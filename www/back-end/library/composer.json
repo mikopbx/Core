@@ -1,5 +1,0 @@
-{
-    "require": {
-        "sentry/sdk": "^2.0"
-    }
-}
