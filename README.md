@@ -20,6 +20,6 @@ The russian [website](https://www.askozia.ru)
 
 The english [website](https://www.mikopbx.com) under construction  
 
-The instalation [instruction] (https://wiki.mikopbx.com/quickstart_lancher)
+The instalation [instruction](https://wiki.mikopbx.com/quickstart_lancher)
 
 Description under construction...
