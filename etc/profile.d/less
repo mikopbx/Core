@@ -1,0 +1,10 @@
+
+export LESS="--ignore-case"
+export LESSOPEN="|lesspipe.sh %s"
+
+if [ -f "" ] ; then
+LESSOPEN="| %s"
+else
+LESSOPEN="|lesspipe %s"
+fi
+export LESSOPEN

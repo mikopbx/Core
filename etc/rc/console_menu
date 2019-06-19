@@ -1,0 +1,74 @@
+#!/usr/bin/php -f
+<?php
+/**
+ * Copyright © MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Alexey Portnov, 7 2018
+ */
+
+require_once("globals.php");
+include '/etc/rc/banner';
+
+$fp         = fopen('php://stdin', 'r');
+$is_live_cd = file_exists('/offload/livecd');
+if($is_live_cd){
+    if(file_exists('/conf.recover/conf')){
+        $live_cd_text = "  8) ".Util::translate("Install or recover");
+        $install_cmd  = 'initial.recovery';
+    }else{
+        $live_cd_text = "  8) ".Util::translate('Install on Hard Drive');
+        $install_cmd  = 'initial.install';
+    }
+}else{
+    $live_cd_text = '';
+}
+
+echo "\n\n";
+echo "  ".Util::translate("PBX console setup")."\n";
+echo "*********************************\n\n";
+echo "  1) ".Util::translate('Change language')."\n";
+echo "  2) ".Util::translate('Set up LAN IP address')."\n";
+echo "  3) ".Util::translate('Reboot system')."\n";
+echo "  4) ".Util::translate('Ping host')."\n";
+echo "  5) ".Util::translate('Firewall')."\n";
+echo "  6) ".Util::translate('Connect storage')."\n";
+echo "  7) ".Util::translate('Reset admin password')."\n";
+echo "$live_cd_text\n\n";
+echo Util::translate('Enter a number').": ";
+
+init_db($g['m_di'], $g['phalcon_settings']);
+$op_mode = trim(fgets($fp));
+switch ($op_mode) {
+    case 1:
+        include '/etc/rc/initial.change.lang';
+        break;
+    case 2:
+        include '/etc/rc/initial.setlanip';
+        break;
+    case 3:
+        include '/etc/rc/initial.reboot';
+        break;
+    case 4:
+        include '/etc/rc/initial.ping';
+        break;
+    case 5:
+        include '/etc/rc/initial.firewall';
+        break;
+    case 6:
+        include '/etc/rc/connect.storage';
+        break;
+    case 7:
+        include '/etc/rc/reset.password';
+        break;
+    case 8:
+        if($is_live_cd) {
+            include "/etc/rc/{$install_cmd}";
+        }else{
+            sleep(2);
+        }
+        break;
+    case 9:
+        file_put_contents('/tmp/start_sh', '');
+        break;
+}

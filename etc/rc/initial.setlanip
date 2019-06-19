@@ -1,0 +1,91 @@
+<?php
+/**
+ * Copyright © MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Alexey Portnov, 4 2019
+ */
+
+// Подключаем зависимости / вспомогательные классы.
+require_once("globals.php");
+
+$network = new Network();
+$system  = new System();
+
+$fp = fopen('php://stdin', 'r');
+// LAN IP via DHCP
+echo "\n".Util::translate('Do you want to use DHCP to configure your LAN interface?')." (y/n) ";
+$data = array();
+if (strcasecmp(chop(fgets($fp)), "y") == 0) {
+
+	$data['dhcp'] = 1;
+	$network->update_net_settings($data);
+	$network->lan_configure();
+	$system->nginx_start();
+	echo "\n";
+	echo Util::translate("The LAN interface will now be configured via DHCP...");
+	echo "\n\n";
+	echo Util::translate("Press ENTER to continue.");
+	echo "\n";
+
+	fgets($fp);
+	return 0;
+} else {
+	$data['dhcp'] = 0;
+}
+
+// LAN IP address
+do {
+	echo "\n";
+	echo Util::translate('Enter the new LAN IP address: ');
+	$lanip = chop(fgets($fp));
+	if ($lanip === "") {
+        return 0;
+	}
+} while (!Verify::is_ipaddress($lanip));
+
+echo "\n".Util::translate('Subnet masks are to be entered as bit counts (as in CIDR notation).')."\n";
+echo "e.g. 255.255.255.255 = 32\n";
+echo "     255.255.255.0   = 24\n";
+echo "     255.255.0.0     = 16\n\n";
+
+do {
+	echo Util::translate("Enter the new LAN subnet bit count: ");
+	$lanbits = chop(fgets($fp));
+	if ($lanbits === "") {
+        return 0;
+	}
+} while (!is_numeric($lanbits) || ($lanbits < 1) || ($lanbits > 32));
+
+// LAN Gateway
+do {
+	echo "\n".Util::translate('Enter the LAN gateway IP address: ');
+	$gwip = chop(fgets($fp));
+	if ($gwip === "") {
+        return 0;
+	}
+} while (!Verify::is_ipaddress($gwip));
+
+// LAN DNS
+do {
+	echo "\n".Util::translate('Enter the LAN DNS IP address: ');
+	$dnsip = chop(fgets($fp));
+	if ($dnsip === "") {
+        return 0;
+	}
+} while (!Verify::is_ipaddress($dnsip));
+
+$data['ipaddr']  	= $lanip;
+$data['subnet']  	= $lanbits;
+$data['gateway'] 	= $gwip;
+$data['primarydns'] = $dnsip;
+
+$proto = 'http';
+
+$network->update_net_settings($data);
+$network->resolvconf_generate();
+$network->lan_configure();
+$system->nginx_start();
+
+echo "\n\n".Util::translate('Press ENTER to continue.');
+fgets($fp);

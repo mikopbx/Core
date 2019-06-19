@@ -1,0 +1,21 @@
+<?php
+/**
+ * Copyright © MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Alexey Portnov, 7 2018
+ */
+
+$fp = fopen('php://stdin', 'r');
+echo "\n";
+echo Util::translate('Enter a host name or IP address: ');
+
+$pinghost = trim(fgets($fp));
+if ($pinghost) {
+    echo "\n";
+    passthru("/bin/ping -c3 " . escapeshellarg($pinghost));
+    echo "\n".Util::translate('Press ENTER to continue.')."\n";
+    fgets($fp);
+}else{
+    sleep(4);
+}

@@ -1,0 +1,97 @@
+#!/usr/bin/php -f
+<?php
+/**
+ * Copyright © MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Alexey Portnov, 5 2018
+ */
+
+require_once("globals.php");
+
+$product_name 	= $g['pt1c_pbx_name'];
+$NoCfDevice = <<<EOD
+
+*******************************************************************************
+* FATAL ERROR                                                                 *
+* The device that contains the configuration file (mikopbx.db) could not be   *
+* found. $product_name cannot continue booting.                               *
+*******************************************************************************
+
+EOD;
+
+$cfgdevice = '';
+/* check if there's already an fstab (NFS booting?) */
+if (file_exists("{$g['pt1c_etc_path']}/fstab")) {
+    // Обработка не требуется.
+}else if ( file_exists("/offload/livecd") ){
+    $d_path_info = pathinfo("{$g['pt1c_db_path']}");
+    // Копируем файл базы данных настроек.
+    copy('/offload/conf/mikopbx.db', "{$g['pt1c_db_path']}");
+    // Устанавливаем владельца для базы данных.
+    chown("{$g['pt1c_db_path']}", 'www');
+    chgrp("{$g['pt1c_db_path']}", 'www');
+    // Устанавливаем владельца для каталога.
+    chown("{$d_path_info['dirname']}", 'www');
+    chgrp("{$d_path_info['dirname']}", 'www');
+
+    // Обновление конфигурации.
+    \PBX::update_system_config();
+    sleep(3);
+}else{
+    $storage = new \Storage();
+    /* iterate through the disks fdisk finds until one contains a mikopbx.db */
+    $attempts = 2;
+    while ($attempts--) {
+        Util::mwexec('fdisk -l | grep "^/dev/" | cut -c 6-8 | uniq', $disks);
+        // " - Mount storage... "
+        echo "\n - Found disks: " . implode(", ", $disks) . "\n";
+        foreach ($disks as $disk) {
+            echo " - Looking for configuration on: $disk\n";
+            $part 	 = (strpos($disk, "mmcblk") !== false)?"p3":"3";
+
+            $uuid   = $storage->get_uuid("/dev/{$disk}{$part}");
+            $format = \Storage::get_fs_type("{$disk}{$part}");
+            // Запустим проверку раздела диска//
+            \Util::mwexec("if [ -b /dev/{$disk}{$part} ]; then /sbin/fsck.{$format} -p /dev/{$disk}{$part}; fi;");
+            if (\Util::mwexec("/bin/mount -t {$format} -rw UUID=\"{$uuid}\" {$g['cf_path']}") != 0) {
+                continue;
+            }
+
+            if (file_exists("{$g['pt1c_db_path']}")) {
+                $cfgdevice = $disk;
+                $cfgpartition = $cfgdevice.$part;
+                echo " - Found configuration on $cfgdevice.\n";
+                $old_db_name = '/cf/conf/miko'.'zia'.'.db';
+                if(file_exists($old_db_name)){
+                    @unlink('/cf/conf/mikopbx.db');
+                    @rename($old_db_name, '/cf/conf/mikopbx.db');
+                }
+                // Обновление конфигурации.
+                \PBX::update_system_config();
+            }
+            Util::mwexec("/bin/umount -f {$g['cf_path']}");
+            if ($cfgdevice) {
+                // Всегда проверяем диск с базой данных настроек.
+                Util::mwexec("/sbin/fsck.{$format} -a /dev/{$disk}{$part}");
+                break;
+            }
+        }
+        if ($cfgdevice) break;
+        if ($attempts) {
+            echo " - Configuration not found.\n";
+            echo " - Waiting for devices to settle and attempting again.\n";
+            sleep(3);
+        }
+    }
+
+    if (!$cfgdevice) {
+        /* no device found, print an error and die */
+        echo $NoCfDevice;
+        Util::mwexec("/sbin/halt");
+    }else{
+        // Запишем в файл имя подключенного устройства.
+        file_put_contents("{$g['varetc_path']}/cfdevice", $cfgdevice);
+    }
+}
+?>

@@ -1,0 +1,23 @@
+#!/usr/bin/php -f
+<?php
+/**
+ * Copyright © MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Alexey Portnov, 5 2018
+ */
+
+require_once("globals.php");
+
+if(file_exists('/tmp/ejectcd')){
+    sleep(15);
+}
+$g['booting'] = TRUE;
+$result = Mikopbx\Main::bootup();
+$g['booting'] = FALSE;
+
+// if(true == $result){
+if(!file_exists('/offload/livecd')) {
+    Util::mwexec_bg('/etc/rc/bootup_pbx');
+}
+// }

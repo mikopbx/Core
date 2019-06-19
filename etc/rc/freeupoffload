@@ -1,0 +1,22 @@
+#!/bin/sh
+
+PATH=/sbin:/bin
+export PATH
+
+# Подключаем библиотеку функций.
+. /etc/rc/shell_functions.sh;
+
+/bin/touch /tmp/freeoffload;
+
+killprocesses 'crond' -KILL 0;
+killprocesses 'nginx' -KILL 0;
+killprocesses 'monitord' -KILL 1;
+killprocesses '/offload' -TERM 3;
+killprocesses '/offload' -KILL 0;
+
+echo " |   - unmounting /offload ...";
+f_umount /offload;
+echo " |   - unmounting /cf...";
+f_umount /cf;
+
+exit 0

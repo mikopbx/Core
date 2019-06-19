@@ -1,0 +1,9 @@
+#!/bin/sh
+
+time=$(date +%s);
+filename="/tmp/ps_result${time}";
+/bin/ps -A -f -orss,pid,args | /bin/busybox grep -v '[0-9]m ' | /bin/busybox awk '{ print $1 "k ; " $2 " ; " $3 " " $4 " " $5 " " $6 " " $7 " " $8 }' > $filename;
+/bin/ps -A -f -orss,pid,args | /bin/busybox grep '[0-9]m ' | /bin/busybox awk '{ print $1 " ; " $2 " ; " $3 " " $4 " " $5 " " $6 " " $7 " " $8 }' >> $filename;
+
+/bin/busybox cat $filename | /bin/sort -r -h -f | /usr/bin/column -t -s ';' | /bin/busybox grep -v "^0k" | grep -v "^RSSk";
+/bin/busybox rm -rf $filename;

@@ -1,0 +1,2 @@
+export XDG_CONFIG_DIRS="$XDG_CONFIG_DIRS${XDG_CONFIG_DIRS:+:}/etc/opt/gnome2/xdg"
+export XDG_DATA_DIRS="$XDG_DATA_DIRS${XDG_DATA_DIRS:+:}/opt/gnome2/share"

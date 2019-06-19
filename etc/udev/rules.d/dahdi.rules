@@ -1,0 +1,18 @@
+
+ACTION!="add",	GOTO="dahdi_add_end"
+
+# DAHDI devices with ownership/permissions for running as non-root
+SUBSYSTEM=="dahdi",		OWNER="asterisk", GROUP="asterisk", MODE="0660"
+
+# Backward compat names: /dev/dahdi/<channo>
+SUBSYSTEM=="dahdi_channels",	SYMLINK+="dahdi/%m"
+
+# Add persistant names as well
+SUBSYSTEM=="dahdi_channels", ATTRS{hardware_id}!="",	SYMLINK+="dahdi/devices/%s{hardware_id}/%s{local_spanno}/%n"
+SUBSYSTEM=="dahdi_channels", ATTRS{location}!="",	SYMLINK+="dahdi/devices/@%s{location}/%s{local_spanno}/%n"
+
+LABEL="dahdi_add_end"
+
+# hotplug scripts
+SUBSYSTEM=="dahdi_devices",	RUN+="%E{DAHDI_TOOLS_ROOTDIR}/usr/share/dahdi/dahdi_handle_device"
+SUBSYSTEM=="dahdi_spans",	RUN+="%E{DAHDI_TOOLS_ROOTDIR}/usr/share/dahdi/dahdi_span_config"

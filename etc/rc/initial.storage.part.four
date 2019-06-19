@@ -1,0 +1,87 @@
+#!/bin/sh
+if [ "$1" != "create" ];then
+	exit 6;
+fi;
+
+if [ "${2}x" == "x" ];then
+    cf_file='/var/etc/cfdevice';
+    if [ ! -f "$cf_file" ];then
+        exit 5;
+    fi;
+    # Получим "системный" диск.
+    dev=$(/bin/busybox cat "$cf_file");
+    dev="/dev/${dev}";
+else
+    dev=$2;
+fi;
+
+# Проверим, существует ли блочное устройство.
+if [ ! -b "${dev}" ];then
+	exit 4;
+fi;
+
+# Проверим смотирован ли диск.
+mounted=$(mount | /bin/busybox grep "${dev}");
+if [ "${mounted}x" != "x" ];then
+	exit 7;
+fi;
+
+res_file='/tmp/add_partitions.sh';
+echo '#!/bin/sh' > "$res_file";
+echo "/sbin/sfdisk ${dev} << EOF" >> "$res_file";
+
+# Получим информацию по разделам диска.
+/sbin/sfdisk "${dev}" -d --force | /bin/busybox grep "^/dev" | /bin/busybox awk '{print $4 $6 $7 $8}' | /bin/busybox sed 's/type=//g' | /bin/busybox sed 's/bootable/\*/g' >> "$res_file"
+
+count=$(cat "$res_file" | /bin/busybox wc -l);
+if [ "$count" -lt "5" ];then
+	exit 0;
+fi;
+
+# Добавляем новый раздел в разметку.
+echo '600M,,83;' >> "$res_file";
+echo ';' >> "$res_file";
+echo ';' >> "$res_file";
+echo 'EOF' >> "$res_file";
+
+/bin/sh "$res_file" > /dev/null 2>&1;
+rm "$res_file";
+
+echo " - re-initialize partition table...";
+/sbin/blockdev --rereadpt "${dev}" > /dev/null 2>&1;
+sleep 2;
+
+dev4check=$(/bin/busybox fdisk -l "${dev}" | /bin/busybox grep "${dev}4");
+
+if [ "x${dev4check}" != "x" ];then
+    tmp_dir='/tmp/test_mnt';
+    # Создаем файловую систему.
+    mkdir -p "$tmp_dir";
+
+    type=$(/sbin/blkid -o full "${dev}4" | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^TYPE" | /bin/busybox awk -F "\"" '{print $2}' | /bin/busybox head -n 1);
+    mount -t "$type" "${dev}4" "$tmp_dir" 2> /dev/null;
+    if [ "$?" != "0" ]; then
+        type='ext4';
+        echo " - mount ${dev}4 exit code $?";
+        # Создаем файловую систему ext2.
+        "mkfs.${type}" "${dev}4" > /dev/null 2>&1;
+        echo " - mkfs.${type} ${dev}4 exit code $?"
+        sleep 3;
+    else
+        /etc/rc/shell_functions.sh killprocesses "$tmp_dir" -TERM 0;
+        umount "$tmp_dir";
+    fi;
+
+    if [ "$?" == "0" ]; then
+        # Удаляем временную директорию.
+        rm -rf /tmp/test_mnt;
+        echo " - сheck filesysten on ${dev}4";
+        "/sbin/fsck.${type}" -a "${dev}4" > /dev/null 2>&1;
+        echo " - сheck completed..."
+    else
+        echo " - umount ${dev}4 exit code $?"
+    fi;
+else
+    echo " - partition ${dev}4 not found...";
+    echo " - ${dev} - the disk size is probably less than 600Mb.";
+fi;

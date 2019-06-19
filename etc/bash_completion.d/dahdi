@@ -1,0 +1,133 @@
+# Check for bash
+[ -z "$BASH_VERSION" ] && return
+
+__dahdi_span_assignments() {
+	local cur prev has_cmd i
+	COMPREPLY=()
+	cur=${COMP_WORDS[COMP_CWORD]}
+	prev=${COMP_WORDS[COMP_CWORD-1]}
+
+	has_cmd=0
+	for (( i=0; i < COMP_CWORD; i++)); do
+		case "${COMP_WORDS[$i]}" in
+		add | auto | dumpconfig | list | remove)
+			has_cmd=1
+			break
+			;;
+		esac
+	done
+	case "$prev" in
+	-k | --key) COMPREPLY=( $(compgen -W 'devpath hwid location' -- $cur) ) ;;
+	*)
+		case "$cur" in
+		-*) COMPREPLY=( ${COMPREPLY[@]} $(compgen -W \
+			'-h -k -n -v --help --key --dry-run --verbose' -- $cur ) )
+			;;
+		*)
+			if [ "$has_cmd" = 1 ]; then
+				COMPREPLY=( ${COMPREPLY[@]} $(shopt -s nullglob; \
+					echo /sys/bus/dahdi_devices/devices/* ) )
+			else
+				COMPREPLY=( ${COMPREPLY[@]} $(compgen -W \
+					'add auto dumpconfig list remove' -- $cur) )
+			fi
+			;;
+		esac
+		;;
+	esac
+}
+
+complete -F __dahdi_span_assignments dahdi_span_assignments
+
+__dahdi_span_types() {
+	local cur prev has_cmd i
+	COMPREPLY=()
+	cur=${COMP_WORDS[COMP_CWORD]}
+	prev=${COMP_WORDS[COMP_CWORD-1]}
+
+	has_cmd=0
+	for (( i=0; i < COMP_CWORD; i++)); do
+		case "${COMP_WORDS[$i]}" in
+		dumpconfig | list | set)
+			has_cmd=1
+			break
+			;;
+		esac
+	done
+	case "$prev" in
+	-k | --key) COMPREPLY=( $(compgen -W 'devpath hwid location' -- $cur) ) ;;
+	--line-type) COMPREPLY=( $(compgen -W 'E1 J1 T1' -- $cur) ) ;;
+	*)
+		case "$cur" in
+		-*) COMPREPLY=( ${COMPREPLY[@]} $(compgen -W \
+			'-h -k -n -v --help --key --dry-run --line-type --verbose' -- $cur ) )
+			;;
+		*)
+			if [ "$has_cmd" = 1 ]; then
+				# FIXME: check if devices are settable?
+				COMPREPLY=( ${COMPREPLY[@]} $( \
+					grep -l '[EJT]1' /sys/devices/pci0000:00/0000:00:10.4/usb1/1-1/xbus-00/*/spantype 2>/dev/null | sed -e 's|/spantype||') )
+			else
+				COMPREPLY=( ${COMPREPLY[@]} $(compgen -W \
+					'dumpconfig list set' -- $cur) )
+			fi
+			;;
+		esac
+		;;
+	esac
+}
+
+complete -F __dahdi_span_types dahdi_span_types
+
+
+__dahdi_genconf() {
+	local cur
+	COMPREPLY=()
+	prev=${COMP_WORDS[COMP_CWORD-1]}
+	cur=${COMP_WORDS[COMP_CWORD]}
+
+	case "$prev" in
+	--line-type) COMPREPLY=( $(compgen -W 'E1 J1 T1' -- $cur) ) ;;
+	*)
+		case "$cur" in
+		-*) COMPREPLY+=( $(compgen -W '-F -v -V --freepbx --version --verbose --line-type' -- $cur ) ) ;;
+		*)
+			COMPREPLY+=( $(compgen -W "$( perl -e 'my $file = "\u$ARGV[0]";
+				# Complete module name. Translate the case of the
+				# first letter
+				my @pats = map {"$_/Dahdi/Config/Gen/$file*.pm"} @INC;
+				foreach (@pats) {
+					foreach(glob) {
+						s|.*/||;
+						s|.pm$||;
+						s|^(.)|lc($1)|e;
+						print "$_ "
+					}
+				}')" -- $cur ) )
+			;;
+		esac
+		;;
+	esac
+}
+
+complete -F __dahdi_genconf dahdi_genconf
+
+__dahdi_cfg() {
+	local cur prev
+	COMPREPLY=()
+	cur=${COMP_WORDS[COMP_CWORD]}
+	prev=${COMP_WORDS[COMP_CWORD-1]}
+
+	case "$prev" in
+	-c) COMPREPLY=( $(compgen -f -- $cur) ) ;;
+	-S) COMPREPLY=( $(ls -d /sys/bus/dahdi_spans/devices/* 2>/dev/null | sed -e 's/.*-//') ) ;;
+	# FIXME: A similar completion for -C (<chan1>-<chan2>)
+	*)
+		COMPREPLY=( ${COMPREPLY[@]} $(compgen -W \
+			'-c -C -f -h -s -S -t -v ' -- $cur ) )
+		;;
+	esac
+}
+
+# Disable until -c works properly
+#complete -F __dahdi_cfg dahdi_cfg

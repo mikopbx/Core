@@ -1,0 +1,28 @@
+#
+# /etc/dahdi/spantype.conf: Set E1/T1/J1 per-device
+#
+# Built as a table of two columns:
+#  <id>    <local_spanno>:<type>
+#
+# Where:
+#  * The <id> field may be either:
+#         hardware_id
+#         @location
+#         devpath (in sysfs)
+#  * The <local_spanno> is the relative span number 
+#    in the device (starting from 1)
+#    In this filed globbing rules apply. E.g:
+#        - * are all the spans in this device
+#        - [12] are the first two spans in this device
+#  * The <type> may be E1, T1 or J1
+#
+# Examples:
+#  Set the first two spans of a specific Astribank to T1
+#usb:000156 [12]:T1
+
+#  Set all spans of another Astribank to T1
+#usb:INT03165		*:E1
+
+#  Set the first two spans of an Astribank to T1. The
+#  Astribanks is specified by its location instead of hardware_id
+#@usb-0000:00:1d.7-3 [12]:T1

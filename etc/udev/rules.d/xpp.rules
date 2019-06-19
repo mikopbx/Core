@@ -1,0 +1,12 @@
+# Load firmware into the Xorcom Astribank device:
+SUBSYSTEM=="usb", ACTION=="add", \
+ENV{PRODUCT}=="e4e4/11[3456][013]/*", ENV{DEVTYPE}!="usb_interface", \
+	OPTIONS+="event_timeout=180" \
+	RUN+="/usr/share/dahdi/xpp_fxloader udev $env{PRODUCT}"
+
+# Hotplug hook for Astribank up/down
+# If you need this functionality, copy the astribank_hook.sample
+# to $XPP_INIT_DIR/astribank_hook
+#
+# By default XPP_INIT_DIR="/usr/share/dahdi"
+KERNEL=="xbus*", RUN+="%E{XPP_INIT_DIR}/astribank_hook udev $kernel $sysfs{status} $sysfs{connector}"

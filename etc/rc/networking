@@ -1,0 +1,20 @@
+#!/usr/bin/php -f
+<?php
+
+require_once 'globals.php';
+if(count($argv) == 2 && 'start' == $argv[1]){
+    $network = new Network();
+    $network->resolvconf_generate();
+    $network->lo_configure();
+    $network->lan_configure();
+}else if(count($argv) == 2 && 'stop' == $argv[1]){
+    $network = new Network();
+    $if_list = $network->get_interfaces();
+    $arr_commands = array();
+    foreach ($if_list as $if_name => $data){
+        $arr_commands[] = "/sbin/ifconfig $if_name down";
+    }
+    Util::mwexec_commands($arr_commands,$out, 'net_stop');
+}
+
+?>

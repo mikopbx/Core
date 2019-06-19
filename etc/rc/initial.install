@@ -1,0 +1,115 @@
+<?php
+/**
+ * Copyright © MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Alexey Portnov, 4 2019
+ */
+
+require_once("globals.php");
+$fp = fopen('php://stdin', 'r');
+$storage = new Storage();
+
+$valid_disks = [];
+$selected_disk = ['size' => 0, 'id' => ''];
+$all_hdd = $storage->get_all_hdd();
+foreach ($all_hdd as $disk) {
+	$other_info = '';
+	if(true == $disk['sys_disk']) $other_info.=' System Disk ';
+	if(true == $disk['mounted'])  $other_info.=' Mounted ';
+	if($other_info != '') 		   $other_info = "[ \033[31;1m{$other_info}\033[0m ]";
+
+    if($selected_disk['size'] == 0 || $selected_disk['size'] > $disk['size'] ){
+        $selected_disk = $disk;
+    }
+
+    if($disk['size'] < 400){
+        continue;
+    }
+
+    $valid_disks[$disk['id']] = "  - {$disk['id']}, {$disk['size_text']}, {$disk['vendor']} $other_info \n";
+}
+
+if(count($valid_disks) == 0){
+	echo "\n ".Util::translate('Valid disks not found...')." \n";
+	sleep(3);
+	return 0;
+}
+
+echo "\n ".Util::translate('Select the drive to install the system.')." ";
+echo "\n ".Util::translate('Selected disk:')."\033[33;1m [{$selected_disk['id']}] \033[0m \n\n";
+echo "\n ".Util::translate('Valid disks are:')." \n\n";
+foreach ($valid_disks as $disk) {
+    echo $disk;
+}
+echo "\n";
+do {
+    echo "\n".Util::translate('Enter the device name:').Util::translate('(default value = ').$selected_disk['id'].") :";
+	$target_disk = trim(fgets($fp));
+	if ($target_disk === "") {
+        $target_disk = $selected_disk['id'];
+	}
+} while (!array_key_exists($target_disk, $valid_disks));
+
+echo "
+
+*******************************************************************************
+* ".Util::translate('WARNING')."!                                                                    
+* ".Util::translate('The PBX is about to be installed onto the')." \033[33;1m{$target_disk}\033[0m.
+* - ".Util::translate('everything on this device will be erased!')."                                 
+* - ".Util::translate('this cannot be undone!')."                                                    
+*******************************************************************************
+
+".Util::translate('The PBX will reboot after installation.')."
+
+".Util::translate('Do you want to proceed? (y/n): ');
+
+if (strcasecmp(trim(fgets($fp)), "y") == 0) {
+    // Сохраним информацию о системном диске во временный файл.
+    file_put_contents($GLOBALS['g']['varetc_path'].'/cfdevice', "$target_disk");
+
+    echo "Installing PBX...\n";
+    // Получим все смонтированные разделы:
+    $mnt_dirs = [];
+    \Util::mwexec("mount | grep '^/dev/{$target_disk}' | /bin/busybox awk '{print $3}'",$mnt_dirs);
+    foreach ($mnt_dirs as $mnt){
+        // Завершаем все связанные процессы.
+        \Util::mwexec("/etc/rc/shell_functions.sh killprocesses '$mnt' -TERM 0;");
+        // Отмонтируем.
+        \Util::mwexec("umount {$mnt}");
+    }
+    echo " - unpacking img...\n";
+    system("/bin/gunzip -c /offload/firmware.img.gz | dd of=/dev/{$target_disk} bs=512");
+    echo " - create storage partition...\n";
+    system("/etc/rc/initial.storage.part.four create /dev/{$target_disk}");
+    echo "done\n";
+
+    // Подключение диска для хранения данных.
+    include '/etc/rc/connect.storage';
+
+	echo "Copying configuration...";
+	@mkdir("/mnttmp");
+    /** Монтируем диск с настройками */
+	\Util::mwexec("/bin/mount -w -o noatime /dev/{$target_disk}3 /mnttmp");
+
+    $config = new \Config();
+    $lang = $config->get_general_settings('PBXLanguage');
+    $filename       = $g['pt1c_db_path'];
+    $filename_lang  = "/offload/conf/mikopbx-{$lang}.db";
+    if($lang != 'ru-ru' && file_exists($filename_lang)){
+        $filename = $filename_lang;
+    }
+    /** Копируем файл базы данных настроек. */
+    \Util::mwexec("cp {$filename} /mnttmp/conf/mikopbx.db");
+
+	// Фиксируем флаг необходимости очистки кэш web.
+	file_put_contents('/mnttmp/conf/need_clean_cashe_www', '');
+	\Util::mwexec("/bin/umount /mnttmp");
+	echo "done\n";
+
+    // Фиксируем флаг необходимости вынуить CD диск.
+    file_put_contents('/tmp/ejectcd','');
+	\System::reboot_sync(false);
+}else{
+    sleep(3);
+}

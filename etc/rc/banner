@@ -1,0 +1,79 @@
+<?php
+/**
+ * Copyright © MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Alexey Portnov, 5 2019
+ */
+
+require_once("globals.php");
+Util::set_cyrillic_font();
+
+$config   = new Config();
+$network  = new Network();
+
+$livecd_text = '';
+if(file_exists('/offload/livecd')){
+	$livecd_text = Util::translate("PBX is running in Live or Recovery mode");
+}
+
+if(file_exists('/offload/version')){
+    $version_file = '/offload/version';
+}else{
+    $version_file = "{$g['pt1c_etc_path']}/version";
+}
+
+$version 		= trim(file_get_contents("{$version_file}"));
+$buildtime  	= trim(file_get_contents("{$g['pt1c_etc_path']}/version.buildtime"));
+$product_name 	= $g['pt1c_pbx_name_kind'];
+$copyright_info = "$product_name is Copyright (C) 2006-2018. All rights reserved.\n".
+				  "    \033[31;1m{$livecd_text}\033[0m \n";
+
+$networks = $network->getGeneralNetSettings();
+$arr_commands = array();
+
+$ip_text = ['','','','','']; $id_text=0;
+foreach ($networks as $if_data){
+    if($if_data['disabled'] == 1) continue;
+	$interface = $network->get_interface($if_data['interface']);
+
+	if ($if_data['dhcp'] == 1) {
+		$ip_line = "    ".Util::translate('LAN IP address: assigned via DHCP');
+    } else if($if_data['vlanid'] > 0){
+        $ip_line = "    ".Util::translate('VLAN IP address: assigned via')." {$if_data['interface_orign']}";
+    } else {
+		$ip_line = "    ".Util::translate('LAN IP address');
+	}
+	
+	$ip_info = "unassigned";
+	if ($interface['ipaddr']) {
+		$ip_info = "\033[33;1m{$interface['ipaddr']}\033[0m on ".$if_data['interface'];
+	}
+	
+	if (NULL != $interface['mac']){
+		$ip_text[$id_text] = "{$ip_line}: {$ip_info}";
+        $id_text++;
+	}
+}
+
+$files = Mikopbx\Main::check_for_corrupted_files();
+$broken= '';
+if(count($files)!=0){
+    $broken = "\033[31;1m".Util::translate('The integrity of the system is broken')."...\033[0m";
+}
+
+$this_is = Util::translate('this_is');
+$t_version = Util::translate('version');
+echo <<<EOD
+
+
+*** {$this_is}\033[32;1m{$product_name}\033[0m, {$t_version} \033[32;1m{$version}\033[0m
+    built on {$buildtime} for {$g['platform']}
+    {$copyright_info}
+
+    {$ip_text[0]}
+    {$ip_text[1]}
+    {$ip_text[2]}
+    {$ip_text[3]}
+    {$broken}
+EOD;

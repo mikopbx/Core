@@ -1,0 +1,57 @@
+#
+# /etc/dahdi/assigned-spans.conf:
+#
+# This file assigns span and channel numbers to dahdi devices
+#
+# Built as a table keyed by <id>:
+#  <id>    <spanspec>....
+#
+# Where:
+#  * The <id> field may be either:
+#         hardware_id
+#         @location
+#         devpath (in sysfs)
+#  * Shell-style globbing is allowed for the <id> field
+#  * There may one or more of <spanspec>
+#  * Each <spanspec> is composed as:
+#    <local_spanno>:<assigned_spanno>:<base_channo>
+#
+# Examples:
+
+# Astribank with two spans:
+#    FXS * 8 channels + 4 digital inputs 2 digital outputs
+#    FXO * 8 channels
+#usb:QA-1		1:1:1
+#usb:QA-1		2:2:15
+
+# Same Astribank in one-liner
+#usb:QA-1		1:1:1 2:2:15
+
+# Astribank with 4*PRI spans and 3*FXS*8 spans
+# Note that channels are NOT globally contigous
+# each span get its own 50 numbers. Also, skip
+# Channel number 250...
+#usb:INT03165		1:1:1	# E1
+#usb:INT03165		2:2:51	# E1
+#usb:INT03165		3:3:151	# E1
+#usb:INT03165		4:4:201	# E1
+#usb:INT03165		5:5:301	# FXS * 8 channels
+#usb:INT03165		6:6:351	# FXS * 8 channels
+#usb:INT03165		7:7:401	# FXS * 8 channels
+
+# Alternatively -- all in one-line
+#usb:INT03165		1:1:1 2:2:51 3:3:151 4:4:201 5:5:301 6:6:351 7:7:401
+
+# Astribank with 4*BRI without hardware_id :-(
+# We use the location on the bus (ie: where it is physically
+# located). Note the '@' prefix that indicate the location key.
+#@usb-0000:00:1d.7-3	1:1:50
+#@usb-0000:00:1d.7-3	2:2:100
+#@usb-0000:00:1d.7-3	3:3:150
+#@usb-0000:00:1d.7-3	4:4:200
+
+# Same configuration with globbing:
+#/sys/*/usb1/1-6/*	1:1:50
+#/sys/*/usb1/1-6/*	2:2:100
+#/sys/*/usb1/1-6/*	3:3:150
+#/sys/*/usb1/1-6/*	4:4:200

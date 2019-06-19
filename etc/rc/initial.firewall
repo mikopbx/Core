@@ -1,0 +1,49 @@
+<?php
+/**
+ * Copyright © MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Alexey Portnov, 11 2018
+ */
+
+require_once("globals.php");
+
+$config = new Config();
+$firewall_enable = $config->get_general_settings('PBXFirewallEnabled');
+
+if($firewall_enable == '1'){
+    $action = 'disable';
+    $status = 'running';
+}else{
+    $action = 'enable';
+    $status = 'stopped';
+}
+
+$fp = fopen('php://stdin', 'r');
+echo "\n\n\n";
+echo Util::translate('Firewall is now')." \033[33;1m".Util::translate($status)."\033[0m.\n";
+echo Util::translate("Do you want {$action} firewall now? (y/n): ");
+
+if (strcasecmp(trim(fgets($fp)), "y") != 0) {
+    sleep(2);
+    return 0;
+}
+
+if('enable' == $action){
+    $enable = '1';
+}else if('disable' == $action){
+    $enable = '0';
+}else{
+    return 0;
+}
+
+$config->set_general_settings("PBXFirewallEnabled", $enable);
+$config->set_general_settings("PBXFail2BanEnabled", $enable);
+
+$result = Firewall::reload_firewall();
+if($result['result'] != 'Success'){
+    echo "\n Firewall error ... {$result['result']}\n\n";
+}else{
+    echo "\n Firewall is {$action}d... \n\n";
+}
+sleep(2);

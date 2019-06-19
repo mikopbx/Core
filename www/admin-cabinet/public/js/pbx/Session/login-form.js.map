@@ -1,0 +1,44 @@
+{
+  "version": 3,
+  "sources": [
+    "../../src/Session/login-form.js"
+  ],
+  "names": [
+    "loginForm",
+    "$formObj",
+    "$",
+    "$submitButton",
+    "validateRules",
+    "login",
+    "identifier",
+    "rules",
+    "type",
+    "prompt",
+    "globalTranslate",
+    "auth_ValidateLoginNotEmpty",
+    "password",
+    "auth_ValidatePasswordNotEmpty",
+    "initialize",
+    "initializeForm",
+    "on",
+    "remove",
+    "cbBeforeSendForm",
+    "settings",
+    "result",
+    "data",
+    "form",
+    "cbAfterSendForm",
+    "Form",
+    "url",
+    "globalRootUrl",
+    "keyboardShortcuts",
+    "configWorkerEnabled",
+    "document",
+    "ready"
+  ],
+  "mappings": ";;AAAA;;;;;;;;AAQA;AAEA,IAAMA,SAAS,GAAG;AACjBC,EAAAA,QAAQ,EAAEC,CAAC,CAAC,aAAD,CADM;AAEjBC,EAAAA,aAAa,EAAED,CAAC,CAAC,eAAD,CAFC;AAGjBE,EAAAA,aAAa,EAAE;AACdC,IAAAA,KAAK,EAAE;AACNC,MAAAA,UAAU,EAAE,OADN;AAENC,MAAAA,KAAK,EAAE,CACN;AACCC,QAAAA,IAAI,EAAE,OADP;AAECC,QAAAA,MAAM,EAAEC,eAAe,CAACC;AAFzB,OADM;AAFD,KADO;AAUdC,IAAAA,QAAQ,EAAE;AACTN,MAAAA,UAAU,EAAE,UADH;AAETC,MAAAA,KAAK,EAAE,CACN;AACCC,QAAAA,IAAI,EAAE,OADP;AAECC,QAAAA,MAAM,EAAEC,eAAe,CAACG;AAFzB,OADM;AAFE;AAVI,GAHE;AAuBjBC,EAAAA,UAvBiB;AAAA,0BAuBJ;AACZd,MAAAA,SAAS,CAACe,cAAV;AACAb,MAAAA,CAAC,CAAC,OAAD,CAAD,CAAWc,EAAX,CAAc,OAAd,EAAuB,YAAM;AAC5Bd,QAAAA,CAAC,CAAC,eAAD,CAAD,CAAmBe,MAAnB;AACA,OAFD;AAGA;;AA5BgB;AAAA;AA6BjBC,EAAAA,gBA7BiB;AAAA,8BA6BAC,QA7BA,EA6BU;AAC1B,UAAMC,MAAM,GAAGD,QAAf;AACAC,MAAAA,MAAM,CAACC,IAAP,GAAcrB,SAAS,CAACC,QAAV,CAAmBqB,IAAnB,CAAwB,YAAxB,CAAd;AACA,aAAOF,MAAP;AACA;;AAjCgB;AAAA;AAkCjBG,EAAAA,eAlCiB;AAAA,+BAkCC,CAEjB;;AApCgB;AAAA;AAqCjBR,EAAAA,cArCiB;AAAA,8BAqCA;AAChBS,MAAAA,IAAI,CAACvB,QAAL,GAAgBD,SAAS,CAACC,QAA1B;AACAuB,MAAAA,IAAI,CAACC,GAAL,aAAcC,aAAd;AACAF,MAAAA,IAAI,CAACpB,aAAL,GAAqBJ,SAAS,CAACI,aAA/B;AACAoB,MAAAA,IAAI,CAACN,gBAAL,GAAwBlB,SAAS,CAACkB,gBAAlC;AACAM,MAAAA,IAAI,CAACD,eAAL,GAAuBvB,SAAS,CAACuB,eAAjC;AACAC,MAAAA,IAAI,CAACG,iBAAL,GAAyB,KAAzB;AACAH,MAAAA,IAAI,CAACI,mBAAL,GAA2B,KAA3B;AACAJ,MAAAA,IAAI,CAACV,UAAL;AACA;;AA9CgB;AAAA;AAAA,CAAlB;AAiDAZ,CAAC,CAAC2B,QAAD,CAAD,CAAYC,KAAZ,CAAkB,YAAM;AACvB9B,EAAAA,SAAS,CAACc,UAAV;AACA,CAFD",
+  "sourcesContent": [
+    "/*\n * Copyright (C) MIKO LLC - All Rights Reserved\n * Unauthorized copying of this file, via any medium is strictly prohibited\n * Proprietary and confidential\n * Written by Nikolay Beketov, 6 2018\n *\n */\n\n/* global globalRootUrl,globalTranslate,Form */\n\nconst loginForm = {\n\t$formObj: $('#login-form'),\n\t$submitButton: $('#submitbutton'),\n\tvalidateRules: {\n\t\tlogin: {\n\t\t\tidentifier: 'login',\n\t\t\trules: [\n\t\t\t\t{\n\t\t\t\t\ttype: 'empty',\n\t\t\t\t\tprompt: globalTranslate.auth_ValidateLoginNotEmpty,\n\t\t\t\t},\n\t\t\t],\n\t\t},\n\t\tpassword: {\n\t\t\tidentifier: 'password',\n\t\t\trules: [\n\t\t\t\t{\n\t\t\t\t\ttype: 'empty',\n\t\t\t\t\tprompt: globalTranslate.auth_ValidatePasswordNotEmpty,\n\t\t\t\t},\n\t\t\t],\n\t\t},\n\t},\n\tinitialize() {\n\t\tloginForm.initializeForm();\n\t\t$('input').on('input', () => {\n\t\t\t$('.message.ajax').remove();\n\t\t});\n\t},\n\tcbBeforeSendForm(settings) {\n\t\tconst result = settings;\n\t\tresult.data = loginForm.$formObj.form('get values');\n\t\treturn result;\n\t},\n\tcbAfterSendForm() {\n\n\t},\n\tinitializeForm() {\n\t\tForm.$formObj = loginForm.$formObj;\n\t\tForm.url = `${globalRootUrl}session/start`;\n\t\tForm.validateRules = loginForm.validateRules;\n\t\tForm.cbBeforeSendForm = loginForm.cbBeforeSendForm;\n\t\tForm.cbAfterSendForm = loginForm.cbAfterSendForm;\n\t\tForm.keyboardShortcuts = false;\n\t\tForm.configWorkerEnabled = false;\n\t\tForm.initialize();\n\t},\n};\n\n$(document).ready(() => {\n\tloginForm.initialize();\n});\n\n"
+  ],
+  "file": "login-form.js"
+}

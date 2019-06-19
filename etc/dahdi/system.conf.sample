@@ -1,0 +1,326 @@
+#
+# DAHDI Configuration File
+#
+# This file is parsed by the DAHDI Configurator, dahdi_cfg
+#
+# Span Configuration
+# ++++++++++++++++++
+# First come the span definitions, in the format
+# 
+#   span=<span num>,<timing source>,<line build out (LBO)>,<framing>,<coding>[,yellow]
+#
+# All T1/E1/BRI spans generate a clock signal on their transmit side. The
+# <timing source> parameter determines whether the clock signal from the far
+# end of the T1/E1/BRI is used as the master source of clock timing. If it is, our
+# own clock will synchronise to it. T1/E1/BRI connected directly or indirectly to
+# a PSTN provider (telco) should generally be the first choice to sync to. The
+# PSTN will never be a slave to you. You must be a slave to it.
+#
+# Choose 1 to make the equipment at the far end of the E1/T1/BRI link the preferred
+# source of the master clock. Choose 2 to make it the second choice for the master
+# clock, if the first choice port fails (the far end dies, a cable breaks, or
+# whatever). Choose 3 to make a port the third choice, and so on. If you have, say,
+# 2 ports connected to the PSTN, mark those as 1 and 2. The number used for each
+# port should be different.
+#
+# If you choose 0, the port will never be used as a source of timing. This is
+# appropriate when you know the far end should always be a slave to you. If
+# the port is connected to a channel bank, for example, you should always be
+# its master. Likewise, BRI TE ports should always be configured as a slave.
+# Any number of ports can be marked as 0.
+#
+# Incorrect timing sync may cause clicks/noise in the audio, poor quality or failed
+# faxes, unreliable modem operation, and is a general all round bad thing.
+#
+# NOTE: The B410P card cannot reliably connect one of its four ports
+# configured in TE mode to another one configured in NT mode. It will not
+# reliably sync clock from itself. Please use another physical card and
+# configure one to provide clock and one to recover clock in any B410P test
+# environments.
+#
+# The line build-out (or LBO) is an integer, from the following table:
+#
+#  0: 0 db (CSU) / 0-133 feet (DSX-1)
+#  1: 133-266 feet (DSX-1)
+#  2: 266-399 feet (DSX-1)
+#  3: 399-533 feet (DSX-1)
+#  4: 533-655 feet (DSX-1)
+#  5: -7.5db (CSU)
+#  6: -15db (CSU)
+#  7: -22.5db (CSU)
+#
+# If the span is a BRI port the line build-out is not used and should be set
+# to 0.
+#
+# framing:: 
+#   one of 'd4' or 'esf' for T1 or 'cas' or 'ccs' for E1. Use 'ccs' for BRI.
+#  'd4' could be referred to as 'sf' or 'superframe'
+#
+# coding:: 
+#   one of 'ami' or 'b8zs' for T1 or 'ami' or 'hdb3' for E1. Use 'ami' for
+#   BRI.
+#
+#   * For E1 there is the optional keyword 'crc4' to enable CRC4 checking.
+#   * If the keyword 'yellow' follows, yellow alarm is transmitted when no
+#     channels are open.
+#
+#span=1,0,0,esf,b8zs
+#span=2,1,0,esf,b8zs
+#span=3,0,0,ccs,hdb3,crc4
+#
+# Dynamic Spans
+# +++++++++++++
+# Next come the dynamic span definitions, in the form:
+# 
+#   dynamic=<driver>,<address>,<numchans>,<timing>
+#
+# Where <driver> is the name of the driver (e.g. eth), <address> is the
+# driver specific address (like a MAC for eth), <numchans> is the number
+# of channels, and <timing> is a timing priority, like for a normal span.
+# use "0" to not use this as a timing source, or prioritize them as
+# primary, secondard, etc.  Note that you MUST have a REAL DAHDI device
+# if you are not using external timing.
+#
+#   dynamic=eth,eth0/00:02:b3:35:43:9c,24,0
+#
+# If a non-zero timing value is used, as above, only the last span should
+# have the non-zero value. 
+#
+# Channel Configuration
+# +++++++++++++++++++++
+# Next come the definitions for using the channels.  The format is:
+# <device>=<channel list>
+#
+# Valid devices are:
+#
+# e&m::
+#   Channel(s) are signalled using E&M signalling on a T1 line.
+#   Specific implementation, such as Immediate, Wink, or Feature
+#   Group D are handled by the userspace library.
+# e&me1::
+#   Channel(s) are signalled using E&M signalling on an E1 line.
+# fxsls:: 
+#   Channel(s) are signalled using FXS Loopstart protocol.
+# fxsgs:: 
+#   Channel(s) are signalled using FXS Groundstart protocol.
+# fxsks:: 
+#   Channel(s) are signalled using FXS Koolstart protocol.
+# fxols:: 
+#   Channel(s) are signalled using FXO Loopstart protocol.
+# fxogs:: 
+#   Channel(s) are signalled using FXO Groundstart protocol.
+# fxoks:: 
+#   Channel(s) are signalled using FXO Koolstart protocol.
+#
+# unused:: 
+#   No signalling is performed, each channel in the list remains idle
+# clear::
+#   Channel(s) are bundled into a single span.  No conversion or
+#   signalling is performed, and raw data is available on the master.
+# bchan:: 
+#   Like 'clear' except all channels are treated individually and
+#   are not bundled.  'inclear' is an alias for this.
+# rawhdlc::
+#   The DAHDI driver performs HDLC encoding and decoding on the 
+#   bundle, and the resulting data is communicated via the master
+#   device.
+# dchan::
+#   The DAHDI driver performs HDLC encoding and decoding on the
+#   bundle and also performs incoming and outgoing FCS insertion
+#   and verification.  'fcshdlc' is an alias for this. 
+# hardhdlc::
+#   The hardware driver performs HDLC encoding and decoding on the
+#   bundle and also performs incoming and outgoing FCS insertion
+#   and verification.  Is subject to limitations and support of underlying
+#   hardware. BRI spans serviced by the wcb4xxp driver must use hardhdlc
+#   channels for the signalling channels. 
+# nethdlc::
+#   The DAHDI driver bundles the channels together into an
+#   hdlc network device, which in turn can be configured with
+#   sethdlc (available separately). In 2.6.x kernels you can also optionally
+#   pass the name for the network interface after the channel list.
+#   Syntax:
+#   
+#     nethdlc=<channel list>[:interface name]
+#   Use original names, don't use the names which have been already registered 
+#   in system e.g eth.
+#
+# dacs::
+#   The DAHDI driver cross connects the channels starting at
+#   the channel number listed at the end, after a colon
+# dacsrbs::
+#   The DAHDI driver cross connects the channels starting at
+#   the channel number listed at the end, after a colon and 
+#   also performs the DACSing of RBS bits
+#
+# The channel list is a comma-separated list of channels or ranges, for
+# example:
+#
+#   1,3,5 (channels one, three, and five)
+#   16-23, 29 (channels 16 through 23, as well as channel 29)
+#
+# So, some complete examples are:
+#
+#   e&m=1-12
+#   nethdlc=13-24
+#   fxsls=25,26,27,28
+#   fxols=29-32
+#
+# An example of BRI port:
+# 
+#   span=1,1,0,ccs,ami
+#   bchan=1,2
+#   hardhdlc=3
+#
+# NOTE: When using BRI channels in asterisk, use the bri_cpe, bri_net, or
+# bri_cpe_ptmp (for point to multipoint mode). libpri does not currently
+# support point to multipoint when in NT mode. Otherwise, the bearer channel
+# are configured identically to other DAHDI channels.
+#
+#fxoks=1-24
+#bchan=25-47
+#dchan=48
+#fxols=1-12
+#fxols=13-24
+#e&m=25-29
+#nethdlc=30-33
+#clear=44
+#clear=45
+#clear=46
+#clear=47
+#fcshdlc=48
+#dacs=1-24:48
+#dacsrbs=1-24:48
+#
+# Tone Zone Data
+# ++++++++++++++
+# Finally, you can preload some tone zones, to prevent them from getting
+# overwritten by other users (if you allow non-root users to open /dev/dahdi/*
+# interfaces anyway.  Also this means they won't have to be loaded at runtime.
+# The format is "loadzone=<zone>" where the zone is a two letter country code.
+# 
+# You may also specify a default zone with "defaultzone=<zone>" where zone
+# is a two letter country code.
+#
+# An up-to-date list of the zones can be found in the file zonedata.c
+#
+loadzone = us
+#loadzone = us-old
+#loadzone=gr
+#loadzone=it
+#loadzone=fr
+#loadzone=de
+#loadzone=uk
+#loadzone=fi
+#loadzone=jp
+#loadzone=sp
+#loadzone=no
+#loadzone=hu
+#loadzone=lt
+#loadzone=pl
+defaultzone=us
+#
+# PCI Radio Interface
+# +++++++++++++++++++
+# (see http://www.zapatatelephony.org/app_rpt.html)
+#
+# The PCI Radio Interface card interfaces up to 4 two-way radios (either
+# a base/mobile radio or repeater system) to DAHDI channels. The driver
+# may work either independent of an application, or with it, through
+# the driver;s ioctl() interface. This file gives you access to specify
+# load-time parameters for Radio channels, so that the driver may run
+# by itself, and just act like a generic DAHDI radio interface.
+#
+# Unlike the rest of this file, you specify a block of parameters, and
+# then the channel(s) to which they apply. CTCSS is specified as a frequency
+# in tenths of hertz, for example 131.8 HZ is specified as 1318. DCS
+# for receive is specified as the code directly, for example 223. DCS for
+# transmit is specified as D and then the code, for example D223.
+#
+# The hardware supports a "community" CTCSS decoder system that has
+# arbitrary transmit CTCSS or DCS codes associated with them, unlike
+# traditional "community" systems that encode the same tone they decode.
+# 
+# this example is a single tone DCS transmit and receive
+#
+# specify the transmit tone (in DCS mode this stays constant):
+#tx=D371
+#
+# specify the receive DCS code:
+#dcsrx=223
+#
+# this example is a "community" CTCSS (if you only want a single tone, then
+# only specify 1 in the ctcss list)
+#
+# specify the default transmit tone (when not receiving):
+#tx=1000
+#
+# Specify the receive freq, the tag (use 0 if none), and the transmit code.
+# The tag may be used by applications to determine classification of tones.
+# The tones are to be specified in order of presedence, most important first.
+# Currently, 15 tones may be specified..
+#
+#ctcss=1318,1,1318
+#ctcss=1862,1,1862
+#
+# The following parameters may be omitted if their default value is acceptible
+#
+# Set the receive debounce time in milliseconds:
+#debouncetime=123
+#
+# set the transmit quiet dropoff burst time in milliseconds:
+#bursttime=234
+#
+# set the COR level threshold (specified in tenths of millivolts)
+# valid values are {3125,6250,9375,12500,15625,18750,21875,25000}
+#corthresh=12500
+#
+# Invert COR signal {y,n}
+#invertcor=y
+# Set the external tone mode; yes, no, internal {y,n,i}
+#exttone=y
+#
+# Now apply the configuration to the specified channels:
+#
+# We are all done with our channel parameters, so now we specify what
+# channels they apply to
+#channels=1-4
+#
+# Overiding PCM encoding
+# ++++++++++++++++++++++
+# Usually the channel driver sets the encoding of the PCM for the
+# channel (mulaw / alaw. That is: g711u or g711a). However there are
+# some cases where you would like to override that. 'mulaw' and 'alaw'
+# set different such encoding. Use them for channels you have already
+# defined with e.g. 'bchan' or 'fxoks'.
+#mulaw=1-4
+#alaw=1-4
+#
+# 'deflaw' is similar, but resets the encoding to the channel driver's
+# default. It must be useful for something, I guess.
+#mulaw=1-10
+#deflaw=5
+#
+# Echo Cancellers
+# +++++++++++++++
+# DAHDI uses modular echo cancellers that are configured per channel. The echo
+# cancellers are compiled and installed as part of the dahdi-linux package.
+# You can specify in this file the echo canceller to be used for each
+# channel. The default behavior is for there to be NO echo canceller on any
+# channel, so it is very important that you specify one here.
+#
+# Valid echo cancellers are: hwec, mg2, kb1, sec2, and sec.
+# 'hwec' is a special echo canceller that should be used if hardware echo
+# cancellation is desired on and available on the specified channels.
+# If compiled, 'hpec' is also a valid echo canceller.
+# 
+# To configure the default echo cancellers, use the format:
+# echocanceller=<echocanceller name>,<channel(s)>
+#
+# Example:
+# Configure channels 1 through 8 to use the mg2 echo canceller
+#echocanceller=mg2,1-8 
+#
+# And change channel 2 to use the kb1 echo canceller.
+#echocanceller=kb1,2
+#

@@ -1,0 +1,23 @@
+<?php
+/**
+ * Copyright © MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Alexey Portnov, 4 2019
+ */
+
+require_once("globals.php");
+
+$fp = fopen('php://stdin', 'r');
+echo "\n\n";
+echo Util::translate('The system will reboot. This may take a minute.');
+echo "\n\n";
+echo Util::translate('Do you want to proceed? (y/n): ');
+
+if (strcasecmp(chop(fgets($fp)), "y") == 0) {
+    echo "\n\n";
+    echo Util::translate('The system is rebooting now...');
+    System::reboot_sync(false);
+}else{
+    sleep(1);
+}

@@ -1,0 +1,305 @@
+/*
+ * Copyright (C) MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Nikolay Beketov, 5 2018
+ *
+ */
+
+div.copyright{
+    bottom: 1px;
+    position: absolute;
+    background-color: rgba(0, 0, 0, 0.1);
+    color: white;
+    font-size: 14px;
+    margin: 5px 5px 5px 5px;
+}
+
+div.pusher{
+    padding-top: 10px
+}
+
+body > .grid {
+    height: 100%;
+}
+
+body {
+    background: #f1f4f5;
+}
+
+
+#main{
+    min-height:100%;
+    padding-bottom:45px;
+    box-sizing:border-box;
+    padding-left: 15px;
+}
+.footer {
+    background-color: #1B1C1D;
+    position: absolute;
+    margin-top: -45px;
+    left: 0;
+    width: 100%;
+    padding: 1px 0;
+}
+
+.ui.sidebar.visible ~ .pusher {
+    width: calc(100% - 260px);
+}
+
+/*Табличка с перетаскиванием начало*/
+.dragHandle
+{
+    cursor: move;
+}
+
+.hoveringRow td {
+    -moz-box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.8);
+    -webkit-box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.8);
+    box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.8);
+}
+.hoveringRow td:first-child {
+    -moz-box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.8);
+    -webkit-box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.8);
+    box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.8);
+}
+.hoveringRow td:last-child {
+    -moz-box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.8);
+    -webkit-box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.8);
+    box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.8);
+}
+.hoveringRow td:after {
+    content: "";
+    width: 3px;
+    height: 100%;
+    background-color: #F5F8FB;
+    position: absolute;
+    right: 0;
+    top: 0;
+    z-index: 1;
+}
+/*Табличка с перетаскиванием конец*/
+
+/*Аватары пользователей*/
+
+td.disabled img{
+    filter: opacity(50%);
+}
+/*Аватары пользователей конец*/
+
+/*Кнопка сохранения конфигурации */
+#apply-configuration-button{
+    display: none;
+}
+
+/*Таблица с вертикальным текстом в заголовке */
+.verticalTableHeader {
+    text-align:center;
+    white-space:nowrap;
+    transform-origin:50% 50%;
+    transform: rotate(90deg);
+
+}
+
+/* Редактор кода */
+.application-code {
+    position: relative;
+    width: 100%;
+    height: 600px;
+}
+
+/* Прячем на время загрузки искажения интерфейса */
+#content-frame{
+    display: none;
+}
+
+/* Иконки сортировки в таблицах */
+th.sorting_asc:after {
+    display: inline-block;
+    opacity: 1;
+    margin: 0 .25rem 0 0;
+    width: 1.18em;
+    height: 1em;
+    font-family: Icons;
+    font-style: normal;
+    font-weight: 400;
+    text-decoration: inherit;
+    text-align: center;
+    speak: none;
+    font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-font-smoothing: antialiased;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    content: "\f0d8";
+}
+
+th.sorting_desc:after {
+    display: inline-block;
+    opacity: 1;
+    margin: 0 .25rem 0 0;
+    width: 1.18em;
+    height: 1em;
+    font-family: Icons;
+    font-style: normal;
+    font-weight: 400;
+    text-decoration: inherit;
+    text-align: center;
+    speak: none;
+    font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-font-smoothing: antialiased;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    content: '\f0d7';
+}
+th.sorting:after {
+    display: inline-block;
+    opacity: 1;
+    margin: 0 .25rem 0 0;
+    width: 1.18em;
+    height: 1em;
+    font-family: Icons;
+    font-style: normal;
+    font-weight: 400;
+    text-decoration: inherit;
+    text-align: center;
+    speak: none;
+    font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-font-smoothing: antialiased;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    content: '\f0dc';
+}
+
+
+tr {
+ cursor: pointer;
+}
+
+/* Секция аудио плеера */
+#audio-player-segment {
+    display: none;
+}
+
+#audio-player-segment div.fields {
+    margin: 0;
+}
+
+/* Фичи в информации о лицензиях */
+span.features {
+    color: grey;
+    font-size: x-small
+}
+
+/* Бар качества пароля */
+.password-score-section, .ssh-password-score-section {
+    display: none;
+}
+
+/* Сидебар с отладочной информацией */
+#debug-info {
+    background: #fff;
+}
+
+/* Логотип на главной */
+#login-logo {
+    width: 10em;;
+}
+
+/* Тестовая строка шаблон для восстановления архива */
+#backup-template-row {
+    display: none;
+}
+
+/* Плашка с информацией о необходимости лицензирования */
+#license-warning {
+    display: none;
+}
+
+/* Поле выбора номера для переадресации */
+.ui.form .inline.field > .selection.dropdown.forwarding-select,
+.ui.form .inline.fields .field > .selection.dropdown.forwarding-select,
+.ui.form .fields .field > .selection.dropdown.forwarding-select,
+.ui.form .field > .selection.dropdown.forwarding-select {
+    min-width: 400px;
+}
+
+/* Версия АТС */
+div#pbx-version {
+    position: fixed;
+    right: 4px;
+    bottom: 1px;
+    font-size: 12px;
+    z-index: -1;
+    color: grey;
+}
+
+/* Увеличим высоту выпадающих списков */
+@media only screen and (min-width: 992px) {
+    .ui.search.dropdown .menu {
+        max-height: 30rem;
+    }
+}
+
+/* Таблица CDR */
+#cdr-table{
+    font-size: 12px;
+}
+
+
+
+/* Проигрыватель для CDR */
+.cdr-player .ui.range{
+    height: 15px;
+}
+.cdr-player .ui.range .inner{
+    margin: 2px 0px 0px 0px;
+    height: 11px;
+}
+.cdr-player .ui.range .inner .thumb{
+    height: 14px;
+    width: 14px;
+}
+.cdr-player .ui.range .inner .track-fill,
+.cdr-player .ui.range .inner .track{
+    top: 5px;
+}
+
+.ui.very.basic.cdr-player tr td{
+    border-top: none;
+}
+
+.ui.very.basic.cdr-player tr.cdr-label{
+    color: grey;
+    font-size: 0.65rem;
+    position: absolute;
+    margin-top: -13px;
+    margin-left: 27px;
+}
+
+.ui.very.basic.cdr-player tr.cdr-label i.icons .top.right.corner.icon{
+    font-size: 5px;
+}
+
+/* Исправление косяков размеров */
+.ui.large.form .field .dropdown,
+.ui.large.form .field .input {
+    font-size: 1.12rem;
+}
+
+.ui.large.form .field .ui.selection.dropdown>.delete.icon,
+.ui.large.form .field .ui.selection.dropdown>.dropdown.icon,
+.ui.large.form .field .ui.selection.dropdown>.search.icon {
+    top: .68571429em;
+}
+
+.ui.large.form .ui.button, .ui.buttons .button, .ui.buttons{
+    font-size: 1.2rem
+}
+
+/* ширина колонки статуса пользователя */
+td.extension-status{
+    min-width: 21px;
+}
