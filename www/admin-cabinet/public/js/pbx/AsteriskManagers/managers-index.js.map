@@ -1,0 +1,27 @@
+{
+  "version": 3,
+  "sources": [
+    "../../src/AsteriskManagers/managers-index.js"
+  ],
+  "names": [
+    "managersTable",
+    "initialize",
+    "$",
+    "on",
+    "e",
+    "id",
+    "target",
+    "closest",
+    "attr",
+    "window",
+    "location",
+    "globalRootUrl",
+    "document",
+    "ready"
+  ],
+  "mappings": ";;AAAA;;;;;;;;AAOA;AAEA,IAAMA,aAAa,GAAG;AACrBC,EAAAA,UADqB;AAAA,0BACR;AACZC,MAAAA,CAAC,CAAC,cAAD,CAAD,CAAkBC,EAAlB,CAAqB,UAArB,EAAiC,UAACC,CAAD,EAAO;AACvC,YAAMC,EAAE,GAAGH,CAAC,CAACE,CAAC,CAACE,MAAH,CAAD,CAAYC,OAAZ,CAAoB,IAApB,EAA0BC,IAA1B,CAA+B,IAA/B,CAAX;AACAC,QAAAA,MAAM,CAACC,QAAP,aAAqBC,aAArB,sCAA8DN,EAA9D;AACA,OAHD;AAIA;;AANoB;AAAA;AAAA,CAAtB;AASAH,CAAC,CAACU,QAAD,CAAD,CAAYC,KAAZ,CAAkB,YAAM;AACvBb,EAAAA,aAAa,CAACC,UAAd;AACA,CAFD",
+  "sourcesContent": [
+    "/*\n * Copyright (C) MIKO LLC - All Rights Reserved\n * Unauthorized copying of this file, via any medium is strictly prohibited\n * Proprietary and confidential\n * Written by Nikolay Beketov, 11 2018\n *\n */\n/* global globalRootUrl */\n\nconst managersTable = {\n\tinitialize() {\n\t\t$('.user-row td').on('dblclick', (e) => {\n\t\t\tconst id = $(e.target).closest('tr').attr('id');\n\t\t\twindow.location = `${globalRootUrl}asterisk-managers/modify/${id}`;\n\t\t});\n\t},\n};\n\n$(document).ready(() => {\n\tmanagersTable.initialize();\n});\n\n"
+  ],
+  "file": "managers-index.js"
+}

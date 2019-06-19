@@ -1,0 +1,27 @@
+{
+  "version": 3,
+  "sources": [
+    "../../src/OutOffWorkTime/out-of-work-times-index.js"
+  ],
+  "names": [
+    "OutOfWorkTimesTable",
+    "initialize",
+    "$",
+    "on",
+    "e",
+    "id",
+    "target",
+    "closest",
+    "attr",
+    "window",
+    "location",
+    "globalRootUrl",
+    "document",
+    "ready"
+  ],
+  "mappings": ";;AAAA;;;;;;;;AAQA;AAEA,IAAMA,mBAAmB,GAAG;AAC3BC,EAAAA,UAD2B;AAAA,0BACd;AACZC,MAAAA,CAAC,CAAC,eAAD,CAAD,CAAmBC,EAAnB,CAAsB,UAAtB,EAAkC,UAACC,CAAD,EAAO;AACxC,YAAMC,EAAE,GAAGH,CAAC,CAACE,CAAC,CAACE,MAAH,CAAD,CAAYC,OAAZ,CAAoB,IAApB,EAA0BC,IAA1B,CAA+B,IAA/B,CAAX;AACAC,QAAAA,MAAM,CAACC,QAAP,aAAqBC,aAArB,sCAA8DN,EAA9D;AACA,OAHD;AAIA;;AAN0B;AAAA;AAAA,CAA5B;AAUAH,CAAC,CAACU,QAAD,CAAD,CAAYC,KAAZ,CAAkB,YAAM;AACvBb,EAAAA,mBAAmB,CAACC,UAApB;AACA,CAFD",
+  "sourcesContent": [
+    "/*\n * Copyright (C) MIKO LLC - All Rights Reserved\n * Unauthorized copying of this file, via any medium is strictly prohibited\n * Proprietary and confidential\n * Written by Nikolay Beketov, 11 2018\n *\n */\n\n/* global globalRootUrl */\n\nconst OutOfWorkTimesTable = {\n\tinitialize() {\n\t\t$('.frame-row td').on('dblclick', (e) => {\n\t\t\tconst id = $(e.target).closest('tr').attr('id');\n\t\t\twindow.location = `${globalRootUrl}out-off-work-time/modify/${id}`;\n\t\t});\n\t},\n\n};\n\n$(document).ready(() => {\n\tOutOfWorkTimesTable.initialize();\n});\n\n"
+  ],
+  "file": "out-of-work-times-index.js"
+}

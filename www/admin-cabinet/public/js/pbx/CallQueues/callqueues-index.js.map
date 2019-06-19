@@ -1,0 +1,27 @@
+{
+  "version": 3,
+  "sources": [
+    "../../src/CallQueues/callqueues-index.js"
+  ],
+  "names": [
+    "callqueueTable",
+    "initialize",
+    "$",
+    "on",
+    "e",
+    "id",
+    "target",
+    "closest",
+    "attr",
+    "window",
+    "location",
+    "globalRootUrl",
+    "document",
+    "ready"
+  ],
+  "mappings": ";;AAAA;;;;;;;;AAOA;AAEA,IAAMA,cAAc,GAAG;AACtBC,EAAAA,UADsB;AAAA,0BACT;AACZC,MAAAA,CAAC,CAAC,eAAD,CAAD,CAAmBC,EAAnB,CAAsB,UAAtB,EAAkC,UAACC,CAAD,EAAO;AACxC,YAAMC,EAAE,GAAGH,CAAC,CAACE,CAAC,CAACE,MAAH,CAAD,CAAYC,OAAZ,CAAoB,IAApB,EAA0BC,IAA1B,CAA+B,IAA/B,CAAX;AACAC,QAAAA,MAAM,CAACC,QAAP,aAAqBC,aAArB,gCAAwDN,EAAxD;AACA,OAHD;AAIA;;AANqB;AAAA;AAAA,CAAvB;AASAH,CAAC,CAACU,QAAD,CAAD,CAAYC,KAAZ,CAAkB,YAAM;AACvBb,EAAAA,cAAc,CAACC,UAAf;AACA,CAFD",
+  "sourcesContent": [
+    "/*\n * Copyright (C) MIKO LLC - All Rights Reserved\n * Unauthorized copying of this file, via any medium is strictly prohibited\n * Proprietary and confidential\n * Written by Nikolay Beketov, 11 2018\n *\n */\n/* global globalRootUrl */\n\nconst callqueueTable = {\n\tinitialize() {\n\t\t$('.queue-row td').on('dblclick', (e) => {\n\t\t\tconst id = $(e.target).closest('tr').attr('id');\n\t\t\twindow.location = `${globalRootUrl}call-queues/modify/${id}`;\n\t\t});\n\t},\n};\n\n$(document).ready(() => {\n\tcallqueueTable.initialize();\n});\n\n"
+  ],
+  "file": "callqueues-index.js"
+}

@@ -1,0 +1,48 @@
+{
+  "version": 3,
+  "sources": [
+    "../../src/Firewall/firewall-modify.js"
+  ],
+  "names": [
+    "$",
+    "fn",
+    "form",
+    "settings",
+    "rules",
+    "ipaddr",
+    "value",
+    "result",
+    "f",
+    "match",
+    "i",
+    "a",
+    "firewall",
+    "$formObj",
+    "validateRules",
+    "network",
+    "identifier",
+    "type",
+    "prompt",
+    "globalTranslate",
+    "fw_ValidatePermitAddress",
+    "description",
+    "fw_ValidateRuleName",
+    "initialize",
+    "checkbox",
+    "dropdown",
+    "initializeForm",
+    "cbBeforeSendForm",
+    "data",
+    "cbAfterSendForm",
+    "Form",
+    "url",
+    "globalRootUrl",
+    "document",
+    "ready"
+  ],
+  "mappings": ";;AAAA;;;;;;;;AAQA;AAEAA,CAAC,CAACC,EAAF,CAAKC,IAAL,CAAUC,QAAV,CAAmBC,KAAnB,CAAyBC,MAAzB,GAAkC,UAAUC,KAAV,EAAiB;AAClD,MAAIC,MAAM,GAAG,IAAb;AACA,MAAMC,CAAC,GAAGF,KAAK,CAACG,KAAN,CAAY,8CAAZ,CAAV;;AACA,MAAID,CAAC,IAAI,IAAT,EAAe;AACdD,IAAAA,MAAM,GAAG,KAAT;AACA,GAFD,MAEO;AACN,SAAK,IAAIG,CAAC,GAAG,CAAb,EAAgBA,CAAC,GAAG,CAApB,EAAuBA,CAAC,IAAI,CAA5B,EAA+B;AAC9B,UAAMC,CAAC,GAAGH,CAAC,CAACE,CAAD,CAAX;;AACA,UAAIC,CAAC,GAAG,GAAR,EAAa;AACZJ,QAAAA,MAAM,GAAG,KAAT;AACA;AACD;;AACD,QAAIC,CAAC,CAAC,CAAD,CAAD,GAAO,EAAX,EAAe;AACdD,MAAAA,MAAM,GAAG,KAAT;AACA;AACD;;AACD,SAAOA,MAAP;AACA,CAjBD;;AAmBA,IAAMK,QAAQ,GAAG;AAChBC,EAAAA,QAAQ,EAAEb,CAAC,CAAC,gBAAD,CADK;AAEhBc,EAAAA,aAAa,EAAE;AACdC,IAAAA,OAAO,EAAE;AACRC,MAAAA,UAAU,EAAE,SADJ;AAERZ,MAAAA,KAAK,EAAE,CACN;AACCa,QAAAA,IAAI,EAAE,QADP;AAECC,QAAAA,MAAM,EAAEC,eAAe,CAACC;AAFzB,OADM;AAFC,KADK;AAUdC,IAAAA,WAAW,EAAE;AACZL,MAAAA,UAAU,EAAE,aADA;AAEZZ,MAAAA,KAAK,EAAE,CACN;AACCa,QAAAA,IAAI,EAAE,OADP;AAECC,QAAAA,MAAM,EAAEC,eAAe,CAACG;AAFzB,OADM;AAFK;AAVC,GAFC;AAsBhBC,EAAAA,UAtBgB;AAAA,0BAsBH;AACZvB,MAAAA,CAAC,CAAC,mBAAD,CAAD,CAAuBwB,QAAvB;AACAxB,MAAAA,CAAC,CAAC,WAAD,CAAD,CAAeyB,QAAf;AAEAb,MAAAA,QAAQ,CAACc,cAAT;AACA;;AA3Be;AAAA;AA4BhBC,EAAAA,gBA5BgB;AAAA,8BA4BCxB,QA5BD,EA4BW;AAC1B,UAAMI,MAAM,GAAGJ,QAAf;AACAI,MAAAA,MAAM,CAACqB,IAAP,GAAchB,QAAQ,CAACC,QAAT,CAAkBX,IAAlB,CAAuB,YAAvB,CAAd;AACA,aAAOK,MAAP;AACA;;AAhCe;AAAA;AAiChBsB,EAAAA,eAjCgB;AAAA,+BAiCE,CAEjB;;AAnCe;AAAA;AAoChBH,EAAAA,cApCgB;AAAA,8BAoCC;AAChBI,MAAAA,IAAI,CAACjB,QAAL,GAAgBD,QAAQ,CAACC,QAAzB;AACAiB,MAAAA,IAAI,CAACC,GAAL,aAAcC,aAAd;AACAF,MAAAA,IAAI,CAAChB,aAAL,GAAqBF,QAAQ,CAACE,aAA9B;AACAgB,MAAAA,IAAI,CAACH,gBAAL,GAAwBf,QAAQ,CAACe,gBAAjC;AACAG,MAAAA,IAAI,CAACD,eAAL,GAAuBjB,QAAQ,CAACiB,eAAhC;AACAC,MAAAA,IAAI,CAACP,UAAL;AACA;;AA3Ce;AAAA;AAAA,CAAjB;AA8CAvB,CAAC,CAACiC,QAAD,CAAD,CAAYC,KAAZ,CAAkB,YAAM;AACvBtB,EAAAA,QAAQ,CAACW,UAAT;AACA,CAFD",
+  "sourcesContent": [
+    "/*\n * Copyright (C) MIKO LLC - All Rights Reserved\n * Unauthorized copying of this file, via any medium is strictly prohibited\n * Proprietary and confidential\n * Written by Nikolay Beketov, 5 2018\n *\n */\n\n/* global globalRootUrl,globalTranslate, Form */\n\n$.fn.form.settings.rules.ipaddr = function (value) {\n\tlet result = true;\n\tconst f = value.match(/^(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})$/);\n\tif (f == null) {\n\t\tresult = false;\n\t} else {\n\t\tfor (let i = 1; i < 5; i += 1) {\n\t\t\tconst a = f[i];\n\t\t\tif (a > 255) {\n\t\t\t\tresult = false;\n\t\t\t}\n\t\t}\n\t\tif (f[5] > 32) {\n\t\t\tresult = false;\n\t\t}\n\t}\n\treturn result;\n};\n\nconst firewall = {\n\t$formObj: $('#firewall-form'),\n\tvalidateRules: {\n\t\tnetwork: {\n\t\t\tidentifier: 'network',\n\t\t\trules: [\n\t\t\t\t{\n\t\t\t\t\ttype: 'ipaddr',\n\t\t\t\t\tprompt: globalTranslate.fw_ValidatePermitAddress,\n\t\t\t\t},\n\t\t\t],\n\t\t},\n\t\tdescription: {\n\t\t\tidentifier: 'description',\n\t\t\trules: [\n\t\t\t\t{\n\t\t\t\t\ttype: 'empty',\n\t\t\t\t\tprompt: globalTranslate.fw_ValidateRuleName,\n\t\t\t\t},\n\t\t\t],\n\t\t},\n\t},\n\tinitialize() {\n\t\t$('.rules, .checkbox').checkbox();\n\t\t$('.dropdown').dropdown();\n\n\t\tfirewall.initializeForm();\n\t},\n\tcbBeforeSendForm(settings) {\n\t\tconst result = settings;\n\t\tresult.data = firewall.$formObj.form('get values');\n\t\treturn result;\n\t},\n\tcbAfterSendForm() {\n\n\t},\n\tinitializeForm() {\n\t\tForm.$formObj = firewall.$formObj;\n\t\tForm.url = `${globalRootUrl}firewall/save`;\n\t\tForm.validateRules = firewall.validateRules;\n\t\tForm.cbBeforeSendForm = firewall.cbBeforeSendForm;\n\t\tForm.cbAfterSendForm = firewall.cbAfterSendForm;\n\t\tForm.initialize();\n\t},\n};\n\n$(document).ready(() => {\n\tfirewall.initialize();\n});\n\n"
+  ],
+  "file": "firewall-modify.js"
+}
