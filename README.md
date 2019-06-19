@@ -1,4 +1,4 @@
-# MikoPBX
+# MikoPBX - free phone system for small business
 ```
                                                                                      
 88b           d88  88  88                     88888888ba   88888888ba  8b        d8  
