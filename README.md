@@ -18,7 +18,7 @@ MikoPBX is an open source GUI (graphical user interface) that controls and manag
 
 The russian [website](https://www.askozia.ru)
 
-The english [website] under construction (https://www.mikopbx.com) 
+The english [website](https://www.mikopbx.com) under construction  
 
 The instalation [instruction] (https://wiki.mikopbx.com/quickstart_lancher)
 
