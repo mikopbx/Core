@@ -10,11 +10,11 @@
 
 /* global Sentry, globalPBXVersion, globalPBXLicense, globalLastSentryEventId, globalTranslate */
 Sentry.onLoad(function () {
-  function globalShowSentryReportDialog(sentryEventId) {
-    var itIsKnownError = localStorage.getItem("sentry_lastError".concat(sentryEventId));
+  function globalShowSentryReportDialog(hash, sentryEventId) {
+    var itIsKnownError = localStorage.getItem("sentry_lastError".concat(hash));
 
     if (itIsKnownError === null) {
-      if (globalTranslate !== undefined && globalTranslate.length > 0) {
+      if (globalTranslate !== undefined && Object.keys(globalTranslate).length > 0) {
         Sentry.showReportDialog({
           eventId: sentryEventId,
           title: globalTranslate.sntry_Title,
@@ -33,7 +33,7 @@ Sentry.onLoad(function () {
         });
       }
 
-      localStorage.setItem("sentry_lastError".concat(sentryEventId), 'theFormHasAlreadySent');
+      localStorage.setItem("sentry_lastError".concat(hash), 'theFormHasAlreadySent');
     }
   }
 
@@ -44,7 +44,22 @@ Sentry.onLoad(function () {
       function beforeSend(event, hint) {
         // Check if it is an exception, and if so, show the report dialog
         if (event.exception) {
-          globalShowSentryReportDialog(event.event_id);
+          var error = hint.originalException;
+
+          if (error && error.message && error.message.length > 0) {
+            var s = error.message;
+            var hash = 0;
+            var i;
+            var chr;
+
+            for (i = 0; i < s.length; i++) {
+              chr = s.charCodeAt(i);
+              hash = (hash << 5) - hash + chr;
+              hash |= 0; // Convert to 32bit integer
+            }
+
+            globalShowSentryReportDialog(hash, hint.eventId);
+          }
         }
 
         return event;

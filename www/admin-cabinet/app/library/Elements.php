@@ -215,7 +215,7 @@ class Elements extends Component {
 				'submenu'   => array(
 					'backup'            => array(
 						'caption'   => 'mm_Backup',
-						'iconclass' => 'umbrella',
+						'iconclass' => 'history',
 						'action'    => 'index',
 						'param'     => '',
 						'style'     => '',
@@ -242,6 +242,13 @@ class Elements extends Component {
 						'param'     => '',
 						'style'     => '',
 					],
+                    'console'         => [
+                        'caption'   => 'mm_SSHConsole',
+                        'iconclass' => 'terminal',
+                        'action'    => 'index',
+                        'param'     => '',
+                        'style'     => '',
+                    ],
 					// 'factory-reset' => array(
 					//     'caption' => 'Factory defaults',
 					//     'iconclass' => '',
@@ -358,10 +365,10 @@ class Elements extends Component {
 	 */
 	public function getMenu() {
 		foreach ( $this->_headerMenu as $group => $groupparams ) {
-			if ( key_exists( 'submenu', $groupparams ) ) {
+			if ( array_key_exists( 'submenu', $groupparams ) ) {
 				echo '<div class="item">';
 				echo '<div class="header">';
-				if ( key_exists( 'iconclass', $groupparams ) && ! empty( $groupparams['iconclass'] ) ) {
+				if ( array_key_exists( 'iconclass', $groupparams ) && ! empty( $groupparams['iconclass'] ) ) {
 					echo "<i class='{$groupparams['iconclass']} icon'></i>";
 				}
 				echo $this->translation->_( $groupparams['caption'] ) . '</div>';
@@ -390,16 +397,16 @@ class Elements extends Component {
 		$uncamelizeControllerName = Text::uncamelize( $controllerName, '-' );
 		$result                   = '';
 		foreach ( $this->_headerMenu as $index => $group ) {
-			if ( $index == $uncamelizeControllerName
-			     && key_exists( 'iconclass', $group[$uncamelizeControllerName] )
+			if ( $index === $uncamelizeControllerName
+			     && array_key_exists( 'iconclass', $group[$uncamelizeControllerName] )
 			     && ! empty($group[$uncamelizeControllerName]['iconclass'])
 			) {
 				$result = "<i class='{$group[$uncamelizeControllerName]['iconclass']} icon'></i>";
 				break;
 			}
-			if ( key_exists( 'submenu', $group ) ) {
+			if ( array_key_exists( 'submenu', $group ) ) {
 				foreach ( $group['submenu'] as $index2 => $submenu ) {
-					if ( $index2 == $uncamelizeControllerName
+					if ( $index2 === $uncamelizeControllerName
 					&& !empty($submenu['iconclass'])) {
 						$result = "<i class='{$submenu['iconclass']} icon'></i>";
 						break;

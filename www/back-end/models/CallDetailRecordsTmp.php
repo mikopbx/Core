@@ -9,37 +9,15 @@
 
 namespace Models;
 
-class CallDetailRecordsTmp extends ModelsBase
+class CallDetailRecordsTmp extends CallDetailRecordsBase
 {
 
-	public $id;
-	public $start;
-	public $endtime;
-	public $answer;
-	public $src_chan;
-	public $dst_chan;
-	public $dst_num;
-	public $UNIQUEID;
-	public $linkedid;
-	public $did;
-	public $disposition;
-	public $recordingfile;
-	public $from_account;
-	public $to_account;
-	public $dialstatus;
-	public $appname;
-	public $transfer;
-	public $is_app;
-	public $duration;
-	public $billsec;
-	public $work_completed;
-
-	public function getSource()
+	public function getSource() :string
 	{
 		return 'cdr';
 	}
 
-	public function initialize()
+	public function initialize(): void
 	{
 		parent::initialize();
 		$this->useDynamicUpdate(true);

@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 12 2018
+ * Written by Alexey Portnov, 8 2019
  */
 
 class p_Park extends ConfigClass{
@@ -103,6 +103,7 @@ class p_Park extends ConfigClass{
         for ($ext = $this->ParkingStartSlot; $ext <= $this->ParkingEndSlot; $ext++) {
             $conf.= 'exten => '.$ext.',1,Goto(parked-calls,${EXTEN},1)'. "\n";
         }
+        $conf .= "\n";
         return $conf;
     }
 

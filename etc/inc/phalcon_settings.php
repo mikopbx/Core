@@ -38,8 +38,9 @@ $phalcon_settings = array(
         'jsCacheDir'    => $pbx_dirs['cache_js_dir'].'/',
         'cssCacheDir'   => $pbx_dirs['cache_css_dir'].'/',
         'imgCacheDir'   => $pbx_dirs['cache_img_dir'].'/',
-		'mediaDir'      => $pbx_dirs['media']."/",
+		'mediaDir'      => $pbx_dirs['media'].'/',
 		'backendDir'    => $www .'/back-end/',
+        'modulesBaseDir'=> $www .'/back-end/modules/',
         'debugMode'	    => false,
     ),
     'cdrdatabase' => array(

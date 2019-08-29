@@ -305,6 +305,35 @@ var Extensions = {
     }
 
     return UpdatePhonesRepresent;
+  }(),
+
+  /**
+   * Обновляет представление сотрудника в кеше браузера
+   */
+  UpdatePhoneRepresent: function () {
+    function UpdatePhoneRepresent(number) {
+      var numbers = [];
+      numbers.push(number);
+      $.api({
+        url: "".concat(globalRootUrl, "extensions/GetPhonesRepresent/"),
+        data: {
+          numbers: numbers
+        },
+        method: 'POST',
+        on: 'now',
+        onSuccess: function () {
+          function onSuccess(response) {
+            if (response !== undefined && response.success === true && response.message[number] !== undefined) {
+              sessionStorage.setItem(number, response.message[number].represent);
+            }
+          }
+
+          return onSuccess;
+        }()
+      });
+    }
+
+    return UpdatePhoneRepresent;
   }()
 };
 //# sourceMappingURL=extensions.js.map

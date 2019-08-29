@@ -6,15 +6,69 @@
  *
  */
 
-/* global PbxApi, globalTranslate, ConfigWorker, globalRootUrl */
+/* global PbxApi, globalTranslate, ConfigWorker, Resumable, globalRootUrl, UserMessage */
+
+const mergingCheckWorker = {
+	timeOut: 3000,
+	timeOutHandle: '',
+	errorCounts: 0,
+	$progressBarLabel: $('#upload-progress-bar').find('.label'),
+	fileID: null,
+	isXML: false,
+	initialize(fileID, isXML = false) {
+		// Запустим обновление статуса провайдера
+		mergingCheckWorker.fileID = fileID;
+		mergingCheckWorker.isXML = isXML;
+		mergingCheckWorker.restartWorker(fileID);
+	},
+	restartWorker() {
+		window.clearTimeout(mergingCheckWorker.timeoutHandle);
+		mergingCheckWorker.worker();
+	},
+	worker() {
+		PbxApi.BackupStatusUpload(mergingCheckWorker.fileID, mergingCheckWorker.cbAfterResponse);
+		mergingCheckWorker.timeoutHandle = window.setTimeout(
+			mergingCheckWorker.worker,
+			mergingCheckWorker.timeOut,
+		);
+	},
+	cbAfterResponse(response) {
+		if (mergingCheckWorker.errorCounts > 10) {
+			mergingCheckWorker.$progressBarLabel.text(globalTranslate.bkp_UploadError);
+			UserMessage.showError(globalTranslate.bkp_UploadError);
+			window.clearTimeout(mergingCheckWorker.timeoutHandle);
+		}
+		if (response === undefined || Object.keys(response).length === 0) {
+			mergingCheckWorker.errorCounts += 1;
+			return;
+		}
+		if (response.status_upload === 'COMPLETE') {
+			mergingCheckWorker.$progressBarLabel.text(globalTranslate.bkp_UploadComplete);
+			if (mergingCheckWorker.isXML) {
+				mergingCheckWorker.$progressBarLabel.text(globalTranslate.bkp_SettingsRestoredWaitReboot);
+				PbxApi.SystemReboot();
+			} else {
+				window.location.reload();
+			}
+		} else if (response.status_upload !== undefined) {
+			mergingCheckWorker.$progressBarLabel.text(globalTranslate.bkp_UploadProcessingFiles);
+			mergingCheckWorker.errorCounts = 0;
+		} else {
+			mergingCheckWorker.errorCounts += 1;
+		}
+	},
+
+};
+
 
 const backupIndex = {
 	$templateRow: $('#backup-template-row'),
 	$dummy: $('#dummy-row'),
 	$uploadButton: $('#uploadbtn'),
 	$progressBar: $('#upload-progress-bar'),
+	$progressBarLabel: $('#upload-progress-bar').find('.label'),
 	$body: $('body'),
-	$ajaxMessagesDiv: $('#ajax-messages'),
+	resumable: null,
 	initialize() {
 		backupIndex.$progressBar.hide();
 		PbxApi.BackupGetFilesList(backupIndex.cbBackupGetFilesListAfterResponse);
@@ -23,48 +77,21 @@ const backupIndex = {
 			const id = $(e.target).closest('a').attr('data-value');
 			PbxApi.BackupDownloadFile(id);
 		});
-
-		backupIndex.$uploadButton.on('click', (e) => {
-			if ($(e.target).closest('button').hasClass('loading')) {
-				e.preventDefault();
-				return;
-			}
-			$('input:file', $(e.target).parents()).click();
+		backupIndex.$body.on('click', 'a.delete', (e) => {
+			e.preventDefault();
+			const id = $(e.target).closest('a').attr('data-value');
+			PbxApi.BackupDeleteFile(id, backupIndex.cbAfterDeleteFile);
 		});
-
-		$('input:file').on('change', (e) => {
-			const filename = e.target.files[0].name;
-			$('input:text', $(e.target).parent()).val(filename);
-			ConfigWorker.stopConfigWorker();
-			const data = $('input:file')[0].files[0];
-			backupIndex.$uploadButton.addClass('loading');
-			PbxApi.BackupUpload(data, backupIndex.cbUploadFileProcessing);
-		});
+		backupIndex.initializeResumable();
 	},
+
 	/**
-	 * Обработка процесса загрузки файла бекапа на станцию
+	 * Коллбек после удаления файла бекапа
+	 * @param response
 	 */
-	cbUploadFileProcessing(response) {
-		if (response.length === 0 || response === false) {
-			backupIndex.$uploadButton.removeClass('loading');
-			$('.ui.message.ajax').remove();
-			backupIndex.$ajaxMessagesDiv.after(`<div class="ui error message ajax">${globalTranslate.bkp_UploadError}</div>`);
-		} else if (response.function === 'upload_progress') {
-			backupIndex.$uploadButton.addClass('loading');
-			backupIndex.$progressBar.show();
-			backupIndex.$progressBar.progress({
-				percent: parseInt(response.percent, 10),
-			});
-			if (response.percent === 100) {
-				setTimeout(() => {
-					window.location = `${globalRootUrl}/backup/index`;
-				}, 5000);
-			}
-		} else if (response.function === 'convert_config') { // TODO: тут конфиг происходит сразу при загрузке, не хорошо
-			backupIndex.$uploadButton.addClass('loading');
-			PbxApi.SystemReboot();
-			$('.ui.message.ajax').remove();
-			backupIndex.$ajaxMessagesDiv.after(`<div class="ui success message ajax">${globalTranslate.bkp_SettingsRestoredWaitReboot}</div>`);
+	cbAfterDeleteFile(response) {
+		if (response) {
+			window.location = `${globalRootUrl}backup/index`;
 		}
 	},
 	/**
@@ -110,7 +137,92 @@ const backupIndex = {
 			$newRow.appendTo('#existing-backup-files-table');
 		});
 	},
+	/**
+	 * Подключение обработчкика загрузки файлов по частям
+	 */
+	initializeResumable() {
+		const r = new Resumable({
+			target: PbxApi.backupUpload,
+			testChunks: false,
+			chunkSize: 30 * 1024 * 1024,
+			maxFiles: 1,
+			fileType: ['img', 'zip', 'xml'],
+		});
+
+		r.assignBrowse(document.getElementById('uploadbtn'));
+		r.on('fileSuccess', (file, response) => {
+			console.debug('fileSuccess', file);
+			let isXML = false;
+			if (file.file !== undefined && file.file.type !== undefined) {
+				isXML = file.file.type === 'text/xml';
+			}
+			backupIndex.checkStatusFileMerging(response, isXML);
+			backupIndex.$uploadButton.removeClass('loading');
+		});
+		r.on('fileProgress', (file) => {
+			console.debug('fileProgress', file);
+		});
+		r.on('fileAdded', (file, event) => {
+			r.upload();
+			console.debug('fileAdded', event);
+		});
+		r.on('fileRetry', (file) => {
+			console.debug('fileRetry', file);
+		});
+		r.on('fileError', (file, message) => {
+			console.debug('fileError', file, message);
+		});
+
+		r.on('uploadStart', () => {
+			console.debug('uploadStart');
+			ConfigWorker.stopConfigWorker();
+			backupIndex.$uploadButton.addClass('loading');
+			backupIndex.$progressBar.show();
+			backupIndex.$progressBarLabel.text(globalTranslate.bkp_UploadInProgress);
+		});
+		r.on('complete', () => {
+			console.debug('complete');
+		});
+		r.on('progress', () => {
+			console.debug('progress');
+			backupIndex.$progressBar.progress({
+				percent: 100 * r.progress(),
+			});
+		});
+		r.on('error', (message, file) => {
+			console.debug('error', message, file);
+			backupIndex.$progressBarLabel.text(globalTranslate.bkp_UploadError);
+			backupIndex.$uploadButton.removeClass('loading');
+			UserMessage.showError(`${globalTranslate.bkp_UploadError}<br>${message}`);
+		});
+		r.on('pause', () => {
+			console.debug('pause');
+		});
+		r.on('cancel', () => {
+			console.debug('cancel');
+		});
+	},
+	/**
+	 * Запуск процесса ожидания склеивания файла после загрузки на сервер
+	 *
+	 * @param response ответ функции /pbxcore/api/backup/upload
+	 */
+	checkStatusFileMerging(response, isXML) {
+		if (response === undefined || PbxApi.tryParseJSON(response) === false) {
+			UserMessage.showError(`${globalTranslate.bkp_UploadError}`);
+			return;
+		}
+		const json = JSON.parse(response);
+		if (json === undefined || json.data === undefined) {
+			UserMessage.showError(`${globalTranslate.bkp_UploadError}`);
+			return;
+		}
+		const fileID = json.data.backup_id;
+		mergingCheckWorker.initialize(fileID, isXML);
+	},
+
 };
+
 
 $(document).ready(() => {
 	backupIndex.initialize();

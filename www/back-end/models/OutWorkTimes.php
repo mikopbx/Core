@@ -10,40 +10,83 @@
 namespace Models;
 
 use Phalcon\Mvc\Model\Relation;
+
 class OutWorkTimes extends ModelsBase
 {
-
+    /**
+     * @var integer
+     */
     public $id;
+
+    /**
+     * @var string
+     */
     public $date_from;
+
+    /**
+     * @var string
+     */
     public $date_to;
+
+    /**
+     * @var integer
+     */
     public $weekday_from;
+
+    /**
+     * @var integer
+     */
     public $weekday_to;
-	public $time_from;
+
+    /**
+     * @var string
+     */
+    public $time_from;
+
+    /**
+     * @var string
+     */
     public $time_to;
+
+    /**
+     * @var string
+     */
     public $action;
+
+    /**
+     * @var string
+     */
     public $extension;
+
+    /**
+     * @var string
+     */
     public $audio_message_id;
+
+    /**
+     * @var string
+     */
     public $description;
 
 
-    public function getSource()
+    public function getSource(): string
     {
         return 'm_OutWorkTimes';
     }
 
-    public function initialize()
+    public function initialize(): void
     {
-	    parent::initialize();
+        parent::initialize();
         $this->belongsTo(
             'extension',
             'Models\Extensions',
             'number',
             [
-                "alias"=>"Extensions",
-                "foreignKey" => [
-                    "allowNulls" => true,
-                    "action"     => Relation::NO_ACTION
-                ]
+                'alias'      => 'Extensions',
+                'foreignKey' => [
+                    'allowNulls' => true,
+                    'action'     => Relation::NO_ACTION,
+                ],
             ]
         );
 
@@ -52,11 +95,11 @@ class OutWorkTimes extends ModelsBase
             'Models\SoundFiles',
             'id',
             [
-                "alias"      => 'SoundFiles',
-                "foreignKey" => [
-                    "allowNulls" => true,
-                    "action"     => Relation::NO_ACTION
-                ]
+                'alias'      => 'SoundFiles',
+                'foreignKey' => [
+                    'allowNulls' => true,
+                    'action'     => Relation::NO_ACTION,
+                ],
             ]
 
         );

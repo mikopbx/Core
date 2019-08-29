@@ -13,15 +13,26 @@ use Phalcon\Mvc\Model\Relation;
 
 class SoundFiles extends ModelsBase
 {
+    /**
+     * @var integer
+     */
     public $id;
+
+    /**
+     * @var string
+     */
     public $name;
+
+    /**
+     * @var string
+     */
     public $path;
 
-    public function getSource()
+    public function getSource() :string
     {
         return 'm_SoundFiles';
     }
-    public function initialize()
+    public function initialize() :void
     {
 	    parent::initialize();
         $this->hasMany(

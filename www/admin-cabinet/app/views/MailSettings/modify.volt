@@ -73,7 +73,7 @@
     </div>
 </div>
 <div class="ui bottom attached tab segment" data-tab="notifications">
-
+    <h3 class="ui dividing header ">{{ t._("ms_MissedCalls") }}</h3>
     <div class="field">
         <label for="MailTplMissedCallSubject">{{ t._('ms_MissedCallSubject') }}</label>
 
@@ -94,25 +94,33 @@
 
     </div>
 
-    {#<div class="field">#}
-        {#<label for="MailTplVoicemailSubject">{{ t._('ms_VoicemailSubject') }}</label>#}
+    <h3 class="ui dividing header ">{{ t._("ms_Voicemail") }}</h3>
+    <div class="field">
+        <label for="MailTplVoicemailSubject">{{ t._('ms_VoicemailSubject') }}</label>
 
-        {#{{ form.render('MailTplVoicemailSubject') }}#}
+        {{ form.render('MailTplVoicemailSubject') }}
 
-    {#</div>#}
+    </div>
 
-    {#<div class="field">#}
-        {#<label for="MailTplVoicemailBody">{{ t._('ms_VoicemailBody') }}</label>#}
+    <div class="field">
+        <label for="MailTplVoicemailBody">{{ t._('ms_VoicemailBody') }}</label>
 
-        {#{{ form.render('MailTplVoicemailBody') }}#}
+        {{ form.render('MailTplVoicemailBody') }}
 
-    {#</div>#}
-    {#<div class="field">#}
-        {#<label for="MailTplVoicemailFooter">{{ t._('ms_VoicemailBody') }}</label>#}
+    </div>
+    <div class="field">
+        <label for="MailTplVoicemailFooter">{{ t._('ms_VoicemailBody') }}</label>
 
-        {#{{ form.render('MailTplVoicemailBody') }}#}
+        {{ form.render('MailTplVoicemailBody') }}
 
-    {#</div>#}
+    </div>
+
+    <div class="five wide field">
+        <label for="VoicemailNotificationsEmail">{{ t._('ms_VoicemailCommonEmail') }}</label>
+
+        {{ form.render('VoicemailNotificationsEmail') }}
+
+    </div>
 
 </div>
 

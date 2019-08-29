@@ -3,10 +3,9 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 11 2018
+ * Written by Alexey Portnov, 7 2019
  */
 require_once 'globals.php';
-require_once 'Nats/autoloader.php';
 
 class worker_ami_listener {
     private $client;
@@ -106,6 +105,7 @@ if(count($argv)>1 && $argv[1] == 'start') {
         Util::sys_log_msg("AMI_WORKER_EXCEPTION", $e->getMessage());
     }
     $listener->start();
+
 }
 
 

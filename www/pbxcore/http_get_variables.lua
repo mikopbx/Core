@@ -108,16 +108,20 @@ for key,var_name in ipairs(variables) do
 
     var_name = string.gsub(var_name, "%(", "_")
     var_name = string.gsub(var_name, "%)", "_")
+
+    local var_value = "";
     -- Чтение результата.
     local data = reader()
     local data_table = data:split("\r\n")
     for key,pair_key_val in ipairs(data_table) do
         local key_val_table = pair_key_val:split(": ")
         if key_val_table[1] == 'Value' then
-            result_part1 = ""..result_part1..",p_"..var_name;
-            result_part2 = ""..result_part2..",\""..key_val_table[2].."\"";
+            var_value    = key_val_table[2];
         end
     end
+
+    result_part1 = ""..result_part1..",p_"..var_name;
+    result_part2 = ""..result_part2..", \""..var_value.."\"";
 end
 
 bytes = sock:send("Action: Logoff\r\n\r\n")

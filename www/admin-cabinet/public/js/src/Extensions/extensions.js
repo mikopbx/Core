@@ -213,5 +213,25 @@ const Extensions = {
 			},
 		});
 	},
+	/**
+	 * Обновляет представление сотрудника в кеше браузера
+	 */
+	UpdatePhoneRepresent(number) {
+		const numbers = [];
+		numbers.push(number);
+		$.api({
+			url: `${globalRootUrl}extensions/GetPhonesRepresent/`,
+			data: { numbers },
+			method: 'POST',
+			on: 'now',
+			onSuccess(response) {
+				if (response !== undefined
+					&& response.success === true
+					&& response.message[number] !== undefined) {
+					sessionStorage.setItem(number, response.message[number].represent);
+				}
+			},
+		});
+	},
 
 };

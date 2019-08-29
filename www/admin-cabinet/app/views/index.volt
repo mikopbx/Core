@@ -13,6 +13,7 @@
         <link rel="manifest" href="{{ url() }}public/img/site.webmanifest">
         <link rel="mask-icon" href="{{ url() }}public/img/safari-pinned-tab.svg" color="#5bbad5">
         <link rel="shortcut icon" href="{{ url() }}public/img/favicon.ico">
+        <meta name="robots" content="noindex, nofollow"/>
         <meta name="msapplication-TileColor" content="#2b5797">
         <meta name="msapplication-config" content="{{ url() }}public/img/browserconfig.xml">
         <meta name="theme-color" content="#ffffff">
@@ -27,7 +28,7 @@
 			var globalPBXLicense = '{{ PBXLicense }}';
 			var globalLastSentryEventId = '{{ lastSentryEventId }}';
 			var globalPBXLanguage = '{{ PBXLanguage }}';
-
+			var globalSSHPort = '{{ SSHPort }}';
         </script>
         {% cache 'headerAssetsAfterMetatags'~cacheName~'Cache.volt.php' %}
 

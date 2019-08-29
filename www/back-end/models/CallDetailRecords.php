@@ -8,41 +8,19 @@
  */
 namespace Models;
 
-class CallDetailRecords extends ModelsBase
+class CallDetailRecords extends CallDetailRecordsBase
 {
-
-	public $id;
-	public $start;
-	public $endtime;
-	public $answer;
-	public $src_chan;
-	public $dst_chan;
-	public $dst_num;
-	public $UNIQUEID;
-	public $linkedid;
-	public $did;
-	public $disposition;
-	public $recordingfile;
-	public $from_account;
-	public $to_account;
-	public $dialstatus;
-	public $appname;
-	public $transfer;
-	public $is_app;
-	public $duration;
-	public $billsec;
-	public $work_completed;
-
-	public function getSource()
+	public function getSource() :string
 	{
 		return 'cdr_general';
 	}
 
-	public function initialize()
+	public function initialize() :void
 	{
 		parent::initialize();
 		$this->useDynamicUpdate(true);
 		$this->setConnectionService('dbCDR');
 	}
+
 
 }

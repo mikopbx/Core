@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 6 2019
+ * Written by Alexey Portnov, 8 2019
  */
 
 require_once 'globals.php';
@@ -113,12 +113,15 @@ class Storage {
      * @return mixed
      */
 	public function get_free_space($hdd){
-        $out = array();
+        $out = [];
         $hdd = escapeshellarg($hdd);
-        Util::mwexec("df | grep {$hdd} | awk '{print $4}'",$out);
+        Util::mwexec("df -m | grep {$hdd} | awk '{print $4}'",$out);
         $result = 0;
         foreach ($out as $res){
-            $result += (1*$res)/1024;
+            if(!is_numeric($res)){
+                continue;
+            }
+            $result += (1*$res);
         }
         return $result;
     }
@@ -133,7 +136,7 @@ class Storage {
         // Создание больщого файла для тестов.
         // head -c 1500MB /dev/urandom > /storage/usbdisk1/big_file.mp3
         foreach ($hdd as $disk){
-            if($disk['sys_disk'] == true && !Storage::is_storage_disk_mounted("{$disk['id']}4")){
+            if($disk['sys_disk'] === true && !Storage::is_storage_disk_mounted("{$disk['id']}4")){
                 // Это системный диск (4ый раздел). Он не смонтирован.
                 continue;
             }
@@ -142,17 +145,17 @@ class Storage {
             $need_alert = false; $test_alert = '';
             if($free < 5){
                 $need_alert = true;
-                $test_alert = "Little free disk space left {$disk['id']}. Free - {$disk['free_space']}Mb / {$disk['size']}Mb.";
+                $test_alert = "The {$disk['id']} has less than 5% of free space available. Free - {$disk['free_space']}Mb / {$disk['size']}Mb.";
             }
 
             if($disk['free_space'] < 500){
                 $need_alert = true;
-                $test_alert = "Little free disk space left {$disk['id']}. Free - {$disk['free_space']}Mb / {$disk['size']}Mb.";
+                $test_alert = "The {$disk['id']} has less than 500MB of free space available. Free - {$disk['free_space']}Mb / {$disk['size']}Mb.";
             }
 
             if($disk['free_space'] < 100){
                 $need_alert = true;
-                $test_alert = "There is no free disk space {$disk['id']}. Free - {$disk['free_space']}Mb / {$disk['size']}Mb. Old call records will be deleted.";
+                $test_alert = "The {$disk['id']} has less than 100MB of free space available. Free - {$disk['free_space']}Mb / {$disk['size']}Mb. Old call records will be deleted.";
                 Util::mwexec_bg("/usr/bin/php -f /etc/inc/workers/worker_remove_old_records.php");
             }
 
@@ -378,7 +381,7 @@ class Storage {
 		$disks   = $this->get_disk_settings();
 		$conf = '';
 		foreach ($disks as $disk) {
-		    if( "{$disk['device']}" != "/dev/{$cf_disk}" ){
+		    if( $disk['device'] !== "/dev/{$cf_disk}" ){
                 // Если это обычный диск, то раздел 1.
 		        $dev = "{$disk['device']}1";
             }else{
@@ -389,15 +392,15 @@ class Storage {
                 // Диск не существует.
                 continue;
             }
-            if($disk['media'] == 1){
+            if($disk['media'] === 1){
                 file_put_contents($storage_dev_file, "/storage/usbdisk{$disk['id']}");
             }
 
             $str_uid = 'UUID='.$this->get_uuid($dev).'';
-            $format_p4 = Storage::get_fs_type($dev);
+            $format_p4 = self::get_fs_type($dev);
 			$conf .= "{$str_uid} /storage/usbdisk{$disk['id']} {$format_p4} async,rw 0 0\n";
 			$is_mounted = $this->is_storage_disk_mounted("/storage/usbdisk{$disk['id']}");
-			if( !$is_mounted && isset($disk['check_when_booting']) && $disk['check_when_booting'] == 1){
+			if( !$is_mounted && isset($disk['check_when_booting']) && $disk['check_when_booting'] === 1){
 			    // Проверка диска.
                 file_put_contents('/cf/conf/need_clean_cashe_www', '');
                 Util::mwexec("/sbin/fsck.{$format_p4} -a {$dev}");
@@ -408,6 +411,12 @@ class Storage {
 			if (!file_exists($mount_point)) {
 				Util::mwexec("mkdir -p {$mount_point}");
 			}
+			if(!$is_mounted){
+			    // Запускаем проверку диска.
+                // Если размер диска был изменен, то система попытается подогнать размер.
+                echo "\n  - start resize storage disk {$dev}...";
+			    Util::mwexec("/etc/rc/resize_storage_part '{$disk['device']}'");
+            }
 		}
 		$this->save_fstab($conf);
 
@@ -531,27 +540,30 @@ class Storage {
 	         return $result;
         }
 
-	    $tmp_dir = "/tmp/mnt_".time();
+	    $tmp_dir = '/tmp/mnt_'.time();
 
-	    mkdir($tmp_dir, 0777, true);
+	    if(!file_exists($tmp_dir) && !mkdir($tmp_dir, 0777, true) && !is_dir($tmp_dir)){
+            Util::sys_log_msg('Storage', 'Unable to create directory '. $tmp_dir);
+            return $result;
+        }
         $out = [];
 
         $storage = new Storage();
-        $uid_part = 'UUID='.$storage->get_uuid("{$device}").'';
-        $format = Storage::get_fs_type($device);
+        $uid_part = 'UUID='.$storage->get_uuid($device).'';
+        $format = self::get_fs_type($device);
 
         Util::mwexec("mount -t {$format} {$uid_part} {$tmp_dir}", $out);
-        if(trim(implode("", $out)) == "" && is_dir("{$tmp_dir}/mikopbx")){
+        if(is_dir("{$tmp_dir}/mikopbx") && trim(implode('', $out)) === ''){
             // $out - пустая строка, ошибок нет
             // присутствует каталог mikopbx.
             $result = true;
         }
-        if(Storage::is_storage_disk_mounted($device)){
+        if(self::is_storage_disk_mounted($device)){
             Util::mwexec("umount {$device}");
         }
 
-        if(!Storage::is_storage_disk_mounted($device)){
-            rmdir($tmp_dir);
+        if(!self::is_storage_disk_mounted($device)){
+            Util::mwexec("rm -rf '{$tmp_dir}'");
         }
         return $result;
     }
@@ -691,6 +703,7 @@ class Storage {
                     "{$user}@{$host}:{$remout_dir} {$local_dir} << EOF\n".
                     "{$pass}\n".
                     "EOF\n";
+        // file_put_contents('/tmp/sshfs_'.$host, $command);
         Util::mwexec($command,$out);
         $response = trim(implode('', $out));
         if('Terminated' == $response){
@@ -738,7 +751,7 @@ class Storage {
         $command =  "/usr/bin/timeout -t 3 /usr/bin/curlftpfs  -o allow_other -o {$auth_line}fsname={$host} {$connect_line} {$local_dir}";
         Util::mwexec($command,$out);
         $response = trim(implode('', $out));
-        if('Terminated' == $response){
+        if('Terminated' === $response){
             // Удаленный сервер не ответил / или не корректно указан пароль.
             unset($response);
         }
@@ -752,11 +765,11 @@ class Storage {
      * @return bool
      */
     static function umount_disk($dir){
-        if(Storage::is_storage_disk_mounted("$dir")){
+        if(self::is_storage_disk_mounted($dir)){
             Util::mwexec("/etc/rc/shell_functions.sh 'killprocesses' '$dir' -TERM 0");
             Util::mwexec("umount {$dir}");
         }
-        $result = !Storage::is_storage_disk_mounted("$dir");
+        $result = !self::is_storage_disk_mounted($dir);
         if($result && file_exists($dir)){
             // Если диск не смонтирован, то удаляем каталог.
             Util::mwexec("rm -rf '{$dir}'");

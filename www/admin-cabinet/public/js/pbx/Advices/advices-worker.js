@@ -78,20 +78,57 @@ var advicesWorker = {
       if (response === undefined) return;
       advicesWorker.$advices.html('');
 
-      if (response.success === true && response.message !== undefined && response.message.length > 0) {
-        var htmlMessages = '<div class="ui icon warning message">';
-        htmlMessages += '<i class="warning icon"></i>';
-        htmlMessages += '<div class="content">';
-        htmlMessages += "<div class=\"header\">".concat(globalTranslate.adv_MessagesHeader, "</div>");
-        htmlMessages += '<ul class="list">';
-        $.each(response.message, function (key, value) {
-          htmlMessages += "<li>".concat(value, "</li>");
-        });
-        htmlMessages += '</ul>';
-        htmlMessages += '</div>';
-        htmlMessages += '</div>';
+      if (response.success === true && response.message !== undefined) {
+        var htmlMessages = '';
+
+        if (response.message.error !== undefined && response.message.error.length > 0) {
+          htmlMessages += '<div class="ui icon error message">';
+          htmlMessages += '<i class="x icon"></i>';
+          htmlMessages += '<div class="content">';
+          htmlMessages += "<div class=\"header\">".concat(globalTranslate.adv_MessagesHeaderError, "</div>");
+          htmlMessages += '<ul class="list">';
+          $.each(response.message.error, function (key, value) {
+            htmlMessages += "<li>".concat(value, "</li>");
+          });
+          htmlMessages += '</ul>';
+          htmlMessages += '</div>';
+          htmlMessages += '</div>';
+        } else if (response.message.warning !== undefined && response.message.warning.length > 0) {
+          htmlMessages += '<div class="ui icon warning message">';
+          htmlMessages += '<i class="warning icon"></i>';
+          htmlMessages += '<div class="content">';
+          htmlMessages += "<div class=\"header\">".concat(globalTranslate.adv_MessagesHeader, "</div>");
+          htmlMessages += '<ul class="list">';
+          $.each(response.message.warning, function (key, value) {
+            htmlMessages += "<li>".concat(value, "</li>");
+          });
+          htmlMessages += '</ul>';
+          htmlMessages += '</div>';
+          htmlMessages += '</div>';
+        } else if (response.message.info !== undefined && response.message.info.length > 0) {
+          htmlMessages += '<div class="ui icon info message">';
+          htmlMessages += '<i class="info icon"></i>';
+          htmlMessages += '<div class="content">';
+          htmlMessages += "<div class=\"header\">".concat(globalTranslate.adv_MessagesHeader, "</div>");
+          htmlMessages += '<ul class="list">';
+          $.each(response.message.info, function (key, value) {
+            htmlMessages += "<li>".concat(value, "</li>");
+          });
+          htmlMessages += '</ul>';
+          htmlMessages += '</div>';
+          htmlMessages += '</div>';
+        }
+
         advicesWorker.$advices.html(htmlMessages);
-        localStorage.setItem('previousAdvice', htmlMessages);
+        localStorage.setItem('previousAdvice', htmlMessages); // Проверим есть ли обновление системы
+
+        if (response.message.info !== undefined && response.message.info.length > 0) {
+          $.each(response.message.info, function (key, value) {
+            if (value.indexOf('/admin-cabinet/update/index/') > -1) {
+              $('a[href="/admin-cabinet/update/index/"] > i').addClass('loading');
+            }
+          });
+        }
       } else if (response.success === true && response.message !== undefined && response.message.length === 0) {
         localStorage.removeItem('previousAdvice');
       }

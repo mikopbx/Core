@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 5 2019
+ * Written by Alexey Portnov, 8 2019
  */
 
 class p_Queue extends ConfigClass{
@@ -92,6 +92,7 @@ class p_Queue extends ConfigClass{
             $conf.= 'exten => _'.$queue['extension'].',1,Set(__ISTRANSFER=transfer_)'." \n\t";
             $conf.= 'same => n,Goto(internal,${EXTEN},1)'." \n";
         }
+        $conf .= "\n";
         return $conf;
     }
 

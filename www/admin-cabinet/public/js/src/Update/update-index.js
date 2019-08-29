@@ -7,13 +7,12 @@
  */
 
 /* global PbxApi, globalPBXVersion, globalTranslate, ConfigWorker,
-globalPBXLicense, globalPBXLanguage, globalPBXVersion */
+globalPBXLicense, globalPBXLanguage, globalPBXVersion, showdown, UserMessage */
 
 const upgradeStatusLoopWorker = {
 	timeOut: 1000,
 	timeOutHandle: '',
 	iterations: 0,
-	$ajaxMessgesDiv: $('#ajax-messages'),
 	initialize() {
 		upgradeStatusLoopWorker.iterations = 0;
 		upgradeStatusLoopWorker.restartWorker();
@@ -39,9 +38,8 @@ const upgradeStatusLoopWorker = {
 			$('i.loading.redo').addClass('sync').removeClass('redo');
 		} else if (response.d_status === 'DOWNLOAD_ERROR') {
 			window.clearTimeout(upgradeStatusLoopWorker.timeoutHandle);
-			$('.ui.message.ajax').remove();
-			upgradeStatusLoopWorker.$ajaxMessgesDiv.after(`<div class="ui error message ajax">${globalTranslate.upd_DownloadUpgradeError}</div>`);
-			$('i.loading.redo').addClass('download').removeClass('loading redo');
+			UserMessage.showError(globalTranslate.upd_DownloadUpgradeError);
+			$('i.loading.redo').addClass('redo').removeClass('loading');
 		}
 	},
 };
@@ -51,10 +49,11 @@ const updatePBX = {
 	$formObj: $('#upgrade-form'),
 	$submitButton: $('#submitbutton'),
 	$progressBar: $('#upload-progress-bar'),
-	$ajaxMessgesDiv: $('#ajax-messages'),
+	$progressBarLabel: $('#upload-progress-bar').find('.label'),
 	currentVersion: globalPBXVersion,
 	$restoreModalForm: $('#update-modal-form'),
 	upgradeInProgress: false,
+	converter: new showdown.Converter(),
 	initialize() {
 		updatePBX.$restoreModalForm.modal();
 		updatePBX.$submitButton.addClass('disabled');
@@ -122,7 +121,7 @@ const updatePBX = {
 					}
 				});
 
-				$('a.download').on('click', (e) => {
+				$('a.redo').on('click', (e) => {
 					e.preventDefault();
 					if (updatePBX.$submitButton.hasClass('loading') || updatePBX.upgradeInProgress) return;
 					updatePBX.$restoreModalForm
@@ -136,7 +135,7 @@ const updatePBX = {
 								params.updateLink = $aLink.attr('href');
 								params.md5 = $aLink.attr('data-md5');
 								params.size = $aLink.attr('data-size');
-								$aLink.find('i').addClass('loading redo').removeClass('download');
+								$aLink.find('i').addClass('loading');
 								updatePBX.upgradeInProgress = true;
 								PbxApi.SystemUpgradeOnline(params);
 								upgradeStatusLoopWorker.initialize();
@@ -152,30 +151,48 @@ const updatePBX = {
 		if (response.length === 0 || response === false) {
 			updatePBX.$submitButton.removeClass('loading');
 			updatePBX.upgradeInProgress = false;
-			$('.ui.message.ajax').remove();
-			updatePBX.$ajaxMessgesDiv.after(`<div class="ui error message ajax">${globalTranslate.upd_UploadError}</div>`);
+			UserMessage.showError(globalTranslate.upd_UploadError);
 		} else if (response.function === 'upload_progress') {
 			updatePBX.$progressBar.progress({
 				percent: parseInt(response.percent, 10),
 			});
+			if (response.percent < 100) {
+				updatePBX.$progressBarLabel.text(globalTranslate.upd_UploadInProgress);
+			} else {
+				updatePBX.$progressBarLabel.text(globalTranslate.upd_UpgradeInProgress);
+			}
+
 		}
 	},
 	AddNewVersionInformation(obj) {
 		$('#online-updates-block').show();
+		let markdownText = decodeURIComponent(obj.description);
+		markdownText = markdownText.replace(/<br>/g, '\r');
+		markdownText = markdownText.replace(/<br >/g, '\r');
+		markdownText = markdownText.replace(/\* \*/g, '*');
+		markdownText = markdownText.replace(/\*\*/g, '*');
+		const html = updatePBX.converter.makeHtml(markdownText);
 		const dymanicRow = `
 			<tr class="update-row">
 			<td class="center aligned">${obj.version}</td>
-			<td>${decodeURIComponent(obj.description)}</td>
+			<td>${html}</td>
 			<td class="right aligned collapsing">
     		<div class="ui small basic icon buttons action-buttons">
-    			<a href="${obj.href}" class="ui button download" 
+    			<a href="${obj.href}" class="ui button redo popuped" 
+    				data-content = "${globalTranslate.bt_ToolTipUpgradeOnline}"
+					data-md5 ="${obj.md5}" data-size ="${obj.size}">
+					<i class="icon redo blue"></i>
+					<span class="percent"></span>
+				</a>
+				<a href="${obj.href}" class="ui button download popuped" 
+					data-content = "${globalTranslate.bt_ToolTipDownload}"
 					data-md5 ="${obj.md5}" data-size ="${obj.size}">
 					<i class="icon download blue"></i>
-					<span class="percent"></span>
 				</a>
     		</div>   
 	</tr>`;
 		$('#updates-table tbody').append(dymanicRow);
+		$('a.popuped').popup();
 	},
 };
 

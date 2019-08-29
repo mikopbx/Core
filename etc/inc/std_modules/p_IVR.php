@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 5 2019
+ * Written by Alexey Portnov, 8 2019
  */
 
 class p_IVR extends ConfigClass{
@@ -29,11 +29,11 @@ class p_IVR extends ConfigClass{
         // Генерация внутреннего номерного плана.
         $conf = '';
         foreach ($this->db_data as $ivr) {
-            /** @var \Models\SoundFiles $res */
-            $res = \Models\SoundFiles::findFirst($ivr->audio_message_id);
-            $audio_message = ($res == null)?'':$res->path;
+            /** @var Models\SoundFiles $res */
+            $res = Models\SoundFiles::findFirst($ivr->audio_message_id);
+            $audio_message = empty($res)?'':$res->path;
 
-            $timeout_wait_exten = max($ivr->timeout, 1);
+            $timeout_wait_exten = max($ivr->timeout, 0);
             if(file_exists($audio_message)){
                 $audio_message = Util::trim_extension_file($audio_message);
             }else{
@@ -51,7 +51,11 @@ class p_IVR extends ConfigClass{
             $conf .= 'same => n,GotoIf($[${try_count} > '.$try_count_ivr.']?internal,'.$ivr->timeout_extension.',1)'."\n\t";
             $conf .= "same => n,Set(TIMEOUT(digit)=2) \n\t";
             $conf .= "same => n,Background({$audio_message}) \n\t";
-            $conf .= "same => n,WaitExten({$timeout_wait_exten}) \n";
+            if($timeout_wait_exten>0){
+                $conf .= "same => n,WaitExten({$timeout_wait_exten}) \n";
+            }else{
+                $conf .= "same => n,Goto(t,1)\n";
+            }
             $res = Models\IvrMenuActions::find("ivr_menu_id = '{$ivr->uniqid}'");
             foreach ($res as $ext){
                 $conf .= "exten => {$ext->digits},1,Goto(internal,{$ext->extension},1)\n";
@@ -59,7 +63,7 @@ class p_IVR extends ConfigClass{
             $conf .= "exten => i,1,Goto(s,5)\n";
             $conf .= "exten => t,1,Goto(s,5)\n";
 
-            if($ivr->allow_enter_any_internal_extension == 1){
+            if($ivr->allow_enter_any_internal_extension === "1"){
                 $extension = Util::get_extension_X($this->extensionLength);
                 $conf .= 'exten => _'.$extension.',1,ExecIf($["${SIPPEER(${EXTEN},status)}x" == "x"]?Goto(s,1))'. "\n\t";
                 $conf .= 'same => n,Goto(internal,${EXTEN},1)'."\n";
@@ -109,7 +113,7 @@ class p_IVR extends ConfigClass{
         foreach ($this->db_data as $ivr){
             $ivr_ext_conf .= "exten => {$ivr->extension},1,Goto(ivr-{$ivr->extension},s,1)" . "\n";
         }
-
+        $ivr_ext_conf .= "\n";
         return $ivr_ext_conf;
     }
 

@@ -10,8 +10,10 @@
 
 /* global globalRootUrl, PbxApi, DebuggerInfo */
 var providers = {
+  $deleteModalForm: $('#delete-modal-form'),
   initialize: function () {
     function initialize() {
+      providers.$deleteModalForm.modal();
       $('.provider-row .checkbox').checkbox({
         onChecked: function () {
           function onChecked() {
@@ -66,6 +68,33 @@ var providers = {
         var id = $(e.target).closest('tr').attr('id');
         var type = $(e.target).closest('tr').attr('data-value');
         window.location = "".concat(globalRootUrl, "providers/modify").concat(type, "/").concat(id);
+      });
+      $('body').on('click', '.provider-row a.delete', function (e) {
+        e.preventDefault();
+        var linksExist = $(e.target).closest('tr').attr('data-links');
+
+        if (linksExist === 'true') {
+          providers.$deleteModalForm.modal({
+            closable: false,
+            onDeny: function () {
+              function onDeny() {
+                return true;
+              }
+
+              return onDeny;
+            }(),
+            onApprove: function () {
+              function onApprove() {
+                window.location = $(e.target).closest('a').attr('href');
+                return true;
+              }
+
+              return onApprove;
+            }()
+          }).modal('show');
+        } else {
+          window.location = $(e.target).closest('a').attr('href');
+        }
       });
     }
 

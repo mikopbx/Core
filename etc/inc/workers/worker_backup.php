@@ -3,12 +3,14 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 6 2019
+ * Written by Alexey Portnov, 7 2019
  */
 
 require_once 'globals.php';
 
-if(count($argv)<3) exit;
+if(count($argv)<3) {
+    exit;
+}
 
 $id      = trim($argv[1]);
 $command = trim($argv[2]);
@@ -16,10 +18,10 @@ if(empty($id)){
     exit;
 }
 
-if('none' != $id ){
+if('none' !== $id ){
     $b = new Backup($id);
     $b->create_arhive();
-}elseif(count($argv)==4){
+}elseif(count($argv)===4){
     $PID = Util::get_pid_process("{$argv[1]} {$argv[2]} {$argv[3]}", ''.getmypid().' ');
     if(empty($PID)){
         // Другого процесса с аналогичными установками не запущено.
@@ -29,7 +31,7 @@ if('none' != $id ){
             $backup_dir = '/storage/'.$res->ftp_host.'.'.$res->ftp_port;
             $disk_mounted = Storage::is_storage_disk_mounted("$backup_dir ");
             if(!$disk_mounted){
-                if($res->ftp_sftp_mode == '1'){
+                if($res->ftp_sftp_mode === '1'){
                     $disk_mounted = Storage::mount_sftp_disk($res->ftp_host, $res->ftp_port, $res->ftp_username, $res->ftp_secret, $res->ftp_path, $backup_dir);
                 }else{
                     $disk_mounted = Storage::mount_ftp($res->ftp_host, $res->ftp_port, $res->ftp_username, $res->ftp_secret, $res->ftp_path, $backup_dir);
@@ -53,10 +55,10 @@ if('none' != $id ){
             }
 
             // Запускаем резервное копирование.
-            $id      = "backup_".time();
+            $id      = 'backup_'.time();
             $options = json_decode($res->what_backup, true);
             $options['backup'] = $backup_dir;
-            if($res->ftp_sftp_mode != '1') {
+            if($res->ftp_sftp_mode !== '1') {
                 $options['type'] = 'zip';
             }
             $b = new Backup($id, $options);

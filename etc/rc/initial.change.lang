@@ -13,7 +13,6 @@ echo \Util::translate("Change language")."\n";
 echo "*******************************\n\n";
 echo "1) Русский\n";
 echo "2) English\n";
-echo "3) ".\Util::translate('Cancel')."\n\n";
 echo \Util::translate('Enter a number').": \n";
 
 $input = trim(fgets($fp));

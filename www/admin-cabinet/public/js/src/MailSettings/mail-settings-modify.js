@@ -6,7 +6,7 @@
  *
  */
 
-/* global globalRootUrl,globalTranslate, Form, PbxApi */
+/* global globalRootUrl,globalTranslate, Form, PbxApi, UserMessage */
 
 const mailSettings = {
 	$formObj: $('#mail-settings-form'),
@@ -25,7 +25,7 @@ const mailSettings = {
 		$('#mail-settings-menu .item').tab();
 		$('.checkbox').checkbox();
 
-		this.initializeForm();
+		mailSettings.initializeForm();
 	},
 	updateMailSettingsCallback(response) {
 		if (response.result.toUpperCase() === 'SUCCESS') {
@@ -38,8 +38,15 @@ const mailSettings = {
 					body: globalTranslate.ms_TestEmailBody,
 					encode: '',
 				};
-				PbxApi.SendTestEmail(params);
+				PbxApi.SendTestEmail(params, mailSettings.cbAfterEmailSend);
 			}
+		}
+	},
+	cbAfterEmailSend(message) {
+		if (message === true) {
+			UserMessage.showInformation(globalTranslate.ms_TestEmailSentSuccessfully);
+		} else if (message.length > 0) {
+			UserMessage.showError(message);
 		}
 	},
 	cbBeforeSendForm(settings) {

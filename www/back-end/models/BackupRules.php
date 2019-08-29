@@ -109,11 +109,8 @@ class BackupRules extends ModelsBase {
 	 */
 	public $what_backup;
 
-	public function getSource() {
+	public function getSource() :string {
 		return 'm_BackupRules';
 	}
 
-	public function initialize() {
-		parent::initialize();
-	}
 }

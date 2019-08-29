@@ -110,13 +110,47 @@ var licensingModify = {
       licensingModify.initializeForm();
 
       if (licensingModify.defaultLicenseKey.length === 28) {
-        $('#filled-license-key-info').html("".concat(licensingModify.defaultLicenseKey, " <i class=\"spinner loading icon\"></i>")).show();
+        $('#filled-license-key-info').html("".concat(licensingModify.defaultLicenseKey, " <i class=\"spinner loading icon\"></i>")).show(); //  Проверим доступность фичии
+
         $.api({
-          url: "".concat(globalRootUrl, "/licensing/getLicenseInfo/").concat(licensingModify.defaultLicenseKey),
+          url: "".concat(globalRootUrl, "licensing/getBaseFeatureStatus/").concat(licensingModify.defaultLicenseKey),
+          on: 'now',
+          successTest: function () {
+            function successTest(response) {
+              // test whether a JSON response is valid
+              return response !== undefined && Object.keys(response).length > 0 && response.success === true;
+            }
+
+            return successTest;
+          }(),
+          onSuccess: function () {
+            function onSuccess() {
+              licensingModify.$formObj.removeClass('error').addClass('success');
+              $('.ui.message.ajax').remove();
+              $('#filled-license-key-info').after("<div class=\"ui success message ajax\"><i class=\"check green icon\"></i> ".concat(globalTranslate.lic_LicenseKeyValid, "</div>"));
+              $('.spinner.loading.icon').remove();
+            }
+
+            return onSuccess;
+          }(),
+          onFailure: function () {
+            function onFailure(response) {
+              licensingModify.$formObj.addClass('error').removeClass('success');
+              $('.ui.message.ajax').remove();
+              $('#filled-license-key-info').after("<div class=\"ui error message ajax\"><i class=\"exclamation triangle red icon\"></i> ".concat(response.message, "</div>"));
+              $('.spinner.loading.icon').remove();
+            }
+
+            return onFailure;
+          }()
+        }); // Получим информациию о лицензии
+
+        $.api({
+          url: "".concat(globalRootUrl, "licensing/getLicenseInfo/").concat(licensingModify.defaultLicenseKey),
           on: 'now',
           onSuccess: function () {
             function onSuccess(response) {
-              licensingModify.cbCheckLicenseKey(response);
+              licensingModify.cbShowLicenseInfo(response);
             }
 
             return onSuccess;
@@ -163,27 +197,17 @@ var licensingModify = {
 
     return cbOnLicenceKeyInputChange;
   }(),
-  cbCheckLicenseKey: function () {
-    function cbCheckLicenseKey(response) {
+  cbShowLicenseInfo: function () {
+    function cbShowLicenseInfo(response) {
       if (response !== undefined && response.message !== 'null') {
-        $('.ui.message.ajax').remove();
-        $('#filled-license-key-info').after("<div class=\"ui success message ajax\"><i class=\"check green icon\"></i> ".concat(globalTranslate.lic_LicenseKeyValid, "</div>"));
-        $('.spinner.loading.icon').remove();
-        licensingModify.$formObj.removeClass('error').addClass('success');
         licensingModify.showLicenseInfo(response.message);
         licensingModify.$licenseDetailInfo.show();
       } else {
-        $('.ui.message.ajax').remove();
-        var licKey = licensingModify.$licKey.val();
-        $('#filled-license-key-info').html("<strike>".concat(licKey, "</strike>")); // $('#filled-license-key-info').after(`<div class="ui error message ajax"><i class="exclamation triangle red icon"></i> ${JSON.parse(response).cause}</div>`);
-
-        $('.spinner.loading.icon').remove();
-        licensingModify.$formObj.addClass('error').removeClass('success');
         licensingModify.$licenseDetailInfo.hide();
       }
     }
 
-    return cbCheckLicenseKey;
+    return cbShowLicenseInfo;
   }(),
 
   /**

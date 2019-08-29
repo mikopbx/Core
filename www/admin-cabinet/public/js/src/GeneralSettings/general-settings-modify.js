@@ -112,4 +112,3 @@ const generalSettingsModify = {
 $(document).ready(() => {
 	generalSettingsModify.initialize();
 });
-

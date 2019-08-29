@@ -13,18 +13,32 @@ use Phalcon\Mvc\Model\Relation;
 
 class SipCodecs extends ModelsBase
 {
-
+    /**
+     * @var integer
+     */
     public $id;
+
+    /**
+     * @var string
+     */
     public $sipuid;
+
+    /**
+     * @var string
+     */
     public $codec;
+
+    /**
+     * @var integer
+     */
     public $priority;
 
-    public function getSource()
+    public function getSource() :string
     {
         return 'm_SipCodecs';
     }
 
-    public function initialize()
+    public function initialize() :void
     {
 	    parent::initialize();
         $this->belongsTo(
@@ -32,10 +46,10 @@ class SipCodecs extends ModelsBase
             'Models\Codecs',
             'name',
             [
-                "alias"=>"Codecs",
-                "foreignKey" => [
-                    "allowNulls" => false,
-                    "action"     => Relation::NO_ACTION,
+                'alias'=>'Codecs',
+                'foreignKey' => [
+                    'allowNulls' => false,
+                    'action'     => Relation::NO_ACTION,
                 ]
             ]
         );

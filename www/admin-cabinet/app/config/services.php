@@ -7,6 +7,7 @@
  *
  */
 
+use Models\PbxSettings;
 use Phalcon\Cache\Backend\File;
 use Phalcon\Cache\Frontend\Output;
 use Phalcon\Mvc\Model\Metadata\Files;
@@ -18,12 +19,13 @@ use Phalcon\Mvc\View\Engine\Volt as VoltEngine;
 use Phalcon\Session\Adapter\Files as SessionAdapter;
 use Phalcon\Flash\Session as DirectSession;
 use Phalcon\Events\Manager as EventsManager;
-use Phalcon\Translate\Adapter\NativeArray as NativeArray;
+use Phalcon\Translate\Adapter\NativeArray;
 use \Phalcon\Logger;
 use \Phalcon\Logger\Adapter\File as FileLogger;
 use Phalcon\Cache\Frontend\Data as FrontendData;
 use Phalcon\Text;
 use Phalcon\Events\Event;
+use Modules\LicenseWorker;
 /**
  * The FactoryDefault Dependency Injector automatically register the right services providing a full stack framework
  */
@@ -79,7 +81,7 @@ $di->set('view', function() use ($config) {
 	$view = new View();
 	$view->setViewsDir($config->application->viewsDir);
 	$view->registerEngines(array(
-		".volt" => 'volt'
+		'.volt' => 'volt'
 	));
 	return $view;
 });
@@ -89,7 +91,7 @@ $di->set('view', function() use ($config) {
 $di->set('volt', function($view, $di) use ($config){
 	$volt = new VoltEngine($view, $di);
 	$volt->setOptions(array(
-		"compiledPath" => $config->application->cacheDir
+		'compiledPath' => $config->application->cacheDir
 	));
 	$compiler = $volt->getCompiler();
 	$compiler->addFunction( 'in_array', 'in_array' );
@@ -111,12 +113,12 @@ $di->set(
 
 	//Cache for one day
 	$frontCache = new Output( [
-		"lifetime" => $config->application->debugMode ? 1 : 86400,
+		'lifetime' => $config->application->debugMode ? 1 : 86400,
 	] );
 
 	//Set file cache
 	$cache = new File( $frontCache, [
-		"cacheDir" => $config->application->cacheDir,
+		'cacheDir' => $config->application->cacheDir,
 	] );
 
 	return $cache;
@@ -130,12 +132,12 @@ $di->set(
 
 	//Cache for one day
 	$frontCache = new FrontendData( [
-		"lifetime" => 3600,
+		'lifetime' => 3600,
 	] );
 
 	//Set file cache
 	$cache = new File( $frontCache, [
-		"cacheDir" => $config->application->cacheDir,
+		'cacheDir' => $config->application->cacheDir,
 	] );
 
 	return $cache;
@@ -150,8 +152,8 @@ if (!$config->application->debugMode) {
 	$di->set('modelsMetadata', function () use ( $config ) {
 		$metaData = new Files( [
 			'metaDataDir' => $config->application->metacacheDir,
-			"lifetime"    => 86400,
-			"prefix"      => "metacache_key",
+			'lifetime'    => 86400,
+			'prefix'      => 'metacache_key',
 		] );
 
 		return $metaData;
@@ -165,13 +167,13 @@ $di->set('modelsCache', function () use ($config){
 	// Cache data for one day by default
 	$frontCache = new FrontendData(
 		[
-			"lifetime" => 86400,
+			'lifetime' => 86400,
 		]
 	);
 
 	//Set file cache
 	$cache = new File( $frontCache, [
-		"cacheDir" => $config->application->modelscacheDir,
+		'cacheDir' => $config->application->modelscacheDir,
 	] );
 
 	return $cache;
@@ -185,7 +187,7 @@ $di->set('db', function() use ($config) {
 
 	$dbclass = 'Phalcon\Db\Adapter\Pdo\\' . $config->database->adapter;
 	$connection = new $dbclass( array(
-		"dbname" => $config->database->dbfile,
+		'dbname' => $config->database->dbfile,
 	) );
 
 	if ( $config->application->debugMode) {
@@ -196,7 +198,7 @@ $di->set('db', function() use ($config) {
 		$eventsManager = new EventsManager();
 		// Слушаем все события базы данных
 		$eventsManager->attach('db', function ($event, $connection) use ($logger) {
-			if ($event->getType() == 'beforeQuery') {
+			if ($event->getType() === 'beforeQuery') {
 				$logger->log($connection->getSQLStatement(), Logger::SPECIAL);
 			}
 		});
@@ -215,7 +217,7 @@ $di->set('dbCDR', function() use ($config) {
 
 	$dbclass = 'Phalcon\Db\Adapter\Pdo\\' . $config->cdrdatabase->adapter;
 	$connection = new $dbclass( [
-		"dbname" => $config->cdrdatabase->dbfile,
+		'dbname' => $config->cdrdatabase->dbfile,
 	] );
 
 	if ( $config->application->debugMode ) {
@@ -227,7 +229,7 @@ $di->set('dbCDR', function() use ($config) {
 		// Слушаем все события базы данных
 		$eventsManager->attach( 'db',
 			function ( $event, $connection ) use ( $logger ) {
-				if ( $event->getType() == 'beforeQuery' ) {
+				if ( $event->getType() === 'beforeQuery' ) {
 					$logger->log( $connection->getSQLStatement(),
 						Logger::SPECIAL );
 				}
@@ -268,14 +270,14 @@ $di->setShared( 'sessionRO', function () {
 	$return_data = array();
 	$offset = 0;
 	while ($offset < strlen($session_data)) {
-		if (false === strpos(substr($session_data, $offset), "|")) {
+		if (false === strpos(substr($session_data, $offset), '|')) {
 			break;
 		}
-		$pos = strpos($session_data, "|", $offset);
+		$pos = strpos($session_data, '|', $offset);
 		$num = $pos - $offset;
 		$varname = substr($session_data, $offset, $num);
 		$offset += $num + 1;
-		$data = unserialize(substr($session_data, $offset),array('allowed_classes' => false));
+		$data = unserialize(substr($session_data, $offset), array('allowed_classes' => false));
 		$return_data[$varname] = $data;
 		$offset += strlen(serialize($data));
 	}
@@ -305,7 +307,7 @@ $di->setShared( 'translation', function () use ( $di ) {
 	// Return a translation object
 	return new NativeArray(
 		[
-			"content" => $di->getMessages(),
+			'content' => $di->getMessages(),
 		]
 	);
 } );
@@ -334,10 +336,10 @@ $di->setShared( 'messages', function () use ( $config, $di ) {
 	$language = $di->getLanguage();
 	$messages = [];
 	// Заглянем сначала в кеш переводов
-	$roSession  = $this->get( 'sessionRO' );
+	$session  = $this->get( 'session' );
 	$cacheKey = false;
-	if ( $roSession !== null && array_key_exists('versionHash', $roSession)) {
-		$cacheKey = 'LocalisationArray' . $roSession['versionHash'].$language.'.php';
+	if ( $session !== null && $session->has('versionHash')) {
+		$cacheKey = 'LocalisationArray' . $session->get('versionHash').$language.'.php';
 	}
 	if ($cacheKey) {
 		$translates  = $this->get('managedCache')->get($cacheKey, 3600);
@@ -348,7 +350,7 @@ $di->setShared( 'messages', function () use ( $config, $di ) {
 
 	$translates = [];
 	// Возьмем английский интерфейс
-	$enFilePath= $config->application->backendDir.'messages/en.php';
+	$enFilePath= "{$config->application->backendDir}messages/en.php";
 	if ( file_exists( $enFilePath ) ) {
 		$translates    = require $enFilePath;
 	}
@@ -357,7 +359,7 @@ $di->setShared( 'messages', function () use ( $config, $di ) {
 	if ($language!=='en'){
 		$additionalTranslates = [];
 		// Check if we have a translation file for that lang
-		$langFile = $config->application->backendDir."messages/{$language}.php";
+		$langFile = "{$config->application->backendDir}messages/{$language}.php";
 		if ( file_exists( $langFile ) ) {
 			$additionalTranslates = require $langFile;
 		}
@@ -369,8 +371,7 @@ $di->setShared( 'messages', function () use ( $config, $di ) {
 
 	// Возьмем английский перевод расширений
 	$extensionsTranslates = [[]];
-	$results = glob( $config->application->modulesDir
-		. '*/{messages}/en.php', GLOB_BRACE );
+	$results = glob( $config->application->modulesDir.'*/{messages}/en.php', GLOB_BRACE );
 	foreach ( $results as $path ) {
 		$langArr = require $path;
 		if (is_array($langArr)){
@@ -384,8 +385,7 @@ $di->setShared( 'messages', function () use ( $config, $di ) {
 	}
 	if ($language!=='en'){
 		$additionalTranslates = [[]];
-		$results = glob( $config->application->modulesDir
-			. "*/{messages}/{$language}.php", GLOB_BRACE );
+		$results = glob( $config->application->modulesDir."*/{messages}/{$language}.php", GLOB_BRACE );
 		foreach ( $results as $path ) {
 			$langArr = require $path;
 			if (is_array($langArr)){
@@ -436,7 +436,6 @@ $di->setShared( 'licenseWorker', function () use ( $config ) {
 	} else {
 		$serverUrl = 'http://127.0.0.1:8222';
 	}
-
 	return new LicenseWorker( $serverUrl );
 } );
 
@@ -446,35 +445,38 @@ $di->setShared( 'licenseWorker', function () use ( $config ) {
 $di->set( 'assets', function () use ( $config ) {
 	$manager    = new Phalcon\Assets\Manager();
 	$dispatcher = $this->get( 'dispatcher' );
-	$roSession  = $this->get( 'sessionRO' );
+	$session  = $this->get( 'session' );
 	$controller = $dispatcher->getControllerName();
 	$action     = $dispatcher->getActionName();
 	if ( $action === NULL ) {
-		$action = "index";
+		$action = 'index';
 	}
-	$headerCollectionJSForExtensions  = $manager->collection( "headerJS" );
-	$footerCollectionJSForExtensions  = $manager->collection( "footerJS" );
-	$headerCollectionJS  = $manager->collection( "headerPBXJS" );
-	$headerCollectionCSS = $manager->collection( "headerCSS" );
-	$footerCollectionJS  = $manager->collection( "footerPBXJS" );
-	$headerCollectionSentryJS  = $manager->collection( "headerSentryJS" );
+	$headerCollectionJSForExtensions  = $manager->collection( 'headerJS' );
+	$footerCollectionJSForExtensions  = $manager->collection( 'footerJS' );
+	$headerCollectionJS  = $manager->collection( 'headerPBXJS' );
+	$headerCollectionCSS = $manager->collection( 'headerCSS' );
+	$footerCollectionJS  = $manager->collection( 'footerPBXJS' );
+	$headerCollectionSentryJS  = $manager->collection( 'headerSentryJS' );
 
 
 	$cssCacheDir = $config->application->cssCacheDir;
 	$jsCacheDir	 = $config->application->jsCacheDir;
 
-	if ( $roSession !== null && array_key_exists('versionHash', $roSession)) {
-		$version = "v=" . $roSession['versionHash'];
+	if ( $session !== null && $session->has('versionHash')) {
+		$version = $session->get('versionHash');
 	} else {
-		$version = "v=" . str_replace(PHP_EOL, '', file_get_contents('/etc/version'));
+		$version = str_replace(PHP_EOL, '', file_get_contents('/etc/version'));
 	}
 	if (file_exists('/tmp/sendmetrics')){
-		$headerCollectionSentryJS->addjs('//browser.sentry-cdn.com/5.1.1/bundle.min.js',FALSE,FALSE,['crossorigin'=>'anonymous']);
-		$headerCollectionSentryJS->addJs("public/js/pbx/main/sentry-error-logger.js?{$version}",TRUE,FALSE);
+		$headerCollectionSentryJS->addjs('//browser.sentry-cdn.com/5.6.1/bundle.min.js',FALSE,FALSE,[
+		    'crossorigin'=>'anonymous',
+            'integrity'=>'sha384-pGTFmbQfua2KiaV2+ZLlfowPdd5VMT2xU4zCBcuJr7TVQozMO+I1FmPuVHY3u8KB'
+        ]);
+		$headerCollectionSentryJS->addJs("public/js/pbx/main/sentry-error-logger.js?v={$version}",TRUE,FALSE);
 	}
 
 	$semanticCollectionCSS = $manager
-		->collection( "SemanticUICSS" );
+		->collection( 'SemanticUICSS' );
 	$semanticCollectionCSS
 		->addCss( 'css/semantic/grid.min.css', TRUE, FALSE )
 		->addCss( 'css/semantic/divider.min.css', TRUE, FALSE )
@@ -492,14 +494,14 @@ $di->set( 'assets', function () use ( $config ) {
 		->addCss( 'css/semantic/transition.min.css', TRUE, FALSE );
 
 	$footerCollectionACE = $manager
-		->collection( "footerACE" );
+		->collection( 'footerACE' );
 
 	$headerCollectionJS
-		->addJs( "js/pbx/main/header.js", TRUE )
-		->addJs( "js/jquery.min.js", TRUE );
+		->addJs( 'js/pbx/main/header.js', TRUE )
+		->addJs( 'js/jquery.min.js', TRUE );
 
 	$semanticCollectionJS = $manager
-		->collection( "SemanticUIJS" );
+		->collection( 'SemanticUIJS' );
 	$semanticCollectionJS
 		->addJs('js/semantic/form.min.js', TRUE, FALSE)
 		->addJs('js/semantic/api.min.js', TRUE, FALSE)
@@ -508,7 +510,7 @@ $di->set( 'assets', function () use ( $config ) {
 		->addJs('js/semantic/transition.min.js', TRUE, FALSE);
 
 	// Если пользователь залогинился, сформируем необходимые CSS кеши
-	if ( is_array($roSession) && array_key_exists('auth', $roSession )) {
+	if ( $session && $session->has('auth')) {
 		$semanticCollectionCSS
 			->addCss( 'css/semantic/menu.min.css', TRUE, FALSE )
 			->addCss( 'css/semantic/sidebar.min.css', TRUE, FALSE )
@@ -522,6 +524,7 @@ $di->set( 'assets', function () use ( $config ) {
 			->addCss( 'css/semantic/tab.min.css', TRUE, FALSE )
 			->addCss( 'css/semantic/checkbox.min.css', TRUE, FALSE )
 			->addCss( 'css/semantic/popup.min.css', TRUE, FALSE )
+            ->addCss( 'css/semantic/toast.min.css', TRUE, FALSE )
 			->addCss( 'css/semantic/dropdown.min.css', TRUE, FALSE );
 
 		$semanticCollectionJS
@@ -530,6 +533,7 @@ $di->set( 'assets', function () use ( $config ) {
 			->addJs( 'js/semantic/sidebar.min.js', TRUE, FALSE )
 			->addJs( 'js/semantic/dropdown.min.js', TRUE, FALSE )
 			->addJs( 'js/semantic/checkbox.min.js', TRUE, FALSE )
+            ->addJs( 'js/semantic/toast.min.js', TRUE, FALSE )
 			->addJs( 'js/semantic/tab.min.js', TRUE, FALSE );
 
 
@@ -551,12 +555,23 @@ $di->set( 'assets', function () use ( $config ) {
 				TRUE )
 			->addJs( 'js/pbx/Advices/advices-worker.js',
 				TRUE,
-				TRUE );
+				TRUE )
+            ->addJs( 'js/pbx/SendMetrics/send-metrics-index.js',
+                TRUE,
+                TRUE )
+            ->addJs( 'js/pbx/main/ssh-console.js',
+                TRUE,
+                TRUE )
+            ->addJs( 'js/pbx/main/delete-something.js',
+                TRUE,
+                TRUE )
+            ->addJs( 'js/pbx/main/user-message.js',
+                TRUE,
+                TRUE );
 
-		if ( $dispatcher->getModuleName() === "PBXExtension" ) {
+		if ( $dispatcher->getModuleName() === 'PBXExtension' ) {
 			$footerCollectionJS->addJs( 'js/pbx/PbxExtensionModules/pbx-extension-module-status.js',
-				TRUE,
-				TRUE );
+				TRUE);
 		}
 	}
 		switch ($controller){
@@ -573,6 +588,7 @@ $di->set( 'assets', function () use ( $config ) {
 				if ($action==='index'){
 					$semanticCollectionCSS->addCss( 'css/semantic/progress.min.css', TRUE, FALSE );
 					$semanticCollectionJS->addJs( 'js/semantic/progress.min.js', TRUE, FALSE );
+					$footerCollectionJS->addJs( 'js/resumable.js',TRUE, TRUE );
 					$footerCollectionJS->addJs( 'js/pbx/Backup/backup-index.js',TRUE, TRUE );
 				} elseif ($action==='create'){
 					$semanticCollectionCSS->addCss( 'css/semantic/progress.min.css', TRUE, FALSE );
@@ -696,7 +712,7 @@ $di->set( 'assets', function () use ( $config ) {
 						->addJs( 'js/clipboard/clipboard.js', TRUE );
 
 				} elseif ($action==='modify'){
-					$semanticCollectionCSS->addCss( "css/semantic/card.min.css", TRUE, FALSE );
+					$semanticCollectionCSS->addCss( 'css/semantic/card.min.css', TRUE, FALSE );
 					$footerCollectionJS
 						->addJs( 'js/inputmask/inputmask.js', TRUE )
 						->addJs( 'js/inputmask/jquery.inputmask.js', TRUE )
@@ -816,13 +832,21 @@ $di->set( 'assets', function () use ( $config ) {
 				break;
 			case 'PbxExtensionModules':
 				if ($action==='index'){
+                    $semanticCollectionJS->addJs('js/semantic/modal.min.js', TRUE, FALSE);
 					$footerCollectionJS
+                        ->addJs( 'js/pbx/Update/update-api.js', TRUE )
 						->addJs( 'js/pbx/PbxExtensionModules/pbx-extension-modules-index.js', TRUE );
+					$semanticCollectionCSS->addCss( 'css/semantic/modal.min.css', TRUE, FALSE );
 				}
 				break;
 
 			case 'Providers':
 				if ($action==='index'){
+                    $semanticCollectionCSS
+                        ->addCss( 'css/semantic/modal.min.css', TRUE, FALSE );
+
+                    $semanticCollectionJS
+                        ->addJs( 'js/semantic/modal.min.js', TRUE, FALSE );
 					$footerCollectionJS
 						->addJs( 'js/pbx/main/debugger-info.js', TRUE )
 						->addJs( 'js/pbx/Providers/providers-index.js', TRUE );
@@ -847,7 +871,7 @@ $di->set( 'assets', function () use ( $config ) {
 					$footerCollectionJS
 						->addJs( 'js/pbx/main/form.js', TRUE )
 						->addJs( 'js/pbx/Session/login-form.js', TRUE );
-				}
+                }
 				break;
 			case 'SoundFiles':
 				if ($action==='index'){
@@ -893,6 +917,7 @@ $di->set( 'assets', function () use ( $config ) {
 				if ($action==='index'){
 					$footerCollectionJS
 						->addJs( 'js/pbx/main/form.js', TRUE )
+                        ->addJs( 'js/showdown/showdown.min.js', TRUE )
 						->addJs( 'js/pbx/Update/update-index.js', TRUE );
 					$semanticCollectionCSS
 						->addCss( 'css/semantic/progress.min.css', TRUE, FALSE )
@@ -908,85 +933,71 @@ $di->set( 'assets', function () use ( $config ) {
 				break;
 		}
 	$headerCollectionCSS
-		->addCss( "css/custom.css", TRUE );
+		->addCss( 'css/custom.css', TRUE );
 
 	$footerCollectionJS->addJs( 'js/pbx/main/footer.js',
 		TRUE,
 		TRUE );
 
 
-	// Сохраним перевод в файл
+	// Сохраним перевод в файл если его еще нет
 	$language = $this->get( 'language' );
-	$arrStr = [];
-	foreach ( $this->get( 'messages' ) as $key => $value ) {
-		$arrStr[ $key ] = str_replace( '"', '\\"',
-			str_replace( [ "\n", "  " ], '', $value ) );
+	$langJSFile = "public/js/cache/localization-{$language}-{$version}.min.js";
+	if (!file_exists($langJSFile)){
+		$arrStr = [];
+		foreach ( $this->get( 'messages' ) as $key => $value ) {
+			$arrStr[ $key ] = str_replace( "'", "\\'",
+				str_replace( [ "\n", '  ' ], '', $value ) );
+		}
+
+		$fileName    = "{$jsCacheDir}localization-{$language}-{$version}.min.js";
+		$scriptArray = json_encode( $arrStr );
+		file_put_contents( $fileName, "globalTranslate = {$scriptArray}" );
 	}
 
-	$fileName    = "{$jsCacheDir}localization-{$language}.min.js";
-	$scriptArray = json_encode( $arrStr );
-	file_put_contents( $fileName, "globalTranslate = {$scriptArray}" );
-
-	$footerCollectionLoc = $manager->collection( "footerLoc" );
-	$footerCollectionLoc->addJs( "public/js/cache/localization-{$language}.min.js?{$version}", TRUE);
+	$footerCollectionLoc = $manager->collection( 'footerLoc' );
+	$footerCollectionLoc->addJs( $langJSFile, TRUE);
 
 
 	// Название получаемого файла
-	$resultCombinedName = Text::uncamelize( ucfirst( $controller )
-	                                        . ucfirst( $action ), '-' );
+	$resultCombinedName = Text::uncamelize( ucfirst( $controller ) . ucfirst( $action ), '-' );
+	$resultCombinedName = strlen( $resultCombinedName ) !== '' ? $resultCombinedName . '-' : '';
 
-	$resultCombinedName = strlen( $resultCombinedName ) > 0
-		? $resultCombinedName . "-" : '';
-
-
-
-	// $semanticCollectionCSS->join( TRUE );
-	// $semanticCollectionCSS->setTargetPath( "{$cssCacheDir}{$resultCombinedName}semantic.min.css" );
-	// $semanticCollectionCSS->setTargetUri( "public/css/cache/{$resultCombinedName}semantic.min.css?{$version}" );
-	// $semanticCollectionCSS->addFilter(
-	// 	new Phalcon\Assets\Filters\Cssmin()
-	// );
 
 	$headerCollectionCSS->join( TRUE );
 	$headerCollectionCSS->setTargetPath( "{$cssCacheDir}{$resultCombinedName}header.min.css" );
-	$headerCollectionCSS->setTargetUri( "public/css/cache/{$resultCombinedName}header.min.css?{$version}" );
+	$headerCollectionCSS->setTargetUri( "public/css/cache/{$resultCombinedName}header.min.css?v={$version}" );
 	$headerCollectionCSS->addFilter(
 		new Phalcon\Assets\Filters\Cssmin()
 	);
 
-	// $semanticCollectionJS->join( TRUE );
-	// $semanticCollectionJS->setTargetPath( "{$jsCacheDir}{$resultCombinedName}semantic.min.js" );
-	// $semanticCollectionJS->setTargetUri( "public/js/cache/{$resultCombinedName}semantic.min.js?{$version}" );
-	// $semanticCollectionJS->addFilter(
-	// 	new Phalcon\Assets\Filters\Jsmin()
-	// );
 	$semanticCollectionCSS->setPrefix('public/');
 	$semanticCollectionJS->setPrefix('public/');
 	$headerCollectionJS->setPrefix('public/');
 	$footerCollectionJS->setPrefix('public/');
 	foreach($headerCollectionJS as $resource){
-		$resource->setPath($resource->getPath().'?'.$version);
+		$resource->setPath($resource->getPath().'?v='.$version);
 	}
 	foreach($footerCollectionJS as $resource){
-		$resource->setPath($resource->getPath().'?'.$version);
+		$resource->setPath($resource->getPath().'?v='.$version);
 	}
 	foreach($semanticCollectionJS as $resource){
-		$resource->setPath($resource->getPath().'?'.$version);
+		$resource->setPath($resource->getPath().'?v='.$version);
 	}
 	foreach($semanticCollectionCSS as $resource){
-		$resource->setPath($resource->getPath().'?'.$version);
+		$resource->setPath($resource->getPath().'?v='.$version);
 	}
 
 	$headerCollectionJSForExtensions->join( TRUE );
 	$headerCollectionJSForExtensions->setTargetPath( "{$jsCacheDir}{$resultCombinedName}header.min.js" );
-	$headerCollectionJSForExtensions->setTargetUri( "public/js/cache/{$resultCombinedName}header.min.js?{$version}" );
+	$headerCollectionJSForExtensions->setTargetUri( "public/js/cache/{$resultCombinedName}header.min.js?v={$version}" );
 	$headerCollectionJSForExtensions->addFilter(
 	 	new Phalcon\Assets\Filters\Jsmin()
 	);
 
 	$footerCollectionJSForExtensions->join( TRUE );
 	$footerCollectionJSForExtensions->setTargetPath( "{$jsCacheDir}{$resultCombinedName}footer.min.js" );
-	$footerCollectionJSForExtensions->setTargetUri( "public/js/cache/{$resultCombinedName}footer.min.js?{$version}" );
+	$footerCollectionJSForExtensions->setTargetUri( "public/js/cache/{$resultCombinedName}footer.min.js?v={$version}" );
 	$footerCollectionJSForExtensions->addFilter(
 		new Phalcon\Assets\Filters\Jsmin()
 	);

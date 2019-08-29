@@ -29,6 +29,7 @@ const customFile = {
 		$('.type-select').dropdown({
 			onChange() {
 				customFile.hideShowCode();
+				customFile.getFileContentFromServer();
 			},
 		});
 
@@ -68,7 +69,9 @@ const customFile = {
 	},
 	getFileContentFromServer() {
 		const filePath = customFile.$formObj.form('get value', 'filepath');
-		PbxApi.GetFileContent({filename: filePath}, customFile.cbGetFileContentFromServer);
+		const mode = customFile.$formObj.form('get value', 'mode') !== 'override';
+		const data = { filename: filePath, needOriginal: mode };
+		PbxApi.GetFileContent(data, customFile.cbGetFileContentFromServer);
 	},
 	initializeAce() {
 		const IniMode = ace.require('ace/mode/julia').Mode;

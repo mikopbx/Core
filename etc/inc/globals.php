@@ -110,14 +110,21 @@ if( 'cli' == php_sapi_name() || defined('ISPBXCORESERVICES')){
             // $g['pt1c_inc_path'].'/custom_modules',  // Генератор конфигов.
             $g['pt1c_inc_path'],
         ];
-        $models     = [
+
+        $nameSpaces     = [
             'Models'  => $config['application']['modelsDir'],
-            'Modules' => $config['application']['modulesDir'],
+            'Modules' => [
+                $config['application']['modulesDir'],
+                $config['application']['modulesBaseDir']
+            ],
+        ];
+        $libraryFiles = [
+            $config['application']['backendDir'].'library/vendor/autoload.php' // Sentry - cloud error logger
         ];
         $m_loader = new Loader();
+        $m_loader->registerNamespaces($nameSpaces);
         $m_loader->registerDirs($dirScripts);
-        $m_loader->registerNamespaces($models);
-		$m_loader->registerFiles([$g['www_path'].'/back-end/library/vendor/autoload.php']);  // Sentry - cloud error logger
+		$m_loader->registerFiles($libraryFiles);
         $m_loader->register();
         $g['m_loader'] = $m_loader;
     }
@@ -140,7 +147,7 @@ if( 'cli' == php_sapi_name() || defined('ISPBXCORESERVICES')){
     $m_di->setShared('translation', function() use ($phalcon_settings,$m_di){
         return new NativeArray(
             array(
-                "content" => $m_di->getMessages()
+                'content' => $m_di->getMessages()
             )
         );
     });
@@ -149,9 +156,9 @@ if( 'cli' == php_sapi_name() || defined('ISPBXCORESERVICES')){
      * Кеш для контроллеров.
      */
     $m_di->set('managedCache', function () use ($phalcon_settings) {
-        $frontCache = new Data( ["lifetime" => 3600]);
+        $frontCache = new Data( ['lifetime' => 3600]);
         $cache = new File( $frontCache, [
-                "cacheDir" => $phalcon_settings['application']['cacheDir'],
+                'cacheDir' => $phalcon_settings['application']['cacheDir'],
             ]
         );
         return $cache;
@@ -203,5 +210,6 @@ if( 'cli' == php_sapi_name() || defined('ISPBXCORESERVICES')){
 		$errorLogger = new SentryErrorLogger('pbx-core-workers');
 	}
 	$errorLogger->init();
+	$g['error_logger']=&$errorLogger;
 
 }

@@ -56,14 +56,14 @@ var ivrMenu = {
     timeout: {
       identifier: 'timeout',
       rules: [{
-        type: 'integer[1..99]',
+        type: 'integer[0..99]',
         prompt: globalTranslate.iv_ValidateTimeoutOutOfRange
       }]
     },
     number_of_repeat: {
       identifier: 'number_of_repeat',
       rules: [{
-        type: 'integer[1..99]',
+        type: 'integer[0..99]',
         prompt: globalTranslate.iv_ValidateRepeatNumberOutOfRange
       }]
     }

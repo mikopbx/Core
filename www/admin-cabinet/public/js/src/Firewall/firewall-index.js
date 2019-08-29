@@ -70,6 +70,7 @@ const firewallTable = {
 		$('i.icon.checkmark.green[data-value="off"]')
 			.removeClass('checkmark green')
 			.addClass('close red');
+		$('i.icon.corner.close').hide();
 
 		if (sendEvent) {
 			const event = document.createEvent('Event');
@@ -83,9 +84,10 @@ const firewallTable = {
 	cbAfterDisabled(sendEvent = false) {
 		firewallTable.$statusToggle.find('label').text(globalTranslate.fw_StatusDisabled);
 		firewallTable.$statusToggle.checkbox('set unchecked');
-		$('i.icon.close.red')
+		$('i.icon.close.red[data-value="off"]')
 			.removeClass('close red')
 			.addClass('checkmark green');
+		$('i.icon.corner.close').show();
 		if (sendEvent) {
 			const event = document.createEvent('Event');
 			event.initEvent('ConfigDataChanged', false, true);

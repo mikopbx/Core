@@ -32,6 +32,7 @@
             <div class="bar">
                 <div class="progress"></div>
             </div>
+            <div class="label"></div>
         </div>
     </div>
     {{ partial("partials/submitbutton",[

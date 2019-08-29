@@ -16,7 +16,7 @@ class BackupController extends BaseController {
 	/**
 	 * Инициализация базового класса
 	 */
-	public function initialize() {
+	public function initialize() :void{
 		$this->whatBackupTpl = [
 			'backup-config'      => '1',
 			'backup-cdr'         => '1',
@@ -30,15 +30,16 @@ class BackupController extends BaseController {
 	 * Список доступных для скачивания бекапов
 	 *
 	 */
-	public function indexAction() {
-
+	public function indexAction() :void{
+        // Очистим кеш хранилища для получения актульной информации о свободном месте
+        $this->session->remove('checkStorage');
 	}
 
 	/**
 	 * Форма мгновенного создания бекапа
 	 *
 	 */
-	public function createAction() {
+	public function createAction() :void{
 		$whatBackup             = $this->whatBackupTpl;
 		$this->view->form       = new BackupCreateForm( NULL, $whatBackup );
 		$this->view->whatBackup = $whatBackup;
@@ -49,7 +50,7 @@ class BackupController extends BaseController {
 	 * Форма восстановления из бекапа
 	 *
 	 */
-	public function restoreAction() {
+	public function restoreAction() :void{
 		$this->view->form = new BackupRestoreForm();
 		$this->view->submitMode = NULL;
 	}
@@ -58,17 +59,17 @@ class BackupController extends BaseController {
 	 * Форма настройки автоматического бекапа
 	 *
 	 */
-	public function automaticAction() {
+	public function automaticAction() :void{
 		$entity = BackupRules::findFirst();
 		if ( $entity === FALSE ) {
 			$entity                      = new BackupRules();
 			$entity->what_backup         = json_encode( $this->whatBackupTpl );
-			$entity->at_time             = "0:00";
+			$entity->at_time             = '0:00';
 			$entity->keep_older_versions = 3;
 		}
 
-		$weekDays = [ '0' => $this->translation->_( "bkp_EveryDay" ) ];
-		for ( $i = "1"; $i <= 7; $i ++ ) {
+		$weekDays = [ '0' => $this->translation->_( 'bkp_EveryDay' ) ];
+		for ( $i = '1'; $i <= 7; $i ++ ) {
 			$weekDays[ $i ] = $this->translation->_( date( 'D',
 				strtotime( "Sunday +{$i} days" ) ) );
 		}
@@ -76,7 +77,7 @@ class BackupController extends BaseController {
 			[ 'week-days' => $weekDays ] );
 		$whatBackup       = json_decode( $entity->what_backup, TRUE );
 		foreach ( $this->whatBackupTpl as $key => $value ) {
-			if ( ! key_exists( $key, $whatBackup ) ) {
+			if ( ! array_key_exists( $key, $whatBackup ) ) {
 				$whatBackup[ $key ] = $value;
 			}
 		}
@@ -89,7 +90,7 @@ class BackupController extends BaseController {
 	 * Удаление файла бекпапа
 	 *
 	 */
-	public function deleteAction() {
+	public function deleteAction() :void{
 
 	}
 
@@ -97,7 +98,7 @@ class BackupController extends BaseController {
 	 * Скачивание бекапа через браузер
 	 *
 	 */
-	public function downloadAction() {
+	public function downloadAction() :void{
 
 	}
 
@@ -118,15 +119,15 @@ class BackupController extends BaseController {
 		// Пройдемся по полям базы данных
 		foreach ( $rule as $name => $value ) {
 			switch ( $name ) {
-				case "id":
-				case "what_backup":
+				case 'id':
+				case 'what_backup':
 					break;
-				case "enabled":
-				case "ftp_sftp_mode":
+				case 'enabled':
+				case 'ftp_sftp_mode':
 					if ( array_key_exists( $name, $data ) ) {
-						$rule->$name = ( $data[ $name ] == 'on' ) ? "1" : "0";
+						$rule->$name = ( $data[ $name ] === 'on' ) ? 1 : 0;
 					} else {
-						$rule->$name = "0";
+						$rule->$name = 0;
 					}
 					break;
 				default:
@@ -137,7 +138,7 @@ class BackupController extends BaseController {
 		$what_backup = [];
 		foreach ( $data as $name => $value ) {
 			if ( strpos( $name, 'backup-' ) === 0 ) {
-				$what_backup[ $name ] = ( $data[ $name ] == 'on' ) ? "1" : "0";
+				$what_backup[ $name ] = ( $data[ $name ] == 'on' ) ? '1' : '0';
 			}
 		}
 		$rule->what_backup = json_encode( $what_backup );

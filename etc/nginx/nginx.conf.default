@@ -70,6 +70,9 @@ http {
 	###SSL#	location /favicon.ico {
 	###SSL#		try_files /admin-cabinet/public/favicon.ico /favicon.ico;
 	###SSL#	}
+	###SSL#			location /robots.txt {
+	###SSL#				try_files /admin-cabinet/public/robots.txt /robots.txt;
+	###SSL#			}
 	###SSL#	location /pbxcore/api/system/ping {	
 	###SSL#		add_header Access-Control-Allow-Origin *;
 	###SSL#		add_header Cache-Control "no-store";
@@ -82,8 +85,9 @@ http {
 	###SSL#        root /offload/rootfs/usr/www/;
 	###SSL#		access_log off;
 	###SSL#		expires 3d;
-	###SSL#		
 	###SSL#    }
+	###SSL#	
+###ADDISIONAL_CONFIG_SSL#	
 	###SSL#}
 	### SSL ### END ###
 	server {
@@ -144,6 +148,9 @@ http {
 		location /favicon.ico {
 			try_files /admin-cabinet/public/favicon.ico /favicon.ico;
 		}
+		location /robots.txt {
+			try_files /admin-cabinet/public/robots.txt /robots.txt;
+		}
 	    location ~ /\.ht {
 	        deny all;
 	    }
@@ -151,8 +158,8 @@ http {
 	        root /offload/rootfs/usr/www/;
 			access_log off;
 			expires 3d;
-			
 	    }
+###ADDISIONAL_CONFIG#	
 	}
-
+###ADDISIONAL_CONFIG_HTTP#	
 }

@@ -167,7 +167,6 @@ function () {
 
 var soundFiles = {
   $audioFilesList: $('#sound-files-table'),
-  $deleteButtons: $('.ui.button.delete'),
   $contentFrame: $('#content-frame'),
   initialize: function () {
     function initialize() {
@@ -206,7 +205,7 @@ var soundFiles = {
       toArray.apply(document.getElementsByTagName('audio')).forEach(function (audio) {
         audio.addEventListener('error', soundFiles.handleMediaError);
       });
-      soundFiles.$deleteButtons.on('click', function (e) {
+      $('body').on('click', 'a.delete', function (e) {
         e.preventDefault();
         var fileName = $(e.target).closest('tr').attr('data-value');
         var id = $(e.target).closest('tr').attr('id');

@@ -19,12 +19,17 @@ use Models\ExtensionForwardingRights;
 use Models\PbxExtensionModules;
 use Phalcon\Text;
 
+/**
+ * @property void managedCache
+ * @property void translation
+ * @property void config
+ */
 class ExtensionsController extends BaseController {
 
 	/**
 	 * Построение списка внутренних номеров и сотрудников
 	 */
-	public function indexAction() {
+	public function indexAction() :void{
 		$extensionTable = [];
 
 		$parameters = [
@@ -89,6 +94,8 @@ class ExtensionsController extends BaseController {
 				case 'EXTERNAL':
 					$extensionTable[ $extension->userid ]['mobile'] = $extension->number;
 					break;
+				default:
+
 			}
 		}
 		$this->view->extensions = $extensionTable;
@@ -98,7 +105,7 @@ class ExtensionsController extends BaseController {
 	/**
 	 * @param null $id - идентификатор внутреннего номера
 	 */
-	public function modifyAction($id = NULL) {
+	public function modifyAction($id = NULL) :void {
 		$codecs          = [];
 		$availableCodecs = Codecs::find();
 		foreach ($availableCodecs as $codec) {
@@ -207,8 +214,10 @@ class ExtensionsController extends BaseController {
 	 *
 	 * @return void параметры помещаются в view и обрабатваются через ControllerBase::afterExecuteRoute()
 	 */
-	public function saveAction() {
-		if ( ! $this->request->isPost()) return;
+	public function saveAction() :void{
+		if ( ! $this->request->isPost()) {
+			return;
+		}
 
 		$this->db->begin();
 
@@ -229,11 +238,11 @@ class ExtensionsController extends BaseController {
 
 		} else {
 			$extension = $sipEntity->Extensions;
-			if ( ! $extension) $extension = new Extensions();
+			if ( ! $extension) {$extension = new Extensions();}
 			$userEntity = $extension->Users;
-			if ( ! $userEntity) $userEntity = new Users();
+			if ( ! $userEntity) {$userEntity = new Users();}
 			$fwdEntity = $extension->ExtensionForwardingRights;
-			if ( ! $fwdEntity) $fwdEntity = new ExtensionForwardingRights();
+			if ( ! $fwdEntity) {$fwdEntity = new ExtensionForwardingRights();}
 		}
 
 		// Заполним параметры пользователя
@@ -279,7 +288,7 @@ class ExtensionsController extends BaseController {
 		// Если мобильный не указан, то не будем его добавлять в базу
 		if ( ! empty($data['mobile_number'])) {
 			$externalPhone = ExternalPhones::findFirstByUniqid($data['mobile_uniqid']);
-			if ($externalPhone == FALSE) {
+			if ($externalPhone === FALSE) {
 				$externalPhone   = new ExternalPhones();
 				$mobileExtension = new Extensions();
 			} else {
@@ -346,12 +355,14 @@ class ExtensionsController extends BaseController {
 
 		$errors = FALSE;
 		if ($extension && $extension->ExtensionForwardingRights
-			&& ! $extension->ExtensionForwardingRights->delete())
+			&& ! $extension->ExtensionForwardingRights->delete()) {
 			$errors = $extension->ExtensionForwardingRights->getMessages();
+		}
 
-		if ( ! $errors && $extension && ! $extension->Users->delete())
+
+		if ( ! $errors && $extension && ! $extension->Users->delete()){
 			$errors = $extension->Users->getMessages();
-
+		}
 
 		if ($errors) {
 			$this->flash->error(implode('<br>', $errors));
@@ -401,7 +412,7 @@ class ExtensionsController extends BaseController {
 	 *
 	 * @return void
 	 */
-	public function disableAction($number = NULL) {
+	public function disableAction($number = NULL) :void{
 		$extension = Extensions::findFirstByNumber($number);
 		if ($extension) {
 			$extensions = Extensions::findByUserid($extension->userid);
@@ -435,7 +446,7 @@ class ExtensionsController extends BaseController {
 	 *
 	 * @return void
 	 */
-	public function enableAction($number = NULL) {
+	public function enableAction($number = NULL) :void {
 		$extension = Extensions::findFirstByNumber($number);
 		if ($extension) {
 			$extensions = Extensions::findByUserid($extension->userid);
@@ -462,76 +473,7 @@ class ExtensionsController extends BaseController {
 	}
 
 
-	/**
-	 * Используется для генерации списка выбора пользователей из JS скрипта extensions.js
-	 *
-	 * @param bool $onlyphone - отображать только телефоны или все возможные номера
-	 *
-	 * @return void параметры помещаются в view и обрабатваются через ControllerBase::afterExecuteRoute()
-	 */
-	public function getForSelectAction($onlyphone = FALSE) :void{
 
-		$cacheKey = "Extensions.getForSelectAction.{$onlyphone}";
-		$results  = $this->managedCache->get($cacheKey, 3600);
-		if (empty($results)) {
-
-			$results = [];
-
-			if ($onlyphone) {
-				// Список телефоонных эктеншенов
-				$parameters = [
-					'conditions' => 'type IN ({ids:array})',
-					'bind'       => [
-						'ids' => ['SIP', 'EXTERNAL'],
-					],
-				];
-			} else {
-				$parameters = [];
-			}
-			$extensions = Extensions::find($parameters);
-			foreach ($extensions as $record) {
-				$type = ($record->userid > 0) ? ' USER'
-					: $record->type; // Пользователи будут самыми первыми в списке
-				$type = Text::underscore(strtoupper($type));
-
-
-				// Необходимо проверить к какому модулю относится эта запись
-				// и включен ли этот модуль в данный момент
-				if ($type === "MODULES"
-					&& PbxExtensionModules::ifModule4ExtensionDisabled($record->number)) {
-					continue; // исключаем отключенные модули
-				}
-				$represent = $record->getRepresent();
-				$clearedRepresent = strip_tags($represent);
-				$results[] = [
-					'name'          => $represent,
-					'value'         => $record->number,
-					'type'          => $type,
-					'typeLocalized' => $this->translation->_("ex_dropdownCategory_{$type}"),
-					'sorter'        => ($record->userid > 0)?"{$type}{$clearedRepresent}{$record->number}":"{$type}{$clearedRepresent}"
-					// 'avatar' => ( $record->userid > 0 )
-					// 	? $record->Users->avatar : '',
-				];
-			}
-
-			usort($results,
-				['ExtensionsController', 'sortExtensionsArray']);
-			$this->managedCache->save($cacheKey, $results);
-		}
-		$this->view->success = TRUE;
-		$this->view->results = $results;
-
-
-	}
-
-	/**
-	 * Сортировка массива extensions
-	 *
-	 * @return bool
-	 */
-	private function sortExtensionsArray($a, $b) :bool{
-		return strcmp($a['sorter'], $b['sorter']);
-	}
 
 	/**
 	 * Сохранение параметров в таблицу Users
@@ -591,11 +533,16 @@ class ExtensionsController extends BaseController {
 					$extension->$name = $isMobile ? 'EXTERNAL' : 'SIP';
 					break;
 				case 'public_access':
+                    if (array_key_exists($name, $data))
+                        $extension->$name = ($data[ $name ] === 'on') ? '1' : '0';
+                    else
+                        $extension->$name = '0';
+                    break;
 				case 'show_in_phonebook':
 					if (array_key_exists($name, $data))
 						$extension->$name = ($data[ $name ] === 'on') ? '1' : '0';
 					else
-						$extension->$name = '0';
+						$extension->$name = ($data['is_general_user_number'] === 'on') ? '1' : '0';
 					break;
 				case 'callerid':
 					$extension->$name = $this->transliterate($data['user_username']);
@@ -897,10 +844,12 @@ class ExtensionsController extends BaseController {
 	/**
 	 * Возвращает представление для списка нормеров телефонов по AJAX запросу
 	 *
-	 * @return string
+	 * @return void
 	 */
 	public function GetPhonesRepresentAction() :void{
-		if ( ! $this->request->isPost()) return;
+		if ( ! $this->request->isPost()) {
+			return;
+		}
 		$numbers = $this->request->getPost('numbers');
 		$result =[];
 		foreach ($numbers as $number){
@@ -912,4 +861,75 @@ class ExtensionsController extends BaseController {
 		$this->view->success = true;
 		$this->view->message = $result;
 	}
+
+    /**
+     * Используется для генерации списка выбора пользователей из JS скрипта extensions.js
+     *
+     * @param bool $onlyphone - отображать только телефоны или все возможные номера
+     *
+     * @return void параметры помещаются в view и обрабатваются через ControllerBase::afterExecuteRoute()
+     */
+    public function getForSelectAction($onlyphone = FALSE) :void{
+
+        $cacheKey = "Extensions.getForSelectAction.{$onlyphone}.php";
+        $results  = $this->managedCache->get($cacheKey, 3600);
+        if (empty($results) || $this->config->application->debugMode) {
+
+            $results = [];
+
+            if ($onlyphone) {
+                // Список телефоонных эктеншенов
+                $parameters = [
+                    'conditions' => 'type IN ({ids:array})',
+                    'bind'       => [
+                        'ids' => ['SIP', 'EXTERNAL'],
+                    ],
+                ];
+            } else {
+                $parameters = [];
+            }
+            $extensions = Extensions::find($parameters);
+            foreach ($extensions as $record) {
+                $type = ($record->userid > 0) ? ' USER'
+                    : $record->type; // Пользователи будут самыми первыми в списке
+                $type = Text::underscore(strtoupper($type));
+
+
+                // Необходимо проверить к какому модулю относится эта запись
+                // и включен ли этот модуль в данный момент
+                if ($type === 'MODULES'
+                    && PbxExtensionModules::ifModule4ExtensionDisabled($record->number)) {
+                    continue; // исключаем отключенные модули
+                }
+                $represent = $record->getRepresent();
+                $clearedRepresent = strip_tags($represent);
+                $results[] = [
+                    'name'          => $represent,
+                    'value'         => $record->number,
+                    'type'          => $type,
+                    'typeLocalized' => $this->translation->_("ex_dropdownCategory_{$type}"),
+                    'sorter'        => ($record->userid > 0)?"{$type}{$clearedRepresent}{$record->number}":"{$type}{$clearedRepresent}"
+                    // 'avatar' => ( $record->userid > 0 )
+                    // 	? $record->Users->avatar : '',
+                ];
+            }
+
+            usort($results,
+                ['ExtensionsController', 'sortExtensionsArray']);
+            $this->managedCache->save($cacheKey, $results);
+        }
+        $this->view->success = TRUE;
+        $this->view->results = $results;
+
+
+    }
+
+    /**
+     * Сортировка массива extensions
+     *
+     * @return integer
+     */
+    private function sortExtensionsArray($a, $b) :int {
+        return strcmp($a['sorter'], $b['sorter']);
+    }
 }

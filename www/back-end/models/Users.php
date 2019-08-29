@@ -13,57 +13,89 @@ use Phalcon\Mvc\Model\Relation;
 
 class Users extends ModelsBase
 {
+    /**
+     * @var integer
+     */
     public $id;
+
+    /**
+     * @var string
+     */
     public $email;
+
+    /**
+     * @var string
+     */
     public $username;
+
+    /**
+     * @var string
+     */
     public $password;
+
+    /**
+     * @var string
+     */
     public $role;
+
+    /**
+     * @var string
+     */
     public $language;
+
+    /**
+     * @var string
+     */
     public $voicemailpincode;
+
+    /**
+     * @var string
+     */
     public $ldapauth;
+
+    /**
+     * @var string
+     */
     public $avatar;
 
-    public function getSource()
+    public function getSource(): string
     {
         return 'm_Users';
     }
 
-    static function getRoleValues(){
-        return array('Admins','Users');
-    }
-
-    static function getLanguages(){
-        return array('ru','en','de');
-    }
-
-
-    public function initialize()
+    static function getRoleValues(): array
     {
-	    parent::initialize();
+        return ['Admins', 'Users'];
+    }
+
+    static function getLanguages(): array
+    {
+        return ['ru', 'en', 'de'];
+    }
+
+    public function afterSave(): void
+    {
+
+        // Обновим кеш для списков выбора если поменяли имя, фамилию сотрудрника
+        $this->clearCache('Models\Extensions');
+        parent::afterSave();
+    }
+
+    public function initialize(): void
+    {
+        parent::initialize();
         $this->hasMany(
             'id',
             'Models\Extensions',
             'userid',
             [
-                "alias"=>"Extensions",
-                "foreignKey" => [
-                    "allowNulls" => false,
-                    "action"     => Relation::ACTION_CASCADE
-                ]
+                'alias'      => 'Extensions',
+                'foreignKey' => [
+                    'allowNulls' => false,
+                    'action'     => Relation::ACTION_CASCADE,
+                ],
             ]
         );
-	    // $this->hasMany(
-	    //     'id',
-	    //     'Models\ModuleAutoProvisioning',
-	    //     'userid',
-	    //     [
-	    //         "alias"=>"ModuleAutoProvisioning",
-	    //         "foreignKey" => [
-	    //             "allowNulls" => false,
-	    //             "action"     => Relation::ACTION_CASCADE
-	    //         ]
-	    //     ]
-	    // );
     }
 
 

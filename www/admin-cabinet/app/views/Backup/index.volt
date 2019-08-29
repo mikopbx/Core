@@ -7,6 +7,7 @@
     <div class="bar">
         <div class="progress"></div>
     </div>
+    <div class="label"></div>
 </div>
 <div id="existing-backup-files">
     <table class="ui selectable compact table" id="existing-backup-files-table">
@@ -30,7 +31,8 @@
                 [
                     'id': '',
                     'restore' : 'backup/restore/',
-                    'download' : 'backup/download/'
+                    'download' : 'backup/download/',
+                    'delete': 'backup/delete/'
                 ]) }}
         </tr>
         </tbody>

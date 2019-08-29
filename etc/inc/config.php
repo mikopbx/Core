@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 12 2018
+ * Written by Alexey Portnov, 7 2019
  */
 
 require_once("globals.php");
@@ -19,15 +19,30 @@ class Config{
      * @return array|string
      */
     public function get_general_settings($db_key = ''){
+        $result = '';
+        try{
+            $result = $this->get_general_settings_private($db_key);
+        }catch (PDOException $e){
+            if($e->errorInfo[1]==17 ){
+                // Обновляем схему базыданных.
+                init_db($GLOBALS['g']['m_di'], $GLOBALS['g']['phalcon_settings']);
+                $result = $this->get_general_settings_private($db_key);
+                // Если и тут будет исключение, то какая то другая, более грубая ошибка. Будем ловить...
+            }
+        }
+        return $result;
+	}
+
+    private function get_general_settings_private($db_key = ''){
         if($db_key == ''){
             $result = Models\PbxSettings::getAllPbxSettings();
         }else{
             $result = Models\PbxSettings::getValueByKey("$db_key");
         }
-		return $result;
-	}
+        return $result;
+    }
 
-    /**
+        /**
      * Сохранение основных настроек станции.
      * @param $db_key
      * @param $value

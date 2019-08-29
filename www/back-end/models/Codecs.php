@@ -12,16 +12,31 @@ use Phalcon\Mvc\Model\Relation;
 
 class Codecs extends ModelsBase
 {
+    /**
+     * @var integer
+     */
     public $id;
+
+    /**
+     * @var string
+     */
     public $name;
+
+    /**
+     * @var string
+     */
     public $type;
+
+    /**
+     * @var string
+     */
     public $description;
 
-    public function getSource()
+    public function getSource() :string 
     {
         return 'm_Codecs';
     }
-    public function initialize()
+    public function initialize() :void
     {
 	    parent::initialize();
         $this->hasMany(
@@ -29,10 +44,10 @@ class Codecs extends ModelsBase
             'Models\IaxCodecs',
             'codec',
             [
-                "alias"=>"IaxCodecs",
-                "foreignKey" => [
-                    "allowNulls" => true,
-                    "action"     => Relation::ACTION_CASCADE
+                'alias'=>'IaxCodecs',
+                'foreignKey' => [
+                    'allowNulls' => true,
+                    'action'     => Relation::ACTION_CASCADE
                 ],
                 'params' => array(
                     'order' => 'priority asc'
@@ -46,10 +61,10 @@ class Codecs extends ModelsBase
             'Models\SipCodecs',
             'codec',
             [
-                "alias"=>"SipCodecs",
-                "foreignKey" => [
-                    "allowNulls" => true,
-                    "action"     => Relation::ACTION_CASCADE
+                'alias'=>'SipCodecs',
+                'foreignKey' => [
+                    'allowNulls' => true,
+                    'action'     => Relation::ACTION_CASCADE
                 ],
                 'params' => array(
                     'order' => 'priority asc'

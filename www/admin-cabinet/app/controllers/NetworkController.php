@@ -78,7 +78,7 @@ class NetworkController extends BaseController {
 			$eth->id = 'new';
 			$this->fillEthStructure( $eth, $data );
 			$eth->id = '';
-			$eth->disabled = 0;
+			$eth->disabled = '0';
 			if ( $eth->save() === FALSE ) {
 				$errors = $eth->getMessages();
 				$this->flash->warning( implode( '<br>', $errors ) );

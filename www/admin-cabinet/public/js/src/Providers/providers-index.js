@@ -9,7 +9,9 @@
 /* global globalRootUrl, PbxApi, DebuggerInfo */
 
 const providers = {
+	$deleteModalForm: $('#delete-modal-form'),
 	initialize() {
+		providers.$deleteModalForm.modal();
 		$('.provider-row .checkbox')
 			.checkbox({
 				onChecked() {
@@ -52,6 +54,26 @@ const providers = {
 			const id = $(e.target).closest('tr').attr('id');
 			const type = $(e.target).closest('tr').attr('data-value');
 			window.location = `${globalRootUrl}providers/modify${type}/${id}`;
+		});
+
+		$('body').on('click', '.provider-row a.delete', (e) => {
+			e.preventDefault();
+			const linksExist = $(e.target).closest('tr').attr('data-links');
+			if (linksExist === 'true') {
+				providers.$deleteModalForm
+					.modal({
+						closable: false,
+						onDeny: () => true,
+						onApprove: () => {
+							window.location = $(e.target).closest('a').attr('href');
+							return true;
+						},
+					})
+					.modal('show');
+			} else {
+				window.location = $(e.target).closest('a').attr('href');
+			}
+
 		});
 	},
 };

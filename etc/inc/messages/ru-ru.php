@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 2 2019
+ * Written by Alexey Portnov, 8 2019
  */
 
 $messages = [
@@ -69,5 +69,8 @@ $messages = [
     '(default value = ' => '(значение по умолчанию = ',
     'Select the drive to store the data.' => 'Выберите диск для хранения данных.',
     'user' => 'пользователь',
+    'Reboot' => 'Перезагрузить Askozia',
+    'Power off' => 'Выключить',
+    'Choose action' => 'Выберите действие',
     'Пропущенный вызов' => 'У Вас есть пропущенный вызов'
 ];

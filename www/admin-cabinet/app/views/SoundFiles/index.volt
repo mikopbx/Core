@@ -12,7 +12,7 @@
             </thead>
             <tbody>
         {% endif %}
-        <tr class="file-row" id="{{ record.id }}">
+        <tr class="file-row" id="{{ record.id }}" data-value="{{ record.path }}">
             <td class="name"><i class="file audio outline icon"></i>{{ record.name }}</td>
             <td class="cdr-player">
             <table>

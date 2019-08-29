@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 3 2019
+ * Written by Alexey Portnov, 8 2019
  */
 
 require_once 'globals.php';
@@ -64,12 +64,12 @@ class Network {
 
 		$dns  = $this->getHostDNS();
 		foreach ($dns as $ns) {
-			if (trim($ns) != ''){
+			if (trim($ns) !== ''){
 				$resolv_conf .= "nameserver $ns\n";
 			} 			
 		}
-		if(count($dns)==0){
-            $resolv_conf .= "nameserver 8.8.8.8\n";
+		if(count($dns)===0){
+            $resolv_conf .= "nameserver 127.0.0.1\n";
         }
 
 		file_put_contents("{$g['pt1c_etc_path']}/resolv.conf", $resolv_conf);
@@ -157,16 +157,16 @@ class Network {
         $internet = ($general==true)?1:0;
 
         $data = new Models\LanInterfaces();
-        $data->writeAttribute("name",       "$name");
-        $data->writeAttribute("interface",  "$name");
-        $data->writeAttribute("dhcp",       $dhcp);
-        $data->writeAttribute("internet",   $internet);
-        $data->writeAttribute("disabled",   $disabled);
-        $data->writeAttribute("vlanid",     0);
-        $data->writeAttribute("hostname",   'mikopbx');
-        $data->writeAttribute("domain",     'local');
-        $data->writeAttribute("topology",   'private');
-        $data->writeAttribute("primarydns", '8.8.8.8');
+        $data->writeAttribute('name',       $name);
+        $data->writeAttribute('interface',  $name);
+        $data->writeAttribute('dhcp',       $dhcp);
+        $data->writeAttribute('internet',   $internet);
+        $data->writeAttribute('disabled',   $disabled);
+        $data->writeAttribute('vlanid',     0);
+        $data->writeAttribute('hostname',   'mikopbx');
+        $data->writeAttribute('domain',     'local');
+        $data->writeAttribute('topology',   'private');
+        $data->writeAttribute('primarydns', '127.0.0.1');
 
         $data->save();
 

@@ -19,6 +19,7 @@ class GeneralSettingsController extends BaseController {
 		$pbxSettings = PbxSettings::getAllPbxSettings();
 		$this->view->form = new GeneralSettingsEditForm(null,$pbxSettings);
 		$this->view->submitMode = NULL;
+		$sshPort = $pbxSettings['SSHPort'];
 	}
 
 	/**

@@ -13,16 +13,31 @@ use Phalcon\Mvc\Model\Relation;
 
 class ConferenceRooms extends ModelsBase
 {
+    /**
+     * @var integer
+     */
     public $id;
+
+    /**
+     * @var string
+     */
     public $uniqid;
+
+    /**
+     * @var string
+     */
     public $extension;
+
+    /**
+     * @var string
+     */
     public $name;
 
-    public function getSource()
+    public function getSource() :string
     {
         return 'm_ConferenceRooms';
     }
-    public function initialize()
+    public function initialize() :void 
     {
 	    parent::initialize();
         $this->belongsTo(
@@ -30,10 +45,10 @@ class ConferenceRooms extends ModelsBase
             'Models\Extensions',
             'number',
             [
-                "alias"=>"Extensions",
-                "foreignKey" => [
-                    "allowNulls" => false,
-                    "action"     => Relation::NO_ACTION // Удаляем всегда Extension, а он удалить эту запись
+                'alias'=>'Extensions',
+                'foreignKey' => [
+                    'allowNulls' => false,
+                    'action'     => Relation::NO_ACTION // Удаляем всегда Extension, а он удалить эту запись
                 ]
             ]
         );
@@ -45,7 +60,7 @@ class ConferenceRooms extends ModelsBase
 
         $validation = new \Phalcon\Validation();
         $validation->add('uniqid', new UniquenessValidator([
-            'message' => $this->t("mo_ThisUniqidMustBeUniqueForConferenceRoomsModels")
+            'message' => $this->t('mo_ThisUniqidMustBeUniqueForConferenceRoomsModels')
         ]));
         return $this->validate($validation);
 

@@ -8,11 +8,14 @@ $loader = new Loader();
 /**
  * We're a registering a set of directories taken from the configuration file
  */
- 
- $loader->registerNamespaces(array(
+
+$arNameSpaces = [
 	 'Models'  => $config->application->modelsDir,
-	 'Modules' => $config->application->modulesDir,
- ));
+	 'Modules' => [
+	     $config->application->modulesDir,
+         $config->application->modulesBaseDir
+     ],
+];
 
 $arDirs = [
 	$config->application->controllersDir,
@@ -22,12 +25,20 @@ $arDirs = [
 	$config->application->formsDir,
 ];
 
-$results = glob( $config->application->modulesDir
-                 . "*/*/{controllers,forms}", GLOB_BRACE );
+$results = glob( $config->application->modulesDir . '*/*/{controllers,forms}', GLOB_BRACE );
 foreach ( $results as $path ) {
 	$arDirs[] = $path;
-};
+}
 
+$results = glob( $config->application->modulesDir . '*/{setup}', GLOB_BRACE );
+foreach ( $results as $path ) {
+    $arDirs[] = $path;
+}
+
+// $arrFiles[] = '/etc/inc/Nats/autoloader.php';
+
+$arrFiles[] = $config->application->backendDir.'library/vendor/autoload.php';
+$loader->registerFiles($arrFiles);
+$loader->registerNamespaces($arNameSpaces);
 $loader->registerDirs( $arDirs );
-$loader->registerFiles([$config->application->backendDir.'library/vendor/autoload.php']);
 $loader->register();

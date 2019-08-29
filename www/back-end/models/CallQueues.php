@@ -14,38 +14,116 @@ use Phalcon\Mvc\Model\Relation;
 
 class CallQueues extends ModelsBase
 {
+    /**
+     * @var integer
+     */
     public $id;
+
+    /**
+     * @var string
+     */
     public $uniqid;
+
+    /**
+     * @var string
+     */
     public $name;
+
+    /**
+     * @var string
+     */
     public $extension;
+
+    /**
+     * @var string
+     */
     public $strategy;
+
+    /**
+     * @var string
+     */
     public $seconds_to_ring_each_member;
-    public $seconds_for_wrapup; //number
-    public $recive_calls_while_on_a_call; //check
-    public $caller_hear; //ringing or musiconhold
-    public $announce_position; //check
-    public $announce_hold_time; //check
-    public $periodic_announce_sound_id; // integer
-    public $periodic_announce_frequency; //number seconds
 
-    public $timeout_to_redirect_to_extension; //number seconds noanswer
-    public $timeout_extension; //extension
+    /**
+     * @var integer
+     */
+    public $seconds_for_wrapup;
 
+    /**
+     * @var integer
+     */
+    public $recive_calls_while_on_a_call;
+
+    /**
+     * @var string{'ringing'|'musiconhold'}
+     */
+    public $caller_hear;
+
+    /**
+     * @var integer
+     */
+    public $announce_position;
+
+    /**
+     * @var integer
+     */
+    public $announce_hold_time;
+
+    /**
+     * @var integer
+     */
+    public $periodic_announce_sound_id;
+
+    /**
+     * @var integer
+     */
+    public $periodic_announce_frequency;
+
+    /**
+     * @var integer
+     */
+    public $timeout_to_redirect_to_extension;
+
+    /**
+     * @var string
+     */
+    public $timeout_extension;
+
+    /**
+     * @var string
+     */
     public $redirect_to_extension_if_empty; //extension
 
+    /**
+     * @var integer
+     */
     public $number_unanswered_calls_to_redirect; //number unanswered calls
+
+    /**
+     * @var string
+     */
     public $redirect_to_extension_if_unanswered; //extension
 
+    /**
+     * @var integer
+     */
     public $number_repeat_unanswered_to_redirect; //number repeat queue cycle
+
+    /**
+     * @var string
+     */
     public $redirect_to_extension_if_repeat_exceeded; //extension
 
+    /**
+     * @var string
+     */
     public $description;
 
-    public function getSource()
+    public function getSource() :string
     {
         return 'm_CallQueues';
     }
-    public function initialize()
+    public function initialize() :void
     {
 	    parent::initialize();
         $this->belongsTo(
@@ -53,10 +131,10 @@ class CallQueues extends ModelsBase
             'Models\Extensions',
             'number',
             [
-                "alias"      => 'Extensions',
-                "foreignKey" => [
-                    "allowNulls" => false,
-                    "action"     => Relation::NO_ACTION // В первую очередь удаляются Extension, а он удалит CallQueues
+                'alias'      => 'Extensions',
+                'foreignKey' => [
+                    'allowNulls' => false,
+                    'action'     => Relation::NO_ACTION // В первую очередь удаляются Extension, а он удалит CallQueues
                 ]
             ]
         );
@@ -65,11 +143,11 @@ class CallQueues extends ModelsBase
             'Models\Extensions',
             'number',
             [
-	            "alias"      => 'TimeoutExtensions',
-                "foreignKey" => [
-	                "message"    => 'Models\TimeoutExtensions',
-	                "allowNulls" => true,
-	                "action"     => Relation::NO_ACTION
+	            'alias'      => 'TimeoutExtensions',
+                'foreignKey' => [
+	                'message'    => 'Models\TimeoutExtensions',
+	                'allowNulls' => true,
+	                'action'     => Relation::NO_ACTION
 	                // Не троогать Extensions
                 ]
             ]
@@ -79,11 +157,11 @@ class CallQueues extends ModelsBase
             'Models\Extensions',
             'number',
             [
-	            "alias"      => 'RedirectIfEmptyExtensions',
-                "foreignKey" => [
-	                "allowNulls" => true,
-	                "message"    => 'Models\RedirectIfEmptyExtensions',
-	                "action"     => Relation::NO_ACTION
+	            'alias'      => 'RedirectIfEmptyExtensions',
+                'foreignKey' => [
+	                'allowNulls' => true,
+	                'message'    => 'Models\RedirectIfEmptyExtensions',
+	                'action'     => Relation::NO_ACTION
 	                // Не троогать Extensions
                 ]
             ]
@@ -93,11 +171,11 @@ class CallQueues extends ModelsBase
             'Models\Extensions',
             'number',
             [
-	            "alias"      => 'RedirectIfUnAnsweredExtensions',
-                "foreignKey" => [
-	                "allowNulls" => true,
-	                "message"    => 'Models\RedirectIfUnAnsweredExtensions',
-	                "action"     => Relation::NO_ACTION
+	            'alias'      => 'RedirectIfUnAnsweredExtensions',
+                'foreignKey' => [
+	                'allowNulls' => true,
+	                'message'    => 'Models\RedirectIfUnAnsweredExtensions',
+	                'action'     => Relation::NO_ACTION
 	                // Не троогать Extensions
                 ]
             ]
@@ -107,11 +185,11 @@ class CallQueues extends ModelsBase
             'Models\Extensions',
             'number',
             [
-	            "alias"      => 'RedirectIfRepeadExceeded',
-                "foreignKey" => [
-	                "allowNulls" => true,
-	                "message"    => 'Models\RedirectIfRepeadExceeded',
-	                "action"     => Relation::NO_ACTION
+	            'alias'      => 'RedirectIfRepeadExceeded',
+                'foreignKey' => [
+	                'allowNulls' => true,
+	                'message'    => 'Models\RedirectIfRepeadExceeded',
+	                'action'     => Relation::NO_ACTION
 	                // Не троогать Extensions
                 ]
             ]
@@ -122,10 +200,10 @@ class CallQueues extends ModelsBase
             'Models\SoundFiles',
             'id',
             [
-                "alias"      => 'SoundFiles',
-                "foreignKey" => [
-                    "allowNulls" => false,
-                    "action"     => Relation::NO_ACTION
+                'alias'      => 'SoundFiles',
+                'foreignKey' => [
+                    'allowNulls' => false,
+                    'action'     => Relation::NO_ACTION
                     ]
             ]
 
@@ -135,10 +213,10 @@ class CallQueues extends ModelsBase
             'Models\CallQueueMembers',
             'queue',
             [
-                "alias"=>"CallQueueMembers",
-                "foreignKey" => [
-                    "allowNulls" => false,
-                    "action"     => Relation::ACTION_CASCADE //Удалить подчиненные все CallQueueMembers
+                'alias'=>'CallQueueMembers',
+                'foreignKey' => [
+                    'allowNulls' => false,
+                    'action'     => Relation::ACTION_CASCADE //Удалить подчиненные все CallQueueMembers
                 ],
                 'params' => array(
                     'order' => 'priority asc'
@@ -150,12 +228,12 @@ class CallQueues extends ModelsBase
     }
 
 
-    public function validation()
+    public function validation() :bool
     {
 
         $validation = new \Phalcon\Validation();
         $validation->add('uniqid', new UniquenessValidator([
-            'message' => $this->t("mo_ThisUniqidMustBeUniqueForCallQueuesModels")
+            'message' => $this->t('mo_ThisUniqidMustBeUniqueForCallQueuesModels')
         ]));
         return $this->validate($validation);
 

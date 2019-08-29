@@ -15,7 +15,6 @@ var restoreWorker = {
   $submitButton: $('#submitbutton'),
   waitRestoreId: undefined,
   $progressBar: $('#restore-progress-bar'),
-  $ajaxMessagesDiv: $('#ajax-messages'),
   restoreIsProcessing: false,
   $formObj: $('#backup-restore-form'),
   formAlreadyBuilded: false,
@@ -132,7 +131,6 @@ var restoreBackup = {
   $formObj: $('#backup-restore-form'),
   $submitButton: $('#submitbutton'),
   $deleteButton: $('#deletebutton'),
-  $ajaxMessagesDiv: $('#ajax-messages'),
   $restoreModalForm: $('#restore-modal-form'),
   currentBackupId: window.location.pathname.split('/')[4],
   initialize: function () {
@@ -197,7 +195,7 @@ var restoreBackup = {
   cbAfterDeleteFile: function () {
     function cbAfterDeleteFile(response) {
       if (response) {
-        window.location = "".concat(globalRootUrl, "/backup/index");
+        window.location = "".concat(globalRootUrl, "backup/index");
       }
     }
 

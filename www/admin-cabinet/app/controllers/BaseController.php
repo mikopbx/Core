@@ -23,7 +23,7 @@ class BaseController extends Controller {
 	/**
 	 * Инициализация базововго класса
 	 */
-	public function initialize() {
+	public function initialize(){
 		$this->di                    = $this->getDi();
 		$this->actionName            = $this->dispatcher->getActionName();
 		$this->controllerName        = $this->dispatcher->getControllerName();
@@ -38,20 +38,19 @@ class BaseController extends Controller {
 	/**
 	 * Инициализирует шаблонизатор View и устанавливает переменные системы для отображения
 	 */
-	protected function prepareView(){
+	protected function prepareView() :void{
 		date_default_timezone_set( $this->getSessionData('PBXTimezone') );
 		$roSession  = $this->sessionRO;
 		$this->view->PBXVersion = $this->getSessionData('PBXVersion');
-		$this->view->PBXLicense = $this->getSessionData('PBXLicense');
-		$this->view->PBXLanguage= $this->getSessionData('PBXLanguage');
-
-		// Проверим монтирование диска для хранения
-		if ( $roSession !== null && array_key_exists('StorageDiskUnMounted', $roSession)) {
-			$this->view->StorageDiskUnMounted = $roSession[ 'StorageDiskUnMounted' ];
-		} else {
-			$this->view->StorageDiskUnMounted = false;
-		}
-
+        if ( $roSession !== null && array_key_exists('auth', $roSession)) {
+		    $this->view->SSHPort    = $this->getSessionData('SSHPort');
+		    $this->view->PBXLicense = $this->getSessionData('PBXLicense');
+		    $this->view->PBXLanguage= $this->getSessionData('PBXLanguage');
+        } else {
+            $this->view->SSHPort    = '';
+            $this->view->PBXLicense = '';
+            $this->view->PBXLanguage= '';
+        }
 
 		// Кеш версий модулей и атс, для правильной работы АТС при установке модулей
 		$versionHash = $this->getVersionsHash();
@@ -64,7 +63,7 @@ class BaseController extends Controller {
 		}
 
 		// Добавим версию модуля, если это модуль
-		if ( $this->moduleName == "PBXExtension" ) {
+		if ( $this->moduleName === 'PBXExtension' ) {
 			$module = PbxExtensionModules::findFirstByUniqid( $this->controllerName );
 			if ( !$module ) {
 				$module = new PbxExtensionModules();
@@ -76,7 +75,7 @@ class BaseController extends Controller {
 		}
 
 		// Разрешим отправку анонимной информации об ошибках
-		if ($this->getSessionData('SendMetrics') == '1'){
+		if ($this->getSessionData('SendMetrics') === '1'){
 			touch('/tmp/sendmetrics');
 			$this->view->lastSentryEventId = Sentry\State\Hub::getCurrent()->getLastEventId();
 		} else {
@@ -119,7 +118,7 @@ class BaseController extends Controller {
 		$this->view->urlToController = $this->url->get( $unCamelizedControllerName );
 		$this->view->represent       = '';
 		$this->view->cacheName       = "{$this->controllerName}{$this->actionName}{$this->language}{$versionHash}";
-		if ( $this->moduleName  === "PBXExtension" ) {
+		if ( $this->moduleName  === 'PBXExtension' ) {
 			$this->view->setTemplateAfter( 'modules' );
 		} else {
 			$this->view->setTemplateAfter( 'main' );
@@ -134,7 +133,7 @@ class BaseController extends Controller {
 	 * @return \Phalcon\Http\Response|\Phalcon\Http\ResponseInterface
 	 */
 	public function afterExecuteRoute( Dispatcher $dispatcher ) {
-		if ( $this->request->isAjax() == TRUE ) {
+		if ( $this->request->isAjax() === TRUE ) {
 			$this->view->disableLevel( [
 				View::LEVEL_ACTION_VIEW     => TRUE,
 				View::LEVEL_LAYOUT          => TRUE,
@@ -146,19 +145,21 @@ class BaseController extends Controller {
 			$data = $this->view->getParamsToView();
 
 			/* Set global params if is not set in controller/action */
-			if ( is_array( $data ) ) {
+			if (is_array($data) && isset($data['raw_response'])){
+				$result = $data['raw_response'];
+			} elseif ( is_array( $data ) ) {
 				$data['success'] = array_key_exists( 'success', $data ) ? $data['success'] : TRUE;
 				$data['reload']  = array_key_exists( 'reload', $data ) ? $data['reload'] : FALSE;
-				$data['message'] = isset( $data['message'] ) ? $data['message'] : $this->flash->getMessages();
+				$data['message'] = $data['message'] ?? $this->flash->getMessages();
 
 				// Добавим информацию о последней ошибке для отображения диалогового окна для пользователя
 				if (file_exists('/tmp/sendmetrics')) {
 					$data['lastSentryEventId'] = Sentry\State\Hub::getCurrent()->getLastEventId();
 				}
-				$data            = json_encode( $data );
+				$result            = json_encode( $data );
 			}
 
-			$this->response->setContent( $data );
+			$this->response->setContent( $result );
 		}
 		return $this->response->send();
 	}
@@ -166,7 +167,7 @@ class BaseController extends Controller {
 	/**
 	 * Перехват события перед обработкой в контроллере
 	 */
-	public function beforeExecuteRoute(){
+	public function beforeExecuteRoute() :void{
 		if ($this->request->isPost()){
 			$data = $this->request->getPost('submitMode');
 			if (!empty($data)){
@@ -201,7 +202,7 @@ class BaseController extends Controller {
 	 *
 	 * @return string
 	 */
-	protected function transliterate( $string ) {
+	protected function transliterate( $string ) :string{
 
 		$converter = [
 			'а' => 'a',
@@ -281,19 +282,23 @@ class BaseController extends Controller {
 	 * Генерирует хеш из версий установленных модулей и АТС, для корректного склеивания JS, CSS и локализаций.
 	 *
 	 */
-	private function getVersionsHash(){
+	private function getVersionsHash() :string{
 		$result = Models\PbxSettings::getValueByKey( 'PBXVersion' );
-		$modulesVersions = Models\PbxExtensionModules::find(['columns'=>'version']);
+		$modulesVersions = Models\PbxExtensionModules::find(['columns'=>'id,version']);
 		foreach ($modulesVersions as $module) {
-			$result.=$module->version;
+			$result.="{$module->version}{$module->version}";
 		}
 		return md5($result);
 	}
 
 	/**
 	 * Берет данные из сессии или из базы данных и записывает в кеш
+	 *
+	 * @param $key string параметры сессии
+	 *
+	 * @return string
 	 */
-	private function getSessionData($key){
+    protected function getSessionData($key) :string{
 		$roSession  = $this->sessionRO;
 		if ( $roSession !== null && array_key_exists($key, $roSession)) {
 			$value = $roSession[ $key ];

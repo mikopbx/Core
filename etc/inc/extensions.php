@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 6 2019
+ * Written by Alexey Portnov, 8 2019
  */
 
 require_once("globals.php");
@@ -63,14 +63,13 @@ class Extensions{
      * @param $conf
      */
 	private function generateInternal(&$conf){
-        $extension = Util::get_extension_X($this->extensionLength);
+        $extension = 'X!';
 
 		foreach ($this->arrObject as $appClass) {
 			$conf.= $appClass->extensionGenContexts();
 		}
 		$conf.= "\n";
 		$conf.= "[internal-num-undefined] \n";
-		// $conf.= 'exten => _'.$extension.',1,AGI(cdr_connector.php,${ISTRANSFER}dial_hangup)'."\n\t";
 		$conf.= 'exten => _'.$extension.',1,ExecIf($["${ISTRANSFER}x" != "x"]?Gosub(${ISTRANSFER}dial_hangup,${EXTEN},1))'."\n\t";
 		$conf.= 'same => n,ExecIf($["${BLINDTRANSFER}x" != "x"]?AGI(check_redirect.php,${BLINDTRANSFER}))'."\n\t";
 		$conf.= "same => n,Playback(pbx-invalid) \n\n";
@@ -89,8 +88,7 @@ class Extensions{
 		$conf.= 'same => n,ExecIf($["${fw}x" != "x"]?Set(__pt1c_UNIQUEID=${UNDEFINED})'."\n\t";
 		$conf.= 'same => n,ExecIf($["${fw}x" != "x"]?Goto(internal,${fw},1))'."\n\t";
 		$conf.= 'same => n,ExecIf($["${BLINDTRANSFER}x" != "x"]?AGI(check_redirect.php,${BLINDTRANSFER}))'."\n\t";
-		$conf.= 'same => n,Hangup() '."\n";
-		$conf.= "\n\n";
+		$conf.= 'same => n,Hangup() '."\n\n";
 
 		$conf.= "[all_peers]\n";
 		$conf.= 'exten => failed,1,Hangup()'."\n";
@@ -106,7 +104,6 @@ class Extensions{
 
         $conf.= 'same => n,ExecIf($["${CHANNEL(channeltype)}" == "Local" && "${FROM_PEER}x" == "x"]?Set(__FROM_PEER=${CALLERID(num)}))'."\n\t";;
         $conf.= 'same => n,Set(CHANNEL(hangup_handler_wipe)=hangup_handler,s,1)'."\n\t";
-		// $conf.= 'same => n,AGI(cdr_connector.php,${ISTRANSFER}dial)'."\n\t";
 		$conf.= 'same => n,Gosub(${ISTRANSFER}dial,${EXTEN},1)'."\n\t";
 
 		// Описываем возможность прыжка в пользовательский sub контекст.
@@ -122,62 +119,58 @@ class Extensions{
 
         $voicemail_exten = Config::get_voicemail_exten();
         $conf.= 'exten => '.$voicemail_exten.',1,NoOp(NOTICE, Dialing out from ${CALLERID(all)} to VoiceMail'."\n\t";
-        // $conf.= 'same => n,VoiceMailMain(${CALLERID(num)}@voicemailcontext,s)'."\n\t";
         $conf.= 'same => n,VoiceMailMain(admin@voicemailcontext,s)'."\n\t";
         $conf.= 'same => n,Hangup()'."\n\n";
 
         $conf.= "[voice_mail_peer] \n";
         $conf.= 'exten => voicemail,1,Answer()'."\n\t";
-        // $conf.= 'exten => _voicemail*XXX,1,Answer()'."\n\t";
-        // $conf.= 'same => n,VoiceMail(${EXTEN:10}@voicemailcontext)'."\n\t";
         $conf.= 'same => n,VoiceMail(admin@voicemailcontext)'."\n\t";
         $conf.= 'same => n,Hangup()'."\n\n";
 
 		// Контекст для внутренних вызовов.
 		$conf.= "[internal] \n";
-		// $conf.= 'include => voice_mail_peer'. "\n";
 
 		foreach ($this->arrObject as $appClass) {
 			$conf.= $appClass->getIncludeInternal();
 		}
-		$conf.= 'exten => _'.$extension.',1,Set(CHANNEL(hangup_handler_wipe)=hangup_handler,s,1)'." \n\t";
-		$conf.= 'same => n,ExecIf($["${ISTRANSFER}x" != "x"]?Set(SIPADDHEADER01=${EMPTY_VAR})'." \n\t";
-		$conf.= 'same => n,ExecIf($["${CHANNEL(channeltype)}" == "Local"]?Gosub(set_orign_chan,s,1))'." \n\t";
-
-		// $conf.= 'same => n,AGI(cdr_connector.php,${ISTRANSFER}dial)'." \n\t";
-        $conf.= 'same => n,Gosub(${ISTRANSFER}dial,${EXTEN},1)'."\n\t";
-		// Проверим, существует ли такой пир.
-		$conf.= 'same => n,ExecIf($["${SIPPEER(${EXTEN},status)}x" == "x"]?Goto(internal-num-undefined,${EXTEN},1))'." \n\t";
-        $conf.= 'same => n,ExecIf($["${DEVICE_STATE(SIP/${EXTEN})}" == "BUSY"]?Set(DIALSTATUS=BUSY))'." \n\t";
-        $conf.= 'same => n,GotoIf($["${DEVICE_STATE(SIP/${EXTEN})}" == "BUSY"]?fw_start)'." \n\t";
-		// Как долго звонить пиру.
-		$conf.= 'same => n,Set(ringlength=${DB(FW_TIME/${EXTEN})})'." \n\t";
-		$conf.= 'same => n,ExecIf($["${ringlength}x" == "x" || "${QUEUE_SRC_CHAN}x" != "x"]?Set(ringlength=600))'." \n\t";
-
-        $conf.= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN}),1}" == "1"]?${CONTEXT}-custom,${EXTEN},1) '." \n\t";
-		// Совершаем вызов пира.
-		$conf.= 'same => n,Dial(SIP/${EXTEN},${ringlength},TtekKHhM(dial_answer)b(dial_create_chan,s,1))'." \n\t";
-		$conf.= 'same => n(fw_start),NoOp(dial_hangup)'." \n\t";
-
-		// QUEUE_SRC_CHAN - установлена, если вызов сервершен агенту очереди.
-		// Проверяем нужна ли переадресация 
-		$expression = '$["${DIALSTATUS}" != "ANSWER" && "${QUEUE_SRC_CHAN}x" == "x"]'; 
-		$conf.= 'same => n,ExecIf('.$expression.'?Goto(internal-fw,${EXTEN},1))'." \n\t";
-		$conf.= 'same => n,ExecIf($["${BLINDTRANSFER}x" != "x"]?AGI(check_redirect.php,${BLINDTRANSFER}))'." \n\t";
-        $conf.= 'same => n,Hangup()'."\n\n";
 
 		foreach ($this->arrObject as $appClass) {
 			$conf.= $appClass->extensionGenInternal();
 		}
-        $conf.= "\n";
+
 		$conf.= 'exten => i,1,NoOp(-- INVALID NUMBER --)'."\n\t";
 		$conf.= 'same => n,Set(DIALSTATUS=INVALID_NUMBER)'."\n\t";
 		$conf.= 'same => n,Playback(privacy-incorrect,noanswer)'."\n\t";
 		$conf.= 'same => n,Hangup()'."\n";
 		
-		// $conf.= 'exten => h,1,AGI(cdr_connector.php,${ISTRANSFER}dial_hangup)'."\n\n";
         $conf.= 'exten => h,1,ExecIf($["${ISTRANSFER}x" != "x"]?Gosub(${ISTRANSFER}dial_hangup,${EXTEN},1))'."\n\n";
-	}
+
+        $conf.= "\n"."[internal-users] \n";
+        $conf.= 'exten => _'.$extension.',1,Set(CHANNEL(hangup_handler_wipe)=hangup_handler,s,1)'." \n\t";
+        $conf.= 'same => n,ExecIf($["${ISTRANSFER}x" != "x"]?Set(SIPADDHEADER01=${EMPTY_VAR})'." \n\t";
+        $conf.= 'same => n,ExecIf($["${CHANNEL(channeltype)}" == "Local"]?Gosub(set_orign_chan,s,1))'." \n\t";
+
+        $conf.= 'same => n,Gosub(${ISTRANSFER}dial,${EXTEN},1)'."\n\t";
+        // Проверим, существует ли такой пир.
+        $conf.= 'same => n,ExecIf($["${SIPPEER(${EXTEN},status)}x" == "x"]?Goto(internal-num-undefined,${EXTEN},1))'." \n\t";
+        $conf.= 'same => n,ExecIf($["${DEVICE_STATE(SIP/${EXTEN})}" == "BUSY"]?Set(DIALSTATUS=BUSY))'." \n\t";
+        $conf.= 'same => n,GotoIf($["${DEVICE_STATE(SIP/${EXTEN})}" == "BUSY"]?fw_start)'." \n\t";
+        // Как долго звонить пиру.
+        $conf.= 'same => n,Set(ringlength=${DB(FW_TIME/${EXTEN})})'." \n\t";
+        $conf.= 'same => n,ExecIf($["${ringlength}x" == "x" || "${QUEUE_SRC_CHAN}x" != "x"]?Set(ringlength=600))'." \n\t";
+
+        $conf.= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN}),1}" == "1"]?${CONTEXT}-custom,${EXTEN},1) '." \n\t";
+        // Совершаем вызов пира.
+        $conf.= 'same => n,Dial(SIP/${EXTEN},${ringlength},TtekKHhM(dial_answer)b(dial_create_chan,s,1))'." \n\t";
+        $conf.= 'same => n(fw_start),NoOp(dial_hangup)'." \n\t";
+
+        // QUEUE_SRC_CHAN - установлена, если вызов сервершен агенту очереди.
+        // Проверяем нужна ли переадресация
+        $expression = '$["${DIALSTATUS}" != "ANSWER" && "${QUEUE_SRC_CHAN}x" == "x"]';
+        $conf.= 'same => n,ExecIf('.$expression.'?Goto(internal-fw,${EXTEN},1))'." \n\t";
+        $conf.= 'same => n,ExecIf($["${BLINDTRANSFER}x" != "x"]?AGI(check_redirect.php,${BLINDTRANSFER}))'." \n\t";
+        $conf.= 'same => n,Hangup()'."\n\n";
+    }
 
     /**
      * Генератор контекста для переадресаций.
@@ -185,7 +178,6 @@ class Extensions{
      */
 	private function generateInternalTransfer(&$conf){
 
-	    $extension = Util::get_extension_X($this->extensionLength);
 		$conf.= "[internal-transfer] \n";
 
 		foreach ($this->arrObject as $appClass) {
@@ -195,14 +187,7 @@ class Extensions{
         foreach ($this->arrObject as $appClass) {
             $conf.= $appClass->extensionGenInternalTransfer();
         }
-
-        $conf.= "\n";
-        $conf.= 'exten => _'.$extension.',1,Set(__ISTRANSFER=transfer_)'." \n\t";
-		$conf.= 'same => n,Goto(internal,${EXTEN},1)'." \n";
-		// $conf.= 'exten => h,1,AGI(cdr_connector.php,transfer_dial_hangup)'."\n";
         $conf.= 'exten => h,1,Gosub(transfer_dial_hangup,${EXTEN},1)'."\n\n";
-
-		$conf.= "\n";
 	}
 
     /**
@@ -210,7 +195,7 @@ class Extensions{
      * @param $conf
      */
 	private function generateOtherExten(&$conf){
-        $extension = Util::get_extension_X($this->extensionLength);
+        $extension = 'X!';
 		// Контекст для AMI originate. Без него отображается не корректный CallerID.
 		$conf.= '[sipregistrations]'."\n\n";
 
@@ -239,7 +224,6 @@ class Extensions{
 		$conf.= 'same => n,return'." \n\n";
 
         $conf.= '[dial_create_chan]'." \n";
-		// $conf.= 'exten => s,1,AGI(cdr_connector.php,${ISTRANSFER}dial_create_chan)'."\n\t";
         $conf.= 'exten => s,1,Gosub(lua_${ISTRANSFER}dial_create_chan,${EXTEN},1)'."\n\t";
         $conf.= 'same => n,Set(pt1c_is_dst=1)'." \n\t";
 		$conf.= 'same => n,Set(CHANNEL(hangup_handler_wipe)=hangup_handler,s,1)'." \n\t";
@@ -247,7 +231,6 @@ class Extensions{
 
 		$conf.= '[hangup_handler]'."\n";
 		$conf.= 'exten => s,1,NoOp(--- hangup - ${CHANNEL} ---)'."\n\t";
-		// $conf.= 'same => n,AGI(cdr_connector.php,hangup_chan)'."\n\t";
         $conf.= 'same => n,Gosub(hangup_chan,${EXTEN},1))'."\n\t";
 
         $conf.= 'same => n,return'."\n\n";
@@ -272,12 +255,12 @@ class Extensions{
         $conf.= 'same => n,Wait(0.3)'."\n\t";
         $conf.= 'same => n,Bridge(${SRC_BRIDGE_CHAN},kKTthH)'."\n\n";
 
-        // $conf.= 'exten => h,1,AGI(cdr_connector.php,${ISTRANSFER}dial_hangup)'."\n\n";
         $conf.= 'exten => h,1,ExecIf($["${ISTRANSFER}x" != "x"]?Gosub(${ISTRANSFER}dial_hangup,${EXTEN},1))'."\n\n";
 
         // TODO / Добавление / удаление префиксов на входящий callerid.
         $conf.= '[add-trim-prefix-clid]'."\n";
         $conf.= 'exten => _.!,1,NoOp(--- Incoming call from ${CALLERID(num)} ---)'."\n\t";
+        $conf.= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN}),1}" == "1"]?${CONTEXT}-custom,${EXTEN},1)'."\n\t";
         // Отсекаем "+".
         // $conf.= 'same => n,ExecIf( $["${CALLERID(num):0:1}" == "+"]?Set(CALLERID(num)=${CALLERID(num):1}))'."\n\t";
         // Отсекаем "7" и добавляем "8".
@@ -314,9 +297,9 @@ class Extensions{
         // Описываем возможность прыжка в пользовательский sub контекст.
         $conf.= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN}),1}" == "1"]?${CONTEXT}-custom,${EXTEN},1)'."\n\t";
 
-        /** @var \Models\OutgoingRoutingTable $routs */
-        /** @var \Models\OutgoingRoutingTable $rout */
-        $routs   = \Models\OutgoingRoutingTable::find(['order' => 'priority']);
+        /** @var Models\OutgoingRoutingTable $routs */
+        /** @var Models\OutgoingRoutingTable $rout */
+        $routs   = Models\OutgoingRoutingTable::find(['order' => 'priority']);
         $provider_contexts = [];
         foreach ($routs as $rout) {
             foreach ($this->arrObject as $appClass) {
@@ -392,14 +375,14 @@ class Extensions{
             // Звонки через провайдера.
             $provider_filter = "provider = '$provider'";
         }
-        /** @var \Models\IncomingRoutingTable $default_action */
-		$default_action = \Models\IncomingRoutingTable::findFirst("priority = 9999");
+        /** @var Models\IncomingRoutingTable $default_action */
+		$default_action = Models\IncomingRoutingTable::findFirst("priority = 9999");
 		$filter = [
 		    "$provider_filter",
 		    'order' => 'provider,priority,extension',
         ];
-		/** @var \Models\IncomingRoutingTable $m_data */
-        $m_data = \Models\IncomingRoutingTable::find($filter);
+		/** @var Models\IncomingRoutingTable $m_data */
+        $m_data = Models\IncomingRoutingTable::find($filter);
         $data = $m_data->toArray();
 
         $need_def_rout = true;
@@ -541,7 +524,6 @@ class Extensions{
     private function generateOutWorkTimes(&$conf){
         $conf.= "\n\n[macro-playback-exit]\n";
         $conf.= "exten => s,1,NoOp(check time)"."\n\t";
-        // $conf.= 'same => n,AGI(cdr_connector.php,dial_outworktimes)'."\n\t";
         $conf.= 'same => n,Gosub(dial_outworktimes,${EXTEN},1)'."\n\t";
         $conf.= 'same => n,Playback(${ARG1})'."\n\t";
         $conf.= 'same => n,Hangup()'."\n\n";
@@ -550,7 +532,17 @@ class Extensions{
         $conf.= "exten => _.!,1,NoOp(check time)\n\t";
 
         $data = Models\OutWorkTimes::find(['order'=>'date_from']);
+
+        $now_year       = 1*date("Y", time());
         foreach ($data as $out_data){
+            if(!empty($out_data->date_from) && !empty($out_data->date_to)){
+                $year_from = 1*date("Y", $out_data->date_from);
+                $year_to   = 1*date("Y", $out_data->date_to);
+                if($now_year < $year_from || $now_year > $year_to){
+                    // Правило не актуально для текущего года.
+                    continue;
+                }
+            }
             $time_from  = $out_data->time_from;
             $time_to    = $out_data->time_to;
             if(empty($time_from) && empty($time_to)){
@@ -594,9 +586,9 @@ class Extensions{
                 $appname = 'GotoIfTime';
                 $appdata = "internal,{$out_data->extension},1";
             }else{
-                /** @var \Models\SoundFiles $res */
-                $res = \Models\SoundFiles::findFirst($out_data->audio_message_id);
-                $audio_message = ($res == null)?'':\Util::trim_extension_file($res->path);
+                /** @var Models\SoundFiles $res */
+                $res = Models\SoundFiles::findFirst($out_data->audio_message_id);
+                $audio_message = ($res == null)?'':Util::trim_extension_file($res->path);
                 $appname = 'ExecIfTime';
                 $appdata = "Macro(playback-exit,{$audio_message})";
             }

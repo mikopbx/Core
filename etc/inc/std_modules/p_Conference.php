@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 3 2019
+ * Written by Alexey Portnov, 8 2019
  */
 
 class p_Conference extends ConfigClass{
@@ -40,7 +40,7 @@ class p_Conference extends ConfigClass{
         foreach($data as $conference){
             $conf .= "exten => {$conference->extension},1,Goto(conference-rooms,{$conference->extension},1)" . "\n";
         }
-
+        $conf .= "\n";
         return $conf;
     }
 
@@ -53,6 +53,7 @@ class p_Conference extends ConfigClass{
         foreach($data as $conference){
             $conf .= "exten => {$conference->extension},1,Goto(conference-rooms,{$conference->extension},1)" . "\n";
         }
+        $conf .= "\n";
         return $conf;
     }
 

@@ -12,18 +12,37 @@ namespace Models;
 class CallEventsLogs extends ModelsBase
 {
 
+    /**
+     * @var integer
+     */
 	public $id;
+
+    /**
+     * @var string
+     */
 	public $eventtime;
+
+    /**
+     * @var string
+     */
 	public $app;
+
+	/**
+     * @var string
+     */
 	public $linkedid;
+
+    /**
+     * @var string
+     */
 	public $datajson;
 
-	public function getSource()
+	public function getSource() :string
 	{
 		return 'call_events';
 	}
 
-	public function initialize()
+	public function initialize(): void
 	{
 		parent::initialize();
 		$this->useDynamicUpdate(true);

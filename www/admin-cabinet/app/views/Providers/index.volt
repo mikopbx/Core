@@ -1,4 +1,20 @@
-
+<div class="ui modal" id="delete-modal-form">
+    <div class="header">
+        {{ t._('pr_DeleteTitle') }}
+    </div>
+    <div class="image content">
+        <div class="image">
+            <i class="icon attention"></i>
+        </div>
+        <div class="description">
+            {{ t._('pr_DeleteDescription') }}
+        </div>
+    </div>
+    <div class="actions">
+        <div class="ui cancel button">{{ t._('pr_Cancel') }}</div>
+        <div class="ui red approve button">{{ t._('pr_Delete') }}</div>
+    </div>
+</div>
     {{ link_to("providers/modifysip", '<i class="add circle icon"></i> '~t._('pr_AddSIPProvider'), "class": " ui blue button ") }}
     {{ link_to("providers/modifyiax", '<i class="add circle icon"></i> '~t._('pr_AddIAXProvider'), "class": " ui blue button ") }}
 
@@ -22,7 +38,7 @@
         {% endif %}
 
 
-        <tr class="provider-row" id="{{ provider['uniqid'] }}" data-value="{{ provider['type']|lower }}">
+        <tr class="provider-row" id="{{ provider['uniqid'] }}" data-value="{{ provider['type']|lower }}" data-links="{{ provider['existLinks']|lower }}">
 
             <td class="collapsing no-modify-columns">
                 <div class="ui  toggle checkbox">

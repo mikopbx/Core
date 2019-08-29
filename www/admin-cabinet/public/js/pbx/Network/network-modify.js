@@ -38,7 +38,7 @@ var networks = {
     extipaddr: {
       optional: true,
       rules: [{
-        type: 'ipaddr',
+        type: 'ipaddrWithPortOptional',
         prompt: globalTranslate.nw_ValidateExtIppaddrNotRight
       }, {
         type: 'extenalIpHost',
@@ -253,6 +253,29 @@ var networks = {
 $.fn.form.settings.rules.ipaddr = function (value) {
   var result = true;
   var f = value.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+
+  if (f == null) {
+    result = false;
+  } else {
+    for (var i = 1; i < 5; i += 1) {
+      var a = f[i];
+
+      if (a > 255) {
+        result = false;
+      }
+    }
+
+    if (f[5] > 32) {
+      result = false;
+    }
+  }
+
+  return result;
+};
+
+$.fn.form.settings.rules.ipaddrWithPortOptional = function (value) {
+  var result = true;
+  var f = value.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})(:[0-9]+)?$/);
 
   if (f == null) {
     result = false;

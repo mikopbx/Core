@@ -8,10 +8,9 @@
  *
  */
 
-/* global globalRootUrl, PbxApi, globalTranslate */
+/* global globalRootUrl, PbxApi, globalTranslate, UserMessage */
 var pbxExtesionStatus = {
   $toggle: $('#module-status-toggle'),
-  $ajaxMessagesDiv: $('#ajax-messages'),
   initialize: function () {
     function initialize() {
       pbxExtesionStatus.$toggle.checkbox({
@@ -48,7 +47,6 @@ var pbxExtesionStatus = {
    */
   enableModule: function () {
     function enableModule(uniqid, cbAfterEnable) {
-      $('.ui.message.ajax').remove();
       $.api({
         url: "".concat(globalRootUrl, "pbx-extension-modules/enable/{uniqid}"),
         on: 'now',
@@ -61,17 +59,13 @@ var pbxExtesionStatus = {
               pbxExtesionStatus.$toggle.checkbox('set checked');
               cbAfterEnable(uniqid);
               pbxExtesionStatus.$toggle.find('label').text(globalTranslate.ext_ModuleDisabledStatusEnabled);
+              var event = document.createEvent('Event');
+              event.initEvent('ModuleStatusChanged', false, true);
+              window.dispatchEvent(event);
             } else {
               pbxExtesionStatus.$toggle.checkbox('set unchecked');
               pbxExtesionStatus.$toggle.find('label').text(globalTranslate.ext_ModuleDisabledStatusDisabled);
-              var previousMessage = '';
-              $.each(response.message, function (index, value) {
-                if (previousMessage !== value) {
-                  pbxExtesionStatus.$ajaxMessagesDiv.after("<div class=\"ui ".concat(index, " message ajax\">").concat(value, "</div>"));
-                }
-
-                previousMessage = value;
-              });
+              UserMessage.showMultiString(response.message);
             }
 
             pbxExtesionStatus.$toggle.removeClass('disabled');
@@ -92,7 +86,6 @@ var pbxExtesionStatus = {
    */
   disableModule: function () {
     function disableModule(uniqid, cbAfterDisable) {
-      $('.ui.message.ajax').remove();
       $.api({
         url: "".concat(globalRootUrl, "pbx-extension-modules/disable/{uniqid}"),
         on: 'now',
@@ -105,17 +98,13 @@ var pbxExtesionStatus = {
               pbxExtesionStatus.$toggle.checkbox('set unchecked');
               cbAfterDisable(uniqid);
               pbxExtesionStatus.$toggle.find('label').text(globalTranslate.ext_ModuleDisabledStatusDisabled);
+              var event = document.createEvent('Event');
+              event.initEvent('ModuleStatusChanged', false, true);
+              window.dispatchEvent(event);
             } else {
               pbxExtesionStatus.$toggle.checkbox('set checked');
               pbxExtesionStatus.$toggle.find('label').text(globalTranslate.ext_ModuleDisabledStatusEnabled);
-              var previousMessage = '';
-              $.each(response.message, function (index, value) {
-                if (previousMessage !== value) {
-                  pbxExtesionStatus.$ajaxMessagesDiv.after("<div class=\"ui ".concat(index, " message ajax\">").concat(value, "</div>"));
-                }
-
-                previousMessage = value;
-              });
+              UserMessage.showMultiString(response.message);
             }
 
             pbxExtesionStatus.$toggle.removeClass('disabled');

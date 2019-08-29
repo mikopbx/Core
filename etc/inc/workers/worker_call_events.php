@@ -833,6 +833,8 @@ while (true) {
 
         $client->wait();
     }catch (Exception $e){
+		$errorLogger = $g['error_logger'];
+		$errorLogger->captureException($e);
 	    sleep(1);
     }
 }

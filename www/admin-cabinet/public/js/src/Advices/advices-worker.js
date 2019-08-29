@@ -53,21 +53,60 @@ const advicesWorker = {
 		if (response === undefined) return;
 		advicesWorker.$advices.html('');
 		if (response.success === true
-			&& response.message !== undefined
-			&& response.message.length > 0) {
-			let htmlMessages = '<div class="ui icon warning message">';
-			htmlMessages += '<i class="warning icon"></i>';
-			htmlMessages += '<div class="content">';
-			htmlMessages += `<div class="header">${globalTranslate.adv_MessagesHeader}</div>`;
-			htmlMessages += '<ul class="list">';
-			$.each(response.message, (key, value) => {
-				htmlMessages += `<li>${value}</li>`;
-			});
-			htmlMessages += '</ul>';
-			htmlMessages += '</div>';
-			htmlMessages += '</div>';
+			&& response.message !== undefined) {
+			let htmlMessages = '';
+			if (response.message.error !== undefined
+				&& response.message.error.length > 0) {
+				htmlMessages += '<div class="ui icon error message">';
+				htmlMessages += '<i class="x icon"></i>';
+				htmlMessages += '<div class="content">';
+				htmlMessages += `<div class="header">${globalTranslate.adv_MessagesHeaderError}</div>`;
+				htmlMessages += '<ul class="list">';
+				$.each(response.message.error, (key, value) => {
+					htmlMessages += `<li>${value}</li>`;
+				});
+				htmlMessages += '</ul>';
+				htmlMessages += '</div>';
+				htmlMessages += '</div>';
+			} else if (response.message.warning !== undefined
+				&& response.message.warning.length > 0) {
+				htmlMessages += '<div class="ui icon warning message">';
+				htmlMessages += '<i class="warning icon"></i>';
+				htmlMessages += '<div class="content">';
+				htmlMessages += `<div class="header">${globalTranslate.adv_MessagesHeader}</div>`;
+				htmlMessages += '<ul class="list">';
+				$.each(response.message.warning, (key, value) => {
+					htmlMessages += `<li>${value}</li>`;
+				});
+				htmlMessages += '</ul>';
+				htmlMessages += '</div>';
+				htmlMessages += '</div>';
+			} else if (response.message.info !== undefined
+				&& response.message.info.length > 0) {
+				htmlMessages += '<div class="ui icon info message">';
+				htmlMessages += '<i class="info icon"></i>';
+				htmlMessages += '<div class="content">';
+				htmlMessages += `<div class="header">${globalTranslate.adv_MessagesHeader}</div>`;
+				htmlMessages += '<ul class="list">';
+				$.each(response.message.info, (key, value) => {
+					htmlMessages += `<li>${value}</li>`;
+				});
+				htmlMessages += '</ul>';
+				htmlMessages += '</div>';
+				htmlMessages += '</div>';
+			}
 			advicesWorker.$advices.html(htmlMessages);
 			localStorage.setItem('previousAdvice', htmlMessages);
+
+			// Проверим есть ли обновление системы
+			if (response.message.info !== undefined
+				&& response.message.info.length > 0) {
+				$.each(response.message.info, (key, value) => {
+					if (value.indexOf('/admin-cabinet/update/index/') > -1) {
+						$('a[href="/admin-cabinet/update/index/"] > i').addClass('loading');
+					}
+				});
+			}
 		} else if (response.success === true
 			&& response.message !== undefined
 			&& response.message.length === 0) {

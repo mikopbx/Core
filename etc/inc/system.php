@@ -3,8 +3,10 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 6 2019
+ * Written by Alexey Portnov, 8 2019
  */
+
+use Models\CustomFiles;
 
 require_once 'globals.php';
 
@@ -18,7 +20,7 @@ class System {
     /**
      * System constructor.
      */
-    function __construct(){
+    public function __construct(){
         global $g;
         // Класс / обертка для работы с настройками.
         $this->config = new Config();
@@ -28,44 +30,66 @@ class System {
     /**
      * Подгрузка дополнительных модулей ядра.
      */
-    public function load_kernel_modules(){
-		Util::mwexec("/sbin/modprobe -q dahdi");
-		Util::mwexec("/sbin/modprobe -q dahdi_transcode");
+    public function load_kernel_modules():void {
+		Util::mwexec('/sbin/modprobe -q dahdi');
+		Util::mwexec('/sbin/modprobe -q dahdi_transcode');
 	}  
 
 	/**
 	 *	Устанавливаем имя хост текущей машины.
 	**/
-    public function hostname_configure(){
+    public function hostname_configure():int{
 	    $data 		= Network::getHostName();
-	    $hostname 	= "${data['hostname']}";
-		return Util::mwexec("/bin/hostname " . escapeshellarg("$hostname"));
+	    $hostname 	= $data['hostname'];
+		return Util::mwexec('/bin/hostname ' . escapeshellarg($hostname));
     }
-	
-	/**
-	 *	Старт web сервера.
-	**/
-	public function nginx_start(){
-	    Util::killbyname('nginx');
-	    $this->nginx_generate_conf();
-		Util::mwexec("php-fpm");
-		Util::mwexec("nginx");
-	}
+
+    /**
+     *	Старт web сервера.
+     **/
+    public function nginx_start():void {
+        Util::killbyname('nginx');
+        $this->nginx_generate_conf();
+        Util::mwexec('php-fpm');
+        Util::mwexec('nginx');
+    }
+
+    public function safe_modules($worker_proc_name, $path_to_script):void {
+        $pid = Util::get_pid_process($worker_proc_name);
+        $need_start = false;
+        if(empty($pid)){
+            $need_start = true;
+        }else{
+            $pid_file = '/var/run/'.$worker_proc_name.'.pid';
+            if(file_exists($pid_file)){
+                $data = filemtime($pid_file);
+                if(time() - $data > 10){
+                    $need_start = true;
+                    Util::killbyname($worker_proc_name);
+                }
+            }else{
+                $need_start = true;
+            }
+        }
+        if($need_start){
+            Util::mwexec_bg("/usr/bin/php -f {$path_to_script} start");
+        }
+    }
 
     /**
      * Описание конфига nginx.
      * @param bool $not_ssl
      * @param int  $level
      */
-	public function nginx_generate_conf($not_ssl = false, $level=0){
+	public function nginx_generate_conf($not_ssl = false, $level=0):void {
 
 	    $config_file  = '/etc/nginx/nginx.conf';
 	    $pattern_file = '/etc/nginx/nginx.conf.pattern';
-	    if(!file_exists("$pattern_file")){
+	    if(!file_exists($pattern_file)){
             // Создаем резервную копию.
 	        copy($config_file, $pattern_file);
         }
-        $dns_server = '8.8.8.8';
+        $dns_server = '127.0.0.1';
 
 	    $net = new Network();
         $dns  = $net->getHostDNS();
@@ -75,33 +99,35 @@ class System {
                 break;
             }
         }
-	    $WEBPort            = $this->config->get_general_settings("WEBPort");
-	    $WEBHTTPSPort       = $this->config->get_general_settings("WEBHTTPSPort");
+	    $WEBPort            = $this->config->get_general_settings('WEBPort');
+	    $WEBHTTPSPort       = $this->config->get_general_settings('WEBHTTPSPort');
 
         $config = file_get_contents($pattern_file);
         $config = str_replace('<DNS>',          $dns_server,    $config);
         $config = str_replace('<WEBHTTPSPort>', $WEBHTTPSPort,  $config);
         $config = str_replace('<WEBPort>',      $WEBPort,       $config);
 
-        $WEBHTTPSPublicKey  = $this->config->get_general_settings("WEBHTTPSPublicKey");
-        $WEBHTTPSPrivateKey = $this->config->get_general_settings("WEBHTTPSPrivateKey");
+        // ###ADDISIONAL_CONFIG_HTTP# - при замене параметра можно добавить конфиг в секцию http
+        // ###ADDISIONAL_CONFIG# - добавляет конфиг в секцию server (http)
+        // ###ADDISIONAL_CONFIG_SSL# - добавляет конфиг в секцию server (https)
 
-        if($not_ssl == false && !empty($WEBHTTPSPublicKey) && !empty($WEBHTTPSPrivateKey)){
-            file_put_contents("/etc/ssl/certs/nginx.crt",   $WEBHTTPSPublicKey);
-            file_put_contents("/etc/ssl/private/nginx.key", $WEBHTTPSPrivateKey);
+        $WEBHTTPSPublicKey  = $this->config->get_general_settings('WEBHTTPSPublicKey');
+        $WEBHTTPSPrivateKey = $this->config->get_general_settings('WEBHTTPSPrivateKey');
+
+        if($not_ssl === false && !empty($WEBHTTPSPublicKey) && !empty($WEBHTTPSPrivateKey)){
+            file_put_contents('/etc/ssl/certs/nginx.crt',   $WEBHTTPSPublicKey);
+            file_put_contents('/etc/ssl/private/nginx.key', $WEBHTTPSPrivateKey);
             // Подключаем конфиг SSL.
             $config = str_replace('###SSL#', '', $config);
         }
         file_put_contents($config_file, $config);
 
         $out = [];
-        Util::mwexec("nginx -t",$out);
+        Util::mwexec('nginx -t',$out);
         $res = implode($out);
-        if(stristr($res, 'test failed') === FALSE) {
-            // Все ок.
-        }elseif($level<1){
-            $level+=1;
-            \Util::sys_log_msg('nginx', 'Failed test config file. SSL will be disable...');
+        if( $level<1 && false !== strpos($res, 'test failed')){
+            ++$level;
+            Util::sys_log_msg('nginx', 'Failed test config file. SSL will be disable...');
             $this->nginx_generate_conf(true, $level);
         }
     }
@@ -156,10 +182,39 @@ class System {
         return $result;
 	}
 
+	public static function gnats_log_rotate():void {
+        $log_dir = Util::get_log_dir().'/nats';
+        $pid = Util::get_pid_process('gnatsd', 'custom_modules');
+        if(empty($pid)){
+            $system = new System();
+            $system->gnats_start();
+            sleep(1);
+        }
+        $text_config="{$log_dir}/gnatsd.log".' {
+    start 0
+    rotate 9
+    size 1M
+    maxsize 1M
+    daily
+    missingok
+    notifempty
+    sharedscripts
+    postrotate
+        /usr/sbin/gnatsd -sl reopen='.$pid.' > /dev/null 2> /dev/null
+    endscript
+}';
+
+        $path_conf = '/etc/nats/logrotate.conf';
+        file_put_contents($path_conf, $text_config);
+        if(file_exists("{$log_dir}/gnatsd.log")){
+            Util::mwexec_bg("/usr/sbin/logrotate '{$path_conf}' > /dev/null 2> /dev/null");
+        }
+    }
+
 	/**
      * Будет вызван после старта asterisk.
      */
-	public function on_after_pbx_started(){
+	public function on_after_pbx_started():void {
         foreach ($this->arrObject as $appClass) {
             /** @var \ConfigClass $appClass */
             $appClass->on_after_pbx_started();
@@ -251,11 +306,11 @@ class System {
                     $row->check_when_booting = 0;
                     $row->save();
                 }
-            }catch (\Exception $e){
-                \Util::sys_log_msg("Reboot: Storage ", "".$e->getMessage());
+            }catch (Exception $e){
+                Util::sys_log_msg("Reboot: Storage ", "".$e->getMessage());
             }
         }
-	    \Util::mwexec("/etc/rc/reboot > /dev/null 2>&1");
+	    Util::mwexec("/etc/rc/reboot > /dev/null 2>&1");
 	}
 
     /**
@@ -434,12 +489,12 @@ server 2.pool.ntp.org';
      * Генератор конфига cron.
      * @param bool $boot
      */
-	private function cron_generate($boot=true) {
+	private function cron_generate($boot=true):void {
 		$worker_safe_scripts = '/usr/bin/php -f /etc/inc/cron/worker_safe_scripts.php > /dev/null 2> /dev/null';
 		$mast_have = [];
 
         $restart_night = $this->config->get_general_settings('RestartEveryNight');
-        if("$restart_night" == "1"){
+        if($restart_night === '1'){
             $mast_have[] = '0 1 * * * /usr/sbin/asterisk -rx"core restart now" > /dev/null 2> /dev/null'. "\n";
         }
 		$mast_have[] = '*/5 * * * * /usr/sbin/ntpd -q > /dev/null 2> /dev/null'. "\n";
@@ -447,20 +502,19 @@ server 2.pool.ntp.org';
 		$mast_have[] = '*/6 * * * * /bin/sh /etc/inc/cron/cleaner_download_links.sh  download_link > /dev/null 2> /dev/null'. "\n";
         $mast_have[] = "*/1 * * * * {$worker_safe_scripts}". "\n";
 
-        \Backup::create_cron_tasks($mast_have);
+        Backup::create_cron_tasks($mast_have);
         $tasks = [];
         // Дополнительные модули также могут добавить задачи в cron.
         foreach ($this->arrObject as $appClass) {
-            /** @var \ConfigClass $appClass */
+            /** @var ConfigClass $appClass */
             $appClass->create_cron_tasks($tasks);
         }
         $conf = implode('', array_merge($mast_have, $tasks) );
-        if($boot == true){
-            Util::mwexec("$worker_safe_scripts");
+        if($boot === true){
+            Util::mwexec($worker_safe_scripts);
         }
 
-        Util::file_write_content("/var/spool/cron/crontabs/root", $conf);
-
+        Util::file_write_content('/var/spool/cron/crontabs/root', $conf);
 	}
 
     /**
@@ -499,7 +553,7 @@ server 2.pool.ntp.org';
 
         $actions = array();
         /** @var \Models\CustomFiles $res_data */
-        $res_data = \Models\CustomFiles::find("changed = '1'");
+        $res_data = CustomFiles::find("changed = '1'");
         foreach ($res_data as $file_data){
             // Всегда рестрартуем все модули asterisk (только чтение конфигурации).
             $actions['asterisk_core_reload'] = 100;
@@ -507,6 +561,9 @@ server 2.pool.ntp.org';
             switch ($filename){
                 case 'manager.conf':
                     $actions['manager'] = 10;
+                    break;
+                case 'musiconhold.conf':
+                    $actions['musiconhold'] = 100;
                     break;
                 case 'modules.conf':
                     $actions['modules'] = 10;
@@ -561,6 +618,9 @@ server 2.pool.ntp.org';
                 case 'manager':
                     $res = PBX::manager_reload();
                     break;
+                case 'musiconhold':
+                    $res = PBX::musiconhold_reload();
+                    break;
                 case 'modules':
                     $res = PBX::modules_reload();
                     break;
@@ -596,24 +656,36 @@ server 2.pool.ntp.org';
         return $result;
     }
 
-    static function convert_config(){
+    static function convert_config($config_file = ''){
         $result = [
             'result'  => 'Success',
             'message' => ''
         ];
-        try{
-            $dirs = PBX::get_asterisk_dirs();
-            $cntr = new OldConfigConverter("{$dirs['tmp']}/old_config.xml");
-            $cntr->parse();
-            $cntr->make_config();
+        $dirs = PBX::get_asterisk_dirs();
+        if( empty($config_file) ){
+            $config_file = "{$dirs['tmp']}/old_config.xml";
+        }
 
-            unlink("{$dirs['tmp']}/old_config.xml");
-        }catch (Exception $e){
+        if(file_exists($config_file)){
+            try{
+                $cntr = new OldConfigConverter($config_file);
+                $cntr->parse();
+                $cntr->make_config();
+
+                unlink("{$dirs['tmp']}/old_config.xml");
+            }catch (Exception $e){
+                $result = [
+                    'result'  => 'Error',
+                    'message' => $e->getMessage()
+                ];
+            }
+        }else{
             $result = [
                 'result'  => 'Error',
-                'message' => $e->getMessage()
+                'message' => 'XML config not found'
             ];
         }
+
 
         return $result;
     }
@@ -656,12 +728,12 @@ server 2.pool.ntp.org';
      * @return mixed
      */
     static function upgrade_online($data){
-        $dirs       = \PBX::get_asterisk_dirs();
+        $dirs       = PBX::get_asterisk_dirs();
         $module = 'upgrade_online';
         if(!file_exists($dirs['tmp']."/{$module}")){
             mkdir($dirs['tmp']."/{$module}", 0755, true);
         }else{
-            \Util::mwexec("rm -rf {$dirs['tmp']}/{$module}/* ");
+            Util::mwexec("rm -rf {$dirs['tmp']}/{$module}/* ");
         }
         $download_settings = [
             'res_file' => "{$dirs['tmp']}/{$module}/update.img",
@@ -673,7 +745,7 @@ server 2.pool.ntp.org';
 
         file_put_contents($dirs['tmp']."/{$module}/progress", "0");
         file_put_contents($dirs['tmp']."/{$module}/download_settings.json", json_encode($download_settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-        \Util::mwexec_bg("php -f /etc/inc/workers/worker_download.php ".$dirs['tmp']."/{$module}/download_settings.json");
+        Util::mwexec_bg("php -f /etc/inc/workers/worker_download.php ".$dirs['tmp']."/{$module}/download_settings.json");
         $result['result']   = 'Success';
         return $result;
     }
@@ -682,13 +754,13 @@ server 2.pool.ntp.org';
      * Возвращает информацию по статусу загрузки файла обновления img.
      * @return array
      */
-    static function status_upgrade(){
+    public static function status_upgrade():array {
         $result = array(
             'result'  => 'Success',
         );
-        $dirs       = \PBX::get_asterisk_dirs();
-        $modulesDir = $dirs['tmp']."/upgrade_online";
-        $progress_file = $modulesDir."/progress";
+        $dirs       = PBX::get_asterisk_dirs();
+        $modulesDir = $dirs['tmp'].'/upgrade_online';
+        $progress_file = $modulesDir.'/progress';
 
         $error    = '';
         if(file_exists($modulesDir.'/error')){
@@ -697,26 +769,26 @@ server 2.pool.ntp.org';
 
         if(!file_exists($progress_file)){
             $result['d_status_progress'] = '0';
-            $result['d_status'] = "NOT_FOUND";
-        }elseif('' != $error ){
-            $result['d_status'] = "DOWNLOAD_ERROR";
+            $result['d_status'] = 'NOT_FOUND';
+        }elseif('' !== $error ){
+            $result['d_status'] = 'DOWNLOAD_ERROR';
             $result['d_status_progress'] = file_get_contents($progress_file);
             $result['d_error']  = $error;
-        }elseif('100' == file_get_contents($progress_file) ){
+        }elseif('100' === file_get_contents($progress_file) ){
             $result['d_status_progress'] = '100';
-            $result['d_status'] = "DOWNLOAD_COMPLETE";
+            $result['d_status'] = 'DOWNLOAD_COMPLETE';
         }else{
             $result['d_status_progress'] = file_get_contents($progress_file);
-            $d_pid = \Util::get_pid_process($dirs['tmp']."/upgrade_online/download_settings.json");
+            $d_pid = Util::get_pid_process($dirs['tmp'].'/upgrade_online/download_settings.json');
             if(empty($d_pid)){
-                $result['d_status'] = "DOWNLOAD_ERROR";
+                $result['d_status'] = 'DOWNLOAD_ERROR';
                 $error = '';
                 if(file_exists($modulesDir.'/error')){
                     $error = file_get_contents($modulesDir.'/error');
                 }
                 $result['d_error']  = $error;
             }else{
-                $result['d_status'] = "DOWNLOAD_IN_PROGRESS";
+                $result['d_status'] = 'DOWNLOAD_IN_PROGRESS';
             }
         }
         return $result;
@@ -727,7 +799,7 @@ server 2.pool.ntp.org';
      * @param $module
      * @return array
      */
-    static function module_download_status($module){
+    public static function module_download_status($module):array {
         $result = [
             'result' => 'Success',
             'data'   =>  null
@@ -742,30 +814,30 @@ server 2.pool.ntp.org';
 
         if(!file_exists($progress_file)){
             $result['d_status_progress'] = '0';
-            $result['d_status'] = "NOT_FOUND";
+            $result['d_status'] = 'NOT_FOUND';
             $result['i_status'] = false;
-        }elseif('' != $error ){
-            $result['d_status'] = "DOWNLOAD_ERROR";
+        }elseif('' !== $error ){
+            $result['d_status'] = 'DOWNLOAD_ERROR';
             $result['d_status_progress'] = file_get_contents($progress_file);
             $result['d_error']  = $error;
             $result['i_status'] = false;
-        }elseif('100' == file_get_contents($progress_file) ){
+        }elseif('100' === file_get_contents($progress_file) ){
             $result['d_status_progress'] = '100';
-            $result['d_status'] = "DOWNLOAD_COMPLETE";
+            $result['d_status'] = 'DOWNLOAD_COMPLETE';
             $result['i_status'] = file_exists($modulesDir.$module.'/installed');
         }else{
-            $dirs       = \PBX::get_asterisk_dirs();
+            $dirs       = PBX::get_asterisk_dirs();
             $result['d_status_progress'] = file_get_contents($progress_file);
-            $d_pid = \Util::get_pid_process($dirs['tmp']."/{$module}/download_settings.json");
+            $d_pid = Util::get_pid_process($dirs['tmp']."/{$module}/download_settings.json");
             if(empty($d_pid)){
-                $result['d_status'] = "DOWNLOAD_ERROR";
+                $result['d_status'] = 'DOWNLOAD_ERROR';
                 $error = '';
                 if(file_exists($modulesDir.$module.'/error')){
                     $error = file_get_contents($modulesDir.$module.'/error');
                 }
                 $result['d_error']  = $error;
             }else{
-                $result['d_status'] = "DOWNLOAD_IN_PROGRESS";
+                $result['d_status'] = 'DOWNLOAD_IN_PROGRESS';
             }
             $result['i_status'] = false;
         }
@@ -780,32 +852,40 @@ server 2.pool.ntp.org';
      * @param $md5
      * @return array
      */
-    static function module_start_download($module, $url, $md5){
-        $dirs       = \PBX::get_asterisk_dirs();
-        $modulesDir = $dirs['custom_modules'].'/';
-        if(!file_exists($modulesDir.$module)){
-            mkdir($modulesDir.$module, 0755, true);
+    public static function module_start_download($module, $url, $md5):array {
+        $dirs        = PBX::get_asterisk_dirs();
+        $modulesDir  = $dirs['custom_modules'].'/';
+        $moduleDir   = $modulesDir.$module;
+        $moduleDirTmp= "{$dirs['tmp']}/{$module}";
+
+
+        if (!is_dir($moduleDir)
+            && !mkdir($moduleDir,0755, true)
+            && !is_dir($moduleDir)){
+            return [];
         }
-        if(!file_exists($dirs['tmp']."/{$module}")){
-            mkdir($dirs['tmp']."/{$module}", 0755, true);
+        if (!is_dir($moduleDirTmp)
+            && !mkdir($moduleDirTmp,0755, true)
+            && !is_dir($moduleDirTmp)){
+            return [];
         }
 
         $download_settings = [
-            'res_file' => $dirs['tmp']."/{$module}/modulefile.zip",
+            'res_file' => "$moduleDirTmp/modulefile.zip",
             'url'      => $url,
             'module'   => $module,
             'md5'      => $md5,
             'action'   => 'module_install'
         ];
-        if(file_exists($modulesDir.$module.'/error')){
-            unlink($modulesDir.$module.'/error');
+        if(file_exists("$moduleDir/error")){
+            unlink("$moduleDir/error");
         }
-        if(file_exists($modulesDir.$module.'/installed')){
-            unlink($modulesDir.$module.'/installed');
+        if(file_exists("$moduleDir/installed")){
+            unlink("$moduleDir/installed");
         }
-        file_put_contents($modulesDir.$module.'/progress', "0");
-        file_put_contents($dirs['tmp']."/{$module}/download_settings.json", json_encode($download_settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-        \Util::mwexec_bg("php -f /etc/inc/workers/worker_download.php ".$dirs['tmp']."/{$module}/download_settings.json");
+        file_put_contents("$moduleDir/progress", '0');
+        file_put_contents("$moduleDirTmp/download_settings.json", json_encode($download_settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        Util::mwexec_bg("php -f /etc/inc/workers/worker_download.php $moduleDirTmp/download_settings.json");
         return [];
     }
 

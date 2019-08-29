@@ -22,6 +22,7 @@ const PbxApi = {
 	pbxGetPeersStatus: `${Config.pbxUrl}/pbxcore/api/sip/get_peers_statuses`,
 	pbxGetPeerStatus: `${Config.pbxUrl}/pbxcore/api/sip/get_sip_peer`,
 	pbxGetActiveCalls: `${Config.pbxUrl}/pbxcore/api/cdr/get_active_calls`, // Получить активные звонки,
+	pbxGetActiveChannels: `${Config.pbxUrl}/pbxcore/api/cdr/get_active_channels`, // Получить активные звонки,
 	pbxCheckLicense: `${Config.pbxUrl}/pbxcore/api/pbx/check_licence`,
 	systemUploadAudioFile: `${Config.pbxUrl}/pbxcore/api/system/upload_audio_file`,
 	systemRemoveAudioFile: `${Config.pbxUrl}/pbxcore/api/system/remove_audio_file`,
@@ -55,7 +56,31 @@ const PbxApi = {
 	backupStop: `${Config.pbxUrl}/pbxcore/api/backup/stop`, // Приостановить архивирование curl -X POST -d '{"id":"backup_1530703760"}' http://172.16.156.212/pbxcore/api/backup/start;
 	backupUpload: `${Config.pbxUrl}/pbxcore/api/backup/upload`, // Загрузка файла на АТС curl -F "file=@backup_1530703760.zip" http://172.16.156.212/pbxcore/api/backup/upload;
 	backupGetEstimatedSize: `${Config.pbxUrl}/pbxcore/api/backup/get_estimated_size`,
+	backupStatusUpload: `${Config.pbxUrl}/pbxcore/api/backup/status_upload`, // curl 'http://172.16.156.223/pbxcore/api/backup/status_upload?backup_id=backup_1562746816'
+	backupStartScheduled: `${Config.pbxUrl}/pbxcore/api/backup/start_scheduled`, // curl 'http://172.16.156.223/pbxcore/api/backup/start_scheduled'
 
+
+	/**
+	 * Проверка ответа на JSON
+	 * @param jsonString
+	 * @returns {boolean|any}
+	 */
+	tryParseJSON(jsonString) {
+		try {
+			const o = JSON.parse(jsonString);
+
+			// Handle non-exception-throwing cases:
+			// Neither JSON.parse(false) or JSON.parse(1234) throw errors, hence the type-checking,
+			// but... JSON.parse(null) returns null, and typeof null === "object",
+			// so we must check for that, too. Thankfully, null is falsey, so this suffices:
+			if (o && typeof o === 'object') {
+				return o;
+			}
+		} catch (e) {
+			//
+		}
+		return false;
+	},
 	/**
 	 * Проверка связи с PBX
 	 * @param callback
@@ -454,14 +479,26 @@ const PbxApi = {
 	},
 	/**
 	 * Отпарвляет тестовое сообщение на почту
-	 * @param $data
+	 * @param data
 	 */
-	SendTestEmail($data) {
+	SendTestEmail(data, callback) {
 		$.api({
 			url: PbxApi.systemSendTestEmail,
 			on: 'now',
 			method: 'POST',
-			data: JSON.stringify($data),
+			data: JSON.stringify(data),
+			successTest(response) {
+				// test whether a JSON response is valid
+				return response !== undefined
+					&& Object.keys(response).length > 0
+					&& response.result.toUpperCase() === 'SUCCESS';
+			},
+			onSuccess() {
+				callback(true);
+			},
+			onFailure(response) {
+				callback(response.message);
+			},
 		});
 	},
 	/**
@@ -544,7 +581,7 @@ const PbxApi = {
 	 */
 	GetCurrentCalls(callback) {
 		$.api({
-			url: PbxApi.pbxGetActiveCalls,
+			url: PbxApi.pbxGetActiveChannels,
 			on: 'now',
 			successTest(response) {
 				// test whether a JSON response is valid
@@ -826,6 +863,55 @@ const PbxApi = {
 			},
 		});
 	},
+
+	/**
+	 * Удалить файл по указанному ID
+	 * @param fileId - идентификатор файла с архивом
+	 * @param callback - функция для обработки результата
+	 */
+	BackupStatusUpload(fileId, callback) {
+		$.api({
+			url: `${PbxApi.backupStatusUpload}?backup_id={id}`,
+			on: 'now',
+			urlData: {
+				id: fileId,
+			},
+			successTest(response) {
+				// test whether a JSON response is valid
+				return response !== undefined
+					&& Object.keys(response).length > 0;
+			},
+			onSuccess(response) {
+				callback(response);
+			},
+			onError() {
+				callback(false);
+			},
+		});
+	},
+
+	/**
+	 * Запускает запланированное резервное копирование сразу
+	 *
+	 */
+	BackupStartScheduled(callback) {
+		$.api({
+			url: PbxApi.backupStartScheduled,
+			on: 'now',
+			successTest(response) {
+				// test whether a JSON response is valid
+				return response !== undefined
+					&& Object.keys(response).length > 0
+					&& response.result.toUpperCase() === 'SUCCESS';
+			},
+			onSuccess() {
+				callback(true);
+			},
+			onError() {
+				callback(false);
+			},
+		});
+	},
 	/**
 	 * Загрузить на станцию файл обновления
 	 * @param file - Тело загружаемого файла
@@ -939,17 +1025,22 @@ const PbxApi = {
 			url: PbxApi.systemInstallModule,
 			on: 'now',
 			method: 'POST',
-			data: `{"uniqid":"${params.uniqid}","md5":"${params.md5}","url":"${params.updateLink}"}`,
+			data: `{"uniqid":"${params.uniqid}","md5":"${params.md5}","size":"${params.size}","url":"${params.updateLink}"}`,
 		});
 	},
 	/**
 	 * Удаление модуля расширения
 	 *
+	 * @param moduleName - id модуля
+	 * @param keepSettings bool - сохранять ли настройки
+	 * @param callback - функция колбека
 	 */
-	SystemDeleteModule(moduleName, callback) {
+	SystemDeleteModule(moduleName, keepSettings, callback) {
 		$.api({
 			url: `${Config.pbxUrl}/pbxcore/api/modules/${moduleName}/uninstall`,
 			on: 'now',
+			method: 'POST',
+			data: `{"uniqid":"${moduleName}","keepSettings":"${keepSettings}"}`,
 			successTest(response) {
 				// test whether a JSON response is valid
 				return response !== undefined
@@ -959,8 +1050,8 @@ const PbxApi = {
 			onSuccess() {
 				callback(true);
 			},
-			onError() {
-				callback(false);
+			onError(response) {
+				callback(response);
 			},
 		});
 	},

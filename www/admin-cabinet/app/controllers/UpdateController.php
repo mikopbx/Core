@@ -21,7 +21,7 @@ class UpdateController extends BaseController {
 		$licKey = PbxSettings::getValueByKey( 'PBXLicense' );
 		if ( strlen( $licKey ) !== 28
 		     || ! Text::startsWith( $licKey, "MIKO-" ) ) {
-			return $this->forward( 'licensing/modify' );
+			return $this->forward( 'licensing/modify/update' );
 		}
 
 		$licKey                 = PbxSettings::getValueByKey( 'PBXLicense' );

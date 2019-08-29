@@ -10,7 +10,7 @@
 class SystemDiagnosticController extends BaseController {
 
 	public function indexAction() {
-
+       
 	}
 
 }

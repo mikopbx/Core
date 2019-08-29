@@ -1,0 +1,52 @@
+#!/bin/sh
+
+disk="${1}";
+disk_name=$(basename $disk);
+if [ ! -b "${disk}" ]; then
+    echo 'error';
+    exit 1;
+fi;
+
+total=$(cat "/sys/block/${disk_name}/size" 2> /dev/null);
+disk_size=$(cat "/sys/block/${disk_name}/${disk_name}1/size" 2> /dev/null);
+
+delta=`expr $total - $disk_size`;
+delta_size_mb=`expr $delta \* 100 \* 512 / 1024 / 1024`;
+echo "total=$total disk_size=$disk_size size_mb=$delta_size_mb";
+
+if [ "$delta_size_mb" -le "100000" ]; then
+    exit 0;
+fi;
+
+is_mounted=$(mount | grep "$disk");
+
+if [ "${is_mounted}x" != "x" ]; then
+    echo 'free storage...';
+    /etc/rc/freestorage;
+fi;
+
+if [ -b "${disk}1" ]; then
+    echo 'delete part 1...';
+    fdisk "$disk" > /dev/null 2> /dev/null << EOF
+d
+w
+EOF
+fi;
+
+echo 'add new part 1...';
+
+fdisk "$disk" > /dev/null 2> /dev/null  << EOF
+n
+p
+1
+
+
+w
+EOF
+
+fs_type=$(/sbin/blkid -ofull "${disk}1");
+if [ "${fs_type}x" != "x" ]; then
+    e2fsck -f "$disk"
+    resize2fs "$disk"
+fi;
+

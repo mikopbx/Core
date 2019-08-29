@@ -8,21 +8,9 @@
 <div id="main" class="main-content-wrapper pusher">
     <div id="debug-info"></div>
     <div class="ui container">
-        {% if StorageDiskUnMounted %}
-            <div class="row">
-                <div class="ui icon negative message">
-                    <i class="hdd icon"></i>
-                    <div class="content">
-                        <div class="header">
-                            {{ t._("adv_MessagesHeaderError") }}
-                        </div>
-                        {{ t._("adv_StorageDiskUnMounted") }}
-                    </div>
-                </div>
-            </div>
-        {% else %}
+
             <div class="row" id="advices"></div>
-        {% endif %}
+
 
         <h1 class="ui {% if (action=='index') %}dividing{% endif %} header">
             {{ elements.getIconByController(controller) }}
@@ -32,7 +20,7 @@
                     {% if not urlToWiki is empty %}
                         <a href="{{ urlToWiki }}" target="_blank"
                            data-content="{{ t._("GoToWikiDocumentation") }}"
-                           class="ui circular label" data-variation="wide">?</a>
+                           data-variation="wide"><i class="small blue question icon circular label"></i></a>
                     {% endif %}
                 </div>
             </div>

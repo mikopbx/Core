@@ -12,18 +12,32 @@ use Phalcon\Mvc\Model\Relation;
 
 class IaxCodecs extends ModelsBase
 {
-
+    /**
+     * @var integer
+     */
     public $id;
+
+    /**
+     * @var string
+     */
     public $iaxuid;
+
+    /**
+     * @var string
+     */
     public $codec;
+
+    /**
+     * @var integer
+     */
     public $priority;
 
-    public function getSource()
+    public function getSource() :string
     {
         return 'm_IaxCodecs';
     }
 
-    public function initialize()
+    public function initialize() :void
     {
 	    parent::initialize();
         $this->belongsTo(
@@ -31,10 +45,10 @@ class IaxCodecs extends ModelsBase
             'Models\Codecs',
             'name',
             [
-	            "alias"=>"Codecs",
-                "foreignKey" => [
-                    "allowNulls" => false,
-                    "action"     => Relation::NO_ACTION,
+	            'alias'=>'Codecs',
+                'foreignKey' => [
+                    'allowNulls' => false,
+                    'action'     => Relation::NO_ACTION,
                 ]
             ]
         );
@@ -44,10 +58,10 @@ class IaxCodecs extends ModelsBase
             'Models\Iax',
             'uniqid',
             [
-	            "alias"=>"Iax",
-                "foreignKey" => [
-                    "allowNulls" => false,
-                    "action"     => Relation::NO_ACTION,
+	            'alias'=>'Iax',
+                'foreignKey' => [
+                    'allowNulls' => false,
+                    'action'     => Relation::NO_ACTION,
                 ]
             ]
         );

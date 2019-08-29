@@ -3,8 +3,10 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 8 2018
+ * Written by Alexey Portnov, 8 2019
  */
+
+use Models\Extensions;
 
 /**
 $cntr = new OldConfigConverter('/root/config.xml');
@@ -49,14 +51,16 @@ class OldConfigConverter{
      * @return array
      */
     public function parse(){
-        $this->parse_sip_phones();
-        $this->parse_external_phone();
-        $this->parse_manager();
-        $this->parse_sip_providers();
-        $this->parse_iax_providers();
-        $this->parse_smart_ivr();
-        $this->parse_saas_key();
-        $this->parse_callflow();
+        if($this->res_html){
+            $this->parse_sip_phones();
+            $this->parse_external_phone();
+            $this->parse_manager();
+            $this->parse_sip_providers();
+            $this->parse_iax_providers();
+            $this->parse_smart_ivr();
+            $this->parse_saas_key();
+            $this->parse_callflow();
+        }
         return $this->data;
     }
 
@@ -84,16 +88,23 @@ class OldConfigConverter{
      * @return mixed|null
      */
     private function get($name){
-        return isset($this->tmp_data[$name])?$this->tmp_data[$name]:null;
+        return $this->tmp_data[$name] ?? null;
     }
 
     /**
      * Конвертация настроек sip.conf (пользовательские учетки).
      */
-    private function parse_sip_phones(){
-        foreach($this->res_html->find('sip phone') as $e) {
+    private function parse_sip_phones() :void {
+        if(is_bool($this->res_html)){
+            return;
+        }
+        $sip_phone_nodes = $this->res_html->find('sip phone');
+        if(is_bool($sip_phone_nodes)){
+            return;
+        }
+        foreach($sip_phone_nodes as $e) {
             $this->init_data($e->children);
-            if($this->get('uniqid') == null){
+            if($this->get('uniqid') === null){
                 continue;
             }
 
@@ -143,23 +154,26 @@ class OldConfigConverter{
             $networkfilter = $this->add_net_filter($this->get('permitip'), $this->get('permitnetmask'), $rules);
 
             $secret = substr($this->get('secret'),0, stripos($this->get('secret'), '</secret>'));
-            $secret = (trim($secret) == '')?$this->get('secret'):$secret;
+            $secret = (trim($secret) === '')?$this->get('secret'):$secret;
 
-            if($this->get('language') != 'ru-ru' && $this->get('language') != 'en-en') {
+            $language_code = $this->get('language');
+            if($language_code !== 'ru-ru' && $language_code !== 'en-en') {
                 $language = 'ru-ru';
             }else{
                 $language = $this->get('language');
             }
+            /** @var Models\Extensions $exten_db */
             $exten_db = Models\Extensions::findFirst("number='{$this->get('extension')}'");
-            $id      = ($exten_db == null)?null:$exten_db->id;
-            $user_id = ($exten_db == null)?null:$exten_db->userid;
+            $id      = ($exten_db === null)?null:$exten_db->id;
+            $user_id = ($exten_db === null)?null:$exten_db->userid;
 
-            $this->data['extensions'][$this->get('extension')] = [
+            $exten_num = $this->get('extension');
+            $this->data['extensions'][$exten_num] = [
                 'id'                => $id,
                 'user_id'           => $user_id,
                 'fwd_ringlength'    => $this->get('ringlength'),
                 'user_username'     => $this->get('callerid'),
-                'number'            => $this->get('extension'),
+                'number'            => $exten_num,
                 'user_email'        => $this->get('emailcallrecordaddress'),
                 'user_language'     => $language,
                 'sip_secret'        => $secret,

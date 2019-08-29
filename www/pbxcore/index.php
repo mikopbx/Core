@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 6 2019
+ * Written by Alexey Portnov, 8 2019
  */
 
 define('ISPBXCORESERVICES', '1');
@@ -17,13 +17,13 @@ use Phalcon\Events\Manager as EventsManager;
 
 // Create a events manager
 $eventsManager = new EventsManager();
-$eventsManager->attach("micro:beforeExecuteRoute", function (Event $event, Micro $app) {
+$eventsManager->attach('micro:beforeExecuteRoute', function (Event $event, Micro $app) {
     // return true;
-    if($_SERVER['REMOTE_ADDR'] == '127.0.0.1'){
+    if($_SERVER['REMOTE_ADDR'] === '127.0.0.1'){
         return true;
     }
     $config = $GLOBALS['g']['phalcon_settings'];
-    if($config["application"]["debugMode"] == true){
+    if($config['application']['debugMode'] === true){
         return true;
     }
     System::session_readonly();
@@ -46,13 +46,13 @@ $eventsManager->attach("micro:beforeExecuteRoute", function (Event $event, Micro
     }elseif(!in_array($pattern, $panel_pattern)) {
         $res_auth = false;
     }
-    if(FALSE == $res_auth){
-        $app->response->setStatusCode(403, "Forbidden")->sendHeaders();
+    if(FALSE === $res_auth){
+        $app->response->setStatusCode(403, 'Forbidden')->sendHeaders();
         $app->response->setContent('The user isn\'t authenticated. ');
         $app->response->send();
-        Util::sys_log_msg('web_auth', "From: {$_SERVER['REMOTE_ADDR']} UserAgent:{$_SERVER['HTTP_USER_AGENT']} Cause: Wrong password");
+        $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? 'Undefined';
+        Util::sys_log_msg('web_auth', "From: {$_SERVER['REMOTE_ADDR']} UserAgent:{$user_agent} Cause: Wrong password");
     }
-    unset($event);
     return $res_auth;
 });
 
@@ -62,7 +62,7 @@ $app->setEventsManager($eventsManager);
 /**
  * Последовательная загрузка данных из cdr таблицы.
  * /pbxcore/api/cdr/get_data MIKO AJAM
- * curl 'http://172.16.156.223:80/pbxcore/api/cdr/get_data?offset=0&limit=1';
+ * curl 'http://127.0.0.1:80/pbxcore/api/cdr/get_data?offset=0&limit=1';
  */
 $app->get('/api/cdr/get_data', function () use ($app) {
     $offset = $app->request->get('offset');
@@ -70,20 +70,20 @@ $app->get('/api/cdr/get_data', function () use ($app) {
     $limit  = ($limit>600)?600:$limit;
 
     $filter = [
-        "id>:id:",
+        'id>:id:',
         'bind'  => ['id' => $offset],
         'order' => 'id',
         'limit' => $limit,
-        'miko_result_in_file' => true,
+        'miko_result_in_file' => true
     ];
 
     $client  = new BeanstalkClient('select_cdr');
     $message = $client->request(json_encode($filter), 2);
-    if($message == false){
+    if($message === false){
         $app->response->setContent('');
         $app->response->send();
     }else{
-        $result   = json_decode($message);
+        $result   = json_decode($message, true);
         $arr_data = [];
         if(file_exists($result)){
             $arr_data = json_decode(file_get_contents($result), true);
@@ -91,14 +91,16 @@ $app->get('/api/cdr/get_data', function () use ($app) {
         }
         $xml_output  = "<?xml version=\"1.0\"?>\n";
         $xml_output .= "<cdr-table-askozia>\n";
-        foreach ($arr_data as $data){
-            $attributes = '';
-            foreach ($data as $tmp_key => $tmp_val) {
-                $attributes .= sprintf('%s="%s" ', $tmp_key, rawurlencode($tmp_val));
+        if(is_array($arr_data)){
+            foreach ($arr_data as $data){
+                $attributes = '';
+                foreach ($data as $tmp_key => $tmp_val) {
+                    $attributes .= sprintf('%s="%s" ', $tmp_key, rawurlencode($tmp_val));
+                }
+                $xml_output.= "<cdr-row $attributes />\n";
             }
-            $xml_output.= "<cdr-row $attributes />\n";
         }
-        $xml_output .= "</cdr-table-askozia>";
+        $xml_output .= '</cdr-table-askozia>';
         $app->response->setContent($xml_output);
         $app->response->send();
     }
@@ -118,23 +120,24 @@ $app->get('/api/cdr/records', function () use ($app) {
     }
 
     $filename = $app->request->get('view');
-    $extension = strtolower(substr(strrchr($filename,"."),1));
+    $extension = strtolower(substr(strrchr($filename,'.'),1));
     $type = '';
     switch ($extension) {
-        case "mp3":
-            $type = "audio/mpeg";
+        case 'mp3':
+            $type = 'audio/mpeg';
             break;
-        case "wav":
-            $type = "audio/x-wav";
+        case 'wav':
+            $type = 'audio/x-wav';
             break;
-        case "gsm":
-            $type = "audio/x-gsm";
+        case 'gsm':
+            $type = 'audio/x-gsm';
             break;
     }
     $size = @filesize($filename);
-    if(!$size || $type == ''){
-        openlog("miko_ajam", LOG_PID | LOG_PERROR, LOG_AUTH);
-        syslog(LOG_WARNING, "From {$_SERVER['REMOTE_ADDR']}. UserAgent: ({$_SERVER['HTTP_USER_AGENT']}). File not found.");
+    if(!$size || $type === ''){
+        openlog('miko_ajam', LOG_PID | LOG_PERROR, LOG_AUTH);
+        $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? 'Undefined';
+        syslog(LOG_WARNING, "From {$_SERVER['REMOTE_ADDR']}. UserAgent: ({$user_agent}). File not found.");
         closelog();
 
         $response = new Phalcon\Http\Response();
@@ -144,12 +147,12 @@ $app->get('/api/cdr/records', function () use ($app) {
         return;
     }
 
-    $fp=fopen($filename, "rb");
+    $fp=fopen($filename, 'rb');
     if ($fp) {
-        $app->response->setHeader('Content-Description', "mp3 file");
-        $app->response->setHeader('Content-Disposition', "attachment; filename=".basename($filename));
-        $app->response->setHeader('Content-type', "$type");
-        $app->response->setHeader('Content-Transfer-Encoding', "binary");
+        $app->response->setHeader('Content-Description', 'mp3 file');
+        $app->response->setHeader('Content-Disposition', 'attachment; filename='.basename($filename));
+        $app->response->setHeader('Content-type', $type);
+        $app->response->setHeader('Content-Transfer-Encoding', 'binary');
         $app->response->setContentLength($size);
         $app->response->sendHeaders();
         fpassthru($fp);
@@ -175,33 +178,33 @@ $app->get('/api/cdr/records', function () use ($app) {
  */
 $app->get('/api/cdr/playback', function () use ($app) {
     $filename    = $app->request->get('view');
-    $extension = strtolower(substr(strrchr($filename,"."),1));
-    if(Util::rec_file_exists($filename) && ($extension == 'mp3' || $extension == 'wav' )){
+    $extension = strtolower(substr(strrchr($filename,'.'),1));
+    if(($extension === 'mp3' || $extension === 'wav' ) && Util::rec_file_exists($filename)){
         $ctype ='';
         switch( $extension ) {
-            case "mp3": $ctype="audio/mpeg"; break;
-            case "wav": $ctype="audio/x-wav"; break;
+            case 'mp3': $ctype='audio/mpeg'; break;
+            case 'wav': $ctype='audio/x-wav'; break;
         }
         $filesize = filesize($filename);
         if (isset($_SERVER['HTTP_RANGE'])){
             $range = $_SERVER['HTTP_RANGE'];
             list ($param, $range) = explode('=', $range);
-            if (strtolower(trim($param)) != 'bytes') {
-                header("HTTP/1.1 400 Invalid Request");
+            if (strtolower(trim($param)) !== 'bytes') {
+                header('HTTP/1.1 400 Invalid Request');
                 exit();
             }
             $range = explode(',', $range);
             $range = explode('-', $range[0]);
             if ($range[0] === '') {
                 $end = $filesize - 1;
-                $start = $end - intval($range[0]);
+                $start = $end - (int) $range[0];
             }else
                 if ($range[1] === ''){
-                    $start = intval($range[0]);
+                    $start = (int) $range[0];
                     $end = $filesize - 1;
                 }else{
-                    $start = intval($range[0]);
-                    $end = intval($range[1]);
+                    $start  = (int) $range[0];
+                    $end    = (int) $range[1];
                     // if ($end >= $filesize || (! $start && (! $end || $end == ($filesize - 1)))){
                         // $partial = false;
                     // }
@@ -210,11 +213,11 @@ $app->get('/api/cdr/playback', function () use ($app) {
 
             $app->response->resetHeaders();
             $app->response->setRawHeader('HTTP/1.1 206 Partial Content');
-            $app->response->setHeader('Content-type', "$ctype");
+            $app->response->setHeader('Content-type', $ctype);
             $app->response->setHeader('Content-Range', "bytes $start-$end/$filesize");
             $app->response->setContentLength($length);
             if (! $fp = fopen($filename, 'rb')) {
-                header("HTTP/1.1 500 Internal Server Error");
+                header('HTTP/1.1 500 Internal Server Error');
                 exit();
             }
             if ($start){
@@ -230,15 +233,15 @@ $app->get('/api/cdr/playback', function () use ($app) {
             fclose($fp);
             $app->response->setContent($content);
         }else{
-            $app->response->setHeader('Content-type', "$ctype");
+            $app->response->setHeader('Content-type', $ctype);
             $app->response->setContentLength($filesize);
-            $app->response->setHeader('Accept-Ranges', "bytes");
+            $app->response->setHeader('Accept-Ranges', 'bytes');
             $app->response->setStatusCode(200, 'OK');
             // $app->response->setContent(file_get_contents($filename));
             $app->response->setFileToSend($filename);
             // TODO
         }
-        $app->response->setHeader('Server', "nginx");
+        $app->response->setHeader('Server', 'nginx');
 
         $is_download = !empty($app->request->get('download'));
         if($is_download){
@@ -251,8 +254,10 @@ $app->get('/api/cdr/playback', function () use ($app) {
         }
         $app->response->send();
     }else{
-        openlog("miko_ajam", LOG_PID | LOG_PERROR, LOG_AUTH);
-        syslog(LOG_WARNING, "From {$_SERVER['REMOTE_ADDR']}. UserAgent: ({$_SERVER['HTTP_USER_AGENT']}). File not found.");
+        openlog('miko_ajam', LOG_PID | LOG_PERROR, LOG_AUTH);
+
+        $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? 'Undefined';
+        syslog(LOG_WARNING, "From {$_SERVER['REMOTE_ADDR']}. UserAgent: ({$user_agent}). File not found.");
         closelog();
         $app->response->resetHeaders();
         $app->response->setRawHeader('HTTP/1.0 404 Not Found');
@@ -687,11 +692,13 @@ $app->post('/api/system/{name}', function ($params) use ($app) {
  * GET Резервное копирование.
  *
  * Получить список доступных резервных копий.
- *   curl http://172.16.156.212/pbxcore/api/backup/list;
+ *   curl http://127.0.0.1/pbxcore/api/backup/list;
  * Скачать файл лога.
  *   curl http://172.16.156.212/pbxcore/api/backup/download?id=backup_1530715058
  * Удалить резервную копию
- *   curl http://172.16.156.212/pbxcore/api/backup/remove?id=backup_1531123670
+ *   curl http://127.0.0.1/pbxcore/api/backup/remove?id=backup_1564399526
+ * Старт резервного копирования по расписанию вручную.
+ *   curl http://127.0.0.1/pbxcore/api/backup/start_scheduled
  * Получить пердполагаемый размер резервной копии
  *   curl http://172.16.156.212/pbxcore/api/backup/get_estimated_size
  *
@@ -700,35 +707,36 @@ $app->post('/api/system/{name}', function ($params) use ($app) {
  * Проверить соединение с FTP / SFTP хранилищем.
  *  curl http://172.16.156.212/pbxcore/api/backup/check_storage_ftp?id=1
  */
-$app->get('/api/backup/{name}', function ($params)use ($app) {
+$app->get('/api/backup/{name}', function ($action)use ($app) {
     $request = array(
         'data'   => $_REQUEST,
-        'action' => $params
+        'action' => $action
     );
 
     $client = new Nats\Connection();
     $client->connect(10);
-    $cb = function (Nats\Message $message) use ($params, $app) {
-        if($params == 'download'){
+    $cb = function (Nats\Message $message) use ($action, $app) {
+        if($action === 'download'){
             $id = $app->request->get('id');
             $b = new Backup($id);
             $filename = $b->get_result_file();
 
+            Util::sys_log_msg('test', $filename);
+
             if(!file_exists($filename)){
-                $app->response->setStatusCode(404, "File not found")->sendHeaders();
-                $app->response->setContent("File not found");
+                $app->response->setStatusCode(404, 'File not found')->sendHeaders();
+                $app->response->setContent('File not found '.$id);
                 $app->response->send();
                 return;
             }
 
             $extension = Util::get_extension_file($filename);
-            if($extension == 'zip'){
+            if($extension === 'zip'){
                 $size = filesize($filename);
-                $app->response->setHeader('Content-type',        "application/zip");
-                $app->response->setHeader('Content-Description', "File Transfer");
+                $app->response->setHeader('Content-type',        'application/zip');
+                $app->response->setHeader('Content-Description', 'File Transfer');
                 $app->response->setHeader('Content-Disposition', "attachment; filename={$id}.{$extension}");
 
-                // $app->response->setHeader('Content-Transfer-Encoding', "binary");
                 $app->response->setContentLength($size);
                 $app->response->sendHeaders();
 
@@ -748,7 +756,7 @@ $app->get('/api/backup/{name}', function ($params)use ($app) {
                 $app->response->send();
             }
         }else{
-            $app->response->setStatusCode(200, "OK")->sendHeaders();
+            $app->response->setStatusCode(200, 'OK')->sendHeaders();
             $app->response->setContent($message->getBody());
             $app->response->send();
         }
@@ -772,75 +780,89 @@ $app->get('/api/backup/{name}', function ($params)use ($app) {
  *  curl -X POST -d '{"id": "backup_1534838222", "options":{"backup-sound-files":"1"}}' http://172.16.156.212/pbxcore/api/backup/recover;
  */
 $app->post('/api/backup/{name}', function ($params)use ($app){
-    if($params == 'upload' ){
+    if($params === 'upload' ){
         $data = [];
-        $data["result"] = "ERROR";
-        if($app->request->hasFiles() == true){
-            $backupdir  = Backup::get_backup_dir();
-            $dirs       = PBX::get_asterisk_dirs();
-            foreach ($app->request->getUploadedFiles() as $file) {
-                $tmp_arr   = explode('.', $file->getName());
-                $extension = $tmp_arr[count($tmp_arr)-1];
-                unset($tmp_arr[count($tmp_arr)-1]);
+        $data['result'] = 'ERROR';
 
-                $dir_name = implode($tmp_arr);
+        foreach ($_FILES as $file) {
+            // check the error status
+            if ($file['error'] !== 0) {
+                Util::sys_log_msg('UploadFile','error '.$file['error'].' in file '.$_POST['resumableFilename']);
+                continue;
+            }
+            $dirs = PBX::get_asterisk_dirs();
+            // init the destination file (format <filename.ext>.part<#chunk>
+            // the file is stored in a temporary directory
+            if(isset($_POST['resumableIdentifier']) && trim($_POST['resumableIdentifier'])!==''){
+                $temp_dir = $dirs['tmp'].'/'.$_POST['resumableIdentifier'];
+            }else{
+                $temp_dir = $dirs['tmp'].'/backup';
+            }
+            $dest_file = $temp_dir.'/'.$_POST['resumableFilename'].'.part'.$_POST['resumableChunkNumber'];
+            // create the temporary directory
+            if(!is_dir($temp_dir) && !mkdir($temp_dir, 0777, true) && !is_dir($temp_dir)){
+                Util::sys_log_msg('UploadFile', "Error create dir '$temp_dir'");
+            }
 
-                if($extension == 'xml') {
-                    $res_file = "{$dirs['tmp']}/old_config.xml";
-                    $res = $file->moveTo($res_file);
-                    $res = ($res && file_exists($res_file));
-                    if ($res != true) {
-                        $app->response->setContent(json_encode($data));
-                        $app->response->send();
-                        return;
-                    }
-                    $request = array(
-                        'data' => null,
-                        'action' => 'convert_config' // Операция.
-                    );
-                    $client = new Nats\Connection();
-                    $client->connect(10);
-                    $cb = function (Nats\Message $message) use ($app){
-                        $app->response->setStatusCode(200, "OK")->sendHeaders();
-                        $app->response->setContent('' . $message->getBody());
-                        $app->response->send();
-                    };
-                    $client->request('backup', json_encode($request), $cb);
-                    return;
-                }else{
-                    $mnt_point = "{$backupdir}/$dir_name/mnt_point";
-                    if(!is_dir("{$backupdir}/$dir_name/")){
-                        mkdir("{$backupdir}/$dir_name/");
-                        mkdir("{$mnt_point}");
-                    }
-                    $res_file = "{$backupdir}/$dir_name/resultfile.{$extension}";
-                    $res = $file->moveTo($res_file);
-                    $res = ($res && file_exists($res_file));
-                    if($res == true){
-                        $request = [
-                            'data'   => [
-                                'res_file'  => $res_file,
-                                'mnt_point' => $mnt_point,
-                                'backupdir' => $backupdir,
-                                'dir_name'  => $dir_name,
-                                'extension' => $extension
-                            ],
-                            'action' => $params // Операция.
-                        ];
-                        $client = new Nats\Connection();
-                        $client->connect(10);
-                        $cb = function (Nats\Message $message) use ($app){
-                            $app->response->setStatusCode(200, "OK")->sendHeaders();
-                            $app->response->setContent('' . $message->getBody());
-                            $app->response->send();
-                        };
-                        $client->request('backup', json_encode($request), $cb);
-                        return;
-                    }
+            $result = false;
+            // move the temporary file
+            if (!move_uploaded_file($file['tmp_name'], $dest_file)) {
+                Util::sys_log_msg('UploadFile','Error saving (move_uploaded_file) chunk '.$_POST['resumableChunkNumber'].' for file '.$dest_file);
+            } else {
+                // check if all the parts present, and create the final destination file
+                $result = Util::createFileFromChunks($temp_dir, $_POST['resumableFilename'], $_POST['resumableTotalSize'],$_POST['resumableTotalChunks'], '', $_POST['resumableChunkSize']);
+            }
+            if($result === true){
+                $data['result'] = 'Success';
+                $backupdir  = Backup::get_backup_dir();
+                $dir_name   = Util::trim_extension_file(basename($_POST['resumableFilename']));
+                $extension  = Util::get_extension_file(basename($_POST['resumableFilename']));
+                $mnt_point  = "{$backupdir}/$dir_name/mnt_point";
+                if(!file_exists("{$backupdir}/$dir_name/")){
+                    Util::mwexec("mkdir -p {$backupdir}/{$dir_name}/ {$mnt_point}");
                 }
+                file_put_contents("{$backupdir}/$dir_name/upload_status", 'MERGING');
+                $data['data'] = [
+                    'backup_id'  => $dir_name,
+                    'status_url' => '/pbxcore/api/backup/status_upload?backup_id='.$dir_name,
+                    'result'     => 'MERGING'
+                ];
+
+                $merge_post_action = ($extension === 'xml')?'convert_config':'upload_backup';
+                $merge_settings    = [
+                    'data'   => [
+                        'result_file'           => "{$backupdir}/$dir_name/resultfile.{$extension}",
+                        'mnt_point'             => $mnt_point,
+                        'backupdir'             => $backupdir,
+                        'dir_name'              => $dir_name,
+                        'extension'             => $extension,
+                        'temp_dir'              => $temp_dir,
+                        'resumableFilename'     => $_POST['resumableFilename'] ?? 'test',
+                        'resumableTotalChunks'  => $_POST['resumableTotalChunks'] ?? '1',
+                    ],
+                    'action' => $merge_post_action
+                ];
+                $settings_file = "{$backupdir}/$dir_name/merge_settings";
+                file_put_contents($settings_file, json_encode($merge_settings, JSON_UNESCAPED_SLASHES|JSON_PRETTY_PRINT));
+
+                // Отправляем задачу на склеивание файла.
+                $client = new Nats\Connection();
+                $client->connect(10);
+                $req_data = [
+                    'action' => 'merge_uploaded_file',
+                    'data' => [
+                        'settings_file' => $settings_file
+                    ]
+                ];
+                $client->request('backup', json_encode($req_data), function (Nats\Message $message){
+                });
+
+            }else{
+                $data['result'] = 'INPROGRESS';
             }
         }
-        $app->response->setContent(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        $app->response->setStatusCode(200, 'OK')->sendHeaders();
+        $app->response->setContent(json_encode($data, JSON_UNESCAPED_SLASHES|JSON_PRETTY_PRINT));
         $app->response->send();
         return;
     }
@@ -848,7 +870,7 @@ $app->post('/api/backup/{name}', function ($params)use ($app){
     $row_data = $app->request->getRawBody();
     // Проверим, переданные данные.
     if(!Util::is_json($row_data)){
-        $app->response->setStatusCode(200, "OK")->sendHeaders();
+        $app->response->setStatusCode(200, 'OK')->sendHeaders();
         $app->response->setContent('{"result":"ERROR"}');
         $app->response->send();
         return;
@@ -861,8 +883,8 @@ $app->post('/api/backup/{name}', function ($params)use ($app){
 
     $client = new Nats\Connection();
     $client->connect(10);
-    $cb = function (Nats\Message $message) use ($app) {
-        $app->response->setStatusCode(200, "OK")->sendHeaders();
+    $cb = static function (Nats\Message $message) use ($app) {
+        $app->response->setStatusCode(200, 'OK')->sendHeaders();
         $app->response->setContent(''.$message->getBody());
         $app->response->send();
     };
@@ -940,14 +962,11 @@ $f_modules_name_command = function ($name, $command) use ($app) {
             $app->response->redirect($response['redirect'], true, 302);
             $app->response->send();
         }elseif (isset($response['headers']) && isset($response['echo'])){
-            if(isset($response['headers'])){
-                foreach ($response['headers'] as $name => $value){
-                    $app->response->setHeader($name, $value);
-                }
+            foreach ($response['headers'] as $name => $value){
+                $app->response->setHeader($name, $value);
             }
-            if( isset($response['echo']) ){
-                $app->response->setContent($response['echo']);
-            }
+
+            $app->response->setContent($response['echo']);
             $app->response->setStatusCode(200, "OK")->sendHeaders();
             $app->response->send();
         }elseif (isset($response['echo_file'])){

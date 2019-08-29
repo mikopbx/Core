@@ -89,6 +89,7 @@ class MailSettingsController extends BaseController {
 			'MailTplVoicemailSubject',
 			'MailTplVoicemailBody',
 			'SystemNotificationsEmail',
+            'VoicemailNotificationsEmail'
 		);
 	}
 }

@@ -77,6 +77,14 @@
     </div>
 
 </div>
+<div class="ui segment disability">
+    <div class="field">
+        <div class="ui toggle checkbox" id="create-now">
+            <input type="checkbox" name="create-now">
+            <label>{{ t._('bkp_CreateBackupAfterSaveSettings') }}</label>
+        </div>
+    </div>
+</div>
 {{ partial("partials/submitbutton",[]) }}
 {{ link_to('backup/index', "<i class='angle left icon'></i>"~t._('bt_Back'), "class": "ui large labeled icon button") }}
 </form>

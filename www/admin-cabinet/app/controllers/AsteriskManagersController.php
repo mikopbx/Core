@@ -18,7 +18,7 @@ class AsteriskManagersController extends BaseController {
 	/**
 	 * Инициализация базового класса
 	 */
-	public function initialize() {
+	public function initialize() :void{
 		$this->arrCheckBoxes = [
 			'call',
 			'cdr',

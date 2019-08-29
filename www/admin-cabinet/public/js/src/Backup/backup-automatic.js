@@ -6,7 +6,7 @@
  *
  */
 
-/* global globalRootUrl, globalTranslate, Form, SemanticLocalization */
+/* global globalRootUrl, globalTranslate, Form, SemanticLocalization, PbxApi */
 
 const automaticBackup = {
 	$timeStart: $('#time-start'),
@@ -15,6 +15,7 @@ const automaticBackup = {
 	$sftpTgl: $('#sftp-toggle'),
 	$ftpPort: $('#ftp_port'),
 	$formObj: $('#backup-automatic-form'),
+	$createNowTgl: $('#create-now'),
 	validateRules: {
 		ftp_host: {
 			identifier: 'ftp_host',
@@ -91,7 +92,14 @@ const automaticBackup = {
 		return result;
 	},
 	cbAfterSendForm() {
-
+		if (automaticBackup.$createNowTgl.checkbox('is checked')) {
+			PbxApi.BackupStartScheduled(automaticBackup.cbAfterStartScheduled);
+		}
+	},
+	cbAfterStartScheduled(result) {
+		if (result) {
+			window.location = `${globalRootUrl}backup/index`;
+		}
 	},
 	initializeForm() {
 		Form.$formObj = automaticBackup.$formObj;

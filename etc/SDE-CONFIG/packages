@@ -185,7 +185,7 @@ O -----5---- 111.100 network openslp 2.0.0 / extra/network extra/server CROSS 0
 X -----5---- 111.200 network tcp_wrappers 7.6 / base/system CROSS FPIC-QUIRK 0
 O -----5---- 111.300 archiver alien 8.95 / extra/development 0
 O 0----5---- 111.400 base gperf 3.1 / base/development CROSS 0
-X -----5---- 111.800 develop cvs 1.11.23 / base/development CROSS 0
+O -----5---- 111.800 develop cvs 1.11.23 / base/development CROSS 0
 O -----5---- 111.810 develop cvsps 2.1 / base/development 0
 O -----5---- 111.900 base rcs 5.7 / base/development 0
 O -----5---- 112.000 contrib fusionsound 2007-12-23 / extra/multimedia 0
@@ -2884,7 +2884,7 @@ O -----5---- 800.000 develop memprof 0.5.9 / extra/tool 0
 O -----5---- 800.000 develop mxml 2.3 / extra/tool 0
 O -----5---- 800.000 develop ncc 2.8 / extra/development 0
 O -----5---- 800.000 develop nesla 0.9.3 / extra/development NOPARALLEL 0
-O -----5---- 800.000 develop nodejs 0.10.35 / extra/development NOPARALLEL CROSS 0
+O -----5---- 800.000 develop nodejs 10.16.0 / extra/development NOPARALLEL CROSS 0
 O -----5---- 800.000 develop nwcc 0.8.3 / base/development 0
 O -----5---- 800.000 develop odyssey 0.5 / extra/development CROSS 0
 O -----5---- 800.000 develop pcc 1.0.0 / extra/development NOPARALLEL 0

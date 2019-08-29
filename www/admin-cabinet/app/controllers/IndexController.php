@@ -8,7 +8,7 @@
  */
 
 class IndexController extends BaseController {
-    public function initialize()
+    public function initialize():void
     {
         $this->tag->setTitle($this->translation->_('Askozia phone system'));
         parent::initialize();

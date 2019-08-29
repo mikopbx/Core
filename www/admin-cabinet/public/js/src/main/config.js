@@ -10,4 +10,5 @@
 
 const Config = {
 	pbxUrl: globalDebugMode ? '//172.16.32.72' : '',
+	updateUrl: 'https://update.askozia.ru/',
 };

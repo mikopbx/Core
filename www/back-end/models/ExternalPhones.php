@@ -13,20 +13,47 @@ use Phalcon\Mvc\Model\Relation;
 
 class ExternalPhones extends ModelsBase
 {
+    /**
+     * @var integer
+     */
     public $id;
+
+    /**
+     * @var string
+     */
     public $extension;
+
+    /**
+     * @var string
+     */
     public $uniqid;
+
+    /**
+     * @var string
+     */
     public $dialstring;
+
+    /**
+     * @var string
+     */
     public $manualdialplanincoming;
+
+    /**
+     * @var string
+     */
     public $manualdialplanoutgoing;
+
+    /**
+     * @var integer
+     */
     public $disabled;
 
-    public function getSource()
+    public function getSource() :string 
     {
         return 'm_ExternalPhones';
     }
 
-    public function initialize()
+    public function initialize() :void 
     {
 	    parent::initialize();
         $this->belongsTo(
@@ -34,10 +61,10 @@ class ExternalPhones extends ModelsBase
             'Models\Extensions',
             'number',
             [
-                "alias"=>"Extensions",
-                "foreignKey" => [
-                    "allowNulls" => false,
-                    "action"     => Relation::NO_ACTION // Всегда сначала удаляем Extensions, а он удалит ExternalPhones
+                'alias'=>'Extensions',
+                'foreignKey' => [
+                    'allowNulls' => false,
+                    'action'     => Relation::NO_ACTION // Всегда сначала удаляем Extensions, а он удалит ExternalPhones
                 ]
             ]
         );
@@ -46,7 +73,7 @@ class ExternalPhones extends ModelsBase
     {
         $validation = new \Phalcon\Validation();
         $validation->add('uniqid', new UniquenessValidator([
-            'message' => $this->t("mo_ThisUniqidNotUniqueForExternalPhonesModels")
+            'message' => $this->t('mo_ThisUniqidNotUniqueForExternalPhonesModels')
         ]));
         return $this->validate($validation);
     }

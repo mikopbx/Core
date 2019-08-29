@@ -1,4 +1,5 @@
 {{ form('licensing/modify', 'role': 'form', 'class': 'ui form large', 'id':'licencing-modify-form') }}
+<input type="hidden" name = "backurl" value="{{ backurl }}">
 <div id="licenseKeySection">
     <h2 class="ui header">{{ t._('lic_LicenseKey') }}</h2>
 
@@ -91,5 +92,4 @@
         {{ t._('lic_ResetLicenseSettings') }}
     </button>
 </div>
-    </form>
-
+</form>

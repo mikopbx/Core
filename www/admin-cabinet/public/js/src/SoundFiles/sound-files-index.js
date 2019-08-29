@@ -122,7 +122,6 @@ class IndexSoundPlayer {
 
 const soundFiles = {
 	$audioFilesList: $('#sound-files-table'),
-	$deleteButtons: $('.ui.button.delete'),
 	$contentFrame: $('#content-frame'),
 	initialize() {
 		soundFiles.$audioFilesList.DataTable({
@@ -154,7 +153,7 @@ const soundFiles = {
 		toArray.apply(document.getElementsByTagName('audio')).forEach((audio) => {
 			audio.addEventListener('error', soundFiles.handleMediaError);
 		});
-		soundFiles.$deleteButtons.on('click', (e) => {
+		$('body').on('click', 'a.delete', (e) => {
 			e.preventDefault();
 			const fileName = $(e.target).closest('tr').attr('data-value');
 			const id = $(e.target).closest('tr').attr('id');

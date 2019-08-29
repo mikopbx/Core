@@ -8,17 +8,68 @@
  *
  */
 
-/* global globalRootUrl, PbxApi, globalTranslate,
- globalPBXLanguage, globalPBXLicense, globalPBXVersion */
+/* global globalRootUrl, PbxApi, globalTranslate, UpdateApi, UserMessage */
+var licensing = {
+  params: undefined,
+  callback: undefined,
+  captureFeature: function () {
+    function captureFeature(params, callback) {
+      licensing.params = params;
+      licensing.callback = callback;
+      $.api({
+        url: "".concat(globalRootUrl, "licensing/captureFeatureForProductId"),
+        on: 'now',
+        method: 'POST',
+        data: {
+          licFeatureId: licensing.params.licFeatureId,
+          licProductId: licensing.params.licProductId
+        },
+        successTest: function () {
+          function successTest(response) {
+            // test whether a JSON response is valid
+            return response !== undefined && Object.keys(response).length > 0 && response.success === true;
+          }
+
+          return successTest;
+        }(),
+        onSuccess: licensing.cbAfterFeatureCaptured,
+        onFailure: licensing.cbAfterFailureFeatureCaptured
+      });
+    }
+
+    return captureFeature;
+  }(),
+  cbAfterFeatureCaptured: function () {
+    function cbAfterFeatureCaptured() {
+      licensing.callback(licensing.params);
+    }
+
+    return cbAfterFeatureCaptured;
+  }(),
+  cbAfterFailureFeatureCaptured: function () {
+    function cbAfterFailureFeatureCaptured(response) {
+      if (response !== undefined && Object.keys(response).length > 0 && response.message.length > 0) {
+        UserMessage.showError(response.message);
+      } else {
+        UserMessage.showError(globalTranslate.ext_NoLicenseAvailable);
+      }
+
+      $('a.button').removeClass('disabled');
+    }
+
+    return cbAfterFailureFeatureCaptured;
+  }()
+};
 var upgradeStatusLoopWorker = {};
 var extensionModules = {
-  $ajaxMessgesDiv: $('#ajax-messages'),
-  $checboxes: $('.module-row .checkbox'),
-  updatesUrl: 'https://update.askozia.ru/',
+  $checkboxes: $('.module-row .checkbox'),
+  $deleteModalForm: $('#delete-modal-form'),
+  $keepSettingsCheckbox: $('#keepModuleSettings'),
   initialize: function () {
     function initialize() {
-      extensionModules.getModulesUpdates();
-      extensionModules.$checboxes.checkbox({
+      extensionModules.$deleteModalForm.modal();
+      UpdateApi.getModulesUpdates(extensionModules.cbParseModuleUpdates);
+      extensionModules.$checkboxes.checkbox({
         onChecked: function () {
           function onChecked() {
             var uniqid = $(this).closest('tr').attr('id');
@@ -40,15 +91,90 @@ var extensionModules = {
 
     return initialize;
   }(),
-  addUpdateButtonToRow: function () {
-    function addUpdateButtonToRow(obj) {
-      var $moduleRow = $("tr#".concat(obj.uniqid));
-      var dymanicButton = "<a href=\"".concat(obj.href, "\" class=\"ui button update popuped\" \n\t\t\tdata-content=\"").concat(globalTranslate.ext_UpdateModule, "\"\n\t\t\tdata-uniqid =\"").concat(obj.uniqid, "\" \n\t\t\tdata-md5 =\"").concat(obj.md5, "\">\n\t\t\t<i class=\"icon redo blue\"></i> \n\t\t\t<span class=\"percent\"></span>\n\t\t\t</a>");
-      $moduleRow.find('.action-buttons').prepend(dymanicButton);
+
+  /**
+   * Обработка списка модулей полученнх с сайта
+   * @param response
+   */
+  cbParseModuleUpdates: function () {
+    function cbParseModuleUpdates(response) {
+      response.modules.forEach(function (obj) {
+        // Ищем среди установленных
+        var $moduleRow = $("tr.module-row#".concat(obj.uniqid));
+
+        if ($moduleRow.length > 0) {
+          var oldVer = $moduleRow.find('td.version').text();
+          var newVer = obj.version;
+
+          if (extensionModules.versionCompare(newVer, oldVer) > 0) {
+            extensionModules.addUpdateButtonToRow(obj);
+          }
+        } else {
+          var $newModuleRow = $("tr.new-module-row#".concat(obj.uniqid));
+
+          if ($newModuleRow.length > 0) {
+            var _oldVer = $newModuleRow.find('td.version').text();
+
+            var _newVer = obj.version;
+
+            if (extensionModules.versionCompare(_newVer, _oldVer) > 0) {
+              $newModuleRow.remove();
+              extensionModules.addModuleDescription(obj);
+            }
+          } else {
+            extensionModules.addModuleDescription(obj);
+          }
+        }
+      });
+      $('a.download').on('click', function (e) {
+        e.preventDefault();
+        $('a.button').addClass('disabled');
+        var params = {};
+        var $aLink = $(e.target).closest('a');
+        $aLink.removeClass('disabled');
+        params.uniqid = $aLink.attr('data-uniqid');
+        params.releaseId = $aLink.attr('data-id');
+        params.size = $aLink.attr('data-size');
+        params.licProductId = $aLink.attr('data-productid');
+        params.licFeatureId = $aLink.attr('data-featureid');
+        params.action = 'install';
+        params.aLink = $aLink;
+        licensing.captureFeature(params, extensionModules.cbAfterLicenseCheck);
+      });
+      $('a.update').on('click', function (e) {
+        e.preventDefault();
+        $('a.button').addClass('disabled');
+        var params = {};
+        var $aLink = $(e.target).closest('a');
+        $aLink.removeClass('disabled');
+        params.licProductId = $aLink.attr('data-productid');
+        params.licFeatureId = $aLink.attr('data-featureid');
+        params.action = 'update';
+        params.releaseId = $aLink.attr('data-id');
+        params.uniqid = $aLink.attr('data-uniqid');
+        params.size = $aLink.attr('data-size');
+        params.aLink = $aLink;
+        licensing.captureFeature(params, extensionModules.cbAfterLicenseCheck);
+      });
+      $('a.delete').on('click', function (e) {
+        e.preventDefault();
+        $('a.button').addClass('disabled');
+        $(e.target).closest('a').removeClass('disabled');
+        var params = [];
+        var $aLink = $(e.target).closest('tr');
+        params.uniqid = $aLink.attr('id');
+        extensionModules.deleteModule(params);
+      });
+      $('a[data-content]').popup();
     }
 
-    return addUpdateButtonToRow;
+    return cbParseModuleUpdates;
   }(),
+
+  /**
+   * Добавляет описание доступного модуля
+   * @param obj
+   */
   addModuleDescription: function () {
     function addModuleDescription(obj) {
       $('#online-updates-block').show();
@@ -58,113 +184,95 @@ var extensionModules = {
         promoLink = "<br><a href=\"".concat(obj.promo_link, "\" target=\"_blank\">").concat(globalTranslate.ext_ExternalDescription, "</a>");
       }
 
-      var dymanicRow = "\n\t\t\t<tr class=\"new-module-row\" id=\"".concat(obj.uniqid, "\">\n\t\t\t\t\t\t<td>").concat(decodeURIComponent(obj.name), "<br>\n\t\t\t\t\t\t<span class=\"features\">").concat(decodeURIComponent(obj.description), " ").concat(promoLink, "</span>\n\t\t\t\t\t\t</td>\n\t\t\t\t\t\t<td>").concat(decodeURIComponent(obj.developer), "</td>\n\t\t\t\t\t\t<td class=\"center aligned\">").concat(obj.version, "</td>\n\t\t\t\t\t\t<td class=\"right aligned collapsing\">\n    \t\t\t\t\t\t<div class=\"ui small basic icon buttons action-buttons\">\n    \t\t\t\t\t\t\t<a href=\"").concat(obj.href, "\" class=\"ui button download\" \n\t\t\t\t\t\t\t\t\tdata-content=\"").concat(globalTranslate.ext_InstallModule, "\"\n\t\t\t\t\t\t\t\t\tdata-uniqid =\"").concat(obj.uniqid, "\" \n\t\t\t\t\t\t\t\t\tdata-md5 =\"").concat(obj.md5, "\">\n\t\t\t\t\t\t\t\t\t<i class=\"icon download blue\"></i> \n\t\t\t\t\t\t\t\t\t<span class=\"percent\"></span>\n\t\t\t\t\t\t\t\t</a>\n    \t\t\t\t\t\t</div>\n\t\t\t</tr>");
+      var dymanicRow = "\n\t\t\t<tr class=\"new-module-row\" id=\"".concat(obj.uniqid, "\">\n\t\t\t\t\t\t<td>").concat(decodeURIComponent(obj.name), "<br>\n\t\t\t\t\t\t<span class=\"features\">").concat(decodeURIComponent(obj.description), " ").concat(promoLink, "</span>\n\t\t\t\t\t\t</td>\n\t\t\t\t\t\t<td>").concat(decodeURIComponent(obj.developer), "</td>\n\t\t\t\t\t\t<td class=\"center aligned version\">").concat(obj.version, "</td>\n\t\t\t\t\t\t<td class=\"right aligned collapsing\">\n    \t\t\t\t\t\t<div class=\"ui small basic icon buttons action-buttons\">\n    \t\t\t\t\t\t\t<a href=\"#\" class=\"ui button download\" \n\t\t\t\t\t\t\t\t\tdata-content= \"").concat(globalTranslate.ext_InstallModule, "\"\n\t\t\t\t\t\t\t\t\tdata-uniqid = \"").concat(obj.uniqid, "\"\n\t\t\t\t\t\t\t\t\tdata-size = \"").concat(obj.size, "\"\n\t\t\t\t\t\t\t\t\tdata-productId = \"").concat(obj.lic_product_id, "\"\n\t\t\t\t\t\t\t\t\tdata-featureId = \"").concat(obj.lic_feature_id, "\" \n\t\t\t\t\t\t\t\t\tdata-id =\"").concat(obj.release_id, "\">\n\t\t\t\t\t\t\t\t\t<i class=\"icon download blue\"></i> \n\t\t\t\t\t\t\t\t\t<span class=\"percent\"></span>\n\t\t\t\t\t\t\t\t</a>\n    \t\t\t\t\t\t</div>\n\t\t\t</tr>");
       $('#new-modules-table tbody').append(dymanicRow);
     }
 
     return addModuleDescription;
   }(),
-  getModulesUpdates: function () {
-    function getModulesUpdates() {
-      var requestData = {
-        TYPE: 'MODULES',
-        LICENSE: globalPBXLicense,
-        PBXVER: globalPBXVersion,
-        LANGUAGE: globalPBXLanguage
-      };
-      $.api({
-        url: extensionModules.updatesUrl,
-        on: 'now',
-        method: 'POST',
-        data: requestData,
-        successTest: function () {
-          function successTest(response) {
-            // test whether a JSON response is valid
-            return response !== undefined && Object.keys(response).length > 0 && response.result.toUpperCase() === 'SUCCESS';
-          }
 
-          return successTest;
-        }(),
-        onSuccess: function () {
-          function onSuccess(response) {
-            response.modules.forEach(function (obj) {
-              var $moduleRow = $("tr#".concat(obj.uniqid));
+  /**
+   * Добавляет кнопку обновления старой версии PBX
+   * @param obj
+   */
+  addUpdateButtonToRow: function () {
+    function addUpdateButtonToRow(obj) {
+      var $moduleRow = $("tr.module-row#".concat(obj.uniqid));
+      var $currentUpdateButton = $("tr.module-row#".concat(obj.uniqid)).find('a.update');
 
-              if ($moduleRow.length > 0) {
-                var oldVer = $moduleRow.find('td.version').text().replace(/\D/g, '');
-                var newVer = obj.version.replace(/\D/g, '');
+      if ($currentUpdateButton.length > 0) {
+        var oldVer = $currentUpdateButton.attr('data-ver');
+        var newVer = obj.version;
 
-                if (oldVer < newVer) {
-                  extensionModules.addUpdateButtonToRow(obj);
-                }
-              } else {
-                extensionModules.addModuleDescription(obj);
-              }
-            });
-            $('a.download').on('click', function (e) {
-              e.preventDefault();
-              $('a.button').addClass('disabled');
-              var params = [];
-              var $aLink = $(e.target).closest('a');
-              $aLink.removeClass('disabled');
-              params.updateLink = $aLink.attr('href');
-              params.uniqid = $aLink.attr('data-uniqid');
-              params.md5 = $aLink.attr('data-md5');
-              $aLink.find('i').addClass('loading redo').removeClass('download');
-              extensionModules.installModule(params, false);
-            });
-            $('a.update').on('click', function (e) {
-              e.preventDefault();
-              $('a.button').addClass('disabled');
-              var params = [];
-              var $aLink = $(e.target).closest('a');
-              $aLink.removeClass('disabled');
-              params.updateLink = $aLink.attr('href');
-              params.uniqid = $aLink.attr('data-uniqid');
-              params.md5 = $aLink.attr('data-md5');
-              $aLink.find('i').addClass('loading');
-              extensionModules.updateModule(params);
-            });
-            $('a.delete').on('click', function (e) {
-              e.preventDefault();
-              $('a.button').addClass('disabled');
-              $(e.target).closest('a').removeClass('disabled');
-              var params = [];
-              var $aLink = $(e.target).closest('tr');
-              params.uniqid = $aLink.attr('id');
-              extensionModules.deleteModule(params);
-            });
-            $('a[data-content]').popup();
-          }
+        if (extensionModules.versionCompare(newVer, oldVer) <= 0) {
+          return;
+        }
+      }
 
-          return onSuccess;
-        }()
-      });
+      $currentUpdateButton.remove();
+      var dynamicButton = "<a href=\"#\" class=\"ui button update popuped\" \n\t\t\tdata-content=\"".concat(globalTranslate.ext_UpdateModule, "\"\n\t\t\tdata-ver =\"").concat(obj.version, "\"\n\t\t\tdata-uniqid =\"").concat(obj.uniqid, "\" \n\t\t\tdata-productId = \"").concat(obj.lic_product_id, "\"\n\t\t\tdata-featureId = \"").concat(obj.lic_feature_id, "\" \n\t\t\tdata-id =\"").concat(obj.release_id, "\">\n\t\t\t<i class=\"icon redo blue\"></i> \n\t\t\t<span class=\"percent\"></span>\n\t\t\t</a>");
+      $moduleRow.find('.action-buttons').prepend(dynamicButton);
     }
 
-    return getModulesUpdates;
+    return addUpdateButtonToRow;
   }(),
 
   /**
-   * Сначала отключим модуль, если получится, то отправим команду на удаление
-   * и обновим страничку
-   * @param params - параметры запроса.
+   * Если фича захвачена, обращаемся к серверу
+   * обновлений за получениием дистрибутива
+   * @param params
+   * @returns {boolean}
    */
-  deleteModule: function () {
-    function deleteModule(params) {
-      // Проверим включен ли модуль, если включен, вырубим его
-      var status = $("#".concat(params.uniqid)).find('.checkbox').checkbox('is checked');
-
-      if (status === true) {
-        extensionModules.disableModule(params.uniqid, function () {
-          PbxApi.SystemDeleteModule(params.uniqid, extensionModules.cbAfterDelete);
-        });
-      } else {
-        PbxApi.SystemDeleteModule(params.uniqid, extensionModules.cbAfterDelete);
-      }
+  cbAfterLicenseCheck: function () {
+    function cbAfterLicenseCheck(params) {
+      UpdateApi.GetModuleInstallLink(params, extensionModules.cbGetModuleInstallLinkSuccess, extensionModules.cbGetModuleInstallLinkFailure);
     }
 
-    return deleteModule;
+    return cbAfterLicenseCheck;
+  }(),
+
+  /**
+   * Если сайт вернул ссылку на обновление
+   * @param params
+   * @param response
+   */
+  cbGetModuleInstallLinkSuccess: function () {
+    function cbGetModuleInstallLinkSuccess(params, response) {
+      var newParams = params;
+      response.modules.forEach(function (obj) {
+        newParams.md5 = obj.md5;
+        newParams.updateLink = obj.href;
+
+        if (newParams.action === 'update') {
+          extensionModules.updateModule(newParams);
+          params.aLink.find('i').addClass('loading');
+        } else {
+          params.aLink.find('i').addClass('loading redo').removeClass('download');
+          extensionModules.installModule(newParams, false);
+        }
+      });
+    }
+
+    return cbGetModuleInstallLinkSuccess;
+  }(),
+
+  /**
+   * Если сайт отказал в обновлении, не захвачена нужная фича
+   */
+  cbGetModuleInstallLinkFailure: function () {
+    function cbGetModuleInstallLinkFailure(params) {
+      $('a.button').removeClass('disabled');
+
+      if (params.action === 'update') {
+        params.aLink.find('i').removeClass('loading');
+      } else {
+        params.aLink.find('i').removeClass('loading redo').addClass('download');
+      }
+
+      UserMessage.showError(globalTranslate.ext_GetLinkError);
+    }
+
+    return cbGetModuleInstallLinkFailure;
   }(),
 
   /**
@@ -224,14 +332,7 @@ var extensionModules = {
               cbAfterEnable(uniqid);
             } else {
               $("#".concat(uniqid)).find('.checkbox').checkbox('set unchecked');
-              var previousMessage = '';
-              $.each(response.message, function (index, value) {
-                if (previousMessage !== value) {
-                  extensionModules.$ajaxMessgesDiv.after("<div class=\"ui ".concat(index, " message ajax\">").concat(value, "</div>"));
-                }
-
-                previousMessage = value;
-              });
+              UserMessage.showMultiString(response.message);
             }
           }
 
@@ -265,14 +366,7 @@ var extensionModules = {
               cbAfterDisable(uniqid);
             } else {
               $("#".concat(uniqid)).find('.checkbox').checkbox('set checked');
-              var previousMessage = '';
-              $.each(response.message, function (index, value) {
-                if (previousMessage !== value) {
-                  extensionModules.$ajaxMessgesDiv.after("<div class=\"ui ".concat(index, " message ajax\">").concat(value, "</div>"));
-                }
-
-                previousMessage = value;
-              });
+              UserMessage.showMultiString(response.message);
               $("#".concat(uniqid)).find('i').removeClass('loading');
             }
           }
@@ -292,10 +386,53 @@ var extensionModules = {
   reloadModuleAndPage: function () {
     function reloadModuleAndPage(uniqid) {
       PbxApi.SystemReloadModule(uniqid);
-      window.location = "".concat(globalRootUrl, "/pbx-extension-modules/index/");
+      window.location = "".concat(globalRootUrl, "pbx-extension-modules/index/");
     }
 
     return reloadModuleAndPage;
+  }(),
+
+  /**
+   * Сначала отключим модуль, если получится, то отправим команду на удаление
+   * и обновим страничку
+   * @param params - параметры запроса.
+   */
+  deleteModule: function () {
+    function deleteModule(params) {
+      // Cпросим пользователя сохранять ли настройки
+      extensionModules.$deleteModalForm.modal({
+        closable: false,
+        onDeny: function () {
+          function onDeny() {
+            $('a.button').removeClass('disabled');
+            return true;
+          }
+
+          return onDeny;
+        }(),
+        onApprove: function () {
+          function onApprove() {
+            // Проверим включен ли модуль, если включен, вырубим его
+            var status = $("#".concat(params.uniqid)).find('.checkbox').checkbox('is checked');
+            var keepSettings = extensionModules.$keepSettingsCheckbox.checkbox('is checked');
+
+            if (status === true) {
+              extensionModules.disableModule(params.uniqid, function () {
+                PbxApi.SystemDeleteModule(params.uniqid, keepSettings, extensionModules.cbAfterDelete);
+              });
+            } else {
+              PbxApi.SystemDeleteModule(params.uniqid, keepSettings, extensionModules.cbAfterDelete);
+            }
+
+            return true;
+          }
+
+          return onApprove;
+        }()
+      }).modal('show');
+    }
+
+    return deleteModule;
   }(),
 
   /**
@@ -307,17 +444,84 @@ var extensionModules = {
     function cbAfterDelete(result) {
       $('a.button').removeClass('disabled');
 
-      if (result) {
+      if (result === true) {
         window.location = "".concat(globalRootUrl, "pbx-extension-modules/index/");
       } else {
         $('.ui.message.ajax').remove();
-        extensionModules.$ajaxMessgesDiv.after("<div class=\"ui error message ajax\">".concat(globalTranslate.ext_DeleteModuleError, "</div>"));
+        var errorMessage = result.data !== undefined ? result.data : '';
+        errorMessage = errorMessage.replace(/\n/g, '<br>');
+        UserMessage.showError(errorMessage, globalTranslate.ext_DeleteModuleError);
       }
     }
 
     return cbAfterDelete;
+  }(),
+
+  /**
+   * Сравнение версий модулей
+   * @param v1
+   * @param v2
+   * @param options
+   * @returns {number}
+   */
+  versionCompare: function () {
+    function versionCompare(v1, v2, options) {
+      var lexicographical = options && options.lexicographical;
+      var zeroExtend = options && options.zeroExtend;
+      var v1parts = v1.split('.');
+      var v2parts = v2.split('.');
+
+      function isValidPart(x) {
+        return (lexicographical ? /^\d+[A-Za-z]*$/ : /^\d+$/).test(x);
+      }
+
+      if (!v1parts.every(isValidPart) || !v2parts.every(isValidPart)) {
+        return NaN;
+      }
+
+      if (zeroExtend) {
+        while (v1parts.length < v2parts.length) {
+          v1parts.push('0');
+        }
+
+        while (v2parts.length < v1parts.length) {
+          v2parts.push('0');
+        }
+      }
+
+      if (!lexicographical) {
+        v1parts = v1parts.map(Number);
+        v2parts = v2parts.map(Number);
+      }
+
+      for (var i = 0; i < v1parts.length; i += 1) {
+        if (v2parts.length === i) {
+          return 1;
+        }
+
+        if (v1parts[i] === v2parts[i]) {//
+        } else if (v1parts[i] > v2parts[i]) {
+          return 1;
+        } else {
+          return -1;
+        }
+      }
+
+      if (v1parts.length !== v2parts.length) {
+        return -1;
+      }
+
+      return 0;
+    }
+
+    return versionCompare;
   }()
 };
+/**
+ * Мониторинг статуса обновления или установки модуля
+ *
+ */
+
 upgradeStatusLoopWorker = {
   timeOut: 1000,
   timeOutHandle: '',
@@ -359,21 +563,21 @@ upgradeStatusLoopWorker = {
 
       if (response.i_status === true) {
         $('a.button').removeClass('disabled');
-        localStorage.removeItem('globalTranslateVersion'); // Перезапустим формирование кеша перевода
-
-        if (upgradeStatusLoopWorker.needEnableAfterInstall) {
-          extensionModules.enableModule(upgradeStatusLoopWorker.moduleUniqid, extensionModules.reloadModuleAndPage);
-        } else {
-          window.location = "".concat(globalRootUrl, "pbx-extension-modules/index/");
-        }
-
+        setTimeout(function () {
+          if (upgradeStatusLoopWorker.needEnableAfterInstall) {
+            extensionModules.enableModule(upgradeStatusLoopWorker.moduleUniqid, extensionModules.reloadModuleAndPage);
+          } else {
+            window.location = "".concat(globalRootUrl, "pbx-extension-modules/index/");
+          }
+        }, 3000);
         window.clearTimeout(upgradeStatusLoopWorker.timeoutHandle);
       }
 
       if (upgradeStatusLoopWorker.iterations > 50 || response.d_status === 'DOWNLOAD_ERROR') {
         window.clearTimeout(upgradeStatusLoopWorker.timeoutHandle);
-        $('.ui.message.ajax').remove();
-        extensionModules.$ajaxMessgesDiv.after("<div class=\"ui error message ajax\">".concat(globalTranslate.ext_UpdateModuleError, "</div>"));
+        var errorMessage = response.d_error !== undefined ? response.d_error : '';
+        errorMessage = errorMessage.replace(/\n/g, '<br>');
+        UserMessage.showError(errorMessage, globalTranslate.ext_UpdateModuleError);
         $("#".concat(upgradeStatusLoopWorker.moduleUniqid)).find('i').removeClass('loading');
         $('.new-module-row').find('i').addClass('download').removeClass('redo');
         $('a.button').removeClass('disabled');

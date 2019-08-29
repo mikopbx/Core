@@ -10,6 +10,7 @@
 
 /* global globalDebugMode */
 var Config = {
-  pbxUrl: globalDebugMode ? '//172.16.32.72' : ''
+  pbxUrl: globalDebugMode ? '//172.16.32.72' : '',
+  updateUrl: 'https://update.askozia.ru/'
 };
 //# sourceMappingURL=config.js.map

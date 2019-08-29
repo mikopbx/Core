@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 5 2018
+ * Written by Alexey Portnov, 8 2019
  */
 
 class p_ExternalPhones extends ConfigClass{
@@ -41,12 +41,13 @@ class p_ExternalPhones extends ConfigClass{
      * @return string
      */
 	public function extensionGenInternal(){
-		$conf = "";
+		$conf = '';
 		foreach($this->db_data as $external){
 			$conf.= "exten => _{$external['extension']},1,Set(EXTERNALPHONE=".$external['dialstring'].")\n\t";
 			$conf.= "same => n,Goto(outgoing,{$external['dialstring']},1)\n\t";
 			$conf.= "same => n,AGI(check_redirect.php,\${BLINDTRANSFER})\n";
 		}
+        $conf .= "\n";
 		return $conf;
 	}
 
@@ -59,6 +60,7 @@ class p_ExternalPhones extends ConfigClass{
             $conf.= 'exten => _'.$external['extension'].',1,Set(__ISTRANSFER=transfer_)'." \n\t";
             $conf.= 'same => n,Goto(internal,${EXTEN},1)'." \n";
         }
+        $conf .= "\n";
         return $conf;
     }
 

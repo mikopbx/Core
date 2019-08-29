@@ -9,21 +9,36 @@
 
 namespace Models;
 
-
 class Fail2BanRules extends ModelsBase
 {
+    /**
+     * @var integer
+     */
     public $id;
+
+    /**
+     * @var integer
+     */
     public $maxretry;
+
+    /**
+     * @var integer
+     */
     public $bantime;
+
+    /**
+     * @var integer
+     */
     public $findtime;
+
+    /**
+     * @var string
+     */
     public $whitelist;
 
-    public function getSource()
+    public function getSource() :string
     {
         return 'm_Fail2BanRules';
     }
 
-    public function initialize() {
-	    parent::initialize();
-    }
 }

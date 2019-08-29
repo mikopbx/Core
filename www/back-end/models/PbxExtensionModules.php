@@ -15,94 +15,91 @@ use Phalcon\Mvc\Model\Relation;
 
 class PbxExtensionModules extends ModelsBase
 {
-
+    /**
+     * @var integer
+     */
     public $id;
+
+    /**
+     * @var string
+     */
     public $uniqid;
+
+    /**
+     * @var string
+     */
     public $name;
+
+    /**
+     * @var string
+     */
     public $version;
+
+    /**
+     * @var string
+     */
     public $developer;
+
+    /**
+     * @var string
+     */
 	public $support_email;
+
+    /**
+     * @var string
+     */
     public $path;
+
+    /**
+     * @var string
+     */
     public $description;
+
+    /**
+     * @var integer
+     */
 	public $disabled;
 
-    public function getSource()
+    public function getSource() :string 
     {
         return 'm_PbxExtensionModules';
     }
 
-    public function initialize() {
-	    parent::initialize();
-	    $this->hasMany(
-		    'uniqid',
-		    'Models\PbxExtensionRelationship',
-		    'moduleUniqid',
-		    [
-			    "alias"      => "PbxExtensionRelationship",
-			    "foreignKey" => [
-				    "allowNulls" => FALSE,
-				    "action"     => Relation::ACTION_CASCADE,
-			    ],
-		    ]
-	    );
-
-    }
-
-	public function validation()
+	public function validation() :bool 
     {
         $validation = new Validation();
         $validation->add('uniqid', new UniquenessValidator([
-            'message' => $this->t("mo_ThisUniqidMustBeUniqueForPbxExtensionModulesModels")
+            'message' => $this->t('mo_ThisUniqidMustBeUniqueForPbxExtensionModulesModels')
         ]));
         return $this->validate($validation);
     }
 
-	public static function ifModule4ExtensionDisabled( String $number ) {
-		$module = PbxExtensionModules::getModuleByExtension( $number );
+	public static function ifModule4ExtensionDisabled( String $number ) :bool
+    {
+		$module = self::getModuleByExtension( $number );
 		if ( $module ) {
-			return $module->disabled;
+			return $module->disabled ==='1';
 		} else {
 			return TRUE;
 		}
 
 	}
 
-	public static function getModuleByExtension( String $number ) {
+	public static function getModuleByExtension( String $number ) 
+    {
 		$result     = FALSE;
-		$parameters = [
-			'conditions' => 'model = :model: 
-    		            and alias = moduleUniqid
-    		            and fields = :fields:
-    		            and action = :action:
-    		            ',
-			'bind'       => [
-				'model'  => 'Models\Extensions',
-				'fields' => 'number',
-				'action' => '2',
-			],
-		];
-
-		$relationship = PbxExtensionRelationship::find( $parameters );
-		foreach ( $relationship as $rule ) {
-			$model      = $rule->referenceModel;
-			if ( ! class_exists( $model ) ) {
-				continue;
-				//throw new \Exception( 'Error on getModuleByExtension: "Database corrupted"' );
-			}
-			$parameters = [
-				'conditions' => "{$rule->referencedFields} = :number:",
-				'bind'       => [
-					'number' => $number,
-				],
-			];
-
-			$record     = $model::findFirst( $parameters );
-			if ( $record ) {
-				$result = $rule->PbxExtensionModules;
-				break;
+		$extension = Extensions::findFirst("number ='{$number}'");
+		$relatedLinks = $extension->getRelatedLinks();
+		$moduleUniqueID = false;
+		foreach ($relatedLinks as $relation){
+			$obj = $relation['object'];
+			if (strpos(get_class($obj), 'Modules\\') === 0){
+				$moduleUniqueID = explode('Models\\',get_class ($obj))[1];
 			}
 		}
-
+		if ($moduleUniqueID){
+			$result = self::findFirst("uniqid='{$moduleUniqueID}'");
+		}
 		return $result;
 	}
 

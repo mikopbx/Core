@@ -13,26 +13,43 @@ use Phalcon\Mvc\Model\Relation;
 
 class IvrMenuActions extends ModelsBase {
 
+    /**
+     * @var integer
+     */
 	public $id;
+
+    /**
+     * @var string
+     */
 	public $ivr_menu_id;
+
+    /**
+     * @var string
+     */
 	public $digits;
+
+    /**
+     * @var string
+     */
 	public $extension;
 
-	public function getSource() {
+	public function getSource()  :string
+    {
 		return 'm_IvrMenuActions';
 	}
 
-	public function initialize() {
+	public function initialize() :void
+    {
 		parent::initialize();
 		$this->belongsTo(
 			'extension',
 			'Models\Extensions',
 			'number',
 			[
-				"alias"      => "Extensions",
-				"foreignKey" => [
-					"allowNulls" => FALSE,
-					"action"     => Relation::NO_ACTION,
+				'alias'      => 'Extensions',
+				'foreignKey' => [
+					'allowNulls' => FALSE,
+					'action'     => Relation::NO_ACTION,
 				],
 			]
 		);
@@ -41,10 +58,10 @@ class IvrMenuActions extends ModelsBase {
 			'Models\IvrMenu',
 			'uniqid',
 			[
-				"alias"      => "IvrMenu",
-				"foreignKey" => [
-					"allowNulls" => FALSE,
-					"action"     => Relation::NO_ACTION,
+				'alias'      => 'IvrMenu',
+				'foreignKey' => [
+					'allowNulls' => FALSE,
+					'action'     => Relation::NO_ACTION,
 				],
 			]
 		);

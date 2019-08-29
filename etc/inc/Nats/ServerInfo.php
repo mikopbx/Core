@@ -1,4 +1,11 @@
 <?php
+/**
+ * Copyright © MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Alexey Portnov, 8 2019
+ */
+
 namespace Nats;
 
 /**
@@ -95,18 +102,21 @@ class ServerInfo
     public function __construct($connectionResponse)
     {
         $parts = explode(' ', $connectionResponse);
-        $data  = json_decode($parts[1], true);
+        $data  = '';
+        if(isset($parts[1])){
+            $data  = json_decode($parts[1], true);
+        }
 
         $this->setServerID($data['server_id']);
         $this->setHost($data['host']);
         $this->setPort($data['port']);
         $this->setVersion($data['version']);
         $this->setGoVersion($data['go']);
-        $this->setAuthRequired($data['auth_required']);
-        $this->setSSLRequired($data['ssl_required']);
-        $this->setTLSRequired($data['tls_required']);
-        $this->setTLSVerify($data['tls_verify']);
-        $this->setMaxPayload($data['max_payload']);
+        $this->setAuthRequired($data['auth_required']?? false);
+        $this->setSSLRequired($data['ssl_required']??false);
+        $this->setTLSRequired($data['tls_required']??false);
+        $this->setTLSVerify($data['tls_verify']??false);
+        $this->setMaxPayload($data['max_payload']??1000000);
     }
 
     /**

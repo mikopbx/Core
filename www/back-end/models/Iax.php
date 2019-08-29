@@ -13,23 +13,61 @@ use Phalcon\Mvc\Model\Relation;
 
 class Iax extends ModelsBase
 {
+    /**
+     * @var integer
+     */
     public $id;
+
+    /**
+     * @var string
+     */
     public $uniqid;
+
+    /**
+     * @var string
+     */
     public $username;
+
+    /**
+     * @var string
+     */
     public $secret;
+
+    /**
+     * @var string
+     */
     public $host;
+
+    /**
+     * @var integer
+     */
     public $qualify;
+
+    /**
+     * @var integer
+     */
     public $disabled;
+
+    /**
+     * @var integer
+     */
     public $noregister;
+
+    /**
+     * @var string
+     */
     public $manualattributes;
+    /**
+     * @var string
+     */
     public $description;
 
-    public function getSource()
+    public function getSource() :string
     {
         return 'm_Iax';
     }
 
-    public function initialize()
+    public function initialize() :void
     {
 	    parent::initialize();
         $this->hasMany(
@@ -37,10 +75,10 @@ class Iax extends ModelsBase
             'Models\IaxCodecs',
             'iaxuid',
             [
-                "alias"=>"Codecs",
-                "foreignKey" => [
-                    "allowNulls" => true,
-                    "action"     => Relation::ACTION_CASCADE
+                'alias'=>'Codecs',
+                'foreignKey' => [
+                    'allowNulls' => true,
+                    'action'     => Relation::ACTION_CASCADE
                 ],
                 'params' => array(
                     'order' => 'priority asc'
@@ -53,29 +91,31 @@ class Iax extends ModelsBase
             'Models\Providers',
             'iaxuid',
             [
-                "alias"=>"Providers",
-                "foreignKey" => [
-                    "allowNulls" => false,
-                    "action"     => Relation::ACTION_CASCADE,
+                'alias'=>'Providers',
+                'foreignKey' => [
+                    'allowNulls' => false,
+                    'action'     => Relation::ACTION_CASCADE,
                 ]
             ]
         );
     }
 
-	public function setManualAttributes( $text ) {
+	public function setManualAttributes( $text ) :void
+    {
 		$this->manualattributes = base64_encode( $text );
 	}
 
-	public function getManualAttributes() {
+	public function getManualAttributes()  :string
+    {
 		return base64_decode( $this->manualattributes );
 	}
 
-    public function validation()
+    public function validation() :bool
     {
 
         $validation = new \Phalcon\Validation();
         $validation->add('uniqid', new UniquenessValidator([
-            'message' => $this->t("mo_ThisUniqidMustBeUniqueForIAXModels")
+            'message' => $this->t('mo_ThisUniqidMustBeUniqueForIAXModels')
         ]));
         return $this->validate($validation);
 

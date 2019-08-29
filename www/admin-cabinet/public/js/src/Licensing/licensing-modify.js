@@ -113,11 +113,37 @@ const licensingModify = {
 				.html(`${licensingModify.defaultLicenseKey} <i class="spinner loading icon"></i>`)
 				.show();
 
+			//  Проверим доступность фичии
 			$.api({
-				url: `${globalRootUrl}/licensing/getLicenseInfo/${licensingModify.defaultLicenseKey}`,
+				url: `${globalRootUrl}licensing/getBaseFeatureStatus/${licensingModify.defaultLicenseKey}`,
+				on: 'now',
+				successTest(response) {
+					// test whether a JSON response is valid
+					return response !== undefined
+						&& Object.keys(response).length > 0
+						&& response.success === true;
+				},
+				onSuccess() {
+					licensingModify.$formObj.removeClass('error').addClass('success');
+					$('.ui.message.ajax').remove();
+					$('#filled-license-key-info').after(`<div class="ui success message ajax"><i class="check green icon"></i> ${globalTranslate.lic_LicenseKeyValid}</div>`);
+					$('.spinner.loading.icon').remove();
+				},
+				onFailure(response) {
+					licensingModify.$formObj.addClass('error').removeClass('success');
+					$('.ui.message.ajax').remove();
+					$('#filled-license-key-info').after(`<div class="ui error message ajax"><i class="exclamation triangle red icon"></i> ${response.message}</div>`);
+					$('.spinner.loading.icon').remove();
+				},
+			});
+
+
+			// Получим информациию о лицензии
+			$.api({
+				url: `${globalRootUrl}licensing/getLicenseInfo/${licensingModify.defaultLicenseKey}`,
 				on: 'now',
 				onSuccess(response) {
-					licensingModify.cbCheckLicenseKey(response);
+					licensingModify.cbShowLicenseInfo(response);
 				},
 				onError(errorMessage, element, xhr) {
 					if (xhr.status === 403) {
@@ -149,20 +175,11 @@ const licensingModify = {
 			$('#couponSection').hide();
 		}
 	},
-	cbCheckLicenseKey(response) {
+	cbShowLicenseInfo(response) {
 		if (response !== undefined && response.message !== 'null') {
-			$('.ui.message.ajax').remove();
-			$('#filled-license-key-info').after(`<div class="ui success message ajax"><i class="check green icon"></i> ${globalTranslate.lic_LicenseKeyValid}</div>`);
-			$('.spinner.loading.icon').remove();
-			licensingModify.$formObj.removeClass('error').addClass('success');
 			licensingModify.showLicenseInfo(response.message);
 			licensingModify.$licenseDetailInfo.show();
 		} else {
-			$('.ui.message.ajax').remove();
-			const licKey = licensingModify.$licKey.val();
-			$('#filled-license-key-info').html(`<strike>${licKey}</strike>`);// $('#filled-license-key-info').after(`<div class="ui error message ajax"><i class="exclamation triangle red icon"></i> ${JSON.parse(response).cause}</div>`);
-			$('.spinner.loading.icon').remove();
-			licensingModify.$formObj.addClass('error').removeClass('success');
 			licensingModify.$licenseDetailInfo.hide();
 		}
 	},

@@ -99,6 +99,7 @@ var firewallTable = {
       firewallTable.$statusToggle.find('label').text(globalTranslate.fw_StatusEnabled);
       firewallTable.$statusToggle.checkbox('set checked');
       $('i.icon.checkmark.green[data-value="off"]').removeClass('checkmark green').addClass('close red');
+      $('i.icon.corner.close').hide();
 
       if (sendEvent) {
         var event = document.createEvent('Event');
@@ -118,7 +119,8 @@ var firewallTable = {
       var sendEvent = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
       firewallTable.$statusToggle.find('label').text(globalTranslate.fw_StatusDisabled);
       firewallTable.$statusToggle.checkbox('set unchecked');
-      $('i.icon.close.red').removeClass('close red').addClass('checkmark green');
+      $('i.icon.close.red[data-value="off"]').removeClass('close red').addClass('checkmark green');
+      $('i.icon.corner.close').show();
 
       if (sendEvent) {
         var event = document.createEvent('Event');

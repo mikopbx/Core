@@ -83,12 +83,12 @@ class IvrMenu extends ModelsBase
 	 */
 	public $description;
 
-    public function getSource()
+    public function getSource() :string
     {
         return 'm_IvrMenu';
     }
 
-    public function initialize()
+    public function initialize() :void
     {
 	    parent::initialize();
         $this->belongsTo(
@@ -96,10 +96,10 @@ class IvrMenu extends ModelsBase
             'Models\Extensions',
             'number',
             [
-                "alias"      => 'Extensions',
-                "foreignKey" => [
-                    "allowNulls" => false,
-                    "action"     => Relation::NO_ACTION // IVR меню удаляем через его Extension
+                'alias'      => 'Extensions',
+                'foreignKey' => [
+                    'allowNulls' => false,
+                    'action'     => Relation::NO_ACTION // IVR меню удаляем через его Extension
                 ]
             ]
         );
@@ -109,11 +109,11 @@ class IvrMenu extends ModelsBase
             'Models\Extensions',
             'number',
             [
-                "alias"      => 'TimeoutExtensions',
-                "foreignKey" => [
-	                "message"    => 'Models\TimeoutExtensions',
-	                "allowNulls" => FALSE,
-	                "action"     => Relation::NO_ACTION// Не троогать Extensions
+                'alias'      => 'TimeoutExtensions',
+                'foreignKey' => [
+	                'message'    => 'Models\TimeoutExtensions',
+	                'allowNulls' => FALSE,
+	                'action'     => Relation::NO_ACTION// Не троогать Extensions
                 ]
             ]
         );
@@ -123,10 +123,10 @@ class IvrMenu extends ModelsBase
             'Models\IvrMenuActions',
             'ivr_menu_id',
             [
-                "alias"=>"IvrMenuActions",
-                "foreignKey" => [
-                    "allowNulls" => false,
-                    "action"     => Relation::ACTION_CASCADE //Удалить подчиненные все IvrMenuActions при удалении IvrMenu
+                'alias'=>'IvrMenuActions',
+                'foreignKey' => [
+                    'allowNulls' => false,
+                    'action'     => Relation::ACTION_CASCADE //Удалить подчиненные все IvrMenuActions при удалении IvrMenu
                 ],
                 'params' => array(
                     'order' => 'digits asc'
@@ -139,10 +139,10 @@ class IvrMenu extends ModelsBase
             'Models\SoundFiles',
             'id',
             [
-                "alias"      => 'SoundFiles',
-                "foreignKey" => [
-                    "allowNulls" => true,
-                    "action"     => Relation::NO_ACTION
+                'alias'      => 'SoundFiles',
+                'foreignKey' => [
+                    'allowNulls' => true,
+                    'action'     => Relation::NO_ACTION
                 ]
             ]
 
@@ -152,12 +152,12 @@ class IvrMenu extends ModelsBase
     }
 
 
-    public function validation()
+    public function validation() :bool
     {
 
         $validation = new \Phalcon\Validation();
         $validation->add('uniqid', new UniquenessValidator([
-            'message' => $this->t("mo_ThisUniqidMustBeUniqueForIvrMenuModels")
+            'message' => $this->t('mo_ThisUniqidMustBeUniqueForIvrMenuModels')
         ]));
         return $this->validate($validation);
 

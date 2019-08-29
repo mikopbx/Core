@@ -30,6 +30,7 @@ var customFile = {
         onChange: function () {
           function onChange() {
             customFile.hideShowCode();
+            customFile.getFileContentFromServer();
           }
 
           return onChange;
@@ -86,9 +87,12 @@ var customFile = {
   getFileContentFromServer: function () {
     function getFileContentFromServer() {
       var filePath = customFile.$formObj.form('get value', 'filepath');
-      PbxApi.GetFileContent({
-        filename: filePath
-      }, customFile.cbGetFileContentFromServer);
+      var mode = customFile.$formObj.form('get value', 'mode') !== 'override';
+      var data = {
+        filename: filePath,
+        needOriginal: mode
+      };
+      PbxApi.GetFileContent(data, customFile.cbGetFileContentFromServer);
     }
 
     return getFileContentFromServer;

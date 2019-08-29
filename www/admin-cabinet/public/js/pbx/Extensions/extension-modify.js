@@ -2399,6 +2399,7 @@ var extension = {
   cbAfterSendForm: function () {
     function cbAfterSendForm() {
       extension.defaultNumber = extension.$number.val();
+      Extensions.UpdatePhoneRepresent(extension.defaultNumber);
     }
 
     return cbAfterSendForm;
@@ -2430,6 +2431,7 @@ var avatar = {
       $('#clear-avatar').on('click', function () {
         avatar.$picture.attr('src', "".concat(globalRootUrl, "public/img/unknownPerson.jpg"));
         extension.$formObj.form('set value', 'user_avatar', null);
+        extension.$sip_secret.trigger('change');
       });
       $('#file-select').on('change', function (e) {
         var image;
@@ -2454,6 +2456,7 @@ var avatar = {
               var mybase64resized = avatar.resizeCrop(args);
               avatar.$picture.attr('src', mybase64resized);
               extension.$formObj.form('set value', 'user_avatar', mybase64resized);
+              extension.$sip_secret.trigger('change');
             };
           });
         }

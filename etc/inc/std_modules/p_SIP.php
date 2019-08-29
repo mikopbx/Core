@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 4 2019
+ * Written by Alexey Portnov, 8 2019
  */
 
 require_once 'globals.php';
@@ -173,6 +173,7 @@ class p_SIP extends ConfigClass {
         foreach($this->data_providers as $provider){
             // Формируем строку регистрации.
             $manualregister = trim(str_replace(["register", "=>"],'', $provider['manualregister']));
+            $port	   = (trim($provider['port']) =='')?'5060':"{$provider['port']}";
             if($provider['noregister'] != 1 && !empty($provider['manualregister'])){
                 // Строка регистрация определена вручную.
                 $reg_strings.= "register => {$manualregister} \n";
@@ -180,11 +181,10 @@ class p_SIP extends ConfigClass {
                 // Строка регистрации генерируется автоматически.
                 $sip_user  = '"'.$provider['username'].'"';
                 $secret	   = (trim($provider['secret']) =='')?'':":\"{$provider['secret']}\"";
-                $host	   = '"'.$provider['host'].'"';
-                $port	   = (trim($provider['port']) =='')?'':":{$provider['port']}";
+                $host	   = ''.$provider['host'].'';
                 $extension = $sip_user;
 
-                $reg_strings.= "register => {$sip_user}{$secret}@{$host}{$port}/{$extension} \n";
+                $reg_strings.= "register => {$sip_user}{$secret}@{$host}:{$port}/{$extension} \n";
             }
 
             // Формируем секцию / раздел sip.conf
@@ -222,6 +222,7 @@ class p_SIP extends ConfigClass {
                 "type={$type} \n".
                 "context={$provider['uniqid']}-incoming \n".
                 "host={$provider['host']} \n".
+                "port={$port} \n".
                 "language={$lang}\n".
                 "nat={$provider['nat']} \n".
                 "dtmfmode={$provider['dtmfmode']} \n".
@@ -508,11 +509,31 @@ class p_SIP extends ConfigClass {
         return $conf;
     }
 
+    public function extensionGenInternal():string {
+        // Генерация внутреннего номерного плана.
+        $conf = '';
+        foreach($this->data_peers as $peer){
+            $conf.= "exten => {$peer['extension']},1,Goto(internal-users,{$peer['extension']},1) \n";
+        }
+        $conf .= "\n";
+        return $conf;
+    }
+    public function extensionGenInternalTransfer():string {
+        // Генерация внутреннего номерного плана.
+        $conf = '';
+        foreach($this->data_peers as $peer){
+            $conf.= "exten => {$peer['extension']},1,Goto(internal-users,{$peer['extension']},1) \n";
+        }
+        $conf .= "\n";
+        return $conf;
+    }
+
+
     /**
      * Получение статусов SIP пиров.
      * @return array
      */
-    static function get_peers_statuses(){
+    static function get_peers_statuses() : array {
         $result = array(
             'result'  => 'ERROR'
         );

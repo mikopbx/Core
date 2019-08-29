@@ -63,7 +63,7 @@ const ivrMenu = {
 			identifier: 'timeout',
 			rules: [
 				{
-					type: 'integer[1..99]',
+					type: 'integer[0..99]',
 					prompt: globalTranslate.iv_ValidateTimeoutOutOfRange,
 				},
 			],
@@ -72,7 +72,7 @@ const ivrMenu = {
 			identifier: 'number_of_repeat',
 			rules: [
 				{
-					type: 'integer[1..99]',
+					type: 'integer[0..99]',
 					prompt: globalTranslate.iv_ValidateRepeatNumberOutOfRange,
 				},
 			],

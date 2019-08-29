@@ -1211,6 +1211,7 @@ const extension = {
 	},
 	cbAfterSendForm() {
 		extension.defaultNumber = extension.$number.val();
+		Extensions.UpdatePhoneRepresent(extension.defaultNumber);
 	},
 	initializeForm() {
 		Form.$formObj = extension.$formObj;
@@ -1235,6 +1236,7 @@ const avatar = {
 		$('#clear-avatar').on('click', () => {
 			avatar.$picture.attr('src', `${globalRootUrl}public/img/unknownPerson.jpg`);
 			extension.$formObj.form('set value', 'user_avatar', null);
+			extension.$sip_secret.trigger('change');
 		});
 
 		$('#file-select').on('change', (e) => {
@@ -1258,6 +1260,7 @@ const avatar = {
 						const mybase64resized = avatar.resizeCrop(args);
 						avatar.$picture.attr('src', mybase64resized);
 						extension.$formObj.form('set value', 'user_avatar', mybase64resized);
+						extension.$sip_secret.trigger('change');
 					};
 				});
 			}

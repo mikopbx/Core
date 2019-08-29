@@ -12,23 +12,57 @@ use Phalcon\Mvc\Model\Relation;
 
 class OutgoingRoutingTable extends ModelsBase
 {
-
+    /**
+     * @var integer
+     */
     public $id;
+
+    /**
+     * @var string
+     */
     public $rulename;
+
+    /**
+     * @var string
+     */
     public $providerid;
+
+    /**
+     * @var integer
+     */
     public $priority;
+
+    /**
+     * @var string
+     */
     public $numberbeginswith;
+
+    /**
+     * @var integer
+     */
     public $restnumbers;
+
+    /**
+     * @var integer
+     */
     public $trimfrombegin;
+
+    /**
+     * @var string
+     */
     public $prepend;
+
+    /**
+     * @var string
+     */
     public $note;
 
-    public function getSource()
+    public function getSource() :string
     {
         return 'm_OutgoingRoutingTable';
     }
 
-    public function initialize()
+    public function initialize() :void
     {
 	    parent::initialize();
         $this->belongsTo(
@@ -36,10 +70,10 @@ class OutgoingRoutingTable extends ModelsBase
             'Models\Providers',
             'uniqid',
             [
-                "alias"      => 'Providers',
-                "foreignKey" => [
-                    "allowNulls" => false,
-                    "action"     => Relation::NO_ACTION,
+                'alias'      => 'Providers',
+                'foreignKey' => [
+                    'allowNulls' => false,
+                    'action'     => Relation::NO_ACTION,
                 ]
             ]
         );

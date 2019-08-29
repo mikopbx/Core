@@ -31,10 +31,9 @@ class AdvicesController extends BaseController {
 		foreach ($arrAdvicesTypes as $adviceType){
 			$currentAdvice = $adviceType['type'];
 			if ($roSession !== null && array_key_exists($currentAdvice, $roSession) ) {
-				$oldResult = json_decode($roSession[$currentAdvice],FALSE);
-				if (!empty($oldResult->LastMessage)
-					&& (time() - $oldResult->LastTimeStamp < $adviceType['cacheTime'])){
-					$arrMessages[] = $oldResult->LastMessage;
+				$oldResult = json_decode($roSession[$currentAdvice],true);
+				if (time() - $oldResult['LastTimeStamp'] < $adviceType['cacheTime']){
+					$arrMessages[] =  $oldResult['LastMessage'];
 					continue;
 				}
 			}
@@ -45,7 +44,15 @@ class AdvicesController extends BaseController {
 			$this->session->set( $currentAdvice, json_encode(['LastMessage'=>$newResult,'LastTimeStamp'=>time()]));
 		}
 		$this->view->success = TRUE;
-		$this->view->message = array_merge(...$arrMessages);
+		$result=[];
+		foreach ($arrMessages as $message){
+            foreach ($message as $key=>$value){
+                if (!empty($value)) {
+                    $result[$key][] = $value;
+                }
+            }
+		}
+		$this->view->message = $result;
 	}
 
 	/**
@@ -53,20 +60,19 @@ class AdvicesController extends BaseController {
 	 * @return array
 	 */
 	private function checkPasswords() {
-		$messages           = [];
 		$arrOfDefaultValues = PbxSettings::getDefaultArrayValues();
 		if ( $arrOfDefaultValues['WebAdminPassword']
 		     === PbxSettings::getValueByKey( 'WebAdminPassword' ) ) {
-			$messages[] = $this->translation->_( 'adv_YouUseDefaultWebPassword',
+			$messages['warning'] = $this->translation->_( 'adv_YouUseDefaultWebPassword',
 				[ 'url' => $this->url->get( 'general-settings/modify/#/passwords' ) ] );
 		}
 		if ( $arrOfDefaultValues['SSHPassword']
 		     === PbxSettings::getValueByKey( 'SSHPassword' ) ) {
-			$messages[] = $this->translation->_( 'adv_YouUseDefaultSSHPassword',
+			$messages['warning'] = $this->translation->_( 'adv_YouUseDefaultSSHPassword',
 				[ 'url' => $this->url->get( 'general-settings/modify/#/ssh' ) ] );
 		}
 
-		return $messages;
+		return $messages??[];
 	}
 
 	/**
@@ -74,17 +80,16 @@ class AdvicesController extends BaseController {
 	 * @return array
 	 */
 	private function checkFirewalls() {
-		$messages = [];
 		if ( PbxSettings::getValueByKey( 'PBXFirewallEnabled' ) === '0' ) {
-			$messages[] = $this->translation->_( 'adv_FirewallDisabled',
+			$messages['warning'] = $this->translation->_( 'adv_FirewallDisabled',
 				[ 'url' => $this->url->get( 'firewall/index/' ) ] );
 		}
 		if ( NetworkFilters::count() === 0 ) {
-			$messages[] = $this->translation->_( 'adv_NetworksNotConfigured',
+			$messages['warning'] = $this->translation->_( 'adv_NetworksNotConfigured',
 				[ 'url' => $this->url->get( 'firewall/index/' ) ] );
 		}
 
-		return $messages;
+		return $messages??[];
 	}
 
 	/**
@@ -95,7 +100,6 @@ class AdvicesController extends BaseController {
 		if (!is_array($_COOKIE) || !array_key_exists(session_name(), $_COOKIE)) {
 			return [];
 		}
-		$messages = [];
 		$url      = 'http://127.0.0.1/pbxcore/api/storage/list';
 		$ch       = curl_init();
 		curl_setopt( $ch, CURLOPT_URL, $url );
@@ -112,16 +116,18 @@ class AdvicesController extends BaseController {
 					&& strpos($disk->mounted, '/storage/usbdisk') !== false ) {
 					$storageDiskMounted = TRUE;
 					if ($disk->free_space < 500){
-						$messages[]
+						$messages['warning']
 							= $this->translation->_( 'adv_StorageDiskRunningOutOfFreeSpace',['free'=>$disk->free_space] );
 					}
 
 				}
 			}
-			$this->session->set('StorageDiskUnMounted',!$storageDiskMounted);
+            if ( $storageDiskMounted === false ){
+                $messages['error'] = $this->translation->_('adv_StorageDiskUnMounted');
+            }
 
 		}
-		return $messages;
+		return $messages??[];
 	}
 
 	/**
@@ -129,47 +135,60 @@ class AdvicesController extends BaseController {
 	 * @return array
 	 */
 	private function checkUpdates() {
-		$PBXVersion  = Models\PbxSettings::getValueByKey( 'PBXVersion' );
+		$PBXVersion  = $this->getSessionData('PBXVersion');
 
-		$messages = [];
-		$url      = 'https://update.askozia.ru/getNews/';
+		$url      = 'https://update.askozia.ru/';
 		$ch       = curl_init();
 		curl_setopt( $ch, CURLOPT_URL, $url );
 		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 );
 		curl_setopt( $ch, CURLOPT_TIMEOUT, 3 );
 		curl_setopt( $ch, CURLOPT_POST, 1);
 		curl_setopt( $ch, CURLOPT_POSTFIELDS,
-			"TYPE=FIRMWARE&PBXVER={$PBXVersion}");
+			"TYPE=FIRMWAREGETNEWS&PBXVER={$PBXVersion}");
 
 		$output = curl_exec( $ch );
 		 curl_close( $ch );
 		 $answer = json_decode( $output,FALSE );
 		 if ( $answer !== NULL && $answer->newVersionAvailable === true ){
-				$messages[] = $this->translation->_( 'adv_AvailableNewVersionPBX',
+				$messages['info'] = $this->translation->_( 'adv_AvailableNewVersionPBX',
 					[ 'url' => $this->url->get( 'update/index/' ),
 					  'ver' => $answer->version ] );
 		 }
-		 return $messages;
+
+		 return $messages??[];
 	}
 	/**
 	 * Проверка зарегистрирована ли копия Askozia
 	 *
 	 */
 	private function checkRegistration(){
-		$licKey  = Models\PbxSettings::getValueByKey( 'PBXLicense' );
-		$messages=[];
+		$licKey  = Models\PbxSettings::getValueByKey('PBXLicense');
 		if (empty($licKey)) {
-			$messages[] = $this->translation->_( 'adv_ThisCopyIsNotRegistered',
+			$messages['warning'] = $this->translation->_( 'adv_ThisCopyIsNotRegistered',
 				[ 'url' => $this->url->get( 'licensing/modify/' )]);
 		} else {
-			file_put_contents('/tmp/licenseKey', $licKey);
+            $checkBaseFeature = $this->licenseWorker->featureAvailable(33);
+            if ($checkBaseFeature['success']===false) {
+                if ($this->language === 'ru'){
+                    $url    = 'https://wiki.mikopbx.com/licensing#oshibki_pri_registracii';
+                } else {
+                    $url    = "https://wiki.mikopbx.com/{$this->language}:licensing#oshibki_pri_registracii";
+                }
+
+                $messages['warning'] = $this->translation->_( 'adv_ThisCopyHasLicensingTroubles',
+                    [
+                        'url' => $url,
+                        'error'=> $this->licenseWorker->translateLicenseErrorMessage($checkBaseFeature['error'])
+                    ]
+                );
+            }
+
 			$licenseInfo = $this->licenseWorker->getLicenseInfo( $licKey );
-			If (empty($licenseInfo)){
-				$messages[] = $this->translation->_( 'adv_ThisCopyIsNotRegistered',
-					[ 'url' => $this->url->get( 'licensing/modify/' )]);
-			}
+			if ($licenseInfo instanceof SimpleXMLElement)  {
+			    file_put_contents('/tmp/licenseInfo', json_encode($licenseInfo->attributes()));
+            }
 		}
-		return $messages;
+		return $messages??[];
 	}
 
 }

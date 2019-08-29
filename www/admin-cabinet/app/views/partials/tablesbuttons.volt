@@ -18,7 +18,7 @@
             {{ link_to(download ~ id, '<i class="icon download blue"></i> ', "class": "ui button download popuped", "data-content": t._('bt_ToolTipDownload')) }}
         {% endif %}
         {% if delete is not empty %}
-            {{ link_to(delete ~ id, '<i class="icon trash red"></i> ', "class": "ui button delete popuped", "data-content":t._('bt_ToolTipDelete')) }}
+            {{ link_to(delete ~ id, '<i class="icon trash red"></i> ', "class": "ui button delete two-steps-delete popuped", "data-content":t._('bt_ToolTipDelete')) }}
         {% endif %}
     </div>
 </td>

@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 6 2019
+ * Written by Alexey Portnov, 8 2019
  */
 
 require_once 'globals.php';
@@ -77,7 +77,11 @@ class Util {
      */
     static function stop_log(){
         $dir_all_log = Util::get_log_dir();
+
         Util::killbyname('timeout');
+        Util::killbyname('tcpdump');
+        Util::killbyname('logread');
+
         $dirlog = $dir_all_log.'/dir_start_all_log';
         if(!is_dir($dirlog)){
             mkdir($dirlog, 0777, true);
@@ -105,33 +109,36 @@ class Util {
      * Стартует запись логов.
      * @param int $timeout
      */
-    static function start_log($timeout=300){
-        Util::stop_log();
-        $dir_all_log = Util::get_log_dir();
-	    Util::mwexec('find '.$dir_all_log.'/ -name *_start_all_log* | xargs rm -rf');
+    public static function start_log($timeout=300) :void {
+        self::stop_log();
+        $dir_all_log = self::get_log_dir();
+	    self::mwexec('find '.$dir_all_log.'/ -name *_start_all_log* | xargs rm -rf');
 	    // Получим каталог с логами.
         $dirlog = $dir_all_log.'/dir_start_all_log';
         if(!is_dir($dirlog)){
             mkdir($dirlog, 0777, true);
         }
-        Util::mwexec_bg_timeout("logread -f", $timeout, "{$dirlog}/logread_f.log");
-        Util::mwexec_bg_timeout("ping 8.8.8.8", $timeout, "{$dirlog}/ping_8888.log");
-        Util::mwexec_bg_timeout("ping ya.ru", $timeout, "{$dirlog}/ping_ya_ru.log");
-        Util::mwexec_bg_timeout("ping lic.miko.ru", $timeout, "{$dirlog}/ping_lic_miko_ru.log");
-        Util::mwexec_bg_timeout("openssl s_client -connect lm.miko.ru:443", $timeout, "{$dirlog}/openssl_lm_miko_ru.log");
-        Util::mwexec_bg_timeout("openssl s_client -connect lic.miko.ru:443", $timeout, "{$dirlog}/openssl_lic_miko_ru.log");
-        Util::mwexec_bg_timeout("logread", $timeout, "{$dirlog}/logread.log");
-        Util::mwexec_bg_timeout("route -n", $timeout, "{$dirlog}/rout_n.log");
-        Util::mwexec_bg_timeout("asterisk -rx 'sip show settings'", $timeout, "{$dirlog}/sip_show_settings.log");
-        Util::mwexec_bg_timeout("asterisk -rx 'sip show peers'", $timeout, "{$dirlog}/sip_show_peers.log");
-        Util::mwexec_bg_timeout("asterisk -rx 'sip show registry'", $timeout, "{$dirlog}/sip_show_registry.log");
+        self::mwexec_bg_timeout("logread -f", $timeout, "{$dirlog}/logread_f.log");
 
-        Util::mwexec("cp /var/log/php_error.log $dirlog");
+        self::mwexec_bg("ping 8.8.8.8 -w 2 > {$dirlog}/ping_8888.log");
+        self::mwexec_bg("ping ya.ru -w 2 > {$dirlog}/ping_8888.log");
+        self::mwexec_bg("openssl s_client -connect lm.miko.ru:443 > {$dirlog}/openssl_lm_miko_ru.log");
+        self::mwexec_bg("openssl s_client -connect lic.miko.ru:443 > {$dirlog}/openssl_lic_miko_ru.log");
+        self::mwexec_bg("logread > {$dirlog}/logread.log");
+        self::mwexec_bg("route -n > {$dirlog}/rout_n.log");
+        self::mwexec_bg("asterisk -rx 'sip show settings' > {$dirlog}/sip_show_settings.log");
+        self::mwexec_bg("asterisk -rx 'sip show peers' > {$dirlog}/sip_show_peers.log");
+        self::mwexec_bg("asterisk -rx 'sip show registry' > {$dirlog}/sip_show_registry.log");
+
+        $php_log = '/var/log/php_error.log';
+        if(file_exists($php_log)){
+            self::mwexec("cp $php_log $dirlog");
+        }
 
         $network = new Network();
         $arr_eth = $network->get_interface_names();
         foreach ($arr_eth as $eth){
-            Util::mwexec_bg_timeout("tcpdump -i $eth -n -s 0 -vvv -w {$dirlog}/{$eth}.pcap", $timeout, "{$dirlog}/{$eth}_out.log");
+            self::mwexec_bg_timeout("tcpdump -i $eth -n -s 0 -vvv -w {$dirlog}/{$eth}.pcap", $timeout, "{$dirlog}/{$eth}_out.log");
         }
     }
 
@@ -141,16 +148,16 @@ class Util {
      * @param null   $out
      * @param string $logname
      */
-	static function mwexec_commands($arr_cmds, &$out = null, $logname = ''){
+	public static function mwexec_commands($arr_cmds, &$out = null, $logname = ''):void {
         $out = array();
 		foreach ($arr_cmds as $cmd){
             $out[] = "$cmd;";
             $out_cmd = array();
-			Util::mwexec($cmd,$out_cmd);
+			self::mwexec($cmd,$out_cmd);
             $out = array_merge($out, $out_cmd);
 		}
 
-		if($logname != ''){
+		if($logname !== ''){
             $result = implode("\n", $out);
             file_put_contents("/tmp/{$logname}_commands.log", $result);
         }
@@ -161,7 +168,7 @@ class Util {
      * @param $json
      * @return string
      */
-	static function json_indent($json) {
+	public static function json_indent($json) :string {
 	
 	    $result      = '';
 	    $pos         = 0;
@@ -177,12 +184,12 @@ class Util {
 	        $char = substr($json, $i, 1);
 	
 	        // Are we inside a quoted string?
-	        if ($char == '"' && $prevChar != '\\') {
+	        if ($char === '"' && $prevChar !== '\\') {
 	            $outOfQuotes = !$outOfQuotes;
 	
 	        // If this character is the end of an element,
 	        // output a new line and indent the next line.
-	        } else if(($char == '}' || $char == ']') && $outOfQuotes) {
+	        } else if(($char === '}' || $char === ']') && $outOfQuotes) {
 	            $result .= $newLine;
 	            $pos --;
 	            for ($j=0; $j<$pos; $j++) {
@@ -195,9 +202,9 @@ class Util {
 	
 	        // If the last character was the beginning of an element,
 	        // output a new line and indent the next line.
-	        if (($char == ',' || $char == '{' || $char == '[') && $outOfQuotes) {
+	        if (($char === ',' || $char === '{' || $char === '[') && $outOfQuotes) {
 	            $result .= $newLine;
-	            if ($char == '{' || $char == '[') {
+	            if ($char === '{' || $char === '[') {
 	                $pos ++;
 	            }
 	
@@ -213,7 +220,7 @@ class Util {
 	}
 	
 	// TODO / Возвращает путь к исполняемому файлу.
-	static function which($v){
+	public static function which($v) :string {
 		return $v;
 	}
 
@@ -223,10 +230,10 @@ class Util {
      * @param string $exclude
      * @return string
      */
-	static function get_pid_process($name, $exclude=''){
-        $path_ps    = Util::which('ps');
-        $path_grep  = Util::which('grep');
-        $path_awk 	= Util::which('awk');
+	public static function get_pid_process($name, $exclude='') :string {
+        $path_ps    = self::which('ps');
+        $path_grep  = self::which('grep');
+        $path_awk 	= self::which('awk');
 
         $filter_cmd = '';
         if(!empty($exclude)){
@@ -234,10 +241,8 @@ class Util {
         }
 
         $out = array();
-        Util::mwexec("$path_ps -A -o 'pid,args' {$filter_cmd} | $path_grep '$name' | $path_grep -v grep | $path_awk ' {print $1} '", $out);
-        $WorkerPID = trim(implode(' ', $out));
-
-        return $WorkerPID;
+        self::mwexec("$path_ps -A -o 'pid,args' {$filter_cmd} | $path_grep '$name' | $path_grep -v grep | $path_awk ' {print $1} '", $out);
+        return trim(implode(' ', $out));
     }
 
     /**
@@ -249,30 +254,30 @@ class Util {
      * @param $action
      * @return array | bool
      */
-	static function process_worker($cmd, $param, $proc_name, $action){
+	public static function process_worker($cmd, $param, $proc_name, $action){
 		$out_file = '/dev/null';
-		$path_kill  = Util::which('kill');
-		$path_nohup = Util::which('nohup');
+		$path_kill  = self::which('kill');
+		$path_nohup = self::which('nohup');
 
 		if(!empty($param)){
-		    $proc_str = $cmd." ".trim($param);
+		    $proc_str = $cmd.' '.trim($param);
         }else{
             $proc_str = $proc_name;
         }
-		$WorkerPID = Util::get_pid_process($proc_str);
+		$WorkerPID = self::get_pid_process($proc_str);
 
-		if('status' == $action ){
-			$status = ("$WorkerPID" != '') ? "Started" : "Stoped";
+		if('status' === $action ){
+			$status = ($WorkerPID !== '') ? 'Started' : 'Stoped';
 			return array('status' => $status, 'app' => $proc_name, 'PID' => $WorkerPID);
 		}
 		$out = array();
-		if("$WorkerPID" != '' && ('stop' == $action || 'restart' == $action) ){
-			Util::mwexec("$path_kill -9 $WorkerPID  > /dev/null 2>&1 &", $out);
+		if('$WorkerPID' !== '' && ('stop' === $action || 'restart' === $action) ){
+			self::mwexec("$path_kill -9 $WorkerPID  > /dev/null 2>&1 &", $out);
 			$WorkerPID = '';
 		}
 		
-		if("$WorkerPID" == '' && ('start' == $action || 'restart' == $action) ){
-			Util::mwexec("$path_nohup $cmd $param  > $out_file 2>&1 &", $out);
+		if($WorkerPID === '' && ('start' === $action || 'restart' === $action) ){
+			self::mwexec("$path_nohup $cmd $param  > $out_file 2>&1 &", $out);
 			usleep(500000);
 		}
 
@@ -281,12 +286,12 @@ class Util {
 
     /**
      * Рестарт рабочего процесса конкретного скрипта из ' /etc/inc/workers/'.
-     * @param        $name
+     * @param string $name
      * @param string $param
      */
-	static function restart_worker($name, $param=''){
+	public static function restart_worker($name, $param='') :void {
         $command = "php -f {$GLOBALS['g']['pt1c_inc_path']}/workers/{$name}.php";
-        Util::process_worker("$command","$param", "$name", 'restart');
+        self::process_worker($command, $param, $name, 'restart');
     }
 
     /**
@@ -488,44 +493,35 @@ class Util {
         $extension = $tmp_arr[count($tmp_arr) - 1];
         return $extension;
     }
-        /**
+
+    /**
      * Записывает данные в файл.
      * @param $filename
      * @param $data
      */
-    static function file_write_content($filename, $data){
+    public static function file_write_content($filename, $data) :void {
         /** @var Models\CustomFiles $res */
         $res = Models\CustomFiles::findFirst("filepath = '{$filename}'");
-        $only_append = false;
-
 
         $filename_orgn = "{$filename}.orgn";
-        if( ($res == null || $res->mode == 'none') && file_exists($filename_orgn)){
+        if( ( !$res || $res->mode === 'none') && file_exists($filename_orgn)){
             unlink($filename_orgn);
-        }
-        if($res->mode != 'none'){
+        }else if($res && $res->mode !== 'none'){
             // Запишем оригинальный файл.
             file_put_contents($filename_orgn, $data);
         }
-        if('/var/spool/cron/crontabs/root' == $filename){
-            // Исключение из правил. Нельзя переопределить.
-            $only_append = true;
-        }
-        if($res == null){
+
+        if(!$res){
             // Файл еще не зарегистрирован в базе. Сделаем это.
             $res = new Models\CustomFiles();
-            $res->writeAttribute("filepath",   $filename);
-            $res->writeAttribute("mode",       'none');
+            $res->writeAttribute('filepath',   $filename);
+            $res->writeAttribute('mode',       'none');
             $res->save();
-        }else if($res->mode == 'append'){
+        }else if($res->mode === 'append'){
             // Добавить к файлу.
             $data .= "\n\n";
             $data .= base64_decode($res->content);
-        }else if($only_append && $res->mode == 'override'){
-            // Добавить к файлу.
-            $data .= "\n\n";
-            $data .= base64_decode($res->content);
-        }else if($res->mode == 'override'){
+        }else if($res->mode === 'override'){
             // Переопределить файл.
             $data  = base64_decode($res->content);
         }
@@ -535,22 +531,23 @@ class Util {
     /**
      * Считывает содержимое файла, если есть разрешение.
      * @param $filename
+	 * @param $needOriginal
      * @return array
      */
-    static function file_read_content($filename){
+    static function file_read_content($filename, $needOriginal = TRUE){
         $result = array();
         $res = Models\CustomFiles::findFirst("filepath = '{$filename}'");
-        if($res == null){
-            $result['result'] = 'ERROR';
-            $result['data']   = '';
-            $result['message']= 'There is no access to the file';
+        if($res){
+			$filename_orgn = "{$filename}.orgn";
+			if($needOriginal && file_exists($filename_orgn)){
+				$filename = $filename_orgn;
+			}
+			$result['result'] = 'Success';
+			$result['data']   = rawurlencode(file_get_contents($filename));
         }else{
-            $filename_orgn = "{$filename}.orgn";
-            if(file_exists($filename_orgn)){
-                $filename = $filename_orgn;
-            }
-            $result['result'] = 'Success';
-            $result['data']   = rawurlencode(file_get_contents($filename));
+			$result['result'] = 'ERROR';
+			$result['data']   = '';
+			$result['message']= 'There is no access to the file';
         }
         return $result;
     }
@@ -944,6 +941,87 @@ class Util {
         return $need_create_link;
     }
 
+    /**
+     *
+     * Delete a directory RECURSIVELY
+     * @param string $dir - directory path
+     * @link http://php.net/manual/en/function.rmdir.php
+     */
+    static function rrmdir($dir) {
+        if (is_dir($dir)) {
+            $objects = scandir($dir);
+            foreach ($objects as $object) {
+                if ($object != "." && $object != "..") {
+                    if (filetype($dir . "/" . $object) == "dir") {
+                        Util::rrmdir($dir . "/" . $object);
+                    } else {
+                        unlink($dir . "/" . $object);
+                    }
+                }
+            }
+            reset($objects);
+            rmdir($dir);
+        }
+    }
+
+    /**
+     * Check if all the parts exist, and
+     * gather all the parts of the file together
+     * @param string $temp_dir  - the temporary directory holding all the parts of the file
+     * @param string $fileName  - the original file name
+     * @param string $totalSize - original file size (in bytes)
+     * @param string $total_files - original file size (in bytes)
+     * @param string $result_file - original file size (in bytes)
+     * @param string $chunkSize - each chunk size (in bytes)
+     * @return bool
+     */
+    static function createFileFromChunks($temp_dir, $fileName, $totalSize, $total_files, $result_file = '', $chunkSize=0) {
+        // count all the parts of this file
+        $total_files_on_server_size = 0;
+        foreach(scandir($temp_dir) as $file) {
+            $temp_total = $total_files_on_server_size;
+            $tempfilesize = filesize($temp_dir.'/'.$file);
+            $total_files_on_server_size = $temp_total + $tempfilesize;
+        }
+        // check that all the parts are present
+        // If the Size of all the chunks on the server is equal to the size of the file uploaded.
+        if ($total_files_on_server_size >= $totalSize) {
+            // Загрузка завершена.
+            return true;
+        }
+
+        // Загрузка еще не завершена. Часть файла успешно сохранена.
+        return false;
+    }
+
+    static function mergeFilesInDirectory($temp_dir, $fileName, $total_files, $result_file = ''){
+        if(empty($result_file)){
+            $result_file = dirname($temp_dir).'/'.$fileName;
+        }
+        // create the final destination file
+        if (($fp = fopen($result_file, 'w')) !== false) {
+            for ($i=1; $i<=$total_files; $i++) {
+                $tmp_file = $temp_dir.'/'.$fileName.'.part'.$i;
+                fwrite($fp, file_get_contents($tmp_file));
+                // Удаляем временный файл.
+                unlink($tmp_file);
+           }
+            fclose($fp);
+        } else {
+            self::sys_log_msg('UploadFile', 'cannot create the destination file - '.$result_file);
+            return false;
+        }
+        self::sys_log_msg('UploadFile','destination file - '.$result_file );
+        // rename the temporary directory (to avoid access from other
+        // concurrent chunks uploads) and than delete it
+        if (rename($temp_dir, $temp_dir.'_UNUSED')) {
+            self::rrmdir($temp_dir.'_UNUSED');
+        } else {
+            self::rrmdir($temp_dir);
+        }
+        // Загрузка завершена. Возвращаем путь к файлу.
+        return $result_file;
+    }
 
     /**
      * Генерация сертификата средствами openssl.

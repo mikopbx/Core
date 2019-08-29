@@ -1,5 +1,7 @@
 "use strict";
 
+function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
 /*
  * Copyright (C) MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
@@ -31,6 +33,8 @@ var PbxApi = {
   pbxGetPeersStatus: "".concat(Config.pbxUrl, "/pbxcore/api/sip/get_peers_statuses"),
   pbxGetPeerStatus: "".concat(Config.pbxUrl, "/pbxcore/api/sip/get_sip_peer"),
   pbxGetActiveCalls: "".concat(Config.pbxUrl, "/pbxcore/api/cdr/get_active_calls"),
+  // Получить активные звонки,
+  pbxGetActiveChannels: "".concat(Config.pbxUrl, "/pbxcore/api/cdr/get_active_channels"),
   // Получить активные звонки,
   pbxCheckLicense: "".concat(Config.pbxUrl, "/pbxcore/api/pbx/check_licence"),
   systemUploadAudioFile: "".concat(Config.pbxUrl, "/pbxcore/api/system/upload_audio_file"),
@@ -85,6 +89,35 @@ var PbxApi = {
   backupUpload: "".concat(Config.pbxUrl, "/pbxcore/api/backup/upload"),
   // Загрузка файла на АТС curl -F "file=@backup_1530703760.zip" http://172.16.156.212/pbxcore/api/backup/upload;
   backupGetEstimatedSize: "".concat(Config.pbxUrl, "/pbxcore/api/backup/get_estimated_size"),
+  backupStatusUpload: "".concat(Config.pbxUrl, "/pbxcore/api/backup/status_upload"),
+  // curl 'http://172.16.156.223/pbxcore/api/backup/status_upload?backup_id=backup_1562746816'
+  backupStartScheduled: "".concat(Config.pbxUrl, "/pbxcore/api/backup/start_scheduled"),
+  // curl 'http://172.16.156.223/pbxcore/api/backup/start_scheduled'
+
+  /**
+   * Проверка ответа на JSON
+   * @param jsonString
+   * @returns {boolean|any}
+   */
+  tryParseJSON: function () {
+    function tryParseJSON(jsonString) {
+      try {
+        var o = JSON.parse(jsonString); // Handle non-exception-throwing cases:
+        // Neither JSON.parse(false) or JSON.parse(1234) throw errors, hence the type-checking,
+        // but... JSON.parse(null) returns null, and typeof null === "object",
+        // so we must check for that, too. Thankfully, null is falsey, so this suffices:
+
+        if (o && _typeof(o) === 'object') {
+          return o;
+        }
+      } catch (e) {//
+      }
+
+      return false;
+    }
+
+    return tryParseJSON;
+  }(),
 
   /**
    * Проверка связи с PBX
@@ -684,15 +717,37 @@ var PbxApi = {
 
   /**
    * Отпарвляет тестовое сообщение на почту
-   * @param $data
+   * @param data
    */
   SendTestEmail: function () {
-    function SendTestEmail($data) {
+    function SendTestEmail(data, callback) {
       $.api({
         url: PbxApi.systemSendTestEmail,
         on: 'now',
         method: 'POST',
-        data: JSON.stringify($data)
+        data: JSON.stringify(data),
+        successTest: function () {
+          function successTest(response) {
+            // test whether a JSON response is valid
+            return response !== undefined && Object.keys(response).length > 0 && response.result.toUpperCase() === 'SUCCESS';
+          }
+
+          return successTest;
+        }(),
+        onSuccess: function () {
+          function onSuccess() {
+            callback(true);
+          }
+
+          return onSuccess;
+        }(),
+        onFailure: function () {
+          function onFailure(response) {
+            callback(response.message);
+          }
+
+          return onFailure;
+        }()
       });
     }
 
@@ -821,7 +876,7 @@ var PbxApi = {
   GetCurrentCalls: function () {
     function GetCurrentCalls(callback) {
       $.api({
-        url: PbxApi.pbxGetActiveCalls,
+        url: PbxApi.pbxGetActiveChannels,
         on: 'now',
         successTest: function () {
           function successTest(response) {
@@ -1275,6 +1330,84 @@ var PbxApi = {
   }(),
 
   /**
+   * Удалить файл по указанному ID
+   * @param fileId - идентификатор файла с архивом
+   * @param callback - функция для обработки результата
+   */
+  BackupStatusUpload: function () {
+    function BackupStatusUpload(fileId, callback) {
+      $.api({
+        url: "".concat(PbxApi.backupStatusUpload, "?backup_id={id}"),
+        on: 'now',
+        urlData: {
+          id: fileId
+        },
+        successTest: function () {
+          function successTest(response) {
+            // test whether a JSON response is valid
+            return response !== undefined && Object.keys(response).length > 0;
+          }
+
+          return successTest;
+        }(),
+        onSuccess: function () {
+          function onSuccess(response) {
+            callback(response);
+          }
+
+          return onSuccess;
+        }(),
+        onError: function () {
+          function onError() {
+            callback(false);
+          }
+
+          return onError;
+        }()
+      });
+    }
+
+    return BackupStatusUpload;
+  }(),
+
+  /**
+   * Запускает запланированное резервное копирование сразу
+   *
+   */
+  BackupStartScheduled: function () {
+    function BackupStartScheduled(callback) {
+      $.api({
+        url: PbxApi.backupStartScheduled,
+        on: 'now',
+        successTest: function () {
+          function successTest(response) {
+            // test whether a JSON response is valid
+            return response !== undefined && Object.keys(response).length > 0 && response.result.toUpperCase() === 'SUCCESS';
+          }
+
+          return successTest;
+        }(),
+        onSuccess: function () {
+          function onSuccess() {
+            callback(true);
+          }
+
+          return onSuccess;
+        }(),
+        onError: function () {
+          function onError() {
+            callback(false);
+          }
+
+          return onError;
+        }()
+      });
+    }
+
+    return BackupStartScheduled;
+  }(),
+
+  /**
    * Загрузить на станцию файл обновления
    * @param file - Тело загружаемого файла
    * @param callback - функция для обработки результата
@@ -1445,7 +1578,7 @@ var PbxApi = {
         url: PbxApi.systemInstallModule,
         on: 'now',
         method: 'POST',
-        data: "{\"uniqid\":\"".concat(params.uniqid, "\",\"md5\":\"").concat(params.md5, "\",\"url\":\"").concat(params.updateLink, "\"}")
+        data: "{\"uniqid\":\"".concat(params.uniqid, "\",\"md5\":\"").concat(params.md5, "\",\"size\":\"").concat(params.size, "\",\"url\":\"").concat(params.updateLink, "\"}")
       });
     }
 
@@ -1455,12 +1588,17 @@ var PbxApi = {
   /**
    * Удаление модуля расширения
    *
+   * @param moduleName - id модуля
+   * @param keepSettings bool - сохранять ли настройки
+   * @param callback - функция колбека
    */
   SystemDeleteModule: function () {
-    function SystemDeleteModule(moduleName, callback) {
+    function SystemDeleteModule(moduleName, keepSettings, callback) {
       $.api({
         url: "".concat(Config.pbxUrl, "/pbxcore/api/modules/").concat(moduleName, "/uninstall"),
         on: 'now',
+        method: 'POST',
+        data: "{\"uniqid\":\"".concat(moduleName, "\",\"keepSettings\":\"").concat(keepSettings, "\"}"),
         successTest: function () {
           function successTest(response) {
             // test whether a JSON response is valid
@@ -1477,8 +1615,8 @@ var PbxApi = {
           return onSuccess;
         }(),
         onError: function () {
-          function onError() {
-            callback(false);
+          function onError(response) {
+            callback(response);
           }
 
           return onError;

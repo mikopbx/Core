@@ -9,12 +9,11 @@
  */
 
 /* global PbxApi, globalPBXVersion, globalTranslate, ConfigWorker,
-globalPBXLicense, globalPBXLanguage, globalPBXVersion */
+globalPBXLicense, globalPBXLanguage, globalPBXVersion, showdown, UserMessage */
 var upgradeStatusLoopWorker = {
   timeOut: 1000,
   timeOutHandle: '',
   iterations: 0,
-  $ajaxMessgesDiv: $('#ajax-messages'),
   initialize: function () {
     function initialize() {
       upgradeStatusLoopWorker.iterations = 0;
@@ -53,9 +52,8 @@ var upgradeStatusLoopWorker = {
         $('i.loading.redo').addClass('sync').removeClass('redo');
       } else if (response.d_status === 'DOWNLOAD_ERROR') {
         window.clearTimeout(upgradeStatusLoopWorker.timeoutHandle);
-        $('.ui.message.ajax').remove();
-        upgradeStatusLoopWorker.$ajaxMessgesDiv.after("<div class=\"ui error message ajax\">".concat(globalTranslate.upd_DownloadUpgradeError, "</div>"));
-        $('i.loading.redo').addClass('download').removeClass('loading redo');
+        UserMessage.showError(globalTranslate.upd_DownloadUpgradeError);
+        $('i.loading.redo').addClass('redo').removeClass('loading');
       }
     }
 
@@ -66,10 +64,11 @@ var updatePBX = {
   $formObj: $('#upgrade-form'),
   $submitButton: $('#submitbutton'),
   $progressBar: $('#upload-progress-bar'),
-  $ajaxMessgesDiv: $('#ajax-messages'),
+  $progressBarLabel: $('#upload-progress-bar').find('.label'),
   currentVersion: globalPBXVersion,
   $restoreModalForm: $('#update-modal-form'),
   upgradeInProgress: false,
+  converter: new showdown.Converter(),
   initialize: function () {
     function initialize() {
       updatePBX.$restoreModalForm.modal();
@@ -150,7 +149,7 @@ var updatePBX = {
                 updatePBX.AddNewVersionInformation(obj);
               }
             });
-            $('a.download').on('click', function (e) {
+            $('a.redo').on('click', function (e) {
               e.preventDefault();
               if (updatePBX.$submitButton.hasClass('loading') || updatePBX.upgradeInProgress) return;
               updatePBX.$restoreModalForm.modal({
@@ -170,7 +169,7 @@ var updatePBX = {
                     params.updateLink = $aLink.attr('href');
                     params.md5 = $aLink.attr('data-md5');
                     params.size = $aLink.attr('data-size');
-                    $aLink.find('i').addClass('loading redo').removeClass('download');
+                    $aLink.find('i').addClass('loading');
                     updatePBX.upgradeInProgress = true;
                     PbxApi.SystemUpgradeOnline(params);
                     upgradeStatusLoopWorker.initialize();
@@ -195,12 +194,17 @@ var updatePBX = {
       if (response.length === 0 || response === false) {
         updatePBX.$submitButton.removeClass('loading');
         updatePBX.upgradeInProgress = false;
-        $('.ui.message.ajax').remove();
-        updatePBX.$ajaxMessgesDiv.after("<div class=\"ui error message ajax\">".concat(globalTranslate.upd_UploadError, "</div>"));
+        UserMessage.showError(globalTranslate.upd_UploadError);
       } else if (response["function"] === 'upload_progress') {
         updatePBX.$progressBar.progress({
           percent: parseInt(response.percent, 10)
         });
+
+        if (response.percent < 100) {
+          updatePBX.$progressBarLabel.text(globalTranslate.upd_UploadInProgress);
+        } else {
+          updatePBX.$progressBarLabel.text(globalTranslate.upd_UpgradeInProgress);
+        }
       }
     }
 
@@ -209,8 +213,15 @@ var updatePBX = {
   AddNewVersionInformation: function () {
     function AddNewVersionInformation(obj) {
       $('#online-updates-block').show();
-      var dymanicRow = "\n\t\t\t<tr class=\"update-row\">\n\t\t\t<td class=\"center aligned\">".concat(obj.version, "</td>\n\t\t\t<td>").concat(decodeURIComponent(obj.description), "</td>\n\t\t\t<td class=\"right aligned collapsing\">\n    \t\t<div class=\"ui small basic icon buttons action-buttons\">\n    \t\t\t<a href=\"").concat(obj.href, "\" class=\"ui button download\" \n\t\t\t\t\tdata-md5 =\"").concat(obj.md5, "\" data-size =\"").concat(obj.size, "\">\n\t\t\t\t\t<i class=\"icon download blue\"></i>\n\t\t\t\t\t<span class=\"percent\"></span>\n\t\t\t\t</a>\n    \t\t</div>   \n\t</tr>");
+      var markdownText = decodeURIComponent(obj.description);
+      markdownText = markdownText.replace(/<br>/g, '\r');
+      markdownText = markdownText.replace(/<br >/g, '\r');
+      markdownText = markdownText.replace(/\* \*/g, '*');
+      markdownText = markdownText.replace(/\*\*/g, '*');
+      var html = updatePBX.converter.makeHtml(markdownText);
+      var dymanicRow = "\n\t\t\t<tr class=\"update-row\">\n\t\t\t<td class=\"center aligned\">".concat(obj.version, "</td>\n\t\t\t<td>").concat(html, "</td>\n\t\t\t<td class=\"right aligned collapsing\">\n    \t\t<div class=\"ui small basic icon buttons action-buttons\">\n    \t\t\t<a href=\"").concat(obj.href, "\" class=\"ui button redo popuped\" \n    \t\t\t\tdata-content = \"").concat(globalTranslate.bt_ToolTipUpgradeOnline, "\"\n\t\t\t\t\tdata-md5 =\"").concat(obj.md5, "\" data-size =\"").concat(obj.size, "\">\n\t\t\t\t\t<i class=\"icon redo blue\"></i>\n\t\t\t\t\t<span class=\"percent\"></span>\n\t\t\t\t</a>\n\t\t\t\t<a href=\"").concat(obj.href, "\" class=\"ui button download popuped\" \n\t\t\t\t\tdata-content = \"").concat(globalTranslate.bt_ToolTipDownload, "\"\n\t\t\t\t\tdata-md5 =\"").concat(obj.md5, "\" data-size =\"").concat(obj.size, "\">\n\t\t\t\t\t<i class=\"icon download blue\"></i>\n\t\t\t\t</a>\n    \t\t</div>   \n\t</tr>");
       $('#updates-table tbody').append(dymanicRow);
+      $('a.popuped').popup();
     }
 
     return AddNewVersionInformation;
