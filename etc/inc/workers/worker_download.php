@@ -34,7 +34,7 @@ class Downloader
         }
         $this->old_memory_limit = ini_get('memory_limit');
         register_shutdown_function([$this, 'ShutdownHandler']);
-        ini_set('memory_limit', "300M");
+        ini_set('memory_limit', '300M');
 
         $temp_dir = dirname($this->settings['res_file']);
         if ( ! is_dir($temp_dir) && ! mkdir($temp_dir, 0777, true) && ! is_dir($temp_dir)) {
@@ -47,7 +47,6 @@ class Downloader
                 file_put_contents($this->error_file, 'Error on create module folder', FILE_APPEND);
             }
         }
-
         $this->progress_file = $temp_dir . '/progress';
         $this->error_file    = $temp_dir . '/error';
         if (file_exists($this->error_file)) {
@@ -192,10 +191,11 @@ class Downloader
                 $backupModuleDir  = $GLOBALS['g']['phalcon_settings']['application']['modulesDir'] . $this->settings['module'] . '_orig';
                 Util::mwexec("cp -rf $currentModuleDir $backupModuleDir");
                 Util::mwexec("rm -rf $currentModuleDir/*");
+                Util::mwexec("7za e -spf -aoa -o$currentModuleDir {$this->settings['res_file']}");
                 Util::mwexec("cp -rf $backupModuleDir/progress $currentModuleDir");
+            } else {
+                Util::mwexec("7za e -spf -aoa -o$currentModuleDir {$this->settings['res_file']}");
             }
-            // unpack
-            Util::mwexec("7za e -spf -aoa -o$currentModuleDir {$this->settings['res_file']}");
             Util::mwexec("chown www:www -R $currentModuleDir");
 
             $path_class = "\\Modules\\{$this->settings['module']}\\setup\\PbxExtensionSetup";
@@ -204,7 +204,6 @@ class Downloader
                 $response = $setup->installModule();
                 if ($response['result']) {
                     $result['result'] = 'Success';
-                    sleep(5);
                     file_put_contents("$currentModuleDir/installed", '');
                 } else {
                     $result['result'] = 'Error';
@@ -223,6 +222,8 @@ class Downloader
                 if ($needBackup) {
                     Util::mwexec("mv $backupModuleDir $currentModuleDir");
                 }
+            } else if ($needBackup) {
+                Util::mwexec("rm -rf $backupModuleDir");
             }
             Util::mwexec('rm -rf ' . dirname($this->settings['res_file']));
         } elseif ('upgrade_online' === $this->settings['action']) {

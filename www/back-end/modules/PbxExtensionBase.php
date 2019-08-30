@@ -8,12 +8,14 @@
 
 namespace Modules;
 
+use Models\ModelsBase;
 use Models\PbxSettings;
 use Phalcon\Db\Adapter\Pdo\Sqlite;
 use Util;
 use Config;
 use Models\PbxExtensionModules;
 use Phalcon\Db\Column;
+use Phalcon\DI;
 
 /**
  * Class PbxExtensionBase
@@ -86,14 +88,10 @@ abstract class PbxExtensionBase
 
     public function __construct()
     {
-        $this->di              = $GLOBALS['g']['m_di'];
-        $this->phalconSettings = $GLOBALS['g']['phalcon_settings'];
-        if (isset($this->di)) {
-           $this->db = $this->di->get('db');
-        } else {
-           $this->db = new Sqlite(['dbname' => $GLOBALS['g']['pt1c_db_path']]);
-        }
-        $this->moduleDir = $this->phalconSettings['application']['modulesDir'] . $this->module_uniqid;
+            $this->di = DI::getDefault();
+            $this->db = $this->di->get('db');
+            $this->phalconSettings =  $this->di->get('config')->toArray();
+            $this->moduleDir = $this->phalconSettings['application']['modulesDir'] . $this->module_uniqid;
     }
 
     /**

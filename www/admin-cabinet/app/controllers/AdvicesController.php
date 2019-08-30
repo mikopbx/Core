@@ -170,9 +170,9 @@ class AdvicesController extends BaseController {
             $checkBaseFeature = $this->licenseWorker->featureAvailable(33);
             if ($checkBaseFeature['success']===false) {
                 if ($this->language === 'ru'){
-                    $url    = 'https://wiki.mikopbx.com/licensing#oshibki_pri_registracii';
+                    $url    = 'https://wiki.mikopbx.com/licensing#faq_chavo';
                 } else {
-                    $url    = "https://wiki.mikopbx.com/{$this->language}:licensing#oshibki_pri_registracii";
+                    $url    = "https://wiki.mikopbx.com/{$this->language}:licensing#faq_chavo";
                 }
 
                 $messages['warning'] = $this->translation->_( 'adv_ThisCopyHasLicensingTroubles',

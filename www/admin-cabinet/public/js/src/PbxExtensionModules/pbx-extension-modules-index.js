@@ -469,16 +469,14 @@ upgradeStatusLoopWorker = {
 		if (response.length === 0 || response === false) return;
 		if (response.i_status === true) {
 			$('a.button').removeClass('disabled');
-			setTimeout(() => {
-				if (upgradeStatusLoopWorker.needEnableAfterInstall) {
-					extensionModules.enableModule(
-						upgradeStatusLoopWorker.moduleUniqid,
-						extensionModules.reloadModuleAndPage,
-					);
-				} else {
-					window.location = `${globalRootUrl}pbx-extension-modules/index/`;
-				}
-			}, 3000);
+			if (upgradeStatusLoopWorker.needEnableAfterInstall) {
+				extensionModules.enableModule(
+					upgradeStatusLoopWorker.moduleUniqid,
+					extensionModules.reloadModuleAndPage,
+				);
+			} else {
+				window.location = `${globalRootUrl}pbx-extension-modules/index/`;
+			}
 
 			window.clearTimeout(upgradeStatusLoopWorker.timeoutHandle);
 		}
