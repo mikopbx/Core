@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 8 2019
+ * Written by Alexey Portnov, 9 2019
  */
 
 use Models\CustomFiles;
@@ -743,9 +743,16 @@ server 2.pool.ntp.org';
             'action'   => $module
         ];
 
-        file_put_contents($dirs['tmp']."/{$module}/progress", "0");
+        file_put_contents($dirs['tmp']."/{$module}/progress", '0');
         file_put_contents($dirs['tmp']."/{$module}/download_settings.json", json_encode($download_settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-        Util::mwexec_bg("php -f /etc/inc/workers/worker_download.php ".$dirs['tmp']."/{$module}/download_settings.json");
+        Util::mwexec_bg('php -f /etc/inc/workers/worker_download.php '.$dirs['tmp']."/{$module}/download_settings.json");
+        // Ожидание запуска процесса загрузки.
+        usleep(500000);
+        $d_pid = Util::get_pid_process($dirs['tmp']."/{$module}/download_settings.json");
+        if(empty($d_pid)) {
+            sleep(1);
+        }
+
         $result['result']   = 'Success';
         return $result;
     }
@@ -886,6 +893,13 @@ server 2.pool.ntp.org';
         file_put_contents("$moduleDir/progress", '0');
         file_put_contents("$moduleDirTmp/download_settings.json", json_encode($download_settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         Util::mwexec_bg("php -f /etc/inc/workers/worker_download.php $moduleDirTmp/download_settings.json");
+
+        // Ожидание запуска процесса загрузки.
+        usleep(500000);
+        $d_pid = Util::get_pid_process("{$moduleDirTmp}/download_settings.json");
+        if(empty($d_pid)) {
+            sleep(1);
+        }
         return [];
     }
 

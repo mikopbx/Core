@@ -868,6 +868,7 @@ It can be activated once, after which the coupon becomes redeemed.
 	'ext_Delete'		   			=> 'Delete',
     'ext_GetLinkError'                 => 'The update server returns a wrong answer, try to continue a bit later.',
     'ext_NoLicenseAvailable'           => 'No available license to install this module',
+    'ext_Version'                      => 'Version',
 	'DimmerWaitForPBXIsOnline'              => 'Connection lost to the core PBX ...',
     'DimmerWaitForPBXOnlineDescription'   => 'It\'s normal if the computer has been restarted. <br>This page will be reloaded when the connection established.',
     'loc_NoResult'                          => 'Nothing found',

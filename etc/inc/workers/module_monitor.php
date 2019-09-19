@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 8 2019
+ * Written by Alexey Portnov, 9 2019
  */
 
 namespace     Modules\Services;
@@ -91,6 +91,7 @@ class Monitor {
      * Проверка целостности модулей.
      */
     public function check_modules():void {
+
         while (true) {
             file_put_contents(self::get_pid_file(), getmypid());
             sleep(5);
@@ -99,8 +100,8 @@ class Monitor {
                 continue;
             }
             $this->last_check_time = time();
-
             $modules_miko = $this->get_module_data();
+
             /** @var  PbxExtensionModules $data */
             $extensions_data = PbxExtensionModules::find('disabled=0');
             foreach ($extensions_data as $data){
@@ -113,7 +114,6 @@ class Monitor {
                 }
             }
         }
-
     }
 
     /**
@@ -148,13 +148,9 @@ class Monitor {
         $url = 'http://127.0.0.1:8222/license.api/featureavailable';
         $headers = [];
         $response = $this->query('GET', $url, ['feature' => $id], $headers);
-        if( isset($response['session']) && !empty($response['session']) ){
+        if( isset($response['result']) && !empty($response['result']) ){
             $result = true;
         }
-        // else if(isset($response['data'])){
-        //     Util::sys_log_msg('Modules', 'feature: '.$id.' data: '.$response['data']);
-        // }
-
         return $result;
     }
 

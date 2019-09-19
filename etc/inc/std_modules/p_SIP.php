@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 8 2019
+ * Written by Alexey Portnov, 9 2019
  */
 
 require_once 'globals.php';
@@ -56,16 +56,19 @@ class p_SIP extends ConfigClass {
      * Генератор файла sip_notify.conf.
      * Удаленное управление телефоном.
      */
-    private function generateSipNotify(){
+    private function generateSipNotify():void {
         // Ребут телефонов Yealink.
         // CLI> sip notify yealink-reboot autoprovision_user
         // autoprovision_user - id sip учетной записи.
-        $conf = "";
+        $conf = '';
         $conf.= "[yealink-reboot]\n".
                 "Event=>check-sync\;reboot=true\n".
                 "Content-Length=>0\n";
         $conf.= "\n";
 
+        $conf.= "[snom-reboot]\n".
+                "Event=>check-sync\;reboot=true\n".
+        $conf.= "\n";
         // Пример
         // CLI> sip notify yealink-action-ok autoprovision_user
         // http://support.yealink.com/faq/faqInfo?id=173
@@ -74,7 +77,7 @@ class p_SIP extends ConfigClass {
                 "Event=>ACTION-URI\n".
                 "Content=>key=SPEAKER\n";
 
-        Util::file_write_content($this->astConfDir."/sip_notify.conf", $conf);
+        Util::file_write_content($this->astConfDir.'/sip_notify.conf', $conf);
     }
 
     /**
@@ -165,46 +168,47 @@ class p_SIP extends ConfigClass {
      * @param $general_settings
      * @return string
      */
-    private function generate_providers($general_settings){
+    private function generate_providers($general_settings):string {
         $conf = '';
         $reg_strings = '';
         $prov_config = '';
 
         foreach($this->data_providers as $provider){
             // Формируем строку регистрации.
-            $manualregister = trim(str_replace(["register", "=>"],'', $provider['manualregister']));
-            $port	   = (trim($provider['port']) =='')?'5060':"{$provider['port']}";
-            if($provider['noregister'] != 1 && !empty($provider['manualregister'])){
+            $manualregister = trim(str_replace(['register', '=>'],'', $provider['manualregister']));
+            $port	   = (trim($provider['port']) === '')?'5060':$provider['port'];
+
+            $noregister = $provider['noregister'] !== '1';
+            if( $noregister && !empty($provider['manualregister']) ){
                 // Строка регистрация определена вручную.
                 $reg_strings.= "register => {$manualregister} \n";
-            }else if($provider['noregister'] != 1){
+            }else if($noregister){
                 // Строка регистрации генерируется автоматически.
                 $sip_user  = '"'.$provider['username'].'"';
-                $secret	   = (trim($provider['secret']) =='')?'':":\"{$provider['secret']}\"";
+                $secret	   = (trim($provider['secret']) ==='')?'':":\"{$provider['secret']}\"";
                 $host	   = ''.$provider['host'].'';
                 $extension = $sip_user;
 
                 $reg_strings.= "register => {$sip_user}{$secret}@{$host}:{$port}/{$extension} \n";
             }
-
             // Формируем секцию / раздел sip.conf
             // Различные доп. атрибуты.
-            $fromdomain  = (trim($provider['fromdomain']) =='')?"{$provider['host']}":"{$provider['fromdomain']}";
-            $defaultuser = (trim($provider['defaultuser']) =='')?"{$provider['username']}":"{$provider['defaultuser']}";
-            $qualify     = ($provider['qualify'] == 1 || $provider['qualify'] == 'yes')?'yes':'no';
+            $fromdomain  = (trim($provider['fromdomain']) ==='')?$provider['host']:$provider['fromdomain'];
+            $defaultuser = (trim($provider['defaultuser']) ==='')?$provider['username']:$provider['defaultuser'];
+            $qualify     = ($provider['qualify'] === '1' || $provider['qualify'] === 'yes')?'yes':'no';
 
-            $from     = (trim($provider['fromuser']) =='')?"{$provider['username']}; username":"{$provider['fromuser']}; fromuser";
-            $fromuser = ($provider['disablefromuser'] == 1)?'':"fromuser={$from}; \n";
+            $from     = (trim($provider['fromuser']) ==='')?"{$provider['username']}; username":"{$provider['fromuser']}; fromuser";
+            $fromuser = ($provider['disablefromuser'] === '1')?'':"fromuser={$from}; \n";
 
             // Ручные настройки.
             $manualattributes = '';
-            if(trim($provider['manualattributes']) != ''){
+            if(trim($provider['manualattributes']) !== ''){
                 $manualattributes = "; manual attributes \n".
                     base64_decode($provider['manualattributes']). " \n".
                     "; manual attributes\n";
             }
             $type = 'friend';
-            if(1 == $provider['receive_calls_without_auth']){
+            if('1' === $provider['receive_calls_without_auth']){
                 // Звонки без авторизации.
                 $type               = 'peer';
                 $defaultuser        = ';';
@@ -212,7 +216,7 @@ class p_SIP extends ConfigClass {
             }
             $lang = $general_settings['PBXLanguage'];
 
-            $codecs = "";
+            $codecs = '';
             foreach ($provider['codecs'] as $codec){
                 $codecs .= "allow={$codec} \n";
             }
@@ -233,11 +237,11 @@ class p_SIP extends ConfigClass {
                 "icesupport=yes \n".
                 "insecure=port,invite \n".
                 "disallow=all \n".
-                "$codecs".
+                $codecs.
                 "defaultuser=$defaultuser\n".
                 "fromdomain=$fromdomain\n".
-                "$fromuser".
-                "$manualattributes".
+                $fromuser.
+                $manualattributes.
                 "\n";
 
         }
@@ -522,7 +526,8 @@ class p_SIP extends ConfigClass {
         // Генерация внутреннего номерного плана.
         $conf = '';
         foreach($this->data_peers as $peer){
-            $conf.= "exten => {$peer['extension']},1,Goto(internal-users,{$peer['extension']},1) \n";
+            $conf.= "exten => {$peer['extension']},1,Set(__ISTRANSFER=transfer_) \n";
+            $conf.= "	same => n,Goto(internal-users,{$peer['extension']},1) \n";
         }
         $conf .= "\n";
         return $conf;

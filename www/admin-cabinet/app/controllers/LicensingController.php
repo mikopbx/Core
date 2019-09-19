@@ -57,7 +57,7 @@ class LicensingController extends BaseController
             return;
         }
         $data = $this->request->getPost();
-        if ( isset($data['licKey'])) {
+        if ( ! empty($data['licKey'])) {
             $oldLicKey = PbxSettings::getValueByKey('PBXLicense');
             if ($oldLicKey !== $data['licKey']) {
 

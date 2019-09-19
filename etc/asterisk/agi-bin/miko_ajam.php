@@ -181,9 +181,10 @@ class CDR_Data{
     /**
      * Собирает инвормацию по хинтам и оповещает о них в UserEvent.
      */
-    private function GetHints(){
-        $arr_hints = array();
-        exec("asterisk -rx\"core show hints\" | grep -v egistered | grep State | awk -F'[ ]*[:]?[ ]+' ' {print $1 \"@.@\" $2 \"@.@\" $3 } '", $arr_hints);
+    private function GetHints():void{
+        $arr_hints = [];
+        $context = 'internal-hints';
+        exec("asterisk -rx\"core show hints\" | grep -v egistered | grep State | awk -F'([ ]*[:]?[ ]+)|@' ' {print $1\"@{$context}\" \"@.@\" $3 \"@.@\" $4 } '", $arr_hints);
         $result = ''; $count  = 1;
         foreach ($arr_hints as $hint_row){
             if($count >= 10){
@@ -191,9 +192,9 @@ class CDR_Data{
                 $result = ''; $count = 1;
             }
             $result .= trim($hint_row).'.....';
-            $count=$count+1;
+            $count++;
         }
-        if($result!=''){
+        if($result!==''){
             $this->UserEvent("RowsHint,chan1c:{$this->vars['chan']},Lines:{$result}");
         }
         $this->UserEvent("HintsEnd,chan1c:{$this->vars['chan']}");

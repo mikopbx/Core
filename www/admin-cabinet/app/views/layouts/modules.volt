@@ -8,15 +8,12 @@
 <div id="main" class="main-content-wrapper pusher">
     <div id="debug-info"></div>
     <div class="ui container">
-
-            <div class="row" id="advices"></div>
-
-
+        <div class="row" id="advices"></div>
         <h1 class="ui {% if (action=='index') %}dividing{% endif %} header">
             {{ elements.getIconByController(controller) }}
             <div class="content">
                 {{ t._('Breadcrumb'~controller) }}
-                <div class="sub header">{{ t._('SubHeader'~controller) }}
+                <div class="sub header">{{ t._('SubHeader'~controller) }} ( {{ t._('ext_Version') }} {{ module.version }})
                     {% if not urlToWiki is empty %}
                         <a href="{{ urlToWiki }}" target="_blank"
                            data-content="{{ t._("GoToWikiDocumentation") }}"

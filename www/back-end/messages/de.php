@@ -868,6 +868,7 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
 	'ext_Delete'		   			   => 'Löschen',
     'ext_GetLinkError'                 => 'Der Update-Server gibt eine falsche Antwort zurück. Versuchen Sie es später erneut.',
     'ext_NoLicenseAvailable'           => 'Keine verfügbare Lizenz zur Installation dieses Moduls',
+    'ext_Version'                      => 'Softwareversion',
 	'DimmerWaitForPBXIsOnline'          => 'Keine Verbindung zur PBX ...',
     'DimmerWaitForPBXOnlineDescription'  => 'Es ist normal, wenn der Computer neu gestartet wurde.<br> Diese Seite wird beim Verbindungsaufbau neu geladen!',
 	'loc_NoResult'                        => 'Nichts gefunden',
