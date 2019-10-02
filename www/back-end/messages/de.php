@@ -754,6 +754,7 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
     'lic_FailedToCaptureFeature2008'        =>'(2008) Lizenz nicht verfügbar',
     'lic_InvalidLicenseKey2009'             => '(2009) Ungültiger Lizenzschlüssel',
     'lic_FeatureExpired2011'                => '(2011) Lizenzfunktion ist abgelaufen',
+    'lic_FailedCheckLicense'                => 'Der Lizenzserver ist nicht erreichbar. Versuchen Sie es später erneut.',
 	'er_Home'                               => 'zum Anfang',
 	'rs_RestartPhoneSystem'                 => 'PBX neustarten',
 	'rs_ShutDownPhoneSystem'                => 'PBX ausschalten',

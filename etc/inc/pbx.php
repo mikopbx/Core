@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 8 2019
+ * Written by Alexey Portnov, 9 2019
  */
 
 use Models\NetworkFilters;
@@ -244,7 +244,6 @@ class PBX {
         $modules[]='app_dial.so';
         $modules[]='app_directed_pickup.so';
         $modules[]='app_echo.so';
-        $modules[]='app_macro.so';
         $modules[]='app_meetme.so';
         $modules[]='app_milliwatt.so';
         $modules[]='app_originate.so';
@@ -322,6 +321,18 @@ class PBX {
         $modules[]='pbx_lua.so';
         $modules[]='app_stack.so';
         $modules[]='func_dialplan.so';
+
+        if(file_exists('/offload/asterisk/modules/res_pjproject.so')){
+            $modules[]='res_pjproject.so';
+            $modules[]='res_speech.so';
+            $modules[]='res_sorcery_astdb.so';
+            $modules[]='res_sorcery_config.so';
+            $modules[]='res_sorcery_memory.so';
+            file_put_contents('/etc/asterisk/pjproject.conf', '');
+            file_put_contents('/etc/asterisk/sorcery.conf', '');
+        }else{
+            $modules[]='app_macro.so';
+        }
 
 		foreach ($modules as $key => $value){
 			$conf.= "load => $value\n";

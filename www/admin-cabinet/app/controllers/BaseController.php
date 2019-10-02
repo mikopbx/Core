@@ -109,7 +109,6 @@ class BaseController extends Controller {
 		if ($this->language === 'ru'){
 			$this->view->urlToWiki
 				= "https://wiki.mikopbx.com/{$unCamelizedControllerName}";
-			$this->view->urlToLogo = $this->url->get( 'public/img/logo.svg' );
 		} else {
 			$this->view->urlToWiki
 				= "https://wiki.mikopbx.com/{$this->language}:{$unCamelizedControllerName}";

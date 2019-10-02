@@ -8,6 +8,8 @@
 
 namespace     Modules\Services;
 use Models\PbxExtensionModules;
+use Models\Users;
+use PDOException;
 use Util;
 use System;
 
@@ -102,8 +104,19 @@ class Monitor {
             $this->last_check_time = time();
             $modules_miko = $this->get_module_data();
 
+            $extensions_data = [];
             /** @var  PbxExtensionModules $data */
-            $extensions_data = PbxExtensionModules::find('disabled=0');
+            try{
+                $extensions_data = PbxExtensionModules::find('disabled=0');
+            }catch (PDOException $e){
+                if( (int)$e->errorInfo[1]===17 ){
+                    // Обновляем схему базыданных.
+                    init_db($GLOBALS['g']['m_di'], $GLOBALS['g']['phalcon_settings']);
+                    $extensions_data = PbxExtensionModules::find('disabled=0');
+                    // Если и тут будет исключение, то какая то другая, более грубая ошибка. Будем ловить...
+                }
+            }
+
             foreach ($extensions_data as $data){
                 if( ($modules_miko[$data->uniqid]??true) === true) {
                     continue;

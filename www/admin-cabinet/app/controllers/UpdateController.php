@@ -18,14 +18,6 @@ class UpdateController extends BaseController {
 	 *
 	 */
 	public function indexAction() {
-		$licKey = PbxSettings::getValueByKey( 'PBXLicense' );
-		if ( strlen( $licKey ) !== 28
-		     || ! Text::startsWith( $licKey, "MIKO-" ) ) {
-			return $this->forward( 'licensing/modify/update' );
-		}
-
-		$licKey                 = PbxSettings::getValueByKey( 'PBXLicense' );
-		$this->view->licenseKey = $licKey;
 		$this->view->submitMode = NULL;
 	}
 }

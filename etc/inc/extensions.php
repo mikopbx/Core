@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 8 2019
+ * Written by Alexey Portnov, 10 2019
  */
 
 require_once("globals.php");
@@ -161,7 +161,11 @@ class Extensions{
 
         $conf.= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN}),1}" == "1"]?${CONTEXT}-custom,${EXTEN},1) '." \n\t";
         // Совершаем вызов пира.
-        $conf.= 'same => n,Dial(SIP/${EXTEN},${ringlength},TtekKHhM(dial_answer)b(dial_create_chan,s,1))'." \n\t";
+        if(file_exists('/offload/asterisk/modules/res_pjproject.so')) {
+            $conf.= 'same => n,Dial(SIP/${EXTEN},${ringlength},TtekKHhU(dial_answer)b(dial_create_chan,s,1))'." \n\t";
+        }else{
+            $conf.= 'same => n,Dial(SIP/${EXTEN},${ringlength},TtekKHhM(dial_answer)b(dial_create_chan,s,1))'." \n\t";
+        }
         $conf.= 'same => n(fw_start),NoOp(dial_hangup)'." \n\t";
 
         // QUEUE_SRC_CHAN - установлена, если вызов сервершен агенту очереди.
@@ -213,7 +217,7 @@ class Extensions{
 
         // Описываем возможность прыжка в пользовательский sub контекст.
         $conf.= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN}),1}" == "1"]?${CONTEXT}-custom,${EXTEN},1)'."\n\t";
-		$conf.= 'same => n,Dial(Local/${EXTEN}@internal/n${ADDITIONAL_PEER},60,TteKkHhb(originate_create_chan,s,1))'." \n\n";
+		$conf.= 'same => n,Dial(Local/${EXTEN}@internal-users/n${ADDITIONAL_PEER},60,TteKkHhb(originate_create_chan,s,1))'." \n\n";
 
 		$conf.= '[macro-dial_answer]'."\n";
 		// $conf.= 'exten => s,1,AGI(cdr_connector.php,${ISTRANSFER}dial_answer)'."\n\n";
@@ -231,7 +235,7 @@ class Extensions{
 
 		$conf.= '[hangup_handler]'."\n";
 		$conf.= 'exten => s,1,NoOp(--- hangup - ${CHANNEL} ---)'."\n\t";
-        $conf.= 'same => n,Gosub(hangup_chan,${EXTEN},1))'."\n\t";
+        $conf.= 'same => n,Gosub(hangup_chan,${EXTEN},1)'."\n\t";
 
         $conf.= 'same => n,return'."\n\n";
 
@@ -348,7 +352,11 @@ class Extensions{
             // Описываем возможность прыжка в пользовательский sub контекст.
             $conf.= 'same => n,GosubIf($["${DIALPLAN_EXISTS('.$rout['providerid'].'-outgoing-custom,${EXTEN}),1}" == "1"]?'.$rout['providerid'].'-outgoing-custom,${EXTEN},1)'."\n\t";
 
-            $conf.= 'same => n,Dial('.$rout['technology'].'/'.$rout['providerid'].'/${number},600,${DOPTIONS}TeKM(dial_answer)b(dial_create_chan,s,1))'."\n\t";
+            if(file_exists('/offload/asterisk/modules/res_pjproject.so')) {
+                $conf.= 'same => n,Dial('.$rout['technology'].'/'.$rout['providerid'].'/${number},600,${DOPTIONS}TeKU(dial_answer)b(dial_create_chan,s,1))'."\n\t";
+            }else{
+                $conf.= 'same => n,Dial('.$rout['technology'].'/'.$rout['providerid'].'/${number},600,${DOPTIONS}TeKM(dial_answer)b(dial_create_chan,s,1))'."\n\t";
+            }
             // $conf.= 'same => n,AGI(cdr_connector.php,${ISTRANSFER}dial_hangup)'."\n\t";
             $conf.= 'same => n,ExecIf($["${ISTRANSFER}x" != "x"]?Gosub(${ISTRANSFER}dial_hangup,${EXTEN},1))'."\n\t";
 

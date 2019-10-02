@@ -510,7 +510,8 @@ X -----5---- 117.000 base lsof 4.89 / base/tool CROSS 0
 O -----5---- 117.100 textproc libunicode 0.4.gnome / extra/text CROSS AUTOMAKE-QUIRK 0
 O -----5---- 117.200 games bsd-games 2.17 / extra/game 0
 X -1---5---- 117.300 base popt 1.16 / base/library CROSS FPIC-QUIRK 0
-X -----5---- 117.301 miko beanstalkd 1.10 / extra/server CROSS 0
+X -----5---- 117.301 miko beanstalkd 1.11 / extra/server CROSS 0
+X -----5-7-- 117.301 miko lbeanstalk 1.3.0 / extra/server CROSS 0
 X -----5---- 117.301 miko libsrtp 2.2.0 / extra/server CROSS 0
 X -----5---- 117.301 miko logrotate 3.14.0 / extra/server CROSS 0
 O -----5---- 117.301 miko procpc 3.2.8 / extra/server CROSS 0
@@ -520,7 +521,7 @@ X -----5---- 117.600 network libpcap 1.8.1 / base/library CROSS DIETLIBC FPIC-QU
 X -----5---- 117.700 network tcpdump 4.9.0 / base/tool CROSS 0
 O -----5---- 117.800 audio workbone 2.4 / extra/multimedia CROSS 0
 O -1---5---- 117.800 miko azure 3.0.117 / extra/network CROSS 0
-X -----5---- 117.800 miko jansson 2.10 / extra/network CROSS 0
+X -----5---- 117.800 miko jansson 2.12 / extra/network CROSS 0
 X -----5---- 117.800 miko sngrep 1.4.5 / extra/network CROSS 0
 O -----5---- 117.900 network openldap 2.4.44 / extra/server JAIL 0
 O -----5---- 117.950 base hal 0.5.14 / extra/network 0
@@ -1225,6 +1226,7 @@ O -----5---- 150.000 java sun-jdk-160 6u21 / extra/emulator BINARY 0
 O -----5---- 150.000 java sun-jre-150 1_5_0_17 / extra/emulator BINARY 0
 O -----5---- 150.000 java sun-jre-160 6u21 / extra/emulator BINARY 0
 X -----5---- 150.000 miko asterisk13 13.25.0 / extra/network CROSS NOPARALLEL 0
+O -1---5---- 150.000 miko asterisk16 16.5.1 / extra/network CROSS NOPARALLEL 0
 O -----5---- 150.000 network apache 2.4.23 / extra/server JAIL 0
 O -----5---- 150.000 network asterisk 11.8.1 / extra/network CROSS NOPARALLEL 0
 O -----5---- 150.000 network hiawatha 6.19 / extra/server 0
@@ -1934,7 +1936,7 @@ O -----5---- 200.000 develop docutils 0.12 / extra/development CROSS 0
 O -----5---- 200.000 develop iulib 0.3 / base/development 0
 O -----5---- 200.000 develop libdbi 0.9.0 / extra/base CROSS 0
 O -----5---- 200.000 develop libebt 1.3.0 / extra/development CROSS 0
-O -----5---- 200.000 develop libedit 20140213-3.1 / extra/development 0
+X -----5---- 200.000 develop libedit 20140213-3.1 / extra/development 0
 O -----5---- 200.000 develop libnjb 2.2.7 / extra/development CROSS 0
 O -----5---- 200.000 develop mpich2 1.2.1p1 / extra/development NOPARALLEL 0
 O -----5---- 200.000 develop ocaml-findlib 1.2.2 / extra/development 0
@@ -3141,7 +3143,7 @@ O -----5---- 800.000 network packeth 1.6 / extra/network CROSS 0
 O -----5---- 800.000 network pam_ldap 184 / extra/server extra/base 0
 O -----5---- 800.000 network pmacct 1.6.1 / extra/network CROSS 0
 O -----5---- 800.000 network privoxy 3.0.16 / extra/network 0
-O -----5---- 800.000 network proftpd 1.3.4 / extra/network NOPARALLEL 0
+O -----5---- 800.000 network proftpd 1.3.6 / extra/network NOPARALLEL 0
 O -----5---- 800.000 network pureftpd 1.0.45 / extra/tool CROSS 0
 O -----5---- 800.000 network r1000 1.05 / base/system CROSS 0
 O -----5---- 800.000 network silc-client 1.1.8 / extra/network NOPARALLEL 0

@@ -9,7 +9,7 @@
  */
 
 /* global PbxApi, globalPBXVersion, globalTranslate, ConfigWorker,
-globalPBXLicense, globalPBXLanguage, globalPBXVersion, showdown, UserMessage */
+globalPBXLanguage, globalPBXVersion, showdown, UserMessage */
 var upgradeStatusLoopWorker = {
   timeOut: 1000,
   timeOutHandle: '',
@@ -122,7 +122,6 @@ var updatePBX = {
       });
       var requestData = {
         TYPE: 'FIRMWARE',
-        LICENSE: globalPBXLicense,
         PBXVER: globalPBXVersion,
         LANGUAGE: globalPBXLanguage
       };

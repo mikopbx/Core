@@ -754,6 +754,7 @@ It can be activated once, after which the coupon becomes redeemed.
     'lic_FailedToCaptureFeature2008'        =>'(2008) License unavailable',
     'lic_InvalidLicenseKey2009'             => '(2009) Invalid license key',
     'lic_FeatureExpired2011'                => '(2011) License feature is expired',
+    'lic_FailedCheckLicense'                => 'The license server is unreachable. Try to connect later.',
 	'er_Home'                               => 'Go to top',
 	'rs_RestartPhoneSystem'                 => 'Restart the PBX',
 	'rs_ShutDownPhoneSystem'                => 'Turn off PBX',

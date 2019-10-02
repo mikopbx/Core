@@ -70,8 +70,11 @@ class LicensingController extends BaseController
                 } elseif ( ! empty($licenseInfo) && strpos($licenseInfo, '2026') !== false) {
                     $this->flash->error($this->translation->_('lic_FailedCheckLicense2026'));
                     $this->view->success = false;
-                } else {
+                } elseif  (! empty($licenseInfo)) {
                     $this->flash->error($licenseInfo);
+                    $this->view->success = false;
+                } else {
+                    $this->flash->error($this->translation->_('lic_FailedCheckLicense'));
                     $this->view->success = false;
                 }
 
@@ -108,10 +111,9 @@ class LicensingController extends BaseController
             } else {
                 $this->view->reload = 'licensing/modify/';
             }
-
-            $this->session->remove('checkRegistration');
-            $this->session->remove('PBXLicense');
         }
+        $this->session->remove('PBXLicense');
+        $this->session->remove('checkRegistration');
 
     }
 

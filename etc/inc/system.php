@@ -204,7 +204,7 @@ class System {
     endscript
 }';
 
-        $path_conf = '/etc/nats/logrotate.conf';
+        $path_conf = $GLOBALS['g']['varetc_path'].'/gnatsd_logrotate.conf';
         file_put_contents($path_conf, $text_config);
         if(file_exists("{$log_dir}/gnatsd.log")){
             Util::mwexec_bg("/usr/sbin/logrotate '{$path_conf}' > /dev/null 2> /dev/null");

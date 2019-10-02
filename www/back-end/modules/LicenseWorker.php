@@ -89,13 +89,15 @@ class LicenseWorker extends Component
      */
     public function getTrialLicense($params)
     {
+        $version = str_replace(PHP_EOL, '', file_get_contents('/etc/version'));
+
         $data     = [
             'companyname' => $params['companyname'],
             'email'       => $params['email'],
             'contact'     => $params['contact'],
             'tel'         => $params['telefone'],
             'inn'         => $params['inn'],
-            'description' => 'get trial from askozia pbx',
+            'description' => "get trial from askozia pbx $version",
             'product'     => '11',
         ];
         $response = $this->curlPostRequest('gettrial', $data);

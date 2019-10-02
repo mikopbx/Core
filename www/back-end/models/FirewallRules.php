@@ -93,6 +93,7 @@ class FirewallRules extends ModelsBase
             'SIP'  => [
                 'rules'  => [
                     ['portfrom' => $defaultSIP, 'portto' => $defaultSIP, 'protocol' => 'udp'],
+                    ['portfrom' => $defaultSIP, 'portto' => $defaultSIP, 'protocol' => 'tcp'],
                     ['portfrom' => $defaultRTPFrom, 'portto' => $defaultRTPTo, 'protocol' => 'udp'],
                 ],
                 'action' => 'allow',

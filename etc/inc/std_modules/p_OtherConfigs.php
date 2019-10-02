@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 1 2019
+ * Written by Alexey Portnov, 9 2019
  */
 
 class p_OtherConfigs extends ConfigClass{
@@ -76,6 +76,7 @@ class p_OtherConfigs extends ConfigClass{
 		$conf .= "dateformat = %F %T\n\n";
 		$conf .= "[logfiles]\n";
 		$conf .= "syslog.local0 => notice,warning,error\n";
+		$conf .= "console => debug,error,verbose(10)\n\n";
 
         Util::file_write_content($this->astConfDir."/logger.conf", $conf);
 	}

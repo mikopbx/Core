@@ -756,6 +756,7 @@ return [
     'lic_FailedToCaptureFeature2008'        =>'(2008) Нет необходимой лицензии',
     'lic_InvalidLicenseKey2009'             => '(2009) Ошибка лицензионного ключа',
     'lic_FeatureExpired2011'                => '(2011) Срок действия лицензии истек',
+    'lic_FailedCheckLicense'                => 'Сервер лицензирования не вернул ответ, проверьте настройки Internet и повторите попытку позже',
 	'er_Home'                               => 'Перейти в начало',
 	'rs_RestartPhoneSystem'                 => 'Перезагрузить АТС',
 	'rs_ShutDownPhoneSystem'                => 'Выключить АТС',

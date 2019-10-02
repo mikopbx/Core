@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 9 2018
+ * Written by Alexey Portnov, 9 2019
  */
 
 namespace Nats;
@@ -259,8 +259,8 @@ class Connection
             throw Exception::forStreamSocketClientError($errstr, $errno);
         }
 
-        $timeout      = number_format($timeout, 3);
-        $seconds      = floor($timeout);
+        $timeout      = (int) number_format($timeout, 3);
+        $seconds      = (int) floor($timeout);
         $microseconds = (($timeout - $seconds) * 1000);
         stream_set_timeout($fp, $seconds, $microseconds);
 

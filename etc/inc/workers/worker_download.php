@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 8 2019
+ * Written by Alexey Portnov, 9 2019
  */
 
 namespace Workers;
@@ -172,8 +172,11 @@ class Downloader
             file_put_contents($this->error_file, 'File does not uploaded', FILE_APPEND);
             return;
         }
-        if (md5_file($this->settings['res_file']) !== $this->settings['md5']) {
-            unlink($this->settings['res_file']);
+        if (!file_exists($this->settings['res_file']) || md5_file($this->settings['res_file']) !== $this->settings['md5']) {
+
+            if( file_exists($this->settings['res_file']) ){
+                unlink($this->settings['res_file']);
+            }
             file_put_contents($this->error_file, 'Error check sum.', FILE_APPEND);
             return;
         }

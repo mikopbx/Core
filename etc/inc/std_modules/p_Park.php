@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 8 2019
+ * Written by Alexey Portnov, 9 2019
  */
 
 class p_Park extends ConfigClass{
@@ -20,8 +20,8 @@ class p_Park extends ConfigClass{
     public function getSettings(){
         $config = new Config();
         $this->ParkingExt       = $config->get_general_settings('PBXCallParkingExt');
-        $this->ParkingStartSlot = 0+$config->get_general_settings('PBXCallParkingStartSlot');
-        $this->ParkingEndSlot   = 0+$config->get_general_settings('PBXCallParkingEndSlot');
+        $this->ParkingStartSlot = (int)$config->get_general_settings('PBXCallParkingStartSlot');
+        $this->ParkingEndSlot   = (int)$config->get_general_settings('PBXCallParkingEndSlot');
     }
 
     /**

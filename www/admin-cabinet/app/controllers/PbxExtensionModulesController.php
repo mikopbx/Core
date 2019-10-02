@@ -114,7 +114,7 @@ class PbxExtensionModulesController extends BaseController
                     );
                     $record->appendMessage($message);
                     $error    = true;
-                    $errors[] = $record->getMessages();
+                    $errors = $record->getMessages();
                 }
                 if ($relation->getReferencedModel() === 'Models\Extensions') {
                     $needClearExtensionsCache = true;
