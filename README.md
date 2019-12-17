@@ -16,7 +16,7 @@
 
 MikoPBX is an open source GUI (graphical user interface) that controls and manages Asterisk© (PBX). MikoPBX is licensed under GPL. MikoPBX is a completely modular GUI for Asterisk written in PHP and Javascript. Meaning you can easily write any module you can think of and distribute it free of cost to your clients so that they can take advantage of beneficial features in [Asterisk](http://www.asterisk.org/ "Asterisk Home Page")
 
-The russian [website](https://www.askozia.ru)
+The russian [website](https://www.mikopbx.ru)
 
 The english [website](https://www.mikopbx.com) under construction  
 
