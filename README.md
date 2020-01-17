@@ -22,4 +22,6 @@ The english [website](https://www.mikopbx.com) under construction
 
 The instalation [instruction](https://wiki.mikopbx.com/quickstart_lancher)
 
+The chat with developers you can find on [telegram](https://t.me/mikopbx_dev)
+
 Description under construction...
