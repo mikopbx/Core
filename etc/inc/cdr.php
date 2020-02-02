@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 4 2019
+ * Written by Alexey Portnov, 1 2020
  */
 
 require_once 'globals.php';
@@ -70,30 +70,32 @@ class Cdr {
      * @return array
      */
 	static function get_db_fealds(){
-		$f_list = [
-            "id" 		     => 'INTEGER PRIMARY KEY',
-            "UNIQUEID" 		 => 'TEXT',
-			"start" 		 => 'TEXT', 	 // DataTime
-			"answer" 		 => 'TEXT', 	 // DataTime
-			"endtime" 		 => 'TEXT', 	 // DataTime
-			"src_chan" 		 => 'TEXT',
-			"src_num" 		 => 'TEXT', 
-			"dst_chan" 		 => 'TEXT', 
-			"dst_num" 		 => 'TEXT', 
-			"linkedid" 		 => 'TEXT',
-			"did"  			 => 'TEXT', 
-			"disposition"  	 => 'TEXT', 
-			"recordingfile"  => 'TEXT',
-			"from_account"	 => 'TEXT',
-			"to_account"	 => 'TEXT',
-			"dialstatus"	 => 'TEXT',
-			"appname"	     => 'TEXT',
-			"transfer" 		 => 'INTEGER DEFAULT (0)', 	// Boolean
-			"is_app" 		 => 'INTEGER DEFAULT (0)', 	// Boolean
-			"duration" 		 => 'INTEGER DEFAULT (0)',
-			"billsec" 		 => 'INTEGER DEFAULT (0)',
-			"work_completed" => 'INTEGER DEFAULT (0)'  	// Boolean
-		];
+        $f_list = [
+            'id' 		     => 'INTEGER PRIMARY KEY',
+            'UNIQUEID' 		 => 'TEXT',
+            'start' 		 => 'TEXT', 	 // DataTime
+            'answer' 		 => 'TEXT', 	 // DataTime
+            'endtime' 		 => 'TEXT', 	 // DataTime
+            'src_chan' 		 => 'TEXT',
+            'src_num' 		 => 'TEXT',
+            'dst_chan' 		 => 'TEXT',
+            'dst_num' 		 => 'TEXT',
+            'linkedid' 		 => 'TEXT',
+            'did'  			 => 'TEXT',
+            'disposition'  	 => 'TEXT',
+            'recordingfile'  => 'TEXT',
+            'from_account'	 => 'TEXT',
+            'to_account'	 => 'TEXT',
+            'dialstatus'	 => 'TEXT',
+            'appname'	     => 'TEXT',
+            'transfer' 		 => 'INTEGER DEFAULT (0)', 	// Boolean
+            'is_app' 		 => 'INTEGER DEFAULT (0)', 	// Boolean
+            'duration' 		 => 'INTEGER DEFAULT (0)',
+            'billsec' 		 => 'INTEGER DEFAULT (0)',
+            'work_completed' => 'INTEGER DEFAULT (0)', 	// Boolean
+            'src_call_id'    => 'TEXT', 	// Boolean
+            'dst_call_id'    => 'TEXT',    // Boolean
+        ];
 		return $f_list;
 	}
 
@@ -144,13 +146,13 @@ class Cdr {
         $f_list = Cdr::get_db_fealds();
 
         // "Рабочая" таблица.
-        Cdr::create_table($id, 'cdr');
+        self::create_table($id, 'cdr');
         // Итоговая таблица.
-        Cdr::create_table($id, 'cdr_general');
+        self::create_table($id, 'cdr_general');
         // Добавляем триггеры в рабочую таблицу.
-		Cdr::add_triggers($id, 'cdr');
+        self::add_triggers($id, 'cdr');
 
-		Cdr::set_permit_to_db();
+        self::set_permit_to_db();
 		return $f_list;
 	}
 
@@ -158,7 +160,10 @@ class Cdr {
      * Проверка базы данных на наличие "Битых" строк
      */
 	static function check_db(){
-        \Cdr::set_permit_to_db();
+        self::set_permit_to_db();
+        self::check_column_in_table('', 'cdr');
+        self::check_column_in_table('', 'cdr_general');
+
         $am = \Util::get_am('off');
         $channels_id = $am->GetChannels(true);
         $am->Logoff();
@@ -170,7 +175,7 @@ class Cdr {
             if( array_key_exists($row_cdr->linkedid, $channels_id) ){
                 continue;
             }
-            $date = \Util::GetLastDateLogDB($row_cdr->linkedid);
+            $date = Util::GetLastDateLogDB($row_cdr->linkedid);
             if(!$row_cdr->endtime){
                 if($date){
                     $row_cdr->endtime = $date;
@@ -190,7 +195,7 @@ class Cdr {
      * @param        $name
      */
 	static function create_table($id, $name){
-        $f_list = Cdr::get_db_fealds();
+        $f_list = self::get_db_fealds();
         $q = 'CREATE '.'TABLE IF NOT EXISTS "'.$name.'"(';
         $column = '';
         foreach ($f_list as $key => $value){
@@ -199,18 +204,32 @@ class Cdr {
         $q .= "$column\n";
         $q .= 'CONSTRAINT "unique_UNIQUEID" UNIQUE ( "UNIQUEID" )';
         $q .= ');';
-        Cdr::run_query($q, false, $id);
+        self::run_query($q, false, $id);
 
-        Cdr::create_index('id',             $id, $name);
-        Cdr::create_index('UNIQUEID',       $id, $name);
-        Cdr::create_index('src_chan',       $id, $name);
-        Cdr::create_index('dst_chan',       $id, $name);
-        Cdr::create_index('linkedid',       $id, $name);
-        Cdr::create_index('start',          $id, $name);
-        Cdr::create_index('src_num',        $id, $name);
-        Cdr::create_index('dst_num',        $id, $name);
-        Cdr::create_index('work_completed', $id, $name);
+        self::check_column_in_table($id, $name);
 
+        self::create_index('id',             $id, $name);
+        self::create_index('UNIQUEID',       $id, $name);
+        self::create_index('src_chan',       $id, $name);
+        self::create_index('dst_chan',       $id, $name);
+        self::create_index('linkedid',       $id, $name);
+        self::create_index('start',          $id, $name);
+        self::create_index('src_num',        $id, $name);
+        self::create_index('dst_num',        $id, $name);
+        self::create_index('work_completed', $id, $name);
+    }
+
+    static function check_column_in_table($id, $name):void {
+        $f_list = self::get_db_fealds();
+        $meta_data   = self::run_query("PRAGMA table_info('$name')", true, $id);
+        foreach ($meta_data as $column) {
+            if(isset($f_list[$column['name']])){
+                unset($f_list[$column['name']]);
+            }
+        }
+        foreach ($f_list as $key => $value){
+            self::run_query('ALTER TABLE '.$name.' ADD COLUMN '.$key.' '.$value.';', false, $id);
+        }
     }
 
     /**
@@ -369,7 +388,7 @@ class Cdr {
         $res = $m_data->save();
         if(!$res) {
             Util::sys_log_msg('insert_data_to_db_m', implode(' ',$m_data->getMessages()));
-        };
+        }
 
         return $res;
     }
@@ -378,27 +397,40 @@ class Cdr {
      * Инициирует запись разговора на канале.
      * @param $channel
      * @param $file_name
-     * @param null $subdir
+     * @param null $sub_dir
+     * @param null $full_name
      * @return string
      */
-	static function MixMonitor($channel, $file_name, $subdir=null){
+	public static function MixMonitor($channel, $file_name=null, $sub_dir=null, $full_name=null):string {
 		global $g;
         $res_file = '';
 
-		if(isset($g['record_calls']) && $g['record_calls'] == '1'){
+        $file_name = str_replace('/','_', $file_name);
+		if(isset($g['record_calls']) && $g['record_calls'] === '1'){
             $am  = Util::get_am('off');
-            $monitor_dir = Storage::get_monitor_dir();
-            if($subdir==null){
-                $subdir = date("Y/m/d/H/");
+            if(!file_exists($full_name)){
+                $monitor_dir = Storage::get_monitor_dir();
+                if($sub_dir === null){
+                    $sub_dir = date('Y/m/d/H/');
+                }
+                $f   = $monitor_dir.$sub_dir.$file_name;
+            }else{
+                $f = Util::trim_extension_file($full_name);
+                $file_name = basename($f);
             }
-            $f   = "$monitor_dir".$subdir.$file_name;
-            $res = $am->MixMonitor($channel, "{$f}.wav", 'ab', "/bin/nice -n 19 /usr/bin/lame -b 32 --silent \"{$f}.wav\" \"{$f}.mp3\" && /bin/chmod o+r \"{$f}.mp3\"");
+            $split_audio_thread = $g['split_audio_thread']??'0';
+            if($split_audio_thread === '1'){
+                $options="abr({$f}_in.wav)t({$f}_out.wav)";
+            }else{
+                $options='ab';
+            }
+            $res = $am->MixMonitor($channel, "{$f}.wav", $options, "/bin/nice -n 19 /usr/bin/lame -b 32 --silent \"{$f}.wav\" \"{$f}.mp3\" && /bin/chmod o+r \"{$f}.mp3\"");
             $res['cmd'] = "MixMonitor($channel, $file_name)";
-            Cdr::LogEvent(json_encode($res));
+            self::LogEvent(json_encode($res));
             $res_file = "{$f}.mp3";
             $am->UserEvent('StartRecording', ['recordingfile' => $res_file, 'recchan' => $channel]);
         }
-		return "$res_file";
+		return $res_file;
 	}
 
     /**
@@ -435,5 +467,76 @@ class Cdr {
 			file_put_contents('/tmp/dial_log', $data."\n",FILE_APPEND);
 		}
 	}
+
+    /**
+     * Получение активных звонков по данным CDR.
+     * @return string
+     */
+	static function get_active_calls():string {
+        $filter = [
+            'order' => 'id',
+            'columns' => 'start,answer,endtime,src_num,dst_num,did,linkedid',
+            'miko_tmp_db' => true,
+        ];
+        $client  = new BeanstalkClient('select_cdr');
+        $message = $client->request(json_encode($filter), 2);
+        if($message == false){
+            $content = '[]';
+        }else{
+            $content = $message;
+        }
+
+        return $content;
+    }
+
+    /**
+     * Получение активных каналов. Не завершенные звонки (endtime IS NULL).
+     * @return string
+     */
+    static function get_active_channels():string {
+        $filter = [
+            'endtime IS NULL',
+            'order' => 'id',
+            'columns' => 'start,answer,src_chan,dst_chan,src_num,dst_num,did,linkedid',
+            'miko_tmp_db' => true,
+            'miko_result_in_file' => true,
+        ];
+        $client  = new BeanstalkClient('select_cdr');
+        $message = $client->request(json_encode($filter), 2);
+        if($message == false){
+            $content = '[]';
+        }else{
+            $result_message = '[]';
+            $am = Util::get_am('off');
+            $active_chans = $am->GetChannels(true);
+            $am->Logoff();
+            $result_data = [];
+
+            $result   = json_decode($message);
+            if(file_exists($result)){
+                $data = json_decode(file_get_contents($result), true);
+                unlink($result);
+                foreach ($data as $row){
+                    if( !isset($active_chans[$row['linkedid']]) ){
+                        // Вызов уже не существует.
+                        continue;
+                    }
+                    if(empty($row['dst_chan']) && empty($row['src_chan'])){
+                        // Это ошибочная ситуация. Игнорируем такой вызов.
+                        continue;
+                    }
+                    $channels = $active_chans[$row['linkedid']];
+                    if( ( empty($row['src_chan']) || in_array($row['src_chan'],$channels) )
+                        && ( empty($row['dst_chan']) || in_array($row['dst_chan'],$channels) ) ){
+                        $result_data[] = $row;
+                    }
+                }
+                $result_message = json_encode($result_data, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+
+            }
+            $content = $result_message;
+        }
+        return $content;
+    }
 
 }

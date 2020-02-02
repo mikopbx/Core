@@ -14,37 +14,40 @@ use Phalcon\Mvc\Model\Relation;
 class SoundFiles extends ModelsBase
 {
     /**
-     * @var integer
+     * @Primary
+     * @Identity
+     * @Column(type="integer", nullable=false)
      */
     public $id;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $name;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $path;
 
-    public function getSource() :string
+    public function getSource(): string
     {
         return 'm_SoundFiles';
     }
-    public function initialize() :void
+
+    public function initialize(): void
     {
-	    parent::initialize();
+        parent::initialize();
         $this->hasMany(
             'id',
             'Models\CallQueues',
             'periodic_announce_sound_id',
             [
-                "alias"=>"CallQueues",
+                "alias"      => "CallQueues",
                 "foreignKey" => [
                     "allowNulls" => true,
-                    "action"     => Relation::ACTION_RESTRICT
-                ]
+                    "action"     => Relation::ACTION_RESTRICT,
+                ],
             ]
         );
 
@@ -53,11 +56,11 @@ class SoundFiles extends ModelsBase
             'Models\OutWorkTimes',
             'audio_message_id',
             [
-                "alias"=>"OutWorkTimes",
+                "alias"      => "OutWorkTimes",
                 "foreignKey" => [
                     "allowNulls" => true,
-                    "action"     => Relation::ACTION_RESTRICT
-                ]
+                    "action"     => Relation::ACTION_RESTRICT,
+                ],
             ]
         );
         $this->hasMany(
@@ -65,11 +68,11 @@ class SoundFiles extends ModelsBase
             'Models\IvrMenu',
             'audio_message_id',
             [
-                "alias"=>"IvrMenu",
+                "alias"      => "IvrMenu",
                 "foreignKey" => [
                     "allowNulls" => true,
-                    "action"     => Relation::ACTION_RESTRICT
-                ]
+                    "action"     => Relation::ACTION_RESTRICT,
+                ],
             ]
         );
 

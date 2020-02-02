@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 8 2019
+ * Written by Alexey Portnov, 12 2019
  */
 
 class p_Conference extends ConfigClass{
@@ -64,7 +64,7 @@ class p_Conference extends ConfigClass{
     public function extensionGenContexts(){
         $config         = new Config();
         $PBXRecordCalls = $config->get_general_settings('PBXRecordCalls');
-        $rec_options    = ($PBXRecordCalls == '1')? 'r':'';
+        $rec_options    = ($PBXRecordCalls === '1')? 'r':'';
 
         // Генерация внутреннего номерного плана.
         $conf = '';
@@ -73,9 +73,9 @@ class p_Conference extends ConfigClass{
         foreach($data as $conference){
             $conf .= 'exten => '.$conference->extension.',1,NoOp(---)'."\n\t";
             $conf .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" == "Local"]?Hangup())'."\n\t";
+            $conf .= 'same => n,AGI(cdr_connector.php,meetme_dial)'."\n\t";
             $conf .= 'same => n,Answer()'."\n\t";
             $conf .= 'same => n,Set(CHANNEL(hangup_handler_wipe)=hangup_handler_meetme,s,1)'."\n\t";
-            $conf .= 'same => n,AGI(cdr_connector.php,meetme_dial)'."\n\t";
             $conf .= 'same => n,Meetme(${EXTEN},qdMT'.$rec_options.')'."\n\t";
             $conf .= 'same => n,Hangup()'."\n\n";
         }

@@ -52,10 +52,12 @@
 
             </td>
             <td>
-                {% if not (rule['note'] is empty) %}
+                {% if not (rule['note'] is empty) and rule['note']|length>20 %}
                     <div class="ui basic icon button" data-content="{{ rule['note'] }}" data-variation="wide" data-position="top right">
                         <i class="file text  icon" ></i>
                     </div>
+                {% else %}
+                    {{ rule['note'] }}
                 {% endif %}
             </td>
             {{ partial("partials/tablesbuttons",

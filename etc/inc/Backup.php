@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 8 2019
+ * Written by Alexey Portnov, 1 2020
  */
 
 use Models\BackupRules;
@@ -72,8 +72,8 @@ class Backup {
                 'backup-sound-files'=> '1'
             ];
         }
-        if(!file_exists($this->config_file)){
-            file_put_contents($this->config_file, json_encode($this->options), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        if(!file_exists($this->config_file) && FALSE === @file_put_contents($this->config_file, json_encode($this->options), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)){
+            Util::sys_log_msg('Backup', 'Failed create file '.$this->config_file);
         }
     }
 
@@ -145,7 +145,7 @@ class Backup {
         foreach ($arr_size as $key => $value){
             // Есть какие то аномалии с преобразование значение в json
             // Без этого костыля есть проблемы с округлением.
-            $arr_size[$key] = 1*$value;
+            $arr_size[$key] = trim(1*$value);
         }
         return $arr_size;
     }
@@ -859,7 +859,7 @@ class Backup {
 
         $commands = Models\BackupRules::find('enabled="1"');
         foreach ($commands as $cmd){
-            $day = (0 === $cmd->every)?'*':$cmd->every;
+            $day = ('0' === $cmd->every)?'*':$cmd->every;
             $arr_time = explode(':', $cmd->at_time);
             if(count($arr_time)!==2){
                 $h = '*';

@@ -1,21 +1,26 @@
-/*!
-* bindings/inputmask.binding.js
-* https://github.com/RobinHerbots/Inputmask
-* Copyright (c) 2010 - 2018 Robin Herbots
-* Licensed under the MIT license (http://www.opensource.org/licenses/mit-license.php)
-* Version: 4.0.0-beta.24
-*/
-
-!function(factory) {
-    "function" == typeof define && define.amd ? define([ "jquery", "../inputmask", "../global/document" ], factory) : "object" == typeof exports ? module.exports = factory(require("jquery"), require("../inputmask"), require("../global/document")) : factory(jQuery, window.Inputmask, document);
-}(function($, Inputmask, document) {
-    $(document).ajaxComplete(function(event, xmlHttpRequest, ajaxOptions) {
-        -1 !== $.inArray("html", ajaxOptions.dataTypes) && $(".inputmask, [data-inputmask], [data-inputmask-mask], [data-inputmask-alias]").each(function(ndx, lmnt) {
-            void 0 === lmnt.inputmask && Inputmask().mask(lmnt);
-        });
-    }).ready(function() {
-        $(".inputmask, [data-inputmask], [data-inputmask-mask], [data-inputmask-alias]").each(function(ndx, lmnt) {
-            void 0 === lmnt.inputmask && Inputmask().mask(lmnt);
-        });
-    });
-});
+/*
+ Input Mask plugin binding
+ http://github.com/RobinHerbots/jquery.inputmask
+ Copyright (c) Robin Herbots
+ Licensed under the MIT license
+ */
+(function (factory) {
+	factory(jQuery, window.Inputmask, window);
+}
+(function ($, Inputmask, window) {
+	$(window.document).ajaxComplete(function (event, xmlHttpRequest, ajaxOptions) {
+		if ($.inArray("html", ajaxOptions.dataTypes) !== -1) {
+			$(".inputmask, [data-inputmask], [data-inputmask-mask], [data-inputmask-alias], [data-inputmask-regex]").each(function (ndx, lmnt) {
+				if (lmnt.inputmask === undefined) {
+					Inputmask().mask(lmnt);
+				}
+			});
+		}
+	}).ready(function () {
+		$(".inputmask, [data-inputmask], [data-inputmask-mask], [data-inputmask-alias],[data-inputmask-regex]").each(function (ndx, lmnt) {
+			if (lmnt.inputmask === undefined) {
+				Inputmask().mask(lmnt);
+			}
+		});
+	});
+}));

@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 9 2019
+ * Written by Alexey Portnov, 1 2020
  */
 
 use Models\CustomFiles;
@@ -33,6 +33,9 @@ class System {
     public function load_kernel_modules():void {
 		Util::mwexec('/sbin/modprobe -q dahdi');
 		Util::mwexec('/sbin/modprobe -q dahdi_transcode');
+		Util::mwexec('ulimit -n 4096');
+		Util::mwexec('ulimit -p 4096');
+
 	}  
 
 	/**
@@ -48,10 +51,99 @@ class System {
      *	Старт web сервера.
      **/
     public function nginx_start():void {
+        Util::killbyname('php-fpm');
         Util::killbyname('nginx');
         $this->nginx_generate_conf();
-        Util::mwexec('php-fpm');
+        Util::mwexec('php-fpm -c /usr/lib64/php-fpm.ini');
         Util::mwexec('nginx');
+    }
+
+    public function syslogd_start():void {
+        $syslog_file = '/var/log/messages';
+        $log_file = self::get_syslog_file();
+        if(!file_exists($syslog_file)){
+            file_put_contents($syslog_file, '');
+        }
+        $pid = Util::get_pid_process('/sbin/syslogd');
+        if(!empty($pid)){
+            $options = file_exists($log_file)?'>':'';
+            Util::mwexec('/bin/busybox logread 2> /dev/null >'.$options.$log_file);
+            // Завершаем процесс.
+            Util::mwexec("/bin/busybox kill '$pid'");
+        }
+
+        Util::create_update_link($log_file, $syslog_file);
+        Util::mwexec('/sbin/syslogd -O '.$log_file.' -b 10 -s 10240');
+    }
+
+    static function setup_php_log(){
+        $src_log_file = '/var/log/php_error.log';
+        $dst_log_file = self::get_php_file();
+        if(!file_exists($src_log_file)){
+            file_put_contents($src_log_file, '');
+        }
+        $options = file_exists($dst_log_file)?'>':'';
+        Util::mwexec("cat {$src_log_file} 2> /dev/null >{$options} {$dst_log_file}");
+        Util::create_update_link($dst_log_file, $src_log_file);
+    }
+
+    static function rotate_php_log(){
+        $max_size = 2;
+        $f_name = self::get_php_file();
+        $text_config="{$f_name}".' {
+    nocreate
+    nocopytruncate
+    delaycompress
+    nomissingok
+    start 0
+    rotate 9
+    size '.$max_size.'M
+    missingok
+    noolddir
+    postrotate
+        /usr/sbin/asterisk -rx "logger reload" > /dev/null 2> /dev/null
+    endscript
+}';
+        $path_conf = $GLOBALS['g']['varetc_path'].'/php_logrotate_'.basename($f_name).'.conf';
+        file_put_contents($path_conf, $text_config);
+        $mb10 = $max_size * 1024 * 1024;
+
+        $options = '';
+        if(Util::m_file_sise($f_name) > $mb10 ){
+            $options = '-f';
+        }
+        Util::mwexec_bg("/usr/sbin/logrotate {$options} '{$path_conf}' > /dev/null 2> /dev/null");
+    }
+
+
+    static function get_syslog_file(){
+        $logdir = self::get_log_dir().'/system';
+        if(!file_exists($logdir) && !mkdir($logdir, 0777, true) && !is_dir($logdir)){
+            $logdir = '/var/log';
+        }
+        return "$logdir/messages";
+    }
+    static function get_php_file(){
+        $logdir = self::get_log_dir().'/php';
+        if(!file_exists($logdir) && !mkdir($logdir, 0777, true) && !is_dir($logdir)){
+            $logdir = '/var/log';
+        }
+        return "$logdir/error";
+    }
+
+    static function get_log_dir(){
+        if( Storage::is_storage_disk_mounted() ){
+            $mountpoint = Storage::get_media_dir();
+            $logdir = "$mountpoint/{$GLOBALS['g']['pt1c_pbx_name']}/log";
+        }else{
+            $logdir = '/var/log';
+        }
+
+        if(!file_exists($logdir) && !mkdir($logdir, 0777, true) && !is_dir($logdir)){
+            $logdir = '/var/log';
+        }
+
+        return $logdir;
     }
 
     public function safe_modules($worker_proc_name, $path_to_script):void {
@@ -114,9 +206,11 @@ class System {
         $WEBHTTPSPublicKey  = $this->config->get_general_settings('WEBHTTPSPublicKey');
         $WEBHTTPSPrivateKey = $this->config->get_general_settings('WEBHTTPSPrivateKey');
 
+        $public_filename  = '/etc/ssl/certs/nginx.crt';
+        $private_filename = '/etc/ssl/private/nginx.key';
         if($not_ssl === false && !empty($WEBHTTPSPublicKey) && !empty($WEBHTTPSPrivateKey)){
-            file_put_contents('/etc/ssl/certs/nginx.crt',   $WEBHTTPSPublicKey);
-            file_put_contents('/etc/ssl/private/nginx.key', $WEBHTTPSPrivateKey);
+            file_put_contents($public_filename,   $WEBHTTPSPublicKey);
+            file_put_contents($private_filename, $WEBHTTPSPrivateKey);
             // Подключаем конфиг SSL.
             $config = str_replace('###SSL#', '', $config);
         }
@@ -136,29 +230,30 @@ class System {
      * Старт сервера обработки очередей задач.
      * @return array
      */
-	public function gnats_start(){
+	public function gnats_start():array {
         $confdir = '/etc/nats';
-        if(!is_dir($confdir)){
-	        @mkdir($confdir, 0755, true);
+        if(!file_exists($confdir) && !mkdir($confdir, 0777, true) && !is_dir($confdir)){
+	        Util::sys_log_msg('NATS', 'Error. Can not create dir '.$confdir);
         }
-		Util::killbyname('gnatsd');
-		$logdir = Util::get_log_dir().'/nats';
-		if(!is_dir($logdir)){
-		    mkdir($logdir,0777,true);
+        $logdir = self::get_log_dir().'/nats';
+        if(!file_exists($logdir) && !mkdir($logdir, 0777, true) && !is_dir($logdir)){
+            $logdir = '/var/log';
         }
-		$settings = array(
-            'port' => '4222',
-            'http_port' => '8222',
+
+        $pid_file = '/var/run/gnatsd.pid';
+		$settings = [
+            'port' => '4223',
+            'http_port' => '8223',
             'debug' => 'false',
             'trace' => 'false',
             'logtime' => 'true',
-            'pid_file' => '/var/run/gnatsd.pid',
+            'pid_file' => $pid_file,
             'max_connections' => '1000',
             'max_payload' => '1000000',
             'max_control_line' => '512',
-            'sessions_path' => "$logdir",
+            'sessions_path' => $logdir,
             'log_file' => "{$logdir}/gnatsd.log"
-        );
+        ];
         $config = '';
         foreach ($settings as $key => $val){
             $config .= "{$key}: {$val} \n";
@@ -168,7 +263,10 @@ class System {
 
         $lic = $this->config->get_general_settings('PBXLicense');
 		file_put_contents($logdir.'/license.key', $lic);
-        Util::mwexec_bg("gnatsd --config {$conf_file}");
+
+
+        Util::mwexec('kill $(cat '.$pid_file.')');
+        Util::mwexec_bg("gnatsd --config {$conf_file}", "{$logdir}/gnats_process.log");
 
         $result = array(
             'result'  => 'Success'
@@ -176,15 +274,20 @@ class System {
 
         // Перезапуск сервисов.
         foreach ($this->arrObject as $appClass) {
-            /** @var \ConfigClass $appClass */
+            /** @var ConfigClass $appClass */
             $appClass->on_nats_reload();
         }
         return $result;
 	}
 
+    /**
+     *
+     */
 	public static function gnats_log_rotate():void {
-        $log_dir = Util::get_log_dir().'/nats';
+        $log_dir = self::get_log_dir().'/nats';
         $pid = Util::get_pid_process('gnatsd', 'custom_modules');
+
+        $max_size = 1;
         if(empty($pid)){
             $system = new System();
             $system->gnats_start();
@@ -193,7 +296,7 @@ class System {
         $text_config="{$log_dir}/gnatsd.log".' {
     start 0
     rotate 9
-    size 1M
+    size '.$max_size.'M
     maxsize 1M
     daily
     missingok
@@ -204,10 +307,17 @@ class System {
     endscript
 }';
 
+        $mb10 = $max_size * 1024 * 1024;
+
+        $options = '';
+        if(Util::m_file_sise("{$log_dir}/gnatsd.log") > $mb10){
+            $options = '-f';
+        }
+
         $path_conf = $GLOBALS['g']['varetc_path'].'/gnatsd_logrotate.conf';
         file_put_contents($path_conf, $text_config);
         if(file_exists("{$log_dir}/gnatsd.log")){
-            Util::mwexec_bg("/usr/sbin/logrotate '{$path_conf}' > /dev/null 2> /dev/null");
+            Util::mwexec_bg("/usr/sbin/logrotate $options '{$path_conf}' > /dev/null 2> /dev/null");
         }
     }
 
@@ -237,7 +347,9 @@ class System {
         $result = array(
             'result'  => 'Success'
         );
-		if (!file_exists("/etc/dropbear")) mkdir("/etc/dropbear");
+        $dropbear_dir = '/etc/dropbear';
+        Util::mw_mkdir($dropbear_dir);
+
 		$keytypes = array(
 			"rsa"	=> "SSHRsaKey",
 			"dss" 	=> "SSHDssKey",
@@ -247,7 +359,7 @@ class System {
 		$config = $this->config->get_general_settings();
 		// $config = array();
 		foreach ($keytypes as $keytype => $db_key) {
-			$res_keyfilepath = "/etc/dropbear/dropbear_" . $keytype . "_host_key";
+			$res_keyfilepath = "{$dropbear_dir}/dropbear_" . $keytype . "_host_key";
 			$key = (isset($config[$db_key]))?trim( $config[$db_key] ):"";
 			if(strlen($key) > 100){
 				// Сохраняем ключ в файл. 
@@ -264,9 +376,9 @@ class System {
 		}
         $ssh_port = escapeshellcmd($this->config->get_general_settings('SSHPort'));
 		// Перезапускаем сервис dropbear;
-        Util::killbyname("dropbear");
+        Util::killbyname('dropbear');
         usleep(500000);
-		Util::mwexec("dropbear -p '{$ssh_port}' > /var/log/dropbear_start.log");
+		Util::mwexec("dropbear -p '{$ssh_port}' -c /etc/rc/hello > /var/log/dropbear_start.log");
 		$this->generate_authorized_keys();
 
         $result['data'] = @file_get_contents('/var/log/dropbear_start.log');
@@ -283,13 +395,12 @@ class System {
      * Сохранение ключей аторизации.
      */
     public function generate_authorized_keys(){
-        if (!is_dir("/root/.ssh")) {
-            mkdir("/root/.ssh");
-        }
+        $ssh_dir = '/root/.ssh';
+        Util::mw_mkdir($ssh_dir);
+
         $config = new Config();
         $conf_data = $config->get_general_settings('SSHAuthorizedKeys');
-
-        file_put_contents("/root/.ssh/authorized_keys", $conf_data);
+        file_put_contents("{$ssh_dir}/authorized_keys", $conf_data);
     }
 
     /**
@@ -298,17 +409,7 @@ class System {
      */
 	static function reboot_sync($check_storage=true) {
         if($check_storage!=true){
-            try{
-                $pbxSettings = \Models\Storage::find();
-                /** @var \Models\Storage $pbxSettings */
-                /** @var \Models\Storage $row */
-                foreach ($pbxSettings as $row){
-                    $row->check_when_booting = 0;
-                    $row->save();
-                }
-            }catch (Exception $e){
-                Util::sys_log_msg("Reboot: Storage ", "".$e->getMessage());
-            }
+            Storage::disable_need_check_storage();
         }
 	    Util::mwexec("/etc/rc/reboot > /dev/null 2>&1");
 	}
@@ -535,7 +636,7 @@ server 2.pool.ntp.org';
 	public function vm_ware_tools_configure(){
         Util::killbyname("vmtoolsd");
 		$config = $this->config->get_general_settings();
-		if('VMWARE' == $config['VirtualHardwareType']){
+		if('VMWARE' === $config['VirtualHardwareType']){
             $conf = "[logging]\n"
                 ."log = false\n"
                 ."vmtoolsd.level = none\n"
@@ -590,8 +691,8 @@ server 2.pool.ntp.org';
         }
 
         asort($actions);
-        $result = System::invoke_actions($actions);
-        if($result['result'] != 'ERROR'){
+        $result = self::invoke_actions($actions);
+        if($result['result'] !== 'ERROR'){
             // Зафиксируем результат работы.
             foreach ($res_data as $file_data){
                 /** @var \Models\CustomFiles $file_data */
@@ -648,7 +749,7 @@ server 2.pool.ntp.org';
                     $res = PBX::core_reload();
                     break;
             }
-            if($res != null && $res['result'] == 'ERROR'){
+            if($res !== null && $res['result'] === 'ERROR'){
                 $result = $res['result'];
                 break;
             }
@@ -671,8 +772,8 @@ server 2.pool.ntp.org';
                 $cntr = new OldConfigConverter($config_file);
                 $cntr->parse();
                 $cntr->make_config();
-
-                unlink("{$dirs['tmp']}/old_config.xml");
+                file_put_contents('/tmp/ejectcd', '');
+                Util::mwexec_bg('/etc/rc/reboot', '/dev/null', 3);
             }catch (Exception $e){
                 $result = [
                     'result'  => 'Error',
@@ -686,14 +787,14 @@ server 2.pool.ntp.org';
             ];
         }
 
-
         return $result;
     }
 
     /**
+     * Запускает процесс обновление АТС из img образа.
      * @return array
      */
-    static function upgrade_from_img(){
+    public static function upgrade_from_img():array {
         $result = array(
             'result'  => 'Success',
             'message' => 'In progress...'
@@ -707,17 +808,21 @@ server 2.pool.ntp.org';
         if(!file_exists($upd_file)){
             $result['result']   = 'Error';
             $result['message']  = 'IMG file not found';
-            $result['path']     = "$upd_file";
+            $result['path']     = $upd_file;
             return $result;
         }
         if(!file_exists('/var/etc/cfdevice')){
             $result['result']   = 'Error';
             $result['message']  = 'The system is not installed';
-            $result['path']     = "$upd_file";
+            $result['path']     = $upd_file;
             return $result;
         }
         $dev = trim(file_get_contents('/var/etc/cfdevice'));
-        Util::mwexec_bg("/etc/rc/firmware recover_upgrade {$upd_file} /dev/{$dev}");
+
+        Storage::disable_need_check_storage();
+        $link = '/tmp/firmware_update.img';
+        Util::create_update_link($upd_file, $link);
+        Util::mwexec_bg("/etc/rc/firmware recover_upgrade {$link} /dev/{$dev}");
 
         return $result;
     }
@@ -731,7 +836,7 @@ server 2.pool.ntp.org';
         $dirs       = PBX::get_asterisk_dirs();
         $module = 'upgrade_online';
         if(!file_exists($dirs['tmp']."/{$module}")){
-            mkdir($dirs['tmp']."/{$module}", 0755, true);
+            Util::mw_mkdir($dirs['tmp']."/{$module}");
         }else{
             Util::mwexec("rm -rf {$dirs['tmp']}/{$module}/* ");
         }
@@ -762,6 +867,7 @@ server 2.pool.ntp.org';
      * @return array
      */
     public static function status_upgrade():array {
+        clearstatcache();
         $result = array(
             'result'  => 'Success',
         );
@@ -803,21 +909,28 @@ server 2.pool.ntp.org';
 
     /**
      * Возвращает статус скачивания модуля.
-     * @param $module
+     * @param module - Module ID
      * @return array
      */
     public static function module_download_status($module):array {
+        clearstatcache();
         $result = [
             'result' => 'Success',
             'data'   =>  null
         ];
-        $modulesDir = $GLOBALS['g']['phalcon_settings']['application']['modulesDir'];
-        $progress_file = $modulesDir.$module.'/progress';
+        $dirs          = PBX::get_asterisk_dirs();
+        $moduleDirTmp  = $dirs['tmp'].'/'.$module;
+        $progress_file = $moduleDirTmp.'/progress';
         $error    = '';
-        if(file_exists($modulesDir.$module.'/error')){
-            $error = trim(file_get_contents($modulesDir.$module.'/error'));
+        if(file_exists($moduleDirTmp.'/error')){
+            $error = trim(file_get_contents($moduleDirTmp.'/error'));
         }
 
+        // Ожидание запуска процесса загрузки.
+        $d_pid = Util::get_pid_process("{$moduleDirTmp}/download_settings.json");
+        if(empty($d_pid)) {
+            usleep(500000);
+        }
 
         if(!file_exists($progress_file)){
             $result['d_status_progress'] = '0';
@@ -831,16 +944,15 @@ server 2.pool.ntp.org';
         }elseif('100' === file_get_contents($progress_file) ){
             $result['d_status_progress'] = '100';
             $result['d_status'] = 'DOWNLOAD_COMPLETE';
-            $result['i_status'] = file_exists($modulesDir.$module.'/installed');
+            $result['i_status'] = file_exists($moduleDirTmp.'/installed');
         }else{
-            $dirs       = PBX::get_asterisk_dirs();
             $result['d_status_progress'] = file_get_contents($progress_file);
-            $d_pid = Util::get_pid_process($dirs['tmp']."/{$module}/download_settings.json");
+            $d_pid = Util::get_pid_process($moduleDirTmp.'/download_settings.json');
             if(empty($d_pid)){
                 $result['d_status'] = 'DOWNLOAD_ERROR';
                 $error = '';
-                if(file_exists($modulesDir.$module.'/error')){
-                    $error = file_get_contents($modulesDir.$module.'/error');
+                if(file_exists($moduleDirTmp.'/error')){
+                    $error = file_get_contents($moduleDirTmp.'/error');
                 }
                 $result['d_error']  = $error;
             }else{
@@ -861,16 +973,8 @@ server 2.pool.ntp.org';
      */
     public static function module_start_download($module, $url, $md5):array {
         $dirs        = PBX::get_asterisk_dirs();
-        $modulesDir  = $dirs['custom_modules'].'/';
-        $moduleDir   = $modulesDir.$module;
         $moduleDirTmp= "{$dirs['tmp']}/{$module}";
 
-
-        if (!is_dir($moduleDir)
-            && !mkdir($moduleDir,0755, true)
-            && !is_dir($moduleDir)){
-            return [];
-        }
         if (!is_dir($moduleDirTmp)
             && !mkdir($moduleDirTmp,0755, true)
             && !is_dir($moduleDirTmp)){
@@ -884,22 +988,16 @@ server 2.pool.ntp.org';
             'md5'      => $md5,
             'action'   => 'module_install'
         ];
-        if(file_exists("$moduleDir/error")){
-            unlink("$moduleDir/error");
+        if(file_exists("$moduleDirTmp/error")){
+            unlink("$moduleDirTmp/error");
         }
-        if(file_exists("$moduleDir/installed")){
-            unlink("$moduleDir/installed");
+        if(file_exists("$moduleDirTmp/installed")){
+            unlink("$moduleDirTmp/installed");
         }
-        file_put_contents("$moduleDir/progress", '0');
+        file_put_contents("$moduleDirTmp/progress", '0');
         file_put_contents("$moduleDirTmp/download_settings.json", json_encode($download_settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         Util::mwexec_bg("php -f /etc/inc/workers/worker_download.php $moduleDirTmp/download_settings.json");
 
-        // Ожидание запуска процесса загрузки.
-        usleep(500000);
-        $d_pid = Util::get_pid_process("{$moduleDirTmp}/download_settings.json");
-        if(empty($d_pid)) {
-            sleep(1);
-        }
         return [];
     }
 
@@ -907,7 +1005,7 @@ server 2.pool.ntp.org';
      * Получение информации о публичном IP.
      * @return array
      */
-    static function get_external_ip_info(){
+    public static function get_external_ip_info():array {
         $result = [
             'result'  => 'Error',
             'message' => null,
@@ -940,7 +1038,7 @@ server 2.pool.ntp.org';
      * Чтение данных сессии. (Read-only sessions to the rescue).
      * https://www.leaseweb.com/labs/2014/08/session-locking-non-blocking-read-sessions-php/
      */
-    static function session_readonly(){
+    public static function session_readonly():void {
         if(!is_array($_COOKIE) || !isset($_COOKIE[session_name()])){
             return;
         }
@@ -949,16 +1047,18 @@ server 2.pool.ntp.org';
         if(!file_exists($session_file)){
             return;
         }
-        $session_data = file_get_contents($session_file);
+        $session_data = @file_get_contents($session_file);
         $return_data = [];
         $offset = 0;
         while ($offset < strlen($session_data)) {
-            if (!strstr(substr($session_data, $offset), "|")) break;
-            $pos = strpos($session_data, "|", $offset);
+            if (strpos(substr($session_data, $offset), '|') === FALSE){
+                break;
+            }
+            $pos = strpos($session_data, '|', $offset);
             $num = $pos - $offset;
             $varname = substr($session_data, $offset, $num);
             $offset += $num + 1;
-            $data = unserialize(substr($session_data, $offset));
+            $data = unserialize(substr($session_data, $offset),['allowed_classes' => []]);
             $return_data[$varname] = $data;
             $offset += strlen(serialize($data));
         }

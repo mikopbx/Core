@@ -3,8 +3,10 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 9 2019
+ * Written by Alexey Portnov, 11 2019
  */
+
+use Models\NetworkFilters;
 
 require_once 'globals.php';
 
@@ -13,6 +15,9 @@ class p_SIP extends ConfigClass {
     protected $data_providers;
     protected $data_rout;
     protected $description = 'sip.conf';
+    protected $technology;
+    protected $contexts_data=[];
+    protected $arrObject=[];
 
     /**
      * Получение настроек.
@@ -22,8 +27,19 @@ class p_SIP extends ConfigClass {
         $this->data_peers     = $this->get_peers();
         $this->data_providers = $this->get_providers();
         $this->data_rout      = $this->get_out_routes();
-
+        $this->technology     = self::get_technology();
+        $this->arrObject      = PBX::init_modules($GLOBALS['g'], get_class($this));
     }
+
+    public static function get_technology(){
+        if(file_exists('/offload/asterisk/modules/res_pjproject.so')){
+            $technology = 'PJSIP';
+        }else{
+            $technology = 'SIP';
+        }
+        return $technology;
+    }
+
 
     /**
      * Генератор sip.conf
@@ -31,13 +47,21 @@ class p_SIP extends ConfigClass {
      * @return bool|void
      */
     protected function generateConfigProtected($general_settings){
-
         $conf = '';
-        $conf.= $this->generate_general($general_settings);
-        $conf.= $this->generate_providers($general_settings);
-        $conf.= $this->generate_peers($general_settings);
+        if($this->technology === 'SIP'){
+            $conf.= $this->generate_general($general_settings);
+            $conf.= $this->generate_providers($general_settings);
+            $conf.= $this->generate_peers($general_settings);
 
-        Util::file_write_content($this->astConfDir."/sip.conf", $conf);
+            Util::file_write_content($this->astConfDir.'/sip.conf', $conf);
+        }else{
+            $conf = '';
+            $conf.= $this->generate_general_pj($general_settings);
+            $conf.= $this->generate_providers_pj($general_settings);
+            $conf.= $this->generate_peers_pj($general_settings);
+
+            Util::file_write_content($this->astConfDir.'/pjsip.conf', $conf);
+        }
 
         $db = new AstDB();
         foreach($this->data_peers as $peer){
@@ -81,11 +105,92 @@ class p_SIP extends ConfigClass {
     }
 
     /**
+     * Генератора секции general pjsip.conf
+     * @param $general_settings
+     * @return string
+     */
+    private function generate_general_pj($general_settings):string {
+        $network  = new Network();
+
+        $topology = 'public'; $extipaddr = ''; $exthostname = '';
+        $networks = $network->getGeneralNetSettings();
+        $subnets = array();
+        foreach ($networks as $if_data){
+            $lan_config = $network->get_interface($if_data['interface']);
+            if(empty($lan_config['ipaddr']) || empty($lan_config['subnet'])){
+                continue;
+            }
+            $sub = new SubnetCalculator( $lan_config['ipaddr'], $lan_config['subnet'] );
+            $net = $sub->getNetworkPortion() . '/' . $lan_config['subnet'];
+            if($if_data['topology'] === 'private' && in_array($net, $subnets, true) === FALSE){
+                $subnets[] = $net;
+            }
+            if(trim($if_data['internet']) === '1'){
+                $topology    = trim($if_data['topology']);
+                $extipaddr   = trim($if_data['extipaddr']);
+                $exthostname = trim($if_data['exthostname']);
+            }
+        }
+
+        $networks = Models\NetworkFilters::find('local_network=1');
+        foreach ($networks as $net){
+            if(in_array($net->permit,$subnets,true) === FALSE){
+                $subnets[] = $net->permit;
+            }
+        }
+
+        $conf = "[general] \n".
+                "disable_multi_domain=on\n".
+                "transport = udp \n\n".
+
+                "[global] \n".
+                "type = global\n".
+                "user_agent = mikopbx\n\n".
+
+                "[anonymous]\n".
+                "type = endpoint\n".
+                "allow = alaw\n".
+                "allow = ulaw\n".
+                "allow = g722\n".
+                "allow = gsm\n".
+                "allow = g726\n".
+                "context = public-direct-dial\n\n".
+
+                "[transport-udp]\n".
+                "type = transport\n".
+                "protocol = udp\n".
+                "bind=0.0.0.0:{$general_settings['SIPPort']}\n";
+
+        if($topology === 'private'){
+            foreach ($subnets as $net){
+                $conf .= "local_net={$net}\n";
+            }
+
+            if(!empty($exthostname)){
+                $parts = explode(':', $exthostname);
+                $conf .= 'external_media_address='.$parts[0]."\n";
+                $conf .= 'external_signaling_address='.$parts[0]."\n";
+                $conf .= 'external_signaling_port='.($parts[1]??'5060');
+            }elseif(!empty($extipaddr)){
+                $parts = explode(':', $extipaddr);
+                $conf .= 'external_media_address='.$parts[0]."\n";
+                $conf .= 'external_signaling_address='.$parts[0]."\n";
+                $conf .= 'external_signaling_port='.($parts[1]??'5060');
+            }
+        }
+
+        file_put_contents($GLOBALS['g']['varetc_path'].'/topology_hash', md5($topology.$exthostname.$extipaddr));
+        $conf.="\n";
+        return $conf;
+
+    }
+
+    /**
      * Генератора секции general sip.conf
      * @param $general_settings
      * @return string
      */
-    private function generate_general($general_settings){
+    private function generate_general($general_settings):string {
 
         $conf = "[general] \n".
             "context=public-direct-dial \n".
@@ -116,6 +221,7 @@ class p_SIP extends ConfigClass {
             "auth_message_requests=yes \n".
             // Support for ITU-T T.140 realtime text.
             "textsupport=yes \n".
+            "websocket_enabled=false \n". // Реализуем средствами PJSIP
             "register_retry_403=yes\n\n";
         $network  = new Network();
 
@@ -160,6 +266,173 @@ class p_SIP extends ConfigClass {
         }
 
         $conf.="\n\n";
+        return $conf;
+    }
+
+    /**
+     * Разбор INI конфига
+     * @param $manual_attributes
+     * @return array
+     */
+    private function parce_ini_settings($manual_attributes):array {
+        $tmp_data = base64_decode($manual_attributes);
+        if(base64_encode($tmp_data) === $manual_attributes){
+            $manual_attributes = $tmp_data;
+        }
+        unset($tmp_data);
+        // TRIMMING
+        $tmp_arr = explode("\n", $manual_attributes);
+        foreach ($tmp_arr as &$row){
+            $row = trim($row);
+            $pos = strpos($row, ']');
+            if($pos !== FALSE && strpos($row, '[') === 0){
+                $row = "\n".substr($row,0, $pos);
+            }
+        }
+        unset($row);
+        $manual_attributes = implode("\n", $tmp_arr);
+        // TRIMMING END
+
+        $manual_data = [];
+        $sections = explode("\n[", str_replace(']','',$manual_attributes));
+        foreach ($sections as $section){
+            $data_rows    = explode("\n", trim($section));
+            $section_name = trim($data_rows[0]??'');
+            if(!empty($section_name)){
+                unset($data_rows[0]);
+                $manual_data[$section_name] = [];
+                foreach ($data_rows as $row){
+                    if(strpos($row, '=') === FALSE){
+                        continue;
+                    }
+                    $arr_value = explode('=', $row);
+                    if(count($arr_value)>1){
+                        $key = trim($arr_value[0]);
+                        unset($arr_value[0]);
+                        $value = trim(implode('=', $arr_value));
+                    }
+                    if(empty($value) || empty($key)){
+                        continue;
+                    }
+                    $manual_data[$section_name][$key] = $value;
+                }
+            }
+        }
+
+        return $manual_data;
+    }
+
+    /**
+     * Генератор секции провайдеров в sip.conf
+     * @param $general_settings
+     * @return string
+     */
+    private function generate_providers_pj($general_settings):string {
+        $conf = '';
+        $reg_strings = '';
+        $prov_config = '';
+
+        foreach($this->data_providers as $provider){
+            $manual_attributes = $this->parce_ini_settings(base64_decode($provider['manualattributes']??''));
+            $port	     = (trim($provider['port']) === '')?'5060':$provider['port'];
+
+            $need_register = $provider['noregister'] !== '1';
+            if($need_register){
+                $options = [
+                    'type'     => 'auth',
+                    'username' => $provider['username'],
+                    'password' => $provider['secret'],
+                ];
+                $reg_strings .= "[REG-AUTH-{$provider['uniqid']}]\n";
+                $reg_strings .= Util::override_configuration_array($options, $manual_attributes, 'registration-auth');
+
+                $options = [
+                    'type' => 'registration',
+                    'transport' => 'transport-udp',
+                    'outbound_auth' => "REG-AUTH-{$provider['uniqid']}",
+                    'contact_user' => $provider['username'],
+                    'retry_interval' => '20',
+                    'max_retries' => '10',
+                    'expiration' => $general_settings['SIPDefaultExpiry'],
+                    'server_uri' => "sip:{$provider['host']}:{$port}",
+                    'client_uri' => "sip:{$provider['username']}@{$provider['host']}:{$port}"
+                ];
+                $reg_strings .= "[REG-{$provider['uniqid']}] \n";
+                $reg_strings .= Util::override_configuration_array($options, $manual_attributes, 'registration');
+            }
+
+            if('1' !== $provider['receive_calls_without_auth']) {
+                $options = [
+                    'type'     => 'auth',
+                    'username' => $provider['username'],
+                    'password' => $provider['secret'],
+                ];
+                $prov_config .= "[{$provider['uniqid']}-OUT]\n";
+                $prov_config .= Util::override_configuration_array($options, $manual_attributes, 'endpoint-auth');
+            }
+
+            $defaultuser = (trim($provider['defaultuser']) ==='')?$provider['username']:$provider['defaultuser'];
+            if( !empty($defaultuser) && '1' !== $provider['receive_calls_without_auth'] ){
+                $contact = "sip:$defaultuser@{$provider['host']}:{$port}";
+            }else {
+                $contact = "sip:{$provider['host']}:{$port}";
+            }
+            $options = [
+                'type' => 'aor',
+                'max_contacts' => '1',
+                'contact' => $contact,
+                'maximum_expiration' => $general_settings['SIPMaxExpiry'],
+                'minimum_expiration' => $general_settings['SIPMinExpiry'],
+                'default_expiration' => $general_settings['SIPDefaultExpiry']
+            ];
+            $prov_config .= "[{$provider['uniqid']}]\n";
+            $prov_config .= Util::override_configuration_array($options, $manual_attributes, 'aor');
+
+            $options = [
+                'type' => 'identify',
+                'endpoint' => $provider['uniqid'],
+                'match' => $provider['host']
+            ];
+            $prov_config .= "[{$provider['uniqid']}]\n";
+            $prov_config .= Util::override_configuration_array($options, $manual_attributes, 'identify');
+
+            $fromdomain  = (trim($provider['fromdomain']) ==='')?$provider['host']:$provider['fromdomain'];
+            $from        = (trim($provider['fromuser'])   ==='')?"{$provider['username']}; username":"{$provider['fromuser']}; fromuser";
+            $from_user   = ($provider['disablefromuser']  ==='1')?null:$from;
+            $lang = $general_settings['PBXLanguage'];
+
+            if(count($this->contexts_data[$provider['context_id']]) === 1){
+                $context_id = $provider['uniqid'];
+            }else{
+                $context_id = $provider['context_id'];
+            }
+            $dtmfmode = ($provider['dtmfmode'] === 'rfc2833')?'rfc4733':$provider['dtmfmode'];
+            $options = [
+                'type'      => 'endpoint',
+                'context'   => "{$context_id}-incoming",
+                'dtmf_mode' => $dtmfmode,
+                'disallow'  => 'all',
+                'allow'     => $provider['codecs'],
+                'rtp_symmetric' => 'yes',
+                'force_rport' => 'yes',
+                'rewrite_contact' => 'yes',
+                'ice_support' => 'no',
+                'direct_media' => 'no',
+                'from_user' => $from_user,
+                'from_domain' => $fromdomain,
+                'sdp_session' => 'mikopbx',
+                'language' => $lang,
+                'aors' => $provider['uniqid'],
+            ];
+            if('1' !== $provider['receive_calls_without_auth']) {
+                $options['outbound_auth'] = "{$provider['uniqid']}-OUT";
+            }
+            $prov_config .= "[{$provider['uniqid']}]\n";
+            $prov_config .= Util::override_configuration_array($options, $manual_attributes, 'endpoint');
+        }
+
+        $conf.= $reg_strings;
+        $conf.= $prov_config;
         return $conf;
     }
 
@@ -257,6 +530,97 @@ class p_SIP extends ConfigClass {
      * @param $general_settings
      * @return string
      */
+    public function generate_peers_pj($general_settings):string {
+
+        $lang = $general_settings['PBXLanguage'];
+        $conf = '';
+
+        $conf_acl = '';
+        foreach($this->data_peers as $peer){
+            $manual_attributes = $this->parce_ini_settings($peer['manualattributes']??'');
+
+            $language = str_replace('_', '-', strtolower($lang));
+            $language 	  = (trim($language)==='')?'ru-ru':$language;
+
+            $calleridname = (trim($peer['calleridname'])==='')?$peer['extension']:$peer['calleridname'];
+            $deny         = (trim($peer['deny'])==='')?'0.0.0.0/0.0.0.0':$peer['deny'];
+            $busylevel    = (trim($peer['busylevel'])==='')?'1':''.$peer['busylevel'];
+            $permit       = (trim($peer['permit'])==='')?'0.0.0.0/0.0.0.0':$peer['permit'];
+
+            $options = [
+                'deny'   => $deny,
+                'permit' => $permit,
+            ];
+            $conf_acl .= "[acl_{$peer['extension']}] \n";
+            $conf_acl .= Util::override_configuration_array($options, $manual_attributes, 'acl');
+
+            $options = [
+                'type'   => 'auth',
+                'username' => $peer['extension'],
+                'password' => $peer['secret'],
+            ];
+            $conf.= "[{$peer['extension']}] \n";
+            $conf.= Util::override_configuration_array($options, $manual_attributes, 'auth');
+
+            $options = [
+                'type'   => 'aor',
+                'qualify_frequency' => '60',
+                'qualify_timeout' => '5',
+                'max_contacts' => '5',
+            ];
+            $conf.= "[{$peer['extension']}] \n";
+            $conf.= Util::override_configuration_array($options, $manual_attributes, 'aor');
+
+            $dtmfmode = ($peer['dtmfmode'] === 'rfc2833')?'rfc4733':$peer['dtmfmode'];
+            $options = [
+                'type'      => 'endpoint',
+                'transport' => 'transport-udp',
+                'context'   => 'all_peers',
+                'dtmf_mode' => $dtmfmode,
+                'disallow'  => 'all',
+                'allow'     => $peer['codecs'],
+                'rtp_symmetric' => 'yes',
+                'force_rport' => 'yes',
+                'rewrite_contact' => 'yes',
+                'ice_support' => 'yes',
+                'direct_media' => 'no',
+                'callerid' => "{$calleridname} <{$peer['extension']}>",
+                // 'webrtc'   => 'yes',
+                'send_pai' => 'yes',
+                'call_group' => '1',
+                'pickup_group' => '1',
+                'sdp_session' => 'mikopbx',
+                'language' => $language,
+                'mailboxes' => 'admin@voicemailcontext',
+                'device_state_busy_at' => $busylevel,
+                'aors' => $peer['extension'],
+                'auth' => $peer['extension'],
+                'outbound_auth' => $peer['extension'],
+                'acl' => "acl_{$peer['extension']}",
+            ];
+                // ---------------- //
+            $conf.= "[{$peer['extension']}] \n";
+            $conf.= Util::override_configuration_array($options, $manual_attributes, 'endpoint');
+
+            foreach ($this->arrObject as $Object) {
+                $conf .= $Object->generate_peer_pj_additional_options($peer);
+            }
+        }
+
+        foreach ($this->arrObject as $Object) {
+            $conf  .= $Object->generate_peers_pj($general_settings);
+        }
+
+
+        Util::file_write_content($this->astConfDir.'/acl.conf', $conf_acl);
+        return $conf;
+    }
+
+    /**
+     * Генератор сеции пиров для sip.conf
+     * @param $general_settings
+     * @return string
+     */
     public function generate_peers($general_settings){
         $lang = $general_settings['PBXLanguage'];
         $conf = '';
@@ -322,15 +686,8 @@ class p_SIP extends ConfigClass {
             // ---------------- //
         }
 
-        $modules = \Models\PbxExtensionModules::find("disabled=0");
-        foreach ($modules as $value) {
-            $class_name = str_replace("Module", '', $value->uniqid);
-            $path_class  = "\\Modules\\{$value->uniqid}\\Lib\\{$class_name}";
-            if (class_exists($path_class)){
-                /** @var \ConfigClass $Object */
-                $Object = new $path_class($this->g);
-                $conf  .= $Object->generate_peers($general_settings);
-            }
+        foreach ($this->arrObject as $Object) {
+            $conf  .= $Object->generate_peers($general_settings);
         }
 
         return $conf;
@@ -341,21 +698,28 @@ class p_SIP extends ConfigClass {
      * @return array
      */
     private function get_providers(){
-        /** @var \Models\Sip $sip_peer */
-        /** @var \Models\NetworkFilters $network_filter */
+        /** @var Models\Sip $sip_peer */
+        /** @var Models\NetworkFilters $network_filter */
         // Получим настройки всех аккаунтов.
         $data = [];
-        $db_data = \Models\Sip::find("type = 'friend' AND ( disabled <> '1')");
+        $db_data = Models\Sip::find("type = 'friend' AND ( disabled <> '1')");
         foreach ($db_data as $sip_peer) {
             $arr_data = $sip_peer->toArray();
             $arr_data['receive_calls_without_auth'] = $sip_peer->receive_calls_without_auth;
-            $network_filter = \Models\NetworkFilters::findFirst($sip_peer->networkfilterid);
+            $network_filter = Models\NetworkFilters::findFirst($sip_peer->networkfilterid);
             $arr_data['permit'] = ($network_filter==null)?'':$network_filter->permit;
             $arr_data['deny']   = ($network_filter==null)?'':$network_filter->deny;
 
             // Получим используемые кодеки.
             $arr_data['codecs'] = $this->get_codecs($sip_peer->uniqid);
 
+            $context_id = preg_replace("/[^a-z\d]/iu", '', $sip_peer->host.$sip_peer->port);;
+            if( !isset($this->contexts_data[$context_id]) ){
+                $this->contexts_data[$context_id] = [];
+            }
+            $this->contexts_data[$context_id][$sip_peer->uniqid] = $sip_peer->username;
+
+            $arr_data['context_id'] = $context_id;
             $data[] = $arr_data;
         }
         return $data;
@@ -366,11 +730,11 @@ class p_SIP extends ConfigClass {
      * @return array
      */
     private function get_peers(){
-        /** @var \Models\NetworkFilters $network_filter */
-        /** @var \Models\Sip $sip_peer */
-        /** @var \Models\Extensions $extension */
-        /** @var \Models\Users $user */
-        /** @var \Models\ExtensionForwardingRights $extensionForwarding */
+        /** @var Models\NetworkFilters $network_filter */
+        /** @var Models\Sip $sip_peer */
+        /** @var Models\Extensions $extension */
+        /** @var Models\Users $user */
+        /** @var Models\ExtensionForwardingRights $extensionForwarding */
 
         $data = array();
         $db_data = Models\Sip::find("type = 'peer' AND ( disabled <> '1')");
@@ -398,6 +762,7 @@ class p_SIP extends ConfigClass {
                 $user = \Models\Users::findFirst($extension->userid);
                 if(null != $user){
                     $arr_data['language'] = $user->language;
+                    $arr_data['user_id']  = $user->id;
                 }
             }
             $extensionForwarding = \Models\ExtensionForwardingRights::findFirst("extension = '{$sip_peer->extension}'");
@@ -449,11 +814,13 @@ class p_SIP extends ConfigClass {
         /** @var \Models\Sip $sip_peer */
 
         $data    = [];
-        $routs   = \Models\OutgoingRoutingTable::find(['order' => 'priority']);
-        $db_data = \Models\Sip::find("type = 'friend' AND ( disabled <> '1')");
+        $routs   = Models\OutgoingRoutingTable::find(['order' => 'priority']);
+        $db_data = Models\Sip::find("type = 'friend' AND ( disabled <> '1')");
         foreach ($routs as $rout) {
             foreach ($db_data as $sip_peer) {
-                if($sip_peer->uniqid != $rout->providerid) continue;
+                if($sip_peer->uniqid !== $rout->providerid) {
+                    continue;
+                }
                 $arr_data   = $rout->toArray();
                 $arr_data['description'] = $sip_peer->description;
                 $arr_data['uniqid']      = $sip_peer->uniqid;
@@ -468,12 +835,14 @@ class p_SIP extends ConfigClass {
      * @param string $id
      * @return null|string
      */
-    public function getTechByID($id){
+    public function getTechByID($id):string {
         // Генерация внутреннего номерного плана.
-        $technology = null;
+        $technology = '';
         foreach ($this->data_providers as $sip_peer) {
-            if($sip_peer['uniqid'] != $id) continue;
-            $technology = 'SIP';
+            if($sip_peer['uniqid'] !== $id) {
+                continue;
+            }
+            $technology = self::get_technology();
             break;
         }
         return $technology;
@@ -483,7 +852,7 @@ class p_SIP extends ConfigClass {
      * Генератор extension для контекста peers.
      * @return string
      */
-    public function extensionGenContexts(){
+    public function extensionGenContexts():string {
         // Генерация внутреннего номерного плана.
         $conf = '';
 
@@ -493,9 +862,16 @@ class p_SIP extends ConfigClass {
             $conf .= "include => outgoing \n";
         }
 
+        $contexts = [];
         // Входящие контексты.
         foreach($this->data_providers as $provider) {
-            $conf .= Extensions::generateIncomingContextPeers($provider['uniqid'], $provider['username']);
+            $contexts_data = $this->contexts_data[$provider['context_id']];
+            if(count($contexts_data) === 1){
+                $conf .= Extensions::generateIncomingContextPeers($provider['uniqid'], $provider['username'], '', $this->arrObject);
+            }else if(!in_array($provider['context_id'], $contexts,true)){
+                $conf .= Extensions::generateIncomingContextPeers($contexts_data, NULL, $provider['context_id'],   $this->arrObject);
+                $contexts[]=$provider['context_id'];
+            }
         }
 
         return $conf;
@@ -505,10 +881,10 @@ class p_SIP extends ConfigClass {
      * Генерация хинтов.
      * @return string
      */
-    public function extensionGenHints(){
+    public function extensionGenHints():string {
         $conf = '';
         foreach($this->data_peers as $peer){
-            $conf.= "exten => {$peer['extension']},hint,SIP/{$peer['extension']} \n";
+            $conf.= "exten => {$peer['extension']},hint,{$this->technology}/{$peer['extension']} \n";
         }
         return $conf;
     }
@@ -538,13 +914,17 @@ class p_SIP extends ConfigClass {
      * Получение статусов SIP пиров.
      * @return array
      */
-    static function get_peers_statuses() : array {
+    public static function get_peers_statuses() : array {
         $result = array(
             'result'  => 'ERROR'
         );
 
         $am = Util::get_am('off');
-        $peers = $am->get_sip_peers();
+        if(self::get_technology() === 'SIP'){
+            $peers = $am->get_sip_peers();
+        }else{
+            $peers = $am->get_pj_sip_peers();
+        }
         $am->Logoff();
 
         $result['data']     = $peers;
@@ -557,13 +937,17 @@ class p_SIP extends ConfigClass {
      * @param $peer
      * @return array
      */
-    static function get_peer_status($peer){
+    public static function get_peer_status($peer):array {
         $result = array(
             'result'  => 'ERROR'
         );
 
         $am = Util::get_am('off');
-        $peers = $am->get_sip_peer($peer);
+        if(self::get_technology() === 'SIP'){
+            $peers = $am->get_sip_peer($peer);
+        }else{
+            $peers = $am->get_pj_sip_peer($peer);
+        }
         $am->Logoff();
 
         $result['data']     = $peers;
@@ -574,16 +958,20 @@ class p_SIP extends ConfigClass {
     /**
      * Получение статусов регистраций.
      */
-    static function get_registry(){
+    public static function get_registry():array {
         $result = array(
             'result'  => 'ERROR'
         );
         $am = Util::get_am('off');
-        $peers = $am->get_sip_registry();
+        if(self::get_technology() === 'SIP'){
+            $peers = $am->get_sip_registry();
+        }else{
+            $peers = $am->get_pj_sip_registry();
+        }
 
         $providers = Models\Sip::find("type = 'friend'");
         foreach ($providers as $provider){
-            if($provider->disabled == 1){
+            if($provider->disabled === '1'){
                 $peers[] = [
                     'state'     => 'OFF',
                     'id'        => $provider->uniqid,
@@ -592,8 +980,12 @@ class p_SIP extends ConfigClass {
                 ];
                 continue;
             }
-            if($provider->noregister == 1){
-                $peers_status = $am->get_sip_peer($provider->uniqid);
+            if($provider->noregister === '1'){
+                if(self::get_technology() === 'SIP'){
+                    $peers_status = $am->get_sip_peer($provider->uniqid);
+                }else{
+                    $peers_status = $am->get_pj_sip_peer($provider->uniqid);
+                }
                 $peers[] = [
                     'state'     => $peers_status['state'],
                     'id'        => $provider->uniqid,
@@ -604,11 +996,12 @@ class p_SIP extends ConfigClass {
             }
 
             foreach ($peers as &$peer){
-                if($peer['host'] != $provider->host || $peer['username'] != $provider->username){
+                if($peer['host'] !== $provider->host || $peer['username'] !== $provider->username){
                     continue;
                 }
                 $peer['id'] = $provider->uniqid;
             }
+            unset($peer);
         }
         $am->Logoff();
         $result['data']     = $peers;
@@ -619,30 +1012,68 @@ class p_SIP extends ConfigClass {
     /**
      * Перезапуск модуля SIP.
      */
-    static function sip_reload(){
+    public static function sip_reload():array {
         $result = array(
             'result'  => 'ERROR',
             'message' => ''
         );
 
-        $sip    = new p_SIP($GLOBALS['g']);
+        $network  = new Network();
+
+        $topology = 'public'; $extipaddr = ''; $exthostname = '';
+        $networks = $network->getGeneralNetSettings();
+        foreach ($networks as $if_data){
+            $lan_config = $network->get_interface($if_data['interface']);
+            if(NULL === $lan_config['ipaddr'] || NULL === $lan_config['subnet']){
+                continue;
+            }
+            if(trim($if_data['internet']) === '1'){
+                $topology    = trim($if_data['topology']);
+                $extipaddr   = trim($if_data['extipaddr']);
+                $exthostname = trim($if_data['exthostname']);
+            }
+        }
+        $old_hash = file_get_contents($GLOBALS['g']['varetc_path'].'/topology_hash');
+        $now_hadh = md5($topology.$exthostname.$extipaddr);
+
+        $sip    = new self($GLOBALS['g']);
         $config = new Config();
         $general_settings = $config->get_general_settings();
         $sip->generateConfigProtected($general_settings);
+
+
         $out    = array();
-        Util::mwexec("asterisk -rx 'dialplan reload'",$out);
-        $out_data  = trim(implode('', $out));
-        if($out_data != 'Dialplan reloaded.'){
-            $result['message'] .= "$out_data";
-        }
-        $out    = array();
-        $out_data  = trim(implode('', $out));
-        Util::mwexec("asterisk -rx 'sip reload'", $out);
-        if($out_data != ''){
-            $result['message'] .= " $out_data";
+        if(self::get_technology() === 'SIP') {
+            Util::mwexec("asterisk -rx 'dialplan reload'",$out);
+            $out_data  = trim(implode('', $out));
+            if($out_data !== 'Dialplan reloaded.'){
+                $result['message'] .= $out_data;
+            }
+            $out    = array();
+            $out_data  = trim(implode('', $out));
+            Util::mwexec("asterisk -rx 'sip reload'", $out);
+            if($out_data !== ''){
+                $result['message'] .= " $out_data";
+            }
+        }elseif($old_hash === $now_hadh){
+            Util::mwexec("asterisk -rx 'module reload acl'",$out);
+            Util::mwexec("asterisk -rx 'core reload'",$out);
+            $out_data  = trim(implode('', $out));
+            if($out_data !== ''){
+                $result['message'] .= $out_data;
+            }
+        }else{
+            // Завершаем каналы.
+            Util::mwexec("asterisk -rx 'channel request hangup all'",$out);
+            usleep(500000);
+            Util::mwexec("asterisk -rx 'core restart now'",$out);
+            $out_data  = trim(implode('', $out));
+            if($out_data !== ''){
+                $result['message'] .= $out_data;
+            }
         }
 
-        if($result['message'] == ''){
+        if($result['message'] === ''){
             $result['result'] = 'Success';
         }
         return $result;

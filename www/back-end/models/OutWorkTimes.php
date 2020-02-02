@@ -14,57 +14,59 @@ use Phalcon\Mvc\Model\Relation;
 class OutWorkTimes extends ModelsBase
 {
     /**
-     * @var integer
+     * @Primary
+     * @Identity
+     * @Column(type="integer", nullable=false)
      */
     public $id;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $date_from;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $date_to;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $weekday_from;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $weekday_to;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $time_from;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $time_to;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $action;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $extension;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $audio_message_id;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $description;
 

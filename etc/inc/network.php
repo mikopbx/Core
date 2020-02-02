@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 8 2019
+ * Written by Alexey Portnov, 11 2019
  */
 
 require_once 'globals.php';
@@ -54,26 +54,80 @@ class Network {
 	/**
 	 * Generates resolv.conf
 	**/
-	public function resolvconf_generate() {
+	public function resolvconf_generate():void {
 		global $g;
 	    $resolv_conf = '';
-	    $data_hostname = Network::getHostName();
-	    if(trim($data_hostname['domain']) != ''){
+	    $data_hostname = self::getHostName();
+	    if(trim($data_hostname['domain']) !== ''){
 			$resolv_conf .= "domain {$data_hostname['domain']}\n";
 	    }
 
-		$dns  = $this->getHostDNS();
-		foreach ($dns as $ns) {
-			if (trim($ns) !== ''){
-				$resolv_conf .= "nameserver $ns\n";
-			} 			
-		}
-		if(count($dns)===0){
-            $resolv_conf .= "nameserver 127.0.0.1\n";
-        }
+        $resolv_conf .= "nameserver 127.0.0.1\n";
 
+        $named_dns = [];
+        $dns  = $this->getHostDNS();
+		foreach ($dns as $ns) {
+			if (trim($ns) === ''){
+			    continue;
+			}
+            $named_dns[]  = $ns;
+            $resolv_conf .= "nameserver {$ns}\n";
+		}
+        if(count($dns)===0){
+            $resolv_conf .= "nameserver 8.8.8.8\n";
+            $resolv_conf .= "nameserver 4.4.4.4\n";
+        }
 		file_put_contents("{$g['pt1c_etc_path']}/resolv.conf", $resolv_conf);
-	}
+        $this->generate_pdnsd_config($named_dns);
+    }
+
+    private function generate_pdnsd_config($named_dns):void {
+	    global $g;
+        $log_dir   = System::get_log_dir().'/pdnsd';
+        $cache_dir = $log_dir.'/cashe';
+        if(!file_exists($cache_dir) && !mkdir($cache_dir, 0777, true) && !is_dir($cache_dir)){
+            $log_dir = '/var/log';
+            $cache_dir = $log_dir.'/cashe';
+        }
+        /*
+        if(!in_array('8.8.4.4', $named_dns, true)){
+            $named_dns[]='8.8.4.4';
+        }
+        if(!in_array('4.4.4.4', $named_dns, true)){
+            $named_dns[]='4.4.4.4';
+        }//*/
+        $conf = 'global {'."\n".
+                '	perm_cache=10240;'."\n".
+                '	cache_dir="'.$cache_dir.'";'."\n".
+                '	pid_file = /var/run/pdnsd.pid;'."\n".
+                '	run_as="nobody";'."\n".
+                '	server_ip = 127.0.0.1;'."\n".
+                '	status_ctl = on;'."\n".
+                '	query_method=udp_tcp;'."\n".
+                '	min_ttl=15m;'."\n".
+                '	max_ttl=1w;'."\n".
+                '	timeout=10;'."\n".
+                '	neg_domain_pol=on;'."\n".
+                '	run_as=root;'."\n".
+                '	daemon=on;'."\n".
+                '}'."\n".
+                'server {'."\n".
+                '	label = "main";'."\n".
+                '	ip = '.implode(', ',$named_dns).';'."\n".
+                '	interface=lo;'."\n".
+                '	uptest=if;'."\n".
+                '	interval=10m;'."\n".
+                '	purge_cache=off;'."\n".
+                '}';
+        file_put_contents("{$g['pt1c_etc_path']}/pdnsd.conf", $conf);
+
+        $pid = Util::get_pid_process('/usr/sbin/pdnsd');
+        if(!empty($pid)){
+            // Завершаем процесс.
+            Util::mwexec("/bin/busybox kill '$pid'");
+        }
+        Util::mwexec("/usr/sbin/pdnsd -c {$g['pt1c_etc_path']}/pdnsd.conf -4");
+    }
 
     /**
      * Возвращает массив DNS серверов из настроек.
@@ -84,8 +138,8 @@ class Network {
         /** @var \Models\LanInterfaces $res */
         $res = Models\LanInterfaces::findFirst("internet = '1'");
         if(null != $res){
-            if('' != trim($res->primarydns) )   $dns[] = $res->primarydns;
-            if('' != trim($res->secondarydns) ) $dns[] = $res->secondarydns;
+            if('' !== trim($res->primarydns) )   $dns[] = $res->primarydns;
+            if('' !== trim($res->secondarydns) ) $dns[] = $res->secondarydns;
         }
         return $dns;
 
@@ -306,7 +360,26 @@ class Network {
 
 		return 0;
 	}
-	
+
+	public static function start_sipdump():void {
+        $config = new Config();
+        $use = $config->get_general_settings('USE_PCAP_SIP_DUMP');
+        if($use !== '1'){
+            return;
+        }
+
+        Util::killbyname('pcapsipdump');
+        $log_dir = System::get_log_dir().'/pcapsipdump';
+        Util::mw_mkdir($log_dir);
+
+        $network = new Network();
+        $arr_eth = $network->get_interface_names();
+        foreach ($arr_eth as $eth){
+            $pid_file = "/var/run/pcapsipdump_{$eth}.pid";
+            Util::mwexec_bg('pcapsipdump -T 120 -P '.$pid_file.' -i '.$eth.' -m \'^(INVITE|REGISTER)$\' -L '.$log_dir.'/dump.db');
+        }
+    }
+
 	/**
 	 * Configures LAN interface FROM udhcpc (renew_bound)
 	 */
@@ -359,38 +432,36 @@ class Network {
 			}
 		}
 
+        $named_dns = [];
+        if('' !== $env_vars['dns']){
+            $named_dns = explode(' ', $env_vars['dns']);
+        }
         if($is_inet == 1){
 			// ТОЛЬКО, если этот интерфейс для интернет, правим resolv.conf. 
-			$resolv_text = '';
-			// Домен сети.
-			if('' != $env_vars['domain']){
-				$resolv_text.="search {$env_vars['domain']}\n";
-			}
-			// Прописываем основные DNS. 
-			if('' != $env_vars['dns']){
-				$dns = explode(' ', $env_vars['dns']);
-				foreach ($dns as $i){
-					$resolv_text.="nameserver $i\n";	
-				}
-			}
-			echo "{$g['pt1c_etc_path']}/resolv.conf";
-			file_put_contents("{$g['pt1c_etc_path']}/resolv.conf", $resolv_text);
+			// Прописываем основные DNS.
+			$this->generate_pdnsd_config($named_dns);
 		}
 
 		// Сохрании информацию в базу данных.
-		$data = array(
+		$data = [
 		    'subnet'  => $env_vars['subnet'],
             'ipaddr'  => $env_vars['ip'],
             'gateway' => $env_vars['router']
-        );
+        ];
 		if(Verify::is_ipaddress($env_vars['ip'])){
             $data['subnet'] = $this->net_mask_to_cidr($env_vars['subnet']);
-
         }else{
             $data['subnet'] = '';
         }
         $this->update_if_settings($data, $env_vars['interface']);
-        \Util::mwexec_bg("/etc/rc/networking.set.mtu '{$env_vars['interface']}'");
+
+		$data = [
+		    'primarydns'    => $named_dns[0]??'',
+            'secondarydns'  => $named_dns[1]??''
+        ];
+		$this->update_dns_settings($data, $env_vars['interface']);
+
+        Util::mwexec_bg("/etc/rc/networking.set.mtu '{$env_vars['interface']}'");
     }
 
     /**
@@ -529,9 +600,29 @@ class Network {
      * @param $name
      */
     public function update_if_settings($data, $name){
+        /** @var Models\LanInterfaces $res */
         $res = Models\LanInterfaces::findFirst("interface = '$name' AND vlanid=0");
         foreach ($data as $key => $value){
             $res->writeAttribute("$key", "$value");
+        }
+        $res->save();
+    }
+
+    /**
+     * Сохранение DNS настроек сетевого интерфейса.
+     * @param $data
+     * @param $name
+     */
+    public function update_dns_settings($data, $name){
+        /** @var Models\LanInterfaces $res */
+        $res = Models\LanInterfaces::findFirst("interface = '$name' AND vlanid=0");
+        if(empty($res->primarydns) && !empty($data['primarydns'])){
+            $res->writeAttribute('primarydns', $data['primarydns']);
+        }elseif (empty($res->secondarydns) && $res->primarydns !== $data['primarydns']){
+            $res->writeAttribute('secondarydns', $data['primarydns']);
+        }
+        if(empty($res->secondarydns)&& !empty($data['secondarydns'])){
+            $res->writeAttribute('secondarydns', $data['secondarydns']);
         }
         $res->save();
     }

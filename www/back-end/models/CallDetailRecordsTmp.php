@@ -12,16 +12,16 @@ namespace Models;
 class CallDetailRecordsTmp extends CallDetailRecordsBase
 {
 
-	public function getSource() :string
-	{
-		return 'cdr';
-	}
+    public function getSource(): string
+    {
+        return 'cdr';
+    }
 
-	public function initialize(): void
-	{
-		parent::initialize();
-		$this->useDynamicUpdate(true);
-		$this->setConnectionService('dbCDR');
-	}
+    public function initialize(): void
+    {
+        parent::initialize();
+        $this->useDynamicUpdate(true);
+        $this->setConnectionService('dbCDR');
+    }
 
 }

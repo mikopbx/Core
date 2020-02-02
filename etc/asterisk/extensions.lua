@@ -1,18 +1,3 @@
--- Copyright © MIKO LLC - All Rights Reserved
--- Unauthorized copying of this file, via any medium is strictly prohibited
--- Proprietary and confidential
--- Written by Alexey Portnov, 6 2019
-
--- Copyright © MIKO LLC - All Rights Reserved
--- Unauthorized copying of this file, via any medium is strictly prohibited
--- Proprietary and confidential
--- Written by Alexey Portnov, 6 2019
-
--- Copyright © MIKO LLC - All Rights Reserved
--- Unauthorized copying of this file, via any medium is strictly prohibited
--- Proprietary and confidential
--- Written by Alexey Portnov, 5 2019
-
 
 -- Инициализация вспомогательных процедур и функций.
 JSON = (loadfile "/etc/inc/lua/JSON.lua")();
@@ -75,7 +60,7 @@ end
 function set_variable(p_name, p_value)
     if(is_test == nil) then
         channel[p_name] = p_value;
-        app["NoOp"](p_name.. ' set to '..p_value);
+        -- app["NoOp"](p_name.. ' set to '..p_value);
     elseif( ask_var ~=nil ) then
 
         channel[p_name] = ask_var:new(p_value);
@@ -94,6 +79,11 @@ end
 
 -- Начало телефонного звонка
 function event_dial(without_event)
+    local NOCDR = get_variable("NOCDR");
+    if(NOCDR~='') then
+        app["return"]();
+        return;
+    end
     without_event = without_event or false
     local data = {}
     data['start'] = get_now_date()
@@ -124,6 +114,7 @@ function event_dial(without_event)
     local dst_num, src_num;
     data['action'] = "dial";
     if(IS_ORGNT ~= '')then
+        agi_channel = get_variable('MASTER_CHANNEL(CHANNEL)')
         dst_num  	        = get_variable("CALLERID(num)")
         src_num  	        = get_variable("EXTEN")
         data['dialstatus']  = 'ORIGINATE';
@@ -152,8 +143,14 @@ function event_dial(without_event)
     data['transfer']  	 = '0';
     data['agi_channel']  = agi_channel;
     data['did']		     = get_variable("FROM_DID");
-    data['from_account']= from_account;
-    data['IS_ORGNT']    = (IS_ORGNT ~= '');
+
+    local is_pjsip = string.lower(get_variable("CHANNEL")):find("pjsip/") ~= nil
+    if(is_pjsip) then
+        data['src_call_id']  = get_variable("CHANNEL(pjsip,call-id)");
+    end
+
+    data['from_account'] = from_account;
+    data['IS_ORGNT']     = (IS_ORGNT ~= '');
 
     set_variable("__pt1c_UNIQUEID", id);
 
@@ -166,6 +163,11 @@ end
 
 -- Обработка события создания канала - пары, при начале телефонного звонка.
 function event_dial_create_chan()
+    local NOCDR = get_variable("NOCDR");
+    if(NOCDR~='') then
+        app["return"]();
+        return;
+    end
     local data = {}
     local id = get_variable("pt1c_UNIQUEID");
 
@@ -177,7 +179,8 @@ function event_dial_create_chan()
 
     local is_local = string.lower(get_variable("CHANNEL")):find("local/") ~= nil
     if(is_local ~= true)then
-        data['to_account']  	= get_variable("CHANNEL(peername)");
+        data['to_account']  	= get_variable("CUT(CUT(CHANNEL(name),,1),/,2)");
+        app["NoOp"]('to_account set to '..data['to_account']);
     end
 
     local IS_ORGNT   = get_variable("IS_ORGNT");
@@ -186,6 +189,12 @@ function event_dial_create_chan()
         if(peer_mobile ~= '' and id:find(peer_mobile) == nil)then
             data['org_id'] = get_variable('UNIQUEID'):sub(0, 16)..'_'..peer_mobile..'_'..IS_ORGNT;
         end
+    end
+
+    -- data['dst_call_id']  = get_variable("PJSIP_HEADER(read,Call-ID)");
+    local is_pjsip = string.lower(data['dst_chan']):find("pjsip/") ~= nil
+    if(is_pjsip) then
+        data['dst_call_id']  = get_variable("CHANNEL(pjsip,call-id)");
     end
 
     userevent_return(data)
@@ -251,6 +260,10 @@ function event_dial_answer()
     end
 
     set_variable("__pt1c_UNIQUEID", id);
+    set_variable("MASTER_CHANNEL(M_DIALSTATUS)", 'ANSWER');
+    app["AGI"]('/etc/asterisk/agi-bin/clean_timeout.php');
+    set_variable("MASTER_CHANNEL(M_TIMEOUT_CHANNEL)", '');
+
     userevent_return(data)
     return data;
 end
@@ -283,6 +296,11 @@ function event_transfer_dial()
     data['src_chan'] 	= channel;
     data['did']		    = get_variable("FROM_DID");
     data['UNIQUEID']  	= id;
+    local is_pjsip = string.lower(get_variable("CHANNEL")):find("pjsip/") ~= nil
+    if(is_pjsip) then
+        data['src_call_id'] = get_variable("CHANNEL(pjsip,call-id)");
+    end
+
     if(TRANSFERERNAME == '')then
         data['transfer'] = '0'
     else
@@ -304,6 +322,13 @@ function event_transfer_dial_create_chan()
     data['dst_chan'] 		  = get_variable("CHANNEL");
     data['action']  		  = "transfer_dial_create_chan";
     data['linkedid']  		  = get_variable("CDR(linkedid)");
+
+    local is_pjsip = string.lower(data['dst_chan']):find("pjsip/") ~= nil
+    if(is_pjsip) then
+        data['dst_call_id']       = get_variable("CHANNEL(pjsip,call-id)");
+    end
+    set_variable("CHANNEL(hangup_handler_wipe)", 'hangup_handler,s,1');
+
     userevent_return(data)
     return data;
 end
@@ -368,8 +393,14 @@ function event_queue_start()
     local time_start;
     local id         = get_variable("pt1c_UNIQUEID")
     local ISTRANSFER = get_variable("ISTRANSFER");
+    local FROM_DID   = get_variable('FROM_DID');
 
-    if(id == '' or ISTRANSFER ~= '') then
+    if(id ~= '' and FROM_DID == '') then
+        -- Это внутренний вызов, так как FROM_DID пустой.
+        time_start = get_now_date();
+        -- Обнуляем идентификатор, нужно описать новый
+        set_variable("pt1c_UNIQUEID", "");
+    elseif(id == '' or ISTRANSFER ~= '') then
         id         = get_variable('UNIQUEID')..'_'..generateRandomString(6);
         time_start = get_now_date();
     end
@@ -377,7 +408,7 @@ function event_queue_start()
     data['action']  	= "queue_start";
     data['dst_num']  	= get_variable('EXTEN');
     data['dst_chan']  	= 'Queue:'..get_variable('EXTEN');
-    data['did']  	    = get_variable('FROM_DID');
+    data['did']  	    = FROM_DID;
     data['is_app']  	= '1';
     data['UNIQUEID']  	= id;
     data['linkedid']  	= get_variable("CDR(linkedid)");
@@ -454,6 +485,15 @@ function event_dial_outworktimes()
     return data;
 end
 
+function set_from_peer()
+    local from_peer_revers = get_variable("CHANNEL"):reverse();
+    local result = string.sub(from_peer_revers, string.find(from_peer_revers,"-")+1, from_peer_revers:len()):reverse();
+    result = string.sub(result, string.find(result,"/")+1, result:len());
+    app["NoOp"]('__FROM_PEER set to '..result);
+    set_variable('__FROM_PEER', result);
+    app["return"]();
+end
+
 -- TODO
 -- Event_unpark_call
 -- Event_unpark_call_timeout
@@ -466,7 +506,7 @@ extensions = {
     transfer_dial={},
     lua_dial_create_chan={},
     dial_answer={},
-    lua_transfer_dial_create_chan={},
+    transfer_dial_create_chan={},
     transfer_dial_answer={},
     transfer_dial_hangup={},
     hangup_chan={},
@@ -475,12 +515,13 @@ extensions = {
     queue_end={},
     dial_app={},
     dial_outworktimes={},
+    set_from_peer={},
 }
 extensions.dial["_.!"]                      = function() event_dial() end
 extensions.transfer_dial["_.!"]             = function() event_transfer_dial() end
 extensions.lua_dial_create_chan["_.!"]      = function() event_dial_create_chan() end
 extensions.dial_answer["_.!"]               = function() event_dial_answer() end
-extensions.lua_transfer_dial_create_chan["_.!"] = function() event_transfer_dial_create_chan() end
+extensions.transfer_dial_create_chan["_.!"] = function() event_transfer_dial_create_chan() end
 extensions.transfer_dial_answer["_.!"]      = function() event_transfer_dial_answer() end
 extensions.transfer_dial_hangup["_.!"]      = function() event_transfer_dial_hangup() end
 extensions.hangup_chan["_.!"]               = function() event_hangup_chan() end
@@ -489,6 +530,7 @@ extensions.queue_answer["_.!"]              = function() event_queue_answer() en
 extensions.queue_end["_.!"]                 = function() event_queue_end() end
 extensions.dial_app["_.!"]                  = function() event_dial_app() end
 extensions.dial_outworktimes["_.!"]         = function() event_dial_outworktimes() end
+extensions.set_from_peer["_.!"]             = function() set_from_peer() end
 
 -----------------------------------------------------
 -- блок тестирования модуля...

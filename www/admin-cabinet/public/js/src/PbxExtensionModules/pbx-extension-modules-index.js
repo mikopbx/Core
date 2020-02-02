@@ -2,71 +2,49 @@
  * Copyright (C) MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 7 2018
+ * Written by Nikolay Beketov, 12 2019
  *
  */
 
-/* global globalRootUrl, PbxApi, globalTranslate, UpdateApi, UserMessage */
+/* global globalRootUrl, PbxApi, globalTranslate,
+UpdateApi, UserMessage, globalPBXVersion, SemanticLocalization,
+upgradeStatusLoopWorker, licensing, PbxExtensionStatus */
 
-const licensing = {
-	params: undefined,
-	callback: undefined,
-	captureFeature(params, callback) {
-		licensing.params = params;
-		licensing.callback = callback;
-		$.api({
-			url: `${globalRootUrl}licensing/captureFeatureForProductId`,
-			on: 'now',
-			method: 'POST',
-			data: {
-				licFeatureId: licensing.params.licFeatureId,
-				licProductId: licensing.params.licProductId,
-			},
-			successTest(response) {
-				// test whether a JSON response is valid
-				return response !== undefined
-					&& Object.keys(response).length > 0
-					&& response.success === true;
-			},
-			onSuccess: licensing.cbAfterFeatureCaptured,
-			onFailure: licensing.cbAfterFailureFeatureCaptured,
 
-		});
-	},
-	cbAfterFeatureCaptured() {
-		licensing.callback(licensing.params);
-	},
-	cbAfterFailureFeatureCaptured(response) {
-		if (response !== undefined
-			&& Object.keys(response).length > 0
-			&& response.message.length > 0) {
-			UserMessage.showError(response.message);
-		} else {
-			UserMessage.showError(globalTranslate.ext_NoLicenseAvailable);
-		}
-		$('a.button').removeClass('disabled');
-	},
-};
-
-let upgradeStatusLoopWorker = {};
 const extensionModules = {
 	$checkboxes: $('.module-row .checkbox'),
 	$deleteModalForm: $('#delete-modal-form'),
 	$keepSettingsCheckbox: $('#keepModuleSettings'),
+	$modulesTable: $('#modules-table'),
+	pbxVersion: globalPBXVersion.replace(/-dev/i, ''),
+	checkBoxes: [],
 	initialize() {
 		extensionModules.$deleteModalForm.modal();
+		extensionModules.initializeDataTable();
 		UpdateApi.getModulesUpdates(extensionModules.cbParseModuleUpdates);
-		extensionModules.$checkboxes
-			.checkbox({
-				onChecked() {
-					const uniqid = $(this).closest('tr').attr('id');
-					extensionModules.enableModule(uniqid, PbxApi.SystemReloadModule);
-				},
-				onUnchecked() {
-					const uniqid = $(this).closest('tr').attr('id');
-					extensionModules.disableModule(uniqid, PbxApi.SystemReloadModule);
-				},
-			});
+		extensionModules.$checkboxes.each((index, obj) => {
+			const uniqId = $(obj).attr('data-value');
+			extensionModules.checkBoxes.push(new PbxExtensionStatus(uniqId, false));
+		});
+	},
+	/**
+	 * Initialize data tables on table
+	 */
+	initializeDataTable() {
+		extensionModules.$modulesTable.DataTable({
+			lengthChange: false,
+			paging: false,
+			columns: [
+				{ orderable: false, searchable: false },
+				null,
+				null,
+				null,
+				{ orderable: false, searchable: false },
+			],
+			// order: [1, 'asc'],
+			language: SemanticLocalization.dataTableLocalisation,
+		});
+		$('.add-new').appendTo($('div.eight.column:eq(0)'));
 	},
 	/**
 	 * Обработка списка модулей полученнх с сайта
@@ -74,7 +52,13 @@ const extensionModules = {
 	 */
 	cbParseModuleUpdates(response) {
 		response.modules.forEach((obj) => {
-			// Ищем среди установленных
+			// Проверим подходит ли по номеру версии этот модуль к АТС
+			const minAppropriateVersionPBX = obj.min_pbx_version;
+			const currentVersionPBX = extensionModules.pbxVersion;
+			if (extensionModules.versionCompare(currentVersionPBX, minAppropriateVersionPBX) < 0) {
+				return;
+			}
+			// Ищем среди установленных, предложим обновление
 			const $moduleRow = $(`tr.module-row#${obj.uniqid}`);
 			if ($moduleRow.length > 0) {
 				const oldVer = $moduleRow.find('td.version').text();
@@ -225,8 +209,8 @@ const extensionModules = {
 			newParams.md5 = obj.md5;
 			newParams.updateLink = obj.href;
 			if (newParams.action === 'update') {
-				extensionModules.updateModule(newParams);
 				params.aLink.find('i').addClass('loading');
+				extensionModules.updateModule(newParams);
 			} else {
 				params.aLink.find('i').addClass('loading redo').removeClass('download');
 				extensionModules.installModule(newParams, false);
@@ -254,7 +238,7 @@ const extensionModules = {
 		// Проверим включен ли модуль, если включен, вырубим его
 		const status = $(`#${params.uniqid}`).find('.checkbox').checkbox('is checked');
 		if (status === true) {
-			extensionModules.disableModule(params.uniqid, () => {
+			PbxApi.ModuleDisable(params.uniqid, () => {
 				extensionModules.installModule(params, true);
 			});
 		} else {
@@ -264,62 +248,25 @@ const extensionModules = {
 	/**
 	 * Обновление модуля
 	 * @param params - параметры запроса
+	 * @param needEnable - включить ли модуль после установки?
 	 */
 	installModule(params, needEnable) {
-		PbxApi.SystemInstallModule(params);
-		upgradeStatusLoopWorker.initialize(params.uniqid, needEnable);
-	},
-	/**
-	 * Включить модуль, с проверкой ссылочной целостности
-	 * @param params - параметры запроса.
-	 * @param cbAfterEnable - колбек функция
-	 */
-	enableModule(uniqid, cbAfterEnable) {
-		$('.ui.message.ajax').remove();
-		$.api({
-			url: `${globalRootUrl}pbx-extension-modules/enable/{uniqid}`,
-			on: 'now',
-			urlData: {
-				uniqid,
-			},
-			onSuccess(response) {
-				if (response.success) {
-					$(`#${uniqid} .disability`).removeClass('disabled');
-					$(`#${uniqid}`).find('.checkbox').checkbox('set checked');
-					cbAfterEnable(uniqid);
-				} else {
-					$(`#${uniqid}`).find('.checkbox').checkbox('set unchecked');
+		PbxApi.SystemInstallModule(params, (response) => {
+			if (response === true) {
+				upgradeStatusLoopWorker.initialize(params.uniqid, needEnable);
+			} else {
+				if (response.message !== undefined) {
 					UserMessage.showMultiString(response.message);
-				}
-			},
-
-		});
-	},
-	/**
-	 * Выключить модуль, с проверкой ссылочной целостности
-	 * @param uniqid - ID модуля
-	 * @param cbAfterDisable - колбек функция
-	 */
-	disableModule(uniqid, cbAfterDisable) {
-		$('.ui.message.ajax').remove();
-		$.api({
-			url: `${globalRootUrl}pbx-extension-modules/disable/{uniqid}`,
-			on: 'now',
-			urlData: {
-				uniqid,
-			},
-			onSuccess(response) {
-				if (response.success) {
-					$(`#${uniqid} .disability`).addClass('disabled');
-					$(`#${uniqid}`).find('.checkbox').checkbox('set unchecked');
-					cbAfterDisable(uniqid);
 				} else {
-					$(`#${uniqid}`).find('.checkbox').checkbox('set checked');
-					UserMessage.showMultiString(response.message);
-					$(`#${uniqid}`).find('i').removeClass('loading');
+					UserMessage.showMultiString(globalTranslate.ext_InstallationError);
 				}
-			},
-
+				$('a.button').removeClass('disabled');
+				if (params.action === 'update') {
+					params.aLink.find('i').removeClass('loading');
+				} else {
+					params.aLink.find('i').removeClass('loading redo').addClass('download');
+				}
+			}
 		});
 	},
 	/**
@@ -349,7 +296,7 @@ const extensionModules = {
 					const status = $(`#${params.uniqid}`).find('.checkbox').checkbox('is checked');
 					const keepSettings = extensionModules.$keepSettingsCheckbox.checkbox('is checked');
 					if (status === true) {
-						extensionModules.disableModule(params.uniqid, () => {
+						PbxApi.ModuleDisable(params.uniqid, () => {
 							PbxApi.SystemDeleteModule(
 								params.uniqid,
 								keepSettings,
@@ -432,72 +379,6 @@ const extensionModules = {
 	},
 
 };
-
-
-/**
- * Мониторинг статуса обновления или установки модуля
- *
- */
-upgradeStatusLoopWorker = {
-	timeOut: 1000,
-	timeOutHandle: '',
-	moduleUniqid: '',
-	iterations: 0,
-	oldPercent: 0,
-	needEnableAfterInstall: false,
-	initialize(uniqid, needEnable) {
-		upgradeStatusLoopWorker.moduleUniqid = uniqid;
-		upgradeStatusLoopWorker.iterations = 0;
-		upgradeStatusLoopWorker.needEnableAfterInstall = needEnable;
-		upgradeStatusLoopWorker.restartWorker();
-	},
-	restartWorker() {
-		window.clearTimeout(upgradeStatusLoopWorker.timeoutHandle);
-		upgradeStatusLoopWorker.worker();
-	},
-	worker() {
-		window.clearTimeout(upgradeStatusLoopWorker.timeoutHandle);
-		PbxApi.SystemGetModuleInstallStatus(
-			upgradeStatusLoopWorker.moduleUniqid,
-			upgradeStatusLoopWorker.cbRefreshModuleStatus,
-		);
-	},
-	cbRefreshModuleStatus(response) {
-		upgradeStatusLoopWorker.iterations += 1;
-		upgradeStatusLoopWorker.timeoutHandle =
-			window.setTimeout(upgradeStatusLoopWorker.worker, upgradeStatusLoopWorker.timeOut);
-		if (response.length === 0 || response === false) return;
-		if (response.i_status === true) {
-			$('a.button').removeClass('disabled');
-			if (upgradeStatusLoopWorker.needEnableAfterInstall) {
-				extensionModules.enableModule(
-					upgradeStatusLoopWorker.moduleUniqid,
-					extensionModules.reloadModuleAndPage,
-				);
-			} else {
-				window.location = `${globalRootUrl}pbx-extension-modules/index/`;
-			}
-
-			window.clearTimeout(upgradeStatusLoopWorker.timeoutHandle);
-		}
-		if (upgradeStatusLoopWorker.iterations > 50 || response.d_status === 'DOWNLOAD_ERROR') {
-			window.clearTimeout(upgradeStatusLoopWorker.timeoutHandle);
-			let errorMessage = (response.d_error !== undefined) ? response.d_error : '';
-			errorMessage = errorMessage.replace(/\n/g, '<br>');
-			UserMessage.showError(errorMessage, globalTranslate.ext_UpdateModuleError);
-			$(`#${upgradeStatusLoopWorker.moduleUniqid}`).find('i').removeClass('loading');
-			$('.new-module-row').find('i').addClass('download').removeClass('redo');
-			$('a.button').removeClass('disabled');
-		} else if (response.d_status === 'DOWNLOAD_IN_PROGRESS' || response.d_status === 'DOWNLOAD_COMPLETE') {
-			if (upgradeStatusLoopWorker.oldPercent !== response.d_status_progress) {
-				upgradeStatusLoopWorker.iterations = 0;
-			}
-			$('i.loading.redo').closest('a').find('.percent').text(`${response.d_status_progress}%`);
-			upgradeStatusLoopWorker.oldPercent = response.d_status_progress;
-		}
-	},
-};
-
 
 $(document).ready(() => {
 	extensionModules.initialize();

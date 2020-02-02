@@ -8,23 +8,26 @@
  */
 
 namespace Models;
+
 use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
 class CustomFiles extends ModelsBase
 {
     /**
-     * @var integer
+     * @Primary
+     * @Identity
+     * @Column(type="integer", nullable=false)
      */
     public $id;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $filepath;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $content;
 
@@ -34,40 +37,44 @@ class CustomFiles extends ModelsBase
      * override - переопределить
      * none - ничего не делать
      *
-     * @var string {'append'|'override'|'none'}
+     * @Column(type="string", nullable=true, default="none") {'append'|'override'|'none'}
      */
     public $mode;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $changed;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $description;
 
 
-    public function getSource() :string
+    public function getSource(): string
     {
         return 'm_CustomFiles';
     }
 
-	public function validation() :bool
+    public function validation(): bool
     {
 
         $validation = new Validation();
         $validation->add('filepath', new UniquenessValidator([
-            'message' => $this->t('mo_ThisFilepathMustBeUniqueForCustomFilesModels')
+            'message' => $this->t('mo_ThisFilepathMustBeUniqueForCustomFilesModels'),
         ]));
+
         return $this->validate($validation);
     }
 
-    public function setContent($text) :void {
+    public function setContent($text): void
+    {
         $this->content = base64_encode($text);
     }
-    public function getContent() :string {
+
+    public function getContent(): string
+    {
         return base64_decode($this->content);
     }
 }

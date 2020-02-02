@@ -3,28 +3,31 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 2 2019
+ * Written by Alexey Portnov, 11 2019
  */
 
 class BeanstalkClient {
     private $_host = '127.0.0.1';
     private $_port = '4229';
-    private $queue = null;
+    private $queue;
     private $connected = false;
     private $job_options = [];
     private $subscriptions = [];
-    private $tube = '';
+    private $tube;
     private $reconnectsCount = 0;
-    private $message = null;
+    private $message;
 
-    function __construct($tube){
-        $this->tube = "$tube";
+    private $timeout;
+    private $timeout_hendler;
+
+    function __construct($tube, $timeout=10){
+        $this->tube = $tube;
+        $this->timeout = $timeout;
         $connect_params = ['host' => $this->_host, 'port' => $this->_port, 'tube' => $tube];
         $this->queue = new Phalcon\Queue\Beanstalk($connect_params);
         $this->init_queue();
 
         $this->job_options = ['priority' => 250, 'delay' => 0, 'ttr' => 3600];
-
     }
 
     /**
@@ -149,19 +152,24 @@ class BeanstalkClient {
             $this->message = null;
 
             $start = microtime(true);
-            $job = $this->queue->reserve(10);
+            $job = $this->queue->reserve($this->timeout);
             if($job == false){
                 $worktime = (microtime(true) - $start);
                 if($worktime < 0.5){
                     // Что то не то, вероятно потеряна связь с сервером очередей.
                     $this->init_queue();
                 }
+                if(is_array($this->timeout_hendler)){
+                    call_user_func($this->timeout_hendler);
+                }else if (is_callable($this->timeout_hendler) === true) {
+                    $this->timeout_hendler();
+                }
                 continue;
             }
 
             $this->message = $job->getBody();
             $tube    = ( $job->stats() )['tube'];
-            $func    = $this->subscriptions[$tube];
+            $func    = $this->subscriptions[$tube]??NULL;
 
             if(is_array($func)){
                 call_user_func($func, $this);
@@ -181,7 +189,7 @@ class BeanstalkClient {
      * @return string
      */
     public function getBody(){
-        if(is_array($this->message) && isset($this->message['inbox_tube']) && count($this->message) == 2){
+        if(is_array($this->message) && isset($this->message['inbox_tube']) && count($this->message) === 2){
             // Это поступил request, треует ответа. Данные были переданы первым параметром массива.
             $message_data = $this->message[0];
         }else{
@@ -208,6 +216,13 @@ class BeanstalkClient {
      */
     public function setErrorHendler($err_handler){
 
+    }
+
+    /**
+     * @param $handler
+     */
+    public function setTimeoutHendler($handler){
+        $this->timeout_hendler = $handler;
     }
 
     public function reconnectsCount(){

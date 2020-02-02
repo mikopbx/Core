@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 8 2019
+ * Written by Alexey Portnov, 1 2020
  */
 
 define('ISPBXCORESERVICES', '1');
@@ -43,7 +43,7 @@ $eventsManager->attach('micro:beforeExecuteRoute', function (Event $event, Micro
     // Проверяем авторизацию.
     if(preg_match_all('/\/api\/modules\/Module\w*\/custom_action\S*/m', $pattern) > 0){
         // Это сервисы модулей.
-    }elseif(!in_array($pattern, $panel_pattern)) {
+    }elseif(!in_array($pattern, $panel_pattern, true)) {
         $res_auth = false;
     }
     if(FALSE === $res_auth){
@@ -109,7 +109,7 @@ $app->get('/api/cdr/get_data', function () use ($app) {
 /**
  * Скачивание записи разговора.
  * /pbxcore/api/cdr/records MIKO AJAM
- * curl http://172.16.156.212/pbxcore/api/cdr/records?view=/storage/usbdisk1/mikoziapbx/voicemailarchive/monitor/2018/05/05/16/mikozia-1525527966.4_oWgzQFMPRA.mp3
+ * curl http://172.16.156.223/pbxcore/api/cdr/records?view=/storage/usbdisk1/mikoziapbx/voicemailarchive/monitor/2018/05/05/16/mikozia-1525527966.4_oWgzQFMPRA.mp3
  */
 $app->get('/api/cdr/records', function () use ($app) {
     if(!Util::check_auth_http($this->request)){
@@ -212,26 +212,26 @@ $app->get('/api/cdr/playback', function () use ($app) {
             $length = $end - $start + 1;
 
             $app->response->resetHeaders();
-            $app->response->setRawHeader('HTTP/1.1 206 Partial Content');
-            $app->response->setHeader('Content-type', $ctype);
-            $app->response->setHeader('Content-Range', "bytes $start-$end/$filesize");
-            $app->response->setContentLength($length);
             if (! $fp = fopen($filename, 'rb')) {
-                header('HTTP/1.1 500 Internal Server Error');
-                exit();
+                $app->response->setRawHeader('HTTP/1.1 500 Internal Server Error');
+            }else{
+                $app->response->setRawHeader('HTTP/1.1 206 Partial Content');
+                $app->response->setHeader('Content-type', $ctype);
+                $app->response->setHeader('Content-Range', "bytes $start-$end/$filesize");
+                $app->response->setContentLength($length);
+                if ($start){
+                    fseek($fp, $start);
+                }
+                $content = '';
+                while ($length) {
+                    set_time_limit(0);
+                    $read = ($length > 8192) ? 8192 : $length;
+                    $length -= $read;
+                    $content.=fread($fp, $read);
+                }
+                fclose($fp);
+                $app->response->setContent($content);
             }
-            if ($start){
-                fseek($fp, $start);
-            }
-            $content = '';
-            while ($length) {
-                set_time_limit(0);
-                $read = ($length > 8192) ? 8192 : $length;
-                $length -= $read;
-                $content.=fread($fp, $read);
-            }
-            fclose($fp);
-            $app->response->setContent($content);
         }else{
             $app->response->setHeader('Content-type', $ctype);
             $app->response->setContentLength($filesize);
@@ -269,7 +269,7 @@ $app->get('/api/cdr/playback', function () use ($app) {
 
 /**
  * /pbxcore/api/cdr/ Запрос активных звонков.
- *   curl http://172.16.156.212/pbxcore/api/cdr/get_active_calls;
+ *   curl http://172.16.156.223/pbxcore/api/cdr/get_active_calls;
  * Пример ответа:
  * [{"start":"2018-02-27 10:45:07","answer":null,"src_num":"206","dst_num":"226","did":"","linkedid":"1519717507.24"}]
  * Возвращает массив массивов со следующими полями:
@@ -282,18 +282,8 @@ $app->get('/api/cdr/playback', function () use ($app) {
 "did"  			 => 'TEXT',
  */
 $app->get('/api/cdr/get_active_calls', function () use ($app) {
-    $filter = [
-        'order' => 'id',
-        'columns' => 'start,answer,endtime,src_num,dst_num,did,linkedid',
-        'miko_tmp_db' => true,
-    ];
-    $client  = new BeanstalkClient('select_cdr');
-    $message = $client->request(json_encode($filter), 2);
-    if($message == false){
-        $app->response->setContent('[]');
-    }else{
-        $app->response->setContent($message);
-    }
+    $content = Cdr::get_active_calls();
+    $app->response->setContent($content);
     $app->response->send();
 
 });
@@ -313,48 +303,8 @@ $app->get('/api/cdr/get_active_calls', function () use ($app) {
 "did"  			 => 'TEXT',
  */
 $app->get('/api/cdr/get_active_channels', function () use ($app) {
-    $filter = [
-        "endtime IS NULL",
-        'order' => 'id',
-        'columns' => 'start,answer,src_chan,dst_chan,src_num,dst_num,did,linkedid',
-        'miko_tmp_db' => true,
-        'miko_result_in_file' => true,
-    ];
-    $client  = new BeanstalkClient('select_cdr');
-    $message = $client->request(json_encode($filter), 2);
-    if($message == false){
-        $app->response->setContent('[]');
-    }else{
-        $result_message = "[]";
-        $am = Util::get_am('off');
-        $active_chans = $am->GetChannels(true);
-        $am->Logoff();
-        $result_data = [];
-
-        $result   = json_decode($message);
-        if(file_exists($result)){
-            $data = json_decode(file_get_contents($result), true);
-            unlink($result);
-            foreach ($data as $row){
-                if( !isset($active_chans[$row['linkedid']]) ){
-                    // Вызов уже не существует.
-                    continue;
-                }
-                if(empty($row['dst_chan']) && empty($row['src_chan'])){
-                    // Это ошибочная ситуация. Игнорируем такой вызов.
-                    continue;
-                }
-                $channels = $active_chans[$row['linkedid']];
-                if( ( empty($row['src_chan']) || in_array($row['src_chan'],$channels) )
-                    && ( empty($row['dst_chan']) || in_array($row['dst_chan'],$channels) ) ){
-                    $result_data[] = $row;
-                }
-            }
-            $result_message = json_encode($result_data, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
-
-        }
-        $app->response->setContent($result_message);
-    }
+    $content = Cdr::get_active_channels();
+    $app->response->setContent($content);
     $app->response->send();
 
 });
@@ -423,7 +373,7 @@ $app->get('/api/iax/{name}', function ($params) use ($app) {
 
 /**
  * Получение информации по SIP пиру.
- *   curl -X POST -d '{"peer": "212"}' http://172.16.156.212/pbxcore/api/sip/get_sip_peer;
+ *   curl -X POST -d '{"peer": "212"}' http://127.0.0.1/pbxcore/api/sip/get_sip_peer;
  */
 $app->post('/api/sip/{name}', function ($params) use ($app) {
     $row_data = $app->request->getRawBody();
@@ -463,7 +413,7 @@ $app->post('/api/sip/{name}', function ($params) use ($app) {
  * Запуск генератора dialplan, перезапуск dialplan на АТС.
  *   curl http://172.16.156.212/pbxcore/api/pbx/reload_dialplan;
  * Рестарт модуля SIP.
- *   curl http://172.16.156.212/pbxcore/api/pbx/reload_sip;
+ *   curl http://127.0.0.1/pbxcore/api/pbx/reload_sip;
  * Рестарт модуля очередей.
  *   curl http://172.16.156.212/pbxcore/api/pbx/reload_queues;
  * Рестарт модуля IAX
@@ -484,7 +434,6 @@ $app->get('/api/pbx/{name}', function ($params) use ($app) {
     $cb = function (Nats\Message $message) use ($app) {
         $app->response->setContent($message->getBody());
         $app->response->send();
-        return;
     };
     $client->request('pbx', "$params", $cb);
 });
@@ -508,7 +457,7 @@ $app->get('/api/pbx/{name}', function ($params) use ($app) {
  * Настройка SSH
  *   curl http://172.16.156.212/pbxcore/api/system/reload_ssh;
  * Настройка cron
- *   curl http://172.16.156.212/pbxcore/api/system/reload_cron;
+ *   curl http://127.0.0.1/pbxcore/api/system/reload_cron;
  * Настройка Nats
  *   curl http://172.16.156.212/pbxcore/api/system/reload_nats;
  * Обновление конфигурации кастомных файлов.
@@ -523,6 +472,9 @@ $app->get('/api/pbx/{name}', function ($params) use ($app) {
  *   curl http://172.16.156.212/pbxcore/api/system/reload_nginx
  * Получение информации о внешнем IP адресе:
  *   curl http://172.16.156.212/pbxcore/api/system/get_external_ip_info
+ *
+ * Рестарт сервисов, зависимфх от модулей.
+ *   curl http://127.0.0.1/pbxcore/api/system/restart_module_dependent_workers -H 'Cookie: XDEBUG_SESSION=PHPSTORM'
  * Пример ответа:
  *   {"result":"Success"}
  */
@@ -533,29 +485,36 @@ $app->get('/api/system/{name}', function ($params)use ($app) {
         'action' =>$params
     );
     $client = new Nats\Connection();
-    $client->connect(10);
+    if($params === 'stop_log') {
+        $client->connect(60);
+    }else{
+        $client->connect(5);
+    }
     $cb = function (Nats\Message $message) use ($params, $app) {
-        if($params == 'stop_log'){
+        if($params === 'stop_log'){
             $data = json_decode($message->getBody(), true);
             if(!file_exists($data['filename'])){
-                $app->response->setStatusCode(200, "OK")->sendHeaders();
+                $app->response->setStatusCode(200, 'OK')->sendHeaders();
                 $app->response->setContent('Log file not found.');
                 $app->response->send();
                 return;
             }
-            $fp=fopen($data['filename'], "rb");
-            if ($fp) {
-                $size = filesize($data['filename']);
-                $app->response->setHeader('Content-Description', "log file");
-                $app->response->setHeader('Content-Disposition', "attachment; filename=".basename($data['filename']));
-                $app->response->setHeader('Content-type', "application/gzip");
-                $app->response->setHeader('Content-Transfer-Encoding', "binary");
-                $app->response->setContentLength($size);
-                $app->response->sendHeaders();
-                fpassthru($fp);
-            }
+
+            $scheme     = $app->request->getScheme();
+            $host       = $app->request->getHttpHost();
+            $port       = $app->request->getPort();
+            $uid        = Util::generateRandomString(36);
+            $path2dirs  = PBX::get_asterisk_dirs();
+
+            $result_dir = "{$path2dirs['download_link']}/{$uid}";
+            Util::mwexec("mkdir -p {$result_dir}");
+
+            $link_name = md5($data['filename']).'.'.Util::get_extension_file($data['filename']);
+            Util::mwexec("ln -s {$data['filename']} {$result_dir}/{$link_name}");
+            $app->response->redirect("{$scheme}://{$host}:{$port}/download_link/{$uid}/{$link_name}");
+            $app->response->send();
         }else{
-            $app->response->setStatusCode(200, "OK")->sendHeaders();
+            $app->response->setStatusCode(200, 'OK')->sendHeaders();
             $app->response->setContent($message->getBody());
             $app->response->send();
         }
@@ -592,7 +551,8 @@ $app->get('/api/system/{name}', function ($params)use ($app) {
  *      "function": "convert_audio_file"
  *   }
  * Загрузка аудио файла на АТС:
- *   curl  -F "file=@/root/2233333.mp3" http://172.16.156.212/pbxcore/api/system/upload_audio_file;
+ *   curl  -X POST -d '{"filename": "/storage/usbdisk1/mikopbx/tmp/1577195443/test.mp3"}' http://127.0.0.1/pbxcore/api/system/upload_audio_file -H 'Cookie: XDEBUG_SESSION=PHPSTORM';
+ *   curl  -F "file=@/storage/usbdisk1/mikopbx/voicemailarchive/monitor/2019/11/29/10/mikopbx-15750140_201_YNrXH1KHDj.mp3" http://127.0.0.1/pbxcore/api/system/upload_audio_file;
  *   Пример ответа:
  *   {
  *      "result": "Success",
@@ -603,69 +563,74 @@ $app->get('/api/system/{name}', function ($params)use ($app) {
 
  *   curl -X POST -d '{"filename": "/storage/usbdisk1/mikopbx/tmp/2233333.wav"}' http://172.16.156.212/pbxcore/api/system/remove_audio_file;
  * Обновление системы (офлайн)
+ *   curl -X POST -d '{"filename": "/storage/usbdisk1/mikopbx/tmp/2019.4.200-mikopbx-generic-x86-64-linux.img"}' http://127.0.0.1/pbxcore/api/system/upgrade -H 'Cookie: XDEBUG_SESSION=PHPSTORM';
  *   curl -F "file=@1.0.5-9.0-svn-mikopbx-x86-64-cross-linux.img" http://172.16.156.212/pbxcore/api/system/upgrade;
  * Онлайн обновление АТС.
  *   curl -X POST -d '{"md5":"df7622068d0d58700a2a624d991b6c1f", "url": "https://www.askozia.ru/upload/update/firmware/6.2.96-9.0-svn-mikopbx-x86-64-cross-linux.img"}' http://172.16.156.223/pbxcore/api/system/upgrade_online;
  */
 $app->post('/api/system/{name}', function ($params) use ($app) {
-    if($params == 'upgrade') {
-        $data = ["result" => "ERROR"];
-        if ($app->request->hasFiles() != true) {
+    $data = [
+        'result"' => 'ERROR'
+    ];
+    if($params === 'upgrade') {
+        $dirs     = PBX::get_asterisk_dirs();
+        $upd_file = "{$dirs['tmp']}/update.img";
+        $res      = false;
+        if ($app->request->hasFiles() === 0) {
+            // Используем существующий файл;
+            $post_data = json_decode($app->request->getRawBody(), true);
+            if($post_data && isset($post_data['filename']) && file_exists($post_data['filename'])) {
+                $res = Util::mwexec("cp '{$post_data['filename']}' '{$upd_file}'") === 0;
+            }
+        }else{
+            // Загружаем новый файл на сервер
+            foreach ($app->request->getUploadedFiles() as $file) {
+                $res = $file->moveTo($upd_file);
+            }
+        }
+        // Проверяем существование файла.
+        $res = ($res && file_exists($upd_file));
+        if ($res !== true) {
+            $data['data'] = 'Update file not found.';
             $app->response->setContent(json_encode($data));
             $app->response->send();
             return;
-        }
-        $dirs = PBX::get_asterisk_dirs();
-
-        foreach ($app->request->getUploadedFiles() as $file) {
-            $tmp_arr = explode('.', $file->getName());
-            $extension = $tmp_arr[count($tmp_arr) - 1];
-            if ($extension == 'img') {
-                $upd_file = "{$dirs['tmp']}/update.img";
-            } else {
-                continue;
-            }
-
-            $res = $file->moveTo($upd_file);
-            $res = ($res && file_exists($upd_file));
-            if ($res != true) {
-                $app->response->setContent(json_encode($data));
-                $app->response->send();
-                return;
-            }
-            break;
         }
         $data = null;
-    }else if($params == 'upload_audio_file') {
-        $data = ["result" => "ERROR"];
-        if ($app->request->hasFiles() != true) {
-            $data['message'] = 'Uploded file not found.';
+    }else if($params === 'upload_audio_file') {
+        $dirs = PBX::get_asterisk_dirs();
+        $filename = '';
+        $res = false;
+        if ($app->request->hasFiles() === 0) {
+            // Используем существующий файл;
+            $post_data = json_decode($app->request->getRawBody(), true);
+            if($post_data && isset($post_data['filename']) && file_exists($post_data['filename'])) {
+                $filename = "{$dirs['media']}/".basename($post_data['filename']);
+                $res = Util::mwexec("cp {$post_data['filename']} {$filename}") === 0;
+            }
+        }else{
+            foreach ($app->request->getUploadedFiles() as $file) {
+                $filename = $dirs['media'].'/'.basename($file->getName());
+                $res = $file->moveTo( $filename);
+            }
+        }
+
+        $res = ($res && file_exists($filename));
+        if ($res !== true) {
+            $data['message'] = 'Can not move uploded file.';
             $app->response->setContent(json_encode($data));
             $app->response->send();
             return;
         }
-        $dirs = PBX::get_asterisk_dirs();
-        $filename = '';
-        foreach ($app->request->getUploadedFiles() as $file) {
-            $filename = "{$dirs['media']}/".basename($file->getName());
-            $res = $file->moveTo( $filename);
-            $res = ($res && file_exists($filename));
-            if ($res != true) {
-                $data['message'] = 'Can not move uploded file.';
-                $app->response->setContent(json_encode($data));
-                $app->response->send();
-                return;
-            }
-            break;
-        }
+
         $data   = ['filename' => $filename];
         $params = 'convert_audio_file';
     }else{
         $row_data = $app->request->getRawBody();
         // Проверим, переданные данные.
         if(!Util::is_json($row_data)){
-            $app->response->setStatusCode(200, "OK")->sendHeaders();
-            $app->response->setContent('{"result":"ERROR"}');
+            $app->response->setStatusCode(200, 'OK')->sendHeaders();
+            $app->response->setContent(json_encode($data));
             $app->response->send();
             return;
         }
@@ -774,7 +739,8 @@ $app->get('/api/backup/{name}', function ($action)use ($app) {
  * Загрузка файла на АТС.
  *   curl -F "file=@backup_1531474060.zip" http://172.16.156.212/pbxcore/api/backup/upload;
  * Конвертация старого конфига.
- *   curl -F "file=@config-askoziapbx.local-20180817170826.xml" http://172.16.156.212/pbxcore/api/backup/upload;
+ *
+ *
  * Восстановить из резервной копии.
  *  curl -X POST -d '{"id": "backup_1534838222", "options":{"backup-config":"1","backup-records":"1","backup-cdr":"1","backup-sound-files":"1"}}' http://172.16.156.212/pbxcore/api/backup/recover;
  *  curl -X POST -d '{"id": "backup_1534838222", "options":{"backup-sound-files":"1"}}' http://172.16.156.212/pbxcore/api/backup/recover;
@@ -800,7 +766,7 @@ $app->post('/api/backup/{name}', function ($params)use ($app){
             }
             $dest_file = $temp_dir.'/'.$_POST['resumableFilename'].'.part'.$_POST['resumableChunkNumber'];
             // create the temporary directory
-            if(!is_dir($temp_dir) && !mkdir($temp_dir, 0777, true) && !is_dir($temp_dir)){
+            if(!Util::mw_mkdir($temp_dir)){
                 Util::sys_log_msg('UploadFile', "Error create dir '$temp_dir'");
             }
 
@@ -819,7 +785,7 @@ $app->post('/api/backup/{name}', function ($params)use ($app){
                 $extension  = Util::get_extension_file(basename($_POST['resumableFilename']));
                 $mnt_point  = "{$backupdir}/$dir_name/mnt_point";
                 if(!file_exists("{$backupdir}/$dir_name/")){
-                    Util::mwexec("mkdir -p {$backupdir}/{$dir_name}/ {$mnt_point}");
+                    Util::mwexec("mkdir -p '{$backupdir}/{$dir_name}/' '{$mnt_point}'");
                 }
                 file_put_contents("{$backupdir}/$dir_name/upload_status", 'MERGING');
                 $data['data'] = [
@@ -892,6 +858,128 @@ $app->post('/api/backup/{name}', function ($params)use ($app){
     $client->request('backup', json_encode($request), $cb);
 });
 
+/**
+ *   curl -F "file=@ModuleTemplate.zip" http://127.0.0.1/pbxcore/api/upload/module -H 'Cookie: XDEBUG_SESSION=PHPSTORM'
+ *   curl -X POST -d '{"id": "1531474060"}' http://127.0.0.1/pbxcore/api/upload/status; -H 'Cookie: XDEBUG_SESSION=PHPSTORM'
+ */
+$app->post('/api/upload/{name}', function ($params)use ($app){
+
+    $data = [];
+    $data['result'] = 'ERROR';
+    $data['data']   = '';
+
+    $dirs = PBX::get_asterisk_dirs();
+    if ($app->request->hasFiles() > 0){
+        $upload_id = time();
+        $resumableFilename    = $app->request->getPost('resumableFilename');
+        $resumableIdentifier  = $app->request->getPost('resumableIdentifier');
+        $resumableChunkNumber = $app->request->getPost('resumableChunkNumber');
+        $resumableTotalSize   = $app->request->getPost('resumableTotalSize');
+        $resumableChunkSize   = $app->request->getPost('resumableChunkSize');
+
+        foreach ($app->request->getUploadedFiles() as $file) {
+            if ( $file->getError() ) {
+                $data['data'] = 'error '.$file->getError().' in file '.$resumableFilename;
+                Util::sys_log_msg('UploadFile','error '.$file->getError().' in file '.$resumableFilename);
+                continue;
+            }
+            if(isset($resumableIdentifier) && trim($resumableIdentifier)!==''){
+                $temp_dir      = $dirs['tmp'].'/'.Util::trim_extension_file(basename($resumableFilename));
+                $temp_dst_file = $dirs['tmp'].'/'.$upload_id.'/'.basename($resumableFilename);
+                $chunks_dest_file = $temp_dir.'/'.$resumableFilename.'.part'.$resumableChunkNumber;
+            }else{
+                $temp_dir           = $dirs['tmp'].'/'.$upload_id;
+                $temp_dst_file      = $temp_dir.'/'.basename($file->getName());
+                $chunks_dest_file   = $temp_dst_file;
+            }
+            if(!Util::mw_mkdir($temp_dir) || ! Util::mw_mkdir(dirname($temp_dst_file))){
+                Util::sys_log_msg('UploadFile', "Error create dir '$temp_dir'");
+                $data['data'] .= "Error create dir 'temp_dir'";
+                continue;
+            }
+            if ( !$file->moveTo($chunks_dest_file) ) {
+                Util::sys_log_msg('UploadFile','Error saving (move_uploaded_file) for '.$chunks_dest_file);
+                $data['result'] = 'ERROR';
+                $data['d_status_progress'] = '0';
+                $data['d_status'] = 'ID_NOT_SET';
+            }elseif($resumableFilename) {
+                // Передача файлов частями.
+                $result = Util::createFileFromChunks($temp_dir, $resumableFilename, $resumableTotalSize, $resumableChunkNumber, '', $resumableChunkSize);
+                if($result === true){
+                    $data['result'] = 'Success';
+
+                    $merge_settings    = [
+                        'data'   => [
+                            'result_file'           => $temp_dst_file,
+                            'temp_dir'              => $temp_dir,
+                            'resumableFilename'     => $resumableFilename,
+                            'resumableTotalChunks'  => $resumableChunkNumber,
+                        ],
+                        'action' => 'merge'
+                    ];
+                    $settings_file = "{$temp_dir}/merge_settings";
+                    file_put_contents($settings_file, json_encode($merge_settings, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
+
+                    // Отправляем задачу на склеивание файла.
+                    $client = new Nats\Connection();
+                    $client->connect(10);
+                    $req_data = [
+                        'action' => 'merge_uploaded_file',
+                        'data' => [
+                            'settings_file' => $settings_file
+                        ]
+                    ];
+                    $client->request('system', json_encode($req_data), function (Nats\Message $message){
+                    });
+                    $data['upload_id'] = $upload_id;
+                    $data['filename']  = $temp_dst_file;
+                    $data['d_status'] = 'INPROGRESS';
+                }
+            }else{
+                $data['result'] = 'Success';
+                // Передача файла целиком.
+                $data['upload_id'] = $upload_id;
+                $data['filename']  = $temp_dst_file;
+                $data['d_status'] = 'DOWNLOAD_COMPLETE';
+                file_put_contents($temp_dir.'/progress', '100');
+                Util::mwexec_bg('/etc/rc/shell_functions.sh killprocesses '.$temp_dir.' -TERM 0;rm -rf '.$temp_dir, '/dev/null', 30);
+            }
+        }
+    }elseif($params === 'status'){
+        $data['result'] = 'Success';
+        $post_data = json_decode($app->request->getRawBody(), true);
+        if($post_data && isset($post_data['id'])){
+            $upload_id      = $post_data['id'];
+            $progress_dir   = $dirs['tmp'].'/'.$upload_id;
+            $progress_file  = $progress_dir.'/progress';
+
+            if(empty($upload_id)){
+                $data['result'] = 'ERROR';
+                $data['d_status_progress'] = '0';
+                $data['d_status'] = 'ID_NOT_SET';
+            }
+            elseif(!file_exists($progress_file) && file_exists($progress_dir)){
+                $data['d_status_progress'] = '0';
+                $data['d_status'] = 'INPROGRESS';
+            }elseif( !file_exists($progress_dir) ){
+                $data['result'] = 'ERROR';
+                $data['d_status_progress'] = '0';
+                $data['d_status'] = 'NOT_FOUND';
+            }elseif('100' === file_get_contents($progress_file) ){
+                $data['d_status_progress'] = '100';
+                $data['d_status'] = 'DOWNLOAD_COMPLETE';
+            }else{
+                $data['d_status_progress'] = file_get_contents($progress_file);
+            }
+        }
+    }
+
+    $app->response->setStatusCode(200, 'OK')->sendHeaders();
+    $app->response->setContent(json_encode($data, JSON_UNESCAPED_SLASHES|JSON_PRETTY_PRINT));
+    $app->response->send();
+
+
+});
 
 /**
  * API дополнительных модулей.
@@ -922,6 +1010,7 @@ $app->post('/api/backup/{name}', function ($params)use ($app){
  * curl http://84.201.142.45/pbxcore/api/modules/ModuleBitrix24Notify/custom_action?portal=miko24.ru
  * curl http://84.201.142.45/pbxcore/api/modules/ModuleBitrix24Notify/custom_action
  *
+ * curl http://127.0.0.1/pbxcore/api/modules/ModuleWebConsole/show_console
  * curl http://127.0.0.1/pbxcore/api/modules/ModuleWebConsole/show_console
  *
  * @param $name
@@ -967,14 +1056,14 @@ $f_modules_name_command = function ($name, $command) use ($app) {
             }
 
             $app->response->setContent($response['echo']);
-            $app->response->setStatusCode(200, "OK")->sendHeaders();
+            $app->response->setStatusCode(200, 'OK')->sendHeaders();
             $app->response->send();
         }elseif (isset($response['echo_file'])){
-            $app->response->setStatusCode(200, "OK")->sendHeaders();
+            $app->response->setStatusCode(200, 'OK')->sendHeaders();
             $app->response->setFileToSend($response['echo_file']);
             $app->response->send();
         }else{
-            $app->response->setStatusCode(200, "OK")->sendHeaders();
+            $app->response->setStatusCode(200, 'OK')->sendHeaders();
             $app->response->setContent($message->getBody());
             $app->response->send();
         }
@@ -991,31 +1080,80 @@ $app->post('/api/modules/{name}/{command}', $f_modules_name_command);
  * Загрузка модуля по http
     curl -X POST -d '{"uniqid":"ModuleCTIClient", "md5":"fd9fbf38298dea83667a36d1d0464eae", "url": "https://www.askozia.ru/upload/update/modules/ModuleCTIClient/ModuleCTIClientv01.zip"}' http://172.16.156.223/pbxcore/api/modules/upload;
     curl -X POST -d '{"uniqid":"ModuleSmartIVR", "md5":"fc64fd786f4242885ab50ce5f1fb56c5", "url": "https://www.askozia.ru/upload/update/modules/ModuleSmartIVR/ModuleSmartIVRv01.zip"}' http://172.16.156.223/pbxcore/api/modules/upload;
+ * Загрузка аудио файла на АТС:
+    curl -F "file=@ModuleTemplate.zip" http://127.0.0.1/pbxcore/api/modules/upload;
+    curl -X POST -d '{"filename":"/storage/usbdisk1/mikopbx/tmp/ModuleTemplate.zip"}' http://127.0.0.1/pbxcore/api/modules/unpack -H 'Cookie: XDEBUG_SESSION=PHPSTORM';
  */
 $app->post('/api/modules/{command}', function ($command) use ($app){
-    $data = ["result" => "ERROR"];
-    if (Util::is_json($app->request->getRawBody() )  ){
-        $row_data = $app->request->getRawBody();
-        $data     = json_decode( $row_data, true);
+    $result = [
+        'result' => 'ERROR',
+        'uniqid' => null
+    ];
+    $data = NULL;
+    if ('upload' === $command  && $app->request->hasFiles() === 0){
+        if (Util::is_json($app->request->getRawBody() )  ){
+            $row_data = $app->request->getRawBody();
+            $data     = json_decode( $row_data, true);
+        }else{
+            $result['data'] = 'Body is not JSON';
+        }
+    }elseif( in_array($command, ['upload', 'unpack']) ){
+        $dirs = PBX::get_asterisk_dirs();
+        $module_file = "{$dirs['tmp']}/".time().'.zip';
+        if ($app->request->hasFiles() > 0) {
+            foreach ($app->request->getUploadedFiles() as $file) {
+                $extension = Util::get_extension_file($file->getName());
+                if ($extension !== 'zip') {
+                    continue;
+                }
+                $file->moveTo($module_file);
+                break;
+            }
+        }elseif ('unpack' === $command ){
+            $post_data = json_decode($app->request->getRawBody(), true);
+            if($post_data && isset($post_data['filename']) && file_exists($post_data['filename'])) {
+                Util::mwexec("cp '{$post_data['filename']}' '{$module_file}'");
+            }
+        }
+        if (file_exists($module_file)) {
+            $cmd = 'f="'.$module_file.'"; p=`7za l $f | grep module.json`;if [ "$?" == "0" ]; then 7za -so e -y -r $f `echo $p |  awk -F" " \'{print $6}\'`; fi';
+            Util::mwexec($cmd, $out);
+            $settings = json_decode(implode("\n", $out), true);
+
+            $module_uniqid = $settings['module_uniqid'] ?? NULL;
+            if(!$module_uniqid){
+                $result['data'] = 'The" module_uniqid " in the module file is not described.the json or file does not exist.';
+            }
+            $data = [
+                'md5' => md5_file($module_file),
+                'url' => "file://{$module_file}",
+                'l_file' => $module_file,
+                'uniqid' => $module_uniqid
+            ];
+        }else{
+            $result['data'] = 'Failed to upload file to server';
+        }
+        $command = 'upload';
+    }
+
+    if($data){
         $request  = array(
-            'data'      => $data, // Параметры запроса.
+            'data'      => $data,           // Параметры запроса.
             'module'    => $data['uniqid'], // Параметры запроса.
-            'action'    => $command  // Операция.
+            'action'    => $command         // Операция.
         );
         $client = new Nats\Connection();
         $client->connect(5);
-        $cb = function (Nats\Message $message) use ($app) {
-            $app->response->setStatusCode(200, "OK")->sendHeaders();
-            $app->response->setContent(''.$message->getBody());
-            $app->response->send();
-            exit(0);
+        $cb = function (Nats\Message $message) use (&$result) {
+            $result = json_decode($message->getBody(), true);
         };
         $client->request('modules', json_encode($request), $cb);
+        $result['uniqid'] = $data['uniqid'];
     }
 
-    $app->response->setContent(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+    $app->response->setContent(json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
     $app->response->send();
-    return;
+
 });
 
 /**
@@ -1030,7 +1168,7 @@ $app->get('/api/storage/{name}', function ($name) use ($app) {
     $client = new Nats\Connection();
     $client->connect(10);
     $cb = function (Nats\Message $message) use ($name, $app) {
-        $app->response->setStatusCode(200, "OK")->sendHeaders();
+        $app->response->setStatusCode(200, 'OK')->sendHeaders();
         $app->response->setContent($message->getBody());
         $app->response->send();
     };
@@ -1052,7 +1190,7 @@ $app->post('/api/storage/{name}', function ($name)use ($app){
     $row_data = $app->request->getRawBody();
     // Проверим, переданные данные.
     if(!Util::is_json($row_data)){
-        $app->response->setStatusCode(200, "OK")->sendHeaders();
+        $app->response->setStatusCode(200, 'OK')->sendHeaders();
         $app->response->setContent('{"result":"ERROR"}');
         $app->response->send();
         return;
@@ -1066,7 +1204,7 @@ $app->post('/api/storage/{name}', function ($name)use ($app){
     $client = new Nats\Connection();
     $client->connect(10);
     $cb = function (Nats\Message $message) use ($app) {
-        $app->response->setStatusCode(200, "OK")->sendHeaders();
+        $app->response->setStatusCode(200, 'OK')->sendHeaders();
         $app->response->setContent(''.$message->getBody());
         $app->response->send();
     };
@@ -1079,7 +1217,7 @@ $app->post('/api/storage/{name}', function ($name)use ($app){
  */
 $app->notFound(function () use ($app) {
     sleep(2);
-    $app->response->setStatusCode(404, "Not Found")->sendHeaders();
+    $app->response->setStatusCode(404, 'Not Found')->sendHeaders();
     $app->response->setContent('This is crazy, but this page was not found!');
     $app->response->send();
 });

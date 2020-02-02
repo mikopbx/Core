@@ -10,94 +10,99 @@
 namespace Models;
 
 use Phalcon\Mvc\Model\Relation;
+use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
 class DialplanApplications extends ModelsBase
 {
     /**
-     * @var integer
+     * @Primary
+     * @Identity
+     * @Column(type="integer", nullable=false)
      */
     public $id;
 
     /**
-     * @var string
+     * @Primary
+     * @Column(type="string", nullable=true)
      */
     public $uniqid;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $name;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $extension;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $hint;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $applicationlogic;
 
     /**
-     * @var string {'plaintext'|'php'}
+     * @Column(type="string", nullable=true) {'plaintext'|'php'}
      */
     public $type;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $description;
 
-    public function getSource() :string
+    public function getSource(): string
     {
         return 'm_DialplanApplications';
     }
 
-    public function initialize() :void
+    public function initialize(): void
     {
-	    parent::initialize();
+        parent::initialize();
         $this->belongsTo(
             'extension',
             'Models\Extensions',
             'number',
             [
-                'alias'=>'Extensions',
+                'alias'      => 'Extensions',
                 'foreignKey' => [
                     'allowNulls' => false,
                     'action'     => Relation::NO_ACTION //DialplanApplications удаляем через его Extension
-                ]
+                ],
             ]
         );
 
     }
 
-    public function setApplicationlogic($text) :void
+    public function setApplicationlogic($text): void
     {
         $this->applicationlogic = base64_encode($text);
     }
 
-    public function getApplicationlogic() :string
+    public function getApplicationlogic(): string
     {
         return base64_decode($this->applicationlogic);
     }
 
-    public function validation() :bool
+    public function validation(): bool
     {
-        $validation = new \Phalcon\Validation();
+        $validation = new Validation();
 
         $validation->add('uniqid', new UniquenessValidator([
-            'message' => $this->t('mo_ThisUniqidNotUniqueForDialplanApplicationsModels')
+            'message' => $this->t('mo_ThisUniqidNotUniqueForDialplanApplicationsModels'),
         ]));
 
         $validation->add('extension', new UniquenessValidator([
-            'message' => $this->t('mo_ThisExtensionNotUniqueForDialplanApplicationsModels')
+            'message' => $this->t('mo_ThisExtensionNotUniqueForDialplanApplicationsModels'),
         ]));
+
         return $this->validate($validation);
     }
 }

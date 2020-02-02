@@ -8,9 +8,14 @@ export PATH
 
 /bin/touch /tmp/freeoffload;
 
-killprocesses 'crond' -KILL 0;
-killprocesses 'nginx' -KILL 0;
-killprocesses 'monitord' -KILL 1;
+killprocess_by_name 'worker_reload' -9 0;
+killprocess_by_name 'worker_models_events' -9 0;
+killprocess_by_name 'pdnsd' -9 0;
+
+killprocess_by_name 'crond' -KILL 0;
+killprocess_by_name 'nginx' -KILL 0;
+killprocess_by_name 'monitord' -KILL 1;
+
 killprocesses '/offload' -TERM 3;
 killprocesses '/offload' -KILL 0;
 
@@ -19,4 +24,3 @@ f_umount /offload;
 echo " |   - unmounting /cf...";
 f_umount /cf;
 
-exit 0

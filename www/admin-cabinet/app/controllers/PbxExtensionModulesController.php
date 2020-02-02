@@ -42,7 +42,7 @@ class PbxExtensionModulesController extends BaseController
                 'developer'   => $module->developer,
                 'version'     => $module->version,
                 'classname'   => $unCamelizedControllerName,
-                'status'      => ($module->disabled==='1') ? 'disabled' : '',
+                'status'      => ($module->disabled === '1') ? 'disabled' : '',
                 'permanent'   => true,
             ];
         }
@@ -53,6 +53,73 @@ class PbxExtensionModulesController extends BaseController
     }
 
     /**
+     * Страница с настройкой параметров модуля
+     * param $uniqid - string идентификатор модуля
+     */
+    public function modifyAction($uniqid): void
+    {
+        $menuSettings               = "AdditionalMenuItem{$uniqid}";
+        $unCamelizedControllerName  = Text::uncamelize($uniqid, '-');
+        $previousMenuSettings       = PbxSettings::findFirstByKey($menuSettings);
+        $this->view->showAtMainMenu = $previousMenuSettings !== false;
+        if ( ! $previousMenuSettings) {
+            $previousMenuSettings        = new PbxSettings();
+            $previousMenuSettings->key   = $menuSettings;
+            $value                       = [
+                'uniqid'        => $uniqid,
+                'href'          => $this->url->get($unCamelizedControllerName),
+                'group'         => '',
+                'iconClass'     => 'puzzle piece',
+                'caption'       => "Breadcrumb$uniqid",
+                'showAtSidebar' => false,
+            ];
+            $previousMenuSettings->value = json_encode($value);
+        }
+        $options                = json_decode($previousMenuSettings->value, true);
+        $this->view->form       = new PbxExtensionModuleSettingsForm($previousMenuSettings, $options);
+        $this->view->title      = $this->translation->_('ext_SettingsForModule') . ' ' . $this->translation->_("Breadcrumb$uniqid");
+        $this->view->submitMode = null;
+        $this->view->indexUrl   = $unCamelizedControllerName;
+    }
+
+    /**
+     * Сохранение настроек отображения модуля в боковом меню
+     * сохраняет настройку отображения в PbxSettings
+     */
+    public function saveModuleSettingsAction(): void
+    {
+
+        if ( ! $this->request->isPost()) {
+            return;
+        }
+        $data = $this->request->getPost();
+
+        $record = PbxSettings::findFirstByKey($data['key']);
+        if ( ! $record) {
+            $record      = new PbxSettings();
+            $record->key = $data['key'];
+        }
+        $value         = [
+            'uniqid'        => $data['uniqid'],
+            'href'          => $data['href'],
+            'group'         => $data['menu-group'],
+            'iconClass'     => $data['iconClass'],
+            'caption'       => $data['caption'],
+            'showAtSidebar' => $data['show-at-sidebar'] === 'on',
+        ];
+        $record->value = json_encode($value);
+        if ($record->save() === false) {
+            $errors = $record->getMessages();
+            $this->flash->error(implode('<br>', $errors));
+            $this->view->success = false;
+
+            return;
+        }
+        $this->flash->success($this->translation->_('ms_SuccessfulSaved'));
+        $this->view->success = true;
+    }
+
+    /**
      * Включение модуля
      *
      * @param string $uniqid Уникальный идентификатор модуля, если мы открываем
@@ -60,85 +127,110 @@ class PbxExtensionModulesController extends BaseController
      */
     public function enableAction($uniqid): void
     {
-        $error                    = false;
-        $errors                   = [];
-        $needClearExtensionsCache = false;
-        $mainClass                = "Modules\\{$uniqid}\Models\\{$uniqid}";
-        if ( ! class_exists($mainClass)) {
-            $this->flash->error("Class {$mainClass} doesn't exist");
-            $this->view->success = false;
-
-            return;
-        }
-
-        $setupClass = "\\Modules\\{$uniqid}\\setup\\PbxExtensionSetup";
+        $this->view->success = false;
+        $setupClass          = "\\Modules\\{$uniqid}\\setup\\PbxExtensionSetup";
         if (class_exists($setupClass)) {
-            $setup    = new $setupClass();
-            if ($setup->lic_feature_id > 0){
-                // Пробуем захватить фичу
-                $result = $this->licenseWorker->captureFeature($setup->lic_feature_id);
-                if ($result['success']===false){
+            $setup = new $setupClass($uniqid);
+            if ($setup->lic_feature_id > 0) {
+                // Пробуем захватить фичу c учетом оффлан режима
+                $result = $this->licenseWorker->featureAvailable($setup->lic_feature_id);
+                if ($result['success'] === false) {
                     $this->flash->error($this->licenseWorker->translateLicenseErrorMessage($result['error']));
-                    $this->view->success = false;
+
                     return;
                 }
             }
-        }
-        $this->db->begin();
-        // $controllerClass = "{$uniqid}Controller";
-        // if (class_exists($controllerClass)
-        // 	&& method_exists($controllerClass,'disableAction')){
-        // 	$controller = new $controllerClass();
-        // 	$controller->enableAction();
-        // }
+        } else {
+            $this->flash->error("Class {$setupClass} doesn't exist");
 
-        // Проверим нет ли битых ссылок перед включением модуля
-        // например удалили сотрудника, а модуль на него ссылался
-        //
-        $record = $mainClass::findFirst();
-        if ($record) {
-            $relations = $record->_modelsManager->getRelations($mainClass);
-            foreach ($relations as $relation) {
-                $alias        = $relation->getOption('alias');
-                $checkedValue = $record->$alias;
-                $foreignKey   = $relation->getOption('foreignKey');
-                if ($checkedValue === false
-                    && array_key_exists('allowNulls', $foreignKey)
-                    && $foreignKey['allowNulls'] === false
-                ) {
-                    $message = new Message(
-                        $record->t('mo_ModuleSettingsError',
-                            [
-                                'modulename' => $record->getRepresent(true),
-                            ])
-                    );
-                    $record->appendMessage($message);
-                    $error    = true;
-                    $errors = $record->getMessages();
+            return;
+        }
+        $error = false;
+        $this->db->begin('temporary'); // Временная транзакция, которая будет отменена после теста включения
+
+        // Временно включим модуль, чтобы включить все связи и зависимости
+        $module = PbxExtensionModules::findFirstByUniqid($uniqid);
+        if ($module) {
+            $module->disabled = '0';
+            $module->save();
+        }
+
+        // Если в контроллере есть функция корректного включения, вызовем ее,
+        // например модуль умной маршртутизации прописывает себя в маршруты
+        $controllerClass = "{$uniqid}Controller";
+        if (class_exists($controllerClass)
+            && method_exists($controllerClass, 'enableAction')) {
+            $controller = new $controllerClass();
+            if ($controller->enableAction() === false) {
+                $messages = $this->flash->getMessages();
+                if ($messages){
+                    foreach ($messages as $index=>$message){
+                        $this->flash->$index($message[0]);
+                    }
+                } else {
+                    $this->flash->error('Error on the Module controller enable function');
                 }
-                if ($relation->getReferencedModel() === 'Models\Extensions') {
-                    $needClearExtensionsCache = true;
+                $this->db->rollback('temporary'); // Откатываем временную транзакцию
+
+                return;
+            }
+        }
+
+        // Проверим нет ли битых ссылок, которые мешают включить модуль
+        // например удалили сотрудника, а модуль указывает на его extension
+        //
+        $moduleModelsDir = $this->config->application->modulesDir . $uniqid . '/Models';
+        $results         = glob($moduleModelsDir . '/*.php', GLOB_NOSORT);
+        foreach ($results as $file) {
+            $className        = pathinfo($file)['filename'];
+            $moduleModelClass = "\\Modules\\{$uniqid}\\Models\\{$className}";
+            if (class_exists($moduleModelClass)) {
+                if ((new $moduleModelClass())->getReadConnectionService() !== 'db') {
+                    continue; // Это не основная база данных
+                }
+                $records = $moduleModelClass::find();
+                foreach ($records as $record) {
+                    $relations = $record->_modelsManager->getRelations(get_class($record));
+                    foreach ($relations as $relation) {
+                        $alias        = $relation->getOption('alias');
+                        $checkedValue = $record->$alias;
+                        $foreignKey   = $relation->getOption('foreignKey');
+                        // В модуле указан заперт на NULL в описании модели,
+                        // а параметр этот не заполнен в настройках модуля
+                        // например в модуле маршрутизации, резервный номер
+                        if ($checkedValue === false
+                            && array_key_exists('allowNulls', $foreignKey)
+                            && $foreignKey['allowNulls'] === false
+                        ) {
+                            $this->flash->error($record->t('mo_ModuleSettingsError',
+                                [
+                                    'modulename' => $record->getRepresent(true),
+                                ]));
+                            $error = true;
+
+                        }
+                    }
                 }
             }
         }
-        $this->db->rollback();
-        if ( ! $error && ! $this->enableFirewallSettings($uniqid)) {
-            $error    = true;
-            $errors[] = ['Error on enable firewall settings'];
+        if (!$error){
+            $this->flash->clear();
         }
-        if ($error) {
-            $this->flash->error(implode('<br>', $errors));
-            $this->view->success = false;
-        } else {
+        $this->db->rollback('temporary'); // Откатываем временную транзакцию
+
+        // Если ошибок нет, включаем Firewall и модуль
+        if ( ! $error && ! $this->enableFirewallSettings($uniqid)) {
+            $this->flash->error('Error on enable firewall settings');
+
+            return;
+        }
+        if ( ! $error) {
             $module = PbxExtensionModules::findFirstByUniqid($uniqid);
             if ($module) {
                 $module->disabled = '0';
                 if ($module->save() === true) {
                     $this->view->success = true;
-                    if ($needClearExtensionsCache) {
-                        $module->clearCache('Models\Extensions');
-                    }
-                    $controllerClass = "{$uniqid}Controller";
+                    $controllerClass     = "{$uniqid}Controller";
                     if (class_exists($controllerClass)
                         && method_exists($controllerClass, 'disableAction')) {
                         $controller = new $controllerClass();
@@ -147,8 +239,6 @@ class PbxExtensionModulesController extends BaseController
                 }
             }
         }
-
-
     }
 
     /**
@@ -159,80 +249,104 @@ class PbxExtensionModulesController extends BaseController
      */
     public function disableAction($uniqid = null): void
     {
-        $mainClass = "Modules\\" . $uniqid . "\Models\\" . $uniqid;
-        if ( ! class_exists($mainClass)) {
-            $this->flash->error("Class {$mainClass} doesn't exist");
-            $this->view->success = false;
+        $this->view->success = false;
+
+        $controllerClass = "{$uniqid}Controller";
+        if ( ! class_exists($controllerClass)) {
+            $this->flash->error("Class {$controllerClass} doesn't exist");
 
             return;
         }
-        $needClearExtensionsCache = false;
-        $result                   = true;
+
+        $error = false;
 
         // Проверим, нет ли настроенных зависимостей у других модулей
-        // Попробуем удалить главную запись модуля
-        $this->db->begin();
+        // Попробуем удалить все настройки модуля
+        $this->db->begin('temporary');
 
-        $controllerClass = "{$uniqid}Controller";
-        if (class_exists($controllerClass)
-            && method_exists($controllerClass, 'disableAction')) {
+        if (method_exists($controllerClass, 'disableAction')) {
             $controller = new $controllerClass();
-            $controller->disableAction();
-        }
-
-        // Попытаемся удалить текущий модуль, если ошибок не будет, значит можно выклчать
-        $element = $mainClass::findFirst();
-        if ($element) {
-            $mainRelations = $element->_modelsManager->getRelations($mainClass);
-
-            foreach ($mainRelations as $subRelation) {
-                $relatedModel = $subRelation->getReferencedModel();
-                $element->_modelsManager->load($relatedModel);
-                $relations = $element->_modelsManager->getRelationsBetween($relatedModel, $mainClass);
-
-                foreach ($relations as $relation) {
-                    // Проверим есть ли записи в таблице которая запрещает удаление текущих данных
-                    $mappedFields             = $relation->getFields();
-                    $mappedFields             = is_array($mappedFields)
-                        ? $mappedFields : [$mappedFields];
-                    $referencedFields         = $relation->getReferencedFields();
-                    $referencedFields         = is_array($referencedFields)
-                        ? $referencedFields : [$referencedFields];
-                    $parameters['conditions'] = '';
-                    $parameters['bind']       = [];
-                    foreach ($mappedFields as $index => $mappedField) {
-                        $parameters['conditions']             .= $index > 0 ? ' OR ' : '';
-                        $parameters['conditions']             .= $mappedField . '= :field' . $index . ':';
-                        $bindField                            = $referencedFields[$index];
-                        $parameters['bind']['field' . $index] = $element->$bindField;
+            if ($controller->disableAction() === false) {
+                $messages = $this->flash->getMessages();
+                if ($messages){
+                    foreach ($messages as $index=>$message){
+                        $this->flash->$index($message[0]);
                     }
-                    $relatedRecords = $relatedModel::find($parameters);
-                    if ( ! $relatedRecords->delete() && $result) {
-                        $result = false;
-                        $errors = $relatedRecords->getMessages();
-                    } elseif ($relatedModel === 'Models\Extensions') {
-                        $needClearExtensionsCache = true;
-                    }
+                } else {
+                    $this->flash->error('Error on the Module controller disable function');
                 }
+                $this->db->rollback('temporary');
 
+                return;
             }
         }
 
-        $this->db->rollback();
 
-        if ($result && ! $this->disableFirewallSettings($uniqid)) {
-            $result = false;
+        // Попытаемся удалить текущий модуль, если ошибок не будет, значит можно выклчать
+        // Например на модуль может ссылаться запись в таблице Extensions, которую надо удалить при отключении
+        // модуля
+        $moduleModelsDir = $this->config->application->modulesDir . $uniqid . '/Models';
+        $results         = glob($moduleModelsDir . '/*.php', GLOB_NOSORT);
+        foreach ($results as $file) {
+            $className        = pathinfo($file)['filename'];
+            $moduleModelClass = "\\Modules\\{$uniqid}\\Models\\{$className}";
+            if (class_exists($moduleModelClass)) {
+                if ((new $moduleModelClass())->getReadConnectionService() !== 'db') {
+                    continue; // Это не основная база данных
+                }
+                $records = $moduleModelClass::find();
+                foreach ($records as $record) {
+                    $mainRelations = $record->_modelsManager->getRelations(get_class($record));
+                    foreach ($mainRelations as $subRelation) {
+                        $relatedModel = $subRelation->getReferencedModel();
+                        $record->_modelsManager->load($relatedModel);
+                        $relations = $record->_modelsManager->getRelationsBetween($relatedModel,
+                            get_class($record));
+                        foreach ($relations as $relation) {
+                            // Проверим есть ли записи в таблице которая запрещает удаление текущих данных
+                            $mappedFields             = $relation->getFields();
+                            $mappedFields             = is_array($mappedFields)
+                                ? $mappedFields : [$mappedFields];
+                            $referencedFields         = $relation->getReferencedFields();
+                            $referencedFields         = is_array($referencedFields)
+                                ? $referencedFields : [$referencedFields];
+                            $parameters['conditions'] = '';
+                            $parameters['bind']       = [];
+                            foreach ($mappedFields as $index => $mappedField) {
+                                $parameters['conditions']             .= $index > 0 ? ' OR ' : '';
+                                $parameters['conditions']             .= $mappedField . '= :field' . $index . ':';
+                                $bindField                            = $referencedFields[$index];
+                                $parameters['bind']['field' . $index] = $record->$bindField;
+                            }
+                            $relatedRecords = $relatedModel::find($parameters);
+                            if ( ! $error && ! $relatedRecords->delete()) {
+                                $error = true;
+                                $this->flash->error($relatedRecords->getMessages());
+                            }
+                        }
+                    }
+                }
+            }
         }
-        if ($result) {
+        if (!$error){
+            $this->flash->clear();
+        }
+        $this->db->rollback('temporary'); // Откатываем временную транзакцию
+
+        // Если ошибок нет, выключаем Firewall и модуль
+        if ( ! $error && ! $this->disableFirewallSettings($uniqid)) {
+            $this->flash->error('Error on disable firewall settings');
+
+            return;
+        }
+
+        if ( ! $error) {
             $module = PbxExtensionModules::findFirstByUniqid($uniqid);
             if ($module) {
                 $module->disabled = '1';
                 if ($module->save() === true) {
                     $this->view->success = true;
-                    if ($needClearExtensionsCache) {
-                        $module->clearCache('Models\Extensions');
-                    }
-                    $controllerClass = "{$uniqid}Controller";
+                    $controllerClass     = "{$uniqid}Controller";
                     if (class_exists($controllerClass)
                         && method_exists($controllerClass, 'disableAction')) {
                         $controller = new $controllerClass();
@@ -240,12 +354,7 @@ class PbxExtensionModulesController extends BaseController
                     }
                 }
             }
-        } else {
-
-            $this->flash->error(implode('<br>', $errors));
-            $this->view->success = false;
         }
-
     }
 
     /**
@@ -272,8 +381,8 @@ class PbxExtensionModulesController extends BaseController
         }
         $errors   = [];
         $networks = NetworkFilters::find();
-        $key          = strtoupper(key($defaultRules));
-        $record = $defaultRules[key($defaultRules)];
+        $key      = strtoupper(key($defaultRules));
+        $record   = $defaultRules[key($defaultRules)];
 
         $oldRules = FirewallRules::findByCategory($key);
         if ($oldRules->count() > 0) {
@@ -282,30 +391,30 @@ class PbxExtensionModulesController extends BaseController
 
         foreach ($networks as $network) {
             foreach ($record['rules'] as $detailRule) {
-                    $newRule                  = new FirewallRules();
-                    $newRule->networkfilterid = $network->id;
-                    $newRule->protocol        = $detailRule['protocol'];
-                    $newRule->portfrom        = $detailRule['portfrom'];
-                    $newRule->portto          = $detailRule['portto'];
-                    $newRule->category        = $key;
-                    $newRule->action          = $record['action'];
-                    $newRule->description     = $detailRule['name'];
-                    if (array_key_exists($network->id, $previousRules)) {
-                        $newRule->action = $previousRules[$network->id];
-                    }
-                    if ( ! $newRule->save()) {
-                        $errors[] = $newRule->getMessages();
-                    }
+                $newRule                  = new FirewallRules();
+                $newRule->networkfilterid = $network->id;
+                $newRule->protocol        = $detailRule['protocol'];
+                $newRule->portfrom        = $detailRule['portfrom'];
+                $newRule->portto          = $detailRule['portto'];
+                $newRule->category        = $key;
+                $newRule->action          = $record['action'];
+                $newRule->description     = $detailRule['name'];
+                if (array_key_exists($network->id, $previousRules)) {
+                    $newRule->action = $previousRules[$network->id];
+                }
+                if ( ! $newRule->save()) {
+                    $errors[] = $newRule->getMessages();
                 }
             }
+        }
         if (count($errors) > 0) {
-            $this->flash->warning(implode('<br>', $errors));
+            $this->flash->error(implode('<br>', $errors));
             $this->db->rollback();
 
             return false;
-        } else {
-            $this->db->commit();
         }
+
+        $this->db->commit();
 
         return true;
     }
@@ -330,10 +439,10 @@ class PbxExtensionModulesController extends BaseController
         $key          = strtoupper(key($defaultRules));
         $currentRules = FirewallRules::findByCategory($key);
         foreach ($currentRules as $detailRule) {
-                $savedState[$detailRule->networkfilterid] = $detailRule->action;
+            $savedState[$detailRule->networkfilterid] = $detailRule->action;
         }
         $this->db->begin();
-        if (!$currentRules->delete()) {
+        if ( ! $currentRules->delete()) {
             $errors[] = $currentRules->getMessages();
         }
 
@@ -347,14 +456,37 @@ class PbxExtensionModulesController extends BaseController
             $errors[] = $previousRuleSettings->getMessages();
         }
         if (count($errors) > 0) {
-            $this->flash->warning(implode('<br>', $errors));
+            $this->flash->error(implode('<br>', $errors));
             $this->db->rollback();
 
             return false;
-        } else {
-            $this->db->commit();
         }
 
+        $this->db->commit();
+
         return true;
+    }
+
+    /**
+     * Генерирует дополнительные пункты меню в интерфейс
+     */
+    public function sidebarIncludeAction(): void
+    {
+        $result  = [];
+        $modules = PbxExtensionModules::find('disabled="0"');
+        foreach ($modules as $module) {
+            $menuSettings         = "AdditionalMenuItem{$module->uniqid}";
+            $previousMenuSettings = PbxSettings::findFirstByKey($menuSettings);
+            if ($previousMenuSettings) {
+                $result['items'][] = json_decode($previousMenuSettings->value, true);
+            }
+        }
+        $this->view->message = $result;
+        $this->view->success = true;
+    }
+
+    private function testDeleteRelationRecords()
+    {
+
     }
 }

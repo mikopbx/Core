@@ -56,12 +56,13 @@ class SipProviderEditForm extends Form
         $this->add(new Text('host'));
 
         // Dtmfmode
-        $arrDTMFType=array(
-            'auto'=>$this->translation->_('auto'),
-            'inband'=>$this->translation->_('inband'),
-            'info'=>$this->translation->_('info'),
-            'rfc2833'=>$this->translation->_('rfc2833'),
-        );
+        $arrDTMFType = [
+            'auto'    => $this->translation->_('auto'),
+            'inband'  => $this->translation->_('inband'),
+            'info'    => $this->translation->_('info'),
+            'rfc4733' => $this->translation->_('rfc4733'),
+            'auto_info' => $this->translation->_('auto_info'),
+        ];
 
         $dtmfmode = new Select('dtmfmode', $arrDTMFType, array(
             'using' => array(

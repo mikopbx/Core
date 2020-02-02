@@ -9,34 +9,36 @@
 
 namespace Models;
 
+use Phalcon\Mvc\Model\Relation;
 use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
-use Phalcon\Mvc\Model\Relation;
 
 class Providers extends ModelsBase
 {
     /**
-     * @var integer
+     * @Primary
+     * @Identity
+     * @Column(type="integer", nullable=false)
      */
     public $id;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $uniqid;
 
     /**
-     * @var string{'SIP'|'IAX'}
+     * @Column(type="string", nullable=true){'SIP'|'IAX'}
      */
     public $type;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $sipuid;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $iaxuid;
 

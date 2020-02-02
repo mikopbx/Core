@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 9 2019
+ * Written by Alexey Portnov, 10 2019
  */
 
 namespace     Modules\Services;
@@ -158,7 +158,7 @@ class Monitor {
     private function capture_feature($id):bool {
         $result = false;
 
-        $url = 'http://127.0.0.1:8222/license.api/featureavailable';
+        $url = 'http://127.0.0.1:8223/license.api/featureavailable';
         $headers = [];
         $response = $this->query('GET', $url, ['feature' => $id], $headers);
         if( isset($response['result']) && !empty($response['result']) ){

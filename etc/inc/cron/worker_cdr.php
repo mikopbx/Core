@@ -3,10 +3,13 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 6 2019
+ * Written by Alexey Portnov, 1 2020
  */
 
 require_once 'globals.php';
+
+use Models\CallDetailRecordsTmp;
+
 /**
  * Class WorkerCdr
  * Обработка записей CDR. Заполение длительности звонков.
@@ -27,9 +30,9 @@ class WorkerCdr{
         $this->client_queue = new BeanstalkClient('select_cdr');
 
         $this->filter = [
-            "(work_completed<>1 OR work_completed IS NULL) AND endtime IS NOT NULL",
+            '(work_completed<>1 OR work_completed IS NULL) AND endtime IS NOT NULL',
             'miko_tmp_db' => true,
-            'columns' => 'start,answer,src_num,dst_num,endtime,linkedid,recordingfile,dialstatus,UNIQUEID',
+            'columns' => 'start,answer,src_num,dst_num,dst_chan,endtime,linkedid,recordingfile,dialstatus,UNIQUEID',
             'miko_result_in_file' => true,
         ];
 
@@ -104,10 +107,12 @@ class WorkerCdr{
             unlink($result);
             $result = $file_data;
         }
+        if(!is_array($result) && !is_object($result)){
+            return;
+        }
         if(count($result) < 1){
             return;
         }
-
         $arr_update_cdr = [];
         // Получаем идентификаторы активных каналов.
         $channels_id = $this->get_active_id_channels();
@@ -116,11 +121,11 @@ class WorkerCdr{
                 // Цепочка вызовов еще не завершена.
                 continue;
             }
-            if(trim($row['recordingfile']) != ''){
+            if(trim($row['recordingfile']) !== ''){
                 // Если каналов не существует с ID, то можно удалить временные файлы.
                 $p_info = pathinfo($row['recordingfile']);
-                $fname = $p_info['dirname'].'/'.$p_info['filename'].".wav";
-                if(is_file($fname)){
+                $fname = $p_info['dirname'].'/'.$p_info['filename'].'.wav';
+                if(file_exists($fname)){
                     @unlink($fname);
                 }
             }
@@ -135,13 +140,40 @@ class WorkerCdr{
             $disposition = 'NOANSWER';
             if($billsec > 0){
                 $disposition = 'ANSWERED';
-            }else if('' != $dialstatus){
-                $disposition = ($dialstatus=='ANSWERED')?$disposition:$dialstatus;
+            }else if('' !== $dialstatus){
+                $disposition = ($dialstatus==='ANSWERED')?$disposition:$dialstatus;
             }
 
-            if($disposition!='ANSWERED'){
+            if($billsec <= 0){
+                $row['answer'] = '';
+                $billsec = 0;
+
+                if(!empty($row['recordingfile'])){
+                    $p_info = pathinfo($row['recordingfile']);
+                    $file_list = [
+                        $p_info['dirname'].'/'.$p_info['filename'].'.mp3',
+                        $p_info['dirname'].'/'.$p_info['filename'].'.wav',
+                        $p_info['dirname'].'/'.$p_info['filename'].'_in.wav',
+                        $p_info['dirname'].'/'.$p_info['filename'].'_out.wav'
+                    ];
+                    foreach ($file_list as $file){
+                        if(!file_exists($file)){
+                            continue;
+                        }
+                        @unlink($file);
+                    }
+                }
+            }
+
+            if($disposition!=='ANSWERED'){
                 if(file_exists($row['recordingfile'])){
                     @unlink($row['recordingfile']);
+                }
+            }elseif ( !file_exists(Util::trim_extension_file($row['recordingfile']).'wav') && !file_exists($row['recordingfile'])){
+                /** @var CallDetailRecordsTmp $rec_data */
+                $rec_data = CallDetailRecordsTmp::findFirst("linkedid='{$row['linkedid']}' AND dst_chan='{$row['dst_chan']}'");
+                if($rec_data){
+                    $row['recordingfile'] = $rec_data->recordingfile;
                 }
             }
 
@@ -151,7 +183,7 @@ class WorkerCdr{
                 'billsec'        => $billsec,
                 'disposition'    => $disposition,
                 'UNIQUEID'       => $row['UNIQUEID'],
-                'recordingfile'  => ($disposition == 'ANSWERED')?$row['recordingfile']:'',
+                'recordingfile'  => ($disposition === 'ANSWERED')?$row['recordingfile']:'',
                 'tmp_linked_id'    => $row['linkedid'],
             ];
 
@@ -182,7 +214,7 @@ class WorkerCdr{
      * @param $row
      */
     private function check_no_answer_call($row){
-        if($row['disposition'] == 'ANSWERED'){
+        if($row['disposition'] === 'ANSWERED'){
             $this->no_answered_calls[$row['linkedid']]['NOANSWER'] = false;
             return;
         }
@@ -251,8 +283,8 @@ class WorkerCdr{
     }
 }
 
-$worker_proc_name = "worker_cdr_complete";
-if(count($argv)>1 && $argv[1] == 'start') {
+$worker_proc_name = 'worker_cdr_complete';
+if(count($argv)>1 && $argv[1] === 'start') {
     cli_set_process_title($worker_proc_name);
     $worker = new WorkerCdr();
     $worker->Start();

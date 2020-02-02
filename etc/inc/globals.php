@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 12 2018
+ * Written by Alexey Portnov, 11 2019
  */
 
 /*
@@ -14,9 +14,11 @@ use Phalcon\Cache\Backend\File;
 use Phalcon\Cache\Frontend\Data;
 use Phalcon\Events\Manager;
 use Phalcon\Loader;
-use \Phalcon\Logger;
-use \Phalcon\Logger\Adapter\File as FileLogger;
-use \Phalcon\Translate\Adapter\NativeArray;
+use Phalcon\Logger;
+use Phalcon\Logger\Adapter\File as FileLogger;
+use Phalcon\Mvc\Model\MetaData\Memory;
+use Phalcon\Mvc\Model\MetaData\Strategy\Annotations as StrategyAnnotations;
+use Phalcon\Translate\Adapter\NativeArray;
 
 $g = array(
 	"cf_path" 			=> "/cf",
@@ -69,6 +71,32 @@ if( 'cli' == php_sapi_name() || defined('ISPBXCORESERVICES')){
         $m_di->set('db', function() use ($config) {
             $db_class = '\Phalcon\Db\Adapter\Pdo\\'.$config['database']['adapter'];
             $connection= new $db_class(array("dbname" => $config['database']['dbfile']));
+
+            if (is_file('/tmp/debug')) {
+                $logpath = Cdr::getPathtoLog();
+                $logger  = new FileLogger($logpath);
+                $eventsManager = new Manager();
+                // Слушаем все события базы данных
+                $eventsManager->attach('db', function ($event, $connection) use ($logger) {
+                    if ($event->getType() === 'beforeQuery') {
+                        $statement = $connection->getSQLStatement();
+                        $variables = $connection->getSqlVariables();
+                        if (is_array($variables)) {
+                            foreach ($variables as $variable => $value) {
+                                if (is_array($value)){
+                                    $value = '('.implode(', ',$value).')';
+                                }
+                                $variable = str_replace(':','',$variable);
+                                $statement = str_replace(":$variable", "'$value'", $statement);
+                            }
+                        }
+                        $logger->log($statement, Logger::SPECIAL);
+                    }
+                });
+
+                // Назначаем EventsManager экземпляру адаптера базы данных
+                $connection->setEventsManager($eventsManager);
+            }
             return $connection;
         });
         // Asterisk CDR Database connection.
@@ -85,8 +113,19 @@ if( 'cli' == php_sapi_name() || defined('ISPBXCORESERVICES')){
                 $eventsManager = new Manager();
                 // Слушаем все события базы данных
                 $eventsManager->attach('db', function ($event, $connection) use ($logger) {
-                    if ($event->getType() == 'beforeQuery') {
-                        $logger->log($connection->getSQLStatement(), Logger::SPECIAL);
+                    if ($event->getType() === 'beforeQuery') {
+                        $statement = $connection->getSQLStatement();
+                        $variables = $connection->getSqlVariables();
+                        if (is_array($variables)) {
+                            foreach ($variables as $variable => $value) {
+                                if (is_array($value)){
+                                    $value = '('.implode(', ',$value).')';
+                                }
+                                $variable = str_replace(':','',$variable);
+                                $statement = str_replace(":$variable", "'$value'", $statement);
+                            }
+                        }
+                        $logger->log($statement, Logger::SPECIAL);
                     }
                 });
 
@@ -102,6 +141,9 @@ if( 'cli' == php_sapi_name() || defined('ISPBXCORESERVICES')){
             ));
             return $connection;
         });
+
+        // Подключаем db файлы модулей как севрисы в DI
+        Modules\DiServicesInstall::Register($m_di);
     }
     function init_loader(&$g, $config){
         $dirScripts = [
@@ -119,6 +161,7 @@ if( 'cli' == php_sapi_name() || defined('ISPBXCORESERVICES')){
             ],
         ];
         $libraryFiles = [
+            $config['application']['backendDir'].'modules/DiServicesInstall.php', // Подключаем db файлы модулей как севрисы в DI
             $config['application']['backendDir'].'library/vendor/autoload.php' // Sentry - cloud error logger
         ];
         $m_loader = new Loader();
@@ -166,9 +209,26 @@ if( 'cli' == php_sapi_name() || defined('ISPBXCORESERVICES')){
     );
 
     /**
+     * If the configuration specify the use of metadata adapter use it or use memory otherwise
+     */
+
+    $m_di->set('modelsMetadata', function () {
+        $metaData = new Memory([
+            'lifetime' => 86400,
+            'prefix'   => 'metacache_key',
+        ]);
+        $metaData->setStrategy(
+            new StrategyAnnotations()
+        );
+
+        return $metaData;
+    });
+
+
+    /**
      * Register the translation service
      */
-    $m_di->setShared('messages', function() use ($phalcon_settings, $g){
+    $m_di->setShared('messages', function() use ($g){
         $messages=[];
         $language='en-en';
         if(file_exists($g['pt1c_db_path'])){
@@ -178,10 +238,11 @@ if( 'cli' == php_sapi_name() || defined('ISPBXCORESERVICES')){
             }catch (Exception $e){
             }
         }
-        if (file_exists("/etc/inc/messages/{$language}.php")) {
+
+        if (empty($_ENV['SSH_CLIENT']) && file_exists("/etc/inc/messages/{$language}.php")) {
             require "/etc/inc/messages/{$language}.php";
         } else {
-            require "/etc/inc/messages/en-en.php";
+            require '/etc/inc/messages/en-en.php';
         }
         return  $messages;
     });
@@ -189,7 +250,7 @@ if( 'cli' == php_sapi_name() || defined('ISPBXCORESERVICES')){
     if(!defined('ISPBXCORESERVICES')){
         $cli_translation = $m_di->getTranslation();
         $g['cli_translation']    = $cli_translation;
-        $g['pt1c_pbx_name_kind'] = Util::translate("MIKO_PBX");
+        $g['pt1c_pbx_name_kind'] = Util::translate('MIKO_PBX');
     }
     $g['m_di'] = &$m_di;
     $g['phalcon_settings'] = &$phalcon_settings;

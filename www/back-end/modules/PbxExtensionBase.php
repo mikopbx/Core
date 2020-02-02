@@ -3,95 +3,329 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 7 2019
+ * Written by Alexey Portnov, 12 2019
  */
 
 namespace Modules;
 
-use Models\ModelsBase;
+use Models\PbxExtensionModules;
 use Models\PbxSettings;
 use Phalcon\Db\Adapter\Pdo\Sqlite;
-use Util;
-use Config;
-use Models\PbxExtensionModules;
 use Phalcon\Db\Column;
+use Phalcon\Db\Index;
 use Phalcon\DI;
-
+use Phalcon\Text;
+use Util;
+use RuntimeException;
 /**
  * Class PbxExtensionBase
  * Общие для всех модулей методы
  * Подключается при установке, удалении модуля
  */
-abstract class PbxExtensionBase
+class PbxExtensionBase
 {
     /**
-     * @var string Идентификатор модуля расширения
+     * Module unique identify  from module.json
+     *
+     * @var string
      */
     protected $module_uniqid;
 
     /**
-     * @var string Версия модуля расширения
+     * Module version from module.json
+     *
+     * @var string
      */
     protected $version;
 
     /**
-     * @var string Минимально совместимая версия PBX
+     * Minimal require version PBX
+     *
+     * @var string
      */
     protected $min_pbx_version;
 
     /**
-     * @var string Наименование разработчика
+     * Module developer name
+     *
+     * @var string
      */
     protected $developer;
 
     /**
-     * @var string Емейл для связи с разработчиком
+     * Module developer's email from module.json
+     *
+     * @var string
      */
     protected $support_email;
 
     /**
-     * Ссылка на базу данных
+     * Trial product version identify number from module.json
+     *
+     * @var integer
+     */
+    public $lic_product_id;
+
+    /**
+     * License feature identify number from module.json
+     *
+     * @var integer
+     */
+    public $lic_feature_id;
+
+    /**
+     * PBX general database
      *
      * @var \Phalcon\Db\Adapter\Pdo\Sqlite
      */
-    protected $db; // база данных
+    protected $db;
 
     /**
+     * Database from module DB folder
+     *
+     * @var \Phalcon\Db\Adapter\Pdo\Sqlite
+     */
+    protected $moduleDB;
+
+    /**
+     * Folder with module files
+     *
+     * @var string
+     */
+    protected $moduleDir;
+
+    /**
+     * Phalcon config service
+     *
+     * @var \Config
+     */
+    protected $config;
+
+    /**
+     * Dependency injector
+     *
      * @var \Phalcon\DI\FactoryDefault
      */
     private $di;
 
     /**
-     * @var array Конфигурационный массив Phalcon
+     * Error and verbose messages
+     *
+     * @var array
      */
-    protected $phalconSettings;
+    private $messages;
 
     /**
-     * @var string Папка с модулем
+     * PbxExtensionBase constructor.
+     *
+     * @param $module_uniqid
      */
-    protected $moduleDir;
-
-    /**
-     * @var \Config Методы получения конфигурационных настроек из базы данных
-     */
-    protected $config;
-
-    /**
-     * @var \lic_product_id Идентификатор триальной лицензии
-     */
-    public $lic_product_id;
-
-    /**
-     * @var \lic_feature_id Идентификатор фичи
-     */
-    public $lic_feature_id;
-
-    public function __construct()
+    public function __construct($module_uniqid = null)
     {
-            $this->di = DI::getDefault();
-            $this->db = $this->di->get('db');
-            $this->phalconSettings =  $this->di->get('config')->toArray();
-            $this->moduleDir = $this->phalconSettings['application']['modulesDir'] . $this->module_uniqid;
+        if($module_uniqid!==null){
+            $this->module_uniqid   = $module_uniqid;
+        }
+        $this->di              = DI::getDefault();
+        $this->db              = $this->di->get('db');
+        $this->config          = $this->di->get('config');
+        $settings_file          = "{$this->config->application->modulesDir}{$this->module_uniqid}/module.json";
+        if (file_exists($settings_file)){
+            $module_settings = json_decode(file_get_contents($settings_file),true);
+            if ($module_settings){
+                $this->version         = $module_settings['version'];
+                $this->min_pbx_version = $module_settings['min_pbx_version'];
+                $this->developer       = $module_settings['developer'];
+                $this->support_email   = $module_settings['support_email'];
+                if (array_key_exists('lic_product_id', $module_settings)){
+                    $this->lic_product_id  = $module_settings['lic_product_id'];
+                } else {
+                    $this->lic_product_id  = 0 ;
+                }
+                if (array_key_exists('lic_feature_id', $module_settings)){
+                    $this->lic_feature_id  = $module_settings['lic_feature_id'];
+                } else {
+                    $this->lic_feature_id  = 0 ;
+                }
+            } else {
+                $this->messages[]= 'Error on decode module.json';
+            }
+        }
+        $this->moduleDir       = $this->config->application->modulesDir . $this->module_uniqid;
+        $this->messages        = [];
+
+        // Create and connect database
+        $dbPath = "{$this->moduleDir}/db";
+
+        if(!file_exists($dbPath) && !mkdir($dbPath, 0777, true) && !is_dir($dbPath)){
+            $this->messages[]=sprintf('Directory "%s" was not created', $dbPath);
+            throw new RuntimeException(sprintf('Directory "%s" was not created', $dbPath));
+        }
+        $this->moduleDB = new Sqlite(['dbname' => "$dbPath/module.db"]);
+    }
+
+    /**
+     * Последовательный вызов процедур установки модуля расширения
+     * с текстового результата установки
+     *
+     * @return bool - результат установки
+     */
+    public function installModule(): bool
+    {
+        $result = true;
+        try {
+            if ( ! $this->activateLicense()) {
+                $this->messages[]  = 'License activate error';
+                $result = false;
+            }
+            if ( ! $this->installFiles()) {
+                $this->messages[]   = ' installFiles error';
+                $result = false;
+            }
+            if ( ! $this->installDB()) {
+                $this->messages[]   = ' installDB error';
+                $result = false;
+            }
+        } catch (Throwable $exception) {
+            $result = false;
+            $this->messages=$exception->getMessage();
+        }
+
+        return $result;
+    }
+
+    /**
+     * Выполняет активацию триалов, проверку лицензионного клчюча
+     *
+     * @return bool результат активации лицензии
+     */
+    protected function activateLicense(): bool{
+        return true;
+    }
+
+    /**
+     * Выполняет копирование необходимых файлов, в папки системы
+     *
+     * @return bool результат установки
+     */
+    protected function installFiles(): bool
+    {
+        $backupPath = "{$this->config->application->modulesDir}Backup/{$this->module_uniqid}";
+        if (is_dir($backupPath)) {
+            Util::mwexec("cp -r {$backupPath}/db/* {$this->moduleDir}/db/");
+        }
+        $this->fixRights();
+        return true;
+    }
+
+    /**
+     * Создает структуру для хранения настроек модуля в своей модели
+     * и заполняет настройки по-умолчанию если таблицы не было в системе
+     * см (unInstallDB)
+     *
+     * Регистрирует модуль в PbxExtensionModules
+     *
+     * @return bool результат установки
+     */
+    protected function installDB(): bool
+    {
+        $this->fixRights();
+        return true;
+    }
+
+    /**
+     * Последовательный вызов процедур установки модуля расширения
+     * с результата удаления
+     *
+     * @param $keepSettings bool - сохранять настройки модуля при удалении
+     *
+     * @return bool - результат удаления
+     */
+    public function uninstallModule($keepSettings = false): bool
+    {
+        $result = true;
+        try {
+            if ( ! $this->unInstallDB($keepSettings)) {
+                $this->messages[]= ' unInstallDB error';
+                $result = false;
+            }
+            if ($result && ! $this->unInstallFiles($keepSettings)) {
+                $this->messages[]= ' unInstallFiles error';
+                $result = false;
+            }
+        } catch (Throwable $exception) {
+            $result = false;
+            $this->messages=$exception->getMessage();
+        }
+
+        return $result;
+    }
+
+    /**
+     * Удаляет запись о модуле из PbxExtensionModules
+     * Удаляет свою модель
+     *
+     * @param  $keepSettings - оставляет таблицу с данными своей модели
+     *
+     * @return bool результат очистки
+     */
+    protected function unInstallDB($keepSettings = false): bool
+    {
+        return $this->unregisterModule();
+    }
+
+    /**
+     * Выполняет удаление своих файлов с остановной процессов
+     * при необходимости
+     *
+     * @param bool $keepSettings сохранять настройки
+     *
+     * @return bool результат удаления
+     */
+    protected function unInstallFiles($keepSettings = false) //: bool Пока мешает удалять и обновлять старые модули, раскоменитровать после релиза 2020.5
+    {
+        $backupPath = "{$this->config->application->modulesDir}Backup/{$this->module_uniqid}";
+        Util::mwexec("rm -rf {$backupPath}");
+        if ($keepSettings) {
+            if ( ! is_dir($backupPath) && ! mkdir($backupPath, 0777, true) && ! is_dir($backupPath)) {
+                $this->messages[] = sprintf('Directory "%s" was not created', $backupPath);
+
+                return false;
+            }
+            Util::mwexec("cp -r {$this->moduleDir}/db {$backupPath}/");
+        }
+        Util::mwexec("rm -rf {$this->moduleDir}");
+
+        return true;
+    }
+
+    /**
+     * Выполняет регистрацию модуля в таблице PbxExtensionModules
+     *
+     * @return bool
+     */
+    protected function registerNewModule(): bool
+    {
+        // Проверим версию АТС и Модуля на совместимость
+        $currentVersionPBX = PbxSettings::getValueByKey('PBXVersion');
+        $currentVersionPBX = str_replace('-dev','', $currentVersionPBX);
+        if (version_compare($currentVersionPBX, $this->min_pbx_version) < 0) {
+            $this->messages[] = "Error: module depends minimum PBX ver $this->min_pbx_version";
+            return false;
+        }
+
+        $module = PbxExtensionModules::findFirst("uniqid='{$this->module_uniqid}'");
+        if ( ! $module) {
+            $module           = new PbxExtensionModules();
+            $module->name     = $this->locString("SubHeader{$this->module_uniqid}");
+            $module->disabled = '1';
+        }
+        $module->uniqid        = $this->module_uniqid;
+        $module->developer     = $this->developer;
+        $module->version       = $this->version;
+        $module->description   = $this->locString("Breadcrumb{$this->module_uniqid}");
+        $module->support_email = $this->support_email;
+
+        return $module->save();
     }
 
     /**
@@ -139,34 +373,157 @@ abstract class PbxExtensionBase
     }
 
     /**
-     * Выполняет регистрацию модуля в таблице PbxExtensionModules
+     * Обходит файлы с описанием моделей и создает таблицы в базе данных
      *
      * @return bool
      */
-    protected function registerNewModule(): bool
+    protected function createSettingsTableByModelsAnnotations(): bool
     {
-        // Проверим версию АТС и Модуля на совместимость
-        $currentVersionPBX = PbxSettings::getValueByKey('PBXVersion');
-        if (version_compare($currentVersionPBX, $this->min_pbx_version) < 0) {
-            return false;
+        $result   = true;
+        $results  = glob($this->moduleDir . '/Models/*.php', GLOB_NOSORT);
+        foreach ($results as $file) {
+            $className        = pathinfo($file)['filename'];
+            $moduleModelClass = "\\Modules\\{$this->module_uniqid}\\Models\\{$className}";
+            $this->createUpdateDbTableByAnnotations($moduleModelClass);
         }
 
-        $module = PbxExtensionModules::findFirst("uniqid='{$this->module_uniqid}'");
-        if ( ! $module) {
-            $module           = new PbxExtensionModules();
-            $module->name     = $this->locString("SubHeader{$this->module_uniqid}");
-            $module->disabled = '1';
-        }
-        $module->uniqid        = $this->module_uniqid;
-        $module->developer     = $this->developer;
-        $module->version       = $this->version;
-        $module->description   = $this->locString("Breadcrumb{$this->module_uniqid}");
-        $module->support_email = $this->support_email;
+        // Подключаем db файлы модулей как севрисы в DI после пересоздания
+        DiServicesInstall::Register($this->di);
 
-        return $module->save();
+        return $result;
     }
 
     /**
+     * Create, update DB structure by code description
+     *
+     * @param $moduleModelClass - class name with namespace
+     *                          i.e. Models\Extensions or Modules\ModuleSmartIVR\Models\Settings
+     *
+     * @return bool
+     */
+    private function createUpdateDbTableByAnnotations($moduleModelClass): bool
+    {
+        $result = true;
+        if (!class_exists($moduleModelClass) || count(get_class_vars($moduleModelClass)) === 0) {
+            return $result;
+        }
+        $metaData = $this->di->get('modelsMetadata');
+        $model           = new $moduleModelClass;
+        $table_structure = [];
+
+        // Create columns list by code annotations
+        $newColNames     = $metaData->getAttributes($model);
+        foreach ($newColNames as $attribute) {
+            $table_structure[$attribute] = ['type' => Column::TYPE_TEXT, 'default' => ''];
+        }
+
+        // For each numeric column change type
+        $numericAttributes = $metaData->getDataTypesNumeric($model);
+        foreach ($numericAttributes as $attribute => $value) {
+            $table_structure[$attribute] = ['type' => Column::TYPE_INTEGER, 'default' => '0'];
+        }
+
+        // For each not nullable column change type
+        $notNull = $metaData->getNotNullAttributes($model);
+        foreach ($notNull as $attribute) {
+            $table_structure[$attribute]['notNull'] = true;
+        }
+
+        // Set default values for initial save, later it fill at Models\ModelBase\beforeValidationOnCreate
+        $defaultValues = $metaData->getDefaultValues($model);
+        foreach ($defaultValues as $key => $value) {
+            $table_structure[$key]['default'] = $value;
+        }
+
+        // Set primary keys
+        $primaryKeys = $metaData->getPrimaryKeyAttributes($model);
+        foreach ($primaryKeys as $attribute) {
+            $table_structure[$attribute]['primary'] = true;
+        }
+
+        // Find auto incremental column, usually it is ID column
+        $keyFiled = $metaData->getIdentityField($model);
+        if (isset($keyFiled)) {
+            $table_structure[$keyFiled] = [
+                'type'          => Column::TYPE_INTEGER,
+                'notNull'       => true,
+                'autoIncrement' => true,
+                'primary'       => true,
+            ];
+        }
+
+        // Create new table structure
+        $columns = [];
+        foreach ($table_structure as $colName => $colType) {
+            $columns[] = new Column($colName, $colType);
+        }
+
+        $columnsNew = ['columns' => $columns];
+        $tableName  = $model->getSource();
+        $this->moduleDB->begin();
+
+        if ( ! $this->moduleDB->tableExists($tableName)) {
+            $result = $this->moduleDB->createTable($tableName, null, $columnsNew);
+        } else { // Таблица существует, создадим новую и скопируем данные, чтобы не думать про новые, старые колонки
+
+            $columnsTemp = $this->moduleDB->describeColumns($tableName, null);
+
+            $currentStateColumnList = [];
+            $oldColNames            = []; // Старые названия колонок
+            $countColumnsTemp       = count($columnsTemp);
+            for ($k = 0; $k < $countColumnsTemp; $k++) {
+                $currentStateColumnList[$k] = $columnsTemp[$k]->getName();
+                $oldColNames[]              = $columnsTemp[$k]->getName();
+            }
+
+            $aquery = '
+            CREATE TEMPORARY TABLE ' . $tableName . '_backup(' . implode(',', $currentStateColumnList) . ');
+            INSERT INTO ' . $tableName . '_backup SELECT ' . implode(',',
+                    $currentStateColumnList) . ' FROM ' . $tableName . ';
+            DROP TABLE ' . $tableName . ';';
+            $result = $result && $this->moduleDB->execute($aquery);
+
+            $result = $result && $this->moduleDB->createTable($tableName, null, $columnsNew);
+
+            $newColumnNames = array_intersect($newColNames, $oldColNames);
+
+            $result = $result && $this->moduleDB->execute('
+            INSERT INTO ' . $tableName . '(' . implode(',', $newColumnNames) . ')
+            SELECT ' . implode(',', $newColumnNames) . ' FROM ' . $tableName . '_backup;
+        ');
+            $result = $result && $this->moduleDB->execute('
+            DROP TABLE ' . $tableName . '_backup;            
+        ');
+        }
+
+        // For each indexed columns change type
+        $reflection = $this->di->get('annotations')->get($model);
+        foreach ($reflection->getPropertiesAnnotations() as $name => $collection) {
+            if ($collection->has('Indexed')) {
+                // Define new unique index
+                $index_column = new Index(
+                    "{$name}_UNIQUE",
+                    [
+                        $name,
+                    ],
+                    'UNIQUE'
+                );
+                $result = $result && $this->moduleDB->addIndex($tableName, null, $index_column);
+            }
+        }
+        if ($result) {
+            $this->moduleDB->commit();
+        } else {
+            $this->messages[] = "Error: Failed on create table $tableName";
+            $this->moduleDB->rollback();
+        }
+        return $result;
+    }
+
+
+    /**
+     * DEPRECATED
+     *
      * Создает или обновляет структуру таблицы настроек
      *
      * @param $tableName
@@ -176,39 +533,39 @@ abstract class PbxExtensionBase
      */
     protected function createSettingsTable($tableName, $tableStructure): bool
     {
-
         $result           = true;
         $tableColumnTypes = [
-            'key'     => ['type'          => Column::TYPE_INTEGER,
-                          'notNull'       => true,
-                          'autoIncrement' => true,
-                          'primary'       => true,
+            'key'     => [
+                'type'          => Column::TYPE_INTEGER,
+                'notNull'       => true,
+                'autoIncrement' => true,
+                'primary'       => true,
             ],
             'integer' => ['type' => Column::TYPE_INTEGER, 'default' => '0'],
             'string'  => ['type' => Column::TYPE_TEXT, 'default' => ''],
         ];
-        $columns = [];
-        $newColNames = []; // Имена новых колонок в таблице
+        $columns          = [];
+        $newColNames      = []; // Имена новых колонок в таблице
         foreach ($tableStructure as $colName => $colType) {
-            $columns[] = new Column($colName, $tableColumnTypes[$colType]);
+            $columns[]     = new Column($colName, $tableColumnTypes[$colType]);
             $newColNames[] = $colName;
         }
         $columnsNew = ['columns' => $columns];
-        $this->db->begin();
+        $this->moduleDB->begin();
 
-        if ( ! $this->db->tableExists($tableName)) {
-            $result = $this->db->createTable($tableName, null, $columnsNew);
+        if ( ! $this->moduleDB->tableExists($tableName)) {
+            $result = $this->moduleDB->createTable($tableName, null, $columnsNew);
 
         } else { // Таблица существует, создадим новую и скопируем данные, чтобы не думать про новые, старые колонки
 
-            $columnsTemp = $this->db->describeColumns($tableName, null);
+            $columnsTemp = $this->moduleDB->describeColumns($tableName, null);
 
             $currentStateColumnList = [];
-            $oldColNames = []; // Старые названия колонок
-            $countColumnsTemp =  count($columnsTemp);
+            $oldColNames            = []; // Старые названия колонок
+            $countColumnsTemp       = count($columnsTemp);
             for ($k = 0; $k < $countColumnsTemp; $k++) {
                 $currentStateColumnList[$k] = $columnsTemp[$k]->getName();
-                $oldColNames[] = $columnsTemp[$k]->getName();
+                $oldColNames[]              = $columnsTemp[$k]->getName();
             }
 
             $aquery = '
@@ -216,32 +573,33 @@ abstract class PbxExtensionBase
             INSERT INTO ' . $tableName . '_backup SELECT ' . implode(',',
                     $currentStateColumnList) . ' FROM ' . $tableName . ';
             DROP TABLE ' . $tableName . ';';
-            $result = $result && $this->db->execute($aquery);
+            $result = $result && $this->moduleDB->execute($aquery);
 
-            $result = $result && $this->db->createTable($tableName, null, $columnsNew);
+            $result = $result && $this->moduleDB->createTable($tableName, null, $columnsNew);
 
             $newColumnNames = array_intersect($newColNames, $oldColNames);
 
-            $result = $result && $this->db->execute('
-            INSERT INTO ' . $tableName .'('. implode(',', $newColumnNames) . ')
+            $result = $result && $this->moduleDB->execute('
+            INSERT INTO ' . $tableName . '(' . implode(',', $newColumnNames) . ')
             SELECT ' . implode(',', $newColumnNames) . ' FROM ' . $tableName . '_backup;
         ');
-            $result = $result && $this->db->execute('
+            $result = $result && $this->moduleDB->execute('
             DROP TABLE ' . $tableName . '_backup;            
         ');
 
         }
         if ($result) {
-            $this->db->commit();
-            init_db($this->di, $this->phalconSettings);
+            $this->moduleDB->commit();
+            init_db($this->di, $this->config->toArray());
         } else {
-            Util::sys_log_msg('update_system_config', 'Error: Failed to create table ' . $tableName . '.');
+            $this->messages[] = "Error: Failed on create table $tableName";
         }
 
         return $result;
     }
 
     /**
+     * DEPRICATED
      * Удаляет указанную таблицу настроек модуля
      *
      * @param $tableName - имя таблицы
@@ -251,12 +609,12 @@ abstract class PbxExtensionBase
     protected function dropSettingsTable($tableName): bool
     {
         $result = true;
-        if ($this->db->tableExists($tableName)) {
-            $result = $this->db->dropTable($tableName);
+        if ($this->moduleDB->tableExists($tableName)) {
+            $result = $this->moduleDB->dropTable($tableName);
             if ($result === true) {
-                init_db($this->di, $this->phalconSettings);
+                init_db($this->di, $this->config->toArray());
             } else {
-                Util::sys_log_msg('update_system_config', "Error: Failed to drop table {$tableName}.");
+                $this->messages[] = "Error: Failed on drop table $tableName";
             }
         }
 
@@ -268,7 +626,7 @@ abstract class PbxExtensionBase
      *
      * @return bool результат очистки
      */
-    protected function unregisterModule() :bool
+    protected function unregisterModule(): bool
     {
         $result = true;
         $module = PbxExtensionModules::findFirst("uniqid='{$this->module_uniqid}'");
@@ -279,99 +637,51 @@ abstract class PbxExtensionBase
         return $result;
     }
 
-	/**
-     * Создает структуру для хранения настроек модуля в своей модели
-     * и заполняет настройки по-умолчанию если таблицы не было в системе
-     * см (unInstallDB)
+    /**
+     * Setup ownerships and folder rights
      *
-     * Регистрирует модуль в PbxExtensionModules
-     *
-     * @return bool результат установки
+     * @return bool
      */
-	abstract protected function installDB(): bool;
-
-	/**
-     * Выполняет копирование необходимых файлов, в папки системы
-     *
-     * @return bool результат установки
-     */
-	abstract protected function installFiles(): bool;
-
-	/**
-     * Удаляет запись о модуле из PbxExtensionModules
-     * Удаляет свою модель
-     *
-     * @param  $keepSettings - оставляет таблицу с данными своей модели
-     *
-     * @return bool результат очистки
-     */
-	abstract protected function unInstallDB($keepSettings = false): bool;
-
-	/**
-     * Выполняет удаление своих файлов с остановной процессов
-     * при необходимости
-     *
-     * @return bool результат удаления
-     */
-	abstract protected function unInstallFiles(): bool;
-
-
-	/**
-     * Выполняет активацию триалов, проверку лицензионного клчюча
-     *
-     * @return bool результат активации лицензии
-     */
-	abstract protected function activateLicense(): bool;
-	
-	/**
-     * Последовательный вызов процедур установки модуля расширения
-     * с текстового результата установки
-     *
-     * @return array - результат установки
-     */
-	public function installModule(): array
+    protected function fixRights() :bool
     {
-        $result = true;
-        $error  = '';
-        if ( ! $this->activateLicense()) {
-            $error  = 'License activate error';
-            $result = false;
-        }
-        if ( ! $this->installDB()) {
-            $error  .= ' installDB error';
-            $result = false;
-        }
-        if ( ! $this->installFiles()) {
-            $error  .= ' installFiles error';
-            $result = false;
-        }
+        Util::mwexec("chown -R www:www {$this->moduleDir}");
+        Util::mwexec("chmod -R 777 {$this->moduleDir}");
 
-        return ['result' => $result, 'error' => $error];
+        return true;
     }
 
-	/**
-     * Последовательный вызов процедур установки модуля расширения
-     * с результата удаления
+    /**
+     * Добавляет модуль в боковое меню
      *
-     * @param $keepSettings bool - сохранять настройки модуля при удалении
-     *
-     * @return array - результат удаления
+     * @return bool
      */
-	public function uninstallModule($keepSettings = false): array
+    protected function addToSidebar(): bool
     {
-        $result = true;
-        $error  = '';
-        if ( ! $this->unInstallDB($keepSettings)) {
-            $error  .= ' unInstallDB error';
-            $result = false;
+        $menuSettingsKey = "AdditionalMenuItem{$this->module_uniqid}";
+        $unCamelizedControllerName = Text::uncamelize($this->module_uniqid, '-');
+        $menuSettings = PbxSettings::findFirstByKey($menuSettingsKey);
+        if (!$menuSettings){
+            $menuSettings = new PbxSettings();
+            $menuSettings->key = $menuSettingsKey;
         }
-        if ($result && ! $this->unInstallFiles()) {
-            $error  .= ' unInstallFiles error';
-            $result = false;
-        }
-
-        return ['result' => $result, 'error' => $error];
+        $value = [
+            'uniqid'=>$this->module_uniqid,
+            'href'=>"/admin-cabinet/$unCamelizedControllerName",
+            'group'=>'maintenance',
+            'iconClass'=>'puzzle',
+            'caption'=>"Breadcrumb$this->module_uniqid",
+            'showAtSidebar'=>true,
+        ];
+        $menuSettings->value = json_encode($value);
+        return $menuSettings->save();
     }
 
-
+    /**
+     * Returns error messages
+     * @return array
+     */
+    public function getMessages(): array
+    {
+        return $this->messages;
+    }
 }

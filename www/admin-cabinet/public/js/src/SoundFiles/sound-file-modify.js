@@ -2,7 +2,7 @@
  * Copyright (C) MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 5 2018
+ * Written by Nikolay Beketov, 12 2019
  *
  */
 
@@ -51,7 +51,7 @@ const sndPlayer = {
 	},
 
 	cbOnSliderChange(newVal, meta) {
-		if (meta.triggeredByUser && isFinite(sndPlayer.slider.duration)) {
+		if (meta.triggeredByUser && Number.isFinite(sndPlayer.slider.duration)) {
 			sndPlayer.slider.removeEventListener('timeupdate', sndPlayer.cbTimeUpdate, false);
 			sndPlayer.slider.currentTime = (sndPlayer.slider.duration * newVal) / 100;
 			sndPlayer.slider.addEventListener('timeupdate', sndPlayer.cbTimeUpdate, false);
@@ -60,7 +60,7 @@ const sndPlayer = {
 	// timeUpdate
 	// Synchronizes playhead position with current point in audio
 	cbTimeUpdate() {
-		if (isFinite(sndPlayer.slider.duration)) {
+		if (Number.isFinite(sndPlayer.slider.duration)) {
 			const percent = sndPlayer.slider.currentTime / sndPlayer.slider.duration;
 			const rangePosition = Math.round((percent) * 100);
 			sndPlayer.$slider.range('set value', rangePosition);
@@ -130,6 +130,7 @@ const soundFileModify = {
 			soundFileModify.blob = window.URL || window.webkitURL;
 			const fileURL = soundFileModify.blob.createObjectURL(file);
 			sndPlayer.UpdateSource(fileURL);
+			soundFileModify.$formObj.addClass('loading');
 			PbxApi.SystemUploadAudioFile(file, soundFileModify.cbAfterUploadFile);
 		});
 
@@ -141,11 +142,12 @@ const soundFileModify = {
 		}
 	},
 	cbAfterUploadFile(filename) {
-		soundFileModify.$submitButton.removeClass('loading');
 		soundFileModify.trashBin.push(soundFileModify.$formObj.form('get value', 'path'));
 		soundFileModify.$formObj.form('set value', 'path', filename);
 		soundFileModify.$soundFileName.trigger('change');
 		sndPlayer.UpdateSource(`/pbxcore/api/cdr/playback?view=${filename}`);
+		soundFileModify.$submitButton.removeClass('loading');
+		soundFileModify.$formObj.removeClass('loading');
 	},
 	cbBeforeSendForm(settings) {
 		const result = settings;

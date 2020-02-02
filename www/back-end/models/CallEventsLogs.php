@@ -13,40 +13,43 @@ class CallEventsLogs extends ModelsBase
 {
 
     /**
-     * @var integer
+     * @Primary
+     * @Identity
+     * @Column(type="integer", nullable=false)
      */
-	public $id;
+    public $id;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
-	public $eventtime;
+    public $eventtime;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
-	public $app;
-
-	/**
-     * @var string
-     */
-	public $linkedid;
+    public $app;
 
     /**
-     * @var string
+     * @Primary
+     * @Column(type="string", nullable=true)
      */
-	public $datajson;
+    public $linkedid;
 
-	public function getSource() :string
-	{
-		return 'call_events';
-	}
+    /**
+     * @Column(type="string", nullable=true)
+     */
+    public $datajson;
 
-	public function initialize(): void
-	{
-		parent::initialize();
-		$this->useDynamicUpdate(true);
-		$this->setConnectionService('dbLog');
-	}
+    public function getSource(): string
+    {
+        return 'call_events';
+    }
+
+    public function initialize(): void
+    {
+        parent::initialize();
+        $this->useDynamicUpdate(true);
+        $this->setConnectionService('dbLog');
+    }
 
 }

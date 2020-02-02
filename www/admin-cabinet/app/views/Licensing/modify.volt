@@ -1,5 +1,25 @@
 {{ form('licensing/modify', 'role': 'form', 'class': 'ui form large', 'id':'licencing-modify-form') }}
 <input type="hidden" name = "backurl" value="{{ backurl }}">
+
+<div class="ui top attached tabular menu" id="licensing-menu">
+    <a class="item active" data-tab="intro">{{ t._('lic_IntroductionTabHeader') }}</a>
+    <a class="item" data-tab="management">{{ t._('lic_ManagementTabHeader') }}</a>
+</div>
+<div class="ui bottom attached tab segment active" data-tab="intro">
+    <div class="ui header">{{ t._('lic_FirstQuestionHeader') }}</div>
+    {{ t._('lic_FirstQuestionAnswer') }}
+    <div class="ui header">{{ t._('lic_MarketplaceHeader') }}</div>
+    {{ t._('lic_MarketplaceText') }}
+    <div class="ui header">{{ t._('lic_MarketplaceImageHeader') }}</div>
+    <div class="ui center aligned basic segment">
+        <img src="{{ modulesExampleImgPath}}" class="ui fluid image"/>
+        <div class="ui hidden divider"></div>
+        <a class="ui blue primary button" href="#management">{{ t._('lic_MarketplaceAction') }}</a>
+    </div>
+
+</div>
+<div class="ui bottom attached tab segment" data-tab="management">
+
 <div id="licenseKeySection">
     <h2 class="ui header">{{ t._('lic_LicenseKey') }}</h2>
 
@@ -75,7 +95,7 @@
             <label>{{ t._('lic_Inn') }}</label>
             {{ getTrialForm.render('inn') }}
         </div>
-        <div class="ui divider"></div>
+        <div class="ui hidden divider"></div>
     </div>
 
     <div id="couponSection">
@@ -84,12 +104,16 @@
             {{ activateCouponForm.render('coupon') }}
         </div>
         {{ t._('lic_CouponMessage') }}
-        <div class="ui divider"></div>
+        <div class="ui hidden divider"></div>
     </div>
+    <div class="ui header">{{ t._('lic_LastQuestionHeader') }}</div>
+    {{ t._('lic_LastQuestionAnswer') }}
+    <div class="ui hidden divider"></div>
     {{ partial("partials/submitbutton",['indexurl':'']) }}
     <button class="ui labeled icon large button" id="reset-license">
         <i class="recycle icon"></i>
         {{ t._('lic_ResetLicenseSettings') }}
     </button>
+</div>
 </div>
 </form>

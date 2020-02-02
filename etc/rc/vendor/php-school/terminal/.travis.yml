@@ -1,0 +1,22 @@
+language: php
+
+php:
+  - 7.1
+  - 7.2
+
+install:
+  - composer self-update
+  - composer install
+
+before_script:
+  - mkdir -p build/logs
+
+script:
+  - ./vendor/bin/phpunit --coverage-clover ./build/logs/clover.xml
+  - composer cs
+  - composer static
+
+after_script:
+  - bash <(curl -s https://codecov.io/bash)
+  - wget https://scrutinizer-ci.com/ocular.phar
+  - php ocular.phar code-coverage:upload --format=php-clover ./build/logs/clover.xml

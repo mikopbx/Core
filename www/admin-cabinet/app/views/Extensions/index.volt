@@ -27,7 +27,11 @@
                                                                   data-value="{{ extension['userid'] }}"> {{ extension['username'] }}
             </td>
             <td class="center aligned {{ extension['status'] }} disability">{{ extension['number'] }}</td>
-            <td class="center aligned {{ extension['status'] }} disability">{{ extension['mobile'] }}</td>
+            <td class="center aligned {{ extension['status'] }} disability" data-search="{{ extension['mobile'] }}">
+                <div class="ui transparent input">
+                    <input class="mobile-number-input" type="text" value="{{ extension['mobile'] }}">
+                </div>
+            </td>
             <td class="{{ extension['status'] }} disability">{{ extension['email'] }}</td>
                 {{ partial("partials/tablesbuttons",
                     [

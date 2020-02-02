@@ -1,122 +1,137 @@
 <?php
 /**
- * Copyright (C) MIKO LLC - All Rights Reserved
+ * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 7 2019
- *
+ * Written by Alexey Portnov, 12 2019
  */
 namespace Models;
 
 abstract class CallDetailRecordsBase extends ModelsBase
 {
-
     /**
-     * @var integer
+     * @Primary
+     * @Identity
+     * @Column(type="integer", nullable=false)
      */
     public $id;
 
     /**
      * Time call starts
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $start;
 
     /**
      * Time when call ends
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $endtime;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $answer;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $src_chan;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
+     */
+    public $src_num;
+
+    /**
+     * @Column(type="string", nullable=true)
      */
     public $dst_chan;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $dst_num;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $UNIQUEID;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $linkedid;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $did;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $disposition;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $recordingfile;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $from_account;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $to_account;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $dialstatus;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $appname;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $transfer;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $is_app;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $duration;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $billsec;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $work_completed;
+
+    /**
+     * @Column(type="string", nullable=true)
+     */
+    public $src_call_id;
+
+    /**
+     * @Column(type="string", nullable=true)
+     */
+    public $dst_call_id;
 
 
 }

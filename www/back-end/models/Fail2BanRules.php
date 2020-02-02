@@ -12,31 +12,33 @@ namespace Models;
 class Fail2BanRules extends ModelsBase
 {
     /**
-     * @var integer
+     * @Primary
+     * @Identity
+     * @Column(type="integer", nullable=false)
      */
     public $id;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $maxretry;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $bantime;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $findtime;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $whitelist;
 
-    public function getSource() :string
+    public function getSource(): string
     {
         return 'm_Fail2BanRules';
     }

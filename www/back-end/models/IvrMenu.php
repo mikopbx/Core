@@ -8,89 +8,93 @@
  */
 
 namespace Models;
+
 use Phalcon\Mvc\Model\Relation;
+use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
 class IvrMenu extends ModelsBase
 {
 
-	/**
-	 * @var integer
-	 */
+    /**
+     * @Primary
+     * @Identity
+     * @Column(type="integer", nullable=false)
+     */
     public $id;
 
-	/**
-	 * Адрес сервера 1С
-	 *
-	 * @var string
-	 */
+    /**
+     * Адрес сервера 1С
+     *
+     * @Column(type="string", nullable=true)
+     */
     public $uniqid;
 
-	/**
-	 * Номер IVR меню
-	 *
-	 * @var string
-	 */
+    /**
+     * Номер IVR меню
+     *
+     * @Column(type="string", nullable=true)
+     */
     public $extension;
 
-	/**
-	 * ID записи аудиоприветсвия
-	 *
-	 * @var string
-	 */
+    /**
+     * ID записи аудиоприветсвия
+     *
+     * @Column(type="string", nullable=true)
+     */
     public $audio_message_id;
 
-	/**
-	 * Название IVR меню
-	 *
-	 * @var string
-	 */
+    /**
+     * Название IVR меню
+     *
+     * @Column(type="string", nullable=true)
+     */
     public $name;
 
-	/**
-	 * Ожидание ввода внутреннего номера после проигрывания приветсвитя
-	 * 7 секунд по-умолчанию
-	 * @var integer
-	 */
-	public $timeout;
+    /**
+     * Ожидание ввода внутреннего номера после проигрывания приветсвитя
+     * 7 секунд по-умолчанию
+     * @Column(type="integer", nullable=true)
+     */
+    public $timeout;
 
-	/**
-	 * Номер на который уйдет вызов после $number_of_repeat попыток набора
-	 *
-	 * @var string
-	 */
+    /**
+     * Номер на который уйдет вызов после $number_of_repeat попыток набора
+     *
+     * @Column(type="string", nullable=true)
+     */
     public $timeout_extension;
 
-	/**
-	 * Разрешить донабор любого внутреннего номера
-	 *
-	 * @var integer
-	 */
+    /**
+     * Разрешить донабор любого внутреннего номера
+     *
+     * @Column(type="integer", nullable=true)
+     */
     public $allow_enter_any_internal_extension;
 
 
-	/**
-	 * Максимальное число повторов меню перед отправкой на номер по умолчанию
-	 *
-	 * @var integer
-	 */
-	public $number_of_repeat;
+    /**
+     * Максимальное число повторов меню перед отправкой на номер по умолчанию
+     *
+     * @Column(type="integer", nullable=true)
+     */
+    public $number_of_repeat;
 
-	/**
-	 * Комментарий
-	 *
-	 * @var string
-	 */
-	public $description;
+    /**
+     * Комментарий
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public $description;
 
-    public function getSource() :string
+    public function getSource(): string
     {
         return 'm_IvrMenu';
     }
 
-    public function initialize() :void
+    public function initialize(): void
     {
-	    parent::initialize();
+        parent::initialize();
         $this->belongsTo(
             'extension',
             'Models\Extensions',
@@ -100,7 +104,7 @@ class IvrMenu extends ModelsBase
                 'foreignKey' => [
                     'allowNulls' => false,
                     'action'     => Relation::NO_ACTION // IVR меню удаляем через его Extension
-                ]
+                ],
             ]
         );
 
@@ -111,10 +115,10 @@ class IvrMenu extends ModelsBase
             [
                 'alias'      => 'TimeoutExtensions',
                 'foreignKey' => [
-	                'message'    => 'Models\TimeoutExtensions',
-	                'allowNulls' => FALSE,
-	                'action'     => Relation::NO_ACTION// Не троогать Extensions
-                ]
+                    'message'    => 'Models\TimeoutExtensions',
+                    'allowNulls' => false,
+                    'action'     => Relation::NO_ACTION// Не троогать Extensions
+                ],
             ]
         );
 
@@ -123,14 +127,15 @@ class IvrMenu extends ModelsBase
             'Models\IvrMenuActions',
             'ivr_menu_id',
             [
-                'alias'=>'IvrMenuActions',
+                'alias'      => 'IvrMenuActions',
                 'foreignKey' => [
                     'allowNulls' => false,
-                    'action'     => Relation::ACTION_CASCADE //Удалить подчиненные все IvrMenuActions при удалении IvrMenu
+                    'action'     => Relation::ACTION_CASCADE
+                    //Удалить подчиненные все IvrMenuActions при удалении IvrMenu
                 ],
-                'params' => array(
-                    'order' => 'digits asc'
-                )
+                'params'     => [
+                    'order' => 'digits asc',
+                ],
             ]
         );
 
@@ -142,8 +147,8 @@ class IvrMenu extends ModelsBase
                 'alias'      => 'SoundFiles',
                 'foreignKey' => [
                     'allowNulls' => true,
-                    'action'     => Relation::NO_ACTION
-                ]
+                    'action'     => Relation::NO_ACTION,
+                ],
             ]
 
         );
@@ -152,13 +157,14 @@ class IvrMenu extends ModelsBase
     }
 
 
-    public function validation() :bool
+    public function validation(): bool
     {
 
-        $validation = new \Phalcon\Validation();
+        $validation = new Validation();
         $validation->add('uniqid', new UniquenessValidator([
-            'message' => $this->t('mo_ThisUniqidMustBeUniqueForIvrMenuModels')
+            'message' => $this->t('mo_ThisUniqidMustBeUniqueForIvrMenuModels'),
         ]));
+
         return $this->validate($validation);
 
 

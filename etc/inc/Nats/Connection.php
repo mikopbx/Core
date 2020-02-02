@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 9 2019
+ * Written by Alexey Portnov, 12 2019
  */
 
 namespace Nats;
@@ -108,7 +108,6 @@ class Connection
      * @var array list of subscriptions
      */
     private $subscriptions = [];
-
 
     /**
      * Return the number of subscriptions available.
@@ -545,6 +544,10 @@ class Connection
         $this->subscriptions["ERROR.MSG"] = $callback;
     }
 
+    public function setAfterPublishAction($callback){
+        $this->subscriptions["AFTER.PUBLISH.ACTION"] = $callback;
+    }
+
     /**
      * Subscribes to an specific event given a subject and a queue.
      *
@@ -605,6 +608,16 @@ class Connection
         $msg = $msg.' '.strlen($payload);
         $this->send($msg."\r\n".$payload);
         $this->pubs += 1;
+
+
+        $func = $this->subscriptions['AFTER.PUBLISH.ACTION']??null;
+        if(is_array($func)){
+            call_user_func($func, $msg);
+        } else if (is_callable($func) === true) {
+            $func($msg);
+        }
+
+
     }
 
     /**

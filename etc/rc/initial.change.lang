@@ -3,27 +3,11 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 2 2019
+ * Written by Alexey Portnov, 10 2019
  */
 
-$fp         = fopen('php://stdin', 'r');
-system('clear');
-echo "\n";
-echo \Util::translate("Change language")."\n";
-echo "*******************************\n\n";
-echo "1) Русский\n";
-echo "2) English\n";
-echo \Util::translate('Enter a number').": \n";
+$config     = new Config();
+$lang       = $config->get_general_settings('PBXLanguage');
+$new_lang   = ('en-en' === $lang)?'ru-ru':'en-en';
 
-$input = trim(fgets($fp));
-if('1' == $input){
-    $lang = 'ru-ru';
-}elseif('2' == $input){
-    $lang = 'en-en';
-}else{
-    sleep(1);
-    return 0;
-}
-$config = new \Config();
-$config->set_general_settings('PBXLanguage', $lang);
-sleep(2);
+$config->set_general_settings('PBXLanguage', $new_lang);

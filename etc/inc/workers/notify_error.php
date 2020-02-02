@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 12 2018
+ * Written by Alexey Portnov, 1 2020
  */
 
 require_once 'globals.php';
@@ -11,7 +11,7 @@ require_once 'globals.php';
 class notify_error {
     private $queue          = [];
     private $starting_point = 0;
-    private $interval       = 600;
+    private $interval       = 28800;
 
     /**
      * Обработчик пинга. Тут же проверка необходимости оповещения.
@@ -47,8 +47,16 @@ class notify_error {
         if(empty($body)){
             return;
         }
+        $mail_body = '';
+        if(is_array($body)){
+            foreach ($body as $key => $val){
+                $mail_body .= "$key: $val <br>";
+            }
+        }else{
+            $mail_body = trim($body);
+        }
         // Наполняем массив уникальными даными.
-        $this->queue[$body] = 'Storage error:';
+        $this->queue[$mail_body] = 'Storage error:';
     }
 
     /**

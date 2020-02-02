@@ -15,102 +15,107 @@ use Phalcon\Mvc\Model\ResultsetInterface;
 class NetworkFilters extends ModelsBase
 {
     /**
-     * @var integer
+     * @Primary
+     * @Identity
+     * @Column(type="integer", nullable=false)
      */
     public $id;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $permit;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $deny;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $newer_block_ip;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
-	public $local_network;
+    public $local_network;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $description;
 
-    public function getSource() :string
+    public function getSource(): string
     {
         return 'm_NetworkFilters';
     }
 
-    public function initialize() :void
+    public function initialize(): void
     {
-	    parent::initialize();
+        parent::initialize();
         $this->hasMany(
             'id',
             'Models\Sip',
             'networkfilterid',
-	        [
-		        'alias'=>'Sip',
-		        'foreignKey' => [
-			        'allowNulls' => true,
-			        'action'     => Relation::NO_ACTION
-		        ]
-	        ]
+            [
+                'alias'      => 'Sip',
+                'foreignKey' => [
+                    'allowNulls' => true,
+                    'action'     => Relation::NO_ACTION,
+                ],
+            ]
         );
         $this->hasMany(
             'id',
             'Models\FirewallRules',
             'networkfilterid',
             [
-                'alias'=>'FirewallRules',
+                'alias'      => 'FirewallRules',
                 'foreignKey' => [
                     'allowNulls' => true,
-                    'action'     => Relation::ACTION_CASCADE
-                ]
+                    'action'     => Relation::ACTION_CASCADE,
+                ],
             ]
         );
         $this->hasMany(
             'id',
             'Models\AsteriskManagerUsers',
             'networkfilterid',
-	        [
-		        'alias'=>'AsteriskManagerUsers',
-		        'foreignKey' => [
-			        'allowNulls' => true,
-			        'action'     => Relation::NO_ACTION
-		        ]
-	        ]
+            [
+                'alias'      => 'AsteriskManagerUsers',
+                'foreignKey' => [
+                    'allowNulls' => true,
+                    'action'     => Relation::NO_ACTION,
+                ],
+            ]
         );
     }
 
     /**
      * Вернуть список подсетей с разрешенным типом трафика
+     *
      * @param array $arrTrafficCategory
+     *
      * @return ResultsetInterface
      */
-    public static function getAllowedFiltersForType($arrTrafficCategory) :ResultsetInterface
+    public static function getAllowedFiltersForType($arrTrafficCategory): ResultsetInterface
     {
-        $parameters=array(
-            'conditions'=>'FirewallRules.category in ({arrkeys:array}) and FirewallRules.action="allow"',
-            'bind'=>array(
-                'arrkeys'=>$arrTrafficCategory
-            ),
-            'joins'=>array(
-                'FirewallRules'=>array(
-                            0=>'\Models\FirewallRules',
-                            1=>'FirewallRules.networkfilterid=\Models\NetworkFilters.id',
-                            2=>'FirewallRules',
-                            3=>'INNER'
-                )
-            )
-        );
+        $parameters = [
+            'conditions' => 'FirewallRules.category in ({arrkeys:array}) and FirewallRules.action="allow"',
+            'bind'       => [
+                'arrkeys' => $arrTrafficCategory,
+            ],
+            'joins'      => [
+                'FirewallRules' => [
+                    0 => '\Models\FirewallRules',
+                    1 => 'FirewallRules.networkfilterid=\Models\NetworkFilters.id',
+                    2 => 'FirewallRules',
+                    3 => 'INNER',
+                ],
+            ],
+        ];
+
         return NetworkFilters::find($parameters);
     }
 

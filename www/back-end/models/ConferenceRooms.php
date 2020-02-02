@@ -8,60 +8,70 @@
  */
 
 namespace Models;
-use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
+
 use Phalcon\Mvc\Model\Relation;
+use Phalcon\Validation;
+use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
 class ConferenceRooms extends ModelsBase
 {
     /**
-     * @var integer
+     * @Primary
+     * @Identity
+     * @Column(type="integer", nullable=false)
      */
     public $id;
 
     /**
-     * @var string
+     * @Primary
+     * @Column(type="string", nullable=true)
      */
     public $uniqid;
 
     /**
-     * @var string
+     * Link to Extension
+     *
+     * @Column(type="string", nullable=true)
      */
     public $extension;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $name;
 
-    public function getSource() :string
+    public function getSource(): string
     {
         return 'm_ConferenceRooms';
     }
-    public function initialize() :void 
+
+    public function initialize(): void
     {
-	    parent::initialize();
+        parent::initialize();
         $this->belongsTo(
             'extension',
             'Models\Extensions',
             'number',
             [
-                'alias'=>'Extensions',
+                'alias'      => 'Extensions',
                 'foreignKey' => [
                     'allowNulls' => false,
                     'action'     => Relation::NO_ACTION // Удаляем всегда Extension, а он удалить эту запись
-                ]
+                ],
             ]
         );
 
 
     }
+
     public function validation()
     {
 
-        $validation = new \Phalcon\Validation();
+        $validation = new Validation();
         $validation->add('uniqid', new UniquenessValidator([
-            'message' => $this->t('mo_ThisUniqidMustBeUniqueForConferenceRoomsModels')
+            'message' => $this->t('mo_ThisUniqidMustBeUniqueForConferenceRoomsModels'),
         ]));
+
         return $this->validate($validation);
 
 

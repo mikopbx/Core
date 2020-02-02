@@ -19,6 +19,18 @@
         <div class="ui red approve button">{{ t._('ext_Delete') }}</div>
     </div>
 </div>
+{{ link_to("#", '<i class="upload icon"></i>  '~t._('ext_AddNewExtension'), "class": "ui blue button add-new", "id":"add-new-button") }}
+<a href="https://github.com/mikopbx/ModuleTemplate" target="_blank" class="ui basic button add-new"><i class="plus icon"></i> {{ t._('ext_CreateNewExtension') }}</a>
+
+<div>
+    <input type="file" name="update-file" accept=".zip" style="display: none!important;"/>
+    <div class="ui indicating progress" id="upload-progress-bar">
+        <div class="bar">
+            <div class="progress"></div>
+        </div>
+        <div class="label"></div>
+    </div>
+</div>
 
 {% for module in modulelist %}
     {% if loop.first %}
@@ -36,8 +48,8 @@
     {% endif %}
     <tr class="module-row" id="{{ module['uniqid'] }}">
         <td class="collapsing no-modify-columns">
-            <div class="ui  toggle checkbox">
-                <input type="checkbox" {% if module['status']!='disabled' %} checked {% endif %}> <label></label>
+            <div class="ui toggle checkbox" data-value="{{ module['uniqid'] }}">
+                <input type="checkbox" {% if module['status']!=='disabled' %} checked {% endif %}/> <label></label>
             </div>
         </td>
         <td class="{{ module['status'] }} disability">{{ t._('Breadcrumb'~module['uniqid']) }}<br><span
@@ -56,7 +68,7 @@
         </table>
     {% endif %}
 {% endfor %}
-
+<div class="ui hidden divider"></div>
 <div id="online-updates-block" style="display: none">
     <h3 class="ui header">{{ t._('ext_AvailableModules') }}</h3>
     <table class="ui celled table" id="new-modules-table">

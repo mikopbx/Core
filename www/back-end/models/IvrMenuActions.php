@@ -11,60 +11,63 @@ namespace Models;
 
 use Phalcon\Mvc\Model\Relation;
 
-class IvrMenuActions extends ModelsBase {
+class IvrMenuActions extends ModelsBase
+{
 
     /**
-     * @var integer
+     * @Primary
+     * @Identity
+     * @Column(type="integer", nullable=false)
      */
-	public $id;
+    public $id;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
-	public $ivr_menu_id;
+    public $ivr_menu_id;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
-	public $digits;
+    public $digits;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
-	public $extension;
+    public $extension;
 
-	public function getSource()  :string
+    public function getSource(): string
     {
-		return 'm_IvrMenuActions';
-	}
+        return 'm_IvrMenuActions';
+    }
 
-	public function initialize() :void
+    public function initialize(): void
     {
-		parent::initialize();
-		$this->belongsTo(
-			'extension',
-			'Models\Extensions',
-			'number',
-			[
-				'alias'      => 'Extensions',
-				'foreignKey' => [
-					'allowNulls' => FALSE,
-					'action'     => Relation::NO_ACTION,
-				],
-			]
-		);
-		$this->belongsTo(
-			'ivr_menu_id',
-			'Models\IvrMenu',
-			'uniqid',
-			[
-				'alias'      => 'IvrMenu',
-				'foreignKey' => [
-					'allowNulls' => FALSE,
-					'action'     => Relation::NO_ACTION,
-				],
-			]
-		);
-	}
+        parent::initialize();
+        $this->belongsTo(
+            'extension',
+            'Models\Extensions',
+            'number',
+            [
+                'alias'      => 'Extensions',
+                'foreignKey' => [
+                    'allowNulls' => false,
+                    'action'     => Relation::NO_ACTION,
+                ],
+            ]
+        );
+        $this->belongsTo(
+            'ivr_menu_id',
+            'Models\IvrMenu',
+            'uniqid',
+            [
+                'alias'      => 'IvrMenu',
+                'foreignKey' => [
+                    'allowNulls' => false,
+                    'action'     => Relation::NO_ACTION,
+                ],
+            ]
+        );
+    }
 
 }

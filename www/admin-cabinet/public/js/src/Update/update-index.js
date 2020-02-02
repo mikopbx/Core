@@ -2,11 +2,11 @@
  * Copyright (C) MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 7 2018
+ * Written by Nikolay Beketov, 12 2019
  *
  */
 
-/* global PbxApi, globalPBXVersion, globalTranslate, ConfigWorker,
+/* global PbxApi, globalPBXVersion, globalTranslate,
 globalPBXLanguage, globalPBXVersion, showdown, UserMessage */
 
 const upgradeStatusLoopWorker = {
@@ -82,7 +82,6 @@ const updatePBX = {
 								closable: false,
 								onDeny: () => true,
 								onApprove: () => {
-									ConfigWorker.stopConfigWorker();
 									updatePBX.$submitButton.addClass('loading');
 									updatePBX.upgradeInProgress = true;
 									const data = $('input:file')[0].files[0];
@@ -128,7 +127,6 @@ const updatePBX = {
 							closable: false,
 							onDeny: () => true,
 							onApprove: () => {
-								ConfigWorker.stopConfigWorker();
 								const params = [];
 								const $aLink = $(e.target).closest('a');
 								params.updateLink = $aLink.attr('href');
@@ -160,7 +158,6 @@ const updatePBX = {
 			} else {
 				updatePBX.$progressBarLabel.text(globalTranslate.upd_UpgradeInProgress);
 			}
-
 		}
 	},
 	AddNewVersionInformation(obj) {

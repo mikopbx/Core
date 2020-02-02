@@ -9,129 +9,131 @@
 
 namespace Models;
 
-use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
-
 use Phalcon\Mvc\Model\Relation;
+use Phalcon\Validation;
+use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
 class Sip extends ModelsBase
 {
     /**
-     * @var integer
+     * @Primary
+     * @Identity
+     * @Column(type="integer", nullable=false)
      */
     public $id;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $uniqid;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $disabled;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $extension;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $type;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $host;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $port;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $username;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $secret;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $defaultuser;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $fromuser;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $fromdomain;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $nat;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $dtmfmode;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $qualifyfreq;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $qualify;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $busylevel;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $networkfilterid;
 
     /**
-     * @var integer
+     * @Column(type="string", nullable=true)
      */
     public $manualattributes;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $manualregister;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $disablefromuser;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $noregister;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $receive_calls_without_auth;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $description;
 
@@ -199,19 +201,19 @@ class Sip extends ModelsBase
         );
     }
 
-    public function setManualAttributes($text) :void
+    public function setManualAttributes($text): void
     {
         $this->manualattributes = base64_encode($text);
     }
 
-    public function getManualAttributes() :string
+    public function getManualAttributes(): string
     {
         return base64_decode($this->manualattributes);
     }
 
-    public function validation() :bool
+    public function validation(): bool
     {
-        $validation = new \Phalcon\Validation();
+        $validation = new Validation();
         $validation->add('uniqid', new UniquenessValidator([
             'message' => $this->t('mo_ThisUniqidMustBeUniqueForSIPModels'),
         ]));

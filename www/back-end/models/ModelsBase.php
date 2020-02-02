@@ -9,35 +9,43 @@
 
 namespace Models;
 
+use Exception;
+use Phalcon\Db\RawValue;
 use Phalcon\Mvc\Model;
 use Phalcon\Mvc\Model\Message;
 use Phalcon\Mvc\Model\Relation;
-use Exception;
 
 class ModelsBase extends Model
 {
 
-    public function initialize()
+    public function initialize(): void
     {
         $this->setup(['orm.events' => true]);
         $this->keepSnapshots(true);
 
         // Пройдемся по модулям и подключим их отношения к текущей модели, если они описаны
         $parameters['conditions'] = 'disabled=0';
-        if ($this->getDI()->has('modelsCache')) {
-            $category            = explode('\\', static::class)[1];
-            $parameters['cache'] = [
-                'key'      => $category,
-                'lifetime' => 10,
-            ];
-        }
-        $modules = PbxExtensionModules::find($parameters);
-        foreach ($modules as $module) {
-            $moduleModelClass = "\\Modules\\{$module->uniqid}\\Models\\{$module->uniqid}";
-            if (class_exists($moduleModelClass) && method_exists($moduleModelClass, 'getDynamicRelations')) {
-                $relations = $moduleModelClass::getDynamicRelations(static::class);
-                foreach ($relations as $relation => $rule) {
-                    $this->$relation(...$rule);
+        // if ($this->getDI()->has('modelsCache')) {
+        //     $category            = explode('\\', static::class)[1];
+        //     $parameters['cache'] = [
+        //         'key'      => $category,
+        //         'lifetime' => 10,
+        //     ];
+        // }
+        if ($this->getDI()->get('db')->tableExists('m_PbxExtensionModules')) {
+            $modules = PbxExtensionModules::find($parameters);
+            foreach ($modules as $module) {
+                $moduleModelsDir = $this->di->getConfig()->application->modulesDir . $module->uniqid . '/Models';
+                $results         = glob($moduleModelsDir . '/*.php', GLOB_NOSORT);
+                foreach ($results as $file) {
+                    $className        = pathinfo($file)['filename'];
+                    $moduleModelClass = "\\Modules\\{$module->uniqid}\\Models\\{$className}";
+                    if (class_exists($moduleModelClass) && method_exists($moduleModelClass, 'getDynamicRelations')) {
+                        $relations = $moduleModelClass::getDynamicRelations(static::class);
+                        foreach ($relations as $relation => $rule) {
+                            $this->$relation(...$rule);
+                        }
+                    }
                 }
             }
         }
@@ -53,7 +61,7 @@ class ModelsBase extends Model
      * например Models\IvrMenuTimeout, иначе метод getRelated не сможет найти зависимые
      * записи в моделях
      */
-    public function onValidationFails()
+    public function onValidationFails(): void
     {
         $errorMessages = $this->getMessages();
         foreach ($errorMessages as $errorMessage) {
@@ -64,7 +72,7 @@ class ModelsBase extends Model
                     $newErrorMessage = $this->t('ConstraintViolation');
                     $newErrorMessage .= "<ul class='list'>";
                     if ($relatedRecords === false) {
-                        throw new Exception('Error on models relationship '. $errorMessage);
+                        throw new Exception('Error on models relationship ' . $errorMessage);
                     }
                     if (is_a($relatedRecords, "Phalcon\Mvc\Model\Resultset")) {
                         foreach ($relatedRecords as $item) {
@@ -83,12 +91,44 @@ class ModelsBase extends Model
     }
 
     /**
+     * Функция для доступа к массиву переводов из моделей, используется для
+     * сообщений на понятном пользователю языке
+     *
+     * @param       $message
+     * @param array $parameters
+     *
+     * @return mixed
+     */
+    public function t($message, $parameters = [])
+    {
+        if (php_sapi_name() !== 'cli') {
+            return $this->getDI()->getTranslation()->t($message, $parameters);
+        } else {
+            return $message;
+        }
+    }
+
+    /**
+     * Fill default values from annotations
+     */
+    public function beforeValidationOnCreate(): void
+    {
+        $metaData      = $metaData = $this->di->get('modelsMetadata');
+        $defaultValues = $metaData->getDefaultValues($this);
+        foreach ($defaultValues as $field => $value) {
+            if ( ! isset($this->{$field}) || $this->{$field} === null) {
+                $this->{$field} = new RawValue($value);
+            }
+        }
+    }
+
+    /**
      * Функция позволяет вывести список зависимостей с сылками,
      * которые мешают удалению текущей сущности
      *
      * @return bool
      */
-    public function beforeDelete()
+    public function beforeDelete(): bool
     {
         $result = true;
         $relations
@@ -154,30 +194,73 @@ class ModelsBase extends Model
     }
 
     /**
-     * Функция для доступа к массиву переводов из моделей, используется для
-     * сообщений на понятном пользователю языке
-     *
-     * @param       $message
-     * @param array $parameters
-     *
-     * @return mixed
+     * После сохранения данных любой модели
      */
-    public function t($message, $parameters = [])
+    public function afterSave(): void
     {
+        $this->processSettingsChanges('afterSave');
+        $this->clearCache(static::class);
+    }
+
+    /**
+     * Готовит массив действий для перезапуска модулей ядра системы
+     * и Asterisk
+     *
+     * @param $action string  быть afterSave или afterDelete
+     */
+    private function processSettingsChanges(string $action): void
+    {
+
         if (php_sapi_name() !== 'cli') {
-            return $this->getDI()->getTranslation()->t($message, $parameters);
-        } else {
-            return $message;
+
+            if ( ! $this->hasSnapshotData()) {
+                return;
+            } // нечего менять
+
+            $changedFields = $this->getUpdatedFields();
+            if (empty($changedFields) && $action === 'afterSave') {
+                return;
+            }
+
+            // Запишем информацию о изменениях в очередь
+            $queue = $this->getDI()->getQueueModelsEvents();
+
+            if ($this instanceof PbxSettings) {
+                $id = $this->key;
+            } else {
+                $id = $this->id;
+            }
+
+            $queue->put(
+                [
+                    'model'         => get_class($this),
+                    'recordId'      => $id,
+                    'action'        => $action,
+                    'changedFields' => $changedFields,
+                ]
+            );
+
         }
     }
 
     /**
-     * После сохранения данных любой модели
+     * Очистка кешей при сохранении данных в базу
+     *
+     * @param $calledClass string модель, с чей кеш будем чистить в полном формате
      */
-    public function afterSave()
+    public function clearCache($calledClass): void
     {
-        $this->processSettingsChanges('afterSave');
-        $this->clearCache(static::class);
+        $cache    = $this->getDI()->getManagedCache();
+        $category = explode('\\', $calledClass)[1];
+        $keys     = $cache->queryKeys($category);
+        foreach ($keys as $key) {
+            $cache->delete($key);
+        }
+
+        if ($this->getDI()->has('modelsCache')) {
+            $this->getDI()->get('modelsCache')->delete($category);
+        }
+
     }
 
     /**
@@ -198,14 +281,15 @@ class ModelsBase extends Model
      *
      * @return string
      */
-    public function getRepresent($needLink = false)
+    public function getRepresent($needLink = false): string
     {
         if ($this->id === null) {
             return $this->t('mo_NewElement');
         }
 
         $url      = $this->getDI()->getUrl();
-        $category = explode('\\', get_called_class())[1];
+        $link     = '#';
+        $category = explode('\\', static::class)[1];
         switch ($category) {
             case 'AsteriskManagerUsers':
                 $link = $url->get('asterisk-managers/modify/' . $this->id);
@@ -248,7 +332,7 @@ class ModelsBase extends Model
                 $link = $url->get('extensions/modify/' . $this->id);
                 // Для внутреннего номера бывают разные представления
                 if ($this->userid > 0) {
-                    if ($this->type == 'EXTERNAL') {
+                    if ($this->type === 'EXTERNAL') {
                         $icon = '<i class="icons"><i class="user outline icon"></i><i class="top right corner alternate mobile icon"></i></i>';
                     } else {
                         $icon = '<i class="icons"><i class="user outline icon"></i></i>';
@@ -330,11 +414,9 @@ class ModelsBase extends Model
                 $name = $this->IvrMenu->name;
                 break;
             case 'Codecs':
-                $link = '#';
                 $name = $this->name;
                 break;
             case 'IaxCodecs':
-                $link = '#';
                 $name = $this->codec;
                 break;
             case 'IncomingRoutingTable':
@@ -360,7 +442,7 @@ class ModelsBase extends Model
                 $name = $this->description;
                 break;
             case 'Providers':
-                if ($this->type == "IAX") {
+                if ($this->type === "IAX") {
                     $link = $url->get('providers/modifyiax/' . $this->uniqid);
                     $name = $this->Iax->getRepresent();
                 } else {
@@ -391,16 +473,13 @@ class ModelsBase extends Model
                             . $this->description;
                     }
                 } else { // Что это?
-                    $link = '#';
                     $name = $this->description;
                 }
                 break;
             case 'SipCodecs':
-                $link = '#';
                 $name = $this->codec;
                 break;
             case 'Users':
-                $link = '#';
                 $name = '<i class="user outline icon"></i> ' . $this->username;
                 break;
             case 'SoundFiles':
@@ -446,166 +525,5 @@ class ModelsBase extends Model
         return $s;
     }
 
-    /**
-     * Готовит массив действий для перезапуска модулей ядра системы
-     * и Asterisk
-     *
-     * @param $action string  быть afterSave или afterDelete
-     */
-    private function processSettingsChanges(string $action): void
-    {
-
-        if (php_sapi_name() !== 'cli') {
-            $session = $this->getDI()->getSession();
-            if ($session->has('configuration-has-changes')) {
-                $previousArr = $session->get('configuration-has-changes');
-            } else {
-                $previousArr = [];
-            }
-
-            if ( ! $this->hasSnapshotData()) {
-                return;
-            } // нечего менять
-
-            $changedFields = $this->getUpdatedFields();
-            if (empty($changedFields) && $action === 'afterSave') {
-                return;
-            }
-            switch (get_called_class()) {
-                case 'Models\AsteriskManagerUsers':
-                    $previousArr['ReloadManagers'] = true;
-                    break;
-                case 'Models\CallQueueMembers':
-                    $previousArr['ReloadQueue'] = true;
-                    break;
-                case 'Models\CallQueues':
-                    $previousArr['ReloadQueue']    = true;
-                    $previousArr['ReloadDialplan'] = true;
-                    break;
-                case 'Models\ConferenceRooms':
-                    $previousArr['ReloadDialplan'] = true;
-                    break;
-                case 'Models\CustomFiles':
-                    $previousArr['UpdateCustomFiles'] = true;
-                    break;
-                case 'Models\DialplanApplications':
-                    $previousArr['ReloadDialplan'] = true;
-                    break;
-                case 'Models\ExtensionForwardingRights':
-                    $previousArr['ReloadSip']      = true;
-                    $previousArr['ReloadDialplan'] = true;
-                    break;
-                case 'Models\Extensions':
-                    $previousArr['ReloadDialplan'] = true;
-                    break;
-                case 'Models\ExternalPhones':
-                    $previousArr['ReloadDialplan'] = true;
-                    break;
-                case 'Models\Fail2BanRules':
-                    $previousArr['ReloadFirewall'] = true;
-                    break;
-                case 'Models\FirewallRules':
-                    $previousArr['ReloadFirewall'] = true;
-                    break;
-                case 'Models\Iax':
-                    $previousArr['ReloadIax']      = true;
-                    $previousArr['ReloadDialplan'] = true;
-                    break;
-                case 'Models\IaxCodecs':
-                    $previousArr['ReloadIax'] = true;
-                    break;
-                case 'Models\IncomingRoutingTable':
-                    $previousArr['ReloadDialplan'] = true;
-                    break;
-                case 'Models\IvrMenu':
-                    $previousArr['ReloadDialplan'] = true;
-                    break;
-                case 'Models\IvrMenuActions':
-                    $previousArr['ReloadDialplan'] = true;
-                    break;
-                case 'Models\LanInterfaces':
-                    $previousArr['ReloadNetwork'] = true;
-                    $previousArr['ReloadIax']     = true;
-                    $previousArr['ReloadSip']     = true;
-                    break;
-                case 'Models\NetworkFilters':
-                    $previousArr['ReloadFirewall'] = true;
-                    $previousArr['ReloadSip']      = true;
-                    $previousArr['ReloadManagers'] = true;
-                    break;
-                case 'Models\OutgoingRoutingTable':
-                    $previousArr['ReloadDialplan'] = true;
-                    break;
-                case 'Models\OutWorkTimes':
-                    $previousArr['ReloadDialplan'] = true;
-                    break;
-                case 'Models\PbxSettings':
-                    if ($this->itHasFeaturesSettingsChanges()) {
-                        $previousArr['ReloadFeatures'] = true;
-                    }
-                    if ($this->itHasAMIParametersChanges()) {
-                        $previousArr['ReloadManagers'] = true;
-                    }
-                    if ($this->itHasIaxParametersChanges()) {
-                        $previousArr['ReloadIax'] = true;
-                    }
-                    if ($this->itHasSipParametersChanges()) {
-                        $previousArr['ReloadSip'] = true;
-                    }
-                    if ($this->itHasSSHParametersChanges()) {
-                        $previousArr['ReloadSSH'] = true;
-                    }
-                    if ($this->itHasFirewallParametersChanges()) {
-                        $previousArr['ReloadFirewall'] = true;
-                        FirewallRules::updatePorts($this);
-                    }
-                    if ($this->itHasWebParametersChanges()) {
-                        $previousArr['ReloadNginx'] = true;
-                    }
-                    if ($this->itHasCronParametersChanges()) {
-                        $previousArr['ReloadCron'] = true;
-                    }
-                    if ($this->itHasDialplanParametersChanges()) {
-                        $previousArr['ReloadDialplan'] = true;
-                    }
-                    break;
-                case 'Models\Sip':
-                    $previousArr['ReloadSip']      = true;
-                    $previousArr['ReloadDialplan'] = true;
-                    break;
-                case 'Models\SipCodecs':
-                    $previousArr['ReloadSip'] = true;
-                    break;
-                case 'Models\SoundFiles':
-                    $previousArr['ReloadDialplan'] = true;
-                    break;
-                case 'Models\BackupRules':
-                    $previousArr['ReloadCron'] = true;
-                    break;
-                default:
-            }
-            $session->set('configuration-has-changes', $previousArr);
-        }
-    }
-
-    /**
-     * Очистка кешей при сохранении данных в базу
-     *
-     * @param $calledClass string модель, с чей кеш будем чистить в полном формате
-     */
-    public function clearCache($calledClass): void
-    {
-        $cache    = $this->getDI()->getManagedCache();
-        $category = explode('\\', $calledClass)[1];
-        $keys     = $cache->queryKeys($category);
-        foreach ($keys as $key) {
-            $cache->delete($key);
-        }
-
-        if ($this->getDI()->has('modelsCache')) {
-            $this->getDI()->get('modelsCache')->delete($category);
-        }
-
-    }
 
 }

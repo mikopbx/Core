@@ -8,60 +8,64 @@
  */
 
 namespace Models;
-use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
+
 use Phalcon\Mvc\Model\Relation;
+use Phalcon\Validation;
+use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
 class ExtensionForwardingRights extends ModelsBase
 {
     /**
-     * @var integer
+     * @Primary
+     * @Identity
+     * @Column(type="integer", nullable=false)
      */
     public $id;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $extension;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $forwarding;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $forwardingonbusy;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $forwardingonunavailable;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $ringlength;
 
-    public function getSource() :string 
+    public function getSource(): string
     {
         return 'm_ExtensionForwardingRights';
     }
 
-    public function initialize() :void 
+    public function initialize(): void
     {
-	    parent::initialize();
+        parent::initialize();
         $this->belongsTo(
             'extension',
             'Models\Extensions',
             'number',
             [
-                'alias'=>'Extensions',
+                'alias'      => 'Extensions',
                 'foreignKey' => [
                     'allowNulls' => false,
                     'message'    => 'Models\Extensions',
-                    'action'     => Relation::NO_ACTION
-                ]
+                    'action'     => Relation::NO_ACTION,
+                ],
             ]
         );
 
@@ -70,12 +74,12 @@ class ExtensionForwardingRights extends ModelsBase
             'Models\Extensions',
             'number',
             [
-                'alias'=>'ForwardingExtensions',
+                'alias'      => 'ForwardingExtensions',
                 'foreignKey' => [
                     'allowNulls' => true,
                     'message'    => 'Models\ForwardingExtensions',
-                    'action'     => Relation::NO_ACTION
-                ]
+                    'action'     => Relation::NO_ACTION,
+                ],
             ]
         );
 
@@ -84,12 +88,12 @@ class ExtensionForwardingRights extends ModelsBase
             'Models\Extensions',
             'number',
             [
-                'alias'=>'ForwardingBusyExtensions',
+                'alias'      => 'ForwardingBusyExtensions',
                 'foreignKey' => [
                     'allowNulls' => true,
                     'message'    => 'Models\ForwardingBusyExtensions',
-                    'action'     => Relation::NO_ACTION
-                ]
+                    'action'     => Relation::NO_ACTION,
+                ],
             ]
         );
 
@@ -98,24 +102,26 @@ class ExtensionForwardingRights extends ModelsBase
             'Models\Extensions',
             'number',
             [
-                'alias'=>'ForwardingUnavailableExtensions',
+                'alias'      => 'ForwardingUnavailableExtensions',
                 'foreignKey' => [
                     'allowNulls' => true,
                     'message'    => 'Models\ForwardingUnavailableExtensions',
-                    'action'     => Relation::NO_ACTION
-                ]
+                    'action'     => Relation::NO_ACTION,
+                ],
             ]
         );
 
     }
-    public function validation() :bool 
+
+    public function validation(): bool
     {
-        $validation = new \Phalcon\Validation();
+        $validation = new Validation();
 
 
         $validation->add('extension', new UniquenessValidator([
-            'message' => $this->t('mo_ThisExtensionNotUniqueForExtensionForwardingRightsModels')
+            'message' => $this->t('mo_ThisExtensionNotUniqueForExtensionForwardingRightsModels'),
         ]));
+
         return $this->validate($validation);
     }
 }

@@ -123,7 +123,8 @@ class ExtensionEditForm extends Form {
 			'auto'    => $this->translation->_('auto'),
 			'inband'  => $this->translation->_('inband'),
 			'info'    => $this->translation->_('info'),
-			'rfc2833' => $this->translation->_('rfc2833'),
+			'rfc4733' => $this->translation->_('rfc4733'),
+            'auto_info'    => $this->translation->_('auto_info'),
 		];
 
 		$dtmfmode = new Select('sip_dtmfmode', $arrDTMFType, [

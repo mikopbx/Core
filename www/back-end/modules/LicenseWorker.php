@@ -20,7 +20,7 @@ class LicenseWorker extends Component
     private $serverUrl;
     private $sessionId;
 
-    public function __construct($serverUrl = 'http://127.0.0.1:8222')
+    public function __construct($serverUrl = 'http://127.0.0.1:8223')
     {
         $this->serverUrl = $serverUrl;
     }
@@ -299,7 +299,10 @@ class LicenseWorker extends Component
             $result = $this->translation->_('lic_InvalidLicenseKey2009');
         } elseif (strpos($message, '2011') !== false) {
             $result = $this->translation->_('lic_FeatureExpired2011');
+        } elseif (empty($message)) {
+            $result = $this->translation->_('lic_UnknownLicenseMessage');
         }
+
         return $result;
     }
 }

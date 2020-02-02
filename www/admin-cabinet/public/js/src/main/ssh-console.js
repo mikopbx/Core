@@ -2,7 +2,7 @@
  * Copyright (C) MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 7 2019
+ * Written by Nikolay Beketov, 12 2019
  *
  */
 
@@ -14,11 +14,10 @@ const sshConsole = {
 	target: null,
 	hide: false,
 	initialize() {
-		sshConsole.$menuLink.on('click', (e) => {
+		$('body').on('click', 'a[href$="/admin-cabinet/console/index/"]', (e) => {
 			e.preventDefault();
 			window.open(sshConsole.link, sshConsole.target);
 		});
-
 		// Проверим возможность запуска SSH
 		const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor) && !(navigator.userAgent.match(/Opera|OPR\//));
 		const isSafari = navigator.vendor && navigator.vendor.indexOf('Apple') > -1 && navigator.userAgent && !navigator.userAgent.match('CriOS');

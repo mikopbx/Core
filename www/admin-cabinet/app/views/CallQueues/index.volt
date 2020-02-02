@@ -1,9 +1,9 @@
 
-    {{ link_to("call-queues/modify", '<i class="add circle icon"></i> '~t._('cq_AddNewQueue'), "class": "ui blue button") }}
+    {{ link_to("call-queues/modify", '<i class="add circle icon"></i> '~t._('cq_AddNewQueue'), "class": "ui blue button", 'id':'add-new-button') }}
 
     {% for queue in queues %}
         {% if loop.first %}
-            <table class="ui selectable compact table" id="routingTable">
+            <table class="ui selectable compact table" id="queues-table">
             <thead>
             <tr>
                 <th>{{ t._('cq_Name') }}</th>
@@ -34,8 +34,6 @@
                     </div>
                 {% endif %}
             </td>
-            </td>
-            <td class="right aligned collapsing">
                 {{ partial("partials/tablesbuttons",
                     [
                         'id': queue.uniqid,
@@ -43,7 +41,6 @@
                         'delete': 'call-queues/delete/'
                     ])
                 }}
-            </td>
         </tr>
 
         {% if loop.last %}

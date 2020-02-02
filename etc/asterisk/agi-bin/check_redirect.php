@@ -8,17 +8,16 @@
  */
 require_once 'phpagi.php';
 require_once 'globals.php';
-require_once 'Nats/autoloader.php';
 
 $chan		= trim($argv[1]);
 $agi 		= new AGI();
-$DIALSTATUS = $agi->get_variable("DIALSTATUS", true);
-$linkedid   = $agi->get_variable("CDR(linkedid)", true);
-if($chan == '' && "ANSWER" == "$DIALSTATUS") {
+$DIALSTATUS = $agi->get_variable('DIALSTATUS', true);
+$linkedid   = $agi->get_variable('CDR(linkedid)', true);
+if($chan === '' && 'ANSWER' === $DIALSTATUS) {
 	exit;
 }
 // Обнуляем значение переменной.
-$agi->set_variable("BLINDTRANSFER", "");
+$agi->set_variable('BLINDTRANSFER', '');
 
 try{
     $filter = [
@@ -31,10 +30,11 @@ try{
     $message = $client->request(json_encode($filter), 2);
     if($message !== false){
         $res = json_decode($client->getBody(), true);
-        if(count($res) == 1){
-            $exten = ($res[0]['src_chan'] == $chan)?$res[0]['src_num']:$res[0]['dst_num'];
+        if(count($res) === 1){
+            $exten = ($res[0]['src_chan'] === $chan)?$res[0]['src_num']:$res[0]['dst_num'];
             sleep(2);
-            $agi->exec_goto("internal", "{$exten}", "1");
+            $agi->set_variable('pt1c_UNIQUEID', '');
+            $agi->exec_goto('internal', $exten, '1');
         }
     }else{
         Util::sys_log_msg('CheckRedirect', "Error get data from queue 'select_cdr'. ");

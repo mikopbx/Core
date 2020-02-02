@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 8 2019
+ * Written by Alexey Portnov, 12 2019
  */
 
 use Models\Extensions;
@@ -104,8 +104,9 @@ class OldConfigConverter{
         }
         foreach($sip_phone_nodes as $e) {
             $this->init_data($e->children);
-            if($this->get('uniqid') === null){
-                continue;
+            $uid = $this->get('uniqid');
+            if($uid === null){
+                $uid = strtoupper('SIP-PHONE-' . md5(time()));
             }
 
             $this->data['m_ExtensionForwardingRights'][] = [
@@ -137,7 +138,7 @@ class OldConfigConverter{
                 'defaultuser'   => null,
                 'fromuser'      => null,
                 'fromdomain'    => null,
-                'uniqid'        => $this->get('uniqid'),
+                'uniqid'        => $uid,
                 'nat'           => 'force_rport,comedia',
                 'dtmfmode'      => $this->get('dtmfmode'),
 
@@ -164,8 +165,8 @@ class OldConfigConverter{
             }
             /** @var Models\Extensions $exten_db */
             $exten_db = Models\Extensions::findFirst("number='{$this->get('extension')}'");
-            $id      = ($exten_db === null)?null:$exten_db->id;
-            $user_id = ($exten_db === null)?null:$exten_db->userid;
+            $id      = ($exten_db === FALSE)?null:$exten_db->id;
+            $user_id = ($exten_db === FALSE)?null:$exten_db->userid;
 
             $exten_num = $this->get('extension');
             $this->data['extensions'][$exten_num] = [
@@ -177,7 +178,7 @@ class OldConfigConverter{
                 'user_email'        => $this->get('emailcallrecordaddress'),
                 'user_language'     => $language,
                 'sip_secret'        => $secret,
-                'sip_uniqid'        => $this->get('uniqid'),
+                'sip_uniqid'        => $uid,
                 'sip_dtmfmode'      => $this->get('dtmfmode'),
                 'sip_type'          => 'peer',
                 'is_general_user_number' => 1,
@@ -713,11 +714,9 @@ class OldConfigConverter{
             }
             $w_api->add_extension($value);
         }
-
         foreach ($this->data['asterisk-managers'] as $key => $value){
             $w_api->add_manager($value);
         }
-
         foreach ($this->data['providers_sip'] as $key => $value){
             $w_api->add_provider_sip($value);
         }

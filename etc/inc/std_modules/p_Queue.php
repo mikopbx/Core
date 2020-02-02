@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 8 2019
+ * Written by Alexey Portnov, 10 2019
  */
 
 class p_Queue extends ConfigClass{
@@ -48,7 +48,7 @@ class p_Queue extends ConfigClass{
             $queue_ext_conf .= 'same => n,Gosub(queue_start,${EXTEN},1)'."\n\t";
 
             $options = '';
-            if(isset($queue['caller_hear']) && $queue['caller_hear'] == 'ringing'){
+            if(isset($queue['caller_hear']) && $queue['caller_hear'] === 'ringing'){
                 $options.='r'; // Установить КПВ (гудки) вместо Музыки на Удержании для ожидающих в очереди
             }
             $ringlength = ( trim($queue['timeout_to_redirect_to_extension']) =='' )?120:$queue['timeout_to_redirect_to_extension'];
@@ -57,11 +57,11 @@ class p_Queue extends ConfigClass{
             // $queue_ext_conf .= 'same => n,AGI(cdr_connector.php,queue_end)'."\n\t";
             $queue_ext_conf .= 'same => n,Gosub(queue_end,${EXTEN},1)'."\n\t";
 
-            if( trim($queue['timeout_extension']) !='' ){
+            if( trim($queue['timeout_extension']) !=='' ){
                 // Если по таймауту не ответили, то выполним переадресацию.
                 $queue_ext_conf.= 'same => n,ExecIf($["${QUEUESTATUS}" == "TIMEOUT"]?Goto(internal,'.$queue['timeout_extension'].',1))'." \n\t";
             }
-            if( trim($queue['redirect_to_extension_if_empty']) !='' ){
+            if( trim($queue['redirect_to_extension_if_empty']) !=='' ){
                 // Если пустая очередь, то выполним переадресацию.
                 $exp = '$["${QUEUESTATUS}" == "JOINEMPTY" || "${QUEUESTATUS}" == "LEAVEEMPTY" ]';
                 $queue_ext_conf.= 'same => n,ExecIf('.$exp.'?Goto(internal,'.$queue['redirect_to_extension_if_empty'].',1))'." \n\t";
@@ -127,12 +127,17 @@ class p_Queue extends ConfigClass{
 				$periodic_announce_frequency = "periodic-announce-frequency={$queue_data['periodic_announce_frequency']} \n";
 			}
 			$announce_frequency = '';
-			if($announceposition != 'no' || $announceholdtime != 'no'){
+			if($announceposition !== 'no' || $announceholdtime !== 'no'){
 				$announce_frequency .= "announce-frequency=30 \n";
 			}
+
+			// liner - под этой стратегией понимаем последовательный вызов агентов очереди.
+            // Каждый новый звонок должен инициировать последовательный вызов начиная с первого агента.
+			$strategy = ('linear' === $queue_data['strategy'])?'ringall':$queue_data['strategy'];
+
 			$q_conf .= "[{$queue_data['uniqid']}]; {$queue_data['name']}\n";
 			$q_conf .= "musicclass=default \n";
-			$q_conf .= "strategy={$queue_data['strategy']} \n";
+			$q_conf .= "strategy={$strategy} \n";
 			$q_conf .= "timeout={$timeout} \n";
 			$q_conf .= "wrapuptime={$wrapuptime} \n";
 			$q_conf .= "ringinuse={$ringinuse} \n";
@@ -144,12 +149,16 @@ class p_Queue extends ConfigClass{
 			$q_conf .= "announce-holdtime={$announceholdtime} \n";
 			$q_conf .= "$announce_frequency";
 
+			$penalty = 0;
 			foreach($queue_data['agents'] as $agent){
+			    if('linear' === $queue_data['strategy']){
+                    $penalty++;
+                }
 				$hint = '';
 				if($agent['isExternal'] != true){
 					$hint = ",hint:{$agent['agent']}@internal-hints";
 				}
-				$q_conf .= "member => Local/{$agent['agent']}@internal/n,0,\"{$agent['agent']}\"{$hint} \n";
+				$q_conf .= "member => Local/{$agent['agent']}@internal/n,{$penalty},\"{$agent['agent']}\"{$hint} \n";
 			}
 			$q_conf .= "\n";
 		}

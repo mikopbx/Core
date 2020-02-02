@@ -114,7 +114,7 @@ class CallDetailRecordsController extends BaseController
         ];
 
         foreach ($selectedRecords as $record) {
-            if ( ! key_exists($record->linkedid, $arrCdr)) {
+            if ( ! array_key_exists($record->linkedid, $arrCdr)) {
                 $arrCdr[$record->linkedid] = clone $objectLinkedCallRecord;
             }
             if ($record->is_app !== '1'
@@ -127,14 +127,14 @@ class CallDetailRecordsController extends BaseController
             $linkedRecord              = $arrCdr[$record->linkedid];
             $linkedRecord->linkedid    = $record->linkedid;
             $linkedRecord->disposition = $linkedRecord->disposition !== 'ANSWERED' ? $disposition : 'ANSWERED';
-            $linkedRecord->start       = $linkedRecord->start == null ? $record->start : $linkedRecord->start;
-            $linkedRecord->src_num     = $linkedRecord->src_num == null ? $record->src_num : $linkedRecord->src_num;
+            $linkedRecord->start       = $linkedRecord->start === '' ? $record->start : $linkedRecord->start;
+            $linkedRecord->src_num     = $linkedRecord->src_num === '' ? $record->src_num : $linkedRecord->src_num;
             if ( ! empty($record->did)) {
                 $linkedRecord->dst_num = $record->did;
             } else {
-                $linkedRecord->dst_num = $linkedRecord->dst_num == null ? $record->dst_num : $linkedRecord->dst_num;
+                $linkedRecord->dst_num = $linkedRecord->dst_num === '' ? $record->dst_num : $linkedRecord->dst_num;
             }
-            $linkedRecord->billsec += intval($record->billsec, 10);
+            $linkedRecord->billsec += (int)$record->billsec;
             if ($disposition === 'ANSWERED') {
                 $linkedRecord->answered[] = [
                     'id'            => $record->id,
@@ -147,7 +147,7 @@ class CallDetailRecordsController extends BaseController
         }
         $output = [];
         foreach ($arrCdr as $cdr) {
-            $timing   = gmdate('i:s', $cdr->billsec);
+            $timing   = gmdate($cdr->billsec<3600?'i:s':'G:i:s', $cdr->billsec);
             $output[] = [
                 date('d-m-Y H:i:s', strtotime($cdr->start)),
                 $cdr->src_num,
@@ -174,6 +174,13 @@ class CallDetailRecordsController extends BaseController
     {
         $parameters['conditions'] = '';
 
+        // Поищем линкдиды, и если они там есть, то игнориуем все предыдущие параметры запроса
+        if (preg_match_all("/mikopbx-\d+.\d+/", $searchPhrase, $matches) && count($matches[0]) === 1) {
+            $parameters['conditions']           = 'linkedid = :SearchPhrase:';
+            $parameters['bind']['SearchPhrase'] = $matches[0][0];
+            return;
+        }
+
         // Поищем даты
         if (preg_match_all("/\d{2}\/\d{2}\/\d{4}/", $searchPhrase, $matches)) {
             if (count($matches[0]) === 1) {
@@ -195,24 +202,6 @@ class CallDetailRecordsController extends BaseController
                 $searchPhrase                          = str_replace([$matches[0][0],$matches[0][1]], '', $searchPhrase);
             }
         }
-        // Поищем линкдиды
-        if (preg_match_all("/mikopbx-\d+.\d+/", $searchPhrase, $matches)) {
-            $needCloseAnd = false;
-            if ($parameters['conditions'] !== '') {
-                $parameters['conditions'] .= ' AND (';
-                $needCloseAnd             = true;
-            }
-            if (count($matches[0]) === 1) {
-                $parameters['conditions']           .= 'linkedid = :SearchPhrase:';
-                $parameters['bind']['SearchPhrase'] = $matches[0][0];
-                $searchPhrase                       = str_replace($matches[0][0], '', $searchPhrase);
-            }
-
-            if ($needCloseAnd) {
-                $parameters['conditions'] .= ')';
-            }
-        }
-
 
         // Поищем номера телефонов
         $searchPhrase = str_replace(['(', ')', '-', '+'], '', $searchPhrase);
@@ -303,9 +292,8 @@ class CallDetailRecordsController extends BaseController
             if ($needCloseAnd) {
                 $parameters['conditions'] .= ')';
             }
-            // if (count($matches[0]) === 1 || count($matches[0]) === 2) {
-            //     $parameters['conditions'] .= ' AND (disposition = "ANSWER" OR disposition = "ANSWERED")';
-            // }
+
+
         }
     }
 }

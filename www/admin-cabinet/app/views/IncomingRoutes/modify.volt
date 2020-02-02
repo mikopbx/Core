@@ -2,6 +2,7 @@
 
 
 {{ form.render('id') }}
+{{ form.render('priority') }}
 {{ form.render('action') }}
 
 <div class="ten wide field">

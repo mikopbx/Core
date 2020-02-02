@@ -350,3 +350,11 @@ th.firewall-category > div > span {
 #firewall-table tbody > tr:last-child >td {
     border-bottom: 1px solid rgba(34,36,38,.15);
 }
+
+
+/**
+Модули расширений
+ */
+a.ui.button.pbx-extensions-settings {
+    margin-top: -7px;
+}

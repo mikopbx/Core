@@ -9,48 +9,52 @@
 
 namespace Models;
 
-use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 use Phalcon\Mvc\Model\Relation;
+use Phalcon\Validation;
+use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
 class CallQueueMembers extends ModelsBase
 {
     /**
-     * @var integer
+     * @Primary
+     * @Identity
+     * @Column(type="integer", nullable=false)
      */
     public $id;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $queue;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $extension;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $priority;
 
-    public function getSource() :string
+    public function getSource(): string
     {
         return 'm_CallQueueMembers';
     }
-    public function initialize() :void 
+
+    public function initialize(): void
     {
-	    parent::initialize();
+        parent::initialize();
         $this->belongsTo(
             'extension',
             'Models\Extensions',
             'number',
             [
-                'alias'=>'Extensions',
+                'alias'      => 'Extensions',
                 'foreignKey' => [
-                'allowNulls' => false,
-                'action'     => Relation::NO_ACTION,
-                ]
+                    'allowNulls' => false,
+                    'action'     => Relation::NO_ACTION,
+                ],
             ]
         );
         $this->belongsTo(
@@ -58,24 +62,26 @@ class CallQueueMembers extends ModelsBase
             'Models\CallQueues',
             'uniqid',
             [
-                'alias'=>'CallQueues',
+                'alias'      => 'CallQueues',
                 'foreignKey' => [
                     'allowNulls' => false,
                     'action'     => Relation::NO_ACTION,
-                ]
+                ],
             ]
 
         );
 
 
     }
-    public function validation() :bool
+
+    public function validation(): bool
     {
 
-        $validation = new \Phalcon\Validation();
-        $validation->add(array('queue', 'extension'), new UniquenessValidator([
-            'message' => $this->t('mo_ThisQueueAndMemberMustBeUniqueForCallQueuesModels')
+        $validation = new Validation();
+        $validation->add(['queue', 'extension'], new UniquenessValidator([
+            'message' => $this->t('mo_ThisQueueAndMemberMustBeUniqueForCallQueuesModels'),
         ]));
+
         return $this->validate($validation);
 
 

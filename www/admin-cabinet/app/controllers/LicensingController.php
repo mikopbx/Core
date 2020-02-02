@@ -30,6 +30,11 @@ class LicensingController extends BaseController
      */
     public function modifyAction($backurl = null): void
     {
+        if ($this->language === 'ru'){
+            $this->view->modulesExampleImgPath = $this->url->get( 'public/img/modules-example-ru.png' );
+        } else {
+            $this->view->modulesExampleImgPath = $this->url->get( 'public/img/modules-example-en.png' );;
+        }
 
         // Форма лицензионного ключа
         $licKey                           = PbxSettings::getValueByKey('PBXLicense');

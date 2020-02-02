@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 8 2019
+ * Written by Alexey Portnov, 1 2020
  */
 
 require_once 'globals.php';
@@ -34,17 +34,46 @@ class Util {
 		return $retval; 
     }
 
+    public static function override_configuration_array($options, $manual_attributes, $section):string {
+        $result_config = '';
+        if($manual_attributes !== null && isset($manual_attributes[$section])){
+            foreach ($manual_attributes[$section] as $key => $value){
+                if($key === 'type'){
+                    continue;
+                }
+                $options[$key] = $value;
+            }
+        }
+        foreach ($options as $key => $value){
+            if(empty($value) || empty($key)){
+                continue;
+            }
+            if(is_array($value)){
+                array_unshift($value, ' ');
+                $result_config .= trim(implode("\n{$key} = ", $value))."\n";
+            }else{
+                $result_config .= "{$key} = {$value}\n";
+            }
+        }
+        return "$result_config\n";
+    }
+
     /**
      * Выполняет системную команду exec() в фоне.
      * @param $command
+     * @param $out_file
+     * @param $sleep_time
      */
-    static function mwexec_bg($command){
-		global $g;
-		if ($g['debug']) {
-			echo "mwexec_bg(): $command\n";
-			return;
-		}
-		exec("nohup $command > /dev/null 2>&1 &");
+    static function mwexec_bg($command, $out_file = '/dev/null', $sleep_time = 0){
+
+        if($sleep_time > 0){
+            $filename = '/tmp/'.time().'_noop.sh';
+            file_put_contents($filename, "sleep {$sleep_time}; $command; rm -rf $filename");
+            $noop_command = "nohup sh {$filename} > {$out_file} 2>&1 &";
+        }else{
+            $noop_command = "nohup {$command} > {$out_file} 2>&1 &";
+        }
+		exec($noop_command);
     }
 
     /**
@@ -68,40 +97,41 @@ class Util {
      * @return int|null
      */
 	static function killbyname($procname) {
-		return Util::mwexec("busybox killall ".escapeshellarg($procname));
+		return Util::mwexec('busybox killall '.escapeshellarg($procname));
 	}
 
     /**
      * Завершает запись логов.
      * @return string
      */
-    static function stop_log(){
+    public static function stop_log():string {
         $dir_all_log = Util::get_log_dir();
 
-        Util::killbyname('timeout');
-        Util::killbyname('tcpdump');
-        Util::killbyname('logread');
+        self::killbyname('timeout');
+        self::killbyname('tcpdump');
 
         $dirlog = $dir_all_log.'/dir_start_all_log';
-        if(!is_dir($dirlog)){
-            mkdir($dirlog, 0777, true);
+        if(!file_exists($dirlog) && !mkdir($dirlog, 0777, true) && !is_dir($dirlog)){
+            return '';
         }
-        /**
-         * В коммент. Слишком большой размер логов не возможно скачать.
-        if(is_dir("{$dir_all_log}/nats")){
-            Util::mwexec("cp -R {$dir_all_log}/nats $dirlog");
-            if(is_file("$dirlog/nats/license.key"))
-                unlink("$dirlog/nats/license.key");
-        }
-        */
-        $result = $dir_all_log.'/arhive_start_all_log.tar.gz';
-        // Пакуем логи.
-        Util::mwexec('find '.$dir_all_log.'/ -name *_start_all_log | xargs tar -zcf '.$result);
-        // Удаляем логи. Оставляем только архив.
-        Util::mwexec('find '.$dir_all_log.'/ -name *_start_all_log | xargs rm -rf');
-        // Удаляем каталог логов.
-        Util::mwexec_bg("rm -rf $dirlog");
 
+        $log_dir = System::get_log_dir();
+        self::mwexec("cp -R {$log_dir} {$dirlog}");
+
+        $result = $dir_all_log.'/arhive_start_all_log.zip';
+        if(file_exists($result)){
+            self::mwexec('rm -rf '.$result);
+        }
+        // Пакуем логи.
+        self::mwexec("7za a -tzip -mx0 -spf '{$result}' '{$dirlog}'");
+        // Удаляем логи. Оставляем только архив.
+        self::mwexec('find '.$dir_all_log.'/ -name *_start_all_log | xargs rm -rf');
+
+        if(file_exists($dirlog)){
+            self::mwexec('find '.$dirlog.'/ -name license.key | xargs rm -rf');
+        }
+        // Удаляем каталог логов.
+        self::mwexec_bg("rm -rf $dirlog");
         return $result;
     }
 
@@ -109,26 +139,30 @@ class Util {
      * Стартует запись логов.
      * @param int $timeout
      */
-    public static function start_log($timeout=300) :void {
+    public static function start_log($timeout=300):void {
         self::stop_log();
         $dir_all_log = self::get_log_dir();
 	    self::mwexec('find '.$dir_all_log.'/ -name *_start_all_log* | xargs rm -rf');
 	    // Получим каталог с логами.
         $dirlog = $dir_all_log.'/dir_start_all_log';
-        if(!is_dir($dirlog)){
-            mkdir($dirlog, 0777, true);
+        if(!file_exists($dirlog) && !mkdir($dirlog, 0777, true) && !is_dir($dirlog)){
+            return;
         }
-        self::mwexec_bg_timeout("logread -f", $timeout, "{$dirlog}/logread_f.log");
+        self::mwexec_bg('ping 8.8.8.8 -w 2', "{$dirlog}/ping_8888.log");
+        self::mwexec_bg('ping ya.ru -w 2',  "{$dirlog}/ping_8888.log");
+        self::mwexec_bg_timeout("openssl s_client -connect lm.miko.ru:443 > {$dirlog}/openssl_lm_miko_ru.log", 1);
+        self::mwexec_bg_timeout("openssl s_client -connect lic.miko.ru:443 > {$dirlog}/openssl_lic_miko_ru.log", 1);
+        self::mwexec_bg('route -n ', " {$dirlog}/rout_n.log");
 
-        self::mwexec_bg("ping 8.8.8.8 -w 2 > {$dirlog}/ping_8888.log");
-        self::mwexec_bg("ping ya.ru -w 2 > {$dirlog}/ping_8888.log");
-        self::mwexec_bg("openssl s_client -connect lm.miko.ru:443 > {$dirlog}/openssl_lm_miko_ru.log");
-        self::mwexec_bg("openssl s_client -connect lic.miko.ru:443 > {$dirlog}/openssl_lic_miko_ru.log");
-        self::mwexec_bg("logread > {$dirlog}/logread.log");
-        self::mwexec_bg("route -n > {$dirlog}/rout_n.log");
-        self::mwexec_bg("asterisk -rx 'sip show settings' > {$dirlog}/sip_show_settings.log");
-        self::mwexec_bg("asterisk -rx 'sip show peers' > {$dirlog}/sip_show_peers.log");
-        self::mwexec_bg("asterisk -rx 'sip show registry' > {$dirlog}/sip_show_registry.log");
+        if(p_SIP::get_technology() === 'SIP'){
+            self::mwexec_bg("asterisk -rx 'sip show settings' ", " {$dirlog}/sip_show_settings.log");
+            self::mwexec_bg("asterisk -rx 'sip show peers' ", " {$dirlog}/sip_show_peers.log");
+            self::mwexec_bg("asterisk -rx 'sip show registry' ", " {$dirlog}/sip_show_registry.log");
+        }else{
+            self::mwexec_bg("asterisk -rx 'pjsip show registrations' ", " {$dirlog}/pjsip_show_registrations.log");
+            self::mwexec_bg("asterisk -rx 'pjsip show endpoints' ", " {$dirlog}/pjsip_show_endpoints.log");
+            self::mwexec_bg("asterisk -rx 'pjsip show contacts' ", " {$dirlog}/pjsip_show_contacts.log");
+        }
 
         $php_log = '/var/log/php_error.log';
         if(file_exists($php_log)){
@@ -162,6 +196,14 @@ class Util {
             file_put_contents("/tmp/{$logname}_commands.log", $result);
         }
 	}
+
+	public static function mw_mkdir($path){
+        $result = true;
+	    if(!file_exists($path) && !mkdir($path, 0777, true) && !is_dir($path)){
+            $result = false;
+        }
+        return $result;
+    }
 
     /**
      * Форматирует JSON в читабельный вид.
@@ -252,10 +294,10 @@ class Util {
      * @param $param
      * @param $proc_name
      * @param $action
+     * @param $out_file
      * @return array | bool
      */
-	public static function process_worker($cmd, $param, $proc_name, $action){
-		$out_file = '/dev/null';
+	public static function process_worker($cmd, $param, $proc_name, $action, $out_file = '/dev/null'){
 		$path_kill  = self::which('kill');
 		$path_nohup = self::which('nohup');
 
@@ -292,6 +334,11 @@ class Util {
 	public static function restart_worker($name, $param='') :void {
         $command = "php -f {$GLOBALS['g']['pt1c_inc_path']}/workers/{$name}.php";
         self::process_worker($command, $param, $name, 'restart');
+    }
+
+    public static function restart_module_dependent_workers():void {
+        // Завершение worker_models_events процесса перезапустит его.
+        self::killbyname('worker_models_events');
     }
 
     /**
@@ -357,12 +404,12 @@ class Util {
      * @param string $dest_number
      * @return array
      */
-    static function am_originate($peer_number, $peer_mobile, $dest_number){
+    public static function am_originate($peer_number, $peer_mobile, $dest_number):array {
         /** @var AGI_AsteriskManager $am */
-        $am = Util::get_am('off');
+        $am = self::get_am('off');
         $channel     = 'Local/'.$peer_number.'@internal-originate';
         $context     = 'all_peers';
-        $IS_ORGNT    = Util::generateRandomString();
+        $IS_ORGNT    = self::generateRandomString();
         $variable    = "_IS_ORGNT={$IS_ORGNT},pt1c_cid={$dest_number},_extenfrom1c={$peer_number},__peer_mobile={$peer_mobile},_FROM_PEER={$peer_number}";
 
         $result = $am->Originate($channel, $dest_number, $context, '1', NULL, NULL, NULL, NULL, $variable, NULL, '1');
@@ -390,6 +437,23 @@ class Util {
 
         preg_match($re, $string, $matches, PREG_OFFSET_CAPTURE, 0);
         return (count($matches)>0);
+    }
+
+    /**
+     *  Возвращает размер файла в Мб.
+     * @param $filename
+     * @return float|int
+     */
+    static function m_file_sise($filename){
+        $size = 0;
+        if(file_exists($filename)){
+            $tmp_size = filesize($filename);
+            if($tmp_size !== FALSE){
+                // Получим размер в Мб.
+                $size = $tmp_size;
+            }
+        }
+        return $size;
     }
 
     /**
@@ -796,7 +860,7 @@ class Util {
     static function get_size_file($filename){
         $result = 0;
         if(file_exists($filename)){
-            Util::mwexec("du -d 0 -k '{$filename}' | /usr/bin/awk  '{ print $1}'",$out);
+            self::mwexec("du -d 0 -k '{$filename}' | /usr/bin/awk  '{ print $1}'",$out);
             $time_str = implode($out);
             preg_match_all('/^\d+$/', $time_str, $matches, PREG_SET_ORDER, 0);
             if(count($matches)>0){
@@ -807,7 +871,7 @@ class Util {
     }
 
     /**
-     * Устанавливаем шривт для консоли.
+     * Устанавливаем шрифт для консоли.
      */
     static function set_cyrillic_font(){
         Util::mwexec("/usr/sbin/setfont /usr/share/consolefonts/Cyr_a8x16.psfu.gz 2>/dev/null");
@@ -835,7 +899,7 @@ class Util {
      * @param        $data
      */
     public function add_job_to_beanstalk($queue, $data){
-        $queue  = new BeanstalkClient("{$queue}");
+        $queue  = new BeanstalkClient($queue);
         $queue->publish($data);
     }
 
@@ -843,7 +907,7 @@ class Util {
      * Создает ряд рабочих каталогов / директорий.
      * @return array
      */
-    public function create_work_dirs(){
+    public function create_work_dirs():array {
         $path2dirs = PBX::get_asterisk_dirs();
 
         $path = '';
@@ -854,7 +918,7 @@ class Util {
             $path.= " $value";
         }
         if(!empty($path)){
-            Util::mwexec("mkdir -p $path");
+            self::mwexec("mkdir -p $path");
         }
 
         $www_dirs = [
@@ -869,24 +933,25 @@ class Util {
             $path2dirs['download_link']
         ];
         // Предоставим права на директории www.
-        Util::mwexec("chown -R www:www ".implode(' ', $www_dirs));
+        self::mwexec('chmod +r -R '.implode(' ', $www_dirs));
+        self::mwexec('chown -R www:www '.implode(' ', $www_dirs));
 
-        $res = Util::create_update_link($path2dirs['cache_js_dir'],  '/var/cache/www/admin-cabinet/cache/js');
-        $res = $res | Util::create_update_link($path2dirs['cache_css_dir'], '/var/cache/www/admin-cabinet/cache/css');
-        $res = $res | Util::create_update_link($path2dirs['cache_img_dir'], '/var/cache/www/admin-cabinet/cache/img');
-        $res = $res | Util::create_update_link($path2dirs['php_session'],   '/var/lib/php/session');
+        $res  = self::create_update_link($path2dirs['cache_js_dir'],  '/var/cache/www/admin-cabinet/cache/js');
+        $res |= self::create_update_link($path2dirs['cache_css_dir'], '/var/cache/www/admin-cabinet/cache/css');
+        $res |= self::create_update_link($path2dirs['cache_img_dir'], '/var/cache/www/admin-cabinet/cache/img');
+        $res |= self::create_update_link($path2dirs['php_session'],   '/var/lib/php/session');
 
         $storage_disk_mounted = Storage::is_storage_disk_mounted();
         if($storage_disk_mounted && file_exists('/cf/conf/need_clean_cashe_www')){
             $cashe_dirs = [
-                $path2dirs['cache_js_dir']."/*",
-                $path2dirs['cache_css_dir']."/*",
-                $path2dirs['cache_img_dir']."/*",
-                $path2dirs['php_session']."/*",
-                $GLOBALS['g']['phalcon_settings']['application']['cacheDir']."*",
+                $path2dirs['cache_js_dir'].'/*',
+                $path2dirs['cache_css_dir'].'/*',
+                $path2dirs['cache_img_dir'].'/*',
+                $path2dirs['php_session'].'/*',
+                $GLOBALS['g']['phalcon_settings']['application']['cacheDir'].'*',
             ];
 
-            Util::mwexec("rm -rf ".implode(' ', $cashe_dirs));
+            self::mwexec('rm -rf '.implode(' ', $cashe_dirs));
             unlink('/cf/conf/need_clean_cashe_www');
         }
 
@@ -905,7 +970,7 @@ class Util {
 
         if($res){
             $cacheDir = $GLOBALS['g']['phalcon_settings']['application']['cacheDir'];
-            Util::mwexec("rm -rf {$cacheDir}/*");
+            self::mwexec("rm -rf {$cacheDir}/*");
         }
 
         return $path2dirs;
@@ -994,10 +1059,17 @@ class Util {
         return false;
     }
 
-    static function mergeFilesInDirectory($temp_dir, $fileName, $total_files, $result_file = ''){
+    static function mergeFilesInDirectory($temp_dir, $fileName, $total_files, $result_file = '', $progress_dir = ''){
         if(empty($result_file)){
             $result_file = dirname($temp_dir).'/'.$fileName;
         }
+
+        $show_progress = file_exists($progress_dir);
+        $progress_file = $progress_dir.'/progress';
+        if($show_progress && !file_exists($progress_file)){
+            file_put_contents($progress_file,'0');
+        }
+
         // create the final destination file
         if (($fp = fopen($result_file, 'w')) !== false) {
             for ($i=1; $i<=$total_files; $i++) {
@@ -1005,7 +1077,10 @@ class Util {
                 fwrite($fp, file_get_contents($tmp_file));
                 // Удаляем временный файл.
                 unlink($tmp_file);
-           }
+                if($show_progress){
+                    file_put_contents($progress_file, round($i / $total_files * 100),2);
+                }
+            }
             fclose($fp);
         } else {
             self::sys_log_msg('UploadFile', 'cannot create the destination file - '.$result_file);
@@ -1019,6 +1094,11 @@ class Util {
         } else {
             self::rrmdir($temp_dir);
         }
+
+        if($show_progress){
+            file_put_contents($progress_file, 100);
+        }
+
         // Загрузка завершена. Возвращаем путь к файлу.
         return $result_file;
     }

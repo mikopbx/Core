@@ -3,12 +3,10 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 8 2019
+ * Written by Alexey Portnov, 1 2020
  */
-
 require_once 'Nats/autoloader.php';
 require_once 'globals.php';
-
 if(count($argv)<=1){
     // Не переданы аргументы.
     exit(2);
@@ -71,21 +69,20 @@ if('upload_backup' === $file_data['action']){
         file_put_contents("{$settings['backupdir']}/{$settings['dir_name']}/upload_status", 'ERROR');
         exit(1);
     }
-    $request = array(
-        'data'   => ['config_file' => $res_file],
-        'action' => 'convert_config' // Операция.
-    );
     try{
-        $client = new Nats\Connection();
-        $client->connect(10);
-        $cb = function (Nats\Message $message) use ($settings){
-            $status = 'COMPLETE';
-            file_put_contents("{$settings['backupdir']}/{$settings['dir_name']}/upload_status", $status);
-            exit(0);
-        };
-        $client->request('backup', json_encode($request), $cb);
+        $result = System::convert_config($res_file);
+        $status = 'COMPLETE';
     }catch (Exception $e){
-
+        $status = 'ERROR';
     }
-    file_put_contents("{$settings['backupdir']}/{$settings['dir_name']}/upload_status", 'ERROR');
+    file_put_contents("{$settings['backupdir']}/{$settings['dir_name']}/upload_status", $status);
+}elseif($file_data['action'] === 'merge'){
+    $settings = $file_data['data'];
+    if(!file_exists($settings['result_file'])){
+        Util::mergeFilesInDirectory($settings['temp_dir'], $settings['resumableFilename'], $settings['resumableTotalChunks'], $settings['result_file'], dirname($settings['result_file']));
+    }
+    $res = file_exists($settings['result_file']);
+    // Отложенное удаление файла.
+    $rm_file = basename(dirname($settings['result_file'])) === 'tmp'?$settings['result_file']: dirname($settings['result_file']);
+    Util::mwexec_bg('/etc/rc/shell_functions.sh killprocesses '.$rm_file.' -TERM 0;rm -rf '.$rm_file, '/dev/null', 30);
 }

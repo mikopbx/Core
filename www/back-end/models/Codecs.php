@@ -8,50 +8,54 @@
  */
 
 namespace Models;
+
 use Phalcon\Mvc\Model\Relation;
 
 class Codecs extends ModelsBase
 {
     /**
-     * @var integer
+     * @Primary
+     * @Identity
+     * @Column(type="integer", nullable=false)
      */
     public $id;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $name;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $type;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $description;
 
-    public function getSource() :string 
+    public function getSource(): string
     {
         return 'm_Codecs';
     }
-    public function initialize() :void
+
+    public function initialize(): void
     {
-	    parent::initialize();
+        parent::initialize();
         $this->hasMany(
             'name',
             'Models\IaxCodecs',
             'codec',
             [
-                'alias'=>'IaxCodecs',
+                'alias'      => 'IaxCodecs',
                 'foreignKey' => [
                     'allowNulls' => true,
-                    'action'     => Relation::ACTION_CASCADE
+                    'action'     => Relation::ACTION_CASCADE,
                 ],
-                'params' => array(
-                    'order' => 'priority asc'
-                )
+                'params'     => [
+                    'order' => 'priority asc',
+                ],
             ]
         );
 
@@ -61,14 +65,14 @@ class Codecs extends ModelsBase
             'Models\SipCodecs',
             'codec',
             [
-                'alias'=>'SipCodecs',
+                'alias'      => 'SipCodecs',
                 'foreignKey' => [
                     'allowNulls' => true,
-                    'action'     => Relation::ACTION_CASCADE
+                    'action'     => Relation::ACTION_CASCADE,
                 ],
-                'params' => array(
-                    'order' => 'priority asc'
-                )
+                'params'     => [
+                    'order' => 'priority asc',
+                ],
             ]
         );
     }

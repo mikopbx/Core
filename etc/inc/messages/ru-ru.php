@@ -3,15 +3,15 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 8 2019
+ * Written by Alexey Portnov, 1 2020
  */
 
 $messages = [
     'MIKO_PBX' => 'МИКО PBX',
     'PBX is running in Live or Recovery mode' => 'АТС запущена c Live CD в режиме восстановления.',
-    'LAN IP address: assigned via DHCP' => 'LAN IP назначен через DHCP',
+    'LAN IP address assigned via DHCP' => 'LAN IP назначен через DHCP',
     'LAN IP address' => 'LAN IP установлен вручную',
-    'VLAN IP address: assigned via' => 'VLAN IP: работает через интерфейс',
+    'VLAN IP address assigned via' => 'VLAN IP: работает через интерфейс',
     'The integrity of the system is broken' => 'Нарушена целостность системы',
     'PBX console setup' => 'Консоль АТС',
     'Install or recover' =>'Выполнить установку / восстановить',
@@ -63,7 +63,7 @@ $messages = [
     'The PBX is about to be installed onto the' => 'АТС будет установлена на диск: ',
     'everything on this device will be erased!' => 'все данные на устройстве будут удалены!',
     'this cannot be undone!' => 'операция необратима!',
-    'Change language' => 'Change language / Выбор языка интерфейса',
+    'Change language' => 'Change language / Смена языка интерфейса',
     'Select the drive to install the system.' => 'Выберите диск для установки системы.',
     'Selected disk:' => 'Выбранный диск:',
     '(default value = ' => '(значение по умолчанию = ',
@@ -72,5 +72,11 @@ $messages = [
     'Reboot' => 'Перезагрузить Askozia',
     'Power off' => 'Выключить',
     'Choose action' => 'Выберите действие',
-    'Пропущенный вызов' => 'У Вас есть пропущенный вызов'
+    'Пропущенный вызов' => 'У Вас есть пропущенный вызов',
+    'Console' => 'Консоль (Shell)',
+    'Failed to mount the disc...' => 'Не вышло смонтировать диск...',
+    'All processes will be completed. Continue? (y/n):' => 'Все процессы будут завершены. Продолжить? (y/n):',
+    'Configuring using DHCP' => 'Настройка с использованием DHCP',
+    'Manual setting' => 'Ручная настройка',
+    'Storage' => 'Хранилище данных'
 ];

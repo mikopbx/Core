@@ -53,12 +53,13 @@ if (file_exists("{$g['pt1c_etc_path']}/fstab")) {
             $uuid   = $storage->get_uuid("/dev/{$disk}{$part}");
             $format = Storage::get_fs_type("{$disk}{$part}");
             // Запустим проверку раздела диска//
-            Util::mwexec("if [ -b /dev/{$disk}{$part} ]; then /sbin/fsck.{$format} -p /dev/{$disk}{$part}; fi;");
+            Util::mwexec("if [ -b /dev/{$disk}{$part} ]; then /sbin/fsck.{$format} -f -p /dev/{$disk}{$part}; fi;");
             if (Util::mwexec("/bin/mount -t {$format} -rw UUID=\"{$uuid}\" {$g['cf_path']}") !== 0) {
                 continue;
             }
 
             if (file_exists($g['pt1c_db_path'])) {
+                init_db($g['m_di'], $g['phalcon_settings']);
                 $cfgdevice = $disk;
                 $cfgpartition = $cfgdevice.$part;
                 echo " - Found configuration on $cfgdevice.\n";
@@ -80,7 +81,7 @@ if (file_exists("{$g['pt1c_etc_path']}/fstab")) {
             Util::mwexec("/bin/umount -f {$g['cf_path']}");
             if ($cfgdevice) {
                 // Всегда проверяем диск с базой данных настроек.
-                Util::mwexec("/sbin/fsck.{$format} -a /dev/{$disk}{$part}");
+                Util::mwexec("/sbin/fsck.{$format} -f -p /dev/{$disk}{$part}");
                 break;
             }
         }
@@ -103,4 +104,3 @@ if (file_exists("{$g['pt1c_etc_path']}/fstab")) {
         file_put_contents("{$g['varetc_path']}/cfdevice", $cfgdevice);
     }
 }
-?>

@@ -8,73 +8,80 @@
  */
 
 namespace Models;
-use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
+
 use Phalcon\Mvc\Model\Relation;
+use Phalcon\Validation;
+use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
 class ExternalPhones extends ModelsBase
 {
     /**
-     * @var integer
+     * @Primary
+     * @Identity
+     * @Column(type="integer", nullable=false)
      */
     public $id;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $extension;
 
     /**
-     * @var string
+     * @Primary
+     * @Column(type="string", nullable=true)
      */
     public $uniqid;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $dialstring;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $manualdialplanincoming;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $manualdialplanoutgoing;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $disabled;
 
-    public function getSource() :string 
+    public function getSource(): string
     {
         return 'm_ExternalPhones';
     }
 
-    public function initialize() :void 
+    public function initialize(): void
     {
-	    parent::initialize();
+        parent::initialize();
         $this->belongsTo(
             'extension',
             'Models\Extensions',
             'number',
             [
-                'alias'=>'Extensions',
+                'alias'      => 'Extensions',
                 'foreignKey' => [
                     'allowNulls' => false,
                     'action'     => Relation::NO_ACTION // Всегда сначала удаляем Extensions, а он удалит ExternalPhones
-                ]
+                ],
             ]
         );
     }
+
     public function validation()
     {
-        $validation = new \Phalcon\Validation();
+        $validation = new Validation();
         $validation->add('uniqid', new UniquenessValidator([
-            'message' => $this->t('mo_ThisUniqidNotUniqueForExternalPhonesModels')
+            'message' => $this->t('mo_ThisUniqidNotUniqueForExternalPhonesModels'),
         ]));
+
         return $this->validate($validation);
     }
 }

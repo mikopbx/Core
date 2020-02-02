@@ -1,4 +1,11 @@
 <?php
+/**
+ * Copyright © MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Alexey Portnov, 10 2019
+ */
+
 namespace Nats;
 
 use Traversable;
@@ -23,7 +30,7 @@ class ConnectionOptions
      *
      * @var integer
      */
-    private $port = 4222;
+    private $port = 4223;
 
     /**
      * Username to connect.

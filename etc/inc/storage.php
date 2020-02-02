@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 8 2019
+ * Written by Alexey Portnov, 1 2020
  */
 
 require_once 'globals.php';
@@ -145,18 +145,18 @@ class Storage {
             $need_alert = false; $test_alert = '';
             if($free < 5){
                 $need_alert = true;
-                $test_alert = "The {$disk['id']} has less than 5% of free space available. Free - {$disk['free_space']}Mb / {$disk['size']}Mb.";
+                $test_alert = "The {$disk['id']} has less than 5% of free space available.";
             }
 
             if($disk['free_space'] < 500){
                 $need_alert = true;
-                $test_alert = "The {$disk['id']} has less than 500MB of free space available. Free - {$disk['free_space']}Mb / {$disk['size']}Mb.";
+                $test_alert = "The {$disk['id']} has less than 500MB of free space available.";
             }
 
             if($disk['free_space'] < 100){
                 $need_alert = true;
-                $test_alert = "The {$disk['id']} has less than 100MB of free space available. Free - {$disk['free_space']}Mb / {$disk['size']}Mb. Old call records will be deleted.";
-                Util::mwexec_bg("/usr/bin/php -f /etc/inc/workers/worker_remove_old_records.php");
+                $test_alert = "The {$disk['id']} has less than 100MB of free space available. Old call records will be deleted.";
+                Util::mwexec_bg('/usr/bin/php -f /etc/inc/workers/worker_remove_old_records.php');
             }
 
             if(!$need_alert){
@@ -381,6 +381,7 @@ class Storage {
 		$disks   = $this->get_disk_settings();
 		$conf = '';
 		foreach ($disks as $disk) {
+            clearstatcache();
 		    if( $disk['device'] !== "/dev/{$cf_disk}" ){
                 // Если это обычный диск, то раздел 1.
 		        $dev = "{$disk['device']}1";
@@ -392,7 +393,7 @@ class Storage {
                 // Диск не существует.
                 continue;
             }
-            if($disk['media'] === 1){
+            if($disk['media'] === '1' || !file_exists($storage_dev_file)){
                 file_put_contents($storage_dev_file, "/storage/usbdisk{$disk['id']}");
             }
 
@@ -400,28 +401,31 @@ class Storage {
             $format_p4 = self::get_fs_type($dev);
 			$conf .= "{$str_uid} /storage/usbdisk{$disk['id']} {$format_p4} async,rw 0 0\n";
 			$is_mounted = $this->is_storage_disk_mounted("/storage/usbdisk{$disk['id']}");
-			if( !$is_mounted && isset($disk['check_when_booting']) && $disk['check_when_booting'] === 1){
-			    // Проверка диска.
-                file_put_contents('/cf/conf/need_clean_cashe_www', '');
-                Util::mwexec("/sbin/fsck.{$format_p4} -a {$dev}");
-                echo "\n  - check disk {$dev}...";
-                sleep(1);
-            }
             $mount_point = "/storage/usbdisk{$disk['id']}";
 			if (!file_exists($mount_point)) {
 				Util::mwexec("mkdir -p {$mount_point}");
 			}
-			if(!$is_mounted){
-			    // Запускаем проверку диска.
-                // Если размер диска был изменен, то система попытается подогнать размер.
-                echo "\n  - start resize storage disk {$dev}...";
-			    Util::mwexec("/etc/rc/resize_storage_part '{$disk['device']}'");
-            }
 		}
 		$this->save_fstab($conf);
+		System::setup_php_log();
 
 		$util = new Util();
         $util->create_work_dirs();
+    }
+
+    public static function disable_need_check_storage():void {
+        try{
+            // Проверка диска не требуется.
+            $pbxSettings = \Models\Storage::find();
+            /** @var \Models\Storage $pbxSettings */
+            /** @var \Models\Storage $row */
+            foreach ($pbxSettings as $row){
+                $row->check_when_booting = 0;
+                $row->save();
+            }
+        }catch (Exception $e){
+            Util::sys_log_msg('Reboot: Storage ', $e->getMessage());
+        }
     }
 
     /**
@@ -446,7 +450,7 @@ class Storage {
 		global $g;
 		// Точка монтирования доп. дисков.
 		Util::mwexec("mkdir -p /storage/");
-		if(! is_file($g['varetc_path'].'/cfdevice')){
+		if(! file_exists($g['varetc_path'].'/cfdevice')){
             return;
         }
         $fstab = '';
@@ -484,21 +488,17 @@ class Storage {
      */
 	public function get_disk_settings($id=''){
         $data = array();
-        if('' == $id){
+        if('' === $id){
             $pbxSettings = \Models\Storage::find();
-            if($pbxSettings != null ){
+            if($pbxSettings){
                 // Возвращаем данные до модификации.
                 $data = $pbxSettings->toArray();
-                /** @var \Models\Storage $pbxSettings */
-                /** @var \Models\Storage $row */
-                foreach ($pbxSettings as $row){
-                    $row->check_when_booting = 1;
-                    $row->save();
-                }
             }
         }else{
-            $pbxSettings = Models\Storage::findFirst("id = '$id'");
-            if($pbxSettings != null ) $data = $pbxSettings->toArray();
+            $pbxSettings = Models\Storage::findFirst("id='$id'");
+            if($pbxSettings){
+                $data = $pbxSettings->toArray();
+            }
         }
         return $data;
 	}
@@ -508,22 +508,22 @@ class Storage {
      * @param $data
      * @param int $id
      */
-	public function save_disk_settings($data, $id = 1){
+	public function save_disk_settings($data, $id = '1'){
 		if(!is_array($data)) return;
 		$disk_data = $this->get_disk_settings($id);
-		if(count($disk_data) == 0){
+		if(count($disk_data) === 0){
             $uniqid = strtoupper('STORAGE-DISK-' . md5( time() ) );
 		    $storage_settings = new Models\Storage();
             foreach ($data as $key => $val) {
-                $storage_settings->writeAttribute("$key", "$val");
+                $storage_settings->writeAttribute($key, $val);
             }
-            $storage_settings->writeAttribute("uniqid", $uniqid);
+            $storage_settings->writeAttribute('uniqid', $uniqid);
             $storage_settings->save();
 
         }else{
 			$storage_settings = Models\Storage::findFirst("id = '$id'");
             foreach ($data as $key => $value){
-                $storage_settings->writeAttribute("$key", "$value");
+                $storage_settings->writeAttribute($key, $value);
             }
             $storage_settings->save();
 		}

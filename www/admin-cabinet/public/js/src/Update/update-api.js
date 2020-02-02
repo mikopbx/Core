@@ -2,7 +2,7 @@
  * Copyright (C) MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 8 2019
+ * Written by Nikolay Beketov, 12 2019
  *
  */
 
@@ -22,7 +22,7 @@ const UpdateApi = {
 		const requestData = {
 			TYPE: 'MODULES',
 			LICENSE: globalPBXLicense,
-			PBXVER: globalPBXVersion,
+			PBXVER: globalPBXVersion.replace(/-dev/i, ''),
 			LANGUAGE: globalPBXLanguage,
 		};
 		$.api({

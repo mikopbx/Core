@@ -8,81 +8,86 @@
  */
 
 namespace Models;
-use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
+
 use Phalcon\Mvc\Model\Relation;
+use Phalcon\Validation;
+use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
 class Iax extends ModelsBase
 {
     /**
-     * @var integer
+     * @Primary
+     * @Identity
+     * @Column(type="integer", nullable=false)
      */
     public $id;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $uniqid;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $username;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $secret;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $host;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $qualify;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $disabled;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $noregister;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $manualattributes;
+
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $description;
 
-    public function getSource() :string
+    public function getSource(): string
     {
         return 'm_Iax';
     }
 
-    public function initialize() :void
+    public function initialize(): void
     {
-	    parent::initialize();
+        parent::initialize();
         $this->hasMany(
             'uniqid',
             'Models\IaxCodecs',
             'iaxuid',
             [
-                'alias'=>'Codecs',
+                'alias'      => 'Codecs',
                 'foreignKey' => [
                     'allowNulls' => true,
-                    'action'     => Relation::ACTION_CASCADE
+                    'action'     => Relation::ACTION_CASCADE,
                 ],
-                'params' => array(
-                    'order' => 'priority asc'
-                )
+                'params'     => [
+                    'order' => 'priority asc',
+                ],
             ]
         );
 
@@ -91,32 +96,33 @@ class Iax extends ModelsBase
             'Models\Providers',
             'iaxuid',
             [
-                'alias'=>'Providers',
+                'alias'      => 'Providers',
                 'foreignKey' => [
                     'allowNulls' => false,
                     'action'     => Relation::ACTION_CASCADE,
-                ]
+                ],
             ]
         );
     }
 
-	public function setManualAttributes( $text ) :void
+    public function setManualAttributes($text): void
     {
-		$this->manualattributes = base64_encode( $text );
-	}
+        $this->manualattributes = base64_encode($text);
+    }
 
-	public function getManualAttributes()  :string
+    public function getManualAttributes(): string
     {
-		return base64_decode( $this->manualattributes );
-	}
+        return base64_decode($this->manualattributes);
+    }
 
-    public function validation() :bool
+    public function validation(): bool
     {
 
-        $validation = new \Phalcon\Validation();
+        $validation = new Validation();
         $validation->add('uniqid', new UniquenessValidator([
-            'message' => $this->t('mo_ThisUniqidMustBeUniqueForIAXModels')
+            'message' => $this->t('mo_ThisUniqidMustBeUniqueForIAXModels'),
         ]));
+
         return $this->validate($validation);
 
 

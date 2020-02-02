@@ -2,11 +2,11 @@
  * Copyright (C) MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 6 2018
+ * Written by Nikolay Beketov, 12 2019
  *
  */
 
-/* global PbxApi, globalTranslate, ConfigWorker, Resumable, globalRootUrl, UserMessage */
+/* global PbxApi, globalTranslate, Resumable, globalRootUrl, UserMessage */
 
 const mergingCheckWorker = {
 	timeOut: 3000,
@@ -175,7 +175,6 @@ const backupIndex = {
 
 		r.on('uploadStart', () => {
 			console.debug('uploadStart');
-			ConfigWorker.stopConfigWorker();
 			backupIndex.$uploadButton.addClass('loading');
 			backupIndex.$progressBar.show();
 			backupIndex.$progressBarLabel.text(globalTranslate.bkp_UploadInProgress);

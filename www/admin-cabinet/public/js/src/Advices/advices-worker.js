@@ -2,7 +2,7 @@
  * Copyright (C) MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 11 2018
+ * Written by Nikolay Beketov, 12 2019
  *
  */
 
@@ -99,6 +99,7 @@ const advicesWorker = {
 			localStorage.setItem('previousAdvice', htmlMessages);
 
 			// Проверим есть ли обновление системы
+			$('a[href="/admin-cabinet/update/index/"] > i').removeClass('loading');
 			if (response.message.info !== undefined
 				&& response.message.info.length > 0) {
 				$.each(response.message.info, (key, value) => {

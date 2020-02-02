@@ -10,47 +10,48 @@
 namespace Models;
 
 use Phalcon\Mvc\Model\Relation;
-use Phalcon\Di;
 
 class FirewallRules extends ModelsBase
 {
     /**
-     * @var integer
+     * @Primary
+     * @Identity
+     * @Column(type="integer", nullable=false)
      */
     public $id;
 
     /**
-     * @var string{'udp','tcp','icmp'}
+     * @Column(type="string", nullable=true){'udp','tcp','icmp'}
      */
     public $protocol;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $portfrom;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $portto;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $networkfilterid;
 
     /**
-     * @var string{'allow','block'}
+     * @Column(type="string", nullable=true){'allow','block'}
      */
     public $action;
 
     /**
-     * @var string{'SIP','WEB','SSH','AMI','CTI','ICMP'}
+     * @Column(type="string", nullable=true){'SIP','WEB','SSH','AMI','CTI','ICMP'}
      */
     public $category;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $description;
 
@@ -91,68 +92,69 @@ class FirewallRules extends ModelsBase
 
         $template = [
             'SIP'  => [
-                'rules'  => [
+                'rules'     => [
                     ['portfrom' => $defaultSIP, 'portto' => $defaultSIP, 'protocol' => 'udp'],
                     ['portfrom' => $defaultSIP, 'portto' => $defaultSIP, 'protocol' => 'tcp'],
                     ['portfrom' => $defaultRTPFrom, 'portto' => $defaultRTPTo, 'protocol' => 'udp'],
                 ],
-                'action' => 'allow',
-                'shortName'=>'SIP & RTP',
+                'action'    => 'allow',
+                'shortName' => 'SIP & RTP',
             ],
             'WEB'  => [
-                'rules'  => [
+                'rules'     => [
                     ['portfrom' => $defaultWeb, 'portto' => $defaultWeb, 'protocol' => 'tcp'],
                     ['portfrom' => $defaultWebHttps, 'portto' => $defaultWebHttps, 'protocol' => 'tcp'],
                 ],
-                'action' => 'allow',
-                'shortName'=>'WEB',
+                'action'    => 'allow',
+                'shortName' => 'WEB',
 
             ],
             'SSH'  => [
-                'rules'  => [
+                'rules'     => [
                     ['portfrom' => $defaultSSH, 'portto' => $defaultSSH, 'protocol' => 'tcp'],
                 ],
-                'action' => 'allow',
-                'shortName'=>'SSH',
+                'action'    => 'allow',
+                'shortName' => 'SSH',
             ],
             'AMI'  => [
-                'rules'  => [
+                'rules'     => [
                     ['portfrom' => $defaultAMI, 'portto' => $defaultAMI, 'protocol' => 'tcp'],
                 ],
-                'action' => 'allow',
-                'shortName'=>'AMI',
+                'action'    => 'allow',
+                'shortName' => 'AMI',
             ],
-            'AJAM'  => [
-                'rules'  => [
+            'AJAM' => [
+                'rules'     => [
                     ['portfrom' => $defaultAJAM, 'portto' => $defaultAJAM, 'protocol' => 'tcp'],
                     ['portfrom' => $defaultAJAMTLS, 'portto' => $defaultAJAMTLS, 'protocol' => 'tcp'],
                 ],
-                'action' => 'allow',
-                'shortName'=>'AJAM',
+                'action'    => 'allow',
+                'shortName' => 'AJAM',
             ],
             'ICMP' => [
-                'rules'  => [
+                'rules'     => [
                     ['portfrom' => 0, 'portto' => 0, 'protocol' => 'icmp'],
                 ],
-                'action' => 'allow',
-                'shortName'=>'ICMP',
+                'action'    => 'allow',
+                'shortName' => 'ICMP',
             ],
         ];
 
 
         //Подключим правила из установленных модулей расширений
         $additionalRules = [[]];
-        $enabledModules = PbxExtensionModules::find('disabled=0');
+        $enabledModules  = PbxExtensionModules::find('disabled=0');
         foreach ($enabledModules as $enabled_module) {
             $class = "\\Modules\\{$enabled_module->uniqid}\\setup\\FirewallRules";
-            if (class_exists($class)){
-                $additionalRules[]= $class::getDefaultRules();
+            if (class_exists($class)) {
+                $additionalRules[] = $class::getDefaultRules();
             }
         }
-        if ($additionalRules!==[[]]) {
+        if ($additionalRules !== [[]]) {
             $template = array_merge($template, ...$additionalRules);
         }
-        $template = array_change_key_case($template,CASE_UPPER);
+        $template = array_change_key_case($template, CASE_UPPER);
+
         return $template;
     }
 

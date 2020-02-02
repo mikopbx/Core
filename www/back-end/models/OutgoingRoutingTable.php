@@ -8,63 +8,66 @@
  */
 
 namespace Models;
+
 use Phalcon\Mvc\Model\Relation;
 
 class OutgoingRoutingTable extends ModelsBase
 {
     /**
-     * @var integer
+     * @Primary
+     * @Identity
+     * @Column(type="integer", nullable=false)
      */
     public $id;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $rulename;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $providerid;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $priority;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $numberbeginswith;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $restnumbers;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $trimfrombegin;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $prepend;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $note;
 
-    public function getSource() :string
+    public function getSource(): string
     {
         return 'm_OutgoingRoutingTable';
     }
 
-    public function initialize() :void
+    public function initialize(): void
     {
-	    parent::initialize();
+        parent::initialize();
         $this->belongsTo(
             'providerid',
             'Models\Providers',
@@ -74,7 +77,7 @@ class OutgoingRoutingTable extends ModelsBase
                 'foreignKey' => [
                     'allowNulls' => false,
                     'action'     => Relation::NO_ACTION,
-                ]
+                ],
             ]
         );
     }

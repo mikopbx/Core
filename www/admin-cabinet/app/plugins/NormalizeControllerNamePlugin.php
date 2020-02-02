@@ -26,23 +26,36 @@ class NormalizeControllerNamePlugin extends Plugin
 	 * @param Event $event
 	 * @param Dispatcher $dispatcher
 	 */
-	public function beforeDispatch(Event $event, Dispatcher $dispatcher)
+	public function beforeDispatch(Event $event, Dispatcher $dispatcher) :void
 	{
-		$controller = $dispatcher->getControllerName();
-		if ( strpos( $controller, '-' ) > 0 ) {
-			$dispatcher->setControllerName(
-				Text::camelize( $controller )
-			);
-		} else {
-			$dispatcher->setControllerName(
-				ucfirst( $controller )
-			);
-		}
-		if ( stripos( $controller, "module" ) === 0 ) {
-			$dispatcher->setModuleName( "PBXExtension" );
-		} else {
-			$dispatcher->setModuleName( "PBXCore" );
-		}
+        $controller = $dispatcher->getControllerName();
+        if ( strpos( $controller, '-' ) > 0 ) {
+            $controller = str_replace('-', '_', $controller);
+        }
+        $dispatcher->setControllerName(ucfirst($controller));
+
+        if ( stripos( $controller, 'module' ) === 0 ) {
+            $dispatcher->setModuleName( 'PBXExtension' );
+        } else {
+            $dispatcher->setModuleName( 'PBXCore' );
+        }
+    }
+
+    /**
+     * This action is executed after execute any action in the application
+     *
+     * @param Event $event
+     * @param Dispatcher $dispatcher
+     */
+    public function afterDispatchLoop(Event $event, Dispatcher $dispatcher) :void
+    {
+        $controller = $dispatcher->getControllerName();
+
+        if ( strpos( $controller, '_' ) > 0 ) {
+            $dispatcher->setControllerName(Text::camelize( $controller));
+        } else {
+            $dispatcher->setControllerName(ucfirst( $controller ));
+        }
 
     }
 }

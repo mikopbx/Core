@@ -2,11 +2,11 @@
  * Copyright (C) MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 6 2018
+ * Written by Nikolay Beketov, 12 2019
  *
  */
 
-/* global PbxApi, ConfigWorker, globalTranslate, globalRootUrl */
+/* global PbxApi, globalTranslate, globalRootUrl */
 
 
 const restoreWorker = {
@@ -134,7 +134,6 @@ const restoreBackup = {
 						onApprove: () => {
 							restoreWorker.$submitButton.addClass('loading');
 							restoreWorker.restoreIsProcessing = true;
-							ConfigWorker.stopConfigWorker();
 							PbxApi.BackupRecover(params, restoreBackup.cbAfterRestore);
 							return true;
 						},

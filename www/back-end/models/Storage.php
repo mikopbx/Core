@@ -9,92 +9,91 @@
 
 namespace Models;
 
+use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
-
 
 class Storage extends ModelsBase
 {
     /**
-     * @var integer
+     * @Primary
+     * @Identity
+     * @Column(type="integer", nullable=false)
      */
     public $id;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $name;
 
     /**
-     * @var string
-     */
-    public $uniqid;
-
-    /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $device;
 
     /**
-     * @var integer
-     */
-    public $media;
-
-    /**
-     * @var integer
-     */
-    public $persistence;
-
-    /**
-     * @var integer
-     */
-    public $astlogs;
-
-    /**
-     * @var string
-     */
-    public $faxarchive;
-
-    /**
-     * @var integer
-     */
-    public $voicemailarchive;
-
-    /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $mountpoint;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
+     */
+    public $uniqid;
+
+    /**
+     * @Column(type="string", nullable=true)
      */
     public $filesystemtype;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
+     */
+    public $media;
+
+    /**
+     * @Column(type="integer", nullable=true)
+     */
+    public $persistence;
+
+    /**
+     * @Column(type="integer", nullable=true)
+     */
+    public $astlogs;
+
+    /**
+     * @Column(type="integer", nullable=true)
+     */
+    public $voicemailarchive;
+
+
+    /**
+     * @Column(type="integer", nullable=true)
      */
     public $syslog;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $check_when_booting;
 
 
-    public function getSource() :string
+    public function getSource(): string
     {
         return 'm_Storage';
     }
 
 
-	public function validation() :bool
+    public function validation(): bool
     {
-        $validation = new \Phalcon\Validation();
+        $validation = new Validation();
         $validation->add('device', new UniquenessValidator([
-            'message' => $this->t("mo_ThisDeviceNotUniqueForStorageModels")
+            'message' => $this->t("mo_ThisDeviceNotUniqueForStorageModels"),
         ]));
         $validation->add('uniqid', new UniquenessValidator([
-            'message' => $this->t("mo_ThisUniqidNotUniqueForStorageModels")
+            'message' => $this->t("mo_ThisUniqidNotUniqueForStorageModels"),
         ]));
+
         return $this->validate($validation);
     }
 

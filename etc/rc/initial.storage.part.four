@@ -43,17 +43,21 @@ echo '600M,,83;' >> "$res_file";
 echo ';' >> "$res_file";
 echo ';' >> "$res_file";
 echo 'EOF' >> "$res_file";
-
+echo 'echo " - sfdisk ... result code $?"; ' >> "$res_file";
+echo 'sleep 2;' >> "$res_file";
+echo '/sbin/blockdev --rereadpt "${dev}" > /dev/null 2>&1;' >> "$res_file";
+echo 'echo " - re-initialize partition table... code $?";' >> "$res_file";
+echo 'sleep 2;' >> "$res_file";
 /bin/sh "$res_file" > /dev/null 2>&1;
 rm "$res_file";
 
-echo " - re-initialize partition table...";
 /sbin/blockdev --rereadpt "${dev}" > /dev/null 2>&1;
-sleep 2;
+sleep 1;
 
-dev4check=$(/bin/busybox fdisk -l "${dev}" | /bin/busybox grep "${dev}4");
+if [ -b "${dev}4" ];then
+    #e2fsck -f -p "${dev}4";
+    #echo " - e2fsck... exit code $?";
 
-if [ "x${dev4check}" != "x" ];then
     tmp_dir='/tmp/test_mnt';
     # Создаем файловую систему.
     mkdir -p "$tmp_dir";
@@ -65,8 +69,19 @@ if [ "x${dev4check}" != "x" ];then
         echo " - mount ${dev}4 exit code $?";
         # Создаем файловую систему ext2.
         "mkfs.${type}" "${dev}4" > /dev/null 2>&1;
-        echo " - mkfs.${type} ${dev}4 exit code $?"
-        sleep 3;
+        if [ "$?" != "0" ]; then
+            echo " - ERROR: mkfs on '${dev}4' type '${type}' exit code '$?'"
+        fi;
+
+	    uuid=$(/sbin/blkid -ofull "${dev}4" | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^UUID" | /bin/busybox awk -F "\"" '{print $2}' | /bin/busybox head -n 1);
+		mount -t "${type}" -rw UUID="$uuid" "$tmp_dir" 2> /dev/null;
+        if [ "$?" != "0" ]; then
+            echo " - ERROR: can not mount '${dev}4' type: '${type}' uuid: '${uuid}' exit code '$?'"
+            sleep 30;
+        else
+            sleep 3;
+            umount "$tmp_dir";
+        fi;
     else
         /etc/rc/shell_functions.sh killprocesses "$tmp_dir" -TERM 0;
         umount "$tmp_dir";
@@ -75,11 +90,15 @@ if [ "x${dev4check}" != "x" ];then
     if [ "$?" == "0" ]; then
         # Удаляем временную директорию.
         rm -rf /tmp/test_mnt;
-        echo " - сheck filesysten on ${dev}4";
+        echo " - сheck filesystem on ${dev}4";
         "/sbin/fsck.${type}" -a "${dev}4" > /dev/null 2>&1;
-        echo " - сheck completed..."
+        if [ "$?" != "0" ]; then
+            echo " - ERROR: сheck fs on '${dev}4' type: '${type}' exit code '$?'"
+        else
+            echo " - сheck completed..."
+        fi;
     else
-        echo " - umount ${dev}4 exit code $?"
+        echo " - ERROR: umount ${dev}4 exit code $?"
     fi;
 else
     echo " - partition ${dev}4 not found...";

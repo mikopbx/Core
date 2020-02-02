@@ -2,20 +2,22 @@
  * Copyright (C) MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 5 2018
+ * Written by Nikolay Beketov, 12 2019
  *
  */
 
-/* global globalRootUrl, ClipboardJS, PbxApi, SemanticLocalization, DebuggerInfo */
+/* global globalRootUrl, ClipboardJS, PbxApi, SemanticLocalization,
+DebuggerInfo, InputMaskPatterns */
 
 const extensionsTable = {
+	maskList: null,
 	initialize() {
 		$('.avatar').each(function () {
 			if ($(this).attr('src') === '') {
 				$(this).attr('src', `${globalRootUrl}public/img/unknownPerson.jpg`);
 			}
 		});
-
+		extensionsTable.initializeInputmask($('input.mobile-number-input'));
 		$('#extensions-table').DataTable({
 			lengthChange: false,
 			paging: false,
@@ -25,11 +27,12 @@ const extensionsTable = {
 				null,
 				null,
 				null,
-				// { orderable: false, searchable: false },
-				{orderable: false, searchable: false},
+				{ orderable: false, searchable: false },
 			],
 			order: [1, 'asc'],
 			language: SemanticLocalization.dataTableLocalisation,
+			drawCallback() {
+			},
 		});
 
 		$('#add-new-button').appendTo($('div.eight.column:eq(0)'));
@@ -82,7 +85,29 @@ const extensionsTable = {
 				},
 			});
 	},
-
+	/**
+	 * Инициализирует красивое представление номеров
+	 */
+	initializeInputmask($el) {
+		if (extensionsTable.maskList === null) {
+			// Подготовим таблицу для сортировки
+			extensionsTable.maskList = $.masksSort(InputMaskPatterns, ['#'], /[0-9]|#/, 'mask');
+		}
+		$el.inputmasks({
+			inputmask: {
+				definitions: {
+					'#': {
+						validator: '[0-9]',
+						cardinality: 1,
+					},
+				},
+			},
+			match: /[0-9]/,
+			replace: '9',
+			list: extensionsTable.maskList,
+			listKey: 'mask',
+		});
+	},
 };
 
 

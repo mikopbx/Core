@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 9 2019
+ * Written by Alexey Portnov, 12 2019
  */
 
 class p_Park extends ConfigClass{
@@ -65,9 +65,7 @@ class p_Park extends ConfigClass{
      */
 	public function getIncludeInternalTransfer(){
 		// Генерация внутреннего номерного плана. 
-		$result = '';
-		// $result.= "include => parked-calls \n";
-		return $result;
+		return 'exten => '.$this->ParkingExt.',1,Goto(parkedcalls,${EXTEN},1)'. "\n";
 	}
 
     /**

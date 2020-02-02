@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 8 2019
+ * Written by Alexey Portnov, 10 2019
  */
 
 require_once('globals.php');
@@ -178,7 +178,7 @@ class Firewall{
     /**
      * Записываем конфиг для fail2ban. Описываем правила блокировок.
      */
-    private function write_config(){
+    private function write_config():void {
 
         $user_whitelist = '';
         /** @var Models\Fail2BanRules $res */
@@ -207,7 +207,6 @@ class Firewall{
         }
         $this->generate_jails();
         $jails = array(
-            'asterisk'      => 'iptables-allports[name=ASTERISK, protocol=all]',
             'dropbear'      => 'iptables-allports[name=SSH, protocol=all]',
             'mikoajam'      => 'iptables-allports[name=MIKOAJAM, protocol=all]',
             'mikopbx-www'   => 'iptables-allports[name=HTTP, protocol=all]'
@@ -215,17 +214,52 @@ class Firewall{
         $config = "[DEFAULT]\n".
                   "ignoreip = 127.0.0.1 {$user_whitelist}\n\n";
 
+        $syslog_file = System::get_syslog_file();
+
         foreach ($jails as $jail => $action){
             $config.= "[{$jail}]\n".
                 "enabled = true\n".
                 "backend = process\n".
-                "logprocess = logread -f\n".
+                "logpath = {$syslog_file}\n".
+                // "logprocess = logread -f\n".
                 "maxretry = {$max_retry}\n".
                 "findtime = {$find_time}\n".
                 "bantime = {$ban_time}\n".
                 "logencoding = utf-8\n".
                 "action = {$action}\n\n";
         }
+
+        $log_dir = System::get_log_dir().'/asterisk/';
+        $config.= "[asterisk_security_log]\n".
+                  "enabled = true\n".
+                  "filter = asterisk\n".
+                  "action = iptables-allports[name=ASTERISK, protocol=all]\n".
+                  "logencoding = utf-8\n".
+                  "maxretry = {$max_retry}\n".
+                  "findtime = {$find_time}\n".
+                  "bantime = {$ban_time}\n".
+                  "logpath = {$log_dir}security_log\n\n";
+
+        $config.= "[asterisk_error]\n".
+                  "enabled = true\n".
+                  "filter = asterisk\n".
+                  "action = iptables-allports[name=ASTERISK_ERROR, protocol=all]\n".
+                  "maxretry = {$max_retry}\n".
+                  "findtime = {$find_time}\n".
+                  "bantime = {$ban_time}\n".
+                  "logencoding = utf-8\n".
+                  "logpath = {$log_dir}error\n\n";
+
+        $config.= "[asterisk_public]\n".
+                  "enabled = true\n".
+                  "filter = asterisk\n".
+                  "action = iptables-allports[name=ASTERISK_PUBLIC, protocol=all]\n".
+                  "maxretry = {$max_retry}\n".
+                  "findtime = {$find_time}\n".
+                  "bantime = {$ban_time}\n".
+                  "logencoding = utf-8\n".
+                  "logpath = {$log_dir}messages\n\n";
+
         Util::file_write_content('/etc/fail2ban/jail.local',$config);
     }
 
@@ -233,25 +267,35 @@ class Firewall{
      * Создаем дополнительные правила.
      */
     private function generate_jails(){
-        $filter = 'failregex = ^%(__prefix_line)sFrom\s<HOST>.\sUserAgent:\s(\S|\s)*File not found.$';
+
         $conf = "[INCLUDES]\n".
                 "before = common.conf\n".
                 "[Definition]\n".
-                "_daemon = miko_ajam\n".
-                "$filter\n".
+                "_daemon = (authpriv.warn |auth.warn )?miko_ajam\n".
+                'failregex = ^%(__prefix_line)sFrom\s+<HOST>.\s+UserAgent:\s+[a-zA-Z0-9 \s\.,/:;\+\-_\)\(\[\]]*.\s+Fail\s+auth\s+http.$'."\n".
+                '            ^%(__prefix_line)sFrom\s+<HOST>.\s+UserAgent:\s+[a-zA-Z0-9 \s\.,/:;\+\-_\)\(\[\]]*.\s+File\s+not\s+found.$'."\n".
                 "ignoreregex =\n";
         file_put_contents('/etc/fail2ban/filter.d/mikoajam.conf', $conf);
 
-        $filter = 'failregex = ^%(__prefix_line)sFrom:\s<HOST>\sUserAgent:(\S|\s)*Wrong password$';
-        $filter2 = '            ^(\S|\s)*nginx:\s+\d+/\d+/\d+\s+(\S|\s)*status\s+403(\S|\s)*client:\s+<HOST>(\S|\s)*';
         $conf = "[INCLUDES]\n".
                 "before = common.conf\n".
                 "[Definition]\n".
-                "_daemon = php-errors\n".
-                "$filter\n".
-                "$filter2\n".
+                "_daemon = [\S\W\s]+web_auth\n".
+                'failregex = ^%(__prefix_line)sFrom:\s<HOST>\sUserAgent:(\S|\s)*Wrong password$'."\n".
+                '            ^(\S|\s)*nginx:\s+\d+/\d+/\d+\s+(\S|\s)*status\s+403(\S|\s)*client:\s+<HOST>(\S|\s)*'."\n".
                 "ignoreregex =\n";
         file_put_contents('/etc/fail2ban/filter.d/mikopbx-www.conf', $conf);
+
+        $conf = "[INCLUDES]\n".
+                "before = common.conf\n".
+                "[Definition]\n".
+                "_daemon = (authpriv.warn )?dropbear\n".
+                'prefregex = ^%(__prefix_line)s<F-CONTENT>(?:[Ll]ogin|[Bb]ad|[Ee]xit).+</F-CONTENT>$'."\n".
+                'failregex = ^[Ll]ogin attempt for nonexistent user (\'.*\' )?from <HOST>:\d+$'."\n".
+                '            ^[Bb]ad (PAM )?password attempt for .+ from <HOST>(:\d+)?$'."\n".
+                '            ^[Ee]xit before auth \(user \'.+\', \d+ fails\): Max auth tries reached - user \'.+\' from <HOST>:\d+\s*$'."\n".
+                "ignoreregex =\n";
+        file_put_contents('/etc/fail2ban/filter.d/dropbear.conf', $conf);
 
     }
 
@@ -460,6 +504,9 @@ class Firewall{
         $results  = $db->query($q);
         if(FALSE !== $results && $results->numColumns()>0){
             while($res = $results->fetchArray(SQLITE3_ASSOC)){
+                if(strpos($res['jail'], 'asterisk') === 0){
+                    $res['jail'] = 'asterisk';
+                }
                 $result[] = $res;
             }
         }

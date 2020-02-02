@@ -8,122 +8,134 @@
  */
 
 namespace Models;
-use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
+
 use Phalcon\Mvc\Model\Relation;
+use Phalcon\Validation;
+use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
 class AsteriskManagerUsers extends ModelsBase
 {
     /**
-     * @var integer
+     * @Primary
+     * @Identity
+     * @Column(type="integer", nullable=false)
      */
     public $id;
+
     /**
-     * @var string
+     * AMI users username
+     *
+     * @Column(type="string", nullable=true)
      */
     public $username;
+
     /**
-     * @var string
+     * AMI users password
+     *
+     * @Column(type="string", nullable=true)
      */
     public $secret;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $call;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $cdr;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $originate;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $reporting;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $agent;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $config;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $dialplan;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $dtmf;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $log;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $system;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $user;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $verbose;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $networkfilterid;
 
     /**
-     * @var string
+     * AMI users Description
+     *
+     * @Column(type="string", nullable=true)
      */
     public $description;
 
-    public function getSource() :string 
+    public function getSource(): string
     {
         return 'm_AsteriskManagerUsers';
     }
 
-    public function validation() :bool
+    public function validation(): bool
     {
-        $validation = new \Phalcon\Validation();
+        $validation = new Validation();
         $validation->add('username', new UniquenessValidator([
-            'message' => $this->t('mo_ThisUsernameNotUniqueForStorageModels')
+            'message' => $this->t('mo_ThisUsernameNotUniqueForStorageModels'),
         ]));
 
         return $this->validate($validation);
     }
 
-    public function initialize() :void
+    public function initialize(): void
     {
-	    parent::initialize();
+        parent::initialize();
         $this->belongsTo(
             'networkfilterid',
             'Models\NetworkFilters',
             'id',
             [
-                'alias'=>'NetworkFilters',
+                'alias'      => 'NetworkFilters',
                 'foreignKey' => [
                     'allowNulls' => true,
-                    'action'     => Relation::NO_ACTION
-                ]
+                    'action'     => Relation::NO_ACTION,
+                ],
             ]
         );
     }

@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 9 2019
+ * Written by Alexey Portnov, 10 2019
  */
 
 class p_OtherConfigs extends ConfigClass{
@@ -69,16 +69,25 @@ class p_OtherConfigs extends ConfigClass{
         Util::file_write_content($this->astConfDir."/asterisk.conf", $conf);
 	}
 
-	private function logger_conf_generate(){
-		$conf  = "[general]\n";
+	private function logger_conf_generate():void {
+        $logdir = System::get_log_dir().'/asterisk/';
+        if(!file_exists($logdir) && !mkdir($logdir, 0777, true) && !is_dir($logdir)){
+            $logdir = '';
+        }
+        $conf  = "[general]\n";
 		$conf .= "queue_log = no\n";
 		$conf .= "event_log = no\n";
-		$conf .= "dateformat = %F %T\n\n";
+		$conf .= "dateformat = %F %T\n";
+		$conf .= "\n";
 		$conf .= "[logfiles]\n";
-		$conf .= "syslog.local0 => notice,warning,error\n";
+		// $conf .= "syslog.local0 => notice,warning,error\n";
 		$conf .= "console => debug,error,verbose(10)\n\n";
+        $conf .= "{$logdir}security_log => security\n";
+        $conf .= "{$logdir}messages => notice,warning\n";
+        $conf .= "{$logdir}error => error\n";
+        $conf .= "\n";
 
-        Util::file_write_content($this->astConfDir."/logger.conf", $conf);
+        Util::file_write_content($this->astConfDir.'/logger.conf', $conf);
 	}
 
 	private function ccss_conf_generate(){

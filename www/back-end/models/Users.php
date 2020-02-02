@@ -14,47 +14,49 @@ use Phalcon\Mvc\Model\Relation;
 class Users extends ModelsBase
 {
     /**
-     * @var integer
+     * @Primary
+     * @Identity
+     * @Column(type="integer", nullable=false)
      */
     public $id;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $email;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $username;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $password;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $role;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $language;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $voicemailpincode;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $ldapauth;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $avatar;
 

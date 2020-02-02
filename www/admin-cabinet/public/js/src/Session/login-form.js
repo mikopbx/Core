@@ -2,7 +2,7 @@
  * Copyright (C) MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 6 2018
+ * Written by Nikolay Beketov, 12 2019
  *
  */
 
@@ -52,7 +52,6 @@ const loginForm = {
 		Form.cbBeforeSendForm = loginForm.cbBeforeSendForm;
 		Form.cbAfterSendForm = loginForm.cbAfterSendForm;
 		Form.keyboardShortcuts = false;
-		Form.configWorkerEnabled = false;
 		Form.initialize();
 	},
 };

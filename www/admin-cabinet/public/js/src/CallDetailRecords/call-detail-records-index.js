@@ -2,7 +2,7 @@
  * Copyright (C) MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 7 2018
+ * Written by Nikolay Beketov, 12 2019
  *
  */
 
@@ -61,13 +61,22 @@ class CDRPlayer {
 	 * Обработчик подгрузки метаданных
 	 */
 	cbOnMetadataLoaded() {
-		if (isFinite(this.duration)) {
+		if (Number.isFinite(this.duration)) {
 			const $row = $(this).closest('tr');
 			const date = new Date(null);
-			date.setSeconds(this.currentTime); // specify value for SECONDS here
+			date.setSeconds(parseInt(this.currentTime, 10)); // specify value for SECONDS here
 			const currentTime = date.toISOString().substr(14, 5);
-			date.setSeconds(this.duration); // specify value for SECONDS here
-			const duration = date.toISOString().substr(14, 5);
+			date.setSeconds(parseInt(this.duration, 10)); // specify value for SECONDS here
+			const dateStr = date.toISOString();
+			const hours = parseInt(dateStr.substr(11, 2), 10);
+			let duration;
+			if (hours === 0) {
+				duration = dateStr.substr(14, 5);
+			} else if (hours < 10) {
+				duration = dateStr.substr(12, 7);
+			} else if (hours >= 10) {
+				duration = dateStr.substr(11, 8);
+			}
 			$row.find('span.cdr-duration').text(`${currentTime}/${duration}`);
 		}
 	}
@@ -78,17 +87,27 @@ class CDRPlayer {
 	 * @param meta
 	 */
 	cbOnSliderChange(newVal, meta) {
-		if (meta.triggeredByUser && isFinite(this.html5Audio.duration)) {
+		if (meta.triggeredByUser && Number.isFinite(this.html5Audio.duration)) {
 			this.html5Audio.removeEventListener('timeupdate', this.cbTimeUpdate, false);
 			this.html5Audio.currentTime = (this.html5Audio.duration * newVal) / 100;
 			this.html5Audio.addEventListener('timeupdate', this.cbTimeUpdate, false);
 		}
-		if (isFinite(this.html5Audio.duration)) {
-			const date = new Date(null);
-			date.setSeconds(this.html5Audio.currentTime); // specify value for SECONDS here
-			const currentTime = date.toISOString().substr(14, 5);
-			date.setSeconds(this.html5Audio.duration); // specify value for SECONDS here
-			const duration = date.toISOString().substr(14, 5);
+		if (Number.isFinite(this.html5Audio.duration)) {
+			const dateCurrent = new Date(null);
+			dateCurrent.setSeconds(parseInt(this.html5Audio.currentTime, 10)); // specify value for SECONDS here
+			const currentTime = dateCurrent.toISOString().substr(14, 5);
+			const dateDuration = new Date(null);
+			dateDuration.setSeconds(parseInt(this.html5Audio.duration, 10)); // specify value for SECONDS here
+			const dateStr = dateDuration.toISOString();
+			const hours = parseInt(dateStr.substr(11, 2), 10);
+			let duration;
+			if (hours === 0) {
+				duration = dateStr.substr(14, 5);
+			} else if (hours < 10) {
+				duration = dateStr.substr(12, 7);
+			} else if (hours >= 10) {
+				duration = dateStr.substr(11, 8);
+			}
 			this.spanDuration.text(`${currentTime}/${duration}`);
 		}
 	}
@@ -97,7 +116,7 @@ class CDRPlayer {
 	 * Колбек на изменение позиции проигрываемого файла из HTML5 аудиотега
 	 */
 	cbTimeUpdate() {
-		if (isFinite(this.duration)) {
+		if (Number.isFinite(this.duration)) {
 			const percent = this.currentTime / this.duration;
 			const rangePosition = Math.min(Math.round((percent) * 100), 100);
 			const $row = $(this).closest('tr');

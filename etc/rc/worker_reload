@@ -1,0 +1,41 @@
+#!/bin/sh
+
+# Приоритет запуска процесса.
+PRIORITY=0
+# Путь и базовые параметры для запускаемого приложения.
+PATHTOBIN=$1;
+# Имя сервиса.
+NAME=$(basename `echo $PATHTOBIN | tr ' ' '-'`);
+
+# Длительно ожидание перед новым запуском.
+SLEEPSECS=4
+
+# Транслируем переменные из командной строки.
+CLIARGS="$2 $3 $4 $5 $6"
+
+message() {
+	echo "$1" >&2
+	logger -t "$NAME" "$1"
+}
+
+run_bin()
+{
+	while :; do
+
+	    nice -n $PRIORITY ${PATHTOBIN} ${CLIARGS}
+		EXITSTATUS=$?
+
+		message "$NAME ended with exit status $EXITSTATUS"
+		if test "x$EXITSTATUS" = "x0" ; then
+			message "Bin $NAME shutdown normally."
+			sleep 30
+		else
+			message "$NAME died with code $EXITSTATUS."
+		fi
+		message "Automatically restarting $NAME."
+		sleep $SLEEPSECS
+
+	done
+}
+
+run_bin &

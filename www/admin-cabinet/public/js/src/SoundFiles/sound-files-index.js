@@ -2,7 +2,7 @@
  * Copyright (C) MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 5 2018
+ * Written by Nikolay Beketov, 12 2019
  *
  */
 
@@ -55,7 +55,7 @@ class IndexSoundPlayer {
 	 * Обработчик подгрузки метаданных
 	 */
 	cbOnMetadataLoaded() {
-		if (isFinite(this.duration)) {
+		if (Number.isFinite(this.duration)) {
 			const $row = $(this).closest('tr');
 			const date = new Date(null);
 			date.setSeconds(this.currentTime); // specify value for SECONDS here
@@ -72,12 +72,12 @@ class IndexSoundPlayer {
 	 * @param meta
 	 */
 	cbOnSliderChange(newVal, meta) {
-		if (meta.triggeredByUser && isFinite(this.html5Audio.duration)) {
+		if (meta.triggeredByUser && Number.isFinite(this.html5Audio.duration)) {
 			this.html5Audio.removeEventListener('timeupdate', this.cbTimeUpdate, false);
 			this.html5Audio.currentTime = (this.html5Audio.duration * newVal) / 100;
 			this.html5Audio.addEventListener('timeupdate', this.cbTimeUpdate, false);
 		}
-		if (isFinite(this.html5Audio.duration)) {
+		if (Number.isFinite(this.html5Audio.duration)) {
 			const date = new Date(null);
 			date.setSeconds(this.html5Audio.currentTime); // specify value for SECONDS here
 			const currentTime = date.toISOString().substr(14, 5);
@@ -91,7 +91,7 @@ class IndexSoundPlayer {
 	 * Колбек на изменение позиции проигрываемого файла из HTML5 аудиотега
 	 */
 	cbTimeUpdate() {
-		if (isFinite(this.duration)) {
+		if (Number.isFinite(this.duration)) {
 			const percent = this.currentTime / this.duration;
 			const rangePosition = Math.round((percent) * 100);
 			const $row = $(this).closest('tr');

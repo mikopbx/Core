@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 12 2018
+ * Written by Alexey Portnov, 10 2019
  */
 
 require_once 'globals.php';
@@ -157,9 +157,9 @@ class p_IAX extends ConfigClass {
      * @param string $id
      * @return string|null
      */
-    public function getTechByID($id){
+    public function getTechByID($id):string {
         // Генерация исходящего номерного плана.
-        $technology = null;
+        $technology = '';
         foreach ($this->data_providers as $peer) {
             if($peer['uniqid'] != $id) continue;
             $technology = 'IAX2';

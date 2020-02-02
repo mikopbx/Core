@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 8 2019
+ * Written by Alexey Portnov, 11 2019
  */
 
 class p_IVR extends ConfigClass{
@@ -43,10 +43,9 @@ class p_IVR extends ConfigClass{
             $conf .= "[ivr-{$ivr->extension}] \n";
             $conf .= 'exten => s,1,ExecIf($["${CHANNEL(channeltype)}" == "Local"]?Gosub(set_orign_chan,s,1))'."\n\t";
             $conf .= "same => n,Set(APPEXTEN={$ivr->extension})\n\t";
-            // $conf .= 'same => n,AGI(cdr_connector.php,dial_app)'."\n\t";
             $conf .= 'same => n,Gosub(dial_app,${EXTEN},1)'."\n\t";
             $conf .= 'same => n,Answer()'."\n\t";
-            $conf .= 'same => n,ExecIf($["${try_count}x" == "x"]?Set(try_count=0)'."\n\t";
+            $conf .= 'same => n,Set(try_count=0); №6'."\n\t";
             $conf .= 'same => n,Set(try_count=$[${try_count} + 1])'."\n\t";
             $conf .= 'same => n,GotoIf($[${try_count} > '.$try_count_ivr.']?internal,'.$ivr->timeout_extension.',1)'."\n\t";
             $conf .= "same => n,Set(TIMEOUT(digit)=2) \n\t";
@@ -60,12 +59,17 @@ class p_IVR extends ConfigClass{
             foreach ($res as $ext){
                 $conf .= "exten => {$ext->digits},1,Goto(internal,{$ext->extension},1)\n";
             }
-            $conf .= "exten => i,1,Goto(s,5)\n";
-            $conf .= "exten => t,1,Goto(s,5)\n";
+            $conf .= "exten => i,1,Goto(s,6)\n";
+            $conf .= "exten => t,1,Goto(s,6)\n";
 
-            if($ivr->allow_enter_any_internal_extension === "1"){
+            if($ivr->allow_enter_any_internal_extension === '1'){
                 $extension = Util::get_extension_X($this->extensionLength);
-                $conf .= 'exten => _'.$extension.',1,ExecIf($["${SIPPEER(${EXTEN},status)}x" == "x"]?Goto(s,1))'. "\n\t";
+                if('SIP' === p_SIP::get_technology()) {
+                    $conf .= 'exten => _'.$extension.',1,ExecIf($["${SIPPEER(${EXTEN},status)}x" == "x"]?Goto(s,1))'. "\n\t";
+                }else{
+                    $conf .= 'exten => _'.$extension.',1,ExecIf($["${PJSIP_ENDPOINT(${EXTEN},auth)}x" == "x"]?Goto(s,1))'. "\n\t";
+                }
+
                 $conf .= 'same => n,Goto(internal,${EXTEN},1)'."\n";
             }
         }

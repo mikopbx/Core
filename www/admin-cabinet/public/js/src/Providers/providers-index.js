@@ -2,14 +2,15 @@
  * Copyright (C) MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 5 2018
+ * Written by Nikolay Beketov, 12 2019
  *
  */
 
-/* global globalRootUrl, PbxApi, DebuggerInfo */
+/* global globalRootUrl, PbxApi, DebuggerInfo, SemanticLocalization */
 
 const providers = {
 	$deleteModalForm: $('#delete-modal-form'),
+	$providersTable: $('#providers-table'),
 	initialize() {
 		providers.$deleteModalForm.modal();
 		$('.provider-row .checkbox')
@@ -73,8 +74,29 @@ const providers = {
 			} else {
 				window.location = $(e.target).closest('a').attr('href');
 			}
-
 		});
+		providers.initializeDataTable();
+	},
+	/**
+	 * Initialize data tables on table
+	 */
+	initializeDataTable() {
+		providers.$providersTable.DataTable({
+			lengthChange: false,
+			paging: false,
+			columns: [
+				null,
+				null,
+				null,
+				null,
+				null,
+				null,
+				{orderable: false, searchable: false},
+			],
+			order: [1, 'asc'],
+			language: SemanticLocalization.dataTableLocalisation,
+		});
+		$('.add-new-button').appendTo($('div.eight.column:eq(0)'));
 	},
 };
 const providersStatusLoopWorker = {
@@ -127,9 +149,9 @@ const providersStatusLoopWorker = {
 		});
 		htmlTable += '</table>';
 		DebuggerInfo.UpdateContent(htmlTable);
-		const green = '<a class="ui green empty circular label "></a>';
-		const grey = '<a class="ui grey empty circular label "></a>';
-		const yellow = '<a class="ui yellow empty circular label "></a>';
+		const green = '<div class="ui green empty circular label" style="width: 1px;height: 1px;"></div>';
+		const grey = '<div class="ui grey empty circular label" style="width: 1px;height: 1px;"></div>';
+		const yellow = '<div class="ui yellow empty circular label" style="width: 1px;height: 1px;"></div>';
 		$('tr.provider-row').each((index, obj) => {
 			const uniqid = $(obj).attr('id');
 			if (providersStatusLoopWorker.providerStatuses[uniqid] !== undefined) {

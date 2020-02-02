@@ -52,7 +52,7 @@ O -----5---- 103.700 x86 cpuid 3.3 / base/tool CROSS 0
 O -----5---- 103.800 develop ccbench 0.2 / base/development CROSS 0
 O -1-3------ 103.900 base termcap 1.3.1 / base/library CROSS DIETLIBC FPIC-QUIRK 0
 X -1-3------ 104.000 base ncurses 6.0 / base/library CROSS DIETLIBC FPIC-QUIRK 0
-O ---3------ 104.100 base libelf 0.8.13 / base/library CROSS NOPARALLEL 0
+X ---3------ 104.100 base libelf 0.8.13 / base/library CROSS NOPARALLEL 0
 X -1---5---- 104.100 base readline 7.0-003 / base/library CROSS DIETLIBC 0
 O -----5---- 104.100 develop libunwind 1.1 / base/library CROSS 0
 X -1---5---- 104.200 develop strace 4.16 / base/development CROSS 0
@@ -143,6 +143,7 @@ O -----5---- 109.300 develop llvm 4.0.0 / extra/development CC CXX KCC 0
 X -1-3------ 109.400 base bison 3.0.4 / base/development CROSS DIETLIBC 0
 O -----5---- 109.400 develop hwloc 1.8 / extra/development 0
 X -----5---- 109.500 base bc 1.06.95 / base/tool CROSS 0
+X -1---5---- 109.500 base pcre2 2.10.33 / base/library CROSS 0
 X -1---5---- 109.500 base pcre 8.40 / base/library CROSS 0
 X -1-3------ 109.500 base util-linux 2.29.2 / base/system CROSS DIETLIBC 0
 O -----5---- 109.500 develop pocl 0.14 / extra/development 0
@@ -199,7 +200,7 @@ X -1---5-7-- 112.300 network curl 7.53.1 / base/tool CROSS DIETLIBC 0
 X -----5---- 112.300 textproc libxml 2.9.4 / base/library CROSS DIETLIBC 0
 X -----5---- 112.330 security libgpg-error 1.27 / extra/crypto CROSS 0
 X -----5---- 112.340 security libgcrypt 1.7.6 / extra/crypto CROSS 0
-O ?----5---- 112.350 textproc libxslt 1.1.29 / base/library CROSS 0
+X -----5---- 112.350 textproc libxslt 1.1.29 / base/library CROSS 0
 O -----5---- 112.400 develop gengetopt 2.22.6 / extra/development NOPARALLEL 0
 O -----5---- 112.400 develop redet 8.25 / extra/development CROSS 0
 O -----5---- 112.400 develop rman 3.2 / extra/development CROSS 0
@@ -589,6 +590,7 @@ O -----5---- 121.400 dictionary aspell-fr 0.50-3 / extra/office CROSS 0
 O -----5---- 121.500 dictionary aspell-es 0.50-2 / extra/office CROSS 0
 O -----5---- 121.600 dictionary aspell-en 7.1-0 / extra/office CROSS 0
 O -----5---- 121.700 multimedia libdvdcss 1.3.0 / extra/filesystem extra/crypto CROSS 0
+O -----5---- 121.800 miko sqliteodbc 1.4.5 / extra/network CROSS 0
 O -----5---- 121.800 multimedia dvbd 0.7.7 / extra/multimedia CROSS 0
 O -----5---- 121.800 multimedia dvb-firmware 2005-07-05 / extra/multimedia CROSS 0
 O -----5---- 121.800 multimedia dvbsnoop 1.4.50 / extra/multimedia CROSS 0
@@ -606,7 +608,7 @@ O -----5---- 122.400 audio nas 1.9.4 / extra/multimedia 0
 O -----5---- 122.500 audio libao 1.2.0 / extra/multimedia CROSS 0
 O -----5---- 122.500 audio libmpcdec v1.2.6 / extra/multimedia 0
 X -----5---- 122.500 audio libogg 1.3.2 / extra/multimedia CROSS 0
-O -----5---- 122.500 audio libopus 1.1.4 / extra/multimedia CROSS 0
+X -----5---- 122.500 audio libopus 1.1.4 / extra/multimedia CROSS 0
 X -----5---- 122.500 audio libvorbis 1.3.5 / extra/multimedia CROSS 0
 O -----5---- 122.500 audio opusfile 0.8 / extra/multimedia CROSS 0
 O -----5---- 122.500 audio qhimdtransfer 0.8 / extra/multimedia NOPARALLEL 0
@@ -629,7 +631,7 @@ O -----5---- 123.300 graphic libmng 1.0.10 / extra/multimedia CROSS FPIC-QUIRK 0
 O -----5---- 123.400 network ypserv 2.26 / extra/network CROSS 0
 O -----5---- 123.500 database firebird 2.1.3 / extra/database NOPARALLEL 0
 O -----5---- 123.500 database mysql 5.6.19 / extra/database JAIL 0
-O -----5---- 123.600 network pdnsd 1.2.8 / extra/server CROSS 0
+X -----5---- 123.600 network pdnsd 1.2.8 / extra/server CROSS 0
 O -----5---- 123.700 network squid 3.1.23 / extra/server JAIL 0
 O -----5---- 123.800 network wwwoffle 2.9i / extra/server 0
 O -----5---- 124.000 security clamav 0.99 / extra/security extra/server 0
@@ -679,6 +681,7 @@ O -----5---- 126.400 audio faad 2.7 / extra/multimedia CROSS 0
 O -----5---- 126.400 audio flac 1.3.2 / extra/multimedia CROSS 0
 O -----5---- 126.400 audio mac 3.99-u4-b5 / extra/multimedia CROSS 0
 X -----5---- 126.400 audio speex 1.2.0 / extra/multimedia CROSS NOPARALLEL 0
+X -----5---- 126.401 audio speexdsp 1.2.0 / extra/multimedia CROSS NOPARALLEL 0
 O -----5---- 126.450 graphic poppler 0.53.0 / extra/development CROSS 0
 O -----5---- 126.450 x11 glitz 0.5.6 / extra/x11 0
 O -----5---- 126.480 x11 cairo 1.14.8 / extra/x11 CROSS 0
@@ -871,6 +874,7 @@ O -----5---- 130.100 x11 fox 1.7.58 / extra/development base/x11 0
 O -----5---- 130.100 x11 lesstif 0.95.0 / extra/development base/x11 0
 O -----5---- 130.200 base elf 0.5.4p1 / extra/base CROSS 0
 O -----5---- 130.300 graphic cinepaint 0.22-1 / extra/multimedia 0
+X -----5---- 130.301 miko lnav 0.8.5 / extra/server CROSS 0
 O -----5---- 130.400 network ifstat 1.1 / extra/base CROSS 0
 O -----5---- 130.400 network iptraf 3.0.1 / extra/base CROSS 0
 O -----5---- 130.400 network wget 1.19.1 / extra/network CROSS DIETLIBC 0
@@ -1225,8 +1229,7 @@ O -----5---- 150.000 java sun-jdk-150 1_5_0_10 / extra/emulator BINARY 0
 O -----5---- 150.000 java sun-jdk-160 6u21 / extra/emulator BINARY 0
 O -----5---- 150.000 java sun-jre-150 1_5_0_17 / extra/emulator BINARY 0
 O -----5---- 150.000 java sun-jre-160 6u21 / extra/emulator BINARY 0
-X -----5---- 150.000 miko asterisk13 13.25.0 / extra/network CROSS NOPARALLEL 0
-O -1---5---- 150.000 miko asterisk16 16.5.1 / extra/network CROSS NOPARALLEL 0
+O -----5---- 150.000 miko asterisk13 13.25.0 / extra/network CROSS NOPARALLEL 0
 O -----5---- 150.000 network apache 2.4.23 / extra/server JAIL 0
 O -----5---- 150.000 network asterisk 11.8.1 / extra/network CROSS NOPARALLEL 0
 O -----5---- 150.000 network hiawatha 6.19 / extra/server 0
@@ -1240,7 +1243,7 @@ O -----5---- 150.000 perl perl-net-smtp-ssl 1.01 / extra/development 0
 O -----5---- 150.000 perl perl-openssl 0.10 / extra/development 0
 O -----5---- 150.000 textproc htmldoc 1.8.26 / extra/tool CROSS 0
 O -----5---- 150.000 textproc iso-codes 3.11.1 / extra/tool CROSS 0
-O -----5---- 150.000 textproc xmlstarlet 1.6.1 / extra/tool CROSS 0
+X -----5---- 150.000 textproc xmlstarlet 1.6.1 / extra/tool CROSS 0
 O -----5---- 150.000 x86 flashrom 0.9.8 / base/tool CROSS 0
 X -----5---- 150.100 filesystem cdrkit 1.1.11 / extra/filesystem CROSS 0
 O -----5---- 150.100 gnome2 gnopernicus 1.1.2 / extra/tool extra/desktop/gnome 0
@@ -1624,7 +1627,7 @@ O -----5---- 178.000 multimedia lirc 0.9.0 / extra/multimedia 0
 O -----5---- 178.000 network silc-toolkit 1.1.10 / extra/network CROSS 0
 O -----5---- 178.000 network tidy 051026 / extra/development NOPARALLEL 0
 O -----5---- 178.100 php php4 4.4.9 / extra/development CROSS 0
-X -----5---- 178.100 php php 7.1.9 / extra/development CROSS 0
+X -----5---- 178.100 php php 7.2.24 / extra/development CROSS 0
 O -----5---- 178.101 php gdchart 0.2.0 / extra/development 0
 O -----5---- 178.101 php php-imagick 2.3.0 / extra/development 0
 O -----5---- 178.300 x11 bbdock 0.2.8 / extra/windowmanager 0
@@ -1638,6 +1641,8 @@ O -----5---- 179.000 develop libcpptest 1.1.2 / extra/development 0
 O -----5---- 179.000 xorg xdm 1.1.11 / base/x11 CROSS 0
 O -----5---- 179.001 base sysvinit-utils-cut 2.88 / base/tool 0
 O -----5---- 179.100 base shadow 4.1.4.3 / base/system CROSS 0
+O -----5---- 179.100 php phptermbox 0.1.3 / extra/network CROSS 0
+X -----5---- 179.100 php pthreads 3.2.0 / extra/network CROSS 0
 X -----5---- 179.199 filesystem e2fsprogs 1.43.4 / base/system extra/filesystem CROSS DIETLIBC FPIC-QUIRK 0
 O -1-3-5---- 179.200 base pwdutils 3.1.3 / base/system CROSS 0
 O -----5---- 179.200 x86 acpica 20150410 / extra/tool CROSS NOPARALLEL 0
@@ -1955,9 +1960,10 @@ O -----5---- 200.000 graphic fbv 1.0b / extra/graphic CROSS 0
 O -----5---- 200.000 graphic qingy 1.0.0 / extra/login 0
 O -----5---- 200.000 graphic tesseract 2.04 / extra/graphic CROSS 0
 O -1---5---- 200.000 ia64 elilo 3.12 / base/boot CROSS NOPARALLEL 0
-O -----5---- 200.000 lua luabitop 1.0.1 / extra/development 0
+X -----5---- 200.000 lua luabitop 1.0.1 / extra/development 0
 O -----5---- 200.000 lua luacurl 1.2.1 / extra/development CROSS FPIC-QUIRK 0
 O -----5---- 200.000 lua luaffi 0.9.0 / extra/development FPIC-QUIRK 0
+O -----5---- 200.000 lua lua-resty-websocket 0.07 / extra/development 0
 X -----5---- 200.000 lua luasocket 2.0.2 / extra/development CROSS 0
 O -----5---- 200.000 mail mini_sendmail 1.3.6 / extra/server CROSS 0
 O -----5---- 200.000 multimedia libxspf 1.2.0 / extra/multimedia CROSS 0
@@ -2036,6 +2042,7 @@ O -----5---- 200.270 x11 compiz 0.8.8 / base/x11 0
 O -----5---- 200.300 filesystem makebootfat 1.4-patched1-1 / base/system extra/filesystem 0
 O -----5---- 200.300 gnustep emacs-app 23.0.0_NS-9.0rc3 / extra/editor 0
 O -----5---- 200.300 network arpwatch 2.1a15 / extra/tool 0
+X -----5---- 200.301 miko pcapsipdump 2.2.0 / extra/server CROSS 0
 O -----5---- 200.400 develop clearsilver 0.10.5 / extra/development FPIC-QUIRK 0
 O -----5---- 200.400 graphic gifsicle 1.88 / extra/multimedia 0
 O -----5---- 200.400 lua copas 1.1.5 / extra/development CROSS 0
@@ -2074,7 +2081,7 @@ O -----5---- 200.600 security prelude-lml 1.0.0 / extra/security 0
 O -----5---- 200.600 security prelude-manager 1.0.0 / extra/security 0
 O -----5---- 200.700 network libgift 0.11.8.1 / extra/network 0
 O -----5---- 200.700 security prewikka 1.0.0 / extra/security 0
-O -----5---- 200.800 network ngrep 1.45 / extra/tool CROSS 0
+X -----5---- 200.800 network ngrep 1.47 / extra/tool CROSS 0
 O -----5---- 200.800 network pnscan 1.11 / base/tool 0
 O -----5---- 200.900 gpe hotplug-dbus 0.9 / extra/desktop/gpe CROSS 0
 O -----5---- 200.900 gpe libgpelaunch 0.14 / extra/desktop/gpe CROSS 0
@@ -2084,6 +2091,7 @@ O -----5---- 200.900 gpe libgtkstylus 0.3 / extra/desktop/gpe CROSS 0
 O -----5---- 200.900 gpe libxsettings-client 0.17 / extra/desktop/gpe CROSS 0
 O -----5---- 200.900 gpe mbmerlin 0.8.1-2 / extra/desktop/gpe CROSS 0
 O -----5---- 201.000 develop libuninum 2.7 / base/library CROSS 0
+X -----5---- 201.000 miko asterisk16 16.5.1 / extra/network CROSS NOPARALLEL 0
 O -----5---- 201.000 network slidentd 1.0.0 / extra/network extra/server 0
 O -----5---- 201.000 network unreal-ircd 3.2 / extra/server 0
 O -----5---- 201.000 network xmlrpc-c 1.25.30 / extra/base FPIC-QUIRK NOPARALLEL 0
@@ -3374,7 +3382,7 @@ O -----5---- 801.000 graphic libpano 2.9.19 / extra/multimedia CROSS 0
 O -----5---- 801.000 graphic nip2 7.10.21 / extra/multimedia CROSS 0
 O -----5---- 801.000 graphic normalmap 1.2.2 / extra/graphic 0
 O -----5---- 801.000 mail mdmh 0.7 / extra/tool CROSS 0
-X -----5---- 801.000 miko cphalcon 3.2.2 / extra/server CROSS 0
+X -----5---- 801.000 miko cphalcon 3.3.2 / extra/server CROSS 0
 O -----5---- 801.000 network rtorrent 0.9.4 / extra/network 0
 O -----5---- 801.000 network scope 0.0.4 / extra/tool CROSS 0
 O -----5---- 801.000 network sjinn 1.01 / extra/tool CROSS 0

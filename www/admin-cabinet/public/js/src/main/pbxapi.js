@@ -2,20 +2,13 @@
  * Copyright (C) MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 6 2018
+ * Written by Nikolay Beketov, 12 2019
  *
  */
-/* global localStorage,globalRootUrl,Config */
+/* global localStorage, globalRootUrl,Config */
 
 const PbxApi = {
 	pbxPing: `${Config.pbxUrl}/pbxcore/api/system/ping`,
-	pbxReloadAllModulesUrl: `${Config.pbxUrl}/pbxcore/api/pbx/reload_all_modules`, // Рестарт всех модулей АТС
-	pbxReloadDialplanUrl: `${Config.pbxUrl}/pbxcore/api/pbx/reload_dialplan`, // Запуск генератора dialplan, перезапуск dialplan на АТС.
-	pbxReloadSip: `${Config.pbxUrl}/pbxcore/api/pbx/reload_sip`, // Рестарт модуля SIP.
-	pbxReloadIax: `${Config.pbxUrl}/pbxcore/api/pbx/reload_iax`, // Рестарт модуля IAX.
-	pbxReloadQueue: `${Config.pbxUrl}/pbxcore/api/pbx/reload_queues`, // Рестарт модуля очередей.
-	pbxReloadManagers: `${Config.pbxUrl}/pbxcore/api/pbx/reload_manager`, // Рестарт модуля очередей.
-	pbxReloadFeatures: `${Config.pbxUrl}/pbxcore/api/pbx/reload_features`,
 	pbxGetHistory: `${Config.pbxUrl}/pbxcore/api/cdr/get_history`, // Запрос истории звонков POST -d '{"number": "212", "start":"2018-01-01", "end":"2019-01-01"}'
 	pbxGetSipRegistry: `${Config.pbxUrl}/pbxcore/api/sip/get_registry`,
 	pbxGetIaxRegistry: `${Config.pbxUrl}/pbxcore/api/iax/get_registry`,
@@ -23,24 +16,16 @@ const PbxApi = {
 	pbxGetPeerStatus: `${Config.pbxUrl}/pbxcore/api/sip/get_sip_peer`,
 	pbxGetActiveCalls: `${Config.pbxUrl}/pbxcore/api/cdr/get_active_calls`, // Получить активные звонки,
 	pbxGetActiveChannels: `${Config.pbxUrl}/pbxcore/api/cdr/get_active_channels`, // Получить активные звонки,
-	pbxCheckLicense: `${Config.pbxUrl}/pbxcore/api/pbx/check_licence`,
 	systemUploadAudioFile: `${Config.pbxUrl}/pbxcore/api/system/upload_audio_file`,
 	systemRemoveAudioFile: `${Config.pbxUrl}/pbxcore/api/system/remove_audio_file`,
 	systemReboot: `${Config.pbxUrl}/pbxcore/api/system/reboot`, // Рестарт ОС
 	systemShutDown: `${Config.pbxUrl}/pbxcore/api/system/shutdown`, // Выключить машину
-	systemReloadNetwork: `${Config.pbxUrl}/pbxcore/api/system/network_reload`, // Рестарт сетевых интерфейсов.
-	systemReloadFirewall: `${Config.pbxUrl}/pbxcore/api/system/reload_firewall`, // Перезагрузка правил firewall
 	systemGetBannedIp: `${Config.pbxUrl}/pbxcore/api/system/get_ban_ip`, // Получение забаненных ip
 	systemUnBanIp: `${Config.pbxUrl}/pbxcore/api/system/unban_ip`, // Снятие бана IP адреса curl -X POST -d '{"ip": "172.16.156.1"}'
 	systemGetInfo: `${Config.pbxUrl}/pbxcore/api/system/get_info`, // Получение информации о системе
 	systemSetDateTime: `${Config.pbxUrl}/pbxcore/api/system/set_date`, // curl -X POST -d '{"date": "2015.12.31-01:01:20"}',
-	systemReloadSSH: `${Config.pbxUrl}/pbxcore/api/system/reload_ssh`,
-	systemReloadSMTP: `${Config.pbxUrl}/pbxcore/api/system/reload_msmtp`,
-	systemReloadNginx: `${Config.pbxUrl}/pbxcore/api/system/reload_nginx`,
-	systemReloadCron: `${Config.pbxUrl}/pbxcore/api/system/reload_cron`,
 	systemSendTestEmail: `${Config.pbxUrl}/pbxcore/api/system/send_mail`, // Отправить почту
 	systemGetFileContent: `${Config.pbxUrl}/pbxcore/api/system/file_read_content`, // Получить контент файла по имени
-	systemUpdateCustomFiles: `${Config.pbxUrl}/pbxcore/api/system/update_custom_files`,
 	systemStartLogsCapture: `${Config.pbxUrl}/pbxcore/api/system/start_log`,
 	systemStopLogsCapture: `${Config.pbxUrl}/pbxcore/api/system/stop_log`,
 	systemGetExternalIP: `${Config.pbxUrl}/pbxcore/api/system/get_external_ip_info`,
@@ -48,6 +33,8 @@ const PbxApi = {
 	systemUpgradeOnline: `${Config.pbxUrl}/pbxcore/api/system/upgrade_online`, // Обновление АТС онлайн
 	systemGetUpgradeStatus: `${Config.pbxUrl}/pbxcore/api/system/status_upgrade`, // Получение статуса обновления
 	systemInstallModule: `${Config.pbxUrl}/pbxcore/api/modules/upload`,
+	systemDeleteModule: `${Config.pbxUrl}/pbxcore/api/modules/{moduleName}/uninstall`,
+	systemInstallStatusModule: `${Config.pbxUrl}/pbxcore/api/modules/{moduleName}/status`,
 	backupGetFilesList: `${Config.pbxUrl}/pbxcore/api/backup/list`, // Получить список архивов
 	backupDownloadFile: `${Config.pbxUrl}/pbxcore/api/backup/download`, // Получить архив /pbxcore/api/backup/download?id=backup_1530703760
 	backupDeleteFile: `${Config.pbxUrl}/pbxcore/api/backup/remove`, // Удалить архив curl http://172.16.156.212/pbxcore/api/backup/remove?id=backup_1530714645
@@ -58,8 +45,8 @@ const PbxApi = {
 	backupGetEstimatedSize: `${Config.pbxUrl}/pbxcore/api/backup/get_estimated_size`,
 	backupStatusUpload: `${Config.pbxUrl}/pbxcore/api/backup/status_upload`, // curl 'http://172.16.156.223/pbxcore/api/backup/status_upload?backup_id=backup_1562746816'
 	backupStartScheduled: `${Config.pbxUrl}/pbxcore/api/backup/start_scheduled`, // curl 'http://172.16.156.223/pbxcore/api/backup/start_scheduled'
-
-
+	moduleDisable: `${globalRootUrl}pbx-extension-modules/disable/{moduleName}`,
+	moduleEnable: `${globalRootUrl}pbx-extension-modules/enable/{moduleName}`,
 	/**
 	 * Проверка ответа на JSON
 	 * @param jsonString
@@ -81,6 +68,18 @@ const PbxApi = {
 		}
 		return false;
 	},
+
+	/**
+	 * Проверка ответа PBX на успех
+	 * @param response
+	 */
+	successTest(response) {
+		return response !== undefined
+			&& Object.keys(response).length > 0
+			&& response.result !== undefined
+			&& response.result.toUpperCase() === 'SUCCESS';
+	},
+
 	/**
 	 * Проверка связи с PBX
 	 * @param callback
@@ -104,211 +103,6 @@ const PbxApi = {
 			},
 		});
 	},
-
-	/**
-	 * Перезагрузка всех настроек АТС
-	 * @param callback
-	 */
-	ReloadAllModules(callback) {
-		$.api({
-			url: PbxApi.pbxReloadAllModulesUrl,
-			on: 'now',
-			onSuccess(response) {
-				if (response !== undefined
-					&& Object.keys(response).length > 0
-					&& response.result.toUpperCase() === 'SUCCESS') {
-					callback('ReloadAllModules');
-				}
-			},
-		});
-	},
-	/**
-	 * Перезагрузка диалпланов
-	 * @param callback
-	 */
-	ReloadDialplan(callback) {
-		$.api({
-			url: PbxApi.pbxReloadDialplanUrl,
-			on: 'now',
-			onSuccess(response) {
-				if (response !== undefined
-					&& Object.keys(response).length > 0
-					&& response.result.toUpperCase() === 'SUCCESS') {
-					callback('ReloadDialplan');
-				}
-			},
-		});
-	},
-	/**
-	 * Перезагрузка настроек SIP
-	 * @param callback
-	 */
-	ReloadSip(callback) {
-		$.api({
-			url: PbxApi.pbxReloadSip,
-			on: 'now',
-			onSuccess(response) {
-				if (response !== undefined
-					&& Object.keys(response).length > 0
-					&& response.result.toUpperCase() === 'SUCCESS') {
-					callback('ReloadSip');
-				}
-			},
-		});
-	},
-	/**
-	 * Перезагрузка настроек IAX
-	 * @param callback
-	 */
-	ReloadIax(callback) {
-		$.api({
-			url: PbxApi.pbxReloadIax,
-			on: 'now',
-			onSuccess(response) {
-				if (response !== undefined
-					&& Object.keys(response).length > 0
-					&& response.result.toUpperCase() === 'SUCCESS') {
-					callback('ReloadIax');
-				}
-			},
-		});
-	},
-	/**
-	 * Перезагрузка настроек Очередей
-	 * @param callback
-	 */
-	ReloadQueue(callback) {
-		$.api({
-			url: PbxApi.pbxReloadQueue,
-			on: 'now',
-			onSuccess(response) {
-				if (response !== undefined
-					&& Object.keys(response).length > 0
-					&& response.result.toUpperCase() === 'SUCCESS') {
-					callback('ReloadQueue');
-				}
-			},
-		});
-	},
-	/**
-	 * Перезагрузка настроек менеджеров
-	 * @param callback
-	 */
-	ReloadManagers(callback) {
-		$.api({
-			url: PbxApi.pbxReloadManagers,
-			on: 'now',
-			onSuccess(response) {
-				if (response !== undefined
-					&& Object.keys(response).length > 0
-					&& response.result.toUpperCase() === 'SUCCESS') {
-					callback('ReloadManagers');
-				}
-			},
-		});
-	},
-	/**
-	 * Перезагрузка настроек features.conf
-	 * @param callback
-	 */
-	ReloadFeatures(callback) {
-		$.api({
-			url: PbxApi.pbxReloadFeatures,
-			on: 'now',
-			onSuccess(response) {
-				if (response !== undefined
-					&& Object.keys(response).length > 0
-					&& response.result.toUpperCase() === 'SUCCESS') {
-					callback('ReloadFeatures');
-				}
-			},
-		});
-	},
-	/**
-	 * Перезагрузка настроек сети
-	 * @param callback
-	 */
-	ReloadNetwork(callback) {
-		$.api({
-			url: PbxApi.systemReloadNetwork,
-			on: 'now',
-			onSuccess(response) {
-				if (response !== undefined
-					&& Object.keys(response).length > 0
-					&& response.result.toUpperCase() === 'SUCCESS') {
-					callback('ReloadNetwork');
-				}
-			},
-		});
-	},
-	/**
-	 * Перезагрузка настроек SSH
-	 * @param callback
-	 */
-	ReloadSSH(callback) {
-		$.api({
-			url: PbxApi.systemReloadSSH,
-			on: 'now',
-			onSuccess(response) {
-				if (response !== undefined
-					&& Object.keys(response).length > 0
-					&& response.result.toUpperCase() === 'SUCCESS') {
-					callback('ReloadSSH');
-				}
-			},
-		});
-	},
-	/**
-	 * Перезагрузка настроек фаейровола
-	 * @param callback
-	 */
-	ReloadFirewall(callback) {
-		$.api({
-			url: PbxApi.systemReloadFirewall,
-			on: 'now',
-			onSuccess(response) {
-				if (response !== undefined
-					&& Object.keys(response).length > 0
-					&& response.result.toUpperCase() === 'SUCCESS') {
-					callback('ReloadFirewall');
-				}
-			},
-		});
-	},
-
-	/**
-	 * Перезагрузка Nginx
-	 */
-	ReloadNginx(callback) {
-		$.api({
-			url: PbxApi.systemReloadNginx,
-			on: 'now',
-			onSuccess(response) {
-				if (response !== undefined
-					&& Object.keys(response).length > 0
-					&& response.result.toUpperCase() === 'SUCCESS') {
-					callback('ReloadNginx');
-				}
-			},
-		});
-	},
-	/**
-	 * Перезагрузка Cron
-	 */
-	ReloadCron(callback) {
-		$.api({
-			url: PbxApi.systemReloadCron,
-			on: 'now',
-			onSuccess(response) {
-				if (response !== undefined
-					&& Object.keys(response).length > 0
-					&& response.result.toUpperCase() === 'SUCCESS') {
-					callback('ReloadCron');
-				}
-			},
-		});
-	},
-
 	/**
 	 * Получение списка забанненых IP адресов
 	 * @param callback
@@ -317,14 +111,12 @@ const PbxApi = {
 		$.api({
 			url: PbxApi.systemGetBannedIp,
 			on: 'now',
-			successTest(response) {
-				// test whether a JSON response is valid
-				return response !== undefined
-					&& Object.keys(response).length > 0
-					&& response.result.toUpperCase() === 'SUCCESS';
-			},
+			successTest: PbxApi.successTest,
 			onSuccess(response) {
 				callback(response.data);
+			},
+			onFailure() {
+				callback(false);
 			},
 			onError() {
 				callback(false);
@@ -342,14 +134,12 @@ const PbxApi = {
 			on: 'now',
 			method: 'POST',
 			data: JSON.stringify(data),
-			successTest(response) {
-				// test whether a JSON response is valid
-				return response !== undefined
-					&& Object.keys(response).length > 0
-					&& response.result.toUpperCase() === 'SUCCESS';
-			},
+			successTest: PbxApi.successTest,
 			onSuccess(response) {
 				callback(response.data);
+			},
+			onFailure() {
+				callback(false);
 			},
 			onError() {
 				callback(false);
@@ -365,12 +155,7 @@ const PbxApi = {
 		$.api({
 			url: PbxApi.pbxGetPeersStatus,
 			on: 'now',
-			successTest(response) {
-				// test whether a JSON response is valid
-				return response !== undefined
-					&& Object.keys(response).length > 0
-					&& response.result.toUpperCase() === 'SUCCESS';
-			},
+			successTest: PbxApi.successTest,
 			onSuccess(response) {
 				callback(response.data);
 			},
@@ -395,12 +180,7 @@ const PbxApi = {
 			on: 'now',
 			method: 'POST',
 			data: JSON.stringify(data),
-			successTest(response) {
-				// test whether a JSON response is valid
-				return response !== undefined
-					&& Object.keys(response).length > 0
-					&& response.result.toUpperCase() === 'SUCCESS';
-			},
+			successTest: PbxApi.successTest,
 			onSuccess(response) {
 				callback(response.data);
 			},
@@ -422,12 +202,7 @@ const PbxApi = {
 		$.api({
 			url: PbxApi.pbxGetSipRegistry,
 			on: 'now',
-			successTest(response) {
-				// test whether a JSON response is valid
-				return response !== undefined
-					&& Object.keys(response).length > 0
-					&& response.result.toUpperCase() === 'SUCCESS';
-			},
+			successTest: PbxApi.successTest,
 			onSuccess(response) {
 				callback(response.data);
 			},
@@ -446,12 +221,7 @@ const PbxApi = {
 		$.api({
 			url: PbxApi.pbxGetIaxRegistry,
 			on: 'now',
-			successTest(response) {
-				// test whether a JSON response is valid
-				return response !== undefined
-					&& Object.keys(response).length > 0
-					&& response.result.toUpperCase() === 'SUCCESS';
-			},
+			successTest: PbxApi.successTest,
 			onSuccess(response) {
 				callback(response.data);
 			},
@@ -470,6 +240,7 @@ const PbxApi = {
 		$.api({
 			url: PbxApi.systemReloadSMTP,
 			on: 'now',
+			successTest: PbxApi.successTest,
 			onSuccess(response) {
 				if (response !== undefined) {
 					callback(response);
@@ -487,12 +258,7 @@ const PbxApi = {
 			on: 'now',
 			method: 'POST',
 			data: JSON.stringify(data),
-			successTest(response) {
-				// test whether a JSON response is valid
-				return response !== undefined
-					&& Object.keys(response).length > 0
-					&& response.result.toUpperCase() === 'SUCCESS';
-			},
+			successTest: PbxApi.successTest,
 			onSuccess() {
 				callback(true);
 			},
@@ -532,25 +298,6 @@ const PbxApi = {
 		});
 	},
 	/**
-	 * Отправляет информацию о изменении кастомизированных файлов
-	 * @param callback
-	 */
-	UpdateCustomFiles(callback) {
-		$.api({
-			url: PbxApi.systemUpdateCustomFiles,
-			on: 'now',
-			successTest(response) {
-				// test whether a JSON response is valid
-				return response !== undefined
-					&& Object.keys(response).length > 0
-					&& response.result.toUpperCase() === 'SUCCESS';
-			},
-			onSuccess() {
-				callback('UpdateCustomFiles');
-			},
-		});
-	},
-	/**
 	 * Получаем информацию о внешнем IP станции
 	 * @param callback
 	 */
@@ -558,12 +305,7 @@ const PbxApi = {
 		$.api({
 			url: PbxApi.systemGetExternalIP,
 			on: 'now',
-			successTest(response) {
-				// test whether a JSON response is valid
-				return response !== undefined
-					&& Object.keys(response).length > 0
-					&& response.result.toUpperCase() === 'SUCCESS';
-			},
+			successTest: PbxApi.successTest,
 			onSuccess(response) {
 				callback(response.data);
 			},
@@ -583,11 +325,6 @@ const PbxApi = {
 		$.api({
 			url: PbxApi.pbxGetActiveChannels,
 			on: 'now',
-			successTest(response) {
-				// test whether a JSON response is valid
-				return response !== undefined
-					&& Object.keys(response).length > 0;
-			},
 			onSuccess(response) {
 				if (Object.keys(response).length > 0) {
 					callback(response);
@@ -620,27 +357,6 @@ const PbxApi = {
 			on: 'now',
 		});
 	},
-
-	/**
-	 * Проверка доступности необходимых фич в лицензионном ключе
-	 * @param callback
-	 */
-	CheckLicense(callback) {
-		$.api({
-			url: PbxApi.pbxCheckLicense,
-			on: 'now',
-			onSuccess(response) {
-				if (response !== undefined
-					&& Object.keys(response).length > 0) {
-					if (response.result.toUpperCase() === 'ERROR') {
-						callback(response.error);
-					} else if (response.result.toUpperCase() === 'SUCCESS') {
-						callback(true);
-					}
-				}
-			},
-		});
-	},
 	/**
 	 * Запуск сборщика системных логов
 	 */
@@ -668,16 +384,14 @@ const PbxApi = {
 		$.api({
 			url: PbxApi.backupGetFilesList,
 			on: 'now',
-			successTest(response) {
-				// test whether a JSON response is valid
-				return response !== undefined
-					&& Object.keys(response).length > 0
-					&& response.result.toUpperCase() === 'SUCCESS';
-			},
+			successTest: PbxApi.successTest,
 			onSuccess(response) {
 				callback(response.data);
 			},
 			onError() {
+				callback(false);
+			},
+			onFailure() {
 				callback(false);
 			},
 		});
@@ -700,16 +414,14 @@ const PbxApi = {
 			urlData: {
 				id: fileId,
 			},
-			successTest(response) {
-				// test whether a JSON response is valid
-				return response !== undefined
-					&& Object.keys(response).length > 0
-					&& response.result.toUpperCase() === 'SUCCESS';
-			},
+			successTest: PbxApi.successTest,
 			onSuccess() {
 				callback(true);
 			},
 			onError() {
+				callback(false);
+			},
+			onFailure() {
 				callback(false);
 			},
 		});
@@ -725,16 +437,14 @@ const PbxApi = {
 			method: 'POST',
 			data: JSON.stringify(jsonParams),
 			on: 'now',
-			successTest(response) {
-				// test whether a JSON response is valid
-				return response !== undefined
-					&& Object.keys(response).length > 0
-					&& response.result.toUpperCase() === 'SUCCESS';
-			},
+			successTest: PbxApi.successTest,
 			onSuccess() {
 				callback(true);
 			},
 			onError() {
+				callback(false);
+			},
+			onFailure() {
 				callback(false);
 			},
 		});
@@ -756,14 +466,14 @@ const PbxApi = {
 			on: 'now',
 			method: 'POST',
 			data: JSON.stringify(jsonParams),
-			successTest(response) {
-				// test whether a JSON response is valid
-				return Object.keys(response).length > 0 && response.result.toUpperCase() === 'SUCCESS';
-			},
+			successTest: PbxApi.successTest,
 			onSuccess(response) {
 				callback(response.data);
 			},
 			onError() {
+				callback(false);
+			},
+			onFailure() {
 				callback(false);
 			},
 		});
@@ -779,16 +489,14 @@ const PbxApi = {
 			on: 'now',
 			method: 'POST',
 			data: `{'id':'${fileId}'}`,
-			successTest(response) {
-				// test whether a JSON response is valid
-				return response !== undefined
-					&& Object.keys(response).length > 0
-					&& response.result.toUpperCase() === 'SUCCESS';
-			},
+			successTest: PbxApi.successTest,
 			onSuccess(response) {
 				callback(response.data);
 			},
 			onError() {
+				callback(false);
+			},
+			onFailure() {
 				callback(false);
 			},
 		});
@@ -802,16 +510,14 @@ const PbxApi = {
 		$.api({
 			url: PbxApi.backupGetEstimatedSize,
 			on: 'now',
-			successTest(response) {
-				// test whether a JSON response is valid
-				return response !== undefined
-					&& Object.keys(response).length > 0
-					&& response.result.toUpperCase() === 'SUCCESS';
-			},
+			successTest: PbxApi.successTest,
 			onSuccess(response) {
 				callback(response.data);
 			},
 			onError() {
+				callback(false);
+			},
+			onFailure() {
 				callback(false);
 			},
 		});
@@ -876,15 +582,14 @@ const PbxApi = {
 			urlData: {
 				id: fileId,
 			},
-			successTest(response) {
-				// test whether a JSON response is valid
-				return response !== undefined
-					&& Object.keys(response).length > 0;
-			},
+			successTest: PbxApi.successTest,
 			onSuccess(response) {
 				callback(response);
 			},
 			onError() {
+				callback(false);
+			},
+			onFailure() {
 				callback(false);
 			},
 		});
@@ -898,16 +603,14 @@ const PbxApi = {
 		$.api({
 			url: PbxApi.backupStartScheduled,
 			on: 'now',
-			successTest(response) {
-				// test whether a JSON response is valid
-				return response !== undefined
-					&& Object.keys(response).length > 0
-					&& response.result.toUpperCase() === 'SUCCESS';
-			},
+			successTest: PbxApi.successTest,
 			onSuccess() {
 				callback(true);
 			},
 			onError() {
+				callback(false);
+			},
+			onFailure() {
 				callback(false);
 			},
 		});
@@ -984,12 +687,7 @@ const PbxApi = {
 				newSettings.data.append('file', blob, newFileName);
 				return newSettings;
 			},
-			successTest(response) {
-				// test whether a JSON response is valid
-				return response !== undefined
-					&& Object.keys(response).length > 0
-					&& response.result.toUpperCase() === 'SUCCESS';
-			},
+			successTest: PbxApi.successTest,
 			onSuccess(response) {
 				callback(response.filename);
 			},
@@ -1017,15 +715,72 @@ const PbxApi = {
 		});
 	},
 	/**
-	 * Установка модуля расширения
-	 *
+	 * Upload module as json with link by POST request
+	 * @param params
+	 * @param callback - функция колбека
 	 */
-	SystemInstallModule(params) {
+	SystemInstallModule(params, callback) {
 		$.api({
 			url: PbxApi.systemInstallModule,
 			on: 'now',
 			method: 'POST',
 			data: `{"uniqid":"${params.uniqid}","md5":"${params.md5}","size":"${params.size}","url":"${params.updateLink}"}`,
+			successTest: PbxApi.successTest,
+			onSuccess() {
+				callback(true);
+			},
+			onFailure(response) {
+				callback(response);
+			},
+			onError(response) {
+				callback(response);
+			},
+		});
+	},
+	/**
+	 * Upload module as file by POST request
+	 * @param file - Тело загружаемого файла
+	 * @param callback - функция колбека
+	 */
+	SystemUploadModule(file, callback) {
+		$.api({
+			on: 'now',
+			url: PbxApi.systemInstallModule,
+			method: 'POST',
+			cache: false,
+			processData: false,
+			contentType: false,
+			beforeSend: (settings) => {
+				const newSettings = settings;
+				const now = parseInt(Date.now() / 1000, 10);
+				newSettings.data = new FormData();
+				newSettings.data.append(`module_install_${now}`, file);
+				return newSettings;
+			},
+			onResponse: response => response,
+			successTest: response => !response.error || false, // change this
+			onSuccess: (json) => {
+				callback(json);
+			},
+			onFailure: (json) => {
+				callback(json);
+			},
+			xhr: () => {
+				const xhr = new window.XMLHttpRequest();
+				// прогресс загрузки на сервер
+				xhr.upload.addEventListener('progress', (evt) => {
+					if (evt.lengthComputable) {
+						const percentComplete = 100 * (evt.loaded / evt.total);
+						const json = {
+							function: 'upload_progress',
+							percent: percentComplete,
+						};
+						// Show upload progress on bar
+						callback(json);
+					}
+				}, false);
+				return xhr;
+			},
 		});
 	},
 	/**
@@ -1037,22 +792,99 @@ const PbxApi = {
 	 */
 	SystemDeleteModule(moduleName, keepSettings, callback) {
 		$.api({
-			url: `${Config.pbxUrl}/pbxcore/api/modules/${moduleName}/uninstall`,
+			url: PbxApi.systemDeleteModule,
+			urlData: {
+				moduleName,
+			},
 			on: 'now',
 			method: 'POST',
 			data: `{"uniqid":"${moduleName}","keepSettings":"${keepSettings}"}`,
-			successTest(response) {
-				// test whether a JSON response is valid
-				return response !== undefined
-					&& Object.keys(response).length > 0
-					&& response.result.toUpperCase() === 'SUCCESS';
-			},
+			successTest: PbxApi.successTest,
 			onSuccess() {
 				callback(true);
+			},
+			onFailure(response) {
+				callback(response);
 			},
 			onError(response) {
 				callback(response);
 			},
+		});
+	},
+	/**
+	 * Проверка статуса установки модуля
+	 * @param moduleName - uniqid модуля
+	 * @param callback - функция для обработки результата
+	 * @param failureCallback
+	 */
+	SystemGetModuleInstallStatus(moduleName, callback, failureCallback) {
+		$.api({
+			url: PbxApi.systemInstallStatusModule,
+			on: 'now',
+			timeout: 3000,
+			urlData: {
+				moduleName,
+			},
+			successTest: PbxApi.successTest,
+			onSuccess(response) {
+				callback(response);
+			},
+			onFailure() {
+				failureCallback();
+			},
+			onError() {
+				failureCallback();
+			},
+			onAbort() {
+				failureCallback();
+			},
+		});
+	},
+
+	/**
+	 * Disable pbxExtension module
+	 */
+	ModuleDisable(moduleName, callback) {
+		$.api({
+			url: PbxApi.moduleDisable,
+			on: 'now',
+			urlData: {
+				moduleName,
+			},
+			successTest: PbxApi.successTest,
+			onSuccess(response) {
+				callback(response);
+			},
+			onFailure(response) {
+				callback(response);
+			},
+			onError() {
+				callback(false);
+			},
+
+		});
+	},
+	/**
+	 * Disable pbxExtension module
+	 */
+	ModuleEnable(moduleName, callback) {
+		$.api({
+			url: PbxApi.moduleEnable,
+			on: 'now',
+			urlData: {
+				moduleName,
+			},
+			successTest: PbxApi.successTest,
+			onSuccess(response) {
+				callback(response);
+			},
+			onFailure(response) {
+				callback(response);
+			},
+			onError(response) {
+				callback(response);
+			},
+
 		});
 	},
 	/**
@@ -1075,44 +907,18 @@ const PbxApi = {
 		$.api({
 			url: PbxApi.systemGetUpgradeStatus,
 			on: 'now',
-			successTest(response) {
-				// test whether a JSON response is valid
-				return response !== undefined
-					&& Object.keys(response).length > 0
-					&& response.result.toUpperCase() === 'SUCCESS';
-			},
+			successTest: PbxApi.successTest,
 			onSuccess(response) {
 				callback(response);
+			},
+			onFailure() {
+				callback(false);
 			},
 			onError() {
 				callback(false);
 			},
 		});
 	},
-	/**
-	 * Проверка статуса установки модуля
-	 * @param moduleName - uniqid модуля
-	 * @param callback - функция для обработки результата
-	 */
-	SystemGetModuleInstallStatus(moduleName, callback) {
-		$.api({
-			url: `${Config.pbxUrl}/pbxcore/api/modules/${moduleName}/status`,
-			on: 'now',
-			successTest(response) {
-				// test whether a JSON response is valid
-				return response !== undefined
-					&& Object.keys(response).length > 0
-					&& response.result.toUpperCase() === 'SUCCESS';
-			},
-			onSuccess(response) {
-				callback(response);
-			},
-			onError() {
-				callback(false);
-			},
-		});
-	},
-
 };
 
 // export default PbxApi;

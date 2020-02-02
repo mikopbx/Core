@@ -2,7 +2,7 @@
  * Copyright (C) MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 6 2018
+ * Written by Nikolay Beketov, 12 2019
  *
  */
 
@@ -15,12 +15,16 @@ $.fn.form.settings.rules.checkEmptyIfLicenseKeyEmpty = function (value) {
 
 const licensingModify = {
 	$formObj: $('#licencing-modify-form'),
+	$emptyLicenseKeyInfo: $('#empty-license-key-info'),
+	$filledLicenseKeyInfo: $('#filled-license-key-info'),
 	$licKey: $('#licKey'),
 	$coupon: $('#coupon'),
 	$email: $('#email'),
+	$ajaxMessages: $('.ui.message.ajax'),
 	$licenseDetailInfo: $('#licenseDetailInfo'),
 	$resetButton: $('#reset-license'),
 	$productDetails: $('#productDetails'),
+	$licensingMenu: $('#licensing-menu .item'),
 	defaultLicenseKey: null,
 	validateRules: {
 		companyname: {
@@ -86,6 +90,10 @@ const licensingModify = {
 		});
 		licensingModify.$email.inputmask('email');
 		licensingModify.defaultLicenseKey = licensingModify.$licKey.val();
+		licensingModify.$licensingMenu.tab({
+			history: true,
+			historyType: 'hash',
+		});
 		licensingModify.$resetButton.api({
 			url: `${globalRootUrl}licensing/resetSettings`,
 			method: 'GET',
@@ -95,7 +103,7 @@ const licensingModify = {
 			},
 			onSuccess(response) {
 				$(this).removeClass('loading disabled');
-				$('.ui.message.ajax').remove();
+				licensingModify.$ajaxMessages.remove();
 				if (response.success) window.location.reload();
 			},
 			onFailure(response) {
@@ -109,7 +117,7 @@ const licensingModify = {
 
 
 		if (licensingModify.defaultLicenseKey.length === 28) {
-			$('#filled-license-key-info')
+			licensingModify.$filledLicenseKeyInfo
 				.html(`${licensingModify.defaultLicenseKey} <i class="spinner loading icon"></i>`)
 				.show();
 
@@ -125,14 +133,14 @@ const licensingModify = {
 				},
 				onSuccess() {
 					licensingModify.$formObj.removeClass('error').addClass('success');
-					$('.ui.message.ajax').remove();
-					$('#filled-license-key-info').after(`<div class="ui success message ajax"><i class="check green icon"></i> ${globalTranslate.lic_LicenseKeyValid}</div>`);
+					licensingModify.$ajaxMessages.remove();
+					licensingModify.$filledLicenseKeyInfo.after(`<div class="ui success message ajax"><i class="check green icon"></i> ${globalTranslate.lic_LicenseKeyValid}</div>`);
 					$('.spinner.loading.icon').remove();
 				},
 				onFailure(response) {
 					licensingModify.$formObj.addClass('error').removeClass('success');
-					$('.ui.message.ajax').remove();
-					$('#filled-license-key-info').after(`<div class="ui error message ajax"><i class="exclamation triangle red icon"></i> ${response.message}</div>`);
+					licensingModify.$ajaxMessages.remove();
+					licensingModify.$filledLicenseKeyInfo.after(`<div class="ui error message ajax"><i class="exclamation triangle red icon"></i> ${response.message}</div>`);
 					$('.spinner.loading.icon').remove();
 				},
 			});
@@ -152,12 +160,19 @@ const licensingModify = {
 				},
 			});
 			// PbxApi.CheckLicense(licensingModify.cbCheckLicenseKey);
-			$('#empty-license-key-info').hide();
+			licensingModify.$emptyLicenseKeyInfo.hide();
 		} else {
-			$('#filled-license-key-info').hide();
-			$('#empty-license-key-info').show();
+			licensingModify.$filledLicenseKeyInfo.hide();
+			licensingModify.$emptyLicenseKeyInfo.show();
+		}
+
+		if (licensingModify.defaultLicenseKey !== '') {
+			licensingModify.$licensingMenu.tab('change tab', 'management');
 		}
 	},
+	/**
+	 * Обработчик при вводе ключа
+	 */
 	cbOnLicenceKeyInputChange() {
 		const licKey = licensingModify.$licKey.val();
 		if (licKey.length === 28) {
@@ -175,6 +190,10 @@ const licensingModify = {
 			$('#couponSection').hide();
 		}
 	},
+	/**
+	 * Показать GetLicenseInfo
+	 * @param response
+	 */
 	cbShowLicenseInfo(response) {
 		if (response !== undefined && response.message !== 'null') {
 			licensingModify.showLicenseInfo(response.message);

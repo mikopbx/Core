@@ -8,106 +8,110 @@
  */
 
 namespace Models;
+
+use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
 class LanInterfaces extends ModelsBase
 {
     /**
-     * @var integer
+     * @Primary
+     * @Identity
+     * @Column(type="integer", nullable=false)
      */
     public $id;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $name;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $interface;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $vlanid;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $subnet;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $ipaddr;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $gateway;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $topology;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $extipaddr;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $exthostname;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $hostname;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $domain;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $primarydns;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $secondarydns;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $dhcp;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $internet;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $disabled;
 
-    public function getSource() :string
+    public function getSource(): string
     {
         return 'm_LanInterfaces';
     }
 
 
-    public function validation() :bool
+    public function validation(): bool
     {
-        $validation = new \Phalcon\Validation();
-        $validation->add(array('interface', 'vlanid'), new UniquenessValidator([
-            'message' => $this->t('mo_ThisVlanIdNotUniqueForLanInterfacesModels')
+        $validation = new Validation();
+        $validation->add(['interface', 'vlanid'], new UniquenessValidator([
+            'message' => $this->t('mo_ThisVlanIdNotUniqueForLanInterfacesModels'),
         ]));
 
         return $this->validate($validation);

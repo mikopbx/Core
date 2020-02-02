@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 8 2019
+ * Written by Alexey Portnov, 12 2019
  */
 
 require_once 'globals.php';
@@ -20,6 +20,8 @@ class Checker {
      * @throws Exception
      */
     public function __construct(){
+        // Проверим, что gnats запущен.
+        System::gnats_log_rotate();
         $this->client_nats = new Nats\Connection();
         $this->client_nats->connect($this->timeout);
 
@@ -157,7 +159,10 @@ try{
     $cheker->check_worker_beanstalk('notify_error');
 
     Firewall::check_fail2ban();
-    System::gnats_log_rotate();
+
+    /** Ротация логов */
+    PBX::log_rotate();
+    System::rotate_php_log();
 
     // Проверка критических проблем.
     Mikopbx\Main::check_alert();

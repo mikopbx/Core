@@ -1,5 +1,8 @@
 #!/bin/sh
 
+REBOOT_PID=$$;
+export REBOOT_PID;
+
 /etc/rc/freestorage;
 /etc/rc/freeupoffload;
 

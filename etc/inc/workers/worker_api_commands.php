@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 8 2019
+ * Written by Alexey Portnov, 1 2020
  */
 
 namespace Workers;
@@ -16,9 +16,7 @@ use Nats\Connection;
 use Notifications;
 use p_IAX;
 use p_OtherConfigs;
-use p_Queue;
 use p_SIP;
-use PBX;
 use PDOException;
 use Storage;
 use System;
@@ -33,12 +31,15 @@ class ApiCommands{
     /** @var \Nats\Message $message */
     private $message;
 
+    private $need_restart;
+
     /**
      * ApiCommands constructor.
      * @param $g
      */
     function __construct(&$g){
         $this->g = $g;
+        $this->need_restart = false;
         register_shutdown_function([$this, 'ShutdownHandler']);
     }
 
@@ -47,13 +48,23 @@ class ApiCommands{
      */
     public function ShutdownHandler(){
         if (@is_array($e = @error_get_last())) {
-            $worker_safe_scripts = '/usr/bin/php -f /etc/inc/cron/worker_safe_scripts.php';
-            Util::mwexec_bg("$worker_safe_scripts");
+            $this->need_restart = true;
             $response = [
                 'result' => 'FATAL_ERROR',
                 'data'   => error_get_last()
             ];
             $this->message->reply( json_encode($response, JSON_PRETTY_PRINT) );
+        }
+        if(!$this->need_restart){
+            return;
+        }
+    }
+
+    public function check_need_restart($msg){
+        if($this->need_restart){
+             $command = "/usr/bin/php -f {$GLOBALS['_SERVER']['PHP_SELF']}";
+             Util::mwexec_bg($command);
+             exit(0);
         }
     }
 
@@ -67,14 +78,16 @@ class ApiCommands{
         while (true) {
             if(! $client->isConnected() === true){
                 $client->reconnect();
-                $client->subscribe('pbx',       [$this, 'pbx_cb']);
-                $client->subscribe('sip',       [$this, 'sip_cb']);
-                $client->subscribe('iax',       [$this, 'iax_cb']);
-                $client->subscribe('system',    [$this, 'system_cb']);
-                $client->subscribe('backup',    [$this, 'backup_cb']);
-                $client->subscribe('storage',   [$this, 'storage_cb']);
-                $client->subscribe('modules',   [$this, 'modules_cb']);
-                $client->subscribe('ping_worker_api_commands',  	  [$this, 'ping_cb']);
+                $client->subscribe('pbx',                       [$this, 'pbx_cb']);
+                $client->subscribe('sip',                       [$this, 'sip_cb']);
+                $client->subscribe('iax',                       [$this, 'iax_cb']);
+                $client->subscribe('system',                    [$this, 'system_cb']);
+                $client->subscribe('backup',                    [$this, 'backup_cb']);
+                $client->subscribe('storage',                   [$this, 'storage_cb']);
+                $client->subscribe('modules',                   [$this, 'modules_cb']);
+                $client->subscribe('ping_worker_api_commands',  [$this, 'ping_cb']);
+
+                $client->setAfterPublishAction([$this, 'check_need_restart']);
             }
             $client->wait();
         }
@@ -92,6 +105,7 @@ class ApiCommands{
             }
         }
     }
+
     /**
      * Обработка пинга демона.
      * @param \Nats\Message $message
@@ -116,16 +130,16 @@ class ApiCommands{
         $result = array(
             'result'  => 'ERROR'
         );
-        if('get_peers_statuses' == "$action"){
+        if('get_peers_statuses' === $action){
             $result = p_SIP::get_peers_statuses();
-        }else if('get_sip_peer' == "$action"){
+        }else if('get_sip_peer' === $action){
             $result = p_SIP::get_peer_status($data['peer']);
-        }else if('get_registry' == "$action"){
+        }else if('get_registry' === $action){
             $result = p_SIP::get_registry();
         }else{
             $result['data'] = 'API action not found;';
         }
-        $result['function'] = "$action";
+        $result['function'] = $action;
         $message->reply( json_encode($result, JSON_PRETTY_PRINT) );
     }
 
@@ -143,12 +157,12 @@ class ApiCommands{
         $result = array(
             'result'  => 'ERROR'
         );
-        if('get_registry' == "$action"){
+        if('get_registry' === $action){
             $result = p_IAX::get_registry();
         }else{
             $result['data'] = 'API action not found;';
         }
-        $result['function'] = "$action";
+        $result['function'] = $action;
         $message->reply( json_encode($result, JSON_PRETTY_PRINT) );
     }
 
@@ -168,25 +182,35 @@ class ApiCommands{
             'result'  => 'ERROR'
         );
 
-        if('reboot' == "$action"){
+        if('reboot' === $action){
             $result['result'] = 'Success';
             $message->reply( json_encode($result) );
             System::reboot_sync(false);
-        }else if('shutdown' == "$action"){
+        }else if('merge_uploaded_file' === $action){
+            $result = [
+                'result' => 'Success'
+            ];
+            Util::mwexec_bg("php -f /etc/inc/workers/merge_uploded_file.php '{$data['settings_file']}'");
+        } elseif ('restart_module_dependent_workers' === $action){
+            $result['result'] = 'Success';
+            $this->need_restart = true;
+            Util::restart_module_dependent_workers();
+        }else if('shutdown' === $action){
             $result['result'] = 'Success';
             $message->reply( json_encode($result) );
             System::shutdown();
-        }else if('network_reload' == "$action"){
-            $result['result'] = 'Success';
-            $message->reply( json_encode($result) );
-            System::network_reload();
-        }else if('set_date' == "$action"){
+        }else if('network_reload' === $action){
+            $result = [
+                'result' => 'Success',
+                'data'   => 'method is deprecated '
+            ];
+        }else if('set_date' === $action){
             $result = System::set_date($data['date']);
-        }else if('get_info' == "$action"){
+        }else if('get_info' === $action){
             $result = System::get_info();
-        }else if('send_mail' == "$action"){
+        }else if('send_mail' === $action){
             if(isset($data['email']) && isset($data['subject']) && isset($data['body']) ){
-                if(isset($data['encode']) && $data['encode'] == 'base64'){
+                if(isset($data['encode']) && $data['encode'] === 'base64'){
                     $data['subject'] = base64_decode($data['subject']);
                     $data['body']    = base64_decode($data['body']);
                 }
@@ -195,64 +219,73 @@ class ApiCommands{
                 $result['message'] = 'Not all query parameters are populated.';
             }
 
-        }else if('file_read_content' == "$action"){
+        }else if('file_read_content' === $action){
             $result = Util::file_read_content($data['filename'], $data['needOriginal']);
-        }else if('get_external_ip_info' == "$action"){
+        }else if('get_external_ip_info' === $action){
             $result = System::get_external_ip_info();
-        }else if('reload_cron' == "$action"){
-            $result = System::invoke_actions(['cron' => 0]);
-        }else if('reload_ssh' == "$action"){
-            $system = new System();
-            $result = $system->sshd_configure();
-        }else if('reload_msmtp' == "$action"){
+        }else if('reload_cron' === $action){
+            $result = [
+                'result' => 'Success',
+                'data'   => 'method is deprecated '
+            ];
+        }else if('reload_ssh' === $action){
+            $result = [
+                'result' => 'Success',
+                'data'   => 'method is deprecated '
+            ];
+        }else if('reload_msmtp' === $action){
             $notifications = new Notifications();
             $result = $notifications->configure();
 
             $OtherConfigs = new p_OtherConfigs($GLOBALS['g']);
             $OtherConfigs->voicemail_generate();
             Util::mwexec("asterisk -rx 'voicemail reload'");
-        }else if('unban_ip' == "$action"){
+        }else if('unban_ip' === $action){
             $result = Firewall::fail2ban_unban_all($data['ip']);
-        }else if('get_ban_ip' == "$action"){
+        }else if('get_ban_ip' === $action){
             $result['result'] = 'Success';
             $result['data']   = Firewall::get_ban_ip();
-        }else if('update_custom_files' == "$action"){
-            $result = System::update_custom_files();
-        }else if('reload_nats' == "$action"){
-            $system = new System();
-            $result = $system->gnats_start();
-        }else if('start_log' == "$action"){
+        }else if('update_custom_files' === $action){
+            $result = [
+                'result' => 'Success',
+                'data'   => 'method is deprecated '
+            ];
+        }else if('reload_nats' === $action){
+            $result = [
+                'result' => 'Success',
+                'data'   => 'method is deprecated '
+            ];
+        }else if('start_log' === $action){
             $result['result'] = 'Success';
             Util::start_log();
-        }else if('stop_log' == "$action"){
+        }else if('stop_log' === $action){
             $result['result']   = 'Success';
             $result['filename'] = Util::stop_log();
-        }else if('reload_nginx' == "$action"){
-            $result['function'] = "$action";
-            $result['result']   = 'Success';
-            $message->reply( json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) );
-            sleep(1);
-
-            $sys = new System();
-            $sys->nginx_start();
-            return;
-        }else if('status_upgrade' == "$action"){
+        }else if('reload_nginx' === $action){
+            $result = [
+                'result' => 'Success',
+                'data'   => 'method is deprecated '
+            ];
+        }else if('status_upgrade' === $action){
             $result = System::status_upgrade();
-        }else if('upgrade_online' == "$action"){
+        }else if('upgrade_online' === $action){
             $result = System::upgrade_online($request['data']);
-        }else if('upgrade' == "$action"){
+        }else if('upgrade' === $action){
             $result = System::upgrade_from_img();
-        }else if('remove_audio_file' == "$action"){
+        }else if('remove_audio_file' === $action){
             $result = Util::remove_audio_file($data['filename']);
-        }else if('convert_audio_file' == "$action"){
+        }else if('convert_audio_file' === $action){
             $result = Util::convert_audio_file($data['filename']);
-        }else if('reload_firewall' == "$action"){
-            $result = Firewall::reload_firewall();
+        }else if('reload_firewall' === $action){
+            $result = [
+                'result' => 'Success',
+                'data'   => 'method is deprecated '
+            ];
         }else{
             $result['message'] = 'API action not found;';
         }
 
-        $result['function'] = "$action";
+        $result['function'] = $action;
         $message->reply( json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) );
 
     }
@@ -270,24 +303,42 @@ class ApiCommands{
             'result'  => 'ERROR'
         );
 
-        if('reload_all_modules' == "$action"){
-            $pbx = new PBX();
-            $pbx->stop();
-            $result = $pbx->configure();
-        }else if('reload_dialplan' == "$action"){
-            $pbx = new PBX();
-            $result = $pbx->dialplan_reload();
-        }else if('reload_sip' == "$action") {
-            $result = p_SIP::sip_reload();
-        }else if('reload_queues' == "$action"){
-            $result = p_Queue::queue_reload();
-        }else if('reload_features' == "$action"){
-            $result = PBX::features_reload();
-        }else if('reload_manager' == "$action"){
-            $result = PBX::manager_reload();
-        }else if('reload_iax' == "$action"){
-            $result = p_IAX::iax_reload();
-        }else if('check_licence' == "$action"){
+        if('reload_all_modules' === $action){
+            $result = [
+                'result' => 'Success',
+                'data'   => 'method is deprecated '
+            ];
+        }else if('reload_dialplan' === $action){
+            $result = [
+                'result' => 'Success',
+                'data'   => 'method is deprecated '
+            ];
+        }else if('reload_sip' === $action) {
+            $result = [
+                'result' => 'Success',
+                'data'   => 'method is deprecated '
+            ];
+        }else if('reload_queues' === $action){
+            $result = [
+                'result' => 'Success',
+                'data'   => 'method is deprecated '
+            ];
+        }else if('reload_features' === $action){
+            $result = [
+                'result' => 'Success',
+                'data'   => 'method is deprecated '
+            ];
+        }else if('reload_manager' === $action){
+            $result = [
+                'result' => 'Success',
+                'data'   => 'method is deprecated '
+            ];
+        }else if('reload_iax' === $action){
+            $result = [
+                'result' => 'Success',
+                'data'   => 'method is deprecated '
+            ];
+        }else if('check_licence' === $action){
             $License = '\\Mikopbx\\License';
             $lic     = new $License();
             $result  = $lic->check_licence();
@@ -296,7 +347,7 @@ class ApiCommands{
             $result['message'] = 'API action not found;';
         }
 
-        $result['function'] = "$action";
+        $result['function'] = $action;
         $message->reply( json_encode($result, JSON_PRETTY_PRINT) );
     }
 
@@ -305,6 +356,7 @@ class ApiCommands{
      * @param Nats\Message $message
      */
     public function backup_cb($message) : void {
+        clearstatcache();
         $this->check_connect_db();
 
         $this->message = $message;
@@ -377,6 +429,7 @@ class ApiCommands{
      * @return array
      */
     public function modules_cb($message) :array {
+        clearstatcache();
         $this->check_connect_db();
 
         if( ! Storage::is_storage_disk_mounted() ){
@@ -396,14 +449,15 @@ class ApiCommands{
 
         // Предварительные действия по распаковке модуля.
         if('upload' === $action){
-            $result = System::module_start_download($module, $request['data']['url'], $request['data']['md5']);
-            $result['function'] = "$action";
+            $result['function'] = $action;
             $result['result']   = 'Success';
             $message->reply( json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) );
+
+            $result = System::module_start_download($module, $request['data']['url'], $request['data']['md5']);
             return $result;
         }elseif('status' === $action){
             $result = System::module_download_status($module);
-            $result['function'] = "$action";
+            $result['function'] = $action;
             $result['result']   = 'Success';
             $message->reply( json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) );
             return $result;
@@ -411,9 +465,9 @@ class ApiCommands{
 
         $path_class = $this->get_module_class($module, $action);
         if(FALSE === $path_class){
-            $result['data'][]     = "Class '$module' does not exist...";
+            $result['data'][]    = "Class '$module' does not exist...";
             $result['data'][]    = "Class '$path_class' does not exist...";
-            $result['function'] = "$action";
+            $result['function'] = $action;
             $message->reply( json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) );
             return $result;
         }
@@ -440,7 +494,7 @@ class ApiCommands{
                 $result = $response;
             } elseif ('uninstall' === $action){
 				if(class_exists($path_class) && method_exists($path_class, 'uninstallModule')){
-					$setup      = new $path_class();
+					$setup      = new $path_class($module);
 				} else {
 					// Заглушка которая позволяет удалить модуль из базы данных, которого нет на диске
 					$path_class = PbxExtensionFailure::class;
@@ -452,24 +506,26 @@ class ApiCommands{
 				} else {
 					$keepSettings = false;
 				}
-                $response   = $setup->uninstallModule($keepSettings);
-                if($response['result']){
+                if($setup->uninstallModule($keepSettings)){
                     $result['result'] = 'Success';
                 } else {
-					$result['result'] = 'Error';
-					$result['data'] = $response['error'];
-				}
+                    $result['result'] = 'Error';
+                    $result['data']   = implode('<br>', $setup->getMessages());
+                }
+
+                $this->need_restart = true;
+                Util::restart_module_dependent_workers();
             }else{
                 $cl     = new $path_class($this->g);
-                $result = $cl->$action($request);
+                $result = @$cl->$action($request);
             }
-        }catch (Exception $e){
+        } catch (Exception $e){
 			$errorLogger = $this->g['error_logger'];
 			$errorLogger->captureException($e);
             $result['data'] = $e->getMessage();
         }
 
-        $result['function'] = "$action";
+        $result['function'] = $action;
         $message->reply( json_encode($result, JSON_PRETTY_PRINT) );
 
         return $result;

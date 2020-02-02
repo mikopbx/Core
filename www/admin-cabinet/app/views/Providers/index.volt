@@ -15,16 +15,15 @@
         <div class="ui red approve button">{{ t._('pr_Delete') }}</div>
     </div>
 </div>
-    {{ link_to("providers/modifysip", '<i class="add circle icon"></i> '~t._('pr_AddSIPProvider'), "class": " ui blue button ") }}
-    {{ link_to("providers/modifyiax", '<i class="add circle icon"></i> '~t._('pr_AddIAXProvider'), "class": " ui blue button ") }}
+    {{ link_to("providers/modifysip", '<i class="add circle icon"></i> '~t._('pr_AddSIPProvider'), "class": " ui blue button add-new-button") }}
+    {{ link_to("providers/modifyiax", '<i class="add circle icon"></i> '~t._('pr_AddIAXProvider'), "class": " ui blue button add-new-button") }}
 
 
     {% for provider in providerlist %}
         {% if loop.first %}
-            <table class="ui selectable table">
+            <table class="ui selectable table" id="providers-table">
             <thead>
             <tr>
-
                 <th></th>
                 <th class="center aligned"></th>
                 <th>{{ t._('pr_TableColumnProviderName') }}</th>

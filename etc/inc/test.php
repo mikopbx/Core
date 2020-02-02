@@ -3,16 +3,20 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 8 2019
+ * Written by Alexey Portnov, 1 2020
  */
-
-use Models\BackupRules;
 
 ini_set('error_reporting', E_ALL);
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 require_once 'globals.php';
 $g['booting']   = true;
+
+unset($errorLogger,$g['error_logger']);
+$s = new Storage();
+var_dump($s->get_disk_settings());
+
+exit(0);
 
 if(count($argv)===1){
     $g['booting']   = false;
@@ -41,9 +45,9 @@ if(count($argv)===1){
     // php -f /etc/inc/test.php ModuleWebConsole InstallDB
 
     // php -f /etc/inc/test.php ModuleBitrix24Notify InstallDB
-    // php -f /etc/inc/test.php ModuleBitrix24Integration InstallDB
-    // php -f /etc/inc/test.php ModuleBitrix24Integration unInstallDB
-
+    // php -f /etc/inc/test.php ModuleBitrix24Integration installModule
+    // php -f /etc/inc/test.php ModuleBitrix24Integration uninstallModule
+    // php -f /etc/inc/test.php ModuleBitrix24Integration uninstallModule
     $module = $argv[1] ?? '';
     $action = $argv[2] ?? '';
     $path_class = "\\Modules\\{$module}\\setup\\PbxExtensionSetup";

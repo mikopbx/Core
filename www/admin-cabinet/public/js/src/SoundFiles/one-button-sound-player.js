@@ -2,7 +2,7 @@
  * Copyright (C) MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 11 2018
+ * Written by Nikolay Beketov, 12 2019
  *
  */
 
@@ -62,14 +62,14 @@ const sndPlayerOneBtn = {
 		}
 	},
 	cbOnSliderChange(newVal, meta) {
-		if (meta.triggeredByUser && isFinite(sndPlayerOneBtn.slider.duration)) {
+		if (meta.triggeredByUser && Number.isFinite(sndPlayerOneBtn.slider.duration)) {
 			sndPlayerOneBtn.slider.removeEventListener('timeupdate', sndPlayerOneBtn.cbTimeUpdate, false);
 			sndPlayerOneBtn.slider.currentTime = (sndPlayerOneBtn.slider.duration * newVal) / 100;
 			sndPlayerOneBtn.slider.addEventListener('timeupdate', sndPlayerOneBtn.cbTimeUpdate, false);
 		}
 	},
 	cbTimeUpdate() {
-		if (isFinite(sndPlayerOneBtn.slider.duration)) {
+		if (Number.isFinite(sndPlayerOneBtn.slider.duration)) {
 			const percent = sndPlayerOneBtn.slider.currentTime / sndPlayerOneBtn.slider.duration;
 			const rangePosition = Math.round((percent) * 100);
 			sndPlayerOneBtn.$slider.range('set value', rangePosition);

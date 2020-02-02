@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 4 2019
+ * Written by Alexey Portnov, 12 2019
  */
 
 class ConfigClass {
@@ -91,7 +91,7 @@ class ConfigClass {
      * @param  string $id
      * @return string
      */
-    public function getTechByID($id){
+    public function getTechByID($id):string {
         unset($id);
         // Генерация внутреннего номерного плана.
         $result = '';
@@ -197,6 +197,88 @@ class ConfigClass {
     public function generate_peers($param){
         unset($param);
         return '';
+    }
+
+    /**
+     * Генератор сеции пиров для sip.conf
+     * @return string
+     */
+    public function generate_peers_pj($param){
+        unset($param);
+        return '';
+    }
+
+    /**
+     * Генератор сеции пиров для manager.conf
+     * @return string
+     */
+    public function generate_manager($param){
+        unset($param);
+        return '';
+    }
+
+    /**
+     * Дополнительные параметры для
+     * @param $peer
+     * @return string
+     */
+    public function generate_peer_pj_additional_options($peer):string {
+
+        return '';
+    }
+
+    /**
+     * Кастомизация исходящего контекста для конкретного маршрута.
+     * @param $peer
+     * @return string
+     */
+    public function generate_out_rout_context($rout):string {
+
+        return '';
+    }
+    /**
+     * Кастомизация исходящего контекста для конкретного маршрута.
+     * @param $peer
+     * @return string
+     */
+    public function generate_out_rout_after_dial_context($rout):string {
+
+        return '';
+    }
+
+    /**
+     * Кастомизация входящего контекста для конкретного маршрута.
+     * @param $peer
+     * @return string
+     */
+    public function generate_incoming_rout_after_dial_context($id):string {
+
+        return '';
+    }
+
+    /**
+     * Кастомизация входящего контекста для конкретного маршрута.
+     * @param $peer
+     * @return string
+     */
+    public function generate_incoming_rout_before_dial($rout_number):string {
+
+        return '';
+    }
+
+    /**
+     * Обработчик события изменения данных в базе настроек mikopbx.db.
+     */
+    public function models_event_change_data($data):void {
+
+    }
+
+    /**
+     * Обработчик события изменения данных в базе настроек mikopbx.db.
+     * @param $modified_tables
+     */
+    public function models_event_need_reload($modified_tables):void {
+
     }
 
 }

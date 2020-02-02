@@ -9,123 +9,135 @@
 
 namespace Models;
 
-use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 use Phalcon\Mvc\Model\Relation;
+use Phalcon\Validation;
+use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
 class CallQueues extends ModelsBase
 {
     /**
-     * @var integer
+     * @Primary
+     * @Identity
+     * @Column(type="integer", nullable=false)
      */
     public $id;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $uniqid;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $name;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $extension;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $strategy;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $seconds_to_ring_each_member;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $seconds_for_wrapup;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $recive_calls_while_on_a_call;
 
     /**
-     * @var string{'ringing'|'musiconhold'}
+     * @Column(type="string", nullable=true){'ringing'|'musiconhold'}
      */
     public $caller_hear;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $announce_position;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $announce_hold_time;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $periodic_announce_sound_id;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $periodic_announce_frequency;
 
     /**
-     * @var integer
+     * @Column(type="integer", nullable=true)
      */
     public $timeout_to_redirect_to_extension;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $timeout_extension;
 
     /**
-     * @var string
+     * Link to Extension number
+     *
+     * @Column(type="string", nullable=true)
      */
-    public $redirect_to_extension_if_empty; //extension
+    public $redirect_to_extension_if_empty;
 
     /**
-     * @var integer
+     * Number unanswered calls before redirect
+     *
+     * @Column(type="integer", nullable=true)
      */
-    public $number_unanswered_calls_to_redirect; //number unanswered calls
+    public $number_unanswered_calls_to_redirect;
 
     /**
-     * @var string
+     * Link to Extension number
+     * @Column(type="string", nullable=true)
      */
-    public $redirect_to_extension_if_unanswered; //extension
+    public $redirect_to_extension_if_unanswered;
 
     /**
-     * @var integer
+     * Number repeat queue cycle
+     *
+     * @Column(type="integer", nullable=true)
      */
-    public $number_repeat_unanswered_to_redirect; //number repeat queue cycle
+    public $number_repeat_unanswered_to_redirect;
 
     /**
-     * @var string
+     * Link to Extension number
+     * @Column(type="string", nullable=true)
      */
-    public $redirect_to_extension_if_repeat_exceeded; //extension
+    public $redirect_to_extension_if_repeat_exceeded;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $description;
 
-    public function getSource() :string
+    public function getSource(): string
     {
         return 'm_CallQueues';
     }
-    public function initialize() :void
+
+    public function initialize(): void
     {
-	    parent::initialize();
+        parent::initialize();
         $this->belongsTo(
             'extension',
             'Models\Extensions',
@@ -135,7 +147,7 @@ class CallQueues extends ModelsBase
                 'foreignKey' => [
                     'allowNulls' => false,
                     'action'     => Relation::NO_ACTION // В первую очередь удаляются Extension, а он удалит CallQueues
-                ]
+                ],
             ]
         );
         $this->belongsTo(
@@ -143,13 +155,13 @@ class CallQueues extends ModelsBase
             'Models\Extensions',
             'number',
             [
-	            'alias'      => 'TimeoutExtensions',
+                'alias'      => 'TimeoutExtensions',
                 'foreignKey' => [
-	                'message'    => 'Models\TimeoutExtensions',
-	                'allowNulls' => true,
-	                'action'     => Relation::NO_ACTION
-	                // Не троогать Extensions
-                ]
+                    'message'    => 'Models\TimeoutExtensions',
+                    'allowNulls' => true,
+                    'action'     => Relation::NO_ACTION
+                    // Не троогать Extensions
+                ],
             ]
         );
         $this->belongsTo(
@@ -157,13 +169,13 @@ class CallQueues extends ModelsBase
             'Models\Extensions',
             'number',
             [
-	            'alias'      => 'RedirectIfEmptyExtensions',
+                'alias'      => 'RedirectIfEmptyExtensions',
                 'foreignKey' => [
-	                'allowNulls' => true,
-	                'message'    => 'Models\RedirectIfEmptyExtensions',
-	                'action'     => Relation::NO_ACTION
-	                // Не троогать Extensions
-                ]
+                    'allowNulls' => true,
+                    'message'    => 'Models\RedirectIfEmptyExtensions',
+                    'action'     => Relation::NO_ACTION
+                    // Не троогать Extensions
+                ],
             ]
         );
         $this->belongsTo(
@@ -171,13 +183,13 @@ class CallQueues extends ModelsBase
             'Models\Extensions',
             'number',
             [
-	            'alias'      => 'RedirectIfUnAnsweredExtensions',
+                'alias'      => 'RedirectIfUnAnsweredExtensions',
                 'foreignKey' => [
-	                'allowNulls' => true,
-	                'message'    => 'Models\RedirectIfUnAnsweredExtensions',
-	                'action'     => Relation::NO_ACTION
-	                // Не троогать Extensions
-                ]
+                    'allowNulls' => true,
+                    'message'    => 'Models\RedirectIfUnAnsweredExtensions',
+                    'action'     => Relation::NO_ACTION
+                    // Не троогать Extensions
+                ],
             ]
         );
         $this->belongsTo(
@@ -185,13 +197,13 @@ class CallQueues extends ModelsBase
             'Models\Extensions',
             'number',
             [
-	            'alias'      => 'RedirectIfRepeadExceeded',
+                'alias'      => 'RedirectIfRepeadExceeded',
                 'foreignKey' => [
-	                'allowNulls' => true,
-	                'message'    => 'Models\RedirectIfRepeadExceeded',
-	                'action'     => Relation::NO_ACTION
-	                // Не троогать Extensions
-                ]
+                    'allowNulls' => true,
+                    'message'    => 'Models\RedirectIfRepeadExceeded',
+                    'action'     => Relation::NO_ACTION
+                    // Не троогать Extensions
+                ],
             ]
         );
 
@@ -203,8 +215,8 @@ class CallQueues extends ModelsBase
                 'alias'      => 'SoundFiles',
                 'foreignKey' => [
                     'allowNulls' => false,
-                    'action'     => Relation::NO_ACTION
-                    ]
+                    'action'     => Relation::NO_ACTION,
+                ],
             ]
 
         );
@@ -213,14 +225,14 @@ class CallQueues extends ModelsBase
             'Models\CallQueueMembers',
             'queue',
             [
-                'alias'=>'CallQueueMembers',
+                'alias'      => 'CallQueueMembers',
                 'foreignKey' => [
                     'allowNulls' => false,
                     'action'     => Relation::ACTION_CASCADE //Удалить подчиненные все CallQueueMembers
                 ],
-                'params' => array(
-                    'order' => 'priority asc'
-                )
+                'params'     => [
+                    'order' => 'priority asc',
+                ],
             ]
         );
 
@@ -228,13 +240,14 @@ class CallQueues extends ModelsBase
     }
 
 
-    public function validation() :bool
+    public function validation(): bool
     {
 
-        $validation = new \Phalcon\Validation();
+        $validation = new Validation();
         $validation->add('uniqid', new UniquenessValidator([
-            'message' => $this->t('mo_ThisUniqidMustBeUniqueForCallQueuesModels')
+            'message' => $this->t('mo_ThisUniqidMustBeUniqueForCallQueuesModels'),
         ]));
+
         return $this->validate($validation);
 
 

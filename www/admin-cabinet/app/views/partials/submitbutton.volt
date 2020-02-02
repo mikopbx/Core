@@ -1,6 +1,6 @@
 <div class="ui error message" id="form-error-messages"></div>
 {% if  indexurl is not empty %}
-    {{ link_to(indexurl, "<i class='list icon'></i>"~t._('bt_BackToList'), "class": "ui labeled large icon button") }}
+    {{ link_to(indexurl, "<i class='list icon'></i>"~t._('bt_BackToList'), "class": "ui labeled large icon button", "id":"back-to-list-button") }}
 {% endif %}
 
 {% if submitMode is not empty %}

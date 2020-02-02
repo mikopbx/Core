@@ -1,8 +1,8 @@
-{{ link_to("ivr-menu/modify", '<i class="add circle icon"></i> '~t._('iv_AddNewIvrMenu'), "class": "ui blue button") }}
+{{ link_to("ivr-menu/modify", '<i class="add circle icon"></i> '~t._('iv_AddNewIvrMenu'), "class": "ui blue button", 'id':'add-new-button') }}
 
     {% for record in ivrmenu %}
         {% if loop.first %}
-            <table class="ui selectable compact table">
+            <table class="ui selectable compact table" id="ivr-menu-table">
             <thead>
             <tr>
                 <th class="centered">{{ t._('iv_Extension') }}</th>

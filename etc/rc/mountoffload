@@ -31,7 +31,7 @@ mountoffload()
 mountconfrecover()
 {
 	offloaddisk=$1;
-	echo "  - attempting to mount existing configuration..."
+	echo " - attempting to mount existing configuration..."
 	
 	# Создаем каталог для монтирования (старая конфигурация). 
 	rec_dir='/conf.recover/';
@@ -43,24 +43,24 @@ mountconfrecover()
 	do
 		if [ "${diskr}" = "${offloaddisk}" ]; then
 			# Проверка на уже смонтированный диск.
-			echo "  - skip ${diskr}, already mount..."
+			echo " - skip ${diskr}, already mount..."
 			continue
 		fi
 
 		if [ ! -b "/dev/${diskr}3" ]; then
-			echo "  - skip ${diskr}, part 3 not found..."
+			echo " - skip ${diskr}, part 3 not found..."
 			continue
 		fi;
 
 	    type=$(/sbin/blkid -o full "/dev/${diskr}3" | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^TYPE" | /bin/busybox awk -F "\"" '{print $2}' | /bin/busybox head -n 1);
 		if [ -f "/sbin/fsck.${type}" ]; then
-		    "/sbin/fsck.${type}" -p "/dev/${diskr}3" > /dev/null 2> /dev/null;
-		    echo "  - trying fsck /dev/${diskr}3 ... returned: $?"
+		    "/sbin/fsck.${type}" -f -p "/dev/${diskr}3" > /dev/null 2> /dev/null;
+		    echo " - trying fsck /dev/${diskr}3 ... returned: $?"
 		fi
 
         uuid=$(/sbin/blkid -o full "/dev/${diskr}3" | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^UUID" | /bin/busybox awk -F "\"" '{print $2}' | /bin/busybox head -n 1);
 		mount -t "${type}" -r UUID="${uuid}" "${rec_dir}" # > /dev/null 2> /dev/null;
-		echo "  - trying mount ${diskr} fs ${type} ... returned: $?"
+		echo " - trying mount ${diskr} fs ${type} ... returned: $?"
 		if [ -d "${rec_dir}conf" ] && [ ! -f "${rec_dir}livecd"  ] ; then
 			
 			### Распакуем файлы конфигурации ###
@@ -74,7 +74,7 @@ mountconfrecover()
 			rm -rf /tmp/tmp_dir;
 			###
 			
-			echo "  - found existing configuration on ${diskr}3!"
+			echo " - found existing configuration on ${diskr}3!"
 			exit 0
 		else
 			umount -f "${rec_dir}" > /dev/null 2> /dev/null;

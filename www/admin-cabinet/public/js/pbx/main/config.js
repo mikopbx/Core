@@ -4,7 +4,7 @@
  * Copyright (C) MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 6 2018
+ * Written by Nikolay Beketov, 12 2019
  *
  */
 
@@ -13,4 +13,4 @@ var Config = {
   pbxUrl: globalDebugMode ? '//172.16.32.72' : '',
   updateUrl: 'https://update.askozia.ru/'
 };
-//# sourceMappingURL=config.js.map
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy9tYWluL2NvbmZpZy5qcyJdLCJuYW1lcyI6WyJDb25maWciLCJwYnhVcmwiLCJnbG9iYWxEZWJ1Z01vZGUiLCJ1cGRhdGVVcmwiXSwibWFwcGluZ3MiOiI7O0FBQUE7Ozs7Ozs7O0FBUUE7QUFFQSxJQUFNQSxNQUFNLEdBQUc7QUFDZEMsRUFBQUEsTUFBTSxFQUFFQyxlQUFlLEdBQUcsZ0JBQUgsR0FBc0IsRUFEL0I7QUFFZEMsRUFBQUEsU0FBUyxFQUFFO0FBRkcsQ0FBZiIsInNvdXJjZXNDb250ZW50IjpbIi8qXG4gKiBDb3B5cmlnaHQgKEMpIE1JS08gTExDIC0gQWxsIFJpZ2h0cyBSZXNlcnZlZFxuICogVW5hdXRob3JpemVkIGNvcHlpbmcgb2YgdGhpcyBmaWxlLCB2aWEgYW55IG1lZGl1bSBpcyBzdHJpY3RseSBwcm9oaWJpdGVkXG4gKiBQcm9wcmlldGFyeSBhbmQgY29uZmlkZW50aWFsXG4gKiBXcml0dGVuIGJ5IE5pa29sYXkgQmVrZXRvdiwgMTIgMjAxOVxuICpcbiAqL1xuXG4vKiBnbG9iYWwgZ2xvYmFsRGVidWdNb2RlICovXG5cbmNvbnN0IENvbmZpZyA9IHtcblx0cGJ4VXJsOiBnbG9iYWxEZWJ1Z01vZGUgPyAnLy8xNzIuMTYuMzIuNzInIDogJycsXG5cdHVwZGF0ZVVybDogJ2h0dHBzOi8vdXBkYXRlLmFza296aWEucnUvJyxcbn07XG4iXX0=

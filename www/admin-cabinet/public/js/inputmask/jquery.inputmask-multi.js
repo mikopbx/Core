@@ -217,7 +217,7 @@
         $(this)
         .on("keydown.inputmasks", masksKeyDown)
         .on("keypress.inputmasks", masksKeyPress)
-        .on("paste.inputmasks", masksPaste)
+        .on("paste.inputmasks", masksPasteCustom)
         .on("dragdrop.inputmasks", masksPaste)
         .on("drop.inputmasks", masksPaste)
         .on("cut.inputmasks", masksPaste)
@@ -324,6 +324,19 @@
     var masksChange = function(e) {
         maskInit.call(this);
         //runOriginal.call(this, e);
+        return true;
+    }
+
+    // MIKO add number clearing
+    var masksPasteCustom = function(e) {
+        var number =  e.originalEvent.clipboardData.getData('text').replace(/\D+/g, '');
+        var input = this;
+        setTimeout(function() {
+            $(this).val(number);
+            maskInit.call(input);
+            //runOriginal.call(input, e);
+            $(this).trigger("complete");
+        }, 0);
         return true;
     }
 

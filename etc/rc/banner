@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 5 2019
+ * Written by Alexey Portnov, 10 2019
  */
 
 require_once("globals.php");
@@ -26,7 +26,7 @@ if(file_exists('/offload/version')){
 $version 		= trim(file_get_contents("{$version_file}"));
 $buildtime  	= trim(file_get_contents("{$g['pt1c_etc_path']}/version.buildtime"));
 $product_name 	= $g['pt1c_pbx_name_kind'];
-$copyright_info = "$product_name is Copyright (C) 2006-2018. All rights reserved.\n".
+$copyright_info = "$product_name is Copyright (C) 2006-2020. All rights reserved.\n".
 				  "    \033[31;1m{$livecd_text}\033[0m \n";
 
 $networks = $network->getGeneralNetSettings();

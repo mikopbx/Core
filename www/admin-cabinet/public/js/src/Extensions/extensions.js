@@ -2,7 +2,7 @@
  * Copyright (C) MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 11 2018
+ * Written by Nikolay Beketov, 12 2019
  *
  */
 
@@ -44,10 +44,11 @@ const Extensions = {
 
 		return formattedResponse;
 	},
+	// Настойки выпадающего списка с пустым
 	getDropdownSettingsWithEmpty(cbOnChange = null) {
 		const result = {
 			apiSettings: {
-				url: `${globalRootUrl}extensions/getForSelect/0`,
+				url: `${globalRootUrl}extensions/getForSelect/all`,
 				cache: false,
 				// throttle: 400,
 				onResponse(response) {
@@ -72,10 +73,11 @@ const Extensions = {
 		};
 		return result;
 	},
+	// Настойки выпадающего списка без пустого
 	getDropdownSettingsWithoutEmpty(cbOnChange = null) {
 		const result = {
 			apiSettings: {
-				url: `${globalRootUrl}extensions/getForSelect/0`,
+				url: `${globalRootUrl}extensions/getForSelect/all`,
 				cache: false,
 				// throttle: 400,
 				onResponse(response) {
@@ -95,6 +97,62 @@ const Extensions = {
 			templates: {
 				menu: Extensions.customDropdownMenu,
 			},
+		};
+		return result;
+	},
+	// Настойки выпадающего списка только для внутренних без пустого
+	getDropdownSettingsOnlyInternalWithoutEmpty(cbOnChange = null) {
+		const result = {
+			apiSettings: {
+				url: `${globalRootUrl}extensions/getForSelect/internal`,
+				cache: false,
+				// throttle: 400,
+				onResponse(response) {
+					return Extensions.formatDropdownResults(response, false);
+				},
+			},
+			ignoreCase: true,
+			fullTextSearch: true,
+			filterRemoteData: true,
+			saveRemoteData: false,
+			forceSelection: false,
+			direction: 'downward',
+			hideDividers: 'empty',
+			onChange(value) {
+				if (cbOnChange !== null) cbOnChange(value);
+			},
+			templates: {
+				menu: Extensions.customDropdownMenu,
+			},
+		};
+		return result;
+	},
+	// Настойки выпадающего списка только для внутренних с пустым
+	getDropdownSettingsOnlyInternalWithEmpty(cbOnChange = null) {
+		const result = {
+			apiSettings: {
+				url: `${globalRootUrl}extensions/getForSelect/internal`,
+				cache: false,
+				// throttle: 400,
+				onResponse(response) {
+					return Extensions.formatDropdownResults(response, true);
+				},
+			},
+			onChange(value) {
+				if (parseInt(value, 10) === -1) $(this).dropdown('clear');
+				if (cbOnChange !== null) cbOnChange(value);
+			},
+			ignoreCase: true,
+			fullTextSearch: true,
+			filterRemoteData: true,
+			saveRemoteData: false,
+			forceSelection: false,
+			direction: 'downward',
+			hideDividers: 'empty',
+			templates: {
+				menu: Extensions.customDropdownMenu,
+			},
+
 		};
 		return result;
 	},
@@ -131,7 +189,7 @@ const Extensions = {
 	},
 	getPhoneExtensions(callBack) {
 		$.api({
-			url: `${globalRootUrl}extensions/getForSelect/1`,
+			url: `${globalRootUrl}extensions/getForSelect/phones`,
 			on: 'now',
 			onResponse(response) {
 				return Extensions.formatDropdownResults(response, false);

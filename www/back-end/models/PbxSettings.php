@@ -1,10 +1,9 @@
 <?php
 /**
- * Copyright (C) MIKO LLC - All Rights Reserved
+ * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 6 2018
- *
+ * Written by Alexey Portnov, 12 2019
  */
 
 namespace Models;
@@ -16,12 +15,13 @@ class PbxSettings extends ModelsBase
 {
 
     /**
-     * @var string
+     * @Primary
+     * @Column(type="string", nullable=true)
      */
     public $key;
 
     /**
-     * @var string
+     * @Column(type="string", nullable=true)
      */
     public $value;
 
@@ -39,7 +39,6 @@ class PbxSettings extends ModelsBase
         ]));
 
         return $this->validate($validation);
-
     }
 
     /**
@@ -177,6 +176,7 @@ class PbxSettings extends ModelsBase
                     return true;
                 }
         }
+
         return false;
     }
 
@@ -296,6 +296,8 @@ class PbxSettings extends ModelsBase
         switch ($this->key) {
             case 'WEBPort':
             case 'WEBHTTPSPort':
+            case 'WEBHTTPSPublicKey':
+            case 'WEBHTTPSPrivateKey':
                 return true;
                 break;
             default:

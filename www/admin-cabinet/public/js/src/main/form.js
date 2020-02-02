@@ -2,11 +2,11 @@
  * Copyright (C) MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 7 2018
+ * Written by Nikolay Beketov, 12 2019
  *
  */
 
-/* global globalRootUrl , ConfigWorker, globalTranslate */
+/* global globalRootUrl, globalTranslate */
 
 const Form = {
 	$formObj: '',
@@ -21,7 +21,6 @@ const Form = {
 	contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
 	keyboardShortcuts: true,
 	enableDirrity: true,
-	configWorkerEnabled: true,
 	oldFormValues: [],
 	initialize() {
 		if (Form.enableDirrity) Form.initializeDirrity();
@@ -128,19 +127,16 @@ const Form = {
 			},
 			onSuccess(response) {
 				$('.ui.message.ajax').remove();
-				let requestWithoutErrors = true;
 				$.each(response.message, (index, value) => {
 					if (index === 'error') {
 						Form.$submitButton.transition('shake').removeClass('loading');
 						Form.$formObj.after(`<div class="ui ${index} message ajax">${value}</div>`);
-						requestWithoutErrors = false;
 					}
 				});
 				const event = document.createEvent('Event');
 				event.initEvent('ConfigDataChanged', false, true);
 				window.dispatchEvent(event);
 				Form.cbAfterSendForm(response);
-				if (Form.configWorkerEnabled && requestWithoutErrors) ConfigWorker.restartWorker();
 				if (response.success
 					&& response.reload.length > 0
 					&& Form.$submitModeInput.val() === 'SaveSettings') {
@@ -161,6 +157,7 @@ const Form = {
 				} else if (Form.enableDirrity) {
 					Form.initializeDirrity();
 				}
+				Form.$submitButton.removeClass('loading');
 			},
 			onFailure(response) {
 				Form.$formObj.after(response);

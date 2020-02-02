@@ -10,17 +10,17 @@ namespace Models;
 
 class CallDetailRecords extends CallDetailRecordsBase
 {
-	public function getSource() :string
-	{
-		return 'cdr_general';
-	}
+    public function getSource(): string
+    {
+        return 'cdr_general';
+    }
 
-	public function initialize() :void
-	{
-		parent::initialize();
-		$this->useDynamicUpdate(true);
-		$this->setConnectionService('dbCDR');
-	}
+    public function initialize(): void
+    {
+        parent::initialize();
+        $this->useDynamicUpdate(true);
+        $this->setConnectionService('dbCDR');
+    }
 
 
 }

@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 9 2019
+ * Written by Alexey Portnov, 1 2020
  */
 
 use Models\NetworkFilters;
@@ -31,9 +31,10 @@ class PBX {
     /**
      * Возвращает массив инициализированных модулей АТС.
      * @param $g
+     * @param $exeption_class
      * @return array
      */
-	public static function init_modules($g) :array {
+	public static function init_modules($g, $exeption_class=null) :array {
 	    $arrObject = [];
         $arr = array(
             'p_ExternalPhones',
@@ -47,8 +48,12 @@ class PBX {
             'p_DialplanApplication',
             'p_MikoAjam',
         );
+
         // Подключение классов.
         foreach ($arr as $value) {
+            if($value === $exeption_class){
+                continue;
+            }
             if (class_exists($value)){
                 $arrObject[] = new $value($g);
             }
@@ -58,7 +63,11 @@ class PBX {
             $class_name = str_replace('Module', '', $value->uniqid);
             $path_class  = "\\Modules\\{$value->uniqid}\\Lib\\{$class_name}";
             if (class_exists($path_class)){
-                $arrObject[] = new $path_class($g);
+                try{
+                    $arrObject[] = new $path_class($g);
+                }catch (Exception $e){
+                    Util::sys_log_msg('INIT_MODULE', "Fail init module '{$value->uniqid}' ." . $e->getMessage());
+                }
             }
         }
         return $arrObject;
@@ -172,6 +181,7 @@ class PBX {
         $path2dirs['backup'] 	     = '/var/asterisk/backup';
         $path2dirs['tmp'] 	         = '/ultmp';
         $path2dirs['custom_modules'] = '/var/asterisk/custom_modules';
+        $path2dirs['datapath'] 	     = '/var/asterisk';
         $path2dirs['php_session']    = '/var/tmp/php';
         $path2dirs['cache_js_dir']   = '/var/cache/www/cache_js_dir';
         $path2dirs['cache_css_dir']  = '/var/cache/www/cache_css_dir';
@@ -185,7 +195,8 @@ class PBX {
      * @param bool $booting
      */
 	public static function start($booting = false) :void {
-		Util::mwexec_bg('/usr/sbin/safe_asterisk -fn');
+        Network::start_sipdump();
+	    Util::mwexec_bg('/usr/sbin/safe_asterisk -fn');
 		$sys = new System();
 		$sys->cron_configure($booting);
 	}
@@ -229,7 +240,7 @@ class PBX {
 	public static function restart() :void {
 		self::stop();
 		self::start();
-	}
+    }
 
     /**
      * Создание конфига modules.conf
@@ -237,7 +248,14 @@ class PBX {
 	private function modules_conf_generate() :void {
 		$conf = "[modules]\n".
 				"autoload=no\n";
+
 		$modules  = [];
+        //$modules[]='res_odbc.so';
+        //$modules[]='res_config_odbc.so';
+        //$modules[]='pbx_realtime.so';
+        //$modules[]='res_sorcery_realtime.so';
+        //$modules[]='res_config_sqlite3.so';
+
 		$modules[]='app_mixmonitor.so';
 		$modules[]='app_cdr.so';
         $modules[]='app_exec.so';
@@ -255,7 +273,6 @@ class PBX {
         $modules[]='app_voicemail.so';
         $modules[]='chan_dahdi.so';
         $modules[]='chan_iax2.so';
-        $modules[]='chan_sip.so';
 
         $modules[]='codec_alaw.so';
         $modules[]='codec_dahdi.so';
@@ -264,7 +281,19 @@ class PBX {
         $modules[]='codec_gsm.so';
         $modules[]='codec_ulaw.so';
         $modules[]='codec_adpcm.so';
+        $modules[]='codec_speex.so';
 
+        $modules[]='codec_opus.so';
+        $modules[]='codec_resample.so';
+        $modules[]='codec_g729a.so';
+        $modules[]='codec_siren14.so';
+        $modules[]='codec_siren7.so';
+        $modules[]='codec_a_mu.so';
+        $modules[]='codec_ilbc.so';
+        $modules[]='codec_lpc10.so';
+        $modules[]='codec_silk.so';
+
+        $modules[]='format_ogg_speex.so';
         $modules[]='format_gsm.so';
         $modules[]='format_pcm.so';
         $modules[]='format_wav.so';
@@ -279,6 +308,7 @@ class PBX {
         $modules[]='format_g719.so';
 
         $modules[]='func_callerid.so';
+        $modules[]='func_speex.so';
         $modules[]='func_channel.so';
         $modules[]='func_config.so';
         $modules[]='func_cut.so';
@@ -287,6 +317,7 @@ class PBX {
         $modules[]='func_db.so';
         $modules[]='func_logic.so';
         $modules[]='func_strings.so';
+        $modules[]='func_periodic_hook.so';
         $modules[]='pbx_config.so';
         $modules[]='pbx_loopback.so';
         $modules[]='pbx_spool.so';
@@ -323,14 +354,63 @@ class PBX {
         $modules[]='func_dialplan.so';
 
         if(file_exists('/offload/asterisk/modules/res_pjproject.so')){
+            $modules[]='res_crypto.so';
             $modules[]='res_pjproject.so';
             $modules[]='res_speech.so';
             $modules[]='res_sorcery_astdb.so';
             $modules[]='res_sorcery_config.so';
             $modules[]='res_sorcery_memory.so';
+
+            $modules[]='chan_pjsip.so';
+            $modules[]='func_pjsip_endpoint.so';
+            $modules[]='res_http_websocket.so';
+            $modules[]='res_musiconhold.so';
+            $modules[]='res_pjproject.so';
+            $modules[]='res_pjsip_acl.so';
+            $modules[]='res_pjsip_authenticator_digest.so';
+            $modules[]='res_pjsip_caller_id.so';
+            $modules[]='res_pjsip_dialog_info_body_generator.so';
+            $modules[]='res_pjsip_diversion.so';
+            $modules[]='res_pjsip_dtmf_info.so';
+            $modules[]='res_pjsip_endpoint_identifier_anonymous.so';
+            $modules[]='res_pjsip_endpoint_identifier_ip.so';
+            $modules[]='res_pjsip_endpoint_identifier_user.so';
+            $modules[]='res_pjsip_exten_state.so';
+            $modules[]='res_pjsip_header_funcs.so';
+            $modules[]='res_pjsip_logger.so';
+            $modules[]='res_pjsip_messaging.so';
+            $modules[]='res_pjsip_mwi_body_generator.so';
+            $modules[]='res_pjsip_mwi.so';
+            $modules[]='res_pjsip_nat.so';
+            $modules[]='res_pjsip_notify.so';
+            $modules[]='res_pjsip_one_touch_record_info.so';
+            $modules[]='res_pjsip_outbound_authenticator_digest.so';
+            $modules[]='res_pjsip_outbound_publish.so';
+            $modules[]='res_pjsip_outbound_registration.so';
+            $modules[]='res_pjsip_path.so';
+            $modules[]='res_pjsip_pidf_body_generator.so';
+            $modules[]='res_pjsip_pidf_digium_body_supplement.so';
+            $modules[]='res_pjsip_pidf_eyebeam_body_supplement.so';
+            $modules[]='res_pjsip_publish_asterisk.so';
+            $modules[]='res_pjsip_pubsub.so';
+            $modules[]='res_pjsip_refer.so';
+            $modules[]='res_pjsip_registrar.so';
+            $modules[]='res_pjsip_rfc3326.so';
+            $modules[]='res_pjsip_sdp_rtp.so';
+            $modules[]='res_pjsip_send_to_voicemail.so';
+            $modules[]='res_pjsip_session.so';
+            $modules[]='res_pjsip.so';
+            $modules[]='res_pjsip_t38.so';
+            $modules[]='res_pjsip_transport_websocket.so';
+            $modules[]='res_pjsip_xpidf_body_generator.so';
+            $modules[]='res_security_log.so';
+
             file_put_contents('/etc/asterisk/pjproject.conf', '');
             file_put_contents('/etc/asterisk/sorcery.conf', '');
+            file_put_contents('/etc/asterisk/pjsip.conf', '');
+            file_put_contents('/etc/asterisk/pjsip_notify.conf', '');
         }else{
+            $modules[]='chan_sip.so';
             $modules[]='app_macro.so';
         }
 
@@ -339,7 +419,42 @@ class PBX {
 		}
 
         Util::file_write_content('/etc/asterisk/modules.conf', $conf);
+        Util::file_write_content('/etc/asterisk/codecs.conf',  '');
 	}
+
+	static function log_rotate():void {
+        self::rotate_pbx_log('messages');
+        self::rotate_pbx_log('security_log');
+        self::rotate_pbx_log('error');
+    }
+
+    static function rotate_pbx_log($f_name){
+        $max_size = 2;
+        $log_dir = System::get_log_dir().'/asterisk/';
+        $text_config="{$log_dir}{$f_name}".' {
+    nocreate
+    nocopytruncate
+    delaycompress
+    nomissingok
+    start 0
+    rotate 9
+    size '.$max_size.'M
+    missingok
+    noolddir
+    postrotate
+        /usr/sbin/asterisk -rx "logger reload" > /dev/null 2> /dev/null
+    endscript
+}';
+        $path_conf = $GLOBALS['g']['varetc_path'].'/asterisk_logrotate_'.$f_name.'.conf';
+        file_put_contents($path_conf, $text_config);
+        $mb10 = $max_size * 1024 * 1024;
+
+        $options = '';
+        if(Util::m_file_sise("{$log_dir}{$f_name}") > $mb10 ){
+            $options = '-f';
+        }
+        Util::mwexec_bg("/usr/sbin/logrotate {$options} '{$path_conf}' > /dev/null 2> /dev/null");
+    }
 
     /**
      * Создание конфига indication.conf
@@ -475,6 +590,26 @@ class PBX {
      * Создание конфига manager.conf
      */
 	private function manager_conf_generate() :void {
+
+	    $vars=[
+	        'DIALEDPEERNUMBER',
+	        'BLKVM_CHANNEL',
+	        'BRIDGEPEER',
+	        'INTERCHANNEL',
+            'FROM_DID',
+	        'mikoidconf',
+	        'conf_1c',
+	        '1cautoanswer',
+	        'extenfrom1c',
+	        'spyee',
+	        'datafrom1c',
+	        'CDR(lastapp)',
+	        'CDR(channel)',
+	        'CDR(src)',
+	        'CDR(dst)',
+	        'CDR(recordingfile)'
+        ];
+
 	    $conf = "[general]\n".
 				"enabled = yes\n".
 				"port = {$this->arr_gs['AMIPort']};\n".
@@ -482,6 +617,8 @@ class PBX {
 				"displayconnects = no\n".
 				"allowmultiplelogin = yes\n".
 				"webenabled = yes\n".
+				"timestampevents = yes\n".
+				'channelvars='.implode(',', $vars)."\n".
 				"httptimeout = 60\n\n";
 
 		if($this->arr_gs['AMIEnabled'] === '1'){
@@ -548,16 +685,9 @@ class PBX {
         $conf.= "eventfilter=!Event: Newexten\n";
         $conf.= "\n";
 
-        $conf.='[amidclient]' ."\n";
-        $conf.='secret=amidclient' ."\n";
-        $conf.='deny=0.0.0.0/0.0.0.0' ."\n";
-        $conf.='permit=127.0.0.1/255.255.255.255' ."\n";
-        $conf.='read=agent,call,cdr,user' ."\n";
-        $conf.='write=call,originate,reporting' ."\n";
-        $conf.="eventfilter=!UserEvent: CdrConnector\n";
-        $conf.="eventfilter=!Event: Newexten\n";
-        $conf.="\n";
-
+        foreach ($this->arrObject as $appClass) {
+            $conf.=$appClass->generate_manager($this->arr_gs);
+        }
 
         Util::file_write_content('/etc/asterisk/manager.conf', $conf);
 	}
@@ -573,23 +703,30 @@ class PBX {
                 "bindaddr=0.0.0.0\n".
                 "bindport={$this->arr_gs['AJAMPort']}\n".
                 "prefix=asterisk\n".
-                "enablestatic=no\n\n";
+                "enablestatic=yes\n\n";
 
         if(!empty($this->arr_gs['AJAMPortTLS'])){
-            $conf .= "tlsenable=yes\n".
-                     "tlsbindaddr=0.0.0.0:{$this->arr_gs['AJAMPortTLS']}\n".
-                     "tlscertfile=/etc/asterisk/ajam.pem\n".
-                     "tlsprivatekey=/etc/asterisk/ajam.pem\n";
-            $s_data = $this->config->get_general_settings('PBXHTTPSKey');
-            if(empty($s_data)){
+            $keys_dir = '/etc/asterisk/keys';
+            if (! is_dir($keys_dir) && ! mkdir($keys_dir) && ! is_dir($keys_dir)) {
+                Util::sys_log_msg('http_conf_generate', sprintf('Directory "%s" was not created', $keys_dir));
+                return;
+            }
+            $WEBHTTPSPublicKey  = $this->arr_gs['WEBHTTPSPublicKey'];
+            $WEBHTTPSPrivateKey = $this->arr_gs['WEBHTTPSPrivateKey'];
+
+            if(!empty($WEBHTTPSPublicKey) && !empty($WEBHTTPSPrivateKey)){
+                $s_data = "{$WEBHTTPSPublicKey}\n{$WEBHTTPSPrivateKey}";
+            }else{
                 // Генерируем сертификат ssl.
                 $data   = Util::generate_ssl_sert();
                 $s_data = implode("\n", $data);
-                $this->config->set_general_settings('PBXHTTPSKey', $s_data);
             }
-            file_put_contents('/etc/asterisk/ajam.pem', $s_data);
+            $conf .= "tlsenable=yes\n".
+                     "tlsbindaddr=0.0.0.0:{$this->arr_gs['AJAMPortTLS']}\n".
+                     "tlscertfile={$keys_dir}/ajam.pem\n".
+                     "tlsprivatekey={$keys_dir}/ajam.pem\n";
+            Util::file_write_content("{$keys_dir}/ajam.pem", $s_data);
         }
-
         Util::file_write_content('/etc/asterisk/http.conf', $conf);
     }
 
@@ -634,6 +771,25 @@ class PBX {
                 echo " - Create new table m_BackupRules.\n";
             }else{
                 Util::sys_log_msg('update_system_config', 'Error: Failed to create table m_BackupRules.');
+            }
+        }
+
+        if (!$connection->tableExists('m_LongPollSubscribe')) {
+            $columns = [
+                new Phalcon\Db\Column('id',                    $type_key),
+                new Phalcon\Db\Column('action',                $type_str),
+                new Phalcon\Db\Column('data',                  $type_str),
+                new Phalcon\Db\Column('timeout',               $type_int),
+                new Phalcon\Db\Column('enable',                $type_int),
+                new Phalcon\Db\Column('channel',               $type_str)
+            ];
+            $result = $connection->createTable( 'm_LongPollSubscribe', null, ['columns' => $columns ]);
+            if($result === true){
+                // Необходима перезагрузка.
+                $needreboot = true;
+                echo " - Create new table m_LongPollSubscribe.\n";
+            }else{
+                Util::sys_log_msg('update_system_config', 'Error: Failed to create table m_LongPollSubscribe.');
             }
         }
 
@@ -738,7 +894,7 @@ class PBX {
             /** @var Models\PbxExtensionModules $modules */
             $modules = Models\PbxExtensionModules::find();
             foreach ($modules as $module){
-                if($module->version === '1.0' && empty($module->support_email && 'МИКО' === $module->developer)){
+                if($module->version === '1.0' && empty($module->support_email) && 'МИКО' === $module->developer){
                     $modules->delete();
                 }
             }
@@ -799,6 +955,19 @@ class PBX {
             foreach ($modules as $module){
                 Util::mwexec("chmod +xr {$modulesDir}/{$module->name}/agi-bin");
             }
+
+            // Корректировка AstDB
+            $astdb_file = '/storage/usbdisk1/mikopbx/persistence/astdb.sqlite';
+            if(file_exists($astdb_file)){
+                // С переходом на PJSIP удалим статусы SIP.
+                Util::mwexec("sqlite3  {$astdb_file} 'DELETE FROM astdb WHERE key LIKE \"/UserBuddyStatus/SIP%\"'");
+            }
+
+            // self::check_codec('g729', 'G.729A', 'audio');
+            // self::check_codec('siren14', 'ITU G.722.1 Siren 14', 'audio');
+            // self::check_codec('siren7', 'ITU G.722.1 Siren 7', 'audio');
+            self::check_codec('ilbc', 'iLBC', 'audio');
+            self::check_codec('opus', 'Opus Codec', 'audio');
         }
 
         $PrivateKey = $config->get_general_settings('WEBHTTPSPrivateKey');
@@ -813,6 +982,46 @@ class PBX {
             $config->set_general_settings('AJAMPortTLS', '8089');
         }
 
+        $app_number = '10003246';
+        $d_app = Models\DialplanApplications::findFirst('extension="'.$app_number.'"');
+        if(!$d_app) {
+            $app_text   = '1,Answer()'."\n".
+                'n,AGI(cdr_connector.php,${ISTRANSFER}dial_answer)'."\n".
+                'n,Echo()'."\n".
+                'n,Hangup()'."\n";
+            $d_app = new Models\DialplanApplications();
+            $d_app->applicationlogic = base64_encode($app_text);
+            $d_app->extension        = $app_number;
+            $d_app->description      = 'Echos audio and video back to the caller as soon as it is received. Used to test connection delay.';
+            $d_app->name             = 'Echo test';
+            $d_app->type             = 'plaintext';
+            $d_app->uniqid           = 'DIALPLAN-APPLICATION-' . md5(time());
+
+            if ($d_app->save()) {
+                $extension = Models\Extensions::findFirst("number = '{$app_number}'");
+                if (!$extension) {
+                    $extension = new Models\Extensions();
+                    $extension->number = $app_number;
+                    $extension->type = 'DIALPLAN APPLICATION';
+                    $extension->callerid = $d_app->name;
+                    $extension->show_in_phonebook = true;
+                    $extension->save();
+                }
+            }
+        }
+
         return true;
+    }
+
+    public static  function check_codec($name, $desc, $type){
+        $codec = Models\Codecs::findFirst('name="'.$name.'"');
+        if(!$codec){
+            /** @var Models\Codecs $codec_g722 */
+            $codec = new Models\Codecs();
+            $codec->name        = $name;
+            $codec->type        = $type;
+            $codec->description = $desc;
+            $codec->save();
+        }
     }
 }

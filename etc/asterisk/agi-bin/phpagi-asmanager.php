@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 12 2018
+ * Written by Alexey Portnov, 12 2019
  */
 
 
@@ -15,7 +15,7 @@
  */
 
 if (!class_exists('AGI')) {
-    require_once(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'phpagi.php');
+    require_once __DIR__.'/phpagi.php';
 }
 
 /**
@@ -203,6 +203,40 @@ class AGI_AsteriskManager {
         return $result;
     }
 
+    private function wait_response_get_sub_data(&$parameters, $end_string = '', $event_as_array=true):void {
+        if(!is_array($parameters)){
+            $parameters = [];
+        }
+        if(empty($end_string)){
+            return;
+        }
+        $parameters['data'] = array();
+        $m      = [];
+        $key    = '';
+        $value  = '';
+        do {
+            $buff   = fgets($this->socket, 4096);
+            $a_pos  = strpos($buff, ':');
+            if (!$a_pos) {
+                if (count($m)>0) {
+                    if($event_as_array){
+                        $parameters['data'][$m['Event']][] = $m;
+                    }else{
+                        $parameters['data'][$m['Event']] = $m;
+                    }
+                }
+                $m = [];
+                continue;
+            }
+
+            $key   = trim(substr($buff, 0, $a_pos));
+            $value = trim(substr($buff, $a_pos + 1));
+
+            $m[$key] = $value;
+
+        } while ($value !== $end_string);
+    }
+
     /**
      * Wait for a response
      *
@@ -212,7 +246,7 @@ class AGI_AsteriskManager {
      * @param boolean $allow_timeout if the socket times out, return an empty array
      * @return array of parameters, empty on timeout
      */
-    public function wait_response($allow_timeout = false){
+    public function wait_response($allow_timeout = false):array {
         $timeout = false;
         do {
             $type = NULL;
@@ -221,180 +255,70 @@ class AGI_AsteriskManager {
                 return $parameters;
             }
             $buffer = trim(@fgets($this->socket, 4096));
-            while ($buffer != '') {
+            while ($buffer !== '') {
                 $a = strpos($buffer, ':');
                 if ($a) {
                     $key = ''; $value = '';
                     $event_text = substr($buffer, $a + 2);
                     if (!count($parameters)){
                         $type = strtolower(substr($buffer, 0, $a));
-                        if ($event_text == 'Follows') {
+                        if ($event_text === 'Follows') {
                             // A follows response means there is a miltiline field that follows.
                             $parameters['data'] = '';
                             $buff = fgets($this->socket, 4096);
-                            while (substr($buff, 0, 6) != '--END ') {
+                            while (substr($buff, 0, 6) !== '--END ') {
                                 $parameters['data'] .= $buff;
                                 $buff = fgets($this->socket, 4096);
                             }
                         }
-                    } else if ('Queue status will follow' == $event_text) {
-                        $parameters['data'] = array();
-                        $m = array();
-                        do {
-                            $buff = fgets($this->socket, 4096);
-                            $a_pos = strpos($buff, ':');
-                            if (!$a_pos) {
-                                if (count($m)) {
-                                    $parameters['data'][$m['Event']][] = $m;
-                                }
-                                $m = array();
-                                continue;
-                            };
-
-                            $key    = trim(substr($buff, 0, $a_pos));
-                            $value  = trim(substr($buff, $a_pos + 1));
-
-                            $m[$key] = $value;
-
-                        } while ($value != 'QueueStatusComplete');
-
-                    } else if ('Channels will follow' == $event_text) {
-                        $parameters['data'] = array();
-                        $m = array();
-                        do {
-                            $buff = fgets($this->socket, 4096);
-                            $a_pos = strpos($buff, ':');
-                            if (!$a_pos) {
-                                if (count($m)) {
-                                    $parameters['data'][$m['Event']][] = $m;
-                                }
-                                $m = array();
-                                continue;
-                            };
-
-                            $key = trim(substr($buff, 0, $a_pos));
-                            $value = trim(substr($buff, $a_pos + 1));
-
-                            $m[$key] = $value;
-
-                        } while ($value != 'CoreShowChannelsComplete');
-
-                    } else if ('Result will follow' == $event_text) {
-                        $parameters['data'] = array();
-                        $m = array();
-                        do {
-                            $buff = fgets($this->socket, 4096);
-                            $a_pos = strpos($buff, ':');
-                            if (!$a_pos) {
-                                if (count($m)) {
-                                    $parameters['data'][$m['Event']][] = $m;
-                                }
-                                $m = array();
-                                continue;
-                            };
-
-                            $key = trim(substr($buff, 0, $a_pos));
-                            $value = trim(substr($buff, $a_pos + 1));
-
-                            $m[$key] = $value;
-
-                        } while ($value != 'DBGetComplete');
-
-                    } else if ('Parked calls will follow' == $event_text) {
-                        $parameters['data'] = array();
-                        $m = array();
-                        do {
-                            $buff = fgets($this->socket, 4096);
-                            $a_pos = strpos($buff, ':');
-                            if (!$a_pos) {
-                                if (count($m)) {
-                                    $parameters['data'][$m['Event']][] = $m;
-                                }
-                                $m = array();
-                                continue;
-                            };
-
-                            $key = trim(substr($buff, 0, $a_pos));
-                            $value = trim(substr($buff, $a_pos + 1));
-
-                            $m[$key] = $value;
-
-                        } while ($value != 'ParkedCallsComplete');
-
-                    } else if ('Peer status list will follow' == $event_text) {
-                        $parameters['data'] = array();
-                        $m = array();
-                        do {
-                            $buff = fgets($this->socket, 4096);
-                            $a_pos = strpos($buff, ':');
-                            if (!$a_pos) {
-                                if (count($m)) {
-                                    $parameters['data'][$m['Event']][] = $m;
-                                }
-                                $m = array();
-                                continue;
-                            };
-
-                            $key = trim(substr($buff, 0, $a_pos));
-                            $value = trim(substr($buff, $a_pos + 1));
-
-                            $m[$key] = $value;
-
-                        } while ($value != 'PeerlistComplete');
-                    } else if ('IAX Peer status list will follow' == $event_text) {
-                        $parameters['data'] = array();
-                        $m = array();
-                        do {
-                            $buff = fgets($this->socket, 4096);
-                            $a_pos = strpos($buff, ':');
-                            if (!$a_pos) {
-                                if (count($m)) {
-                                    $parameters['data'][$m['Event']][] = $m;
-                                }
-                                $m = array();
-                                continue;
-                            };
-
-                            $key = trim(substr($buff, 0, $a_pos));
-                            $value = trim(substr($buff, $a_pos + 1));
-
-                            $m[$key] = $value;
-
-                        } while ($value != 'PeerlistComplete');
-                    } else if ('Registrations will follow' == $event_text) {
-                        $parameters['data'] = array();
-                        $m = array();
-                        do {
-                            $buff = fgets($this->socket, 4096);
-                            $a_pos = strpos($buff, ':');
-                            if (!$a_pos) {
-                                if (count($m)) {
-                                    $parameters['data'][$m['Event']][] = $m;
-                                }
-                                $m = array();
-                                continue;
-                            };
-
-                            $key = trim(substr($buff, 0, $a_pos));
-                            $value = trim(substr($buff, $a_pos + 1));
-
-                            $m[$key] = $value;
-
-                        } while ($value != 'RegistrationsComplete');
+                    } else if ('Queue status will follow' === $event_text) {
+                        // QueueStatus
+                        $this->wait_response_get_sub_data($parameters, 'QueueStatusComplete');
+                    } else if ('Channels will follow' === $event_text) {
+                        // CoreShowChannels
+                        $this->wait_response_get_sub_data($parameters, 'CoreShowChannelsComplete');
+                    } else if ('Result will follow' === $event_text) {
+                        // DBGet
+                        $this->wait_response_get_sub_data($parameters, 'DBGetComplete');
+                    } else if ('Parked calls will follow' === $event_text) {
+                        // ParkedCalls
+                        $this->wait_response_get_sub_data($parameters, 'ParkedCallsComplete');
+                    } else if ('Peer status list will follow' === $event_text) {
+                        // SipShowPeers
+                        $this->wait_response_get_sub_data($parameters, 'PeerlistComplete');
+                    } else if ('IAX Peer status list will follow' === $event_text) {
+                        // IAXpeerlist
+                        $this->wait_response_get_sub_data($parameters, 'PeerlistComplete');
+                    } else if ('Registrations will follow' === $event_text) {
+                        // SipShowRegistry
+                        $this->wait_response_get_sub_data($parameters, 'RegistrationsComplete');
+                    } else if ('A listing of Endpoints follows, presented as EndpointList events' === $event_text) {
+                        // PJSIPShowEndpoints
+                        $this->wait_response_get_sub_data($parameters, 'EndpointListComplete');
+                    } else if ('Following are Events for each object associated with the Endpoint' === $event_text) {
+                        //  PJSIPShowEndpoint
+                        $this->wait_response_get_sub_data($parameters, 'EndpointDetailComplete', false);
+                    } else if ('Following are Events for each Outbound registration' === $event_text) {
+                        // PJSIPShowRegistrationsOutbound
+                        $this->wait_response_get_sub_data($parameters, 'OutboundRegistrationDetailComplete');
+                    } else if ('Meetme user list will follow' === $event_text) {
+                        // MeetmeList
+                        $this->wait_response_get_sub_data($parameters, 'MeetmeListComplete');
+                    } else if ('Meetme conferences will follow' === $event_text) {
+                        // MeetmeList
+                        $this->wait_response_get_sub_data($parameters, 'MeetmeListRoomsComplete');
                     }
-                    unset($key);
-                    unset($value);                    //
-                    //* PT1C */
-
+                    unset($key,$value);
                     // store parameter in $parameters
                     $parameters[substr($buffer, 0, $a)] = $event_text;
                 }
                 $buffer = trim(fgets($this->socket, 4096));
             }
 
-            // process response
+            // Process response
             switch ($type) {
-                case '': // timeout occured
+                case '':
+                    // Timeout occured
                     $timeout = $allow_timeout;
                     break;
                 case 'event':
@@ -406,7 +330,7 @@ class AGI_AsteriskManager {
                     $this->log('Unhandled response packet from Manager: ' . print_r($parameters, true));
                     break;
             }
-        } while ($type != 'response' && !$timeout);
+        } while ($type !== 'response' && !$timeout);
         return $parameters;
     }
 
@@ -631,10 +555,14 @@ class AGI_AsteriskManager {
         if(null != $channels){
             foreach($channels as $chan){
                 if($group == true){
+                    if(! isset($chan['Linkedid']) ){
+                        continue;
+                    }
                     $channels_id[$chan['Linkedid']][] = $chan['Channel'];
                 }else{
                     $channels_id[] = $chan['Channel'];
-                }            }
+                }
+            }
         }
 
         return $channels_id;
@@ -806,6 +734,38 @@ class AGI_AsteriskManager {
         $parameters = array('Family' => $Family, 'Key' => $Key, 'Val' => $Val);
         $res_data = $this->send_request_timeout('DBPut', $parameters);
         return $res_data;
+    }
+
+    /**
+     * MeetmeList
+     * @param $Conference
+     * @param $ActionID
+     * @return array
+     */
+    public function MeetmeList($Conference, $ActionID=''):array {
+        if(empty($ActionID)){
+            $ActionID = Util::generateRandomString(5);
+        }
+        $parameters = [
+            'Conference' => $Conference,
+            'ActionID' => $ActionID
+        ];
+        return $this->send_request_timeout('MeetmeList', $parameters);
+    }
+
+    /**
+     * MeetmeListRooms
+     * @param $ActionID
+     * @return array
+     */
+    public function MeetmeListRooms($ActionID=''):array {
+        if(empty($ActionID)){
+            $ActionID = Util::generateRandomString(5);
+        }
+        $parameters = [
+            'ActionID' => $ActionID
+        ];
+        return $this->send_request_timeout('MeetmeListRooms', $parameters);
     }
 
     /**
@@ -1015,7 +975,7 @@ class AGI_AsteriskManager {
     public function get_sip_registry(){
         $peers = array();
         $result = $this->send_request_timeout('SIPshowregistry');
-        if ($result['data'] != null && $result['data']['RegistryEntry'] != null) {
+        if ($result['data'] !== null && $result['data']['RegistryEntry'] !== null) {
             foreach ($result['data']['RegistryEntry'] as $peer) {
                 $peers[] = array(
                     'id'        => $peer['Username'],
@@ -1023,6 +983,56 @@ class AGI_AsteriskManager {
                     'host'      => $peer['Host'],
                     'username'  => $peer['Username'],
                     );
+            }
+        }
+        return $peers;
+    }
+
+    /**
+     * Полученире текущих регистраций.
+     * @return array
+     */
+    public function get_pj_sip_registry():array {
+        $peers  = [];
+        $result = $this->send_request_timeout('PJSIPShowRegistrationsOutbound');
+        if ( isset($result['data']['OutboundRegistrationDetail']) ) {
+            foreach ($result['data']['OutboundRegistrationDetail'] as $peer) {
+                [$sip, $host, $port] = explode(':', $peer['ServerUri']);
+                $peers[] = array(
+                    'id'        => str_replace('REG-', '', $peer['ObjectName']),
+                    'state'     => strtoupper($peer['Status']),
+                    'host'      => $host,
+                    'username'  => $peer['ContactUser'],
+                    );
+                unset($sip, $port);
+            }
+        }
+        return $peers;
+    }
+
+    /**
+     * Полученире текущих регистраций.
+     * @return array
+     */
+    public function get_pj_sip_peers():array {
+        $peers = [];
+        $result = $this->send_request_timeout('PJSIPShowEndpoints');
+        if ( isset($result['data']['EndpointList']) ) {
+            foreach ($result['data']['EndpointList'] as $peer) {
+                if($peer['ObjectName'] === 'anonymous'){
+                    continue;
+                }
+
+                $state_array = [
+                    'Not in use'  => 'OK',
+                    'Busy'        => 'OK'
+                ];
+                $state = $state_array[$peer['DeviceState']] ?? 'UNKNOWN';
+
+                $peers[] = array(
+                    'id'        => $peer['ObjectName'],
+                    'state'     => strtoupper($state),
+                );
             }
         }
         return $peers;
@@ -1059,6 +1069,49 @@ class AGI_AsteriskManager {
         $res['time-response']= strtoupper(str_replace(['(', ')'],'',$arr_status[1]));
         return $res;
     }
+
+    /**
+     * Получение статуса конкретного пира.
+     * @param $peer
+     * @return array
+     */
+    function get_pj_sip_peer($peer){
+        $result = [];
+        $parameters = ['Endpoint' => trim($peer)];
+        $res = $this->send_request_timeout('PJSIPShowEndpoint', $parameters);
+
+        if(isset($res['data']['ContactStatusDetail'])){
+            $result = $res['data']['ContactStatusDetail'];
+        }
+        $result['state']  = isset($result['URI']) && !empty($result['URI']) ? 'OK' : 'UNKNOWN';
+        return $result;
+    }
+
+    /**
+     * @param $conference
+     * @param array $vars
+     * @return array
+     */
+    public function meetMeCollectInfo($conference, $vars=[]):array {
+        $result = [];
+        $conf_data = $this->MeetmeList($conference);
+        if(!isset($conf_data['data']['MeetmeList'])){
+            return $result;
+        }
+        foreach ($conf_data['data']['MeetmeList'] as $user_data){
+            $user_data['linkedid']  = $this->GetVar($user_data['Channel'], 'CDR(linkedid)',  null, false);
+            $user_data['meetme_id'] = $this->GetVar($user_data['Channel'], 'MEETMEUNIQUEID', null, false);
+
+            foreach ($vars as $var){
+                $user_data[$var] = $this->GetVar($user_data['Channel'], $var, null, false);
+            }
+
+            $result[] = $user_data;
+        }
+
+        return $result;
+    }
+
 
     /*
     * MIKO End.

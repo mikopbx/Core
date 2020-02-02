@@ -16,6 +16,8 @@ while (true){
         $g['booting'] = TRUE;
         Mikopbx\Main::bootup_pbx();
         $g['booting'] = FALSE;
+        Util::mwexec_bg("/etc/rc/worker_reload 'php -f /etc/inc/workers/worker_models_events.php' ");
+        Util::mwexec_bg("/etc/rc/worker_reload 'php -f /etc/inc/workers/longpoll_api.php' ");
         break;
     }
 }

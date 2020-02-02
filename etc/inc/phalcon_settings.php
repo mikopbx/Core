@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 11 2018
+ * Written by Alexey Portnov, 1 2020
  */
 
 /**
@@ -16,6 +16,7 @@ $www            = realpath($g['www_path']);
 $app_dir        = $www.'/admin-cabinet/app';
 
 $pbx_dirs = PBX::get_asterisk_dirs();
+$g = $GLOBALS['g'];
 
 $phalcon_settings = array(
     'database' => array(
@@ -50,6 +51,10 @@ $phalcon_settings = array(
     'logdatabase' => array(
         'adapter'       => 'Sqlite',
         'dbfile'        => dirname(Cdr::getPathToDB()).'/events_log.db',
+    ),
+    'beanstalk' => array(
+        'host' => '127.0.0.1',
+        'port' => 4229
     ),
 
 );
