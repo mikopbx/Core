@@ -12,8 +12,8 @@ require_once 'globals.php';
 $network = new Network();
 $action  = trim($argv[1]);
 
-if($action == 'deconfig'){
+if($action === 'deconfig'){
     $network->udhcpc_configure_deconfig();
-}elseif( 'renew' == $action || 'bound' == $action ){
+}elseif( 'bound' === $action || 'renew' === $action){
     $network->udhcpc_configure_renew_bound();
 }

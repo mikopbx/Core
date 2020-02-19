@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 1 2020
+ * Written by Alexey Portnov, 2 2020
  */
 
 namespace PhpSchool\CliMenu;
@@ -130,8 +130,6 @@ class CliMenu
      */
     protected function configureTerminal() : void
     {
-        $this->assertTerminalIsValidTTY();
-
         $this->terminal->disableCanonicalMode();
         $this->terminal->disableEchoBack();
         $this->terminal->disableCursor();

@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 11 2019
+ * Written by Alexey Portnov, 2 2020
  */
 
 require_once 'globals.php';
@@ -250,9 +250,11 @@ class Network {
             $if_data->save();
         }
     }
-	/**
-	 * Configures LAN interface
-	 */
+
+    /**
+     * Configures LAN interface
+     * @return int
+     */
     public function lan_configure() {
 		global $g;
 		$networks = $this->getGeneralNetSettings();
@@ -281,11 +283,6 @@ class Network {
             $arr_commands[] = "/sbin/ifconfig $if_name down";
             $arr_commands[] = "/sbin/ifconfig $if_name 0.0.0.0";
 
-			/*
-			if (verify_is_macaddress($if_data['mac'])) {
-				$arr_commands[] = "/sbin/ifconfig $if_name hw ether $mac";
-			}
-			*/
 			$gw_param = '';
 			if($if_data['dhcp'] == 1){
                 /*
@@ -296,13 +293,26 @@ class Network {
                  * -q - Exit after obtaining lease
                  * -n - Exit if lease is not obtained
                  */
-                $options = '-t 6 -T 5 -S -q -n';
-				$arr_commands[] = "/sbin/udhcpc {$options} -i {$if_name} -x hostname:{$hostname} -s {$g['pt1c_inc_path']}/workers/worker_udhcpc_configure.php";
+                $pid_file= "/var/run/udhcpc_{$if_name}";
+                $pid_pcc = Util::get_pid_process($pid_file);
+                if(!empty($pid_pcc)){
+                    // Завершаем старый процесс.
+                    system("kill `cat {$pid_file}` {$pid_pcc}");
+                }
+                // Получаем IP и дожидаемся завершения процесса.
+                $options = '-t 6 -T 5 -q -n';
+                Util::mwexec("/sbin/udhcpc {$options} -i {$if_name} -x hostname:{$hostname} -s {$g['pt1c_inc_path']}/workers/worker_udhcpc_configure.php");
+                // Старутем новый процесс udhcpc в  фоне.
+                $options = '-t 6 -T 5 -S -b -n';
+                $arr_commands[] = "nohup /sbin/udhcpc {$options} -p {$pid_file} -i {$if_name} -x hostname:test -s {$g['pt1c_inc_path']}/workers/worker_udhcpc_configure.php 2>&1 &";
 				/*
 					udhcpc  - утилита произведет настройку интерфейса 
 						   	- произведет конфигурацию /etc/resolv.conf
 					Дальнейшая настройка маршрутов будет произволиться в udhcpc_configure_renew_bound();
 					и в udhcpc_configure_deconfig(). Эти методы будут вызваны скриптом worker_udhcpc_configure.php.
+				    // man udhcp
+                    // http://pwet.fr/man/linux/administration_systeme/udhcpc/
+
 				*/
 				
 			}else{
@@ -346,17 +356,17 @@ class Network {
 		$this->hosts_generate($networks);
 
 		foreach ($eth_mtu as $eth){
-            \Util::mwexec_bg("/etc/rc/networking.set.mtu '{$eth}'");
+            Util::mwexec_bg("/etc/rc/networking.set.mtu '{$eth}'");
         }
 
 		$firewall = new Firewall();
         $firewall->apply_config();
 
         // Дополнительные "ручные" маршруты.
-        \Util::file_write_content('/etc/static-routes', '');
+        Util::file_write_content('/etc/static-routes', '');
         $arr_commands = []; $out = [];
-        \Util::mwexec("/bin/cat /etc/static-routes | /bin/grep '^rout' | /bin/busybox awk -F ';' '{print $1}'",$arr_commands);
-        \Util::mwexec_commands($arr_commands,$out, 'rout');
+        Util::mwexec("/bin/cat /etc/static-routes | /bin/grep '^rout' | /bin/busybox awk -F ';' '{print $1}'",$arr_commands);
+        Util::mwexec_commands($arr_commands,$out, 'rout');
 
 		return 0;
 	}
@@ -397,14 +407,17 @@ class Network {
 			'hostname'	=> '',
 			'subnet'	=> '',
 			'serverid'	=> '',
-			'domain'	=> ''	
+			'ipttl'	    => '',
+			'lease'	    => '',
+			'domain'	=> ''
 		);
-		// Получаем значения переменных окружения. 
+
+		// Получаем значения переменных окружения.
 		foreach ($env_vars as $key => $value){
 			$env_vars[$key] = trim(getenv($key));
 		}
 		$BROADCAST = ($env_vars['broadcast'] == '')?"":"broadcast {$env_vars['broadcast']}";
-        $NET_MASK   = ($env_vars['subnet']    == '')?"":"netmask {$env_vars['subnet']}";
+        $NET_MASK  = ($env_vars['subnet']    == '')?"":"netmask {$env_vars['subnet']}";
 
 		// Настраиваем интерфейс. 
 		Util::mwexec("ifconfig {$env_vars['interface']} {$env_vars['ip']} $BROADCAST $NET_MASK");

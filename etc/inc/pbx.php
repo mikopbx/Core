@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 1 2020
+ * Written by Alexey Portnov, 2 2020
  */
 
 use Models\NetworkFilters;
@@ -285,9 +285,9 @@ class PBX {
 
         $modules[]='codec_opus.so';
         $modules[]='codec_resample.so';
-        $modules[]='codec_g729a.so';
-        $modules[]='codec_siren14.so';
-        $modules[]='codec_siren7.so';
+        // $modules[]='codec_g729a.so';
+        // $modules[]='codec_siren14.so';
+        // $modules[]='codec_siren7.so';
         $modules[]='codec_a_mu.so';
         $modules[]='codec_ilbc.so';
         $modules[]='codec_lpc10.so';

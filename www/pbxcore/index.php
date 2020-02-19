@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 1 2020
+ * Written by Alexey Portnov, 2 2020
  */
 
 define('ISPBXCORESERVICES', '1');
@@ -511,7 +511,7 @@ $app->get('/api/system/{name}', function ($params)use ($app) {
 
             $link_name = md5($data['filename']).'.'.Util::get_extension_file($data['filename']);
             Util::mwexec("ln -s {$data['filename']} {$result_dir}/{$link_name}");
-            $app->response->redirect("{$scheme}://{$host}:{$port}/download_link/{$uid}/{$link_name}");
+            $app->response->redirect("{$scheme}://{$host}/download_link/{$uid}/{$link_name}");
             $app->response->send();
         }else{
             $app->response->setStatusCode(200, 'OK')->sendHeaders();

@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 1 2020
+ * Written by Alexey Portnov, 2 2020
  */
 
 $messages = [
@@ -28,6 +28,7 @@ $messages = [
     'this_is' => '',
     'Do you want to use DHCP to configure your LAN interface?' => 'Использовать DHCP для настройки LAN интерфейса?',
     "The LAN interface will now be configured via DHCP..." => 'LAN интерфейс будет настроен с использованием DHCP...',
+    "The LAN interface will now be configured ..." => 'Настройка LAN интерфейса...',
     'Enter the new LAN IP address: ' => 'Введите новый LAN IP адрес: ',
     'Subnet masks are to be entered as bit counts (as in CIDR notation).' => 'Маска подсети в CIDR формате (1-31).',
     "Enter the new LAN subnet bit count: " => 'Введите значение маски: ',
@@ -78,5 +79,7 @@ $messages = [
     'All processes will be completed. Continue? (y/n):' => 'Все процессы будут завершены. Продолжить? (y/n):',
     'Configuring using DHCP' => 'Настройка с использованием DHCP',
     'Manual setting' => 'Ручная настройка',
-    'Storage' => 'Хранилище данных'
+    'Storage' => 'Хранилище данных',
+    'Resize storage' => 'Увеличить хранилище. Задейстовать неразмеченную область.',
+    'Check storage'  => 'Проверить диск на ошибки.',
 ];

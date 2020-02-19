@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 1 2020
+ * Written by Alexey Portnov, 2 2020
  */
 
 require_once("globals.php");
@@ -109,7 +109,7 @@ class Extensions{
         $conf.= 'same => n,Gosub(${ISTRANSFER}dial,${EXTEN},1)'."\n\t";
 
         // Описываем возможность прыжка в пользовательский sub контекст.
-        $conf.= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN}),1}" == "1"]?${CONTEXT}-custom,${EXTEN},1)'."\n\t";
+        $conf.= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1)'."\n\t";
 
         $conf.= 'same => n,Goto(peer_${FROM_PEER},${EXTEN},1)'."\n\n";
 
@@ -173,7 +173,7 @@ class Extensions{
         $conf.= 'same => n,Set(ringlength=${DB(FW_TIME/${EXTEN})})'." \n\t";
         $conf.= 'same => n,ExecIf($["${ringlength}x" == "x" || "${QUEUE_SRC_CHAN}x" != "x"]?Set(ringlength=600))'." \n\t";
 
-        $conf.= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN}),1}" == "1"]?${CONTEXT}-custom,${EXTEN},1) '." \n\t";
+        $conf.= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1) '." \n\t";
         // Совершаем вызов пира.
 
         $technology = p_SIP::get_technology();
@@ -243,7 +243,7 @@ class Extensions{
         $conf.= 'same => n,ExecIf($["${peer_mobile}x" != "x"]?Set(ADDITIONAL_PEER=&Local/${peer_mobile}@outgoing/n))'." \n\t";
 
         // Описываем возможность прыжка в пользовательский sub контекст.
-        $conf.= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN}),1}" == "1"]?${CONTEXT}-custom,${EXTEN},1)'."\n\t";
+        $conf.= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1)'."\n\t";
         $conf.= 'same => n,Dial(Local/${EXTEN}@internal-users/n${ADDITIONAL_PEER},60,TteKkHhb(originate_create_chan,s,1))'." \n\n";
 
         $conf.= '[macro-dial_answer]'."\n";
@@ -289,7 +289,7 @@ class Extensions{
         // TODO / Добавление / удаление префиксов на входящий callerid.
         $conf.= '[add-trim-prefix-clid]'."\n";
         $conf.= 'exten => _.!,1,NoOp(--- Incoming call from ${CALLERID(num)} ---)'."\n\t";
-        $conf.= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN}),1}" == "1"]?${CONTEXT}-custom,${EXTEN},1)'."\n\t";
+        $conf.= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1)'."\n\t";
         // Отсекаем "+".
         // $conf.= 'same => n,ExecIf( $["${CALLERID(num):0:1}" == "+"]?Set(CALLERID(num)=${CALLERID(num):1}))'."\n\t";
         // Отсекаем "7" и добавляем "8".
@@ -324,7 +324,7 @@ class Extensions{
         $conf.= 'same => n,Ringing()'." \n\t";
 
         // Описываем возможность прыжка в пользовательский sub контекст.
-        $conf.= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN}),1}" == "1"]?${CONTEXT}-custom,${EXTEN},1)'."\n\t";
+        $conf.= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1)'."\n\t";
 
         /** @var Models\OutgoingRoutingTable $routs */
         /** @var Models\OutgoingRoutingTable $rout */
@@ -377,7 +377,7 @@ class Extensions{
             $conf.= 'same => n,ExecIf($["${EXTERNALPHONE}" == "${EXTEN}"]?Set(DOPTIONS=tk))'."\n\t";
 
             // Описываем возможность прыжка в пользовательский sub контекст.
-            $conf.= 'same => n,GosubIf($["${DIALPLAN_EXISTS('.$rout['providerid'].'-outgoing-custom,${EXTEN}),1}" == "1"]?'.$rout['providerid'].'-outgoing-custom,${EXTEN},1)'."\n\t";
+            $conf.= 'same => n,GosubIf($["${DIALPLAN_EXISTS('.$rout['providerid'].'-outgoing-custom,${EXTEN},1)}" == "1"]?'.$rout['providerid'].'-outgoing-custom,${EXTEN},1)'."\n\t";
 
             $technology = p_SIP::get_technology();
             if($technology === 'SIP') {
@@ -482,7 +482,7 @@ class Extensions{
                 // Проверим распискние для входящих внешних звонков.
                 $rout_data.= 'same => n,Gosub(check-out-work-time,${EXTEN},1)';
                 // Описываем возможность прыжка в пользовательский sub контекст.
-                $rout_data.= " \n\t".'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN}),1}" == "1"]?${CONTEXT}-custom,${EXTEN},1)';
+                $rout_data.= " \n\t".'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1)';
             }
 
             if(!empty($rout['extension'])){
@@ -562,7 +562,7 @@ class Extensions{
                         $conf.= $appClass->generate_incoming_rout_after_dial_context($uniqid);
                     }
                 }
-                $conf.= " \t".'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-after-dial-custom,${EXTEN}),1}" == "1"]?${CONTEXT}-after-dial-custom,${EXTEN},1)'."\n";
+                $conf.= " \t".'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-after-dial-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-after-dial-custom,${EXTEN},1)'."\n";
             }else if('busy' === $default_action->action){
                 $conf .= "\t"."same => n,Busy()"."\n";
             }

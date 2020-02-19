@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 5 2019
+ * Written by Alexey Portnov, 2 2020
  */
 
 class p_DialplanApplication extends ConfigClass {
@@ -74,11 +74,11 @@ class p_DialplanApplication extends ConfigClass {
     private function generatePlaneTextApp($app){
         // 	same => n,Macro(dial_answer)
         $text_app = base64_decode($app->applicationlogic);
-        $arr_data_app = explode("\n", $text_app);
+        $arr_data_app = explode("\n", trim($text_app));
 
-        $app_data = "";
+        $app_data = '';
         foreach ($arr_data_app as $row){
-            if("" == $app_data){
+            if('' === $app_data){
                 $app_data .= "exten => _{$app->extension},$row"."\n\t";
             }else{
                 $app_data .= "same => $row"."\n\t";

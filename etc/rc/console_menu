@@ -87,13 +87,13 @@ EOD;
 $setup_lan = function (CliMenuBuilder $b){
     $b->setTitle(Util::translate('Choose action'))
         ->addItem('[1] '.Util::translate('Configuring using DHCP'), function (CliMenu $menu) {
+            echo Util::translate('The LAN interface will now be configured via DHCP...');
             $network = new Network();
             $system  = new System();
             $data['dhcp'] = 1;
             $network->update_net_settings($data);
             $network->lan_configure();
             $system->nginx_start();
-            echo Util::translate('The LAN interface will now be configured via DHCP...');
             sleep(2);
             exit(0);
         })
@@ -145,6 +145,7 @@ $setup_lan = function (CliMenuBuilder $b){
             $data['gateway'] 	= $gwip;
             $data['primarydns'] = $dnsip;
 
+            echo Util::translate('The LAN interface will now be configured ...');
             $network->update_net_settings($data);
             $network->resolvconf_generate();
             $network->lan_configure();
@@ -210,6 +211,13 @@ $menu = (new CliMenuBuilder)
         $new_lang   = ('en-en' === $lang)?'ru-ru':'en-en';
 
         $config->set_general_settings('PBXLanguage', $new_lang);
+
+        $pbx = new PBX();
+        $pbx->dialplan_reload();
+        p_IAX::iax_reload();
+        p_SIP::sip_reload();
+        PBX::features_reload();
+
         sleep(1);
         exit(0);
     })

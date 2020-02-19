@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 1 2020
+ * Written by Alexey Portnov, 2 2020
  */
 
 use Models\BackupRules;
@@ -303,11 +303,19 @@ class Backup {
         $result['id']         = $data['dir_name'];
         $result['extension']  = $data['extension'];
         if($data['extension'] === 'img'){
+            if(!file_exists($data['res_file']??'')){
+                $result['result'] = 'ERROR';
+                $result['data'] = "Backup file {$data['res_file']} not found";
+                Util::sys_log_msg('Backup_unpack_conf_img', $result['data']);
+                return $result;
+            }
+
             $res = Util::mwexec("/bin/mount -o loop {$data['res_file']} {$data['mnt_point']}");
             if($res !== 0){
                 $result['result'] = 'ERROR';
                 $result['data'] = "Fail mount {$data['res_file']}... on loop device...";
                 Util::sys_log_msg('Backup_unpack_conf_img', $result['data']);
+                return $result;
             }
 
             // Если бекап выполнялся в каталоге оперативной памяти:
@@ -327,7 +335,10 @@ class Backup {
                 if(($out[0] ?? false) && file_exists($out[0])){
                     // бекап выполнялся на сетевой диск.
                     $path_b_dir       = dirname($out[0]);
-                    $result['new_id'] = basename($path_b_dir);
+                    $new_id           = basename($path_b_dir);
+                    if($data['dir_name'] !== $new_id){
+                        $result['new_id'] = $new_id;
+                    }
                 }
             }
 
