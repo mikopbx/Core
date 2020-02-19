@@ -108,10 +108,8 @@ class AsteriskManagersController extends BaseController {
 		foreach ( $manager as $name => $value ) {
 			if ( in_array( $name, $this->arrCheckBoxes ) ) {
 				$manager->$name = '';
-				$manager->$name .= ( $data[ $name . '_read' ] == 'on' ) ? 'read'
-					: '';
-				$manager->$name .= ( $data[ $name . '_write' ] == 'on' )
-					? 'write' : '';
+				$manager->$name .= ( $data[ $name . '_read' ] === 'on' ) ? 'read' : '';
+				$manager->$name .= ( $data[ $name . '_write' ] === 'on' ) ? 'write' : '';
 				continue;
 			}
 
