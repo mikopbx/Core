@@ -6,7 +6,7 @@
  *
  */
 
-/* global globalRootUrl, globalTranslate */
+/* global globalRootUrl, globalTranslate, globalPBXLanguage */
 
 const pbxExtensionMenuAddition = {
 	$sidebarMenu: $('#sidebarmenu'),
@@ -21,7 +21,7 @@ const pbxExtensionMenuAddition = {
 	 * Показывает старые пункты меню, до получения ответа от сервера
 	 */
 	showPreviousMenuVersion() {
-		const previousMenu = localStorage.getItem('previousMenu');
+		const previousMenu = localStorage.getItem(`previousMenu${globalPBXLanguage}`);
 		if (previousMenu !== null) {
 			pbxExtensionMenuAddition.$sidebarMenu.html(previousMenu);
 			pbxExtensionMenuAddition.makeMenuActiveElement();
@@ -50,7 +50,7 @@ const pbxExtensionMenuAddition = {
 						}
 					}
 				});
-				localStorage.setItem('previousMenu', pbxExtensionMenuAddition.$sidebarMenu.html());
+				localStorage.setItem(`previousMenu${globalPBXLanguage}`, pbxExtensionMenuAddition.$sidebarMenu.html());
 				pbxExtensionMenuAddition.makeMenuActiveElement();
 			},
 		});

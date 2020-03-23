@@ -891,12 +891,22 @@ const PbxApi = {
 	 * Установка обновления PBX
 	 *
 	 */
-	SystemUpgradeOnline(params) {
+	SystemUpgradeOnline(params, callback) {
 		$.api({
 			url: PbxApi.systemUpgradeOnline,
 			on: 'now',
 			method: 'POST',
 			data: `{"md5":"${params.md5}","url":"${params.updateLink}"}`,
+			successTest: PbxApi.successTest,
+			onSuccess() {
+				callback(true);
+			},
+			onFailure(response) {
+				callback(response);
+			},
+			onError(response) {
+				callback(response);
+			},
 		});
 	},
 

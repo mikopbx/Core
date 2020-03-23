@@ -6,7 +6,7 @@
  *
  */
 
-/* global globalRootUrl, globalTranslate */
+/* global globalRootUrl, globalTranslate, globalPBXLanguage */
 
 const advicesWorker = {
 	timeOut: 300000,
@@ -26,7 +26,7 @@ const advicesWorker = {
 	 * Показывает старые советы до получения обвноления со станции
 	 */
 	showPreviousAdvice() {
-		const previousAdvice = localStorage.getItem('previousAdvice');
+		const previousAdvice = localStorage.getItem(`previousAdvice${globalPBXLanguage}`);
 		if (previousAdvice !== undefined) {
 			advicesWorker.$advices.html(previousAdvice);
 		}
@@ -96,7 +96,7 @@ const advicesWorker = {
 				htmlMessages += '</div>';
 			}
 			advicesWorker.$advices.html(htmlMessages);
-			localStorage.setItem('previousAdvice', htmlMessages);
+			localStorage.setItem(`previousAdvice${globalPBXLanguage}`, htmlMessages);
 
 			// Проверим есть ли обновление системы
 			$('a[href="/admin-cabinet/update/index/"] > i').removeClass('loading');
@@ -111,7 +111,7 @@ const advicesWorker = {
 		} else if (response.success === true
 			&& response.message !== undefined
 			&& response.message.length === 0) {
-			localStorage.removeItem('previousAdvice');
+			localStorage.removeItem(`previousAdvice${globalPBXLanguage}`);
 		}
 	},
 };

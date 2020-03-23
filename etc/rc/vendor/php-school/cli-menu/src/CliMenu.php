@@ -130,6 +130,11 @@ class CliMenu
      */
     protected function configureTerminal() : void
     {
+        if(!$this->terminal->isInteractive()){
+            sleep(1);
+            exit(3);
+        }
+
         $this->terminal->disableCanonicalMode();
         $this->terminal->disableEchoBack();
         $this->terminal->disableCursor();

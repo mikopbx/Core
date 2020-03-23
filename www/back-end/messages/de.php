@@ -1,10 +1,9 @@
 <?php
 /**
- * Copyright (C) MIKO LLC - All Rights Reserved
+ * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 4 2019
- *
+ * Written by Alexey Portnov, 3 2020
  */
 
 return [
@@ -570,6 +569,7 @@ return [
 	'gs_ValidateWeakSSHPassword'            => 'Das Passwort ist zu einfach.',
 	'gs_ValidateSSHPasswordsFieldDifferent' => 'Das eingegebene Passwort ist nicht korrekt.',
 	'gs_SendAnonymousMetrics'		 		=> 'Fehlerberichte an Entwickler senden',
+    'gs_RedirectToHttps'                    =>'Auf HTTPS umleiten',
 	'ts_CurrentSettings'                    =>'Aktuelle Einstellung',
 	'ts_SystemTime'                         =>'Systemzeit',
 	'ts_TimeZone'                           =>'Zeitzone',
@@ -792,6 +792,9 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
 	'f2b_TableBannedHeader'      => 'Gesperrte IP-Adressen',
 	'f2b_Unban'                  => 'Freigeben',
 	'f2b_Jail_asterisk'          => 'SIP oder AMI Autorisierungsfehler',
+    'f2b_Jail_asterisk_security_log'          => 'SIP oder AMI Autorisierungsfehler (security_log)',
+    'f2b_Jail_asterisk_error'          => 'SIP oder AMI Autorisierungsfehler (error)',
+    'f2b_Jail_asterisk_public'          => 'SIP oder AMI Autorisierungsfehler (public)',
 	'f2b_Jail_dropbear'         => 'SSH Autorisierungsfehler',
 	'f2b_Jail_mikoajam'         => 'CTI oder 1C Panel Autorisierungsfehler',
 	'f2b_Jail_mikopbx-www'      => 'PBX Admin-Oberfläche  Autorisierungsfehler',

@@ -134,8 +134,7 @@ const updatePBX = {
 								params.size = $aLink.attr('data-size');
 								$aLink.find('i').addClass('loading');
 								updatePBX.upgradeInProgress = true;
-								PbxApi.SystemUpgradeOnline(params);
-								upgradeStatusLoopWorker.initialize();
+								PbxApi.SystemUpgradeOnline(params, updatePBX.cbAfterStartUpgradeOnline);
 								return true;
 							},
 						})
@@ -158,6 +157,18 @@ const updatePBX = {
 			} else {
 				updatePBX.$progressBarLabel.text(globalTranslate.upd_UpgradeInProgress);
 			}
+		}
+	},
+	/**
+	 * After start online upgrade we have to wait an answer,
+	 * and then start status check worker
+	 */
+	cbAfterStartUpgradeOnline(response) {
+		if (response === true) {
+			upgradeStatusLoopWorker.initialize();
+		} else {
+			updatePBX.upgradeInProgress = false;
+			$('i.loading.redo').removeClass('loading');
 		}
 	},
 	AddNewVersionInformation(obj) {

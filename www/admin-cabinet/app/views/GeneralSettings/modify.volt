@@ -197,13 +197,22 @@
         </div>
 
         <div class="ui  tab segment" data-tab="web">
+            <div class="inline fields">
             <div class="field">
-                <label>{{ t._('gs_WebPort') }}</label>
+                <label for="WEBPort">{{ t._('gs_WebPort') }}</label>
                 {{ form.render('WEBPort') }}
             </div>
             <div class="field">
                 <label>{{ t._('gs_WebHTTPSPort') }}</label>
                 {{ form.render('WEBHTTPSPort') }}
+            </div>
+
+            <div class="field">
+                    <div class="ui toggle checkbox">
+                        <label>{{ t._('gs_RedirectToHttps') }}</label>
+                        {{ form.render('RedirectToHttps') }}
+                    </div>
+            </div>
             </div>
             <div class="field">
                 <label>{{ t._('gs_WEBHTTPSPublicKey') }}</label>

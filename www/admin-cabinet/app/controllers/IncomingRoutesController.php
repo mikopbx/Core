@@ -57,13 +57,13 @@ class IncomingRoutesController extends BaseController
         if ( ! $defaultRule) {
             $defaultRule           = new IncomingRoutingTable();
             $defaultRule->id       = 1;
-            $defaultRule->action   = "busy";
+            $defaultRule->action   = 'busy';
             $defaultRule->priority = 9999;
-            $defaultRule->rulename = "default action";
-        };
+            $defaultRule->rulename = 'default action';
+        }
 
         // Список всех используемых эктеншенов
-        $forwardingExtensions[""] = $this->translation->_("ex_SelectNumber");
+        $forwardingExtensions[''] = $this->translation->_('ex_SelectNumber');
         $parameters               = [
             'conditions' => 'number IN ({ids:array})',
             'bind'       => [
@@ -111,7 +111,7 @@ class IncomingRoutesController extends BaseController
         }
 
         // Список всех используемых эктеншенов
-        $forwardingExtensions[""] = $this->translation->_("ex_SelectNumber");
+        $forwardingExtensions[''] = $this->translation->_('ex_SelectNumber');
         $parameters               = [
             'conditions' => 'number IN ({ids:array})',
             'bind'       => [

@@ -53,4 +53,14 @@ class Logger
         {
             $this->logger->log(print_r($data,true));
         }
+
+        public function writeError($data, $level = \Phalcon\Logger::ERROR):void
+        {
+            $this->logger->log(print_r($data,true));
+        }
+
+        public function writeInfo($data, $level = \Phalcon\Logger::INFO):void
+        {
+            $this->logger->log(print_r($data,true));
+        }
 }

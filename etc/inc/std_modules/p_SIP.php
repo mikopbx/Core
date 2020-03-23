@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 11 2019
+ * Written by Alexey Portnov, 3 2020
  */
 
 use Models\NetworkFilters;
@@ -582,7 +582,7 @@ class p_SIP extends ConfigClass {
                 'rtp_symmetric' => 'yes',
                 'force_rport' => 'yes',
                 'rewrite_contact' => 'yes',
-                'ice_support' => 'yes',
+                'ice_support'  => 'no',
                 'direct_media' => 'no',
                 'callerid' => "{$calleridname} <{$peer['extension']}>",
                 // 'webrtc'   => 'yes',
@@ -1033,7 +1033,10 @@ class p_SIP extends ConfigClass {
                 $exthostname = trim($if_data['exthostname']);
             }
         }
-        $old_hash = file_get_contents($GLOBALS['g']['varetc_path'].'/topology_hash');
+        $old_hash = '';
+        if(file_exists($GLOBALS['g']['varetc_path'].'/topology_hash')){
+            $old_hash = file_get_contents($GLOBALS['g']['varetc_path'].'/topology_hash');
+        }
         $now_hadh = md5($topology.$exthostname.$extipaddr);
 
         $sip    = new self($GLOBALS['g']);

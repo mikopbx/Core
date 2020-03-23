@@ -140,10 +140,12 @@ $setup_lan = function (CliMenuBuilder $b){
                 ->ask();
             $dnsip = $el_lanip->fetch();
 
+            $data = [];
             $data['ipaddr']  	= $lanip;
             $data['subnet']  	= $lanbits;
             $data['gateway'] 	= $gwip;
             $data['primarydns'] = $dnsip;
+            $data['dhcp']       = '0';
 
             echo Util::translate('The LAN interface will now be configured ...');
             $network->update_net_settings($data);

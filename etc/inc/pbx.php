@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 2 2020
+ * Written by Alexey Portnov, 3 2020
  */
 
 use Models\NetworkFilters;
@@ -403,6 +403,7 @@ class PBX {
             $modules[]='res_pjsip_t38.so';
             $modules[]='res_pjsip_transport_websocket.so';
             $modules[]='res_pjsip_xpidf_body_generator.so';
+            $modules[]='res_pjsip_dlg_options.so';
             $modules[]='res_security_log.so';
 
             file_put_contents('/etc/asterisk/pjproject.conf', '');

@@ -264,8 +264,6 @@ const callDetailRecords = {
 			if (record.recordingfile === undefined
 				|| record.recordingfile === null
 				|| record.recordingfile.length === 0) {
-				const recordFileName = `Call_record_between_${record.src_num}_and_${record.dst_num}_from_${data[0]}`;
-				recordFileName.replace(/[^\w\s!?]/g, '');
 
 				htmlPlayer += `
 
@@ -287,23 +285,24 @@ const callDetailRecords = {
    	<td class="left aligned"><span class="need-update">${record.dst_num}</span></td>
 </tr>`;
 			} else {
-				const recordFileName = `Call_record_between_${record.src_num}_and_${record.dst_num}_from_${data[0]}`;
+				let recordFileName = `Call_record_between_${record.src_num}_and_${record.dst_num}_from_${data[0]}`;
 				recordFileName.replace(/[^\w\s!?]/g, '');
-
+				recordFileName = encodeURIComponent(recordFileName);
+				const recordFileUri = encodeURIComponent(record.recordingfile);
 				htmlPlayer += `
 
 <tr class="detail-record-row" id="${record.id}">
    	<td class="one wide"></td>
    	<td class="one wide right aligned">
    		<i class="ui icon play"></i>
-	   	<audio preload="metadata" id="audio-player-${record.id}" src="/pbxcore/api/cdr/playback?view=${record.recordingfile}"></audio>
+	   	<audio preload="metadata" id="audio-player-${record.id}" src="/pbxcore/api/cdr/playback?view=${recordFileUri}"></audio>
 	</td>
     <td class="five wide">
     	<div class="ui range cdr-player" data-value="${record.id}"></div>
     </td>
     <td class="one wide"><span class="cdr-duration"></span></td>
     <td class="one wide">
-    	<i class="ui icon download" data-value="/pbxcore/api/cdr/playback?view=${record.recordingfile}&download=1&filename=${recordFileName}.mp3"></i>
+    	<i class="ui icon download" data-value="/pbxcore/api/cdr/playback?view=${recordFileUri}&download=1&filename=${recordFileName}.mp3"></i>
     </td>
     <td class="right aligned"><span class="need-update">${record.src_num}</span></td>
     <td class="one wide center aligned"><i class="icon exchange"></i></td>

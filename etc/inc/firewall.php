@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 10 2019
+ * Written by Alexey Portnov, 3 2020
  */
 
 require_once('globals.php');
@@ -310,10 +310,32 @@ class Firewall{
      * Старт firewall.
      */
     static function fail2ban_start(){
+
+        // Чистим битые строки, не улдаленные после отмены бана.
+        self::clean_fail2ban_db();
+
         Util::killbyname('fail2ban-server');
         $cmd_start      = 'fail2ban-client -x start';
         $command        = "($cmd_start;) > /dev/null 2>&1 &";
         Util::mwexec($command);
+    }
+
+    static function clean_fail2ban_db(){
+        /** @var Models\Fail2BanRules $res */
+        $res = Models\Fail2BanRules::findFirst("id = '1'");
+        if($res!==null) {
+            $ban_time = $res->bantime;
+        }else{
+            $ban_time = '43800';
+        }
+        $path_db    = self::fail2ban_get_db_path();
+        $db         = new SQLite3($path_db);
+        $db->busyTimeout(3000);
+        if(FALSE === self::table_ban_exists($db)){
+            return;
+        }
+        $q = 'DELETE'.' from bans WHERE (timeofban+'.$ban_time.')<'.time();
+        $db->query($q);
     }
 
     /**
@@ -333,6 +355,8 @@ class Firewall{
         $enable = ($fail2ban_enable == '1');
         if($enable){
             // Попробуем найти jail по данным DB.
+            // fail2ban-client unban 172.16.156.1
+            // TODO Util::mwexec("fail2ban-client unban {$ip}}");
             $data = self::get_ban_ip($ip);
             foreach ($data as $row){
                 $res = self::fail2ban_unban($ip, $row['jail']);
@@ -358,8 +382,8 @@ class Firewall{
         $ip  = trim($ip);
         // Валидация...
         $matches = array();
-        preg_match_all('/^[a-z-]+$/', $jail, $matches, PREG_SET_ORDER);
-        if(!Verify::is_ipaddress($ip) || count($matches)===0){
+        // preg_match_all('/^[a-z-]+$/', $jail, $matches, PREG_SET_ORDER);
+        if(!Verify::is_ipaddress($ip)){
             // это НЕ IP адрес, или не корректно указан jail.
             $res['message'] = 'Not valid ip or jail.';
             return $res;
@@ -486,9 +510,19 @@ class Firewall{
      */
     static function get_ban_ip($ip = null){
         $result = [];
-        $q = 'SELECT'.' DISTINCT jail,ip,MAX(timeofban) AS timeofban FROM bans ';
+
+        /** @var Models\Fail2BanRules $res */
+        $res = Models\Fail2BanRules::findFirst("id = '1'");
+        if($res!==null) {
+            $ban_time = $res->bantime;
+        }else{
+            $ban_time = '43800';
+        }
+
+        // Добавленн фильтр по времени бана. возвращаем только адреса, которые еще НЕ разбанены.
+        $q = 'SELECT'.' DISTINCT jail,ip,MAX(timeofban) AS timeofban, MAX(timeofban+'.$ban_time.') AS timeunban FROM bans where (timeofban+'.$ban_time.')>'.time();
         if($ip !== null){
-            $q .= "WHERE ip='{$ip}'";
+            $q .= " AND ip='{$ip}'";
         }
         $q.=' GROUP BY jail,ip';
 
@@ -504,9 +538,6 @@ class Firewall{
         $results  = $db->query($q);
         if(FALSE !== $results && $results->numColumns()>0){
             while($res = $results->fetchArray(SQLITE3_ASSOC)){
-                if(strpos($res['jail'], 'asterisk') === 0){
-                    $res['jail'] = 'asterisk';
-                }
                 $result[] = $res;
             }
         }

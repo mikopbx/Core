@@ -11,7 +11,13 @@ require_once 'phpagi.php';
 
 $agi = new AGI();
 $channel	= $agi->get_variable('MASTER_CHANNEL(M_TIMEOUT_CHANNEL)', 	true);
+$FROM_CHAN	= $agi->get_variable('FROM_CHAN', 	true);
 
 /** @var AGI_AsteriskManager $am */
 $am = Util::get_am('off');
-$am->SetVar($channel, 'TIMEOUT(absolute)', '0');
+$am->SetVar($channel,   'TIMEOUT(absolute)', '0');
+$am->SetVar($FROM_CHAN, "MASTER_CHANNEL(M_DIALSTATUS)", 'ANSWER');
+
+// Перестрахова на случай с перехватом звонка через *8.
+$t_channel = $am->GetVar($FROM_CHAN, 'MASTER_CHANNEL(M_TIMEOUT_CHANNEL)');
+$am->SetVar($t_channel, "TIMEOUT(absolute)", '0');

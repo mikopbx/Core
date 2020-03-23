@@ -1,10 +1,9 @@
 <?php
 /**
- * Copyright (C) MIKO LLC - All Rights Reserved
+ * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 6 2018
- *
+ * Written by Alexey Portnov, 3 2020
  */
 
 return [
@@ -570,6 +569,7 @@ return [
 	'gs_ValidateWeakSSHPassword'            => 'Set a very simple password SSH',
 	'gs_ValidateSSHPasswordsFieldDifferent' => 'The SSH password is entered incorrectly',
 	'gs_SendAnonymousMetrics'		 		=> 'Send bugs reports to the developers team',
+    'gs_RedirectToHttps'                    =>'Redirect to HTTPS',
 	'ts_CurrentSettings'                    =>'Current setting',
 	'ts_SystemTime'                         =>'System time',
 	'ts_TimeZone'                           =>'Timezone',
@@ -792,6 +792,9 @@ It can be activated once, after which the coupon becomes redeemed.
 	'f2b_TableBannedHeader'      => 'Blocked addresses',
 	'f2b_Unban'                  => 'Unlock',
 	'f2b_Jail_asterisk'          => 'SIP or AMI authorization errors',
+    'f2b_Jail_asterisk_security_log'          => 'SIP or AMI authorization errors (security_log)',
+    'f2b_Jail_asterisk_error'          => 'SIP or AMI authorization errors (error)',
+    'f2b_Jail_asterisk_public'          => 'SIP or AMI authorization errors (public)',
 	'f2b_Jail_dropbear'         => 'The error of SSH login sessions',
 	'f2b_Jail_mikoajam'         => 'Authorization errors from CTI clients or 1C panels',
 	'f2b_Jail_mikopbx-www'      => 'Authorization errors in the PBX administrative interface',

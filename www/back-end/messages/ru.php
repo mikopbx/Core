@@ -1,10 +1,9 @@
 <?php
 /**
- * Copyright (C) MIKO LLC - All Rights Reserved
+ * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 6 2018
- *
+ * Written by Alexey Portnov, 3 2020
  */
 
 return [
@@ -570,6 +569,7 @@ return [
 	'gs_ValidateWeakSSHPassword'            => 'Указан очень простой пароль SSH',
 	'gs_ValidateSSHPasswordsFieldDifferent' => 'Пароль SSH введен некорректно',
 	'gs_SendAnonymousMetrics'		 		=>'Отправлять разрабочикам информацию о сбоях',
+    'gs_RedirectToHttps'                    =>'Редирект на HTTPS',
 	'ts_CurrentSettings'                    =>'Текущие настройки',
 	'ts_SystemTime'                         =>'Системное время',
 	'ts_TimeZone'                           =>'Таймзона',
@@ -794,6 +794,9 @@ return [
 	'f2b_TableBannedHeader'      => 'Заблокированные адреса',
 	'f2b_Unban'                  => 'Разблокировать',
 	'f2b_Jail_asterisk'          => 'Ошибки авторизации SIP или AMI',
+	'f2b_Jail_asterisk_security_log'          => 'Ошибки авторизации SIP или AMI (security_log)',
+	'f2b_Jail_asterisk_error'          => 'Ошибки авторизации SIP или AMI (error)',
+	'f2b_Jail_asterisk_public'          => 'Ошибки авторизации SIP или AMI (public)',
 	'f2b_Jail_dropbear'         => 'Ошибки авторизации SSH сессий',
 	'f2b_Jail_mikoajam'         => 'Ошибки при авторизациии CTI клиентов или 1С панелей',
 	'f2b_Jail_mikopbx-www'      => 'Ошбики авторизации в административном интерфейсе PBX',

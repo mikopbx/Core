@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 1 2020
+ * Written by Alexey Portnov, 2 2020
  */
 
 ini_set('error_reporting', E_ALL);
@@ -13,8 +13,15 @@ require_once 'globals.php';
 $g['booting']   = true;
 
 unset($errorLogger,$g['error_logger']);
-$s = new Storage();
-var_dump($s->get_disk_settings());
+Util::get_pid_process('udhcp', '');
+
+$if_name = 'eth1';
+$pid_file= "/var/run/udhcpc_{$if_name}";
+$pid_pcc = Util::get_pid_process($pid_file);
+if(!empty($pid_pcc)){
+    // Завершаем старый процесс.
+    system("kill `cat {$pid_file}` {$pid_pcc}");
+}
 
 exit(0);
 

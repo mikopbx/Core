@@ -1,0 +1,5 @@
+::sysinit:/sbin/syslogd -S -C512
+::sysinit:/etc/boot_init
+::sysinit:/etc/rc/bootup
+tty1::respawn:/etc/rc/initial
+::respawn:/bin/beanstalkd -l 127.0.0.1 -p 4229

@@ -39,13 +39,17 @@ recover_upgrade)
         else
             # Storage на диске основном диске,
             # так как его нужно отмнонтировать, то перемещамем образ в RAM.
-            /etc/rc/freestorage;
             echo " - move img to RAM ...";
-
             tmp_img=$(basename "$2");
             img_file="/tmp/${tmp_img}";
             # Перемещаем img файл в /tmp. Storage будет отмонтирован.
-            mv "$2" "${img_file}";
+            src_file=`readlink -f "$2"`;
+            if [ "${src_file}" != "${img_file}" ]; then
+              mv "${src_file}" "${img_file}";
+            fi
+
+            echo " - free storage ...";
+            /etc/rc/freestorage;
         fi
 
         # Отключаем основной диск.

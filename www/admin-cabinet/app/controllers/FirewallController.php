@@ -231,7 +231,7 @@ class FirewallController extends BaseController
 
 
     /**
-     * Обновление параметров внутреннего номера
+     * Заполним параметры записи Network Filter
      *
      * @param \Models\NetworkFilters $filterRecord
      * @param array                  $data массив полей из POST запроса
@@ -399,7 +399,7 @@ class FirewallController extends BaseController
             $fail2BanEnabled      = new PbxSettings();
             $fail2BanEnabled->key = 'PBXFail2BanEnabled';
         }
-        $fail2BanEnabled->value = "0";
+        $fail2BanEnabled->value = '0';
         if ($fail2BanEnabled->save() === false) {
             $errors = $fail2BanEnabled->getMessages();
             $this->flash->warning(implode('<br>', $errors));

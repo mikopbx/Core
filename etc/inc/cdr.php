@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 1 2020
+ * Written by Alexey Portnov, 3 2020
  */
 
 require_once 'globals.php';
@@ -360,6 +360,7 @@ class Cdr {
         }
 
         $is_new = false;
+        /** @var Models\CallDetailRecordsTmp $m_data */
         $m_data = Models\CallDetailRecordsTmp::findFirst(
             [
                 "UNIQUEID=:id:",
@@ -370,9 +371,37 @@ class Cdr {
             $m_data = new Models\CallDetailRecordsTmp();
             $is_new = true;
         }elseif (isset($data['IS_ORGNT']) && $data['action'] == 'dial'){
-            // Если это оригинация, то НЕ переопределяем уже существующую строку.
-            // dial может прийти дважды.
-            return true;
+            if(empty($m_data->endtime)){
+                // Если это оригинация, то НЕ переопределяем уже существующую строку.
+                // dial может прийти дважды.
+                return true;
+            }else{
+                // Предыдущие звонки завершены. Текущий вызов новый, к примеру через резервного провайдера.
+                // Меняем идентификатор предыдущих звонков.
+                $m_data->UNIQUEID       = $m_data->UNIQUEID.Util::generateRandomString(5);
+                // Чистим путь к файлу записи.
+                $m_data->recordingfile  = "";
+                $m_data->save();
+
+                $new_m_data = new Models\CallDetailRecordsTmp();
+                $new_m_data->UNIQUEID       = $data['UNIQUEID'];
+                $new_m_data->start          = $data['start'];
+                $new_m_data->src_chan       = $m_data->src_chan;
+                $new_m_data->src_num        = $m_data->src_num;
+                $new_m_data->src_num        = $m_data->src_num;
+                $new_m_data->dst_num        = $data['src_num'];
+                $new_m_data->did            = $data['did'];
+                $new_m_data->from_account   = $data['from_account'];
+                $new_m_data->linkedid       = $data['linkedid'];
+                $new_m_data->transfer       = $data['transfer'];
+
+                $res = $new_m_data->save();
+                if(!$res) {
+                    Util::sys_log_msg('insert_data_to_db_m', implode(' ',$m_data->getMessages()));
+                }
+                return $res;
+            }
+
         }
 
         $f_list = Cdr::get_db_fealds();

@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 1 2020
+ * Written by Alexey Portnov, 3 2020
  */
 
 use Models\CustomFiles;
@@ -197,11 +197,19 @@ class System {
         $config = file_get_contents($pattern_file);
         $config = str_replace('<DNS>',          $dns_server,    $config);
         $config = str_replace('<WEBHTTPSPort>', $WEBHTTPSPort,  $config);
-        $config = str_replace('<WEBPort>',      $WEBPort,       $config);
-
         // ###ADDISIONAL_CONFIG_HTTP# - при замене параметра можно добавить конфиг в секцию http
         // ###ADDISIONAL_CONFIG# - добавляет конфиг в секцию server (http)
         // ###ADDISIONAL_CONFIG_SSL# - добавляет конфиг в секцию server (https)
+        $RedirectToHttps    = $this->config->get_general_settings('RedirectToHttps');
+        if($RedirectToHttps === "1"){
+            $conf_data = "listen      {$WEBPort};"."\n"
+                        .'        '
+                        .'return 301 https://$host:'.$WEBHTTPSPort.'$request_uri;'."\n";
+            $config = str_replace('listen      <WEBPort>;', $conf_data,  $config);
+        }else{
+            $config = str_replace('<WEBPort>',      $WEBPort,       $config);
+        }
+
 
         $WEBHTTPSPublicKey  = $this->config->get_general_settings('WEBHTTPSPublicKey');
         $WEBHTTPSPrivateKey = $this->config->get_general_settings('WEBHTTPSPrivateKey');
@@ -797,13 +805,15 @@ server 2.pool.ntp.org';
     public static function upgrade_from_img():array {
         $result = array(
             'result'  => 'Success',
-            'message' => 'In progress...'
+            'message' => 'In progress...',
+            'info'    => 'Update from local file'
         );
 
         $dirs = PBX::get_asterisk_dirs();
         $upd_file = "{$dirs['tmp']}/update.img";
         if(!file_exists($upd_file)) {
             $upd_file = "{$dirs['tmp']}/upgrade_online/update.img";
+            $result['info']   = 'Online update';
         }
         if(!file_exists($upd_file)){
             $result['result']   = 'Error';
@@ -838,8 +848,14 @@ server 2.pool.ntp.org';
         if(!file_exists($dirs['tmp']."/{$module}")){
             Util::mw_mkdir($dirs['tmp']."/{$module}");
         }else{
+            // Чистим файлы, загруженные онлайн.
             Util::mwexec("rm -rf {$dirs['tmp']}/{$module}/* ");
         }
+        if(file_exists("{$dirs['tmp']}/update.img")){
+            // Чистим вручную загруженный файл.
+            Util::mwexec("rm -rf {$dirs['tmp']}/update.img");
+        }
+
         $download_settings = [
             'res_file' => "{$dirs['tmp']}/{$module}/update.img",
             'url'      => $data['url'],

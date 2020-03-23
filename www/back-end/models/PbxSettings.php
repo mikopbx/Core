@@ -41,6 +41,14 @@ class PbxSettings extends ModelsBase
         return $this->validate($validation);
     }
 
+    public function afterSave(): void
+    {
+        parent::afterSave();
+        if ($this->itHasFirewallParametersChanges()) {
+            FirewallRules::updatePorts($this);
+        }
+    }
+
     /**
      * Значения по умолчанию для переменных станции
      *
@@ -76,6 +84,7 @@ class PbxSettings extends ModelsBase
             'WEBHTTPSPort'                    => '443',
             'WEBHTTPSPublicKey'               => '',
             'WEBHTTPSPrivateKey'              => '',
+            'RedirectToHttps'                 => '0',
             'MailSMTPUseTLS'                  => '0',
             'MailSMTPCertCheck'               => '0',
             'MailSMTPHost'                    => '',
@@ -298,6 +307,7 @@ class PbxSettings extends ModelsBase
             case 'WEBHTTPSPort':
             case 'WEBHTTPSPublicKey':
             case 'WEBHTTPSPrivateKey':
+            case 'RedirectToHttps':
                 return true;
                 break;
             default:
