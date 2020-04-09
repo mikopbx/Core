@@ -1,3 +1,5 @@
+[![Translation status](https://weblate.mikopbx.com/widgets/mikopbx/-/admin-web-interface/svg-badge.svg)](https://weblate.mikopbx.com/engage/mikopbx/?utm_source=widget)
+
 # MikoPBX - free phone system for small business
 ```
                                                                                      
@@ -21,6 +23,7 @@ The russian [website](https://www.mikopbx.ru)
 The english [website](https://www.mikopbx.com) under construction  
 
 The instalation [instruction](https://wiki.mikopbx.com/quickstart_lancher)
+
 
 The chat with developers you can find on [telegram](https://t.me/mikopbx_dev)
 
