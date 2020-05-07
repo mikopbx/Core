@@ -13,6 +13,10 @@ use Phalcon\Mvc\{Controller, Dispatcher, View};
 use Phalcon\Text;
 use Sentry\SentrySdk;
 
+/**
+ * @property array sessionRO
+ * @property \Phalcon\Translate\Adapter\NativeArray  translation
+ */
 class BaseController extends Controller
 {
 

@@ -14,14 +14,20 @@ use Phalcon\Messages\Message;
 use Phalcon\Mvc\Model;
 use Phalcon\Mvc\Model\Relation;
 use Phalcon\Mvc\Model\Resultset;
+use Phalcon\Mvc\Model\ResultsetInterface;
 use Phalcon\Text;
 
+/**
+ * @method mixed findFirstById
+ * @method mixed findFirst
+ * @method ResultsetInterface find
+ */
 abstract class ModelsBase extends Model
 {
 
     public function initialize(): void
     {
-        $this->setup(['orm.events' => true]);
+        self::setup(['orm.events' => true]);
         $this->keepSnapshots(true);
 
         // Пройдемся по модулям и подключим их отношения к текущей модели, если они описаны
