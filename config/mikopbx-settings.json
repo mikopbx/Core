@@ -60,7 +60,7 @@
   "adminApplication": {
     "debugMode": false,
     "wwwDir": "/usr/www",
-    "baseUri": "/sites/admin-cabinet/",
+    "baseUri": "/admin-cabinet/",
     "cacheDir": "/mountpoint/mikopbx/cache",
     "voltCacheDir": "/mountpoint/mikopbx/cache/volt",
     "jsCacheDir": "/usr/www/sites/admin-cabinet/public/assets/js/cache",

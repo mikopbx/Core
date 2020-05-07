@@ -34,7 +34,6 @@ if( 'cli' !== php_sapi_name()){
     // Initialize sentry error logger
     $errorLogger = new SentryErrorLogger('pbx-core-workers');
     $errorLogger->init();
-    $g['error_logger']=&$errorLogger;
 
     RegisterDIServices::init();
 

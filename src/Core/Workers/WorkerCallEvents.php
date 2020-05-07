@@ -1055,8 +1055,8 @@ if (isset($argv) && count($argv) > 1 && $argv[1] === 'start') {
             $worker = new $workerClassname();
             $worker->start();
         } catch (\Exception $e) {
-            global $g;
-            $g['error_logger']->captureException($e);
+            global $errorLogger;
+            $errorLogger->captureException($e);
             Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage());
         }
 }

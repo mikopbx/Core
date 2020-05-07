@@ -11,6 +11,7 @@ use MikoPBX\Core\Config\{
 };
 use MikoPBX\Common\Providers\ConfigProvider;
 use Phalcon\Di\FactoryDefault\Cli;
+use MikoPBX\Core\System\SentryErrorLogger;
 
 
 // Initialize dependency injector
@@ -21,5 +22,8 @@ require_once 'ClassLoader.php';
 ClassLoader::init();
 
 $di->register(new ConfigProvider());
+// Initialize sentry error logger
+$errorLogger = new SentryErrorLogger('pbx-core-workers');
+$errorLogger->init();
 
 RegisterDIServices::init(true);
