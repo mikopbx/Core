@@ -69,7 +69,7 @@ class UpdateSystemConfig
     private function updateDbStructureByModelsAnnotations(): bool
     {
         $result    = true;
-        $modelsDir = $this->config->path('core.rootPath') . '/src/Common/Models';
+        $modelsDir = $this->config->path('core.rootPath').'/src/Common/Models';
         $results   = glob("{$modelsDir}/*.php", GLOB_NOSORT);
         foreach ($results as $file) {
             $className        = pathinfo($file)['filename'];
@@ -97,7 +97,7 @@ class UpdateSystemConfig
     {
         $result = true;
         if (
-            ! class_exists($modelClassName)
+            !class_exists($modelClassName)
             || count(get_class_vars($modelClassName)) === 0) {
             return false;
         }
@@ -124,7 +124,7 @@ class UpdateSystemConfig
                 'isNumeric' => false,
                 'primary'   => false,
             ];
-            $previousAttribute           = $attribute;
+            $previousAttribute = $attribute;
         }
 
         // For each numeric column change type
@@ -198,10 +198,10 @@ class UpdateSystemConfig
             'columns' => $columns,
             'indexes' => $indexes,
         ];
-        $tableName  = $model->getSource();
+        $tableName = $model->getSource();
         $connectionService->begin();
 
-        if ( ! $connectionService->tableExists($tableName)) {
+        if (!$connectionService->tableExists($tableName)) {
             $result = $connectionService->createTable($tableName, '', $columnsNew);
         } else {
 
@@ -291,11 +291,11 @@ DROP TABLE  {$tableName}";
                 if ($oldField->$compared_setting() !== $newField->$compared_setting()) {
                     // Sqlite transform "1" to ""1"" in default settings, but it is normal
                     if ($compared_setting === 'getDefault'
-                        && $oldField->$compared_setting() === '"' . $newField->$compared_setting() . '"') {
+                        && $oldField->$compared_setting() === '"'.$newField->$compared_setting().'"') {
                         continue;
                     }
 
-                    return true;  // find different columns
+                    return true; // find different columns
                 }
             }
         }
@@ -309,8 +309,8 @@ DROP TABLE  {$tableName}";
     public function updateConfigs(): bool
     {
         $this->mikoPBXConfig = new MikoPBXConfig();
-        $previous_version    = str_ireplace('-dev','',$this->mikoPBXConfig->getGeneralSettings('PBXVersion'));
-        $current_version     = str_ireplace('-dev','',trim(file_get_contents('/etc/version')));
+        $previous_version    = str_ireplace('-dev', '', $this->mikoPBXConfig->getGeneralSettings('PBXVersion'));
+        $current_version     = str_ireplace('-dev', '', trim(file_get_contents('/etc/version')));
         if ($previous_version !== $current_version) {
             if (version_compare($previous_version, '1.0.0', '<=')) {
                 $this->fillInitialSettings();
@@ -355,7 +355,7 @@ DROP TABLE  {$tableName}";
         /** @var \MikoPBX\Common\Models\Sip $peer */
         $peers = Sip::find('type="peer"');
         foreach ($peers as $peer) {
-            $peer->secret = md5('' . time() . 'sip' . $peer->id);
+            $peer->secret = md5(''.time().'sip'.$peer->id);
             $peer->save();
         }
 
@@ -363,7 +363,7 @@ DROP TABLE  {$tableName}";
         /** @var \MikoPBX\Common\Models\AsteriskManagerUsers $manager */
         $managers = AsteriskManagerUsers::find();
         foreach ($managers as $manager) {
-            $manager->secret = md5('' . time() . 'manager' . $manager->id);
+            $manager->secret = md5(''.time().'manager'.$manager->id);
             $manager->save();
         }
     }
@@ -376,7 +376,7 @@ DROP TABLE  {$tableName}";
     {
         /** @var \MikoPBX\Common\Models\Codecs $codec_g722 */
         $codec_g722 = Codecs::findFirst('name="g722"');
-        if ($codec_g722===null) {
+        if ($codec_g722 === null) {
             /** @var \MikoPBX\Common\Models\Codecs $codec_g722 */
             $codec_g722              = new Codecs();
             $codec_g722->name        = 'g722';
@@ -417,19 +417,19 @@ DROP TABLE  {$tableName}";
         /** @var \MikoPBX\Common\Models\DialplanApplications $res */
         $app_number = '10000100';
         $app_logic  = base64_encode('1,Goto(voice_mail_peer,voicemail,1)');
-        $d_app      = DialplanApplications::findFirst('extension="' . $app_number . '"');
-        if ($d_app===null) {
+        $d_app      = DialplanApplications::findFirst('extension="'.$app_number.'"');
+        if ($d_app === null) {
             $d_app                   = new DialplanApplications();
             $d_app->applicationlogic = $app_logic;
             $d_app->extension        = $app_number;
             $d_app->description      = 'Voice Mail';
             $d_app->name             = 'VOICEMAIL';
             $d_app->type             = 'plaintext';
-            $d_app->uniqid           = 'DIALPLAN-APPLICATION-' . md5(time());
+            $d_app->uniqid           = 'DIALPLAN-APPLICATION-'.md5(time());
 
             if ($d_app->save()) {
                 $extension = ExtensionsModel::findFirst("number = '{$app_number}'");
-                if ($extension===null) {
+                if ($extension === null) {
                     $extension                    = new ExtensionsModel();
                     $extension->number            = $app_number;
                     $extension->type              = 'DIALPLAN APPLICATION';
@@ -452,7 +452,7 @@ DROP TABLE  {$tableName}";
         foreach ($result as $rule) {
             /** @var \MikoPBX\Common\Models\NetworkFilters $network_filter */
             $network_filter = NetworkFilters::findFirst($rule->networkfilterid);
-            if ($network_filter===null) {
+            if ($network_filter === null) {
                 // Это "битая" роль, необходимо ее удалить. Нет ссылки на подсеть.
                 $rule->delete();
             }
@@ -478,23 +478,23 @@ DROP TABLE  {$tableName}";
 
 
         $app_number = '10003246';
-        $d_app      = DialplanApplications::findFirst('extension="' . $app_number . '"');
-        if ($d_app===null) {
-            $app_text                = '1,Answer()' . "\n" .
-                'n,AGI(cdr_connector.php,${ISTRANSFER}dial_answer)' . "\n" .
-                'n,Echo()' . "\n" .
-                'n,Hangup()' . "\n";
+        $d_app      = DialplanApplications::findFirst('extension="'.$app_number.'"');
+        if ($d_app === null) {
+            $app_text = '1,Answer()'."\n".
+                'n,AGI(cdr_connector.php,${ISTRANSFER}dial_answer)'."\n".
+                'n,Echo()'."\n".
+                'n,Hangup()'."\n";
             $d_app                   = new DialplanApplications();
             $d_app->applicationlogic = base64_encode($app_text);
             $d_app->extension        = $app_number;
             $d_app->description      = 'Echos audio and video back to the caller as soon as it is received. Used to test connection delay.';
             $d_app->name             = 'Echo test';
             $d_app->type             = 'plaintext';
-            $d_app->uniqid           = 'DIALPLAN-APPLICATION-' . md5(time());
+            $d_app->uniqid           = 'DIALPLAN-APPLICATION-'.md5(time());
 
             if ($d_app->save()) {
                 $extension = ExtensionsModel::findFirst("number = '{$app_number}'");
-                if ($extension===null) {
+                if ($extension === null) {
                     $extension                    = new ExtensionsModel();
                     $extension->number            = $app_number;
                     $extension->type              = 'DIALPLAN APPLICATION';
@@ -513,38 +513,38 @@ DROP TABLE  {$tableName}";
     {
         // Add custom category to all sound files
         $soundFiles = SoundFiles::find();
-        foreach ($soundFiles as $sound_file){
+        foreach ($soundFiles as $sound_file) {
             $sound_file->category = SoundFiles::CATEGORY_CUSTOM;
             $sound_file->update();
         }
 
         // Add moh files to db and copy them to storage
-        $oldMohDir  = $this->config->path('asterisk.astvarlibdir').'/sounds/moh';
-        $currentMohDir  = $this->config->path('asterisk.mohdir');
-        if (!Util::mwMkdir($currentMohDir)){
+        $oldMohDir = $this->config->path('asterisk.astvarlibdir').'/sounds/moh';
+        $currentMohDir = $this->config->path('asterisk.mohdir');
+        if (!Util::mwMkdir($currentMohDir)) {
             return;
         }
         $files = scandir($oldMohDir);
         foreach ($files as $file) {
-            if (in_array($file, ['.','..'])) continue;
-            if (copy($oldMohDir.'/'.$file, $currentMohDir.'/'.$file)){
+            if (in_array($file, ['.', '..'])) continue;
+            if (copy($oldMohDir.'/'.$file, $currentMohDir.'/'.$file)) {
                 $sound_file = new SoundFiles();
                 $sound_file->path = $currentMohDir.'/'.$file;
-                $sound_file->category=SoundFiles::CATEGORY_MOH;
-                $sound_file->name=$file;
+                $sound_file->category = SoundFiles::CATEGORY_MOH;
+                $sound_file->name = $file;
                 $sound_file->save();
             }
         }
 
         // Remove old cache folders
         $mediaMountPoint = $this->config->path('core.mediaMountPoint');
-        $oldCacheDirs= [
+        $oldCacheDirs = [
             "$mediaMountPoint/mikopbx/cache_js_dir",
             "$mediaMountPoint/mikopbx/cache_img_dir",
             "$mediaMountPoint/mikopbx/cache_css_dir"
         ];
         foreach ($oldCacheDirs as $old_cache_dir) {
-            if (is_dir($old_cache_dir)){
+            if (is_dir($old_cache_dir)) {
                 Util::mwExec("rm -rf $old_cache_dir");
             }
         }
