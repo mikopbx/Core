@@ -17,7 +17,7 @@ class Fail2BanController extends BaseController
     /**
      * Построение списка внутренних номеров и сотрудников
      */
-    public function indexAction()
+    public function indexAction(): void
     {
         $rules = Fail2BanRules::findFirst();
         if ($rules===null) {
@@ -33,7 +33,7 @@ class Fail2BanController extends BaseController
     /**
      * Сохранение настроек системы
      */
-    public function saveAction()
+    public function saveAction(): void
     {
         if ( ! $this->request->isPost()) {
             return;

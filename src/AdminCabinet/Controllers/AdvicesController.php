@@ -73,6 +73,7 @@ class AdvicesController extends BaseController
      */
     private function checkPasswords()
     {
+        $messages = [];
         $arrOfDefaultValues = PbxSettings::getDefaultArrayValues();
         if ($arrOfDefaultValues['WebAdminPassword']
             === PbxSettings::getValueByKey('WebAdminPassword')) {

@@ -187,7 +187,7 @@ class NetworkController extends BaseController
      *
      * @param string $ethId
      */
-    public function deleteAction($ethId = '')
+    public function deleteAction($ethId = ''): void
     {
         $eth = LanInterfaces::findFirstById($ethId);
         if ($eth!==null && $eth->delete() === false) {

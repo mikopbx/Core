@@ -18,7 +18,7 @@ class IncomingRoutesController extends BaseController
     /**
      * Построение списка входящих маршрутов
      */
-    public function indexAction()
+    public function indexAction(): void
     {
         $parameters = [
             'conditions' => 'id>1',
@@ -135,7 +135,7 @@ class IncomingRoutesController extends BaseController
     /**
      * Сохранение входящего маршрута
      */
-    public function saveAction()
+    public function saveAction(): void
     {
         if ( ! $this->request->isPost()) {
             return;

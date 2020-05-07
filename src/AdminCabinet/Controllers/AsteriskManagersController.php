@@ -98,7 +98,7 @@ class AsteriskManagersController extends BaseController
     /**
      * Сохраенение настроек Asterisk Manager
      */
-    public function saveAction()
+    public function saveAction(): void
     {
         if ( ! $this->request->isPost()) {
             return;
@@ -114,7 +114,7 @@ class AsteriskManagersController extends BaseController
         }
 
         foreach ($manager as $name => $value) {
-            if (in_array($name, $this->arrCheckBoxes)) {
+            if (in_array($name, $this->arrCheckBoxes, true)) {
                 $manager->$name = '';
                 $manager->$name .= ($data[$name . '_read'] === 'on') ? 'read' : '';
                 $manager->$name .= ($data[$name . '_write'] === 'on') ? 'write' : '';
@@ -144,16 +144,18 @@ class AsteriskManagersController extends BaseController
 
     /**
      * Удаление Asterisk Manager
+     *
+     * @param null $amiId
+     *
+     * @return void
      */
-    public function deleteAction($amiId = null)
+    public function deleteAction($amiId = null): void
     {
 
         $manager = AsteriskManagerUsers::findFirstByid($amiId);
         if ($manager!==null) {
             $manager->delete();
         }
-
-        return $this->forward('asterisk-managers/index');
-
+        $this->forward('asterisk-managers/index');
     }
 }

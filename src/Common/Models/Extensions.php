@@ -13,6 +13,10 @@ use Phalcon\Mvc\Model\Relation;
 use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
+/**
+ * @method static mixed findFirstByNumber(string|null $number)
+ * @method static mixed findByUserid(int $userid)
+ */
 class Extensions extends ModelsBase
 {
     /**
@@ -404,7 +408,7 @@ class Extensions extends ModelsBase
         }
         $relations = $this->_modelsManager->getRelations(Extensions::class);
         foreach ($relations as $relation) {
-            if ($relation->getFields() == 'number'
+            if ($relation->getFields() === 'number'
                 ||
                 (
                     is_array($relation->getFields())

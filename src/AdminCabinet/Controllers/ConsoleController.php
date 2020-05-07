@@ -19,9 +19,10 @@ class ConsoleController extends BaseController
     /**
      * Заглушка
      *
-     * @param int $currentPage текущая страница пажинации
+     * @param int  $currentPage текущая страница пажинации
+     * @param null $parameters
      */
-    public function indexAction($currentPage = 0, $parameters = null)
+    public function indexAction($currentPage = 0, $parameters = null): void
     {
     }
 }

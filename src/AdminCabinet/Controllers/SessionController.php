@@ -73,7 +73,7 @@ class SessionController extends BaseController
      *
      * @param  $role
      */
-    private function _registerSession($role)
+    private function _registerSession($role): void
     {
         $sessionParams = [
             'role' => $role,

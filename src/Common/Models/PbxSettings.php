@@ -11,6 +11,9 @@ namespace MikoPBX\Common\Models;
 use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
+/**
+ * @method static mixed findFirstByKey(string $string)
+ */
 class PbxSettings extends ModelsBase
 {
 

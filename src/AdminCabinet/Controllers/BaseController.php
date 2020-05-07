@@ -13,9 +13,16 @@ use Phalcon\Mvc\{Controller, Dispatcher, View};
 use Phalcon\Text;
 use Sentry\SentrySdk;
 
+
 /**
  * @property array sessionRO
+ * @property \Phalcon\Session\Manager session
  * @property \Phalcon\Translate\Adapter\NativeArray  translation
+ * @property string language
+ * @property \MikoPBX\AdminCabinet\Library\Elements elements
+ * @property string moduleName
+ * @property \Phalcon\Flash\Session flash
+ * @property \Phalcon\Tag tag
  */
 class BaseController extends Controller
 {

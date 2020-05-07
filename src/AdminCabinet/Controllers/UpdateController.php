@@ -16,7 +16,7 @@ class UpdateController extends BaseController
      * Обновление станции до нового релиза
      *
      */
-    public function indexAction()
+    public function indexAction(): void
     {
         $this->view->submitMode = null;
     }

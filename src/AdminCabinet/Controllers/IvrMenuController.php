@@ -18,7 +18,7 @@ class IvrMenuController extends BaseController
     /**
      * Построение списка IVR меню
      */
-    public function indexAction()
+    public function indexAction(): void
     {
         $this->view->ivrmenu = IvrMenu::find();
     }
@@ -29,7 +29,7 @@ class IvrMenuController extends BaseController
      *
      * @param null $ivrmenuid идентификатор меню
      */
-    public function modifyAction($ivrmenuid = null)
+    public function modifyAction($ivrmenuid = null): void
     {
 
         $ivrmenu                = IvrMenu::findFirstByUniqid($ivrmenuid);
@@ -102,7 +102,7 @@ class IvrMenuController extends BaseController
     /**
      * Сохранение ivr меню
      */
-    public function saveAction()
+    public function saveAction(): void
     {
         if ( ! $this->request->isPost()) {
             return;
@@ -168,7 +168,7 @@ class IvrMenuController extends BaseController
      *
      * @return bool update result
      */
-    private function updateExtension(Extensions $extension, array $data)
+    private function updateExtension(Extensions $extension, array $data): bool
     {
 
         $extension->number   = $data['extension'];
@@ -192,7 +192,7 @@ class IvrMenuController extends BaseController
      *
      * @return bool update result
      */
-    private function updateIVRMenu(IvrMenu $ivrMenu, array $data)
+    private function updateIVRMenu(IvrMenu $ivrMenu, array $data): bool
     {
 
         // Заполним параметры записи Ivr Menu
@@ -236,7 +236,7 @@ class IvrMenuController extends BaseController
      *
      * @return bool update result
      */
-    private function updateIVRMenuActions(array $data)
+    private function updateIVRMenuActions(array $data): bool
     {
 
         $existDigits = [];

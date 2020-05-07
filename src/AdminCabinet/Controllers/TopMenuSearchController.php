@@ -72,6 +72,10 @@ class TopMenuSearchController extends BaseController
 
     /**
      * Add items to menu
+     *
+     * @param $items
+     * @param $record
+     * @param $itemClass
      */
     private function addMenuItem(&$items, $record, $itemClass): void
     {
@@ -93,6 +97,8 @@ class TopMenuSearchController extends BaseController
 
     /**
      * Add non object menu items
+     *
+     * @param $items
      */
     private function addOtherMenuItems(&$items): void
     {

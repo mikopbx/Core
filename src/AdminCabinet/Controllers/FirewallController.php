@@ -107,7 +107,7 @@ class FirewallController extends BaseController
             }
         }
 
-        usort($networksTable, [FirewallController::class, 'sortArrayByNetwork']);
+        usort($networksTable, [__CLASS__, 'sortArrayByNetwork']);
 
         $this->view->rulesTable         = $networksTable;
         $this->view->PBXFirewallEnabled = PbxSettings::getValueByKey('PBXFirewallEnabled');

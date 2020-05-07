@@ -18,7 +18,7 @@ class CustomFilesController extends BaseController
     /**
      * Построение списка файлов
      */
-    public function indexAction()
+    public function indexAction(): void
     {
 
         $files = CustomFiles::find();
@@ -52,7 +52,7 @@ class CustomFilesController extends BaseController
      *
      * @return void
      */
-    public function saveAction()
+    public function saveAction(): void
     {
         if ( ! $this->request->isPost()) {
             return;

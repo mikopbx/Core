@@ -21,10 +21,6 @@ use MikoPBX\Common\Models\{Codecs,
     Users};
 use Phalcon\Text;
 
-/**
- * @property void translation
- * @property void config
- */
 class ExtensionsController extends BaseController
 {
 
@@ -510,7 +506,7 @@ class ExtensionsController extends BaseController
      *
      * @return bool результат сохранения
      */
-    private function saveSip(Sip $sipEntity, $data)
+    private function saveSip(Sip $sipEntity, $data): bool
     {
         foreach ($sipEntity as $name => $value) {
             switch ($name) {

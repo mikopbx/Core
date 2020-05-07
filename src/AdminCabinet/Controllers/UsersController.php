@@ -14,19 +14,6 @@ class UsersController extends BaseController
 {
 
     /**
-     * Проверка на доступность емейл адреса
-     */
-    public function availableAction($email)
-    {
-        $result    = true;
-        $extension = Users::findFirstByEmail($email);
-        if ($extension===null) {
-            $result = false;
-        }
-        $this->view->emailAvailable = $result;
-    }
-
-    /**
      * Saves Base64 from database to cache dir, and returns full url
      *
      * @param $item

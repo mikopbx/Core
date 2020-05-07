@@ -17,7 +17,7 @@ class CallQueuesController extends BaseController
     /**
      * Получение списка очередей вызовово
      */
-    public function indexAction()
+    public function indexAction(): void
     {
         $queues             = CallQueues::find();
         $this->view->queues = $queues;
@@ -29,7 +29,7 @@ class CallQueuesController extends BaseController
      *
      * @param string $uniqid - идентификатор редактируемой очереди
      */
-    public function modifyAction(string $uniqid = null)
+    public function modifyAction(string $uniqid = null): void
     {
         $queue            = CallQueues::findFirstByUniqid($uniqid);
         $queueMembersList = [];
@@ -105,7 +105,7 @@ class CallQueuesController extends BaseController
     /**
      * Сохранение очереди через AJAX запрос из формы
      */
-    public function saveAction()
+    public function saveAction(): void
     {
         if ( ! $this->request->isPost()) {
             return;
@@ -169,7 +169,7 @@ class CallQueuesController extends BaseController
      *
      * @return bool update result
      */
-    private function updateExtension(Extensions $extension, array $data)
+    private function updateExtension(Extensions $extension, array $data): bool
     {
 
         $extension->number   = $data['extension'];
@@ -193,7 +193,7 @@ class CallQueuesController extends BaseController
      *
      * @return bool update result
      */
-    private function updateQueue(CallQueues $queue, array $data)
+    private function updateQueue(CallQueues $queue, array $data): bool
     {
         foreach ($queue as $name => $value) {
             switch ($name) {
@@ -217,21 +217,21 @@ class CallQueuesController extends BaseController
                 case "redirect_to_extension_if_repeat_exceeded":
                     if ( ! array_key_exists($name, $data) || empty($data[$name])) {
                         $queue->$name = null;
-                        continue;
+                        continue 2;
                     }
                     $queue->$name = $data[$name];
                     break;
                 case "redirect_to_extension_if_empty":
                     if ( ! array_key_exists($name, $data) || empty($data[$name])) {
                         $queue->$name = null;
-                        continue;
+                        continue 2;
                     }
                     $queue->$name = $data[$name];
 
                     break;
                 case "timeout_to_redirect_to_extension":
                     if ( ! array_key_exists($name, $data)) {
-                        continue;
+                        continue 2;
                     }
                     if (empty($data[$name])) {
                         $queue->$name = null;
@@ -245,14 +245,14 @@ class CallQueuesController extends BaseController
                         || (array_key_exists('timeout_to_redirect_to_extension', $data)
                             && intval($data['timeout_to_redirect_to_extension']) === 0)) {
                         $queue->$name = null;
-                        continue;
+                        continue 2;
                     }
                     $queue->$name = $data[$name];
 
                     break;
                 case "number_unanswered_calls_to_redirect":
                     if ( ! array_key_exists($name, $data)) {
-                        continue;
+                        continue 2;
                     }
                     if (empty($data[$name])) {
                         $queue->$name = null;
@@ -266,14 +266,14 @@ class CallQueuesController extends BaseController
                         || (array_key_exists('number_unanswered_calls_to_redirect', $data)
                             && intval($data['number_unanswered_calls_to_redirect']) === 0)) {
                         $queue->$name = null;
-                        continue;
+                        continue 2;
                     }
                     $queue->$name = $data[$name];
 
                     break;
                 default:
                     if ( ! array_key_exists($name, $data)) {
-                        continue;
+                        continue 2;
                     }
                     $queue->$name = $data[$name];
             }
@@ -296,7 +296,7 @@ class CallQueuesController extends BaseController
      *
      * @return bool update result
      */
-    private function updateQueueMembers(array $data)
+    private function updateQueueMembers(array $data): bool
     {
 
         $realMembers = [];
@@ -320,7 +320,7 @@ class CallQueuesController extends BaseController
                     return false;
                 }
                 $queueMember = new CallQueueMembers();
-            } elseif ($queueMembers->count() == 1) {
+            } elseif ($queueMembers->count() === 1) {
                 $queueMember = $queueMembers->getFirst();
             } else {
                 $queueMember = new CallQueueMembers();

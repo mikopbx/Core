@@ -13,6 +13,9 @@ use Phalcon\Mvc\Model\Relation;
 use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
+/**
+ * @method static mixed findFirstByUniqid(array|string|int $parameters=null)
+ */
 class Iax extends ModelsBase
 {
     /**

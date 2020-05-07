@@ -13,6 +13,7 @@ use MikoPBX\AdminCabinet\Forms\BackupCreateForm;
 use MikoPBX\AdminCabinet\Forms\BackupRestoreForm;
 use MikoPBX\Common\Models\BackupRules;
 
+
 class BackupController extends BaseController
 {
 
@@ -118,10 +119,10 @@ class BackupController extends BaseController
      * Сохранение настроек автоматического резервного копирования
      *
      */
-    public function saveAction()
+    public function saveAction(): void
     {
         if ( ! $this->request->isPost()) {
-            return $this->forward('backup/automatic');
+            $this->forward('backup/automatic');
         }
 
         $data = $this->request->getPost();

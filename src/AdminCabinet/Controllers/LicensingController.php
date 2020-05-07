@@ -15,20 +15,11 @@ use MikoPBX\Common\Models\PbxSettings;
 use Phalcon\Text;
 use SimpleXMLElement;
 
+/**
+ * @property \MikoPBX\Modules\LicenseWorker licenseWorker
+ */
 class LicensingController extends BaseController
 {
-
-    private $licenseWorker;
-
-    /**
-     * Инициализация базового класса
-     */
-    public function initialize(): void
-    {
-        parent::initialize();
-        $this->licenseWorker = $this->getDI()->getLicenseWorker();
-    }
-
     /**
      * Форма работы с лицензионными ключами
      *

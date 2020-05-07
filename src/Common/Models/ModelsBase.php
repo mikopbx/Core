@@ -9,18 +9,30 @@
 
 namespace MikoPBX\Common\Models;
 
+use Phalcon\Db\Adapter\AdapterInterface;
 use Phalcon\Db\RawValue;
 use Phalcon\Messages\Message;
+use Phalcon\Messages\MessageInterface;
 use Phalcon\Mvc\Model;
 use Phalcon\Mvc\Model\Relation;
 use Phalcon\Mvc\Model\Resultset;
+use Phalcon\Mvc\Model\Resultset\Simple;
 use Phalcon\Mvc\Model\ResultsetInterface;
 use Phalcon\Text;
 
 /**
- * @method static mixed findFirstById(array|string|int|null $parameters)
- * @method static mixed findFirst(array|string|int|null $parameters)
- * @method static ResultsetInterface find(array|string|int|null $parameters)
+ * @method static mixed findFirstById(array|string|int $parameters=null)
+ * @method static mixed findFirstByUniqid(array|string|int $parameters=null)
+ * @method static mixed findFirst(array|string|int $parameters=null)
+ * @method static ResultsetInterface find(array|string|int $parameters=null)
+ * @method static mixed count(array $parameters=null)
+ * @method  bool create()
+ * @method  bool delete()
+ * @method  bool save()
+ * @method  bool update()
+ * @method  array|MessageInterface[] getMessages(mixed $filter = null)
+ * @method static AdapterInterface getReadConnection()
+ * @method  Simple|false getRelated(string $alias, $arguments = null)
  */
 abstract class ModelsBase extends Model
 {

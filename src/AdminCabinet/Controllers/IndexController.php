@@ -10,16 +10,8 @@ namespace MikoPBX\AdminCabinet\Controllers;
 
 class IndexController extends BaseController
 {
-    public function initialize(): void
-    {
-        $this->tag->setTitle($this->translation->_('Askozia phone system'));
-        parent::initialize();
-    }
-
-    public function indexAction()
+    public function indexAction():void
     {
 
     }
-
-
 }

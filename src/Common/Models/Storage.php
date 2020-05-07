@@ -12,6 +12,9 @@ namespace MikoPBX\Common\Models;
 use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
+/**
+ * @method static mixed findFirstByUniqid(array|string|int $parameters=null)
+ */
 class Storage extends ModelsBase
 {
     /**

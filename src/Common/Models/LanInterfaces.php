@@ -12,6 +12,9 @@ namespace MikoPBX\Common\Models;
 use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
+/**
+ * @method static findFirstByInternet(int $int)
+ */
 class LanInterfaces extends ModelsBase
 {
     /**

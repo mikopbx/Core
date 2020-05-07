@@ -9,11 +9,14 @@
 
 namespace MikoPBX\Common\Models;
 
+use MikoPBX\Utilities\Debug\PhpError;
 use Phalcon\Exception;
 use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
-use Utilities\Debug\PhpError;
 
+/**
+ * @method static mixed findFirstByUniqid(array|string|int $parameters=null)
+ */
 class PbxExtensionModules extends ModelsBase
 {
     /**
@@ -77,7 +80,7 @@ class PbxExtensionModules extends ModelsBase
                 return $module->disabled === '1';
             }
         } catch (Exception $e) {
-            \MikoPBX\Utilities\Debug\PhpError::exceptionHandler($e);
+            PhpError::exceptionHandler($e);
         }
 
         return true;

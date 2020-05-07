@@ -52,7 +52,7 @@ class DialplanApplicationsController extends BaseController
     /**
      * Сохраенение настроек Dialplan Applications
      */
-    public function saveAction()
+    public function saveAction(): void
     {
         if ( ! $this->request->isPost()) {
             return;

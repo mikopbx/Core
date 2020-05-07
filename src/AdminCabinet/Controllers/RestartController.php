@@ -14,7 +14,7 @@ class RestartController extends BaseController
     /**
      * Форма с основными кнопками для перезагрузки и выключения станции
      */
-    public function indexAction()
+    public function indexAction(): void
     {
 
     }

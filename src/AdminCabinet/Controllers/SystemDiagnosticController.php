@@ -11,7 +11,7 @@ namespace MikoPBX\AdminCabinet\Controllers;
 class SystemDiagnosticController extends BaseController
 {
 
-    public function indexAction()
+    public function indexAction(): void
     {
 
     }

@@ -19,7 +19,7 @@ class OutboundRoutesController extends BaseController
     /**
      * Построениие списка исходящих маршрутов
      */
-    public function indexAction()
+    public function indexAction(): void
     {
 
         $rules        = OutgoingRoutingTable::find(['order' => 'priority']);
@@ -65,7 +65,7 @@ class OutboundRoutesController extends BaseController
      *
      * @param null $id
      */
-    public function modifyAction($id = null)
+    public function modifyAction($id = null): void
     {
 
         $rule = OutgoingRoutingTable::findFirstByid($id);
@@ -92,7 +92,7 @@ class OutboundRoutesController extends BaseController
     /**
      * Сохранение карточки исходящего маршрута
      */
-    public function saveAction()
+    public function saveAction(): void
     {
         $this->db->begin();
 
@@ -162,7 +162,7 @@ class OutboundRoutesController extends BaseController
      *
      * @param null $ruleid
      */
-    public function changePriorityAction($ruleid = null)
+    public function changePriorityAction($ruleid = null): void
     {
         $this->view->disable();
         $result = false;
@@ -179,7 +179,7 @@ class OutboundRoutesController extends BaseController
         echo json_encode($result);
     }
 
-    private function sortArrayByNameAndState($a, $b)
+    private function sortArrayByNameAndState($a, $b): ?int
     {
         $sDisabled = $this->translation->_('mo_Disabled');
         if ($a == $b) {

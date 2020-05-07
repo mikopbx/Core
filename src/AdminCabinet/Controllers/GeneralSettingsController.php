@@ -17,7 +17,7 @@ class GeneralSettingsController extends BaseController
     /**
      * Построение формы настроек
      */
-    public function modifyAction()
+    public function modifyAction(): void
     {
         $pbxSettings            = PbxSettings::getAllPbxSettings();
         $this->view->form       = new GeneralSettingsEditForm(null, $pbxSettings);
@@ -27,7 +27,7 @@ class GeneralSettingsController extends BaseController
     /**
      * Сохранение настроек системы
      */
-    public function saveAction()
+    public function saveAction(): void
     {
         if ( ! $this->request->isPost()) {
             return;

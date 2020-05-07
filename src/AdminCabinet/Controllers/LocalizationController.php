@@ -17,7 +17,7 @@ class LocalizationController extends BaseController
      *
      * @return string
      */
-    public function getTranslatedArrayAction()
+    public function getTranslatedArrayAction(): ?string
     {
         $arrStr = [];
         foreach ($this->messages as $key => $value) {

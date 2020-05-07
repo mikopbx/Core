@@ -17,7 +17,7 @@ class MailSettingsController extends BaseController
     /**
      * Построение формы настроек почты
      */
-    public function modifyAction()
+    public function modifyAction(): void
     {
         $arrKeys = $this->getEmailSettingsArray();
         foreach ($arrKeys as $key) {
@@ -33,7 +33,7 @@ class MailSettingsController extends BaseController
      *
      * @return array
      */
-    private function getEmailSettingsArray()
+    private function getEmailSettingsArray(): array
     {
         return [
             'MailSMTPHost',
@@ -58,7 +58,7 @@ class MailSettingsController extends BaseController
     /**
      * Сохранение почтовых настроек
      */
-    public function saveAction()
+    public function saveAction(): void
     {
         if ( ! $this->request->isPost()) {
             return;

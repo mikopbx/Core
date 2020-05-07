@@ -19,7 +19,8 @@ class CallDetailRecordsController extends BaseController
     /**
      * Выборка записей из журнала звонков
      *
-     * @param int $currentPage текущая страница пажинации
+     * @param int  $currentPage текущая страница пажинации
+     * @param null $parameters
      */
     public function indexAction($currentPage = 0, $parameters = null): void
     {

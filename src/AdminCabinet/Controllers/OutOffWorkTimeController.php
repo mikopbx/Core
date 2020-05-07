@@ -18,7 +18,7 @@ class OutOffWorkTimeController extends BaseController
     /**
      * Построение списка правила маршрутизации в нерабочее время
      */
-    public function indexAction()
+    public function indexAction(): void
     {
         $paremeters      = [
             'order' => 'date_from, weekday_from, time_from',

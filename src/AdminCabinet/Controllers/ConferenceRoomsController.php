@@ -19,7 +19,7 @@ class ConferenceRoomsController extends BaseController
     /**
      * Построение списка конференц комнат
      */
-    public function indexAction()
+    public function indexAction(): void
     {
         $records             = ConferenceRooms::find();
         $this->view->records = $records;
@@ -31,7 +31,7 @@ class ConferenceRoomsController extends BaseController
      *
      * @param string|NULL $uniqid
      */
-    public function modifyAction(string $uniqid = null)
+    public function modifyAction(string $uniqid = null): void
     {
         $record = ConferenceRooms::findFirstByUniqid($uniqid);
         if ($record===null) {
@@ -48,7 +48,7 @@ class ConferenceRoomsController extends BaseController
     /**
      * Сохранение конференц комнаты
      */
-    public function saveAction()
+    public function saveAction(): void
     {
         if ( ! $this->request->isPost()) {
             return;
@@ -104,7 +104,7 @@ class ConferenceRoomsController extends BaseController
      *
      * @return bool update result
      */
-    private function updateExtension(Extensions $extension, array $data)
+    private function updateExtension(Extensions $extension, array $data): bool
     {
 
         $extension->number   = $data['extension'];
@@ -128,7 +128,7 @@ class ConferenceRoomsController extends BaseController
      *
      * @return bool update result
      */
-    private function updateConferenceRoom(ConferenceRooms $room, array $data)
+    private function updateConferenceRoom(ConferenceRooms $room, array $data): bool
     {
         foreach ($room as $name => $value) {
             switch ($name) {
@@ -140,7 +140,7 @@ class ConferenceRoomsController extends BaseController
                     break;
                 default:
                     if ( ! array_key_exists($name, $data)) {
-                        continue;
+                        continue 2;
                     }
                     $room->$name = $data[$name];
             }

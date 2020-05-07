@@ -19,7 +19,7 @@ class TimeSettingsController extends BaseController
     /**
      * Форма редактирования и настроек времени на станции
      */
-    public function modifyAction()
+    public function modifyAction(): void
     {
         $parameters = [
             'key IN ({ids:array})',
@@ -42,7 +42,7 @@ class TimeSettingsController extends BaseController
      *
      * @return array
      */
-    private function getTimeSettingsArray()
+    private function getTimeSettingsArray(): array
     {
         return [
             'PBXTimezone',
@@ -56,7 +56,7 @@ class TimeSettingsController extends BaseController
      *
      * @return array
      */
-    private function generateTimezoneList()
+    private function generateTimezoneList(): array
     {
         static $regions = [
             DateTimeZone::AFRICA,
@@ -72,7 +72,7 @@ class TimeSettingsController extends BaseController
 
         $timezones = [];
         foreach ($regions as $region) {
-            $timezones = array_merge($timezones, DateTimeZone::listIdentifiers($region));
+            $timezones = array_merge(...DateTimeZone::listIdentifiers($region));
         }
 
         $timezone_offsets = [];
