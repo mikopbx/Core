@@ -309,7 +309,7 @@ DROP TABLE  {$tableName}";
     public function updateConfigs(): bool
     {
         $this->mikoPBXConfig = new MikoPBXConfig();
-        $previous_version    = $this->mikoPBXConfig->getGeneralSettings('PBXVersion');
+        $previous_version    = str_ireplace('-dev','',$this->mikoPBXConfig->getGeneralSettings('PBXVersion'));
         $current_version     = str_ireplace('-dev','',trim(file_get_contents('/etc/version')));
         if ($previous_version !== $current_version) {
             if (version_compare($previous_version, '1.0.0', '<=')) {
@@ -339,7 +339,7 @@ DROP TABLE  {$tableName}";
 
             //...add there new updates //
 
-            $this->mikoPBXConfig->setGeneralSettings('PBXVersion', $current_version);
+            $this->mikoPBXConfig->setGeneralSettings('PBXVersion', trim(file_get_contents('/etc/version')));
         }
 
         return true;

@@ -18,9 +18,9 @@ use Phalcon\Mvc\Model\ResultsetInterface;
 use Phalcon\Text;
 
 /**
- * @method mixed findFirstById
- * @method mixed findFirst
- * @method ResultsetInterface find
+ * @method static mixed findFirstById(array|string|int|null $parameters)
+ * @method static mixed findFirst(array|string|int|null $parameters)
+ * @method static ResultsetInterface find(array|string|int|null $parameters)
  */
 abstract class ModelsBase extends Model
 {
