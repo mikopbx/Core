@@ -1260,6 +1260,6 @@ class Util
     public static function echoWithSyslog($message):void
     {
         echo $message.PHP_EOL;
-        self::sysLogMsg(static::class, $message);
+        self::sysLogMsg(static::class, $message, LOG_INFO);
     }
 }

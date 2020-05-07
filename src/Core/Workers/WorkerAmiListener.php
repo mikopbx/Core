@@ -23,7 +23,7 @@ class WorkerAmiListener extends WorkerBase
      *
      * @throws Exception
      */
-    function __construct()
+    public function __construct()
     {
         parent::__construct();
         $this->client = new BeanstalkClient(WorkerCallEvents::class);
@@ -38,7 +38,7 @@ class WorkerAmiListener extends WorkerBase
     {
         $this->am->addEventHandler("userevent", [$this, "callback"]);
         while (true) {
-            $result = $this->am->wait_user_event(true);
+            $result = $this->am->waitUserEvent(true);
             if ($result == false) {
                 // Нужен реконнект.
                 usleep(100000);
@@ -89,7 +89,6 @@ class WorkerAmiListener extends WorkerBase
      */
     private function actionSendToBeanstalk($result)
     {
-
         $this->message_is_sent = false;
         $error                 = '';
         for ($i = 1; $i <= 10; $i++) {

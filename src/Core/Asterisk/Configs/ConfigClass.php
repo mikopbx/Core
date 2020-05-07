@@ -40,8 +40,8 @@ abstract class ConfigClass
      */
     public function __construct($debug = false)
     {
-        $config = $this->di->getShared('config');
         $this->di            = Di::getDefault();
+        $config = $this->di->getShared('config');
         $this->astConfDir    = $config->path('asterisk.confDir');
         $this->modulesDir    = $config->path('core.modulesDir');
         $this->booting       = $this->di->getRegistry()->booting;

@@ -15,7 +15,7 @@ use Phalcon\Db\Index;
 use Phalcon\DI;
 use Phalcon\Text;
 use RuntimeException;
-use Util;
+use MikoPBX\Core\System\Util;
 
 /**
  * Class PbxExtensionBase
