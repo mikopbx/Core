@@ -11,7 +11,6 @@ namespace MikoPBX\AdminCabinet\Controllers;
 class UpdateController extends BaseController
 {
 
-
     /**
      * Обновление станции до нового релиза
      *

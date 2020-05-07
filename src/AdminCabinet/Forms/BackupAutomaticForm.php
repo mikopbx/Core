@@ -20,7 +20,7 @@ use Phalcon\Forms\Form;
 class BackupAutomaticForm extends Form
 {
 
-    public function initialize($entity = null, $options = null)
+    public function initialize($entity = null, $options = null): void
     {
         foreach ($entity as $key => $value) {
             switch ($key) {

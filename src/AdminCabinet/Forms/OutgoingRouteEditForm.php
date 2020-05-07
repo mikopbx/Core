@@ -18,7 +18,7 @@ use Phalcon\Forms\Form;
 
 class OutgoingRouteEditForm extends Form
 {
-    public function initialize($entity = null, $options = null)
+    public function initialize($entity = null, $options = null): void
     {
 
         // ID

@@ -34,7 +34,7 @@ class ModulesDBConnectionsProvider implements ServiceProviderInterface
         $registeredDBServices = [];
         $config               = $di->getShared('config');
         // Зарегистрируем сервисы базы данных для модулей расширений
-        $results = glob($config->core->modulesDir . '*/db/*.db', GLOB_NOSORT);
+        $results = glob($config->core->modulesDir . '/*/db/*.db', GLOB_NOSORT);
         foreach ($results as $file) {
             $service_name           = self::makeServiceName($file, $config->core->modulesDir);
             $registeredDBServices[] = $service_name;

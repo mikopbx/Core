@@ -18,7 +18,7 @@ use Phalcon\Forms\Form;
 
 class GeneralSettingsEditForm extends Form
 {
-    public function initialize($entity = null, $options = null)
+    public function initialize($entity = null, $options = null): void
     {
         foreach ($options as $key => $value) {
             switch ($key) {

@@ -952,7 +952,7 @@ class ExtensionsController extends BaseController
         }
 
         usort($results,
-            [ExtensionsController::class, 'sortExtensionsArray']);
+            [__CLASS__, 'sortExtensionsArray']);
 
         $this->view->success = true;
         $this->view->results = $results;
@@ -963,7 +963,10 @@ class ExtensionsController extends BaseController
     /**
      * Сортировка массива extensions
      *
-     * @return integer
+     * @param $a
+     * @param $b
+     *
+     * @return int
      */
     private function sortExtensionsArray($a, $b): int
     {

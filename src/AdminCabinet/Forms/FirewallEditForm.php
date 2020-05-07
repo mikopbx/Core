@@ -16,7 +16,7 @@ use Phalcon\Forms\Form;
 
 class FirewallEditForm extends Form
 {
-    public function initialize($entity = null, $options = null)
+    public function initialize($entity = null, $options = null): void
     {
         $this->add(new Hidden('id'));
         $this->add(new Text('description'));

@@ -200,10 +200,10 @@ class ProvidersController extends BaseController
      * @param bool $type - sip или iax
      *
      */
-    public function saveAction($type)
+    public function saveAction($type): void
     {
         if ( ! $this->request->isPost()) {
-            return $this->forward('network/index');
+            $this->forward('network/index');
         }
         $this->db->begin();
         $data = $this->request->getPost();
@@ -381,7 +381,7 @@ class ProvidersController extends BaseController
      *
      * @param string $uniqid Уникальный идентификатор провайдера
      */
-    public function deleteAction($uniqid = null)
+    public function deleteAction($uniqid = null): void
     {
 
         $provider = Providers::findFirstByUniqid($uniqid);
@@ -389,12 +389,18 @@ class ProvidersController extends BaseController
         if ($provider!==null) {
             $this->db->begin();
             $errors = false;
-            if ($provider->Iax && ! $provider->Iax->delete()) {
-                $errors = $provider->Iax->getMessages();
+            if ($provider->Iax) {
+                $iax = $provider->Iax;
+                if (!$iax->delete()){
+                    $errors = $iax->getMessages();
+                }
             }
 
-            if ($provider->Sip && ! $provider->Sip->delete()) {
-                $errors = $provider->Sip->getMessages();
+            if ($errors===false && $provider->Sip) {
+                $sip = $provider->Sip;
+                if (!$sip->delete()){
+                    $errors = $sip->getMessages();
+                }
             }
 
             if ($errors) {
@@ -405,7 +411,7 @@ class ProvidersController extends BaseController
             }
         }
 
-        return $this->forward('providers/index');
+        $this->forward('providers/index');
 
     }
 

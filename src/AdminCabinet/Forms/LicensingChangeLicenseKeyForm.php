@@ -14,7 +14,7 @@ use Phalcon\Forms\Form;
 class LicensingChangeLicenseKeyForm extends Form
 {
 
-    public function initialize($entity = null, $options = null)
+    public function initialize($entity = null, $options = null): void
     {
         $this->add(new Text('licKey', ["value" => $options['licKey']]));
     }

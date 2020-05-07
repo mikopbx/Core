@@ -29,12 +29,12 @@ class ClassLoader
             ],
         ];
 
-        $results = glob($config->path('core.modulesDir') . '*/*/{controllers,forms}', GLOB_BRACE);
+        $results = glob($config->path('core.modulesDir') . '/*/*/{controllers,forms}', GLOB_BRACE);
         foreach ($results as $path) {
             $arDirs[] = $path;
         }
 
-        $results = glob($config->path('core.modulesDir') . '*/{setup}', GLOB_BRACE);
+        $results = glob($config->path('core.modulesDir') . '/*/{setup}', GLOB_BRACE);
         foreach ($results as $path) {
             $arDirs[] = $path;
         }

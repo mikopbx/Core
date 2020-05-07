@@ -10,7 +10,7 @@ namespace MikoPBX\Core\Asterisk\Configs;
 use MikoPBX\Core\System\MikoPBXConfig;
 use Phalcon\Di;
 
-class ConfigClass
+abstract class ConfigClass
 {
     // Директория конфигурационных файлов Asterisk;
     protected $astConfDir;
@@ -38,11 +38,13 @@ class ConfigClass
      *
      * @param bool $debug
      */
-    function __construct ($debug = false)
+    public function __construct($debug = false)
     {
-        $this->di = Di::getDefault();
-        $this->astConfDir = $this->di->getShared('config')->path('asterisk.confDir');
-        $this->booting =  $this->di->getRegistry()->booting;
+        $config = $this->di->getShared('config');
+        $this->di            = Di::getDefault();
+        $this->astConfDir    = $config->path('asterisk.confDir');
+        $this->modulesDir    = $config->path('core.modulesDir');
+        $this->booting       = $this->di->getRegistry()->booting;
         $this->mikoPBXConfig = new MikoPBXConfig();
         $this->getSettings();
         unset($debug);
@@ -52,7 +54,7 @@ class ConfigClass
     {
     }
 
-    public function generateConfig($general_settings)
+    public function generateConfig($general_settings): void
     {
         // Генерация конфигурационных файлов.
         $this->echoGenerateConfig();
@@ -66,25 +68,26 @@ class ConfigClass
     /**
      * Вывод сообщения о генерации конфига.
      */
-    protected function echoGenerateConfig()
+    protected function echoGenerateConfig(): void
     {
         if ($this->booting === true && $this->description != null) {
             echo "   |- generate config {$this->description}... ";
         }
     }
 
-    // Генерация конфигурационного файла asterisk.
-    // $general_settings - массив глобальных настроек.
-
+    /**
+     * Генерация конфигурационного файла asterisk.
+     * $general_settings - массив глобальных настроек.
+     * @param $general_settings
+     */
     protected function generateConfigProtected($general_settings)
     {
-
     }
 
     /**
      * Вывод сообщения об окончании генерации.
      */
-    protected function echoDone()
+    protected function echoDone(): void
     {
         if ($this->booting === true && $this->description != null) {
             echo "\033[32;1mdone\033[0m \n";
@@ -229,7 +232,6 @@ class ConfigClass
      */
     public function onAfterPbxStarted()
     {
-
     }
 
     /**
@@ -239,7 +241,6 @@ class ConfigClass
      */
     public function createCronTasks(&$tasks)
     {
-
     }
 
     /**
@@ -304,7 +305,6 @@ class ConfigClass
      */
     public function generatePeerPjAdditionalOptions($peer): string
     {
-
         return '';
     }
 
@@ -317,7 +317,6 @@ class ConfigClass
      */
     public function generateOutRoutContext($rout): string
     {
-
         return '';
     }
 
@@ -330,7 +329,6 @@ class ConfigClass
      */
     public function generateOutRoutAfterDialContext($rout): string
     {
-
         return '';
     }
 
@@ -343,7 +341,6 @@ class ConfigClass
      */
     public function generateIncomingRoutAfterDialContext($id): string
     {
-
         return '';
     }
 
@@ -356,16 +353,16 @@ class ConfigClass
      */
     public function generateIncomingRoutBeforeDial($rout_number): string
     {
-
         return '';
     }
 
     /**
      * Обработчик события изменения данных в базе настроек mikopbx.db.
+     *
+     * @param $data
      */
     public function modelsEventChangeData($data): void
     {
-
     }
 
     /**
@@ -375,7 +372,6 @@ class ConfigClass
      */
     public function modelsEventNeedReload($modified_tables): void
     {
-
     }
 
 }

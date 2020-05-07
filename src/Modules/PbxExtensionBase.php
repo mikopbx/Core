@@ -27,13 +27,13 @@ class PbxExtensionBase
     /**
      * Trial product version identify number from module.json
      *
-     * @var integer
+     * @var int
      */
     public $lic_product_id;
     /**
      * License feature identify number from module.json
      *
-     * @var integer
+     * @var int
      */
     public $lic_feature_id;
     /**
@@ -121,7 +121,7 @@ class PbxExtensionBase
         $this->di      = DI::getDefault();
         $this->db      = $this->di->get('db');
         $this->config  = $this->di->get('config');
-        $settings_file = "{$this->config->path('core.modulesDir')}{$this->module_uniqid}/module.json";
+        $settings_file = "{$this->config->path('core.modulesDir')}/{$this->module_uniqid}/module.json";
         if (file_exists($settings_file)) {
             $module_settings = json_decode(file_get_contents($settings_file), true);
             if ($module_settings) {
@@ -143,7 +143,7 @@ class PbxExtensionBase
                 $this->messages[] = 'Error on decode module.json';
             }
         }
-        $this->moduleDir = $this->config->path('core.modulesDir') . $this->module_uniqid;
+        $this->moduleDir = $this->config->path('core.modulesDir') .'/'. $this->module_uniqid;
         $this->messages  = [];
 
         // Create and connect database
@@ -203,7 +203,7 @@ class PbxExtensionBase
      */
     protected function installFiles(): bool
     {
-        $backupPath = "{$this->config->path('core.modulesDir')}Backup/{$this->module_uniqid}";
+        $backupPath = "{$this->config->path('core.modulesDir')}/Backup/{$this->module_uniqid}";
         if (is_dir($backupPath)) {
             Util::mwExec("cp -r {$backupPath}/db/* {$this->moduleDir}/db/");
         }
@@ -309,7 +309,7 @@ class PbxExtensionBase
     protected function unInstallFiles($keepSettings = false
     ) //: bool Пока мешает удалять и обновлять старые модули, раскоменитровать после релиза 2020.5
     {
-        $backupPath = "{$this->config->path('core.modulesDir')}Backup/{$this->module_uniqid}";
+        $backupPath = "{$this->config->path('core.modulesDir')}/Backup/{$this->module_uniqid}";
         Util::mwExec("rm -rf {$backupPath}");
         if ($keepSettings) {
             if ( ! is_dir($backupPath) && ! mkdir($backupPath, 0777, true) && ! is_dir($backupPath)) {
@@ -445,7 +445,7 @@ class PbxExtensionBase
             return $result;
         }
         $metaData        = $this->di->get('modelsMetadata');
-        $model           = new $moduleModelClass;
+        $model           = new $moduleModelClass();
         $table_structure = [];
 
         // Create columns list by code annotations

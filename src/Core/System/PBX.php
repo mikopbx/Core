@@ -58,11 +58,11 @@ class PBX
      */
     public function __construct()
     {
-        $this->di = Di::getDefault();
+        $this->di            = Di::getDefault();
         $this->mikoPBXConfig = new MikoPBXConfig();
-        $this->arr_gs = $this->mikoPBXConfig->getGeneralSettings();
-        $this->booting = $this->di->getRegistry()->booting;
-        $this->arrObject = $this->di->getShared('pbxConfModules');
+        $this->arr_gs        = $this->mikoPBXConfig->getGeneralSettings();
+        $this->booting       = $this->di->getRegistry()->booting;
+        $this->arrObject     = $this->di->getShared('pbxConfModules');
     }
 
     /**
@@ -100,7 +100,7 @@ class PBX
         $modules = PbxExtensionModules::find('disabled=0');
         foreach ($modules as $value) {
             $class_name = str_replace('Module', '', $value->uniqid);
-            $path_class = "\\Modules\\{$value->uniqid}\\Lib\\{$class_name}";
+            $path_class = "\\Modules\\{$value->uniqid}\\Lib\\{$class_name}Conf";
             if (class_exists($path_class)) {
                 try {
                     $arrObject[] = new $path_class();
@@ -123,14 +123,14 @@ class PBX
         self::start();
     }
 
-    static function logRotate(): void
+    public static function logRotate(): void
     {
         self::rotatePbxLog('messages');
         self::rotatePbxLog('security_log');
         self::rotatePbxLog('error');
     }
 
-    static function rotatePbxLog($f_name)
+    public static function rotatePbxLog($f_name)
     {
         $max_size    = 2;
         $log_dir     = System::getLogDir() . '/asterisk/';
@@ -148,7 +148,7 @@ class PBX
         /usr/sbin/asterisk -rx "logger reload" > /dev/null 2> /dev/null
     endscript
 }';
-        $varEtcPath = Di::getDefault()->getConfig()->path('core.varEtcPath');
+        $varEtcPath  = Di::getDefault()->getConfig()->path('core.varEtcPath');
         $path_conf   = $varEtcPath . '/asterisk_logrotate_' . $f_name . '.conf';
         file_put_contents($path_conf, $text_config);
         $mb10 = $max_size * 1024 * 1024;
@@ -289,7 +289,6 @@ class PBX
 
         return $result;
     }
-
 
 
     public static function checkCodec($name, $desc, $type)
@@ -569,7 +568,6 @@ class PBX
      */
     private function managerConfGenerate(): void
     {
-
         $vars = [
             'DIALEDPEERNUMBER',
             'BLKVM_CHANNEL',
@@ -601,7 +599,6 @@ class PBX
             "httptimeout = 60\n\n";
 
         if ($this->arr_gs['AMIEnabled'] === '1') {
-
             /** @var \MikoPBX\Common\Models\AsteriskManagerUsers $managers */
             /** @var \MikoPBX\Common\Models\AsteriskManagerUsers $user */
             $managers = AsteriskManagerUsers::find();
@@ -664,7 +661,6 @@ class PBX
                 $conf .= "\n";
             }
             $conf .= "\n";
-
         }
         $conf .= '[phpagi]' . "\n";
         $conf .= 'secret=phpagi' . "\n";
@@ -687,7 +683,6 @@ class PBX
      */
     private function httpConfGenerate(): void
     {
-
         $enabled = ($this->arr_gs['AJAMEnabled'] === '1') ? 'yes' : 'no';
         $conf    = "[general]\n" .
             "enabled={$enabled}\n" .
@@ -727,7 +722,6 @@ class PBX
      */
     private function featuresGenerate(): void
     {
-
         $pickup_extension = $this->mikoPBXConfig->getPickupExten();
         $conf             = "[general]\n" .
             "featuredigittimeout = {$this->arr_gs['PBXFeatureDigitTimeout']}\n" .
@@ -755,7 +749,9 @@ class PBX
      */
     private function indicationConfGenerate($country = 'ru'): void
     {
-        $data = file_get_contents('/usr/www/src/Core/Asterisk/Configs/Samples/indications.conf.sample'); // TODO::ReplaceWith path
+        $data = file_get_contents(
+            '/usr/www/src/Core/Asterisk/Configs/Samples/indications.conf.sample'
+        ); // TODO::ReplaceWith path
         $conf = str_replace('{country}', $country, $data);
         Util::fileWriteContent('/etc/asterisk/indications.conf', $conf);
     }

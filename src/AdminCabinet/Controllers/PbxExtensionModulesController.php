@@ -161,7 +161,7 @@ class PbxExtensionModulesController extends BaseController
             $controller = new $controllerClass();
             if ($controller->enableAction() === false) {
                 $messages = $this->flash->getMessages();
-                if ($messages) {
+                if (!empty($messages)) {
                     foreach ($messages as $index => $message) {
                         $this->flash->$index($message[0]);
                     }
@@ -177,7 +177,7 @@ class PbxExtensionModulesController extends BaseController
         // Проверим нет ли битых ссылок, которые мешают включить модуль
         // например удалили сотрудника, а модуль указывает на его extension
         //
-        $moduleModelsDir = $this->config->core->modulesDir . $uniqid . '/Models';
+        $moduleModelsDir = $this->config->core->modulesDir .'/'. $uniqid . '/Models';
         $results         = glob($moduleModelsDir . '/*.php', GLOB_NOSORT);
         foreach ($results as $file) {
             $className        = pathinfo($file)['filename'];
@@ -328,7 +328,7 @@ class PbxExtensionModulesController extends BaseController
             $controller = new $controllerClass();
             if ($controller->disableAction() === false) {
                 $messages = $this->flash->getMessages();
-                if ($messages) {
+                if (!empty($messages)) {
                     foreach ($messages as $index => $message) {
                         $this->flash->$index($message[0]);
                     }
@@ -345,7 +345,7 @@ class PbxExtensionModulesController extends BaseController
         // Попытаемся удалить текущий модуль, если ошибок не будет, значит можно выклчать
         // Например на модуль может ссылаться запись в таблице Extensions, которую надо удалить при отключении
         // модуля
-        $moduleModelsDir = $this->config->core->modulesDir . $uniqid . '/Models';
+        $moduleModelsDir = $this->config->core->modulesDir .'/'. $uniqid . '/Models';
         $results         = glob($moduleModelsDir . '/*.php', GLOB_NOSORT);
         foreach ($results as $file) {
             $className        = pathinfo($file)['filename'];

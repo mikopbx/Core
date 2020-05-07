@@ -20,7 +20,7 @@ use Phalcon\Forms\Form;
 
 class SipProviderEditForm extends Form
 {
-    public function initialize($entity = null, $options = null)
+    public function initialize($entity = null, $options = null): void
     {
 
         // Не нужны провайдеру

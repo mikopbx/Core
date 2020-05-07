@@ -16,7 +16,7 @@ use Phalcon\Forms\Form;
 
 class TimeSettingsEditForm extends Form
 {
-    public function initialize($entity = null, $options = null)
+    public function initialize($entity = null, $options = null): void
     {
 //        $arrNtpServersVariants = array(
 //            'ru.pool.ntp.org' => 'ru.pool.ntp.org',

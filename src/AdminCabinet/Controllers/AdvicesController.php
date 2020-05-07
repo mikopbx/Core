@@ -71,7 +71,7 @@ class AdvicesController extends BaseController
      *
      * @return array
      */
-    private function checkPasswords()
+    private function checkPasswords(): array
     {
         $messages = [];
         $arrOfDefaultValues = PbxSettings::getDefaultArrayValues();
@@ -94,7 +94,7 @@ class AdvicesController extends BaseController
      *
      * @return array
      */
-    private function checkFirewalls()
+    private function checkFirewalls(): array
     {
         if (PbxSettings::getValueByKey('PBXFirewallEnabled') === '0') {
             $messages['warning'] = $this->translation->_('adv_FirewallDisabled',
@@ -113,7 +113,7 @@ class AdvicesController extends BaseController
      *
      * @return array
      */
-    private function checkStorage()
+    private function checkStorage(): array
     {
         if ( ! is_array($_COOKIE) || ! array_key_exists(session_name(), $_COOKIE)) {
             return [];
@@ -157,7 +157,7 @@ class AdvicesController extends BaseController
      *
      * @return array
      */
-    private function checkUpdates()
+    private function checkUpdates(): array
     {
         $PBXVersion = $this->getSessionData('PBXVersion');
 
@@ -188,7 +188,7 @@ class AdvicesController extends BaseController
      * Проверка зарегистрирована ли копия Askozia
      *
      */
-    private function checkRegistration()
+    private function checkRegistration(): array
     {
         $licKey = PbxSettings::getValueByKey('PBXLicense');
         if ( ! empty($licKey)) {

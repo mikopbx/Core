@@ -18,7 +18,7 @@ use Phalcon\Forms\Form;
 
 class IvrMenuEditForm extends Form
 {
-    public function initialize($entity = null, $options = null)
+    public function initialize($entity = null, $options = null): void
     {
         // ID
         $this->add(new Hidden('id'));

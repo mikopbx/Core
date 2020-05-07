@@ -17,12 +17,13 @@ use Sentry\SentrySdk;
 /**
  * @property array sessionRO
  * @property \Phalcon\Session\Manager session
- * @property \Phalcon\Translate\Adapter\NativeArray  translation
+ * @property \Phalcon\Translate\TranslateFactory  translation
  * @property string language
  * @property \MikoPBX\AdminCabinet\Library\Elements elements
  * @property string moduleName
  * @property \Phalcon\Flash\Session flash
  * @property \Phalcon\Tag tag
+ * @property \Phalcon\Config\Adapter\Json config
  */
 class BaseController extends Controller
 {
@@ -36,7 +37,7 @@ class BaseController extends Controller
     /**
      * Инициализация базововго класса
      */
-    public function initialize()
+    public function initialize() :void
     {
         $this->di                        = $this->getDi();
         $this->actionName                = $this->dispatcher->getActionName();
@@ -146,7 +147,7 @@ class BaseController extends Controller
         // Для модулей кинем в кеш все статические картинки
         if ($this->moduleName === 'PBXExtension') {
             $modulesDir          = $this->getDI()->config->path('core.modulesDir');
-            $moduleImageDir      = $modulesDir . $this->controllerName . '/public/assets/img';
+            $moduleImageDir      = $modulesDir .'/'. $this->controllerName . '/public/assets/img';
             $moduleImageCacheDir = $this->config->adminApplication->imgCacheDir .'/'. $this->controllerName;
             if (file_exists($moduleImageDir)
                 && ! file_exists($moduleImageCacheDir)) {
@@ -249,12 +250,12 @@ class BaseController extends Controller
      *
      * @param string $uri
      */
-    protected function forward($uri)
+    protected function forward($uri): void
     {
         $uriParts = explode('/', $uri);
         $params   = array_slice($uriParts, 2);
 
-        return $this->dispatcher->forward(
+        $this->dispatcher->forward(
             [
                 'controller' => $uriParts[0],
                 'action'     => $uriParts[1],

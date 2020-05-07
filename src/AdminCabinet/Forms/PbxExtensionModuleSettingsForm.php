@@ -18,7 +18,7 @@ use Phalcon\Forms\Form;
 class PbxExtensionModuleSettingsForm extends Form
 {
 
-    public function initialize($entity = null, $options = null)
+    public function initialize($entity = null, $options = null): void
     {
 
         // ModuleUniqId

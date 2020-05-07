@@ -78,7 +78,7 @@ class TimeSettingsController extends BaseController
         $timezone_offsets = [];
         foreach ($timezones as $timezone) {
             $tz                          = new DateTimeZone($timezone);
-            $timezone_offsets[$timezone] = $tz->getOffset(new DateTime);
+            $timezone_offsets[$timezone] = $tz->getOffset(new DateTime());
         }
 
         // sort timezone by offset
@@ -120,7 +120,7 @@ class TimeSettingsController extends BaseController
             switch ($key) {
                 case "PBXManualTimeSettings":
                 case "***ALL CHECK BOXES ABOVE***":
-                    $record->value = ($data[$key] == 'on') ? "1" : "0";
+                    $record->value = ($data[$key] === 'on') ? "1" : "0";
                     break;
                 default:
                     if ( ! array_key_exists($key, $data)) {

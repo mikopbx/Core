@@ -145,7 +145,7 @@ class AsteriskManagersController extends BaseController
     /**
      * Удаление Asterisk Manager
      *
-     * @param null $amiId
+     * @param int|string $amiId
      *
      * @return void
      */

@@ -16,11 +16,12 @@ use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
 use Phalcon\Validation\Validator\Email;
 use Phalcon\Validation\Validator\PresenceOf;
+use Phalcon\Forms\Form;
 
-class UserEditForm extends FormsBase
+class UserEditForm extends Form
 {
 
-    public function initialize($entity = null, $options = null)
+    public function initialize($entity = null, $options = null): void
     {
         // ID
         $this->add(new Hidden('id'));

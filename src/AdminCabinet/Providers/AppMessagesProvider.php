@@ -63,7 +63,7 @@ class AppMessagesProvider implements ServiceProviderInterface
 
             // Возьмем английский перевод расширений
             $extensionsTranslates = [[]];
-            $results              = glob($coreConfig->modulesDir . '*/{messages}/en.php', GLOB_BRACE);
+            $results              = glob($coreConfig->modulesDir . '/*/{messages}/en.php', GLOB_BRACE);
             foreach ($results as $path) {
                 $langArr = require $path;
                 if (is_array($langArr)) {
@@ -77,7 +77,7 @@ class AppMessagesProvider implements ServiceProviderInterface
             }
             if ($language !== 'en') {
                 $additionalTranslates = [[]];
-                $results              = glob($coreConfig->modulesDir . "*/{messages}/{$language}.php",
+                $results              = glob($coreConfig->modulesDir . "/*/{messages}/{$language}.php",
                     GLOB_BRACE);
                 foreach ($results as $path) {
                     $langArr = require $path;

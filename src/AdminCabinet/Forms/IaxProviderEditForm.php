@@ -17,7 +17,7 @@ use Phalcon\Forms\Form;
 
 class IaxProviderEditForm extends Form
 {
-    public function initialize($entity = null, $options = null)
+    public function initialize($entity = null, $options = null): void
     {
         // ProviderType
         $this->add(new Hidden('providerType', ['value' => 'IAX']));

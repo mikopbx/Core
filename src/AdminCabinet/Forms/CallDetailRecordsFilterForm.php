@@ -15,7 +15,7 @@ use Phalcon\Forms\Form;
 class CallDetailRecordsFilterForm extends Form
 {
 
-    public function initialize($entity = null, $options = null)
+    public function initialize($entity = null, $options = null): void
     {
 
         $this->add(new Text('extension',

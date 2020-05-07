@@ -15,7 +15,7 @@ use Phalcon\Forms\Form;
 class BackupCreateForm extends Form
 {
 
-    public function initialize($entity = null, $options = null)
+    public function initialize($entity = null, $options = null): void
     {
         foreach ($options as $name => $value) {
             $cheskarr = ['value' => null];

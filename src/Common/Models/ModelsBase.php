@@ -55,7 +55,7 @@ abstract class ModelsBase extends Model
 
         $modules = PbxExtensionModules::find($parameters);
         foreach ($modules as $module) {
-            $moduleModelsDir = $modulesDir . $module->uniqid . '/Models';
+            $moduleModelsDir = $modulesDir .'/'. $module->uniqid . '/Models';
             $results         = glob($moduleModelsDir . '/*.php', GLOB_NOSORT);
             foreach ($results as $file) {
                 $className        = pathinfo($file)['filename'];
@@ -213,18 +213,10 @@ abstract class ModelsBase extends Model
                     case Relation::ACTION_CASCADE: // Удалим все зависимые записи
                         foreach ($relatedRecords as $record){
                             $result=$result&&$record->checkRelationsSatisfaction($theFirstDeleteRecord, $record);
+                            if ($result){
+                                $result = $record->delete();
+                            }
                         }
-                        // if ($result && count($relatedRecords)>0) {
-                        //     foreach ($relatedRecords as $record){
-                        //         if ($record->beforeDelete()===false){
-                        //             $errors = $record->getMessages();
-                        //             $object->appendMessage(
-                        //                 new Message(implode('<br>', $errors))
-                        //             );
-                        //             $result = false;
-                        //         }
-                        //     }
-                        // }
                         break;
                     case Relation::NO_ACTION: // Очистим ссылки на записи в таблицах зависимых
                         break;
