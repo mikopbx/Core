@@ -1,0 +1,10 @@
+#!/bin/sh
+/etc/rc/freeupoffload
+/etc/rc/freestorage
+
+if [ "$1" = "-r" ]
+then
+    /etc/rc/reboot;
+else
+	/sbin/poweroff;
+fi

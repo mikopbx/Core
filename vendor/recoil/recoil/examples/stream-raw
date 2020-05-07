@@ -1,0 +1,31 @@
+#!/usr/bin/env php
+<?php
+
+/**
+ * This example shows how to asynchronously read from a stream.
+ */
+
+declare(strict_types = 1);
+
+require __DIR__ . '/../vendor/autoload.php';
+
+
+use Recoil\ReferenceKernel\ReferenceKernel;
+use Recoil\Recoil;
+
+ReferenceKernel::start(function () {
+    $fp = tmpfile(); // please note that this is a *blocking* file operation
+    stream_set_blocking($fp, false);
+    stream_set_read_buffer($fp, 0);
+
+    $buffer = "<line 1>\n<line 2>\n";
+    yield Recoil::write($fp, $buffer);
+
+    fseek($fp, 0);
+
+    while (!feof($fp)) {
+        echo yield Recoil::read($fp);
+    }
+
+    fclose($fp);
+});

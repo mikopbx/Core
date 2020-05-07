@@ -1,0 +1,32 @@
+#!/usr/bin/php -f
+<?php
+/**
+ * Copyright © MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Alexey Portnov, 5 2018
+ */
+
+namespace MikoPBX\Core\Rc;
+
+use MikoPBX\Core\System\{
+    Util,
+    SystemLoader
+};
+require_once('globals_boot.php');
+
+echo 'Start /etc/rc/bootup'.PHP_EOL;
+
+if(file_exists('/tmp/ejectcd')){
+    sleep(15);
+}
+
+$mikoPBX = new SystemLoader();
+echo ' |   -  Start MikoPBX\Core\System\SystemLoader\startSystem'.PHP_EOL;
+$result = $mikoPBX->startSystem();
+
+if(true === $result){
+     if(!file_exists('/offload/livecd')) {
+         Util::mwExecBg('/etc/rc/bootup_pbx');
+     }
+}

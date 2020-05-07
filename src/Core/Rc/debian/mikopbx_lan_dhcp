@@ -1,0 +1,9 @@
+
+# printenv > /tmp/123;
+case "${reason}" in BOUND|RENEW|REBIND|REBOOT)
+    make_resolv_conf () {
+        true
+    }
+    /usr/bin/php -f /etc/rc/udhcpc.configure "${reason}"
+;;
+esac

@@ -1,0 +1,72 @@
+{
+  "database": {
+    "debugMode": false,
+    "adapter": "Sqlite",
+    "dbfile": "/cf/conf/mikopbx.db",
+    "debugLogFile": "/mountpoint/mikopbx/log/debug-mikopbx-queries.log"
+  },
+  "cdrDatabase": {
+    "debugMode": false,
+    "adapter": "Sqlite",
+    "dbfile": "/mountpoint/mikopbx/astlogs/asterisk/cdr.db",
+    "debugLogFile": "/mountpoint/mikopbx/log/debug-cdr-queries.log"
+  },
+  "eventsLogDatabase": {
+    "debugMode": false,
+    "adapter": "Sqlite",
+    "dbfile": "/mountpoint/mikopbx/astlogs/asterisk/events_log.db",
+    "debugLogFile": "/mountpoint/mikopbx/debug-events_log-queries.log"
+  },
+  "astDatabase": {
+    "adapter": "Sqlite",
+    "dbfile": "/mountpoint/mikopbx/persistence/astdb.sqlite3"
+  },
+  "core": {
+    "debugMode": false,
+    "rootPath": "/usr/www",
+    "backupPath": "/mountpoint/mikopbx/backup",
+    "rcDir": "/usr/www/src/Core/Rc",
+    "workersPath": "/usr/www/src/Core/Workers",
+    "cfPath": "/cf",
+    "varEtcPath": "/var/etc",
+    "sqlite3BinPath": "/usr/bin/sqlite3",
+    "translationsPath": "/usr/www/src/Core/Messages/",
+    "modulesDir": "/mountpoint/mikopbx/custom_modules/",
+    "tempPath": "/mountpoint/mikopbx/tmp",
+    "logsPath": "/mountpoint/mikopbx/log",
+    "phpSessionPath": "/mountpoint/mikopbx/php_session",
+    "mediaMountPoint": "/mountpoint"
+  },
+  "asterisk": {
+    "astagidir": "/usr/www/src/Core/Asterisk/agi-bin",
+    "astvarlibdir" : "/offload/asterisk",
+    "confDir" : "/etc/asterisk",
+    "astmoddir": "/offload/asterisk/modules",
+    "astdbdir": "/mountpoint/mikopbx/persistence",
+    "astlogdir" : "/mountpoint/mikopbx/astlogs/asterisk",
+    "astspooldir" : "/mountpoint/mikopbx/voicemailarchive",
+    "mediadir": "/mountpoint/mikopbx/media",
+    "monitordir" : "/mountpoint/mikopbx/voicemailarchive/monitor",
+    "mohdir": "/mountpoint/mikopbx/media/moh"
+  },
+  "beanstalk": {
+    "host": "127.0.0.1",
+    "port": 4229
+  },
+  "gnats": {
+    "host": "127.0.0.1",
+    "port": 4223
+  },
+  "adminApplication": {
+    "debugMode": false,
+    "wwwDir": "/usr/www",
+    "baseUri": "/sites/admin-cabinet/",
+    "cacheDir": "/mountpoint/mikopbx/cache",
+    "voltCacheDir": "/mountpoint/mikopbx/cache/volt",
+    "jsCacheDir": "/usr/www/sites/admin-cabinet/public/assets/js/cache",
+    "cssCacheDir": "/usr/www/sites/admin-cabinet/public/assets/css/cache",
+    "imgCacheDir": "/usr/www/sites/admin-cabinet/public/assets/img/cache",
+    "viewsDir": "/usr/www/sites/admin-cabinet/app/views/",
+    "downloadLink": "/var/spool/download_link"
+  }
+}

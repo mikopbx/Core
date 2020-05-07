@@ -1,0 +1,84 @@
+#!/bin/bash
+
+### BEGIN INIT INFO
+# Provides:          mikopbx_iptables
+# Required-Start:    $networking
+# Required-Stop:     $networking
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: iptables frontend script
+# Description:       iptables-based firewall
+### END INIT INFO
+
+test -f /lib/lsb/init-functions || exit 1
+. /lib/lsb/init-functions
+
+DESC="Iptables based firewall (MIKOPBX)"
+NAME=mikopbx_iptables
+SCRIPTNAME=/etc/init.d/mikopbx_iptables
+
+do_start(){
+  echo Starting ip-firewall...
+  if [ -e /etc/iptables/iptables.mikopbx ]
+  then
+    sh /etc/iptables/iptables.mikopbx;
+  elif [ -e /etc/iptables/iptables.default ]; then
+    /sbin/iptables-restore < /etc/iptables/iptables.default
+    echo Done.
+  else
+    echo Unable to load rules. Make sure file /etc/iptables/iptables.default exists or make default some rules set.
+  fi
+}
+
+do_stop()
+{
+  echo Turning off ip-firewall...
+  /sbin/iptables -F INPUT
+  /sbin/iptables -F OUTPUT
+  /sbin/iptables -F FORWARD
+  /sbin/iptables -P INPUT ACCEPT
+  /sbin/iptables -P OUTPUT ACCEPT
+  /sbin/iptables -P FORWARD ACCEPT
+  echo Done.
+}
+
+do_init(){
+  echo Initiating...
+  if [ ! -e /etc/iptables ]
+    then
+      echo Directory /etc/iptables not found. Creating...
+      mkdir /etc/iptables
+      echo Done.
+  fi
+  if [ ! -e /etc/iptables/iptables.default ]
+    then
+      echo Default rules set not found. Creating...
+      /sbin/iptables -F INPUT
+      /sbin/iptables -F OUTPUT
+      /sbin/iptables -F FORWARD
+      /sbin/iptables -P INPUT ACCEPT
+      /sbin/iptables -P OUTPUT ACCEPT
+      /sbin/iptables -P FORWARD ACCEPT
+      /sbin/iptables-save > /etc/iptables/iptables.clean
+      ln -s /etc/iptables/iptables.clean /etc/iptables/iptables.default
+      echo Done.
+  fi
+}
+
+do_init
+
+case "$1" in
+    start)
+        do_start
+    ;;
+    stop)
+        do_stop
+    ;;
+    restart)
+        do_stop
+        do_start
+    ;;
+    *)
+        echo Usage: "${SCRIPTNAME} start|stop|restart"
+    ;;
+esac

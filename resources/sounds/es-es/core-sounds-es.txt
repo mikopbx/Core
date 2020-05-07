@@ -1,0 +1,492 @@
+; Core Asterisk Sounds in Spanish
+
+agent-alreadyon: Ese agente ya ha sido autenticado. Por favor ingrese su numero de agente seguido por la tecla de numero.
+agent-incorrect: Clave incorrecta. Por favor, ingrese su numero de agente seguido por la tecla de numero
+agent-loggedoff: Agente desconectado
+agent-loginok: Agente conectado
+agent-newlocation: Por favor ingrese una nueva extension seguida por la tecla de numero
+agent-pass: Por favor ingrese su contrasena seguida por la tecla de numero
+agent-user: Autenticacion de agente. Por favor ingrese su numero de agente seguido por la tecla de numero
+ascending-2tone: [ascending tones]
+auth-incorrect: Contrasena incorrecta. Por favor ingrese su contrasena seguida por la tecla de numero
+auth-thankyou: Gracias
+beep: [tono simple]
+beeperr: [ tono de error ]
+conf-adminmenu-162: Por favor presione uno para activar o desactivar el modo de silencio. Dos para activar o desactivar el candado en la conferencia. Trés para expulsar al último usuario. Cuatro u seis para subir o bajar el volumen de la conferencia. Cinco para extender la conferencia. Siete o nueve para bajar o subir su propio volumen, u ocho para salir.
+conf-adminmenu-18: Por favor presione uno para activar o desactivar el modo mudo personal, dos para bloquear o desbloquear la conferencia, tres para expulsar al último usuario, cuatro o seis para decrementar o incrementar el volumen de la conferencia, cinco para extender la conferencia, siete o nueve para decrementar o incrementar su volumen, u ocho para mas opciones.
+conf-adminmenu-menu8: Presione uno para listar los usuarios de la conferencia, dos para expulsar a todos los usuarios que no son administradores, tres para activar o desactivar el modo mudo para todos los usuarios que no son administradores, cuatro para grabar esta conferencia, u ocho para salir de este menu y regresar a la conferencia.
+conf-adminmenu: Por favor marque 1 para habilitar o deshabilitar el modo mudo, 2 para bloquear o desbloquear la conferencia, 3 para expulsar al ultimo usuario, 4 o 6 para aumentar o disminuir el volumen de la conferencia, 7 o 9 para el volumen suyo, u 8 para salir.
+conf-enteringno: Entrando a la conferencia numero
+conf-errormenu: Opcion invalida
+conf-extended: La conferencia ha sido extendida.
+conf-getchannel: Por favor ingrese el numero de canal seguido por la tecla de numero.
+conf-getconfno: Por favor ingese el numero de la conferencia seguido por la tecla de numero.
+conf-getpin: Por favor ingrese la clave de entrada para la conferencia.
+conf-hasjoin: Ya esta en la conferencia.
+conf-hasleft: Ha dejado la conferencia.
+conf-invalid: Numero de conferencia invalido. Por favor intente de nuevo.
+conf-invalidpin: Clave de entrada invalida para esta conferencia.
+conf-kicked: Ha sido expulsado por el sistema de esta conferencia.
+conf-leaderhasleft: El lider ha dejado la conferencia.
+conf-locked: La conferencia ha sido bloqueada.
+conf-lockednow: La conferencia ha sido bloqueada.
+conf-muted: Esta usted ahora en modo mudo.
+conf-noempty: Por el momento no hay conferencias vacias.
+conf-nonextended: La conferencia no puede ser extendida.
+conf-now-muted: La conferencia está ahora en modo mudo.
+conf-now-recording: La conferencia está ahora siendo grabada.
+conf-now-unmuted: El modo mudo ha sido desactivado en la conferencia.
+conf-onlyone: Actualmente solo hay otro participante en la conferencia.
+conf-onlyperson: Por el momento, usted es la unica persona en la conferencia.
+conf-otherinparty: Otros participantes en la conferencia.
+conf-placeintoconf: Usted se unira a la conferencia
+conf-roll-callcomplete: Rol de llamadas completo.
+conf-thereare: Actualmente hay
+conf-unlockednow: La conferencia ha sido desbloqueada.
+conf-unmuted: Ha desactivado el modo mudo.
+conf-usermenu-162: Por favor presione uno para activar o desactivar el modo mudo personal, cuatro o seis para decrementar o incrementar el volumen de la conferencia, cinco para extender la conferencia, siete o nueve para decrementar o incrementar su volumen, u ocho para salir de este menu y regresar a la conferencia.
+conf-usermenu: Por favor marque 1 para habilitar o deshabilitar el mudo mudo, 4 o 6 para aumentar o disminuir el volumen de la conferencia, 7 o 9 para el volumen suyo, u 8 para salir.
+conf-userswilljoin: Usuarios se uniran a la conferencia.
+conf-userwilljoin: Usuario se unira a la conferencia.
+conf-waitforleader: La conferencia comenzara cuando llegue el lider.
+confbridge-begin-glorious-a: La conferencia iniciará cuando nuestro glorioso líder llegue.
+confbridge-begin-glorious-b: La conferencia iniciará cuando nuestro glorioso líder llegue.
+confbridge-begin-glorious-c: La conferencia iniciará cuando nuestro glorioso líder llegue.
+confbridge-conf-begin: La conferencia iniciará ahora.
+confbridge-conf-end: La conferencia ha terminado.
+confbridge-dec-list-vol-in: Para reducir el volumen del audio de otros participantes...
+confbridge-dec-list-vol-out: ...para reducir el volumen del audio de otros participantes.
+confbridge-dec-talk-vol-in: Para reducir el volumen de su habla hacia otros participantes...
+confbridge-dec-talk-vol-out: ...para reducir el volumen de su habla hacia otros participantes.
+confbridge-has-joined: ...ha ingresado a la conferencia.
+confbridge-has-left: ...ha dejado la conferencia.
+confbridge-inc-list-vol-in: Para incrementar el volumen del audio de otros participantes...
+confbridge-inc-list-vol-out: ...Para incrementar el volumen del audio de otros participantes...
+confbridge-inc-talk-vol-in: Para incrementar el volumen de su habla hacia otros participantes...
+confbridge-inc-talk-vol-out: ...Para incrementar el volumen de su habla hacia otros participantes.
+confbridge-invalid: Usted ha ingresado una opcion inválida.
+confbridge-join: (beep)
+confbridge-leave-in: Para salir de la conferencia...
+confbridge-leave-out: ...para salir de la conferencia.
+confbridge-lock-extended: ...para bloquear ó desbloquear la conferencia. Cuando una conferencia está bloqueada, solo los administradores pueden entrar.
+confbridge-lock-in: Para bloquear ó desbloquear la conferencia.
+confbridge-lock-no-join: La conferencia está actualmente bloqueada y no se puede ingresar.
+confbridge-lock-out-0: ...para bloquear o desbloquear la conferencia.
+confbridge-locked: La conferencia está ahora bloqueada.
+confbridge-menu-exit-in: Para salir del menú
+confbridge-menu-exit-out: ...para salir del menú.
+confbridge-mute-extended: ...para activar o desactivar el modo mudo. En modo mudo no puedes enviar audio a otros participantes; sin embargo aun escucharas el audio de los otros participantes que no esten en modo mudo.
+confbridge-mute-in: Para activar o desactivar el modo mudo...
+confbridge-mute-out: ...para activar o desactivar el modo mudo.
+confbridge-muted: Usted se encuentra ahora en modo mudo.
+confbridge-only-one: Actualmente hay otro participante en la conferencia.
+confbridge-only-participant: Usted es actualmente el único participante en la conferencia.
+confbridge-participants: ...participantes en la conferencia.
+confbridge-pin-bad: Usted ha introducido demasiados números de identificación personal inválidos.
+confbridge-pin: Por favor ingrese su número de identificación personal seguido de la tecla gato.
+confbridge-remove-last-in: Para expulsar al participante ingresado mas recientemente en la conferencia...
+confbridge-remove-last-out: ...para expulsar al participante ingresado mas recientemente en la conferencia...
+confbridge-removed: Usted ha sido expulsado de la conferencia.
+confbridge-rest-list-vol-in: Para reiniciar el volumen del audio de la conferencia al nivel por defecto.
+confbridge-rest-list-vol-out: ...para reiniciar el volumen del audio de la conferencia al nivel por defeto.
+confbridge-rest-talk-vol-in: Para reiniciar su volumen de habla al nivel por defecto...
+confbridge-rest-talk-vol-out: ...para reiniciar su volumen de habla al nivel por defecto.
+confbridge-there-are: Hay actualmente...
+confbridge-unlocked: La conferencia está ahora desbloqueada.
+confbridge-unmuted: Usted ya no se encuentra en modo mudo.
+demo-abouttotry: Intentare establecer una conexion intra-Asterisk con un servidor de demonstracion localizado en Digium. Para lograr esto, usted ya debe estar conectado a Internet. Por favor espere mientras intento establecer la conexion.
+demo-congrats: Felicidades, usted ha instalado y ejecutado exitosamente su PBX de codigo abierto, Asterisk. Tambien ha instalado una serie de sonidos y archivos de configuracion que le ayudaran a comenzar. Al igual que una PBX normal, usted navegara esta demonstracion tecleando digitos en su telefono. Si esta usando el canal de consola a cambio de un telefono fisico, puede usar los comandos "dial," "answer" y "hangup" para simular su telefono.
+demo-echodone: La prueba del eco ha sido completada.
+demo-echotest: Esta a punto de entrar a la prueba de eco. En este modo, todo lo que diga sera repetido tan pronto como sea recibido por el sistema. El proposito de esta prueba es de darle una idea de la demora del sonido entre usted y el sistema ejecutando la prueba. Para terminar, cuelgue o presione la tecla de numero.
+demo-enterkeywords: Por favor ingrese una o mas palabras claves separadas por un asterisco y despues presione la tecla de numero.
+demo-instruct: Si usted desea obtener mas informacion tecnica sobre Asterisk, marque 2 ahora. Si quiere probar la capacidad de voz sobre IP de Asterisk, marque 500 para intentar un intercambio intra-Asterisk, o una conexion IAX a un servidor de demonstracion en Digium. Para que funcione esta prueba, usted ya tiene que estar conectado a Internet y tener un modem de por lo menos 28.8 Kb. Para ejecutar una prueba de eco, marque 600; esta prueba es mas util si usted se ha conectado al servidor Asterisk a distancia. La configuracion demuestra tambien tener un solo usuario con la extension 1234 y la contrasena 4242, ese usuario esta configurado para llamar a la consola cuando se ha marcado su extension. Si usted marca 1234, puede intentar llamar a la consola. Si la consola esta ocupada o no esta disponible, tendra la posibilidad de dejar un mensaje. Para verificar el mensaje del usuario, tiene que marcar el 8500 e ingresara al sistema de mensajes.
+demo-moreinfo: Asterisk es una plataforma PBX e IVR de codigo abierto que corre en el sistema operativo Linux. Para mas informacion, visite www.asterisk.org
+demo-nogo: Lo siento, pero no fue posible crear la conexion al servidor de demostracion en Digium. Puede encontrar informacion util para solucionar el problema en la consola de Asterisk.
+demo-nomatch: Lo siento, pero no hay una correspondencia con esas palabras claves.
+demo-thanks: Hasta luego. Gracias por probar a Asterisk, la PBX de codigo abierto.
+descending-2tone: [descending tones]
+dictate/both_help: Presione el asterisco para pausar o despausar, presione la tecla de numero para entrar a un nuevo de archivo de dictado.
+dictate/enter_filename: Introduzca el nombre numerico del archivo de dictado seguido por la tecla de numero, o presione la tecla de numero para salir.
+dictate/forhelp: Marque 0 para obtener ayuda.
+dictate/pause: pausa
+dictate/paused: pausado
+dictate/play_help: Marque 1 para cambiar al modo de grabacion, 2 para reproducir rapidamente, 7 para saltar hacia atras, 8 para saltar hacia delante.
+dictate/playback: reproduccion
+dictate/playback_mode: Modo de reproduccion
+dictate/record: grabar
+dictate/record_help: Marque 1 para cambiar a modo de reproduccion, 8 para borrar el archivo y comenzar de nuevo.
+dictate/record_mode: Modo de grabacion
+dictate/truncating_audio: borrando audio
+digits/0: cero
+digits/0: diez
+digits/100-and: Ciento
+digits/11: once
+digits/12: doce
+digits/13: trece
+digits/14: catorce
+digits/15: quince
+digits/16: dieciseis
+digits/17: diecisiete
+digits/18: dieciocho
+digits/19: diecinueve
+digits/1: uno
+digits/1f: una
+digits/1m: un
+digits/200: doscientos
+digits/20: veinte
+digits/21-and: veinti
+digits/21: veintiuno
+digits/22: veintidos
+digits/23: veintitres
+digits/24: veinticuatro
+digits/25: veinticinco
+digits/26: veintiseis
+digits/27: veintisiete
+digits/28: veintiocho
+digits/29: veintinueve
+digits/2: dos
+digits/300: trescientos
+digits/30: treinta
+digits/3: tres
+digits/400: cuatrocientos
+digits/40: cuarenta
+digits/4: cuatro
+digits/500: quinientos
+digits/50: cincuenta
+digits/5: cinco
+digits/600: seiscientos
+digits/60: sesenta
+digits/6: seis
+digits/700: setecientos
+digits/70: setenta
+digits/7: siete
+digits/800: ochocientos
+digits/80: ochenta
+digits/8: ocho
+digits/900: novecientos
+digits/90: noventa
+digits/9: nueve
+digits/a-m: a.m.
+digits/afternoon: de la tarde
+digits/and: y
+digits/at: a las
+digits/day-0: Domingo
+digits/day-1: Lunes
+digits/day-2: Martes
+digits/day-3: Miercoles
+digits/day-4: Jueves
+digits/day-5: Viernes
+digits/day-6: Sabado
+digits/dollars: dolares
+digits/es-de: de
+digits/es-el: el
+digits/h-10: decimo
+digits/h-11: undecimo
+digits/h-12: duodecimo
+digits/h-13: decimo tercero
+digits/h-14: decimo cuarto
+digits/h-15: decimo quinto
+digits/h-16: decimo sexto
+digits/h-17: decimo septimo
+digits/h-18: decimo octavo
+digits/h-19: decimo noveno
+digits/h-1: primero
+digits/h-20: vigesimo
+digits/h-2: segundo
+digits/h-30: trigesimo
+digits/h-3: tercero
+digits/h-40: cuadragésimo
+digits/h-4: cuarto
+digits/h-50: quincuagésimo
+digits/h-5: quinto
+digits/h-60: sexagésimo
+digits/h-6: sexto
+digits/h-70: septuagésimo
+digits/h-7: septimo
+digits/h-80: octogésimo
+digits/h-8: octavo
+digits/h-90: nonagésimo
+digits/h-9: noveno
+digits/h-billion: billonésimo
+digits/h-hundred: centésimo
+digits/h-million: millonésimo
+digits/h-thousand: milésimo
+digits/hundred: cient
+digits/million: millon
+digits/millions: millones
+digits/minus: menos
+digits/mon-0: Enero
+digits/mon-10: Noviembre
+digits/mon-11: Diciembre
+digits/mon-1: Febrero
+digits/mon-2: Marzo
+digits/mon-3: Abril
+digits/mon-4: Mayo
+digits/mon-5: Junio
+digits/mon-6: Julio
+digits/mon-7: Agosto
+digits/mon-8: Septiembre
+digits/mon-9: Octubre
+digits/oclock: en punto
+digits/oh: oh
+digits/p-m: p.m.
+digits/pound: tecla de numero
+digits/star: asterisco
+digits/thousand: mil
+digits/today: hoy
+digits/tomorrow: manana
+digits/yesterday: ayer
+dir-firstlast: letras del primer nombre o apellido de la persona
+dir-instr: Si esta es la persona que usted busca, marque 1 ahora. Si no, por favor marque el asterisco.
+dir-intro-fn: Bienvenido al directorio. Por favor marque las tres primeras letras del nimbre de la persona que usted busca en su teclado. Use el 7 para la Q y el 9 para la Z.
+dir-intro: Bienvenido al directorio. Por favor marque las tres primeras letras del apellido de la persona que usted busca en su teclado. Use el 7 para la Q y el 9 para la Z.
+dir-last: letras del apellido de la persona
+dir-multi1: Presione
+dir-multi2: para
+dir-multi3: la extension
+dir-multi9: Presione nueve para mas resultados.
+dir-nomatch: Nadie en el directorio corresponde a su busqueda.
+dir-nomore: No hay mas entidade correspondientes en el directorio.
+dir-pls-enter: Por favor presione las primeras
+dir-usingkeypad:
+dir-welcome:
+followme/call-from: Llamada entrante de
+followme/no-recording: Usted tiene una llamada entrante
+followme/options: Presione 1 para aceptar la llamada para aceptar la llamada o 2 para rechazarla.
+followme/pls-hold-while-try: Por favor espere mientras intento enlazar su llamada
+followme/sorry: Lo siento pero no logre encontrar a la persona que usted busca
+followme/status: La persona a quien ha llamado, no se encuentra en su escritorio. Intentare localizarla por usted.
+hello-world: Hola Mundo!
+hours: horas
+invalid: Lo siento, esa es una extension invalida. Por favor intente de nuevo.
+letters/a: a
+letters/at: arroba
+letters/b: b
+letters/c: c
+letters/d: d
+letters/dash: guion
+letters/dollar: dolar
+letters/dot: punto
+letters/e: e
+letters/equals: igual
+letters/exclaimation-point: signo de exclamacion
+letters/f: f
+letters/g: g
+letters/h: h
+letters/i: i
+letters/j: j
+letters/k: k
+letters/l: l
+letters/m: m
+letters/n: n
+letters/o: o
+letters/p: p
+letters/plus: mas
+letters/q: q
+letters/r: r
+letters/s: s
+letters/slash: diagonal
+letters/space: espacio
+letters/t: t
+letters/u: u
+letters/v: v
+letters/w: w
+letters/x: x
+letters/y: y
+letters/z: z
+minutes: minutos
+pbx-invalid: Lo siento, esa es una extension invalida. Por favor intente de nuevo.
+pbx-invalidpark: Lo siento, no hay llamadas sobre esa extension. Por favor intente otra vez.
+pbx-parkingfailed: El intento de estacionamiento de llamada ha fallado.
+pbx-transfer: Transferencia
+phonetic/9_p: noveno
+phonetic/a_p: Alfa
+phonetic/b_p: Bravo
+phonetic/c_p: Carlos
+phonetic/d_p: Delta
+phonetic/e_p: Eco
+phonetic/f_p: Francia
+phonetic/g_p: Gato
+phonetic/h_p: Hotel
+phonetic/i_p: India
+phonetic/j_p: Japon
+phonetic/k_p: Kilo
+phonetic/l_p: Lima
+phonetic/m_p: Maria
+phonetic/n_p: Nancy
+phonetic/o_p: Oscar
+phonetic/p_p: Papa
+phonetic/q_p: Queso
+phonetic/r_p: Romeo
+phonetic/s_p: Sandra
+phonetic/t_p: Tango
+phonetic/u_p: Urgente
+phonetic/v_p: Victor
+phonetic/w_p: Whiskey
+phonetic/x_p: X-Ray
+phonetic/y_p: Yankee
+phonetic/z_p: Zulu
+please-try-again: Por favor intente de nuevo.
+priv-callee-options: Marque 1 si desea que esta persona se comunique con usted directamente ahora y en adelante. Marque 2 si desea enviar a esta persona al buzon de voz ahora y en adelante. Marque 3 para enviar a esta persona a las opciones de tortura ahora y en adelante. Marque 4 para enviar a esta persona al menu de no llamar gentilmente ahora y an adelante. Marque 5 para que esta persona sea comunicada directamente con usted en el futuro, pero por esta vez mandarla al buzon de voz.
+priv-callpending: Tengo una persona esperando que se llama
+priv-introsaved: Gracias, por favor espere mientras intento comunicarle.
+priv-recordintro: Al tono, por favor indique su nombre
+privacy-incorrect: Lo siento, ese numero no es valido.
+privacy-prompt: Por favor introdusca su numero de telefono empezando con la clave lada.
+privacy-thankyou: Muchas gracias.
+privacy-unident: La persona que usted desea llamar no acepta llamadas no identificadas.
+queue-callswaiting: Esperando por un representante.
+queue-holdtime: Tiempo de espera estimado es de
+queue-less-than: menos de
+queue-minute: minuto
+queue-minutes: minutos
+queue-periodic-announce: Todos nuestros representantes se encuentran ocupados, por favor espere y pronto le atenderemos.
+queue-quantity1: Por el momento hay mas de
+queue-quantity2: llamadas en espera
+queue-reporthold: Tiempo de espera
+queue-seconds: segundos
+queue-thankyou: Muchas gracias por su paciencia.
+queue-thereare: Usted es el cliente numero
+queue-youarenext: Su llamada es la primera en linea y sera atendida por el proximo representante.
+screen-callee-options: Usted tiene las siguientes opciones: marque 1 si desea comunicarse inmediatamente con la llamada, marque 2 si desea enviar la persona al buzon de mensajes, marque 3 para enviar a esta persona a las opciones de tortura, marque 4 para enviar a esta persona a una opcion cortes de no llamar.
+seconds: segundos
+spy-agent: agente
+spy-console: consola
+spy-dahdi: dahdi
+spy-h323: h-323
+spy-iax2: iax
+spy-iax: iax
+spy-jingle: jingle
+spy-local: local
+spy-mgcp: mgcp
+spy-misdn: M I S D N
+spy-mobile: Bluetooth
+spy-nbs: N B S
+spy-sip: sip
+spy-skinny: skinny
+spy-unistim: Unistim
+spy-usbradio: Radio U S B
+spy-zap: zap
+ss-noservice: El numero que usted ha marcado esta fuera de servicio. Por favor verifique el numero y vuelva a intentar.
+transfer: Por favor espere mientras le comunico con esa extension.
+tt-allbusy: Todos los representantes de la casa se encuentran ocupados asistiendo a otros vendedores por telefono. Por favor espere y su llamada sera atendida en el orden que fue recibida.
+tt-monkeys: [ grabacion de monos gritando ]
+tt-monkeysintro: Han sido llevados por monos.
+tt-somethingwrong: Algo esta terriblemente mal.
+tt-weasels: Las comadrejas se han comido nuestro sistema telefonico.
+vm-advopts: Marque 3 para obtener las opciones avanzadas.
+vm-and: y
+vm-calldiffnum: Marque 2 para llamar a otro numero.
+vm-changeto: Cambiar a que carpeta
+vm-Cust1: Carpeta 5
+vm-Cust2: Carpeta 6
+vm-Cust3: Carpeta 7
+vm-Cust4: Carpeta 8
+vm-Cust5: Carpeta 9
+vm-delete: Marque 7 para borrar el mensaje.
+vm-deleted: Mensaje borrado.
+vm-dialout: Por favor espere mientras enlazo su llamada
+vm-duration: La duracion de este mensaje es de
+vm-enter-num-to-call: Por favor marque el numero que desea llamar.
+vm-extension: extension
+vm-Family: Apellido
+vm-first: primer
+vm-for: para
+vm-forward-multiple: Presione uno para mandar este mensaje, o dos para agregar otro recipiente.
+vm-forward: Marque 1 para teclear una extension. Marque 2 para obtener el directorio.
+vm-forwardoptions: Marque 1 para dejar pendiente un mensaje o 2 para enviar el mensaje sin espera.
+vm-Friends: Amigos
+vm-from-extension: Mensaje de la extension
+vm-from-phonenumber: Mensaje del numero de telefono
+vm-from: de
+vm-goodbye: hasta pronto.
+vm-helpexit: Marque el asterisco para obtener ayuda o la tecla de numero para salir.
+vm-INBOX: nuevos
+vm-INBOXs: nuevo
+vm-incorrect-mailbox: Entrada incorrecta. Buzon?
+vm-incorrect: Entrada incorrecta
+vm-instructions: Presione 1 para escuchar sus mensajes. Presione la tecla de numero para terminar en cualquier momento.
+vm-intro: Por favor deje su mensaje despues del tono. Al terminar, cuelgue o presione la tecla de numero.
+vm-invalid-password: La contrasenia no cumple los requisitos minimos para este correo de voz. Por favor intente de nuevo.
+vm-invalidpassword: contrasena incorrecta. Por favor, intente de nuevo
+vm-isonphone: Se encuentra ocupada
+vm-isunavail: No esta libre
+vm-last: Ultimo
+vm-leavemsg: Marque 5 para dejar mensaje
+vm-login: Correo de voz. Ingrese su extension.
+vm-mailboxfull: Lo siento, pero el buzon de esta persona no puede aceptar mas mensajes.
+vm-marked-nonurgent: El estatus de urgencia ha sido desactivado para este mensaje.
+vm-marked-urgent: Este mensaje ha sido marcado como urgente.
+vm-message: mensaje
+vm-messages: mensajes
+vm-minutes: minutos
+vm-mismatch: Las contrasenas que usted tecleo no coinciden. Por favor intente de nuevo.
+vm-msginstruct: Para escuchar el siguiente mensaje marque 6. Para repetir el mensaje marque 5. Para escuchar el mensaje anterior marque 4. Para borrar o recuperar el mensaje marque 0. Para salir presione la tecla de numero.
+vm-msgsaved: Su mensaje ha sido guardado.
+vm-newpassword: Por favor ingrese su nueva contrasena seguida por la tecla de numero.
+vm-newuser: Bienvenido al correo de voz. Primero le guiare atravez del proceso de configuracion.
+vm-next: Marque 6 para escuchar el proximo mensaje.
+vm-no: no
+vm-nobodyavail: En este momento nadie esta libre para responder a su llamada
+vm-nobox: Usted no puede responder a este mensaje porque el usuario no tiene buzon para mensajes.
+vm-nomore: No hay mensajes.
+vm-nonumber: Lo siento, pero no se quien ha enviado este mensaje.
+vm-num-i-have: El numero que tengo es el
+vm-Old: viejos
+vm-Olds: viejo
+vm-onefor-full: Presione 1 para escuchar mensajes
+vm-onefor: Marque 1 para
+vm-options: Marque 1 para grabar sus mensajes que en este momento no esta libre. Marque 2 para grabar su mensaje de ocupado. Marque 3 para grabar su numbre. Marque 4 para grabar su mensaje de bienvenida provisional. Marque 5 para cambiar su contrasena. Marque el asterisco para volver a las opciones principales.
+vm-opts-full: Presione 2 para mensajes guardados en otras carpetas.  Presione 3 para grabar un mensaje a otra persona.  Presione 0 para opciones de saludo y contrasena.
+vm-opts: Marque 2 paracambiar de carpeta, 3 para opciones avanzadas, o 0 para opciones del correo.
+vm-passchanged: Sus contrasenas han sido cambiadas.
+vm-password: contrasena
+vm-pls-try-again: Por favor intente de nuevo.
+vm-press: marque
+vm-prev: Marque 4 para el mensaje previo.
+vm-reachoper: Marque 0 para hablar con la operadora.
+vm-rec-busy: Despues del tono grabe su mensaje de ocupado y presione la tecla de numero.
+vm-rec-name: Despues del tono diga su nombre y presione la tecla de numero.
+vm-rec-temp: Despues del tono grabe su mensaje provisional y presione la tecla de numero.
+vm-rec-unv: Despues del tono grabe su mensaje de no disponible y presione la tecla de numero.
+vm-received: recibido
+vm-record-prepend: Al escuchar el tono, por favor grabe la introduccion para el mensaje re-enviado. Al terminar, presione el signo de gato.
+vm-reenterpassword: Por favor ingrese su contrasena de nuevo y presione la tecla de numero.
+vm-repeat: Marque 5 para repetir el mensaje
+vm-review-nonurgent: Presione 4 para desactivar el estatus de urgencia del mensaje.
+vm-review-urgent: Presione 4 para marcar este mensaje como urgente.
+vm-review: Marque 1 para aceptar esta grabacion, 2 para escucharlo, 3 para volver a grabar su mensaje.
+vm-saved: guardado
+vm-savedto: guardado en
+vm-savefolder: En que carpeta desea guardar el mensaje ?
+vm-savemessage: o 9 para guardar este mensaje
+vm-saveoper: Marque 1 para aceptar esta grabacion, de lo contrario, por favor espere en la linea.
+vm-sorry: Lo siento, no comprendi su respuesta.
+vm-star-cancel: Marque el asterisco para anular.
+vm-starmain: Marque el asterisco para regresar a las opciones principales.
+vm-tempgreetactive: Sus saludos [temporales] estan actualmente en uso
+vm-tempgreeting2: Marque 1 para grabar su saludo temporal, o 2 para borrarlo.
+vm-tempgreeting: Marque 1 para grabar su saludo temporal.
+vm-tempremoved: Su saludo temporal ha sido borrado.
+vm-then-pound: luego presione la tecla de numero
+vm-theperson: La persona en la extension
+vm-tmpexists: Hay un saludo temporal a cambio del saludo estandar.
+vm-tocallback: Marque 2 para llamar a la persona que ha enviado este mensaje.
+vm-tocallnum: Marque 1 para llamar a este numero.
+vm-tocancel: o la tecla de numero para cancelar.
+vm-tocancelmsg: Marque el asterisco para anular este mensaje.
+vm-toenternumber: Marque 1 para ingresar un numero.
+vm-toforward: Marque 8 para enviar este mensaje a otro usuario.
+vm-tohearenv: Marque 3 para escuchar las propiedades de este mensaje.
+vm-tomakecall: Marque 4 para hacer una llamada al exterior.
+vm-tooshort: Su mensaje es muy corto.
+vm-toreply: Marque 1 para enviar una respuesta.
+vm-torerecord: Marque 3 para volver a grabar su mensaje.
+vm-undelete: Marque 7 para recuperar el mensaje.
+vm-undeleted: Mensaje recuperado.
+vm-unknown-caller: De una persona no identificada.
+vm-Urgent: urgente
+vm-whichbox: Para dejar un mesaje por favor, entre un numero de buzon.
+vm-Work: trabajo
+vm-youhave: Usted tiene
+vm-youhaveno: Usted no tiene

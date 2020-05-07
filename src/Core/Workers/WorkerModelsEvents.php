@@ -1,0 +1,426 @@
+<?php
+/**
+ * Copyright © MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Alexey Portnov, 2 2020
+ */
+namespace MikoPBX\Core\Workers;
+
+use Phalcon\Di;
+use Phalcon\Exception;
+use MikoPBX\Core\Asterisk\Configs\{IAXConf, QueueConf, SIPConf};
+use MikoPBX\Core\System\{System, BeanstalkClient, Firewall, PBX};
+use MikoPBX\Common\Models\{AsteriskManagerUsers,
+    BackupRules,
+    CallQueueMembers,
+    CallQueues,
+    ConferenceRooms,
+    CustomFiles,
+    DialplanApplications,
+    ExtensionForwardingRights,
+    Extensions,
+    ExternalPhones,
+    Fail2BanRules,
+    FirewallRules,
+    Iax,
+    IaxCodecs,
+    IncomingRoutingTable,
+    IvrMenu,
+    IvrMenuActions,
+    LanInterfaces,
+    NetworkFilters,
+    OutgoingRoutingTable,
+    OutWorkTimes,
+    PbxExtensionModules,
+    PbxSettings,
+    Sip,
+    SipCodecs,
+    SoundFiles};
+
+require_once 'globals.php';
+ini_set('error_reporting', E_ALL);
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+
+class WorkerModelsEvents extends WorkerBase
+{
+    private const R_MANAGERS = 'reloadManager';
+
+    private const R_QUEUES = 'reloadQueues';
+
+    private const R_DIALPLAN = 'reloadDialplan';
+
+    private const R_CUSTOM_F = 'updateCustomFiles';
+
+    private const R_FIREWALL = 'reloadFirewall';
+
+    private const R_NETWORK = 'networkReload';
+
+    private const R_IAX = 'reloadIax';
+
+    private const R_SIP = 'reloadSip';
+
+    private const R_FEATURES = 'reloadFeatures';
+
+    private const R_CRON = 'reloadCron';
+
+    private const R_NGINX = 'reloadNginx';
+
+    private const R_SSH = 'reloadSSH';
+
+    private const R_LICENSE = 'reloadLicense';
+
+    private const R_NATS = 'reloadNats';
+
+    private const R_VOICEMAIL = 'reloadVoicemail';
+
+    private $last_change;
+    private $modified_tables;
+    private $pbx;
+    private $timeout = 3;
+    private $arrObject;
+    private $PRIORITY_R;
+
+
+    /**
+     * Entry point
+     */
+    public function start():void
+    {
+        $this->arrObject = $this->di->getShared('pbxConfModules');
+
+        $this->PRIORITY_R = [
+            self::R_NETWORK,
+            self::R_FIREWALL,
+            self::R_SSH,
+            self::R_LICENSE,
+            self::R_NATS,
+            self::R_NGINX,
+            self::R_CRON,
+            self::R_FEATURES,
+            self::R_SIP,
+            self::R_IAX,
+            self::R_DIALPLAN,
+            self::R_QUEUES,
+            self::R_MANAGERS,
+            self::R_CUSTOM_F,
+            self::R_VOICEMAIL,
+        ];
+
+        $this->modified_tables = [];
+        $this->pbx             = new PbxSettings();
+
+        $client                = new BeanstalkClient();
+        $client->subscribe(self::class, [$this, 'processModelChanges']);
+        $client->subscribe('ping_'.self::class, [$this, 'pingCallBack']);
+        $client->setTimeoutHandler([$this, 'timeoutHandler']);
+
+
+        while (true){
+            $client->wait();
+        }
+    }
+
+    /**
+     * Parser for received Beanstalk message
+     * @param BeanstalkClient $message
+     */
+    public function processModelChanges($message):void
+    {
+        $receivedMessage = json_decode($message->getBody(),true);
+        $this->fillModifiedTables($receivedMessage);
+        $this->startReload();
+
+        // Send information about models changes to additional modules
+        foreach ($this->arrObject as $appClass) {
+            $appClass->modelsEventChangeData($receivedMessage);
+        }
+    }
+
+    /**
+     * Collect changes to determine which modules must be reloaded or reconfigured
+     * @param $data
+     */
+    private function fillModifiedTables($data):void
+    {
+        $count_changes = count($this->modified_tables);
+
+        $called_class = $data['model'] ?? '';
+        switch ($called_class) {
+            case AsteriskManagerUsers::class:
+                $this->modified_tables[self::R_MANAGERS] = true;
+                break;
+            case CallQueueMembers::class:
+                $this->modified_tables[self::R_QUEUES] = true;
+                break;
+            case CallQueues::class:
+                $this->modified_tables[self::R_QUEUES]   = true;
+                $this->modified_tables[self::R_DIALPLAN] = true;
+                break;
+            case ConferenceRooms::class:
+                $this->modified_tables[self::R_DIALPLAN] = true;
+                break;
+            case CustomFiles::class:
+                $this->modified_tables[self::R_CUSTOM_F] = true;
+                break;
+            case DialplanApplications::class:
+                $this->modified_tables[self::R_DIALPLAN] = true;
+                break;
+            case ExtensionForwardingRights::class:
+                $this->modified_tables[self::R_SIP]      = true;
+                $this->modified_tables[self::R_DIALPLAN] = true;
+                break;
+            case Extensions::class:
+                $this->modified_tables[self::R_DIALPLAN] = true;
+                break;
+            case ExternalPhones::class:
+                $this->modified_tables[self::R_DIALPLAN] = true;
+                break;
+            case Fail2BanRules::class:
+                $this->modified_tables[self::R_FIREWALL] = true;
+                break;
+            case FirewallRules::class:
+                $this->modified_tables[self::R_FIREWALL] = true;
+                break;
+            case Iax::class:
+                $this->modified_tables[self::R_IAX]      = true;
+                $this->modified_tables[self::R_DIALPLAN] = true;
+                break;
+            case IaxCodecs::class:
+                $this->modified_tables[self::R_IAX] = true;
+                break;
+            case IncomingRoutingTable::class:
+                $this->modified_tables[self::R_DIALPLAN] = true;
+                break;
+            case IvrMenu::class:
+                $this->modified_tables[self::R_DIALPLAN] = true;
+                break;
+            case IvrMenuActions::class:
+                $this->modified_tables[self::R_DIALPLAN] = true;
+                break;
+            case LanInterfaces::class:
+                $this->modified_tables[self::R_NETWORK] = true;
+                $this->modified_tables[self::R_IAX]     = true;
+                $this->modified_tables[self::R_SIP]     = true;
+                break;
+            case NetworkFilters::class:
+                $this->modified_tables[self::R_FIREWALL] = true;
+                $this->modified_tables[self::R_SIP]      = true;
+                $this->modified_tables[self::R_MANAGERS] = true;
+                break;
+            case OutgoingRoutingTable::class:
+                $this->modified_tables[self::R_DIALPLAN] = true;
+                break;
+            case OutWorkTimes::class:
+                $this->modified_tables[self::R_DIALPLAN] = true;
+                break;
+            case PbxSettings::class:
+                $this->pbx->key = $data['recordId'] ?? '';
+                if ($this->pbx->itHasFeaturesSettingsChanges()) {
+                    $this->modified_tables[self::R_FEATURES] = true;
+                }
+                if ($this->pbx->itHasAMIParametersChanges()) {
+                    $this->modified_tables[self::R_MANAGERS] = true;
+                }
+                if ($this->pbx->itHasIaxParametersChanges()) {
+                    $this->modified_tables[self::R_IAX] = true;
+                }
+                if ($this->pbx->itHasSipParametersChanges()) {
+                    $this->modified_tables[self::R_SIP] = true;
+                }
+                if ($this->pbx->itHasSSHParametersChanges()) {
+                    $this->modified_tables[self::R_SSH] = true;
+                }
+                if ($this->pbx->itHasFirewallParametersChanges()) {
+                    $this->modified_tables[self::R_FIREWALL] = true;
+                }
+                if ($this->pbx->itHasWebParametersChanges()) {
+                    $this->modified_tables[self::R_NGINX] = true;
+                }
+                if ($this->pbx->itHasCronParametersChanges()) {
+                    $this->modified_tables[self::R_CRON] = true;
+                }
+                if ($this->pbx->itHasDialplanParametersChanges()) {
+                    $this->modified_tables[self::R_DIALPLAN] = true;
+                }
+                if ($this->pbx->itHasVoiceMailParametersChanges()) {
+                    $this->modified_tables[self::R_VOICEMAIL] = true;
+                }
+                if ('PBXInternalExtensionLength' === $this->pbx->key) {
+                    $this->modified_tables[self::R_DIALPLAN] = true;
+                    $this->modified_tables[self::R_SIP]      = true;
+                }
+                if ('PBXLicense' === $this->pbx->key) {
+                    $this->modified_tables[self::R_LICENSE] = true;
+                    $this->modified_tables[self::R_NATS]    = true;
+                }
+                break;
+            case Sip::class:
+                $this->modified_tables[self::R_SIP]      = true;
+                $this->modified_tables[self::R_DIALPLAN] = true;
+                break;
+            case SipCodecs::class:
+                $this->modified_tables[self::R_SIP] = true;
+                break;
+            case SoundFiles::class:
+                $this->modified_tables[self::R_DIALPLAN] = true;
+                break;
+            case BackupRules::class:
+                $this->modified_tables[self::R_CRON] = true;
+                break;
+            case PbxExtensionModules::class:
+                $this->modified_tables[self::R_CRON] = true;
+                break;
+            default:
+        }
+
+        if ($count_changes === 0 && count($this->modified_tables) > 0) {
+            // Начинаем отсчет времени при получении первой задачи.
+            $this->last_change = time();
+        }
+    }
+
+    /**
+     * Apply changes
+     * @return array
+     */
+    private function startReload(): array
+    {
+        if (count($this->modified_tables) === 0) {
+            return [];
+        }
+        $delta = time() - $this->last_change;
+        if ($delta < $this->timeout) {
+            return [];
+        }
+
+        $results = [];
+        foreach ($this->PRIORITY_R as $method_name) {
+            $action = $this->modified_tables[$method_name] ?? null;
+            if ($action === null) {
+                continue;
+            }
+            if (method_exists($this, $method_name)) {
+                $results[$method_name] = $this->$method_name();
+            }
+        }
+
+        foreach ($this->arrObject as $appClass) {
+            $appClass->modelsEventNeedReload($this->modified_tables);
+        }
+        $this->modified_tables = [];
+
+        return $results;
+    }
+
+
+    public function reloadNats(): array
+    {
+        $system = new System();
+
+        return $system->gnatsStart();
+    }
+
+    /**
+     * @return array
+     */
+    public function reloadDialplan(): array
+    {
+        $pbx = new PBX();
+
+        return $pbx->dialplanReload();
+    }
+
+    public function reloadManager(): array
+    {
+        return PBX::managerReload();
+    }
+
+    public function reloadQueues(): array
+    {
+        return QueueConf::queueReload();
+    }
+
+    public function updateCustomFiles(): array
+    {
+        return System::updateCustomFiles();
+    }
+
+    public function reloadFirewall(): array
+    {
+        return Firewall::reloadFirewall();
+    }
+
+    public function networkReload(): array
+    {
+        System::networkReload();
+
+        return ['result' => 'Success'];
+    }
+
+    public function reloadIax(): array
+    {
+        return IAXConf::iaxReload();
+
+    }
+
+    public function reloadSip(): array
+    {
+        return SIPConf::sipReload();
+    }
+
+    public function reloadFeatures(): array
+    {
+        return PBX::featuresReload();
+    }
+
+    public function reloadCron(): array
+    {
+        return System::invokeActions(['cron' => 0]);
+    }
+
+    public function reloadNginx(): array
+    {
+        $sys = new System();
+        $sys->nginxStart();
+
+        return ['result' => 'Success'];
+    }
+
+    public function reloadSSH(): array
+    {
+        $system = new System();
+
+        return $system->sshdConfigure();
+    }
+
+    public function reloadVoicemail(): array
+    {
+        return PBX::voicemailReload();
+    }
+
+    function timeoutHandler()
+    {
+        // Обязательная обработка.
+        $this->last_change = time() - $this->timeout;
+        $this->startReload();
+    }
+
+}
+
+/**
+ * Основной цикл демона.
+ */
+
+if (isset($argv) && count($argv) > 1 && $argv[1] === 'start') {
+    cli_set_process_title(WorkerModelsEvents::class);
+    try {
+        $me = new WorkerModelsEvents();
+        $me->start();
+    } catch (Exception $e) {
+        global $g;
+        $g['error_logger']->captureException($e);
+        sleep(1);
+    }
+}

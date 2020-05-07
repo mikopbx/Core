@@ -1,0 +1,20 @@
+#!/bin/sh
+
+PATH=/sbin:/bin
+export PATH
+
+. /etc/rc/shell_functions.sh;
+
+storage='/storage/usbdisk1';
+
+file_storage_device='/var/etc/storage_device';
+if [ -f "$file_storage_device" ] ; then
+    storage=$(cat "$file_storage_device");
+fi;
+
+killprocess_by_name 'pdnsd' -KILL 0;
+killprocesses '/sbin/monitord' -KILL 1;
+killprocesses "$storage" -TERM 3;
+killprocesses "$storage" -KILL 0;
+
+f_umount "$storage";

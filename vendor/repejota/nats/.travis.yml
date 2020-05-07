@@ -1,0 +1,25 @@
+sudo: required
+services:
+  - docker
+language: php
+php:
+  - 5.6
+  - 7
+  - 7.1
+cache:
+  directories:
+   - vendor
+   - $HOME/.composer/cache
+before_install:
+  - docker run -d -p 4222:4222 --name nats nats
+before_script:
+  - make dist-clean
+  - make deps
+  - make dev-deps
+script:
+  - mkdir -p build/logs
+  - make lint-php
+  - make test
+after_script:
+  - php vendor/bin/coveralls
+  - php vendor/bin/coveralls -v

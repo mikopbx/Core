@@ -1,0 +1,14 @@
+#!/usr/bin/php -f
+<?php
+use MikoPBX\Core\System\Network;
+
+require_once 'globals_boot.php';
+
+$action  = strtolower(trim($argv[1]));
+$network = new Network();
+if ($action === 'deconfig') {
+    $network->udhcpcConfigureDeconfig();
+} elseif ('bound' === $action || 'renew' === $action) {
+    $network->udhcpcConfigureRenewBound();
+}
+   

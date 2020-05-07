@@ -1,0 +1,28 @@
+{
+    "name": "mikopbx/core",
+    "authors": [
+        {
+            "name": "Alexey Portnov",
+            "email": "apor@miko.ru"
+        },
+        {
+            "name": "Nikolay Beketov",
+            "email": "nbek@miko.ru"
+        }
+    ],
+    "require": {
+        "phpmailer/phpmailer": "^6.1",
+        "repejota/nats": "^0.8.7",
+        "php-school/cli-menu": "^4.0",
+        "php-school/terminal": "^0.2.1",
+        "pda/pheanstalk": "^4.0",
+        "recoil/recoil": "^1.0",
+        "recoil/react": "^1.0",
+        "sentry/sdk": "2.1.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "MikoPBX\\": "src/"
+        }
+    }
+}

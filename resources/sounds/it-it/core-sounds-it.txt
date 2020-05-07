@@ -1,0 +1,602 @@
+﻿; Core Asterisk Sounds in Italian
+; Elenco completo del set “core sound” dei messaggi in italiano per centralino “Asterisk”
+
+activated: Attivato.
+added: Aggiunto.
+agent-alreadyon: Quell'operatore è già loggato. Digitare il proprio numero di operatore seguito dal tasto cancelletto.
+agent-incorrect: Login errato. Prego digitare il proprio numero di operatore seguito dal tasto cancelletto.
+agent-loggedoff: operatore disconnesso.
+agent-loginok: operatore connesso
+agent-newlocation: Prego digitare un nuovo interno seguito da cancelletto.
+agent-pass: Prego digitare la propria password seguita dal tasto cancelletto.
+agent-user: Login operatore. Prego digitare il proprio numero di operatore seguito dal tasto cancelletto.
+all-circuits-busy-now: Tutti i circuiti sono ora occupati.
+ascending-2tone: [toni ascendenti]
+astcc-followed-by-the-pound-key: Seguito dal tasto cancelletto.
+at-tone-time-exactly: Al segnale acustico, il tempo sar? esattamente..
+auth-incorrect: Password errata. Prego digitare la password seguita dal tasto cancelletto.
+auth-thankyou: Grazie.
+beep: un suono beep
+beeperr: un suono beep di errore
+call-forwarding: Inoltro chiamata
+call-fwd-no-ans: Inoltro chiamata su non risposta.
+call-fwd-on-busy: Inoltro chiamata su occupato.
+call-fwd-unconditional: Inoltro chiamata incondizionato.
+call-waiting: Chiamata in attesa.
+calling: Chiamata.
+cancelled: Cancellato.
+cannot-complete-as-dialed: La chiamata non pu? essere completata cos? come composta.
+check-number-dial-again: Perpiacere controlla il numero e componi ancora.
+conf-adminmenu-162: Prego premere 1 per attivare o disattivare la propria voce, 2 per bloccare o sbloccare la conferenza, 3 per espellere l'ultimo utente, 4 o 6 per diminuire o aumentare il volume conferenza, 5 per prolungare la conferenza, 7 o 9 per diminuire o aumentare il proprio volume, o 8 per uscire.
+conf-adminmenu-18: Premere 1 per attivare o disattivare l'audio, 2 per bloccare o sbloccare la conferenza, 3 per espellere l'ultimo utente, 4 o 6 per ridurre o aumentare il volume della conferenza, 5 per prolungare la conferenza, 7 o 9 per diminuire o aumentare il volume o 8 per ulteriori opzioni.
+conf-adminmenu-menu8: Premere 1 per elencare gli utenti attualmente presenti nella conferenza, 2 per dare il via a tutti gli utenti non amministratori, 3 per disattivare o disattivare tutti gli utenti non amministratori, 4 per registrare questa conferenza, o 8 per uscire da questo menu e tornare alla conferenza.
+conf-adminmenu: Prego premere 1 per disattivare o riattivare la propria voce, 2 per bloccare o sbloccare la conferenza, 3 per espellere l'ultimo utente, 4 o 6 per ridurre o aumentare il volume della conferenza, 7 o 9 per ridurre o aumentare il proprio volume, o 8 per uscire.
+conf-enteringno: Stai entrando nella conferenza numero…
+conf-errormenu: Scelta non valida
+conf-extended: La conferenza è stata prolungata.
+conf-full: La conferenza ? piena.
+conf-getchannel: Prego digitare il numero del canale seguito dal tasto cancelletto.
+conf-getconfno: Prego digitare il proprio numero di conferenza seguito dal tasto cancelletto.
+conf-getpin: Prego inserire il numero pin della conferenza.
+conf-hasjoin: è ora in conferenza.
+conf-hasleft: ha lasciato la conferenza.
+conf-invalid: Questo non è un numero di conferenza valido. Prego riprovare.
+conf-invalidpin: quel pin non è valido per questa conferenza.
+conf-kicked: Sei stato espulso da questa conferenza
+conf-leaderhasleft: Il moderatore ha lasciato la conferenza.
+conf-locked: Questa conferenza è bloccata!
+conf-lockednow: La conferenza ora è bloccata
+conf-mute: voce disattivata
+conf-muted: Ora sei muto
+conf-noempty: Attualmente non esistono conferenze vuote.
+conf-nonextended: La conferenza non può essere prolungata.
+conf-now-muted: La conferenza ora è silenziata.
+conf-now-recording: La conferenza è ora in fase di registrazione.
+conf-now-unmuted: La conferenza ora è non silenziata.
+conf-onlyone: Attualmente c’è un altro partecipante alla conferenza.
+conf-onlyperson: Attualmente sei l'unica persona in questa conferenza.
+conf-otherinparty: altri partecipanti alla conferenza
+conf-placeintoconf: Ora sarete inseriti nella conferenza.
+conf-roll-callcomplete: Appello completo.
+conf-thereare: ci sono attualmente…
+conf-unlockednow: La conferenza è ora sbloccata
+conf-unmuted: voce riattivata
+conf-usermenu-162: Prego premere 1 per disattivare o riattivare la propria voce, 4 o 6 per ridurre o aumentare il volume della conferenza, 5 per prolungare la conferenza, 7 o 9 per ridurre o aumentare il proprio volume, o 8 per uscire
+conf-usermenu: Prego premere 1 per attivare o disattivare la propria voce, 4 o 6 per diminuire o aumentare il volume della conferenza, 7 o 9 per diminuire o aumentare il proprio volume, o 8 per uscire.
+conf-userswilljoin: gli utenti potranno partecipare alla conferenza.
+conf-userwilljoin: l’utente potrà partecipare alla conferenza.
+conf-waitforleader: La conferenza avrà inizio all’arrivo del moderatore.
+confbridge-begin-glorious-a: La conferenza inizierà quando il nostro glorioso moderatore arriverà
+confbridge-begin-glorious-b: La conferenza inizierà quando il nostro (enfatico) glorioso moderatore arriverà
+confbridge-begin-glorious-c: La conferenza inizierà all'arrivo del nostro glorioso moderatore
+confbridge-begin-leader: la conferenza inizierà all'arrivo del moderatore
+confbridge-begin-leader_PRESIDENTE: la conferenza inizierà all'arrivo del presidente (voce alternativa con presidente al posto di moderatore, visto che sono indeciso sulla traduzione)
+confbridge-conf-begin: la conferenza inizia ora
+confbridge-conf-end: la conferenza è terminata
+confbridge-dec-list-vol-in: Per ridurre il volume dell'audio degli altri partecipanti...
+confbridge-dec-list-vol-out: ...per ridurre il volume dell'audio degli altri partecipanti.
+confbridge-dec-talk-vol-in: Per ridurre il volume della tua voce agli altri partecipanti...
+confbridge-dec-talk-vol-out: ...per ridurre il volume della tua voce agli altri partecipanti.
+confbridge-has-joined: ... si è unito alla conferenza.
+confbridge-has-left: ...ha lasciato la conferenza.
+confbridge-inc-list-vol-in: Per alzare il volume dell'audio degli altri partecipanti...
+confbridge-inc-list-vol-out: ...per alzare il volume dell'audio degli altri partecipanti.
+confbridge-inc-talk-vol-in: Per alzare il volume della tua voce agli altri partecipanti...
+confbridge-inc-talk-vol-out: ...per alzare il volume della tua voce agli altri partecipanti.
+confbridge-invalid: Hai inserito un'opzione non valida.
+confbridge-join: un suono di beep ascendente
+confbridge-leave-in: Per lasciare la conferenza...
+confbridge-leave-out: ...per lasciare la conferenza.
+confbridge-leave: un suono di beep discendente
+confbridge-lock-extended: ...per bloccare, o sbloccare la conferenza. Quando una conferenza è bloccata solo gli amministratori della conferenza possono entrare.
+confbridge-lock-in: Per bloccare, o sbloccare la conferenza...
+confbridge-lock-no-join: La conferenza è al momento bloccata e non si può entrare.
+confbridge-lock-out: ...per bloccare, o sbloccare la conferenza.
+confbridge-locked: La conferenza è ora bloccata.
+confbridge-menu-exit-in: Per uscire dal menu...
+confbridge-menu-exit-out: ...per uscire dal menu.
+confbridge-mute-extended: ...per disattivare o riattivare la propria voce. Quando la tua voce è disattivata non puoi mandare audio agli altri partecipanti. Però senti ancora l'audio degli altri partecipanti attivi. confbridge-mute-in: Per disattivare o riattivare la propria voce... confbridge-mute-out: ...per disattivare o riattivare la propria voce. confbridge-only-one: C'è attualmente solo un altro partecipante alla conferenza.
+confbridge-mute-in: Per disattivare o riattivare l'audio ...
+confbridge-mute-out: ... per disattivare o riattivare l'audio.
+confbridge-muted: Voce disattivata. (You are now muted.)
+confbridge-only-one: Al momento c'è un altro partecipante alla conferenza.
+confbridge-only-participant: Sei attualmente l'unico partecipante alla conferenza.
+confbridge-participants: ...partecipanti alla conferenza.
+confbridge-pin-bad: Hai inserito troppi numeri identificativi personali invalidi.
+confbridge-pin: Prego inserire il tuo numero identificativo personale seguito dal tasto cancelletto.
+confbridge-remove-last-in: Per rimuovere il partecipante che si è unito per ultimo alla conferenza...
+confbridge-remove-last-out: ...per rimuovere il partecipante che si è unito per ultimo alla conferenza.
+confbridge-removed: Sei stato rimosso dalla conferenza.
+confbridge-rest-list-vol-in: Per riportare il volume dell'audio della conferenza al valore di default...
+confbridge-rest-list-vol-out: ...per riportare il volume dell'audio della conferenza al valore di default.
+confbridge-rest-talk-vol-in: Per riportare il volume della tua voce al valore di default...
+confbridge-rest-talk-vol-out: ...per riportare il volume della tua voce al valore di default.
+confbridge-there-are: Ci sono attualmente...
+confbridge-unlocked: La conferenza è ora sbloccata.
+confbridge-unmuted: La tua voce non è più disattivata.
+de-activated: Disattivato.
+demo-abouttotry: Sto per tentare una connessione fra macchine Asterisk con un server dimostrativo presso la Digium. Perché ciò possa funzionare devi già essere collegato ad internet. Prego attendere un attimo mentre tento di stabilire la connessione.
+demo-congrats: Congratulazioni. Hai installato ed eseguito con successo il PBX open source Asterisk. Hai anche installato una serie di suoni di esempio e file di configurazione che ti dovrebbero aiutare ad iniziare. Come un normale PBX navigherai in questa demo digitando dei numeri. Se stai usando un canale gestito da consolle al posto di un normale telefono puoi usare i comandi “dial”, “answer" e ”hangup” per simulare il comportamento di un telefono standard.
+demo-echodone: Il test dell'eco è stato completato.
+demo-echotest: Stai per iniziare un test dell'eco. In questa modalità tutto quanto dirai ti verrà ripetuto appena viene ricevuto. Lo scopo di questo test è di fornirti un'indicazione udibile della latenza fra te e il computer che sta eseguendo il programma di test dell'eco. Puoi terminare il test appendendo il ricevitore o premendo il tasto cancelletto.
+demo-enterkeywords: Prego inserire una o più parole chiave separate da asterisco e premere il tasto cancelletto.
+demo-instruct: Se desideri ascoltare maggiori informazioni tecniche su Asterisk, digita 2 ora. Se desideri testare le capacità di Voice over IP di Asterisk puoi comporre 500 per tentare una connessione tra centralini asterisk (IAX) con un server dimostrativo alla Digium. Per far sì che questo test possa funzionare devi essere connesso a internet come minimo con un modem da 28Kilobit. Per eseguire un test dell'eco componi 600. Questo test è maggiormente utile quando sei connesso a questo server Asterisk da una posizione remota. La configurazione di esempio ha anche un singolo utente con l'interno 1234 e password 4242. Tale utente è configurato per far squillare la console quando il suo interno viene chiamato. Se componi l'1234 puoi provare a far squillare la console. Se la console è occupata o non disponibile ti verrà data la possibilità di lasciare un messaggio di posta vocale. Per controllare la posta vocale dell'utente chiama l'interno 8500 per entrare nel sistema di posta vocale. Al termine puoi premere il tasto cancelletto per scollegarti dal PBX.
+demo-moreinfo: Asterisk è una piattaforma pbx e ivr completa e open source che funziona sul sistema operativo linux. Per ulteriori informazioni, visitare www.asterisk.org.
+demo-nogo: Sono spiacente ma non sono stato in grado di creare una connessione con il server Asterisk dimostrativo della Digium. Potrai trovare maggiori informazioni di debug nella console Asterisk.
+demo-nomatch: Sono spiacente, non c'è corrispondenza per quelle parole chiave
+demo-thanks: Arrivederci. Grazie per aver provato il PBX Open Source Asterisk.
+descending-2tone: [toni discendenti]
+dictate/both_help: premere asterisco per attivare o disattivare la pausa, premere cancelletto per inserire un nuovo nome di file per il dettato
+dictate/enter_filename: Inserire un nome numerico per il file del dettato seguito da cancelletto, o solo cancelletto per uscire
+dictate/forhelp: premere 0 per l'aiuto
+dictate/pause: pausa
+dictate/paused: messo in pausa
+dictate/play_help: premere 1 per passare alla modalità registrazione, premere 2 per attivare/disattivare la riproduzione accelerata, premere 7 per saltare all'indietro, premere 8 per saltare in avanti
+dictate/playback: riproduzione
+dictate/playback_mode: modalità di riproduzione
+dictate/record: registrare
+dictate/record_help: premere 1 per passare alla modalità riproduzione, premere 8 per troncare il file e ricominciare
+dictate/record_mode: modalità di registrazione
+dictate/truncating_audio: troncamento dell’audio
+digits/0: zero
+digits/10: dieci
+digits/11: undici
+digits/12: dodici
+digits/13: tredici
+digits/14: quattordici
+digits/15: quindici
+digits/16: sedici
+digits/17: diciassette
+digits/18: diciotto
+digits/19: diciannove
+digits/1: uno
+digits/20: venti
+digits/21: ventuno
+digits/28: ventotto
+digits/2: due
+digits/30: trenta
+digits/31: trentuno
+digits/38: trentotto
+digits/3: tre
+digits/40: quaranta
+digits/41: quarantuno
+digits/48: quarantotto
+digits/4: quattro
+digits/50: cinquanta
+digits/51: cinquantuno
+digits/58: cinquantotto
+digits/5: cinque
+digits/60: sessanta
+digits/61: sessantuno
+digits/68: sessantotto
+digits/6: sei
+digits/70: settanta
+digits/71: settantuno
+digits/78: settantotto
+digits/7: sette
+digits/80: ottanta
+digits/81: ottantuno
+digits/88: ottantotto
+digits/8: otto
+digits/90: novanta
+digits/91: novantuno
+digits/98: novantotto
+digits/9: nove
+digits/a-m: antimeridiane
+digits/at: alle
+digits/billion: miliardi
+digits/day-0: Domenica
+digits/day-1: Lunedì
+digits/day-2: Martedì
+digits/day-3: Mercoledì
+digits/day-4: Giovedì
+digits/day-5: Venerdì
+digits/day-6: Sabato
+digits/dollars: dollari
+digits/e: e
+digits/euros: euro
+digits/h-10: decimo
+digits/h-11: undicesimo
+digits/h-12: dodicesimo
+digits/h-13: tredicesimo
+digits/h-14: quattordicesimo
+digits/h-15: quindicesimo
+digits/h-16: sedicesimo
+digits/h-17: Diciassettesimo
+digits/h-18: diciottesimo
+digits/h-19: diciannovesimo
+digits/h-1: primo
+digits/h-20: ventesimo
+digits/h-2: secondo
+digits/h-30: trentesimo
+digits/h-3: terzo
+digits/h-40: quarantesimo
+digits/h-4: quarto
+digits/h-50: cinquantesimo
+digits/h-5: quinto
+digits/h-60: sessantesimo
+digits/h-6: sesto
+digits/h-70: settantesimo
+digits/h-7: settimo
+digits/h-80: ottantesimo
+digits/h-8: ottavo
+digits/h-90: novantesimo
+digits/h-9: nono
+digits/h-billion: miliardesimo
+digits/h-hundred: centesimo
+digits/h-million: milionesimo
+digits/h-thousand: millesimo
+digits/hours: ore
+digits/hundred: centinaia
+digits/million: milioni
+digits/minus: meno
+digits/minutes: minuti
+digits/mon-0: Gennaio
+digits/mon-10: Novembre
+digits/mon-11: Dicembre
+digits/mon-1: Febbraio
+digits/mon-2: Marzo
+digits/mon-3: Aprile
+digits/mon-4: Maggio
+digits/mon-5: Giugno
+digits/mon-6: luglio
+digits/mon-7: Agosto
+digits/mon-8: settembre
+digits/mon-9: ottobre
+digits/oclock: in punto
+digits/oh: zero
+digits/ore-1900: millenovecento... (data)
+digits/ore-2000: duemila... (data)
+digits/ore-mezzanotte: mezzanotte
+digits/ore-una: una
+digits/p-m: pomeridiane
+digits/pound: cancelletto
+digits/star: asterisco
+digits/thousand: mille
+digits/thousands: migliaia
+digits/today: oggi
+digits/tomorrow: domani
+digits/un: un
+digits/yesterday: ieri
+dir-first: lettere del nome del tuo interlocutore.
+dir-firstlast: ... lettere del nome o del cognome del tuo interlocutore.
+dir-instr: Se questa è la persona che sta cercando premere 1, altrimenti prema asterisco.
+dir-intro-fn: Benvenuto nell'elenco. Prego digitare le prime tre lettere del nome della persona cercata utilizzando la tastiera a toni del telefono. Usi il tasto 7 per la Q ed il tasto 9 per la Z.
+dir-intro: Benvenuto nell'elenco. Prego digitare le prime tre lettere del cognome della persona cercata utilizzando la tastiera a toni. Usi il tasto 7 per la Q ed il tasto 9 per la Z.
+dir-last: ... lettere del cognome del tuo interlocutore.
+dir-multi1: Premere ...
+dir-multi2: ... per ...
+dir-multi3: ... interno ...
+dir-multi9: Premere 9 per ulteriori voci.
+dir-nomatch: Nessuna voce dell'elenco corrisponde a quanto cerca.
+dir-nomore: Non ci sono ulteriori voci compatibili nell’elenco.
+dir-pls-enter: digitare le prime ...
+dir-usingkeypad: … utilizzando la tastiera a toni. Premere il tasto 7 per la lettera Q, ed il tasto 9 per la Z.
+dir-welcome: Benvenuto nell’elenco
+disabled: Disabilitato.
+do-not-disturb: Non disturbare.
+dollars: dollari
+enabled: Abilitato
+enter-num-blacklist: Perpiacere inserire il numero da aggiungere alla lista nera.
+entr-num-rmv-blklist: Perpiacere inserire il numero da rimuovere dalla lista nera.
+extension: Estensione.
+feature-not-avail-line: Quella funzione non ? attiva su questa linea.
+followme/call-from: chiamata in arrivo da
+followme/no-recording: c’è una chiamata in arrivo
+followme/options: premere 1 per accettare questa chiamata, o 2 per rifiutarla
+followme/pls-hold-while-try: prego attendere mentre tento di trovare la persona chiamata
+followme/sorry: sono spiacente, ma non mi è stato possibile trovare la persona chiamata
+followme/status: la persona chiamata non è al suo tavolo, cercherò di trovarla
+for: Per.
+from-unknown-caller: Da un chiamante sconosciuto.
+goodbye: Arrivederci!
+hello-world: Ciao mondo.
+hello: Ciao.
+hours: ore
+if-correct-press: Se questo ? corretto, premi ...
+im-sorry: Mi dispiace.
+info-about-last-call: Informazione riguardo la tua ultima chiamata.
+invalid: Spiacente, [quello] non è un interno valido. Prego riprovare.
+is-in-use: E' in uso.
+is-set-to: E' impostato per.
+is: Is.
+letters/a: a
+letters/ascii123: parentesi graffa aperta
+letters/ascii124: barra verticale
+letters/ascii125: parentesi graffa chiusa
+letters/ascii126: tilde
+letters/ascii34: doppie virgolette
+letters/ascii36: simbolo del dollaro
+letters/ascii37: percento
+letters/ascii38: e commerciale
+letters/ascii39: virgolette
+letters/ascii40: parentesi aperta
+letters/ascii41: parentesi chiusa
+letters/ascii42: asterisco
+letters/ascii44: virgola
+letters/ascii58: due punti
+letters/ascii59: punto e virgola
+letters/ascii60: minore
+letters/ascii62: maggiore
+letters/ascii63: punto interrogativo
+letters/ascii91: parentesi quadra aperta
+letters/ascii92: barra rovescia
+letters/ascii93: parentesi quadra chiusa
+letters/ascii94: accento circonflesso
+letters/ascii95: underscore
+letters/ascii96: apice acuto
+letters/asterisk: asterisco
+letters/at: a [@]
+letters/b: b
+letters/c: c
+letters/d: d
+letters/dash: trattino [-]
+letters/dollar: dollaro [$]
+letters/dot: punto [.]
+letters/e: e
+letters/equals: uguale [=]
+letters/exclaimation-point: [!] punto esclamativo
+letters/f: f
+letters/g: g
+letters/h: h
+letters/i: i
+letters/j: j
+letters/k: k
+letters/l: l
+letters/m: m
+letters/n: n
+letters/O: O
+letters/p: p
+letters/plus: più [+]
+letters/q: q
+letters/r: r
+letters/s: s
+letters/slash: slash [/]
+letters/space: spazio []
+letters/t: t
+letters/u: u
+letters/v: v
+letters/w: w
+letters/x: x
+letters/y: y
+letters/z: z
+letters/zed: zed
+location: Posizione.
+lowercase: minuscolo
+millions: milioni
+minutes: minuti
+num-was-successfully: Il numero ? stato con successo...
+number-not-answering: Il numero non sta rispondendo.
+number: Numero.
+one-moment-please: Un momento, perpiacere.
+pbx-invalid: Spiacente, [quello] non è un interno valido. Prego riprovare.
+pbx-invalidpark: Sono spiacente, non c'è nessuna chiamata parcheggiata su quell'interno. Prego riprovare.
+pbx-parkingfailed: [tentativo di] Parcheggio della chiamata non riuscito.
+pbx-transfer: trasferimento.
+phonetic/9_p: nove
+phonetic/a_p: a come ancona
+phonetic/b_p: b come bologna
+phonetic/C_P: c come como
+phonetic/d_p: d come domodossola
+phonetic/e_p: e come empoli
+phonetic/f_p: f come firenze
+phonetic/g_p: g come genova
+phonetic/h_p: h come hotel
+phonetic/i_p: i come imola
+phonetic/j_p: i lunga
+phonetic/k_p: kappa
+phonetic/l_p: l come livorno
+phonetic/m_p: m come milano
+phonetic/n_p: n come napoli
+phonetic/o_p: o come otranto
+phonetic/p_p: p come palermo
+phonetic/q_p: q come quarto
+phonetic/r_p: r come roma
+phonetic/s_p: s come savona
+phonetic/t_p: t come torino
+phonetic/u_p: u come udine
+phonetic/v_p: v come venezia
+phonetic/w_p: vu doppia
+phonetic/x_p: ics
+phonetic/y_p: ipsilon
+phonetic/z_p: z come zara
+please-try-again: Perpiacere prova ancora.
+please-try-call-later: Si prega di riprovare la chiamata più tardi.
+pls-hold-while-try: Perpiacere attendi mentre proviamo a connetterti.
+pls-try-call-later: Perpiacere riprova ancora la tua chiamata pi? tardi.
+pm-invalid-option: Quella opzione ? invalida. Perpiacere prova ancora.
+priv-callee-options: Prema 1 se desidera che questo chiamante la raggiunga direttamente ora, e in futuro.  Prema 2 se desidera mandare questo chiamante nella posta vocale ora e in futuro.  Prema 3 per mandare questo chiamante nei menù di tortura, ora e in futuro.  Prema 4 per mandare questo chiamante in un educato menù di “non chiamare”, ora e in futuro.  Prema 5 per permettere a questo chiamante di raggiungerla direttamente in futuro ma, per questa volta, mandarlo alla posta vocale.
+priv-callpending: Ho un chiamante in attesa, che si è presentato come::
+priv-introsaved: Grazie. Attenda cortesemente mentre tento di connetterla con il suo interlocutore!
+priv-recordintro: Dopo il segnale acustico, dica il suo nome.
+privacy-incorrect: Sono spiacente, quel numero non è valido.
+privacy-prompt: Immetta cortesemente il suo numero telefonico, preceduto dal prefisso.
+privacy-thankyou: Grazie.
+privacy-to-blacklist-last-caller: L'ultimo chiamante era...
+privacy-unident: la persona che sta tentando di contattare non accetta chiamate anonime.
+queue-callswaiting: In attesa di parlare con un operatore
+queue-holdtime: Il tempo di attesa stimato è attualmente di…
+queue-less-than: meno di
+queue-minute: minuto
+queue-minutes: minuti
+queue-periodic-announce: Tutti i nostri operatori sono al momento occupati. Rimanga cortesemente in linea e le risponderà il primo operatore disponibile.
+queue-quantity1: Attualmente, ci sono più di ...
+queue-quantity2: ... chiamanti in attesa di parlare con un operatore.
+queue-reporthold: tempo di attesa
+queue-seconds: Secondi
+queue-thankyou: Grazie per la tua pazienza
+queue-thereare: Attualmente sei il chiamante numero...
+queue-youarenext: La sua chiamata è ora la prima in lista e verrà risposta appena si libera un operatore.
+removed: Rimosso.
+screen-callee-options: Opzioni disponibili: prema 1 se desidera connettersi immediatamente alla chiamata in arrivo.  Prema 2 se desidera mandare questo chiamante alla posta vocale.  Prema 3 per mandare questo chiamante al menù di tortura.  Prema 4 per mandare questo chiamante in un educato menù di “non richiamare”
+seconds: secondi
+silence/10: (10 secondi di silenzio)
+silence/1: (1 secondo di silenzio)
+silence/2: (2 secondi di silenzio)
+silence/3: (3 secondi di silenzio)
+silence/4: (4 secondi di silenzio)
+silence/5: (5 secondi di silenzio)
+silence/6: (6 secondi di silenzio)
+silence/7: (7 secondi di silenzio)
+silence/8: (8 secondi di silenzio)
+silence/9: (9 secondi di silenzio)
+simul-call-limit-reached: Limite chiamata simultanea raggiunto.
+something-terribly-wrong: Qualcosa ? terribilmente sbagliato!
+sorry-youre-having-problems: Spiacente, stai avendo problemi.
+sorry: Ci dispiace.
+speed-dial-empty: La composizione rapida alla quale hai avuto accesso ? vuota.
+speed-dial: Composizione rapida.
+spy-agent: operatore
+spy-console: Console
+spy-dahdi: DAHDI
+spy-h323: H.323 (in inglese)
+spy-iax2: IAX (nota: non dice "2")
+spy-iax: IAX
+spy-jingle: Jingle
+spy-local: Local
+spy-local_LOCAL: Local
+spy-mgcp: MGCP (in inglese)
+spy-misdn: M I S D N  (emme-iessedienne)
+spy-mobile: Bluetooth Mobile
+spy-nbs: N B S (in inglese)
+spy-sip: SIP
+spy-skinny: Skinny
+spy-unistim: Unistim
+spy-usbradio: Radio USB
+spy-zap: Zap
+ss-noservice: Il numero che ha digitato non è in uso. Prego controllare il numero e riprovare.
+telephone-number: Numero di telefono.
+time: Orario.
+to-call-this-number: Per chiamare questo numero.
+to-extension: Per estendere.
+to-listen-to-it: Per ascoltarlo.
+to-rerecord-it: Per riregistrarlo.
+transfer: Prego rimanere in linea mentre provo quell'interno.
+tt-allbusy: Tutti gli operatori della ditta sono al momento impegnati con altri clienti. Rimanga in linea e la sua chiamata verrà risposta secondo l'ordine in cui è stata ricevuta.
+tt-monkeys: [suono delle scimmie urlanti]
+tt-monkeysintro: Sono stati portati via dalle scimmie
+tt-somethingwrong: C'è qualcosa di terribilmente sbagliato
+tt-weasels: Le donnole hanno mangiato il nostro sistema telefonico
+unidentified-no-callback: Non identificato, quindi non pu? essere richiamato.
+uppercase: maiuscolo
+vm-advopts: premere 3 per le opzioni avanzate
+vm-and: e
+vm-calldiffnum: premere 2 per immettere un numero diverso
+vm-changeto: Cambia verso quale cartella?
+vm-Cust1: cartella 5
+vm-Cust2: cartella 6
+vm-Cust3: cartella 7
+vm-Cust4: cartella 8
+vm-Cust5: cartella 9
+vm-delete: premere 7 per cancellare questo messaggio.
+vm-deleted: Messaggio cancellato.
+vm-dialout: prego attendere mentre connetto la sua chiamata
+vm-duration: Questo messaggio dura ...
+vm-enter-num-to-call: prego digitare il numero che desidera chiamare
+vm-extension: interno
+vm-Family: famiglia
+vm-first: primo
+vm-for: per
+vm-forward-multiple: premere 1 per inviare questo messaggio, o 2 per aggiungere un altro destinatario.
+vm-forward: premere 1 per digitare l'interno, premere 2 per usare l'elenco
+vm-forwardoptions: premere 1 per preporre un messaggio o 2 per inoltrare il messaggio senza commento
+vm-Friends: amici
+vm-from-extension: Messaggio dall’interno...
+vm-from-phonenumber: Messaggio dal numero di telefono...
+vm-from: da
+vm-goodbye: Arrivederci
+vm-helpexit: premere asterisco per l'aiuto o cancelletto per uscire.
+vm-INBOX: nuovo
+vm-incorrect-mailbox: Login non corretta. Casella di posta?
+vm-incorrect: Login non corretta.
+vm-instructions: Per accedere ai tuoi messaggi premi 1 ora. Puoi uscire dalla posta vocale in qualsiasi momento premendo il tasto cancelletto.
+vm-intro: Prego lasciare un messaggio dopo il segnale acustico. Al termine abbassare il ricevitore o premere il tasto cancelletto. (produrre un beep subito dopo, ma non in questo file).
+vm-invalid-password: la password non soddisfa i requisiti minimi per questa cassella di posta. Prego riprovare.
+vm-invalidpassword: Questa non è una password valida. Prego riprovare.
+vm-isonphone: è al telefono
+vm-isunavail: non è disponibile
+vm-last: ultimo
+vm-leavemsg: premere 5 per lasciare un messaggio
+vm-login: Posta vocale. Casella di posta?
+vm-mailboxfull: spiacente ma la casella di posta dell'utente non può accettare ulteriori messaggi
+vm-marked-nonurgent: Stato di urgente rimosso.
+vm-marked-urgent: Messaggio contrassegnato come urgente.
+vm-message: messaggio
+vm-messages: messaggi
+vm-minutes: minuti
+vm-mismatch: La password immessa e quella re-immessa non corrispondono. Prego riprovare.
+vm-msgforwarded: Il tuo messaggio è stato inoltrato con successo.
+vm-msginstruct: Per ascoltare il messaggio seguente premere 6, per ripetere questo messaggio premere 5, per ascoltare il messaggio precedente premere 4, per cancellare o ripristinare questo messaggio premere zero, per uscire dalla posta vocale premere cancelletto.
+vm-msgsaved: Il [suo] messaggio è stato salvato.
+vm-newpassword: Prego digitare la nuova password seguita dal tasto cancelletto.
+vm-newuser: Benvenuto nel sistema di gestione della posta vocale. In primo luogo, ti guiderò attraverso un breve processo di installazione.
+vm-next: Premere 6 per ascoltare il messaggio successivo.
+vm-no: nessun
+vm-nobodyavail: Al momento nessuno degli operatori è in grado di rispondere alla sua chiamata.
+vm-nobox: non è possibile rispondere a questo messaggio perché il mittente non ha una casella di posta
+vm-nomore: Nessun ulteriore messaggio.
+vm-nonumber: Sono spiacente ma non so chi abbia mandato questo messaggio
+vm-num-i-have: il numero che ho è
+vm-nuovi: nuovi
+vm-nuovo: nuovo
+vm-Old: vecchio
+vm-onefor-full: Premere uno per ascoltare ...
+vm-onefor: Premere 1 per
+vm-options: Premere 1 per registrare il proprio messaggio di non disponibile, premere 2 per registrare il proprio messaggio di occupato, premere 3 per registrare il proprio nome, premere 4 per registrare il proprio messaggio provvisorio di saluto, premere 5 per cambiare la propria password, premere asterisco per tornare al menù principale.
+vm-opts-full: premere 2 per accedere ai messaggi salvati in altre cartelle. Premere 3 per registrare un messaggio per un altra casella di posta. Premere 0 per la gestione dei messaggi di benvenuto e della password.
+vm-opts: premere 2 per cambiare cartella, premere 3 per le opzioni avanzate, premere 0 per le opzioni della casella di posta.
+vm-passchanged: Le tue password sono state modificate.
+vm-password: password
+vm-pls-try-again: prego riprovare
+vm-press: premi
+vm-prev: Premere 4 per il messaggio precedente
+vm-reachoper: premere 0 per parlare con un operatore
+vm-rec-busy: Dopo il segnale acustico inserire il proprio messaggio di occupato e premere il tasto cancelletto.
+vm-rec-name: Dopo il segnale acustico inserire il proprio nome e premere il tasto cancelletto.
+vm-rec-temp: Dopo il segnale acustico, registrare il proprio messaggio provvisorio, e poi premere il tasto cancelletto.
+vm-rec-unv: Dopo il segnale acustico registra il tuo messaggio di non disponibile e quindi premi il tasto cancelletto.
+vm-received: ricevuto
+vm-record-prepend: Dopo il segnale acustico, prego registrare un'introduzione al messaggio inoltrato. Al termine, premere il tasto cancelletto.
+vm-reenterpassword: Prego digitare nuovamente la password seguita dal tasto cancelletto.
+vm-repeat: premere 5 per ripetere il messaggio corrente.
+vm-review-nonurgent: premere 4 per rimuovere lo status di urgente di questo messaggio.
+vm-review-urgent: premere 4 per contrassegnare questo messaggio come urgente.
+vm-review: premere 1 per accettare questa registrazione, premere 2 per ascoltarla, premere 3 per ri-registrare il messaggio
+vm-saved: salvato
+vm-savedto: salvato in...
+vm-savefolder: In quale cartella devo salvare il messaggio?
+vm-savemessage: o 9 per salvare questo messaggio
+vm-saveoper: premere 1 per accettare questa registrazione, altrimenti continuare a rimanere in attesa
+vm-sorry: spiacente, non ho capito la tua risposta.
+vm-star-cancel: premere asterisco per cancellare
+vm-starmain: premere asterisco per tornare al menu principale
+vm-tempgreetactive: Il tuo messaggio temporaneo di saluto è attualmente attivo
+vm-tempgreeting2: premere 1 per registrare il proprio messaggio provvisorio di saluto, o premere 2 per eliminarlo
+vm-tempgreeting: premere 1 per registrare il proprio messaggio provvisorio di saluto
+vm-tempremoved: Il tuo messaggio provvisorio di saluto è stato eliminato vm-then-pound: poi premere cancelletto
+vm-then-pound: quindi premere sterlina
+vm-theperson: La persona all’interno...
+vm-tmpexists: C'è un saluto temporaneo, che viene usato al posto del tuo messaggio di benvenuto standard.
+vm-tocallback: premere 2 per chiamare la persona che ha mandato questo messaggio
+vm-tocallnum: premere 1 per chiamare questo numero
+vm-tocancel: o cancelletto per cancellare.
+vm-tocancelmsg: premere asterisco per cancellare questo messaggio
+vm-toenternumber: premere 1 per immettere un numero
+vm-toforward: Premere 8 per inoltrare il messaggio ad un altro utente
+vm-tohearenv: premere 3 per sentire l'intestazione del messaggio
+vm-tomakecall: premere 4 per effettuare una chiamata in uscita
+vm-tooshort: il messaggio è troppo corto
+vm-toreply: premere 1 per mandare una risposta
+vm-torerecord: premere il tasto 3 per registrare nuovamente il messaggio
+vm-undelete: Premere 7 per ripristinare questo messaggio
+vm-undeleted: Messaggio ripristinato.
+vm-unknown-caller: da un chiamante sconosciuto
+vm-Urgent: urgente
+vm-vecchi: vecchi
+vm-vecchio: vecchio
+vm-whichbox: Per lasciare un messaggio, prego digitare un numero di casella di posta.
+vm-Work: lavoro
+vm-youhave: hai
+with: Con.
+you-entered: Hai inserito.
+your: Il tuo.

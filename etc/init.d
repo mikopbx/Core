@@ -1,1 +1,0 @@
-rc.d/init.d

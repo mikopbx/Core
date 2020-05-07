@@ -1,0 +1,29 @@
+#!/usr/bin/env php
+<?php
+
+/**
+ * This example shows how to call one coroutine from another.
+ */
+
+declare(strict_types = 1);
+
+require __DIR__ . '/../vendor/autoload.php';
+
+use Recoil\ReferenceKernel\ReferenceKernel;
+
+function hello()
+{
+    echo 'Hello, ';
+    yield;
+}
+
+function world()
+{
+    echo 'world!' . PHP_EOL;
+    yield;
+}
+
+ReferenceKernel::start(function () {
+    yield hello();
+    yield world();
+});

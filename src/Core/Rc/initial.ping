@@ -1,0 +1,26 @@
+<?php
+/**
+ * Copyright © MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Alexey Portnov, 2 2020
+ */
+namespace MikoPBX\Core\Rc;
+
+use MikoPBX\Core\System\{
+    Util
+};
+require_once('globals_boot.php');
+$fp = fopen('php://stdin', 'r');
+echo "\n";
+echo Util::translate('Enter a host name or IP address: ');
+
+$pinghost = trim(fgets($fp));
+if ($pinghost) {
+    echo "\n";
+    passthru("/bin/ping -c3 " . escapeshellarg($pinghost));
+    echo "\n".Util::translate('Press ENTER to continue.')."\n";
+    fgets($fp);
+}else{
+    sleep(4);
+}

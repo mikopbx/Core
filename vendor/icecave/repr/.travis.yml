@@ -1,0 +1,25 @@
+sudo: false
+language: php
+php:
+- '7.1'
+- '7.2'
+- '7.3'
+- '7.4snapshot'
+- 'nightly'
+matrix:
+  fast_finish: true
+  allow_failures:
+  - php: '7.4snapshot'
+  - php: 'nightly'
+before_install:
+- phpenv config-rm xdebug.ini || true
+- "[[ $GITHUB_TOKEN ]] && composer config --global github-oauth.github.com $GITHUB_TOKEN"
+install: composer install --no-interaction
+script: phpdbg -qrr vendor/bin/phpunit
+after_script: bash <(curl -s https://codecov.io/bash)
+env:
+  global:
+    secure: AFGBABndywa34PpjoHcwExHZq1SEnzLHhF9/Vbd+KEATqJXt1ozAh4yQdmQg8ADFA04eLiiksn++Tl31rBcfFfs8tS66vuITe1js8oHTSM53WnIGMZBAEwFNbn+UVPx4iMTchr9XR2npZUwK7lNlj+yO/4bcZrUU+6pbcSPr4XE=
+cache:
+  directories:
+  - "$HOME/.composer/cache/files"

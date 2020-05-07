@@ -1,0 +1,36 @@
+{
+    "name": "icecave/repr",
+    "description": "A library for generating string representations of any value, inspired by Python's reprlib library.",
+    "keywords": [
+        "string",
+        "representation",
+        "human",
+        "readable",
+        "repr"
+    ],
+    "homepage": "https://github.com/icecave/repr",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "James Harris",
+            "email": "mailjamesharris@gmail.com",
+            "homepage": "https://github.com/jmalloc"
+        }
+    ],
+    "require": {
+        "php": ">=7.1"
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^2",
+        "phake/phake": "^1",
+        "phpunit/phpunit": "^7"
+    },
+    "autoload": { "psr-4": { "Icecave\\Repr\\": "src" } },
+    "autoload-dev": { "psr-4": { "Icecave\\Repr\\": "test/src" } },
+    "config": {
+        "sort-packages": true,
+        "platform": {
+            "php": "7.2"
+        }
+    }
+}
