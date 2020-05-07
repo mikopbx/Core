@@ -20,7 +20,7 @@ mountoffload()
   fi
 	if [ -d "${wwwdir}" ]; then
 		echo " - Copy phalcon config file to /etc/inc ..."
-		cp "${wwwdir}"/src/config/mikopbx-settings.json /etc/inc/;
+		cp "${wwwdir}"/config/mikopbx-settings.json /etc/inc/;
 	fi
 	umount -f /offload 2> /dev/null
 	mount -t "${type}" -r UUID="$uuid" /offload 2> /dev/null;
