@@ -35,8 +35,7 @@
     "tempPath": "/mountpoint/mikopbx/tmp",
     "logsPath": "/mountpoint/mikopbx/log",
     "phpSessionPath": "/mountpoint/mikopbx/php_session",
-    "mediaMountPoint": "/mountpoint",
-    "managedCachePath": "/mountpoint/mikopbx/tmp/managedCache"
+    "mediaMountPoint": "/mountpoint"
   },
   "asterisk": {
     "astagidir": "/usr/www/src/Core/Asterisk/agi-bin",

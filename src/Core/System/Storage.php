@@ -1014,7 +1014,6 @@ class Storage
         $www_dirs[] = $this->config->path('database.logsPath');
         $www_dirs[] = $this->config->path('core.phpSessionPath');
         $www_dirs[] = $this->config->path('core.tempPath');
-        $www_dirs[] = $this->config->path('core.managedCachePath');
 
         // Add read rights
         Util::mwExec('find ' . implode(' ', $www_dirs). ' -type d -exec chmod 755 {} \;');

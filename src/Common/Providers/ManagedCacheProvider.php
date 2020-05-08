@@ -38,16 +38,16 @@ class ManagedCacheProvider implements ServiceProviderInterface
      */
     public function register(DiInterface $di): void
     {
-        $managedCachePath = $di->getShared('config')->path('core.managedCachePath');
+        $tempPath = $di->getShared('config')->path('core.tempPath');
         $di->setShared(
             'managedCache',
-            function () use ($managedCachePath) {
+            function () use ($tempPath) {
                 $serializerFactory = new SerializerFactory();
 
                 $options = [
                     'defaultSerializer' => 'Json',
                     'lifetime'          => 7200,
-                    'storageDir'        => $managedCachePath,
+                    'storageDir'        => $tempPath.'/managedCache',
                 ];
 
                 $adapter = new Stream($serializerFactory, $options);
