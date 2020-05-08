@@ -1114,7 +1114,7 @@ server 2.pool.ntp.org';
     /**
      * Запуск SSH сервера.
      **/
-    public function sshdConfigure()
+    public function sshdConfigure(): array
     {
         @file_put_contents('/var/log/lastlog', '');
         $result       = [
@@ -1168,7 +1168,7 @@ server 2.pool.ntp.org';
     /**
      * Сохранение ключей аторизации.
      */
-    public function generateAuthorizedKeys()
+    public function generateAuthorizedKeys(): void
     {
         $ssh_dir = '/root/.ssh';
         Util::mwMkdir($ssh_dir);

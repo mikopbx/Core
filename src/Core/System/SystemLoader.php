@@ -74,7 +74,6 @@ class SystemLoader
         Util::echoGreenDone();
 
         Util::echoWithSyslog(' - Configuring SSH console ...  ');
-        $system->updateShellPassword();
         $system->sshdConfigure();
         Util::echoGreenDone();
 

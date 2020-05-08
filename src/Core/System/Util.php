@@ -15,7 +15,6 @@ use MikoPBX\Common\Models\{CallEventsLogs, CustomFiles};
 use Phalcon\Db\Adapter\Pdo\Sqlite;
 use Phalcon\Db\Column;
 use Phalcon\Di;
-use Phalcon\Loader;
 use ReflectionClass;
 
 /**

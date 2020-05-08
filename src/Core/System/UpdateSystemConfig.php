@@ -339,7 +339,6 @@ DROP TABLE  {$tableName}";
 
             //...add here new updates //
 
-            $storage = new Storage();
             $this->mikoPBXConfig->setGeneralSettings('PBXVersion', trim(file_get_contents('/etc/version')));
         }
 

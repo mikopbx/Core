@@ -77,7 +77,11 @@ class WorkerModelsEvents extends WorkerBase
 
     private $last_change;
     private $modified_tables;
-    private $pbx;
+
+    /**
+     * @var PbxSettings
+     */
+    private $pbxSettings;
     private $timeout = 3;
     private $arrObject;
     private $PRIORITY_R;
@@ -109,7 +113,7 @@ class WorkerModelsEvents extends WorkerBase
         ];
 
         $this->modified_tables = [];
-        $this->pbx             = new PbxSettings();
+        $this->pbxSettings     = new PbxSettings();
 
         $client = new BeanstalkClient();
         $client->subscribe(self::class, [$this, 'processModelChanges']);
@@ -218,42 +222,42 @@ class WorkerModelsEvents extends WorkerBase
                 $this->modified_tables[self::R_DIALPLAN] = true;
                 break;
             case PbxSettings::class:
-                $this->pbx->key = $data['recordId'] ?? '';
-                if ($this->pbx->itHasFeaturesSettingsChanges()) {
+                $this->pbxSettings->key = $data['recordId'] ?? '';
+                if ($this->pbxSettings->itHasFeaturesSettingsChanges()) {
                     $this->modified_tables[self::R_FEATURES] = true;
                 }
-                if ($this->pbx->itHasAMIParametersChanges()) {
+                if ($this->pbxSettings->itHasAMIParametersChanges()) {
                     $this->modified_tables[self::R_MANAGERS] = true;
                 }
-                if ($this->pbx->itHasIaxParametersChanges()) {
+                if ($this->pbxSettings->itHasIaxParametersChanges()) {
                     $this->modified_tables[self::R_IAX] = true;
                 }
-                if ($this->pbx->itHasSipParametersChanges()) {
+                if ($this->pbxSettings->itHasSipParametersChanges()) {
                     $this->modified_tables[self::R_SIP] = true;
                 }
-                if ($this->pbx->itHasSSHParametersChanges()) {
+                if ($this->pbxSettings->itHasSSHParametersChanges()) {
                     $this->modified_tables[self::R_SSH] = true;
                 }
-                if ($this->pbx->itHasFirewallParametersChanges()) {
+                if ($this->pbxSettings->itHasFirewallParametersChanges()) {
                     $this->modified_tables[self::R_FIREWALL] = true;
                 }
-                if ($this->pbx->itHasWebParametersChanges()) {
+                if ($this->pbxSettings->itHasWebParametersChanges()) {
                     $this->modified_tables[self::R_NGINX] = true;
                 }
-                if ($this->pbx->itHasCronParametersChanges()) {
+                if ($this->pbxSettings->itHasCronParametersChanges()) {
                     $this->modified_tables[self::R_CRON] = true;
                 }
-                if ($this->pbx->itHasDialplanParametersChanges()) {
+                if ($this->pbxSettings->itHasDialplanParametersChanges()) {
                     $this->modified_tables[self::R_DIALPLAN] = true;
                 }
-                if ($this->pbx->itHasVoiceMailParametersChanges()) {
+                if ($this->pbxSettings->itHasVoiceMailParametersChanges()) {
                     $this->modified_tables[self::R_VOICEMAIL] = true;
                 }
-                if ('PBXInternalExtensionLength' === $this->pbx->key) {
+                if ('PBXInternalExtensionLength' === $this->pbxSettings->key) {
                     $this->modified_tables[self::R_DIALPLAN] = true;
                     $this->modified_tables[self::R_SIP]      = true;
                 }
-                if ('PBXLicense' === $this->pbx->key) {
+                if ('PBXLicense' === $this->pbxSettings->key) {
                     $this->modified_tables[self::R_LICENSE] = true;
                     $this->modified_tables[self::R_NATS]    = true;
                 }
@@ -414,7 +418,7 @@ class WorkerModelsEvents extends WorkerBase
 /**
  * Основной цикл демона.
  */
-$workerClassname = WorkerMergeUploadedFile::class;
+$workerClassname = WorkerModelsEvents::class;
 if (isset($argv) && count($argv) > 1 && $argv[1] === 'start') {
     cli_set_process_title($workerClassname);
     try {

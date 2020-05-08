@@ -62,7 +62,7 @@ class SentryErrorLogger
             ]);
             Sentry\configureScope(function (Sentry\State\Scope $scope): void {
                 if (isset($this->email)) {
-                    $scope->setUser(['id' => $this->email]);
+                    $scope->setUser(['id' => $this->email], true);
                 }
                 if (isset($this->licKey)) {
                     $scope->setExtra('key', $this->licKey);
