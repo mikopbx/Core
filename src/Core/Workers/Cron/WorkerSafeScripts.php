@@ -5,13 +5,13 @@
  * Proprietary and confidential
  * Written by Alexey Portnov, 4 2020
  */
+
 namespace MikoPBX\Core\Workers\Cron;
 
 require_once('globals_boot.php');
 
 use Generator;
-use Recoil\React\ReactKernel;
-use Recoil\Recoil;
+use MikoPBX\Core\System\{BeanstalkClient, Firewall, PBX, System, Util};
 use MikoPBX\Core\Workers\WorkerAmiListener;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\Workers\WorkerCallEvents;
@@ -22,10 +22,11 @@ use MikoPBX\Core\Workers\WorkerModelsEvents;
 use MikoPBX\Core\Workers\WorkerModuleMonitor;
 use MikoPBX\Core\Workers\WorkerNotifyByEmail;
 use MikoPBX\Core\Workers\WorkerNotifyError;
-use Mikopbx\Service\Main;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
+use Mikopbx\Service\Main;
 use Phalcon\Exception;
-use MikoPBX\Core\System\{System, BeanstalkClient, Firewall, PBX, Util};
+use Recoil\React\ReactKernel;
+use Recoil\Recoil;
 
 class WorkerSafeScripts extends WorkerBase
 {
@@ -34,7 +35,7 @@ class WorkerSafeScripts extends WorkerBase
     private $result = false;
     private $message = false;
 
-    public function start():void
+    public function start(): void
     {
         /** Ротация логов */
         System::gnatsLogRotate();
@@ -47,31 +48,31 @@ class WorkerSafeScripts extends WorkerBase
 
         $this->waitFullyBooted();
 
-        ReactKernel::start(function () {
-
-            // Parallel execution https://github.com/recoilphp/recoil
-            try {
-            yield [
-                $this->checkWorkerBeanstalk(WorkerCdr::class),
-                $this->checkWorkerBeanstalk(WorkerModelsEvents::class),
-                $this->checkWorkerBeanstalk(WorkerCallEvents::class),
-                $this->checkWorkerBeanstalk(WorkerLicenseChecker::class),
-                $this->checkWorkerBeanstalk(WorkerNotifyByEmail::class),
-                $this->checkWorkerBeanstalk(WorkerNotifyError::class),
-                $this->checkWorkerBeanstalk(WorkerApiCommands::class),
-                $this->checkWorkerBeanstalk(WorkerLongPoolAPI::class),
-                $this->checkWorkerAMI(WorkerAmiListener::class), // Проверка листнера UserEvent
-                $this->checkWorker(WorkerModuleMonitor::class)
-            ];
-            } catch (\Exception $e) {
-                global $errorLogger;
-                $errorLogger->captureException($e);
-                Util::sysLogMsg(__CLASS__.'_EXCEPTION', $e->getMessage());
+        ReactKernel::start(
+            function () {
+                // Parallel execution https://github.com/recoilphp/recoil
+                try {
+                    yield [
+                        $this->checkWorkerBeanstalk(WorkerCdr::class),
+                        $this->checkWorkerBeanstalk(WorkerModelsEvents::class),
+                        $this->checkWorkerBeanstalk(WorkerCallEvents::class),
+                        $this->checkWorkerBeanstalk(WorkerLicenseChecker::class),
+                        $this->checkWorkerBeanstalk(WorkerNotifyByEmail::class),
+                        $this->checkWorkerBeanstalk(WorkerNotifyError::class),
+                        $this->checkWorkerBeanstalk(WorkerApiCommands::class),
+                        $this->checkWorkerBeanstalk(WorkerLongPoolAPI::class),
+                        $this->checkWorkerAMI(WorkerAmiListener::class), // Проверка листнера UserEvent
+                        $this->checkWorker(WorkerModuleMonitor::class),
+                    ];
+                } catch (\Exception $e) {
+                    global $errorLogger;
+                    $errorLogger->captureException($e);
+                    Util::sysLogMsg(__CLASS__ . '_EXCEPTION', $e->getMessage());
+                }
             }
-        });
+        );
 
         Firewall::checkFail2ban();
-
     }
 
     /**
@@ -107,50 +108,6 @@ class WorkerSafeScripts extends WorkerBase
         return $res_data;
     }
 
-    public function callback($message): void
-    {
-        $this->result  = true;
-        $this->message = $message;
-    }
-
-    /**
-     * Проверка работы worker.
-     *
-     * @param $name
-     *
-     * @throws \Nats\Exception
-     */
-    public function checkWorker($name): ?Generator
-    {
-        if ( ! $this->client_nats->isConnected() === true) {
-            $this->client_nats->reconnect();
-        }
-        $this->result = false;
-        $WorkerPID    = Util::getPidOfProcess($name);
-        if ($WorkerPID !== '') {
-            // Сервис запущен. Выполним к нему пинг.
-            $this->client_nats->request("ping_{$name}", 'ping', [$this, 'callback']);
-            if (false === $this->result) {
-                $this->startWorker($name);
-            }
-        } else {
-            // Сервис вовсе не запущен.
-            $this->startWorker($name);
-        }
-        yield;
-    }
-
-    /**
-     * Запуск рабочего процесса.
-     *
-     * @param        $name
-     * @param string $param
-     */
-    private function startWorker($name, $param = ''): void
-    {
-        Util::restartWorker($name, $param);
-    }
-
     /**
      * Проверка работы сервиса через beanstalk.
      *
@@ -175,6 +132,17 @@ class WorkerSafeScripts extends WorkerBase
             $this->startWorker($name);
         }
         yield;
+    }
+
+    /**
+     * Запуск рабочего процесса.
+     *
+     * @param        $name
+     * @param string $param
+     */
+    private function startWorker($name, $param = ''): void
+    {
+        Util::restartWorker($name, $param);
     }
 
     /**
@@ -205,6 +173,39 @@ class WorkerSafeScripts extends WorkerBase
             $this->checkWorkerAMI($name, $level + 1);
         }
         yield;
+    }
+
+    /**
+     * Проверка работы worker.
+     *
+     * @param $name
+     *
+     * @throws \Nats\Exception
+     */
+    public function checkWorker($name): ?Generator
+    {
+        if ( ! $this->client_nats->isConnected() === true) {
+            $this->client_nats->reconnect();
+        }
+        $this->result = false;
+        $WorkerPID    = Util::getPidOfProcess($name);
+        if ($WorkerPID !== '') {
+            // Сервис запущен. Выполним к нему пинг.
+            $this->client_nats->request("ping_{$name}", 'ping', [$this, 'callback']);
+            if (false === $this->result) {
+                $this->startWorker($name);
+            }
+        } else {
+            // Сервис вовсе не запущен.
+            $this->startWorker($name);
+        }
+        yield;
+    }
+
+    public function callback($message): void
+    {
+        $this->result  = true;
+        $this->message = $message;
     }
 }
 

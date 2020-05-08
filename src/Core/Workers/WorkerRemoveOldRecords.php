@@ -8,7 +8,6 @@
 namespace MikoPBX\Core\Workers;
 
 use Exception;
-use Phalcon\Di;
 use MikoPBX\Core\System\{Storage, Util};
 
 require_once 'globals.php';

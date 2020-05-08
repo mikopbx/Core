@@ -10,10 +10,8 @@ namespace MikoPBX\Core\Workers;
 require_once('globals_boot.php');
 
 use Phalcon\Exception;
-use MikoPBX\Core\Config\RegisterDIServices;
 use MikoPBX\Core\System\{BeanstalkClient, Util};
 use MikoPBX\Common\Models\{CallDetailRecordsTmp, Users};
-use PDOException;
 
 /**
  * Class WorkerCdr

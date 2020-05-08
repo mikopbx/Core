@@ -13,6 +13,7 @@ use Phalcon\Di;
 
 abstract class WorkerBase
 {
+
     /** @var \Phalcon\Di $di */
     protected $di;
 
@@ -26,7 +27,7 @@ abstract class WorkerBase
     }
 
     /**
-     * Обработка пинга демона.
+     * Ping callback for keep alive check
      *
      * @param BeanstalkClient $message
      */
@@ -35,6 +36,10 @@ abstract class WorkerBase
         $message->reply(json_encode($message->getBody() . ':pong'));
     }
 
+
+    /**
+     * Create PID file for worker
+     */
     public function getPidFile():string
     {
         $name = str_replace("\\", '-', self::class);
