@@ -20,8 +20,6 @@ namespace MikoPBX\PBXCoreREST\Providers;
 
 use MikoPBX\PBXCoreREST\Controllers\{
     Pbx\GetController as PbxGetController,
-    Backup\GetController as BackupGetController,
-    Backup\PostController as BackupPostController,
     Iax\GetController as IaxGetController,
     Sip\GetController as SipGetController,
     Sip\PostController as SipPostController,
@@ -142,9 +140,9 @@ class RouterProvider implements ServiceProviderInterface
             [CdrGetController::class, 'playbackAction', '/pbxcore/api/cdr/playback', 'get', '/'],
             [CdrGetController::class, 'getDataAction', '/pbxcore/api/cdr/getData', 'get', '/'],
 
-
-            [BackupGetController::class, 'callAction', '/pbxcore/api/backup/{actionName}', 'get', '/'],
-            [BackupPostController::class, 'callAction', '/pbxcore/api/backup/{actionName}', 'post', '/'],
+            // TODO: Перенести в модуль Backup
+            // [BackupGetController::class, 'callAction', '/pbxcore/api/backup/{actionName}', 'get', '/'],
+            // [BackupPostController::class, 'callAction', '/pbxcore/api/backup/{actionName}', 'post', '/'],
 
             [StorageGetController::class, 'callAction', '/pbxcore/api/storage/{actionName}', 'get', '/'],
             [StoragePostController::class, 'callAction', '/pbxcore/api/storage/{actionName}', 'post', '/'],
