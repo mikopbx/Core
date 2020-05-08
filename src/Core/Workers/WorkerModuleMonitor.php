@@ -23,7 +23,7 @@ class WorkerModuleMonitor extends WorkerBase
     /**
      * Проверка целостности модулей.
      */
-    public function start(): void
+    public function start($argv): void
     {
         $client = $this->di->getShared('natsConnection');
 
@@ -204,7 +204,7 @@ if (isset($argv) && count($argv) > 1 && $argv[1] === 'start') {
 
         try {
             $worker = new $workerClassname();
-            $worker->start();
+            $worker->start($argv);
         } catch (Exception $e) {
             global $errorLogger;
             $errorLogger->captureException($e);

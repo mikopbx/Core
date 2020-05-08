@@ -86,7 +86,7 @@ class WorkerModelsEvents extends WorkerBase
     /**
      * Entry point
      */
-    public function start():void
+    public function start($argv): void
     {
         $this->arrObject = $this->di->getShared('pbxConfModules');
 
@@ -111,24 +111,25 @@ class WorkerModelsEvents extends WorkerBase
         $this->modified_tables = [];
         $this->pbx             = new PbxSettings();
 
-        $client                = new BeanstalkClient();
+        $client = new BeanstalkClient();
         $client->subscribe(self::class, [$this, 'processModelChanges']);
-        $client->subscribe('ping_'.self::class, [$this, 'pingCallBack']);
+        $client->subscribe('ping_' . self::class, [$this, 'pingCallBack']);
         $client->setTimeoutHandler([$this, 'timeoutHandler']);
 
 
-        while (true){
+        while (true) {
             $client->wait();
         }
     }
 
     /**
      * Parser for received Beanstalk message
+     *
      * @param BeanstalkClient $message
      */
-    public function processModelChanges($message):void
+    public function processModelChanges($message): void
     {
-        $receivedMessage = json_decode($message->getBody(),true);
+        $receivedMessage = json_decode($message->getBody(), true);
         $this->fillModifiedTables($receivedMessage);
         $this->startReload();
 
@@ -140,9 +141,10 @@ class WorkerModelsEvents extends WorkerBase
 
     /**
      * Collect changes to determine which modules must be reloaded or reconfigured
+     *
      * @param $data
      */
-    private function fillModifiedTables($data):void
+    private function fillModifiedTables($data): void
     {
         $count_changes = count($this->modified_tables);
 
@@ -283,6 +285,7 @@ class WorkerModelsEvents extends WorkerBase
 
     /**
      * Apply changes
+     *
      * @return array
      */
     private function startReload(): array
@@ -362,7 +365,6 @@ class WorkerModelsEvents extends WorkerBase
     public function reloadIax(): array
     {
         return IAXConf::iaxReload();
-
     }
 
     public function reloadSip(): array
@@ -400,7 +402,7 @@ class WorkerModelsEvents extends WorkerBase
         return PBX::voicemailReload();
     }
 
-    function timeoutHandler()
+    public function timeoutHandler()
     {
         // Обязательная обработка.
         $this->last_change = time() - $this->timeout;
@@ -412,12 +414,12 @@ class WorkerModelsEvents extends WorkerBase
 /**
  * Основной цикл демона.
  */
-
+$workerClassname = WorkerMergeUploadedFile::class;
 if (isset($argv) && count($argv) > 1 && $argv[1] === 'start') {
-    cli_set_process_title(WorkerModelsEvents::class);
+    cli_set_process_title($workerClassname);
     try {
-        $me = new WorkerModelsEvents();
-        $me->start();
+        $worker = new $workerClassname();
+        $worker->start($argv);
     } catch (Exception $e) {
         global $errorLogger;
         $errorLogger->captureException($e);

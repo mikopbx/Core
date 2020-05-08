@@ -33,8 +33,10 @@ class WorkerAmiListener extends WorkerBase
 
     /**
      * Старт работы листнера.
+     *
+     * @param $argv
      */
-    public function start()
+    public function start($argv):void
     {
         $this->am->addEventHandler("userevent", [$this, "callback"]);
         while (true) {
@@ -87,7 +89,7 @@ class WorkerAmiListener extends WorkerBase
      *
      * @param string $result - данные в ормате json для отправки.
      */
-    private function actionSendToBeanstalk($result)
+    private function actionSendToBeanstalk($result): void
     {
         $this->message_is_sent = false;
         $error                 = '';
@@ -124,7 +126,7 @@ if (isset($argv) && count($argv) > 1 && $argv[1] === 'start') {
     cli_set_process_title($workerClassname);
     try {
         $worker = new $workerClassname();
-        $worker->start();
+        $worker->start($argv);
     } catch (\Exception $e) {
         global $errorLogger;
         $errorLogger->captureException($e);

@@ -18,7 +18,7 @@ class WorkerNotifyByEmail extends WorkerBase
     /**
      * Entry point
      */
-    public function start(): void
+    public function start($argv): void
     {
         $client = new BeanstalkClient(__CLASS__);
         $client->subscribe(__CLASS__, [$this, 'workerNotifyByEmail']);
@@ -96,7 +96,7 @@ if (isset($argv) && count($argv) > 1 && $argv[1] === 'start') {
     while (true) {
         try {
             $worker = new $workerClassname();
-            $worker->start();
+            $worker->start($argv);
         } catch (Exception $e) {
             global $errorLogger;
             $errorLogger->captureException($e);

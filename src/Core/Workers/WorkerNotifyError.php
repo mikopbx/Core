@@ -21,7 +21,7 @@ class WorkerNotifyError extends WorkerBase
     /**
      * Наполняем очередь уведомлениями.
      */
-    public function start()
+    public function start($argv):void
     {
         $client = new BeanstalkClient('WorkerNotifyError_license');
         $client->subscribe('WorkerNotifyError_license', [$this, 'onLicenseError']);
@@ -123,7 +123,7 @@ if (isset($argv) && count($argv) > 1 && $argv[1] === 'start') {
     cli_set_process_title($workerClassname);
     try {
         $worker = new $workerClassname();
-        $worker->start();
+        $worker->start($argv);
     } catch (\Exception $e) {
         global $errorLogger;
         $errorLogger->captureException($e);

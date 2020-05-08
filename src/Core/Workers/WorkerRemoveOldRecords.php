@@ -15,7 +15,8 @@ require_once 'globals.php';
 class WorkerRemoveOldRecords extends WorkerBase
 {
 
-    public function start(){
+    public function start($argv):void
+    {
 
         $varEtcPath =  $this->di ->getShared('config')->path('core.varEtcPath');
         $filename = "{$varEtcPath}/storage_device";

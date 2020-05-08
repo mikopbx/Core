@@ -15,7 +15,8 @@ require_once 'globals.php';
 
 class WorkerRecover extends WorkerBase
 {
-    public function start($argv){
+    public function start($argv):void
+    {
         $id = trim($argv[1]);
         if (empty($id)) {
             exit;

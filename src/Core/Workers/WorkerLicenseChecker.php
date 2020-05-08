@@ -16,7 +16,7 @@ require_once 'globals.php';
 
 class WorkerLicenseChecker extends WorkerBase
 {
-    public function start():void
+    public function start($argv):void
     {
         $lic = new License();
         $lic->startWorker();
@@ -30,7 +30,7 @@ if (isset($argv) && count($argv) > 1) {
     cli_set_process_title($workerClassname);
     try {
         $worker = new $workerClassname();
-        $worker->start();
+        $worker->start($argv);
     } catch (Exception $e) {
         global $errorLogger;
         $errorLogger->captureException($e);

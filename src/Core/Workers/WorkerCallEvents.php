@@ -21,9 +21,9 @@ class WorkerCallEvents extends WorkerBase
 
     /**
      *
-     * @throws \Pheanstalk\Exception\DeadlineSoonException
+     * @param $argv
      */
-    public function start(): void
+    public function start($argv): void
     {
         $client = new BeanstalkClient(self::class);
         $client->subscribe(self::class, [$this, 'callEventsWorker']);
@@ -1053,7 +1053,7 @@ if (isset($argv) && count($argv) > 1 && $argv[1] === 'start') {
     cli_set_process_title($workerClassname);
         try {
             $worker = new $workerClassname();
-            $worker->start();
+            $worker->start($argv);
         } catch (\Exception $e) {
             global $errorLogger;
             $errorLogger->captureException($e);

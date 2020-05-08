@@ -11,7 +11,7 @@ namespace MikoPBX\Core\Workers;
 use MikoPBX\Core\System\BeanstalkClient;
 use Phalcon\Di;
 
-abstract class WorkerBase
+abstract class WorkerBase implements WorkerInterface
 {
 
     /** @var \Phalcon\Di $di */

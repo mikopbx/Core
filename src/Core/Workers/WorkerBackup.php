@@ -5,18 +5,18 @@
  * Proprietary and confidential
  * Written by Alexey Portnov, 2 2020
  */
+
 namespace MikoPBX\Core\Workers;
 
 use Exception;
+use MikoPBX\Common\Models\BackupRules;
 use MikoPBX\Core\Backup\Backup;
 use MikoPBX\Core\System\{Storage, Util};
-use MikoPBX\Common\Models\BackupRules;
 
 class WorkerBackup extends WorkerBase
 {
-    public static function start($argv)
+    public function start($argv): void
     {
-
         if (count($argv) < 3) {
             exit;
         }
@@ -41,11 +41,23 @@ class WorkerBackup extends WorkerBase
                     $disk_mounted = Storage::isStorageDiskMounted("$backup_dir ");
                     if ( ! $disk_mounted) {
                         if ($res->ftp_sftp_mode === '1') {
-                            $disk_mounted = Storage::mountSftpDisk($res->ftp_host, $res->ftp_port, $res->ftp_username,
-                                $res->ftp_secret, $res->ftp_path, $backup_dir);
+                            $disk_mounted = Storage::mountSftpDisk(
+                                $res->ftp_host,
+                                $res->ftp_port,
+                                $res->ftp_username,
+                                $res->ftp_secret,
+                                $res->ftp_path,
+                                $backup_dir
+                            );
                         } else {
-                            $disk_mounted = Storage::mountFtp($res->ftp_host, $res->ftp_port, $res->ftp_username,
-                                $res->ftp_secret, $res->ftp_path, $backup_dir);
+                            $disk_mounted = Storage::mountFtp(
+                                $res->ftp_host,
+                                $res->ftp_port,
+                                $res->ftp_username,
+                                $res->ftp_secret,
+                                $res->ftp_path,
+                                $backup_dir
+                            );
                         }
                     }
                     if ( ! $disk_mounted) {
@@ -77,8 +89,6 @@ class WorkerBackup extends WorkerBase
                 }
             }
         }
-
-
     }
 
 }

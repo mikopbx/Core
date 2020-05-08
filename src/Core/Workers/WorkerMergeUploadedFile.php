@@ -17,7 +17,8 @@ require_once 'globals.php';
 
 class WorkerMergeUploadedFile extends WorkerBase
 {
-    public function start($argv){
+    public function start($argv):void
+    {
 
         if (count($argv) <= 1) {
             // Не переданы аргументы.

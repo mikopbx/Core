@@ -35,7 +35,7 @@ class WorkerCdr extends WorkerBase
     /**
      * Entry point
      */
-    public function start():void
+    public function start($argv):void
     {
         $this->filter = [
             '(work_completed<>1 OR work_completed IS NULL) AND endtime IS NOT NULL',
@@ -276,7 +276,7 @@ if (isset($argv) && count($argv) > 1 && $argv[1] === 'start') {
     cli_set_process_title($workerClassname);
     try {
         $worker = new $workerClassname();
-        $worker->start();
+        $worker->start($argv);
     } catch (\Exception $e) {
         global $errorLogger;
         $errorLogger->captureException($e);

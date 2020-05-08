@@ -31,7 +31,7 @@ class WorkerLongPoolAPI extends WorkerBase
 {
     private $client_queue;
 
-    public function start() :void
+    public function start($argv) :void
     {
 
         $this->client_queue = new BeanstalkClient();
@@ -210,7 +210,7 @@ if (isset($argv) && count($argv) > 1) {
     cli_set_process_title($workerClassname);
     try {
         $worker = new $workerClassname();
-        $worker->start();
+        $worker->start($argv);
     } catch (Exception $e) {
         global $errorLogger;
         $errorLogger->captureException($e);

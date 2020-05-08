@@ -33,9 +33,8 @@ class WorkerSafeScripts extends WorkerBase
     private $client_nats;
     private $timeout = 8;
     private $result = false;
-    private $message = false;
 
-    public function start(): void
+    public function start($argv): void
     {
         /** Ротация логов */
         System::gnatsLogRotate();
@@ -205,7 +204,6 @@ class WorkerSafeScripts extends WorkerBase
     public function callback($message): void
     {
         $this->result  = true;
-        $this->message = $message;
     }
 }
 
@@ -215,7 +213,7 @@ if (isset($argv) && count($argv) > 1 && $argv[1] === 'start') {
     cli_set_process_title($workerClassname);
     try {
         $worker = new $workerClassname();
-        $worker->start();
+        $worker->start($argv);
     } catch (\Exception $e) {
         global $errorLogger;
         $errorLogger->captureException($e);
