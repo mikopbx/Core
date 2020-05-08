@@ -28,7 +28,7 @@ class BaseController extends Controller
             'action' => $actionName
         ]);
         $connection  = $this->beanstalkConnection;
-        $response = $connection->request($requestMessage, 15, 0);
+        $response = $connection->request($requestMessage, 5, 0);
         if ( $response !== false){
             $response = json_decode($response,true);
             $this->response->setPayloadSuccess($response);

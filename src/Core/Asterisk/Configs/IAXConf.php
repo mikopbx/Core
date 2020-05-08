@@ -37,61 +37,56 @@ class IAXConf extends ConfigClass
     /**
      * Получение статусов регистраций IAX.
      */
-    static function getRegistry()
+    public static function getRegistry(): array
     {
         $result = [
             'result' => 'ERROR',
         ];
-        $am     = Util::getAstManager('off');
-        $regs   = $am->IAXregistry();
-        $peers  = $am->IAXpeerlist();
+        $peers = [];
+         // First select disabled providers
+        $disabledProviders = Iax::find();
+        foreach ($disabledProviders as $provider){
+            $peers[] = [
+                'state'    => 'OFF',
+                'id'       => $provider->uniqid,
+                'username' => trim($provider->username),
+                'host'     => trim($provider->host),
+                'noregister'=> $provider->noregister
+            ];
+        }
 
-        $providers = Iax::find();
-        foreach ($providers as $provider) {
-            if ($provider->disabled == 1) {
-                // Этого пира нет среди $peers.
-                $peers[] = [
-                    'state'    => 'OFF',
-                    'id'       => $provider->uniqid,
-                    'username' => trim($provider->username),
-                    'host'     => trim($provider->host),
-                ];
-                continue;
-            }
-
-            foreach ($peers as &$peer) {
-                if ($peer['ObjectName'] != $provider->uniqid) {
-                    continue;
-                }
-                $peer['id'] = $provider->uniqid;
-                if ($provider->noregister == 1) {
-                    // Пир без регистрации.
-                    $arr_status            = explode(' ', $peer['Status']);
-                    $peer['state']         = strtoupper($arr_status[0]);
-                    $peer['time-response'] = strtoupper(str_replace(['(', ')'], '', $arr_status[1]));
-                } else {
-                    $peer['state'] = 'Error register.';
-                    // Анализируем активные регистрации.
-                    foreach ($regs as $reg) {
-                        if ($reg['Addr'] != trim($provider->host) || $reg['Username'] != trim($provider->username)) {
-                            continue;
+        if (Iax::findFirst("disabled = '0'")!==null){
+            // Find them over AMI
+            $am     = Util::getAstManager('off');
+            $amiRegs   = $am->IAXregistry(); // Registrations
+            $amiPeers  = $am->IAXpeerlist(); // Peers
+            $am->Logoff();
+            foreach ($amiPeers as $amiPeer){
+                $key = array_search($amiPeer['ObjectName'], array_column($peers, 'id'),true);
+                if ($key !== false){
+                    $currentPeer = &$peers[$key];
+                    if ($currentPeer['noregister'] === '1') {
+                        // Пир без регистрации.
+                        $arr_status            = explode(' ', $amiPeer['Status']);
+                        $currentPeer['state']         = strtoupper($arr_status[0]);
+                        $currentPeer['time-response'] = strtoupper(str_replace(['(', ')'], '', $arr_status[1]));
+                    } else {
+                        $currentPeer['state'] = 'Error register.';
+                        // Parse active registrations
+                        foreach ($amiRegs as $reg) {
+                            if (
+                                strcasecmp($reg['Addr'],$currentPeer['host']) === 0
+                                && strcasecmp($reg['Username'], $currentPeer['username']) === 0
+                            ) {
+                                $currentPeer['state'] = $reg['State'];
+                                break;
+                            }
                         }
-                        $peer['state'] = $reg['State'];
-                        break;
                     }
                 }
-                unset($peer['ObjectName']);
-                unset($peer['Status']);
-                unset($peer['Event']);
-                unset($peer['Channeltype']);
-
-                if ( ! isset($peer['state'])) {
-                    $peer['state'] = '';
-                }
             }
-
         }
-        $am->Logoff();
+
         $result['data']   = $peers;
         $result['result'] = 'Success';
 
@@ -136,7 +131,6 @@ class IAXConf extends ConfigClass
 
             $this->data_providers[] = $arr_data;
         }
-
     }
 
     /**
@@ -266,7 +260,6 @@ class IAXConf extends ConfigClass
                 $port        = '';
                 $reg_strings .= "register => {$user}{$secret}@{$host}{$port} \n";
             }
-
         }
 
         $conf = $reg_strings . "\n" . $prov_config;

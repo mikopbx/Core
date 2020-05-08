@@ -1188,7 +1188,7 @@ class Util
 
         $am  = new AGI_AsteriskManager();
         $res = $am->connect("127.0.0.1:{$port}", null, null, $events);
-        if (true == $res) {
+        if (true === $res) {
             $g['AGI_AsteriskManager'] = $am;
         }
 
