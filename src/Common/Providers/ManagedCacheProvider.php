@@ -38,7 +38,7 @@ class ManagedCacheProvider implements ServiceProviderInterface
      */
     public function register(DiInterface $di): void
     {
-        $managedCachePath = $di->getShared('config')->get('core.managedCachePath');
+        $managedCachePath = $di->getShared('config')->path('core.managedCachePath');
         $di->setShared(
             'managedCache',
             function () use ($managedCachePath) {
