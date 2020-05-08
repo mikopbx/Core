@@ -128,7 +128,7 @@ class AGI_AsteriskManager
      */
     public function sendRequest($action, $parameters = [])
     {
-        $req = "Action: $action";
+        $req = "Action: $action\r\n";
         foreach ($parameters as $var => $val) {
             $req .= "$var: $val\r\n";
         }
@@ -138,7 +138,7 @@ class AGI_AsteriskManager
         }
         @fwrite($this->socket, $req);
 
-        return $this->waitResponse(true);
+        return $this->waitResponse();
     }
 
     /**
@@ -669,7 +669,7 @@ class AGI_AsteriskManager
      */
     public function IAXpeerlist()
     {
-        $result   = $this->sendRequest('IAXpeerlist');
+        $result   = $this->sendRequestTimeout('IAXpeerlist');
         $data     = (isset($result['data']) && is_array($result['data'])) ? $result['data'] : [];
         $arr_peer = (isset($data['PeerEntry']) && is_array($data['PeerEntry'])) ? $data['PeerEntry'] : [];
 
@@ -683,7 +683,7 @@ class AGI_AsteriskManager
      */
     public function IAXregistry():array
     {
-        $result   = $this->sendRequest('IAXregistry');
+        $result   = $this->sendRequestTimeout('IAXregistry');
         $data     = (isset($result['data']) && is_array($result['data'])) ? $result['data'] : [];
         $arr_peer = (isset($data['RegistryEntry']) && is_array($data['RegistryEntry'])) ? $data['RegistryEntry'] : [];
 

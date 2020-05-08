@@ -377,7 +377,7 @@ class PbxExtensionBase
         $language             = substr(PbxSettings::getValueByKey('WebAdminLanguage'), 0, 2);
         $translates           = [];
         $extensionsTranslates = [[]];
-        $results              = glob($this->moduleDir . '/{messages}/en.php', GLOB_BRACE);
+        $results              = glob($this->moduleDir . '/{Messages}/en.php', GLOB_BRACE);
         foreach ($results as $path) {
             $langArr = require $path;
             if (is_array($langArr)) {
@@ -389,7 +389,7 @@ class PbxExtensionBase
         }
         if ($language !== 'en') {
             $additionalTranslates = [[]];
-            $results              = glob($this->moduleDir . "/{messages}/{$language}.php", GLOB_BRACE);
+            $results              = glob($this->moduleDir . "/{Messages}/{$language}.php", GLOB_BRACE);
             foreach ($results as $path) {
                 $langArr = require $path;
                 if (is_array($langArr)) {
