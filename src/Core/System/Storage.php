@@ -987,11 +987,18 @@ class Storage
             $this->config->path('adminApplication.imgCacheDir'));
         Util::createUpdateSymlink($this->config->path('core.phpSessionPath'), '/var/lib/php/session');
         Util::createUpdateSymlink($this->config->path('core.tempPath'), '/ultmp');
-
         Util::createUpdateSymlink($this->config->path('core.rootPath').'/src/ext/lua/asterisk/extensions.lua', '/etc/asterisk/extensions.lua'); //TODO:Этот файл используется?
 
+        $this->applyFolderRights();
 
+        return true;
+    }
 
+    /**
+     * Fix permissions for Folder and Files
+     */
+    private function applyFolderRights():void
+    {
         // Add Rights to the WWW dirs plus some core dirs
         $www_dirs = [];
         $arrConfig = $this->config->adminApplication->toArray();
@@ -1007,6 +1014,7 @@ class Storage
         $www_dirs[] = $this->config->path('database.logsPath');
         $www_dirs[] = $this->config->path('core.phpSessionPath');
         $www_dirs[] = $this->config->path('core.tempPath');
+        $www_dirs[] = $this->config->path('core.managedCachePath');
 
         // Add read rights
         Util::mwExec('find ' . implode(' ', $www_dirs). ' -type d -exec chmod 755 {} \;');
@@ -1019,8 +1027,8 @@ class Storage
         $exec_dirs[] = $this->config->path('core.rcDir');
         Util::mwExec('find ' . implode(' ', $exec_dirs). ' -type f -exec chmod +x {} \;');
         Util::mwExec('mount -o remount,ro /offload 2> /dev/null');
-        return true;
     }
+
 
     /**
      * Delete old modules, not installed on the system
