@@ -27,4 +27,11 @@ The instalation [instruction](https://wiki.mikopbx.com/quickstart_lancher)
 
 The chat with developers you can find on [telegram](https://t.me/mikopbx_dev)
 
+<p align="center">
+    <a href="https://www.mikopbx.com">
+        <img src="https://github.com/mikopbx/assets/raw/master/img/screenshots/MikoPBXExtensions.png"/>
+    </a>
+</p>
+
+
 Description under construction...
