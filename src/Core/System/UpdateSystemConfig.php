@@ -337,8 +337,10 @@ DROP TABLE  {$tableName}";
                 $previous_version = '2020.2.314';
             }
 
-            //...add there new updates //
+            //...add here new updates //
 
+            $storage = new Storage();
+            $storage->clearCacheDirs();
             $this->mikoPBXConfig->setGeneralSettings('PBXVersion', trim(file_get_contents('/etc/version')));
         }
 

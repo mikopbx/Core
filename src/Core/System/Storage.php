@@ -1049,7 +1049,7 @@ class Storage
     /**
      * Clear cache files
      */
-    private function clearCacheDirs(): void
+    public function clearCacheDirs(): void
     {
         $cache_dirs = [
             $this->config->path('adminApplication.jsCacheDir') . '/*',
