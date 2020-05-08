@@ -1047,22 +1047,6 @@ class Storage
     }
 
     /**
-     * Clear cache files
-     */
-    public function clearCacheDirs(): void
-    {
-        $cache_dirs = [
-            $this->config->path('adminApplication.jsCacheDir') . '/*',
-            $this->config->path('adminApplication.cssCacheDir') . '/*',
-            $this->config->path('adminApplication.imgCacheDir') . '/*',
-            $this->config->path('core.phpSessionPath') . '/*',
-            $this->config->path('adminApplication.cacheDir') . '/*',
-        ];
-
-        Util::mwExec('rm -rf ' . implode(' ', $cache_dirs));
-    }
-
-    /**
      * Сохраняем новые данные диска.
      *
      * @param     $data
