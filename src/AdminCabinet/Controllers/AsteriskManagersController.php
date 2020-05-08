@@ -68,7 +68,7 @@ class AsteriskManagersController extends BaseController
     {
 
         $manager = AsteriskManagerUsers::findFirstById($id);
-        if ($manager===null) {
+        if ($manager === null) {
             $manager = new AsteriskManagerUsers();
         }
 

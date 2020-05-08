@@ -57,7 +57,7 @@ class OutOffWorkTimeController extends BaseController
     public function modifyAction($id = null): void
     {
         $timeFrame = OutWorkTimes::findFirstById($id);
-        if ($timeFrame===null) {
+        if ($timeFrame === null) {
             $timeFrame = new OutWorkTimes();
         }
 
@@ -111,7 +111,7 @@ class OutOffWorkTimeController extends BaseController
 
         $this->db->begin();
         $timeFrame = OutWorkTimes::findFirstByid($data['id']);
-        if ($timeFrame ===null) {
+        if ($timeFrame === null) {
             $timeFrame = new OutWorkTimes();
         }
 
@@ -173,7 +173,7 @@ class OutOffWorkTimeController extends BaseController
     public function deleteAction($id = null)
     {
         $timeFrame = OutWorkTimes::findFirstByid($id);
-        if ($timeFrame!==null) {
+        if ($timeFrame !== null) {
             $timeFrame->delete();
         }
 

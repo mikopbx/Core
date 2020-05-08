@@ -125,7 +125,7 @@ class FirewallController extends BaseController
         $networkFilter = NetworkFilters::findFirstById($networkId);
         $firewallRules = FirewallRules::getDefaultRules();
         $data          = $this->request->getPost();
-        if ($networkFilter===null) {
+        if ($networkFilter === null) {
             $networkFilter         = new NetworkFilters();
             $networkFilter->permit = empty($data['permit']) ? '0.0.0.0/0' : $data['permit'];
         } else {
@@ -193,7 +193,7 @@ class FirewallController extends BaseController
      */
     private function updateNetworkFilters(NetworkFilters $filterRecord, array $data): bool
     {
-        $calculator = new Cidr;
+        $calculator = new Cidr();
         // Заполним параметры записи Network Filter
         foreach ($filterRecord as $name => $value) {
             switch ($name) {
@@ -318,7 +318,7 @@ class FirewallController extends BaseController
         $filterRecord = NetworkFilters::findFirstById($networkId);
 
         $errors = false;
-        if ($filterRecord!==null && !$filterRecord->delete()) {
+        if ($filterRecord !== null && !$filterRecord->delete()) {
             $errors = $filterRecord->getMessages();
         }
 
@@ -338,7 +338,7 @@ class FirewallController extends BaseController
     public function enableAction(): void
     {
         $fail2BanEnabled = PbxSettings::findFirstByKey('PBXFail2BanEnabled');
-        if ($fail2BanEnabled===null) {
+        if ($fail2BanEnabled === null) {
             $fail2BanEnabled      = new PbxSettings();
             $fail2BanEnabled->key = 'PBXFail2BanEnabled';
         }
@@ -352,7 +352,7 @@ class FirewallController extends BaseController
         }
 
         $firewallEnabled = PbxSettings::findFirstByKey('PBXFirewallEnabled');
-        if ($firewallEnabled===null) {
+        if ($firewallEnabled === null) {
             $firewallEnabled      = new PbxSettings();
             $firewallEnabled->key = 'PBXFail2BanEnabled';
         }
@@ -373,7 +373,7 @@ class FirewallController extends BaseController
     public function disableAction(): void
     {
         $fail2BanEnabled = PbxSettings::findFirstByKey('PBXFail2BanEnabled');
-        if ($fail2BanEnabled===null) {
+        if ($fail2BanEnabled === null) {
             $fail2BanEnabled      = new PbxSettings();
             $fail2BanEnabled->key = 'PBXFail2BanEnabled';
         }
@@ -387,7 +387,7 @@ class FirewallController extends BaseController
         }
 
         $firewallEnabled = PbxSettings::findFirstByKey('PBXFirewallEnabled');
-        if ($firewallEnabled===null) {
+        if ($firewallEnabled === null) {
             $firewallEnabled      = new PbxSettings();
             $firewallEnabled->key = 'PBXFail2BanEnabled';
         }

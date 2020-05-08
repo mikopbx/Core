@@ -35,7 +35,7 @@ class CustomFilesController extends BaseController
     public function modifyAction(string $id)
     {
         $file = CustomFiles::findFirstById($id);
-        if ($file===null) {
+        if ($file === null) {
             return $this->forward('custom-files/index');
         }
 

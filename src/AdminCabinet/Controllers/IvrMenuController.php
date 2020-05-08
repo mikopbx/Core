@@ -37,7 +37,7 @@ class IvrMenuController extends BaseController
         $soundfilesList[""]     = $this->translation->_("sf_SelectAudioFile");
         $extensionList[""]      = $this->translation->_("ex_SelectNumber");
         $extensionListForFilter = [];
-        if ($ivrmenu===null) {
+        if ($ivrmenu === null) {
             $ivrmenu                   = new IvrMenu();
             $ivrmenu->uniqid           = strtoupper('IVR-' . md5($ivrmenu->id . time()));
             $ivrmenu->number_of_repeat = 3;
@@ -112,7 +112,7 @@ class IvrMenuController extends BaseController
 
         $data          = $this->request->getPost();
         $ivrMenuRecord = IvrMenu::findFirstByUniqid($data['uniqid']);
-        if ($ivrMenuRecord ===null) {
+        if ($ivrMenuRecord === null) {
             $ivrMenuRecord = new IvrMenu();
 
             $extension                    = new Extensions();
@@ -301,7 +301,7 @@ class IvrMenuController extends BaseController
         $ivrmenu = IvrMenu::findFirstByUniqid($uniqid);
 
         $errors = false;
-        if ($ivrmenu!==null && ! $ivrmenu->Extensions->delete()) {
+        if ($ivrmenu !== null && ! $ivrmenu->Extensions->delete()) {
             $errors = $ivrmenu->Extensions->getMessages();
         }
 

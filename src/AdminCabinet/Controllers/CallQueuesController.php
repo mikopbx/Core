@@ -35,7 +35,7 @@ class CallQueuesController extends BaseController
         $queueMembersList = [];
         $soundfilesList   = [];
         $extensionList    = [];
-        if ($queue===null) {
+        if ($queue === null) {
             $queue                              = new CallQueues();
             $queue->uniqid                      = strtoupper('QUEUE-' . md5($queue->id . time()));
             $queue->caller_hear                 = 'moh';
@@ -114,7 +114,7 @@ class CallQueuesController extends BaseController
 
         $data  = $this->request->getPost();
         $queue = CallQueues::findFirstByUniqid($data['uniqid']);
-        if ($queue===null) {
+        if ($queue === null) {
             $queue                        = new CallQueues();
             $extension                    = new Extensions();
             $extension->type              = "QUEUE";
@@ -369,7 +369,7 @@ class CallQueuesController extends BaseController
         $queue = CallQueues::findFirstByUniqid($uniqid);
 
         $errors = false;
-        if ($queue!==null && ! $queue->Extensions->delete()) {
+        if ($queue !== null && ! $queue->Extensions->delete()) {
             $errors = $queue->Extensions->getMessages();
         }
 

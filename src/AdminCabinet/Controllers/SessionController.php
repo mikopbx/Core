@@ -91,7 +91,7 @@ class SessionController extends BaseController
             $this->session->set('WebAdminLanguage', $newLanguage);
             if ($this->session->has('auth')) {
                 $languageSettings = PbxSettings::findFirstByKey('WebAdminLanguage');
-                if ( ! $languageSettings) {
+                if ($languageSettings === null) {
                     $languageSettings      = new PbxSettings();
                     $languageSettings->key = 'WebAdminLanguage';
                 }

@@ -668,7 +668,7 @@ class PbxExtensionBase
         $menuSettingsKey           = "AdditionalMenuItem{$this->module_uniqid}";
         $unCamelizedControllerName = Text::uncamelize($this->module_uniqid, '-');
         $menuSettings              = PbxSettings::findFirstByKey($menuSettingsKey);
-        if ( ! $menuSettings) {
+        if ($menuSettings === null) {
             $menuSettings      = new PbxSettings();
             $menuSettings->key = $menuSettingsKey;
         }

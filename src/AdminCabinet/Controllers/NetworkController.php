@@ -33,7 +33,7 @@ class NetworkController extends BaseController
         $arrEth['new'] = $template;
 
         $internetInterface = LanInterfaces::findFirstByInternet(1);
-        if ($internetInterface===null) {
+        if ($internetInterface === null) {
             $internetInterface = new LanInterfaces();
         }
         // Найдем дополнительные интерфейсы, которые можно удалить

@@ -58,7 +58,7 @@ class ProvidersController extends BaseController
 
         $provider = Providers::findFirstByUniqid($uniqid);
 
-        if ($provider!==null) {
+        if ($provider !== null) {
             $enabledCodecs = $provider->Sip->Codecs;
             foreach ($enabledCodecs as $codec) {
                 $codecs[$codec->codec]['enabled'] = true;
@@ -104,7 +104,7 @@ class ProvidersController extends BaseController
 
         $provider = Providers::findFirstByUniqid($uniqid);
 
-        if ($provider!==null) {
+        if ($provider !== null) {
             $enabledCodecs = $provider->Iax->Codecs;
 
             foreach ($enabledCodecs as $codec) {
@@ -154,7 +154,7 @@ class ProvidersController extends BaseController
                 break;
             }
         }
-        if ($provider!==null) {
+        if ($provider !== null) {
             $provider->disabled = '0';
             if ($provider->save() === true) {
                 $this->view->success = true;
@@ -185,7 +185,7 @@ class ProvidersController extends BaseController
                 break;
             }
         }
-        if ($provider!==null) {
+        if ($provider !== null) {
             $provider->disabled = '1';
             if ($provider->save() === true) {
                 $this->view->success = true;
@@ -247,7 +247,7 @@ class ProvidersController extends BaseController
 
         // Проверим это новый провайдер или старый
         $provider = Providers::findFirstByUniqid($data['uniqid']);
-        if ($provider===null) {
+        if ($provider === null) {
             $provider         = new Providers();
             $provider->uniqid = $data['uniqid'];
             switch ($type) {
@@ -386,7 +386,7 @@ class ProvidersController extends BaseController
 
         $provider = Providers::findFirstByUniqid($uniqid);
 
-        if ($provider!==null) {
+        if ($provider !== null) {
             $this->db->begin();
             $errors = false;
             if ($provider->Iax) {

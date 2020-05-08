@@ -112,7 +112,7 @@ class TimeSettingsController extends BaseController
         $arrSettings = $this->getTimeSettingsArray();
         foreach ($arrSettings as $key) {
             $record = PbxSettings::findFirstByKey($key);
-            if ($record===null) {
+            if ($record === null) {
                 $record      = new PbxSettings();
                 $record->key = $key;
             }

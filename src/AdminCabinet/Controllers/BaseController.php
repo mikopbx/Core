@@ -83,7 +83,7 @@ class BaseController extends Controller
         // Добавим версию модуля, если это модуль
         if ($this->moduleName === 'PBXExtension') {
             $module = PbxExtensionModules::findFirstByUniqid($this->controllerName);
-            if ( ! $module) {
+            if ($module === null) {
                 $module           = new PbxExtensionModules();
                 $module->disabled = '1';
                 $module->name     = 'Unknown module';

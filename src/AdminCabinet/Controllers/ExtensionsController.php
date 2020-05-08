@@ -147,7 +147,7 @@ class ExtensionsController extends BaseController
 
         $extension = Extensions::findFirstById($id);
 
-        if ($extension===null) {
+        if ($extension === null) {
             $extension                         = new Extensions();
             $extension->show_in_phonebook      = '1';
             $extension->public_access          = '0';
@@ -282,7 +282,7 @@ class ExtensionsController extends BaseController
             $sipEntity = SIP::findFirstByUniqid($data['sip_uniqid']);
         }
 
-        if ($sipEntity===null) {
+        if ($sipEntity === null) {
             $sipEntity             = new SIP();
             $extension             = new Extensions();
             $userEntity            = new Users();
@@ -701,7 +701,7 @@ class ExtensionsController extends BaseController
         // настройки переадресации у этой же учетной записи, т.к. она может ссылаться на себя
 
         $errors = false;
-        if ($extension!==null && $extension->ExtensionForwardingRights
+        if ($extension !== null && $extension->ExtensionForwardingRights
             && ! $extension->ExtensionForwardingRights->delete()) {
             $errors = $extension->ExtensionForwardingRights->getMessages();
         }
@@ -735,7 +735,7 @@ class ExtensionsController extends BaseController
         $result = true;
         // Проверим пересечение с внутренним номерным планом
         $extension = Extensions::findFirstByNumber($number);
-        if ($extension!==null) {
+        if ($extension !== null) {
             $result             = false;
             $this->view->userId = $extension->userid;
         }
@@ -763,7 +763,7 @@ class ExtensionsController extends BaseController
     public function disableAction($number = null): void
     {
         $extension = Extensions::findFirstByNumber($number);
-        if ($extension!==null) {
+        if ($extension !== null) {
             $extensions = Extensions::findByUserid($extension->userid);
             foreach ($extensions as $extension) {
                 switch ($extension->type) {
@@ -797,7 +797,7 @@ class ExtensionsController extends BaseController
     public function enableAction($number = null): void
     {
         $extension = Extensions::findFirstByNumber($number);
-        if ($extension!==null) {
+        if ($extension !== null) {
             $extensions = Extensions::findByUserid($extension->userid);
             foreach ($extensions as $extension) {
                 switch ($extension->type) {

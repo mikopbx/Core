@@ -34,7 +34,7 @@ class DialplanApplicationsController extends BaseController
     public function modifyAction(string $uniqid = null): void
     {
         $app = DialplanApplications::findFirstByUniqid($uniqid);
-        if ($app===null) {
+        if ($app === null) {
             $app            = new DialplanApplications();
             $app->uniqid    = strtoupper('DIALPLAN-APP-' . md5($app->id . time()));
             $app->type      = 'php';
@@ -177,7 +177,7 @@ class DialplanApplicationsController extends BaseController
     public function deleteAction(string $uniqid = null)
     {
         $appRecord = DialplanApplications::findFirstByUniqid($uniqid);
-        if ($appRecord===null){
+        if ($appRecord === null){
             return;
         }
         $this->db->begin();

@@ -34,7 +34,7 @@ class ConferenceRoomsController extends BaseController
     public function modifyAction(string $uniqid = null): void
     {
         $record = ConferenceRooms::findFirstByUniqid($uniqid);
-        if ($record===null) {
+        if ($record === null) {
             $record            = new ConferenceRooms();
             $record->uniqid    = strtoupper('CONFERENCE-' . md5(time()));
             $record->extension = Extensions::getNextFreeApplicationNumber();
@@ -56,7 +56,7 @@ class ConferenceRoomsController extends BaseController
         $this->db->begin();
         $data = $this->request->getPost();
         $room = ConferenceRooms::findFirstByUniqid($data['uniqid']);
-        if ($room===null) {
+        if ($room === null) {
             $room                         = new ConferenceRooms();
             $extension                    = new Extensions();
             $extension->type              = "CONFERENCE";
@@ -166,7 +166,7 @@ class ConferenceRoomsController extends BaseController
         $queue = ConferenceRooms::findFirstByUniqid($uniqid);
 
         $errors = false;
-        if ($queue!==null && ! $queue->Extensions->delete()) {
+        if ($queue !== null && ! $queue->Extensions->delete()) {
             $errors = $queue->Extensions->getMessages();
         }
 

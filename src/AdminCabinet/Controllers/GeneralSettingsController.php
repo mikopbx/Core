@@ -37,7 +37,7 @@ class GeneralSettingsController extends BaseController
         $this->db->begin();
         foreach ($pbxSettings as $key => $value) {
             $record = PbxSettings::findFirstByKey($key);
-            if ($record===null) {
+            if ($record === null) {
                 $record        = new PbxSettings();
                 $record->key   = $key;
                 $record->value = $value;

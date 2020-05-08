@@ -126,7 +126,7 @@ class LicensingController extends BaseController
     {
         $this->db->begin();
         $record = PbxSettings::findFirstByKey('PBXLicense');
-        if ( ! $record) {
+        if ($record === null) {
             $record      = new PbxSettings();
             $record->key = 'PBXLicense';
         }
@@ -152,7 +152,7 @@ class LicensingController extends BaseController
     public function resetSettingsAction(): void
     {
         $record = PbxSettings::findFirstByKey('PBXLicense');
-        if ($record !== false && $record->delete() === false) {
+        if ($record !== null && $record->delete() === false) {
             $errors = $record->getMessages();
             $this->flash->error(implode('<br>', $errors));
             $this->view->success = false;

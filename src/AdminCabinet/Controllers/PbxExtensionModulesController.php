@@ -60,7 +60,7 @@ class PbxExtensionModulesController extends BaseController
         $unCamelizedControllerName  = Text::uncamelize($uniqid, '-');
         $previousMenuSettings       = PbxSettings::findFirstByKey($menuSettings);
         $this->view->showAtMainMenu = $previousMenuSettings !== false;
-        if ($previousMenuSettings===null) {
+        if ($previousMenuSettings === null) {
             $previousMenuSettings        = new PbxSettings();
             $previousMenuSettings->key   = $menuSettings;
             $value                       = [
@@ -93,7 +93,7 @@ class PbxExtensionModulesController extends BaseController
         $data = $this->request->getPost();
 
         $record = PbxSettings::findFirstByKey($data['key']);
-        if ($record===null) {
+        if ($record === null) {
             $record      = new PbxSettings();
             $record->key = $data['key'];
         }
@@ -148,7 +148,7 @@ class PbxExtensionModulesController extends BaseController
 
         // Временно включим модуль, чтобы включить все связи и зависимости
         $module = PbxExtensionModules::findFirstByUniqid($uniqid);
-        if ($module!==null) {
+        if ($module !== null) {
             $module->disabled = '0';
             $module->save();
         }
@@ -224,7 +224,7 @@ class PbxExtensionModulesController extends BaseController
         }
         if ( ! $error) {
             $module = PbxExtensionModules::findFirstByUniqid($uniqid);
-            if ($module!==null) {
+            if ($module !== null) {
                 $module->disabled = '0';
                 if ($module->save() === true) {
                     $this->view->success = true;
@@ -257,7 +257,7 @@ class PbxExtensionModulesController extends BaseController
         $defaultRules         = $class::getDefaultRules();
         $previousRuleSettings = PbxSettings::findFirstByKey("{$uniqid}FirewallSettings");
         $previousRules        = [];
-        if ($previousRuleSettings!==null) {
+        if ($previousRuleSettings !== null) {
             $previousRules = json_decode($previousRuleSettings->value, true);
             $previousRuleSettings->delete();
         }
@@ -402,7 +402,7 @@ class PbxExtensionModulesController extends BaseController
 
         if ( ! $error) {
             $module = PbxExtensionModules::findFirstByUniqid($uniqid);
-            if ($module!==null) {
+            if ($module !== null) {
                 $module->disabled = '1';
                 if ($module->save() === true) {
                     $this->view->success = true;
@@ -475,7 +475,7 @@ class PbxExtensionModulesController extends BaseController
         foreach ($modules as $module) {
             $menuSettings         = "AdditionalMenuItem{$module->uniqid}";
             $previousMenuSettings = PbxSettings::findFirstByKey($menuSettings);
-            if ($previousMenuSettings!==null) {
+            if ($previousMenuSettings !== null) {
                 $result['items'][] = json_decode($previousMenuSettings->value, true);
             }
         }

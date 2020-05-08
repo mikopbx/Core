@@ -69,7 +69,7 @@ class OutboundRoutesController extends BaseController
     {
 
         $rule = OutgoingRoutingTable::findFirstByid($id);
-        if ($rule===null) {
+        if ($rule === null) {
             $rule = new OutgoingRoutingTable();
         }
 
@@ -99,7 +99,7 @@ class OutboundRoutesController extends BaseController
         $data = $this->request->getPost();
 
         $rule = OutgoingRoutingTable::findFirstByid($data['id']);
-        if ($rule===null) {
+        if ($rule === null) {
             $rule = new OutgoingRoutingTable();
         }
 
@@ -149,7 +149,7 @@ class OutboundRoutesController extends BaseController
     public function deleteAction($id = null)
     {
         $rule = OutgoingRoutingTable::findFirstByid($id);
-        if ($rule!==null) {
+        if ($rule !== null) {
             $rule->delete();
         }
 
@@ -172,7 +172,7 @@ class OutboundRoutesController extends BaseController
         }
         $data = $this->request->getPost();
         $rule = OutgoingRoutingTable::findFirstById($ruleid);
-        if ($rule!==null) {
+        if ($rule !== null) {
             $rule->priority = intval($data['newPriority']);
             $result         = $rule->update();
         }

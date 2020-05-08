@@ -38,7 +38,7 @@ class SoundFilesController extends BaseController
         } else {
             $file = SoundFiles::findFirstById($id);
         }
-        if ($file===null) {
+        if ($file === null) {
             $file = new SoundFiles();
             $file->category = SoundFiles::CATEGORY_CUSTOM;
         }
@@ -101,7 +101,7 @@ class SoundFilesController extends BaseController
     {
         $soundFile = SoundFiles::findFirstById($id);
         $errors    = false;
-        if ($soundFile!==null && ! $soundFile->delete()) {
+        if ($soundFile !== null && !$soundFile->delete()) {
             $errors = $soundFile->getMessages();
         }
         if ($errors) {
@@ -120,7 +120,7 @@ class SoundFilesController extends BaseController
     public function getPathByIdAction(string $id = null):void
     {
         $soundFile = SoundFiles::findFirstById($id);
-        if ($soundFile!==null) {
+        if ($soundFile !== null) {
             $this->view->message = $soundFile->path;
             $this->view->success = true;
         } else {

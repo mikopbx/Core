@@ -69,7 +69,7 @@ class MailSettingsController extends BaseController
         $arrSettings = $this->getEmailSettingsArray();
         foreach ($arrSettings as $key) {
             $record = PbxSettings::findFirstByKey($key);
-            if ($record===null) {
+            if ($record === null) {
                 $record      = new PbxSettings();
                 $record->key = $key;
             }

@@ -54,7 +54,7 @@ class IncomingRoutesController extends BaseController
         }
         //Маршрут по умолчанию
         $defaultRule = IncomingRoutingTable::findFirstById(1);
-        if ($defaultRule===null) {
+        if ($defaultRule === null) {
             $defaultRule           = new IncomingRoutingTable();
             $defaultRule->id       = 1;
             $defaultRule->action   = 'busy';
@@ -96,7 +96,7 @@ class IncomingRoutesController extends BaseController
         } // Первая строка маршрут по умолчанию, ее не трогаем.
 
         $rule = IncomingRoutingTable::findFirstByid($ruleId);
-        if ($rule===null) {
+        if ($rule === null) {
             $rule = new IncomingRoutingTable();
         }
 
@@ -143,7 +143,7 @@ class IncomingRoutesController extends BaseController
         $this->db->begin();
         $data = $this->request->getPost();
         $rule = IncomingRoutingTable::findFirstByid($data['id']);
-        if ($rule===null) {
+        if ($rule === null) {
             $rule = new IncomingRoutingTable();
         }
 
@@ -210,7 +210,7 @@ class IncomingRoutesController extends BaseController
         }
 
         $rule = IncomingRoutingTable::findFirstByid($ruleId);
-        if ($rule!==null) {
+        if ($rule !== null) {
             $rule->delete();
         }
 
@@ -237,7 +237,7 @@ class IncomingRoutesController extends BaseController
         }
         $data = $this->request->getPost();
         $rule = IncomingRoutingTable::findFirstById($ruleId);
-        if ($rule!==null) {
+        if ($rule !== null) {
             $rule->priority = (int)$data['newPriority'];
             $result         = $rule->update();
         }
