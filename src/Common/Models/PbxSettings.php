@@ -134,13 +134,13 @@ class PbxSettings extends ModelsBase
     public static function getValueByKey($parameters = null): string
     {
         $result = parent::findFirstByKey($parameters);
-        if ($result !== null || $result->value === null) {
+        if ($result === null || $result->value === null) {
             $arrOfDefaultValues = self::getDefaultArrayValues();
             if ( ! array_key_exists($parameters, $arrOfDefaultValues)) {
                 return '';
-            } else {
-                return $arrOfDefaultValues[$parameters];
             }
+
+            return $arrOfDefaultValues[$parameters];
         }
 
         return $result->value;

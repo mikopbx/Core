@@ -21,9 +21,9 @@ class WorkerApiCommands extends WorkerBase
 {
 
     /**
-     * @throws \Exception
+     * @param $argv
      */
-    public function start():void
+    public function start($argv):void
     {
         $client = new BeanstalkClient();
         $client->subscribe('ping_' . self::class, [$this, 'pingCallBack']);
@@ -521,7 +521,7 @@ if (isset($argv) && count($argv) > 1 && $argv[1] === 'start') {
     while (true) {
         try {
             $worker = new $workerClassname();
-            $worker->start();
+            $worker->start($argv);
         } catch (Exception $e) {
             global $errorLogger;
             $errorLogger->captureException($e);

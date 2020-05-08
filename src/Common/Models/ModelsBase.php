@@ -22,6 +22,7 @@ use Phalcon\Text;
 
 /**
  * @method static mixed findFirstById(array|string|int $parameters=null)
+ * @method static mixed findFirstByKey(string|null $parameters)
  * @method static mixed findFirstByUniqid(array|string|int $parameters=null)
  * @method static mixed findFirst(array|string|int $parameters=null)
  * @method static ResultsetInterface find(array|string|int $parameters=null)
