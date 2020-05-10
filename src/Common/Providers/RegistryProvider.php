@@ -16,7 +16,7 @@ declare(strict_types=1);
  *
  */
 
-namespace MikoPBX\Core\Providers;
+namespace MikoPBX\Common\Providers;
 
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;

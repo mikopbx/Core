@@ -8,7 +8,8 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Core\System\{MikoPBXConfig, Network, Util};
-use MikoPBX\Common\Models\{ExtensionForwardingRights,
+use MikoPBX\Common\Models\{
+    ExtensionForwardingRights,
     Extensions as ExtensionsModel,
     NetworkFilters,
     OutgoingRoutingTable,

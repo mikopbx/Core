@@ -60,7 +60,7 @@ class RouterProvider implements ServiceProviderInterface
         /** @var Manager $eventsManager */
         $eventsManager = $di->getShared('eventsManager');
 
-        $this->attachRoutes($application);
+        $this->attachRoutes($application, $di);
         $this->attachMiddleware($application, $eventsManager);
 
         $application->setEventsManager($eventsManager);
@@ -72,7 +72,7 @@ class RouterProvider implements ServiceProviderInterface
      * @param Micro   $application
      * @param Manager $eventsManager
      */
-    private function attachMiddleware(Micro $application, Manager $eventsManager)
+    private function attachMiddleware(Micro $application, Manager $eventsManager): void
     {
         $middleware = $this->getMiddleware();
 
@@ -88,11 +88,24 @@ class RouterProvider implements ServiceProviderInterface
     /**
      * Attaches the routes to the application; lazy loaded
      *
-     * @param Micro $application
+     * @param Micro                   $application
+     * @param \Phalcon\Di\DiInterface $di
      */
-    private function attachRoutes(Micro $application)
+    private function attachRoutes(Micro $application, DiInterface $di): void
     {
+        // Add hard coded routes
         $routes = $this->getRoutes();
+
+        // Add additional modules routes
+        $additionalRoutes = [];
+        $additionalModules = $di->getShared('pbxConfModules');
+        foreach ($additionalModules as $appClass) {
+            /** @var \MikoPBX\Core\Modules\Config\ConfigClass; $appClass */
+            $additionalRoutes[] = $appClass->getPBXCoreRESTAdditionalRoutes();
+        }
+
+        $routes = array_merge($routes,...$additionalRoutes);
+
         // Class, Method, Route, Handler, ParamsRegex
         foreach ($routes as $route) {
             $collection = new Collection();
@@ -126,7 +139,7 @@ class RouterProvider implements ServiceProviderInterface
      */
     private function getRoutes(): array
     {
-        $routes =  [
+        return [
             // Class, Method, Route, Handler, ParamsRegex
             [PbxGetController::class, 'callAction', '/pbxcore/api/pbx/{actionName}', 'get', '/'],
 
@@ -139,8 +152,6 @@ class RouterProvider implements ServiceProviderInterface
             [CdrGetController::class, 'recordsAction', '/pbxcore/api/cdr/records', 'get', '/'],
             [CdrGetController::class, 'playbackAction', '/pbxcore/api/cdr/playback', 'get', '/'],
             [CdrGetController::class, 'getDataAction', '/pbxcore/api/cdr/getData', 'get', '/'],
-
-
 
             [StorageGetController::class, 'callAction', '/pbxcore/api/storage/{actionName}', 'get', '/'],
             [StoragePostController::class, 'callAction', '/pbxcore/api/storage/{actionName}', 'post', '/'],
@@ -157,15 +168,6 @@ class RouterProvider implements ServiceProviderInterface
             [ModulesPostController::class,'callActionForModule',  '/pbxcore/api/modules/{moduleName}/{actionName}/', 'post', '/'],
         ];
 
-        $additionalRoutes = [];
-        $additionalModules = $this->getShared('pbxConfModules');
-        foreach ($additionalModules as $appClass) {
-            /** @var \MikoPBX\Core\Modules\Config\ConfigClass; $appClass */
-            $additionalRoutes[] = $appClass->getPBXCoreRESTAdditionalRoutes();
-        }
-
-        $routes = array_merge($routes,...$additionalRoutes);
-        return $routes;
     }
 
 }

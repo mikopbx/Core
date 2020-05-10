@@ -25,7 +25,7 @@ use MikoPBX\Core\System\{
     Firewall
 };
 use MikoPBX\Service\Main;
-require_once('globals_boot.php');
+require_once('globals.php');
 
 ini_set('error_reporting', E_ALL);
 ini_set('display_errors', 1);

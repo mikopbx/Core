@@ -11,17 +11,18 @@ declare(strict_types=1);
 namespace MikoPBX\Core\Config;
 
 use Phalcon\Di;
-use MikoPBX\Common\Providers\{ManagedCacheProvider,
+use MikoPBX\Common\Providers\{
+    ManagedCacheProvider,
     ModelsCacheProvider,
     ModelsMetadataProvider,
     MainDatabaseProvider,
     CDRDatabaseProvider,
     TranslationProvider,
     NatsConnectionProvider,
-    ModulesDBConnectionsProvider};
-use MikoPBX\Core\Providers\{
-    PBXConfModulesProvider,
+    ModulesDBConnectionsProvider,
     RegistryProvider,
+    PBXConfModulesProvider};
+use MikoPBX\Core\Providers\{
     CliMessagesProvider,
     EventsLogDatabaseProvider};
 
@@ -30,9 +31,8 @@ class RegisterDIServices
 {
     /**
      * Initialize services on dependency injector
-     * @param bool $safeMode
      */
-    public static function init($safeMode=false): void
+    public static function init(): void
     {
         $di = Di::getDefault();
         $adminCabinetProviders = [
@@ -57,17 +57,13 @@ class RegisterDIServices
             NatsConnectionProvider::class,
 
             // Inject PBX modules
-            PBXConfModulesProvider::class
+            PBXConfModulesProvider::class,
+            ModulesDBConnectionsProvider::class
 
         ];
 
         foreach ($adminCabinetProviders as $provider) {
             $di->register(new $provider());
-        }
-
-        if (! $safeMode) { //TODO:: Проверить успешно ли грузятся правила Firewall из модулей
-            // Inject Modules' Database connections
-            $di->register( new ModulesDBConnectionsProvider());
         }
 
     }

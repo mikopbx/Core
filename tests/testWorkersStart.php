@@ -5,7 +5,7 @@ use \MikoPBX\Core\Workers\WorkerLongPoolAPI;
 use \MikoPBX\Core\Workers\WorkerModelsEvents;
 use Phalcon\Loader;
 
-require_once 'globals_boot.php';
+require_once 'globals.php';
 
 
 

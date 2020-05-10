@@ -6,7 +6,8 @@
  * Written by Alexey Portnov, 2 2020
  */
 namespace MikoPBX\PbxCore;
-use MikoPBX\PBXCoreREST\Config\{ClassLoader, RegisterDIServices};
+use MikoPBX\Common\Config\ClassLoader;
+use MikoPBX\PBXCoreREST\Config\{RegisterDIServices};
 use Phalcon\Di\FactoryDefault;
 use Phalcon\Exception;
 use MikoPBX\Core\System\{SentryErrorLogger, Util};
@@ -17,8 +18,7 @@ use Phalcon\Mvc\Micro;
 $di = new FactoryDefault();
 
 // Auto-loader configuration
-require_once __DIR__ . '/../../src/PBXCoreREST/Config/ClassLoader.php';
-ClassLoader::init($di);
+require_once __DIR__ . '/../../src/Common/Config/ClassLoader.php';
 
 // Attach Sentry error logger
 $errorLogger = new SentryErrorLogger('pbx-core-rest');

@@ -2,7 +2,7 @@
 <?php
 use MikoPBX\Core\System\Network;
 
-require_once 'globals_boot.php';
+require_once 'globals.php';
 
 $action  = strtolower(trim($argv[1]));
 $network = new Network();

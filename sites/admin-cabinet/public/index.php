@@ -13,15 +13,13 @@ use Phalcon\Mvc\Application;
 use MikoPBX\Core\System\SentryErrorLogger;
 use Phalcon\Exception;
 use MikoPBX\AdminCabinet\Utilities\Debug\PhpError;
-use MikoPBX\AdminCabinet\Config\ClassLoader;
 
 $di = new FactoryDefault();
 
 /**
  * Auto-loader configuration
  */
-require_once __DIR__ . '/../../../src/AdminCabinet/Config/ClassLoader.php';
-ClassLoader::init($di);
+require_once __DIR__ . '/../../../src/Common/Config/ClassLoader.php';
 
 /**
  * Load application services

@@ -7,7 +7,7 @@
  */
 namespace MikoPBX\Core\Workers;
 
-require_once('globals_boot.php');
+require_once('globals.php');
 
 use Phalcon\Exception;
 use MikoPBX\Core\System\{BeanstalkClient, Util};

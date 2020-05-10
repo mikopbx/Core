@@ -16,7 +16,7 @@ declare(strict_types=1);
  *
  */
 
-namespace MikoPBX\Core\Providers;
+namespace MikoPBX\Common\Providers;
 
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Core\Asterisk\Configs\ConferenceConf;

@@ -10,7 +10,7 @@ namespace MikoPBX\Core\Rc;
 use MikoPBX\Core\System\{
     Util
 };
-require_once('globals_boot.php');
+require_once('globals.php');
 $fp = fopen('php://stdin', 'r');
 echo "\n";
 echo Util::translate('Enter a host name or IP address: ');

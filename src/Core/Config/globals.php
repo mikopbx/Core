@@ -5,31 +5,16 @@
  * Proprietary and confidential
  * Written by Alexey Portnov, 4 2020
  */
-use MikoPBX\Core\Config\{
-    ClassLoader,
-    RegisterDIServices
-};
+use MikoPBX\Core\Config\RegisterDIServices;
 use MikoPBX\Common\Providers\ConfigProvider;
 use MikoPBX\Core\System\SentryErrorLogger;
-use MikoPBX\Core\Modules\ClassLoader as ModulesClassLoader;
 use Phalcon\Di\FactoryDefault\Cli;
 
-// We will not use globals for something instead of Cli or Core services
-if( 'cli' !== php_sapi_name()){
-    return;
-}
     // Initialize dependency injector
     $di 	= new Cli();
 
-    // Register classes, namespaces, additional libraries
-    require_once 'ClassLoader.php';
-    ClassLoader::init();
-
-    $di->register(new ConfigProvider());
-
-    // Register classes, namespaces, additional libraries from custom modules
-    ModulesClassLoader::init();
-
+    // Register classes, namespaces, additional libraries with lazzy load
+    require_once __DIR__ . '/../../../src/Common/Config/ClassLoader.php';
 
     // Initialize sentry error logger
     $errorLogger = new SentryErrorLogger('pbx-core-workers');
@@ -37,8 +22,8 @@ if( 'cli' !== php_sapi_name()){
 
     RegisterDIServices::init();
 
-    // Setup timezone
+    // Setup timezone //TODO:: Это надо один раз при загрузке системы?
     // if(is_file('/etc/localtime')){
-    //      System::phpTimeZoneConfigure(); //TODO:: Это надо один раз при загрузке системы?
+    //      System::phpTimeZoneConfigure();
     // }
 

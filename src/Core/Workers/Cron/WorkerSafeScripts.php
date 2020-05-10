@@ -8,7 +8,7 @@
 
 namespace MikoPBX\Core\Workers\Cron;
 
-require_once('globals_boot.php');
+require_once('globals.php');
 
 use Generator;
 use MikoPBX\Core\System\{BeanstalkClient, Firewall, PBX, System, Util};

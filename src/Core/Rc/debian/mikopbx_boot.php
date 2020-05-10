@@ -17,7 +17,7 @@
 // use MikoPBX\Core\System\PBX;
 // use MikoPBX\Core\System\Util;
 //
-// require_once('globals_boot.php');
+// require_once('globals.php');
 //
 // if(file_exists('/tmp/ejectcd')){
 //     sleep(15);

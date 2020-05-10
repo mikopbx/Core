@@ -10,7 +10,7 @@ use MikoPBX\Core\System\{
     Util,
     System
 };
-require_once('globals_boot.php');
+require_once('globals.php');
 
 $fp = fopen('php://stdin', 'rb');
 system('clear');
