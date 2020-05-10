@@ -8,6 +8,7 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Core\System\{MikoPBXConfig, Util};
+use MikoPBX\Core\Modules\Config\ConfigClass;
 use MikoPBX\Common\Models\{IncomingRoutingTable, OutgoingRoutingTable, OutWorkTimes, SoundFiles};
 use Phalcon\Di;
 

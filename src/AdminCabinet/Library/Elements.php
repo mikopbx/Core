@@ -191,13 +191,6 @@ class Elements extends Injectable
                 'caption'   => 'mm_Maintenance',
                 'iconclass' => '',
                 'submenu'   => [
-                    'backup'            => [
-                        'caption'   => 'mm_Backup',
-                        'iconclass' => 'history',
-                        'action'    => 'index',
-                        'param'     => '',
-                        'style'     => '',
-                    ],
                     'update'            => [
                         'caption'   => 'mm_UpdateSystem',
                         'iconclass' => 'sync',

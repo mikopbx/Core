@@ -179,7 +179,7 @@ class System
         // Перезапуск сервисов.
         $additionalModules = $this->di->getShared('pbxConfModules');
         foreach ($additionalModules as $appClass) {
-            /** @var \MikoPBX\Core\Asterisk\Configs\ConfigClass $appClass */
+            /** @var \MikoPBX\Core\Modules\Config\ConfigClass $appClass */
             $appClass->onNatsReload();
         }
 
@@ -573,11 +573,10 @@ server 2.pool.ntp.org';
         $mast_have[] = '*/6 * * * * ' . $cron_user . "/bin/sh {$workersPath}/Cron/cleaner_download_links.sh  download_link > /dev/null 2> /dev/null\n";
         $mast_have[] = '*/1 * * * * ' . $cron_user . "{$WorkerSafeScripts}\n";
 
-        //Backup::createCronTasks($mast_have);//TODO Перенести в модуль Backup
         $tasks = [];
         // Дополнительные модули также могут добавить задачи в cron.
         foreach ($additionalModules as $appClass) {
-            /** @var \MikoPBX\Core\Asterisk\Configs\ConfigClass $appClass */
+            /** @var \MikoPBX\Core\Modules\Config\ConfigClass $appClass */
             $appClass->createCronTasks($tasks);
         }
         $conf = implode('', array_merge($mast_have, $tasks));
@@ -1105,7 +1104,7 @@ server 2.pool.ntp.org';
     {
         $additionalModules = $this->di->getShared('pbxConfModules');
         foreach ($additionalModules as $appClass) {
-            /** @var \MikoPBX\Core\Asterisk\Configs\ConfigClass $appClass */
+            /** @var \MikoPBX\Core\Modules\Config\ConfigClass $appClass */
             $appClass->onAfterPbxStarted();
         }
     }

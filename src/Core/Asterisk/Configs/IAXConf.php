@@ -9,6 +9,7 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Core\System\{MikoPBXConfig, Util};
 use MikoPBX\Common\Models\{Iax, IaxCodecs};
+use MikoPBX\Core\Modules\Config\ConfigClass;
 
 class IAXConf extends ConfigClass
 {

@@ -7,6 +7,7 @@
  */
 namespace MikoPBX\Core\Asterisk\Configs;
 
+use MikoPBX\Core\Modules\Config\ConfigClass;
 use MikoPBX\Core\System\Util;
 
 class ParkConf extends ConfigClass
@@ -141,7 +142,7 @@ class ParkConf extends ConfigClass
      *
      * @return string
      */
-    public function getfeaturemap()
+    public function getFeatureMap()
     {
         return "parkcall => *2 \n";
     }

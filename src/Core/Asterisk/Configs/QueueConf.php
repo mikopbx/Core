@@ -9,6 +9,7 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Core\System\{MikoPBXConfig, Util};
 use MikoPBX\Common\Models\CallQueues;
+use MikoPBX\Core\Modules\Config\ConfigClass;
 
 class QueueConf extends ConfigClass
 {

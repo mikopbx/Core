@@ -6,7 +6,7 @@ declare(strict_types=1);
  * Proprietary and confidential
  * Written by Alexey Portnov, 12 2019
  */
-namespace MikoPBX\Modules\Providers;
+namespace MikoPBX\Common\Providers;
 
 
 use Phalcon\Db\Adapter\Pdo\Sqlite;

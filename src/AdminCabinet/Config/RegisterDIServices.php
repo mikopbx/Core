@@ -29,8 +29,8 @@ use MikoPBX\Common\Providers\{CDRDatabaseProvider,
     ModelsCacheProvider,
     ModelsMetadataProvider,
     SessionReadOnlyProvider,
-    TranslationProvider};
-use MikoPBX\Modules\Providers\ModulesDBConnectionsProvider;
+    TranslationProvider,
+    ModulesDBConnectionsProvider};
 use Phalcon\Di\DiInterface;
 
 class RegisterDIServices

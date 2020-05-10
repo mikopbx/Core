@@ -8,6 +8,7 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Core\System\{System, Util};
+use MikoPBX\Core\Modules\Config\ConfigClass;
 
 class OtherConf extends ConfigClass
 {

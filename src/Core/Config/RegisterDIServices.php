@@ -17,14 +17,13 @@ use MikoPBX\Common\Providers\{ManagedCacheProvider,
     MainDatabaseProvider,
     CDRDatabaseProvider,
     TranslationProvider,
-    NatsConnectionProvider};
+    NatsConnectionProvider,
+    ModulesDBConnectionsProvider};
 use MikoPBX\Core\Providers\{
     PBXConfModulesProvider,
     RegistryProvider,
     CliMessagesProvider,
     EventsLogDatabaseProvider};
-
-use MikoPBX\Modules\Providers\ModulesDBConnectionsProvider;
 
 
 class RegisterDIServices

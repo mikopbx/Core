@@ -5,15 +5,16 @@
  * Proprietary and confidential
  * Written by Alexey Portnov, 2 2020
  */
-namespace MikoPBX\Core\Asterisk\Configs;
+namespace MikoPBX\Core\Modules\Config;
 
 use MikoPBX\Core\System\MikoPBXConfig;
 use Phalcon\Di;
 
-abstract class ConfigClass
+abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInterface
 {
     // Директория конфигурационных файлов Asterisk;
     protected $astConfDir;
+
     // Описание класса (имя конф. файла).
     protected $description;
 
@@ -47,7 +48,6 @@ abstract class ConfigClass
         $this->booting       = $this->di->getRegistry()->booting;
         $this->mikoPBXConfig = new MikoPBXConfig();
         $this->getSettings();
-        unset($debug);
     }
 
     public function getSettings()
@@ -183,7 +183,7 @@ abstract class ConfigClass
     }
 
     // Секция featuremap для features.conf
-    public function getfeaturemap()
+    public function getFeatureMap()
     {
         // Возвращает старкоды.
         return '';
@@ -372,6 +372,15 @@ abstract class ConfigClass
      */
     public function modelsEventNeedReload($modified_tables): void
     {
+    }
+
+    /**
+     * Returns array of additional routes for PBXCoreREST interface from module
+     * @return array
+     */
+    public function getPBXCoreRESTAdditionalRoutes(): array
+    {
+        return [];
     }
 
 }

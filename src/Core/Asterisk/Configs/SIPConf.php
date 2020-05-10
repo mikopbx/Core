@@ -7,7 +7,7 @@
  */
 namespace MikoPBX\Core\Asterisk\Configs;
 
-use MikoPBX\Core\System\{ MikoPBXConfig, Network, Util};
+use MikoPBX\Core\System\{MikoPBXConfig, Network, Util};
 use MikoPBX\Common\Models\{ExtensionForwardingRights,
     Extensions as ExtensionsModel,
     NetworkFilters,
@@ -16,6 +16,7 @@ use MikoPBX\Common\Models\{ExtensionForwardingRights,
     SipCodecs,
     Users
 };
+use MikoPBX\Core\Modules\Config\ConfigClass;
 use MikoPBX\Core\Utilities\SubnetCalculator;
 use MikoPBX\Core\Asterisk\AstDB;
 use Phalcon\Di;

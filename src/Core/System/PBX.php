@@ -65,54 +65,6 @@ class PBX
         $this->arrObject     = $this->di->getShared('pbxConfModules');
     }
 
-    /**
-     * Возвращает массив инициализированных модулей АТС.
-     *
-     * @param $exeption_class
-     *
-     * @return array
-     */
-    public static function initAdditionalModules($exeption_class = null): array
-    {
-        $arrObject = [];
-        $arr       = [
-            ExternalPhonesConf::class,
-            OtherConf::class,
-            SIPConf::class,
-            IAXConf::class,
-            IVRConf::class,
-            ParkConf::class,
-            ConferenceConf::class,
-            QueueConf::class,
-            DialplanApplicationConf::class,
-            MikoAjamConf::class,
-        ];
-
-        // Подключение классов.
-        foreach ($arr as $value) {
-            if ($value === $exeption_class) {
-                continue;
-            }
-            if (class_exists($value)) {
-                $arrObject[] = new $value();
-            }
-        }
-        $modules = PbxExtensionModules::find('disabled=0');
-        foreach ($modules as $value) {
-            $class_name = str_replace('Module', '', $value->uniqid);
-            $path_class = "\\Modules\\{$value->uniqid}\\Lib\\{$class_name}Conf";
-            if (class_exists($path_class)) {
-                try {
-                    $arrObject[] = new $path_class();
-                } catch (Exception $e) {
-                    Util::sysLogMsg('INIT_MODULE', "Fail init module '{$value->uniqid}' ." . $e->getMessage());
-                }
-            }
-        }
-
-        return $arrObject;
-    }
-
 
     /**
      * Перезапуск процесса Asterisk.
@@ -736,7 +688,7 @@ class PBX
             "blindxfer => {$this->arr_gs['PBXFeatureBlindTransfer']}\n";
 
         foreach ($this->arrObject as $appClass) {
-            $conf .= $appClass->getfeaturemap();
+            $conf .= $appClass->getFeatureMap();
         }
 
         Util::fileWriteContent('/etc/asterisk/features.conf', $conf);

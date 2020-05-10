@@ -18,7 +18,19 @@ declare(strict_types=1);
 
 namespace MikoPBX\Core\Providers;
 
-use MikoPBX\Core\System\PBX;
+use MikoPBX\Common\Models\PbxExtensionModules;
+use MikoPBX\Core\Asterisk\Configs\ConferenceConf;
+use MikoPBX\Core\Asterisk\Configs\DialplanApplicationConf;
+use MikoPBX\Core\Asterisk\Configs\ExternalPhonesConf;
+use MikoPBX\Core\Asterisk\Configs\IAXConf;
+use MikoPBX\Core\Asterisk\Configs\IVRConf;
+use MikoPBX\Core\Asterisk\Configs\MikoAjamConf;
+use MikoPBX\Core\Asterisk\Configs\OtherConf;
+use MikoPBX\Core\Asterisk\Configs\ParkConf;
+use MikoPBX\Core\Asterisk\Configs\QueueConf;
+use MikoPBX\Core\Asterisk\Configs\SIPConf;
+use MikoPBX\Core\System\Util;
+use Phalcon\Exception;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 
@@ -35,7 +47,42 @@ class PBXConfModulesProvider implements ServiceProviderInterface
     public function register(DiInterface $di): void
     {
         $di->setShared('pbxConfModules', function () {
-            return  PBX::initAdditionalModules();
+            $arrObject = [];
+            $arr       = [
+                ExternalPhonesConf::class,
+                OtherConf::class,
+                SIPConf::class,
+                IAXConf::class,
+                IVRConf::class,
+                ParkConf::class,
+                ConferenceConf::class,
+                QueueConf::class,
+                DialplanApplicationConf::class,
+                MikoAjamConf::class,
+            ];
+
+            // Add system classes
+            foreach ($arr as $value) {
+                if (class_exists($value)) {
+                    $arrObject[] = new $value();
+                }
+            }
+
+            // Add additional modules classes
+            $modules = PbxExtensionModules::find('disabled=0');
+            foreach ($modules as $value) {
+                $class_name = str_replace('Module', '', $value->uniqid);
+                $full_class_name = "\\Modules\\{$value->uniqid}\\Lib\\{$class_name}Conf";
+                if (class_exists($full_class_name)) {
+                    try {
+                        $arrObject[] = new $full_class_name();
+                    } catch (Exception $e) {
+                        Util::sysLogMsg('INIT_MODULE', "Fail init module '{$value->uniqid}' ." . $e->getMessage());
+                    }
+                }
+            }
+
+            return $arrObject;
         });
     }
 }

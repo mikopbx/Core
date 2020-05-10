@@ -9,6 +9,7 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Core\System\{Util};
 use MikoPBX\Common\Models\{IvrMenu, IvrMenuActions, SoundFiles};
+use MikoPBX\Core\Modules\Config\ConfigClass;
 
 class IVRConf extends ConfigClass
 {

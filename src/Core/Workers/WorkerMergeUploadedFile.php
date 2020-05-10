@@ -7,7 +7,6 @@
  */
 namespace MikoPBX\Core\Workers;
 
-use Phalcon\Di;
 use Phalcon\Exception;
 use MikoPBX\Core\System\{System, Util};
 use Nats\Message;
@@ -35,7 +34,7 @@ class WorkerMergeUploadedFile extends WorkerBase
             exit(4);
         }
 
-        if ('upload_backup' === $file_data['action']) {
+        if ('upload_backup' === $file_data['action']) { // TODO::Возможно это надо перенести в Backup воркер
             $settings = $file_data['data'];
             $res_file = "{$settings['backupdir']}/{$settings['dir_name']}/resultfile.{$settings['extension']}";
 

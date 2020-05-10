@@ -9,7 +9,6 @@ namespace MikoPBX\PBXCoreREST\Workers;
 
 use MikoPBX\Core\Asterisk\Configs\{IAXConf, OtherConf, SIPConf};
 use MikoPBX\Core\Asterisk\CdrDb;
-use MikoPBX\Core\Backup\Backup;
 use MikoPBX\Core\System\{BeanstalkClient, Firewall, Notifications, Storage, System, Util};
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Modules\PbxExtensionFailure;
@@ -65,9 +64,6 @@ class WorkerApiCommands extends WorkerBase
                 break;
             case 'system':
                 $answer = $this->systemCallBack($request);
-                break;
-            case 'backup':
-                $answer = $this->backupCallBack($request);
                 break;
             case 'storage':
                 $answer = $this->storageCallBack($request);
@@ -246,78 +242,6 @@ class WorkerApiCommands extends WorkerBase
     }
 
     /**
-     * Операции резервного копирования / восстановления системы.
-     *
-     * @param array $request
-     */
-    public function backupCallBack($request): array
-    {
-        clearstatcache();
-        $action = $request['action'];
-        $data   = $request['data'];
-
-        $result = [
-            'result' => 'ERROR',
-        ];
-        if ('list' === $action) {
-            $result = Backup::listBackups();
-        } elseif ('startScheduled' === $action) {
-            $result = Backup::startScheduled();
-        } elseif ('start' === $action) {
-            $result = Backup::start($data);
-        } elseif ('stop' === $action) {
-            $result = Backup::stop($data['id']);
-        } elseif ('remove' === $action) {
-            $result = Backup::remove($data['id']);
-        } elseif ('checkStorageFtp' === $action) {
-            $result = Backup::checkStorageFtp($data['id']);
-        } elseif ('upload' === $action) {
-            $result = Backup::unpackUplodedImgConf($data);
-        } elseif ('convertConfig' === $action) {
-            $result = System::convertConfig($data['config_file']);
-        } elseif ('getEstimatedSize' === $action) {
-            $result = [
-                'result' => 'Success',
-                'data'   => Backup::getEstimatedSize(),
-            ];
-        } elseif ('statusUpload' === $action) {
-            if (isset($data['backup_id'])) {
-                $backup_dir  = Backup::getBackupDir();
-                $status_file = "{$backup_dir}/{$data['backup_id']}/upload_status";
-            } else {
-                $status_file = '';
-            }
-
-            $result = 'ERROR';
-            if ($status_file === '') {
-                $status = 'ERROR_EMPTY_ID_BACKUP';
-            } elseif (file_exists($status_file)) {
-                $status = file_get_contents($status_file);
-                $result = 'Success';
-            } else {
-                $status = 'ERROR_FILE_NOT_FOUND';
-            }
-            $result = [
-                'result'        => $result,
-                'status_upload' => $status,
-            ];
-        } elseif ('merge_uploaded_file' === $action) {
-            $result      = [
-                'result' => 'Success',
-            ];
-            $workersPath = $this->di->get('config')->core->workersPath;
-            Util::mwExecBg("php -f {$workersPath}/WorkerMergeUploadedFile.php '{$data['settings_file']}'");
-        } elseif ('recover' === $action) {
-            $options = $data['options'] ?? null;
-            $result  = Backup::startRecover($data['id'], $options);
-        }
-
-        $result['function'] = $action;
-
-        return $result;
-    }
-
-    /**
      * Обработка команд управления дисками.
      *
      * @param array $request
@@ -408,7 +332,7 @@ class WorkerApiCommands extends WorkerBase
 
         try {
             if ('check' === $action) {
-                /** @var \MikoPBX\Core\Asterisk\Configs\ConfigClass $c */
+                /** @var \MikoPBX\Core\Modules\Config\ConfigClass $c */
                 $c        = new $path_class(true);
                 $response = $c->test();
                 if ($response['result'] === true) {
@@ -416,13 +340,13 @@ class WorkerApiCommands extends WorkerBase
                 }
                 $result['data'] = $response;
             } elseif ('reload' === $action) {
-                /** @var \MikoPBX\Core\Asterisk\Configs\ConfigClass $cl */
+                /** @var \MikoPBX\Core\Modules\Config\ConfigClass $cl */
                 $cl = new $path_class();
                 $cl->reloadServices();
                 $cl->onAfterPbxStarted();
                 $result['result'] = 'Success';
             } elseif ('customAction' === $action) {
-                /** @var \MikoPBX\Core\Asterisk\Configs\ConfigClass $cl */
+                /** @var \MikoPBX\Core\Modules\Config\ConfigClass $cl */
                 $cl       = new $path_class();
                 $response = $cl->customAction($request['data']);
                 $result   = $response;

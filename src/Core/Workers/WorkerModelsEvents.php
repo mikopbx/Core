@@ -12,7 +12,6 @@ use Phalcon\Exception;
 use MikoPBX\Core\Asterisk\Configs\{IAXConf, QueueConf, SIPConf};
 use MikoPBX\Core\System\{System, BeanstalkClient, Firewall, PBX};
 use MikoPBX\Common\Models\{AsteriskManagerUsers,
-    BackupRules,
     CallQueueMembers,
     CallQueues,
     ConferenceRooms,
@@ -271,9 +270,6 @@ class WorkerModelsEvents extends WorkerBase
                 break;
             case SoundFiles::class:
                 $this->modified_tables[self::R_DIALPLAN] = true;
-                break;
-            case BackupRules::class:
-                $this->modified_tables[self::R_CRON] = true;
                 break;
             case PbxExtensionModules::class:
                 $this->modified_tables[self::R_CRON] = true;

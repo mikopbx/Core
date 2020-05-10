@@ -7,6 +7,7 @@
  */
 namespace MikoPBX\Core\Asterisk\Configs;
 
+use MikoPBX\Core\Modules\Config\ConfigClass;
 use Phalcon\Exception;
 
 class MikoAjamConf extends ConfigClass

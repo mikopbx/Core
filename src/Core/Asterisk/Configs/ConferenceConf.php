@@ -8,6 +8,8 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\ConferenceRooms;
+use MikoPBX\Core\Modules\Config\ConfigClass;
+
 
 class ConferenceConf extends ConfigClass
 {

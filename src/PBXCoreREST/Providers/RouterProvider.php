@@ -126,7 +126,7 @@ class RouterProvider implements ServiceProviderInterface
      */
     private function getRoutes(): array
     {
-        return [
+        $routes =  [
             // Class, Method, Route, Handler, ParamsRegex
             [PbxGetController::class, 'callAction', '/pbxcore/api/pbx/{actionName}', 'get', '/'],
 
@@ -140,9 +140,7 @@ class RouterProvider implements ServiceProviderInterface
             [CdrGetController::class, 'playbackAction', '/pbxcore/api/cdr/playback', 'get', '/'],
             [CdrGetController::class, 'getDataAction', '/pbxcore/api/cdr/getData', 'get', '/'],
 
-            // TODO: Перенести в модуль Backup
-            // [BackupGetController::class, 'callAction', '/pbxcore/api/backup/{actionName}', 'get', '/'],
-            // [BackupPostController::class, 'callAction', '/pbxcore/api/backup/{actionName}', 'post', '/'],
+
 
             [StorageGetController::class, 'callAction', '/pbxcore/api/storage/{actionName}', 'get', '/'],
             [StoragePostController::class, 'callAction', '/pbxcore/api/storage/{actionName}', 'post', '/'],
@@ -154,9 +152,20 @@ class RouterProvider implements ServiceProviderInterface
 
             [ModulesGetController::class, 'callAction', '/pbxcore/api/modules/{actionName}/', 'get', '/'],
             [ModulesPostController::class,'callAction',  '/pbxcore/api/modules/{actionName}/', 'post', '/'],
+
             [ModulesGetController::class, 'callActionForModule', '/pbxcore/api/modules/{moduleName}/{actionName}/', 'get', '/'],
             [ModulesPostController::class,'callActionForModule',  '/pbxcore/api/modules/{moduleName}/{actionName}/', 'post', '/'],
         ];
+
+        $additionalRoutes = [];
+        $additionalModules = $this->getShared('pbxConfModules');
+        foreach ($additionalModules as $appClass) {
+            /** @var \MikoPBX\Core\Modules\Config\ConfigClass; $appClass */
+            $additionalRoutes[] = $appClass->getPBXCoreRESTAdditionalRoutes();
+        }
+
+        $routes = array_merge($routes,...$additionalRoutes);
+        return $routes;
     }
 
 }
