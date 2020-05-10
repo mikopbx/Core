@@ -7,7 +7,7 @@
  *
  */
 
-namespace MikoPBX\Modules;
+namespace MikoPBX\Core\Modules;
 
 use MikoPBX\Service\License;
 use Phalcon\Di\Injectable;

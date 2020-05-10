@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace MikoPBX\PBXCoreREST\Config;
 
 use MikoPBX\Common\Providers\ConfigProvider;
-use MikoPBX\Modules\ClassLoader as ModulesClassLoader;
+use MikoPBX\Core\Modules\ClassLoader as ModulesClassLoader;
 use Phalcon\Di;
 use Phalcon\Loader;
 use function MikoPBX\Common\Config\appPath;

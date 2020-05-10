@@ -10,23 +10,14 @@ namespace MikoPBX\Core\System;
 use Exception;
 use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\Asterisk\Configs\{
-    ConferenceConf,
-    DialplanApplicationConf,
     ExtensionsConf,
-    ExternalPhonesConf,
-    IAXConf,
-    IVRConf,
-    MikoAjamConf,
-    OtherConf,
-    ParkConf,
-    QueueConf,
-    SIPConf};
+    OtherConf
+};
 use MikoPBX\Core\Config\RegisterDIServices;
 use MikoPBX\Common\Models\{
     AsteriskManagerUsers,
     Codecs,
-    NetworkFilters,
-    PbxExtensionModules
+    NetworkFilters
 };
 use MikoPBX\Core\Workers\WorkerAmiListener;
 use MikoPBX\Core\Workers\WorkerCallEvents;
@@ -65,14 +56,14 @@ class PBX
         $this->arrObject     = $this->di->getShared('pbxConfModules');
     }
 
-
     /**
      * Перезапуск процесса Asterisk.
      */
     public static function restart(): void
     {
-        self::stop();
-        self::start();
+        $pbx = new PBX();
+        $pbx->stop();
+        $pbx->start();
     }
 
     public static function logRotate(): void
@@ -82,7 +73,7 @@ class PBX
         self::rotatePbxLog('error');
     }
 
-    public static function rotatePbxLog($f_name)
+    public static function rotatePbxLog($f_name):void
     {
         $max_size    = 2;
         $log_dir     = System::getLogDir() . '/asterisk/';
@@ -266,7 +257,7 @@ class PBX
         ];
 
         if ( ! $this->booting) {
-            self::stop();
+            $this->stop();
         }
         /**
          * Создание конфигурационных файлов.
@@ -322,7 +313,7 @@ class PBX
     /**
      * Остановка процесса Asterisk.
      */
-    public static function stop(): void
+    public function stop(): void
     {
         Util::killByName('safe_asterisk');
         sleep(1);
@@ -701,9 +692,10 @@ class PBX
      */
     private function indicationConfGenerate($country = 'ru'): void
     {
+        $rootPath = $this->di->getShared('config')->path('core.rootPath');
         $data = file_get_contents(
-            '/usr/www/src/Core/Asterisk/Configs/Samples/indications.conf.sample'
-        ); // TODO::ReplaceWith path
+            "{$rootPath}/src/Core/Asterisk/Configs/Samples/indications.conf.sample"
+        );
         $conf = str_replace('{country}', $country, $data);
         Util::fileWriteContent('/etc/asterisk/indications.conf', $conf);
     }
@@ -739,10 +731,10 @@ class PBX
     public function start(): void
     {
         Network::startSipDump();
-//        if(Util::is_debian()){
-//            Util::mwExecBg('systemctl restart asterisk');
-//        }else{
-        Util::mwExecBg('/usr/sbin/safe_asterisk -fn');
-//        }
+       if(Util::isSystemctl()){
+           Util::mwExecBg('systemctl restart asterisk');
+       }else{
+           Util::mwExecBg('/usr/sbin/safe_asterisk -fn');
+       }
     }
 }

@@ -6,7 +6,7 @@
  * Written by Alexey Portnov, 12 2019
  */
 
-namespace MikoPBX\Modules;
+namespace MikoPBX\Core\Modules;
 
 use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings};
 use Phalcon\Db\Adapter\Pdo\Sqlite;

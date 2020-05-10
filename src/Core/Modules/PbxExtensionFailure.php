@@ -6,7 +6,7 @@
  * Written by Alexey Portnov, 7 2019
  */
 
-namespace MikoPBX\Modules;
+namespace MikoPBX\Core\Modules;
 
 class PbxExtensionFailure extends PbxExtensionBase
 {

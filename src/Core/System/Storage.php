@@ -13,7 +13,7 @@ use MikoPBX\Common\Models\{
     Storage as StorageModel
 };
 use Phalcon\Di;
-use Phalcon\Exception;
+
 
 /**
  * Вспомогательные методы.

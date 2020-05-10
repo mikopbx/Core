@@ -11,7 +11,7 @@ use MikoPBX\Core\Config\{
 };
 use MikoPBX\Common\Providers\ConfigProvider;
 use MikoPBX\Core\System\SentryErrorLogger;
-use MikoPBX\Modules\ClassLoader as ModulesClassLoader;
+use MikoPBX\Core\Modules\ClassLoader as ModulesClassLoader;
 use Phalcon\Di\FactoryDefault\Cli;
 
 // We will not use globals for something instead of Cli or Core services

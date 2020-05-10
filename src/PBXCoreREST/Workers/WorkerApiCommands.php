@@ -11,7 +11,7 @@ use MikoPBX\Core\Asterisk\Configs\{IAXConf, OtherConf, SIPConf};
 use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\System\{BeanstalkClient, Firewall, Notifications, Storage, System, Util};
 use MikoPBX\Core\Workers\WorkerBase;
-use MikoPBX\Modules\PbxExtensionFailure;
+use MikoPBX\Core\Modules\PbxExtensionFailure;
 use Phalcon\Exception;
 
 require_once 'globals.php';

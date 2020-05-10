@@ -7,7 +7,7 @@ declare(strict_types=1);
  * Written by Nikolay Beketov, 12 2019
  *
  */
-namespace MikoPBX\Modules;
+namespace MikoPBX\Core\Modules;
 
 use Phalcon\Di;
 use Phalcon\Loader;
