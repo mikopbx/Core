@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 /**
  * Copyright (C) MIKO LLC - All Rights Reserved
@@ -21,19 +22,24 @@ class LanguageSelectorProvider implements ServiceProviderInterface
 {
     public function register(DiInterface $di): void
     {
-        $di->setShared('language', function () {
-            $roSession = $this->get('sessionRO');
-            if ($roSession !== null && array_key_exists('WebAdminLanguage',
-                    $roSession) && ! empty($roSession['WebAdminLanguage'])) {
-                $language = $roSession['WebAdminLanguage'];
-            } elseif (array_key_exists('HTTP_ACCEPT_LANGUAGE', $_SERVER)) {
-                $ls       = new LanguageSelector();
-                $language = $ls->getBestMatch();
-            } else {
-                $language = 'en';
-            }
+        $di->setShared(
+            'language',
+            function () {
+                $roSession = $this->get('sessionRO');
+                if ($roSession !== null && array_key_exists(
+                        'WebAdminLanguage',
+                        $roSession
+                    ) && ! empty($roSession['WebAdminLanguage'])) {
+                    $language = $roSession['WebAdminLanguage'];
+                } elseif (array_key_exists('HTTP_ACCEPT_LANGUAGE', $_SERVER)) {
+                    $ls       = new LanguageSelector();
+                    $language = $ls->getBestMatch();
+                } else {
+                    $language = 'en';
+                }
 
-            return $language;
-        });
+                return $language;
+            }
+        );
     }
 }

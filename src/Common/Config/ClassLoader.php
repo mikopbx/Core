@@ -17,13 +17,13 @@ use Phalcon\Loader;
 
 class ClassLoader
 {
-    public static function init():void
+    public static function init(): void
     {
         require __DIR__ . '/functions.php';
         require appPath('vendor/autoload.php');
 
         $di = Di::getDefault();
-        if ($di !== null){
+        if ($di !== null) {
             $di->register(new ConfigProvider());
         }
 
@@ -39,7 +39,7 @@ class ClassLoader
 
         $modulesDir = $di->getConfig()->path('core.modulesDir');
         $nameSpaces = [
-             'Modules' => $modulesDir
+            'Modules' => $modulesDir,
         ];
 
         $loader = new Loader();

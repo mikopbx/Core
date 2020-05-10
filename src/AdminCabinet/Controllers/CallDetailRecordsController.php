@@ -9,8 +9,8 @@
 
 namespace MikoPBX\AdminCabinet\Controllers;
 
-use MikoPBX\Common\Models\{CallDetailRecords, PbxSettings};
 use DateTime;
+use MikoPBX\Common\Models\{CallDetailRecords, PbxSettings};
 
 class CallDetailRecordsController extends BaseController
 {
@@ -200,8 +200,11 @@ class CallDetailRecordsController extends BaseController
                 $date                                  = DateTime::createFromFormat('d/m/Y', $matches[0][1]);
                 $tomorrowDate                          = $date->modify('+1 day')->format('Y-m-d');
                 $parameters['bind']['dateFromPhrase2'] = $tomorrowDate;
-                $searchPhrase                          = str_replace([$matches[0][0], $matches[0][1]], '',
-                    $searchPhrase);
+                $searchPhrase                          = str_replace(
+                    [$matches[0][0], $matches[0][1]],
+                    '',
+                    $searchPhrase
+                );
             }
         }
 
@@ -221,7 +224,6 @@ class CallDetailRecordsController extends BaseController
                     $parameters['bind']['SearchPhrase1'] = $matches[0][0];
                     $parameters['bind']['SearchPhrase2'] = $matches[0][0];
                 } else {
-
                     $seekNumber                          = substr($matches[0][0], -9);
                     $parameters['conditions']            .= 'src_num LIKE :SearchPhrase1: OR dst_num LIKE :SearchPhrase2: OR did LIKE :SearchPhrase3:';
                     $parameters['bind']['SearchPhrase1'] = "%{$seekNumber}%";
@@ -244,7 +246,9 @@ class CallDetailRecordsController extends BaseController
                     $parameters['bind']['SearchPhrase6'] = $matches[0][0];
                     $parameters['bind']['SearchPhrase7'] = $matches[0][1];
                     $parameters['bind']['SearchPhrase8'] = $matches[0][0];
-                } elseif ($extensionsLength === strlen($matches[0][0]) && $extensionsLength !== strlen($matches[0][1])) {
+                } elseif ($extensionsLength === strlen($matches[0][0]) && $extensionsLength !== strlen(
+                        $matches[0][1]
+                    )) {
                     $seekNumber                          = substr($matches[0][1], -9);
                     $parameters['conditions']            .= '(src_num = :SearchPhrase1: AND dst_num LIKE :SearchPhrase2:)';
                     $parameters['conditions']            .= ' OR (src_num LIKE :SearchPhrase3: AND dst_num = :SearchPhrase4:)';
@@ -258,8 +262,9 @@ class CallDetailRecordsController extends BaseController
                     $parameters['bind']['SearchPhrase6'] = $matches[0][0];
                     $parameters['bind']['SearchPhrase7'] = "%{$seekNumber}%";
                     $parameters['bind']['SearchPhrase8'] = $matches[0][0];
-                } elseif ($extensionsLength !== strlen($matches[0][0]) && $extensionsLength === strlen($matches[0][1])) {
-
+                } elseif ($extensionsLength !== strlen($matches[0][0]) && $extensionsLength === strlen(
+                        $matches[0][1]
+                    )) {
                     $seekNumber                          = substr($matches[0][0], -9);
                     $parameters['conditions']            .= '(src_num LIKE :SearchPhrase1: AND dst_num = :SearchPhrase2:)';
                     $parameters['conditions']            .= ' OR (src_num = :SearchPhrase3: AND dst_num LIKE :SearchPhrase4:)';
@@ -294,8 +299,6 @@ class CallDetailRecordsController extends BaseController
             if ($needCloseAnd) {
                 $parameters['conditions'] .= ')';
             }
-
-
         }
     }
 }

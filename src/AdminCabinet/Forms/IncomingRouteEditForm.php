@@ -6,6 +6,7 @@
  * Written by Nikolay Beketov, 5 2018
  *
  */
+
 namespace MikoPBX\AdminCabinet\Forms;
 
 use Phalcon\Forms\Element\Hidden;
@@ -41,26 +42,29 @@ class IncomingRouteEditForm extends Form
         $this->add(new Numeric('timeout', ['maxlength' => 3, 'style' => 'width: 80px;', 'defaultValue' => 120]));
 
         // Providers
-        $providers = new Select('provider', $options['providers'], [
+        $providers = new Select(
+            'provider', $options['providers'], [
             'using'    => [
                 'id',
                 'name',
             ],
             'useEmpty' => false,
             'class'    => 'ui selection dropdown provider-select',
-        ]);
+        ]
+        );
         $this->add($providers);
 
         // Extension
-        $extension = new Select('extension', $options['extensions'], [
+        $extension = new Select(
+            'extension', $options['extensions'], [
             'using'    => [
                 'id',
                 'name',
             ],
             'useEmpty' => false,
             'class'    => 'ui selection dropdown search forwarding-select',
-        ]);
+        ]
+        );
         $this->add($extension);
-
     }
 }

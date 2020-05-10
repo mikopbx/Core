@@ -6,11 +6,11 @@
  * Written by Nikolay Beketov, 5 2018
  *
  */
+
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\SoundFilesEditForm;
 use MikoPBX\Common\Models\SoundFiles;
-use MikoPBX\Core\System\Util;
 
 class SoundFilesController extends BaseController
 {
@@ -18,10 +18,10 @@ class SoundFilesController extends BaseController
     /**
      * Build sounds list
      */
-    public function indexAction():void
+    public function indexAction(): void
     {
-        $this->view->mohFiles = SoundFiles::find('category="'.SoundFiles::CATEGORY_MOH.'"');
-        $this->view->customFiles = SoundFiles::find('category="'.SoundFiles::CATEGORY_CUSTOM.'"');
+        $this->view->mohFiles    = SoundFiles::find('category="' . SoundFiles::CATEGORY_MOH . '"');
+        $this->view->customFiles = SoundFiles::find('category="' . SoundFiles::CATEGORY_CUSTOM . '"');
     }
 
 
@@ -30,16 +30,16 @@ class SoundFilesController extends BaseController
      *
      * @param string $id редактируемой записи
      */
-    public function modifyAction(string $id = null):void
+    public function modifyAction(string $id = null): void
     {
-        if (in_array($id,[SoundFiles::CATEGORY_CUSTOM, SoundFiles::CATEGORY_MOH], true)){
-            $file = new SoundFiles();
+        if (in_array($id, [SoundFiles::CATEGORY_CUSTOM, SoundFiles::CATEGORY_MOH], true)) {
+            $file           = new SoundFiles();
             $file->category = $id;
         } else {
             $file = SoundFiles::findFirstById($id);
         }
         if ($file === null) {
-            $file = new SoundFiles();
+            $file           = new SoundFiles();
             $file->category = SoundFiles::CATEGORY_CUSTOM;
         }
 
@@ -54,7 +54,7 @@ class SoundFilesController extends BaseController
      *
      * @return void
      */
-    public function saveAction():void
+    public function saveAction(): void
     {
         if ( ! $this->request->isPost()) {
             return;
@@ -97,11 +97,11 @@ class SoundFilesController extends BaseController
      *
      * @param string $id
      */
-    public function deleteAction(string $id = null):void
+    public function deleteAction(string $id = null): void
     {
         $soundFile = SoundFiles::findFirstById($id);
         $errors    = false;
-        if ($soundFile !== null && !$soundFile->delete()) {
+        if ($soundFile !== null && ! $soundFile->delete()) {
             $errors = $soundFile->getMessages();
         }
         if ($errors) {
@@ -117,7 +117,7 @@ class SoundFilesController extends BaseController
      *
      * @param string $id
      */
-    public function getPathByIdAction(string $id = null):void
+    public function getPathByIdAction(string $id = null): void
     {
         $soundFile = SoundFiles::findFirstById($id);
         if ($soundFile !== null) {

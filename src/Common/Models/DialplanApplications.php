@@ -14,7 +14,7 @@ use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
 /**
- * @method static mixed findFirstByUniqid(array|string|int $parameters=null)
+ * @method static mixed findFirstByUniqid(array|string|int $parameters = null)
  */
 class DialplanApplications extends ModelsBase
 {
@@ -77,7 +77,6 @@ class DialplanApplications extends ModelsBase
                 ],
             ]
         );
-
     }
 
     public function getApplicationlogic(): string
@@ -94,13 +93,23 @@ class DialplanApplications extends ModelsBase
     {
         $validation = new Validation();
 
-        $validation->add('uniqid', new UniquenessValidator([
-            'message' => $this->t('mo_ThisUniqidNotUniqueForDialplanApplicationsModels'),
-        ]));
+        $validation->add(
+            'uniqid',
+            new UniquenessValidator(
+                [
+                    'message' => $this->t('mo_ThisUniqidNotUniqueForDialplanApplicationsModels'),
+                ]
+            )
+        );
 
-        $validation->add('extension', new UniquenessValidator([
-            'message' => $this->t('mo_ThisExtensionNotUniqueForDialplanApplicationsModels'),
-        ]));
+        $validation->add(
+            'extension',
+            new UniquenessValidator(
+                [
+                    'message' => $this->t('mo_ThisExtensionNotUniqueForDialplanApplicationsModels'),
+                ]
+            )
+        );
 
         return $this->validate($validation);
     }

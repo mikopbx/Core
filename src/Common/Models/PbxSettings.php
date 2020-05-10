@@ -28,13 +28,6 @@ class PbxSettings extends ModelsBase
      */
     public $value;
 
-    public function initialize(): void
-    {
-        $this->setSource('m_PbxSettings');
-        parent::initialize();
-    }
-
-
     /**
      * Значениея по умолчанию для переменных станции
      *
@@ -146,13 +139,23 @@ class PbxSettings extends ModelsBase
         return $result->value;
     }
 
+    public function initialize(): void
+    {
+        $this->setSource('m_PbxSettings');
+        parent::initialize();
+    }
+
     public function validation(): bool
     {
-
         $validation = new Validation();
-        $validation->add('key', new UniquenessValidator([
-            'message' => $this->t('mo_ThisKeyMustBeUniqueForPbxSettingsModels'),
-        ]));
+        $validation->add(
+            'key',
+            new UniquenessValidator(
+                [
+                    'message' => $this->t('mo_ThisKeyMustBeUniqueForPbxSettingsModels'),
+                ]
+            )
+        );
 
         return $this->validate($validation);
     }
@@ -231,7 +234,6 @@ class PbxSettings extends ModelsBase
                 break;
             default:
                 return false;
-
         }
     }
 
@@ -250,7 +252,6 @@ class PbxSettings extends ModelsBase
                 break;
             default:
                 return false;
-
         }
     }
 
@@ -276,7 +277,6 @@ class PbxSettings extends ModelsBase
                 break;
             default:
                 return false;
-
         }
     }
 
@@ -298,7 +298,6 @@ class PbxSettings extends ModelsBase
                 break;
             default:
                 return false;
-
         }
     }
 
@@ -319,7 +318,6 @@ class PbxSettings extends ModelsBase
                 break;
             default:
                 return false;
-
         }
     }
 
@@ -336,7 +334,6 @@ class PbxSettings extends ModelsBase
                 break;
             default:
                 return false;
-
         }
     }
 
@@ -353,7 +350,6 @@ class PbxSettings extends ModelsBase
                 break;
             default:
                 return false;
-
         }
     }
 
@@ -376,7 +372,6 @@ class PbxSettings extends ModelsBase
                 break;
             default:
                 return false;
-
         }
     }
 

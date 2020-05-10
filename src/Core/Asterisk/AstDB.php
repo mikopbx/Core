@@ -8,10 +8,11 @@
 
 namespace MikoPBX\Core\Asterisk;
 
+use MikoPBX\Core\System\{Util};
 use Phalcon\Di;
 use Phalcon\Exception;
-use MikoPBX\Core\System\{PBX, Util};
 use SQLite3;
+
 class AstDB
 {
     /**
@@ -24,7 +25,7 @@ class AstDB
     /**
      * AstDB constructor.
      */
-    function __construct()
+    public function __construct()
     {
         $this->di = Di::getDefault();
         $this->am = Util::getAstManager('off');
@@ -67,7 +68,6 @@ EOF;
 
         $this->db->close();
         $this->db = null;
-
     }
 
     /**

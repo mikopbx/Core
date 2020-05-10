@@ -5,6 +5,7 @@
  * Proprietary and confidential
  * Written by Alexey Portnov, 2 2020
  */
+
 namespace MikoPBX\Core\System;
 
 use Phalcon\Di;
@@ -23,11 +24,11 @@ class BeanstalkClient
     private $message;
     private $timeout_handler;
 
-    public function __construct($tube='default')
+    public function __construct($tube = 'default')
     {
-        $this->di = Di::getDefault();
-        $tube = str_replace("\\", '-', $tube);
-        $this->tube    = $tube;
+        $this->di          = Di::getDefault();
+        $tube              = str_replace("\\", '-', $tube);
+        $this->tube        = $tube;
         $this->job_options = ['priority' => 250, 'delay' => 0, 'ttr' => 3600];
         $this->reconnect();
         // foreach ($this->subscriptions as $key => $subscription) {
@@ -35,12 +36,12 @@ class BeanstalkClient
         // }
     }
 
-    public function reconnect():void
+    public function reconnect(): void
     {
-        $config   = $this->di->get('config')->beanstalk;
-        $this->queue   = Pheanstalk::create($config->host, $config->port);
+        $config      = $this->di->get('config')->beanstalk;
+        $this->queue = Pheanstalk::create($config->host, $config->port);
         $this->queue->useTube($this->tube);
-        $this->connected   = true;
+        $this->connected = true;
     }
 
     /**
@@ -66,15 +67,15 @@ class BeanstalkClient
     public function request($job_data, $timeout = 10, $priority = null)
     {
         $this->message = false;
-        $inbox_tube             = uniqid('INBOX_', true);
+        $inbox_tube    = uniqid('INBOX_', true);
         $this->queue->watch($inbox_tube);
 
         // Отправляем данные для обработки.
-        $requestMessage=[
+        $requestMessage = [
             $job_data,
-            'inbox_tube' => $inbox_tube
+            'inbox_tube' => $inbox_tube,
         ];
-        $id = $this->publish($requestMessage, $priority);
+        $id             = $this->publish($requestMessage, $priority);
 
         // Получаем ответ от сервера.
         $job = $this->queue->reserveWithTimeout($timeout);
@@ -113,7 +114,7 @@ class BeanstalkClient
 
         $job_data = serialize($job_data);
         // Send JOB to queue
-        if ( is_numeric($priority)) {
+        if (is_numeric($priority)) {
             $result = $this->queue->put($job_data, $priority);
         } else {
             $result = $this->queue->put($job_data);
@@ -128,7 +129,7 @@ class BeanstalkClient
     /**
      * Subscribe on new message in tube
      *
-     * @param string           $tube - listening tube
+     * @param string           $tube     - listening tube
      * @param array | callable $callback - worker
      */
     public function subscribe($tube, $callback): void
@@ -144,42 +145,41 @@ class BeanstalkClient
      *
      * @param int $timeout
      */
-    public function wait($timeout=10): void
+    public function wait($timeout = 10): void
     {
+        $this->message = null;
 
-            $this->message = null;
-
-            $start = microtime(true);
-            $job   = $this->queue->reserveWithTimeout($timeout);
-            if ($job === null) {
-                $worktime = (microtime(true) - $start);
-                if ($worktime < 0.5) {
-                   // Что то не то, вероятно потеряна связь с сервером очередей.
-                   $this->reconnect();
-                }
-                if (is_array($this->timeout_handler)) {
-                    call_user_func($this->timeout_handler);
-                } elseif (is_callable($this->timeout_handler) === true) {
-                    $this->timeout_handler();
-                }
-                return;
+        $start = microtime(true);
+        $job   = $this->queue->reserveWithTimeout($timeout);
+        if ($job === null) {
+            $worktime = (microtime(true) - $start);
+            if ($worktime < 0.5) {
+                // Что то не то, вероятно потеряна связь с сервером очередей.
+                $this->reconnect();
+            }
+            if (is_array($this->timeout_handler)) {
+                call_user_func($this->timeout_handler);
+            } elseif (is_callable($this->timeout_handler) === true) {
+                $this->timeout_handler();
             }
 
-            // Processing job over callable function attached in $this->subscribe
-            $this->message = unserialize($job->getData(),[false]);
-            $stats = $this->queue->statsJob($job);
-            $requestFormTube      = $stats['tube'];
-            $func          = $this->subscriptions[$requestFormTube] ?? null;
+            return;
+        }
 
-            if (is_array($func)) {
-                call_user_func($func, $this);
-            } elseif (is_callable($func) === true) {
-                $func($this);
-            } else {
-                return;
-            }
-            $this->queue->delete($job);
+        // Processing job over callable function attached in $this->subscribe
+        $this->message   = unserialize($job->getData(), [false]);
+        $stats           = $this->queue->statsJob($job);
+        $requestFormTube = $stats['tube'];
+        $func            = $this->subscriptions[$requestFormTube] ?? null;
 
+        if (is_array($func)) {
+            call_user_func($func, $this);
+        } elseif (is_callable($func) === true) {
+            $func($this);
+        } else {
+            return;
+        }
+        $this->queue->delete($job);
     }
 
     /**
@@ -222,7 +222,6 @@ class BeanstalkClient
      */
     public function setErrorHandler($err_handler): void
     {
-
     }
 
     /**

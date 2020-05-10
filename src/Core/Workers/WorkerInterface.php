@@ -23,13 +23,13 @@ interface WorkerInterface
     /**
      * Create PID file for worker
      */
-    public function getPidFile():string;
+    public function getPidFile(): string;
 
     /**
      * Worker entry point
      *
      * @param mixed $params
      */
-    public function start($params):void;
+    public function start($params): void;
 
 }

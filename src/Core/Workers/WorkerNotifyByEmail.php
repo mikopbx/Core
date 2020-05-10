@@ -5,10 +5,11 @@
  * Proprietary and confidential
  * Written by Alexey Portnov, 2 2020
  */
+
 namespace MikoPBX\Core\Workers;
 
-use MikoPBX\Core\System\{BeanstalkClient, MikoPBXConfig, Notifications, Util};
 use Exception;
+use MikoPBX\Core\System\{BeanstalkClient, MikoPBXConfig, Notifications, Util};
 
 require_once 'globals.php';
 

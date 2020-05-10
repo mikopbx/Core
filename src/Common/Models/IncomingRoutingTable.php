@@ -90,8 +90,6 @@ class IncomingRoutingTable extends ModelsBase
                 ],
             ]
         );
-
-
     }
 }
 

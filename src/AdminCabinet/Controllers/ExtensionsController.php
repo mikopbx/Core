@@ -6,6 +6,7 @@
  * Written by Nikolay Beketov, 6 2018
  *
  */
+
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\ExtensionEditForm;
@@ -98,7 +99,6 @@ class ExtensionsController extends BaseController
                     $extensionTable[$extension->userid]['mobile'] = $extension->number;
                     break;
                 default:
-
             }
         }
         $this->view->extensions = $extensionTable;
@@ -194,7 +194,7 @@ class ExtensionsController extends BaseController
             ],
         ];
         $externalExtension = Extensions::findFirst($parameters);
-        if ($externalExtension===null) {
+        if ($externalExtension === null) {
             $externalExtension                           = new Extensions();
             $externalExtension->userid                   = $extension->userid;
             $externalExtension->type                     = 'EXTERNAL';
@@ -202,7 +202,6 @@ class ExtensionsController extends BaseController
             $externalExtension->ExternalPhones           = new ExternalPhones();
             $externalExtension->ExternalPhones->uniqid   = strtoupper('EXTERNAL-' . md5(time()));
             $externalExtension->ExternalPhones->disabled = '0';
-
         }
 
 
@@ -227,12 +226,14 @@ class ExtensionsController extends BaseController
         $extensionsLength      = PbxSettings::getValueByKey('PBXInternalExtensionLength');
         $internalExtensionMask = '9{' . $extensionsLength . '}';
 
-        $form = new ExtensionEditForm($extension, [
+        $form = new ExtensionEditForm(
+            $extension, [
             'network_filters'        => $arrNetworkFilters,
             'external_extension'     => $externalExtension,
             'forwarding_extensions'  => $forwardingExtensions,
             'internalextension_mask' => $internalExtensionMask,
-        ]);
+        ]
+        );
 
         $this->view->form      = $form;
         $this->view->codecs    = $codecs;
@@ -258,7 +259,6 @@ class ExtensionsController extends BaseController
         $maxExtension = (10 ** $extensionsLength) - 1;
 
         return ($result <= $maxExtension) ? $result : '';
-
     }
 
     /**
@@ -288,7 +288,6 @@ class ExtensionsController extends BaseController
             $userEntity            = new Users();
             $fwdEntity             = new ExtensionForwardingRights();
             $fwdEntity->ringlength = 45;
-
         } else {
             $extension = $sipEntity->Extensions;
             if ( ! $extension) {
@@ -378,7 +377,7 @@ class ExtensionsController extends BaseController
                 ],
             ];
             $deletedMobileNumber = Extensions::findFirst($parameters);
-            if ($deletedMobileNumber!==null
+            if ($deletedMobileNumber !== null
                 && $deletedMobileNumber->delete() === false) {
                 $errors = $deletedMobileNumber->getMessages();
                 $this->flash->error(implode('<br>', $errors));
@@ -446,7 +445,6 @@ class ExtensionsController extends BaseController
      */
     private function saveExtension(Extensions $extension, Users $userEntity, $data, $isMobile = false): bool
     {
-
         foreach ($extension as $name => $value) {
             switch ($name) {
                 case 'id':
@@ -484,7 +482,6 @@ class ExtensionsController extends BaseController
                     if (array_key_exists($name, $data)) {
                         $extension->$name = $data[$name];
                     }
-
             }
         }
 
@@ -548,7 +545,6 @@ class ExtensionsController extends BaseController
                     if (array_key_exists('sip_' . $name, $data)) {
                         $sipEntity->$name = $data['sip_' . $name];
                     }
-
             }
         }
         if ($sipEntity->save() === false) {
@@ -582,7 +578,7 @@ class ExtensionsController extends BaseController
             ];
             if (array_key_exists('codec_' . $key, $data) && $data['codec_' . $key] === 'on') {
                 $newCodec = SipCodecs::findFirst($parameters);
-                if ($newCodec===null) {
+                if ($newCodec === null) {
                     $newCodec = new SipCodecs();
                 }
                 $newCodec->sipuid   = $data['sip_uniqid'];
@@ -604,7 +600,6 @@ class ExtensionsController extends BaseController
 
                     return false;
                 }
-
             }
         }
 
@@ -615,7 +610,7 @@ class ExtensionsController extends BaseController
      * Заполним параметры переадресации
      *
      * @param \MikoPBX\Common\Models\ExtensionForwardingRights $forwardingRight
-     * @param                                           $data
+     * @param                                                  $data
      *
      * @return bool
      */
@@ -630,7 +625,6 @@ class ExtensionsController extends BaseController
                     if (array_key_exists('fwd_' . $name, $data)) {
                         $forwardingRight->$name = ($data['fwd_' . $name] === -1) ? '' : $data['fwd_' . $name];
                     }
-
             }
         }
 
@@ -665,7 +659,6 @@ class ExtensionsController extends BaseController
                 case 'disabled':
                     if (array_key_exists('mobile_' . $name, $data)) {
                         $externalPhone->$name = ($data['mobile_' . $name] === 'on') ? '1' : '0';
-
                     } else {
                         $externalPhone->$name = '0';
                     }
@@ -674,7 +667,6 @@ class ExtensionsController extends BaseController
                     if (array_key_exists('mobile_' . $name, $data)) {
                         $externalPhone->$name = $data['mobile_' . $name];
                     }
-
             }
         }
         if ($externalPhone->save() === false) {
@@ -706,9 +698,9 @@ class ExtensionsController extends BaseController
             $errors = $extension->ExtensionForwardingRights->getMessages();
         }
 
-        if ( ! $errors && $extension){
+        if ( ! $errors && $extension) {
             $user = $extension->Users;
-            if (!$user->delete()) {
+            if ( ! $user->delete()) {
                 $errors = $user->getMessages();
             }
         }
@@ -852,7 +844,6 @@ class ExtensionsController extends BaseController
      */
     public function GetPhoneRepresentAction($phoneNumber): string
     {
-
         $response = $phoneNumber;
 
         if (strlen($phoneNumber) > 10) {
@@ -872,7 +863,7 @@ class ExtensionsController extends BaseController
             ];
         }
         $result = Extensions::findFirst($parameters);
-        if ($result!==null) {
+        if ($result !== null) {
             $response = $result->getRepresent();
         }
 
@@ -888,7 +879,6 @@ class ExtensionsController extends BaseController
      */
     public function getForSelectAction($type = 'all'): void
     {
-
         $results = [];
 
         switch ($type) {
@@ -923,7 +913,6 @@ class ExtensionsController extends BaseController
             {
                 $parameters = [];
             }
-
         }
         $extensions = Extensions::find($parameters);
         foreach ($extensions as $record) {
@@ -951,13 +940,13 @@ class ExtensionsController extends BaseController
             ];
         }
 
-        usort($results,
-            [__CLASS__, 'sortExtensionsArray']);
+        usort(
+            $results,
+            [__CLASS__, 'sortExtensionsArray']
+        );
 
         $this->view->success = true;
         $this->view->results = $results;
-
-
     }
 
     /**

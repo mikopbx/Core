@@ -5,6 +5,7 @@
  * Proprietary and confidential
  * Written by Alexey Portnov, 2 2020
  */
+
 namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Core\Modules\Config\ConfigClass;
@@ -20,7 +21,7 @@ class MikoAjamConf extends ConfigClass
      *
      * @return string
      */
-    public function extensionGenContexts():string
+    public function extensionGenContexts(): string
     {
         $PBXRecordCalls = $this->mikoPBXConfig->getGeneralSettings('PBXRecordCalls');
         $rec_options    = ($PBXRecordCalls == '1') ? 'r' : '';

@@ -1,4 +1,5 @@
 <?php
+
 namespace MikoPBX\PBXCoreREST\Controllers\System;
 
 use MikoPBX\Core\System\Util;
@@ -33,46 +34,48 @@ use Phalcon\Di;
  */
 class GetController extends BaseController
 {
-    public function callAction($actionName):void
+    public function callAction($actionName): void
     {
-        $requestMessage = json_encode([
-            'processor'=>'system',
-            'data'   => null,
-            'action' => $actionName
-        ]);
-        $connection  = $this->beanstalkConnection;
-        if($actionName === 'stopLog') {
+        $requestMessage = json_encode(
+            [
+                'processor' => 'system',
+                'data'      => null,
+                'action'    => $actionName,
+            ]
+        );
+        $connection     = $this->beanstalkConnection;
+        if ($actionName === 'stopLog') {
             $response = $connection->request($requestMessage, 60, 0);
-        }else{
+        } else {
             $response = $connection->request($requestMessage, 5, 0);
         }
-        if ( $response !== false){
-            $response = json_decode($response,true);
-            if($actionName === 'stopLog'){
-                if(!file_exists($response['filename'])){
+        if ($response !== false) {
+            $response = json_decode($response, true);
+            if ($actionName === 'stopLog') {
+                if ( ! file_exists($response['filename'])) {
                     $this->response->setPayloadSuccess('Log file not found.');
+
                     return;
                 }
-                $scheme     = $this->request->getScheme();
-                $host       = $this->request->getHttpHost();
-                $port       = $this->request->getPort();
-                $uid        = Util::generateRandomString(36);
-                $di = Di::getDefault();
+                $scheme       = $this->request->getScheme();
+                $host         = $this->request->getHttpHost();
+                $port         = $this->request->getPort();
+                $uid          = Util::generateRandomString(36);
+                $di           = Di::getDefault();
                 $downloadLink = $di->getShared('config')->path('adminApplication.downloadLink');
 
                 $result_dir = "{$downloadLink}/{$uid}";
                 Util::mwExec("mkdir -p {$result_dir}");
 
-                $link_name = md5($response['filename']).'.'.Util::getExtensionOfFile($response['filename']);
+                $link_name = md5($response['filename']) . '.' . Util::getExtensionOfFile($response['filename']);
                 Util::mwExec("ln -s {$response['filename']} {$result_dir}/{$link_name}");
                 $this->response->redirect("{$scheme}://{$host}:{$port}/download_link/{$uid}/{$link_name}");
                 $this->response->sendRaw();
-            }else{
+            } else {
                 $this->response->setPayloadSuccess($response);
             }
         } else {
             $this->sendError(500);
         }
-
     }
 }

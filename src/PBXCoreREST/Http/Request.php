@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace MikoPBX\PBXCoreREST\Http;
 
 use Phalcon\Http\Request as PhRequest;
-use function str_replace;
 
 class Request extends PhRequest
 {
@@ -35,6 +34,7 @@ class Request extends PhRequest
     public function isAuthorizedSessionRequest(): bool
     {
         $sessionRO = $this->getDI()->getShared('sessionRO');
+
         return (is_array($sessionRO) && array_key_exists('auth', $sessionRO));
     }
 

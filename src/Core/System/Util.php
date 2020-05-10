@@ -5,13 +5,14 @@
  * Proprietary and confidential
  * Written by Alexey Portnov, 4 2020
  */
+
 namespace MikoPBX\Core\System;
 
 use AGI_AsteriskManager;
 use DateTime;
 use Exception;
-use MikoPBX\Core\Asterisk\Configs\SIPConf;
 use MikoPBX\Common\Models\{CallEventsLogs, CustomFiles};
+use MikoPBX\Core\Asterisk\Configs\SIPConf;
 use Phalcon\Db\Adapter\Pdo\Sqlite;
 use Phalcon\Db\Column;
 use Phalcon\Di;
@@ -95,8 +96,11 @@ class Util
         $network = new Network();
         $arr_eth = $network->getInterfacesNames();
         foreach ($arr_eth as $eth) {
-            self::mwExecBgWithTimeout("tcpdump -i $eth -n -s 0 -vvv -w {$dirlog}/{$eth}.pcap", $timeout,
-                "{$dirlog}/{$eth}_out.log");
+            self::mwExecBgWithTimeout(
+                "tcpdump -i $eth -n -s 0 -vvv -w {$dirlog}/{$eth}.pcap",
+                $timeout,
+                "{$dirlog}/{$eth}_out.log"
+            );
         }
     }
 
@@ -184,7 +188,6 @@ class Util
      */
     public static function mwExecBg($command, $out_file = '/dev/null', $sleep_time = 0)
     {
-
         if ($sleep_time > 0) {
             $filename = '/tmp/' . time() . '_noop.sh';
             file_put_contents($filename, "sleep {$sleep_time}; $command; rm -rf $filename");
@@ -241,7 +244,7 @@ class Util
      *
      * @return bool
      */
-    public static function mwMkdir($path):bool
+    public static function mwMkdir($path): bool
     {
         $result = true;
         if ( ! file_exists($path) && ! mkdir($path, 0777, true) && ! is_dir($path)) {
@@ -262,7 +265,6 @@ class Util
      */
     public static function jsonIndent($json): string
     {
-
         $result      = '';
         $pos         = 0;
         $strLen      = strlen($json);
@@ -272,7 +274,6 @@ class Util
         $outOfQuotes = true;
 
         for ($i = 0; $i <= $strLen; $i++) {
-
             // Grab the next character in the string.
             $char = substr($json, $i, 1);
 
@@ -313,25 +314,6 @@ class Util
     }
 
     /**
-     * Try to find full path to php file by class name
-     * @param $className
-     *
-     * @return string|null
-     */
-    public static function getFilePathByClassName($className):?string
-    {
-        $filename = null;
-        try {
-            $reflection = new ReflectionClass($className);
-            $filename = $reflection->getFileName();
-        } catch (Exception $exception){
-            self::sysLogMsg('Util', 'Error ' . $exception->getMessage());
-        }
-        return $filename;
-    }
-
-
-    /**
      * Рестарт рабочего процесса конкретного скрипта из ''.
      *
      * @param string $className
@@ -340,10 +322,45 @@ class Util
     public static function restartWorker($className, $param = ''): void
     {
         $workerPath = self::getFilePathByClassName($className);
-        if (!empty($workerPath)){
-            $command     = "php -f {$workerPath}";
+        if ( ! empty($workerPath)) {
+            $command = "php -f {$workerPath}";
             self::processWorker($command, $param, $className, 'restart');
         }
+    }
+
+    /**
+     * Try to find full path to php file by class name
+     *
+     * @param $className
+     *
+     * @return string|null
+     */
+    public static function getFilePathByClassName($className): ?string
+    {
+        $filename = null;
+        try {
+            $reflection = new ReflectionClass($className);
+            $filename   = $reflection->getFileName();
+        } catch (Exception $exception) {
+            self::sysLogMsg('Util', 'Error ' . $exception->getMessage());
+        }
+
+        return $filename;
+    }
+
+    /**
+     * Добавить сообщение в Syslog.
+     *
+     * @param     $log_name
+     * @param     $text
+     * @param int $level
+     */
+    public static function sysLogMsg($log_name, $text, $level = null)
+    {
+        $level = ($level == null) ? LOG_WARNING : $level;
+        openlog("$log_name", LOG_PID | LOG_PERROR, LOG_AUTH);
+        syslog($level, "$text");
+        closelog();
     }
 
     /**
@@ -413,15 +430,17 @@ class Util
         $path_grep = self::which('grep');
         $path_awk  = self::which('awk');
 
-        $name =  addslashes($name);
+        $name       = addslashes($name);
         $filter_cmd = '';
         if ( ! empty($exclude)) {
             $filter_cmd = "| $path_grep -v " . escapeshellarg($exclude);
         }
 
         $out = [];
-        self::mwExec("$path_ps -A -o 'pid,args' {$filter_cmd} | $path_grep '$name' | $path_grep -v grep | $path_awk ' {print $1} '",
-            $out);
+        self::mwExec(
+            "$path_ps -A -o 'pid,args' {$filter_cmd} | $path_grep '$name' | $path_grep -v grep | $path_awk ' {print $1} '",
+            $out
+        );
 
         return trim(implode(' ', $out));
     }
@@ -459,6 +478,43 @@ class Util
     }
 
     /**
+     * Получаем объект менеджер asterisk.
+     *
+     * @param string $events
+     *
+     * @return AGI_AsteriskManager
+     */
+    public static function getAstManager($events = 'on')
+    {
+        global $g;
+        require_once 'phpagi.php';
+        if (isset($g['AGI_AsteriskManager'])) {
+            /** @var AGI_AsteriskManager $am */
+            $am = $g['AGI_AsteriskManager'];
+            // Проверка на разрыв соединения.
+            if (is_resource($am->socket)) {
+                $res = $am->sendRequestTimeout('Ping');
+                if (isset($res['Response']) && trim($res['Response']) != '') {
+                    // Уже есть подключенный экземпляр класса.
+                    return $am;
+                }
+            } else {
+                unset($g['AGI_AsteriskManager']);
+            }
+        }
+        $config = new MikoPBXConfig();
+        $port   = $config->getGeneralSettings('AMIPort');
+
+        $am  = new AGI_AsteriskManager();
+        $res = $am->connect("127.0.0.1:{$port}", null, null, $events);
+        if (true === $res) {
+            $g['AGI_AsteriskManager'] = $am;
+        }
+
+        return $am;
+    }
+
+    /**
      * Генератор произвольной строки.
      *
      * @param int $length
@@ -484,9 +540,10 @@ class Util
      *
      * @return bool
      */
-    public static function isJson($jsonString):bool
+    public static function isJson($jsonString): bool
     {
         json_decode($jsonString, true);
+
         return (json_last_error() === JSON_ERROR_NONE);
     }
 
@@ -529,8 +586,10 @@ class Util
             $result = true;
         } else {
             openlog("miko_ajam", LOG_PID | LOG_PERROR, LOG_AUTH);
-            syslog(LOG_WARNING,
-                "From {$_SERVER['REMOTE_ADDR']}. UserAgent: ({$_SERVER['HTTP_USER_AGENT']}). Fail auth http.");
+            syslog(
+                LOG_WARNING,
+                "From {$_SERVER['REMOTE_ADDR']}. UserAgent: ({$_SERVER['HTTP_USER_AGENT']}). Fail auth http."
+            );
             closelog();
         }
 
@@ -718,21 +777,6 @@ class Util
     }
 
     /**
-     * Добавить сообщение в Syslog.
-     *
-     * @param     $log_name
-     * @param     $text
-     * @param int $level
-     */
-    public static function sysLogMsg($log_name, $text, $level = null)
-    {
-        $level = ($level == null) ? LOG_WARNING : $level;
-        openlog("$log_name", LOG_PID | LOG_PERROR, LOG_AUTH);
-        syslog($level, "$text");
-        closelog();
-    }
-
-    /**
      * @param string  $id
      * @param SQLite3 $db
      *
@@ -755,7 +799,6 @@ class Util
         }
 
         return $eventtime;
-
     }
 
     /**
@@ -779,7 +822,6 @@ class Util
         } catch (Exception $e) {
             Util::sysLogMsg('logMsgDb', $e->getMessage());
         }
-
     }
 
     /**
@@ -807,7 +849,7 @@ class Util
      *
      * @return array
      */
-    public static function removeAudioFile($filePath):array
+    public static function removeAudioFile($filePath): array
     {
         $result    = [];
         $extension = self::getExtensionOfFile($filePath);
@@ -821,6 +863,7 @@ class Util
         if ( ! file_exists($filePath)) {
             $result['result']  = 'Success';
             $result['message'] = "File '{$filePath}' not found.";
+
             return $result;
         }
 
@@ -829,18 +872,19 @@ class Util
         $arrDeletedFiles = [
             escapeshellarg(self::trimExtensionForFile($filePath) . ".wav"),
             escapeshellarg(self::trimExtensionForFile($filePath) . ".mp3"),
-            escapeshellarg(self::trimExtensionForFile($filePath) . ".alaw")
+            escapeshellarg(self::trimExtensionForFile($filePath) . ".alaw"),
         ];
 
 
         self::mwExec("rm -rf " . implode(' ', $arrDeletedFiles), $out);
         if (file_exists($filePath)) {
-            $result_str = implode($out);
+            $result_str        = implode($out);
             $result['result']  = 'Error';
             $result['message'] = $result_str;
         } else {
             $result['result'] = 'Success';
         }
+
         return $result;
     }
 
@@ -893,6 +937,7 @@ class Util
         if ( ! file_exists($filename)) {
             $result['result']  = 'Error';
             $result['message'] = "File '{$filename}' not found.";
+
             return $result;
         }
         $out          = [];
@@ -900,6 +945,7 @@ class Util
         if (false === copy($filename, $tmp_filename)) {
             $result['result']  = 'Error';
             $result['message'] = "Unable to create temporary file '{$tmp_filename}'.";
+
             return $result;
         }
 
@@ -929,8 +975,9 @@ class Util
             @unlink($filename);
         }
 
-        $result['result']  = 'Success';
-        $result['data']  = $n_filename_mp3;
+        $result['result'] = 'Success';
+        $result['data']   = $n_filename_mp3;
+
         return $result;
     }
 
@@ -973,12 +1020,12 @@ class Util
      */
     public static function translate($text)
     {
-       $di = Di::getDefault();
-       if ($di!==null){
-           return $di->getShared('translation')->_($text);
-       } else {
-           return $text;
-       }
+        $di = Di::getDefault();
+        if ($di !== null) {
+            return $di->getShared('translation')->_($text);
+        } else {
+            return $text;
+        }
     }
 
     /**
@@ -1029,8 +1076,13 @@ class Util
      *
      * @return bool|string
      */
-    public static function mergeFilesInDirectory($temp_dir, $fileName, $total_files, $result_file = '', $progress_dir = '')
-    {
+    public static function mergeFilesInDirectory(
+        $temp_dir,
+        $fileName,
+        $total_files,
+        $result_file = '',
+        $progress_dir = ''
+    ) {
         if (empty($result_file)) {
             $result_file = dirname($temp_dir) . '/' . $fileName;
         }
@@ -1158,64 +1210,12 @@ class Util
     }
 
     /**
-     * Получаем объект менеджер asterisk.
-     *
-     * @param string $events
-     *
-     * @return AGI_AsteriskManager
-     */
-    public static function getAstManager($events = 'on')
-    {
-        global $g;
-        require_once 'phpagi.php';
-        if (isset($g['AGI_AsteriskManager'])) {
-            /** @var AGI_AsteriskManager $am */
-            $am = $g['AGI_AsteriskManager'];
-            // Проверка на разрыв соединения.
-            if (is_resource($am->socket)) {
-                $res = $am->sendRequestTimeout('Ping');
-                if (isset($res['Response']) && trim($res['Response']) != '') {
-                    // Уже есть подключенный экземпляр класса.
-                    return $am;
-                }
-            } else {
-                unset($g['AGI_AsteriskManager']);
-            }
-        }
-        $config = new MikoPBXConfig();
-        $port   = $config->getGeneralSettings('AMIPort');
-
-        $am  = new AGI_AsteriskManager();
-        $res = $am->connect("127.0.0.1:{$port}", null, null, $events);
-        if (true === $res) {
-            $g['AGI_AsteriskManager'] = $am;
-        }
-
-        return $am;
-    }
-
-    /**
      * Выводить текстовое сообщение "done" подсвечивает зеленым цветом.
      */
-    public static function echoGreenDone():void
+    public static function echoGreenDone(): void
     {
         echo "\033[32;1mdone\033[0m \n";
     }
-
-    /**
-     * Добавляем задачу для уведомлений.
-     *
-     * @param string $queue
-     * @param        $data
-     */
-    public function addJobToBeanstalk($queue, $data):void
-    {
-        /** @var \MikoPBX\Core\System\BeanstalkClient $queue */
-        $queue = new BeanstalkClient($queue);
-        $queue->publish(json_encode($data));
-    }
-
-
 
     /**
      * Создание символической ссылки, если необходимо.
@@ -1225,7 +1225,7 @@ class Util
      *
      * @return bool
      */
-    public static function createUpdateSymlink($target, $link):bool
+    public static function createUpdateSymlink($target, $link): bool
     {
         $need_create_link = true;
         if (is_link($link)) {
@@ -1243,7 +1243,7 @@ class Util
             // Это должна быть именно ссылка. Файл удаляем.
             unlink($link);
         }
-        if (!file_exists($target)){
+        if ( ! file_exists($target)) {
             self::mwExec("mkdir -p {$target}");
         }
         if ($need_create_link) {
@@ -1256,9 +1256,22 @@ class Util
     /**
      * Print message and write it to syslog
      */
-    public static function echoWithSyslog($message):void
+    public static function echoWithSyslog($message): void
     {
-        echo $message.PHP_EOL;
+        echo $message . PHP_EOL;
         self::sysLogMsg(static::class, $message, LOG_INFO);
+    }
+
+    /**
+     * Добавляем задачу для уведомлений.
+     *
+     * @param string $queue
+     * @param        $data
+     */
+    public function addJobToBeanstalk($queue, $data): void
+    {
+        /** @var \MikoPBX\Core\System\BeanstalkClient $queue */
+        $queue = new BeanstalkClient($queue);
+        $queue->publish(json_encode($data));
     }
 }

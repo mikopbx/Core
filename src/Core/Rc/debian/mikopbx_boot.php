@@ -1,5 +1,3 @@
-
-
 // TODO::Добавить в src/Core/System/SystemLoader.php проверку на debian и там стартовать все
 
 <!--#!/usr/bin/php -f-->

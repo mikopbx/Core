@@ -6,6 +6,7 @@
  * Written by Nikolay Beketov, 5 2018
  *
  */
+
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use DateTime;
@@ -136,7 +137,6 @@ class TimeSettingsController extends BaseController
 
                 return;
             }
-
         }
 
         $this->flash->success($this->translation->_('ms_SuccessfulSaved'));

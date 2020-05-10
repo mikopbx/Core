@@ -6,11 +6,12 @@
  * Written by Nikolay Beketov, 5 2019
  *
  */
+
 namespace MikoPBX\AdminCabinet\Plugins;
 
+use Phalcon\Di\Injectable;
 use Phalcon\Events\Event;
 use Phalcon\Mvc\Dispatcher;
-use Phalcon\Di\Injectable;
 use Phalcon\Text;
 
 /**
@@ -40,7 +41,7 @@ class NormalizeControllerNamePlugin extends Injectable
             $dispatcher->setNamespaceName('');
         } else {
             $dispatcher->setModuleName('PBXCore');
-           // $dispatcher->setNamespaceName('');
+            // $dispatcher->setNamespaceName('');
         }
     }
 
@@ -59,6 +60,5 @@ class NormalizeControllerNamePlugin extends Injectable
         } else {
             $dispatcher->setControllerName(ucfirst($controller));
         }
-
     }
 }

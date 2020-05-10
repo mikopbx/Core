@@ -6,6 +6,7 @@
  * Written by Nikolay Beketov, 5 2018
  *
  */
+
 namespace MikoPBX\AdminCabinet\Forms;
 
 use Phalcon\Forms\Element\Check;
@@ -44,7 +45,8 @@ class CallQueueEditForm extends Form
             'linear'      => $this->translation->_('cq_linear'),
         ];
 
-        $strategy = new Select('strategy', $arrActions, [
+        $strategy = new Select(
+            'strategy', $arrActions, [
             'using'        => [
                 'id',
                 'name',
@@ -52,7 +54,8 @@ class CallQueueEditForm extends Form
             'useEmpty'     => false,
             'defaultValue' => "ringall",
             'class'        => 'ui selection dropdown strategyselect',
-        ]);
+        ]
+        );
         $this->add($strategy);
 
 
@@ -76,14 +79,16 @@ class CallQueueEditForm extends Form
             'moh'     => $this->translation->_('cq_moh'),
         ];
 
-        $callerhear = new Select('caller_hear', $arrActions, [
+        $callerhear = new Select(
+            'caller_hear', $arrActions, [
             'using'    => [
                 'id',
                 'name',
             ],
             'useEmpty' => false,
             'class'    => 'ui selection dropdown callerhearselect',
-        ]);
+        ]
+        );
         $this->add($callerhear);
 
         // Announceposition
@@ -104,14 +109,16 @@ class CallQueueEditForm extends Form
 
 
         // Periodicannouncesoundid
-        $periodicannouncesoundid = new Select('periodic_announce_sound_id', $options['soundfiles'], [
+        $periodicannouncesoundid = new Select(
+            'periodic_announce_sound_id', $options['soundfiles'], [
             'using'    => [
                 'id',
                 'name',
             ],
             'useEmpty' => true,
             'class'    => 'ui selection dropdown search periodic-announce-sound-id-select',
-        ]);
+        ]
+        );
         $this->add($periodicannouncesoundid);
 
         // Periodicannouncefrequency - Seconds between announcements
@@ -119,81 +126,99 @@ class CallQueueEditForm extends Form
 
         // Timeouttoredirecttoextension
         $ringlength = $entity->timeout_to_redirect_to_extension;
-        $this->add(new Numeric('timeout_to_redirect_to_extension',
-            [
-                "maxlength" => 2,
-                "style"     => "width: 80px;",
-                "value"     => ($ringlength > 0) ? $ringlength : '',
-            ]));
+        $this->add(
+            new Numeric(
+                'timeout_to_redirect_to_extension',
+                [
+                    "maxlength" => 2,
+                    "style"     => "width: 80px;",
+                    "value"     => ($ringlength > 0) ? $ringlength : '',
+                ]
+            )
+        );
 
         // Timeoutextension
-        $extension = new Select('timeout_extension', $options['extensions'], [
+        $extension = new Select(
+            'timeout_extension', $options['extensions'], [
             'using'    => [
                 'id',
                 'name',
             ],
             'useEmpty' => true,
             'class'    => 'ui selection dropdown search forwarding-select',
-        ]);
+        ]
+        );
         $this->add($extension);
 
         // Redirecttoextensionifempty
-        $extension = new Select('redirect_to_extension_if_empty', $options['extensions'], [
+        $extension = new Select(
+            'redirect_to_extension_if_empty', $options['extensions'], [
             'using'    => [
                 'id',
                 'name',
             ],
             'useEmpty' => true,
             'class'    => 'ui selection dropdown search forwarding-select',
-        ]);
+        ]
+        );
         $this->add($extension);
 
         // Numberunansweredcallstoredirect
         $ringlength = $entity->number_unanswered_calls_to_redirect;
-        $this->add(new Numeric('number_unanswered_calls_to_redirect',
-            [
-                "maxlength" => 2,
-                "style"     => "width: 80px;",
-                "value"     => ($ringlength > 0) ? $ringlength : '',
-            ]));
+        $this->add(
+            new Numeric(
+                'number_unanswered_calls_to_redirect',
+                [
+                    "maxlength" => 2,
+                    "style"     => "width: 80px;",
+                    "value"     => ($ringlength > 0) ? $ringlength : '',
+                ]
+            )
+        );
 
         // Redirecttoextensionifunanswered
-        $extension = new Select('redirect_to_extension_if_unanswered', $options['extensions'], [
+        $extension = new Select(
+            'redirect_to_extension_if_unanswered', $options['extensions'], [
             'using'    => [
                 'id',
                 'name',
             ],
             'useEmpty' => true,
             'class'    => 'ui selection dropdown search forwarding-select',
-        ]);
+        ]
+        );
         $this->add($extension);
 
         // Numberrepeatunansweredtoredirect
         $ringlength = $entity->number_repeat_unanswered_to_redirect;
-        $this->add(new Numeric('number_repeat_unanswered_to_redirect',
-            [
-                "maxlength" => 2,
-                "style"     => "width: 80px;",
-                "value"     => ($ringlength > 0) ? $ringlength : '',
-            ]));
+        $this->add(
+            new Numeric(
+                'number_repeat_unanswered_to_redirect',
+                [
+                    "maxlength" => 2,
+                    "style"     => "width: 80px;",
+                    "value"     => ($ringlength > 0) ? $ringlength : '',
+                ]
+            )
+        );
 
         // Redirecttoextensionifrepeatexceeded
 
-        $extension = new Select('redirect_to_extension_if_repeat_exceeded', $options['extensions'], [
+        $extension = new Select(
+            'redirect_to_extension_if_repeat_exceeded', $options['extensions'], [
             'using'    => [
                 'id',
                 'name',
             ],
             'useEmpty' => true,
             'class'    => 'ui selection dropdown search forwarding-select',
-        ]);
+        ]
+        );
         $this->add($extension);
 
 
         // Description
         $rows = max(round(strlen($entity->description) / 95), 2);
         $this->add(new TextArea('description', ["rows" => $rows]));
-
-
     }
 }

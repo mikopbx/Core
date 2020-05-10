@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 /**
  * Copyright (C) MIKO LLC - All Rights Reserved
@@ -20,10 +21,13 @@ use Phalcon\Di\ServiceProviderInterface;
  */
 class ElementsProvider implements ServiceProviderInterface
 {
-    public function register(DiInterface $di):void
+    public function register(DiInterface $di): void
     {
-        $di->setShared('elements', function () {
-            return new Elements();
-        });
+        $di->setShared(
+            'elements',
+            function () {
+                return new Elements();
+            }
+        );
     }
 }

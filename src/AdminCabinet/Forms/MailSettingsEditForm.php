@@ -6,6 +6,7 @@
  * Written by Nikolay Beketov, 5 2018
  *
  */
+
 namespace MikoPBX\AdminCabinet\Forms;
 
 use Phalcon\Forms\Element\Check;
@@ -35,25 +36,35 @@ class MailSettingsEditForm extends Form
                 case 'MailTplVoicemailBody' :
                 case 'MailTplMissedCallFooter' :
 
-                    $this->add(new TextArea($key, [
-                        'value' => $value,
-                    ]));
+                    $this->add(
+                        new TextArea(
+                            $key, [
+                            'value' => $value,
+                        ]
+                        )
+                    );
                     break;
 
                 case 'MailSMTPPassword' :
-                    $this->add(new Password($key, [
-                        'value' => $value,
-                    ]));
+                    $this->add(
+                        new Password(
+                            $key, [
+                            'value' => $value,
+                        ]
+                        )
+                    );
                     break;
 
                 default :
-                    $this->add(new Text($key, [
-                        'value' => $value,
-                    ]));
-
+                    $this->add(
+                        new Text(
+                            $key, [
+                            'value' => $value,
+                        ]
+                        )
+                    );
             }
         }
-
     }
 
 }

@@ -64,6 +64,7 @@ interface SystemConfigInterface
 
     /**
      * Returns array of additional routes for PBXCoreREST interface from module
+     *
      * @return array
      */
     public function getPBXCoreRESTAdditionalRoutes(): array;

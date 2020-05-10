@@ -1,4 +1,5 @@
 <?php
+
 namespace MikoPBX\PBXCoreREST\Controllers\Pbx;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
@@ -14,7 +15,7 @@ use MikoPBX\PBXCoreREST\Controllers\BaseController;
 class GetController extends BaseController
 {
 
-    public function callAction($actionName):void
+    public function callAction($actionName): void
     {
         $this->sendRequestToBackendWorker('pbx', $actionName);
     }

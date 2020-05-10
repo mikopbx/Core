@@ -19,11 +19,11 @@ declare(strict_types=1);
 namespace MikoPBX\Common\Providers;
 
 
+use Phalcon\Cache;
+use Phalcon\Cache\Adapter\Memory;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
-use Phalcon\Cache;
 use Phalcon\Storage\SerializerFactory;
-use Phalcon\Cache\Adapter\Memory;
 
 /**
  * Main database connection is created based in the parameters defined in the configuration file
@@ -48,6 +48,7 @@ class ModelsCacheProvider implements ServiceProviderInterface
                 ];
 
                 $adapter = new Memory($serializerFactory, $options);
+
                 return new Cache($adapter);
             }
         );

@@ -1,4 +1,5 @@
 <?php
+
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\Common\Models\{AsteriskManagerUsers,
@@ -32,7 +33,6 @@ class TopMenuSearchController extends BaseController
      */
     public function getForSelectAction(): void
     {
-
         $arrClasses = [
             Users::class,
             Providers::class,
@@ -105,28 +105,36 @@ class TopMenuSearchController extends BaseController
         $elements = $this->elements;
 
         $items[] = [
-            'name'          => $elements->getIconByController('incoming-routes') . ' ' . $this->translation->_('mm_IncomingRoutes'),
+            'name'          => $elements->getIconByController('incoming-routes') . ' ' . $this->translation->_(
+                    'mm_IncomingRoutes'
+                ),
             'value'         => $this->url->get('incoming-routes'),
             'type'          => 'MENUITEMS',
             'typeLocalized' => $this->translation->_('ex_dropdownCategory_MENUITEMS'),
             'sorter'        => strip_tags($this->translation->_('mm_IncomingRoutes')),
         ];
         $items[] = [
-            'name'          => $elements->getIconByController('outbound-routes') . ' ' . $this->translation->_('mm_OutboundRoutes'),
+            'name'          => $elements->getIconByController('outbound-routes') . ' ' . $this->translation->_(
+                    'mm_OutboundRoutes'
+                ),
             'value'         => $this->url->get('outbound-routes'),
             'type'          => 'MENUITEMS',
             'typeLocalized' => $this->translation->_('ex_dropdownCategory_MENUITEMS'),
             'sorter'        => strip_tags($this->translation->_('mm_OutboundRoutes')),
         ];
         $items[] = [
-            'name'          => $elements->getIconByController('general-settings') . ' ' . $this->translation->_('mm_GeneralSettings'),
+            'name'          => $elements->getIconByController('general-settings') . ' ' . $this->translation->_(
+                    'mm_GeneralSettings'
+                ),
             'value'         => $this->url->get('general-settings/modify'),
             'type'          => 'MENUITEMS',
             'typeLocalized' => $this->translation->_('ex_dropdownCategory_MENUITEMS'),
             'sorter'        => strip_tags($this->translation->_('mm_GeneralSettings')),
         ];
         $items[] = [
-            'name'          => $elements->getIconByController('time-settings') . ' ' . $this->translation->_('mm_SystemClock'),
+            'name'          => $elements->getIconByController('time-settings') . ' ' . $this->translation->_(
+                    'mm_SystemClock'
+                ),
             'value'         => $this->url->get('time-settings/modify'),
             'type'          => 'MENUITEMS',
             'typeLocalized' => $this->translation->_('ex_dropdownCategory_MENUITEMS'),
@@ -140,21 +148,27 @@ class TopMenuSearchController extends BaseController
             'sorter'        => strip_tags($this->translation->_('mm_Network')),
         ];
         $items[] = [
-            'name'          => $elements->getIconByController('mail-settings') . ' ' . $this->translation->_('mm_MailSettings'),
+            'name'          => $elements->getIconByController('mail-settings') . ' ' . $this->translation->_(
+                    'mm_MailSettings'
+                ),
             'value'         => $this->url->get('mail-settings/modify'),
             'type'          => 'MENUITEMS',
             'typeLocalized' => $this->translation->_('ex_dropdownCategory_MENUITEMS'),
             'sorter'        => strip_tags($this->translation->_('mm_MailSettings')),
         ];
         $items[] = [
-            'name'          => $elements->getIconByController('call-detail-records') . ' ' . $this->translation->_('mm_CallDetailRecords'),
+            'name'          => $elements->getIconByController('call-detail-records') . ' ' . $this->translation->_(
+                    'mm_CallDetailRecords'
+                ),
             'value'         => $this->url->get('call-detail-records'),
             'type'          => 'MENUITEMS',
             'typeLocalized' => $this->translation->_('ex_dropdownCategory_MENUITEMS'),
             'sorter'        => strip_tags($this->translation->_('mm_CallDetailRecords')),
         ];
         $items[] = [
-            'name'          => $elements->getIconByController('sound-files') . ' ' . $this->translation->_('mm_SoundFiles'),
+            'name'          => $elements->getIconByController('sound-files') . ' ' . $this->translation->_(
+                    'mm_SoundFiles'
+                ),
             'value'         => $this->url->get('sound-files'),
             'type'          => 'MENUITEMS',
             'typeLocalized' => $this->translation->_('ex_dropdownCategory_MENUITEMS'),
@@ -162,7 +176,9 @@ class TopMenuSearchController extends BaseController
         ];
 
         $items[] = [
-            'name'          => $elements->getIconByController('licensing') . ' ' . $this->translation->_('mm_Licensing'),
+            'name'          => $elements->getIconByController('licensing') . ' ' . $this->translation->_(
+                    'mm_Licensing'
+                ),
             'value'         => $this->url->get('licensing/modify/'),
             'type'          => 'MENUITEMS',
             'typeLocalized' => $this->translation->_('ex_dropdownCategory_MENUITEMS'),
@@ -170,7 +186,9 @@ class TopMenuSearchController extends BaseController
         ];
 
         $items[] = [
-            'name'          => $elements->getIconByController('pbx-extension-modules') . ' ' . $this->translation->_('BreadcrumbPbxExtensionModules'),
+            'name'          => $elements->getIconByController('pbx-extension-modules') . ' ' . $this->translation->_(
+                    'BreadcrumbPbxExtensionModules'
+                ),
             'value'         => $this->url->get('pbx-extension-modules'),
             'type'          => 'MENUITEMS',
             'typeLocalized' => $this->translation->_('ex_dropdownCategory_MENUITEMS'),
@@ -178,7 +196,9 @@ class TopMenuSearchController extends BaseController
         ];
 
         $items[] = [
-            'name'          => $elements->getIconByController('system-diagnostic') . ' ' . $this->translation->_('mm_SystemDiagnostic'),
+            'name'          => $elements->getIconByController('system-diagnostic') . ' ' . $this->translation->_(
+                    'mm_SystemDiagnostic'
+                ),
             'value'         => $this->url->get('system-diagnostic'),
             'type'          => 'MENUITEMS',
             'typeLocalized' => $this->translation->_('ex_dropdownCategory_MENUITEMS'),
@@ -186,14 +206,18 @@ class TopMenuSearchController extends BaseController
         ];
 
         $items[] = [
-            'name'          => $elements->getIconByController('fail2-ban') . ' ' . $this->translation->_('mm_BruteForceProtection'),
+            'name'          => $elements->getIconByController('fail2-ban') . ' ' . $this->translation->_(
+                    'mm_BruteForceProtection'
+                ),
             'value'         => $this->url->get('fail2-ban'),
             'type'          => 'MENUITEMS',
             'typeLocalized' => $this->translation->_('ex_dropdownCategory_MENUITEMS'),
             'sorter'        => strip_tags($this->translation->_('mm_BruteForceProtection')),
         ];
         $items[] = [
-            'name'          => $elements->getIconByController('update') . ' ' . $this->translation->_('mm_UpdateSystem'),
+            'name'          => $elements->getIconByController('update') . ' ' . $this->translation->_(
+                    'mm_UpdateSystem'
+                ),
             'value'         => $this->url->get('update'),
             'type'          => 'MENUITEMS',
             'typeLocalized' => $this->translation->_('ex_dropdownCategory_MENUITEMS'),
@@ -204,7 +228,7 @@ class TopMenuSearchController extends BaseController
     /**
      * Сортировка массива extensions
      *
-     * @return integer
+     * @return int
      */
     private function sortItemsArray($a, $b): int
     {

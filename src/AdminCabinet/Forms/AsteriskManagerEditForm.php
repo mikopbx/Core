@@ -6,6 +6,7 @@
  * Written by Nikolay Beketov, 5 2018
  *
  */
+
 namespace MikoPBX\AdminCabinet\Forms;
 
 use Phalcon\Forms\Element\Check;
@@ -48,7 +49,8 @@ class AsteriskManagerEditForm extends Form
         }
 
         // Networkfilterid
-        $networkfilterid = new Select('networkfilterid', $options['network_filters'], [
+        $networkfilterid = new Select(
+            'networkfilterid', $options['network_filters'], [
             'using'    => [
                 'id',
                 'name',
@@ -56,7 +58,8 @@ class AsteriskManagerEditForm extends Form
             'useEmpty' => false,
             'value'    => $entity->networkfilterid,
             'class'    => 'ui selection dropdown network-filter-select',
-        ]);
+        ]
+        );
         $this->add($networkfilterid);
 
         // Description

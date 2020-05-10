@@ -1,4 +1,5 @@
 <?php
+
 namespace MikoPBX\Core\System;
 
 use MikoPBX\Service\Main;
@@ -20,10 +21,10 @@ class SystemLoader
     /**
      * Load system services
      */
-    public function startSystem():bool
+    public function startSystem(): bool
     {
         $this->di->getRegistry()->booting = true;
-        $storage = new Storage();
+        $storage                          = new Storage();
         Util::echoWithSyslog(' - Mount storage... ');
         $storage->saveFstab(); //Mount storage disk
         $storage->configure();
@@ -83,6 +84,7 @@ class SystemLoader
         Util::echoGreenDone();
 
         $this->di->getRegistry()->booting = false;
+
         return true;
     }
 
@@ -94,8 +96,8 @@ class SystemLoader
     public function startMikoPBX(): bool
     {
         $this->di->getRegistry()->booting = true;
-        $system = new System();
-        $pbx    = new PBX();
+        $system                           = new System();
+        $pbx                              = new PBX();
 
         Util::echoWithSyslog(' - Start nats queue daemon...');
         $system->gnatsStart();
@@ -120,6 +122,7 @@ class SystemLoader
         Util::echoGreenDone();
 
         $this->di->getRegistry()->booting = false;
+
         return true;
     }
 }

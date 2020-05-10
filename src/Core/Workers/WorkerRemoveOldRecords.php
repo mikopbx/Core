@@ -5,6 +5,7 @@
  * Proprietary and confidential
  * Written by Alexey Portnov, 2 2020
  */
+
 namespace MikoPBX\Core\Workers;
 
 use Exception;
@@ -15,11 +16,10 @@ require_once 'globals.php';
 class WorkerRemoveOldRecords extends WorkerBase
 {
 
-    public function start($argv):void
+    public function start($argv): void
     {
-
-        $varEtcPath =  $this->di ->getShared('config')->path('core.varEtcPath');
-        $filename = "{$varEtcPath}/storage_device";
+        $varEtcPath = $this->di->getShared('config')->path('core.varEtcPath');
+        $filename   = "{$varEtcPath}/storage_device";
         if (file_exists($filename)) {
             $mount_point = file_get_contents($filename);
         } else {
@@ -39,8 +39,10 @@ class WorkerRemoveOldRecords extends WorkerBase
         $monitor_dir = Storage::getMonitorDir();
         $out         = [];
         $count_dir   = 1;
-        Util::mwExec("/bin/find {$monitor_dir}*/*/*  -maxdepth 0 -type d  -printf '%T+ %p\n' 2> /dev/null | /bin/sort | /bin/head -n 10 | /bin/busybox awk '{print $2}'",
-            $out);
+        Util::mwExec(
+            "/bin/find {$monitor_dir}*/*/*  -maxdepth 0 -type d  -printf '%T+ %p\n' 2> /dev/null | /bin/sort | /bin/head -n 10 | /bin/busybox awk '{print $2}'",
+            $out
+        );
         foreach ($out as $dir_info) {
             if ( ! is_dir($dir_info)) {
                 echo 'error';

@@ -129,9 +129,14 @@ class AsteriskManagerUsers extends ModelsBase
     public function validation(): bool
     {
         $validation = new Validation();
-        $validation->add('username', new UniquenessValidator([
-            'message' => $this->t('mo_ThisUsernameNotUniqueForStorageModels'),
-        ]));
+        $validation->add(
+            'username',
+            new UniquenessValidator(
+                [
+                    'message' => $this->t('mo_ThisUsernameNotUniqueForStorageModels'),
+                ]
+            )
+        );
 
         return $this->validate($validation);
     }

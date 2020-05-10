@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 /**
  * Copyright (C) MIKO LLC - All Rights Reserved
@@ -11,18 +12,18 @@ declare(strict_types=1);
 namespace MikoPBX\PBXCoreREST\Providers;
 
 
+use MikoPBX\PBXCoreREST\Plugins\SecurityPlugin;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 use Phalcon\Events\Event;
-use Phalcon\Mvc\Dispatcher;
 use Phalcon\Events\Manager as EventsManager;
+use Phalcon\Mvc\Dispatcher;
 use Phalcon\Mvc\Micro;
-use MikoPBX\PBXCoreREST\Plugins\SecurityPlugin;
 
 /**
  *  We register the events manager
  */
-class DispatcherProvider  implements ServiceProviderInterface
+class DispatcherProvider implements ServiceProviderInterface
 {
     /**
      * Register dispatcher service provider
@@ -31,15 +32,22 @@ class DispatcherProvider  implements ServiceProviderInterface
      */
     public function register(DiInterface $di): void
     {
-        $di->setShared('dispatcher', function () {
-            // Create a events manager
-            $eventsManager = new EventsManager;
-            $eventsManager->attach('micro:beforeExecuteRoute', function (Event $event, Micro $app) {
-                SecurityPlugin::beforeExecuteRoute($event, $app);
-            });
-            $dispatcher = new Dispatcher;
-            $dispatcher->setEventsManager($eventsManager);
-            return $dispatcher;
-        });
+        $di->setShared(
+            'dispatcher',
+            function () {
+                // Create a events manager
+                $eventsManager = new EventsManager();
+                $eventsManager->attach(
+                    'micro:beforeExecuteRoute',
+                    function (Event $event, Micro $app) {
+                        SecurityPlugin::beforeExecuteRoute($event, $app);
+                    }
+                );
+                $dispatcher = new Dispatcher();
+                $dispatcher->setEventsManager($eventsManager);
+
+                return $dispatcher;
+            }
+        );
     }
 }

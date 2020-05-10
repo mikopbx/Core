@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 /**
  * Copyright © MIKO LLC - All Rights Reserved
@@ -38,9 +39,12 @@ class ModulesDBConnectionsProvider implements ServiceProviderInterface
         foreach ($results as $file) {
             $service_name           = self::makeServiceName($file, $config->core->modulesDir);
             $registeredDBServices[] = $service_name;
-            $di->set($service_name, function () use ($file) {
-                return new Sqlite(['dbname' => $file]);
-            });
+            $di->set(
+                $service_name,
+                function () use ($file) {
+                    return new Sqlite(['dbname' => $file]);
+                }
+            );
         }
 
         // Register transactions events
@@ -51,36 +55,37 @@ class ModulesDBConnectionsProvider implements ServiceProviderInterface
             $eventsManager = new Manager();
         }
         // Слушаем все события базы данных
-        $eventsManager->attach('db', function ($event) use ($registeredDBServices, $di) {
-            switch ($event->getType()) {
-                case 'beginTransaction':
-                {
-                    foreach ($registeredDBServices as $service) {
-                        $di->get($service)->begin();
+        $eventsManager->attach(
+            'db',
+            function ($event) use ($registeredDBServices, $di) {
+                switch ($event->getType()) {
+                    case 'beginTransaction':
+                    {
+                        foreach ($registeredDBServices as $service) {
+                            $di->get($service)->begin();
+                        }
+                        break;
                     }
-                    break;
-                }
-                case 'commitTransaction':
-                {
-                    foreach ($registeredDBServices as $service) {
-                        $di->get($service)->commit();
+                    case 'commitTransaction':
+                    {
+                        foreach ($registeredDBServices as $service) {
+                            $di->get($service)->commit();
+                        }
+                        break;
                     }
-                    break;
-                }
-                case 'rollbackTransaction':
-                {
-                    foreach ($registeredDBServices as $service) {
-                        $di->get($service)->rollback();
+                    case 'rollbackTransaction':
+                    {
+                        foreach ($registeredDBServices as $service) {
+                            $di->get($service)->rollback();
+                        }
+                        break;
                     }
-                    break;
+                    default:
                 }
-                default:
             }
-
-        });
+        );
         // Назначаем EventsManager экземпляру адаптера базы данных
         $mainConnection->setEventsManager($eventsManager);
-
     }
 
     /**

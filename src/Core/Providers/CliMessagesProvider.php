@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 /**
  * Copyright (C) MIKO LLC - All Rights Reserved
@@ -17,9 +18,9 @@ use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 
 /**
-* Array of translations is created based on the translations files
-*/
-class CliMessagesProvider  implements ServiceProviderInterface
+ * Array of translations is created based on the translations files
+ */
+class CliMessagesProvider implements ServiceProviderInterface
 {
     /**
      * Register messages service provider
@@ -29,21 +30,24 @@ class CliMessagesProvider  implements ServiceProviderInterface
     public function register(DiInterface $di): void
     {
         $coreConfig = $di->getShared('config')->get('core');
-        $di->setShared('messages', function () use ($coreConfig) {
-            $messages = [];
-            try{
-                $conf = new MikoPBXConfig();
-                $language = $conf->getGeneralSettings('SSHLanguage');
-            }catch (Exception $e){
-                $language = 'en-en';
-            }
-            if (empty($_ENV['SSH_CLIENT']) && file_exists("{$coreConfig->translationsPath}{$language}.php")) {
-                require "{$coreConfig->translationsPath}{$language}.php";
-            } else {
-                require "{$coreConfig->translationsPath}en-en.php";
-            }
+        $di->setShared(
+            'messages',
+            function () use ($coreConfig) {
+                $messages = [];
+                try {
+                    $conf     = new MikoPBXConfig();
+                    $language = $conf->getGeneralSettings('SSHLanguage');
+                } catch (Exception $e) {
+                    $language = 'en-en';
+                }
+                if (empty($_ENV['SSH_CLIENT']) && file_exists("{$coreConfig->translationsPath}{$language}.php")) {
+                    require "{$coreConfig->translationsPath}{$language}.php";
+                } else {
+                    require "{$coreConfig->translationsPath}en-en.php";
+                }
 
-            return $messages;
-        });
+                return $messages;
+            }
+        );
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 /**
@@ -15,26 +16,40 @@ namespace MikoPBX\PBXCoreREST\Http;
 use Phalcon\Http\Response as PhResponse;
 use Phalcon\Http\ResponseInterface;
 use Phalcon\Messages\Messages;
+
 use function date;
 use function json_decode;
 use function sha1;
 
 class Response extends PhResponse
 {
-    const OK                    = 200;
-    const CREATED               = 201;
-    const ACCEPTED              = 202;
-    const MOVED_PERMANENTLY     = 301;
-    const FOUND                 = 302;
-    const TEMPORARY_REDIRECT    = 307;
-    const PERMANENTLY_REDIRECT  = 308;
-    const BAD_REQUEST           = 400;
-    const UNAUTHORIZED          = 401;
-    const FORBIDDEN             = 403;
-    const NOT_FOUND             = 404;
-    const INTERNAL_SERVER_ERROR = 500;
-    const NOT_IMPLEMENTED       = 501;
-    const BAD_GATEWAY           = 502;
+    public const OK = 200;
+
+    public const CREATED = 201;
+
+    public const ACCEPTED = 202;
+
+    public const MOVED_PERMANENTLY = 301;
+
+    public const FOUND = 302;
+
+    public const TEMPORARY_REDIRECT = 307;
+
+    public const PERMANENTLY_REDIRECT = 308;
+
+    public const BAD_REQUEST = 400;
+
+    public const UNAUTHORIZED = 401;
+
+    public const FORBIDDEN = 403;
+
+    public const NOT_FOUND = 404;
+
+    public const INTERNAL_SERVER_ERROR = 500;
+
+    public const NOT_IMPLEMENTED = 501;
+
+    public const BAD_GATEWAY = 502;
 
     private $codes = [
         200 => 'OK',
@@ -53,6 +68,7 @@ class Response extends PhResponse
 
     /**
      * Returns the http code description or if not found the code itself
+     *
      * @param int $code
      *
      * @return int|string
@@ -89,7 +105,7 @@ class Response extends PhResponse
             'meta' => [
                 'timestamp' => $timestamp,
                 'hash'      => $hash,
-            ]
+            ],
         ];
 
         /**
@@ -147,9 +163,9 @@ class Response extends PhResponse
     public function setPayloadSuccess($content = []): Response
     {
         $data = (true === is_array($content)) ? $content : ['data' => $content];
-        $data = (true === isset($data['data'])) ? $data  : ['data' => $data];
-        if (is_array($data['data']) && array_key_exists('result', $data['data'] )){
-            $data['result']=$data['data']['result'];
+        $data = (true === isset($data['data'])) ? $data : ['data' => $data];
+        if (is_array($data['data']) && array_key_exists('result', $data['data'])) {
+            $data['result'] = $data['data']['result'];
             unset($data['data']['result']);
         }
         $this->setJsonContent($data);

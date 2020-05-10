@@ -6,11 +6,12 @@
  * Written by Nikolay Beketov, 6 2018
  *
  */
+
 namespace MikoPBX\AdminCabinet\Plugins;
 
+use Phalcon\Di\Injectable;
 use Phalcon\Events\Event;
 use Phalcon\Mvc\Dispatcher;
-use Phalcon\Di\Injectable;
 
 /**
  * SecurityPlugin
@@ -46,16 +47,20 @@ class SecurityPlugin extends Injectable
         } else { // не AJAX запрос
             $auth = $this->session->get('auth');
             if ( ! $auth && $controller !== 'SESSION') {
-                $dispatcher->forward([
-                    'controller' => 'session',
-                    'action'     => 'index',
-                ]);
+                $dispatcher->forward(
+                    [
+                        'controller' => 'session',
+                        'action'     => 'index',
+                    ]
+                );
             } elseif ($controller == 'INDEX') {
                 // TODO: когда будет главная страница сделаем переадресацию на нее
-                $dispatcher->forward([
-                    'controller' => 'extensions',
-                    'action'     => 'index',
-                ]);
+                $dispatcher->forward(
+                    [
+                        'controller' => 'extensions',
+                        'action'     => 'index',
+                    ]
+                );
             }
         }
     }

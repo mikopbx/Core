@@ -6,6 +6,7 @@
  * Written by Nikolay Beketov, 5 2018
  *
  */
+
 namespace MikoPBX\Common\Models;
 
 class CallDetailRecords extends CallDetailRecordsBase

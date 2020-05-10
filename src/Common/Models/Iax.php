@@ -14,7 +14,7 @@ use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
 /**
- * @method static mixed findFirstByUniqid(array|string|int $parameters=null)
+ * @method static mixed findFirstByUniqid(array|string|int $parameters = null)
  */
 class Iax extends ModelsBase
 {
@@ -117,15 +117,17 @@ class Iax extends ModelsBase
 
     public function validation(): bool
     {
-
         $validation = new Validation();
-        $validation->add('uniqid', new UniquenessValidator([
-            'message' => $this->t('mo_ThisUniqidMustBeUniqueForIAXModels'),
-        ]));
+        $validation->add(
+            'uniqid',
+            new UniquenessValidator(
+                [
+                    'message' => $this->t('mo_ThisUniqidMustBeUniqueForIAXModels'),
+                ]
+            )
+        );
 
         return $this->validate($validation);
-
-
     }
 
 }

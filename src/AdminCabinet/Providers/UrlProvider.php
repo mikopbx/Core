@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 /**
  * Copyright (C) MIKO LLC - All Rights Reserved
@@ -23,11 +24,14 @@ class UrlProvider implements ServiceProviderInterface
     public function register(DiInterface $di): void
     {
         $baseUri = $di->getShared('config')->adminApplication->baseUri;
-        $di->setShared('url', function () use ($baseUri) {
-            $url = new Url();
-            $url->setBaseUri($baseUri);
+        $di->setShared(
+            'url',
+            function () use ($baseUri) {
+                $url = new Url();
+                $url->setBaseUri($baseUri);
 
-            return $url;
-        });
+                return $url;
+            }
+        );
     }
 }

@@ -6,6 +6,7 @@
  * Written by Nikolay Beketov, 5 2018
  *
  */
+
 namespace MikoPBX\AdminCabinet\Forms;
 
 use Phalcon\Forms\Element\Check;
@@ -20,16 +21,19 @@ class ExtensionEditForm extends Form
 {
     public function initialize($entity = null, $options = null): void
     {
-
         // EXTENSION
 
         // ID
         $this->add(new Hidden('id'));
 
         // Number
-        $this->add(new Text('number', [
-            "data-inputmask" => "'mask': '" . $options["internalextension_mask"] . "'",
-        ]));
+        $this->add(
+            new Text(
+                'number', [
+                "data-inputmask" => "'mask': '" . $options["internalextension_mask"] . "'",
+            ]
+            )
+        );
 
         // Type
         $this->add(new Hidden('type'));
@@ -64,12 +68,17 @@ class ExtensionEditForm extends Form
         $this->add(new Text('user_username', ["value" => $entity->Users->username]));
 
         // Email
-        $this->add(new Text('user_email', [
-            "value" => $entity->Users->email,
-        ]));
+        $this->add(
+            new Text(
+                'user_email', [
+                "value" => $entity->Users->email,
+            ]
+            )
+        );
 
         // Language
-        $language = new Select('user_language',
+        $language = new Select(
+            'user_language',
             [
                 'ru-ru' => $this->translation->_("ex_Russian"),
                 'en-ru' => $this->translation->_("ex_English"),
@@ -83,7 +92,8 @@ class ExtensionEditForm extends Form
                 'value'    => $entity->Users->language,
                 'useEmpty' => false,
                 'class'    => 'ui selection dropdown language-select',
-            ]);
+            ]
+        );
         $this->add($language);
 
 
@@ -110,9 +120,13 @@ class ExtensionEditForm extends Form
         $this->add(new Hidden('sip_type', ["value" => $entity->Sip->type]));
 
         // Secret
-        $this->add(new Text('sip_secret', [
-            "value" => $entity->Sip->secret,
-        ]));
+        $this->add(
+            new Text(
+                'sip_secret', [
+                "value" => $entity->Sip->secret,
+            ]
+            )
+        );
 
         // Busylevel
         $this->add(new Numeric('sip_busylevel', ["value" => $entity->Sip->busylevel]));
@@ -126,7 +140,8 @@ class ExtensionEditForm extends Form
             'auto_info' => $this->translation->_('auto_info'),
         ];
 
-        $dtmfmode = new Select('sip_dtmfmode', $arrDTMFType, [
+        $dtmfmode = new Select(
+            'sip_dtmfmode', $arrDTMFType, [
             'using'    => [
                 'id',
                 'name',
@@ -134,11 +149,13 @@ class ExtensionEditForm extends Form
             'useEmpty' => false,
             'value'    => $entity->Sip->dtmfmode,
             'class'    => 'ui selection dropdown dtmf-mode-select',
-        ]);
+        ]
+        );
         $this->add($dtmfmode);
 
         // Networkfilterid
-        $networkfilterid = new Select('sip_networkfilterid', $options['network_filters'], [
+        $networkfilterid = new Select(
+            'sip_networkfilterid', $options['network_filters'], [
             'using'    => [
                 'id',
                 'name',
@@ -146,7 +163,8 @@ class ExtensionEditForm extends Form
             'useEmpty' => false,
             'value'    => $entity->Sip->networkfilterid,
             'class'    => 'ui selection dropdown network-filter-select',
-        ]);
+        ]
+        );
         $this->add($networkfilterid);
 
 
@@ -159,7 +177,8 @@ class ExtensionEditForm extends Form
             'no'                  => 'no',
         ];
 
-        $nat = new Select('nat', $arrNatType, [
+        $nat = new Select(
+            'nat', $arrNatType, [
             'using'    => [
                 'id',
                 'name',
@@ -167,7 +186,8 @@ class ExtensionEditForm extends Form
             'useEmpty' => false,
             'value'    => $entity->Sip->nat,
             'class'    => 'ui selection dropdown protocol-select',
-        ]);
+        ]
+        );
         $this->add($nat);
 
         // Qualify
@@ -182,10 +202,16 @@ class ExtensionEditForm extends Form
         $this->add(new Numeric('qualifyfreq', ["value" => $entity->Sip->qualifyfreq]));
 
         // Manualattributes
-        $rows = max(round(strlen($entity->Sip->manualattributes) / 95),
-            2);
-        $this->add(new TextArea('sip_manualattributes',
-            ["value" => $entity->Sip->manualattributes, "rows" => $rows]));
+        $rows = max(
+            round(strlen($entity->Sip->manualattributes) / 95),
+            2
+        );
+        $this->add(
+            new TextArea(
+                'sip_manualattributes',
+                ["value" => $entity->Sip->manualattributes, "rows" => $rows]
+            )
+        );
 
         // Description
         $this->add(new Text('sip_description', ["value" => $entity->Sip->description]));
@@ -202,53 +228,75 @@ class ExtensionEditForm extends Form
         // Uniqid
         $this->add(new Hidden('mobile_uniqid', ["value" => $options['external_extension']->ExternalPhones->uniqid]));
         // Disabled
-        $this->add(new Hidden('mobile_disabled',
-            ["value" => $options['external_extension']->ExternalPhones->disabled]));
+        $this->add(
+            new Hidden(
+                'mobile_disabled',
+                ["value" => $options['external_extension']->ExternalPhones->disabled]
+            )
+        );
         // Dialstring
-        $this->add(new Text('mobile_dialstring',
-            ["value" => $options['external_extension']->ExternalPhones->dialstring]));
+        $this->add(
+            new Text(
+                'mobile_dialstring',
+                ["value" => $options['external_extension']->ExternalPhones->dialstring]
+            )
+        );
 
 
         // Routing
         // Forwarding
-        $this->add(new Select('fwd_forwarding', $options['forwarding_extensions'], [
-            'using'    => [
-                'id',
-                'name',
-            ],
-            'useEmpty' => true,
-            'value'    => $entity->ExtensionForwardingRights->forwarding,
-            'class'    => 'ui selection dropdown search forwarding-select',
-        ]));
+        $this->add(
+            new Select(
+                'fwd_forwarding', $options['forwarding_extensions'], [
+                'using'    => [
+                    'id',
+                    'name',
+                ],
+                'useEmpty' => true,
+                'value'    => $entity->ExtensionForwardingRights->forwarding,
+                'class'    => 'ui selection dropdown search forwarding-select',
+            ]
+            )
+        );
         // Forwardingonbusy
-        $this->add(new Select('fwd_forwardingonbusy', $options['forwarding_extensions'], [
-            'using'    => [
-                'id',
-                'name',
-            ],
-            'useEmpty' => true,
-            'value'    => $entity->ExtensionForwardingRights->forwardingonbusy,
-            'class'    => 'ui selection dropdown search forwarding-select',
-        ]));
+        $this->add(
+            new Select(
+                'fwd_forwardingonbusy', $options['forwarding_extensions'], [
+                'using'    => [
+                    'id',
+                    'name',
+                ],
+                'useEmpty' => true,
+                'value'    => $entity->ExtensionForwardingRights->forwardingonbusy,
+                'class'    => 'ui selection dropdown search forwarding-select',
+            ]
+            )
+        );
         // Forwardingonunavailable
-        $this->add(new Select('fwd_forwardingonunavailable', $options['forwarding_extensions'], [
-            'using'    => [
-                'id',
-                'name',
-            ],
-            'useEmpty' => true,
-            'value'    => $entity->ExtensionForwardingRights->forwardingonunavailable,
-            'class'    => 'ui selection dropdown search forwarding-select',
-        ]));
+        $this->add(
+            new Select(
+                'fwd_forwardingonunavailable', $options['forwarding_extensions'], [
+                'using'    => [
+                    'id',
+                    'name',
+                ],
+                'useEmpty' => true,
+                'value'    => $entity->ExtensionForwardingRights->forwardingonunavailable,
+                'class'    => 'ui selection dropdown search forwarding-select',
+            ]
+            )
+        );
         // Ringlength
         $ringlength = $entity->ExtensionForwardingRights->ringlength;
-        $this->add(new Numeric('fwd_ringlength', [
-            "maxlength"    => 2,
-            "style"        => "width: 80px;",
-            "defaultValue" => 120,
-            "value"        => ($ringlength > 0) ? $ringlength : '',
-        ]));
-
-
+        $this->add(
+            new Numeric(
+                'fwd_ringlength', [
+                "maxlength"    => 2,
+                "style"        => "width: 80px;",
+                "defaultValue" => 120,
+                "value"        => ($ringlength > 0) ? $ringlength : '',
+            ]
+            )
+        );
     }
 }

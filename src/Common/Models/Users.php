@@ -60,6 +60,11 @@ class Users extends ModelsBase
      */
     public $avatar;
 
+    public static function getRoleValues(): array
+    {
+        return ['Admins', 'Users'];
+    }
+
     public function initialize(): void
     {
         $this->setSource('m_Users');
@@ -76,11 +81,6 @@ class Users extends ModelsBase
                 ],
             ]
         );
-    }
-
-    static function getRoleValues(): array
-    {
-        return ['Admins', 'Users'];
     }
 
     public function afterSave(): void

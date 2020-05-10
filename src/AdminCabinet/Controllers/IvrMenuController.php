@@ -6,6 +6,7 @@
  * Written by Nikolay Beketov, 5 2018
  *
  */
+
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\IvrMenuEditForm;
@@ -31,7 +32,6 @@ class IvrMenuController extends BaseController
      */
     public function modifyAction($ivrmenuid = null): void
     {
-
         $ivrmenu                = IvrMenu::findFirstByUniqid($ivrmenuid);
         $ivrActionsList         = [];
         $soundfilesList[""]     = $this->translation->_("sf_SelectAudioFile");
@@ -44,7 +44,6 @@ class IvrMenuController extends BaseController
             $ivrmenu->extension
                                        = Extensions::getNextFreeApplicationNumber();
             $ivrmenu->timeout          = 7;
-
         } else {
             $extensionListForFilter[] = $ivrmenu->timeout_extension;
             // Списк экстеншенов очереди
@@ -60,8 +59,11 @@ class IvrMenuController extends BaseController
                 $ivrActionsList[]         = [
                     'id'                 => $action->id,
                     'extension'          => $action->extension,
-                    'extensionRepresent' => str_replace('"', '\\"',
-                        $action->Extensions->getRepresent()),
+                    'extensionRepresent' => str_replace(
+                        '"',
+                        '\\"',
+                        $action->Extensions->getRepresent()
+                    ),
                     'digits'             => $action->digits,
                 ];
                 $extensionListForFilter[] = $action->extension;
@@ -88,14 +90,15 @@ class IvrMenuController extends BaseController
             $soundfilesList[$soundFile->id] = $soundFile->getRepresent();
         }
 
-        $form                   = new IvrMenuEditForm($ivrmenu, [
+        $form                   = new IvrMenuEditForm(
+            $ivrmenu, [
             'extensions' => $extensionList,
             'soundfiles' => $soundfilesList,
-        ]);
+        ]
+        );
         $this->view->form       = $form;
         $this->view->ivractions = $ivrActionsList;
         $this->view->represent  = $ivrmenu->getRepresent();
-
     }
 
 
@@ -122,7 +125,6 @@ class IvrMenuController extends BaseController
             $extension->userid            = null;
             $extension->show_in_phonebook = 1;
             $extension->public_access     = 1;
-
         } else {
             $extension = $ivrMenuRecord->Extensions;
         }
@@ -164,13 +166,12 @@ class IvrMenuController extends BaseController
      * Обновление параметров внутреннего номера
      *
      * @param \MikoPBX\Common\Models\Extensions $extension
-     * @param array                      $data массив полей из POST запроса
+     * @param array                             $data массив полей из POST запроса
      *
      * @return bool update result
      */
     private function updateExtension(Extensions $extension, array $data): bool
     {
-
         $extension->number   = $data['extension'];
         $extension->callerid = parent::transliterate($data['name']);
         if ($extension->save() === false) {
@@ -181,20 +182,18 @@ class IvrMenuController extends BaseController
         }
 
         return true;
-
     }
 
     /**
      * Обновление параметров IVR меню
      *
      * @param \MikoPBX\Common\Models\IvrMenu $ivrMenu
-     * @param array                   $data массив полей из POST запроса
+     * @param array                          $data массив полей из POST запроса
      *
      * @return bool update result
      */
     private function updateIVRMenu(IvrMenu $ivrMenu, array $data): bool
     {
-
         // Заполним параметры записи Ivr Menu
         foreach ($ivrMenu as $name => $value) {
             switch ($name) {
@@ -226,7 +225,6 @@ class IvrMenuController extends BaseController
         }
 
         return true;
-
     }
 
     /**
@@ -238,13 +236,11 @@ class IvrMenuController extends BaseController
      */
     private function updateIVRMenuActions(array $data): bool
     {
-
         $existDigits = [];
 
         // Заполним параметры IvrMenuActions
         $arrActions = json_decode($data['actions']);
         foreach ($arrActions as $value) {
-
             $parameters = [
                 'conditions' => 'ivr_menu_id = :uniqid: AND digits=:digits:',
                 'bind'       => [
@@ -253,7 +249,7 @@ class IvrMenuController extends BaseController
                 ],
             ];
             $newRule    = IvrMenuActions::findFirst($parameters);
-            if ($newRule ===null) {
+            if ($newRule === null) {
                 $newRule              = new IvrMenuActions();
                 $newRule->digits      = $value->digits;
                 $newRule->ivr_menu_id = $data['uniqid'];
@@ -287,7 +283,6 @@ class IvrMenuController extends BaseController
         }
 
         return true;
-
     }
 
     /**

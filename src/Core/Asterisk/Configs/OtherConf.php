@@ -5,10 +5,11 @@
  * Proprietary and confidential
  * Written by Alexey Portnov, 2 2020
  */
+
 namespace MikoPBX\Core\Asterisk\Configs;
 
-use MikoPBX\Core\System\{System, Util};
 use MikoPBX\Core\Modules\Config\ConfigClass;
+use MikoPBX\Core\System\{System, Util};
 
 class OtherConf extends ConfigClass
 {
@@ -65,7 +66,7 @@ class OtherConf extends ConfigClass
      *
      * @return bool
      */
-    protected function generateConfigProtected($general_settings):bool
+    protected function generateConfigProtected($general_settings): bool
     {
         // Генерация конфигурационных файлов.
         $result = true;
@@ -92,8 +93,8 @@ class OtherConf extends ConfigClass
     {
         $dirsConfig = $this->di->getShared('config');
 
-        $lang   = $this->mikoPBXConfig->getGeneralSettings('PBXLanguage');
-        $conf   = "[directories]\n" .
+        $lang = $this->mikoPBXConfig->getGeneralSettings('PBXLanguage');
+        $conf = "[directories]\n" .
             "astetcdir => /etc/asterisk\n" .
             "astagidir => {$dirsConfig->path('asterisk.astagidir')}\n" .
             "astkeydir => /etc/asterisk\n" .
@@ -151,7 +152,7 @@ class OtherConf extends ConfigClass
     private function musicOnHoldConfGenerate()
     {
         $dirsConfig = $this->di->getShared('config');
-        $mohpath = $dirsConfig->path('asterisk.mohdir');
+        $mohpath    = $dirsConfig->path('asterisk.mohdir');
 
         $conf = "[default]\n" .
             "mode=files\n" .
@@ -206,7 +207,6 @@ class OtherConf extends ConfigClass
 
     private function rtpConfGenerate($settings)
     {
-
         $conf = "[general]\n" .
             "rtpstart={$settings['RTPPortFrom']}\n" .
             "rtpend={$settings['RTPPortTo']}\n\n";
@@ -287,7 +287,6 @@ class OtherConf extends ConfigClass
         //*/
 
         Util::fileWriteContent($this->astConfDir . '/voicemail.conf', $conf);
-
     }
 
 }

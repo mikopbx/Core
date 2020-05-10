@@ -6,6 +6,7 @@
  * Written by Nikolay Beketov, 5 2018
  *
  */
+
 namespace MikoPBX\AdminCabinet\Forms;
 
 use Phalcon\Forms\Element\Hidden;
@@ -18,7 +19,6 @@ class SoundFilesEditForm extends Form
     {
         foreach ($entity as $key => $value) {
             switch ($key) {
-
                 case "id":
                 case "path":
                 case "category":
@@ -28,7 +28,6 @@ class SoundFilesEditForm extends Form
                 default:
                     $this->add(new Text($key));
             }
-
         }
     }
 }

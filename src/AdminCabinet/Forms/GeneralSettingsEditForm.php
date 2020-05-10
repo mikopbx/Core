@@ -6,6 +6,7 @@
  * Written by Nikolay Beketov, 6 2018
  *
  */
+
 namespace MikoPBX\AdminCabinet\Forms;
 
 use Phalcon\Forms\Element\Check;
@@ -22,7 +23,6 @@ class GeneralSettingsEditForm extends Form
     {
         foreach ($options as $key => $value) {
             switch ($key) {
-
                 case 'SIPPort':
                 case 'SIPDefaultExpiry':
                 case 'SIPMinExpiry':
@@ -46,13 +46,21 @@ class GeneralSettingsEditForm extends Form
                     break;
                 case 'SSHPassword':
                     $this->add(new Password($key, ['value' => $value]));
-                    $this->add(new Password('SSHPasswordRepeat',
-                        ['value' => $value]));
+                    $this->add(
+                        new Password(
+                            'SSHPasswordRepeat',
+                            ['value' => $value]
+                        )
+                    );
                     break;
                 case 'WebAdminPassword':
                     $this->add(new Password($key, ['value' => $value]));
-                    $this->add(new Password('WebAdminPasswordRepeat',
-                        ['value' => $value]));
+                    $this->add(
+                        new Password(
+                            'WebAdminPasswordRepeat',
+                            ['value' => $value]
+                        )
+                    );
                     break;
                 case 'Description':
                     $this->add(new TextArea($key, ['value' => $value, "rows" => 2]));
@@ -65,11 +73,16 @@ class GeneralSettingsEditForm extends Form
                 case 'WEBHTTPSPrivateKey':
                 case '***ALL TEXTAREA ABOVE***':
                     $rows = max(round(strlen($value) / 95), 2);
-                    $this->add(new TextArea($key,
-                        ['value' => $value, 'rows' => $rows]));
+                    $this->add(
+                        new TextArea(
+                            $key,
+                            ['value' => $value, 'rows' => $rows]
+                        )
+                    );
                     break;
                 case 'PBXLanguage':
-                    $language = new Select($key,
+                    $language = new Select(
+                        $key,
                         [
                             'en-en' => $this->translation->_('ex_English'),
                             'en-gb' => $this->translation->_('ex_EnglishUK'),
@@ -95,11 +108,13 @@ class GeneralSettingsEditForm extends Form
                             'value'    => $value,
                             'useEmpty' => false,
                             'class'    => 'ui selection dropdown language-select',
-                        ]);
+                        ]
+                    );
                     $this->add($language);
                     break;
                 case 'PBXInternalExtensionLength':
-                    $extLength = new Select($key,
+                    $extLength = new Select(
+                        $key,
                         [
                             3 => $this->translation->_('gs_ThreeDigthts'),
                             4 => $this->translation->_('gs_FourDigthts'),
@@ -114,7 +129,8 @@ class GeneralSettingsEditForm extends Form
                             'value'    => $value,
                             'useEmpty' => false,
                             'class'    => 'ui selection dropdown extension-length-select',
-                        ]);
+                        ]
+                    );
                     $this->add($extLength);
                     break;
                 case 'PBXRecordCalls':

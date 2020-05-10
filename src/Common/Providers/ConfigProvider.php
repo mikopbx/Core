@@ -11,10 +11,10 @@ declare(strict_types=1);
 
 namespace MikoPBX\Common\Providers;
 
+use Phalcon\Config\Adapter\Json;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 use Phalcon\Exception;
-use Phalcon\Config\Adapter\Json;
 
 /**
  * Read the configuration
@@ -23,14 +23,17 @@ class ConfigProvider implements ServiceProviderInterface
 {
     public function register(DiInterface $di): void
     {
-        $configPath    = '/etc/inc/mikopbx-settings.json';
+        $configPath = '/etc/inc/mikopbx-settings.json';
 
-        if (!file_exists($configPath) || !is_readable($configPath)) {
+        if ( ! file_exists($configPath) || ! is_readable($configPath)) {
             throw new Exception('Config file does not exist: ' . $configPath);
         }
 
-        $di->setShared('config', function () use ($configPath) {
-            return new Json($configPath);
-        });
+        $di->setShared(
+            'config',
+            function () use ($configPath) {
+                return new Json($configPath);
+            }
+        );
     }
 }

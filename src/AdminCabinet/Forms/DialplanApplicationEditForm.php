@@ -6,6 +6,7 @@
  * Written by Nikolay Beketov, 5 2018
  *
  */
+
 namespace MikoPBX\AdminCabinet\Forms;
 
 use Phalcon\Forms\Element\Hidden;
@@ -20,7 +21,6 @@ class DialplanApplicationEditForm extends Form
     {
         foreach ($entity as $key => $value) {
             switch ($key) {
-
                 case "id":
                 case "uniqid":
                 case "***ALL HIDDEN ABOVE***":
@@ -31,7 +31,8 @@ class DialplanApplicationEditForm extends Form
                     $this->add(new TextArea($key, ["rows" => $rows]));
                     break;
                 case "type":
-                    $select = new Select($key,
+                    $select = new Select(
+                        $key,
                         [
                             'php'       => $this->translation->_("da_TypePhp"),
                             'plaintext' => $this->translation->_("da_TypePlaintext"),
@@ -43,7 +44,8 @@ class DialplanApplicationEditForm extends Form
                             ],
                             'useEmpty' => false,
                             'class'    => 'ui selection dropdown type-select',
-                        ]);
+                        ]
+                    );
                     $this->add($select);
                     break;
                 case "applicationlogic":
@@ -52,7 +54,6 @@ class DialplanApplicationEditForm extends Form
                 default:
                     $this->add(new Text($key));
             }
-
         }
     }
 }

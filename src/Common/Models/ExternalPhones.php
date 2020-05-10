@@ -14,7 +14,7 @@ use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
 /**
- * @method static mixed findFirstByUniqid(array|string|int $parameters=null)
+ * @method static mixed findFirstByUniqid(array|string|int $parameters = null)
  */
 class ExternalPhones extends ModelsBase
 {
@@ -77,9 +77,14 @@ class ExternalPhones extends ModelsBase
     public function validation()
     {
         $validation = new Validation();
-        $validation->add('uniqid', new UniquenessValidator([
-            'message' => $this->t('mo_ThisUniqidNotUniqueForExternalPhonesModels'),
-        ]));
+        $validation->add(
+            'uniqid',
+            new UniquenessValidator(
+                [
+                    'message' => $this->t('mo_ThisUniqidNotUniqueForExternalPhonesModels'),
+                ]
+            )
+        );
 
         return $this->validate($validation);
     }

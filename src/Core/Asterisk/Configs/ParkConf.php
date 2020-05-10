@@ -5,6 +5,7 @@
  * Proprietary and confidential
  * Written by Alexey Portnov, 2 2020
  */
+
 namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Core\Modules\Config\ConfigClass;
@@ -27,7 +28,7 @@ class ParkConf extends ConfigClass
      *
      * @return null
      */
-    static function getParkslotData($EXTEN = null)
+    public static function getParkslotData($EXTEN = null)
     {
         $ParkeeChannel = null;
         $am            = Util::getAstManager('off');

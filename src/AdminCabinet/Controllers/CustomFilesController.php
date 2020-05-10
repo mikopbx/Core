@@ -6,6 +6,7 @@
  * Written by Nikolay Beketov, 5 2018
  *
  */
+
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\CustomFilesEditForm;
@@ -20,7 +21,6 @@ class CustomFilesController extends BaseController
      */
     public function indexAction(): void
     {
-
         $files = CustomFiles::find();
 
         $this->view->files = $files;
@@ -88,6 +88,5 @@ class CustomFilesController extends BaseController
             $this->flash->success($this->translation->_('ms_SuccessfulSaved'));
             $this->view->success = true;
         }
-
     }
 }

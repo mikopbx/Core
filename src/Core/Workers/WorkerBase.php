@@ -5,6 +5,7 @@
  * Proprietary and confidential
  * Written by Alexey Portnov, 2 2020
  */
+
 namespace MikoPBX\Core\Workers;
 
 
@@ -27,6 +28,16 @@ abstract class WorkerBase implements WorkerInterface
     }
 
     /**
+     * Create PID file for worker
+     */
+    public function getPidFile(): string
+    {
+        $name = str_replace("\\", '-', self::class);
+
+        return "/var/run/{$name}.pid";
+    }
+
+    /**
      * Ping callback for keep alive check
      *
      * @param BeanstalkClient $message
@@ -34,15 +45,5 @@ abstract class WorkerBase implements WorkerInterface
     public function pingCallBack($message): void
     {
         $message->reply(json_encode($message->getBody() . ':pong'));
-    }
-
-
-    /**
-     * Create PID file for worker
-     */
-    public function getPidFile():string
-    {
-        $name = str_replace("\\", '-', self::class);
-        return "/var/run/{$name}.pid";
     }
 }

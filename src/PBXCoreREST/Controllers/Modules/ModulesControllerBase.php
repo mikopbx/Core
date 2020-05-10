@@ -29,15 +29,17 @@ class ModulesControllerBase extends BaseController
      *   curl http://127.0.0.1/pbxcore/api/modules/ModuleBitrix24Integration/reload
      *
      * Деинсталляция модуля:
-    curl http://172.16.156.223/pbxcore/api/modules/ModuleSmartIVR/uninstall
-    curl http://172.16.156.223/pbxcore/api/modules/ModuleCTIClient/uninstall
+     * curl http://172.16.156.223/pbxcore/api/modules/ModuleSmartIVR/uninstall
+     * curl http://172.16.156.223/pbxcore/api/modules/ModuleCTIClient/uninstall
      * Статус загрузки модуля на АТС:
-    curl http://172.16.156.223/pbxcore/api/modules/ModuleSmartIVR/status/
-    curl http://172.16.156.223/pbxcore/api/modules/ModuleCTIClient/status/
+     * curl http://172.16.156.223/pbxcore/api/modules/ModuleSmartIVR/status/
+     * curl http://172.16.156.223/pbxcore/api/modules/ModuleCTIClient/status/
      *
      * Выполнение действий без основной авторизации.
-     * curl http://172.16.156.223/pbxcore/api/modules/ModuleAutoprovision/customAction?action=getcfg&mac=00135E874B49&solt=test
-     * curl http://172.16.156.223/pbxcore/api/modules/ModuleAutoprovision/customAction?action=getimg&file=logo-yealink-132x32.dob
+     * curl
+     * http://172.16.156.223/pbxcore/api/modules/ModuleAutoprovision/customAction?action=getcfg&mac=00135E874B49&solt=test
+     * curl
+     * http://172.16.156.223/pbxcore/api/modules/ModuleAutoprovision/customAction?action=getimg&file=logo-yealink-132x32.dob
      *
      * curl http://84.201.142.45/pbxcore/api/modules/ModuleBitrix24Notify/customAction?portal=b24-uve4uz.bitrix24.ru
      * curl http://84.201.142.45/pbxcore/api/modules/ModuleBitrix24Notify/customAction?portal=miko24.ru
@@ -49,25 +51,24 @@ class ModulesControllerBase extends BaseController
      * @param $moduleName
      * @param $actionName
      */
-    public function callActionForModule($moduleName, $actionName):void
+    public function callActionForModule($moduleName, $actionName): void
     {
-
         $_REQUEST['ip_srv'] = $_SERVER['SERVER_ADDR'];
-        $input    = file_get_contents( 'php://input' );
-        $request = [
-            'data'   => $_REQUEST,
-            'module' => $moduleName,
-            'input'  => $input,     // Параметры запроса.
-            'action' => $actionName,
+        $input              = file_get_contents('php://input');
+        $request            = [
+            'data'           => $_REQUEST,
+            'module'         => $moduleName,
+            'input'          => $input,     // Параметры запроса.
+            'action'         => $actionName,
             'REQUEST_METHOD' => $_SERVER['REQUEST_METHOD'],
-            'processor'=>'modules'
+            'processor'      => 'modules',
         ];
 
-        $connection  = $this->beanstalkConnection;
-        $response = $connection->request($request, 100, 0);
-        if ( $response !== false){
-            $response = json_decode($response,true);
-            if( isset($response['fpassthru']) ) {
+        $connection = $this->beanstalkConnection;
+        $response   = $connection->request($request, 100, 0);
+        if ($response !== false) {
+            $response = json_decode($response, true);
+            if (isset($response['fpassthru'])) {
                 $fp = fopen($response['filename'], "rb");
                 if ($fp) {
                     $size = filesize($response['filename']);
@@ -84,19 +85,19 @@ class ModulesControllerBase extends BaseController
                 if (isset($response['need_delete']) && $response['need_delete'] == true) {
                     unlink($response['filename']);
                 }
-            }elseif (isset($response['redirect'])){
+            } elseif (isset($response['redirect'])) {
                 $this->response->redirect($response['redirect'], true, 302);
                 $this->response->sendRaw();
-            }elseif (isset($response['headers']) && isset($response['echo'])){
-                foreach ($response['headers'] as $name => $value){
+            } elseif (isset($response['headers']) && isset($response['echo'])) {
+                foreach ($response['headers'] as $name => $value) {
                     $this->response->setHeader($name, $value);
                 }
                 $this->response->setPayloadSuccess($response['echo']);
-            }elseif (isset($response['echo_file'])){
+            } elseif (isset($response['echo_file'])) {
                 $this->response->setStatusCode(200, 'OK')->sendHeaders();
                 $this->response->setFileToSend($response['echo_file']);
                 $this->response->sendRaw();
-            }else{
+            } else {
                 $this->response->setPayloadSuccess($response);
             }
         } else {

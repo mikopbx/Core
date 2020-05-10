@@ -21,12 +21,12 @@ use Phalcon\Mvc\Model\ResultsetInterface;
 use Phalcon\Text;
 
 /**
- * @method static mixed findFirstById(array|string|int $parameters=null)
+ * @method static mixed findFirstById(array|string|int $parameters = null)
  * @method static mixed findFirstByKey(string|null $parameters)
- * @method static mixed findFirstByUniqid(array|string|int $parameters=null)
- * @method static mixed findFirst(array|string|int $parameters=null)
- * @method static ResultsetInterface find(array|string|int $parameters=null)
- * @method static mixed count(array $parameters=null)
+ * @method static mixed findFirstByUniqid(array|string|int $parameters = null)
+ * @method static mixed findFirst(array|string|int $parameters = null)
+ * @method static ResultsetInterface find(array|string|int $parameters = null)
+ * @method static mixed count(array $parameters = null)
  * @method  bool create()
  * @method  bool delete()
  * @method  bool save()
@@ -56,7 +56,7 @@ abstract class ModelsBase extends Model
 
         $modules = PbxExtensionModules::find($parameters);
         foreach ($modules as $module) {
-            $moduleModelsDir = $modulesDir .'/'. $module->uniqid . '/Models';
+            $moduleModelsDir = $modulesDir . '/' . $module->uniqid . '/Models';
             $results         = glob($moduleModelsDir . '/*.php', GLOB_NOSORT);
             foreach ($results as $file) {
                 $className        = pathinfo($file)['filename'];
@@ -69,7 +69,6 @@ abstract class ModelsBase extends Model
                 }
             }
         }
-
     }
 
     /**
@@ -88,11 +87,11 @@ abstract class ModelsBase extends Model
         foreach ($errorMessages as $errorMessage) {
             switch ($errorMessage->getType()) {
                 case 'ConstraintViolation':
-                    $arrMessageParts = explode('Common\\Models\\',$errorMessage->getMessage());
-                    if (count($arrMessageParts)===2){
-                        $relatedModel    = $arrMessageParts[1];
+                    $arrMessageParts = explode('Common\\Models\\', $errorMessage->getMessage());
+                    if (count($arrMessageParts) === 2) {
+                        $relatedModel = $arrMessageParts[1];
                     } else {
-                        $relatedModel    = $errorMessage->getMessage();
+                        $relatedModel = $errorMessage->getMessage();
                     }
                     $relatedRecords  = $this->getRelated($relatedModel);
                     $newErrorMessage = $this->t('ConstraintViolation');
@@ -113,7 +112,6 @@ abstract class ModelsBase extends Model
                 default:
             }
         }
-
     }
 
     /**
@@ -156,7 +154,7 @@ abstract class ModelsBase extends Model
      */
     public function beforeDelete(): bool
     {
-        return  $this->checkRelationsSatisfaction($this, $this);
+        return $this->checkRelationsSatisfaction($this, $this);
     }
 
     /**
@@ -167,11 +165,11 @@ abstract class ModelsBase extends Model
      *
      * @return bool
      */
-    private function checkRelationsSatisfaction($theFirstDeleteRecord, $currentDeleteRecord):bool
+    private function checkRelationsSatisfaction($theFirstDeleteRecord, $currentDeleteRecord): bool
     {
         $result = true;
         $relations
-            = $currentDeleteRecord->_modelsManager->getRelations(get_class($currentDeleteRecord));
+                = $currentDeleteRecord->_modelsManager->getRelations(get_class($currentDeleteRecord));
         foreach ($relations as $relation) {
             $foreignKey = $relation->getOption('foreignKey');
             if (array_key_exists('action', $foreignKey)) {
@@ -212,9 +210,9 @@ abstract class ModelsBase extends Model
                         }
                         break;
                     case Relation::ACTION_CASCADE: // Удалим все зависимые записи
-                        foreach ($relatedRecords as $record){
-                            $result=$result&&$record->checkRelationsSatisfaction($theFirstDeleteRecord, $record);
-                            if ($result){
+                        foreach ($relatedRecords as $record) {
+                            $result = $result && $record->checkRelationsSatisfaction($theFirstDeleteRecord, $record);
+                            if ($result) {
                                 $result = $record->delete();
                             }
                         }
@@ -226,6 +224,7 @@ abstract class ModelsBase extends Model
                 }
             }
         }
+
         return $result;
     }
 
@@ -246,9 +245,7 @@ abstract class ModelsBase extends Model
      */
     private function processSettingsChanges(string $action): void
     {
-
         if (php_sapi_name() !== 'cli') {
-
             if ( ! $this->hasSnapshotData()) {
                 return;
             } // nothing changed
@@ -266,14 +263,15 @@ abstract class ModelsBase extends Model
             } else {
                 $id = $this->id;
             }
-            $jobData = json_encode([
-                'model'         => get_class($this),
-                'recordId'      => $id,
-                'action'        => $action,
-                'changedFields' => $changedFields,
-            ]);
+            $jobData = json_encode(
+                [
+                    'model'         => get_class($this),
+                    'recordId'      => $id,
+                    'action'        => $action,
+                    'changedFields' => $changedFields,
+                ]
+            );
             $queue->publish($jobData);
-
         }
     }
 
@@ -293,7 +291,6 @@ abstract class ModelsBase extends Model
         if ($this->getDI()->has('modelsCache')) {
             $this->getDI()->get('modelsCache')->delete($category);
         }
-
     }
 
     /**
@@ -356,13 +353,12 @@ abstract class ModelsBase extends Model
                         $icon = '<i class="icons"><i class="user outline icon"></i></i>';
                     }
                     $name = '';
-                    if (isset($this->Users->username)){
+                    if (isset($this->Users->username)) {
                         $name = $this->trimName($this->Users->username);
                     }
 
                     $name = "{$icon} {$name} <{$this->number}>";
                 } else {
-
                     switch (strtoupper($this->type)) {
                         case 'CONFERENCE':
                             $name = $this->ConferenceRooms->getRepresent();
@@ -506,10 +502,12 @@ abstract class ModelsBase extends Model
             }
             $link     = $this->getWebInterfaceLink();
             $category = explode('\\', static::class)[3];
-            $result   = $this->t('rep' . $category,
+            $result   = $this->t(
+                'rep' . $category,
                 [
                     'represent' => "<a href='{$link}'>{$name}</a>",
-                ]);
+                ]
+            );
         } else {
             $result = $name;
         }

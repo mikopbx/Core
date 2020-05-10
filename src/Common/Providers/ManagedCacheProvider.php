@@ -27,8 +27,8 @@ use Phalcon\Storage\SerializerFactory;
 
 
 /**
-* Main database connection is created based in the parameters defined in the configuration file
-*/
+ * Main database connection is created based in the parameters defined in the configuration file
+ */
 class ManagedCacheProvider implements ServiceProviderInterface
 {
     /**
@@ -47,10 +47,11 @@ class ManagedCacheProvider implements ServiceProviderInterface
                 $options = [
                     'defaultSerializer' => 'Json',
                     'lifetime'          => 7200,
-                    'storageDir'        => $tempPath.'/managedCache',
+                    'storageDir'        => $tempPath . '/managedCache',
                 ];
 
                 $adapter = new Stream($serializerFactory, $options);
+
                 return new Cache($adapter);
             }
         );

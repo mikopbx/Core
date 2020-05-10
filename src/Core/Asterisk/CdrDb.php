@@ -5,10 +5,11 @@
  * Proprietary and confidential
  * Written by Alexey Portnov, 3 2020
  */
+
 namespace MikoPBX\Core\Asterisk;
 
-use MikoPBX\Core\System\{BeanstalkClient, MikoPBXConfig, Storage, Util};
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
+use MikoPBX\Core\System\{BeanstalkClient, MikoPBXConfig, Storage, Util};
 use MikoPBX\Core\Workers\WorkerCdr;
 use Phalcon\Di;
 use SQLite3;
@@ -26,7 +27,7 @@ class CdrDb
      *
      * @return array
      */
-    static function createDb($id = '')
+    public static function createDb($id = '')
     {
         $f_list = CdrDb::getDbFilds();
 
@@ -47,7 +48,7 @@ class CdrDb
      *
      * @return array
      */
-    static function getDbFilds()
+    public static function getDbFilds()
     {
         $f_list = [
             'id'             => 'INTEGER PRIMARY KEY',
@@ -85,7 +86,7 @@ class CdrDb
      * @param string $id
      * @param        $name
      */
-    static function createTable($id, $name)
+    public static function createTable($id, $name)
     {
         $f_list = self::getDbFilds();
         $q      = 'CREATE ' . 'TABLE IF NOT EXISTS "' . $name . '"(';
@@ -120,7 +121,7 @@ class CdrDb
      *
      * @return array
      */
-    static function runQuery($q, $return_array = false, $id = '')
+    public static function runQuery($q, $return_array = false, $id = '')
     {
         CdrDb::LogEvent($q);
         $data       = [];
@@ -157,7 +158,7 @@ class CdrDb
      *
      * @param $data
      */
-    static function LogEvent($data)
+    public static function LogEvent($data)
     {
         if (is_file('/tmp/debug')) {
             file_put_contents('/tmp/dial_log', $data . "\n", FILE_APPEND);
@@ -171,7 +172,7 @@ class CdrDb
      *
      * @return SQLite3
      */
-    static function getDB($id = '')
+    public static function getDB($id = '')
     {
         global $g;
         if (isset($g['db_sql_obj'])) {
@@ -187,7 +188,28 @@ class CdrDb
         return $db;
     }
 
-    static function checkColumnInTable($id, $name): void
+    /**
+     * Возвращает путь к базе данных истории звонков.
+     *
+     * @param string $id
+     *
+     * @return string
+     */
+    public static function getPathToDB($id = ''): string
+    {
+        $di = Di::getDefault();
+
+        if ($id == '' && $di !== null) {
+            $dbname = $di->getShared('config')->path('cdrDatabase.dbfile');
+        } else {
+            $id     = str_replace('mikopbx-', '', $id);
+            $dbname = 'cdr/' . date("Y/m/d/H/", $id) . $id . ".db";
+        }
+
+        return $dbname;
+    }
+
+public static function checkColumnInTable($id, $name): void
     {
         $f_list    = self::getDbFilds();
         $meta_data = self::runQuery("PRAGMA table_info('$name')", true, $id);
@@ -208,7 +230,7 @@ class CdrDb
      * @param $id
      * @param $table
      */
-    static function createIndex($column_name, $id, $table)
+    public static function createIndex($column_name, $id, $table)
     {
         $q = "CREATE INDEX IF NOT EXISTS i_{$table}_{$column_name} ON {$table} ({$column_name})";
         CdrDb::runQuery($q, false, $id);
@@ -220,7 +242,7 @@ class CdrDb
      * @param $id
      * @param $table
      */
-    static function addTriggers($id, $table)
+    public static function addTriggers($id, $table)
     {
         $trigger_name = 'after_work_completed';
         $f_list       = CdrDb::getDbFilds();
@@ -249,7 +271,7 @@ class CdrDb
     /**
      * Установка прав доступа к файлам базы данных.
      */
-    static function setPermitToDb()
+    public static function setPermitToDb()
     {
         $path = CdrDb::getPathToDB();
         $user = 'www';
@@ -257,7 +279,7 @@ class CdrDb
         Util::chown("{$path}-shm", $user);
         Util::chown("{$path}-wal", $user);
 
-        $log_path = CdrDb::getPathtoLog();
+        $log_path = self::getParetoLog();
         file_put_contents($log_path, '');
         Util::chown($log_path, $user);
     }
@@ -267,36 +289,20 @@ class CdrDb
      *
      * @return string
      */
-    static function getPathtoLog()
+    public static function getParetoLog(): string
     {
-        return Di::getDefault()->getShared('config')->path('cdrDatabase.debugLogFile');
-    }
-
-    /**
-     * Возвращает путь к базе данных истории звонков.
-     *
-     * @param string $id
-     *
-     * @return string
-     */
-    static function getPathToDB($id = '')
-    {
-        global $g;
-
-        if ($id == '') {
-            $dbname =  Di::getDefault()->getShared('config')->path('cdrDatabase.dbfile');
-        } else {
-            $id     = str_replace('mikopbx-', '', $id);
-            $dbname = 'cdr/' . date("Y/m/d/H/", $id) . $id . ".db";
+        $di = Di::getDefault();
+        if ($di !== null) {
+            return $di->getShared('config')->path('cdrDatabase.debugLogFile');
         }
 
-        return $dbname;
+        return '/var/log';
     }
 
     /**
      * Проверка базы данных на наличие "Битых" строк
      */
-    static function checkDb()
+    public static function checkDb(): void
     {
         self::setPermitToDb();
         self::checkColumnInTable('', 'cdr');
@@ -334,7 +340,7 @@ class CdrDb
      *
      * @return bool
      */
-    static function updateDataInDbM($data)
+    public static function updateDataInDbM($data): bool
     {
         if (empty($data['UNIQUEID'])) {
             Util::sysLogMsg('updateDataInDbM', 'UNIQUEID is empty ' . json_encode($data));
@@ -370,7 +376,6 @@ class CdrDb
          */
         $insert_data = $m_data->toArray();
         if ($insert_data['work_completed'] == 1) {
-
             $insert_data['action']        = "hangup_update_cdr";
             $insert_data['GLOBAL_STATUS'] = isset($data['GLOBAL_STATUS']) ? $data['GLOBAL_STATUS'] : $data['disposition'];
             unset($insert_data['src_chan']);
@@ -399,7 +404,7 @@ class CdrDb
      *
      * @return bool
      */
-    static function insertDataToDbM($data)
+    public static function insertDataToDbM($data): bool
     {
         if (empty($data['UNIQUEID'])) {
             Util::sysLogMsg('insertDataToDbM', 'UNIQUEID is empty ' . json_encode($data));
@@ -449,7 +454,6 @@ class CdrDb
 
                 return $res;
             }
-
         }
 
         $f_list = CdrDb::getDbFilds();
@@ -482,9 +486,9 @@ class CdrDb
      */
     public static function MixMonitor($channel, $file_name = null, $sub_dir = null, $full_name = null): string
     {
-        $res_file = '';
-        $mikoPBXConfig = new MikoPBXConfig();
-        $record_calls = $mikoPBXConfig->getGeneralSettings('PBXRecordCalls');
+        $res_file           = '';
+        $mikoPBXConfig      = new MikoPBXConfig();
+        $record_calls       = $mikoPBXConfig->getGeneralSettings('PBXRecordCalls');
         $split_audio_thread = $mikoPBXConfig->getGeneralSettings('PBXSplitAudioThread');
 
         $file_name = str_replace('/', '_', $file_name);
@@ -505,8 +509,12 @@ class CdrDb
             } else {
                 $options = 'ab';
             }
-            $res        = $am->MixMonitor($channel, "{$f}.wav", $options,
-                "/bin/nice -n 19 /usr/bin/lame -b 32 --silent \"{$f}.wav\" \"{$f}.mp3\" && /bin/chmod o+r \"{$f}.mp3\"");
+            $res        = $am->MixMonitor(
+                $channel,
+                "{$f}.wav",
+                $options,
+                "/bin/nice -n 19 /usr/bin/lame -b 32 --silent \"{$f}.wav\" \"{$f}.mp3\" && /bin/chmod o+r \"{$f}.mp3\""
+            );
             $res['cmd'] = "MixMonitor($channel, $file_name)";
             self::LogEvent(json_encode($res));
             $res_file = "{$f}.mp3";
@@ -523,7 +531,7 @@ class CdrDb
      *
      * @return string
      */
-    static function MeetMeSetRecFilename($file_name)
+    public static function MeetMeSetRecFilename($file_name): string
     {
         $monitor_dir = Storage::getMonitorDir();
         $sub_dir     = date("Y/m/d/H/");
@@ -536,10 +544,10 @@ class CdrDb
      *
      * @param $channel
      */
-    static function StopMixMonitor($channel)
+    public static function StopMixMonitor($channel): void
     {
         $mikoPBXConfig = new MikoPBXConfig();
-        $record_calls = $mikoPBXConfig->getGeneralSettings('PBXRecordCalls');
+        $record_calls  = $mikoPBXConfig->getGeneralSettings('PBXRecordCalls');
 
         if (isset($record_calls) && $record_calls === '1') {
             $am         = Util::getAstManager('off');
@@ -554,7 +562,7 @@ class CdrDb
      *
      * @return string
      */
-    static function getActiveCalls(): string
+    public static function getActiveCalls(): string
     {
         $filter  = [
             'order'       => 'id',
@@ -577,7 +585,7 @@ class CdrDb
      *
      * @return string
      */
-    static function getActiveChannels(): string
+    public static function getActiveChannels(): string
     {
         $filter  = [
             'endtime IS NULL',
@@ -617,7 +625,6 @@ class CdrDb
                     }
                 }
                 $result_message = json_encode($result_data, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
-
             }
             $content = $result_message;
         }

@@ -5,6 +5,7 @@
  * Proprietary and confidential
  * Written by Alexey Portnov, 2 2020
  */
+
 namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\ExternalPhones;
@@ -75,7 +76,6 @@ class ExternalPhonesConf extends ConfigClass
      */
     protected function generateConfigProtected($general_settings)
     {
-
     }
 
 }

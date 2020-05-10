@@ -6,6 +6,7 @@
  * Written by Nikolay Beketov, 6 2018
  *
  */
+
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings};
@@ -15,15 +16,15 @@ use Sentry\SentrySdk;
 
 
 /**
- * @property array sessionRO
- * @property \Phalcon\Session\Manager session
- * @property \Phalcon\Translate\TranslateFactory  translation
- * @property string language
+ * @property array                                  sessionRO
+ * @property \Phalcon\Session\Manager               session
+ * @property \Phalcon\Translate\TranslateFactory    translation
+ * @property string                                 language
  * @property \MikoPBX\AdminCabinet\Library\Elements elements
- * @property string moduleName
- * @property \Phalcon\Flash\Session flash
- * @property \Phalcon\Tag tag
- * @property \Phalcon\Config\Adapter\Json config
+ * @property string                                 moduleName
+ * @property \Phalcon\Flash\Session                 flash
+ * @property \Phalcon\Tag                           tag
+ * @property \Phalcon\Config\Adapter\Json           config
  */
 class BaseController extends Controller
 {
@@ -37,7 +38,7 @@ class BaseController extends Controller
     /**
      * Инициализация базововго класса
      */
-    public function initialize() :void
+    public function initialize(): void
     {
         $this->di                        = $this->getDi();
         $this->actionName                = $this->dispatcher->getActionName();
@@ -107,15 +108,23 @@ class BaseController extends Controller
             case'save':
             case'modify':
             case'*** WITHOUT ACTION ***':
-                $this->tag->setTitle($this->config->adminApplication->kind . ' | '
-                    . $this->translation->_('Breadcrumb'
-                        . $this->controllerName));
+                $this->tag->setTitle(
+                    $this->config->adminApplication->kind . ' | '
+                    . $this->translation->_(
+                        'Breadcrumb'
+                        . $this->controllerName
+                    )
+                );
                 break;
             default:
-                $this->tag->setTitle($this->config->adminApplication->kind . ' | '
-                    . $this->translation->_('Breadcrumb'
+                $this->tag->setTitle(
+                    $this->config->adminApplication->kind . ' | '
+                    . $this->translation->_(
+                        'Breadcrumb'
                         . $this->controllerName
-                        . $this->actionName));
+                        . $this->actionName
+                    )
+                );
         }
 
         $this->view->t         = $this->translation;
@@ -147,8 +156,8 @@ class BaseController extends Controller
         // Для модулей кинем в кеш все статические картинки
         if ($this->moduleName === 'PBXExtension') {
             $modulesDir          = $this->getDI()->config->path('core.modulesDir');
-            $moduleImageDir      = $modulesDir .'/'. $this->controllerName . '/public/assets/img';
-            $moduleImageCacheDir = $this->config->adminApplication->imgCacheDir .'/'. $this->controllerName;
+            $moduleImageDir      = $modulesDir . '/' . $this->controllerName . '/public/assets/img';
+            $moduleImageCacheDir = $this->config->adminApplication->imgCacheDir . '/' . $this->controllerName;
             if (file_exists($moduleImageDir)
                 && ! file_exists($moduleImageCacheDir)) {
                 symlink($moduleImageDir, $moduleImageCacheDir);
@@ -201,13 +210,15 @@ class BaseController extends Controller
     public function afterExecuteRoute(Dispatcher $dispatcher)
     {
         if ($this->request->isAjax() === true) {
-            $this->view->disableLevel([
-                View::LEVEL_ACTION_VIEW     => true,
-                View::LEVEL_LAYOUT          => true,
-                View::LEVEL_MAIN_LAYOUT     => true,
-                View::LEVEL_AFTER_TEMPLATE  => true,
-                View::LEVEL_BEFORE_TEMPLATE => true,
-            ]);
+            $this->view->disableLevel(
+                [
+                    View::LEVEL_ACTION_VIEW     => true,
+                    View::LEVEL_LAYOUT          => true,
+                    View::LEVEL_MAIN_LAYOUT     => true,
+                    View::LEVEL_AFTER_TEMPLATE  => true,
+                    View::LEVEL_BEFORE_TEMPLATE => true,
+                ]
+            );
             $this->response->setContentType('application/json', 'UTF-8');
             $data = $this->view->getParamsToView();
 
@@ -274,7 +285,6 @@ class BaseController extends Controller
      */
     protected function transliterate($string): string
     {
-
         $converter = [
             'а' => 'a',
             'б' => 'b',
@@ -346,6 +356,5 @@ class BaseController extends Controller
         ];
 
         return strtr($string, $converter);
-
     }
 }

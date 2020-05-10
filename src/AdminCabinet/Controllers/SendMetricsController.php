@@ -6,6 +6,7 @@
  * Written by Nikolay Beketov, 8 2019
  *
  */
+
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\Common\Models\Extensions;
@@ -21,7 +22,6 @@ class SendMetricsController extends BaseController
         $licenseKey  = $this->getSessionData('PBXLicense');
         $dataMetrics = $this->prepareDate();
         $this->licenseWorker->sendLicenseMetrics($licenseKey, $dataMetrics);
-
     }
 
     /**

@@ -6,6 +6,7 @@
  * Written by Nikolay Beketov, 5 2018
  *
  */
+
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\DefaultIncomingRouteForm;
@@ -124,11 +125,12 @@ class IncomingRoutesController extends BaseController
         foreach ($extensions as $record) {
             $forwardingExtensions[$record->number] = $record ? $record->getRepresent() : '';
         }
-        $form                  = new IncomingRouteEditForm($rule,
-            ['extensions' => $forwardingExtensions, 'providers' => $providersList]);
+        $form                  = new IncomingRouteEditForm(
+            $rule,
+            ['extensions' => $forwardingExtensions, 'providers' => $providersList]
+        );
         $this->view->form      = $form;
         $this->view->represent = $rule->getRepresent();
-
     }
 
 
@@ -174,7 +176,6 @@ class IncomingRoutesController extends BaseController
                     if (array_key_exists($name, $data)) {
                         $rule->$name = $data[$name];
                     }
-
             }
         }
 
@@ -195,7 +196,6 @@ class IncomingRoutesController extends BaseController
         if (empty($data['id'])) {
             $this->view->reload = "incoming-routes/modify/{$rule->id}";
         }
-
     }
 
     /**
@@ -215,7 +215,6 @@ class IncomingRoutesController extends BaseController
         }
 
         return $this->forward('incoming-routes/index');
-
     }
 
     /**

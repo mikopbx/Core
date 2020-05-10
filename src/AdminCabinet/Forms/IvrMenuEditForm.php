@@ -6,6 +6,7 @@
  * Written by Nikolay Beketov, 5 2018
  *
  */
+
 namespace MikoPBX\AdminCabinet\Forms;
 
 use Phalcon\Forms\Element\Check;
@@ -33,39 +34,51 @@ class IvrMenuEditForm extends Form
         $this->add(new Text('extension'));
 
         // Number of repeat
-        $this->add(new Numeric('number_of_repeat', [
-            "maxlength"    => 2,
-            "style"        => "width: 80px;",
-            "defaultValue" => 3,
-        ]));
+        $this->add(
+            new Numeric(
+                'number_of_repeat', [
+                "maxlength"    => 2,
+                "style"        => "width: 80px;",
+                "defaultValue" => 3,
+            ]
+            )
+        );
 
         // Timeout
-        $this->add(new Numeric('timeout', [
-            "maxlength"    => 2,
-            "style"        => "width: 80px;",
-            "defaultValue" => 7,
-        ]));
+        $this->add(
+            new Numeric(
+                'timeout', [
+                "maxlength"    => 2,
+                "style"        => "width: 80px;",
+                "defaultValue" => 7,
+            ]
+            )
+        );
 
         // Timeoutextension
-        $extension = new Select('timeout_extension', $options['extensions'], [
+        $extension = new Select(
+            'timeout_extension', $options['extensions'], [
             'using'    => [
                 'id',
                 'name',
             ],
             'useEmpty' => false,
             'class'    => 'ui selection dropdown search forwarding-select',
-        ]);
+        ]
+        );
         $this->add($extension);
 
         // Audio_message_id
-        $audioMessage = new Select('audio_message_id', $options['soundfiles'], [
+        $audioMessage = new Select(
+            'audio_message_id', $options['soundfiles'], [
             'using'    => [
                 'id',
                 'name',
             ],
             'useEmpty' => false,
             'class'    => 'ui selection dropdown search audio-message-select',
-        ]);
+        ]
+        );
         $this->add($audioMessage);
 
         //Allow_enter_any_internal_extension

@@ -5,13 +5,14 @@
  * Proprietary and confidential
  * Written by Alexey Portnov, 2 2020
  */
+
 namespace MikoPBX\Core\Workers;
 
 require_once('globals.php');
 
-use Phalcon\Exception;
-use MikoPBX\Core\System\{BeanstalkClient, Util};
 use MikoPBX\Common\Models\{CallDetailRecordsTmp, Users};
+use MikoPBX\Core\System\{BeanstalkClient, Util};
+use Phalcon\Exception;
 
 /**
  * Class WorkerCdr
@@ -20,8 +21,9 @@ use MikoPBX\Common\Models\{CallDetailRecordsTmp, Users};
 class WorkerCdr extends WorkerBase
 {
 
-    public const SELECT_CDR_TUBE='select_cdr_tube';
-    public const UPDATE_CDR_TUBE='update_cdr_tube';
+    public const SELECT_CDR_TUBE = 'select_cdr_tube';
+
+    public const UPDATE_CDR_TUBE = 'update_cdr_tube';
 
 
     /** @var array */
@@ -35,7 +37,7 @@ class WorkerCdr extends WorkerBase
     /**
      * Entry point
      */
-    public function start($argv):void
+    public function start($argv): void
     {
         $this->filter = [
             '(work_completed<>1 OR work_completed IS NULL) AND endtime IS NOT NULL',
@@ -46,7 +48,7 @@ class WorkerCdr extends WorkerBase
 
 
         $this->client_queue = new BeanstalkClient(self::SELECT_CDR_TUBE);
-        $this->client_queue->subscribe('ping_'.self::class, [$this, 'pingCallBack']);
+        $this->client_queue->subscribe('ping_' . self::class, [$this, 'pingCallBack']);
 
         $this->initSettings();
 
@@ -57,7 +59,7 @@ class WorkerCdr extends WorkerBase
             } catch (Exception $e) {
                 $result = ($result === true) ? $result : false;
                 $error  = $e->getMessage();
-                Util::sysLogMsg(self::class.'_ERROR', $error);
+                Util::sysLogMsg(self::class . '_ERROR', $error);
             }
 
             if ($result !== false) {
@@ -71,7 +73,7 @@ class WorkerCdr extends WorkerBase
     {
         $this->internal_numbers  = [];
         $this->no_answered_calls = [];
-        $users = Users::find();
+        $users                   = Users::find();
         foreach ($users as $user) {
             if (empty($user->email)) {
                 continue;
@@ -86,7 +88,6 @@ class WorkerCdr extends WorkerBase
             } catch (Exception $e) {
                 Util::sysLogMsg('WorkerCdr', $e->getMessage());
             }
-
         }
     }
 
@@ -94,7 +95,7 @@ class WorkerCdr extends WorkerBase
      * Обработчик результата запроса.
      *
      */
-    private function updateCdr():void
+    private function updateCdr(): void
     {
         $this->initSettings();
         $result_data = $this->client_queue->getBody();
@@ -167,10 +168,14 @@ class WorkerCdr extends WorkerBase
                 if (file_exists($row['recordingfile'])) {
                     @unlink($row['recordingfile']);
                 }
-            } elseif ( ! file_exists(Util::trimExtensionForFile($row['recordingfile']) . 'wav') && ! file_exists($row['recordingfile'])) {
+            } elseif ( ! file_exists(Util::trimExtensionForFile($row['recordingfile']) . 'wav') && ! file_exists(
+                    $row['recordingfile']
+                )) {
                 /** @var CallDetailRecordsTmp $rec_data */
-                $rec_data = CallDetailRecordsTmp::findFirst("linkedid='{$row['linkedid']}' AND dst_chan='{$row['dst_chan']}'");
-                if ($rec_data!==null) {
+                $rec_data = CallDetailRecordsTmp::findFirst(
+                    "linkedid='{$row['linkedid']}' AND dst_chan='{$row['dst_chan']}'"
+                );
+                if ($rec_data !== null) {
                     $row['recordingfile'] = $rec_data->recordingfile;
                 }
             }
@@ -195,7 +200,6 @@ class WorkerCdr extends WorkerBase
             if (isset($this->no_answered_calls[$linkedid]) &&
                 isset($this->no_answered_calls[$linkedid]['NOANSWER']) &&
                 $this->no_answered_calls[$linkedid]['NOANSWER'] == false) {
-
                 $data['GLOBAL_STATUS'] = 'ANSWERED';
             }
             unset($data['tmp_linked_id']);
@@ -203,8 +207,6 @@ class WorkerCdr extends WorkerBase
         }
 
         $this->notifyByEmail();
-
-
     }
 
     /**
@@ -213,7 +215,7 @@ class WorkerCdr extends WorkerBase
      *
      * @return array
      */
-    private function getActiveIdChannels():array
+    private function getActiveIdChannels(): array
     {
         $am           = Util::getAstManager('off');
         $active_chans = $am->GetChannels(true);
@@ -260,7 +262,7 @@ class WorkerCdr extends WorkerBase
     /**
      * Постановка задачи в очередь на оповещение по email.
      */
-    private function notifyByEmail():void
+    private function notifyByEmail(): void
     {
         foreach ($this->no_answered_calls as $call) {
             $this->client_queue->publish(json_encode($call), null, WorkerNotifyByEmail::class);

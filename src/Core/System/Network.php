@@ -5,6 +5,7 @@
  * Proprietary and confidential
  * Written by Alexey Portnov, 4 2020
  */
+
 namespace MikoPBX\Core\System;
 
 use Exception;
@@ -25,7 +26,7 @@ class Network
     /**
      * Network constructor.
      */
-    function __construct()
+    public function __construct()
     {
         $this->di = Di::getDefault();
     }
@@ -46,8 +47,21 @@ class Network
         $arr_eth = $network->getInterfacesNames();
         foreach ($arr_eth as $eth) {
             $pid_file = "/var/run/pcapsipdump_{$eth}.pid";
-            Util::mwExecBg('pcapsipdump -T 120 -P ' . $pid_file . ' -i ' . $eth . ' -m \'^(INVITE|REGISTER)$\' -L ' . $log_dir . '/dump.db');
+            Util::mwExecBg(
+                'pcapsipdump -T 120 -P ' . $pid_file . ' -i ' . $eth . ' -m \'^(INVITE|REGISTER)$\' -L ' . $log_dir . '/dump.db'
+            );
         }
+    }
+
+    /**
+     * Имена всех подключенных сетевых интерфейсов.
+     */
+    public function getInterfacesNames()
+    {
+        // Универсальная команда для получения всех PCI сетевых интерфейсов.
+        Util::mwExec("ls -l /sys/class/net | grep pci | awk '{ print $9 }'", $names);
+
+        return $names;
     }
 
     /**
@@ -108,7 +122,7 @@ class Network
      *
      * @return array
      */
-    static function getHostName():array
+    public static function getHostName(): array
     {
         $data = [
             'hostname' => 'mikopbx',
@@ -130,7 +144,7 @@ class Network
      *
      * @return array
      */
-    public function getHostDNS()
+    public function getHostDNS(): array
     {
         $dns = [];
         /** @var \MikoPBX\Common\Models\LanInterfaces $res */
@@ -154,7 +168,7 @@ class Network
      */
     private function generatePdnsdConfig($named_dns): void
     {
-        $tempPath = $this->di->getShared('config')->get('core.tempPath');
+        $tempPath  = $this->di->getShared('config')->get('core.tempPath');
         $cache_dir = $tempPath . '/pdnsd/cache';
         if ( ! file_exists($cache_dir) && ! mkdir($cache_dir, 0777, true) && ! is_dir($cache_dir)) {
             $cache_dir = '/var/spool';
@@ -202,7 +216,7 @@ class Network
      *
      * @return int
      */
-    public function lanConfigure():int
+    public function lanConfigure(): int
     {
         if (Util::isSystemctl()) {
             $this->lanConfigureSystemCtl();
@@ -254,8 +268,8 @@ class Network
                     system("kill `cat {$pid_file}` {$pid_pcc}");
                 }
                 // Получаем IP и дожидаемся завершения процесса.
-                $workerPath = '/etc/rc/udhcpc.configure';
-                $options = '-t 6 -T 5 -q -n';
+                $workerPath     = '/etc/rc/udhcpc.configure';
+                $options        = '-t 6 -T 5 -q -n';
                 $arr_commands[] = "/sbin/udhcpc {$options} -i {$if_name} -x hostname:{$hostname} -s {$workerPath}";
                 // Старутем новый процесс udhcpc в  фоне.
                 $options        = '-t 6 -T 5 -S -b -n';
@@ -269,7 +283,6 @@ class Network
                     // http://pwet.fr/man/linux/administration_systeme/udhcpc/
 
                 */
-
             } else {
                 $ipaddr  = trim($if_data['ipaddr']);
                 $subnet  = trim($if_data['subnet']);
@@ -323,8 +336,10 @@ class Network
         Util::fileWriteContent('/etc/static-routes', '');
         $arr_commands = [];
         $out          = [];
-        Util::mwExec("/bin/cat /etc/static-routes | /bin/grep '^rout' | /bin/busybox awk -F ';' '{print $1}'",
-            $arr_commands);
+        Util::mwExec(
+            "/bin/cat /etc/static-routes | /bin/grep '^rout' | /bin/busybox awk -F ';' '{print $1}'",
+            $arr_commands
+        );
         Util::mwExecCommands($arr_commands, $out, 'rout');
 
         return 0;
@@ -381,13 +396,11 @@ class Network
                     "vlan_raw_device {$if_data['interface_orign']}\n" .
                     "{$routs_add}\n" .
                     "{$routs_rem}\n";
-
             } elseif ($if_data['dhcp'] == 1) {
                 $lan_config = "auto {$if_name}\n" .
                     "iface {$if_name} inet dhcp\n" .
                     "{$routs_add}\n" .
                     "{$routs_rem}\n";
-
             } else {
                 if (empty($ipaddr)) {
                     continue;
@@ -422,7 +435,7 @@ class Network
      *
      * @return array
      */
-    public function getGeneralNetSettings()
+    public function getGeneralNetSettings(): array
     {
         // Массив сетевых интерфейсов, которые видит ОС.
         $src_array_eth = $this->getInterfacesNames();
@@ -473,7 +486,7 @@ class Network
         if (null === $res) {
             /** @var \MikoPBX\Common\Models\LanInterfaces $eth_settings */
             $eth_settings = LanInterfaces::findFirst("disabled='0'");
-            if ($eth_settings!==null) {
+            if ($eth_settings !== null) {
                 $eth_settings->internet = 1;
                 $eth_settings->save();
             }
@@ -483,24 +496,13 @@ class Network
     }
 
     /**
-     * Имена всех подключенных сетевых интерфейсов.
-     */
-    public function getInterfacesNames()
-    {
-        // Универсальная команда для получения всех PCI сетевых интерфейсов.
-        Util::mwExec("ls -l /sys/class/net | grep pci | awk '{ print $9 }'", $names);
-
-        return $names;
-    }
-
-    /**
      * Преобразует сетевую маску в CIDR представление.
      *
      * @param $net_mask
      *
      * @return int
      */
-    public function netMaskToCidr($net_mask)
+    public function netMaskToCidr($net_mask): int
     {
         $bits     = 0;
         $net_mask = explode(".", $net_mask);
@@ -517,18 +519,18 @@ class Network
      *
      * @param $name
      */
-    public function enableLanInterface($name)
+    public function enableLanInterface($name): void
     {
-        $parameters       = [
+        $parameters = [
             'conditions' => 'interface = :ifName: and disabled = :disabled:',
             'bind'       => [
-                'ifName' => $name,
-                'disabled'=> 1
+                'ifName'   => $name,
+                'disabled' => 1,
             ],
         ];
 
         $if_data = LanInterfaces::findFirst($parameters);
-        if ($if_data!==null) {
+        if ($if_data !== null) {
             $if_data->disabled = 0;
             $if_data->update();
         }
@@ -539,7 +541,7 @@ class Network
      *
      * @param $name
      */
-    public function disableLanInterface($name)
+    public function disableLanInterface($name): void
     {
         $if_data = LanInterfaces::findFirst("interface = '{$name}'");
         if ($if_data) {
@@ -618,7 +620,7 @@ class Network
             'domain'    => '',
         ];
 
-        $debugMode = Di::getDefault()->getShared('config')->path('core.debugMode');
+        $debugMode = $this->di->getShared('config')->path('core.debugMode');
 
         // Получаем значения переменных окружения.
         foreach ($env_vars as $key => $value) {
@@ -654,7 +656,9 @@ class Network
             }
         }
         // Добавляем пользовательские маршруты.
-        Util::mwExec("/bin/cat /etc/static-routes | /bin/grep '^rout' | /bin/busybox awk -F ';' '{print $1}' | grep '{$env_vars['interface']}' | sh");
+        Util::mwExec(
+            "/bin/cat /etc/static-routes | /bin/grep '^rout' | /bin/busybox awk -F ';' '{print $1}' | grep '{$env_vars['interface']}' | sh"
+        );
 
         $named_dns = [];
         if ('' !== $env_vars['dns']) {
@@ -760,7 +764,7 @@ class Network
      * @param $data
      * @param $name
      */
-    public function updateIfSettings($data, $name)
+    public function updateIfSettings($data, $name): void
     {
         /** @var \MikoPBX\Common\Models\LanInterfaces $res */
         $res = LanInterfaces::findFirst("interface = '$name' AND vlanid=0");
@@ -776,7 +780,7 @@ class Network
      * @param $data
      * @param $name
      */
-    public function updateDnsSettings($data, $name)
+    public function updateDnsSettings($data, $name): void
     {
         /** @var \MikoPBX\Common\Models\LanInterfaces $res */
         $res = LanInterfaces::findFirst("interface = '$name' AND vlanid=0");
@@ -798,7 +802,7 @@ class Network
      *
      * @return string
      */
-    public function getInterfaceNameById($id_net)
+    public function getInterfaceNameById($id_net): string
     {
         /** @var \MikoPBX\Common\Models\LanInterfaces $res */
         $res            = LanInterfaces::findFirst("id = '$id_net'");
@@ -814,10 +818,10 @@ class Network
      *
      * @return string
      */
-    public function getEnabledLanInterfaces():array
+    public function getEnabledLanInterfaces(): array
     {
         /** @var \MikoPBX\Common\Models\LanInterfaces $res */
-        $res      = LanInterfaces::find('disabled=0');
+        $res = LanInterfaces::find('disabled=0');
 
         return $res->toArray();
     }
@@ -825,7 +829,7 @@ class Network
     /**
      * Configures LAN interface FROM udhcpc (deconfig)
      */
-    public function udhcpcConfigureDeconfig():void
+    public function udhcpcConfigureDeconfig(): void
     {
         // Настройка по умолчанию.
         $interface = trim(getenv('interface'));
@@ -846,7 +850,7 @@ class Network
      *
      * @param $data
      */
-    public function updateNetSettings($data)
+    public function updateNetSettings($data): void
     {
         $res         = LanInterfaces::findFirst("internet = '1'");
         $update_inet = false;
@@ -871,7 +875,7 @@ class Network
      *
      * @return array
      */
-    public function getInterfaces()
+    public function getInterfaces(): array
     {
         // Получим все имена PCI интерфейсов (сеть).
         $i_names = $this->getInterfacesNames();
@@ -890,7 +894,7 @@ class Network
      *
      * @return array
      */
-    public function getInterface($name)
+    public function getInterface($name): array
     {
         $interface = [];
 

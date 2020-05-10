@@ -5,20 +5,20 @@
  * Proprietary and confidential
  * Written by Alexey Portnov, 2 2020
  */
+
 namespace MikoPBX\Core\Workers;
 
-use Phalcon\Exception;
 use MikoPBX\Core\System\{System, Util};
 use Nats\Message;
+use Phalcon\Exception;
 
 require_once 'globals.php';
 
 
 class WorkerMergeUploadedFile extends WorkerBase
 {
-    public function start($argv):void
+    public function start($argv): void
     {
-
         if (count($argv) <= 1) {
             // Не переданы аргументы.
             exit(2);
@@ -39,22 +39,25 @@ class WorkerMergeUploadedFile extends WorkerBase
             $res_file = "{$settings['backupdir']}/{$settings['dir_name']}/resultfile.{$settings['extension']}";
 
             if ( ! file_exists($res_file) && file_exists($settings['temp_dir'])) {
-                Util::mergeFilesInDirectory($settings['temp_dir'], $settings['resumableFilename'],
-                    $settings['resumableTotalChunks'], $res_file);
+                Util::mergeFilesInDirectory(
+                    $settings['temp_dir'],
+                    $settings['resumableFilename'],
+                    $settings['resumableTotalChunks'],
+                    $res_file
+                );
             }
             $request = [
                 'data'   => [
-                    'res_file'  => $res_file,
+                    'res_file' => $res_file,
                     'mnt_point' => $settings['mnt_point'],
                     'backupdir' => $settings['backupdir'],
-                    'dir_name'  => $settings['dir_name'],
+                    'dir_name' => $settings['dir_name'],
                     'extension' => $settings['extension'],
                 ],
                 'action' => 'upload' // Операция.
             ];
 
             try {
-
                 $client = $this->di->get('natsConnection');
                 $client->connect(10);
                 $cb = function (Message $message) use ($settings) {
@@ -68,15 +71,18 @@ class WorkerMergeUploadedFile extends WorkerBase
                 };
                 $client->request('backup', json_encode($request), $cb);
             } catch (Exception $e) {
-
             }
         } elseif ($file_data['action'] === 'convertConfig') {
             $settings = $file_data['data'];
             $res_file = "{$settings['backupdir']}/{$settings['dir_name']}/resultfile.{$settings['extension']}";
 
             if ( ! file_exists($res_file) && file_exists($settings['temp_dir'])) {
-                Util::mergeFilesInDirectory($settings['temp_dir'], $settings['resumableFilename'],
-                    $settings['resumableTotalChunks'], $res_file);
+                Util::mergeFilesInDirectory(
+                    $settings['temp_dir'],
+                    $settings['resumableFilename'],
+                    $settings['resumableTotalChunks'],
+                    $res_file
+                );
             }
 
             $res = file_exists($res_file);
@@ -94,14 +100,24 @@ class WorkerMergeUploadedFile extends WorkerBase
         } elseif ($file_data['action'] === 'merge') {
             $settings = $file_data['data'];
             if ( ! file_exists($settings['result_file'])) {
-                Util::mergeFilesInDirectory($settings['temp_dir'], $settings['resumableFilename'],
-                    $settings['resumableTotalChunks'], $settings['result_file'], dirname($settings['result_file']));
+                Util::mergeFilesInDirectory(
+                    $settings['temp_dir'],
+                    $settings['resumableFilename'],
+                    $settings['resumableTotalChunks'],
+                    $settings['result_file'],
+                    dirname($settings['result_file'])
+                );
             }
             $res = file_exists($settings['result_file']);
             // Отложенное удаление файла.
-            $rm_file = basename(dirname($settings['result_file'])) === 'tmp' ? $settings['result_file'] : dirname($settings['result_file']);
-            Util::mwExecBg('/etc/rc/shell_functions.sh killprocesses ' . $rm_file . ' -TERM 0;rm -rf ' . $rm_file, '/dev/null',
-                30);
+            $rm_file = basename(dirname($settings['result_file'])) === 'tmp' ? $settings['result_file'] : dirname(
+                $settings['result_file']
+            );
+            Util::mwExecBg(
+                '/etc/rc/shell_functions.sh killprocesses ' . $rm_file . ' -TERM 0;rm -rf ' . $rm_file,
+                '/dev/null',
+                30
+            );
         }
     }
 

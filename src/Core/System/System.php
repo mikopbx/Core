@@ -5,11 +5,12 @@
  * Proprietary and confidential
  * Written by Alexey Portnov, 4 2020
  */
+
 namespace MikoPBX\Core\System;
 
 use Exception;
-use MikoPBX\Core\Asterisk\Configs\{IAXConf, QueueConf, SIPConf};
 use MikoPBX\Common\Models\CustomFiles;
+use MikoPBX\Core\Asterisk\Configs\{IAXConf, QueueConf, SIPConf};
 use MikoPBX\Core\Workers\Cron\WorkerSafeScripts;
 use MikoPBX\Core\Workers\WorkerDownloader;
 use Phalcon\Di;
@@ -30,10 +31,10 @@ class System
         $this->di = Di::getDefault();
 
         // Класс / обертка для работы с настройками.
-        $this->mikoPBXConfig    = new MikoPBXConfig();
+        $this->mikoPBXConfig = new MikoPBXConfig();
     }
 
-    static function setupPhpLog()
+    public static function setupPhpLog()
     {
         $src_log_file = '/var/log/php_error.log';
         $dst_log_file = self::getPhpFile();
@@ -45,7 +46,7 @@ class System
         Util::createUpdateSymlink($dst_log_file, $src_log_file);
     }
 
-    static function getPhpFile()
+    public static function getPhpFile()
     {
         $logdir = self::getLogDir() . '/php';
         if ( ! file_exists($logdir) && ! mkdir($logdir, 0777, true) && ! is_dir($logdir)) {
@@ -55,7 +56,14 @@ class System
         return "$logdir/error";
     }
 
-    static function rotatePhpLog()
+    public static function getLogDir()
+    {
+        $di = Di::getDefault();
+
+        return $di->getShared('config')->path('core.logsPath');
+    }
+
+    public static function rotatePhpLog()
     {
         $max_size    = 2;
         $f_name      = self::getPhpFile();
@@ -73,7 +81,7 @@ class System
         /usr/sbin/asterisk -rx "logger reload" > /dev/null 2> /dev/null
     endscript
 }';
-        $varEtcPath = Di::getDefault()->getConfig()->path('core.varEtcPath');
+        $varEtcPath  = Di::getDefault()->getConfig()->path('core.varEtcPath');
         $path_conf   = $varEtcPath . '/php_logrotate_' . basename($f_name) . '.conf';
         file_put_contents($path_conf, $text_config);
         $mb10 = $max_size * 1024 * 1024;
@@ -120,7 +128,7 @@ class System
             $options = '-f';
         }
         $varEtcPath = Di::getDefault()->getConfig()->path('core.varEtcPath');
-        $path_conf = $varEtcPath . '/gnatsd_logrotate.conf';
+        $path_conf  = $varEtcPath . '/gnatsd_logrotate.conf';
         file_put_contents($path_conf, $text_config);
         if (file_exists("{$log_dir}/gnatsd.log")) {
             Util::mwExecBg("/usr/sbin/logrotate $options '{$path_conf}' > /dev/null 2> /dev/null");
@@ -191,7 +199,7 @@ class System
      *
      * @param bool $check_storage
      */
-    static function rebootSync():void
+    public static function rebootSync(): void
     {
         Util::mwExec("/etc/rc/reboot > /dev/null 2>&1");
     }
@@ -199,7 +207,7 @@ class System
     /**
      * Shutdown the system.
      */
-    static function shutdown():void
+    public static function shutdown(): void
     {
         Util::mwExec("/etc/rc/shutdown > /dev/null 2>&1");
     }
@@ -207,7 +215,7 @@ class System
     /**
      * Рестарт сетевых интерфейсов.
      */
-    static function networkReload()
+    public static function networkReload()
     {
         $system = new System();
         $system->hostnameConfigure();
@@ -241,7 +249,7 @@ class System
      *
      * @return array
      */
-    static function setDate($date)
+    public static function setDate($date)
     {
         $result = [
             'result' => 'ERROR',
@@ -321,10 +329,10 @@ server 2.pool.ntp.org';
     /**
      * Установка таймзоны для php.
      */
-    static function phpTimeZoneConfigure()
+    public static function phpTimeZoneConfigure()
     {
-        $mikoPBXConfig   = new MikoPBXConfig();
-        $timezone = $mikoPBXConfig->getTimeZone();
+        $mikoPBXConfig = new MikoPBXConfig();
+        $timezone      = $mikoPBXConfig->getTimeZone();
         date_default_timezone_set($timezone);
         if (file_exists('/etc/TZ')) {
             Util::mwExec('export TZ="$(cat /etc/TZ)"');
@@ -336,7 +344,7 @@ server 2.pool.ntp.org';
      *
      * @return array
      */
-    static function getInfo()
+    public static function getInfo()
     {
         $result = [
             'result' => 'Success',
@@ -357,7 +365,7 @@ server 2.pool.ntp.org';
     /**
      * Возвращает информацию по загрузке CPU.
      */
-    static function getCpu()
+    public static function getCpu()
     {
         $ut = [];
         Util::mwExec("/bin/mpstat | /bin/grep all", $ut);
@@ -374,7 +382,7 @@ server 2.pool.ntp.org';
     /**
      * Получаем информацию по времени работы ПК.
      */
-    static function getUpTime()
+    public static function getUpTime()
     {
         $ut = [];
         Util::mwExec("/usr/bin/uptime | awk -F \" |,\" '{print $5}'", $ut);
@@ -385,7 +393,7 @@ server 2.pool.ntp.org';
     /**
      * Получаем информацию по оперативной памяти.
      */
-    static function getMemInfo()
+    public static function getMemInfo()
     {
         $result = [];
         $out    = [];
@@ -405,16 +413,15 @@ server 2.pool.ntp.org';
      *
      * @return array
      */
-    static function updateCustomFiles()
+    public static function updateCustomFiles()
     {
-
         $actions = [];
         /** @var \MikoPBX\Common\Models\CustomFiles $res_data */
         $res_data = CustomFiles::find("changed = '1'");
         foreach ($res_data as $file_data) {
             // Всегда рестрартуем все модули asterisk (только чтение конфигурации).
             $actions['asterisk_coreReload'] = 100;
-            $filename                        = basename($file_data->filepath);
+            $filename                       = basename($file_data->filepath);
             switch ($filename) {
                 case 'manager.conf':
                     $actions['manager'] = 10;
@@ -467,7 +474,7 @@ server 2.pool.ntp.org';
      *
      * @return array|mixed
      */
-    static function invokeActions($actions)
+    public static function invokeActions($actions)
     {
         $result = [
             'result' => 'Success',
@@ -524,9 +531,9 @@ server 2.pool.ntp.org';
      *
      * @return int
      */
-    public function cronConfigure():int
+    public function cronConfigure(): int
     {
-        $booting =  $this->di->getRegistry()->booting;
+        $booting = $this->di->getRegistry()->booting;
         $this->cronGenerate($booting);
         if (Util::isSystemctl()) {
             Util::mwExec('systemctl restart cron');
@@ -546,7 +553,7 @@ server 2.pool.ntp.org';
     private function cronGenerate($boot = true): void
     {
         $additionalModules = $this->di->getShared('pbxConfModules');
-        $mast_have = [];
+        $mast_have         = [];
 
         if (Util::isSystemctl()) {
             $mast_have[]   = "SHELL=/bin/sh\n";
@@ -593,13 +600,13 @@ server 2.pool.ntp.org';
         Util::fileWriteContent($cron_filename, $conf);
     }
 
-    static function convertConfig($config_file = '')
+    public static function convertConfig($config_file = '')
     {
-        $result = [
+        $result  = [
             'result'  => 'Success',
             'message' => '',
         ];
-        $di = Di::getDefault();
+        $di      = Di::getDefault();
         $tempDir = $di->getShared('config')->path('core.tempPath');
         if (empty($config_file)) {
             $config_file = "{$tempDir}/old_config.xml";
@@ -641,8 +648,8 @@ server 2.pool.ntp.org';
             'info'    => 'Update from local file',
         ];
 
-        $di = Di::getDefault();
-        $tempDir = $di->getShared('config')->path('core.tempPath');
+        $di       = Di::getDefault();
+        $tempDir  = $di->getShared('config')->path('core.tempPath');
         $upd_file = "{$tempDir}/update.img";
         if ( ! file_exists($upd_file)) {
             $upd_file       = "{$tempDir}/upgradeOnline/update.img";
@@ -678,12 +685,12 @@ server 2.pool.ntp.org';
      *
      * @return mixed
      */
-    static function upgradeOnline($data)
+    public static function upgradeOnline($data)
     {
-        $di = Di::getDefault();
+        $di      = Di::getDefault();
         $tempDir = $di->getShared('config')->path('core.tempPath');
-        $module = 'upgradeOnline';
-        if ( ! file_exists($tempDir. "/{$module}")) {
+        $module  = 'upgradeOnline';
+        if ( ! file_exists($tempDir . "/{$module}")) {
             Util::mwMkdir($tempDir . "/{$module}");
         } else {
             // Чистим файлы, загруженные онлайн.
@@ -702,11 +709,13 @@ server 2.pool.ntp.org';
             'action'   => $module,
         ];
 
-        $workerDownloaderPath =  Util::getFilePathByClassName(WorkerDownloader::class);
+        $workerDownloaderPath = Util::getFilePathByClassName(WorkerDownloader::class);
 
         file_put_contents($tempDir . "/{$module}/progress", '0');
-        file_put_contents($tempDir . "/{$module}/download_settings.json",
-            json_encode($download_settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        file_put_contents(
+            $tempDir . "/{$module}/download_settings.json",
+            json_encode($download_settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
+        );
         Util::mwExecBg("php -f {$workerDownloaderPath} " . $tempDir . "/{$module}/download_settings.json");
         // Ожидание запуска процесса загрузки.
         usleep(500000);
@@ -731,8 +740,8 @@ server 2.pool.ntp.org';
         $result        = [
             'result' => 'Success',
         ];
-        $di = Di::getDefault();
-        $tempDir = $di->getShared('config')->path('core.tempPath');
+        $di            = Di::getDefault();
+        $tempDir       = $di->getShared('config')->path('core.tempPath');
         $modulesDir    = $tempDir . '/upgradeOnline';
         $progress_file = $modulesDir . '/progress';
 
@@ -783,8 +792,8 @@ server 2.pool.ntp.org';
             'result' => 'Success',
             'data'   => null,
         ];
-        $di = Di::getDefault();
-        $tempDir = $di->getShared('config')->path('core.tempPath');
+        $di            = Di::getDefault();
+        $tempDir       = $di->getShared('config')->path('core.tempPath');
         $moduleDirTmp  = $tempDir . '/' . $module;
         $progress_file = $moduleDirTmp . '/progress';
         $error         = '';
@@ -841,7 +850,7 @@ server 2.pool.ntp.org';
      */
     public static function moduleStartDownload($module, $url, $md5): array
     {
-        $di = Di::getDefault();
+        $di       = Di::getDefault();
         $tempPath = $di->getShared('config')->path('core.tempPath');
 
         $moduleDirTmp = "{$tempPath}/{$module}";
@@ -866,9 +875,11 @@ server 2.pool.ntp.org';
             unlink("$moduleDirTmp/installed");
         }
         file_put_contents("$moduleDirTmp/progress", '0');
-        file_put_contents("$moduleDirTmp/download_settings.json",
-            json_encode($download_settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-        $workerDownloaderPath =  Util::getFilePathByClassName(WorkerDownloader::class);
+        file_put_contents(
+            "$moduleDirTmp/download_settings.json",
+            json_encode($download_settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
+        );
+        $workerDownloaderPath = Util::getFilePathByClassName(WorkerDownloader::class);
         Util::mwExecBg("php -f {$workerDownloaderPath} $moduleDirTmp/download_settings.json");
 
         return [];
@@ -951,7 +962,6 @@ server 2.pool.ntp.org';
         Util::mwExec('/sbin/modprobe -q dahdi_transcode');
         Util::mwExec('ulimit -n 4096');
         Util::mwExec('ulimit -p 4096');
-
     }
 
     /**
@@ -978,8 +988,8 @@ server 2.pool.ntp.org';
      */
     public function nginxGenerateConf($not_ssl = false, $level = 0): void
     {
-        $configPath = '/etc/nginx/mikopbx/conf.d';
-        $httpConfigFile = "{$configPath}/http-server.conf";
+        $configPath      = '/etc/nginx/mikopbx/conf.d';
+        $httpConfigFile  = "{$configPath}/http-server.conf";
         $httpsConfigFile = "{$configPath}/https-server.conf";
 
         $dns_server = '127.0.0.1';
@@ -1001,7 +1011,7 @@ server 2.pool.ntp.org';
         $config = str_replace(['<DNS>', '<WEBPort>'], [$dns_server, $WEBPort], $config);
 
         $RedirectToHttps = $this->mikoPBXConfig->getGeneralSettings('RedirectToHttps');
-        if ($RedirectToHttps === '1' && $not_ssl === false ) {
+        if ($RedirectToHttps === '1' && $not_ssl === false) {
             $conf_data = 'if ( $remote_addr != "127.0.0.1" ) {' . PHP_EOL
                 . '        ' . 'return 301 https://$host:' . $WEBHTTPSPort . '$request_uri;' . PHP_EOL
                 . '       }' . PHP_EOL;
@@ -1024,7 +1034,7 @@ server 2.pool.ntp.org';
             $config = file_get_contents("{$httpsConfigFile}.original");
             $config = str_replace(['<DNS>', '<WEBHTTPSPort>'], [$dns_server, $WEBHTTPSPort], $config);
             file_put_contents($httpsConfigFile, $config);
-        } else if(file_exists($httpsConfigFile)) {
+        } elseif (file_exists($httpsConfigFile)) {
             unlink($httpsConfigFile);
         }
 
@@ -1058,7 +1068,7 @@ server 2.pool.ntp.org';
         Util::mwExec('/sbin/syslogd -O ' . $log_file . ' -b 10 -s 10240');
     }
 
-    static function getSyslogFile()
+    public static function getSyslogFile()
     {
         $logdir = self::getLogDir() . '/system';
         if ( ! file_exists($logdir) && ! mkdir($logdir, 0777, true) && ! is_dir($logdir)) {
@@ -1066,12 +1076,6 @@ server 2.pool.ntp.org';
         }
 
         return "$logdir/messages";
-    }
-
-    static function getLogDir()
-    {
-        $di = Di::getDefault();
-        return $di->getShared('config')->path('core.logsPath');
     }
 
     public function safeModules($worker_proc_name, $path_to_script): void
@@ -1096,7 +1100,7 @@ server 2.pool.ntp.org';
             Util::mwExecBg("/usr/bin/php -f {$path_to_script} start");
         }
     }
- 
+
     /**
      * Будет вызван после старта asterisk.
      */
@@ -1130,7 +1134,7 @@ server 2.pool.ntp.org';
         // $config = array();
         foreach ($keytypes as $keytype => $db_key) {
             $res_keyfilepath = "{$dropbear_dir}/dropbear_" . $keytype . "_host_key";
-            $key = $this->mikoPBXConfig->getGeneralSettings($db_key);
+            $key             = $this->mikoPBXConfig->getGeneralSettings($db_key);
             $key             = (isset($key)) ? trim($key) : "";
             if (strlen($key) > 100) {
                 // Сохраняем ключ в файл.

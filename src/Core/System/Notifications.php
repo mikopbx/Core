@@ -5,6 +5,7 @@
  * Proprietary and confidential
  * Written by Alexey Portnov, 2 2020
  */
+
 namespace MikoPBX\Core\System;
 
 use Phalcon\Exception;
@@ -26,7 +27,7 @@ class Notifications
      *
      * @return array
      */
-    static function sendMailOld($to, $subject, $message, $file = false)
+    public static function sendMailOld($to, $subject, $message, $file = false)
     {
         $mikoPBXConfig        = new MikoPBXConfig();
         $settings             = $mikoPBXConfig->getGeneralSettings();
@@ -45,7 +46,7 @@ class Notifications
         $message = str_replace("\n", '&brvbar;', $message);
 
         $EOL       = "\r\n";
-        $separator = md5(uniqid(time(),true));
+        $separator = md5(uniqid(time(), true));
 
         $bodyMail = "--$separator{$EOL}";
         $bodyMail .= "Content-type: text/html; charset='utf-8'{$EOL}";
@@ -53,7 +54,6 @@ class Notifications
         $bodyMail .= "--{$separator}{$EOL}";
 
         if ($file && is_file($file)) {
-
             $fileRead      = fopen($file, "r");
             $contentFile   = fread($fileRead, filesize($file));
             $file_name_b64 = base64_encode(basename($file));
@@ -101,9 +101,9 @@ class Notifications
      *
      * @return array
      */
-    static function sendMail($to, $subject, $message, $filename = false)
+    public static function sendMail($to, $subject, $message, $filename = false)
     {
-        $mikoPBXConfig               = new MikoPBXConfig();
+        $mikoPBXConfig        = new MikoPBXConfig();
         $settings             = $mikoPBXConfig->getGeneralSettings();
         $enable_notifications = $settings['MailEnableNotifications'];
         $result               = [];
@@ -198,8 +198,8 @@ class Notifications
             'result' => 'Success',
         ];
 
-        $mikoPBXConfig   = new MikoPBXConfig();
-        $settings = $mikoPBXConfig->getGeneralSettings();
+        $mikoPBXConfig = new MikoPBXConfig();
+        $settings      = $mikoPBXConfig->getGeneralSettings();
 
         $conf = "defaults\n" .
             "auth       on\n" .

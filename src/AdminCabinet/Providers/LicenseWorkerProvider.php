@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 /**
  * Copyright (C) MIKO LLC - All Rights Reserved
@@ -16,17 +17,20 @@ use Phalcon\Di\ServiceProviderInterface;
 
 class LicenseWorkerProvider implements ServiceProviderInterface
 {
-    public function register(DiInterface $di):void
+    public function register(DiInterface $di): void
     {
         $debugMode = $di->getShared('config')->adminApplication->debugMode;
-        $di->setShared('licenseWorker', function () use ($debugMode) {
-            if ($debugMode) {
-                $serverUrl = 'http://172.16.32.72:8223';
-            } else {
-                $serverUrl = 'http://127.0.0.1:8223';
-            }
+        $di->setShared(
+            'licenseWorker',
+            function () use ($debugMode) {
+                if ($debugMode) {
+                    $serverUrl = 'http://172.16.32.72:8223';
+                } else {
+                    $serverUrl = 'http://127.0.0.1:8223';
+                }
 
-            return new LicenseWorker($serverUrl);
-        });
+                return new LicenseWorker($serverUrl);
+            }
+        );
     }
 }

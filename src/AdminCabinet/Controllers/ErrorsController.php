@@ -6,6 +6,7 @@
  * Written by Nikolay Beketov, 5 2018
  *
  */
+
 namespace MikoPBX\AdminCabinet\Controllers;
 
 class ErrorsController extends BaseController
@@ -18,16 +19,13 @@ class ErrorsController extends BaseController
 
     public function show404Action()
     {
-
     }
 
     public function show401Action()
     {
-
     }
 
     public function show500Action()
     {
-
     }
 }

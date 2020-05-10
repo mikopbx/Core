@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 /**
  * Copyright (C) MIKO LLC - All Rights Reserved
@@ -19,27 +20,36 @@ class VoltProvider implements ServiceProviderInterface
 {
     public function register(DiInterface $di): void
     {
-        $view = $di->getShared('view');
+        $view      = $di->getShared('view');
         $appConfig = $di->getShared('config')->adminApplication;
-        $di->setShared('volt', function () use ($view, $di, $appConfig) {
-            $voltCacheDir = $appConfig->voltCacheDir.'/';
-            $volt = new VoltEngine($view, $di);
-            $volt->setOptions([
-                'path' => $voltCacheDir,
-            ]);
+        $di->setShared(
+            'volt',
+            function () use ($view, $di, $appConfig) {
+                $voltCacheDir = $appConfig->voltCacheDir . '/';
+                $volt         = new VoltEngine($view, $di);
+                $volt->setOptions(
+                    [
+                        'path' => $voltCacheDir,
+                    ]
+                );
 
-            $compiler = $volt->getCompiler();
-            $compiler->addFunction('in_array', 'in_array');
+                $compiler = $volt->getCompiler();
+                $compiler->addFunction('in_array', 'in_array');
 
-            if ($appConfig->debugMode === true) {
-                array_map('unlink',
-                    glob($appConfig->voltCacheDir . '/*.php'));
-                $volt->setOptions([
-                    'compileAlways' => true,
-                ]);
+                if ($appConfig->debugMode === true) {
+                    array_map(
+                        'unlink',
+                        glob($appConfig->voltCacheDir . '/*.php')
+                    );
+                    $volt->setOptions(
+                        [
+                            'compileAlways' => true,
+                        ]
+                    );
+                }
+
+                return $volt;
             }
-
-            return $volt;
-        });
+        );
     }
 }

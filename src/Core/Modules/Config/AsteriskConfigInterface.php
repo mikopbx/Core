@@ -92,6 +92,7 @@ interface AsteriskConfigInterface
      * @return string
      */
     public function generateOutRoutContext($rout): string;
+
     /**
      * Кастомизация исходящего контекста для конкретного маршрута.
      *

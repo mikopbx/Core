@@ -1,8 +1,7 @@
 <?php
+
 namespace MikoPBX\AdminCabinet\Library;
 
-use MikoPBX\AdminCabinet\Providers\AppMessagesProvider;
-use MikoPBX\AdminCabinet\Providers\LanguageSelectorProvider;
 use MikoPBX\Providers\TranslationProvider;
 use Phalcon\Di\Injectable;
 
@@ -13,7 +12,6 @@ use Phalcon\Di\Injectable;
  * Written by Nikolay Beketov, 12 2019
  *
  */
-
 class LanguageSelector extends Injectable
 {
     private $language = null;
@@ -35,9 +33,10 @@ class LanguageSelector extends Injectable
 
     /**
      * Returns the best matched language by User's web browser settings
+     *
      * @return string
      */
-    public function getBestMatch():string
+    public function getBestMatch(): string
     {
         $languages = [
             'en' => 'en',
@@ -63,7 +62,6 @@ class LanguageSelector extends Injectable
             if (isset($languages[$s])) {
                 return $languages[$s];
             }
-
         }
 
         return 'en'; // Default

@@ -6,6 +6,7 @@
  * Written by Nikolay Beketov, 6 2018
  *
  */
+
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\LicensingActivateCouponForm;
@@ -62,7 +63,6 @@ class LicensingController extends BaseController
         if ( ! empty($data['licKey'])) {
             $oldLicKey = PbxSettings::getValueByKey('PBXLicense');
             if ($oldLicKey !== $data['licKey']) {
-
                 $licenseInfo = $this->licenseWorker->getLicenseInfo($data['licKey']);
                 if ($licenseInfo instanceof SimpleXMLElement) {
                     $this->saveLicenseKey($data['licKey']);
@@ -79,7 +79,6 @@ class LicensingController extends BaseController
                     $this->flash->error($this->translation->_('lic_FailedCheckLicense'));
                     $this->view->success = false;
                 }
-
             }
             if ( ! empty($data['coupon'])) {
                 $result
@@ -116,7 +115,6 @@ class LicensingController extends BaseController
         }
         $this->session->remove('PBXLicense');
         $this->session->remove('checkRegistration');
-
     }
 
     /**
@@ -177,7 +175,6 @@ class LicensingController extends BaseController
         $licenseInfo         = $this->licenseWorker->getLicenseInfo($licenseKey);
         $this->view->success = true;
         $this->view->message = json_encode($licenseInfo);
-
     }
 
     /**

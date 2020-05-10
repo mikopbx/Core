@@ -6,6 +6,7 @@
  * Written by Nikolay Beketov, 5 2018
  *
  */
+
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\NetworkEditForm;
@@ -108,7 +109,6 @@ class NetworkController extends BaseController
      */
     private function fillEthStructure($eth, $data): void
     {
-
         foreach ($eth as $name => $value) {
             $itIsInternetInterfce = $eth->id == $data['internet_interface'];
             switch ($name) {
@@ -177,7 +177,6 @@ class NetworkController extends BaseController
                     if (array_key_exists($name . '_' . $eth->id, $data)) {
                         $eth->$name = $data[$name . '_' . $eth->id];
                     }
-
             }
         }
     }
@@ -190,7 +189,7 @@ class NetworkController extends BaseController
     public function deleteAction($ethId = ''): void
     {
         $eth = LanInterfaces::findFirstById($ethId);
-        if ($eth!==null && $eth->delete() === false) {
+        if ($eth !== null && $eth->delete() === false) {
             $errors = $eth->getMessages();
             $this->flash->warning(implode('<br>', $errors));
             $this->view->success = false;

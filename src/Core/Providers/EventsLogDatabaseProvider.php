@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 /**
  * Copyright (C) MIKO LLC - All Rights Reserved
@@ -11,13 +12,13 @@ declare(strict_types=1);
 namespace MikoPBX\Core\Providers;
 
 
+use MikoPBX\Common\Providers\DatabaseProviderBase;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
-use MikoPBX\Common\Providers\DatabaseProviderBase;
 
 /**
-* Events log database connection is created based in the parameters defined in the configuration file
-*/
+ * Events log database connection is created based in the parameters defined in the configuration file
+ */
 class EventsLogDatabaseProvider extends DatabaseProviderBase implements ServiceProviderInterface
 {
     /**

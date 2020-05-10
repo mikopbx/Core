@@ -6,6 +6,7 @@
  * Written by Nikolay Beketov, 5 2018
  *
  */
+
 namespace MikoPBX\AdminCabinet\Forms;
 
 use MikoPBX\Common\Models\Users;
@@ -14,9 +15,9 @@ use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Password;
 use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
+use Phalcon\Forms\Form;
 use Phalcon\Validation\Validator\Email;
 use Phalcon\Validation\Validator\PresenceOf;
-use Phalcon\Forms\Form;
 
 class UserEditForm extends Form
 {
@@ -28,35 +29,49 @@ class UserEditForm extends Form
         // Name
         $name = new Text('name');
         $name->setFilters(['striptags', 'string']);
-        $name->addValidators([
-            new PresenceOf([
-                'message' => $this->translation->_("Name is required"),
-            ]),
-        ]);
+        $name->addValidators(
+            [
+                new PresenceOf(
+                    [
+                        'message' => $this->translation->_("Name is required"),
+                    ]
+                ),
+            ]
+        );
         $this->add($name);
 
         // Email
         $email = new Text('email');
         $email->setFilters('email');
-        $email->addValidators([
-            new PresenceOf([
-                'message' => $this->translation->_("E-mail is required"),
-            ]),
-            new Email([
-                'message' => $this->translation->_("E-mail is not valid"),
-            ]),
-        ]);
+        $email->addValidators(
+            [
+                new PresenceOf(
+                    [
+                        'message' => $this->translation->_("E-mail is required"),
+                    ]
+                ),
+                new Email(
+                    [
+                        'message' => $this->translation->_("E-mail is not valid"),
+                    ]
+                ),
+            ]
+        );
         $this->add($email);
 
         // Password
         $password = new Password('newpassword');
 
         if ($entity == null) {
-            $password->addValidators([
-                new PresenceOf([
-                    'message' => $this->translation->_("Password is required"),
-                ]),
-            ]);
+            $password->addValidators(
+                [
+                    new PresenceOf(
+                        [
+                            'message' => $this->translation->_("Password is required"),
+                        ]
+                    ),
+                ]
+            );
         }
 
 
@@ -76,14 +91,16 @@ class UserEditForm extends Form
                 $typename => $this->translation->_($typename),
             ];
         }
-        $role = new Select('role', $arrType, [
+        $role = new Select(
+            'role', $arrType, [
             'using'    => [
                 'id',
                 'name',
             ],
             'useEmpty' => false,
             'class'    => 'ui dropdown userrole',
-        ]);
+        ]
+        );
         $this->add($role);
 
 
@@ -115,7 +132,5 @@ class UserEditForm extends Form
 
         $active = new Check('active', $cheskarr);
         $this->add($active);
-
-
     }
 }

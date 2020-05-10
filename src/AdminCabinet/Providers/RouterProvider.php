@@ -33,30 +33,33 @@ class RouterProvider implements ServiceProviderInterface
      */
     public function register(DiInterface $di): void
     {
-        $di->set('router', function () {
-            $router = new Router();
+        $di->set(
+            'router',
+            function () {
+                $router = new Router();
 
-            $router->addGet(
-                '/assets/(css|js)/([\w.-]+)\.(css|js)',
-                [
-                    'controller' => 'assets',
-                    'action'     => 'serve',
-                    'type'       => 1, //(css|js)
-                    'collection' => 2, //(controller)
-                    'extension'  => 3, //(css|js)
-                ]
-            );
+                $router->addGet(
+                    '/assets/(css|js)/([\w.-]+)\.(css|js)',
+                    [
+                        'controller' => 'assets',
+                        'action'     => 'serve',
+                        'type'       => 1, //(css|js)
+                        'collection' => 2, //(controller)
+                        'extension'  => 3, //(css|js)
+                    ]
+                );
 
-            $router->add(
-                '/admin-cabinet/:controller/:action/:params',
-                [
-                    'controller' => 1,
-                    'action'     => 2,
-                    'params'     => 3,
-                ]
-            );
+                $router->add(
+                    '/admin-cabinet/:controller/:action/:params',
+                    [
+                        'controller' => 1,
+                        'action'     => 2,
+                        'params'     => 3,
+                    ]
+                );
 
-            return $router;
-        });
+                return $router;
+            }
+        );
     }
 }

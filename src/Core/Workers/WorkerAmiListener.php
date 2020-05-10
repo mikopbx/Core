@@ -5,12 +5,13 @@
  * Proprietary and confidential
  * Written by Alexey Portnov, 2 2020
  */
+
 namespace MikoPBX\Core\Workers;
 
 require_once 'globals.php';
 
-use Phalcon\Exception;
 use MikoPBX\Core\System\{BeanstalkClient, Util};
+use Phalcon\Exception;
 
 class WorkerAmiListener extends WorkerBase
 {
@@ -32,11 +33,24 @@ class WorkerAmiListener extends WorkerBase
     }
 
     /**
+     * Установка фильтра
+     *
+     * @return array
+     */
+    private function setFilter()
+    {
+        $params = ['Operation' => 'Add', 'Filter' => 'Event: UserEvent'];
+        $res    = $this->am->sendRequestTimeout('Filter', $params);
+
+        return $res;
+    }
+
+    /**
      * Старт работы листнера.
      *
      * @param $argv
      */
-    public function start($argv):void
+    public function start($argv): void
     {
         $this->am->addEventHandler("userevent", [$this, "callback"]);
         while (true) {
@@ -48,19 +62,6 @@ class WorkerAmiListener extends WorkerBase
                 $this->setFilter();
             }
         }
-    }
-
-    /**
-     * Установка фильтра
-     *
-     * @return array
-     */
-    private function setFilter()
-    {
-        $params = ['Operation' => 'Add', 'Filter' => 'Event: UserEvent'];
-        $res    = $this->am->sendRequestTimeout('Filter', $params);
-
-        return $res;
     }
 
     /**

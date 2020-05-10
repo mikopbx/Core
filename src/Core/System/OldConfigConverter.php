@@ -5,10 +5,11 @@
  * Proprietary and confidential
  * Written by Alexey Portnov, 2 2020
  */
+
 namespace MikoPBX\Core\System;
 
-use MikoPBX\Core\System\{Config, MikoPBXConfig, Network, Verify};
 use MikoPBX\Common\Models\{Extensions, ExternalPhones, NetworkFilters};
+use MikoPBX\Core\System\{Config};
 
 
 /**
@@ -30,7 +31,7 @@ class OldConfigConverter
      *
      * @param $filename
      */
-    function __construct($filename)
+    public function __construct($filename)
     {
         $text_xml       = file_get_contents($filename);
         $this->res_html = str_get_html($text_xml);
@@ -192,7 +193,6 @@ class OldConfigConverter
                 'fwd_forwardingonunavailable' => '',
                 'tmp_pbx_networkfilter'       => $networkfilter,
             ];
-
         }
     }
 
@@ -391,7 +391,6 @@ class OldConfigConverter
                 }
 
                 $this->data['asterisk-managers'][] = $manager;
-
             }
         }
     }
@@ -439,7 +438,6 @@ class OldConfigConverter
                 'manualattributes'           => base64_decode($this->get('manualattributes')),
                 'noregister'                 => ($this->get('noregister') == 'yes') ? 1 : 0,
             ];
-
         }
     }
 
@@ -504,7 +502,6 @@ class OldConfigConverter
 
             break;
         }
-
     }
 
     /**
@@ -598,7 +595,6 @@ class OldConfigConverter
                     break;
                 }
             }
-
         }
 
         foreach ($queues as $key => $q) {
@@ -611,7 +607,6 @@ class OldConfigConverter
             $q['uniqid']                 = "QUEUE-" . md5($q['extension']);
             $this->data['call-queues'][] = $q;
         }
-
     }
 
     private function parseIvr($data)
@@ -715,7 +710,6 @@ class OldConfigConverter
                                     break;
                                 }
                             }
-
                         } else {
                             $id = $tgt_m;
                         }

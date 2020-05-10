@@ -5,20 +5,13 @@
  * Proprietary and confidential
  * Written by Alexey Portnov, 4 2020
  */
+
 namespace MikoPBX\Core\System;
 
-use Exception;
+use MikoPBX\Common\Models\{AsteriskManagerUsers, Codecs, NetworkFilters};
 use MikoPBX\Core\Asterisk\CdrDb;
-use MikoPBX\Core\Asterisk\Configs\{
-    ExtensionsConf,
-    OtherConf
-};
+use MikoPBX\Core\Asterisk\Configs\{ExtensionsConf, OtherConf};
 use MikoPBX\Core\Config\RegisterDIServices;
-use MikoPBX\Common\Models\{
-    AsteriskManagerUsers,
-    Codecs,
-    NetworkFilters
-};
 use MikoPBX\Core\Workers\WorkerAmiListener;
 use MikoPBX\Core\Workers\WorkerCallEvents;
 use Phalcon\Di;
@@ -30,19 +23,17 @@ use Phalcon\Di;
  */
 class PBX
 {
-    private $di; // Link to the dependency injector
+        /**
+     * @var bool
+     */
+    public $booting; // Link to the dependency injector
+private $di;
     private $arrObject;
     private $arr_gs;
-
     /**
      * @var \MikoPBX\Core\System\MikoPBXConfig
      */
     private $mikoPBXConfig;
-
-    /**
-     * @var bool
-     */
-    public $booting;
 
     /**
      * PBX constructor.
@@ -66,6 +57,33 @@ class PBX
         $pbx->start();
     }
 
+    /**
+     * Остановка процесса Asterisk.
+     */
+    public function stop(): void
+    {
+        Util::killByName('safe_asterisk');
+        sleep(1);
+        Util::mwExec("asterisk -rx 'core stop now'");
+        Util::processWorker('', '', WorkerCallEvents::class, 'stop');
+        Util::processWorker('', '', WorkerAmiListener::class, 'stop');
+        Util::killByName('asterisk');
+    }
+
+    /**
+     * Запуск процесса Asterisk.
+     *
+     */
+    public function start(): void
+    {
+        Network::startSipDump();
+        if (Util::isSystemctl()) {
+            Util::mwExecBg('systemctl restart asterisk');
+        } else {
+            Util::mwExecBg('/usr/sbin/safe_asterisk -fn');
+        }
+    }
+
     public static function logRotate(): void
     {
         self::rotatePbxLog('messages');
@@ -73,7 +91,7 @@ class PBX
         self::rotatePbxLog('error');
     }
 
-    public static function rotatePbxLog($f_name):void
+    public static function rotatePbxLog($f_name): void
     {
         $max_size    = 2;
         $log_dir     = System::getLogDir() . '/asterisk/';
@@ -124,6 +142,31 @@ class PBX
         $result['data'] = $out;
 
         return $result;
+    }
+
+    /**
+     * Создание конфига features.conf
+     */
+    private function featuresGenerate(): void
+    {
+        $pickup_extension = $this->mikoPBXConfig->getPickupExten();
+        $conf             = "[general]\n" .
+            "featuredigittimeout = {$this->arr_gs['PBXFeatureDigitTimeout']}\n" .
+            "atxfernoanswertimeout = {$this->arr_gs['PBXFeatureAtxferNoAnswerTimeout']}\n" .
+            "transferdigittimeout = 3\n" .
+            "pickupexten = {$pickup_extension}\n" .
+            "atxferabort = *0\n" .
+            "\n" .
+            "[featuremap]\n" .
+            "atxfer => {$this->arr_gs['PBXFeatureAttendedTransfer']}\n" .
+            "disconnect = *0\n" .
+            "blindxfer => {$this->arr_gs['PBXFeatureBlindTransfer']}\n";
+
+        foreach ($this->arrObject as $appClass) {
+            $conf .= $appClass->getFeatureMap();
+        }
+
+        Util::fileWriteContent('/etc/asterisk/features.conf', $conf);
     }
 
     /**
@@ -182,6 +225,160 @@ class PBX
         return $result;
     }
 
+    /**
+     * Создание конфига manager.conf
+     */
+    private function managerConfGenerate(): void
+    {
+        $vars = [
+            'DIALEDPEERNUMBER',
+            'BLKVM_CHANNEL',
+            'BRIDGEPEER',
+            'INTERCHANNEL',
+            'FROM_DID',
+            'mikoidconf',
+            'conf_1c',
+            '1cautoanswer',
+            'extenfrom1c',
+            'spyee',
+            'datafrom1c',
+            'CDR(lastapp)',
+            'CDR(channel)',
+            'CDR(src)',
+            'CDR(dst)',
+            'CDR(recordingfile)',
+        ];
+
+        $conf = "[general]\n" .
+            "enabled = yes\n" .
+            "port = {$this->arr_gs['AMIPort']};\n" .
+            "bindaddr = 0.0.0.0\n" .
+            "displayconnects = no\n" .
+            "allowmultiplelogin = yes\n" .
+            "webenabled = yes\n" .
+            "timestampevents = yes\n" .
+            'channelvars=' . implode(',', $vars) . "\n" .
+            "httptimeout = 60\n\n";
+
+        if ($this->arr_gs['AMIEnabled'] === '1') {
+            /** @var \MikoPBX\Common\Models\AsteriskManagerUsers $managers */
+            /** @var \MikoPBX\Common\Models\AsteriskManagerUsers $user */
+            $managers = AsteriskManagerUsers::find();
+            $result   = [];
+            foreach ($managers as $user) {
+                $arr_data = $user->toArray();
+                /** @var NetworkFilters $network_filter */
+                $network_filter     = NetworkFilters::findFirst($user->networkfilterid);
+                $arr_data['permit'] = empty($network_filter) ? '' : $network_filter->permit;
+                $arr_data['deny']   = empty($network_filter) ? '' : $network_filter->deny;
+                $result[]           = $arr_data;
+            }
+
+            foreach ($result as $user) {
+                $conf .= '[' . $user['username'] . "]\n";
+                $conf .= 'secret=' . $user['secret'] . "\n";
+
+                if (trim($user['deny']) !== '') {
+                    $conf .= 'deny=' . $user['deny'] . "\n";
+                }
+                if (trim($user['permit']) !== '') {
+                    $conf .= 'permit=' . $user['permit'] . "\n";
+                }
+
+                $keys  = [
+                    'call',
+                    'cdr',
+                    'originate',
+                    'reporting',
+                    'agent',
+                    'config',
+                    'dialplan',
+                    'dtmf',
+                    'log',
+                    'system',
+                    'verbose',
+                    'user',
+                ];
+                $read  = '';
+                $write = '';
+                foreach ($keys as $perm) {
+                    if ($user[$perm] === 'readwrite') {
+                        $read  .= ('' === $read) ? $perm : ",$perm";
+                        $write .= ('' === $write) ? $perm : ",$perm";
+                    } elseif ($user[$perm] === 'write') {
+                        $write .= ('' === $write) ? $perm : ",$perm";
+                    } elseif ($user[$perm] === 'read') {
+                        $read .= ('' === $read) ? $perm : ",$perm";
+                    }
+                }
+                if ($read !== '') {
+                    $conf .= "read=$read\n";
+                }
+
+                if ($write !== '') {
+                    $conf .= "write=$write\n";
+                }
+                $conf .= "eventfilter=!UserEvent: CdrConnector\n";
+                $conf .= "eventfilter=!Event: Newexten\n";
+                $conf .= "\n";
+            }
+            $conf .= "\n";
+        }
+        $conf .= '[phpagi]' . "\n";
+        $conf .= 'secret=phpagi' . "\n";
+        $conf .= 'deny=0.0.0.0/0.0.0.0' . "\n";
+        $conf .= 'permit=127.0.0.1/255.255.255.255' . "\n";
+        $conf .= 'read=all' . "\n";
+        $conf .= 'write=all' . "\n";
+        $conf .= "eventfilter=!Event: Newexten\n";
+        $conf .= "\n";
+
+        foreach ($this->arrObject as $appClass) {
+            $conf .= $appClass->generateManager($this->arr_gs);
+        }
+
+        Util::fileWriteContent('/etc/asterisk/manager.conf', $conf);
+    }
+
+    /**
+     * Генерация http.cong AJAM.
+     */
+    private function httpConfGenerate(): void
+    {
+        $enabled = ($this->arr_gs['AJAMEnabled'] === '1') ? 'yes' : 'no';
+        $conf    = "[general]\n" .
+            "enabled={$enabled}\n" .
+            "bindaddr=0.0.0.0\n" .
+            "bindport={$this->arr_gs['AJAMPort']}\n" .
+            "prefix=asterisk\n" .
+            "enablestatic=yes\n\n";
+
+        if ( ! empty($this->arr_gs['AJAMPortTLS'])) {
+            $keys_dir = '/etc/asterisk/keys';
+            if ( ! is_dir($keys_dir) && ! mkdir($keys_dir) && ! is_dir($keys_dir)) {
+                Util::sysLogMsg('httpConfGenerate', sprintf('Directory "%s" was not created', $keys_dir));
+
+                return;
+            }
+            $WEBHTTPSPublicKey  = $this->arr_gs['WEBHTTPSPublicKey'];
+            $WEBHTTPSPrivateKey = $this->arr_gs['WEBHTTPSPrivateKey'];
+
+            if ( ! empty($WEBHTTPSPublicKey) && ! empty($WEBHTTPSPrivateKey)) {
+                $s_data = "{$WEBHTTPSPublicKey}\n{$WEBHTTPSPrivateKey}";
+            } else {
+                // Генерируем сертификат ssl.
+                $data   = Util::generateSslCert();
+                $s_data = implode("\n", $data);
+            }
+            $conf .= "tlsenable=yes\n" .
+                "tlsbindaddr=0.0.0.0:{$this->arr_gs['AJAMPortTLS']}\n" .
+                "tlscertfile={$keys_dir}/ajam.pem\n" .
+                "tlsprivatekey={$keys_dir}/ajam.pem\n";
+            Util::fileWriteContent("{$keys_dir}/ajam.pem", $s_data);
+        }
+        Util::fileWriteContent('/etc/asterisk/http.conf', $conf);
+    }
+
     public static function musicOnHoldReload(): array
     {
         $o = new OtherConf();
@@ -231,96 +428,6 @@ class PBX
         ];
 
         return $result;
-    }
-
-
-    public static function checkCodec($name, $desc, $type)
-    {
-        $codec = Codecs::findFirst('name="' . $name . '"');
-        if ( ! $codec) {
-            /** @var \MikoPBX\Common\Models\Codecs $codec_g722 */
-            $codec              = new Codecs();
-            $codec->name        = $name;
-            $codec->type        = $type;
-            $codec->description = $desc;
-            $codec->save();
-        }
-    }
-
-    /**
-     * Generates all Asterisk configuration files and (re)starts the Asterisk process
-     */
-    public function configure(): array
-    {
-        $result = [
-            'result' => 'ERROR',
-        ];
-
-        if ( ! $this->booting) {
-            $this->stop();
-        }
-        /**
-         * Создание конфигурационных файлов.
-         */
-        if ($this->booting) {
-            echo '   |- generate modules.conf... ';
-        }
-        $this->modulesConfGenerate();
-        if ($this->booting) {
-            echo "\033[32;1mdone\033[0m \n";
-        }
-
-        if ($this->booting) {
-            echo '   |- generate manager.conf... ';
-        }
-        $this->managerConfGenerate();
-        $this->httpConfGenerate();
-        if ($this->booting) {
-            echo "\033[32;1mdone\033[0m \n";
-        }
-
-        foreach ($this->arrObject as $appClass) {
-            $appClass->generateConfig($this->arr_gs);
-        }
-        $this->featuresGenerate();
-        $this->indicationConfGenerate();
-
-        if ($this->booting) {
-            echo '   |- generate extensions.conf... ';
-        }
-        $this->dialplanReload();
-        if ($this->booting) {
-            echo "\033[32;1mdone\033[0m \n";
-        }
-
-        // Создание базы данных истории звонков.
-        $di = Di::getDefault();
-        /** @var \Phalcon\Db\Adapter\Pdo\Sqlite $connection */
-        $connection = $di->get('dbCDR');
-        if ( ! $connection->tableExists('cdr')) {
-            CdrDb::createDb();
-            Util::CreateLogDB();
-            RegisterDIServices::recreateDBConnections();
-        } else {
-            CdrDb::checkDb();
-        }
-
-        $result['result'] = 'Success';
-
-        return $result;
-    }
-
-    /**
-     * Остановка процесса Asterisk.
-     */
-    public function stop(): void
-    {
-        Util::killByName('safe_asterisk');
-        sleep(1);
-        Util::mwExec("asterisk -rx 'core stop now'");
-        Util::processWorker('', '', WorkerCallEvents::class, 'stop');
-        Util::processWorker('', '', WorkerAmiListener::class, 'stop');
-        Util::killByName('asterisk');
     }
 
     /**
@@ -506,183 +613,80 @@ class PBX
         Util::fileWriteContent('/etc/asterisk/codecs.conf', '');
     }
 
-    /**
-     * Создание конфига manager.conf
-     */
-    private function managerConfGenerate(): void
+    public static function checkCodec($name, $desc, $type)
     {
-        $vars = [
-            'DIALEDPEERNUMBER',
-            'BLKVM_CHANNEL',
-            'BRIDGEPEER',
-            'INTERCHANNEL',
-            'FROM_DID',
-            'mikoidconf',
-            'conf_1c',
-            '1cautoanswer',
-            'extenfrom1c',
-            'spyee',
-            'datafrom1c',
-            'CDR(lastapp)',
-            'CDR(channel)',
-            'CDR(src)',
-            'CDR(dst)',
-            'CDR(recordingfile)',
+        $codec = Codecs::findFirst('name="' . $name . '"');
+        if ( ! $codec) {
+            /** @var \MikoPBX\Common\Models\Codecs $codec_g722 */
+            $codec              = new Codecs();
+            $codec->name        = $name;
+            $codec->type        = $type;
+            $codec->description = $desc;
+            $codec->save();
+        }
+    }
+
+    /**
+     * Generates all Asterisk configuration files and (re)starts the Asterisk process
+     */
+    public function configure(): array
+    {
+        $result = [
+            'result' => 'ERROR',
         ];
 
-        $conf = "[general]\n" .
-            "enabled = yes\n" .
-            "port = {$this->arr_gs['AMIPort']};\n" .
-            "bindaddr = 0.0.0.0\n" .
-            "displayconnects = no\n" .
-            "allowmultiplelogin = yes\n" .
-            "webenabled = yes\n" .
-            "timestampevents = yes\n" .
-            'channelvars=' . implode(',', $vars) . "\n" .
-            "httptimeout = 60\n\n";
-
-        if ($this->arr_gs['AMIEnabled'] === '1') {
-            /** @var \MikoPBX\Common\Models\AsteriskManagerUsers $managers */
-            /** @var \MikoPBX\Common\Models\AsteriskManagerUsers $user */
-            $managers = AsteriskManagerUsers::find();
-            $result   = [];
-            foreach ($managers as $user) {
-                $arr_data = $user->toArray();
-                /** @var NetworkFilters $network_filter */
-                $network_filter     = NetworkFilters::findFirst($user->networkfilterid);
-                $arr_data['permit'] = empty($network_filter) ? '' : $network_filter->permit;
-                $arr_data['deny']   = empty($network_filter) ? '' : $network_filter->deny;
-                $result[]           = $arr_data;
-            }
-
-            foreach ($result as $user) {
-                $conf .= '[' . $user['username'] . "]\n";
-                $conf .= 'secret=' . $user['secret'] . "\n";
-
-                if (trim($user['deny']) !== '') {
-                    $conf .= 'deny=' . $user['deny'] . "\n";
-                }
-                if (trim($user['permit']) !== '') {
-                    $conf .= 'permit=' . $user['permit'] . "\n";
-                }
-
-                $keys  = [
-                    'call',
-                    'cdr',
-                    'originate',
-                    'reporting',
-                    'agent',
-                    'config',
-                    'dialplan',
-                    'dtmf',
-                    'log',
-                    'system',
-                    'verbose',
-                    'user',
-                ];
-                $read  = '';
-                $write = '';
-                foreach ($keys as $perm) {
-                    if ($user[$perm] === 'readwrite') {
-                        $read  .= ('' === $read) ? $perm : ",$perm";
-                        $write .= ('' === $write) ? $perm : ",$perm";
-                    } elseif ($user[$perm] === 'write') {
-                        $write .= ('' === $write) ? $perm : ",$perm";
-                    } elseif ($user[$perm] === 'read') {
-                        $read .= ('' === $read) ? $perm : ",$perm";
-                    }
-                }
-                if ($read !== '') {
-                    $conf .= "read=$read\n";
-                }
-
-                if ($write !== '') {
-                    $conf .= "write=$write\n";
-                }
-                $conf .= "eventfilter=!UserEvent: CdrConnector\n";
-                $conf .= "eventfilter=!Event: Newexten\n";
-                $conf .= "\n";
-            }
-            $conf .= "\n";
+        if ( ! $this->booting) {
+            $this->stop();
         }
-        $conf .= '[phpagi]' . "\n";
-        $conf .= 'secret=phpagi' . "\n";
-        $conf .= 'deny=0.0.0.0/0.0.0.0' . "\n";
-        $conf .= 'permit=127.0.0.1/255.255.255.255' . "\n";
-        $conf .= 'read=all' . "\n";
-        $conf .= 'write=all' . "\n";
-        $conf .= "eventfilter=!Event: Newexten\n";
-        $conf .= "\n";
+        /**
+         * Создание конфигурационных файлов.
+         */
+        if ($this->booting) {
+            echo '   |- generate modules.conf... ';
+        }
+        $this->modulesConfGenerate();
+        if ($this->booting) {
+            echo "\033[32;1mdone\033[0m \n";
+        }
+
+        if ($this->booting) {
+            echo '   |- generate manager.conf... ';
+        }
+        $this->managerConfGenerate();
+        $this->httpConfGenerate();
+        if ($this->booting) {
+            echo "\033[32;1mdone\033[0m \n";
+        }
 
         foreach ($this->arrObject as $appClass) {
-            $conf .= $appClass->generateManager($this->arr_gs);
+            $appClass->generateConfig($this->arr_gs);
+        }
+        $this->featuresGenerate();
+        $this->indicationConfGenerate();
+
+        if ($this->booting) {
+            echo '   |- generate extensions.conf... ';
+        }
+        $this->dialplanReload();
+        if ($this->booting) {
+            echo "\033[32;1mdone\033[0m \n";
         }
 
-        Util::fileWriteContent('/etc/asterisk/manager.conf', $conf);
-    }
-
-    /**
-     * Генерация http.cong AJAM.
-     */
-    private function httpConfGenerate(): void
-    {
-        $enabled = ($this->arr_gs['AJAMEnabled'] === '1') ? 'yes' : 'no';
-        $conf    = "[general]\n" .
-            "enabled={$enabled}\n" .
-            "bindaddr=0.0.0.0\n" .
-            "bindport={$this->arr_gs['AJAMPort']}\n" .
-            "prefix=asterisk\n" .
-            "enablestatic=yes\n\n";
-
-        if ( ! empty($this->arr_gs['AJAMPortTLS'])) {
-            $keys_dir = '/etc/asterisk/keys';
-            if ( ! is_dir($keys_dir) && ! mkdir($keys_dir) && ! is_dir($keys_dir)) {
-                Util::sysLogMsg('httpConfGenerate', sprintf('Directory "%s" was not created', $keys_dir));
-
-                return;
-            }
-            $WEBHTTPSPublicKey  = $this->arr_gs['WEBHTTPSPublicKey'];
-            $WEBHTTPSPrivateKey = $this->arr_gs['WEBHTTPSPrivateKey'];
-
-            if ( ! empty($WEBHTTPSPublicKey) && ! empty($WEBHTTPSPrivateKey)) {
-                $s_data = "{$WEBHTTPSPublicKey}\n{$WEBHTTPSPrivateKey}";
-            } else {
-                // Генерируем сертификат ssl.
-                $data   = Util::generateSslCert();
-                $s_data = implode("\n", $data);
-            }
-            $conf .= "tlsenable=yes\n" .
-                "tlsbindaddr=0.0.0.0:{$this->arr_gs['AJAMPortTLS']}\n" .
-                "tlscertfile={$keys_dir}/ajam.pem\n" .
-                "tlsprivatekey={$keys_dir}/ajam.pem\n";
-            Util::fileWriteContent("{$keys_dir}/ajam.pem", $s_data);
-        }
-        Util::fileWriteContent('/etc/asterisk/http.conf', $conf);
-    }
-
-    /**
-     * Создание конфига features.conf
-     */
-    private function featuresGenerate(): void
-    {
-        $pickup_extension = $this->mikoPBXConfig->getPickupExten();
-        $conf             = "[general]\n" .
-            "featuredigittimeout = {$this->arr_gs['PBXFeatureDigitTimeout']}\n" .
-            "atxfernoanswertimeout = {$this->arr_gs['PBXFeatureAtxferNoAnswerTimeout']}\n" .
-            "transferdigittimeout = 3\n" .
-            "pickupexten = {$pickup_extension}\n" .
-            "atxferabort = *0\n" .
-            "\n" .
-            "[featuremap]\n" .
-            "atxfer => {$this->arr_gs['PBXFeatureAttendedTransfer']}\n" .
-            "disconnect = *0\n" .
-            "blindxfer => {$this->arr_gs['PBXFeatureBlindTransfer']}\n";
-
-        foreach ($this->arrObject as $appClass) {
-            $conf .= $appClass->getFeatureMap();
+        // Создание базы данных истории звонков.
+        $di = Di::getDefault();
+        /** @var \Phalcon\Db\Adapter\Pdo\Sqlite $connection */
+        $connection = $di->get('dbCDR');
+        if ( ! $connection->tableExists('cdr')) {
+            CdrDb::createDb();
+            Util::CreateLogDB();
+            RegisterDIServices::recreateDBConnections();
+        } else {
+            CdrDb::checkDb();
         }
 
-        Util::fileWriteContent('/etc/asterisk/features.conf', $conf);
+        $result['result'] = 'Success';
+
+        return $result;
     }
 
     /**
@@ -693,10 +697,10 @@ class PBX
     private function indicationConfGenerate($country = 'ru'): void
     {
         $rootPath = $this->di->getShared('config')->path('core.rootPath');
-        $data = file_get_contents(
+        $data     = file_get_contents(
             "{$rootPath}/src/Core/Asterisk/Configs/Samples/indications.conf.sample"
         );
-        $conf = str_replace('{country}', $country, $data);
+        $conf     = str_replace('{country}', $country, $data);
         Util::fileWriteContent('/etc/asterisk/indications.conf', $conf);
     }
 
@@ -722,19 +726,5 @@ class PBX
         $result['result'] = 'Success';
 
         return $result;
-    }
-
-    /**
-     * Запуск процесса Asterisk.
-     *
-     */
-    public function start(): void
-    {
-        Network::startSipDump();
-       if(Util::isSystemctl()){
-           Util::mwExecBg('systemctl restart asterisk');
-       }else{
-           Util::mwExecBg('/usr/sbin/safe_asterisk -fn');
-       }
     }
 }

@@ -6,6 +6,7 @@
  * Written by Nikolay Beketov, 5 2018
  *
  */
+
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\AsteriskManagerEditForm;
@@ -66,17 +67,18 @@ class AsteriskManagersController extends BaseController
      */
     public function modifyAction($id = null)
     {
-
         $manager = AsteriskManagerUsers::findFirstById($id);
         if ($manager === null) {
             $manager = new AsteriskManagerUsers();
         }
 
         $arrNetworkFilters = [];
-        $networkFilters    = NetworkFilters::getAllowedFiltersForType([
-            'AJAM',
-            'AMI',
-        ]);
+        $networkFilters    = NetworkFilters::getAllowedFiltersForType(
+            [
+                'AJAM',
+                'AMI',
+            ]
+        );
         $arrNetworkFilters['none']
                            = $this->translation->_('ex_NoNetworkFilter');
         foreach ($networkFilters as $filter) {
@@ -84,11 +86,13 @@ class AsteriskManagersController extends BaseController
         }
 
 
-        $this->view->form = new AsteriskManagerEditForm($manager,
+        $this->view->form = new AsteriskManagerEditForm(
+            $manager,
             [
                 'network_filters'     => $arrNetworkFilters,
                 'array_of_checkboxes' => $this->arrCheckBoxes,
-            ]);
+            ]
+        );
 
         $this->view->arrCheckBoxes = $this->arrCheckBoxes;
         $this->view->represent     = $manager->getRepresent();
@@ -109,7 +113,7 @@ class AsteriskManagersController extends BaseController
         if (isset($data['id'])) {
             $manager = AsteriskManagerUsers::findFirst($data['id']);
         }
-        if ($manager===null) {
+        if ($manager === null) {
             $manager = new AsteriskManagerUsers();
         }
 
@@ -125,7 +129,6 @@ class AsteriskManagersController extends BaseController
                 continue;
             }
             $manager->$name = $data[$name];
-
         }
         $errors = false;
         if ( ! $manager->save()) {
@@ -151,9 +154,8 @@ class AsteriskManagersController extends BaseController
      */
     public function deleteAction($amiId = null): void
     {
-
         $manager = AsteriskManagerUsers::findFirstByid($amiId);
-        if ($manager!==null) {
+        if ($manager !== null) {
             $manager->delete();
         }
         $this->forward('asterisk-managers/index');

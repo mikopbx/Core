@@ -5,6 +5,7 @@
  * Proprietary and confidential
  * Written by Alexey Portnov, 4 2020
  */
+
 namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Models\{Fail2BanRules, FirewallRules, NetworkFilters};
@@ -37,7 +38,7 @@ class Firewall
      *
      * @return array
      */
-    static function reloadFirewall()
+    public static function reloadFirewall()
     {
         $result = [];
 
@@ -84,13 +85,18 @@ class Firewall
             $arr_commands_custom = [];
             $out                 = [];
             Util::fileWriteContent('/etc/firewall_additional', '');
-            Util::mwExec("/bin/cat /etc/firewall_additional | grep -v '|' | grep -v '&'| /bin/grep '^iptables' | /bin/busybox awk -F ';' '{print $1}'",
-                $arr_commands_custom);
+            Util::mwExec(
+                "/bin/cat /etc/firewall_additional | grep -v '|' | grep -v '&'| /bin/grep '^iptables' | /bin/busybox awk -F ';' '{print $1}'",
+                $arr_commands_custom
+            );
             if (Util::isSystemctl()) {
                 Util::mwMkdir('/etc/iptables');
                 file_put_contents('/etc/iptables/iptables.mikopbx', implode("\n", $arr_command));
-                file_put_contents('/etc/iptables/iptables.mikopbx', "\n" . implode("\n", $arr_commands_custom),
-                    FILE_APPEND);
+                file_put_contents(
+                    '/etc/iptables/iptables.mikopbx',
+                    "\n" . implode("\n", $arr_commands_custom),
+                    FILE_APPEND
+                );
                 Util::mwExec('systemctl restart mikopbx_iptables');
             } else {
                 Util::mwExecCommands($arr_command, $out, 'firewall');
@@ -109,7 +115,7 @@ class Firewall
     /**
      * Завершение работы fail2ban;
      */
-    static function fail2banStop()
+    public static function fail2banStop(): void
     {
         if (Util::isSystemctl()) {
             Util::mwExec('systemctl stop fail2ban');
@@ -132,12 +138,12 @@ class Firewall
      *
      * @return string
      */
-    static function fail2banMakeDirs()
+    public static function fail2banMakeDirs(): string
     {
         $res_file = self::fail2banGetDbPath();
         $filename = basename($res_file);
 
-        $old_dir_db =  '/cf/fail2ban';
+        $old_dir_db = '/cf/fail2ban';
         $dir_db     = self::getFail2banDbDir();
 
         // Создаем рабочие каталоги.
@@ -176,12 +182,12 @@ class Firewall
      *
      * @return string
      */
-    static function fail2banGetDbPath()
+    public static function fail2banGetDbPath(): string
     {
         return '/var/lib/fail2ban/fail2ban.sqlite3';
     }
 
-    static function getFail2banDbDir()
+    public static function getFail2banDbDir(): string
     {
         if (Storage::isStorageDiskMounted()) {
             $mount_point = Storage::getMediaDir();
@@ -208,7 +214,7 @@ class Firewall
      *
      * @return string
      */
-    private function getIptablesInputRule($dport = '', $other_data = '', $action = 'ACCEPT')
+    private function getIptablesInputRule($dport = '', $other_data = '', $action = 'ACCEPT'): string
     {
         $data_port = '';
         if (trim($dport) !== '') {
@@ -224,7 +230,7 @@ class Firewall
      *
      * @param $arr_command
      */
-    private function addFirewallRules(&$arr_command)
+    private function addFirewallRules(&$arr_command): void
     {
         /** @var \MikoPBX\Common\Models\FirewallRules $result */
         /** @var \MikoPBX\Common\Models\FirewallRules $rule */
@@ -264,7 +270,6 @@ class Firewall
      */
     private function writeConfig(): void
     {
-
         $user_whitelist = '';
         /** @var \MikoPBX\Common\Models\Fail2BanRules $res */
         $res = Fail2BanRules::findFirst("id = '1'");
@@ -351,9 +356,8 @@ class Firewall
     /**
      * Создаем дополнительные правила.
      */
-    private function generateJails()
+    private function generateJails(): void
     {
-
         $conf = "[INCLUDES]\n" .
             "before = common.conf\n" .
             "[Definition]\n" .
@@ -382,13 +386,12 @@ class Firewall
             '            ^[Ee]xit before auth \(user \'.+\', \d+ fails\): Max auth tries reached - user \'.+\' from <HOST>:\d+\s*$' . "\n" .
             "ignoreregex =\n";
         file_put_contents('/etc/fail2ban/filter.d/dropbear.conf', $conf);
-
     }
 
     /**
      * Старт firewall.
      */
-    static function fail2banStart()
+    public static function fail2banStart(): void
     {
         if (Util::isSystemctl()) {
             Util::mwExec('systemctl restart fail2ban');
@@ -404,7 +407,7 @@ class Firewall
         Util::mwExec($command);
     }
 
-    static function cleanFail2banDb()
+    public static function cleanFail2banDb(): void
     {
         /** @var \MikoPBX\Common\Models\Fail2BanRules $res */
         $res = Fail2BanRules::findFirst("id = '1'");
@@ -430,22 +433,21 @@ class Firewall
      *
      * @return bool
      */
-    static function tableBanExists($db)
+    public static function tableBanExists($db): bool
     {
         $q_check      = 'SELECT' . ' name FROM sqlite_master WHERE type = "table" AND name="bans"';
         $result_check = $db->query($q_check);
-        $result       = (false !== $result_check && $result_check->fetchArray(SQLITE3_ASSOC) !== false);
 
-        return $result;
+        return (false !== $result_check && $result_check->fetchArray(SQLITE3_ASSOC) !== false);
     }
 
     /**
      * Проверка запущен ли fail2ban.
      */
-    static function checkFail2ban()
+    public static function checkFail2ban(): void
     {
         $firewall = new Firewall();
-        if ($firewall->fail2ban_enable && ! $firewall->fail2banIsRuning()) {
+        if ($firewall->fail2ban_enable && ! $firewall->fail2banIsRunning()) {
             self::fail2banStart();
         }
     }
@@ -455,7 +457,7 @@ class Firewall
      *
      * @return bool
      */
-    private function fail2banIsRuning()
+    private function fail2banIsRunning(): bool
     {
         $res_ping = Util::mwExec('fail2ban-client ping');
         $res_stat = Util::mwExec('fail2ban-client status');
@@ -475,7 +477,7 @@ class Firewall
      *
      * @return array
      */
-    static function fail2banUnbanAll($ip)
+    public static function fail2banUnbanAll($ip): array
     {
         $ip     = trim($ip);
         $result = ['result' => 'Success'];
@@ -512,7 +514,7 @@ class Firewall
      *
      * @return array
      */
-    static function getBanIp($ip = null)
+    public static function getBanIp($ip = null): array
     {
         $result = [];
 
@@ -525,7 +527,8 @@ class Firewall
         }
 
         // Добавленн фильтр по времени бана. возвращаем только адреса, которые еще НЕ разбанены.
-        $q = 'SELECT' . ' DISTINCT jail,ip,MAX(timeofban) AS timeofban, MAX(timeofban+' . $ban_time . ') AS timeunban FROM bans where (timeofban+' . $ban_time . ')>' . time();
+        $q = 'SELECT' . ' DISTINCT jail,ip,MAX(timeofban) AS timeofban, MAX(timeofban+' . $ban_time . ') AS timeunban FROM bans where (timeofban+' . $ban_time . ')>' . time(
+            );
         if ($ip !== null) {
             $q .= " AND ip='{$ip}'";
         }
@@ -558,7 +561,7 @@ class Firewall
      *
      * @return array
      */
-    static function fail2banUnban($ip, $jail)
+    public static function fail2banUnban($ip, $jail): array
     {
         $res = ['result' => 'ERROR'];
         $ip  = trim($ip);
@@ -600,7 +603,7 @@ class Firewall
      *
      * @return array
      */
-    static function fail2banUnbanDb($ip, $jail = '')
+    public static function fail2banUnbanDb($ip, $jail = ''): array
     {
         $jail_q  = ($jail === '') ? '' : "AND jail = '{$jail}'";
         $path_db = self::fail2banGetDbPath();

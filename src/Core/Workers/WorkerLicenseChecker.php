@@ -5,6 +5,7 @@
  * Proprietary and confidential
  * Written by Alexey Portnov, 2 2020
  */
+
 namespace MikoPBX\Core\Workers;
 
 use Exception;
@@ -16,7 +17,7 @@ require_once 'globals.php';
 
 class WorkerLicenseChecker extends WorkerBase
 {
-    public function start($argv):void
+    public function start($argv): void
     {
         $lic = new License();
         $lic->startWorker();

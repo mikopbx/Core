@@ -5,12 +5,13 @@
  * Proprietary and confidential
  * Written by Alexey Portnov, 2 2020
  */
+
 namespace MikoPBX\Core\Workers;
 
 require_once 'globals.php';
 
-use Phalcon\Exception;
 use MikoPBX\Core\System\{BeanstalkClient, MikoPBXConfig, Notifications, Util};
+use Exception;
 
 class WorkerNotifyError extends WorkerBase
 {
@@ -21,12 +22,12 @@ class WorkerNotifyError extends WorkerBase
     /**
      * Наполняем очередь уведомлениями.
      */
-    public function start($argv):void
+    public function start($argv): void
     {
         $client = new BeanstalkClient('WorkerNotifyError_license');
         $client->subscribe('WorkerNotifyError_license', [$this, 'onLicenseError']);
         $client->subscribe('WorkerNotifyError_storage', [$this, 'onStorageError']);
-        $client->subscribe('ping_'.self::class, [$this, 'pingCallBack']);
+        $client->subscribe('ping_' . self::class, [$this, 'pingCallBack']);
 
         while (true) {
             $client->wait();
@@ -38,7 +39,7 @@ class WorkerNotifyError extends WorkerBase
      *
      * @param BeanstalkClient $message
      */
-    public function pingCallBack($message):void
+    public function pingCallBack($message): void
     {
         parent::pingCallBack($message);
         if (count($this->queue) > 0 && (time() - $this->starting_point) > $this->interval) {
@@ -124,7 +125,7 @@ if (isset($argv) && count($argv) > 1 && $argv[1] === 'start') {
     try {
         $worker = new $workerClassname();
         $worker->start($argv);
-    } catch (\Exception $e) {
+    } catch (Exception $e) {
         global $errorLogger;
         $errorLogger->captureException($e);
         Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage());

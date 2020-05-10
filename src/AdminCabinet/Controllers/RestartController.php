@@ -6,6 +6,7 @@
  * Written by Nikolay Beketov, 6 2018
  *
  */
+
 namespace MikoPBX\AdminCabinet\Controllers;
 
 class RestartController extends BaseController
@@ -16,6 +17,5 @@ class RestartController extends BaseController
      */
     public function indexAction(): void
     {
-
     }
 }

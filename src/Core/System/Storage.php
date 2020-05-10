@@ -5,13 +5,11 @@
  * Proprietary and confidential
  * Written by Alexey Portnov, 4 2020
  */
+
 namespace MikoPBX\Core\System;
 
+use MikoPBX\Common\Models\{PbxExtensionModules, Storage as StorageModel};
 use MikoPBX\Common\Providers\ConfigProvider;
-use MikoPBX\Common\Models\{
-    PbxExtensionModules,
-    Storage as StorageModel
-};
 use Phalcon\Di;
 
 
@@ -45,7 +43,7 @@ class Storage
      *
      * @return string
      */
-    static function getMonitorDir()
+    public static function getMonitorDir()
     {
         return Di::getDefault()->getConfig()->path('asterisk.monitordir');
     }
@@ -55,7 +53,7 @@ class Storage
      *
      * @return string
      */
-    static function getMediaDir()
+    public static function getMediaDir()
     {
         return Di::getDefault()->getConfig()->path('core.mediaMountPoint');
     }
@@ -68,7 +66,7 @@ class Storage
      *
      * @return bool
      */
-    static function isStorageDisk($device)
+    public static function isStorageDisk($device)
     {
         $result = false;
         if ( ! file_exists("{$device}")) {
@@ -117,8 +115,10 @@ class Storage
         if (strlen($device) == 0) {
             return false;
         }
-        $res = Util::mwExec("/sbin/blkid -ofull {$device} | /bin/busybox sed -r 's/[[:alnum:]]+=/\\n&/g' | /bin/busybox grep \"^UUID\" | /bin/busybox awk -F \"\\\"\" '{print $2}' | /usr/bin/head -n 1",
-            $output);
+        $res = Util::mwExec(
+            "/sbin/blkid -ofull {$device} | /bin/busybox sed -r 's/[[:alnum:]]+=/\\n&/g' | /bin/busybox grep \"^UUID\" | /bin/busybox awk -F \"\\\"\" '{print $2}' | /usr/bin/head -n 1",
+            $output
+        );
         if ($res == 0 && count($output) > 0) {
             $result = $output[0];
         } else {
@@ -139,8 +139,10 @@ class Storage
     {
         $device = str_replace('/dev/', '', $device);
         $out    = [];
-        Util::mwExec("/sbin/blkid -ofull /dev/{$device} | /bin/busybox sed -r 's/[[:alnum:]]+=/\\n&/g' | /bin/busybox grep \"^TYPE=\" | /bin/busybox awk -F \"\\\"\" '{print $2}'",
-            $out);
+        Util::mwExec(
+            "/sbin/blkid -ofull /dev/{$device} | /bin/busybox sed -r 's/[[:alnum:]]+=/\\n&/g' | /bin/busybox grep \"^TYPE=\" | /bin/busybox awk -F \"\\\"\" '{print $2}'",
+            $out
+        );
         $format = implode('', $out);
         if ($format == 'msdosvfat') {
             $format = 'msdos';
@@ -157,7 +159,7 @@ class Storage
      *
      * @return bool
      */
-    static function isStorageDiskMounted($filter = '', &$mount_dir = '')
+    public static function isStorageDiskMounted($filter = '', &$mount_dir = '')
     {
         if (Util::isSystemctl() && file_exists('/storage/usbdisk1/')) {
             $mount_dir = '/storage/usbdisk1/';
@@ -195,7 +197,7 @@ class Storage
      *
      * @return bool
      */
-    static function mountSftpDisk($host, $port, $user, $pass, $remout_dir, $local_dir)
+    public static function mountSftpDisk($host, $port, $user, $pass, $remout_dir, $local_dir)
     {
         if ( ! file_exists($local_dir) && ! mkdir($local_dir, 0777, true) && ! is_dir($local_dir)) {
             return false;
@@ -229,7 +231,7 @@ class Storage
      *
      * @return bool
      */
-    static function mountFtp($host, $port, $user, $pass, $remout_dir, $local_dir)
+    public static function mountFtp($host, $port, $user, $pass, $remout_dir, $local_dir)
     {
         if ( ! file_exists($local_dir) && ! mkdir($local_dir, 0777, true) && ! is_dir($local_dir)) {
             return false;
@@ -272,7 +274,7 @@ class Storage
      *
      * @return array|bool
      */
-    static function mkfs_disk($dev)
+    public static function mkfs_disk($dev)
     {
         if ( ! file_exists($dev)) {
             $dev = "/dev/{$dev}";
@@ -304,7 +306,7 @@ class Storage
      *
      * @return bool
      */
-    static function umountDisk($dir)
+    public static function umountDisk($dir)
     {
         if (self::isStorageDiskMounted($dir)) {
             Util::mwExec("/etc/rc/shell_functions.sh 'killprocesses' '$dir' -TERM 0");
@@ -331,7 +333,8 @@ class Storage
     {
         openlog("storage", LOG_NDELAY, LOG_DAEMON);
         // overwrite with fresh DOS partition table
-        Util::mwExec("echo \"o\n" .
+        Util::mwExec(
+            "echo \"o\n" .
             // create new
             "n\n" .
             // primary partition
@@ -354,7 +357,10 @@ class Storage
             */
             // and write changes
             "w\n" .
-            "\" | fdisk " . $device, $out, $retval);
+            "\" | fdisk " . $device,
+            $out,
+            $retval
+        );
         syslog(LOG_NOTICE, "fdisk returned " . $retval);
         closelog();
 
@@ -403,7 +409,7 @@ class Storage
      *
      * @return string
      */
-    static function statusMkfs($dev):string
+    public static function statusMkfs($dev): string
     {
         if ( ! file_exists($dev)) {
             $dev = "/dev/{$dev}";
@@ -464,7 +470,6 @@ class Storage
             // Добавляем задачу на уведомление.
             $util->addJobToBeanstalk('WorkerNotifyError_storage', $data);
         }
-
     }
 
     /**
@@ -480,8 +485,10 @@ class Storage
 
         if (Util::isSystemctl()) {
             $out = [];
-            Util::mwExec("/usr/bin/df -k /storage/usbdisk1 | awk  '{ print $1 \"|\" $3 \"|\" $4} ' | grep -v 'Available'",
-                $out);
+            Util::mwExec(
+                "/usr/bin/df -k /storage/usbdisk1 | awk  '{ print $1 \"|\" $3 \"|\" $4} ' | grep -v 'Available'",
+                $out
+            );
             $disk_data = explode('|', implode(" ", $out));
             if (count($disk_data) === 3) {
                 $m_size      = round(($disk_data[1] + $disk_data[2]) / 1024, 1);
@@ -559,7 +566,6 @@ class Storage
                     'sys_disk'   => $sys_disk,
                 ];
             }
-
         }
 
         return $res_disks;
@@ -572,8 +578,10 @@ class Storage
      */
     private function cdromGetDevices()
     {
-        return explode(" ",
-            trim(exec('/sbin/sysctl -n dev.cdrom.info | /bin/busybox grep "drive name" | /bin/busybox cut -f 3')));
+        return explode(
+            " ",
+            trim(exec('/sbin/sysctl -n dev.cdrom.info | /bin/busybox grep "drive name" | /bin/busybox cut -f 3'))
+        );
     }
 
     /**
@@ -595,9 +603,8 @@ class Storage
      *
      * @return bool
      */
-    static function diskIsMounted($disk, $filter = '/dev/')
+    public static function diskIsMounted($disk, $filter = '/dev/')
     {
-
         $out = [];
         Util::mwExec("mount | grep '{$filter}{$disk}'", $out);
         if (count($out) > 0) {
@@ -754,7 +761,7 @@ class Storage
      *
      * @return bool
      */
-    static function mountDisk($dev, $format, $dir)
+    public static function mountDisk($dev, $format, $dir)
     {
         if (Storage::isStorageDiskMounted("/dev/{$dev} ")) {
             return true;
@@ -785,7 +792,7 @@ class Storage
      */
     public function configure(): void
     {
-        $is_mounted = false;
+        $is_mounted       = false;
         $cf_disk          = '';
         $varEtcPath       = $this->config->path('core.varEtcPath');
         $storage_dev_file = "{$varEtcPath}/storage_device";
@@ -836,34 +843,6 @@ class Storage
     }
 
     /**
-     * After mount storage we will change /mountpoint/ to new $mount_point value
-     *
-     * @param string $mount_point
-     */
-    private function updateConfigWithNewMountPoint(string $mount_point): void
-    {
-        $staticSettingsFile = '/etc/inc/mikopbx-settings.json';
-        $staticSettingsFileOrig = '/usr/www/config/mikopbx-settings.json';
-
-        $jsonString = file_get_contents($staticSettingsFileOrig);
-        $data       = json_decode($jsonString, true);
-        foreach ($data as $rootKey=>$rootEntry) {
-            foreach ($rootEntry as $nestedKey => $entry) {
-                if (stripos($entry,'/mountpoint')!==false) {
-                    $data[$rootKey][$nestedKey] = str_ireplace('/mountpoint', $mount_point, $entry);
-                }
-            }
-        }
-        $newJsonString = json_encode($data, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES);
-        file_put_contents($staticSettingsFile, $newJsonString);
-
-        // Update config variable
-        $this->di->remove('config');
-        $this->di->register(new ConfigProvider());
-        $this->config = $this->di->getShared('config');
-    }
-
-    /**
      * Получаем настройки диска из базы данных.
      *
      * @param string $id
@@ -905,6 +884,34 @@ class Storage
         }
 
         return $result;
+    }
+
+    /**
+     * After mount storage we will change /mountpoint/ to new $mount_point value
+     *
+     * @param string $mount_point
+     */
+    private function updateConfigWithNewMountPoint(string $mount_point): void
+    {
+        $staticSettingsFile     = '/etc/inc/mikopbx-settings.json';
+        $staticSettingsFileOrig = '/usr/www/config/mikopbx-settings.json';
+
+        $jsonString = file_get_contents($staticSettingsFileOrig);
+        $data       = json_decode($jsonString, true);
+        foreach ($data as $rootKey => $rootEntry) {
+            foreach ($rootEntry as $nestedKey => $entry) {
+                if (stripos($entry, '/mountpoint') !== false) {
+                    $data[$rootKey][$nestedKey] = str_ireplace('/mountpoint', $mount_point, $entry);
+                }
+            }
+        }
+        $newJsonString = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        file_put_contents($staticSettingsFile, $newJsonString);
+
+        // Update config variable
+        $this->di->remove('config');
+        $this->di->register(new ConfigProvider());
+        $this->config = $this->di->getShared('config');
     }
 
     /**
@@ -962,7 +969,7 @@ class Storage
         $arrConfig = $this->config->toArray();
         foreach ($arrConfig as $rootEntry) {
             foreach ($rootEntry as $key => $entry) {
-                if (stripos ($key, 'path') === false
+                if (stripos($key, 'path') === false
                     && stripos($key, 'dir') === false
                 ) {
                     continue;
@@ -979,15 +986,24 @@ class Storage
             Util::mwExec("mkdir -p $path");
         }
 
-        Util::createUpdateSymlink($this->config->path('adminApplication.cacheDir').'/js',
-            $this->config->path('adminApplication.jsCacheDir'));
-        Util::createUpdateSymlink($this->config->path('adminApplication.cacheDir').'/css',
-            $this->config->path('adminApplication.cssCacheDir'));
-        Util::createUpdateSymlink($this->config->path('adminApplication.cacheDir').'/img',
-            $this->config->path('adminApplication.imgCacheDir'));
+        Util::createUpdateSymlink(
+            $this->config->path('adminApplication.cacheDir') . '/js',
+            $this->config->path('adminApplication.jsCacheDir')
+        );
+        Util::createUpdateSymlink(
+            $this->config->path('adminApplication.cacheDir') . '/css',
+            $this->config->path('adminApplication.cssCacheDir')
+        );
+        Util::createUpdateSymlink(
+            $this->config->path('adminApplication.cacheDir') . '/img',
+            $this->config->path('adminApplication.imgCacheDir')
+        );
         Util::createUpdateSymlink($this->config->path('core.phpSessionPath'), '/var/lib/php/session');
         Util::createUpdateSymlink($this->config->path('core.tempPath'), '/ultmp');
-        Util::createUpdateSymlink($this->config->path('core.rootPath').'/src/ext/lua/asterisk/extensions.lua', '/etc/asterisk/extensions.lua'); //TODO:Этот файл используется?
+        Util::createUpdateSymlink(
+            $this->config->path('core.rootPath') . '/src/ext/lua/asterisk/extensions.lua',
+            '/etc/asterisk/extensions.lua'
+        ); //TODO:Этот файл используется?
 
         $this->applyFolderRights();
 
@@ -997,14 +1013,14 @@ class Storage
     /**
      * Fix permissions for Folder and Files
      */
-    private function applyFolderRights():void
+    private function applyFolderRights(): void
     {
         // Add Rights to the WWW dirs plus some core dirs
-        $www_dirs = [];
+        $www_dirs  = [];
         $arrConfig = $this->config->adminApplication->toArray();
         foreach ($arrConfig as $key => $entry) {
-            if (stripos($key,'path') === false
-                && stripos($key,'dir') === false
+            if (stripos($key, 'path') === false
+                && stripos($key, 'dir') === false
             ) {
                 continue;
             }
@@ -1016,15 +1032,15 @@ class Storage
         $www_dirs[] = $this->config->path('core.tempPath');
 
         // Add read rights
-        Util::mwExec('find ' . implode(' ', $www_dirs). ' -type d -exec chmod 755 {} \;');
-        Util::mwExec('find ' . implode(' ', $www_dirs). ' -type f -exec chmod 644 {} \;');
+        Util::mwExec('find ' . implode(' ', $www_dirs) . ' -type d -exec chmod 755 {} \;');
+        Util::mwExec('find ' . implode(' ', $www_dirs) . ' -type f -exec chmod 644 {} \;');
         Util::mwExec('chown -R www:www ' . implode(' ', $www_dirs));
 
         // Add executable rights
         $exec_dirs[] = $this->config->path('asterisk.astagidir');
         $exec_dirs[] = $this->config->path('core.workersPath');
         $exec_dirs[] = $this->config->path('core.rcDir');
-        Util::mwExec('find ' . implode(' ', $exec_dirs). ' -type f -exec chmod +x {} \;');
+        Util::mwExec('find ' . implode(' ', $exec_dirs) . ' -type f -exec chmod +x {} \;');
         Util::mwExec('mount -o remount,ro /offload 2> /dev/null');
     }
 
@@ -1066,7 +1082,6 @@ class Storage
             }
             $storage_settings->writeAttribute('uniqid', $uniqid);
             $storage_settings->save();
-
         } else {
             $storage_settings = StorageModel::findFirst("id = '$id'");
             foreach ($data as $key => $value) {

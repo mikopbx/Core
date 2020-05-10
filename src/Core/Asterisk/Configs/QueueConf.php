@@ -5,11 +5,12 @@
  * Proprietary and confidential
  * Written by Alexey Portnov, 2 2020
  */
+
 namespace MikoPBX\Core\Asterisk\Configs;
 
-use MikoPBX\Core\System\{MikoPBXConfig, Util};
 use MikoPBX\Common\Models\CallQueues;
 use MikoPBX\Core\Modules\Config\ConfigClass;
+use MikoPBX\Core\System\{MikoPBXConfig, Util};
 
 class QueueConf extends ConfigClass
 {
@@ -19,13 +20,13 @@ class QueueConf extends ConfigClass
     /**
      * Генерация конфига очередей. Рестарт модуля очередей.
      */
-    static function queueReload()
+    public static function queueReload()
     {
         $result           = [
             'result' => 'ERROR',
         ];
         $queue            = new QueueConf();
-        $mikoPBXConfig           = new MikoPBXConfig();
+        $mikoPBXConfig    = new MikoPBXConfig();
         $general_settings = $mikoPBXConfig->getGeneralSettings();
         $queue->generateConfig($general_settings);
         $out = [];
@@ -85,7 +86,6 @@ class QueueConf extends ConfigClass
                 } // эти параметры мы собрали по-своему
                 $arrResult[$queueUniqid][$key] = $value;
             }
-
         }
 
         return $arrResult; // JSON_PRETTY_PRINT
@@ -153,7 +153,6 @@ class QueueConf extends ConfigClass
 
         $q_conf = '';
         foreach ($this->db_data as $queue_data) {
-
             $joinempty        = (isset($queue_data['joinempty']) && $queue_data['joinempty'] == 1) ? 'yes' : 'no';
             $leavewhenempty   = (isset($queue_data['leavewhenempty']) && $queue_data['leavewhenempty'] == 1) ? 'yes' : 'no';
             $ringinuse        = ($queue_data['recive_calls_while_on_a_call'] == 1) ? 'yes' : 'no';
@@ -234,7 +233,9 @@ class QueueConf extends ConfigClass
             if (isset($queue['caller_hear']) && $queue['caller_hear'] === 'ringing') {
                 $options .= 'r'; // Установить КПВ (гудки) вместо Музыки на Удержании для ожидающих в очереди
             }
-            $ringlength     = (trim($queue['timeout_to_redirect_to_extension']) == '') ? 120 : $queue['timeout_to_redirect_to_extension'];
+            $ringlength     = (trim(
+                    $queue['timeout_to_redirect_to_extension']
+                ) == '') ? 120 : $queue['timeout_to_redirect_to_extension'];
             $queue_ext_conf .= "same => n,Queue({$queue['uniqid']},kT{$options},,,{$ringlength},,,queue_agent_answer,s,1) \n\t";
             // Оповестим о завершении работы очереди.
             // $queue_ext_conf .= 'same => n,AGI(cdr_connector.php,queue_end)'."\n\t";

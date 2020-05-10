@@ -1,4 +1,5 @@
 <?php
+
 namespace MikoPBX\Core\Utilities;
 
 use Phalcon\Exception;
@@ -255,12 +256,15 @@ class SubnetCalculator
      */
     private function ipAddressCalculation($format, $separator = '')
     {
-        return implode($separator, array_map(
-            function ($x) use ($format) {
-                return sprintf($format, $x);
-            },
-            $this->quads
-        ));
+        return implode(
+            $separator,
+            array_map(
+                function ($x) use ($format) {
+                    return sprintf($format, $x);
+                },
+                $this->quads
+            )
+        );
     }
 
     /**
@@ -429,14 +433,22 @@ class SubnetCalculator
         $network_quads         = $this->getNetworkPortionQuads();
         $number_ip_addresses   = $this->getNumberIPAddresses();
         $network_range_quads   = [];
-        $network_range_quads[] = sprintf('%d',
-            ($network_quads[0] & ($this->subnet_mask >> 24)) + ((($number_ip_addresses - 1) >> 24) & 0xFF));
-        $network_range_quads[] = sprintf('%d',
-            ($network_quads[1] & ($this->subnet_mask >> 16)) + ((($number_ip_addresses - 1) >> 16) & 0xFF));
-        $network_range_quads[] = sprintf('%d',
-            ($network_quads[2] & ($this->subnet_mask >> 8)) + ((($number_ip_addresses - 1) >> 8) & 0xFF));
-        $network_range_quads[] = sprintf('%d',
-            ($network_quads[3] & ($this->subnet_mask >> 0)) + ((($number_ip_addresses - 1) >> 0) & 0xFF));
+        $network_range_quads[] = sprintf(
+            '%d',
+            ($network_quads[0] & ($this->subnet_mask >> 24)) + ((($number_ip_addresses - 1) >> 24) & 0xFF)
+        );
+        $network_range_quads[] = sprintf(
+            '%d',
+            ($network_quads[1] & ($this->subnet_mask >> 16)) + ((($number_ip_addresses - 1) >> 16) & 0xFF)
+        );
+        $network_range_quads[] = sprintf(
+            '%d',
+            ($network_quads[2] & ($this->subnet_mask >> 8)) + ((($number_ip_addresses - 1) >> 8) & 0xFF)
+        );
+        $network_range_quads[] = sprintf(
+            '%d',
+            ($network_quads[3] & ($this->subnet_mask >> 0)) + ((($number_ip_addresses - 1) >> 0) & 0xFF)
+        );
 
         return implode('.', $network_range_quads);
     }
@@ -470,16 +482,41 @@ class SubnetCalculator
     public function __tostring()
     {
         $string = sprintf("%-18s %15s %8s %32s\n", "{$this->ip}/{$this->network_size}", 'Quads', 'Hex', 'Binary');
-        $string .= sprintf("%-18s %15s %8s %32s\n", '------------------', '---------------', '--------',
-            '--------------------------------');
-        $string .= sprintf("%-18s %15s %8s %32s\n", 'IP Address:', $this->getIPAddress(), $this->getIPAddressHex(),
-            $this->getIPAddressBinary());
-        $string .= sprintf("%-18s %15s %8s %32s\n", 'Subnet Mask:', $this->getSubnetMask(), $this->getSubnetMaskHex(),
-            $this->getSubnetMaskBinary());
-        $string .= sprintf("%-18s %15s %8s %32s\n", 'Network Portion:', $this->getNetworkPortion(),
-            $this->getNetworkPortionHex(), $this->getNetworkPortionBinary());
-        $string .= sprintf("%-18s %15s %8s %32s\n", 'Host Portion:', $this->getHostPortion(),
-            $this->getHostPortionHex(), $this->getHostPortionBinary());
+        $string .= sprintf(
+            "%-18s %15s %8s %32s\n",
+            '------------------',
+            '---------------',
+            '--------',
+            '--------------------------------'
+        );
+        $string .= sprintf(
+            "%-18s %15s %8s %32s\n",
+            'IP Address:',
+            $this->getIPAddress(),
+            $this->getIPAddressHex(),
+            $this->getIPAddressBinary()
+        );
+        $string .= sprintf(
+            "%-18s %15s %8s %32s\n",
+            'Subnet Mask:',
+            $this->getSubnetMask(),
+            $this->getSubnetMaskHex(),
+            $this->getSubnetMaskBinary()
+        );
+        $string .= sprintf(
+            "%-18s %15s %8s %32s\n",
+            'Network Portion:',
+            $this->getNetworkPortion(),
+            $this->getNetworkPortionHex(),
+            $this->getNetworkPortionBinary()
+        );
+        $string .= sprintf(
+            "%-18s %15s %8s %32s\n",
+            'Host Portion:',
+            $this->getHostPortion(),
+            $this->getHostPortionHex(),
+            $this->getHostPortionBinary()
+        );
         $string .= "\n";
         $string .= sprintf("%-28s %d\n", 'Number of IP Addresses:', $this->getNumberIPAddresses());
         $string .= sprintf("%-28s %d\n", 'Number of Addressable Hosts:', $this->getNumberAddressableHosts());

@@ -14,7 +14,7 @@ use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
 /**
- * @method static mixed findFirstByUniqid(array|string|int $parameters=null)
+ * @method static mixed findFirstByUniqid(array|string|int $parameters = null)
  */
 class ConferenceRooms extends ModelsBase
 {
@@ -60,20 +60,20 @@ class ConferenceRooms extends ModelsBase
                 ],
             ]
         );
-
-
     }
 
     public function validation()
     {
-
         $validation = new Validation();
-        $validation->add('uniqid', new UniquenessValidator([
-            'message' => $this->t('mo_ThisUniqidMustBeUniqueForConferenceRoomsModels'),
-        ]));
+        $validation->add(
+            'uniqid',
+            new UniquenessValidator(
+                [
+                    'message' => $this->t('mo_ThisUniqidMustBeUniqueForConferenceRoomsModels'),
+                ]
+            )
+        );
 
         return $this->validate($validation);
-
-
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 namespace MikoPBX\PBXCoreREST\Controllers\Cdr;
 
 
@@ -120,6 +121,7 @@ class GetController extends BaseController
             syslog(LOG_WARNING, "From {$_SERVER['REMOTE_ADDR']}. UserAgent: ({$user_agent}). File not found.");
             closelog();
             $this->sendError(404);
+
             return;
         }
 
@@ -148,7 +150,7 @@ class GetController extends BaseController
      *  download - опциональный параметр, скачивать записи или нет
      *  filename - опциональный параметр, красивое имя для файла, так файл будет назван при скачивании браузером
      */
-    public function playbackAction():void
+    public function playbackAction(): void
     {
         $filename  = $this->request->get('view');
         $extension = strtolower(substr(strrchr($filename, '.'), 1));
@@ -168,6 +170,7 @@ class GetController extends BaseController
                 [$param, $range] = explode('=', $range);
                 if (strtolower(trim($param)) !== 'bytes') {
                     $this->sendError(400);
+
                     return;
                 }
                 $range = explode(',', $range);
@@ -226,8 +229,10 @@ class GetController extends BaseController
                     $new_filename = basename($filename);
                 }
 
-                $this->response->setHeader('Content-Disposition',
-                    "attachment; filename*=UTF-8''" . basename($new_filename));
+                $this->response->setHeader(
+                    'Content-Disposition',
+                    "attachment; filename*=UTF-8''" . basename($new_filename)
+                );
             }
             $this->response->sendRaw();
         } else {

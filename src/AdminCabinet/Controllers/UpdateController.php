@@ -6,6 +6,7 @@
  * Written by Nikolay Beketov, 7 2018
  *
  */
+
 namespace MikoPBX\AdminCabinet\Controllers;
 
 class UpdateController extends BaseController

@@ -18,32 +18,27 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Providers;
 
-use MikoPBX\PBXCoreREST\Controllers\{
-    Pbx\GetController as PbxGetController,
+use MikoPBX\PBXCoreREST\Controllers\{Cdr\GetController as CdrGetController,
     Iax\GetController as IaxGetController,
+    Modules\GetController as ModulesGetController,
+    Modules\PostController as ModulesPostController,
+    Pbx\GetController as PbxGetController,
     Sip\GetController as SipGetController,
     Sip\PostController as SipPostController,
-    Cdr\GetController as CdrGetController,
     Storage\GetController as StorageGetController,
     Storage\PostController as StoragePostController,
     System\GetController as SystemGetController,
     System\PostController as SystemPostController,
-    Upload\GetController as UploadGetController,
-    Modules\PostController as ModulesPostController,
-    Modules\GetController as ModulesGetController,
-};
-
-
-
-
+    Upload\GetController as UploadGetController,};
 use MikoPBX\PBXCoreREST\Middleware\AuthenticationMiddleware;
 use MikoPBX\PBXCoreREST\Middleware\NotFoundMiddleware;
 use MikoPBX\PBXCoreREST\Middleware\ResponseMiddleware;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
-use Phalcon\Mvc\Micro;
 use Phalcon\Events\Manager;
+use Phalcon\Mvc\Micro;
 use Phalcon\Mvc\Micro\Collection;
+
 
 /**
  * Register Router service
@@ -56,7 +51,7 @@ class RouterProvider implements ServiceProviderInterface
     public function register(DiInterface $di): void
     {
         /** @var Micro $application */
-        $application   = $di->getShared('application');
+        $application = $di->getShared('application');
         /** @var Manager $eventsManager */
         $eventsManager = $di->getShared('eventsManager');
 
@@ -64,25 +59,6 @@ class RouterProvider implements ServiceProviderInterface
         $this->attachMiddleware($application, $eventsManager);
 
         $application->setEventsManager($eventsManager);
-    }
-
-    /**
-     * Attaches the middleware to the application
-     *
-     * @param Micro   $application
-     * @param Manager $eventsManager
-     */
-    private function attachMiddleware(Micro $application, Manager $eventsManager): void
-    {
-        $middleware = $this->getMiddleware();
-
-        /**
-         * Get the events manager and attach the middleware to it
-         */
-        foreach ($middleware as $class => $function) {
-            $eventsManager->attach('micro', new $class());
-            $application->{$function}(new $class());
-        }
     }
 
     /**
@@ -97,14 +73,14 @@ class RouterProvider implements ServiceProviderInterface
         $routes = $this->getRoutes();
 
         // Add additional modules routes
-        $additionalRoutes = [];
+        $additionalRoutes  = [];
         $additionalModules = $di->getShared('pbxConfModules');
         foreach ($additionalModules as $appClass) {
             /** @var \MikoPBX\Core\Modules\Config\ConfigClass; $appClass */
             $additionalRoutes[] = $appClass->getPBXCoreRESTAdditionalRoutes();
         }
 
-        $routes = array_merge($routes,...$additionalRoutes);
+        $routes = array_merge($routes, ...$additionalRoutes);
 
         // Class, Method, Route, Handler, ParamsRegex
         foreach ($routes as $route) {
@@ -112,24 +88,13 @@ class RouterProvider implements ServiceProviderInterface
             $collection
                 ->setHandler($route[0], true)
                 ->setPrefix($route[2])
-                ->{$route[3]}($route[4], $route[1]);
+                ->{$route[3]}(
+                    $route[4],
+                    $route[1]
+                );
 
             $application->mount($collection);
         }
-    }
-
-    /**
-     * Returns the array for the middleware with the action to attach
-     *
-     * @return array
-     */
-    private function getMiddleware(): array
-    {
-        return [
-            NotFoundMiddleware::class          => 'before',
-            AuthenticationMiddleware::class    => 'before',
-            ResponseMiddleware::class          => 'after',
-        ];
     }
 
     /**
@@ -162,12 +127,56 @@ class RouterProvider implements ServiceProviderInterface
             [UploadGetController::class, 'callAction', '/pbxcore/api/upload/{actionName}', 'get', '/'],
 
             [ModulesGetController::class, 'callAction', '/pbxcore/api/modules/{actionName}/', 'get', '/'],
-            [ModulesPostController::class,'callAction',  '/pbxcore/api/modules/{actionName}/', 'post', '/'],
+            [ModulesPostController::class, 'callAction', '/pbxcore/api/modules/{actionName}/', 'post', '/'],
 
-            [ModulesGetController::class, 'callActionForModule', '/pbxcore/api/modules/{moduleName}/{actionName}/', 'get', '/'],
-            [ModulesPostController::class,'callActionForModule',  '/pbxcore/api/modules/{moduleName}/{actionName}/', 'post', '/'],
+            [
+                ModulesGetController::class,
+                'callActionForModule',
+                '/pbxcore/api/modules/{moduleName}/{actionName}/',
+                'get',
+                '/',
+            ],
+            [
+                ModulesPostController::class,
+                'callActionForModule',
+                '/pbxcore/api/modules/{moduleName}/{actionName}/',
+                'post',
+                '/',
+            ],
         ];
+    }
 
+    /**
+     * Attaches the middleware to the application
+     *
+     * @param Micro   $application
+     * @param Manager $eventsManager
+     */
+    private function attachMiddleware(Micro $application, Manager $eventsManager): void
+    {
+        $middleware = $this->getMiddleware();
+
+        /**
+         * Get the events manager and attach the middleware to it
+         */
+        foreach ($middleware as $class => $function) {
+            $eventsManager->attach('micro', new $class());
+            $application->{$function}(new $class());
+        }
+    }
+
+    /**
+     * Returns the array for the middleware with the action to attach
+     *
+     * @return array
+     */
+    private function getMiddleware(): array
+    {
+        return [
+            NotFoundMiddleware::class       => 'before',
+            AuthenticationMiddleware::class => 'before',
+            ResponseMiddleware::class       => 'after',
+        ];
     }
 
 }

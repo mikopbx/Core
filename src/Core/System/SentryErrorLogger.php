@@ -5,6 +5,7 @@
  * Proprietary and confidential
  * Written by Alexey Portnov, 2 2020
  */
+
 namespace MikoPBX\Core\System;
 
 use Exception;
@@ -28,7 +29,7 @@ class SentryErrorLogger
     protected $di;
 
 
-    function __construct($libraryName)
+    public function __construct($libraryName)
     {
         $this->dsn         = 'https://a8d729459beb446eb3cbb9df997dcc7b@centry.miko.ru/1';
         $this->libraryName = $libraryName;
@@ -55,25 +56,29 @@ class SentryErrorLogger
     public function init()
     {
         if ($this->enabled) {
-            Sentry\init([
-                'dsn'         => $this->dsn,
-                'release'     => $this->release,
-                'environment' => $this->environment,
-            ]);
-            Sentry\configureScope(function (Sentry\State\Scope $scope): void {
-                if (isset($this->email)) {
-                    $scope->setUser(['id' => $this->email], true);
+            Sentry\init(
+                [
+                    'dsn'         => $this->dsn,
+                    'release'     => $this->release,
+                    'environment' => $this->environment,
+                ]
+            );
+            Sentry\configureScope(
+                function (Sentry\State\Scope $scope): void {
+                    if (isset($this->email)) {
+                        $scope->setUser(['id' => $this->email], true);
+                    }
+                    if (isset($this->licKey)) {
+                        $scope->setExtra('key', $this->licKey);
+                    }
+                    if (isset($this->companyName)) {
+                        $scope->setExtra('company', $this->companyName);
+                    }
+                    if (isset($this->libraryName)) {
+                        $scope->setTag('library', $this->libraryName);
+                    }
                 }
-                if (isset($this->licKey)) {
-                    $scope->setExtra('key', $this->licKey);
-                }
-                if (isset($this->companyName)) {
-                    $scope->setExtra('company', $this->companyName);
-                }
-                if (isset($this->libraryName)) {
-                    $scope->setTag('library', $this->libraryName);
-                }
-            });
+            );
         }
 
         return $this->enabled;

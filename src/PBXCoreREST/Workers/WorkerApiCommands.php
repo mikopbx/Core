@@ -5,13 +5,14 @@
  * Proprietary and confidential
  * Written by Alexey Portnov, 2 2020
  */
+
 namespace MikoPBX\PBXCoreREST\Workers;
 
-use MikoPBX\Core\Asterisk\Configs\{IAXConf, OtherConf, SIPConf};
 use MikoPBX\Core\Asterisk\CdrDb;
+use MikoPBX\Core\Asterisk\Configs\{IAXConf, OtherConf, SIPConf};
+use MikoPBX\Core\Modules\PbxExtensionFailure;
 use MikoPBX\Core\System\{BeanstalkClient, Firewall, Notifications, Storage, System, Util};
 use MikoPBX\Core\Workers\WorkerBase;
-use MikoPBX\Core\Modules\PbxExtensionFailure;
 use Phalcon\Exception;
 
 require_once 'globals.php';
@@ -22,7 +23,7 @@ class WorkerApiCommands extends WorkerBase
     /**
      * @param $argv
      */
-    public function start($argv):void
+    public function start($argv): void
     {
         $client = new BeanstalkClient();
         $client->subscribe('ping_' . self::class, [$this, 'pingCallBack']);
@@ -99,6 +100,29 @@ class WorkerApiCommands extends WorkerBase
         }
 
         $result['function'] = $action;
+
+        return $result;
+    }
+
+    /**
+     * Запросы с CDR таблице
+     *
+     * @param array $request
+     */
+    private function cdrCallBack($request): array
+    {
+        $action = $request['action'];
+        switch ($action) {
+            case 'getActiveCalls':
+                $result = CdrDb::getActiveCalls();
+                break;
+            case 'getActiveChannels':
+                $result = CdrDb::getActiveChannels();
+                break;
+            default:
+                $result = ["Unknown action - {$action}"];
+                break;
+        }
 
         return $result;
     }
@@ -199,7 +223,6 @@ class WorkerApiCommands extends WorkerBase
             } else {
                 $result['message'] = 'Not all query parameters are populated.';
             }
-
         } elseif ('fileReadContent' === $action) {
             $result = Util::fileReadContent($data['filename'], $data['needOriginal']);
         } elseif ('getExternalIpInfo' === $action) {
@@ -207,7 +230,7 @@ class WorkerApiCommands extends WorkerBase
         } elseif ('reloadMsmtp' === $action) {
             $notifications = new Notifications();
             $result        = $notifications->configure();
-            $OtherConfigs = new OtherConf();
+            $OtherConfigs  = new OtherConf();
             $OtherConfigs->voiceMailConfGenerate();
             Util::mwExec("asterisk -rx 'voicemail reload'");
         } elseif ('unBanIp' === $action) {
@@ -250,7 +273,6 @@ class WorkerApiCommands extends WorkerBase
      */
     public function storageCallBack($request): array
     {
-
         $action = $request['action'];
         $data   = $request['data'];
 
@@ -309,8 +331,11 @@ class WorkerApiCommands extends WorkerBase
         if ('upload' === $action) {
             $result['function'] = $action;
             $result['result']   = 'Success';
-            $result             = System::moduleStartDownload($module, $request['data']['url'],
-                $request['data']['md5']);
+            $result             = System::moduleStartDownload(
+                $module,
+                $request['data']['url'],
+                $request['data']['md5']
+            );
 
             return $result;
         } elseif ('status' === $action) {
@@ -394,7 +419,6 @@ class WorkerApiCommands extends WorkerBase
      */
     private function getModuleClass($module, $action)
     {
-
         $class_name = str_replace('Module', '', $module);
         $path_class = "\\Modules\\{$module}\\Lib\\{$class_name}";
 
@@ -412,28 +436,6 @@ class WorkerApiCommands extends WorkerBase
         }
 
         return $path_class;
-    }
-
-    /**
-     * Запросы с CDR таблице
-     *
-     * @param array $request
-     */
-    private function cdrCallBack($request):array
-    {
-        $action = $request['action'];
-        switch ($action) {
-            case 'getActiveCalls':
-                $result = CdrDb::getActiveCalls();
-                break;
-            case 'getActiveChannels':
-                $result = CdrDb::getActiveChannels();
-                break;
-            default:
-                $result = ["Unknown action - {$action}"];
-                break;
-        }
-        return $result;
     }
 
 }

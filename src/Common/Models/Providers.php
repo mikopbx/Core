@@ -14,7 +14,7 @@ use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
 /**
- * @method static mixed findFirstByUniqid(array|string|int $parameters=null)
+ * @method static mixed findFirstByUniqid(array|string|int $parameters = null)
  */
 class Providers extends ModelsBase
 {
@@ -108,20 +108,21 @@ class Providers extends ModelsBase
                 ],
             ]
         );
-
     }
 
 
     public function validation(): bool
     {
-
         $validation = new Validation();
-        $validation->add('uniqid', new UniquenessValidator([
-            'message' => $this->t('mo_ThisUniqidMustBeUniqueForProvidersModels'),
-        ]));
+        $validation->add(
+            'uniqid',
+            new UniquenessValidator(
+                [
+                    'message' => $this->t('mo_ThisUniqidMustBeUniqueForProvidersModels'),
+                ]
+            )
+        );
 
         return $this->validate($validation);
-
-
     }
 }

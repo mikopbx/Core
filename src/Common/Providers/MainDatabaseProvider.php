@@ -22,8 +22,8 @@ use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 
 /**
-* Main database connection is created based in the parameters defined in the configuration file
-*/
+ * Main database connection is created based in the parameters defined in the configuration file
+ */
 class MainDatabaseProvider extends DatabaseProviderBase implements ServiceProviderInterface
 {
     /**

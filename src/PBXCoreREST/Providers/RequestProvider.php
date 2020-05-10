@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 /**
@@ -13,8 +14,8 @@ declare(strict_types=1);
 namespace MikoPBX\PBXCoreREST\Providers;
 
 use MikoPBX\PBXCoreREST\Http\Request;
-use Phalcon\Di\ServiceProviderInterface;
 use Phalcon\Di\DiInterface;
+use Phalcon\Di\ServiceProviderInterface;
 
 class RequestProvider implements ServiceProviderInterface
 {

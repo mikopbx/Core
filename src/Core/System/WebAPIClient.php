@@ -5,6 +5,7 @@
  * Proprietary and confidential
  * Written by Alexey Portnov, 2 2020
  */
+
 namespace MikoPBX\Core\Backup;
 
 use MikoPBX\Core\System\MikoPBXConfig;
@@ -129,7 +130,6 @@ class WebAPIClient
         $resultrequest = $this->getData($url);
 
         return $resultrequest;
-
     }
 
     /**

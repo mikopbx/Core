@@ -6,6 +6,7 @@
  * Written by Nikolay Beketov, 5 2018
  *
  */
+
 namespace MikoPBX\AdminCabinet\Forms;
 
 use Phalcon\Forms\Element\Check;
@@ -58,7 +59,8 @@ class FirewallEditForm extends Form
             "31" => "31 - 255.255.255.254",
             "32" => "32 - 255.255.255.255",
         ];
-        $mask     = new Select('subnet', $arrMasks, [
+        $mask     = new Select(
+            'subnet', $arrMasks, [
             'using'    => [
                 'id',
                 'name',
@@ -66,7 +68,8 @@ class FirewallEditForm extends Form
             'useEmpty' => false,
             'value'    => $options['subnet'],
             'class'    => 'ui selection dropdown ipaddress',
-        ]);
+        ]
+        );
         $this->add($mask);
 
         // Newer_block_ip
@@ -85,7 +88,5 @@ class FirewallEditForm extends Form
         }
 
         $this->add(new Check('local_network', $cheskarr));
-
-
     }
 }

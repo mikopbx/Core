@@ -30,9 +30,9 @@ use MikoPBX\Core\Asterisk\Configs\ParkConf;
 use MikoPBX\Core\Asterisk\Configs\QueueConf;
 use MikoPBX\Core\Asterisk\Configs\SIPConf;
 use MikoPBX\Core\System\Util;
-use Phalcon\Exception;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
+use Phalcon\Exception;
 
 /**
  * Main database connection is created based in the parameters defined in the configuration file
@@ -46,43 +46,46 @@ class PBXConfModulesProvider implements ServiceProviderInterface
      */
     public function register(DiInterface $di): void
     {
-        $di->setShared('pbxConfModules', function () {
-            $arrObject = [];
-            $arr       = [
-                ExternalPhonesConf::class,
-                OtherConf::class,
-                SIPConf::class,
-                IAXConf::class,
-                IVRConf::class,
-                ParkConf::class,
-                ConferenceConf::class,
-                QueueConf::class,
-                DialplanApplicationConf::class,
-                MikoAjamConf::class,
-            ];
+        $di->setShared(
+            'pbxConfModules',
+            function () {
+                $arrObject = [];
+                $arr       = [
+                    ExternalPhonesConf::class,
+                    OtherConf::class,
+                    SIPConf::class,
+                    IAXConf::class,
+                    IVRConf::class,
+                    ParkConf::class,
+                    ConferenceConf::class,
+                    QueueConf::class,
+                    DialplanApplicationConf::class,
+                    MikoAjamConf::class,
+                ];
 
-            // Add system classes
-            foreach ($arr as $value) {
-                if (class_exists($value)) {
-                    $arrObject[] = new $value();
-                }
-            }
-
-            // Add additional modules classes
-            $modules = PbxExtensionModules::find('disabled=0');
-            foreach ($modules as $value) {
-                $class_name = str_replace('Module', '', $value->uniqid);
-                $full_class_name = "\\Modules\\{$value->uniqid}\\Lib\\{$class_name}Conf";
-                if (class_exists($full_class_name)) {
-                    try {
-                        $arrObject[] = new $full_class_name();
-                    } catch (Exception $e) {
-                        Util::sysLogMsg('INIT_MODULE', "Fail init module '{$value->uniqid}' ." . $e->getMessage());
+                // Add system classes
+                foreach ($arr as $value) {
+                    if (class_exists($value)) {
+                        $arrObject[] = new $value();
                     }
                 }
-            }
 
-            return $arrObject;
-        });
+                // Add additional modules classes
+                $modules = PbxExtensionModules::find('disabled=0');
+                foreach ($modules as $value) {
+                    $class_name      = str_replace('Module', '', $value->uniqid);
+                    $full_class_name = "\\Modules\\{$value->uniqid}\\Lib\\{$class_name}Conf";
+                    if (class_exists($full_class_name)) {
+                        try {
+                            $arrObject[] = new $full_class_name();
+                        } catch (Exception $e) {
+                            Util::sysLogMsg('INIT_MODULE', "Fail init module '{$value->uniqid}' ." . $e->getMessage());
+                        }
+                    }
+                }
+
+                return $arrObject;
+            }
+        );
     }
 }

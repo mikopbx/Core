@@ -6,6 +6,7 @@
  * Written by Nikolay Beketov, 5 2018
  *
  */
+
 namespace MikoPBX\AdminCabinet\Forms;
 
 use Phalcon\Forms\Element\Hidden;
@@ -20,7 +21,6 @@ class CustomFilesEditForm extends Form
     {
         foreach ($entity as $key => $value) {
             switch ($key) {
-
                 case "id":
                 case "content":
                 case "filepath":
@@ -32,7 +32,8 @@ class CustomFilesEditForm extends Form
                     $this->add(new TextArea($key, ["rows" => $rows]));
                     break;
                 case "mode":
-                    $select = new Select($key,
+                    $select = new Select(
+                        $key,
                         [
                             'none'     => $this->translation->_("cf_FileActionsNone"),
                             'append'   => $this->translation->_("cf_FileActionsAppend"),
@@ -45,7 +46,8 @@ class CustomFilesEditForm extends Form
                             ],
                             'useEmpty' => false,
                             'class'    => 'ui selection dropdown type-select',
-                        ]);
+                        ]
+                    );
                     $this->add($select);
                     break;
                 //case "filepath":
@@ -54,7 +56,6 @@ class CustomFilesEditForm extends Form
                 default:
                     $this->add(new Text($key));
             }
-
         }
     }
 }

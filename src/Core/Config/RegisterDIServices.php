@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 /**
  * Copyright (C) MIKO LLC - All Rights Reserved
@@ -10,21 +11,18 @@ declare(strict_types=1);
 
 namespace MikoPBX\Core\Config;
 
-use Phalcon\Di;
-use MikoPBX\Common\Providers\{
+use MikoPBX\Common\Providers\{CDRDatabaseProvider,
+    MainDatabaseProvider,
     ManagedCacheProvider,
     ModelsCacheProvider,
     ModelsMetadataProvider,
-    MainDatabaseProvider,
-    CDRDatabaseProvider,
-    TranslationProvider,
-    NatsConnectionProvider,
     ModulesDBConnectionsProvider,
+    NatsConnectionProvider,
+    PBXConfModulesProvider,
     RegistryProvider,
-    PBXConfModulesProvider};
-use MikoPBX\Core\Providers\{
-    CliMessagesProvider,
-    EventsLogDatabaseProvider};
+    TranslationProvider};
+use MikoPBX\Core\Providers\{CliMessagesProvider, EventsLogDatabaseProvider};
+use Phalcon\Di;
 
 
 class RegisterDIServices
@@ -34,7 +32,7 @@ class RegisterDIServices
      */
     public static function init(): void
     {
-        $di = Di::getDefault();
+        $di                    = Di::getDefault();
         $adminCabinetProviders = [
             // Inject Registry provider
             RegistryProvider::class,
@@ -58,14 +56,13 @@ class RegisterDIServices
 
             // Inject PBX modules
             PBXConfModulesProvider::class,
-            ModulesDBConnectionsProvider::class
+            ModulesDBConnectionsProvider::class,
 
         ];
 
         foreach ($adminCabinetProviders as $provider) {
             $di->register(new $provider());
         }
-
     }
 
     /**

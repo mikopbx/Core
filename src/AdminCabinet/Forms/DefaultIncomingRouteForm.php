@@ -6,6 +6,7 @@
  * Written by Nikolay Beketov, 5 2018
  *
  */
+
 namespace MikoPBX\AdminCabinet\Forms;
 
 use Phalcon\Forms\Element\Hidden;
@@ -26,7 +27,8 @@ class DefaultIncomingRouteForm extends Form
                         'extension' => $this->translation->_('ir_extension'),
                     ];
 
-                    $defaultActions = new Select('action', $arrDefaultActions, [
+                    $defaultActions = new Select(
+                        'action', $arrDefaultActions, [
                         'using'    => [
                             'id',
                             'name',
@@ -34,14 +36,16 @@ class DefaultIncomingRouteForm extends Form
                         'useEmpty' => false,
                         'value'    => $value,
                         'class'    => 'ui selection dropdown defaultrouteselect',
-                    ]);
+                    ]
+                    );
                     $this->add($defaultActions);
                     break;
                 }
                 case 'extension' :
                 {
                     // Extension
-                    $extension = new Select('extension', $options['extensions'], [
+                    $extension = new Select(
+                        'extension', $options['extensions'], [
                         'using'    => [
                             'id',
                             'name',
@@ -49,7 +53,8 @@ class DefaultIncomingRouteForm extends Form
                         'useEmpty' => true,
                         'value'    => $value,
                         'class'    => 'ui selection dropdown search forwarding-select',
-                    ]);
+                    ]
+                    );
                     $this->add($extension);
                     break;
                 }

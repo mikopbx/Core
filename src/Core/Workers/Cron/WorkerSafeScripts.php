@@ -26,7 +26,6 @@ use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use Mikopbx\Service\Main;
 use Phalcon\Exception;
 use Recoil\React\ReactKernel;
-use Recoil\Recoil;
 
 class WorkerSafeScripts extends WorkerBase
 {
@@ -203,7 +202,7 @@ class WorkerSafeScripts extends WorkerBase
 
     public function callback($message): void
     {
-        $this->result  = true;
+        $this->result = true;
     }
 }
 

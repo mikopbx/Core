@@ -6,6 +6,7 @@
  * Written by Nikolay Beketov, 5 2018
  *
  */
+
 namespace MikoPBX\AdminCabinet\Forms;
 
 use Phalcon\Forms\Element\Hidden;
@@ -20,7 +21,6 @@ class OutgoingRouteEditForm extends Form
 {
     public function initialize($entity = null, $options = null): void
     {
-
         // ID
         $this->add(new Hidden('id'));
 
@@ -47,15 +47,16 @@ class OutgoingRouteEditForm extends Form
         $this->add(new Text('trimfrombegin', ["maxlength" => 2, "style" => "width: 80px;", 'min' => 0]));
 
         // Providers
-        $providers = new Select('providerid', $options, [
+        $providers = new Select(
+            'providerid', $options, [
             'using'    => [
                 'id',
                 'name',
             ],
             'useEmpty' => false,
             'class'    => 'ui selection dropdown providerselect',
-        ]);
+        ]
+        );
         $this->add($providers);
-
     }
 }

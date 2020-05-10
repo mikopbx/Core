@@ -101,7 +101,6 @@ class OutWorkTimes extends ModelsBase
             ]
 
         );
-
     }
 }
 

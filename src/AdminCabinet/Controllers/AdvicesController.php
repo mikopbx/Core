@@ -6,6 +6,7 @@
  * Written by Nikolay Beketov, 11 2018
  *
  */
+
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\Common\Models\{NetworkFilters, PbxSettings};
@@ -48,11 +49,16 @@ class AdvicesController extends BaseController
             if ( ! empty($newResult)) {
                 $arrMessages[] = $newResult;
             }
-            $this->session->set($currentAdvice, json_encode([
-                'LastLanguage'  => $language,
-                'LastMessage'   => $newResult,
-                'LastTimeStamp' => time(),
-            ]));
+            $this->session->set(
+                $currentAdvice,
+                json_encode(
+                    [
+                        'LastLanguage'  => $language,
+                        'LastMessage'   => $newResult,
+                        'LastTimeStamp' => time(),
+                    ]
+                )
+            );
         }
         $this->view->success = true;
         $result              = [];
@@ -73,17 +79,21 @@ class AdvicesController extends BaseController
      */
     private function checkPasswords(): array
     {
-        $messages = [];
+        $messages           = [];
         $arrOfDefaultValues = PbxSettings::getDefaultArrayValues();
         if ($arrOfDefaultValues['WebAdminPassword']
             === PbxSettings::getValueByKey('WebAdminPassword')) {
-            $messages['warning'] = $this->translation->_('adv_YouUseDefaultWebPassword',
-                ['url' => $this->url->get('general-settings/modify/#/passwords')]);
+            $messages['warning'] = $this->translation->_(
+                'adv_YouUseDefaultWebPassword',
+                ['url' => $this->url->get('general-settings/modify/#/passwords')]
+            );
         }
         if ($arrOfDefaultValues['SSHPassword']
             === PbxSettings::getValueByKey('SSHPassword')) {
-            $messages['warning'] = $this->translation->_('adv_YouUseDefaultSSHPassword',
-                ['url' => $this->url->get('general-settings/modify/#/ssh')]);
+            $messages['warning'] = $this->translation->_(
+                'adv_YouUseDefaultSSHPassword',
+                ['url' => $this->url->get('general-settings/modify/#/ssh')]
+            );
         }
 
         return $messages ?? [];
@@ -97,12 +107,16 @@ class AdvicesController extends BaseController
     private function checkFirewalls(): array
     {
         if (PbxSettings::getValueByKey('PBXFirewallEnabled') === '0') {
-            $messages['warning'] = $this->translation->_('adv_FirewallDisabled',
-                ['url' => $this->url->get('firewall/index/')]);
+            $messages['warning'] = $this->translation->_(
+                'adv_FirewallDisabled',
+                ['url' => $this->url->get('firewall/index/')]
+            );
         }
         if (NetworkFilters::count() === 0) {
-            $messages['warning'] = $this->translation->_('adv_NetworksNotConfigured',
-                ['url' => $this->url->get('firewall/index/')]);
+            $messages['warning'] = $this->translation->_(
+                'adv_NetworksNotConfigured',
+                ['url' => $this->url->get('firewall/index/')]
+            );
         }
 
         return $messages ?? [];
@@ -137,16 +151,16 @@ class AdvicesController extends BaseController
                     $storageDiskMounted = true;
                     if ($disk->free_space < 500) {
                         $messages['warning']
-                            = $this->translation->_('adv_StorageDiskRunningOutOfFreeSpace',
-                            ['free' => $disk->free_space]);
+                            = $this->translation->_(
+                            'adv_StorageDiskRunningOutOfFreeSpace',
+                            ['free' => $disk->free_space]
+                        );
                     }
-
                 }
             }
             if ($storageDiskMounted === false) {
                 $messages['error'] = $this->translation->_('adv_StorageDiskUnMounted');
             }
-
         }
 
         return $messages ?? [];
@@ -167,18 +181,23 @@ class AdvicesController extends BaseController
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_TIMEOUT, 3);
         curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS,
-            "TYPE=FIRMWAREGETNEWS&PBXVER={$PBXVersion}");
+        curl_setopt(
+            $ch,
+            CURLOPT_POSTFIELDS,
+            "TYPE=FIRMWAREGETNEWS&PBXVER={$PBXVersion}"
+        );
 
         $output = curl_exec($ch);
         curl_close($ch);
         $answer = json_decode($output, false);
         if ($answer !== null && $answer->newVersionAvailable === true) {
-            $messages['info'] = $this->translation->_('adv_AvailableNewVersionPBX',
+            $messages['info'] = $this->translation->_(
+                'adv_AvailableNewVersionPBX',
                 [
                     'url' => $this->url->get('update/index/'),
                     'ver' => $answer->version,
-                ]);
+                ]
+            );
         }
 
         return $messages ?? [];
@@ -192,7 +211,6 @@ class AdvicesController extends BaseController
     {
         $licKey = PbxSettings::getValueByKey('PBXLicense');
         if ( ! empty($licKey)) {
-
             $checkBaseFeature = $this->licenseWorker->featureAvailable(33);
             if ($checkBaseFeature['success'] === false) {
                 if ($this->language === 'ru') {
@@ -201,7 +219,8 @@ class AdvicesController extends BaseController
                     $url = "https://wiki.mikopbx.com/{$this->language}:licensing#faq_chavo";
                 }
 
-                $messages['warning'] = $this->translation->_('adv_ThisCopyHasLicensingTroubles',
+                $messages['warning'] = $this->translation->_(
+                    'adv_ThisCopyHasLicensingTroubles',
                     [
                         'url'   => $url,
                         'error' => $this->licenseWorker->translateLicenseErrorMessage($checkBaseFeature['error']),

@@ -5,21 +5,20 @@
  * Proprietary and confidential
  * Written by Alexey Portnov, 4 2020
  */
+
 namespace MikoPBX\Core\Asterisk\Configs;
 
-use MikoPBX\Core\System\{MikoPBXConfig, Network, Util};
-use MikoPBX\Common\Models\{
-    ExtensionForwardingRights,
+use MikoPBX\Common\Models\{ExtensionForwardingRights,
     Extensions as ExtensionsModel,
     NetworkFilters,
     OutgoingRoutingTable,
     Sip,
     SipCodecs,
-    Users
-};
-use MikoPBX\Core\Modules\Config\ConfigClass;
-use MikoPBX\Core\Utilities\SubnetCalculator;
+    Users};
 use MikoPBX\Core\Asterisk\AstDB;
+use MikoPBX\Core\Modules\Config\ConfigClass;
+use MikoPBX\Core\System\{MikoPBXConfig, Network, Util};
+use MikoPBX\Core\Utilities\SubnetCalculator;
 use Phalcon\Di;
 
 class SIPConf extends ConfigClass
@@ -55,6 +54,17 @@ class SIPConf extends ConfigClass
         $result['result'] = 'Success';
 
         return $result;
+    }
+
+    public static function getTechnology()
+    {
+        if (file_exists('/offload/asterisk/modules/res_pjproject.so')) {
+            $technology = 'PJSIP';
+        } else {
+            $technology = 'SIP';
+        }
+
+        return $technology;
     }
 
     /**
@@ -167,7 +177,7 @@ class SIPConf extends ConfigClass
                 $exthostname = trim($if_data['exthostname']);
             }
         }
-        $old_hash = '';
+        $old_hash   = '';
         $varEtcPath = Di::getDefault()->getConfig()->path('core.varEtcPath');
         if (file_exists($varEtcPath . '/topology_hash')) {
             $old_hash = file_get_contents($varEtcPath . '/topology_hash');
@@ -175,7 +185,7 @@ class SIPConf extends ConfigClass
         $now_hadh = md5($topology . $exthostname . $extipaddr);
 
         $sip              = new self();
-        $mikoPBXConfig           = new MikoPBXConfig();
+        $mikoPBXConfig    = new MikoPBXConfig();
         $general_settings = $mikoPBXConfig->getGeneralSettings();
         $sip->generateConfigProtected($general_settings);
 
@@ -265,7 +275,6 @@ class SIPConf extends ConfigClass
      */
     private function generateGeneral($general_settings): string
     {
-
         $conf    = "[general] \n" .
             "context=public-direct-dial \n" .
             "transport=udp \n" .
@@ -302,7 +311,7 @@ class SIPConf extends ConfigClass
         $topology    = 'public';
         $extipaddr   = '';
         $exthostname = '';
-        $networks    =  $network->getEnabledLanInterfaces();
+        $networks    = $network->getEnabledLanInterfaces();
         $subnets     = [];
         foreach ($networks as $if_data) {
             $lan_config = $network->getInterface($if_data['interface']);
@@ -383,7 +392,9 @@ class SIPConf extends ConfigClass
             $defaultuser = (trim($provider['defaultuser']) === '') ? $provider['username'] : $provider['defaultuser'];
             $qualify     = ($provider['qualify'] === '1' || $provider['qualify'] === 'yes') ? 'yes' : 'no';
 
-            $from     = (trim($provider['fromuser']) === '') ? "{$provider['username']}; username" : "{$provider['fromuser']}; fromuser";
+            $from     = (trim(
+                    $provider['fromuser']
+                ) === '') ? "{$provider['username']}; username" : "{$provider['fromuser']}; fromuser";
             $fromuser = ($provider['disablefromuser'] === '1') ? '' : "fromuser={$from}; \n";
 
             // Ручные настройки.
@@ -429,7 +440,6 @@ class SIPConf extends ConfigClass
                 $fromuser .
                 $manualattributes .
                 "\n";
-
         }
 
         $conf .= "$reg_strings \n";
@@ -450,7 +460,6 @@ class SIPConf extends ConfigClass
         $lang = $general_settings['PBXLanguage'];
         $conf = '';
         foreach ($this->data_peers as $peer) {
-
             $language = str_replace('_', '-', strtolower($lang));
             $language = (trim($language) == '') ? 'en-en' : $language;
 
@@ -532,7 +541,7 @@ class SIPConf extends ConfigClass
         $topology    = 'public';
         $extipaddr   = '';
         $exthostname = '';
-        $networks    =  $network->getEnabledLanInterfaces();
+        $networks    = $network->getEnabledLanInterfaces();
         $subnets     = [];
         foreach ($networks as $if_data) {
             $lan_config = $network->getInterface($if_data['interface']);
@@ -604,7 +613,6 @@ class SIPConf extends ConfigClass
         $conf .= "\n";
 
         return $conf;
-
     }
 
     /**
@@ -685,7 +693,9 @@ class SIPConf extends ConfigClass
             $prov_config .= Util::overrideConfigurationArray($options, $manual_attributes, 'identify');
 
             $fromdomain = (trim($provider['fromdomain']) === '') ? $provider['host'] : $provider['fromdomain'];
-            $from       = (trim($provider['fromuser']) === '') ? "{$provider['username']}; username" : "{$provider['fromuser']}; fromuser";
+            $from       = (trim(
+                    $provider['fromuser']
+                ) === '') ? "{$provider['username']}; username" : "{$provider['fromuser']}; fromuser";
             $from_user  = ($provider['disablefromuser'] === '1') ? null : $from;
             $lang       = $general_settings['PBXLanguage'];
 
@@ -792,10 +802,9 @@ class SIPConf extends ConfigClass
      */
     public function generatePeersPj($general_settings): string
     {
-
-        $lang = $general_settings['PBXLanguage'];
+        $lang              = $general_settings['PBXLanguage'];
         $additionalModules = $this->di->getShared('pbxConfModules');
-        $conf = '';
+        $conf              = '';
 
         $conf_acl = '';
         foreach ($this->data_peers as $peer) {
@@ -872,7 +881,7 @@ class SIPConf extends ConfigClass
 
         foreach ($additionalModules as $Object) {
             // Prevent cycling, skip current class
-            if (is_a($Object, SIPConf::class)){
+            if (is_a($Object, SIPConf::class)) {
                 continue;
             }
             $conf .= $Object->generatePeersPj($general_settings);
@@ -980,7 +989,6 @@ class SIPConf extends ConfigClass
                 $arr_data['forwardingonunavailable'] = $extensionForwarding->forwardingonunavailable;
             }
             $data[] = $arr_data;
-
         }
 
         return $data;
@@ -1074,17 +1082,6 @@ class SIPConf extends ConfigClass
         return $data;
     }
 
-    public static function getTechnology()
-    {
-        if (file_exists('/offload/asterisk/modules/res_pjproject.so')) {
-            $technology = 'PJSIP';
-        } else {
-            $technology = 'SIP';
-        }
-
-        return $technology;
-    }
-
     /**
      * Генератор extension для контекста outgoing.
      *
@@ -1130,7 +1127,11 @@ class SIPConf extends ConfigClass
             if (count($contexts_data) === 1) {
                 $conf .= ExtensionsConf::generateIncomingContextPeers($provider['uniqid'], $provider['username'], '');
             } elseif ( ! in_array($provider['context_id'], $contexts, true)) {
-                $conf       .= ExtensionsConf::generateIncomingContextPeers($contexts_data, null, $provider['context_id']);
+                $conf       .= ExtensionsConf::generateIncomingContextPeers(
+                    $contexts_data,
+                    null,
+                    $provider['context_id']
+                );
                 $contexts[] = $provider['context_id'];
             }
         }

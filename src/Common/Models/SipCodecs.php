@@ -64,7 +64,6 @@ class SipCodecs extends ModelsBase
                 ],
             ]
         );
-
     }
 
 }

@@ -6,6 +6,7 @@
  * Written by Nikolay Beketov, 5 2018
  *
  */
+
 namespace MikoPBX\AdminCabinet\Forms;
 
 use Phalcon\Forms\Element\Check;
@@ -22,7 +23,6 @@ class SipProviderEditForm extends Form
 {
     public function initialize($entity = null, $options = null): void
     {
-
         // Не нужны провайдеру
         // Busylevel
         // Extension
@@ -65,7 +65,8 @@ class SipProviderEditForm extends Form
             'auto_info' => $this->translation->_('auto_info'),
         ];
 
-        $dtmfmode = new Select('dtmfmode', $arrDTMFType, [
+        $dtmfmode = new Select(
+            'dtmfmode', $arrDTMFType, [
             'using'    => [
                 'id',
                 'name',
@@ -73,7 +74,8 @@ class SipProviderEditForm extends Form
             'useEmpty' => false,
             'value'    => $entity->dtmfmode,
             'class'    => 'ui selection dropdown dtmfmode-select',
-        ]);
+        ]
+        );
         $this->add($dtmfmode);
 
 
@@ -89,7 +91,8 @@ class SipProviderEditForm extends Form
             'no'                  => 'no',
         ];
 
-        $nat = new Select('nat', $arrNatType, [
+        $nat = new Select(
+            'nat', $arrNatType, [
             'using'    => [
                 'id',
                 'name',
@@ -97,7 +100,8 @@ class SipProviderEditForm extends Form
             'useEmpty' => false,
             'value'    => $entity->nat,
             'class'    => 'ui selection dropdown protocol-select',
-        ]);
+        ]
+        );
         $this->add($nat);
 
         // Qualify

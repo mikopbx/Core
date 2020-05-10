@@ -6,6 +6,8 @@
  * Written by Alexey Portnov, 2 2020
  */
 
+use MikoPBX\Core\System\Util;
+
 
 /**
  * Written for PHP 4.3.4, should work with older PHP 4.x versions.
@@ -14,15 +16,15 @@
  *
  */
 
-if (!class_exists('AGI')) {
-    require_once __DIR__.'/phpagi.php';
+if ( ! class_exists('AGI')) {
+    require_once __DIR__ . '/phpagi.php';
 }
 
 /**
  * Asterisk Manager class
  *
- * @link http://www.voip-info.org/wiki-Asterisk+config+manager.conf
- * @link http://www.voip-info.org/wiki-Asterisk+manager+API
+ * @link    http://www.voip-info.org/wiki-Asterisk+config+manager.conf
+ * @link    http://www.voip-info.org/wiki-Asterisk+manager+API
  * @example examples/sip_show_peer.php Get information about a sip peer
  * @package phpAGI
  */
@@ -119,52 +121,6 @@ class AGI_AsteriskManager
     }
 
     /**
-     * Send a request
-     *
-     * @param string $action
-     * @param array  $parameters
-     *
-     * @return array of parameters
-     */
-    public function sendRequest($action, $parameters = [])
-    {
-        $req = "Action: $action\r\n";
-        foreach ($parameters as $var => $val) {
-            $req .= "$var: $val\r\n";
-        }
-        $req .= "\r\n";
-        if ( ! is_resource($this->socket)) {
-            return [];
-        }
-        @fwrite($this->socket, $req);
-
-        return $this->waitResponse();
-    }
-
-    /**
-     * Send a request
-     *
-     * @param string $action
-     * @param array  $parameters
-     *
-     * @return array of parameters
-     */
-    public function sendRequestTimeout($action, $parameters = [])
-    {
-        $req = "Action: $action\r\n";
-        foreach ($parameters as $var => $val) {
-            $req .= "$var: $val\r\n";
-        }
-        $req .= "\r\n";
-        if ( ! is_resource($this->socket)) {
-            return [];
-        }
-        @fwrite($this->socket, $req);
-
-        return $this->waitResponse(true);
-    }
-
-    /**
      * Проверка работы сервиса AMI.
      *
      * @param string $pingname
@@ -232,38 +188,27 @@ class AGI_AsteriskManager
         return $result;
     }
 
-    private function waitResponseGetSubData(&$parameters, $end_string = '', $event_as_array = true): void
+    /**
+     * Send a request
+     *
+     * @param string $action
+     * @param array  $parameters
+     *
+     * @return array of parameters
+     */
+    public function sendRequestTimeout($action, $parameters = [])
     {
-        if ( ! is_array($parameters)) {
-            $parameters = [];
+        $req = "Action: $action\r\n";
+        foreach ($parameters as $var => $val) {
+            $req .= "$var: $val\r\n";
         }
-        if (empty($end_string)) {
-            return;
+        $req .= "\r\n";
+        if ( ! is_resource($this->socket)) {
+            return [];
         }
-        $parameters['data'] = [];
-        $m                  = [];
-        $key                = '';
-        $value              = '';
-        do {
-            $buff  = fgets($this->socket, 4096);
-            $a_pos = strpos($buff, ':');
-            if ( ! $a_pos) {
-                if (count($m) > 0) {
-                    if ($event_as_array) {
-                        $parameters['data'][$m['Event']][] = $m;
-                    } else {
-                        $parameters['data'][$m['Event']] = $m;
-                    }
-                }
-                $m = [];
-                continue;
-            }
+        @fwrite($this->socket, $req);
 
-            $key   = trim(substr($buff, 0, $a_pos));
-            $value = trim(substr($buff, $a_pos + 1));
-
-            $m[$key] = $value;
-        } while ($value !== $end_string);
+        return $this->waitResponse(true);
     }
 
     /**
@@ -367,6 +312,103 @@ class AGI_AsteriskManager
         return $parameters;
     }
 
+    private function waitResponseGetSubData(&$parameters, $end_string = '', $event_as_array = true): void
+    {
+        if ( ! is_array($parameters)) {
+            $parameters = [];
+        }
+        if (empty($end_string)) {
+            return;
+        }
+        $parameters['data'] = [];
+        $m                  = [];
+        $key                = '';
+        $value              = '';
+        do {
+            $buff  = fgets($this->socket, 4096);
+            $a_pos = strpos($buff, ':');
+            if ( ! $a_pos) {
+                if (count($m) > 0) {
+                    if ($event_as_array) {
+                        $parameters['data'][$m['Event']][] = $m;
+                    } else {
+                        $parameters['data'][$m['Event']] = $m;
+                    }
+                }
+                $m = [];
+                continue;
+            }
+
+            $key   = trim(substr($buff, 0, $a_pos));
+            $value = trim(substr($buff, $a_pos + 1));
+
+            $m[$key] = $value;
+        } while ($value !== $end_string);
+    }
+
+    /**
+     * Process event
+     *
+     * @access private
+     *
+     * @param array $parameters
+     *
+     * @return mixed result of event handler or false if no handler was found
+     */
+    public function processEvent($parameters)
+    {
+        $ret = false;
+        $e   = strtolower($parameters['Event']);
+        $this->log("Got event.. $e");
+
+        $handler = '';
+        if (isset($this->event_handlers[$e])) {
+            $handler = $this->event_handlers[$e];
+        } elseif (isset($this->event_handlers['*'])) {
+            $handler = $this->event_handlers['*'];
+        }
+        if (is_array($handler)) {
+            call_user_func($handler, $parameters);
+        } elseif (function_exists($handler)) {
+            $this->log("Execute handler $handler");
+            $ret = $handler($e, $parameters, $this->server, $this->port);
+        } else {
+            $this->log("No event handler for event '$e'");
+        }
+
+        return $ret;
+    }
+
+    /**
+     * Log a message
+     *
+     * @param string $message
+     * @param int    $level from 1 to 4
+     */
+    public function log($message, $level = 1)
+    {
+        if ($this->pagi != false) {
+            $this->pagi->conlog($message, $level);
+        }
+    }
+
+    public function microtimeFloat()
+    {
+        [$usec, $sec] = explode(" ", microtime());
+
+        return ((float)$usec + (float)$sec);
+    }
+
+    /**
+     * Ping
+     *
+     * @link http://www.voip-info.org/wiki-Asterisk+Manager+API+Action+Ping
+     */
+    public function Ping()
+    {
+        return $this->sendRequestTimeout('Ping');
+    }
+
     /**
      * Wait for a user events.
      *
@@ -405,6 +447,10 @@ class AGI_AsteriskManager
         return $parameters;
     }
 
+    // *********************************************************************************************************
+    // **                       COMMANDS                                                                      **
+    // *********************************************************************************************************
+
     /**
      * Connect to Asterisk
      *
@@ -413,7 +459,7 @@ class AGI_AsteriskManager
      * @param string $secret
      * @param string $events
      *
-     * @return boolean true on success
+     * @return bool true on success
      * @example examples/sip_show_peer.php Get information about a sip peer
      *
      */
@@ -476,9 +522,27 @@ class AGI_AsteriskManager
         return true;
     }
 
-    public function loggedIn()
+    /**
+     * Send a request
+     *
+     * @param string $action
+     * @param array  $parameters
+     *
+     * @return array of parameters
+     */
+    public function sendRequest($action, $parameters = [])
     {
-        return $this->_loggedIn;
+        $req = "Action: $action\r\n";
+        foreach ($parameters as $var => $val) {
+            $req .= "$var: $val\r\n";
+        }
+        $req .= "\r\n";
+        if ( ! is_resource($this->socket)) {
+            return [];
+        }
+        @fwrite($this->socket, $req);
+
+        return $this->waitResponse();
     }
 
     /**
@@ -496,9 +560,20 @@ class AGI_AsteriskManager
         }
     }
 
-    // *********************************************************************************************************
-    // **                       COMMANDS                                                                      **
-    // *********************************************************************************************************
+    /**
+     * Logoff Manager
+     *
+     * @link http://www.voip-info.org/wiki-Asterisk+Manager+API+Action+Logoff
+     */
+    public function Logoff()
+    {
+        return $this->sendRequestTimeout('Logoff');
+    }
+
+    public function loggedIn()
+    {
+        return $this->_loggedIn;
+    }
 
     /**
      * Set Absolute Timeout
@@ -507,8 +582,8 @@ class AGI_AsteriskManager
      *
      * @link http://www.voip-info.org/wiki-Asterisk+Manager+API+Action+AbsoluteTimeout
      *
-     * @param string  $channel Channel name to hangup
-     * @param integer $timeout Maximum duration of the call (sec)
+     * @param string $channel Channel name to hangup
+     * @param int    $timeout Maximum duration of the call (sec)
      *
      * @return array
      */
@@ -589,37 +664,9 @@ class AGI_AsteriskManager
     }
 
     /**
-     * Gets a Channel Variable
-     *
-     * @link http://www.voip-info.org/wiki-Asterisk+Manager+API+Action+GetVar
-     * @link http://www.voip-info.org/wiki-Asterisk+variables
-     *
-     * @param string  $channel  Channel to read variable from
-     * @param string  $variable
-     * @param string  $actionid message matching variable
-     * @param boolean $ret_array
-     *
-     * @return string | array
-     */
-    public function GetVar($channel, $variable, $actionid = null, $ret_array = true)
-    {
-        $parameters = ['Channel' => $channel, 'Variable' => $variable];
-        if ($actionid) {
-            $parameters['ActionID'] = $actionid;
-        }
-
-        $data = $this->sendRequest('GetVar', $parameters);
-        if ($ret_array != true) {
-            $data = (isset($data['Value']) && $data['Value']) ? $data['Value'] : '';
-        }
-
-        return $data;
-    }
-
-    /**
      * Возвращает массив активных каналов.
      *
-     * @param boolean $group
+     * @param bool $group
      *
      * @return array
      */
@@ -681,7 +728,7 @@ class AGI_AsteriskManager
      *
      * @return array
      */
-    public function IAXregistry():array
+    public function IAXregistry(): array
     {
         $result   = $this->sendRequestTimeout('IAXregistry');
         $data     = (isset($result['data']) && is_array($result['data'])) ? $result['data'] : [];
@@ -721,16 +768,6 @@ class AGI_AsteriskManager
         $headers['UserEvent'] = $name;
 
         return $this->sendRequestTimeout('UserEvent', $headers);
-    }
-
-    /**
-     * Logoff Manager
-     *
-     * @link http://www.voip-info.org/wiki-Asterisk+Manager+API+Action+Logoff
-     */
-    public function Logoff()
-    {
-        return $this->sendRequestTimeout('Logoff');
     }
 
     /**
@@ -789,10 +826,10 @@ class AGI_AsteriskManager
      *
      * @link http://www.voip-info.org/wiki-Asterisk+Manager+API+Action+Monitor
      *
-     * @param string  $channel
-     * @param string  $file
-     * @param string  $format
-     * @param boolean $mix
+     * @param string $channel
+     * @param string $file
+     * @param string $format
+     * @param bool   $mix
      *
      * @return array
      */
@@ -868,27 +905,6 @@ class AGI_AsteriskManager
     }
 
     /**
-     * MeetmeList
-     *
-     * @param $Conference
-     * @param $ActionID
-     *
-     * @return array
-     */
-    public function MeetmeList($Conference, $ActionID = ''): array
-    {
-        if (empty($ActionID)) {
-            $ActionID = Util::generateRandomString(5);
-        }
-        $parameters = [
-            'Conference' => $Conference,
-            'ActionID'   => $ActionID,
-        ];
-
-        return $this->sendRequestTimeout('MeetmeList', $parameters);
-    }
-
-    /**
      * MeetmeListRooms
      *
      * @param $ActionID
@@ -898,7 +914,7 @@ class AGI_AsteriskManager
     public function MeetmeListRooms($ActionID = ''): array
     {
         if (empty($ActionID)) {
-            $ActionID = \MikoPBX\Core\System\Util::generateRandomString(5);
+            $ActionID = Util::generateRandomString(5);
         }
         $parameters = [
             'ActionID' => $ActionID,
@@ -927,18 +943,18 @@ class AGI_AsteriskManager
      *
      * @link http://www.voip-info.org/wiki-Asterisk+Manager+API+Action+Originate
      *
-     * @param string  $channel     Channel name to call
-     * @param string  $exten       Extension to use (requires 'Context' and 'Priority')
-     * @param string  $context     Context to use (requires 'Exten' and 'Priority')
-     * @param string  $priority    Priority to use (requires 'Exten' and 'Context')
-     * @param string  $application Application to use
-     * @param string  $data        Data to use (requires 'Application')
-     * @param integer $timeout     How long to wait for call to be answered (in ms)
-     * @param string  $callerid    Caller ID to be set on the outgoing channel
-     * @param string  $variable    Channel variable to set (VAR1=value1|VAR2=value2)
-     * @param string  $account     Account code
-     * @param boolean $async       true fast origination
-     * @param string  $actionid    message matching variable
+     * @param string $channel     Channel name to call
+     * @param string $exten       Extension to use (requires 'Context' and 'Priority')
+     * @param string $context     Context to use (requires 'Exten' and 'Priority')
+     * @param string $priority    Priority to use (requires 'Exten' and 'Context')
+     * @param string $application Application to use
+     * @param string $data        Data to use (requires 'Application')
+     * @param int    $timeout     How long to wait for call to be answered (in ms)
+     * @param string $callerid    Caller ID to be set on the outgoing channel
+     * @param string $variable    Channel variable to set (VAR1=value1|VAR2=value2)
+     * @param string $account     Account code
+     * @param bool   $async       true fast origination
+     * @param string $actionid    message matching variable
      *
      * @return array
      */
@@ -1022,23 +1038,13 @@ class AGI_AsteriskManager
     }
 
     /**
-     * Ping
-     *
-     * @link http://www.voip-info.org/wiki-Asterisk+Manager+API+Action+Ping
-     */
-    public function Ping()
-    {
-        return $this->sendRequestTimeout('Ping');
-    }
-
-    /**
      * Queue Add
      *
      * @link http://www.voip-info.org/wiki-Asterisk+Manager+API+Action+QueueAdd
      *
-     * @param string  $queue
-     * @param string  $interface
-     * @param integer $penalty
+     * @param string $queue
+     * @param string $interface
+     * @param int    $penalty
      *
      * @return array
      */
@@ -1179,6 +1185,10 @@ class AGI_AsteriskManager
         return $this->sendRequest('Status', $parameters);
     }
 
+    /*
+    * MIKO Start.
+    */
+
     /**
      * Stop monitoring a channel
      *
@@ -1192,10 +1202,6 @@ class AGI_AsteriskManager
     {
         return $this->sendRequest('StopMonitor', ['Channel' => $channel]);
     }
-
-    /*
-    * MIKO Start.
-    */
 
     /**
      * Полученире текущих регистраций.
@@ -1338,6 +1344,15 @@ class AGI_AsteriskManager
         return $result;
     }
 
+
+    /*
+    * MIKO End.
+    */
+
+    // *********************************************************************************************************
+    // **                       MISC                                                                          **
+    // *********************************************************************************************************
+
     /**
      * @param       $conference
      * @param array $vars
@@ -1365,33 +1380,53 @@ class AGI_AsteriskManager
         return $result;
     }
 
-
-    /*
-    * MIKO End.
-    */
-
-    // *********************************************************************************************************
-    // **                       MISC                                                                          **
-    // *********************************************************************************************************
-
     /**
-     * Log a message
+     * MeetmeList
      *
-     * @param string $message
-     * @param int    $level from 1 to 4
+     * @param $Conference
+     * @param $ActionID
+     *
+     * @return array
      */
-    public function log($message, $level = 1)
+    public function MeetmeList($Conference, $ActionID = ''): array
     {
-        if ($this->pagi != false) {
-            $this->pagi->conlog($message, $level);
+        if (empty($ActionID)) {
+            $ActionID = Util::generateRandomString(5);
         }
+        $parameters = [
+            'Conference' => $Conference,
+            'ActionID'   => $ActionID,
+        ];
+
+        return $this->sendRequestTimeout('MeetmeList', $parameters);
     }
 
-    public function microtimeFloat()
+    /**
+     * Gets a Channel Variable
+     *
+     * @link http://www.voip-info.org/wiki-Asterisk+Manager+API+Action+GetVar
+     * @link http://www.voip-info.org/wiki-Asterisk+variables
+     *
+     * @param string $channel  Channel to read variable from
+     * @param string $variable
+     * @param string $actionid message matching variable
+     * @param bool   $ret_array
+     *
+     * @return string | array
+     */
+    public function GetVar($channel, $variable, $actionid = null, $ret_array = true)
     {
-        [$usec, $sec] = explode(" ", microtime());
+        $parameters = ['Channel' => $channel, 'Variable' => $variable];
+        if ($actionid) {
+            $parameters['ActionID'] = $actionid;
+        }
 
-        return ((float)$usec + (float)$sec);
+        $data = $this->sendRequest('GetVar', $parameters);
+        if ($ret_array != true) {
+            $data = (isset($data['Value']) && $data['Value']) ? $data['Value'] : '';
+        }
+
+        return $data;
     }
 
     /**
@@ -1422,38 +1457,5 @@ class AGI_AsteriskManager
         $this->event_handlers[$event] = $callback;
 
         return true;
-    }
-
-    /**
-     * Process event
-     *
-     * @access private
-     *
-     * @param array $parameters
-     *
-     * @return mixed result of event handler or false if no handler was found
-     */
-    public function processEvent($parameters)
-    {
-        $ret = false;
-        $e   = strtolower($parameters['Event']);
-        $this->log("Got event.. $e");
-
-        $handler = '';
-        if (isset($this->event_handlers[$e])) {
-            $handler = $this->event_handlers[$e];
-        } elseif (isset($this->event_handlers['*'])) {
-            $handler = $this->event_handlers['*'];
-        }
-        if (is_array($handler)) {
-            call_user_func($handler, $parameters);
-        } elseif (function_exists($handler)) {
-            $this->log("Execute handler $handler");
-            $ret = $handler($e, $parameters, $this->server, $this->port);
-        } else {
-            $this->log("No event handler for event '$e'");
-        }
-
-        return $ret;
     }
 }

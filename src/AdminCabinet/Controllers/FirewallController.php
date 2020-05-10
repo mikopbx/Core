@@ -6,6 +6,7 @@
  * Written by Nikolay Beketov, 5 2018
  *
  */
+
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\FirewallEditForm;
@@ -31,8 +32,10 @@ class FirewallController extends BaseController
             }
 
             if (strpos($interface->subnet, '.') === false) {
-                $localAddresses[] = $calculator->cidr2network($interface->ipaddr,
-                        $interface->subnet) . '/' . $interface->subnet;
+                $localAddresses[] = $calculator->cidr2network(
+                        $interface->ipaddr,
+                        $interface->subnet
+                    ) . '/' . $interface->subnet;
             } else {
                 $cidr             = $calculator->netmask2cidr($interface->subnet);
                 $localAddresses[] = $calculator->cidr2network($interface->ipaddr, $cidr) . '/' . $cidr;
@@ -50,12 +53,16 @@ class FirewallController extends BaseController
             $permitParts = explode('/', $filter->permit);
 
             if (strpos($permitParts[1], '.') === false) {
-                $networksTable[$filter->id]['network'] = $calculator->cidr2network($permitParts[0],
-                        $permitParts[1]) . '/' . $permitParts[1];
+                $networksTable[$filter->id]['network'] = $calculator->cidr2network(
+                        $permitParts[0],
+                        $permitParts[1]
+                    ) . '/' . $permitParts[1];
             } else {
                 $cidr                                  = $calculator->netmask2cidr($permitParts[1]);
-                $networksTable[$filter->id]['network'] = $calculator->cidr2network($permitParts[0],
-                        $cidr) . '/' . $cidr;
+                $networksTable[$filter->id]['network'] = $calculator->cidr2network(
+                        $permitParts[0],
+                        $cidr
+                    ) . '/' . $cidr;
             }
             $networksTable[$filter->id]['permanent'] = false;
 
@@ -111,7 +118,6 @@ class FirewallController extends BaseController
 
         $this->view->rulesTable         = $networksTable;
         $this->view->PBXFirewallEnabled = PbxSettings::getValueByKey('PBXFirewallEnabled');
-
     }
 
 
@@ -136,8 +142,10 @@ class FirewallController extends BaseController
         }
         $permitParts = explode('/', $networkFilter->permit);
 
-        $this->view->form          = new FirewallEditForm($networkFilter,
-            ['network' => $permitParts[0], 'subnet' => $permitParts[1]]);
+        $this->view->form          = new FirewallEditForm(
+            $networkFilter,
+            ['network' => $permitParts[0], 'subnet' => $permitParts[1]]
+        );
         $this->view->firewallRules = $firewallRules;
         $this->view->represent     = $networkFilter->getRepresent();
     }
@@ -187,7 +195,7 @@ class FirewallController extends BaseController
      * Заполним параметры записи Network Filter
      *
      * @param \MikoPBX\Common\Models\NetworkFilters $filterRecord
-     * @param array                          $data массив полей из POST запроса
+     * @param array                                 $data массив полей из POST запроса
      *
      * @return bool update result
      */
@@ -198,8 +206,10 @@ class FirewallController extends BaseController
         foreach ($filterRecord as $name => $value) {
             switch ($name) {
                 case 'permit':
-                    $filterRecord->$name = $calculator->cidr2network($data['network'],
-                            $data['subnet']) . '/' . $data['subnet'];
+                    $filterRecord->$name = $calculator->cidr2network(
+                            $data['network'],
+                            $data['subnet']
+                        ) . '/' . $data['subnet'];
                     break;
                 case 'deny':
                     $filterRecord->$name = '0.0.0.0/0';
@@ -300,11 +310,9 @@ class FirewallController extends BaseController
                 }
                 $rowId++;
             }
-
         }
 
         return true;
-
     }
 
     /**
@@ -318,7 +326,7 @@ class FirewallController extends BaseController
         $filterRecord = NetworkFilters::findFirstById($networkId);
 
         $errors = false;
-        if ($filterRecord !== null && !$filterRecord->delete()) {
+        if ($filterRecord !== null && ! $filterRecord->delete()) {
             $errors = $filterRecord->getMessages();
         }
 

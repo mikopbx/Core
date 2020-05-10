@@ -427,7 +427,6 @@ class Extensions extends ModelsBase
                     foreach ($relatedRecords as $relatedRecord) {
                         $relatedRecord->update([$referencedField => $this->number]);
                     }
-
                 }
             }
         }
@@ -441,9 +440,14 @@ class Extensions extends ModelsBase
     public function validation(): bool
     {
         $validation = new Validation();
-        $validation->add('number', new UniquenessValidator([
-            'message' => $this->t('mo_ThisNumberNotUniqueForExtensionsModels'),
-        ]));
+        $validation->add(
+            'number',
+            new UniquenessValidator(
+                [
+                    'message' => $this->t('mo_ThisNumberNotUniqueForExtensionsModels'),
+                ]
+            )
+        );
 
         return $this->validate($validation);
     }
@@ -480,7 +484,6 @@ class Extensions extends ModelsBase
                             'referenceField' => $referencedField,
                         ];
                     }
-
                 }
             }
         }

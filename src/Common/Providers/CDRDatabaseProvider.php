@@ -16,8 +16,8 @@ use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 
 /**
-* CDR database connection is created based in the parameters defined in the configuration file
-*/
+ * CDR database connection is created based in the parameters defined in the configuration file
+ */
 class CDRDatabaseProvider extends DatabaseProviderBase implements ServiceProviderInterface
 {
     /**

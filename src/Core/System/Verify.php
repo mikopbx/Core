@@ -5,6 +5,7 @@
  * Proprietary and confidential
  * Written by Alexey Portnov, 2 2020
  */
+
 namespace MikoPBX\Core\System;
 
 class Verify
@@ -17,9 +18,8 @@ class Verify
      *
      * @return bool
      */
-    static function isIpAddress($ipaddr)
+    public static function isIpAddress($ipaddr): ?bool
     {
-
         if ( ! is_string($ipaddr)) {
             return false;
         }
@@ -41,7 +41,7 @@ class Verify
      *
      * @return bool
      */
-    function isNumericInt($arg)
+    public function isNumericInt($arg): bool
     {
         return (preg_match("/[^0-9]/", $arg) ? false : true);
     }

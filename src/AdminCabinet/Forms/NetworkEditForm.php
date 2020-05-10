@@ -6,6 +6,7 @@
  * Written by Nikolay Beketov, 5 2018
  *
  */
+
 namespace MikoPBX\AdminCabinet\Forms;
 
 use Phalcon\Forms\Element\Check;
@@ -36,13 +37,21 @@ class NetworkEditForm extends Form
         $this->add(new Check('usenat', $cheskArr));
 
         foreach ($options['eths'] as $eth) {
-            $this->add(new Hidden('interface_' . $eth->id, [
-                'value' => $eth->interface,
-            ]));
+            $this->add(
+                new Hidden(
+                    'interface_' . $eth->id, [
+                    'value' => $eth->interface,
+                ]
+                )
+            );
 
-            $this->add(new Text('name_' . $eth->id, [
-                'value' => $eth->name,
-            ]));
+            $this->add(
+                new Text(
+                    'name_' . $eth->id, [
+                    'value' => $eth->name,
+                ]
+                )
+            );
 
             // DHCP
             $cheskarr = ['value' => null];
@@ -52,10 +61,14 @@ class NetworkEditForm extends Form
 
             $this->add(new Check('dhcp_' . $eth->id, $cheskarr));
 
-            $this->add(new Text('ipaddr_' . $eth->id, [
-                'value' => $eth->ipaddr,
-                'class' => 'ipaddress',
-            ]));
+            $this->add(
+                new Text(
+                    'ipaddr_' . $eth->id, [
+                    'value' => $eth->ipaddr,
+                    'class' => 'ipaddress',
+                ]
+                )
+            );
 
             // Выбор подсети интерфейса
             $arrMasks = [
@@ -93,7 +106,8 @@ class NetworkEditForm extends Form
                 "31" => "31 - 255.255.255.254",
                 "32" => "32 - 255.255.255.255",
             ];
-            $mask     = new Select('subnet_' . $eth->id, $arrMasks, [
+            $mask     = new Select(
+                'subnet_' . $eth->id, $arrMasks, [
                 'using'    => [
                     'id',
                     'name',
@@ -101,24 +115,29 @@ class NetworkEditForm extends Form
                 'useEmpty' => false,
                 'value'    => $eth->subnet,
                 'class'    => 'ui selection dropdown ipaddress',
-            ]);
+            ]
+            );
             $this->add($mask);
 
-            $this->add(new Numeric('vlanid_' . $eth->id, [
-                'value' => $eth->vlanid,
-            ]));
+            $this->add(
+                new Numeric(
+                    'vlanid_' . $eth->id, [
+                    'value' => $eth->vlanid,
+                ]
+                )
+            );
 
             $arrInterfaces[$eth->id] = $eth->name . ' (' . $eth->interface . (($eth->vlanid > 0) ? '.' . $eth->vlanid : '') . ')';
             if ( ! in_array($eth->interface, $arrRealInterfaces)) {
                 $arrRealInterfaces[$eth->id] = $eth->interface;
             }
-
         }
 
         unset($arrInterfaces['new']);
         unset($arrRealInterfaces['new']);
         // Выбор интернет интерфейса
-        $internetInterface = new Select('internet_interface', $arrInterfaces, [
+        $internetInterface = new Select(
+            'internet_interface', $arrInterfaces, [
             'using'    => [
                 'id',
                 'name',
@@ -126,20 +145,22 @@ class NetworkEditForm extends Form
             'useEmpty' => false,
             'value'    => $entity->id,
             'class'    => 'ui selection dropdown',
-        ]);
+        ]
+        );
         $this->add($internetInterface);
 
 
         // Поля для вновь добавляемого интерфейса
-        $newInterface = new Select('interface_new', $arrRealInterfaces, [
+        $newInterface = new Select(
+            'interface_new', $arrRealInterfaces, [
             'using'    => [
                 'id',
                 'name',
             ],
             'useEmpty' => true,
             'class'    => 'ui selection dropdown',
-        ]);
+        ]
+        );
         $this->add($newInterface);
-
     }
 }

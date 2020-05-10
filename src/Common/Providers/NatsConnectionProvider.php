@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 /**
  * Copyright (C) MIKO LLC - All Rights Reserved
@@ -17,8 +18,8 @@ use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 
 /**
-* Main database connection is created based in the parameters defined in the configuration file
-*/
+ * Main database connection is created based in the parameters defined in the configuration file
+ */
 class NatsConnectionProvider implements ServiceProviderInterface
 {
     /**
@@ -29,12 +30,16 @@ class NatsConnectionProvider implements ServiceProviderInterface
     public function register(DiInterface $di): void
     {
         $gnatsConfig = $di->getShared('config')->get('gnats');
-        $di->setShared('natsConnection', function () use ($gnatsConfig){
-            $connectionOptions = new NatsConnectionOptions();
-            $host = $gnatsConfig->host;
-            $port = $gnatsConfig->port;
-            $connectionOptions->setHost($host)->setPort($port);
-            return new NatsConnection($connectionOptions);
-        });
+        $di->setShared(
+            'natsConnection',
+            function () use ($gnatsConfig) {
+                $connectionOptions = new NatsConnectionOptions();
+                $host              = $gnatsConfig->host;
+                $port              = $gnatsConfig->port;
+                $connectionOptions->setHost($host)->setPort($port);
+
+                return new NatsConnection($connectionOptions);
+            }
+        );
     }
 }

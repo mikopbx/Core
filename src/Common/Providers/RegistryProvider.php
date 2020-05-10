@@ -34,8 +34,11 @@ class RegistryProvider implements ServiceProviderInterface
      */
     public function register(DiInterface $di): void
     {
-        $di->setShared('registry', function () {
-            return new Registry();
-        });
+        $di->setShared(
+            'registry',
+            function () {
+                return new Registry();
+            }
+        );
     }
 }

@@ -27,7 +27,7 @@ class GetController extends BaseController
      *
      * @param $actionName
      */
-    public function callAction($actionName):void
+    public function callAction($actionName): void
     {
         $this->sendRequestToBackendWorker('sip', $actionName);
     }

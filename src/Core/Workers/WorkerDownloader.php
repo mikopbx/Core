@@ -36,6 +36,7 @@ class WorkerDownloader extends WorkerBase
             $this->settings = json_decode(file_get_contents($argv[1]), true);
         } else {
             echo 'Download error... Settings file does not exist';
+
             return;
         }
         $this->old_memory_limit = ini_get('memory_limit');
@@ -143,8 +144,9 @@ class WorkerDownloader extends WorkerBase
 
             return;
         }
-        if ( ! file_exists($this->settings['res_file']) || md5_file($this->settings['res_file']) !== $this->settings['md5']) {
-
+        if ( ! file_exists($this->settings['res_file']) || md5_file(
+                $this->settings['res_file']
+            ) !== $this->settings['md5']) {
             if (file_exists($this->settings['res_file'])) {
                 unlink($this->settings['res_file']);
             }
@@ -155,7 +157,6 @@ class WorkerDownloader extends WorkerBase
 
         // MD5 проверили, подтверждаем загрузку файла на 100%
         if ('module_install' === $this->settings['action']) {
-
             $error            = false;
             $currentModuleDir = $this->di->getConfig()->path('core.modulesDir') . $this->settings['module'];
             $needBackup       = is_dir($currentModuleDir);
@@ -163,7 +164,9 @@ class WorkerDownloader extends WorkerBase
 
             // Kill all module processes
             if (is_dir("{$currentModuleDir}/bin")) {
-                Util::mwExec("/bin/busybox kill -9 $(/usr/bin/lsof {$currentModuleDir}/bin/* |  /bin/busybox grep -v COMMAND | /bin/busybox awk  '{ print $2}' | /bin/busybox uniq)");
+                Util::mwExec(
+                    "/bin/busybox kill -9 $(/usr/bin/lsof {$currentModuleDir}/bin/* |  /bin/busybox grep -v COMMAND | /bin/busybox awk  '{ print $2}' | /bin/busybox uniq)"
+                );
             }
 
             // Uninstall module with keep settings and backup db
@@ -245,8 +248,10 @@ class WorkerDownloader extends WorkerBase
     {
         if (@is_array($e = @error_get_last())) {
             if (file_exists($this->error_file)) {
-                file_put_contents($this->error_file,
-                    json_encode(error_get_last(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+                file_put_contents(
+                    $this->error_file,
+                    json_encode(error_get_last(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
+                );
             } else {
                 Util::sysLogMsg('FileWorkerDownloader', json_encode(error_get_last()));
             }

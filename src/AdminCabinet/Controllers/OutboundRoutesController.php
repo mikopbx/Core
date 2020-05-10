@@ -6,6 +6,7 @@
  * Written by Nikolay Beketov, 5 2018
  *
  */
+
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\OutgoingRouteEditForm;
@@ -21,7 +22,6 @@ class OutboundRoutesController extends BaseController
      */
     public function indexAction(): void
     {
-
         $rules        = OutgoingRoutingTable::find(['order' => 'priority']);
         $routingTable = [];
         foreach ($rules as $rule) {
@@ -67,7 +67,6 @@ class OutboundRoutesController extends BaseController
      */
     public function modifyAction($id = null): void
     {
-
         $rule = OutgoingRoutingTable::findFirstByid($id);
         if ($rule === null) {
             $rule = new OutgoingRoutingTable();
@@ -79,14 +78,13 @@ class OutboundRoutesController extends BaseController
             $providersList[$provider->uniqid] = $provider->getRepresent();
         }
 
-        uasort($providersList, ["OutboundRoutesController", "sortArrayByNameAndState"]);
+        uasort($providersList, [__CLASS__, "sortArrayByNameAndState"]);
 
         if ($rule->restnumbers == -1) {
             $rule->restnumbers = '';
         }
         $this->view->form      = new OutgoingRouteEditForm($rule, $providersList);
         $this->view->represent = $rule->getRepresent();
-
     }
 
     /**
@@ -146,15 +144,14 @@ class OutboundRoutesController extends BaseController
      *
      * @param null $id
      */
-    public function deleteAction($id = null)
+    public function deleteAction($id = null): void
     {
         $rule = OutgoingRoutingTable::findFirstByid($id);
         if ($rule !== null) {
             $rule->delete();
         }
 
-        return $this->forward('outbound-routes/index');
-
+        $this->forward('outbound-routes/index');
     }
 
     /**
@@ -189,6 +186,5 @@ class OutboundRoutesController extends BaseController
         } else {
             return ($a < $b) ? -1 : 1;
         }
-
     }
 }

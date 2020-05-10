@@ -1,4 +1,5 @@
 <?php
+
 namespace MikoPBX\AdminCabinet\Library;
 
 use Phalcon\Di\Injectable;

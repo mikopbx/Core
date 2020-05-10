@@ -14,7 +14,7 @@ use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
 /**
- * @method static mixed findFirstByUniqid(array|string|int $parameters=null)
+ * @method static mixed findFirstByUniqid(array|string|int $parameters = null)
  */
 class Sip extends ModelsBase
 {
@@ -214,9 +214,14 @@ class Sip extends ModelsBase
     public function validation(): bool
     {
         $validation = new Validation();
-        $validation->add('uniqid', new UniquenessValidator([
-            'message' => $this->t('mo_ThisUniqidMustBeUniqueForSIPModels'),
-        ]));
+        $validation->add(
+            'uniqid',
+            new UniquenessValidator(
+                [
+                    'message' => $this->t('mo_ThisUniqidMustBeUniqueForSIPModels'),
+                ]
+            )
+        );
 
         return $this->validate($validation);
     }

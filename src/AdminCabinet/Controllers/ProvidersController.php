@@ -6,6 +6,7 @@
  * Written by Nikolay Beketov, 5 2018
  *
  */
+
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\{IaxProviderEditForm, SipProviderEditForm};
@@ -36,7 +37,6 @@ class ProvidersController extends BaseController
             ];
         }
         $this->view->providerlist = $providersList;
-
     }
 
 
@@ -63,7 +63,6 @@ class ProvidersController extends BaseController
             foreach ($enabledCodecs as $codec) {
                 $codecs[$codec->codec]['enabled'] = true;
             }
-
         } else {
             $uniqid                     = strtoupper('SIP-' . time());
             $provider                   = new Providers();
@@ -110,7 +109,6 @@ class ProvidersController extends BaseController
             foreach ($enabledCodecs as $codec) {
                 $codecs[$codec->codec]['enabled'] = true;
             }
-
         } else {
             $uniqid                    = strtoupper('IAX-' . time());
             $provider                  = new Providers();
@@ -129,7 +127,6 @@ class ProvidersController extends BaseController
         $this->view->codecs    = $codecs;
         $this->view->form      = new IaxProviderEditForm($provider->Iax);
         $this->view->represent = $provider->getRepresent();
-
     }
 
     /**
@@ -140,7 +137,6 @@ class ProvidersController extends BaseController
      */
     public function enableAction($type, $uniqid = null): void
     {
-
         $this->view->success = false;
         switch ($type) {
             case 'iax':
@@ -160,8 +156,6 @@ class ProvidersController extends BaseController
                 $this->view->success = true;
             }
         }
-
-
     }
 
     /**
@@ -191,7 +185,6 @@ class ProvidersController extends BaseController
                 $this->view->success = true;
             }
         }
-
     }
 
     /**
@@ -244,7 +237,6 @@ class ProvidersController extends BaseController
      */
     private function saveProvider($data, $type): bool
     {
-
         // Проверим это новый провайдер или старый
         $provider = Providers::findFirstByUniqid($data['uniqid']);
         if ($provider === null) {
@@ -303,7 +295,6 @@ class ProvidersController extends BaseController
                     if (array_key_exists($name, $data)) {
                         $providerByType->$name = $data[$name];
                     }
-
             }
         }
 
@@ -347,7 +338,7 @@ class ProvidersController extends BaseController
             ];
             if (array_key_exists('codec_' . $key, $data) && $data['codec_' . $key] == 'on') {
                 $newCodec = $classCodecs::findFirst($parameters);
-                if ($newCodec===null) {
+                if ($newCodec === null) {
                     $newCodec = new $classCodecs();
                 }
                 $newCodec->$fieldUid = $data['uniqid'];
@@ -369,7 +360,6 @@ class ProvidersController extends BaseController
 
                     return false;
                 }
-
             }
         }
 
@@ -383,7 +373,6 @@ class ProvidersController extends BaseController
      */
     public function deleteAction($uniqid = null): void
     {
-
         $provider = Providers::findFirstByUniqid($uniqid);
 
         if ($provider !== null) {
@@ -391,14 +380,14 @@ class ProvidersController extends BaseController
             $errors = false;
             if ($provider->Iax) {
                 $iax = $provider->Iax;
-                if (!$iax->delete()){
+                if ( ! $iax->delete()) {
                     $errors = $iax->getMessages();
                 }
             }
 
-            if ($errors===false && $provider->Sip) {
+            if ($errors === false && $provider->Sip) {
                 $sip = $provider->Sip;
-                if (!$sip->delete()){
+                if ( ! $sip->delete()) {
                     $errors = $sip->getMessages();
                 }
             }
@@ -412,7 +401,6 @@ class ProvidersController extends BaseController
         }
 
         $this->forward('providers/index');
-
     }
 
 }

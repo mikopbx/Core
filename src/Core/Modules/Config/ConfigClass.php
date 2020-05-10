@@ -5,6 +5,7 @@
  * Proprietary and confidential
  * Written by Alexey Portnov, 2 2020
  */
+
 namespace MikoPBX\Core\Modules\Config;
 
 use MikoPBX\Core\System\MikoPBXConfig;
@@ -42,7 +43,7 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
     public function __construct($debug = false)
     {
         $this->di            = Di::getDefault();
-        $config = $this->di->getShared('config');
+        $config              = $this->di->getShared('config');
         $this->astConfDir    = $config->path('asterisk.confDir');
         $this->modulesDir    = $config->path('core.modulesDir');
         $this->booting       = $this->di->getRegistry()->booting;
@@ -78,6 +79,7 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
     /**
      * Генерация конфигурационного файла asterisk.
      * $general_settings - массив глобальных настроек.
+     *
      * @param $general_settings
      */
     protected function generateConfigProtected($general_settings)
@@ -376,6 +378,7 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
 
     /**
      * Returns array of additional routes for PBXCoreREST interface from module
+     *
      * @return array
      */
     public function getPBXCoreRESTAdditionalRoutes(): array

@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Middleware;
@@ -15,6 +16,7 @@ use Phalcon\Mvc\Micro\MiddlewareInterface;
 class AuthenticationMiddleware implements MiddlewareInterface
 {
     use ResponseTrait;
+
     /**
      * Call me
      *
@@ -25,7 +27,7 @@ class AuthenticationMiddleware implements MiddlewareInterface
     public function call(Micro $api)
     {
         /** @var Request $request */
-        $request  = $api->getService('request');
+        $request = $api->getService('request');
         /** @var Response $response */
         $response = $api->getService('response');
 
@@ -40,6 +42,7 @@ class AuthenticationMiddleware implements MiddlewareInterface
                 $response::OK,
                 'Invalid Token'
             );
+
             return false;
         }
 
@@ -56,16 +59,16 @@ class AuthenticationMiddleware implements MiddlewareInterface
             '/api/cdr/getData',
         ];
         // Текущий паттерн.
-        $pattern = $api->getRouter()->getRewriteUri();
+        $pattern  = $api->getRouter()->getRewriteUri();
         $res_auth = true;
         // Проверяем авторизацию.
-        if(preg_match_all('/\/api\/modules\/Module\w*\/customAction\S*/m', $pattern) > 0){
+        if (preg_match_all('/\/api\/modules\/Module\w*\/customAction\S*/m', $pattern) > 0) {
             // Это сервисы модулей.
-        }elseif(!in_array($pattern, $panel_pattern, true)) {
+        } elseif ( ! in_array($pattern, $panel_pattern, true)) {
             $res_auth = false;
         }
-        return $res_auth;
 
+        return $res_auth;
     }
 
 }

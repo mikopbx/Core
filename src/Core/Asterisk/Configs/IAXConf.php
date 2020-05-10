@@ -5,11 +5,12 @@
  * Proprietary and confidential
  * Written by Alexey Portnov, 2 2020
  */
+
 namespace MikoPBX\Core\Asterisk\Configs;
 
-use MikoPBX\Core\System\{MikoPBXConfig, Util};
 use MikoPBX\Common\Models\{Iax, IaxCodecs};
 use MikoPBX\Core\Modules\Config\ConfigClass;
+use MikoPBX\Core\System\{MikoPBXConfig, Util};
 
 class IAXConf extends ConfigClass
 {
@@ -19,7 +20,7 @@ class IAXConf extends ConfigClass
     /**
      * Перезапуск модуля IAX2;
      */
-    static function iaxReload()
+    public static function iaxReload()
     {
         $result = [
             'result' => 'ERROR',
@@ -43,32 +44,32 @@ class IAXConf extends ConfigClass
         $result = [
             'result' => 'ERROR',
         ];
-        $peers = [];
-         // First select disabled providers
+        $peers  = [];
+        // First select disabled providers
         $disabledProviders = Iax::find();
-        foreach ($disabledProviders as $provider){
+        foreach ($disabledProviders as $provider) {
             $peers[] = [
-                'state'    => 'OFF',
-                'id'       => $provider->uniqid,
-                'username' => trim($provider->username),
-                'host'     => trim($provider->host),
-                'noregister'=> $provider->noregister
+                'state'      => 'OFF',
+                'id'         => $provider->uniqid,
+                'username'   => trim($provider->username),
+                'host'       => trim($provider->host),
+                'noregister' => $provider->noregister,
             ];
         }
 
-        if (Iax::findFirst("disabled = '0'")!==null){
+        if (Iax::findFirst("disabled = '0'") !== null) {
             // Find them over AMI
-            $am     = Util::getAstManager('off');
-            $amiRegs   = $am->IAXregistry(); // Registrations
-            $amiPeers  = $am->IAXpeerlist(); // Peers
+            $am       = Util::getAstManager('off');
+            $amiRegs  = $am->IAXregistry(); // Registrations
+            $amiPeers = $am->IAXpeerlist(); // Peers
             $am->Logoff();
-            foreach ($amiPeers as $amiPeer){
-                $key = array_search($amiPeer['ObjectName'], array_column($peers, 'id'),true);
-                if ($key !== false){
+            foreach ($amiPeers as $amiPeer) {
+                $key = array_search($amiPeer['ObjectName'], array_column($peers, 'id'), true);
+                if ($key !== false) {
                     $currentPeer = &$peers[$key];
                     if ($currentPeer['noregister'] === '1') {
                         // Пир без регистрации.
-                        $arr_status            = explode(' ', $amiPeer['Status']);
+                        $arr_status                   = explode(' ', $amiPeer['Status']);
                         $currentPeer['state']         = strtoupper($arr_status[0]);
                         $currentPeer['time-response'] = strtoupper(str_replace(['(', ')'], '', $arr_status[1]));
                     } else {
@@ -76,7 +77,7 @@ class IAXConf extends ConfigClass
                         // Parse active registrations
                         foreach ($amiRegs as $reg) {
                             if (
-                                strcasecmp($reg['Addr'],$currentPeer['host']) === 0
+                                strcasecmp($reg['Addr'], $currentPeer['host']) === 0
                                 && strcasecmp($reg['Username'], $currentPeer['username']) === 0
                             ) {
                                 $currentPeer['state'] = $reg['State'];

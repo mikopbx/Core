@@ -6,11 +6,11 @@
  * Written by Nikolay Beketov, 6 2018
  *
  */
+
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\LoginForm;
 use MikoPBX\Common\Models\PbxSettings;
-use Phalcon\Di;
 
 /**
  * SessionController
@@ -61,8 +61,10 @@ class SessionController extends BaseController
             $this->view->success = false;
             $this->flash->error($this->translation->_('auth_WrongLoginPassword'));
             if (openlog('web_auth', LOG_ODELAY, LOG_LOCAL7)) {
-                syslog(LOG_WARNING,
-                    "From: {$_SERVER['REMOTE_ADDR']} UserAgent:({$_SERVER['HTTP_USER_AGENT']}) Cause: Wrong password");
+                syslog(
+                    LOG_WARNING,
+                    "From: {$_SERVER['REMOTE_ADDR']} UserAgent:({$_SERVER['HTTP_USER_AGENT']}) Cause: Wrong password"
+                );
                 closelog();
             }
         }
@@ -102,7 +104,6 @@ class SessionController extends BaseController
         } else {
             $this->view->success = false;
         }
-
     }
 
     /**

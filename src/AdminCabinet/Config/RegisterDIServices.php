@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 /**
  * Copyright (C) MIKO LLC - All Rights Reserved
@@ -28,9 +29,9 @@ use MikoPBX\Common\Providers\{CDRDatabaseProvider,
     ManagedCacheProvider,
     ModelsCacheProvider,
     ModelsMetadataProvider,
+    ModulesDBConnectionsProvider,
     SessionReadOnlyProvider,
-    TranslationProvider,
-    ModulesDBConnectionsProvider};
+    TranslationProvider};
 use Phalcon\Di\DiInterface;
 
 class RegisterDIServices
@@ -40,7 +41,7 @@ class RegisterDIServices
      *
      * @param \Phalcon\Di\DiInterface $di
      */
-    public static function init(DiInterface $di):void
+    public static function init(DiInterface $di): void
     {
         $adminCabinetProviders = [
             // Inject Database connections

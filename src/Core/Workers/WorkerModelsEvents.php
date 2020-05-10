@@ -5,12 +5,9 @@
  * Proprietary and confidential
  * Written by Alexey Portnov, 2 2020
  */
+
 namespace MikoPBX\Core\Workers;
 
-use Phalcon\Di;
-use Phalcon\Exception;
-use MikoPBX\Core\Asterisk\Configs\{IAXConf, QueueConf, SIPConf};
-use MikoPBX\Core\System\{System, BeanstalkClient, Firewall, PBX};
 use MikoPBX\Common\Models\{AsteriskManagerUsers,
     CallQueueMembers,
     CallQueues,
@@ -36,6 +33,9 @@ use MikoPBX\Common\Models\{AsteriskManagerUsers,
     Sip,
     SipCodecs,
     SoundFiles};
+use MikoPBX\Core\Asterisk\Configs\{IAXConf, QueueConf, SIPConf};
+use MikoPBX\Core\System\{BeanstalkClient, Firewall, PBX, System};
+use Phalcon\Exception;
 
 require_once 'globals.php';
 ini_set('error_reporting', E_ALL);

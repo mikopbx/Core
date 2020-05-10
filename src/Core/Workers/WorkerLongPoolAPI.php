@@ -5,14 +5,16 @@
  * Proprietary and confidential
  * Written by Alexey Portnov, 2 2020
  */
+
 namespace MikoPBX\Core\Workers;
 
-use Phalcon\Exception;
+use MikoPBX\Common\Models\LongPollSubscribe;
 use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\Asterisk\Configs\{IAXConf, SIPConf};
-use MikoPBX\Common\Models\LongPollSubscribe;
 use MikoPBX\Core\System\BeanstalkClient;
 use MikoPBX\Core\System\Util;
+use Phalcon\Exception;
+
 use function clearstatcache;
 
 
@@ -31,14 +33,13 @@ class WorkerLongPoolAPI extends WorkerBase
 {
     private $client_queue;
 
-    public function start($argv) :void
+    public function start($argv): void
     {
-
         $this->client_queue = new BeanstalkClient();
-        $this->client_queue->subscribe('ping_'.self::class, [$this,'pingCallBack']);
+        $this->client_queue->subscribe('ping_' . self::class, [$this, 'pingCallBack']);
 
-        $ACTIONS          = [];
-        $COMMON_CNANNELS  = [];
+        $ACTIONS         = [];
+        $COMMON_CNANNELS = [];
 
         while (true) {
             $data = $this->getData('http://localhost/pbxcore/api/long/channels-stats?id=ALL');
@@ -76,18 +77,15 @@ class WorkerLongPoolAPI extends WorkerBase
      */
 
     /**
-     * Отправляет POST запрос по http. Возвращает ответ в виде массива.
+     * Отправляет GET запрос по http. Возвращает ответ в виде массива.
      *
      * @param string $url
-     * @param string $data
      *
      * @return string
      */
-    private function postData($url, $data)
+    private function getData($url)
     {
         $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_TIMEOUT, 1);
         $resultrequest = curl_exec($ch);
@@ -96,22 +94,24 @@ class WorkerLongPoolAPI extends WorkerBase
         return json_decode($resultrequest, true);
     }
 
-    /**
-     * Отправляет GET запрос по http. Возвращает ответ в виде массива.
-     *
-     * @param string $url
-     *
-     * @return string
-     */
-     private function getData($url)
+    private function setChannelsData(): void
     {
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 1);
-        $resultrequest = curl_exec($ch);
-        curl_close($ch);
+        /** @var \MikoPBX\Common\Models\LongPollSubscribe $sub */
+        $subscribes = LongPollSubscribe::find('enable=1');
 
-        return json_decode($resultrequest, true);
+        /** @var \MikoPBX\Common\Models\LongPollSubscribe $sub */
+        foreach ($subscribes as $sub) {
+            $last_action                                     = $GLOBALS['ACTIONS'][$sub->action]['last_action'] ?? time(
+                ) - 1;
+            $GLOBALS['ACTIONS'][$sub->action]                = $sub->toArray();
+            $GLOBALS['ACTIONS'][$sub->action]['last_action'] = $last_action;
+
+
+            $last_action                                                            = $GLOBALS['COMMON_CNANNELS'][$sub->channel][$sub->action]['last_action'] ?? time(
+                ) - 1;
+            $GLOBALS['COMMON_CNANNELS'][$sub->channel][$sub->action]                = $sub->toArray();
+            $GLOBALS['COMMON_CNANNELS'][$sub->channel][$sub->action]['last_action'] = $last_action;
+        }
     }
 
     /**
@@ -158,7 +158,6 @@ class WorkerLongPoolAPI extends WorkerBase
      */
     private function checkAction($channel, &$data, $common_chan = null)
     {
-
         if ( ! $common_chan) {
             $actions = $GLOBALS['ACTIONS'];
         } else {
@@ -184,22 +183,25 @@ class WorkerLongPoolAPI extends WorkerBase
         return $enable;
     }
 
-    private function setChannelsData():void
+    /**
+     * Отправляет POST запрос по http. Возвращает ответ в виде массива.
+     *
+     * @param string $url
+     * @param string $data
+     *
+     * @return string
+     */
+    private function postData($url, $data)
     {
-        /** @var \MikoPBX\Common\Models\LongPollSubscribe $sub */
-        $subscribes = LongPollSubscribe::find('enable=1');
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 1);
+        $resultrequest = curl_exec($ch);
+        curl_close($ch);
 
-        /** @var \MikoPBX\Common\Models\LongPollSubscribe $sub */
-        foreach ($subscribes as $sub) {
-            $last_action                                     = $GLOBALS['ACTIONS'][$sub->action]['last_action'] ?? time() - 1;
-            $GLOBALS['ACTIONS'][$sub->action]                = $sub->toArray();
-            $GLOBALS['ACTIONS'][$sub->action]['last_action'] = $last_action;
-
-
-            $last_action                                                            = $GLOBALS['COMMON_CNANNELS'][$sub->channel][$sub->action]['last_action'] ?? time() - 1;
-            $GLOBALS['COMMON_CNANNELS'][$sub->channel][$sub->action]                = $sub->toArray();
-            $GLOBALS['COMMON_CNANNELS'][$sub->channel][$sub->action]['last_action'] = $last_action;
-        }
+        return json_decode($resultrequest, true);
     }
 
 }

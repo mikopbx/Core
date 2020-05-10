@@ -5,10 +5,11 @@
  * Proprietary and confidential
  * Written by Alexey Portnov, 2 2020
  */
+
 namespace MikoPBX\Core\System;
 
-use MikoPBX\Core\Config\RegisterDIServices;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Core\Config\RegisterDIServices;
 use PDOException;
 
 /**
@@ -64,7 +65,6 @@ class MikoPBXConfig
         }
 
         return $data->delete();
-
     }
 
     /**

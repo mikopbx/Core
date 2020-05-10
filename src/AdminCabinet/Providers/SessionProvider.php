@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 /**
  * Copyright (C) MIKO LLC - All Rights Reserved
@@ -24,16 +25,21 @@ class SessionProvider implements ServiceProviderInterface
     public function register(DiInterface $di): void
     {
         $phpSessionPath = $di->getShared('config')->path('core.phpSessionPath');
-        $di->setShared('session', function () use ($phpSessionPath){
-            $session = new SessionManager();
-            $files = new SessionAdapter([
-                'savePath' => $phpSessionPath,
-                'prefix'   => 'sess_'
-            ]);
-            $session->setAdapter($files);
-            $session->start();
+        $di->setShared(
+            'session',
+            function () use ($phpSessionPath) {
+                $session = new SessionManager();
+                $files   = new SessionAdapter(
+                    [
+                        'savePath' => $phpSessionPath,
+                        'prefix'   => 'sess_',
+                    ]
+                );
+                $session->setAdapter($files);
+                $session->start();
 
-            return $session;
-        });
+                return $session;
+            }
+        );
     }
 }

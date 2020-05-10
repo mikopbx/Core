@@ -9,13 +9,13 @@
 namespace MikoPBX\Core\Modules;
 
 use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings};
+use MikoPBX\Core\System\Util;
 use Phalcon\Db\Adapter\Pdo\Sqlite;
 use Phalcon\Db\Column;
 use Phalcon\Db\Index;
 use Phalcon\DI;
 use Phalcon\Text;
 use RuntimeException;
-use MikoPBX\Core\System\Util;
 
 /**
  * Class PbxExtensionBase
@@ -143,7 +143,7 @@ class PbxExtensionBase
                 $this->messages[] = 'Error on decode module.json';
             }
         }
-        $this->moduleDir = $this->config->path('core.modulesDir') .'/'. $this->module_uniqid;
+        $this->moduleDir = $this->config->path('core.modulesDir') . '/' . $this->module_uniqid;
         $this->messages  = [];
 
         // Create and connect database
@@ -515,8 +515,10 @@ class PbxExtensionBase
 
             $aquery = '
             CREATE TEMPORARY TABLE ' . $tableName . '_backup(' . implode(',', $currentStateColumnList) . ');
-            INSERT INTO ' . $tableName . '_backup SELECT ' . implode(',',
-                    $currentStateColumnList) . ' FROM ' . $tableName . ';
+            INSERT INTO ' . $tableName . '_backup SELECT ' . implode(
+                    ',',
+                    $currentStateColumnList
+                ) . ' FROM ' . $tableName . ';
             DROP TABLE ' . $tableName . ';';
             $result = $result && $this->moduleDB->execute($aquery);
 
@@ -524,13 +526,17 @@ class PbxExtensionBase
 
             $newColumnNames = array_intersect($newColNames, $oldColNames);
 
-            $result = $result && $this->moduleDB->execute('
+            $result = $result && $this->moduleDB->execute(
+                    '
             INSERT INTO ' . $tableName . '(' . implode(',', $newColumnNames) . ')
             SELECT ' . implode(',', $newColumnNames) . ' FROM ' . $tableName . '_backup;
-        ');
-            $result = $result && $this->moduleDB->execute('
+        '
+                );
+            $result = $result && $this->moduleDB->execute(
+                    '
             DROP TABLE ' . $tableName . '_backup;            
-        ');
+        '
+                );
         }
 
         // For each indexed columns change type
@@ -592,7 +598,6 @@ class PbxExtensionBase
 
         if ( ! $this->moduleDB->tableExists($tableName)) {
             $result = $this->moduleDB->createTable($tableName, '', $columnsNew);
-
         } else { // Таблица существует, создадим новую и скопируем данные, чтобы не думать про новые, старые колонки
 
             $columnsTemp = $this->moduleDB->describeColumns($tableName, '');
@@ -607,8 +612,10 @@ class PbxExtensionBase
 
             $aquery = '
             CREATE TEMPORARY TABLE ' . $tableName . '_backup(' . implode(',', $currentStateColumnList) . ');
-            INSERT INTO ' . $tableName . '_backup SELECT ' . implode(',',
-                    $currentStateColumnList) . ' FROM ' . $tableName . ';
+            INSERT INTO ' . $tableName . '_backup SELECT ' . implode(
+                    ',',
+                    $currentStateColumnList
+                ) . ' FROM ' . $tableName . ';
             DROP TABLE ' . $tableName . ';';
             $result = $result && $this->moduleDB->execute($aquery);
 
@@ -616,14 +623,17 @@ class PbxExtensionBase
 
             $newColumnNames = array_intersect($newColNames, $oldColNames);
 
-            $result = $result && $this->moduleDB->execute('
+            $result = $result && $this->moduleDB->execute(
+                    '
             INSERT INTO ' . $tableName . '(' . implode(',', $newColumnNames) . ')
             SELECT ' . implode(',', $newColumnNames) . ' FROM ' . $tableName . '_backup;
-        ');
-            $result = $result && $this->moduleDB->execute('
+        '
+                );
+            $result = $result && $this->moduleDB->execute(
+                    '
             DROP TABLE ' . $tableName . '_backup;            
-        ');
-
+        '
+                );
         }
         if ($result) {
             $this->moduleDB->commit();

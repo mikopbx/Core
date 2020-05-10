@@ -6,6 +6,7 @@
  * Written by Nikolay Beketov, 11 2019
  *
  */
+
 namespace MikoPBX\AdminCabinet\Forms;
 
 use Phalcon\Forms\Element\Check;
@@ -20,7 +21,6 @@ class PbxExtensionModuleSettingsForm extends Form
 
     public function initialize($entity = null, $options = null): void
     {
-
         // ModuleUniqId
         $this->add(new Hidden('uniqid', ['value' => $options['uniqid']]));
 
@@ -41,14 +41,19 @@ class PbxExtensionModuleSettingsForm extends Form
         $this->add(new Check('show-at-sidebar', $cheskarr));
 
         // Caption
-        $this->add(new Text('caption', [
-            'value' => $this->di->get('translation')->_($options['caption']),
-        ]));
+        $this->add(
+            new Text(
+                'caption', [
+                'value' => $this->di->get('translation')->_($options['caption']),
+            ]
+            )
+        );
 
         // Left sidebar groups
         $menuGroups = $this->di->getElements()->getMenuGroups();
 
-        $groups = new Select('menu-group', $menuGroups, [
+        $groups = new Select(
+            'menu-group', $menuGroups, [
             'using'    => [
                 'id',
                 'name',
@@ -56,9 +61,8 @@ class PbxExtensionModuleSettingsForm extends Form
             'useEmpty' => false,
             'value'    => $options['group'],
             'class'    => 'ui selection dropdown',
-        ]);
+        ]
+        );
         $this->add($groups);
-
-
     }
 }

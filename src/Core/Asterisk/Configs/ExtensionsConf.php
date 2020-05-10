@@ -5,11 +5,12 @@
  * Proprietary and confidential
  * Written by Alexey Portnov, 4 2020
  */
+
 namespace MikoPBX\Core\Asterisk\Configs;
 
-use MikoPBX\Core\System\{MikoPBXConfig, Util};
-use MikoPBX\Core\Modules\Config\ConfigClass;
 use MikoPBX\Common\Models\{IncomingRoutingTable, OutgoingRoutingTable, OutWorkTimes, SoundFiles};
+use MikoPBX\Core\Modules\Config\ConfigClass;
+use MikoPBX\Core\System\{MikoPBXConfig, Util};
 use Phalcon\Di;
 
 class ExtensionsConf extends ConfigClass
@@ -21,8 +22,8 @@ class ExtensionsConf extends ConfigClass
     public function generate()
     {
         $additionalModules = $this->di->getShared('pbxConfModules');
-        $conf = "[globals] \n";
-        $conf .= "TRANSFER_CONTEXT=internal-transfer; \n";
+        $conf              = "[globals] \n";
+        $conf              .= "TRANSFER_CONTEXT=internal-transfer; \n";
         foreach ($additionalModules as $appClass) {
             $conf .= $appClass->extensionGlobals();
         }
@@ -129,7 +130,6 @@ class ExtensionsConf extends ConfigClass
         // Отсекаем "7" и добавляем "8".
         // $conf.= 'same => n,ExecIf( $["${REGEX("^7[0-9]+" ${CALLERID(num)})}" == "1"]?Set(CALLERID(num)=8${CALLERID(num):1}))'."\n\t";
         $conf .= 'same => n,return' . "\n\n";
-
     }
 
     /**
@@ -273,7 +273,6 @@ class ExtensionsConf extends ConfigClass
         $conf       .= 'same => n,Hangup()' . "\n\n";
 
         $conf .= 'exten => h,1,ExecIf($["${ISTRANSFER}x" != "x"]?Gosub(${ISTRANSFER}dial_hangup,${EXTEN},1))' . "\n\n";
-
     }
 
     /**
@@ -284,7 +283,7 @@ class ExtensionsConf extends ConfigClass
     private function generateInternalTransfer(&$conf)
     {
         $additionalModules = $this->di->getShared('pbxConfModules');
-        $conf .= "[internal-transfer] \n";
+        $conf              .= "[internal-transfer] \n";
 
         foreach ($additionalModules as $appClass) {
             $conf .= $appClass->getIncludeInternalTransfer();
@@ -304,7 +303,7 @@ class ExtensionsConf extends ConfigClass
     private function generateSipHints(&$conf)
     {
         $additionalModules = $this->di->getShared('pbxConfModules');
-        $conf .= "[internal-hints] \n";
+        $conf              .= "[internal-hints] \n";
         foreach ($additionalModules as $appClass) {
             $conf .= $appClass->extensionGenHints();
         }
@@ -319,7 +318,7 @@ class ExtensionsConf extends ConfigClass
     private function generateOutContextPeers(&$conf)
     {
         $additionalModules = $this->di->getShared('pbxConfModules');
-        $conf .= "[outgoing] \n";
+        $conf              .= "[outgoing] \n";
 
         $conf .= 'exten => _+.!,1,NoOp(Strip + sign from number and convert it to 00)' . " \n\t";
         $conf .= 'same => n,Set(ADDPLUS=00);' . " \n\t";
@@ -436,9 +435,9 @@ class ExtensionsConf extends ConfigClass
     public function generatePublicContext(&$conf)
     {
         $additionalModules = $this->di->getShared('pbxConfModules');
-        $conf .= "\n";
-        $conf .= self::generateIncomingContextPeers('none', '', '');
-        $conf .= "[public-direct-dial] \n";
+        $conf              .= "\n";
+        $conf              .= self::generateIncomingContextPeers('none', '', '');
+        $conf              .= "[public-direct-dial] \n";
         foreach ($additionalModules as $appClass) {
             $conf .= $appClass->generatePublicContext($conf);
         }
@@ -464,8 +463,8 @@ class ExtensionsConf extends ConfigClass
      */
     public static function generateIncomingContextPeers($provider, $login = '', $uniqid = ''): string
     {
-        $conf     = '';
-        $dialplan = [];
+        $conf              = '';
+        $dialplan          = [];
         $additionalModules = Di::getDefault()->getShared('pbxConfModules');
 
         if ('none' === $provider) {
@@ -488,7 +487,6 @@ class ExtensionsConf extends ConfigClass
                 "provider = '$provider'",
                 'order' => 'provider,priority,extension',
             ];
-
         }
         /** @var \MikoPBX\Common\Models\IncomingRoutingTable $default_action */
         $default_action = IncomingRoutingTable::findFirst('priority = 9999');
@@ -634,7 +632,6 @@ class ExtensionsConf extends ConfigClass
         }
 
         return $conf;
-
     }
 
     /**

@@ -6,6 +6,7 @@
  * Written by Nikolay Beketov, 5 2018
  *
  */
+
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\ConferenceRoomEditForm;
@@ -41,7 +42,6 @@ class ConferenceRoomsController extends BaseController
         }
         $this->view->form      = new ConferenceRoomEditForm($record);
         $this->view->represent = $record->getRepresent();
-
     }
 
 
@@ -65,7 +65,6 @@ class ConferenceRoomsController extends BaseController
             $extension->userid            = null;
             $extension->show_in_phonebook = 1;
             $extension->public_access     = 1;
-
         } else {
             $extension = $room->Extensions;
         }
@@ -100,13 +99,12 @@ class ConferenceRoomsController extends BaseController
      * Обновление параметров внутреннего номера
      *
      * @param \MikoPBX\Common\Models\Extensions $extension
-     * @param array                      $data массив полей из POST запроса
+     * @param array                             $data массив полей из POST запроса
      *
      * @return bool update result
      */
     private function updateExtension(Extensions $extension, array $data): bool
     {
-
         $extension->number   = $data['extension'];
         $extension->callerid = parent::transliterate($data['name']);
         if ($extension->save() === false) {
@@ -117,14 +115,13 @@ class ConferenceRoomsController extends BaseController
         }
 
         return true;
-
     }
 
     /**
      * Обновление параметров очереди
      *
      * @param \MikoPBX\Common\Models\ConferenceRooms $room
-     * @param array                           $data массив полей из POST запроса
+     * @param array                                  $data массив полей из POST запроса
      *
      * @return bool update result
      */

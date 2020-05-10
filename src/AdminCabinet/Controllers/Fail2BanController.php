@@ -6,6 +6,7 @@
  * Written by Nikolay Beketov, 6 2018
  *
  */
+
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\Fail2BanEditForm;
@@ -20,13 +21,15 @@ class Fail2BanController extends BaseController
     public function indexAction(): void
     {
         $rules = Fail2BanRules::findFirst();
-        if ($rules===null) {
+        if ($rules === null) {
             $rules = new Fail2BanRules();
         }
         $fail2BanEnabled = PbxSettings::getValueByKey('PBXFail2BanEnabled');
 
-        $this->view->form       = new Fail2BanEditForm($rules,
-            ['PBXFail2BanEnabled' => $fail2BanEnabled]);
+        $this->view->form       = new Fail2BanEditForm(
+            $rules,
+            ['PBXFail2BanEnabled' => $fail2BanEnabled]
+        );
         $this->view->submitMode = null;
     }
 
@@ -41,7 +44,7 @@ class Fail2BanController extends BaseController
         $data   = $this->request->getPost();
         $record = Fail2BanRules::findFirst();
 
-        if ($record===null) {
+        if ($record === null) {
             $record = new Fail2BanRules();
         }
         $this->db->begin();

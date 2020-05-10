@@ -6,6 +6,7 @@
  * Written by Nikolay Beketov, 5 2018
  *
  */
+
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\DialplanApplicationEditForm;
@@ -45,7 +46,6 @@ class DialplanApplicationsController extends BaseController
         $this->view->applicationLogic = $app->getApplicationlogic();
         $this->view->form             = $form;
         $this->view->represent        = $app->getRepresent();
-
     }
 
 
@@ -72,7 +72,6 @@ class DialplanApplicationsController extends BaseController
             $extension->userid            = null;
             $extension->show_in_phonebook = 0;
             $extension->public_access     = 0;
-
         } else {
             $extension = $appRecord->Extensions;
         }
@@ -107,13 +106,12 @@ class DialplanApplicationsController extends BaseController
      * Обновление параметров внутреннего номера
      *
      * @param \MikoPBX\Common\Models\Extensions $extension
-     * @param array                      $data массив полей из POST запроса
+     * @param array                             $data массив полей из POST запроса
      *
      * @return bool update result
      */
     private function updateExtension(Extensions $extension, array $data): bool
     {
-
         $extension->number   = $data['extension'];
         $extension->callerid = $this->transliterate($data['name']);
         if ($extension->save() === false) {
@@ -124,20 +122,18 @@ class DialplanApplicationsController extends BaseController
         }
 
         return true;
-
     }
 
     /**
      * Обновление параметров приложения
      *
      * @param \MikoPBX\Common\Models\DialplanApplications $application
-     * @param array                                $data массив полей из POST запроса
+     * @param array                                       $data массив полей из POST запроса
      *
      * @return bool update result
      */
     private function updateDialplanApplication(DialplanApplications $application, array $data): bool
     {
-
         // Заполним параметры записи
         foreach ($application as $name => $value) {
             switch ($name) {
@@ -154,7 +150,6 @@ class DialplanApplicationsController extends BaseController
                     if (array_key_exists($name, $data)) {
                         $application->$name = $data[$name];
                     }
-
             }
         }
 
@@ -166,7 +161,6 @@ class DialplanApplicationsController extends BaseController
         }
 
         return true;
-
     }
 
     /**
@@ -177,7 +171,7 @@ class DialplanApplicationsController extends BaseController
     public function deleteAction(string $uniqid = null)
     {
         $appRecord = DialplanApplications::findFirstByUniqid($uniqid);
-        if ($appRecord === null){
+        if ($appRecord === null) {
             return;
         }
         $this->db->begin();

@@ -6,6 +6,7 @@
  * Written by Nikolay Beketov, 5 2018
  *
  */
+
 namespace MikoPBX\AdminCabinet\Forms;
 
 use Phalcon\Forms\Element\Hidden;
@@ -27,6 +28,5 @@ class ConferenceRoomEditForm extends Form
 
         // Extension
         $this->add(new Text('extension'));
-
     }
 }

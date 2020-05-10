@@ -66,20 +66,20 @@ class CallQueueMembers extends ModelsBase
             ]
 
         );
-
-
     }
 
     public function validation(): bool
     {
-
         $validation = new Validation();
-        $validation->add(['queue', 'extension'], new UniquenessValidator([
-            'message' => $this->t('mo_ThisQueueAndMemberMustBeUniqueForCallQueuesModels'),
-        ]));
+        $validation->add(
+            ['queue', 'extension'],
+            new UniquenessValidator(
+                [
+                    'message' => $this->t('mo_ThisQueueAndMemberMustBeUniqueForCallQueuesModels'),
+                ]
+            )
+        );
 
         return $this->validate($validation);
-
-
     }
 }

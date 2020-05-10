@@ -6,6 +6,7 @@
  * Written by Nikolay Beketov, 6 2018
  *
  */
+
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\TimeFrameEditForm;
@@ -29,14 +30,24 @@ class OutOffWorkTimeController extends BaseController
             $timeframesTable[] = [
                 'id'               => $timeFrame->id,
                 'date_from'        => ( ! empty($timeFrame->date_from))
-                > 0 ? date("d/m/Y",
-                    $timeFrame->date_from) : '',
+                > 0 ? date(
+                    "d/m/Y",
+                    $timeFrame->date_from
+                ) : '',
                 'date_to'          => ( ! empty($timeFrame->date_to)) > 0
                     ? date("d/m/Y", $timeFrame->date_to) : '',
-                'weekday_from'     => ( ! empty($timeFrame->weekday_from)) ? $this->translation->_(date('D',
-                    strtotime("Sunday +{$timeFrame->weekday_from} days"))) : '',
-                'weekday_to'       => ( ! empty($timeFrame->weekday_to)) ? $this->translation->_(date('D',
-                    strtotime("Sunday +{$timeFrame->weekday_to} days"))) : '',
+                'weekday_from'     => ( ! empty($timeFrame->weekday_from)) ? $this->translation->_(
+                    date(
+                        'D',
+                        strtotime("Sunday +{$timeFrame->weekday_from} days")
+                    )
+                ) : '',
+                'weekday_to'       => ( ! empty($timeFrame->weekday_to)) ? $this->translation->_(
+                    date(
+                        'D',
+                        strtotime("Sunday +{$timeFrame->weekday_to} days")
+                    )
+                ) : '',
                 'time_from'        => $timeFrame->time_from,
                 'time_to'          => $timeFrame->time_to,
                 'action'           => $timeFrame->action,
@@ -89,12 +100,14 @@ class OutOffWorkTimeController extends BaseController
             $weekDays[$i] = $this->translation->_(date('D', strtotime("Sunday +{$i} days")));
         }
 
-        $form                  = new TimeFrameEditForm($timeFrame, [
+        $form                  = new TimeFrameEditForm(
+            $timeFrame, [
             'extensions'        => $forwardingExtensions,
             'audio-message'     => $audioMessages,
             'available-actions' => $availableActions,
             'week-days'         => $weekDays,
-        ]);
+        ]
+        );
         $this->view->form      = $form;
         $this->view->represent = $timeFrame->getRepresent();
     }
@@ -162,7 +175,6 @@ class OutOffWorkTimeController extends BaseController
         if (empty($data['id'])) {
             $this->view->reload = "out-off-work-time/modify/{$timeFrame->id}";
         }
-
     }
 
     /**
@@ -178,7 +190,6 @@ class OutOffWorkTimeController extends BaseController
         }
 
         return $this->forward('OutOffWorkTime/index');
-
     }
 
 

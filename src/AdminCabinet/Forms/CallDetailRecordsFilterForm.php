@@ -6,6 +6,7 @@
  * Written by Nikolay Beketov, 7 2018
  *
  */
+
 namespace MikoPBX\AdminCabinet\Forms;
 
 use Phalcon\Forms\Element\Text;
@@ -17,12 +18,18 @@ class CallDetailRecordsFilterForm extends Form
 
     public function initialize($entity = null, $options = null): void
     {
-
-        $this->add(new Text('extension',
-            ['value' => $options['extension']]));
-        $this->add(new Text('date_from',
-            ['value' => $options['date_from']]));
+        $this->add(
+            new Text(
+                'extension',
+                ['value' => $options['extension']]
+            )
+        );
+        $this->add(
+            new Text(
+                'date_from',
+                ['value' => $options['date_from']]
+            )
+        );
         $this->add(new Text('date_to', ['value' => $options['date_to']]));
-
     }
 }

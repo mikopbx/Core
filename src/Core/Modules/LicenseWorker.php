@@ -33,8 +33,10 @@ class LicenseWorker extends Injectable
      */
     public function getLicenseInfo($key)
     {
-        $response = $this->curlPostRequest('getlicenseinfo',
-            ['key' => $key]);
+        $response = $this->curlPostRequest(
+            'getlicenseinfo',
+            ['key' => $key]
+        );
 
         $arResult = $this->convertXMLToArray($response['result']);
         if ($arResult['success']) {
@@ -69,8 +71,11 @@ class LicenseWorker extends Injectable
             $params = http_build_query($data);
             curl_setopt($ch, CURLOPT_POST, 1);
             curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
-            curl_setopt($ch, CURLOPT_HTTPHEADER,
-                ['Content-type: application/x-www-form-urlencoded']);
+            curl_setopt(
+                $ch,
+                CURLOPT_HTTPHEADER,
+                ['Content-type: application/x-www-form-urlencoded']
+            );
         }
         $output   = curl_exec($ch);
         $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -88,7 +93,6 @@ class LicenseWorker extends Injectable
      */
     private function convertXMLToArray($text): array
     {
-
         $json_data = json_decode($text, true);
         if (is_null($json_data)) {
             $text      = str_replace(['\n', '\"'], "\n", $text);
@@ -226,7 +230,6 @@ class LicenseWorker extends Injectable
         } else {
             return ['success' => false, 'error' => $data['error']];
         }
-
     }
 
     /**
@@ -247,7 +250,6 @@ class LicenseWorker extends Injectable
 
             return ['success' => false, 'error' => $data['error']];
         }
-
     }
 
     /**
@@ -269,7 +271,6 @@ class LicenseWorker extends Injectable
 
                 return ['success' => false, 'error' => $data['error']];
             }
-
         }
 
         return ['success' => false, 'error' => 'SessionId did not store on capture'];

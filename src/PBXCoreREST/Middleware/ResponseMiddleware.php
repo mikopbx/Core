@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Middleware;
@@ -28,9 +29,10 @@ class ResponseMiddleware implements MiddlewareInterface
     {
         /** @var Response $response */
         $response = $api->getService('response');
-       if (!$response->isSent()){
-           $response->send();
-       }
+        if ( ! $response->isSent()) {
+            $response->send();
+        }
+
         return true;
     }
 }

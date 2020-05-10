@@ -6,6 +6,7 @@
  * Written by Nikolay Beketov, 6 2018
  *
  */
+
 namespace MikoPBX\AdminCabinet\Forms;
 
 use Phalcon\Forms\Element\Password;
@@ -22,6 +23,5 @@ class LoginForm extends Form
         // Password
         $password = new Password('password');
         $this->add($password);
-
     }
 }

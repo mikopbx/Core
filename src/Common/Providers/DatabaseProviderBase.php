@@ -39,43 +39,52 @@ class DatabaseProviderBase
      */
     public function registerDBService(string $serviceName, DiInterface $di, Config $dbConfig): void
     {
-        $di->setShared($serviceName, function () use ($dbConfig) {
-            $dbclass    = 'Phalcon\Db\Adapter\Pdo\\' . $dbConfig->adapter;
-            $connection = new $dbclass([
-                'dbname' => $dbConfig->dbfile,
-            ]);
-            $connection->setNestedTransactionsWithSavepoints(true);
-            if ($dbConfig->debugMode) {
-                $adapter = new FileLogger($dbConfig->debugLogFile);
-                $logger  = new Logger(
-                    'messages',
+        $di->setShared(
+            $serviceName,
+            function () use ($dbConfig) {
+                $dbclass    = 'Phalcon\Db\Adapter\Pdo\\' . $dbConfig->adapter;
+                $connection = new $dbclass(
                     [
-                        'main' => $adapter,
+                        'dbname' => $dbConfig->dbfile,
                     ]
                 );
-                $eventsManager = new EventsManager();
-                // Слушаем все события базы данных
-                $eventsManager->attach('db', function ($event, $connection) use ($logger) {
-                    if ($event->getType() === 'beforeQuery') {
-                        $statement = $connection->getSQLStatement();
-                        $variables = $connection->getSqlVariables();
-                        if (is_array($variables)) {
-                            foreach ($variables as $variable => $value) {
-                                if (is_array($value)) {
-                                    $value = '(' . implode(', ', $value) . ')';
+                $connection->setNestedTransactionsWithSavepoints(true);
+                if ($dbConfig->debugMode) {
+                    $adapter       = new FileLogger($dbConfig->debugLogFile);
+                    $logger        = new Logger(
+                        'messages',
+                        [
+                            'main' => $adapter,
+                        ]
+                    );
+                    $eventsManager = new EventsManager();
+                    // Слушаем все события базы данных
+                    $eventsManager->attach(
+                        'db',
+                        function ($event, $connection) use ($logger) {
+                            if ($event->getType() === 'beforeQuery') {
+                                $statement = $connection->getSQLStatement();
+                                $variables = $connection->getSqlVariables();
+                                if (is_array($variables)) {
+                                    foreach ($variables as $variable => $value) {
+                                        if (is_array($value)) {
+                                            $value = '(' . implode(', ', $value) . ')';
+                                        }
+                                        $variable  = str_replace(':', '', $variable);
+                                        $statement = str_replace(":$variable", "'$value'", $statement);
+                                    }
                                 }
-                                $variable  = str_replace(':', '', $variable);
-                                $statement = str_replace(":$variable", "'$value'", $statement);
+                                $logger->debug($statement);
                             }
                         }
-                        $logger->debug($statement);
-                    }
-                });
+                    );
 
-                // Назначаем EventsManager экземпляру адаптера базы данных
-                $connection->setEventsManager($eventsManager);
+                    // Назначаем EventsManager экземпляру адаптера базы данных
+                    $connection->setEventsManager($eventsManager);
+                }
+
+                return $connection;
             }
-            return $connection;
-        });
+        );
     }
 }

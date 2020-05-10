@@ -5,6 +5,7 @@
  * Proprietary and confidential
  * Written by Alexey Portnov, 12 2019
  */
+
 namespace MikoPBX\Common\Models;
 
 abstract class CallDetailRecordsBase extends ModelsBase

@@ -8,6 +8,7 @@
  * @version 1.0
  * @link
  */
+
 namespace MikoPBX\AdminCabinet\Utilities\Debug;
 
 class PhpError
@@ -25,7 +26,6 @@ class PhpError
             // Record Error
             PhpError::errorHandler(0, $e->getMessage(), $e->getFile(), $e->getLine());
         }
-
     }
 
     /**
@@ -38,7 +38,6 @@ class PhpError
      */
     public static function errorHandler($errNo, $errStr, $errFile, $errLine)
     {
-
         if ($errNo != E_STRICT) {
             self::logToSyslog($errNo, $errStr, $errFile, $errLine);
         }

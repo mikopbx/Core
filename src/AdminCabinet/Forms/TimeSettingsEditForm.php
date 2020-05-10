@@ -6,6 +6,7 @@
  * Written by Nikolay Beketov, 5 2018
  *
  */
+
 namespace MikoPBX\AdminCabinet\Forms;
 
 use Phalcon\Forms\Element\Check;
@@ -30,7 +31,8 @@ class TimeSettingsEditForm extends Form
             switch ($item->key) {
                 case 'PBXTimezone' :
                 {
-                    $ntpserver = new Select('PBXTimezone', $options, [
+                    $ntpserver = new Select(
+                        'PBXTimezone', $options, [
                         'using'    => [
                             'id',
                             'name',
@@ -38,7 +40,8 @@ class TimeSettingsEditForm extends Form
                         'useEmpty' => false,
                         'value'    => $item->value,
                         'class'    => 'ui search selection dropdown',
-                    ]);
+                    ]
+                    );
                     $this->add($ntpserver);
                     break;
                 }
@@ -53,16 +56,23 @@ class TimeSettingsEditForm extends Form
                 }
                 default :
                 {
-                    $this->add(new Text($item->key, [
-                        'value' => $item->value,
-                    ]));
+                    $this->add(
+                        new Text(
+                            $item->key, [
+                            'value' => $item->value,
+                        ]
+                        )
+                    );
                 }
             }
         }
 
-        $this->add(new Text('CurrentDateTime', [
-            'value' => date('m/d/Y H:i:s', time()),
-        ]));
-
+        $this->add(
+            new Text(
+                'CurrentDateTime', [
+                'value' => date('m/d/Y H:i:s', time()),
+            ]
+            )
+        );
     }
 }

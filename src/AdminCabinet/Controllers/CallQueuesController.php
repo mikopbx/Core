@@ -6,6 +6,7 @@
  * Written by Nikolay Beketov, 5 2018
  *
  */
+
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\CallQueueEditForm;
@@ -46,7 +47,6 @@ class CallQueuesController extends BaseController
             $queue->periodic_announce_frequency = 45;
             $queue->extension
                                                 = Extensions::getNextFreeApplicationNumber();
-
         } else {
             // Списк экстеншенов очереди
             $parameters = [
@@ -92,10 +92,12 @@ class CallQueuesController extends BaseController
             $soundfilesList[$soundFile->id] = $soundFile->name;
         }
 
-        $form                        = new CallQueueEditForm($queue, [
+        $form                        = new CallQueueEditForm(
+            $queue, [
             'extensions' => $extensionList,
             'soundfiles' => $soundfilesList,
-        ]);
+        ]
+        );
         $this->view->form            = $form;
         $this->view->extensionsTable = $queueMembersList;
         $this->view->represent       = $queue->getRepresent();
@@ -165,13 +167,12 @@ class CallQueuesController extends BaseController
      * Обновление параметров внутреннего номера
      *
      * @param \MikoPBX\Common\Models\Extensions $extension
-     * @param array                      $data массив полей из POST запроса
+     * @param array                             $data массив полей из POST запроса
      *
      * @return bool update result
      */
     private function updateExtension(Extensions $extension, array $data): bool
     {
-
         $extension->number   = $data['extension'];
         $extension->callerid = parent::transliterate($data['name']);
         if ($extension->save() === false) {
@@ -182,14 +183,13 @@ class CallQueuesController extends BaseController
         }
 
         return true;
-
     }
 
     /**
      * Обновление параметров очереди
      *
      * @param \MikoPBX\Common\Models\CallQueues $queue
-     * @param array                      $data массив полей из POST запроса
+     * @param array                             $data массив полей из POST запроса
      *
      * @return bool update result
      */
@@ -298,7 +298,6 @@ class CallQueuesController extends BaseController
      */
     private function updateQueueMembers(array $data): bool
     {
-
         $realMembers = [];
         // Обновим настройки у существующих членов очереди
         $membersTable = json_decode($data['members']);

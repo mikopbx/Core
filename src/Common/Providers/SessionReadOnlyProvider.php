@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 /**
  * Copyright (C) MIKO LLC - All Rights Reserved
@@ -22,35 +23,38 @@ class SessionReadOnlyProvider implements ServiceProviderInterface
     public function register(DiInterface $di): void
     {
         $phpSessionPath = $di->getShared('config')->path('core.phpSessionPath');
-        $di->setShared('sessionRO', function () use ($phpSessionPath){
-            if ( ! is_array($_COOKIE) || ! array_key_exists(session_name(), $_COOKIE)) {
-                return null;
-            }
-            $session_name = preg_replace('/[^\da-z]/i', '', $_COOKIE[session_name()]);
-            $session_file = $phpSessionPath . '/sess_' . $session_name;
-            if ( ! file_exists($session_file)) {
-                return null;
-            }
-
-            $session_data = file_get_contents($session_file);
-
-            $return_data = [];
-            $offset      = 0;
-            while ($offset < strlen($session_data)) {
-                if (false === strpos(substr($session_data, $offset), '|')) {
-                    break;
+        $di->setShared(
+            'sessionRO',
+            function () use ($phpSessionPath) {
+                if ( ! is_array($_COOKIE) || ! array_key_exists(session_name(), $_COOKIE)) {
+                    return null;
                 }
-                $pos                   = strpos($session_data, '|', $offset);
-                $num                   = $pos - $offset;
-                $varname               = substr($session_data, $offset, $num);
-                $offset                += $num + 1;
-                $data                  = unserialize(substr($session_data, $offset), ['allowed_classes' => false]);
-                $return_data[$varname] = $data;
-                $offset                += strlen(serialize($data));
-            }
-            $_SESSION = $return_data;
+                $session_name = preg_replace('/[^\da-z]/i', '', $_COOKIE[session_name()]);
+                $session_file = $phpSessionPath . '/sess_' . $session_name;
+                if ( ! file_exists($session_file)) {
+                    return null;
+                }
 
-            return $return_data;
-        });
+                $session_data = file_get_contents($session_file);
+
+                $return_data = [];
+                $offset      = 0;
+                while ($offset < strlen($session_data)) {
+                    if (false === strpos(substr($session_data, $offset), '|')) {
+                        break;
+                    }
+                    $pos                   = strpos($session_data, '|', $offset);
+                    $num                   = $pos - $offset;
+                    $varname               = substr($session_data, $offset, $num);
+                    $offset                += $num + 1;
+                    $data                  = unserialize(substr($session_data, $offset), ['allowed_classes' => false]);
+                    $return_data[$varname] = $data;
+                    $offset                += strlen(serialize($data));
+                }
+                $_SESSION = $return_data;
+
+                return $return_data;
+            }
+        );
     }
 }

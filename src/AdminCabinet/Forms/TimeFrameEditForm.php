@@ -6,6 +6,7 @@
  * Written by Nikolay Beketov, 6 2018
  *
  */
+
 namespace MikoPBX\AdminCabinet\Forms;
 
 use Phalcon\Forms\Element\Hidden;
@@ -25,41 +26,48 @@ class TimeFrameEditForm extends Form
                     $this->add(new Hidden($key));
                     break;
                 case 'extension' :
-                    $extension = new Select($key, $options['extensions'], [
+                    $extension = new Select(
+                        $key, $options['extensions'], [
                         'using'    => [
                             'id',
                             'name',
                         ],
                         'useEmpty' => true,
                         'class'    => 'ui selection search forwarding-select',
-                    ]);
+                    ]
+                    );
                     $this->add($extension);
                     break;
                 case 'audio_message_id' :
-                    $audiomessageid = new Select($key, $options['audio-message'], [
+                    $audiomessageid = new Select(
+                        $key, $options['audio-message'], [
                         'using'    => [
                             'id',
                             'name',
                         ],
                         'useEmpty' => true,
                         'class'    => 'ui selection dropdown-default search',
-                    ]);
+                    ]
+                    );
                     $this->add($audiomessageid);
                     break;
                 case 'action' :
-                    $action = new Select($key, $options['available-actions'], [
+                    $action = new Select(
+                        $key, $options['available-actions'], [
                         'using'    => [
                             'id',
                             'name',
                         ],
                         'useEmpty' => false,
                         'class'    => 'ui selection dropdown search',
-                    ]);
+                    ]
+                    );
                     $this->add($action);
                     break;
                 case 'weekday_from' :
                 case 'weekday_to' :
-                    $action = new Select($key, $options['week-days'], [
+                    $action = new Select(
+                        $key, $options['week-days'], [
                         'using'    => [
                             'id',
                             'name',
@@ -67,7 +75,8 @@ class TimeFrameEditForm extends Form
                         'useEmpty' => true,
                         'value'    => empty($entity->$key) ? -1 : $value,
                         'class'    => 'ui selection',
-                    ]);
+                    ]
+                    );
                     $this->add($action);
                     break;
                 case 'description' :
@@ -77,9 +86,7 @@ class TimeFrameEditForm extends Form
 
                 default :
                     $this->add(new Text($key));
-
             }
         }
-
     }
 }

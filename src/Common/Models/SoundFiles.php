@@ -13,31 +13,26 @@ use Phalcon\Mvc\Model\Relation;
 
 class SoundFiles extends ModelsBase
 {
+    public const CATEGORY_MOH = 'moh';
+    public const CATEGORY_CUSTOM = 'custom';
     /**
      * @Primary
      * @Identity
      * @Column(type="integer", nullable=false)
      */
     public $id;
-
     /**
      * @Column(type="string", nullable=true)
      */
     public $name;
-
     /**
      * @Column(type="string", nullable=true)
      */
     public $path;
-
     /**
      * @Column(type="string", nullable=true)
      */
     public $category;
-
-
-    public const CATEGORY_MOH              = 'moh';
-    public const CATEGORY_CUSTOM           = 'custom';
 
     public function initialize(): void
     {
@@ -80,6 +75,5 @@ class SoundFiles extends ModelsBase
                 ],
             ]
         );
-
     }
 }

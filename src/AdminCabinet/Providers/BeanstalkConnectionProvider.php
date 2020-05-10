@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 /**
  * Copyright (C) MIKO LLC - All Rights Reserved
@@ -28,8 +29,11 @@ class BeanstalkConnectionProvider implements ServiceProviderInterface
      */
     public function register(DiInterface $di): void
     {
-        $di->setShared('beanstalkConnection', function () {
-            return new BeanstalkClient(WorkerModelsEvents::class);
-        });
+        $di->setShared(
+            'beanstalkConnection',
+            function () {
+                return new BeanstalkClient(WorkerModelsEvents::class);
+            }
+        );
     }
 }

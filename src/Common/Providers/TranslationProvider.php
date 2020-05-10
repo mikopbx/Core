@@ -25,8 +25,8 @@ use Phalcon\Translate\InterpolatorFactory;
 use Phalcon\Translate\TranslateFactory;
 
 /**
-* Localization service
-*/
+ * Localization service
+ */
 class TranslationProvider implements ServiceProviderInterface
 {
     /**
@@ -36,18 +36,20 @@ class TranslationProvider implements ServiceProviderInterface
      */
     public function register(DiInterface $di): void
     {
-        $di->setShared('translation', function () use ($di) {
+        $di->setShared(
+            'translation',
+            function () use ($di) {
+                $interpolator = new InterpolatorFactory();
+                $factory      = new TranslateFactory($interpolator);
 
-            $interpolator = new InterpolatorFactory();
-            $factory      = new TranslateFactory($interpolator);
-
-            // Return a translation object
-            return $factory->newInstance(
-                'array',
-                [
-                    'content' => $di->getMessages(),
-                ]
-            );
-        });
+                // Return a translation object
+                return $factory->newInstance(
+                    'array',
+                    [
+                        'content' => $di->getMessages(),
+                    ]
+                );
+            }
+        );
     }
 }

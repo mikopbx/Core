@@ -6,6 +6,7 @@
  * Written by Nikolay Beketov, 6 2018
  *
  */
+
 namespace MikoPBX\AdminCabinet\Controllers;
 
 class SystemDiagnosticController extends BaseController
@@ -13,7 +14,6 @@ class SystemDiagnosticController extends BaseController
 
     public function indexAction(): void
     {
-
     }
 
 }

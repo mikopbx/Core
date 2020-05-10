@@ -5,13 +5,13 @@
  * Proprietary and confidential
  * Written by Alexey Portnov, 2 2020
  */
+
 namespace MikoPBX\Core\Workers;
 
 use Exception;
-use MikoPBX\Core\Config\RegisterDIServices;
-use Phalcon\Di;
-use MikoPBX\Core\System\{Util, System};
 use MikoPBX\Common\Models\{PbxExtensionModules};
+use MikoPBX\Core\Config\RegisterDIServices;
+use MikoPBX\Core\System\{Util};
 use PDOException;
 
 require_once 'globals.php';
@@ -30,7 +30,7 @@ class WorkerModuleMonitor extends WorkerBase
         while (true) {
             if ( ! $client->isConnected() === true) {
                 $client->reconnect();
-                $client->subscribe('ping_'.self::class, [$this, 'pingCallBack']);
+                $client->subscribe('ping_' . self::class, [$this, 'pingCallBack']);
             }
             $client->wait();
             $delta = time() - $this->last_check_time;
@@ -202,13 +202,12 @@ $workerClassname = WorkerModuleMonitor::class;
 if (isset($argv) && count($argv) > 1 && $argv[1] === 'start') {
     cli_set_process_title($workerClassname);
 
-        try {
-            $worker = new $workerClassname();
-            $worker->start($argv);
-        } catch (Exception $e) {
-            global $errorLogger;
-            $errorLogger->captureException($e);
-            Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage());
-        }
-
+    try {
+        $worker = new $workerClassname();
+        $worker->start($argv);
+    } catch (Exception $e) {
+        global $errorLogger;
+        $errorLogger->captureException($e);
+        Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage());
+    }
 }

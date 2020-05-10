@@ -143,7 +143,6 @@ class FirewallRules extends ModelsBase
      */
     public static function updatePorts(PbxSettings $enity): void
     {
-
         switch ($enity->key) {
             case 'RTPPortFrom':
                 $defaultSIP = PbxSettings::getValueByKey('SIPPort');
@@ -221,8 +220,6 @@ class FirewallRules extends ModelsBase
                 }
                 break;
         }
-
-
     }
 
     public function initialize(): void

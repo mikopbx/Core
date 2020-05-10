@@ -13,7 +13,7 @@ use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
 /**
- * @method static mixed findFirstByUniqid(array|string|int $parameters=null)
+ * @method static mixed findFirstByUniqid(array|string|int $parameters = null)
  */
 class Storage extends ModelsBase
 {
@@ -89,12 +89,22 @@ class Storage extends ModelsBase
     public function validation(): bool
     {
         $validation = new Validation();
-        $validation->add('device', new UniquenessValidator([
-            'message' => $this->t("mo_ThisDeviceNotUniqueForStorageModels"),
-        ]));
-        $validation->add('uniqid', new UniquenessValidator([
-            'message' => $this->t("mo_ThisUniqidNotUniqueForStorageModels"),
-        ]));
+        $validation->add(
+            'device',
+            new UniquenessValidator(
+                [
+                    'message' => $this->t("mo_ThisDeviceNotUniqueForStorageModels"),
+                ]
+            )
+        );
+        $validation->add(
+            'uniqid',
+            new UniquenessValidator(
+                [
+                    'message' => $this->t("mo_ThisUniqidNotUniqueForStorageModels"),
+                ]
+            )
+        );
 
         return $this->validate($validation);
     }

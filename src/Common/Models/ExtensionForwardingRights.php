@@ -106,7 +106,6 @@ class ExtensionForwardingRights extends ModelsBase
                 ],
             ]
         );
-
     }
 
     public function validation(): bool
@@ -114,9 +113,14 @@ class ExtensionForwardingRights extends ModelsBase
         $validation = new Validation();
 
 
-        $validation->add('extension', new UniquenessValidator([
-            'message' => $this->t('mo_ThisExtensionNotUniqueForExtensionForwardingRightsModels'),
-        ]));
+        $validation->add(
+            'extension',
+            new UniquenessValidator(
+                [
+                    'message' => $this->t('mo_ThisExtensionNotUniqueForExtensionForwardingRightsModels'),
+                ]
+            )
+        );
 
         return $this->validate($validation);
     }

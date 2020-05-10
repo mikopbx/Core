@@ -5,6 +5,7 @@
  * Proprietary and confidential
  * Written by Alexey Portnov, 2 2020
  */
+
 namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\DialplanApplications;
@@ -98,8 +99,8 @@ class DialplanApplicationConf extends ConfigClass
     private function generatePhpApp($app)
     {
         $agiBinFolder = $this->di->getConfig()->path('asterisk.astagidir');
-        $text_app = "#!/usr/bin/php\n";
-        $text_app .= base64_decode($app['applicationlogic']);
+        $text_app     = "#!/usr/bin/php\n";
+        $text_app     .= base64_decode($app['applicationlogic']);
         file_put_contents("{$agiBinFolder}/{$app['uniqid']}.php", $text_app);
         chmod("{$agiBinFolder}/{$app['uniqid']}.php", 0755);
 

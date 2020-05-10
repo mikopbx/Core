@@ -1,4 +1,5 @@
 <?php
+
 namespace MikoPBX\PBXCoreREST\Controllers\Storage;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
@@ -10,7 +11,7 @@ use MikoPBX\PBXCoreREST\Controllers\BaseController;
  */
 class GetController extends BaseController
 {
-    public function callAction($actionName):void
+    public function callAction($actionName): void
     {
         $this->sendRequestToBackendWorker('storage', $actionName, $_REQUEST);
     }

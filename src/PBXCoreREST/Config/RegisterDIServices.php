@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 /**
  * Copyright (C) MIKO LLC - All Rights Reserved
@@ -10,19 +11,19 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Config;
 
-use MikoPBX\PBXCoreREST\Providers\{DispatcherProvider, RequestProvider, ResponseProvider, RouterProvider, BeanstalkConnectionProvider};
 use MikoPBX\Common\Providers\{CDRDatabaseProvider,
     MainDatabaseProvider,
     ManagedCacheProvider,
     ModelsCacheProvider,
     ModelsMetadataProvider,
-    NatsConnectionProvider,
-    RegistryProvider,
     PBXConfModulesProvider,
-    SessionReadOnlyProvider,
-    TranslationProvider};
-use MikoPBX\Core\Providers\CliMessagesProvider;
-use MikoPBX\Core\Providers\EventsLogDatabaseProvider;
+    RegistryProvider,
+    SessionReadOnlyProvider};
+use MikoPBX\PBXCoreREST\Providers\{BeanstalkConnectionProvider,
+    DispatcherProvider,
+    RequestProvider,
+    ResponseProvider,
+    RouterProvider};
 use Phalcon\Di\DiInterface;
 
 class RegisterDIServices
@@ -32,7 +33,7 @@ class RegisterDIServices
      *
      * @param \Phalcon\Di\DiInterface $di
      */
-    public static function init(DiInterface $di):void
+    public static function init(DiInterface $di): void
     {
         $pbxRestAPIProviders = [
             // Inject Registry provider
@@ -59,13 +60,12 @@ class RegisterDIServices
             ResponseProvider::class,
             RequestProvider::class,
             RouterProvider::class,
-            SessionReadOnlyProvider::class
+            SessionReadOnlyProvider::class,
 
         ];
 
         foreach ($pbxRestAPIProviders as $provider) {
             $di->register(new $provider());
         }
-
     }
 }

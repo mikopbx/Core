@@ -25,8 +25,8 @@ use Phalcon\Mvc\Model\MetaData\Memory;
 use Phalcon\Mvc\Model\MetaData\Strategy\Annotations as StrategyAnnotations;
 
 /**
-* Main database connection is created based in the parameters defined in the configuration file
-*/
+ * Main database connection is created based in the parameters defined in the configuration file
+ */
 class ModelsMetadataProvider implements ServiceProviderInterface
 {
     /**
@@ -36,16 +36,21 @@ class ModelsMetadataProvider implements ServiceProviderInterface
      */
     public function register(DiInterface $di): void
     {
-        $di->setShared('modelsMetadata', function () {
-            $metaData = new Memory([
-                'lifetime' => 600,
-                'prefix'   => 'metacache_key',
-            ]);
-            $metaData->setStrategy(
-                new StrategyAnnotations()
-            );
+        $di->setShared(
+            'modelsMetadata',
+            function () {
+                $metaData = new Memory(
+                    [
+                        'lifetime' => 600,
+                        'prefix'   => 'metacache_key',
+                    ]
+                );
+                $metaData->setStrategy(
+                    new StrategyAnnotations()
+                );
 
-            return $metaData;
-        });
+                return $metaData;
+            }
+        );
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 /**
@@ -13,8 +14,8 @@ declare(strict_types=1);
 namespace MikoPBX\PBXCoreREST\Providers;
 
 use MikoPBX\PBXCoreREST\Http\Response;
-use Phalcon\Di\ServiceProviderInterface;
 use Phalcon\Di\DiInterface;
+use Phalcon\Di\ServiceProviderInterface;
 
 class ResponseProvider implements ServiceProviderInterface
 {
@@ -33,8 +34,7 @@ class ResponseProvider implements ServiceProviderInterface
                  */
                 $response
                     ->setStatusCode(200)
-                    ->setContentType('application/vnd.api+json', 'UTF-8')
-                ;
+                    ->setContentType('application/vnd.api+json', 'UTF-8');
 
                 return $response;
             }

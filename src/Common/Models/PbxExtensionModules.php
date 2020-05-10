@@ -15,7 +15,7 @@ use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
 /**
- * @method static mixed findFirstByUniqid(array|string|int $parameters=null)
+ * @method static mixed findFirstByUniqid(array|string|int $parameters = null)
  */
 class PbxExtensionModules extends ModelsBase
 {
@@ -66,13 +66,7 @@ class PbxExtensionModules extends ModelsBase
      */
     public $disabled;
 
-    public function initialize(): void
-    {
-        $this->setSource('m_PbxExtensionModules');
-        parent::initialize();
-    }
-
-    public static function ifModule4ExtensionDisabled(String $number): bool
+    public static function ifModule4ExtensionDisabled(string $number): bool
     {
         try {
             $module = self::getModuleByExtension($number);
@@ -84,10 +78,9 @@ class PbxExtensionModules extends ModelsBase
         }
 
         return true;
-
     }
 
-    public static function getModuleByExtension(String $number)
+    public static function getModuleByExtension(string $number)
     {
         $result         = false;
         $extension      = Extensions::findFirst("number ='{$number}'");
@@ -106,12 +99,23 @@ class PbxExtensionModules extends ModelsBase
         return $result;
     }
 
+    public function initialize(): void
+    {
+        $this->setSource('m_PbxExtensionModules');
+        parent::initialize();
+    }
+
     public function validation(): bool
     {
         $validation = new Validation();
-        $validation->add('uniqid', new UniquenessValidator([
-            'message' => $this->t('mo_ThisUniqidMustBeUniqueForPbxExtensionModulesModels'),
-        ]));
+        $validation->add(
+            'uniqid',
+            new UniquenessValidator(
+                [
+                    'message' => $this->t('mo_ThisUniqidMustBeUniqueForPbxExtensionModulesModels'),
+                ]
+            )
+        );
 
         return $this->validate($validation);
     }

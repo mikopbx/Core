@@ -113,9 +113,14 @@ class LanInterfaces extends ModelsBase
     public function validation(): bool
     {
         $validation = new Validation();
-        $validation->add(['interface', 'vlanid'], new UniquenessValidator([
-            'message' => $this->t('mo_ThisVlanIdNotUniqueForLanInterfacesModels'),
-        ]));
+        $validation->add(
+            ['interface', 'vlanid'],
+            new UniquenessValidator(
+                [
+                    'message' => $this->t('mo_ThisVlanIdNotUniqueForLanInterfacesModels'),
+                ]
+            )
+        );
 
         return $this->validate($validation);
     }

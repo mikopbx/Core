@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 /**
  * Copyright (C) MIKO LLC - All Rights Reserved
@@ -22,19 +23,22 @@ class FlashProvider implements ServiceProviderInterface
 {
     public function register(DiInterface $di): void
     {
-        $di->setShared('flash', function () {
-            $cssClasses = [
-                'error'   => 'ui negative message',
-                'success' => 'ui positive message',
-                'notice'  => 'ui info message',
-                'warning' => 'ui warning message',
-            ];
+        $di->setShared(
+            'flash',
+            function () {
+                $cssClasses = [
+                    'error'   => 'ui negative message',
+                    'success' => 'ui positive message',
+                    'notice'  => 'ui info message',
+                    'warning' => 'ui warning message',
+                ];
 
-            $flash = new FlashSession();
-            $flash->setCssClasses($cssClasses);
-            $flash->setAutoescape(false);
+                $flash = new FlashSession();
+                $flash->setCssClasses($cssClasses);
+                $flash->setAutoescape(false);
 
-            return $flash;
-        });
+                return $flash;
+            }
+        );
     }
 }

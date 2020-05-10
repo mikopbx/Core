@@ -5,6 +5,7 @@
  * Proprietary and confidential
  * Written by Alexey Portnov, 2 2020
  */
+
 namespace MikoPBX\Core\Workers;
 
 require_once 'globals.php';
@@ -14,102 +15,11 @@ use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\System\{BeanstalkClient, MikoPBXConfig, Util};
 use Phalcon\Di;
 use Phalcon\Exception;
+
 use function function_exists;
 
 class WorkerCallEvents extends WorkerBase
 {
-
-    /**
-     *
-     * @param $argv
-     */
-    public function start($argv): void
-    {
-        $client = new BeanstalkClient(self::class);
-        $client->subscribe(self::class, [$this, 'callEventsWorker']);
-        $client->subscribe(WorkerCdr::SELECT_CDR_TUBE, [$this, 'selectCDRWorker']);
-        $client->subscribe(WorkerCdr::UPDATE_CDR_TUBE, [$this, 'updateCDRWorker']);
-        $client->subscribe('ping_'.self::class, [$this, 'pingCallBack']);
-        $client->setErrorHandler([$this, 'errorHandler']);
-
-        while (true){
-            $client->wait();
-        }
-    }
-
-    /**
-     * Обработчик событий изменения состояния звонка.
-     *
-     * @param array | BeanstalkClient $tube
-     */
-    public function callEventsWorker($tube): void
-    {
-        $data      = json_decode($tube->getBody(), true);
-        $func_name = '\MikoPBX\Core\Workers\WorkerCallEvents::Action_' . $data['action'];
-        if (function_exists($func_name)) {
-            $func_name($data);
-        }
-        $tube->reply(json_encode(true));
-    }
-
-    /**
-     * Получения CDR к обработке.
-     *
-     * @param array | BeanstalkClient $tube
-     */
-    public function updateCDRWorker($tube): void
-    {
-        $q    = $tube->getBody();
-        $data = json_decode($q, true);
-        $res  = CdrDb::updateDataInDbM($data);
-        $tube->reply(json_encode($res));
-    }
-
-
-    /**
-     * @param array | BeanstalkClient $tube
-     */
-    public function selectCDRWorker($tube): void
-    {
-        $q      = $tube->getBody();
-        $filter = json_decode($q, true);
-        $res    = null;
-        try {
-            if (isset($filter['miko_tmp_db'])) {
-                $res = CallDetailRecordsTmp::find($filter);
-            } else {
-                $res = CallDetailRecords::find($filter);
-            }
-            $res_data = json_encode($res->toArray());
-        } catch (Exception $e) {
-            $res_data = '[]';
-        }
-
-        if ($res && isset($filter['add_pack_query'])) {
-            $arr = [];
-            foreach ($res->toArray() as $row) {
-                $arr[] = $row[$filter['columns']];
-            }
-            $filter['add_pack_query']['bind'][$filter['columns']] = $arr;
-            try {
-                $res      = CallDetailRecords::find($filter['add_pack_query']);
-                $res_data = json_encode($res->toArray());
-            } catch (Exception $e) {
-                $res_data = '[]';
-            }
-        }
-
-        if (isset($filter['miko_result_in_file'])) {
-            $di         = Di::getDefault();
-            $dirsConfig = $di->getShared('config');
-            $filename   = $dirsConfig->path('core.tempPath') . '/' . md5(microtime(true));
-            file_put_contents("$filename", $res_data);
-            Util::mwExec("chown -R www:www {$filename} > /dev/null 2> /dev/null");
-            $res_data = json_encode("$filename");
-        }
-
-        $tube->reply($res_data);
-    }
 
     /**
      * Обработка события начала телефонного звонка.
@@ -123,13 +33,37 @@ class WorkerCallEvents extends WorkerBase
     }
 
     /**
+     * Завершение работы приложения.
+     *
+     * @param $data
+     */
+    public static function Action_app_end($data): void
+    {
+        $filter = [
+            'linkedid=:linkedid: AND is_app=1 AND endtime IS NULL',
+            'bind' => [
+                'linkedid' => $data['linkedid'],
+            ],
+        ];
+        /** @var CallDetailRecordsTmp $m_data */
+        /** @var CallDetailRecordsTmp $row */
+        $m_data = CallDetailRecordsTmp::find($filter);
+        foreach ($m_data as $row) {
+            $row->writeAttribute('endtime', $data['start']);
+            $res = $row->update();
+            if ( ! $res) {
+                Util::sysLogMsg('Action_app_end', implode(' ', $row->getMessages()));
+            }
+        }
+    }
+
+    /**
      * Обработка события создания канала - пары, при начале телефонного звонка.
      *
      * @param $data
      */
     public static function Action_dial_create_chan($data): void
     {
-
         if (isset($data['org_id'])) {
             // Вероятно необходимо переопределить искать по двум ID.
             // Применимо только для Originate, когда в качестве звонящего используем два канала
@@ -188,8 +122,12 @@ class WorkerCallEvents extends WorkerBase
                 $row->writeAttribute('src_chan', $data['dst_chan']);
             } else {
                 if ( ! $rec_start) {
-                    $data['recordingfile'] = CdrDb::MixMonitor($data['dst_chan'], $row->UNIQUEID, null,
-                        $row->recordingfile);
+                    $data['recordingfile'] = CdrDb::MixMonitor(
+                        $data['dst_chan'],
+                        $row->UNIQUEID,
+                        null,
+                        $row->recordingfile
+                    );
                     $row->writeAttribute('recordingfile', $data['recordingfile']);
                     $rec_start = true;
                 }
@@ -336,7 +274,6 @@ class WorkerCallEvents extends WorkerBase
         }
     }
 
-
     /**
      * Завершение / уничтожение канала.
      *
@@ -453,16 +390,6 @@ class WorkerCallEvents extends WorkerBase
     }
 
     /**
-     * Завершение звонка. Завершение прееадресации.
-     *
-     * @param $data
-     */
-    public static function Action_dial_hangup($data): void
-    {
-        // self::Action_CreateRowTransfer('dial_hangup', $data);
-    }
-
-    /**
      * Логирование истории звонков при трасфере.
      *
      * @param       $action
@@ -471,7 +398,6 @@ class WorkerCallEvents extends WorkerBase
      */
     public static function Action_CreateRowTransfer($action, $data, $calls_data = null): void
     {
-
         if (null === $calls_data) {
             $filter     = [
                 'linkedid=:linkedid: AND endtime IS NULL AND transfer=1 AND (src_chan=:chan: OR dst_chan=:chan:)',
@@ -505,8 +431,10 @@ class WorkerCallEvents extends WorkerBase
             // Запись разговора.
             CdrDb::StopMixMonitor($insert_data['src_chan']);
             CdrDb::StopMixMonitor($insert_data['dst_chan']);
-            $recordingfile = CdrDb::MixMonitor($insert_data['dst_chan'],
-                'transfer_' . $insert_data['src_num'] . '_' . $insert_data['dst_num'] . '_' . $data['linkedid']);
+            $recordingfile = CdrDb::MixMonitor(
+                $insert_data['dst_chan'],
+                'transfer_' . $insert_data['src_num'] . '_' . $insert_data['dst_num'] . '_' . $data['linkedid']
+            );
             //
             $insert_data['action']        = "{$action}_end_trasfer";
             $insert_data['recordingfile'] = $recordingfile;
@@ -527,8 +455,9 @@ class WorkerCallEvents extends WorkerBase
 
             CdrDb::insertDataToDbM($insert_data);
             CdrDb::LogEvent(json_encode($insert_data));
-
-        } elseif (empty($calls_data[0]['answer']) && count($calls_data) === 1 && ! empty($calls_data[0]['recordingfile'])) {
+        } elseif (empty($calls_data[0]['answer']) && count(
+                $calls_data
+            ) === 1 && ! empty($calls_data[0]['recordingfile'])) {
             $row_data = $calls_data[0];
             $chan     = ($data['agi_channel'] === $row_data['src_chan']) ? $row_data['dst_chan'] : $row_data['src_chan'];
             $filter   = [
@@ -541,13 +470,22 @@ class WorkerCallEvents extends WorkerBase
             ];
             /** @var CallDetailRecordsTmp $not_ended_cdr */
             $not_ended_cdr = CallDetailRecordsTmp::findFirst($filter);
-            if ($not_ended_cdr!==null) {
+            if ($not_ended_cdr !== null) {
                 CdrDb::StopMixMonitor($not_ended_cdr->src_chan);
                 // Cdr::StopMixMonitor($not_ended_cdr->dst_chan);
                 CdrDb::MixMonitor($not_ended_cdr->dst_chan, '', '', $not_ended_cdr->recordingfile);
             }
-
         }
+    }
+
+    /**
+     * Завершение звонка. Завершение прееадресации.
+     *
+     * @param $data
+     */
+    public static function Action_dial_hangup($data): void
+    {
+        // self::Action_CreateRowTransfer('dial_hangup', $data);
     }
 
     /**
@@ -557,11 +495,9 @@ class WorkerCallEvents extends WorkerBase
      */
     public static function Action_transfer_dial($data): void
     {
-
         self::Action_transfer_check($data);
         CdrDb::insertDataToDbM($data);
         self::Action_app_end($data);
-
     }
 
     /**
@@ -598,7 +534,6 @@ class WorkerCallEvents extends WorkerBase
      */
     public static function Action_transfer_dial_create_chan($data): void
     {
-
         $filter     = [
             'UNIQUEID=:UNIQUEID: AND endtime IS NULL AND answer IS NULL',
             'bind' => [
@@ -683,7 +618,6 @@ class WorkerCallEvents extends WorkerBase
      */
     public static function Action_transfer_dial_hangup($data): void
     {
-
         $pos = stripos($data['agi_channel'], 'local/');
         if ($pos === false) {
             // Это НЕ локальный канал.
@@ -718,7 +652,7 @@ class WorkerCallEvents extends WorkerBase
             ];
             /** @var CallDetailRecordsTmp $res */
             $res = CallDetailRecordsTmp::findFirst($filter);
-            if ($res!==null) {
+            if ($res !== null) {
                 $info      = pathinfo($res->recordingfile);
                 $data_time = ($res->answer == null) ? $res->start : $res->answer;
                 $subdir    = date('Y/m/d/H/', strtotime($data_time));
@@ -764,9 +698,7 @@ class WorkerCallEvents extends WorkerBase
                     Util::sysLogMsg('Action_transfer_dial_answer', implode(' ', $row->getMessages()));
                 }
             }
-
         }
-
     }
 
     /**
@@ -778,31 +710,6 @@ class WorkerCallEvents extends WorkerBase
     {
         self::Action_app_end($data);
         CdrDb::insertDataToDbM($data);
-    }
-
-    /**
-     * Завершение работы приложения.
-     *
-     * @param $data
-     */
-    public static function Action_app_end($data): void
-    {
-        $filter = [
-            'linkedid=:linkedid: AND is_app=1 AND endtime IS NULL',
-            'bind' => [
-                'linkedid' => $data['linkedid'],
-            ],
-        ];
-        /** @var CallDetailRecordsTmp $m_data */
-        /** @var CallDetailRecordsTmp $row */
-        $m_data = CallDetailRecordsTmp::find($filter);
-        foreach ($m_data as $row) {
-            $row->writeAttribute('endtime', $data['start']);
-            $res = $row->update();
-            if ( ! $res) {
-                Util::sysLogMsg('Action_app_end', implode(' ', $row->getMessages()));
-            }
-        }
     }
 
     /**
@@ -822,7 +729,6 @@ class WorkerCallEvents extends WorkerBase
      */
     public static function Action_queue_start($data): void
     {
-
         if ($data['transfer'] == '1') {
             // Если это трансфер выполним поиск связанных данных.
             self::Action_transfer_check($data);
@@ -858,7 +764,7 @@ class WorkerCallEvents extends WorkerBase
             /** @var CallDetailRecordsTmp $m_data */
             /** @var CallDetailRecordsTmp $row */
             $m_data = CallDetailRecordsTmp::findFirst($filter);
-            if ($m_data!==null) {
+            if ($m_data !== null) {
                 $data['src_chan'] = $m_data->src_chan;
                 $m_data->UNIQUEID = $data['UNIQUEID'];
 
@@ -922,7 +828,6 @@ class WorkerCallEvents extends WorkerBase
      */
     public static function Action_queue_answer($data): void
     {
-
         $filter = [
             "UNIQUEID=:UNIQUEID: AND answer IS NULL",
             'bind' => [
@@ -969,7 +874,6 @@ class WorkerCallEvents extends WorkerBase
                 Util::sysLogMsg('Action_queue_end', implode(' ', $row->getMessages()));
             }
         }
-
     }
 
     /**
@@ -999,11 +903,12 @@ class WorkerCallEvents extends WorkerBase
                 if ($row->UNIQUEID === $data['UNIQUEID'] && $is_local && ! $is_stored_local) {
                     $data['src_chan'] = $row->src_chan;
                 }
-                if (file_exists($row->recordingfile) || file_exists(Util::trimExtensionForFile($row->recordingfile) . '.wav')) {
+                if (file_exists($row->recordingfile) || file_exists(
+                        Util::trimExtensionForFile($row->recordingfile) . '.wav'
+                    )) {
                     // Переопределим путь к файлу записи разговора. Для конферецнии файл один.
                     $recordingfile = $row->recordingfile;
                 }
-
             }
             if ($row->linkedid === $data['meetme_id']) {
                 continue;
@@ -1036,29 +941,118 @@ class WorkerCallEvents extends WorkerBase
                 Util::sysLogMsg('Action_hangup_chan_meetme', implode(' ', $row->getMessages()));
             }
         }
-
     }
 
-    private function errorHandler($m):void
+    /**
+     *
+     * @param $argv
+     */
+    public function start($argv): void
     {
-        Util::sysLogMsg(self::class.'_ERROR', $m);
+        $client = new BeanstalkClient(self::class);
+        $client->subscribe(self::class, [$this, 'callEventsWorker']);
+        $client->subscribe(WorkerCdr::SELECT_CDR_TUBE, [$this, 'selectCDRWorker']);
+        $client->subscribe(WorkerCdr::UPDATE_CDR_TUBE, [$this, 'updateCDRWorker']);
+        $client->subscribe('ping_' . self::class, [$this, 'pingCallBack']);
+        $client->setErrorHandler([$this, 'errorHandler']);
+
+        while (true) {
+            $client->wait();
+        }
+    }
+
+    /**
+     * Обработчик событий изменения состояния звонка.
+     *
+     * @param array | BeanstalkClient $tube
+     */
+    public function callEventsWorker($tube): void
+    {
+        $data      = json_decode($tube->getBody(), true);
+        $func_name = '\MikoPBX\Core\Workers\WorkerCallEvents::Action_' . $data['action'];
+        if (function_exists($func_name)) {
+            $func_name($data);
+        }
+        $tube->reply(json_encode(true));
+    }
+
+    /**
+     * Получения CDR к обработке.
+     *
+     * @param array | BeanstalkClient $tube
+     */
+    public function updateCDRWorker($tube): void
+    {
+        $q    = $tube->getBody();
+        $data = json_decode($q, true);
+        $res  = CdrDb::updateDataInDbM($data);
+        $tube->reply(json_encode($res));
+    }
+
+    /**
+     * @param array | BeanstalkClient $tube
+     */
+    public function selectCDRWorker($tube): void
+    {
+        $q      = $tube->getBody();
+        $filter = json_decode($q, true);
+        $res    = null;
+        try {
+            if (isset($filter['miko_tmp_db'])) {
+                $res = CallDetailRecordsTmp::find($filter);
+            } else {
+                $res = CallDetailRecords::find($filter);
+            }
+            $res_data = json_encode($res->toArray());
+        } catch (Exception $e) {
+            $res_data = '[]';
+        }
+
+        if ($res && isset($filter['add_pack_query'])) {
+            $arr = [];
+            foreach ($res->toArray() as $row) {
+                $arr[] = $row[$filter['columns']];
+            }
+            $filter['add_pack_query']['bind'][$filter['columns']] = $arr;
+            try {
+                $res      = CallDetailRecords::find($filter['add_pack_query']);
+                $res_data = json_encode($res->toArray());
+            } catch (Exception $e) {
+                $res_data = '[]';
+            }
+        }
+
+        if (isset($filter['miko_result_in_file'])) {
+            $di         = Di::getDefault();
+            $dirsConfig = $di->getShared('config');
+            $filename   = $dirsConfig->path('core.tempPath') . '/' . md5(microtime(true));
+            file_put_contents("$filename", $res_data);
+            Util::mwExec("chown -R www:www {$filename} > /dev/null 2> /dev/null");
+            $res_data = json_encode("$filename");
+        }
+
+        $tube->reply($res_data);
+    }
+
+    private function errorHandler($m): void
+    {
+        Util::sysLogMsg(self::class . '_ERROR', $m);
     }
 }
-
 
 
 // Start worker process
 $workerClassname = WorkerCallEvents::class;
 if (isset($argv) && count($argv) > 1 && $argv[1] === 'start') {
     cli_set_process_title($workerClassname);
-        try {
-            $worker = new $workerClassname();
-            $worker->start($argv);
-        } catch (\Exception $e) {
-            global $errorLogger;
-            $errorLogger->captureException($e);
-            Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage());
-        }
+    try {
+        $worker = new $workerClassname();
+        $worker->start($argv);
+    } catch (\Exception $e) {
+        global $errorLogger;
+        $errorLogger->captureException($e);
+        Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage());
+    }
 }
 
 

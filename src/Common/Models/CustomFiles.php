@@ -59,11 +59,15 @@ class CustomFiles extends ModelsBase
 
     public function validation(): bool
     {
-
         $validation = new Validation();
-        $validation->add('filepath', new UniquenessValidator([
-            'message' => $this->t('mo_ThisFilepathMustBeUniqueForCustomFilesModels'),
-        ]));
+        $validation->add(
+            'filepath',
+            new UniquenessValidator(
+                [
+                    'message' => $this->t('mo_ThisFilepathMustBeUniqueForCustomFilesModels'),
+                ]
+            )
+        );
 
         return $this->validate($validation);
     }
