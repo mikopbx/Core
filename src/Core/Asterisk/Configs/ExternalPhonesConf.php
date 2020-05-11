@@ -19,7 +19,7 @@ class ExternalPhonesConf extends ConfigClass
     /**
      * Получение настроек с АТС.
      */
-    public function getSettings()
+    public function getSettings(): void
     {
         $db_data    = [];
         $ext_phones = ExternalPhones::find("disabled = '0' OR disabled IS NULL");
@@ -39,7 +39,7 @@ class ExternalPhonesConf extends ConfigClass
      *
      * @return string
      */
-    public function extensionGenInternal()
+    public function extensionGenInternal(): string
     {
         $conf = '';
         foreach ($this->db_data as $external) {
@@ -55,7 +55,7 @@ class ExternalPhonesConf extends ConfigClass
     /**
      * @return string
      */
-    public function extensionGenInternalTransfer()
+    public function extensionGenInternalTransfer(): string
     {
         $conf = '';
         foreach ($this->db_data as $external) {
@@ -65,17 +65,6 @@ class ExternalPhonesConf extends ConfigClass
         $conf .= "\n";
 
         return $conf;
-    }
-
-    /**
-     * Генератор sip.conf
-     *
-     * @param $general_settings
-     *
-     * @return bool|void
-     */
-    protected function generateConfigProtected($general_settings)
-    {
     }
 
 }

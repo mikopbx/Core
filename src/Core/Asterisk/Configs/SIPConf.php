@@ -56,7 +56,12 @@ class SIPConf extends ConfigClass
         return $result;
     }
 
-    public static function getTechnology()
+    /**
+     * Returns PJSIP ot SIP uses at PBX
+     *
+     * @return string
+     */
+    public static function getTechnology(): string
     {
         if (file_exists('/offload/asterisk/modules/res_pjproject.so')) {
             $technology = 'PJSIP';
@@ -68,7 +73,7 @@ class SIPConf extends ConfigClass
     }
 
     /**
-     * Получение статуса SIP пира.
+     * Gets peer status
      *
      * @param $peer
      *
@@ -95,7 +100,7 @@ class SIPConf extends ConfigClass
     }
 
     /**
-     * Получение статусов регистраций.
+     * Ger SIP Registry status
      */
     public static function getRegistry(): array
     {
@@ -151,7 +156,7 @@ class SIPConf extends ConfigClass
     }
 
     /**
-     * Перезапуск модуля SIP.
+     * Reload SIP
      */
     public static function sipReload(): array
     {
@@ -267,7 +272,7 @@ class SIPConf extends ConfigClass
     }
 
     /**
-     * Генератора секции general sip.conf
+     * Generate [general] section in sip.conf
      *
      * @param $general_settings
      *
@@ -455,7 +460,7 @@ class SIPConf extends ConfigClass
      *
      * @return string
      */
-    public function generatePeers($general_settings)
+    public function generatePeers($general_settings): string
     {
         $lang = $general_settings['PBXLanguage'];
         $conf = '';
@@ -925,7 +930,7 @@ class SIPConf extends ConfigClass
     /**
      * Получение настроек.
      */
-    public function getSettings()
+    public function getSettings(): void
     {
         // Настройки для текущего класса.
         $this->data_peers     = $this->getPeers();
@@ -939,7 +944,7 @@ class SIPConf extends ConfigClass
      *
      * @return array
      */
-    private function getPeers()
+    private function getPeers(): array
     {
         /** @var \MikoPBX\Common\Models\NetworkFilters $network_filter */
         /** @var \MikoPBX\Common\Models\Sip $sip_peer */

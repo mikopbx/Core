@@ -51,7 +51,7 @@ class ParkConf extends ConfigClass
     /**
      * Получение настроек.
      */
-    public function getSettings()
+    public function getSettings(): void
     {
         $this->ParkingExt       = $this->mikoPBXConfig->getGeneralSettings('PBXCallParkingExt');
         $this->ParkingStartSlot = (int)$this->mikoPBXConfig->getGeneralSettings('PBXCallParkingStartSlot');
@@ -63,7 +63,7 @@ class ParkConf extends ConfigClass
      *
      * @return string
      */
-    public function getIncludeInternal()
+    public function getIncludeInternal(): string
     {
         // Включаем контексты.
         $conf = '';
@@ -77,7 +77,7 @@ class ParkConf extends ConfigClass
      *
      * @return string
      */
-    public function getIncludeInternalTransfer()
+    public function getIncludeInternalTransfer(): string
     {
         // Генерация внутреннего номерного плана.
         return 'exten => ' . $this->ParkingExt . ',1,Goto(parkedcalls,${EXTEN},1)' . "\n";
@@ -88,7 +88,7 @@ class ParkConf extends ConfigClass
      *
      * @return string
      */
-    public function extensionGenContexts()
+    public function extensionGenContexts(): string
     {
         // Генерация внутреннего номерного плана.
         $conf = '';
@@ -114,7 +114,7 @@ class ParkConf extends ConfigClass
      *
      * @return string
      */
-    public function extensionGenInternal()
+    public function extensionGenInternal(): string
     {
         $conf = '';
         for ($ext = $this->ParkingStartSlot; $ext <= $this->ParkingEndSlot; $ext++) {
@@ -130,7 +130,7 @@ class ParkConf extends ConfigClass
      *
      * @return string
      */
-    public function extensionGlobals()
+    public function extensionGlobals(): string
     {
         // Генерация хинтов.
         $result = "PARKING_DURATION=50\n";
@@ -143,7 +143,7 @@ class ParkConf extends ConfigClass
      *
      * @return string
      */
-    public function getFeatureMap()
+    public function getFeatureMap(): string
     {
         return "parkcall => *2 \n";
     }
@@ -155,7 +155,7 @@ class ParkConf extends ConfigClass
      *
      * @return bool
      */
-    protected function generateConfigProtected($settings)
+    protected function generateConfigProtected($settings): bool
     {
         // Генерация конфигурационных файлов.
         $result = true;

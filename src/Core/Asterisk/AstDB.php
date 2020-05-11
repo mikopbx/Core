@@ -38,7 +38,7 @@ class AstDB
     /**
      * Создать базу данных.
      */
-    private function createDb()
+    private function createDb(): void
     {
         $sql = <<<EOF
 			CREATE TABLE IF NOT EXISTS astdb (
@@ -60,7 +60,7 @@ EOF;
     /**
      * Закрыть соединение с базой данных.
      */
-    public function closeDb()
+    public function closeDb(): void
     {
         if ($this->db == null) {
             return;
@@ -79,7 +79,7 @@ EOF;
      *
      * @return bool
      */
-    public function databasePut($family, $key, $value)
+    public function databasePut($family, $key, $value): bool
     {
         $result = false;
         if ($this->db == null || $this->am->loggedIn()) {
@@ -108,7 +108,7 @@ EOF;
      *
      * @return bool
      */
-    private function databasePutAmi($family, $key, $value)
+    private function databasePutAmi($family, $key, $value): bool
     {
         $result   = false;
         $res_data = $this->am->DBPut($family, $key, $value);

@@ -18,7 +18,7 @@ class DialplanApplicationConf extends ConfigClass
     /**
      * Получение настроек.
      */
-    public function getSettings()
+    public function getSettings(): void
     {
         // Настройки для текущего класса.
         $this->db_data = DialplanApplications::find()->toArray();
@@ -29,7 +29,7 @@ class DialplanApplicationConf extends ConfigClass
      *
      * @return string
      */
-    public function getIncludeInternal()
+    public function getIncludeInternal(): string
     {
         // Включаем контексты.
         $conf = "include => applications \n";
@@ -42,7 +42,7 @@ class DialplanApplicationConf extends ConfigClass
      *
      * @return string
      */
-    public function getIncludeInternalTransfer()
+    public function getIncludeInternalTransfer(): string
     {
         // Генерация внутреннего номерного плана.
         $result = '';
@@ -56,7 +56,7 @@ class DialplanApplicationConf extends ConfigClass
      *
      * @return string
      */
-    public function extensionGenContexts()
+    public function extensionGenContexts(): string
     {
         $app_ext_conf = "\n[applications]\n";
         foreach ($this->db_data as $app) {
@@ -77,7 +77,7 @@ class DialplanApplicationConf extends ConfigClass
      *
      * @return string
      */
-    private function generatePlaneTextApp($app)
+    private function generatePlaneTextApp($app): string
     {
         // 	same => n,Macro(dial_answer)
         $text_app     = base64_decode($app['applicationlogic']);
@@ -96,7 +96,7 @@ class DialplanApplicationConf extends ConfigClass
         return $result;
     }
 
-    private function generatePhpApp($app)
+    private function generatePhpApp($app): string
     {
         $agiBinFolder = $this->di->getConfig()->path('asterisk.astagidir');
         $text_app     = "#!/usr/bin/php\n";
@@ -117,7 +117,7 @@ class DialplanApplicationConf extends ConfigClass
      *
      * @return string
      */
-    public function extensionGenHints()
+    public function extensionGenHints(): string
     {
         $conf = '';
         foreach ($this->db_data as $app) {

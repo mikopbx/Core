@@ -10,32 +10,32 @@ interface SystemConfigInterface
     /**
      * Проверка работы сервисов.
      */
-    public function test();
+    public function test(): array ;
 
     /**
      * Генерация конфига, рестарт работы модуля.
      * Метод вызывается после рестарта NATS сервера.
      */
-    public function onNatsReload();
+    public function onNatsReload(): void;
 
     /**
      * Перезапуск сервисов модуля.
      *
-     * @return bool
+     * @return void
      */
-    public function reloadServices();
+    public function reloadServices(): void;
 
     /**
      * Будет вызван после старта asterisk.
      */
-    public function onAfterPbxStarted();
+    public function onAfterPbxStarted(): void;
 
     /**
      * Добавление задач в crond.
      *
      * @param $tasks
      */
-    public function createCronTasks(&$tasks);
+    public function createCronTasks(&$tasks): void;
 
     /**
      * Модули: Выполнение к-либо действия.
@@ -44,7 +44,7 @@ interface SystemConfigInterface
      *
      * @return array
      */
-    public function customAction($req_data);
+    public function customAction($req_data): array;
 
 
     /**

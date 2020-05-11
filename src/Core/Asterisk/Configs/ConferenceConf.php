@@ -20,7 +20,7 @@ class ConferenceConf extends ConfigClass
      *
      * @return string
      */
-    public function getIncludeInternal()
+    public function getIncludeInternal(): string
     {
         // Включаем контексты.
         $conf = '';
@@ -34,7 +34,7 @@ class ConferenceConf extends ConfigClass
      *
      * @return string
      */
-    public function getIncludeInternalTransfer()
+    public function getIncludeInternalTransfer(): string
     {
         // Генерация внутреннего номерного плана.
         $result = '';
@@ -48,7 +48,7 @@ class ConferenceConf extends ConfigClass
      *
      * @return string
      */
-    public function extensionGenInternal()
+    public function extensionGenInternal(): string
     {
         $conf = '';
         $data = ConferenceRooms::find(['order' => 'extension']);
@@ -63,7 +63,7 @@ class ConferenceConf extends ConfigClass
     /**
      * @return string
      */
-    public function extensionGenInternalTransfer()
+    public function extensionGenInternalTransfer(): string
     {
         $conf = '';
         $data = ConferenceRooms::find(['order' => 'extension']);
@@ -80,7 +80,7 @@ class ConferenceConf extends ConfigClass
      *
      * @return string
      */
-    public function extensionGenContexts()
+    public function extensionGenContexts(): string
     {
         $PBXRecordCalls = $this->mikoPBXConfig->getGeneralSettings('PBXRecordCalls');
         $rec_options    = ($PBXRecordCalls === '1') ? 'r' : '';
@@ -107,7 +107,7 @@ class ConferenceConf extends ConfigClass
      *
      * @return string
      */
-    public function extensionGenHints()
+    public function extensionGenHints(): string
     {
         $conf = '';
         $data = ConferenceRooms::find(['order' => 'extension']);

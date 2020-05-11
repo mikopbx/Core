@@ -38,9 +38,8 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
     /**
      * ConfigClass constructor.
      *
-     * @param bool $debug
      */
-    public function __construct($debug = false)
+    public function __construct()
     {
         $this->di            = Di::getDefault();
         $config              = $this->di->getShared('config');
@@ -51,7 +50,7 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
         $this->getSettings();
     }
 
-    public function getSettings()
+    public function getSettings(): void
     {
     }
 
@@ -98,7 +97,7 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
 
     // Получаем строки include для секции internal.
 
-    public function getIncludeInternal()
+    public function getIncludeInternal(): string
     {
         // Генерация внутреннего номерного плана.
         $result = '';
@@ -107,7 +106,7 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
     }
 
     // Получаем строки include для секции internal-transfer.
-    public function getIncludeInternalTransfer()
+    public function getIncludeInternalTransfer() :string
     {
         // Генерация внутреннего номерного плана.
         $result = '';
@@ -116,7 +115,7 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
     }
 
     // Генератор extension для контекста internal.
-    public function extensionGenInternal()
+    public function extensionGenInternal(): string
     {
         // Генерация внутреннего номерного плана.
         $result = '';
@@ -125,7 +124,7 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
     }
 
     // Генератор extension для контекста internal.
-    public function extensionGenInternalTransfer()
+    public function extensionGenInternalTransfer(): string
     {
         // Генерация внутреннего номерного плана.
         $result = '';
@@ -159,7 +158,7 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
     }
 
     // Генератор extensions, дополнительные контексты.
-    public function extensionGenContexts()
+    public function extensionGenContexts(): string
     {
         $result = '';
 
@@ -167,7 +166,7 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
     }
 
     // Генератор хинтов для контекста internal-hints
-    public function extensionGenHints()
+    public function extensionGenHints(): string
     {
         // Генерация хинтов.
         $result = '';
@@ -176,7 +175,7 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
     }
 
     // Секция global для extensions.conf.
-    public function extensionGlobals()
+    public function extensionGlobals(): string
     {
         // Генерация хинтов.
         $result = '';
@@ -185,7 +184,7 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
     }
 
     // Секция featuremap для features.conf
-    public function getFeatureMap()
+    public function getFeatureMap(): string
     {
         // Возвращает старкоды.
         return '';
@@ -194,9 +193,11 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
     /**
      * Генерация контекста для публичных звонков.
      *
+     * @param $conf
+     *
      * @return string
      */
-    public function generatePublicContext(&$conf)
+    public function generatePublicContext(&$conf) :string
     {
         // Возвращает старкоды.
         return '';
@@ -205,7 +206,7 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
     /**
      * Проверка работы сервисов.
      */
-    public function test()
+    public function test(): array
     {
         return ['result' => true];
     }
@@ -214,25 +215,23 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
      * Генерация конфига, рестарт работы модуля.
      * Метод вызывается после рестарта NATS сервера.
      */
-    public function onNatsReload()
+    public function onNatsReload(): void
     {
-        return true;
     }
 
     /**
      * Перезапуск сервисов модуля.
      *
-     * @return bool
+     * @return void
      */
-    public function reloadServices()
+    public function reloadServices(): void
     {
-        return true;
     }
 
     /**
      * Будет вызван после старта asterisk.
      */
-    public function onAfterPbxStarted()
+    public function onAfterPbxStarted(): void
     {
     }
 
@@ -241,7 +240,7 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
      *
      * @param $tasks
      */
-    public function createCronTasks(&$tasks)
+    public function createCronTasks(&$tasks): void
     {
     }
 
@@ -252,14 +251,12 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
      *
      * @return array
      */
-    public function customAction($req_data)
+    public function customAction($req_data): array
     {
-        $result = [
+        return [
             'result' => 'ERROR',
             'data'   => $req_data,
         ];
-
-        return $result;
     }
 
     /**
@@ -267,7 +264,7 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
      *
      * @return string
      */
-    public function generatePeers($param)
+    public function generatePeers($param): string
     {
         unset($param);
 
@@ -279,7 +276,7 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
      *
      * @return string
      */
-    public function generatePeersPj($param)
+    public function generatePeersPj($param): string
     {
         unset($param);
 
@@ -291,7 +288,7 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
      *
      * @return string
      */
-    public function generateManager($param)
+    public function generateManager($param): string
     {
         unset($param);
 
@@ -337,7 +334,7 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
     /**
      * Кастомизация входящего контекста для конкретного маршрута.
      *
-     * @param $peer
+     * @param $id
      *
      * @return string
      */

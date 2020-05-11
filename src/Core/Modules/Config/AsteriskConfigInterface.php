@@ -6,21 +6,41 @@ namespace MikoPBX\Core\Modules\Config;
 interface AsteriskConfigInterface
 {
 
-    public function getSettings();
+    /**
+     * @return mixed
+     */
+    public function getSettings(): void;
 
+    /**
+     * @param $general_settings
+     */
     public function generateConfig($general_settings): void;
 
-    // Получаем строки include для секции internal.
-    public function getIncludeInternal();
+    /**
+     * Получаем строки include для секции internal
+     * @return string
+     */
+    public function getIncludeInternal(): string;
 
-    // Получаем строки include для секции internal-transfer.
-    public function getIncludeInternalTransfer();
+    /**
+     * Получаем строки include для секции internal-transfer.
+     * @return string
+     */
+    public function getIncludeInternalTransfer(): string;
 
-    // Генератор extension для контекста internal.
-    public function extensionGenInternal();
 
-    // Генератор extension для контекста internal.
-    public function extensionGenInternalTransfer();
+    /**
+     * Генератор extension для контекста internal
+     * @return string
+     */
+    public function extensionGenInternal(): string;
+
+    /**
+     * Генератор extension для контекста internal-transfer
+     *
+     * @return string
+     */
+    public function extensionGenInternalTransfer(): string;
 
     /**
      * Опираясь на ID учетной записи возвращает имя технологии SIP / IAX2.
@@ -31,49 +51,78 @@ interface AsteriskConfigInterface
      */
     public function getTechByID($id): string;
 
-    // Генератор extension для контекста peers.
+    /**
+     * Генератор extension для контекста peers
+     *
+     * @return mixed
+     */
     public function extensionGenPeerContexts();
 
-    // Генератор extensions, дополнительные контексты.
-    public function extensionGenContexts();
 
-    // Генератор хинтов для контекста internal-hints
-    public function extensionGenHints();
+    /**
+     * Генератор extensions, дополнительные контексты.
+     *
+     * @return string
+     */
+    public function extensionGenContexts(): string;
 
-    // Секция global для extensions.conf.
+    /**
+     * Генератор хинтов для контекста internal-hints
+     *
+     * @return string
+     */
+    public function extensionGenHints(): string;
+
+
+    /**
+     * Секция global для extensions.conf
+     * @return mixed
+     */
     public function extensionGlobals();
 
-    // Секция featuremap для features.conf
+    /**
+     * Секция featuremap для features.conf
+     *
+     * @return mixed
+     */
     public function getFeatureMap();
 
     /**
      * Генерация контекста для публичных звонков.
      *
+     * @param $conf
+     *
      * @return string
      */
-    public function generatePublicContext(&$conf);
+    public function generatePublicContext(&$conf):string;
 
 
     /**
      * Генератор сеции пиров для sip.conf
      *
+     * @param $param
+     *
      * @return string
      */
-    public function generatePeers($param);
+    public function generatePeers($param): string;
 
     /**
      * Генератор сеции пиров для sip.conf
      *
+     * @param $param
+     *
      * @return string
      */
-    public function generatePeersPj($param);
+    public function generatePeersPj($param):string;
 
     /**
      * Генератор сеции пиров для manager.conf
      *
+     * @param $param
+     *
      * @return string
      */
-    public function generateManager($param);
+    public function generateManager($param):string;
 
     /**
      * Дополнительные параметры для
@@ -87,7 +136,7 @@ interface AsteriskConfigInterface
     /**
      * Кастомизация исходящего контекста для конкретного маршрута.
      *
-     * @param $peer
+     * @param $rout
      *
      * @return string
      */
@@ -96,7 +145,7 @@ interface AsteriskConfigInterface
     /**
      * Кастомизация исходящего контекста для конкретного маршрута.
      *
-     * @param $peer
+     * @param $rout
      *
      * @return string
      */
@@ -105,7 +154,7 @@ interface AsteriskConfigInterface
     /**
      * Кастомизация входящего контекста для конкретного маршрута.
      *
-     * @param $peer
+     * @param $id
      *
      * @return string
      */
@@ -114,7 +163,7 @@ interface AsteriskConfigInterface
     /**
      * Кастомизация входящего контекста для конкретного маршрута.
      *
-     * @param $peer
+     * @param $rout_number
      *
      * @return string
      */

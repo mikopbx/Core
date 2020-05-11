@@ -432,7 +432,7 @@ class ExtensionsConf extends ConfigClass
      *
      * @param $conf
      */
-    public function generatePublicContext(&$conf)
+    public function generatePublicContext(&$conf):string
     {
         $additionalModules = $this->di->getShared('pbxConfModules');
         $conf              .= "\n";

@@ -768,7 +768,7 @@ class WorkerCallEvents extends WorkerBase
                 $data['src_chan'] = $m_data->src_chan;
                 $m_data->UNIQUEID = $data['UNIQUEID'];
 
-                $f_list = CdrDb::getDbFilds();
+                $f_list = CdrDb::getDbFields();
                 foreach ($data as $attribute => $value) {
                     if ( ! array_key_exists($attribute, $f_list)) {
                         continue;

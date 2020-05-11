@@ -20,7 +20,7 @@ class IVRConf extends ConfigClass
     /**
      * Получение настроек.
      */
-    public function getSettings()
+    public function getSettings(): void
     {
         // Настройки для текущего класса.
         $res           = IvrMenu::find();
@@ -35,7 +35,7 @@ class IVRConf extends ConfigClass
      *
      * @return string
      */
-    public function extensionGenContexts()
+    public function extensionGenContexts(): string
     {
         // Генерация внутреннего номерного плана.
         $conf = '';
@@ -93,7 +93,7 @@ class IVRConf extends ConfigClass
      *
      * @return string
      */
-    public function extensionGenHints()
+    public function extensionGenHints(): string
     {
         $conf = '';
         foreach ($this->db_data as $ivr) {
@@ -110,7 +110,7 @@ class IVRConf extends ConfigClass
      *
      * @return int
      */
-    public function get_duration_file($filename)
+    public function getSoundFileDuration($filename)
     {
         $result = 7;
         if (file_exists($filename)) {
@@ -131,7 +131,7 @@ class IVRConf extends ConfigClass
      *
      * @return string
      */
-    public function extensionGenInternal()
+    public function extensionGenInternal(): string
     {
         $ivr_ext_conf = '';
         foreach ($this->db_data as $ivr) {
@@ -145,7 +145,7 @@ class IVRConf extends ConfigClass
     /**
      * @return string
      */
-    public function extensionGenInternalTransfer()
+    public function extensionGenInternalTransfer(): string
     {
         $conf = '';
         foreach ($this->db_data as $ivr) {

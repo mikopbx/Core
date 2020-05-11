@@ -98,7 +98,7 @@ class IAXConf extends ConfigClass
     /**
      * Получение настроек.
      */
-    public function getSettings()
+    public function getSettings(): void
     {
         // Настройки для текущего класса.
         $this->getProviders();
@@ -107,7 +107,7 @@ class IAXConf extends ConfigClass
     /**
      * Получение данных по IAX2 провайдерам.
      */
-    private function getProviders()
+    private function getProviders(): void
     {
         // Получим настройки всех аккаунтов.
         $this->data_providers = [];
@@ -140,11 +140,11 @@ class IAXConf extends ConfigClass
      *
      * @return string
      */
-    public function extensionGenContexts()
+    public function extensionGenContexts(): string
     {
         $conf = '';
         foreach ($this->data_providers as $provider) {
-            $conf .= Extensions::generateIncomingContextPeers($provider['uniqid']);
+            $conf .= ExtensionsConf::generateIncomingContextPeers($provider['uniqid']);
         }
 
         return $conf;
@@ -196,7 +196,7 @@ class IAXConf extends ConfigClass
      *
      * @return string
      */
-    private function generateGeneral($general_settings)
+    private function generateGeneral($general_settings): string
     {
         $iax_port = (trim($general_settings['IAXPort']) != '') ? $general_settings['IAXPort'] : '4569';
         $conf     = '[general]' . "\n";
@@ -219,7 +219,7 @@ class IAXConf extends ConfigClass
      *
      * @return string
      */
-    private function generateProviders($general_settings)
+    private function generateProviders($general_settings): string
     {
         $reg_strings = '';
         $prov_config = '';

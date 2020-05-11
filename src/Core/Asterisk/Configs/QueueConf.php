@@ -45,7 +45,7 @@ class QueueConf extends ConfigClass
     /**
      * Получение настроек.
      */
-    public function getSettings()
+    public function getSettings(): void
     {
         // Настройки для текущего класса.
         $this->db_data = $this->getQueueData();
@@ -56,7 +56,7 @@ class QueueConf extends ConfigClass
      *
      * @return array
      */
-    public function getQueueData()
+    public function getQueueData(): array
     {
         $arrResult = [];
         $queues    = CallQueues::find();
@@ -96,7 +96,7 @@ class QueueConf extends ConfigClass
      *
      * @return string
      */
-    public function extensionGenContexts()
+    public function extensionGenContexts(): string
     {
         // Генерация внутреннего номерного плана.
         $conf = "[queue_agent_answer]\n";
@@ -113,7 +113,7 @@ class QueueConf extends ConfigClass
      *
      * @return string
      */
-    public function extensionGenHints()
+    public function extensionGenHints(): string
     {
         $conf = '';
         foreach ($this->db_data as $queue) {
@@ -126,7 +126,7 @@ class QueueConf extends ConfigClass
     /**
      * @return string
      */
-    public function extensionGenInternalTransfer()
+    public function extensionGenInternalTransfer(): string
     {
         $conf = '';
         foreach ($this->db_data as $queue) {
@@ -217,7 +217,7 @@ class QueueConf extends ConfigClass
      *
      * @return string
      */
-    public function extensionGenInternal()
+    public function extensionGenInternal(): string
     {
         $queue_ext_conf = '';
         foreach ($this->db_data as $queue) {

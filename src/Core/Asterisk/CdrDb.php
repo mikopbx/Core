@@ -27,9 +27,9 @@ class CdrDb
      *
      * @return array
      */
-    public static function createDb($id = '')
+    public static function createDb($id = ''): array
     {
-        $f_list = CdrDb::getDbFilds();
+        $f_list = self::getDbFields();
 
         // "Рабочая" таблица.
         self::createTable($id, 'cdr');
@@ -48,9 +48,9 @@ class CdrDb
      *
      * @return array
      */
-    public static function getDbFilds()
+    public static function getDbFields(): array
     {
-        $f_list = [
+        return [
             'id'             => 'INTEGER PRIMARY KEY',
             'UNIQUEID'       => 'TEXT',
             'start'          => 'TEXT',     // DataTime
@@ -76,8 +76,6 @@ class CdrDb
             'src_call_id'    => 'TEXT',    // Boolean
             'dst_call_id'    => 'TEXT',    // Boolean
         ];
-
-        return $f_list;
     }
 
     /**
@@ -86,9 +84,9 @@ class CdrDb
      * @param string $id
      * @param        $name
      */
-    public static function createTable($id, $name)
+    public static function createTable($id, $name): void
     {
-        $f_list = self::getDbFilds();
+        $f_list = self::getDbFields();
         $q      = 'CREATE ' . 'TABLE IF NOT EXISTS "' . $name . '"(';
         $column = '';
         foreach ($f_list as $key => $value) {
@@ -121,11 +119,11 @@ class CdrDb
      *
      * @return array
      */
-    public static function runQuery($q, $return_array = false, $id = '')
+    public static function runQuery($q, $return_array = false, $id = ''): array
     {
-        CdrDb::LogEvent($q);
+        self::LogEvent($q);
         $data       = [];
-        $db         = CdrDb::getDB($id);
+        $db         = self::getDB($id);
         $time_start = microtime(true);
         $results    = $db->query("$q");
         // Начинаем замер времени
@@ -140,13 +138,13 @@ class CdrDb
         } else {
             $err = trim($db->lastErrorMsg());
             if ('not an error' != $err) {
-                CdrDb::LogEvent("Sqlite3: $err");
+                self::LogEvent("Sqlite3: $err");
                 Util::sysLogMsg('CDR_DB', $err);
             }
         }
         $time = microtime(true) - $time_start;
         if ($time > 0.010) {
-            CdrDb::LogEvent("Sqlite3: $q" . "Time: " . number_format($time, 10));
+            self::LogEvent("Sqlite3: $q" . "Time: " . number_format($time, 10));
             Util::sysLogMsg('CDR_DB', "Slow query " . number_format($time, 3) . "ms. {$q}", LOG_WARNING);
         }
 
@@ -158,7 +156,7 @@ class CdrDb
      *
      * @param $data
      */
-    public static function LogEvent($data)
+    public static function LogEvent($data): void
     {
         if (is_file('/tmp/debug')) {
             file_put_contents('/tmp/dial_log', $data . "\n", FILE_APPEND);
@@ -178,7 +176,7 @@ class CdrDb
         if (isset($g['db_sql_obj'])) {
             return $g['db_sql_obj'];
         }
-        $cdr_db_path = CdrDb::getPathToDB($id);
+        $cdr_db_path = self::getPathToDB($id);
 
         $db = new SQLite3($cdr_db_path);
         $db->busyTimeout(5000);
@@ -209,9 +207,9 @@ class CdrDb
         return $dbname;
     }
 
-public static function checkColumnInTable($id, $name): void
+    public static function checkColumnInTable($id, $name): void
     {
-        $f_list    = self::getDbFilds();
+        $f_list    = self::getDbFields();
         $meta_data = self::runQuery("PRAGMA table_info('$name')", true, $id);
         foreach ($meta_data as $column) {
             if (isset($f_list[$column['name']])) {
@@ -230,10 +228,10 @@ public static function checkColumnInTable($id, $name): void
      * @param $id
      * @param $table
      */
-    public static function createIndex($column_name, $id, $table)
+    public static function createIndex($column_name, $id, $table): void
     {
         $q = "CREATE INDEX IF NOT EXISTS i_{$table}_{$column_name} ON {$table} ({$column_name})";
-        CdrDb::runQuery($q, false, $id);
+        self::runQuery($q, false, $id);
     }
 
     /**
@@ -242,10 +240,10 @@ public static function checkColumnInTable($id, $name): void
      * @param $id
      * @param $table
      */
-    public static function addTriggers($id, $table)
+    public static function addTriggers($id, $table): void
     {
         $trigger_name = 'after_work_completed';
-        $f_list       = CdrDb::getDbFilds();
+        $f_list       = self::getDbFields();
         $column       = '';
         $new_column   = '';
         foreach ($f_list as $key => $value) {
@@ -256,7 +254,7 @@ public static function checkColumnInTable($id, $name): void
             $new_column .= ($new_column == '') ? "NEW.$key" : ",NEW.$key";
         }
         $q = "DROP TRIGGER IF EXISTS {$table}.{$trigger_name}";
-        CdrDb::runQuery($q, false, $id);
+        self::runQuery($q, false, $id);
 
         $q = "CREATE TRIGGER IF NOT EXISTS {$trigger_name} \n" .
             "   AFTER UPDATE OF work_completed ON {$table} FOR EACH ROW \n" .
@@ -265,21 +263,21 @@ public static function checkColumnInTable($id, $name): void
             "   INSERT OR REPLACE INTO cdr_general ({$column}) VALUES({$new_column});\n" .
             "   DELETE FROM cdr WHERE UNIQUEID = NEW.UNIQUEID;\n" .
             "END;";
-        CdrDb::runQuery($q, false, $id);
+        self::runQuery($q, false, $id);
     }
 
     /**
      * Установка прав доступа к файлам базы данных.
      */
-    public static function setPermitToDb()
+    public static function setPermitToDb(): void
     {
-        $path = CdrDb::getPathToDB();
+        $path = self::getPathToDB();
         $user = 'www';
         Util::chown($path, $user);
         Util::chown("{$path}-shm", $user);
         Util::chown("{$path}-wal", $user);
 
-        $log_path = self::getParetoLog();
+        $log_path = self::getPathToLog();
         file_put_contents($log_path, '');
         Util::chown($log_path, $user);
     }
@@ -289,7 +287,7 @@ public static function checkColumnInTable($id, $name): void
      *
      * @return string
      */
-    public static function getParetoLog(): string
+    public static function getPathToLog(): string
     {
         $di = Di::getDefault();
         if ($di !== null) {
@@ -356,7 +354,7 @@ public static function checkColumnInTable($id, $name): void
         if ($m_data === null) {
             return true;
         }
-        $f_list = CdrDb::getDbFilds();
+        $f_list = self::getDbFields();
         foreach ($data as $attribute => $value) {
             if ( ! array_key_exists($attribute, $f_list)) {
                 continue;
@@ -456,7 +454,7 @@ public static function checkColumnInTable($id, $name): void
             }
         }
 
-        $f_list = CdrDb::getDbFilds();
+        $f_list = self::getDbFields();
         foreach ($data as $attribute => $value) {
             if ( ! array_key_exists($attribute, $f_list)) {
                 continue;
@@ -553,7 +551,7 @@ public static function checkColumnInTable($id, $name): void
             $am         = Util::getAstManager('off');
             $res        = $am->StopMixMonitor($channel);
             $res['cmd'] = "StopMixMonitor($channel)";
-            CdrDb::LogEvent(json_encode($res));
+            self::LogEvent(json_encode($res));
         }
     }
 
