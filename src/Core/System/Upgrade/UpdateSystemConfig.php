@@ -43,7 +43,7 @@ class UpdateSystemConfig
     {
         $this->di     = Di::getDefault();
         $this->config = $this->di->getShared('config');
-        $this->mikoPBXConfig;
+        $this->mikoPBXConfig = new MikoPBXConfig();
     }
 
     /**

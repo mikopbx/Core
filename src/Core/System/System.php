@@ -878,9 +878,9 @@ server 2.pool.ntp.org';
      * @param $url
      * @param $md5
      *
-     * @return array
+     * @return void
      */
-    public static function moduleStartDownload($module, $url, $md5): array
+    public static function moduleStartDownload($module, $url, $md5): void
     {
         $di     = Di::getDefault();
         if ($di !== null){
@@ -894,7 +894,7 @@ server 2.pool.ntp.org';
         if ( ! is_dir($moduleDirTmp)
             && ! mkdir($moduleDirTmp, 0755, true)
             && ! is_dir($moduleDirTmp)) {
-            return [];
+            return;
         }
 
         $download_settings = [
@@ -918,7 +918,7 @@ server 2.pool.ntp.org';
         $workerDownloaderPath = Util::getFilePathByClassName(WorkerDownloader::class);
         Util::mwExecBg("php -f {$workerDownloaderPath} $moduleDirTmp/download_settings.json");
 
-        return [];
+        return;
     }
 
     /**

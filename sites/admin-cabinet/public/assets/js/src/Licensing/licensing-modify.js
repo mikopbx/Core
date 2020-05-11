@@ -6,7 +6,7 @@
  *
  */
 
-/* global globalRootUrl, globalTranslate, Form */
+/* global globalRootUrl, globalTranslate, Form, sessionStorage */
 
 
 $.fn.form.settings.rules.checkEmptyIfLicenseKeyEmpty = function (value) {

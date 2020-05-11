@@ -6,7 +6,7 @@
  *
  */
 
-/* global globalRootUrl */
+/* global globalRootUrl, sessionStorage */
 
 const topMenuSearch = {
 	$input: $('#top-menu-search'),

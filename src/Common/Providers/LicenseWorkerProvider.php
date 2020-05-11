@@ -19,7 +19,7 @@ class LicenseWorkerProvider implements ServiceProviderInterface
 {
     public function register(DiInterface $di): void
     {
-        $debugMode = $di->getShared('config')->adminApplication->debugMode;
+        $debugMode = $di->getShared('config')->path('adminApplication.debugMode');
         $di->setShared(
             'licenseWorker',
             function () use ($debugMode) {

@@ -57,7 +57,6 @@ class DispatcherProvider implements ServiceProviderInterface
                     );
                 }
                 $dispatcher = new Dispatcher();
-                $dispatcher->setDefaultNamespace('MikoPBX\AdminCabinet\Controllers');
                 $dispatcher->setEventsManager($eventsManager);
 
                 return $dispatcher;

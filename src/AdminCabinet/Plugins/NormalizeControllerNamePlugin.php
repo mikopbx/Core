@@ -38,10 +38,12 @@ class NormalizeControllerNamePlugin extends Injectable
 
         if (stripos($controller, 'module') === 0) {
             $dispatcher->setModuleName('PBXExtension');
-            $dispatcher->setNamespaceName('');
+            $camelizeControllerName = Text::camelize($controller);
+            $dispatcher->setNamespaceName("\\Modules\\{$camelizeControllerName}\\App\\Controllers");
+
         } else {
             $dispatcher->setModuleName('PBXCore');
-            // $dispatcher->setNamespaceName('');
+            $dispatcher->setNamespaceName('MikoPBX\AdminCabinet\Controllers');
         }
     }
 

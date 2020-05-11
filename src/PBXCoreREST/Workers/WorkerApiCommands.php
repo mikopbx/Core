@@ -10,7 +10,7 @@ namespace MikoPBX\PBXCoreREST\Workers;
 
 use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\Asterisk\Configs\{IAXConf, OtherConf, SIPConf};
-use MikoPBX\Core\Modules\Setup\PbxExtensionFailure;
+use MikoPBX\Modules\Setup\PbxExtensionFailure;
 use MikoPBX\Core\System\{BeanstalkClient, Firewall, Notifications, Storage, System, Util};
 use MikoPBX\Core\Workers\WorkerBase;
 use Phalcon\Exception;
@@ -329,13 +329,14 @@ class WorkerApiCommands extends WorkerBase
 
         // Предварительные действия по распаковке модуля.
         if ('upload' === $action) {
-            $result['function'] = $action;
-            $result['result']   = 'Success';
-            $result             = System::moduleStartDownload(
+            System::moduleStartDownload(
                 $module,
                 $request['data']['url'],
                 $request['data']['md5']
             );
+            $result['uniqid']   = $module;
+            $result['function'] = $action;
+            $result['result']   = 'Success';
 
             return $result;
         } elseif ('status' === $action) {
@@ -427,9 +428,9 @@ class WorkerApiCommands extends WorkerBase
                 $path_class = false;
             }
         } elseif ($action === 'uninstall') { // Этот метод существует всегда
-            $path_class = "\\Modules\\{$module}\\setup\\PbxExtensionSetup";
+            $path_class = "\\Modules\\{$module}\\Setup\\PbxExtensionSetup";
         } elseif ( ! method_exists($path_class, $action)) {
-            $path_class = "\\Modules\\{$module}\\setup\\PbxExtensionSetup";
+            $path_class = "\\Modules\\{$module}\\Setup\\PbxExtensionSetup";
             if ( ! class_exists("$path_class")) {
                 $path_class = false;
             }

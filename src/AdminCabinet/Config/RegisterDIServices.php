@@ -103,42 +103,6 @@ class RegisterDIServices
         //     return $cache;
         // }
         // );
-        // /**
-        //  * Кеш для контроллеров
-        //  */
-        // $di->set(
-        //     'managedCache', function () use ($config) {
-        //
-        //     //Cache for one day
-        //     $frontCache = new FrontendData([
-        //         'lifetime' => 3600,
-        //     ]);
-        //
-        //     //Set file cache
-        //     $cache = new File($frontCache, [
-        //         'cacheDir' => $config->adminApplication->cacheDir,
-        //     ]);
-        //
-        //     return $cache;
-        // }
-        // );
 
-// Set the models cache service
-//         $di->set('modelsCache', function () use ($config) {
-//
-//             // Cache data for one day by default
-//             $frontCache = new FrontendData(
-//                 [
-//                     'lifetime' => 86400,
-//                 ]
-//             );
-//
-//             //Set file cache
-//             $cache = new File($frontCache, [
-//                 'cacheDir' => $config->adminApplication->modelscacheDir,
-//             ]);
-//
-//             return $cache;
-//         });
     }
 }

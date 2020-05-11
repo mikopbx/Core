@@ -126,20 +126,20 @@ class RouterProvider implements ServiceProviderInterface
 
             [UploadGetController::class, 'callAction', '/pbxcore/api/upload/{actionName}', 'get', '/'],
 
-            [ModulesGetController::class, 'callAction', '/pbxcore/api/modules/{actionName}/', 'get', '/'],
-            [ModulesPostController::class, 'callAction', '/pbxcore/api/modules/{actionName}/', 'post', '/'],
+            [ModulesGetController::class, 'callAction', '/pbxcore/api/modules/{actionName}', 'get', '/'],
+            [ModulesPostController::class, 'callAction', '/pbxcore/api/modules/{actionName}', 'post', '/'],
 
             [
                 ModulesGetController::class,
                 'callActionForModule',
-                '/pbxcore/api/modules/{moduleName}/{actionName}/',
+                '/pbxcore/api/modules/{moduleName}/{actionName}',
                 'get',
                 '/',
             ],
             [
                 ModulesPostController::class,
                 'callActionForModule',
-                '/pbxcore/api/modules/{moduleName}/{actionName}/',
+                '/pbxcore/api/modules/{moduleName}/{actionName}',
                 'post',
                 '/',
             ],

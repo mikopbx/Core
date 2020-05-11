@@ -55,14 +55,14 @@ class ModulesControllerBase extends BaseController
     {
         $_REQUEST['ip_srv'] = $_SERVER['SERVER_ADDR'];
         $input              = file_get_contents('php://input');
-        $request            = [
+        $request            = json_encode([
             'data'           => $_REQUEST,
             'module'         => $moduleName,
             'input'          => $input,     // Параметры запроса.
             'action'         => $actionName,
             'REQUEST_METHOD' => $_SERVER['REQUEST_METHOD'],
             'processor'      => 'modules',
-        ];
+        ]);
 
         $connection = $this->beanstalkConnection;
         $response   = $connection->request($request, 100, 0);

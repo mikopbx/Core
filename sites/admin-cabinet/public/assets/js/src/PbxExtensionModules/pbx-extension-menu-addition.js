@@ -6,7 +6,7 @@
  *
  */
 
-/* global globalRootUrl, globalTranslate, globalWebAdminLanguage */
+/* global globalRootUrl, globalTranslate, globalWebAdminLanguage, sessionStorage */
 
 const pbxExtensionMenuAddition = {
 	$sidebarMenu: $('#sidebar-menu'),

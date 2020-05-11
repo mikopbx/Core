@@ -144,9 +144,9 @@ class BaseController extends Controller
 
         // Для модулей кинем в кеш все статические картинки
         if ($this->moduleName === 'PBXExtension') {
-            $modulesDir          = $this->getDI()->config->path('core.modulesDir');
-            $moduleImageDir      = $modulesDir . '/' . $this->controllerName . '/public/assets/img';
-            $moduleImageCacheDir = $this->config->adminApplication->imgCacheDir . '/' . $this->controllerName;
+            $modulesDir          = $this->config->path('core.modulesDir');
+            $moduleImageDir      = $modulesDir . '/' . $this->controllerName . '/Public/assets/img';
+            $moduleImageCacheDir = $this->config->path('adminApplication.imgCacheDir') . '/' . $this->controllerName;
             if (file_exists($moduleImageDir)
                 && ! file_exists($moduleImageCacheDir)) {
                 symlink($moduleImageDir, $moduleImageCacheDir);

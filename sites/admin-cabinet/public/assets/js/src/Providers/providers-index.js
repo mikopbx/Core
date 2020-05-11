@@ -6,7 +6,7 @@
  *
  */
 
-/* global globalRootUrl, PbxApi, DebuggerInfo, SemanticLocalization */
+/* global globalRootUrl, PbxApi, DebuggerInfo, SemanticLocalization, sessionStorage */
 
 const providers = {
 	$deleteModalForm: $('#delete-modal-form'),

@@ -28,7 +28,7 @@ class EventsLogDatabaseProvider extends DatabaseProviderBase implements ServiceP
      */
     public function register(DiInterface $di): void
     {
-        $dbConfig = $di->getShared('config')->get('eventsLogDatabase');
+        $dbConfig = $di->getShared('config')->get('eventsLogDatabase')->toArray();
         $this->registerDBService('dbEventsLog', $di, $dbConfig);
     }
 }

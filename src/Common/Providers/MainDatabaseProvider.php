@@ -33,7 +33,7 @@ class MainDatabaseProvider extends DatabaseProviderBase implements ServiceProvid
      */
     public function register(DiInterface $di): void
     {
-        $dbConfig = $di->getShared('config')->get('database');
+        $dbConfig = $di->getShared('config')->get('database')->toArray();
         $this->registerDBService('db', $di, $dbConfig);
     }
 }

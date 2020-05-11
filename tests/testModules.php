@@ -53,7 +53,7 @@ if(count($argv)===1){
     // php -f /etc/inc/test.php ModuleBitrix24Integration uninstallModule
     $module = $argv[1] ?? '';
     $action = $argv[2] ?? '';
-    $path_class = "\\Modules\\{$module}\\setup\\PbxExtensionSetup";
+    $path_class = "\\Modules\\{$module}\\Setup\\PbxExtensionSetup";
     if(!class_exists($path_class)){
         $path_class = false;
         echo "Класс не существует.. $path_class";

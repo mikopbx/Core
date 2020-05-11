@@ -58,11 +58,6 @@ class UpdateDatabase
         foreach ($results as $file) {
             $className        = pathinfo($file)['filename'];
             $moduleModelClass = "MikoPBX\\Common\\Models\\{$className}";
-            // Test is abstract
-            $reflection = new ReflectionClass($moduleModelClass);
-            if ($reflection->isAbstract()) {
-                continue;
-            }
             $this->createUpdateDbTableByAnnotations($moduleModelClass);
         }
 
@@ -83,6 +78,11 @@ class UpdateDatabase
         if (
             ! class_exists($modelClassName)
             || count(get_class_vars($modelClassName)) === 0) {
+            return false;
+        }
+        // Test is abstract
+        $reflection = new ReflectionClass($modelClassName);
+        if ($reflection->isAbstract()) {
             return false;
         }
 

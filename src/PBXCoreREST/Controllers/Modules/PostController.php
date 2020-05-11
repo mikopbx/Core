@@ -44,8 +44,7 @@ class PostController extends ModulesControllerBase
                 $result['data'] = 'Body is not JSON';
             }
         } elseif (in_array($actionName, ['upload', 'unpack'])) {
-            $di          = Di::getDefault();
-            $tempDir     = $di->getShared('config')->path('core.tempPath');
+            $tempDir     = $this->config->path('core.tempPath');
             $module_file = "{$tempDir}/" . time() . '.zip';
             if ($this->request->hasFiles() > 0) {
                 foreach ($this->request->getUploadedFiles() as $file) {

@@ -28,29 +28,29 @@ use Phalcon\Logger\Adapter\Stream as FileLogger;
 /**
  * Main database connection is created based in the parameters defined in the configuration file
  */
-class DatabaseProviderBase
+abstract class DatabaseProviderBase
 {
     /**
      * Register db service provider
      *
      * @param string                  $serviceName Injection service name
      * @param \Phalcon\Di\DiInterface $di
-     * @param \Phalcon\Config         $dbConfig
+     * @param array         $dbConfig
      */
-    public function registerDBService(string $serviceName, DiInterface $di, Config $dbConfig): void
+    public function registerDBService(string $serviceName, DiInterface $di, array $dbConfig): void
     {
         $di->setShared(
             $serviceName,
             function () use ($dbConfig) {
-                $dbclass    = 'Phalcon\Db\Adapter\Pdo\\' . $dbConfig->adapter;
+                $dbclass    = 'Phalcon\Db\Adapter\Pdo\\' . $dbConfig['adapter'];
                 $connection = new $dbclass(
                     [
-                        'dbname' => $dbConfig->dbfile,
+                        'dbname' => $dbConfig['dbfile'],
                     ]
                 );
                 $connection->setNestedTransactionsWithSavepoints(true);
-                if ($dbConfig->debugMode) {
-                    $adapter       = new FileLogger($dbConfig->debugLogFile);
+                if ($dbConfig['debugMode']) {
+                    $adapter       = new FileLogger($dbConfig['debugLogFile']);
                     $logger        = new Logger(
                         'messages',
                         [

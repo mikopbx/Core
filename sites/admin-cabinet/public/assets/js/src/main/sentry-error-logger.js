@@ -5,7 +5,10 @@
  * Written by Nikolay Beketov, 12 2019
  *
  */
-/* global Sentry, globalPBXVersion, globalPBXLicense, globalLastSentryEventId, globalTranslate */
+
+
+/* global Sentry, globalPBXVersion, globalPBXLicense,
+globalLastSentryEventId, globalTranslate, localStorage */
 
 Sentry.onLoad(() => {
 	function globalShowSentryReportDialog(hash, sentryEventId) {

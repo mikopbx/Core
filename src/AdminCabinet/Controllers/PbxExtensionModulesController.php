@@ -127,7 +127,7 @@ class PbxExtensionModulesController extends BaseController
     public function enableAction($uniqid): void
     {
         $this->view->success = false;
-        $setupClass          = "\\Modules\\{$uniqid}\\setup\\PbxExtensionSetup";
+        $setupClass          = "\\Modules\\{$uniqid}\\Setup\\PbxExtensionSetup";
         if (class_exists($setupClass)) {
             $setup = new $setupClass($uniqid);
             if ($setup->lic_feature_id > 0) {
@@ -253,7 +253,7 @@ class PbxExtensionModulesController extends BaseController
      */
     protected function enableFirewallSettings($uniqid): bool
     {
-        $class = "\\Modules\\{$uniqid}\\setup\\FirewallRules";
+        $class = "\\Modules\\{$uniqid}\\Setup\\FirewallRules";
         if ( ! class_exists($class)) {
             return true;
         }
@@ -433,7 +433,7 @@ class PbxExtensionModulesController extends BaseController
      */
     protected function disableFirewallSettings($uniqid): bool
     {
-        $class = "\\Modules\\{$uniqid}\\setup\\FirewallRules";
+        $class = "\\Modules\\{$uniqid}\\Setup\\FirewallRules";
         if ( ! class_exists($class)) {
             return true;
         }

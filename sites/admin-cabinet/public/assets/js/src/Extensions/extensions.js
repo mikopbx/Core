@@ -6,7 +6,8 @@
  *
  */
 
-/* global globalRootUrl */
+/* global globalRootUrl, sessionStorage */
+
 const Extensions = {
 	initialize() {
 		window.addEventListener('ConfigDataChanged', Extensions.cbOnDataChanged);

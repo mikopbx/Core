@@ -83,4 +83,13 @@ class RegisterDIServices
         $di->register(new CDRDatabaseProvider());
         $di->register(new EventsLogDatabaseProvider());
     }
+
+    /**
+     * Recreate DB connections after table structure changes for additional modules
+     */
+    public static function recreateModulesDBConnections(): void
+    {
+        $di = Di::getDefault();
+        $di->register(new ModulesDBConnectionsProvider());
+    }
 }

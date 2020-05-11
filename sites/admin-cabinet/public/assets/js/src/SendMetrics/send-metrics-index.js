@@ -6,7 +6,7 @@
  *
  */
 
-/* global globalRootUrl */
+/* global globalRootUrl, sessionStorage */
 
 $(document).ready(() => {
 	const isMetricsSend = sessionStorage.getItem('MetricsAlreadySent');

@@ -158,9 +158,9 @@ class WorkerDownloader extends WorkerBase
         // MD5 проверили, подтверждаем загрузку файла на 100%
         if ('module_install' === $this->settings['action']) {
             $error            = false;
-            $currentModuleDir = $this->di->getConfig()->path('core.modulesDir') . $this->settings['module'];
+            $currentModuleDir = $this->di->getShared('config')->path('core.modulesDir') .'/'. $this->settings['module'];
             $needBackup       = is_dir($currentModuleDir);
-            $path_class       = "\\Modules\\{$this->settings['module']}\\setup\\PbxExtensionSetup";
+            $path_class       = "\\Modules\\{$this->settings['module']}\\Setup\\PbxExtensionSetup";
 
             // Kill all module processes
             if (is_dir("{$currentModuleDir}/bin")) {

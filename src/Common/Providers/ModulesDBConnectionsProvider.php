@@ -23,7 +23,7 @@ use Phalcon\Text;
  *
  * @package Modules
  */
-class ModulesDBConnectionsProvider implements ServiceProviderInterface
+class ModulesDBConnectionsProvider extends DatabaseProviderBase implements ServiceProviderInterface
 {
     /**
      * DiServicesInstall constructor
@@ -35,20 +35,26 @@ class ModulesDBConnectionsProvider implements ServiceProviderInterface
         $registeredDBServices = [];
         $config               = $di->getShared('config');
         // Зарегистрируем сервисы базы данных для модулей расширений
-        $results = glob($config->core->modulesDir . '/*/db/*.db', GLOB_NOSORT);
+        $results = glob($config->path('core.modulesDir') . '/*/db/*.db', GLOB_NOSORT);
         foreach ($results as $file) {
-            $service_name           = self::makeServiceName($file, $config->core->modulesDir);
+            $moduleName = self::findModuleIdByDbPath($file, $config->path('core.modulesDir'));
+            $service_name  = self::makeServiceName($file, $moduleName);
+
             $registeredDBServices[] = $service_name;
-            $di->set(
-                $service_name,
-                function () use ($file) {
-                    return new Sqlite(['dbname' => $file]);
-                }
-            );
+            if ($di->has($service_name)){
+                $di->remove($service_name);
+            }
+            $config= ["debugMode"    => $config->path('core.debugMode'),
+                      "adapter"      => "Sqlite",
+                      "dbfile"       => $file,
+                      "debugLogFile" => "{$config->path('core.logsPath')}/$moduleName/db/queries.log"
+            ];
+
+            $this->registerDBService($service_name, $di, $config);
         }
 
         // Register transactions events
-        $mainConnection = $di->get('db');
+        $mainConnection = $di->getShared('db');
 
         $eventsManager = $mainConnection->getEventsManager();
         if ($eventsManager === null) {
@@ -93,11 +99,12 @@ class ModulesDBConnectionsProvider implements ServiceProviderInterface
      *
      * @param $filePath
      *
+     * @param $moduleName
+     *
      * @return string - service name for dependency injection
      */
-    private static function makeServiceName($filePath, $modulesRoot): string
+    private static function makeServiceName($filePath, $moduleName): string
     {
-        $moduleName = self::findModuleIdByDbPath($filePath, $modulesRoot);
         $dbName     = pathinfo($filePath)['filename'];
 
         return $moduleName . '_' . Text::uncamelize($dbName, '_') . '_db';
@@ -114,7 +121,8 @@ class ModulesDBConnectionsProvider implements ServiceProviderInterface
     {
         $filePath = str_replace($modulesRoot, '', $filePath);
 
-        return implode('/', array_slice(explode('/', $filePath), 0, 1));
+       // return implode('/', array_slice(explode('/', $filePath), 0, 1));
+        return explode('/', $filePath)[1];
     }
 }
 

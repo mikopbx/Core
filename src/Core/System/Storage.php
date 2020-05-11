@@ -540,7 +540,7 @@ class Storage
             }
             unset($temp_vendor, $temp_size, $original_size);
             $mounted = self::diskIsMounted("{$disk}");
-            if ($mounted_only == true && $mounted == false) {
+            if ($mounted_only === true && $mounted === false) {
                 continue;
             }
             $sys_disk = ($cf_disk == $disk) ? true : false;
@@ -613,9 +613,9 @@ class Storage
      * @param $disk
      * @param $filter
      *
-     * @return bool
+     * @return string|bool
      */
-    public static function diskIsMounted($disk, $filter = '/dev/'): bool
+    public static function diskIsMounted($disk, $filter = '/dev/')
     {
         $out = [];
         Util::mwExec("mount | grep '{$filter}{$disk}'", $out);

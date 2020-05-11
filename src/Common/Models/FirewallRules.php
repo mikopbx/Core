@@ -123,7 +123,7 @@ class FirewallRules extends ModelsBase
         $additionalRules = [[]];
         $enabledModules  = PbxExtensionModules::find('disabled=0');
         foreach ($enabledModules as $enabled_module) {
-            $class = "\\Modules\\{$enabled_module->uniqid}\\setup\\FirewallRules";
+            $class = "\\Modules\\{$enabled_module->uniqid}\\Setup\\FirewallRules";
             if (class_exists($class)) {
                 $additionalRules[] = $class::getDefaultRules();
             }

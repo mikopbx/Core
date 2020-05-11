@@ -58,6 +58,16 @@ class RouterProvider implements ServiceProviderInterface
                     ]
                 );
 
+                $router->add(
+                    '/admin-cabinet/:controller',
+                    [
+                        'controller' => 1,
+                        'action'     => 'index',
+                        'params'     => '',
+                    ]
+                );
+
+
                 return $router;
             }
         );

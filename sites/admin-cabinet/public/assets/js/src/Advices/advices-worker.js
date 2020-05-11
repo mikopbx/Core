@@ -6,7 +6,7 @@
  *
  */
 
-/* global globalRootUrl, globalWebAdminLanguage */
+/* global globalRootUrl, globalWebAdminLanguage, sessionStorage */
 
 const advicesWorker = {
 	timeOut: 300000,

@@ -764,13 +764,12 @@ const PbxApi = {
 				newSettings.data.append(`module_install_${now}`, file);
 				return newSettings;
 			},
-			onResponse: response => response,
-			successTest: response => !response.error || false, // change this
-			onSuccess: (json) => {
-				callback(json);
+			successTest: PbxApi.successTest,
+			onSuccess: (response) => {
+				callback(response.data, true);
 			},
-			onFailure: (json) => {
-				callback(json);
+			onFailure: (response) => {
+				callback(response.data, false);
 			},
 			xhr: () => {
 				const xhr = new window.XMLHttpRequest();
@@ -783,7 +782,7 @@ const PbxApi = {
 							percent: percentComplete,
 						};
 						// Show upload progress on bar
-						callback(json);
+						callback(json, true);
 					}
 				}, false);
 				return xhr;
@@ -834,7 +833,7 @@ const PbxApi = {
 			},
 			successTest: PbxApi.successTest,
 			onSuccess(response) {
-				callback(response);
+				callback(response.data);
 			},
 			onFailure() {
 				failureCallback();

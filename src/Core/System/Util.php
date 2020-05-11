@@ -13,6 +13,7 @@ use DateTime;
 use Exception;
 use MikoPBX\Common\Models\{CallEventsLogs, CustomFiles};
 use MikoPBX\Core\Asterisk\Configs\SIPConf;
+use MikoPBX\Core\Workers\WorkerModelsEvents;
 use Phalcon\Db\Adapter\Pdo\Sqlite;
 use Phalcon\Db\Column;
 use Phalcon\Di;
@@ -166,12 +167,11 @@ class Util
      */
     public static function mwExec($command, &$oarr = null, &$retval = null)
     {
-        global $g;
         $retval = 0;
         $oarr   = [];
+        $di = Di::getDefault();
 
-        $debugMode = Di::getDefault()->getShared('config')->path('core.debugMode');
-        if ($debugMode) {
+        if ($di!==null && $di->getShared('config')->path('core.debugMode')) {
             echo "mwExec(): $command\n";
         } else {
             exec("$command 2>&1", $oarr, $retval);
@@ -452,7 +452,7 @@ class Util
     public static function restartModuleDependentWorkers(): void
     {
         // Завершение WorkerModelsEvents процесса перезапустит его.
-        self::killByName('WorkerModelsEvents');
+        self::killByName(WorkerModelsEvents::class);
     }
 
     /**

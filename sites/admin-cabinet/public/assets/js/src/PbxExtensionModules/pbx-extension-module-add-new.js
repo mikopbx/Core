@@ -36,12 +36,12 @@ const addNewExtension = {
 			}
 		});
 	},
-	cbAfterUploadFile(response) {
-		if (response.length === 0 || response === false) {
+	cbAfterUploadFile(response, success) {
+		if (response.length === 0 || response === false || success === false) {
 			addNewExtension.$uploadButton.removeClass('loading');
 			addNewExtension.uploadInProgress = false;
 			UserMessage.showError(globalTranslate.ext_UploadError);
-		} else if (response.function === 'upload_progress') {
+		} else if (response.function === 'upload_progress' && success) {
 			addNewExtension.$progressBar.progress({
 				percent: parseInt(response.percent, 10),
 			});
@@ -50,7 +50,7 @@ const addNewExtension = {
 			} else {
 				addNewExtension.$progressBarLabel.text(globalTranslate.ext_InstallationInProgress);
 			}
-		} else if (response.function === 'upload' && PbxApi.successTest(response)) {
+		} else if (response.function === 'upload' && success) {
 			upgradeStatusLoopWorker.initialize(response.uniqid, false);
 		} else {
 			UserMessage.showMultiString(response.message);
