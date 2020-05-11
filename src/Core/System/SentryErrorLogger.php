@@ -53,7 +53,7 @@ class SentryErrorLogger
      *
      * @return Boolean - результат инициализации
      */
-    public function init()
+    public function init(): bool
     {
         if ($this->enabled) {
             Sentry\init(

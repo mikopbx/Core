@@ -22,7 +22,6 @@ class WorkerAmiListener extends WorkerBase
     /**
      * WorkerAmiListener constructor.
      *
-     * @throws Exception
      */
     public function __construct()
     {
@@ -37,12 +36,11 @@ class WorkerAmiListener extends WorkerBase
      *
      * @return array
      */
-    private function setFilter()
+    private function setFilter(): array
     {
         $params = ['Operation' => 'Add', 'Filter' => 'Event: UserEvent'];
-        $res    = $this->am->sendRequestTimeout('Filter', $params);
 
-        return $res;
+        return $this->am->sendRequestTimeout('Filter', $params);
     }
 
     /**

@@ -38,7 +38,7 @@ class Firewall
      *
      * @return array
      */
-    public static function reloadFirewall()
+    public static function reloadFirewall(): array
     {
         $result = [];
 
@@ -244,7 +244,7 @@ class Firewall
             }
             /** @var \MikoPBX\Common\Models\NetworkFilters $network_filter */
             $network_filter = NetworkFilters::findFirst($rule->networkfilterid);
-            if ( ! $network_filter) {
+            if ($network_filter === null) {
                 Util::sysLogMsg('Firewall', "network_filter_id not found {$rule->networkfilterid}");
                 continue;
             }
@@ -611,23 +611,20 @@ class Firewall
         $db->busyTimeout(3000);
         if (false === self::tableBanExists($db)) {
             // Таблица не существует. Бана нет.
-            $res = [
+            return [
                 'result'  => 'Success',
                 'message' => '',
             ];
-
-            return $res;
         }
         $q = 'DELETE' . " FROM bans WHERE ip = '{$ip}' {$jail_q}";
         $db->query($q);
 
         $err = $db->lastErrorMsg();
-        $res = [
+
+        return [
             'result'  => ($err === 'not an error') ? 'Success' : 'ERROR',
             'message' => $err,
         ];
-
-        return $res;
     }
 
 }

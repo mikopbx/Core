@@ -34,7 +34,7 @@ class System
         $this->mikoPBXConfig = new MikoPBXConfig();
     }
 
-    public static function setupPhpLog()
+    public static function setupPhpLog(): void
     {
         $src_log_file = '/var/log/php_error.log';
         $dst_log_file = self::getPhpFile();
@@ -46,7 +46,7 @@ class System
         Util::createUpdateSymlink($dst_log_file, $src_log_file);
     }
 
-    public static function getPhpFile()
+    public static function getPhpFile(): string
     {
         $logdir = self::getLogDir() . '/php';
         if ( ! file_exists($logdir) && ! mkdir($logdir, 0777, true) && ! is_dir($logdir)) {
@@ -56,11 +56,13 @@ class System
         return "$logdir/error";
     }
 
-    public static function getLogDir()
+    public static function getLogDir(): string
     {
-        $di = Di::getDefault();
-
-        return $di->getShared('config')->path('core.logsPath');
+        $di     = Di::getDefault();
+        if ($di !== null){
+            return $di->getConfig()->path('core.logsPath');
+        }
+        return '/var/log';
     }
 
     public static function rotatePhpLog()
@@ -81,7 +83,12 @@ class System
         /usr/sbin/asterisk -rx "logger reload" > /dev/null 2> /dev/null
     endscript
 }';
-        $varEtcPath  = Di::getDefault()->getConfig()->path('core.varEtcPath');
+        $di     = Di::getDefault();
+        if ($di !== null){
+            $varEtcPath = $di->getConfig()->path('core.varEtcPath');
+        } else {
+            $varEtcPath = '/var/etc';
+        }
         $path_conf   = $varEtcPath . '/php_logrotate_' . basename($f_name) . '.conf';
         file_put_contents($path_conf, $text_config);
         $mb10 = $max_size * 1024 * 1024;
@@ -127,7 +134,12 @@ class System
         if (Util::mFileSize("{$log_dir}/gnatsd.log") > $mb10) {
             $options = '-f';
         }
-        $varEtcPath = Di::getDefault()->getConfig()->path('core.varEtcPath');
+        $di     = Di::getDefault();
+        if ($di !== null){
+            $varEtcPath = $di->getConfig()->path('core.varEtcPath');
+        } else {
+            $varEtcPath = '/var/etc';
+        }
         $path_conf  = $varEtcPath . '/gnatsd_logrotate.conf';
         file_put_contents($path_conf, $text_config);
         if (file_exists("{$log_dir}/gnatsd.log")) {
@@ -606,8 +618,12 @@ server 2.pool.ntp.org';
             'result'  => 'Success',
             'message' => '',
         ];
-        $di      = Di::getDefault();
-        $tempDir = $di->getShared('config')->path('core.tempPath');
+        $di     = Di::getDefault();
+        if ($di !== null){
+            $tempDir = $di->getConfig()->path('core.tempPath');
+        } else {
+            $tempDir = '/tmp';
+        }
         if (empty($config_file)) {
             $config_file = "{$tempDir}/old_config.xml";
         }
@@ -648,8 +664,12 @@ server 2.pool.ntp.org';
             'info'    => 'Update from local file',
         ];
 
-        $di       = Di::getDefault();
-        $tempDir  = $di->getShared('config')->path('core.tempPath');
+        $di     = Di::getDefault();
+        if ($di !== null){
+            $tempDir = $di->getConfig()->path('core.tempPath');
+        } else {
+            $tempDir = '/tmp';
+        }
         $upd_file = "{$tempDir}/update.img";
         if ( ! file_exists($upd_file)) {
             $upd_file       = "{$tempDir}/upgradeOnline/update.img";
@@ -687,8 +707,12 @@ server 2.pool.ntp.org';
      */
     public static function upgradeOnline($data)
     {
-        $di      = Di::getDefault();
-        $tempDir = $di->getShared('config')->path('core.tempPath');
+        $di     = Di::getDefault();
+        if ($di !== null){
+            $tempDir = $di->getConfig()->path('core.tempPath');
+        } else {
+            $tempDir = '/tmp';
+        }
         $module  = 'upgradeOnline';
         if ( ! file_exists($tempDir . "/{$module}")) {
             Util::mwMkdir($tempDir . "/{$module}");
@@ -740,8 +764,12 @@ server 2.pool.ntp.org';
         $result        = [
             'result' => 'Success',
         ];
-        $di            = Di::getDefault();
-        $tempDir       = $di->getShared('config')->path('core.tempPath');
+        $di     = Di::getDefault();
+        if ($di !== null){
+            $tempDir = $di->getConfig()->path('core.tempPath');
+        } else {
+            $tempDir = '/tmp';
+        }
         $modulesDir    = $tempDir . '/upgradeOnline';
         $progress_file = $modulesDir . '/progress';
 
@@ -792,8 +820,12 @@ server 2.pool.ntp.org';
             'result' => 'Success',
             'data'   => null,
         ];
-        $di            = Di::getDefault();
-        $tempDir       = $di->getShared('config')->path('core.tempPath');
+        $di     = Di::getDefault();
+        if ($di !== null){
+            $tempDir = $di->getConfig()->path('core.tempPath');
+        } else {
+            $tempDir = '/tmp';
+        }
         $moduleDirTmp  = $tempDir . '/' . $module;
         $progress_file = $moduleDirTmp . '/progress';
         $error         = '';
@@ -850,10 +882,14 @@ server 2.pool.ntp.org';
      */
     public static function moduleStartDownload($module, $url, $md5): array
     {
-        $di       = Di::getDefault();
-        $tempPath = $di->getShared('config')->path('core.tempPath');
+        $di     = Di::getDefault();
+        if ($di !== null){
+            $tempDir = $di->getConfig()->path('core.tempPath');
+        } else {
+            $tempDir = '/tmp';
+        }
 
-        $moduleDirTmp = "{$tempPath}/{$module}";
+        $moduleDirTmp = "{$tempDir}/{$module}";
 
         if ( ! is_dir($moduleDirTmp)
             && ! mkdir($moduleDirTmp, 0755, true)

@@ -544,7 +544,7 @@ class Network
     public function disableLanInterface($name): void
     {
         $if_data = LanInterfaces::findFirst("interface = '{$name}'");
-        if ($if_data) {
+        if ($if_data !== null) {
             $if_data->internet = 0;
             $if_data->disabled = 1;
             $if_data->update();
@@ -584,10 +584,8 @@ class Network
 
     /**
      * Настройка hosts
-     *
-     * @param $networks
      */
-    public function hostsGenerate()
+    public function hostsGenerate(): void
     {
         $s = new System();
         $s->hostnameConfigure();
@@ -596,7 +594,7 @@ class Network
     /**
      * Configures LAN interface FROM udhcpc (renew_bound)
      */
-    public function udhcpcConfigureRenewBound()
+    public function udhcpcConfigureRenewBound(): void
     {
         if (Util::isSystemctl()) {
             $this->udhcpcConfigureRenewBoundSystemCtl();
@@ -647,7 +645,7 @@ class Network
         // Добавляем маршруты по умолчанию.
         /** @var \MikoPBX\Common\Models\LanInterfaces $if_data */
         $if_data = LanInterfaces::findFirst("interface = '{$env_vars['interface']}'");
-        $is_inet = ($if_data != null) ? $if_data->internet : 0;
+        $is_inet = ($if_data !== null) ? $if_data->internet : 0;
         if ('' != $env_vars['router'] && $is_inet == 1) {
             // ТОЛЬКО, если этот интерфейс для интернет, создаем дефолтный маршрут.
             $routers = explode(' ', $env_vars['router']);
@@ -728,7 +726,7 @@ class Network
         // Добавляем маршруты по умолчанию.
         /** @var \MikoPBX\Common\Models\LanInterfaces $if_data */
         $if_data = LanInterfaces::findFirst("interface = '{$env_vars['interface']}'");
-        $is_inet = ($if_data != null) ? $if_data->internet : 0;
+        $is_inet = ($if_data !== null) ? $if_data->internet : 0;
 
         $named_dns = [];
         if ('' !== $env_vars['dns']) {
@@ -768,6 +766,9 @@ class Network
     {
         /** @var \MikoPBX\Common\Models\LanInterfaces $res */
         $res = LanInterfaces::findFirst("interface = '$name' AND vlanid=0");
+        if ($res === null){
+            return;
+        }
         foreach ($data as $key => $value) {
             $res->writeAttribute("$key", "$value");
         }
@@ -784,6 +785,9 @@ class Network
     {
         /** @var \MikoPBX\Common\Models\LanInterfaces $res */
         $res = LanInterfaces::findFirst("interface = '$name' AND vlanid=0");
+        if ($res === null){
+            return;
+        }
         if (empty($res->primarydns) && ! empty($data['primarydns'])) {
             $res->writeAttribute('primarydns', $data['primarydns']);
         } elseif (empty($res->secondarydns) && $res->primarydns !== $data['primarydns']) {
@@ -806,9 +810,7 @@ class Network
     {
         /** @var \MikoPBX\Common\Models\LanInterfaces $res */
         $res            = LanInterfaces::findFirst("id = '$id_net'");
-        $interface_inet = ($res == null) ? '' : $res->interface;
-
-        return $interface_inet;
+        return ($res === null) ? '' : $res->interface;
     }
 
     /**
@@ -931,12 +933,14 @@ class Network
         }
 
         Util::mwExec('cat /etc/resolv.conf | grep "nameserver" | cut -d " " -f 2', $dnsout);
+
+        $dnsSrv = [];
         foreach ($dnsout as $line) {
             if (Verify::isIpAddress($line)) {
-                $interface['dns'][] = $line;
+                $dnsSrv[] = $line;
             }
         }
-
+        $interface['dns'] = $dnsSrv;
         return $interface;
     }
 

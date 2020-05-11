@@ -27,7 +27,7 @@ class Notifications
      *
      * @return array
      */
-    public static function sendMailOld($to, $subject, $message, $file = false)
+    public static function sendMailOld($to, $subject, $message, $file = false): array
     {
         $mikoPBXConfig        = new MikoPBXConfig();
         $settings             = $mikoPBXConfig->getGeneralSettings();
@@ -101,7 +101,7 @@ class Notifications
      *
      * @return array
      */
-    public static function sendMail($to, $subject, $message, $filename = false)
+    public static function sendMail($to, $subject, $message, $filename = false): array
     {
         $mikoPBXConfig        = new MikoPBXConfig();
         $settings             = $mikoPBXConfig->getGeneralSettings();
@@ -192,7 +192,7 @@ class Notifications
      *
      * @return array
      */
-    public function configure()
+    public function configure(): array
     {
         $result = [
             'result' => 'Success',

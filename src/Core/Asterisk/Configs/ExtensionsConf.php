@@ -432,14 +432,14 @@ class ExtensionsConf extends ConfigClass
      *
      * @param $conf
      */
-    public function generatePublicContext(&$conf):string
+    public function generatePublicContext(&$conf): void
     {
         $additionalModules = $this->di->getShared('pbxConfModules');
         $conf              .= "\n";
         $conf              .= self::generateIncomingContextPeers('none', '', '');
         $conf              .= "[public-direct-dial] \n";
         foreach ($additionalModules as $appClass) {
-            $conf .= $appClass->generatePublicContext($conf);
+            $appClass->generatePublicContext($conf);
         }
         $filter = ["provider IS NULL AND priority<>9999"];
 
@@ -713,7 +713,7 @@ class ExtensionsConf extends ConfigClass
             } else {
                 /** @var \MikoPBX\Common\Models\SoundFiles $res */
                 $res           = SoundFiles::findFirst($out_data->audio_message_id);
-                $audio_message = ($res == null) ? '' : Util::trimExtensionForFile($res->path);
+                $audio_message = ($res === null) ? '' : Util::trimExtensionForFile($res->path);
 
                 $conf_out_set_var .= "[work-time-set-var-{$out_data->id}]\n" .
                     'exten => _.!,1,Set(filename=' . $audio_message . ')' . "\n\t" .

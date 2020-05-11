@@ -109,7 +109,7 @@ class AsteriskManagersController extends BaseController
         }
 
         $data    = $this->request->getPost();
-        $manager = false;
+        $manager = null;
         if (isset($data['id'])) {
             $manager = AsteriskManagerUsers::findFirst($data['id']);
         }

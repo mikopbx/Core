@@ -9,10 +9,8 @@
 namespace MikoPBX\Core\Workers;
 
 use Exception;
-use MikoPBX\Common\Models\{PbxExtensionModules};
-use MikoPBX\Core\Config\RegisterDIServices;
-use MikoPBX\Core\System\{Util};
-use PDOException;
+use MikoPBX\Common\Models\PbxExtensionModules;
+use MikoPBX\Core\System\Util;
 
 require_once 'globals.php';
 
@@ -42,16 +40,7 @@ class WorkerModuleMonitor extends WorkerBase
 
             $extensions_data = [];
             /** @var  PbxExtensionModules $data */
-            try {
-                $extensions_data = PbxExtensionModules::find('disabled=0');
-            } catch (PDOException $e) {
-                if ((int)$e->errorInfo[1] === 17) {
-                    // Обновляем схему базыданных.
-                    RegisterDIServices::recreateDBConnections();
-                    $extensions_data = PbxExtensionModules::find('disabled=0');
-                    // Если и тут будет исключение, то какая то другая, более грубая ошибка. Будем ловить...
-                }
-            }
+            $extensions_data = PbxExtensionModules::find('disabled=0');
 
             foreach ($extensions_data as $data) {
                 if (($modules_miko[$data->uniqid] ?? true) === true) {

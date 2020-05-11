@@ -43,9 +43,13 @@ class Storage
      *
      * @return string
      */
-    public static function getMonitorDir()
+    public static function getMonitorDir(): string
     {
-        return Di::getDefault()->getConfig()->path('asterisk.monitordir');
+        $di     = Di::getDefault();
+        if ($di !== null){
+            return $di->getConfig()->path('asterisk.monitordir');
+        }
+        return '/tmp';
     }
 
     /**
@@ -53,9 +57,13 @@ class Storage
      *
      * @return string
      */
-    public static function getMediaDir()
+    public static function getMediaDir(): string
     {
-        return Di::getDefault()->getConfig()->path('core.mediaMountPoint');
+        $di     = Di::getDefault();
+        if ($di !== null){
+            return $di->getConfig()->path('core.mediaMountPoint');
+        }
+        return '/tmp';
     }
 
 
@@ -66,7 +74,7 @@ class Storage
      *
      * @return bool
      */
-    public static function isStorageDisk($device)
+    public static function isStorageDisk($device): bool
     {
         $result = false;
         if ( ! file_exists("{$device}")) {
@@ -108,12 +116,12 @@ class Storage
      *
      * @param $device
      *
-     * @return bool
+     * @return string
      */
-    public function getUuid($device)
+    public function getUuid($device): string
     {
         if (strlen($device) == 0) {
-            return false;
+            return '';
         }
         $res = Util::mwExec(
             "/sbin/blkid -ofull {$device} | /bin/busybox sed -r 's/[[:alnum:]]+=/\\n&/g' | /bin/busybox grep \"^UUID\" | /bin/busybox awk -F \"\\\"\" '{print $2}' | /usr/bin/head -n 1",
@@ -122,7 +130,7 @@ class Storage
         if ($res == 0 && count($output) > 0) {
             $result = $output[0];
         } else {
-            $result = false;
+            $result = '';
         }
 
         return $result;
@@ -135,7 +143,7 @@ class Storage
      *
      * @return string
      */
-    public function getFsType($device)
+    public function getFsType($device): string
     {
         $device = str_replace('/dev/', '', $device);
         $out    = [];
@@ -159,16 +167,21 @@ class Storage
      *
      * @return bool
      */
-    public static function isStorageDiskMounted($filter = '', &$mount_dir = '')
+    public static function isStorageDiskMounted($filter = '', &$mount_dir = ''): bool
     {
         if (Util::isSystemctl() && file_exists('/storage/usbdisk1/')) {
             $mount_dir = '/storage/usbdisk1/';
 
             return true;
         }
-        if ('' == $filter) {
-            $res_disk   = null;
-            $varEtcPath = Di::getDefault()->getConfig()->path('core.varEtcPath');
+        if ('' === $filter) {
+            $di     = Di::getDefault();
+            if ($di !== null){
+                $varEtcPath = $di->getConfig()->path('core.varEtcPath');
+            } else {
+                $varEtcPath = '/var/etc';
+            }
+
             $filename   = "{$varEtcPath}/storage_device";
             if (file_exists($filename)) {
                 $filter = file_get_contents($filename);
@@ -197,7 +210,7 @@ class Storage
      *
      * @return bool
      */
-    public static function mountSftpDisk($host, $port, $user, $pass, $remout_dir, $local_dir)
+    public static function mountSftpDisk($host, $port, $user, $pass, $remout_dir, $local_dir): bool
     {
         if ( ! file_exists($local_dir) && ! mkdir($local_dir, 0777, true) && ! is_dir($local_dir)) {
             return false;
@@ -216,7 +229,7 @@ class Storage
             unset($response);
         }
 
-        return Storage::isStorageDiskMounted("$local_dir ");
+        return self::isStorageDiskMounted("$local_dir ");
     }
 
     /**
@@ -231,7 +244,7 @@ class Storage
      *
      * @return bool
      */
-    public static function mountFtp($host, $port, $user, $pass, $remout_dir, $local_dir)
+    public static function mountFtp($host, $port, $user, $pass, $remout_dir, $local_dir): bool
     {
         if ( ! file_exists($local_dir) && ! mkdir($local_dir, 0777, true) && ! is_dir($local_dir)) {
             return false;
@@ -264,7 +277,7 @@ class Storage
             unset($response);
         }
 
-        return Storage::isStorageDiskMounted("$local_dir ");
+        return self::isStorageDiskMounted("$local_dir ");
     }
 
     /**
@@ -283,16 +296,16 @@ class Storage
             return false;
         }
         $dir = '';
-        Storage::isStorageDiskMounted("$dev", $dir);
+        self::isStorageDiskMounted("$dev", $dir);
 
-        if (empty($dir) || Storage::umountDisk($dir)) {
+        if (empty($dir) || self::umountDisk($dir)) {
             // Диск размонтирован.
             $st = new Storage();
             // Будет запущен процесс:
             $st->formatDiskLocal($dev, true);
             sleep(1);
 
-            return (Storage::statusMkfs($dev) == 'inprogress');
+            return (self::statusMkfs($dev) == 'inprogress');
         } else {
             // Ошибка размонтирования диска.
             return false;
@@ -306,7 +319,7 @@ class Storage
      *
      * @return bool
      */
-    public static function umountDisk($dir)
+    public static function umountDisk($dir): bool
     {
         if (self::isStorageDiskMounted($dir)) {
             Util::mwExec("/etc/rc/shell_functions.sh 'killprocesses' '$dir' -TERM 0");
@@ -424,15 +437,14 @@ class Storage
     /**
      * Проверка свободного места на дисках. Уведомление в случае проблем.
      */
-    public function checkFreeSpace()
+    public function checkFreeSpace(): void
     {
-        $storage = new Storage();
         $util    = new Util();
-        $hdd     = $storage->getAllHdd(true);
+        $hdd     = $this->getAllHdd(true);
         // Создание больщого файла для тестов.
         // head -c 1500MB /dev/urandom > /storage/usbdisk1/big_file.mp3
         foreach ($hdd as $disk) {
-            if ($disk['sys_disk'] === true && ! Storage::isStorageDiskMounted("{$disk['id']}4")) {
+            if ($disk['sys_disk'] === true && ! self::isStorageDiskMounted("{$disk['id']}4")) {
                 // Это системный диск (4ый раздел). Он не смонтирован.
                 continue;
             }
@@ -479,7 +491,7 @@ class Storage
      *
      * @return array
      */
-    public function getAllHdd($mounted_only = false)
+    public function getAllHdd($mounted_only = false): array
     {
         $res_disks = [];
 
@@ -527,7 +539,7 @@ class Storage
                 continue;
             }
             unset($temp_vendor, $temp_size, $original_size);
-            $mounted = Storage::diskIsMounted("{$disk}");
+            $mounted = self::diskIsMounted("{$disk}");
             if ($mounted_only == true && $mounted == false) {
                 continue;
             }
@@ -576,7 +588,7 @@ class Storage
      *
      * @return array
      */
-    private function cdromGetDevices()
+    private function cdromGetDevices(): array
     {
         return explode(
             " ",
@@ -589,7 +601,7 @@ class Storage
      *
      * @return array
      */
-    private function diskGetDevices()
+    private function diskGetDevices(): array
     {
         //  TODO // Переписать через использование lsblk.
         return explode(" ", trim(exec("/bin/ls /dev | grep '^[a-z]d[a-z]' | tr \"\n\" \" \"")));
@@ -603,7 +615,7 @@ class Storage
      *
      * @return bool
      */
-    public static function diskIsMounted($disk, $filter = '/dev/')
+    public static function diskIsMounted($disk, $filter = '/dev/'): bool
     {
         $out = [];
         Util::mwExec("mount | grep '{$filter}{$disk}'", $out);
@@ -614,9 +626,7 @@ class Storage
         }
         $data = explode(' ', trim($res_out));
 
-        $result = (count($data) > 2) ? $data[2] : false;
-
-        return $result;
+        return (count($data) > 2) ? $data[2] : false;
     }
 
     /**
@@ -626,7 +636,7 @@ class Storage
      *
      * @return string
      */
-    private function getVendorDisk($disk)
+    private function getVendorDisk($disk): string
     {
         $temp_vendor = [];
         if (is_file("/sys/block/" . $disk . "/device/vendor")) {
@@ -720,7 +730,7 @@ class Storage
             $fs           = null;
             $need_unmount = false;
             $mount_dir    = '';
-            if (Storage::isStorageDiskMounted("/dev/{$dev} ", $mount_dir)) {
+            if (self::isStorageDiskMounted("/dev/{$dev} ", $mount_dir)) {
                 Util::mwExec("mount | grep '/dev/{$dev}' | awk '{print $5}'", $out);
                 $fs         = trim(implode("", $out));
                 $fs         = ($fs == 'fuseblk') ? 'ntfs' : $fs;
@@ -731,7 +741,7 @@ class Storage
                 if (in_array($format, $allow_formats)) {
                     $fs = $format;
                 }
-                Storage::mountDisk($dev, $format, $tmp_dir);
+                self::mountDisk($dev, $format, $tmp_dir);
 
                 $need_unmount = true;
                 $used_space   = Util::getSizeOfFile("$tmp_dir");
@@ -745,7 +755,7 @@ class Storage
                 "fs"         => $fs,
             ];
             if ($need_unmount) {
-                Storage::umountDisk($tmp_dir);
+                self::umountDisk($tmp_dir);
             }
         }
 
@@ -761,9 +771,9 @@ class Storage
      *
      * @return bool
      */
-    public static function mountDisk($dev, $format, $dir)
+    public static function mountDisk($dev, $format, $dir): bool
     {
-        if (Storage::isStorageDiskMounted("/dev/{$dev} ")) {
+        if (self::isStorageDiskMounted("/dev/{$dev} ")) {
             return true;
         }
         if ( ! file_exists($dir) && ! mkdir($dir, 0777, true) && ! is_dir($dir)) {
@@ -784,7 +794,7 @@ class Storage
             Util::mwExec("mount -t {$format} {$uid_part} {$dir}", $out);
         }
 
-        return Storage::isStorageDiskMounted("/dev/{$dev} ");
+        return self::isStorageDiskMounted("/dev/{$dev} ");
     }
 
     /**
@@ -827,7 +837,7 @@ class Storage
             $str_uid     = 'UUID=' . $this->getUuid($dev) . '';
             $format_p4   = $this->getFsType($dev);
             $conf        .= "{$str_uid} /storage/usbdisk{$disk['id']} {$format_p4} async,rw 0 0\n";
-            $is_mounted  = $this->isStorageDiskMounted("/storage/usbdisk{$disk['id']}");
+            $is_mounted  = self::isStorageDiskMounted("/storage/usbdisk{$disk['id']}");
             $mount_point = "/storage/usbdisk{$disk['id']}";
             if ( ! file_exists($mount_point)) {
                 Util::mwExec("mkdir -p {$mount_point}");
@@ -849,7 +859,7 @@ class Storage
      *
      * @return array
      */
-    public function getDiskSettings($id = '')
+    public function getDiskSettings($id = ''): array
     {
         $data = [];
         if ('' === $id) {
@@ -860,7 +870,7 @@ class Storage
             }
         } else {
             $pbxSettings = StorageModel::findFirst("id='$id'");
-            if ($pbxSettings) {
+            if ($pbxSettings !== null) {
                 $data = $pbxSettings->toArray();
             }
         }
@@ -875,7 +885,7 @@ class Storage
      *
      * @return bool
      */
-    private function hddExists($disk)
+    private function hddExists($disk): bool
     {
         $result = false;
         $uid    = $this->getUuid("{$disk}");
@@ -956,11 +966,11 @@ class Storage
     }
 
     /**
-     * Create system folders and apply rights to them
+     * Create system folders
      *
-     * @return bool
+     * @return void
      */
-    private function createWorkDirs(): bool
+    private function createWorkDirs(): void
     {
         $path = '';
         Util::mwExec('mount -o remount,rw /offload 2> /dev/null');
@@ -1007,7 +1017,6 @@ class Storage
 
         $this->applyFolderRights();
 
-        return true;
     }
 
     /**
@@ -1068,7 +1077,7 @@ class Storage
      * @param     $data
      * @param int $id
      */
-    public function saveDiskSettings($data, $id = '1')
+    public function saveDiskSettings($data, $id = '1'): void
     {
         if ( ! is_array($data)) {
             return;
@@ -1084,6 +1093,9 @@ class Storage
             $storage_settings->save();
         } else {
             $storage_settings = StorageModel::findFirst("id = '$id'");
+            if ($storage_settings === null){
+                return;
+            }
             foreach ($data as $key => $value) {
                 $storage_settings->writeAttribute($key, $value);
             }

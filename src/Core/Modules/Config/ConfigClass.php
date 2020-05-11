@@ -195,12 +195,10 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
      *
      * @param $conf
      *
-     * @return string
+     * @return void
      */
-    public function generatePublicContext(&$conf) :string
+    public function generatePublicContext(&$conf) :void
     {
-        // Возвращает старкоды.
-        return '';
     }
 
     /**

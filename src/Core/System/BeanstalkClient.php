@@ -24,6 +24,12 @@ class BeanstalkClient
     private $message;
     private $timeout_handler;
 
+
+    /**
+     * BeanstalkClient constructor.
+     *
+     * @param string $tube
+     */
     public function __construct($tube = 'default')
     {
         $this->di          = Di::getDefault();

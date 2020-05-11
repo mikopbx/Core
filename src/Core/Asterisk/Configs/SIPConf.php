@@ -960,15 +960,15 @@ class SIPConf extends ConfigClass
             if (null != $sip_peer->networkfilterid) {
                 $network_filter = NetworkFilters::findFirst($sip_peer->networkfilterid);
             }
-            $arr_data['permit'] = ($network_filter == null) ? '' : $network_filter->permit;
-            $arr_data['deny']   = ($network_filter == null) ? '' : $network_filter->deny;
+            $arr_data['permit'] = ($network_filter === null) ? '' : $network_filter->permit;
+            $arr_data['deny']   = ($network_filter === null) ? '' : $network_filter->deny;
 
             // Получим используемые кодеки.
             $arr_data['codecs'] = $this->getCodecs($sip_peer->uniqid);
 
             // Имя сотрудника.
             $extension = ExtensionsModel::findFirst("number = '{$sip_peer->extension}'");
-            if (null == $extension) {
+            if (null === $extension) {
                 $arr_data['publicaccess'] = false;
                 $arr_data['language']     = '';
                 $arr_data['calleridname'] = $sip_peer->extension;
@@ -976,13 +976,13 @@ class SIPConf extends ConfigClass
                 $arr_data['publicaccess'] = $extension->public_access;
                 $arr_data['calleridname'] = $extension->callerid;
                 $user                     = Users::findFirst($extension->userid);
-                if (null != $user) {
+                if (null !== $user) {
                     $arr_data['language'] = $user->language;
                     $arr_data['user_id']  = $user->id;
                 }
             }
             $extensionForwarding = ExtensionForwardingRights::findFirst("extension = '{$sip_peer->extension}'");
-            if (null == $extensionForwarding) {
+            if (null === $extensionForwarding) {
                 $arr_data['ringlength']              = '';
                 $arr_data['forwarding']              = '';
                 $arr_data['forwardingonbusy']        = '';
@@ -1038,8 +1038,8 @@ class SIPConf extends ConfigClass
             $arr_data                               = $sip_peer->toArray();
             $arr_data['receive_calls_without_auth'] = $sip_peer->receive_calls_without_auth;
             $network_filter                         = NetworkFilters::findFirst($sip_peer->networkfilterid);
-            $arr_data['permit']                     = ($network_filter == null) ? '' : $network_filter->permit;
-            $arr_data['deny']                       = ($network_filter == null) ? '' : $network_filter->deny;
+            $arr_data['permit']                     = ($network_filter === null) ? '' : $network_filter->permit;
+            $arr_data['deny']                       = ($network_filter === null) ? '' : $network_filter->deny;
 
             // Получим используемые кодеки.
             $arr_data['codecs'] = $this->getCodecs($sip_peer->uniqid);

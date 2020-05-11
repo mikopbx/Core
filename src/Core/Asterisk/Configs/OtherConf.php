@@ -273,9 +273,9 @@ class OtherConf extends ConfigClass
             $username = $peer->extension;
             $mail_box = '';
             $exten = Extensions::findFirst("number='{$username}'");
-            if($exten != null){
+            if($exten !== null){
                 $user = Users::findFirst("id='{$exten->userid}'");
-                if($user != null){
+                if($user !== null){
                     $username = $user->username;
                     $mail_box = $user->email;
                 }

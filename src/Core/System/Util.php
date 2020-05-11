@@ -18,6 +18,7 @@ use Phalcon\Db\Column;
 use Phalcon\Di;
 use ReflectionClass;
 
+
 /**
  * Вспомогательные методы.
  */
@@ -465,7 +466,6 @@ class Util
      */
     public static function amiOriginate($peer_number, $peer_mobile, $dest_number): array
     {
-        /** @var AGI_AsteriskManager $am */
         $am       = self::getAstManager('off');
         $channel  = 'Local/' . $peer_number . '@internal-originate';
         $context  = 'all_peers';
@@ -521,7 +521,7 @@ class Util
      *
      * @return string
      */
-    public static function generateRandomString($length = 10)
+    public static function generateRandomString($length = 10): string
     {
         $characters       = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
         $charactersLength = strlen($characters);
@@ -603,7 +603,7 @@ class Util
      *
      * @return string
      */
-    public static function getExtensionX($length)
+    public static function getExtensionX($length): string
     {
         $extension = '';
         for ($i = 0; $i < $length; $i++) {
@@ -620,7 +620,7 @@ class Util
      *
      * @return bool
      */
-    public static function recFileExists($filename)
+    public static function recFileExists($filename): ?bool
     {
         if (file_exists($filename) && filesize($filename) > 0) {
             return true;
@@ -636,7 +636,7 @@ class Util
      *
      * @return string
      */
-    public static function numberToDate($data)
+    public static function numberToDate($data): string
     {
         $re_number = '/^\d+.\d+$/';
         preg_match_all($re_number, $data, $matches, PREG_SET_ORDER, 0);
@@ -659,9 +659,9 @@ class Util
         $res = CustomFiles::findFirst("filepath = '{$filename}'");
 
         $filename_orgn = "{$filename}.orgn";
-        if (( ! $res || $res->mode === 'none') && file_exists($filename_orgn)) {
+        if (( $res === null || $res->mode === 'none') && file_exists($filename_orgn)) {
             unlink($filename_orgn);
-        } elseif ($res && $res->mode !== 'none') {
+        } elseif ($res !== null && $res->mode !== 'none') {
             // Запишем оригинальный файл.
             file_put_contents($filename_orgn, $data);
         }
@@ -691,11 +691,11 @@ class Util
      *
      * @return array
      */
-    public static function fileReadContent($filename, $needOriginal = true)
+    public static function fileReadContent($filename, $needOriginal = true): array
     {
         $result = [];
         $res    = CustomFiles::findFirst("filepath = '{$filename}'");
-        if ($res) {
+        if ($res !== null) {
             $filename_orgn = "{$filename}.orgn";
             if ($needOriginal && file_exists($filename_orgn)) {
                 $filename = $filename_orgn;
@@ -717,7 +717,7 @@ class Util
      * @param $filename
      * @param $user
      */
-    public static function chown($filename, $user)
+    public static function chown($filename, $user): void
     {
         if (file_exists($filename)) {
             chown($filename, $user);
@@ -728,7 +728,7 @@ class Util
     /**
      * Создаем базу данных для логов, если требуется.
      */
-    public static function CreateLogDB()
+    public static function CreateLogDB(): void
     {
         $db_path    = Di::getDefault()->getShared('config')->path('eventsLogDatabase.dbfile');
         $table_name = 'call_events';
@@ -782,7 +782,7 @@ class Util
      *
      * @return array
      */
-    public static function GetLastDateLogDB($id, &$db = null)
+    public static function GetLastDateLogDB($id, &$db = null): ?array
     {
         if ($db == null) {
             $cdr_db_path = Di::getDefault()->getShared('config')->path('eventsLogDatabase.dbfile');
@@ -807,7 +807,7 @@ class Util
      * @param $app
      * @param $data_obj
      */
-    public static function logMsgDb($app, $data_obj)
+    public static function logMsgDb($app, $data_obj): void
     {
         try {
             $data = new CallEventsLogs();
@@ -829,7 +829,7 @@ class Util
      *
      * @return string
      */
-    public static function getNowDate()
+    public static function getNowDate(): ?string
     {
         $result = null;
         try {
@@ -912,7 +912,7 @@ class Util
      *
      * @return string
      */
-    public static function trimExtensionForFile($filename, $delimiter = '.')
+    public static function trimExtensionForFile($filename, $delimiter = '.'): string
     {
         // Отсечем расширение файла.
         $tmp_arr = explode("$delimiter", $filename);
@@ -988,7 +988,7 @@ class Util
      *
      * @return int
      */
-    public static function getSizeOfFile($filename)
+    public static function getSizeOfFile($filename): int
     {
         $result = 0;
         if (file_exists($filename)) {
@@ -1006,7 +1006,7 @@ class Util
     /**
      * Устанавливаем шрифт для консоли.
      */
-    public static function setCyrillicFont()
+    public static function setCyrillicFont(): void
     {
         self::mwExec("/usr/sbin/setfont /usr/share/consolefonts/Cyr_a8x16.psfu.gz 2>/dev/null");
     }
@@ -1048,7 +1048,7 @@ class Util
         $total_files,
         $result_file = '',
         $chunkSize = 0
-    ) {
+    ): bool {
         // count all the parts of this file
         $total_files_on_server_size = 0;
         foreach (scandir($temp_dir) as $file) {
@@ -1135,7 +1135,7 @@ class Util
      *
      * @link http://php.net/manual/en/function.rmdir.php
      */
-    public static function rRmDir($dir)
+    public static function rRmDir($dir): void
     {
         if (is_dir($dir)) {
             $objects = scandir($dir);
@@ -1162,7 +1162,7 @@ class Util
      *
      * @return array
      */
-    public static function generateSslCert($options = null, $config_args_pkey = null, $config_args_csr = null)
+    public static function generateSslCert($options = null, $config_args_pkey = null, $config_args_csr = null): array
     {
         // Инициализация настроек.
         if ( ! $options) {
@@ -1204,7 +1204,7 @@ class Util
     /**
      * @return bool
      */
-    public static function isSystemctl()
+    public static function isSystemctl(): bool
     {
         return (stripos(php_uname('v'), 'debian') !== false);
     }

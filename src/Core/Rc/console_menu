@@ -333,7 +333,7 @@ $menu = (new CliMenuBuilder)
             ->addItem('[2] '.Util::translate('Check storage'), function (CliMenu $menu) {
                 /** @var \MikoPBX\Common\Models\Storage $data */
                 $data = StorageModel::findFirst();
-                if(!$data){
+                if($data === null){
                     echo "\n " . Util::translate('Valid disks not found...') . " \n";
                     return;
                 }
@@ -369,7 +369,7 @@ $menu = (new CliMenuBuilder)
             ->addItem('[3] '.Util::translate('Resize storage'), function (CliMenu $menu) {
                 /** @var MikoPBX\Common\Models\Storage $data */
                 $data = StorageModel::findFirst();
-                if(!$data){
+                if($data === null){
                     echo "\n " . Util::translate('Valid disks not found...') . " \n";
                     return;
                 }

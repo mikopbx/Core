@@ -23,11 +23,11 @@ use Phalcon\Di;
  */
 class PBX
 {
-        /**
+    /**
      * @var bool
      */
-    public $booting; // Link to the dependency injector
-private $di;
+    public $booting;
+    private $di; // Link to the dependency injector
     private $arrObject;
     private $arr_gs;
     /**
@@ -269,8 +269,8 @@ private $di;
                 $arr_data = $user->toArray();
                 /** @var NetworkFilters $network_filter */
                 $network_filter     = NetworkFilters::findFirst($user->networkfilterid);
-                $arr_data['permit'] = empty($network_filter) ? '' : $network_filter->permit;
-                $arr_data['deny']   = empty($network_filter) ? '' : $network_filter->deny;
+                $arr_data['permit'] = $network_filter === null ? '' : $network_filter->permit;
+                $arr_data['deny']   = $network_filter === null ? '' : $network_filter->deny;
                 $result[]           = $arr_data;
             }
 
@@ -385,12 +385,11 @@ private $di;
         $c = new MikoPBXConfig();
         $o->generateConfig($c->getGeneralSettings());
         Util::mwExec("asterisk -rx 'module reload manager'");
-        $result = [
+
+        return [
             'result' => 'Success',
             'data'   => '',
         ];
-
-        return $result;
     }
 
     /**
@@ -422,12 +421,11 @@ private $di;
         $pbx->modulesConfGenerate();
         $arr_out = [];
         Util::mwExec("asterisk -rx 'core restart now'", $arr_out);
-        $result = [
+
+        return [
             'result' => 'Success',
             'data'   => '',
         ];
-
-        return $result;
     }
 
     /**
@@ -613,10 +611,10 @@ private $di;
         Util::fileWriteContent('/etc/asterisk/codecs.conf', '');
     }
 
-    public static function checkCodec($name, $desc, $type)
+    public static function checkCodec($name, $desc, $type): void
     {
         $codec = Codecs::findFirst('name="' . $name . '"');
-        if ( ! $codec) {
+        if ($codec === null) {
             /** @var \MikoPBX\Common\Models\Codecs $codec_g722 */
             $codec              = new Codecs();
             $codec->name        = $name;
@@ -673,9 +671,8 @@ private $di;
         }
 
         // Создание базы данных истории звонков.
-        $di = Di::getDefault();
         /** @var \Phalcon\Db\Adapter\Pdo\Sqlite $connection */
-        $connection = $di->get('dbCDR');
+        $connection = $this->di->get('dbCDR');
         if ( ! $connection->tableExists('cdr')) {
             CdrDb::createDb();
             Util::CreateLogDB();

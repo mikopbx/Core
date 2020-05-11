@@ -2,7 +2,9 @@
 
 namespace MikoPBX\Core\System;
 
-use MikoPBX\Service\Main;
+use MikoPBX\Core\System\Upgrade\UpdateDatabase;
+use MikoPBX\Core\System\Upgrade\UpdateSystemConfig;
+use MikoPBX\Service\Main; // at mikopbx.so
 use Phalcon\Di;
 
 ini_set('error_reporting', E_ALL);
@@ -25,8 +27,8 @@ class SystemLoader
     {
         $this->di->getRegistry()->booting = true;
         $storage                          = new Storage();
-        Util::echoWithSyslog(' - Mount storage... ');
-        $storage->saveFstab(); //Mount storage disk
+        Util::echoWithSyslog(' - Mount storage disk... ');
+        $storage->saveFstab();
         $storage->configure();
         Util::echoGreenDone();
 
@@ -36,12 +38,13 @@ class SystemLoader
         Util::echoGreenDone();
 
         Util::echoWithSyslog(' - Update database ... ');
-        $updater = new UpdateSystemConfig();
-        $updater->updateDatabaseStructure();
+        $dbUpdater = new UpdateDatabase();
+        $dbUpdater->updateDatabaseStructure();
         Util::echoGreenDone();
 
         Util::echoWithSyslog(' - Update configs and applications ... ');
-        $updater->updateConfigs();
+        $confUpdate = new UpdateSystemConfig();
+        $confUpdate->updateConfigs();
         Util::echoGreenDone();
 
 

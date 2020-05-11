@@ -75,7 +75,7 @@ class CDR_Data
             $this->app_10000666_777($res_data);
         } elseif ('10000109' == $this->exten) {
             $res     = Extensions::findFirst("number='{$this->vars['number']}'");
-            $context = ($res != null) ? 'all_peers' : '';
+            $context = ($res !== null) ? 'all_peers' : '';
             $this->UserEvent(
                 "GetContest,chan1c:{$this->vars['tehnology']}/{$this->vars['number']},peercontext:{$context}"
             );

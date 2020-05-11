@@ -9,8 +9,6 @@
 namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Core\Config\RegisterDIServices;
-use PDOException;
 
 /**
  * Class Config
@@ -40,12 +38,12 @@ class MikoPBXConfig
     public function setGeneralSettings($db_key, $value)
     {
         $data = PbxSettings::findFirst("key = '$db_key'");
-        if (null == $data) {
+        if (null === $data) {
             $data = new PbxSettings();
-            $data->writeAttribute("key", "$db_key");
+            $data->writeAttribute("key", $db_key);
         }
 
-        $data->writeAttribute("value", "$value");
+        $data->writeAttribute("value", $value);
 
         return $data->save();
     }
@@ -57,10 +55,10 @@ class MikoPBXConfig
      *
      * @return bool
      */
-    public function deleteGeneralSettings($db_key)
+    public function deleteGeneralSettings($db_key): bool
     {
         $data = PbxSettings::findFirst("key = '$db_key'");
-        if (null == $data) {
+        if (null === $data) {
             return true;
         }
 
@@ -72,11 +70,9 @@ class MikoPBXConfig
      *
      * @return string
      */
-    public function getTimeZone()
+    public function getTimeZone(): string
     {
-        $tz = trim($this->getGeneralSettings('PBXTimezone'));
-
-        return $tz;
+        return trim($this->getGeneralSettings('PBXTimezone'));
     }
 
     /**
@@ -88,29 +84,11 @@ class MikoPBXConfig
      */
     public function getGeneralSettings($db_key = '')
     {
-        $result = '';
-        try {
-            $result = $this->getGeneralSettingsPrivate($db_key);
-        } catch (PDOException $e) {
-            if ($e->errorInfo[1] == 17) {
-                // Обновляем схему базыданных.
-                RegisterDIServices::recreateDBConnections();
-                $result = $this->getGeneralSettingsPrivate($db_key);
-                // Если и тут будет исключение, то какая то другая, более грубая ошибка. Будем ловить...
-            }
-        }
-
-        return $result;
-    }
-
-    private function getGeneralSettingsPrivate($db_key = '')
-    {
         if ($db_key === '') {
             $result = PbxSettings::getAllPbxSettings();
         } else {
-            $result = PbxSettings::getValueByKey("$db_key");
+            $result = PbxSettings::getValueByKey($db_key);
         }
-
         return $result;
     }
 
@@ -119,11 +97,9 @@ class MikoPBXConfig
      *
      * @return string
      */
-    public function getServerNTP()
+    public function getServerNTP(): string
     {
-        $value = trim($this->getGeneralSettings('NTPServer'));
-
-        return $value;
+        return trim($this->getGeneralSettings('NTPServer'));
     }
 
 }

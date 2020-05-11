@@ -150,8 +150,8 @@ class OldConfigConverter
             }
             /** @var \MikoPBX\Common\Models\Extensions $exten_db */
             $exten_db = Extensions::findFirst("number='{$this->get('extension')}'");
-            $id       = ($exten_db === false) ? null : $exten_db->id;
-            $user_id  = ($exten_db === false) ? null : $exten_db->userid;
+            $id       = ($exten_db === null) ? null : $exten_db->id;
+            $user_id  = ($exten_db === null) ? null : $exten_db->userid;
 
             $exten_num                            = $this->get('extension');
             $this->data['extensions'][$exten_num] = [
@@ -199,7 +199,7 @@ class OldConfigConverter
     /**
      * Инициализация данных текущего узла.
      */
-    private function initData($children)
+    private function initData($children): void
     {
         $this->tmp_data = [];
         foreach ($children as $child) {
@@ -236,7 +236,7 @@ class OldConfigConverter
      *
      * @return string
      */
-    private function addNetFilter($permitip, $permitnetmask, $rules = '')
+    private function addNetFilter($permitip, $permitnetmask, $rules = ''): string
     {
         $networkfilter = '';
         if (Verify::isIpAddress($permitip) && Verify::isIpAddress($permitnetmask)) {
@@ -278,7 +278,7 @@ class OldConfigConverter
     /**
      * Конвертация настроек внешних телефонов.
      */
-    private function parseExternalPhone()
+    private function parseExternalPhone(): void
     {
         foreach ($this->res_html->find('external phone') as $e) {
             $this->initData($e->children);
@@ -310,7 +310,7 @@ class OldConfigConverter
             }
 
             $exten_db      = ExternalPhones::findFirst("extension='{$this->get('extension')}'");
-            $mobile_uniqid = ($exten_db == null) ? $this->get('uniqid') : $exten_db->uniqid;
+            $mobile_uniqid = ($exten_db === null) ? $this->get('uniqid') : $exten_db->uniqid;
 
             $extension                                = &$this->data['extensions'][$user_num];
             $extension['mobile_number']               = $this->get('extension');
@@ -340,7 +340,7 @@ class OldConfigConverter
     /**
      * Конвертация настроек manager.conf.
      */
-    private function parseManager()
+    private function parseManager(): void
     {
         foreach ($this->res_html->find('services manager manager-user') as $e) {
             $this->initData($e->children);
@@ -398,7 +398,7 @@ class OldConfigConverter
     /**
      * Конвертация настроек sip.conf (учетки провайдеров).
      */
-    private function parseSipProviders()
+    private function parseSipProviders(): void
     {
         foreach ($this->res_html->find('sip provider') as $e) {
             $this->initData($e->children);
@@ -444,7 +444,7 @@ class OldConfigConverter
     /**
      * Конвертация настроек sip.conf (учетки провайдеров).
      */
-    private function parseIaxProviders()
+    private function parseIaxProviders(): void
     {
         foreach ($this->res_html->find('iax provider') as $e) {
             $this->initData($e->children);
@@ -481,7 +481,7 @@ class OldConfigConverter
     /**
      * Получаем настройки SMART IVR.
      */
-    private function parseSmartIvr()
+    private function parseSmartIvr(): void
     {
         foreach ($this->res_html->find('miko_1c smartivr') as $e) {
             $this->initData($e->children);
@@ -507,7 +507,7 @@ class OldConfigConverter
     /**
      * Получаем ключ лицензии.
      */
-    private function parseSaasKey()
+    private function parseSaasKey(): void
     {
         foreach ($this->res_html->find('saaskey') as $e) {
             $this->data['saas_key'] = $e->text();
@@ -517,7 +517,7 @@ class OldConfigConverter
     /**
      * Разбор маршрутов вызовов.
      */
-    private function parseCallFlow()
+    private function parseCallFlow(): void
     {
         foreach ($this->res_html->find('cfe callflow') as $e) {
             $this->initData($e->children);
@@ -535,7 +535,7 @@ class OldConfigConverter
      *
      * @param $data
      */
-    private function parseQueues($data)
+    private function parseQueues($data): void
     {
         $queues      = [];
         $tmp_queues  = [];
@@ -609,7 +609,7 @@ class OldConfigConverter
         }
     }
 
-    private function parseIvr($data)
+    private function parseIvr($data): void
     {
         $tmp_ivrs    = [];
         $tmp_modules = [];
@@ -734,7 +734,7 @@ class OldConfigConverter
     /**
      * Создает конфигурацию в новом формате.
      */
-    public function makeConfig()
+    public function makeConfig(): ?bool
     {
         $w_api = new WebAPIClient();
         $res   = $w_api->login();
@@ -744,7 +744,7 @@ class OldConfigConverter
 
         foreach ($this->data['net_filters'] as $key => $value) {
             $filter = NetworkFilters::findFirst("permit='{$key}'");
-            if ($filter == null) {
+            if ($filter === null) {
                 $w_api->addNetFilter($value);
             }
         }
@@ -752,7 +752,7 @@ class OldConfigConverter
         foreach ($this->data['extensions'] as $key => $value) {
             if ( ! empty($value['tmp_pbx_networkfilter'])) {
                 $filter = NetworkFilters::findFirst("permit='{$value['tmp_pbx_networkfilter']}'");
-                if ($filter != null) {
+                if ($filter !== null) {
                     $value['sip_networkfilterid'] = $filter->id;
                 }
             }
