@@ -59,7 +59,7 @@ class NetworkFilters extends ModelsBase
         $di         = DI::getDefault();
         $parameters = [
             'models'     => [
-                'NetworkFilters' => NetworkFilters::class,
+                'NetworkFilters' => __CLASS__,
             ],
             'conditions' => 'FirewallRules.category in ({arrkeys:array}) and FirewallRules.action="allow"',
             'bind'       => [

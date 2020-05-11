@@ -9,11 +9,12 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\{Iax, IaxCodecs};
-use MikoPBX\Core\Modules\Config\ConfigClass;
+use MikoPBX\Modules\Config\ConfigClass;
 use MikoPBX\Core\System\{MikoPBXConfig, Util};
 
 class IAXConf extends ConfigClass
 {
+    public const TYPE_IAX2 = 'IAX2';
     protected $data_providers;
     protected $description = 'iax.conf';
 

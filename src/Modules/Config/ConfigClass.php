@@ -6,7 +6,7 @@
  * Written by Alexey Portnov, 2 2020
  */
 
-namespace MikoPBX\Core\Modules\Config;
+namespace MikoPBX\Modules\Config;
 
 use MikoPBX\Core\System\MikoPBXConfig;
 use Phalcon\Di;
@@ -204,7 +204,7 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
     /**
      * Проверка работы сервисов.
      */
-    public function test(): array
+    public function checkModuleWorkProperly(): array
     {
         return ['result' => true];
     }
@@ -377,6 +377,15 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
      * @return array
      */
     public function getPBXCoreRESTAdditionalRoutes(): array
+    {
+        return [];
+    }
+
+    /**
+     * Returns array of workers classes for WorkerSafeScripts from module
+     * @return array
+     */
+    public function getModuleWorkers(): array
     {
         return [];
     }

@@ -7,9 +7,8 @@
  *
  */
 
-namespace MikoPBX\Core\Modules;
+namespace MikoPBX\Service;
 
-use MikoPBX\Service\License;
 use Phalcon\Di\Injectable;
 use SimpleXMLElement;
 

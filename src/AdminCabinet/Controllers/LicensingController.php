@@ -17,7 +17,7 @@ use Phalcon\Text;
 use SimpleXMLElement;
 
 /**
- * @property \MikoPBX\Core\Modules\LicenseWorker licenseWorker
+ * @property \MikoPBX\AdminCabinet\Providers\LicenseWorkerProvider licenseWorker
  */
 class LicensingController extends BaseController
 {

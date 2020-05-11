@@ -10,7 +10,7 @@ namespace MikoPBX\PBXCoreREST\Workers;
 
 use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\Asterisk\Configs\{IAXConf, OtherConf, SIPConf};
-use MikoPBX\Core\Modules\PbxExtensionFailure;
+use MikoPBX\Core\Modules\Setup\PbxExtensionFailure;
 use MikoPBX\Core\System\{BeanstalkClient, Firewall, Notifications, Storage, System, Util};
 use MikoPBX\Core\Workers\WorkerBase;
 use Phalcon\Exception;
@@ -357,21 +357,21 @@ class WorkerApiCommands extends WorkerBase
 
         try {
             if ('check' === $action) {
-                /** @var \MikoPBX\Core\Modules\Config\ConfigClass $c */
+                /** @var \MikoPBX\Modules\Config\ConfigClass $c */
                 $c        = new $path_class(true);
-                $response = $c->test();
+                $response = $c->checkModuleWorkProperly();
                 if ($response['result'] === true) {
                     $result['result'] = 'Success';
                 }
                 $result['data'] = $response;
             } elseif ('reload' === $action) {
-                /** @var \MikoPBX\Core\Modules\Config\ConfigClass $cl */
+                /** @var \MikoPBX\Modules\Config\ConfigClass $cl */
                 $cl = new $path_class();
                 $cl->reloadServices();
                 $cl->onAfterPbxStarted();
                 $result['result'] = 'Success';
             } elseif ('customAction' === $action) {
-                /** @var \MikoPBX\Core\Modules\Config\ConfigClass $cl */
+                /** @var \MikoPBX\Modules\Config\ConfigClass $cl */
                 $cl       = new $path_class();
                 $response = $cl->customAction($request['data']);
                 $result   = $response;

@@ -18,20 +18,22 @@ use MikoPBX\AdminCabinet\Providers\{AppMessagesProvider,
     ElementsProvider,
     FlashProvider,
     LanguageSelectorProvider,
-    LicenseWorkerProvider,
     RouterProvider,
     SessionProvider,
     UrlProvider,
     ViewProvider,
     VoltProvider};
-use MikoPBX\Common\Providers\{CDRDatabaseProvider,
+use MikoPBX\Common\Providers\{
+    CDRDatabaseProvider,
     MainDatabaseProvider,
     ManagedCacheProvider,
     ModelsCacheProvider,
     ModelsMetadataProvider,
     ModulesDBConnectionsProvider,
     SessionReadOnlyProvider,
-    TranslationProvider};
+    TranslationProvider,
+    LicenseWorkerProvider
+};
 use Phalcon\Di\DiInterface;
 
 class RegisterDIServices

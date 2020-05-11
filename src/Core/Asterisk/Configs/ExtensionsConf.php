@@ -9,7 +9,7 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\{IncomingRoutingTable, OutgoingRoutingTable, OutWorkTimes, SoundFiles};
-use MikoPBX\Core\Modules\Config\ConfigClass;
+use MikoPBX\Modules\Config\ConfigClass;
 use MikoPBX\Core\System\{MikoPBXConfig, Util};
 use Phalcon\Di;
 
@@ -70,7 +70,7 @@ class ExtensionsConf extends ConfigClass
         $conf .= 'same => n,ExecIf($["${pt1c_cid}x" != "x"]?Set(CALLERID(num)=${pt1c_cid}))' . " \n\t";
 
         $technology = SIPConf::getTechnology();
-        if ('SIP' == $technology) {
+        if (SIPConf::TYPE_SIP === $technology) {
             $conf .= 'same => n,ExecIf($["${SIPADDHEADER}x" != "x"]?SIPaddheader(${SIPADDHEADER}))' . " \n\t";
         } else {
             $conf .= 'same => n,ExecIf($["${CUT(CHANNEL,\;,2)}" == "2"]?Set(__PT1C_SIP_HEADER=${SIPADDHEADER}))' . " \n\t";
@@ -238,7 +238,7 @@ class ExtensionsConf extends ConfigClass
         $conf .= 'same => n,Gosub(${ISTRANSFER}dial,${EXTEN},1)' . "\n\t";
         // Проверим, существует ли такой пир.
 
-        if ('SIP' === $technology) {
+        if (SIPConf::TYPE_SIP === $technology) {
             $conf .= 'same => n,ExecIf($["${SIPPEER(${EXTEN},status)}x" == "x"]?Goto(internal-num-undefined,${EXTEN},1))' . " \n\t";
         } else {
             $conf .= 'same => n,ExecIf($["${PJSIP_ENDPOINT(${EXTEN},auth)}x" == "x"]?Goto(internal-num-undefined,${EXTEN},1))' . " \n\t";
@@ -253,8 +253,7 @@ class ExtensionsConf extends ConfigClass
         $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1) ' . " \n\t";
         // Совершаем вызов пира.
 
-        $technology = SIPConf::getTechnology();
-        if ($technology === 'SIP') {
+        if ($technology === SIPConf::TYPE_SIP) {
             $conf .= 'same => n,Dial(' . $technology . '/${EXTEN},${ringlength},TtekKHhM(dial_answer)b(dial_create_chan,s,1))' . " \n\t";
         } else {
             // $conf.= 'same => n,Dial(${PJSIP_DIAL_CONTACTS(${EXTEN})},${ringlength},TtekKHhU(dial_answer)b(dial_create_chan,s,1))'." \n\t";
@@ -384,9 +383,9 @@ class ExtensionsConf extends ConfigClass
             $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(' . $rout['providerid'] . '-outgoing-custom,${EXTEN},1)}" == "1"]?' . $rout['providerid'] . '-outgoing-custom,${EXTEN},1)' . "\n\t";
 
             $technology = SIPConf::getTechnology();
-            if ($rout['technology'] === 'IAX2') {
+            if ($rout['technology'] === IAXConf::TYPE_IAX2) {
                 $conf .= 'same => n,Dial(' . $rout['technology'] . '/' . $rout['providerid'] . '/${number},600,${DOPTIONS}TKM(dial_answer)b(dial_create_chan,s,1))' . "\n\t";
-            } elseif ($technology === 'SIP') {
+            } elseif ($technology === SIPConf::TYPE_SIP) {
                 $conf .= 'same => n,Dial(' . $rout['technology'] . '/' . $rout['providerid'] . '/${number},600,${DOPTIONS}TKM(dial_answer)b(dial_create_chan,s,1))' . "\n\t";
             } else {
                 $conf .= 'same => n,Dial(' . $rout['technology'] . '/${number}@' . $rout['providerid'] . ',600,${DOPTIONS}TKU(dial_answer)b(dial_create_chan,s,1))' . "\n\t";

@@ -9,7 +9,7 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\{IvrMenu, IvrMenuActions, SoundFiles};
-use MikoPBX\Core\Modules\Config\ConfigClass;
+use MikoPBX\Modules\Config\ConfigClass;
 use MikoPBX\Core\System\{Util};
 
 class IVRConf extends ConfigClass
@@ -75,7 +75,7 @@ class IVRConf extends ConfigClass
 
             if ($ivr['allow_enter_any_internal_extension'] === '1') {
                 $extension = Util::getExtensionX($this->extensionLength);
-                if ('SIP' === SIPConf::getTechnology()) {
+                if (SIPConf::TYPE_SIP === SIPConf::getTechnology()) {
                     $conf .= 'exten => _' . $extension . ',1,ExecIf($["${SIPPEER(${EXTEN},status)}x" == "x"]?Goto(s,1))' . "\n\t";
                 } else {
                     $conf .= 'exten => _' . $extension . ',1,ExecIf($["${PJSIP_ENDPOINT(${EXTEN},auth)}x" == "x"]?Goto(s,1))' . "\n\t";

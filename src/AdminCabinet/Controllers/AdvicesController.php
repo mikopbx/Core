@@ -13,7 +13,7 @@ use MikoPBX\Common\Models\{NetworkFilters, PbxSettings};
 use SimpleXMLElement;
 
 /**
- * @property \MikoPBX\Core\Modules\LicenseWorker licenseWorker
+ * @property \MikoPBX\AdminCabinet\Providers\LicenseWorkerProvider licenseWorker
  */
 class AdvicesController extends BaseController
 {

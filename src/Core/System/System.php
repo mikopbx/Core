@@ -199,7 +199,7 @@ class System
         // Перезапуск сервисов.
         $additionalModules = $this->di->getShared('pbxConfModules');
         foreach ($additionalModules as $appClass) {
-            /** @var \MikoPBX\Core\Modules\Config\ConfigClass $appClass */
+            /** @var \MikoPBX\Modules\Config\ConfigClass $appClass */
             $appClass->onNatsReload();
         }
 
@@ -595,7 +595,7 @@ server 2.pool.ntp.org';
         $tasks = [];
         // Дополнительные модули также могут добавить задачи в cron.
         foreach ($additionalModules as $appClass) {
-            /** @var \MikoPBX\Core\Modules\Config\ConfigClass $appClass */
+            /** @var \MikoPBX\Modules\Config\ConfigClass $appClass */
             $appClass->createCronTasks($tasks);
         }
         $conf = implode('', array_merge($mast_have, $tasks));
@@ -1144,7 +1144,7 @@ server 2.pool.ntp.org';
     {
         $additionalModules = $this->di->getShared('pbxConfModules');
         foreach ($additionalModules as $appClass) {
-            /** @var \MikoPBX\Core\Modules\Config\ConfigClass $appClass */
+            /** @var \MikoPBX\Modules\Config\ConfigClass $appClass */
             $appClass->onAfterPbxStarted();
         }
     }

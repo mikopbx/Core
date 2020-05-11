@@ -16,13 +16,15 @@ use MikoPBX\Common\Models\{ExtensionForwardingRights,
     SipCodecs,
     Users};
 use MikoPBX\Core\Asterisk\AstDB;
-use MikoPBX\Core\Modules\Config\ConfigClass;
+use MikoPBX\Modules\Config\ConfigClass;
 use MikoPBX\Core\System\{MikoPBXConfig, Network, Util};
 use MikoPBX\Core\Utilities\SubnetCalculator;
 use Phalcon\Di;
 
 class SIPConf extends ConfigClass
 {
+    public const TYPE_SIP = 'SIP';
+    public const TYPE_PJSIP = 'PJSIP';
 
     protected $data_peers;
     protected $data_providers;
@@ -43,7 +45,7 @@ class SIPConf extends ConfigClass
         ];
 
         $am = Util::getAstManager('off');
-        if (self::getTechnology() === 'SIP') {
+        if (self::getTechnology() === self::TYPE_SIP) {
             $peers = $am->getSipPeers();
         } else {
             $peers = $am->getPjSipPeers();
@@ -64,9 +66,9 @@ class SIPConf extends ConfigClass
     public static function getTechnology(): string
     {
         if (file_exists('/offload/asterisk/modules/res_pjproject.so')) {
-            $technology = 'PJSIP';
+            $technology = self::TYPE_PJSIP;
         } else {
-            $technology = 'SIP';
+            $technology = self::TYPE_SIP;
         }
 
         return $technology;
@@ -86,7 +88,7 @@ class SIPConf extends ConfigClass
         ];
 
         $am = Util::getAstManager('off');
-        if (self::getTechnology() === 'SIP') {
+        if (self::getTechnology() === self::TYPE_SIP) {
             $peers = $am->getSipPeer($peer);
         } else {
             $peers = $am->getPjSipPeer($peer);
@@ -108,7 +110,7 @@ class SIPConf extends ConfigClass
             'result' => 'ERROR',
         ];
         $am     = Util::getAstManager('off');
-        if (self::getTechnology() === 'SIP') {
+        if (self::getTechnology() === self::TYPE_SIP) {
             $peers = $am->getSipRegistry();
         } else {
             $peers = $am->getPjSipRegistry();
@@ -126,7 +128,7 @@ class SIPConf extends ConfigClass
                 continue;
             }
             if ($provider->noregister === '1') {
-                if (self::getTechnology() === 'SIP') {
+                if (self::getTechnology() === self::TYPE_SIP) {
                     $peers_status = $am->getSipPeer($provider->uniqid);
                 } else {
                     $peers_status = $am->getPjSipPeer($provider->uniqid);
@@ -196,7 +198,7 @@ class SIPConf extends ConfigClass
 
 
         $out = [];
-        if (self::getTechnology() === 'SIP') {
+        if (self::getTechnology() === self::TYPE_SIP) {
             Util::mwExec("asterisk -rx 'dialplan reload'", $out);
             $out_data = trim(implode('', $out));
             if ($out_data !== 'Dialplan reloaded.') {

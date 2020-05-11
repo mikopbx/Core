@@ -9,9 +9,9 @@ declare(strict_types=1);
  *
  */
 
-namespace MikoPBX\AdminCabinet\Providers;
+namespace MikoPBX\Common\Providers;
 
-use MikoPBX\Core\Modules\LicenseWorker;
+use MikoPBX\Service\LicenseWorker;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 

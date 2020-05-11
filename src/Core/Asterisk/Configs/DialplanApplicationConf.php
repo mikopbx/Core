@@ -9,7 +9,7 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\DialplanApplications;
-use MikoPBX\Core\Modules\Config\ConfigClass;
+use MikoPBX\Modules\Config\ConfigClass;
 
 class DialplanApplicationConf extends ConfigClass
 {

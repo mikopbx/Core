@@ -70,6 +70,31 @@ class WorkerSafeScripts extends WorkerBase
             }
         );
 
+        // Modules workers
+        $arrModulesWorkers = [];
+        $pbxConfModules = $this->di->getShared('pbxConfModules');
+        foreach ($pbxConfModules as $pbxConfModule){
+            $arrModulesWorkers[] = $pbxConfModule->getModuleWorkers();
+        }
+        $arrModulesWorkers = array_merge(...$arrModulesWorkers);
+        if (count($arrModulesWorkers)>0){
+            ReactKernel::start(
+                function () use ($arrModulesWorkers){
+                    // Parallel execution https://github.com/recoilphp/recoil
+                    try {
+                        foreach ($arrModulesWorkers as $moduleWorker){
+                            yield $this->checkWorkerBeanstalk($moduleWorker);
+                        }
+                    } catch (\Exception $e) {
+                        global $errorLogger;
+                        $errorLogger->captureException($e);
+                        Util::sysLogMsg(__CLASS__ . '_EXCEPTION', $e->getMessage());
+                    }
+                }
+            );
+        }
+
+
         Firewall::checkFail2ban();
     }
 

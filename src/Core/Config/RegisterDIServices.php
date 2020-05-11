@@ -11,7 +11,9 @@ declare(strict_types=1);
 
 namespace MikoPBX\Core\Config;
 
-use MikoPBX\Common\Providers\{CDRDatabaseProvider,
+use MikoPBX\Common\Providers\{
+    CDRDatabaseProvider,
+    LicenseWorkerProvider,
     MainDatabaseProvider,
     ManagedCacheProvider,
     ModelsCacheProvider,
@@ -53,6 +55,9 @@ class RegisterDIServices
 
             // Inject Queue connection
             NatsConnectionProvider::class,
+
+            // Inject License Worker
+            LicenseWorkerProvider::class,
 
             // Inject PBX modules
             PBXConfModulesProvider::class,

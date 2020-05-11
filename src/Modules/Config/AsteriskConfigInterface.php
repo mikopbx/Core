@@ -1,6 +1,6 @@
 <?php
 
-namespace MikoPBX\Core\Modules\Config;
+namespace MikoPBX\Modules\Config;
 
 
 interface AsteriskConfigInterface

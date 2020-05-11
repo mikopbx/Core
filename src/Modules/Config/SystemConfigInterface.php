@@ -1,7 +1,7 @@
 <?php
 
 
-namespace MikoPBX\Core\Modules\Config;
+namespace MikoPBX\Modules\Config;
 
 
 interface SystemConfigInterface
@@ -10,7 +10,7 @@ interface SystemConfigInterface
     /**
      * Проверка работы сервисов.
      */
-    public function test(): array ;
+    public function checkModuleWorkProperly(): array;
 
     /**
      * Генерация конфига, рестарт работы модуля.
@@ -68,5 +68,12 @@ interface SystemConfigInterface
      * @return array
      */
     public function getPBXCoreRESTAdditionalRoutes(): array;
+
+
+    /**
+     * Returns array of workers classes for WorkerSafeScripts from module
+     * @return array
+     */
+    public function getModuleWorkers(): array;
 
 }

@@ -76,7 +76,7 @@ class RouterProvider implements ServiceProviderInterface
         $additionalRoutes  = [];
         $additionalModules = $di->getShared('pbxConfModules');
         foreach ($additionalModules as $appClass) {
-            /** @var \MikoPBX\Core\Modules\Config\ConfigClass; $appClass */
+            /** @var \MikoPBX\Modules\Config\ConfigClass; $appClass */
             $additionalRoutes[] = $appClass->getPBXCoreRESTAdditionalRoutes();
         }
 

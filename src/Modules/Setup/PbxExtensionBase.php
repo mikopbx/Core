@@ -6,7 +6,7 @@
  * Written by Alexey Portnov, 12 2019
  */
 
-namespace MikoPBX\Core\Modules;
+namespace MikoPBX\Core\Modules\Setup;
 
 use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings};
 use MikoPBX\Core\System\Util;
