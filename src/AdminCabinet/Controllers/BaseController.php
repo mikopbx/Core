@@ -11,20 +11,21 @@ namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings};
 use Phalcon\Mvc\{Controller, Dispatcher, View};
+use Phalcon\Tag;
 use Phalcon\Text;
 use Sentry\SentrySdk;
 
 
 /**
- * @property array                                  sessionRO
- * @property \Phalcon\Session\Manager               session
- * @property \Phalcon\Translate\TranslateFactory    translation
- * @property string                                 language
- * @property \MikoPBX\AdminCabinet\Library\Elements elements
- * @property string                                 moduleName
- * @property \Phalcon\Flash\Session                 flash
- * @property \Phalcon\Tag                           tag
- * @property \Phalcon\Config\Adapter\Json           config
+ * @property array                                         sessionRO
+ * @property \Phalcon\Session\Manager                      session
+ * @property \MikoPBX\Common\Providers\TranslationProvider translation
+ * @property string                                        language
+ * @property \MikoPBX\AdminCabinet\Library\Elements        elements
+ * @property string                                        moduleName
+ * @property \Phalcon\Flash\Session                        flash
+ * @property \Phalcon\Tag                                  tag
+ * @property \Phalcon\Config\Adapter\Json                  config
  */
 class BaseController extends Controller
 {
@@ -102,33 +103,21 @@ class BaseController extends Controller
             }
             $this->view->lastSentryEventId = null;
         }
+        $title = 'MikoPBX';
         switch ($this->actionName) {
             case'index':
             case'delete':
             case'save':
             case'modify':
             case'*** WITHOUT ACTION ***':
-                $this->tag->setTitle(
-                    $this->config->adminApplication->kind . ' | '
-                    . $this->translation->_(
-                        'Breadcrumb'
-                        . $this->controllerName
-                    )
-                );
+                $title .= '|'. $this->translation->_("Breadcrumb{$this->controllerName}");
                 break;
             default:
-                $this->tag->setTitle(
-                    $this->config->adminApplication->kind . ' | '
-                    . $this->translation->_(
-                        'Breadcrumb'
-                        . $this->controllerName
-                        . $this->actionName
-                    )
-                );
+                $title .= '|'. $this->translation->_("Breadcrumb{$this->controllerName}{$this->actionName}");
         }
-
+        Tag::setTitle($title);
         $this->view->t         = $this->translation;
-        $this->view->debugMode = $this->config->adminApplication->debugMode;
+        $this->view->debugMode = $this->config->path('adminApplication.debugMode');
         $this->view->urlToLogo = $this->url->get('public/assets/img/logo-mikopbx.svg');
         if ($this->language === 'ru') {
             $this->view->urlToWiki

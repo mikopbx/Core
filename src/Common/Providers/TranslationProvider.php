@@ -26,6 +26,7 @@ use Phalcon\Translate\TranslateFactory;
 
 /**
  * Localization service
+ * @method string _(string $translateKey, array $placeholders = array())
  */
 class TranslationProvider implements ServiceProviderInterface
 {
