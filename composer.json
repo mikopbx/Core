@@ -18,7 +18,8 @@
         "pda/pheanstalk": "^4.0",
         "recoil/recoil": "^1.0",
         "recoil/react": "^1.0",
-        "sentry/sdk": "2.1.0"
+        "sentry/sdk": "2.1.0",
+        "filp/whoops": "^2.7"
     },
     "autoload": {
         "psr-4": {

@@ -29,7 +29,7 @@ const mailSettings = {
 		mailSettings.initializeForm();
 	},
 	updateMailSettingsCallback(response) {
-		if (response.result.toUpperCase() === 'SUCCESS') {
+		if (response.result === true) {
 			mailSettings.$formObj.after(`<div class="ui success message ajax">${globalTranslate.ms_TestEmailSubject}</div>`);
 			const testEmail = mailSettings.$formObj.form('get value', 'SystemNotificationsEmail');
 			if (testEmail.length > 0) {

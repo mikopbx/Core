@@ -108,7 +108,7 @@ const updatePBX = {
 				// test whether a JSON response is valid
 				return response !== undefined
 					&& Object.keys(response).length > 0
-					&& response.result.toUpperCase() === 'SUCCESS';
+					&& response.result === true;
 			},
 			onSuccess(response) {
 				const currentVerison = updatePBX.currentVersion.replace(/\D/g, '');

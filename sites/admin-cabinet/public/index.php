@@ -13,6 +13,8 @@ use Phalcon\Mvc\Application;
 use MikoPBX\Core\System\SentryErrorLogger;
 use Phalcon\Exception;
 use MikoPBX\AdminCabinet\Utilities\Debug\PhpError;
+use Whoops\Handler\PrettyPageHandler;
+use Whoops\Run;
 
 $di = new FactoryDefault();
 
@@ -33,6 +35,13 @@ $errorLogger->init();
 
 register_shutdown_function([PhpError::class,'runtimeShutdown']);
 set_error_handler([PhpError::class,'errorHandler']);
+
+if ($di->getShared('config')->path('adminApplication.debugMode')){
+    $whoops = new Run();
+    $whoops->pushHandler(new PrettyPageHandler());
+    $whoops->register();
+}
+
 try {
     $application = new Application($di);
     $uri = str_replace($_SERVER['SCRIPT_NAME'], '', $_SERVER['REQUEST_URI']);

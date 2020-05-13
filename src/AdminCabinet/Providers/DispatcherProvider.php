@@ -30,10 +30,10 @@ class DispatcherProvider implements ServiceProviderInterface
      */
     public function register(DiInterface $di): void
     {
-        $appConfig = $di->getShared('config')->get('adminApplication');
+        $debugMode = $di->getShared('config')->path('adminApplication.debugMode');
         $di->setShared(
             'dispatcher',
-            function () use ($appConfig) {
+            function () use ($debugMode) {
                 $eventsManager = new EventsManager();
 
                 /**
@@ -50,7 +50,7 @@ class DispatcherProvider implements ServiceProviderInterface
                 /**
                  * Handle exceptions and not-found exceptions using NotFoundPlugin
                  */
-                if ( ! $appConfig->debugMode) {
+                if ( ! $debugMode) {
                     $eventsManager->attach(
                         'dispatch:beforeException',
                         new NotFoundPlugin()

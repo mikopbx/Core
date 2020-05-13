@@ -77,7 +77,7 @@ const PbxApi = {
 		return response !== undefined
 			&& Object.keys(response).length > 0
 			&& response.result !== undefined
-			&& response.result.toUpperCase() === 'SUCCESS';
+			&& response.result === true;
 	},
 
 	/**

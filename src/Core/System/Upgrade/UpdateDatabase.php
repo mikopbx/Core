@@ -4,6 +4,7 @@
 namespace MikoPBX\Core\System\Upgrade;
 
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Config\RegisterDIServices;
 use Phalcon\Db\Column;
 use Phalcon\Db\Index;
@@ -26,10 +27,15 @@ class UpdateDatabase
 
     /**
      * System constructor.
+     *
+     * @throws \Phalcon\Di\Exception
      */
     public function __construct()
     {
         $this->di     = Di::getDefault();
+        if ($this->di === null){
+            throw new \Phalcon\Di\Exception('\Phalcon\DI did not installed.');
+        }
         $this->config = $this->di->getShared('config');
     }
 
@@ -39,8 +45,8 @@ class UpdateDatabase
             RegisterDIServices::recreateDBConnections(); // after storage remount
             $this->updateDbStructureByModelsAnnotations();
             RegisterDIServices::recreateDBConnections(); // if we change anything in structure
-        } catch (ReflectionException $e) {
-            echo "Database conversion error";
+        } catch (\RuntimeException $e) {
+            echo "Errors within database upgrade process";
         }
     }
 
@@ -48,7 +54,6 @@ class UpdateDatabase
      * Обходит файлы с описанием моделей и создает таблицы в базе данных
      *
      * @return bool
-     * @throws \ReflectionException
      */
     private function updateDbStructureByModelsAnnotations(): bool
     {

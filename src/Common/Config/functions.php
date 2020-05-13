@@ -16,6 +16,6 @@ if (true !== function_exists('MikoPBX\Common\Config\appPath')) {
      */
     function appPath(string $path = ''): string
     {
-        return dirname(dirname(dirname(__DIR__))) . ($path ? DIRECTORY_SEPARATOR . $path : $path);
+        return dirname(__DIR__,3) . ($path ? DIRECTORY_SEPARATOR . $path : $path);
     }
 }

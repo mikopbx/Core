@@ -10,11 +10,11 @@ declare(strict_types=1);
 namespace MikoPBX\Common\Providers;
 
 
-use Phalcon\Db\Adapter\Pdo\Sqlite;
+use Phalcon\Application\Exception;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 use Phalcon\Events\Manager;
-use Phalcon\Text;
+use ReflectionClass;
 
 
 /**
@@ -29,28 +29,76 @@ class ModulesDBConnectionsProvider extends DatabaseProviderBase implements Servi
      * DiServicesInstall constructor
      *
      * @param $di - link to app dependency injector
+     *
+     * @throws \ReflectionException
+     * @throws \Phalcon\Application\Exception
      */
     public function register(DiInterface $di): void
     {
         $registeredDBServices = [];
         $config               = $di->getShared('config');
-        // Зарегистрируем сервисы базы данных для модулей расширений
-        $results = glob($config->path('core.modulesDir') . '/*/db/*.db', GLOB_NOSORT);
-        foreach ($results as $file) {
-            $moduleName = self::findModuleIdByDbPath($file, $config->path('core.modulesDir'));
-            $service_name  = self::makeServiceName($file, $moduleName);
 
-            $registeredDBServices[] = $service_name;
-            if ($di->has($service_name)){
-                $di->remove($service_name);
+        $results = glob($config->path('core.modulesDir') . '/*/module.json', GLOB_NOSORT);
+
+        foreach ($results as $moduleJson) {
+            $jsonString            = file_get_contents($moduleJson);
+            $jsonModuleDescription = json_decode($jsonString, true);
+            if ( ! is_array($jsonModuleDescription)) {
+                continue;
             }
-            $config= ["debugMode"    => $config->path('core.debugMode'),
-                      "adapter"      => "Sqlite",
-                      "dbfile"       => $file,
-                      "debugLogFile" => "{$config->path('core.logsPath')}/$moduleName/db/queries.log"
-            ];
+            $moduleUniqueId = $jsonModuleDescription['module_uniqid'];
+            if ( ! isset($moduleUniqueId)) {
+                continue;
+            }
 
-            $this->registerDBService($service_name, $di, $config);
+            $modelsFiles = glob("{$config->path('core.modulesDir')}/{$moduleUniqueId}/Models/*.php", GLOB_NOSORT);
+            foreach ($modelsFiles as $file) {
+                $className        = pathinfo($file)['filename'];
+                $moduleModelClass = "\\Modules\\{$moduleUniqueId}\\Models\\{$className}";
+
+                // Test whether this class abstract or not
+                try {
+                    $reflection = new ReflectionClass($moduleModelClass);
+                    if ($reflection->isAbstract()) {
+                        continue;
+                    }
+                } catch (\ReflectionException $exception) {
+                    continue;
+                }
+
+                if (
+                    ! class_exists($moduleModelClass)
+                    || count(get_class_vars($moduleModelClass)) === 0) {
+                    continue;
+                }
+
+                $model                 = new $moduleModelClass();
+                $connectionServiceName = $model->getReadConnectionService();
+                if ( ! isset($connectionServiceName)) {
+                    continue;
+                }
+                $registeredDBServices[] = $connectionServiceName;
+                if ($di->has($connectionServiceName)) {
+                    $di->remove($connectionServiceName);
+                }
+
+                // Create and connect database
+                $dbPath = "{$config->path('core.modulesDir')}/{$moduleUniqueId}/db";
+
+                if ( ! file_exists($dbPath) && ! mkdir($dbPath, 0777, true) && ! is_dir($dbPath)) {
+                    $this->messages[] = sprintf('Directory "%s" was not created', $dbPath);
+                    throw new Exception(sprintf('Directory "%s" was not created', $dbPath));
+                }
+
+                $config = [
+                    "debugMode"    => $config->path('core.debugMode'),
+                    "adapter"      => "Sqlite",
+                    "dbfile"       => "{$dbPath}/module.db",
+                    "debugLogFile" => "{$config->path('core.logsPath')}/$moduleUniqueId/db/queries.log",
+                ];
+
+                $this->registerDBService($connectionServiceName, $di, $config);
+            }
         }
 
         // Register transactions events
@@ -60,7 +108,7 @@ class ModulesDBConnectionsProvider extends DatabaseProviderBase implements Servi
         if ($eventsManager === null) {
             $eventsManager = new Manager();
         }
-        // Слушаем все события базы данных
+        // Attach all created connections to one transaction manager
         $eventsManager->attach(
             'db',
             function ($event) use ($registeredDBServices, $di) {
@@ -94,36 +142,6 @@ class ModulesDBConnectionsProvider extends DatabaseProviderBase implements Servi
         $mainConnection->setEventsManager($eventsManager);
     }
 
-    /**
-     * Create DI service name for database connection
-     *
-     * @param $filePath
-     *
-     * @param $moduleName
-     *
-     * @return string - service name for dependency injection
-     */
-    private static function makeServiceName($filePath, $moduleName): string
-    {
-        $dbName     = pathinfo($filePath)['filename'];
-
-        return $moduleName . '_' . Text::uncamelize($dbName, '_') . '_db';
-    }
-
-    /**
-     * Find ModuleId from Path
-     *
-     * @param $filePath
-     *
-     * @return string - module ID
-     */
-    private static function findModuleIdByDbPath($filePath, $modulesRoot): string
-    {
-        $filePath = str_replace($modulesRoot, '', $filePath);
-
-       // return implode('/', array_slice(explode('/', $filePath), 0, 1));
-        return explode('/', $filePath)[1];
-    }
 }
 
 

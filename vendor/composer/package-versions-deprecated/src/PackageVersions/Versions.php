@@ -26,6 +26,7 @@ final class Versions
   'beberlei/assert' => 'v3.2.7@d63a6943fc4fd1a2aedb65994e3548715105abcf',
   'clue/stream-filter' => 'v1.4.1@5a58cc30a8bd6a4eb8f856adf61dd3e013f53f71',
   'composer/package-versions-deprecated' => '1.8.0@98df7f1b293c0550bd5b1ce6b60b59bdda23aa47',
+  'filp/whoops' => '2.7.2@17d0d3f266c8f925ebd035cd36f83cf802b47d4a',
   'guzzlehttp/guzzle' => '6.5.3@aab4ebd862aa7d04f01a4b51849d657db56d882e',
   'guzzlehttp/promises' => 'v1.3.1@a59da6cf61d80060647ff4d3eb2c03a2bc694646',
   'guzzlehttp/psr7' => '1.6.1@239400de7a173fe9901b9ac7c06497751f00727a',
@@ -49,6 +50,7 @@ final class Versions
   'psr/http-client' => '1.0.0@496a823ef742b632934724bf769560c2a5c7c44e',
   'psr/http-factory' => '1.0.1@12ac7fcd07e5b077433f5f2bee95b3a771bf61be',
   'psr/http-message' => '1.0.1@f6561bf28d520154e4b0ec72be95418abe6d9363',
+  'psr/log' => '1.1.3@0f73288fd15629204f9d42b7055f72dacbe811fc',
   'ralouphie/getallheaders' => '3.0.3@120b605dfeb996808c31b6477290a714d356e822',
   'react/event-loop' => 'v1.1.1@6d24de090cd59cfc830263cfba965be77b563c13',
   'react/promise' => 'v2.7.1@31ffa96f8d2ed0341a57848cbb84d88b89dd664d',
@@ -64,7 +66,7 @@ final class Versions
   'symfony/polyfill-mbstring' => 'v1.15.0@81ffd3a9c6d707be22e3012b827de1c9775fc5ac',
   'symfony/polyfill-php72' => 'v1.15.0@37b0976c78b94856543260ce09b460a7bc852747',
   'symfony/polyfill-uuid' => 'v1.15.0@2318f7f470a892867f3de602e403d006b1b9c9aa',
-  'mikopbx/core' => 'dev-develop@d800c5824b830930baaf826b385058f381d4f210',
+  'mikopbx/core' => 'dev-develop@7e148c8b5396c0d6b5579f17d5a5272221173c59',
 );
 
     private function __construct()

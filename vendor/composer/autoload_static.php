@@ -24,6 +24,10 @@ class ComposerStaticInit5db96ad6a0e1ea778f383ecdf444d8ac
     );
 
     public static $prefixLengthsPsr4 = array (
+        'W' => 
+        array (
+            'Whoops\\' => 7,
+        ),
         'S' => 
         array (
             'Symfony\\Polyfill\\Uuid\\' => 22,
@@ -44,6 +48,7 @@ class ComposerStaticInit5db96ad6a0e1ea778f383ecdf444d8ac
         ),
         'P' => 
         array (
+            'Psr\\Log\\' => 8,
             'Psr\\Http\\Message\\' => 17,
             'Psr\\Http\\Client\\' => 16,
             'PhpSchool\\Terminal\\' => 19,
@@ -91,6 +96,10 @@ class ComposerStaticInit5db96ad6a0e1ea778f383ecdf444d8ac
     );
 
     public static $prefixDirsPsr4 = array (
+        'Whoops\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/filp/whoops/src/Whoops',
+        ),
         'Symfony\\Polyfill\\Uuid\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/polyfill-uuid',
@@ -138,6 +147,10 @@ class ComposerStaticInit5db96ad6a0e1ea778f383ecdf444d8ac
         'React\\EventLoop\\' => 
         array (
             0 => __DIR__ . '/..' . '/react/event-loop/src',
+        ),
+        'Psr\\Log\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/psr/log/Psr/Log',
         ),
         'Psr\\Http\\Message\\' => 
         array (

@@ -46,6 +46,10 @@ class RegisterDIServices
     public static function init(DiInterface $di): void
     {
         $adminCabinetProviders = [
+            // Inject cache providers
+            ManagedCacheProvider::class,
+            ModelsCacheProvider::class,
+
             // Inject Database connections
             ModelsMetadataProvider::class,
             MainDatabaseProvider::class,
@@ -68,10 +72,6 @@ class RegisterDIServices
 
             // Inject Queue connection
             BeanstalkConnectionProvider::class,
-
-            // Inject caches
-            ManagedCacheProvider::class,
-            ModelsCacheProvider::class,
 
             // Inject translation
             AppMessagesProvider::class,

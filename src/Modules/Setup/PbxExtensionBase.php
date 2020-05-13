@@ -74,12 +74,6 @@ abstract class PbxExtensionBase implements PbxExtensionSetupInterface
      */
     protected $db;
 
-    /**
-     * Database from module DB folder
-     *
-     * @var \Phalcon\Db\Adapter\Pdo\Sqlite
-     */
-    protected $moduleDB;
 
     /**
      * Folder with module files
@@ -105,7 +99,7 @@ abstract class PbxExtensionBase implements PbxExtensionSetupInterface
     /**
      * Dependency injector
      *
-     * @var \Phalcon\DI\FactoryDefault
+     * @var \Phalcon\DI
      */
     private $di;
 
@@ -129,6 +123,9 @@ abstract class PbxExtensionBase implements PbxExtensionSetupInterface
             $this->module_uniqid = $module_uniqid;
         }
         $this->di      = DI::getDefault();
+        if ($this->di === null){
+            throw new \Phalcon\Di\Exception('\Phalcon\DI did not installed.');
+        }
         $this->db      = $this->di->getShared('db');
         $this->config  = $this->di->getShared('config');
         $this->licenseWorker =  $this->di->getShared('licenseWorker');
@@ -158,14 +155,7 @@ abstract class PbxExtensionBase implements PbxExtensionSetupInterface
 
         $this->messages  = [];
 
-        // Create and connect database
-        $dbPath = "{$this->moduleDir}/db";
 
-        if ( ! file_exists($dbPath) && ! mkdir($dbPath, 0777, true) && ! is_dir($dbPath)) {
-            $this->messages[] = sprintf('Directory "%s" was not created', $dbPath);
-            throw new Exception(sprintf('Directory "%s" was not created', $dbPath));
-        }
-        $this->moduleDB = new Sqlite(['dbname' => "$dbPath/module.db"]);
     }
 
     /**
@@ -215,7 +205,39 @@ abstract class PbxExtensionBase implements PbxExtensionSetupInterface
      */
     public function installFiles(): bool
     {
-        $backupPath = "{$this->config->path('core.modulesDir')}/Backup/{$this->module_uniqid}";
+        // Create cache links for JS, CSS, IMG folders
+
+        $modulesDir          = $this->config->path('core.modulesDir');
+        // IMG
+        $moduleImageDir      = "{$this->moduleDir}/public/assets/img";
+        $moduleImageCacheDir = "{$this->config->path('adminApplication.imgCacheDir')}/{$this->module_uniqid}";
+        if (file_exists($moduleImageCacheDir)){
+            unlink($moduleImageCacheDir);
+        }
+        if (file_exists($moduleImageDir)) {
+            symlink($moduleImageDir, $moduleImageCacheDir);
+        }
+        // CSS
+        $moduleCSSDir      = "{$this->moduleDir}/public/assets/css";
+        $moduleCSSCacheDir = "{$this->config->path('adminApplication.cssCacheDir')}/{$this->module_uniqid}";
+        if (file_exists($moduleCSSCacheDir)){
+            unlink($moduleCSSCacheDir);
+        }
+        if (file_exists($moduleCSSDir)) {
+            symlink($moduleCSSDir, $moduleCSSCacheDir);
+        }
+        // JS
+        $moduleJSDir      = "{$this->moduleDir}/public/assets/js";
+        $moduleJSCacheDir = "{$this->config->path('adminApplication.jsCacheDir')}/{$this->module_uniqid}";
+        if (file_exists($moduleJSCacheDir)){
+            unlink($moduleJSCacheDir);
+        }
+        if (file_exists($moduleJSDir)) {
+            symlink($moduleJSDir, $moduleJSCacheDir);
+        }
+
+        // Restore Database settings
+        $backupPath = "{$modulesDir}/Backup/{$this->module_uniqid}";
         if (is_dir($backupPath)) {
             Util::mwExec("cp -r {$backupPath}/db/* {$this->moduleDir}/db/");
         }
@@ -231,8 +253,9 @@ abstract class PbxExtensionBase implements PbxExtensionSetupInterface
      */
     public function fixRights(): bool
     {
-        Util::mwExec("chown -R www:www {$this->moduleDir}");
-        Util::mwExec("chmod -R 777 {$this->moduleDir}");
+        Util::mwExec('find ' . $this->moduleDir . ' -type d -exec chmod 755 {} \;');
+        Util::mwExec('find ' . $this->moduleDir . ' -type f -exec chmod 644 {} \;');
+        Util::mwExec('chown -R www:www ' . $this->moduleDir);
 
         return true;
     }
@@ -321,7 +344,8 @@ abstract class PbxExtensionBase implements PbxExtensionSetupInterface
     public function unInstallFiles($keepSettings = false
     )//: bool Пока мешает удалять и обновлять старые модули, раскоменитровать после релиза 2020.5
     {
-        $backupPath = "{$this->config->path('core.modulesDir')}/Backup/{$this->module_uniqid}";
+        $modulesDir          = $this->config->path('core.modulesDir');
+        $backupPath = "{$modulesDir}/Backup/{$this->module_uniqid}";
         Util::mwExec("rm -rf {$backupPath}");
         if ($keepSettings) {
             if ( ! is_dir($backupPath) && ! mkdir($backupPath, 0777, true) && ! is_dir($backupPath)) {
@@ -332,6 +356,25 @@ abstract class PbxExtensionBase implements PbxExtensionSetupInterface
             Util::mwExec("cp -r {$this->moduleDir}/db {$backupPath}/");
         }
         Util::mwExec("rm -rf {$this->moduleDir}");
+
+        // Remove assets
+        // IMG
+        $moduleImageCacheDir = "{$this->config->path('adminApplication.imgCacheDir')}/{$this->module_uniqid}";
+        if (file_exists($moduleImageCacheDir)){
+            unlink($moduleImageCacheDir);
+        }
+
+        // CSS
+        $moduleCSSCacheDir = "{$this->config->path('adminApplication.cssCacheDir')}/{$this->module_uniqid}";
+        if (file_exists($moduleCSSCacheDir)){
+            unlink($moduleCSSCacheDir);
+        }
+
+        // JS
+        $moduleJSCacheDir = "{$this->config->path('adminApplication.jsCacheDir')}/{$this->module_uniqid}";
+        if (file_exists($moduleJSCacheDir)){
+            unlink($moduleJSCacheDir);
+        }
 
         return true;
     }
@@ -429,6 +472,10 @@ abstract class PbxExtensionBase implements PbxExtensionSetupInterface
     public function createSettingsTableByModelsAnnotations(): bool
     {
         $result  = true;
+
+        // Add new connection for this module after add new Models folder
+        RegisterDIServices::recreateModulesDBConnections();
+
         $results = glob($this->moduleDir . '/Models/*.php', GLOB_NOSORT);
         $dbUpgrade = new UpdateDatabase();
         foreach ($results as $file) {
@@ -436,10 +483,10 @@ abstract class PbxExtensionBase implements PbxExtensionSetupInterface
             $moduleModelClass = "\\Modules\\{$this->module_uniqid}\\Models\\{$className}";
             $dbUpgrade->createUpdateDbTableByAnnotations($moduleModelClass);
         }
-
-        // Подключаем db файлы модулей как севрисы в DI после пересоздания
-        RegisterDIServices::recreateModulesDBConnections();
-
+        if ($result){
+            // Update database connections after upgrade their structure
+            RegisterDIServices::recreateModulesDBConnections();
+        }
         return $result;
     }
 

@@ -34,7 +34,7 @@ const UpdateApi = {
 				// test whether a JSON response is valid
 				return response !== undefined
 					&& Object.keys(response).length > 0
-					&& response.result.toUpperCase() === 'SUCCESS';
+					&& response.result === true;
 			},
 			onSuccess: cbSuccess,
 		});
@@ -55,7 +55,7 @@ const UpdateApi = {
 				// test whether a JSON response is valid
 				return response !== undefined
 					&& Object.keys(response).length > 0
-					&& response.result.toUpperCase() === 'SUCCESS';
+					&& response.result === true;
 			},
 			onSuccess(response) {
 				cbSuccess(params, response);

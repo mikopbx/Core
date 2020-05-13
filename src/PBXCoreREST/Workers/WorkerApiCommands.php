@@ -421,21 +421,26 @@ class WorkerApiCommands extends WorkerBase
     private function getModuleClass($module, $action)
     {
         $class_name = str_replace('Module', '', $module);
-        $path_class = "\\Modules\\{$module}\\Lib\\{$class_name}";
 
-        if (in_array($action, ['check', 'reload', 'customAction'])) {
-            if ( ! class_exists($path_class)) {
-                $path_class = false;
-            }
-        } elseif ($action === 'uninstall') { // Этот метод существует всегда
-            $path_class = "\\Modules\\{$module}\\Setup\\PbxExtensionSetup";
-        } elseif ( ! method_exists($path_class, $action)) {
-            $path_class = "\\Modules\\{$module}\\Setup\\PbxExtensionSetup";
-            if ( ! class_exists("$path_class")) {
-                $path_class = false;
-            }
+        switch ($action){
+            case 'check':
+            case 'reload':
+            case 'customAction':
+                $path_class = "\\Modules\\{$module}\\Lib\\{$class_name}Conf";
+                break;
+            case 'uninstall':
+                $path_class = "\\Modules\\{$module}\\Setup\\PbxExtensionSetup";
+                break;
+            default: // Try to find in basic module class
+                $path_class = "\\Modules\\{$module}\\Lib\\{$class_name}";
+                if ( ! class_exists($path_class) || ! method_exists($path_class, $action)) {
+                    $path_class = false;
+                }
         }
 
+        if ( ! class_exists($path_class)) {
+            $path_class = false;
+        }
         return $path_class;
     }
 

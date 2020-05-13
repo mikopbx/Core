@@ -168,6 +168,13 @@ class Response extends PhResponse
             $data['result'] = $data['data']['result'];
             unset($data['data']['result']);
         }
+        if (strcasecmp($data['result'],'Error')){
+            $data['result'] = false;
+        }
+        if (strcasecmp($data['result'],'SUCCESS')){
+            $data['result'] = true;
+        }
+
         $this->setJsonContent($data);
 
         return $this;
