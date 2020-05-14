@@ -1,15 +1,6 @@
 {
     "name": "mikopbx/core",
-    "authors": [
-        {
-            "name": "Alexey Portnov",
-            "email": "apor@miko.ru"
-        },
-        {
-            "name": "Nikolay Beketov",
-            "email": "nbek@miko.ru"
-        }
-    ],
+    "description": "Free PBX system for SMB based on Asterisk",
     "require": {
         "phpmailer/phpmailer": "^6.1",
         "repejota/nats": "^0.8.7",
@@ -24,6 +15,30 @@
     "autoload": {
         "psr-4": {
             "MikoPBX\\": "src/"
+        }
+    },
+    "type": "application",
+    "keywords": [
+        "pbx",
+        "asterisk",
+        "freepbx"
+    ],
+    "license": "GNU",
+    "homepage": "https://github.com/mikopbx/Core",
+    "authors": [
+        {
+            "name": "Alexey Portnov",
+            "email": "apor@miko.ru"
+        },
+        {
+            "name": "Nikolay Beketov",
+            "email": "nbek@miko.ru"
+        }
+    ],
+    "config": {
+        "sort-packages": true,
+        "platform": {
+            "php": "7.2"
         }
     }
 }
