@@ -1,5 +1,6 @@
 <!--TOP MENU-->
-<div class="ui fixed inverted menu" style="padding-left: 250px">
+<div class="ui fixed inverted menu">
+    <a class="item logo" href="{{url.get('index')}}"><img src="{{ urlToLogo }}" class="ui small image"/></a>
 {#    <div class="item">#}
 {#        CPU 20%#}
 {#    </div>#}

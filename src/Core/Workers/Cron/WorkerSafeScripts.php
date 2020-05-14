@@ -148,25 +148,15 @@ class WorkerSafeScripts extends WorkerBase
             // Выполняем запрос с наибольшим приоритетом.
             $result = $queue->request('ping', 15, 0);
             if (false === $result) {
-                $this->startWorker($name);
+                Util::restartPHPWorker($name);
             }
         } else {
             // Сервис вовсе не запущен.
-            $this->startWorker($name);
+            Util::restartPHPWorker($name);
         }
         yield;
     }
 
-    /**
-     * Запуск рабочего процесса.
-     *
-     * @param        $name
-     * @param string $param
-     */
-    private function startWorker($name, $param = ''): void
-    {
-        Util::restartWorker($name, $param);
-    }
 
     /**
      * Проверка работы AMI листнера.
@@ -189,7 +179,7 @@ class WorkerSafeScripts extends WorkerBase
         }
 
         if ($res_ping === false && $level < 10) {
-            $this->startWorker($name, 'start');
+            Util::restartPHPWorker($name);
             // Сервис не запущен.
             sleep(5);
             // Пытаемся снова запустить / проверить работу сервиса.
@@ -216,11 +206,11 @@ class WorkerSafeScripts extends WorkerBase
             // Сервис запущен. Выполним к нему пинг.
             $this->client_nats->request("ping_{$name}", 'ping', [$this, 'callback']);
             if (false === $this->result) {
-                $this->startWorker($name);
+                Util::restartPHPWorker($name);
             }
         } else {
             // Сервис вовсе не запущен.
-            $this->startWorker($name);
+            Util::restartPHPWorker($name);
         }
         yield;
     }

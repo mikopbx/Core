@@ -1001,7 +1001,7 @@ server 2.pool.ntp.org';
     }
 
     /**
-     *    Старт web сервера.
+     *   Start Nginx and php-fpm
      **/
     public function nginxStart(): void
     {
@@ -1085,7 +1085,7 @@ server 2.pool.ntp.org';
         }
     }
 
-    public function syslogd_start(): void
+    public function syslogDaemonStart(): void
     {
         $syslog_file = '/var/log/messages';
         $log_file    = self::getSyslogFile();

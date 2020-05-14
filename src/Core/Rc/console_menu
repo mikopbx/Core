@@ -5,6 +5,7 @@ namespace MikoPBX\Core\Rc;
 use PhpSchool\CliMenu\CliMenu;
 use PhpSchool\CliMenu\Builder\CliMenuBuilder;
 use PhpSchool\CliMenu\Action\GoBackAction;
+use PhpSchool\CliMenu\Exception\InvalidTerminalException;
 use PhpSchool\CliMenu\MenuStyle;
 use PhpSchool\CliMenu\Input\Text;
 use PhpSchool\CliMenu\Input\InputIO;
@@ -446,4 +447,9 @@ $menu = (new CliMenuBuilder)
     ->disableDefaultItems()
     ->build();
 
-$menu->open();
+if ($menu->getTerminal()->isInteractive()){
+    try {
+        $menu->open();
+    } catch (InvalidTerminalException $e) {
+    }
+}

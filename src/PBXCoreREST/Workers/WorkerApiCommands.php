@@ -10,9 +10,10 @@ namespace MikoPBX\PBXCoreREST\Workers;
 
 use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\Asterisk\Configs\{IAXConf, OtherConf, SIPConf};
-use MikoPBX\Modules\Setup\PbxExtensionFailure;
 use MikoPBX\Core\System\{BeanstalkClient, Firewall, Notifications, Storage, System, Util};
 use MikoPBX\Core\Workers\WorkerBase;
+use MikoPBX\Modules\Setup\PbxExtensionFailure;
+use MikoPBX\Modules\ModuleState;
 use Phalcon\Exception;
 
 require_once 'globals.php';
@@ -327,62 +328,82 @@ class WorkerApiCommands extends WorkerBase
             'data'   => null,
         ];
 
-        // Предварительные действия по распаковке модуля.
-        if ('upload' === $action) {
-            System::moduleStartDownload(
-                $module,
-                $request['data']['url'],
-                $request['data']['md5']
-            );
-            $result['uniqid']   = $module;
-            $result['function'] = $action;
-            $result['result']   = 'Success';
+        switch ($action) {
+            case 'upload':
+                System::moduleStartDownload(
+                    $module,
+                    $request['data']['url'],
+                    $request['data']['md5']
+                );
+                $result['uniqid']   = $module;
+                $result['function'] = $action;
+                $result['result']   = 'Success';
+                return $result;
+            case 'status':
+                $result             = System::moduleDownloadStatus($module);
+                $result['function'] = $action;
+                $result['result']   = 'Success';
 
-            return $result;
-        } elseif ('status' === $action) {
-            $result             = System::moduleDownloadStatus($module);
-            $result['function'] = $action;
-            $result['result']   = 'Success';
-
-            return $result;
+                return $result;
+            case 'enable':
+                $moduleStateProcessor = new ModuleState($module);
+                if ($moduleStateProcessor->enableModule() === false){
+                    $result['messages']   = $moduleStateProcessor->getMessages();
+                } else {
+                    unset($result);
+                    $result['result']   = 'Success';
+                }
+                return $result;
+            case 'disable':
+                $moduleStateProcessor = new ModuleState($module);
+                if ($moduleStateProcessor->disableModule() === false){
+                    $result['messages'] = $moduleStateProcessor->getMessages();
+                } else {
+                    unset($result);
+                    $result['result']   = 'Success';
+                }
+                return $result;
+            default:
+                break;
         }
 
-        $path_class = $this->getModuleClass($module, $action);
-        if (false === $path_class) {
+        $moduleClass = $this->getModuleClass($module, $action);
+        if (false === $moduleClass) {
             $result['data'][]   = "Class '$module' does not exist...";
-            $result['data'][]   = "Class '$path_class' does not exist...";
+            $result['data'][]   = "Class '$moduleClass' does not exist...";
             $result['function'] = $action;
 
             return $result;
         }
 
-        try {
-            if ('check' === $action) {
-                /** @var \MikoPBX\Modules\Config\ConfigClass $c */
-                $c        = new $path_class(true);
-                $response = $c->checkModuleWorkProperly();
+
+        switch ($action) {
+            case 'check':
+                $cl       = new $moduleClass(true);
+                $response = $cl->checkModuleWorkProperly();
                 if ($response['result'] === true) {
                     $result['result'] = 'Success';
                 }
                 $result['data'] = $response;
-            } elseif ('reload' === $action) {
-                /** @var \MikoPBX\Modules\Config\ConfigClass $cl */
-                $cl = new $path_class();
+                break;
+            case 'reload':
+                $cl = new $moduleClass();
                 $cl->reloadServices();
                 $cl->onAfterPbxStarted();
                 $result['result'] = 'Success';
-            } elseif ('customAction' === $action) {
-                /** @var \MikoPBX\Modules\Config\ConfigClass $cl */
-                $cl       = new $path_class();
+                break;
+            case 'customAction':
+                $cl       = new $moduleClass();
                 $response = $cl->customAction($request['data']);
                 $result   = $response;
-            } elseif ('uninstall' === $action) {
-                if (class_exists($path_class) && method_exists($path_class, 'uninstallModule')) {
-                    $setup = new $path_class($module);
+                break;
+            case 'uninstall':
+                if (class_exists($moduleClass) && method_exists($moduleClass, 'uninstallModule')) {
+                    $setup = new $moduleClass($module);
                 } else {
                     // Заглушка которая позволяет удалить модуль из базы данных, которого нет на диске
-                    $path_class = PbxExtensionFailure::class;
-                    $setup      = new $path_class($module);
+                    $moduleClass = PbxExtensionFailure::class;
+                    $setup       = new $moduleClass($module);
                 }
                 $prams = json_decode($request['input'], true);
                 if (array_key_exists('keepSettings', $prams)) {
@@ -397,16 +418,16 @@ class WorkerApiCommands extends WorkerBase
                     $result['data']   = implode('<br>', $setup->getMessages());
                 }
                 Util::restartModuleDependentWorkers();
-            } else {
-                $cl     = new $path_class();
-                $result = @$cl->$action($request);
-            }
-        } catch (Exception $e) {
-            global $errorLogger;
-            $errorLogger->captureException($e);
-            $result['data'] = $e->getMessage();
+                break;
+            default:
+                $cl = new $moduleClass();
+                if (method_exists($moduleClass, $action)) {
+                    $result = @$cl->$action($request);
+                } else {
+                    $result = ['result' => 'ERROR', 'message' => 'Unknown method ' . $action];
+                }
+                break;
         }
-
         $result['function'] = $action;
 
         return $result;
@@ -422,7 +443,7 @@ class WorkerApiCommands extends WorkerBase
     {
         $class_name = str_replace('Module', '', $module);
 
-        switch ($action){
+        switch ($action) {
             case 'check':
             case 'reload':
             case 'customAction':
@@ -441,6 +462,7 @@ class WorkerApiCommands extends WorkerBase
         if ( ! class_exists($path_class)) {
             $path_class = false;
         }
+
         return $path_class;
     }
 

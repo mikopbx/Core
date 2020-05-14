@@ -76,4 +76,24 @@ interface SystemConfigInterface
      */
     public function getModuleWorkers(): array;
 
+    /**
+     * Returns array of additional firewall rules for module
+     * @return array
+     */
+    public function getDefaultFirewallRules(): array;
+
+
+    /**
+     * Process enable action in web interface
+     * @return bool
+     */
+    public function onBeforeModuleEnable(): bool;
+
+    /**
+     * Process disable action in web interface
+     * @return bool
+     */
+    public function onBeforeModuleDisable(): bool;
+
+
 }

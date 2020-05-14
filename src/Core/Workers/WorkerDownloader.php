@@ -222,7 +222,7 @@ class WorkerDownloader extends WorkerBase
                 file_put_contents($this->installed_file, '');
                 file_put_contents($this->progress_file, 100);
                 Util::restartModuleDependentWorkers();
-                Util::restartWorker(WorkerApiCommands::class);
+                Util::restartPHPWorker(WorkerApiCommands::class);
             }
             Util::mwExec('rm -rf ' . $this->settings['res_file']);
         } elseif ('upgradeOnline' === $this->settings['action']) {

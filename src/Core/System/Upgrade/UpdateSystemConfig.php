@@ -57,26 +57,31 @@ class UpdateSystemConfig
             if (version_compare($previous_version, '1.0.0', '<=')) {
                 $this->fillInitialSettings();
                 $previous_version = '1.0.1';
+                Util::echoWithSyslog(' - UpdateConfigs: Upgrade applications up tp '.$previous_version);
             }
 
             if (version_compare($previous_version, '6.2.110', '<')) {
                 $this->updateConfigsUpToVer62110();
                 $previous_version = '6.2.110';
+                Util::echoWithSyslog(' - UpdateConfigs: Upgrade applications up tp '.$previous_version);
             }
 
             if (version_compare($previous_version, '6.4', '<')) {
                 $this->updateConfigsUpToVer64();
                 $previous_version = '6.4';
+                Util::echoWithSyslog(' - UpdateConfigs: Upgrade applications up tp '.$previous_version);
             }
 
             if (version_compare($previous_version, '2020.1.62', '<')) {
                 $this->updateConfigsUpToVer2020162();
                 $previous_version = '2020.1.62';
+                Util::echoWithSyslog(' - UpdateConfigs: Upgrade applications up tp '.$previous_version);
             }
 
             if (version_compare($previous_version, '2020.2.314', '<')) {
                 $this->updateConfigsUpToVer20202314();
                 $previous_version = '2020.2.314';
+                Util::echoWithSyslog(' - UpdateConfigs: Upgrade applications up tp '.$previous_version);
             }
 
             //...add here new updates //

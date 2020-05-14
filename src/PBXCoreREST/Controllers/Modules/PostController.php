@@ -80,6 +80,8 @@ class PostController extends ModulesControllerBase
                 $result['data'] = 'Failed to upload file to server';
             }
             $command = 'upload';
+        } elseif (in_array($actionName, ['enable', 'disable'])) {
+            $data = $actionName;
         }
 
         if ($data) {

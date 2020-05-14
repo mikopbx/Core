@@ -34,7 +34,7 @@ class SystemLoader
 
         Util::echoWithSyslog(' - Start syslogd daemon...');
         $system = new System();
-        $system->syslogd_start();
+        $system->syslogDaemonStart();
         Util::echoGreenDone();
 
         Util::echoWithSyslog(' - Update database ... ');

@@ -34,16 +34,16 @@ class PbxExtensionStatus {
 		this.$toggle.addClass('disabled');
 		this.changeLabelText(globalTranslate.ext_ModuleStatusChanging);
 		const cbAfterModuleEnable = $.proxy(this.cbAfterModuleEnable, this);
-		PbxApi.ModuleEnable(this.uniqid, cbAfterModuleEnable);
+		PbxApi.SystemEnableModule(this.uniqid, cbAfterModuleEnable);
 	}
 	cbOnUnchecked() {
 		this.$toggle.addClass('disabled');
 		this.changeLabelText(globalTranslate.ext_ModuleStatusChanging);
 		const cbAfterModuleDisable = $.proxy(this.cbAfterModuleDisable, this);
-		PbxApi.ModuleDisable(this.uniqid, cbAfterModuleDisable);
+		PbxApi.SystemDisableModule(this.uniqid, cbAfterModuleDisable);
 	}
-	cbAfterModuleDisable(response) {
-		if (response.success) {
+	cbAfterModuleDisable(response, success) {
+		if (success) {
 			this.$toggle.checkbox('set unchecked');
 			PbxApi.SystemReloadModule(this.uniqid);
 			this.changeLabelText(globalTranslate.ext_ModuleDisabledStatusDisabled);
@@ -56,15 +56,15 @@ class PbxExtensionStatus {
 			this.changeLabelText(globalTranslate.ext_ModuleDisabledStatusEnabled);
 			this.$disabilityFields.removeClass('disabled');
 		}
-		if (response.message !== undefined) {
+		if (response.data !== undefined && response.data.messages !== undefined) {
 			UserMessage.showMultiString(response.message, globalTranslate.ext_ModuleChangeStatusError);
-		} else if (response !== undefined) {
+		} else if (typeof response !== 'undefined') {
 			UserMessage.showMultiString(response, globalTranslate.ext_ModuleChangeStatusError);
 		}
 		this.$toggle.removeClass('disabled');
 	}
-	cbAfterModuleEnable(response) {
-		if (response.success) {
+	cbAfterModuleEnable(response, success) {
+		if (success) {
 			this.$toggle.checkbox('set checked');
 			PbxApi.SystemReloadModule(this.uniqid);
 			this.changeLabelText(globalTranslate.ext_ModuleDisabledStatusEnabled);
@@ -77,9 +77,9 @@ class PbxExtensionStatus {
 			this.changeLabelText(globalTranslate.ext_ModuleDisabledStatusDisabled);
 			this.$disabilityFields.addClass('disabled');
 		}
-		if (response.message !== undefined) {
-			UserMessage.showMultiString(response.message, globalTranslate.ext_ModuleChangeStatusError);
-		} else if (response !== undefined) {
+		if (response.data !== undefined && response.data.messages !== undefined) {
+			UserMessage.showMultiString(response.data, globalTranslate.ext_ModuleChangeStatusError);
+		} else if (typeof response !== 'undefined') {
 			UserMessage.showMultiString(response, globalTranslate.ext_ModuleChangeStatusError);
 		}
 		this.$toggle.removeClass('disabled');

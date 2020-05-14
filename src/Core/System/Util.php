@@ -153,7 +153,7 @@ class Util
      */
     public static function killByName($procname)
     {
-        return Util::mwExec('busybox killall ' . escapeshellarg($procname));
+        return self::mwExec('busybox killall ' . escapeshellarg($procname));
     }
 
     /**
@@ -208,8 +208,9 @@ class Util
      */
     public static function mwExecBgWithTimeout($command, $timeout = 4, $logname = '/dev/null')
     {
-        $debugMode = Di::getDefault()->getShared('config')->path('core.debugMode');
-        if ($debugMode) {
+        $di = Di::getDefault();
+
+        if ($di !== null && $di->getShared('config')->path('core.debugMode')) {
             echo "mwExecBg(): $command\n";
 
             return;
@@ -315,12 +316,12 @@ class Util
     }
 
     /**
-     * Рестарт рабочего процесса конкретного скрипта из ''.
+     * Restart PHP workers
      *
      * @param string $className
      * @param string $param
      */
-    public static function restartWorker($className, $param = ''): void
+    public static function restartPHPWorker($className, $param = 'start'): void
     {
         $workerPath = self::getFilePathByClassName($className);
         if ( ! empty($workerPath)) {
@@ -394,14 +395,15 @@ class Util
             return ['status' => $status, 'app' => $proc_name, 'PID' => $WorkerPID];
         }
         $out = [];
+
         if ($WorkerPID !== '' && ('stop' === $action || 'restart' === $action)) {
             self::mwExec("$path_kill -9 $WorkerPID  > /dev/null 2>&1 &", $out);
             $WorkerPID = '';
         }
 
         if ($WorkerPID === '' && ('start' === $action || 'restart' === $action)) {
-            self::mwExec("$path_nohup $cmd start $param  > $out_file 2>&1 &", $out);
-            usleep(500000);
+            self::mwExec("$path_nohup $cmd $param  > $out_file 2>&1 &", $out);
+            // usleep(500000);
         }
 
         return true;
@@ -730,7 +732,13 @@ class Util
      */
     public static function CreateLogDB(): void
     {
-        $db_path    = Di::getDefault()->getShared('config')->path('eventsLogDatabase.dbfile');
+        $di = Di::getDefault();
+        if ($di===null) {
+            self::sysLogMsg('CreateLogDB', 'Dependency injector does not initialized');
+            return;
+        }
+
+        $db_path    = $di->getShared('config')->path('eventsLogDatabase.dbfile');
         $table_name = 'call_events';
         $db         = new Sqlite(['dbname' => $db_path]);
         if ( ! $db->tableExists($table_name)) {
@@ -746,7 +754,7 @@ class Util
             ];
             $result  = $db->createTable($table_name, '', ['columns' => $columns]);
             if ( ! $result) {
-                Util::sysLogMsg('CreateLogDB', 'Can not create db ' . $table_name);
+                self::sysLogMsg('CreateLogDB', 'Can not create db ' . $table_name);
 
                 return;
             }
@@ -769,7 +777,7 @@ class Util
             $q      = "CREATE" . " INDEX IF NOT EXISTS i_call_events_{$index_name} ON {$table_name} ({$index_name})";
             $result = $db->query($q);
             if ( ! $result) {
-                Util::sysLogMsg('CreateLogDB', 'Can not create index ' . $index_name);
+                self::sysLogMsg('CreateLogDB', 'Can not create index ' . $index_name);
 
                 return;
             }
@@ -784,8 +792,14 @@ class Util
      */
     public static function GetLastDateLogDB($id, &$db = null): ?array
     {
+        $di = Di::getDefault();
+        if ($di===null) {
+            self::sysLogMsg('CreateLogDB', 'Dependency injector does not initialized');
+            return[];
+        }
+
         if ($db == null) {
-            $cdr_db_path = Di::getDefault()->getShared('config')->path('eventsLogDatabase.dbfile');
+            $cdr_db_path = $di->getShared('config')->path('eventsLogDatabase.dbfile');
             $db          = new SQLite3($cdr_db_path);
         }
         $db->busyTimeout(5000);
@@ -820,7 +834,7 @@ class Util
             }
             $data->save();
         } catch (Exception $e) {
-            Util::sysLogMsg('logMsgDb', $e->getMessage());
+            self::sysLogMsg('logMsgDb', $e->getMessage());
         }
     }
 
@@ -1233,7 +1247,7 @@ class Util
             $need_create_link = ($old_target != $target);
             // Если необходимо, удаляем старую ссылку.
             if ($need_create_link) {
-                Util::mwExec("cp {$old_target}/* {$target}");
+                self::mwExec("cp {$old_target}/* {$target}");
                 unlink($link);
             }
         } elseif (is_dir($link)) {

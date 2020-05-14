@@ -34,6 +34,8 @@ const PbxApi = {
 	systemGetUpgradeStatus: `${Config.pbxUrl}/pbxcore/api/system/statusUpgrade`, // Получение статуса обновления
 	systemInstallModule: `${Config.pbxUrl}/pbxcore/api/modules/upload`,
 	systemDeleteModule: `${Config.pbxUrl}/pbxcore/api/modules/{moduleName}/uninstall`,
+	systemDisableModule: `${Config.pbxUrl}/pbxcore/api/modules/{moduleName}/disable`,
+	systemEnableModule: `${Config.pbxUrl}/pbxcore/api/modules/{moduleName}/enable`,
 	systemInstallStatusModule: `${Config.pbxUrl}/pbxcore/api/modules/{moduleName}/status`,
 	backupGetFilesList: `${Config.pbxUrl}/pbxcore/api/backup/list`, // Получить список архивов
 	backupDownloadFile: `${Config.pbxUrl}/pbxcore/api/backup/download`, // Получить архив /pbxcore/api/backup/download?id=backup_1530703760
@@ -45,8 +47,6 @@ const PbxApi = {
 	backupGetEstimatedSize: `${Config.pbxUrl}/pbxcore/api/backup/getEstimatedSize`,
 	backupStatusUpload: `${Config.pbxUrl}/pbxcore/api/backup/status_upload`, // curl 'http://172.16.156.223/pbxcore/api/backup/status_upload?backup_id=backup_1562746816'
 	backupStartScheduled: `${Config.pbxUrl}/pbxcore/api/backup/startScheduled`, // curl 'http://172.16.156.223/pbxcore/api/backup/startScheduled'
-	moduleDisable: `${globalRootUrl}pbx-extension-modules/disable/{moduleName}`,
-	moduleEnable: `${globalRootUrl}pbx-extension-modules/enable/{moduleName}`,
 	/**
 	 * Проверка ответа на JSON
 	 * @param jsonString
@@ -850,22 +850,24 @@ const PbxApi = {
 	/**
 	 * Disable pbxExtension module
 	 */
-	ModuleDisable(moduleName, callback) {
+	SystemDisableModule(moduleName, callback) {
 		$.api({
-			url: PbxApi.moduleDisable,
+			url: PbxApi.systemDisableModule,
 			on: 'now',
+			method: 'POST',
 			urlData: {
 				moduleName,
 			},
+			data: `{"uniqid":"${moduleName}"}`,
 			successTest: PbxApi.successTest,
 			onSuccess(response) {
-				callback(response);
+				callback(response, true);
 			},
 			onFailure(response) {
-				callback(response);
+				callback(response, false);
 			},
-			onError() {
-				callback(false);
+			onError(response) {
+				callback(response, false);
 			},
 
 		});
@@ -873,22 +875,24 @@ const PbxApi = {
 	/**
 	 * Disable pbxExtension module
 	 */
-	ModuleEnable(moduleName, callback) {
+	SystemEnableModule(moduleName, callback) {
 		$.api({
-			url: PbxApi.moduleEnable,
+			url: PbxApi.systemEnableModule,
 			on: 'now',
+			method: 'POST',
 			urlData: {
 				moduleName,
 			},
+			data: `{"uniqid":"${moduleName}"}`,
 			successTest: PbxApi.successTest,
 			onSuccess(response) {
-				callback(response);
+				callback(response, true);
 			},
 			onFailure(response) {
-				callback(response);
+				callback(response, false);
 			},
 			onError(response) {
-				callback(response);
+				callback(response, false);
 			},
 
 		});

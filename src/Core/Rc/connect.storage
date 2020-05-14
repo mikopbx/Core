@@ -129,8 +129,8 @@ $pbx = new PBX();
 $pbx->configure();
 
 // Перезапускае связанные со storage процессы.
-Util::restartWorker(WorkerApiCommands::class);
-Util::restartWorker(WorkerAmiListener::class);
+Util::restartPHPWorker(WorkerApiCommands::class);
+Util::restartPHPWorker(WorkerAmiListener::class);
 
 if(Storage::isStorageDiskMounted()){
     echo "\n ".Util::translate('Storage disk is already mounted...')." \n\n";

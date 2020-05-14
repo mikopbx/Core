@@ -34,6 +34,11 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
      */
     protected $booting;
 
+    /**
+     * @var array
+     */
+    protected $messages;
+
 
     /**
      * ConfigClass constructor.
@@ -47,6 +52,7 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
         $this->modulesDir    = $config->path('core.modulesDir');
         $this->booting       = $this->di->getRegistry()->booting;
         $this->mikoPBXConfig = new MikoPBXConfig();
+        $this->messages = [];
         $this->getSettings();
     }
 
@@ -390,4 +396,39 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
         return [];
     }
 
+    /**
+     * Returns array of additional firewall rules for module
+     * @return array
+     */
+    public function getDefaultFirewallRules(): array
+    {
+        return [];
+    }
+
+    /**
+     * Return messages after function or method execution
+     * @return array
+     */
+    public function getMessages(): array
+    {
+        return  $this->messages;
+    }
+
+    /**
+     * Process enable action in web interface
+     * @return bool
+     */
+    public function onBeforeModuleEnable(): bool
+    {
+        return true;
+    }
+
+    /**
+     * Process disable action in web interface
+     * @return bool
+     */
+    public function onBeforeModuleDisable(): bool
+    {
+        return true;
+    }
 }

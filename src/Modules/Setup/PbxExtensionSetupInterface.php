@@ -42,7 +42,7 @@ interface PbxExtensionSetupInterface
      *
      * @return bool
      */
-    public function fixRights(): bool;
+    public function fixFilesRights(): bool;
 
     /**
      * Создает структуру для хранения настроек модуля в своей модели

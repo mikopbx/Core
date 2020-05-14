@@ -66,7 +66,7 @@ final class Versions
   'symfony/polyfill-mbstring' => 'v1.15.0@81ffd3a9c6d707be22e3012b827de1c9775fc5ac',
   'symfony/polyfill-php72' => 'v1.15.0@37b0976c78b94856543260ce09b460a7bc852747',
   'symfony/polyfill-uuid' => 'v1.15.0@2318f7f470a892867f3de602e403d006b1b9c9aa',
-  'mikopbx/core' => 'dev-develop@7e148c8b5396c0d6b5579f17d5a5272221173c59',
+  'mikopbx/core' => 'dev-develop@707e049832f904b5cb665ce8398c06c72da0174d',
 );
 
     private function __construct()

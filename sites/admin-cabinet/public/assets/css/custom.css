@@ -18,6 +18,9 @@ body {
     background: #f1f4f5;
 }
 
+#sidebar-menu{
+    top: 40px;
+}
 .ui.sidebar.visible ~ .pusher {
     width: calc(100% - 260px);
 }
@@ -181,6 +184,9 @@ span.features {
 /* Логотип на главной */
 .item.logo {
     padding: 7px 10px 7px 50px !important;
+}
+.item.logo img {
+    margin-right: 50px;!important;
 }
 
 /* Логотип на главной при авторизации */

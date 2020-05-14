@@ -191,12 +191,14 @@ class UpdateDatabase
         $connectionService->begin();
 
         if ( ! $connectionService->tableExists($tableName)) {
+            Util::echoWithSyslog(' - UpdateDatabase: Create new table: '.$tableName);
             $result = $connectionService->createTable($tableName, '', $columnsNew);
         } else {
             // Table exists, we have to check/upgrade its structure
             $currentColumnsArr = $connectionService->describeColumns($tableName, '');
 
             if ($this->isTableStructureNotEqual($currentColumnsArr, $columns)) {
+                Util::echoWithSyslog(' - UpdateDatabase: Upgrade table structure for: '.$tableName);
                 // Create new table and copy all data
                 $currentStateColumnList = [];
                 $oldColNames            = []; // Старые названия колонок

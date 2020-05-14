@@ -9,8 +9,13 @@
 
 namespace MikoPBX\Common\Models;
 
+use MikoPBX\Core\System\Util;
+use Phalcon\Di;
 use Phalcon\Mvc\Model\Relation;
 
+/**
+ * @method static mixed findByCategory(string $category)
+ */
 class FirewallRules extends ModelsBase
 {
     /**
@@ -119,19 +124,20 @@ class FirewallRules extends ModelsBase
         ];
 
 
-        //Подключим правила из установленных модулей расширений
-        $additionalRules = [[]];
-        $enabledModules  = PbxExtensionModules::find('disabled=0');
-        foreach ($enabledModules as $enabled_module) {
-            $class = "\\Modules\\{$enabled_module->uniqid}\\Setup\\FirewallRules";
-            if (class_exists($class)) {
-                $additionalRules[] = $class::getDefaultRules();
+        //Add modules firewall rules
+        $di = Di::getDefault();
+        if ($di!==null) {
+            $additionalRules = [[]];
+            $pbxConfModules = $di->getShared('pbxConfModules');
+            foreach ($pbxConfModules as $pbxConfModule){
+                $additionalRules[] = $pbxConfModule->getDefaultFirewallRules();
+            }
+            $additionalRules = array_merge(...$additionalRules);
+            if ($additionalRules !== [[]]) {
+                $template = array_merge($template, ...$additionalRules);
+                $template = array_change_key_case($template, CASE_UPPER);
             }
         }
-        if ($additionalRules !== [[]]) {
-            $template = array_merge($template, ...$additionalRules);
-        }
-        $template = array_change_key_case($template, CASE_UPPER);
 
         return $template;
     }
