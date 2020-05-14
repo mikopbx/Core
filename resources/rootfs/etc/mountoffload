@@ -9,24 +9,27 @@ mountoffload()
 	uuid=$(/sbin/blkid -ofull $1 | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^UUID" | /bin/busybox awk -F "\"" '{print $2}' | /bin/busybox head -n 1);
     type=$(/sbin/blkid -ofull $1 | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^TYPE="| /bin/busybox awk -F "\"" '{print $2}' | /bin/busybox head -n 1);
 	mount -t "${type}" -rw UUID="$uuid" /offload 2> /dev/null;
-	usrdir='/offload/rootfs/usr';
-	wwwdir="${usrdir}/www";
-	rcDir="${usrdir}/www/src/Core/Rc";
+	usrDir='/offload/rootfs/usr';
+	srcDir="${usrDir}/www";
+	rcDir="${usrDir}/www/src/Core/Rc";
+
 	if [ -d "${rcDir}" ]; then
-  	echo " - Create for /etc/rc ..."
+  	echo " - Create symlink for /etc/rc ..."
     rm -rf /etc/rc;
   	ln -s "${rcDir}" /etc/rc;
 		chmod +x -R "${rcDir}"
   fi
-	if [ -d "${wwwdir}" ]; then
+
+	if [ -d "${srcDir}" ]; then
 		echo " - Copy phalcon config file to /etc/inc ..."
-		cp "${wwwdir}"/config/mikopbx-settings.json /etc/inc/;
+		mkdir -p /etc/inc/;
+		cp "${srcDir}"/config/mikopbx-settings.json /etc/inc/;
 	fi
 	umount -f /offload 2> /dev/null
 	mount -t "${type}" -r UUID="$uuid" /offload 2> /dev/null;
 }
 
-mountconfrecover()
+mountConfRecover()
 {
 	offloaddisk=$1;
 	echo " - attempting to mount existing configuration..."
@@ -113,7 +116,7 @@ do
 	echo " - trying ${disk} mount returned: $?"
 	if [ -f /offload/livecd ]; then
 		echo " - found LIVECD flag file...";
-		mountconfrecover $disk;
+		mountConfRecover $disk;
 		# Все, что необходимо было смонтировано. 
 		exit 0
 	fi
@@ -170,7 +173,7 @@ do
 	echo " - trying ${disk} mount returned: $?"
 	if [ -f /offload/livecd ]; then
 		echo " - found LIVE USB flag file...";
-		mountconfrecover $disk;
+		mountConfRecover $disk;
 		exit 0
 	fi
 	umount -f /offload
