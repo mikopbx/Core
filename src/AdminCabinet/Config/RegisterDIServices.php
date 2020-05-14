@@ -23,17 +23,17 @@ use MikoPBX\AdminCabinet\Providers\{AppMessagesProvider,
     UrlProvider,
     ViewProvider,
     VoltProvider};
-use MikoPBX\Common\Providers\{
-    CDRDatabaseProvider,
+use MikoPBX\Common\Providers\{CDRDatabaseProvider,
     MainDatabaseProvider,
     ManagedCacheProvider,
     ModelsCacheProvider,
     ModelsMetadataProvider,
     ModulesDBConnectionsProvider,
+    PBXConfModulesProvider,
+    RegistryProvider,
     SessionReadOnlyProvider,
     TranslationProvider,
-    LicenseWorkerProvider
-};
+    LicenseWorkerProvider};
 use Phalcon\Di\DiInterface;
 
 class RegisterDIServices
@@ -80,6 +80,12 @@ class RegisterDIServices
 
             // Inject license
             LicenseWorkerProvider::class,
+
+            // Inject PBX modules
+            PBXConfModulesProvider::class,
+
+            // Inject Registry
+            RegistryProvider::class
 
         ];
 

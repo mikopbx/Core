@@ -44,7 +44,8 @@ class ModuleState extends Injectable
             $this->lic_feature_id = 0;
         }
 
-        $configClassName = "\\Modules\\{$this->moduleUniqueID}\\Lib\\{$this->moduleUniqueID}Conf";
+        $class_name      = str_replace('Module', '', $this->moduleUniqueID);
+        $configClassName = "\\Modules\\{$this->moduleUniqueID}\\Lib\\{$class_name}Conf";
         if (class_exists($configClassName)) {
             $this->configClass = new $configClassName();
         } else {
@@ -381,6 +382,7 @@ class ModuleState extends Injectable
         $this->db->begin();
         if ( ! $currentRules->delete()) {
             $this->messages[] = $currentRules->getMessages();
+            return false;
         }
 
         $previousRuleSettings = PbxSettings::findFirstByKey("{$this->moduleUniqueID}FirewallSettings");

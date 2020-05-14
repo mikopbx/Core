@@ -58,8 +58,6 @@ class PbxExtensionStatus {
 		}
 		if (response.data !== undefined && response.data.messages !== undefined) {
 			UserMessage.showMultiString(response.message, globalTranslate.ext_ModuleChangeStatusError);
-		} else if (typeof response !== 'undefined') {
-			UserMessage.showMultiString(response, globalTranslate.ext_ModuleChangeStatusError);
 		}
 		this.$toggle.removeClass('disabled');
 	}
@@ -79,8 +77,6 @@ class PbxExtensionStatus {
 		}
 		if (response.data !== undefined && response.data.messages !== undefined) {
 			UserMessage.showMultiString(response.data, globalTranslate.ext_ModuleChangeStatusError);
-		} else if (typeof response !== 'undefined') {
-			UserMessage.showMultiString(response, globalTranslate.ext_ModuleChangeStatusError);
 		}
 		this.$toggle.removeClass('disabled');
 	}

@@ -130,12 +130,13 @@ class FirewallRules extends ModelsBase
             $additionalRules = [[]];
             $pbxConfModules = $di->getShared('pbxConfModules');
             foreach ($pbxConfModules as $pbxConfModule){
-                $additionalRules[] = $pbxConfModule->getDefaultFirewallRules();
-            }
-            $additionalRules = array_merge(...$additionalRules);
-            if ($additionalRules !== [[]]) {
-                $template = array_merge($template, ...$additionalRules);
-                $template = array_change_key_case($template, CASE_UPPER);
+                $additionalRules = $pbxConfModule->getDefaultFirewallRules();
+                if ($additionalRules!==[]){
+                    $additionalRules = array_change_key_case($additionalRules, CASE_UPPER);
+                    foreach ($additionalRules as $key=>$rule){
+                        $template[$key]=$rule;
+                    }
+                }
             }
         }
 

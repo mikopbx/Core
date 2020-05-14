@@ -316,10 +316,6 @@ class WorkerApiCommands extends WorkerBase
     {
         clearstatcache();
 
-        if ( ! Storage::isStorageDiskMounted()) {
-            return ['result' => 'ERROR', 'message' => 'Storage is not mounted.'];
-        }
-
         $action = $request['action'];
         $module = $request['module'];
 
