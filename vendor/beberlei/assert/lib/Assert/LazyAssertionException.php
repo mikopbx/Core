@@ -14,9 +14,6 @@
 
 namespace Assert;
 
-use function count;
-use function sprintf;
-
 class LazyAssertionException extends InvalidArgumentException
 {
     /**
@@ -31,11 +28,11 @@ class LazyAssertionException extends InvalidArgumentException
      */
     public static function fromErrors(array $errors): self
     {
-        $message = sprintf('The following %d assertions failed:', count($errors))."\n";
+        $message = \sprintf('The following %d assertions failed:', \count($errors))."\n";
 
         $i = 1;
         foreach ($errors as $error) {
-            $message .= sprintf("%d) %s: %s\n", $i++, $error->getPropertyPath(), $error->getMessage());
+            $message .= \sprintf("%d) %s: %s\n", $i++, $error->getPropertyPath(), $error->getMessage());
         }
 
         return new static($message, $errors);

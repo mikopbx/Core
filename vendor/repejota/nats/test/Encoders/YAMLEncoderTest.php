@@ -5,12 +5,11 @@ use Nats;
 use Nats\ConnectionOptions;
 use Nats\EncodedConnection;
 use Nats\Encoders\YAMLEncoder;
-use PHPUnit_Framework_TestCase;
 
 /**
  * Class YAMLEncoderTest.
  */
-class YAMLEncoderTest extends PHPUnit_Framework_TestCase
+class YAMLEncoderTest extends \PHPUnit_Framework_TestCase
 {
 
     /**

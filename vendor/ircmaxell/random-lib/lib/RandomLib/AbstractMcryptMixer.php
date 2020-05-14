@@ -26,8 +26,6 @@
  */
 namespace RandomLib;
 
-use RuntimeException;
-
 /**
  * The mcrypt abstract mixer class
  *
@@ -172,7 +170,7 @@ abstract class AbstractMcryptMixer extends AbstractMixer
     private function prepareCipher($key)
     {
         if (0 !== mcrypt_generic_init($this->mcrypt, $key, $this->initv)) {
-            throw new RuntimeException('Failed to prepare mcrypt module');
+            throw new \RuntimeException('Failed to prepare mcrypt module');
         }
     }
 }

@@ -3,12 +3,11 @@ namespace Nats\tests\Unit;
 
 use Nats\Connection;
 use Nats\Message;
-use PHPUnit_Framework_TestCase;
 
 /**
  * Class MessageTest
  */
-class MessageTest extends PHPUnit_Framework_TestCase
+class MessageTest extends \PHPUnit_Framework_TestCase
 {
 
 

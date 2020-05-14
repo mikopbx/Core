@@ -2,7 +2,6 @@
 
 namespace Pheanstalk\Command;
 
-use Pheanstalk\Contract\ResponseParserInterface;
 use Pheanstalk\YamlResponseParser;
 
 /**
@@ -16,7 +15,7 @@ class StatsTubeCommand extends TubeCommand
         return sprintf('stats-tube %s', $this->tube);
     }
 
-    public function getResponseParser(): ResponseParserInterface
+    public function getResponseParser(): \Pheanstalk\Contract\ResponseParserInterface
     {
         return new YamlResponseParser(
             YamlResponseParser::MODE_DICT

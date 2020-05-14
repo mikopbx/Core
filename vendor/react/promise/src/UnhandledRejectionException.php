@@ -2,19 +2,13 @@
 
 namespace React\Promise;
 
-use Exception;
-use RuntimeException;
-use Throwable;
-use function json_encode;
-use function sprintf;
-
-class UnhandledRejectionException extends RuntimeException
+class UnhandledRejectionException extends \RuntimeException
 {
     private $reason;
 
     public static function resolve($reason)
     {
-        if ($reason instanceof Exception || $reason instanceof Throwable) {
+        if ($reason instanceof \Exception || $reason instanceof \Throwable) {
             return $reason;
         }
 
@@ -25,7 +19,7 @@ class UnhandledRejectionException extends RuntimeException
     {
         $this->reason = $reason;
 
-        $message = sprintf('Unhandled Rejection: %s', json_encode($reason));
+        $message = \sprintf('Unhandled Rejection: %s', \json_encode($reason));
 
         parent::__construct($message, 0);
     }

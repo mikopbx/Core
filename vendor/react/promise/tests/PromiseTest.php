@@ -2,7 +2,6 @@
 
 namespace React\Promise;
 
-use Exception;
 use React\Promise\PromiseAdapter\CallbackPromiseAdapter;
 
 class PromiseTest extends TestCase
@@ -33,7 +32,7 @@ class PromiseTest extends TestCase
     /** @test */
     public function shouldRejectIfResolverThrowsException()
     {
-        $exception = new Exception('foo');
+        $exception = new \Exception('foo');
 
         $promise = new Promise(function () use ($exception) {
             throw $exception;
@@ -54,7 +53,7 @@ class PromiseTest extends TestCase
     {
         gc_collect_cycles();
         $promise = new Promise(function ($resolve) {
-            $resolve(new Exception('foo'));
+            $resolve(new \Exception('foo'));
         });
         unset($promise);
 
@@ -66,7 +65,7 @@ class PromiseTest extends TestCase
     {
         gc_collect_cycles();
         $promise = new Promise(function () {
-            throw new Exception('foo');
+            throw new \Exception('foo');
         });
         unset($promise);
 
@@ -78,7 +77,7 @@ class PromiseTest extends TestCase
     {
         gc_collect_cycles();
         $promise = new Promise(function ($resolve, $reject) {
-            $reject(new Exception('foo'));
+            $reject(new \Exception('foo'));
         });
         unset($promise);
 
@@ -90,7 +89,7 @@ class PromiseTest extends TestCase
     {
         gc_collect_cycles();
         $promise = new Promise(function ($resolve, $reject) { }, function ($resolve, $reject) {
-            $reject(new Exception('foo'));
+            $reject(new \Exception('foo'));
         });
         $promise->cancel();
         unset($promise);
@@ -103,7 +102,7 @@ class PromiseTest extends TestCase
     {
         gc_collect_cycles();
         $promise = new Promise(function ($resolve, $reject) { }, function ($resolve, $reject) {
-            $reject(new Exception('foo'));
+            $reject(new \Exception('foo'));
         });
         $promise->then()->then()->then()->cancel();
         unset($promise);
@@ -116,7 +115,7 @@ class PromiseTest extends TestCase
     {
         gc_collect_cycles();
         $promise = new Promise(function ($resolve, $reject) {
-            throw new Exception('foo');
+            throw new \Exception('foo');
         });
         unset($promise);
 
@@ -140,7 +139,7 @@ class PromiseTest extends TestCase
     {
         gc_collect_cycles();
         $promise = new Promise(function () {}, function () use (&$promise) {
-            throw new Exception('foo');
+            throw new \Exception('foo');
         });
         $promise->cancel();
         unset($promise);
@@ -157,7 +156,7 @@ class PromiseTest extends TestCase
     {
         gc_collect_cycles();
         $promise = new Promise(function () use (&$promise) {
-            throw new Exception('foo');
+            throw new \Exception('foo');
         });
         unset($promise);
 
@@ -173,7 +172,7 @@ class PromiseTest extends TestCase
     {
         gc_collect_cycles();
         $promise = new Promise(function () {
-            throw new Exception('foo');
+            throw new \Exception('foo');
         }, function () use (&$promise) { });
         unset($promise);
 
@@ -184,7 +183,7 @@ class PromiseTest extends TestCase
     public function shouldIgnoreNotifyAfterReject()
     {
         $promise = new Promise(function () { }, function ($resolve, $reject, $notify) {
-            $reject(new Exception('foo'));
+            $reject(new \Exception('foo'));
             $notify(42);
         });
 

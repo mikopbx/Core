@@ -14,8 +14,6 @@
 
 namespace SecurityLibTest\Mocks;
 
-use SecurityLib\AbstractFactory;
-
 /**
  * The interface that all hash implementations must implement
  *
@@ -23,7 +21,7 @@ use SecurityLib\AbstractFactory;
  * @package    Hash
  * @author     Anthony Ferrara <ircmaxell@ircmaxell.com>
  */
-class Factory extends AbstractFactory {
+class Factory extends \SecurityLib\AbstractFactory {
     
     protected $callbacks = array();
 

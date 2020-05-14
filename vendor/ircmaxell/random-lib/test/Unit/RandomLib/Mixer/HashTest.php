@@ -10,11 +10,9 @@
  */
 namespace RandomLib\Mixer;
 
-use PHPUnit_Framework_TestCase;
-use RandomLib\Mixer;
 use SecurityLib\Strength;
 
-class HashTest extends PHPUnit_Framework_TestCase
+class HashTest extends \PHPUnit_Framework_TestCase
 {
     public static function provideMix()
     {
@@ -37,7 +35,7 @@ class HashTest extends PHPUnit_Framework_TestCase
     public function testConstructWithoutArgument()
     {
         $hash = new Hash();
-        $this->assertTrue($hash instanceof Mixer);
+        $this->assertTrue($hash instanceof \RandomLib\Mixer);
     }
 
     public function testGetStrength()

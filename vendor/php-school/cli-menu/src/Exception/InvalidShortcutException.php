@@ -2,12 +2,10 @@
 
 namespace PhpSchool\CliMenu\Exception;
 
-use RuntimeException;
-
 /**
  * @author Aydin Hassan <aydin@hotmail.co.uk>
  */
-class InvalidShortcutException extends RuntimeException
+class InvalidShortcutException extends \RuntimeException
 {
     public static function fromShortcut(string $shortcut) : self
     {

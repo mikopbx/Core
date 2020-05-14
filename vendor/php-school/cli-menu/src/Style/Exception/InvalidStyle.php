@@ -5,9 +5,8 @@ declare(strict_types=1);
 namespace PhpSchool\CliMenu\Style\Exception;
 
 use PhpSchool\CliMenu\MenuItem\MenuItemInterface;
-use RuntimeException;
 
-class InvalidStyle extends RuntimeException
+class InvalidStyle extends \RuntimeException
 {
     public static function unregisteredStyle(string $styleClass) : self
     {

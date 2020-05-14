@@ -10,11 +10,9 @@
  */
 namespace RandomLib;
 
-use PHPUnit_Framework_TestCase;
-use ReflectionProperty;
 use SecurityLib\Strength;
 
-class FactoryTest extends PHPUnit_Framework_TestCase
+class FactoryTest extends \PHPUnit_Framework_TestCase
 {
     public function testConstruct()
     {
@@ -62,7 +60,7 @@ class FactoryTest extends PHPUnit_Framework_TestCase
     public function testNoAvailableSource()
     {
         $factory = new Factory();
-        $sources = new ReflectionProperty($factory, 'sources');
+        $sources = new \ReflectionProperty($factory, 'sources');
         $sources->setAccessible(true);
         $sources->setValue($factory, array());
         $factory->getMediumStrengthGenerator();

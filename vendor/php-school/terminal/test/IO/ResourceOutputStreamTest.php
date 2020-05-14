@@ -2,10 +2,8 @@
 
 namespace PhpSchool\TerminalTest\IO;
 
-use InvalidArgumentException;
 use PhpSchool\Terminal\IO\ResourceOutputStream;
 use PHPUnit\Framework\TestCase;
-use const STDIN;
 
 /**
  * @author Aydin Hassan <aydin@hotmail.co.uk>
@@ -14,16 +12,16 @@ class ResourceOutputStreamTest extends TestCase
 {
     public function testNonStream() : void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Expected a valid stream');
         new ResourceOutputStream(42);
     }
 
     public function testNotWritable() : void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Expected a writable stream');
-        new ResourceOutputStream(STDIN);
+        new ResourceOutputStream(\STDIN);
     }
 
     public function testWrite() : void

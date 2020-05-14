@@ -10,11 +10,9 @@
  */
 namespace RandomLib\Mixer;
 
-use PHPUnit_Framework_TestCase;
-use RandomLib\Mixer;
 use SecurityLib\Strength;
 
-class McryptRijndael128Test extends PHPUnit_Framework_TestCase
+class McryptRijndael128Test extends \PHPUnit_Framework_TestCase
 {
     public static function provideMix()
     {
@@ -43,7 +41,7 @@ class McryptRijndael128Test extends PHPUnit_Framework_TestCase
     public function testConstructWithoutArgument()
     {
         $hash = new McryptRijndael128();
-        $this->assertTrue($hash instanceof Mixer);
+        $this->assertTrue($hash instanceof \RandomLib\Mixer);
     }
 
     public function testGetStrength()

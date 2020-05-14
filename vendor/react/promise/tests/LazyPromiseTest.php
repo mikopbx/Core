@@ -2,7 +2,6 @@
 
 namespace React\Promise;
 
-use Exception;
 use React\Promise\PromiseAdapter\CallbackPromiseAdapter;
 
 class LazyPromiseTest extends TestCase
@@ -87,7 +86,7 @@ class LazyPromiseTest extends TestCase
     /** @test */
     public function shouldReturnRejectedPromiseIfFactoryThrowsException()
     {
-        $exception = new Exception();
+        $exception = new \Exception();
 
         $factory = $this->createCallableMock();
         $factory

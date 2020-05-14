@@ -10,10 +10,7 @@
  */
 namespace RandomLib;
 
-use PHPUnit_Framework_TestCase;
-use const PHP_INT_MAX;
-
-class GeneratorTest extends PHPUnit_Framework_TestCase
+class GeneratorTest extends \PHPUnit_Framework_TestCase
 {
     protected $generator = null;
     protected $mixer = null;
@@ -52,7 +49,7 @@ class GeneratorTest extends PHPUnit_Framework_TestCase
             array(0, 0),
             array(0, 1),
             array(1, 10000),
-            array(100000, PHP_INT_MAX),
+            array(100000, \PHP_INT_MAX),
         );
     }
 

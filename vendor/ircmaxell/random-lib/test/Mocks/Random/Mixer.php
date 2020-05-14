@@ -26,7 +26,6 @@
  */
 namespace RandomLibtest\Mocks\Random;
 
-use RandomLibTest\Mocks\AbstractMock;
 use SecurityLib\Strength;
 
 /**
@@ -39,7 +38,7 @@ use SecurityLib\Strength;
  *
  * @author     Anthony Ferrara <ircmaxell@ircmaxell.com>
  */
-class Mixer extends AbstractMock implements \RandomLib\Mixer
+class Mixer extends \RandomLibTest\Mocks\AbstractMock implements \RandomLib\Mixer
 {
     public static $strength = null;
 

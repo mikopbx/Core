@@ -2,7 +2,6 @@
 
 namespace PhpSchool\CliMenu\Input;
 
-use Closure;
 use PhpSchool\CliMenu\MenuStyle;
 use PhpSchool\Terminal\InputCharacter;
 
@@ -108,7 +107,7 @@ class Number implements Input
         if ($this->validator) {
             $validator = $this->validator;
             
-            if ($validator instanceof Closure) {
+            if ($validator instanceof \Closure) {
                 $validator = $validator->bindTo($this);
             }
             

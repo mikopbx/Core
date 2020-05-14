@@ -30,7 +30,6 @@
  */
 namespace RandomLib\Source;
 
-use RandomLib\AbstractSource;
 use SecurityLib\Strength;
 
 /**
@@ -47,7 +46,7 @@ use SecurityLib\Strength;
  * @author     Anthony Ferrara <ircmaxell@ircmaxell.com>
  * @codeCoverageIgnore
  */
-class MTRand extends AbstractSource
+class MTRand extends \RandomLib\AbstractSource
 {
 
     /**

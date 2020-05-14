@@ -7,8 +7,6 @@ namespace Recoil\Exception;
 use Recoil\Strand;
 use RuntimeException;
 use Throwable;
-use function get_class;
-use function sprintf;
 
 /*
  * A kernel panic has occurred as a result of an unhandled exception in a
@@ -53,10 +51,10 @@ class StrandException extends RuntimeException implements PanicException
     {
         $this->strand = $strand;
         parent::__construct(
-            sprintf(
+            \sprintf(
                 'Unhandled exception in strand #%d: %s (%s).',
                 $strand->id(),
-                get_class($cause),
+                \get_class($cause),
                 $cause->getMessage()
             ),
             0,

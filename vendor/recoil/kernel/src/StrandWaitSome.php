@@ -9,8 +9,6 @@ use Recoil\Exception\CompositeException;
 use Recoil\Listener;
 use Recoil\Strand;
 use Throwable;
-use function array_search;
-use function count;
 
 /**
  * Implementation of Api::some().
@@ -74,7 +72,7 @@ final class StrandWaitSome implements Awaitable, Listener
         assert($strand instanceof Strand, 'strand cannot be null');
         assert(in_array($strand, $this->substrands, true), 'unknown strand');
 
-        $index = array_search($strand, $this->substrands, true);
+        $index = \array_search($strand, $this->substrands, true);
         unset($this->substrands[$index]);
 
         $this->values[$index] = $value;
@@ -100,12 +98,12 @@ final class StrandWaitSome implements Awaitable, Listener
         assert($strand instanceof Strand, 'strand cannot be null');
         assert(in_array($strand, $this->substrands, true), 'unknown strand');
 
-        $index = array_search($strand, $this->substrands, true);
+        $index = \array_search($strand, $this->substrands, true);
         unset($this->substrands[$index]);
 
         $this->exceptions[$index] = $exception;
 
-        if ($this->count > count($this->substrands)) {
+        if ($this->count > \count($this->substrands)) {
             foreach ($this->substrands as $s) {
                 $s->clearPrimaryListener();
                 $s->terminate();

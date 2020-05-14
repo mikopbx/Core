@@ -3,15 +3,12 @@
 namespace PhpSchool\CliMenu\MenuItem;
 
 use Assert\Assertion;
-use BadMethodCallException;
-use InvalidArgumentException;
 use PhpSchool\CliMenu\CliMenu;
 use PhpSchool\CliMenu\MenuStyle;
 use PhpSchool\CliMenu\Style\DefaultStyle;
 use PhpSchool\CliMenu\Style\ItemStyle;
 use PhpSchool\CliMenu\Style\Selectable;
 use PhpSchool\CliMenu\Util\StringUtil;
-use RuntimeException;
 use function PhpSchool\CliMenu\Util\collect;
 use function PhpSchool\CliMenu\Util\each;
 use function PhpSchool\CliMenu\Util\mapWithKeys;
@@ -51,9 +48,9 @@ class SplitItem implements MenuItemInterface, PropagatesStyles
      * @var array
      */
     private static $blacklistedItems = [
-        AsciiArtItem::class,
-        LineBreakItem::class,
-        SplitItem::class,
+        \PhpSchool\CliMenu\MenuItem\AsciiArtItem::class,
+        \PhpSchool\CliMenu\MenuItem\LineBreakItem::class,
+        \PhpSchool\CliMenu\MenuItem\SplitItem::class,
     ];
 
     public function __construct(array $items = [])
@@ -79,7 +76,7 @@ class SplitItem implements MenuItemInterface, PropagatesStyles
     {
         foreach (self::$blacklistedItems as $bl) {
             if ($item instanceof $bl) {
-                throw new InvalidArgumentException("Cannot add a $bl to a SplitItem");
+                throw new \InvalidArgumentException("Cannot add a $bl to a SplitItem");
             }
         }
         $this->items[] = $item;
@@ -128,7 +125,7 @@ class SplitItem implements MenuItemInterface, PropagatesStyles
         $numberOfItems = count($this->items);
 
         if ($numberOfItems === 0) {
-            throw new RuntimeException(sprintf('There should be at least one item added to: %s', __CLASS__));
+            throw new \RuntimeException(sprintf('There should be at least one item added to: %s', __CLASS__));
         }
         
         if (!$selected) {
@@ -253,7 +250,7 @@ class SplitItem implements MenuItemInterface, PropagatesStyles
     public function setSelectedItemIndex(int $index) : void
     {
         if (!isset($this->items[$index])) {
-            throw new InvalidArgumentException(sprintf('Index: "%s" does not exist', $index));
+            throw new \InvalidArgumentException(sprintf('Index: "%s" does not exist', $index));
         }
         
         $this->selectedItemIndex = $index;
@@ -275,7 +272,7 @@ class SplitItem implements MenuItemInterface, PropagatesStyles
     public function getSelectedItem() : MenuItemInterface
     {
         if (null === $this->selectedItemIndex) {
-            throw new RuntimeException('No item is selected');
+            throw new \RuntimeException('No item is selected');
         }
         
         return $this->items[$this->selectedItemIndex];
@@ -332,7 +329,7 @@ class SplitItem implements MenuItemInterface, PropagatesStyles
      */
     public function getText() : string
     {
-        throw new BadMethodCallException(sprintf('Not supported on: %s', __CLASS__));
+        throw new \BadMethodCallException(sprintf('Not supported on: %s', __CLASS__));
     }
 
     /**

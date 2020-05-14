@@ -2,15 +2,13 @@
 
 namespace PhpSchool\CliMenu;
 
-use Countable;
-
 /**
  * Represents the current screen being displayed
  * contains all rows of output
  *
  * @author Aydin Hassan <aydin@hotmail.co.uk>
  */
-class Frame implements Countable
+class Frame implements \Countable
 {
     /**
      * @var array

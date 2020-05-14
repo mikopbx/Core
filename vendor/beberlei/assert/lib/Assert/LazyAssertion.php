@@ -15,9 +15,6 @@
 namespace Assert;
 
 use LogicException;
-use function call_user_func;
-use function call_user_func_array;
-use function is_subclass_of;
 
 /**
  * Chaining builder for lazy assertions.
@@ -176,7 +173,7 @@ class LazyAssertion
         }
 
         try {
-            call_user_func_array([$this->currentChain, $method], $args);
+            \call_user_func_array([$this->currentChain, $method], $args);
         } catch (AssertionFailedException $e) {
             $this->errors[] = $e;
             $this->currentChainFailed = true;
@@ -193,7 +190,7 @@ class LazyAssertion
     public function verifyNow(): bool
     {
         if ($this->errors) {
-            throw call_user_func([$this->exceptionClass, 'fromErrors'], $this->errors);
+            throw \call_user_func([$this->exceptionClass, 'fromErrors'], $this->errors);
         }
 
         return true;
@@ -206,7 +203,7 @@ class LazyAssertion
      */
     public function setAssertClass(string $className)
     {
-        if (Assert::class !== $className && ! is_subclass_of($className, Assert::class)) {
+        if (Assert::class !== $className && !\is_subclass_of($className, Assert::class)) {
             throw new LogicException($className.' is not (a subclass of) '.Assert::class);
         }
 
@@ -222,7 +219,7 @@ class LazyAssertion
      */
     public function setExceptionClass(string $className)
     {
-        if (LazyAssertionException::class !== $className && ! is_subclass_of($className, LazyAssertionException::class)) {
+        if (LazyAssertionException::class !== $className && !\is_subclass_of($className, LazyAssertionException::class)) {
             throw new LogicException($className.' is not (a subclass of) '.LazyAssertionException::class);
         }
 

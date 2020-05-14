@@ -20,8 +20,6 @@
 
 namespace PHPMailer\PHPMailer;
 
-use Psr\Log\LoggerInterface;
-
 /**
  * PHPMailer - PHP email creation and transport class.
  *
@@ -885,7 +883,7 @@ class PHPMailer
             return;
         }
         //Is this a PSR-3 logger?
-        if ($this->Debugoutput instanceof LoggerInterface) {
+        if ($this->Debugoutput instanceof \Psr\Log\LoggerInterface) {
             $this->Debugoutput->debug($str);
 
             return;
@@ -1208,7 +1206,7 @@ class PHPMailer
                         ];
                     }
                 } else {
-                    [$name, $email] = explode('<', $address);
+                    list($name, $email) = explode('<', $address);
                     $email = trim(str_replace('>', '', $email));
                     if (static::validateAddress($email)) {
                         $addresses[] = [
@@ -3959,7 +3957,7 @@ class PHPMailer
     {
         if (null === $value && strpos($name, ':') !== false) {
             // Value passed in as name:value
-            [$name, $value] = explode(':', $name, 2);
+            list($name, $value) = explode(':', $name, 2);
         }
         $name = trim($name);
         $value = trim($value);
@@ -4531,7 +4529,7 @@ class PHPMailer
             if (strpos($line, ':') === false) {
                 continue;
             }
-            [$heading, $value] = explode(':', $line, 2);
+            list($heading, $value) = explode(':', $line, 2);
             //Lower-case header name
             $heading = strtolower($heading);
             //Collapse white space within the value, also convert WSP to space

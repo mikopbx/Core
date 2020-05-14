@@ -3,7 +3,6 @@
 
 namespace Pheanstalk\Socket;
 
-use Exception;
 use Pheanstalk\Contract\SocketInterface;
 use Pheanstalk\Exception\ConnectionException;
 use Pheanstalk\Exception\SocketException;
@@ -22,7 +21,7 @@ class SocketSocket implements SocketInterface
         int $connectTimeout
     ) {
         if (!extension_loaded('sockets')) {
-            throw new Exception('Sockets extension not found');
+            throw new \Exception('Sockets extension not found');
         }
 
         $this->socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
@@ -49,7 +48,7 @@ class SocketSocket implements SocketInterface
         if (@socket_connect($this->socket, $addresses[0], $port) === false) {
             $error = socket_last_error($this->socket);
             throw new ConnectionException($error, socket_strerror($error));
-        }
+        };
 
         socket_set_option($this->socket, SOL_SOCKET, SO_SNDTIMEO, $sendTimeout);
         socket_set_option($this->socket, SOL_SOCKET, SO_RCVTIMEO, $receiveTimeout);

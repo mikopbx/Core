@@ -10,7 +10,6 @@ use PhpSchool\Terminal\IO\ResourceInputStream;
 use PhpSchool\Terminal\IO\ResourceOutputStream;
 use PhpSchool\Terminal\UnixTerminal;
 use PHPUnit\Framework\TestCase;
-use ReflectionObject;
 
 class UnixTerminalTest extends TestCase
 {
@@ -168,7 +167,7 @@ class UnixTerminalTest extends TestCase
         $output = new BufferedOutput;
 
         $terminal = new UnixTerminal($input, $output);
-        $rf = new ReflectionObject($terminal);
+        $rf = new \ReflectionObject($terminal);
         $rp = $rf->getProperty('width');
         $rp->setAccessible(true);
         $rp->setValue($terminal, 23);

@@ -2,9 +2,7 @@
 
 namespace React\Promise;
 
-use LogicException;
 use React\Promise\PromiseAdapter\CallbackPromiseAdapter;
-use RuntimeException;
 
 class FulfilledPromiseTest extends TestCase
 {
@@ -18,7 +16,7 @@ class FulfilledPromiseTest extends TestCase
         return new CallbackPromiseAdapter([
             'promise' => function () use (&$promise) {
                 if (!$promise) {
-                    throw new LogicException('FulfilledPromise must be resolved before obtaining the promise');
+                    throw new \LogicException('FulfilledPromise must be resolved before obtaining the promise');
                 }
 
                 return $promise;
@@ -29,7 +27,7 @@ class FulfilledPromiseTest extends TestCase
                 }
             },
             'reject' => function () {
-                throw new LogicException('You cannot call reject() for React\Promise\FulfilledPromise');
+                throw new \LogicException('You cannot call reject() for React\Promise\FulfilledPromise');
             },
             'notify' => function () {
                 // no-op
@@ -56,7 +54,7 @@ class FulfilledPromiseTest extends TestCase
         gc_collect_cycles();
         $promise = new FulfilledPromise(1);
         $promise->always(function () {
-            throw new RuntimeException();
+            throw new \RuntimeException();
         });
         unset($promise);
 
@@ -69,7 +67,7 @@ class FulfilledPromiseTest extends TestCase
         gc_collect_cycles();
         $promise = new FulfilledPromise(1);
         $promise = $promise->then(function () {
-            throw new RuntimeException();
+            throw new \RuntimeException();
         });
         unset($promise);
 

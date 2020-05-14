@@ -2,8 +2,6 @@
 
 namespace React\Promise;
 
-use Exception;
-
 class CancellationQueueTest extends TestCase
 {
     /** @test */
@@ -82,7 +80,7 @@ class CancellationQueueTest extends TestCase
         $mock
             ->expects($this->once())
             ->method('cancel')
-            ->will($this->throwException(new Exception('test')));
+            ->will($this->throwException(new \Exception('test')));
 
         $cancellationQueue = new CancellationQueue();
         $cancellationQueue->enqueue($mock);

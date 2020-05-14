@@ -2,7 +2,6 @@
 
 namespace Pheanstalk;
 
-use Closure;
 use Pheanstalk\Contract\CommandInterface;
 use Pheanstalk\Contract\JobIdInterface;
 use Pheanstalk\Contract\PheanstalkInterface;
@@ -408,7 +407,7 @@ class Pheanstalk implements PheanstalkInterface
      * @return mixed the return value of the closure.
      * @internal This is marked as internal since it is not part of a stabilized interface.
      */
-    public function withUsedTube(string $tube, Closure $closure)
+    public function withUsedTube(string $tube, \Closure $closure)
     {
         $used = $this->listTubeUsed();
         try {
@@ -425,7 +424,7 @@ class Pheanstalk implements PheanstalkInterface
      * @return mixed the return value of the closure.
      * @internal This is marked as internal since it is not part of a stabilized interface.
      */
-    public function withWatchedTube(string $tube, Closure $closure)
+    public function withWatchedTube(string $tube, \Closure $closure)
     {
         $watched = $this->listTubesWatched();
         try {

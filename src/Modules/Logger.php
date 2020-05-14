@@ -10,7 +10,7 @@
 namespace MikoPBX\Core\Modules;
 
 use MikoPBX\Core\System\System;
-use Phalcon\Logger\Adapter\Stream as FileAdapter;
+use Phalcon\Logger\Adapter\Stream as FileLogger;
 
 class Logger
 {
@@ -27,39 +27,27 @@ class Logger
     {
         $logPath        = System::getLogDir() . '/' . $moduleId . '/';
         $this->logFile  = $logPath . $class . 'log';
-        $logfilestokeep = 30;
-
-        if (file_exists($this->logFile)) {
-            if (date('Y-m-d', filemtime($this->logFile)) !== date('Y-m-d')) {
-                if (file_exists($this->logFile . '.' . $logfilestokeep)) {
-                    unlink($this->logFile . '.' . $logfilestokeep);
-                }
-                for ($i = $logfilestokeep; $i > 0; $i--) {
-                    if (file_exists($this->logFile . '.' . $i)) {
-                        $next = $i + 1;
-                        rename($this->logFile . '.' . $i, $this->logFile . '.' . $next);
-                    }
-                }
-                rename($this->logFile, $this->logFile . '.1');
-            }
-        } elseif ( ! file_exists($logPath) && ! mkdir($logPath, 0777, true) && ! is_dir($logPath)) {
-            $this->logFile = "/var/log/$moduleId.log";
-        }
-        $this->logger = new FileAdapter($this->logFile);
+        $adapter       = new FileLogger($this->logFile);
+        $this->logger  = new \Phalcon\Logger(
+            'messages',
+            [
+                'main' => $adapter,
+            ]
+        );
     }
 
-    public function write($data, $level = \Phalcon\Logger::ERROR): void
+    public function write($data): void
     {
-        $this->logger->log(print_r($data, true));
+        $this->logger->info(print_r($data, true));
     }
 
-    public function writeError($data, $level = \Phalcon\Logger::ERROR): void
+    public function writeError($data): void
     {
-        $this->logger->log(print_r($data, true));
+        $this->logger->error(print_r($data, true));
     }
 
-    public function writeInfo($data, $level = \Phalcon\Logger::INFO): void
+    public function writeInfo($data): void
     {
-        $this->logger->log(print_r($data, true));
+        $this->logger->info(print_r($data, true));
     }
 }

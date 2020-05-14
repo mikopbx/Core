@@ -27,8 +27,6 @@
  */
 namespace RandomLib;
 
-use RuntimeException;
-use SecurityLib\AbstractFactory;
 use SecurityLib\Strength;
 
 /**
@@ -41,7 +39,7 @@ use SecurityLib\Strength;
  *
  * @author     Anthony Ferrara <ircmaxell@ircmaxell.com>
  */
-class Factory extends AbstractFactory
+class Factory extends \SecurityLib\AbstractFactory
 {
 
     /**
@@ -74,7 +72,7 @@ class Factory extends AbstractFactory
      *
      * @return Generator The instantiated generator
      */
-    public function getGenerator(Strength $strength)
+    public function getGenerator(\SecurityLib\Strength $strength)
     {
         $sources = $this->findSources($strength);
         $mixer   = $this->findMixer($strength);
@@ -195,7 +193,7 @@ class Factory extends AbstractFactory
      *
      * @return Source The found source
      */
-    protected function findSources(Strength $strength)
+    protected function findSources(\SecurityLib\Strength $strength)
     {
         $sources = array();
         foreach ($this->getSources() as $source) {
@@ -205,7 +203,7 @@ class Factory extends AbstractFactory
         }
 
         if (0 === count($sources)) {
-            throw new RuntimeException('Could not find sources');
+            throw new \RuntimeException('Could not find sources');
         }
 
         return $sources;
@@ -220,7 +218,7 @@ class Factory extends AbstractFactory
      *
      * @return Mixer The found mixer
      */
-    protected function findMixer(Strength $strength)
+    protected function findMixer(\SecurityLib\Strength $strength)
     {
         $newMixer = null;
         $fallback = null;
@@ -236,7 +234,7 @@ class Factory extends AbstractFactory
         }
         if (is_null($newMixer)) {
             if (is_null($fallback)) {
-                throw new RuntimeException('Could not find mixer');
+                throw new \RuntimeException('Could not find mixer');
             }
 
             return $fallback;

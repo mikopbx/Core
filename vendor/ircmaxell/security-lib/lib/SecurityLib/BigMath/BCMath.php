@@ -14,8 +14,6 @@
  */
 namespace SecurityLib\BigMath;
 
-use SecurityLib\BigMath;
-
 /**
  * A class for arbitrary precision math functions implemented using bcmath
  *
@@ -23,7 +21,7 @@ use SecurityLib\BigMath;
  * @package    Core
  * @subpackage BigMath
  */
-class BCMath extends BigMath {
+class BCMath extends \SecurityLib\BigMath {
 
     /**
      * Add two numbers together

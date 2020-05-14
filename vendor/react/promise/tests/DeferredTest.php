@@ -2,9 +2,7 @@
 
 namespace React\Promise;
 
-use Exception;
 use React\Promise\PromiseAdapter\CallbackPromiseAdapter;
-use stdClass;
 
 class DeferredTest extends TestCase
 {
@@ -28,7 +26,7 @@ class DeferredTest extends TestCase
     {
         $deferred = new Deferred();
 
-        $sentinel = new stdClass();
+        $sentinel = new \stdClass();
 
         $mock = $this->createCallableMock();
         $mock
@@ -47,7 +45,7 @@ class DeferredTest extends TestCase
     {
         gc_collect_cycles();
         $deferred = new Deferred(function ($resolve, $reject) {
-            $reject(new Exception('foo'));
+            $reject(new \Exception('foo'));
         });
         $deferred->promise()->cancel();
         unset($deferred);
@@ -60,7 +58,7 @@ class DeferredTest extends TestCase
     {
         gc_collect_cycles();
         $deferred = new Deferred(function ($resolve, $reject) {
-            $reject(new Exception('foo'));
+            $reject(new \Exception('foo'));
         });
         $deferred->promise()->then()->cancel();
         unset($deferred);
@@ -73,7 +71,7 @@ class DeferredTest extends TestCase
     {
         gc_collect_cycles();
         $deferred = new Deferred(function () use (&$deferred) { });
-        $deferred->reject(new Exception('foo'));
+        $deferred->reject(new \Exception('foo'));
         unset($deferred);
 
         $this->assertSame(0, gc_collect_cycles());

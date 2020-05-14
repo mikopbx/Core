@@ -1,7 +1,5 @@
 <?php
 
-use SecurityLib\BigMath;
-
 class Unit_Core_BigMathTest extends PHPUnit_Framework_TestCase {
 
     protected static $mathImplementations = array();
@@ -36,7 +34,7 @@ class Unit_Core_BigMathTest extends PHPUnit_Framework_TestCase {
     }
 
     public function testCreateFromServerConfiguration() {
-        $instance = BigMath::createFromServerConfiguration();
+        $instance = \SecurityLib\BigMath::createFromServerConfiguration();
         if (extension_loaded('bcmath')) {
             $this->assertEquals('SecurityLib\\BigMath\\BCMath', get_class($instance));
         } elseif (extension_loaded('gmp')) {

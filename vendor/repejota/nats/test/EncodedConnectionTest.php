@@ -5,12 +5,11 @@ use Nats;
 use Nats\Connection;
 use Nats\ConnectionOptions;
 use Nats\Encoders\JSONEncoder;
-use PHPUnit_Framework_TestCase;
 
 /**
  * Class EncodedConnectionTest.
  */
-class EncodedConnectionTest extends PHPUnit_Framework_TestCase
+class EncodedConnectionTest extends \PHPUnit_Framework_TestCase
 {
 
     /**

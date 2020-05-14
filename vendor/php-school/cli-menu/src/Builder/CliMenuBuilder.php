@@ -2,8 +2,6 @@
 
 namespace PhpSchool\CliMenu\Builder;
 
-use Closure;
-use InvalidArgumentException;
 use PhpSchool\CliMenu\Action\ExitAction;
 use PhpSchool\CliMenu\Action\GoBackAction;
 use PhpSchool\CliMenu\Exception\InvalidShortcutException;
@@ -188,7 +186,7 @@ class CliMenuBuilder
         return $this;
     }
 
-    public function addSubMenu(string $text, Closure $callback) : self
+    public function addSubMenu(string $text, \Closure $callback) : self
     {
         $builder = self::newSubMenu($this->terminal);
 
@@ -298,7 +296,7 @@ class CliMenuBuilder
         }
     }
 
-    public function addSplitItem(Closure $callback) : self
+    public function addSplitItem(\Closure $callback) : self
     {
         $builder = new SplitItemBuilder($this->menu);
 
@@ -327,7 +325,7 @@ class CliMenuBuilder
     public function disableMenu() : self
     {
         if (!$this->subMenu) {
-            throw new InvalidArgumentException(
+            throw new \InvalidArgumentException(
                 'You can\'t disable the root menu'
             );
         }

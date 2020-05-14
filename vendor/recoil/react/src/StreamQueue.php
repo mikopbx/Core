@@ -5,7 +5,6 @@ declare(strict_types=1); // @codeCoverageIgnore
 namespace Recoil\React;
 
 use React\EventLoop\LoopInterface;
-use function is_resource;
 
 /**
  * Please note that this code is not part of the public API. It may be
@@ -57,7 +56,7 @@ final class StreamQueue
      */
     public function read($stream, callable $callback): callable
     {
-        assert(is_resource($stream));
+        assert(\is_resource($stream));
 
         $fd = (int) $stream;
         $id = $this->nextId++;
@@ -94,7 +93,7 @@ final class StreamQueue
      */
     public function write($stream, callable $callback): callable
     {
-        assert(is_resource($stream));
+        assert(\is_resource($stream));
 
         $fd = (int) $stream;
         $id = $this->nextId++;

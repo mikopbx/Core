@@ -16,12 +16,6 @@
 
 namespace SecurityLib;
 
-use function function_exists;
-use function mb_strlen;
-use function mb_substr;
-use function strlen;
-use function substr;
-
 /**
  * The Utility trait.
  *
@@ -44,10 +38,10 @@ abstract class Util {
      */
     public static function safeStrlen($string)
     {
-        if (function_exists('mb_strlen')) {
-            return mb_strlen($string, '8bit');
+        if (\function_exists('mb_strlen')) {
+            return \mb_strlen($string, '8bit');
         }
-        return strlen($string);
+        return \strlen($string);
     }
 
     /**
@@ -62,11 +56,11 @@ abstract class Util {
      */
     public static function safeSubstr($string, $start = 0, $length = null)
     {
-        if (function_exists('mb_substr')) {
-            return mb_substr($string, $start, $length, '8bit');
+        if (\function_exists('mb_substr')) {
+            return \mb_substr($string, $start, $length, '8bit');
         } elseif ($length !== null) {
-            return substr($string, $start, $length);
+            return \substr($string, $start, $length);
         }
-        return substr($string, $start);
+        return \substr($string, $start);
     }
 }

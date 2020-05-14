@@ -2,9 +2,6 @@
 
 namespace React\Promise\PromiseTest;
 
-use Exception;
-use stdClass;
-
 trait NotifyTestTrait
 {
     /**
@@ -17,7 +14,7 @@ trait NotifyTestTrait
     {
         $adapter = $this->getPromiseTestAdapter();
 
-        $sentinel = new stdClass();
+        $sentinel = new \stdClass();
 
         $mock = $this->createCallableMock();
         $mock
@@ -36,7 +33,7 @@ trait NotifyTestTrait
     {
         $adapter = $this->getPromiseTestAdapter();
 
-        $sentinel = new stdClass();
+        $sentinel = new \stdClass();
 
         $mock = $this->createCallableMock();
         $mock
@@ -70,7 +67,7 @@ trait NotifyTestTrait
     {
         $adapter = $this->getPromiseTestAdapter();
 
-        $sentinel = new stdClass();
+        $sentinel = new \stdClass();
 
         $mock = $this->createCallableMock();
         $mock
@@ -104,7 +101,7 @@ trait NotifyTestTrait
     {
         $adapter = $this->getPromiseTestAdapter();
 
-        $exception = new Exception();
+        $exception = new \Exception();
 
         $mock = $this->createCallableMock();
         $mock
@@ -141,7 +138,7 @@ trait NotifyTestTrait
 
         $promise2 = $adapter2->promise();
 
-        $sentinel = new stdClass();
+        $sentinel = new \stdClass();
 
         $mock = $this->createCallableMock();
         $mock
@@ -173,7 +170,7 @@ trait NotifyTestTrait
 
         $promise2 = $adapter2->promise();
 
-        $sentinel = new stdClass();
+        $sentinel = new \stdClass();
 
         $mock = $this->createCallableMock();
         $mock
@@ -202,7 +199,7 @@ trait NotifyTestTrait
         $adapter = $this->getPromiseTestAdapter();
         $adapter2 = $this->getPromiseTestAdapter();
 
-        $sentinel = new stdClass();
+        $sentinel = new \stdClass();
 
         $mock = $this->createCallableMock();
         $mock
@@ -332,7 +329,7 @@ trait NotifyTestTrait
         $this->setExpectedException('\Exception', 'UnhandledRejectionException');
 
         $this->assertNull($adapter->promise()->done(null, null, function () {
-            throw new Exception('UnhandledRejectionException');
+            throw new \Exception('UnhandledRejectionException');
         }));
         $adapter->notify(1);
     }

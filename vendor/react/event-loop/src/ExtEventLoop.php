@@ -5,14 +5,9 @@ namespace React\EventLoop;
 use BadMethodCallException;
 use Event;
 use EventBase;
-use EventConfig;
 use React\EventLoop\Tick\FutureTickQueue;
 use React\EventLoop\Timer\Timer;
 use SplObjectStorage;
-use function call_user_func;
-use function class_exists;
-use const DIRECTORY_SEPARATOR;
-use const PHP_VERSION_ID;
 
 /**
  * An `ext-event` based event loop.
@@ -43,16 +38,16 @@ final class ExtEventLoop implements LoopInterface
 
     public function __construct()
     {
-        if (! class_exists('EventBase', false)) {
+        if (!\class_exists('EventBase', false)) {
             throw new BadMethodCallException('Cannot create ExtEventLoop, ext-event extension missing');
         }
 
         // support arbitrary file descriptors and not just sockets
         // Windows only has limited file descriptor support, so do not require this (will fail otherwise)
         // @link http://www.wangafu.net/~nickm/libevent-book/Ref2_eventbase.html#_setting_up_a_complicated_event_base
-        $config = new EventConfig();
-        if (DIRECTORY_SEPARATOR !== '\\') {
-            $config->requireFeatures(EventConfig::FEATURE_FDS);
+        $config = new \EventConfig();
+        if (\DIRECTORY_SEPARATOR !== '\\') {
+            $config->requireFeatures(\EventConfig::FEATURE_FDS);
         }
 
         $this->eventBase = new EventBase($config);
@@ -89,7 +84,7 @@ final class ExtEventLoop implements LoopInterface
 
         // ext-event does not increase refcount on stream resources for PHP 7+
         // manually keep track of stream resource to prevent premature garbage collection
-        if (PHP_VERSION_ID >= 70000) {
+        if (\PHP_VERSION_ID >= 70000) {
             $this->readRefs[$key] = $stream;
         }
     }
@@ -108,7 +103,7 @@ final class ExtEventLoop implements LoopInterface
 
         // ext-event does not increase refcount on stream resources for PHP 7+
         // manually keep track of stream resource to prevent premature garbage collection
-        if (PHP_VERSION_ID >= 70000) {
+        if (\PHP_VERSION_ID >= 70000) {
             $this->writeRefs[$key] = $stream;
         }
     }
@@ -245,7 +240,7 @@ final class ExtEventLoop implements LoopInterface
     {
         $timers = $this->timerEvents;
         $this->timerCallback = function ($_, $__, $timer) use ($timers) {
-            call_user_func($timer->getCallback(), $timer);
+            \call_user_func($timer->getCallback(), $timer);
 
             if (!$timer->isPeriodic() && $timers->contains($timer)) {
                 $this->cancelTimer($timer);
@@ -268,11 +263,11 @@ final class ExtEventLoop implements LoopInterface
             $key = (int) $stream;
 
             if (Event::READ === (Event::READ & $flags) && isset($read[$key])) {
-                call_user_func($read[$key], $stream);
+                \call_user_func($read[$key], $stream);
             }
 
             if (Event::WRITE === (Event::WRITE & $flags) && isset($write[$key])) {
-                call_user_func($write[$key], $stream);
+                \call_user_func($write[$key], $stream);
             }
         };
     }

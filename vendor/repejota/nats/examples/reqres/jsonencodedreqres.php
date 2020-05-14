@@ -1,14 +1,9 @@
 <?php
-
-use Nats\ConnectionOptions;
-use Nats\EncodedConnection;
-use Nats\Encoders\JSONEncoder;
-
 require_once __DIR__.'/../../vendor/autoload.php';
 
-$encoder = new JSONEncoder();
-$options = new ConnectionOptions();
-$client  = new EncodedConnection($options, $encoder);
+$encoder = new \Nats\Encoders\JSONEncoder();
+$options = new \Nats\ConnectionOptions();
+$client  = new \Nats\EncodedConnection($options, $encoder);
 $client->connect();
 
 // Request Response.

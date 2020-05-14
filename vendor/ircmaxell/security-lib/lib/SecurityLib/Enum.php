@@ -14,7 +14,6 @@
 namespace SecurityLib;
 
 use \ReflectionObject;
-use UnexpectedValueException;
 
 /**
  * The Enum base class for Enum functionality
@@ -60,7 +59,7 @@ abstract class Enum {
         $validValues = $this->getConstList();
         $this->name  = array_search($value, $validValues);
         if (!$this->name) {
-            throw new UnexpectedValueException(
+            throw new \UnexpectedValueException(
                 'Value not a const in enum ' . get_class($this)
             );
         }

@@ -20,7 +20,6 @@ use Recoil\StrandTrace;
 use SplObjectStorage;
 use Throwable;
 use UnexpectedValueException;
-use function is_callable;
 
 /**
  * The standard {@see SystemStrand} implementation.
@@ -218,7 +217,7 @@ trait StrandTrait
                     // A raw callable was yielded ...
                     } elseif (
                         $produced instanceof Closure || // perf
-                        is_callable($produced)
+                        \is_callable($produced)
                     ) {
                         $produced = $produced();
 

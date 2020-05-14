@@ -16,12 +16,6 @@ namespace Assert;
 
 use LogicException;
 use ReflectionClass;
-use RuntimeException;
-use function array_unshift;
-use function call_user_func_array;
-use function is_string;
-use function is_subclass_of;
-use function method_exists;
 
 /**
  * Chaining builder for assertions.
@@ -179,14 +173,14 @@ class AssertionChain
             return $this;
         }
 
-        if (! method_exists($this->assertionClassName, $methodName)) {
-            throw new RuntimeException("Assertion '".$methodName."' does not exist.");
+        if (!\method_exists($this->assertionClassName, $methodName)) {
+            throw new \RuntimeException("Assertion '".$methodName."' does not exist.");
         }
 
         $reflClass = new ReflectionClass($this->assertionClassName);
         $method = $reflClass->getMethod($methodName);
 
-        array_unshift($args, $this->value);
+        \array_unshift($args, $this->value);
         $params = $method->getParameters();
 
         foreach ($params as $idx => $param) {
@@ -207,7 +201,7 @@ class AssertionChain
             $methodName = 'all'.$methodName;
         }
 
-        call_user_func_array([$this->assertionClassName, $methodName], $args);
+        \call_user_func_array([$this->assertionClassName, $methodName], $args);
 
         return $this;
     }
@@ -245,11 +239,11 @@ class AssertionChain
      */
     public function setAssertionClassName($className): AssertionChain
     {
-        if (! is_string($className)) {
+        if (!\is_string($className)) {
             throw new LogicException('Exception class name must be passed as a string');
         }
 
-        if (Assertion::class !== $className && ! is_subclass_of($className, Assertion::class)) {
+        if (Assertion::class !== $className && !\is_subclass_of($className, Assertion::class)) {
             throw new LogicException($className.' is not (a subclass of) '.Assertion::class);
         }
 

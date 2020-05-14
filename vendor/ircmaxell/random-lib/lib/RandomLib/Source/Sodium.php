@@ -32,9 +32,7 @@
  */
 namespace RandomLib\Source;
 
-use RandomLib\AbstractSource;
 use SecurityLib\Strength;
-use function Sodium\randombytes_buf;
 
 /**
  * The libsodium Random Number Source
@@ -48,7 +46,7 @@ use function Sodium\randombytes_buf;
  * @author     Anthony Ferrara <ircmaxell@ircmaxell.com>
  * @author     Ben Ramsey <ben@benramsey.com>
  */
-class Sodium extends AbstractSource
+class Sodium extends \RandomLib\AbstractSource
 {
 
     /**
@@ -106,6 +104,6 @@ class Sodium extends AbstractSource
             return str_repeat(chr(0), $size);
         }
 
-        return randombytes_buf($size);
+        return \Sodium\randombytes_buf($size);
     }
 }

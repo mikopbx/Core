@@ -8,7 +8,6 @@ use Pheanstalk\Contract\SocketInterface;
 use Pheanstalk\Socket\FsockopenSocket;
 use Pheanstalk\Socket\SocketSocket;
 use Pheanstalk\Socket\StreamSocket;
-use RuntimeException;
 
 class SocketFactory implements SocketFactoryInterface
 {
@@ -89,7 +88,7 @@ class SocketFactory implements SocketFactoryInterface
             case self::FSOCKOPEN:
                 return $this->createFsockopenSocket();
             default:
-                throw new RuntimeException("Unknown implementation");
+                throw new \RuntimeException("Unknown implementation");
         }
     }
 }

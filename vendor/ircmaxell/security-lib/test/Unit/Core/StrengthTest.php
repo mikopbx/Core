@@ -1,14 +1,13 @@
 <?php
 
-use SecurityLib\Enum;
 use SecurityLib\Strength;
 
 class Unit_Core_StrengthTest extends PHPUnit_Framework_TestCase {
 
     public function testConstruct() {
         $obj = new Strength(Strength::LOW);
-        $this->assertTrue($obj instanceof Strength);
-        $this->assertTrue($obj instanceof Enum);
+        $this->assertTrue($obj instanceof \SecurityLib\Strength);
+        $this->assertTrue($obj instanceof \SecurityLib\Enum);
     }
 
     public function testGetConstList() {

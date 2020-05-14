@@ -1,7 +1,5 @@
 <?php
 
-use SecurityLib\BigMath\BCMath;
-
 require_once __DIR__ . '/../BigMathTest.php';
 
 class Unit_Core_BigMath_BCMathTest extends Unit_Core_BigMathTest {
@@ -18,7 +16,7 @@ class Unit_Core_BigMath_BCMathTest extends Unit_Core_BigMathTest {
      * @dataProvider provideAddTest
      */
     public function testAdd($left, $right, $expected) {
-        $obj = new BCMath;
+        $obj = new \SecurityLib\BigMath\BCMath;
         $this->assertEquals($expected, $obj->add($left, $right));
     }
 
@@ -26,7 +24,7 @@ class Unit_Core_BigMath_BCMathTest extends Unit_Core_BigMathTest {
      * @dataProvider provideSubtractTest
      */
     public function testSubtract($left, $right, $expected) {
-        $obj = new BCMath;
+        $obj = new \SecurityLib\BigMath\BCMath;
         $this->assertEquals($expected, $obj->subtract($left, $right));
     }
 }

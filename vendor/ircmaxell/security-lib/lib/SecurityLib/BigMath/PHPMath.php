@@ -15,7 +15,6 @@
 namespace SecurityLib\BigMath;
 
 use SecurityLib\BaseConverter;
-use SecurityLib\BigMath;
 
 /**
  * A class for arbitrary precision math functions implemented in PHP
@@ -24,7 +23,7 @@ use SecurityLib\BigMath;
  * @package    Core
  * @subpackage BigMath
  */
-class PHPMath extends BigMath {
+class PHPMath extends \SecurityLib\BigMath {
 
     /**
      * Add two numbers together

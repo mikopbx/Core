@@ -31,7 +31,6 @@
  */
 namespace RandomLib\Mixer;
 
-use RandomLib\AbstractMixer;
 use SecurityLib\Strength;
 
 /**
@@ -48,7 +47,7 @@ use SecurityLib\Strength;
  *
  * @author     Anthony Ferrara <ircmaxell@ircmaxell.com>
  */
-class XorMixer extends AbstractMixer
+class XorMixer extends \RandomLib\AbstractMixer
 {
 
     /**

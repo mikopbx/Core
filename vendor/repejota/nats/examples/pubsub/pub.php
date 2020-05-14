@@ -1,10 +1,7 @@
 <?php
-
-use Nats\Connection;
-
 require_once __DIR__.'/../../vendor/autoload.php';
 
-$client = new Connection();
+$client = new \Nats\Connection();
 $client->connect();
 
 // Simple Publisher.

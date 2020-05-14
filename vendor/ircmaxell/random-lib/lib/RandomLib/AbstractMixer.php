@@ -37,7 +37,7 @@ use SecurityLib\Util;
  *
  * @author   Anthony Ferrara <ircmaxell@ircmaxell.com>
  */
-abstract class AbstractMixer implements Mixer
+abstract class AbstractMixer implements \RandomLib\Mixer
 {
 
     /**

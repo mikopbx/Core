@@ -2,23 +2,9 @@
 
 namespace React\EventLoop;
 
-use BadMethodCallException;
 use React\EventLoop\Tick\FutureTickQueue;
 use React\EventLoop\Timer\Timer;
 use React\EventLoop\Timer\Timers;
-use function array_merge;
-use function call_user_func;
-use function ftell;
-use function function_exists;
-use function pcntl_async_signals;
-use function pcntl_signal;
-use function pcntl_signal_dispatch;
-use function sleep;
-use function stream_select;
-use function usleep;
-use const DIRECTORY_SEPARATOR;
-use const PHP_INT_MAX;
-use const SIG_DFL;
 
 /**
  * A `stream_select()` based event loop.
@@ -83,13 +69,13 @@ final class StreamSelectLoop implements LoopInterface
     {
         $this->futureTickQueue = new FutureTickQueue();
         $this->timers = new Timers();
-        $this->pcntl = function_exists('pcntl_signal') && function_exists('pcntl_signal_dispatch');
-        $this->pcntlPoll = $this->pcntl && ! function_exists('pcntl_async_signals');
+        $this->pcntl = \function_exists('pcntl_signal') && \function_exists('pcntl_signal_dispatch');
+        $this->pcntlPoll = $this->pcntl && !\function_exists('pcntl_async_signals');
         $this->signals = new SignalsHandler();
 
         // prefer async signals if available (PHP 7.1+) or fall back to dispatching on each tick
         if ($this->pcntl && !$this->pcntlPoll) {
-            pcntl_async_signals(true);
+            \pcntl_async_signals(true);
         }
     }
 
@@ -164,14 +150,14 @@ final class StreamSelectLoop implements LoopInterface
     public function addSignal($signal, $listener)
     {
         if ($this->pcntl === false) {
-            throw new BadMethodCallException('Event loop feature "signals" isn\'t supported by the "StreamSelectLoop"');
+            throw new \BadMethodCallException('Event loop feature "signals" isn\'t supported by the "StreamSelectLoop"');
         }
 
         $first = $this->signals->count($signal) === 0;
         $this->signals->add($signal, $listener);
 
         if ($first) {
-            pcntl_signal($signal, array($this->signals, 'call'));
+            \pcntl_signal($signal, array($this->signals, 'call'));
         }
     }
 
@@ -184,7 +170,7 @@ final class StreamSelectLoop implements LoopInterface
         $this->signals->remove($signal, $listener);
 
         if ($this->signals->count($signal) === 0) {
-            pcntl_signal($signal, SIG_DFL);
+            \pcntl_signal($signal, \SIG_DFL);
         }
     }
 
@@ -211,7 +197,7 @@ final class StreamSelectLoop implements LoopInterface
                     // Ensure we do not exceed maximum integer size, which may
                     // cause the loop to tick once every ~35min on 32bit systems.
                     $timeout *= self::MICROSECONDS_PER_SECOND;
-                    $timeout = $timeout > PHP_INT_MAX ? PHP_INT_MAX : (int)$timeout;
+                    $timeout = $timeout > \PHP_INT_MAX ? \PHP_INT_MAX : (int)$timeout;
                 }
 
             // The only possible event is stream or signal activity, so wait forever ...
@@ -244,7 +230,7 @@ final class StreamSelectLoop implements LoopInterface
 
         $available = $this->streamSelect($read, $write, $timeout);
         if ($this->pcntlPoll) {
-            pcntl_signal_dispatch();
+            \pcntl_signal_dispatch();
         }
         if (false === $available) {
             // if a system call has been interrupted,
@@ -256,7 +242,7 @@ final class StreamSelectLoop implements LoopInterface
             $key = (int) $stream;
 
             if (isset($this->readListeners[$key])) {
-                call_user_func($this->readListeners[$key], $stream);
+                \call_user_func($this->readListeners[$key], $stream);
             }
         }
 
@@ -264,7 +250,7 @@ final class StreamSelectLoop implements LoopInterface
             $key = (int) $stream;
 
             if (isset($this->writeListeners[$key])) {
-                call_user_func($this->writeListeners[$key], $stream);
+                \call_user_func($this->writeListeners[$key], $stream);
             }
         }
     }
@@ -291,30 +277,30 @@ final class StreamSelectLoop implements LoopInterface
             // Lacking better APIs, every write-only socket that has not yet read any data is assumed to be in a pending connection attempt state.
             // @link https://docs.microsoft.com/de-de/windows/win32/api/winsock2/nf-winsock2-select
             $except = null;
-            if (DIRECTORY_SEPARATOR === '\\') {
+            if (\DIRECTORY_SEPARATOR === '\\') {
                 $except = array();
                 foreach ($write as $key => $socket) {
-                    if (!isset($read[$key]) && @ftell($socket) === 0) {
+                    if (!isset($read[$key]) && @\ftell($socket) === 0) {
                         $except[$key] = $socket;
                     }
                 }
             }
 
             // suppress warnings that occur, when stream_select is interrupted by a signal
-            $ret = @stream_select($read, $write, $except, $timeout === null ? null : 0, $timeout);
+            $ret = @\stream_select($read, $write, $except, $timeout === null ? null : 0, $timeout);
 
             if ($except) {
-                $write = array_merge($write, $except);
+                $write = \array_merge($write, $except);
             }
             return $ret;
         }
 
         if ($timeout > 0) {
-            usleep($timeout);
+            \usleep($timeout);
         } elseif ($timeout === null) {
             // wait forever (we only reach this if we're only awaiting signals)
             // this may be interrupted and return earlier when a signal is received
-            sleep(PHP_INT_MAX);
+            \sleep(PHP_INT_MAX);
         }
 
         return 0;

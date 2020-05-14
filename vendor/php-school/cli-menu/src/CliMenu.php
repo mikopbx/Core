@@ -2,7 +2,6 @@
 
 namespace PhpSchool\CliMenu;
 
-use InvalidArgumentException;
 use PhpSchool\CliMenu\Exception\InvalidTerminalException;
 use PhpSchool\CliMenu\Exception\MenuNotOpenException;
 use PhpSchool\CliMenu\Input\InputIO;
@@ -23,7 +22,6 @@ use PhpSchool\CliMenu\Util\StringUtil as s;
 use PhpSchool\Terminal\InputCharacter;
 use PhpSchool\Terminal\NonCanonicalReader;
 use PhpSchool\Terminal\Terminal;
-use RuntimeException;
 use function PhpSchool\CliMenu\Util\collect;
 use function PhpSchool\CliMenu\Util\each;
 
@@ -243,7 +241,7 @@ class CliMenu
     public function addCustomControlMapping(string $input, callable $callable) : void
     {
         if (isset($this->defaultControlMappings[$input]) || isset($this->customControlMappings[$input])) {
-            throw new InvalidArgumentException('Cannot rebind this input');
+            throw new \InvalidArgumentException('Cannot rebind this input');
         }
 
         $this->customControlMappings[$input] = $callable;
@@ -270,7 +268,7 @@ class CliMenu
     public function removeCustomControlMapping(string $input) : void
     {
         if (!isset($this->customControlMappings[$input])) {
-            throw new InvalidArgumentException('This input is not registered');
+            throw new \InvalidArgumentException('This input is not registered');
         }
 
         unset($this->customControlMappings[$input]);
@@ -400,7 +398,7 @@ class CliMenu
     public function getSelectedItem() : MenuItemInterface
     {
         if (null === $this->selectedItem) {
-            throw new RuntimeException('No selected item');
+            throw new \RuntimeException('No selected item');
         }
 
         $item = $this->items[$this->selectedItem];
@@ -414,7 +412,7 @@ class CliMenu
         $key = array_search($item, $this->items, true);
 
         if (false === $key) {
-            throw new InvalidArgumentException('Item does not exist in menu');
+            throw new \InvalidArgumentException('Item does not exist in menu');
         }
 
         $this->selectedItem = $key;
@@ -423,7 +421,7 @@ class CliMenu
     public function getSelectedItemIndex() : int
     {
         if (null === $this->selectedItem) {
-            throw new RuntimeException('No selected item');
+            throw new \RuntimeException('No selected item');
         }
 
         return $this->selectedItem;
@@ -432,7 +430,7 @@ class CliMenu
     public function getItemByIndex(int $index) : MenuItemInterface
     {
         if (!isset($this->items[$index])) {
-            throw new RuntimeException('Item with index does not exist');
+            throw new \RuntimeException('Item with index does not exist');
         }
 
         return $this->items[$index];
@@ -587,7 +585,7 @@ class CliMenu
         }
         
         if (count($this->items) === 0) {
-            throw new RuntimeException('Menu must have at least 1 item before it can be opened');
+            throw new \RuntimeException('Menu must have at least 1 item before it can be opened');
         }
 
         $this->configureTerminal();
@@ -632,7 +630,7 @@ class CliMenu
         $key = array_search($item, $this->items, true);
 
         if (false === $key) {
-            throw new InvalidArgumentException('Item does not exist in menu');
+            throw new \InvalidArgumentException('Item does not exist in menu');
         }
 
         unset($this->items[$key]);
@@ -746,7 +744,7 @@ class CliMenu
     private function guardSingleLine(string $text) : void
     {
         if (strpos($text, "\n") !== false) {
-            throw new InvalidArgumentException;
+            throw new \InvalidArgumentException;
         }
     }
 

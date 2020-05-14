@@ -31,7 +31,6 @@
  */
 namespace RandomLib\Mixer;
 
-use RandomLib\AbstractMixer;
 use SecurityLib\Strength;
 use SecurityLib\Util;
 
@@ -49,7 +48,7 @@ use SecurityLib\Util;
  *
  * @author     Anthony Ferrara <ircmaxell@ircmaxell.com>
  */
-class Hash extends AbstractMixer
+class Hash extends \RandomLib\AbstractMixer
 {
 
     /**

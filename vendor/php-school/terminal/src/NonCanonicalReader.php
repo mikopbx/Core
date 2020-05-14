@@ -2,8 +2,6 @@
 
 namespace PhpSchool\Terminal;
 
-use InvalidArgumentException;
-
 /**
  * This class takes a terminal and disabled canonical mode. It reads the input
  * and returns characters and control sequences as `InputCharacters` as soon
@@ -43,7 +41,7 @@ class NonCanonicalReader
     public function addControlMapping(string $character, string $mapToControl) : void
     {
         if (!InputCharacter::controlExists($mapToControl)) {
-            throw new InvalidArgumentException(sprintf('Control "%s" does not exist', $mapToControl));
+            throw new \InvalidArgumentException(sprintf('Control "%s" does not exist', $mapToControl));
         }
 
         $this->mappings[$character] = $mapToControl;

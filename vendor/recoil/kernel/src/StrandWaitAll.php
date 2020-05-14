@@ -8,7 +8,6 @@ use Recoil\Awaitable;
 use Recoil\Listener;
 use Recoil\Strand;
 use Throwable;
-use function array_search;
 
 /**
  * Implementation of Api::all().
@@ -56,7 +55,7 @@ final class StrandWaitAll implements Awaitable, Listener
         assert($strand instanceof Strand, 'strand cannot be null');
         assert(in_array($strand, $this->substrands, true), 'unknown strand');
 
-        $index = array_search($strand, $this->substrands, true);
+        $index = \array_search($strand, $this->substrands, true);
         unset($this->substrands[$index]);
 
         $this->values[$index] = $value;

@@ -2,7 +2,6 @@
 
 namespace PhpSchool\CliMenu\Style;
 
-use InvalidArgumentException;
 use PhpSchool\CliMenu\MenuItem\CheckboxItem;
 use PhpSchool\CliMenu\MenuItem\MenuItemInterface;
 
@@ -58,7 +57,7 @@ class CheckboxStyle implements ItemStyle
     public function getMarker(MenuItemInterface $item, bool $selected) : string
     {
         if (!$item instanceof CheckboxItem) {
-            throw new InvalidArgumentException(
+            throw new \InvalidArgumentException(
                 sprintf('Expected an instance of: %s. Got: %s', CheckboxItem::class, get_class($item))
             );
         }

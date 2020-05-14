@@ -2,7 +2,6 @@
 
 namespace PhpSchool\CliMenu\Style;
 
-use InvalidArgumentException;
 use PhpSchool\CliMenu\MenuItem\MenuItemInterface;
 use PhpSchool\CliMenu\MenuItem\RadioItem;
 
@@ -58,7 +57,7 @@ class RadioStyle implements ItemStyle
     public function getMarker(MenuItemInterface $item, bool $selected) : string
     {
         if (!$item instanceof RadioItem) {
-            throw new InvalidArgumentException(
+            throw new \InvalidArgumentException(
                 sprintf('Expected an instance of: %s. Got: %s', RadioItem::class, get_class($item))
             );
         }

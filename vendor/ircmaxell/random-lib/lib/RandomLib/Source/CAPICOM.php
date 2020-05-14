@@ -28,9 +28,6 @@
  */
 namespace RandomLib\Source;
 
-use COM;
-use Exception;
-use RandomLib\AbstractSource;
 use SecurityLib\Strength;
 
 /**
@@ -45,7 +42,7 @@ use SecurityLib\Strength;
  * @author     Anthony Ferrara <ircmaxell@ircmaxell.com>
  * @codeCoverageIgnore
  */
-class CAPICOM extends AbstractSource
+class CAPICOM extends \RandomLib\AbstractSource
 {
 
     /**
@@ -79,11 +76,11 @@ class CAPICOM extends AbstractSource
     public function generate($size)
     {
         try {
-            $util = new COM('CAPICOM.Utilities.1');
+            $util = new \COM('CAPICOM.Utilities.1');
             $data = base64_decode($util->GetRandom($size, 0));
 
             return str_pad($data, $size, chr(0));
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             unset($e);
 
             return static::emptyValue($size);

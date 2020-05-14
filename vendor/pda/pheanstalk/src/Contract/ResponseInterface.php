@@ -2,9 +2,6 @@
 
 namespace Pheanstalk\Contract;
 
-use ArrayAccess;
-use Traversable;
-
 /**
  * A response from the beanstalkd server.
  *
@@ -12,7 +9,7 @@ use Traversable;
  * @package Pheanstalk
  * @license http://www.opensource.org/licenses/mit-license.php
  */
-interface ResponseInterface extends ArrayAccess, Traversable
+interface ResponseInterface extends \ArrayAccess, \Traversable
 {
     // global error responses
     const RESPONSE_OUT_OF_MEMORY = 'OUT_OF_MEMORY';

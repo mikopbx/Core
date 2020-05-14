@@ -16,8 +16,6 @@
 
 namespace SecurityLib;
 
-use InvalidArgumentException;
-
 /**
  * A Utility class for converting between raw binary strings and a given
  * list of characters
@@ -93,7 +91,7 @@ class BaseConverter {
     public static function baseConvert(array $source, $srcBase, $dstBase) {
         if ($dstBase < 2) {
             $message = sprintf('Invalid Destination Base: %d', $dstBase);
-            throw new InvalidArgumentException($message);
+            throw new \InvalidArgumentException($message);
         }
         $result = array();
         $count  = count($source);

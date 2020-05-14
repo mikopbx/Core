@@ -3,7 +3,6 @@
 
 namespace Pheanstalk;
 
-use InvalidArgumentException;
 use Pheanstalk\Contract\JobIdInterface;
 
 class JobId implements JobIdInterface
@@ -13,7 +12,7 @@ class JobId implements JobIdInterface
     public function __construct(int $id)
     {
         if ($id < 0) {
-            throw new InvalidArgumentException('Id must be >= 0');
+            throw new \InvalidArgumentException('Id must be >= 0');
         }
         $this->id = $id;
     }

@@ -11,13 +11,6 @@ use Recoil\Kernel\Exception\RejectedException;
 use Recoil\Recoil;
 use Throwable;
 use UnexpectedValueException;
-use function count;
-use function is_array;
-use function is_float;
-use function is_integer;
-use function is_resource;
-use function is_string;
-use function method_exists;
 
 /**
  * A partial implementation of {@see Api}.
@@ -46,23 +39,23 @@ trait ApiTrait
             return $this->cooperate($strand);
         }
 
-        if (is_integer($value) || is_float($value)) {
+        if (\is_integer($value) || \is_float($value)) {
             return $this->sleep($strand, $value);
         }
 
-        if (is_array($value)) {
+        if (\is_array($value)) {
             return $this->all($strand, ...$value);
         }
 
-        if (is_resource($value)) {
-            if (is_string($key)) {
+        if (\is_resource($value)) {
+            if (\is_string($key)) {
                 return $this->write($strand, $value, $key, PHP_INT_MAX);
             } else {
                 return $this->read($strand, $value, 1, PHP_INT_MAX);
             }
         }
 
-        if (method_exists($value, 'then')) {
+        if (\method_exists($value, 'then')) {
             $onFulfilled = static function ($result) use ($strand) {
                 $strand->send($result);
             };
@@ -75,13 +68,13 @@ trait ApiTrait
                 }
             };
 
-            if (method_exists($value, 'done')) {
+            if (\method_exists($value, 'done')) {
                 $value->done($onFulfilled, $onRejected);
             } else {
                 $value->then($onFulfilled, $onRejected);
             }
 
-            if (method_exists($value, 'cancel')) {
+            if (\method_exists($value, 'cancel')) {
                 $strand->setTerminator(function () use ($value) {
                     $value->cancel();
                 });
@@ -392,7 +385,7 @@ trait ApiTrait
      */
     public function some(SystemStrand $strand, int $count, ...$coroutines)
     {
-        $max = count($coroutines);
+        $max = \count($coroutines);
 
         if ($count < 0 || $count > $max) {
             $strand->throw(

@@ -10,10 +10,9 @@
  */
 namespace RandomLib\Source;
 
-use PHPUnit_Framework_TestCase;
 use SecurityLib\Strength;
 
-abstract class AbstractSourceTest extends PHPUnit_Framework_TestCase
+abstract class AbstractSourceTest extends \PHPUnit_Framework_TestCase
 {
     public function setUp()
     {

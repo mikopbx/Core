@@ -2,8 +2,6 @@
 
 namespace PhpSchool\Terminal;
 
-use InvalidArgumentException;
-use RuntimeException;
 use function in_array;
 
 /**
@@ -90,7 +88,7 @@ class InputCharacter
     public function getControl() : string
     {
         if (!isset(static::$controls[$this->data])) {
-            throw new RuntimeException(sprintf('Character "%s" is not a control', $this->data));
+            throw new \RuntimeException(sprintf('Character "%s" is not a control', $this->data));
         }
 
         return static::$controls[$this->data];
@@ -127,7 +125,7 @@ class InputCharacter
     public static function fromControlName(string $controlName) : self
     {
         if (!static::controlExists($controlName)) {
-            throw new InvalidArgumentException(sprintf('Control "%s" does not exist', $controlName));
+            throw new \InvalidArgumentException(sprintf('Control "%s" does not exist', $controlName));
         }
 
         return new static(array_search($controlName, static::$controls, true));

@@ -5,10 +5,6 @@ declare(strict_types=1); // @codeCoverageIgnore
 namespace Recoil\ReferenceKernel;
 
 use RuntimeException;
-use function error_get_last;
-use function stream_select;
-use function stripos;
-use function usleep;
 
 /**
  * Please note that this code is not part of the public API. It may be
@@ -102,7 +98,7 @@ class IO
             empty($this->writeStreams)
         ) {
             if ($timeout !== null) {
-                usleep($timeout);
+                \usleep($timeout);
             }
 
             return self::INACTIVE;
@@ -112,7 +108,7 @@ class IO
         $writeStreams = $this->writeStreams;
         $exceptStreams = null;
 
-        $count = @stream_select(
+        $count = @\stream_select(
             $readStreams,
             $writeStreams,
             $exceptStreams,
@@ -122,7 +118,7 @@ class IO
 
         // @codeCoverageIgnoreStart
         if ($count === false) {
-            $error = error_get_last();
+            $error = \error_get_last();
 
             if ($error === null) {
                 // Handle cases where stream_select() returns false, but there
@@ -134,7 +130,7 @@ class IO
                 );
             }
 
-            if (stripos($error['message'], 'interrupted system call') === false) {
+            if (\stripos($error['message'], 'interrupted system call') === false) {
                 throw new ErrorException(
                    $error['message'],
                    $error['type'],

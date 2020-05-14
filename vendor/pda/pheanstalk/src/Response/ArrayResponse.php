@@ -2,7 +2,6 @@
 
 namespace Pheanstalk\Response;
 
-use ArrayObject;
 use Pheanstalk\Contract\ResponseInterface;
 
 /**
@@ -12,7 +11,7 @@ use Pheanstalk\Contract\ResponseInterface;
  * @package Pheanstalk
  * @license http://www.opensource.org/licenses/mit-license.php
  */
-class ArrayResponse extends ArrayObject implements ResponseInterface
+class ArrayResponse extends \ArrayObject implements ResponseInterface
 {
     private $name;
 

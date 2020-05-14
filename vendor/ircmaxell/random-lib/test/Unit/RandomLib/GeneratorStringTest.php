@@ -10,9 +10,7 @@
  */
 namespace RandomLib;
 
-use PHPUnit_Framework_TestCase;
-
-class GeneratorStringTest extends PHPUnit_Framework_TestCase
+class GeneratorStringTest extends \PHPUnit_Framework_TestCase
 {
     protected $generator = null;
     protected $mixer = null;

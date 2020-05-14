@@ -2,10 +2,8 @@
 
 namespace PhpSchool\TerminalTest\IO;
 
-use InvalidArgumentException;
 use PhpSchool\Terminal\IO\ResourceInputStream;
 use PHPUnit\Framework\TestCase;
-use const STDOUT;
 
 /**
  * @author Aydin Hassan <aydin@hotmail.co.uk>
@@ -14,16 +12,16 @@ class ResourceInputStreamTest extends TestCase
 {
     public function testNonStream() : void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Expected a valid stream');
         new ResourceInputStream(42);
     }
 
     public function testNotReadable() : void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Expected a readable stream');
-        new ResourceInputStream(STDOUT);
+        new ResourceInputStream(\STDOUT);
     }
 
     public function testRead() : void

@@ -26,8 +26,6 @@
  */
 namespace RandomLibtest\Mocks\Random;
 
-use const PHP_INT_MAX;
-
 /**
  * The Mixer strategy interface.
  *
@@ -70,7 +68,7 @@ class Generator extends \RandomLib\Generator
         return $this->__call('generate', array($size));
     }
 
-    public function generateInt($min = 0, $max = PHP_INT_MAX)
+    public function generateInt($min = 0, $max = \PHP_INT_MAX)
     {
         return $this->__call('generateInt', array($min, $max));
     }

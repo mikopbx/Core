@@ -6,8 +6,6 @@ namespace Recoil\Exception;
 
 use RuntimeException;
 use Throwable;
-use function get_class;
-use function sprintf;
 
 /**
  * A kernel panic has been caused by an exception inside the kernel.
@@ -40,9 +38,9 @@ class KernelException extends RuntimeException implements PanicException
     public function __construct(Throwable $cause)
     {
         parent::__construct(
-            sprintf(
+            \sprintf(
                 'Unhandled exception in kernel: %s (%s).',
-                get_class($cause),
+                \get_class($cause),
                 $cause->getMessage()
             ),
             0,

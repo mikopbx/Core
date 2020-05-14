@@ -28,9 +28,7 @@
  */
 namespace RandomLib\Source;
 
-use RandomLib\AbstractSource;
 use SecurityLib\Strength;
-use function random_bytes;
 
 /**
  * The PHP7 Random Number Source
@@ -43,7 +41,7 @@ use function random_bytes;
  *
  * @author     Anthony Ferrara <ircmaxell@ircmaxell.com>
  */
-class RandomBytes extends AbstractSource
+class RandomBytes extends \RandomLib\AbstractSource
 {
 
     /**
@@ -80,6 +78,6 @@ class RandomBytes extends AbstractSource
             return str_repeat(chr(0), $size);
         }
 
-        return random_bytes($size);
+        return \random_bytes($size);
     }
 }

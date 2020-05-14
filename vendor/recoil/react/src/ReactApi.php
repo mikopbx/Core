@@ -11,13 +11,6 @@ use Recoil\Kernel\ApiTrait;
 use Recoil\Kernel\Strand;
 use Recoil\Kernel\SystemStrand;
 use RuntimeException;
-use function error_clear_last;
-use function error_get_last;
-use function fread;
-use function fwrite;
-use function stream_get_meta_data;
-use function strlen;
-use function substr;
 
 /**
  * A kernel API based on the React event loop.
@@ -130,7 +123,7 @@ final class ReactApi implements Api
                 &$done,
                 &$buffer
             ) {
-                $chunk = @fread(
+                $chunk = @\fread(
                     $stream,
                     $maxLength < self::MAX_READ_LENGTH
                         ? $maxLength
@@ -140,7 +133,7 @@ final class ReactApi implements Api
                 if ($chunk === false) {
                     // @codeCoverageIgnoreStart
                     $done();
-                    $error = error_get_last();
+                    $error = \error_get_last();
                     $strand->throw(
                         new ErrorException(
                             $error['message'],
@@ -156,7 +149,7 @@ final class ReactApi implements Api
                     $strand->send($buffer);
                 } else {
                     $buffer .= $chunk;
-                    $length = strlen($chunk);
+                    $length = \strlen($chunk);
 
                     if ($length >= $minLength || $length === $maxLength) {
                         $done();
@@ -188,7 +181,7 @@ final class ReactApi implements Api
         string $buffer,
         int $length = PHP_INT_MAX
     ) {
-        $bufferLength = strlen($buffer);
+        $bufferLength = \strlen($buffer);
 
         if ($bufferLength < $length) {
             $length = $bufferLength;
@@ -209,8 +202,8 @@ final class ReactApi implements Api
                 &$buffer,
                 &$length
             ) {
-                error_clear_last();
-                $bytes = @fwrite($stream, $buffer, $length);
+                \error_clear_last();
+                $bytes = @\fwrite($stream, $buffer, $length);
 
                 // Zero is returned by fwrite() when a stream error occurs, such
                 // as EPIPE. We *assume* that all of React's event loop
@@ -226,7 +219,7 @@ final class ReactApi implements Api
                 if ($bytes === 0 || $bytes === false) {
                     // @codeCoverageIgnoreStart
                     $done();
-                    $error = error_get_last();
+                    $error = \error_get_last();
 
                     if ($error !== null) {
                         $strand->throw(
@@ -239,7 +232,7 @@ final class ReactApi implements Api
                             )
                         );
                     } else {
-                        $md = stream_get_meta_data($stream);
+                        $md = \stream_get_meta_data($stream);
                         $message = 'an unknown error has occurred writing to ' . $md['uri'];
                         if (!$md['seekable']) {
                             $message .= ', the remote end may have closed the connection';
@@ -252,7 +245,7 @@ final class ReactApi implements Api
                     $strand->send();
                 } else {
                     $length -= $bytes;
-                    $buffer = substr($buffer, $bytes);
+                    $buffer = \substr($buffer, $bytes);
                 }
             }
         );

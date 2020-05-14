@@ -2,11 +2,6 @@
 
 namespace React\EventLoop;
 
-use function array_search;
-use function call_user_func;
-use function count;
-use function in_array;
-
 /**
  * @internal
  */
@@ -20,7 +15,7 @@ final class SignalsHandler
             $this->signals[$signal] = array();
         }
 
-        if (in_array($listener, $this->signals[$signal])) {
+        if (\in_array($listener, $this->signals[$signal])) {
             return;
         }
 
@@ -33,10 +28,10 @@ final class SignalsHandler
             return;
         }
 
-        $index = array_search($listener, $this->signals[$signal], true);
+        $index = \array_search($listener, $this->signals[$signal], true);
         unset($this->signals[$signal][$index]);
 
-        if (isset($this->signals[$signal]) && count($this->signals[$signal]) === 0) {
+        if (isset($this->signals[$signal]) && \count($this->signals[$signal]) === 0) {
             unset($this->signals[$signal]);
         }
     }
@@ -48,7 +43,7 @@ final class SignalsHandler
         }
 
         foreach ($this->signals[$signal] as $listener) {
-            call_user_func($listener, $signal);
+            \call_user_func($listener, $signal);
         }
     }
 
@@ -58,7 +53,7 @@ final class SignalsHandler
             return 0;
         }
 
-        return count($this->signals[$signal]);
+        return \count($this->signals[$signal]);
     }
 
     public function isEmpty()

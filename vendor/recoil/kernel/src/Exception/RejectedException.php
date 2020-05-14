@@ -6,8 +6,6 @@ namespace Recoil\Kernel\Exception;
 
 use Icecave\Repr\Repr;
 use RuntimeException;
-use function is_integer;
-use function is_string;
 
 /**
  * A promise was rejected with a non-exception reason.
@@ -21,9 +19,9 @@ class RejectedException extends RuntimeException
     {
         $this->reason = $reason;
 
-        if (is_string($reason)) {
+        if (\is_string($reason)) {
             parent::__construct($reason);
-        } elseif (is_integer($reason)) {
+        } elseif (\is_integer($reason)) {
             parent::__construct('The promise was rejected (' . Repr::repr($reason) . ').', $reason);
         } else {
             parent::__construct('The promise was rejected (' . Repr::repr($reason) . ').');

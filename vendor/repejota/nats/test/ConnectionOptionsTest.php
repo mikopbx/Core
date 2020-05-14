@@ -2,12 +2,11 @@
 namespace Nats\Test;
 
 use Nats\ConnectionOptions;
-use PHPUnit_Framework_TestCase;
 
 /**
  * Class ConnectionOptionsTest
  */
-class ConnectionOptionsTest extends PHPUnit_Framework_TestCase
+class ConnectionOptionsTest extends \PHPUnit_Framework_TestCase
 {
 
 

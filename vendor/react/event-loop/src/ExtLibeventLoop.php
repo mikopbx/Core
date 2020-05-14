@@ -8,24 +8,6 @@ use EventBase;
 use React\EventLoop\Tick\FutureTickQueue;
 use React\EventLoop\Timer\Timer;
 use SplObjectStorage;
-use function call_user_func;
-use function event_add;
-use function event_base_loop;
-use function event_base_new;
-use function event_base_set;
-use function event_del;
-use function event_free;
-use function event_new;
-use function event_set;
-use function event_timer_new;
-use function event_timer_set;
-use function function_exists;
-use const EV_PERSIST;
-use const EV_READ;
-use const EV_SIGNAL;
-use const EV_WRITE;
-use const EVLOOP_NONBLOCK;
-use const EVLOOP_ONCE;
 
 /**
  * An `ext-libevent` based event loop.
@@ -71,11 +53,11 @@ final class ExtLibeventLoop implements LoopInterface
 
     public function __construct()
     {
-        if (! function_exists('event_base_new')) {
+        if (!\function_exists('event_base_new')) {
             throw new BadMethodCallException('Cannot create ExtLibeventLoop, ext-libevent extension missing');
         }
 
-        $this->eventBase = event_base_new();
+        $this->eventBase = \event_base_new();
         $this->futureTickQueue = new FutureTickQueue();
         $this->timerEvents = new SplObjectStorage();
         $this->signals = new SignalsHandler();
@@ -91,10 +73,10 @@ final class ExtLibeventLoop implements LoopInterface
             return;
         }
 
-        $event = event_new();
-        event_set($event, $stream, EV_PERSIST | EV_READ, $this->streamCallback);
-        event_base_set($event, $this->eventBase);
-        event_add($event);
+        $event = \event_new();
+        \event_set($event, $stream, \EV_PERSIST | \EV_READ, $this->streamCallback);
+        \event_base_set($event, $this->eventBase);
+        \event_add($event);
 
         $this->readEvents[$key] = $event;
         $this->readListeners[$key] = $listener;
@@ -107,10 +89,10 @@ final class ExtLibeventLoop implements LoopInterface
             return;
         }
 
-        $event = event_new();
-        event_set($event, $stream, EV_PERSIST | EV_WRITE, $this->streamCallback);
-        event_base_set($event, $this->eventBase);
-        event_add($event);
+        $event = \event_new();
+        \event_set($event, $stream, \EV_PERSIST | \EV_WRITE, $this->streamCallback);
+        \event_base_set($event, $this->eventBase);
+        \event_add($event);
 
         $this->writeEvents[$key] = $event;
         $this->writeListeners[$key] = $listener;
@@ -122,8 +104,8 @@ final class ExtLibeventLoop implements LoopInterface
 
         if (isset($this->readListeners[$key])) {
             $event = $this->readEvents[$key];
-            event_del($event);
-            event_free($event);
+            \event_del($event);
+            \event_free($event);
 
             unset(
                 $this->readEvents[$key],
@@ -138,8 +120,8 @@ final class ExtLibeventLoop implements LoopInterface
 
         if (isset($this->writeListeners[$key])) {
             $event = $this->writeEvents[$key];
-            event_del($event);
-            event_free($event);
+            \event_del($event);
+            \event_free($event);
 
             unset(
                 $this->writeEvents[$key],
@@ -170,8 +152,8 @@ final class ExtLibeventLoop implements LoopInterface
     {
         if ($this->timerEvents->contains($timer)) {
             $event = $this->timerEvents[$timer];
-            event_del($event);
-            event_free($event);
+            \event_del($event);
+            \event_free($event);
 
             $this->timerEvents->detach($timer);
         }
@@ -187,10 +169,10 @@ final class ExtLibeventLoop implements LoopInterface
         $this->signals->add($signal, $listener);
 
         if (!isset($this->signalEvents[$signal])) {
-            $this->signalEvents[$signal] = event_new();
-            event_set($this->signalEvents[$signal], $signal, EV_PERSIST | EV_SIGNAL, array($this->signals, 'call'));
-            event_base_set($this->signalEvents[$signal], $this->eventBase);
-            event_add($this->signalEvents[$signal]);
+            $this->signalEvents[$signal] = \event_new();
+            \event_set($this->signalEvents[$signal], $signal, \EV_PERSIST | \EV_SIGNAL, array($this->signals, 'call'));
+            \event_base_set($this->signalEvents[$signal], $this->eventBase);
+            \event_add($this->signalEvents[$signal]);
         }
     }
 
@@ -199,8 +181,8 @@ final class ExtLibeventLoop implements LoopInterface
         $this->signals->remove($signal, $listener);
 
         if (isset($this->signalEvents[$signal]) && $this->signals->count($signal) === 0) {
-            event_del($this->signalEvents[$signal]);
-            event_free($this->signalEvents[$signal]);
+            \event_del($this->signalEvents[$signal]);
+            \event_free($this->signalEvents[$signal]);
             unset($this->signalEvents[$signal]);
         }
     }
@@ -212,14 +194,14 @@ final class ExtLibeventLoop implements LoopInterface
         while ($this->running) {
             $this->futureTickQueue->tick();
 
-            $flags = EVLOOP_ONCE;
+            $flags = \EVLOOP_ONCE;
             if (!$this->running || !$this->futureTickQueue->isEmpty()) {
-                $flags |= EVLOOP_NONBLOCK;
+                $flags |= \EVLOOP_NONBLOCK;
             } elseif (!$this->readEvents && !$this->writeEvents && !$this->timerEvents->count() && $this->signals->isEmpty()) {
                 break;
             }
 
-            event_base_loop($this->eventBase, $flags);
+            \event_base_loop($this->eventBase, $flags);
         }
     }
 
@@ -235,11 +217,11 @@ final class ExtLibeventLoop implements LoopInterface
      */
     private function scheduleTimer(TimerInterface $timer)
     {
-        $this->timerEvents[$timer] = $event = event_timer_new();
+        $this->timerEvents[$timer] = $event = \event_timer_new();
 
-        event_timer_set($event, $this->timerCallback, $timer);
-        event_base_set($event, $this->eventBase);
-        event_add($event, $timer->getInterval() * self::MICROSECONDS_PER_SECOND);
+        \event_timer_set($event, $this->timerCallback, $timer);
+        \event_base_set($event, $this->eventBase);
+        \event_add($event, $timer->getInterval() * self::MICROSECONDS_PER_SECOND);
     }
 
     /**
@@ -254,7 +236,7 @@ final class ExtLibeventLoop implements LoopInterface
         $that = $this;
         $timers = $this->timerEvents;
         $this->timerCallback = function ($_, $__, $timer) use ($timers, $that) {
-            call_user_func($timer->getCallback(), $timer);
+            \call_user_func($timer->getCallback(), $timer);
 
             // Timer already cancelled ...
             if (!$timers->contains($timer)) {
@@ -263,7 +245,7 @@ final class ExtLibeventLoop implements LoopInterface
 
             // Reschedule periodic timers ...
             if ($timer->isPeriodic()) {
-                event_add(
+                \event_add(
                     $timers[$timer],
                     $timer->getInterval() * ExtLibeventLoop::MICROSECONDS_PER_SECOND
                 );
@@ -289,12 +271,12 @@ final class ExtLibeventLoop implements LoopInterface
         $this->streamCallback = function ($stream, $flags) use (&$read, &$write) {
             $key = (int) $stream;
 
-            if (EV_READ === (EV_READ & $flags) && isset($read[$key])) {
-                call_user_func($read[$key], $stream);
+            if (\EV_READ === (\EV_READ & $flags) && isset($read[$key])) {
+                \call_user_func($read[$key], $stream);
             }
 
-            if (EV_WRITE === (EV_WRITE & $flags) && isset($write[$key])) {
-                call_user_func($write[$key], $stream);
+            if (\EV_WRITE === (\EV_WRITE & $flags) && isset($write[$key])) {
+                \call_user_func($write[$key], $stream);
             }
         };
     }

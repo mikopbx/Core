@@ -5,7 +5,6 @@ declare(strict_types=1); // @codeCoverageIgnore
 namespace Recoil\ReferenceKernel;
 
 use SplPriorityQueue;
-use function microtime;
 
 /**
  * Please note that this code is not part of the public API. It may be
@@ -36,7 +35,7 @@ class EventQueue
      */
     public function schedule(float $delay, callable $fn): callable
     {
-        $time = microtime(true) + $delay;
+        $time = \microtime(true) + $delay;
         $event = new Event($time, $fn);
 
         $this->queue->insert($event, -$time);
@@ -62,7 +61,7 @@ class EventQueue
      */
     public function tick()
     {
-        $time = microtime(true);
+        $time = \microtime(true);
 
         while (
             $this->pendingEvents > 0 &&
@@ -95,7 +94,7 @@ class EventQueue
             return null;
         }
 
-        $delta = $this->nextTime - microtime(true);
+        $delta = $this->nextTime - \microtime(true);
 
         if ($delta <= 0) {
             return 0;

@@ -6,9 +6,6 @@
  * using coroutines (i.e., "vanilla" React).
  */
 
-use React\EventLoop\Factory;
-use function React\Promise\all;
-
 require dirname(__DIR__) . '/vendor/autoload.php';
 
 /**
@@ -33,14 +30,14 @@ function resolveDomainName($name, React\Dns\Resolver\Resolver $resolver)
 
 // -----------------------------------------------------------------------------
 
-$loop = Factory::create();
+$loop = \React\EventLoop\Factory::create();
 
 $resolver = (new React\Dns\Resolver\Factory)->create(
     '8.8.8.8',
     $loop
 );
 
-all([
+\React\Promise\all([
     resolveDomainName('recoil.io', $resolver),
     resolveDomainName('reactphp.org', $resolver),
     resolveDomainName('probably-wont-resolve', $resolver),

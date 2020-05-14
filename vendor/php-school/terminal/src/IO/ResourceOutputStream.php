@@ -2,7 +2,6 @@
 
 namespace PhpSchool\Terminal\IO;
 
-use InvalidArgumentException;
 use function is_resource;
 use function get_resource_type;
 use function stream_get_meta_data;
@@ -21,12 +20,12 @@ class ResourceOutputStream implements OutputStream
     public function __construct($stream = STDOUT)
     {
         if (!is_resource($stream) || get_resource_type($stream) !== 'stream') {
-            throw new InvalidArgumentException('Expected a valid stream');
+            throw new \InvalidArgumentException('Expected a valid stream');
         }
 
         $meta = stream_get_meta_data($stream);
         if (strpos($meta['mode'], 'r') !== false && strpos($meta['mode'], '+') === false) {
-            throw new InvalidArgumentException('Expected a writable stream');
+            throw new \InvalidArgumentException('Expected a writable stream');
         }
 
         $this->stream = $stream;

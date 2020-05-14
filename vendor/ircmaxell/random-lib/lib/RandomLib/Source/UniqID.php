@@ -29,7 +29,6 @@
  */
 namespace RandomLib\Source;
 
-use RandomLib\AbstractSource;
 use SecurityLib\Strength;
 use SecurityLib\Util;
 
@@ -46,7 +45,7 @@ use SecurityLib\Util;
  * @author     Anthony Ferrara <ircmaxell@ircmaxell.com>
  * @codeCoverageIgnore
  */
-class UniqID extends AbstractSource
+class UniqID extends \RandomLib\AbstractSource
 {
 
     /**

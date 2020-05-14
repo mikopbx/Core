@@ -5,12 +5,11 @@ use Nats;
 use Nats\ConnectionOptions;
 use Nats\EncodedConnection;
 use Nats\Encoders\PHPEncoder;
-use PHPUnit_Framework_TestCase;
 
 /**
  * Class PHPEncoderTest.
  */
-class PHPEncoderTest extends PHPUnit_Framework_TestCase
+class PHPEncoderTest extends \PHPUnit_Framework_TestCase
 {
 
     /**

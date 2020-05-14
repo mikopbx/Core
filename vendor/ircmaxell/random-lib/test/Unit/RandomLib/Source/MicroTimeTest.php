@@ -10,7 +10,6 @@
  */
 namespace RandomLib\Source;
 
-use ReflectionClass;
 use SecurityLib\Strength;
 
 class MicroTimeTest extends AbstractSourceTest
@@ -27,7 +26,7 @@ class MicroTimeTest extends AbstractSourceTest
     {
         $class = static::getTestedClass();
         $rand = new $class();
-        $reflection_class = new ReflectionClass($class);
+        $reflection_class = new \ReflectionClass($class);
         $static = $reflection_class->getStaticProperties();
         $this->assertTrue($static['counter'] !== 0);
     }

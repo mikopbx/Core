@@ -20,8 +20,6 @@
 
 namespace PHPMailer\PHPMailer;
 
-use Psr\Log\LoggerInterface;
-
 /**
  * PHPMailer RFC821 SMTP email transport class.
  * Implements RFC 821 SMTP commands and provides some utility methods for sending mail to an SMTP server.
@@ -258,7 +256,7 @@ class SMTP
             return;
         }
         //Is this a PSR-3 logger?
-        if ($this->Debugoutput instanceof LoggerInterface) {
+        if ($this->Debugoutput instanceof \Psr\Log\LoggerInterface) {
             $this->Debugoutput->debug($str);
 
             return;

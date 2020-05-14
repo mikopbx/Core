@@ -30,7 +30,6 @@
  */
 namespace RandomLib\Source;
 
-use RandomLib\AbstractSource;
 use SecurityLib\Strength;
 use SecurityLib\Util;
 
@@ -48,7 +47,7 @@ use SecurityLib\Util;
  * @author     Anthony Ferrara <ircmaxell@ircmaxell.com>
  * @codeCoverageIgnore
  */
-final class MicroTime extends AbstractSource
+final class MicroTime extends \RandomLib\AbstractSource
 {
 
     /**
@@ -83,9 +82,9 @@ final class MicroTime extends AbstractSource
         $state      .= count(debug_backtrace(false));
         self::$state = hash('sha512', $state, true);
         if (is_null(self::$counter)) {
-            [, self::$counter] = unpack("i", Util::safeSubstr(self::$state, 0, 4));
+            list(, self::$counter) = unpack("i", Util::safeSubstr(self::$state, 0, 4));
             $seed = $this->generate(Util::safeStrlen(dechex(PHP_INT_MAX)));
-            [, self::$counter] = unpack("i", $seed);
+            list(, self::$counter) = unpack("i", $seed);
         }
     }
 

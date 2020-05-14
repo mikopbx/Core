@@ -1,16 +1,14 @@
 <?php
 namespace Nats\tests\Unit;
 
-use Exception;
 use Nats;
 use Nats\Connection;
 use Nats\ConnectionOptions;
-use PHPUnit_Framework_TestCase;
 
 /**
  * Class ConnectionTest.
  */
-class ConnectionTest extends PHPUnit_Framework_TestCase
+class ConnectionTest extends \PHPUnit_Framework_TestCase
 {
 
     /**
@@ -217,7 +215,7 @@ class ConnectionTest extends PHPUnit_Framework_TestCase
      */
     public function testRefusedConnection()
     {
-        $this->setExpectedException(Exception::class);
+        $this->setExpectedException(\Exception::class);
 
         $options = new ConnectionOptions();
         $options->setHost('localhost');

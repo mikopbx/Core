@@ -2,10 +2,8 @@
 
 namespace PhpSchool\TerminalTest;
 
-use InvalidArgumentException;
 use PhpSchool\Terminal\InputCharacter;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
 
 /**
  * @author Aydin Hassan <aydin@hotmail.co.uk>
@@ -37,7 +35,7 @@ class InputCharacterTest extends TestCase
 
     public function testExceptionIsThrownIfGetControlCalledWhenNotAControl() : void
     {
-        self::expectException(RuntimeException::class);
+        self::expectException(\RuntimeException::class);
         self::expectExceptionMessage('Character "p" is not a control');
 
         $char = new InputCharacter('p');
@@ -68,7 +66,7 @@ class InputCharacterTest extends TestCase
 
     public function testFromControlNameThrowsExceptionIfControlDoesNotExist() : void
     {
-        self::expectException(InvalidArgumentException::class);
+        self::expectException(\InvalidArgumentException::class);
         self::expectExceptionMessage('Control "w" does not exist');
 
         InputCharacter::fromControlName('w');

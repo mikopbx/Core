@@ -3,7 +3,6 @@
 namespace PhpSchool\CliMenu\Util;
 
 use Assert\Assertion;
-use InvalidArgumentException;
 use PhpSchool\Terminal\Terminal;
 
 class ColourUtil
@@ -297,7 +296,7 @@ class ColourUtil
     public static function map256To8(int $colourCode) : string
     {
         if (!isset(self::$coloursMap[$colourCode])) {
-            throw new InvalidArgumentException('Invalid colour code');
+            throw new \InvalidArgumentException('Invalid colour code');
         }
 
         return self::$coloursMap[$colourCode];

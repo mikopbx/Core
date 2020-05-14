@@ -13,10 +13,6 @@
  */
 namespace SecurityLib;
 
-use SecurityLib\BigMath\BCMath;
-use SecurityLib\BigMath\GMP;
-use SecurityLib\BigMath\PHPMath;
-
 /**
  * A class for arbitrary precision math functions
  *
@@ -37,11 +33,11 @@ abstract class BigMath {
     public static function createFromServerConfiguration() {
         //@codeCoverageIgnoreStart
         if (extension_loaded('gmp')) {
-            return new GMP();
+            return new \SecurityLib\BigMath\GMP();
         } elseif (extension_loaded('bcmath')) {
-            return new BCMath();
+            return new \SecurityLib\BigMath\BCMath();
         } else {
-            return new PHPMath();
+            return new \SecurityLib\BigMath\PHPMath();
         }
         //@codeCoverageIgnoreEnd
     }

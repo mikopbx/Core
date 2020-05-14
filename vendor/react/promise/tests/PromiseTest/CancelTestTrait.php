@@ -2,7 +2,6 @@
 
 namespace React\Promise\PromiseTest;
 
-use Exception;
 use React\Promise;
 
 trait CancelTestTrait
@@ -82,7 +81,7 @@ trait CancelTestTrait
     /** @test */
     public function cancelShouldRejectPromiseWithExceptionIfCancellerThrows()
     {
-        $e = new Exception();
+        $e = new \Exception();
 
         $adapter = $this->getPromiseTestAdapter(function () use ($e) {
             throw $e;

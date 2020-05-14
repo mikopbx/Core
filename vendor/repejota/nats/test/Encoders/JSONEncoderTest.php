@@ -5,12 +5,11 @@ use Nats;
 use Nats\ConnectionOptions;
 use Nats\EncodedConnection;
 use Nats\Encoders\JSONEncoder;
-use PHPUnit_Framework_TestCase;
 
 /**
  * Class JSONEncoderTest.
  */
-class JSONEncoderTest extends PHPUnit_Framework_TestCase
+class JSONEncoderTest extends \PHPUnit_Framework_TestCase
 {
 
     /**

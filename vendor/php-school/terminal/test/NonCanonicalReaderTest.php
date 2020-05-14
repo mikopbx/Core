@@ -2,7 +2,6 @@
 
 namespace PhpSchool\TerminalTest;
 
-use InvalidArgumentException;
 use PhpSchool\Terminal\InputCharacter;
 use PhpSchool\Terminal\Terminal;
 use PhpSchool\Terminal\NonCanonicalReader;
@@ -15,7 +14,7 @@ class NonCanonicalReaderTest extends TestCase
 {
     public function testExceptionIsThrownIfMappingAddedForNonControlCharacter() : void
     {
-        self::expectException(InvalidArgumentException::class);
+        self::expectException(\InvalidArgumentException::class);
         self::expectExceptionMessage('Control "w" does not exist');
 
         $terminal = $this->createMock(Terminal::class);
@@ -25,7 +24,7 @@ class NonCanonicalReaderTest extends TestCase
 
     public function testExceptionIsThrownIfMappingsAddedForNonControlCharacter() : void
     {
-        self::expectException(InvalidArgumentException::class);
+        self::expectException(\InvalidArgumentException::class);
         self::expectExceptionMessage('Control "w" does not exist');
 
         $terminal = $this->createMock(Terminal::class);

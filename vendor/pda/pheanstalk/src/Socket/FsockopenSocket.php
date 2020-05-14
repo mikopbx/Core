@@ -3,7 +3,6 @@
 
 namespace Pheanstalk\Socket;
 
-use Exception;
 use Pheanstalk\Exception\ConnectionException;
 
 /**
@@ -18,7 +17,7 @@ class FsockopenSocket extends FileSocket
     ) {
 
         if (!function_exists('fsockopen')) {
-            throw new Exception('Fsockopen not found');
+            throw new \Exception('Fsockopen not found');
         }
 
         $this->socket = @fsockopen($host, $port, $error, $errorMessage, $connectTimeout);

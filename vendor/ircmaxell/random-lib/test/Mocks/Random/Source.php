@@ -26,7 +26,6 @@
  */
 namespace RandomLibtest\Mocks\Random;
 
-use RandomLibTest\Mocks\AbstractMock;
 use SecurityLib\Strength;
 
 /**
@@ -39,7 +38,7 @@ use SecurityLib\Strength;
  *
  * @author     Anthony Ferrara <ircmaxell@ircmaxell.com>
  */
-class Source extends AbstractMock implements \RandomLib\Source
+class Source extends \RandomLibTest\Mocks\AbstractMock implements \RandomLib\Source
 {
     public static $strength = null;
 

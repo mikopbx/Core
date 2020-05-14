@@ -6,7 +6,6 @@ use Pheanstalk\Contract\CommandInterface;
 use Pheanstalk\Contract\ResponseParserInterface;
 use Pheanstalk\Exception\CommandException;
 use Pheanstalk\Response\ArrayResponse;
-use RuntimeException;
 
 /**
  * Common functionality for Command implementations.
@@ -33,7 +32,7 @@ abstract class AbstractCommand implements CommandInterface
         if ($this instanceof ResponseParserInterface) {
             return $this;
         }
-        throw new RuntimeException('Concrete implementation must implement `ResponseParser` or override this method');
+        throw new \RuntimeException('Concrete implementation must implement `ResponseParser` or override this method');
     }
 
     /**

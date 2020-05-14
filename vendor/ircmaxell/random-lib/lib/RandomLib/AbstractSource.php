@@ -31,7 +31,7 @@ use SecurityLib\Strength;
  * @category PHPSecurityLib
  * @package  Random
  */
-abstract class AbstractSource implements Source
+abstract class AbstractSource implements \RandomLib\Source
 {
 
     /**

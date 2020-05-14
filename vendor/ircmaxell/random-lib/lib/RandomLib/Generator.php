@@ -28,8 +28,6 @@
  */
 namespace RandomLib;
 
-use RangeException;
-
 /**
  * The Random Number Generator Class
  *
@@ -204,7 +202,7 @@ class Generator
              * actually store the difference, so we need to check if it's a float
              * and hence auto-converted...
              */
-            throw new RangeException(
+            throw new \RangeException(
                 'The supplied range is too great to generate'
             );
         }

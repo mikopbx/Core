@@ -8,11 +8,6 @@ use ErrorException;
 use Recoil\Kernel\Api;
 use Recoil\Kernel\ApiTrait;
 use Recoil\Kernel\SystemStrand;
-use function error_get_last;
-use function fread;
-use function fwrite;
-use function strlen;
-use function substr;
 
 /**
  * Please note that this code is not part of the public API. It may be
@@ -137,7 +132,7 @@ final class ReferenceApi implements Api
                 &$done,
                 &$buffer
             ) {
-                $chunk = @fread(
+                $chunk = @\fread(
                     $stream,
                     $maxLength < self::MAX_READ_LENGTH
                         ? $maxLength
@@ -147,7 +142,7 @@ final class ReferenceApi implements Api
                 if ($chunk === false) {
                     // @codeCoverageIgnoreStart
                     $done();
-                    $error = error_get_last();
+                    $error = \error_get_last();
                     $strand->throw(
                         new ErrorException(
                             $error['message'],
@@ -163,7 +158,7 @@ final class ReferenceApi implements Api
                     $strand->send($buffer);
                 } else {
                     $buffer .= $chunk;
-                    $length = strlen($chunk);
+                    $length = \strlen($chunk);
 
                     if ($length >= $minLength || $length === $maxLength) {
                         $done();
@@ -197,7 +192,7 @@ final class ReferenceApi implements Api
         string $buffer,
         int $length
     ) {
-        $bufferLength = strlen($buffer);
+        $bufferLength = \strlen($buffer);
 
         if ($bufferLength < $length) {
             $length = $bufferLength;
@@ -220,14 +215,14 @@ final class ReferenceApi implements Api
                 &$buffer,
                 &$length
             ) {
-                $bytes = @fwrite($stream, $buffer, $length);
+                $bytes = @\fwrite($stream, $buffer, $length);
 
                 // zero and false both indicate an error
                 // http://php.net/manual/en/function.fwrite.php#96951
                 if ($bytes === 0 || $bytes === false) {
                     // @codeCoverageIgnoreStart
                     $done();
-                    $error = error_get_last();
+                    $error = \error_get_last();
                     $strand->throw(
                         new ErrorException(
                             $error['message'],
@@ -243,7 +238,7 @@ final class ReferenceApi implements Api
                     $strand->send();
                 } else {
                     $length -= $bytes;
-                    $buffer = substr($buffer, $bytes);
+                    $buffer = \substr($buffer, $bytes);
                 }
             }
         );

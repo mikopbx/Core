@@ -6,7 +6,6 @@ namespace Recoil\Exception;
 
 use Exception;
 use Throwable;
-use function count;
 
 /**
  * A container for multiple exceptions produced by API operations that run
@@ -59,7 +58,7 @@ class CompositeException extends Exception implements RecoilException
     {
         $this->exceptions = $exceptions;
 
-        parent::__construct(count($exceptions) . ' operation(s) failed.');
+        parent::__construct(\count($exceptions) . ' operation(s) failed.');
     }
 
     /**

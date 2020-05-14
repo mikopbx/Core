@@ -9,7 +9,6 @@ use Recoil\Exception\CompositeException;
 use Recoil\Listener;
 use Recoil\Strand;
 use Throwable;
-use function array_search;
 
 /**
  * Implementation of Api::any().
@@ -79,7 +78,7 @@ final class StrandWaitAny implements Awaitable, Listener
         assert($strand instanceof Strand, 'strand cannot be null');
         assert(in_array($strand, $this->substrands, true), 'unknown strand');
 
-        $index = array_search($strand, $this->substrands, true);
+        $index = \array_search($strand, $this->substrands, true);
         unset($this->substrands[$index]);
 
         $this->exceptions[$index] = $exception;

@@ -14,10 +14,6 @@
 
 namespace SecurityLib;
 
-use DirectoryIterator;
-use InvalidArgumentException;
-use ReflectionClass;
-
 /**
  * The base abstract factory used by all PasswordLib factories
  *
@@ -51,10 +47,10 @@ abstract class AbstractFactory {
         $instantiate = false
     ) {
         $name = strtolower($name);
-        $refl = new ReflectionClass($class);
+        $refl = new \ReflectionClass($class);
         if (!$refl->implementsInterface($implements)) {
             $message = sprintf('Class must implement %s', $implements);
-            throw new InvalidArgumentException($message);
+            throw new \InvalidArgumentException($message);
         }
         if ($instantiate) {
             $class = new $class;
@@ -73,7 +69,7 @@ abstract class AbstractFactory {
      * @return void
      */
     protected function loadFiles($directory, $namespace, $callback) {
-        foreach (new DirectoryIterator($directory) as $file) {
+        foreach (new \DirectoryIterator($directory) as $file) {
             $filename = $file->getBasename();
             if ($file->isFile() && substr($filename, -4) == '.php') {
                 $name  = substr($filename, 0, -4);

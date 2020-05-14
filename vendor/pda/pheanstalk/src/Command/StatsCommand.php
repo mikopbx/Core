@@ -2,7 +2,6 @@
 
 namespace Pheanstalk\Command;
 
-use Pheanstalk\Contract\ResponseParserInterface;
 use Pheanstalk\YamlResponseParser;
 
 /**
@@ -17,7 +16,7 @@ class StatsCommand extends AbstractCommand
         return 'stats';
     }
 
-    public function getResponseParser(): ResponseParserInterface
+    public function getResponseParser(): \Pheanstalk\Contract\ResponseParserInterface
     {
         return new YamlResponseParser(
             YamlResponseParser::MODE_DICT

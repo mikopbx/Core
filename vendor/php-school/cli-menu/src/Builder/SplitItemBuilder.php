@@ -2,7 +2,6 @@
 
 namespace PhpSchool\CliMenu\Builder;
 
-use Closure;
 use PhpSchool\CliMenu\CliMenu;
 use PhpSchool\CliMenu\MenuItem\CheckboxItem;
 use PhpSchool\CliMenu\MenuItem\LineBreakItem;
@@ -104,7 +103,7 @@ class SplitItemBuilder
         return $this;
     }
 
-    public function addSubMenu(string $text, Closure $callback) : self
+    public function addSubMenu(string $text, \Closure $callback) : self
     {
         $builder = CliMenuBuilder::newSubMenu($this->menu->getTerminal());
 

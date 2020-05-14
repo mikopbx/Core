@@ -9,9 +9,7 @@
  * @version    Build @@version@@
  */
 
-use RandomLib\Factory;
 use RandomLib\Generator;
-use RandomLib\Mixer\Hash;
 use RandomLibTest\Mocks\Random\Mixer;
 use RandomLibTest\Mocks\Random\Source;
 
@@ -47,12 +45,12 @@ class Vectors_Random_GeneratorTest extends PHPUnit_Framework_TestCase
 
     public static function provideGenerators()
     {
-        $factory = new Factory();
+        $factory = new \RandomLib\Factory();
         $generator = $factory->getLowStrengthGenerator();
         $sources = $generator->getSources();
         $ret = array();
 
-        $ret[] = array(new Generator($sources, new Hash()), 10000, 'hash');
+        $ret[] = array(new Generator($sources, new \RandomLib\Mixer\Hash()), 10000, 'hash');
 
         return $ret;
     }
@@ -101,7 +99,7 @@ class Vectors_Random_GeneratorTest extends PHPUnit_Framework_TestCase
      *
      * @dataProvider provideGenerators
      */
-    public function testGenerate(Generator $generator, $times)
+    public function testGenerate(\RandomLib\Generator $generator, $times)
     {
         $ratio = $this->doTestGenerate($generator, $times);
         if ($ratio < 0.8 || $ratio > 1.2) {
@@ -118,7 +116,7 @@ class Vectors_Random_GeneratorTest extends PHPUnit_Framework_TestCase
         }
     }
 
-    protected function doTestGenerate(Generator $generator, $times)
+    protected function doTestGenerate(\RandomLib\Generator $generator, $times)
     {
         $inside = 0;
         $outside = 0;

@@ -2,12 +2,10 @@
 
 namespace PhpSchool\Terminal\Exception;
 
-use RuntimeException;
-
 /**
  * @author Aydin Hassan <aydin@hotmail.co.uk>
  */
-class NotInteractiveTerminal extends RuntimeException
+class NotInteractiveTerminal extends \RuntimeException
 {
     public static function inputNotInteractive() : self
     {
