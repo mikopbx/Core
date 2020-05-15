@@ -1170,9 +1170,9 @@ class Util
     /**
      * Генерация сертификата средствами openssl.
      *
-     * @param null $options
-     * @param null $config_args_pkey
-     * @param null $config_args_csr
+     * @param array $options
+     * @param array $config_args_pkey
+     * @param array $config_args_csr
      *
      * @return array
      */

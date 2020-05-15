@@ -127,7 +127,6 @@ class FirewallRules extends ModelsBase
         //Add modules firewall rules
         $di = Di::getDefault();
         if ($di!==null) {
-            $additionalRules = [[]];
             $pbxConfModules = $di->getShared('pbxConfModules');
             foreach ($pbxConfModules as $pbxConfModule){
                 $additionalRules = $pbxConfModule->getDefaultFirewallRules();

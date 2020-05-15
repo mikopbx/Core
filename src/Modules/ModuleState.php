@@ -16,6 +16,9 @@ use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\PbxSettings;
 use Phalcon\Di\Injectable;
 
+/**
+ * @property \MikoPBX\Service\LicenseWorker licenseWorker
+ */
 class ModuleState extends Injectable
 {
     private $messages;
@@ -70,7 +73,7 @@ class ModuleState extends Injectable
         }
 
         $error = false;
-        $this->db->begin('temporary'); // Временная транзакция, которая будет отменена после теста включения
+        $this->db->begin(); // Временная транзакция, которая будет отменена после теста включения
 
         // Временно включим модуль, чтобы включить все связи и зависимости
         $module = PbxExtensionModules::findFirstByUniqid($this->moduleUniqueID);
@@ -152,7 +155,7 @@ class ModuleState extends Injectable
         if ( ! $error) {
             $this->messages = [];
         }
-        $this->db->rollback('temporary'); // Откатываем временную транзакцию
+        $this->db->rollback(); // Откатываем временную транзакцию
 
         // Если ошибок нет, включаем Firewall и модуль
         if ( ! $error && ! $this->enableFirewallSettings()) {
@@ -179,8 +182,6 @@ class ModuleState extends Injectable
     /**
      * При включении модуля устанавливает настройки Firewall по-умолчаниию
      * или по состоянию на момент выключения
-     *
-     * @param $this ->moduleUniqueID
      *
      * @return bool
      */
@@ -251,7 +252,7 @@ class ModuleState extends Injectable
 
         // Проверим, нет ли настроенных зависимостей у других модулей
         // Попробуем удалить все настройки модуля
-        $this->db->begin('temporary');
+        $this->db->begin();
 
         if ($this->configClass !== null
             && method_exists($this->configClass, 'onBeforeModuleDisable')
@@ -331,7 +332,7 @@ class ModuleState extends Injectable
         if ( ! $error) {
             $this->messages = [];
         }
-        $this->db->rollback('temporary'); // Откатываем временную транзакцию
+        $this->db->rollback(); // Откатываем временную транзакцию
 
         // Если ошибок нет, выключаем Firewall и модуль
         if ( ! $error && ! $this->disableFirewallSettings()) {

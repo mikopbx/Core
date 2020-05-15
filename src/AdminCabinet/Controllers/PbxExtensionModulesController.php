@@ -52,10 +52,10 @@ class PbxExtensionModulesController extends BaseController
 
     /**
      * Страница с настройкой параметров модуля
-     * @param $uniqid - string идентификатор модуля
+     * @param $uniqid string идентификатор модуля
      *
      */
-    public function modifyAction($uniqid): void
+    public function modifyAction(string $uniqid): void
     {
         $menuSettings               = "AdditionalMenuItem{$uniqid}";
         $unCamelizedControllerName  = Text::uncamelize($uniqid, '-');
