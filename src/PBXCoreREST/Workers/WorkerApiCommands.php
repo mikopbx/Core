@@ -51,31 +51,36 @@ class WorkerApiCommands extends WorkerBase
     {
         $request   = json_decode($message->getBody(), true);
         $processor = $request['processor'];
-        switch ($processor) {
-            case 'pbx':
-                $answer = $this->pbxCallBack($request);
-                break;
-            case 'cdr':
-                $answer = $this->cdrCallBack($request);
-                break;
-            case 'sip':
-                $answer = $this->sipCallBack($request);
-                break;
-            case 'iax':
-                $answer = $this->iaxCallBack($request);
-                break;
-            case 'system':
-                $answer = $this->systemCallBack($request);
-                break;
-            case 'storage':
-                $answer = $this->storageCallBack($request);
-                break;
-            case 'modules':
-                $answer = $this->modulesCallBack($request);
-                break;
-            default:
-                $answer = "Unknown processor - {$processor}";
+        try {
+            switch ($processor) {
+                case 'pbx':
+                    $answer = $this->pbxCallBack($request);
+                    break;
+                case 'cdr':
+                    $answer = $this->cdrCallBack($request);
+                    break;
+                case 'sip':
+                    $answer = $this->sipCallBack($request);
+                    break;
+                case 'iax':
+                    $answer = $this->iaxCallBack($request);
+                    break;
+                case 'system':
+                    $answer = $this->systemCallBack($request);
+                    break;
+                case 'storage':
+                    $answer = $this->storageCallBack($request);
+                    break;
+                case 'modules':
+                    $answer = $this->modulesCallBack($request);
+                    break;
+                default:
+                    $answer = "Unknown processor - {$processor}";
+            }
+        } catch (\Exception $exception) {
+            $answer = 'Exception on WorkerApiCommands - '.$exception->getMessage();
         }
+
         $message->reply(json_encode($answer));
     }
 

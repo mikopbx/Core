@@ -52,7 +52,6 @@ const callQueue = {
 		},
 	},
 	initialize() {
-		Extensions.initialize();
 		Extensions.getPhoneExtensions(callQueue.setAvailableQueueMembers);
 		callQueue.defaultExtension = $('#extension').val();
 		callQueue.$accordions.accordion();

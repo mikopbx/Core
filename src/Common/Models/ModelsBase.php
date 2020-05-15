@@ -9,6 +9,7 @@
 
 namespace MikoPBX\Common\Models;
 
+use MikoPBX\Core\System\Util;
 use Phalcon\Db\Adapter\AdapterInterface;
 use Phalcon\Db\RawValue;
 use Phalcon\Messages\Message;
@@ -84,6 +85,10 @@ abstract class ModelsBase extends Model
     public function onValidationFails(): void
     {
         $errorMessages = $this->getMessages();
+        if (php_sapi_name() === 'cli'){
+            Util::sysLogMsg(__CLASS__, implode(' ', $errorMessages));
+            return;
+        }
         foreach ($errorMessages as $errorMessage) {
             switch ($errorMessage->getType()) {
                 case 'ConstraintViolation':
@@ -125,11 +130,7 @@ abstract class ModelsBase extends Model
      */
     public function t($message, $parameters = [])
     {
-        if (php_sapi_name() !== 'cli') {
-            return $this->getDI()->getTranslation()->t($message, $parameters);
-        } else {
-            return $message;
-        }
+        return $this->getDI()->getTranslation()->t($message, $parameters);
     }
 
     /**
@@ -435,10 +436,10 @@ abstract class ModelsBase extends Model
                     $name .= $this->description;
                 } else {
                     $represent = '';
-                    if (isset($this->date_from)) {
+                    if (is_numeric($this->date_from)) {
                         $represent .= date("d/m/Y", $this->date_from) . '-';
                     }
-                    if (isset($this->date_to)) {
+                    if (is_numeric($this->date_to)) {
                         $represent .= date("d/m/Y", $this->date_to) . ' ';
                     }
                     if (isset($this->weekday_from)) {

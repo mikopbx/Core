@@ -962,7 +962,7 @@ class Storage
         // Дублируем для работы vmtoolsd.
         file_put_contents("/etc/mtab", $fstab);
         Util::mwExec('mount -a 2> /dev/null');
-        Util::mwExec('chown -R www:www /cf > /dev/null 2> /dev/null');
+        Util::addRegularWWWRights('/cf');
     }
 
     /**
@@ -1041,9 +1041,7 @@ class Storage
         $www_dirs[] = $this->config->path('core.tempPath');
 
         // Add read rights
-        Util::mwExec('find ' . implode(' ', $www_dirs) . ' -type d -exec chmod 755 {} \;');
-        Util::mwExec('find ' . implode(' ', $www_dirs) . ' -type f -exec chmod 644 {} \;');
-        Util::mwExec('chown -R www:www ' . implode(' ', $www_dirs));
+        Util::addRegularWWWRights(implode(' ', $www_dirs));
 
         // Add executable rights
         $exec_dirs[] = $this->config->path('asterisk.astagidir');

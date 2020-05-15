@@ -81,7 +81,6 @@ const ivrMenu = {
 	},
 
 	initialize() {
-		Extensions.initialize();
 		ivrMenu.$dropDowns.dropdown();
 
 		// Динамическая прововерка свободен ли выбранный номер

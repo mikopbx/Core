@@ -180,6 +180,7 @@ abstract class PbxExtensionBase implements PbxExtensionSetupInterface
                 $this->messages[] = ' installDB error';
                 $result           = false;
             }
+            $this->fixFilesRights();
         } catch (Throwable $exception) {
             $result         = false;
             $this->messages[] = $exception->getMessage();
@@ -241,8 +242,6 @@ abstract class PbxExtensionBase implements PbxExtensionSetupInterface
         if (is_dir($backupPath)) {
             Util::mwExec("cp -r {$backupPath}/db/* {$this->moduleDir}/db/");
         }
-        $this->fixFilesRights();
-
         return true;
     }
 
@@ -253,14 +252,13 @@ abstract class PbxExtensionBase implements PbxExtensionSetupInterface
      */
     public function fixFilesRights(): bool
     {
-        Util::mwExec('find ' . $this->moduleDir . ' -type d -exec chmod 755 {} \;');
-        Util::mwExec('find ' . $this->moduleDir . ' -type f -exec chmod 644 {} \;');
-        Util::mwExec('chown -R www:www ' . $this->moduleDir);
+        // Add regular www rights
+        Util::addRegularWWWRights($this->moduleDir);
 
         // Add executable right to module's binary
         $binDir = $this->moduleDir.'/bin';
         if (is_dir($binDir)){
-            Util::mwExec('find ' . $binDir . ' -type f -exec chmod 755 {} \;');
+            Util::addExecutableRights($binDir);
         }
 
         return true;
@@ -277,8 +275,6 @@ abstract class PbxExtensionBase implements PbxExtensionSetupInterface
      */
     public function installDB(): bool
     {
-        $this->fixFilesRights();
-
         return true;
     }
 

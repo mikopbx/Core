@@ -1027,7 +1027,7 @@ class WorkerCallEvents extends WorkerBase
             $dirsConfig = $di->getShared('config');
             $filename   = $dirsConfig->path('core.tempPath') . '/' . md5(microtime(true));
             file_put_contents("$filename", $res_data);
-            Util::mwExec("chown -R www:www {$filename} > /dev/null 2> /dev/null");
+            Util::addRegularWWWRights($filename);
             $res_data = json_encode("$filename");
         }
 

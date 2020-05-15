@@ -252,7 +252,6 @@ class Util
         if ( ! file_exists($path) && ! mkdir($path, 0777, true) && ! is_dir($path)) {
             $result = false;
         }
-
         return $result;
     }
 
@@ -1286,5 +1285,25 @@ class Util
     {
         $queue = new BeanstalkClient($tube);
         $queue->publish(json_encode($data));
+    }
+
+    /**
+     * Apply regular rights for folders and files
+     * @param $folder
+     */
+    public static function addRegularWWWRights($folder):void
+    {
+        self::mwExec('find ' . $folder . ' -type d -exec chmod 755 {} \;');
+        self::mwExec('find ' . $folder . ' -type f -exec chmod 644 {} \;');
+        self::mwExec('chown -R www:www ' . $folder);
+    }
+
+    /**
+     * Apply executable rights for folders and files
+     * @param $folder
+     */
+    public static function addExecutableRights($folder):void
+    {
+        self::mwExec('find ' . $folder . ' -type f -exec chmod 755 {} \;');
     }
 }

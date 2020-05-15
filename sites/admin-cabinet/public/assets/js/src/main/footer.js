@@ -6,6 +6,7 @@
  *
  */
 
+
 $(document).ready(() => {
 	$('.popuped').popup();
 	$('div[data-content], a[data-content]').popup();

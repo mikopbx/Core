@@ -177,6 +177,10 @@ class AssetProvider implements ServiceProviderInterface
                             true
                         )
                         ->addJs(
+                            'js/pbx/Extensions/extensions.js',
+                            true
+                        )
+                        ->addJs(
                             'js/pbx/PbxExtensionModules/pbx-extension-menu-addition.js',
                             true
                         )
@@ -254,7 +258,6 @@ class AssetProvider implements ServiceProviderInterface
                                 ->addJS('js/vendor/datepicker/daterangepicker.js', true);
 
                             $footerCollectionJS
-                                ->addJs('js/pbx/Extensions/extensions.js', true)
                                 ->addJs(
                                     'js/pbx/CallDetailRecords/call-detail-records-index.js',
                                     true
@@ -273,7 +276,6 @@ class AssetProvider implements ServiceProviderInterface
                                 ->addJs('js/vendor/jquery.debounce-1.0.5.js', true)
                                 ->addJs('js/vendor/jquery.tablednd.js', true)
                                 ->addJs('js/pbx/main/form.js', true)
-                                ->addJs('js/pbx/Extensions/extensions.js', true)
                                 ->addJs('js/pbx/CallQueues/callqueue-modify.js', true)
                                 ->addJs('js/pbx/SoundFiles/one-button-sound-player.js', true);
                         }
@@ -285,7 +287,6 @@ class AssetProvider implements ServiceProviderInterface
                         } elseif ($action === 'modify') {
                             $footerCollectionJS
                                 ->addJs('js/pbx/main/form.js', true)
-                                ->addJs('js/pbx/Extensions/extensions.js', true)
                                 ->addJs('js/pbx/ConferenceRooms/conference-room-modify.js', true);
                         }
                         break;
@@ -319,7 +320,6 @@ class AssetProvider implements ServiceProviderInterface
                                 ->addJs('js/vendor/ace/mode-julia.js', true);
                             $footerCollectionJS
                                 ->addJs('js/pbx/main/form.js', true)
-                                ->addJs('js/pbx/Extensions/extensions.js', true)
                                 ->addJs('js/pbx/DialplanApplications/dialplan-applications-modify.js', true);
                         }
                         break;
@@ -347,7 +347,6 @@ class AssetProvider implements ServiceProviderInterface
                                 ->addJs('js/vendor/inputmask/bindings/inputmask.binding.js', true)
                                 ->addJs('js/vendor/inputmask/init.js', true)
                                 ->addJs('js/pbx/Extensions/input-mask-patterns.js', true)
-                                ->addJs('js/pbx/Extensions/extensions.js', true)
                                 ->addJs('js/pbx/main/form.js', true)
                                 ->addJs('js/pbx/main/debugger-info.js', true)
                                 ->addJs('js/pbx/Extensions/extension-modify.js', true);
@@ -388,11 +387,9 @@ class AssetProvider implements ServiceProviderInterface
                         if ($action === 'index') {
                             $footerCollectionJS->addJs('js/vendor/jquery.tablednd.js', true)
                                 ->addJs('js/pbx/main/form.js', true)
-                                ->addJs('js/pbx/Extensions/extensions.js', true)
                                 ->addJs('js/pbx/IncomingRoutes/incoming-route-index.js', true);
                         } elseif ($action === 'modify') {
                             $footerCollectionJS->addJs('js/pbx/main/form.js', true)
-                                ->addJs('js/pbx/Extensions/extensions.js', true)
                                 ->addJs('js/pbx/IncomingRoutes/incoming-route-modify.js', true);
                         }
                         break;
@@ -405,7 +402,6 @@ class AssetProvider implements ServiceProviderInterface
                                 ->addJs('js/pbx/IvrMenu/ivrmenu-index.js', true);
                         } elseif ($action === 'modify') {
                             $footerCollectionJS->addJs('js/pbx/main/form.js', true)
-                                ->addJs('js/pbx/Extensions/extensions.js', true)
                                 ->addJs('js/pbx/SoundFiles/one-button-sound-player.js', true)
                                 ->addJs('js/pbx/IvrMenu/ivrmenu-modify.js', true);
                         }
@@ -456,7 +452,6 @@ class AssetProvider implements ServiceProviderInterface
                             $semanticCollectionJS->addJs('js/vendor/semantic/calendar.min.js', true);
                             $footerCollectionJS
                                 ->addJs('js/pbx/main/form.js', true)
-                                ->addJs('js/pbx/Extensions/extensions.js', true)
                                 ->addJs('js/pbx/OutOffWorkTime/out-of-work-time-modify.js', true)
                                 ->addJs('js/pbx/SoundFiles/one-button-sound-player.js', true);
                         }
@@ -510,7 +505,6 @@ class AssetProvider implements ServiceProviderInterface
                     case 'Restart':
                         if ($action === 'index') {
                             $footerCollectionJS
-                                ->addJs('js/pbx/Extensions/extensions.js', true)
                                 ->addJs('js/pbx/Restart/restart-index.js', true);
                         }
                         break;

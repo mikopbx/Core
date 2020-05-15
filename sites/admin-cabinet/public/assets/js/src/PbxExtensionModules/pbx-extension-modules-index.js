@@ -238,7 +238,7 @@ const extensionModules = {
 		// Проверим включен ли модуль, если включен, вырубим его
 		const status = $(`#${params.uniqid}`).find('.checkbox').checkbox('is checked');
 		if (status === true) {
-			PbxApi.ModuleDisable(params.uniqid, () => {
+			PbxApi.SystemDisableModule(params.uniqid, () => {
 				extensionModules.installModule(params, true);
 			});
 		} else {
@@ -296,7 +296,7 @@ const extensionModules = {
 					const status = $(`#${params.uniqid}`).find('.checkbox').checkbox('is checked');
 					const keepSettings = extensionModules.$keepSettingsCheckbox.checkbox('is checked');
 					if (status === true) {
-						PbxApi.ModuleDisable(params.uniqid, () => {
+						PbxApi.SystemDisableModule(params.uniqid, () => {
 							PbxApi.SystemDeleteModule(
 								params.uniqid,
 								keepSettings,

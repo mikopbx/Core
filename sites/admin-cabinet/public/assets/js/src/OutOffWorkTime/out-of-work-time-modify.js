@@ -66,7 +66,6 @@ const outOfWorkTimeRecord = {
 		},
 	},
 	initialize() {
-		Extensions.initialize();
 		outOfWorkTimeRecord.$defaultDropdown.dropdown();
 		outOfWorkTimeRecord.$rangeDaysStart.calendar({
 			firstDayOfWeek: SemanticLocalization.calendarFirstDayOfWeek,

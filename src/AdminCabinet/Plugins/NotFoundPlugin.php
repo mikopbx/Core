@@ -44,10 +44,12 @@ class NotFoundPlugin extends Injectable
 
         $dispatcher->forward(
             [
-                'controller' => 'errors',
-                'action'     => 'show500',
+                    'controller' => 'errors',
+                    'action'     => 'show500',
             ]
         );
+
+
 
         return false;
     }

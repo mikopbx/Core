@@ -33,7 +33,6 @@ const incomingRouteModify = {
 		},
 	},
 	initialize() {
-		Extensions.initialize();
 		incomingRouteModify.$providerDropDown.dropdown();
 		incomingRouteModify.initializeForm();
 		incomingRouteModify.$forwardingSelectDropdown.dropdown(Extensions.getDropdownSettingsWithoutEmpty());

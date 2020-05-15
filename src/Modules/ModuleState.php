@@ -34,10 +34,15 @@ class ModuleState extends Injectable
         $this->moduleUniqueID  = $moduleUniqueID;
         $this->modulesRoot           = $this->di->getShared('config')->path('core.modulesDir');
         $moduleJson            = "{$this->modulesRoot}/{$this->moduleUniqueID}/module.json";
+        if (!file_exists($moduleJson)){
+            $this->messages[] = 'module.json not found for module ' . $this->moduleUniqueID;
+
+            return;
+        }
         $jsonString            = file_get_contents($moduleJson);
         $jsonModuleDescription = json_decode($jsonString, true);
         if ( ! is_array($jsonModuleDescription)) {
-            $this->messages[] = 'module.json not found for module ' . $this->moduleUniqueID;
+            $this->messages[] = 'module.json parsing error ' . $this->moduleUniqueID;
 
             return;
         }
@@ -73,7 +78,7 @@ class ModuleState extends Injectable
         }
 
         $error = false;
-        $this->db->begin(); // Временная транзакция, которая будет отменена после теста включения
+        $this->db->begin(true); // Временная транзакция, которая будет отменена после теста включения
 
         // Временно включим модуль, чтобы включить все связи и зависимости
         $module = PbxExtensionModules::findFirstByUniqid($this->moduleUniqueID);
@@ -94,7 +99,7 @@ class ModuleState extends Injectable
             } else {
                 $this->messages[] = 'Error on the Module enable function at onBeforeModuleEnable';
             }
-            $this->db->rollback('temporary'); // Откатываем временную транзакцию
+            $this->db->rollback(true); // Откатываем временную транзакцию
 
             return false;
         }
@@ -155,7 +160,7 @@ class ModuleState extends Injectable
         if ( ! $error) {
             $this->messages = [];
         }
-        $this->db->rollback(); // Откатываем временную транзакцию
+        $this->db->rollback(true); // Откатываем временную транзакцию
 
         // Если ошибок нет, включаем Firewall и модуль
         if ( ! $error && ! $this->enableFirewallSettings()) {
@@ -194,7 +199,7 @@ class ModuleState extends Injectable
             return true;
         }
 
-        $this->db->begin();
+        $this->db->begin(true);
         $defaultRules         = $this->configClass->getDefaultFirewallRules();
         $previousRuleSettings = PbxSettings::findFirstByKey("{$this->moduleUniqueID}FirewallSettings");
         $previousRules        = [];
@@ -232,12 +237,12 @@ class ModuleState extends Injectable
         }
         if (count($errors) > 0) {
             $this->messages[] = array_merge($this->messages, $errors);
-            $this->db->rollback();
+            $this->db->rollback(true);
 
             return false;
         }
 
-        $this->db->commit();
+        $this->db->commit(true);
 
         return true;
     }
@@ -252,7 +257,7 @@ class ModuleState extends Injectable
 
         // Проверим, нет ли настроенных зависимостей у других модулей
         // Попробуем удалить все настройки модуля
-        $this->db->begin();
+        $this->db->begin(true);
 
         if ($this->configClass !== null
             && method_exists($this->configClass, 'onBeforeModuleDisable')
@@ -263,7 +268,7 @@ class ModuleState extends Injectable
             } else {
                 $this->messages[] = 'Error on the Module enable function at onBeforeModuleDisable';
             }
-            $this->db->rollback('temporary'); // Откатываем временную транзакцию
+            $this->db->rollback(true); // Откатываем временную транзакцию
 
             return false;
         }
@@ -332,7 +337,7 @@ class ModuleState extends Injectable
         if ( ! $error) {
             $this->messages = [];
         }
-        $this->db->rollback(); // Откатываем временную транзакцию
+        $this->db->rollback(true); // Откатываем временную транзакцию
 
         // Если ошибок нет, выключаем Firewall и модуль
         if ( ! $error && ! $this->disableFirewallSettings()) {
@@ -380,7 +385,7 @@ class ModuleState extends Injectable
         foreach ($currentRules as $detailRule) {
             $savedState[$detailRule->networkfilterid] = $detailRule->action;
         }
-        $this->db->begin();
+        $this->db->begin(true);
         if ( ! $currentRules->delete()) {
             $this->messages[] = $currentRules->getMessages();
             return false;
@@ -397,12 +402,12 @@ class ModuleState extends Injectable
         }
         if (count($errors) > 0) {
             $this->messages[] = array_merge($this->messages, $errors);
-            $this->db->rollback();
+            $this->db->rollback(true);
 
             return false;
         }
 
-        $this->db->commit();
+        $this->db->commit(true);
 
         return true;
     }

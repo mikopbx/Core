@@ -126,7 +126,6 @@ const extension = {
 
 	},
 	initialize() {
-		Extensions.initialize();
 		extension.defaultEmail = extension.$email.inputmask('unmaskedvalue');
 		extension.defaultMobileNumber = extension.$mobile_number.inputmask('unmaskedvalue');
 		extension.defaultNumber = extension.$number.inputmask('unmaskedvalue');

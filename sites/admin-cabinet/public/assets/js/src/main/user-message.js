@@ -49,7 +49,12 @@ const UserMessage = {
 			messagesArray = messages;
 			$.each(messages, (index, value) => {
 				if (!value) {
-					messagesArray.pop(index);
+					if (Array.isArray(messagesArray)){
+						messagesArray.pop(index);
+					} else {
+						delete messagesArray[index];
+					}
+
 				}
 			});
 		} else if (!Array.isArray(messages) && messages) {
@@ -70,10 +75,10 @@ const UserMessage = {
 					UserMessage.scrollToMessages();
 				} else if (index === 'error') {
 					UserMessage.showError(newValue, header);
-				} else if (index === 'warning') {
-					UserMessage.showWraning(newValue, header);
-				} else {
+				} else if (index === 'info') {
 					UserMessage.showInformation(newValue, header);
+				} else {
+					UserMessage.showWraning(newValue, header);
 				}
 				previousMessage = value;
 			});

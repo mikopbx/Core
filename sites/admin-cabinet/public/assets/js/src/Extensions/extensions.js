@@ -328,3 +328,7 @@ const Extensions = {
 	},
 
 };
+
+$(document).ready(() => {
+	Extensions.initialize();
+});

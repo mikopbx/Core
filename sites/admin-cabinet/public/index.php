@@ -44,7 +44,6 @@ if ($di->getShared('config')->path('adminApplication.debugMode')){
 
 try {
     $application = new Application($di);
-    $uri = str_replace($_SERVER['SCRIPT_NAME'], '', $_SERVER['REQUEST_URI']);
 	echo $application->handle($_SERVER['REQUEST_URI'])->getContent();
 } catch (Exception $e) {
 	$errorLogger->captureException($e);

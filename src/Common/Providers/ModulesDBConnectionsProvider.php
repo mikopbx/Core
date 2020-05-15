@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace MikoPBX\Common\Providers;
 
 
+use MikoPBX\Core\System\Util;
 use Phalcon\Application\Exception;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
@@ -30,15 +31,15 @@ class ModulesDBConnectionsProvider extends DatabaseProviderBase implements Servi
      *
      * @param $di - link to app dependency injector
      *
-     * @throws \ReflectionException
      * @throws \Phalcon\Application\Exception
      */
     public function register(DiInterface $di): void
     {
         $registeredDBServices = [];
         $config               = $di->getShared('config');
+        $modulesDir           = $config->path('core.modulesDir');
 
-        $results = glob($config->path('core.modulesDir') . '/*/module.json', GLOB_NOSORT);
+        $results = glob($modulesDir . '/*/module.json', GLOB_NOSORT);
 
         foreach ($results as $moduleJson) {
             $jsonString            = file_get_contents($moduleJson);
@@ -51,7 +52,7 @@ class ModulesDBConnectionsProvider extends DatabaseProviderBase implements Servi
                 continue;
             }
 
-            $modelsFiles = glob("{$config->path('core.modulesDir')}/{$moduleUniqueId}/Models/*.php", GLOB_NOSORT);
+            $modelsFiles = glob("{$modulesDir}/{$moduleUniqueId}/Models/*.php", GLOB_NOSORT);
             foreach ($modelsFiles as $file) {
                 $className        = pathinfo($file)['filename'];
                 $moduleModelClass = "\\Modules\\{$moduleUniqueId}\\Models\\{$className}";
@@ -90,6 +91,8 @@ class ModulesDBConnectionsProvider extends DatabaseProviderBase implements Servi
                     throw new Exception(sprintf('Directory "%s" was not created', $dbPath));
                 }
 
+                $fileExistBeforeAttachToConnection = file_exists("{$dbPath}/module.db");
+
                 $config = [
                     "debugMode"    => $config->path('core.debugMode'),
                     "adapter"      => "Sqlite",
@@ -98,6 +101,11 @@ class ModulesDBConnectionsProvider extends DatabaseProviderBase implements Servi
                 ];
 
                 $this->registerDBService($connectionServiceName, $di, $config);
+
+                // if database was created, we will need to apply rules
+                if (!$fileExistBeforeAttachToConnection){
+                    Util::addRegularWWWRights($dbPath);
+                }
             }
         }
 

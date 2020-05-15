@@ -33,7 +33,6 @@ const incomingRoutes = {
 		},
 	},
 	initialize() {
-		Extensions.initialize();
 		$('#routingTable').tableDnD({
 			onDrop() {
 				$('.rule-row').each((index, obj) => {

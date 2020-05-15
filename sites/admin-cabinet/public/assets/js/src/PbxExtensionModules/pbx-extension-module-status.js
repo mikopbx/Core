@@ -49,6 +49,7 @@ class PbxExtensionStatus {
 			this.changeLabelText(globalTranslate.ext_ModuleDisabledStatusDisabled);
 			const event = document.createEvent('Event');
 			event.initEvent('ModuleStatusChanged', false, true);
+			event.initEvent('ConfigDataChanged', false, true);
 			window.dispatchEvent(event);
 			this.$disabilityFields.addClass('disabled');
 		} else {
@@ -68,6 +69,7 @@ class PbxExtensionStatus {
 			this.changeLabelText(globalTranslate.ext_ModuleDisabledStatusEnabled);
 			const event = document.createEvent('Event');
 			event.initEvent('ModuleStatusChanged', false, true);
+			event.initEvent('ConfigDataChanged', false, true);
 			window.dispatchEvent(event);
 			this.$disabilityFields.removeClass('disabled');
 		} else {
@@ -76,7 +78,7 @@ class PbxExtensionStatus {
 			this.$disabilityFields.addClass('disabled');
 		}
 		if (response.data !== undefined && response.data.messages !== undefined) {
-			UserMessage.showMultiString(response.data, globalTranslate.ext_ModuleChangeStatusError);
+			UserMessage.showMultiString(response.data.messages, globalTranslate.ext_ModuleChangeStatusError);
 		}
 		this.$toggle.removeClass('disabled');
 	}

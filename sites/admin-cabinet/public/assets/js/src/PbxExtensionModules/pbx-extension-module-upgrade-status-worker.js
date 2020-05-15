@@ -45,7 +45,7 @@ const upgradeStatusLoopWorker = {
 		if (response !== false && response.i_status === true) {
 			$('a.button').removeClass('disabled');
 			if (upgradeStatusLoopWorker.needEnableAfterInstall) {
-				PbxApi.ModuleEnable(
+				PbxApi.SystemEnableModule(
 					upgradeStatusLoopWorker.moduleUniqid,
 					() => { extensionModules.reloadModuleAndPage(upgradeStatusLoopWorker.moduleUniqid); },
 				);

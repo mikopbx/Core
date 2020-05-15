@@ -10,14 +10,15 @@ require_once 'globals.php';
 
 use MikoPBX\Modules\ModuleState;
 
-$moduleStateProcessor = new ModuleState('ModuleCTIClient');
-if ($moduleStateProcessor->enableModule() === false){
+$moduleStateProcessor = new ModuleState('ModuleSmartIVR');
+if ($moduleStateProcessor->disableModule() === false){
     $result['messages']   = $moduleStateProcessor->getMessages();
 } else {
     unset($result);
     $result['result']   = 'Success';
 }
-if ($moduleStateProcessor->disableModule() === false){
+
+if ($moduleStateProcessor->enableModule() === false){
     $result['messages']   = $moduleStateProcessor->getMessages();
 } else {
     unset($result);
