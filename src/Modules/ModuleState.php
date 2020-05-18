@@ -17,7 +17,7 @@ use MikoPBX\Common\Models\PbxSettings;
 use Phalcon\Di\Injectable;
 
 /**
- * @property \MikoPBX\Service\LicenseWorker licenseWorker
+ * @property \MikoPBX\Service\License license
  */
 class ModuleState extends Injectable
 {
@@ -69,9 +69,9 @@ class ModuleState extends Injectable
     {
         if ($this->lic_feature_id > 0) {
             // Пробуем захватить фичу c учетом оффлан режима
-            $result = $this->licenseWorker->featureAvailable($this->lic_feature_id);
+            $result = $this->license->featureAvailable($this->lic_feature_id);
             if ($result['success'] === false) {
-                $this->messages[] = $this->licenseWorker->translateLicenseErrorMessage($result['error']);
+                $this->messages[] = $this->license->translateLicenseErrorMessage($result['error']);
 
                 return false;
             }

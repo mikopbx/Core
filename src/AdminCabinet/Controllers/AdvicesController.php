@@ -13,7 +13,7 @@ use MikoPBX\Common\Models\{NetworkFilters, PbxSettings};
 use SimpleXMLElement;
 
 /**
- * @property \MikoPBX\Service\LicenseWorker licenseWorker
+ * @property \MikoPBX\Service\License license
  */
 class AdvicesController extends BaseController
 {
@@ -211,7 +211,7 @@ class AdvicesController extends BaseController
     {
         $licKey = PbxSettings::getValueByKey('PBXLicense');
         if ( ! empty($licKey)) {
-            $checkBaseFeature = $this->licenseWorker->featureAvailable(33);
+            $checkBaseFeature = $this->license->featureAvailable(33);
             if ($checkBaseFeature['success'] === false) {
                 if ($this->language === 'ru') {
                     $url = 'https://wiki.mikopbx.com/licensing#faq_chavo';
@@ -223,12 +223,12 @@ class AdvicesController extends BaseController
                     'adv_ThisCopyHasLicensingTroubles',
                     [
                         'url'   => $url,
-                        'error' => $this->licenseWorker->translateLicenseErrorMessage($checkBaseFeature['error']),
+                        'error' => $this->license->translateLicenseErrorMessage($checkBaseFeature['error']),
                     ]
                 );
             }
 
-            $licenseInfo = $this->licenseWorker->getLicenseInfo($licKey);
+            $licenseInfo = $this->license->getLicenseInfo($licKey);
             if ($licenseInfo instanceof SimpleXMLElement) {
                 file_put_contents('/tmp/licenseInfo', json_encode($licenseInfo->attributes()));
             }

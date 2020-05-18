@@ -13,7 +13,7 @@ namespace MikoPBX\Core\Config;
 
 use MikoPBX\Common\Providers\{
     CDRDatabaseProvider,
-    LicenseWorkerProvider,
+    LicenseProvider,
     MainDatabaseProvider,
     ManagedCacheProvider,
     ModelsCacheProvider,
@@ -57,7 +57,7 @@ class RegisterDIServices
             NatsConnectionProvider::class,
 
             // Inject License Worker
-            LicenseWorkerProvider::class,
+            LicenseProvider::class,
 
             // Inject PBX modules
             PBXConfModulesProvider::class,

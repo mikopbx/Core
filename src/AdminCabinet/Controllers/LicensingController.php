@@ -17,7 +17,7 @@ use Phalcon\Text;
 use SimpleXMLElement;
 
 /**
- * @property \MikoPBX\AdminCabinet\Providers\LicenseWorkerProvider licenseWorker
+ * @property \MikoPBX\AdminCabinet\Providers\LicenseProvider license
  */
 class LicensingController extends BaseController
 {
@@ -63,11 +63,11 @@ class LicensingController extends BaseController
         if ( ! empty($data['licKey'])) {
             $oldLicKey = PbxSettings::getValueByKey('PBXLicense');
             if ($oldLicKey !== $data['licKey']) {
-                $licenseInfo = $this->licenseWorker->getLicenseInfo($data['licKey']);
+                $licenseInfo = $this->license->getLicenseInfo($data['licKey']);
                 if ($licenseInfo instanceof SimpleXMLElement) {
                     $this->saveLicenseKey($data['licKey']);
-                    $this->licenseWorker->changeLicenseKey($data['licKey']);
-                    $this->licenseWorker->addTrial('11'); // Askozia PBX
+                    $this->license->changeLicenseKey($data['licKey']);
+                    $this->license->addTrial('11'); // Askozia PBX
                     $this->view->success = true;
                 } elseif ( ! empty($licenseInfo) && strpos($licenseInfo, '2026') !== false) {
                     $this->flash->error($this->translation->_('lic_FailedCheckLicense2026'));
@@ -82,25 +82,25 @@ class LicensingController extends BaseController
             }
             if ( ! empty($data['coupon'])) {
                 $result
-                    = $this->licenseWorker->activateCoupon($data['coupon']);
+                    = $this->license->activateCoupon($data['coupon']);
                 if ($result === true) {
                     $this->flash->success($this->translation->_('lic_SuccessfulCouponActivated'));
                     $this->view->success = true;
                 } else {
-                    $message = $this->licenseWorker->translateLicenseErrorMessage($result);
+                    $message = $this->license->translateLicenseErrorMessage($result);
                     $this->flash->error($message);
                     $this->view->success = false;
                 }
             }
         } else { // Получим триальную лицензию для ключа
-            $newLicenseKey = $this->licenseWorker->getTrialLicense($data);
+            $newLicenseKey = $this->license->getTrialLicense($data);
             if (strlen($newLicenseKey) === 28
                 && Text::startsWith($newLicenseKey, 'MIKO-')) {
                 $this->saveLicenseKey($newLicenseKey);
-                $this->licenseWorker->changeLicenseKey($newLicenseKey);
+                $this->license->changeLicenseKey($newLicenseKey);
             } else {
                 // Не удалось получить триальную лицензию, попробуем вывести корректное сообщение об ошибке
-                $message = $this->licenseWorker->translateLicenseErrorMessage($newLicenseKey);
+                $message = $this->license->translateLicenseErrorMessage($newLicenseKey);
                 $this->flash->error($message);
                 $this->view->success = false;
             }
@@ -158,7 +158,7 @@ class LicensingController extends BaseController
             return;
         }
         $this->view->success = true;
-        $this->licenseWorker->changeLicenseKey('');
+        $this->license->changeLicenseKey('');
         $this->session->remove('checkRegistration');
     }
 
@@ -172,7 +172,7 @@ class LicensingController extends BaseController
         if (empty($licenseKey)) {
             return [];
         }
-        $licenseInfo         = $this->licenseWorker->getLicenseInfo($licenseKey);
+        $licenseInfo         = $this->license->getLicenseInfo($licenseKey);
         $this->view->success = true;
         $this->view->message = json_encode($licenseInfo);
     }
@@ -182,10 +182,10 @@ class LicensingController extends BaseController
      */
     public function getBaseFeatureStatusAction(): void
     {
-        $checkBaseFeature = $this->licenseWorker->featureAvailable(33);
+        $checkBaseFeature = $this->license->featureAvailable(33);
         if ($checkBaseFeature['success'] === false) {
             $this->view->success = false;
-            $this->view->message = $this->licenseWorker->translateLicenseErrorMessage($checkBaseFeature['error']);
+            $this->view->message = $this->license->translateLicenseErrorMessage($checkBaseFeature['error']);
         } else {
             $this->view->success = true;
         }
@@ -206,13 +206,13 @@ class LicensingController extends BaseController
         }
         if ($data['licFeatureId'] > 0) {
             // Пробуем захватить фичу
-            $result = $this->licenseWorker->captureFeature($data['licFeatureId']);
+            $result = $this->license->captureFeature($data['licFeatureId']);
             if ($result['success'] === false) {
                 // Добавим тириал и захватим фичу еще раз
-                $this->licenseWorker->addTrial($data['licProductId']);
-                $result = $this->licenseWorker->captureFeature($data['licFeatureId']);
+                $this->license->addTrial($data['licProductId']);
+                $result = $this->license->captureFeature($data['licFeatureId']);
                 if ($result['success'] === false) {
-                    $this->view->message = $this->licenseWorker->translateLicenseErrorMessage($result['error']);
+                    $this->view->message = $this->license->translateLicenseErrorMessage($result['error']);
                     $this->view->success = false;
                 }
             }

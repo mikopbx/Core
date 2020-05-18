@@ -22,7 +22,6 @@ use MikoPBX\PBXCoreREST\Controllers\{Cdr\GetController as CdrGetController,
     Iax\GetController as IaxGetController,
     Modules\GetController as ModulesGetController,
     Modules\PostController as ModulesPostController,
-    Pbx\GetController as PbxGetController,
     Sip\GetController as SipGetController,
     Sip\PostController as SipPostController,
     Storage\GetController as StorageGetController,
@@ -106,7 +105,6 @@ class RouterProvider implements ServiceProviderInterface
     {
         return [
             // Class, Method, Route, Handler, ParamsRegex
-            [PbxGetController::class, 'callAction', '/pbxcore/api/pbx/{actionName}', 'get', '/'],
 
             [SipGetController::class, 'callAction', '/pbxcore/api/sip/{actionName}', 'get', '/'],
             [SipPostController::class, 'callAction', '/pbxcore/api/sip/{actionName}', 'post', '/'],

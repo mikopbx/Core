@@ -11,17 +11,17 @@ declare(strict_types=1);
 
 namespace MikoPBX\Common\Providers;
 
-use MikoPBX\Service\LicenseWorker;
+use MikoPBX\Service\License;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 
-class LicenseWorkerProvider implements ServiceProviderInterface
+class LicenseProvider implements ServiceProviderInterface
 {
     public function register(DiInterface $di): void
     {
         $debugMode = $di->getShared('config')->path('adminApplication.debugMode');
         $di->setShared(
-            'licenseWorker',
+            'license',
             function () use ($debugMode) {
                 if ($debugMode) {
                     $serverUrl = 'http://172.16.32.72:8223';
@@ -29,7 +29,7 @@ class LicenseWorkerProvider implements ServiceProviderInterface
                     $serverUrl = 'http://127.0.0.1:8223';
                 }
 
-                return new LicenseWorker($serverUrl);
+                return new License($serverUrl);
             }
         );
     }

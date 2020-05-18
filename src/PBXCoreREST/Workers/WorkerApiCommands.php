@@ -85,32 +85,6 @@ class WorkerApiCommands extends WorkerBase
     }
 
     /**
-     * Обработка команд управления PBX.
-     *
-     * @param array $request
-     */
-    public function pbxCallBack($request): array
-    {
-        $action = $request['action'];
-        $result = [
-            'result' => 'ERROR',
-        ];
-
-        if ('check_licence' === $action) {
-            $License          = '\\MikoPBX\\Service\\License';
-            $lic              = new $License();
-            $result           = $lic->check_licence();
-            $result['result'] = ($result['result'] !== true) ? 'ERROR' : 'Success';
-        } else {
-            $result['message'] = 'API action not found;';
-        }
-
-        $result['function'] = $action;
-
-        return $result;
-    }
-
-    /**
      * Запросы с CDR таблице
      *
      * @param array $request

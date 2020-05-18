@@ -9,8 +9,8 @@
 namespace MikoPBX\Core\Workers;
 
 use Exception;
+use MikoPBX\Core\System\BeanstalkClient;
 use MikoPBX\Core\System\Util;
-use MikoPBX\Service\License;
 
 require_once 'globals.php';
 
@@ -19,8 +19,20 @@ class WorkerLicenseChecker extends WorkerBase
 {
     public function start($argv): void
     {
-        $lic = new License();
-        $lic->startWorker();
+        $beansTalkClient = new BeanstalkClient();
+        $beansTalkClient->subscribe('ping_' . self::class, [$this, 'pingCallBack']);
+
+        $lic =  $this->di->getShared('license');
+        while (true) {
+            $beansTalkClient->wait(5);
+
+            $delta = time() - $this->last_check_time;
+            if ($delta < 3600) {
+                continue;
+            }
+            $this->last_check_time = time();
+            $lic->checkPBX();
+        }
     }
 
 }

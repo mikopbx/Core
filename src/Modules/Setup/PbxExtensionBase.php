@@ -92,9 +92,9 @@ abstract class PbxExtensionBase implements PbxExtensionSetupInterface
     /**
      * License worker
      *
-     * @var \MikoPBX\Service\LicenseWorker
+     * @var \MikoPBX\Service\License
      */
-    protected $licenseWorker;
+    protected $license;
 
     /**
      * Dependency injector
@@ -128,7 +128,7 @@ abstract class PbxExtensionBase implements PbxExtensionSetupInterface
         }
         $this->db      = $this->di->getShared('db');
         $this->config  = $this->di->getShared('config');
-        $this->licenseWorker =  $this->di->getShared('licenseWorker');
+        $this->license =  $this->di->getShared('license');
         $this->moduleDir = $this->config->path('core.modulesDir') . '/' . $this->module_uniqid;
         $settings_file = "{$this->moduleDir}/module.json";
         if (file_exists($settings_file)) {

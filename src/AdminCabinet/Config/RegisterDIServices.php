@@ -33,7 +33,7 @@ use MikoPBX\Common\Providers\{CDRDatabaseProvider,
     RegistryProvider,
     SessionReadOnlyProvider,
     TranslationProvider,
-    LicenseWorkerProvider};
+    LicenseProvider};
 use Phalcon\Di\DiInterface;
 
 class RegisterDIServices
@@ -79,7 +79,7 @@ class RegisterDIServices
             LanguageSelectorProvider::class,
 
             // Inject license
-            LicenseWorkerProvider::class,
+            LicenseProvider::class,
 
             // Inject PBX modules
             PBXConfModulesProvider::class,
