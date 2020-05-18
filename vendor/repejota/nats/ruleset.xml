@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<ruleset name="Custom Standard">
+    <description>php-nats Coding Standards for Inline Documentation and Comments</description>
+
+    <rule ref="Squiz.Functions">
+        <!-- Conflicts with PSR2 -->
+        <exclude name="Squiz.Functions.FunctionDeclarationArgumentSpacing.SpaceBeforeEquals" />
+        <exclude name="Squiz.Functions.FunctionDeclarationArgumentSpacing.SpaceAfterDefault" />
+    </rule>
+
+    <rule ref="Squiz.Files">
+        <!-- Avoid to check for .inc files ... always use .php -->
+        <exclude name="Squiz.Files.FileExtension.ClassFound" />
+    </rule>
+
+    <rule ref="Squiz.WhiteSpace">
+        <!-- Conflict with PSR2 -->
+        <exclude name="Squiz.WhiteSpace.FunctionClosingBraceSpace.SpacingBeforeClose" />
+    </rule>
+
+    <rule ref="Squiz.NamingConventions">
+        <!-- Do not use underscore prefix for anything private -->
+        <exclude name="Squiz.NamingConventions.ValidVariableName.PrivateNoUnderscore" />
+        <exclude name="Squiz.NamingConventions.ValidFunctionName.PrivateNoUnderscore" />
+    </rule>
+
+    <rule ref="Squiz.Commenting">
+        <exclude name="Squiz.WhiteSpace.FunctionSpacing.After" />
+        <exclude name="Squiz.Commenting.LongConditionClosingComment.Missing" />
+        <exclude name="Squiz.Commenting.ClosingDeclarationComment.Missing" />
+        <!-- Don't need file doc comments -->
+        <exclude name="Squiz.Commenting.FileComment.Missing" />
+        <!-- It is too early for PHP7 features to be required -->
+        <exclude name="Squiz.Commenting.FunctionComment.ScalarTypeHintMissing" />
+    </rule>
+
+</ruleset>
