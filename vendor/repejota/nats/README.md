@@ -22,7 +22,7 @@ Requirements
 ------------
 
 * php 5.6+
-* [gnatsd](https://github.com/apcera/gnatsd)
+* [nats](https://github.com/derekcollison/nats) or [gnatsd](https://github.com/apcera/gnatsd)
 
 
 Usage

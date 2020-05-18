@@ -31,12 +31,11 @@ curl -s -v --no-buffer 'http://172.16.156.223/pbxcore/api/long/sub/test' -H 'Coo
 
 class WorkerLongPoolAPI extends WorkerBase
 {
-    private $client_queue;
 
     public function start($argv): void
     {
-        $this->client_queue = new BeanstalkClient();
-        $this->client_queue->subscribe('ping_' . self::class, [$this, 'pingCallBack']);
+        $client_queue = new BeanstalkClient();
+        $client_queue->subscribe('ping_' . self::class, [$this, 'pingCallBack']);
 
         $ACTIONS         = [];
         $COMMON_CNANNELS = [];
@@ -68,7 +67,7 @@ class WorkerLongPoolAPI extends WorkerBase
                     }
                 }
             }
-            $this->client_queue->wait(1); // instead of sleep
+            $client_queue->wait(1); // instead of sleep
         }
     }
 

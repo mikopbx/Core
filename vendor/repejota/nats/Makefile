@@ -1,7 +1,7 @@
 PHPCS_PHAR = https://squizlabs.github.io/PHP_CodeSniffer/phpcs.phar
 COMPOSER_PHAR = https://getcomposer.org/composer.phar
 PHPDOCUMENTOR_PHAR_URL = https://github.com/phpDocumentor/phpDocumentor2/releases/download/v2.9.0/phpDocumentor.phar
-CLEAN_FILES = composer.phar composer.lock phpdoc.phar phpcs.phar phpcbf.phar .idea
+CLEAN_FILES = composer.phar composer.lock phpDocumentor.phar phpcs.phar phpcbf.phar
 CLEAN_FOLDERS = bin build cover vendor docs/api
 CLEAN_PATHS = $(CLEAN_FILES) $(CLEAN_FOLDERS)
 SOURCE_CODE_PATHS = src test examples

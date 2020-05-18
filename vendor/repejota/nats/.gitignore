@@ -4,9 +4,8 @@ vendor
 cover
 *.phar
 /composer.phar
-/phpdoc.phar
+/phpDocumentor.phar
 /composer.lock
 /docs/api
 build
 .idea
-coverage

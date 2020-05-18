@@ -58,7 +58,7 @@ final class Versions
   'recoil/kernel' => '1.0.2@cf307c4f8de2b82dfd3798b1bdd1d2c229239b3a',
   'recoil/react' => '1.0.2@d385ab9ff8cbc99ab2d145ff9687895f9e8dcc0d',
   'recoil/recoil' => '1.0.1@4b6ef1bac619910b21edb3bda6a7b16502b6889a',
-  'repejota/nats' => '0.8.7@68e6d24232e8b5aaf134697e47de2652b3ebff6f',
+  'repejota/nats' => '0.8.4@e1031b58114cbc009c5dabd894f12bcbd39cf6f8',
   'sentry/sdk' => '2.1.0@18921af9c2777517ef9fb480845c22a98554d6af',
   'sentry/sentry' => '2.3.2@b3e71feb32f1787b66a3b4fdb8686972e9c7ba94',
   'symfony/options-resolver' => 'v5.0.8@3707e3caeff2b797c0bfaadd5eba723dd44e6bf1',
@@ -66,7 +66,7 @@ final class Versions
   'symfony/polyfill-mbstring' => 'v1.17.0@fa79b11539418b02fc5e1897267673ba2c19419c',
   'symfony/polyfill-php72' => 'v1.17.0@f048e612a3905f34931127360bdd2def19a5e582',
   'symfony/polyfill-uuid' => 'v1.17.0@6dbf0269e8aeab8253a5059c51c1760fb4034e87',
-  'mikopbx/core' => 'dev-develop@e6ec05ac6ca68e53cffa948179e8664a8bed4167',
+  'mikopbx/core' => 'dev-develop@6c2a473d8836921a85de150d6f862e64553d670b',
 );
 
     private function __construct()

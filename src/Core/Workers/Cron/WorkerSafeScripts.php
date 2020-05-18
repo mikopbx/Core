@@ -29,20 +29,12 @@ use Recoil\React\ReactKernel;
 
 class WorkerSafeScripts extends WorkerBase
 {
-    private $client_nats;
-    private $timeout = 8;
-    private $result = false;
-
     public function start($argv): void
     {
         /** Ротация логов */
         System::gnatsLogRotate();
         System::rotatePhpLog();
         PBX::logRotate();
-
-
-        $this->client_nats = $this->di->getShared('natsConnection');
-        $this->client_nats->connect($this->timeout);
 
         $this->waitFullyBooted();
 
@@ -59,8 +51,8 @@ class WorkerSafeScripts extends WorkerBase
                         $this->checkWorkerBeanstalk(WorkerNotifyError::class),
                         $this->checkWorkerBeanstalk(WorkerApiCommands::class),
                         $this->checkWorkerBeanstalk(WorkerLongPoolAPI::class),
+                        $this->checkWorkerBeanstalk(WorkerModuleMonitor::class),
                         $this->checkWorkerAMI(WorkerAmiListener::class), // Проверка листнера UserEvent
-                        $this->checkWorker(WorkerModuleMonitor::class),
                     ];
                 } catch (\Exception $e) {
                     global $errorLogger;
@@ -106,8 +98,7 @@ class WorkerSafeScripts extends WorkerBase
     private function waitFullyBooted(): bool
     {
         $time_start = microtime(true);
-
-        $res_data = false;
+        $result = false;
         $out      = [];
         if (Util::isSystemctl()) {
             $options = '';
@@ -116,109 +107,81 @@ class WorkerSafeScripts extends WorkerBase
         }
 
         while (true) {
-            $result = Util::mwExec("/usr/bin/timeout {$options} 1 /usr/sbin/asterisk -rx'core waitfullybooted'", $out);
-            if ($result === 0 && implode('', $out) === 'Asterisk has fully booted.') {
-                $res_data = true;
+            $execResult = Util::mwExec("/usr/bin/timeout {$options} 1 /usr/sbin/asterisk -rx'core waitfullybooted'", $out);
+            if ($execResult === 0 && implode('', $out) === 'Asterisk has fully booted.') {
+                $result = true;
                 break;
             }
             $time = microtime(true) - $time_start;
             if ($time > 60) {
-                Util::sysLogMsg('Safe Script', 'Error: Asterisk has not booted');
+                Util::sysLogMsg(__CLASS__, 'Error: Asterisk has not booted');
                 break;
             }
         }
 
-        return $res_data;
+        return $result;
     }
 
     /**
      * Проверка работы сервиса через beanstalk.
      *
-     * @param $name
+     * @param $workerClassName
      *
-     * @throws Exception
+     * @return \Generator|null
+     * @throws \Pheanstalk\Exception\DeadlineSoonException
      */
-    public function checkWorkerBeanstalk($name): ?Generator
+    public function checkWorkerBeanstalk($workerClassName): ?Generator
     {
-        $this->result = false;
-        $WorkerPID    = Util::getPidOfProcess($name);
+        $WorkerPID    = Util::getPidOfProcess($workerClassName);
+        $result = false;
         if ($WorkerPID !== '') {
-            // Сервис запущен. Выполним к нему пинг.
-            $queue = new BeanstalkClient("ping_{$name}");
-            // Выполняем запрос с наибольшим приоритетом.
+            // We had service PID, so we will ping it
+            $queue = new BeanstalkClient("ping_{$workerClassName}");
+
+            // Check service with higher priority
             $result = $queue->request('ping', 15, 0);
-            if (false === $result) {
-                Util::restartPHPWorker($name);
-            }
-        } else {
-            // Сервис вовсе не запущен.
-            Util::restartPHPWorker($name);
+        }
+        if (false === $result) {
+            Util::restartPHPWorker($workerClassName);
+            Util::sysLogMsg(__CLASS__, "Service {$workerClassName} started.");
         }
         yield;
     }
 
 
     /**
-     * Проверка работы AMI листнера.
+     * Check AMI listener
      *
-     * @param $name  - имя сервиса
-     * @param $level - уровень рекурсии
+     * @param $workerClassName - service name
+     * @param $level           - recursion level
+     *
+     * @return \Generator|null
      */
-    public function checkWorkerAMI($name, $level = 0): ?Generator
+    public function checkWorkerAMI($workerClassName, $level = 0): ?Generator
     {
         $res_ping  = false;
-        $WorkerPID = Util::getPidOfProcess($name);
+        $WorkerPID = Util::getPidOfProcess($workerClassName);
         if ($WorkerPID !== '') {
-            // Сервис запущен. Выполним к нему пинг.
+            // We had service PID, so we will ping it
             $am       = Util::getAstManager();
             $res_ping = $am->pingAMIListner();
             if (false === $res_ping) {
-                // Пинг не прошел.
-                Util::sysLogMsg('AMI_listner', 'Restart...');
+                Util::sysLogMsg('checkWorkerAMI', 'Restart...');
             }
         }
 
         if ($res_ping === false && $level < 10) {
-            Util::restartPHPWorker($name);
-            // Сервис не запущен.
+            Util::restartPHPWorker($workerClassName);
+            Util::sysLogMsg(__CLASS__, "Service {$workerClassName} started.");
+            // Wait 5 seconds while service will be ready to listen requests
             sleep(5);
-            // Пытаемся снова запустить / проверить работу сервиса.
-            $this->checkWorkerAMI($name, $level + 1);
+
+            // Check service again
+            $this->checkWorkerAMI($workerClassName, $level + 1);
         }
         yield;
     }
 
-    /**
-     * Проверка работы worker.
-     *
-     * @param $name
-     *
-     * @throws \Nats\Exception
-     */
-    public function checkWorker($name): ?Generator
-    {
-        if ( ! $this->client_nats->isConnected() === true) {
-            $this->client_nats->reconnect();
-        }
-        $this->result = false;
-        $WorkerPID    = Util::getPidOfProcess($name);
-        if ($WorkerPID !== '') {
-            // Сервис запущен. Выполним к нему пинг.
-            $this->client_nats->request("ping_{$name}", 'ping', [$this, 'callback']);
-            if (false === $this->result) {
-                Util::restartPHPWorker($name);
-            }
-        } else {
-            // Сервис вовсе не запущен.
-            Util::restartPHPWorker($name);
-        }
-        yield;
-    }
-
-    public function callback($message): void
-    {
-        $this->result = true;
-    }
 }
 
 // Start worker process

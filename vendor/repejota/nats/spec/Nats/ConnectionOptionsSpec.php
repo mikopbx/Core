@@ -7,7 +7,6 @@ use Prophecy\Argument;
 
 class ConnectionOptionsSpec extends ObjectBehavior
 {
-
     function it_is_initializable()
     {
         $this->shouldHaveType('Nats\ConnectionOptions');
@@ -47,29 +46,5 @@ class ConnectionOptionsSpec extends ObjectBehavior
 
     function it_returns_a_valid_default_address() {
         $this->getAddress()->shouldEqual("tcp://localhost:4222");
-    }
-
-    function it_options_can_be_overrided()
-    {
-        $options = array(
-            'host' => 'remotehost.com',
-            'port' => 4321,
-            'user' => 'user',
-            'pass' => 'pass',
-            'token' => 'token',
-            'lang' => 'php',
-            'version' => '1.2.3',
-            'verbose' => true,
-            'pedantic' => true,
-            'reconnect' => false,
-        );
-        $this->setConnectionOptions($options);
-        $this->getHost()->shouldBe('remotehost.com');
-        $this->getPort()->shouldBe(4321);
-        $this->getUser()->shouldBe('user');
-        $this->getPass()->shouldBe('pass');
-        $this->getToken()->shouldBe('token');
-        $this->getLang()->shouldBe('php');
-        $this->getVersion()->shouldBe('1.2.3');
     }
 }

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2e8a8a33eb57dc62f07b4031bea47a31",
+    "content-hash": "a615159a186e5c4ace32e1d47618f53e",
     "packages": [
         {
             "name": "beberlei/assert",
@@ -1943,26 +1943,25 @@
         },
         {
             "name": "repejota/nats",
-            "version": "0.8.7",
+            "version": "0.8.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/repejota/phpnats.git",
-                "reference": "68e6d24232e8b5aaf134697e47de2652b3ebff6f"
+                "reference": "e1031b58114cbc009c5dabd894f12bcbd39cf6f8"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/repejota/phpnats/zipball/68e6d24232e8b5aaf134697e47de2652b3ebff6f",
-                "reference": "68e6d24232e8b5aaf134697e47de2652b3ebff6f",
+                "url": "https://api.github.com/repos/repejota/phpnats/zipball/e1031b58114cbc009c5dabd894f12bcbd39cf6f8",
+                "reference": "e1031b58114cbc009c5dabd894f12bcbd39cf6f8",
                 "shasum": ""
             },
             "require": {
                 "ircmaxell/random-lib": "^1.2"
             },
             "require-dev": {
-                "leanphp/phpspec-code-coverage": "^3.2@dev",
                 "phpspec/phpspec": "^3.0",
                 "phpunit/phpunit": "5.*",
-                "satooshi/php-coveralls": "2.0.x-dev"
+                "satooshi/php-coveralls": "dev-master"
             },
             "type": "library",
             "autoload": {
@@ -2001,7 +2000,7 @@
                 }
             ],
             "description": "A nats.io client in PHP",
-            "time": "2018-06-09T15:32:07+00:00"
+            "time": "2017-04-25T11:59:54+00:00"
         },
         {
             "name": "sentry/sdk",

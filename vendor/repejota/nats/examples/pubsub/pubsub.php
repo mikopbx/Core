@@ -18,5 +18,3 @@ $client->publish('foo', 'Marty McFly');
 
 // Wait for 1 message.
 $client->wait(1);
-
-$client->close();

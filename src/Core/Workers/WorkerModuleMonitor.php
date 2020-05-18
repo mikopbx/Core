@@ -10,6 +10,7 @@ namespace MikoPBX\Core\Workers;
 
 use Exception;
 use MikoPBX\Common\Models\PbxExtensionModules;
+use MikoPBX\Core\System\BeanstalkClient;
 use MikoPBX\Core\System\Util;
 
 require_once 'globals.php';
@@ -23,14 +24,19 @@ class WorkerModuleMonitor extends WorkerBase
      */
     public function start($argv): void
     {
-        $client = $this->di->getShared('natsConnection');
+        $natsClient = $this->di->getShared('natsConnection');
+
+        $beansTalkClient = new BeanstalkClient();
+        $beansTalkClient->subscribe('ping_' . self::class, [$this, 'pingCallBack']);
 
         while (true) {
-            if ( ! $client->isConnected() === true) {
-                $client->reconnect();
-                $client->subscribe('ping_' . self::class, [$this, 'pingCallBack']);
+            if ( ! $natsClient->isConnected() === true) {
+                $natsClient->reconnect();
             }
-            $client->wait();
+            $natsClient->wait();
+
+            $beansTalkClient->wait(1); // instead of sleep
+
             $delta = time() - $this->last_check_time;
             if ($delta < 86400) {
                 continue;

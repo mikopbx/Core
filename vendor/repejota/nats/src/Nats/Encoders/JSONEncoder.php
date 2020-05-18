@@ -34,7 +34,7 @@ class JSONEncoder implements Encoder
      */
     public function decode($payload)
     {
-        $payload = json_decode($payload, true);
+        $payload = json_decode($payload);
         return $payload;
     }
 }

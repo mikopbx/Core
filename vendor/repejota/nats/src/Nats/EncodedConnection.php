@@ -1,8 +1,6 @@
 <?php
 namespace Nats;
 
-use Nats\Encoders\Encoder;
-
 /**
  * Class EncodedConnection
  *
@@ -25,10 +23,25 @@ class EncodedConnection extends Connection
      * @param ConnectionOptions           $options Connection options object.
      * @param \Nats\Encoders\Encoder|null $encoder Encoder to use with the payload.
      */
-    public function __construct(ConnectionOptions $options = null, Encoder $encoder = null)
+    public function __construct(ConnectionOptions $options = null, \Nats\Encoders\Encoder $encoder = null)
     {
         $this->encoder = $encoder;
         parent::__construct($options);
+    }
+
+    /**
+     * Request does a request and executes a callback with the response.
+     *
+     * @param string   $subject  Message topic.
+     * @param string   $payload  Message data.
+     * @param \Closure $callback Closure to be executed as callback.
+     *
+     * @return void
+     */
+    public function request($subject, $payload, \Closure $callback)
+    {
+        $payload = $this->encoder->encode($payload);
+        parent::request($subject, $payload, $callback);
     }
 
     /**
@@ -36,14 +49,13 @@ class EncodedConnection extends Connection
      *
      * @param string $subject Message topic.
      * @param string $payload Message data.
-     * @param string $inbox   Message inbox.
      *
      * @return void
      */
-    public function publish($subject, $payload = null, $inbox = null)
+    public function publish($subject, $payload = null)
     {
         $payload = $this->encoder->encode($payload);
-        parent::publish($subject, $payload, $inbox);
+        parent::publish($subject, $payload);
     }
 
     /**

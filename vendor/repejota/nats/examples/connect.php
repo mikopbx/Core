@@ -1,6 +1,8 @@
 <?php
 require_once __DIR__.'/../vendor/autoload.php';
 
-$c = new Nats\Connection();
+$connectionOptions = new \Nats\ConnectionOptions();
+$connectionOptions->setHost('localhost')->setPort(4222);
+$c = new Nats\Connection($connectionOptions);
 $c->connect();
 $c->close();

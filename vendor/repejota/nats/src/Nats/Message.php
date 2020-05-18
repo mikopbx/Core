@@ -3,8 +3,6 @@ namespace Nats;
 
 /**
  * Message Class.
- *
- * @package Nats
  */
 class Message
 {
@@ -176,8 +174,8 @@ class Message
      */
     public function reply($body)
     {
-        $this->conn->publish(
-            $this->subject,
+        $this->getConn()->publish(
+            $this->getSubject(),
             $body
         );
     }

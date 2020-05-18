@@ -9,6 +9,4 @@ echo 'Server: nats://'.$connectionOptions->getHost().':'.$connectionOptions->get
 $c = new Nats\Connection($connectionOptions);
 $c->connect();
 
-
-// TODO ping is not public.
 $c->ping();
