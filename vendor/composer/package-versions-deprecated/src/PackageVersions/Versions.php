@@ -53,7 +53,7 @@ final class Versions
   'psr/log' => '1.1.3@0f73288fd15629204f9d42b7055f72dacbe811fc',
   'ralouphie/getallheaders' => '3.0.3@120b605dfeb996808c31b6477290a714d356e822',
   'react/event-loop' => 'v1.1.1@6d24de090cd59cfc830263cfba965be77b563c13',
-  'react/promise' => 'v2.7.1@31ffa96f8d2ed0341a57848cbb84d88b89dd664d',
+  'react/promise' => 'v2.8.0@f3cff96a19736714524ca0dd1d4130de73dbbbc4',
   'recoil/api' => '1.0.1@0e998e56ca1b6ddf8665b23833737445ab639b4e',
   'recoil/kernel' => '1.0.2@cf307c4f8de2b82dfd3798b1bdd1d2c229239b3a',
   'recoil/react' => '1.0.2@d385ab9ff8cbc99ab2d145ff9687895f9e8dcc0d',
@@ -62,11 +62,11 @@ final class Versions
   'sentry/sdk' => '2.1.0@18921af9c2777517ef9fb480845c22a98554d6af',
   'sentry/sentry' => '2.3.2@b3e71feb32f1787b66a3b4fdb8686972e9c7ba94',
   'symfony/options-resolver' => 'v5.0.8@3707e3caeff2b797c0bfaadd5eba723dd44e6bf1',
-  'symfony/polyfill-intl-idn' => 'v1.15.0@47bd6aa45beb1cd7c6a16b7d1810133b728bdfcf',
-  'symfony/polyfill-mbstring' => 'v1.15.0@81ffd3a9c6d707be22e3012b827de1c9775fc5ac',
-  'symfony/polyfill-php72' => 'v1.15.0@37b0976c78b94856543260ce09b460a7bc852747',
-  'symfony/polyfill-uuid' => 'v1.15.0@2318f7f470a892867f3de602e403d006b1b9c9aa',
-  'mikopbx/core' => 'dev-develop@e0324b1946866438fb47a5cc6340cfd9a4549d2e',
+  'symfony/polyfill-intl-idn' => 'v1.17.0@3bff59ea7047e925be6b7f2059d60af31bb46d6a',
+  'symfony/polyfill-mbstring' => 'v1.17.0@fa79b11539418b02fc5e1897267673ba2c19419c',
+  'symfony/polyfill-php72' => 'v1.17.0@f048e612a3905f34931127360bdd2def19a5e582',
+  'symfony/polyfill-uuid' => 'v1.17.0@6dbf0269e8aeab8253a5059c51c1760fb4034e87',
+  'mikopbx/core' => 'dev-develop@e6ec05ac6ca68e53cffa948179e8664a8bed4167',
 );
 
     private function __construct()
