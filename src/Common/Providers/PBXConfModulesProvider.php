@@ -22,9 +22,14 @@ use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Core\Asterisk\Configs\ConferenceConf;
 use MikoPBX\Core\Asterisk\Configs\DialplanApplicationConf;
 use MikoPBX\Core\Asterisk\Configs\ExternalPhonesConf;
+use MikoPBX\Core\Asterisk\Configs\FeaturesConf;
+use MikoPBX\Core\Asterisk\Configs\HttpConf;
 use MikoPBX\Core\Asterisk\Configs\IAXConf;
+use MikoPBX\Core\Asterisk\Configs\IndicationConf;
 use MikoPBX\Core\Asterisk\Configs\IVRConf;
+use MikoPBX\Core\Asterisk\Configs\ManagerConf;
 use MikoPBX\Core\Asterisk\Configs\MikoAjamConf;
+use MikoPBX\Core\Asterisk\Configs\ModulesConf;
 use MikoPBX\Core\Asterisk\Configs\OtherConf;
 use MikoPBX\Core\Asterisk\Configs\ParkConf;
 use MikoPBX\Core\Asterisk\Configs\QueueConf;
@@ -61,6 +66,11 @@ class PBXConfModulesProvider implements ServiceProviderInterface
                     QueueConf::class,
                     DialplanApplicationConf::class,
                     MikoAjamConf::class,
+                    FeaturesConf::class,
+                    HttpConf::class,
+                    IndicationConf::class,
+                    ManagerConf::class,
+                    ModulesConf::class,
                 ];
 
                 // Add system classes

@@ -94,7 +94,7 @@ return [
     'sntry_ErrorGeneric'                                          => 'Bilinmeyen gönderme hatası. Tekrar deneyin!',
     'lic_CouponMessage'                                           => '<div class = \'ui message\'> Kupon, PBX\'in işlevselliğini genişletirken veya bir lisans satın alırken kullanılır. <br>
 Bir kez etkinleştirilebilir, bundan sonra kupon kullanılır.
-</ Div>',
+</div>',
     'lic_ResetLicenseSettings'                                    => 'Bağlantıyı kaldır anahtarı',
     'lic_IntroductionTabHeader'                                   => 'Pazar yeri lisanslama hakkında',
     'f2b_Reason'                                                  => 'neden',
@@ -371,20 +371,20 @@ Bir kez etkinleştirilebilir, bundan sonra kupon kullanılır.
     'qf_NatModeInstructions'                                      => '<div class = \'ui mesajı\'>
             <div class = \'ui madde işaretli liste\'>
                 <div class = \'item\'> <b> hayır </b>, RFC 3581\'de belirtilen dışında özel bir NAT işlemi gerçekleştirmez
-                </ Div>
+                </div>
                 <div class = \'item\'> <b> force_rport </b>, herhangi bir rport parametresi belirtilmemiş olsa bile, sanki
-                </ Div>
+                </div>
                 <div class = \'item\'> <b> comedia </b>, RTP paketlerini alındıkları bağlantı noktasına geri göndererek SDP başlığında gerekli bağlantı noktasını yok sayar
-                </ Div>
+                </div>
                 <div class = \'item\'> <b> auto_comedia </b> Asterisk cihazın NAT arkasında olduğunu belirleyebiliyorsa, comedia seçeneğini belirleyin
-                </ Div>
+                </div>
                 nat = yes yerine <div class = \'item\'> <b> force_rport, comedia </b> seçeneği
-                </ Div>
-            </ Div>
-        </ Div>',
+                </div>
+            </div>
+        </div>',
     'qf_QualifyInstructions'                                      => '<div class = \'ui mesajı\'>
             Bu seçenek etkinleştirildiğinde, Yıldız işareti belirtilen sıklıkta SIP Seçenekleri paketleri gönderir. Bu, yönlendiricinizdeki NAT tünellemesini desteklemek için gereklidir.
-        </ Div>',
+        </div>',
     'AdvancedOptions'                                             => 'Gelişmiş ayarlar',
     'ConnectionSettings'                                          => 'Bağlantı Ayarları',
     'BreadcrumbHome'                                              => 'Başlangıç',
@@ -786,7 +786,7 @@ Bir kez etkinleştirilebilir, bundan sonra kupon kullanılır.
 Zaten bir anahtarınız varsa, bu alana kolayca girebilirsiniz. <br>
 Anahtarınız varsa, ancak unuttuysanız, lic@miko.ru adresinden gelen mektuplar için postaya bakın <br>
 Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
-</ Div>',
+</div>',
     'lic_CurrentLicenseInfo'                                      => 'Lisanslı Ürün Detayları',
     'lic_Expired'                                                 => 'Ürünün Süresi Doldu',
     'lic_ExpiredAfter'                                            => 'Lisans süresi% sona erdi% sonra dolar',

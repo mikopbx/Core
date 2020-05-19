@@ -88,6 +88,8 @@ class WorkerModelsEvents extends WorkerBase
 
     /**
      * Entry point
+     *
+     * @param $argv
      */
     public function start($argv): void
     {

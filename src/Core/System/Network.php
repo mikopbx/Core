@@ -816,9 +816,7 @@ class Network
     /**
      * Возвращает список включеннх веб интерейсов
      *
-     * @param $id_net
-     *
-     * @return string
+     * @return array
      */
     public function getEnabledLanInterfaces(): array
     {

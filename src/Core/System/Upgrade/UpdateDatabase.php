@@ -9,8 +9,10 @@ use MikoPBX\Core\Config\RegisterDIServices;
 use Phalcon\Db\Column;
 use Phalcon\Db\Index;
 use Phalcon\Di;
+use Phalcon\Di\Exception;
 use ReflectionClass;
 use ReflectionException;
+use RuntimeException;
 
 
 class UpdateDatabase
@@ -34,7 +36,7 @@ class UpdateDatabase
     {
         $this->di     = Di::getDefault();
         if ($this->di === null){
-            throw new \Phalcon\Di\Exception('\Phalcon\DI did not installed.');
+            throw new Exception('\Phalcon\DI did not installed.');
         }
         $this->config = $this->di->getShared('config');
     }
@@ -45,7 +47,7 @@ class UpdateDatabase
             RegisterDIServices::recreateDBConnections(); // after storage remount
             $this->updateDbStructureByModelsAnnotations();
             RegisterDIServices::recreateDBConnections(); // if we change anything in structure
-        } catch (\RuntimeException $e) {
+        } catch (RuntimeException $e) {
             echo "Errors within database upgrade process";
         }
     }

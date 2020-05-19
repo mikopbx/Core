@@ -32,9 +32,7 @@ class DialplanApplicationConf extends ConfigClass
     public function getIncludeInternal(): string
     {
         // Включаем контексты.
-        $conf = "include => applications \n";
-
-        return $conf;
+        return "include => applications \n";
     }
 
     /**
@@ -45,10 +43,8 @@ class DialplanApplicationConf extends ConfigClass
     public function getIncludeInternalTransfer(): string
     {
         // Генерация внутреннего номерного плана.
-        $result = '';
-
         // $result.= "include => applications \n";
-        return $result;
+        return '';
     }
 
     /**
@@ -91,9 +87,8 @@ class DialplanApplicationConf extends ConfigClass
                 $app_data .= "same => $row" . "\n\t";
             }
         }
-        $result = "$app_data\n";
 
-        return $result;
+        return "$app_data\n";
     }
 
     private function generatePhpApp($app): string

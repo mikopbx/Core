@@ -429,7 +429,7 @@ class CdrDb
             } else {
                 // Предыдущие звонки завершены. Текущий вызов новый, к примеру через резервного провайдера.
                 // Меняем идентификатор предыдущих звонков.
-                $m_data->UNIQUEID = $m_data->UNIQUEID . Util::generateRandomString(5);
+                $m_data->UNIQUEID .= Util::generateRandomString(5);
                 // Чистим путь к файлу записи.
                 $m_data->recordingfile = "";
                 $m_data->save();

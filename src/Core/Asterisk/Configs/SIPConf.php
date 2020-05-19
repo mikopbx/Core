@@ -17,7 +17,7 @@ use MikoPBX\Common\Models\{ExtensionForwardingRights,
     Users};
 use MikoPBX\Core\Asterisk\AstDB;
 use MikoPBX\Modules\Config\ConfigClass;
-use MikoPBX\Core\System\{MikoPBXConfig, Network, Util};
+use MikoPBX\Core\System\{Network, Util};
 use MikoPBX\Core\Utilities\SubnetCalculator;
 use Phalcon\Di;
 
@@ -192,9 +192,7 @@ class SIPConf extends ConfigClass
         $now_hadh = md5($topology . $exthostname . $extipaddr);
 
         $sip              = new self();
-        $mikoPBXConfig    = new MikoPBXConfig();
-        $general_settings = $mikoPBXConfig->getGeneralSettings();
-        $sip->generateConfigProtected($general_settings);
+        $sip->generateConfigProtected();
 
 
         $out = [];
@@ -238,24 +236,22 @@ class SIPConf extends ConfigClass
     /**
      * Генератор sip.conf
      *
-     * @param $general_settings
-     *
      * @return bool|void
      */
-    protected function generateConfigProtected($general_settings)
+    protected function generateConfigProtected(): void
     {
         $conf = '';
         if ($this->technology === 'SIP') {
-            $conf .= $this->generateGeneral($general_settings);
-            $conf .= $this->generateProviders($general_settings);
-            $conf .= $this->generatePeers($general_settings);
+            $conf .= $this->generateGeneral();
+            $conf .= $this->generateProviders();
+            $conf .= $this->generatePeers();
 
             Util::fileWriteContent($this->astConfDir . '/sip.conf', $conf);
         } else {
             $conf = '';
-            $conf .= $this->generateGeneralPj($general_settings);
-            $conf .= $this->generateProvidersPj($general_settings);
-            $conf .= $this->generatePeersPj($general_settings);
+            $conf .= $this->generateGeneralPj();
+            $conf .= $this->generateProvidersPj();
+            $conf .= $this->generatePeersPj();
 
             Util::fileWriteContent($this->astConfDir . '/pjsip.conf', $conf);
         }
@@ -276,26 +272,25 @@ class SIPConf extends ConfigClass
     /**
      * Generate [general] section in sip.conf
      *
-     * @param $general_settings
      *
      * @return string
      */
-    private function generateGeneral($general_settings): string
+    private function generateGeneral(): string
     {
         $conf    = "[general] \n" .
             "context=public-direct-dial \n" .
             "transport=udp \n" .
             "allowoverlap=no \n" .
-            "udpbindaddr=0.0.0.0:{$general_settings['SIPPort']} \n" .
+            "udpbindaddr=0.0.0.0:{$this->generalSettings['SIPPort']} \n" .
             "srvlookup=yes \n" .
             "useragent=MikoPBX \n" .
             "sdpsession=MikoPBX \n" .
             "relaxdtmf=yes \n" .
             "alwaysauthreject=yes \n" .
             "videosupport=yes \n" .
-            "minexpiry={$general_settings['SIPMinExpiry']} \n" .
-            "defaultexpiry={$general_settings['SIPDefaultExpiry']} \n" .
-            "maxexpiry={$general_settings['SIPMaxExpiry']} \n" .
+            "minexpiry={$this->generalSettings['SIPMinExpiry']} \n" .
+            "defaultexpiry={$this->generalSettings['SIPDefaultExpiry']} \n" .
+            "maxexpiry={$this->generalSettings['SIPMaxExpiry']} \n" .
             "nat=force_rport,comedia; \n" .
             "notifyhold=yes \n" .
             "notifycid=ignore-context \n" .
@@ -339,7 +334,7 @@ class SIPConf extends ConfigClass
 
         $networks = NetworkFilters::find('local_network=1');
         foreach ($networks as $net) {
-            if (array_search($net->permit, $subnets) === false) {
+            if ( ! in_array($net->permit, $subnets, true)) {
                 $subnets[] = $net->permit;
             }
         }
@@ -365,11 +360,9 @@ class SIPConf extends ConfigClass
     /**
      * Генератор секции провайдеров в sip.conf
      *
-     * @param $general_settings
-     *
      * @return string
      */
-    private function generateProviders($general_settings): string
+    private function generateProviders(): string
     {
         $conf        = '';
         $reg_strings = '';
@@ -418,7 +411,7 @@ class SIPConf extends ConfigClass
                 $defaultuser        = ';';
                 $provider['secret'] = ';';
             }
-            $lang = $general_settings['PBXLanguage'];
+            $lang = $this->generalSettings['PBXLanguage'];
 
             $codecs = '';
             foreach ($provider['codecs'] as $codec) {
@@ -458,13 +451,11 @@ class SIPConf extends ConfigClass
     /**
      * Генератор сеции пиров для sip.conf
      *
-     * @param $general_settings
-     *
      * @return string
      */
-    public function generatePeers($general_settings): string
+    public function generatePeers(): string
     {
-        $lang = $general_settings['PBXLanguage'];
+        $lang = $this->generalSettings['PBXLanguage'];
         $conf = '';
         foreach ($this->data_peers as $peer) {
             $language = str_replace('_', '-', strtolower($lang));
@@ -528,7 +519,7 @@ class SIPConf extends ConfigClass
         }
         $additionalModules = $this->di->getShared('pbxConfModules');
         foreach ($additionalModules as $Object) {
-            $conf .= $Object->generatePeers($general_settings);
+            $conf .= $Object->generatePeers();
         }
 
         return $conf;
@@ -537,11 +528,10 @@ class SIPConf extends ConfigClass
     /**
      * Генератора секции general pjsip.conf
      *
-     * @param $general_settings
      *
      * @return string
      */
-    private function generateGeneralPj($general_settings): string
+    private function generateGeneralPj(): string
     {
         $network = new Network();
 
@@ -595,7 +585,7 @@ class SIPConf extends ConfigClass
             "[transport-udp]\n" .
             "type = transport\n" .
             "protocol = udp\n" .
-            "bind=0.0.0.0:{$general_settings['SIPPort']}\n";
+            "bind=0.0.0.0:{$this->generalSettings['SIPPort']}\n";
 
         if ($topology === 'private') {
             foreach ($subnets as $net) {
@@ -625,11 +615,10 @@ class SIPConf extends ConfigClass
     /**
      * Генератор секции провайдеров в sip.conf
      *
-     * @param $general_settings
      *
      * @return string
      */
-    private function generateProvidersPj($general_settings): string
+    private function generateProvidersPj(): string
     {
         $conf        = '';
         $reg_strings = '';
@@ -656,7 +645,7 @@ class SIPConf extends ConfigClass
                     'contact_user'   => $provider['username'],
                     'retry_interval' => '20',
                     'max_retries'    => '10',
-                    'expiration'     => $general_settings['SIPDefaultExpiry'],
+                    'expiration'     => $this->generalSettings['SIPDefaultExpiry'],
                     'server_uri'     => "sip:{$provider['host']}:{$port}",
                     'client_uri'     => "sip:{$provider['username']}@{$provider['host']}:{$port}",
                 ];
@@ -684,9 +673,9 @@ class SIPConf extends ConfigClass
                 'type'               => 'aor',
                 'max_contacts'       => '1',
                 'contact'            => $contact,
-                'maximum_expiration' => $general_settings['SIPMaxExpiry'],
-                'minimum_expiration' => $general_settings['SIPMinExpiry'],
-                'default_expiration' => $general_settings['SIPDefaultExpiry'],
+                'maximum_expiration' => $this->generalSettings['SIPMaxExpiry'],
+                'minimum_expiration' => $this->generalSettings['SIPMinExpiry'],
+                'default_expiration' => $this->generalSettings['SIPDefaultExpiry'],
             ];
             $prov_config .= "[{$provider['uniqid']}]\n";
             $prov_config .= Util::overrideConfigurationArray($options, $manual_attributes, 'aor');
@@ -704,7 +693,7 @@ class SIPConf extends ConfigClass
                     $provider['fromuser']
                 ) === '') ? "{$provider['username']}; username" : "{$provider['fromuser']}; fromuser";
             $from_user  = ($provider['disablefromuser'] === '1') ? null : $from;
-            $lang       = $general_settings['PBXLanguage'];
+            $lang       = $this->generalSettings['PBXLanguage'];
 
             if (count($this->contexts_data[$provider['context_id']]) === 1) {
                 $context_id = $provider['uniqid'];
@@ -803,13 +792,12 @@ class SIPConf extends ConfigClass
     /**
      * Генератор сеции пиров для sip.conf
      *
-     * @param $general_settings
      *
      * @return string
      */
-    public function generatePeersPj($general_settings): string
+    public function generatePeersPj(): string
     {
-        $lang              = $general_settings['PBXLanguage'];
+        $lang              = $this->generalSettings['PBXLanguage'];
         $additionalModules = $this->di->getShared('pbxConfModules');
         $conf              = '';
 
@@ -888,10 +876,10 @@ class SIPConf extends ConfigClass
 
         foreach ($additionalModules as $Object) {
             // Prevent cycling, skip current class
-            if (is_a($Object, SIPConf::class)) {
+            if (is_a($Object, __CLASS__)) {
                 continue;
             }
-            $conf .= $Object->generatePeersPj($general_settings);
+            $conf .= $Object->generatePeersPj();
         }
 
 
@@ -1008,7 +996,7 @@ class SIPConf extends ConfigClass
      *
      * @return array
      */
-    private function getCodecs($uniqid)
+    private function getCodecs($uniqid): array
     {
         $arr_codecs = [];
         $filter     = [
@@ -1029,7 +1017,7 @@ class SIPConf extends ConfigClass
      *
      * @return array
      */
-    private function getProviders()
+    private function getProviders(): array
     {
         /** @var \MikoPBX\Common\Models\Sip $sip_peer */
         /** @var \MikoPBX\Common\Models\NetworkFilters $network_filter */
@@ -1064,7 +1052,7 @@ class SIPConf extends ConfigClass
      *
      * @return array
      */
-    private function getOutRoutes()
+    private function getOutRoutes(): array
     {
         /** @var \MikoPBX\Common\Models\OutgoingRoutingTable $rout */
         /** @var \MikoPBX\Common\Models\OutgoingRoutingTable $routs */

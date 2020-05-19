@@ -17,7 +17,6 @@ class WorkerAmiListener extends WorkerBase
 {
     private $client;
     private $am;
-    private $message_is_sent;
 
     /**
      * WorkerAmiListener constructor.
@@ -90,16 +89,16 @@ class WorkerAmiListener extends WorkerBase
      */
     private function actionSendToBeanstalk($result): void
     {
-        $this->message_is_sent = false;
-        $error                 = '';
+        $message_is_sent = false;
+        $error           = '';
         for ($i = 1; $i <= 10; $i++) {
             try {
                 $result_send = $this->client->publish($result);
                 if ($result_send == false) {
                     $this->client->reconnect();
                 }
-                $this->message_is_sent = ($result_send !== false);
-                if ($this->message_is_sent == true) {
+                $message_is_sent = ($result_send !== false);
+                if ($message_is_sent == true) {
                     // Проверка
                     break;
                 }
@@ -109,7 +108,7 @@ class WorkerAmiListener extends WorkerBase
             }
         }
 
-        if ($this->message_is_sent == false) {
+        if ($message_is_sent == false) {
             Util::sysLogMsg('CDR_AMI_Connector', "Error send data to queue. " . $error);
         }
         // Логируем оповещение.

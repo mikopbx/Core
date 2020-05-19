@@ -168,7 +168,7 @@ class DialplanApplicationsController extends BaseController
      *
      * @param string|NULL $uniqid идентификатор редактируемого Dialplan Application
      */
-    public function deleteAction(string $uniqid = null)
+    public function deleteAction(string $uniqid = null):void
     {
         $appRecord = DialplanApplications::findFirstByUniqid($uniqid);
         if ($appRecord === null) {
@@ -187,6 +187,6 @@ class DialplanApplicationsController extends BaseController
             $this->db->commit();
         }
 
-        return $this->forward('dialplan-applications/index');
+        $this->forward('dialplan-applications/index');
     }
 }

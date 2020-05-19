@@ -318,7 +318,7 @@ class Elements extends Injectable
     /**
      * Builds header menu with left and right items
      *
-     * @return string
+     * @return void
      */
     public function getMenu(): void
     {
@@ -405,7 +405,7 @@ class Elements extends Injectable
 
     public function getAvailableWebAdminLanguages(): array
     {
-        $result = [
+        return [
             'en'      => $this->translation->_('ex_English'),
             'ru'      => $this->translation->_('ex_Russian'),
             'de'      => $this->translation->_('ex_Deutsch'),
@@ -423,8 +423,6 @@ class Elements extends Injectable
             'vi'      => $this->translation->_('ex_Vietnamese'),
             'zh_Hans' => $this->translation->_('ex_Chinese'),
         ];
-
-        return $result;
     }
 
 }

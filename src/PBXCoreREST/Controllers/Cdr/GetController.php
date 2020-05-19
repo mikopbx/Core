@@ -40,6 +40,8 @@ class GetController extends BaseController
      * "dst_num"         => 'TEXT',
      * "linkedid"         => 'TEXT',
      * "did"             => 'TEXT',
+     *
+     * @param $actionName
      */
     public function callAction($actionName): void
     {

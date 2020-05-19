@@ -39,6 +39,11 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
      */
     protected $messages;
 
+    /**
+     * @var array
+     */
+    protected $generalSettings;
+
 
     /**
      * ConfigClass constructor.
@@ -52,6 +57,7 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
         $this->modulesDir    = $config->path('core.modulesDir');
         $this->booting       = $this->di->getRegistry()->booting;
         $this->mikoPBXConfig = new MikoPBXConfig();
+        $this->generalSettings = $this->mikoPBXConfig->getGeneralSettings();
         $this->messages = [];
         $this->getSettings();
     }
@@ -60,11 +66,11 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
     {
     }
 
-    public function generateConfig($general_settings): void
+    public function generateConfig(): void
     {
         // Генерация конфигурационных файлов.
         $this->echoGenerateConfig();
-        $this->generateConfigProtected($general_settings);
+        $this->generateConfigProtected();
         $this->echoDone();
     }
 
@@ -83,11 +89,8 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
 
     /**
      * Генерация конфигурационного файла asterisk.
-     * $general_settings - массив глобальных настроек.
-     *
-     * @param $general_settings
      */
-    protected function generateConfigProtected($general_settings)
+    protected function generateConfigProtected():void
     {
     }
 
@@ -106,36 +109,28 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
     public function getIncludeInternal(): string
     {
         // Генерация внутреннего номерного плана.
-        $result = '';
-
-        return $result;
+        return '';
     }
 
     // Получаем строки include для секции internal-transfer.
     public function getIncludeInternalTransfer() :string
     {
         // Генерация внутреннего номерного плана.
-        $result = '';
-
-        return $result;
+        return '';
     }
 
     // Генератор extension для контекста internal.
     public function extensionGenInternal(): string
     {
         // Генерация внутреннего номерного плана.
-        $result = '';
-
-        return $result;
+        return '';
     }
 
     // Генератор extension для контекста internal.
     public function extensionGenInternalTransfer(): string
     {
         // Генерация внутреннего номерного плана.
-        $result = '';
-
-        return $result;
+        return '';
     }
 
     /**
@@ -147,46 +142,35 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
      */
     public function getTechByID($id): string
     {
-        unset($id);
         // Генерация внутреннего номерного плана.
-        $result = '';
-
-        return $result;
+        return '';
     }
 
     // Генератор extension для контекста peers.
     public function extensionGenPeerContexts()
     {
         // Генерация внутреннего номерного плана.
-        $result = '';
-
-        return $result;
+        return '';
     }
 
     // Генератор extensions, дополнительные контексты.
     public function extensionGenContexts(): string
     {
-        $result = '';
-
-        return $result;
+        return '';
     }
 
     // Генератор хинтов для контекста internal-hints
     public function extensionGenHints(): string
     {
         // Генерация хинтов.
-        $result = '';
-
-        return $result;
+        return '';
     }
 
     // Секция global для extensions.conf.
     public function extensionGlobals(): string
     {
         // Генерация хинтов.
-        $result = '';
-
-        return $result;
+        return '';
     }
 
     // Секция featuremap для features.conf
@@ -268,10 +252,8 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
      *
      * @return string
      */
-    public function generatePeers($param): string
+    public function generatePeers(): string
     {
-        unset($param);
-
         return '';
     }
 
@@ -280,22 +262,17 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
      *
      * @return string
      */
-    public function generatePeersPj($param): string
+    public function generatePeersPj(): string
     {
-        unset($param);
-
         return '';
     }
 
     /**
      * Генератор сеции пиров для manager.conf
      *
-     * @return string
      */
-    public function generateManager($param): string
+    public function generateManagerConf(): string
     {
-        unset($param);
-
         return '';
     }
 
@@ -314,7 +291,7 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
     /**
      * Кастомизация исходящего контекста для конкретного маршрута.
      *
-     * @param $peer
+     * @param $rout
      *
      * @return string
      */
@@ -326,7 +303,7 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
     /**
      * Кастомизация исходящего контекста для конкретного маршрута.
      *
-     * @param $peer
+     * @param $rout
      *
      * @return string
      */
@@ -350,7 +327,7 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
     /**
      * Кастомизация входящего контекста для конкретного маршрута.
      *
-     * @param $peer
+     * @param $rout_number
      *
      * @return string
      */
@@ -430,5 +407,15 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
     public function onBeforeModuleDisable(): bool
     {
         return true;
+    }
+
+    /**
+     * Генератор modules.conf
+     *
+     * @return string
+     */
+    public function generateModulesConf():string
+    {
+        return '';
     }
 }

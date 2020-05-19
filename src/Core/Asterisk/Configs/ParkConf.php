@@ -34,7 +34,7 @@ class ParkConf extends ConfigClass
         $am            = Util::getAstManager('off');
         $res           = $am->ParkedCalls('default');
         if (count($res['data']) == 0) {
-            return $ParkeeChannel;
+            return null;
         }
 
         foreach ($res['data']['ParkedCall'] as $park_row) {
@@ -53,9 +53,9 @@ class ParkConf extends ConfigClass
      */
     public function getSettings(): void
     {
-        $this->ParkingExt       = $this->mikoPBXConfig->getGeneralSettings('PBXCallParkingExt');
-        $this->ParkingStartSlot = (int)$this->mikoPBXConfig->getGeneralSettings('PBXCallParkingStartSlot');
-        $this->ParkingEndSlot   = (int)$this->mikoPBXConfig->getGeneralSettings('PBXCallParkingEndSlot');
+        $this->ParkingExt       = $this->generalSettings['PBXCallParkingExt'];
+        $this->ParkingStartSlot = (int)$this->generalSettings['PBXCallParkingStartSlot'];
+        $this->ParkingEndSlot   = (int)$this->generalSettings['PBXCallParkingEndSlot'];
     }
 
     /**
@@ -66,10 +66,8 @@ class ParkConf extends ConfigClass
     public function getIncludeInternal(): string
     {
         // Включаем контексты.
-        $conf = '';
-
         // $conf.= "include => parked-calls \n";
-        return $conf;
+        return '';
     }
 
     /**
@@ -133,9 +131,7 @@ class ParkConf extends ConfigClass
     public function extensionGlobals(): string
     {
         // Генерация хинтов.
-        $result = "PARKING_DURATION=50\n";
-
-        return $result;
+        return "PARKING_DURATION=50\n";
     }
 
     /**
@@ -151,14 +147,12 @@ class ParkConf extends ConfigClass
     /**
      * Генерация файла конфигурации.
      *
-     * @param $settings
      *
-     * @return bool
+     * @return void
      */
-    protected function generateConfigProtected($settings): bool
+    protected function generateConfigProtected(): void
     {
         // Генерация конфигурационных файлов.
-        $result = true;
         $conf   = "[general] \n" .
             "parkeddynamic = yes \n\n" .
             "[default] \n" .
@@ -171,8 +165,6 @@ class ParkConf extends ConfigClass
             "comebackcontext = parkedcallstimeout\n" .
             "parkpos => {$this->ParkingStartSlot}-{$this->ParkingEndSlot} \n\n";
         file_put_contents($this->astConfDir . '/res_parking.conf', $conf);
-
-        return $result;
     }
 
 }

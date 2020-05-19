@@ -43,10 +43,10 @@ class SessionController extends BaseController
      * This action authenticate and logs an user into the application
      *
      */
-    public function startAction()
+    public function startAction():void
     {
         if ( ! $this->request->isPost()) {
-            return $this->forward('session/index');
+            $this->forward('session/index');
         }
         $loginFromUser = $this->request->getPost('login');
         $passFromUser  = $this->request->getPost('password');

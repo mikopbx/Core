@@ -543,7 +543,7 @@ class Storage
             if ($mounted_only === true && $mounted === false) {
                 continue;
             }
-            $sys_disk = ($cf_disk == $disk) ? true : false;
+            $sys_disk = ($cf_disk == $disk);
 
             $mb_size = 0;
             if (is_file("/sys/block/" . $disk . "/size")) {
@@ -1072,8 +1072,8 @@ class Storage
     /**
      * Сохраняем новые данные диска.
      *
-     * @param     $data
-     * @param int $id
+     * @param        $data
+     * @param string $id
      */
     public function saveDiskSettings($data, $id = '1'): void
     {

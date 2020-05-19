@@ -21,16 +21,13 @@ class IAXConf extends ConfigClass
     /**
      * Перезапуск модуля IAX2;
      */
-    public static function iaxReload()
+    public static function iaxReload(): array
     {
         $result = [
             'result' => 'ERROR',
         ];
-        $config = new MikoPBXConfig();
-        $arr_gs = $config->getGeneralSettings();
-        $iax    = new IAXConf();
-        $iax->generateConfig($arr_gs);
-
+        $iax    = new self();
+        $iax->generateConfig();
         Util::mwExec("asterisk -rx 'iax2 reload'");
         $result['result'] = 'Success';
 
@@ -176,30 +173,28 @@ class IAXConf extends ConfigClass
     /**
      * Генератор iax.conf
      *
-     * @param $general_settings
      *
-     * @return bool|void
+     * @return void
      */
-    protected function generateConfigProtected($general_settings)
+    protected function generateConfigProtected():void
     {
         $conf = '';
-        $conf .= $this->generateGeneral($general_settings);
-        $conf .= $this->generateProviders($general_settings);
+        $conf .= $this->generateGeneral();
+        $conf .= $this->generateProviders();
 
         Util::fileWriteContent($this->astConfDir . '/iax.conf', $conf);
-        file_put_contents($this->astConfDir . '/iaxprov.conf', "[default]\ncodec=ulaw\n");
+        file_put_contents($this->astConfDir . '/iaxprov.conf', "[default]\ncodec=alaw\n");
     }
 
     /**
      * Генератора секции general iax.conf
      *
-     * @param $general_settings
      *
      * @return string
      */
-    private function generateGeneral($general_settings): string
+    private function generateGeneral(): string
     {
-        $iax_port = (trim($general_settings['IAXPort']) != '') ? $general_settings['IAXPort'] : '4569';
+        $iax_port = (trim($this->generalSettings['IAXPort']) !== '') ? $this->generalSettings['IAXPort'] : '4569';
         $conf     = '[general]' . "\n";
         // $conf .= "context=public-direct-dial \n";
         $conf .= "bindport={$iax_port}\n";
@@ -216,16 +211,15 @@ class IAXConf extends ConfigClass
     /**
      * Генератор секции провайдеров в iax.conf
      *
-     * @param $general_settings
      *
      * @return string
      */
-    private function generateProviders($general_settings): string
+    private function generateProviders(): string
     {
         $reg_strings = '';
         $prov_config = '';
 
-        $lang = str_replace('_', '-', strtolower($general_settings['PBXLanguage']));
+        $lang = str_replace('_', '-', strtolower($this->generalSettings['PBXLanguage']));
         foreach ($this->data_providers as $provider) {
             $prov_config .= "[{$provider['uniqid']}];\n";
             $prov_config .= "type=friend\n";
@@ -265,9 +259,7 @@ class IAXConf extends ConfigClass
             }
         }
 
-        $conf = $reg_strings . "\n" . $prov_config;
-
-        return $conf;
+        return $reg_strings . "\n" . $prov_config;
     }
 
 }

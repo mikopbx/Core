@@ -17,7 +17,7 @@ use Phalcon\Text;
 use SimpleXMLElement;
 
 /**
- * @property \MikoPBX\AdminCabinet\Providers\LicenseProvider license
+ * @property \MikoPBX\Service\License license
  */
 class LicensingController extends BaseController
 {
@@ -119,6 +119,8 @@ class LicensingController extends BaseController
 
     /**
      * Сохранение ключа в базу данных
+     *
+     * @param $licenseKey
      */
     private function saveLicenseKey($licenseKey): void
     {
@@ -167,10 +169,10 @@ class LicensingController extends BaseController
      *
      * @param $licenseKey
      */
-    public function getLicenseInfoAction($licenseKey)
+    public function getLicenseInfoAction($licenseKey):void
     {
         if (empty($licenseKey)) {
-            return [];
+            return;
         }
         $licenseInfo         = $this->license->getLicenseInfo($licenseKey);
         $this->view->success = true;

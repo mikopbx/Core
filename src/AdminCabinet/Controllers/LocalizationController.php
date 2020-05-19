@@ -12,21 +12,15 @@ namespace MikoPBX\AdminCabinet\Controllers;
 class LocalizationController extends BaseController
 {
 
-
     /**
      * Возвращает массив переводов для локализации в JavaScript
      *
-     * @return string
      */
-    public function getTranslatedArrayAction(): ?string
+    public function getTranslatedArrayAction(): void
     {
         $arrStr = [];
         foreach ($this->messages as $key => $value) {
-            $arrStr[$key] = str_replace(
-                '"',
-                '\\"',
-                str_replace(["\n", "  "], '', $value)
-            );
+            $arrStr[$key] = str_replace(["\n", "  ", '"'], ['', '', '\\"'], $value);
         }
 
         $this->view->success = true;

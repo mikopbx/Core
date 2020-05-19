@@ -27,7 +27,7 @@ class IVRConf extends ConfigClass
         $this->db_data = $res->toArray();
 
 
-        $this->extensionLength = $this->mikoPBXConfig->getGeneralSettings('PBXInternalExtensionLength');
+        $this->extensionLength = $this->generalSettings['PBXInternalExtensionLength'];
     }
 
     /**

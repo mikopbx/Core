@@ -16,6 +16,7 @@ use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 use Phalcon\Events\Manager;
 use ReflectionClass;
+use ReflectionException;
 
 
 /**
@@ -63,7 +64,7 @@ class ModulesDBConnectionsProvider extends DatabaseProviderBase implements Servi
                     if ($reflection->isAbstract()) {
                         continue;
                     }
-                } catch (\ReflectionException $exception) {
+                } catch (ReflectionException $exception) {
                     continue;
                 }
 

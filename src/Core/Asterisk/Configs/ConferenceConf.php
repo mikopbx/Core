@@ -23,10 +23,8 @@ class ConferenceConf extends ConfigClass
     public function getIncludeInternal(): string
     {
         // Включаем контексты.
-        $conf = '';
-
         // $conf.= "include => conference-rooms \n";
-        return $conf;
+        return '';
     }
 
     /**
@@ -37,10 +35,8 @@ class ConferenceConf extends ConfigClass
     public function getIncludeInternalTransfer(): string
     {
         // Генерация внутреннего номерного плана.
-        $result = '';
-
         // $result.= "include => conference-rooms \n";
-        return $result;
+        return '';
     }
 
     /**
@@ -82,7 +78,7 @@ class ConferenceConf extends ConfigClass
      */
     public function extensionGenContexts(): string
     {
-        $PBXRecordCalls = $this->mikoPBXConfig->getGeneralSettings('PBXRecordCalls');
+        $PBXRecordCalls = $this->generalSettings['PBXRecordCalls'];
         $rec_options    = ($PBXRecordCalls === '1') ? 'r' : '';
 
         // Генерация внутреннего номерного плана.

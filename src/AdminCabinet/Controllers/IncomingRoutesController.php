@@ -90,10 +90,10 @@ class IncomingRoutesController extends BaseController
      *
      * @param null $ruleId Идентификатор правила маршрутизации
      */
-    public function modifyAction($ruleId = null)
+    public function modifyAction($ruleId = null) :void
     {
         if ((int)$ruleId === 1) {
-            return $this->forward('incoming-routes/index');
+            $this->forward('incoming-routes/index');
         } // Первая строка маршрут по умолчанию, ее не трогаем.
 
         $rule = IncomingRoutingTable::findFirstByid($ruleId);

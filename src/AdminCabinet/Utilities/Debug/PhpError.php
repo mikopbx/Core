@@ -24,7 +24,7 @@ class PhpError
     {
         if ( ! empty($e)) {
             // Record Error
-            PhpError::errorHandler(0, $e->getMessage(), $e->getFile(), $e->getLine());
+            self::errorHandler(0, $e->getMessage(), $e->getFile(), $e->getLine());
         }
     }
 
@@ -74,7 +74,7 @@ class PhpError
         $e = error_get_last();
         if ( ! empty($e)) {
             // Record Error
-            PhpError::errorHandler($e['type'], $e['message'], $e['file'], $e['line']);
+            self::errorHandler($e['type'], $e['message'], $e['file'], $e['line']);
         }
     }
 

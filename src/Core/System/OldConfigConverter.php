@@ -10,6 +10,7 @@ namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Models\{Extensions, ExternalPhones, NetworkFilters};
 use MikoPBX\Core\System\{Config};
+use MikoPBX\Core\Backup\WebAPIClient;
 
 
 /**
@@ -198,6 +199,8 @@ class OldConfigConverter
 
     /**
      * Инициализация данных текущего узла.
+     *
+     * @param $children
      */
     private function initData($children): void
     {

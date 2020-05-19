@@ -25,8 +25,6 @@ $mikoPBX = new SystemLoader();
 echo ' |   -  Start MikoPBX\Core\System\SystemLoader\startSystem'.PHP_EOL;
 $result = $mikoPBX->startSystem();
 
-if(true === $result){
-     if(!file_exists('/offload/livecd')) {
-         Util::mwExecBg('/etc/rc/bootup_pbx');
-     }
+if((true === $result) && ! file_exists('/offload/livecd')) {
+    Util::mwExecBg('/etc/rc/bootup_pbx');
 }

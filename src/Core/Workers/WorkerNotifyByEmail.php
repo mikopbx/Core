@@ -18,6 +18,8 @@ class WorkerNotifyByEmail extends WorkerBase
 {
     /**
      * Entry point
+     *
+     * @param $argv
      */
     public function start($argv): void
     {

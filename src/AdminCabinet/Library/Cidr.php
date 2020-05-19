@@ -34,9 +34,7 @@ class Cidr extends Injectable
     // e.g. 10.0.2.56/21 = 10.0.0.0
     public function cidr2network($ip, $cidr)
     {
-        $network = long2ip((ip2long($ip)) & ((-1 << (32 - (int)$cidr))));
-
-        return $network;
+        return long2ip((ip2long($ip)) & ((-1 << (32 - (int)$cidr))));
     }
 
     // convert netmask to cidr

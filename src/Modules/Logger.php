@@ -7,7 +7,7 @@
  *
  */
 
-namespace MikoPBX\Core\Modules;
+namespace MikoPBX\Modules;
 
 use MikoPBX\Core\System\System;
 use Phalcon\Logger\Adapter\Stream as FileLogger;

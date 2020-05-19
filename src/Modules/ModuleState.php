@@ -15,6 +15,8 @@ use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\PbxSettings;
 use Phalcon\Di\Injectable;
+use ReflectionClass;
+use ReflectionException;
 
 /**
  * @property \MikoPBX\Service\License license
@@ -122,11 +124,11 @@ class ModuleState extends Injectable
 
             // Test whether this class abstract or not
             try {
-                $reflection = new \ReflectionClass($moduleModelClass);
+                $reflection = new ReflectionClass($moduleModelClass);
                 if ($reflection->isAbstract()) {
                     continue;
                 }
-            } catch (\ReflectionException $exception) {
+            } catch (ReflectionException $exception) {
                 continue;
             }
             $translator = $this->di->getShared('translation');
@@ -290,11 +292,11 @@ class ModuleState extends Injectable
 
             // Test whether this class abstract or not
             try {
-                $reflection = new \ReflectionClass($moduleModelClass);
+                $reflection = new ReflectionClass($moduleModelClass);
                 if ($reflection->isAbstract()) {
                     continue;
                 }
-            } catch (\ReflectionException $exception) {
+            } catch (ReflectionException $exception) {
                 continue;
             }
             if (class_exists($moduleModelClass)) {

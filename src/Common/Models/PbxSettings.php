@@ -35,9 +35,9 @@ class PbxSettings extends ModelsBase
      */
     public static function getAllPbxSettings(): array
     {
-        $arrOfDefaultValues = PbxSettings::getDefaultArrayValues();
+        $arrOfDefaultValues = self::getDefaultArrayValues();
         foreach ($arrOfDefaultValues as $key => $record) {
-            $arrOfDefaultValues[$key] = PbxSettings::getValueByKey($key);
+            $arrOfDefaultValues[$key] = self::getValueByKey($key);
         }
 
         return $arrOfDefaultValues;

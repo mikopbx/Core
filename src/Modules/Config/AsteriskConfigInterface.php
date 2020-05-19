@@ -12,9 +12,9 @@ interface AsteriskConfigInterface
     public function getSettings(): void;
 
     /**
-     * @param $general_settings
+     *
      */
-    public function generateConfig($general_settings): void;
+    public function generateConfig(): void;
 
     /**
      * Получаем строки include для секции internal
@@ -100,29 +100,32 @@ interface AsteriskConfigInterface
     /**
      * Генератор сеции пиров для sip.conf
      *
-     * @param $param
      *
      * @return string
      */
-    public function generatePeers($param): string;
+    public function generatePeers(): string;
 
     /**
      * Генератор сеции пиров для sip.conf
      *
-     * @param $param
      *
      * @return string
      */
-    public function generatePeersPj($param):string;
+    public function generatePeersPj():string;
 
     /**
      * Генератор сеции пиров для manager.conf
      *
-     * @param $param
+     * @return string
+     */
+    public function generateManagerConf():string;
+
+    /**
+     * Генератор modules.conf
      *
      * @return string
      */
-    public function generateManager($param):string;
+    public function generateModulesConf():string;
 
     /**
      * Дополнительные параметры для

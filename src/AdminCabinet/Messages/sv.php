@@ -76,7 +76,7 @@ return [
     'gs_AJAMPort'                                                 => 'AJAM port',
     'lic_CouponMessage'                                           => '<div class = \'ui message\'> Kupongen används vid utvidgning av PBX: s funktionalitet eller vid köp av en licens. <br>
 Det kan aktiveras en gång, varefter kupongen löses in.
-</ Div>',
+</div>',
     'lic_FailedActivateCoupon2041'                                => '(2041) Denna kupong har redan aktiverats tidigare.',
     'rs_ShutDownPhoneSystem'                                      => 'Stäng av PBX',
     'ext_Version'                                                 => 'version',
@@ -373,7 +373,7 @@ Det kan aktiveras en gång, varefter kupongen löses in.
 Om du redan har en nyckel kan du helt enkelt ange den i det här fältet. <br>
 Om du hade nyckeln, men du glömde den, leta i posten efter inkommande brev på lic@miko.ru <br>
 Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. <br>
-</ Div>',
+</div>',
     'lic_CurrentLicenseInfo'                                      => 'Licensierad produktinformation',
     'lic_Expired'                                                 => 'Produkten har gått ut',
     'lic_ExpiredAfter'                                            => 'Licensen löper ut efter% har gått ut',
@@ -560,20 +560,20 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'qf_NatModeInstructions'                                      => '<div class = \'ui meddelande\'>
             <div class = \'ui punktlista\'>
                 <div class = \'item\'> <b> nej </b> utför ingen speciell NAT-bearbetning förutom den som anges i RFC 3581
-                </ Div>
+                </div>
                 <div class = \'item\'> <b> force_rport </b> även om ingen rport-parameter anges, agera som om den var
-                </ Div>
+                </div>
                 <div class = \'item\'> <b> comedia </b> skicka RTP-paket tillbaka till porten från vilken de mottogs, och ignorerar den nödvändiga porten i SDP-huvudet
-                </ Div>
+                </div>
                 <div class = \'item\'> <b> auto_comedia </b> om Asterisk kan bestämma att enheten ligger bakom NAT ställer du in comedia-alternativet
-                </ Div>
+                </div>
                 <div class = \'item\'> <b> force_rport, comedia </b> alternativet ersätter nat = ja
-                </ Div>
-            </ Div>
-        </ Div>',
+                </div>
+            </div>
+        </div>',
     'qf_QualifyInstructions'                                      => '<div class = \'ui meddelande\'>
             När detta alternativ är aktiverat skickar Asterisk SIP-alternativpaket med den angivna frekvensen. Detta är nödvändigt för att stödja NAT-tunneling på din router.
-        </ Div>',
+        </div>',
     'AdvancedOptions'                                             => 'Avancerade inställningar',
     'ConnectionSettings'                                          => 'Anslutningsinställningar',
     'BreadcrumbHome'                                              => 'Till början',

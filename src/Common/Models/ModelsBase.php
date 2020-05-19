@@ -639,8 +639,6 @@ abstract class ModelsBase extends Model
                     }
                 } elseif ($this->Providers) { // Это провайдер
                     $link = $url->get('providers/modifysip/' . $this->Providers->id);
-                } else { // Что это?
-
                 }
                 break;
             case SipCodecs::class:

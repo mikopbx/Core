@@ -89,7 +89,8 @@ function getBannerText(){
     }
 
     $this_is   = Util::translate('this_is');
-    $result_text =  <<<EOD
+
+    return <<<EOD
 
 *** {$this_is}\033[01;32mMikoPBX v.{$version}\033[39m
     built on {$buildtime} for Generic (x64)
@@ -101,8 +102,6 @@ function getBannerText(){
  {$ip_text[3]}
  {$broken}
 EOD;
-
-    return $result_text;
 }
 
 $setup_lan = function (CliMenuBuilder $b){
@@ -183,7 +182,7 @@ $setup_lan = function (CliMenuBuilder $b){
         ->setBackgroundColour('black', 'black')
         ->enableAutoShortcuts()
         ->disableDefaultItems()
-        ->addItem('[3] '.Util::translate('Cancel'), new GoBackAction);
+        ->addItem('[3] '.Util::translate('Cancel'), new GoBackAction());
 };
 $additional_items   = [];
 $is_live_cd = file_exists('/offload/livecd');
@@ -217,7 +216,7 @@ $additional_items[] = ['[9] '.Util::translate('Console'), function (CliMenu $men
     exit(0);
 }];
 
-$menu = (new CliMenuBuilder)
+$menu = (new CliMenuBuilder())
     ->setTitle(getBannerText())
     ->enableAutoShortcuts()
     ->setForegroundColour('white', 'white')
@@ -260,7 +259,7 @@ $menu = (new CliMenuBuilder)
             ->setForegroundColour('white', 'white')
             ->setBackgroundColour('black', 'black')
             ->disableDefaultItems()
-            ->addItem('[3] '.Util::translate('Cancel'), new GoBackAction);
+            ->addItem('[3] '.Util::translate('Cancel'), new GoBackAction());
     })
     ->addItem('[4] '.Util::translate('Ping host'), function (CliMenu $menu) {
         $style = (new MenuStyle())
@@ -408,7 +407,7 @@ $menu = (new CliMenuBuilder)
             ->setForegroundColour('white', 'white')
             ->setBackgroundColour('black', 'black')
             ->disableDefaultItems()
-            ->addItem('[4] '.Util::translate('Cancel'), new GoBackAction);
+            ->addItem('[4] '.Util::translate('Cancel'), new GoBackAction());
     })
 
     ->addItem('[7] '.Util::translate('Reset admin password'), function (CliMenu $menu) {

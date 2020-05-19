@@ -6,9 +6,7 @@
  * Written by Alexey Portnov, 2 2020
  */
 
-namespace MikoPBX\Core\Backup;
-
-use MikoPBX\Core\System\MikoPBXConfig;
+namespace MikoPBX\Core\System;
 
 class WebAPIClient
 {
@@ -127,9 +125,8 @@ class WebAPIClient
             return false;
         }
         $url           = "{$this->protocol}://{$this->host}:{$this->port}/pbxcore/api/storage/list";
-        $resultrequest = $this->getData($url);
 
-        return $resultrequest;
+        return $this->getData($url);
     }
 
     /**

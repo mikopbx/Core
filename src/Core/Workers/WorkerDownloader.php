@@ -27,7 +27,7 @@ class WorkerDownloader extends WorkerBase
     /**
      * WorkerDownloader entry point.
      *
-     * @param string $settings - path to the download settings file
+     * @param $argv
      */
 
     public function start($argv): void

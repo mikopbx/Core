@@ -21,17 +21,17 @@ class ExternalPhonesConf extends ConfigClass
      */
     public function getSettings(): void
     {
-        $db_data    = [];
+        $ext_data   = [];
         $ext_phones = ExternalPhones::find("disabled = '0' OR disabled IS NULL");
-        if ($ext_phones != null) {
-            foreach ($ext_phones as $ext_phone) {
-                $db_data[] = [
-                    'extension'  => $ext_phone->extension,
-                    'dialstring' => $ext_phone->dialstring,
-                ];
-            }
+
+        foreach ($ext_phones as $ext_phone) {
+            $ext_data[] = [
+                'extension'  => $ext_phone->extension,
+                'dialstring' => $ext_phone->dialstring,
+            ];
         }
-        $this->db_data = $db_data;
+
+        $this->db_data = $ext_data;
     }
 
     /**

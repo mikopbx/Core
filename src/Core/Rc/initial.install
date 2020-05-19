@@ -134,7 +134,7 @@ if (strtolower(trim(fgets($fp)) ) === 'y') {
 
     // Фиксируем флаг необходимости вынуить CD диск.
     file_put_contents('/tmp/ejectcd','');
-	System::rebootSync(false);
+	System::rebootSync();
 }else{
     sleep(3);
 }

@@ -21,6 +21,8 @@ class WorkerNotifyError extends WorkerBase
 
     /**
      * Наполняем очередь уведомлениями.
+     *
+     * @param $argv
      */
     public function start($argv): void
     {

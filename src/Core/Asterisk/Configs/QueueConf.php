@@ -20,15 +20,13 @@ class QueueConf extends ConfigClass
     /**
      * Генерация конфига очередей. Рестарт модуля очередей.
      */
-    public static function queueReload()
+    public static function queueReload(): array
     {
         $result           = [
             'result' => 'ERROR',
         ];
-        $queue            = new QueueConf();
-        $mikoPBXConfig    = new MikoPBXConfig();
-        $general_settings = $mikoPBXConfig->getGeneralSettings();
-        $queue->generateConfig($general_settings);
+        $queue            = new self();
+        $queue->generateConfig();
         $out = [];
         Util::mwExec("asterisk -rx 'queue reload all '", $out);
         $out_data = trim(implode('', $out));
@@ -70,7 +68,7 @@ class QueueConf extends ConfigClass
                     [
                         'agent'      => $agent->extension,
                         'priority'   => $agent->priority,
-                        'isExternal' => ($agent->Extensions->type == "EXTERNAL"),
+                        'isExternal' => ($agent->Extensions->type === "EXTERNAL"),
                     ];
             }
             $arrResult[$queueUniqid]['agents'] = $arrAgents;
@@ -141,11 +139,10 @@ class QueueConf extends ConfigClass
     /**
      * Создание конфига для очередей.
      *
-     * @param $general_settings
      *
-     * @return bool
+     * @return void
      */
-    protected function generateConfigProtected($general_settings)
+    protected function generateConfigProtected() :void
     {
         $this->extensionGenInternal();
         // Генерация конфигурационных файлов.
@@ -209,7 +206,6 @@ class QueueConf extends ConfigClass
 
         Util::fileWriteContent($this->astConfDir . '/queues.conf', $q_conf);
 
-        return $result;
     }
 
     /**

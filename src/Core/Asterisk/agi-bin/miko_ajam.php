@@ -132,7 +132,7 @@ class CDR_Data
                 }
                 $result .= $field . '@.@';
             }
-            $ch = $ch + 1;
+            ++$ch;
             if ($ch >= 7) {
                 $this->UserEvent("FromCDR,chan1c:{$this->vars['chan']},Date:{$this->vars['date1']},Lines:$result");
                 $result = "";
@@ -324,7 +324,7 @@ class CDR_Data
             foreach ($output as $_data) {
                 // Набор символов - разделитель строк
                 if ( ! $result == "") {
-                    $result = $result . ".....";
+                    $result .= ".....";
                 }
 
                 $_data = str_replace('/UserBuddyStatus/', '', $_data);
@@ -340,7 +340,7 @@ class CDR_Data
 
                 $val = urlencode(trim($arr_data[1]));
 
-                $result = $result . "$key@.@$val";
+                $result .= "$key@.@$val";
 
                 // Если необходимо отправляем данные порциями
                 if ($ch == 20) {
@@ -349,7 +349,7 @@ class CDR_Data
                     $result = "";
                     $ch     = 1;
                 }
-                $ch = $ch + 1;
+                ++$ch;
             }
             // Проверяем, есть ли остаток данных для отправки
             if ( ! $result == "") {

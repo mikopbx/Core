@@ -209,7 +209,6 @@ class System
     /**
      * Reboots the system after calling system_reboot_cleanup()
      *
-     * @param bool $check_storage
      */
     public static function rebootSync(): void
     {
@@ -538,8 +537,6 @@ server 2.pool.ntp.org';
 
     /**
      * Настройка cron. Запуск демона.
-     *
-     * @param bool $booting
      *
      * @return int
      */
@@ -917,8 +914,6 @@ server 2.pool.ntp.org';
         );
         $workerDownloaderPath = Util::getFilePathByClassName(WorkerDownloader::class);
         Util::mwExecBg("php -f {$workerDownloaderPath} $moduleDirTmp/download_settings.json");
-
-        return;
     }
 
     /**

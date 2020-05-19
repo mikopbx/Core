@@ -912,9 +912,8 @@ class Util
     public static function getExtensionOfFile($filename, $delimiter = '.')
     {
         $tmp_arr   = explode("$delimiter", $filename);
-        $extension = $tmp_arr[count($tmp_arr) - 1];
 
-        return $extension;
+        return $tmp_arr[count($tmp_arr) - 1];
     }
 
     /**
@@ -1050,7 +1049,7 @@ class Util
      * @param string $totalSize   - original file size (in bytes)
      * @param string $total_files - original file size (in bytes)
      * @param string $result_file - original file size (in bytes)
-     * @param string $chunkSize   - each chunk size (in bytes)
+     * @param int    $chunkSize   - each chunk size (in bytes)
      *
      * @return bool
      */
@@ -1268,6 +1267,8 @@ class Util
 
     /**
      * Print message and write it to syslog
+     *
+     * @param $message
      */
     public static function echoWithSyslog($message): void
     {

@@ -27,9 +27,9 @@ class SecurityPlugin extends Injectable
      * @param Event      $event
      * @param Dispatcher $dispatcher
      */
-    public function beforeDispatch(Event $event, Dispatcher $dispatcher)
+    public function beforeDispatch(Event $event, Dispatcher $dispatcher):bool
     {
-        if ($_SERVER['REMOTE_ADDR'] == '127.0.0.1') {
+        if ($_SERVER['REMOTE_ADDR'] === '127.0.0.1') {
             return true;
         }
         $controller = strtoupper($dispatcher->getControllerName());
@@ -63,6 +63,7 @@ class SecurityPlugin extends Injectable
                 );
             }
         }
+        return true;
     }
 
 }

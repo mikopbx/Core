@@ -62,14 +62,11 @@ class OtherConf extends ConfigClass
     /**
      * Создание конфигов.
      *
-     * @param $general_settings
-     *
-     * @return bool
+     * @return void
      */
-    protected function generateConfigProtected($general_settings): bool
+    protected function generateConfigProtected():void
     {
         // Генерация конфигурационных файлов.
-        $result = true;
         $this->asteriskConfGenerate();
         $this->loggerConfGenerate();
         $this->ccssConfGenerate();
@@ -82,18 +79,17 @@ class OtherConf extends ConfigClass
         $this->celConfGenerate();
         // $this->cdrSqlite3CustomConfGenerate();
         // $this->celSqliteCustomGenerate();
-        $this->rtpConfGenerate($general_settings);
+        $this->rtpConfGenerate();
         $this->queueRulesConfGenerate();
         $this->voiceMailConfGenerate();
 
-        return $result;
     }
 
-    private function asteriskConfGenerate()
+    private function asteriskConfGenerate(): void
     {
         $dirsConfig = $this->di->getShared('config');
 
-        $lang = $this->mikoPBXConfig->getGeneralSettings('PBXLanguage');
+        $lang = $this->generalSettings['PBXLanguage'];
         $conf = "[directories]\n" .
             "astetcdir => /etc/asterisk\n" .
             "astagidir => {$dirsConfig->path('asterisk.astagidir')}\n" .
@@ -141,7 +137,7 @@ class OtherConf extends ConfigClass
         Util::fileWriteContent($this->astConfDir . '/logger.conf', $conf);
     }
 
-    private function ccssConfGenerate()
+    private function ccssConfGenerate(): void
     {
         $conf = "[general]\n" .
             "cc_max_requests = 20\n";
@@ -149,7 +145,7 @@ class OtherConf extends ConfigClass
         file_put_contents($this->astConfDir . '/ccss.conf', $conf);
     }
 
-    private function musicOnHoldConfGenerate()
+    private function musicOnHoldConfGenerate(): void
     {
         $dirsConfig = $this->di->getShared('config');
         $mohpath    = $dirsConfig->path('asterisk.mohdir');
@@ -161,7 +157,7 @@ class OtherConf extends ConfigClass
         Util::fileWriteContent($this->astConfDir . '/musiconhold.conf', $conf);
     }
 
-    private function cdrConfGenerate()
+    private function cdrConfGenerate(): void
     {
         $conf = "[general]\n" .
             "enable=yes\n" .
@@ -173,19 +169,19 @@ class OtherConf extends ConfigClass
         file_put_contents($this->astConfDir . '/cdr.conf', $conf);
     }
 
-    private function aclGenerate()
+    private function aclGenerate(): void
     {
         $conf = '';
         file_put_contents($this->astConfDir . '/acl.conf', $conf);
     }
 
-    private function udptlGenerate()
+    private function udptlGenerate(): void
     {
         $conf = '';
         file_put_contents($this->astConfDir . '/udptl.conf', $conf);
     }
 
-    private function chanDahdiConfGenerate()
+    private function chanDahdiConfGenerate(): void
     {
         $conf = "[trunkgroups]\n" .
             "[channels]\n" .
@@ -193,7 +189,7 @@ class OtherConf extends ConfigClass
         file_put_contents($this->astConfDir . '/chan_dahdi.conf', $conf);
     }
 
-    public function celConfGenerate()
+    public function celConfGenerate(): void
     {
         $conf = "[general]\n" .
             "enable=yes\n" .
@@ -205,39 +201,39 @@ class OtherConf extends ConfigClass
         Util::fileWriteContent($this->astConfDir . '/cel.conf', $conf);
     }
 
-    private function rtpConfGenerate($settings)
+    private function rtpConfGenerate(): void
     {
         $conf = "[general]\n" .
-            "rtpstart={$settings['RTPPortFrom']}\n" .
-            "rtpend={$settings['RTPPortTo']}\n\n";
+            "rtpstart={$this->generalSettings['RTPPortFrom']}\n" .
+            "rtpend={$this->generalSettings['RTPPortTo']}\n\n";
 
         Util::fileWriteContent($this->astConfDir . '/rtp.conf', $conf);
     }
 
-    private function queueRulesConfGenerate()
+    private function queueRulesConfGenerate(): void
     {
         $conf = '';
         file_put_contents($this->astConfDir . '/queuerules.conf', $conf);
     }
 
-    public function voiceMailConfGenerate()
+    public function voiceMailConfGenerate(): void
     {
         // Уважаемый ${VM_NAME}:\n\n\tВам пришло новое голосовое сообщение длиной ${VM_DUR}
         // под номером (number ${VM_MSGNUM})\nв ящик ${VM_MAILBOX} от ${VM_CALLERID}, в ${VM_DATE}. \n\t
-        $emailsubject = $this->mikoPBXConfig->getGeneralSettings('MailTplVoicemailSubject');
+        $emailsubject = $this->generalSettings['MailTplVoicemailSubject'];
         $emailsubject = str_replace("\n", '', $emailsubject);
         $emailsubject = str_replace("\t", '', $emailsubject);
 
-        $emailbody = $this->mikoPBXConfig->getGeneralSettings('MailTplVoicemailBody');
+        $emailbody = $this->generalSettings['MailTplVoicemailBody'];
         $emailbody = str_replace("\n", '\n', $emailbody);
         $emailbody = str_replace("\t", '', $emailbody);
 
-        $from = $this->mikoPBXConfig->getGeneralSettings('MailSMTPSenderAddress');
+        $from = $this->generalSettings['MailSMTPSenderAddress'];
         if (empty($from)) {
-            $from = $this->mikoPBXConfig->getGeneralSettings('MailSMTPUsername');
+            $from =  $this->generalSettings['MailSMTPUsername'];
         }
 
-        $timezone = $this->mikoPBXConfig->getGeneralSettings('PBXTimezone');
+        $timezone = $this->generalSettings['PBXTimezone'];
         $conf     = "[general]\n" .
             "format=wav49|gsm|wav\n" .
             "attach=yes\n" .
@@ -262,9 +258,9 @@ class OtherConf extends ConfigClass
 
         $conf .= "[voicemailcontext]\n";
 
-        $mail_box = $this->mikoPBXConfig->getGeneralSettings('VoicemailNotificationsEmail');
+        $mail_box = $this->generalSettings['VoicemailNotificationsEmail'];
         if (empty($mail_box)) {
-            $mail_box = $this->mikoPBXConfig->getGeneralSettings('SystemNotificationsEmail');
+            $mail_box = $this->generalSettings['SystemNotificationsEmail'];
         }
         $conf .= "admin => admin," . Util::translate("user") . ",{$mail_box},,attach=yes|tz=local\n";
         /*

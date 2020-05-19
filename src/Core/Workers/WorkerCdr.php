@@ -26,8 +26,6 @@ class WorkerCdr extends WorkerBase
     public const UPDATE_CDR_TUBE = 'update_cdr_tube';
 
 
-    /** @var array */
-    private $filter;
     private $client_queue;
     private $timeout = 10;
     private $internal_numbers = [];
@@ -36,10 +34,14 @@ class WorkerCdr extends WorkerBase
 
     /**
      * Entry point
+     *
+     * @param $argv
+     *
+     * @throws \Pheanstalk\Exception\DeadlineSoonException
      */
     public function start($argv): void
     {
-        $this->filter = [
+        $filter = [
             '(work_completed<>1 OR work_completed IS NULL) AND endtime IS NOT NULL',
             'miko_tmp_db'         => true,
             'columns'             => 'start,answer,src_num,dst_num,dst_chan,endtime,linkedid,recordingfile,dialstatus,UNIQUEID',
@@ -55,7 +57,7 @@ class WorkerCdr extends WorkerBase
         while (true) {
             $result = false;
             try {
-                $result = $this->client_queue->request(json_encode($this->filter), 10);
+                $result = $this->client_queue->request(json_encode($filter), 10);
             } catch (Exception $e) {
                 $result = ($result === true) ? $result : false;
                 $error  = $e->getMessage();
@@ -203,7 +205,7 @@ class WorkerCdr extends WorkerBase
                 $data['GLOBAL_STATUS'] = 'ANSWERED';
             }
             unset($data['tmp_linked_id']);
-            $this->client_queue->publish(json_encode($data), null, WorkerCdr::UPDATE_CDR_TUBE);
+            $this->client_queue->publish(json_encode($data), null, self::UPDATE_CDR_TUBE);
         }
 
         $this->notifyByEmail();

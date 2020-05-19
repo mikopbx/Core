@@ -23,7 +23,7 @@ class MikoAjamConf extends ConfigClass
      */
     public function extensionGenContexts(): string
     {
-        $PBXRecordCalls = $this->mikoPBXConfig->getGeneralSettings('PBXRecordCalls');
+        $PBXRecordCalls = $this->generalSettings['PBXRecordCalls'];
         $rec_options    = ($PBXRecordCalls == '1') ? 'r' : '';
 
         $conf = "\n";
@@ -76,11 +76,8 @@ class MikoAjamConf extends ConfigClass
     /**
      * Создание конфигурационных файлов.
      *
-     * @param $settings
-     *
-     * @throws Exception
      */
-    protected function generateConfigProtected($settings)
+    protected function generateConfigProtected(): void
     {
         if (is_file('/var/etc/http_auth')) {
             return;

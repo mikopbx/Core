@@ -19,7 +19,7 @@ class ExtensionsConf extends ConfigClass
     /**
      * Основной генератор exgtensions.conf
      */
-    public function generate()
+    public function generate(): void
     {
         $additionalModules = $this->di->getShared('pbxConfModules');
         $conf              = "[globals] \n";
@@ -279,7 +279,7 @@ class ExtensionsConf extends ConfigClass
      *
      * @param $conf
      */
-    private function generateInternalTransfer(&$conf)
+    private function generateInternalTransfer(&$conf): void
     {
         $additionalModules = $this->di->getShared('pbxConfModules');
         $conf              .= "[internal-transfer] \n";
@@ -299,7 +299,7 @@ class ExtensionsConf extends ConfigClass
      *
      * @param $conf
      */
-    private function generateSipHints(&$conf)
+    private function generateSipHints(&$conf): void
     {
         $additionalModules = $this->di->getShared('pbxConfModules');
         $conf              .= "[internal-hints] \n";
@@ -314,7 +314,7 @@ class ExtensionsConf extends ConfigClass
      *
      * @param $conf
      */
-    private function generateOutContextPeers(&$conf)
+    private function generateOutContextPeers(&$conf): void
     {
         $additionalModules = $this->di->getShared('pbxConfModules');
         $conf              .= "[outgoing] \n";
@@ -409,7 +409,7 @@ class ExtensionsConf extends ConfigClass
      *
      * @return string
      */
-    private function generateOutgoingRegexPattern($rout)
+    private function generateOutgoingRegexPattern($rout): string
     {
         $conf        = '';
         $restnumbers = '';
@@ -640,7 +640,7 @@ class ExtensionsConf extends ConfigClass
      *
      * @return string
      */
-    private function generateOutWorkTimes(&$conf)
+    private function generateOutWorkTimes(&$conf): string
     {
         $conf .= "\n\n[playback-exit]\n";
         $conf .= 'exten => _.!,1,NoOp(check time)' . "\n\t";

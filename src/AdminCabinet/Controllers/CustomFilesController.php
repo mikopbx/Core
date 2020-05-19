@@ -32,11 +32,11 @@ class CustomFilesController extends BaseController
      *
      * @param string $id редактируемой записи
      */
-    public function modifyAction(string $id)
+    public function modifyAction(string $id): void
     {
         $file = CustomFiles::findFirstById($id);
         if ($file === null) {
-            return $this->forward('custom-files/index');
+            $this->forward('custom-files/index');
         }
 
         $form                   = new CustomFilesEditForm($file);

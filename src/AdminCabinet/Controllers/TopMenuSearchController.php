@@ -27,8 +27,6 @@ class TopMenuSearchController extends BaseController
     /**
      * Используется для генерации списка выбора пользователей из JS скрипта extensions.js
      *
-     * @param string $type {all, phones, internal} - отображать только телефоны или все возможные номера
-     *
      * @return void параметры помещаются в view и обрабатваются через ControllerBase::afterExecuteRoute()
      */
     public function getForSelectAction(): void
@@ -58,7 +56,7 @@ class TopMenuSearchController extends BaseController
                 }
                 $this->addMenuItem($categoryItems, $record, $itemClass);
             }
-            usort($categoryItems, [TopMenuSearchController::class, 'sortItemsArray']);
+            usort($categoryItems, [__CLASS__, 'sortItemsArray']);
             $results[] = $categoryItems;
         }
 
@@ -227,6 +225,9 @@ class TopMenuSearchController extends BaseController
 
     /**
      * Сортировка массива extensions
+     *
+     * @param $a
+     * @param $b
      *
      * @return int
      */

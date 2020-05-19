@@ -406,7 +406,7 @@ class Extensions extends ModelsBase
         if (empty($snapShotData)) {
             return;
         }
-        $relations = $this->_modelsManager->getRelations(Extensions::class);
+        $relations = $this->_modelsManager->getRelations(__CLASS__);
         foreach ($relations as $relation) {
             if ($relation->getFields() === 'number'
                 ||
@@ -460,7 +460,7 @@ class Extensions extends ModelsBase
     public function getRelatedLinks(): array
     {
         $result    = [];
-        $relations = $this->_modelsManager->getRelations(Extensions::class);
+        $relations = $this->_modelsManager->getRelations(__CLASS__);
         foreach ($relations as $relation) {
             if ($relation->getFields() === 'number'
                 ||
