@@ -17,6 +17,7 @@ require_once 'globals.php';
 
 class WorkerLicenseChecker extends WorkerBase
 {
+    private $last_check_time=0;
     public function start($argv): void
     {
         $beansTalkClient = new BeanstalkClient();

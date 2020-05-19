@@ -9,14 +9,13 @@
 namespace MikoPBX\Core\Workers;
 
 use Exception;
-use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Core\System\BeanstalkClient;
 use MikoPBX\Core\System\Util;
 require_once 'globals.php';
 
 class WorkerModuleMonitor extends WorkerBase
 {
-    private $last_check_time = 0;
+    private $last_check_time=0;
 
     /**
      * Проверка целостности модулей.
@@ -32,21 +31,14 @@ class WorkerModuleMonitor extends WorkerBase
 
         while (true) {
             $beansTalkClient->wait(5);
-
             $delta = time() - $this->last_check_time;
             if ($delta < 3600) {
                 continue;
             }
-            $enabledModules = PbxExtensionModules::find("disabled=0");
-            if (count($enabledModules)>0){
-                $lic->checkModules($enabledModules);
-            }
             $this->last_check_time = time();
-
+            $lic->checkModules();
         }
     }
-
-
 
 }
 

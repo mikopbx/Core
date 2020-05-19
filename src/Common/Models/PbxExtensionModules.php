@@ -9,8 +9,6 @@
 
 namespace MikoPBX\Common\Models;
 
-use MikoPBX\Utilities\Debug\PhpError;
-use Phalcon\Exception;
 use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
@@ -68,13 +66,9 @@ class PbxExtensionModules extends ModelsBase
 
     public static function ifModule4ExtensionDisabled(string $number): bool
     {
-        try {
-            $module = self::getModuleByExtension($number);
-            if ($module) {
-                return $module->disabled === '1';
-            }
-        } catch (Exception $e) {
-            PhpError::exceptionHandler($e);
+        $module = self::getModuleByExtension($number);
+        if ($module) {
+            return $module->disabled === '1';
         }
 
         return true;
