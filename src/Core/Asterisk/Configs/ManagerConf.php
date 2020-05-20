@@ -17,10 +17,9 @@ use MikoPBX\Modules\Config\ConfigClass;
 
 class ManagerConf extends ConfigClass
 {
-    /**
-     * Создание конфига manager.conf
-     */
-    public function generateManagerConf(): string
+    protected $description = 'manager.conf';
+
+    protected function generateConfigProtected(): void
     {
         $vars = [
             'DIALEDPEERNUMBER',
@@ -127,13 +126,8 @@ class ManagerConf extends ConfigClass
 
         $additionalModules = $this->di->getShared('pbxConfModules');
         foreach ($additionalModules as $appClass) {
-            // Prevent cycling, skip current class
-            if (is_a($appClass, __CLASS__)) {
-                continue;
-            }
             $conf .= $appClass->generateManagerConf();
         }
-        Util::fileWriteContent('/etc/asterisk/manager.conf', $conf);
-        return '';
+        Util::fileWriteContent($this->astConfDir .'/manager.conf', $conf);
     }
 }

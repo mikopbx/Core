@@ -94,14 +94,14 @@ class ModulesDBConnectionsProvider extends DatabaseProviderBase implements Servi
 
                 $fileExistBeforeAttachToConnection = file_exists("{$dbPath}/module.db");
 
-                $config = [
+                $params = [
                     "debugMode"    => $config->path('core.debugMode'),
                     "adapter"      => "Sqlite",
                     "dbfile"       => "{$dbPath}/module.db",
                     "debugLogFile" => "{$config->path('core.logsPath')}/$moduleUniqueId/db/queries.log",
                 ];
 
-                $this->registerDBService($connectionServiceName, $di, $config);
+                $this->registerDBService($connectionServiceName, $di, $params);
 
                 // if database was created, we will need to apply rules
                 if (!$fileExistBeforeAttachToConnection){

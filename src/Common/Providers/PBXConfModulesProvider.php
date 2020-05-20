@@ -30,14 +30,14 @@ use MikoPBX\Core\Asterisk\Configs\IVRConf;
 use MikoPBX\Core\Asterisk\Configs\ManagerConf;
 use MikoPBX\Core\Asterisk\Configs\MikoAjamConf;
 use MikoPBX\Core\Asterisk\Configs\ModulesConf;
-use MikoPBX\Core\Asterisk\Configs\OtherConf;
-use MikoPBX\Core\Asterisk\Configs\ParkConf;
+use MikoPBX\Core\Asterisk\Configs\ResParkingConf;
 use MikoPBX\Core\Asterisk\Configs\QueueConf;
 use MikoPBX\Core\Asterisk\Configs\SIPConf;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 use Phalcon\Exception;
+use function MikoPBX\Common\Config\appPath;
 
 /**
  * Main database connection is created based in the parameters defined in the configuration file
@@ -55,28 +55,13 @@ class PBXConfModulesProvider implements ServiceProviderInterface
             'pbxConfModules',
             function () {
                 $arrObject = [];
-                $arr       = [
-                    ExternalPhonesConf::class,
-                    OtherConf::class,
-                    SIPConf::class,
-                    IAXConf::class,
-                    IVRConf::class,
-                    ParkConf::class,
-                    ConferenceConf::class,
-                    QueueConf::class,
-                    DialplanApplicationConf::class,
-                    MikoAjamConf::class,
-                    FeaturesConf::class,
-                    HttpConf::class,
-                    IndicationConf::class,
-                    ManagerConf::class,
-                    ModulesConf::class,
-                ];
-
-                // Add system classes
-                foreach ($arr as $value) {
-                    if (class_exists($value)) {
-                        $arrObject[] = new $value();
+                $configsDir = appPath('src/Core/Asterisk/Configs');
+                $modulesFiles = glob("{$configsDir}/*.php", GLOB_NOSORT);
+                foreach ($modulesFiles as $file) {
+                    $className        = pathinfo($file)['filename'];
+                    $full_class_name = "\\MikoPBX\\Core\\Asterisk\\Configs\\{$className}";
+                    if (class_exists($full_class_name)) {
+                        $arrObject[] = new $full_class_name();
                     }
                 }
 

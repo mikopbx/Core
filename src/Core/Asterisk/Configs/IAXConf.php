@@ -19,6 +19,22 @@ class IAXConf extends ConfigClass
     protected $description = 'iax.conf';
 
     /**
+     * Генератор iax.conf
+     *
+     *
+     * @return void
+     */
+    protected function generateConfigProtected():void
+    {
+        $conf = '';
+        $conf .= $this->generateGeneral();
+        $conf .= $this->generateProviders();
+
+        Util::fileWriteContent($this->astConfDir . '/iax.conf', $conf);
+        file_put_contents($this->astConfDir . '/iaxprov.conf', "[default]\ncodec=alaw\n");
+    }
+
+    /**
      * Перезапуск модуля IAX2;
      */
     public static function iaxReload(): array
@@ -43,9 +59,8 @@ class IAXConf extends ConfigClass
             'result' => 'ERROR',
         ];
         $peers  = [];
-        // First select disabled providers
-        $disabledProviders = Iax::find();
-        foreach ($disabledProviders as $provider) {
+        $providers = Iax::find();
+        foreach ($providers as $provider) {
             $peers[] = [
                 'state'      => 'OFF',
                 'id'         => $provider->uniqid,
@@ -109,8 +124,8 @@ class IAXConf extends ConfigClass
     {
         // Получим настройки всех аккаунтов.
         $this->data_providers = [];
-        $db_data              = Iax::find("disabled IS NULL OR disabled = '0'");
-        foreach ($db_data as $peer) {
+        $arrIaxProviders              = Iax::find("disabled IS NULL OR disabled = '0'");
+        foreach ($arrIaxProviders as $peer) {
             /** @var \MikoPBX\Common\Models\Iax $peer */
             $arr_data = $peer->toArray();
 
@@ -170,21 +185,7 @@ class IAXConf extends ConfigClass
         return $technology;
     }
 
-    /**
-     * Генератор iax.conf
-     *
-     *
-     * @return void
-     */
-    protected function generateConfigProtected():void
-    {
-        $conf = '';
-        $conf .= $this->generateGeneral();
-        $conf .= $this->generateProviders();
 
-        Util::fileWriteContent($this->astConfDir . '/iax.conf', $conf);
-        file_put_contents($this->astConfDir . '/iaxprov.conf', "[default]\ncodec=alaw\n");
-    }
 
     /**
      * Генератора секции general iax.conf

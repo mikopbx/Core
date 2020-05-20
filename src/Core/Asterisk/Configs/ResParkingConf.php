@@ -11,14 +11,32 @@ namespace MikoPBX\Core\Asterisk\Configs;
 use MikoPBX\Modules\Config\ConfigClass;
 use MikoPBX\Core\System\Util;
 
-class ParkConf extends ConfigClass
+class ResParkingConf extends ConfigClass
 {
-
-    protected $description = 'res_parking.conf';
-
     protected $ParkingExt;
     protected $ParkingStartSlot;
     protected $ParkingEndSlot;
+
+
+    protected $description = 'res_parking.conf';
+
+    protected function generateConfigProtected(): void
+    {
+        // Генерация конфигурационных файлов.
+        $conf   = "[general] \n" .
+            "parkeddynamic = yes \n\n" .
+            "[default] \n" .
+            "context => parkedcalls \n" .
+            "parkedcallreparking = caller\n" .
+            "parkedcalltransfers = caller\n" .
+            "parkext => {$this->ParkingExt} \n" .
+            "findslot => next\n" .
+            "comebacktoorigin=no\n" .
+            "comebackcontext = parkedcallstimeout\n" .
+            "parkpos => {$this->ParkingStartSlot}-{$this->ParkingEndSlot} \n\n";
+        file_put_contents($this->astConfDir . '/res_parking.conf', $conf);
+    }
+
 
     /**
      * Функция позволяет получить активные каналы.
@@ -143,28 +161,4 @@ class ParkConf extends ConfigClass
     {
         return "parkcall => *2 \n";
     }
-
-    /**
-     * Генерация файла конфигурации.
-     *
-     *
-     * @return void
-     */
-    protected function generateConfigProtected(): void
-    {
-        // Генерация конфигурационных файлов.
-        $conf   = "[general] \n" .
-            "parkeddynamic = yes \n\n" .
-            "[default] \n" .
-            "context => parkedcalls \n" .
-            "parkedcallreparking = caller\n" .
-            "parkedcalltransfers = caller\n" .
-            "parkext => {$this->ParkingExt} \n" .
-            "findslot => next\n" .
-            "comebacktoorigin=no\n" .
-            "comebackcontext = parkedcallstimeout\n" .
-            "parkpos => {$this->ParkingStartSlot}-{$this->ParkingEndSlot} \n\n";
-        file_put_contents($this->astConfDir . '/res_parking.conf', $conf);
-    }
-
 }

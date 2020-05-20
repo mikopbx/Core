@@ -26,7 +26,6 @@ class IVRConf extends ConfigClass
         $res           = IvrMenu::find();
         $this->db_data = $res->toArray();
 
-
         $this->extensionLength = $this->generalSettings['PBXInternalExtensionLength'];
     }
 

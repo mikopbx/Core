@@ -14,32 +14,8 @@ use MikoPBX\Core\System\{MikoPBXConfig, Util};
 
 class QueueConf extends ConfigClass
 {
-    protected $description = 'queues.conf';
     private $db_data;
-
-    /**
-     * Генерация конфига очередей. Рестарт модуля очередей.
-     */
-    public static function queueReload(): array
-    {
-        $result           = [
-            'result' => 'ERROR',
-        ];
-        $queue            = new self();
-        $queue->generateConfig();
-        $out = [];
-        Util::mwExec("asterisk -rx 'queue reload all '", $out);
-        $out_data = trim(implode('', $out));
-        if ($out_data == '') {
-            $result['result'] = 'Success';
-        } else {
-            $result['result']  = 'ERROR';
-            $result['message'] = "$out_data";
-        }
-
-        return $result;
-    }
-
+    protected $description = 'queues.conf';
     /**
      * Получение настроек.
      */
@@ -47,6 +23,78 @@ class QueueConf extends ConfigClass
     {
         // Настройки для текущего класса.
         $this->db_data = $this->getQueueData();
+    }
+
+    /**
+     * Создание конфига для очередей.
+     *
+     *
+     * @return void
+     */
+    protected function generateConfigProtected() :void
+    {
+        $this->extensionGenInternal();
+        // Генерация конфигурационных файлов.
+        $result = true;
+
+        $q_conf = '';
+        foreach ($this->db_data as $queue_data) {
+            $joinempty        = (isset($queue_data['joinempty']) && $queue_data['joinempty'] == 1) ? 'yes' : 'no';
+            $leavewhenempty   = (isset($queue_data['leavewhenempty']) && $queue_data['leavewhenempty'] == 1) ? 'yes' : 'no';
+            $ringinuse        = ($queue_data['recive_calls_while_on_a_call'] == 1) ? 'yes' : 'no';
+            $announceposition = ($queue_data['announce_position'] == 1) ? 'yes' : 'no';
+            $announceholdtime = ($queue_data['announce_hold_time'] == 1) ? 'yes' : 'no';
+
+            $timeout           = ($queue_data['seconds_to_ring_each_member'] == '') ? '60' : $queue_data['seconds_to_ring_each_member'];
+            $wrapuptime        = ($queue_data['seconds_for_wrapup'] == '') ? '3' : $queue_data['seconds_for_wrapup'];
+            $periodic_announce = '';
+            if (trim($queue_data['periodic_announce']) != '') {
+                $announce_file     = Util::trimExtensionForFile($queue_data['periodic_announce']);
+                $periodic_announce = "periodic-announce={$announce_file} \n";
+            }
+            $periodic_announce_frequency = '';
+            if (trim($queue_data['periodic_announce_frequency']) != '') {
+                $periodic_announce_frequency = "periodic-announce-frequency={$queue_data['periodic_announce_frequency']} \n";
+            }
+            $announce_frequency = '';
+            if ($announceposition !== 'no' || $announceholdtime !== 'no') {
+                $announce_frequency .= "announce-frequency=30 \n";
+            }
+
+            // liner - под этой стратегией понимаем последовательный вызов агентов очереди.
+            // Каждый новый звонок должен инициировать последовательный вызов начиная с первого агента.
+            $strategy = ('linear' === $queue_data['strategy']) ? 'ringall' : $queue_data['strategy'];
+
+            $q_conf .= "[{$queue_data['uniqid']}]; {$queue_data['name']}\n";
+            $q_conf .= "musicclass=default \n";
+            $q_conf .= "strategy={$strategy} \n";
+            $q_conf .= "timeout={$timeout} \n";
+            $q_conf .= "wrapuptime={$wrapuptime} \n";
+            $q_conf .= "ringinuse={$ringinuse} \n";
+            $q_conf .= "$periodic_announce";
+            $q_conf .= "$periodic_announce_frequency";
+            $q_conf .= "joinempty={$joinempty} \n";
+            $q_conf .= "leavewhenempty={$leavewhenempty} \n";
+            $q_conf .= "announce-position={$announceposition} \n";
+            $q_conf .= "announce-holdtime={$announceholdtime} \n";
+            $q_conf .= "$announce_frequency";
+
+            $penalty = 0;
+            foreach ($queue_data['agents'] as $agent) {
+                if ('linear' === $queue_data['strategy']) {
+                    $penalty++;
+                }
+                $hint = '';
+                if ($agent['isExternal'] != true) {
+                    $hint = ",hint:{$agent['agent']}@internal-hints";
+                }
+                $q_conf .= "member => Local/{$agent['agent']}@internal/n,{$penalty},\"{$agent['agent']}\"{$hint} \n";
+            }
+            $q_conf .= "\n";
+        }
+
+        Util::fileWriteContent($this->astConfDir . '/queues.conf', $q_conf);
+
     }
 
     /**
@@ -136,77 +184,7 @@ class QueueConf extends ConfigClass
         return $conf;
     }
 
-    /**
-     * Создание конфига для очередей.
-     *
-     *
-     * @return void
-     */
-    protected function generateConfigProtected() :void
-    {
-        $this->extensionGenInternal();
-        // Генерация конфигурационных файлов.
-        $result = true;
 
-        $q_conf = '';
-        foreach ($this->db_data as $queue_data) {
-            $joinempty        = (isset($queue_data['joinempty']) && $queue_data['joinempty'] == 1) ? 'yes' : 'no';
-            $leavewhenempty   = (isset($queue_data['leavewhenempty']) && $queue_data['leavewhenempty'] == 1) ? 'yes' : 'no';
-            $ringinuse        = ($queue_data['recive_calls_while_on_a_call'] == 1) ? 'yes' : 'no';
-            $announceposition = ($queue_data['announce_position'] == 1) ? 'yes' : 'no';
-            $announceholdtime = ($queue_data['announce_hold_time'] == 1) ? 'yes' : 'no';
-
-            $timeout           = ($queue_data['seconds_to_ring_each_member'] == '') ? '60' : $queue_data['seconds_to_ring_each_member'];
-            $wrapuptime        = ($queue_data['seconds_for_wrapup'] == '') ? '3' : $queue_data['seconds_for_wrapup'];
-            $periodic_announce = '';
-            if (trim($queue_data['periodic_announce']) != '') {
-                $announce_file     = Util::trimExtensionForFile($queue_data['periodic_announce']);
-                $periodic_announce = "periodic-announce={$announce_file} \n";
-            }
-            $periodic_announce_frequency = '';
-            if (trim($queue_data['periodic_announce_frequency']) != '') {
-                $periodic_announce_frequency = "periodic-announce-frequency={$queue_data['periodic_announce_frequency']} \n";
-            }
-            $announce_frequency = '';
-            if ($announceposition !== 'no' || $announceholdtime !== 'no') {
-                $announce_frequency .= "announce-frequency=30 \n";
-            }
-
-            // liner - под этой стратегией понимаем последовательный вызов агентов очереди.
-            // Каждый новый звонок должен инициировать последовательный вызов начиная с первого агента.
-            $strategy = ('linear' === $queue_data['strategy']) ? 'ringall' : $queue_data['strategy'];
-
-            $q_conf .= "[{$queue_data['uniqid']}]; {$queue_data['name']}\n";
-            $q_conf .= "musicclass=default \n";
-            $q_conf .= "strategy={$strategy} \n";
-            $q_conf .= "timeout={$timeout} \n";
-            $q_conf .= "wrapuptime={$wrapuptime} \n";
-            $q_conf .= "ringinuse={$ringinuse} \n";
-            $q_conf .= "$periodic_announce";
-            $q_conf .= "$periodic_announce_frequency";
-            $q_conf .= "joinempty={$joinempty} \n";
-            $q_conf .= "leavewhenempty={$leavewhenempty} \n";
-            $q_conf .= "announce-position={$announceposition} \n";
-            $q_conf .= "announce-holdtime={$announceholdtime} \n";
-            $q_conf .= "$announce_frequency";
-
-            $penalty = 0;
-            foreach ($queue_data['agents'] as $agent) {
-                if ('linear' === $queue_data['strategy']) {
-                    $penalty++;
-                }
-                $hint = '';
-                if ($agent['isExternal'] != true) {
-                    $hint = ",hint:{$agent['agent']}@internal-hints";
-                }
-                $q_conf .= "member => Local/{$agent['agent']}@internal/n,{$penalty},\"{$agent['agent']}\"{$hint} \n";
-            }
-            $q_conf .= "\n";
-        }
-
-        Util::fileWriteContent($this->astConfDir . '/queues.conf', $q_conf);
-
-    }
 
     /**
      * Возвращает номерной план для internal контекста.
@@ -250,5 +228,28 @@ class QueueConf extends ConfigClass
         }
 
         return $queue_ext_conf;
+    }
+
+    /**
+     * Генерация конфига очередей. Рестарт модуля очередей.
+     */
+    public static function queueReload(): array
+    {
+        $result           = [
+            'result' => 'ERROR',
+        ];
+        $queue            = new self();
+        $queue->generateConfig();
+        $out = [];
+        Util::mwExec("asterisk -rx 'queue reload all '", $out);
+        $out_data = trim(implode('', $out));
+        if ($out_data == '') {
+            $result['result'] = 'Success';
+        } else {
+            $result['result']  = 'ERROR';
+            $result['message'] = "$out_data";
+        }
+
+        return $result;
     }
 }

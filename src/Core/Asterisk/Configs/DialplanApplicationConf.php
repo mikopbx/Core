@@ -13,7 +13,7 @@ use MikoPBX\Modules\Config\ConfigClass;
 
 class DialplanApplicationConf extends ConfigClass
 {
-    private $db_data;
+    private $arrDialplanApplications;
 
     /**
      * Получение настроек.
@@ -21,7 +21,7 @@ class DialplanApplicationConf extends ConfigClass
     public function getSettings(): void
     {
         // Настройки для текущего класса.
-        $this->db_data = DialplanApplications::find()->toArray();
+        $this->arrDialplanApplications = DialplanApplications::find()->toArray();
     }
 
     /**
@@ -35,17 +35,6 @@ class DialplanApplicationConf extends ConfigClass
         return "include => applications \n";
     }
 
-    /**
-     * Возвращает включения в контекст internal-transfer
-     *
-     * @return string
-     */
-    public function getIncludeInternalTransfer(): string
-    {
-        // Генерация внутреннего номерного плана.
-        // $result.= "include => applications \n";
-        return '';
-    }
 
     /**
      * Генерация дополнительных контекстов.
@@ -55,7 +44,7 @@ class DialplanApplicationConf extends ConfigClass
     public function extensionGenContexts(): string
     {
         $app_ext_conf = "\n[applications]\n";
-        foreach ($this->db_data as $app) {
+        foreach ($this->arrDialplanApplications as $app) {
             if ('plaintext' == $app['type']) {
                 $app_ext_conf .= $this->generatePlaneTextApp($app);
             } elseif ('php' == $app['type']) {
@@ -93,7 +82,7 @@ class DialplanApplicationConf extends ConfigClass
 
     private function generatePhpApp($app): string
     {
-        $agiBinFolder = $this->di->getConfig()->path('asterisk.astagidir');
+        $agiBinFolder = $this->di->getShared('config')->path('asterisk.astagidir');
         $text_app     = "#!/usr/bin/php\n";
         $text_app     .= base64_decode($app['applicationlogic']);
         file_put_contents("{$agiBinFolder}/{$app['uniqid']}.php", $text_app);
@@ -115,7 +104,7 @@ class DialplanApplicationConf extends ConfigClass
     public function extensionGenHints(): string
     {
         $conf = '';
-        foreach ($this->db_data as $app) {
+        foreach ($this->arrDialplanApplications as $app) {
             $conf .= "exten => {$app['extension']},hint,Custom:{$app['extension']} \n";
         }
 

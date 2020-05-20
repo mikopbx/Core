@@ -15,11 +15,12 @@ use Phalcon\Di;
 
 class ExtensionsConf extends ConfigClass
 {
+    protected $description = 'extensions.conf';
 
     /**
-     * Основной генератор exgtensions.conf
+     * Основной генератор extensions.conf
      */
-    public function generate(): void
+    protected function generateConfigProtected(): void
     {
         $additionalModules = $this->di->getShared('pbxConfModules');
         $conf              = "[globals] \n";
@@ -47,7 +48,7 @@ class ExtensionsConf extends ConfigClass
         // Переключатель по времени.
         $this->generateOutWorkTimes($conf);
 
-        Util::fileWriteContent("/etc/asterisk/extensions.conf", $conf);
+        Util::fileWriteContent($this->astConfDir . '/extensions.conf', $conf);
     }
 
     /**
@@ -55,7 +56,7 @@ class ExtensionsConf extends ConfigClass
      *
      * @param $conf
      */
-    private function generateOtherExten(&$conf)
+    private function generateOtherExten(&$conf): void
     {
         $extension = 'X!';
         // Контекст для AMI originate. Без него отображается не корректный CallerID.
@@ -137,7 +138,7 @@ class ExtensionsConf extends ConfigClass
      *
      * @param $conf
      */
-    private function generateInternal(&$conf)
+    private function generateInternal(&$conf): void
     {
         $extension  = 'X!';
         $technology = SIPConf::getTechnology();
@@ -438,6 +439,9 @@ class ExtensionsConf extends ConfigClass
         $conf              .= self::generateIncomingContextPeers('none', '', '');
         $conf              .= "[public-direct-dial] \n";
         foreach ($additionalModules as $appClass) {
+            if ($appClass instanceof $this){
+                continue;
+            }
             $appClass->generatePublicContext($conf);
         }
         $filter = ["provider IS NULL AND priority<>9999"];
@@ -464,7 +468,11 @@ class ExtensionsConf extends ConfigClass
     {
         $conf              = '';
         $dialplan          = [];
-        $additionalModules = Di::getDefault()->getShared('pbxConfModules');
+        $di = Di::getDefault();
+        if ($di===null){
+            return '';
+        }
+        $additionalModules = $di->getShared('pbxConfModules');
 
         if ('none' === $provider) {
             // Звонки по sip uri.

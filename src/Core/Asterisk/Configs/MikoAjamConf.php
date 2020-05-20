@@ -14,7 +14,19 @@ use Phalcon\Exception;
 class MikoAjamConf extends ConfigClass
 {
 
-    protected $description = 'miko_ajam';
+    /**
+     * Создание конфигурационных файлов.
+     *
+     */
+    protected function generateConfigProtected(): void
+    {
+        if (is_file('/var/etc/http_auth')) {
+            return;
+        }
+        $user_name = md5(random_bytes(20));
+        $pass      = md5(random_bytes(12));
+        file_put_contents('/var/etc/http_auth', "{$user_name}:{$pass}");
+    }
 
     /**
      * Генерация дополнительных контекстов.
@@ -73,18 +85,6 @@ class MikoAjamConf extends ConfigClass
         return $conf;
     }
 
-    /**
-     * Создание конфигурационных файлов.
-     *
-     */
-    protected function generateConfigProtected(): void
-    {
-        if (is_file('/var/etc/http_auth')) {
-            return;
-        }
-        $user_name = md5(random_bytes(20));
-        $pass      = md5(random_bytes(12));
-        file_put_contents('/var/etc/http_auth', "{$user_name}:{$pass}");
-    }
+
 
 }

@@ -65,11 +65,11 @@ class System
         return '/var/log';
     }
 
-    public static function rotatePhpLog()
+    public static function rotatePhpLog(): void
     {
         $max_size    = 2;
         $f_name      = self::getPhpFile();
-        $text_config = "{$f_name}" . ' {
+        $text_config = (string)($f_name) . ' {
     nocreate
     nocopytruncate
     delaycompress
@@ -226,7 +226,7 @@ class System
     /**
      * Рестарт сетевых интерфейсов.
      */
-    public static function networkReload()
+    public static function networkReload(): void
     {
         $system = new System();
         $system->hostnameConfigure();
@@ -260,7 +260,7 @@ class System
      *
      * @return array
      */
-    public static function setDate($date)
+    public static function setDate($date): array
     {
         $result = [
             'result' => 'ERROR',
@@ -316,7 +316,7 @@ class System
     /**
      * Настрока демона ntpd.
      */
-    private function ntpDaemonConfigure()
+    private function ntpDaemonConfigure(): void
     {
         $ntp_server = $this->mikoPBXConfig->getServerNTP();
         if ('' != $ntp_server) {
@@ -340,7 +340,7 @@ server 2.pool.ntp.org';
     /**
      * Установка таймзоны для php.
      */
-    public static function phpTimeZoneConfigure()
+    public static function phpTimeZoneConfigure(): void
     {
         $mikoPBXConfig = new MikoPBXConfig();
         $timezone      = $mikoPBXConfig->getTimeZone();
@@ -355,7 +355,7 @@ server 2.pool.ntp.org';
      *
      * @return array
      */
-    public static function getInfo()
+    public static function getInfo(): array
     {
         $result = [
             'result' => 'Success',
@@ -393,7 +393,7 @@ server 2.pool.ntp.org';
     /**
      * Получаем информацию по времени работы ПК.
      */
-    public static function getUpTime()
+    public static function getUpTime(): string
     {
         $ut = [];
         Util::mwExec("/usr/bin/uptime | awk -F \" |,\" '{print $5}'", $ut);
@@ -404,7 +404,7 @@ server 2.pool.ntp.org';
     /**
      * Получаем информацию по оперативной памяти.
      */
-    public static function getMemInfo()
+    public static function getMemInfo(): array
     {
         $result = [];
         $out    = [];
@@ -513,7 +513,7 @@ server 2.pool.ntp.org';
                     $res = PBX::managerReload();
                     break;
                 case 'systemtime':
-                    $res = CustomFiles::setDate('');
+                    $res = self::setDate('');
                     break;
                 case 'firewall':
                     $res = Firewall::reloadFirewall();
@@ -609,7 +609,7 @@ server 2.pool.ntp.org';
         Util::fileWriteContent($cron_filename, $conf);
     }
 
-    public static function convertConfig($config_file = '')
+    public static function convertConfig($config_file = ''): array
     {
         $result  = [
             'result'  => 'Success',
@@ -953,38 +953,6 @@ server 2.pool.ntp.org';
     }
 
     /**
-     * Чтение данных сессии. (Read-only sessions to the rescue).
-     * https://www.leaseweb.com/labs/2014/08/session-locking-non-blocking-read-sessions-php/
-     */
-    public static function sessionReadonly(): void
-    {
-        if ( ! is_array($_COOKIE) || ! isset($_COOKIE[session_name()])) {
-            return;
-        }
-        $session_name = preg_replace('/[^\da-z]/i', '', $_COOKIE[session_name()]);
-        $session_file = session_save_path() . '/sess_' . $session_name;
-        if ( ! file_exists($session_file)) {
-            return;
-        }
-        $session_data = @file_get_contents($session_file);
-        $return_data  = [];
-        $offset       = 0;
-        while ($offset < strlen($session_data)) {
-            if (strpos(substr($session_data, $offset), '|') === false) {
-                break;
-            }
-            $pos                   = strpos($session_data, '|', $offset);
-            $num                   = $pos - $offset;
-            $varname               = substr($session_data, $offset, $num);
-            $offset                += $num + 1;
-            $data                  = unserialize(substr($session_data, $offset), ['allowed_classes' => []]);
-            $return_data[$varname] = $data;
-            $offset                += strlen(serialize($data));
-        }
-        $_SESSION = $return_data;
-    }
-
-    /**
      * Подгрузка дополнительных модулей ядра.
      */
     public function loadKernelModules(): void
@@ -1099,7 +1067,7 @@ server 2.pool.ntp.org';
         Util::mwExec('/sbin/syslogd -O ' . $log_file . ' -b 10 -s 10240');
     }
 
-    public static function getSyslogFile()
+    public static function getSyslogFile(): string
     {
         $logdir = self::getLogDir() . '/system';
         if ( ! file_exists($logdir) && ! mkdir($logdir, 0777, true) && ! is_dir($logdir)) {
@@ -1214,7 +1182,7 @@ server 2.pool.ntp.org';
     /**
      * Устанавливаем пароль для пользователя системы.
      **/
-    public function updateShellPassword()
+    public function updateShellPassword(): void
     {
         $password = $this->mikoPBXConfig->getGeneralSettings('SSHPassword');
         Util::mwExec("echo \"root:$password\" | /usr/sbin/chpasswd");
@@ -1223,7 +1191,7 @@ server 2.pool.ntp.org';
     /**
      * Запуск open vmware tools.
      */
-    public function vmwareToolsConfigure()
+    public function vmwareToolsConfigure(): void
     {
         Util::killByName("vmtoolsd");
         $virtualHW = $this->mikoPBXConfig->getGeneralSettings('VirtualHardwareType');

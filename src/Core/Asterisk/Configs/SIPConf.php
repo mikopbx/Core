@@ -29,9 +29,45 @@ class SIPConf extends ConfigClass
     protected $data_peers;
     protected $data_providers;
     protected $data_rout;
-    protected $description = 'sip.conf';
     protected $technology;
     protected $contexts_data = [];
+
+    protected $description = 'pjsip.conf';
+
+    /**
+     * Генератор sip.conf
+     *
+     * @return bool|void
+     */
+    protected function generateConfigProtected(): void
+    {
+        $conf = '';
+        if ($this->technology === 'SIP') {
+            $conf .= $this->generateGeneral();
+            $conf .= $this->generateProviders();
+            $conf .= $this->generatePeers();
+
+            Util::fileWriteContent($this->astConfDir . '/sip.conf', $conf);
+        } else {
+            $conf .= $this->generateGeneralPj();
+            $conf .= $this->generateProvidersPj();
+            $conf .= $this->generatePeersPj();
+
+            Util::fileWriteContent($this->astConfDir . '/pjsip.conf', $conf);
+        }
+
+        $db = new AstDB();
+        foreach ($this->data_peers as $peer) {
+            // Помещаем в AstDB сведения по маршуртизации.
+            $ringlength = ($peer['ringlength'] == 0) ? '' : trim($peer['ringlength']);
+            $db->databasePut('FW_TIME', "{$peer['extension']}", $ringlength);
+            $db->databasePut('FW', "{$peer['extension']}", trim($peer['forwarding']));
+            $db->databasePut('FW_BUSY', "{$peer['extension']}", trim($peer['forwardingonbusy']));
+            $db->databasePut('FW_UNAV', "{$peer['extension']}", trim($peer['forwardingonunavailable']));
+        }
+    }
+
+
 
     /**
      * Получение статусов SIP пиров.
@@ -233,41 +269,7 @@ class SIPConf extends ConfigClass
         return $result;
     }
 
-    /**
-     * Генератор sip.conf
-     *
-     * @return bool|void
-     */
-    protected function generateConfigProtected(): void
-    {
-        $conf = '';
-        if ($this->technology === 'SIP') {
-            $conf .= $this->generateGeneral();
-            $conf .= $this->generateProviders();
-            $conf .= $this->generatePeers();
 
-            Util::fileWriteContent($this->astConfDir . '/sip.conf', $conf);
-        } else {
-            $conf = '';
-            $conf .= $this->generateGeneralPj();
-            $conf .= $this->generateProvidersPj();
-            $conf .= $this->generatePeersPj();
-
-            Util::fileWriteContent($this->astConfDir . '/pjsip.conf', $conf);
-        }
-
-        $db = new AstDB();
-        foreach ($this->data_peers as $peer) {
-            // Помещаем в AstDB сведения по маршуртизации.
-            $ringlength = ($peer['ringlength'] == 0) ? '' : trim($peer['ringlength']);
-            $db->databasePut('FW_TIME', "{$peer['extension']}", $ringlength);
-            $db->databasePut('FW', "{$peer['extension']}", trim($peer['forwarding']));
-            $db->databasePut('FW_BUSY', "{$peer['extension']}", trim($peer['forwardingonbusy']));
-            $db->databasePut('FW_UNAV', "{$peer['extension']}", trim($peer['forwardingonunavailable']));
-        }
-
-        $this->generateSipNotify();
-    }
 
     /**
      * Generate [general] section in sip.conf
@@ -625,7 +627,7 @@ class SIPConf extends ConfigClass
         $prov_config = '';
 
         foreach ($this->data_providers as $provider) {
-            $manual_attributes = $this->parseIniSettings(base64_decode($provider['manualattributes'] ?? ''));
+            $manual_attributes = Util::parseIniSettings(base64_decode($provider['manualattributes'] ?? ''));
             $port              = (trim($provider['port']) === '') ? '5060' : $provider['port'];
 
             $need_register = $provider['noregister'] !== '1';
@@ -733,61 +735,7 @@ class SIPConf extends ConfigClass
         return $conf;
     }
 
-    /**
-     * Разбор INI конфига
-     *
-     * @param $manual_attributes
-     *
-     * @return array
-     */
-    private function parseIniSettings($manual_attributes): array
-    {
-        $tmp_data = base64_decode($manual_attributes);
-        if (base64_encode($tmp_data) === $manual_attributes) {
-            $manual_attributes = $tmp_data;
-        }
-        unset($tmp_data);
-        // TRIMMING
-        $tmp_arr = explode("\n", $manual_attributes);
-        foreach ($tmp_arr as &$row) {
-            $row = trim($row);
-            $pos = strpos($row, ']');
-            if ($pos !== false && strpos($row, '[') === 0) {
-                $row = "\n" . substr($row, 0, $pos);
-            }
-        }
-        unset($row);
-        $manual_attributes = implode("\n", $tmp_arr);
-        // TRIMMING END
 
-        $manual_data = [];
-        $sections    = explode("\n[", str_replace(']', '', $manual_attributes));
-        foreach ($sections as $section) {
-            $data_rows    = explode("\n", trim($section));
-            $section_name = trim($data_rows[0] ?? '');
-            if ( ! empty($section_name)) {
-                unset($data_rows[0]);
-                $manual_data[$section_name] = [];
-                foreach ($data_rows as $row) {
-                    if (strpos($row, '=') === false) {
-                        continue;
-                    }
-                    $arr_value = explode('=', $row);
-                    if (count($arr_value) > 1) {
-                        $key = trim($arr_value[0]);
-                        unset($arr_value[0]);
-                        $value = trim(implode('=', $arr_value));
-                    }
-                    if (empty($value) || empty($key)) {
-                        continue;
-                    }
-                    $manual_data[$section_name][$key] = $value;
-                }
-            }
-        }
-
-        return $manual_data;
-    }
 
     /**
      * Генератор сеции пиров для sip.conf
@@ -801,24 +749,14 @@ class SIPConf extends ConfigClass
         $additionalModules = $this->di->getShared('pbxConfModules');
         $conf              = '';
 
-        $conf_acl = '';
         foreach ($this->data_peers as $peer) {
-            $manual_attributes = $this->parseIniSettings($peer['manualattributes'] ?? '');
+            $manual_attributes = Util::parseIniSettings($peer['manualattributes'] ?? '');
 
             $language = str_replace('_', '-', strtolower($lang));
             $language = (trim($language) === '') ? 'en-en' : $language;
 
             $calleridname = (trim($peer['calleridname']) === '') ? $peer['extension'] : $peer['calleridname'];
-            $deny         = (trim($peer['deny']) === '') ? '0.0.0.0/0.0.0.0' : $peer['deny'];
             $busylevel    = (trim($peer['busylevel']) === '') ? '1' : '' . $peer['busylevel'];
-            $permit       = (trim($peer['permit']) === '') ? '0.0.0.0/0.0.0.0' : $peer['permit'];
-
-            $options  = [
-                'deny'   => $deny,
-                'permit' => $permit,
-            ];
-            $conf_acl .= "[acl_{$peer['extension']}] \n";
-            $conf_acl .= Util::overrideConfigurationArray($options, $manual_attributes, 'acl');
 
             $options = [
                 'type'     => 'auth',
@@ -882,39 +820,7 @@ class SIPConf extends ConfigClass
             $conf .= $Object->generatePeersPj();
         }
 
-
-        Util::fileWriteContent($this->astConfDir . '/acl.conf', $conf_acl);
-
         return $conf;
-    }
-
-    /**
-     * Генератор файла sip_notify.conf.
-     * Удаленное управление телефоном.
-     */
-    private function generateSipNotify(): void
-    {
-        // Ребут телефонов Yealink.
-        // CLI> sip notify yealink-reboot autoprovision_user
-        // autoprovision_user - id sip учетной записи.
-        $conf = '';
-        $conf .= "[yealink-reboot]\n" .
-            "Event=>check-sync\;reboot=true\n" .
-            "Content-Length=>0\n";
-        $conf .= "\n";
-
-        $conf .= "[snom-reboot]\n" .
-            "Event=>check-sync\;reboot=true\n" .
-            $conf .= "\n";
-        // Пример
-        // CLI> sip notify yealink-action-ok autoprovision_user
-        // http://support.yealink.com/faq/faqInfo?id=173
-        $conf .= "[yealink-action-ok]\n" .
-            "Content-Type=>message/sipfrag\n" .
-            "Event=>ACTION-URI\n" .
-            "Content=>key=SPEAKER\n";
-
-        Util::fileWriteContent($this->astConfDir . '/sip_notify.conf', $conf);
     }
 
     /**

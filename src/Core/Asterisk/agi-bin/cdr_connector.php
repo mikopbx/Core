@@ -8,7 +8,7 @@
  */
 
 use MikoPBX\Core\Asterisk\CdrDb;
-use MikoPBX\Core\Asterisk\Configs\{ParkConf};
+use MikoPBX\Core\Asterisk\Configs\{ResParkingConf};
 use MikoPBX\Core\System\{MikoPBXConfig, Util};
 
 require_once 'phpagi.php';
@@ -379,7 +379,7 @@ function Event_unpark_call($agi, $action)
     $now = Util::getNowDate();
     // Обработка данных парковки.
     $exten    = $agi->get_variable("EXTEN", true);
-    $park_row = ParkConf::getParkslotData($exten);
+    $park_row = ResParkingConf::getParkslotData($exten);
 
     $agi->set_variable("__pt1c_IS_PARK", "1");
     $agi->set_variable("pt1c_PARK_CHAN", $park_row['ParkeeChannel']);

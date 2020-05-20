@@ -15,18 +15,18 @@ use MikoPBX\Modules\Config\ConfigClass;
 
 class IndicationConf extends ConfigClass
 {
-    /**
-     * Создание конфига indication.conf
-     *
-     * @param string $country
-     */
-    public function generateIndicationConf($country = 'ru'): void
+    protected $description = 'indications.conf';
+
+    protected function generateConfigProtected(): void
     {
+        $country = 'ru';//TODO:: Добавить в интерфейс если это важная опция
         $rootPath = $this->di->getShared('config')->path('core.rootPath');
         $data     = file_get_contents(
             "{$rootPath}/src/Core/Asterisk/Configs/Samples/indications.conf.sample"
         );
         $conf     = str_replace('{country}', $country, $data);
-        Util::fileWriteContent('/etc/asterisk/indications.conf', $conf);
+        Util::fileWriteContent($this->astConfDir . '/indications.conf', $conf);
+
     }
+
 }

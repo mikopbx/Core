@@ -16,7 +16,8 @@ use MikoPBX\Core\Asterisk\Configs\{ExtensionsConf,
     IndicationConf,
     ManagerConf,
     ModulesConf,
-    OtherConf};
+    MusicOnHoldConf,
+    VoiceMailConf};
 use MikoPBX\Core\Config\RegisterDIServices;
 use MikoPBX\Core\Workers\WorkerAmiListener;
 use MikoPBX\Core\Workers\WorkerCallEvents;
@@ -140,7 +141,7 @@ class PBX
     public static function featuresReload(): array
     {
         $featuresConf = new FeaturesConf();
-        $featuresConf->generateFeaturesConf();
+        $featuresConf->generateConfig();
         $result  = [
             'result' => 'Success',
         ];
@@ -155,8 +156,6 @@ class PBX
         return $result;
     }
 
-
-
     /**
      * Перезапуск большинства модулей asterisk.
      *
@@ -165,7 +164,7 @@ class PBX
     public static function coreReload(): array
     {
         $featuresConf = new FeaturesConf();
-        $featuresConf->generateFeaturesConf();
+        $featuresConf->generateConfig();
         $result  = [
             'result' => 'Success',
         ];
@@ -188,10 +187,10 @@ class PBX
     public static function managerReload(): array
     {
         $managerCong= new ManagerConf();
-        $managerCong->generateManagerConf();
+        $managerCong->generateConfig();
 
         $httpConf= new HttpConf();
-        $httpConf->httpConfGenerate();
+        $httpConf->generateConfig();
 
         $result  = [
             'result' => 'Success',
@@ -217,7 +216,7 @@ class PBX
 
     public static function musicOnHoldReload(): array
     {
-        $o = new OtherConf();
+        $o = new MusicOnHoldConf();
         $o->generateConfig();
         Util::mwExec("asterisk -rx 'module reload manager'");
 
@@ -234,8 +233,8 @@ class PBX
      */
     public static function voicemailReload(): array
     {
-        $o = new OtherConf();
-        $o->voiceMailConfGenerate();
+        $o = new VoiceMailConf();
+        $o->generateConfig();
         $result  = [
             'result' => 'Success',
         ];
@@ -253,7 +252,7 @@ class PBX
     public static function modulesReload(): array
     {
         $pbx = new ModulesConf();
-        $pbx->generateModulesConf();
+        $pbx->generateConfig();
         $arr_out = [];
         Util::mwExec("asterisk -rx 'core restart now'", $arr_out);
 
@@ -293,38 +292,8 @@ class PBX
         /**
          * Создание конфигурационных файлов.
          */
-        if ($this->booting) {
-            echo '   |- generate modules.conf... ';
-        }
-        $modulesConf = new ModulesConf();
-        $modulesConf->generateModulesConf();
-        if ($this->booting) {
-            echo "\033[32;1mdone\033[0m \n";
-        }
-
-        if ($this->booting) {
-            echo '   |- generate manager.conf... ';
-        }
-        $managerCong= new ManagerConf();
-        $managerCong->generateManagerConf();
-
-        $httpConf= new HttpConf();
-        $httpConf->httpConfGenerate();
-        if ($this->booting) {
-            echo "\033[32;1mdone\033[0m \n";
-        }
-
         foreach ($this->arrObject as $appClass) {
-            $appClass->generateConfig($this->arr_gs);
-        }
-        $featuresConf = new FeaturesConf();
-        $featuresConf->generateFeaturesConf();
-
-        $indicationConf = new IndicationConf();
-        $indicationConf->generateIndicationConf();
-
-        if ($this->booting) {
-            echo '   |- generate extensions.conf... ';
+            $appClass->generateConfig();
         }
         $this->dialplanReload();
         if ($this->booting) {
@@ -360,7 +329,7 @@ class PBX
         ];
 
         $extensions = new ExtensionsConf();
-        $extensions->generate();
+        $extensions->generateConfig();
         if ($this->booting !== true) {
             Util::mwExec("asterisk -rx 'dialplan reload'");
             Util::mwExec("asterisk -rx 'module reload pbx_lua.so'");

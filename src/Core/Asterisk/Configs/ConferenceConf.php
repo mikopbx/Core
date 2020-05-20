@@ -16,30 +16,6 @@ class ConferenceConf extends ConfigClass
 {
 
     /**
-     * Возвращает включения в контекст internal
-     *
-     * @return string
-     */
-    public function getIncludeInternal(): string
-    {
-        // Включаем контексты.
-        // $conf.= "include => conference-rooms \n";
-        return '';
-    }
-
-    /**
-     * Возвращает включения в контекст internal-transfer
-     *
-     * @return string
-     */
-    public function getIncludeInternalTransfer(): string
-    {
-        // Генерация внутреннего номерного плана.
-        // $result.= "include => conference-rooms \n";
-        return '';
-    }
-
-    /**
      * Возвращает номерной план для internal контекста.
      *
      * @return string

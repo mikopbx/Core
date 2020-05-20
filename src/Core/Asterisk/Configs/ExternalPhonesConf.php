@@ -13,8 +13,7 @@ use MikoPBX\Modules\Config\ConfigClass;
 
 class ExternalPhonesConf extends ConfigClass
 {
-    protected $description = 'external phones conf';
-    private $db_data;
+    private $arrExternalPhones;
 
     /**
      * Получение настроек с АТС.
@@ -31,7 +30,7 @@ class ExternalPhonesConf extends ConfigClass
             ];
         }
 
-        $this->db_data = $ext_data;
+        $this->arrExternalPhones = $ext_data;
     }
 
     /**
@@ -42,7 +41,7 @@ class ExternalPhonesConf extends ConfigClass
     public function extensionGenInternal(): string
     {
         $conf = '';
-        foreach ($this->db_data as $external) {
+        foreach ($this->arrExternalPhones as $external) {
             $conf .= "exten => _{$external['extension']},1,Set(EXTERNALPHONE=" . $external['dialstring'] . ")\n\t";
             $conf .= "same => n,Goto(outgoing,{$external['dialstring']},1)\n\t";
             $conf .= "same => n,AGI(check_redirect.php,\${BLINDTRANSFER})\n";
@@ -58,7 +57,7 @@ class ExternalPhonesConf extends ConfigClass
     public function extensionGenInternalTransfer(): string
     {
         $conf = '';
-        foreach ($this->db_data as $external) {
+        foreach ($this->arrExternalPhones as $external) {
             $conf .= 'exten => _' . $external['extension'] . ',1,Set(__ISTRANSFER=transfer_)' . " \n\t";
             $conf .= 'same => n,Goto(internal,${EXTEN},1)' . " \n";
         }

@@ -15,10 +15,9 @@ use MikoPBX\Modules\Config\ConfigClass;
 
 class FeaturesConf extends ConfigClass
 {
-    /**
-     * Создание конфига features.conf
-     */
-    public function generateFeaturesConf(): void
+    protected $description = 'features.conf';
+
+    protected function generateConfigProtected(): void
     {
         $pickup_extension = $this->mikoPBXConfig->getPickupExten();
         $conf             = "[general]\n" .
@@ -35,13 +34,9 @@ class FeaturesConf extends ConfigClass
 
         $additionalModules = $this->di->getShared('pbxConfModules');
         foreach ($additionalModules as $appClass) {
-            // Prevent cycling, skip current class
-            if (is_a($appClass, __CLASS__)) {
-                continue;
-            }
             $conf .= $appClass->getFeatureMap();
         }
 
-        Util::fileWriteContent('/etc/asterisk/features.conf', $conf);
+        Util::fileWriteContent($this->astConfDir . '/features.conf', $conf);
     }
 }

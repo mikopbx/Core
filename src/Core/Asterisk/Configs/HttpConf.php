@@ -15,10 +15,9 @@ use MikoPBX\Modules\Config\ConfigClass;
 
 class HttpConf extends ConfigClass
 {
-    /**
-     * Генерация http.cong AJAM.
-     */
-    public function httpConfGenerate(): void
+    protected $description = 'http.conf';
+
+    protected function generateConfigProtected(): void
     {
         $enabled = ($this->generalSettings['AJAMEnabled'] === '1') ? 'yes' : 'no';
         $conf    = "[general]\n" .
@@ -51,6 +50,6 @@ class HttpConf extends ConfigClass
                 "tlsprivatekey={$keys_dir}/ajam.pem\n";
             Util::fileWriteContent("{$keys_dir}/ajam.pem", $s_data);
         }
-        Util::fileWriteContent('/etc/asterisk/http.conf', $conf);
+        Util::fileWriteContent($this->astConfDir . '/http.conf', $conf);
     }
 }

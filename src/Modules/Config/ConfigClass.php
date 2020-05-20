@@ -16,9 +16,6 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
     // Директория конфигурационных файлов Asterisk;
     protected $astConfDir;
 
-    // Описание класса (имя конф. файла).
-    protected $description;
-
     /**
      * @var mixed|\Phalcon\Di\DiInterface|null
      */
@@ -44,6 +41,11 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
      */
     protected $generalSettings;
 
+    /**
+     * Asterisk config file name
+     * @var string
+     */
+    protected $description;
 
     /**
      * ConfigClass constructor.
@@ -64,6 +66,7 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
 
     public function getSettings(): void
     {
+
     }
 
     public function generateConfig(): void
@@ -79,10 +82,11 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
 
     /**
      * Вывод сообщения о генерации конфига.
+     *
      */
     protected function echoGenerateConfig(): void
     {
-        if ($this->booting === true && $this->description != null) {
+        if ($this->booting === true && !empty($this->description)) {
             echo "   |- generate config {$this->description}... ";
         }
     }
@@ -99,7 +103,7 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
      */
     protected function echoDone(): void
     {
-        if ($this->booting === true && $this->description != null) {
+        if ($this->booting === true) {
             echo "\033[32;1mdone\033[0m \n";
         }
     }

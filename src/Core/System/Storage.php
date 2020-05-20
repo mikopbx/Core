@@ -195,7 +195,7 @@ class Storage
         Util::mwExec("mount | grep {$filter} | awk '{print $3}'", $out);
         $mount_dir = trim(implode('', $out));
 
-        return ($mount_dir == '') ? false : true;
+        return ($mount_dir !== '');
     }
 
     /**

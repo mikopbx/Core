@@ -18,6 +18,7 @@ use Phalcon\Db\Adapter\Pdo\Sqlite;
 use Phalcon\Db\Column;
 use Phalcon\Di;
 use ReflectionClass;
+use SQLite3;
 
 
 /**
@@ -187,7 +188,7 @@ class Util
      * @param $out_file
      * @param $sleep_time
      */
-    public static function mwExecBg($command, $out_file = '/dev/null', $sleep_time = 0)
+    public static function mwExecBg($command, $out_file = '/dev/null', $sleep_time = 0): void
     {
         if ($sleep_time > 0) {
             $filename = '/tmp/' . time() . '_noop.sh';
@@ -206,7 +207,7 @@ class Util
      * @param int    $timeout
      * @param string $logname
      */
-    public static function mwExecBgWithTimeout($command, $timeout = 4, $logname = '/dev/null')
+    public static function mwExecBgWithTimeout($command, $timeout = 4, $logname = '/dev/null'): void
     {
         $di = Di::getDefault();
 
@@ -255,65 +256,6 @@ class Util
         return $result;
     }
 
-    // TODO / Возвращает путь к исполняемому файлу.
-
-    /**
-     * Форматирует JSON в читабельный вид.
-     *
-     * @param $json
-     *
-     * @return string
-     */
-    public static function jsonIndent($json): string
-    {
-        $result      = '';
-        $pos         = 0;
-        $strLen      = strlen($json);
-        $indentStr   = '  ';
-        $newLine     = "\n";
-        $prevChar    = '';
-        $outOfQuotes = true;
-
-        for ($i = 0; $i <= $strLen; $i++) {
-            // Grab the next character in the string.
-            $char = substr($json, $i, 1);
-
-            // Are we inside a quoted string?
-            if ($char === '"' && $prevChar !== '\\') {
-                $outOfQuotes = ! $outOfQuotes;
-
-                // If this character is the end of an element,
-                // output a new line and indent the next line.
-            } elseif (($char === '}' || $char === ']') && $outOfQuotes) {
-                $result .= $newLine;
-                $pos--;
-                for ($j = 0; $j < $pos; $j++) {
-                    $result .= $indentStr;
-                }
-            }
-
-            // Add the character to the result string.
-            $result .= $char;
-
-            // If the last character was the beginning of an element,
-            // output a new line and indent the next line.
-            if (($char === ',' || $char === '{' || $char === '[') && $outOfQuotes) {
-                $result .= $newLine;
-                if ($char === '{' || $char === '[') {
-                    $pos++;
-                }
-
-                for ($j = 0; $j < $pos; $j++) {
-                    $result .= $indentStr;
-                }
-            }
-
-            $prevChar = $char;
-        }
-
-        return $result;
-    }
-
     /**
      * Restart PHP workers
      *
@@ -356,7 +298,7 @@ class Util
      * @param     $text
      * @param int $level
      */
-    public static function sysLogMsg($log_name, $text, $level = null)
+    public static function sysLogMsg($log_name, $text, $level = null): void
     {
         $level = ($level == null) ? LOG_WARNING : $level;
         openlog("$log_name", LOG_PID | LOG_PERROR, LOG_AUTH);
@@ -485,7 +427,7 @@ class Util
      *
      * @return AGI_AsteriskManager
      */
-    public static function getAstManager($events = 'on')
+    public static function getAstManager($events = 'on'): AGI_AsteriskManager
     {
         global $g;
         require_once 'phpagi.php';
@@ -528,7 +470,7 @@ class Util
         $charactersLength = strlen($characters);
         $randomString     = '';
         for ($i = 0; $i < $length; $i++) {
-            $randomString .= $characters[rand(0, $charactersLength - 1)];
+            $randomString .= $characters[random_int(0, $charactersLength - 1)];
         }
 
         return $randomString;
@@ -623,11 +565,7 @@ class Util
      */
     public static function recFileExists($filename): ?bool
     {
-        if (file_exists($filename) && filesize($filename) > 0) {
-            return true;
-        } else {
-            return false;
-        }
+        return (file_exists($filename) && filesize($filename) > 0);
     }
 
     /**
@@ -911,7 +849,7 @@ class Util
      */
     public static function getExtensionOfFile($filename, $delimiter = '.')
     {
-        $tmp_arr   = explode("$delimiter", $filename);
+        $tmp_arr   = explode((string)$delimiter, $filename);
 
         return $tmp_arr[count($tmp_arr) - 1];
     }
@@ -927,10 +865,10 @@ class Util
     public static function trimExtensionForFile($filename, $delimiter = '.'): string
     {
         // Отсечем расширение файла.
-        $tmp_arr = explode("$delimiter", $filename);
+        $tmp_arr = explode((string)$delimiter, $filename);
         if (count($tmp_arr) > 1) {
             unset($tmp_arr[count($tmp_arr) - 1]);
-            $filename = implode("$delimiter", $tmp_arr);
+            $filename = implode((string)$delimiter, $tmp_arr);
         }
 
         return $filename;
@@ -1307,4 +1245,61 @@ class Util
     {
         self::mwExec('find ' . $folder . ' -type f -exec chmod 755 {} \;');
     }
+
+    /**
+     * Разбор INI конфига
+     *
+     * @param $manual_attributes
+     *
+     * @return array
+     */
+    public static function parseIniSettings($manual_attributes): array
+    {
+        $tmp_data = base64_decode($manual_attributes);
+        if (base64_encode($tmp_data) === $manual_attributes) {
+            $manual_attributes = $tmp_data;
+        }
+        unset($tmp_data);
+        // TRIMMING
+        $tmp_arr = explode("\n", $manual_attributes);
+        foreach ($tmp_arr as &$row) {
+            $row = trim($row);
+            $pos = strpos($row, ']');
+            if ($pos !== false && strpos($row, '[') === 0) {
+                $row = "\n" . substr($row, 0, $pos);
+            }
+        }
+        unset($row);
+        $manual_attributes = implode("\n", $tmp_arr);
+        // TRIMMING END
+
+        $manual_data = [];
+        $sections    = explode("\n[", str_replace(']', '', $manual_attributes));
+        foreach ($sections as $section) {
+            $data_rows    = explode("\n", trim($section));
+            $section_name = trim($data_rows[0] ?? '');
+            if ( ! empty($section_name)) {
+                unset($data_rows[0]);
+                $manual_data[$section_name] = [];
+                foreach ($data_rows as $row) {
+                    if (strpos($row, '=') === false) {
+                        continue;
+                    }
+                    $arr_value = explode('=', $row);
+                    if (count($arr_value) > 1) {
+                        $key = trim($arr_value[0]);
+                        unset($arr_value[0]);
+                        $value = trim(implode('=', $arr_value));
+                    }
+                    if (empty($value) || empty($key)) {
+                        continue;
+                    }
+                    $manual_data[$section_name][$key] = $value;
+                }
+            }
+        }
+
+        return $manual_data;
+    }
+
 }

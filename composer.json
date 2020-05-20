@@ -10,7 +10,15 @@
         "recoil/recoil": "^1.0",
         "recoil/react": "^1.0",
         "sentry/sdk": "^2.1.0",
-        "filp/whoops": "^2.7"
+        "filp/whoops": "^2.7",
+        "ext-json": "*",
+        "ext-sqlite3": "*",
+        "ext-simplexml": "*",
+        "ext-posix": "*",
+        "ext-sockets": "*",
+        "ext-iconv": "*",
+        "ext-curl": "*",
+        "ext-openssl": "*"
     },
     "autoload": {
         "psr-4": {
