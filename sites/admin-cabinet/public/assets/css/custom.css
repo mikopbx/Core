@@ -20,6 +20,7 @@ body {
 
 #sidebar-menu{
     top: 40px;
+    padding-bottom: 40px;
 }
 .ui.sidebar.visible ~ .pusher {
     width: calc(100% - 260px);
