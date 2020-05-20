@@ -26,6 +26,6 @@ class CdrManagerConf extends ConfigClass
             "linkedid => linkedid\n" .
             "recordingfile => recordingfile\n\n";
 
-        Util::fileWriteContent($this->astConfDir . "/cdr_manager.conf", $conf);
+        Util::fileWriteContent($this->config->path('asterisk.confDir') . "/cdr_manager.conf", $conf);
     }
 }

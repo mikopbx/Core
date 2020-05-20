@@ -20,12 +20,12 @@ class IndicationConf extends ConfigClass
     protected function generateConfigProtected(): void
     {
         $country = 'ru';//TODO:: Добавить в интерфейс если это важная опция
-        $rootPath = $this->di->getShared('config')->path('core.rootPath');
+        $rootPath = $this->config->path('core.rootPath');
         $data     = file_get_contents(
             "{$rootPath}/src/Core/Asterisk/Configs/Samples/indications.conf.sample"
         );
         $conf     = str_replace('{country}', $country, $data);
-        Util::fileWriteContent($this->astConfDir . '/indications.conf', $conf);
+        Util::fileWriteContent($this->config->path('asterisk.confDir') . '/indications.conf', $conf);
 
     }
 

@@ -10,7 +10,9 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 
-class CdrConf extends \MikoPBX\Modules\Config\ConfigClass
+use MikoPBX\Modules\Config\ConfigClass;
+
+class CdrConf extends ConfigClass
 {
     protected $description = 'cdr.conf';
 
@@ -23,6 +25,6 @@ class CdrConf extends \MikoPBX\Modules\Config\ConfigClass
             "usegmtime=no\n" .
             "loguniqueid=yes\n" .
             "loguserfield=yes\n";
-        file_put_contents($this->astConfDir . '/cdr.conf', $conf);
+        file_put_contents($this->config->path('asterisk.confDir') . '/cdr.conf', $conf);
     }
 }

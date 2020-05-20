@@ -10,7 +10,9 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 
-class ChanDahdiConf extends \MikoPBX\Modules\Config\ConfigClass
+use MikoPBX\Modules\Config\ConfigClass;
+
+class ChanDahdiConf extends ConfigClass
 {
     protected $description = 'chan_dahdi.conf';
 
@@ -19,7 +21,8 @@ class ChanDahdiConf extends \MikoPBX\Modules\Config\ConfigClass
         $conf = "[trunkgroups]\n" .
             "[channels]\n" .
             "";
-        file_put_contents($this->astConfDir . '/chan_dahdi.conf', $conf);
+
+        file_put_contents($this->config->path('asterisk.confDir') . '/chan_dahdi.conf', $conf);
     }
 
 }

@@ -34,7 +34,7 @@ class ResParkingConf extends ConfigClass
             "comebacktoorigin=no\n" .
             "comebackcontext = parkedcallstimeout\n" .
             "parkpos => {$this->ParkingStartSlot}-{$this->ParkingEndSlot} \n\n";
-        file_put_contents($this->astConfDir . '/res_parking.conf', $conf);
+        file_put_contents($this->config->path('asterisk.confDir') . '/res_parking.conf', $conf);
     }
 
 

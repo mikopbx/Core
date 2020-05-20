@@ -19,6 +19,6 @@ class QueueRulesConf extends ConfigClass
     protected function generateConfigProtected(): void
     {
         $conf = '';
-        file_put_contents($this->astConfDir . '/queuerules.conf', $conf);
+        file_put_contents($this->config->path('asterisk.confDir') . '/queuerules.conf', $conf);
     }
 }

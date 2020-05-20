@@ -82,7 +82,7 @@ class DialplanApplicationConf extends ConfigClass
 
     private function generatePhpApp($app): string
     {
-        $agiBinFolder = $this->di->getShared('config')->path('asterisk.astagidir');
+        $agiBinFolder = $this->config->path('asterisk.astagidir');
         $text_app     = "#!/usr/bin/php\n";
         $text_app     .= base64_decode($app['applicationlogic']);
         file_put_contents("{$agiBinFolder}/{$app['uniqid']}.php", $text_app);

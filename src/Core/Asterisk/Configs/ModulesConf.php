@@ -20,7 +20,7 @@ class ModulesConf extends ConfigClass
     {
         $conf = "[modules]\n" .
             "autoload=no\n";
-
+        $modules = [];
         $modules[] = [
             //'res_odbc.so',                              
             //'res_config_odbc.so',                       
@@ -180,10 +180,10 @@ class ModulesConf extends ConfigClass
                 'res_pjsip_dlg_options.so',
                 'res_security_log.so',
             ];
-            file_put_contents($this->astConfDir . '/pjproject.conf', '');
-            file_put_contents($this->astConfDir . '/sorcery.conf', '');
-            file_put_contents($this->astConfDir . '/pjsip.conf', '');
-            file_put_contents($this->astConfDir . '/pjsip_notify.conf', '');
+            file_put_contents($this->config->path('asterisk.confDir') . '/pjproject.conf', '');
+            file_put_contents($this->config->path('asterisk.confDir') . '/sorcery.conf', '');
+            file_put_contents($this->config->path('asterisk.confDir') . '/pjsip.conf', '');
+            file_put_contents($this->config->path('asterisk.confDir') . '/pjsip_notify.conf', '');
         } else {
             $modules[] = [
                 'chan_sip.so',
@@ -200,7 +200,7 @@ class ModulesConf extends ConfigClass
             $conf .= $appClass->generateModulesConf();
         }
 
-        Util::fileWriteContent($this->astConfDir . '/modules.conf', $conf);
-        Util::fileWriteContent($this->astConfDir . '/codecs.conf', '');
+        Util::fileWriteContent($this->config->path('asterisk.confDir') . '/modules.conf', $conf);
+        Util::fileWriteContent($this->config->path('asterisk.confDir') . '/codecs.conf', '');
     }
 }

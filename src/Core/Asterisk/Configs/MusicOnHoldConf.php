@@ -19,13 +19,12 @@ class MusicOnHoldConf extends ConfigClass
 
     protected function generateConfigProtected(): void
     {
-        $dirsConfig = $this->di->getShared('config');
-        $mohpath    = $dirsConfig->path('asterisk.mohdir');
+        $mohpath    = $this->config->path('asterisk.mohdir');
 
         $conf = "[default]\n" .
             "mode=files\n" .
             "directory=$mohpath\n\n";
 
-        Util::fileWriteContent($this->astConfDir . '/musiconhold.conf', $conf);
+        Util::fileWriteContent($this->config->path('asterisk.confDir') . '/musiconhold.conf', $conf);
     }
 }

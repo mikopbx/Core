@@ -12,8 +12,9 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
+use MikoPBX\Modules\Config\ConfigClass;
 
-class LoggerConf extends \MikoPBX\Modules\Config\ConfigClass
+class LoggerConf extends ConfigClass
 {
     protected $description = 'logger.conf';
 
@@ -36,6 +37,6 @@ class LoggerConf extends \MikoPBX\Modules\Config\ConfigClass
         $conf .= "{$logDir}error => error\n";
         $conf .= "\n";
 
-        Util::fileWriteContent($this->astConfDir . '/logger.conf', $conf);
+        Util::fileWriteContent($this->config->path('asterisk.confDir') . '/logger.conf', $conf);
     }
 }

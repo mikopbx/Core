@@ -81,6 +81,6 @@ class VoiceMailConf extends ConfigClass
         }
         //*/
 
-        Util::fileWriteContent($this->astConfDir . '/voicemail.conf', $conf);
+        Util::fileWriteContent($this->config->path('asterisk.confDir') . '/voicemail.conf', $conf);
     }
 }

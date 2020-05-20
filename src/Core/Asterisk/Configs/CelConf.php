@@ -26,6 +26,6 @@ class CelConf extends ConfigClass
             "dateformat = %F %T\n\n" .
             "[manager]\n" .
             "enabled = yes\n\n";
-        Util::fileWriteContent($this->astConfDir . '/cel.conf', $conf);
+        Util::fileWriteContent($this->config->path('asterisk.confDir') . '/cel.conf', $conf);
     }
 }

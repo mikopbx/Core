@@ -30,25 +30,11 @@ class IAXConf extends ConfigClass
         $conf .= $this->generateGeneral();
         $conf .= $this->generateProviders();
 
-        Util::fileWriteContent($this->astConfDir . '/iax.conf', $conf);
-        file_put_contents($this->astConfDir . '/iaxprov.conf', "[default]\ncodec=alaw\n");
+        Util::fileWriteContent($this->config->path('asterisk.confDir') . '/iax.conf', $conf);
+        file_put_contents($this->config->path('asterisk.confDir') . '/iaxprov.conf', "[default]\ncodec=alaw\n");
     }
 
-    /**
-     * Перезапуск модуля IAX2;
-     */
-    public static function iaxReload(): array
-    {
-        $result = [
-            'result' => 'ERROR',
-        ];
-        $iax    = new self();
-        $iax->generateConfig();
-        Util::mwExec("asterisk -rx 'iax2 reload'");
-        $result['result'] = 'Success';
 
-        return $result;
-    }
 
     /**
      * Получение статусов регистраций IAX.

@@ -519,10 +519,9 @@ server 2.pool.ntp.org';
                     $res = Firewall::reloadFirewall();
                     break;
                 case 'asterisk_coreReload':
-                    SIPConf::sipReload();
-                    IAXConf::iaxReload();
-                    $pbx = new PBX();
-                    $pbx->dialplanReload();
+                    PBX::sipReload();
+                    PBX::iaxReload();
+                    PBX::dialplanReload();
                     $res = PBX::coreReload();
                     break;
             }

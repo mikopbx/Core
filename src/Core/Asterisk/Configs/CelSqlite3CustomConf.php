@@ -10,7 +10,9 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 
-class CelSqlite3CustomConf extends \MikoPBX\Modules\Config\ConfigClass
+use MikoPBX\Modules\Config\ConfigClass;
+
+class CelSqlite3CustomConf extends ConfigClass
 {
     protected $description = 'cel_sqlite3_custom.conf';
 
@@ -24,6 +26,6 @@ class CelSqlite3CustomConf extends \MikoPBX\Modules\Config\ConfigClass
             "columns => $cal \n" .
             "values => $values \n";
 
-        file_put_contents($this->astConfDir . "/cel_sqlite3_custom.conf", $conf);
+        file_put_contents($this->config->path('asterisk.confDir') . "/cel_sqlite3_custom.conf", $conf);
     }
 }

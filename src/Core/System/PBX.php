@@ -13,10 +13,12 @@ use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\Asterisk\Configs\{ExtensionsConf,
     FeaturesConf,
     HttpConf,
+    IAXConf,
     IndicationConf,
     ManagerConf,
     ModulesConf,
     MusicOnHoldConf,
+    SIPConf,
     VoiceMailConf};
 use MikoPBX\Core\Config\RegisterDIServices;
 use MikoPBX\Core\Workers\WorkerAmiListener;
@@ -295,7 +297,7 @@ class PBX
         foreach ($this->arrObject as $appClass) {
             $appClass->generateConfig();
         }
-        $this->dialplanReload();
+        self::dialplanReload();
         if ($this->booting) {
             echo "\033[32;1mdone\033[0m \n";
         }
@@ -321,16 +323,20 @@ class PBX
      *
      * @return array
      */
-    public function dialplanReload(): array
+    public static function dialplanReload(): array
     {
-        global $g;
+        $di            = Di::getDefault();
+        $booting       = $di->getRegistry()->booting;
         $result = [
             'result' => 'ERROR',
         ];
+        if ($di === null) {
+            return $result;
+        }
 
         $extensions = new ExtensionsConf();
         $extensions->generateConfig();
-        if ($this->booting !== true) {
+        if ($booting !== true) {
             Util::mwExec("asterisk -rx 'dialplan reload'");
             Util::mwExec("asterisk -rx 'module reload pbx_lua.so'");
         }
@@ -339,4 +345,100 @@ class PBX
 
         return $result;
     }
+
+    /**
+     * Reload SIP
+     */
+    public static function sipReload(): array
+    {
+        $di            = Di::getDefault();
+        $result = [
+            'result'  => 'ERROR',
+            'message' => '',
+        ];
+        if ($di === null) {
+            return $result;
+        }
+        $network = new Network();
+
+        $topology    = 'public';
+        $extipaddr   = '';
+        $exthostname = '';
+        $networks    = $network->getEnabledLanInterfaces();
+        foreach ($networks as $if_data) {
+            $lan_config = $network->getInterface($if_data['interface']);
+            if (null === $lan_config['ipaddr'] || null === $lan_config['subnet']) {
+                continue;
+            }
+            if (trim($if_data['internet']) === '1') {
+                $topology    = trim($if_data['topology']);
+                $extipaddr   = trim($if_data['extipaddr']);
+                $exthostname = trim($if_data['exthostname']);
+            }
+        }
+        $old_hash   = '';
+        $varEtcPath = $di->getShared('config')->path('core.varEtcPath');
+        if (file_exists($varEtcPath . '/topology_hash')) {
+            $old_hash = file_get_contents($varEtcPath . '/topology_hash');
+        }
+        $now_hadh = md5($topology . $exthostname . $extipaddr);
+
+        $sip              = new SIPConf();
+        $sip->generateConfig();
+
+
+        $out = [];
+        if (SIPConf::getTechnology() === SIPConf::TYPE_SIP) {
+            Util::mwExec("asterisk -rx 'dialplan reload'", $out);
+            $out_data = trim(implode('', $out));
+            if ($out_data !== 'Dialplan reloaded.') {
+                $result['message'] .= $out_data;
+            }
+            $out      = [];
+            $out_data = trim(implode('', $out));
+            Util::mwExec("asterisk -rx 'sip reload'", $out);
+            if ($out_data !== '') {
+                $result['message'] .= " $out_data";
+            }
+        } elseif ($old_hash === $now_hadh) {
+            Util::mwExec("asterisk -rx 'module reload acl'", $out);
+            Util::mwExec("asterisk -rx 'core reload'", $out);
+            $out_data = trim(implode('', $out));
+            if ($out_data !== '') {
+                $result['message'] .= $out_data;
+            }
+        } else {
+            // Завершаем каналы.
+            Util::mwExec("asterisk -rx 'channel request hangup all'", $out);
+            usleep(500000);
+            Util::mwExec("asterisk -rx 'core restart now'", $out);
+            $out_data = trim(implode('', $out));
+            if ($out_data !== '') {
+                $result['message'] .= $out_data;
+            }
+        }
+
+        if ($result['message'] === '') {
+            $result['result'] = 'Success';
+        }
+
+        return $result;
+    }
+
+    /**
+     * Перезапуск модуля IAX2;
+     */
+    public static function iaxReload(): array
+    {
+        $result = [
+            'result' => 'ERROR',
+        ];
+        $iax    = new IAXConf();
+        $iax->generateConfig();
+        Util::mwExec("asterisk -rx 'iax2 reload'");
+        $result['result'] = 'Success';
+
+        return $result;
+    }
+
 }

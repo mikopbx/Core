@@ -47,13 +47,13 @@ class SIPConf extends ConfigClass
             $conf .= $this->generateProviders();
             $conf .= $this->generatePeers();
 
-            Util::fileWriteContent($this->astConfDir . '/sip.conf', $conf);
+            Util::fileWriteContent($this->config->path('asterisk.confDir') . '/sip.conf', $conf);
         } else {
             $conf .= $this->generateGeneralPj();
             $conf .= $this->generateProvidersPj();
             $conf .= $this->generatePeersPj();
 
-            Util::fileWriteContent($this->astConfDir . '/pjsip.conf', $conf);
+            Util::fileWriteContent($this->config->path('asterisk.confDir') . '/pjsip.conf', $conf);
         }
 
         $db = new AstDB();
@@ -193,81 +193,7 @@ class SIPConf extends ConfigClass
         return $result;
     }
 
-    /**
-     * Reload SIP
-     */
-    public static function sipReload(): array
-    {
-        $result = [
-            'result'  => 'ERROR',
-            'message' => '',
-        ];
 
-        $network = new Network();
-
-        $topology    = 'public';
-        $extipaddr   = '';
-        $exthostname = '';
-        $networks    = $network->getEnabledLanInterfaces();
-        foreach ($networks as $if_data) {
-            $lan_config = $network->getInterface($if_data['interface']);
-            if (null === $lan_config['ipaddr'] || null === $lan_config['subnet']) {
-                continue;
-            }
-            if (trim($if_data['internet']) === '1') {
-                $topology    = trim($if_data['topology']);
-                $extipaddr   = trim($if_data['extipaddr']);
-                $exthostname = trim($if_data['exthostname']);
-            }
-        }
-        $old_hash   = '';
-        $varEtcPath = Di::getDefault()->getConfig()->path('core.varEtcPath');
-        if (file_exists($varEtcPath . '/topology_hash')) {
-            $old_hash = file_get_contents($varEtcPath . '/topology_hash');
-        }
-        $now_hadh = md5($topology . $exthostname . $extipaddr);
-
-        $sip              = new self();
-        $sip->generateConfigProtected();
-
-
-        $out = [];
-        if (self::getTechnology() === self::TYPE_SIP) {
-            Util::mwExec("asterisk -rx 'dialplan reload'", $out);
-            $out_data = trim(implode('', $out));
-            if ($out_data !== 'Dialplan reloaded.') {
-                $result['message'] .= $out_data;
-            }
-            $out      = [];
-            $out_data = trim(implode('', $out));
-            Util::mwExec("asterisk -rx 'sip reload'", $out);
-            if ($out_data !== '') {
-                $result['message'] .= " $out_data";
-            }
-        } elseif ($old_hash === $now_hadh) {
-            Util::mwExec("asterisk -rx 'module reload acl'", $out);
-            Util::mwExec("asterisk -rx 'core reload'", $out);
-            $out_data = trim(implode('', $out));
-            if ($out_data !== '') {
-                $result['message'] .= $out_data;
-            }
-        } else {
-            // Завершаем каналы.
-            Util::mwExec("asterisk -rx 'channel request hangup all'", $out);
-            usleep(500000);
-            Util::mwExec("asterisk -rx 'core restart now'", $out);
-            $out_data = trim(implode('', $out));
-            if ($out_data !== '') {
-                $result['message'] .= $out_data;
-            }
-        }
-
-        if ($result['message'] === '') {
-            $result['result'] = 'Success';
-        }
-
-        return $result;
-    }
 
 
 
@@ -607,7 +533,7 @@ class SIPConf extends ConfigClass
             }
         }
 
-        $varEtcPath = $this->di->getConfig()->path('core.varEtcPath');
+        $varEtcPath = $this->config->path('core.varEtcPath');
         file_put_contents($varEtcPath . '/topology_hash', md5($topology . $exthostname . $extipaddr));
         $conf .= "\n";
 

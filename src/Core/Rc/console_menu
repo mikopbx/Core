@@ -233,10 +233,9 @@ $menu = (new CliMenuBuilder())
         $new_lang   = ('en-en' === $lang)?'ru-ru':'en-en';
         $mikoPBXConfig->setGeneralSettings('SSHLanguage', $new_lang);
 
-        $pbx = new PBX();
-        $pbx->dialplanReload();
-        IAXConf::iaxReload();
-        SIPConf::sipReload();
+        PBX::dialplanReload();
+        PBX::iaxReload();
+        PBX::sipReload();
         PBX::featuresReload();
 
         sleep(1);

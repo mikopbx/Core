@@ -128,6 +128,6 @@ class ManagerConf extends ConfigClass
         foreach ($additionalModules as $appClass) {
             $conf .= $appClass->generateManagerConf();
         }
-        Util::fileWriteContent($this->astConfDir .'/manager.conf', $conf);
+        Util::fileWriteContent($this->config->path('asterisk.confDir') .'/manager.conf', $conf);
     }
 }

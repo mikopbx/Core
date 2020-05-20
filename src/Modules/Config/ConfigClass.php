@@ -13,9 +13,6 @@ use Phalcon\Di;
 
 abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInterface
 {
-    // Директория конфигурационных файлов Asterisk;
-    protected $astConfDir;
-
     /**
      * @var mixed|\Phalcon\Di\DiInterface|null
      */
@@ -25,6 +22,11 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
      * @var \MikoPBX\Core\System\MikoPBXConfig
      */
     protected $mikoPBXConfig;
+
+    /**
+     * @var \Phalcon\Config
+     */
+    protected $config;
 
     /**
      * @var bool
@@ -54,9 +56,8 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
     public function __construct()
     {
         $this->di            = Di::getDefault();
-        $config              = $this->di->getShared('config');
-        $this->astConfDir    = $config->path('asterisk.confDir');
-        $this->modulesDir    = $config->path('core.modulesDir');
+        $this->config        = $this->di->getShared('config');
+        $this->modulesDir    = $this->config->path('core.modulesDir');
         $this->booting       = $this->di->getRegistry()->booting;
         $this->mikoPBXConfig = new MikoPBXConfig();
         $this->generalSettings = $this->mikoPBXConfig->getGeneralSettings();

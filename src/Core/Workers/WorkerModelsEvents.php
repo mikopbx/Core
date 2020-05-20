@@ -332,9 +332,7 @@ class WorkerModelsEvents extends WorkerBase
      */
     public function reloadDialplan(): array
     {
-        $pbx = new PBX();
-
-        return $pbx->dialplanReload();
+        return PBX::dialplanReload();
     }
 
     public function reloadManager(): array
@@ -366,12 +364,12 @@ class WorkerModelsEvents extends WorkerBase
 
     public function reloadIax(): array
     {
-        return IAXConf::iaxReload();
+        return PBX::iaxReload();
     }
 
     public function reloadSip(): array
     {
-        return SIPConf::sipReload();
+        return PBX::sipReload();
     }
 
     public function reloadFeatures(): array

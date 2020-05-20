@@ -18,20 +18,19 @@ class AsteriskConf extends ConfigClass
     protected $description = 'asterisk.conf';
 
     protected function generateConfigProtected(): void
-    {
-        $dirsConfig = $this->di->getShared('config');
+    {;
 
         $lang = $this->generalSettings['PBXLanguage'];
         $conf = "[directories]\n" .
             "astetcdir => /etc/asterisk\n" .
-            "astagidir => {$dirsConfig->path('asterisk.astagidir')}\n" .
+            "astagidir => {$this->config->path('asterisk.astagidir')}\n" .
             "astkeydir => /etc/asterisk\n" .
             "astrundir => /var/asterisk/run\n" .
-            "astmoddir => {$dirsConfig->path('asterisk.astmoddir')}\n" .
-            "astvarlibdir => {$dirsConfig->path('asterisk.astvarlibdir')}\n" .
-            "astdbdir => {$dirsConfig->path('asterisk.astdbdir')}\n" .
-            "astlogdir => {$dirsConfig->path('asterisk.astlogdir')}\n" .
-            "astspooldir => {$dirsConfig->path('asterisk.astspooldir')}\n" .
+            "astmoddir => {$this->config->path('asterisk.astmoddir')}\n" .
+            "astvarlibdir => {$this->config->path('asterisk.astvarlibdir')}\n" .
+            "astdbdir => {$this->config->path('asterisk.astdbdir')}\n" .
+            "astlogdir => {$this->config->path('asterisk.astlogdir')}\n" .
+            "astspooldir => {$this->config->path('asterisk.astspooldir')}\n" .
             "\n" .
             "\n" .
             "[options]\n" .
@@ -44,6 +43,6 @@ class AsteriskConf extends ConfigClass
             "lockmode=flock\n" .
             "systemname = mikopbx\n";
 
-        Util::fileWriteContent($this->astConfDir . '/asterisk.conf', $conf);
+        Util::fileWriteContent($this->config->path('asterisk.confDir') . '/asterisk.conf', $conf);
     }
 }

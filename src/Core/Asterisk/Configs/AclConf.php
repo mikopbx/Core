@@ -70,7 +70,7 @@ class AclConf extends ConfigClass
 
         }
 
-        Util::fileWriteContent($this->astConfDir . '/acl.conf', $conf_acl);
+        Util::fileWriteContent($this->config->path('asterisk.confDir') . '/acl.conf', $conf_acl);
     }
 
 

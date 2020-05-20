@@ -19,6 +19,6 @@ class UdptlConf extends ConfigClass
     protected function generateConfigProtected(): void
     {
         $conf = '';
-        file_put_contents($this->astConfDir . '/udptl.conf', $conf);
+        file_put_contents($this->config->path('asterisk.confDir') . '/udptl.conf', $conf);
     }
 }

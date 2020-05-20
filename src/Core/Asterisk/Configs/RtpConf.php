@@ -23,6 +23,6 @@ class RtpConf extends ConfigClass
             "rtpstart={$this->generalSettings['RTPPortFrom']}\n" .
             "rtpend={$this->generalSettings['RTPPortTo']}\n\n";
 
-        Util::fileWriteContent($this->astConfDir . '/rtp.conf', $conf);
+        Util::fileWriteContent($this->config->path('asterisk.confDir') . '/rtp.conf', $conf);
     }
 }

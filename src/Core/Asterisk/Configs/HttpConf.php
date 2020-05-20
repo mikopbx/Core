@@ -50,6 +50,6 @@ class HttpConf extends ConfigClass
                 "tlsprivatekey={$keys_dir}/ajam.pem\n";
             Util::fileWriteContent("{$keys_dir}/ajam.pem", $s_data);
         }
-        Util::fileWriteContent($this->astConfDir . '/http.conf', $conf);
+        Util::fileWriteContent($this->config->path('asterisk.confDir') . '/http.conf', $conf);
     }
 }

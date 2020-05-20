@@ -11,8 +11,9 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 
 use MikoPBX\Core\System\Util;
+use MikoPBX\Modules\Config\ConfigClass;
 
-class SipNotifyConf extends \MikoPBX\Modules\Config\ConfigClass
+class SipNotifyConf extends ConfigClass
 {
     protected $description = 'sip_notify.conf';
 
@@ -38,6 +39,6 @@ class SipNotifyConf extends \MikoPBX\Modules\Config\ConfigClass
             "Event=>ACTION-URI\n" .
             "Content=>key=SPEAKER\n";
 
-        Util::fileWriteContent($this->astConfDir . '/sip_notify.conf', $conf);
+        Util::fileWriteContent($this->config->path('asterisk.confDir') . '/sip_notify.conf', $conf);
     }
 }
