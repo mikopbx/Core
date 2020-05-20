@@ -13,16 +13,6 @@ use MikoPBX\Modules\Config\ConfigClass;
 
 class DialplanApplicationConf extends ConfigClass
 {
-    private $arrDialplanApplications;
-
-    /**
-     * Получение настроек.
-     */
-    public function getSettings(): void
-    {
-        // Настройки для текущего класса.
-        $this->arrDialplanApplications = DialplanApplications::find()->toArray();
-    }
 
     /**
      * Возвращает включения в контекст internal
@@ -44,7 +34,8 @@ class DialplanApplicationConf extends ConfigClass
     public function extensionGenContexts(): string
     {
         $app_ext_conf = "\n[applications]\n";
-        foreach ($this->arrDialplanApplications as $app) {
+        $arrDialplanApplications = DialplanApplications::find()->toArray();
+        foreach ($arrDialplanApplications as $app) {
             if ('plaintext' == $app['type']) {
                 $app_ext_conf .= $this->generatePlaneTextApp($app);
             } elseif ('php' == $app['type']) {
@@ -104,7 +95,8 @@ class DialplanApplicationConf extends ConfigClass
     public function extensionGenHints(): string
     {
         $conf = '';
-        foreach ($this->arrDialplanApplications as $app) {
+        $arrDialplanApplications = DialplanApplications::find()->toArray();
+        foreach ($arrDialplanApplications as $app) {
             $conf .= "exten => {$app['extension']},hint,Custom:{$app['extension']} \n";
         }
 

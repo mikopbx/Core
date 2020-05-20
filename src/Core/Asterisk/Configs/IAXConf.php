@@ -149,29 +149,6 @@ class IAXConf extends ConfigClass
         return $conf;
     }
 
-    /**
-     * Генератор extension для контекста outgoing.
-     *
-     * @param string $id
-     *
-     * @return string|null
-     */
-    public function getTechByID($id): string
-    {
-        // Генерация исходящего номерного плана.
-        $technology = '';
-        foreach ($this->data_providers as $peer) {
-            if ($peer['uniqid'] != $id) {
-                continue;
-            }
-            $technology = 'IAX2';
-            break;
-        }
-
-        return $technology;
-    }
-
-
 
     /**
      * Генератора секции general iax.conf

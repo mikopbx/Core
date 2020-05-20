@@ -42,14 +42,6 @@ interface AsteriskConfigInterface
      */
     public function extensionGenInternalTransfer(): string;
 
-    /**
-     * Опираясь на ID учетной записи возвращает имя технологии SIP / IAX2.
-     *
-     * @param string $id
-     *
-     * @return string
-     */
-    public function getTechByID($id): string;
 
     /**
      * Генератор extension для контекста peers
@@ -96,7 +88,6 @@ interface AsteriskConfigInterface
      */
     public function generatePublicContext(&$conf): void;
 
-
     /**
      * Генератор сеции пиров для sip.conf
      *
@@ -106,7 +97,7 @@ interface AsteriskConfigInterface
     public function generatePeers(): string;
 
     /**
-     * Генератор сеции пиров для sip.conf
+     * Генератор сеции пиров для pjsip.conf
      *
      *
      * @return string

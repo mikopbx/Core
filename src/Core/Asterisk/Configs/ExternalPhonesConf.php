@@ -40,6 +40,9 @@ class ExternalPhonesConf extends ConfigClass
      */
     public function extensionGenInternal(): string
     {
+        if ($this->arrExternalPhones===null){
+            $this->getSettings();
+        }
         $conf = '';
         foreach ($this->arrExternalPhones as $external) {
             $conf .= "exten => _{$external['extension']},1,Set(EXTERNALPHONE=" . $external['dialstring'] . ")\n\t";
@@ -56,6 +59,9 @@ class ExternalPhonesConf extends ConfigClass
      */
     public function extensionGenInternalTransfer(): string
     {
+        if ($this->arrExternalPhones===null){
+            $this->getSettings();
+        }
         $conf = '';
         foreach ($this->arrExternalPhones as $external) {
             $conf .= 'exten => _' . $external['extension'] . ',1,Set(__ISTRANSFER=transfer_)' . " \n\t";

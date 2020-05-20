@@ -8,7 +8,7 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
-use MikoPBX\Common\Models\{IncomingRoutingTable, OutgoingRoutingTable, OutWorkTimes, SoundFiles};
+use MikoPBX\Common\Models\{IncomingRoutingTable, OutgoingRoutingTable, OutWorkTimes, Providers, SoundFiles};
 use MikoPBX\Modules\Config\ConfigClass;
 use MikoPBX\Core\System\{MikoPBXConfig, Util};
 use Phalcon\Di;
@@ -335,16 +335,14 @@ class ExtensionsConf extends ConfigClass
         $provider_contexts = [];
 
         foreach ($routs as $rout) {
-            foreach ($additionalModules as $appClass) {
-                $technology = $appClass->getTechByID($rout->providerid);
-                if ($technology !== '') {
+            $technology = $this->getTechByID($rout->providerid);
+            if ($technology !== '') {
                     $rout_data                       = $rout->toArray();
                     $rout_data['technology']         = $technology;
                     $id_dialplan                     = $rout_data['providerid'] . '-' . $rout_data['id'] . '-outgoing';
                     $provider_contexts[$id_dialplan] = $rout_data;
                     $conf                            .= $this->generateOutgoingRegexPattern($rout_data);
                     break;
-                }
             }
         }
         $conf .= 'same => n,ExecIf($["${peer_mobile}x" != "x"]?Hangup())' . " \n\t";
@@ -737,5 +735,27 @@ class ExtensionsConf extends ConfigClass
         $conf .= $conf_out_set_var;
 
         return $conf;
+    }
+
+    /**
+     * Генератор extension для контекста outgoing.
+     *
+     * @param string $uniqueID
+     *
+     * @return null|string
+     */
+    public function getTechByID($uniqueID): string
+    {
+        $technology = '';
+        $provider   = Providers::findFirstByUniqid($uniqueID);
+        if ($provider !== null) {
+            if ($provider->type === 'SIP') {
+                $technology = SIPConf::getTechnology();
+            } elseif ($provider->type === 'IAX') {
+                $technology = 'IAX2';
+            }
+        }
+
+        return $technology;
     }
 }

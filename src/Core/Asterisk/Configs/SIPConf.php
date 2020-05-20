@@ -193,10 +193,6 @@ class SIPConf extends ConfigClass
         return $result;
     }
 
-
-
-
-
     /**
      * Generate [general] section in sip.conf
      *
@@ -909,27 +905,7 @@ class SIPConf extends ConfigClass
         return $data;
     }
 
-    /**
-     * Генератор extension для контекста outgoing.
-     *
-     * @param string $id
-     *
-     * @return null|string
-     */
-    public function getTechByID($id): string
-    {
-        // Генерация внутреннего номерного плана.
-        $technology = '';
-        foreach ($this->data_providers as $sip_peer) {
-            if ($sip_peer['uniqid'] !== $id) {
-                continue;
-            }
-            $technology = self::getTechnology();
-            break;
-        }
 
-        return $technology;
-    }
 
     /**
      * Генератор extension для контекста peers.
@@ -938,6 +914,9 @@ class SIPConf extends ConfigClass
      */
     public function extensionGenContexts(): string
     {
+        if ($this->data_peers===null){
+            $this->getSettings();
+        }
         // Генерация внутреннего номерного плана.
         $conf = '';
 
@@ -973,6 +952,9 @@ class SIPConf extends ConfigClass
      */
     public function extensionGenHints(): string
     {
+        if ($this->data_peers===null){
+            $this->getSettings();
+        }
         $conf = '';
         foreach ($this->data_peers as $peer) {
             $conf .= "exten => {$peer['extension']},hint,{$this->technology}/{$peer['extension']} \n";
@@ -983,6 +965,9 @@ class SIPConf extends ConfigClass
 
     public function extensionGenInternal(): string
     {
+        if ($this->data_peers===null){
+            $this->getSettings();
+        }
         // Генерация внутреннего номерного плана.
         $conf = '';
         foreach ($this->data_peers as $peer) {

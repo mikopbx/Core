@@ -62,7 +62,6 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
         $this->mikoPBXConfig = new MikoPBXConfig();
         $this->generalSettings = $this->mikoPBXConfig->getGeneralSettings();
         $this->messages = [];
-        $this->getSettings();
     }
 
     public function getSettings(): void
@@ -74,6 +73,7 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
     {
         // Генерация конфигурационных файлов.
         $this->echoGenerateConfig();
+        $this->getSettings();
         $this->generateConfigProtected();
         $this->echoDone();
     }
@@ -138,18 +138,6 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
         return '';
     }
 
-    /**
-     * Опираясь на ID учетной записи возвращает имя технологии SIP / IAX2.
-     *
-     * @param string $id
-     *
-     * @return string
-     */
-    public function getTechByID($id): string
-    {
-        // Генерация внутреннего номерного плана.
-        return '';
-    }
 
     // Генератор extension для контекста peers.
     public function extensionGenPeerContexts()
