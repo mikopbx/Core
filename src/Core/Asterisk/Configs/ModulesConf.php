@@ -182,7 +182,6 @@ class ModulesConf extends ConfigClass
             ];
             file_put_contents($this->config->path('asterisk.confDir') . '/pjproject.conf', '');
             file_put_contents($this->config->path('asterisk.confDir') . '/sorcery.conf', '');
-            file_put_contents($this->config->path('asterisk.confDir') . '/pjsip.conf', '');
             file_put_contents($this->config->path('asterisk.confDir') . '/pjsip_notify.conf', '');
         } else {
             $modules[] = [

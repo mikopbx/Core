@@ -6,7 +6,6 @@
  * Written by Alexey Portnov, 2 2020
  */
 namespace MikoPBX\PbxCore;
-use MikoPBX\Common\Config\ClassLoader;
 use MikoPBX\PBXCoreREST\Config\{RegisterDIServices};
 use Phalcon\Di\FactoryDefault;
 use Phalcon\Exception;
