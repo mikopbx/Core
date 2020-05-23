@@ -18,7 +18,7 @@ class ResParkingConf extends ConfigClass
     protected $ParkingEndSlot;
 
 
-    protected $description = 'res_parking.conf';
+    protected string $description = 'res_parking.conf';
 
     protected function generateConfigProtected(): void
     {

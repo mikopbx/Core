@@ -15,7 +15,7 @@ use MikoPBX\Modules\Config\ConfigClass;
 
 class CelConf extends ConfigClass
 {
-    protected $description = 'cel.conf';
+    protected string $description = 'cel.conf';
 
     protected function generateConfigProtected(): void
     {

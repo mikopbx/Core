@@ -17,7 +17,7 @@ use MikoPBX\Modules\Config\ConfigClass;
 
 class AclConf extends ConfigClass
 {
-    protected $description = 'acl.conf';
+    protected string $description = 'acl.conf';
     protected $data_peers;
     /**
      * Получение настроек.

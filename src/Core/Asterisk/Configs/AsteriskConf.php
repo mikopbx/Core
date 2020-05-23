@@ -15,7 +15,7 @@ use MikoPBX\Modules\Config\ConfigClass;
 
 class AsteriskConf extends ConfigClass
 {
-    protected $description = 'asterisk.conf';
+    protected string $description = 'asterisk.conf';
 
     protected function generateConfigProtected(): void
     {;

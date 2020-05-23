@@ -14,7 +14,7 @@ use MikoPBX\Modules\Config\ConfigClass;
 
 class CdrConf extends ConfigClass
 {
-    protected $description = 'cdr.conf';
+    protected string $description = 'cdr.conf';
 
     protected function generateConfigProtected(): void
     {

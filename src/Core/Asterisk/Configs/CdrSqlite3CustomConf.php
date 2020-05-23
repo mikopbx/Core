@@ -14,7 +14,7 @@ use MikoPBX\Modules\Config\ConfigClass;
 
 class CdrSqlite3CustomConf extends ConfigClass
 {
-    protected $description = 'cdr_sqlite3_custom.conf';
+    protected string $description = 'cdr_sqlite3_custom.conf';
 
     protected function generateConfigProtected(): void
     {

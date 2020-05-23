@@ -16,7 +16,7 @@ use MikoPBX\Modules\Config\ConfigClass;
 
 class LoggerConf extends ConfigClass
 {
-    protected $description = 'logger.conf';
+    protected string $description = 'logger.conf';
 
     protected function generateConfigProtected(): void
     {

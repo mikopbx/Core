@@ -14,20 +14,6 @@ use MikoPBX\Core\System\{Util};
 
 class IVRConf extends ConfigClass
 {
-    private $db_data;
-    private $extensionLength;
-
-    /**
-     * Получение настроек.
-     */
-    public function getSettings(): void
-    {
-        // Настройки для текущего класса.
-        $res           = IvrMenu::find();
-        $this->db_data = $res->toArray();
-
-        $this->extensionLength = $this->generalSettings['PBXInternalExtensionLength'];
-    }
 
     /**
      * Генерация дополнительных контекстов.
@@ -36,9 +22,10 @@ class IVRConf extends ConfigClass
      */
     public function extensionGenContexts(): string
     {
+        $db_data           = IvrMenu::find()->toArray();
         // Генерация внутреннего номерного плана.
         $conf = '';
-        foreach ($this->db_data as $ivr) {
+        foreach ($db_data as $ivr) {
             /** @var \MikoPBX\Common\Models\SoundFiles $res */
             $res           = SoundFiles::findFirst($ivr['audio_message_id']);
             $audio_message = $res === null ? '' : $res->path;
@@ -73,7 +60,7 @@ class IVRConf extends ConfigClass
             $conf .= "exten => t,1,Goto(s,6)\n";
 
             if ($ivr['allow_enter_any_internal_extension'] === '1') {
-                $extension = Util::getExtensionX($this->extensionLength);
+                $extension = Util::getExtensionX($this->generalSettings['PBXInternalExtensionLength']);
                 if (SIPConf::TYPE_SIP === SIPConf::getTechnology()) {
                     $conf .= 'exten => _' . $extension . ',1,ExecIf($["${SIPPEER(${EXTEN},status)}x" == "x"]?Goto(s,1))' . "\n\t";
                 } else {
@@ -95,7 +82,8 @@ class IVRConf extends ConfigClass
     public function extensionGenHints(): string
     {
         $conf = '';
-        foreach ($this->db_data as $ivr) {
+        $db_data           = IvrMenu::find()->toArray();
+        foreach ($db_data as $ivr) {
             $conf .= "exten => {$ivr['extension']},hint,Custom:{$ivr['extension']} \n";
         }
 
@@ -133,7 +121,8 @@ class IVRConf extends ConfigClass
     public function extensionGenInternal(): string
     {
         $ivr_ext_conf = '';
-        foreach ($this->db_data as $ivr) {
+        $db_data           = IvrMenu::find()->toArray();
+        foreach ($db_data as $ivr) {
             $ivr_ext_conf .= "exten => {$ivr['extension']},1,Goto(ivr-{$ivr['extension']},s,1)" . "\n";
         }
         $ivr_ext_conf .= "\n";
@@ -147,7 +136,8 @@ class IVRConf extends ConfigClass
     public function extensionGenInternalTransfer(): string
     {
         $conf = '';
-        foreach ($this->db_data as $ivr) {
+        $db_data           = IvrMenu::find()->toArray();
+        foreach ($db_data as $ivr) {
             $conf .= 'exten => _' . $ivr['extension'] . ',1,Set(__ISTRANSFER=transfer_)' . " \n\t";
             $conf .= 'same => n,Goto(internal,${EXTEN},1)' . " \n";
         }

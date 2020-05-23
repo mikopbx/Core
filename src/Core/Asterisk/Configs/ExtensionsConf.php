@@ -15,7 +15,7 @@ use Phalcon\Di;
 
 class ExtensionsConf extends ConfigClass
 {
-    protected $description = 'extensions.conf';
+    protected string $description = 'extensions.conf';
 
     /**
      * Основной генератор extensions.conf

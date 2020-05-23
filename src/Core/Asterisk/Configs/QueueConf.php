@@ -14,16 +14,8 @@ use MikoPBX\Core\System\{MikoPBXConfig, Util};
 
 class QueueConf extends ConfigClass
 {
-    private $db_data;
-    protected $description = 'queues.conf';
-    /**
-     * Получение настроек.
-     */
-    public function getSettings(): void
-    {
-        // Настройки для текущего класса.
-        $this->db_data = $this->getQueueData();
-    }
+    protected string $description = 'queues.conf';
+
 
     /**
      * Создание конфига для очередей.
@@ -38,7 +30,8 @@ class QueueConf extends ConfigClass
         $result = true;
 
         $q_conf = '';
-        foreach ($this->db_data as $queue_data) {
+        $db_data = $this->getQueueData();
+        foreach ($db_data as $queue_data) {
             $joinempty        = (isset($queue_data['joinempty']) && $queue_data['joinempty'] == 1) ? 'yes' : 'no';
             $leavewhenempty   = (isset($queue_data['leavewhenempty']) && $queue_data['leavewhenempty'] == 1) ? 'yes' : 'no';
             $ringinuse        = ($queue_data['recive_calls_while_on_a_call'] == 1) ? 'yes' : 'no';
@@ -162,7 +155,8 @@ class QueueConf extends ConfigClass
     public function extensionGenHints(): string
     {
         $conf = '';
-        foreach ($this->db_data as $queue) {
+        $db_data = $this->getQueueData();
+        foreach ($db_data as $queue) {
             $conf .= "exten => {$queue['extension']},hint,Custom:{$queue['extension']} \n";
         }
 
@@ -175,7 +169,8 @@ class QueueConf extends ConfigClass
     public function extensionGenInternalTransfer(): string
     {
         $conf = '';
-        foreach ($this->db_data as $queue) {
+        $db_data = $this->getQueueData();
+        foreach ($db_data as $queue) {
             $conf .= 'exten => _' . $queue['extension'] . ',1,Set(__ISTRANSFER=transfer_)' . " \n\t";
             $conf .= 'same => n,Goto(internal,${EXTEN},1)' . " \n";
         }
@@ -194,7 +189,8 @@ class QueueConf extends ConfigClass
     public function extensionGenInternal(): string
     {
         $queue_ext_conf = '';
-        foreach ($this->db_data as $queue) {
+        $db_data = $this->getQueueData();
+        foreach ($db_data as $queue) {
             $queue_ext_conf .= "exten => {$queue['extension']},1,NoOp(--- Start Queue ---) \n\t";
             $queue_ext_conf .= "same => n,Answer() \n\t";
             $queue_ext_conf .= 'same => n,Set(__QUEUE_SRC_CHAN=${CHANNEL})' . "\n\t";

@@ -15,7 +15,7 @@ use MikoPBX\Modules\Config\ConfigClass;
 
 class MusicOnHoldConf extends ConfigClass
 {
-    protected $description = 'musiconhold.conf';
+    protected string $description = 'musiconhold.conf';
 
     protected function generateConfigProtected(): void
     {

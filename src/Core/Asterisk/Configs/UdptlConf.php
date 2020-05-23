@@ -14,7 +14,7 @@ use MikoPBX\Modules\Config\ConfigClass;
 
 class UdptlConf extends ConfigClass
 {
-    protected $description = 'udptl.conf';
+    protected string $description = 'udptl.conf';
 
     protected function generateConfigProtected(): void
     {
