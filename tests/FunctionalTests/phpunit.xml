@@ -1,0 +1,15 @@
+<!--
+  ~ Copyright (C) MIKO LLC - All Rights Reserved
+  ~ Unauthorized copying of this file, via any medium is strictly prohibited
+  ~ Proprietary and confidential
+  ~ Written by Nikolay Beketov, 5 2020
+  ~
+  -->
+<phpunit bootstrap="vendor/autoload.php">
+    <testsuites>
+        <testsuite name="FillPBXSettings">
+            <file>tests/LoginTest.php</file>
+            <file>tests/FillPBXSettingsTest.php</file>
+        </testsuite>
+    </testsuites>
+</phpunit>
