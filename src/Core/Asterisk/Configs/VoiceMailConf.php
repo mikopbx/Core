@@ -15,7 +15,7 @@ use MikoPBX\Modules\Config\ConfigClass;
 
 class VoiceMailConf extends ConfigClass
 {
-    protected string $description = 'voicemail.conf';
+    protected $description = 'voicemail.conf';
 
     protected function generateConfigProtected(): void
     {

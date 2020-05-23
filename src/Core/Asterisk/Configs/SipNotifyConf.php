@@ -15,7 +15,7 @@ use MikoPBX\Modules\Config\ConfigClass;
 
 class SipNotifyConf extends ConfigClass
 {
-    protected string $description = 'sip_notify.conf';
+    protected $description = 'sip_notify.conf';
 
     protected function generateConfigProtected(): void
     {

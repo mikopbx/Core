@@ -14,7 +14,7 @@ use MikoPBX\Modules\Config\ConfigClass;
 
 class QueueRulesConf extends ConfigClass
 {
-    protected string $description = 'queuerules.conf';
+    protected $description = 'queuerules.conf';
 
     protected function generateConfigProtected(): void
     {

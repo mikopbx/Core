@@ -15,7 +15,7 @@ use MikoPBX\Modules\Config\ConfigClass;
 
 class IndicationConf extends ConfigClass
 {
-    protected string $description = 'indications.conf';
+    protected $description = 'indications.conf';
 
     protected function generateConfigProtected(): void
     {

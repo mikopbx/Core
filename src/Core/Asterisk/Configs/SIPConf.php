@@ -32,7 +32,7 @@ class SIPConf extends ConfigClass
     protected $technology;
     protected $contexts_data = [];
 
-    protected string $description = 'pjsip.conf';
+    protected $description = 'pjsip.conf';
 
     /**
      * Генератор sip.conf

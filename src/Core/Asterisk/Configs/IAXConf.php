@@ -15,7 +15,7 @@ use MikoPBX\Core\System\{MikoPBXConfig, Util};
 class IAXConf extends ConfigClass
 {
     public const TYPE_IAX2 = 'IAX2';
-    protected string $description = 'iax.conf';
+    protected $description = 'iax.conf';
 
     /**
      * Генератор iax.conf

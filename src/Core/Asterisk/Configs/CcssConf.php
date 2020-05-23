@@ -14,7 +14,7 @@ use MikoPBX\Modules\Config\ConfigClass;
 
 class CcssConf extends ConfigClass
 {
-    protected string $description = 'ccss.conf';
+    protected $description = 'ccss.conf';
 
     protected function generateConfigProtected(): void
     {

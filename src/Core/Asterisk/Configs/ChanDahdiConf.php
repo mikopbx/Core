@@ -14,7 +14,7 @@ use MikoPBX\Modules\Config\ConfigClass;
 
 class ChanDahdiConf extends ConfigClass
 {
-    protected string $description = 'chan_dahdi.conf';
+    protected $description = 'chan_dahdi.conf';
 
     protected function generateConfigProtected(): void
     {

@@ -15,7 +15,7 @@ use MikoPBX\Modules\Config\ConfigClass;
 
 class FeaturesConf extends ConfigClass
 {
-    protected string $description = 'features.conf';
+    protected $description = 'features.conf';
 
     protected function generateConfigProtected(): void
     {
