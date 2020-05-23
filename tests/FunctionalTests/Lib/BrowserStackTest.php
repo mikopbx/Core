@@ -4,10 +4,11 @@ namespace MikoPBX\FunctionalTests\Lib;
 
 use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Facebook\WebDriver\WebDriverBy;
+use PHPUnit\Framework\TestCase;
 
 require 'globals.php';
 
-class BrowserStackTest extends PHPUnit\Framework\TestCase
+class BrowserStackTest extends TestCase
 {
     protected static $driver;
     protected static $bs_local;

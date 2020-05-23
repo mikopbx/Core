@@ -47,7 +47,7 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
      * Asterisk config file name
      * @var string
      */
-    protected string $description;
+    protected $description;
 
     /**
      * ConfigClass constructor.

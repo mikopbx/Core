@@ -20,6 +20,7 @@
         "ext-openssl": "*"
     },
     "require-dev": {
+        "ext-zip": "*",
         "phpunit/phpunit-selenium": "^8.0",
         "php-webdriver/webdriver": "^1.8",
         "browserstack/browserstack-local": "^1.1",

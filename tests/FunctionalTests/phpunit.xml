@@ -5,11 +5,13 @@
   ~ Written by Nikolay Beketov, 5 2020
   ~
   -->
-<phpunit bootstrap="vendor/autoload.php">
+<phpunit bootstrap="../../vendor/autoload.php">
     <testsuites>
-        <testsuite name="FillPBXSettings">
-            <file>tests/LoginTest.php</file>
-            <file>tests/FillPBXSettingsTest.php</file>
+        <testsuite name="TestMikoPBX">
+            <file>Tests/LoginTest.php</file>
+            <file>Tests/FillPBXSettingsTest.php</file>
+            <file>Tests/CustomFileChangeTest.php</file>
+            <file>Tests/CreateExtensionsTest.php</file>
         </testsuite>
     </testsuites>
 </phpunit>

@@ -9,11 +9,9 @@
 
 namespace MikoPBX\FunctionalTests\Lib;
 
-use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Facebook\WebDriver\WebDriverBy;
 use MikoPBX\FunctionalTests\Tests\LoginTrait;
 
-require_once 'tests/LoginTrait.php';
 
 class MikoPBXTestsBase extends BrowserStackTest
 {
