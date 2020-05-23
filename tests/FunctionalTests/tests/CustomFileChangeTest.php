@@ -6,12 +6,14 @@
  * Written by Nikolay Beketov, 5 2020
  *
  */
-require_once 'LoginTrait.php';
-use Facebook\WebDriver\WebDriverBy;
+namespace MikoPBX\FunctionalTests\Tests;
 
-class CustomFileChangeTest extends BrowserStackTest
+use Facebook\WebDriver\WebDriverBy;
+use MikoPBX\FunctionalTests\Lib\MikoPBXTestsBase;
+
+class CustomFileChangeTest extends MikoPBXTestsBase
 {
-    use  LoginTrait;
+
     /**
      * @depends testLogin
      */

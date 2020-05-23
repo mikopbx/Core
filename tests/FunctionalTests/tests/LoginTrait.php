@@ -1,4 +1,5 @@
 <?php
+namespace MikoPBX\FunctionalTests\Tests;
 /**
  * Copyright (C) MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
@@ -7,6 +8,7 @@
  *
  */
 use Facebook\WebDriver\WebDriverBy;
+
 trait LoginTrait
 {
     public function testLogin(): void

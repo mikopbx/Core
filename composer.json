@@ -10,7 +10,6 @@
         "recoil/recoil": "^1.0",
         "recoil/react": "^1.0",
         "sentry/sdk": "^2.1.0",
-        "filp/whoops": "^2.7",
         "ext-json": "*",
         "ext-sqlite3": "*",
         "ext-simplexml": "*",
@@ -24,27 +23,16 @@
         "phpunit/phpunit-selenium": "^8.0",
         "php-webdriver/webdriver": "^1.8",
         "browserstack/browserstack-local": "^1.1",
-        "phpmailer/phpmailer": "^6.1",
-        "repejota/nats": "0.8.4",
-        "php-school/cli-menu": "^4.0",
-        "php-school/terminal": "^0.2.1",
-        "pda/pheanstalk": "^4.0",
-        "recoil/recoil": "^1.0",
-        "recoil/react": "^1.0",
-        "sentry/sdk": "^2.1.0",
-        "filp/whoops": "^2.7",
-        "ext-json": "*",
-        "ext-sqlite3": "*",
-        "ext-simplexml": "*",
-        "ext-posix": "*",
-        "ext-sockets": "*",
-        "ext-iconv": "*",
-        "ext-curl": "*",
-        "ext-openssl": "*"
+        "filp/whoops": "^2.7"
     },
     "autoload": {
         "psr-4": {
             "MikoPBX\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "MikoPBX\\FunctionalTests\\": "tests/FunctionalTests"
         }
     },
     "type": "application",

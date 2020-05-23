@@ -1,5 +1,8 @@
 <?php
-require_once 'LoginTrait.php';
-class LoginTest extends BrowserStackTest {
-use  LoginTrait;
+namespace MikoPBX\FunctionalTests\Tests;
+
+use MikoPBX\FunctionalTests\Lib\MikoPBXTestsBase;
+
+class LoginTest extends MikoPBXTestsBase {
+
 }

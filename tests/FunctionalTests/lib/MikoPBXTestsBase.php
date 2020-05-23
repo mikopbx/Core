@@ -1,49 +1,23 @@
 <?php
+/**
+ * Copyright (C) MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Nikolay Beketov, 5 2020
+ *
+ */
 
 namespace MikoPBX\FunctionalTests\Lib;
 
 use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Facebook\WebDriver\WebDriverBy;
+use MikoPBX\FunctionalTests\Tests\LoginTrait;
 
-require 'globals.php';
+require_once 'tests/LoginTrait.php';
 
-class BrowserStackTest extends PHPUnit\Framework\TestCase
+class MikoPBXTestsBase extends BrowserStackTest
 {
-    protected static $driver;
-    protected static $bs_local;
-
-    public static function setUpBeforeClass(): void
-    {
-        $CONFIG  = $GLOBALS['CONFIG'];
-        $task_id = getenv('TASK_ID') ? getenv('TASK_ID') : 0;
-
-        $url  = "https://" . $GLOBALS['BROWSERSTACK_USERNAME'] . ":" . $GLOBALS['BROWSERSTACK_ACCESS_KEY'] . "@" . $CONFIG['server'] . "/wd/hub";
-        $caps = $CONFIG['environments'][$task_id];
-
-        foreach ($CONFIG["capabilities"] as $key => $value) {
-            if ( ! array_key_exists($key, $caps)) {
-                $caps[$key] = $value;
-            }
-        }
-
-        // if(array_key_exists("browserstack.local", $caps) && $caps["browserstack.local"])
-        // {
-        //     $bs_local_args = array("key" => $GLOBALS['BROWSERSTACK_ACCESS_KEY']);
-        //     self::$bs_local = new BrowserStack\Local();
-        //     self::$bs_local->start($bs_local_args);
-        // }
-
-        self::$driver = RemoteWebDriver::create($url, $caps);
-    }
-
-    public static function tearDownAfterClass(): void
-    {
-        self::$driver->quit();
-        if (self::$bs_local) {
-            self::$bs_local->stop();
-        }
-    }
-
+    use  LoginTrait;
     /**
      * Assert that menu item not found on the page
      *
@@ -246,10 +220,10 @@ class BrowserStackTest extends PHPUnit\Framework\TestCase
             $xpath                  = '//div[@id="sidebar-menu"]//ancestor::a[contains(@class, "item") and contains(@href ,"'.$href.'")]';
             $sidebarItem = self::$driver->findElement(WebDriverBy::xpath($xpath));
             $sidebarItem->click();
-    } catch (\Facebook\WebDriver\Exception\NoSuchElementException $e) {
-        echo('Not found sidebar item with href='.$href.' on this page');
-    } catch (\Exception $e) {
-        echo('Unknown error');
-    }
+        } catch (\Facebook\WebDriver\Exception\NoSuchElementException $e) {
+            echo('Not found sidebar item with href='.$href.' on this page');
+        } catch (\Exception $e) {
+            echo('Unknown error');
+        }
     }
 }
