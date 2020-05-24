@@ -20,55 +20,22 @@ class CreateExtensionsTest extends MikoPBXTestsBase
      */
     public function testCreateExtensions(): void
     {
-        $xpath            = '//div[@id="sidebar-menu"]//ancestor::a[contains(@class, "item") and contains(@href ,"/admin-cabinet/extensions/index/")]';
-        $a_UsersIndexPage = self::$driver->findElement(WebDriverBy::xpath($xpath));
-        $a_UsersIndexPage->click();
-
         $extensionsList = $this->getExtensionsList();
         foreach ($extensionsList as $extension) {
-            $xpath             = "//a[@href = '/admin-cabinet/extensions/modify' and @id = 'add-new-button']";
-            $button_AddNewUser = self::$driver->findElement(WebDriverBy::xpath($xpath));
-            $button_AddNewUser->click();
+            $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
+            $this->clickAddNewButtonByHref('/admin-cabinet/extensions/modify');
 
-            $xpathUserName  = "//input[@type = 'text' and @id = 'user_username' and @name = 'user_username']";
-            $input_UserName = self::$driver->findElement(WebDriverBy::xpath($xpathUserName));
-            $input_UserName->sendKeys($extension['username']);
+            $this->changeInputField('user_username', $extension['username']);
+            $this->changeInputField('number', $extension['number']);
+            $this->changeInputField('mobile_number', $extension['mobile']);
+            $this->changeInputField('user_email', $extension['email']);
+            $this->changeInputField('sip_secret', $extension['secret']);
 
-            $xpathNumber  = "//input[@type = 'text' and @id = 'number' and @name = 'number']";
-            $input_Number = self::$driver->findElement(WebDriverBy::xpath($xpathNumber));
-            $input_Number->sendKeys($extension['number']);
-
-            $xpathMobileNumber  = "//input[@type = 'text' and @id = 'mobile_number' and @name = 'mobile_number']";
-            $input_MobileNumber = self::$driver->findElement(WebDriverBy::xpath($xpathMobileNumber));
-            $input_MobileNumber->sendKeys($extension['mobile']);
-
-            $xpathEmail  = "//input[@type = 'text' and @id = 'user_email' and @name = 'user_email']";
-            $input_Email = self::$driver->findElement(WebDriverBy::xpath($xpathEmail));
-            $input_Email->sendKeys($extension['email']);
-
-            $xpath           = "//input[@type = 'text' and @id = 'sip_secret' and @name = 'sip_secret']";
-            $input_SipSecret = self::$driver->findElement(WebDriverBy::xpath($xpath));
-            $input_SipSecret->sendKeys($extension['secret']);
-
-            $xpath              = "//input[@type = 'file' and @name = 'file-select']";
-            $input_hiddenAvatar = self::$driver->findElement(WebDriverBy::xpath($xpath));
             //$filePath           =  __DIR__."/../assets/{$extension['number']}.png";
             $filePath = 'C:\Users\hello\Documents\images\person.jpg';
-            $input_hiddenAvatar->sendKeys($filePath);
+            $this->changeFileField('file-select', $filePath);
 
-            $xpath         = '//form[@id="extensions-form"]//ancestor::div[@id="submitbutton"]';
-            $button_Submit = self::$driver->findElement(WebDriverBy::xpath($xpath));
-            if ($button_Submit) {
-                $button_Submit->click();
-                self::$driver->wait(10, 500)->until(
-                    function ($driver) {
-                        $xpath         = '//form[@id="extensions-form"]//ancestor::div[@id="submitbutton"]';
-                        $button_Submit = $driver->findElement(WebDriverBy::xpath($xpath));
-
-                        return $button_Submit->isEnabled();
-                    }
-                );
-            }
+           $this->submitForm('extensions-form');
 
             self::$driver->wait(10, 500)->until(
                 function () {
@@ -83,42 +50,21 @@ class CreateExtensionsTest extends MikoPBXTestsBase
             $input_ExtensionUniqueID = self::$driver->findElement(WebDriverBy::xpath($xpath));
             $this->assertNotEmpty($input_ExtensionUniqueID->getAttribute('value'));
 
-            $xpath               = "//id('fwd_forwardingonbusy')";
-            $input_forwardOnBusy = self::$driver->findElement(WebDriverBy::xpath($xpath));
-            $this->assertEquals($extension['mobile'], $input_forwardOnBusy->getAttribute('value'));
+            $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
+            $this->clickModifyButtonOnRowWithText($extension['username']);
 
+            $this->assertMenuItemSelected('fwd_forwardingonbusy', $extension['mobile']);
+            $this->assertMenuItemSelected('fwd_forwarding', $extension['mobile']);
+            $this->assertMenuItemSelected('fwd_forwardingonunavailable', $extension['mobile']);
 
-            $xpath                  = "//id('fwd_forwarding')";
-            $input_forwardOnTimeout = self::$driver->findElement(WebDriverBy::xpath($xpath));
-            $this->assertEquals($extension['mobile'], $input_forwardOnTimeout->getAttribute('value'));
+            $this->assertInputFieldValueEqual('mobile_dialstring',  $extension['mobile']);
 
-            $xpath                      = "//id('fwd_forwardingonunavailable')";
-            $input_forwardOnUnavailable = self::$driver->findElement(WebDriverBy::xpath($xpath));
-            $this->assertEquals($extension['mobile'], $input_forwardOnUnavailable->getAttribute('value'));
+            $this->assertInputFieldValueEqual('sip_secret',  $extension['secret']);
 
-            $xpath                  = "//input[@type = 'text' and @id = 'mobile_dialstring' and @name = 'mobile_dialstring']";
-            $input_mobileDialstring = self::$driver->findElement(WebDriverBy::xpath($xpath));
-            $this->assertEquals($extension['mobile'], $input_mobileDialstring->getAttribute('value'));
+            $this->assertInputFieldValueEqual('number',  $extension['number']);
+            $this->assertInputFieldValueEqual('username',  $extension['username']);
+            $this->assertInputFieldValueEqual('user_email',  $extension['email']);
 
-            $xpath           = "//input[@type = 'text' and @id = 'sip_secret' and @name = 'sip_secret']";
-            $input_sipSecret = self::$driver->findElement(WebDriverBy::xpath($xpath));
-            $this->assertEquals($extension['secret'], $input_sipSecret->getAttribute('value'));
-
-            $input_Number = self::$driver->findElement(WebDriverBy::xpath($xpathNumber));
-            $this->assertEquals($extension['number'], $input_Number->getAttribute('value'));
-
-            $input_UserName = self::$driver->findElement(WebDriverBy::xpath($xpathUserName));
-            $this->assertEquals($extension['username'], $input_UserName->getAttribute('value'));
-
-            $input_UserName = self::$driver->findElement(WebDriverBy::xpath($xpathEmail));
-            $this->assertEquals($extension['email'], $input_UserName->getAttribute('value'));
-
-            $xpath            = '//div[@id="sidebar-menu"]//ancestor::a[contains(@class, "item") and contains(@href ,"/admin-cabinet/extensions/index/")]';
-            $a_UsersIndexPage = self::$driver->findElement(WebDriverBy::xpath($xpath));
-            $a_UsersIndexPage->click();
-
-            $filesList = self::$driver->findElement(WebDriverBy::xpath('id("extensions-table")'));
-            $this->assertStringContainsString($extension['username'], $filesList->getText());
         }
     }
 

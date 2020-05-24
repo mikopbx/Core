@@ -99,6 +99,7 @@ class IAXConf extends ConfigClass
      */
     private function getProviders(): array
     {
+        $data_providers =[];
         // Получим настройки всех аккаунтов.
         $arrIaxProviders              = Iax::find("disabled IS NULL OR disabled = '0'");
         foreach ($arrIaxProviders as $peer) {
@@ -119,9 +120,10 @@ class IAXConf extends ConfigClass
             foreach ($codecs as $ob_codec) {
                 $arr_data['codecs'][] = $ob_codec->codec;
             }
+            $data_providers[] = $arr_data;
 
-            return $arr_data;
         }
+        return $data_providers;
     }
 
     /**

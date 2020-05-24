@@ -16,6 +16,7 @@ use MikoPBX\FunctionalTests\Tests\LoginTrait;
 class MikoPBXTestsBase extends BrowserStackTest
 {
     use  LoginTrait;
+
     /**
      * Assert that menu item not found on the page
      *
@@ -56,19 +57,6 @@ class MikoPBXTestsBase extends BrowserStackTest
             echo('Form doesn\'t send after 10 seconds timeout');
         } catch (\Exception $e) {
             echo('Unknown error');
-        }
-    }
-
-    /**
-     * Assert that input field with name $name value is equal to $value
-     * @param string $name
-     * @param string $value
-     */
-    protected function assertInputFieldValueEqual(string $name, string $value):void{
-        $xpath      = '//input[@name="' . $name . '" and (@type="text" or @type="password")]';
-        $inputItems = self::$driver->findElements(WebDriverBy::xpath($xpath));
-        foreach ($inputItems as $inputItem) {
-            $this->assertEquals($value, $inputItem->getAttribute('value'));
         }
     }
 
@@ -119,6 +107,52 @@ class MikoPBXTestsBase extends BrowserStackTest
         }
     }
 
+
+    /**
+     * If file filed with $name exists on the page, it value will be changed on $value
+     *
+     * @param string $name
+     * @param string $value
+     */
+    protected function changeFileField(string $name, string $value): void
+    {
+        $xpath      = '//input[@name="' . $name . '" and (@type = "file")]';
+        $inputItems = self::$driver->findElements(WebDriverBy::xpath($xpath));
+        foreach ($inputItems as $inputItem) {
+            $inputItem->sendKeys($value);
+        }
+    }
+
+    /**
+     * If input filed with $name exists on the page, it value will be changed on $value
+     *
+     * @param string $name
+     * @param string $value
+     */
+    protected function changeInputField(string $name, string $value): void
+    {
+        $xpath      = '//input[@name="' . $name . '" and (@type="text" or @type="password" or @type="hidden")]';
+        $inputItems = self::$driver->findElements(WebDriverBy::xpath($xpath));
+        foreach ($inputItems as $inputItem) {
+            $inputItem->click();
+            $inputItem->clear();
+            $inputItem->sendKeys($value);
+        }
+    }
+
+    /**
+     * Assert that input field with name $name value is equal to $value
+     * @param string $name
+     * @param string $value
+     */
+    protected function assertInputFieldValueEqual(string $name, string $value):void{
+        $xpath      = '//input[@name="' . $name . '" and (@type="text" or @type="password" or @type="hidden")]';
+        $inputItems = self::$driver->findElements(WebDriverBy::xpath($xpath));
+        foreach ($inputItems as $inputItem) {
+            $this->assertEquals($value, $inputItem->getAttribute('value'));
+        }
+    }
+
     /**
      * Change checkbox state according the $enabled value if checkbox with the $name exist on the page
      *
@@ -141,24 +175,6 @@ class MikoPBXTestsBase extends BrowserStackTest
             }
         }
     }
-
-    /**
-     * If input filed with $name exists on the page, it value will be changed on $value
-     *
-     * @param string $name
-     * @param string $value
-     */
-    protected function changeInputField(string $name, string $value): void
-    {
-        $xpath      = '//input[@name="' . $name . '" and (@type="text" or @type="password")]';
-        $inputItems = self::$driver->findElements(WebDriverBy::xpath($xpath));
-        foreach ($inputItems as $inputItem) {
-            $inputItem->click();
-            $inputItem->clear();
-            $inputItem->sendKeys($value);
-        }
-    }
-
     /**
      * Assert that checkBox state is equal to the $enabled if checkbox with the $name exist on the page
      *
@@ -186,7 +202,7 @@ class MikoPBXTestsBase extends BrowserStackTest
      */
     protected function submitForm(string $formId): void
     {
-        $xpath = '//form[@id="' . $formId . '"]//ancestor::button[@id="submitbutton"]';
+        $xpath = '//form[@id="' . $formId . '"]//ancestor::div[@id="submitbutton"]';
         try {
             $button_Submit = self::$driver->findElement(WebDriverBy::xpath($xpath));
             if ($button_Submit) {
@@ -220,6 +236,39 @@ class MikoPBXTestsBase extends BrowserStackTest
             $sidebarItem->click();
         } catch (\Facebook\WebDriver\Exception\NoSuchElementException $e) {
             echo('Not found sidebar item with href='.$href.' on this page');
+        } catch (\Exception $e) {
+            echo('Unknown error');
+        }
+    }
+
+    /**
+     * Find modify button on row with text $text and click it
+     * @param string $text
+     */
+    protected function clickModifyButtonOnRowWithText(string $text):void
+    {
+        $xpath = ('//td[contains(text(),"'.$text.'")]/ancestor::tr[contains(@class, "row")]//a[contains(@href,"modify")]');
+        try {
+            $tableButtonModify = self::$driver->findElement(WebDriverBy::xpath($xpath));
+            $tableButtonModify->click();
+        } catch (\Facebook\WebDriver\Exception\NoSuchElementException $e) {
+            echo('Not found row with text='.$text.' on this page');
+        } catch (\Exception $e) {
+            echo('Unknown error');
+        }
+    }
+
+    /**
+     * Click on add new button by href
+     * @param string $href
+     */
+    protected function clickAddNewButtonByHref(string $href):void {
+        try {
+            $xpath             = "//a[@href = '{$href}' and @id = 'add-new-button']";
+            $button_AddNew = self::$driver->findElement(WebDriverBy::xpath($xpath));
+            $button_AddNew ->click();
+        } catch (\Facebook\WebDriver\Exception\NoSuchElementException $e) {
+            echo('Not found button with href='.$href.' on this page');
         } catch (\Exception $e) {
             echo('Unknown error');
         }
