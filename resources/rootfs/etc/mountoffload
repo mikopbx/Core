@@ -3,30 +3,35 @@
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 export PATH
 
+createBootConfFiles()
+{
+  usrDir='/offload/rootfs/usr';
+  srcDir="${usrDir}/www";
+  rcDir="${usrDir}/www/src/Core/Rc";
+  confFile="${srcDir}/config/mikopbx-settings.json";
+  if [ -f "${rcDir}" ]; then
+        echo " - Create symlink for /etc/rc ..."
+        rm -rf /etc/rc;
+        ln -s "${rcDir}" /etc/rc;
+        # chmod +x -R "${rcDir}"
+  fi
+
+  if [ -f "${confFile}" ]; then
+        echo " - Copy phalcon config file to /etc/inc ..."
+        mkdir -p /etc/inc/;
+        cp "$confFile" /etc/inc/;
+  fi
+}
+
 mountoffload()
 {
 	disk=$1;
 	uuid=$(/sbin/blkid -ofull $1 | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^UUID" | /bin/busybox awk -F "\"" '{print $2}' | /bin/busybox head -n 1);
-    type=$(/sbin/blkid -ofull $1 | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^TYPE="| /bin/busybox awk -F "\"" '{print $2}' | /bin/busybox head -n 1);
-	mount -t "${type}" -rw UUID="$uuid" /offload 2> /dev/null;
-	usrDir='/offload/rootfs/usr';
-	srcDir="${usrDir}/www";
-	rcDir="${usrDir}/www/src/Core/Rc";
-
-	if [ -d "${rcDir}" ]; then
-  	echo " - Create symlink for /etc/rc ..."
-    rm -rf /etc/rc;
-  	ln -s "${rcDir}" /etc/rc;
-		chmod +x -R "${rcDir}"
-  fi
-
-	if [ -d "${srcDir}" ]; then
-		echo " - Copy phalcon config file to /etc/inc ..."
-		mkdir -p /etc/inc/;
-		cp "${srcDir}"/config/mikopbx-settings.json /etc/inc/;
-	fi
+  type=$(/sbin/blkid -ofull $1 | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^TYPE="| /bin/busybox awk -F "\"" '{print $2}' | /bin/busybox head -n 1);
 	umount -f /offload 2> /dev/null
 	mount -t "${type}" -r UUID="$uuid" /offload 2> /dev/null;
+
+	createBootConfFiles
 }
 
 mountConfRecover()
@@ -65,14 +70,14 @@ mountConfRecover()
 		if [ -d "${rec_dir}conf" ] && [ ! -f "${rec_dir}livecd"  ] ; then
 			
 			### Распакуем файлы конфигурации ###
-			mkdir -p /tmp/tmp_dir;
-			cd /tmp/tmp_dir;
-			
-			cat /offload/boot/initramfs.igz | gzip -d | cpio -id > /dev/null 2> /dev/null;
-			cp -R /tmp/tmp_dir/etc/inc/* /etc/inc/;
-			cp -R /tmp/tmp_dir/etc/rc/*  /etc/rc/;
-			cd /;
-			rm -rf /tmp/tmp_dir;
+			# mkdir -p /tmp/tmp_dir;
+			# cd /tmp/tmp_dir;
+
+			# cat /offload/boot/initramfs.igz | gzip -d | cpio -id > /dev/null 2> /dev/null;
+			# cp -R /tmp/tmp_dir/etc/inc/* /etc/inc/;
+			# cp -R /tmp/tmp_dir/etc/rc/*  /etc/rc/;
+			# cd /;
+			# rm -rf /tmp/tmp_dir;
 			###
 			
 			echo " - found existing configuration on ${diskr}3!"
@@ -116,6 +121,7 @@ do
 	echo " - trying ${disk} mount returned: $?"
 	if [ -f /offload/livecd ]; then
 		echo " - found LIVECD flag file...";
+		createBootConfFiles
 		mountConfRecover $disk;
 		# Все, что необходимо было смонтировано. 
 		exit 0
