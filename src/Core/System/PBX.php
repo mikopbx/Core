@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 4 2020
+ * Written by Alexey Portnov, 5 2020
  */
 
 namespace MikoPBX\Core\System;
@@ -388,19 +388,7 @@ class PBX
 
 
         $out = [];
-        if (SIPConf::getTechnology() === SIPConf::TYPE_SIP) {
-            Util::mwExec("asterisk -rx 'dialplan reload'", $out);
-            $out_data = trim(implode('', $out));
-            if ($out_data !== 'Dialplan reloaded.') {
-                $result['message'] .= $out_data;
-            }
-            $out      = [];
-            $out_data = trim(implode('', $out));
-            Util::mwExec("asterisk -rx 'sip reload'", $out);
-            if ($out_data !== '') {
-                $result['message'] .= " $out_data";
-            }
-        } elseif ($old_hash === $now_hadh) {
+        if ($old_hash === $now_hadh) {
             Util::mwExec("asterisk -rx 'module reload acl'", $out);
             Util::mwExec("asterisk -rx 'core reload'", $out);
             $out_data = trim(implode('', $out));

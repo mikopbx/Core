@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 4 2020
+ * Written by Alexey Portnov, 5 2020
  */
 
 namespace MikoPBX\Core\Asterisk\Configs;
@@ -70,12 +70,7 @@ class ExtensionsConf extends ConfigClass
         $conf .= '; Если это originate, то скроем один CDR.' . " \n\t";
         $conf .= 'same => n,ExecIf($["${pt1c_cid}x" != "x"]?Set(CALLERID(num)=${pt1c_cid}))' . " \n\t";
 
-        $technology = SIPConf::getTechnology();
-        if (SIPConf::TYPE_SIP === $technology) {
-            $conf .= 'same => n,ExecIf($["${SIPADDHEADER}x" != "x"]?SIPaddheader(${SIPADDHEADER}))' . " \n\t";
-        } else {
-            $conf .= 'same => n,ExecIf($["${CUT(CHANNEL,\;,2)}" == "2"]?Set(__PT1C_SIP_HEADER=${SIPADDHEADER}))' . " \n\t";
-        }
+        $conf .= 'same => n,ExecIf($["${CUT(CHANNEL,\;,2)}" == "2"]?Set(__PT1C_SIP_HEADER=${SIPADDHEADER}))' . " \n\t";
         $conf .= 'same => n,ExecIf($["${peer_mobile}x" != "x"]?Set(ADDITIONAL_PEER=&Local/${peer_mobile}@outgoing/n))' . " \n\t";
 
         // Описываем возможность прыжка в пользовательский sub контекст.
@@ -239,11 +234,7 @@ class ExtensionsConf extends ConfigClass
         $conf .= 'same => n,Gosub(${ISTRANSFER}dial,${EXTEN},1)' . "\n\t";
         // Проверим, существует ли такой пир.
 
-        if (SIPConf::TYPE_SIP === $technology) {
-            $conf .= 'same => n,ExecIf($["${SIPPEER(${EXTEN},status)}x" == "x"]?Goto(internal-num-undefined,${EXTEN},1))' . " \n\t";
-        } else {
-            $conf .= 'same => n,ExecIf($["${PJSIP_ENDPOINT(${EXTEN},auth)}x" == "x"]?Goto(internal-num-undefined,${EXTEN},1))' . " \n\t";
-        }
+        $conf .= 'same => n,ExecIf($["${PJSIP_ENDPOINT(${EXTEN},auth)}x" == "x"]?Goto(internal-num-undefined,${EXTEN},1))' . " \n\t";
         $conf .= 'same => n,ExecIf($["${DEVICE_STATE(' . $technology . '/${EXTEN})}" == "BUSY"]?Set(DIALSTATUS=BUSY))' . " \n\t";
         $conf .= 'same => n,GotoIf($["${DEVICE_STATE(' . $technology . '/${EXTEN})}" == "BUSY"]?fw_start)' . " \n\t";
 
@@ -254,14 +245,8 @@ class ExtensionsConf extends ConfigClass
         $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1) ' . " \n\t";
         // Совершаем вызов пира.
 
-        if ($technology === SIPConf::TYPE_SIP) {
-            $conf .= 'same => n,Dial(' . $technology . '/${EXTEN},${ringlength},TtekKHhM(dial_answer)b(dial_create_chan,s,1))' . " \n\t";
-        } else {
-            // $conf.= 'same => n,Dial(${PJSIP_DIAL_CONTACTS(${EXTEN})},${ringlength},TtekKHhU(dial_answer)b(dial_create_chan,s,1))'." \n\t";
-            $conf .= 'same => n,Set(DST_CONTACT=${PJSIP_DIAL_CONTACTS(${EXTEN})})' . " \n\t";
-            $conf .= 'same => n,ExecIf($["${DST_CONTACT}x" != "x"]?Dial(${DST_CONTACT},${ringlength},TtekKHhU(${ISTRANSFER}dial_answer)b(${ISTRANSFER}dial_create_chan,s,1)):Set(DIALSTATUS=CHANUNAVAIL))' . " \n\t";
-        }
-
+        $conf .= 'same => n,Set(DST_CONTACT=${PJSIP_DIAL_CONTACTS(${EXTEN})})' . " \n\t";
+        $conf .= 'same => n,ExecIf($["${DST_CONTACT}x" != "x"]?Dial(${DST_CONTACT},${ringlength},TtekKHhU(${ISTRANSFER}dial_answer)b(${ISTRANSFER}dial_create_chan,s,1)):Set(DIALSTATUS=CHANUNAVAIL))' . " \n\t";
 
         $conf .= 'same => n(fw_start),NoOp(dial_hangup)' . " \n\t";
 
@@ -383,8 +368,6 @@ class ExtensionsConf extends ConfigClass
 
             $technology = SIPConf::getTechnology();
             if ($rout['technology'] === IAXConf::TYPE_IAX2) {
-                $conf .= 'same => n,Dial(' . $rout['technology'] . '/' . $rout['providerid'] . '/${number},600,${DOPTIONS}TKM(dial_answer)b(dial_create_chan,s,1))' . "\n\t";
-            } elseif ($technology === SIPConf::TYPE_SIP) {
                 $conf .= 'same => n,Dial(' . $rout['technology'] . '/' . $rout['providerid'] . '/${number},600,${DOPTIONS}TKM(dial_answer)b(dial_create_chan,s,1))' . "\n\t";
             } else {
                 $conf .= 'same => n,Dial(' . $rout['technology'] . '/${number}@' . $rout['providerid'] . ',600,${DOPTIONS}TKU(dial_answer)b(dial_create_chan,s,1))' . "\n\t";

@@ -81,15 +81,9 @@ class Util
         self::mwExecBgWithTimeout("openssl s_client -connect lic.miko.ru:443 > {$dirlog}/openssl_lic_miko_ru.log", 1);
         self::mwExecBg('route -n ', " {$dirlog}/rout_n.log");
 
-        if (SIPConf::getTechnology() === SIPConf::TYPE_SIP) {
-            self::mwExecBg("asterisk -rx 'sip show settings' ", " {$dirlog}/sip_show_settings.log");
-            self::mwExecBg("asterisk -rx 'sip show peers' ", " {$dirlog}/sip_show_peers.log");
-            self::mwExecBg("asterisk -rx 'sip show registry' ", " {$dirlog}/sip_show_registry.log");
-        } else {
-            self::mwExecBg("asterisk -rx 'pjsip show registrations' ", " {$dirlog}/pjsip_show_registrations.log");
-            self::mwExecBg("asterisk -rx 'pjsip show endpoints' ", " {$dirlog}/pjsip_show_endpoints.log");
-            self::mwExecBg("asterisk -rx 'pjsip show contacts' ", " {$dirlog}/pjsip_show_contacts.log");
-        }
+        self::mwExecBg("asterisk -rx 'pjsip show registrations' ", " {$dirlog}/pjsip_show_registrations.log");
+        self::mwExecBg("asterisk -rx 'pjsip show endpoints' ", " {$dirlog}/pjsip_show_endpoints.log");
+        self::mwExecBg("asterisk -rx 'pjsip show contacts' ", " {$dirlog}/pjsip_show_contacts.log");
 
         $php_log = '/var/log/php_error.log';
         if (file_exists($php_log)) {

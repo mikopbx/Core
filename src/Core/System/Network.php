@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 4 2020
+ * Written by Alexey Portnov, 5 2020
  */
 
 namespace MikoPBX\Core\System;
@@ -233,7 +233,7 @@ class Network
             }
 
             $if_name = $if_data['interface'];
-            $if_name = escapeshellarg(trim($if_name));
+            $if_name = escapeshellcmd(trim($if_name));
             if (empty($if_name)) {
                 continue;
             }
@@ -252,7 +252,7 @@ class Network
             $arr_commands[] = "/bin/busybox ifconfig $if_name 0.0.0.0";
 
             $gw_param = '';
-            if ($if_data['dhcp'] === '1') {
+            if ($if_data['dhcp'] === 1) {
                 /*
                  * -t - количество попыток.
                  * -T - таймаут попытки.

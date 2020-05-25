@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 4 2020
+ * Written by Alexey Portnov, 5 2020
  */
 
 namespace MikoPBX\Core\Asterisk\Configs;
@@ -23,7 +23,6 @@ use Phalcon\Di;
 
 class SIPConf extends ConfigClass
 {
-    public const TYPE_SIP = 'SIP';
     public const TYPE_PJSIP = 'PJSIP';
 
     protected $data_peers;
@@ -42,19 +41,12 @@ class SIPConf extends ConfigClass
     protected function generateConfigProtected(): void
     {
         $conf = '';
-        if ($this->technology === 'SIP') {
-            $conf .= $this->generateGeneral();
-            $conf .= $this->generateProviders();
-            $conf .= $this->generatePeers();
+        $conf .= $this->generateGeneralPj();
+        $conf .= $this->generateProvidersPj();
+        $conf .= $this->generatePeersPj();
 
-            Util::fileWriteContent($this->config->path('asterisk.confDir') . '/sip.conf', $conf);
-        } else {
-            $conf .= $this->generateGeneralPj();
-            $conf .= $this->generateProvidersPj();
-            $conf .= $this->generatePeersPj();
+        Util::fileWriteContent($this->config->path('asterisk.confDir') . '/pjsip.conf', $conf);
 
-            Util::fileWriteContent($this->config->path('asterisk.confDir') . '/pjsip.conf', $conf);
-        }
 
         $db = new AstDB();
         foreach ($this->data_peers as $peer) {
@@ -81,33 +73,13 @@ class SIPConf extends ConfigClass
         ];
 
         $am = Util::getAstManager('off');
-        if (self::getTechnology() === self::TYPE_SIP) {
-            $peers = $am->getSipPeers();
-        } else {
-            $peers = $am->getPjSipPeers();
-        }
+        $peers = $am->getPjSipPeers();
         $am->Logoff();
 
         $result['data']   = $peers;
         $result['result'] = 'Success';
 
         return $result;
-    }
-
-    /**
-     * Returns PJSIP ot SIP uses at PBX
-     *
-     * @return string
-     */
-    public static function getTechnology(): string
-    {
-        if (file_exists('/offload/asterisk/modules/res_pjproject.so')) {
-            $technology = self::TYPE_PJSIP;
-        } else {
-            $technology = self::TYPE_SIP;
-        }
-
-        return $technology;
     }
 
     /**
@@ -124,11 +96,7 @@ class SIPConf extends ConfigClass
         ];
 
         $am = Util::getAstManager('off');
-        if (self::getTechnology() === self::TYPE_SIP) {
-            $peers = $am->getSipPeer($peer);
-        } else {
-            $peers = $am->getPjSipPeer($peer);
-        }
+        $peers = $am->getPjSipPeer($peer);
         $am->Logoff();
 
         $result['data']   = $peers;
@@ -146,11 +114,7 @@ class SIPConf extends ConfigClass
             'result' => 'ERROR',
         ];
         $am     = Util::getAstManager('off');
-        if (self::getTechnology() === self::TYPE_SIP) {
-            $peers = $am->getSipRegistry();
-        } else {
-            $peers = $am->getPjSipRegistry();
-        }
+        $peers = $am->getPjSipRegistry();
 
         $providers = Sip::find("type = 'friend'");
         foreach ($providers as $provider) {
@@ -164,11 +128,7 @@ class SIPConf extends ConfigClass
                 continue;
             }
             if ($provider->noregister === '1') {
-                if (self::getTechnology() === self::TYPE_SIP) {
-                    $peers_status = $am->getSipPeer($provider->uniqid);
-                } else {
-                    $peers_status = $am->getPjSipPeer($provider->uniqid);
-                }
+                $peers_status = $am->getPjSipPeer($provider->uniqid);
                 $peers[] = [
                     'state'    => $peers_status['state'],
                     'id'       => $provider->uniqid,
@@ -191,262 +151,6 @@ class SIPConf extends ConfigClass
         $result['result'] = 'Success';
 
         return $result;
-    }
-
-    /**
-     * Generate [general] section in sip.conf
-     *
-     *
-     * @return string
-     */
-    private function generateGeneral(): string
-    {
-        $conf    = "[general] \n" .
-            "context=public-direct-dial \n" .
-            "transport=udp \n" .
-            "allowoverlap=no \n" .
-            "udpbindaddr=0.0.0.0:{$this->generalSettings['SIPPort']} \n" .
-            "srvlookup=yes \n" .
-            "useragent=MikoPBX \n" .
-            "sdpsession=MikoPBX \n" .
-            "relaxdtmf=yes \n" .
-            "alwaysauthreject=yes \n" .
-            "videosupport=yes \n" .
-            "minexpiry={$this->generalSettings['SIPMinExpiry']} \n" .
-            "defaultexpiry={$this->generalSettings['SIPDefaultExpiry']} \n" .
-            "maxexpiry={$this->generalSettings['SIPMaxExpiry']} \n" .
-            "nat=force_rport,comedia; \n" .
-            "notifyhold=yes \n" .
-            "notifycid=ignore-context \n" .
-            "notifyringing=yes \n" .
-            "pedantic=yes \n" .
-            "callcounter=yes \n" .
-            "regcontext=sipregistrations \n" .
-            "regextenonqualify=yes \n" .
-            // SIP/SIMPLE
-            "accept_outofcall_message=yes \n" .
-            "outofcall_message_context=messages \n" .
-            "subscribecontext=internal-hints \n" .
-            "auth_message_requests=yes \n" .
-            // Support for ITU-T T.140 realtime text.
-            "textsupport=yes \n" .
-            "websocket_enabled=false \n" . // Реализуем средствами PJSIP
-            "register_retry_403=yes\n\n";
-        $network = new Network();
-
-        $topology    = 'public';
-        $extipaddr   = '';
-        $exthostname = '';
-        $networks    = $network->getEnabledLanInterfaces();
-        $subnets     = [];
-        foreach ($networks as $if_data) {
-            $lan_config = $network->getInterface($if_data['interface']);
-            if (null == $lan_config["ipaddr"] || null == $lan_config["subnet"]) {
-                continue;
-            }
-            $sub = new SubnetCalculator($lan_config["ipaddr"], $lan_config["subnet"]);
-            $net = $sub->getNetworkPortion() . "/" . $lan_config["subnet"];
-            if ($if_data["topology"] == 'private' && array_search($net, $subnets) === false) {
-                $subnets[] = $net;
-            }
-            if (trim($if_data["internet"]) == 1) {
-                $topology    = trim($if_data["topology"]);
-                $extipaddr   = trim($if_data["extipaddr"]);
-                $exthostname = trim($if_data["exthostname"]);
-            }
-        }
-
-        $networks = NetworkFilters::find('local_network=1');
-        foreach ($networks as $net) {
-            if ( ! in_array($net->permit, $subnets, true)) {
-                $subnets[] = $net->permit;
-            }
-        }
-
-        foreach ($subnets as $net) {
-            $conf .= "localnet={$net}\n";
-        }
-
-        if ($topology == 'private') {
-            if ( ! empty($exthostname)) {
-                $conf .= "externhost={$exthostname}\n";
-                $conf .= "externrefresh=10";
-            } elseif ( ! empty($extipaddr)) {
-                $conf .= "externaddr={$extipaddr}";
-            }
-        }
-
-        $conf .= "\n\n";
-
-        return $conf;
-    }
-
-    /**
-     * Генератор секции провайдеров в sip.conf
-     *
-     * @return string
-     */
-    private function generateProviders(): string
-    {
-        $conf        = '';
-        $reg_strings = '';
-        $prov_config = '';
-
-        foreach ($this->data_providers as $provider) {
-            // Формируем строку регистрации.
-            $manualregister = trim(str_replace(['register', '=>'], '', $provider['manualregister']));
-            $port           = (trim($provider['port']) === '') ? '5060' : $provider['port'];
-
-            $noregister = $provider['noregister'] !== '1';
-            if ($noregister && ! empty($provider['manualregister'])) {
-                // Строка регистрация определена вручную.
-                $reg_strings .= "register => {$manualregister} \n";
-            } elseif ($noregister) {
-                // Строка регистрации генерируется автоматически.
-                $sip_user  = '"' . $provider['username'] . '"';
-                $secret    = (trim($provider['secret']) === '') ? '' : ":\"{$provider['secret']}\"";
-                $host      = '' . $provider['host'] . '';
-                $extension = $sip_user;
-
-                $reg_strings .= "register => {$sip_user}{$secret}@{$host}:{$port}/{$extension} \n";
-            }
-            // Формируем секцию / раздел sip.conf
-            // Различные доп. атрибуты.
-            $fromdomain  = (trim($provider['fromdomain']) === '') ? $provider['host'] : $provider['fromdomain'];
-            $defaultuser = (trim($provider['defaultuser']) === '') ? $provider['username'] : $provider['defaultuser'];
-            $qualify     = ($provider['qualify'] === '1' || $provider['qualify'] === 'yes') ? 'yes' : 'no';
-
-            $from     = (trim(
-                    $provider['fromuser']
-                ) === '') ? "{$provider['username']}; username" : "{$provider['fromuser']}; fromuser";
-            $fromuser = ($provider['disablefromuser'] === '1') ? '' : "fromuser={$from}; \n";
-
-            // Ручные настройки.
-            $manualattributes = '';
-            if (trim($provider['manualattributes']) !== '') {
-                $manualattributes = "; manual attributes \n" .
-                    base64_decode($provider['manualattributes']) . " \n" .
-                    "; manual attributes\n";
-            }
-            $type = 'friend';
-            if ('1' === $provider['receive_calls_without_auth']) {
-                // Звонки без авторизации.
-                $type               = 'peer';
-                $defaultuser        = ';';
-                $provider['secret'] = ';';
-            }
-            $lang = $this->generalSettings['PBXLanguage'];
-
-            $codecs = '';
-            foreach ($provider['codecs'] as $codec) {
-                $codecs .= "allow={$codec} \n";
-            }
-
-            // Формирование секции.
-            $prov_config .= "[{$provider['uniqid']}] \n" .
-                "type={$type} \n" .
-                "context={$provider['uniqid']}-incoming \n" .
-                "host={$provider['host']} \n" .
-                "port={$port} \n" .
-                "language={$lang}\n" .
-                "nat={$provider['nat']} \n" .
-                "dtmfmode={$provider['dtmfmode']} \n" .
-                "qualifyfreq={$provider['qualifyfreq']} \n" .
-                "qualify={$qualify} \n" .
-                "directmedia=no \n" .
-                "secret={$provider['secret']} \n" .
-                "icesupport=yes \n" .
-                "insecure=port,invite \n" .
-                "disallow=all \n" .
-                $codecs .
-                "defaultuser=$defaultuser\n" .
-                "fromdomain=$fromdomain\n" .
-                $fromuser .
-                $manualattributes .
-                "\n";
-        }
-
-        $conf .= "$reg_strings \n";
-        $conf .= $prov_config;
-
-        return $conf;
-    }
-
-    /**
-     * Генератор сеции пиров для sip.conf
-     *
-     * @return string
-     */
-    public function generatePeers(): string
-    {
-        $lang = $this->generalSettings['PBXLanguage'];
-        $conf = '';
-        foreach ($this->data_peers as $peer) {
-            $language = str_replace('_', '-', strtolower($lang));
-            $language = (trim($language) == '') ? 'en-en' : $language;
-
-            $calleridname = (trim($peer['calleridname']) == '') ? $peer['extension'] : $peer['calleridname'];
-            $deny         = (trim($peer['deny']) == '') ? '' : 'deny=' . $peer['deny'] . "\n";
-            $busylevel    = (trim($peer['busylevel']) == '') ? '' : 'busylevel=' . $peer['busylevel'] . "\n";
-            $permit       = (trim($peer['permit']) == '') ? '' : 'permit=' . $peer['permit'] . "\n";
-
-            // Установим значением по умолчанию.
-            $qualify     = 'yes'; // ($peer['qualify'] == 1 || $peer['qualify'] == 'yes')?'yes':'no';
-            $qualifyfreq = '60';  // $peer['qualifyfreq'];
-
-            // Ручные настройки.
-            $manualattributes = '';
-            if (trim($peer['manualattributes']) != '') {
-                $tmp_data = base64_decode($peer['manualattributes']);
-                if (base64_encode($tmp_data) == $peer['manualattributes']) {
-                    $manualattributes = "; manual attributes \n{$tmp_data} \n; manual attributes\n";
-                } else {
-                    // TODO Данные НЕ закодированы в base64
-                    $manualattributes = "; manual attributes \n{$peer['manualattributes']} \n; manual attributes\n";
-                }
-            }
-
-            $codecs = "";
-            foreach ($peer['codecs'] as $codec) {
-                $codecs .= "allow={$codec} \n";
-            }
-
-            // ---------------- //
-            $conf .= "[{$peer['extension']}] \n" .
-                "type=friend \n" .
-                "context=all_peers \n" .
-                "host=dynamic \n" .
-                "language=$language \n" .
-                "nat=force_rport,comedia; \n" .
-                // "nat={$peer['nat']} \n".
-                "dtmfmode={$peer['dtmfmode']} \n" .
-                "qualifyfreq={$qualifyfreq} \n" .
-                "qualify={$qualify} \n" .
-                "directmedia=no \n" .
-                "callerid={$calleridname} <{$peer['extension']}> \n" .
-                "secret={$peer['secret']} \n" .
-                "icesupport=yes \n" .
-                "disallow=all \n" .
-                "$codecs" .
-                "pickupgroup=1 \n" .
-                "callgroup=1 \n" .
-                "sendrpid=pai\n" .
-                // "mailbox={$peer['extension']}@voicemailcontext \n".
-                "mailbox=admin@voicemailcontext \n" .
-
-                "$busylevel" .
-                "$deny" .
-                "$permit" .
-                "$manualattributes" .
-                "\n";
-            // ---------------- //
-        }
-        $additionalModules = $this->di->getShared('pbxConfModules');
-        foreach ($additionalModules as $Object) {
-            $conf .= $Object->generatePeers();
-        }
-
-        return $conf;
     }
 
     /**
@@ -547,7 +251,9 @@ class SIPConf extends ConfigClass
         $conf        = '';
         $reg_strings = '';
         $prov_config = '';
-
+        if ($this->data_providers===null){
+            $this->getSettings();
+        }
         foreach ($this->data_providers as $provider) {
             $manual_attributes = Util::parseIniSettings(base64_decode($provider['manualattributes'] ?? ''));
             $port              = (trim($provider['port']) === '') ? '5060' : $provider['port'];
@@ -667,6 +373,9 @@ class SIPConf extends ConfigClass
      */
     public function generatePeersPj(): string
     {
+        if ($this->data_peers===null){
+            $this->getSettings();
+        }
         $lang              = $this->generalSettings['PBXLanguage'];
         $additionalModules = $this->di->getShared('pbxConfModules');
         $conf              = '';
@@ -882,6 +591,9 @@ class SIPConf extends ConfigClass
      */
     private function getOutRoutes(): array
     {
+        if ($this->data_peers===null){
+            $this->getSettings();
+        }
         /** @var \MikoPBX\Common\Models\OutgoingRoutingTable $rout */
         /** @var \MikoPBX\Common\Models\OutgoingRoutingTable $routs */
         /** @var \MikoPBX\Common\Models\Sip $db_data */
@@ -980,6 +692,9 @@ class SIPConf extends ConfigClass
 
     public function extensionGenInternalTransfer(): string
     {
+        if ($this->data_peers===null){
+            $this->getSettings();
+        }
         // Генерация внутреннего номерного плана.
         $conf = '';
         foreach ($this->data_peers as $peer) {
@@ -989,5 +704,15 @@ class SIPConf extends ConfigClass
         $conf .= "\n";
 
         return $conf;
+    }
+
+    /**
+     * Returns PJSIP ot SIP uses at PBX
+     *
+     * @return string
+     */
+    public static function getTechnology(): string
+    {
+        return self::TYPE_PJSIP;
     }
 }

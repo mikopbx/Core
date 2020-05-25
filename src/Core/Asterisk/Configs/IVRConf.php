@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 2 2020
+ * Written by Alexey Portnov, 5 2020
  */
 
 namespace MikoPBX\Core\Asterisk\Configs;
@@ -61,12 +61,7 @@ class IVRConf extends ConfigClass
 
             if ($ivr['allow_enter_any_internal_extension'] === '1') {
                 $extension = Util::getExtensionX($this->generalSettings['PBXInternalExtensionLength']);
-                if (SIPConf::TYPE_SIP === SIPConf::getTechnology()) {
-                    $conf .= 'exten => _' . $extension . ',1,ExecIf($["${SIPPEER(${EXTEN},status)}x" == "x"]?Goto(s,1))' . "\n\t";
-                } else {
-                    $conf .= 'exten => _' . $extension . ',1,ExecIf($["${PJSIP_ENDPOINT(${EXTEN},auth)}x" == "x"]?Goto(s,1))' . "\n\t";
-                }
-
+                $conf .= 'exten => _' . $extension . ',1,ExecIf($["${PJSIP_ENDPOINT(${EXTEN},auth)}x" == "x"]?Goto(s,1))' . "\n\t";
                 $conf .= 'same => n,Goto(internal,${EXTEN},1)' . "\n";
             }
         }
