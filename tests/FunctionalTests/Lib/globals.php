@@ -2,7 +2,7 @@
 
 $config_file = getenv('CONFIG_FILE');
 if(!$config_file) {
-    $config_file = '../config/local.conf.json';
+    $config_file = 'config/local.conf.json';
 }
 $GLOBALS['CONFIG'] = json_decode(file_get_contents($config_file), true);
 

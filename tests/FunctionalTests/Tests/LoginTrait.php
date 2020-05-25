@@ -26,7 +26,6 @@ trait LoginTrait
         $login = self::$driver->findElement(WebDriverBy::xpath("//input[@type = 'text' and @id = 'login' and @name = 'login']"));
         if($login) {
             $login->sendKeys("admin");
-
         }
 
         $password = self::$driver->findElement(WebDriverBy::xpath("//input[@type = 'password' and @id = 'password' and @name = 'password']"));
