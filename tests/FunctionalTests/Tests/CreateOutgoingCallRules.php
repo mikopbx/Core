@@ -49,6 +49,7 @@ class CreateOutgoingCallRules extends MikoPBXTestsBase
 
     public function additionProvider(): array
     {
+        $params=[];
         $params[] = [[
             'rulename'=>'Local outgoing calls',
             'note' => 'Calls only at local landlines',

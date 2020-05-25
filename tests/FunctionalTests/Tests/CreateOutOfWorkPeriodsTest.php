@@ -105,6 +105,7 @@ class CreateOutOfWorkPeriodsTest extends MikoPBXTestsBase
 
     public function additionProvider():array
     {
+        $params=[];
         $params[] = [[
             'description' => 'New year holidays',
             'date_from'        => '1 January, 2020',

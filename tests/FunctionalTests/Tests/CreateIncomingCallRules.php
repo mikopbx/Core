@@ -80,6 +80,7 @@ class CreateIncomingCallRules extends MikoPBXTestsBase
 
     public function additionProvider() :array
     {
+        $params=[];
         $params[] = [[
             'default' => false,
             'note' => 'First rule',
