@@ -36,7 +36,7 @@ $errorLogger->init();
 register_shutdown_function([PhpError::class,'runtimeShutdown']);
 set_error_handler([PhpError::class,'errorHandler']);
 
-if ($di->getShared('config')->path('adminApplication.debugMode')){
+if (class_exists(PrettyPageHandler::class)){
     $whoops = new Run();
     $whoops->pushHandler(new PrettyPageHandler());
     $whoops->register();

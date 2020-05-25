@@ -15,7 +15,6 @@ use MikoPBX\Core\System\{MikoPBXConfig, Util};
 class IAXConf extends ConfigClass
 {
     public const TYPE_IAX2 = 'IAX2';
-    protected $data_providers;
     protected $description = 'iax.conf';
 
     /**
@@ -94,22 +93,14 @@ class IAXConf extends ConfigClass
         return $result;
     }
 
-    /**
-     * Получение настроек.
-     */
-    public function getSettings(): void
-    {
-        // Настройки для текущего класса.
-        $this->getProviders();
-    }
 
     /**
      * Получение данных по IAX2 провайдерам.
      */
-    private function getProviders(): void
+    private function getProviders(): array
     {
+        $data_providers =[];
         // Получим настройки всех аккаунтов.
-        $this->data_providers = [];
         $arrIaxProviders              = Iax::find("disabled IS NULL OR disabled = '0'");
         foreach ($arrIaxProviders as $peer) {
             /** @var \MikoPBX\Common\Models\Iax $peer */
@@ -129,9 +120,10 @@ class IAXConf extends ConfigClass
             foreach ($codecs as $ob_codec) {
                 $arr_data['codecs'][] = $ob_codec->codec;
             }
+            $data_providers[] = $arr_data;
 
-            $this->data_providers[] = $arr_data;
         }
+        return $data_providers;
     }
 
     /**
@@ -142,7 +134,8 @@ class IAXConf extends ConfigClass
     public function extensionGenContexts(): string
     {
         $conf = '';
-        foreach ($this->data_providers as $provider) {
+        $providers = $this->getProviders();
+        foreach ($providers as $provider) {
             $conf .= ExtensionsConf::generateIncomingContextPeers($provider['uniqid']);
         }
 
@@ -184,7 +177,8 @@ class IAXConf extends ConfigClass
         $prov_config = '';
 
         $lang = str_replace('_', '-', strtolower($this->generalSettings['PBXLanguage']));
-        foreach ($this->data_providers as $provider) {
+        $providers = $this->getProviders();
+        foreach ($providers as $provider) {
             $prov_config .= "[{$provider['uniqid']}];\n";
             $prov_config .= "type=friend\n";
             $prov_config .= "auth=plaintext\n";

@@ -1,5 +1,0 @@
-comment: false
-ignore:
-    - tests/data
-    - tests/resources
-    - tests/Fixtures

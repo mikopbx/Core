@@ -1,0 +1,4 @@
+/tests/FunctionalTests/config/*.json
+/vendor
+.idea
+/composer.lock
