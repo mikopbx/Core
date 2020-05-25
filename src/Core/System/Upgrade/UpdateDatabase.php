@@ -1,5 +1,10 @@
 <?php
-
+/**
+ * Copyright © MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Alexey Portnov, 5 2020
+ */
 
 namespace MikoPBX\Core\System\Upgrade;
 
@@ -193,14 +198,15 @@ class UpdateDatabase
         $connectionService->begin();
 
         if ( ! $connectionService->tableExists($tableName)) {
-            Util::echoWithSyslog(' - UpdateDatabase: Create new table: '.$tableName);
+            Util::echoWithSyslog(' - UpdateDatabase: Create new table: '.$tableName.' ');
             $result = $connectionService->createTable($tableName, '', $columnsNew);
+            Util::echoGreenDone();
         } else {
             // Table exists, we have to check/upgrade its structure
             $currentColumnsArr = $connectionService->describeColumns($tableName, '');
 
             if ($this->isTableStructureNotEqual($currentColumnsArr, $columns)) {
-                Util::echoWithSyslog(' - UpdateDatabase: Upgrade table structure for: '.$tableName);
+                Util::echoWithSyslog(' - UpdateDatabase: Upgrade table: '.$tableName.' ');
                 // Create new table and copy all data
                 $currentStateColumnList = [];
                 $oldColNames            = []; // Старые названия колонок
@@ -230,6 +236,7 @@ DROP TABLE  {$tableName}";
 
                 // Drop temporary table
                 $result = $result && $connectionService->execute("DROP TABLE {$tableName}_backup;");
+                Util::echoGreenDone();
             }
         }
 

@@ -13,15 +13,15 @@ use MikoPBX\Core\System\{
     SystemLoader
 };
 require_once('globals.php');
-echo ' - Start /etc/rc/bootup_pbx ...'.PHP_EOL;
 
+Util::echoWithSyslog(' - Start /etc/rc/bootup_pbx ...'.PHP_EOL);
 while (true){
      $pid = Util::getPidOfProcess('beanstalkd');
      if(empty($pid)){
-         echo ' - Wait for start beanstalkd deamon...' .PHP_EOL;
+         Util::echoWithSyslog(' - Wait for start beanstalkd deamon ...'.PHP_EOL);
          sleep(2);
      }else{
-         echo ' - Start SystemLoader...'.PHP_EOL;
+         Util::echoWithSyslog(' - Start SystemLoader ...'.PHP_EOL);
          $mikoPBX = new SystemLoader();
          $mikoPBX->startMikoPBX();
          break;

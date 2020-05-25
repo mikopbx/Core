@@ -1,5 +1,10 @@
 <?php
-
+/**
+ * Copyright © MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Alexey Portnov, 5 2020
+ */
 
 namespace MikoPBX\Core\System\Upgrade;
 
@@ -57,31 +62,37 @@ class UpdateSystemConfig
             if (version_compare($previous_version, '1.0.0', '<=')) {
                 $this->fillInitialSettings();
                 $previous_version = '1.0.1';
-                Util::echoWithSyslog(' - UpdateConfigs: Upgrade applications up tp '.$previous_version);
+                Util::echoWithSyslog(' - UpdateConfigs: Upgrade applications up tp '.$previous_version.' ');
+                Util::echoGreenDone();
+
             }
 
             if (version_compare($previous_version, '6.2.110', '<')) {
                 $this->updateConfigsUpToVer62110();
                 $previous_version = '6.2.110';
-                Util::echoWithSyslog(' - UpdateConfigs: Upgrade applications up tp '.$previous_version);
+                Util::echoWithSyslog(' - UpdateConfigs: Upgrade applications up tp '.$previous_version.' ');
+                Util::echoGreenDone();
             }
 
             if (version_compare($previous_version, '6.4', '<')) {
                 $this->updateConfigsUpToVer64();
                 $previous_version = '6.4';
-                Util::echoWithSyslog(' - UpdateConfigs: Upgrade applications up tp '.$previous_version);
+                Util::echoWithSyslog(' - UpdateConfigs: Upgrade applications up tp '.$previous_version.' ');
+                Util::echoGreenDone();
             }
 
             if (version_compare($previous_version, '2020.1.62', '<')) {
                 $this->updateConfigsUpToVer2020162();
                 $previous_version = '2020.1.62';
-                Util::echoWithSyslog(' - UpdateConfigs: Upgrade applications up tp '.$previous_version);
+                Util::echoWithSyslog(' - UpdateConfigs: Upgrade applications up tp '.$previous_version.' ');
+                Util::echoGreenDone();
             }
 
             if (version_compare($previous_version, '2020.2.314', '<')) {
                 $this->updateConfigsUpToVer20202314();
                 $previous_version = '2020.2.314';
-                Util::echoWithSyslog(' - UpdateConfigs: Upgrade applications up tp '.$previous_version);
+                Util::echoWithSyslog(' - UpdateConfigs: Upgrade applications up tp '.$previous_version.' ');
+                Util::echoGreenDone();
             }
 
             //...add here new updates //
@@ -268,6 +279,12 @@ class UpdateSystemConfig
         $oldMohDir     = $this->config->path('asterisk.astvarlibdir') . '/sounds/moh';
         $currentMohDir = $this->config->path('asterisk.mohdir');
         if ( ! Util::mwMkdir($currentMohDir)) {
+            return;
+        }
+        if(!file_exists($oldMohDir)){
+            if(!file_exists('/offload/livecd')){
+                Util::sysLogMsg("UpdateConfigsUpToVer20202314", 'Directory sounds/moh not found', LOG_ERR);
+            }
             return;
         }
         $files = scandir($oldMohDir);

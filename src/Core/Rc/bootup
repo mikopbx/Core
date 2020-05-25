@@ -14,16 +14,15 @@ use MikoPBX\Core\System\{
     SystemLoader
 };
 require_once('globals.php');
-
-echo 'Start /etc/rc/bootup'.PHP_EOL;
-
+Util::echoWithSyslog(' - Start /etc/rc/bootup ...'.PHP_EOL);
 if(file_exists('/tmp/ejectcd')){
     sleep(15);
 }
 
 $mikoPBX = new SystemLoader();
-echo ' |   -  Start MikoPBX\Core\System\SystemLoader\startSystem'.PHP_EOL;
+Util::echoWithSyslog(' - Start SystemLoader\startSystem...'.PHP_EOL);
 $result = $mikoPBX->startSystem();
+Util::echoGreenDone();
 
 if((true === $result) && ! file_exists('/offload/livecd')) {
     Util::mwExecBg('/etc/rc/bootup_pbx');

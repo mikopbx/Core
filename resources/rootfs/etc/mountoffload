@@ -37,7 +37,7 @@ mountoffload()
 mountConfRecover()
 {
 	offloaddisk=$1;
-	echo " - attempting to mount existing configuration..."
+	echo " - Attempting to mount existing configuration..."
 	
 	# Создаем каталог для монтирования (старая конфигурация). 
 	rec_dir='/conf.recover/';
@@ -49,24 +49,24 @@ mountConfRecover()
 	do
 		if [ "${diskr}" = "${offloaddisk}" ]; then
 			# Проверка на уже смонтированный диск.
-			echo " - skip ${diskr}, already mount..."
+			echo " - Skip ${diskr}, already mount..."
 			continue
 		fi
 
 		if [ ! -b "/dev/${diskr}3" ]; then
-			echo " - skip ${diskr}, part 3 not found..."
+			echo " - Skip ${diskr}, part 3 not found..."
 			continue
 		fi;
 
 	    type=$(/sbin/blkid -o full "/dev/${diskr}3" | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^TYPE" | /bin/busybox awk -F "\"" '{print $2}' | /bin/busybox head -n 1);
 		if [ -f "/sbin/fsck.${type}" ]; then
 		    "/sbin/fsck.${type}" -f -p "/dev/${diskr}3" > /dev/null 2> /dev/null;
-		    echo " - trying fsck /dev/${diskr}3 ... returned: $?"
+		    echo " - Trying fsck /dev/${diskr}3 ... returned: $?"
 		fi
 
         uuid=$(/sbin/blkid -o full "/dev/${diskr}3" | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^UUID" | /bin/busybox awk -F "\"" '{print $2}' | /bin/busybox head -n 1);
 		mount -t "${type}" -r UUID="${uuid}" "${rec_dir}" # > /dev/null 2> /dev/null;
-		echo " - trying mount ${diskr} fs ${type} ... returned: $?"
+		echo " - Trying mount ${diskr} fs ${type} ... returned: $?"
 		if [ -d "${rec_dir}conf" ] && [ ! -f "${rec_dir}livecd"  ] ; then
 			
 			### Распакуем файлы конфигурации ###
@@ -80,7 +80,7 @@ mountConfRecover()
 			# rm -rf /tmp/tmp_dir;
 			###
 			
-			echo " - found existing configuration on ${diskr}3!"
+			echo " - Found existing configuration on ${diskr}3!"
 			exit 0
 		else
 			umount -f "${rec_dir}" > /dev/null 2> /dev/null;
@@ -95,8 +95,7 @@ rm -rf /tmp/freeoffload;
 ################################################################################
 # LIVE CD-ROM / LIVE USB
 ################################################################################
-echo
-echo " - waiting for connect device....."
+echo " - Waiting for connect device....."
 busybox sleep 4;
 
 cddev=$(/sbin/sysctl -n dev.cdrom.info | /bin/busybox grep "drive name" | /bin/busybox cut -f 3)
@@ -105,7 +104,7 @@ length=0
 if [ "$?" -eq 0 ]; then
 	length=${#cddev}
 fi
-echo " - attempting to mount /boot partition..."
+echo " - Attempting to mount /boot partition..."
 if [ "$length" -gt 2 ]; then
 	disks=${cddev}
 else
@@ -118,9 +117,9 @@ do
 	else
 		mountoffload /dev/${disk}1;
 	fi
-	echo " - trying ${disk} mount returned: $?"
+	echo " - Trying ${disk} mount returned: $?"
 	if [ -f /offload/livecd ]; then
-		echo " - found LIVECD flag file...";
+		echo " - Found LIVECD flag file...";
 		createBootConfFiles
 		mountConfRecover $disk;
 		# Все, что необходимо было смонтировано. 
@@ -134,18 +133,18 @@ done
 ################################################################################
 
 echo
-echo " - attempting to mount /offload partition..."
+echo " - Attempting to mount /offload partition..."
 disks=$(fdisk -l | /bin/busybox grep "^/dev/" | /bin/busybox cut -c 6-8 | /bin/busybox uniq)
 for disk in $disks
 do
 	mountoffload /dev/${disk}2;
-	echo " - trying ${disk} mount returned: $?"
+	echo " - Trying ${disk} mount returned: $?"
 	if [ -d /offload/rootfs ]; then
-		echo " - found rootfs!"
+		echo " - Found rootfs!"
 		exit 0
 	fi
 	umount -f /offload > /dev/null
-	echo " - failed to find rootfs!"
+	echo " - Failed to find rootfs!"
 done
 
 ################################################################################
@@ -154,20 +153,20 @@ done
 
 echo
 mountoffload /dev/mmcblk0p2;
-echo " - trying mmcblk0 mount returned: $?"
+echo " - Trying mmcblk0 mount returned: $?"
 if [ -d /offload/rootfs ]; then
     echo " - found rootfs on SD CARD!"
     exit 0
 fi
 umount -f /offload
-echo " - failed to find rootfs!"
+echo " - Failed to find rootfs!"
 
 ################################################################################
 # USB 
 ################################################################################
 
 echo
-echo " - waiting for disks to settle and trying again..."
+echo " - Waiting for disks to settle and trying again..."
 /bin/busybox sleep 10
 
 echo " - checking for liveusb..."

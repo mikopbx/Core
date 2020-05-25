@@ -1,4 +1,10 @@
 <?php
+/**
+ * Copyright © MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Alexey Portnov, 5 2020
+ */
 
 namespace MikoPBX\Core\System;
 
@@ -37,15 +43,13 @@ class SystemLoader
         $system->syslogDaemonStart();
         Util::echoGreenDone();
 
-        Util::echoWithSyslog(' - Update database ... ');
+        Util::echoWithSyslog(' - Update database ... '. PHP_EOL);
         $dbUpdater = new UpdateDatabase();
         $dbUpdater->updateDatabaseStructure();
-        Util::echoGreenDone();
 
-        Util::echoWithSyslog(' - Update configs and applications ... ');
+        Util::echoWithSyslog(' - Update configs and applications ... '. PHP_EOL);
         $confUpdate = new UpdateSystemConfig();
         $confUpdate->updateConfigs();
-        Util::echoGreenDone();
 
 
         Util::echoWithSyslog(' - Load kernel modules ... ');
@@ -77,11 +81,11 @@ class SystemLoader
         $network->lanConfigure();
         Util::echoGreenDone();
 
-        Util::echoWithSyslog(' - Configuring SSH console ...  ');
+        Util::echoWithSyslog(' - Configuring SSH console ... ');
         $system->sshdConfigure();
         Util::echoGreenDone();
 
-        Util::echoWithSyslog(' - Configuring msmtp services...');
+        Util::echoWithSyslog(' - Configuring msmtp services... ');
         $notifications = new Notifications();
         $notifications->configure();
         Util::echoGreenDone();

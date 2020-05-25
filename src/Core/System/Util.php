@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 4 2020
+ * Written by Alexey Portnov, 5 2020
  */
 
 namespace MikoPBX\Core\System;
@@ -1210,7 +1210,7 @@ class Util
      */
     public static function echoWithSyslog($message): void
     {
-        echo $message . PHP_EOL;
+        echo $message;
         self::sysLogMsg(static::class, $message, LOG_INFO);
     }
 
