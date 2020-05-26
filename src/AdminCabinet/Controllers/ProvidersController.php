@@ -11,6 +11,7 @@ namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\{IaxProviderEditForm, SipProviderEditForm};
 use MikoPBX\Common\Models\{Codecs, Iax, IaxCodecs, Providers, Sip, SipCodecs};
+use Phalcon\Text;
 
 class ProvidersController extends BaseController
 {
@@ -319,7 +320,7 @@ class ProvidersController extends BaseController
     private function saveCodecs($data, $type): bool
     {
         $availableCodecs = Codecs::find();
-        if ($type == 'iax') {
+        if ($type === 'iax') {
             $classCodecs = IaxCodecs::class;
             $fieldUid    = 'iaxuid';
         } else { //sip
@@ -336,7 +337,8 @@ class ProvidersController extends BaseController
                     'codec'  => $key,
                 ],
             ];
-            if (array_key_exists('codec_' . $key, $data) && $data['codec_' . $key] == 'on') {
+            $searchKey = str_ireplace('.','_', $key);
+            if (array_key_exists('codec_' . $searchKey, $data) && $data['codec_' . $searchKey] == 'on') {
                 $newCodec = $classCodecs::findFirst($parameters);
                 if ($newCodec === null) {
                     $newCodec = new $classCodecs();
