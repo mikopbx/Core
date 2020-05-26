@@ -18,26 +18,29 @@ class CreateConferenceRoomsTest extends MikoPBXTestsBase
      * @depends testLogin
      * @dataProvider additionProvider
      *
-     * @param array $conferenceRecord
+     * @param array $params
      */
-    public function testAddConference(array $conferenceRecord):void{
+    public function testAddConference(array $params):void{
 
         $this->clickSidebarMenuItemByHref('/admin-cabinet/conference-rooms/index/');
-        $this->clickDeleteButtonOnRowWithText($conferenceRecord['name']);
+        $this->clickDeleteButtonOnRowWithText($params['name']);
 
-        $this->clickAddNewButtonByHref('/admin-cabinet/conference-rooms/modify');
-        $this->changeInputField('name', $conferenceRecord['name']);
-        $this->changeInputField('extension', $conferenceRecord['extension']);
+        $this->clickButtonByHref('/admin-cabinet/conference-rooms/modify');
+        $this->changeInputField('name', $params['name']);
+        $this->changeInputField('extension', $params['extension']);
 
         // Сохраняем конференцию
         $this->submitForm('conference-room-form');
 
-        $this->clickModifyButtonOnRowWithText($conferenceRecord['name']);
-        $this->assertInputFieldValueEqual('name', $conferenceRecord['name']);
-        $this->assertInputFieldValueEqual('extension', $conferenceRecord['extension']);
+        $this->clickModifyButtonOnRowWithText($params['name']);
+        $this->assertInputFieldValueEqual('name', $params['name']);
+        $this->assertInputFieldValueEqual('extension', $params['extension']);
     }
 
-
+    /**
+     * Dataset provider
+     * @return array
+     */
     public function additionProvider(): array
     {
         $params = [];

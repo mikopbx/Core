@@ -27,7 +27,7 @@ class CreateIVRMenusTest extends MikoPBXTestsBase
         $this->clickSidebarMenuItemByHref('/admin-cabinet/ivr-menu/index/');
         $this->clickDeleteButtonOnRowWithText($params['name']);
 
-        $this->clickAddNewButtonByHref('/admin-cabinet/ivr-menu/modify');
+        $this->clickButtonByHref('/admin-cabinet/ivr-menu/modify');
         $this->changeTextAreaValue('description', $params['description']);
         $this->changeInputField('name', $params['name']);
         $this->selectDropdownItem('audio_message_id', $params['audio_message_id']);
@@ -80,7 +80,10 @@ class CreateIVRMenusTest extends MikoPBXTestsBase
 
     }
 
-
+    /**
+     * Dataset provider
+     * @return array
+     */
      public function additionProvider(): array
      {
          $params = [];

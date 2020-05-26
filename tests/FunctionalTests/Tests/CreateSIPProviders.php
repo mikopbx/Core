@@ -11,7 +11,7 @@ namespace MikoPBX\FunctionalTests\Tests;
 
 use MikoPBX\FunctionalTests\Lib\MikoPBXTestsBase as MikoPBXTestsBaseAlias;
 
-class CreateProviders extends MikoPBXTestsBaseAlias
+class CreateSIPProviders extends MikoPBXTestsBaseAlias
 {
     /**
      * @depends testLogin
@@ -21,13 +21,11 @@ class CreateProviders extends MikoPBXTestsBaseAlias
      */
     public function testCreateSIPProvider($params):void
     {
-        if ($params['type']!=='sip'){
-            return;
-        }
+
         $this->clickSidebarMenuItemByHref('/admin-cabinet/providers/index/');
         $this->clickDeleteButtonOnRowWithText($params['description']);
 
-        $this->clickAddNewButtonByHref('/admin-cabinet/providers/modifysip');
+        $this->clickButtonByHref('/admin-cabinet/providers/modifysip');
         $this->changeInputField('description', $params['description']);
         $this->changeInputField('host', $params['host']);
         $this->changeInputField('username', $params['username']);
@@ -90,63 +88,12 @@ class CreateProviders extends MikoPBXTestsBaseAlias
 
     }
 
+
     /**
-     * @depends testLogin
-     * @dataProvider additionProvider
-     *
-     * @param array $params
+     * Dataset provider
+     * @return array
      */
-    public function testCreateIaxProvider($params):void
-    {
-        if ($params['type']!=='iax'){
-            return;
-        }
-
-        $this->clickSidebarMenuItemByHref('/admin-cabinet/providers/index/');
-        $this->clickDeleteButtonOnRowWithText($params['description']);
-
-        $this->clickAddNewButtonByHref(' /admin-cabinet/providers/modifyiax');
-        $this->changeInputField('description', $params['description']);
-        $this->changeInputField('host', $params['host']);
-        $this->changeInputField('username', $params['username']);
-        $this->changeInputField('password', $params['password']);
-        $this->selectDropdownItem('dtmfmode', $params['dtmfmode']);
-        // Раскрываем расширенные опции
-        $this->openAccordionOnThePage();
-        $this->changeCheckBoxState('qualify', $params['qualify']);
-
-        foreach ($params['codecs'] as $key=>$value){
-            $this->changeCheckBoxState('codec_'.$key, $value);
-        }
-
-        $this->changeCheckBoxState('noregister', $params['noregister']);
-        $this->changeTextAreaValue('manualattributes', $params['manualattributes']);
-
-        $this->submitForm('save-provider-form');
-        $this->clickSidebarMenuItemByHref('/admin-cabinet/providers/index/');
-        $this->clickModifyButtonOnRowWithText($params['description']);
-
-        // Asserts
-        $this->assertInputFieldValueEqual('description', $params['description']);
-        $this->assertInputFieldValueEqual('host', $params['host']);
-        $this->assertInputFieldValueEqual('username', $params['username']);
-        $this->assertInputFieldValueEqual('password', $params['password']);
-        $this->assertMenuItemSelected('dtmfmode', $params['dtmfmode']);
-        // Раскрываем расширенные опции
-        $this->openAccordionOnThePage();
-
-
-        $this->assertCheckBoxStageIsEqual('qualify', $params['qualify']);
-
-        foreach ($params['codecs'] as $key=>$value){
-            $this->assertCheckBoxStageIsEqual('codec_'.$key, $value);
-        }
-
-        $this->assertCheckBoxStageIsEqual('noregister', $params['noregister']);
-        $this->assertTextAreaValueIsEqual('manualattributes', $params['manualattributes']);
-    }
-
-    public function additionProvider()
+    public function additionProvider():array
     {
         $params = [];
         $params[] = [[
@@ -218,32 +165,6 @@ class CreateProviders extends MikoPBXTestsBaseAlias
             'disablefromuser'=>true,
             'noregister'=>true,
             'receive_calls_without_auth'=>true,
-            'manualattributes'=>'',
-        ]];
-
-        $params[] = [[
-            'type'=>'iax',
-            'description' => 'VoxlinkIAX',
-            'host' => 'vox.link.ru',
-            'username'        => 'line1',
-            'password'        => 'voxvoxSecret',
-            'qualify'         => true,
-            'codecs'     =>[
-                'alaw'=>false,
-                'ulaw'=>true,
-                'g729'=>false,
-                'g723.1'=>true,
-                'g726'=>false,
-                'gsm'=>true,
-                'adpcm'=>false,
-                'g722'=>true,
-                'ilbc'=>false,
-                'opus'=>true,
-                'h264'=>false,
-                'h263'=>true,
-                'h263p'=>false
-            ],
-            'noregister'=>true,
             'manualattributes'=>'',
         ]];
 

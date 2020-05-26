@@ -52,11 +52,11 @@ class MikoPBXTestsBase extends BrowserStackTest
             );
             $menuItem->click();
         } catch (\Facebook\WebDriver\Exception\NoSuchElementException $e) {
-            echo('Not found submit button on this page' . PHP_EOL);
+            $this->fail('Not found select with name '.$name. PHP_EOL);
         } catch (\Facebook\WebDriver\Exception\TimeoutException $e) {
-            echo('Form doesn\'t send after 10 seconds timeout' . PHP_EOL);
+            $this->fail('Not found menuitem '. $value . PHP_EOL);
         } catch (\Exception $e) {
-            echo('Unknown error ' . $e->getMessage() . PHP_EOL);
+            $this->fail('Unknown error ' . $e->getMessage() . PHP_EOL);
         }
     }
 
@@ -225,11 +225,11 @@ class MikoPBXTestsBase extends BrowserStackTest
                 );
             }
         } catch (\Facebook\WebDriver\Exception\NoSuchElementException $e) {
-            echo('Not found submit button on this page' . PHP_EOL);
+            $this->fail('Not found submit button on this page' . PHP_EOL);
         } catch (\Facebook\WebDriver\Exception\TimeoutException $e) {
-            echo('Form doesn\'t send after 10 seconds timeout' . PHP_EOL);
+            $this->fail('Form doesn\'t send after 10 seconds timeout' . PHP_EOL);
         } catch (\Exception $e) {
-            echo('Unknown error ' . $e->getMessage() . PHP_EOL);
+            $this->fail('Unknown error ' . $e->getMessage() . PHP_EOL);
         }
     }
 
@@ -244,10 +244,11 @@ class MikoPBXTestsBase extends BrowserStackTest
             $xpath       = '//div[@id="sidebar-menu"]//ancestor::a[contains(@class, "item") and contains(@href ,"' . $href . '")]';
             $sidebarItem = self::$driver->findElement(WebDriverBy::xpath($xpath));
             $sidebarItem->click();
+            self::$driver->wait(3);
         } catch (\Facebook\WebDriver\Exception\NoSuchElementException $e) {
-            echo('Not found sidebar item with href=' . $href . ' on this page' . PHP_EOL);
+            $this->fail('Not found sidebar item with href=' . $href . ' on this page' . PHP_EOL);
         } catch (\Exception $e) {
-            echo('Unknown error ' . $e->getMessage() . PHP_EOL);
+            $this->fail('Unknown error ' . $e->getMessage() . PHP_EOL);
         }
     }
 
@@ -258,14 +259,14 @@ class MikoPBXTestsBase extends BrowserStackTest
      */
     protected function clickModifyButtonOnRowWithText(string $text): void
     {
-        $xpath = ('//td[contains(text(),"' . $text . '")]/ancestor::tr[contains(@class, "row")]//a[contains(@href,"modify")]');
+        $xpath = ('//td[contains(text(),"' . $text . '")]/parent::tr[contains(@class, "row")]//a[contains(@href,"modify")]');
         try {
             $tableButtonModify = self::$driver->findElement(WebDriverBy::xpath($xpath));
             $tableButtonModify->click();
         } catch (\Facebook\WebDriver\Exception\NoSuchElementException $e) {
-            echo('Not found row with text=' . $text . ' on this page' . PHP_EOL);
+            $this->fail('Not found row with text=' . $text . ' on this page' . PHP_EOL);
         } catch (\Exception $e) {
-            echo('Unknown error ' . $e->getMessage() . PHP_EOL);
+            $this->fail('Unknown error ' . $e->getMessage() . PHP_EOL);
         }
     }
 
@@ -286,7 +287,7 @@ class MikoPBXTestsBase extends BrowserStackTest
         } catch (\Facebook\WebDriver\Exception\NoSuchElementException $e) {
             echo('Not found row with text=' . $text . ' on this page' . PHP_EOL);
         } catch (\Exception $e) {
-            echo('Unknown error ' . $e->getMessage() . PHP_EOL);
+            $this->fail('Unknown error ' . $e->getMessage() . PHP_EOL);
         }
     }
 
@@ -295,16 +296,16 @@ class MikoPBXTestsBase extends BrowserStackTest
      *
      * @param string $href
      */
-    protected function clickAddNewButtonByHref(string $href): void
+    protected function clickButtonByHref(string $href): void
     {
         try {
             $xpath         = "//a[@href = '{$href}']";
             $button_AddNew = self::$driver->findElement(WebDriverBy::xpath($xpath));
             $button_AddNew->click();
         } catch (\Facebook\WebDriver\Exception\NoSuchElementException $e) {
-            echo('Not found button with href=' . $href . ' on this page' . PHP_EOL);
+            $this->fail('Not found button with href=' . $href . ' on this page' . PHP_EOL);
         } catch (\Exception $e) {
-            echo('Unknown error ' . $e->getMessage() . PHP_EOL);
+            $this->fail('Unknown error ' . $e->getMessage() . PHP_EOL);
         }
     }
 
@@ -321,9 +322,9 @@ class MikoPBXTestsBase extends BrowserStackTest
             $tab = self::$driver->findElement(WebDriverBy::xpath($xpath));
             $tab->click();
         } catch (\Facebook\WebDriver\Exception\NoSuchElementException $e) {
-            echo('Not found tab with anchor=' . $anchor . ' on this page' . PHP_EOL);
+            $this->fail('Not found tab with anchor=' . $anchor . ' on this page' . PHP_EOL);
         } catch (\Exception $e) {
-            echo('Unknown error ' . $e->getMessage() . PHP_EOL);
+            $this->fail('Unknown error ' . $e->getMessage() . PHP_EOL);
         }
     }
 
@@ -337,9 +338,9 @@ class MikoPBXTestsBase extends BrowserStackTest
               $tab = self::$driver->findElement(WebDriverBy::xpath($xpath));
               $tab->click();
           } catch (\Facebook\WebDriver\Exception\NoSuchElementException $e) {
-              echo('Not found usual accordion element on this page' . PHP_EOL);
+              $this->fail('Not found usual accordion element on this page' . PHP_EOL);
           } catch (\Exception $e) {
-              echo('Unknown error ' . $e->getMessage() . PHP_EOL);
+              $this->fail('Unknown error ' . $e->getMessage() . PHP_EOL);
           }
     }
 

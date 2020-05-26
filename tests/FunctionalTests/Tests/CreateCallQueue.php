@@ -27,7 +27,7 @@ class CreateCallQueue extends MikoPBXTestsBaseAlias
         $this->clickSidebarMenuItemByHref('/admin-cabinet/call-queues/index/');
         $this->clickDeleteButtonOnRowWithText($params['name']);
 
-        $this->clickAddNewButtonByHref('/admin-cabinet/call-queues/modify');
+        $this->clickButtonByHref('/admin-cabinet/call-queues/modify');
         $this->changeTextAreaValue('description', $params['description']);
         $this->changeInputField('name', $params['name']);
         
@@ -99,6 +99,10 @@ class CreateCallQueue extends MikoPBXTestsBaseAlias
 
     }
 
+    /**
+     * Dataset provider
+     * @return array
+     */
      public function additionProvider(): array
      {
          $params = [];

@@ -19,64 +19,70 @@ class CreateAmiUsersTest extends MikoPBXTestsBaseAlias
      * @depends testLogin
      * @dataProvider additionProvider
      *
-     * @param array $amiUser
+     * @param array $params
      */
-    public function testAddAmiUser(array $amiUser): void
+    public function testAddAmiUser(array $params): void
     {
             self::$driver->executeScript(
                 'document.getElementById("sidebar-menu").scrollTo(0,document.body.scrollHeight);'
             );
             $this->clickSidebarMenuItemByHref('/admin-cabinet/asterisk-managers/index/');
-            $this->clickDeleteButtonOnRowWithText($amiUser['username']);
+            $this->clickDeleteButtonOnRowWithText($params['username']);
 
-            $this->clickAddNewButtonByHref('/admin-cabinet/asterisk-managers/modify');
-            $this->changeTextAreaValue('description', $amiUser['description']);
-            $this->changeInputField('username', $amiUser['username']);
-            $this->changeInputField('secret', $amiUser['secret']);
-            $this->findCheckOnPageAndMarkIt('call', $amiUser['call']);
-            $this->findCheckOnPageAndMarkIt('originate', $amiUser['originate']);
-            $this->findCheckOnPageAndMarkIt('agent', $amiUser['agent']);
-            $this->findCheckOnPageAndMarkIt('dialplan', $amiUser['dialplan']);
-            $this->findCheckOnPageAndMarkIt('log', $amiUser['log']);
-            $this->findCheckOnPageAndMarkIt('user', $amiUser['user']);
-            $this->findCheckOnPageAndMarkIt('cdr', $amiUser['cdr']);
-            $this->findCheckOnPageAndMarkIt('reporting', $amiUser['reporting']);
-            $this->findCheckOnPageAndMarkIt('config', $amiUser['config']);
-            $this->findCheckOnPageAndMarkIt('dtmf', $amiUser['dtmf']);
-            $this->findCheckOnPageAndMarkIt('system', $amiUser['system']);
-            $this->findCheckOnPageAndMarkIt('verbose', $amiUser['verbose']);
+            $this->clickButtonByHref('/admin-cabinet/asterisk-managers/modify');
+
+            $this->changeTextAreaValue('description', $params['description']);
+            $this->changeInputField('username', $params['username']);
+            $this->changeInputField('secret', $params['secret']);
+            $this->findCheckOnPageAndMarkIt('call', $params['call']);
+            $this->findCheckOnPageAndMarkIt('originate', $params['originate']);
+            $this->findCheckOnPageAndMarkIt('agent', $params['agent']);
+            $this->findCheckOnPageAndMarkIt('dialplan', $params['dialplan']);
+            $this->findCheckOnPageAndMarkIt('log', $params['log']);
+            $this->findCheckOnPageAndMarkIt('user', $params['user']);
+            $this->findCheckOnPageAndMarkIt('cdr', $params['cdr']);
+            $this->findCheckOnPageAndMarkIt('reporting', $params['reporting']);
+            $this->findCheckOnPageAndMarkIt('config', $params['config']);
+            $this->findCheckOnPageAndMarkIt('dtmf', $params['dtmf']);
+            $this->findCheckOnPageAndMarkIt('system', $params['system']);
+            $this->findCheckOnPageAndMarkIt('verbose', $params['verbose']);
+
             $this->submitForm('save-ami-form');
 
             self::$driver->executeScript(
                 'document.getElementById("sidebar-menu").scrollTo(0,document.body.scrollHeight);'
             );
             $this->clickSidebarMenuItemByHref('/admin-cabinet/asterisk-managers/index/');
-            $this->clickModifyButtonOnRowWithText($amiUser['username']);
+            $this->clickModifyButtonOnRowWithText($params['username']);
 
             // TESTS
-            $this->assertTextAreaValueIsEqual('description', $amiUser['description']);
-            $this->assertInputFieldValueEqual('username', $amiUser['username']);
-            $this->assertInputFieldValueEqual('secret', $amiUser['secret']);
-            $this->findCheckOnPageAndCompareCondition('call', $amiUser['call']);
-            $this->findCheckOnPageAndCompareCondition('originate', $amiUser['originate']);
-            $this->findCheckOnPageAndCompareCondition('agent', $amiUser['agent']);
-            $this->findCheckOnPageAndCompareCondition('dialplan', $amiUser['dialplan']);
-            $this->findCheckOnPageAndCompareCondition('log', $amiUser['log']);
-            $this->findCheckOnPageAndCompareCondition('user', $amiUser['user']);
-            $this->findCheckOnPageAndCompareCondition('cdr', $amiUser['cdr']);
-            $this->findCheckOnPageAndCompareCondition('reporting', $amiUser['reporting']);
-            $this->findCheckOnPageAndCompareCondition('config', $amiUser['config']);
-            $this->findCheckOnPageAndCompareCondition('dtmf', $amiUser['dtmf']);
-            $this->findCheckOnPageAndCompareCondition('system', $amiUser['system']);
-            $this->findCheckOnPageAndCompareCondition('verbose', $amiUser['verbose']);
+            $this->assertTextAreaValueIsEqual('description', $params['description']);
+            $this->assertInputFieldValueEqual('username', $params['username']);
+            $this->assertInputFieldValueEqual('secret', $params['secret']);
+            $this->findCheckOnPageAndCompareCondition('call', $params['call']);
+            $this->findCheckOnPageAndCompareCondition('originate', $params['originate']);
+            $this->findCheckOnPageAndCompareCondition('agent', $params['agent']);
+            $this->findCheckOnPageAndCompareCondition('dialplan', $params['dialplan']);
+            $this->findCheckOnPageAndCompareCondition('log', $params['log']);
+            $this->findCheckOnPageAndCompareCondition('user', $params['user']);
+            $this->findCheckOnPageAndCompareCondition('cdr', $params['cdr']);
+            $this->findCheckOnPageAndCompareCondition('reporting', $params['reporting']);
+            $this->findCheckOnPageAndCompareCondition('config', $params['config']);
+            $this->findCheckOnPageAndCompareCondition('dtmf', $params['dtmf']);
+            $this->findCheckOnPageAndCompareCondition('system', $params['system']);
+            $this->findCheckOnPageAndCompareCondition('verbose', $params['verbose']);
     }
 
+    /**
+     * Dataset provider
+     * @return array
+     */
     public function additionProvider(): array
     {
         $params = [];
         $params[] = [[
             'description' => 'The first ami user',
-            'username'    => 'mikoTestAMi',
+            'username'    => 'firstAmiUser4Test',
             'secret'      => 'theBigBigSecretWith#And%',
             'call'        => 'read',
             'originate'   => 'readwrite',
@@ -94,7 +100,7 @@ class CreateAmiUsersTest extends MikoPBXTestsBaseAlias
 
         $params[] = [[
             'description' => 'The second one user',
-            'username'    => 'mikoTestAMiSecond',
+            'username'    => 'secondAmiUser4Test',
             'secret'      => 'theBigBigSecretWith#And%and$',
             'call'        => '',
             'originate'   => 'readwrite',

@@ -16,12 +16,13 @@ class FillPBXSettingsTest extends MikoPBXTestsBase
 {
     /**
      * @depends testLogin
+     * @dataProvider additionProvider
+     *
+     * @param array $dataSet
      */
-    public function testFillPBXSettings(): void
+    public function testFillPBXSettings($dataSet): void
     {
         $this->clickSidebarMenuItemByHref("/admin-cabinet/general-settings/modify/");
-
-        $dataSet = $this->dataSet();
 
         foreach ($dataSet as $key => $value) {
             $this->findElementOnPageAndFillValue($key, $value);
@@ -36,25 +37,6 @@ class FillPBXSettingsTest extends MikoPBXTestsBase
         }
     }
 
-    private function dataSet(): array
-    {
-        $SSHAuthorizedKeys = 'ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAuzhViulNR4CXHvTfz8XVdrHq/Hmb3tZP9tFvwzEPtUmSK9ZihL2w45GhEkgXROKM4fY4Ii/KmZq+K2raWFUM54r7A83WseaAZpQM649WbJFVXPOwK6gDJtU/DaL4aSCsZwqhd6eE07ELVLnvjtQMvHqGd3lHI1zn/JnXZ55VDSTPqxDIApgCa5z8yNNXf3JGx5O+teHkG2pgh1Cnki7CE/aYzNWJW6ybq9rXQa6hGna53TuNfS1DwQ2LgF3bGG+Pl7PKCbU2CesqFw6uyGlWvdtF//GmZXEuy1FZNP1f5dHqyIxxanJOcd6rI1tkIZjtckrpIyfytC2coKZKJgX2aQ== nbek@miko.ru
-ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQDZ3hd6/gqPxMMCqFytFdVznYD3Debp2LKTRiJEaS2SSIRHtE9jMNJjCfMR3CnScjKFh19Hfg/SJf2/rmXIJOHNjZvZZ7GgPTMBYllj3okniCA4/vQQRd6FMVPa9Rhu+N2kyMoQcuDEhzL5kEw0ge5BJJcmNjzW+an3fKqB7QwfMQ== jorikfon@MacBook-Pro-Nikolay.local';
-
-        return [
-            'Name'                   => 'Тестовая 72',
-            'Description'            => 'log: admin  pass: 8635255226',
-            'PBXLanguage'            => 'en-en',
-            'PBXRecordCalls'         => true,
-            'SendMetrics'            => false,
-            'SSHPassword'            => '8635255226',
-            'SSHPasswordRepeat'      => '8635255226',
-            'SSHAuthorizedKeys'      => $SSHAuthorizedKeys,
-            'WebAdminPassword'       => '8635255226',
-            'WebAdminPasswordRepeat' => '8635255226',
-
-        ];
-    }
 
     private function findElementOnPageAndFillValue(string $key, $value): void
     {
@@ -116,6 +98,31 @@ ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQDZ3hd6/gqPxMMCqFytFdVznYD3Debp2LKTRiJEaS2S
         }
     }
 
+    /**
+     * Dataset provider
+     * @return array
+     */
+    private function additionProvider(): array
+    {
+        $params = [];
+        $SSHAuthorizedKeys = 'ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAuzhViulNR4CXHvTfz8XVdrHq/Hmb3tZP9tFvwzEPtUmSK9ZihL2w45GhEkgXROKM4fY4Ii/KmZq+K2raWFUM54r7A83WseaAZpQM649WbJFVXPOwK6gDJtU/DaL4aSCsZwqhd6eE07ELVLnvjtQMvHqGd3lHI1zn/JnXZ55VDSTPqxDIApgCa5z8yNNXf3JGx5O+teHkG2pgh1Cnki7CE/aYzNWJW6ybq9rXQa6hGna53TuNfS1DwQ2LgF3bGG+Pl7PKCbU2CesqFw6uyGlWvdtF//GmZXEuy1FZNP1f5dHqyIxxanJOcd6rI1tkIZjtckrpIyfytC2coKZKJgX2aQ== nbek@miko.ru
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQDZ3hd6/gqPxMMCqFytFdVznYD3Debp2LKTRiJEaS2SSIRHtE9jMNJjCfMR3CnScjKFh19Hfg/SJf2/rmXIJOHNjZvZZ7GgPTMBYllj3okniCA4/vQQRd6FMVPa9Rhu+N2kyMoQcuDEhzL5kEw0ge5BJJcmNjzW+an3fKqB7QwfMQ== jorikfon@MacBook-Pro-Nikolay.local';
+
+        $params[] = [[
+            'Name'                   => 'Тестовая 72',
+            'Description'            => 'log: admin  pass: 8635255226',
+            'PBXLanguage'            => 'en-en',
+            'PBXRecordCalls'         => true,
+            'SendMetrics'            => false,
+            'SSHPassword'            => '8635255226',
+            'SSHPasswordRepeat'      => '8635255226',
+            'SSHAuthorizedKeys'      => $SSHAuthorizedKeys,
+            'WebAdminPassword'       => '8635255226',
+            'WebAdminPasswordRepeat' => '8635255226',
+
+        ]];
+        return $params;
+    }
 }
 
 

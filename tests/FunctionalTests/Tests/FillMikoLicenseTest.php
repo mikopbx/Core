@@ -42,7 +42,11 @@ class FillMikoLicenseTest extends MikoPBXTestsBase
 
     }
 
-    public function additionProvider(): array
+    /**
+     * Dataset provider
+     * @return array
+     */
+    private function additionProvider(): array
     {
         return [
             ['MIKO-GW0DC-QEQQD-WN87S-C88PG']

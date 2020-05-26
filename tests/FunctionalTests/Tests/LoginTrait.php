@@ -20,34 +20,58 @@ use Facebook\WebDriver\WebDriverBy;
 
 trait LoginTrait
 {
-    public function testLogin(): void
+    /**
+     * @dataProvider loginDataProvider
+     *
+     * @param array $params
+     */
+    public function testLogin($params): void
     {
         self::$driver->get($GLOBALS['SERVER_PBX']);
-        $login = self::$driver->findElement(WebDriverBy::xpath("//input[@type = 'text' and @id = 'login' and @name = 'login']"));
-        if($login) {
-            $login->sendKeys("admin");
-        }
+        $this->changeInputField('login', $params['login']);
+        $this->changeInputField('password', $params['password']);
 
-        $password = self::$driver->findElement(WebDriverBy::xpath("//input[@type = 'password' and @id = 'password' and @name = 'password']"));
-        if($password) {
-            $password->sendKeys("admin");
-        }
+        $xpath = '//form[@id="login-form"]//ancestor::div[@id="submitbutton"]';
 
-        $submitButton = self::$driver->findElement(WebDriverBy::id('submitbutton'));
-        if($submitButton) {
-            $submitButton->click();
-            $errorMessages = self::$driver->findElements(WebDriverBy::className("error"));
-            if(count($errorMessages)>0) {
-                $password->clear();
-                $password->sendKeys("8635255226");
-                $submitButton->click();
+        $button_Submit = self::$driver->findElement(WebDriverBy::xpath($xpath));
+        $button_Submit->click();
+
+        $xpath = '//div[contains(@class,"error") and contains(@class,"message")]';
+        $errorMessages = self::$driver->findElements(WebDriverBy::xpath($xpath));
+        if(count($errorMessages)>0) {
+            foreach ($errorMessages as $errorMessage){
+                if ($errorMessage->isDisplayed()){
+                    $this->changeInputField('password', $params['password2']);
+                    $button_Submit = self::$driver->findElement(WebDriverBy::xpath($xpath));
+                    $button_Submit->click();
+                }
             }
 
-            self::$driver->wait(10, 500)->until(function($driver) {
-                $elements = $driver->findElements(WebDriverBy::id("top-menu-search"));
-                return count($elements) > 0;
-            });
         }
+
+        self::$driver->wait(10, 500)->until(function($driver) {
+            $elements = $driver->findElements(WebDriverBy::id("top-menu-search"));
+            return count($elements) > 0;
+        });
+
         $this->assertElementNotFound(WebDriverBy::xpath("//input[@type = 'text' and @id = 'login' and @name = 'login']"));
     }
+
+    /**
+     * Dataset provider
+     * @return array
+     */
+    public function loginDataProvider():array
+    {
+        $params = [];
+        $params[] = [[
+            'login'=>'admin',
+            'password'   => 'admin',
+            'password2' => '8635255226'
+        ]];
+
+        return $params;
+    }
+
+
 }

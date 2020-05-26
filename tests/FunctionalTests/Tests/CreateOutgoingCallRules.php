@@ -25,7 +25,7 @@ class CreateOutgoingCallRules extends MikoPBXTestsBase
         $this->clickSidebarMenuItemByHref('/admin-cabinet/outbound-routes/index/');
         $this->clickDeleteButtonOnRowWithText($params['rulename']);
 
-        $this->clickAddNewButtonByHref('/admin-cabinet/outbound-routes/modify');
+        $this->clickButtonByHref('/admin-cabinet/outbound-routes/modify');
         $this->changeInputField('rulename', $params['rulename']);
         $this->changeTextAreaValue('note', $params['note']);
         $this->changeInputField('numberbeginswith', $params['numberbeginswith']);
@@ -47,6 +47,10 @@ class CreateOutgoingCallRules extends MikoPBXTestsBase
         $this->assertMenuItemSelected('providerid', $params['providerid']);
     }
 
+    /**
+     * Dataset provider
+     * @return array
+     */
     public function additionProvider(): array
     {
         $params=[];

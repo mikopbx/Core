@@ -32,8 +32,8 @@
     </div>
 
     <div class="ui error message"></div>
-    <button type="submit" class="ui fluid large black button" id="submitbutton">
+    <div class="ui fluid large black button" id="submitbutton">
         {{ t._('auth_SubmitButton') }}
-    </button>
+    </div>
     </form>
 </div>

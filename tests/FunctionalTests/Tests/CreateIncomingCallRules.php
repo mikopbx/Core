@@ -28,7 +28,7 @@ class CreateIncomingCallRules extends MikoPBXTestsBase
         $this->clickSidebarMenuItemByHref('/admin-cabinet/incoming-routes/index/');
         $this->clickDeleteButtonOnRowWithText($params['note']);
 
-        $this->clickAddNewButtonByHref('/admin-cabinet/incoming-routes/modify');
+        $this->clickButtonByHref('/admin-cabinet/incoming-routes/modify');
         $this->changeTextAreaValue('note', $params['note']);
         $this->selectDropdownItem('provider', $params['provider']);
         $this->changeInputField('number', $params['number']);
@@ -78,6 +78,10 @@ class CreateIncomingCallRules extends MikoPBXTestsBase
 
     }
 
+    /**
+     * Dataset provider
+     * @return array
+     */
     public function additionProvider() :array
     {
         $params=[];

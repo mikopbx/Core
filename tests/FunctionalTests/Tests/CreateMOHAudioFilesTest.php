@@ -13,8 +13,9 @@ namespace MikoPBX\FunctionalTests\Tests;
 use Facebook\WebDriver\WebDriverBy;
 use MikoPBX\FunctionalTests\Lib\MikoPBXTestsBase;
 
-class CreateAudioFilesTest extends MikoPBXTestsBase
+class CreateMOHAudioFilesTest extends MikoPBXTestsBase
 {
+
     /**
      * @depends      testLogin
      * @dataProvider additionProvider
@@ -24,10 +25,11 @@ class CreateAudioFilesTest extends MikoPBXTestsBase
      * @throws \Facebook\WebDriver\Exception\NoSuchElementException
      * @throws \Facebook\WebDriver\Exception\TimeoutException
      */
-    public function testCreateAudioFile($params):void
+    public function testCreateMohFile($params):void
     {
         $this->clickSidebarMenuItemByHref('/admin-cabinet/sound-files/index/');
-        $this->clickDeleteButtonOnRowWithText($params['name']);
+        $this->changeTabOnCurrentPage('moh');
+        $this->clickDeleteButtonOnRowWithText('moh_'.$params['name']);
 
         $this->clickButtonByHref('/admin-cabinet/sound-files/modify/custom');
 
@@ -36,7 +38,7 @@ class CreateAudioFilesTest extends MikoPBXTestsBase
 
         self::$driver->wait(30, 500)->until(
             function ($driver) {
-                $xpath = '//form[@id="sound-file-form"]';
+                $xpath = '//form[@id="moh-sound-files-table"]';
                 $form = $driver->findElement(WebDriverBy::xpath($xpath));
                 $class = $form->getAttribute('class');
                 return stripos('loading', $class)!==FALSE;
@@ -45,22 +47,22 @@ class CreateAudioFilesTest extends MikoPBXTestsBase
 
         self::$driver->wait(30, 500)->until(
             function ($driver) {
-                $xpath = '//form[@id="sound-file-form"]';
+                $xpath = '//form[@id="moh-sound-files-table"]';
                 $form = $driver->findElement(WebDriverBy::xpath($xpath));
                 $class = $form->getAttribute('class');
                 return stripos('loading', $class)===FALSE;
             }
         );
 
+        $this->changeInputField('name', 'moh_'.$params['name']);
 
-        $this->changeInputField('name', $params['name']);
-
-        $this->submitForm('sound-file-form');
+        $this->submitForm('moh-sound-files-table');
 
         $this->clickSidebarMenuItemByHref('/admin-cabinet/sound-files/index/');
+        $this->changeTabOnCurrentPage('moh');
 
-        $this->clickModifyButtonOnRowWithText($params['name']);
-        $this->assertInputFieldValueEqual('name', $params['name']);
+        $this->clickModifyButtonOnRowWithText('moh_'.$params['name']);
+        $this->assertInputFieldValueEqual('name', 'moh_'.$params['name']);
     }
 
 

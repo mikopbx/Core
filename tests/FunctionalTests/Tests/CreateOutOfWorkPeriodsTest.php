@@ -25,7 +25,7 @@ class CreateOutOfWorkPeriodsTest extends MikoPBXTestsBase
         $this->clickSidebarMenuItemByHref('/admin-cabinet/out-off-work-time/index/');
         $this->clickDeleteButtonOnRowWithText($params['description']);
 
-        $this->clickAddNewButtonByHref('/admin-cabinet/out-off-work-time/modify');
+        $this->clickButtonByHref('/admin-cabinet/out-off-work-time/modify');
         $this->changeTextAreaValue('description', $params['description']);
 
         $xpath        = '//div[@id="erase-dates"]';
@@ -103,6 +103,10 @@ class CreateOutOfWorkPeriodsTest extends MikoPBXTestsBase
         }
     }
 
+    /**
+     * Dataset provider
+     * @return array
+     */
     public function additionProvider():array
     {
         $params=[];
