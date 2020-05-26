@@ -7,10 +7,6 @@
  * Written by Alexey Portnov, 5 2020
  */
 
-if ( ! class_exists('AGI_AsteriskManager')) {
-    require_once(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'phpagi-asmanager.php');
-}
-
 define('AST_CONFIG_DIR', '/etc/asterisk/');
 define('AST_SPOOL_DIR', '/var/spool/asterisk/');
 define('AST_TMP_DIR', AST_SPOOL_DIR . '/tmp/');
@@ -69,7 +65,7 @@ class AGI
      * @var array
      * @access public
      */
-    public $request;
+    public array $request;
 
     /**
      * Config variables
@@ -78,15 +74,6 @@ class AGI
      * @access public
      */
     public $config;
-
-    /**
-     * Asterisk Manager
-     *
-     * @var AGI_AsteriskManager
-     * @access public
-     */
-    public $asmanager;
-    public $asm;
 
     /**
      * Input Stream
@@ -115,7 +102,7 @@ class AGI
      *
      * @access public
      */
-    public $option_delim = ",";
+    public string  $option_delim = ",";
 
     /**
      * Constructor
@@ -2049,19 +2036,6 @@ class AGI
 
         return $text;
     }
-
-    /**
-     * Create a new AGI_AsteriskManager.
-     */
-    public function &new_AsteriskManager()
-    {
-        $this->asm       = new AGI_AsteriskManager(null, $this->config);
-        $this->asm->pagi =& $this;
-        $this->config    =& $this->asm->config;
-
-        return $this->asm;
-    }
-
 }
 
 
@@ -2133,15 +2107,15 @@ function phpagi_error_handler($level, $message, $file, $line, $context)
         // make sure message is fully readable (convert unprintable chars to hex representation)
         $ret = '';
         for ($i = 0; $i < strlen($message); $i++) {
-            $c = ord($message{$i});
+            $c = ord($message[$i]);
             if ($c == 10 || $c == 13 || $c == 9) {
-                $ret .= $message{$i};
+                $ret .= $message[$i];
             } elseif ($c < 16) {
                 $ret .= '\x0' . dechex($c);
             } elseif ($c < 32 || $c > 127) {
                 $ret .= '\x' . dechex($c);
             } else {
-                $ret .= $message{$i};
+                $ret .= $message[$i];
             }
         }
         $message = $ret;
