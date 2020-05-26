@@ -8,16 +8,8 @@
 
 use MikoPBX\Core\System\Util;
 
-
-/**
- * Written for PHP 4.3.4, should work with older PHP 4.x versions.
- * Please submit bug reports, patches, etc to http://sourceforge.net/projects/phpagi/
- * Gracias. :)
- *
- */
-
-if ( ! class_exists('AGI')) {
-    require_once __DIR__ . '/phpagi.php';
+if ( !class_exists('AGI')) {
+    require_once __DIR__.DIRECTORY_SEPARATOR.'phpagi.php';
 }
 
 /**

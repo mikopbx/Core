@@ -7,6 +7,10 @@
  * Written by Alexey Portnov, 5 2020
  */
 
+if ( !class_exists('AGI_AsteriskManager')) {
+    require_once(__DIR__.DIRECTORY_SEPARATOR.'phpagi-asmanager.php');
+}
+
 define('AST_DIGIT_ANY',                 '0123456789#*');
 define('AGIRES_OK',                     200);
 define('AST_STATE_DOWN',                0);
