@@ -30,7 +30,7 @@ class CreateDialPlanApplicationTest extends MikoPBXTestsBase
         $this->changeTextAreaValue('description', $params['description']);
         $this->changeInputField('hint', $params['hint']);
         $this->changeInputField('extension', $params['extension']);
-        $this->selectDropdownItem('type', $params['hint']);
+        $this->selectDropdownItem('type', $params['type']);
 
         $this->changeTabOnCurrentPage('code');
         $textAreaACEContent = self::$driver->findElement(WebDriverBy::xpath('id("application-code")//textarea'));
@@ -40,12 +40,13 @@ class CreateDialPlanApplicationTest extends MikoPBXTestsBase
         // Сохраняем
         $this->submitForm('dialplan-application-form');
 
+        $this->clickSidebarMenuItemByHref("/admin-cabinet/dialplan-applications/index/");
         $this->clickModifyButtonOnRowWithText($params['extension']);
         $this->assertInputFieldValueEqual('name', $params['name']);
         $this->assertTextAreaValueIsEqual('description', $params['description']);
         $this->assertInputFieldValueEqual('hint', $params['hint']);
         $this->assertInputFieldValueEqual('extension', $params['extension']);
-        $this->assertMenuItemSelected('type', $params['hint']);
+        $this->assertMenuItemSelected('type', $params['type']);
         $this->assertInputFieldValueEqual('applicationlogic', $params['applicationlogic']);
 
         }
@@ -81,7 +82,7 @@ n,Goto(5)',
         ]];
         $params[] = [[
             'extension'=>'10000123',
-            'name'=>'1C MIKO SMART IVR ',
+            'name'=>'1C MIKO SMART IVR',
             'description'=>"Генерация IVR меню на основе данных CRM системы",
             'hint'=>'10000123',
             'type'=>"php",
@@ -90,8 +91,7 @@ require_once \'globals.php\';
 require_once \'phpagi.php\';
 
 $ivr    = new SmartIVR();
-$result = $ivr->startIVR();
-',
+$result = $ivr->startIVR();',
         ]];
         return $params;
     }

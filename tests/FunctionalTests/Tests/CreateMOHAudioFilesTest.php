@@ -31,32 +31,24 @@ class CreateMOHAudioFilesTest extends MikoPBXTestsBase
         $this->changeTabOnCurrentPage('moh');
         $this->clickDeleteButtonOnRowWithText('moh_'.$params['name']);
 
-        $this->clickButtonByHref('/admin-cabinet/sound-files/modify/custom');
+        $this->clickButtonByHref('/admin-cabinet/sound-files/modify/moh');
 
         $this->changeFileField('sound-file', $params['path']);
 
 
+        self::$driver->wait(2);
         self::$driver->wait(30, 500)->until(
             function ($driver) {
-                $xpath = '//form[@id="moh-sound-files-table"]';
+                $xpath = '//form[@id="sound-file-form"]';
                 $form = $driver->findElement(WebDriverBy::xpath($xpath));
                 $class = $form->getAttribute('class');
-                return stripos('loading', $class)!==FALSE;
-            }
-        );
-
-        self::$driver->wait(30, 500)->until(
-            function ($driver) {
-                $xpath = '//form[@id="moh-sound-files-table"]';
-                $form = $driver->findElement(WebDriverBy::xpath($xpath));
-                $class = $form->getAttribute('class');
-                return stripos('loading', $class)===FALSE;
+                return stripos($class, 'loading')===false;
             }
         );
 
         $this->changeInputField('name', 'moh_'.$params['name']);
 
-        $this->submitForm('moh-sound-files-table');
+        $this->submitForm('sound-file-form');
 
         $this->clickSidebarMenuItemByHref('/admin-cabinet/sound-files/index/');
         $this->changeTabOnCurrentPage('moh');

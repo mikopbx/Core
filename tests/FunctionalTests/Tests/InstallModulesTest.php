@@ -59,7 +59,7 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
 
     }
 
-    protected function additionProvider():array
+    public function additionProvider(): array
     {
         $params=[];
         $params[] = [[

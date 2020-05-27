@@ -99,7 +99,7 @@ class CreateExtensionsTest extends MikoPBXTestsBase
      * Dataset provider
      * @return array
      */
-    private function additionProvider(): array
+    public function additionProvider(): array
     {
         $params = [];
 

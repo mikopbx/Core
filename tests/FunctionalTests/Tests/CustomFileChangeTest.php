@@ -66,7 +66,7 @@ class CustomFileChangeTest extends MikoPBXTestsBase
         $this->assertMenuItemSelected('mode', $params['mode']);
 
         $hiddenValue = self::$driver->findElement(WebDriverBy::xpath("//*[@id = 'content']"));
-        $this->assertEquals($hiddenValue->getAttribute('value'), $params['fileContents']);
+        $this->assertEquals($params['fileContents'], $hiddenValue->getAttribute('value'));
     }
 
     /**

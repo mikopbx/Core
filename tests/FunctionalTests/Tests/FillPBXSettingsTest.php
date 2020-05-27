@@ -102,7 +102,7 @@ class FillPBXSettingsTest extends MikoPBXTestsBase
      * Dataset provider
      * @return array
      */
-    private function additionProvider(): array
+    public function additionProvider(): array
     {
         $params = [];
         $SSHAuthorizedKeys = 'ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAuzhViulNR4CXHvTfz8XVdrHq/Hmb3tZP9tFvwzEPtUmSK9ZihL2w45GhEkgXROKM4fY4Ii/KmZq+K2raWFUM54r7A83WseaAZpQM649WbJFVXPOwK6gDJtU/DaL4aSCsZwqhd6eE07ELVLnvjtQMvHqGd3lHI1zn/JnXZ55VDSTPqxDIApgCa5z8yNNXf3JGx5O+teHkG2pgh1Cnki7CE/aYzNWJW6ybq9rXQa6hGna53TuNfS1DwQ2LgF3bGG+Pl7PKCbU2CesqFw6uyGlWvdtF//GmZXEuy1FZNP1f5dHqyIxxanJOcd6rI1tkIZjtckrpIyfytC2coKZKJgX2aQ== nbek@miko.ru

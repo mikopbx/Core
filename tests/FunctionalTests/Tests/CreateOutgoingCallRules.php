@@ -14,6 +14,13 @@ use MikoPBX\FunctionalTests\Lib\MikoPBXTestsBase;
 
 class CreateOutgoingCallRules extends MikoPBXTestsBase
 {
+    public static function setUpBeforeClass():void
+    {
+        parent::setUpBeforeClass();
+        $basic= new MikoPBXTestsBase();
+        $basic->deleteAllRecordsOnTable('routingTable');
+    }
+
     /**
      * @depends testLogin
      * @dataProvider additionProvider
@@ -35,8 +42,11 @@ class CreateOutgoingCallRules extends MikoPBXTestsBase
         $this->selectDropdownItem('providerid', $params['providerid']);
 
         $this->submitForm('outbound-route-form');
+        $id = $this->getCurrentRecordID();
+
         $this->clickSidebarMenuItemByHref('/admin-cabinet/outbound-routes/index/');
 
+        $this->clickModifyButtonOnRowWithID($id);
         //Asserts
         $this->assertInputFieldValueEqual('rulename', $params['rulename']);
         $this->assertTextAreaValueIsEqual('note', $params['note']);
@@ -68,7 +78,7 @@ class CreateOutgoingCallRules extends MikoPBXTestsBase
             'note' => 'Calls to everywhere',
             'numberbeginswith' => '00',
             'restnumbers'        => '10',
-            'trimfrombegin'        => '00',
+            'trimfrombegin'        => '2',
             'prepend'         => '777',
             'providerid'=>'SIP-PROVIDER-34F7CCFE873B9DABD91CC8D75342CB43'
         ]];

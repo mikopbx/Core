@@ -10,6 +10,7 @@
 namespace MikoPBX\FunctionalTests\Tests;
 
 
+use Facebook\WebDriver\WebDriverBy;
 use MikoPBX\FunctionalTests\Lib\MikoPBXTestsBase;
 
 class NetworkInterfacesTest extends MikoPBXTestsBase
@@ -25,7 +26,7 @@ class NetworkInterfacesTest extends MikoPBXTestsBase
         $this->clickSidebarMenuItemByHref("/admin-cabinet/network/modify/");
         $this->changeTabOnCurrentPage('new');
         $this->selectDropdownItem('interface_new',$params['interface_new']);
-        $this->changeInputField('name_new',$params['name_new']);
+        $this->changeInputField('name_new', $params['name_new']);
         $this->changeCheckBoxState('dhcp_new',$params['dhcp_new']);
         $this->changeInputField('ipaddr_new',$params['ipaddr_new']);
         $this->selectDropdownItem('subnet_new',$params['subnet_new']);
@@ -40,11 +41,19 @@ class NetworkInterfacesTest extends MikoPBXTestsBase
 
         $this->submitForm('network-form');
         $this->clickSidebarMenuItemByHref("/admin-cabinet/network/modify/");
-        $this->changeTabOnCurrentPage($params['interface_new'].'.'.$params['name_new']);
 
+        $xpath = '//div[@id="eth-interfaces-menu"]/a[contains(@class,"item")]';
+        $networks = self::$driver->findElements(WebDriverBy::xpath($xpath));
+        $newTabName = "{$params['name_new']} ({$params['interface_new']}.{$params['vlanid_new']})";
+        $index = null;
+        foreach ($networks as $network){
+            if ($network->getText()===$newTabName){
+                $index = $network->getAttribute('data-tab');
+            }
+        }
 
-        //TODO:: Определить индекс новго интерфейса
-        $index=3;
+        $this->changeTabOnCurrentPage($index);
+
         $this->assertMenuItemSelected('interface_new', $params['interface_new']);
         $this->assertInputFieldValueEqual('name_'.$index, $params['name_new']);
         $this->assertCheckBoxStageIsEqual('dhcp_'.$index, $params['dhcp_new']);

@@ -10,10 +10,19 @@
 namespace MikoPBX\FunctionalTests\Tests;
 
 
+use MikoPBX\FunctionalTests\Lib\MikoPBXTestsBase;
 use MikoPBX\FunctionalTests\Lib\MikoPBXTestsBase as MikoPBXTestsBaseAlias;
 
 class CreateAmiUsersTest extends MikoPBXTestsBaseAlias
 {
+
+    public static function setUpBeforeClass():void
+    {
+        parent::setUpBeforeClass();
+        $basic= new MikoPBXTestsBase();
+        $basic->deleteAllRecordsOnTable('ami-users-table');
+    }
+
 
     /**
      * @depends testLogin
@@ -27,7 +36,6 @@ class CreateAmiUsersTest extends MikoPBXTestsBaseAlias
                 'document.getElementById("sidebar-menu").scrollTo(0,document.body.scrollHeight);'
             );
             $this->clickSidebarMenuItemByHref('/admin-cabinet/asterisk-managers/index/');
-            $this->clickDeleteButtonOnRowWithText($params['username']);
 
             $this->clickButtonByHref('/admin-cabinet/asterisk-managers/modify');
 

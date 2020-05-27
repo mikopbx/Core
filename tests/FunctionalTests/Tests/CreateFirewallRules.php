@@ -14,6 +14,13 @@ use MikoPBX\FunctionalTests\Lib\MikoPBXTestsBase;
 
 class CreateFirewallRules extends MikoPBXTestsBase
 {
+    public static function setUpBeforeClass():void
+    {
+        parent::setUpBeforeClass();
+        $basic= new MikoPBXTestsBase();
+        $basic->deleteAllRecordsOnTable('firewall-table');
+    }
+
     /**
      * @depends testLogin
      * @dataProvider additionProvider
@@ -25,7 +32,6 @@ class CreateFirewallRules extends MikoPBXTestsBase
         $this->clickSidebarMenuItemByHref("/admin-cabinet/firewall/index/");
 
         $this->changeCheckBoxState('status',$params['status']);
-        $this->clickDeleteButtonOnRowWithText($params['description']);
         $this->clickButtonByHref('/admin-cabinet/firewall/modify');
         $this->changeInputField('description',$params['description']);
         $this->changeInputField('network',$params['network']);
