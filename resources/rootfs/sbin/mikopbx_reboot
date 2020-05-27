@@ -3,8 +3,8 @@
 REBOOT_PID=$$;
 export REBOOT_PID;
 
-/etc/rc/freestorage;
-/etc/rc/freeupoffload;
+/bin/freestorage;
+/bin/freeupoffload;
 
 if [ -f /tmp/ejectcd ]; then
     # Попробуем изъять диск.

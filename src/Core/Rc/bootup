@@ -22,7 +22,6 @@ if(file_exists('/tmp/ejectcd')){
 $mikoPBX = new SystemLoader();
 Util::echoWithSyslog(' - Start SystemLoader\startSystem...'.PHP_EOL);
 $result = $mikoPBX->startSystem();
-Util::echoGreenDone();
 
 if((true === $result) && ! file_exists('/offload/livecd')) {
     Util::mwExecBg('/etc/rc/bootup_pbx');

@@ -15,12 +15,12 @@ kill_by_pids()
                 echo "---- MAIN_PID - $MAIN_PID ----"
             else
                 kill $2 ${handle} > /dev/null 2>&1
-
-                if [ "$?" != "0" ]; then
+                resultKill=$?;
+                if [ "$resultKill" != "0" ]; then
                     name=`/bin/busybox ps -A -f -o pid,args | /bin/busybox grep "${handle}" | /bin/busybox grep -v grep`;
-                    echo " |   - ERROR kill ${handle} ${name}";
+                    echo " |   - ERROR kill ${handle} ${name} result: $resultKill";
                 else
-                    echo " |   - kill process ${handle} with option $2 return $?"
+                    echo " |   - kill process ${handle} with option: $2 return: $resultKill"
                 fi;
             fi
         done

@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 4 2020
+ * Written by Alexey Portnov, 5 2020
  */
 
 namespace MikoPBX\Core\System;
@@ -212,7 +212,16 @@ class System
      */
     public static function rebootSync(): void
     {
-        Util::mwExec("/etc/rc/reboot > /dev/null 2>&1");
+        Util::mwExec("/sbin/mikopbx_reboot > /dev/null 2>&1");
+    }
+
+    /**
+     * Reboots the system after calling system_reboot_cleanup()
+     *
+     */
+    public static function rebootSyncBg(): void
+    {
+        Util::mwExecBg("/sbin/mikopbx_reboot > /dev/null 2>&1");
     }
 
     /**
@@ -220,7 +229,7 @@ class System
      */
     public static function shutdown(): void
     {
-        Util::mwExec("/etc/rc/shutdown > /dev/null 2>&1");
+        Util::mwExec("/sbin/shutdown > /dev/null 2>&1");
     }
 
     /**
@@ -630,7 +639,7 @@ server 2.pool.ntp.org';
                 $cntr->parse();
                 $cntr->makeConfig();
                 file_put_contents('/tmp/ejectcd', '');
-                Util::mwExecBg('/etc/rc/reboot', '/dev/null', 3);
+                Util::mwExecBg('/sbin/mikopbx_reboot', '/dev/null', 3);
             } catch (Exception $e) {
                 $result = [
                     'result'  => 'Error',

@@ -248,11 +248,13 @@ $menu = (new CliMenuBuilder())
             ->enableAutoShortcuts()
             ->addItem('[1] '.Util::translate('Reboot'), function (CliMenu $menu) {
                 $menu->close();
-                System::rebootSync();
+                file_put_contents('/tmp/rebooting', '1');
+                exit(0);
             })
             ->addItem('[2] '.Util::translate('Power off'), function (CliMenu $menu) {
                 $menu->close();
-                System::shutdown();
+                file_put_contents('/tmp/shutdown', '1');
+                exit(0);
             })
             ->setWidth(75)
             ->setForegroundColour('white', 'white')
@@ -359,11 +361,11 @@ $menu = (new CliMenuBuilder())
 
                 $dev_name = file_exists("{$data->device}4")?"{$data->device}4":"{$data->device}1";
 
-                passthru('/etc/rc/freestorage');
+                passthru('/bin/freestorage');
                 passthru('e2fsck -f -p '.escapeshellarg($dev_name), $return_var);
                 echo "check return $return_var";
                 sleep(2);
-                system('/etc/rc/reboot');
+                system('/sbin/mikopbx_reboot');
             })
             ->addItem('[3] '.Util::translate('Resize storage'), function (CliMenu $menu) {
                 /** @var MikoPBX\Common\Models\Storage $data */
@@ -392,12 +394,12 @@ $menu = (new CliMenuBuilder())
                     exit(0);
                 }
 
-                passthru('/etc/rc/freestorage');
+                passthru('/bin/freestorage');
                 passthru('/etc/rc/resize_storage_part '.escapeshellarg($data->device),$return_var);
                 echo "resize storage return $return_var";
                 sleep(2);
                 if($return_var === 0){
-                    Util::mwExecBg('/etc/rc/reboot');
+                    Util::mwExecBg('/sbin/mikopbx_reboot');
                 }
 
             })
