@@ -49,11 +49,11 @@ recover_upgrade)
             fi
 
             echo " - free storage ...";
-            /etc/rc/freestorage;
+            /bin/freestorage;
         fi
 
         # Отключаем основной диск.
-	    /etc/rc/freeupoffload;
+	    /bin/freeupoffload;
     fi
 
 	echo " - installing image..."
@@ -84,7 +84,7 @@ recover_upgrade)
     fi
 
 	echo " - rebooting system...";
-	/etc/rc/reboot;
+	/sbin/mikopbx_reboot;
 	;;
 
 esac

@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 4 2020
+ * Written by Alexey Portnov, 5 2020
  */
 
 use MikoPBX\Core\Config\RegisterDIServices;
@@ -22,8 +22,10 @@ $errorLogger->init();
 
 RegisterDIServices::init();
 
-// Setup timezone //TODO:: Это надо один раз при загрузке системы?
-// if(is_file('/etc/localtime')){
-//      System::phpTimeZoneConfigure();
-// }
+// Setup timezone
+//if(file_exists('/etc/localtime')){
+//    // TODO Это нужно выполнять при запуске скрипта php.
+//    // В идеале, в php-ini прописать таймзону - тогда с тайм зоной проблемы не будет и вызывать не потребуется.
+//    MikoPBX\Core\System\System::phpTimeZoneConfigure();
+//}
 

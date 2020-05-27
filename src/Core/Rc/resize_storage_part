@@ -58,13 +58,13 @@ fi;
 is_mounted=$(mount | grep "$disk");
 if [ "${is_mounted}x" != "x" ]; then
     echo ' - free storage...';
-    /etc/rc/freestorage;
+    /bin/freestorage;
 fi;
 
 echo " - delete part ${part} / add new part ${part}...";
 
 if [ -b "${disk}4" ]; then
-    /etc/rc/freeupoffload;
+    /bin/freeupoffload;
     fdisk "$disk" > /dev/null 2> /dev/null << EOF
 d
 ${part}
@@ -103,6 +103,6 @@ fi;
 
 if [ "${need_reboot}x" != "x" ]; then
     touch /tmp/ejectcd;
-    /etc/rc/reboot;
+    /sbin/mikopbx_reboot;
 fi;
 

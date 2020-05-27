@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 2 2020
+ * Written by Alexey Portnov, 5 2020
  */
 namespace MikoPBX\Core\Rc;
 
@@ -94,7 +94,7 @@ if (strtolower(trim(fgets($fp)) ) === 'y') {
         Util::mwExec("umount {$mnt}");
     }
     echo " - unpacking img...\n";
-    system("/bin/gunzip -c /offload/firmware.img.gz | dd of=/dev/{$target_disk} bs=512");
+    system("/bin/pv -tpreb /offload/firmware.img.gz | /bin/gunzip | dd of=/dev/{$target_disk} bs=512 2> /dev/null");
     echo " - create storage partition...\n";
     system("/etc/rc/initial.storage.part.four create /dev/{$target_disk}");
     echo " - create storage - done\n";
@@ -108,8 +108,8 @@ if (strtolower(trim(fgets($fp)) ) === 'y') {
     /** Монтируем диск с настройками */
 	Util::mwExec("/bin/mount -w -o noatime /dev/{$target_disk}3 /mnttmp");
 
-    $config = new MikoPBXConfig();
-    $lang = $config->getGeneralSettings('SSHLanguage');
+    $mikoPBXconfig = new MikoPBXConfig();
+    $lang = $mikoPBXconfig->getGeneralSettings('SSHLanguage');
     
     $filename       = $config->path('database.dbfile');
     $filename_lang  = "/offload/conf/mikopbx-{$lang}.db";

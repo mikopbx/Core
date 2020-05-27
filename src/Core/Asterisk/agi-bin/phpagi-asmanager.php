@@ -3,21 +3,13 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 2 2020
+ * Written by Alexey Portnov, 5 2020
  */
 
 use MikoPBX\Core\System\Util;
 
-
-/**
- * Written for PHP 4.3.4, should work with older PHP 4.x versions.
- * Please submit bug reports, patches, etc to http://sourceforge.net/projects/phpagi/
- * Gracias. :)
- *
- */
-
-if ( ! class_exists('AGI')) {
-    require_once __DIR__ . '/phpagi.php';
+if ( !class_exists('AGI')) {
+    require_once __DIR__.DIRECTORY_SEPARATOR.'phpagi.php';
 }
 
 /**
@@ -96,8 +88,6 @@ class AGI_AsteriskManager
         // load config
         if ( ! is_null($config) && file_exists($config)) {
             $this->config = parse_ini_file($config, true);
-        } elseif (file_exists(DEFAULT_PHPAGI_CONFIG)) {
-            $this->config = parse_ini_file(DEFAULT_PHPAGI_CONFIG, true);
         }
 
         // If optconfig is specified, stuff vals and vars into 'asmanager' config array.
@@ -322,10 +312,9 @@ class AGI_AsteriskManager
         }
         $parameters['data'] = [];
         $m                  = [];
-        $key                = '';
-        $value              = '';
         do {
-            $buff  = fgets($this->socket, 4096);
+            $value = '';
+            $buff  = fgets($this->socket, 4096).$value;
             $a_pos = strpos($buff, ':');
             if ( ! $a_pos) {
                 if (count($m) > 0) {
@@ -425,7 +414,7 @@ class AGI_AsteriskManager
             try {
                 $buffer = trim(@fgets($this->socket, 4096));
             } catch (Exception $e) {
-                return false;
+                return [];
             }
             while ($buffer != '') {
                 $a = strpos($buffer, ':');
