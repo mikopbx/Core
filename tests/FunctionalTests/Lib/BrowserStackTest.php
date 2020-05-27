@@ -27,12 +27,12 @@ class BrowserStackTest extends TestCase
             }
         }
 
-        // if(array_key_exists("browserstack.local", $caps) && $caps["browserstack.local"])
-        // {
-        //     $bs_local_args = array("key" => $GLOBALS['BROWSERSTACK_ACCESS_KEY']);
-        //     self::$bs_local = new BrowserStack\Local();
-        //     self::$bs_local->start($bs_local_args);
-        // }
+        if(array_key_exists("browserstack.local", $caps) && $caps["browserstack.local"])
+        {
+            $bs_local_args = array("key" => $GLOBALS['BROWSERSTACK_ACCESS_KEY']);
+            self::$bs_local = new \BrowserStack\Local();
+            self::$bs_local->start($bs_local_args);
+        }
 
         self::$driver = RemoteWebDriver::create($url, $caps);
     }

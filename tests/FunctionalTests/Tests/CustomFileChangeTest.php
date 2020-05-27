@@ -6,6 +6,7 @@
  * Written by Nikolay Beketov, 5 2020
  *
  */
+
 namespace MikoPBX\FunctionalTests\Tests;
 
 use Facebook\WebDriver\WebDriverBy;
@@ -15,62 +16,76 @@ class CustomFileChangeTest extends MikoPBXTestsBase
 {
 
     /**
-     * @depends testLogin
+     * @depends      testLogin
+     * @dataProvider additionProvider
+     *
+     * @param $params
+     *
+     * @throws \Facebook\WebDriver\Exception\NoSuchElementException
+     * @throws \Facebook\WebDriver\Exception\TimeoutException
      */
-    public function testChangeCustomFile(): void
+    public function testChangeCustomFile($params): void
     {
         // Входим на страницу файлами
         self::$driver->executeScript('document.getElementById("sidebar-menu").scrollTo(0,document.body.scrollHeight);');
         $this->clickSidebarMenuItemByHref("/admin-cabinet/custom-files/index/");
 
-        $filesData = $this->getFilesData();
-        foreach ($filesData as $record){
-            // Находим строчку с файлом по пути из базы данных
-            $this->clickModifyButtonOnRowWithText($record['filePath']);
 
-            $this->changeTextAreaValue('description', $record['description']);
+        // Находим строчку с файлом по пути из базы данных
+        $this->clickModifyButtonOnRowWithText($params['filePath']);
 
-            $this->selectDropdownItem('mode', $record['mode']);
+        $this->changeTextAreaValue('description', $params['description']);
 
-            self::$driver->wait()->until(
-                \Facebook\WebDriver\WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::xpath('id("application-code")//textarea'))
-            );
+        $this->selectDropdownItem('mode', $params['mode']);
 
-            $textAreaACEContent=self::$driver->findElement(WebDriverBy::xpath('id("application-code")//textarea'));
-            $textAreaACEContent->clear();
-            $textAreaACEContent->sendKeys($record['fileContents']);
+        self::$driver->wait()->until(
+            \Facebook\WebDriver\WebDriverExpectedCondition::presenceOfElementLocated(
+                WebDriverBy::xpath('id("application-code")//textarea')
+            )
+        );
 
-            $this->submitForm('custom-file-form');
+        $textAreaACEContent = self::$driver->findElement(WebDriverBy::xpath('id("application-code")//textarea'));
+        $textAreaACEContent->clear();
+        $textAreaACEContent->sendKeys($params['fileContents']);
 
-            self::$driver->executeScript('document.getElementById("sidebar-menu").scrollTo(0,document.body.scrollHeight);');
+        $this->submitForm('custom-file-form');
 
-            $this->clickSidebarMenuItemByHref("/admin-cabinet/custom-files/index/");
+        self::$driver->executeScript('document.getElementById("sidebar-menu").scrollTo(0,document.body.scrollHeight);');
 
-            $filesList = self::$driver->findElement(WebDriverBy::xpath('id("custom-files-table")'));
-            $this->assertStringContainsString($record['description'], $filesList->getText());
+        $this->clickSidebarMenuItemByHref("/admin-cabinet/custom-files/index/");
 
-            // Находим строчку с файлом по пути из базы данных
-            $this->clickModifyButtonOnRowWithText($record['filePath']);
+        $filesList = self::$driver->findElement(WebDriverBy::xpath('id("custom-files-table")'));
+        $this->assertStringContainsString($params['description'], $filesList->getText());
 
-            $this->assertTextAreaValueIsEqual('description', $record['description']);
+        // Находим строчку с файлом по пути из базы данных
+        $this->clickModifyButtonOnRowWithText($params['filePath']);
 
-            // Находим строчку с нужной опцией по значению
-            $this->assertMenuItemSelected('mode', $record['mode']);
+        $this->assertTextAreaValueIsEqual('description', $params['description']);
 
-            $hiddenValue =self::$driver->findElement(WebDriverBy::xpath("//*[@id = 'content']"));
-            $this->assertEquals($hiddenValue->getAttribute('value'), $record['fileContents']);
-        }
+        // Находим строчку с нужной опцией по значению
+        $this->assertMenuItemSelected('mode', $params['mode']);
+
+        $hiddenValue = self::$driver->findElement(WebDriverBy::xpath("//*[@id = 'content']"));
+        $this->assertEquals($hiddenValue->getAttribute('value'), $params['fileContents']);
     }
 
-    protected function getFilesData(): array
+    /**
+     * Dataset provider
+     *
+     * @return array
+     */
+    public function additionProvider(): array
     {
-        return [
+        $params   = [];
+        $params[] = [
             [
-                'filePath'=>'/var/spool/cron/crontabs/root',
-                'mode'=>'append',
-                'fileContents'=>"*/1 * * * * /etc/rc/remount-offload-rw > /dev/null 2> /dev/null",
-                'description'=>'Подключаем режим записи для Offload диска'
-            ]
+                'filePath'     => '/var/spool/cron/crontabs/root',
+                'mode'         => 'append',
+                'fileContents' => "*/1 * * * * /etc/rc/remount-offload-rw > /dev/null 2> /dev/null",
+                'description'  => 'Подключаем режим записи для Offload диска',
+            ],
         ];
+
+        return $params;
     }
 }

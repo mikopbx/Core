@@ -2,6 +2,9 @@
 
 $config_file = getenv('CONFIG_FILE');
 if(!$config_file) {
+    $config_file = 'config/local.conf.json';
+}
+if(!file_exists($config_file)) {
     $config_file = '../config/local.conf.json';
 }
 $GLOBALS['CONFIG'] = json_decode(file_get_contents($config_file), true);
@@ -14,7 +17,7 @@ if(!$GLOBALS['BROWSERSTACK_ACCESS_KEY']) $GLOBALS['BROWSERSTACK_ACCESS_KEY'] = $
 
 $GLOBALS['SERVER_PBX'] = getenv('SERVER_PBX');
 if(!$GLOBALS['SERVER_PBX']) {
-    $GLOBALS['SERVER_PBX']='https://172.16.32.72';
+    $GLOBALS['SERVER_PBX']='https://172.16.32.119';
 }
 
 

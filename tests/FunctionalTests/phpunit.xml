@@ -8,9 +8,13 @@
 <phpunit bootstrap="../../vendor/autoload.php">
     <testsuites>
         <testsuite name="TestMikoPBX">
+            <file>Tests/CreateAmiUsersTest.php</file>
             <file>Tests/FillPBXSettingsTest.php</file>
             <file>Tests/CustomFileChangeTest.php</file>
             <file>Tests/CreateExtensionsTest.php</file>
+        </testsuite>
+        <testsuite name="TestOnlyAMI">
+            <file>Tests/CreateAmiUsersTest.php</file>
         </testsuite>
     </testsuites>
 </phpunit>

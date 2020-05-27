@@ -26,7 +26,7 @@ class MikoPBXTestsBase extends BrowserStackTest
     {
         $els = self::$driver->findElements($by);
         if (count($els)) {
-            $this->fail("Unexpectedly element was found");
+            $this->fail("Unexpectedly element was found by " .$by. PHP_EOL);
         }
         // increment assertion counter
         $this->assertTrue(true);
@@ -41,7 +41,7 @@ class MikoPBXTestsBase extends BrowserStackTest
      */
     protected function selectDropdownItem(string $name, string $value): void
     {
-        $xpath = '//select[@name="' . $name . '"]/ancestor::div[contains(@class, "ui") and contains(@class ,"dropdown")]';
+        $xpath = '//select[@name="' . $name . '"]/ancestor::div[contains(@class, "ui") and contains(@class ,"dropdown")] | //div[@id="' . $name . '" and contains(@class, "ui") and contains(@class ,"dropdown") ]';
         try {
             $selectItem = self::$driver->findElement(WebDriverBy::xpath($xpath));
             $selectItem->click();
@@ -52,11 +52,11 @@ class MikoPBXTestsBase extends BrowserStackTest
             );
             $menuItem->click();
         } catch (\Facebook\WebDriver\Exception\NoSuchElementException $e) {
-            echo('Not found submit button on this page');
+            $this->fail('Not found select with name '.$name. PHP_EOL);
         } catch (\Facebook\WebDriver\Exception\TimeoutException $e) {
-            echo('Form doesn\'t send after 10 seconds timeout');
+            $this->fail('Not found menuitem '. $value . PHP_EOL);
         } catch (\Exception $e) {
-            echo('Unknown error');
+            $this->fail('Unknown error ' . $e->getMessage() . PHP_EOL);
         }
     }
 
@@ -64,14 +64,16 @@ class MikoPBXTestsBase extends BrowserStackTest
      * Assert that menu item selected
      *
      * @param $name  string menu name
-     * @param $value string checked value
+     * @param $checkedValue string checked value
      */
-    protected function assertMenuItemSelected(string $name, string $value): void
+    protected function assertMenuItemSelected(string $name, string $checkedValue): void
     {
         $xpath             = '//select[@name="' . $name . '"]/option[@selected="selected"]';
         $selectedExtension = self::$driver->findElements(WebDriverBy::xpath($xpath));
         foreach ($selectedExtension as $element) {
-            $this->assertEquals($value, $element->getAttribute('value'));
+            $currentValue = $element->getAttribute('value');
+            $message = "{$name} check failure, because {$checkedValue} != {$currentValue}";
+            $this->assertEquals($checkedValue, $currentValue, $message);
         }
     }
 
@@ -96,14 +98,16 @@ class MikoPBXTestsBase extends BrowserStackTest
      * Assert that textArea value is equal
      *
      * @param string $name  textArea name
-     * @param string $value checked value
+     * @param string $checkedValue checked value
      */
-    protected function assertTextAreaValueIsEqual(string $name, string $value): void
+    protected function assertTextAreaValueIsEqual(string $name, string $checkedValue): void
     {
         $xpath        = '//textarea[@name="' . $name . '"]';
         $textAreaItem = self::$driver->findElement(WebDriverBy::xpath($xpath));
         if ($textAreaItem) {
-            $this->assertEquals($value, $textAreaItem->getAttribute('value'));
+            $currentValue = $textAreaItem->getAttribute('value');
+            $message = "{$name} check failure, because {$checkedValue} != {$currentValue}";
+            $this->assertEquals($checkedValue, $currentValue, $message);
         }
     }
 
@@ -131,7 +135,7 @@ class MikoPBXTestsBase extends BrowserStackTest
      */
     protected function changeInputField(string $name, string $value): void
     {
-        $xpath      = '//input[@name="' . $name . '" and (@type="text" or @type="password" or @type="hidden")]';
+        $xpath      = '//input[@name="' . $name . '" and (@type="text" or @type="password" or @type="hidden" or @type="number")]';
         $inputItems = self::$driver->findElements(WebDriverBy::xpath($xpath));
         foreach ($inputItems as $inputItem) {
             $inputItem->click();
@@ -141,15 +145,19 @@ class MikoPBXTestsBase extends BrowserStackTest
     }
 
     /**
-     * Assert that input field with name $name value is equal to $value
+     * Assert that input field with name $name value is equal to $checkedValue
+     *
      * @param string $name
-     * @param string $value
+     * @param string $checkedValue
      */
-    protected function assertInputFieldValueEqual(string $name, string $value):void{
+    protected function assertInputFieldValueEqual(string $name, string $checkedValue): void
+    {
         $xpath      = '//input[@name="' . $name . '" and (@type="text" or @type="password" or @type="hidden")]';
         $inputItems = self::$driver->findElements(WebDriverBy::xpath($xpath));
         foreach ($inputItems as $inputItem) {
-            $this->assertEquals($value, $inputItem->getAttribute('value'));
+            $currentValue = $inputItem->getAttribute('value');
+            $message = "{$name} check failure, because {$checkedValue} != {$currentValue}";
+            $this->assertEquals($checkedValue, $currentValue, $message);
         }
     }
 
@@ -175,6 +183,7 @@ class MikoPBXTestsBase extends BrowserStackTest
             }
         }
     }
+
     /**
      * Assert that checkBox state is equal to the $enabled if checkbox with the $name exist on the page
      *
@@ -187,9 +196,9 @@ class MikoPBXTestsBase extends BrowserStackTest
         $checkBoxItems = self::$driver->findElements(WebDriverBy::xpath($xpath));
         foreach ($checkBoxItems as $checkBoxItem) {
             if ($enabled) {
-                $this->assertTrue($checkBoxItem->isSelected(), "{$name} Must be checked");
+                $this->assertTrue($checkBoxItem->isSelected(), "{$name} must be checked" . PHP_EOL);
             } else {
-                $this->assertFalse($checkBoxItem->isSelected(), "{$name} Must be unchecked");
+                $this->assertFalse($checkBoxItem->isSelected(), "{$name} must be unchecked" . PHP_EOL);
             }
         }
     }
@@ -216,61 +225,123 @@ class MikoPBXTestsBase extends BrowserStackTest
                 );
             }
         } catch (\Facebook\WebDriver\Exception\NoSuchElementException $e) {
-            echo('Not found submit button on this page');
+            $this->fail('Not found submit button on this page' . PHP_EOL);
         } catch (\Facebook\WebDriver\Exception\TimeoutException $e) {
-            echo('Form doesn\'t send after 10 seconds timeout');
+            $this->fail('Form doesn\'t send after 10 seconds timeout' . PHP_EOL);
         } catch (\Exception $e) {
-            echo('Unknown error');
+            $this->fail('Unknown error ' . $e->getMessage() . PHP_EOL);
         }
     }
 
     /**
      * Click on the left sidebar menu item
+     *
      * @param string $href
      */
-    protected function clickSidebarMenuItemByHref(string $href):void
+    protected function clickSidebarMenuItemByHref(string $href): void
     {
         try {
-            $xpath                  = '//div[@id="sidebar-menu"]//ancestor::a[contains(@class, "item") and contains(@href ,"'.$href.'")]';
+            $xpath       = '//div[@id="sidebar-menu"]//ancestor::a[contains(@class, "item") and contains(@href ,"' . $href . '")]';
             $sidebarItem = self::$driver->findElement(WebDriverBy::xpath($xpath));
             $sidebarItem->click();
+            self::$driver->wait(3);
         } catch (\Facebook\WebDriver\Exception\NoSuchElementException $e) {
-            echo('Not found sidebar item with href='.$href.' on this page');
+            $this->fail('Not found sidebar item with href=' . $href . ' on this page' . PHP_EOL);
         } catch (\Exception $e) {
-            echo('Unknown error');
+            $this->fail('Unknown error ' . $e->getMessage() . PHP_EOL);
         }
     }
 
     /**
      * Find modify button on row with text $text and click it
+     *
      * @param string $text
      */
-    protected function clickModifyButtonOnRowWithText(string $text):void
+    protected function clickModifyButtonOnRowWithText(string $text): void
     {
-        $xpath = ('//td[contains(text(),"'.$text.'")]/ancestor::tr[contains(@class, "row")]//a[contains(@href,"modify")]');
+        $xpath = ('//td[contains(text(),"' . $text . '")]/parent::tr[contains(@class, "row")]//a[contains(@href,"modify")]');
         try {
             $tableButtonModify = self::$driver->findElement(WebDriverBy::xpath($xpath));
             $tableButtonModify->click();
         } catch (\Facebook\WebDriver\Exception\NoSuchElementException $e) {
-            echo('Not found row with text='.$text.' on this page');
+            $this->fail('Not found row with text=' . $text . ' on this page' . PHP_EOL);
         } catch (\Exception $e) {
-            echo('Unknown error');
+            $this->fail('Unknown error ' . $e->getMessage() . PHP_EOL);
+        }
+    }
+
+    /**
+     * Find modify button on row with text $text and click it
+     *
+     * @param string $text
+     */
+    protected function clickDeleteButtonOnRowWithText(string $text): void
+    {
+        $xpath = ('//td[contains(text(),"' . $text . '")]/ancestor::tr[contains(@class, "row")]//a[contains(@href,"delete")]');
+        try {
+            $tableButtonModify = self::$driver->findElement(WebDriverBy::xpath($xpath));
+            $tableButtonModify->click();
+            sleep(2);
+            $tableButtonModify->click();
+
+        } catch (\Facebook\WebDriver\Exception\NoSuchElementException $e) {
+            echo('Not found row with text=' . $text . ' on this page' . PHP_EOL);
+        } catch (\Exception $e) {
+            $this->fail('Unknown error ' . $e->getMessage() . PHP_EOL);
         }
     }
 
     /**
      * Click on add new button by href
+     *
      * @param string $href
      */
-    protected function clickAddNewButtonByHref(string $href):void {
+    protected function clickButtonByHref(string $href): void
+    {
         try {
-            $xpath             = "//a[@href = '{$href}' and @id = 'add-new-button']";
+            $xpath         = "//a[@href = '{$href}']";
             $button_AddNew = self::$driver->findElement(WebDriverBy::xpath($xpath));
-            $button_AddNew ->click();
+            $button_AddNew->click();
         } catch (\Facebook\WebDriver\Exception\NoSuchElementException $e) {
-            echo('Not found button with href='.$href.' on this page');
+            $this->fail('Not found button with href=' . $href . ' on this page' . PHP_EOL);
         } catch (\Exception $e) {
-            echo('Unknown error');
+            $this->fail('Unknown error ' . $e->getMessage() . PHP_EOL);
         }
     }
+
+
+    /**
+     * Select tab in tabular menu by anchor
+     *
+     * @param $anchor
+     */
+    protected function changeTabOnCurrentPage($anchor): void
+    {
+        try {
+            $xpath         = "//div[contains(@class, 'tabular') and contains(@class, 'menu')]//a[contains(@data-tab,'{$anchor}')]";
+            $tab = self::$driver->findElement(WebDriverBy::xpath($xpath));
+            $tab->click();
+        } catch (\Facebook\WebDriver\Exception\NoSuchElementException $e) {
+            $this->fail('Not found tab with anchor=' . $anchor . ' on this page' . PHP_EOL);
+        } catch (\Exception $e) {
+            $this->fail('Unknown error ' . $e->getMessage() . PHP_EOL);
+        }
+    }
+
+    /**
+     * Open additional settings under accordion element
+     */
+    protected function openAccordionOnThePage(): void
+    {
+          try {
+              $xpath         = "//div[contains(@class, 'ui') and contains(@class, 'accordion')]";
+              $tab = self::$driver->findElement(WebDriverBy::xpath($xpath));
+              $tab->click();
+          } catch (\Facebook\WebDriver\Exception\NoSuchElementException $e) {
+              $this->fail('Not found usual accordion element on this page' . PHP_EOL);
+          } catch (\Exception $e) {
+              $this->fail('Unknown error ' . $e->getMessage() . PHP_EOL);
+          }
+    }
+
 }
