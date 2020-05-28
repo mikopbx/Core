@@ -16,14 +16,17 @@
             <table>
                 <tr>
                     <td class="one wide">
-                        <i class="ui icon play"></i>
-                        <audio preload="metadata" id="audio-player-{{ record.id }}">
-                            {% if record.path is empty %}
+                        {% if record.path is empty %}
+                            <i class="ui icon play disabled"></i>
+                            <audio preload="none" id="audio-player-{{ record.id }}">
                                 <source src=""/>
-                            {% else %}
+                            </audio>
+                        {% else %}
+                            <i class="ui icon play"></i>
+                            <audio preload="metadata" id="audio-player-{{ record.id }}">
                                 <source src="{{ '/pbxcore/api/cdr/playback?view='~record.path }}"/>
-                            {% endif %}
-                        </audio>
+                            </audio>
+                        {% endif %}
                     </td>
                     <td>
                         <div class="ui range cdr-player"></div>

@@ -36,12 +36,14 @@ trait LoginTrait
         $button_Submit = self::$driver->findElement(WebDriverBy::xpath($xpath));
         $button_Submit->click();
         $this->waitForAjax();
+
         $xpath = '//div[contains(@class,"error") and contains(@class,"message")]';
         $errorMessages = self::$driver->findElements(WebDriverBy::xpath($xpath));
         if(count($errorMessages)>0) {
             foreach ($errorMessages as $errorMessage){
                 if ($errorMessage->isDisplayed()){
                     $this->changeInputField('password', $params['password2']);
+                    $xpath = '//form[@id="login-form"]//ancestor::div[@id="submitbutton"]';
                     $button_Submit = self::$driver->findElement(WebDriverBy::xpath($xpath));
                     $button_Submit->click();
                 }

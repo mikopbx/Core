@@ -45,6 +45,7 @@ class MikoPBXTestsBase extends BrowserStackTest
         try {
             $selectItem = self::$driver->findElement(WebDriverBy::xpath($xpath));
             $selectItem->click();
+            $this->waitForAjax();
             // Находим строчку с нужной опцией по значению
             $xpath    = '//div[contains(@class, "menu") and contains(@class ,"visible")]/div[@data-value="' . $value . '"]';
             $menuItem = self::$driver->wait()->until(

@@ -120,20 +120,21 @@ class PbxSettings extends ModelsBase
     /**
      * Значение по умолчанию для переменных станции
      *
-     * @param $parameters string - ключ значения
+     * @param $key string - ключ значения
      *
      * @return string - результат из базы или значение по умолчанию
      */
-    public static function getValueByKey($parameters = null): string
+    public static function getValueByKey($key): string
     {
-        $result = parent::findFirstByKey($parameters);
+
+        $result = parent::findFirstByKey($key);
         if ($result === null || $result->value === null) {
             $arrOfDefaultValues = self::getDefaultArrayValues();
-            if ( ! array_key_exists($parameters, $arrOfDefaultValues)) {
+            if ( ! array_key_exists($key, $arrOfDefaultValues)) {
                 return '';
             }
 
-            return $arrOfDefaultValues[$parameters];
+            return $arrOfDefaultValues[$key];
         }
 
         return $result->value;

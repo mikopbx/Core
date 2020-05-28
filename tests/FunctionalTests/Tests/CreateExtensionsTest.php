@@ -19,16 +19,17 @@ class CreateExtensionsTest extends MikoPBXTestsBase
      * @depends      testLogin
      * @dataProvider additionProvider
      *
-     * @param $extensionsList
+     * @param $params
      *
      * @throws \Facebook\WebDriver\Exception\NoSuchElementException
      * @throws \Facebook\WebDriver\Exception\TimeoutException
      */
-    public function testCreateExtensions($extensionsList): void
+    public function testCreateExtensions($params): void
     {
-
-        foreach ($extensionsList as $params) {
             $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
+
+            $this->clickDeleteButtonOnRowWithText($params['username']);
+
             $this->clickButtonByHref('/admin-cabinet/extensions/modify');
 
             $this->changeInputField('user_username', $params['username']);
@@ -48,7 +49,7 @@ class CreateExtensionsTest extends MikoPBXTestsBase
             foreach ($params['codecs'] as $key=>$value){
                 $this->changeCheckBoxState('codec_'.$key, $value);
             }
-            $this->changeTextAreaValue('manualattributes', $params['manualattributes']);
+            $this->changeTextAreaValue('sip_manualattributes', $params['manualattributes']);
 
             //$filePath           =  __DIR__."/../assets/{$params['number']}.png";
             $filePath = 'C:\Users\hello\Documents\images\person.jpg';
@@ -74,7 +75,7 @@ class CreateExtensionsTest extends MikoPBXTestsBase
             $this->assertInputFieldValueEqual('username',  $params['username']);
             $this->assertInputFieldValueEqual('number',  $params['number']);
             $this->assertInputFieldValueEqual('user_email',  $params['email']);
-            $this->assertInputFieldValueEqual('mobile_number',  $params['mobile']);
+            // $this->assertInputFieldValueEqual('mobile_number',  $params['mobile']);
 
             $this->assertMenuItemSelected('fwd_forwardingonbusy', $params['mobile']);
             $this->assertMenuItemSelected('fwd_forwarding', $params['mobile']);
@@ -91,8 +92,7 @@ class CreateExtensionsTest extends MikoPBXTestsBase
             foreach ($params['codecs'] as $key=>$value){
                 $this->assertCheckBoxStageIsEqual('codec_'.$key, $value);
             }
-            $this->assertTextAreaValueIsEqual('manualattributes', $params['manualattributes']);
-        }
+            $this->assertTextAreaValueIsEqual('sip_manualattributes', $params['manualattributes']);
     }
 
     /**
@@ -102,7 +102,35 @@ class CreateExtensionsTest extends MikoPBXTestsBase
     public function additionProvider(): array
     {
         $params = [];
-
+        $params[] = [
+            [
+                'number'   => 235,
+                'email'    => 'emar@miko.ru',
+                'username' => 'Eugeniy Makrchev',
+                'mobile'   => '79031454088',
+                'secret'   => '23542354wet',
+                'sip_busylevel'=>1,
+                'user_language'=>'ru-ru',
+                'sip_dtmfmode'=>'auto_info',
+                'sip_networkfilterid'=>'none',
+                'manualattributes'=>'[endpoint]
+callerid=2546456<240>',
+                'codecs'     =>[
+                    'alaw'=>true,
+                    'ulaw'=>false,
+                    'g729'=>true,
+                    'g723.1'=>true,
+                    'g726'=>true,
+                    'gsm'=>false,
+                    'adpcm'=>true,
+                    'g722'=>false,
+                    'ilbc'=>true,
+                    'opus'=>false,
+                    'h264'=>true,
+                    'h263'=>false,
+                    'h263p'=>true
+                ],
+            ]];
         $params[] = [
             [
                 'number'   => 229,
@@ -111,7 +139,7 @@ class CreateExtensionsTest extends MikoPBXTestsBase
                 'mobile'   => '79265244743',
                 'secret'   => 'GAb2o%2B_1Ys.25',
                 'sip_busylevel'=>1,
-                'user_language'=>'ru',
+                'user_language'=>'ru-ru',
                 'sip_dtmfmode'=>'inband',
                 'sip_networkfilterid'=>'none',
                 'manualattributes'=>'',
@@ -129,9 +157,10 @@ class CreateExtensionsTest extends MikoPBXTestsBase
                     'h264'=>true,
                     'h263'=>false,
                     'h263p'=>true
-                ],
 
-            ],
+                ]]];
+
+        $params[] = [
             [
                 'number'   => 223,
                 'email'    => 'svlassvlas@miko.ru',
@@ -139,7 +168,7 @@ class CreateExtensionsTest extends MikoPBXTestsBase
                 'mobile'   => '79269900372',
                 'secret'   => 'GAb2o%qwerqwer2354235.25',
                 'sip_busylevel'=>1,
-                'user_language'=>'en',
+                'user_language'=>'en-en',
                 'sip_dtmfmode'=>'info',
                 'sip_networkfilterid'=>'4',
                 'manualattributes'=>'',
@@ -157,17 +186,18 @@ class CreateExtensionsTest extends MikoPBXTestsBase
                     'h264'=>true,
                     'h263'=>false,
                     'h263p'=>true
-                ],
-            ],
+                ]]];
+        $params[] = [
             [
                 'number'   => 217,
                 'email'    => 'nanabek@miko.ru',
                 'username' => 'Natalia Beketova',
-                'mobile'   => '79265244743',
+                'mobile'   => '79265244843',
                 'secret'   => 'GAb2o%2B_1Ys.25',
                 'sip_busylevel'=>1,
-                'user_language'=>'ru',
+                'user_language'=>'ru-ru',
                 'sip_dtmfmode'=>'auto',
+                'sip_networkfilterid'=>'none',
                 'manualattributes'=>'',
                 'codecs'     =>[
                     'alaw'=>true,
@@ -183,8 +213,9 @@ class CreateExtensionsTest extends MikoPBXTestsBase
                     'h264'=>true,
                     'h263'=>false,
                     'h263p'=>true
-                ],
-            ],
+                    ],
+                ]];
+        $params[] = [
             [
                 'number'   => 206,
                 'email'    => 'bubuh@miko.ru',
@@ -192,8 +223,9 @@ class CreateExtensionsTest extends MikoPBXTestsBase
                 'mobile'   => '79851417827',
                 'secret'   => '23542354wet',
                 'sip_busylevel'=>1,
-                'user_language'=>'ru',
+                'user_language'=>'ru-ru',
                 'sip_dtmfmode'=>'rfc4733',
+                'sip_networkfilterid'=>'none',
                 'manualattributes'=>'',
                 'codecs'     =>[
                     'alaw'=>true,
@@ -210,7 +242,8 @@ class CreateExtensionsTest extends MikoPBXTestsBase
                     'h263'=>false,
                     'h263p'=>true
                 ],
-            ],
+            ]];
+        $params[] = [
             [
                 'number'   => 231,
                 'email'    => 'alish@miko.ru',
@@ -218,8 +251,9 @@ class CreateExtensionsTest extends MikoPBXTestsBase
                 'mobile'   => '79265639989',
                 'secret'   => '23542354wet',
                 'sip_busylevel'=>1,
-                'user_language'=>'ru',
+                'user_language'=>'ru-ru',
                 'sip_dtmfmode'=>'auto_info',
+                'sip_networkfilterid'=>'none',
                 'manualattributes'=>'',
                 'codecs'     =>[
                     'alaw'=>true,
@@ -236,7 +270,8 @@ class CreateExtensionsTest extends MikoPBXTestsBase
                     'h263'=>false,
                     'h263p'=>true
                 ],
-            ],
+            ]];
+        $params[] = [
             [
                 'number'   => 236,
                 'email'    => 'imalll@miko.ru',
@@ -244,8 +279,9 @@ class CreateExtensionsTest extends MikoPBXTestsBase
                 'mobile'   => '79265679989',
                 'secret'   => '23542354wet',
                 'sip_busylevel'=>1,
-                'user_language'=>'ru',
+                'user_language'=>'en-en',
                 'sip_dtmfmode'=>'auto_info',
+                'sip_networkfilterid'=>'none',
                 'manualattributes'=>'',
                 'codecs'     =>[
                     'alaw'=>true,
@@ -262,33 +298,9 @@ class CreateExtensionsTest extends MikoPBXTestsBase
                     'h263'=>false,
                     'h263p'=>true
                 ],
-            ],
-            [
-                'number'   => 236,
-                'email'    => 'emar@miko.ru',
-                'username' => 'Eugeniy Makrchev',
-                'mobile'   => '79031454088',
-                'secret'   => '23542354wet',
-                'sip_busylevel'=>1,
-                'user_language'=>'ru',
-                'sip_dtmfmode'=>'auto_info',
-                'manualattributes'=>'',
-                'codecs'     =>[
-                    'alaw'=>true,
-                    'ulaw'=>false,
-                    'g729'=>true,
-                    'g723.1'=>false,
-                    'g726'=>true,
-                    'gsm'=>false,
-                    'adpcm'=>true,
-                    'g722'=>false,
-                    'ilbc'=>true,
-                    'opus'=>false,
-                    'h264'=>true,
-                    'h263'=>false,
-                    'h263p'=>true
-                ],
-            ],
+            ]];
+
+        $params[] = [
             [
                 'number'   => 214,
                 'email'    => 'alex@miko.ru',
@@ -296,8 +308,9 @@ class CreateExtensionsTest extends MikoPBXTestsBase
                 'mobile'   => '79853059396',
                 'secret'   => '235RTWETtre42354wet',
                 'sip_busylevel'=>1,
-                'user_language'=>'ru',
+                'user_language'=>'ru-ru',
                 'sip_dtmfmode'=>'auto_info',
+                'sip_networkfilterid'=>'none',
                 'manualattributes'=>'',
                 'codecs'     =>[
                     'alaw'=>true,
@@ -314,7 +327,8 @@ class CreateExtensionsTest extends MikoPBXTestsBase
                     'h263'=>false,
                     'h263p'=>true
                 ],
-            ],
+            ]];
+        $params[] = [
             [
                 'number'   => 212,
                 'email'    => 'amzh@miko.ru',
@@ -322,8 +336,9 @@ class CreateExtensionsTest extends MikoPBXTestsBase
                 'mobile'   => '79852888742',
                 'secret'   => '235RTWETtre42354wet',
                 'sip_busylevel'=>1,
-                'user_language'=>'ru',
+                'user_language'=>'ru-ru',
                 'sip_dtmfmode'=>'auto_info',
+                'sip_networkfilterid'=>'none',
                 'manualattributes'=>'',
                 'codecs'     =>[
                     'alaw'=>true,
@@ -340,7 +355,8 @@ class CreateExtensionsTest extends MikoPBXTestsBase
                     'h263'=>false,
                     'h263p'=>true
                 ],
-            ],
+            ]];
+        $params[] = [
             [
                 'number'   => 210,
                 'email'    => 'vmit@miko.ru',
@@ -348,8 +364,9 @@ class CreateExtensionsTest extends MikoPBXTestsBase
                 'mobile'   => '79251323617',
                 'secret'   => '235RTWETtre42354wet',
                 'sip_busylevel'=>1,
-                'user_language'=>'ru',
+                'user_language'=>'ru-ru',
                 'sip_dtmfmode'=>'auto_info',
+                'sip_networkfilterid'=>'none',
                 'manualattributes'=>'',
                 'codecs'     =>[
                     'alaw'=>true,
@@ -366,7 +383,8 @@ class CreateExtensionsTest extends MikoPBXTestsBase
                     'h263'=>false,
                     'h263p'=>true
                 ],
-            ],
+            ]];
+        $params[] = [
             [
                 'number'   => 228,
                 'email'    => 'apas@miko.ru',
@@ -374,8 +392,9 @@ class CreateExtensionsTest extends MikoPBXTestsBase
                 'mobile'   => '79262321957',
                 'secret'   => '235RTWETtre42354wet',
                 'sip_busylevel'=>1,
-                'user_language'=>'ru',
+                'user_language'=>'ru-ru',
                 'sip_dtmfmode'=>'auto_info',
+                'sip_networkfilterid'=>'none',
                 'manualattributes'=>'',
                 'codecs'     =>[
                     'alaw'=>true,
@@ -392,7 +411,8 @@ class CreateExtensionsTest extends MikoPBXTestsBase
                     'h263'=>false,
                     'h263p'=>true
                 ],
-            ],
+            ]];
+        $params[] = [
             [
                 'number'   => 213,
                 'email'    => 'kper@miko.ru',
@@ -400,8 +420,9 @@ class CreateExtensionsTest extends MikoPBXTestsBase
                 'mobile'   => '79256112214',
                 'secret'   => '235RTWETtre42354wet',
                 'sip_busylevel'=>1,
-                'user_language'=>'ru',
+                'user_language'=>'ru-ru',
                 'sip_dtmfmode'=>'auto_info',
+                'sip_networkfilterid'=>'none',
                 'manualattributes'=>'',
                 'codecs'     =>[
                     'alaw'=>true,
@@ -418,7 +439,8 @@ class CreateExtensionsTest extends MikoPBXTestsBase
                     'h263'=>false,
                     'h263p'=>true
                 ],
-            ],
+            ]];
+        $params[] = [
             [
                 'number'   => 204,
                 'email'    => 'apore@miko.ru',
@@ -426,8 +448,9 @@ class CreateExtensionsTest extends MikoPBXTestsBase
                 'mobile'   => '79257184255',
                 'secret'   => '235RTWETtre42354wet',
                 'sip_busylevel'=>1,
-                'user_language'=>'ru',
+                'user_language'=>'ru-ru',
                 'sip_dtmfmode'=>'auto_info',
+                'sip_networkfilterid'=>'none',
                 'manualattributes'=>'',
                 'codecs'     =>[
                     'alaw'=>false,
@@ -444,7 +467,8 @@ class CreateExtensionsTest extends MikoPBXTestsBase
                     'h263'=>true,
                     'h263p'=>false
                 ],
-            ],
+            ]];
+        $params[] = [
             [
                 'number'   => 233,
                 'email'    => 'tpora@miko.ru',
@@ -452,8 +476,9 @@ class CreateExtensionsTest extends MikoPBXTestsBase
                 'mobile'   => '79606567153',
                 'secret'   => '235RTWETt543re42354wet',
                 'sip_busylevel'=>1,
-                'user_language'=>'ru',
+                'user_language'=>'ru-ru',
                 'sip_dtmfmode'=>'auto_info',
+                'sip_networkfilterid'=>'none',
                 'manualattributes'=>'',
                 'codecs'     =>[
                     'alaw'=>true,
@@ -470,7 +495,8 @@ class CreateExtensionsTest extends MikoPBXTestsBase
                     'h263'=>false,
                     'h263p'=>true
                 ],
-            ],
+            ]];
+        $params[] = [
             [
                 'number'   => 254,
                 'email'    => 'apushh@miko.ru',
@@ -478,8 +504,9 @@ class CreateExtensionsTest extends MikoPBXTestsBase
                 'mobile'   => '74952293043',
                 'secret'   => '235RTWETtre5442354wet',
                 'sip_busylevel'=>1,
-                'user_language'=>'ru',
+                'user_language'=>'ru-ru',
                 'sip_dtmfmode'=>'auto_info',
+                'sip_networkfilterid'=>'none',
                 'manualattributes'=>'',
                 'codecs'     =>[
                     'alaw'=>true,
@@ -496,7 +523,8 @@ class CreateExtensionsTest extends MikoPBXTestsBase
                     'h263'=>false,
                     'h263p'=>true
                 ],
-            ],
+            ]];
+        $params[] = [
             [
                 'number'   => 253,
                 'email'    => 'dfom@miko.ru',
@@ -504,8 +532,9 @@ class CreateExtensionsTest extends MikoPBXTestsBase
                 'mobile'   => '79152824438',
                 'secret'   => '235RTWETerwtre42354wet',
                 'sip_busylevel'=>1,
-                'user_language'=>'ru',
+                'user_language'=>'ru-ru',
                 'sip_dtmfmode'=>'auto_info',
+                'sip_networkfilterid'=>'none',
                 'manualattributes'=>'',
                 'codecs'     =>[
                     'alaw'=>false,
@@ -522,7 +551,8 @@ class CreateExtensionsTest extends MikoPBXTestsBase
                     'h263'=>true,
                     'h263p'=>false
                 ],
-            ],
+            ]];
+        $params[] = [
             [
                 'number'   => 230,
                 'email'    => 'dhol@miko.ru',
@@ -530,8 +560,9 @@ class CreateExtensionsTest extends MikoPBXTestsBase
                 'mobile'   => '79161737472',
                 'secret'   => '235RTWETtre42354wet',
                 'sip_busylevel'=>1,
-                'user_language'=>'ru',
+                'user_language'=>'ru-ru',
                 'sip_dtmfmode'=>'auto_info',
+                'sip_networkfilterid'=>'none',
                 'manualattributes'=>'',
                 'codecs'     =>[
                     'alaw'=>true,
@@ -548,7 +579,8 @@ class CreateExtensionsTest extends MikoPBXTestsBase
                     'h263'=>false,
                     'h263p'=>true
                 ],
-            ],
+            ]];
+        $params[] = [
             [
                 'number'   => 219,
                 'email'    => 'icvetf@miko.ru',
@@ -556,8 +588,9 @@ class CreateExtensionsTest extends MikoPBXTestsBase
                 'mobile'   => '79998201098',
                 'secret'   => '235RT34WETtre42354wet',
                 'sip_busylevel'=>1,
-                'user_language'=>'ru',
+                'user_language'=>'ja-jp',
                 'sip_dtmfmode'=>'auto_info',
+                'sip_networkfilterid'=>'none',
                 'manualattributes'=>'[endpoint]
 callerid=2546456<240>',
                 'codecs'     =>[
@@ -575,7 +608,8 @@ callerid=2546456<240>',
                     'h263'=>false,
                     'h263p'=>true
                 ],
-            ],
+            ]];
+        $params[] = [
             [
                 'number'   => 240,
                 'email'    => 'mcvetfd@miko.ru',
@@ -583,8 +617,9 @@ callerid=2546456<240>',
                 'mobile'   => '79055651617',
                 'secret'   => '235RTWETttre42354wet',
                 'sip_busylevel'=>1,
-                'user_language'=>'ru',
+                'user_language'=>'de-de',
                 'sip_dtmfmode'=>'auto_info',
+                'sip_networkfilterid'=>'none',
                 'manualattributes'=>'[endpoint]
 callerid=2546456<240>',
                 'codecs'     =>[
@@ -602,7 +637,8 @@ callerid=2546456<240>',
                     'h263'=>true,
                     'h263p'=>false
                 ],
-            ],
+            ]];
+        $params[] = [
             [
                 'number'   => 251,
                 'email'    => 'vchen@miko.ru',
@@ -610,8 +646,9 @@ callerid=2546456<240>',
                 'mobile'   => '79265775288',
                 'secret'   => '235RTrWETtre42354wet',
                 'sip_busylevel'=>1,
-                'user_language'=>'ru',
+                'user_language'=>'pl-pl',
                 'sip_dtmfmode'=>'auto_info',
+                'sip_networkfilterid'=>'none',
                 'manualattributes'=>'[endpoint]
 callerid=2546456<251>',
                 'codecs'     =>[
@@ -629,7 +666,8 @@ callerid=2546456<251>',
                     'h263'=>false,
                     'h263p'=>true
                 ],
-            ],
+            ]];
+        $params[] = [
             [
                 'number'   => 234,
                 'email'    => 'esam@miko.ru',
@@ -637,8 +675,9 @@ callerid=2546456<251>',
                 'mobile'   => '79161237145',
                 'secret'   => '235RTWETftre42354wet',
                 'sip_busylevel'=>1,
-                'user_language'=>'ru',
+                'user_language'=>'it-it',
                 'sip_dtmfmode'=>'auto_info',
+                'sip_networkfilterid'=>'none',
                 'manualattributes'=>'[endpoint]
 callerid=2546456<234>',
                 'codecs'     =>[
@@ -655,8 +694,8 @@ callerid=2546456<234>',
                     'h264'=>false,
                     'h263'=>true,
                     'h263p'=>false
-                ],
-            ],
+                ]
+            ]
         ];
         return $params;
     }

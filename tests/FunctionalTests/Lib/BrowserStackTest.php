@@ -29,7 +29,10 @@ class BrowserStackTest extends TestCase
 
         if(array_key_exists("browserstack.local", $caps) && $caps["browserstack.local"])
         {
-            $bs_local_args = array("key" => $GLOBALS['BROWSERSTACK_ACCESS_KEY']);
+            $bs_local_args = [
+                "key" => $GLOBALS['BROWSERSTACK_ACCESS_KEY'],
+                "localIdentifier" => $caps['browserstack.localIdentifier'],
+            ];
             self::$bs_local = new \BrowserStack\Local();
             self::$bs_local->start($bs_local_args);
         }

@@ -171,8 +171,6 @@ class ExtensionsController extends BaseController
             $codecs['ulaw']['enabled'] = true;
             $this->view->avatar        = '';
         } else {
-            $extension->Sip->manualattributes
-                           = $extension->Sip->getManualAttributes();
             $enabledCodecs = $extension->Sip->Codecs;
             foreach ($enabledCodecs as $codec) {
                 $codecs[$codec->codec]['enabled'] = true;
@@ -576,7 +574,8 @@ class ExtensionsController extends BaseController
                     'codec'  => $key,
                 ],
             ];
-            if (array_key_exists('codec_' . $key, $data) && $data['codec_' . $key] === 'on') {
+            $searchKey = str_ireplace('.','_', $key);
+            if (array_key_exists('codec_' . $searchKey, $data) && $data['codec_' . $searchKey] === 'on') {
                 $newCodec = SipCodecs::findFirst($parameters);
                 if ($newCodec === null) {
                     $newCodec = new SipCodecs();
