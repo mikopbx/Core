@@ -1,4 +1,4 @@
 #!/bin/sh
 PATH=/sbin:/bin:/usr/sbin:/usr/bin;
 export PATH;
-/etc/rc/initial;
+/sbin/mikopbx_init;
