@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 3 2020
+ * Written by Alexey Portnov, 5 2020
  */
 
 namespace MikoPBX\Core\Asterisk;
@@ -423,8 +423,11 @@ class CdrDb
             $is_new = true;
         } elseif (isset($data['IS_ORGNT']) && $data['action'] == 'dial') {
             if (empty($m_data->endtime)) {
-                // Если это оригинация, то НЕ переопределяем уже существующую строку.
-                // dial может прийти дважды.
+                // Если это оригинация dial может прийти дважды.
+                if(!empty($m_data->src_num) && $m_data->src_num === $data['dst_num']){
+                    $m_data->dst_num = $data['src_num'];
+                    $m_data->save();
+                }
                 return true;
             } else {
                 // Предыдущие звонки завершены. Текущий вызов новый, к примеру через резервного провайдера.
