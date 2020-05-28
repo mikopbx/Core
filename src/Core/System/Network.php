@@ -252,7 +252,7 @@ class Network
             $arr_commands[] = "/bin/busybox ifconfig $if_name 0.0.0.0";
 
             $gw_param = '';
-            if ($if_data['dhcp'] === 1) {
+            if (trim($if_data['dhcp']) === '1') {
                 /*
                  * -t - количество попыток.
                  * -T - таймаут попытки.
@@ -396,7 +396,7 @@ class Network
                     "vlan_raw_device {$if_data['interface_orign']}\n" .
                     "{$routs_add}\n" .
                     "{$routs_rem}\n";
-            } elseif ($if_data['dhcp'] == 1) {
+            } elseif (trim($if_data['dhcp']) === '1') {
                 $lan_config = "auto {$if_name}\n" .
                     "iface {$if_name} inet dhcp\n" .
                     "{$routs_add}\n" .
