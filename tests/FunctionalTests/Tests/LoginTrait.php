@@ -35,7 +35,7 @@ trait LoginTrait
 
         $button_Submit = self::$driver->findElement(WebDriverBy::xpath($xpath));
         $button_Submit->click();
-
+        $this->waitForAjax();
         $xpath = '//div[contains(@class,"error") and contains(@class,"message")]';
         $errorMessages = self::$driver->findElements(WebDriverBy::xpath($xpath));
         if(count($errorMessages)>0) {

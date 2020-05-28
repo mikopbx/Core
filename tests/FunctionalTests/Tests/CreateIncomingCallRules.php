@@ -14,6 +14,14 @@ use MikoPBX\FunctionalTests\Lib\MikoPBXTestsBase;
 
 class CreateIncomingCallRules extends MikoPBXTestsBase
 {
+    public static function setUpBeforeClass():void
+    {
+        parent::setUpBeforeClass();
+        $basic= new MikoPBXTestsBase();
+        $basic->deleteAllRecordsOnTable('routingTable');
+    }
+
+
     /**
      * @depends testLogin
      * @dataProvider additionProvider
@@ -22,9 +30,6 @@ class CreateIncomingCallRules extends MikoPBXTestsBase
      */
     public function testCreateIncomingCallRule($params):void
     {
-        if ($params['default']){
-            return;
-        }
         $this->clickSidebarMenuItemByHref('/admin-cabinet/incoming-routes/index/');
         $this->clickDeleteButtonOnRowWithText($params['note']);
 
@@ -50,35 +55,6 @@ class CreateIncomingCallRules extends MikoPBXTestsBase
     }
 
     /**
-     * @depends testLogin
-     * @dataProvider additionProvider
-     *
-     * @param array $params
-     */
-    public function testChangeDefaultRule($params):void
-    {
-        if (!$params['default']){
-            return;
-        }
-        $this->clickSidebarMenuItemByHref('/admin-cabinet/incoming-routes/index/');
-
-        $this->selectDropdownItem('action', $params['action']);
-        if ($params['action'] === 'extension'){
-            $this->selectDropdownItem('extension', $params['extension']);
-        }
-
-        $this->submitForm('default-rule-form');
-        $this->clickSidebarMenuItemByHref('/admin-cabinet/incoming-routes/index/');
-
-        //Asserts
-        $this->assertMenuItemSelected('action', $params['action']);
-        if ($params['action'] === 'extension'){
-            $this->assertMenuItemSelected('extension', $params['extension']);
-        }
-
-    }
-
-    /**
      * Dataset provider
      * @return array
      */
@@ -86,7 +62,6 @@ class CreateIncomingCallRules extends MikoPBXTestsBase
     {
         $params=[];
         $params[] = [[
-            'default' => false,
             'note' => 'First rule',
             'provider'        => 'none',
             'number'   => 74952293042,
@@ -95,28 +70,11 @@ class CreateIncomingCallRules extends MikoPBXTestsBase
         ]];
 
         $params[] = [[
-            'default' => false,
             'note' => 'Second rule',
             'provider'        => 'SIP-PROVIDER-34F7CCFE873B9DABD91CC8D75342CB43',
             'number'   => 74952293043,
             'extension'   => 202,
             'timeout'=>16
-        ]];
-
-        $params[] = [[
-            'default' => true,
-            'action' => 'busy'
-        ]];
-
-        $params[] = [[
-            'default' => true,
-            'action' => 'hangup'
-        ]];
-
-        $params[] = [[
-            'default' => true,
-            'action' => 'extension',
-            'extension'   => 202
         ]];
 
         return $params;

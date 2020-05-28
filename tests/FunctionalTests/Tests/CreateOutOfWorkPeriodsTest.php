@@ -14,6 +14,14 @@ use MikoPBX\FunctionalTests\Lib\MikoPBXTestsBase;
 
 class CreateOutOfWorkPeriodsTest extends MikoPBXTestsBase
 {
+
+    public static function setUpBeforeClass():void
+    {
+        parent::setUpBeforeClass();
+        $basic= new MikoPBXTestsBase();
+        $basic->deleteAllRecordsOnTable('time-frames-table');
+    }
+
     /**
      * @depends testLogin
      * @dataProvider additionProvider
@@ -23,8 +31,6 @@ class CreateOutOfWorkPeriodsTest extends MikoPBXTestsBase
     public function testCreateOutOfWorkTimePeriod(array $params): void
     {
         $this->clickSidebarMenuItemByHref('/admin-cabinet/out-off-work-time/index/');
-        $this->clickDeleteButtonOnRowWithText($params['description']);
-
         $this->clickButtonByHref('/admin-cabinet/out-off-work-time/modify');
         $this->changeTextAreaValue('description', $params['description']);
 
@@ -59,7 +65,7 @@ class CreateOutOfWorkPeriodsTest extends MikoPBXTestsBase
         }
 
         if(! empty($params['time_to'])){
-            self::$driver->executeScript('$("#time_from").val("'.$params['time_to'].'")');
+            self::$driver->executeScript('$("#time_to").val("'.$params['time_to'].'")');
         }
 
         $this->selectDropdownItem('action', $params['action']);
@@ -76,9 +82,13 @@ class CreateOutOfWorkPeriodsTest extends MikoPBXTestsBase
         }
 
         $this->submitForm('save-outoffwork-form');
+
+        //Remember ID
+        $id = $this->getCurrentRecordID();
+
         $this->clickSidebarMenuItemByHref('/admin-cabinet/out-off-work-time/index/');
 
-        $this->clickModifyButtonOnRowWithText($params['description']);
+        $this->clickModifyButtonOnRowWithID($id);
 
         // Asserts
 
@@ -87,8 +97,8 @@ class CreateOutOfWorkPeriodsTest extends MikoPBXTestsBase
         $this->assertInputFieldValueEqual('date_to', $params['date_to']);
         $this->assertMenuItemSelected('weekday_from', $params['weekday_from']);
         $this->assertMenuItemSelected('weekday_to', $params['weekday_to']);
-        $this->assertInputFieldValueEqual('date_from', $params['time_from']);
-        $this->assertInputFieldValueEqual('date_to', $params['time_to']);
+        $this->assertInputFieldValueEqual('time_from', $params['time_from']);
+        $this->assertInputFieldValueEqual('time_to', $params['time_to']);
 
         $this->assertMenuItemSelected('action', $params['action']);
 

@@ -32,6 +32,7 @@ class CreateConferenceRoomsTest extends MikoPBXTestsBase
         // Сохраняем конференцию
         $this->submitForm('conference-room-form');
 
+        $this->clickSidebarMenuItemByHref('/admin-cabinet/conference-rooms/index/');
         $this->clickModifyButtonOnRowWithText($params['name']);
         $this->assertInputFieldValueEqual('name', $params['name']);
         $this->assertInputFieldValueEqual('extension', $params['extension']);

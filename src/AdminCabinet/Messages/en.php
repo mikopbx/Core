@@ -135,7 +135,7 @@ return [
     'mm_System' => 'System',
     'mm_NetworkSettings' => 'Network and Firewall',
     'mm_GeneralSettings' => 'General settings',
-    'mm_SystemClock' => 'Time Synchronization',
+    'mm_SystemClock' => 'Time Settings',
     'mm_Network' => 'Network interface',
     'mm_Firewall' => 'Firewall',
     'mm_MailSettings' => 'Mail settings',

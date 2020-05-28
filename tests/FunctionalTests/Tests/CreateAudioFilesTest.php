@@ -33,22 +33,13 @@ class CreateAudioFilesTest extends MikoPBXTestsBase
 
         $this->changeFileField('sound-file', $params['path']);
 
-
+        self::$driver->wait(2);
         self::$driver->wait(30, 500)->until(
             function ($driver) {
                 $xpath = '//form[@id="sound-file-form"]';
                 $form = $driver->findElement(WebDriverBy::xpath($xpath));
                 $class = $form->getAttribute('class');
-                return stripos('loading', $class)!==FALSE;
-            }
-        );
-
-        self::$driver->wait(30, 500)->until(
-            function ($driver) {
-                $xpath = '//form[@id="sound-file-form"]';
-                $form = $driver->findElement(WebDriverBy::xpath($xpath));
-                $class = $form->getAttribute('class');
-                return stripos('loading', $class)===FALSE;
+                return stripos($class, 'loading')===false;
             }
         );
 

@@ -8,13 +8,29 @@
 <phpunit bootstrap="../../vendor/autoload.php">
     <testsuites>
         <testsuite name="TestMikoPBX">
-            <file>Tests/CreateAmiUsersTest.php</file>
+            <file>Tests/LoginTest.php</file>
             <file>Tests/FillPBXSettingsTest.php</file>
             <file>Tests/CustomFileChangeTest.php</file>
+            <file>Tests/CreateAudioFilesTest.php</file>
+            <file>Tests/CreateSIPProviders.php</file>
+            <file>Tests/CreateIAXProviders.php</file>
+            <file>Tests/CreateIncomingCallRules.php</file>
+            <file>Tests/CreateDefaultIncomingCallRule.php</file>
+            <file>Tests/CreateOutgoingCallRules.php</file>
+            <file>Tests/CreateOutOfWorkPeriodsTest.php</file>
+            <file>Tests/CreateCallQueue.php</file>
+            <file>Tests/CreateIVRMenusTest.php</file>
+            <file>Tests/FillMikoLicenseTest.php</file>
+            <file>Tests/InstallModulesTest</file>
             <file>Tests/CreateExtensionsTest.php</file>
-        </testsuite>
-        <testsuite name="TestOnlyAMI">
+            <file>Tests/FillDataTimeSettings.php</file>
+            <file>Tests/CreateMOHAudioFilesTest.php</file>
             <file>Tests/CreateAmiUsersTest.php</file>
+            <file>Tests/CreateFail2BanRules.php</file>
+            <file>Tests/CreateFirewallRules.php</file>
+            <file>Tests/CreateConferenceRoomsTest.php</file>
+            <file>Tests/CreateDialPlanApplicationTest.php</file>
+            <file>Tests/NetworkInterfacesTest.php</file>
         </testsuite>
     </testsuites>
 </phpunit>
