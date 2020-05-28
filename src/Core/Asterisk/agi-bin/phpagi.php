@@ -602,7 +602,7 @@ class AGI
             $req = $variable . ' ' . $channel;
         }
 
-        $res = $this->evaluate('GET VARIABLE FULL ' . $req);
+        $res = $this->evaluate('GET FULL VARIABLE ' . $req);
 
         if ($getvalue == false) {
             return ($res);
