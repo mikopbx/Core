@@ -578,6 +578,9 @@ class ExtensionsConf extends ConfigClass
             if ($add_login_pattern && array_key_exists('X!', $rout_data_dial) && isset($dialplan['X!'])) {
                 $dialplan[$login]       = str_replace('_X!,1', "{$login},1", $dialplan['X!']);
                 $rout_data_dial[$login] = $rout_data_dial['X!'];
+            }elseif($add_login_pattern === true && $need_def_rout === true && count($data) === 1){
+                // Только маршрут "По умолчанию".
+                $dialplan[$login]       = str_replace('_X!,1', "{$login},1", $dialplan['X!']);
             }
         } else {
             foreach (array_values($provider) as $_login) {
