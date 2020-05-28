@@ -122,7 +122,7 @@ CdrDb::createDb();
 CdrDb::checkDb();
 
 $system = new System();
-$system->syslogd_start();
+$system->syslogDaemonStart();
 
 $pbx = new PBX();
 $pbx->configure();
