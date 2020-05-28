@@ -3,14 +3,14 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 2 2020
+ * Written by Alexey Portnov, 5 2020
  */
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\CallQueues;
 use MikoPBX\Modules\Config\ConfigClass;
-use MikoPBX\Core\System\{MikoPBXConfig, Util};
+use MikoPBX\Core\System\{Util};
 
 class QueueConf extends ConfigClass
 {
@@ -27,8 +27,6 @@ class QueueConf extends ConfigClass
     {
         $this->extensionGenInternal();
         // Генерация конфигурационных файлов.
-        $result = true;
-
         $q_conf = '';
         $db_data = $this->getQueueData();
         foreach ($db_data as $queue_data) {
@@ -206,7 +204,7 @@ class QueueConf extends ConfigClass
             $ringlength     = (trim(
                     $queue['timeout_to_redirect_to_extension']
                 ) == '') ? 120 : $queue['timeout_to_redirect_to_extension'];
-            $queue_ext_conf .= "same => n,Queue({$queue['uniqid']},kT{$options},,,{$ringlength},,,queue_agent_answer,s,1) \n\t";
+            $queue_ext_conf .= "same => n,Queue({$queue['uniqid']},kT{$options},,,{$ringlength},,,queue_agent_answer) \n\t";
             // Оповестим о завершении работы очереди.
             // $queue_ext_conf .= 'same => n,AGI(cdr_connector.php,queue_end)'."\n\t";
             $queue_ext_conf .= 'same => n,Gosub(queue_end,${EXTEN},1)' . "\n\t";
