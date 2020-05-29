@@ -39,7 +39,7 @@ ln -s /sys/bus/usb /dev/bus/usb
 
 clear;
 echo;
-echo " - Start /etc/mountoffload...";
-/etc/mountoffload;
+echo " - Start /sbin/mountoffload...";
+/sbin/mountoffload;
 echo " - Start /etc/rc/mountconfdir...";
 /etc/rc/mountconfdir;

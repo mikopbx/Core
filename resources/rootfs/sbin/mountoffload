@@ -6,16 +6,17 @@ export PATH
 createBootConfFiles()
 {
   usrDir='/offload/rootfs/usr';
-  srcDir="${usrDir}/www";
+
   rcDir="${usrDir}/www/src/Core/Rc";
-  confFile="${srcDir}/config/mikopbx-settings.json";
-  if [ -f "${rcDir}" ]; then
+  if [ -d "${rcDir}" ]; then
         echo " - Create symlink for /etc/rc ..."
         rm -rf /etc/rc;
         ln -s "${rcDir}" /etc/rc;
         # chmod +x -R "${rcDir}"
   fi
+  sleep 5;
 
+  confFile="${usrDir}/www/config/mikopbx-settings.json";
   if [ -f "${confFile}" ]; then
         echo " - Copy phalcon config file to /etc/inc ..."
         mkdir -p /etc/inc/;
