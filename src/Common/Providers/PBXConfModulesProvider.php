@@ -40,40 +40,52 @@ class PBXConfModulesProvider implements ServiceProviderInterface
     {
         $di->setShared(
             'pbxConfModules',
-            function () {
-                $arrObject = [];
-                $configsDir = appPath('src/Core/Asterisk/Configs');
-                $modulesFiles = glob("{$configsDir}/*.php", GLOB_NOSORT);
-                foreach ($modulesFiles as $file) {
-                    $className        = pathinfo($file)['filename'];
-                    $full_class_name = "\\MikoPBX\\Core\\Asterisk\\Configs\\{$className}";
-                    if (class_exists($full_class_name)) {
-                        $object = new $full_class_name();
-                        if ($object instanceof ConfigClass){
-                            $arrObject[] = $object;
-                        }
-                    }
-                }
-
-                // Add additional modules classes
-                $modules = PbxExtensionModules::find('disabled=0');
-                foreach ($modules as $value) {
-                    $class_name      = str_replace('Module', '', $value->uniqid);
-                    $full_class_name = "\\Modules\\{$value->uniqid}\\Lib\\{$class_name}Conf";
-                    if (class_exists($full_class_name)) {
-                        try {
-                            $object = new $full_class_name();
-                            if ($object instanceof ConfigClass){
-                                $arrObject[] = $object;
-                            }
-                        } catch (Exception $e) {
-                            Util::sysLogMsg('INIT_MODULE', "Fail init module '{$value->uniqid}' ." . $e->getMessage());
-                        }
-                    }
-                }
-
-                return $arrObject;
+            function (){
+                return array_merge($this->getCoreConfModules(), $this->getExtensionsConfModules());
             }
         );
+    }
+
+    /**
+     * Create array of AsteriskConfModules
+     * @return array
+     */
+    private function getCoreConfModules():array
+    {
+        $arrObjects = [];
+        $configsDir = appPath('src/Core/Asterisk/Configs');
+        $modulesFiles = glob("{$configsDir}/*.php", GLOB_NOSORT);
+        foreach ($modulesFiles as $file) {
+            $className        = pathinfo($file)['filename'];
+            $full_class_name = "\\MikoPBX\\Core\\Asterisk\\Configs\\{$className}";
+            if (class_exists($full_class_name)) {
+                $object = new $full_class_name();
+                if ($object instanceof ConfigClass){
+                    $arrObjects[] = $object;
+                }
+            }
+        }
+        return  $arrObjects;
+    }
+
+    /**
+     * Create array of AsteriskConfModules
+     * @return array
+     */
+    private function getExtensionsConfModules():array
+    {
+        $arrObjects = [];
+        $modules = PbxExtensionModules::find('disabled=0');
+        foreach ($modules as $value) {
+            $class_name      = str_replace('Module', '', $value->uniqid);
+            $full_class_name = "\\Modules\\{$value->uniqid}\\Lib\\{$class_name}Conf";
+            if (class_exists($full_class_name)) {
+                    $object = new $full_class_name();
+                if ($object instanceof ConfigClass){
+                    $arrObjects[] = $object;
+                }
+            }
+        }
+        return  $arrObjects;
     }
 }
