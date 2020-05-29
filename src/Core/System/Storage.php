@@ -1040,6 +1040,7 @@ class Storage
         $www_dirs[] = $this->config->path('core.phpSessionPath');
         $www_dirs[] = $this->config->path('core.tempPath');
 
+
         // Add read rights
         Util::addRegularWWWRights(implode(' ', $www_dirs));
 

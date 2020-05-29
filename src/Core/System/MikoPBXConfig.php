@@ -95,10 +95,10 @@ class MikoPBXConfig
     public function getGeneralSettings($db_key = '')
     {
         if ($db_key === '') {
-            $cacheKey = explode('\\', static::class)[3].'.getGeneralSettings';
+            $cacheKey = 'PbxSettings.getGeneralSettings';
             $managedCache = $this->di->getShared('managedCache');
             $settings = $managedCache->get($cacheKey);
-            if ($settings!==null){
+            if ($settings!==null && is_array($settings)){
                 return $settings;
             }
             $result = PbxSettings::getAllPbxSettings();

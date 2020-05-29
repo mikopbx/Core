@@ -24,6 +24,8 @@ use MikoPBX\Modules\Config\ConfigClass;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 use Phalcon\Exception;
+use phpDocumentor\Reflection\DocBlock\Tags\See;
+
 use function MikoPBX\Common\Config\appPath;
 
 /**
@@ -41,7 +43,10 @@ class PBXConfModulesProvider implements ServiceProviderInterface
         $di->setShared(
             'pbxConfModules',
             function (){
-                return array_merge($this->getCoreConfModules(), $this->getExtensionsConfModules());
+                return array_merge(
+                    self::getCoreConfModules(),
+                    self::getExtensionsConfModules()
+                );
             }
         );
     }
@@ -50,7 +55,7 @@ class PBXConfModulesProvider implements ServiceProviderInterface
      * Create array of AsteriskConfModules
      * @return array
      */
-    private function getCoreConfModules():array
+    public static function getCoreConfModules():array
     {
         $arrObjects = [];
         $configsDir = appPath('src/Core/Asterisk/Configs');
@@ -72,7 +77,7 @@ class PBXConfModulesProvider implements ServiceProviderInterface
      * Create array of AsteriskConfModules
      * @return array
      */
-    private function getExtensionsConfModules():array
+    public static function getExtensionsConfModules():array
     {
         $arrObjects = [];
         $modules = PbxExtensionModules::find('disabled=0');
@@ -80,7 +85,7 @@ class PBXConfModulesProvider implements ServiceProviderInterface
             $class_name      = str_replace('Module', '', $value->uniqid);
             $full_class_name = "\\Modules\\{$value->uniqid}\\Lib\\{$class_name}Conf";
             if (class_exists($full_class_name)) {
-                    $object = new $full_class_name();
+                $object = new $full_class_name();
                 if ($object instanceof ConfigClass){
                     $arrObjects[] = $object;
                 }
