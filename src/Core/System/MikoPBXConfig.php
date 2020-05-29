@@ -9,12 +9,22 @@
 namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Models\PbxSettings;
+use Phalcon\Di;
 
 /**
  * Class Config
  */
 class MikoPBXConfig
 {
+    private $di;
+
+    /**
+     * System constructor.
+     */
+    public function __construct()
+    {
+        $this->di = Di::getDefault();
+    }
 
 
     public function getPickupExten(): string
@@ -85,7 +95,16 @@ class MikoPBXConfig
     public function getGeneralSettings($db_key = '')
     {
         if ($db_key === '') {
+            $cacheKey = self::class;
+            $managedCache = $this->di->getShared('managedCache');
+            $settings = $managedCache->get($cacheKey, 5);
+            if ($settings!==null){
+                return $settings;
+            }
             $result = PbxSettings::getAllPbxSettings();
+            if ($cacheKey) {
+                $managedCache->set($cacheKey, $result);
+            }
         } else {
             $result = PbxSettings::getValueByKey($db_key);
         }

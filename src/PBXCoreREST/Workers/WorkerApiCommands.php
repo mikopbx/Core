@@ -9,7 +9,7 @@
 namespace MikoPBX\PBXCoreREST\Workers;
 
 use MikoPBX\Core\Asterisk\CdrDb;
-use MikoPBX\Core\Asterisk\Configs\{IAXConf, OtherConf, SIPConf};
+use MikoPBX\Core\Asterisk\Configs\{IAXConf, OtherConf, SIPConf, VoiceMailConf};
 use MikoPBX\Core\System\{BeanstalkClient, Firewall, Notifications, Storage, System, Util};
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Modules\Setup\PbxExtensionFailure;
@@ -53,9 +53,6 @@ class WorkerApiCommands extends WorkerBase
         $processor = $request['processor'];
         try {
             switch ($processor) {
-                case 'pbx':
-                    $answer = $this->pbxCallBack($request);
-                    break;
                 case 'cdr':
                     $answer = $this->cdrCallBack($request);
                     break;
@@ -210,8 +207,8 @@ class WorkerApiCommands extends WorkerBase
         } elseif ('reloadMsmtp' === $action) {
             $notifications = new Notifications();
             $result        = $notifications->configure();
-            $OtherConfigs  = new OtherConf();
-            $OtherConfigs->voiceMailConfGenerate();
+            $OtherConfigs  = new VoiceMailConf();
+            $OtherConfigs->generateConfig();
             Util::mwExec("asterisk -rx 'voicemail reload'");
         } elseif ('unBanIp' === $action) {
             $result = Firewall::fail2banUnbanAll($data['ip']);

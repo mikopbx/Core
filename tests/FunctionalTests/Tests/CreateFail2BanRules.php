@@ -23,6 +23,13 @@ class CreateFail2BanRules extends MikoPBXTestsBase
     public function testRule(array $params):void{
 
         $this->clickSidebarMenuItemByHref('/admin-cabinet/fail2-ban/index/');
+
+        $this->changeInputField('maxretry', '');
+        $this->changeInputField('findtime', '');
+        $this->changeInputField('bantime', '');
+        $this->changeTextAreaValue('whitelist', '');
+        $this->submitForm('fail2ban-settings-form');
+
         $this->changeInputField('maxretry', $params['maxretry']);
         $this->changeInputField('findtime', $params['findtime']);
         $this->changeInputField('bantime', $params['bantime']);

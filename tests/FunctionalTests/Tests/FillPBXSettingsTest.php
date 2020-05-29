@@ -110,7 +110,7 @@ ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQDZ3hd6/gqPxMMCqFytFdVznYD3Debp2LKTRiJEaS2S
 
         $params[] = [[
             'Name'                   => 'Тестовая 72',
-            'Description'            => 'log: admin  pass: 8635255226',
+            'Description'            => 'log: admin  pass: 8635255226 last test:'.date("Y-m-d H:i:s"),
             'PBXLanguage'            => 'en-en',
             'PBXRecordCalls'         => true,
             'SendMetrics'            => false,

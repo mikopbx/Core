@@ -843,9 +843,8 @@ class Util
      */
     public static function getExtensionOfFile($filename, $delimiter = '.')
     {
-        $tmp_arr   = explode((string)$delimiter, $filename);
-
-        return $tmp_arr[count($tmp_arr) - 1];
+        $path_parts = pathinfo($filename);
+        return $path_parts['extension'];
     }
 
     /**

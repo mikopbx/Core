@@ -13,7 +13,7 @@ namespace MikoPBX\FunctionalTests\Tests;
 use Facebook\WebDriver\WebDriverBy;
 use MikoPBX\FunctionalTests\Lib\MikoPBXTestsBase;
 
-class FillMikoLicenseTest extends MikoPBXTestsBase
+class ChangeLicenseKeyTest extends MikoPBXTestsBase
 {
     /**
      * @depends testLogin
@@ -49,7 +49,7 @@ class FillMikoLicenseTest extends MikoPBXTestsBase
     public function additionProvider(): array
     {
         return [
-            ['MIKO-GW0DC-QEQQD-WN87S-C88PG']
+            [$GLOBALS['CONFIG']['MIKO-LICENSE-KEY']]
         ];
     }
 

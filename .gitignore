@@ -1,4 +1,4 @@
-/tests/FunctionalTests/config/*.json
+/tests/FunctionalTests/config/local.conf.json
 /vendor
 .idea
 /composer.lock

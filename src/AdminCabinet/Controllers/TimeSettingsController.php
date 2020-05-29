@@ -73,8 +73,9 @@ class TimeSettingsController extends BaseController
 
         $timezones = [];
         foreach ($regions as $region) {
-            $timezones = array_merge(...DateTimeZone::listIdentifiers($region));
+            $timezones[] = DateTimeZone::listIdentifiers($region);
         }
+        $timezones = array_merge(...$timezones);
 
         $timezone_offsets = [];
         foreach ($timezones as $timezone) {
