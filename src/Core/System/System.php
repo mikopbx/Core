@@ -698,7 +698,7 @@ server 2.pool.ntp.org';
 
         $link = '/tmp/firmware_update.img';
         Util::createUpdateSymlink($upd_file, $link);
-        Util::mwExecBg("/etc/rc/firmware recover_upgrade {$link} /dev/{$dev}");
+        Util::mwExecBg("/sbin/mikopbx_firmware recover_upgrade {$link} /dev/{$dev}");
 
         return $result;
     }

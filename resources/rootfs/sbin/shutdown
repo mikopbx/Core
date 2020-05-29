@@ -1,6 +1,6 @@
 #!/bin/sh
-/bin/freeupoffload
-/bin/freestorage
+/sbin/freeupoffload
+/sbin/freestorage
 
 if [ "$1" = "-r" ]
 then

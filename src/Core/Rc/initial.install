@@ -94,9 +94,9 @@ if (strtolower(trim(fgets($fp)) ) === 'y') {
         Util::mwExec("umount {$mnt}");
     }
     echo " - unpacking img...\n";
-    system("/bin/pv -tpreb /offload/firmware.img.gz | /bin/gunzip | dd of=/dev/{$target_disk} bs=512 2> /dev/null");
+    passthru("/bin/pv -tpreb /offload/firmware.img.gz | /bin/gunzip | dd of=/dev/{$target_disk} bs=512 2> /dev/null");
     echo " - create storage partition...\n";
-    system("/etc/rc/initial.storage.part.four create /dev/{$target_disk}");
+    passthru("/etc/rc/initial.storage.part.four create /dev/{$target_disk}");
     echo " - create storage - done\n";
 
     // Подключение диска для хранения данных.
