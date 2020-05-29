@@ -40,7 +40,7 @@ function getBannerText(){
 
     $livecd_text = '';
     if(file_exists('/offload/livecd')){
-        $livecd_text = '    '. Util::translate('PBX is running in Live or Recovery mode');
+        $livecd_text = Util::translate('PBX is running in Live or Recovery mode');
     }
 
     if(file_exists('/offload/version')){
@@ -51,8 +51,8 @@ function getBannerText(){
 
     $version 		= trim(file_get_contents($version_file));
     $buildtime  	= trim(file_get_contents('/etc/version.buildtime'));
-    $copyright_info = 'MikoPBX is Copyright (C) 2006-2020. All rights reserved.' .
-        "    \033[31;1m{$livecd_text}\033[39m";
+    $copyright_info = 'MikoPBX is Copyright (C) 2006-2020. All rights reserved.' . PHP_EOL.
+        "\t\033[01;31m".$livecd_text."\033[39m";
 
     $networks = $network->getEnabledLanInterfaces();
     $ip_text = ['','','','','']; $id_text=0;
@@ -82,7 +82,7 @@ function getBannerText(){
     if(!Util::isSystemctl()){
         $files = Main::checkForCorruptedFiles();
         if(count($files)!=0){
-            $broken = "\033[31;1m".Util::translate('The integrity of the system is broken')."...\033[0m";
+            $broken = "\t\033[01;31m".Util::translate('The integrity of the system is broken')."...\033[39m";
         }
     }else{
         $buildtime = 'debian';
