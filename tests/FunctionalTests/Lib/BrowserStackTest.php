@@ -39,6 +39,7 @@ class BrowserStackTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $CONFIG  = $GLOBALS['CONFIG'];
         $url  = "https://" . $GLOBALS['BROWSERSTACK_USERNAME'] . ":" . $GLOBALS['BROWSERSTACK_ACCESS_KEY'] . "@" . $CONFIG['server'] . "/wd/hub";
         $task_id = getenv('TASK_ID') ? getenv('TASK_ID') : 0;
         $caps = $CONFIG['environments'][$task_id];
