@@ -34,9 +34,8 @@ class SessionController extends BaseController
      */
     private function flushCache(): void
     {
-        //$this->di->get('modelsCache')->flush();
-        //$this->di->get('viewCache')->flush();
-        //$this->di->get('managedCache')->flush();
+        $this->di->get('modelsCache')->clear();
+        $this->di->get('managedCache')->clear();
     }
 
     /**

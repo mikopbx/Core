@@ -15,14 +15,15 @@ use MikoPBX\Common\Providers\{
     CDRDatabaseProvider,
     LicenseProvider,
     MainDatabaseProvider,
-    ManagedCacheProvider,
     ModelsCacheProvider,
     ModelsMetadataProvider,
     ModulesDBConnectionsProvider,
     NatsConnectionProvider,
     PBXConfModulesProvider,
     RegistryProvider,
-    TranslationProvider};
+    TranslationProvider,
+    ManagedCacheProvider
+};
 use MikoPBX\Core\Providers\{CliMessagesProvider, EventsLogDatabaseProvider};
 use Phalcon\Di;
 

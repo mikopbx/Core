@@ -25,7 +25,7 @@ class ResponseMiddleware implements MiddlewareInterface
      *
      * @return bool
      */
-    public function call(Micro $api)
+    public function call(Micro $api):bool
     {
         /** @var Response $response */
         $response = $api->getService('response');

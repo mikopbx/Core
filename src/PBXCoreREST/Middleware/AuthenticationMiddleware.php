@@ -53,22 +53,20 @@ class AuthenticationMiddleware implements MiddlewareInterface
     {
         // Исключения дла авторизации.content-disposition
         $panel_pattern = [
-            '/api/miko_ajam/getvar', // Тут авторизация basic
-            '/api/cdr/records',      // Тут авторизация basic
-            '/api/cdr/playback',     // Защищен fail2ban
-            '/api/cdr/getData',
+            '/pbxcore/api/miko_ajam/getvar', // Тут авторизация basic
+            '/pbxcore/api/cdr/records',      // Тут авторизация basic
+            '/pbxcore/api/cdr/playback',     // Защищен fail2ban
+            '/pbxcore/api/cdr/getData',
         ];
         // Текущий паттерн.
-        $pattern  = $api->getRouter()->getRewriteUri();
-        $res_auth = true;
+        $pattern  = $api->request->getURI(true);
+
         // Проверяем авторизацию.
-        if (preg_match_all('/\/api\/modules\/Module\w*\/customAction\S*/m', $pattern) > 0) {
-            // Это сервисы модулей.
-        } elseif ( ! in_array($pattern, $panel_pattern, true)) {
-            $res_auth = false;
+        if ( in_array($pattern, $panel_pattern, true)) {
+            return true;
         }
 
-        return $res_auth;
+        return false;
     }
 
 }

@@ -17,6 +17,7 @@ use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 use Phalcon\Events\Manager as EventsManager;
 use Phalcon\Mvc\Dispatcher;
+use Whoops\Handler\PrettyPageHandler;
 
 /**
  *  We register the events manager
@@ -30,10 +31,9 @@ class DispatcherProvider implements ServiceProviderInterface
      */
     public function register(DiInterface $di): void
     {
-        $debugMode = $di->getShared('config')->path('adminApplication.debugMode');
         $di->setShared(
             'dispatcher',
-            function () use ($debugMode) {
+            function () {
                 $eventsManager = new EventsManager();
 
                 /**
@@ -50,7 +50,7 @@ class DispatcherProvider implements ServiceProviderInterface
                 /**
                  * Handle exceptions and not-found exceptions using NotFoundPlugin
                  */
-                if ( ! $debugMode) {
+                if (! class_exists(PrettyPageHandler::class)) {
                     $eventsManager->attach(
                         'dispatch:beforeException',
                         new NotFoundPlugin()

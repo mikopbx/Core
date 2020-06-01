@@ -3,7 +3,7 @@
  * Copyright (C) MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 4 2020
+ * Written by Nikolay Beketov, 5 2020
  *
  */
 
@@ -20,7 +20,7 @@ namespace MikoPBX\Common\Providers;
 
 
 use Phalcon\Cache;
-use Phalcon\Cache\Adapter\Stream;
+use Phalcon\Cache\Adapter\Memory;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 use Phalcon\Storage\SerializerFactory;
@@ -38,19 +38,17 @@ class ManagedCacheProvider implements ServiceProviderInterface
      */
     public function register(DiInterface $di): void
     {
-        $tempPath = $di->getShared('config')->path('core.tempPath');
         $di->setShared(
             'managedCache',
-            function () use ($tempPath) {
+            function () {
                 $serializerFactory = new SerializerFactory();
 
                 $options = [
                     'defaultSerializer' => 'Json',
-                    'lifetime'          => 7200,
-                    'storageDir'        => $tempPath . '/managedCache',
+                    'lifetime'          => 7200
                 ];
 
-                $adapter = new Stream($serializerFactory, $options);
+                $adapter = new Memory($serializerFactory, $options);
 
                 return new Cache($adapter);
             }
