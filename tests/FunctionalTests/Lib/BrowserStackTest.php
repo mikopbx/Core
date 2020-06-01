@@ -3,15 +3,14 @@
 namespace MikoPBX\FunctionalTests\Lib;
 
 use Facebook\WebDriver\Remote\RemoteWebDriver;
-use Facebook\WebDriver\WebDriverBy;
 use PHPUnit\Framework\TestCase;
 
 require 'globals.php';
 
 class BrowserStackTest extends TestCase
 {
-    protected static $driver;
-    protected static $bs_local;
+    protected static RemoteWebDriver $driver;
+    protected static \BrowserStack\Local $bs_local;
 
     public static function setUpBeforeClass(): void
     {
@@ -34,26 +33,51 @@ class BrowserStackTest extends TestCase
             self::$bs_local = new \BrowserStack\Local();
             self::$bs_local->start($bs_local_args);
         }
-    }
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $CONFIG  = $GLOBALS['CONFIG'];
         $url  = "https://" . $GLOBALS['BROWSERSTACK_USERNAME'] . ":" . $GLOBALS['BROWSERSTACK_ACCESS_KEY'] . "@" . $CONFIG['server'] . "/wd/hub";
-        $task_id = getenv('TASK_ID') ? getenv('TASK_ID') : 0;
-        $caps = $CONFIG['environments'][$task_id];
-
-        foreach ($CONFIG["capabilities"] as $key => $value) {
-            if ( ! array_key_exists($key, $caps)) {
-                $caps[$key] = $value;
-            }
-        }
 
         $caps['project'] = "MikoPBX";
         $caps['build'] = $GLOBALS['BUILD_NUMBER'];
-        $caps['name'] = $this->getName();
+
         self::$driver = RemoteWebDriver::create($url, $caps);
+
+    }
+
+    /**
+     * Before execute test we set it name to RemoteWebdriver
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
+        $sessionID = self::$driver->getSessionID();
+        $name = $this->getName();
+        $client = new \GuzzleHttp\Client();
+        $res = $client->request('PUT', "https://api.browserstack.com/automate/sessions/{$sessionID}.json", [
+            'auth' => [$GLOBALS['BROWSERSTACK_USERNAME'], $GLOBALS['BROWSERSTACK_ACCESS_KEY']],
+            'json' => ['name' => $name]
+        ]);
+    }
+
+    /**
+     * After execute test we will update his status
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
+    public function tearDown(): void
+    {
+        parent::tearDown();
+        $sessionID = self::$driver->getSessionID();
+        $status = $this->getStatus()===0?'passed':'failed';
+        $statusMessage = $this->getStatusMessage();
+        $client = new \GuzzleHttp\Client();
+        $res = $client->request('PUT', "https://api.browserstack.com/automate/sessions/{$sessionID}.json", [
+            'auth' => [$GLOBALS['BROWSERSTACK_USERNAME'], $GLOBALS['BROWSERSTACK_ACCESS_KEY']],
+            'json' => [
+                'status' => $status,
+                'reason' => $statusMessage,
+            ]
+        ]);
+
 
     }
 
