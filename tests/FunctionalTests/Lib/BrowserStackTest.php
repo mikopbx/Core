@@ -4,14 +4,20 @@ namespace MikoPBX\FunctionalTests\Lib;
 
 use Facebook\WebDriver\Remote\RemoteWebDriver;
 use PHPUnit\Framework\TestCase;
+use BrowserStack\Local as BrowserStackLocal;
+use GuzzleHttp\Client as GuzzleHttpClient;
 
 require 'globals.php';
 
 class BrowserStackTest extends TestCase
 {
     protected static RemoteWebDriver $driver;
-    protected static \BrowserStack\Local $bs_local;
+    protected static BrowserStackLocal $bs_local;
 
+    /**
+     * Before all tests
+     * @throws \BrowserStack\LocalException
+     */
     public static function setUpBeforeClass(): void
     {
         $CONFIG  = $GLOBALS['CONFIG'];
@@ -30,7 +36,7 @@ class BrowserStackTest extends TestCase
                 "key" => $GLOBALS['BROWSERSTACK_ACCESS_KEY'],
                 "localIdentifier" => $caps['browserstack.localIdentifier'],
             ];
-            self::$bs_local = new \BrowserStack\Local();
+            self::$bs_local = new BrowserStackLocal();
             self::$bs_local->start($bs_local_args);
         }
 
@@ -52,8 +58,8 @@ class BrowserStackTest extends TestCase
         parent::setUp();
         $sessionID = self::$driver->getSessionID();
         $name = $this->getName();
-        $client = new \GuzzleHttp\Client();
-        $res = $client->request('PUT', "https://api.browserstack.com/automate/sessions/{$sessionID}.json", [
+        $client = new GuzzleHttpClient();
+        $client->request('PUT', "https://api.browserstack.com/automate/sessions/{$sessionID}.json", [
             'auth' => [$GLOBALS['BROWSERSTACK_USERNAME'], $GLOBALS['BROWSERSTACK_ACCESS_KEY']],
             'json' => ['name' => $name]
         ]);
@@ -69,8 +75,8 @@ class BrowserStackTest extends TestCase
         $sessionID = self::$driver->getSessionID();
         $status = $this->getStatus()===0?'passed':'failed';
         $statusMessage = $this->getStatusMessage();
-        $client = new \GuzzleHttp\Client();
-        $res = $client->request('PUT', "https://api.browserstack.com/automate/sessions/{$sessionID}.json", [
+        $client = new GuzzleHttpClient();
+        $client->request('PUT', "https://api.browserstack.com/automate/sessions/{$sessionID}.json", [
             'auth' => [$GLOBALS['BROWSERSTACK_USERNAME'], $GLOBALS['BROWSERSTACK_ACCESS_KEY']],
             'json' => [
                 'status' => $status,
@@ -81,6 +87,9 @@ class BrowserStackTest extends TestCase
 
     }
 
+    /**
+     * After all tests
+     */
     public static function tearDownAfterClass(): void
     {
         self::$driver->quit();

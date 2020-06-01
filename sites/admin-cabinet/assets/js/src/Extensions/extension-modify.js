@@ -343,14 +343,14 @@ const avatar = {
 	$picture: $('#avatar'),
 	initialize() {
 		if (avatar.$picture.attr('src') === '') {
-			avatar.$picture.attr('src', `${globalRootUrl}public/assets/img/unknownPerson.jpg`);
+			avatar.$picture.attr('src', `${globalRootUrl}assets/img/unknownPerson.jpg`);
 		}
 		$('#upload-new-avatar').on('click', () => {
 			$('#file-select').click();
 		});
 
 		$('#clear-avatar').on('click', () => {
-			avatar.$picture.attr('src', `${globalRootUrl}public/assets/img/unknownPerson.jpg`);
+			avatar.$picture.attr('src', `${globalRootUrl}assets/img/unknownPerson.jpg`);
 			extension.$formObj.form('set value', 'user_avatar', null);
 			extension.$sip_secret.trigger('change');
 		});

@@ -9,12 +9,13 @@
 namespace MikoPBX\PBXCoreREST\Workers;
 
 use MikoPBX\Core\Asterisk\CdrDb;
-use MikoPBX\Core\Asterisk\Configs\{IAXConf, OtherConf, SIPConf, VoiceMailConf};
+use MikoPBX\Core\Asterisk\Configs\{IAXConf, SIPConf, VoiceMailConf};
 use MikoPBX\Core\System\{BeanstalkClient, Firewall, Notifications, Storage, System, Util};
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Modules\Setup\PbxExtensionFailure;
 use MikoPBX\Modules\ModuleState;
 use Phalcon\Exception;
+use function MikoPBX\Common\Config\appPath;
 
 require_once 'globals.php';
 
@@ -91,10 +92,10 @@ class WorkerApiCommands extends WorkerBase
         $action = $request['action'];
         switch ($action) {
             case 'getActiveCalls':
-                $result = CdrDb::getActiveCalls();
+                $result['data'] = CdrDb::getActiveCalls();
                 break;
             case 'getActiveChannels':
-                $result = CdrDb::getActiveChannels();
+                $result['data'] = CdrDb::getActiveChannels();
                 break;
             default:
                 $result = ["Unknown action - {$action}"];
@@ -176,7 +177,7 @@ class WorkerApiCommands extends WorkerBase
             $result      = [
                 'result' => 'Success',
             ];
-            $workersPath = $this->di->get('config')->core->workersPath;
+            $workersPath = appPath('src/Core/Workers');
             Util::mwExecBg("php -f {$workersPath}/WorkerMergeUploadedFile.php '{$data['settings_file']}'");
         } elseif ('restartModuleDependentWorkers' === $action) {
             $result['result'] = 'Success';

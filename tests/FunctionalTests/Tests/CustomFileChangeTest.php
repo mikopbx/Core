@@ -10,6 +10,7 @@
 namespace MikoPBX\FunctionalTests\Tests;
 
 use Facebook\WebDriver\WebDriverBy;
+use Facebook\WebDriver\WebDriverExpectedCondition;
 use MikoPBX\FunctionalTests\Lib\MikoPBXTestsBase;
 
 class CustomFileChangeTest extends MikoPBXTestsBase
@@ -39,7 +40,7 @@ class CustomFileChangeTest extends MikoPBXTestsBase
         $this->selectDropdownItem('mode', $params['mode']);
 
         self::$driver->wait()->until(
-            \Facebook\WebDriver\WebDriverExpectedCondition::presenceOfElementLocated(
+            WebDriverExpectedCondition::presenceOfElementLocated(
                 WebDriverBy::xpath('id("application-code")//textarea')
             )
         );

@@ -19,6 +19,8 @@ use ReflectionClass;
 use ReflectionException;
 use RuntimeException;
 
+use function MikoPBX\Common\Config\appPath;
+
 
 class UpdateDatabase
 {
@@ -65,7 +67,7 @@ class UpdateDatabase
     private function updateDbStructureByModelsAnnotations(): bool
     {
         $result    = true;
-        $modelsDir = $this->config->path('core.rootPath') . '/src/Common/Models';
+        $modelsDir = appPath('src/Common/Models');
         $results   = glob("{$modelsDir}/*.php", GLOB_NOSORT);
         foreach ($results as $file) {
             $className        = pathinfo($file)['filename'];

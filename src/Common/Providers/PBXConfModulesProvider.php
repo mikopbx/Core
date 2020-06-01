@@ -19,12 +19,9 @@ declare(strict_types=1);
 namespace MikoPBX\Common\Providers;
 
 use MikoPBX\Common\Models\PbxExtensionModules;
-use MikoPBX\Core\System\Util;
 use MikoPBX\Modules\Config\ConfigClass;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
-use Phalcon\Exception;
-use phpDocumentor\Reflection\DocBlock\Tags\See;
 
 use function MikoPBX\Common\Config\appPath;
 

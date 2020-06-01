@@ -23,14 +23,10 @@
   },
   "core": {
     "debugMode": false,
-    "rootPath": "/usr/www",
     "backupPath": "/mountpoint/mikopbx/backup",
-    "rcDir": "/usr/www/src/Core/Rc",
-    "workersPath": "/usr/www/src/Core/Workers",
     "cfPath": "/cf",
     "varEtcPath": "/var/etc",
     "sqlite3BinPath": "/usr/bin/sqlite3",
-    "translationsPath": "/usr/www/src/Core/Messages/",
     "modulesDir": "/mountpoint/mikopbx/custom_modules",
     "tempPath": "/mountpoint/mikopbx/tmp",
     "logsPath": "/mountpoint/mikopbx/log",
@@ -38,7 +34,6 @@
     "mediaMountPoint": "/mountpoint"
   },
   "asterisk": {
-    "astagidir": "/usr/www/src/Core/Asterisk/agi-bin",
     "astvarlibdir" : "/offload/asterisk",
     "confDir" : "/etc/asterisk",
     "astmoddir": "/offload/asterisk/modules",
@@ -59,14 +54,9 @@
   },
   "adminApplication": {
     "debugMode": false,
-    "wwwDir": "/usr/www",
     "baseUri": "/admin-cabinet/",
     "cacheDir": "/mountpoint/mikopbx/cache",
     "voltCacheDir": "/mountpoint/mikopbx/cache/volt",
-    "jsCacheDir": "/usr/www/sites/admin-cabinet/public/assets/js/cache",
-    "cssCacheDir": "/usr/www/sites/admin-cabinet/public/assets/css/cache",
-    "imgCacheDir": "/usr/www/sites/admin-cabinet/public/assets/img/cache",
-    "viewsDir": "/usr/www/sites/admin-cabinet/app/views/",
     "downloadLink": "/var/spool/download_link"
   }
 }

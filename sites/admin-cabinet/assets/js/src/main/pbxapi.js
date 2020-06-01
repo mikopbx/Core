@@ -323,9 +323,10 @@ const PbxApi = {
 		$.api({
 			url: PbxApi.pbxGetActiveChannels,
 			on: 'now',
+			successTest: PbxApi.successTest,
 			onSuccess(response) {
 				if (Object.keys(response).length > 0) {
-					callback(response);
+					callback(response.data);
 				} else {
 					callback(false);
 				}

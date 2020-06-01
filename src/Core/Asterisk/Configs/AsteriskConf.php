@@ -13,17 +13,20 @@ namespace MikoPBX\Core\Asterisk\Configs;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Modules\Config\ConfigClass;
 
+use function MikoPBX\Common\Config\appPath;
+
 class AsteriskConf extends ConfigClass
 {
-    protected $description = 'asterisk.conf';
+    protected string $description = 'asterisk.conf';
 
     protected function generateConfigProtected(): void
     {
 
         $lang = $this->generalSettings['PBXLanguage'];
+        $astAgiDir = appPath('src/Core/Asterisk/agi-bin');
         $conf = "[directories]\n" .
             "astetcdir => /etc/asterisk\n" .
-            "astagidir => {$this->config->path('asterisk.astagidir')}\n" .
+            "astagidir => {$astAgiDir}\n" .
             "astkeydir => /etc/asterisk\n" .
             "astrundir => /var/asterisk/run\n" .
             "astmoddir => {$this->config->path('asterisk.astmoddir')}\n" .

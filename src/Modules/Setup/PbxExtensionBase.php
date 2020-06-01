@@ -12,11 +12,12 @@ use MikoPBX\Core\Config\RegisterDIServices;
 use MikoPBX\Core\System\Upgrade\UpdateDatabase;
 use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings};
 use MikoPBX\Core\System\Util;
-use Phalcon\Db\Adapter\Pdo\Sqlite;
 use Phalcon\DI;
-use Phalcon\Exception;
+use Phalcon\Di\Exception;
 use Phalcon\Text;
 use Throwable;
+
+use function MikoPBX\Common\Config\appPath;
 
 /**
  * Class PbxExtensionBase
@@ -124,7 +125,7 @@ abstract class PbxExtensionBase implements PbxExtensionSetupInterface
         }
         $this->di      = DI::getDefault();
         if ($this->di === null){
-            throw new \Phalcon\Di\Exception('\Phalcon\DI did not installed.');
+            throw new Exception('\Phalcon\DI did not installed.');
         }
         $this->db      = $this->di->getShared('db');
         $this->config  = $this->di->getShared('config');
@@ -210,8 +211,9 @@ abstract class PbxExtensionBase implements PbxExtensionSetupInterface
 
         $modulesDir          = $this->config->path('core.modulesDir');
         // IMG
-        $moduleImageDir      = "{$this->moduleDir}/public/assets/img";
-        $moduleImageCacheDir = "{$this->config->path('adminApplication.imgCacheDir')}/{$this->module_uniqid}";
+        $moduleImageDir      = "{$this->moduleDir}/assets/img";
+        $imgCacheDir = appPath('sites/admin-cabinet/assets/img/cache');
+        $moduleImageCacheDir = "{$imgCacheDir}/{$this->module_uniqid}";
         if (file_exists($moduleImageCacheDir)){
             unlink($moduleImageCacheDir);
         }
@@ -219,8 +221,9 @@ abstract class PbxExtensionBase implements PbxExtensionSetupInterface
             symlink($moduleImageDir, $moduleImageCacheDir);
         }
         // CSS
-        $moduleCSSDir      = "{$this->moduleDir}/public/assets/css";
-        $moduleCSSCacheDir = "{$this->config->path('adminApplication.cssCacheDir')}/{$this->module_uniqid}";
+        $moduleCSSDir      = "{$this->moduleDir}/assets/css";
+        $cssCacheDir = appPath('sites/admin-cabinet/assets/css/cache');
+        $moduleCSSCacheDir = "{$cssCacheDir}/{$this->module_uniqid}";
         if (file_exists($moduleCSSCacheDir)){
             unlink($moduleCSSCacheDir);
         }
@@ -228,8 +231,9 @@ abstract class PbxExtensionBase implements PbxExtensionSetupInterface
             symlink($moduleCSSDir, $moduleCSSCacheDir);
         }
         // JS
-        $moduleJSDir      = "{$this->moduleDir}/public/assets/js";
-        $moduleJSCacheDir = "{$this->config->path('adminApplication.jsCacheDir')}/{$this->module_uniqid}";
+        $moduleJSDir      = "{$this->moduleDir}/assets/js";
+        $jsCacheDir = appPath('sites/admin-cabinet/assets/js/cache');
+        $moduleJSCacheDir = "{$jsCacheDir}/{$this->module_uniqid}";
         if (file_exists($moduleJSCacheDir)){
             unlink($moduleJSCacheDir);
         }
@@ -361,19 +365,22 @@ abstract class PbxExtensionBase implements PbxExtensionSetupInterface
 
         // Remove assets
         // IMG
-        $moduleImageCacheDir = "{$this->config->path('adminApplication.imgCacheDir')}/{$this->module_uniqid}";
+        $imgCacheDir = appPath('sites/admin-cabinet/assets/img/cache');
+        $moduleImageCacheDir = "{$imgCacheDir}/{$this->module_uniqid}";
         if (file_exists($moduleImageCacheDir)){
             unlink($moduleImageCacheDir);
         }
 
         // CSS
-        $moduleCSSCacheDir = "{$this->config->path('adminApplication.cssCacheDir')}/{$this->module_uniqid}";
+        $cssCacheDir = appPath('sites/admin-cabinet/assets/css/cache');
+        $moduleCSSCacheDir = "{$cssCacheDir}/{$this->module_uniqid}";
         if (file_exists($moduleCSSCacheDir)){
             unlink($moduleCSSCacheDir);
         }
 
         // JS
-        $moduleJSCacheDir = "{$this->config->path('adminApplication.jsCacheDir')}/{$this->module_uniqid}";
+        $jsCacheDir = appPath('sites/admin-cabinet/assets/js/cache');
+        $moduleJSCacheDir = "{$jsCacheDir}/{$this->module_uniqid}";
         if (file_exists($moduleJSCacheDir)){
             unlink($moduleJSCacheDir);
         }

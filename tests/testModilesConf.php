@@ -6,8 +6,11 @@
  * Written by Nikolay Beketov, 5 2020
  *
  */
+
+use MikoPBX\Core\Asterisk\Configs\ModulesConf;
+
 require_once 'globals.php';
 
-$mo = new \MikoPBX\Core\Asterisk\Configs\ModulesConf();
+$mo = new ModulesConf();
 
 $mo->generateModulesConf();

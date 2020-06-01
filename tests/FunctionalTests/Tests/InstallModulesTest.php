@@ -10,6 +10,8 @@
 namespace MikoPBX\FunctionalTests\Tests;
 
 
+use Exception;
+use Facebook\WebDriver\Exception\NoSuchElementException;
 use Facebook\WebDriver\WebDriverBy;
 use MikoPBX\FunctionalTests\Lib\MikoPBXTestsBase as MikoPBXTestsBaseAlias;
 
@@ -23,7 +25,7 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
      */
     public function testInstallModule(array $params): void
     {
-        $this->clickSidebarMenuItemByHref("/admin-cabinet/dialplan-applications/index/");
+        $this->clickSidebarMenuItemByHref("/admin-cabinet/pbx-extension-modules/index/");
 
         // Delete old module
         $xpath = '//tr[@id="'.$params['moduleId'].'"]//a[contains(@href,"delete")]';
@@ -33,9 +35,9 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
             sleep(2);
             $tableButtonModify->click();
 
-        } catch (\Facebook\WebDriver\Exception\NoSuchElementException $e) {
+        } catch (NoSuchElementException $e) {
             echo('Not found row with module =' . $params['moduleId'] . ' on this page' . PHP_EOL);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             echo('Unknown error ' . $e->getMessage() . PHP_EOL);
         }
         // Install new
@@ -44,9 +46,9 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
         try {
             $tableButtonInstall = self::$driver->findElement(WebDriverBy::xpath($xpath));
             $tableButtonInstall->click();
-        } catch (\Facebook\WebDriver\Exception\NoSuchElementException $e) {
+        } catch (NoSuchElementException $e) {
             echo('Not found row with module =' . $params['moduleId'] . ' to install' . PHP_EOL);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             echo('Unknown error ' . $e->getMessage() . PHP_EOL);
         }
 

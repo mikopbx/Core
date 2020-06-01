@@ -3,7 +3,7 @@
  * Copyright (C) MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 6 2018
+ * Written by Nikolay Beketov, 6 2020
  *
  */
 namespace MikoPBX\AdminCabinet;
@@ -21,7 +21,7 @@ $di = new FactoryDefault();
 /**
  * Auto-loader configuration
  */
-require_once __DIR__ . '/../../../src/Common/Config/ClassLoader.php';
+require_once __DIR__ . '/../../src/Common/Config/ClassLoader.php';
 
 /**
  * Load application services

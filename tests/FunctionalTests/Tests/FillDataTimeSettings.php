@@ -20,10 +20,10 @@ class FillDataTimeSettings extends MikoPBXTestsBase
      *
      * @param array $params
      */
-    public function testRule(array $params):void{
+    public function testChangeDataTimeSettings(array $params):void{
 
-        $this->clickSidebarMenuItemByHref('/admin-cabinet/fail2-ban/index/');
-        $this->selectDropdownItem('PBXTimezone',$params['PBXTimezone']);
+        $this->clickSidebarMenuItemByHref('/admin-cabinet/time-settings/modify/');
+        $this->selectDropdownItem('PBXTimezone', $params['PBXTimezone']);
         $this->changeCheckBoxState('PBXManualTimeSettings', $params['PBXManualTimeSettings']);
         if ($params['PBXManualTimeSettings']){
             self::$driver->executeScript("$('div#CalendarBlock div.input.calendar').calendar('set startDate', new Date())");
@@ -31,8 +31,8 @@ class FillDataTimeSettings extends MikoPBXTestsBase
             $this->changeInputField('SetNtpServerBlock', $params['SetNtpServerBlock']);
         }
         // Сохраняем правило
-        $this->submitForm('fail2ban-settings-form');
-        $this->clickSidebarMenuItemByHref('/admin-cabinet/fail2-ban/index/');
+        $this->submitForm('time-settings-form');
+        $this->clickSidebarMenuItemByHref('/admin-cabinet/time-settings/modify/');
 
         $this->assertMenuItemSelected('PBXTimezone',$params['PBXTimezone']);
 

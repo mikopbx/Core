@@ -360,14 +360,14 @@ var avatar = {
   initialize: function () {
     function initialize() {
       if (avatar.$picture.attr('src') === '') {
-        avatar.$picture.attr('src', "".concat(globalRootUrl, "public/assets/img/unknownPerson.jpg"));
+        avatar.$picture.attr('src', "".concat(globalRootUrl, "assets/img/unknownPerson.jpg"));
       }
 
       $('#upload-new-avatar').on('click', function () {
         $('#file-select').click();
       });
       $('#clear-avatar').on('click', function () {
-        avatar.$picture.attr('src', "".concat(globalRootUrl, "public/assets/img/unknownPerson.jpg"));
+        avatar.$picture.attr('src', "".concat(globalRootUrl, "assets/img/unknownPerson.jpg"));
         extension.$formObj.form('set value', 'user_avatar', null);
         extension.$sip_secret.trigger('change');
       });

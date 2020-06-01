@@ -11,6 +11,7 @@ namespace MikoPBX\Core\System;
 use MikoPBX\Common\Models\{PbxExtensionModules, Storage as StorageModel};
 use MikoPBX\Common\Providers\ConfigProvider;
 use Phalcon\Di;
+use function MikoPBX\Common\Config\appPath;
 
 
 /**
@@ -465,7 +466,8 @@ class Storage
             if ($disk['free_space'] < 100) {
                 $need_alert  = true;
                 $test_alert  = "The {$disk['id']} has less than 100MB of free space available. Old call records will be deleted.";
-                $workersPath = $this->di->get('config')->core->workersPath;
+
+                $workersPath = appPath('src/Core/Workers');
                 Util::mwExecBg("/usr/bin/php -f {$workersPath}/WorkerRemoveOldRecords.php");
             }
 
@@ -900,14 +902,16 @@ class Storage
      * After mount storage we will change /mountpoint/ to new $mount_point value
      *
      * @param string $mount_point
+     *
+     * @throws \JsonException
      */
     private function updateConfigWithNewMountPoint(string $mount_point): void
     {
         $staticSettingsFile     = '/etc/inc/mikopbx-settings.json';
-        $staticSettingsFileOrig = '/usr/www/config/mikopbx-settings.json';
+        $staticSettingsFileOrig =  appPath('config/mikopbx-settings.json');
 
         $jsonString = file_get_contents($staticSettingsFileOrig);
-        $data       = json_decode($jsonString, true);
+        $data       = json_decode($jsonString, true, 512, JSON_THROW_ON_ERROR);
         foreach ($data as $rootKey => $rootEntry) {
             foreach ($rootEntry as $nestedKey => $entry) {
                 if (stripos($entry, '/mountpoint') !== false) {
@@ -915,7 +919,7 @@ class Storage
                 }
             }
         }
-        $newJsonString = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        $newJsonString = json_encode($data, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
         file_put_contents($staticSettingsFile, $newJsonString);
 
         // Update config variable
@@ -996,25 +1000,28 @@ class Storage
             Util::mwExec("mkdir -p $path");
         }
 
+        $jsCacheDir = appPath('sites/admin-cabinet/assets/js/cache');
         Util::createUpdateSymlink(
             $this->config->path('adminApplication.cacheDir') . '/js',
-            $this->config->path('adminApplication.jsCacheDir')
+            $jsCacheDir
         );
+
+        $cssCacheDir = appPath('sites/admin-cabinet/assets/css/cache');
         Util::createUpdateSymlink(
             $this->config->path('adminApplication.cacheDir') . '/css',
-            $this->config->path('adminApplication.cssCacheDir')
+            $cssCacheDir
         );
+
+        $imgCacheDir = appPath('sites/admin-cabinet/assets/img/cache');
         Util::createUpdateSymlink(
             $this->config->path('adminApplication.cacheDir') . '/img',
-            $this->config->path('adminApplication.imgCacheDir')
+            $imgCacheDir
         );
         Util::createUpdateSymlink($this->config->path('core.phpSessionPath'), '/var/lib/php/session');
         Util::createUpdateSymlink($this->config->path('core.tempPath'), '/ultmp');
-        Util::createUpdateSymlink(
-            $this->config->path('core.rootPath') . '/src/ext/lua/asterisk/extensions.lua',
-            '/etc/asterisk/extensions.lua'
-        ); //TODO:Этот файл используется?
 
+        $filePath = appPath('src/ext/lua/asterisk/extensions.lua');
+        Util::createUpdateSymlink($filePath, '/etc/asterisk/extensions.lua'); //TODO:Этот файл используется?
         $this->applyFolderRights();
 
     }
@@ -1039,15 +1046,16 @@ class Storage
         $www_dirs[] = $this->config->path('database.logsPath');
         $www_dirs[] = $this->config->path('core.phpSessionPath');
         $www_dirs[] = $this->config->path('core.tempPath');
-
+        $www_dirs[] = '/etc/version';
+        $www_dirs[] = appPath('/');
 
         // Add read rights
         Util::addRegularWWWRights(implode(' ', $www_dirs));
 
         // Add executable rights
-        $exec_dirs[] = $this->config->path('asterisk.astagidir');
-        $exec_dirs[] = $this->config->path('core.workersPath');
-        $exec_dirs[] = $this->config->path('core.rcDir');
+        $exec_dirs[] = appPath('src/Core/Asterisk/agi-bin');
+        $exec_dirs[] = appPath('src/Core/Workers');
+        $exec_dirs[] = appPath('src/Core/Rc');
         Util::mwExec('find ' . implode(' ', $exec_dirs) . ' -type f -exec chmod +x {} \;');
         Util::mwExec('mount -o remount,ro /offload 2> /dev/null');
     }

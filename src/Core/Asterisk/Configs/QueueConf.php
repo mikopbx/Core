@@ -14,7 +14,7 @@ use MikoPBX\Core\System\{Util};
 
 class QueueConf extends ConfigClass
 {
-    protected $description = 'queues.conf';
+    protected string $description = 'queues.conf';
 
 
     /**

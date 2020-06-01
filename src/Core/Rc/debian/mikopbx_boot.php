@@ -1,6 +1,7 @@
 // TODO::Добавить в src/Core/System/SystemLoader.php проверку на debian и там стартовать все
 
 <!--#!/usr/bin/php -f-->
+
 <?php
 //namespace MikoPBX\Core\Rc;
 // /**
@@ -14,6 +15,7 @@
 // use MikoPBX\Core\System\Notifications;
 // use MikoPBX\Core\System\PBX;
 // use MikoPBX\Core\System\Util;
+// use function MikoPBX\Common\Config\appPath;
 //
 // require_once('globals.php');
 //
@@ -64,7 +66,7 @@
 // $system->syslogd_start();
 //
 // echo " - Start models worker...";
-// $workersPath = $this->di->get('config')->core->workersPath;
+// $workersPath = appPath('src/Core/Workers');
 // Util::mwExecBg("/etc/rc/worker_reload 'php -f {$workersPath}/WorkerModelsEvents.php' ");
 // Util::mwExecBg("/etc/rc/worker_reload 'php -f {$workersPath}/WorkerLongPoolAPI.php' ");
 //

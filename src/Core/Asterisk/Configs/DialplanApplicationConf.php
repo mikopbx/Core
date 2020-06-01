@@ -11,6 +11,8 @@ namespace MikoPBX\Core\Asterisk\Configs;
 use MikoPBX\Common\Models\DialplanApplications;
 use MikoPBX\Modules\Config\ConfigClass;
 
+use function MikoPBX\Common\Config\appPath;
+
 class DialplanApplicationConf extends ConfigClass
 {
 
@@ -73,7 +75,7 @@ class DialplanApplicationConf extends ConfigClass
 
     private function generatePhpApp($app): string
     {
-        $agiBinFolder = $this->config->path('asterisk.astagidir');
+        $agiBinFolder = appPath('src/Core/Asterisk/agi-bin');
         $text_app     = "#!/usr/bin/php\n";
         $text_app     .= base64_decode($app['applicationlogic']);
         file_put_contents("{$agiBinFolder}/{$app['uniqid']}.php", $text_app);

@@ -14,6 +14,7 @@ use Phalcon\Assets\Manager;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 use Phalcon\Text;
+use function MikoPBX\Common\Config\appPath;
 
 class AssetProvider implements ServiceProviderInterface
 {
@@ -24,11 +25,9 @@ class AssetProvider implements ServiceProviderInterface
      */
     public function register(DiInterface $di): void
     {
-        $appConfig = $di->getShared('config')->get('adminApplication');
-
         $di->set(
             'assets',
-            function () use ($appConfig) {
+            function () {
                 $manager    = new Manager();
                 $dispatcher = $this->get('dispatcher');
                 $session    = $this->get('session');
@@ -48,16 +47,16 @@ class AssetProvider implements ServiceProviderInterface
                 $footerCollectionACE             = $manager->collection('footerACE');
                 $footerCollectionLoc             = $manager->collection('footerLoc');
 
-                $semanticCollectionCSS->setPrefix('public/assets/');
-                $headerCollectionCSS->setPrefix('public/assets/');
-                $semanticCollectionJS->setPrefix('public/assets/');
-                $headerCollectionJS->setPrefix('public/assets/');
-                $footerCollectionJS->setPrefix('public/assets/');
-                $footerCollectionACE->setPrefix('public/assets/');
-                $footerCollectionLoc->setPrefix('public/assets/');
+                $semanticCollectionCSS->setPrefix('assets/');
+                $headerCollectionCSS->setPrefix('assets/');
+                $semanticCollectionJS->setPrefix('assets/');
+                $headerCollectionJS->setPrefix('assets/');
+                $footerCollectionJS->setPrefix('assets/');
+                $footerCollectionACE->setPrefix('assets/');
+                $footerCollectionLoc->setPrefix('assets/');
 
-                $cssCacheDir = $appConfig->cssCacheDir;
-                $jsCacheDir  = $appConfig->jsCacheDir;
+                $cssCacheDir = appPath('sites/admin-cabinet/assets/css/cache');
+                $jsCacheDir = appPath('sites/admin-cabinet/assets/js/cache');
 
                 if ($session !== null && $session->has('versionHash')) {
                     $version = $session->get('versionHash');
@@ -75,7 +74,7 @@ class AssetProvider implements ServiceProviderInterface
                         ]
                     );
                     $headerCollectionSentryJS->addJs(
-                        "public/assets/js/pbx/main/sentry-error-logger.js?v={$version}",
+                        "assets/js/pbx/main/sentry-error-logger.js?v={$version}",
                         true
                     );
                 }
@@ -637,14 +636,14 @@ class AssetProvider implements ServiceProviderInterface
                 $headerCollectionJSForExtensions->join(true);
                 $headerCollectionJSForExtensions->setTargetPath("{$jsCacheDir}/{$resultCombinedName}header.min.js");
                 $headerCollectionJSForExtensions->setTargetUri(
-                    "public/assets/js/cache/{$resultCombinedName}header.min.js?v={$version}"
+                    "assets/js/cache/{$resultCombinedName}header.min.js?v={$version}"
                 );
 
 
                 $footerCollectionJSForExtensions->join(true);
                 $footerCollectionJSForExtensions->setTargetPath("{$jsCacheDir}/{$resultCombinedName}footer.min.js");
                 $footerCollectionJSForExtensions->setTargetUri(
-                    "public/assets/js/cache/{$resultCombinedName}footer.min.js?v={$version}"
+                    "assets/js/cache/{$resultCombinedName}footer.min.js?v={$version}"
                 );
 
 
