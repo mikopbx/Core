@@ -33,12 +33,19 @@ class SendMetricsController extends BaseController
     {
         $result = [];
 
-        // Версия PBX
+        // PBXVersion
         $result['PBXname'] = 'MikoPBX@' . $this->getSessionData('PBXVersion');
 
-        // Количество Extensions
+        // SIP Extensions count
         $extensions                   = Extensions::find('type="SIP"');
         $result['CountSipExtensions'] = $extensions->count();
+
+        // Interface language
+        $result['WebAdminLanguage'] = $this->getSessionData('WebAdminLanguage');
+
+        // PBX language
+        $result['PBXLanguage'] = $this->getSessionData('PBXLanguage');
+
 
         return $result;
     }

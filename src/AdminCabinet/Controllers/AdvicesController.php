@@ -56,7 +56,8 @@ class AdvicesController extends BaseController
                         'LastLanguage'  => $language,
                         'LastMessage'   => $newResult,
                         'LastTimeStamp' => time(),
-                    ]
+                    ],
+                    JSON_THROW_ON_ERROR
                 )
             );
         }
