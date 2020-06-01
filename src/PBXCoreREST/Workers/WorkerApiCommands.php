@@ -92,10 +92,10 @@ class WorkerApiCommands extends WorkerBase
         $action = $request['action'];
         switch ($action) {
             case 'getActiveCalls':
-                $result = CdrDb::getActiveCalls();
+                $result['data'] = CdrDb::getActiveCalls();
                 break;
             case 'getActiveChannels':
-                $result = CdrDb::getActiveChannels();
+                $result['data'] = CdrDb::getActiveChannels();
                 break;
             default:
                 $result = ["Unknown action - {$action}"];
