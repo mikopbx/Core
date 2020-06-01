@@ -361,7 +361,7 @@ $menu = (new CliMenuBuilder())
 
                 $dev_name = file_exists("{$data->device}4")?"{$data->device}4":"{$data->device}1";
 
-                passthru('/bin/freestorage');
+                passthru('/sbin/freestorage');
                 passthru('e2fsck -f -p '.escapeshellarg($dev_name), $return_var);
                 echo "check return $return_var";
                 sleep(2);
@@ -394,7 +394,7 @@ $menu = (new CliMenuBuilder())
                     exit(0);
                 }
 
-                passthru('/bin/freestorage');
+                passthru('/sbin/freestorage');
                 passthru('/etc/rc/resize_storage_part '.escapeshellarg($data->device),$return_var);
                 echo "resize storage return $return_var";
                 sleep(2);

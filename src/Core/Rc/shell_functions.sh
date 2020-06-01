@@ -12,7 +12,7 @@ kill_by_pids()
         do
             if [ "$MAIN_PID" = "$handle" ] || [ "$REBOOT_PID" = "$handle" ]; then
                 # Это ID основного процесса. Его не трогаем.
-                echo "---- MAIN_PID - $MAIN_PID ----"
+                echo "---- IGNORE PID - $MAIN_PID ----"
             else
                 kill $2 ${handle} > /dev/null 2>&1
                 resultKill=$?;

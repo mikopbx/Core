@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 3 2020
+ * Written by Alexey Portnov, 5 2020
  */
 namespace MikoPBX\Core\Rc;
 use MikoPBX\Core\System\{
@@ -43,7 +43,7 @@ switch ($input) {
         break;
     case 2:
         file_put_contents('/tmp/ejectcd', '');
-        Util::mwExecBg("/etc/rc/firmware recover_upgrade /offload/firmware.img.gz ${DEVICE}");
+        Util::mwExecBg("/sbin/mikopbx_firmware recover_upgrade /offload/firmware.img.gz ${DEVICE}");
         sleep(600);
         break;
     case 3:

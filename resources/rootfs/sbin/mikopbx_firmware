@@ -1,8 +1,6 @@
 #!/bin/sh
 
 CFDEVICE=`cat /var/etc/cfdevice`;
-MAIN_PID=$$;
-export MAIN_PID;
 
 case $1 in
 enable)
@@ -49,11 +47,11 @@ recover_upgrade)
             fi
 
             echo " - free storage ...";
-            /bin/freestorage;
+            /sbin/freestorage;
         fi
 
         # Отключаем основной диск.
-	    /bin/freeupoffload;
+	    /sbin/freeupoffload;
     fi
 
 	echo " - installing image..."

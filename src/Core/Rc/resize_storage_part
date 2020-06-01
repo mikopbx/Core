@@ -58,13 +58,13 @@ fi;
 is_mounted=$(mount | grep "$disk");
 if [ "${is_mounted}x" != "x" ]; then
     echo ' - free storage...';
-    /bin/freestorage;
+    /sbin/freestorage;
 fi;
 
 echo " - delete part ${part} / add new part ${part}...";
 
 if [ -b "${disk}4" ]; then
-    /bin/freeupoffload;
+    /sbin/freeupoffload;
     fdisk "$disk" > /dev/null 2> /dev/null << EOF
 d
 ${part}
