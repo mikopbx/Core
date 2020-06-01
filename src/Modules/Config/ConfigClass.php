@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 2 2020
+ * Written by Alexey Portnov, 6 2020
  */
 
 namespace MikoPBX\Modules\Config;
@@ -104,7 +104,7 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
      */
     protected function echoDone(): void
     {
-        if ($this->booting === true) {
+        if ($this->booting === true && !empty($this->description)) {
             echo "\033[32;1mdone\033[0m \n";
         }
     }
