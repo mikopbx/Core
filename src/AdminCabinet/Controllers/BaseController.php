@@ -118,7 +118,7 @@ class BaseController extends Controller
         Tag::setTitle($title);
         $this->view->t         = $this->translation;
         $this->view->debugMode = $this->config->path('adminApplication.debugMode');
-        $this->view->urlToLogo = $this->url->get('public/assets/img/logo-mikopbx.svg');
+        $this->view->urlToLogo = $this->url->get('assets/img/logo-mikopbx.svg');
         if ($this->language === 'ru') {
             $this->view->urlToWiki
                 = "https://wiki.mikopbx.com/{$this->controllerNameUnCamelized}";

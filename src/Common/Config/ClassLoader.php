@@ -14,6 +14,7 @@ namespace MikoPBX\Common\Config;
 use MikoPBX\Common\Providers\ConfigProvider;
 use Phalcon\Di;
 use Phalcon\Loader;
+use function MikoPBX\Common\Config\appPath;
 
 class ClassLoader
 {

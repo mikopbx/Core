@@ -21,6 +21,7 @@ use MikoPBX\Common\Models\{Codecs,
     SipCodecs,
     Users};
 use Phalcon\Text;
+use function MikoPBX\Common\Config\appPath;
 
 class ExtensionsController extends BaseController
 {
@@ -84,14 +85,15 @@ class ExtensionsController extends BaseController
                     }
                     if ($extension->avatar) {
                         $filename = md5($extension->avatar);
-                        $imgFile  = "{$this->config->adminApplication->imgCacheDir}/$filename.jpg";
+                        $imgCacheDir = appPath('sites/admin-cabinet/assets/img/cache');
+                        $imgFile  = "{$imgCacheDir}/$filename.jpg";
                         if ( ! file_exists($imgFile)) {
                             $this->base64ToJpeg($extension->avatar, $imgFile);
                         }
 
-                        $extensionTable[$extension->userid]['avatar'] = "{$this->url->get()}public/assets/img/cache/{$filename}.jpg";
+                        $extensionTable[$extension->userid]['avatar'] = "{$this->url->get()}assets/img/cache/{$filename}.jpg";
                     } else {
-                        $extensionTable[$extension->userid]['avatar'] = "{$this->url->get()}public/assets/img/unknownPerson.jpg";
+                        $extensionTable[$extension->userid]['avatar'] = "{$this->url->get()}assets/img/unknownPerson.jpg";
                     }
 
                     break;

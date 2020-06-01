@@ -15,7 +15,7 @@ use MikoPBX\Modules\Config\ConfigClass;
 
 class HttpConf extends ConfigClass
 {
-    protected $description = 'http.conf';
+    protected string $description = 'http.conf';
 
     protected function generateConfigProtected(): void
     {

@@ -15,7 +15,7 @@ use MikoPBX\Modules\Config\ConfigClass;
 
 class RtpConf extends ConfigClass
 {
-    protected $description = 'rtp.conf';
+    protected string $description = 'rtp.conf';
 
     protected function generateConfigProtected(): void
     {

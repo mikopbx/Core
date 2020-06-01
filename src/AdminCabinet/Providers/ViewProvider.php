@@ -15,6 +15,7 @@ namespace MikoPBX\AdminCabinet\Providers;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 use Phalcon\Mvc\View;
+use function MikoPBX\Common\Config\appPath;
 
 /**
  * The URL component is used to generate all kind of urls in the application
@@ -23,10 +24,10 @@ class ViewProvider implements ServiceProviderInterface
 {
     public function register(DiInterface $di): void
     {
-        $viewsDir = $di->getShared('config')->path('adminApplication.viewsDir');
         $di->setShared(
             'view',
-            function () use ($viewsDir) {
+            function () {
+                $viewsDir = appPath('src/AdminCabinet/Views');
                 $view = new View();
                 $view->setViewsDir($viewsDir);
                 $view->registerEngines(

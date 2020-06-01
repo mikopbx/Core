@@ -14,6 +14,7 @@ use MikoPBX\Core\Asterisk\Configs\{IAXConf, QueueConf, SIPConf};
 use MikoPBX\Core\Workers\Cron\WorkerSafeScripts;
 use MikoPBX\Core\Workers\WorkerDownloader;
 use Phalcon\Di;
+use function MikoPBX\Common\Config\appPath;
 
 /**
  *
@@ -587,7 +588,7 @@ server 2.pool.ntp.org';
 
         $WorkerSafeScripts = "/usr/bin/php -f {$workerSafeScriptsPath} start > /dev/null 2> /dev/null";
 
-        $workersPath = $this->di->get('config')->path('core.workersPath');
+        $workersPath = appPath('src/Core/Workers');
 
         $restart_night = $this->mikoPBXConfig->getGeneralSettings('RestartEveryNight');
         if ($restart_night === '1') {
@@ -977,12 +978,12 @@ server 2.pool.ntp.org';
     public function nginxStart(): void
     {
         if (Util::isSystemctl()) {
-            Util::mwExec('systemctl restart php7.3-fpm');
+            Util::mwExec('systemctl restart php7.4-fpm');
             Util::mwExec('systemctl restart nginx.service');
         } else {
             Util::killByName('php-fpm');
             Util::killByName('nginx');
-            Util::mwExec('php-fpm -c /etc/php-fpm.ini');
+            Util::mwExec('php-fpm -c /etc/php.ini');
             Util::mwExec('nginx');
         }
     }

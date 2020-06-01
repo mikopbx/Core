@@ -16,7 +16,7 @@ var extensionsTable = {
     function initialize() {
       $('.avatar').each(function () {
         if ($(this).attr('src') === '') {
-          $(this).attr('src', "".concat(globalRootUrl, "public/assets/img/unknownPerson.jpg"));
+          $(this).attr('src', "".concat(globalRootUrl, "assets/img/unknownPerson.jpg"));
         }
       });
       extensionsTable.initializeInputmask($('input.mobile-number-input'));

@@ -17,7 +17,7 @@ use MikoPBX\Modules\Config\ConfigClass;
 
 class ManagerConf extends ConfigClass
 {
-    protected $description = 'manager.conf';
+    protected string $description = 'manager.conf';
 
     protected function generateConfigProtected(): void
     {
