@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 5 2020
+ * Written by Alexey Portnov, 6 2020
  */
 
 namespace MikoPBX\Core\System;
@@ -719,14 +719,14 @@ class Util
      * @param string  $id
      * @param SQLite3 $db
      *
-     * @return array
+     * @return string
      */
-    public static function GetLastDateLogDB($id, &$db = null): ?array
+    public static function GetLastDateLogDB($id, &$db = null): ?string
     {
         $di = Di::getDefault();
         if ($di===null) {
             self::sysLogMsg('CreateLogDB', 'Dependency injector does not initialized');
-            return[];
+            return null;
         }
 
         if ($db == null) {

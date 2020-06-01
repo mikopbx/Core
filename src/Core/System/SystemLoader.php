@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 5 2020
+ * Written by Alexey Portnov, 6 2020
  */
 
 namespace MikoPBX\Core\System;
@@ -115,16 +115,15 @@ class SystemLoader
         $system->nginxStart();
         Util::echoGreenDone();
 
-        Util::echoWithSyslog(' - Configuring Asterisk...');
+        Util::echoWithSyslog(' - Configuring Asterisk...'.PHP_EOL);
         $pbx->configure();
-        Util::echoGreenDone();
 
-        Util::echoWithSyslog(' - Start Asterisk...');
+        Util::echoWithSyslog(' - Start Asterisk... ');
         $pbx->start();
         $system->onAfterPbxStarted();
         Util::echoGreenDone();
 
-        Util::echoWithSyslog(' - Configuring Cron tasks...');
+        Util::echoWithSyslog(' - Configuring Cron tasks... ');
         $system->cronConfigure();
         Util::echoGreenDone();
 

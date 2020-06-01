@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 5 2020
+ * Written by Alexey Portnov, 6 2020
  */
 
 namespace MikoPBX\Core\System;
@@ -299,9 +299,8 @@ class PBX
         }
         self::dialplanReload();
         if ($this->booting) {
-            echo "\033[32;1mdone\033[0m \n";
+            echo "   |- dialplan reload \033[32;1mdone\033[0m \n";
         }
-
         // Создание базы данных истории звонков.
         /** @var \Phalcon\Db\Adapter\Pdo\Sqlite $connection */
         $connection = $this->di->get('dbCDR');
