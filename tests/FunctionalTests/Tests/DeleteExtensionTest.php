@@ -34,7 +34,8 @@ class DeleteExtensionTest extends MikoPBXTestsBase
         $this->waitForAjax();
 
         // Try to find element with ID on page
-        $xpath                   = "//table[@id='extensions-table']//tr[@id='{$input_ExtensionUniqueID}']";
+        $elementID = $input_ExtensionUniqueID->getAttribute('value');
+        $xpath                   = "//table[@id='extensions-table']//tr[@id='{$elementID}']";
         $els = self::$driver->findElements(WebDriverBy::xpath($xpath));
 
         if ($params['possibleToDelete']){

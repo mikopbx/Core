@@ -49,7 +49,7 @@ class ChangeLicenseKeyTest extends MikoPBXTestsBase
     public function additionProvider(): array
     {
         return [
-            [$GLOBALS['MIKO-LICENSE-KEY']]
+            [$GLOBALS['MIKO_LICENSE_KEY']]
         ];
     }
 
