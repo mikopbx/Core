@@ -12,8 +12,6 @@ use MikoPBX\Core\System\{System, Util};
 use Nats\Message;
 use Phalcon\Exception;
 
-require_once 'globals.php';
-
 
 class WorkerMergeUploadedFile extends WorkerBase
 {

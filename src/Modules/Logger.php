@@ -10,24 +10,32 @@
 namespace MikoPBX\Modules;
 
 use MikoPBX\Core\System\System;
+use MikoPBX\Core\System\Util;
 use Phalcon\Logger\Adapter\Stream as FileLogger;
 
 class Logger
 {
-    private $logFile;
-    private $logger;
+    public bool $debug;
+    private \Phalcon\Logger $logger;
+    private string $module_name;
 
     /**
      * Logger constructor.
      *
-     * @param $class
-     * @param $moduleId
+     * @param string $class
+     * @param string $module_name
      */
-    public function __construct($class, $moduleId)
+    public function __construct(string $class, string $module_name)
     {
-        $logPath        = System::getLogDir() . '/' . $moduleId . '/';
-        $this->logFile  = $logPath . $class . 'log';
-        $adapter       = new FileLogger($this->logFile);
+        $this->module_name = $module_name;
+        $this->debug    = true;
+        $logPath        = System::getLogDir() . '/' . $this->module_name . '/';
+        if (!is_dir($logPath)){
+            Util::mwMkdir($logPath);
+            Util::addRegularWWWRights($logPath);
+        }
+        $logFile  = $logPath . $class . '.log';
+        $adapter       = new FileLogger($logFile);
         $this->logger  = new \Phalcon\Logger(
             'messages',
             [
@@ -38,16 +46,24 @@ class Logger
 
     public function write($data): void
     {
-        $this->logger->info(print_r($data, true));
+        if ($this->debug) {
+            $this->logger->info(urldecode(print_r($data, true)));
+        }
     }
 
     public function writeError($data): void
     {
-        $this->logger->error(print_r($data, true));
+        if ($this->debug) {
+            $this->logger->error(urldecode(print_r($data, true)));
+        }
     }
 
     public function writeInfo($data): void
     {
-        $this->logger->info(print_r($data, true));
+        if ($this->debug) {
+            $this->logger->info(urldecode(print_r($data, true)));
+        }
     }
+
+
 }

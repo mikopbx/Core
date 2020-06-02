@@ -21,7 +21,7 @@ use ReflectionException;
 /**
  * @property \MikoPBX\Service\License license
  */
-class ModuleState extends Injectable
+class PbxExtensionState extends Injectable
 {
     private $messages;
     private $lic_feature_id;

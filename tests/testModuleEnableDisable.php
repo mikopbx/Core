@@ -8,9 +8,9 @@
  */
 require_once 'globals.php';
 
-use MikoPBX\Modules\ModuleState;
+use MikoPBX\Modules\PbxExtensionState;
 
-$moduleStateProcessor = new ModuleState('ModuleSmartIVR');
+$moduleStateProcessor = new PbxExtensionState('ModuleSmartIVR');
 if ($moduleStateProcessor->disableModule() === false){
     $result['messages']   = $moduleStateProcessor->getMessages();
 } else {

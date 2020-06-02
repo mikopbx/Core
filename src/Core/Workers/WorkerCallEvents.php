@@ -8,8 +8,6 @@
 
 namespace MikoPBX\Core\Workers;
 
-require_once 'globals.php';
-
 use MikoPBX\Common\Models\{CallDetailRecords, CallDetailRecordsTmp};
 use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\System\{BeanstalkClient, MikoPBXConfig, Util};

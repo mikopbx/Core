@@ -11,7 +11,6 @@ namespace MikoPBX\Core\Workers;
 use Exception;
 use MikoPBX\Core\System\{Storage, Util};
 
-require_once 'globals.php';
 
 class WorkerRemoveOldRecords extends WorkerBase
 {

@@ -8,7 +8,6 @@
 
 namespace MikoPBX\Core\Workers;
 
-require_once 'globals.php';
 
 use MikoPBX\Core\System\{BeanstalkClient, Util};
 use Phalcon\Exception;
@@ -17,18 +16,6 @@ class WorkerAmiListener extends WorkerBase
 {
     private $client;
     private $am;
-
-    /**
-     * WorkerAmiListener constructor.
-     *
-     */
-    public function __construct()
-    {
-        parent::__construct();
-        $this->client = new BeanstalkClient(WorkerCallEvents::class);
-        $this->am     = Util::getAstManager();
-        $this->setFilter();
-    }
 
     /**
      * Установка фильтра
@@ -49,6 +36,10 @@ class WorkerAmiListener extends WorkerBase
      */
     public function start($argv): void
     {
+        $this->client = new BeanstalkClient(WorkerCallEvents::class);
+        $this->am     = Util::getAstManager();
+        $this->setFilter();
+
         $this->am->addEventHandler("userevent", [$this, "callback"]);
         while (true) {
             $result = $this->am->waitUserEvent(true);
@@ -66,11 +57,11 @@ class WorkerAmiListener extends WorkerBase
      *
      * @param $parameters
      */
-    public function callback($parameters)
+    public function callback($parameters): void
     {
-        if ('CdrConnectorPing' == $parameters['UserEvent']) {
+        if ('ping_'.self::class === $parameters['UserEvent']) {
             usleep(50000);
-            $this->am->UserEvent("CdrConnectorPong", []);
+            $this->am->UserEvent(self::class."Pong", []);
 
             return;
         }

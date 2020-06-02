@@ -1,8 +1,8 @@
 <?php
 
 use MikoPBX\Core\System\Util;
-use MikoPBX\Core\Workers\Cron\WorkerSafeScripts;
+use MikoPBX\Core\Workers\Cron\WorkerSafeScriptsCore;
 
 require 'globals.php';
 
-$workerSafeScriptsPath = Util::getFilePathByClassName(WorkerSafeScripts::class);
+$workerSafeScriptsPath = Util::getFilePathByClassName(WorkerSafeScriptsCore::class);

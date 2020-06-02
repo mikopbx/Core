@@ -11,7 +11,7 @@ namespace MikoPBX\Core\Workers;
 use Exception;
 use MikoPBX\Core\System\BeanstalkClient;
 use MikoPBX\Core\System\Util;
-require_once 'globals.php';
+
 
 class WorkerModuleMonitor extends WorkerBase
 {

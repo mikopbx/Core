@@ -12,8 +12,8 @@ use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\Asterisk\Configs\{IAXConf, SIPConf, VoiceMailConf};
 use MikoPBX\Core\System\{BeanstalkClient, Firewall, Notifications, Storage, System, Util};
 use MikoPBX\Core\Workers\WorkerBase;
-use MikoPBX\Modules\Setup\PbxExtensionFailure;
-use MikoPBX\Modules\ModuleState;
+use MikoPBX\Modules\Setup\PbxExtensionSetupFailure;
+use MikoPBX\Modules\PbxExtensionState;
 use Phalcon\Exception;
 use function MikoPBX\Common\Config\appPath;
 
@@ -319,7 +319,7 @@ class WorkerApiCommands extends WorkerBase
 
                 return $result;
             case 'enable':
-                $moduleStateProcessor = new ModuleState($module);
+                $moduleStateProcessor = new PbxExtensionState($module);
                 if ($moduleStateProcessor->enableModule() === false){
                     $result['messages']   = $moduleStateProcessor->getMessages();
                 } else {
@@ -328,7 +328,7 @@ class WorkerApiCommands extends WorkerBase
                 }
                 return $result;
             case 'disable':
-                $moduleStateProcessor = new ModuleState($module);
+                $moduleStateProcessor = new PbxExtensionState($module);
                 if ($moduleStateProcessor->disableModule() === false){
                     $result['messages'] = $moduleStateProcessor->getMessages();
                 } else {
@@ -375,7 +375,7 @@ class WorkerApiCommands extends WorkerBase
                     $setup = new $moduleClass($module);
                 } else {
                     // Заглушка которая позволяет удалить модуль из базы данных, которого нет на диске
-                    $moduleClass = PbxExtensionFailure::class;
+                    $moduleClass = PbxExtensionSetupFailure::class;
                     $setup       = new $moduleClass($module);
                 }
                 $prams = json_decode($request['input'], true);

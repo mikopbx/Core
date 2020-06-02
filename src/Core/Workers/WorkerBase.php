@@ -8,6 +8,7 @@
 
 namespace MikoPBX\Core\Workers;
 
+require_once 'globals.php';
 
 use MikoPBX\Core\System\BeanstalkClient;
 use Phalcon\Di;

@@ -12,7 +12,6 @@ use MikoPBX\Core\System\{MikoPBXConfig, System, Util};
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use Phalcon\Exception;
 
-require_once 'globals.php';
 
 class WorkerDownloader extends WorkerBase
 {

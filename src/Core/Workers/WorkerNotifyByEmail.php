@@ -11,8 +11,6 @@ namespace MikoPBX\Core\Workers;
 use Exception;
 use MikoPBX\Core\System\{BeanstalkClient, MikoPBXConfig, Notifications, Util};
 
-require_once 'globals.php';
-
 
 class WorkerNotifyByEmail extends WorkerBase
 {

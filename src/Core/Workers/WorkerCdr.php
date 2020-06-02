@@ -8,7 +8,6 @@
 
 namespace MikoPBX\Core\Workers;
 
-require_once('globals.php');
 
 use MikoPBX\Common\Models\{CallDetailRecordsTmp, Users};
 use MikoPBX\Core\System\{BeanstalkClient, Util};
