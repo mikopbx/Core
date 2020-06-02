@@ -57,6 +57,8 @@ function getBannerText(){
     $networks = $network->getEnabledLanInterfaces();
     $ip_text = ['','','','','']; $id_text=0;
     foreach ($networks as $if_data){
+        $if_data['interface_orign'] = $if_data['interface'];
+        $if_data['interface']       = ($if_data['vlanid'] > 0) ? "vlan{$if_data['vlanid']}" : $if_data['interface'];
         $interface = $network->getInterface($if_data['interface']);
 
         if ($if_data['dhcp'] === '1') {

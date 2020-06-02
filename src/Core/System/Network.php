@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 5 2020
+ * Written by Alexey Portnov, 6 2020
  */
 
 namespace MikoPBX\Core\System;
@@ -243,9 +243,9 @@ class Network
 
             if ($if_data['vlanid'] > 0) {
                 // Переопределяем имя интерфейса.
-                $arr_commands[] = '/sbin/vconfig set_name_type VLAN_PLUS_VID_NO_PAD';
+                $arr_commands[] = '/usr/bin/vconfig set_name_type VLAN_PLUS_VID_NO_PAD';
                 // Добавляем новый интерфейс.
-                $arr_commands[] = "/sbin/vconfig add {$if_data['interface_orign']} {$if_data['vlanid']}";
+                $arr_commands[] = "/usr/bin/vconfig add {$if_data['interface_orign']} {$if_data['vlanid']}";
             }
             // Отключаем интерфейс.
             $arr_commands[] = "/bin/busybox ifconfig $if_name down";
@@ -654,10 +654,9 @@ class Network
             }
         }
         // Добавляем пользовательские маршруты.
-        Util::mwExec(
-            "/bin/cat /etc/static-routes | /bin/grep '^rout' | /bin/busybox awk -F ';' '{print $1}' | grep '{$env_vars['interface']}' | sh"
-        );
-
+        if (file_exists('/etc/static-routes')) {
+            Util::mwExec("/bin/cat /etc/static-routes | /bin/grep '^rout' | /bin/busybox awk -F ';' '{print $1}' | grep '{$env_vars['interface']}' | sh");
+        }
         $named_dns = [];
         if ('' !== $env_vars['dns']) {
             $named_dns = explode(' ', $env_vars['dns']);
