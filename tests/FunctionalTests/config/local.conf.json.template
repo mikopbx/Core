@@ -19,7 +19,7 @@
     "fixSessionCapabilities": true,
     "remoteFiles": true
   },
-	"MIKO-LICENSE-KEY": "",
+	"MIKO_LICENSE_KEY": "",
   "environments": [{
     "browser": "chrome"
   }]

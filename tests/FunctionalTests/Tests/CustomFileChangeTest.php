@@ -46,7 +46,10 @@ class CustomFileChangeTest extends MikoPBXTestsBase
         );
 
         $textAreaACEContent = self::$driver->findElement(WebDriverBy::xpath('id("application-code")//textarea'));
+        $textAreaACEContent->click();
+        self::$driver->wait(3);
         $textAreaACEContent->clear();
+        self::$driver->wait(3);
         $textAreaACEContent->sendKeys($params['fileContents']);
 
         $this->submitForm('custom-file-form');

@@ -287,7 +287,7 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
             [
                 'number'   => 235,
                 'email'    => 'mask@miko.ru',
-                'username' => 'Ilon Mask',
+                'username' => 'Alexandra Pushina',
                 'mobile'   => '7912312541',
                 'secret'   => '23542354wet2',
                 'sip_busylevel'=>2,
