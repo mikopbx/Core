@@ -1,4 +1,10 @@
 <?php
+/**
+ * Copyright © MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Alexey Portnov, 6 2020
+ */
 
 $messages = [
     'MIKO_PBX'                                                            => 'MIKO PBX',
@@ -73,7 +79,7 @@ $messages = [
     'Install or recover'                                                  => 'Install / Repair',
     'PBX console setup'                                                   => 'PBX console',
     'The integrity of the system is broken'                               => 'System integrity is broken',
-    'VLAN IP address assigned via'                                        => 'VLAN IP: works through the interface',
+    'VLAN IP address assigned via'                                        => 'VLAN IP: works through',
     'LAN IP address'                                                      => 'LAN IP set manually',
     'LAN IP address assigned via DHCP'                                    => 'LAN IP assigned through DHCP server',
 ];

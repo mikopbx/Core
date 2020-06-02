@@ -1,11 +1,17 @@
 <?php
+/**
+ * Copyright © MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Alexey Portnov, 6 2020
+ */
 
 $messages = [
     'MIKO_PBX'                                                            => 'МИКО PBX',
     'PBX is running in Live or Recovery mode'                             => 'Система загружена в режиме восстановления',
     'LAN IP address assigned via DHCP'                                    => 'LAN IP назначен через DHCP сервер',
     'LAN IP address'                                                      => 'LAN IP установлен вручную',
-    'VLAN IP address assigned via'                                        => 'VLAN IP: работает через интерфейс',
+    'VLAN IP address assigned via'                                        => 'VLAN IP: работает через',
     'The integrity of the system is broken'                               => 'Нарушена целостность системы',
     'PBX console setup'                                                   => 'Консоль АТС',
     'Install or recover'                                                  => 'Выполнить установку / восстановить',
