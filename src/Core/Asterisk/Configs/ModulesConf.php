@@ -180,9 +180,9 @@ class ModulesConf extends ConfigClass
                 'res_pjsip_dlg_options.so',
                 'res_security_log.so',
             ];
-            file_put_contents($this->config->path('asterisk.confDir') . '/pjproject.conf', '');
-            file_put_contents($this->config->path('asterisk.confDir') . '/sorcery.conf', '');
-            file_put_contents($this->config->path('asterisk.confDir') . '/pjsip_notify.conf', '');
+            file_put_contents($this->config->path('asterisk.astetcdir') . '/pjproject.conf', '');
+            file_put_contents($this->config->path('asterisk.astetcdir') . '/sorcery.conf', '');
+            file_put_contents($this->config->path('asterisk.astetcdir') . '/pjsip_notify.conf', '');
         } else {
             $modules[] = [
                 'chan_sip.so',
@@ -199,7 +199,7 @@ class ModulesConf extends ConfigClass
             $conf .= $appClass->generateModulesConf();
         }
 
-        Util::fileWriteContent($this->config->path('asterisk.confDir') . '/modules.conf', $conf);
-        Util::fileWriteContent($this->config->path('asterisk.confDir') . '/codecs.conf', '');
+        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/modules.conf', $conf);
+        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/codecs.conf', '');
     }
 }

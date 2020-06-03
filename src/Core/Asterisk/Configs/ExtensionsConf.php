@@ -48,7 +48,7 @@ class ExtensionsConf extends ConfigClass
         // Переключатель по времени.
         $this->generateOutWorkTimes($conf);
 
-        Util::fileWriteContent($this->config->path('asterisk.confDir') . '/extensions.conf', $conf);
+        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/extensions.conf', $conf);
     }
 
     /**

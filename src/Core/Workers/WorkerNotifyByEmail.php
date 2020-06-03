@@ -7,7 +7,7 @@
  */
 
 namespace MikoPBX\Core\Workers;
-
+require_once 'globals.php';
 use Exception;
 use MikoPBX\Core\System\{BeanstalkClient, MikoPBXConfig, Notifications, Util};
 

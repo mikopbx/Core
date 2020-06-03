@@ -25,6 +25,6 @@ class CdrConf extends ConfigClass
             "usegmtime=no\n" .
             "loguniqueid=yes\n" .
             "loguserfield=yes\n";
-        file_put_contents($this->config->path('asterisk.confDir') . '/cdr.conf', $conf);
+        file_put_contents($this->config->path('asterisk.astetcdir') . '/cdr.conf', $conf);
     }
 }

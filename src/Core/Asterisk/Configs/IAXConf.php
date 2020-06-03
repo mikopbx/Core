@@ -29,8 +29,8 @@ class IAXConf extends ConfigClass
         $conf .= $this->generateGeneral();
         $conf .= $this->generateProviders();
 
-        Util::fileWriteContent($this->config->path('asterisk.confDir') . '/iax.conf', $conf);
-        file_put_contents($this->config->path('asterisk.confDir') . '/iaxprov.conf', "[default]\ncodec=alaw\n");
+        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/iax.conf', $conf);
+        file_put_contents($this->config->path('asterisk.astetcdir') . '/iaxprov.conf', "[default]\ncodec=alaw\n");
     }
 
 

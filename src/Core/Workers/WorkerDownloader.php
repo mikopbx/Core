@@ -7,7 +7,7 @@
  */
 
 namespace MikoPBX\Core\Workers;
-
+require_once 'globals.php';
 use MikoPBX\Core\System\{MikoPBXConfig, System, Util};
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use Phalcon\Exception;

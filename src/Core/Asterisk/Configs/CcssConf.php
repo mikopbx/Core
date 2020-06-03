@@ -21,7 +21,7 @@ class CcssConf extends ConfigClass
         $conf = "[general]\n" .
             "cc_max_requests = 20\n";
 
-        file_put_contents($this->config->path('asterisk.confDir') . '/ccss.conf', $conf);
+        file_put_contents($this->config->path('asterisk.astetcdir') . '/ccss.conf', $conf);
     }
 
 }

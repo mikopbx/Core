@@ -24,7 +24,7 @@ class IndicationConf extends ConfigClass
         $filePath = appPath('src/Core/Asterisk/Configs/Samples/indications.conf.sample');
         $data     = file_get_contents($filePath);
         $conf     = str_replace('{country}', $country, $data);
-        Util::fileWriteContent($this->config->path('asterisk.confDir') . '/indications.conf', $conf);
+        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/indications.conf', $conf);
     }
 
 }

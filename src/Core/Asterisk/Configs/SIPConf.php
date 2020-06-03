@@ -45,7 +45,7 @@ class SIPConf extends ConfigClass
         $conf .= $this->generateProvidersPj();
         $conf .= $this->generatePeersPj();
 
-        Util::fileWriteContent($this->config->path('asterisk.confDir') . '/pjsip.conf', $conf);
+        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/pjsip.conf', $conf);
 
 
         $db = new AstDB();

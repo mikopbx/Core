@@ -31,6 +31,6 @@ class CdrSqlite3CustomConf extends ConfigClass
             "columns => $cal \n" .
             "values => $values \n";
 
-        file_put_contents($this->config->path('asterisk.confDir') . "/cdr_sqlite3_custom.conf", $conf);
+        file_put_contents($this->config->path('asterisk.astetcdir') . "/cdr_sqlite3_custom.conf", $conf);
     }
 }

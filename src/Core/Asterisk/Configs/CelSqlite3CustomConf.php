@@ -26,6 +26,6 @@ class CelSqlite3CustomConf extends ConfigClass
             "columns => $cal \n" .
             "values => $values \n";
 
-        file_put_contents($this->config->path('asterisk.confDir') . "/cel_sqlite3_custom.conf", $conf);
+        file_put_contents($this->config->path('asterisk.astetcdir') . "/cel_sqlite3_custom.conf", $conf);
     }
 }

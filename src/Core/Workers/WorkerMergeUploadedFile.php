@@ -7,7 +7,7 @@
  */
 
 namespace MikoPBX\Core\Workers;
-
+require_once 'globals.php';
 use MikoPBX\Core\System\{System, Util};
 use Nats\Message;
 use Phalcon\Exception;

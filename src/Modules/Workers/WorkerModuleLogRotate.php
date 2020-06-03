@@ -7,7 +7,7 @@
  */
 
 namespace MikoPBX\Modules\Workers;
-
+require_once 'globals.php';
 use Exception;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Core\System\System;

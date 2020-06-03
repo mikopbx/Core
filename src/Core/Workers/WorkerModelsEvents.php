@@ -7,7 +7,7 @@
  */
 
 namespace MikoPBX\Core\Workers;
-
+require_once 'globals.php';
 use MikoPBX\Common\Models\{AsteriskManagerUsers,
     CallQueueMembers,
     CallQueues,
