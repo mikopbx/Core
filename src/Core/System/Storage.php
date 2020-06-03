@@ -1021,7 +1021,7 @@ class Storage
         Util::createUpdateSymlink($this->config->path('core.tempPath'), '/ultmp');
 
         $filePath = appPath('src/ext/lua/asterisk/extensions.lua');
-        Util::createUpdateSymlink($filePath, '/etc/asterisk/extensions.lua'); //TODO:Этот файл используется?
+        Util::createUpdateSymlink($filePath, '/etc/asterisk/extensions.lua');
 
         // Create symlinks to AGI-BIN
         $agiBinDir = $this->config->path('asterisk.astagidir');
