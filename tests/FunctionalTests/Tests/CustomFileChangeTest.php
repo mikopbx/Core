@@ -45,8 +45,8 @@ class CustomFileChangeTest extends MikoPBXTestsBase
             )
         );
 
-        $textAreaACEContent = self::$driver->findElement(WebDriverBy::xpath('id("application-code")//textarea'));
-        $textAreaACEContent->click();
+        $textAreaACEContent = self::$driver->findElement(WebDriverBy::xpath('id("application-code")/textarea'));
+        $textAreaACEContent->getLocationOnScreenOnceScrolledIntoView();
         self::$driver->wait(3);
         $textAreaACEContent->clear();
         self::$driver->wait(3);

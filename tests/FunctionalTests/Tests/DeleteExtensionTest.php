@@ -28,13 +28,14 @@ class DeleteExtensionTest extends MikoPBXTestsBase
         // TESTS
         $xpath                   = "//input[@name = 'id']";
         $input_ExtensionUniqueID = self::$driver->findElement(WebDriverBy::xpath($xpath));
+        $elementID = $input_ExtensionUniqueID->getAttribute('value');
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
 
         $this->clickDeleteButtonOnRowWithText($params['username']);
         $this->waitForAjax();
 
         // Try to find element with ID on page
-        $elementID = $input_ExtensionUniqueID->getAttribute('value');
+
         $xpath                   = "//table[@id='extensions-table']//tr[@id='{$elementID}']";
         $els = self::$driver->findElements(WebDriverBy::xpath($xpath));
 

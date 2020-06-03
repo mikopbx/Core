@@ -23,9 +23,9 @@ use ReflectionException;
  */
 class PbxExtensionState extends Injectable
 {
-    private $messages;
+    private array $messages;
     private $lic_feature_id;
-    private $moduleUniqueID;
+    private string $moduleUniqueID;
     private $configClass;
     private $modulesRoot;
 

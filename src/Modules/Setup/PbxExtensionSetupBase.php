@@ -490,7 +490,7 @@ abstract class PbxExtensionSetupBase implements PbxExtensionSetupInterface
         foreach ($results as $file) {
             $className        = pathinfo($file)['filename'];
             $moduleModelClass = "\\Modules\\{$this->module_uniqid}\\Models\\{$className}";
-            $dbUpgrade->createUpdateDbTableByAnnotations($moduleModelClass);
+            $result.=$dbUpgrade->createUpdateDbTableByAnnotations($moduleModelClass);
         }
         if ($result){
             // Update database connections after upgrade their structure

@@ -285,10 +285,10 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
         $params = [];
         $params[] = [
             [
-                'number'   => 235,
+                'number'   => 289,
                 'email'    => 'mask@miko.ru',
                 'username' => 'Alexandra Pushina',
-                'mobile'   => '7912312541',
+                'mobile'   => '79123125410',
                 'secret'   => '23542354wet2',
                 'sip_busylevel'=>2,
                 'user_language'=>'en-en',
