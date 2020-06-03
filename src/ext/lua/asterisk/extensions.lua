@@ -1,3 +1,8 @@
+-- Copyright © MIKO LLC - All Rights Reserved
+-- Unauthorized copying of this file, via any medium is strictly prohibited
+-- Proprietary and confidential
+-- Written by Alexey Portnov, 6 2020
+
 
 -- Инициализация вспомогательных процедур и функций.
 JSON = (loadfile "/usr/www/src/ext/lua/asterisk/JSON.lua")();
@@ -261,7 +266,7 @@ function event_dial_answer()
 
     set_variable("__pt1c_UNIQUEID", id);
     set_variable("MASTER_CHANNEL(M_DIALSTATUS)", 'ANSWER');
-    app["AGI"]('/usr/www/src/MikoPBX/Core/Asterisk/agi-bin/clean_timeout.php');
+    app["AGI"]('/usr/www/src/Core/Asterisk/agi-bin/clean_timeout.php');
     set_variable("MASTER_CHANNEL(M_TIMEOUT_CHANNEL)", '');
 
     userevent_return(data)

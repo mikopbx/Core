@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 5 2020
+ * Written by Alexey Portnov, 6 2020
  */
 namespace MikoPBX\Core\Rc;
 
@@ -94,7 +94,7 @@ if (strtolower(trim(fgets($fp)) ) === 'y') {
         Util::mwExec("umount {$mnt}");
     }
     echo " - unpacking img...\n";
-    passthru("/bin/pv -tpreb /offload/firmware.img.gz | /bin/gunzip | dd of=/dev/{$target_disk} bs=512 2> /dev/null");
+    passthru("/bin/pv -p /offload/firmware.img.gz | /bin/gunzip | dd of=/dev/{$target_disk} bs=512 2> /dev/null");
     echo " - create storage partition...\n";
     passthru("/etc/rc/initial.storage.part.four create /dev/{$target_disk}");
     echo " - create storage - done\n";
@@ -134,7 +134,7 @@ if (strtolower(trim(fgets($fp)) ) === 'y') {
 
     // Фиксируем флаг необходимости вынуить CD диск.
     file_put_contents('/tmp/ejectcd','');
-	System::rebootSync();
+    System::rebootSync();
 }else{
     sleep(3);
 }
