@@ -29,17 +29,17 @@ abstract class PbxExtensionBase
      * Module directory
      * @var string
      */
-    protected string $moduleDir;
+    public string $moduleDir;
 
     /**
      * Phalcon config service
      */
-    protected \Phalcon\Config $config;
+    public \Phalcon\Config $config;
 
     /**
      * Module Logger
      */
-    protected Logger $logger;
+    public Logger $logger;
 
 
     /**

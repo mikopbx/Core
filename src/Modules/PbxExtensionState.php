@@ -14,6 +14,7 @@ use MikoPBX\Common\Models\FirewallRules;
 use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
 use ReflectionClass;
 use ReflectionException;
@@ -355,12 +356,20 @@ class PbxExtensionState extends Injectable
                 if (
                     $module->save() === true
                     && $this->configClass !== null
-                    && method_exists($this->configClass, 'onBeforeModuleEnable')) {
+                    && method_exists($this->configClass, 'onBeforeModuleDisable')) {
                     $this->configClass->onBeforeModuleDisable();
                 }
             }
         }
 
+        // Kill module workers
+        if ( $this->configClass !== null
+            && method_exists($this->configClass, 'getModuleWorkers')) {
+            $workersToKill = $this->configClass->getModuleWorkers();
+            foreach ($workersToKill as $moduleWorker){
+                Util::killByName($moduleWorker['worker']);
+            }
+        }
         return true;
     }
 

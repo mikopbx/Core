@@ -14,9 +14,9 @@ use MikoPBX\Common\Models\PbxExtensionModules;
 
 class PbxExtensionUtils
 {
-    public static function isEnabled(string $moduleName):bool
+    public static function isEnabled(string $moduleUniqueID):bool
     {
-        $result        = PbxExtensionModules::findFirst("uniqid='{$moduleName}'");
+        $result        = PbxExtensionModules::findFirst("uniqid='{$moduleUniqueID}'");
         return ($result!==false && $result->disabled !== '1');
     }
 }
