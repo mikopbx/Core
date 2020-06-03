@@ -1022,8 +1022,19 @@ class Storage
 
         $filePath = appPath('src/ext/lua/asterisk/extensions.lua');
         Util::createUpdateSymlink($filePath, '/etc/asterisk/extensions.lua'); //TODO:Этот файл используется?
-        $this->applyFolderRights();
 
+        // Create symlinks to AGI-BIN
+        $agiBinDir = $this->config->path('asterisk.astagidir');
+        Util::mwMkdir($agiBinDir);
+
+        $roAgiBinFolder = appPath('src/Core/Asterisk/agi-bin');
+        $files = glob("$roAgiBinFolder/*.{php}", GLOB_BRACE);
+        foreach($files as $file) {
+            $newFilename = $agiBinDir.'/'. pathinfo($file)['filename'];
+            Util::createUpdateSymlink($file, $newFilename);
+        }
+
+        $this->applyFolderRights();
     }
 
     /**

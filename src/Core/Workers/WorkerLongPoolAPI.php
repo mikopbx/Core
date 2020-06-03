@@ -7,7 +7,7 @@
  */
 
 namespace MikoPBX\Core\Workers;
-
+require_once 'globals.php';
 use MikoPBX\Common\Models\LongPollSubscribe;
 use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\Asterisk\Configs\{IAXConf, SIPConf};
@@ -17,8 +17,6 @@ use Phalcon\Exception;
 
 use function clearstatcache;
 
-
-require_once 'globals.php';
 
 /*
 curl -s -v --no-buffer 'http://172.16.156.223/pbxcore/api/long/sub/getRegistry' -H 'Cookie: PHPSESSID=aec8c4ae8a26e3f74296ba0acaa3a692'

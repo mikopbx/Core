@@ -3,7 +3,6 @@
 
 namespace MikoPBX\Core\Workers;
 
-
 use MikoPBX\Core\System\BeanstalkClient;
 
 interface WorkerInterface

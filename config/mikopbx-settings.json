@@ -35,8 +35,9 @@
   },
   "asterisk": {
     "astvarlibdir" : "/offload/asterisk",
-    "confDir" : "/etc/asterisk",
+    "astetcdir" : "/etc/asterisk",
     "astmoddir": "/offload/asterisk/modules",
+    "astagidir": "/var/lib/asterisk/agi-bin",
     "astdbdir": "/mountpoint/mikopbx/persistence",
     "astlogdir" : "/mountpoint/mikopbx/astlogs/asterisk",
     "astspooldir" : "/mountpoint/mikopbx/voicemailarchive",

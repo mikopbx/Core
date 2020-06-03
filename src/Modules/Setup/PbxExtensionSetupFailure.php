@@ -8,7 +8,7 @@
 
 namespace MikoPBX\Modules\Setup;
 
-class PbxExtensionFailure extends PbxExtensionBase
+class PbxExtensionSetupFailure extends PbxExtensionSetupBase
 {
 
 }

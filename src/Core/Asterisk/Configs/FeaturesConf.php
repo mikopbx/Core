@@ -37,6 +37,6 @@ class FeaturesConf extends ConfigClass
             $conf .= $appClass->getFeatureMap();
         }
 
-        Util::fileWriteContent($this->config->path('asterisk.confDir') . '/features.conf', $conf);
+        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/features.conf', $conf);
     }
 }

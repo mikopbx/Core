@@ -11,7 +11,7 @@ namespace MikoPBX\Core\System;
 use Exception;
 use MikoPBX\Common\Models\CustomFiles;
 use MikoPBX\Core\Asterisk\Configs\{IAXConf, QueueConf, SIPConf};
-use MikoPBX\Core\Workers\Cron\WorkerSafeScripts;
+use MikoPBX\Core\Workers\Cron\WorkerSafeScriptsCore;
 use MikoPBX\Core\Workers\WorkerDownloader;
 use Phalcon\Di;
 use function MikoPBX\Common\Config\appPath;
@@ -584,7 +584,7 @@ server 2.pool.ntp.org';
         }
 
 
-        $workerSafeScriptsPath = Util::getFilePathByClassName(WorkerSafeScripts::class);
+        $workerSafeScriptsPath = Util::getFilePathByClassName(WorkerSafeScriptsCore::class);
 
         $WorkerSafeScripts = "/usr/bin/php -f {$workerSafeScriptsPath} start > /dev/null 2> /dev/null";
 

@@ -7,8 +7,7 @@
  */
 
 namespace MikoPBX\Core\Workers\Cron;
-
-require_once('globals.php');
+require_once 'globals.php';
 
 use Generator;
 use MikoPBX\Core\System\{BeanstalkClient, Firewall, PBX, System, Util};
@@ -24,11 +23,15 @@ use MikoPBX\Core\Workers\WorkerNotifyByEmail;
 use MikoPBX\Core\Workers\WorkerNotifyError;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use Mikopbx\Service\Main;
+use MikoPBX\Modules\Workers\WorkerModuleLogRotate;
 use Phalcon\Exception;
 use Recoil\React\ReactKernel;
 
-class WorkerSafeScripts extends WorkerBase
+class WorkerSafeScriptsCore extends WorkerBase
 {
+    public const CHECK_BY_BEANSTALK = 'checkWorkerBeanstalk';
+    public const CHECK_BY_AMI = 'checkWorkerAMI';
+
     public function start($argv): void
     {
         /** Ротация логов */
@@ -52,6 +55,7 @@ class WorkerSafeScripts extends WorkerBase
                         $this->checkWorkerBeanstalk(WorkerApiCommands::class),
                         $this->checkWorkerBeanstalk(WorkerLongPoolAPI::class),
                         $this->checkWorkerBeanstalk(WorkerModuleMonitor::class),
+                        $this->checkWorkerBeanstalk(WorkerModuleLogRotate::class),
                         $this->checkWorkerAMI(WorkerAmiListener::class), // Проверка листнера UserEvent
                     ];
                 } catch (\Exception $e) {
@@ -74,8 +78,12 @@ class WorkerSafeScripts extends WorkerBase
                 function () use ($arrModulesWorkers){
                     // Parallel execution https://github.com/recoilphp/recoil
                     try {
-                        foreach ($arrModulesWorkers as $moduleWorker){
-                            yield $this->checkWorkerBeanstalk($moduleWorker);
+                        foreach ($arrModulesWorkers as $type=>$moduleWorker){
+                            if ($type===self::CHECK_BY_AMI){
+                                yield $this->checkWorkerAMI($moduleWorker);
+                            } else {
+                                yield $this->checkWorkerBeanstalk($moduleWorker);
+                            }
                         }
                     } catch (\Exception $e) {
                         global $errorLogger;
@@ -85,7 +93,6 @@ class WorkerSafeScripts extends WorkerBase
                 }
             );
         }
-
 
         Firewall::checkFail2ban();
     }
@@ -164,7 +171,7 @@ class WorkerSafeScripts extends WorkerBase
         if ($WorkerPID !== '') {
             // We had service PID, so we will ping it
             $am       = Util::getAstManager();
-            $res_ping = $am->pingAMIListner();
+            $res_ping = $am->pingAMIListner("ping_{$workerClassName}");
             if (false === $res_ping) {
                 Util::sysLogMsg('checkWorkerAMI', 'Restart...');
             }
@@ -185,7 +192,7 @@ class WorkerSafeScripts extends WorkerBase
 }
 
 // Start worker process
-$workerClassname = WorkerSafeScripts::class;
+$workerClassname = WorkerSafeScriptsCore::class;
 if (isset($argv) && count($argv) > 1 && $argv[1] === 'start') {
     cli_set_process_title($workerClassname);
     try {

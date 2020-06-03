@@ -22,7 +22,7 @@ class ChanDahdiConf extends ConfigClass
             "[channels]\n" .
             "";
 
-        file_put_contents($this->config->path('asterisk.confDir') . '/chan_dahdi.conf', $conf);
+        file_put_contents($this->config->path('asterisk.astetcdir') . '/chan_dahdi.conf', $conf);
     }
 
 }

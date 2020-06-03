@@ -20,11 +20,11 @@ use Throwable;
 use function MikoPBX\Common\Config\appPath;
 
 /**
- * Class PbxExtensionBase
+ * Class PbxExtensionSetupBase
  * Общие для всех модулей методы
  * Подключается при установке, удалении модуля
  */
-abstract class PbxExtensionBase implements PbxExtensionSetupInterface
+abstract class PbxExtensionSetupBase implements PbxExtensionSetupInterface
 {
     /**
      * Trial product version identify number from module.json

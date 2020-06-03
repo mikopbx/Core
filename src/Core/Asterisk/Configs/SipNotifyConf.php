@@ -39,6 +39,6 @@ class SipNotifyConf extends ConfigClass
             "Event=>ACTION-URI\n" .
             "Content=>key=SPEAKER\n";
 
-        Util::fileWriteContent($this->config->path('asterisk.confDir') . '/sip_notify.conf', $conf);
+        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/sip_notify.conf', $conf);
     }
 }

@@ -73,16 +73,20 @@ class DialplanApplicationConf extends ConfigClass
         return "$app_data\n";
     }
 
+    /**
+     * @param $app
+     *
+     * @return string
+     */
     private function generatePhpApp($app): string
     {
-        $agiBinFolder = appPath('src/Core/Asterisk/agi-bin');
+        $agiBinDir = $this->config->path('asterisk.astagidir');
         $text_app     = "#!/usr/bin/php\n";
         $text_app     .= base64_decode($app['applicationlogic']);
-        file_put_contents("{$agiBinFolder}/{$app['uniqid']}.php", $text_app);
-        chmod("{$agiBinFolder}/{$app['uniqid']}.php", 0755);
+        file_put_contents("{$agiBinDir}/{$app['uniqid']}.php", $text_app);
+        chmod("{$agiBinDir}/{$app['uniqid']}.php", 0755);
 
         $result = 'exten => _' . $app['extension'] . ',1,ExecIf($["${CHANNEL(channeltype)}" == "Local"]?Gosub(set_orign_chan,s,1))' . "\n\t";
-        // $result.= 'same => n,AGI(cdr_connector.php,dial_app)'." \n\t";
         $result .= 'same => n,Gosub(dial_app,${EXTEN},1)' . "\n\t";
         $result .= "same => n,AGI({$app['uniqid']}.php)\n";
 

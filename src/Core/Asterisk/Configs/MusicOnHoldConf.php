@@ -25,6 +25,6 @@ class MusicOnHoldConf extends ConfigClass
             "mode=files\n" .
             "directory=$mohpath\n\n";
 
-        Util::fileWriteContent($this->config->path('asterisk.confDir') . '/musiconhold.conf', $conf);
+        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/musiconhold.conf', $conf);
     }
 }

@@ -37,6 +37,6 @@ class LoggerConf extends ConfigClass
         $conf .= "{$logDir}error => error\n";
         $conf .= "\n";
 
-        Util::fileWriteContent($this->config->path('asterisk.confDir') . '/logger.conf', $conf);
+        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/logger.conf', $conf);
     }
 }

@@ -12,6 +12,7 @@ const networks = {
 	$getMyIpButton: $('#getmyip'),
 	$formObj: $('#network-form'),
 	$dropDowns: $('#network-form .dropdown'),
+	$extipaddr:$('#extipaddr'),
 	vlansArray: {},
 	validateRules: {
 		gateway: {
@@ -135,6 +136,7 @@ const networks = {
 			networks.$getMyIpButton.removeClass('loading disabled');
 		} else {
 			networks.$formObj.form('set value', 'extipaddr', response.ip);
+			networks.$extipaddr.trigger('change');
 			networks.$getMyIpButton.removeClass('loading disabled');
 		}
 	},

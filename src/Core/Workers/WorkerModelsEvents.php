@@ -7,7 +7,7 @@
  */
 
 namespace MikoPBX\Core\Workers;
-
+require_once 'globals.php';
 use MikoPBX\Common\Models\{AsteriskManagerUsers,
     CallQueueMembers,
     CallQueues,
@@ -37,7 +37,6 @@ use MikoPBX\Core\Asterisk\Configs\{IAXConf, QueueConf, SIPConf};
 use MikoPBX\Core\System\{BeanstalkClient, Firewall, PBX, System};
 use Phalcon\Exception;
 
-require_once 'globals.php';
 ini_set('error_reporting', E_ALL);
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);

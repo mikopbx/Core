@@ -23,10 +23,10 @@ class AsteriskConf extends ConfigClass
     {
 
         $lang = $this->generalSettings['PBXLanguage'];
-        $astAgiDir = appPath('src/Core/Asterisk/agi-bin');
+
         $conf = "[directories]\n" .
-            "astetcdir => /etc/asterisk\n" .
-            "astagidir => {$astAgiDir}\n" .
+            "astetcdir => {$this->config->path('asterisk.astetcdir')}\n" .
+            "astagidir => {$this->config->path('asterisk.astagidir')}\n" .
             "astkeydir => /etc/asterisk\n" .
             "astrundir => /var/asterisk/run\n" .
             "astmoddir => {$this->config->path('asterisk.astmoddir')}\n" .
@@ -46,6 +46,6 @@ class AsteriskConf extends ConfigClass
             "lockmode=flock\n" .
             "systemname = mikopbx\n";
 
-        Util::fileWriteContent($this->config->path('asterisk.confDir') . '/asterisk.conf', $conf);
+        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/asterisk.conf', $conf);
     }
 }
