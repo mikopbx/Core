@@ -1,0 +1,17 @@
+<?php
+/**
+ * Copyright (C) MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Nikolay Beketov, 6 2020
+ *
+ */
+
+
+use MikoPBX\Modules\Setup\PbxExtensionSetupBase;
+use Modules\ModuleBitrix24Integration\Setup\PbxExtensionSetup;
+
+require_once 'globals.php';
+
+$setup = new PbxExtensionSetup('ModuleBitrix24Integration');
+$setup->installDB();

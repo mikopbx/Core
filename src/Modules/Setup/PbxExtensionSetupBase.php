@@ -43,7 +43,7 @@ abstract class PbxExtensionSetupBase implements PbxExtensionSetupInterface
      *
      * @var string
      */
-    protected $module_uniqid;
+    protected string $module_uniqid;
     /**
      * Module version from module.json
      *
