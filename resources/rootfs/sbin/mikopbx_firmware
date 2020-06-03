@@ -57,7 +57,7 @@ recover_upgrade)
 	echo " - installing image..."
 	if [ -r "${img_file}" ]; then
 		  # /bin/gunzip -c "${img_file}" | dd of=$3 bs=512 > /dev/null 2>&1;
-		  /bin/pv -tpreb "${img_file}" | /bin/gunzip | dd of=$3 bs=512 > /dev/null 2>&1;
+		  /bin/pv -p "${img_file}" | /bin/gunzip | dd of=$3 bs=512 > /dev/null 2>&1;
 	    echo " - dd end working..."
       # Обновляем таблицу разделов.
       /etc/rc/initial.storage.part.four create $3;
