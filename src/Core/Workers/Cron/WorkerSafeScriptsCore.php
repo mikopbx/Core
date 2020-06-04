@@ -7,6 +7,7 @@
  */
 
 namespace MikoPBX\Core\Workers\Cron;
+
 require_once 'globals.php';
 
 use Generator;
@@ -30,6 +31,7 @@ use Recoil\React\ReactKernel;
 class WorkerSafeScriptsCore extends WorkerBase
 {
     public const CHECK_BY_BEANSTALK = 'checkWorkerBeanstalk';
+
     public const CHECK_BY_AMI = 'checkWorkerAMI';
 
     public function start($argv): void
@@ -44,51 +46,39 @@ class WorkerSafeScriptsCore extends WorkerBase
         ReactKernel::start(
             function () {
                 // Parallel execution https://github.com/recoilphp/recoil
-                try {
-                    yield [
-                        $this->checkWorkerBeanstalk(WorkerCdr::class),
-                        $this->checkWorkerBeanstalk(WorkerModelsEvents::class),
-                        $this->checkWorkerBeanstalk(WorkerCallEvents::class),
-                        $this->checkWorkerBeanstalk(WorkerLicenseChecker::class),
-                        $this->checkWorkerBeanstalk(WorkerNotifyByEmail::class),
-                        $this->checkWorkerBeanstalk(WorkerNotifyError::class),
-                        $this->checkWorkerBeanstalk(WorkerApiCommands::class),
-                        $this->checkWorkerBeanstalk(WorkerLongPoolAPI::class),
-                        $this->checkWorkerBeanstalk(WorkerModuleMonitor::class),
-                        $this->checkWorkerBeanstalk(WorkerModuleLogRotate::class),
-                        $this->checkWorkerAMI(WorkerAmiListener::class), // Проверка листнера UserEvent
-                    ];
-                } catch (\Exception $e) {
-                    global $errorLogger;
-                    $errorLogger->captureException($e);
-                    Util::sysLogMsg(__CLASS__ . '_EXCEPTION', $e->getMessage());
-                }
+                yield [
+                    $this->checkWorkerBeanstalk(WorkerCdr::class),
+                    $this->checkWorkerBeanstalk(WorkerModelsEvents::class),
+                    $this->checkWorkerBeanstalk(WorkerCallEvents::class),
+                    $this->checkWorkerBeanstalk(WorkerLicenseChecker::class),
+                    $this->checkWorkerBeanstalk(WorkerNotifyByEmail::class),
+                    $this->checkWorkerBeanstalk(WorkerNotifyError::class),
+                    $this->checkWorkerBeanstalk(WorkerApiCommands::class),
+                    $this->checkWorkerBeanstalk(WorkerLongPoolAPI::class),
+                    $this->checkWorkerBeanstalk(WorkerModuleMonitor::class),
+                    $this->checkWorkerBeanstalk(WorkerModuleLogRotate::class),
+                    $this->checkWorkerAMI(WorkerAmiListener::class), // Проверка листнера UserEvent
+                ];
             }
         );
 
         // Modules workers
         $arrModulesWorkers = [];
-        $pbxConfModules = $this->di->getShared('pbxConfModules');
-        foreach ($pbxConfModules as $pbxConfModule){
+        $pbxConfModules    = $this->di->getShared('pbxConfModules');
+        foreach ($pbxConfModules as $pbxConfModule) {
             $arrModulesWorkers[] = $pbxConfModule->getModuleWorkers();
         }
         $arrModulesWorkers = array_merge(...$arrModulesWorkers);
-        if (count($arrModulesWorkers)>0){
+        if (count($arrModulesWorkers) > 0) {
             ReactKernel::start(
-                function () use ($arrModulesWorkers){
+                function () use ($arrModulesWorkers) {
                     // Parallel execution https://github.com/recoilphp/recoil
-                    try {
-                        foreach ($arrModulesWorkers as $type=>$moduleWorker){
-                            if ($type===self::CHECK_BY_AMI){
-                                yield $this->checkWorkerAMI($moduleWorker);
-                            } else {
-                                yield $this->checkWorkerBeanstalk($moduleWorker);
-                            }
+                    foreach ($arrModulesWorkers as $moduleWorker) {
+                        if ($moduleWorker['type'] === self::CHECK_BY_AMI) {
+                            yield $this->checkWorkerAMI($moduleWorker['worker']);
+                        } else {
+                            yield $this->checkWorkerBeanstalk($moduleWorker['worker']);
                         }
-                    } catch (\Exception $e) {
-                        global $errorLogger;
-                        $errorLogger->captureException($e);
-                        Util::sysLogMsg(__CLASS__ . '_EXCEPTION', $e->getMessage());
                     }
                 }
             );
@@ -105,8 +95,8 @@ class WorkerSafeScriptsCore extends WorkerBase
     private function waitFullyBooted(): bool
     {
         $time_start = microtime(true);
-        $result = false;
-        $out      = [];
+        $result     = false;
+        $out        = [];
         if (Util::isSystemctl()) {
             $options = '';
         } else {
@@ -114,7 +104,10 @@ class WorkerSafeScriptsCore extends WorkerBase
         }
 
         while (true) {
-            $execResult = Util::mwExec("/usr/bin/timeout {$options} 1 /usr/sbin/asterisk -rx'core waitfullybooted'", $out);
+            $execResult = Util::mwExec(
+                "/usr/bin/timeout {$options} 1 /usr/sbin/asterisk -rx'core waitfullybooted'",
+                $out
+            );
             if ($execResult === 0 && implode('', $out) === 'Asterisk has fully booted.') {
                 $result = true;
                 break;
@@ -135,22 +128,26 @@ class WorkerSafeScriptsCore extends WorkerBase
      * @param $workerClassName
      *
      * @return \Generator|null
-     * @throws \Pheanstalk\Exception\DeadlineSoonException
      */
     public function checkWorkerBeanstalk($workerClassName): ?Generator
     {
-        $WorkerPID    = Util::getPidOfProcess($workerClassName);
-        $result = false;
-        if ($WorkerPID !== '') {
-            // We had service PID, so we will ping it
-            $queue = new BeanstalkClient("ping_{$workerClassName}");
-
-            // Check service with higher priority
-            $result = $queue->request('ping', 15, 0);
-        }
-        if (false === $result) {
-            Util::restartPHPWorker($workerClassName);
-            Util::sysLogMsg(__CLASS__, "Service {$workerClassName} started.");
+        try {
+            $WorkerPID = Util::getPidOfProcess($workerClassName);
+            $result    = false;
+            if ($WorkerPID !== '') {
+                // We had service PID, so we will ping it
+                $queue = new BeanstalkClient("ping_{$workerClassName}");
+                // Check service with higher priority
+                $result = $queue->request('ping', 15, 0);
+            }
+            if (false === $result) {
+                Util::restartPHPWorker($workerClassName);
+                Util::sysLogMsg(__CLASS__, "Service {$workerClassName} started.");
+            }
+        } catch (\Exception $e) {
+            global $errorLogger;
+            $errorLogger->captureException($e);
+            Util::sysLogMsg($workerClassName . '_EXCEPTION', $e->getMessage());
         }
         yield;
     }
@@ -166,25 +163,31 @@ class WorkerSafeScriptsCore extends WorkerBase
      */
     public function checkWorkerAMI($workerClassName, $level = 0): ?Generator
     {
-        $res_ping  = false;
-        $WorkerPID = Util::getPidOfProcess($workerClassName);
-        if ($WorkerPID !== '') {
-            // We had service PID, so we will ping it
-            $am       = Util::getAstManager();
-            $res_ping = $am->pingAMIListner("ping_{$workerClassName}");
-            if (false === $res_ping) {
-                Util::sysLogMsg('checkWorkerAMI', 'Restart...');
+        try {
+            $res_ping  = false;
+            $WorkerPID = Util::getPidOfProcess($workerClassName);
+            if ($WorkerPID !== '') {
+                // We had service PID, so we will ping it
+                $am       = Util::getAstManager();
+                $res_ping = $am->pingAMIListner("ping_{$workerClassName}");
+                if (false === $res_ping) {
+                    Util::sysLogMsg('checkWorkerAMI', 'Restart...');
+                }
             }
-        }
 
-        if ($res_ping === false && $level < 10) {
-            Util::restartPHPWorker($workerClassName);
-            Util::sysLogMsg(__CLASS__, "Service {$workerClassName} started.");
-            // Wait 5 seconds while service will be ready to listen requests
-            sleep(5);
+            if ($res_ping === false && $level < 10) {
+                Util::restartPHPWorker($workerClassName);
+                Util::sysLogMsg(__CLASS__, "Service {$workerClassName} started.");
+                // Wait 5 seconds while service will be ready to listen requests
+                sleep(5);
 
-            // Check service again
-            $this->checkWorkerAMI($workerClassName, $level + 1);
+                // Check service again
+                $this->checkWorkerAMI($workerClassName, $level + 1);
+            }
+        } catch (\Exception $e) {
+            global $errorLogger;
+            $errorLogger->captureException($e);
+            Util::sysLogMsg($workerClassName . '_EXCEPTION', $e->getMessage());
         }
         yield;
     }

@@ -40,7 +40,7 @@ class WorkerModuleLogRotate extends WorkerBase
     {
         $logPath        = System::getLogDir() . '/' . $moduleUniqid . '/';
         if ( ! file_exists($logPath)) {
-            exit(0);
+            return;
         }
 
         $results         = glob($logPath . '*.log', GLOB_NOSORT);

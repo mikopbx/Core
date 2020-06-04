@@ -29,12 +29,18 @@ abstract class PbxExtensionBase
      * Module directory
      * @var string
      */
-    protected string $moduleDir;
+    public string $moduleDir;
 
     /**
      * Phalcon config service
      */
-    protected \Phalcon\Config $config;
+    public \Phalcon\Config $config;
+
+    /**
+     * Module Logger
+     */
+    public Logger $logger;
+
 
     /**
      * PbxExtensionBase constructor.
@@ -52,7 +58,7 @@ abstract class PbxExtensionBase
         $this->config  = $this->di->getShared('config');
 
         $modulesDir = $this->config->path('core.modulesDir') . '/' . $moduleUniqueID;
-        $this->module_dir  = "{$modulesDir}{$this->module_name}";
+        $this->moduleDir  = "{$modulesDir}{$moduleUniqueID}";
 
         $className        = basename(str_replace('\\', '/', static::class));
         $this->logger =  new Logger($className, $moduleUniqueID);

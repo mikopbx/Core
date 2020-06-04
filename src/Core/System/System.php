@@ -10,7 +10,7 @@ namespace MikoPBX\Core\System;
 
 use Exception;
 use MikoPBX\Common\Models\CustomFiles;
-use MikoPBX\Core\Asterisk\Configs\{IAXConf, QueueConf, SIPConf};
+use MikoPBX\Core\Asterisk\Configs\{QueueConf};
 use MikoPBX\Core\Workers\Cron\WorkerSafeScriptsCore;
 use MikoPBX\Core\Workers\WorkerDownloader;
 use Phalcon\Di;

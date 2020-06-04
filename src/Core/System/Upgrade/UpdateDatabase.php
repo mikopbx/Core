@@ -92,12 +92,12 @@ class UpdateDatabase
         if (
             ! class_exists($modelClassName)
             || count(get_class_vars($modelClassName)) === 0) {
-            return false;
+            return true;
         }
         // Test is abstract
         $reflection = new ReflectionClass($modelClassName);
         if ($reflection->isAbstract()) {
-            return false;
+            return true;
         }
 
         $model                 = new $modelClassName();

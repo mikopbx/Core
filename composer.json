@@ -36,7 +36,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "MikoPBX\\FunctionalTests\\": "tests/FunctionalTests"
+            "MikoPBX\\Tests\\": "tests/"
         }
     },
     "type": "application",

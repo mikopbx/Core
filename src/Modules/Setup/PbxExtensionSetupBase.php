@@ -43,7 +43,7 @@ abstract class PbxExtensionSetupBase implements PbxExtensionSetupInterface
      *
      * @var string
      */
-    protected $module_uniqid;
+    protected string $module_uniqid;
     /**
      * Module version from module.json
      *
@@ -480,7 +480,6 @@ abstract class PbxExtensionSetupBase implements PbxExtensionSetupInterface
      */
     public function createSettingsTableByModelsAnnotations(): bool
     {
-        $result  = true;
 
         // Add new connection for this module after add new Models folder
         RegisterDIServices::recreateModulesDBConnections();
@@ -490,13 +489,16 @@ abstract class PbxExtensionSetupBase implements PbxExtensionSetupInterface
         foreach ($results as $file) {
             $className        = pathinfo($file)['filename'];
             $moduleModelClass = "\\Modules\\{$this->module_uniqid}\\Models\\{$className}";
-            $dbUpgrade->createUpdateDbTableByAnnotations($moduleModelClass);
+            $upgradeResult = $dbUpgrade->createUpdateDbTableByAnnotations($moduleModelClass);
+            if (!$upgradeResult){
+                return false;
+            }
+
         }
-        if ($result){
-            // Update database connections after upgrade their structure
-            RegisterDIServices::recreateModulesDBConnections();
-        }
-        return $result;
+        // Update database connections after upgrade their structure
+        RegisterDIServices::recreateModulesDBConnections();
+
+        return true;
     }
 
 
