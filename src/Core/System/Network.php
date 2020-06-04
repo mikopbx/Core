@@ -212,6 +212,25 @@ class Network
     }
 
     /**
+     * Настройка OpenVPN. Если в кастомизации системных файлов определн конфиг, то сеть поднимется.
+     */
+    public function openVpnConfigure(){
+        $confFile='/etc/openvpn.ovpn';
+        Util::fileWriteContent($confFile, '');
+        $data = file_get_contents($confFile);
+
+        $pidFile = '/var/run/openvpn.pid';
+        $pid = Util::getPidOfProcess('openvpn');
+        if ( ! empty($pid)) {
+            // Завершаем процесс.
+            Util::mwExec("/bin/busybox kill '$pid'");
+        }
+        if(!empty($data)){
+            Util::mwExecBg("/usr/sbin/openvpn --config /etc/openvpn.ovpn --writepid {$pidFile}", '/dev/null', 5);
+        }
+    }
+
+    /**
      * Configures LAN interface
      *
      * @return int
@@ -220,7 +239,7 @@ class Network
     {
         if (Util::isSystemctl()) {
             $this->lanConfigureSystemCtl();
-
+            $this->openVpnConfigure();
             return 0;
         }
         $networks     = $this->getGeneralNetSettings();
@@ -342,6 +361,7 @@ class Network
         );
         Util::mwExecCommands($arr_commands, $out, 'rout');
 
+        $this->openVpnConfigure();
         return 0;
     }
 
