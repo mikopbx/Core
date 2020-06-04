@@ -15,6 +15,7 @@ use PHPUnit\Framework\TestCase;
 class PbxExtensionSetupBaseTest extends TestCase
 {
 
+
     public function testCreateSettingsTableByModelsAnnotations():void
     {
         $sut = $this->getMockForAbstractClass(PbxExtensionSetupBase::class,['ModuleBitrix24Integration']);
@@ -22,4 +23,13 @@ class PbxExtensionSetupBaseTest extends TestCase
 
         self::assertTrue($result);
     }
+
+    public function testInstallFiles():void
+    {
+        $sut = $this->getMockForAbstractClass(PbxExtensionSetupBase::class,['ModuleBitrix24Integration']);
+        $result = $sut->installFiles();
+        self::assertTrue($result);
+    }
+
+
 }

@@ -20,8 +20,6 @@
             <file>Tests/CreateOutOfWorkPeriodsTest.php</file>
             <file>Tests/CreateCallQueue.php</file>
             <file>Tests/CreateIVRMenusTest.php</file>
-            <file>Tests/ChangeLicenseKeyTest.php</file>
-            <file>Tests/InstallModulesTest</file>
             <file>Tests/CreateExtensionsTest.php</file>
             <file>Tests/FillDataTimeSettings.php</file>
             <file>Tests/CreateMOHAudioFilesTest.php</file>
@@ -33,6 +31,8 @@
             <file>Tests/NetworkInterfacesTest.php</file>
             <file>Tests/ChangeExtensionsSettingsTest.php</file>
             <file>Tests/DeleteExtensionTest.php</file>
+            <file>Tests/ChangeLicenseKeyTest.php</file>
+            <file>Tests/InstallModulesTest</file>
         </testsuite>
     </testsuites>
 </phpunit>

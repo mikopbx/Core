@@ -211,7 +211,7 @@ abstract class PbxExtensionSetupBase implements PbxExtensionSetupInterface
 
         $modulesDir          = $this->config->path('core.modulesDir');
         // IMG
-        $moduleImageDir      = "{$this->moduleDir}/assets/img";
+        $moduleImageDir      = "{$this->moduleDir}/public/assets/img";
         $imgCacheDir = appPath('sites/admin-cabinet/assets/img/cache');
         $moduleImageCacheDir = "{$imgCacheDir}/{$this->module_uniqid}";
         if (file_exists($moduleImageCacheDir)){
@@ -221,7 +221,7 @@ abstract class PbxExtensionSetupBase implements PbxExtensionSetupInterface
             symlink($moduleImageDir, $moduleImageCacheDir);
         }
         // CSS
-        $moduleCSSDir      = "{$this->moduleDir}/assets/css";
+        $moduleCSSDir      = "{$this->moduleDir}/public/assets/css";
         $cssCacheDir = appPath('sites/admin-cabinet/assets/css/cache');
         $moduleCSSCacheDir = "{$cssCacheDir}/{$this->module_uniqid}";
         if (file_exists($moduleCSSCacheDir)){
@@ -231,7 +231,7 @@ abstract class PbxExtensionSetupBase implements PbxExtensionSetupInterface
             symlink($moduleCSSDir, $moduleCSSCacheDir);
         }
         // JS
-        $moduleJSDir      = "{$this->moduleDir}/assets/js";
+        $moduleJSDir      = "{$this->moduleDir}/public/assets/js";
         $jsCacheDir = appPath('sites/admin-cabinet/assets/js/cache');
         $moduleJSCacheDir = "{$jsCacheDir}/{$this->module_uniqid}";
         if (file_exists($moduleJSCacheDir)){

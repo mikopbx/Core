@@ -35,6 +35,7 @@ class CreateExtensionsTest extends MikoPBXTestsBase
             $this->changeInputField('user_username', $params['username']);
             $this->changeInputField('number', $params['number']);
             $this->changeInputField('mobile_number', $params['mobile']);
+            self::$driver->executeScript('$("#mobile_number").trigger("change")');
             $this->changeInputField('user_email', $params['email']);
             $this->selectDropdownItem('user_language', $params['user_language']);
             $this->changeInputField('sip_secret', $params['secret']);
@@ -77,9 +78,13 @@ class CreateExtensionsTest extends MikoPBXTestsBase
             $this->assertInputFieldValueEqual('user_email',  $params['email']);
             // $this->assertInputFieldValueEqual('mobile_number',  $params['mobile']);
 
+            $this->changeTabOnCurrentPage('routing');
+            $this->assertInputFieldValueEqual('fwd_ringlength', '45');
             $this->assertMenuItemSelected('fwd_forwardingonbusy', $params['mobile']);
             $this->assertMenuItemSelected('fwd_forwarding', $params['mobile']);
             $this->assertMenuItemSelected('fwd_forwardingonunavailable', $params['mobile']);
+            $this->changeTabOnCurrentPage('general');
+
             $this->assertMenuItemSelected('user_language', $params['user_language']);
             $this->assertInputFieldValueEqual('sip_secret',  $params['secret']);
 
