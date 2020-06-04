@@ -19,13 +19,9 @@ use MikoPBX\Core\Workers\WorkerCdr;
 use MikoPBX\Core\Workers\WorkerLicenseChecker;
 use MikoPBX\Core\Workers\WorkerLongPoolAPI;
 use MikoPBX\Core\Workers\WorkerModelsEvents;
-use MikoPBX\Core\Workers\WorkerModuleMonitor;
 use MikoPBX\Core\Workers\WorkerNotifyByEmail;
 use MikoPBX\Core\Workers\WorkerNotifyError;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
-use Mikopbx\Service\Main;
-use MikoPBX\Modules\Workers\WorkerModuleLogRotate;
-use Phalcon\Exception;
 use Recoil\React\ReactKernel;
 
 class WorkerSafeScriptsCore extends WorkerBase
@@ -36,11 +32,6 @@ class WorkerSafeScriptsCore extends WorkerBase
 
     public function start($argv): void
     {
-        /** Ротация логов */
-        System::gnatsLogRotate();
-        System::rotatePhpLog();
-        PBX::logRotate();
-
         $this->waitFullyBooted();
 
         ReactKernel::start(
@@ -55,8 +46,6 @@ class WorkerSafeScriptsCore extends WorkerBase
                     $this->checkWorkerBeanstalk(WorkerNotifyError::class),
                     $this->checkWorkerBeanstalk(WorkerApiCommands::class),
                     $this->checkWorkerBeanstalk(WorkerLongPoolAPI::class),
-                    $this->checkWorkerBeanstalk(WorkerModuleMonitor::class),
-                    $this->checkWorkerBeanstalk(WorkerModuleLogRotate::class),
                     $this->checkWorkerAMI(WorkerAmiListener::class), // Проверка листнера UserEvent
                 ];
             }
@@ -136,7 +125,7 @@ class WorkerSafeScriptsCore extends WorkerBase
             $result    = false;
             if ($WorkerPID !== '') {
                 // We had service PID, so we will ping it
-                $queue = new BeanstalkClient("ping_{$workerClassName}");
+                $queue = new BeanstalkClient($this->makePingTubeName($workerClassName));
                 // Check service with higher priority
                 $result = $queue->request('ping', 15, 0);
             }
@@ -169,7 +158,7 @@ class WorkerSafeScriptsCore extends WorkerBase
             if ($WorkerPID !== '') {
                 // We had service PID, so we will ping it
                 $am       = Util::getAstManager();
-                $res_ping = $am->pingAMIListner("ping_{$workerClassName}");
+                $res_ping = $am->pingAMIListner($this->makePingTubeName($workerClassName));
                 if (false === $res_ping) {
                     Util::sysLogMsg('checkWorkerAMI', 'Restart...');
                 }

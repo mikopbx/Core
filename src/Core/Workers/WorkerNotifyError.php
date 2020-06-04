@@ -27,7 +27,7 @@ class WorkerNotifyError extends WorkerBase
         $client = new BeanstalkClient('WorkerNotifyError_license');
         $client->subscribe('WorkerNotifyError_license', [$this, 'onLicenseError']);
         $client->subscribe('WorkerNotifyError_storage', [$this, 'onStorageError']);
-        $client->subscribe('ping_' . self::class, [$this, 'pingCallBack']);
+        $client->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
 
         while (true) {
             $client->wait();

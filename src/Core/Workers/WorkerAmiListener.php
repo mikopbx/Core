@@ -14,8 +14,8 @@ use Phalcon\Exception;
 
 class WorkerAmiListener extends WorkerBase
 {
-    private $client;
-    private $am;
+    protected $client;
+    protected $am;
 
     /**
      * Установка фильтра
@@ -59,13 +59,11 @@ class WorkerAmiListener extends WorkerBase
      */
     public function callback($parameters): void
     {
-        if ('ping_'.self::class === $parameters['UserEvent']) {
-            usleep(50000);
-            $this->am->UserEvent(self::class."Pong", []);
-
-            return;
+        if ($this->replyOnPingRequest($parameters)){
+           return;
         }
-        if ('CdrConnector' != $parameters['UserEvent']) {
+
+        if ('CdrConnector' !== $parameters['UserEvent']) {
             return;
         }
 

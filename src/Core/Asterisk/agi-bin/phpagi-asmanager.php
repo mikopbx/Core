@@ -113,11 +113,11 @@ class AGI_AsteriskManager
     /**
      * Проверка работы сервиса AMI.
      *
-     * @param string $pingname
+     * @param string $pingTube
      *
      * @return array|bool
      */
-    public function pingAMIListner($pingname = 'CdrConnector')
+    public function pingAMIListner($pingTube = 'CdrConnector')
     {
         // Установим фильтр на события.
         $params = ['Operation' => 'Add', 'Filter' => 'Event: UserEvent'];
@@ -126,7 +126,7 @@ class AGI_AsteriskManager
         $req        = '';
         $parameters = [
             'Action'    => 'UserEvent',
-            'UserEvent' => "{$pingname}Ping",
+            'UserEvent' => "{$pingTube}Ping",
         ];
         foreach ($parameters as $var => $val) {
             $req .= "$var: $val\r\n";
@@ -150,7 +150,7 @@ class AGI_AsteriskManager
                 return false;
             }
             $buffer = trim(@fgets($this->socket, 4096));
-            while ($buffer != '') {
+            while (!empty($buffer)) {
                 $a = strpos($buffer, ':');
                 if ($a) {
                     if ( ! count($parameters)) {
@@ -161,15 +161,18 @@ class AGI_AsteriskManager
                 $buffer = trim(fgets($this->socket, 4096));
             }
 
-            if ($type == '' && count($this->Ping()) == 0) {
+            if ($type === '' && count($this->Ping()) === 0) {
                 $timeout = true;
-            } elseif ('event' == $type && $parameters['Event'] == 'UserEvent' && "{$pingname}Pong" == $parameters['UserEvent']) {
+            } elseif (
+                'event' === $type
+                && $parameters['Event'] === 'UserEvent'
+                && "{$pingTube}Pong" === $parameters['UserEvent']) {
                 // Ответ получен.
                 $result = true;
                 break;
             }
             $time = $this->microtimeFloat() - $time_start;
-            if ($time > 2) {
+            if ($time > 5) {
                 // Таймаут ожидания.
                 break;
             }

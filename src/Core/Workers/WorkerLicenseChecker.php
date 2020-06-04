@@ -15,22 +15,15 @@ use MikoPBX\Core\System\Util;
 
 class WorkerLicenseChecker extends WorkerBase
 {
-    private $last_check_time=0;
+
     public function start($argv): void
     {
-        $beansTalkClient = new BeanstalkClient();
-        $beansTalkClient->subscribe('ping_' . self::class, [$this, 'pingCallBack']);
-
-        $lic =  $this->di->getShared('license');
-        while (true) {
-            $beansTalkClient->wait(5);
-
-            $delta = time() - $this->last_check_time;
-            if ($delta < 3600) {
-                continue;
-            }
-            $this->last_check_time = time();
+        $lastLicenseCheck = $this->di->getRegistry()->lastLicenseCheck;
+        if ($lastLicenseCheck===null || time() - $lastLicenseCheck > 3600){
+            $lic =  $this->di->getShared('license');
             $lic->checkPBX();
+            $lic->checkModules();
+            $this->di->getRegistry()->lastLicenseCheck = time();
         }
     }
 

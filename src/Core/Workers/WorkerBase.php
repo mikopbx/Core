@@ -12,6 +12,7 @@ namespace MikoPBX\Core\Workers;
 
 use MikoPBX\Core\System\BeanstalkClient;
 use Phalcon\Di;
+use Phalcon\Text;
 
 abstract class WorkerBase implements WorkerInterface
 {
@@ -46,5 +47,34 @@ abstract class WorkerBase implements WorkerInterface
     public function pingCallBack($message): void
     {
         $message->reply(json_encode($message->getBody() . ':pong'));
+    }
+
+    /**
+     * Make ping tube from classname and ping word
+     *
+     * @param string $workerClassName
+     *
+     * @return string
+     */
+    public function makePingTubeName(string $workerClassName): string
+    {
+        return Text::camelize("ping_{$workerClassName}", '\\');
+    }
+
+    /**
+     * If it was Ping request to check worker, we answer Pong and return True
+     * @param $parameters
+     *
+     * @return bool
+     */
+    public function replyOnPingRequest($parameters):bool
+    {
+        $pingTube = $this->makePingTubeName(static::class);
+        if ( "{$pingTube}Ping" === $parameters['UserEvent']) {
+          //  usleep(50000);
+            $this->am->UserEvent("{$pingTube}Pong", []);
+            return true;
+        }
+        return false;
     }
 }

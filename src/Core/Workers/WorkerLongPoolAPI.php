@@ -33,7 +33,7 @@ class WorkerLongPoolAPI extends WorkerBase
     public function start($argv): void
     {
         $client_queue = new BeanstalkClient();
-        $client_queue->subscribe('ping_' . self::class, [$this, 'pingCallBack']);
+        $client_queue->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
 
         $ACTIONS         = [];
         $COMMON_CNANNELS = [];

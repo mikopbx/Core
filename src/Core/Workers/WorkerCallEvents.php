@@ -952,7 +952,7 @@ class WorkerCallEvents extends WorkerBase
         $client->subscribe(self::class, [$this, 'callEventsWorker']);
         $client->subscribe(WorkerCdr::SELECT_CDR_TUBE, [$this, 'selectCDRWorker']);
         $client->subscribe(WorkerCdr::UPDATE_CDR_TUBE, [$this, 'updateCDRWorker']);
-        $client->subscribe('ping_' . self::class, [$this, 'pingCallBack']);
+        $client->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
         $client->setErrorHandler([$this, 'errorHandler']);
 
         while (true) {

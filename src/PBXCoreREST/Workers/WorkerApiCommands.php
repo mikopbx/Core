@@ -28,7 +28,7 @@ class WorkerApiCommands extends WorkerBase
     public function start($argv): void
     {
         $client = new BeanstalkClient();
-        $client->subscribe('ping_' . self::class, [$this, 'pingCallBack']);
+        $client->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
         $client->subscribe(__CLASS__, [$this, 'prepareAnswer']);
 
         while (true) {
