@@ -1,34 +1,43 @@
 <?php
 /**
- * Copyright © MIKO LLC - All Rights Reserved
+ * Copyright (C) MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 2 2020
+ * Written by Nikolay Beketov, 6 2020
+ *
  */
 
-namespace MikoPBX\Modules\Workers;
-require_once 'globals.php';
-use Exception;
+namespace MikoPBX\Core\Workers;
+
+
 use MikoPBX\Common\Models\PbxExtensionModules;
+use MikoPBX\Core\System\PBX;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
-use MikoPBX\Core\Workers\WorkerBase;
 
-
-class WorkerModuleLogRotate extends WorkerBase
+class WorkerLogRotate extends WorkerBase
 {
-    public function start($argv): void
-    {
-        $lastStart = $this->di->getRegistry()->lastModulesLogRotateStart;
-        if ($lastStart!== null && time() - $lastStart < 3600){
-            return;
-        }
 
-        $plugins = PbxExtensionModules::find('disabled="0"');
-        foreach ($plugins as $plugin) {
-            $this->logRotate($plugin->uniqid);
+    /**
+     * @inheritDoc
+     */
+    public function start($params): void
+    {
+        $lastLogRotateTime = $this->di->getRegistry()->lastLogRotateTime;
+        if ($lastLogRotateTime === null || time() - $lastLogRotateTime > 3600){
+            //System Logs
+            System::gnatsLogRotate();
+            System::rotatePhpLog();
+            PBX::logRotate();
+
+            //Modules Logs
+            $plugins = PbxExtensionModules::find('disabled="0"');
+            foreach ($plugins as $plugin) {
+                $this->logRotate($plugin->uniqid);
+            }
+
+            $this->di->getRegistry()->lastLogRotateTime = time();
         }
-        $this->di->getRegistry()->lastModulesLogRotateStart = time();
     }
 
     /**
@@ -63,11 +72,10 @@ class WorkerModuleLogRotate extends WorkerBase
             }
         }
     }
-
 }
 
 // Start worker process
-$workerClassname = WorkerModuleLogRotate::class;
+$workerClassname = WorkerLogRotate::class;
 if (isset($argv) && count($argv) > 1) {
     cli_set_process_title($workerClassname);
     try {
@@ -79,7 +87,3 @@ if (isset($argv) && count($argv) > 1) {
         Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage());
     }
 }
-
-
-
-

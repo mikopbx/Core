@@ -49,7 +49,7 @@ class WorkerCdr extends WorkerBase
 
 
         $this->client_queue = new BeanstalkClient(self::SELECT_CDR_TUBE);
-        $this->client_queue->subscribe('ping_' . self::class, [$this, 'pingCallBack']);
+        $this->client_queue->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
 
         $this->initSettings();
 

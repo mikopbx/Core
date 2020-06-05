@@ -117,7 +117,7 @@ class WorkerModelsEvents extends WorkerBase
 
         $client = new BeanstalkClient();
         $client->subscribe(self::class, [$this, 'processModelChanges']);
-        $client->subscribe('ping_' . self::class, [$this, 'pingCallBack']);
+        $client->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
         $client->setTimeoutHandler([$this, 'timeoutHandler']);
 
 

@@ -53,6 +53,7 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
 
         $this->clickModifyButtonOnRowWithText($params['username']);
         $this->changeInputField('mobile_number', $params['mobile']);
+        self::$driver->executeScript('$("#mobile_number").trigger("change")');
         $this->submitForm('extensions-form');
 
         // TESTS
@@ -85,6 +86,7 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
 
         $this->clickModifyButtonOnRowWithText($params['username']);
         $this->changeInputField('mobile_number', '');
+        self::$driver->executeScript('$("#mobile_number").trigger("change")');
         $this->submitForm('extensions-form');
 
         // TESTS

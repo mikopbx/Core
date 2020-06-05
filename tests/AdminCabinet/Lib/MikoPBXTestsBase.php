@@ -101,11 +101,14 @@ class MikoPBXTestsBase extends BrowserStackTest
     protected function assertMenuItemSelected(string $name, string $checkedValue): void
     {
         $xpath             = '//select[@name="' . $name . '"]/option[@selected="selected"]';
-        $selectedExtension = self::$driver->findElements(WebDriverBy::xpath($xpath));
-        foreach ($selectedExtension as $element) {
+        $selectedExtensions = self::$driver->findElements(WebDriverBy::xpath($xpath));
+        foreach ($selectedExtensions as $element) {
             $currentValue = $element->getAttribute('value');
             $message      = "{$name} check failure, because {$checkedValue} != {$currentValue}";
             $this->assertEquals($checkedValue, $currentValue, $message);
+        }
+        if (count($selectedExtensions)===0){
+            $this->fail('Not found select with name ' . $name . PHP_EOL);
         }
     }
 
@@ -154,6 +157,9 @@ class MikoPBXTestsBase extends BrowserStackTest
         foreach ($inputItems as $inputItem) {
             $inputItem->sendKeys($value);
         }
+        if (count($inputItems)===0){
+            $this->fail('Not found input with type FILE and with name ' . $name . PHP_EOL);
+        }
     }
 
     /**
@@ -171,6 +177,9 @@ class MikoPBXTestsBase extends BrowserStackTest
             $inputItem->clear();
             $inputItem->sendKeys($value);
         }
+        if (count($inputItems)===0){
+            $this->fail('Not found input with name ' . $name . PHP_EOL);
+        }
     }
 
     /**
@@ -187,6 +196,9 @@ class MikoPBXTestsBase extends BrowserStackTest
             $currentValue = $inputItem->getAttribute('value');
             $message      = "input field: '{$name}' check failure, because {$checkedValue} != {$currentValue}";
             $this->assertEquals($checkedValue, $currentValue, $message);
+        }
+        if (count($inputItems)===0){
+            $this->fail('Not found input with name ' . $name . PHP_EOL);
         }
     }
 
@@ -211,6 +223,9 @@ class MikoPBXTestsBase extends BrowserStackTest
                 $checkBoxItem->click();
             }
         }
+        if (count($checkBoxItems)===0){
+            $this->fail('Not found checkbox with name ' . $name . PHP_EOL);
+        }
     }
 
     /**
@@ -230,6 +245,9 @@ class MikoPBXTestsBase extends BrowserStackTest
                 $this->assertFalse($checkBoxItem->isSelected(), "{$name} must be unchecked" . PHP_EOL);
             }
         }
+        if (count($checkBoxItems)===0){
+            $this->fail('Not found checkbox with name ' . $name . PHP_EOL);
+        }
     }
 
     /**
@@ -243,7 +261,6 @@ class MikoPBXTestsBase extends BrowserStackTest
         $xpath = '//form[@id="' . $formId . '"]//ancestor::div[@id="submitbutton"]';
         try {
             $button_Submit = self::$driver->findElement(WebDriverBy::xpath($xpath));
-
             $button_Submit->click();
             $this->waitForAjax();
             self::$driver->wait(10, 500)->until(

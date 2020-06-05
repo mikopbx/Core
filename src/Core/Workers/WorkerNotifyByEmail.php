@@ -23,7 +23,7 @@ class WorkerNotifyByEmail extends WorkerBase
     {
         $client = new BeanstalkClient(__CLASS__);
         $client->subscribe(__CLASS__, [$this, 'workerNotifyByEmail']);
-        $client->subscribe('ping_' . self::class, [$this, 'pingCallBack']);
+        $client->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
 
         while (true) {
             $client->wait();
