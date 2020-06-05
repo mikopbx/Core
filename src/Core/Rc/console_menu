@@ -28,13 +28,7 @@ use MikoPBX\Core\System\{
 use MikoPBX\Service\Main;
 require_once('globals.php');
 
-ini_set('error_reporting', E_ALL);
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-
-
 Util::setCyrillicFont();
-
 function getBannerText(){
     $network  = new Network();
 
@@ -52,7 +46,7 @@ function getBannerText(){
     $version 		= trim(file_get_contents($version_file));
     $buildtime  	= trim(file_get_contents('/etc/version.buildtime'));
     $copyright_info = 'MikoPBX is Copyright (C) 2006-2020. All rights reserved.' . PHP_EOL.
-        "\t\033[01;31m".$livecd_text."\033[39m";
+        "    \033[01;31m".$livecd_text."\033[39m";
 
     $networks = $network->getEnabledLanInterfaces();
     $ip_text = ['','','','','']; $id_text=0;
@@ -84,7 +78,7 @@ function getBannerText(){
     if(!Util::isSystemctl()){
         $files = Main::checkForCorruptedFiles();
         if(count($files)!=0){
-            $broken = "\t\033[01;31m".Util::translate('The integrity of the system is broken')."...\033[39m";
+            $broken = "    \033[01;31m".Util::translate('The integrity of the system is broken')."...\033[39m";
         }
     }else{
         $buildtime = 'debian';
