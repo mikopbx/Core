@@ -110,10 +110,18 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
     protected function confBlockWithComments(string $addition):string
     {
         $result = '';
-        if (!empty($this->moduleUniqueId) && !empty($addition)){
-            $result ='; BEGIN ADDITION BY '.$this->moduleUniqueId.PHP_EOL."\t";
+        if (empty($addition)){
+            return $result;
+        }
+        if (!empty($this->moduleUniqueId)){
+            $result ='; ***** BEGIN BY '.$this->moduleUniqueId.PHP_EOL."\t";
             $result .= $addition;
-            $result .='; END ADDITION BY '.$this->moduleUniqueId.PHP_EOL."\t";
+            if (substr($addition, -1)!=="\t"){
+                $result .="\t";
+            }
+            $result .='; ***** END BY '.$this->moduleUniqueId.PHP_EOL."\t";
+        } else {
+            $result .= $addition;
         }
         return $result;
     }
