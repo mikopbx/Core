@@ -241,10 +241,20 @@ abstract class PbxExtensionSetupBase implements PbxExtensionSetupInterface
             symlink($moduleJSDir, $moduleJSCacheDir);
         }
 
+        // Create symlinks to AGI-BIN
+        $agiBinDir = $this->config->path('asterisk.astagidir');
+        $moduleAgiBinDir      = "{$this->moduleDir}/agi-bin";
+        $files = glob("$moduleAgiBinDir/*.{php}", GLOB_BRACE);
+        foreach($files as $file) {
+            $newFilename = $agiBinDir.'/'. pathinfo($file)['filename'];
+            Util::createUpdateSymlink($file, $newFilename);
+        }
+
         // Restore Database settings
         $backupPath = "{$modulesDir}/Backup/{$this->module_uniqid}";
         if (is_dir($backupPath)) {
-            Util::mwExec("cp -r {$backupPath}/db/* {$this->moduleDir}/db/");
+            $cpPath = Util::which('cp');
+            Util::mwExec("{$cpPath} -r {$backupPath}/db/* {$this->moduleDir}/db/");
         }
         return true;
     }
@@ -350,18 +360,20 @@ abstract class PbxExtensionSetupBase implements PbxExtensionSetupInterface
     public function unInstallFiles($keepSettings = false
     )//: bool Пока мешает удалять и обновлять старые модули, раскоменитровать после релиза 2020.5
     {
+        $cpPath = Util::which('cp');
+        $rmPath = Util::which('rm');
         $modulesDir          = $this->config->path('core.modulesDir');
         $backupPath = "{$modulesDir}/Backup/{$this->module_uniqid}";
-        Util::mwExec("rm -rf {$backupPath}");
+        Util::mwExec("{$rmPath} -rf {$backupPath}");
         if ($keepSettings) {
             if ( ! is_dir($backupPath) && ! mkdir($backupPath, 0777, true) && ! is_dir($backupPath)) {
                 $this->messages[] = sprintf('Directory "%s" was not created', $backupPath);
 
                 return false;
             }
-            Util::mwExec("cp -r {$this->moduleDir}/db {$backupPath}/");
+            Util::mwExec("{$cpPath} -r {$this->moduleDir}/db {$backupPath}/");
         }
-        Util::mwExec("rm -rf {$this->moduleDir}");
+        Util::mwExec("{$rmPath} -rf {$this->moduleDir}");
 
         // Remove assets
         // IMG
