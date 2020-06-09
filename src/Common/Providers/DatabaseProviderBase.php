@@ -72,6 +72,7 @@ abstract class DatabaseProviderBase
                                         }
                                         $variable  = str_replace(':', '', $variable);
                                         $statement = str_replace(":$variable", "'$value'", $statement);
+                                        $statement = preg_replace('/= \?/', " = '{$value}'", $statement, 1);
                                     }
                                 }
                                 $logger->debug($statement);
