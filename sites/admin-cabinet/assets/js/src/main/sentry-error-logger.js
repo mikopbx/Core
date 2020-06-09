@@ -36,7 +36,7 @@ Sentry.onLoad(() => {
 	}
 
 	Sentry.init({
-		dsn: 'https://a8d729459beb446eb3cbb9df997dcc7b@centry.miko.ru/1',
+		dsn: 'https://07be0eff8a5c463fbac3e90ae5c7d039@sentry.miko.ru/1',
 		release: `mikopbx@${globalPBXVersion}`,
 		beforeSend(event, hint) {
 			// Check if it is an exception, and if so, show the report dialog
