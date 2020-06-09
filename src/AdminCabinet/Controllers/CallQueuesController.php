@@ -310,7 +310,7 @@ class CallQueuesController extends BaseController
                 ],
             ];
             $queueMembers = CallQueueMembers::find($parameters);
-            if ($queueMembers->count() > 1) {
+            if (count($queueMembers) > 1) {
                 // откуда то взались лишние. Надо их всех удалить и создать нового
                 if ($queueMembers->delete() === false) {
                     $errors = $queueMembers->getMessages();
@@ -319,7 +319,7 @@ class CallQueuesController extends BaseController
                     return false;
                 }
                 $queueMember = new CallQueueMembers();
-            } elseif ($queueMembers->count() === 1) {
+            } elseif (count($queueMembers) === 1) {
                 $queueMember = $queueMembers->getFirst();
             } else {
                 $queueMember = new CallQueueMembers();
