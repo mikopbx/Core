@@ -13,7 +13,11 @@ require_once('globals.php');
 $fp = fopen('php://stdin', 'r');
 
 $out = [];
-Util::mwExec("/bin/df | grep conf.recover | cut -d \" \" -f 1 | rev | cut -c 2- | rev", $out);
+$dfPath = Util::which('df');
+$grepPath = Util::which('grep');
+$cutPath = Util::which('cut');
+$revPath = Util::which('rev');
+Util::mwExec("{$dfPath} | {$grepPath} conf.recover | {$cutPath} -d \" \" -f 1 | {$revPath} | {$cutPath} -c 2- | {$revPath}", $out);
 $DEVICE=implode('', $out);
 
 $PBXVERSION = trim(file_get_contents('/etc/version'));
@@ -43,7 +47,8 @@ switch ($input) {
         break;
     case 2:
         file_put_contents('/tmp/ejectcd', '');
-        Util::mwExecBg("/sbin/mikopbx_firmware recover_upgrade /offload/firmware.img.gz ${DEVICE}");
+        $mikopbx_firmwarePath = Util::which('mikopbx_firmware');
+        Util::mwExecBg("{$mikopbx_firmwarePath} recover_upgrade /offload/firmware.img.gz ${DEVICE}");
         sleep(600);
         break;
     case 3:

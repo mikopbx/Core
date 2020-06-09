@@ -73,7 +73,8 @@ class PBX
     {
         Util::killByName('safe_asterisk');
         sleep(1);
-        Util::mwExec("asterisk -rx 'core stop now'");
+        $asteriskPath = Util::which('asterisk');
+        Util::mwExec("{$asteriskPath} -rx 'core stop now'");
         Util::processWorker('', '', WorkerCallEvents::class, 'stop');
         Util::processWorker('', '', WorkerAmiListener::class, 'stop');
         Util::killByName('asterisk');
@@ -87,9 +88,11 @@ class PBX
     {
         Network::startSipDump();
         if (Util::isSystemctl()) {
-            Util::mwExecBg('systemctl restart asterisk');
+            $systemctlPath = Util::which('systemctl');
+            Util::mwExecBg("{$systemctlPath} restart asterisk");
         } else {
-            Util::mwExecBg('/usr/sbin/safe_asterisk -fn');
+            $safe_asteriskPath = Util::which('safe_asterisk');
+            Util::mwExecBg("{$safe_asteriskPath} -fn");
         }
     }
 
@@ -103,26 +106,26 @@ class PBX
     public static function rotatePbxLog($f_name): void
     {
         $di = Di::getDefault();
-
+        $asteriskPath = Util::which('asterisk');
         if ($di === null) {
             return;
         }
         $max_size    = 2;
         $log_dir     = System::getLogDir() . '/asterisk/';
-        $text_config = "{$log_dir}{$f_name}" . ' {
+        $text_config = "{$log_dir}{$f_name} {
     nocreate
     nocopytruncate
     delaycompress
     nomissingok
     start 0
     rotate 9
-    size ' . $max_size . 'M
+    size {$max_size}M
     missingok
     noolddir
     postrotate
-        /usr/sbin/asterisk -rx "logger reload" > /dev/null 2> /dev/null
+        {$asteriskPath} -rx 'logger reload' > /dev/null 2> /dev/null
     endscript
-}';
+}";
         $varEtcPath  = $di->getShared('config')->path('core.varEtcPath');
         $path_conf   = $varEtcPath . '/asterisk_logrotate_' . $f_name . '.conf';
         file_put_contents($path_conf, $text_config);
@@ -132,7 +135,8 @@ class PBX
         if (Util::mFileSize("{$log_dir}{$f_name}") > $mb10) {
             $options = '-f';
         }
-        Util::mwExecBg("/usr/sbin/logrotate {$options} '{$path_conf}' > /dev/null 2> /dev/null");
+        $logrotatePath = Util::which('logrotate');
+        Util::mwExecBg("{$logrotatePath} {$options} '{$path_conf}' > /dev/null 2> /dev/null");
     }
 
     /**
@@ -148,7 +152,8 @@ class PBX
             'result' => 'Success',
         ];
         $arr_out = [];
-        Util::mwExec("asterisk -rx 'module reload features'", $arr_out);
+        $asteriskPath = Util::which('asterisk');
+        Util::mwExec("{$asteriskPath} -rx 'module reload features'", $arr_out);
         $out = implode(' ', $arr_out);
         if ( ! "Module 'features' reloaded successfully." === $out) {
             $result['result'] = 'ERROR';
@@ -171,7 +176,8 @@ class PBX
             'result' => 'Success',
         ];
         $arr_out = [];
-        Util::mwExec("asterisk -rx 'core reload'", $arr_out);
+        $asteriskPath = Util::which('asterisk');
+        Util::mwExec("{$asteriskPath} -rx 'core reload'", $arr_out);
         $out = implode(' ', $arr_out);
         if ('' !== $out) {
             $result['result'] = 'ERROR';
@@ -199,14 +205,15 @@ class PBX
             'data'   => '',
         ];
         $arr_out = [];
-        Util::mwExec("asterisk -rx 'module reload manager'", $arr_out);
+        $asteriskPath = Util::which('asterisk');
+        Util::mwExec("{$asteriskPath} -rx 'module reload manager'", $arr_out);
         $out = implode(' ', $arr_out);
         if ( ! "Module 'manager' reloaded successfully." === $out) {
             $result['result'] = 'ERROR';
         }
         $result['data'] .= $out;
 
-        Util::mwExec("asterisk -rx 'module reload http'", $arr_out);
+        Util::mwExec("{$asteriskPath} -rx 'module reload http'", $arr_out);
         $out = implode(' ', $arr_out);
         if ( ! "Module 'http' reloaded successfully." === trim($out)) {
             $result['result'] = 'ERROR';
@@ -220,7 +227,8 @@ class PBX
     {
         $o = new MusicOnHoldConf();
         $o->generateConfig();
-        Util::mwExec("asterisk -rx 'module reload manager'");
+        $asteriskPath = Util::which('asterisk');
+        Util::mwExec("{$asteriskPath} -rx 'module reload manager'");
 
         return [
             'result' => 'Success',
@@ -241,7 +249,8 @@ class PBX
             'result' => 'Success',
         ];
         $arr_out = [];
-        Util::mwExec("asterisk -rx 'voicemail reload'", $arr_out);
+        $asteriskPath = Util::which('asterisk');
+        Util::mwExec("{$asteriskPath} -rx 'voicemail reload'", $arr_out);
         $out = implode(' ', $arr_out);
         if ('Reloading voicemail configuration...' !== $out) {
             $result['result'] = 'ERROR';
@@ -256,7 +265,8 @@ class PBX
         $pbx = new ModulesConf();
         $pbx->generateConfig();
         $arr_out = [];
-        Util::mwExec("asterisk -rx 'core restart now'", $arr_out);
+        $asteriskPath = Util::which('asterisk');
+        Util::mwExec("{$asteriskPath} -rx 'core restart now'", $arr_out);
 
         return [
             'result' => 'Success',
@@ -336,8 +346,9 @@ class PBX
         $extensions = new ExtensionsConf();
         $extensions->generateConfig();
         if ($booting !== true) {
-            Util::mwExec("asterisk -rx 'dialplan reload'");
-            Util::mwExec("asterisk -rx 'module reload pbx_lua.so'");
+            $path_asterisk  = Util::which('asterisk');
+            Util::mwExec("{$path_asterisk} -rx 'dialplan reload'");
+            Util::mwExec("{$path_asterisk} -rx 'module reload pbx_lua.so'");
         }
 
         $result['result'] = 'Success';
@@ -388,17 +399,19 @@ class PBX
 
         $out = [];
         if ($old_hash === $now_hadh) {
-            Util::mwExec("asterisk -rx 'module reload acl'", $out);
-            Util::mwExec("asterisk -rx 'core reload'", $out);
+            $asteriskPath = Util::which('asterisk');
+            Util::mwExec("{$asteriskPath} -rx 'module reload acl'", $out);
+            Util::mwExec("{$asteriskPath} -rx 'core reload'", $out);
             $out_data = trim(implode('', $out));
             if ($out_data !== '') {
                 $result['message'] .= $out_data;
             }
         } else {
             // Завершаем каналы.
-            Util::mwExec("asterisk -rx 'channel request hangup all'", $out);
+            $asteriskPath = Util::which('asterisk');
+            Util::mwExec("{$asteriskPath} -rx 'channel request hangup all'", $out);
             usleep(500000);
-            Util::mwExec("asterisk -rx 'core restart now'", $out);
+            Util::mwExec("{$asteriskPath} -rx 'core restart now'", $out);
             $out_data = trim(implode('', $out));
             if ($out_data !== '') {
                 $result['message'] .= $out_data;
@@ -422,7 +435,8 @@ class PBX
         ];
         $iax    = new IAXConf();
         $iax->generateConfig();
-        Util::mwExec("asterisk -rx 'iax2 reload'");
+        $asteriskPath = Util::which('asterisk');
+        Util::mwExec("{$asteriskPath} -rx 'iax2 reload'");
         $result['result'] = 'Success';
 
         return $result;

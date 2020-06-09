@@ -163,8 +163,14 @@ class WorkerDownloader extends WorkerBase
 
             // Kill all module processes
             if (is_dir("{$currentModuleDir}/bin")) {
+                $busyboxPath = Util::which('busybox');
+                $killPath = Util::which('kill');
+                $lsofPath = Util::which('lsof');
+                $grepPath = Util::which('grep');
+                $awkPath = Util::which('awk');
+                $uniqPath = Util::which('uniq');
                 Util::mwExec(
-                    "/bin/busybox kill -9 $(/usr/bin/lsof {$currentModuleDir}/bin/* |  /bin/busybox grep -v COMMAND | /bin/busybox awk  '{ print $2}' | /bin/busybox uniq)"
+                    "{$busyboxPath} {$killPath} -9 $({$lsofPath} {$currentModuleDir}/bin/* |  {$busyboxPath} {$grepPath} -v COMMAND | {$busyboxPath} {$awkPath}  '{ print $2}' | {$busyboxPath} {$uniqPath})"
                 );
             }
 

@@ -235,7 +235,8 @@ class QueueConf extends ConfigClass
         $queue            = new self();
         $queue->generateConfig();
         $out = [];
-        Util::mwExec("asterisk -rx 'queue reload all '", $out);
+        $asteriskPath = Util::which('asterisk');
+        Util::mwExec("{$asteriskPath} -rx 'queue reload all '", $out);
         $out_data = trim(implode('', $out));
         if ($out_data == '') {
             $result['result'] = 'Success';

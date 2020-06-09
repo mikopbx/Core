@@ -510,11 +510,15 @@ class CdrDb
             } else {
                 $options = 'ab';
             }
+            $nicePath = Util::which('nice');
+            $lamePath = Util::which('lame');
+            $chmodPath = Util::which('chmod');
+
             $res        = $am->MixMonitor(
                 $channel,
                 "{$f}.wav",
                 $options,
-                "/bin/nice -n 19 /usr/bin/lame -b 32 --silent \"{$f}.wav\" \"{$f}.mp3\" && /bin/chmod o+r \"{$f}.mp3\""
+                "{$nicePath} -n 19 {$lamePath} -b 32 --silent \"{$f}.wav\" \"{$f}.mp3\" && {$chmodPath} o+r \"{$f}.mp3\""
             );
             $res['cmd'] = "MixMonitor($channel, $file_name)";
             self::LogEvent(json_encode($res));

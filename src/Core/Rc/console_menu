@@ -364,7 +364,7 @@ $menu = (new CliMenuBuilder())
                 system('/sbin/mikopbx_reboot');
             })
             ->addItem('[3] '.Util::translate('Resize storage'), function (CliMenu $menu) {
-                /** @var MikoPBX\Common\Models\Storage $data */
+                /** @var \MikoPBX\Common\Models\Storage $data */
                 $data = StorageModel::findFirst();
                 if($data === null){
                     echo "\n " . Util::translate('Valid disks not found...') . " \n";
@@ -395,7 +395,8 @@ $menu = (new CliMenuBuilder())
                 echo "resize storage return $return_var";
                 sleep(2);
                 if($return_var === 0){
-                    Util::mwExecBg('/sbin/mikopbx_reboot');
+                    $mikopbx_rebootPath = Util::which('mikopbx_reboot');
+                    Util::mwExecBg($mikopbx_rebootPath);
                 }
 
             })

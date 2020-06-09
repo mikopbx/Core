@@ -33,6 +33,8 @@ class VoiceMailConf extends ConfigClass
         }
 
         $timezone = $this->generalSettings['PBXTimezone'];
+        $msmtpPath = Util::which('msmtp');
+
         $conf     = "[general]\n" .
             "format=wav49|gsm|wav\n" .
             "attach=yes\n" .
@@ -50,7 +52,7 @@ class VoiceMailConf extends ConfigClass
             "emailbody={$emailbody}\n" .
             "emaildateformat=%A, %d %B %Y в %H:%M:%S\n" .
             "pagerdateformat=%T %D\n" .
-            "mailcmd=/usr/bin/msmtp --file=/etc/msmtp.conf -t\n" .
+            "mailcmd={$msmtpPath} --file=/etc/msmtp.conf -t\n" .
             "serveremail={$from}\n\n" .
             "[zonemessages]\n" .
             "local={$timezone}|'vm-received' q 'digits/at' H 'hours' M 'minutes'\n\n";

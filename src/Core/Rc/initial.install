@@ -84,17 +84,27 @@ if (strtolower(trim(fgets($fp)) ) === 'y') {
     file_put_contents($varEtcPath.'/cfdevice', $target_disk);
 
     echo "Installing PBX...\n";
+    $mountPath = Util::which('mount');
+    $grepPath = Util::which('grep');
+    $busyboxPath = Util::which('busybox');
+    $awkPath = Util::which('awk');
+    $umountPath = Util::which('umount');
+
     // Получим все смонтированные разделы:
     $mnt_dirs = [];
-    Util::mwExec("mount | grep '^/dev/{$target_disk}' | /bin/busybox awk '{print $3}'",$mnt_dirs);
+    Util::mwExec("{$mountPath} | {$grepPath} '^/dev/{$target_disk}' | {$busyboxPath} {$awkPath} '{print $3}'",$mnt_dirs);
     foreach ($mnt_dirs as $mnt){
         // Завершаем все связанные процессы.
         Util::mwExec("/etc/rc/shell_functions.sh killprocesses '$mnt' -TERM 0;");
         // Отмонтируем.
-        Util::mwExec("umount {$mnt}");
+        Util::mwExec("{$umountPath} {$mnt}");
     }
     echo " - unpacking img...\n";
-    passthru("/bin/pv -p /offload/firmware.img.gz | /bin/gunzip | dd of=/dev/{$target_disk} bs=512 2> /dev/null");
+    $pvPath = Util::which('pv');
+    $ddPath = Util::which('dd');
+    $gunzipPath = Util::which('gunzip');
+
+    passthru("{$pvPath} -p /offload/firmware.img.gz | {$gunzipPath} | {$ddPath} of=/dev/{$target_disk} bs=512 2> /dev/null");
     echo " - create storage partition...\n";
     passthru("/etc/rc/initial.storage.part.four create /dev/{$target_disk}");
     echo " - create storage - done\n";
@@ -106,7 +116,7 @@ if (strtolower(trim(fgets($fp)) ) === 'y') {
 	echo 'Copying configuration...';
 	Util::mwMkdir('/mnttmp');
     /** Монтируем диск с настройками */
-	Util::mwExec("/bin/mount -w -o noatime /dev/{$target_disk}3 /mnttmp");
+	Util::mwExec("{$mountPath} -w -o noatime /dev/{$target_disk}3 /mnttmp");
 
     $mikoPBXconfig = new MikoPBXConfig();
     $lang = $mikoPBXconfig->getGeneralSettings('SSHLanguage');
@@ -119,17 +129,18 @@ if (strtolower(trim(fgets($fp)) ) === 'y') {
 
     $result_db_file = '/mnttmp/conf/mikopbx.db';
     /** Копируем файл базы данных настроек. */
-    Util::mwExec("cp {$filename} {$result_db_file}");
+    $cpPath = Util::which('cp');
+    Util::mwExec("{$cpPath} {$filename} {$result_db_file}");
+    $sqlite3Path = Util::which('sqlite3');
 
-    system('sqlite3 '.$filename.'  .dump | grep \'^INSERT INTO "m_Storage"\' > /tmp/dmp_storage.sql');
-    system('sqlite3 '.$filename.'  .dump | grep \'^INSERT INTO "m_LanInterfaces"\' >> /tmp/dmp_storage.sql');
-    system("sqlite3 {$result_db_file} 'DELETE FROM m_Storage'");
-    system("sqlite3 {$result_db_file} 'DELETE FROM m_LanInterfaces'");
-    system("sqlite3 {$result_db_file} < /tmp/dmp_storage.sql");
+    system("{$sqlite3Path} {$filename}".'  .dump | grep \'^INSERT INTO "m_Storage"\' > /tmp/dmp_storage.sql');
+    system("{$sqlite3Path} {$filename}".'  .dump | grep \'^INSERT INTO "m_LanInterfaces"\' >> /tmp/dmp_storage.sql');
+    system("{$sqlite3Path} {$result_db_file} 'DELETE FROM m_Storage'");
+    system("{$sqlite3Path} {$result_db_file} 'DELETE FROM m_LanInterfaces'");
+    system("{$sqlite3Path} {$result_db_file} < /tmp/dmp_storage.sql");
 
     // Фиксируем флаг необходимости очистки кэш web.
-	file_put_contents('/mnttmp/conf/need_clean_cashe_www', '');
-	Util::mwExec('/bin/umount /mnttmp');
+	Util::mwExec("{$umountPath} /mnttmp");
 	echo "done\n";
 
     // Фиксируем флаг необходимости вынуить CD диск.

@@ -6,6 +6,7 @@
  * Proprietary and confidential
  * Written by Alexey Portnov, 5 2018
  */
+
 namespace MikoPBX\Core\Rc;
 
 
@@ -27,89 +28,93 @@ $NoCfDevice = <<<EOD
 
 EOD;
 
-$phalconConfig = Di::getDefault()->get('config');
-$cfPath = $phalconConfig->path('core.cfPath');
-$varEtcPath = $phalconConfig->path('core.varEtcPath');
-$sqlite3BinPath = $phalconConfig->path('core.sqlite3BinPath');
-$dbFile = $phalconConfig->path('database.dbfile');
+$phalconConfig  = Di::getDefault()->get('config');
+$cfPath         = $phalconConfig->path('core.cfPath');
+$varEtcPath     = $phalconConfig->path('core.varEtcPath');
+$dbFile         = $phalconConfig->path('database.dbfile');
+$mountPath      = Util::which('mount');
+$unmountPath    = Util::which('umount');
+$fdiskPath      = Util::which('fdisk');
+$grepPath       = Util::which('grep');
+$cutPath        = Util::which('cut');
+$uniqPath       = Util::which('uniq');
+$sqlite3Path    = Util::which('sqlite3');
+$rmPath         = Util::which('rm');
+$mvPath         = Util::which('mv');
+$haltPath       = Util::which('halt');
+
 
 $cfgdevice = '';
 /* check if there's already an fstab (NFS booting?) */
 if (file_exists('/etc/fstab')) {
-    // Обработка не требуется.
-}else if ( file_exists('/offload/livecd') ){
+    return; // Обработка не требуется.
+}
+
+if (file_exists('/offload/livecd')) {
     $d_path_info = pathinfo($dbFile);
     // Копируем файл базы данных настроек.
     copy('/offload/conf/mikopbx.db', $dbFile);
-    // Устанавливаем владельца для базы данных.
-    chown($dbFile, 'www');
-    chgrp($dbFile, 'www');
-    // Устанавливаем владельца для каталога.
-    chown($d_path_info['dirname'], 'www');
-    chgrp($d_path_info['dirname'], 'www');
+    Util::addRegularWWWRights($d_path_info);
+    Util::addRegularWWWRights($dbFile);
+    return; // Обработка не требуется.
+}
 
-    // Обновление конфигурации.
-    // PBX::updateSystemConfig(); //TODO:: разве не во время загрузки системы это вот все?
-    // sleep(3);
-}else{
-    $storage = new Storage();
-    /* iterate through the disks fdisk finds until one contains a mikopbx.db */
-    $attempts = 2;
-    while ($attempts--) {
-        Util::mwExec('fdisk -l | grep "^/dev/" | cut -c 6-8 | uniq', $disks);
-        // " - Mount storage... "
-        echo "\n - Found disks: " . implode(', ', $disks) . "\n";
-        foreach ($disks as $disk) {
-            echo " - Looking for configuration on: $disk\n";
-            $part 	 = (strpos($disk, 'mmcblk') !== false)?'p3':'3';
 
-            $uuid   = $storage->getUuid("/dev/{$disk}{$part}");
-            $format = $storage->getFsType("{$disk}{$part}");
-            // Запустим проверку раздела диска//
-            Util::mwExec("if [ -b /dev/{$disk}{$part} ]; then /sbin/fsck.{$format} -f -p /dev/{$disk}{$part}; fi;");
-            if (Util::mwExec("/bin/mount -t {$format} -rw UUID=\"{$uuid}\" {$cfPath}") !== 0) {
-                continue;
-            }
+$storage = new Storage();
+/* iterate through the disks fdisk finds until one contains a mikopbx.db */
+$attempts = 2;
+while ($attempts--) {
+    Util::mwExec("{$fdiskPath} -l | {$grepPath} \"^/dev/\" | {$cutPath} -c 6-8 | {$uniqPath}", $disks);
+    // " - Mount storage... "
+    echo "\n - Found disks: " . implode(', ', $disks) . "\n";
+    foreach ($disks as $disk) {
+        echo " - Looking for configuration on: $disk\n";
+        $part = (strpos($disk, 'mmcblk') !== false) ? 'p3' : '3';
 
-            if (file_exists($dbFile) && filesize($dbFile)>0) {
-                $cfgdevice = $disk;
-                $cfgpartition = $cfgdevice.$part;
-                echo " - Found configuration on $cfgpartition.\n";
-                $old_db_name = '/cf/conf/mikozia.db';
-                if(file_exists($old_db_name)){
-                    @unlink($dbFile);
-                    @rename($old_db_name, $dbFile);
-                }
-                if( Util::mwExec("{$sqlite3BinPath} {$dbFile} 'VACUUM'") !== 0){
-                    $tmp_name = '/tmp/'.time().'.db.dmp';
-                    Util::mwExec("{$sqlite3BinPath} {$dbFile} .dump | {$sqlite3BinPath} {$tmp_name}");
-                    Util::mwExec("rm {$dbFile}*");
-                    Util::mwExec("mv {$tmp_name} {$dbFile}");
-                }
-                break;
-                // Обновление конфигурации.
-                //PBX::updateSystemConfig(); //TODO:: разве не во время загрузки системы это вот все?
-            }
-
-            Util::mwExec("/bin/umount -f {$cfPath}");
-
+        $uuid   = $storage->getUuid("/dev/{$disk}{$part}");
+        $format = $storage->getFsType("{$disk}{$part}");
+        // Запустим проверку раздела диска
+        $fsckPath = Util::which("fsck.{$format}");
+        Util::mwExec("if [ -b /dev/{$disk}{$part} ]; then {$fsckPath} -f -p /dev/{$disk}{$part}; fi;");
+        if (Util::mwExec("{$mountPath} -t {$format} -rw UUID=\"{$uuid}\" {$cfPath}") !== 0) {
+            continue;
         }
-        if ($cfgdevice) {
+
+        if (file_exists($dbFile) && filesize($dbFile) > 0) {
+            $cfgdevice    = $disk;
+            $cfgpartition = $cfgdevice . $part;
+            echo " - Found configuration on $cfgpartition.\n";
+            $old_db_name = '/cf/conf/mikozia.db';
+            if (file_exists($old_db_name)) {
+                @unlink($dbFile);
+                @rename($old_db_name, $dbFile);
+            }
+            if (Util::mwExec("{$sqlite3Path} {$dbFile} 'VACUUM'") !== 0) {
+                $tmp_name = '/tmp/' . time() . '.db.dmp';
+                Util::mwExec("{$sqlite3Path} {$dbFile} .dump | {$sqlite3Path} {$tmp_name}");
+                Util::mwExec("{$rmPath} {$dbFile}*");
+                Util::mwExec("{$mvPath} {$tmp_name} {$dbFile}");
+            }
             break;
         }
-        if ($attempts) {
-            echo " - Configuration not found.\n";
-            echo " - Waiting for devices to settle and attempting again.\n";
-            sleep(3);
-        }
-    }
 
-    if (!$cfgdevice) {
-        /* no device found, print an error and die */
-        echo $NoCfDevice;
-        Util::mwExec('/sbin/halt');
-    }else{
-        // Запишем в файл имя подключенного устройства.
-        file_put_contents("{$varEtcPath}/cfdevice", $cfgdevice);
+        Util::mwExec("{$unmountPath} -f {$cfPath}");
     }
+    if ($cfgdevice) {
+        break;
+    }
+    if ($attempts) {
+        echo " - Configuration not found.\n";
+        echo " - Waiting for devices to settle and attempting again.\n";
+        sleep(3);
+    }
+}
+
+if ( ! $cfgdevice) {
+    /* no device found, print an error and die */
+    echo $NoCfDevice;
+    Util::mwExec($haltPath);
+} else {
+    // Запишем в файл имя подключенного устройства.
+    file_put_contents("{$varEtcPath}/cfdevice", $cfgdevice);
 }

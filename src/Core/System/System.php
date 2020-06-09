@@ -68,22 +68,25 @@ class System
 
     public static function rotatePhpLog(): void
     {
+        $asteriskPath = Util::which('asterisk');
+        $logrotatePath = Util::which('logrotate');
+
         $max_size    = 2;
         $f_name      = self::getPhpFile();
-        $text_config = (string)($f_name) . ' {
+        $text_config = (string)($f_name) . " {
     nocreate
     nocopytruncate
     delaycompress
     nomissingok
     start 0
     rotate 9
-    size ' . $max_size . 'M
+    size {$max_size}M
     missingok
     noolddir
     postrotate
-        /usr/sbin/asterisk -rx "logger reload" > /dev/null 2> /dev/null
+        {$asteriskPath} -rx 'logger reload' > /dev/null 2> /dev/null
     endscript
-}';
+}";
         $di     = Di::getDefault();
         if ($di !== null){
             $varEtcPath = $di->getConfig()->path('core.varEtcPath');
@@ -98,7 +101,7 @@ class System
         if (Util::mFileSize($f_name) > $mb10) {
             $options = '-f';
         }
-        Util::mwExecBg("/usr/sbin/logrotate {$options} '{$path_conf}' > /dev/null 2> /dev/null");
+        Util::mwExecBg("{$logrotatePath} {$options} '{$path_conf}' > /dev/null 2> /dev/null");
     }
 
     /**
@@ -107,27 +110,27 @@ class System
     public static function gnatsLogRotate(): void
     {
         $log_dir = self::getLogDir() . '/nats';
-        $pid     = Util::getPidOfProcess('gnatsd', 'custom_modules');
-
+        $gnatsdPath = Util::which('gnatsd');
+        $pid     = Util::getPidOfProcess($gnatsdPath, 'custom_modules');
         $max_size = 1;
         if (empty($pid)) {
             $system = new System();
             $system->gnatsStart();
             sleep(1);
         }
-        $text_config = "{$log_dir}/gnatsd.log" . ' {
+        $text_config = "{$log_dir}/gnatsd.log {
     start 0
     rotate 9
-    size ' . $max_size . 'M
+    size {$max_size}M
     maxsize 1M
     daily
     missingok
     notifempty
     sharedscripts
     postrotate
-        /usr/sbin/gnatsd -sl reopen=' . $pid . ' > /dev/null 2> /dev/null
+        {$gnatsdPath} -sl reopen=$pid > /dev/null 2> /dev/null
     endscript
-}';
+}";
 
         $mb10 = $max_size * 1024 * 1024;
 
@@ -144,7 +147,8 @@ class System
         $path_conf  = $varEtcPath . '/gnatsd_logrotate.conf';
         file_put_contents($path_conf, $text_config);
         if (file_exists("{$log_dir}/gnatsd.log")) {
-            Util::mwExecBg("/usr/sbin/logrotate $options '{$path_conf}' > /dev/null 2> /dev/null");
+            $logrotatePath = Util::which('logrotate');
+            Util::mwExecBg("{$logrotatePath} $options '{$path_conf}' > /dev/null 2> /dev/null");
         }
     }
 
@@ -191,7 +195,8 @@ class System
         if (file_exists($pid_file)) {
             Util::mwExec('kill $(cat ' . $pid_file . ')');
         }
-        Util::mwExecBg("/usr/sbin/gnatsd --config {$conf_file}", "{$logdir}/gnats_process.log");
+        $gnatsdPath = Util::which('gnatsd');
+        Util::mwExecBg("{$gnatsdPath} --config {$conf_file}", "{$logdir}/gnats_process.log");
 
         $result = [
             'result' => 'Success',
@@ -213,7 +218,8 @@ class System
      */
     public static function rebootSync(): void
     {
-        Util::mwExec("/sbin/mikopbx_reboot > /dev/null 2>&1");
+        $mikopbx_rebootPath = Util::which('mikopbx_reboot');
+        Util::mwExec("{$mikopbx_rebootPath} > /dev/null 2>&1");
     }
 
     /**
@@ -222,7 +228,8 @@ class System
      */
     public static function rebootSyncBg(): void
     {
-        Util::mwExecBg("/sbin/mikopbx_reboot > /dev/null 2>&1");
+        $mikopbx_rebootPath = Util::which('mikopbx_reboot');
+        Util::mwExecBg("{$mikopbx_rebootPath} > /dev/null 2>&1");
     }
 
     /**
@@ -230,7 +237,8 @@ class System
      */
     public static function shutdown(): void
     {
-        Util::mwExec("/sbin/shutdown > /dev/null 2>&1");
+        $shutdownPath = Util::which('shutdown');
+        Util::mwExec("{$shutdownPath} > /dev/null 2>&1");
     }
 
     /**
@@ -260,7 +268,8 @@ class System
         }
         Util::fileWriteContent('/etc/hosts', $hosts_conf);
 
-        return Util::mwExec('/bin/hostname ' . escapeshellarg("{$data['hostname']}"));
+        $hostnamePath = Util::which('hostname');
+        return Util::mwExec($hostnamePath.' '. escapeshellarg("{$data['hostname']}"));
     }
 
     /**
@@ -389,7 +398,9 @@ server 2.pool.ntp.org';
     public static function getCpu()
     {
         $ut = [];
-        Util::mwExec("/bin/mpstat | /bin/grep all", $ut);
+        $grepPath = Util::which('grep');
+        $mpstatPath = Util::which('mpstat');
+        Util::mwExec("{$mpstatPath} | {$grepPath} all", $ut);
         preg_match("/^.*\s+all\s+.*\s+.*\s+.*\s+.*\s+.*\s+.*\s+.*\s+.*\s+(.*)\s*.*/i", $ut[0], $matches);
         $rv = 100 - $matches[1];
 
@@ -406,7 +417,9 @@ server 2.pool.ntp.org';
     public static function getUpTime(): string
     {
         $ut = [];
-        Util::mwExec("/usr/bin/uptime | awk -F \" |,\" '{print $5}'", $ut);
+        $uptimePath = Util::which('uptime');
+        $awkPath = Util::which('awk');
+        Util::mwExec("{$uptimePath} | {$awkPath} -F \" |,\" '{print $5}'", $ut);
 
         return implode('', $ut);
     }
@@ -585,17 +598,20 @@ server 2.pool.ntp.org';
 
 
         $workerSafeScriptsPath = Util::getFilePathByClassName(WorkerSafeScriptsCore::class);
-
-        $WorkerSafeScripts = "/usr/bin/php -f {$workerSafeScriptsPath} start > /dev/null 2> /dev/null";
+        $phpPath = Util::which('php');
+        $WorkerSafeScripts = "{$phpPath} -f {$workerSafeScriptsPath} start > /dev/null 2> /dev/null";
 
         $workersPath = appPath('src/Core/Workers');
 
         $restart_night = $this->mikoPBXConfig->getGeneralSettings('RestartEveryNight');
+        $asteriskPath = Util::which('asterisk');
+        $ntpdPath = Util::which('ntpd');
+        $shPath = Util::which('sh');
         if ($restart_night === '1') {
-            $mast_have[] = '0 1 * * * ' . $cron_user . '/usr/sbin/asterisk -rx"core restart now" > /dev/null 2> /dev/null' . "\n";
+            $mast_have[] = '0 1 * * * ' . $cron_user .$asteriskPath.' -rx"core restart now" > /dev/null 2> /dev/null' . "\n";
         }
-        $mast_have[] = '*/5 * * * * ' . $cron_user . '/usr/sbin/ntpd -q > /dev/null 2> /dev/null' . "\n";
-        $mast_have[] = '*/6 * * * * ' . $cron_user . "/bin/sh {$workersPath}/Cron/cleaner_download_links.sh  download_link > /dev/null 2> /dev/null\n";
+        $mast_have[] = '*/5 * * * * ' . $cron_user . $ntpdPath.' -q > /dev/null 2> /dev/null' . "\n";
+        $mast_have[] = '*/6 * * * * ' . $cron_user . "{$shPath} {$workersPath}/Cron/cleaner_download_links.sh  download_link > /dev/null 2> /dev/null\n";
         $mast_have[] = '*/1 * * * * ' . $cron_user . "{$WorkerSafeScripts}\n";
 
         $tasks = [];
@@ -640,7 +656,8 @@ server 2.pool.ntp.org';
                 $cntr->parse();
                 $cntr->makeConfig();
                 file_put_contents('/tmp/ejectcd', '');
-                Util::mwExecBg('/sbin/mikopbx_reboot', '/dev/null', 3);
+                $mikopbx_rebootPath = Util::which('mikopbx_reboot');
+                Util::mwExecBg($mikopbx_rebootPath, '/dev/null', 3);
             } catch (Exception $e) {
                 $result = [
                     'result'  => 'Error',
@@ -699,7 +716,8 @@ server 2.pool.ntp.org';
 
         $link = '/tmp/firmware_update.img';
         Util::createUpdateSymlink($upd_file, $link);
-        Util::mwExecBg("/sbin/mikopbx_firmware recover_upgrade {$link} /dev/{$dev}");
+        $mikopbx_firmwarePath = Util::which('mikopbx_firmware');
+        Util::mwExecBg("{$mikopbx_firmwarePath} recover_upgrade {$link} /dev/{$dev}");
 
         return $result;
     }
@@ -966,10 +984,13 @@ server 2.pool.ntp.org';
      */
     public function loadKernelModules(): void
     {
-        Util::mwExec('/sbin/modprobe -q dahdi');
-        Util::mwExec('/sbin/modprobe -q dahdi_transcode');
-        Util::mwExec('ulimit -n 4096');
-        Util::mwExec('ulimit -p 4096');
+        $modprobePath = Util::which('modprobe');
+        $ulimitPath = Util::which('ulimit');
+
+        Util::mwExec("{$modprobePath} -q dahdi");
+        Util::mwExec("{$modprobePath} -q dahdi_transcode");
+        Util::mwExec("{$ulimitPath} -n 4096");
+        Util::mwExec("{$ulimitPath} -p 4096");
     }
 
     /**
@@ -1064,16 +1085,20 @@ server 2.pool.ntp.org';
         if ( ! file_exists($syslog_file)) {
             file_put_contents($syslog_file, '');
         }
-        $pid = Util::getPidOfProcess('/sbin/syslogd');
+        $syslogdPath = Util::which('syslogd');
+        $busyboxPath = Util::which('busybox');
+        $logreadPath = Util::which('logread');
+        $killPath = Util::which('kill');
+        $pid = Util::getPidOfProcess($syslogdPath);
         if ( ! empty($pid)) {
             $options = file_exists($log_file) ? '>' : '';
-            Util::mwExec('/bin/busybox logread 2> /dev/null >' . $options . $log_file);
+            Util::mwExec("{$busyboxPath} {$logreadPath} 2> /dev/null >" . $options . $log_file);
             // Завершаем процесс.
-            Util::mwExec("/bin/busybox kill '$pid'");
+            Util::mwExec("{$busyboxPath} {$killPath} '$pid'");
         }
 
         Util::createUpdateSymlink($log_file, $syslog_file);
-        Util::mwExec('/sbin/syslogd -O ' . $log_file . ' -b 10 -s 10240');
+        Util::mwExec("{$syslogdPath} -O {$log_file} -b 10 -s 10240");
     }
 
     public static function getSyslogFile(): string
@@ -1105,7 +1130,8 @@ server 2.pool.ntp.org';
             }
         }
         if ($need_start) {
-            Util::mwExecBg("/usr/bin/php -f {$path_to_script} start");
+            $phpPath = Util::which('php');
+            Util::mwExecBg("{$phpPath} -f {$path_to_script} start");
         }
     }
 
@@ -1151,7 +1177,8 @@ server 2.pool.ntp.org';
             // Если ключ не существует, создадим его и обновим информацию в базе данных.
             if ( ! file_exists($res_keyfilepath)) {
                 // Генерация.
-                Util::mwExec("/usr/bin/dropbearkey -t $keytype -f $res_keyfilepath");
+                $dropbearkeyPath = Util::which('dropbearkey');
+                Util::mwExec("{$dropbearkeyPath} -t $keytype -f $res_keyfilepath");
                 // Сохранение.
                 $new_key = base64_encode(file_get_contents($res_keyfilepath));
                 $this->mikoPBXConfig->setGeneralSettings("$db_key", "$new_key");
@@ -1194,7 +1221,9 @@ server 2.pool.ntp.org';
     public function updateShellPassword(): void
     {
         $password = $this->mikoPBXConfig->getGeneralSettings('SSHPassword');
-        Util::mwExec("echo \"root:$password\" | /usr/sbin/chpasswd");
+        $echoPath = Util::which('echo');
+        $chpasswdPath = Util::which('chpasswd');
+        Util::mwExec("{$echoPath} \"root:$password\" | {$chpasswdPath}");
     }
 
     /**
@@ -1211,7 +1240,8 @@ server 2.pool.ntp.org';
                 . ";vmsvc.data = /dev/null\n"
                 . "vmsvc.level = none\n";
             file_put_contents('/etc/vmware-tools/tools.conf', $conf);
-            Util::mwExec('/usr/bin/vmtoolsd --background=/var/run/vmtoolsd.pid > /dev/null 2> /dev/null');
+            $vmtoolsdPath = Util::which('vmtoolsd');
+            Util::mwExec("{$vmtoolsdPath} --background=/var/run/vmtoolsd.pid > /dev/null 2> /dev/null");
         }
     }
 

@@ -318,7 +318,9 @@ class CDR_Data
 
             // Получение статустов всех пользователей
             $dbFamily = escapeshellcmd($this->vars['dbFamily']);
-            Util::mwExec('asterisk -rx"database show ' . $dbFamily . '" | grep /', $output);
+            $asteriskPath = Util::which('asterisk');
+            $grepPath = Util::which('grep');
+            Util::mwExec($asteriskPath.' -rx "database show ' . $dbFamily . '" | '.$grepPath.' /', $output);
             $ch = 0;
             // Обходим файл построчно
             foreach ($output as $_data) {

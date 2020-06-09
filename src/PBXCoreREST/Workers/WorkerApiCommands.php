@@ -178,7 +178,8 @@ class WorkerApiCommands extends WorkerBase
                 'result' => 'Success',
             ];
             $workersPath = appPath('src/Core/Workers');
-            Util::mwExecBg("php -f {$workersPath}/WorkerMergeUploadedFile.php '{$data['settings_file']}'");
+            $phpPath = Util::which('php');
+            Util::mwExecBg("{$phpPath} -f {$workersPath}/WorkerMergeUploadedFile.php '{$data['settings_file']}'");
         } elseif ('restartModuleDependentWorkers' === $action) {
             $result['result'] = 'Success';
             Util::restartModuleDependentWorkers();
@@ -210,7 +211,8 @@ class WorkerApiCommands extends WorkerBase
             $result        = $notifications->configure();
             $OtherConfigs  = new VoiceMailConf();
             $OtherConfigs->generateConfig();
-            Util::mwExec("asterisk -rx 'voicemail reload'");
+            $asteriskPath = Util::which('asterisk');
+            Util::mwExec("{$asteriskPath} -rx 'voicemail reload'");
         } elseif ('unBanIp' === $action) {
             $result = Firewall::fail2banUnbanAll($data['ip']);
         } elseif ('getBanIp' === $action) {
@@ -231,7 +233,8 @@ class WorkerApiCommands extends WorkerBase
         } elseif ('removeAudioFile' === $action) {
             $result = Util::removeAudioFile($data['filename']);
         } elseif ('convertAudioFile' === $action) {
-            Util::mwExec("mv {$data['uploadedBlob']} {$data['filename']}");
+            $mvPath = Util::which('mv');
+            Util::mwExec("{$mvPath} {$data['uploadedBlob']} {$data['filename']}");
             $result = Util::convertAudioFile($data['filename']);
         } else {
             $result['message'] = 'API action not found;';

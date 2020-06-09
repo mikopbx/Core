@@ -91,10 +91,11 @@ class WorkerSafeScriptsCore extends WorkerBase
         } else {
             $options = '-t';
         }
-
+        $timeoutPath = Util::which('timeout');
+        $asteriskPath = Util::which('asterisk');
         while (true) {
             $execResult = Util::mwExec(
-                "/usr/bin/timeout {$options} 1 /usr/sbin/asterisk -rx'core waitfullybooted'",
+                "{$timeoutPath} {$options} 1 {$asteriskPath} -rx'core waitfullybooted'",
                 $out
             );
             if ($execResult === 0 && implode('', $out) === 'Asterisk has fully booted.') {
