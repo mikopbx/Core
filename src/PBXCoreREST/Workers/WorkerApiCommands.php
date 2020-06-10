@@ -11,7 +11,9 @@ namespace MikoPBX\PBXCoreREST\Workers;
 use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\Asterisk\Configs\{IAXConf, SIPConf, VoiceMailConf};
 use MikoPBX\Core\System\{BeanstalkClient, Firewall, Notifications, Storage, System, Util};
+use MikoPBX\Core\Workers\Cron\WorkerSafeScriptsCore;
 use MikoPBX\Core\Workers\WorkerBase;
+use MikoPBX\Core\Workers\WorkerMergeUploadedFile;
 use MikoPBX\Modules\Setup\PbxExtensionSetupFailure;
 use MikoPBX\Modules\PbxExtensionState;
 use Phalcon\Exception;
@@ -177,12 +179,9 @@ class WorkerApiCommands extends WorkerBase
             $result      = [
                 'result' => 'Success',
             ];
-            $workersPath = appPath('src/Core/Workers');
             $phpPath = Util::which('php');
-            Util::mwExecBg("{$phpPath} -f {$workersPath}/WorkerMergeUploadedFile.php '{$data['settings_file']}'");
-        } elseif ('restartModuleDependentWorkers' === $action) {
-            $result['result'] = 'Success';
-            Util::restartModuleDependentWorkers();
+            $workerDownloaderPath = Util::getFilePathByClassName(WorkerMergeUploadedFile::class);
+            Util::mwExecBg("{$phpPath} -f {$workerDownloaderPath} '{$data['settings_file']}'");
         } elseif ('shutdown' === $action) {
             $result['result'] = 'Success';
             System::shutdown();
@@ -319,7 +318,6 @@ class WorkerApiCommands extends WorkerBase
                 $result             = System::moduleDownloadStatus($module);
                 $result['function'] = $action;
                 $result['result']   = 'Success';
-
                 return $result;
             case 'enable':
                 $moduleStateProcessor = new PbxExtensionState($module);
@@ -365,7 +363,6 @@ class WorkerApiCommands extends WorkerBase
             case 'reload':
                 $cl = new $moduleClass();
                 $cl->reloadServices();
-                $cl->onAfterPbxStarted();
                 $result['result'] = 'Success';
                 break;
             case 'customAction':
@@ -393,7 +390,7 @@ class WorkerApiCommands extends WorkerBase
                     $result['result'] = 'Error';
                     $result['data']   = implode('<br>', $setup->getMessages());
                 }
-                Util::restartModuleDependentWorkers();
+                WorkerSafeScriptsCore::restartAllWorkers();
                 break;
             default:
                 $cl = new $moduleClass();

@@ -10,11 +10,13 @@
 namespace MikoPBX\Tests\Core\Asterisk\Configs;
 
 use MikoPBX\Core\Asterisk\Configs\ExtensionsConf;
-use PHPUnit\Framework\TestCase;
+use MikoPBX\Tests\Unit\AbstractUnitTest;
 
-class ExtensionsConfTest extends TestCase
+class ExtensionsConfTest extends AbstractUnitTest
 {
-
+    /**
+     * @backupGlobals disabled
+     */
     public function testGenerateIncomingContextPeers()
     {
         $conf = ExtensionsConf::generateIncomingContextPeers('none', '', '');

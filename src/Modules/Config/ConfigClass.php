@@ -78,9 +78,9 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
         $reflector = new \ReflectionClass(static::class);
         $partsOfNameSpace = explode('\\', $reflector->getNamespaceName());
         if (count($partsOfNameSpace)===3 && $partsOfNameSpace[0]==='Modules'){
-            $this->modulesDir    = $this->config->path('core.modulesDir');
+            $modulesDir    = $this->config->path('core.modulesDir');
             $this->moduleUniqueId = $partsOfNameSpace[1];
-            $this->moduleDir =  $this->modulesDir.'/'.$this->moduleUniqueId;
+            $this->moduleDir =  $modulesDir.'/'.$this->moduleUniqueId;
         }
 
         $this->messages = [];

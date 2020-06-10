@@ -8,6 +8,8 @@
 
 namespace MikoPBX\Core\Workers;
 require_once 'globals.php';
+
+use MikoPBX\Core\Workers\Cron\WorkerSafeScriptsCore;
 use MikoPBX\Core\System\{MikoPBXConfig, System, Util};
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use Phalcon\Exception;
@@ -226,8 +228,7 @@ class WorkerDownloader extends WorkerBase
                 $result['result'] = 'Success';
                 file_put_contents($this->installed_file, '');
                 file_put_contents($this->progress_file, 100);
-                Util::restartModuleDependentWorkers();
-                Util::restartPHPWorker(WorkerApiCommands::class);
+                WorkerSafeScriptsCore::restartAllWorkers();
             }
             Util::mwExec('rm -rf ' . $this->settings['res_file']);
         } elseif ('upgradeOnline' === $this->settings['action']) {

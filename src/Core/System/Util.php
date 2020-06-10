@@ -12,8 +12,6 @@ use AGI_AsteriskManager;
 use DateTime;
 use Exception;
 use MikoPBX\Common\Models\{CallEventsLogs, CustomFiles};
-use MikoPBX\Core\Asterisk\Configs\SIPConf;
-use MikoPBX\Core\Workers\WorkerModelsEvents;
 use Phalcon\Db\Adapter\Pdo\Sqlite;
 use Phalcon\Db\Column;
 use Phalcon\Di;
@@ -425,15 +423,6 @@ class Util
         );
 
         return trim(implode(' ', $out));
-    }
-
-    /**
-     *
-     */
-    public static function restartModuleDependentWorkers(): void
-    {
-        // Завершение WorkerModelsEvents процесса перезапустит его.
-        self::killByName(WorkerModelsEvents::class);
     }
 
     /**

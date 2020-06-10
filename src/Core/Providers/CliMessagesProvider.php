@@ -31,10 +31,9 @@ class CliMessagesProvider implements ServiceProviderInterface
      */
     public function register(DiInterface $di): void
     {
-        $coreConfig = $di->getShared('config')->get('core');
         $di->setShared(
             'messages',
-            function () use ($coreConfig) {
+            function () {
                 $messages = [];
                 try {
                     $conf     = new MikoPBXConfig();
@@ -44,7 +43,6 @@ class CliMessagesProvider implements ServiceProviderInterface
                 }
                 $translationsPath = appPath('src/Core/Messages');
                 if (empty($_ENV['SSH_CLIENT']) && file_exists("{$translationsPath}/{$language}.php")) {
-
                     require "{$translationsPath}/{$language}.php";
                 } else {
                     require "{$translationsPath}/en-en.php";

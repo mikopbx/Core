@@ -11,7 +11,7 @@ namespace MikoPBX\Core\Workers\Cron;
 require_once 'globals.php';
 
 use Generator;
-use MikoPBX\Core\System\{BeanstalkClient, Firewall, PBX, System, Util};
+use MikoPBX\Core\System\{BeanstalkClient, Firewall, Util};
 use MikoPBX\Core\Workers\WorkerAmiListener;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\Workers\WorkerCallEvents;
@@ -30,6 +30,32 @@ class WorkerSafeScriptsCore extends WorkerBase
 
     public const CHECK_BY_AMI = 'checkWorkerAMI';
 
+    /**
+     * Restart workers after module installation
+     */
+    public static function restartAllWorkers(): void
+    {
+        $workerSafeScriptsPath = Util::getFilePathByClassName(WorkerSafeScriptsCore::class);
+        $phpPath = Util::which('php');
+        $command = "{$phpPath} -f {$workerSafeScriptsPath} restart > /dev/null 2> /dev/null";
+        Util::mwExecBg($command);
+    }
+    /**
+     * Restart workers
+     */
+    public function restart(): void
+    {
+        $psPath    = Util::which('ps');
+        $grepPath  = Util::which('grep');
+        $awkPath   = Util::which('awk');
+        $xargsPath = Util::which('xargs');
+        $killPath  = Util::which('kill');
+        $command   = "{$psPath} -ef | {$grepPath} 'Workers\\\\Worker' | {$grepPath} -v grep | {$grepPath} -v WorkerSafeScriptsCore | {$awkPath} '{print $1}' | {$xargsPath} -r {$killPath} -9";
+        Util::mwExec($command);
+        $worker = new self();
+        $worker->start('start');
+    }
+
     public function start($argv): void
     {
         $this->waitFullyBooted();
@@ -38,15 +64,15 @@ class WorkerSafeScriptsCore extends WorkerBase
             function () {
                 // Parallel execution https://github.com/recoilphp/recoil
                 yield [
+                    $this->checkWorkerBeanstalk(WorkerApiCommands::class),
                     $this->checkWorkerBeanstalk(WorkerCdr::class),
-                    $this->checkWorkerBeanstalk(WorkerModelsEvents::class),
                     $this->checkWorkerBeanstalk(WorkerCallEvents::class),
+                    $this->checkWorkerBeanstalk(WorkerModelsEvents::class),
+                    $this->checkWorkerAMI(WorkerAmiListener::class), // Проверка листнера UserEvent
                     $this->checkWorkerBeanstalk(WorkerLicenseChecker::class),
                     $this->checkWorkerBeanstalk(WorkerNotifyByEmail::class),
                     $this->checkWorkerBeanstalk(WorkerNotifyError::class),
-                    $this->checkWorkerBeanstalk(WorkerApiCommands::class),
                     $this->checkWorkerBeanstalk(WorkerLongPoolAPI::class),
-                    $this->checkWorkerAMI(WorkerAmiListener::class), // Проверка листнера UserEvent
                 ];
             }
         );
@@ -91,7 +117,7 @@ class WorkerSafeScriptsCore extends WorkerBase
         } else {
             $options = '-t';
         }
-        $timeoutPath = Util::which('timeout');
+        $timeoutPath  = Util::which('timeout');
         $asteriskPath = Util::which('asterisk');
         while (true) {
             $execResult = Util::mwExec(
@@ -186,14 +212,18 @@ class WorkerSafeScriptsCore extends WorkerBase
 
 // Start worker process
 $workerClassname = WorkerSafeScriptsCore::class;
-if (isset($argv) && count($argv) > 1 && $argv[1] === 'start') {
-    cli_set_process_title($workerClassname);
-    try {
+cli_set_process_title($workerClassname);
+try {
+    if (isset($argv) && count($argv) > 1){
         $worker = new $workerClassname();
-        $worker->start($argv);
-    } catch (\Exception $e) {
-        global $errorLogger;
-        $errorLogger->captureException($e);
-        Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage());
+        if (($argv[1] === 'start')) {
+            $worker->start($argv);
+        } elseif ($argv[1] === 'restart'){
+            $worker->restart();
+        }
     }
+} catch (\Exception $e) {
+    global $errorLogger;
+    $errorLogger->captureException($e);
+    Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage());
 }

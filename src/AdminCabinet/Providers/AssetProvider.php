@@ -37,22 +37,23 @@ class AssetProvider implements ServiceProviderInterface
                     $action = 'index';
                 }
                 $headerCollectionJSForExtensions = $manager->collection('headerJS');
+                $headerCollectionJSForExtensions->setPrefix('assets/');
                 $footerCollectionJSForExtensions = $manager->collection('footerJS');
+                $footerCollectionJSForExtensions->setPrefix('assets/');
                 $headerCollectionJS              = $manager->collection('headerPBXJS');
+                $headerCollectionJS->setPrefix('assets/');
                 $headerCollectionCSS             = $manager->collection('headerCSS');
+                $headerCollectionCSS->setPrefix('assets/');
                 $footerCollectionJS              = $manager->collection('footerPBXJS');
+                $footerCollectionJS->setPrefix('assets/');
                 $headerCollectionSentryJS        = $manager->collection('headerSentryJS');
                 $semanticCollectionCSS           = $manager->collection('SemanticUICSS');
-                $semanticCollectionJS            = $manager->collection('SemanticUIJS');
-                $footerCollectionACE             = $manager->collection('footerACE');
-                $footerCollectionLoc             = $manager->collection('footerLoc');
-
                 $semanticCollectionCSS->setPrefix('assets/');
-                $headerCollectionCSS->setPrefix('assets/');
+                $semanticCollectionJS            = $manager->collection('SemanticUIJS');
                 $semanticCollectionJS->setPrefix('assets/');
-                $headerCollectionJS->setPrefix('assets/');
-                $footerCollectionJS->setPrefix('assets/');
+                $footerCollectionACE             = $manager->collection('footerACE');
                 $footerCollectionACE->setPrefix('assets/');
+                $footerCollectionLoc             = $manager->collection('footerLoc');
                 $footerCollectionLoc->setPrefix('assets/');
 
                 $cssCacheDir = appPath('sites/admin-cabinet/assets/css/cache');
@@ -636,14 +637,14 @@ class AssetProvider implements ServiceProviderInterface
                 $headerCollectionJSForExtensions->join(true);
                 $headerCollectionJSForExtensions->setTargetPath("{$jsCacheDir}/{$resultCombinedName}header.min.js");
                 $headerCollectionJSForExtensions->setTargetUri(
-                    "assets/js/cache/{$resultCombinedName}header.min.js?v={$version}"
+                    "js/cache/{$resultCombinedName}header.min.js?v={$version}"
                 );
 
 
                 $footerCollectionJSForExtensions->join(true);
                 $footerCollectionJSForExtensions->setTargetPath("{$jsCacheDir}/{$resultCombinedName}footer.min.js");
                 $footerCollectionJSForExtensions->setTargetUri(
-                    "assets/js/cache/{$resultCombinedName}footer.min.js?v={$version}"
+                    "js/cache/{$resultCombinedName}footer.min.js?v={$version}"
                 );
 
 
