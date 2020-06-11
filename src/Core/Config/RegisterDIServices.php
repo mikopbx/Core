@@ -11,8 +11,7 @@ declare(strict_types=1);
 
 namespace MikoPBX\Core\Config;
 
-use MikoPBX\Common\Providers\{
-    CDRDatabaseProvider,
+use MikoPBX\Common\Providers\{CDRDatabaseProvider,
     LicenseProvider,
     MainDatabaseProvider,
     ModelsCacheProvider,
@@ -23,8 +22,8 @@ use MikoPBX\Common\Providers\{
     RegistryProvider,
     TranslationProvider,
     ManagedCacheProvider,
-    MessagesProvider
-};
+    MessagesProvider,
+    UrlProvider};
 use MikoPBX\Core\Providers\{EventsLogDatabaseProvider};
 use Phalcon\Di;
 
@@ -60,6 +59,9 @@ class RegisterDIServices
 
             // Inject License Worker
             LicenseProvider::class,
+
+            // Url link builder
+            UrlProvider::class,
 
             // Inject PBX modules
             PBXConfModulesProvider::class,

@@ -108,7 +108,7 @@ class MessagesProvider implements ServiceProviderInterface
                     }
                 }
                 if ($cacheKey) {
-                    $this->get('managedCache')->set($cacheKey, $translates);
+                    $di->get('managedCache')->set($cacheKey, $translates);
                 }
 
                 // Return a translation object

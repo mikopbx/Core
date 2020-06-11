@@ -31,31 +31,11 @@ class WorkerSafeScriptsCore extends WorkerBase
     public const CHECK_BY_AMI = 'checkWorkerAMI';
 
     /**
-     * Restart workers after module installation
+     * Start all workers
+     * @param mixed $argv
+     *
+     * @throws \Throwable
      */
-    public static function restartAllWorkers(): void
-    {
-        $workerSafeScriptsPath = Util::getFilePathByClassName(WorkerSafeScriptsCore::class);
-        $phpPath = Util::which('php');
-        $command = "{$phpPath} -f {$workerSafeScriptsPath} restart > /dev/null 2> /dev/null";
-        Util::mwExecBg($command);
-    }
-    /**
-     * Restart workers
-     */
-    public function restart(): void
-    {
-        $psPath    = Util::which('ps');
-        $grepPath  = Util::which('grep');
-        $awkPath   = Util::which('awk');
-        $xargsPath = Util::which('xargs');
-        $killPath  = Util::which('kill');
-        $command   = "{$psPath} -ef | {$grepPath} 'Workers\\\\Worker' | {$grepPath} -v grep | {$grepPath} -v WorkerSafeScriptsCore | {$awkPath} '{print $1}' | {$xargsPath} -r {$killPath} -9";
-        Util::mwExec($command);
-        $worker = new self();
-        $worker->start('start');
-    }
-
     public function start($argv): void
     {
         $this->waitFullyBooted();
@@ -101,6 +81,32 @@ class WorkerSafeScriptsCore extends WorkerBase
 
         Firewall::checkFail2ban();
     }
+
+    /**
+     * Restart all workers after module installation in separate process
+     */
+    public static function restartAllWorkers(): void
+    {
+        $workerSafeScriptsPath = Util::getFilePathByClassName(WorkerSafeScriptsCore::class);
+        $phpPath = Util::which('php');
+        $command = "{$phpPath} -f {$workerSafeScriptsPath} restart > /dev/null 2> /dev/null";
+        Util::mwExecBg($command);
+    }
+    /**
+     * Restart all workers
+     */
+    public function restart(): void
+    {
+        $psPath    = Util::which('ps');
+        $grepPath  = Util::which('grep');
+        $awkPath   = Util::which('awk');
+        $xargsPath = Util::which('xargs');
+        $killPath  = Util::which('kill');
+        $command   = "{$psPath} -ef | {$grepPath} 'Workers\\\\Worker' | {$grepPath} -v grep | {$grepPath} -v WorkerSafeScriptsCore | {$awkPath} '{print $1}' | {$xargsPath} -r {$killPath} -9";
+        Util::mwExec($command);
+        $this->start('start');
+    }
+
 
     /**
      * Ожидаем полной загрузки asterisk.
@@ -194,8 +200,8 @@ class WorkerSafeScriptsCore extends WorkerBase
             if ($res_ping === false && $level < 10) {
                 Util::restartPHPWorker($workerClassName);
                 Util::sysLogMsg(__CLASS__, "Service {$workerClassName} started.");
-                // Wait 5 seconds while service will be ready to listen requests
-                sleep(5);
+                // Wait 1 second while service will be ready to listen requests
+                sleep(1);
 
                 // Check service again
                 $this->checkWorkerAMI($workerClassName, $level + 1);

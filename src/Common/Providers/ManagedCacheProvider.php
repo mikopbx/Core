@@ -44,7 +44,7 @@ class ManagedCacheProvider implements ServiceProviderInterface
                 $serializerFactory = new SerializerFactory();
 
                 $options = [
-                    'defaultSerializer' => 'Json',
+                    'defaultSerializer' => 'Php',
                     'lifetime'          => 7200
                 ];
 

@@ -20,7 +20,6 @@ use MikoPBX\AdminCabinet\Providers\{
     LanguageSelectorProvider,
     RouterProvider,
     SessionProvider,
-    UrlProvider,
     ViewProvider,
     VoltProvider};
 use MikoPBX\Common\Providers\{CDRDatabaseProvider,
@@ -34,7 +33,8 @@ use MikoPBX\Common\Providers\{CDRDatabaseProvider,
     SessionReadOnlyProvider,
     MessagesProvider,
     TranslationProvider,
-    LicenseProvider};
+    LicenseProvider,
+    UrlProvider};
 use Phalcon\Di\DiInterface;
 
 class RegisterDIServices

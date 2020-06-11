@@ -70,8 +70,7 @@ abstract class WorkerBase implements WorkerInterface
     public function replyOnPingRequest($parameters):bool
     {
         $pingTube = $this->makePingTubeName(static::class);
-        if ( "{$pingTube}Ping" === $parameters['UserEvent']) {
-          //  usleep(50000);
+        if ( $pingTube === $parameters['UserEvent']) {
             $this->am->UserEvent("{$pingTube}Pong", []);
             return true;
         }

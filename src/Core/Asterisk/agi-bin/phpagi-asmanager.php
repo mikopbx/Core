@@ -126,7 +126,7 @@ class AGI_AsteriskManager
         $req        = '';
         $parameters = [
             'Action'    => 'UserEvent',
-            'UserEvent' => "{$pingTube}Ping",
+            'UserEvent' => $pingTube,
         ];
         foreach ($parameters as $var => $val) {
             $req .= "$var: $val\r\n";
