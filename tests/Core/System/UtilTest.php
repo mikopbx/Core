@@ -10,11 +10,10 @@
 namespace MikoPBX\Tests\Core\System;
 
 use MikoPBX\Core\System\Util;
+use MikoPBX\Tests\Unit\AbstractUnitTest;
 use Modules\ModuleBitrix24Integration\Lib\WorkerBitrix24IntegrationAMI;
-use Modules\ModuleBitrix24Integration\Lib\WorkerBitrix24IntegrationHTTP;
-use PHPUnit\Framework\TestCase;
 
-class UtilTest extends TestCase
+class UtilTest extends AbstractUnitTest
 {
 
     public function testMwExec()
@@ -32,6 +31,13 @@ class UtilTest extends TestCase
     {
         $process = WorkerBitrix24IntegrationAMI::class;
         Util::killByName($process);
+        $this->assertTrue(true);
+    }
+
+    public function testRestartPHPWorker(): void
+    {
+        $process = WorkerBitrix24IntegrationAMI::class;
+        Util::restartPHPWorker($process);
         $this->assertTrue(true);
     }
 }

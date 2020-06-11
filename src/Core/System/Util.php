@@ -337,12 +337,7 @@ class Util
         $path_kill  = self::which('kill');
         $path_nohup = self::which('nohup');
 
-        if ( ! empty($param)) {
-            $proc_str = $cmd . ' ' . trim($param);
-        } else {
-            $proc_str = $proc_name;
-        }
-        $WorkerPID = self::getPidOfProcess($proc_str);
+        $WorkerPID = self::getPidOfProcess($proc_name);
 
         if ('status' === $action) {
             $status = ($WorkerPID !== '') ? 'Started' : 'Stoped';
