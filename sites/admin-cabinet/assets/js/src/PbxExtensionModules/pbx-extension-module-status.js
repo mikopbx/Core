@@ -49,6 +49,7 @@ class PbxExtensionStatus {
 			this.changeLabelText(globalTranslate.ext_ModuleDisabledStatusDisabled);
 			const event = document.createEvent('Event');
 			event.initEvent('ModuleStatusChanged', false, true);
+			window.dispatchEvent(event);
 			event.initEvent('ConfigDataChanged', false, true);
 			window.dispatchEvent(event);
 			this.$disabilityFields.addClass('disabled');
@@ -69,6 +70,7 @@ class PbxExtensionStatus {
 			this.changeLabelText(globalTranslate.ext_ModuleDisabledStatusEnabled);
 			const event = document.createEvent('Event');
 			event.initEvent('ModuleStatusChanged', false, true);
+			window.dispatchEvent(event);
 			event.initEvent('ConfigDataChanged', false, true);
 			window.dispatchEvent(event);
 			this.$disabilityFields.removeClass('disabled');

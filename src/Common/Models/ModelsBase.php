@@ -85,8 +85,9 @@ abstract class ModelsBase extends Model
     public function onValidationFails(): void
     {
         $errorMessages = $this->getMessages();
-        if (php_sapi_name() === 'cli'){
+        if (php_sapi_name() === 'cli') {
             Util::sysLogMsg(__CLASS__, implode(' ', $errorMessages));
+
             return;
         }
         foreach ($errorMessages as $errorMessage) {
@@ -173,56 +174,57 @@ abstract class ModelsBase extends Model
                 = $currentDeleteRecord->_modelsManager->getRelations(get_class($currentDeleteRecord));
         foreach ($relations as $relation) {
             $foreignKey = $relation->getOption('foreignKey');
-            if (array_key_exists('action', $foreignKey)) {
-                // Проверим есть ли записи в таблице которая запрещает удаление текущих данных
-                $relatedModel             = $relation->getReferencedModel();
-                $mappedFields             = $relation->getFields();
-                $mappedFields             = is_array($mappedFields)
-                    ? $mappedFields : [$mappedFields];
-                $referencedFields         = $relation->getReferencedFields();
-                $referencedFields         = is_array($referencedFields)
-                    ? $referencedFields : [$referencedFields];
-                $parameters['conditions'] = '';
-                $parameters['bind']       = [];
-                foreach ($referencedFields as $index => $referencedField) {
-                    $parameters['conditions']             .= $index > 0
-                        ? ' OR ' : '';
-                    $parameters['conditions']             .= $referencedField
-                        . '= :field'
-                        . $index . ':';
-                    $bindField
-                                                          = $mappedFields[$index];
-                    $parameters['bind']['field' . $index] = $currentDeleteRecord->$bindField;
-                }
-                $relatedRecords = $relatedModel::find($parameters);
-                switch ($foreignKey['action']) {
-                    case Relation::ACTION_RESTRICT: // Запретим удаление и выведем информацию о том какие записи запретили удалять этот элемент
-                        foreach ($relatedRecords as $relatedRecord) {
-                            $message = new Message(
-                                $theFirstDeleteRecord->t(
-                                    'mo_BeforeDeleteFirst',
-                                    [
-                                        'represent' => $relatedRecord->getRepresent(true),
-                                    ]
-                                )
-                            );
-                            $theFirstDeleteRecord->appendMessage($message);
-                            $result = false;
+            if ( ! array_key_exists('action', $foreignKey)) {
+                continue;
+            }
+            // Проверим есть ли записи в таблице которая запрещает удаление текущих данных
+            $relatedModel             = $relation->getReferencedModel();
+            $mappedFields             = $relation->getFields();
+            $mappedFields             = is_array($mappedFields)
+                ? $mappedFields : [$mappedFields];
+            $referencedFields         = $relation->getReferencedFields();
+            $referencedFields         = is_array($referencedFields)
+                ? $referencedFields : [$referencedFields];
+            $parameters['conditions'] = '';
+            $parameters['bind']       = [];
+            foreach ($referencedFields as $index => $referencedField) {
+                $parameters['conditions']             .= $index > 0
+                    ? ' OR ' : '';
+                $parameters['conditions']             .= $referencedField
+                    . '= :field'
+                    . $index . ':';
+                $bindField
+                                                      = $mappedFields[$index];
+                $parameters['bind']['field' . $index] = $currentDeleteRecord->$bindField;
+            }
+            $relatedRecords = $relatedModel::find($parameters);
+            switch ($foreignKey['action']) {
+                case Relation::ACTION_RESTRICT: // Запретим удаление и выведем информацию о том какие записи запретили удалять этот элемент
+                    foreach ($relatedRecords as $relatedRecord) {
+                        $message = new Message(
+                            $theFirstDeleteRecord->t(
+                                'mo_BeforeDeleteFirst',
+                                [
+                                    'represent' => $relatedRecord->getRepresent(true),
+                                ]
+                            )
+                        );
+                        $theFirstDeleteRecord->appendMessage($message);
+                        $result = false;
+                    }
+                    break;
+                case Relation::ACTION_CASCADE: // Удалим все зависимые записи
+                    foreach ($relatedRecords as $record) {
+                        $result = $result && $record->checkRelationsSatisfaction($theFirstDeleteRecord, $record);
+                        if ($result) {
+                            $result = $record->delete();
                         }
-                        break;
-                    case Relation::ACTION_CASCADE: // Удалим все зависимые записи
-                        foreach ($relatedRecords as $record) {
-                            $result = $result && $record->checkRelationsSatisfaction($theFirstDeleteRecord, $record);
-                            if ($result) {
-                                $result = $record->delete();
-                            }
-                        }
-                        break;
-                    case Relation::NO_ACTION: // Очистим ссылки на записи в таблицах зависимых
-                        break;
-                    default:
-                        break;
-                }
+                    }
+                    break;
+                case Relation::NO_ACTION: // Очистим ссылки на записи в таблицах зависимых
+                    break;
+                default:
+                    break;
             }
         }
 

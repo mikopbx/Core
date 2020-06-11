@@ -1111,30 +1111,6 @@ server 2.pool.ntp.org';
         return "$logdir/messages";
     }
 
-    public function safeModules($worker_proc_name, $path_to_script): void
-    {
-        $pid        = Util::getPidOfProcess($worker_proc_name);
-        $need_start = false;
-        if (empty($pid)) {
-            $need_start = true;
-        } else {
-            $pid_file = '/var/run/' . $worker_proc_name . '.pid';
-            if (file_exists($pid_file)) {
-                $data = filemtime($pid_file);
-                if (time() - $data > 10) {
-                    $need_start = true;
-                    Util::killByName($worker_proc_name);
-                }
-            } else {
-                $need_start = true;
-            }
-        }
-        if ($need_start) {
-            $phpPath = Util::which('php');
-            Util::mwExecBg("{$phpPath} -f {$path_to_script} start");
-        }
-    }
-
     /**
      * Будет вызван после старта asterisk.
      */

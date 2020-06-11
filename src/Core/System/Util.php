@@ -153,14 +153,15 @@ class Util
     /**
      * Завершаем процесс по имени.
      *
-     * @param $procname
+     * @param $procName
      *
      * @return int|null
      */
-    public static function killByName($procname): ?int
+    public static function killByName($procName): ?int
     {
+       // $procName = addslashes($procName);
         $killallPath = self::which('killall');
-        return self::mwExec($killallPath.' ' . escapeshellarg($procname));
+        return self::mwExec($killallPath.' ' . escapeshellarg($procName));
     }
 
     /**

@@ -16,6 +16,8 @@ use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
+use Phalcon\Messages\Message;
+use Phalcon\Mvc\Model\Relation;
 use ReflectionClass;
 use ReflectionException;
 
@@ -184,7 +186,7 @@ class PbxExtensionState extends Injectable
             }
         }
 
-        return true;
+        return !$error;
     }
 
     /**
@@ -247,7 +249,7 @@ class PbxExtensionState extends Injectable
 
         $this->db->commit(true);
 
-        return true;
+        return false;
     }
 
     /**
@@ -303,37 +305,10 @@ class PbxExtensionState extends Injectable
             if (class_exists($moduleModelClass)) {
                 $records = $moduleModelClass::find();
                 foreach ($records as $record) {
-                    $mainRelations = $record->_modelsManager->getRelations(get_class($record));
-                    foreach ($mainRelations as $subRelation) {
-                        $relatedModel = $subRelation->getReferencedModel();
-                        $record->_modelsManager->load($relatedModel);
-                        $relations = $record->_modelsManager->getRelationsBetween(
-                            $relatedModel,
-                            get_class($record)
-                        );
-                        foreach ($relations as $relation) {
-                            // Проверим есть ли записи в таблице которая запрещает удаление текущих данных
-                            $mappedFields             = $relation->getFields();
-                            $mappedFields             = is_array($mappedFields)
-                                ? $mappedFields : [$mappedFields];
-                            $referencedFields         = $relation->getReferencedFields();
-                            $referencedFields         = is_array($referencedFields)
-                                ? $referencedFields : [$referencedFields];
-                            $parameters['conditions'] = '';
-                            $parameters['bind']       = [];
-                            foreach ($mappedFields as $index => $mappedField) {
-                                $parameters['conditions']             .= $index > 0 ? ' OR ' : '';
-                                $parameters['conditions']             .= $mappedField . '= :field' . $index . ':';
-                                $bindField                            = $referencedFields[$index];
-                                $parameters['bind']['field' . $index] = $record->$bindField;
-                            }
-                            $relatedRecords = $relatedModel::find($parameters);
-                            if ( ! $error && ! $relatedRecords->delete()) {
-                                $error            = true;
-                                $this->messages[] = $relatedRecords->getMessages();
-                            }
-                        }
-                    }
+                   if (!$record->beforeDelete()){
+                       $messages[] = $record->getMessages();
+                       $error = true;
+                   }
                 }
             }
         }
@@ -363,14 +338,15 @@ class PbxExtensionState extends Injectable
         }
 
         // Kill module workers
-        if ( $this->configClass !== null
+        if ( ! $error
+            && $this->configClass !== null
             && method_exists($this->configClass, 'getModuleWorkers')) {
             $workersToKill = $this->configClass->getModuleWorkers();
             foreach ($workersToKill as $moduleWorker){
                 Util::killByName($moduleWorker['worker']);
             }
         }
-        return true;
+        return !$error;
     }
 
     /**

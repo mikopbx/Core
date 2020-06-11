@@ -10,6 +10,8 @@
 namespace MikoPBX\Tests\Core\System;
 
 use MikoPBX\Core\System\Util;
+use Modules\ModuleBitrix24Integration\Lib\WorkerBitrix24IntegrationAMI;
+use Modules\ModuleBitrix24Integration\Lib\WorkerBitrix24IntegrationHTTP;
 use PHPUnit\Framework\TestCase;
 
 class UtilTest extends TestCase
@@ -24,5 +26,12 @@ class UtilTest extends TestCase
         $this->assertIsArray($output);
         $this->assertIsInt($resultCode);
         $this->assertStringContainsStringIgnoringCase('Dialplan reloaded.', implode(' ', $output));
+    }
+
+    public function testkillByName(): void
+    {
+        $process = WorkerBitrix24IntegrationAMI::class;
+        Util::killByName($process);
+        $this->assertTrue(true);
     }
 }
