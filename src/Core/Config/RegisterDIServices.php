@@ -22,9 +22,10 @@ use MikoPBX\Common\Providers\{
     PBXConfModulesProvider,
     RegistryProvider,
     TranslationProvider,
-    ManagedCacheProvider
+    ManagedCacheProvider,
+    MessagesProvider
 };
-use MikoPBX\Core\Providers\{CliMessagesProvider, EventsLogDatabaseProvider};
+use MikoPBX\Core\Providers\{EventsLogDatabaseProvider};
 use Phalcon\Di;
 
 
@@ -51,7 +52,7 @@ class RegisterDIServices
             ModelsCacheProvider::class,
 
             // Inject Translations
-            CliMessagesProvider::class,
+            MessagesProvider::class,
             TranslationProvider::class,
 
             // Inject Queue connection

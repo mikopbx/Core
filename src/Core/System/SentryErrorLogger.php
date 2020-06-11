@@ -31,7 +31,7 @@ class SentryErrorLogger
 
     public function __construct($libraryName)
     {
-        $this->dsn         = 'https://a8d729459beb446eb3cbb9df997dcc7b@centry.miko.ru/1';
+        $this->dsn         = 'https://07be0eff8a5c463fbac3e90ae5c7d039@sentry.miko.ru/1';
         $this->libraryName = $libraryName;
         $this->environment = 'development';
         if (file_exists('/tmp/licenseInfo')) {

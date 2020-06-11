@@ -27,7 +27,8 @@
         "php-webdriver/webdriver": "^1.8",
         "browserstack/browserstack-local": "^1.1",
         "filp/whoops": "^2.7",
-        "blackfire/php-sdk": "^1.22"
+        "blackfire/php-sdk": "^1.22",
+        "phalcon/incubator-test": "v1.0.0-alpha.1"
     },
     "autoload": {
         "psr-4": {

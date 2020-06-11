@@ -8,6 +8,8 @@
 
 namespace MikoPBX\Core\Workers;
 require_once 'globals.php';
+
+use MikoPBX\Core\Workers\Cron\WorkerSafeScriptsCore;
 use MikoPBX\Core\System\{MikoPBXConfig, System, Util};
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use Phalcon\Exception;
@@ -163,8 +165,14 @@ class WorkerDownloader extends WorkerBase
 
             // Kill all module processes
             if (is_dir("{$currentModuleDir}/bin")) {
+                $busyboxPath = Util::which('busybox');
+                $killPath = Util::which('kill');
+                $lsofPath = Util::which('lsof');
+                $grepPath = Util::which('grep');
+                $awkPath = Util::which('awk');
+                $uniqPath = Util::which('uniq');
                 Util::mwExec(
-                    "/bin/busybox kill -9 $(/usr/bin/lsof {$currentModuleDir}/bin/* |  /bin/busybox grep -v COMMAND | /bin/busybox awk  '{ print $2}' | /bin/busybox uniq)"
+                    "{$busyboxPath} {$killPath} -9 $({$lsofPath} {$currentModuleDir}/bin/* |  {$busyboxPath} {$grepPath} -v COMMAND | {$busyboxPath} {$awkPath}  '{ print $2}' | {$busyboxPath} {$uniqPath})"
                 );
             }
 
@@ -220,8 +228,7 @@ class WorkerDownloader extends WorkerBase
                 $result['result'] = 'Success';
                 file_put_contents($this->installed_file, '');
                 file_put_contents($this->progress_file, 100);
-                Util::restartModuleDependentWorkers();
-                Util::restartPHPWorker(WorkerApiCommands::class);
+                WorkerSafeScriptsCore::restartAllWorkers();
             }
             Util::mwExec('rm -rf ' . $this->settings['res_file']);
         } elseif ('upgradeOnline' === $this->settings['action']) {

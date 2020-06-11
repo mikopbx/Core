@@ -96,7 +96,10 @@ class IVRConf extends ConfigClass
     {
         $result = 7;
         if (file_exists($filename)) {
-            Util::mwExec("soxi  {$filename} 2>/dev/null | grep Duration | /usr/bin/awk  '{ print $3}'", $out);
+            $soxiPath = Util::which('soxi');
+            $awkPath = Util::which('awk');
+            $grepPath = Util::which('grep');
+            Util::mwExec("{$soxiPath}  {$filename} 2>/dev/null | {$grepPath} Duration | {$awkPath}  '{ print $3}'", $out);
             $time_str = implode($out);
             preg_match_all('/^\d{2}:\d{2}:\d{2}.?\d{0,2}$/', $time_str, $matches, PREG_SET_ORDER, 0);
             if (count($matches) > 0) {

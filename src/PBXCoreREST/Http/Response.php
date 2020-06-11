@@ -168,8 +168,10 @@ class Response extends PhResponse
             $data['result'] = $data['data']['result'];
             unset($data['data']['result']);
         }
-        if (is_string($data['result'])){
+        if (array_key_exists('result', $data) && is_string($data['result'])){
             $data['result'] = strcasecmp($data['result'],'SUCCESS')===0;
+        } else {
+            $data['result'] = false;
         }
         $this->setJsonContent($data);
 

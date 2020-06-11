@@ -12,8 +12,6 @@ use AGI_AsteriskManager;
 use DateTime;
 use Exception;
 use MikoPBX\Common\Models\{CallEventsLogs, CustomFiles};
-use MikoPBX\Core\Asterisk\Configs\SIPConf;
-use MikoPBX\Core\Workers\WorkerModelsEvents;
 use Phalcon\Db\Adapter\Pdo\Sqlite;
 use Phalcon\Db\Column;
 use Phalcon\Di;
@@ -69,32 +67,39 @@ class Util
     {
         self::stopLog();
         $dir_all_log = System::getLogDir();
-        self::mwExec('find ' . $dir_all_log . '/ -name *_start_all_log* | xargs rm -rf');
+        $findPath = self::which('find');
+        self::mwExec("{$findPath} {$dir_all_log}" . '/ -name *_start_all_log* | xargs rm -rf');
         // Получим каталог с логами.
         $dirlog = $dir_all_log . '/dir_start_all_log';
-        if ( ! file_exists($dirlog) && ! mkdir($dirlog, 0777, true) && ! is_dir($dirlog)) {
-            return;
-        }
-        self::mwExecBg('ping 8.8.8.8 -w 2', "{$dirlog}/ping_8888.log");
-        self::mwExecBg('ping ya.ru -w 2', "{$dirlog}/ping_8888.log");
-        self::mwExecBgWithTimeout("openssl s_client -connect lm.miko.ru:443 > {$dirlog}/openssl_lm_miko_ru.log", 1);
-        self::mwExecBgWithTimeout("openssl s_client -connect lic.miko.ru:443 > {$dirlog}/openssl_lic_miko_ru.log", 1);
-        self::mwExecBg('route -n ', " {$dirlog}/rout_n.log");
+        self::mwMkdir($dirlog);
 
-        self::mwExecBg("asterisk -rx 'pjsip show registrations' ", " {$dirlog}/pjsip_show_registrations.log");
-        self::mwExecBg("asterisk -rx 'pjsip show endpoints' ", " {$dirlog}/pjsip_show_endpoints.log");
-        self::mwExecBg("asterisk -rx 'pjsip show contacts' ", " {$dirlog}/pjsip_show_contacts.log");
+        $pingPath = self::which('ping');
+        self::mwExecBg("{$pingPath} 8.8.8.8 -w 2", "{$dirlog}/ping_8888.log");
+        self::mwExecBg("{$pingPath} ya.ru -w 2", "{$dirlog}/ping_8888.log");
+
+        $opensslPath = self::which('openssl');
+        self::mwExecBgWithTimeout("{$opensslPath} s_client -connect lm.miko.ru:443 > {$dirlog}/openssl_lm_miko_ru.log", 1);
+        self::mwExecBgWithTimeout("{$opensslPath} s_client -connect lic.miko.ru:443 > {$dirlog}/openssl_lic_miko_ru.log", 1);
+        $routePath = self::which('route');
+        self::mwExecBg("{$routePath} -n ", " {$dirlog}/rout_n.log");
+
+        $asteriskPath = self::which('asterisk');
+        self::mwExecBg("{$asteriskPath} -rx 'pjsip show registrations' ", " {$dirlog}/pjsip_show_registrations.log");
+        self::mwExecBg("{$asteriskPath} -rx 'pjsip show endpoints' ", " {$dirlog}/pjsip_show_endpoints.log");
+        self::mwExecBg("{$asteriskPath} -rx 'pjsip show contacts' ", " {$dirlog}/pjsip_show_contacts.log");
 
         $php_log = '/var/log/php_error.log';
         if (file_exists($php_log)) {
-            self::mwExec("cp $php_log $dirlog");
+            $cpPath = self::which('cp');
+            self::mwExec("{$cpPath} {$php_log} {$dirlog}");
         }
 
         $network = new Network();
         $arr_eth = $network->getInterfacesNames();
+        $tcpdumpPath = self::which('tcpdump');
         foreach ($arr_eth as $eth) {
             self::mwExecBgWithTimeout(
-                "tcpdump -i $eth -n -s 0 -vvv -w {$dirlog}/{$eth}.pcap",
+                "{$tcpdumpPath} -i {$eth} -n -s 0 -vvv -w {$dirlog}/{$eth}.pcap",
                 $timeout,
                 "{$dirlog}/{$eth}_out.log"
             );
@@ -113,28 +118,34 @@ class Util
         self::killByName('timeout');
         self::killByName('tcpdump');
 
+        $rmPath = self::which('rm');
+        $findPath = self::which('find');
+        $za7Path = self::which('7za');
+        $cpPath = self::which('cp');
+
         $dirlog = $dir_all_log . '/dir_start_all_log';
         if ( ! file_exists($dirlog) && ! mkdir($dirlog, 0777, true) && ! is_dir($dirlog)) {
             return '';
         }
 
         $log_dir = System::getLogDir();
-        self::mwExec("cp -R {$log_dir} {$dirlog}");
+
+        self::mwExec("{$cpPath} -R {$log_dir} {$dirlog}");
 
         $result = $dir_all_log . '/arhive_start_all_log.zip';
         if (file_exists($result)) {
-            self::mwExec('rm -rf ' . $result);
+            self::mwExec("{$rmPath} -rf {$result}");
         }
         // Пакуем логи.
-        self::mwExec("7za a -tzip -mx0 -spf '{$result}' '{$dirlog}'");
+        self::mwExec("{$za7Path} a -tzip -mx0 -spf '{$result}' '{$dirlog}'");
         // Удаляем логи. Оставляем только архив.
-        self::mwExec('find ' . $dir_all_log . '/ -name *_start_all_log | xargs rm -rf');
+        self::mwExec("{$findPath} {$dir_all_log}" . '/ -name *_start_all_log | xargs rm -rf');
 
         if (file_exists($dirlog)) {
-            self::mwExec('find ' . $dirlog . '/ -name license.key | xargs rm -rf');
+            self::mwExec("{$findPath} {$dirlog}" . '/ -name license.key | xargs rm -rf');
         }
         // Удаляем каталог логов.
-        self::mwExecBg("rm -rf $dirlog");
+        self::mwExecBg("{$rmPath} -rf {$dirlog}");
 
         return $result;
     }
@@ -146,9 +157,10 @@ class Util
      *
      * @return int|null
      */
-    public static function killByName($procname)
+    public static function killByName($procname): ?int
     {
-        return self::mwExec('busybox killall ' . escapeshellarg($procname));
+        $killallPath = self::which('killall');
+        return self::mwExec($killallPath.' ' . escapeshellarg($procname));
     }
 
     /**
@@ -160,7 +172,7 @@ class Util
      *
      * @return int|null
      */
-    public static function mwExec($command, &$oarr = null, &$retval = null)
+    public static function mwExec($command, &$oarr = null, &$retval = null): ?int
     {
         $retval = 0;
         $oarr   = [];
@@ -184,12 +196,16 @@ class Util
      */
     public static function mwExecBg($command, $out_file = '/dev/null', $sleep_time = 0): void
     {
+        $nohupPath = self::which('nohup');
+        $shPath = self::which('sh');
+        $rmPath = self::which('rm');
+        $sleepPath = self::which('sleep');
         if ($sleep_time > 0) {
             $filename = '/tmp/' . time() . '_noop.sh';
-            file_put_contents($filename, "sleep {$sleep_time}; $command; rm -rf $filename");
-            $noop_command = "nohup sh {$filename} > {$out_file} 2>&1 &";
+            file_put_contents($filename, "{$sleepPath} {$sleep_time}; {$command}; {$rmPath} -rf {$filename}");
+            $noop_command = "{$nohupPath} {$shPath} {$filename} > {$out_file} 2>&1 &";
         } else {
-            $noop_command = "nohup {$command} > {$out_file} 2>&1 &";
+            $noop_command = "{$nohupPath} {$command} > {$out_file} 2>&1 &";
         }
         exec($noop_command);
     }
@@ -210,17 +226,19 @@ class Util
 
             return;
         }
-        exec("nohup timeout -t {$timeout} $command > {$logname} 2>&1 &");
+        $nohupPath = self::which('nohup');
+        $timeoutPath = self::which('timeout');
+        exec("{$nohupPath} {$timeoutPath} -t {$timeout} {$command} > {$logname} 2>&1 &");
     }
 
     /**
      * Выполнение нескольких команд.
      *
      * @param        $arr_cmds
-     * @param null   $out
+     * @param array  $out
      * @param string $logname
      */
-    public static function mwExecCommands($arr_cmds, &$out = null, $logname = ''): void
+    public static function mwExecCommands($arr_cmds, &$out = [], $logname = ''): void
     {
         $out = [];
         foreach ($arr_cmds as $cmd) {
@@ -237,6 +255,7 @@ class Util
     }
 
     /**
+     * Create folder if it not exist
      * @param $path
      *
      * @return bool
@@ -332,12 +351,12 @@ class Util
         $out = [];
 
         if ($WorkerPID !== '' && ('stop' === $action || 'restart' === $action)) {
-            self::mwExec("$path_kill -9 $WorkerPID  > /dev/null 2>&1 &", $out);
+            self::mwExec("{$path_kill} -9 {$WorkerPID}  > /dev/null 2>&1 &", $out);
             $WorkerPID = '';
         }
 
         if ($WorkerPID === '' && ('start' === $action || 'restart' === $action)) {
-            self::mwExec("$path_nohup $cmd $param  > $out_file 2>&1 &", $out);
+            self::mwExec("{$path_nohup} {$cmd} {$param}  > {$out_file} 2>&1 &", $out);
             // usleep(500000);
         }
 
@@ -345,13 +364,37 @@ class Util
     }
 
     /**
-     * @param $v
+     * Return full path to executable binary
+     * @param string $cmd - name of file
      *
      * @return string
      */
-    public static function which($v): string
+    public static function which($cmd): string
     {
-        return $v;
+        global $_ENV;
+        $binaryFolders =  $_ENV['PATH'];
+
+        foreach (explode(':', $binaryFolders) as $path) {
+            if (is_executable("{$path}/{$cmd}")) {
+                return "{$path}/{$cmd}";
+            }
+        }
+
+        $binaryFolders=
+            [
+                '/bin',
+                '/sbin',
+                '/usr/bin',
+                '/usr/sbin',
+                '/usr/local/bin',
+                '/usr/local/sbin'
+            ];
+        foreach ($binaryFolders as $path){
+            if (is_executable("{$path}/{$cmd}")){
+                return "{$path}/{$cmd}";
+            }
+        }
+        return $cmd;
     }
 
     /**
@@ -373,23 +416,13 @@ class Util
         if ( ! empty($exclude)) {
             $filter_cmd = "| $path_grep -v " . escapeshellarg($exclude);
         }
-
         $out = [];
         self::mwExec(
-            "$path_ps -A -o 'pid,args' {$filter_cmd} | $path_grep '$name' | $path_grep -v grep | $path_awk ' {print $1} '",
+            "{$path_ps} -A -o 'pid,args' {$filter_cmd} | {$path_grep} '{$name}' | {$path_grep} -v grep | {$path_awk} ' {print $1} '",
             $out
         );
 
         return trim(implode(' ', $out));
-    }
-
-    /**
-     *
-     */
-    public static function restartModuleDependentWorkers(): void
-    {
-        // Завершение WorkerModelsEvents процесса перезапустит его.
-        self::killByName(WorkerModelsEvents::class);
     }
 
     /**
@@ -820,8 +853,8 @@ class Util
             escapeshellarg(self::trimExtensionForFile($filePath) . ".alaw"),
         ];
 
-
-        self::mwExec("rm -rf " . implode(' ', $arrDeletedFiles), $out);
+        $rmPath = self::which('rm');
+        self::mwExec("{$rmPath} -rf " . implode(' ', $arrDeletedFiles), $out);
         if (file_exists($filePath)) {
             $result_str        = implode($out);
             $result['result']  = 'Error';
@@ -898,10 +931,12 @@ class Util
         // Конвертируем файл.
         $tmp_filename = escapeshellcmd($tmp_filename);
         $n_filename   = escapeshellcmd($n_filename);
-        self::mwExec("/usr/bin/sox -v 0.99 -G '{$tmp_filename}' -c 1 -r 8000 -b 16 '{$n_filename}'", $out);
+        $soxPath = self::which('sox');
+        self::mwExec("{$soxPath} -v 0.99 -G '{$tmp_filename}' -c 1 -r 8000 -b 16 '{$n_filename}'", $out);
         $result_str = implode('', $out);
 
-        self::mwExec("/usr/bin/lame -b 32 --silent '{$n_filename}' '{$n_filename_mp3}'", $out);
+        $lamePath = self::which('lame');
+        self::mwExec("{$lamePath} -b 32 --silent '{$n_filename}' '{$n_filename_mp3}'", $out);
         $result_mp3 = implode('', $out);
 
         // Чистим мусор.
@@ -935,7 +970,9 @@ class Util
     {
         $result = 0;
         if (file_exists($filename)) {
-            self::mwExec("du -d 0 -k '{$filename}' | /usr/bin/awk  '{ print $1}'", $out);
+            $duPath = self::which('du');
+            $awkPath = self::which('awk');
+            self::mwExec("{$duPath} -d 0 -k '{$filename}' | {$awkPath}  '{ print $1}'", $out);
             $time_str = implode($out);
             preg_match_all('/^\d+$/', $time_str, $matches, PREG_SET_ORDER, 0);
             if (count($matches) > 0) {
@@ -951,7 +988,8 @@ class Util
      */
     public static function setCyrillicFont(): void
     {
-        self::mwExec("/usr/sbin/setfont /usr/share/consolefonts/Cyr_a8x16.psfu.gz 2>/dev/null");
+        $setfontPath = self::which('setfont');
+        self::mwExec("{$setfontPath} /usr/share/consolefonts/Cyr_a8x16.psfu.gz 2>/dev/null");
     }
 
     /**
@@ -1176,7 +1214,8 @@ class Util
             $need_create_link = ($old_target != $target);
             // Если необходимо, удаляем старую ссылку.
             if ($need_create_link) {
-                self::mwExec("cp {$old_target}/* {$target}");
+                $cpPath = self::which('cp');
+                self::mwExec("{$cpPath} {$old_target}/* {$target}");
                 unlink($link);
             }
         } elseif (is_dir($link)) {
@@ -1187,10 +1226,12 @@ class Util
             unlink($link);
         }
         if ( ! file_exists($target)) {
-            self::mwExec("mkdir -p {$target}");
+            $mkdirPath = self::which('mkdir');
+            self::mwExec("{$mkdirPath} -p {$target}");
         }
         if ($need_create_link) {
-            self::mwExec("ln -s {$target}  {$link}");
+            $lnPath = self::which('ln');
+            self::mwExec("{$lnPath} -s {$target}  {$link}");
         }
 
         return $need_create_link;
@@ -1225,18 +1266,27 @@ class Util
      */
     public static function addRegularWWWRights($folder):void
     {
-        self::mwExec('find ' . $folder . ' -type d -exec chmod 755 {} \;');
-        self::mwExec('find ' . $folder . ' -type f -exec chmod 644 {} \;');
-        self::mwExec('chown -R www:www ' . $folder);
+        if (posix_getuid() === 0){
+            $findPath = self::which('find');
+            $chownPath = self::which('chown');
+            $chmodPath = self::which('chmod');
+            self::mwExec("{$findPath} {$folder} -type d -exec {$chmodPath} 755 {} \;");
+            self::mwExec("{$findPath} {$folder} -type f -exec {$chmodPath} 644 {} \;");
+            self::mwExec("{$chownPath} -R www:www {$folder}" );
+        }
     }
 
     /**
-     * Apply executable rights for folders and files
+     * Apply executable rights for files
      * @param $folder
      */
     public static function addExecutableRights($folder):void
     {
-        self::mwExec('find ' . $folder . ' -type f -exec chmod 755 {} \;');
+        if (posix_getuid() === 0){
+            $findPath = self::which('find');
+            $chmodPath = self::which('chmod');
+            self::mwExec("{$findPath} {$folder} -type f -exec {$chmodPath} 755 {} \;");
+        }
     }
 
     /**

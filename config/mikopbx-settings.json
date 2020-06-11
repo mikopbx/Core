@@ -21,12 +21,14 @@
     "adapter": "Sqlite",
     "dbfile": "/mountpoint/mikopbx/persistence/astdb.sqlite3"
   },
+  "modulesDatabases": {
+    "debugMode": false
+  },
   "core": {
     "debugMode": false,
     "backupPath": "/mountpoint/mikopbx/backup",
     "cfPath": "/cf",
     "varEtcPath": "/var/etc",
-    "sqlite3BinPath": "/usr/bin/sqlite3",
     "modulesDir": "/mountpoint/mikopbx/custom_modules",
     "tempPath": "/mountpoint/mikopbx/tmp",
     "logsPath": "/mountpoint/mikopbx/log",

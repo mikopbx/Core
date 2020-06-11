@@ -85,27 +85,37 @@ class ModulesDBConnectionsProvider extends DatabaseProviderBase implements Servi
                 }
 
                 // Create and connect database
-                $dbPath = "{$config->path('core.modulesDir')}/{$moduleUniqueId}/db";
+                $dbDir = "{$config->path('core.modulesDir')}/{$moduleUniqueId}/db";
 
-                if ( ! file_exists($dbPath) && ! mkdir($dbPath, 0777, true) && ! is_dir($dbPath)) {
-                    $this->messages[] = sprintf('Directory "%s" was not created', $dbPath);
-                    throw new Exception(sprintf('Directory "%s" was not created', $dbPath));
+                if ( ! file_exists($dbDir) && ! mkdir($dbDir, 0777, true) && ! is_dir($dbDir)) {
+                    $this->messages[] = sprintf('Directory "%s" was not created', $dbDir);
+                    throw new Exception(sprintf('Directory "%s" was not created', $dbDir));
+                }
+                $dbFileName = "{$dbDir}/module.db";
+                $dbFileExistBeforeAttachToConnection = file_exists($dbFileName);
+
+                $logDir = "{$config->path('core.logsPath')}/$moduleUniqueId/db";
+                $logFileName = "{$logDir}/queries.log";
+                if (!is_dir($logDir)){
+                    Util::mwMkdir($logDir);
+                    $touchPath = Util::which('touch');
+                    Util::mwExec("{$touchPath} {$logFileName}");
+                    Util::addRegularWWWRights($logDir);
                 }
 
-                $fileExistBeforeAttachToConnection = file_exists("{$dbPath}/module.db");
 
                 $params = [
-                    "debugMode"    => $config->path('core.debugMode'),
+                    "debugMode"    => $config->path('modulesDatabases.debugMode'),
                     "adapter"      => "Sqlite",
-                    "dbfile"       => "{$dbPath}/module.db",
-                    "debugLogFile" => "{$config->path('core.logsPath')}/$moduleUniqueId/db/queries.log",
+                    "dbfile"       => $dbFileName,
+                    "debugLogFile" => $logFileName,
                 ];
 
                 $this->registerDBService($connectionServiceName, $di, $params);
 
-                // if database was created, we will need to apply rules
-                if (!$fileExistBeforeAttachToConnection){
-                    Util::addRegularWWWRights($dbPath);
+                // if database was created, we have to apply rules
+                if (!$dbFileExistBeforeAttachToConnection){
+                    Util::addRegularWWWRights($dbDir);
                 }
             }
         }

@@ -22,11 +22,15 @@ class ExtensionsConf extends ConfigClass
      */
     protected function generateConfigProtected(): void
     {
+        /** @scrutinizer ignore-call */
         $additionalModules = $this->di->getShared('pbxConfModules');
         $conf              = "[globals] \n";
         $conf              .= "TRANSFER_CONTEXT=internal-transfer; \n";
         foreach ($additionalModules as $appClass) {
-            $conf .= $appClass->extensionGlobals();
+            $addition = $appClass->extensionGlobals();
+            if (!empty($addition)){
+                $conf .=$appClass->confBlockWithComments($addition);
+            }
         }
         $conf .= "\n";
         $conf .= "\n";
@@ -140,7 +144,10 @@ class ExtensionsConf extends ConfigClass
 
         $additionalModules = $this->di->getShared('pbxConfModules');
         foreach ($additionalModules as $appClass) {
-            $conf .= $appClass->extensionGenContexts();
+            $addition = $appClass->extensionGenContexts();
+            if (!empty($addition)){
+                $conf .=$appClass->confBlockWithComments($addition);
+            }
         }
         $conf .= "\n";
         $conf .= "[internal-num-undefined] \n";
@@ -206,11 +213,17 @@ class ExtensionsConf extends ConfigClass
         $conf .= "[internal] \n";
 
         foreach ($additionalModules as $appClass) {
-            $conf .= $appClass->getIncludeInternal();
+            $addition = $appClass->getIncludeInternal();
+            if (!empty($addition)){
+                $conf .=$appClass->confBlockWithComments($addition);
+            }
         }
 
         foreach ($additionalModules as $appClass) {
-            $conf .= $appClass->extensionGenInternal();
+            $addition = $appClass->extensionGenInternal();
+            if (!empty($addition)){
+                $conf .=$appClass->confBlockWithComments($addition);
+            }
         }
 
         $conf .= 'exten => i,1,NoOp(-- INVALID NUMBER --)' . "\n\t";
@@ -271,11 +284,17 @@ class ExtensionsConf extends ConfigClass
         $conf              .= "[internal-transfer] \n";
 
         foreach ($additionalModules as $appClass) {
-            $conf .= $appClass->getIncludeInternalTransfer();
+            $addition= $appClass->getIncludeInternalTransfer();
+            if (!empty($addition)){
+                $conf .=$appClass->confBlockWithComments($addition);
+            }
         }
 
         foreach ($additionalModules as $appClass) {
-            $conf .= $appClass->extensionGenInternalTransfer();
+            $addition= $appClass->extensionGenInternalTransfer();
+            if (!empty($addition)){
+                $conf .=$appClass->confBlockWithComments($addition);
+            }
         }
         $conf .= 'exten => h,1,Gosub(transfer_dial_hangup,${EXTEN},1)' . "\n\n";
     }
@@ -290,7 +309,10 @@ class ExtensionsConf extends ConfigClass
         $additionalModules = $this->di->getShared('pbxConfModules');
         $conf              .= "[internal-hints] \n";
         foreach ($additionalModules as $appClass) {
-            $conf .= $appClass->extensionGenHints();
+            $addition = $appClass->extensionGenHints();
+            if (!empty($addition)){
+                $conf .=$appClass->confBlockWithComments($addition);
+            }
         }
         $conf .= "\n\n";
     }
@@ -355,7 +377,10 @@ class ExtensionsConf extends ConfigClass
             $conf .= 'exten => _X!,1,Set(number=' . $rout['prepend'] . $exten_var . ')' . "\n\t";
             $conf .= $change_exten;
             foreach ($additionalModules as $appClass) {
-                $conf .= $appClass->generateOutRoutContext($rout);
+                $addition = $appClass->generateOutRoutContext($rout);
+                if (!empty($addition)){
+                    $conf .=$appClass->confBlockWithComments($addition);
+                }
             }
             $conf .= 'same => n,ExecIf($["${number}x" == "x"]?Hangup())' . "\n\t";
             $conf .= 'same => n,Set(ROUTFOUND=1)' . "\n\t";
@@ -366,14 +391,16 @@ class ExtensionsConf extends ConfigClass
             // Описываем возможность прыжка в пользовательский sub контекст.
             $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(' . $rout['providerid'] . '-outgoing-custom,${EXTEN},1)}" == "1"]?' . $rout['providerid'] . '-outgoing-custom,${EXTEN},1)' . "\n\t";
 
-            $technology = SIPConf::getTechnology();
             if ($rout['technology'] === IAXConf::TYPE_IAX2) {
                 $conf .= 'same => n,Dial(' . $rout['technology'] . '/' . $rout['providerid'] . '/${number},600,${DOPTIONS}TKM(dial_answer)b(dial_create_chan,s,1))' . "\n\t";
             } else {
                 $conf .= 'same => n,Dial(' . $rout['technology'] . '/${number}@' . $rout['providerid'] . ',600,${DOPTIONS}TKU(dial_answer)b(dial_create_chan,s,1))' . "\n\t";
             }
             foreach ($additionalModules as $appClass) {
-                $conf .= $appClass->generateOutRoutAfterDialContext($rout);
+                $addition = $appClass->generateOutRoutAfterDialContext($rout);
+                if (!empty($addition)){
+                    $conf .=$appClass->confBlockWithComments($addition);
+                }
             }
             $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(' . $rout['providerid'] . '-outgoing-after-dial-custom,${EXTEN}),1}" == "1"]?' . $rout['providerid'] . '-outgoing-after-dial-custom,${EXTEN},1)' . "\n\t";
 
@@ -517,11 +544,12 @@ class ExtensionsConf extends ConfigClass
                 // TODO / Подмена входящего callerid.
                 $rout_data .= 'same => n,Gosub(add-trim-prefix-clid,${EXTEN},1)' . "\n\t";
 
-                if ($additionalModules) {
-                    foreach ($additionalModules as $appClass) {
-                        $rout_data .= $appClass->generateIncomingRoutBeforeDial($rout_number);
-                    }
-                }
+                foreach ($additionalModules as $appClass) {
+                     $addition = $appClass->generateIncomingRoutBeforeDial($rout_number);
+                     if (!empty($addition)){
+                         $rout_data .=$appClass->confBlockWithComments($addition);
+                     }
+                 }
 
                 // Перехват на ответственного.
                 $rout_data .= 'same => n,UserEvent(Interception,CALLERID: ${CALLERID(num)},chan1c: ${CHANNEL},FROM_DID: ${FROM_DID})' . "\n\t";
@@ -582,9 +610,9 @@ class ExtensionsConf extends ConfigClass
                 // Только маршрут "По умолчанию".
                 $dialplan[$login]       = str_replace('_X!,1', "{$login},1", $dialplan['X!']);
             }
-        } else {
+        } elseif (is_array($provider)) {
             foreach (array_values($provider) as $_login) {
-                $dialplan[$_login] = str_replace('_X!,1', "{$_login},1", $dialplan['X!']);
+                   $dialplan[$_login] = str_replace('_X!,1', "{$_login},1", $dialplan['X!']);
             }
         }
 
@@ -610,9 +638,10 @@ class ExtensionsConf extends ConfigClass
                 $conf .= "\t" . 'same => n,Set(M_TIMEOUT=0)' . "\n";
                 $conf .= "\t" . "same => n," . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?' . "Dial(Local/{$default_action->extension}@internal/n,,TKg)); default action" . "\n";
 
-                if ($additionalModules) {
-                    foreach ($additionalModules as $appClass) {
-                        $conf .= $appClass->generateIncomingRoutAfterDialContext($uniqid);
+                foreach ($additionalModules as $appClass) {
+                    $addition = $appClass->generateIncomingRoutAfterDialContext($uniqid);
+                    if (!empty($addition)){
+                         $conf .=$appClass->confBlockWithComments($addition);
                     }
                 }
                 $conf .= " \t" . 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-after-dial-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-after-dial-custom,${EXTEN},1)' . "\n";

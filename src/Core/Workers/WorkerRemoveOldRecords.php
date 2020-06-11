@@ -25,7 +25,12 @@ class WorkerRemoveOldRecords extends WorkerBase
             exit(0);
         }
         $out = [];
-        Util::mwExec("/bin/mount | /bin/busybox grep {$mount_point} | /bin/busybox awk '{print $1}' | head -n 1", $out);
+        $busyboxPath = Util::which('busybox');
+        $mountPath = Util::which('mount');
+        $grepPath = Util::which('grep');
+        $awkPath = Util::which('awk');
+        $headPath = Util::which('head');
+        Util::mwExec("{$mountPath} | {$busyboxPath} {$grepPath} {$mount_point} | {$busyboxPath} {$awkPath} '{print $1}' | {$headPath} -n 1", $out);
         $dev = implode('', $out);
 
         $s          = new Storage();
@@ -38,8 +43,13 @@ class WorkerRemoveOldRecords extends WorkerBase
         $monitor_dir = Storage::getMonitorDir();
         $out         = [];
         $count_dir   = 1;
+        $busyboxPath = Util::which('busybox');
+        $sortPath = Util::which('sort');
+        $findPath = Util::which('find');
+        $awkPath = Util::which('awk');
+        $headPath = Util::which('head');
         Util::mwExec(
-            "/bin/find {$monitor_dir}*/*/*  -maxdepth 0 -type d  -printf '%T+ %p\n' 2> /dev/null | /bin/sort | /bin/head -n 10 | /bin/busybox awk '{print $2}'",
+            "{$findPath} {$monitor_dir}*/*/*  -maxdepth 0 -type d  -printf '%T+ %p\n' 2> /dev/null | {$sortPath} | {$headPath} -n 10 | {$busyboxPath} {$awkPath} '{print $2}'",
             $out
         );
         foreach ($out as $dir_info) {
@@ -52,9 +62,9 @@ class WorkerRemoveOldRecords extends WorkerBase
                 // Очистка диска не требуется.
                 break;
             }
-            // Util::mwExec("/bin/find {$dir_info}/* -name *.mp3", $out);
-            Util::mwExec("/bin/busybox rm -rf {$dir_info}");
-            // @file_put_contents("{$dir_info}/removed_file.txt", implode("\n",$out));
+            $busyboxPath = Util::which('busybox');
+            $rmPath = Util::which('rm');
+            Util::mwExec("{$busyboxPath} {$rmPath} -rf {$dir_info}");
         }
     }
 }

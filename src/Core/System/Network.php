@@ -45,10 +45,11 @@ class Network
 
         $network = new Network();
         $arr_eth = $network->getInterfacesNames();
+        $pcapsipdumpPath = Util::which('pcapsipdump');
         foreach ($arr_eth as $eth) {
             $pid_file = "/var/run/pcapsipdump_{$eth}.pid";
             Util::mwExecBg(
-                'pcapsipdump -T 120 -P ' . $pid_file . ' -i ' . $eth . ' -m \'^(INVITE|REGISTER)$\' -L ' . $log_dir . '/dump.db'
+                $pcapsipdumpPath.' -T 120 -P ' . $pid_file . ' -i ' . $eth . ' -m \'^(INVITE|REGISTER)$\' -L ' . $log_dir . '/dump.db'
             );
         }
     }
@@ -59,7 +60,10 @@ class Network
     public function getInterfacesNames()
     {
         // Универсальная команда для получения всех PCI сетевых интерфейсов.
-        Util::mwExec("ls -l /sys/class/net | grep pci | awk '{ print $9 }'", $names);
+        $lsPath = Util::which('ls');
+        $grepPath = Util::which('grep');
+        $awkPath = Util::which('awk');
+        Util::mwExec("{$lsPath} -l /sys/class/net | {$grepPath} pci | {$awkPath} '{ print $9 }'", $names);
 
         return $names;
     }
@@ -72,7 +76,9 @@ class Network
         if (Util::isSystemctl()) {
             return;
         }
-        Util::mwExec("/bin/busybox ifconfig lo 127.0.0.1");
+        $busyboxPath = Util::which('busybox');
+        $ifconfigPath = Util::which('ifconfig');
+        Util::mwExec("{$busyboxPath} {$ifconfigPath} lo 127.0.0.1");
     }
 
     /**
@@ -199,15 +205,18 @@ class Network
             '}';
         file_put_contents('/etc/pdnsd.conf', $conf);
 
-        $pid = Util::getPidOfProcess('/usr/sbin/pdnsd');
+        $pdnsdPath = Util::which('pdnsd');
+        $pid = Util::getPidOfProcess($pdnsdPath);
         if ( ! empty($pid)) {
             // Завершаем процесс.
-            Util::mwExec("/bin/busybox kill '$pid'");
+            $busyboxPath = Util::which('busybox');
+            Util::mwExec("{$busyboxPath} kill '$pid'");
         }
         if (Util::isSystemctl()) {
-            Util::mwExec("systemctl restart pdnsd");
+            $systemctlPath = Util::which('systemctl');
+            Util::mwExec("{$systemctlPath} restart pdnsd");
         } else {
-            Util::mwExec("/usr/sbin/pdnsd -c /etc/pdnsd.conf -4");
+            Util::mwExec("{$pdnsdPath} -c /etc/pdnsd.conf -4");
         }
     }
 
@@ -223,10 +232,12 @@ class Network
         $pid = Util::getPidOfProcess('openvpn');
         if ( ! empty($pid)) {
             // Завершаем процесс.
-            Util::mwExec("/bin/busybox kill '$pid'");
+            $busyboxPath = Util::which('busybox');
+            Util::mwExec("{$busyboxPath} kill '$pid'");
         }
         if(!empty($data)){
-            Util::mwExecBg("/usr/sbin/openvpn --config /etc/openvpn.ovpn --writepid {$pidFile}", '/dev/null', 5);
+            $openvpnPath = Util::which('openvpn');
+            Util::mwExecBg("{$openvpnPath} --config /etc/openvpn.ovpn --writepid {$pidFile}", '/dev/null', 5);
         }
     }
 
@@ -242,6 +253,9 @@ class Network
             $this->openVpnConfigure();
             return 0;
         }
+        $busyboxPath = Util::which('busybox');
+        $vconfigPath = Util::which('vconfig');
+
         $networks     = $this->getGeneralNetSettings();
         $arr_commands = [];
 
@@ -262,13 +276,13 @@ class Network
 
             if ($if_data['vlanid'] > 0) {
                 // Переопределяем имя интерфейса.
-                $arr_commands[] = '/usr/bin/vconfig set_name_type VLAN_PLUS_VID_NO_PAD';
+                $arr_commands[] = "{$vconfigPath} set_name_type VLAN_PLUS_VID_NO_PAD";
                 // Добавляем новый интерфейс.
-                $arr_commands[] = "/usr/bin/vconfig add {$if_data['interface_orign']} {$if_data['vlanid']}";
+                $arr_commands[] = "{$vconfigPath} add {$if_data['interface_orign']} {$if_data['vlanid']}";
             }
             // Отключаем интерфейс.
-            $arr_commands[] = "/bin/busybox ifconfig $if_name down";
-            $arr_commands[] = "/bin/busybox ifconfig $if_name 0.0.0.0";
+            $arr_commands[] = "{$busyboxPath} ifconfig $if_name down";
+            $arr_commands[] = "{$busyboxPath} ifconfig $if_name 0.0.0.0";
 
             $gw_param = '';
             if (trim($if_data['dhcp']) === '1') {
@@ -284,15 +298,20 @@ class Network
                 $pid_pcc  = Util::getPidOfProcess($pid_file);
                 if ( ! empty($pid_pcc)) {
                     // Завершаем старый процесс.
-                    system("kill `cat {$pid_file}` {$pid_pcc}");
+                    $killPath = Util::which('kill');
+                    $catPath = Util::which('cat');
+                    system("{$killPath} `{$catPath} {$pid_file}` {$pid_pcc}");
                 }
+                $udhcpcPath = Util::which('udhcpc');
+                $nohupPath = Util::which('nohup');
+
                 // Получаем IP и дожидаемся завершения процесса.
                 $workerPath     = '/etc/rc/udhcpc.configure';
                 $options        = '-t 6 -T 5 -q -n';
-                $arr_commands[] = "/sbin/udhcpc {$options} -i {$if_name} -x hostname:{$hostname} -s {$workerPath}";
+                $arr_commands[] = "{$udhcpcPath} {$options} -i {$if_name} -x hostname:{$hostname} -s {$workerPath}";
                 // Старутем новый процесс udhcpc в  фоне.
                 $options        = '-t 6 -T 5 -S -b -n';
-                $arr_commands[] = "nohup /sbin/udhcpc {$options} -p {$pid_file} -i {$if_name} -x hostname:{$hostname} -s {$workerPath} 2>&1 &";
+                $arr_commands[] = "{$nohupPath} {$udhcpcPath} {$options} -p {$pid_file} -i {$if_name} -x hostname:{$hostname} -s {$workerPath} 2>&1 &";
                 /*
                     udhcpc  - утилита произведет настройку интерфейса
                                - произведет конфигурацию /etc/resolv.conf
@@ -318,13 +337,15 @@ class Network
                     continue;
                 }
 
-                $arr_commands[] = "/bin/busybox ifconfig $if_name $ipaddr netmask $subnet";
+                $ifconfigPath = Util::which('ifconfig');
+                $arr_commands[] = "{$busyboxPath} {$ifconfigPath} $if_name $ipaddr netmask $subnet";
 
                 if ("" != trim($gateway)) {
                     $gw_param = "gw $gateway";
                 }
 
-                $arr_commands[] = "/bin/busybox route del default $if_name";
+                $routePath = Util::which('route');
+                $arr_commands[] = "{$busyboxPath} {$routePath} del default $if_name";
 
                 /** @var LanInterfaces $if_data */
                 $if_data = LanInterfaces::findFirst("id = '{$if_data['id']}'");
@@ -332,10 +353,10 @@ class Network
                 // Добавляем маршруты по умолчанию.
                 if ($is_inet == 1) {
                     // ТОЛЬКО, если этот интерфейс для интернет, создаем дефолтный маршрут.
-                    $arr_commands[] = "/bin/busybox route add default $gw_param dev $if_name";
+                    $arr_commands[] = "{$busyboxPath} {$routePath} add default $gw_param dev $if_name";
                 }
                 // Поднимаем интерфейс.
-                $arr_commands[] = "/bin/busybox ifconfig $if_name up";
+                $arr_commands[] = "{$busyboxPath} {$ifconfigPath} $if_name up";
 
                 $eth_mtu[] = $if_name;
             }
@@ -355,8 +376,11 @@ class Network
         Util::fileWriteContent('/etc/static-routes', '');
         $arr_commands = [];
         $out          = [];
+        $grepPath = Util::which('grep');
+        $awkPath = Util::which('awk');
+        $catPath = Util::which('cat');
         Util::mwExec(
-            "/bin/cat /etc/static-routes | /bin/grep '^rout' | /bin/busybox awk -F ';' '{print $1}'",
+            "{$catPath} /etc/static-routes | {$grepPath} '^rout' | {$busyboxPath} {$awkPath} -F ';' '{print $1}'",
             $arr_commands
         );
         Util::mwExecCommands($arr_commands, $out, 'rout');
@@ -375,6 +399,10 @@ class Network
 
         Util::mwExec('systemctl stop networking');
         Util::mwExec('modprobe 8021q');
+        $busyboxPath = Util::which('busybox');
+        $grepPath = Util::which('grep');
+        $awkPath = Util::which('awk');
+        $catPath = Util::which('cat');
         foreach ($networks as $if_data) {
             $if_name = trim($if_data['interface']);
             if ('' == $if_name) {
@@ -394,11 +422,11 @@ class Network
 
             $result = [''];
             if (file_exists('/etc/static-routes')) {
-                $command = "/bin/cat /etc/static-routes " .
-                    "| /bin/grep '^rout' " .
-                    "| /bin/busybox awk -F ';' '{print $1}' " .
-                    "| grep '{$if_name}\$' " .
-                    "| awk -F 'dev {$if_name}' '{ print $1 }'";
+                $command = "{$catPath} /etc/static-routes " .
+                    "| {$grepPath} '^rout' " .
+                    "| {$busyboxPath} awk -F ';' '{print $1}' " .
+                    "| {$grepPath} '{$if_name}\$' " .
+                    "| {$awkPath} -F 'dev {$if_name}' '{ print $1 }'";
                 Util::mwExec($command, $result);
             }
             $routs_add = ltrim(implode("\npost-up ", $result));
@@ -648,7 +676,8 @@ class Network
         $NET_MASK  = ($env_vars['subnet'] == '') ? "" : "netmask {$env_vars['subnet']}";
 
         // Настраиваем интерфейс.
-        Util::mwExec("/bin/busybox ifconfig {$env_vars['interface']} {$env_vars['ip']} $BROADCAST $NET_MASK");
+        $busyboxPath = Util::which('busybox');
+        Util::mwExec("{$busyboxPath} ifconfig {$env_vars['interface']} {$env_vars['ip']} $BROADCAST $NET_MASK");
 
         // Удаляем старые маршруты по умолчанию.
         while (true) {
@@ -675,7 +704,12 @@ class Network
         }
         // Добавляем пользовательские маршруты.
         if (file_exists('/etc/static-routes')) {
-            Util::mwExec("/bin/cat /etc/static-routes | /bin/grep '^rout' | /bin/busybox awk -F ';' '{print $1}' | grep '{$env_vars['interface']}' | sh");
+            $busyboxPath = Util::which('busybox');
+            $grepPath = Util::which('grep');
+            $awkPath = Util::which('awk');
+            $catPath = Util::which('cat');
+            $shPath = Util::which('sh');
+            Util::mwExec("{$catPath} /etc/static-routes | {$grepPath} '^rout' | {$busyboxPath} {$awkPath} -F ';' '{print $1}' | {$grepPath} '{$env_vars['interface']}' | {$shPath}");
         }
         $named_dns = [];
         if ('' !== $env_vars['dns']) {
@@ -854,7 +888,8 @@ class Network
         $interface = trim(getenv('interface'));
         if ( ! Util::isSystemctl()) {
             // Для MIKO LFS Edition.
-            Util::mwExec("/bin/busybox ifconfig $interface 192.168.2.1 netmask 255.255.255.0");
+            $busyboxPath = Util::which('busybox');
+            Util::mwExec("{$busyboxPath} ifconfig $interface 192.168.2.1 netmask 255.255.255.0");
         }
         $data = [
             'subnet'  => '24',
@@ -918,7 +953,8 @@ class Network
         $interface = [];
 
         // Получаем ifconfig's для interface $name.
-        Util::mwExec("/bin/busybox ifconfig $name 2>/dev/null", $output);
+        $busyboxPath = Util::which('busybox');
+        Util::mwExec("{$busyboxPath} ifconfig $name 2>/dev/null", $output);
         $output = implode(" ", $output);
 
         // Парсим mac
@@ -942,14 +978,18 @@ class Network
         } else {
             $interface['up'] = false;
         }
+        $busyboxPath = Util::which('busybox');
+        $grepPath = Util::which('grep');
+        $cutPath = Util::which('cut');
+        $routePath = Util::which('route');
 
-        Util::mwExec('/bin/busybox route -n | grep ' . $name . '| grep "^0.0.0.0" | cut -d " " -f 10', $matches);
+        Util::mwExec("{$busyboxPath} {$routePath} -n | {$grepPath} {$name} | {$grepPath} \"^0.0.0.0\" | {$cutPath} -d ' ' -f 10", $matches);
         $gw = (count($matches) > 0) ? $matches[0] : '';
         if (Verify::isIpAddress($gw)) {
             $interface['gateway'] = $gw;
         }
-
-        Util::mwExec('cat /etc/resolv.conf | grep "nameserver" | cut -d " " -f 2', $dnsout);
+        $catPath = Util::which('cat');
+        Util::mwExec("{$catPath} /etc/resolv.conf | {$grepPath} nameserver | {$cutPath} -d ' ' -f 2", $dnsout);
 
         $dnsSrv = [];
         foreach ($dnsout as $line) {

@@ -204,6 +204,8 @@ class UpdateSystemConfig
 
     private function updateConfigsUpToVer2020162(): void
     {
+        $sqlite3Path = Util::which('sqlite3');
+
         /** @var \MikoPBX\Common\Models\FirewallRules $rule */
         $result = FirewallRules::find();
         foreach ($result as $rule) {
@@ -219,7 +221,7 @@ class UpdateSystemConfig
         $astdb_file = $this->config->path('astDatabase.dbfile');
         if (file_exists($astdb_file)) {
             // С переходом на PJSIP удалим статусы SIP.
-            Util::mwExec("sqlite3  {$astdb_file} 'DELETE FROM astdb WHERE key LIKE \"/UserBuddyStatus/SIP%\"'");
+            Util::mwExec("{$sqlite3Path}  {$astdb_file} 'DELETE FROM astdb WHERE key LIKE \"/UserBuddyStatus/SIP%\"'");
         }
 
         PBX::checkCodec('ilbc', 'iLBC', 'audio');
@@ -310,7 +312,8 @@ class UpdateSystemConfig
         ];
         foreach ($oldCacheDirs as $old_cache_dir) {
             if (is_dir($old_cache_dir)) {
-                Util::mwExec("rm -rf $old_cache_dir");
+                $rmPath = Util::which('rm');
+                Util::mwExec("{$rmPath} -rf $old_cache_dir");
             }
         }
     }

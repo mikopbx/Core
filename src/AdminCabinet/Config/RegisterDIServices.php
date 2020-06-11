@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace MikoPBX\AdminCabinet\Config;
 
-use MikoPBX\AdminCabinet\Providers\{AppMessagesProvider,
+use MikoPBX\AdminCabinet\Providers\{
     AssetProvider,
     BeanstalkConnectionProvider,
     DispatcherProvider,
@@ -32,6 +32,7 @@ use MikoPBX\Common\Providers\{CDRDatabaseProvider,
     PBXConfModulesProvider,
     RegistryProvider,
     SessionReadOnlyProvider,
+    MessagesProvider,
     TranslationProvider,
     LicenseProvider};
 use Phalcon\Di\DiInterface;
@@ -74,7 +75,7 @@ class RegisterDIServices
             BeanstalkConnectionProvider::class,
 
             // Inject translation
-            AppMessagesProvider::class,
+            MessagesProvider::class,
             TranslationProvider::class,
             LanguageSelectorProvider::class,
 

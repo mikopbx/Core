@@ -27,10 +27,6 @@ use Phalcon\Di;
  * Получение информации о внешнем IP адресе:
  *   curl http://172.16.156.212/pbxcore/api/system/getExternalIpInfo
  *
- * Рестарт сервисов, зависимфх от модулей.
- *   curl http://127.0.0.1/pbxcore/api/system/restartModuleDependentWorkers -H 'Cookie: XDEBUG_SESSION=PHPSTORM'
- * Пример ответа:
- *   {"result":"Success"}
  */
 class GetController extends BaseController
 {

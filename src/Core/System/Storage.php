@@ -8,6 +8,7 @@
 
 namespace MikoPBX\Core\System;
 
+use MikoPBX\Core\Workers\WorkerRemoveOldRecords;
 use MikoPBX\Common\Models\{PbxExtensionModules, Storage as StorageModel};
 use MikoPBX\Common\Providers\ConfigProvider;
 use Phalcon\Di;
@@ -95,18 +96,22 @@ class Storage
         $uid_part = 'UUID=' . $storage->getUuid($device) . '';
         $format   = $storage->getFsType($device);
 
-        Util::mwExec("mount -t {$format} {$uid_part} {$tmp_dir}", $out);
+        $mountPath = Util::which('mount');
+        $umountPath = Util::which('umount');
+        $rmPath = Util::which('rm');
+
+        Util::mwExec("{$mountPath} -t {$format} {$uid_part} {$tmp_dir}", $out);
         if (is_dir("{$tmp_dir}/mikopbx") && trim(implode('', $out)) === '') {
             // $out - пустая строка, ошибок нет
             // присутствует каталог mikopbx.
             $result = true;
         }
         if (self::isStorageDiskMounted($device)) {
-            Util::mwExec("umount {$device}");
+            Util::mwExec("{$umountPath} {$device}");
         }
 
         if ( ! self::isStorageDiskMounted($device)) {
-            Util::mwExec("rm -rf '{$tmp_dir}'");
+            Util::mwExec("{$rmPath} -rf '{$tmp_dir}'");
         }
 
         return $result;
@@ -124,8 +129,15 @@ class Storage
         if (strlen($device) == 0) {
             return '';
         }
+        $blkidPath = Util::which('blkid');
+        $busyboxPath = Util::which('busybox');
+        $sedPath = Util::which('sed');
+        $grepPath = Util::which('grep');
+        $awkPath = Util::which('awk');
+        $headPath = Util::which('head');
+
         $res = Util::mwExec(
-            "/sbin/blkid -ofull {$device} | /bin/busybox sed -r 's/[[:alnum:]]+=/\\n&/g' | /bin/busybox grep \"^UUID\" | /bin/busybox awk -F \"\\\"\" '{print $2}' | /usr/bin/head -n 1",
+            "{$blkidPath} -ofull {$device} | {$busyboxPath} {$sedPath} -r 's/[[:alnum:]]+=/\\n&/g' | {$busyboxPath} {$grepPath} \"^UUID\" | {$busyboxPath} {$awkPath} -F \"\\\"\" '{print $2}' | {$headPath} -n 1",
             $output
         );
         if ($res == 0 && count($output) > 0) {
@@ -146,10 +158,16 @@ class Storage
      */
     public function getFsType($device): string
     {
+        $blkidPath = Util::which('blkid');
+        $busyboxPath = Util::which('busybox');
+        $sedPath = Util::which('sed');
+        $grepPath = Util::which('grep');
+        $awkPath = Util::which('awk');
+
         $device = str_replace('/dev/', '', $device);
         $out    = [];
         Util::mwExec(
-            "/sbin/blkid -ofull /dev/{$device} | /bin/busybox sed -r 's/[[:alnum:]]+=/\\n&/g' | /bin/busybox grep \"^TYPE=\" | /bin/busybox awk -F \"\\\"\" '{print $2}'",
+            "{$blkidPath} -ofull /dev/{$device} | {$busyboxPath} {$sedPath} -r 's/[[:alnum:]]+=/\\n&/g' | {$busyboxPath} {$grepPath} \"^TYPE=\" | {$busyboxPath} {$awkPath} -F \"\\\"\" '{print $2}'",
             $out
         );
         $format = implode('', $out);
@@ -193,7 +211,10 @@ class Storage
         $filter = escapeshellarg($filter);
 
         $out = [];
-        Util::mwExec("mount | grep {$filter} | awk '{print $3}'", $out);
+        $grepPath = Util::which('grep');
+        $mountPath = Util::which('mount');
+        $awkPath = Util::which('awk');
+        Util::mwExec("{$mountPath} | {$grepPath} {$filter} | {$awkPath} '{print $3}'", $out);
         $mount_dir = trim(implode('', $out));
 
         return ($mount_dir !== '');
@@ -218,7 +239,10 @@ class Storage
         }
 
         $out     = [];
-        $command = "/usr/bin/timeout -t 3 /usr/bin/sshfs -p {$port} -o nonempty -o password_stdin -o 'StrictHostKeyChecking=no' " .
+        $timeoutPath = Util::which('timeout');
+        $sshfsPath = Util::which('sshfs');
+
+        $command = "{$timeoutPath} -t 3 {$sshfsPath} -p {$port} -o nonempty -o password_stdin -o 'StrictHostKeyChecking=no' " .
             "{$user}@{$host}:{$remout_dir} {$local_dir} << EOF\n" .
             "{$pass}\n" .
             "EOF\n";
@@ -270,7 +294,9 @@ class Storage
             $connect_line .= "$remout_dir";
         }
 
-        $command = "/usr/bin/timeout -t 3 /usr/bin/curlftpfs  -o allow_other -o {$auth_line}fsname={$host} {$connect_line} {$local_dir}";
+        $timeoutPath = Util::which('timeout');
+        $curlftpfsPath = Util::which('curlftpfs');
+        $command = "{$timeoutPath} -t 3 {$curlftpfsPath}  -o allow_other -o {$auth_line}fsname={$host} {$connect_line} {$local_dir}";
         Util::mwExec($command, $out);
         $response = trim(implode('', $out));
         if ('Terminated' === $response) {
@@ -401,11 +427,12 @@ class Storage
             $device_id = "1";
         }
         $format = 'ext4';
-        $cmd    = "/sbin/mkfs.{$format} {$device}{$device_id}";
+        $mkfsPath = Util::which("mkfs.{$format}");
+        $cmd    = "{$mkfsPath} {$device}{$device_id}";
         if ($bg == false) {
             openlog("storage_format_disk", LOG_NDELAY, LOG_DAEMON);
-            Util::mwExec("$cmd 2>&1", $out, $retval);
-            syslog(LOG_NOTICE, "mkfs.{$format} returned $retval");
+            Util::mwExec("{$cmd} 2>&1", $out, $retval);
+            syslog(LOG_NOTICE, "{$mkfsPath} returned {$retval}");
             closelog();
         } else {
             usleep(200000);
@@ -466,9 +493,7 @@ class Storage
             if ($disk['free_space'] < 100) {
                 $need_alert  = true;
                 $test_alert  = "The {$disk['id']} has less than 100MB of free space available. Old call records will be deleted.";
-
-                $workersPath = appPath('src/Core/Workers');
-                Util::mwExecBg("/usr/bin/php -f {$workersPath}/WorkerRemoveOldRecords.php");
+                Util::restartPHPWorker(WorkerRemoveOldRecords::class);
             }
 
             if ( ! $need_alert) {
@@ -499,8 +524,11 @@ class Storage
 
         if (Util::isSystemctl()) {
             $out = [];
+            $grepPath = Util::which('grep');
+            $dfPath = Util::which('df');
+            $awkPath = Util::which('awk');
             Util::mwExec(
-                "/usr/bin/df -k /storage/usbdisk1 | awk  '{ print $1 \"|\" $3 \"|\" $4} ' | grep -v 'Available'",
+                "{$dfPath} -k /storage/usbdisk1 | {$awkPath}  '{ print $1 \"|\" $3 \"|\" $4} ' | {$grepPath} -v 'Available'",
                 $out
             );
             $disk_data = explode('|', implode(" ", $out));
@@ -592,9 +620,14 @@ class Storage
      */
     private function cdromGetDevices(): array
     {
+        $grepPath = Util::which('grep');
+        $sysctlPath = Util::which('sysctl');
+        $busyboxPath = Util::which('busybox');
+        $cutPath = Util::which('cut');
+
         return explode(
             " ",
-            trim(exec('/sbin/sysctl -n dev.cdrom.info | /bin/busybox grep "drive name" | /bin/busybox cut -f 3'))
+            trim(exec("{$sysctlPath} -n dev.cdrom.info | {$busyboxPath} {$grepPath} 'drive name' | {$busyboxPath} {$cutPath} -f 3"))
         );
     }
 
@@ -606,7 +639,10 @@ class Storage
     private function diskGetDevices(): array
     {
         //  TODO // Переписать через использование lsblk.
-        return explode(" ", trim(exec("/bin/ls /dev | grep '^[a-z]d[a-z]' | tr \"\n\" \" \"")));
+        $grepPath = Util::which('grep');
+        $lsPath = Util::which('ls');
+        $trPath = Util::which('tr');
+        return explode(" ", trim(exec("{$lsPath} /dev | {$grepPath} '^[a-z]d[a-z]' | {$trPath} \"\n\" \" \"")));
     }
 
     /**
@@ -698,9 +734,12 @@ class Storage
      */
     public function determineFormatFs($device)
     {
+        $grepPath = Util::which('grep');
+        $lsPath = Util::which('ls');
+        $trPath = Util::which('tr');
         $allow_formats = ['ext2', 'ext4', 'fat', 'ntfs', 'msdos'];
         $device        = str_replace('/dev/', '', $device);
-        $devices       = explode(" ", trim(exec("/bin/ls /dev | grep '{$device}' | tr \"\n\" \" \"")));
+        $devices       = explode(" ", trim(exec("{$lsPath} /dev | {$grepPath} '{$device}' | {$trPath} \"\n\" \" \"")));
 
         $result_data = [];
         foreach ($devices as $dev) {

@@ -65,9 +65,6 @@ recover_upgrade)
 	fi
 	/sbin/blockdev --rereadpt $3 > /dev/null 2>&1;
 	sleep 3;
-
-	# Фиксируем флаг необходимости очистки кэш web.
-	# touch /tmp/configbak/need_clean_cashe_www;
     if [ -f /offload/livecd ]; then
         echo " - re-mounting /conf.recover read/write...";
         /bin/mount -w -o noatime ${3}3 /conf.recover;

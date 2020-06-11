@@ -50,6 +50,19 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
     protected string $description;
 
     /**
+     * Additional module UniqueID
+     * @var string
+     */
+    protected string $moduleUniqueId;
+
+    /**
+     * Additional module directory
+     * @var string
+     */
+    protected string $moduleDir;
+
+
+    /**
      * ConfigClass constructor.
      *
      */
@@ -57,10 +70,19 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
     {
         $this->di            = Di::getDefault();
         $this->config        = $this->di->getShared('config');
-        $this->modulesDir    = $this->config->path('core.modulesDir');
         $this->booting       = $this->di->getRegistry()->booting;
         $this->mikoPBXConfig = new MikoPBXConfig();
         $this->generalSettings = $this->mikoPBXConfig->getGeneralSettings();
+
+        // Get child class parameters and define module Dir and UniqueID
+        $reflector = new \ReflectionClass(static::class);
+        $partsOfNameSpace = explode('\\', $reflector->getNamespaceName());
+        if (count($partsOfNameSpace)===3 && $partsOfNameSpace[0]==='Modules'){
+            $modulesDir    = $this->config->path('core.modulesDir');
+            $this->moduleUniqueId = $partsOfNameSpace[1];
+            $this->moduleDir =  $modulesDir.'/'.$this->moduleUniqueId;
+        }
+
         $this->messages = [];
     }
 
@@ -78,8 +100,31 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
         $this->echoDone();
     }
 
-    // Настройки для текущего класса.
-    // Метод вызывается при создании объекта.
+
+    /**
+     * Makes pretty module text block into config file
+     * @param string $addition
+     *
+     * @return string
+     */
+    protected function confBlockWithComments(string $addition):string
+    {
+        $result = '';
+        if (empty($addition)){
+            return $result;
+        }
+        if (!empty($this->moduleUniqueId)){
+            $result ='; ***** BEGIN BY '.$this->moduleUniqueId.PHP_EOL."\t";
+            $result .= $addition;
+            if (substr($addition, -1)!=="\t"){
+                $result .="\t";
+            }
+            $result .='; ***** END BY '.$this->moduleUniqueId.PHP_EOL."\t";
+        } else {
+            $result .= $addition;
+        }
+        return $result;
+    }
 
     /**
      * Вывод сообщения о генерации конфига.

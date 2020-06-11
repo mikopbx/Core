@@ -85,8 +85,13 @@ class Firewall
             $arr_commands_custom = [];
             $out                 = [];
             Util::fileWriteContent('/etc/firewall_additional', '');
+
+            $catPath = Util::which('cat');
+            $grepPath = Util::which('grep');
+            $busyboxPath = Util::which('busybox');
+            $awkPath = Util::which('awk');
             Util::mwExec(
-                "/bin/cat /etc/firewall_additional | grep -v '|' | grep -v '&'| /bin/grep '^iptables' | /bin/busybox awk -F ';' '{print $1}'",
+                "{$catPath} /etc/firewall_additional | {$grepPath} -v '|' | {$grepPath} -v '&'| {$grepPath} '^iptables' | {$busyboxPath} {$awkPath} -F ';' '{print $1}'",
                 $arr_commands_custom
             );
             if (Util::isSystemctl()) {
@@ -97,7 +102,8 @@ class Firewall
                     "\n" . implode("\n", $arr_commands_custom),
                     FILE_APPEND
                 );
-                Util::mwExec('systemctl restart mikopbx_iptables');
+                $systemctlPath = Util::which('systemctl');
+                Util::mwExec("{$systemctlPath} restart mikopbx_iptables");
             } else {
                 Util::mwExecCommands($arr_command, $out, 'firewall');
                 Util::mwExecCommands($arr_commands_custom, $out, 'firewall_additional');
@@ -118,9 +124,11 @@ class Firewall
     public static function fail2banStop(): void
     {
         if (Util::isSystemctl()) {
-            Util::mwExec('systemctl stop fail2ban');
+            $systemctlPath = Util::which('systemctl');
+            Util::mwExec("{$systemctlPath} stop fail2ban");
         } else {
-            Util::mwExec('fail2ban-client -x stop');
+            $fail2banPath = Util::which('fail2ban-client');
+            Util::mwExec("{$fail2banPath} -x stop");
         }
     }
 
@@ -129,8 +137,9 @@ class Firewall
      */
     private function dropAllRules(): void
     {
-        Util::mwExec('iptables -F');
-        Util::mwExec('iptables -X');
+        $iptablesPath = Util::which('iptables');
+        Util::mwExec("{$iptablesPath} -F");
+        Util::mwExec("{$iptablesPath} -X");
     }
 
     /**
@@ -166,7 +175,8 @@ class Firewall
             $create_link = true;
             if (file_exists("$old_dir_db/$filename")) {
                 // Перемещаем файл в новое местоположение.
-                Util::mwExec("mv '$old_dir_db/$filename' '$dir_db/$filename'");
+                $mvPath = Util::which('mv');
+                Util::mwExec("{$mvPath} '$old_dir_db/$filename' '$dir_db/$filename'");
             }
         }
 
@@ -394,15 +404,16 @@ class Firewall
     public static function fail2banStart(): void
     {
         if (Util::isSystemctl()) {
-            Util::mwExec('systemctl restart fail2ban');
+            $systemctlPath = Util::which('systemctl');
+            Util::mwExec("{$systemctlPath} restart fail2ban");
 
             return;
         }
         // Чистим битые строки, не улдаленные после отмены бана.
         self::cleanFail2banDb();
-
         Util::killByName('fail2ban-server');
-        $cmd_start = 'fail2ban-client -x start';
+        $fail2banPath = Util::which('fail2ban-client');
+        $cmd_start = "{$fail2banPath} -x start";
         $command   = "($cmd_start;) > /dev/null 2>&1 &";
         Util::mwExec($command);
     }
