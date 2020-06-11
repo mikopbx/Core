@@ -9,15 +9,15 @@ declare(strict_types=1);
  *
  */
 
-namespace MikoPBX\AdminCabinet\Providers;
+namespace MikoPBX\Common\Providers;
 
-
+use MikoPBX\Core\System\MikoPBXConfig;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 
 use function MikoPBX\Common\Config\appPath;
 
-class AppMessagesProvider implements ServiceProviderInterface
+class MessagesProvider implements ServiceProviderInterface
 {
 
     /**
@@ -29,16 +29,27 @@ class AppMessagesProvider implements ServiceProviderInterface
         $di->setShared(
             'messages',
             function () use ($di, $coreConfig) {
-                $language = $di->getLanguage();
+                $cacheKey = false;
+                if (php_sapi_name() === 'cli'){
+                    if (!empty($_ENV['SSH_CLIENT'])) {
+                        $language = 'en';
+                    } else {
+                        $conf     = new MikoPBXConfig();
+                        $language = $conf->getGeneralSettings('SSHLanguage');
+                    }
+                } else {
+                    $language = $di->get('language');
+                    $session  = $di->get('session');
+                    if ($session !== null && $session->has('versionHash')) {
+                        $cacheKey = 'LocalisationArray' . $session->get('versionHash') . $language . '.php';
+                    }
+                }
+
                 $messages = [];
                 // Заглянем сначала в кеш переводов
-                $session  = $this->get('session');
-                $cacheKey = false;
-                if ($session !== null && $session->has('versionHash')) {
-                    $cacheKey = 'LocalisationArray' . $session->get('versionHash') . $language . '.php';
-                }
+
                 if ($cacheKey) {
-                    $translates = $this->get('managedCache')->get($cacheKey, 3600);
+                    $translates = $di->get('managedCache')->get($cacheKey, 3600);
                     if (is_array($translates)) {
                         return $translates;
                     }
@@ -46,16 +57,15 @@ class AppMessagesProvider implements ServiceProviderInterface
 
                 $translates = [];
                 // Возьмем английский интерфейс
-                $enFilePath = appPath('/src/AdminCabinet/Messages/en.php');
+                $enFilePath = appPath('/src/Common/Messages/en.php');
                 if (file_exists($enFilePath)) {
                     $translates = require $enFilePath;
                 }
 
-
                 if ($language !== 'en') {
                     $additionalTranslates = [];
                     // Check if we have a translation file for that lang
-                    $langFile = appPath("/src/AdminCabinet/Messages/{$language}.php");
+                    $langFile = appPath("/src/Common/Messages/{$language}.php");
                     if (file_exists($langFile)) {
                         $additionalTranslates = require $langFile;
                     }

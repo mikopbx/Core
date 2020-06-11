@@ -226,7 +226,7 @@ $menu = (new CliMenuBuilder())
     ->addItem('[1] '.Util::translate('Change language'), function (CliMenu $menu) {
         $mikoPBXConfig     = new MikoPBXConfig();
         $lang       = $mikoPBXConfig->getGeneralSettings('SSHLanguage');
-        $new_lang   = ('en-en' === $lang)?'ru-ru':'en-en';
+        $new_lang   = ('en' === $lang)?'ru':'en';
         $mikoPBXConfig->setGeneralSettings('SSHLanguage', $new_lang);
 
         PBX::dialplanReload();

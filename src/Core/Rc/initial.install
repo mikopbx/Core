@@ -123,7 +123,7 @@ if (strtolower(trim(fgets($fp)) ) === 'y') {
     
     $filename       = $config->path('database.dbfile');
     $filename_lang  = "/offload/conf/mikopbx-{$lang}.db";
-    if($lang !== 'en-en' && file_exists($filename_lang)){
+    if($lang !== 'en' && file_exists($filename_lang)){
         $filename = $filename_lang;
     }
 

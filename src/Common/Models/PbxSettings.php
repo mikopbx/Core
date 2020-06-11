@@ -74,7 +74,7 @@ class PbxSettings extends ModelsBase
             'SSHDssKey'                       => '',
             'SSHAuthorizedKeys'               => '',
             'SSHecdsaKey'                     => '',
-            'SSHLanguage'                     => 'en-en',
+            'SSHLanguage'                     => 'en',
             'WEBPort'                         => '80',
             'WEBHTTPSPort'                    => '443',
             'WEBHTTPSPublicKey'               => '',
