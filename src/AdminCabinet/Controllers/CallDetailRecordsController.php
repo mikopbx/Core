@@ -1,10 +1,9 @@
 <?php
 /**
- * Copyright (C) MIKO LLC - All Rights Reserved
+ * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 5 2018
- *
+ * Written by Alexey Portnov, 6 2020
  */
 
 namespace MikoPBX\AdminCabinet\Controllers;
@@ -63,7 +62,7 @@ class CallDetailRecordsController extends BaseController
 
         // Найдем все LinkedID подходящих под заданный фильтр
         $parameters['columns'] = 'DISTINCT(linkedid) as linkedid';
-        $parameters['order']   = ['CallDetailRecords.start desc'];
+        $parameters['order']   = ['start desc'];
         $parameters['limit']   = $recordsPerPage;
         $parameters['offset']  = $position;
 
@@ -85,7 +84,7 @@ class CallDetailRecordsController extends BaseController
                 'bind'       => [
                     'ids' => $arrIDS[0],
                 ],
-                'order'      => ['CallDetailRecords.linkedid desc', 'CallDetailRecords.start asc'],
+                'order'      => ['linkedid desc', 'start asc'],
             ];
         } else {
             $parameters = [
@@ -94,7 +93,7 @@ class CallDetailRecordsController extends BaseController
                 'bind'       => [
                     'ids' => $arrIDS,
                 ],
-                'order'      => ['CallDetailRecords.linkedid desc', 'CallDetailRecords.start asc'],
+                'order'      => ['linkedid desc', 'start asc'],
             ];
         }
 
