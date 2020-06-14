@@ -14,8 +14,8 @@ use SQLite3;
 
 class Firewall
 {
-    private $firewall_enable;
-    private $fail2ban_enable;
+    private bool $firewall_enable;
+    private bool $fail2ban_enable;
 
     /**
      * Firewall constructor.
@@ -440,7 +440,7 @@ class Firewall
     public static function checkFail2ban(): void
     {
         $firewall = new Firewall();
-        if ($firewall->fail2ban_enable==='1'
+        if ($firewall->fail2ban_enable
             && ! $firewall->fail2banIsRunning()) {
             self::fail2banStart();
         }

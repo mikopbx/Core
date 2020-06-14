@@ -121,7 +121,7 @@ class Storage
      */
     public function getUuid($device): string
     {
-        if (strlen($device) == 0) {
+        if (empty($device)) {
             return '';
         }
         $blkidPath = Util::which('blkid');
@@ -399,7 +399,7 @@ class Storage
         syslog(LOG_NOTICE, "fdisk returned " . $retval);
         closelog();
 
-        if (false == $bg) {
+        if (false === $bg) {
             sleep(1);
         }
 
@@ -456,7 +456,7 @@ class Storage
         Util::mwExec("{$psPath} -A -f | {$grepPath} {$dev} | {$grepPath} mkfs | {$grepPath} -v grep", $out);
         $mount_dir = trim(implode('', $out));
 
-        return ($mount_dir == '') ? 'ended' : 'inprogress';
+        return empty($mount_dir) ? 'ended' : 'inprogress';
     }
 
     /**
@@ -980,7 +980,7 @@ class Storage
         $varEtcPath = $this->config->path('core.varEtcPath');
         // Точка монтирования доп. дисков.
         Util::mwMkdir('/storage');
-        $chmodPath = self::which('chmod');
+        $chmodPath = Util::which('chmod');
         Util::mwExec("{$chmodPath} /storage 755");
         if ( ! file_exists($varEtcPath . '/cfdevice')) {
             return;
