@@ -59,8 +59,8 @@
   "adminApplication": {
     "debugMode": false,
     "baseUri": "/admin-cabinet/",
-    "cacheDir": "/mountpoint/mikopbx/tmp/cache",
-    "voltCacheDir": "/mountpoint/mikopbx/tmp/cache/volt",
+    "cacheDir": "/mountpoint/mikopbx/tmp/www_cache",
+    "voltCacheDir": "/mountpoint/mikopbx/tmp/www_cache/volt",
     "downloadLink": "/var/spool/download_link"
   }
 }

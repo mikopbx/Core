@@ -979,7 +979,9 @@ class Storage
     {
         $varEtcPath = $this->config->path('core.varEtcPath');
         // Точка монтирования доп. дисков.
-        Util::mwMkdir('/storage/');
+        Util::mwMkdir('/storage');
+        $chmodPath = self::which('chmod');
+        Util::mwExec("{$chmodPath} /storage 755");
         if ( ! file_exists($varEtcPath . '/cfdevice')) {
             return;
         }
