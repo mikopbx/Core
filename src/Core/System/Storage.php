@@ -424,14 +424,14 @@ class Storage
         $format = 'ext4';
         $mkfsPath = Util::which("mkfs.{$format}");
         $cmd    = "{$mkfsPath} {$device}{$device_id}";
-        if ($bg == false) {
+        if ($bg === false) {
             openlog("storage_format_disk", LOG_NDELAY, LOG_DAEMON);
             Util::mwExec("{$cmd} 2>&1", $out, $retval);
             syslog(LOG_NOTICE, "{$mkfsPath} returned {$retval}");
             closelog();
         } else {
             usleep(200000);
-            Util::mwExecBg("$cmd");
+            Util::mwExecBg($cmd);
             $retval = true;
         }
 
@@ -451,7 +451,9 @@ class Storage
             $dev = "/dev/{$dev}";
         }
         $out = [];
-        Util::mwExec("ps -A -f | grep {$dev} | grep mkfs | grep -v grep", $out);
+        $psPath = Util::which('ps');
+        $grepPath = Util::which('grep');
+        Util::mwExec("{$psPath} -A -f | {$grepPath} {$dev} | {$grepPath} mkfs | {$grepPath} -v grep", $out);
         $mount_dir = trim(implode('', $out));
 
         return ($mount_dir == '') ? 'ended' : 'inprogress';
@@ -651,7 +653,9 @@ class Storage
     public static function diskIsMounted($disk, $filter = '/dev/')
     {
         $out = [];
-        Util::mwExec("mount | grep '{$filter}{$disk}'", $out);
+        $grepPath = Util::which('grep');
+        $mountPath = Util::which('mount');
+        Util::mwExec("{$mountPath} | {$grepPath} '{$filter}{$disk}'", $out);
         if (count($out) > 0) {
             $res_out = end($out);
         } else {
@@ -708,7 +712,10 @@ class Storage
     {
         $out = [];
         $hdd = escapeshellarg($hdd);
-        Util::mwExec("df -m | grep {$hdd} | awk '{print $4}'", $out);
+        $grepPath = Util::which('grep');
+        $awkPath = Util::which('awk');
+        $dfPath = Util::which('df');
+        Util::mwExec("{$dfPath} -m | {$grepPath} {$hdd} | {$awkPath} '{print $4}'", $out);
         $result = 0;
         foreach ($out as $res) {
             if ( ! is_numeric($res)) {
@@ -767,7 +774,10 @@ class Storage
             $need_unmount = false;
             $mount_dir    = '';
             if (self::isStorageDiskMounted("/dev/{$dev} ", $mount_dir)) {
-                Util::mwExec("mount | grep '/dev/{$dev}' | awk '{print $5}'", $out);
+                $grepPath = Util::which('grep');
+                $awkPath = Util::which('awk');
+                $mountPath = Util::which('mount');
+                Util::mwExec("{$mountPath} | {$grepPath} '/dev/{$dev}' | {$awkPath} '{print $5}'", $out);
                 $fs         = trim(implode("", $out));
                 $fs         = ($fs == 'fuseblk') ? 'ntfs' : $fs;
                 $free_space = $this->getFreeSpace("/dev/{$dev} ");
@@ -821,11 +831,13 @@ class Storage
         }
         $dev = str_replace('/dev/', '', $dev);
         if ('ntfs' == $format) {
-            Util::mwExec("mount.ntfs-3g /dev/{$dev} {$dir}", $out);
+            $mountNtfs3gPath = Util::which('mount.ntfs-3g');
+            Util::mwExec("{$mountNtfs3gPath} /dev/{$dev} {$dir}", $out);
         } else {
             $storage  = new Storage();
             $uid_part = 'UUID=' . $storage->getUuid("/dev/{$dev}") . '';
-            Util::mwExec("mount -t {$format} {$uid_part} {$dir}", $out);
+            $mountPath = Util::which('mount');
+            Util::mwExec("{$mountPath} -t {$format} {$uid_part} {$dir}", $out);
         }
 
         return self::isStorageDiskMounted("/dev/{$dev} ");
@@ -995,7 +1007,8 @@ class Storage
         file_put_contents("/etc/fstab", $fstab);
         // Дублируем для работы vmtoolsd.
         file_put_contents("/etc/mtab", $fstab);
-        Util::mwExec('mount -a 2> /dev/null');
+        $mountPath = Util::which('mount');
+        Util::mwExec("{$mountPath} -a 2> /dev/null");
         Util::addRegularWWWRights('/cf');
     }
 
@@ -1007,7 +1020,8 @@ class Storage
     private function createWorkDirs(): void
     {
         $path = '';
-        Util::mwExec('mount -o remount,rw /offload 2> /dev/null');
+        $mountPath = Util::which('mount');
+        Util::mwExec("{$mountPath} -o remount,rw /offload 2> /dev/null");
 
         // Create dirs
         $arrConfig = $this->config->toArray();
@@ -1094,11 +1108,11 @@ class Storage
         Util::addRegularWWWRights(implode(' ', $www_dirs));
 
         // Add executable rights
-        $exec_dirs[] = appPath('src/Core/Asterisk/agi-bin');
-        $exec_dirs[] = appPath('src/Core/Workers');
-        $exec_dirs[] = appPath('src/Core/Rc');
-        Util::mwExec('find ' . implode(' ', $exec_dirs) . ' -type f -exec chmod +x {} \;');
-        Util::mwExec('mount -o remount,ro /offload 2> /dev/null');
+        Util::addExecutableRights(appPath('src/Core/Asterisk/agi-bin'));
+        Util::addExecutableRights(appPath('src/Core/Rc'));
+
+        $mountPath = Util::which('mount');
+        Util::mwExec("{$mountPath} -o remount,ro /offload 2> /dev/null");
     }
 
 

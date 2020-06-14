@@ -162,7 +162,6 @@ class Util
      */
     public static function killByName($procName): ?int
     {
-        // $procName = addslashes($procName);
         $killallPath = self::which('killall');
 
         return self::mwExec($killallPath . ' ' . escapeshellarg($procName));
@@ -262,17 +261,24 @@ class Util
     /**
      * Create folder if it not exist
      *
-     * @param $path
+     * @param $parameters - one or multiple paths separated by space
      *
      * @return bool
      */
-    public static function mwMkdir($path): bool
+    public static function mwMkdir($parameters): bool
     {
         $result = true;
-        if ( ! file_exists($path) && ! mkdir($path, 0777, true) && ! is_dir($path)) {
-            $result = false;
+        $arrPaths = explode(' ', $parameters);
+        if (count($arrPaths)>0){
+            foreach ($arrPaths as $path){
+                if ( ! empty($path)
+                    && ! file_exists($path)
+                    && ! mkdir($path, 0644, true)
+                    && ! is_dir($path)) {
+                    $result = false;
+                }
+            }
         }
-
         return $result;
     }
 

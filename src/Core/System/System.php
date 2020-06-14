@@ -438,7 +438,7 @@ class System
                     $res = PBX::managerReload();
                     break;
                 case 'systemtime':
-                    $res = DateTime::setDate('');
+                    $res = TimeManagement::setDate('');
                     break;
                 case 'firewall':
                     $res = Firewall::reloadFirewall();

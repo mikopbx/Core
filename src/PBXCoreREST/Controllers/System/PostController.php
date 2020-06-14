@@ -78,7 +78,8 @@ class PostController extends BaseController
                 // Используем существующий файл;
                 $postData = json_decode($this->request->getRawBody(), true);
                 if ($postData && isset($postData['filename']) && file_exists($postData['filename'])) {
-                    $res = Util::mwExec("cp '{$postData['filename']}' '{$upd_file}'") === 0;
+                    $cpPath = Util::which('cp');
+                    $res = Util::mwExec("{$cpPath} '{$postData['filename']}' '{$upd_file}'") === 0;
                 }
             } else {
                 // Загружаем новый файл на сервер

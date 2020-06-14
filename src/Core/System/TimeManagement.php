@@ -12,7 +12,7 @@ namespace MikoPBX\Core\System;
 
 use Phalcon\Di;
 
-class DateTime
+class TimeManagement
 {
     private $di;
     private MikoPBXConfig $mikoPBXConfig;

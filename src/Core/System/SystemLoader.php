@@ -57,7 +57,7 @@ class SystemLoader
         Util::echoGreenDone();
 
         Util::echoWithSyslog(' - Configuring timezone ... ');
-        $sys = new DateTime();
+        $sys = new TimeManagement();
         $sys->timezoneConfigure();
         Util::echoGreenDone();
 

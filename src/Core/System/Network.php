@@ -115,7 +115,8 @@ class Network
                 $s_resolv_conf .= "Domains={$data_hostname['domain']}\n";
             }
             file_put_contents('/etc/systemd/resolved.conf', $s_resolv_conf);
-            Util::mwExec('systemctl restart systemd-resolved');
+            $systemctlPath = Util::which('systemctl');
+            Util::mwExec("{$systemctlPath} restart systemd-resolved");
         } else {
             file_put_contents('/etc//resolv.conf', $resolv_conf);
         }
@@ -394,13 +395,14 @@ class Network
     public function lanConfigureSystemCtl(): void
     {
         $networks = $this->getGeneralNetSettings();
-
-        Util::mwExec('systemctl stop networking');
-        Util::mwExec('modprobe 8021q');
         $busyboxPath = Util::which('busybox');
         $grepPath = Util::which('grep');
         $awkPath = Util::which('awk');
         $catPath = Util::which('cat');
+        $systemctlPath = Util::which('systemctl');
+        $modprobePath = Util::which('modprobe');
+        Util::mwExec("{$systemctlPath} stop networking");
+        Util::mwExec("{$modprobePath} 8021q");
         foreach ($networks as $if_data) {
             $if_name = trim($if_data['interface']);
             if ('' == $if_name) {
@@ -408,7 +410,8 @@ class Network
             }
             $conf_file = "/etc/network/interfaces.d/{$if_name}";
             if ($if_data['disabled'] == 1) {
-                Util::mwExec('ifdown eth0');
+                $ifdownPath = Util::which('ifdown');
+                Util::mwExec("{$ifdownPath} eth0");
                 if (file_exists($if_name)) {
                     unlink($conf_file);
                 }
@@ -469,7 +472,8 @@ class Network
             }
             file_put_contents("/etc/network/interfaces.d/{$if_name}", $lan_config);
         }
-        Util::mwExec('systemctl start networking');
+        $systemctlPath = Util::which('systemctl');
+        Util::mwExec("{$systemctlPath} start networking");
         $this->hostsGenerate();
 
         $firewall = new Firewall();

@@ -10,7 +10,7 @@ namespace MikoPBX\PBXCoreREST\Workers;
 
 use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\Asterisk\Configs\{IAXConf, SIPConf, VoiceMailConf};
-use MikoPBX\Core\System\{BeanstalkClient, DateTime, Firewall, Notifications, Storage, System, Util};
+use MikoPBX\Core\System\{BeanstalkClient, TimeManagement, Firewall, Notifications, Storage, System, Util};
 use MikoPBX\Core\Workers\Cron\WorkerSafeScriptsCore;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\Workers\WorkerMergeUploadedFile;
@@ -187,7 +187,7 @@ class WorkerApiCommands extends WorkerBase
 
             return $result;
         } elseif ('setDate' === $action) {
-            $result = DateTime::setDate($data['date']);
+            $result = TimeManagement::setDate($data['date']);
         } elseif ('getInfo' === $action) {
             $result = System::getInfo();
         } elseif ('sendMail' === $action) {

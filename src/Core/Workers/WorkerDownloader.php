@@ -21,7 +21,7 @@ class WorkerDownloader extends WorkerBase
     private string $progress_file = '';
     private string $error_file = '';
     private string $installed_file = '';
-    private int$file_size = 0;
+    private int $file_size = 0;
 
     /**
      * WorkerDownloader entry point.
@@ -58,9 +58,9 @@ class WorkerDownloader extends WorkerBase
     /**
      * Скачивание файла с удаленного ресурса.
      */
-    public function getFile()
+    public function getFile(): bool
     {
-        if ( ! $this->settings) {
+        if (empty($this->settings)) {
             return false;
         }
         if (strpos($this->settings['url'], 'file://') !== false) {
@@ -82,7 +82,7 @@ class WorkerDownloader extends WorkerBase
         if (file_exists($this->settings['res_file'])) {
             unlink($this->settings['res_file']);
         }
-        $this->file_size = $this->remotefileSize($this->settings['url']);
+        $this->file_size = $this->remoteFileSize($this->settings['url']);
 
         file_put_contents($this->progress_file, 0);
 
@@ -113,27 +113,29 @@ class WorkerDownloader extends WorkerBase
      *
      * @return int || void
      */
-    private function remotefileSize($url)
+    private function remoteFileSize($url): int
     {
         $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_NOBODY, 1);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 0);
-        curl_setopt($ch, CURLOPT_HEADER, 0);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
-        curl_setopt($ch, CURLOPT_MAXREDIRS, 3);
-        curl_exec($ch);
-        $filesize = curl_getinfo($ch, CURLINFO_CONTENT_LENGTH_DOWNLOAD);
-        curl_close($ch);
-
-        return $filesize;
+        $fileSize = 0;
+        if ($ch!==false){
+            curl_setopt($ch, CURLOPT_NOBODY, 1);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 0);
+            curl_setopt($ch, CURLOPT_HEADER, 0);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+            curl_setopt($ch, CURLOPT_MAXREDIRS, 3);
+            curl_exec($ch);
+            $fileSize = curl_getinfo($ch, CURLINFO_CONTENT_LENGTH_DOWNLOAD);
+            curl_close($ch);
+        }
+        return $fileSize;
     }
 
     /**
      * Выполнение действия с загруженным файлом.
      */
-    public function action()
+    public function action(): void
     {
-        if ( ! $this->settings || ! isset($this->settings['action'])) {
+        if ( empty($this->settings) || ! isset($this->settings['action'])) {
             return;
         }
         if ( ! file_exists($this->settings['res_file'])) {
@@ -203,7 +205,7 @@ class WorkerDownloader extends WorkerBase
             Util::mwExec("{$semZaPath} e -spf -aoa -o{$currentModuleDir} {$this->settings['res_file']}");
             Util::addRegularWWWRights($currentModuleDir);
 
-            if ( ! $error && class_exists($path_class) && method_exists($path_class, 'installModule')) {
+            if (class_exists($path_class) && method_exists($path_class, 'installModule')) {
                 $setup = new $path_class($this->settings['module']);
                 if ( ! $setup->installModule()) {
                     $error          = true;
