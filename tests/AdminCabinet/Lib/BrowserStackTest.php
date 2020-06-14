@@ -7,7 +7,7 @@ use PHPUnit\Framework\TestCase;
 use BrowserStack\Local as BrowserStackLocal;
 use GuzzleHttp\Client as GuzzleHttpClient;
 
-require 'Globals.php';
+require 'globals.php';
 
 class BrowserStackTest extends TestCase
 {
