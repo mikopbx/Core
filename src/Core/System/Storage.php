@@ -1102,14 +1102,16 @@ class Storage
         $www_dirs[] = $this->config->path('core.phpSessionPath');
         $www_dirs[] = $this->config->path('core.tempPath');
         $www_dirs[] = '/etc/version';
+        $www_dirs[] = '/var/lib/php/session';
         $www_dirs[] = appPath('/');
 
         // Add read rights
         Util::addRegularWWWRights(implode(' ', $www_dirs));
 
         // Add executable rights
-        Util::addExecutableRights(appPath('src/Core/Asterisk/agi-bin'));
-        Util::addExecutableRights(appPath('src/Core/Rc'));
+        $exec_dirs[] = appPath('src/Core/Asterisk/agi-bin');
+        $exec_dirs[] = appPath('src/Core/Rc');
+        Util::addExecutableRights(implode(' ', $exec_dirs));
 
         $mountPath = Util::which('mount');
         Util::mwExec("{$mountPath} -o remount,ro /offload 2> /dev/null");

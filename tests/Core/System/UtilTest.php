@@ -40,4 +40,15 @@ class UtilTest extends AbstractUnitTest
         Util::restartPHPWorker($process);
         $this->assertTrue(true);
     }
+
+    public function testMwMkdir(): void
+    {
+        $parameters = '/tmp/1 /tmp/2 ';
+        Util::mwMkdir($parameters);
+
+        $parameters = '/tmp/1';
+        Util::mwMkdir($parameters);
+        $this->assertTrue(true);
+
+    }
 }

@@ -32,7 +32,7 @@
     "modulesDir": "/mountpoint/mikopbx/custom_modules",
     "tempPath": "/mountpoint/mikopbx/tmp",
     "logsPath": "/mountpoint/mikopbx/log",
-    "phpSessionPath": "/mountpoint/mikopbx/php_session",
+    "phpSessionPath": "/mountpoint/mikopbx/cache/php_session",
     "mediaMountPoint": "/mountpoint"
   },
   "asterisk": {

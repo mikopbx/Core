@@ -261,11 +261,11 @@ class Util
     /**
      * Create folder if it not exist
      *
-     * @param $parameters - one or multiple paths separated by space
+     * @param $parameters string one or multiple paths separated by space
      *
      * @return bool
      */
-    public static function mwMkdir($parameters): bool
+    public static function mwMkdir(string $parameters): bool
     {
         $result = true;
         $arrPaths = explode(' ', $parameters);
@@ -685,20 +685,6 @@ class Util
         }
 
         return $result;
-    }
-
-    /**
-     * Смена владельца файла.
-     *
-     * @param $filename
-     * @param $user
-     */
-    public static function chown($filename, $user): void
-    {
-        if (file_exists($filename)) {
-            chown($filename, $user);
-            chgrp($filename, $user);
-        }
     }
 
     /**

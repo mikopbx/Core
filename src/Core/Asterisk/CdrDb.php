@@ -272,14 +272,11 @@ class CdrDb
     public static function setPermitToDb(): void
     {
         $path = self::getPathToDB();
-        $user = 'www';
-        Util::chown($path, $user);
-        Util::chown("{$path}-shm", $user);
-        Util::chown("{$path}-wal", $user);
+        Util::addRegularWWWRights($path);
 
         $log_path = self::getPathToLog();
         file_put_contents($log_path, '');
-        Util::chown($log_path, $user);
+        Util::addRegularWWWRights($log_path);
     }
 
     /**

@@ -9,7 +9,7 @@
 
 namespace MikoPBX\Tests\Core\System;
 
-use MikoPBX\Core\System\DateTime;
+use MikoPBX\Core\System\TimeManagement;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Tests\Unit\AbstractUnitTest;
 
@@ -28,7 +28,7 @@ class DateTimeTest extends AbstractUnitTest
     {
         $mikoPBXConfig = new MikoPBXConfig();
         $timezone      = $mikoPBXConfig->getTimeZone();
-        DateTime::phpTimeZoneConfigure();
+        TimeManagement::phpTimeZoneConfigure();
         $etcPhpIniPath = '/etc/php.ini';
         $contents = file_get_contents($etcPhpIniPath);
         $this->assertStringContainsStringIgnoringCase($timezone, $contents);
