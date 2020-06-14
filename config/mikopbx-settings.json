@@ -32,8 +32,9 @@
     "modulesDir": "/mountpoint/mikopbx/custom_modules",
     "tempPath": "/mountpoint/mikopbx/tmp",
     "logsPath": "/mountpoint/mikopbx/log",
-    "phpSessionPath": "/mountpoint/mikopbx/cache/php_session",
-    "mediaMountPoint": "/mountpoint"
+    "phpSessionPath": "/mountpoint/mikopbx/tmp/php_session",
+    "mediaMountPoint": "/mountpoint",
+    "fail2banDbDir": "/mountpoint/mikopbx/fail2ban"
   },
   "asterisk": {
     "astvarlibdir" : "/offload/asterisk",
@@ -58,8 +59,8 @@
   "adminApplication": {
     "debugMode": false,
     "baseUri": "/admin-cabinet/",
-    "cacheDir": "/mountpoint/mikopbx/cache",
-    "voltCacheDir": "/mountpoint/mikopbx/cache/volt",
+    "cacheDir": "/mountpoint/mikopbx/tmp/cache",
+    "voltCacheDir": "/mountpoint/mikopbx/tmp/cache/volt",
     "downloadLink": "/var/spool/download_link"
   }
 }

@@ -1102,7 +1102,6 @@ class Storage
         $www_dirs[] = $this->config->path('core.phpSessionPath');
         $www_dirs[] = $this->config->path('core.tempPath');
         $www_dirs[] = '/etc/version';
-        $www_dirs[] = '/var/lib/php/session';
         $www_dirs[] = appPath('/');
 
         // Add read rights

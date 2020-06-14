@@ -9,6 +9,7 @@
 namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Models\{Fail2BanRules, FirewallRules, NetworkFilters};
+use Phalcon\Di;
 use SQLite3;
 
 class Firewall
@@ -153,7 +154,11 @@ class Firewall
         $filename = basename($res_file);
 
         $old_dir_db = '/cf/fail2ban';
-        $dir_db     = self::getFail2banDbDir();
+        $dir_db = '/var/spool/fail2ban';
+        $di     = Di::getDefault();
+        if ($di !== null) {
+            $dir_db = $di->getShared('config')->path('core.fail2banDbDir');
+        }
         Util::mwMkdir($dir_db);
         // Создаем рабочие каталоги.
         $db_bd_dir = dirname($res_file);
@@ -190,22 +195,6 @@ class Firewall
     public static function fail2banGetDbPath(): string
     {
         return '/var/lib/fail2ban/fail2ban.sqlite3';
-    }
-
-    public static function getFail2banDbDir(): string
-    {
-        if (Storage::isStorageDiskMounted()) {
-            $mount_point = Storage::getMediaDir();
-            $db_dir      = "$mount_point/fail2ban";
-        } else {
-            $db_dir = "/var/spool/fail2ban";
-        }
-        Util::mwMkdir($db_dir);
-        if ( ! file_exists($db_dir)) {
-            $db_dir = '/tmp';
-        }
-
-        return $db_dir;
     }
 
     /**
@@ -451,7 +440,8 @@ class Firewall
     public static function checkFail2ban(): void
     {
         $firewall = new Firewall();
-        if ($firewall->fail2ban_enable && ! $firewall->fail2banIsRunning()) {
+        if ($firewall->fail2ban_enable==='1'
+            && ! $firewall->fail2banIsRunning()) {
             self::fail2banStart();
         }
     }
