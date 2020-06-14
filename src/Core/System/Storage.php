@@ -981,7 +981,7 @@ class Storage
         // Точка монтирования доп. дисков.
         Util::mwMkdir('/storage');
         $chmodPath = Util::which('chmod');
-        Util::mwExec("{$chmodPath} /storage 755");
+        Util::mwExec("{$chmodPath} 755 /storage");
         if ( ! file_exists($varEtcPath . '/cfdevice')) {
             return;
         }

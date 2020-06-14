@@ -73,7 +73,8 @@ class CreateExtensionsTest extends MikoPBXTestsBase
 
             $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
             $this->clickModifyButtonOnRowWithText($params['username']);
-            $this->assertInputFieldValueEqual('username',  $params['username']);
+
+            $this->assertInputFieldValueEqual('user_username',  $params['username']);
             $this->assertInputFieldValueEqual('number',  $params['number']);
             $this->assertInputFieldValueEqual('user_email',  $params['email']);
             // $this->assertInputFieldValueEqual('mobile_number',  $params['mobile']);

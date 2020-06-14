@@ -28,7 +28,7 @@ class CreateIAXProviders extends MikoPBXTestsBaseAlias
         $this->changeInputField('description', $params['description']);
         $this->changeInputField('host', $params['host']);
         $this->changeInputField('username', $params['username']);
-        $this->changeInputField('password', $params['password']);
+        $this->changeInputField('secret', $params['password']);
 
         // Раскрываем расширенные опции
         $this->openAccordionOnThePage();
@@ -51,7 +51,7 @@ class CreateIAXProviders extends MikoPBXTestsBaseAlias
         $this->assertInputFieldValueEqual('description', $params['description']);
         $this->assertInputFieldValueEqual('host', $params['host']);
         $this->assertInputFieldValueEqual('username', $params['username']);
-        $this->assertInputFieldValueEqual('password', $params['password']);
+        $this->assertInputFieldValueEqual('secret', $params['password']);
 
         // Раскрываем расширенные опции
         $this->openAccordionOnThePage();

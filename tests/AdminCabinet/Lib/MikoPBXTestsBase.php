@@ -95,10 +95,11 @@ class MikoPBXTestsBase extends BrowserStackTest
     /**
      * Assert that menu item selected
      *
-     * @param $name         string menu name
-     * @param $checkedValue string checked value
+     * @param      $name         string menu name
+     * @param      $checkedValue string checked value
+     * @param bool $skipIfNotExist
      */
-    protected function assertMenuItemSelected(string $name, string $checkedValue): void
+    protected function assertMenuItemSelected(string $name, string $checkedValue, $skipIfNotExist=false): void
     {
         $xpath             = '//select[@name="' . $name . '"]/option[@selected="selected"]';
         $selectedExtensions = self::$driver->findElements(WebDriverBy::xpath($xpath));
@@ -107,7 +108,7 @@ class MikoPBXTestsBase extends BrowserStackTest
             $message      = "{$name} check failure, because {$checkedValue} != {$currentValue}";
             $this->assertEquals($checkedValue, $currentValue, $message);
         }
-        if (count($selectedExtensions)===0){
+        if (!$skipIfNotExist && count($selectedExtensions)===0){
             $this->fail('Not found select with name ' . $name . PHP_EOL);
         }
     }
@@ -117,8 +118,9 @@ class MikoPBXTestsBase extends BrowserStackTest
      *
      * @param string $name
      * @param string $value
+     * @param bool   $skipIfNotExist
      */
-    protected function changeTextAreaValue(string $name, string $value): void
+    protected function changeTextAreaValue(string $name, string $value, bool $skipIfNotExist=false): void
     {
         $xpath         = ('//textarea[@name="' . $name . '"]');
         $textAreaItems = self::$driver->findElements(WebDriverBy::xpath($xpath));
@@ -126,6 +128,9 @@ class MikoPBXTestsBase extends BrowserStackTest
             $textAreaItem->click();
             $textAreaItem->clear();
             $textAreaItem->sendKeys($value);
+        }
+        if (!$skipIfNotExist && count($textAreaItems)===0){
+            $this->fail('Not found textarea with name ' . $name . PHP_EOL);
         }
     }
 
@@ -149,15 +154,16 @@ class MikoPBXTestsBase extends BrowserStackTest
      *
      * @param string $name
      * @param string $value
+     * @param bool   $skipIfNotExist
      */
-    protected function changeFileField(string $name, string $value): void
+    protected function changeFileField(string $name, string $value, bool $skipIfNotExist=false): void
     {
         $xpath      = '//input[@name="' . $name . '" and (@type = "file")]';
         $inputItems = self::$driver->findElements(WebDriverBy::xpath($xpath));
         foreach ($inputItems as $inputItem) {
             $inputItem->sendKeys($value);
         }
-        if (count($inputItems)===0){
+        if (!$skipIfNotExist && count($inputItems)===0){
             $this->fail('Not found input with type FILE and with name ' . $name . PHP_EOL);
         }
     }
@@ -167,8 +173,9 @@ class MikoPBXTestsBase extends BrowserStackTest
      *
      * @param string $name
      * @param string $value
+     * @param bool   $skipIfNotExist
      */
-    protected function changeInputField(string $name, string $value): void
+    protected function changeInputField(string $name, string $value, bool $skipIfNotExist=false): void
     {
         $xpath      = '//input[@name="' . $name . '" and (@type="text" or @type="password" or @type="hidden" or @type="number")]';
         $inputItems = self::$driver->findElements(WebDriverBy::xpath($xpath));
@@ -177,7 +184,7 @@ class MikoPBXTestsBase extends BrowserStackTest
             $inputItem->clear();
             $inputItem->sendKeys($value);
         }
-        if (count($inputItems)===0){
+        if (!$skipIfNotExist && count($inputItems)===0){
             $this->fail('Not found input with name ' . $name . PHP_EOL);
         }
     }
@@ -187,17 +194,18 @@ class MikoPBXTestsBase extends BrowserStackTest
      *
      * @param string $name
      * @param string $checkedValue
+     * @param bool   $skipIfNotExist
      */
-    protected function assertInputFieldValueEqual(string $name, string $checkedValue): void
+    protected function assertInputFieldValueEqual(string $name, string $checkedValue, $skipIfNotExist=false): void
     {
-        $xpath      = '//input[@name="' . $name . '" and (@type="text" or @type="password" or @type="hidden")]';
+        $xpath      = '//input[@name="' . $name . '" and (@type="text" or @type="number" or @type="password" or @type="hidden")]';
         $inputItems = self::$driver->findElements(WebDriverBy::xpath($xpath));
         foreach ($inputItems as $inputItem) {
             $currentValue = $inputItem->getAttribute('value');
             $message      = "input field: '{$name}' check failure, because {$checkedValue} != {$currentValue}";
             $this->assertEquals($checkedValue, $currentValue, $message);
         }
-        if (count($inputItems)===0){
+        if (!$skipIfNotExist && count($inputItems)===0){
             $this->fail('Not found input with name ' . $name . PHP_EOL);
         }
     }
@@ -207,8 +215,9 @@ class MikoPBXTestsBase extends BrowserStackTest
      *
      * @param string $name
      * @param bool   $enabled
+     * @param bool   $skipIfNotExist
      */
-    protected function changeCheckBoxState(string $name, bool $enabled): void
+    protected function changeCheckBoxState(string $name, bool $enabled, $skipIfNotExist=false): void
     {
         $xpath         = '//input[@name="' . $name . '" and @type="checkbox"]';
         $checkBoxItems = self::$driver->findElements(WebDriverBy::xpath($xpath));
@@ -223,7 +232,7 @@ class MikoPBXTestsBase extends BrowserStackTest
                 $checkBoxItem->click();
             }
         }
-        if (count($checkBoxItems)===0){
+        if (!$skipIfNotExist && count($checkBoxItems)===0){
             $this->fail('Not found checkbox with name ' . $name . PHP_EOL);
         }
     }
@@ -233,8 +242,9 @@ class MikoPBXTestsBase extends BrowserStackTest
      *
      * @param string $name    checkBox name
      * @param bool   $enabled checked state
+     * @param bool   $skipIfNotExist
      */
-    protected function assertCheckBoxStageIsEqual(string $name, bool $enabled): void
+    protected function assertCheckBoxStageIsEqual(string $name, bool $enabled, $skipIfNotExist=false): void
     {
         $xpath         = '//input[@name="' . $name . '" and @type="checkbox"]';
         $checkBoxItems = self::$driver->findElements(WebDriverBy::xpath($xpath));
@@ -245,7 +255,7 @@ class MikoPBXTestsBase extends BrowserStackTest
                 $this->assertFalse($checkBoxItem->isSelected(), "{$name} must be unchecked" . PHP_EOL);
             }
         }
-        if (count($checkBoxItems)===0){
+        if (!$skipIfNotExist && count($checkBoxItems)===0){
             $this->fail('Not found checkbox with name ' . $name . PHP_EOL);
         }
     }

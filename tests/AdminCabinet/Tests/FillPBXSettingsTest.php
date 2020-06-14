@@ -47,8 +47,8 @@ class FillPBXSettingsTest extends MikoPBXTestsBase
         foreach ($inputItemPages as $inputItemPage) {
             $elementPage = $inputItemPage->getAttribute('data-tab');
             self::$driver->get("{$GLOBALS['SERVER_PBX']}/admin-cabinet/general-settings/modify/#/{$elementPage}");
-            $this->changeInputField($key, $value);
-            $this->changeCheckBoxState($key, $value);
+            $this->changeInputField($key, $value, true);
+            $this->changeCheckBoxState($key, $value, true);
         }
 
         $xpath             = '//textarea[@name="' . $key . '"]/ancestor::div[contains(@class, "ui") and contains(@class ,"tab")]';
@@ -57,7 +57,7 @@ class FillPBXSettingsTest extends MikoPBXTestsBase
         foreach ($textAreaItemPages as $textAreaItemPage) {
             $elementPage = $textAreaItemPage->getAttribute('data-tab');
             self::$driver->get("{$GLOBALS['SERVER_PBX']}/admin-cabinet/general-settings/modify/#/{$elementPage}");
-            $this->changeTextAreaValue($key, $value);
+            $this->changeTextAreaValue($key, $value, true);
         }
 
         $xpath           = '//select[@name="' . $key . '"]/ancestor::div[contains(@class, "ui") and contains(@class ,"tab")]';
@@ -65,7 +65,7 @@ class FillPBXSettingsTest extends MikoPBXTestsBase
         foreach ($selectItemPages as $selectItemPage) {
             $elementPage = $selectItemPage->getAttribute('data-tab');
             self::$driver->get("{$GLOBALS['SERVER_PBX']}/admin-cabinet/general-settings/modify/#/{$elementPage}");
-            $this->selectDropdownItem($key, $value);
+            $this->selectDropdownItem($key, $value, true);
         }
     }
 
@@ -76,9 +76,9 @@ class FillPBXSettingsTest extends MikoPBXTestsBase
         foreach ($inputItemPages as $inputItemPage) {
             $elementPage = $inputItemPage->getAttribute('data-tab');
             self::$driver->get("{$GLOBALS['SERVER_PBX']}/admin-cabinet/general-settings/modify/#/{$elementPage}");
-            $this->assertInputFieldValueEqual($key, $value);
+            $this->assertInputFieldValueEqual($key, $value, true);
 
-            $this->assertCheckBoxStageIsEqual($key, $value);
+            $this->assertCheckBoxStageIsEqual($key, $value, true);
         }
 
         $xpath             = '//textarea[@name="' . $key . '"]/ancestor::div[contains(@class, "ui") and contains(@class ,"tab")]';

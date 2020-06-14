@@ -42,8 +42,11 @@ class CreateIncomingCallRules extends MikoPBXTestsBase
 
 
         $this->submitForm('incoming-route-form');
+
+        //Remember ID
+        $id = $this->getCurrentRecordID();
         $this->clickSidebarMenuItemByHref('/admin-cabinet/incoming-routes/index/');
-        $this->clickModifyButtonOnRowWithText($params['note']);
+        $this->clickModifyButtonOnRowWithID($id);
 
         //Asserts
         $this->assertTextAreaValueIsEqual('note', $params['note']);

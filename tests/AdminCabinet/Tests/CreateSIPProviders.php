@@ -21,7 +21,6 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
      */
     public function testCreateSIPProvider($params):void
     {
-
         $this->clickSidebarMenuItemByHref('/admin-cabinet/providers/index/');
         $this->clickDeleteButtonOnRowWithText($params['description']);
 
@@ -29,7 +28,7 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
         $this->changeInputField('description', $params['description']);
         $this->changeInputField('host', $params['host']);
         $this->changeInputField('username', $params['username']);
-        $this->changeInputField('password', $params['password']);
+        $this->changeInputField('secret', $params['password']);
         $this->selectDropdownItem('dtmfmode', $params['dtmfmode']);
         // Раскрываем расширенные опции
         $this->openAccordionOnThePage();
@@ -39,7 +38,6 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
         if ($params['qualify']){
             $this->changeInputField('qualifyfreq', $params['qualifyfreq']);
         }
-
 
         foreach ($params['codecs'] as $key=>$value){
             $this->changeCheckBoxState('codec_'.$key, $value);
@@ -62,7 +60,7 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
         $this->assertInputFieldValueEqual('description', $params['description']);
         $this->assertInputFieldValueEqual('host', $params['host']);
         $this->assertInputFieldValueEqual('username', $params['username']);
-        $this->assertInputFieldValueEqual('password', $params['password']);
+        $this->assertInputFieldValueEqual('secret', $params['password']);
         $this->assertMenuItemSelected('dtmfmode', $params['dtmfmode']);
         // Раскрываем расширенные опции
         $this->openAccordionOnThePage();
