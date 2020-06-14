@@ -35,6 +35,9 @@ class System
         $this->mikoPBXConfig = new MikoPBXConfig();
     }
 
+    /**
+     * Relocate PHP error log to storage mount
+     */
     public static function setupPhpLog(): void
     {
         $src_log_file = '/var/log/php_error.log';
@@ -48,13 +51,19 @@ class System
         Util::createUpdateSymlink($dst_log_file, $src_log_file);
     }
 
+    /**
+     * @return string
+     */
     public static function getPhpFile(): string
     {
         $logdir = self::getLogDir() . '/php';
         Util::mwMkdir($logdir);
-        return "$logdir/error";
+        return "$logdir/error.log";
     }
 
+    /**
+     * @return string
+     */
     public static function getLogDir(): string
     {
         $di     = Di::getDefault();
@@ -64,6 +73,9 @@ class System
         return '/var/log';
     }
 
+    /**
+     *
+     */
     public static function rotatePhpLog(): void
     {
         $asteriskPath = Util::which('asterisk');
