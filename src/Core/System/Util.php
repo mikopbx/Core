@@ -261,21 +261,28 @@ class Util
     /**
      * Create folder if it not exist
      *
-     * @param $parameters string one or multiple paths separated by space
+     * @param      $parameters string one or multiple paths separated by space
+     *
+     * @param bool $addWWWRights
      *
      * @return bool
      */
-    public static function mwMkdir(string $parameters): bool
+    public static function mwMkdir(string $parameters, bool $addWWWRights=false): bool
     {
         $result = true;
-        $arrPaths = explode(' ', $parameters);
-        if (count($arrPaths)>0){
-            foreach ($arrPaths as $path){
-                if ( ! empty($path)
-                    && ! file_exists($path)
-                    && ! mkdir($path, 0644, true)
-                    && ! is_dir($path)) {
-                    $result = false;
+        if (posix_getuid() === 0) {
+            $arrPaths = explode(' ', $parameters);
+            if (count($arrPaths) > 0) {
+                foreach ($arrPaths as $path) {
+                    if ( ! empty($path)
+                        && ! file_exists($path)
+                        && ! mkdir($path, 0644, true)
+                        && ! is_dir($path)) {
+                        $result = false;
+                    }
+                    if ($addWWWRights) {
+                        self::addRegularWWWRights($path);
+                    }
                 }
             }
         }
@@ -381,14 +388,15 @@ class Util
     public static function which($cmd): string
     {
         global $_ENV;
-        $binaryFolders = $_ENV['PATH'];
+        if (array_key_exists('PATH', $_ENV)) {
+            $binaryFolders = $_ENV['PATH'];
 
-        foreach (explode(':', $binaryFolders) as $path) {
-            if (is_executable("{$path}/{$cmd}")) {
-                return "{$path}/{$cmd}";
+            foreach (explode(':', $binaryFolders) as $path) {
+                if (is_executable("{$path}/{$cmd}")) {
+                    return "{$path}/{$cmd}";
+                }
             }
         }
-
         $binaryFolders =
             [
                 '/bin',

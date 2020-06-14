@@ -86,14 +86,14 @@ class ModulesDBConnectionsProvider extends DatabaseProviderBase implements Servi
 
                 // Create and connect database
                 $dbDir = "{$config->path('core.modulesDir')}/{$moduleUniqueId}/db";
-                Util::mwMkdir($dbDir);
+                Util::mwMkdir($dbDir, true);
                 $dbFileName = "{$dbDir}/module.db";
                 $dbFileExistBeforeAttachToConnection = file_exists($dbFileName);
 
                 $logDir = "{$config->path('core.logsPath')}/$moduleUniqueId/db";
                 $logFileName = "{$logDir}/queries.log";
                 if (!is_dir($logDir)){
-                    Util::mwMkdir($logDir);
+                    Util::mwMkdir($logDir, true);
                     $touchPath = Util::which('touch');
                     Util::mwExec("{$touchPath} {$logFileName}");
                     Util::addRegularWWWRights($logDir);
