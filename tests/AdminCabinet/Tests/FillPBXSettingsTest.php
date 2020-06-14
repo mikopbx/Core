@@ -65,7 +65,7 @@ class FillPBXSettingsTest extends MikoPBXTestsBase
         foreach ($selectItemPages as $selectItemPage) {
             $elementPage = $selectItemPage->getAttribute('data-tab');
             self::$driver->get("{$GLOBALS['SERVER_PBX']}/admin-cabinet/general-settings/modify/#/{$elementPage}");
-            $this->selectDropdownItem($key, $value, true);
+            $this->selectDropdownItem($key, $value);
         }
     }
 
