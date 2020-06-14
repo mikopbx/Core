@@ -174,11 +174,9 @@ class Network
      */
     private function generatePdnsdConfig($named_dns): void
     {
-        $tempPath  = $this->di->getShared('config')->get('core.tempPath');
+        $tempPath  = $this->di->getShared('config')->path('core.tempPath');
         $cache_dir = $tempPath . '/pdnsd/cache';
-        if ( ! file_exists($cache_dir) && ! mkdir($cache_dir, 0777, true) && ! is_dir($cache_dir)) {
-            $cache_dir = '/var/spool';
-        }
+        Util::mwMkdir($cache_dir);
 
         $conf = 'global {' . "\n" .
             '	perm_cache=10240;' . "\n" .

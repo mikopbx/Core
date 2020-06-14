@@ -366,11 +366,7 @@ abstract class PbxExtensionSetupBase implements PbxExtensionSetupInterface
         $backupPath = "{$modulesDir}/Backup/{$this->module_uniqid}";
         Util::mwExec("{$rmPath} -rf {$backupPath}");
         if ($keepSettings) {
-            if ( ! is_dir($backupPath) && ! mkdir($backupPath, 0777, true) && ! is_dir($backupPath)) {
-                $this->messages[] = sprintf('Directory "%s" was not created', $backupPath);
-
-                return false;
-            }
+            Util::mwMkdir($backupPath);
             Util::mwExec("{$cpPath} -r {$this->moduleDir}/db {$backupPath}/");
         }
         Util::mwExec("{$rmPath} -rf {$this->moduleDir}");

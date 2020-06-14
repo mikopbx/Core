@@ -12,7 +12,7 @@ use MikoPBX\Core\Asterisk\Configs\{ResParkingConf};
 use MikoPBX\Core\System\{MikoPBXConfig, Util};
 
 require_once 'phpagi.php';
-require_once 'globals.php';
+require_once 'Globals.php';
 
 /**
  * Начало телефонного звонка.

@@ -5,7 +5,7 @@
 
 
 -- Инициализация вспомогательных процедур и функций.
-JSON = (loadfile "/usr/www/src/ext/lua/asterisk/JSON.lua")();
+JSON = (loadfile "/usr/www/src/Core/Asterisk/Configs/lua/JSON.lua")();
 local b='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 -- Кодируем в base64
 function base64_encode(data)
@@ -566,7 +566,7 @@ if(channel == nil) then
 
     if(arg~=nil and arg[1] == 'test' )then
         is_test = true;
-        local TESTS = (loadfile '/usr/www/src/ext/lua/asterisk/cdr_connector_tests.lua')();
+        local TESTS = (loadfile '/usr/www/src/Core/Asterisk/Configs/lua/cdr_connector_tests.lua')();
         TESTS:make_tests();
     end
 

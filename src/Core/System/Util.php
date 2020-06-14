@@ -67,7 +67,7 @@ class Util
     {
         self::stopLog();
         $dir_all_log = System::getLogDir();
-        $findPath = self::which('find');
+        $findPath    = self::which('find');
         self::mwExec("{$findPath} {$dir_all_log}" . '/ -name *_start_all_log* | xargs rm -rf');
         // Получим каталог с логами.
         $dirlog = $dir_all_log . '/dir_start_all_log';
@@ -78,8 +78,14 @@ class Util
         self::mwExecBg("{$pingPath} ya.ru -w 2", "{$dirlog}/ping_8888.log");
 
         $opensslPath = self::which('openssl');
-        self::mwExecBgWithTimeout("{$opensslPath} s_client -connect lm.miko.ru:443 > {$dirlog}/openssl_lm_miko_ru.log", 1);
-        self::mwExecBgWithTimeout("{$opensslPath} s_client -connect lic.miko.ru:443 > {$dirlog}/openssl_lic_miko_ru.log", 1);
+        self::mwExecBgWithTimeout(
+            "{$opensslPath} s_client -connect lm.miko.ru:443 > {$dirlog}/openssl_lm_miko_ru.log",
+            1
+        );
+        self::mwExecBgWithTimeout(
+            "{$opensslPath} s_client -connect lic.miko.ru:443 > {$dirlog}/openssl_lic_miko_ru.log",
+            1
+        );
         $routePath = self::which('route');
         self::mwExecBg("{$routePath} -n ", " {$dirlog}/rout_n.log");
 
@@ -94,8 +100,8 @@ class Util
             self::mwExec("{$cpPath} {$php_log} {$dirlog}");
         }
 
-        $network = new Network();
-        $arr_eth = $network->getInterfacesNames();
+        $network     = new Network();
+        $arr_eth     = $network->getInterfacesNames();
         $tcpdumpPath = self::which('tcpdump');
         foreach ($arr_eth as $eth) {
             self::mwExecBgWithTimeout(
@@ -118,18 +124,15 @@ class Util
         self::killByName('timeout');
         self::killByName('tcpdump');
 
-        $rmPath = self::which('rm');
+        $rmPath   = self::which('rm');
         $findPath = self::which('find');
-        $za7Path = self::which('7za');
-        $cpPath = self::which('cp');
+        $za7Path  = self::which('7za');
+        $cpPath   = self::which('cp');
 
         $dirlog = $dir_all_log . '/dir_start_all_log';
-        if ( ! file_exists($dirlog) && ! mkdir($dirlog, 0777, true) && ! is_dir($dirlog)) {
-            return '';
-        }
+        self::mwMkdir($dirlog);
 
         $log_dir = System::getLogDir();
-
         self::mwExec("{$cpPath} -R {$log_dir} {$dirlog}");
 
         $result = $dir_all_log . '/arhive_start_all_log.zip';
@@ -159,9 +162,10 @@ class Util
      */
     public static function killByName($procName): ?int
     {
-       // $procName = addslashes($procName);
+        // $procName = addslashes($procName);
         $killallPath = self::which('killall');
-        return self::mwExec($killallPath.' ' . escapeshellarg($procName));
+
+        return self::mwExec($killallPath . ' ' . escapeshellarg($procName));
     }
 
     /**
@@ -177,9 +181,9 @@ class Util
     {
         $retval = 0;
         $oarr   = [];
-        $di = Di::getDefault();
+        $di     = Di::getDefault();
 
-        if ($di!==null && $di->getShared('config')->path('core.debugMode')) {
+        if ($di !== null && $di->getShared('config')->path('core.debugMode')) {
             echo "mwExec(): $command\n";
         } else {
             exec("$command 2>&1", $oarr, $retval);
@@ -198,8 +202,8 @@ class Util
     public static function mwExecBg($command, $out_file = '/dev/null', $sleep_time = 0): void
     {
         $nohupPath = self::which('nohup');
-        $shPath = self::which('sh');
-        $rmPath = self::which('rm');
+        $shPath    = self::which('sh');
+        $rmPath    = self::which('rm');
         $sleepPath = self::which('sleep');
         if ($sleep_time > 0) {
             $filename = '/tmp/' . time() . '_noop.sh';
@@ -227,7 +231,7 @@ class Util
 
             return;
         }
-        $nohupPath = self::which('nohup');
+        $nohupPath   = self::which('nohup');
         $timeoutPath = self::which('timeout');
         exec("{$nohupPath} {$timeoutPath} -t {$timeout} {$command} > {$logname} 2>&1 &");
     }
@@ -257,6 +261,7 @@ class Util
 
     /**
      * Create folder if it not exist
+     *
      * @param $path
      *
      * @return bool
@@ -267,6 +272,7 @@ class Util
         if ( ! file_exists($path) && ! mkdir($path, 0777, true) && ! is_dir($path)) {
             $result = false;
         }
+
         return $result;
     }
 
@@ -361,6 +367,7 @@ class Util
 
     /**
      * Return full path to executable binary
+     *
      * @param string $cmd - name of file
      *
      * @return string
@@ -368,7 +375,7 @@ class Util
     public static function which($cmd): string
     {
         global $_ENV;
-        $binaryFolders =  $_ENV['PATH'];
+        $binaryFolders = $_ENV['PATH'];
 
         foreach (explode(':', $binaryFolders) as $path) {
             if (is_executable("{$path}/{$cmd}")) {
@@ -376,20 +383,21 @@ class Util
             }
         }
 
-        $binaryFolders=
+        $binaryFolders =
             [
                 '/bin',
                 '/sbin',
                 '/usr/bin',
                 '/usr/sbin',
                 '/usr/local/bin',
-                '/usr/local/sbin'
+                '/usr/local/sbin',
             ];
-        foreach ($binaryFolders as $path){
-            if (is_executable("{$path}/{$cmd}")){
+        foreach ($binaryFolders as $path) {
+            if (is_executable("{$path}/{$cmd}")) {
                 return "{$path}/{$cmd}";
             }
         }
+
         return $cmd;
     }
 
@@ -621,7 +629,7 @@ class Util
         $res = CustomFiles::findFirst("filepath = '{$filename}'");
 
         $filename_orgn = "{$filename}.orgn";
-        if (( $res === null || $res->mode === 'none') && file_exists($filename_orgn)) {
+        if (($res === null || $res->mode === 'none') && file_exists($filename_orgn)) {
             unlink($filename_orgn);
         } elseif ($res !== null && $res->mode !== 'none') {
             // Запишем оригинальный файл.
@@ -693,8 +701,9 @@ class Util
     public static function CreateLogDB(): void
     {
         $di = Di::getDefault();
-        if ($di===null) {
+        if ($di === null) {
             self::sysLogMsg('CreateLogDB', 'Dependency injector does not initialized');
+
             return;
         }
 
@@ -753,8 +762,9 @@ class Util
     public static function GetLastDateLogDB($id, &$db = null): ?string
     {
         $di = Di::getDefault();
-        if ($di===null) {
+        if ($di === null) {
             self::sysLogMsg('CreateLogDB', 'Dependency injector does not initialized');
+
             return null;
         }
 
@@ -873,6 +883,7 @@ class Util
     public static function getExtensionOfFile($filename, $delimiter = '.')
     {
         $path_parts = pathinfo($filename);
+
         return $path_parts['extension'];
     }
 
@@ -927,7 +938,7 @@ class Util
         // Конвертируем файл.
         $tmp_filename = escapeshellcmd($tmp_filename);
         $n_filename   = escapeshellcmd($n_filename);
-        $soxPath = self::which('sox');
+        $soxPath      = self::which('sox');
         self::mwExec("{$soxPath} -v 0.99 -G '{$tmp_filename}' -c 1 -r 8000 -b 16 '{$n_filename}'", $out);
         $result_str = implode('', $out);
 
@@ -966,7 +977,7 @@ class Util
     {
         $result = 0;
         if (file_exists($filename)) {
-            $duPath = self::which('du');
+            $duPath  = self::which('du');
             $awkPath = self::which('awk');
             self::mwExec("{$duPath} -d 0 -k '{$filename}' | {$awkPath}  '{ print $1}'", $out);
             $time_str = implode($out);
@@ -1221,10 +1232,7 @@ class Util
             // Это должна быть именно ссылка. Файл удаляем.
             unlink($link);
         }
-        if ( ! file_exists($target)) {
-            $mkdirPath = self::which('mkdir');
-            self::mwExec("{$mkdirPath} -p {$target}");
-        }
+        self::mwMkdir($target);
         if ($need_create_link) {
             $lnPath = self::which('ln');
             self::mwExec("{$lnPath} -s {$target}  {$link}");
@@ -1258,28 +1266,30 @@ class Util
 
     /**
      * Apply regular rights for folders and files
+     *
      * @param $folder
      */
-    public static function addRegularWWWRights($folder):void
+    public static function addRegularWWWRights($folder): void
     {
-        if (posix_getuid() === 0){
-            $findPath = self::which('find');
+        if (posix_getuid() === 0) {
+            $findPath  = self::which('find');
             $chownPath = self::which('chown');
             $chmodPath = self::which('chmod');
             self::mwExec("{$findPath} {$folder} -type d -exec {$chmodPath} 755 {} \;");
             self::mwExec("{$findPath} {$folder} -type f -exec {$chmodPath} 644 {} \;");
-            self::mwExec("{$chownPath} -R www:www {$folder}" );
+            self::mwExec("{$chownPath} -R www:www {$folder}");
         }
     }
 
     /**
      * Apply executable rights for files
+     *
      * @param $folder
      */
-    public static function addExecutableRights($folder):void
+    public static function addExecutableRights($folder): void
     {
-        if (posix_getuid() === 0){
-            $findPath = self::which('find');
+        if (posix_getuid() === 0) {
+            $findPath  = self::which('find');
             $chmodPath = self::which('chmod');
             self::mwExec("{$findPath} {$folder} -type f -exec {$chmodPath} 755 {} \;");
         }
@@ -1288,11 +1298,11 @@ class Util
     /**
      * Разбор INI конфига
      *
-     * @param $manual_attributes
+     * @param string $manual_attributes
      *
      * @return array
      */
-    public static function parseIniSettings($manual_attributes): array
+    public static function parseIniSettings(string $manual_attributes): array
     {
         $tmp_data = base64_decode($manual_attributes);
         if (base64_encode($tmp_data) === $manual_attributes) {

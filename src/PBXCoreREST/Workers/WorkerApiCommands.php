@@ -10,7 +10,7 @@ namespace MikoPBX\PBXCoreREST\Workers;
 
 use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\Asterisk\Configs\{IAXConf, SIPConf, VoiceMailConf};
-use MikoPBX\Core\System\{BeanstalkClient, Firewall, Notifications, Storage, System, Util};
+use MikoPBX\Core\System\{BeanstalkClient, DateTime, Firewall, Notifications, Storage, System, Util};
 use MikoPBX\Core\Workers\Cron\WorkerSafeScriptsCore;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\Workers\WorkerMergeUploadedFile;
@@ -19,7 +19,7 @@ use MikoPBX\Modules\PbxExtensionState;
 use Phalcon\Exception;
 use function MikoPBX\Common\Config\appPath;
 
-require_once 'globals.php';
+require_once 'Globals.php';
 
 class WorkerApiCommands extends WorkerBase
 {
@@ -142,7 +142,6 @@ class WorkerApiCommands extends WorkerBase
     public function iaxCallBack($request): array
     {
         $action = $request['action'];
-        // $data    = $request['data'];
         $result = [
             'result' => 'ERROR',
         ];
@@ -188,7 +187,7 @@ class WorkerApiCommands extends WorkerBase
 
             return $result;
         } elseif ('setDate' === $action) {
-            $result = System::setDate($data['date']);
+            $result = DateTime::setDate($data['date']);
         } elseif ('getInfo' === $action) {
             $result = System::getInfo();
         } elseif ('sendMail' === $action) {

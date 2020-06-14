@@ -9,9 +9,11 @@
 
 namespace MikoPBX\Modules;
 
+use Phalcon\Config;
 use Phalcon\Di;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\Exception;
+use ReflectionClass as ReflectionClassAlias;
 
 /**
  * Class PbxExtensionBase
@@ -40,7 +42,7 @@ abstract class PbxExtensionBase
     /**
      * Phalcon config service
      */
-    public \Phalcon\Config $config;
+    public Config $config;
 
     /**
      * Module Logger
@@ -65,7 +67,7 @@ abstract class PbxExtensionBase
 
         if (empty($this->moduleUniqueId)){
             // Get child class parameters and define module Dir and UniqueID
-            $reflector = new \ReflectionClass(static::class);
+            $reflector = new ReflectionClassAlias(static::class);
             $partsOfNameSpace = explode('\\', $reflector->getNamespaceName());
             if (count($partsOfNameSpace)===3 && $partsOfNameSpace[0]==='Modules'){
                 $this->moduleUniqueId = $partsOfNameSpace[1];

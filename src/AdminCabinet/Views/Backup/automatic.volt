@@ -81,7 +81,7 @@
     <div class="field">
         <div class="ui toggle checkbox" id="create-now">
             <input type="checkbox" name="create-now">
-            <label>{{ t._('bkp_CreateBackupAfterSaveSettings') }}</label>
+            <label for="create-now">{{ t._('bkp_CreateBackupAfterSaveSettings') }}</label>
         </div>
     </div>
 </div>

@@ -13,10 +13,6 @@ use MikoPBX\Core\System\Upgrade\UpdateSystemConfig;
 use MikoPBX\Service\Main; // at mikopbx.so
 use Phalcon\Di;
 
-ini_set('error_reporting', E_ALL);
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-
 class SystemLoader
 {
     private $di;
@@ -61,7 +57,8 @@ class SystemLoader
         Util::echoGreenDone();
 
         Util::echoWithSyslog(' - Configuring timezone ... ');
-        $system->timezoneConfigure();
+        $sys = new DateTime();
+        $sys->timezoneConfigure();
         Util::echoGreenDone();
 
         Util::echoWithSyslog(' - Configuring hostname ... ');

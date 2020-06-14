@@ -10,6 +10,7 @@ namespace MikoPBX\Modules\Config;
 
 use MikoPBX\Core\System\MikoPBXConfig;
 use Phalcon\Di;
+use ReflectionClass as ReflectionClassAlias;
 
 abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInterface
 {
@@ -75,7 +76,7 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
         $this->generalSettings = $this->mikoPBXConfig->getGeneralSettings();
 
         // Get child class parameters and define module Dir and UniqueID
-        $reflector = new \ReflectionClass(static::class);
+        $reflector = new ReflectionClassAlias(static::class);
         $partsOfNameSpace = explode('\\', $reflector->getNamespaceName());
         if (count($partsOfNameSpace)===3 && $partsOfNameSpace[0]==='Modules'){
             $modulesDir    = $this->config->path('core.modulesDir');

@@ -21,7 +21,7 @@ use function MikoPBX\Common\Config\appPath;
  */
 class System
 {
-    private $mikoPBXConfig;
+    private MikoPBXConfig $mikoPBXConfig;
     private $di;
 
     /**
@@ -43,17 +43,15 @@ class System
             file_put_contents($src_log_file, '');
         }
         $options = file_exists($dst_log_file) ? '>' : '';
-        Util::mwExec("cat {$src_log_file} 2> /dev/null >{$options} {$dst_log_file}");
+        $catPath = Util::which('cat');
+        Util::mwExec("{$catPath} {$src_log_file} 2> /dev/null >{$options} {$dst_log_file}");
         Util::createUpdateSymlink($dst_log_file, $src_log_file);
     }
 
     public static function getPhpFile(): string
     {
         $logdir = self::getLogDir() . '/php';
-        if ( ! file_exists($logdir) && ! mkdir($logdir, 0777, true) && ! is_dir($logdir)) {
-            $logdir = '/var/log';
-        }
-
+        Util::mwMkdir($logdir);
         return "$logdir/error";
     }
 
@@ -160,13 +158,9 @@ class System
     public function gnatsStart(): array
     {
         $confdir = '/etc/nats';
-        if ( ! file_exists($confdir) && ! mkdir($confdir, 0777, true) && ! is_dir($confdir)) {
-            Util::sysLogMsg('NATS', 'Error. Can not create dir ' . $confdir);
-        }
+        Util::mwMkdir($confdir);
         $logdir = self::getLogDir() . '/nats';
-        if ( ! file_exists($logdir) && ! mkdir($logdir, 0777, true) && ! is_dir($logdir)) {
-            $logdir = '/var/log';
-        }
+        Util::mwMkdir($logdir);
 
         $pid_file = '/var/run/gnatsd.pid';
         $settings = [
@@ -193,7 +187,9 @@ class System
         file_put_contents($logdir . '/license.key', $lic);
 
         if (file_exists($pid_file)) {
-            Util::mwExec('kill $(cat ' . $pid_file . ')');
+            $killPath = Util::which('kill');
+            $catPath = Util::which('kill');
+            Util::mwExec("{$killPath} $({$catPath} {$pid_file})");
         }
         $gnatsdPath = Util::which('gnatsd');
         Util::mwExecBg("{$gnatsdPath} --config {$conf_file}", "{$logdir}/gnats_process.log");
@@ -272,102 +268,6 @@ class System
         return Util::mwExec($hostnamePath.' '. escapeshellarg("{$data['hostname']}"));
     }
 
-    /**
-     * Установка системного времени.
-     *
-     * @param $date - 2015.12.31-01:01:20
-     *
-     * @return array
-     */
-    public static function setDate($date): array
-    {
-        $result = [
-            'result' => 'ERROR',
-        ];
-        // Преобразование числа к дате. Если необходимо.
-        $date = Util::numberToDate($date);
-        // Валидация даты.
-        $re_date = '/^\d{4}\.\d{2}\.\d{2}\-\d{2}\:\d{2}\:\d{2}$/';
-        preg_match_all($re_date, $date, $matches, PREG_SET_ORDER, 0);
-        if (count($matches) > 0) {
-            $result['result'] = 'Success';
-            $arr_data         = [];
-            Util::mwExec("date -s '{$date}'", $arr_data);
-            $result['data'] = implode($arr_data);
-        } else {
-            $result['result'] = 'Success';
-            $result['data']   = 'Update timezone only.';
-            // $result = 'Error format DATE. Need YYYY.MM.DD-hh:mm:ss';
-        }
-
-        $sys = new System();
-        $sys->timezoneConfigure();
-
-        return $result;
-    }
-
-    /**
-     * Populates /etc/TZ with an appropriate time zone
-     */
-    public function timezoneConfigure(): void
-    {
-        $timezone = $this->mikoPBXConfig->getTimeZone();
-
-        // include('timezones.php'); TODO:: Удалить и сам файл?
-        @unlink("/etc/TZ");
-        @unlink("/etc/localtime");
-
-        if ($timezone) {
-            $zone_file = "/usr/share/zoneinfo/{$timezone}";
-            if ( ! file_exists($zone_file)) {
-                return;
-            }
-            exec("cp  $zone_file /etc/localtime");
-            file_put_contents('/etc/TZ', $timezone);
-            putenv("TZ={$timezone}");
-            exec("export TZ;");
-        }
-
-        $this->ntpDaemonConfigure();
-        self::phpTimeZoneConfigure();
-    }
-
-    /**
-     * Настрока демона ntpd.
-     */
-    private function ntpDaemonConfigure(): void
-    {
-        $ntp_server = $this->mikoPBXConfig->getServerNTP();
-        if ('' != $ntp_server) {
-            $ntp_conf = "server $ntp_server";
-        } else {
-            $ntp_conf = 'server 0.pool.ntp.org
-server 1.pool.ntp.org
-server 2.pool.ntp.org';
-        }
-        Util::fileWriteContent('/etc/ntp.conf', $ntp_conf);
-        if ( ! Util::isSystemctl()) {
-            Util::killByName("ntpd");
-        }
-        usleep(500000);
-        $manual_time = $this->mikoPBXConfig->getGeneralSettings('PBXManualTimeSettings');
-        if ($manual_time != 1 && ! Util::isSystemctl()) {
-            Util::mwExec("ntpd");
-        }
-    }
-
-    /**
-     * Установка таймзоны для php.
-     */
-    public static function phpTimeZoneConfigure(): void
-    {
-        $mikoPBXConfig = new MikoPBXConfig();
-        $timezone      = $mikoPBXConfig->getTimeZone();
-        date_default_timezone_set($timezone);
-        if (file_exists('/etc/TZ')) {
-            Util::mwExec('export TZ="$(cat /etc/TZ)"');
-        }
-    }
 
     /**
      * Получение сведений о системе.
@@ -431,12 +331,14 @@ server 2.pool.ntp.org';
     {
         $result = [];
         $out    = [];
-
-        Util::mwExec("cat /proc/meminfo | grep -C 0 'Inactive:' | awk '{print $2}'", $out);
+        $catPath = Util::which('cat');
+        $grepPath = Util::which('grep');
+        $awkPath = Util::which('awk');
+        Util::mwExec("{$catPath} /proc/meminfo | {$grepPath} -C 0 'Inactive:' | {$awkPath} '{print $2}'", $out);
         $result['inactive'] = round((1 * implode($out)) / 1024, 2);
-        Util::mwExec("cat /proc/meminfo | grep -C 0 'MemFree:' | awk '{print $2}'", $out);
+        Util::mwExec("{$catPath} /proc/meminfo | {$grepPath} -C 0 'MemFree:' | {$awkPath} '{print $2}'", $out);
         $result['free'] = round((1 * implode($out)) / 1024, 2);
-        Util::mwExec("cat /proc/meminfo | grep -C 0 'MemTotal:' | awk '{print $2}'", $out);
+        Util::mwExec("{$catPath} /proc/meminfo | {$grepPath} -C 0 'MemTotal:' | {$awkPath} '{print $2}'", $out);
         $result['total'] = round((1 * implode($out)) / 1024, 2);
 
         return $result;
@@ -536,7 +438,7 @@ server 2.pool.ntp.org';
                     $res = PBX::managerReload();
                     break;
                 case 'systemtime':
-                    $res = self::setDate('');
+                    $res = DateTime::setDate('');
                     break;
                 case 'firewall':
                     $res = Firewall::reloadFirewall();
@@ -567,12 +469,13 @@ server 2.pool.ntp.org';
         $booting = $this->di->getRegistry()->booting;
         $this->cronGenerate($booting);
         if (Util::isSystemctl()) {
-            Util::mwExec('systemctl restart cron');
+            $systemctlPath = Util::which('systemctl');
+            Util::mwExec("{$systemctlPath} restart cron");
         } else {
-            Util::killByName('crond');
-            Util::mwExec('crond -L /dev/null -l 8');
+            $crondPath = Util::which('crond');
+            Util::killByName($crondPath);
+            Util::mwExec("{$crondPath} -L /dev/null -l 8");
         }
-
         return 0;
     }
 
@@ -737,16 +640,17 @@ server 2.pool.ntp.org';
         } else {
             $tempDir = '/tmp';
         }
+        $rmPath = Util::which('rm');
         $module  = 'upgradeOnline';
         if ( ! file_exists($tempDir . "/{$module}")) {
             Util::mwMkdir($tempDir . "/{$module}");
         } else {
             // Чистим файлы, загруженные онлайн.
-            Util::mwExec("rm -rf {$tempDir}/{$module}/* ");
+            Util::mwExec("{$rmPath} -rf {$tempDir}/{$module}/* ");
         }
         if (file_exists("{$tempDir}/update.img")) {
             // Чистим вручную загруженный файл.
-            Util::mwExec("rm -rf {$tempDir}/update.img");
+            Util::mwExec("{$rmPath} -rf {$tempDir}/update.img");
         }
 
         $download_settings = [
@@ -764,7 +668,8 @@ server 2.pool.ntp.org';
             $tempDir . "/{$module}/download_settings.json",
             json_encode($download_settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
         );
-        Util::mwExecBg("php -f {$workerDownloaderPath} " . $tempDir . "/{$module}/download_settings.json");
+        $phpPath = Util::which('php');
+        Util::mwExecBg("{$phpPath} -f {$workerDownloaderPath} " . $tempDir . "/{$module}/download_settings.json");
         // Ожидание запуска процесса загрузки.
         usleep(500000);
         $d_pid = Util::getPidOfProcess($tempDir . "/{$module}/download_settings.json");
@@ -914,12 +819,7 @@ server 2.pool.ntp.org';
         }
 
         $moduleDirTmp = "{$tempDir}/{$module}";
-
-        if ( ! is_dir($moduleDirTmp)
-            && ! mkdir($moduleDirTmp, 0755, true)
-            && ! is_dir($moduleDirTmp)) {
-            return;
-        }
+        Util::mwMkdir($moduleDirTmp);
 
         $download_settings = [
             'res_file' => "$moduleDirTmp/modulefile.zip",
@@ -940,7 +840,8 @@ server 2.pool.ntp.org';
             json_encode($download_settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
         );
         $workerDownloaderPath = Util::getFilePathByClassName(WorkerDownloader::class);
-        Util::mwExecBg("php -f {$workerDownloaderPath} $moduleDirTmp/download_settings.json");
+        $phpPath = Util::which('php');
+        Util::mwExecBg("{$phpPath} -f {$workerDownloaderPath} $moduleDirTmp/download_settings.json");
     }
 
     /**
@@ -1104,10 +1005,7 @@ server 2.pool.ntp.org';
     public static function getSyslogFile(): string
     {
         $logdir = self::getLogDir() . '/system';
-        if ( ! file_exists($logdir) && ! mkdir($logdir, 0777, true) && ! is_dir($logdir)) {
-            $logdir = '/var/log';
-        }
-
+        Util::mwMkdir($logdir);
         return "$logdir/messages";
     }
 

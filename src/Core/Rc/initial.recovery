@@ -9,7 +9,7 @@ namespace MikoPBX\Core\Rc;
 use MikoPBX\Core\System\{
     Util
 };
-require_once('globals.php');
+require_once('Globals.php');
 $fp = fopen('php://stdin', 'r');
 
 $out = [];

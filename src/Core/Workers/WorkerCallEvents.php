@@ -7,9 +7,10 @@
  */
 
 namespace MikoPBX\Core\Workers;
-require_once 'globals.php';
+require_once 'Globals.php';
 
 use MikoPBX\Common\Models\{CallDetailRecords, CallDetailRecordsTmp};
+use Exception as ExceptionAlias;
 use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\System\{BeanstalkClient, MikoPBXConfig, Util};
 use Phalcon\Di;
@@ -1003,7 +1004,7 @@ class WorkerCallEvents extends WorkerBase
                 $res = CallDetailRecords::find($filter);
             }
             $res_data = json_encode($res->toArray());
-        } catch (Exception $e) {
+        } catch (ExceptionAlias $e) {
             $res_data = '[]';
         }
 
@@ -1015,8 +1016,8 @@ class WorkerCallEvents extends WorkerBase
             $filter['add_pack_query']['bind'][$filter['columns']] = $arr;
             try {
                 $res      = CallDetailRecords::find($filter['add_pack_query']);
-                $res_data = json_encode($res->toArray());
-            } catch (Exception $e) {
+                $res_data = json_encode($res->toArray(), JSON_THROW_ON_ERROR);
+            } catch (ExceptionAlias $e) {
                 $res_data = '[]';
             }
         }
@@ -1025,9 +1026,9 @@ class WorkerCallEvents extends WorkerBase
             $di         = Di::getDefault();
             $dirsConfig = $di->getShared('config');
             $filename   = $dirsConfig->path('core.tempPath') . '/' . md5(microtime(true));
-            file_put_contents("$filename", $res_data);
+            file_put_contents($filename, $res_data);
             Util::addRegularWWWRights($filename);
-            $res_data = json_encode("$filename");
+            $res_data = json_encode($filename);
         }
 
         $tube->reply($res_data);
@@ -1047,7 +1048,7 @@ if (isset($argv) && count($argv) > 1 && $argv[1] === 'start') {
     try {
         $worker = new $workerClassname();
         $worker->start($argv);
-    } catch (\Exception $e) {
+    } catch (ExceptionAlias $e) {
         global $errorLogger;
         $errorLogger->captureException($e);
         Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage());

@@ -25,7 +25,7 @@ class MessagesProvider implements ServiceProviderInterface
      */
     public function register(DiInterface $di): void
     {
-        $coreConfig = $di->getShared('config')->get('core');
+        $coreConfig = $di->getShared('config')->path('core');
         $di->setShared(
             'messages',
             function () use ($di, $coreConfig) {

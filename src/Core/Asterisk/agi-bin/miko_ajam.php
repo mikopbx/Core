@@ -14,7 +14,7 @@ use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\System\{BeanstalkClient, Util};
 use MikoPBX\Core\Workers\WorkerCdr;
 
-require_once 'globals.php';
+require_once 'Globals.php';
 
 class CDR_Data
 {
@@ -228,7 +228,7 @@ class CDR_Data
                 continue;
             }
             if ( ! file_exists($fname)) {
-                exec("mkdir -p " . dirname($_data));
+                Util::mwMkdir(dirname($_data));
                 exec("curl  -s -f 'http://{$host}:23600{$res}{$_data}' -u {$auth} -I", $curl_output);
                 if (stripos(implode('', $curl_output), 'attachment;') === false) {
                     file_put_contents("{$fname}.empty", '');

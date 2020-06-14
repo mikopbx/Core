@@ -15,17 +15,25 @@ use MikoPBX\Tests\Unit\AbstractUnitTest;
 class WorkerSafeScriptsCoreTest extends AbstractUnitTest
 {
 
-    public function testRestartAllWorkers()
+    public function testRestartAllWorkers():void
     {
         WorkerSafeScriptsCore::restartAllWorkers();
         $this->assertTrue(true);
     }
 
-    public function testStart()
+    public function testStart():void
     {
         $worker = new WorkerSafeScriptsCore();
         $worker->start(['start']);
         $this->assertTrue(true);
+    }
+
+    public function testPrepareWorkersList():void
+    {
+        $worker = new WorkerSafeScriptsCore();
+        $workers = $this->invokeMethod($worker, 'prepareWorkersList');
+        $this->assertIsArray($workers);
+
     }
 
 }

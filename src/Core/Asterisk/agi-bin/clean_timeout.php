@@ -9,7 +9,7 @@
 
 use MikoPBX\Core\System\{Util};
 
-require_once 'globals.php';
+require_once 'Globals.php';
 require_once 'phpagi.php';
 
 $agi       = new AGI();

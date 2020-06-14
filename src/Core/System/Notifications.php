@@ -18,80 +18,6 @@ class Notifications
 {
 
     /**
-     * Отправка почтового сообщения ( используется функция mail() ).
-     *
-     * @param $to
-     * @param $subject
-     * @param $message
-     * @param $file
-     *
-     * @return array
-     */
-    public static function sendMailOld($to, $subject, $message, $file = false): array
-    {
-        $mikoPBXConfig        = new MikoPBXConfig();
-        $settings             = $mikoPBXConfig->getGeneralSettings();
-        $enable_notifications = $settings['MailEnableNotifications'];
-        if ("$enable_notifications" != "1") {
-            return ['result' => 'ERROR', 'message' => 'Notifications is not enable...'];
-        }
-        $result = [];
-
-        $subject = str_replace(':', '&brvbar;', $subject);
-        $subject = str_replace("", '', $subject);
-        $subject = str_replace("\n", '&#010;', $subject);
-
-        $message = str_replace(':', '&#013;', $message);
-        $message = str_replace("", '', $message);
-        $message = str_replace("\n", '&brvbar;', $message);
-
-        $EOL       = "\r\n";
-        $separator = md5(uniqid(time(), true));
-
-        $bodyMail = "--$separator{$EOL}";
-        $bodyMail .= "Content-type: text/html; charset='utf-8'{$EOL}";
-        $bodyMail .= "{$message} <hr>\n\n{$EOL}";
-        $bodyMail .= "--{$separator}{$EOL}";
-
-        if ($file && is_file($file)) {
-            $fileRead      = fopen($file, "r");
-            $contentFile   = fread($fileRead, filesize($file));
-            $file_name_b64 = base64_encode(basename($file));
-            fclose($fileRead);
-
-            $bodyMail .= "Content-Type: application/octet-stream; name==?utf-8?B?{$file_name_b64}?={$EOL}";
-            $bodyMail .= "Content-Transfer-Encoding: base64{$EOL}";
-            $bodyMail .= "Content-Disposition: attachment; filename==?utf-8?B?{$file_name_b64}?={$EOL}{$EOL}";
-            $bodyMail .= chunk_split(base64_encode($contentFile)) . "{$EOL}";
-            $bodyMail .= "--" . $separator . "--{$EOL}";
-        }
-
-        if (isset($settings['MailSMTPSenderAddress']) && trim($settings['MailSMTPSenderAddress']) != '') {
-            $from_address = $settings['MailSMTPSenderAddress'];
-        } else {
-            $from_address = $settings['MailSMTPUsername'];
-        }
-
-        $headers_arr = [
-            'From'         => "System Notifications <{$from_address}>",
-            'Date'         => "" . date("r"),
-            'Content-Type' => "multipart/mixed; boundary=\"$separator\"",
-        ];
-        $headers     = '';
-        foreach ($headers_arr as $key => $value) {
-            $headers .= "{$key}: {$value}{$EOL}";
-        }
-        $mail_sent        = mail($to, $subject, $bodyMail, $headers);
-        $result['result'] = ($mail_sent) ? 'Success' : 'ERROR';
-        if ( ! $mail_sent) {
-            Util::mwExec('logread | grep msmtp | tail -n 1', $arr);
-            $result['message'] = implode(' ', $arr);
-        }
-
-        return $result;
-    }
-
-    /**
      * Отправка сообщения с использованием PHPMailer
      *
      * @param      $to
@@ -100,6 +26,7 @@ class Notifications
      * @param bool $filename
      *
      * @return array
+     * @throws \PHPMailer\PHPMailer\Exception
      */
     public static function sendMail($to, $subject, $message, $filename = false): array
     {
@@ -109,7 +36,7 @@ class Notifications
         $result               = [];
 
         if ("$enable_notifications" != "1") {
-            return ['result' => 'ERROR', 'message' => 'Notifications is not enable...'];
+            return ['result' => 'ERROR', 'message' => 'Notifications disabled...'];
         }
 
         if (isset($settings['MailSMTPSenderAddress']) && trim($settings['MailSMTPSenderAddress']) != '') {
@@ -152,7 +79,7 @@ class Notifications
             }
 
             if (empty($settings['MailSMTPFromUsername'])) {
-                $from_name = 'Askozia Notification';
+                $from_name = 'MikoPBX Notification';
             } else {
                 $from_name = $settings['MailSMTPFromUsername'];
             }

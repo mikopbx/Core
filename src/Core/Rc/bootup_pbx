@@ -12,7 +12,7 @@ use MikoPBX\Core\System\{
     Util,
     SystemLoader
 };
-require_once('globals.php');
+require_once('Globals.php');
 
 Util::echoWithSyslog(' - Start /etc/rc/bootup_pbx ...'.PHP_EOL);
 while (true){

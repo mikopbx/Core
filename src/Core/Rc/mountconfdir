@@ -16,7 +16,7 @@ use MikoPBX\Core\System\{
     Storage
 };
 
-require_once('globals.php');
+require_once('Globals.php');
 
 $NoCfDevice = <<<EOD
 

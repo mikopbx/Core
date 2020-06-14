@@ -154,15 +154,10 @@ class Firewall
 
         $old_dir_db = '/cf/fail2ban';
         $dir_db     = self::getFail2banDbDir();
-
+        Util::mwMkdir($dir_db);
         // Создаем рабочие каталоги.
         $db_bd_dir = dirname($res_file);
-        if ( ! is_dir($db_bd_dir) && ! mkdir($db_bd_dir, 0755, true) && ! is_dir($db_bd_dir)) {
-            Util::logMsgDb('Fail2ban', 'Error create dir ' . $db_bd_dir);
-        }
-        if ( ! is_dir($dir_db) && ! mkdir($dir_db, 0755, true) && ! is_dir($dir_db)) {
-            Util::logMsgDb('Fail2ban', 'Error create dir ' . $dir_db);
-        }
+        Util::mwMkdir($db_bd_dir);
 
         $create_link = false;
 
@@ -205,9 +200,7 @@ class Firewall
         } else {
             $db_dir = "/var/spool/fail2ban";
         }
-        if ( ! is_dir($db_dir) && ! mkdir($db_dir, 0755, true) && ! is_dir($db_dir)) {
-            Util::logMsgDb('Fail2ban', 'Error create dir ' . $db_dir);
-        }
+        Util::mwMkdir($db_dir);
         if ( ! file_exists($db_dir)) {
             $db_dir = '/tmp';
         }
@@ -470,8 +463,9 @@ class Firewall
      */
     private function fail2banIsRunning(): bool
     {
-        $res_ping = Util::mwExec('fail2ban-client ping');
-        $res_stat = Util::mwExec('fail2ban-client status');
+        $fail2banPath = Util::which('fail2ban-client');
+        $res_ping = Util::mwExec("{$fail2banPath} ping");
+        $res_stat = Util::mwExec("{$fail2banPath} status");
 
         $result = false;
         if ($res_ping === 0 && $res_stat === 0) {
@@ -588,7 +582,8 @@ class Firewall
         $path_sock = '/var/run/fail2ban/fail2ban.sock';
         if (file_exists($path_sock) && filetype($path_sock) === 'socket') {
             $out = [];
-            Util::mwExec("fail2ban-client set {$jail} unbanip {$ip} 2>&1", $out);
+            $fail2banPath = Util::which('fail2ban-client');
+            Util::mwExec("{$fail2banPath} set {$jail} unbanip {$ip} 2>&1", $out);
             $res_data = trim(implode('', $out));
             if ($res_data !== $ip && $res_data !== "IP $ip is not banned") {
                 $res['message'] = 'Error fail2ban-client. ' . $res_data;

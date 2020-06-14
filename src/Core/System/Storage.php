@@ -84,12 +84,7 @@ class Storage
         }
 
         $tmp_dir = '/tmp/mnt_' . time();
-
-        if ( ! file_exists($tmp_dir) && ! mkdir($tmp_dir, 0777, true) && ! is_dir($tmp_dir)) {
-            Util::sysLogMsg('Storage', 'Unable to create directory ' . $tmp_dir);
-
-            return $result;
-        }
+        Util::mwMkdir($tmp_dir);
         $out = [];
 
         $storage  = new Storage();
@@ -234,9 +229,7 @@ class Storage
      */
     public static function mountSftpDisk($host, $port, $user, $pass, $remout_dir, $local_dir): bool
     {
-        if ( ! file_exists($local_dir) && ! mkdir($local_dir, 0777, true) && ! is_dir($local_dir)) {
-            return false;
-        }
+        Util::mwMkdir($local_dir);
 
         $out     = [];
         $timeoutPath = Util::which('timeout');
@@ -271,9 +264,7 @@ class Storage
      */
     public static function mountFtp($host, $port, $user, $pass, $remout_dir, $local_dir): bool
     {
-        if ( ! file_exists($local_dir) && ! mkdir($local_dir, 0777, true) && ! is_dir($local_dir)) {
-            return false;
-        }
+        Util::mwMkdir($local_dir);
         $out = [];
 
         // Собираем строку подключения к ftp.
@@ -348,14 +339,16 @@ class Storage
      */
     public static function umountDisk($dir): bool
     {
+        $umountPath = Util::which('umount');
+        $rmPath = Util::which('rm');
         if (self::isStorageDiskMounted($dir)) {
             Util::mwExec("/etc/rc/shell_functions.sh 'killprocesses' '$dir' -TERM 0");
-            Util::mwExec("umount {$dir}");
+            Util::mwExec("{$umountPath} {$dir}");
         }
         $result = ! self::isStorageDiskMounted($dir);
         if ($result && file_exists($dir)) {
             // Если диск не смонтирован, то удаляем каталог.
-            Util::mwExec("rm -rf '{$dir}'");
+            Util::mwExec("{$rmPath} -rf '{$dir}'");
         }
 
         return $result;
@@ -372,9 +365,11 @@ class Storage
     public function formatDiskLocal($device, $bg = false)
     {
         openlog("storage", LOG_NDELAY, LOG_DAEMON);
+        $echoPath = Util::which('echo');
+        $fdiskPath = Util::which('fdisk');
         // overwrite with fresh DOS partition table
         Util::mwExec(
-            "echo \"o\n" .
+            "{$echoPath} \"o\n" .
             // create new
             "n\n" .
             // primary partition
@@ -397,7 +392,7 @@ class Storage
             */
             // and write changes
             "w\n" .
-            "\" | fdisk " . $device,
+            "\" | {$fdiskPath} " . $device,
             $out,
             $retval
         );
@@ -817,9 +812,7 @@ class Storage
         if (self::isStorageDiskMounted("/dev/{$dev} ")) {
             return true;
         }
-        if ( ! file_exists($dir) && ! mkdir($dir, 0777, true) && ! is_dir($dir)) {
-            return false;
-        }
+        Util::mwMkdir($dir);
 
         if ( ! file_exists($dir)) {
             Util::sysLogMsg('Storage', "Unable mount $dev $format to $dir. Unable create dir.");
@@ -880,9 +873,7 @@ class Storage
             $conf        .= "{$str_uid} /storage/usbdisk{$disk['id']} {$format_p4} async,rw 0 0\n";
             $is_mounted  = self::isStorageDiskMounted("/storage/usbdisk{$disk['id']}");
             $mount_point = "/storage/usbdisk{$disk['id']}";
-            if ( ! file_exists($mount_point)) {
-                Util::mwExec("mkdir -p {$mount_point}");
-            }
+            Util::mwMkdir($mount_point);
         }
         $this->saveFstab($conf);
         $this->createWorkDirs();
@@ -976,7 +967,7 @@ class Storage
     {
         $varEtcPath = $this->config->path('core.varEtcPath');
         // Точка монтирования доп. дисков.
-        Util::mwExec('mkdir -p /storage/');
+        Util::mwMkdir('/storage/');
         if ( ! file_exists($varEtcPath . '/cfdevice')) {
             return;
         }
@@ -1036,7 +1027,7 @@ class Storage
         }
 
         if ( ! empty($path)) {
-            Util::mwExec("mkdir -p $path");
+            Util::mwMkdir($path);
         }
 
         $jsCacheDir = appPath('sites/admin-cabinet/assets/js/cache');
@@ -1059,7 +1050,7 @@ class Storage
         Util::createUpdateSymlink($this->config->path('core.phpSessionPath'), '/var/lib/php/session');
         Util::createUpdateSymlink($this->config->path('core.tempPath'), '/ultmp');
 
-        $filePath = appPath('src/ext/lua/asterisk/extensions.lua');
+        $filePath = appPath('src/Core/Asterisk/Configs/lua/extensions.lua');
         Util::createUpdateSymlink($filePath, '/etc/asterisk/extensions.lua');
 
         // Create symlinks to AGI-BIN

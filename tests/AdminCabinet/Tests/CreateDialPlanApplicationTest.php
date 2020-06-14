@@ -87,7 +87,7 @@ n,Goto(5)',
             'hint'=>'10000123',
             'type'=>"php",
             'applicationlogic'=>'<?php
-require_once \'globals.php\';
+require_once \'Globals.php\';
 require_once \'phpagi.php\';
 
 $ivr    = new SmartIVR();

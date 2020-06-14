@@ -19,7 +19,8 @@ use MikoPBX\Core\Asterisk\Configs\{ExtensionsConf,
     ModulesConf,
     MusicOnHoldConf,
     SIPConf,
-    VoiceMailConf};
+    VoiceMailConf
+};
 use MikoPBX\Core\Config\RegisterDIServices;
 use MikoPBX\Core\Workers\WorkerAmiListener;
 use MikoPBX\Core\Workers\WorkerCallEvents;
@@ -105,7 +106,7 @@ class PBX
 
     public static function rotatePbxLog($f_name): void
     {
-        $di = Di::getDefault();
+        $di           = Di::getDefault();
         $asteriskPath = Util::which('asterisk');
         if ($di === null) {
             return;
@@ -148,10 +149,10 @@ class PBX
     {
         $featuresConf = new FeaturesConf();
         $featuresConf->generateConfig();
-        $result  = [
+        $result       = [
             'result' => 'Success',
         ];
-        $arr_out = [];
+        $arr_out      = [];
         $asteriskPath = Util::which('asterisk');
         Util::mwExec("{$asteriskPath} -rx 'module reload features'", $arr_out);
         $out = implode(' ', $arr_out);
@@ -172,10 +173,10 @@ class PBX
     {
         $featuresConf = new FeaturesConf();
         $featuresConf->generateConfig();
-        $result  = [
+        $result       = [
             'result' => 'Success',
         ];
-        $arr_out = [];
+        $arr_out      = [];
         $asteriskPath = Util::which('asterisk');
         Util::mwExec("{$asteriskPath} -rx 'core reload'", $arr_out);
         $out = implode(' ', $arr_out);
@@ -194,17 +195,17 @@ class PBX
      */
     public static function managerReload(): array
     {
-        $managerCong= new ManagerConf();
+        $managerCong = new ManagerConf();
         $managerCong->generateConfig();
 
-        $httpConf= new HttpConf();
+        $httpConf = new HttpConf();
         $httpConf->generateConfig();
 
-        $result  = [
+        $result       = [
             'result' => 'Success',
             'data'   => '',
         ];
-        $arr_out = [];
+        $arr_out      = [];
         $asteriskPath = Util::which('asterisk');
         Util::mwExec("{$asteriskPath} -rx 'module reload manager'", $arr_out);
         $out = implode(' ', $arr_out);
@@ -245,10 +246,10 @@ class PBX
     {
         $o = new VoiceMailConf();
         $o->generateConfig();
-        $result  = [
+        $result       = [
             'result' => 'Success',
         ];
-        $arr_out = [];
+        $arr_out      = [];
         $asteriskPath = Util::which('asterisk');
         Util::mwExec("{$asteriskPath} -rx 'voicemail reload'", $arr_out);
         $out = implode(' ', $arr_out);
@@ -264,7 +265,7 @@ class PBX
     {
         $pbx = new ModulesConf();
         $pbx->generateConfig();
-        $arr_out = [];
+        $arr_out      = [];
         $asteriskPath = Util::which('asterisk');
         Util::mwExec("{$asteriskPath} -rx 'core restart now'", $arr_out);
 
@@ -273,7 +274,6 @@ class PBX
             'data'   => '',
         ];
     }
-
 
 
     public static function checkCodec($name, $desc, $type): void
@@ -287,6 +287,128 @@ class PBX
             $codec->description = $desc;
             $codec->save();
         }
+    }
+
+    /**
+     * Reload SIP
+     */
+    public static function sipReload(): array
+    {
+        $di     = Di::getDefault();
+        $result = [
+            'result'  => 'ERROR',
+            'message' => '',
+        ];
+        if ($di === null) {
+            return $result;
+        }
+        $network = new Network();
+
+        $topology    = 'public';
+        $extipaddr   = '';
+        $exthostname = '';
+        $networks    = $network->getEnabledLanInterfaces();
+        foreach ($networks as $if_data) {
+            $lan_config = $network->getInterface($if_data['interface']);
+            if (null === $lan_config['ipaddr'] || null === $lan_config['subnet']) {
+                continue;
+            }
+            if (trim($if_data['internet']) === '1') {
+                $topology    = trim($if_data['topology']);
+                $extipaddr   = trim($if_data['extipaddr']);
+                $exthostname = trim($if_data['exthostname']);
+            }
+        }
+        $old_hash   = '';
+        $varEtcPath = $di->getShared('config')->path('core.varEtcPath');
+        if (file_exists($varEtcPath . '/topology_hash')) {
+            $old_hash = file_get_contents($varEtcPath . '/topology_hash');
+        }
+        $now_hadh = md5($topology . $exthostname . $extipaddr);
+
+        $sip = new SIPConf();
+        $sip->generateConfig();
+
+
+        $out = [];
+        if ($old_hash === $now_hadh) {
+            $asteriskPath = Util::which('asterisk');
+            Util::mwExec("{$asteriskPath} -rx 'module reload acl'", $out);
+            Util::mwExec("{$asteriskPath} -rx 'core reload'", $out);
+            $out_data = trim(implode('', $out));
+            if ($out_data !== '') {
+                $result['message'] .= $out_data;
+            }
+        } else {
+            // Завершаем каналы.
+            $asteriskPath = Util::which('asterisk');
+            Util::mwExec("{$asteriskPath} -rx 'channel request hangup all'", $out);
+            usleep(500000);
+            Util::mwExec("{$asteriskPath} -rx 'core restart now'", $out);
+            $out_data = trim(implode('', $out));
+            if ($out_data !== '') {
+                $result['message'] .= $out_data;
+            }
+        }
+
+        if ($result['message'] === '') {
+            $result['result'] = 'Success';
+        }
+
+        return $result;
+    }
+
+    /**
+     * Перезапуск модуля IAX2;
+     */
+    public static function iaxReload(): array
+    {
+        $result = [
+            'result' => 'ERROR',
+        ];
+        $iax    = new IAXConf();
+        $iax->generateConfig();
+        $asteriskPath = Util::which('asterisk');
+        Util::mwExec("{$asteriskPath} -rx 'iax2 reload'");
+        $result['result'] = 'Success';
+
+        return $result;
+    }
+
+    /**
+     * Ожидаем полной загрузки asterisk.
+     *
+     * @return bool
+     */
+    public static function waitFullyBooted(): bool
+    {
+        $time_start = microtime(true);
+        $result     = false;
+        $out        = [];
+        if (Util::isSystemctl()) {
+            $options = '';
+        } else {
+            $options = '-t';
+        }
+        $timeoutPath  = Util::which('timeout');
+        $asteriskPath = Util::which('asterisk');
+        while (true) {
+            $execResult = Util::mwExec(
+                "{$timeoutPath} {$options} 1 {$asteriskPath} -rx'core waitfullybooted'",
+                $out
+            );
+            if ($execResult === 0 && implode('', $out) === 'Asterisk has fully booted.') {
+                $result = true;
+                break;
+            }
+            $time = microtime(true) - $time_start;
+            if ($time > 60) {
+                Util::sysLogMsg(__CLASS__, 'Error: Asterisk has not booted');
+                break;
+            }
+        }
+
+        return $result;
     }
 
     /**
@@ -334,9 +456,9 @@ class PBX
      */
     public static function dialplanReload(): array
     {
-        $di            = Di::getDefault();
-        $booting       = $di->getRegistry()->booting;
-        $result = [
+        $di      = Di::getDefault();
+        $booting = $di->getRegistry()->booting;
+        $result  = [
             'result' => 'ERROR',
         ];
         if ($di === null) {
@@ -346,97 +468,11 @@ class PBX
         $extensions = new ExtensionsConf();
         $extensions->generateConfig();
         if ($booting !== true) {
-            $path_asterisk  = Util::which('asterisk');
+            $path_asterisk = Util::which('asterisk');
             Util::mwExec("{$path_asterisk} -rx 'dialplan reload'");
             Util::mwExec("{$path_asterisk} -rx 'module reload pbx_lua.so'");
         }
 
-        $result['result'] = 'Success';
-
-        return $result;
-    }
-
-    /**
-     * Reload SIP
-     */
-    public static function sipReload(): array
-    {
-        $di            = Di::getDefault();
-        $result = [
-            'result'  => 'ERROR',
-            'message' => '',
-        ];
-        if ($di === null) {
-            return $result;
-        }
-        $network = new Network();
-
-        $topology    = 'public';
-        $extipaddr   = '';
-        $exthostname = '';
-        $networks    = $network->getEnabledLanInterfaces();
-        foreach ($networks as $if_data) {
-            $lan_config = $network->getInterface($if_data['interface']);
-            if (null === $lan_config['ipaddr'] || null === $lan_config['subnet']) {
-                continue;
-            }
-            if (trim($if_data['internet']) === '1') {
-                $topology    = trim($if_data['topology']);
-                $extipaddr   = trim($if_data['extipaddr']);
-                $exthostname = trim($if_data['exthostname']);
-            }
-        }
-        $old_hash   = '';
-        $varEtcPath = $di->getShared('config')->path('core.varEtcPath');
-        if (file_exists($varEtcPath . '/topology_hash')) {
-            $old_hash = file_get_contents($varEtcPath . '/topology_hash');
-        }
-        $now_hadh = md5($topology . $exthostname . $extipaddr);
-
-        $sip              = new SIPConf();
-        $sip->generateConfig();
-
-
-        $out = [];
-        if ($old_hash === $now_hadh) {
-            $asteriskPath = Util::which('asterisk');
-            Util::mwExec("{$asteriskPath} -rx 'module reload acl'", $out);
-            Util::mwExec("{$asteriskPath} -rx 'core reload'", $out);
-            $out_data = trim(implode('', $out));
-            if ($out_data !== '') {
-                $result['message'] .= $out_data;
-            }
-        } else {
-            // Завершаем каналы.
-            $asteriskPath = Util::which('asterisk');
-            Util::mwExec("{$asteriskPath} -rx 'channel request hangup all'", $out);
-            usleep(500000);
-            Util::mwExec("{$asteriskPath} -rx 'core restart now'", $out);
-            $out_data = trim(implode('', $out));
-            if ($out_data !== '') {
-                $result['message'] .= $out_data;
-            }
-        }
-
-        if ($result['message'] === '') {
-            $result['result'] = 'Success';
-        }
-
-        return $result;
-    }
-
-    /**
-     * Перезапуск модуля IAX2;
-     */
-    public static function iaxReload(): array
-    {
-        $result = [
-            'result' => 'ERROR',
-        ];
-        $iax    = new IAXConf();
-        $iax->generateConfig();
-        $asteriskPath = Util::which('asterisk');
-        Util::mwExec("{$asteriskPath} -rx 'iax2 reload'");
         $result['result'] = 'Success';
 
         return $result;

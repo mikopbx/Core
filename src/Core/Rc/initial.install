@@ -14,7 +14,7 @@ use MikoPBX\Core\System\{
     System,
     MikoPBXConfig
 };
-require_once('globals.php');
+require_once('Globals.php');
 
 $fp = fopen('php://stdin', 'rb');
 $storage = new Storage();

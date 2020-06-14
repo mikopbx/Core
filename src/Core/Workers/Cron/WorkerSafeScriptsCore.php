@@ -8,10 +8,10 @@
 
 namespace MikoPBX\Core\Workers\Cron;
 
-require_once 'globals.php';
+require_once 'Globals.php';
 
 use Generator;
-use MikoPBX\Core\System\{BeanstalkClient, Firewall, Util};
+use MikoPBX\Core\System\{BeanstalkClient, Firewall, PBX, Util};
 use MikoPBX\Core\Workers\WorkerAmiListener;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\Workers\WorkerCallEvents;
@@ -31,33 +31,31 @@ class WorkerSafeScriptsCore extends WorkerBase
     public const CHECK_BY_AMI = 'checkWorkerAMI';
 
     /**
-     * Start all workers
-     * @param mixed $argv
+     * Prepare workers list to start and restart
+     * We collect core and modules workers
      *
-     * @throws \Throwable
+     * @return array
      */
-    public function start($argv): void
+    private function prepareWorkersList(): array
     {
-        $this->waitFullyBooted();
+        $arrWorkers = [
+            self::CHECK_BY_AMI       =>
+                [
+                    WorkerAmiListener::class,
+                ],
+            self::CHECK_BY_BEANSTALK =>
+                [
+                    WorkerApiCommands::class,
+                    WorkerCdr::class,
+                    WorkerCallEvents::class,
+                    WorkerModelsEvents::class,
+                    WorkerLicenseChecker::class,
+                    WorkerNotifyByEmail::class,
+                    WorkerNotifyError::class,
+                    WorkerLongPoolAPI::class,
+                ],
 
-        ReactKernel::start(
-            function () {
-                // Parallel execution https://github.com/recoilphp/recoil
-                yield [
-                    $this->checkWorkerBeanstalk(WorkerApiCommands::class),
-                    $this->checkWorkerBeanstalk(WorkerCdr::class),
-                    $this->checkWorkerBeanstalk(WorkerCallEvents::class),
-                    $this->checkWorkerBeanstalk(WorkerModelsEvents::class),
-                    $this->checkWorkerAMI(WorkerAmiListener::class), // Проверка листнера UserEvent
-                    $this->checkWorkerBeanstalk(WorkerLicenseChecker::class),
-                    $this->checkWorkerBeanstalk(WorkerNotifyByEmail::class),
-                    $this->checkWorkerBeanstalk(WorkerNotifyError::class),
-                    $this->checkWorkerBeanstalk(WorkerLongPoolAPI::class),
-                ];
-            }
-        );
-
-        // Modules workers
+        ];
         $arrModulesWorkers = [];
         $pbxConfModules    = $this->di->getShared('pbxConfModules');
         foreach ($pbxConfModules as $pbxConfModule) {
@@ -65,87 +63,93 @@ class WorkerSafeScriptsCore extends WorkerBase
         }
         $arrModulesWorkers = array_merge(...$arrModulesWorkers);
         if (count($arrModulesWorkers) > 0) {
-            ReactKernel::start(
-                function () use ($arrModulesWorkers) {
-                    // Parallel execution https://github.com/recoilphp/recoil
-                    foreach ($arrModulesWorkers as $moduleWorker) {
-                        if ($moduleWorker['type'] === self::CHECK_BY_AMI) {
-                            yield $this->checkWorkerAMI($moduleWorker['worker']);
-                        } else {
-                            yield $this->checkWorkerBeanstalk($moduleWorker['worker']);
+            foreach ($arrModulesWorkers as $moduleWorker) {
+                $arrWorkers[$moduleWorker['type']][] = $moduleWorker['worker'];
+            }
+        }
+
+        return $arrWorkers;
+    }
+
+    /**
+     * Restart all workers in separate process,
+     * we use this method after module install or delete
+     */
+    public static function restartAllWorkers(): void
+    {
+        $workerSafeScriptsPath = Util::getFilePathByClassName(__CLASS__);
+        $phpPath = Util::which('php');
+        $WorkerSafeScripts = "{$phpPath} -f {$workerSafeScriptsPath} restart > /dev/null 2> /dev/null";
+        Util::mwExecBg($WorkerSafeScripts);
+    }
+
+    /**
+     * Restart all registered workers
+     */
+    public function restart(): void
+    {
+        $arrWorkers = $this->prepareWorkersList();
+        ReactKernel::start(
+            function () use ($arrWorkers) {
+                // Parallel execution https://github.com/recoilphp/recoil
+                foreach ($arrWorkers as $workersWithCurrentType) {
+                    foreach ($workersWithCurrentType as $worker) {
+                        yield $this->restartWorker($worker);
+                    }
+                }
+            }
+        );
+    }
+
+    /**
+     * Restart worker by class name
+     *
+     * @param $workerClassName
+     *
+     * @return \Generator|null
+     */
+    public function restartWorker($workerClassName): ?Generator
+    {
+        Util::restartPHPWorker($workerClassName);
+        yield;
+    }
+
+    /**
+     * Start all workers or check them
+     *
+     * @param mixed $argv
+     *
+     * @throws \Throwable
+     */
+    public function start($argv): void
+    {
+        PBX::waitFullyBooted();
+
+        $arrWorkers = $this->prepareWorkersList();
+        ReactKernel::start(
+
+            function () use ($arrWorkers) {
+                // Parallel execution https://github.com/recoilphp/recoil
+                foreach ($arrWorkers as $workerType => $workersWithCurrentType) {
+                    foreach ($workersWithCurrentType as $worker) {
+                        if ($workerType === self::CHECK_BY_BEANSTALK) {
+                            yield $this->checkWorkerBeanstalk($worker);
+                        } elseif ($workerType === self::CHECK_BY_AMI) {
+                            yield $this->checkWorkerAMI($worker);
                         }
                     }
                 }
-            );
-        }
+            }
+        );
 
         Firewall::checkFail2ban();
     }
 
-    /**
-     * Restart all workers after module installation in separate process
-     */
-    public static function restartAllWorkers(): void
-    {
-        $workerSafeScriptsPath = Util::getFilePathByClassName(WorkerSafeScriptsCore::class);
-        $phpPath = Util::which('php');
-        $command = "{$phpPath} -f {$workerSafeScriptsPath} restart > /dev/null 2> /dev/null";
-        Util::mwExecBg($command);
-    }
-    /**
-     * Restart all workers
-     */
-    public function restart(): void
-    {
-        $psPath    = Util::which('ps');
-        $grepPath  = Util::which('grep');
-        $awkPath   = Util::which('awk');
-        $xargsPath = Util::which('xargs');
-        $killPath  = Util::which('kill');
-        $command   = "{$psPath} -ef | {$grepPath} 'Workers\\\\Worker' | {$grepPath} -v grep | {$grepPath} -v WorkerSafeScriptsCore | {$awkPath} '{print $1}' | {$xargsPath} -r {$killPath} -9";
-        Util::mwExec($command);
-        $this->start('start');
-    }
 
 
     /**
-     * Ожидаем полной загрузки asterisk.
-     *
-     * @return bool
-     */
-    private function waitFullyBooted(): bool
-    {
-        $time_start = microtime(true);
-        $result     = false;
-        $out        = [];
-        if (Util::isSystemctl()) {
-            $options = '';
-        } else {
-            $options = '-t';
-        }
-        $timeoutPath  = Util::which('timeout');
-        $asteriskPath = Util::which('asterisk');
-        while (true) {
-            $execResult = Util::mwExec(
-                "{$timeoutPath} {$options} 1 {$asteriskPath} -rx'core waitfullybooted'",
-                $out
-            );
-            if ($execResult === 0 && implode('', $out) === 'Asterisk has fully booted.') {
-                $result = true;
-                break;
-            }
-            $time = microtime(true) - $time_start;
-            if ($time > 60) {
-                Util::sysLogMsg(__CLASS__, 'Error: Asterisk has not booted');
-                break;
-            }
-        }
-
-        return $result;
-    }
-
-    /**
-     * Проверка работы сервиса через beanstalk.
+     * Ping worker to check it, if it dead we kill and start it again
+     * We use Beanstalk queue to send ping and check workers
      *
      * @param $workerClassName
      *
@@ -174,9 +178,9 @@ class WorkerSafeScriptsCore extends WorkerBase
         yield;
     }
 
-
     /**
-     * Check AMI listener
+     * Ping worker to check it, if it dead we kill and start it again
+     * We use AMI UserEvent to send ping and check workers
      *
      * @param $workerClassName - service name
      * @param $level           - recursion level
@@ -213,14 +217,13 @@ class WorkerSafeScriptsCore extends WorkerBase
         }
         yield;
     }
-
 }
 
 // Start worker process
 $workerClassname = WorkerSafeScriptsCore::class;
 cli_set_process_title($workerClassname);
 try {
-    if (isset($argv) && count($argv) > 1){
+    if (isset($argv) && count($argv) > 1) {
         $worker = new $workerClassname();
         if (($argv[1] === 'start')) {
             $worker->start($argv);

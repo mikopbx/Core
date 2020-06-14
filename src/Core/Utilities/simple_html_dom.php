@@ -2030,5 +2030,3 @@ class simple_html_dom
         $this->load_file($args);
     }
 }
-
-?>

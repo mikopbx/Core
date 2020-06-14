@@ -7,23 +7,21 @@
  */
 
 namespace MikoPBX\Core\Workers;
-require_once 'globals.php';
+require_once 'Globals.php';
 
 use MikoPBX\Core\Workers\Cron\WorkerSafeScriptsCore;
 use MikoPBX\Core\System\{MikoPBXConfig, System, Util};
-use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
-use Phalcon\Exception;
 
 
 class WorkerDownloader extends WorkerBase
 {
-    private $old_memory_limit;
-    private $progress = 0;
-    private $settings;
-    private $progress_file = '';
-    private $error_file = '';
-    private $installed_file = '';
-    private $file_size = 0;
+    private string $old_memory_limit;
+    private int $progress = 0;
+    private array $settings;
+    private string $progress_file = '';
+    private string $error_file = '';
+    private string $installed_file = '';
+    private int$file_size = 0;
 
     /**
      * WorkerDownloader entry point.
@@ -48,10 +46,7 @@ class WorkerDownloader extends WorkerBase
         $this->progress_file  = $temp_dir . '/progress';
         $this->installed_file = $temp_dir . '/installed';
         $this->error_file     = $temp_dir . '/error';
-
-        if ( ! is_dir($temp_dir) && ! mkdir($temp_dir, 0777, true) && ! is_dir($temp_dir)) {
-            Util::sysLogMsg('FileWorkerDownloader', 'Error on create module folder');
-        }
+        Util::mwMkdir($temp_dir);
 
         if ($this->getFile()) {
             $this->action();
@@ -71,7 +66,8 @@ class WorkerDownloader extends WorkerBase
         if (strpos($this->settings['url'], 'file://') !== false) {
             // Это локальный файл.
             $src_file = str_replace('file://', '', $this->settings['url']);
-            Util::mwExec("mv {$src_file} {$this->settings['res_file']}");
+            $mvPath = Util::which('mv');
+            Util::mwExec("{$mvPath} {$src_file} {$this->settings['res_file']}");
 
             if (file_exists($this->settings['res_file'])) {
                 file_put_contents($this->progress_file, 100);
@@ -84,7 +80,7 @@ class WorkerDownloader extends WorkerBase
             return $result;
         }
         if (file_exists($this->settings['res_file'])) {
-            Util::mwExec("rm -rf {$this->settings['res_file']}");
+            unlink($this->settings['res_file']);
         }
         $this->file_size = $this->remotefileSize($this->settings['url']);
 
@@ -155,7 +151,7 @@ class WorkerDownloader extends WorkerBase
 
             return;
         }
-
+        $rmPath = Util::which('rm');
         // MD5 проверили, подтверждаем загрузку файла на 100%
         if ('module_install' === $this->settings['action']) {
             $error            = false;
@@ -177,7 +173,7 @@ class WorkerDownloader extends WorkerBase
             }
 
             // Uninstall module with keep settings and backup db
-            try {
+
                 if ($needBackup) {
                     $config  = new MikoPBXConfig();
                     $WEBPort = $config->getGeneralSettings('WEBPort');
@@ -197,18 +193,15 @@ class WorkerDownloader extends WorkerBase
                     curl_exec($ch);
                     curl_close($ch);
                 }
-            } catch (Exception $error) {
-                // Broken or very old module. Force uninstall.
-                Util::mwExec("rm -rf $currentModuleDir");
-            } finally {
+
                 if (is_dir($currentModuleDir)) {
                     // Broken or very old module. Force uninstall.
-                    Util::mwExec("rm -rf $currentModuleDir");
+                    Util::mwExec("{$rmPath} -rf {$currentModuleDir}");
                 }
-            }
 
-            Util::mwExec("7za e -spf -aoa -o$currentModuleDir {$this->settings['res_file']}");
-            Util::mwExec("chown www:www -R $currentModuleDir");
+            $semZaPath = Util::which('7za');
+            Util::mwExec("{$semZaPath} e -spf -aoa -o{$currentModuleDir} {$this->settings['res_file']}");
+            Util::addRegularWWWRights($currentModuleDir);
 
             if ( ! $error && class_exists($path_class) && method_exists($path_class, 'installModule')) {
                 $setup = new $path_class($this->settings['module']);
@@ -230,7 +223,7 @@ class WorkerDownloader extends WorkerBase
                 file_put_contents($this->progress_file, 100);
                 WorkerSafeScriptsCore::restartAllWorkers();
             }
-            Util::mwExec('rm -rf ' . $this->settings['res_file']);
+            Util::mwExec("{$rmPath} -rf {$this->settings['res_file']}");
         } elseif ('upgradeOnline' === $this->settings['action']) {
             sleep(3);
             unlink($this->progress_file);
@@ -273,7 +266,7 @@ class WorkerDownloader extends WorkerBase
      * @param $upload_size
      * @param $uploaded
      */
-    public function progress($resource, $download_size, $downloaded, $upload_size, $uploaded)
+    public function progress($resource, $download_size, $downloaded, $upload_size, $uploaded): void
     {
         if ($download_size === 0) {
             return;

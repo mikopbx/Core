@@ -539,5 +539,3 @@ class SubnetCalculator
         return $this->__tostring();
     }
 }
-
-?>

@@ -86,11 +86,7 @@ class ModulesDBConnectionsProvider extends DatabaseProviderBase implements Servi
 
                 // Create and connect database
                 $dbDir = "{$config->path('core.modulesDir')}/{$moduleUniqueId}/db";
-
-                if ( ! file_exists($dbDir) && ! mkdir($dbDir, 0777, true) && ! is_dir($dbDir)) {
-                    $this->messages[] = sprintf('Directory "%s" was not created', $dbDir);
-                    throw new Exception(sprintf('Directory "%s" was not created', $dbDir));
-                }
+                Util::mwMkdir($dbDir);
                 $dbFileName = "{$dbDir}/module.db";
                 $dbFileExistBeforeAttachToConnection = file_exists($dbFileName);
 

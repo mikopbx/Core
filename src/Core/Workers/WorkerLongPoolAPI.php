@@ -7,7 +7,7 @@
  */
 
 namespace MikoPBX\Core\Workers;
-require_once 'globals.php';
+require_once 'Globals.php';
 use MikoPBX\Common\Models\LongPollSubscribe;
 use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\Asterisk\Configs\{IAXConf, SIPConf};

@@ -766,7 +766,7 @@ return [
     'lic_MarketplaceImageHeader' => '图片来自我们的市场',
     'lic_MarketplaceAction' => '进行免费注册',
     'lic_LastQuestionHeader' => '许可证有问题怎么办',
-    'lic_LastQuestionAnswer' => '这不会影响调用，但可能会影响已安装的模块。<br>在<a href="https://lm.miko.ru"> https://lm.miko.ru < / a> <br>如果问题仍然存在，请参阅我们的<a href="https://wiki.mikopbx.com/licensing#faq_chavo" target="_blank">常见问题解答</a>或针对<a href =“ mailto：lic@miko.ru“> lic@miko.ru </a>我们一定会帮助解决此问题。',
+    'lic_LastQuestionAnswer' => '这不会影响调用，但可能会影响已安装的模块。<br>在<a href="https://lm.miko.ru"> https://lm.miko.ru < / a> <br>如果问题仍然存在，请参阅我们的<a href="https://wiki.mikopbx.com/licensing#faq_chavo" target="_blank">常见问题解答</a>或针对<a href ="mailto：lic@miko.ru"> lic@miko.ru </a>我们一定会帮助解决此问题。',
     'er_Home' => '转到开头',
     'rs_RestartPhoneSystem' => '重新加载集团电话',
     'rs_ShutDownPhoneSystem' => '关闭集团电话',

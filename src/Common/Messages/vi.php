@@ -55,7 +55,7 @@ return [
     'adv_AvailableNewVersionPBX' => 'Phiên bản mới của PBX có sẵn - <a href=\'%url%\'>%ver% </a>',
     'adv_ThisCopyIsNotRegistered' => 'Bản sao của chương trình này không được cấp phép - <a href=\'%url%\'> Kích hoạt miễn phí </a>',
     'adv_StorageDiskRunningOutOfFreeSpace' => 'Dung lượng đĩa trống hết trên ổ lưu trữ (%free% Mb) </a>',
-    'adv_ThisCopyHasLicensingTroubles' => 'Sự cố về giấy phép tổng đài:%error% - <a Hay" href=\'%url%\'> cách khắc phục </a>',
+    'adv_ThisCopyHasLicensingTroubles' => 'Sự cố về giấy phép tổng đài:%error% - <a target=\'_blank\' href=\'%url%\'> cách khắc phục </a>',
     'сal_Today' => 'Hôm nay',
     'сal_Yesterday' => 'Hôm qua',
     'сal_LastWeek' => '7 ngày qua',

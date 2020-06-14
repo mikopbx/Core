@@ -7,7 +7,7 @@ use MikoPBX\Core\System\{
     Network
 };
 
-require_once('globals.php');
+require_once('Globals.php');
 if (count($argv) === 2 && 'start' == $argv[1]) {
     $network = new Network();
     $network->resolvConfGenerate();

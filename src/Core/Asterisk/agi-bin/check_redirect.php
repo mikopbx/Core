@@ -11,7 +11,7 @@ use MikoPBX\Core\System\{BeanstalkClient, Util};
 use MikoPBX\Core\Workers\WorkerCdr;
 
 require_once 'phpagi.php';
-require_once 'globals.php';
+require_once 'Globals.php';
 
 $chan       = trim($argv[1]);
 $agi        = new AGI();

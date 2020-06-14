@@ -21,9 +21,7 @@ class LoggerConf extends ConfigClass
     protected function generateConfigProtected(): void
     {
         $logDir = System::getLogDir() . '/asterisk/';
-        if ( ! file_exists($logDir) && ! mkdir($logDir, 0777, true) && ! is_dir($logDir)) {
-            $logDir = '';
-        }
+        Util::mwMkdir($logDir);
         $conf = "[general]\n";
         $conf .= "queue_log = no\n";
         $conf .= "event_log = no\n";

@@ -61,10 +61,10 @@ class GetController extends BaseController
                 $downloadLink = $di->getShared('config')->path('adminApplication.downloadLink');
 
                 $result_dir = "{$downloadLink}/{$uid}";
-                Util::mwExec("mkdir -p {$result_dir}");
-
+                Util::mwMkdir($result_dir);
                 $link_name = md5($response['filename']) . '.' . Util::getExtensionOfFile($response['filename']);
-                Util::mwExec("ln -s {$response['filename']} {$result_dir}/{$link_name}");
+                $lnPath = Util::which('ln');
+                Util::mwExec("{$lnPath} -s {$response['filename']} {$result_dir}/{$link_name}");
                 $this->response->redirect("{$scheme}://{$host}:{$port}/download_link/{$uid}/{$link_name}");
                 $this->response->sendRaw();
             } else {

@@ -58,7 +58,7 @@ class PostController extends ModulesControllerBase
             } elseif ('unpack' === $actionName) {
                 $postData = json_decode($this->request->getRawBody(), true);
                 if ($postData && isset($postData['filename']) && file_exists($postData['filename'])) {
-                    Util::mwExec("cp '{$postData['filename']}' '{$module_file}'");
+                    copy($postData['filename'], $module_file);
                 }
             }
             if (file_exists($module_file)) {

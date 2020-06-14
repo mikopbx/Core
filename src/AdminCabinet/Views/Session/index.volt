@@ -1,7 +1,7 @@
 
 <div class="ui text container">
     <h1 class="ui left aligned header">
-        <img class="ui image" src="{{ urlToLogo }}" id="login-logo">
+        <img class="ui image" src="{{ urlToLogo }}" id="login-logo"/>
         <div class="content">
             {{ NameFromSettings }}
             <div class="sub header"> {{ DescriptionFromSettings }}</div>

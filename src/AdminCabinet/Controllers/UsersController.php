@@ -1,5 +1,5 @@
 <?php
-
+namespace MikoPBX\AdminCabinet\Controllers;
 use MikoPBX\AdminCabinet\Controllers\BaseController;
 use MikoPBX\Common\Models\Users;
 

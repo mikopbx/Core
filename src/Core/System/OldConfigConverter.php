@@ -9,8 +9,6 @@
 namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Models\{Extensions, ExternalPhones, NetworkFilters};
-use MikoPBX\Core\System\{Config};
-use MikoPBX\Core\Backup\WebAPIClient;
 
 
 /**
@@ -737,7 +735,7 @@ class OldConfigConverter
     /**
      * Создает конфигурацию в новом формате.
      */
-    public function makeConfig(): ?bool
+    public function makeConfig(): bool
     {
         $w_api = new WebAPIClient();
         $res   = $w_api->login();
@@ -787,6 +785,7 @@ class OldConfigConverter
         foreach ($this->data['ivr-menu'] as $key => $value) {
             $w_api->addIvrMenu($value);
         }
+        return true;
     }
 
 }

@@ -7,11 +7,12 @@
  */
 
 namespace MikoPBX\Core\Workers;
-require_once 'globals.php';
+
+require_once 'Globals.php';
 
 use MikoPBX\Common\Models\{CallDetailRecordsTmp, Users};
 use MikoPBX\Core\System\{BeanstalkClient, Util};
-use Phalcon\Exception;
+use Phalcon\Exception as ExceptionAlias;
 
 /**
  * Class WorkerCdr
@@ -54,14 +55,7 @@ class WorkerCdr extends WorkerBase
         $this->initSettings();
 
         while (true) {
-            $result = false;
-            try {
-                $result = $this->client_queue->request(json_encode($filter), 10);
-            } catch (Exception $e) {
-                $result = ($result === true) ? $result : false;
-                $error  = $e->getMessage();
-                Util::sysLogMsg(self::class . '_ERROR', $error);
-            }
+            $result = $this->client_queue->request(json_encode($filter), 10);
 
             if ($result !== false) {
                 $this->updateCdr();
@@ -79,15 +73,12 @@ class WorkerCdr extends WorkerBase
             if (empty($user->email)) {
                 continue;
             }
-            try {
-                foreach ($user->Extensions as $exten) {
-                    $this->internal_numbers[$exten->number] = [
-                        'email'    => $user->email,
-                        'language' => $user->language,
-                    ];
-                }
-            } catch (Exception $e) {
-                Util::sysLogMsg('WorkerCdr', $e->getMessage());
+
+            foreach ($user->Extensions as $exten) {
+                $this->internal_numbers[$exten->number] = [
+                    'email'    => $user->email,
+                    'language' => $user->language,
+                ];
             }
         }
     }

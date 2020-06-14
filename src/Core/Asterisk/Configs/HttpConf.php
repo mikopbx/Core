@@ -29,11 +29,7 @@ class HttpConf extends ConfigClass
 
         if ( ! empty($this->generalSettings['AJAMPortTLS'])) {
             $keys_dir = '/etc/asterisk/keys';
-            if ( ! is_dir($keys_dir) && ! mkdir($keys_dir) && ! is_dir($keys_dir)) {
-                Util::sysLogMsg('httpConfGenerate', sprintf('Directory "%s" was not created', $keys_dir));
-
-                return;
-            }
+            Util::mwMkdir($keys_dir);
             $WEBHTTPSPublicKey  = $this->generalSettings['WEBHTTPSPublicKey'];
             $WEBHTTPSPrivateKey = $this->generalSettings['WEBHTTPSPrivateKey'];
 
