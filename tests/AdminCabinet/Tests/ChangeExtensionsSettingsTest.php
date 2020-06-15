@@ -171,6 +171,7 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
 
         $this->clickModifyButtonOnRowWithText($params['username']);
+
         $this->changeTabOnCurrentPage('routing');
         $this->selectDropdownItem('fwd_ringlength', $params['fwd_ringlength']);
         $this->selectDropdownItem('fwd_forwardingonbusy', $params['fwd_forwardingonbusy']);

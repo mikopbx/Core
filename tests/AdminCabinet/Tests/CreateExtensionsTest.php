@@ -84,8 +84,8 @@ class CreateExtensionsTest extends MikoPBXTestsBase
             $this->assertMenuItemSelected('fwd_forwardingonbusy', $params['mobile']);
             $this->assertMenuItemSelected('fwd_forwarding', $params['mobile']);
             $this->assertMenuItemSelected('fwd_forwardingonunavailable', $params['mobile']);
-            $this->changeTabOnCurrentPage('general');
 
+            $this->changeTabOnCurrentPage('general');
             $this->assertMenuItemSelected('user_language', $params['user_language']);
             $this->assertInputFieldValueEqual('sip_secret',  $params['secret']);
 
