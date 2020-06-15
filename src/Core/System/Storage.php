@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 4 2020
+ * Written by Alexey Portnov, 6 2020
  */
 
 namespace MikoPBX\Core\System;
@@ -1019,50 +1019,42 @@ class Storage
      *
      * @return void
      */
-    private function createWorkDirs(): void
-    {
+    private function createWorkDirs(): void{
         $path = '';
         $mountPath = Util::which('mount');
         Util::mwExec("{$mountPath} -o remount,rw /offload 2> /dev/null");
 
+        $isLiveCd = file_exists('/offload/livecd');
         // Create dirs
         $arrConfig = $this->config->toArray();
         foreach ($arrConfig as $rootEntry) {
             foreach ($rootEntry as $key => $entry) {
-                if (stripos($key, 'path') === false
-                    && stripos($key, 'dir') === false
-                ) {
+                if (stripos($key, 'path') === false && stripos($key, 'dir') === false) {
                     continue;
                 }
 
                 if (file_exists($entry)) {
                     continue;
                 }
+                if($isLiveCd && strpos($entry, '/offload/') === 0){
+                    continue;
+                }
                 $path .= " $entry";
             }
         }
 
-        if ( ! empty($path)) {
+        if (!empty($path)) {
             Util::mwMkdir($path);
         }
 
         $jsCacheDir = appPath('sites/admin-cabinet/assets/js/cache');
-        Util::createUpdateSymlink(
-            $this->config->path('adminApplication.cacheDir') . '/js',
-            $jsCacheDir
-        );
+        Util::createUpdateSymlink($this->config->path('adminApplication.cacheDir') . '/js', $jsCacheDir);
 
         $cssCacheDir = appPath('sites/admin-cabinet/assets/css/cache');
-        Util::createUpdateSymlink(
-            $this->config->path('adminApplication.cacheDir') . '/css',
-            $cssCacheDir
-        );
+        Util::createUpdateSymlink($this->config->path('adminApplication.cacheDir') . '/css', $cssCacheDir);
 
         $imgCacheDir = appPath('sites/admin-cabinet/assets/img/cache');
-        Util::createUpdateSymlink(
-            $this->config->path('adminApplication.cacheDir') . '/img',
-            $imgCacheDir
-        );
+        Util::createUpdateSymlink($this->config->path('adminApplication.cacheDir') . '/img', $imgCacheDir);
         Util::createUpdateSymlink($this->config->path('core.phpSessionPath'), '/var/lib/php/session');
         Util::createUpdateSymlink($this->config->path('core.tempPath'), '/ultmp');
 
@@ -1075,8 +1067,8 @@ class Storage
 
         $roAgiBinFolder = appPath('src/Core/Asterisk/agi-bin');
         $files = glob("$roAgiBinFolder/*.{php}", GLOB_BRACE);
-        foreach($files as $file) {
-            $newFilename = $agiBinDir.'/'. pathinfo($file)['filename'];
+        foreach ($files as $file) {
+            $newFilename = $agiBinDir . '/' . pathinfo($file)['filename'];
             Util::createUpdateSymlink($file, $newFilename);
         }
 
