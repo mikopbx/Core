@@ -96,8 +96,9 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
 
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
         $this->clickModifyButtonOnRowWithText($params['username']);
+
         $this->changeTabOnCurrentPage('routing');
-        $this->assertMenuItemSelected('fwd_ringlength', '');
+        $this->assertInputFieldValueEqual('fwd_ringlength', '');
         $this->assertMenuItemSelected('fwd_forwardingonbusy', '');
         $this->assertMenuItemSelected('fwd_forwarding', '');
         $this->assertMenuItemSelected('fwd_forwardingonunavailable', '');
@@ -173,7 +174,7 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
         $this->clickModifyButtonOnRowWithText($params['username']);
 
         $this->changeTabOnCurrentPage('routing');
-        $this->selectDropdownItem('fwd_ringlength', $params['fwd_ringlength']);
+        $this->changeInputField('fwd_ringlength', $params['fwd_ringlength']);
         $this->selectDropdownItem('fwd_forwardingonbusy', $params['fwd_forwardingonbusy']);
         $this->selectDropdownItem('fwd_forwarding', $params['fwd_forwarding']);
         $this->selectDropdownItem('fwd_forwardingonunavailable', $params['fwd_forwardingonunavailable']);
@@ -188,7 +189,7 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
         $this->clickModifyButtonOnRowWithText($params['username']);
         $this->changeTabOnCurrentPage('routing');
-        $this->assertMenuItemSelected('fwd_ringlength', $params['fwd_ringlength']);
+        $this->assertInputFieldValueEqual('fwd_ringlength', $params['fwd_ringlength']);
         $this->assertMenuItemSelected('fwd_forwardingonbusy', $params['fwd_forwardingonbusy']);
         $this->assertMenuItemSelected('fwd_forwarding', $params['fwd_forwarding']);
         $this->assertMenuItemSelected('fwd_forwardingonunavailable', $params['fwd_forwardingonunavailable']);
@@ -216,6 +217,13 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
         $this->selectDropdownItem('user_language', $params['user_language']);
         $this->changeInputField('sip_secret', $params['secret']);
 
+        $this->changeTabOnCurrentPage('routing');
+        $this->changeInputField('fwd_ringlength', $params['fwd_ringlength']);
+        $this->selectDropdownItem('fwd_forwardingonbusy', $params['fwd_forwardingonbusy']);
+        $this->selectDropdownItem('fwd_forwarding', $params['fwd_forwarding']);
+        $this->selectDropdownItem('fwd_forwardingonunavailable', $params['fwd_forwardingonunavailable']);
+        $this->changeTabOnCurrentPage('general');
+
         // Раскрываем расширенные опции
         $this->openAccordionOnThePage();
 
@@ -231,13 +239,6 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
         //$filePath           =  __DIR__."/../assets/{$params['number']}.png";
         $filePath = 'C:\Users\hello\Documents\images\person.jpg';
         $this->changeFileField('file-select', $filePath);
-
-        $this->changeTabOnCurrentPage('routing');
-        $this->changeInputField('fwd_ringlength', $params['fwd_ringlength']);
-        $this->selectDropdownItem('fwd_forwardingonbusy', $params['fwd_forwardingonbusy']);
-        $this->selectDropdownItem('fwd_forwarding', $params['fwd_forwarding']);
-        $this->selectDropdownItem('fwd_forwardingonunavailable', $params['fwd_forwardingonunavailable']);
-        $this->changeTabOnCurrentPage('general');
 
         $this->submitForm('extensions-form');
 

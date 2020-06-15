@@ -151,7 +151,6 @@ const outOfWorkTimeRecord = {
 		$('#erase-dates').on('click', (e) => {
 			outOfWorkTimeRecord.$rangeDaysStart.calendar('clear');
 			outOfWorkTimeRecord.$rangeDaysEnd.calendar('clear');
-			// outOfWorkTimeRecord.$date_from.trigger('change');
 			outOfWorkTimeRecord.$formObj
 				.form('set values', {
 					date_from: '',

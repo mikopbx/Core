@@ -39,11 +39,13 @@ class CreateOutOfWorkPeriodsTest extends MikoPBXTestsBase
         $addNewMenuItem->click();
 
         if(! empty($params['date_from'])){
-            self::$driver->executeScript('outOfWorkTimeRecord.$rangeDaysStart.calendar("set date","'.$params['date_from'].'")');
+            //self::$driver->executeScript('outOfWorkTimeRecord.$rangeDaysStart.calendar("set date","'.$params['date_from'].'")');
+            $this->changeInputField('date_from', $params['date_from']);
         }
 
         if(! empty($params['date_to'])){
-            self::$driver->executeScript('outOfWorkTimeRecord.$rangeDaysEnd.calendar("set date","'.$params['date_to'].'")');
+            //self::$driver->executeScript('outOfWorkTimeRecord.$rangeDaysEnd.calendar("set date","'.$params['date_to'].'")');
+            $this->changeInputField('date_to', $params['date_to']);
         }
 
         $xpath        = '//div[@id="erase-weekdays"]';
@@ -61,11 +63,13 @@ class CreateOutOfWorkPeriodsTest extends MikoPBXTestsBase
         $addNewMenuItem->click();
 
         if(! empty($params['time_from'])){
-            self::$driver->executeScript('$("#time_from").val("'.$params['time_from'].'")');
+            //self::$driver->executeScript('$("#time_from").val("'.$params['time_from'].'")');
+            $this->changeInputField('time_from', $params['time_from']);
         }
 
         if(! empty($params['time_to'])){
-            self::$driver->executeScript('$("#time_to").val("'.$params['time_to'].'")');
+            //self::$driver->executeScript('$("#time_to").val("'.$params['time_to'].'")');
+            $this->changeInputField('time_to', $params['time_to']);
         }
 
         $this->selectDropdownItem('action', $params['action']);

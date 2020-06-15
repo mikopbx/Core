@@ -89,7 +89,7 @@ class ConferenceRoomsController extends BaseController
         $this->view->success = true;
         $this->db->commit();
 
-        // Если это было создание карточки то надо перегрузить страницу с указанием ID
+        // If it was new entity we will reload page with new ID
         if (empty($data['id'])) {
             $this->view->reload = "conference-rooms/modify/{$data['uniqid']}";
         }
