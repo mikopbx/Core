@@ -99,16 +99,16 @@ if (strtolower(trim(fgets($fp)) ) === 'y') {
         // Отмонтируем.
         Util::mwExec("{$umountPath} {$mnt}");
     }
-    echo " - unpacking img...\n";
+    echo " - Unpacking img...\n";
     $pvPath = Util::which('pv');
     $ddPath = Util::which('dd');
     $gunzipPath = Util::which('gunzip');
 
-    passthru("{$pvPath} -p /offload/firmware.img.gz | {$gunzipPath} | {$ddPath} of=/dev/{$target_disk} bs=512 2> /dev/null");
-    echo " - create storage partition...\n";
+    $install_cmd =  'exec < /dev/console > /dev/console 2>/dev/console;'.
+                    "{$pvPath} -p /offload/firmware.img.gz | {$gunzipPath} | {$ddPath} of=/dev/{$target_disk} bs=512 2> /dev/null";
+    passthru($install_cmd);
+    echo " - Create storage partition...\n";
     passthru("/etc/rc/initial.storage.part.four create /dev/{$target_disk}");
-    echo " - create storage - done\n";
-
     // Подключение диска для хранения данных.
     include '/etc/rc/connect.storage';
 
