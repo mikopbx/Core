@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 2 2020
+ * Written by Alexey Portnov, 6 2020
  */
 
 namespace MikoPBX\Core\Workers;
@@ -969,9 +969,9 @@ class WorkerCallEvents extends WorkerBase
     public function callEventsWorker($tube): void
     {
         $data      = json_decode($tube->getBody(), true);
-        $func_name = '\MikoPBX\Core\Workers\WorkerCallEvents::Action_' . $data['action'];
-        if (function_exists($func_name)) {
-            $func_name($data);
+        $funcName = "Action_".$data['action'];
+        if ( method_exists($this, $funcName) ) {
+            $this->$funcName($data);
         }
         $tube->reply(json_encode(true));
     }
