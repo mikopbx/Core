@@ -120,7 +120,7 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
 
         $this->clickModifyButtonOnRowWithText($params['username']);
 
-        $this->changeInputField('email', $params['email']);
+        $this->changeInputField('user_email', $params['email']);
 
         $this->submitForm('extensions-form');
 
@@ -131,7 +131,7 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
 
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
         $this->clickModifyButtonOnRowWithText($params['username']);
-        $this->assertInputFieldValueEqual('email',  $params['email']);
+        $this->assertInputFieldValueEqual('user_email',  $params['email']);
     }
 
     /**
@@ -146,7 +146,7 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
 
         $this->clickModifyButtonOnRowWithText($params['username']);
 
-        $this->changeInputField('email', '');
+        $this->changeInputField('user_email', '');
 
         $this->submitForm('extensions-form');
 
@@ -157,7 +157,7 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
 
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
         $this->clickModifyButtonOnRowWithText($params['username']);
-        $this->assertInputFieldValueEqual('email',  '');
+        $this->assertInputFieldValueEqual('user_email',  '');
     }
 
     /**
@@ -208,8 +208,6 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
 
         $this->clickModifyButtonOnRowWithText($params['username']);
 
-        $this->clickButtonByHref('/admin-cabinet/extensions/modify');
-
         $this->changeInputField('user_username', $params['username']);
         $this->changeInputField('number', $params['number']);
         $this->changeInputField('mobile_number', $params['mobile']);
@@ -249,7 +247,7 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
 
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
         $this->clickModifyButtonOnRowWithText($params['username']);
-        $this->assertInputFieldValueEqual('username',  $params['username']);
+        $this->assertInputFieldValueEqual('user_username',  $params['username']);
         $this->assertInputFieldValueEqual('number',  $params['number']);
         $this->assertInputFieldValueEqual('user_email',  $params['email']);
         // $this->assertInputFieldValueEqual('mobile_number',  $params['mobile']);

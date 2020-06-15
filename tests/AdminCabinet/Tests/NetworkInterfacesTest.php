@@ -54,7 +54,7 @@ class NetworkInterfacesTest extends MikoPBXTestsBase
 
         $this->changeTabOnCurrentPage($index);
 
-        $this->assertMenuItemSelected('interface_new', $params['interface_new']);
+        $this->assertMenuItemSelected('interface_'.$index, $params['interface_new']);
         $this->assertInputFieldValueEqual('name_'.$index, $params['name_new']);
         $this->assertCheckBoxStageIsEqual('dhcp_'.$index, $params['dhcp_new']);
         $this->assertInputFieldValueEqual('ipaddr_'.$index, $params['ipaddr_new']);

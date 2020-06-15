@@ -28,7 +28,7 @@ class FillDataTimeSettings extends MikoPBXTestsBase
         if ($params['PBXManualTimeSettings']){
             self::$driver->executeScript("$('div#CalendarBlock div.input.calendar').calendar('set startDate', new Date())");
         } else {
-            $this->changeInputField('SetNtpServerBlock', $params['SetNtpServerBlock']);
+            $this->changeInputField('NTPServer', $params['NTPServer']);
         }
         // Сохраняем правило
         $this->submitForm('time-settings-form');
@@ -39,7 +39,7 @@ class FillDataTimeSettings extends MikoPBXTestsBase
         if ($params['PBXManualTimeSettings']){
             $setupDate = self::$driver->executeScript("$('div#CalendarBlock div.input.calendar').calendar('get date')");
         } else {
-            $this->assertInputFieldValueEqual('SetNtpServerBlock', $params['SetNtpServerBlock']);
+            $this->assertInputFieldValueEqual('NTPServer', $params['NTPServer']);
         }
     }
 
@@ -54,13 +54,13 @@ class FillDataTimeSettings extends MikoPBXTestsBase
             'PBXTimezone' => 'Europe/Riga',
             'PBXManualTimeSettings'    => false,
             'CurrentDateTime'    => '',
-            'SetNtpServerBlock'    => 'ntp5.stratum1.ru',
+            'NTPServer'    => 'ntp5.stratum1.ru',
         ]];
         $params[] = [[
             'PBXTimezone' => 'Europe/Riga',
             'PBXManualTimeSettings'    => true,
             'CurrentDateTime'    => '',
-            'SetNtpServerBlock'    => '',
+            'NTPServer'    => '',
         ]];
         return $params;
     }
