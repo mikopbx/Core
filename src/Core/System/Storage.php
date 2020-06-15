@@ -1068,7 +1068,8 @@ class Storage
         $roAgiBinFolder = appPath('src/Core/Asterisk/agi-bin');
         $files = glob("$roAgiBinFolder/*.{php}", GLOB_BRACE);
         foreach ($files as $file) {
-            $newFilename = $agiBinDir . '/' . pathinfo($file)['filename'];
+            $fileInfo = pathinfo($file);
+            $newFilename = "{$agiBinDir}/{$fileInfo['filename']}.{$fileInfo['extension']}";
             Util::createUpdateSymlink($file, $newFilename);
         }
 
