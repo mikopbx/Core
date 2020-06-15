@@ -157,7 +157,7 @@ class CreateAmiUsersTest extends MikoPBXTestsBaseAlias
         if (strpos($value, 'read') !== false) {
             $this->assertCheckBoxStageIsEqual("{$key}_read", true);
         } else {
-            $this->assertCheckBoxStageIsEqual("{$key}read", false);
+            $this->assertCheckBoxStageIsEqual("{$key}_read", false);
         }
         if (strpos($value, 'write') !== false) {
             $this->assertCheckBoxStageIsEqual("{$key}_write", true);

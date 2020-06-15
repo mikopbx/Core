@@ -45,7 +45,12 @@ class CreateFirewallRules extends MikoPBXTestsBase
 
         $this->submitForm('firewall-form');
 
-        $this->clickSidebarMenuItemByHref("/admin-cabinet/firewall/index/");
+        //Remember ID
+        $id = $this->getCurrentRecordID();
+        $this->clickSidebarMenuItemByHref('/admin-cabinet/firewall/index/');
+        $this->clickModifyButtonOnRowWithID($id);
+
+
         //asserts
         $this->assertCheckBoxStageIsEqual('status',$params['status']);
         $this->assertInputFieldValueEqual('description',$params['description']);

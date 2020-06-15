@@ -69,7 +69,7 @@ class MikoPBXTestsBase extends BrowserStackTest
             );
             $menuItem->click();
         } catch (NoSuchElementException $e) {
-            $this->fail('Not found select with name ' . $name . PHP_EOL);
+            $this->fail('Not found select with name ' . $name . 'on selectDropdownItem'. PHP_EOL);
         } catch (TimeoutException $e) {
             $this->fail('Not found menuitem ' . $value . PHP_EOL);
         } catch (Exception $e) {
@@ -109,7 +109,7 @@ class MikoPBXTestsBase extends BrowserStackTest
             $this->assertEquals($checkedValue, $currentValue, $message);
         }
         if (!$skipIfNotExist && count($selectedExtensions)===0){
-            $this->fail('Not found select with name ' . $name . PHP_EOL);
+            $this->fail('Not found select with name ' . $name .' in assertMenuItemSelected'. PHP_EOL);
         }
     }
 
@@ -130,7 +130,7 @@ class MikoPBXTestsBase extends BrowserStackTest
             $textAreaItem->sendKeys($value);
         }
         if (!$skipIfNotExist && count($textAreaItems)===0){
-            $this->fail('Not found textarea with name ' . $name . PHP_EOL);
+            $this->fail('Not found textarea with name ' . $name .' in changeTextAreaValue'. PHP_EOL);
         }
     }
 
@@ -164,7 +164,7 @@ class MikoPBXTestsBase extends BrowserStackTest
             $inputItem->sendKeys($value);
         }
         if (!$skipIfNotExist && count($inputItems)===0){
-            $this->fail('Not found input with type FILE and with name ' . $name . PHP_EOL);
+            $this->fail('Not found input with type FILE and with name ' . $name .' in changeFileField'. PHP_EOL);
         }
     }
 
@@ -185,7 +185,7 @@ class MikoPBXTestsBase extends BrowserStackTest
             $inputItem->sendKeys($value);
         }
         if (!$skipIfNotExist && count($inputItems)===0){
-            $this->fail('Not found input with name ' . $name . PHP_EOL);
+            $this->fail('Not found input with name ' . $name .' in changeInputField'. PHP_EOL);
         }
     }
 
@@ -206,7 +206,7 @@ class MikoPBXTestsBase extends BrowserStackTest
             $this->assertEquals($checkedValue, $currentValue, $message);
         }
         if (!$skipIfNotExist && count($inputItems)===0){
-            $this->fail('Not found input with name ' . $name . PHP_EOL);
+            $this->fail('Not found input with name ' . $name .' in assertInputFieldValueEqual'. PHP_EOL);
         }
     }
 
@@ -233,7 +233,7 @@ class MikoPBXTestsBase extends BrowserStackTest
             }
         }
         if (!$skipIfNotExist && count($checkBoxItems)===0){
-            $this->fail('Not found checkbox with name ' . $name . PHP_EOL);
+            $this->fail('Not found checkbox with name ' . $name .' in changeCheckBoxState'. PHP_EOL);
         }
     }
 
@@ -256,7 +256,7 @@ class MikoPBXTestsBase extends BrowserStackTest
             }
         }
         if (!$skipIfNotExist && count($checkBoxItems)===0){
-            $this->fail('Not found checkbox with name ' . $name . PHP_EOL);
+            $this->fail('Not found checkbox with name ' . $name .' in assertCheckBoxStageIsEqual'. PHP_EOL);
         }
     }
 
@@ -361,7 +361,7 @@ class MikoPBXTestsBase extends BrowserStackTest
             $deleteButton->click();
             $this->waitForAjax();
         } catch (NoSuchElementException $e) {
-            echo('Not found row with text=' . $text . ' on this page' . PHP_EOL);
+            echo('Not found row with text=' . $text . ' on this page in clickDeleteButtonOnRowWithText'. PHP_EOL);
         } catch (Exception $e) {
             $this->fail('Unknown error ' . $e->getMessage() . PHP_EOL);
         }
@@ -380,7 +380,7 @@ class MikoPBXTestsBase extends BrowserStackTest
             $button_AddNew->click();
             $this->waitForAjax();
         } catch (NoSuchElementException $e) {
-            $this->fail('Not found button with href=' . $href . ' on this page' . PHP_EOL);
+            $this->fail('Not found button with href=' . $href . ' on this page on clickButtonByHref' . PHP_EOL);
         } catch (Exception $e) {
             $this->fail('Unknown error ' . $e->getMessage() . PHP_EOL);
         }
@@ -398,7 +398,7 @@ class MikoPBXTestsBase extends BrowserStackTest
             $tab   = self::$driver->findElement(WebDriverBy::xpath($xpath));
             $tab->click();
         } catch (NoSuchElementException $e) {
-            $this->fail('Not found tab with anchor=' . $anchor . ' on this page' . PHP_EOL);
+            $this->fail('Not found tab with anchor=' . $anchor . ' on this page in changeTabOnCurrentPage' . PHP_EOL);
         } catch (Exception $e) {
             $this->fail('Unknown error ' . $e->getMessage() . PHP_EOL);
         }
@@ -414,9 +414,9 @@ class MikoPBXTestsBase extends BrowserStackTest
             $tab   = self::$driver->findElement(WebDriverBy::xpath($xpath));
             $tab->click();
         } catch (NoSuchElementException $e) {
-            $this->fail('Not found usual accordion element on this page' . PHP_EOL);
+            $this->fail('Not found usual accordion element on this page on openAccordionOnThePage' . PHP_EOL);
         } catch (Exception $e) {
-            $this->fail('Unknown error ' . $e->getMessage() . PHP_EOL);
+            $this->fail('Unknown error ' . $e->getMessage() .' on openAccordionOnThePage'. PHP_EOL);
         }
     }
 
@@ -432,7 +432,7 @@ class MikoPBXTestsBase extends BrowserStackTest
             $input = self::$driver->findElement(WebDriverBy::xpath($xpath));
             return $input->getAttribute('value')??'';
         } catch (NoSuchElementException $e) {
-            $this->fail('Not found input with name ID on this page' . PHP_EOL);
+            $this->fail('Not found input with name ID on this page getCurrentRecordID' . PHP_EOL);
         } catch (Exception $e) {
             $this->fail('Unknown error ' . $e->getMessage() . PHP_EOL);
         }
