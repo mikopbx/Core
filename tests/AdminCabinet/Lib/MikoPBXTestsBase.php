@@ -488,13 +488,13 @@ class MikoPBXTestsBase extends BrowserStackTest
      */
     protected function deleteAllRecordsOnTable(string $tableId): void
     {
-        $xpath         = '//table[@id="' . $tableId . '"]//a[contains(@href,"delete")]';
+        $xpath         = "//table[@id='{$tableId}']//a[contains(@href,'delete') and not(contains(@class,'disabled'))]";
         $deleteButtons = self::$driver->findElements(WebDriverBy::xpath($xpath));
         while (count($deleteButtons) > 0) {
             try {
                 $deleteButton = self::$driver->findElement(WebDriverBy::xpath($xpath));
                 $deleteButton->click();
-                sleep(2);
+                sleep(1);
                 $deleteButton->click();
                 $this->waitForAjax();
                 unset($deleteButtons[0]);

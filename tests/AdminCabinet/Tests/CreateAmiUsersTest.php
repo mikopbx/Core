@@ -10,19 +10,24 @@
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
 
+use Facebook\WebDriver\WebDriverBy;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase as MikoPBXTestsBaseAlias;
 
 class CreateAmiUsersTest extends MikoPBXTestsBaseAlias
 {
 
-    public static function setUpBeforeClass():void
+    /**
+     * @depends testLogin
+     */
+    public function testDeleteAmiUsers():void
     {
-        parent::setUpBeforeClass();
-        $basic= new MikoPBXTestsBase();
-        $basic->deleteAllRecordsOnTable('ami-users-table');
+        $this->clickSidebarMenuItemByHref('/admin-cabinet/asterisk-managers/index/');
+        $tableId = 'ami-users-table';
+        $this->deleteAllRecordsOnTable($tableId);
+        $xpath         = "//table[@id='{$tableId}']//a[contains(@href,'delete') and not(contains(@class,'disabled'))]";
+        $this->assertElementNotFound(WebDriverBy::xpath($xpath));
     }
-
 
     /**
      * @depends testLogin
