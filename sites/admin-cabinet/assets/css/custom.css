@@ -277,7 +277,8 @@ div#pbx-version {
 
 /* Исправление косяков размеров */
 .ui.large.form .field .dropdown,
-.ui.large.form .field .input {
+.ui.large.form .field input,
+.ui.large.form .inline.fields .field input{
     font-size: 1.12rem;
 }
 

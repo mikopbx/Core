@@ -177,6 +177,11 @@ class FirewallController extends BaseController
             return;
         }
 
+        // If it was new entity we will reload page with new ID
+        if (empty($data['id'])) {
+            $this->view->reload = "firewall/modify/{$filterRecord->id}";
+        }
+
         // Заполним параметры Firewall
         $data['id'] = $filterRecord->id;
         if ( ! $this->updateFirewallRules($data)) {

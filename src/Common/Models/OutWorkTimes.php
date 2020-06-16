@@ -21,12 +21,12 @@ class OutWorkTimes extends ModelsBase
     public $id;
 
     /**
-     * @Column(type="integer", nullable=true)
+     * @Column(type="string", nullable=true)
      */
     public $date_from;
 
     /**
-     * @Column(type="integer", nullable=true)
+     * @Column(type="string", nullable=true)
      */
     public $date_to;
 

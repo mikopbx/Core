@@ -628,6 +628,9 @@ class ExtensionsController extends BaseController
                     }
             }
         }
+        if (empty($forwardingRight->forwarding)){
+            $forwardingRight->ringlength='';
+        }
 
         if ($forwardingRight->save() === false) {
             $errors = $forwardingRight->getMessages();

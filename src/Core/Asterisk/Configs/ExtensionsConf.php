@@ -680,8 +680,8 @@ class ExtensionsConf extends ConfigClass
         foreach ($data as $out_data) {
             /** @var \MikoPBX\Common\Models\OutWorkTimes $out_data */
             if ( ! empty($out_data->date_from) && ! empty($out_data->date_to)) {
-                $year_from = 1 * date('Y', $out_data->date_from);
-                $year_to   = 1 * date('Y', $out_data->date_to);
+                $year_from = 1 * date('Y', (int)$out_data->date_from);
+                $year_to   = 1 * date('Y', (int)$out_data->date_to);
                 if ($now_year < $year_from || $now_year > $year_to) {
                     // Правило не актуально для текущего года.
                     continue;
@@ -693,10 +693,10 @@ class ExtensionsConf extends ConfigClass
                 $times = '*';
             } else {
                 $time_to = (empty($time_to)) ? '23:59' : $time_to;
-                $time_to = (strlen($time_to) == 4) ? "0{$time_to}" : $time_to;
+                $time_to = (strlen($time_to) === 4) ? "0{$time_to}" : $time_to;
 
                 $time_from = (empty($time_from)) ? '00:00' : $time_from;
-                $time_from = (strlen($time_from) == 4) ? "0{$time_from}" : $time_from;
+                $time_from = (strlen($time_from) === 4) ? "0{$time_from}" : $time_from;
 
                 $times = "{$time_from}-{$time_to}";
             }

@@ -1,7 +1,7 @@
 <?php 
 
 $config_file = getenv('CONFIG_FILE');
-if(!$config_file) {
+if(!file_exists($config_file)) {
     $config_file = 'config/local.conf.json';
 }
 if(!file_exists($config_file)) {

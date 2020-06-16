@@ -10,15 +10,21 @@
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
 
+use Facebook\WebDriver\WebDriverBy;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
 class CreateFirewallRules extends MikoPBXTestsBase
 {
-    public static function setUpBeforeClass():void
+    /**
+     * @depends testLogin
+     */
+    public function testDeleteAllFirewallRules():void
     {
-        parent::setUpBeforeClass();
-        $basic= new MikoPBXTestsBase();
-        $basic->deleteAllRecordsOnTable('firewall-table');
+        $this->clickSidebarMenuItemByHref("/admin-cabinet/firewall/index/");
+        $tableId = 'firewall-table';
+        $this->deleteAllRecordsOnTable($tableId);
+        $xpath         = "//table[@id='{$tableId}']//a[contains(@href,'delete') and not(contains(@class,'disabled'))]";
+        $this->assertElementNotFound(WebDriverBy::xpath($xpath));
     }
 
     /**
@@ -30,8 +36,6 @@ class CreateFirewallRules extends MikoPBXTestsBase
     public function testFirewallRule(array $params): void
     {
         $this->clickSidebarMenuItemByHref("/admin-cabinet/firewall/index/");
-
-        $this->changeCheckBoxState('status',$params['status']);
         $this->clickButtonByHref('/admin-cabinet/firewall/modify');
         $this->changeInputField('description',$params['description']);
         $this->changeInputField('network',$params['network']);
@@ -52,7 +56,6 @@ class CreateFirewallRules extends MikoPBXTestsBase
 
 
         //asserts
-        $this->assertCheckBoxStageIsEqual('status',$params['status']);
         $this->assertInputFieldValueEqual('description',$params['description']);
         $this->assertInputFieldValueEqual('network',$params['network']);
         $this->assertMenuItemSelected('subnet',$params['subnet']);
@@ -74,7 +77,6 @@ class CreateFirewallRules extends MikoPBXTestsBase
         $params   = [];
         $params[] = [
             [
-                'status'    => true,
                 'description' => 'MikoNetwork',
                 'network'      => '172.16.32.0',
                 'subnet'        => 24,
@@ -92,7 +94,6 @@ class CreateFirewallRules extends MikoPBXTestsBase
         ];
         $params[] = [
             [
-                'status'    => true,
                 'description' => 'Nikolay macbook',
                 'network'      => '172.16.32.69',
                 'subnet'        => 32,
@@ -110,7 +111,6 @@ class CreateFirewallRules extends MikoPBXTestsBase
         ];
         $params[] = [
             [
-                'status'    => true,
                 'description' => 'MIKOVPN',
                 'network'      => '172.16.34.0',
                 'subnet'        => 24,

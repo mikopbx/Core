@@ -15,11 +15,16 @@ use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 class CreateOutOfWorkPeriodsTest extends MikoPBXTestsBase
 {
 
-    public static function setUpBeforeClass():void
+    /**
+     * @depends testLogin
+     */
+    public function testDeleteOtOfWorkRules():void
     {
-        parent::setUpBeforeClass();
-        $basic= new MikoPBXTestsBase();
-        $basic->deleteAllRecordsOnTable('time-frames-table');
+        $this->clickSidebarMenuItemByHref('/admin-cabinet/out-off-work-time/index/');
+        $tableId = 'time-frames-table';
+        $this->deleteAllRecordsOnTable($tableId);
+        $xpath         = "//table[@id='{$tableId}']//a[contains(@href,'delete') and not(contains(@class,'disabled'))]";
+        $this->assertElementNotFound(WebDriverBy::xpath($xpath));
     }
 
     /**
@@ -40,10 +45,12 @@ class CreateOutOfWorkPeriodsTest extends MikoPBXTestsBase
 
         if(! empty($params['date_from'])){
             self::$driver->executeScript('outOfWorkTimeRecord.$rangeDaysStart.calendar("set date","'.$params['date_from'].'")');
+            //$this->changeInputField('date_from', $params['date_from']);
         }
 
         if(! empty($params['date_to'])){
             self::$driver->executeScript('outOfWorkTimeRecord.$rangeDaysEnd.calendar("set date","'.$params['date_to'].'")');
+            //$this->changeInputField('date_to', $params['date_to']);
         }
 
         $xpath        = '//div[@id="erase-weekdays"]';
@@ -62,10 +69,12 @@ class CreateOutOfWorkPeriodsTest extends MikoPBXTestsBase
 
         if(! empty($params['time_from'])){
             self::$driver->executeScript('$("#time_from").val("'.$params['time_from'].'")');
+            //$this->changeInputField('time_from', $params['time_from']);
         }
 
         if(! empty($params['time_to'])){
             self::$driver->executeScript('$("#time_to").val("'.$params['time_to'].'")');
+            //$this->changeInputField('time_to', $params['time_to']);
         }
 
         $this->selectDropdownItem('action', $params['action']);

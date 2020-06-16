@@ -12,6 +12,7 @@ namespace MikoPBX\Tests\AdminCabinet\Lib;
 use Exception;
 use Facebook\WebDriver\Exception\NoSuchElementException;
 use Facebook\WebDriver\Exception\TimeoutException;
+use Facebook\WebDriver\Interactions\WebDriverActions;
 use Facebook\WebDriver\WebDriverBy;
 use Facebook\WebDriver\WebDriverExpectedCondition;
 use MikoPBX\Tests\AdminCabinet\Tests\LoginTrait;
@@ -45,6 +46,16 @@ class MikoPBXTestsBase extends BrowserStackTest
      */
     protected function selectDropdownItem(string $name, string $value): void
     {
+        // Check selected value
+        $xpath             = '//select[@name="' . $name . '"]/option[@selected="selected"]';
+        $selectedExtensions = self::$driver->findElements(WebDriverBy::xpath($xpath));
+        foreach ($selectedExtensions as $element) {
+            $currentValue = $element->getAttribute('value');
+            if ($currentValue === $value){
+                return;
+            }
+        }
+
         $xpath = '//select[@name="' . $name . '"]/ancestor::div[contains(@class, "ui") and contains(@class ,"dropdown")]';
         $xpath .='| //div[@id="' . $name . '" and contains(@class, "ui") and contains(@class ,"dropdown") ]';
         try {
@@ -56,7 +67,10 @@ class MikoPBXTestsBase extends BrowserStackTest
             $xpath = '//select[@name="' . $name . '"]/ancestor::div[contains(@class, "ui") and contains(@class ,"dropdown")]/input[contains(@class,"search")]';
             $xpath .='| //div[@id="' . $name . '" and contains(@class, "ui") and contains(@class ,"dropdown") ]/input[contains(@class,"search")]';
             $inputItems = self::$driver->findElements(WebDriverBy::xpath($xpath));
+            $actions = new WebDriverActions(self::$driver);
             foreach ($inputItems as $inputItem) {
+                $actions->moveToElement($inputItem);
+                $actions->perform();
                 $inputItem->click();
                 $inputItem->clear();
                 $inputItem->sendKeys($value);
@@ -102,14 +116,18 @@ class MikoPBXTestsBase extends BrowserStackTest
     protected function assertMenuItemSelected(string $name, string $checkedValue, $skipIfNotExist=false): void
     {
         $xpath             = '//select[@name="' . $name . '"]/option[@selected="selected"]';
-        $selectedExtensions = self::$driver->findElements(WebDriverBy::xpath($xpath));
-        foreach ($selectedExtensions as $element) {
-            $currentValue = $element->getAttribute('value');
-            $message      = "{$name} check failure, because {$checkedValue} != {$currentValue}";
-            $this->assertEquals($checkedValue, $currentValue, $message);
-        }
-        if (!$skipIfNotExist && count($selectedExtensions)===0){
-            $this->fail('Not found select with name ' . $name .' in assertMenuItemSelected'. PHP_EOL);
+        if ($checkedValue==='none'){
+            $this->assertElementNotFound(WebDriverBy::xpath($xpath));
+        } else {
+            $selectedExtensions = self::$driver->findElements(WebDriverBy::xpath($xpath));
+            foreach ($selectedExtensions as $element) {
+                $currentValue = $element->getAttribute('value');
+                $message      = "{$name} check failure, because {$checkedValue} != {$currentValue}";
+                $this->assertEquals($checkedValue, $currentValue, $message);
+            }
+            if (!$skipIfNotExist && count($selectedExtensions)===0){
+                $this->fail('Not found select with name ' . $name .' in assertMenuItemSelected'. PHP_EOL);
+            }
         }
     }
 
@@ -124,7 +142,10 @@ class MikoPBXTestsBase extends BrowserStackTest
     {
         $xpath         = ('//textarea[@name="' . $name . '"]');
         $textAreaItems = self::$driver->findElements(WebDriverBy::xpath($xpath));
+        $actions = new WebDriverActions(self::$driver);
         foreach ($textAreaItems as $textAreaItem) {
+            $actions->moveToElement($textAreaItem);
+            $actions->perform();
             $textAreaItem->click();
             $textAreaItem->clear();
             $textAreaItem->sendKeys($value);
@@ -179,7 +200,14 @@ class MikoPBXTestsBase extends BrowserStackTest
     {
         $xpath      = '//input[@name="' . $name . '" and (@type="text" or @type="password" or @type="hidden" or @type="number")]';
         $inputItems = self::$driver->findElements(WebDriverBy::xpath($xpath));
+        $actions = new WebDriverActions(self::$driver);
         foreach ($inputItems as $inputItem) {
+            $actions->moveToElement($inputItem);
+            $actions->perform();
+            $id = $inputItem->getAttribute('id');
+            if (!empty($id)){
+                self::$driver->executeScript("document.getElementById('{$id}').scrollIntoView({block: 'center'})");
+            }
             $inputItem->click();
             $inputItem->clear();
             $inputItem->sendKeys($value);
@@ -229,6 +257,9 @@ class MikoPBXTestsBase extends BrowserStackTest
             ) {
                 $xpath        = '//input[@name="' . $name . '" and @type="checkbox"]/parent::div';
                 $checkBoxItem = self::$driver->findElement(WebDriverBy::xpath($xpath));
+                $actions = new WebDriverActions(self::$driver);
+                $actions->moveToElement($checkBoxItem);
+                $actions->perform();
                 $checkBoxItem->click();
             }
         }
@@ -271,6 +302,9 @@ class MikoPBXTestsBase extends BrowserStackTest
         $xpath = '//form[@id="' . $formId . '"]//ancestor::div[@id="submitbutton"]';
         try {
             $button_Submit = self::$driver->findElement(WebDriverBy::xpath($xpath));
+            $actions = new WebDriverActions(self::$driver);
+            $actions->moveToElement($button_Submit);
+            $actions->perform();
             $button_Submit->click();
             $this->waitForAjax();
             self::$driver->wait(10, 500)->until(
@@ -299,6 +333,9 @@ class MikoPBXTestsBase extends BrowserStackTest
         try {
             $xpath       = '//div[@id="sidebar-menu"]//ancestor::a[contains(@class, "item") and contains(@href ,"' . $href . '")]';
             $sidebarItem = self::$driver->findElement(WebDriverBy::xpath($xpath));
+            $actions = new WebDriverActions(self::$driver);
+            $actions->moveToElement($sidebarItem);
+            $actions->perform();
             $sidebarItem->click();
             $this->waitForAjax();
         } catch (NoSuchElementException $e) {
@@ -318,6 +355,9 @@ class MikoPBXTestsBase extends BrowserStackTest
         $xpath = ('//td[contains(text(),"' . $text . '")]/parent::tr[contains(@class, "row")]//a[contains(@href,"modify")]');
         try {
             $tableButtonModify = self::$driver->findElement(WebDriverBy::xpath($xpath));
+            $actions = new WebDriverActions(self::$driver);
+            $actions->moveToElement($tableButtonModify);
+            $actions->perform();
             $tableButtonModify->click();
             $this->waitForAjax();
         } catch (NoSuchElementException $e) {
@@ -337,6 +377,9 @@ class MikoPBXTestsBase extends BrowserStackTest
         $xpath = ('//tr[contains(@class, "row") and @id="' . $id . '"]//a[contains(@href,"modify")]');
         try {
             $tableButtonModify = self::$driver->findElement(WebDriverBy::xpath($xpath));
+            $actions = new WebDriverActions(self::$driver);
+            $actions->moveToElement($tableButtonModify);
+            $actions->perform();
             $tableButtonModify->click();
             $this->waitForAjax();
         } catch (NoSuchElementException $e) {
@@ -355,10 +398,12 @@ class MikoPBXTestsBase extends BrowserStackTest
     {
         $xpath = ('//td[contains(text(),"' . $text . '")]/ancestor::tr[contains(@class, "row")]//a[contains(@href,"delete")]');
         try {
-            $deleteButton = self::$driver->findElement(WebDriverBy::xpath($xpath));
-            $deleteButton->click();
-            sleep(2);
-            $deleteButton->click();
+            $deleteButtons = self::$driver->findElements(WebDriverBy::xpath($xpath));
+            foreach ($deleteButtons as $deleteButton){
+                $deleteButton->click();
+                sleep(2);
+                $deleteButton->click();
+            }
             $this->waitForAjax();
         } catch (NoSuchElementException $e) {
             echo('Not found row with text=' . $text . ' on this page in clickDeleteButtonOnRowWithText'. PHP_EOL);
@@ -377,6 +422,9 @@ class MikoPBXTestsBase extends BrowserStackTest
         try {
             $xpath         = "//a[@href = '{$href}']";
             $button_AddNew = self::$driver->findElement(WebDriverBy::xpath($xpath));
+            $actions = new WebDriverActions(self::$driver);
+            $actions->moveToElement($button_AddNew);
+            $actions->perform();
             $button_AddNew->click();
             $this->waitForAjax();
         } catch (NoSuchElementException $e) {
@@ -396,6 +444,9 @@ class MikoPBXTestsBase extends BrowserStackTest
         try {
             $xpath = "//div[contains(@class, 'tabular') and contains(@class, 'menu')]//a[contains(@data-tab,'{$anchor}')]";
             $tab   = self::$driver->findElement(WebDriverBy::xpath($xpath));
+            $actions = new WebDriverActions(self::$driver);
+            $actions->moveToElement($tab);
+            $actions->perform();
             $tab->click();
         } catch (NoSuchElementException $e) {
             $this->fail('Not found tab with anchor=' . $anchor . ' on this page in changeTabOnCurrentPage' . PHP_EOL);
@@ -411,8 +462,11 @@ class MikoPBXTestsBase extends BrowserStackTest
     {
         try {
             $xpath = "//div[contains(@class, 'ui') and contains(@class, 'accordion')]";
-            $tab   = self::$driver->findElement(WebDriverBy::xpath($xpath));
-            $tab->click();
+            $accordion   = self::$driver->findElement(WebDriverBy::xpath($xpath));
+            $actions = new WebDriverActions(self::$driver);
+            $actions->moveToElement($accordion);
+            $actions->perform();
+            $accordion->click();
         } catch (NoSuchElementException $e) {
             $this->fail('Not found usual accordion element on this page on openAccordionOnThePage' . PHP_EOL);
         } catch (Exception $e) {
@@ -436,6 +490,7 @@ class MikoPBXTestsBase extends BrowserStackTest
         } catch (Exception $e) {
             $this->fail('Unknown error ' . $e->getMessage() . PHP_EOL);
         }
+        return '';
     }
 
     /**
@@ -447,13 +502,13 @@ class MikoPBXTestsBase extends BrowserStackTest
      */
     protected function deleteAllRecordsOnTable(string $tableId): void
     {
-        $xpath         = '//table[@id="' . $tableId . '"]//a[contains(@href,"delete")]';
+        $xpath         = "//table[@id='{$tableId}']//a[contains(@href,'delete') and not(contains(@class,'disabled'))]";
         $deleteButtons = self::$driver->findElements(WebDriverBy::xpath($xpath));
         while (count($deleteButtons) > 0) {
             try {
                 $deleteButton = self::$driver->findElement(WebDriverBy::xpath($xpath));
                 $deleteButton->click();
-                sleep(2);
+                sleep(1);
                 $deleteButton->click();
                 $this->waitForAjax();
                 unset($deleteButtons[0]);
