@@ -46,6 +46,16 @@ class MikoPBXTestsBase extends BrowserStackTest
      */
     protected function selectDropdownItem(string $name, string $value): void
     {
+        // Check selected value
+        $xpath             = '//select[@name="' . $name . '"]/option[@selected="selected"]';
+        $selectedExtensions = self::$driver->findElements(WebDriverBy::xpath($xpath));
+        foreach ($selectedExtensions as $element) {
+            $currentValue = $element->getAttribute('value');
+            if ($currentValue === $value){
+                return;
+            }
+        }
+
         $xpath = '//select[@name="' . $name . '"]/ancestor::div[contains(@class, "ui") and contains(@class ,"dropdown")]';
         $xpath .='| //div[@id="' . $name . '" and contains(@class, "ui") and contains(@class ,"dropdown") ]';
         try {
@@ -194,6 +204,10 @@ class MikoPBXTestsBase extends BrowserStackTest
         foreach ($inputItems as $inputItem) {
             $actions->moveToElement($inputItem);
             $actions->perform();
+            $id = $inputItem->getAttribute('id');
+            if (!empty($id)){
+                self::$driver->executeScript("document.getElementById('{$id}').scrollIntoView({block: 'center'})");
+            }
             $inputItem->click();
             $inputItem->clear();
             $inputItem->sendKeys($value);

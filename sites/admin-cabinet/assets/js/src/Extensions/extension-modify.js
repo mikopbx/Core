@@ -83,16 +83,16 @@ const extension = {
 		},
 		fwd_ringlength: {
 			identifier: 'fwd_ringlength',
-			optional: true,
+			depends: 'fwd_forwarding',
 			rules: [
 				{
-					type: 'integer[10..180]',
+					type: 'integer[5..180]',
 					prompt: globalTranslate.ex_ValidateRingingBeforeForwardOutOfRange,
 				},
 			],
 		},
 		fwd_forwarding: {
-			depends: 'fwd_ringlength',
+			optional: true,
 			identifier: 'fwd_forwarding',
 			rules: [
 				{
@@ -475,8 +475,12 @@ const extensionStatusLoopWorker = {
 $.fn.form.settings.rules.extensionRule = () => {
 	const fwdRingLength = extension.$formObj.form('get value', 'fwd_ringlength');
 	const fwdForwarding = extension.$formObj.form('get value', 'fwd_forwarding');
-	if ((fwdRingLength > 0) &&
-		(parseInt(fwdForwarding, 10) === -1 || fwdForwarding === '')) {
+	if (fwdForwarding.length>0
+		&& (
+			fwdRingLength==='0'
+			||
+			fwdRingLength===''
+		)) {
 		return false;
 	}
 	return true;

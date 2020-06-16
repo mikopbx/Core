@@ -27,7 +27,9 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
 
         $this->clickModifyButtonOnRowWithText($params['username']);
         $this->changeInputField('number', $params['number']);
-
+        self::$driver->executeScript('$("#number").trigger("change")');
+        self::$driver->executeScript('extension.cbOnCompleteNumber()');
+        $this->changeTabOnCurrentPage('routing');
         $this->submitForm('extensions-form');
 
         // TESTS
@@ -49,11 +51,15 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
      */
     public function testChangeMobile($params):void
     {
+
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
 
         $this->clickModifyButtonOnRowWithText($params['username']);
         $this->changeInputField('mobile_number', $params['mobile']);
         self::$driver->executeScript('$("#mobile_number").trigger("change")');
+        self::$driver->executeScript('extension.cbOnCompleteMobileNumber()');
+        $this->changeTabOnCurrentPage('routing');
+        $this->changeInputField('fwd_ringlength', $params['fwd_ringlength']);
         $this->submitForm('extensions-form');
 
         // TESTS
@@ -64,6 +70,7 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
         $this->clickModifyButtonOnRowWithText($params['username']);
         $this->changeTabOnCurrentPage('routing');
+        $this->assertInputFieldValueEqual('fwd_ringlength', $params['fwd_ringlength']);
         $this->assertMenuItemSelected('fwd_forwardingonbusy', $params['mobile']);
         $this->assertMenuItemSelected('fwd_forwarding', $params['mobile']);
         $this->assertMenuItemSelected('fwd_forwardingonunavailable', $params['mobile']);
@@ -87,8 +94,10 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
         $this->clickModifyButtonOnRowWithText($params['username']);
         $this->changeInputField('mobile_number', '');
         self::$driver->executeScript('$("#mobile_number").trigger("change")');
+        self::$driver->executeScript('extension.cbOnClearedMobileNumber()');
+        $this->changeTabOnCurrentPage('routing');
+        $this->changeInputField('fwd_ringlength', '');
         $this->submitForm('extensions-form');
-
         // TESTS
         $xpath                   = "//input[@name = 'id']";
         $input_ExtensionUniqueID = self::$driver->findElement(WebDriverBy::xpath($xpath));
@@ -122,7 +131,8 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
         $this->clickModifyButtonOnRowWithText($params['username']);
 
         $this->changeInputField('user_email', $params['email']);
-
+        self::$driver->executeScript('$("#user_email").trigger("change")');
+        self::$driver->executeScript('extension.cbOnCompleteEmail()');
         $this->submitForm('extensions-form');
 
         // TESTS
@@ -148,7 +158,7 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
         $this->clickModifyButtonOnRowWithText($params['username']);
 
         $this->changeInputField('user_email', '');
-
+        self::$driver->executeScript('$("#user_email").trigger("change")');
         $this->submitForm('extensions-form');
 
         // TESTS
@@ -212,7 +222,11 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
 
         $this->changeInputField('user_username', $params['username']);
         $this->changeInputField('number', $params['number']);
+        self::$driver->executeScript('$("#number").trigger("change")');
+        self::$driver->executeScript('extension.cbOnCompleteNumber()');
         $this->changeInputField('mobile_number', $params['mobile']);
+        self::$driver->executeScript('$("#mobile_number").trigger("change")');
+        self::$driver->executeScript('extension.cbOnCompleteMobileNumber()');
         $this->changeInputField('user_email', $params['email']);
         $this->selectDropdownItem('user_language', $params['user_language']);
         $this->changeInputField('sip_secret', $params['secret']);

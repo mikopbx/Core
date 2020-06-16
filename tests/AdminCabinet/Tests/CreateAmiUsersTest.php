@@ -22,6 +22,9 @@ class CreateAmiUsersTest extends MikoPBXTestsBaseAlias
      */
     public function testDeleteAmiUsers():void
     {
+        self::$driver->executeScript(
+            'document.getElementById("sidebar-menu").scrollTo(0,document.body.scrollHeight);'
+        );
         $this->clickSidebarMenuItemByHref('/admin-cabinet/asterisk-managers/index/');
         $tableId = 'ami-users-table';
         $this->deleteAllRecordsOnTable($tableId);
