@@ -1,10 +1,9 @@
 <?php
 /**
- * Copyright (C) MIKO LLC - All Rights Reserved
+ * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 6 2018
- *
+ * Written by Alexey Portnov, 6 2020
  */
 
 namespace MikoPBX\Common\Models;
@@ -664,5 +663,11 @@ abstract class ModelsBase extends Model
         return $link;
     }
 
-
+    /**
+     * Возвращает массив полей, по которым следует добавить индекс в DB.
+     * @return array
+     */
+    public function getIndexColumn():array {
+        return array();
+    }
 }

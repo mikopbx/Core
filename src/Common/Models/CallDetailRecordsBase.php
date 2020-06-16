@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 12 2019
+ * Written by Alexey Portnov, 6 2020
  */
 
 namespace MikoPBX\Common\Models;
@@ -61,7 +61,6 @@ abstract class CallDetailRecordsBase extends ModelsBase
     public $UNIQUEID;
 
     /**
-     * @Primary
      * @Column(type="string", nullable=true)
      */
     public $linkedid;
@@ -136,5 +135,8 @@ abstract class CallDetailRecordsBase extends ModelsBase
      */
     public $dst_call_id;
 
+    public function getIndexColumn():array {
+        return ['UNIQUEID', 'src_chan', 'dst_chan', 'linkedid', 'start', 'src_num', 'dst_num'];
+    }
 
 }

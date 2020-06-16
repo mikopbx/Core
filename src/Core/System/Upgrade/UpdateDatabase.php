@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 5 2020
+ * Written by Alexey Portnov, 6 2020
  */
 
 namespace MikoPBX\Core\System\Upgrade;
@@ -202,6 +202,16 @@ class UpdateDatabase
         if ( ! $connectionService->tableExists($tableName)) {
             Util::echoWithSyslog(' - UpdateDatabase: Create new table: '.$tableName.' ');
             $result = $connectionService->createTable($tableName, '', $columnsNew);
+            if($result === true){
+                $indexColumn = $model->getIndexColumn();
+                foreach ($indexColumn as $columnName){
+                    if(!key_exists($columnName, $table_structure)){
+                        continue;
+                    }
+                    $index       = new Index("i_{$tableName}_".$columnName, [$columnName]);
+                    $connectionService->addIndex($tableName, '', $index);
+                }
+            }
             Util::echoGreenDone();
         } else {
             // Table exists, we have to check/upgrade its structure

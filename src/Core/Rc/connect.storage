@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 5 2020
+ * Written by Alexey Portnov, 6 2020
  */
 namespace MikoPBX\Core\Rc;
 
@@ -118,7 +118,6 @@ $storage->configure();
 
 RegisterDIServices::recreateDBConnections(); //TODO:: может это сделать внутри стоража после монтирования нужной папки?
 
-CdrDb::createDb();
 CdrDb::checkDb();
 
 $system = new System();
