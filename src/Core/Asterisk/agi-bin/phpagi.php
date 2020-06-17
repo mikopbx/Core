@@ -4,7 +4,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 5 2020
+ * Written by Alexey Portnov, 6 2020
  */
 
 if ( !class_exists('AGI_AsteriskManager')) {
@@ -110,7 +110,10 @@ class AGI
     {
         // load config
         if ( ! is_null($config) && file_exists($config)) {
-            $this->config = parse_ini_file($config, true);
+            $configData = parse_ini_file($config, true);
+            if($configData !== false){
+                $this->config = $configData;
+            }
         }
 
         // If optconfig is specified, stuff vals and vars into 'phpagi' config array.
@@ -139,17 +142,27 @@ class AGI
             $this->config['cepstral']['swift'] = $this->which('swift');
         }
 
-        ob_implicit_flush(true);
+        ob_implicit_flush(1);
 
         // open stdin & stdout
-        $this->in  = defined('STDIN') ? STDIN : fopen('php://stdin', 'r');
+        $this->in  = defined('STDIN') ? STDIN :   fopen('php://stdin',  'r');
         $this->out = defined('STDOUT') ? STDOUT : fopen('php://stdout', 'w');
 
-        // read the request
-        $str = fgets($this->in);
-        while ($str != "\n") {
-            $this->request[substr($str, 0, strpos($str, ':'))] = trim(substr($str, strpos($str, ':') + 1));
-            $str                                               = fgets($this->in);
+        if($this->in !== false){
+            $str = PHP_EOL;
+            // read the request
+            $resIn = fgets($this->in);
+            if($resIn !== false){
+                $str = $resIn;
+            }
+            while ($str !== PHP_EOL) {
+                $this->request[substr($str, 0, strpos($str, ':'))] = trim(substr($str, strpos($str, ':') + 1));
+                $resIn = fgets($this->in);
+                if($resIn === false){
+                    break;
+                }
+                $str = $resIn;
+            }
         }
 
         // open audio if eagi detected
@@ -223,17 +236,17 @@ class AGI
     {
         $f    = explode(DIRECTORY_SEPARATOR, $folder);
         $base = '';
-        for ($i = 0; $i < count($f); $i++) {
+        $c    = count($f);
+        for ($i = 0; $i < $c; $i++) {
             $base .= $f[$i];
-            if ($f[$i] != '' && ! file_exists($base)) {
-                if (mkdir($base, $perms) == false) {
-                    return (false);
+            if ($f[$i] !== '' && ! file_exists($base)) {
+                if (mkdir($base, $perms) === false) {
+                    return false;
                 }
             }
             $base .= DIRECTORY_SEPARATOR;
         }
-
-        return (true);
+        return true;
     }
 
     /**
@@ -278,9 +291,8 @@ class AGI
      */
     public function verbose($message, $level = 1)
     {
-        $ret = '';
+        $ret = ['code' => 500, 'result' => -1, 'data' => ''];;
         foreach (explode("\n", str_replace("\r\n", "\n", print_r($message, true))) as $msg) {
-            @syslog(LOG_WARNING, $msg);
             $ret = $this->evaluate("VERBOSE \"$msg\" $level");
         }
 
@@ -300,8 +312,10 @@ class AGI
     {
         $broken = ['code' => 500, 'result' => -1, 'data' => ''];
 
-        // write command
-        if ( ! @fwrite($this->out, trim($command) . "\n")) {
+        if($this->out === false || $this->in === false){
+            return $broken;
+        }
+        if ( !fwrite($this->out, trim($command) . "\n")) {
             return $broken;
         }
         fflush($this->out);
@@ -322,10 +336,11 @@ class AGI
         }
 
         // parse result
+        $ret = [];
         $ret['code'] = substr($str, 0, 3);
         $str         = trim(substr($str, 3));
 
-        if ($str[0] == '-') // we have a multiline response!
+        if ($str[0] === '-') // we have a multiline response!
         {
             $count = 0;
             $str   = substr($str, 1) . "\n";
@@ -573,7 +588,7 @@ class AGI
     public function get_variable($variable, $getvalue = false)
     {
         $res = $this->evaluate("GET VARIABLE $variable");
-        if ($getvalue == false) {
+        if ($getvalue === false) {
             return ($res);
         }
 
@@ -591,7 +606,7 @@ class AGI
      * @param string $channel  channel
      * @param bool   $getvalue return the value only
      *
-     * @return array, see evaluate for return information. ['result'] is 0 if variable hasn't been set, 1 if it has.
+     * @return array | string, see evaluate for return information. ['result'] is 0 if variable hasn't been set, 1 if it has.
      *                ['data'] holds the value.  returns value if $getvalue is TRUE
      */
     public function get_fullvariable($variable, $channel = '', $getvalue = false)
@@ -604,7 +619,7 @@ class AGI
 
         $res = $this->evaluate('GET FULL VARIABLE ' . $req);
 
-        if ($getvalue == false) {
+        if ($getvalue === false) {
             return ($res);
         }
 
@@ -836,7 +851,8 @@ class AGI
      * @link http://www.voip-info.org/wiki-Asterisk+-+documentation+of+application+commands
      * @link http://www.dynx.net/ASTERISK/AGI/ccard/agi-ccard.agi
      *
-     * @param $seconds ,allowed, 0 disables timeout
+     * @param $seconds
+     * allowed, 0 disables timeout
      *
      * @return array, see evaluate for return information.
      */
@@ -1428,7 +1444,7 @@ class AGI
      *
      * @link http://www.voip-info.org/wiki-set+priority
      *
-     * @param int $priority
+     * @param string $priority
      *
      * @return array, see evaluate for return information.
      */
