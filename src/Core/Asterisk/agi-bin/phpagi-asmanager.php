@@ -995,9 +995,7 @@ class AGI_AsteriskManager
         if ($account) {
             $parameters['Account'] = $account;
         }
-        if ( ! is_null($async)) {
-            $parameters['Async'] = ($async) ? 'true' : 'false';
-        }
+        $parameters['Async'] = ($async === true) ? 'true' : 'false';
         if ($actionid) {
             $parameters['ActionID'] = $actionid;
         }
