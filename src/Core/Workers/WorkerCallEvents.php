@@ -14,9 +14,6 @@ use Exception as ExceptionAlias;
 use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\System\{BeanstalkClient, MikoPBXConfig, Util};
 use Phalcon\Di;
-use Phalcon\Exception;
-
-use function function_exists;
 
 class WorkerCallEvents extends WorkerBase
 {
@@ -28,7 +25,7 @@ class WorkerCallEvents extends WorkerBase
      */
     public static function Action_dial($data): void
     {
-        CdrDb::insertDataToDbM($data);
+        self::insertDataToDbM($data);
         self::Action_app_end($data);
     }
 
@@ -177,7 +174,7 @@ class WorkerCallEvents extends WorkerBase
                 $new_data['dst_num']  = $data['dst_num'];
                 $new_data['UNIQUEID'] = $data['id'];
                 unset($new_data['end']);
-                CdrDb::insertDataToDbM($new_data);
+                self::insertDataToDbM($new_data);
 
                 /**
                  * Отправка UserEvent
@@ -366,7 +363,7 @@ class WorkerCallEvents extends WorkerBase
                     $n_data['did']           = $data_chan['did'];
                     // $data['from_account'] = $from_account;
                     Util::logMsgDb('call_events', json_encode($n_data));
-                    CdrDb::insertDataToDbM($n_data);
+                    self::insertDataToDbM($n_data);
                     $filter = [
                         'linkedid=:linkedid:',
                         'bind' => ['linkedid' => $data['linkedid']],
@@ -453,7 +450,7 @@ class WorkerCallEvents extends WorkerBase
             $AgiData               = base64_encode(json_encode($insert_data));
             $am->UserEvent('CdrConnector', ['AgiData' => $AgiData]);
 
-            CdrDb::insertDataToDbM($insert_data);
+            self::insertDataToDbM($insert_data);
             CdrDb::LogEvent(json_encode($insert_data));
         } elseif (empty($calls_data[0]['answer']) && count(
                 $calls_data
@@ -496,7 +493,7 @@ class WorkerCallEvents extends WorkerBase
     public static function Action_transfer_dial($data): void
     {
         self::Action_transfer_check($data);
-        CdrDb::insertDataToDbM($data);
+        self::insertDataToDbM($data);
         self::Action_app_end($data);
     }
 
@@ -709,7 +706,7 @@ class WorkerCallEvents extends WorkerBase
     public static function Action_dial_app($data): void
     {
         self::Action_app_end($data);
-        CdrDb::insertDataToDbM($data);
+        self::insertDataToDbM($data);
     }
 
     /**
@@ -719,7 +716,7 @@ class WorkerCallEvents extends WorkerBase
      */
     public static function Action_dial_outworktimes($data): void
     {
-        CdrDb::insertDataToDbM($data);
+        self::insertDataToDbM($data);
     }
 
     /**
@@ -735,10 +732,10 @@ class WorkerCallEvents extends WorkerBase
         }
         if (isset($data['start'])) {
             // Это новая строка.
-            CdrDb::insertDataToDbM($data);
+            self::insertDataToDbM($data);
         } else {
             // Требуется только обновление данных.
-            CdrDb::updateDataInDbM($data);
+            self::updateDataInDbM($data);
         }
         self::Action_app_end($data);
     }
@@ -768,7 +765,7 @@ class WorkerCallEvents extends WorkerBase
                 $data['src_chan'] = $m_data->src_chan;
                 $m_data->UNIQUEID = $data['UNIQUEID'];
 
-                $f_list = CdrDb::getDbFields();
+                $f_list = $m_data->toArray();
                 foreach ($data as $attribute => $value) {
                     if ( ! array_key_exists($attribute, $f_list)) {
                         continue;
@@ -779,7 +776,7 @@ class WorkerCallEvents extends WorkerBase
                 $m_data->save();
             }
         } else {
-            CdrDb::insertDataToDbM($data);
+            self::insertDataToDbM($data);
             self::Action_app_end($data);
         }
     }
@@ -792,9 +789,9 @@ class WorkerCallEvents extends WorkerBase
     public static function Action_unpark_call($data): void
     {
         $data['recordingfile'] = CdrDb::MixMonitor($data['dst_chan'], $data['UNIQUEID']);
-        CdrDb::insertDataToDbM($data);
+        self::insertDataToDbM($data);
         if (is_array($data['data_parking'])) {
-            CdrDb::insertDataToDbM($data['data_parking']);
+            self::insertDataToDbM($data['data_parking']);
         }
         $filter = [
             "linkedid=:linkedid: AND src_chan=:src_chan:",
@@ -818,7 +815,7 @@ class WorkerCallEvents extends WorkerBase
      */
     public static function Action_unpark_call_timeout($data): void
     {
-        CdrDb::insertDataToDbM($data);
+        self::insertDataToDbM($data);
     }
 
     /**
@@ -985,8 +982,153 @@ class WorkerCallEvents extends WorkerBase
     {
         $q    = $tube->getBody();
         $data = json_decode($q, true);
-        $res  = CdrDb::updateDataInDbM($data);
+        $res  = self::updateDataInDbM($data);
         $tube->reply(json_encode($res));
+    }
+
+    /**
+     * Обновление данных в базе.
+     *
+     * @param $data
+     *
+     * @return bool
+     */
+    public static function updateDataInDbM($data): bool
+    {
+        if (empty($data['UNIQUEID'])) {
+            Util::sysLogMsg(__FUNCTION__, 'UNIQUEID is empty ' . json_encode($data));
+
+            return false;
+        }
+
+        $filter = [
+            "UNIQUEID=:id:",
+            'bind' => ['id' => $data['UNIQUEID'],],
+        ];
+        /** @var CallDetailRecordsTmp $m_data */
+        $m_data = CallDetailRecordsTmp::findFirst($filter);
+        if ($m_data === null) {
+            return true;
+        }
+        $f_list = $m_data->toArray();
+        foreach ($data as $attribute => $value) {
+            if ( ! array_key_exists($attribute, $f_list)) {
+                continue;
+            }
+            if ('UNIQUEID' == $attribute) {
+                continue;
+            }
+            $m_data->writeAttribute($attribute, $value);
+        }
+        $res = $m_data->save();
+        if ( ! $res) {
+            Util::sysLogMsg(__FUNCTION__, implode(' ', $m_data->getMessages()));
+        }
+
+        /**
+         * Отправка UserEvent
+         */
+        $insert_data = $m_data->toArray();
+        if ($insert_data['work_completed'] == 1) {
+            $insert_data['action']        = "hangup_update_cdr";
+            $insert_data['GLOBAL_STATUS'] = isset($data['GLOBAL_STATUS']) ? $data['GLOBAL_STATUS'] : $data['disposition'];
+            unset($insert_data['src_chan']);
+            unset($insert_data['dst_chan']);
+            unset($insert_data['work_completed']);
+            unset($insert_data['did']);
+            unset($insert_data['id']);
+            unset($insert_data['from_account']);
+            unset($insert_data['to_account']);
+            unset($insert_data['appname']);
+            unset($insert_data['is_app']);
+            unset($insert_data['transfer']);
+
+            $am      = Util::getAstManager('off');
+            $AgiData = base64_encode(json_encode($insert_data));
+            $am->UserEvent('CdrConnector', ['AgiData' => $AgiData]);
+        }
+
+        return $res;
+    }
+
+    /**
+     * Помещаем данные в базу используя модели.
+     *
+     * @param array $data
+     *
+     * @return bool
+     */
+    public static function insertDataToDbM($data): bool
+    {
+        if (empty($data['UNIQUEID'])) {
+            Util::sysLogMsg(__FUNCTION__, 'UNIQUEID is empty ' . json_encode($data));
+
+            return false;
+        }
+
+        $is_new = false;
+        /** @var CallDetailRecordsTmp $m_data */
+        $m_data = CallDetailRecordsTmp::findFirst(
+            [
+                "UNIQUEID=:id:",
+                'bind' => ['id' => $data['UNIQUEID'],],
+            ]
+        );
+        if ($m_data === null) {
+            $m_data = new CallDetailRecordsTmp();
+            $is_new = true;
+        } elseif (isset($data['IS_ORGNT']) && $data['action'] == 'dial') {
+            if (empty($m_data->endtime)) {
+                // Если это оригинация dial может прийти дважды.
+                if(!empty($m_data->src_num) && $m_data->src_num === $data['dst_num']){
+                    $m_data->dst_num = $data['src_num'];
+                    $m_data->save();
+                }
+                return true;
+            } else {
+                // Предыдущие звонки завершены. Текущий вызов новый, к примеру через резервного провайдера.
+                // Меняем идентификатор предыдущих звонков.
+                $m_data->UNIQUEID .= Util::generateRandomString(5);
+                // Чистим путь к файлу записи.
+                $m_data->recordingfile = "";
+                $m_data->save();
+
+                $new_m_data               = new CallDetailRecordsTmp();
+                $new_m_data->UNIQUEID     = $data['UNIQUEID'];
+                $new_m_data->start        = $data['start'];
+                $new_m_data->src_chan     = $m_data->src_chan;
+                $new_m_data->src_num      = $m_data->src_num;
+                $new_m_data->dst_num      = $data['src_num'];
+                $new_m_data->did          = $data['did'];
+                $new_m_data->from_account = $data['from_account'];
+                $new_m_data->linkedid     = $data['linkedid'];
+                $new_m_data->transfer     = $data['transfer'];
+
+                $res = $new_m_data->save();
+                if ( ! $res) {
+                    Util::sysLogMsg(__FUNCTION__, implode(' ', $m_data->getMessages()));
+                }
+
+                return $res;
+            }
+        }
+
+        $f_list = $m_data->toArray();
+        foreach ($data as $attribute => $value) {
+            if ( ! array_key_exists($attribute, $f_list)) {
+                continue;
+            }
+            if ($is_new == false && 'UNIQUEID' == $attribute) {
+                continue;
+            }
+            $m_data->writeAttribute($attribute, $value);
+        }
+        $res = $m_data->save();
+        if ( ! $res) {
+            Util::sysLogMsg(__FUNCTION__, implode(' ', $m_data->getMessages()));
+        }
+
+        return $res;
     }
 
     /**
@@ -1034,7 +1176,7 @@ class WorkerCallEvents extends WorkerBase
         $tube->reply($res_data);
     }
 
-    private function errorHandler($m): void
+    public function errorHandler($m): void
     {
         Util::sysLogMsg(self::class . '_ERROR', $m);
     }
@@ -1043,9 +1185,11 @@ class WorkerCallEvents extends WorkerBase
 
 // Start worker process
 $workerClassname = WorkerCallEvents::class;
-if (isset($argv) && count($argv) > 1 && $argv[1] === 'start') {
+$action = $argv[1] ?? '';
+if ($action === 'start') {
     cli_set_process_title($workerClassname);
     try {
+        /** @var WorkerCallEvents $worker */
         $worker = new $workerClassname();
         $worker->start($argv);
     } catch (ExceptionAlias $e) {
