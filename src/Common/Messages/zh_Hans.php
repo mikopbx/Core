@@ -986,4 +986,6 @@ return [
     'Storage' => '数据存储',
     'Resize storage' => '通过使用整个未分配区域来增加存储磁盘的大小',
     'Check storage' => '检查磁盘是否有错误',
+    'sf_CustomSounds' => '音频文件',
+    'sf_MusicOnHold' => '保留音乐',
 ];
