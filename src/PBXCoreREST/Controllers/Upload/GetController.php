@@ -34,7 +34,6 @@ class GetController extends BaseController
             $resumableIdentifier  = $this->request->getPost('resumableIdentifier');
             $resumableChunkNumber = $this->request->getPost('resumableChunkNumber');
             $resumableTotalSize   = $this->request->getPost('resumableTotalSize');
-            $resumableChunkSize   = $this->request->getPost('resumableChunkSize');
 
             foreach ($this->request->getUploadedFiles() as $file) {
                 if ($file->getError()) {

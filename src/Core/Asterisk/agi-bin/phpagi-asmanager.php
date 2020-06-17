@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 5 2020
+ * Written by Alexey Portnov, 6 2020
  */
 
 use MikoPBX\Core\System\Util;
@@ -961,7 +961,7 @@ class AGI_AsteriskManager
         $callerid = null,
         $variable = null,
         $account = null,
-        $async = null,
+        $async = true,
         $actionid = null
     ) {
         $parameters = ['Channel' => $channel];

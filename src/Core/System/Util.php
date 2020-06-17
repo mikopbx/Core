@@ -458,7 +458,7 @@ class Util
         return $am->Originate($channel,
                               $dest_number,
                               $context,
-                      '1', null, null, null, null, $variable, null, '1');
+                      '1', null, null, null, null, $variable, null, true);
     }
 
     /**
