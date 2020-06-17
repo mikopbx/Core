@@ -10,6 +10,7 @@ namespace MikoPBX\Core\Asterisk;
 
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
 use MikoPBX\Core\System\{BeanstalkClient, MikoPBXConfig, Storage, Util};
+use MikoPBX\Common\Models\CallEventsLogs;
 use MikoPBX\Core\Workers\WorkerCdr;
 use Phalcon\Di;
 use Pheanstalk\Exception\DeadlineSoonException;
@@ -68,7 +69,9 @@ class CdrDb
             if (array_key_exists($row_cdr->linkedid, $channels_id)) {
                 continue;
             }
-            $date = Util::GetLastDateLogDB($row_cdr->linkedid);
+            $date = CallEventsLogs::maximum(
+                ['linkedid = "'.$row_cdr->linkedid.'"', 'column' => 'eventtime']
+            );
             if ( ! $row_cdr->endtime) {
                 if ($date) {
                     $row_cdr->endtime = $date;

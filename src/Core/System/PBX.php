@@ -437,7 +437,6 @@ class PBX
         /** @var \Phalcon\Db\Adapter\Pdo\Sqlite $connection */
         $connection = $this->di->get('dbCDR');
         if ( ! $connection->tableExists('cdr')) {
-            Util::CreateLogDB();
             RegisterDIServices::recreateDBConnections();
         } else {
             CdrDb::checkDb();

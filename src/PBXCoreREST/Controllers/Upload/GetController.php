@@ -1,4 +1,10 @@
 <?php
+/**
+ * Copyright © MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Alexey Portnov, 6 2020
+ */
 
 namespace MikoPBX\PBXCoreREST\Controllers\Upload;
 
@@ -57,14 +63,7 @@ class GetController extends BaseController
                     $data['d_status']          = 'ID_NOT_SET';
                 } elseif ($resumableFilename) {
                     // Передача файлов частями.
-                    $result = Util::createFileFromChunks(
-                        $temp_dir,
-                        $resumableFilename,
-                        $resumableTotalSize,
-                        $resumableChunkNumber,
-                        '',
-                        $resumableChunkSize
-                    );
+                    $result = Util::createFileFromChunks($temp_dir, $resumableTotalSize);
                     if ($result === true) {
                         $data['result'] = 'Success';
 

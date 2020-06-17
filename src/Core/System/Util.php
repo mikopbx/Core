@@ -12,12 +12,8 @@ use AGI_AsteriskManager;
 use DateTime;
 use Exception;
 use MikoPBX\Common\Models\{CallEventsLogs, CustomFiles};
-use Phalcon\Db\Adapter\Pdo\Sqlite;
-use Phalcon\Db\Column;
 use Phalcon\Di;
 use ReflectionClass;
-use SQLite3;
-
 
 /**
  * Вспомогательные методы.
@@ -445,12 +441,11 @@ class Util
 
     /**
      * Инициация телефонного звонка.
-     *
-     * @param string $peer_number
-     * @param string $peer_mobile
-     * @param string $dest_number
-     *
+     * @param $peer_number
+     * @param $peer_mobile
+     * @param $dest_number
      * @return array
+     * @throws Exception
      */
     public static function amiOriginate($peer_number, $peer_mobile, $dest_number): array
     {
@@ -460,9 +455,10 @@ class Util
         $IS_ORGNT = self::generateRandomString();
         $variable = "_IS_ORGNT={$IS_ORGNT},pt1c_cid={$dest_number},_extenfrom1c={$peer_number},__peer_mobile={$peer_mobile},_FROM_PEER={$peer_number}";
 
-        $result = $am->Originate($channel, $dest_number, $context, '1', null, null, null, null, $variable, null, '1');
-
-        return $result;
+        return $am->Originate($channel,
+                              $dest_number,
+                              $context,
+                      '1', null, null, null, null, $variable, null, '1');
     }
 
     /**
@@ -504,10 +500,9 @@ class Util
 
     /**
      * Генератор произвольной строки.
-     *
      * @param int $length
-     *
      * @return string
+     * @throws Exception
      */
     public static function generateRandomString($length = 10): string
     {
@@ -639,7 +634,7 @@ class Util
      */
     public static function fileWriteContent($filename, $data): void
     {
-        /** @var \MikoPBX\Common\Models\CustomFiles $res */
+        /** @var CustomFiles $res */
         $res = CustomFiles::findFirst("filepath = '{$filename}'");
 
         $filename_orgn = "{$filename}.orgn";
@@ -693,96 +688,6 @@ class Util
         }
 
         return $result;
-    }
-
-    /**
-     * Создаем базу данных для логов, если требуется.
-     */
-    public static function CreateLogDB(): void
-    {
-        $di = Di::getDefault();
-        if ($di === null) {
-            self::sysLogMsg('CreateLogDB', 'Dependency injector does not initialized');
-
-            return;
-        }
-
-        $db_path    = $di->getShared('config')->path('eventsLogDatabase.dbfile');
-        $table_name = 'call_events';
-        $db         = new Sqlite(['dbname' => $db_path]);
-        if ( ! $db->tableExists($table_name)) {
-            $type_str = ['type' => Column::TYPE_TEXT, 'default' => ''];
-            $type_key = ['type' => Column::TYPE_INTEGER, 'notNull' => true, 'autoIncrement' => true, 'primary' => true];
-
-            $columns = [
-                new Column('id', $type_key),
-                new Column('eventtime', $type_str),
-                new Column('app', $type_str),
-                new Column('linkedid', $type_str),
-                new Column('datajson', $type_str),
-            ];
-            $result  = $db->createTable($table_name, '', ['columns' => $columns]);
-            if ( ! $result) {
-                self::sysLogMsg('CreateLogDB', 'Can not create db ' . $table_name);
-
-                return;
-            }
-        }
-
-        $index_names = [
-            'eventtime' => 1,
-            'linkedid'  => 1,
-            'app'       => 1,
-        ];
-
-        $index_q = "SELECT" . " name FROM sqlite_master WHERE type='index' AND tbl_name='$table_name'";
-        $indexes = $db->query($index_q)->fetchAll();
-        foreach ($indexes as $index_data) {
-            if (key_exists($index_data['name'], $index_names)) {
-                unset($index_names[$index_data['name']]);
-            }
-        }
-        foreach ($index_names as $index_name => $value) {
-            $q      = "CREATE" . " INDEX IF NOT EXISTS i_call_events_{$index_name} ON {$table_name} ({$index_name})";
-            $result = $db->query($q);
-            if ( ! $result) {
-                self::sysLogMsg('CreateLogDB', 'Can not create index ' . $index_name);
-
-                return;
-            }
-        }
-    }
-
-    /**
-     * @param string  $id
-     * @param SQLite3 $db
-     *
-     * @return string
-     */
-    public static function GetLastDateLogDB($id, &$db = null): ?string
-    {
-        $di = Di::getDefault();
-        if ($di === null) {
-            self::sysLogMsg('CreateLogDB', 'Dependency injector does not initialized');
-
-            return null;
-        }
-
-        if ($db == null) {
-            $cdr_db_path = $di->getShared('config')->path('eventsLogDatabase.dbfile');
-            $db          = new SQLite3($cdr_db_path);
-        }
-        $db->busyTimeout(5000);
-        $eventtime = null;
-
-        $q      = 'SELECT' . ' MAX(eventtime) AS eventtime FROM call_events WHERE linkedid="' . $id . '" GROUP BY linkedid';
-        $result = $db->query($q);
-        $row    = $result->fetchArray(SQLITE3_ASSOC);
-        if ($row) {
-            $eventtime = $row['eventtime'];
-        }
-
-        return $eventtime;
     }
 
     /**
@@ -876,14 +781,11 @@ class Util
      * Получает расширение файла.
      *
      * @param        $filename
-     * @param string $delimiter
-     *
      * @return mixed
      */
-    public static function getExtensionOfFile($filename, $delimiter = '.')
+    public static function getExtensionOfFile($filename)
     {
         $path_parts = pathinfo($filename);
-
         return $path_parts['extension'];
     }
 
@@ -1020,23 +922,11 @@ class Util
      * Check if all the parts exist, and
      * gather all the parts of the file together
      *
-     * @param string $temp_dir    - the temporary directory holding all the parts of the file
-     * @param string $fileName    - the original file name
-     * @param string $totalSize   - original file size (in bytes)
-     * @param string $total_files - original file size (in bytes)
-     * @param string $result_file - original file size (in bytes)
-     * @param int    $chunkSize   - each chunk size (in bytes)
-     *
+     * @param string $temp_dir - the temporary directory holding all the parts of the file
+     * @param string $totalSize - original file size (in bytes)
      * @return bool
      */
-    public static function createFileFromChunks(
-        $temp_dir,
-        $fileName,
-        $totalSize,
-        $total_files,
-        $result_file = '',
-        $chunkSize = 0
-    ): bool {
+    public static function createFileFromChunks($temp_dir, $totalSize): bool {
         // count all the parts of this file
         $total_files_on_server_size = 0;
         foreach (scandir($temp_dir) as $file) {
@@ -1334,6 +1224,7 @@ class Util
                     if (strpos($row, '=') === false) {
                         continue;
                     }
+                    $key = '';
                     $arr_value = explode('=', $row);
                     if (count($arr_value) > 1) {
                         $key = trim($arr_value[0]);

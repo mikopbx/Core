@@ -47,4 +47,7 @@ class CallEventsLogs extends ModelsBase
         $this->setConnectionService('dbEventsLog');
     }
 
+    public function getIndexColumn(): array{
+        return ['eventtime', 'linkedid', 'app'];
+    }
 }
