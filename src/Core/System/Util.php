@@ -170,7 +170,7 @@ class Util
      * @param null $oarr
      * @param null $retval
      *
-     * @return int|null
+     * @return int
      */
     public static function mwExec($command, &$oarr = null, &$retval = null): ?int
     {

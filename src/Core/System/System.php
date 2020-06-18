@@ -3,13 +3,14 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 5 2020
+ * Written by Alexey Portnov, 6 2020
  */
 
 namespace MikoPBX\Core\System;
 
 use Exception;
 use MikoPBX\Common\Models\CustomFiles;
+use Phalcon\DiInterface;
 use MikoPBX\Core\Asterisk\Configs\{QueueConf};
 use MikoPBX\Core\Workers\Cron\WorkerSafeScriptsCore;
 use MikoPBX\Core\Workers\WorkerDownloader;
@@ -22,7 +23,7 @@ use function MikoPBX\Common\Config\appPath;
 class System
 {
     private MikoPBXConfig $mikoPBXConfig;
-    private $di;
+    private DiInterface $di;
 
     /**
      * System constructor.
@@ -689,6 +690,7 @@ class System
             sleep(1);
         }
 
+        $result = [];
         $result['result'] = 'Success';
 
         return $result;
@@ -750,7 +752,7 @@ class System
     /**
      * Возвращает статус скачивания модуля.
      *
-     * @param $module - Module ID
+     * @param $module Module ID
      *
      * @return array
      */
@@ -869,6 +871,10 @@ class System
             'data'    => null,
         ];
         $curl   = curl_init();
+        if($curl === false){
+            $result['message'] = 'Can not init cURL';
+            return $result;
+        }
         $url    = 'https://ipinfo.io/json';
         curl_setopt($curl, CURLOPT_URL, $url);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
@@ -878,7 +884,6 @@ class System
             $resultrequest = curl_exec($curl);
         } catch (Exception $e) {
             $result['message'] = $e->getMessage();
-
             return $result;
         }
         curl_close($curl);
@@ -1038,7 +1043,6 @@ class System
      **/
     public function sshdConfigure(): array
     {
-        @file_put_contents('/var/log/lastlog', '');
         $result       = [
             'result' => 'Success',
         ];
@@ -1055,7 +1059,7 @@ class System
         foreach ($keytypes as $keytype => $db_key) {
             $res_keyfilepath = "{$dropbear_dir}/dropbear_" . $keytype . "_host_key";
             $key             = $this->mikoPBXConfig->getGeneralSettings($db_key);
-            $key             = (isset($key)) ? trim($key) : "";
+            $key             = (isset($key) && is_string($key)) ? trim($key) : "";
             if (strlen($key) > 100) {
                 // Сохраняем ключ в файл.
                 file_put_contents($res_keyfilepath, base64_decode($key));
