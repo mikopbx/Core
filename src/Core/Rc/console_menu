@@ -223,6 +223,10 @@ $menu = (new CliMenuBuilder())
         ;
     })
     ->setWidth(75)
+    ->addItem(' ', function (CliMenu $menu) {
+        usleep(100000);
+        exit(0);
+    })
     ->addItem('[1] '.Util::translate('Change language'), function (CliMenu $menu) {
         $mikoPBXConfig     = new MikoPBXConfig();
         $lang       = $mikoPBXConfig->getGeneralSettings('SSHLanguage');
