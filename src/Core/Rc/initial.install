@@ -108,7 +108,7 @@ if (strtolower(trim(fgets($fp)) ) === 'y') {
                     "{$pvPath} -p /offload/firmware.img.gz | {$gunzipPath} | {$ddPath} of=/dev/{$target_disk} bs=512 2> /dev/null";
     passthru($install_cmd);
     echo " - Create storage partition...\n";
-    passthru("/etc/rc/initial.storage.part.four create /dev/{$target_disk}");
+    passthru("exec </dev/console >/dev/console 2>/dev/console; /etc/rc/initial.storage.part.four create /dev/{$target_disk}");
     // Подключение диска для хранения данных.
     include '/etc/rc/connect.storage';
 

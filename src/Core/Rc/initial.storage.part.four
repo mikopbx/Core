@@ -26,38 +26,22 @@ if [ "${mounted}x" != "x" ];then
 	exit 7;
 fi;
 
-res_file='/tmp/add_partitions.sh';
-echo '#!/bin/sh' > "$res_file";
-echo "/sbin/sfdisk ${dev} << EOF" >> "$res_file";
-
 # Получим информацию по разделам диска.
-/sbin/sfdisk "${dev}" -d --force | /bin/busybox grep "^/dev" | /bin/busybox awk '{print $4 $6 $7 $8}' | /bin/busybox sed 's/type=//g' | /bin/busybox sed 's/bootable/\*/g' >> "$res_file"
-
-count=$(cat "$res_file" | /bin/busybox wc -l);
-if [ "$count" -lt "5" ];then
-	exit 0;
+count=$(/sbin/sfdisk -l "${dev}" | /bin/busybox grep "^/dev" | /bin/busybox wc -l);
+if [ "$count" != "3" ];then
+  # Добавляем раздел, только если диск имеет 3 раздела. Системный диск.
+  exit 0;
 fi;
 
-# Добавляем новый раздел в разметку.
-echo '600M,,83;' >> "$res_file";
-echo ';' >> "$res_file";
-echo ';' >> "$res_file";
-echo 'EOF' >> "$res_file";
-echo 'echo " - sfdisk ... result code $?"; ' >> "$res_file";
-echo 'sleep 2;' >> "$res_file";
-echo '/sbin/blockdev --rereadpt "${dev}" > /dev/null 2>&1;' >> "$res_file";
-echo 'echo " - re-initialize partition table... code $?";' >> "$res_file";
-echo 'sleep 2;' >> "$res_file";
-/bin/sh "$res_file" > /dev/null 2>&1;
-rm "$res_file";
+# Добавим 4ый раздел.
+/usr/sbin/parted --script --align optimal "${dev}" 'mkpart primary ext4 600MiB 100%'
+echo " - parted return ${?}...";
+sleep 2;
 
 /sbin/blockdev --rereadpt "${dev}" > /dev/null 2>&1;
-sleep 1;
-
 if [ -b "${dev}4" ];then
     #e2fsck -f -p "${dev}4";
     #echo " - e2fsck... exit code $?";
-
     tmp_dir='/tmp/test_mnt';
     # Создаем файловую систему.
     mkdir -p "$tmp_dir";
@@ -73,7 +57,7 @@ if [ -b "${dev}4" ];then
             echo " - ERROR: mkfs on '${dev}4' type '${type}' exit code '$?'"
         fi;
 
-	    uuid=$(/sbin/blkid -ofull "${dev}4" | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^UUID" | /bin/busybox awk -F "\"" '{print $2}' | /bin/busybox head -n 1);
+	  uuid=$(/sbin/blkid -ofull "${dev}4" | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^UUID" | /bin/busybox awk -F "\"" '{print $2}' | /bin/busybox head -n 1);
 		mount -t "${type}" -rw UUID="$uuid" "$tmp_dir" 2> /dev/null;
         if [ "$?" != "0" ]; then
             echo " - ERROR: can not mount '${dev}4' type: '${type}' uuid: '${uuid}' exit code '$?'"

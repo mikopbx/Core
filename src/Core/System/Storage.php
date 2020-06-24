@@ -364,45 +364,14 @@ class Storage
      */
     public function formatDiskLocal($device, $bg = false)
     {
-        openlog("storage", LOG_NDELAY, LOG_DAEMON);
-        $echoPath = Util::which('echo');
-        $fdiskPath = Util::which('fdisk');
-        // overwrite with fresh DOS partition table
-        Util::mwExec(
-            "{$echoPath} \"o\n" .
-            // create new
-            "n\n" .
-            // primary partition
-            "p\n" .
-            // number 1
-            "1\n" .
-            // from the beginning
-            "\n" .
-            // to the end
-            "\n" .
-            // change type
-            /*
-            "t\n" .
-            // to FAT32
-            "b\n" .
-            // set active
-            "a\n" .
-            // partition 1
-            "1\n" .
-            */
-            // and write changes
-            "w\n" .
-            "\" | {$fdiskPath} " . $device,
-            $out,
-            $retval
+        $partedPath = Util::which('parted');
+        $retVal = Util::mwExec(
+            "{$partedPath} --script --align optimal '{$device}' 'mklabel msdos mkpart primary ext4 0% 100%'"
         );
-        syslog(LOG_NOTICE, "fdisk returned " . $retval);
-        closelog();
-
+        Util::sysLogMsg(__CLASS__, "{$partedPath} returned {$retVal}");
         if (false === $bg) {
             sleep(1);
         }
-
         return $this->formatDiskLocalPart2($device, $bg);
     }
 
@@ -425,17 +394,14 @@ class Storage
         $mkfsPath = Util::which("mkfs.{$format}");
         $cmd    = "{$mkfsPath} {$device}{$device_id}";
         if ($bg === false) {
-            openlog("storage_format_disk", LOG_NDELAY, LOG_DAEMON);
-            Util::mwExec("{$cmd} 2>&1", $out, $retval);
-            syslog(LOG_NOTICE, "{$mkfsPath} returned {$retval}");
-            closelog();
+            $retVal = Util::mwExec("{$cmd} 2>&1");
+            Util::sysLogMsg(__CLASS__, "{$mkfsPath} returned {$retVal}");
         } else {
             usleep(200000);
             Util::mwExecBg($cmd);
-            $retval = true;
+            $retVal = true;
         }
-
-        return $retval;
+        return $retVal;
     }
 
     /**
