@@ -10,7 +10,6 @@ namespace MikoPBX\Core\System;
 
 use Exception;
 use MikoPBX\Common\Models\CustomFiles;
-use Phalcon\DiInterface;
 use MikoPBX\Core\Asterisk\Configs\{QueueConf};
 use MikoPBX\Core\Workers\Cron\WorkerSafeScriptsCore;
 use MikoPBX\Core\Workers\WorkerDownloader;
@@ -23,7 +22,10 @@ use function MikoPBX\Common\Config\appPath;
 class System
 {
     private MikoPBXConfig $mikoPBXConfig;
-    private DiInterface $di;
+    /**
+     * @var mixed|\Phalcon\Di\DiInterface|null
+     */
+    private $di;
 
     /**
      * System constructor.
