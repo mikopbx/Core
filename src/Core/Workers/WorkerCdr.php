@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 2 2020
+ * Written by Alexey Portnov, 6 2020
  */
 
 namespace MikoPBX\Core\Workers;
@@ -160,9 +160,9 @@ class WorkerCdr extends WorkerBase
                 if (file_exists($row['recordingfile'])) {
                     @unlink($row['recordingfile']);
                 }
-            } elseif ( ! file_exists(Util::trimExtensionForFile($row['recordingfile']) . 'wav') && ! file_exists(
-                    $row['recordingfile']
-                )) {
+            } elseif (  ! empty($row['recordingfile']) &&
+                        ! file_exists(Util::trimExtensionForFile($row['recordingfile']) . 'wav') &&
+                        ! file_exists( $row['recordingfile']) ) {
                 /** @var CallDetailRecordsTmp $rec_data */
                 $rec_data = CallDetailRecordsTmp::findFirst(
                     "linkedid='{$row['linkedid']}' AND dst_chan='{$row['dst_chan']}'"
