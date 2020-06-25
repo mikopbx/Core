@@ -998,7 +998,6 @@ class Storage
                 if (stripos($key, 'path') === false && stripos($key, 'dir') === false) {
                     continue;
                 }
-
                 if (file_exists($entry)) {
                     continue;
                 }
@@ -1076,7 +1075,6 @@ class Storage
         $mountPath = Util::which('mount');
         Util::mwExec("{$mountPath} -o remount,ro /offload 2> /dev/null");
     }
-
 
     /**
      * Delete old modules, not installed on the system
