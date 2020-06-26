@@ -12,10 +12,7 @@ use PhpSchool\CliMenu\Input\InputIO;
 use PhpSchool\CliMenu\Style\SelectableStyle;
 
 use MikoPBX\Common\Models\Storage as StorageModel;
-use MikoPBX\Core\Asterisk\Configs\{
-    IAXConf,
-    SIPConf
-};
+
 use MikoPBX\Core\System\{
     Util,
     Network,
@@ -85,17 +82,16 @@ function getBannerText(){
     }
 
     $this_is   = Util::translate('this_is');
-
     return <<<EOD
 
 *** {$this_is}\033[01;32mMikoPBX v.{$version}\033[39m
     built on {$buildtime} for Generic (x64)
     {$copyright_info}
-
  {$ip_text[0]}
  {$ip_text[1]}
  {$ip_text[2]}
  {$ip_text[3]}
+ {$ip_text[4]}
  {$broken}
 EOD;
 }
@@ -212,21 +208,24 @@ $additional_items[] = ['[9] '.Util::translate('Console'), function (CliMenu $men
     exit(0);
 }];
 
+$separator      = '-';
+$titleWidth     = 75;
+$title          = str_repeat($separator, 2).'  '.Util::translate("PBX console setup").'  ';
+$titleSeparator = mb_substr($title.str_repeat($separator, $titleWidth - mb_strlen($title)),0,$titleWidth);
+
 $menu = (new CliMenuBuilder())
     ->setTitle(getBannerText())
+    ->setTitleSeparator($titleSeparator)
     ->enableAutoShortcuts()
     ->setForegroundColour('white', 'white')
     ->setBackgroundColour('black', 'black')
     ->modifySelectableStyle(function (SelectableStyle $style) {
-        $style->setSelectedMarker('→')
+        $style->setSelectedMarker(' ')
             ->setUnselectedMarker(' ')
         ;
     })
-    ->setWidth(75)
-    ->addItem(' ', function (CliMenu $menu) {
-        usleep(100000);
-        exit(0);
-    })
+    ->setWidth($titleWidth)
+    ->addItem(' ', function (CliMenu $menu) {})
     ->addItem('[1] '.Util::translate('Change language'), function (CliMenu $menu) {
         $mikoPBXConfig     = new MikoPBXConfig();
         $lang       = $mikoPBXConfig->getGeneralSettings('SSHLanguage');
