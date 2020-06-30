@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 2 2020
+ * Written by Alexey Portnov, 6 2020
  */
 
 namespace MikoPBX\Core\Workers;
@@ -32,8 +32,8 @@ class WorkerNotifyByEmail extends WorkerBase
 
     /**
      * Main worker
-     *
      * @param $message
+     * @throws \PHPMailer\PHPMailer\Exception
      */
     public function workerNotifyByEmail($message): void
     {
@@ -42,10 +42,7 @@ class WorkerNotifyByEmail extends WorkerBase
 
         /** @var BeanstalkClient $message */
         $data = json_decode($message->getBody(), true);
-        if (isset($data['NOANSWER'])) {
-            // Вызов клиента отвечен одним из сотрудников. Но не все участники подняли трубку.
-            return;
-        }
+
         $template_body   = $settings['MailTplMissedCallBody'];
         $template_Footer = $settings['MailTplMissedCallFooter'];
         $emails          = [];
@@ -92,7 +89,8 @@ class WorkerNotifyByEmail extends WorkerBase
 
 // Start worker process
 $workerClassname = WorkerNotifyByEmail::class;
-if (isset($argv) && count($argv) > 1 && $argv[1] === 'start') {
+$action = $argv[1]??'';
+if ($action === 'start') {
     cli_set_process_title($workerClassname);
     while (true) {
         try {

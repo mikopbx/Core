@@ -193,6 +193,8 @@ class WorkerCdr extends WorkerBase
                 isset($this->no_answered_calls[$linkedid]['NOANSWER']) &&
                 $this->no_answered_calls[$linkedid]['NOANSWER'] == false) {
                 $data['GLOBAL_STATUS'] = 'ANSWERED';
+                // Это отвеченный вызов (на очередь). Удаляем из списка.
+                unset($this->no_answered_calls[$linkedid]);
             }
             unset($data['tmp_linked_id']);
             $this->client_queue->publish(json_encode($data), null, self::UPDATE_CDR_TUBE);
@@ -225,7 +227,6 @@ class WorkerCdr extends WorkerBase
     {
         if ($row['disposition'] === 'ANSWERED') {
             $this->no_answered_calls[$row['linkedid']]['NOANSWER'] = false;
-
             return;
         }
         if ( ! array_key_exists($row['dst_num'], $this->internal_numbers)) {
