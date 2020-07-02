@@ -10,7 +10,7 @@
         <div class="ui container">
 
             <!--ADVICES-->
-            <div class="ui flowing popup bottom left transition inverted hidden" id="advices"></div>
+            <div class="ui flowing popup bottom left transition hidden" id="advices"></div>
             <!--/ ADVICES-->
 
             <!--HEADER-->

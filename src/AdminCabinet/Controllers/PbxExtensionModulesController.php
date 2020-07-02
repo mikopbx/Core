@@ -10,7 +10,7 @@
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\PbxExtensionModuleSettingsForm;
-use MikoPBX\Common\Models\{FirewallRules, NetworkFilters, PbxExtensionModules, PbxSettings};
+use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings};
 use Phalcon\Text;
 
 class PbxExtensionModulesController extends BaseController

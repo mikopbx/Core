@@ -17,8 +17,6 @@ use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Util;
 use PDOException;
 use Phalcon\Di\Injectable;
-use Phalcon\Messages\Message;
-use Phalcon\Mvc\Model\Relation;
 use ReflectionClass;
 use ReflectionException;
 

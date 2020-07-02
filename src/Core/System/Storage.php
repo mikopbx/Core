@@ -9,7 +9,7 @@
 namespace MikoPBX\Core\System;
 
 use MikoPBX\Core\Workers\WorkerRemoveOldRecords;
-use MikoPBX\Common\Models\{PbxExtensionModules, Storage as StorageModel};
+use MikoPBX\Common\Models\Storage as StorageModel;
 use MikoPBX\Common\Providers\ConfigProvider;
 use Phalcon\Di;
 use function MikoPBX\Common\Config\appPath;
@@ -856,10 +856,6 @@ class Storage
         $this->saveFstab($conf);
         $this->createWorkDirs();
         System::setupPhpLog();
-
-        if ($is_mounted) {
-            $this->deleteOldModules();
-        }
     }
 
     /**
@@ -1074,23 +1070,6 @@ class Storage
 
         $mountPath = Util::which('mount');
         Util::mwExec("{$mountPath} -o remount,ro /offload 2> /dev/null");
-    }
-
-    /**
-     * Delete old modules, not installed on the system
-     */
-    private function deleteOldModules(): void
-    {
-        // Проверим подключены ли модули.
-        /** @var \MikoPBX\Common\Models\PbxExtensionModules $modules */
-        $modules = PbxExtensionModules::find();
-        foreach ($modules as $module) {
-            if ( ! is_dir("{$this->config->path('core.modulesDir')}/{$module->uniqid}")) {
-                // Модуль не установлен... Нужно дать возможность переустановить модуль.
-                // Чистим запись об установленном модуле:
-                $modules->delete();
-            }
-        }
     }
 
     /**

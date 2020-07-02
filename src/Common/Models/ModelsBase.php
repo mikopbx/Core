@@ -55,13 +55,13 @@ abstract class ModelsBase extends Model
             ],
         ];
 
-        $modules = PbxExtensionModules::find($parameters);
+        $modules = PbxExtensionModules::find($parameters)->toArray();
         foreach ($modules as $module) {
-            $moduleModelsDir = $modulesDir . '/' . $module->uniqid . '/Models';
+            $moduleModelsDir = "{$modulesDir}/{$module['uniqid']}/Models";
             $results         = glob($moduleModelsDir . '/*.php', GLOB_NOSORT);
             foreach ($results as $file) {
                 $className        = pathinfo($file)['filename'];
-                $moduleModelClass = "\\Modules\\{$module->uniqid}\\Models\\{$className}";
+                $moduleModelClass = "\\Modules\\{$module['uniqid']}\\Models\\{$className}";
                 if (class_exists($moduleModelClass) && method_exists($moduleModelClass, 'getDynamicRelations')) {
                     $relations = $moduleModelClass::getDynamicRelations(static::class);
                     foreach ($relations as $relation => $rule) {

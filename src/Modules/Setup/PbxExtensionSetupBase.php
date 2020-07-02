@@ -341,7 +341,7 @@ abstract class PbxExtensionSetupBase implements PbxExtensionSetupInterface
     public function unregisterModule(): bool
     {
         $result = true;
-        $module = PbxExtensionModules::findFirst("uniqid='{$this->module_uniqid}'");
+        $module = PbxExtensionModules::findFirstByUniqid($this->module_uniqid);
         if ($module) {
             $result = $result && $module->delete();
         }
@@ -422,7 +422,7 @@ abstract class PbxExtensionSetupBase implements PbxExtensionSetupInterface
             return false;
         }
 
-        $module = PbxExtensionModules::findFirst("uniqid='{$this->module_uniqid}'");
+        $module = PbxExtensionModules::findFirstByUniqid($this->module_uniqid);
         if ( ! $module) {
             $module           = new PbxExtensionModules();
             $module->name     = $this->locString("Breadcrumb{$this->module_uniqid}");

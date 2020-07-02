@@ -18,12 +18,12 @@ class WorkerLicenseChecker extends WorkerBase
 
     public function start($argv): void
     {
-        $lastLicenseCheck = $this->di->getRegistry()->lastLicenseCheck;
-        if ($lastLicenseCheck===null || time() - $lastLicenseCheck > 3600){
+        $lastLicenseCheck = $this->di->get('managedCache')->get('lastLicenseCheck');
+        if ($lastLicenseCheck===null){
             $lic =  $this->di->getShared('license');
             $lic->checkPBX();
             $lic->checkModules();
-            $this->di->getRegistry()->lastLicenseCheck = time();
+            $this->di->get('managedCache')->set('lastLicenseCheck', time(), 3600);
         }
     }
 

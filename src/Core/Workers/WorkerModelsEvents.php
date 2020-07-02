@@ -33,7 +33,7 @@ use MikoPBX\Common\Models\{AsteriskManagerUsers,
     Sip,
     SipCodecs,
     SoundFiles};
-use MikoPBX\Core\Asterisk\Configs\{IAXConf, QueueConf, SIPConf};
+use MikoPBX\Core\Asterisk\Configs\QueueConf;
 use MikoPBX\Core\System\{BeanstalkClient, Firewall, PBX, System};
 use Phalcon\Exception;
 

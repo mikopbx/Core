@@ -56,6 +56,8 @@ class UpdateSystemConfig
      */
     public function updateConfigs(): bool
     {
+        $this->deleteLostModules();
+
         $previous_version = str_ireplace('-dev', '', $this->mikoPBXConfig->getGeneralSettings('PBXVersion'));
         $current_version  = str_ireplace('-dev', '', trim(file_get_contents('/etc/version')));
         if ($previous_version !== $current_version) {
@@ -101,6 +103,20 @@ class UpdateSystemConfig
         }
 
         return true;
+    }
+
+    /**
+     * Delete modules, not installed on the system
+     */
+    private function deleteLostModules(): void
+    {
+        /** @var \MikoPBX\Common\Models\PbxExtensionModules $modules */
+        $modules = PbxExtensionModules::find();
+        foreach ($modules as $module) {
+            if ( ! is_dir("{$this->config->path('core.modulesDir')}/{$module->uniqid}")) {
+                $module->delete();
+            }
+        }
     }
 
     /**
@@ -161,7 +177,7 @@ class UpdateSystemConfig
         $modules = PbxExtensionModules::find();
         foreach ($modules as $module) {
             if ($module->version === '1.0' && empty($module->support_email) && 'МИКО' === $module->developer) {
-                $modules->delete();
+                $module->delete();
             }
         }
     }
