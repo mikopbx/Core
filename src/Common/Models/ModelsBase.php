@@ -91,8 +91,7 @@ abstract class ModelsBase extends Model
             return;
         }
         foreach ($errorMessages as $errorMessage) {
-            switch ($errorMessage->getType()) {
-                case 'ConstraintViolation':
+            if ($errorMessage->getType()==='ConstraintViolation') {
                     $arrMessageParts = explode('Common\\Models\\', $errorMessage->getMessage());
                     if (count($arrMessageParts) === 2) {
                         $relatedModel = $arrMessageParts[1];
@@ -115,7 +114,6 @@ abstract class ModelsBase extends Model
                     $newErrorMessage .= '</ul>';
                     $errorMessage->setMessage($newErrorMessage);
                     break;
-                default:
             }
         }
     }
@@ -131,7 +129,7 @@ abstract class ModelsBase extends Model
      */
     public function t($message, $parameters = [])
     {
-        return $this->getDI()->getSharedTranslation()->t($message, $parameters);
+        return $this->getDI()->getShared('translation')->t($message, $parameters);
     }
 
     /**
@@ -547,6 +545,7 @@ abstract class ModelsBase extends Model
     public function getWebInterfaceLink(): string
     {
         $url     = new Url();
+        $link = '#';
         switch (static::class) {
             case AsteriskManagerUsers::class:
                 $link = $url->get('asterisk-managers/modify/' . $this->id);
@@ -567,7 +566,7 @@ abstract class ModelsBase extends Model
                 $link = $url->get('dialplan-applications/modify/' . $this->uniqid);
                 break;
             case ExtensionForwardingRights::class:
-                $name = $this->Extensions->getRepresent();
+
                 break;
             case Extensions::class:
                 $link = $url->get('extensions/modify/' . $this->id);
@@ -660,7 +659,6 @@ abstract class ModelsBase extends Model
                 $link = $url->get('sound-files/modify/' . $this->id);
                 break;
             default:
-                $link = '#';
         }
 
         return $link;
