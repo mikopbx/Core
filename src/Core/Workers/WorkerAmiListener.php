@@ -11,12 +11,13 @@ require_once 'Globals.php';
 
 use MikoPBX\Core\System\{BeanstalkClient, Util};
 use Exception as ExceptionAlias;
-use Phalcon\Exception;
+use AGI_AsteriskManager;
 
 class WorkerAmiListener extends WorkerBase
 {
     protected $client;
-    protected $am;
+
+    protected AGI_AsteriskManager $am;
 
     /**
      * Установка фильтра

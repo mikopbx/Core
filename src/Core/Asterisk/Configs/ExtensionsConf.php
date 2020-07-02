@@ -718,11 +718,11 @@ class ExtensionsConf extends ConfigClass
                 $mdays  = '*';
                 $months = '*';
             } else {
-                $mdays  = strtolower(date("j", $date_from));
-                $months = strtolower(date("M", $date_from));
+                $mdays  = strtolower(date("j", (int)$date_from));
+                $months = strtolower(date("M", (int)$date_from));
                 if ( ! empty($date_to)) {
-                    $mdays  .= "-" . strtolower(date("j", $date_to));
-                    $months .= "-" . strtolower(date("M", $date_to));
+                    $mdays  .= "-" . strtolower(date("j", (int)$date_to));
+                    $months .= "-" . strtolower(date("M", (int)$date_to));
                 }
             }
 

@@ -16,14 +16,9 @@ class PbxExtensionStateTest extends AbstractUnitTest
 {
     protected $state;
 
-    public function __construct($name = null, array $data = [], $dataName = '')
-    {
-        parent::__construct($name, $data, $dataName);
-        $this->state = new PbxExtensionState('ModuleBitrix24Integration');
-    }
-
     public function testDisableModule():void
     {
+        $this->state = new PbxExtensionState('ModuleTelegramNotify');
         $result = $this->state->disableModule();
         if ($result===true){
             $this->assertTrue(true);
@@ -34,6 +29,7 @@ class PbxExtensionStateTest extends AbstractUnitTest
 
     public function testEnableModule():void
     {
+        $this->state = new PbxExtensionState('ModuleTelegramNotify');
         $result = $this->state->enableModule();
         if ($result===true){
             $this->assertTrue(true);
@@ -45,6 +41,7 @@ class PbxExtensionStateTest extends AbstractUnitTest
 
     public function testGetMessages():string
     {
+        $this->state = new PbxExtensionState('ModuleTelegramNotify');
         return implode(' ', $this->state->getMessages());
     }
 

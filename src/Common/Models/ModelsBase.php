@@ -19,6 +19,7 @@ use Phalcon\Mvc\Model\Resultset;
 use Phalcon\Mvc\Model\Resultset\Simple;
 use Phalcon\Mvc\Model\ResultsetInterface;
 use Phalcon\Text;
+use Phalcon\Url;
 
 /**
  * @method static mixed findFirstById(array|string|int $parameters = null)
@@ -130,7 +131,7 @@ abstract class ModelsBase extends Model
      */
     public function t($message, $parameters = [])
     {
-        return $this->getDI()->getTranslation()->t($message, $parameters);
+        return $this->getDI()->getSharedTranslation()->t($message, $parameters);
     }
 
     /**
@@ -318,6 +319,7 @@ abstract class ModelsBase extends Model
         if ($this->id === null) {
             return $this->t('mo_NewElement');
         }
+
         switch (static::class) {
             case AsteriskManagerUsers::class:
                 $name = '<i class="asterisk icon"></i> ' . $this->username;
@@ -495,7 +497,8 @@ abstract class ModelsBase extends Model
                     . $this->name;
                 break;
             default:
-                $name = 'Unknown';
+              $name = 'Unknown';
+
         }
 
         if ($needLink) {
@@ -543,8 +546,7 @@ abstract class ModelsBase extends Model
      */
     public function getWebInterfaceLink(): string
     {
-        $url  = $this->getDI()->getUrl();
-        $link = '#';
+        $url     = new Url();
         switch (static::class) {
             case AsteriskManagerUsers::class:
                 $link = $url->get('asterisk-managers/modify/' . $this->id);
@@ -658,6 +660,7 @@ abstract class ModelsBase extends Model
                 $link = $url->get('sound-files/modify/' . $this->id);
                 break;
             default:
+                $link = '#';
         }
 
         return $link;
@@ -668,6 +671,6 @@ abstract class ModelsBase extends Model
      * @return array
      */
     public function getIndexColumn():array {
-        return array();
+        return [];
     }
 }

@@ -408,7 +408,7 @@ class AGI_AsteriskManager
      *
      * @return array of parameters, empty on timeout
      */
-    public function waitUserEvent($allow_timeout = false)
+    public function waitUserEvent($allow_timeout = false): array
     {
         $timeout = false;
         do {
@@ -419,7 +419,7 @@ class AGI_AsteriskManager
             } catch (Exception $e) {
                 return [];
             }
-            while ($buffer != '') {
+            while ($buffer !== '') {
                 $a = strpos($buffer, ':');
                 if ($a) {
                     if ( ! count($parameters)) {
@@ -429,9 +429,9 @@ class AGI_AsteriskManager
                 }
                 $buffer = trim(fgets($this->socket, 4096));
             }
-            if ($type == '' && count($this->Ping()) == 0) {
+            if ($type === '' && count($this->Ping()) === 0) {
                 $timeout = $allow_timeout;
-            } elseif ('event' == $type) {
+            } elseif (stripos($type, 'event')!==false ) {
                 $this->processEvent($parameters);
             }
         } while ( ! $timeout);
