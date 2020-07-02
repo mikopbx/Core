@@ -20,7 +20,7 @@
         "recoil/react": "^1.0",
         "recoil/recoil": "^1.0",
         "repejota/nats": "0.8.4",
-        "sentry/sdk": "^2.1.0",
+        "sentry/sdk": "^2.1.0"
     },
     "require-dev": {
         "roave/security-advisories": "dev-master",
