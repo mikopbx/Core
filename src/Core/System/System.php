@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 6 2020
+ * Written by Alexey Portnov, 7 2020
  */
 
 namespace MikoPBX\Core\System;
@@ -1131,7 +1131,13 @@ class System
                 . "vmtoolsd.level = none\n"
                 . ";vmsvc.data = /dev/null\n"
                 . "vmsvc.level = none\n";
-            file_put_contents('/etc/vmware-tools/tools.conf', $conf);
+
+            $dirVM = '/etc/vmware-tools';
+            if(!file_exists($dirVM)){
+                Util::mwMkdir($dirVM);
+            }
+
+            file_put_contents("{$dirVM}/tools.conf", $conf);
             $vmtoolsdPath = Util::which('vmtoolsd');
             Util::mwExec("{$vmtoolsdPath} --background=/var/run/vmtoolsd.pid > /dev/null 2> /dev/null");
         }
