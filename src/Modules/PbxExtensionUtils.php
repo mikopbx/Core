@@ -16,7 +16,7 @@ class PbxExtensionUtils
 {
     public static function isEnabled(string $moduleUniqueID):bool
     {
-        $result        = PbxExtensionModules::findFirst("uniqid='{$moduleUniqueID}'");
+        $result        = PbxExtensionModules::findFirstByUniqid($moduleUniqueID);
         return ($result!==false && $result->disabled !== '1');
     }
 }

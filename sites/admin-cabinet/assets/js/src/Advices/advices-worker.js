@@ -67,45 +67,57 @@ const advicesWorker = {
 			let countMessages = 0;
 			let iconBellClass = '';
 			htmlMessages += '<div class="ui relaxed divided list">';
-			if (response.message.info !== undefined
-				&& response.message.info.length > 0) {
-				$.each(response.message.info, (key, value) => {
+
+			if (response.message.error !== undefined
+				&& response.message.error.length > 0) {
+				$.each(response.message.error, (key, value) => {
 					htmlMessages += '<div class="item">';
-					htmlMessages += '<i class="smile outline icon"></i>';
+					htmlMessages += '<i class="frown outline red icon"></i>';
 					htmlMessages += '<div class="content">';
-					htmlMessages += `<div class="header">${value}</div>`;
+					htmlMessages += `<div class="ui small red header">${value}</div>`;
 					htmlMessages += '</div>';
 					htmlMessages += '</div>';
 					countMessages += 1;
 				});
-				iconBellClass = 'blue icon bell';
 			}
 			if (response.message.warning !== undefined
 				&& response.message.warning.length > 0) {
 				$.each(response.message.warning, (key, value) => {
 					htmlMessages += '<div class="item">';
-					htmlMessages += '<i class="meh outline icon"></i>';
+					htmlMessages += '<i class="meh outline yellow icon"></i>';
 					htmlMessages += '<div class="content">';
-					htmlMessages += `<div class="header">${value}</div>`;
+					htmlMessages += `<div class="ui small header">${value}</div>`;
 					htmlMessages += '</div>';
 					htmlMessages += '</div>';
 					countMessages += 1;
 				});
-				iconBellClass = 'yellow icon bell';
 			}
+			if (response.message.info !== undefined
+				&& response.message.info.length > 0) {
+				$.each(response.message.info, (key, value) => {
+					htmlMessages += '<div class="item">';
+					htmlMessages += '<i class="smile outline blue icon"></i>';
+					htmlMessages += '<div class="content">';
+					htmlMessages += `<div class="ui small header">${value}</div>`;
+					htmlMessages += '</div>';
+					htmlMessages += '</div>';
+					countMessages += 1;
+				});
+			}
+
 			if (response.message.error !== undefined
 				&& response.message.error.length > 0) {
-				$.each(response.message.error, (key, value) => {
-					htmlMessages += '<div class="item">';
-					htmlMessages += '<i class="frown outline icon"></i>';
-					htmlMessages += '<div class="content">';
-					htmlMessages += `<div class="header">${value}</div>`;
-					htmlMessages += '</div>';
-					htmlMessages += '</div>';
-					countMessages += 1;
-				});
 				iconBellClass = 'red large icon bell';
+			} else if (response.message.warning !== undefined
+				&& response.message.warning.length > 0){
+				iconBellClass = 'yellow icon bell';
+
+			} else if (response.message.info !== undefined
+				&& response.message.info.length > 0){
+				iconBellClass = 'blue icon bell';
 			}
+
+
 			htmlMessages += '</div>';
 			advicesWorker.$advices.html(htmlMessages);
 			sessionStorage.setItem(`previousAdvice${globalWebAdminLanguage}`, htmlMessages);

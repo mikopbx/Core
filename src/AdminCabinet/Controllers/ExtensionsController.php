@@ -629,7 +629,7 @@ class ExtensionsController extends BaseController
             }
         }
         if (empty($forwardingRight->forwarding)){
-            $forwardingRight->ringlength='';
+            $forwardingRight->ringlength=null;
         }
 
         if ($forwardingRight->save() === false) {

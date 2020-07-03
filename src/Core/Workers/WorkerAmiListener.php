@@ -11,12 +11,13 @@ require_once 'Globals.php';
 
 use MikoPBX\Core\System\{BeanstalkClient, Util};
 use Exception as ExceptionAlias;
-use Phalcon\Exception;
+use AGI_AsteriskManager;
 
 class WorkerAmiListener extends WorkerBase
 {
     protected $client;
-    protected $am;
+
+    protected AGI_AsteriskManager $am;
 
     /**
      * Установка фильтра
@@ -44,7 +45,7 @@ class WorkerAmiListener extends WorkerBase
         $this->am->addEventHandler("userevent", [$this, "callback"]);
         while (true) {
             $result = $this->am->waitUserEvent(true);
-            if ($result == false) {
+            if ($result === []) {
                 // Нужен реконнект.
                 usleep(100000);
                 $this->am = Util::getAstManager();

@@ -19,6 +19,7 @@ use Phalcon\Mvc\Model\Resultset;
 use Phalcon\Mvc\Model\Resultset\Simple;
 use Phalcon\Mvc\Model\ResultsetInterface;
 use Phalcon\Text;
+use Phalcon\Url;
 
 /**
  * @method static mixed findFirstById(array|string|int $parameters = null)
@@ -54,13 +55,13 @@ abstract class ModelsBase extends Model
             ],
         ];
 
-        $modules = PbxExtensionModules::find($parameters);
+        $modules = PbxExtensionModules::find($parameters)->toArray();
         foreach ($modules as $module) {
-            $moduleModelsDir = $modulesDir . '/' . $module->uniqid . '/Models';
+            $moduleModelsDir = "{$modulesDir}/{$module['uniqid']}/Models";
             $results         = glob($moduleModelsDir . '/*.php', GLOB_NOSORT);
             foreach ($results as $file) {
                 $className        = pathinfo($file)['filename'];
-                $moduleModelClass = "\\Modules\\{$module->uniqid}\\Models\\{$className}";
+                $moduleModelClass = "\\Modules\\{$module['uniqid']}\\Models\\{$className}";
                 if (class_exists($moduleModelClass) && method_exists($moduleModelClass, 'getDynamicRelations')) {
                     $relations = $moduleModelClass::getDynamicRelations(static::class);
                     foreach ($relations as $relation => $rule) {
@@ -90,8 +91,7 @@ abstract class ModelsBase extends Model
             return;
         }
         foreach ($errorMessages as $errorMessage) {
-            switch ($errorMessage->getType()) {
-                case 'ConstraintViolation':
+            if ($errorMessage->getType()==='ConstraintViolation') {
                     $arrMessageParts = explode('Common\\Models\\', $errorMessage->getMessage());
                     if (count($arrMessageParts) === 2) {
                         $relatedModel = $arrMessageParts[1];
@@ -114,7 +114,6 @@ abstract class ModelsBase extends Model
                     $newErrorMessage .= '</ul>';
                     $errorMessage->setMessage($newErrorMessage);
                     break;
-                default:
             }
         }
     }
@@ -130,7 +129,7 @@ abstract class ModelsBase extends Model
      */
     public function t($message, $parameters = [])
     {
-        return $this->getDI()->getTranslation()->t($message, $parameters);
+        return $this->getDI()->getShared('translation')->t($message, $parameters);
     }
 
     /**
@@ -318,6 +317,7 @@ abstract class ModelsBase extends Model
         if ($this->id === null) {
             return $this->t('mo_NewElement');
         }
+
         switch (static::class) {
             case AsteriskManagerUsers::class:
                 $name = '<i class="asterisk icon"></i> ' . $this->username;
@@ -495,7 +495,8 @@ abstract class ModelsBase extends Model
                     . $this->name;
                 break;
             default:
-                $name = 'Unknown';
+              $name = 'Unknown';
+
         }
 
         if ($needLink) {
@@ -543,7 +544,7 @@ abstract class ModelsBase extends Model
      */
     public function getWebInterfaceLink(): string
     {
-        $url  = $this->getDI()->getUrl();
+        $url     = new Url();
         $link = '#';
         switch (static::class) {
             case AsteriskManagerUsers::class:
@@ -565,7 +566,7 @@ abstract class ModelsBase extends Model
                 $link = $url->get('dialplan-applications/modify/' . $this->uniqid);
                 break;
             case ExtensionForwardingRights::class:
-                $name = $this->Extensions->getRepresent();
+
                 break;
             case Extensions::class:
                 $link = $url->get('extensions/modify/' . $this->id);
@@ -668,6 +669,6 @@ abstract class ModelsBase extends Model
      * @return array
      */
     public function getIndexColumn():array {
-        return array();
+        return [];
     }
 }

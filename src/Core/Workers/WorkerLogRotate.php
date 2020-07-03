@@ -31,9 +31,9 @@ class WorkerLogRotate extends WorkerBase
             PBX::logRotate();
 
             //Modules Logs
-            $plugins = PbxExtensionModules::find('disabled="0"');
+            $plugins = PbxExtensionModules::find('disabled="0"')->toArray();
             foreach ($plugins as $plugin) {
-                $this->logRotate($plugin->uniqid);
+                $this->logRotate($plugin['uniqid']);
             }
 
             $this->di->getRegistry()->lastLogRotateTime = time();

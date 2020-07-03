@@ -21,10 +21,9 @@ use MikoPBX\Common\Providers\{CDRDatabaseProvider,
     PBXConfModulesProvider,
     RegistryProvider,
     TranslationProvider,
-    ManagedCacheProvider,
     MessagesProvider,
     UrlProvider};
-use MikoPBX\Core\Providers\{EventsLogDatabaseProvider};
+use MikoPBX\Core\Providers\{EventsLogDatabaseProvider,ManagedCacheProvider};
 use Phalcon\Di;
 
 

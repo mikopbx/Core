@@ -79,6 +79,9 @@ class StorageTest extends AbstractUnitTest
 
     public function testGetAllHdd()
     {
+        $this->storage = new Storage();
+        $this->storage->getAllHdd();
+        $this->assertTrue(true);
     }
 
     public function testMkfs_disk()
@@ -95,6 +98,9 @@ class StorageTest extends AbstractUnitTest
 
     public function testConfigure()
     {
+        $this->storage = new Storage();
+        $this->storage->configure();
+        $this->assertTrue(true);
     }
 
     public function testUmountDisk()

@@ -44,6 +44,9 @@ class ModulesDBConnectionsProvider extends DatabaseProviderBase implements Servi
 
         foreach ($results as $moduleJson) {
             $jsonString            = file_get_contents($moduleJson);
+            if ($jsonString === false){
+                continue;
+            }
             $jsonModuleDescription = json_decode($jsonString, true);
             if ( ! is_array($jsonModuleDescription)) {
                 continue;
@@ -98,7 +101,6 @@ class ModulesDBConnectionsProvider extends DatabaseProviderBase implements Servi
                     Util::mwExec("{$touchPath} {$logFileName}");
                     Util::addRegularWWWRights($logDir);
                 }
-
 
                 $params = [
                     "debugMode"    => $config->path('modulesDatabases.debugMode'),

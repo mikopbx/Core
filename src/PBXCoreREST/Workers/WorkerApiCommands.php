@@ -336,6 +336,31 @@ class WorkerApiCommands extends WorkerBase
                     $result['result']   = 'Success';
                 }
                 return $result;
+            case 'uninstall':
+                $moduleClass = "\\Modules\\{$module}\\Setup\\PbxExtensionSetup";
+                if (class_exists($moduleClass)
+                    && method_exists($moduleClass, 'uninstallModule')) {
+                    $setup = new $moduleClass($module);
+                } else {
+                    // Заглушка которая позволяет удалить модуль из базы данных, которого нет на диске
+                    $moduleClass = PbxExtensionSetupFailure::class;
+                    $setup       = new $moduleClass($module);
+                }
+                $prams = json_decode($request['input'], true);
+                if (array_key_exists('keepSettings', $prams)) {
+                    $keepSettings = $prams['keepSettings'] === 'true';
+                } else {
+                    $keepSettings = false;
+                }
+                if ($setup->uninstallModule($keepSettings)) {
+                    $result['result'] = 'Success';
+                } else {
+                    $result['result'] = 'Error';
+                    $result['data']   = implode('<br>', $setup->getMessages());
+                }
+                WorkerSafeScriptsCore::restartAllWorkers();
+                return $result;
+                break;
             default:
                 break;
         }
@@ -369,28 +394,6 @@ class WorkerApiCommands extends WorkerBase
                 $response = $cl->customAction($request['data']);
                 $result   = $response;
                 break;
-            case 'uninstall':
-                if (class_exists($moduleClass) && method_exists($moduleClass, 'uninstallModule')) {
-                    $setup = new $moduleClass($module);
-                } else {
-                    // Заглушка которая позволяет удалить модуль из базы данных, которого нет на диске
-                    $moduleClass = PbxExtensionSetupFailure::class;
-                    $setup       = new $moduleClass($module);
-                }
-                $prams = json_decode($request['input'], true);
-                if (array_key_exists('keepSettings', $prams)) {
-                    $keepSettings = $prams['keepSettings'] === 'true';
-                } else {
-                    $keepSettings = false;
-                }
-                if ($setup->uninstallModule($keepSettings)) {
-                    $result['result'] = 'Success';
-                } else {
-                    $result['result'] = 'Error';
-                    $result['data']   = implode('<br>', $setup->getMessages());
-                }
-                WorkerSafeScriptsCore::restartAllWorkers();
-                break;
             default:
                 $cl = new $moduleClass();
                 if (method_exists($moduleClass, $action)) {
@@ -420,9 +423,6 @@ class WorkerApiCommands extends WorkerBase
             case 'reload':
             case 'customAction':
                 $path_class = "\\Modules\\{$module}\\Lib\\{$class_name}Conf";
-                break;
-            case 'uninstall':
-                $path_class = "\\Modules\\{$module}\\Setup\\PbxExtensionSetup";
                 break;
             default: // Try to find in basic module class
                 $path_class = "\\Modules\\{$module}\\Lib\\{$class_name}";

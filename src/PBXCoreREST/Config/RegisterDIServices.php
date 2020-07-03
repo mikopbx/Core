@@ -13,13 +13,14 @@ namespace MikoPBX\PBXCoreREST\Config;
 
 use MikoPBX\Common\Providers\{CDRDatabaseProvider,
     MainDatabaseProvider,
-    ManagedCacheProvider,
     ModelsCacheProvider,
     ModelsMetadataProvider,
     PBXConfModulesProvider,
     RegistryProvider,
     SessionReadOnlyProvider};
-use MikoPBX\PBXCoreREST\Providers\{BeanstalkConnectionProvider,
+use MikoPBX\PBXCoreREST\Providers\{
+    ManagedCacheProvider,
+    BeanstalkConnectionProvider,
     DispatcherProvider,
     RequestProvider,
     ResponseProvider,

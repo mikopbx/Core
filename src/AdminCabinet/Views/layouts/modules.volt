@@ -7,6 +7,9 @@
 <div id="main" class="ui bottom attached main-content-wrapper pusher">
     <div id="debug-info"></div>
     <div class="ui container">
+        <!--ADVICES-->
+        <div class="ui flowing popup bottom left transition hidden" id="advices"></div>
+        <!--/ ADVICES-->
         <!--HEADER-->
         <div class="ui hidden divider"></div>
         <div class="ui grid">

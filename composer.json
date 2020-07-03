@@ -12,6 +12,7 @@
         "ext-sockets": "*",
         "ext-sqlite3": "*",
         "ext-zip": "*",
+        "ext-pdo": "*",
         "pda/pheanstalk": "^4.0",
         "php-school/cli-menu": "^4.0",
         "php-school/terminal": "^0.2.1",

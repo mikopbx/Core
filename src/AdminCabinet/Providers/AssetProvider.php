@@ -206,38 +206,7 @@ class AssetProvider implements ServiceProviderInterface
                                 ->addJs('js/pbx/AsteriskManagers/manager-modify.js', true);
                         }
                         break;
-                    case 'Backup':
-                        if ($action === 'index') {
-                            $semanticCollectionCSS->addCss('css/vendor/semantic/progress.min.css', true);
-                            $semanticCollectionJS->addJs('js/vendor/semantic/progress.min.js', true);
-                            $footerCollectionJS->addJs('js/vendor/resumableumable.js', true);
-                            $footerCollectionJS->addJs('js/pbx/Backup/backup-index.js', true);
-                        } elseif ($action === 'create') {
-                            $semanticCollectionCSS->addCss('css/vendor/semantic/progress.min.css', true);
-                            $semanticCollectionJS->addJs('js/vendor/semantic/progress.min.js', true);
-                            $footerCollectionJS
-                                ->addJs('js/pbx/main/form.js', true)
-                                ->addJs('js/pbx/Backup/backup-create.js', true);
-                        } elseif ($action === 'restore') {
-                            $semanticCollectionCSS
-                                ->addCss('css/vendor/semantic/progress.min.css', true)
-                                ->addCss('css/vendor/semantic/modal.min.css', true);
 
-                            $semanticCollectionJS
-                                ->addJs('js/vendor/semantic/progress.min.js', true)
-                                ->addJs('js/vendor/semantic/modal.min.js', true);
-
-                            $footerCollectionJS
-                                ->addJs('js/pbx/main/form.js', true)
-                                ->addJs('js/pbx/Backup/backup-restore.js', true);
-                        } elseif ($action === 'automatic') {
-                            $semanticCollectionCSS->addCss('css/vendor/semantic/calendar.min.css', true);
-                            $semanticCollectionJS->addJs('js/vendor/semantic/calendar.min.js', true);
-                            $footerCollectionJS
-                                ->addJs('js/pbx/main/form.js', true)
-                                ->addJs('js/pbx/Backup/backup-automatic.js', true);
-                        }
-                        break;
                     case 'CallDetailRecords':
                         if ($action === 'index') {
                             $semanticCollectionJS->addJs('js/vendor/semantic/progress.min.js', true);

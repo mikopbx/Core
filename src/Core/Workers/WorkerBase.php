@@ -10,6 +10,7 @@ namespace MikoPBX\Core\Workers;
 
 
 
+use AGI_AsteriskManager;
 use MikoPBX\Core\System\BeanstalkClient;
 use Phalcon\Di;
 use Phalcon\Text;
@@ -19,6 +20,8 @@ abstract class WorkerBase implements WorkerInterface
 
     /** @var \Phalcon\Di $di */
     protected $di;
+
+    protected AGI_AsteriskManager $am;
 
     /**
      * Workers shared constructor

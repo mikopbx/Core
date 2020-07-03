@@ -15,9 +15,8 @@ use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Util;
+use PDOException;
 use Phalcon\Di\Injectable;
-use Phalcon\Messages\Message;
-use Phalcon\Mvc\Model\Relation;
 use ReflectionClass;
 use ReflectionException;
 
@@ -303,13 +302,18 @@ class PbxExtensionState extends Injectable
                 continue;
             }
             if (class_exists($moduleModelClass)) {
-                $records = $moduleModelClass::find();
-                foreach ($records as $record) {
-                   if (!$record->beforeDelete()){
-                       $messages[] = $record->getMessages();
-                       $error = true;
-                   }
+                try {
+                    $records = $moduleModelClass::find();
+                    foreach ($records as $record) {
+                        if (!$record->beforeDelete()){
+                            $messages[] = $record->getMessages();
+                            $error = true;
+                        }
+                    }
+                } catch (PDOException $e){
+                    $this->messages[] = $e->getMessage();
                 }
+
             }
         }
         if ( ! $error) {
