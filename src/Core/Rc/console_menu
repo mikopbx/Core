@@ -91,8 +91,8 @@ function getBannerText(){
  {$ip_text[1]}
  {$ip_text[2]}
  {$ip_text[3]}
- {$ip_text[4]}
  {$broken}
+
 EOD;
 }
 
