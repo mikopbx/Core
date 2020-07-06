@@ -986,4 +986,6 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'Install or recover' => 'Zainstaluj / napraw',
     'PBX console setup' => 'Konsola PBX',
     'The integrity of the system is broken' => 'Uszkodzona integralność systemu',
+    'sf_CustomSounds' => 'Pliki audio',
+    'sf_MusicOnHold' => 'Muzyka zawieszona',
 ];
