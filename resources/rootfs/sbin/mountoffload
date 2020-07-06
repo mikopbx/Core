@@ -1,6 +1,8 @@
 #!/bin/sh
 
+MD5_BUILD_INFO=$(/bin/busybox md5sum /etc/version.buildtime 2>/dev/null | /bin/busybox awk '{print $1}' 2>/dev/null);
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
+
 export PATH
 
 createBootConfFiles()
@@ -24,6 +26,22 @@ createBootConfFiles()
   fi
 }
 
+checkOffloadDisk()
+{
+  CHECK_RESULT=0; # Все ок
+  pathToFile="/offload/version.buildtime";
+  if [ ! -f "${pathToFile}"  ] ; then
+    echo " - File ${pathToFile} not found";
+    CHECK_RESULT=1; # Файл не существует.
+	else
+    md5OffloadBI=$(/bin/busybox md5sum $pathToFile 2>/dev/null | /bin/busybox awk '{print $1}' 2>/dev/null);
+    if [ ! "${md5OffloadBI}" = "${MD5_BUILD_INFO}" ] ; then
+      CHECK_RESULT=2; # Хэш сумма не сходится.
+      echo " - Hash file ${pathToFile} verification failed";
+   fi
+	fi
+}
+
 mountoffload()
 {
 	disk=$1;
@@ -32,6 +50,13 @@ mountoffload()
 	umount -f /offload 2> /dev/null
 	mount -t "${type}" -r UUID="$uuid" /offload 2> /dev/null;
 
+  MOUNT_RESULT=$?;
+  checkOffloadDisk;
+  if [ ! "${CHECK_RESULT}" = "0" ] ; then
+	  umount -f /offload 2> /dev/null
+	  MOUNT_RESULT="${CHECK_RESULT}";
+    sleep 3;
+  fi
 	createBootConfFiles
 }
 
@@ -66,21 +91,9 @@ mountConfRecover()
 		fi
 
         uuid=$(/sbin/blkid -o full "/dev/${diskr}3" | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^UUID" | /bin/busybox awk -F "\"" '{print $2}' | /bin/busybox head -n 1);
-		mount -t "${type}" -r UUID="${uuid}" "${rec_dir}" # > /dev/null 2> /dev/null;
+		mount -t "${type}" -r UUID="${uuid}" "${rec_dir}"
 		echo " - Trying mount ${diskr} fs ${type} ... returned: $?"
 		if [ -d "${rec_dir}conf" ] && [ ! -f "${rec_dir}livecd"  ] ; then
-			
-			### Распакуем файлы конфигурации ###
-			# mkdir -p /tmp/tmp_dir;
-			# cd /tmp/tmp_dir;
-
-			# cat /offload/boot/initramfs.igz | gzip -d | cpio -id > /dev/null 2> /dev/null;
-			# cp -R /tmp/tmp_dir/etc/inc/* /etc/inc/;
-			# cp -R /tmp/tmp_dir/etc/rc/*  /etc/rc/;
-			# cd /;
-			# rm -rf /tmp/tmp_dir;
-			###
-			
 			echo " - Found existing configuration on ${diskr}3!"
 			exit 0
 		else
@@ -118,7 +131,7 @@ do
 	else
 		mountoffload /dev/${disk}1;
 	fi
-	echo " - Trying ${disk} mount returned: $?"
+	echo " - Trying ${disk} mount returned: $MOUNT_RESULT"
 	if [ -f /offload/livecd ]; then
 		echo " - Found LIVECD flag file...";
 		createBootConfFiles
@@ -139,7 +152,7 @@ disks=$(fdisk -l | /bin/busybox grep "^/dev/" | /bin/busybox cut -c 6-8 | /bin/b
 for disk in $disks
 do
 	mountoffload /dev/${disk}2;
-	echo " - Trying ${disk} mount returned: $?"
+	echo " - Trying ${disk} mount returned: $MOUNT_RESULT"
 	if [ -d /offload/rootfs ]; then
 		echo " - Found rootfs!"
 		exit 0
@@ -154,7 +167,7 @@ done
 
 echo
 mountoffload /dev/mmcblk0p2;
-echo " - Trying mmcblk0 mount returned: $?"
+echo " - Trying mmcblk0 mount returned: $MOUNT_RESULT"
 if [ -d /offload/rootfs ]; then
     echo " - found rootfs on SD CARD!"
     exit 0
@@ -176,7 +189,7 @@ disks=$(fdisk -l | /bin/busybox grep "^/dev/" | /bin/busybox cut -c 6-8 | /bin/b
 for disk in $disks
 do
 	mountoffload /dev/${disk}1;
-	echo " - trying ${disk} mount returned: $?"
+	echo " - trying ${disk} mount returned: $MOUNT_RESULT"
 	if [ -f /offload/livecd ]; then
 		echo " - found LIVE USB flag file...";
 		mountConfRecover $disk;
@@ -190,7 +203,7 @@ disks=$(fdisk -l | /bin/busybox grep "^/dev/" | /bin/busybox cut -c 6-8 | /bin/b
 for disk in $disks
 do
 	mountoffload /dev/${disk}2;
-	echo " - trying ${disk} mount returned: $?"
+	echo " - trying ${disk} mount returned: $MOUNT_RESULT"
 	if [ -d /offload/rootfs ]; then
 		echo " - found rootfs!"
 		exit 0
