@@ -1,4 +1,10 @@
 <?php
+/**
+ * Copyright © MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Alexey Portnov, 7 2020
+ */
 
 return [
     'January'                                                     => 'Январь',
@@ -992,4 +998,5 @@ return [
     'Storage'                                                             => 'Хранилище данных',
     'Resize storage'                                                      => 'Увеличить размер диска для хранения данных, задействовав всю неразмеченную область',
     'Check storage'                                                       => 'Проверить диск на ошибки',
+    'Storage unmounted'                                                   => 'Диск для хранения данных не подключен',
 ];

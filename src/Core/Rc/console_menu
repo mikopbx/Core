@@ -20,7 +20,8 @@ use MikoPBX\Core\System\{
     Verify,
     System,
     MikoPBXConfig,
-    Firewall
+    Firewall,
+    Storage
 };
 use MikoPBX\Service\Main;
 require_once('Globals.php');
@@ -80,6 +81,10 @@ function getBannerText(){
     }else{
         $buildtime = 'debian';
     }
+    $storageWarning = '';
+    if(!Storage::isStorageDiskMounted()){
+        $storageWarning = "    \033[01;31m".Util::translate('Storage unmounted')."...\033[39m";
+    }
 
     $this_is   = Util::translate('this_is');
     return <<<EOD
@@ -91,6 +96,7 @@ function getBannerText(){
 {$ip_text[1]}
 {$ip_text[2]}
 {$ip_text[3]}
+{$storageWarning}
 {$broken}
 
 EOD;
