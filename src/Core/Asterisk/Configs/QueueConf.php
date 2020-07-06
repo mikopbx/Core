@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 5 2020
+ * Written by Alexey Portnov, 7 2020
  */
 
 namespace MikoPBX\Core\Asterisk\Configs;
@@ -54,12 +54,14 @@ class QueueConf extends ConfigClass
 
             // liner - под этой стратегией понимаем последовательный вызов агентов очереди.
             // Каждый новый звонок должен инициировать последовательный вызов начиная с первого агента.
-            $strategy = ('linear' === $queue_data['strategy']) ? 'ringall' : $queue_data['strategy'];
+            // $strategy = ('linear' === $queue_data['strategy']) ? 'ringall' : $queue_data['strategy'];
+            $strategy = $queue_data['strategy'];
 
             $q_conf .= "[{$queue_data['uniqid']}]; {$queue_data['name']}\n";
             $q_conf .= "musicclass=default \n";
             $q_conf .= "strategy={$strategy} \n";
             $q_conf .= "timeout={$timeout} \n";
+            $q_conf .= "retry=1 \n";
             $q_conf .= "wrapuptime={$wrapuptime} \n";
             $q_conf .= "ringinuse={$ringinuse} \n";
             $q_conf .= "$periodic_announce";
@@ -72,9 +74,9 @@ class QueueConf extends ConfigClass
 
             $penalty = 0;
             foreach ($queue_data['agents'] as $agent) {
-                if ('linear' === $queue_data['strategy']) {
-                    $penalty++;
-                }
+                // if ('linear' === $queue_data['strategy']) {
+                //     $penalty++;
+                // }
                 $hint = '';
                 if ($agent['isExternal'] != true) {
                     $hint = ",hint:{$agent['agent']}@internal-hints";
