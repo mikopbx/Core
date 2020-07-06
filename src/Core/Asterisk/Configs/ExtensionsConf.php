@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 5 2020
+ * Written by Alexey Portnov, 7 2020
  */
 
 namespace MikoPBX\Core\Asterisk\Configs;
@@ -327,8 +327,8 @@ class ExtensionsConf extends ConfigClass
         $additionalModules = $this->di->getShared('pbxConfModules');
         $conf              .= "[outgoing] \n";
 
-        $conf .= 'exten => _+.!,1,NoOp(Strip + sign from number and convert it to 00)' . " \n\t";
-        $conf .= 'same => n,Set(ADDPLUS=00);' . " \n\t";
+        $conf .= 'exten => _+.!,1,NoOp(Strip + sign from number and convert it to +)' . " \n\t";
+        $conf .= 'same => n,Set(ADDPLUS=+);' . " \n\t";
         $conf .= 'same => n,Goto(${CONTEXT},${EXTEN:1},1);' . " \n\n";
         $conf .= 'exten => _X!,1,NoOp(Start outgoing calling...)' . " \n\t";
         $conf .= 'same => n,Ringing()' . " \n\t";
