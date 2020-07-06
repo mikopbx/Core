@@ -87,11 +87,11 @@ function getBannerText(){
 *** {$this_is}\033[01;32mMikoPBX v.{$version}\033[39m
     built on {$buildtime} for Generic (x64)
     {$copyright_info}
- {$ip_text[0]}
- {$ip_text[1]}
- {$ip_text[2]}
- {$ip_text[3]}
- {$broken}
+{$ip_text[0]}
+{$ip_text[1]}
+{$ip_text[2]}
+{$ip_text[3]}
+{$broken}
 
 EOD;
 }
