@@ -986,4 +986,6 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'Enter a number' => 'Digite o número da equipe',
     'Reset admin password' => 'Redefinir senha para a interface da web',
     'Connect storage' => 'Unidade de montagem para armazenamento de dados',
+    'sf_CustomSounds' => 'Arquivos de áudio',
+    'sf_MusicOnHold' => 'Música em espera',
 ];
