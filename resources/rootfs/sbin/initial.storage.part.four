@@ -67,7 +67,7 @@ if [ "$resultParted" = "0" ];then
         echo " - mount ${dev}4 exit code $mountResult";
         type='ext4';
         # Создаем файловую систему ext2.
-        yes | "mkfs.${type}" "${dev}4" 2> /dev/null > /dev/null;
+        "mkfs.${type}" "${dev}4" 2> /dev/null > /dev/null;
         mkfsResult=$?;
         if [ "$mkfsResult" != "0" ]; then
             echo " - ERROR: mkfs on '${dev}4' type '${type}' exit code '$mkfsResult'"
