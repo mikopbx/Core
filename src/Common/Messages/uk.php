@@ -986,4 +986,6 @@ return [
     'Firewall' => 'Включити / відключити Firewall',
     'Ping host' => 'Виконати ping адреси',
     'Reboot system' => 'перезавантажити систему',
+    'sf_CustomSounds' => 'аудіофайли',
+    'sf_MusicOnHold' => 'Музика на утриманні',
 ];
