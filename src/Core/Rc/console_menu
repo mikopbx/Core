@@ -82,7 +82,7 @@ function getBannerText(){
         $buildtime = 'debian';
     }
     $storageWarning = '';
-    if(!Storage::isStorageDiskMounted()){
+    if(!Storage::isStorageDiskMounted() && !file_exists('/offload/livecd') ){
         $storageWarning = "    \033[01;31m".Util::translate('Storage unmounted')."...\033[39m";
     }
 
