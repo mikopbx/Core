@@ -54,20 +54,20 @@ while [ ! -b "${dev}4" ]; do
 done
 
 if [ "$resultParted" = "0" ];then
-    e2fsck -f -p "${dev}4" 2> /dev/null;
-    #echo " - e2fsck... exit code $?";
+    # e2fsck -f -p "${dev}4" 2> /dev/null > /dev/null;
+    # echo " - e2fsck... exit code $?";
     tmp_dir='/tmp/test_mnt';
     # Создаем файловую систему.
     mkdir -p "$tmp_dir";
 
     type=$(/sbin/blkid -o full "${dev}4" | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^TYPE" | /bin/busybox awk -F "\"" '{print $2}' | /bin/busybox head -n 1);
-    mount -t "$type" "${dev}4" "$tmp_dir" 2> /dev/null;
+    mount -t "$type" "${dev}4" "$tmp_dir" 2> /dev/null > /dev/null;
     mountResult=$?;
     if [ "$mountResult" != "0" ]; then
         echo " - mount ${dev}4 exit code $mountResult";
         type='ext4';
         # Создаем файловую систему ext2.
-        yes | "mkfs.${type}" "${dev}4" > /dev/null 2>&1;
+        yes | "mkfs.${type}" "${dev}4" 2> /dev/null > /dev/null;
         mkfsResult=$?;
         if [ "$mkfsResult" != "0" ]; then
             echo " - ERROR: mkfs on '${dev}4' type '${type}' exit code '$mkfsResult'"
