@@ -95,8 +95,7 @@ function getBannerText(){
 {$ip_text[0]}
 {$ip_text[1]}
 {$ip_text[2]}
-{$ip_text[3]}
-{$storageWarning}
+{$storageWarning} 
 {$broken}
 
 EOD;
@@ -223,6 +222,8 @@ $menu = (new CliMenuBuilder())
     ->setTitle(getBannerText())
     ->setTitleSeparator($titleSeparator)
     ->enableAutoShortcuts()
+    ->setPadding(0)
+    ->setMarginAuto()
     ->setForegroundColour('white', 'white')
     ->setBackgroundColour('black', 'black')
     ->modifySelectableStyle(function (SelectableStyle $style) {

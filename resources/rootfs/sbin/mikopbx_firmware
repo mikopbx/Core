@@ -60,7 +60,7 @@ recover_upgrade)
 		  /bin/pv -p "${img_file}" | /bin/gunzip | dd of=$3 bs=512 > /dev/null 2>&1;
 	    echo " - dd end working..."
       # Обновляем таблицу разделов.
-      /etc/rc/initial.storage.part.four create $3;
+      /sbin/initial.storage.part.four create $3;
       echo " - disk part four result ${?}...";
 	fi
 	/sbin/blockdev --rereadpt $3 > /dev/null 2>&1;

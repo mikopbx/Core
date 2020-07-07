@@ -34,13 +34,27 @@ if [ "$count" != "3" ];then
 fi;
 
 # Добавим 4ый раздел.
-/usr/sbin/parted --script --align optimal "${dev}" 'mkpart primary ext4 600MiB 100%'
-echo " - parted return ${?}...";
-sleep 2;
+/usr/sbin/parted --script --align optimal "${dev}" 'mkpart primary ext4 600MiB 100%';
+resultParted=$?;
+echo " - parted return ${resultParted}...";
 
-/sbin/blockdev --rereadpt "${dev}" > /dev/null 2>&1;
-if [ -b "${dev}4" ];then
-    #e2fsck -f -p "${dev}4";
+tryCount=1;
+while [ ! -b "${dev}4" ]; do
+  /sbin/blockdev --rereadpt "${dev}" > /dev/null 2>&1;
+  if [ -b "${dev}4" ]; then
+    break;
+  fi
+
+  tryCount=`expr $tryCount + 1`;
+  if [ $tryCount = "25" ]; then
+    echo " - partition ${dev}4 waiting fail...";
+    break;
+  fi
+  sleep 1;
+done
+
+if [ "$resultParted" = "0" ];then
+    e2fsck -f -p "${dev}4" 2> /dev/null;
     #echo " - e2fsck... exit code $?";
     tmp_dir='/tmp/test_mnt';
     # Создаем файловую систему.
@@ -48,17 +62,19 @@ if [ -b "${dev}4" ];then
 
     type=$(/sbin/blkid -o full "${dev}4" | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^TYPE" | /bin/busybox awk -F "\"" '{print $2}' | /bin/busybox head -n 1);
     mount -t "$type" "${dev}4" "$tmp_dir" 2> /dev/null;
-    if [ "$?" != "0" ]; then
+    mountResult=$?;
+    if [ "$mountResult" != "0" ]; then
+        echo " - mount ${dev}4 exit code $mountResult";
         type='ext4';
-        echo " - mount ${dev}4 exit code $?";
         # Создаем файловую систему ext2.
-        "mkfs.${type}" "${dev}4" > /dev/null 2>&1;
-        if [ "$?" != "0" ]; then
-            echo " - ERROR: mkfs on '${dev}4' type '${type}' exit code '$?'"
+        yes | "mkfs.${type}" "${dev}4" > /dev/null 2>&1;
+        mkfsResult=$?;
+        if [ "$mkfsResult" != "0" ]; then
+            echo " - ERROR: mkfs on '${dev}4' type '${type}' exit code '$mkfsResult'"
         fi;
 
-	  uuid=$(/sbin/blkid -ofull "${dev}4" | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^UUID" | /bin/busybox awk -F "\"" '{print $2}' | /bin/busybox head -n 1);
-		mount -t "${type}" -rw UUID="$uuid" "$tmp_dir" 2> /dev/null;
+	      uuid=$(/sbin/blkid -ofull "${dev}4" | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^UUID" | /bin/busybox awk -F "\"" '{print $2}' | /bin/busybox head -n 1);
+		    mount -t "${type}" -rw UUID="$uuid" "$tmp_dir"
         if [ "$?" != "0" ]; then
             echo " - ERROR: can not mount '${dev}4' type: '${type}' uuid: '${uuid}' exit code '$?'"
             sleep 30;
