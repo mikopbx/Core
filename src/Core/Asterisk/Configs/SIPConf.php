@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 5 2020
+ * Written by Alexey Portnov, 7 2020
  */
 
 namespace MikoPBX\Core\Asterisk\Configs;
@@ -269,15 +269,17 @@ class SIPConf extends ConfigClass
                 $reg_strings .= Util::overrideConfigurationArray($options, $manual_attributes, 'registration-auth');
 
                 $options     = [
-                    'type'           => 'registration',
-                    'transport'      => 'transport-udp',
-                    'outbound_auth'  => "REG-AUTH-{$provider['uniqid']}",
-                    'contact_user'   => $provider['username'],
-                    'retry_interval' => '20',
-                    'max_retries'    => '10',
-                    'expiration'     => $this->generalSettings['SIPDefaultExpiry'],
-                    'server_uri'     => "sip:{$provider['host']}:{$port}",
-                    'client_uri'     => "sip:{$provider['username']}@{$provider['host']}:{$port}",
+                    'type'                        => 'registration',
+                    'transport'                   => 'transport-udp',
+                    'outbound_auth'               => "REG-AUTH-{$provider['uniqid']}",
+                    'contact_user'                => $provider['username'],
+                    'retry_interval'              => '30',
+                    'max_retries'                 => '100',
+                    'forbidden_retry_interval'    => '300',
+                    'fatal_retry_interval'        => '300',
+                    'expiration'                  => $this->generalSettings['SIPDefaultExpiry'],
+                    'server_uri'                  => "sip:{$provider['host']}:{$port}",
+                    'client_uri'                  => "sip:{$provider['username']}@{$provider['host']}:{$port}",
                 ];
                 $reg_strings .= "[REG-{$provider['uniqid']}] \n";
                 $reg_strings .= Util::overrideConfigurationArray($options, $manual_attributes, 'registration');
