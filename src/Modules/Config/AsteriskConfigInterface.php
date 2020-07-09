@@ -88,13 +88,6 @@ interface AsteriskConfigInterface
      */
     public function generatePublicContext(&$conf): void;
 
-    /**
-     * Генератор сеции пиров для sip.conf
-     *
-     *
-     * @return string
-     */
-    public function generatePeers(): string;
 
     /**
      * Генератор сеции пиров для pjsip.conf

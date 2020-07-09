@@ -8,24 +8,6 @@ interface SystemConfigInterface
 {
 
     /**
-     * Проверка работы сервисов.
-     */
-    public function checkModuleWorkProperly(): array;
-
-    /**
-     * Генерация конфига, рестарт работы модуля.
-     * Метод вызывается после рестарта NATS сервера.
-     */
-    public function onNatsReload(): void;
-
-    /**
-     * Перезапуск сервисов модуля.
-     *
-     * @return void
-     */
-    public function reloadServices(): void;
-
-    /**
      * Будет вызван после старта asterisk.
      */
     public function onAfterPbxStarted(): void;
@@ -36,15 +18,6 @@ interface SystemConfigInterface
      * @param $tasks
      */
     public function createCronTasks(&$tasks): void;
-
-    /**
-     * Модули: Выполнение к-либо действия.
-     *
-     * @param $req_data
-     *
-     * @return array
-     */
-    public function customAction($req_data): array;
 
 
     /**
@@ -60,14 +33,6 @@ interface SystemConfigInterface
      * @param $modified_tables
      */
     public function modelsEventNeedReload($modified_tables): void;
-
-
-    /**
-     * Returns array of additional routes for PBXCoreREST interface from module
-     *
-     * @return array
-     */
-    public function getPBXCoreRESTAdditionalRoutes(): array;
 
 
     /**

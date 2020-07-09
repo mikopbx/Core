@@ -816,7 +816,6 @@ class Storage
      */
     public function configure(): void
     {
-        $is_mounted       = false;
         $cf_disk          = '';
         $varEtcPath       = $this->config->path('core.varEtcPath');
         $storage_dev_file = "{$varEtcPath}/storage_device";
@@ -851,7 +850,6 @@ class Storage
             $str_uid     = 'UUID=' . $this->getUuid($dev) . '';
             $format_p4   = $this->getFsType($dev);
             $conf        .= "{$str_uid} /storage/usbdisk{$disk['id']} {$format_p4} async,rw 0 0\n";
-            $is_mounted  = self::isStorageDiskMounted("/storage/usbdisk{$disk['id']}");
             $mount_point = "/storage/usbdisk{$disk['id']}";
             Util::mwMkdir($mount_point);
         }
@@ -925,13 +923,20 @@ class Storage
                 }
             }
         }
-        $newJsonString = json_encode($data, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        $newJsonString = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
         file_put_contents($staticSettingsFile, $newJsonString);
 
         // Update config variable
         $this->di->remove('config');
         $this->di->register(new ConfigProvider());
         $this->config = $this->di->getShared('config');
+
+        // Delete old cache dir
+        if (stripos($mount_point, '/mountpoint') !== false){
+            $rmPath = Util::which('rm');
+            Util::mwExec("{$rmPath} -rf /mountpoint");
+        }
+
     }
 
     /**

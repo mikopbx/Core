@@ -12,53 +12,51 @@ use MikoPBX\Core\System\MikoPBXConfig;
 use Phalcon\Di;
 use ReflectionClass as ReflectionClassAlias;
 
-abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInterface
+abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInterface, RestAPIConfigInterface
 {
     /**
-     * @var mixed|\Phalcon\Di\DiInterface|null
+     * Dependency injections
      */
     protected $di;
 
     /**
      * @var \MikoPBX\Core\System\MikoPBXConfig
      */
-    protected $mikoPBXConfig;
+    protected MikoPBXConfig $mikoPBXConfig;
 
     /**
      * @var \Phalcon\Config
      */
-    protected $config;
+    protected \Phalcon\Config $config;
 
     /**
      * @var bool
      */
-    protected $booting;
+    protected bool $booting;
 
     /**
+     * Error and Notice messages
      * @var array
      */
-    protected $messages;
+    protected array $messages;
 
     /**
-     * @var array
+     * Array of PbxSettings values
      */
-    protected $generalSettings;
+    protected array $generalSettings;
 
     /**
      * Asterisk config file name
-     * @var string
      */
     protected string $description;
 
     /**
      * Additional module UniqueID
-     * @var string
      */
     protected string $moduleUniqueId;
 
     /**
      * Additional module directory
-     * @var string
      */
     protected string $moduleDir;
 
@@ -115,12 +113,12 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
             return $result;
         }
         if (!empty($this->moduleUniqueId)){
-            $result ='; ***** BEGIN BY '.$this->moduleUniqueId.PHP_EOL."\t";
+            $result ='; ***** BEGIN BY '.$this->moduleUniqueId.PHP_EOL." *****\t";
             $result .= $addition;
             if (substr($addition, -1)!=="\t"){
                 $result .="\t";
             }
-            $result .='; ***** END BY '.$this->moduleUniqueId.PHP_EOL."\t";
+            $result .='; ***** END BY '.$this->moduleUniqueId.PHP_EOL." *****\t";
         } else {
             $result .= $addition;
         }
@@ -230,30 +228,6 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
     {
     }
 
-    /**
-     * Проверка работы сервисов.
-     */
-    public function checkModuleWorkProperly(): array
-    {
-        return ['result' => true];
-    }
-
-    /**
-     * Генерация конфига, рестарт работы модуля.
-     * Метод вызывается после рестарта NATS сервера.
-     */
-    public function onNatsReload(): void
-    {
-    }
-
-    /**
-     * Перезапуск сервисов модуля.
-     *
-     * @return void
-     */
-    public function reloadServices(): void
-    {
-    }
 
     /**
      * Будет вызван после старта asterisk.
@@ -271,30 +245,6 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
     {
     }
 
-    /**
-     * Модули: Выполнение к-либо действия.
-     *
-     * @param $req_data
-     *
-     * @return array
-     */
-    public function customAction($req_data): array
-    {
-        return [
-            'result' => 'ERROR',
-            'data'   => $req_data,
-        ];
-    }
-
-    /**
-     * Генератор сеции пиров для sip.conf
-     *
-     * @return string
-     */
-    public function generatePeers(): string
-    {
-        return '';
-    }
 
     /**
      * Генератор сеции пиров для sip.conf
@@ -394,16 +344,6 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
     }
 
     /**
-     * Returns array of additional routes for PBXCoreREST interface from module
-     *
-     * @return array
-     */
-    public function getPBXCoreRESTAdditionalRoutes(): array
-    {
-        return [];
-    }
-
-    /**
      * Returns array of workers classes for WorkerSafeScripts from module
      * @return array
      */
@@ -456,5 +396,37 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
     public function generateModulesConf():string
     {
         return '';
+    }
+
+    /**
+     *  Process CoreAPI requests under root rights
+     *
+     * @param array $request
+     *
+     * @return array
+     */
+    public function moduleRestAPICallback(array $request): array
+    {
+        $action = strtoupper($request['action']);
+        switch ($action){
+            case 'CHECK':
+            case 'RELOAD':
+                $result['result']   = 'Success';
+                break;
+            default:
+                $result['result']   = 'ERROR';
+                $result['data'] = 'API action not found;';
+        }
+        return $result;
+    }
+
+    /**
+     * Returns array of additional routes for PBXCoreREST interface from module
+     *
+     * @return array
+     */
+    public function getPBXCoreRESTAdditionalRoutes(): array
+    {
+        return [];
     }
 }
