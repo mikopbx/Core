@@ -209,18 +209,9 @@ class System
         $gnatsdPath = Util::which('gnatsd');
         Util::mwExecBg("{$gnatsdPath} --config {$conf_file}", "{$logdir}/gnats_process.log");
 
-        $result = [
+        return [
             'result' => 'Success',
         ];
-
-        // Перезапуск сервисов.
-        $additionalModules = $this->di->getShared('pbxConfModules');
-        foreach ($additionalModules as $appClass) {
-            /** @var \MikoPBX\Modules\Config\ConfigClass $appClass */
-            $appClass->onNatsReload();
-        }
-
-        return $result;
     }
 
     /**

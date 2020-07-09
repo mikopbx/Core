@@ -931,12 +931,6 @@ class Storage
         $this->di->register(new ConfigProvider());
         $this->config = $this->di->getShared('config');
 
-        // Delete old cache dir
-        if (stripos($mount_point, '/mountpoint') !== false){
-            $rmPath = Util::which('rm');
-            Util::mwExec("{$rmPath} -rf /mountpoint");
-        }
-
     }
 
     /**
