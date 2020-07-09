@@ -37,9 +37,9 @@ class ModulesControllerBase extends BaseController
      *
      * Выполнение действий без основной авторизации.
      * curl
-     * http://172.16.156.223/pbxcore/api/modules/ModuleAutoprovision/customAction?action=getcfg&mac=00135E874B49&solt=test
+     * http://172.16.156.223/pbxcore/api/modules/ModuleAutoprovision/getcfg?mac=00135E874B49&solt=test
      * curl
-     * http://172.16.156.223/pbxcore/api/modules/ModuleAutoprovision/customAction?action=getimg&file=logo-yealink-132x32.dob
+     * http://172.16.156.223/pbxcore/api/modules/ModuleAutoprovision/getimg?file=logo-yealink-132x32.dob
      *
      * curl http://84.201.142.45/pbxcore/api/modules/ModuleBitrix24Notify/customAction?portal=b24-uve4uz.bitrix24.ru
      * curl http://84.201.142.45/pbxcore/api/modules/ModuleBitrix24Notify/customAction?portal=miko24.ru

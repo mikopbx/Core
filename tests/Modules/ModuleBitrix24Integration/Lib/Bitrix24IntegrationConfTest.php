@@ -16,9 +16,6 @@ use PHPUnit\Framework\TestCase;
 class Bitrix24IntegrationConfTest extends AbstractUnitTest
 {
 
-    public function testReloadServices()
-    {
-    }
 
     public function testGetModuleWorkers()
     {

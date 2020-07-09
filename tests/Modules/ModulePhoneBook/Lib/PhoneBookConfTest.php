@@ -23,10 +23,4 @@ class PhoneBookConfTest extends TestCase
 
     }
 
-    public function testReloadServices()
-    {
-        $appClass = new PhoneBookConf();
-        $appClass->reloadServices();
-        $this->assertTrue(true);
-    }
 }

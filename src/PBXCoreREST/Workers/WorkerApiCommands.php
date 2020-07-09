@@ -17,12 +17,18 @@ use MikoPBX\Core\Workers\WorkerMergeUploadedFile;
 use MikoPBX\Modules\Setup\PbxExtensionSetupFailure;
 use MikoPBX\Modules\PbxExtensionState;
 use Phalcon\Exception;
+
 use function MikoPBX\Common\Config\appPath;
 
 require_once 'Globals.php';
 
 class WorkerApiCommands extends WorkerBase
 {
+    /**
+     * Modules can expose additional REST methods and processors,
+     * look at src/Modules/Config/RestAPIConfigInterface.php
+     */
+    private array $additionalProcessors;
 
     /**
      * @param $argv
@@ -32,6 +38,15 @@ class WorkerApiCommands extends WorkerBase
         $client = new BeanstalkClient();
         $client->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
         $client->subscribe(__CLASS__, [$this, 'prepareAnswer']);
+
+        // Every module config class can process requests under root rights,
+        // if it described in Config class
+        $additionalModules = $this->di->getShared('pbxConfModules');
+        foreach ($additionalModules as $moduleConfigObject) {
+            if (method_exists($moduleConfigObject, 'moduleRestAPICallback')) {
+                $this->additionalProcessors[] = [$moduleConfigObject, 'moduleRestAPICallback',];
+            }
+        }
 
         while (true) {
             try {
@@ -78,7 +93,7 @@ class WorkerApiCommands extends WorkerBase
                     $answer = "Unknown processor - {$processor}";
             }
         } catch (\Exception $exception) {
-            $answer = 'Exception on WorkerApiCommands - '.$exception->getMessage();
+            $answer = 'Exception on WorkerApiCommands - ' . $exception->getMessage();
         }
 
         $message->reply(json_encode($answer));
@@ -175,10 +190,10 @@ class WorkerApiCommands extends WorkerBase
 
             return $result;
         } elseif ('merge_uploaded_file' === $action) {
-            $result      = [
+            $result               = [
                 'result' => 'Success',
             ];
-            $phpPath = Util::which('php');
+            $phpPath              = Util::which('php');
             $workerDownloaderPath = Util::getFilePathByClassName(WorkerMergeUploadedFile::class);
             Util::mwExecBg("{$phpPath} -f {$workerDownloaderPath} '{$data['settings_file']}'");
         } elseif ('shutdown' === $action) {
@@ -312,29 +327,33 @@ class WorkerApiCommands extends WorkerBase
                 $result['uniqid']   = $module;
                 $result['function'] = $action;
                 $result['result']   = 'Success';
+
                 return $result;
             case 'status':
                 $result             = System::moduleDownloadStatus($module);
                 $result['function'] = $action;
                 $result['result']   = 'Success';
+
                 return $result;
             case 'enable':
                 $moduleStateProcessor = new PbxExtensionState($module);
-                if ($moduleStateProcessor->enableModule() === false){
-                    $result['messages']   = $moduleStateProcessor->getMessages();
-                } else {
-                    unset($result);
-                    $result['result']   = 'Success';
-                }
-                return $result;
-            case 'disable':
-                $moduleStateProcessor = new PbxExtensionState($module);
-                if ($moduleStateProcessor->disableModule() === false){
+                if ($moduleStateProcessor->enableModule() === false) {
                     $result['messages'] = $moduleStateProcessor->getMessages();
                 } else {
                     unset($result);
-                    $result['result']   = 'Success';
+                    $result['result'] = 'Success';
                 }
+
+                return $result;
+            case 'disable':
+                $moduleStateProcessor = new PbxExtensionState($module);
+                if ($moduleStateProcessor->disableModule() === false) {
+                    $result['messages'] = $moduleStateProcessor->getMessages();
+                } else {
+                    unset($result);
+                    $result['result'] = 'Success';
+                }
+
                 return $result;
             case 'uninstall':
                 $moduleClass = "\\Modules\\{$module}\\Setup\\PbxExtensionSetup";
@@ -359,83 +378,22 @@ class WorkerApiCommands extends WorkerBase
                     $result['data']   = implode('<br>', $setup->getMessages());
                 }
                 WorkerSafeScriptsCore::restartAllWorkers();
+
                 return $result;
-                break;
             default:
-                break;
         }
 
-        $moduleClass = $this->getModuleClass($module, $action);
-        if (false === $moduleClass) {
-            $result['data'][]   = "Class '$module' does not exist...";
-            $result['data'][]   = "Class '$moduleClass' does not exist...";
-            $result['function'] = $action;
-
-            return $result;
+        // Try process request over additional modules
+        foreach ($this->additionalProcessors as [$moduleConfigObject, $callBack]) {
+            if (stripos($module, $moduleConfigObject->moduleUniqueId) === 0) {
+                $result = $moduleConfigObject->$callBack($request);
+                break;
+            }
         }
 
-
-        switch ($action) {
-            case 'check':
-                $cl       = new $moduleClass(true);
-                $response = $cl->checkModuleWorkProperly();
-                if ($response['result'] === true) {
-                    $result['result'] = 'Success';
-                }
-                $result['data'] = $response;
-                break;
-            case 'reload':
-                $cl = new $moduleClass();
-                $cl->reloadServices();
-                $result['result'] = 'Success';
-                break;
-            case 'customAction':
-                $cl       = new $moduleClass();
-                $response = $cl->customAction($request['data']);
-                $result   = $response;
-                break;
-            default:
-                $cl = new $moduleClass();
-                if (method_exists($moduleClass, $action)) {
-                    $result = @$cl->$action($request);
-                } else {
-                    $result = ['result' => 'ERROR', 'message' => 'Unknown method ' . $action];
-                }
-                break;
-        }
         $result['function'] = $action;
 
         return $result;
-    }
-
-    /**
-     * @param $module
-     * @param $action
-     *
-     * @return bool|string
-     */
-    private function getModuleClass($module, $action)
-    {
-        $class_name = str_replace('Module', '', $module);
-
-        switch ($action) {
-            case 'check':
-            case 'reload':
-            case 'customAction':
-                $path_class = "\\Modules\\{$module}\\Lib\\{$class_name}Conf";
-                break;
-            default: // Try to find in basic module class
-                $path_class = "\\Modules\\{$module}\\Lib\\{$class_name}";
-                if ( ! class_exists($path_class) || ! method_exists($path_class, $action)) {
-                    $path_class = false;
-                }
-        }
-
-        if ( ! class_exists($path_class)) {
-            $path_class = false;
-        }
-
-        return $path_class;
     }
 
 }

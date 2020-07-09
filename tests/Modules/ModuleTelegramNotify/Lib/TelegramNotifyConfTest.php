@@ -15,14 +15,6 @@ use MikoPBX\Tests\Unit\AbstractUnitTest;
 class TelegramNotifyConfTest extends AbstractUnitTest
 {
 
-    public function testReloadServices()
-    {
-        $worker = new TelegramNotifyConf();
-        $worker->reloadServices(true);
-        $worker->reloadServices(false);
-        $this->assertTrue(true);
-    }
-
     public function testCheckModuleWorkProperly()
     {
     }
