@@ -70,7 +70,7 @@ d
 ${part}
 w
 EOF
-    /etc/rc/initial.storage.part.four create "$disk";
+    /sbin/initial.storage.part.four create "$disk";
     sleep 2;
 
     need_reboot=1;

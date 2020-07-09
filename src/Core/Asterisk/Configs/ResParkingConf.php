@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 2 2020
+ * Written by Alexey Portnov, 7 2020
  */
 
 namespace MikoPBX\Core\Asterisk\Configs;
@@ -26,13 +26,13 @@ class ResParkingConf extends ConfigClass
         $conf   = "[general] \n" .
             "parkeddynamic = yes \n\n" .
             "[default] \n" .
-            "context => parkedcalls \n" .
+            "context => parked-calls \n" .
             "parkedcallreparking = caller\n" .
             "parkedcalltransfers = caller\n" .
             "parkext => {$this->ParkingExt} \n" .
             "findslot => next\n" .
             "comebacktoorigin=no\n" .
-            "comebackcontext = parkedcallstimeout\n" .
+            "comebackcontext = parked-calls-timeout\n" .
             "parkpos => {$this->ParkingStartSlot}-{$this->ParkingEndSlot} \n\n";
         file_put_contents($this->config->path('asterisk.astetcdir') . '/res_parking.conf', $conf);
     }
@@ -83,8 +83,6 @@ class ResParkingConf extends ConfigClass
      */
     public function getIncludeInternal(): string
     {
-        // Включаем контексты.
-        // $conf.= "include => parked-calls \n";
         return '';
     }
 
@@ -96,7 +94,7 @@ class ResParkingConf extends ConfigClass
     public function getIncludeInternalTransfer(): string
     {
         // Генерация внутреннего номерного плана.
-        return 'exten => ' . $this->ParkingExt . ',1,Goto(parkedcalls,${EXTEN},1)' . "\n";
+        return 'exten => ' . $this->ParkingExt . ',1,Goto(parked-calls,${EXTEN},1)' . "\n";
     }
 
     /**
@@ -109,13 +107,12 @@ class ResParkingConf extends ConfigClass
         // Генерация внутреннего номерного плана.
         $conf = '';
         $conf .= "[parked-calls]\n";
-        $conf .= "exten => _X!,1,NoOp(--- parkedcalls)\n\t";
-        $conf .= "same => n,AGI(cdr_connector.php,unpark_call)\n\t";
+        $conf .= "exten => _X!,1,AGI(cdr_connector.php,unpark_call)\n\t";
         $conf .= 'same => n,ExecIf($["${pt1c_PARK_CHAN}x" == "x"]?Hangup())' . "\n\t";
         $conf .= 'same => n,Bridge(${pt1c_PARK_CHAN},kKTt)' . "\n\t";
         $conf .= 'same => n,Hangup()' . "\n\n";
 
-        $conf .= "[parkedcallstimeout]\n";
+        $conf .= "[parked-calls-timeout]\n";
         $conf .= "exten => s,1,NoOp(This is all that happens to parked calls if they time out.)\n\t";
         $conf .= 'same => n,Set(FROM_PEER=${EMPTYVAR})' . "\n\t";
         $conf .= 'same => n,AGI(cdr_connector.php,unpark_call_timeout)' . "\n\t";
@@ -148,7 +145,6 @@ class ResParkingConf extends ConfigClass
      */
     public function extensionGlobals(): string
     {
-        // Генерация хинтов.
         return "PARKING_DURATION=50\n";
     }
 
