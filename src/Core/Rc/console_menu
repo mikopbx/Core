@@ -284,7 +284,10 @@ $menu = (new CliMenuBuilder())
         if(!empty($pinghost)){
             $command.='echo "start ping host '.escapeshellarg($pinghost).'";';
         }
-        passthru($command.'/usr/bin/timeout -t 4 /bin/ping -c3 ' . escapeshellarg($pinghost));
+        $pingPath    = Util::which('ping');
+        $timeoutPath = Util::which('timeout');
+        passthru("{$command} {$timeoutPath} -t 4 {$pingPath} -c3 " . escapeshellarg($pinghost));
+        passthru("{$command} {$timeoutPath} -t 4 {$pingPath} -c3 " . escapeshellarg($pinghost));
     })
     ->addItem('[5] '.Util::translate('Firewall'), function (CliMenu $menu) {
         $mikoPBXConfig = new MikoPBXConfig();

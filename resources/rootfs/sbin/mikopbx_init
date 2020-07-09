@@ -46,6 +46,7 @@ while : ; do
         if [ -f /etc/debian_version ] ; then
             /bin/bash;
          else
+            exec </dev/console >/dev/console 2>/dev/console;
             /bin/sh;
         fi
     fi
