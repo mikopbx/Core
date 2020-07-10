@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 5 2020
+ * Written by Alexey Portnov, 7 2020
  */
 
 namespace MikoPBX\Core\System\Upgrade;
@@ -286,6 +286,65 @@ class UpdateSystemConfig
      */
     private function updateConfigsUpToVer20202314(): void
     {
+        $availCodecs = [
+            // Видео кодеки.
+            'h263p' => 'H.263+',
+            'h263'  => 'H.263',
+            'h264'  => 'H.264',
+
+            // Аудио кодеки
+            'adpcm' => 'ADPCM',
+            'alaw'  => 'G.711 A-law',
+            'ulaw'  => 'G.711 µ-law',
+            'g719'  => 'G.719',
+            'g722'  => 'G.722',
+            'g726'  => 'G.726',
+            'gsm'   => 'GSM',
+            'ilbc'  => 'ILBC',
+            'lpc10' => 'LPC-10',
+            'silk'  => 'SILK',
+            'speex' => 'Speex',
+            'slin'  => 'Signed Linear PCM',
+            'wav'   => 'wav (SLIN)',
+            'wav49' => 'WAV (GSM)',
+            'opus'  => 'Opus',
+        ];
+        $codecs = Codecs::find();
+        $savedCodecs = [];
+        // Удалим лишние кодеки
+        /** @var \MikoPBX\Common\Models\Codecs $codec */
+        foreach ($codecs as $codec){
+            if(array_key_exists($codec->name, $availCodecs)){
+                $savedCodecs[] = $codec->name;
+                continue;
+            }
+            if(!$codec->delete()){
+                Util::sysLogMsg(__CLASS__, 'Can not delete codec '.$codec->name. ' from \MikoPBX\Common\Models\Codecs');
+            }
+        }
+
+        foreach ($availCodecs as $availCodec => $desc){
+            $codecData = Codecs::findFirst('name="'.$availCodec.'"');
+            if ($codecData === null) {
+                $codecData              = new Codecs();
+            }elseif($codecData->description === $desc){
+                unset($codecData);
+                continue;
+            }
+            $codecData->name        = $availCodec;
+            if(substr($availCodec,0,3) === 'h26'){
+                $type = 'video';
+            }else{
+                $type = 'audio';
+            }
+            $codecData->type        = $type;
+            $codecData->description = $desc;
+            if(!$codecData->save()){
+                Util::sysLogMsg(__CLASS__, 'Can not update codec info '.$codec->name. ' from \MikoPBX\Common\Models\Codecs');
+            }
+        }
+        unset($codecs);
+
         // Add custom category to all sound files
         $soundFiles = SoundFiles::find();
         foreach ($soundFiles as $sound_file) {

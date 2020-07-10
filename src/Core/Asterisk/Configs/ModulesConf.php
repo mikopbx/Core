@@ -1,10 +1,9 @@
 <?php
 /**
- * Copyright (C) MIKO LLC - All Rights Reserved
+ * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 5 2020
- *
+ * Written by Alexey Portnov, 7 2020
  */
 
 namespace MikoPBX\Core\Asterisk\Configs;
@@ -77,6 +76,7 @@ class ModulesConf extends ConfigClass
             'format_h264.so',
             'format_g723.so',
             'format_g719.so',
+            'format_sln.so',
 
             'func_callerid.so',
             'func_speex.so',

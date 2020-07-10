@@ -8,10 +8,12 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
-use MikoPBX\Common\Models\{ExtensionForwardingRights,
+use MikoPBX\Common\Models\{Codecs,
+    ExtensionForwardingRights,
     Extensions as ExtensionsModel,
     NetworkFilters,
     OutgoingRoutingTable,
+    PbxSettings,
     Sip,
     SipCodecs,
     Users};
@@ -191,6 +193,13 @@ class SIPConf extends ConfigClass
                 $subnets[] = $net->permit;
             }
         }
+        $codecs    = Codecs::find()->toArray();
+        $codecConf = '';
+        foreach ($codecs as $codec){
+            $codecConf.= "allow = {$codec['name']}\n";
+        }
+
+        $pbxVersion = PbxSettings::getValueByKey('PBXVersion');
 
         $conf = "[general] \n" .
             "disable_multi_domain=on\n" .
@@ -202,11 +211,7 @@ class SIPConf extends ConfigClass
 
             "[anonymous]\n" .
             "type = endpoint\n" .
-            "allow = alaw\n" .
-            "allow = ulaw\n" .
-            "allow = g722\n" .
-            "allow = gsm\n" .
-            "allow = g726\n" .
+            "{$codecConf}" .
             "timers = no\n" .
             "context = public-direct-dial\n\n" .
 
