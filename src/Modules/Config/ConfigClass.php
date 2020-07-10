@@ -69,7 +69,7 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
     {
         $this->di            = Di::getDefault();
         $this->config        = $this->di->getShared('config');
-        $this->booting       = $this->di->getRegistry()->booting;
+        $this->booting       = $this->di->getRegistry()->booting===true;
         $this->mikoPBXConfig = new MikoPBXConfig();
         $this->generalSettings = $this->mikoPBXConfig->getGeneralSettings();
 
@@ -407,6 +407,7 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
      */
     public function moduleRestAPICallback(array $request): array
     {
+        $result = [];
         $action = strtoupper($request['action']);
         switch ($action){
             case 'CHECK':

@@ -102,7 +102,7 @@ class MikoPBXConfig
                 return $settings;
             }
             $result = PbxSettings::getAllPbxSettings();
-            if ($cacheKey) {
+            if ($cacheKey && $this->di->getRegistry()->booting!==true) {
                 $managedCache->set($cacheKey, $result, 3600);
             }
         } else {
