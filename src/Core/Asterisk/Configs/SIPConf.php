@@ -207,7 +207,7 @@ class SIPConf extends ConfigClass
 
             "[global] \n" .
             "type = global\n" .
-            "user_agent = mikopbx\n\n" .
+            "user_agent = mikopbx-{$pbxVersion}\n\n" .
 
             "[anonymous]\n" .
             "type = endpoint\n" .
@@ -218,6 +218,11 @@ class SIPConf extends ConfigClass
             "[transport-udp]\n" .
             "type = transport\n" .
             "protocol = udp\n" .
+            "bind=0.0.0.0:{$this->generalSettings['SIPPort']}\n\n".
+
+            "[transport-tcp]\n" .
+            "type = transport\n" .
+            "protocol = tcp\n" .
             "bind=0.0.0.0:{$this->generalSettings['SIPPort']}\n";
 
         if ($topology === 'private') {
@@ -275,7 +280,7 @@ class SIPConf extends ConfigClass
 
                 $options     = [
                     'type'                        => 'registration',
-                    'transport'                   => 'transport-udp',
+                    // 'transport'                   => 'transport-udp',
                     'outbound_auth'               => "REG-AUTH-{$provider['uniqid']}",
                     'contact_user'                => $provider['username'],
                     'retry_interval'              => '30',
@@ -416,7 +421,7 @@ class SIPConf extends ConfigClass
             $dtmfmode = ($peer['dtmfmode'] === 'rfc2833') ? 'rfc4733' : $peer['dtmfmode'];
             $options  = [
                 'type'                 => 'endpoint',
-                'transport'            => 'transport-udp',
+                // 'transport'            => 'transport-udp',
                 'context'              => 'all_peers',
                 'dtmf_mode'            => $dtmfmode,
                 'disallow'             => 'all',
