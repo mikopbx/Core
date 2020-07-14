@@ -8,10 +8,12 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
-use MikoPBX\Common\Models\{ExtensionForwardingRights,
+use MikoPBX\Common\Models\{Codecs,
+    ExtensionForwardingRights,
     Extensions as ExtensionsModel,
     NetworkFilters,
     OutgoingRoutingTable,
+    PbxSettings,
     Sip,
     SipCodecs,
     Users};
@@ -191,6 +193,13 @@ class SIPConf extends ConfigClass
                 $subnets[] = $net->permit;
             }
         }
+        $codecs    = Codecs::find()->toArray();
+        $codecConf = '';
+        foreach ($codecs as $codec){
+            $codecConf.= "allow = {$codec['name']}\n";
+        }
+
+        $pbxVersion = PbxSettings::getValueByKey('PBXVersion');
 
         $conf = "[general] \n" .
             "disable_multi_domain=on\n" .
@@ -198,21 +207,22 @@ class SIPConf extends ConfigClass
 
             "[global] \n" .
             "type = global\n" .
-            "user_agent = mikopbx\n\n" .
+            "user_agent = mikopbx-{$pbxVersion}\n\n" .
 
             "[anonymous]\n" .
             "type = endpoint\n" .
-            "allow = alaw\n" .
-            "allow = ulaw\n" .
-            "allow = g722\n" .
-            "allow = gsm\n" .
-            "allow = g726\n" .
+            "{$codecConf}" .
             "timers = no\n" .
             "context = public-direct-dial\n\n" .
 
             "[transport-udp]\n" .
             "type = transport\n" .
             "protocol = udp\n" .
+            "bind=0.0.0.0:{$this->generalSettings['SIPPort']}\n\n".
+
+            "[transport-tcp]\n" .
+            "type = transport\n" .
+            "protocol = tcp\n" .
             "bind=0.0.0.0:{$this->generalSettings['SIPPort']}\n";
 
         if ($topology === 'private') {
@@ -270,7 +280,7 @@ class SIPConf extends ConfigClass
 
                 $options     = [
                     'type'                        => 'registration',
-                    'transport'                   => 'transport-udp',
+                    // 'transport'                   => 'transport-udp',
                     'outbound_auth'               => "REG-AUTH-{$provider['uniqid']}",
                     'contact_user'                => $provider['username'],
                     'retry_interval'              => '30',
@@ -411,7 +421,7 @@ class SIPConf extends ConfigClass
             $dtmfmode = ($peer['dtmfmode'] === 'rfc2833') ? 'rfc4733' : $peer['dtmfmode'];
             $options  = [
                 'type'                 => 'endpoint',
-                'transport'            => 'transport-udp',
+                // 'transport'            => 'transport-udp',
                 'context'              => 'all_peers',
                 'dtmf_mode'            => $dtmfmode,
                 'disallow'             => 'all',
