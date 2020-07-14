@@ -947,7 +947,7 @@ class WorkerCallEvents extends WorkerBase
     public function start($argv): void
     {
         // PID сохраняем при начале работы Worker.
-        $this::savePidFile(self::class);
+        $this->savePidFile(self::class);
 
         $client = new BeanstalkClient(self::class);
         $client->subscribe(self::class, [$this, 'callEventsWorker']);

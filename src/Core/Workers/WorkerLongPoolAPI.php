@@ -33,7 +33,7 @@ class WorkerLongPoolAPI extends WorkerBase
     public function start($argv): void
     {
         // PID сохраняем при начале работы Worker.
-        $this::savePidFile(self::class);
+        $this->savePidFile(self::class);
 
         $client_queue = new BeanstalkClient();
         $client_queue->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);

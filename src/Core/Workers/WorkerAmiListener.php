@@ -39,7 +39,7 @@ class WorkerAmiListener extends WorkerBase
     public function start($argv): void
     {
         // PID сохраняем при начале работы Worker.
-        $this::savePidFile(self::class);
+        $this->savePidFile(self::class);
 
         $this->client = new BeanstalkClient(WorkerCallEvents::class);
         $this->am     = Util::getAstManager();

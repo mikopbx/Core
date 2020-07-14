@@ -93,7 +93,7 @@ class WorkerModelsEvents extends WorkerBase
     public function start($argv): void
     {
         // PID сохраняем при начале работы Worker.
-        $this::savePidFile(self::class);
+        $this->savePidFile(self::class);
 
         $this->arrObject = $this->di->getShared('pbxConfModules');
 

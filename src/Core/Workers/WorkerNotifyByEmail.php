@@ -22,7 +22,7 @@ class WorkerNotifyByEmail extends WorkerBase
     public function start($argv): void
     {
         // PID сохраняем при начале работы Worker.
-        $this::savePidFile(self::class);
+        $this->savePidFile(self::class);
 
         $client = new BeanstalkClient(__CLASS__);
         $client->subscribe(__CLASS__, [$this, 'workerNotifyByEmail']);

@@ -42,7 +42,7 @@ class WorkerCdr extends WorkerBase
     public function start($argv): void
     {
         // PID сохраняем при начале работы Worker.
-        $this::savePidFile(self::class);
+        $this->savePidFile(self::class);
 
         $filter = [
             '(work_completed<>1 OR work_completed IS NULL) AND endtime IS NOT NULL',
