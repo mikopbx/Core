@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 2 2020
+ * Written by Alexey Portnov, 7 2020
  */
 
 namespace MikoPBX\Core\Workers;
@@ -92,6 +92,9 @@ class WorkerModelsEvents extends WorkerBase
      */
     public function start($argv): void
     {
+        // PID сохраняем при начале работы Worker.
+        $this::savePidFile(self::class);
+
         $this->arrObject = $this->di->getShared('pbxConfModules');
 
         $this->PRIORITY_R = [

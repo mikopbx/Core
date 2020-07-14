@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 6 2020
+ * Written by Alexey Portnov, 7 2020
  */
 
 namespace MikoPBX\Core\Workers;
@@ -946,6 +946,9 @@ class WorkerCallEvents extends WorkerBase
      */
     public function start($argv): void
     {
+        // PID сохраняем при начале работы Worker.
+        $this::savePidFile(self::class);
+
         $client = new BeanstalkClient(self::class);
         $client->subscribe(self::class, [$this, 'callEventsWorker']);
         $client->subscribe(WorkerCdr::SELECT_CDR_TUBE, [$this, 'selectCDRWorker']);

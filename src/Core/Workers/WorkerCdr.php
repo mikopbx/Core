@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 6 2020
+ * Written by Alexey Portnov, 7 2020
  */
 
 namespace MikoPBX\Core\Workers;
@@ -41,6 +41,9 @@ class WorkerCdr extends WorkerBase
      */
     public function start($argv): void
     {
+        // PID сохраняем при начале работы Worker.
+        $this::savePidFile(self::class);
+
         $filter = [
             '(work_completed<>1 OR work_completed IS NULL) AND endtime IS NOT NULL',
             'miko_tmp_db'         => true,

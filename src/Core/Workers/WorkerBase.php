@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 2 2020
+ * Written by Alexey Portnov, 7 2020
  */
 
 namespace MikoPBX\Core\Workers;
@@ -12,6 +12,7 @@ namespace MikoPBX\Core\Workers;
 
 use AGI_AsteriskManager;
 use MikoPBX\Core\System\BeanstalkClient;
+use MikoPBX\Core\System\Util;
 use Phalcon\Di;
 use Phalcon\Text;
 
@@ -20,6 +21,8 @@ abstract class WorkerBase implements WorkerInterface
 
     /** @var \Phalcon\Di $di */
     protected $di;
+    /** @var string $className */
+    protected string $className;
 
     protected AGI_AsteriskManager $am;
 
@@ -29,7 +32,19 @@ abstract class WorkerBase implements WorkerInterface
     public function __construct()
     {
         $this->di = Di::getDefault();
-        file_put_contents($this->getPidFile(), getmypid());
+    }
+
+    public function savePidFile($className){
+
+        $this->className = $className;
+        $myPid =  getmypid();
+        $activeProcesses = Util::getPidOfProcess($this->className, $myPid);
+        if(!empty($activeProcesses)){
+            $killApp = Util::which('kill');
+            // Завершаем старый процесс.
+            Util::mwExec("{$killApp} {$activeProcesses}");
+        }
+        file_put_contents($this->getPidFile(), $myPid);
     }
 
     /**
@@ -37,8 +52,14 @@ abstract class WorkerBase implements WorkerInterface
      */
     public function getPidFile(): string
     {
-        $name = str_replace("\\", '-', self::class);
-
+        if(!empty($this->className)){
+            $className = $this->className;
+        }else{
+            // Всегда будет принимать значение "WorkerBase"
+            // Для случая, если метод не переопределен в потомке.
+            $className = self::class;
+        }
+        $name = str_replace("\\", '-', $className);
         return "/var/run/{$name}.pid";
     }
 
