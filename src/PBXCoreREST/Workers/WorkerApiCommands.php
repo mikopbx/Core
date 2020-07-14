@@ -10,7 +10,14 @@ namespace MikoPBX\PBXCoreREST\Workers;
 
 use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\Asterisk\Configs\{IAXConf, SIPConf, VoiceMailConf};
-use MikoPBX\Core\System\{BeanstalkClient, TimeManagement, Firewall, Notifications, Storage, System, Util};
+use MikoPBX\Core\System\{BeanstalkClient,
+    TimeManagement,
+    Firewall,
+    Notifications,
+    Storage,
+    System,
+    UploadAndConvertFiles,
+    Util};
 use MikoPBX\Core\Workers\Cron\WorkerSafeScriptsCore;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\Workers\WorkerMergeUploadedFile;
@@ -42,9 +49,16 @@ class WorkerApiCommands extends WorkerBase
         // Every module config class can process requests under root rights,
         // if it described in Config class
         $additionalModules = $this->di->getShared('pbxConfModules');
+        $this->additionalProcessors=[];
         foreach ($additionalModules as $moduleConfigObject) {
-            if (method_exists($moduleConfigObject, 'moduleRestAPICallback')) {
-                $this->additionalProcessors[] = [$moduleConfigObject, 'moduleRestAPICallback',];
+            if ($moduleConfigObject->moduleUniqueId!=='InternalConfigModule'
+                && method_exists($moduleConfigObject, 'moduleRestAPICallback')
+            ) {
+                $this->additionalProcessors[] = [
+                    $moduleConfigObject->moduleUniqueId,
+                    $moduleConfigObject,
+                    'moduleRestAPICallback'
+                ];
             }
         }
 
@@ -67,9 +81,10 @@ class WorkerApiCommands extends WorkerBase
      */
     public function prepareAnswer($message): void
     {
-        $request   = json_decode($message->getBody(), true);
-        $processor = $request['processor'];
         try {
+            $request   = json_decode($message->getBody(), true, 512, JSON_THROW_ON_ERROR);
+            $processor = $request['processor'];
+
             switch ($processor) {
                 case 'cdr':
                     $answer = $this->cdrCallBack($request);
@@ -86,6 +101,9 @@ class WorkerApiCommands extends WorkerBase
                 case 'storage':
                     $answer = $this->storageCallBack($request);
                     break;
+                case 'upload':
+                    $answer = $this->uploadCallBack($request);
+                    break;
                 case 'modules':
                     $answer = $this->modulesCallBack($request);
                     break;
@@ -96,7 +114,7 @@ class WorkerApiCommands extends WorkerBase
             $answer = 'Exception on WorkerApiCommands - ' . $exception->getMessage();
         }
 
-        $message->reply(json_encode($answer));
+         $message->reply(json_encode($answer));
     }
 
     /**
@@ -127,7 +145,7 @@ class WorkerApiCommands extends WorkerBase
      *
      * @param array $request
      */
-    public function sipCallBack($request): array
+    private function sipCallBack($request): array
     {
         $action = $request['action'];
         $data   = $request['data'];
@@ -142,7 +160,7 @@ class WorkerApiCommands extends WorkerBase
         } elseif ('getRegistry' === $action) {
             $result = SIPConf::getRegistry();
         } else {
-            $result['data'] = 'API action not found;';
+            $result['data'] = 'API action not found in sipCallBack;';
         }
         $result['function'] = $action;
 
@@ -154,7 +172,7 @@ class WorkerApiCommands extends WorkerBase
      *
      * @param array $request
      */
-    public function iaxCallBack($request): array
+    private function iaxCallBack($request): array
     {
         $action = $request['action'];
         $result = [
@@ -163,7 +181,7 @@ class WorkerApiCommands extends WorkerBase
         if ('getRegistry' === $action) {
             $result = IAXConf::getRegistry();
         } else {
-            $result['data'] = 'API action not found;';
+            $result['data'] = 'API action not found in iaxCallBack;';
         }
         $result['function'] = $action;
 
@@ -175,7 +193,7 @@ class WorkerApiCommands extends WorkerBase
      *
      * @param array $request
      */
-    public function systemCallBack($request)
+    private function systemCallBack($request)
     {
         $action = $request['action'];
         $data   = $request['data'];
@@ -184,77 +202,150 @@ class WorkerApiCommands extends WorkerBase
             'result' => 'ERROR',
         ];
 
-        if ('reboot' === $action) {
-            $result['result'] = 'Success';
-            System::rebootSync();
-
-            return $result;
-        } elseif ('merge_uploaded_file' === $action) {
-            $result               = [
-                'result' => 'Success',
-            ];
-            $phpPath              = Util::which('php');
-            $workerDownloaderPath = Util::getFilePathByClassName(WorkerMergeUploadedFile::class);
-            Util::mwExecBg("{$phpPath} -f {$workerDownloaderPath} '{$data['settings_file']}'");
-        } elseif ('shutdown' === $action) {
-            $result['result'] = 'Success';
-            System::shutdown();
-
-            return $result;
-        } elseif ('setDate' === $action) {
-            $result = TimeManagement::setDate($data['date']);
-        } elseif ('getInfo' === $action) {
-            $result = System::getInfo();
-        } elseif ('sendMail' === $action) {
-            if (isset($data['email']) && isset($data['subject']) && isset($data['body'])) {
-                if (isset($data['encode']) && $data['encode'] === 'base64') {
-                    $data['subject'] = base64_decode($data['subject']);
-                    $data['body']    = base64_decode($data['body']);
+        switch ($action){
+            case 'reboot':
+                $result['result'] = 'Success';
+                System::rebootSync();
+                break;
+            case 'shutdown':
+                $result['result'] = 'Success';
+                System::shutdown();
+                break;
+            case 'mergeUploadedFile':
+                $result['result'] = 'Success';
+                $phpPath              = Util::which('php');
+                $workerDownloaderPath = Util::getFilePathByClassName(WorkerMergeUploadedFile::class);
+                Util::mwExecBg("{$phpPath} -f {$workerDownloaderPath} '{$data['settings_file']}'");
+                break;
+            case 'setDate':
+                $result = TimeManagement::setDate($data['date']);
+                break;
+            case 'getInfo':
+                $result = System::getInfo();
+                break;
+            case 'sendMail':
+                if (isset($data['email']) && isset($data['subject']) && isset($data['body'])) {
+                    if (isset($data['encode']) && $data['encode'] === 'base64') {
+                        $data['subject'] = base64_decode($data['subject']);
+                        $data['body']    = base64_decode($data['body']);
+                    }
+                    $result = Notifications::sendMail($data['email'], $data['subject'], $data['body']);
+                } else {
+                    $result['message'] = 'Not all query parameters are populated.';
                 }
-                $result = Notifications::sendMail($data['email'], $data['subject'], $data['body']);
-            } else {
-                $result['message'] = 'Not all query parameters are populated.';
-            }
-        } elseif ('fileReadContent' === $action) {
-            $result = Util::fileReadContent($data['filename'], $data['needOriginal']);
-        } elseif ('getExternalIpInfo' === $action) {
-            $result = System::getExternalIpInfo();
-        } elseif ('reloadMsmtp' === $action) {
-            $notifications = new Notifications();
-            $result        = $notifications->configure();
-            $OtherConfigs  = new VoiceMailConf();
-            $OtherConfigs->generateConfig();
-            $asteriskPath = Util::which('asterisk');
-            Util::mwExec("{$asteriskPath} -rx 'voicemail reload'");
-        } elseif ('unBanIp' === $action) {
-            $result = Firewall::fail2banUnbanAll($data['ip']);
-        } elseif ('getBanIp' === $action) {
-            $result['result'] = 'Success';
-            $result['data']   = Firewall::getBanIp();
-        } elseif ('startLog' === $action) {
-            $result['result'] = 'Success';
-            Util::startLog();
-        } elseif ('stopLog' === $action) {
-            $result['result']   = 'Success';
-            $result['filename'] = Util::stopLog();
-        } elseif ('statusUpgrade' === $action) {
-            $result = System::statusUpgrade();
-        } elseif ('upgradeOnline' === $action) {
-            $result = System::upgradeOnline($request['data']);
-        } elseif ('upgrade' === $action) {
-            $result = System::upgradeFromImg();
-        } elseif ('removeAudioFile' === $action) {
-            $result = Util::removeAudioFile($data['filename']);
-        } elseif ('convertAudioFile' === $action) {
-            $mvPath = Util::which('mv');
-            Util::mwExec("{$mvPath} {$data['uploadedBlob']} {$data['filename']}");
-            $result = Util::convertAudioFile($data['filename']);
-        } else {
-            $result['message'] = 'API action not found;';
+                break;
+            case 'fileReadContent':
+                $result = Util::fileReadContent($data['filename'], $data['needOriginal']);
+                break;
+            case 'getExternalIpInfo':
+                $result = System::getExternalIpInfo();
+                break;
+            case 'reloadMsmtp':
+                $notifications = new Notifications();
+                $result        = $notifications->configure();
+                $OtherConfigs  = new VoiceMailConf();
+                $OtherConfigs->generateConfig();
+                $asteriskPath = Util::which('asterisk');
+                Util::mwExec("{$asteriskPath} -rx 'voicemail reload'");
+                break;
+            case 'unBanIp':
+                $result = Firewall::fail2banUnbanAll($data['ip']);
+                break;
+            case 'getBanIp':
+                $result['result'] = 'Success';
+                $result['data']   = Firewall::getBanIp();
+                break;
+            case 'startLog':
+                $result['result'] = 'Success';
+                Util::startLog();
+                break;
+            case 'stopLog':
+                $result['result']   = 'Success';
+                $result['filename'] = Util::stopLog();
+                break;
+            case 'statusUpgrade':
+                $result = System::statusUpgrade();
+                break;
+            case 'upgradeOnline':
+                $result = System::upgradeOnline($request['data']);
+                break;
+            case 'upgrade':
+                $result = System::upgradeFromImg();
+                break;
+            case 'removeAudioFile':
+                $result = Util::removeAudioFile($data['filename']);
+                break;
+            case 'convertAudioFile':
+                $mvPath = Util::which('mv');
+                Util::mwExec("{$mvPath} {$data['uploadedBlob']} {$data['filename']}");
+                $result = Util::convertAudioFile($data['filename']);
+                break;
+            case 'uploadNewModule':
+                $module = $request['data']['uniqid'];
+                System::moduleStartDownload(
+                    $module,
+                    $request['data']['url'],
+                    $request['data']['md5']
+                );
+                $result['uniqid']   = $module;
+                $result['result']   = 'Success';
+                break;
+            case 'statusUploadingNewModule':
+                $module = $request['data']['uniqid'];
+                $result             = System::moduleDownloadStatus($module);
+                $result['function'] = $action;
+                $result['result']   = 'Success';
+                break;
+            case 'enableModule':
+                $module = $request['data']['uniqid'];
+                $moduleStateProcessor = new PbxExtensionState($module);
+                if ($moduleStateProcessor->enableModule() === false) {
+                    $result['messages'] = $moduleStateProcessor->getMessages();
+                } else {
+                    unset($result);
+                    $result['result'] = 'Success';
+                }
+                break;
+            case 'disableModule':
+                $module = $request['data']['uniqid'];
+                $moduleStateProcessor = new PbxExtensionState($module);
+                if ($moduleStateProcessor->disableModule() === false) {
+                    $result['messages'] = $moduleStateProcessor->getMessages();
+                } else {
+                    unset($result);
+                    $result['result'] = 'Success';
+                }
+                break;
+            case 'uninstallModule':
+                $module = $request['data']['uniqid'];
+                $moduleClass = "\\Modules\\{$module}\\Setup\\PbxExtensionSetup";
+                if (class_exists($moduleClass)
+                    && method_exists($moduleClass, 'uninstallModule')) {
+                    $setup = new $moduleClass($module);
+                } else {
+                    // Заглушка которая позволяет удалить модуль из базы данных, которого нет на диске
+                    $moduleClass = PbxExtensionSetupFailure::class;
+                    $setup       = new $moduleClass($module);
+                }
+                $prams = json_decode($request['input'], true);
+                if (array_key_exists('keepSettings', $prams)) {
+                    $keepSettings = $prams['keepSettings'] === 'true';
+                } else {
+                    $keepSettings = false;
+                }
+                if ($setup->uninstallModule($keepSettings)) {
+                    $result['result'] = 'Success';
+                } else {
+                    $result['result'] = 'Error';
+                    $result['data']   = implode('<br>', $setup->getMessages());
+                }
+                WorkerSafeScriptsCore::restartAllWorkers();
+                break;
+            default:
+                $result['message'] = 'API action not found in systemCallBack;';
         }
 
         $result['function'] = $action;
-
         return $result;
     }
 
@@ -265,7 +356,7 @@ class WorkerApiCommands extends WorkerBase
      *
      * @return array
      */
-    public function storageCallBack($request): array
+    private function storageCallBack($request): array
     {
         $action = $request['action'];
         $data   = $request['data'];
@@ -305,7 +396,7 @@ class WorkerApiCommands extends WorkerBase
      *
      * @return array
      */
-    public function modulesCallBack($request): array
+    private function modulesCallBack($request): array
     {
         clearstatcache();
 
@@ -317,75 +408,9 @@ class WorkerApiCommands extends WorkerBase
             'data'   => null,
         ];
 
-        switch ($action) {
-            case 'upload':
-                System::moduleStartDownload(
-                    $module,
-                    $request['data']['url'],
-                    $request['data']['md5']
-                );
-                $result['uniqid']   = $module;
-                $result['function'] = $action;
-                $result['result']   = 'Success';
-
-                return $result;
-            case 'status':
-                $result             = System::moduleDownloadStatus($module);
-                $result['function'] = $action;
-                $result['result']   = 'Success';
-
-                return $result;
-            case 'enable':
-                $moduleStateProcessor = new PbxExtensionState($module);
-                if ($moduleStateProcessor->enableModule() === false) {
-                    $result['messages'] = $moduleStateProcessor->getMessages();
-                } else {
-                    unset($result);
-                    $result['result'] = 'Success';
-                }
-
-                return $result;
-            case 'disable':
-                $moduleStateProcessor = new PbxExtensionState($module);
-                if ($moduleStateProcessor->disableModule() === false) {
-                    $result['messages'] = $moduleStateProcessor->getMessages();
-                } else {
-                    unset($result);
-                    $result['result'] = 'Success';
-                }
-
-                return $result;
-            case 'uninstall':
-                $moduleClass = "\\Modules\\{$module}\\Setup\\PbxExtensionSetup";
-                if (class_exists($moduleClass)
-                    && method_exists($moduleClass, 'uninstallModule')) {
-                    $setup = new $moduleClass($module);
-                } else {
-                    // Заглушка которая позволяет удалить модуль из базы данных, которого нет на диске
-                    $moduleClass = PbxExtensionSetupFailure::class;
-                    $setup       = new $moduleClass($module);
-                }
-                $prams = json_decode($request['input'], true);
-                if (array_key_exists('keepSettings', $prams)) {
-                    $keepSettings = $prams['keepSettings'] === 'true';
-                } else {
-                    $keepSettings = false;
-                }
-                if ($setup->uninstallModule($keepSettings)) {
-                    $result['result'] = 'Success';
-                } else {
-                    $result['result'] = 'Error';
-                    $result['data']   = implode('<br>', $setup->getMessages());
-                }
-                WorkerSafeScriptsCore::restartAllWorkers();
-
-                return $result;
-            default:
-        }
-
         // Try process request over additional modules
-        foreach ($this->additionalProcessors as [$moduleConfigObject, $callBack]) {
-            if (stripos($module, $moduleConfigObject->moduleUniqueId) === 0) {
+        foreach ($this->additionalProcessors as [$moduleUniqueId, $moduleConfigObject, $callBack]) {
+            if (stripos($module, $moduleUniqueId) === 0) {
                 $result = $moduleConfigObject->$callBack($request);
                 break;
             }
@@ -393,6 +418,34 @@ class WorkerApiCommands extends WorkerBase
 
         $result['function'] = $action;
 
+        return $result;
+    }
+
+    /**
+     * Upload files callback
+     * @param $request
+     *
+     * @return array
+     */
+    private function uploadCallBack($request) :array
+    {
+        $action = $request['action'];
+        $postData   = $request['data'];
+        switch ($action) {
+            case 'uploadResumable':
+                $result = UploadAndConvertFiles::uploadResumable($postData);
+                break;
+            case 'status':
+                $result = UploadAndConvertFiles::statusUploadFile($postData);
+              break;
+            default:
+                $result = [
+                    'result' => 'ERROR',
+                    'message'=>'API action not found in uploadCallBack;'
+                ];
+        }
+
+        $result['function'] = $action;
         return $result;
     }
 

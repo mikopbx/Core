@@ -1,0 +1,158 @@
+<?php
+/**
+ * Copyright (C) MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Nikolay Beketov, 7 2020
+ *
+ */
+
+namespace MikoPBX\Core\System;
+
+namespace MikoPBX\Core\System;
+
+use MikoPBX\Core\Workers\WorkerMergeUploadedFile;
+use Phalcon\Di;
+use Phalcon\Http\Message\Stream;
+use Phalcon\Http\Message\StreamFactory;
+use Phalcon\Http\Message\UploadedFile;
+
+class UploadAndConvertFiles
+{
+    /**
+     * Process resumable upload files
+     *
+     * @param $parameters
+     */
+    public static function uploadResumable($parameters): array
+    {
+        $data['result'] = 'ERROR';
+        $di             = Di::getDefault();
+        if ($di === null) {
+            return ['result' => 'ERROR', 'data' => 'Dependency injector not initialized'];
+        }
+        $upload_id            = $parameters['upload_id'];
+        $resumableFilename    = $parameters['resumableFilename'];
+        $resumableIdentifier  = $parameters['resumableIdentifier'];
+        $resumableChunkNumber = $parameters['resumableChunkNumber'];
+        $resumableTotalSize   = $parameters['resumableTotalSize'];
+        $uploadPath              = $di->getShared('config')->path('core.uploadPath');
+
+        $factory = new StreamFactory();
+
+        foreach ($parameters['files'] as $file_data) {
+            $stream   = $factory->createStreamFromFile($file_data['file_path'], 'r');
+            $file = new UploadedFile(
+                $stream,
+                $file_data['file_size'],
+                $file_data['file_error'],
+                $file_data['file_name'],
+                $file_data['file_type']
+            );
+
+            if (isset($resumableIdentifier) && trim($resumableIdentifier) !== '') {
+                $temp_dir         = $uploadPath . '/' . Util::trimExtensionForFile(basename($resumableFilename));
+                $temp_dst_file    = $uploadPath . '/' . $upload_id . '/' . basename($resumableFilename);
+                $chunks_dest_file = $temp_dir . '/' . $resumableFilename . '.part' . $resumableChunkNumber;
+            } else {
+                $temp_dir         = $uploadPath . '/' . $upload_id;
+                $temp_dst_file    = $temp_dir . '/' . basename($file->getClientFilename());
+                $chunks_dest_file = $temp_dst_file;
+            }
+            if ( ! Util::mwMkdir($temp_dir) || ! Util::mwMkdir(dirname($temp_dst_file))) {
+                Util::sysLogMsg('UploadFile', "Error create dir '$temp_dir'");
+                return ['result' => 'ERROR', 'data' => "Error create dir 'temp_dir'"];
+            }
+            $file->moveTo($chunks_dest_file);
+            // if (file_exists($file->))
+            if ($resumableFilename) {
+                $data['result'] = 'Success';
+                // Передача файлов частями.
+                $result = Util::createFileFromChunks($temp_dir, $resumableTotalSize);
+                if ($result === true) {
+                    $merge_settings = [
+                        'data'   => [
+                            'result_file'          => $temp_dst_file,
+                            'temp_dir'             => $temp_dir,
+                            'resumableFilename'    => $resumableFilename,
+                            'resumableTotalChunks' => $resumableChunkNumber,
+                        ],
+                        'action' => 'merge',
+                    ];
+                    $settings_file  = "{$temp_dir}/merge_settings";
+                    file_put_contents(
+                        $settings_file,
+                        json_encode($merge_settings, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT)
+                    );
+
+                    // Отправляем задачу на склеивание файла.
+                    $phpPath              = Util::which('php');
+                    $workerFilesMergerPath = Util::getFilePathByClassName(WorkerMergeUploadedFile::class);
+                    Util::mwExecBg("{$phpPath} -f {$workerFilesMergerPath} '{$settings_file}'");
+
+                    $data['upload_id'] = $upload_id;
+                    $data['filename']  = $temp_dst_file;
+                    $data['d_status']  = 'INPROGRESS';
+                }
+            } else {
+                $data['result'] = 'Success';
+                // Передача файла целиком.
+                $data['upload_id'] = $upload_id;
+                $data['filename']  = $temp_dst_file;
+                $data['d_status']  = 'UPLOAD_COMPLETE';
+                file_put_contents($temp_dir . '/progress', '100');
+
+                Util::mwExecBg(
+                    '/etc/rc/shell_functions.sh killprocesses ' . $temp_dir . ' -TERM 0;rm -rf ' . $temp_dir,
+                    '/dev/null',
+                    120
+                );
+            }
+        }
+
+        return $data;
+    }
+
+    /**
+     * Returns Status of uploading process
+     * @param $postData
+     *
+     * @return array
+     */
+    public static function statusUploadFile($postData):array
+    {
+        $result['result'] = 'ERROR';
+        $di             = Di::getDefault();
+        if ($di === null) {
+            return ['result' => 'ERROR', 'data' => 'Dependency injector not initialized'];
+        }
+        $uploadPath = $di->getShared('config')->path('core.uploadPath');
+        if ($postData && isset($postData['id'])) {
+            $upload_id     = $postData['id'];
+            $progress_dir  = $uploadPath . '/' . $upload_id;
+            $progress_file = $progress_dir . '/progress';
+
+            if (empty($upload_id)) {
+                $result['result']            = 'ERROR';
+                $result['d_status_progress'] = '0';
+                $result['d_status']          = 'ID_NOT_SET';
+            } elseif ( ! file_exists($progress_file) && file_exists($progress_dir)) {
+                $result['result']            = 'Success';
+                $result['d_status_progress'] = '0';
+                $result['d_status']          = 'INPROGRESS';
+            } elseif ( ! file_exists($progress_dir)) {
+                $result['result']            = 'ERROR';
+                $result['d_status_progress'] = '0';
+                $result['d_status']          = 'NOT_FOUND';
+            } elseif ('100' === file_get_contents($progress_file)) {
+                $result['result']            = 'Success';
+                $result['d_status_progress'] = '100';
+                $result['d_status']          = 'UPLOAD_COMPLETE';
+            } else {
+                $result['result']            = 'Success';
+                $result['d_status_progress'] = file_get_contents($progress_file);
+            }
+        }
+        return $result;
+    }
+}

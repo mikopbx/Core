@@ -19,7 +19,6 @@ declare(strict_types=1);
 namespace MikoPBX\AdminCabinet\Providers;
 
 
-use MikoPBX\Core\System\Util;
 use Phalcon\Cache;
 use Phalcon\Cache\Adapter\Stream;
 use Phalcon\Di\DiInterface;

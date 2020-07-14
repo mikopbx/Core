@@ -50,7 +50,7 @@ const addNewExtension = {
 			} else {
 				addNewExtension.$progressBarLabel.text(globalTranslate.ext_InstallationInProgress);
 			}
-		} else if (response.function === 'upload' && success) {
+		} else if (response.function === 'uploadNewModule' && success) {
 			upgradeStatusLoopWorker.initialize(response.uniqid, false);
 		} else {
 			UserMessage.showMultiString(response.message);

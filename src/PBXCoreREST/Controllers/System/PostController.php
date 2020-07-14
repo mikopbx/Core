@@ -16,6 +16,7 @@ use Phalcon\Di;
 
 /**
  * /pbxcore/api/system/{name}' Управление системой в целом (POST).
+ *
  * Установка системного времени
  *   curl -X POST -d '{"date": "2015.12.31-01:01:20"}' http://172.16.156.212/pbxcore/api/system/setDate;
  *
@@ -43,88 +44,198 @@ use Phalcon\Di;
  *      "filename": "/tmp/WelcomeMaleMusic.wav",
  *      "function": "convertAudioFile"
  *   }
+ *
  * Загрузка аудио файла на АТС:
  *   curl  -X POST -d '{"filename": "/storage/usbdisk1/mikopbx/tmp/1577195443/test.mp3"}'
  *   http://127.0.0.1/pbxcore/api/system/uploadAudioFile -H 'Cookie: XDEBUG_SESSION=PHPSTORM'; curl  -F
  *   "file=@/storage/usbdisk1/mikopbx/voicemailarchive/monitor/2019/11/29/10/mikopbx-15750140_201_YNrXH1KHDj.mp3"
- *   http://127.0.0.1/pbxcore/api/system/uploadAudioFile; Пример ответа:
+ *   http://127.0.0.1/pbxcore/api/system/uploadAudioFile;
+ *
+ * Пример ответа:
  *   {
  *      "result": "Success",
  *      "filename": "/tmp/WelcomeMaleMusic.wav",
  *      "function": "uploadAudioFile"
  *   }
+ *
  * Удаление аудио файла:
  *   curl -X POST -d '{"filename": "/storage/usbdisk1/mikopbx/tmp/2233333.wav"}'
- *   http://172.16.156.212/pbxcore/api/system/removeAudioFile; Обновление системы (офлайн) curl -X POST -d
+ *   http://172.16.156.212/pbxcore/api/system/removeAudioFile;
+ *
+ *
+ * Обновление системы (офлайн) curl -X POST -d
  *   '{"filename": "/storage/usbdisk1/mikopbx/tmp/2019.4.200-mikopbx-generic-x86-64-linux.img"}'
  *   http://127.0.0.1/pbxcore/api/system/upgrade -H 'Cookie: XDEBUG_SESSION=PHPSTORM'; curl -F
- *   "file=@1.0.5-9.0-svn-mikopbx-x86-64-cross-linux.img" http://172.16.156.212/pbxcore/api/system/upgrade; Онлайн
- *   обновление АТС. curl -X POST -d '{"md5":"df7622068d0d58700a2a624d991b6c1f", "url":
+ *   "file=@1.0.5-9.0-svn-mikopbx-x86-64-cross-linux.img" http://172.16.156.212/pbxcore/api/system/upgrade;
+ *
+ *
+ * Онлайн обновление АТС. curl -X POST -d '{"md5":"df7622068d0d58700a2a624d991b6c1f", "url":
  *   "https://www.askozia.ru/upload/update/firmware/6.2.96-9.0-svn-mikopbx-x86-64-cross-linux.img"}'
  *   http://172.16.156.223/pbxcore/api/system/upgradeOnline;
+ *
+ *
+ * Install new module with params by URL
+ * curl -X POST -d '{"uniqid":"ModuleCTIClient", "md5":"fd9fbf38298dea83667a36d1d0464eae", "url":
+ * "https://www.askozia.ru/upload/update/modules/ModuleCTIClient/ModuleCTIClientv01.zip"}'
+ * http://172.16.156.223/pbxcore/api/modules/uploadNewModule;
+ *
+ *
+ * Receive uploading status
+ * curl  -X POST -d '{"uniqid":"ModuleSmartIVR"} http://172.16.156.223/pbxcore/api/system/statusUploadingNewModule
+ *
+ *
+ * Install new module from ZIP archive:
+ * curl -F "file=@ModuleTemplate.zip" http://127.0.0.1/pbxcore/api/modules/uploadNewModule;
+ *
+ *
+ * Uninstall module:
+ * curl -X POST -d '{"uniqid":"ModuleSmartIVR"} http://172.16.156.223/pbxcore/api/system/uninstallModule
+ *
+ *
  */
 class PostController extends BaseController
 {
     public function callAction($actionName): void
     {
-        $di       = Di::getDefault();
-        $tempDir  = $di->getShared('config')->path('core.tempPath');
-        $mediaDir = $di->getShared('config')->path('asterisk.mediadir');
-        $mohDir   = $di->getShared('config')->path('asterisk.mohdir');
-        if ($actionName === 'upgrade') {
-            $upd_file = "{$tempDir}/update.img";
-            $res      = false;
-            if ($this->request->hasFiles() === 0) {
-                // Используем существующий файл;
-                $postData = json_decode($this->request->getRawBody(), true);
-                if ($postData && isset($postData['filename']) && file_exists($postData['filename'])) {
-                    $cpPath = Util::which('cp');
-                    $res = Util::mwExec("{$cpPath} '{$postData['filename']}' '{$upd_file}'") === 0;
+        $data = null;
+        switch ($actionName){
+            case 'upgrade':
+                if ($this->upgradeOverUploadedImg()===false){
+                    return;
                 }
-            } else {
-                // Загружаем новый файл на сервер
-                foreach ($this->request->getUploadedFiles() as $file) {
-                    $res = $file->moveTo($upd_file);
+                break;
+            case 'uploadAudioFile':
+                if ($this->uploadAudioFile()) {
+                    $actionName = 'convertAudioFile';
+                } else {
+                    return;
                 }
-            }
-            // Проверяем существование файла.
-            $res = ($res && file_exists($upd_file));
-            if ($res !== true) {
-                $this->sendError(404, 'Update file not found.');
-
-                return;
-            }
-            $data = null;
-        } elseif ($actionName === 'uploadAudioFile') {
-            $category = $this->request->getPost('category');
-            foreach ($this->request->getUploadedFiles() as $file) {
-                switch ($category) {
-                    case SoundFiles::CATEGORY_MOH:
-                        $filename = "{$mohDir}/" . basename($file->getName());
-                        break;
-                    case SoundFiles::CATEGORY_CUSTOM:
-                        $filename = "{$mediaDir}/" . basename($file->getName());
-                        break;
-                    default:
-                        $this->sendError(400, 'Category not set');
-
-                        return;
+                break;
+            case 'uploadNewModule':
+                $data  = $this->uploadNewModule();
+                if ($data === false){
+                    return;
                 }
-                $data['uploadedBlob'] = $file->getTempName();
-                $data['filename']     = $filename;
-            }
-            $actionName = 'convertAudioFile';
-        } else {
-            $row_data = $this->request->getRawBody();
-            // Проверим, переданные данные.
-            if ( ! Util::isJson($row_data)) {
-                $this->sendError(400, 'It is not JSON');
-
-                return;
-            }
-            $data = json_decode($row_data, true);
+                break;
+            default:
+                $row_data = $this->request->getRawBody();
+                // Проверим, переданные данные.
+                if ( ! Util::isJson($row_data)) {
+                    $this->sendError(400, 'It is not JSON');
+                    return;
+                }
+                $data = json_decode($row_data, true);
         }
 
         $this->sendRequestToBackendWorker('system', $actionName, $data);
+    }
+
+    /**
+     * Prepare uploaded image to update
+     * @return bool
+     */
+    private function upgradeOverUploadedImg():bool
+    {
+        $di       = Di::getDefault();
+        $tempDir  = $di->getShared('config')->path('core.tempPath');
+        $upd_file = "{$tempDir}/update.img";
+        $res      = false;
+        if ($this->request->hasFiles() === 0) {
+            // Используем существующий файл;
+            $postData = json_decode($this->request->getRawBody(), true);
+            if ($postData && isset($postData['filename']) && file_exists($postData['filename'])) {
+                $cpPath = Util::which('cp');
+                $res = Util::mwExec("{$cpPath} '{$postData['filename']}' '{$upd_file}'") === 0;
+            }
+        } else {
+            // Загружаем новый файл на сервер
+            foreach ($this->request->getUploadedFiles() as $file) {
+                $res = $file->moveTo($upd_file);
+            }
+        }
+        // Проверяем существование файла.
+       $res =  ($res && file_exists($upd_file));
+        if (!$res){
+            $this->sendError(404, 'Update file not found.');
+        }
+        return $res;
+
+    }
+
+    /**
+     * Categorize and store uploaded audio files
+     * @return bool
+     */
+    private function uploadAudioFile():bool
+    {
+        $category = $this->request->getPost('category');
+        $di       = Di::getDefault();
+        $mediaDir = $di->getShared('config')->path('asterisk.mediadir');
+        $mohDir   = $di->getShared('config')->path('asterisk.mohdir');
+        foreach ($this->request->getUploadedFiles() as $file) {
+            switch ($category) {
+                case SoundFiles::CATEGORY_MOH:
+                    $filename = "{$mohDir}/" . basename($file->getName());
+                    break;
+                case SoundFiles::CATEGORY_CUSTOM:
+                    $filename = "{$mediaDir}/" . basename($file->getName());
+                    break;
+                default:
+                    $this->sendError(400, 'Category not set');
+                    return false;
+            }
+            $data['uploadedBlob'] = $file->getTempName();
+            $data['filename']     = $filename;
+        }
+       return true;
+    }
+
+    /**
+     * Upload extension module, or download it from internet if only url was sent
+     */
+    private function uploadNewModule()
+    {
+        if ($this->request->hasFiles() === 0) {
+            if (Util::isJson($this->request->getRawBody())) {
+                $row_data = $this->request->getRawBody();
+                $data     = json_decode($row_data, true);
+            } else {
+                $this->sendError(400, 'Body is not JSON');
+                return false;
+            }
+        } else {
+            $tempDir     = $this->config->path('core.tempPath');
+            $module_file = "{$tempDir}/" . time() . '.zip';
+            if ($this->request->hasFiles() > 0) {
+                foreach ($this->request->getUploadedFiles() as $file) {
+                    $extension = Util::getExtensionOfFile($file->getName());
+                    if ($extension !== 'zip') {
+                        continue;
+                    }
+                    $file->moveTo($module_file);
+                    break;
+                }
+            }
+            if (file_exists($module_file)) {
+                $cmd = 'f="' . $module_file . '"; p=`7za l $f | grep module.json`;if [ "$?" == "0" ]; then 7za -so e -y -r $f `echo $p |  awk -F" " \'{print $6}\'`; fi';
+                Util::mwExec($cmd, $out);
+                $settings = json_decode(implode("\n", $out), true);
+
+                $module_uniqid = $settings['module_uniqid'] ?? null;
+                if ( ! $module_uniqid) {
+                    $this->sendError(400, 'The" module_uniqid " in the module file is not described.the json or file does not exist.');
+                }
+                $data = [
+                    'md5'    => md5_file($module_file),
+                    'url'    => "file://{$module_file}",
+                    'l_file' => $module_file,
+                    'uniqid' => $module_uniqid,
+                ];
+            } else {
+                $this->sendError(500, 'Failed to upload file to server');
+                return false;
+            }
+        }
+        return $data;
     }
 }

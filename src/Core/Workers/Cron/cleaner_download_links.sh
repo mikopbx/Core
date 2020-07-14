@@ -1,10 +1,6 @@
 #!/bin/sh
 
-if [ "$1" = "" ]; then
-    exit 1;
-fi
-
-root_dir="/var/spool/${1}/";
+root_dir="/usr/www/sites/pbxcore/files/cache/";
 if [ ! -d "${root_dir}" ]; then
     exit 2;
 fi

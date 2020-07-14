@@ -20,22 +20,27 @@ use Phalcon\Mvc\Controller;
  */
 class BaseController extends Controller
 {
-    public function sendRequestToBackendWorker($processor, $actionName, $payload = null): void
+    public function sendRequestToBackendWorker($processor, $actionName, $payload = null, $modulename=''): void
     {
-        $requestMessage = json_encode(
-            [
-                'processor' => $processor,
-                'data'      => $payload,
-                'action'    => $actionName,
-            ]
-        );
-        $connection     = $this->beanstalkConnection;
-        $response       = $connection->request($requestMessage, 5, 0);
-        if ($response !== false) {
-            $response = json_decode($response, true);
-            $this->response->setPayloadSuccess($response);
-        } else {
-            $this->sendError(500);
+        $requestMessage = [
+            'processor' => $processor,
+            'data'      => $payload,
+            'action'    => $actionName
+        ];
+        if ($processor==='modules'){
+            $requestMessage['module'] = $modulename;
+        }
+        try {
+            $message = json_encode($requestMessage, JSON_THROW_ON_ERROR);
+            $response       = $this->beanstalkConnection->request($message, 5, 0);
+            if ($response !== false) {
+                $response = json_decode($response, true, 512, JSON_THROW_ON_ERROR);
+                $this->response->setPayloadSuccess($response);
+            } else {
+                $this->sendError(500);
+            }
+        } catch (\JsonException $e) {
+            $this->sendError(400);
         }
     }
 

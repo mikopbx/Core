@@ -520,7 +520,7 @@ class System
             $mast_have[] = '0 1 * * * ' . $cron_user .$asteriskPath.' -rx"core restart now" > /dev/null 2> /dev/null' . "\n";
         }
         $mast_have[] = '*/5 * * * * ' . $cron_user . $ntpdPath.' -q > /dev/null 2> /dev/null' . "\n";
-        $mast_have[] = '*/6 * * * * ' . $cron_user . "{$shPath} {$workersPath}/Cron/cleaner_download_links.sh  download_link > /dev/null 2> /dev/null\n";
+        $mast_have[] = '*/6 * * * * ' . $cron_user . "{$shPath} {$workersPath}/Cron/cleaner_download_links.sh > /dev/null 2> /dev/null\n";
         $mast_have[] = '*/1 * * * * ' . $cron_user . "{$WorkerSafeScripts}\n";
 
         $tasks = [];
