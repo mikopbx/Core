@@ -17,6 +17,8 @@ use Phalcon\Di;
 
 class WorkerCallEvents extends WorkerBase
 {
+    // Максимальное количество экземпляров данныого класса.
+    protected int $maxProc=1;
 
     /**
      * Обработка события начала телефонного звонка.
@@ -947,8 +949,6 @@ class WorkerCallEvents extends WorkerBase
     public function start($argv): void
     {
         // PID сохраняем при начале работы Worker.
-        $this->savePidFile(self::class);
-
         $client = new BeanstalkClient(self::class);
         $client->subscribe(self::class, [$this, 'callEventsWorker']);
         $client->subscribe(WorkerCdr::SELECT_CDR_TUBE, [$this, 'selectCDRWorker']);

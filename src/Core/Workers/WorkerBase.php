@@ -19,12 +19,10 @@ use Phalcon\Text;
 abstract class WorkerBase implements WorkerInterface
 {
 
-    /** @var \Phalcon\Di $di */
+    /** @var Di $di */
     protected $di;
-    /** @var string $className */
-    protected string $className;
-
     protected AGI_AsteriskManager $am;
+    protected int $maxProc=0;
 
     /**
      * Workers shared constructor
@@ -32,19 +30,39 @@ abstract class WorkerBase implements WorkerInterface
     public function __construct()
     {
         $this->di = Di::getDefault();
+
+        $this->checkCountProcesses();
+        $this->savePidFile();
     }
 
-    public function savePidFile($className){
-
-        $this->className = $className;
-        $myPid =  getmypid();
-        $activeProcesses = Util::getPidOfProcess($this->className, $myPid);
-        if(!empty($activeProcesses)){
-            $killApp = Util::which('kill');
-            // Завершаем старый процесс.
-            Util::mwExec("{$killApp} {$activeProcesses}");
+    private function checkCountProcesses(): void{
+        $activeProcesses = Util::getPidOfProcess(static::class, getmypid());
+        if($this->maxProc === 1){
+            if(!empty($activeProcesses)){
+                $killApp = Util::which('kill');
+                // Завершаем старый процесс.
+                Util::mwExec("{$killApp} {$activeProcesses}");
+            }
+        }elseif ($this->maxProc > 1){
+            // Лимит процессов может быть превышен. Удаление лишних процессов.
+            $processes = explode(' ', $activeProcesses);
+            // Получим количество лишних процессов.
+            $countProc = count($processes) - $this->maxProc;
+            $killApp   = Util::which('kill');
+            while ($countProc >= 0){
+                if(!isset($processes[$countProc])){
+                    break;
+                }
+                // Завершаем старый процесс.
+                Util::mwExec("{$killApp} {$processes[$countProc]}");
+                $countProc--;
+            }
         }
-        file_put_contents($this->getPidFile(), $myPid);
+    }
+
+    private function savePidFile(): void {
+        $activeProcesses = Util::getPidOfProcess(static::class);
+        file_put_contents($this->getPidFile(), $activeProcesses);
     }
 
     /**
@@ -52,14 +70,7 @@ abstract class WorkerBase implements WorkerInterface
      */
     public function getPidFile(): string
     {
-        if(!empty($this->className)){
-            $className = $this->className;
-        }else{
-            // Всегда будет принимать значение "WorkerBase"
-            // Для случая, если метод не переопределен в потомке.
-            $className = self::class;
-        }
-        $name = str_replace("\\", '-', $className);
+        $name = str_replace("\\", '-', static::class);
         return "/var/run/{$name}.pid";
     }
 

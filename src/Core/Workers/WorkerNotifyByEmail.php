@@ -14,6 +14,7 @@ use MikoPBX\Core\System\{BeanstalkClient, MikoPBXConfig, Notifications, Util};
 
 class WorkerNotifyByEmail extends WorkerBase
 {
+    protected int $maxProc=1;
     /**
      * Entry point
      *
@@ -21,9 +22,6 @@ class WorkerNotifyByEmail extends WorkerBase
      */
     public function start($argv): void
     {
-        // PID сохраняем при начале работы Worker.
-        $this->savePidFile(self::class);
-
         $client = new BeanstalkClient(__CLASS__);
         $client->subscribe(__CLASS__, [$this, 'workerNotifyByEmail']);
         $client->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);

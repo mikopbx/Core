@@ -22,8 +22,8 @@ class WorkerCdr extends WorkerBase
 {
 
     public const SELECT_CDR_TUBE = 'select_cdr_tube';
-
     public const UPDATE_CDR_TUBE = 'update_cdr_tube';
+    protected int $maxProc=1;
 
 
     private $client_queue;
@@ -41,9 +41,6 @@ class WorkerCdr extends WorkerBase
      */
     public function start($argv): void
     {
-        // PID сохраняем при начале работы Worker.
-        $this->savePidFile(self::class);
-
         $filter = [
             '(work_completed<>1 OR work_completed IS NULL) AND endtime IS NOT NULL',
             'miko_tmp_db'         => true,

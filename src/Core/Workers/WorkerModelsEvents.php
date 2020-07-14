@@ -83,6 +83,7 @@ class WorkerModelsEvents extends WorkerBase
     private $timeout = 3;
     private $arrObject;
     private $PRIORITY_R;
+    protected int $maxProc=1;
 
 
     /**
@@ -92,8 +93,6 @@ class WorkerModelsEvents extends WorkerBase
      */
     public function start($argv): void
     {
-        // PID сохраняем при начале работы Worker.
-        $this->savePidFile(self::class);
 
         $this->arrObject = $this->di->getShared('pbxConfModules');
 

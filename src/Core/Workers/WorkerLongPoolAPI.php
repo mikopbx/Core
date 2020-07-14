@@ -29,11 +29,10 @@ curl -s -v --no-buffer 'http://172.16.156.223/pbxcore/api/long/sub/test' -H 'Coo
 
 class WorkerLongPoolAPI extends WorkerBase
 {
+    protected int $maxProc=1;
 
     public function start($argv): void
     {
-        // PID сохраняем при начале работы Worker.
-        $this->savePidFile(self::class);
 
         $client_queue = new BeanstalkClient();
         $client_queue->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);

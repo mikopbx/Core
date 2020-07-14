@@ -16,6 +16,7 @@ class WorkerNotifyError extends WorkerBase
     private $queue = [];
     private $starting_point = 0;
     private $interval = 28800;
+    protected int $maxProc=1;
 
     /**
      * Наполняем очередь уведомлениями.
@@ -24,8 +25,6 @@ class WorkerNotifyError extends WorkerBase
      */
     public function start($argv): void
     {
-        // PID сохраняем при начале работы Worker.
-        $this->savePidFile(self::class);
 
         $client = new BeanstalkClient('WorkerNotifyError_license');
         $client->subscribe('WorkerNotifyError_license', [$this, 'onLicenseError']);
