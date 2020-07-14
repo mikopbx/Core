@@ -32,70 +32,7 @@ class WorkerMergeUploadedFile extends WorkerBase
             exit(4);
         }
 
-        if ('upload_backup' === $file_data['action']) { // TODO::Возможно это надо перенести в Backup воркер
-            $settings = $file_data['data'];
-            $res_file = "{$settings['backupdir']}/{$settings['dir_name']}/resultfile.{$settings['extension']}";
-
-            if ( ! file_exists($res_file) && file_exists($settings['temp_dir'])) {
-                Util::mergeFilesInDirectory(
-                    $settings['temp_dir'],
-                    $settings['resumableFilename'],
-                    $settings['resumableTotalChunks'],
-                    $res_file
-                );
-            }
-            $request = [
-                'data'   => [
-                    'res_file' => $res_file,
-                    'mnt_point' => $settings['mnt_point'],
-                    'backupdir' => $settings['backupdir'],
-                    'dir_name' => $settings['dir_name'],
-                    'extension' => $settings['extension'],
-                ],
-                'action' => 'upload' // Операция.
-            ];
-
-            try {
-                $client = $this->di->get('natsConnection');
-                $client->connect(10);
-                $cb = function (Message $message) use ($settings) {
-                    $result_data = json_decode($message->getBody(), true);
-                    if ($result_data['result'] === 'Success') {
-                        $status = 'COMPLETE';
-                    } else {
-                        $status = 'ERROR';
-                    }
-                    file_put_contents("{$settings['backupdir']}/{$settings['dir_name']}/upload_status", $status);
-                };
-                $client->request('backup', json_encode($request), $cb);
-            } catch (Exception $e) {
-            }
-        } elseif ($file_data['action'] === 'convertConfig') {
-            $settings = $file_data['data'];
-            $res_file = "{$settings['backupdir']}/{$settings['dir_name']}/resultfile.{$settings['extension']}";
-
-            if ( ! file_exists($res_file) && file_exists($settings['temp_dir'])) {
-                Util::mergeFilesInDirectory(
-                    $settings['temp_dir'],
-                    $settings['resumableFilename'],
-                    $settings['resumableTotalChunks'],
-                    $res_file
-                );
-            }
-
-            $res = file_exists($res_file);
-            if ($res !== true) {
-                file_put_contents("{$settings['backupdir']}/{$settings['dir_name']}/upload_status", 'ERROR');
-                exit(1);
-            }
-            try {
-                $result = System::convertConfig($res_file);
-                $status = 'COMPLETE';
-            } catch (Exception $e) {
-                $status = 'ERROR';
-            }
-            file_put_contents("{$settings['backupdir']}/{$settings['dir_name']}/upload_status", $status);
-        } elseif ($file_data['action'] === 'merge') {
+        if ($file_data['action'] === 'merge') {
             $settings = $file_data['data'];
             if ( ! file_exists($settings['result_file'])) {
                 Util::mergeFilesInDirectory(
@@ -114,7 +51,7 @@ class WorkerMergeUploadedFile extends WorkerBase
             Util::mwExecBg(
                 '/etc/rc/shell_functions.sh killprocesses ' . $rm_file . ' -TERM 0;rm -rf ' . $rm_file,
                 '/dev/null',
-                30
+                120
             );
         }
     }

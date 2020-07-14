@@ -28,25 +28,14 @@ class ModulesControllerBase extends BaseController
      *   curl http://127.0.0.1/pbxcore/api/modules/ModuleCTIClient/reload
      *   curl http://127.0.0.1/pbxcore/api/modules/ModuleBitrix24Integration/reload
      *
-     * Деинсталляция модуля:
-     * curl http://172.16.156.223/pbxcore/api/modules/ModuleSmartIVR/uninstall
-     * curl http://172.16.156.223/pbxcore/api/modules/ModuleCTIClient/uninstall
-     * Статус загрузки модуля на АТС:
-     * curl http://172.16.156.223/pbxcore/api/modules/ModuleSmartIVR/status/
-     * curl http://172.16.156.223/pbxcore/api/modules/ModuleCTIClient/status/
      *
      * Выполнение действий без основной авторизации.
-     * curl
-     * http://172.16.156.223/pbxcore/api/modules/ModuleAutoprovision/getcfg?mac=00135E874B49&solt=test
-     * curl
-     * http://172.16.156.223/pbxcore/api/modules/ModuleAutoprovision/getimg?file=logo-yealink-132x32.dob
+     * curl http://172.16.156.223/pbxcore/api/modules/ModuleAutoprovision/getcfg?mac=00135E874B49&solt=test
+     * curl http://172.16.156.223/pbxcore/api/modules/ModuleAutoprovision/getimg?file=logo-yealink-132x32.dob
      *
      * curl http://84.201.142.45/pbxcore/api/modules/ModuleBitrix24Notify/customAction?portal=b24-uve4uz.bitrix24.ru
      * curl http://84.201.142.45/pbxcore/api/modules/ModuleBitrix24Notify/customAction?portal=miko24.ru
      * curl http://84.201.142.45/pbxcore/api/modules/ModuleBitrix24Notify/customAction
-     *
-     * curl http://127.0.0.1/pbxcore/api/modules/ModuleWebConsole/show_console
-     * curl http://127.0.0.1/pbxcore/api/modules/ModuleWebConsole/show_console
      *
      * @param $moduleName
      * @param $actionName
@@ -64,8 +53,7 @@ class ModulesControllerBase extends BaseController
             'processor'      => 'modules',
         ]);
 
-        $connection = $this->beanstalkConnection;
-        $response   = $connection->request($request, 100, 0);
+        $response   = $this->beanstalkConnection->request($request, 100, 0);
         if ($response !== false) {
             $response = json_decode($response, true);
             if (isset($response['fpassthru'])) {

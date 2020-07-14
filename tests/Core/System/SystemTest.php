@@ -158,6 +158,6 @@ class SystemTest extends AbstractUnitTest
     public function testGetExternalIpInfo()
     {
         $result = System::getExternalIpInfo();
-        $this->assertIsString($result);
+        $this->assertIsArray($result);
     }
 }

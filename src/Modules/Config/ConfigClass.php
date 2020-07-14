@@ -53,7 +53,7 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
     /**
      * Additional module UniqueID
      */
-    protected string $moduleUniqueId;
+    public string $moduleUniqueId;
 
     /**
      * Additional module directory
@@ -72,7 +72,7 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
         $this->booting       = $this->di->getRegistry()->booting===true;
         $this->mikoPBXConfig = new MikoPBXConfig();
         $this->generalSettings = $this->mikoPBXConfig->getGeneralSettings();
-
+        $this->moduleUniqueId = 'InternalConfigModule';
         // Get child class parameters and define module Dir and UniqueID
         $reflector = new ReflectionClassAlias(static::class);
         $partsOfNameSpace = explode('\\', $reflector->getNamespaceName());
@@ -416,7 +416,7 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
                 break;
             default:
                 $result['result']   = 'ERROR';
-                $result['data'] = 'API action not found;';
+                $result['data'] = 'API action not found in moduleRestAPICallback;';
         }
         return $result;
     }

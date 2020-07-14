@@ -32,21 +32,13 @@ const PbxApi = {
 	systemUpgrade: `${Config.pbxUrl}/pbxcore/api/system/upgrade`, // Обновление АТС файлом
 	systemUpgradeOnline: `${Config.pbxUrl}/pbxcore/api/system/upgradeOnline`, // Обновление АТС онлайн
 	systemGetUpgradeStatus: `${Config.pbxUrl}/pbxcore/api/system/statusUpgrade`, // Получение статуса обновления
-	systemInstallModule: `${Config.pbxUrl}/pbxcore/api/modules/upload`,
-	systemDeleteModule: `${Config.pbxUrl}/pbxcore/api/modules/{moduleName}/uninstall`,
-	systemDisableModule: `${Config.pbxUrl}/pbxcore/api/modules/{moduleName}/disable`,
-	systemEnableModule: `${Config.pbxUrl}/pbxcore/api/modules/{moduleName}/enable`,
-	systemInstallStatusModule: `${Config.pbxUrl}/pbxcore/api/modules/{moduleName}/status`,
-	backupGetFilesList: `${Config.pbxUrl}/pbxcore/api/backup/list`, // Получить список архивов
-	backupDownloadFile: `${Config.pbxUrl}/pbxcore/api/backup/download`, // Получить архив /pbxcore/api/backup/download?id=backup_1530703760
-	backupDeleteFile: `${Config.pbxUrl}/pbxcore/api/backup/remove`, // Удалить архив curl http://172.16.156.212/pbxcore/api/backup/remove?id=backup_1530714645
-	backupRecover: `${Config.pbxUrl}/pbxcore/api/backup/recover`, // Восстановить архив curl -X POST -d '{"id": "backup_1534838222", "options":{"backup-sound-files":"1"}}' http://172.16.156.212/pbxcore/api/backup/recover;
-	backupStart: `${Config.pbxUrl}/pbxcore/api/backup/start`, // Начать архивирование curl -X POST -d '{"backup-config":"1","backup-records":"1","backup-cdr":"1","backup-sound-files":"1"}' http://172.16.156.212/pbxcore/api/backup/start;
-	backupStop: `${Config.pbxUrl}/pbxcore/api/backup/stop`, // Приостановить архивирование curl -X POST -d '{"id":"backup_1530703760"}' http://172.16.156.212/pbxcore/api/backup/start;
-	backupUpload: `${Config.pbxUrl}/pbxcore/api/backup/upload`, // Загрузка файла на АТС curl -F "file=@backup_1530703760.zip" http://172.16.156.212/pbxcore/api/backup/upload;
-	backupGetEstimatedSize: `${Config.pbxUrl}/pbxcore/api/backup/getEstimatedSize`,
-	backupStatusUpload: `${Config.pbxUrl}/pbxcore/api/backup/status_upload`, // curl 'http://172.16.156.223/pbxcore/api/backup/status_upload?backup_id=backup_1562746816'
-	backupStartScheduled: `${Config.pbxUrl}/pbxcore/api/backup/startScheduled`, // curl 'http://172.16.156.223/pbxcore/api/backup/startScheduled'
+	systemInstallModule: `${Config.pbxUrl}/pbxcore/api/system/uploadNewModule`,
+	systemDeleteModule: `${Config.pbxUrl}/pbxcore/api/system/uninstallModule`,
+	systemDisableModule: `${Config.pbxUrl}/pbxcore/api/system/disableModule`,
+	systemEnableModule: `${Config.pbxUrl}/pbxcore/api/system/enableModule`,
+	systemInstallStatusModule: `${Config.pbxUrl}/pbxcore/api/system/statusUploadingNewModule`,
+	systemUploadFile: `${Config.pbxUrl}/pbxcore/api/upload/uploadResumable`, // curl -F "file=@ModuleTemplate.zip" http://127.0.0.1/pbxcore/api/upload/uploadResumable
+	systemStatusUploadFile: `${Config.pbxUrl}/pbxcore/api/upload/status`, // curl -X POST -d '{"id": "1531474060"}' http://127.0.0.1/pbxcore/api/upload/status;
 	/**
 	 * Проверка ответа на JSON
 	 * @param jsonString
@@ -376,244 +368,7 @@ const PbxApi = {
 		sessionStorage.setItem('LogsCaptureStatus', 'stopped');
 		window.location = PbxApi.systemStopLogsCapture;
 	},
-	/**
-	 * Получить список архивов
-	 */
-	BackupGetFilesList(callback) {
-		$.api({
-			url: PbxApi.backupGetFilesList,
-			on: 'now',
-			successTest: PbxApi.successTest,
-			onSuccess(response) {
-				callback(response.data);
-			},
-			onError() {
-				callback(false);
-			},
-			onFailure() {
-				callback(false);
-			},
-		});
-	},
-	/**
-	 * Скачать файл архива по указанному ID
-	 */
-	BackupDownloadFile(fileId) {
-		window.location = `${PbxApi.backupDownloadFile}?id=${fileId}`;
-	},
-	/**
-	 * Удалить файл по указанному ID
-	 * @param fileId - идентификатор файла с архивом
-	 * @param callback - функция для обработки результата
-	 */
-	BackupDeleteFile(fileId, callback) {
-		$.api({
-			url: `${PbxApi.backupDeleteFile}?id={id}`,
-			on: 'now',
-			urlData: {
-				id: fileId,
-			},
-			successTest: PbxApi.successTest,
-			onSuccess() {
-				callback(true);
-			},
-			onError() {
-				callback(false);
-			},
-			onFailure() {
-				callback(false);
-			},
-		});
-	},
-	/**
-	 * Восстановить систему по указанному ID бекапа
-	 * @param jsonParams - {"id": "backup_1534838222", "options":{"backup-sound-files":"1"}}'
-	 * @param callback - функция для обработки результата
-	 */
-	BackupRecover(jsonParams, callback) {
-		$.api({
-			url: PbxApi.backupRecover,
-			method: 'POST',
-			data: JSON.stringify(jsonParams),
-			on: 'now',
-			successTest: PbxApi.successTest,
-			onSuccess() {
-				callback(true);
-			},
-			onError() {
-				callback(false);
-			},
-			onFailure() {
-				callback(false);
-			},
-		});
-	},
-	/**
-	 * Начало архивирование системы
-	 * @param jsonParams -
-	 * {
-	 * 	"backup-config":"1",
-	 * 	"backup-records":"1",
-	 * 	"backup-cdr":"1",
-	 * 	"backup-sound-files":"1"
-	 * 	}
-	 * @param callback - функция для обработки результата
-	 */
-	BackupStart(jsonParams, callback) {
-		$.api({
-			url: PbxApi.backupStart,
-			on: 'now',
-			method: 'POST',
-			data: JSON.stringify(jsonParams),
-			successTest: PbxApi.successTest,
-			onSuccess(response) {
-				callback(response.data);
-			},
-			onError() {
-				callback(false);
-			},
-			onFailure() {
-				callback(false);
-			},
-		});
-	},
-	/**
-	 * Приостановить архивирование системы
-	 * @param fileId - ИД с файлом архива
-	 * @param callback - функция для обработки результата
-	 */
-	BackupStop(fileId, callback) {
-		$.api({
-			url: PbxApi.backupStop,
-			on: 'now',
-			method: 'POST',
-			data: `{"id":"${fileId}"}`,
-			successTest: PbxApi.successTest,
-			onSuccess(response) {
-				callback(response.data);
-			},
-			onError() {
-				callback(false);
-			},
-			onFailure() {
-				callback(false);
-			},
-		});
-	},
 
-	/**
-	 * Получить размер файлов для бекапа
-	 * @param callback - функция для обработки результата
-	 */
-	BackupGetEstimatedSize(callback) {
-		$.api({
-			url: PbxApi.backupGetEstimatedSize,
-			on: 'now',
-			successTest: PbxApi.successTest,
-			onSuccess(response) {
-				callback(response.data);
-			},
-			onError() {
-				callback(false);
-			},
-			onFailure() {
-				callback(false);
-			},
-		});
-	},
-
-	/**
-	 * Загрузить на станцию файл бекапа
-	 * @param file - Тело загружаемого файла
-	 * @param callback - функция для обработки результата
-	 */
-	BackupUpload(file, callback) {
-		$.api({
-			on: 'now',
-			url: PbxApi.backupUpload,
-			method: 'POST',
-			cache: false,
-			processData: false,
-			contentType: false,
-			beforeSend: (settings) => {
-				const newSettings = settings;
-				const now = parseInt(Date.now() / 1000, 10);
-				newSettings.data = new FormData();
-				newSettings.data.append(`backup_${now}`, file);
-				return newSettings;
-			},
-			onResponse: response => response,
-			successTest: response => !response.error || false, // change this
-			onSuccess: (json) => {
-				callback(json);
-			},
-			onFailure: (json) => {
-				callback(json);
-			},
-			xhr: () => {
-				const xhr = new window.XMLHttpRequest();
-				// прогресс загрузки на сервер
-				xhr.upload.addEventListener('progress', (evt) => {
-					if (evt.lengthComputable) {
-						const percentComplete = 100 * (evt.loaded / evt.total);
-						const json = {
-							function: 'upload_progress',
-							percent: percentComplete,
-						};
-						// делать что-то...
-						callback(json);
-					}
-				}, false);
-				return xhr;
-			},
-		});
-	},
-
-	/**
-	 * Удалить файл по указанному ID
-	 * @param fileId - идентификатор файла с архивом
-	 * @param callback - функция для обработки результата
-	 */
-	BackupStatusUpload(fileId, callback) {
-		$.api({
-			url: `${PbxApi.backupStatusUpload}?backup_id={id}`,
-			on: 'now',
-			urlData: {
-				id: fileId,
-			},
-			successTest: PbxApi.successTest,
-			onSuccess(response) {
-				callback(response);
-			},
-			onError() {
-				callback(false);
-			},
-			onFailure() {
-				callback(false);
-			},
-		});
-	},
-
-	/**
-	 * Запускает запланированное резервное копирование сразу
-	 *
-	 */
-	BackupStartScheduled(callback) {
-		$.api({
-			url: PbxApi.backupStartScheduled,
-			on: 'now',
-			successTest: PbxApi.successTest,
-			onSuccess() {
-				callback(true);
-			},
-			onError() {
-				callback(false);
-			},
-			onFailure() {
-				callback(false);
-			},
-		});
-	},
 	/**
 	 * Загрузить на станцию файл обновления
 	 * @param file - Тело загружаемого файла
@@ -800,9 +555,6 @@ const PbxApi = {
 	SystemDeleteModule(moduleName, keepSettings, callback) {
 		$.api({
 			url: PbxApi.systemDeleteModule,
-			urlData: {
-				moduleName,
-			},
 			on: 'now',
 			method: 'POST',
 			data: `{"uniqid":"${moduleName}","keepSettings":"${keepSettings}"}`,
@@ -829,9 +581,8 @@ const PbxApi = {
 			url: PbxApi.systemInstallStatusModule,
 			on: 'now',
 			timeout: 3000,
-			urlData: {
-				moduleName,
-			},
+			method: 'POST',
+			data: `{"uniqid":"${moduleName}"}`,
 			successTest: PbxApi.successTest,
 			onSuccess(response) {
 				callback(response.data);
@@ -856,9 +607,6 @@ const PbxApi = {
 			url: PbxApi.systemDisableModule,
 			on: 'now',
 			method: 'POST',
-			urlData: {
-				moduleName,
-			},
 			data: `{"uniqid":"${moduleName}"}`,
 			successTest: PbxApi.successTest,
 			onSuccess(response) {
@@ -881,9 +629,6 @@ const PbxApi = {
 			url: PbxApi.systemEnableModule,
 			on: 'now',
 			method: 'POST',
-			urlData: {
-				moduleName,
-			},
 			data: `{"uniqid":"${moduleName}"}`,
 			successTest: PbxApi.successTest,
 			onSuccess(response) {
@@ -940,6 +685,29 @@ const PbxApi = {
 			},
 		});
 	},
+
+	/**
+	 * Получение статуса закачки файла
+	 */
+	SystemGetStatusUploadFile(fileId, callback) {
+		$.api({
+			url: PbxApi.systemStatusUploadFile,
+			on: 'now',
+			method: 'POST',
+			data: `{"id":"${fileId}"}`,
+			successTest: PbxApi.successTest,
+			onSuccess(response) {
+				callback(response.data);
+			},
+			onFailure() {
+				callback(false);
+			},
+			onError() {
+				callback(false);
+			},
+		});
+	},
+
 };
 
 // export default PbxApi;

@@ -1009,6 +1009,10 @@ class Storage
             Util::mwMkdir($path);
         }
 
+        $downloadCacheDir = appPath('sites/pbxcore/files/cache');
+        Util::mwMkdir($downloadCacheDir);
+        Util::createUpdateSymlink($this->config->path('core.downloadCachePath'), $downloadCacheDir);
+
         $jsCacheDir = appPath('sites/admin-cabinet/assets/js/cache');
         Util::createUpdateSymlink($this->config->path('adminApplication.cacheDir') . '/js', $jsCacheDir);
 
@@ -1058,6 +1062,7 @@ class Storage
         $www_dirs[] = $this->config->path('database.logsPath');
         $www_dirs[] = $this->config->path('core.phpSessionPath');
         $www_dirs[] = $this->config->path('core.tempPath');
+        $www_dirs[] = $this->config->path('core.uploadPath');
         $www_dirs[] = '/etc/version';
         $www_dirs[] = appPath('/');
 
@@ -1104,4 +1109,5 @@ class Storage
             $storage_settings->save();
         }
     }
+
 }

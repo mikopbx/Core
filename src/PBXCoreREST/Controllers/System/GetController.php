@@ -58,14 +58,14 @@ class GetController extends BaseController
                 $port         = $this->request->getPort();
                 $uid          = Util::generateRandomString(36);
                 $di           = Di::getDefault();
-                $downloadLink = $di->getShared('config')->path('adminApplication.downloadLink');
+                $downloadLink = $di->getShared('config')->path('core.downloadCachePath');
 
                 $result_dir = "{$downloadLink}/{$uid}";
                 Util::mwMkdir($result_dir);
                 $link_name = md5($response['filename']) . '.' . Util::getExtensionOfFile($response['filename']);
                 $lnPath = Util::which('ln');
                 Util::mwExec("{$lnPath} -s {$response['filename']} {$result_dir}/{$link_name}");
-                $this->response->redirect("{$scheme}://{$host}:{$port}/download_link/{$uid}/{$link_name}");
+                $this->response->redirect("{$scheme}://{$host}:{$port}/pbxcore/files/cache/{$uid}/{$link_name}");
                 $this->response->sendRaw();
             } else {
                 $this->response->setPayloadSuccess($response);

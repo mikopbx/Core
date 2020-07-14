@@ -166,13 +166,13 @@ class PbxExtensionState extends Injectable
         }
         $this->db->rollback(true); // Откатываем временную транзакцию
 
-        // Если ошибок нет, включаем Firewall и модуль
-        if ( ! $error && ! $this->enableFirewallSettings()) {
-            $this->messages[] = 'Error on enable firewall settings';
-
-            return false;
-        }
         if ( ! $error) {
+            // Если ошибок нет, включаем Firewall и модуль
+            if (!$this->enableFirewallSettings()) {
+                $this->messages[] = 'Error on enable firewall settings';
+                return false;
+            }
+
             $module = PbxExtensionModules::findFirstByUniqid($this->moduleUniqueID);
             if ($module !== null) {
                 $module->disabled = '0';
@@ -248,7 +248,7 @@ class PbxExtensionState extends Injectable
 
         $this->db->commit(true);
 
-        return false;
+        return true;
     }
 
     /**
@@ -321,14 +321,15 @@ class PbxExtensionState extends Injectable
         }
         $this->db->rollback(true); // Откатываем временную транзакцию
 
-        // Если ошибок нет, выключаем Firewall и модуль
-        if ( ! $error && ! $this->disableFirewallSettings()) {
-            $this->messages[] = 'Error on disable firewall settings';
 
-            return false;
-        }
 
         if ( ! $error) {
+            // Если ошибок нет, выключаем Firewall и модуль
+            if (! $this->disableFirewallSettings()) {
+                $this->messages[] = 'Error on disable firewall settings';
+                return false;
+            }
+
             $module = PbxExtensionModules::findFirstByUniqid($this->moduleUniqueID);
             if ($module !== null) {
                 $module->disabled = '1';

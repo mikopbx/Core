@@ -19,7 +19,6 @@ declare(strict_types=1);
 namespace MikoPBX\Common\Providers;
 
 
-use Phalcon\Config;
 use Phalcon\Di\DiInterface;
 use Phalcon\Events\Manager as EventsManager;
 use Phalcon\Logger;

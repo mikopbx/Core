@@ -20,15 +20,14 @@ namespace MikoPBX\PBXCoreREST\Providers;
 
 use MikoPBX\PBXCoreREST\Controllers\{Cdr\GetController as CdrGetController,
     Iax\GetController as IaxGetController,
-    Modules\GetController as ModulesGetController,
-    Modules\PostController as ModulesPostController,
+    Modules\ModulesControllerBase,
     Sip\GetController as SipGetController,
     Sip\PostController as SipPostController,
     Storage\GetController as StorageGetController,
     Storage\PostController as StoragePostController,
     System\GetController as SystemGetController,
     System\PostController as SystemPostController,
-    Upload\GetController as UploadGetController,};
+    Upload\PostController as UploadPostController};
 use MikoPBX\PBXCoreREST\Middleware\AuthenticationMiddleware;
 use MikoPBX\PBXCoreREST\Middleware\NotFoundMiddleware;
 use MikoPBX\PBXCoreREST\Middleware\ResponseMiddleware;
@@ -122,20 +121,17 @@ class RouterProvider implements ServiceProviderInterface
             [SystemGetController::class, 'callAction', '/pbxcore/api/system/{actionName}', 'get', '/'],
             [SystemPostController::class, 'callAction', '/pbxcore/api/system/{actionName}', 'post', '/'],
 
-            [UploadGetController::class, 'callAction', '/pbxcore/api/upload/{actionName}', 'get', '/'],
-
-            [ModulesGetController::class, 'callAction', '/pbxcore/api/modules/{actionName}', 'get', '/'],
-            [ModulesPostController::class, 'callAction', '/pbxcore/api/modules/{actionName}', 'post', '/'],
+            [UploadPostController::class, 'callAction', '/pbxcore/api/upload/{actionName}', 'post', '/'],
 
             [
-                ModulesGetController::class,
+                ModulesControllerBase::class,
                 'callActionForModule',
                 '/pbxcore/api/modules/{moduleName}/{actionName}',
                 'get',
                 '/',
             ],
             [
-                ModulesPostController::class,
+                ModulesControllerBase::class,
                 'callActionForModule',
                 '/pbxcore/api/modules/{moduleName}/{actionName}',
                 'post',
