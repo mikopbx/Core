@@ -119,22 +119,21 @@ const soundFileModify = {
 	initialize() {
 		soundFileModify.$dropDowns.dropdown();
 		soundFileModify.initializeForm();
-		soundFileModify.$soundUploadButton.on('click', (e) => {
-			e.preventDefault();
-			$('input:file', $(e.target).parents()).click();
-		});
+		PbxApi.SystemUploadFileAttachToBtn('upload-sound-file',['mp3','wav'], soundFileModify.cbUploadResumable);
 
-		soundFileModify.$soundFileInput.on('change', (e) => {
-			const file = e.target.files[0];
-			if (file === undefined) return;
-			soundFileModify.$soundFileName.val(file.name.replace(/\.[^/.]+$/, ''));
-			soundFileModify.blob = window.URL || window.webkitURL;
-			const fileURL = soundFileModify.blob.createObjectURL(file);
-			sndPlayer.UpdateSource(fileURL);
-			soundFileModify.$formObj.addClass('loading');
-			const category = soundFileModify.$formObj.form('get value', 'category');
-			PbxApi.SystemUploadAudioFile(file, category, soundFileModify.cbAfterUploadFile);
-		});
+		// soundFileModify.$soundUploadButton.on('click', (e) => {
+		// 	e.preventDefault();
+		// 	$('input:file', $(e.target).parents()).click();
+		// });
+
+		// soundFileModify.$soundFileInput.on('change', (e) => {
+		// 	const file = e.target.files[0];
+		// 	if (file === undefined) return;
+		// 	soundFileModify.$soundFileName.val(file.name.replace(/\.[^/.]+$/, ''));
+		// 	soundFileModify.blob = window.URL || window.webkitURL;
+		// 	const fileURL = soundFileModify.blob.createObjectURL(file);
+		// 	sndPlayer.UpdateSource(fileURL);
+		// });
 
 		if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
 			$('#only-https-field').addClass('disabled');
@@ -143,13 +142,54 @@ const soundFileModify = {
 			$('#only-https-field').addClass('disabled');
 		}
 	},
-	cbAfterUploadFile(filename) {
-		soundFileModify.trashBin.push(soundFileModify.$formObj.form('get value', 'path'));
-		soundFileModify.$formObj.form('set value', 'path', filename);
-		soundFileModify.$soundFileName.trigger('change');
-		sndPlayer.UpdateSource(`/pbxcore/api/cdr/playback?view=${filename}`);
-		soundFileModify.$submitButton.removeClass('loading');
-		soundFileModify.$formObj.removeClass('loading');
+
+	/**
+	 * Callback file upload with chunks and merge
+	 * @param action
+	 * @param params
+	 */
+	cbUploadResumable(action, params){
+		switch (action) {
+			case 'fileSuccess':
+				soundFileModify.$submitButton.removeClass('loading');
+				soundFileModify.$formObj.removeClass('loading');
+				const category = soundFileModify.$formObj.form('get value', 'category');
+				const response = PbxApi.tryParseJSON(params.response);
+				if (response !==false && response.data.filename!==undefined){
+					soundFileModify.$soundFileName.val(params.file.fileName);
+					setTimeout(() => {
+						PbxApi.SystemConvertAudioFile(response.data.filename, category, soundFileModify.cbAfterConvertFile);
+						}, 3000);
+
+				} else {
+					UserMessage.showError(`${globalTranslate.sf_UploadError}`);
+				}
+
+				break;
+			case 'uploadStart':
+				soundFileModify.$formObj.addClass('loading');
+				break;
+			case 'error':
+				soundFileModify.$submitButton.removeClass('loading');
+				soundFileModify.$formObj.removeClass('loading');
+				UserMessage.showError(`${globalTranslate.sf_UploadError}<br>${params.message}`);
+				break;
+			default:
+		}
+	},
+	/**
+	 * After file converted to MP3 format
+	 * @param filename
+	 */
+	cbAfterConvertFile(filename) {
+		if (filename === false){
+			UserMessage.showError(`${globalTranslate.sf_UploadError}`);
+		} else {
+			soundFileModify.trashBin.push(soundFileModify.$formObj.form('get value', 'path'));
+			soundFileModify.$formObj.form('set value', 'path', filename);
+			soundFileModify.$soundFileName.trigger('change');
+			sndPlayer.UpdateSource(`/pbxcore/api/cdr/playback?view=${filename}`);
+		}
 	},
 	cbBeforeSendForm(settings) {
 		const result = settings;
@@ -269,9 +309,11 @@ const webkitRecorder = {
 		console.log('recorder stopped');
 		const fileURL = URL.createObjectURL(soundFileModify.blob);
 		sndPlayer.UpdateSource(fileURL);
-		const blobFile = new File([webkitRecorder.chunks[0]], 'blob');
-		const category = soundFileModify.$formObj.form('get value', 'category');
-		PbxApi.SystemUploadAudioFile(blobFile, category, soundFileModify.cbAfterUploadFile);
+		const blobFile = new File([webkitRecorder.chunks[0]], 'blob'+ new Date().getTime()+'.wav');
+		PbxApi.SystemUploadFile(blobFile, soundFileModify.cbUploadResumable);
+		// const category = soundFileModify.$formObj.form('get value', 'category');
+		//
+		// PbxApi.SystemUploadAudioFile(blobFile, category, soundFileModify.cbAfterUploadFile);
 		webkitRecorder.$recordLabel.removeClass('red');
 		webkitRecorder.$stopButton.addClass('disabled');
 		webkitRecorder.$recordButton.removeClass('disabled');

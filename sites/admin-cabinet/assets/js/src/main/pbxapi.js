@@ -16,7 +16,7 @@ const PbxApi = {
 	pbxGetPeerStatus: `${Config.pbxUrl}/pbxcore/api/sip/getSipPeer`,
 	pbxGetActiveCalls: `${Config.pbxUrl}/pbxcore/api/cdr/getActiveCalls`, // Получить активные звонки,
 	pbxGetActiveChannels: `${Config.pbxUrl}/pbxcore/api/cdr/getActiveChannels`, // Получить активные звонки,
-	systemUploadAudioFile: `${Config.pbxUrl}/pbxcore/api/system/uploadAudioFile`,
+	systemConvertAudioFile: `${Config.pbxUrl}/pbxcore/api/system/convertAudioFile`,
 	systemRemoveAudioFile: `${Config.pbxUrl}/pbxcore/api/system/removeAudioFile`,
 	systemReboot: `${Config.pbxUrl}/pbxcore/api/system/reboot`, // Рестарт ОС
 	systemShutDown: `${Config.pbxUrl}/pbxcore/api/system/shutdown`, // Выключить машину
@@ -259,15 +259,15 @@ const PbxApi = {
 	},
 	/**
 	 * Получить контент файла конфигурации с сервера
-	 * @param $data
+	 * @param data
 	 * @param callback
 	 */
-	GetFileContent($data, callback) {
+	GetFileContent(data, callback) {
 		$.api({
 			url: PbxApi.systemGetFileContent,
 			on: 'now',
 			method: 'POST',
-			data: JSON.stringify($data),
+			data: JSON.stringify(data),
 			onSuccess(response) {
 				if (response !== undefined) {
 					callback(response);
@@ -277,7 +277,7 @@ const PbxApi = {
 	},
 	/**
 	 * Обновляет системное время
-	 * @param $data
+	 * @param data
 	 */
 	UpdateDateTime(data) {
 		$.api({
@@ -451,11 +451,36 @@ const PbxApi = {
 		});
 	},
 	/**
-	 * Delete audio file from disk
-	 * @param filePath - full path to the file
+	 * Upload audio file to PBX system
+	 * @param filePath - uploaded file
+	 * @param category - category {moh, custom, etc...}
 	 * @param callback - callback function
 	 */
-	SystemRemoveAudioFile(filePath, fileId, callback) {
+	SystemConvertAudioFile(filePath, category, callback) {
+		$.api({
+			on: 'now',
+			url: PbxApi.systemConvertAudioFile,
+			method: 'POST',
+			data: {temp_filename:filePath, category:category},
+			successTest: PbxApi.successTest,
+			onSuccess(response) {
+				callback(response.data);
+			},
+			onFailure() {
+				callback(false);
+			},
+			onError() {
+				callback(false);
+			},
+		});
+	},
+	/**
+	 * Delete audio file from disk
+	 * @param filePath - full path to the file
+	 * @param fileId
+	 * @param callback - callback function
+	 */
+	SystemRemoveAudioFile(filePath, fileId=null, callback=null) {
 		$.api({
 			url: PbxApi.systemRemoveAudioFile,
 			on: 'now',
@@ -463,7 +488,10 @@ const PbxApi = {
 			data: `{"filename":"${filePath}"}`,
 			successTest: PbxApi.successTest,
 			onSuccess() {
-				callback(fileId);
+				if (callback!==null){
+					callback(fileId);
+				}
+
 			},
 		});
 	},
@@ -683,6 +711,104 @@ const PbxApi = {
 			onError() {
 				callback(false);
 			},
+		});
+	},
+	/**
+	 * Подключение обработчкика загрузки файлов по частям
+	 */
+	SystemUploadFileAttachToBtn(buttonId, fileTypes, callback) {
+		const r = new Resumable({
+			target: PbxApi.systemUploadFile,
+			testChunks: false,
+			chunkSize: 30 * 1024 * 1024,
+			maxFiles: 1,
+			fileType: fileTypes,
+		});
+
+		r.assignBrowse(document.getElementById(buttonId));
+		r.on('fileSuccess', (file, response) => {
+			callback('fileSuccess', {file, response});
+		});
+		r.on('fileProgress', (file) => {
+			callback('fileProgress', {file});
+		});
+		r.on('fileAdded', (file, event) => {
+			r.upload();
+			callback('fileAdded', {file, event});
+		});
+		r.on('fileRetry', (file) => {
+			callback('fileRetry', {file});
+		});
+		r.on('fileError', (file, message) => {
+			callback('fileError', {file, message});
+		});
+		r.on('uploadStart', () => {
+			callback('uploadStart');
+		});
+		r.on('complete', () => {
+			callback('complete');
+		});
+		r.on('progress', () => {
+			const percent = 100 * r.progress();
+			callback('progress', {percent});
+		});
+		r.on('error', (message, file) => {
+			callback('error', {message, file});
+		});
+		r.on('pause', () => {
+			callback('pause');
+		});
+		r.on('cancel', () => {
+			callback('cancel');
+		});
+	},
+	/**
+	 * Подключение обработчкика загрузки файлов по частям
+	 */
+	SystemUploadFile(file, callback) {
+		const r = new Resumable({
+			target: PbxApi.systemUploadFile,
+			testChunks: false,
+			chunkSize: 30 * 1024 * 1024,
+			maxFiles: 1,
+		});
+
+		r.addFile(file);
+		r.upload();
+		r.on('fileSuccess', (file, response) => {
+			callback('fileSuccess', {file, response});
+		});
+		r.on('fileProgress', (file) => {
+			callback('fileProgress', {file});
+		});
+		r.on('fileAdded', (file, event) => {
+			r.upload();
+			callback('fileAdded', {file, event});
+		});
+		r.on('fileRetry', (file) => {
+			callback('fileRetry', {file});
+		});
+		r.on('fileError', (file, message) => {
+			callback('fileError', {file, message});
+		});
+		r.on('uploadStart', () => {
+			callback('uploadStart');
+		});
+		r.on('complete', () => {
+			callback('complete');
+		});
+		r.on('progress', () => {
+			const percent = 100 * r.progress();
+			callback('progress', {percent});
+		});
+		r.on('error', (message, file) => {
+			callback('error', {message, file});
+		});
+		r.on('pause', () => {
+			callback('pause');
+		});
+		r.on('cancel', () => {
+			callback('cancel');
 		});
 	},
 

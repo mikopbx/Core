@@ -277,8 +277,8 @@ class WorkerApiCommands extends WorkerBase
                 break;
             case 'convertAudioFile':
                 $mvPath = Util::which('mv');
-                Util::mwExec("{$mvPath} {$data['uploadedBlob']} {$data['filename']}");
-                $result = Util::convertAudioFile($data['filename']);
+                Util::mwExec("{$mvPath} {$data['temp_filename']} {$data['filename']}");
+                $result = UploadAndConvertFiles::convertAudioFile($data['filename']);
                 break;
             case 'uploadNewModule':
                 $module = $request['data']['uniqid'];
@@ -328,7 +328,7 @@ class WorkerApiCommands extends WorkerBase
                     $setup       = new $moduleClass($module);
                 }
                 $prams = json_decode($request['input'], true);
-                if (array_key_exists('keepSettings', $prams)) {
+                if (is_array($prams) && array_key_exists('keepSettings', $prams)) {
                     $keepSettings = $prams['keepSettings'] === 'true';
                 } else {
                     $keepSettings = false;

@@ -809,64 +809,7 @@ class Util
         return $filename;
     }
 
-    /**
-     * Конвертация файла в wav 8000.
-     *
-     * @param $filename
-     *
-     * @return mixed
-     */
-    public static function convertAudioFile($filename)
-    {
-        $result = [];
-        if ( ! file_exists($filename)) {
-            $result['result']  = 'Error';
-            $result['message'] = "File '{$filename}' not found.";
 
-            return $result;
-        }
-        $out          = [];
-        $tmp_filename = '/tmp/' . time() . "_" . basename($filename);
-        if (false === copy($filename, $tmp_filename)) {
-            $result['result']  = 'Error';
-            $result['message'] = "Unable to create temporary file '{$tmp_filename}'.";
-
-            return $result;
-        }
-
-        // Принудительно устанавливаем расширение файла в wav.
-        $n_filename     = self::trimExtensionForFile($filename) . ".wav";
-        $n_filename_mp3 = self::trimExtensionForFile($filename) . ".mp3";
-        // Конвертируем файл.
-        $tmp_filename = escapeshellcmd($tmp_filename);
-        $n_filename   = escapeshellcmd($n_filename);
-        $soxPath      = self::which('sox');
-        self::mwExec("{$soxPath} -v 0.99 -G '{$tmp_filename}' -c 1 -r 8000 -b 16 '{$n_filename}'", $out);
-        $result_str = implode('', $out);
-
-        $lamePath = self::which('lame');
-        self::mwExec("{$lamePath} -b 32 --silent '{$n_filename}' '{$n_filename_mp3}'", $out);
-        $result_mp3 = implode('', $out);
-
-        // Чистим мусор.
-        unlink($tmp_filename);
-        if ($result_str !== '' && $result_mp3 !== '') {
-            // Ошибка выполнения конвертации.
-            $result['result']  = 'Error';
-            $result['message'] = $result_str;
-
-            return $result;
-        }
-
-        if ($filename !== $n_filename && $filename !== $n_filename_mp3) {
-            @unlink($filename);
-        }
-
-        $result['result'] = 'Success';
-        $result['data']   = $n_filename_mp3;
-
-        return $result;
-    }
 
     /**
      * Получаем размер файла / директории.

@@ -733,6 +733,7 @@ return [
     'sf_ValidationFileNotSelected'                                => 'Сначала загрузите аудиофайл',
     'sf_CustomSounds'                                             => 'Аудиофайлы',
     'sf_MusicOnHold'                                              => 'Музыка на удержании',
+    'sf_UploadError'                                               => 'Ошибка при загрузке аудиофайла',
     'lic_ValidateCompanyNameEmpty'                                => 'Не заполнено обязательное поле - название компании',
     'lic_ValidateContactEmail'                                    => 'Не заполнено обязательное поле - email коннтактного лица',
     'lic_ValidateContactName'                                     => 'Не заполнено обязательное поле - контактное лицо',
