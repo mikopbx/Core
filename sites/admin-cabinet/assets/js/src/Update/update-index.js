@@ -9,6 +9,55 @@
 /* global PbxApi, globalPBXVersion, globalTranslate,
 globalWebAdminLanguage, globalPBXVersion, showdown, UserMessage */
 
+const mergingCheckWorker = {
+	timeOut: 3000,
+	timeOutHandle: '',
+	errorCounts: 0,
+	$progressBarLabel: $('#upload-progress-bar').find('.label'),
+	fileID: null,
+	filePath: '',
+	initialize(fileID, filePath) {
+		// Запустим обновление статуса провайдера
+		mergingCheckWorker.fileID = fileID;
+		mergingCheckWorker.filePath = filePath;
+		mergingCheckWorker.restartWorker(fileID);
+	},
+	restartWorker() {
+		window.clearTimeout(mergingCheckWorker.timeoutHandle);
+		mergingCheckWorker.worker();
+	},
+	worker() {
+		PbxApi.SystemGetStatusUploadFile(mergingCheckWorker.fileID, mergingCheckWorker.cbAfterResponse);
+		mergingCheckWorker.timeoutHandle = window.setTimeout(
+			mergingCheckWorker.worker,
+			mergingCheckWorker.timeOut,
+		);
+	},
+	cbAfterResponse(response) {
+		if (mergingCheckWorker.errorCounts > 10) {
+			mergingCheckWorker.$progressBarLabel.text(globalTranslate.upd_UploadError);
+			UserMessage.showError(globalTranslate.upd_UploadError);
+			updatePBX.$submitButton.removeClass('loading');
+			window.clearTimeout(mergingCheckWorker.timeoutHandle);
+		}
+		if (response === undefined || Object.keys(response).length === 0) {
+			mergingCheckWorker.errorCounts += 1;
+			return;
+		}
+		if (response.d_status === 'UPLOAD_COMPLETE') {
+			mergingCheckWorker.$progressBarLabel.text(globalTranslate.upd_UpgradeInProgress);
+			PbxApi.SystemUpgrade(mergingCheckWorker.filePath, updatePBX.cbAfterStartUpdate);
+			window.clearTimeout(mergingCheckWorker.timeoutHandle);
+		} else if (response.d_status !== undefined) {
+			mergingCheckWorker.$progressBarLabel.text(globalTranslate.upd_UploadInProgress);
+			mergingCheckWorker.errorCounts = 0;
+		} else {
+			mergingCheckWorker.errorCounts += 1;
+		}
+	},
+};
+
+
 const upgradeStatusLoopWorker = {
 	timeOut: 1000,
 	timeOutHandle: '',
@@ -85,7 +134,7 @@ const updatePBX = {
 									updatePBX.$submitButton.addClass('loading');
 									updatePBX.upgradeInProgress = true;
 									const data = $('input:file')[0].files[0];
-									PbxApi.SystemUpgrade(data, updatePBX.cbAfterUploadFile);
+									PbxApi.SystemUploadFile(data,updatePBX.cbResumableUploadFile);
 									return true;
 								},
 							})
@@ -143,20 +192,64 @@ const updatePBX = {
 			},
 		});
 	},
-	cbAfterUploadFile(response) {
-		if (response.length === 0 || response === false) {
-			updatePBX.$submitButton.removeClass('loading');
-			updatePBX.upgradeInProgress = false;
-			UserMessage.showError(globalTranslate.upd_UploadError);
-		} else if (response.function === 'upload_progress') {
-			updatePBX.$progressBar.progress({
-				percent: parseInt(response.percent, 10),
-			});
-			if (response.percent < 100) {
+	/**
+	 * Upload file by chunks
+	 * @param response
+	 */
+	cbResumableUploadFile(action, params){
+		switch (action) {
+			case 'fileSuccess':
+				updatePBX.checkStatusFileMerging(params.response);
+				break;
+			case 'uploadStart':
+				updatePBX.$submitButton.addClass('loading');
+				updatePBX.$progressBar.show();
 				updatePBX.$progressBarLabel.text(globalTranslate.upd_UploadInProgress);
-			} else {
-				updatePBX.$progressBarLabel.text(globalTranslate.upd_UpgradeInProgress);
-			}
+				break;
+			case 'progress':
+				updatePBX.$progressBar.progress({
+					percent: parseInt(params.percent, 10),
+				});
+				break;
+			case 'error':
+				updatePBX.$progressBarLabel.text(globalTranslate.upd_UploadError);
+				updatePBX.$submitButton.removeClass('loading');
+				UserMessage.showError(globalTranslate.upd_UploadError);
+				break;
+			default:
+
+
+		}
+	},
+	/**
+	 * Wait for file ready to use
+	 *
+	 * @param response ответ функции /pbxcore/api/upload/status
+	 */
+	checkStatusFileMerging(response) {
+		if (response === undefined || PbxApi.tryParseJSON(response) === false) {
+			UserMessage.showError(`${globalTranslate.upd_UploadError}`);
+			return;
+		}
+		const json = JSON.parse(response);
+		if (json === undefined || json.data === undefined) {
+			UserMessage.showError(`${globalTranslate.upd_UploadError}`);
+			return;
+		}
+		const fileID = json.data.upload_id;
+		const filePath = json.data.filename;
+		mergingCheckWorker.initialize(fileID, filePath);
+	},
+
+	/**
+	 * Callback after start PBX upgrading
+	 * @param response
+	 */
+	cbAfterStartUpdate(response) {
+		if (response.length === 0 || response === false) {
+			UserMessage.showError(globalTranslate.upd_UpgradeError);
+		} else {
+			updatePBX.$submitButton.removeClass('loading');
 		}
 	},
 	/**
@@ -171,6 +264,9 @@ const updatePBX = {
 			$('i.loading.redo').removeClass('loading');
 		}
 	},
+	/**
+	 * Add new block of update information on page
+	 */
 	AddNewVersionInformation(obj) {
 		$('#online-updates-block').show();
 		let markdownText = decodeURIComponent(obj.description);

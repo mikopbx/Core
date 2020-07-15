@@ -8,6 +8,52 @@
 
 /* global globalRootUrl,globalTranslate, MediaStreamRecorder, StereoAudioRecorder, Form, PbxApi */
 
+const mergingCheckWorker = {
+	timeOut: 3000,
+	timeOutHandle: '',
+	errorCounts: 0,
+	fileID: null,
+	filePath: '',
+	initialize(fileID, filePath) {
+		// Запустим обновление статуса провайдера
+		mergingCheckWorker.fileID = fileID;
+		mergingCheckWorker.filePath = filePath;
+		mergingCheckWorker.restartWorker(fileID);
+	},
+	restartWorker() {
+		window.clearTimeout(mergingCheckWorker.timeoutHandle);
+		mergingCheckWorker.worker();
+	},
+	worker() {
+		PbxApi.SystemGetStatusUploadFile(mergingCheckWorker.fileID, mergingCheckWorker.cbAfterResponse);
+		mergingCheckWorker.timeoutHandle = window.setTimeout(
+			mergingCheckWorker.worker,
+			mergingCheckWorker.timeOut,
+		);
+	},
+	cbAfterResponse(response) {
+		if (mergingCheckWorker.errorCounts > 10) {
+			UserMessage.showError(globalTranslate.sf_UploadError);
+			soundFileModify.$submitButton.removeClass('loading');
+			soundFileModify.$formObj.removeClass('loading');
+			window.clearTimeout(mergingCheckWorker.timeoutHandle);
+		}
+		if (response === undefined || Object.keys(response).length === 0) {
+			mergingCheckWorker.errorCounts += 1;
+			return;
+		}
+		if (response.d_status === 'UPLOAD_COMPLETE') {
+			const category = soundFileModify.$formObj.form('get value', 'category');
+			PbxApi.SystemConvertAudioFile(mergingCheckWorker.filePath, category, soundFileModify.cbAfterConvertFile);
+			window.clearTimeout(mergingCheckWorker.timeoutHandle);
+		} else if (response.d_status !== undefined) {
+			mergingCheckWorker.errorCounts = 0;
+		} else {
+			mergingCheckWorker.errorCounts += 1;
+		}
+	},
+};
+
 const sndPlayer = {
 	slider: document.getElementById('audio-player'),
 	duration: 0, // Duration of audio clip
@@ -121,20 +167,6 @@ const soundFileModify = {
 		soundFileModify.initializeForm();
 		PbxApi.SystemUploadFileAttachToBtn('upload-sound-file',['mp3','wav'], soundFileModify.cbUploadResumable);
 
-		// soundFileModify.$soundUploadButton.on('click', (e) => {
-		// 	e.preventDefault();
-		// 	$('input:file', $(e.target).parents()).click();
-		// });
-
-		// soundFileModify.$soundFileInput.on('change', (e) => {
-		// 	const file = e.target.files[0];
-		// 	if (file === undefined) return;
-		// 	soundFileModify.$soundFileName.val(file.name.replace(/\.[^/.]+$/, ''));
-		// 	soundFileModify.blob = window.URL || window.webkitURL;
-		// 	const fileURL = soundFileModify.blob.createObjectURL(file);
-		// 	sndPlayer.UpdateSource(fileURL);
-		// });
-
 		if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
 			$('#only-https-field').addClass('disabled');
 		}
@@ -151,16 +183,10 @@ const soundFileModify = {
 	cbUploadResumable(action, params){
 		switch (action) {
 			case 'fileSuccess':
-				soundFileModify.$submitButton.removeClass('loading');
-				soundFileModify.$formObj.removeClass('loading');
-				const category = soundFileModify.$formObj.form('get value', 'category');
 				const response = PbxApi.tryParseJSON(params.response);
 				if (response !==false && response.data.filename!==undefined){
 					soundFileModify.$soundFileName.val(params.file.fileName);
-					setTimeout(() => {
-						PbxApi.SystemConvertAudioFile(response.data.filename, category, soundFileModify.cbAfterConvertFile);
-						}, 3000);
-
+					soundFileModify.checkStatusFileMerging(params.response);
 				} else {
 					UserMessage.showError(`${globalTranslate.sf_UploadError}`);
 				}
@@ -178,6 +204,25 @@ const soundFileModify = {
 		}
 	},
 	/**
+	 * Wait for file ready to use
+	 *
+	 * @param response ответ функции /pbxcore/api/upload/status
+	 */
+	checkStatusFileMerging(response) {
+		if (response === undefined || PbxApi.tryParseJSON(response) === false) {
+			UserMessage.showError(`${globalTranslate.sf_UploadError}`);
+			return;
+		}
+		const json = JSON.parse(response);
+		if (json === undefined || json.data === undefined) {
+			UserMessage.showError(`${globalTranslate.sf_UploadError}`);
+			return;
+		}
+		const fileID = json.data.upload_id;
+		const filePath = json.data.filename;
+		mergingCheckWorker.initialize(fileID, filePath);
+	},
+	/**
 	 * After file converted to MP3 format
 	 * @param filename
 	 */
@@ -189,6 +234,9 @@ const soundFileModify = {
 			soundFileModify.$formObj.form('set value', 'path', filename);
 			soundFileModify.$soundFileName.trigger('change');
 			sndPlayer.UpdateSource(`/pbxcore/api/cdr/playback?view=${filename}`);
+			soundFileModify.$submitButton.removeClass('loading');
+			soundFileModify.$formObj.removeClass('loading');
+
 		}
 	},
 	cbBeforeSendForm(settings) {

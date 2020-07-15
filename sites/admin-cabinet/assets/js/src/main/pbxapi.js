@@ -370,48 +370,25 @@ const PbxApi = {
 	},
 
 	/**
-	 * Загрузить на станцию файл обновления
-	 * @param file - Тело загружаемого файла
-	 * @param callback - функция для обработки результата
+	 * Start system upgrade
+	 * @param filePath  tempFile path for upgrade
+	 * @param callback function
 	 */
-	SystemUpgrade(file, callback) {
+	SystemUpgrade(filePath, callback) {
 		$.api({
-			on: 'now',
 			url: PbxApi.systemUpgrade,
+			on: 'now',
 			method: 'POST',
-			cache: false,
-			processData: false,
-			contentType: false,
-			beforeSend: (settings) => {
-				const newSettings = settings;
-				const now = parseInt(Date.now() / 1000, 10);
-				newSettings.data = new FormData();
-				newSettings.data.append(`upgrade_${now}`, file);
-				return newSettings;
+			data: {temp_filename:filePath},
+			successTest: PbxApi.successTest,
+			onSuccess() {
+				callback(true);
 			},
-			onResponse: response => response,
-			successTest: response => !response.error || false, // change this
-			onSuccess: (json) => {
-				callback(json);
+			onFailure(response) {
+				callback(response);
 			},
-			onFailure: (json) => {
-				callback(json);
-			},
-			xhr: () => {
-				const xhr = new window.XMLHttpRequest();
-				// прогресс загрузки на сервер
-				xhr.upload.addEventListener('progress', (evt) => {
-					if (evt.lengthComputable) {
-						const percentComplete = 100 * (evt.loaded / evt.total);
-						const json = {
-							function: 'upload_progress',
-							percent: percentComplete,
-						};
-						// делать что-то...
-						callback(json);
-					}
-				}, false);
-				return xhr;
+			onError(response) {
+				callback(response);
 			},
 		});
 	},
@@ -485,7 +462,7 @@ const PbxApi = {
 			url: PbxApi.systemRemoveAudioFile,
 			on: 'now',
 			method: 'POST',
-			data: `{"filename":"${filePath}"}`,
+			data: {filename:filePath},
 			successTest: PbxApi.successTest,
 			onSuccess() {
 				if (callback!==null){
@@ -515,7 +492,12 @@ const PbxApi = {
 			url: PbxApi.systemInstallModule,
 			on: 'now',
 			method: 'POST',
-			data: `{"uniqid":"${params.uniqid}","md5":"${params.md5}","size":"${params.size}","url":"${params.updateLink}"}`,
+			data: {
+				uniqid:params.uniqid,
+				md5:params.md5,
+				size:params.size,
+				url:params.updateLink
+			},
 			successTest: PbxApi.successTest,
 			onSuccess() {
 				callback(true);
@@ -585,7 +567,10 @@ const PbxApi = {
 			url: PbxApi.systemDeleteModule,
 			on: 'now',
 			method: 'POST',
-			data: `{"uniqid":"${moduleName}","keepSettings":"${keepSettings}"}`,
+			data: {
+				uniqid: moduleName,
+				keepSettings: keepSettings
+			},
 			successTest: PbxApi.successTest,
 			onSuccess() {
 				callback(true);
@@ -600,17 +585,17 @@ const PbxApi = {
 	},
 	/**
 	 * Проверка статуса установки модуля
-	 * @param moduleName - uniqid модуля
-	 * @param callback - функция для обработки результата
+	 * @param moduleUniqueID  uniqid модуля
+	 * @param callback  функция для обработки результата
 	 * @param failureCallback
 	 */
-	SystemGetModuleInstallStatus(moduleName, callback, failureCallback) {
+	SystemGetModuleInstallStatus(moduleUniqueID, callback, failureCallback) {
 		$.api({
 			url: PbxApi.systemInstallStatusModule,
 			on: 'now',
 			timeout: 3000,
 			method: 'POST',
-			data: `{"uniqid":"${moduleName}"}`,
+			data: {uniqid:moduleUniqueID},
 			successTest: PbxApi.successTest,
 			onSuccess(response) {
 				callback(response.data);
@@ -629,13 +614,15 @@ const PbxApi = {
 
 	/**
 	 * Disable pbxExtension module
+	 * @param {*} moduleUniqueID
+	 * @param {function(...[*]=)} callback
 	 */
-	SystemDisableModule(moduleName, callback) {
+	SystemDisableModule(moduleUniqueID, callback) {
 		$.api({
 			url: PbxApi.systemDisableModule,
 			on: 'now',
 			method: 'POST',
-			data: `{"uniqid":"${moduleName}"}`,
+			data: {uniqid:moduleUniqueID},
 			successTest: PbxApi.successTest,
 			onSuccess(response) {
 				callback(response, true);
@@ -651,13 +638,15 @@ const PbxApi = {
 	},
 	/**
 	 * Disable pbxExtension module
+	 * @param {string} moduleUniqueID
+	 * @param {function(...[*]=)} callback
 	 */
-	SystemEnableModule(moduleName, callback) {
+	SystemEnableModule(moduleUniqueID, callback) {
 		$.api({
 			url: PbxApi.systemEnableModule,
 			on: 'now',
 			method: 'POST',
-			data: `{"uniqid":"${moduleName}"}`,
+			data:  {uniqid:moduleUniqueID},
 			successTest: PbxApi.successTest,
 			onSuccess(response) {
 				callback(response, true);
@@ -680,7 +669,10 @@ const PbxApi = {
 			url: PbxApi.systemUpgradeOnline,
 			on: 'now',
 			method: 'POST',
-			data: `{"md5":"${params.md5}","url":"${params.updateLink}"}`,
+			data: {
+				md5:params.md5,
+				url:params.updateLink
+			},
 			successTest: PbxApi.successTest,
 			onSuccess() {
 				callback(true);
@@ -820,7 +812,7 @@ const PbxApi = {
 			url: PbxApi.systemStatusUploadFile,
 			on: 'now',
 			method: 'POST',
-			data: `{"id":"${fileId}"}`,
+			data: {id:fileId},
 			successTest: PbxApi.successTest,
 			onSuccess(response) {
 				callback(response.data);

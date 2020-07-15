@@ -270,7 +270,7 @@ class WorkerApiCommands extends WorkerBase
                 $result = System::upgradeOnline($request['data']);
                 break;
             case 'upgrade':
-                $result = System::upgradeFromImg();
+                $result = System::upgradeFromImg($data['temp_filename']);
                 break;
             case 'removeAudioFile':
                 $result = Util::removeAudioFile($data['filename']);
@@ -436,7 +436,7 @@ class WorkerApiCommands extends WorkerBase
                 $result = UploadAndConvertFiles::uploadResumable($postData);
                 break;
             case 'status':
-                $result = UploadAndConvertFiles::statusUploadFile($postData);
+                $result = UploadAndConvertFiles::statusUploadFile($request['data']);
               break;
             default:
                 $result = [

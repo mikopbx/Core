@@ -847,6 +847,7 @@ return [
     'upd_Update'                                                  => 'Обновить',
     'upd_UploadInProgress'                                        => 'Закачивается файл обновления …',
     'upd_UpgradeInProgress'                                       => 'Обновляются системные файлы …',
+    'upd_UpgradeError'                                           => 'Ошибка при обновлении MikoPBX',
     'ext_TableColumnDescription'                                  => 'Название модуля',
     'ext_TableColumnDeveloper'                                    => 'Разработчик',
     'ext_TableColumnVersion'                                      => 'Версия',

@@ -584,16 +584,18 @@ class System
     }
 
     /**
-     * Запускает процесс обновление АТС из img образа.
+     * Upgrade MikoPBX from uploaded IMG file
+     *
+     * @param string $tempFilename path to uploaded image
      *
      * @return array
      */
-    public static function upgradeFromImg(): array
+    public static function upgradeFromImg(string $tempFilename): array
     {
+
         $result = [
             'result'  => 'Success',
             'message' => 'In progress...',
-            'info'    => 'Update from local file',
         ];
 
         $di     = Di::getDefault();
@@ -603,17 +605,16 @@ class System
             $tempDir = '/tmp';
         }
         $upd_file = "{$tempDir}/update.img";
-        if ( ! file_exists($upd_file)) {
-            $upd_file       = "{$tempDir}/upgradeOnline/update.img";
-            $result['info'] = 'Online update';
-        }
-        if ( ! file_exists($upd_file)) {
-            $result['result']  = 'Error';
-            $result['message'] = 'IMG file not found';
-            $result['path']    = $upd_file;
-
+        $cpPath = Util::which('cp');
+        $res    = Util::mwExec("{$cpPath} '{$tempFilename}' '{$upd_file}'") === 0;
+        if (!$res){
+            $result = [
+                'result'  => 'ERROR',
+                'data' => "Update file '{$tempFilename}' not found.",
+            ];
             return $result;
         }
+
         if ( ! file_exists('/var/etc/cfdevice')) {
             $result['result']  = 'Error';
             $result['message'] = 'The system is not installed';
@@ -632,7 +633,7 @@ class System
     }
 
     /**
-     * Обновление АТС путем скачивания образа с ресурса МИКО.
+     * Download IMG from MikoPBX repository and upgrade it
      *
      * @param $data
      *
