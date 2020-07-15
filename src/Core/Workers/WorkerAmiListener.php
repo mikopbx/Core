@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 2 2020
+ * Written by Alexey Portnov, 7 2020
  */
 
 namespace MikoPBX\Core\Workers;
@@ -18,6 +18,7 @@ class WorkerAmiListener extends WorkerBase
     protected $client;
 
     protected AGI_AsteriskManager $am;
+    protected int $maxProc=1;
 
     /**
      * Установка фильтра

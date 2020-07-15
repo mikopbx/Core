@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 6 2020
+ * Written by Alexey Portnov, 7 2020
  */
 
 namespace MikoPBX\Core\Workers;
@@ -17,6 +17,8 @@ use Phalcon\Di;
 
 class WorkerCallEvents extends WorkerBase
 {
+    // Максимальное количество экземпляров данныого класса.
+    protected int $maxProc=1;
 
     /**
      * Обработка события начала телефонного звонка.
@@ -946,6 +948,7 @@ class WorkerCallEvents extends WorkerBase
      */
     public function start($argv): void
     {
+        // PID сохраняем при начале работы Worker.
         $client = new BeanstalkClient(self::class);
         $client->subscribe(self::class, [$this, 'callEventsWorker']);
         $client->subscribe(WorkerCdr::SELECT_CDR_TUBE, [$this, 'selectCDRWorker']);

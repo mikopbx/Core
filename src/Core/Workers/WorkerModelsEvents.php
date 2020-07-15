@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 2 2020
+ * Written by Alexey Portnov, 7 2020
  */
 
 namespace MikoPBX\Core\Workers;
@@ -83,6 +83,7 @@ class WorkerModelsEvents extends WorkerBase
     private $timeout = 3;
     private $arrObject;
     private $PRIORITY_R;
+    protected int $maxProc=1;
 
 
     /**
@@ -92,6 +93,7 @@ class WorkerModelsEvents extends WorkerBase
      */
     public function start($argv): void
     {
+
         $this->arrObject = $this->di->getShared('pbxConfModules');
 
         $this->PRIORITY_R = [

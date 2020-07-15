@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 2 2020
+ * Written by Alexey Portnov, 7 2020
  */
 
 namespace MikoPBX\Core\Workers;
@@ -16,6 +16,7 @@ class WorkerNotifyError extends WorkerBase
     private $queue = [];
     private $starting_point = 0;
     private $interval = 28800;
+    protected int $maxProc=1;
 
     /**
      * Наполняем очередь уведомлениями.
@@ -24,6 +25,7 @@ class WorkerNotifyError extends WorkerBase
      */
     public function start($argv): void
     {
+
         $client = new BeanstalkClient('WorkerNotifyError_license');
         $client->subscribe('WorkerNotifyError_license', [$this, 'onLicenseError']);
         $client->subscribe('WorkerNotifyError_storage', [$this, 'onStorageError']);

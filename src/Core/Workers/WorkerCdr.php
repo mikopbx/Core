@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 6 2020
+ * Written by Alexey Portnov, 7 2020
  */
 
 namespace MikoPBX\Core\Workers;
@@ -22,8 +22,8 @@ class WorkerCdr extends WorkerBase
 {
 
     public const SELECT_CDR_TUBE = 'select_cdr_tube';
-
     public const UPDATE_CDR_TUBE = 'update_cdr_tube';
+    protected int $maxProc=1;
 
 
     private $client_queue;
