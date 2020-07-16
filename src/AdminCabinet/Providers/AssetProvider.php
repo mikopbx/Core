@@ -508,6 +508,7 @@ class AssetProvider implements ServiceProviderInterface
                             $footerCollectionJS
                                 ->addJs('js/vendor/range/range.min.js', true)
                                 ->addJs('js/pbx/main/form.js', true)
+                                ->addJs('js/vendor/resumable.js', true)
                                 ->addJs('js/pbx/SoundFiles/sound-file-modify.js', true);
                         }
                         break;
@@ -531,6 +532,7 @@ class AssetProvider implements ServiceProviderInterface
                         if ($action === 'index') {
                             $footerCollectionJS
                                 ->addJs('js/pbx/main/form.js', true)
+                                ->addJs('js/vendor/resumable.js', true)
                                 ->addJs('js/vendor/showdown/showdown.min.js', true)
                                 ->addJs('js/pbx/Update/update-index.js', true);
                             $semanticCollectionCSS

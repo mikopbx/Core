@@ -270,15 +270,15 @@ class WorkerApiCommands extends WorkerBase
                 $result = System::upgradeOnline($request['data']);
                 break;
             case 'upgrade':
-                $result = System::upgradeFromImg();
+                $result = System::upgradeFromImg($data['temp_filename']);
                 break;
             case 'removeAudioFile':
                 $result = Util::removeAudioFile($data['filename']);
                 break;
             case 'convertAudioFile':
                 $mvPath = Util::which('mv');
-                Util::mwExec("{$mvPath} {$data['uploadedBlob']} {$data['filename']}");
-                $result = Util::convertAudioFile($data['filename']);
+                Util::mwExec("{$mvPath} {$data['temp_filename']} {$data['filename']}");
+                $result = UploadAndConvertFiles::convertAudioFile($data['filename']);
                 break;
             case 'uploadNewModule':
                 $module = $request['data']['uniqid'];
@@ -328,7 +328,7 @@ class WorkerApiCommands extends WorkerBase
                     $setup       = new $moduleClass($module);
                 }
                 $prams = json_decode($request['input'], true);
-                if (array_key_exists('keepSettings', $prams)) {
+                if (is_array($prams) && array_key_exists('keepSettings', $prams)) {
                     $keepSettings = $prams['keepSettings'] === 'true';
                 } else {
                     $keepSettings = false;
@@ -436,7 +436,7 @@ class WorkerApiCommands extends WorkerBase
                 $result = UploadAndConvertFiles::uploadResumable($postData);
                 break;
             case 'status':
-                $result = UploadAndConvertFiles::statusUploadFile($postData);
+                $result = UploadAndConvertFiles::statusUploadFile($request['data']);
               break;
             default:
                 $result = [

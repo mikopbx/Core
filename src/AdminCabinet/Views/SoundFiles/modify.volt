@@ -37,11 +37,15 @@
     </div>
 
 </div>
+<div class="field">
+    <label>{{ t._('sf_Filename') }}</label>
+    {{ form.render('name') }}
+</div>
 <div class="field" id="audio-player-segment">
     <audio id="audio-player" preload="auto">
         <source src="{{ audioPath }}" type="audio/mp3">
     </audio>
-    <div class="ui  segment">
+    <div class="ui basic segment">
         <div class="fields">
             <div class="one wide field">
                 <button class="ui icon button" id="play-button"><i class="icon play"></i></button>
@@ -53,10 +57,7 @@
 
     </div>
 </div>
-<div class="field">
-    <label>{{ t._('sf_Filename') }}</label>
-    {{ form.render('name') }}
-</div>
+
 
 {{ partial("partials/submitbutton",[
     'indexurl':'sound-files/index',

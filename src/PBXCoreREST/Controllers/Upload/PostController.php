@@ -24,7 +24,7 @@ class PostController extends BaseController
     {
         $data           = [];
         $data['result'] = 'ERROR';
-        $data['data']   = '';
+        $data   = $this->request->getPost();
 
         if ($this->request->hasFiles() > 0) {
             $data = [
@@ -53,9 +53,6 @@ class PostController extends BaseController
                 }
             }
             $actionName = 'uploadResumable';
-        } elseif ($actionName === 'status') {
-            $row_data = $this->request->getRawBody();
-            $data     = json_decode($row_data, true);
         }
         $this->sendRequestToBackendWorker('upload', $actionName, $data);
     }

@@ -98,111 +98,62 @@ class PostController extends BaseController
     public function callAction($actionName): void
     {
         $data = null;
-        switch ($actionName){
-            case 'upgrade':
-                if ($this->upgradeOverUploadedImg()===false){
-                    return;
-                }
-                break;
-            case 'uploadAudioFile':
-                if ($this->uploadAudioFile()) {
-                    $actionName = 'convertAudioFile';
-                } else {
+        switch ($actionName) {
+            case 'convertAudioFile':
+                $data = $this->convertAudioFile();
+                if ($data === null) {
                     return;
                 }
                 break;
             case 'uploadNewModule':
-                $data  = $this->uploadNewModule();
-                if ($data === false){
+                $data = $this->uploadNewModule();
+                if ($data === null) {
                     return;
                 }
                 break;
             default:
-                $row_data = $this->request->getRawBody();
-                // Проверим, переданные данные.
-                if ( ! Util::isJson($row_data)) {
-                    $this->sendError(400, 'It is not JSON');
-                    return;
-                }
-                $data = json_decode($row_data, true);
+                $data = $this->request->getPost();
         }
 
         $this->sendRequestToBackendWorker('system', $actionName, $data);
     }
 
     /**
-     * Prepare uploaded image to update
-     * @return bool
-     */
-    private function upgradeOverUploadedImg():bool
-    {
-        $di       = Di::getDefault();
-        $tempDir  = $di->getShared('config')->path('core.tempPath');
-        $upd_file = "{$tempDir}/update.img";
-        $res      = false;
-        if ($this->request->hasFiles() === 0) {
-            // Используем существующий файл;
-            $postData = json_decode($this->request->getRawBody(), true);
-            if ($postData && isset($postData['filename']) && file_exists($postData['filename'])) {
-                $cpPath = Util::which('cp');
-                $res = Util::mwExec("{$cpPath} '{$postData['filename']}' '{$upd_file}'") === 0;
-            }
-        } else {
-            // Загружаем новый файл на сервер
-            foreach ($this->request->getUploadedFiles() as $file) {
-                $res = $file->moveTo($upd_file);
-            }
-        }
-        // Проверяем существование файла.
-       $res =  ($res && file_exists($upd_file));
-        if (!$res){
-            $this->sendError(404, 'Update file not found.');
-        }
-        return $res;
-
-    }
-
-    /**
      * Categorize and store uploaded audio files
-     * @return bool
+     *
+     * @return array|null
      */
-    private function uploadAudioFile():bool
+    private function convertAudioFile():?array
     {
+        $data = [];
         $category = $this->request->getPost('category');
+        $data['temp_filename'] = $this->request->getPost('temp_filename');
         $di       = Di::getDefault();
         $mediaDir = $di->getShared('config')->path('asterisk.mediadir');
         $mohDir   = $di->getShared('config')->path('asterisk.mohdir');
-        foreach ($this->request->getUploadedFiles() as $file) {
-            switch ($category) {
-                case SoundFiles::CATEGORY_MOH:
-                    $filename = "{$mohDir}/" . basename($file->getName());
-                    break;
-                case SoundFiles::CATEGORY_CUSTOM:
-                    $filename = "{$mediaDir}/" . basename($file->getName());
-                    break;
-                default:
-                    $this->sendError(400, 'Category not set');
-                    return false;
-            }
-            $data['uploadedBlob'] = $file->getTempName();
-            $data['filename']     = $filename;
+        switch ($category) {
+            case SoundFiles::CATEGORY_MOH:
+                $data['filename'] = "{$mohDir}/" . basename($data['temp_filename']);
+                break;
+            case SoundFiles::CATEGORY_CUSTOM:
+                $data['filename'] = "{$mediaDir}/" . basename($data['temp_filename']);
+                break;
+            default:
+                $this->sendError(400, 'Category not set');
+
+                return null;
         }
-       return true;
+        return $data;
     }
 
     /**
      * Upload extension module, or download it from internet if only url was sent
+     * @return array|null
      */
-    private function uploadNewModule()
+    private function uploadNewModule():?array
     {
         if ($this->request->hasFiles() === 0) {
-            if (Util::isJson($this->request->getRawBody())) {
-                $row_data = $this->request->getRawBody();
-                $data     = json_decode($row_data, true);
-            } else {
-                $this->sendError(400, 'Body is not JSON');
-                return false;
-            }
+            $data = $this->request->getPost();
         } else {
             $tempDir     = $this->config->path('core.tempPath');
             $module_file = "{$tempDir}/" . time() . '.zip';
@@ -223,7 +174,10 @@ class PostController extends BaseController
 
                 $module_uniqid = $settings['module_uniqid'] ?? null;
                 if ( ! $module_uniqid) {
-                    $this->sendError(400, 'The" module_uniqid " in the module file is not described.the json or file does not exist.');
+                    $this->sendError(
+                        400,
+                        'The" module_uniqid " in the module file is not described.the json or file does not exist.'
+                    );
                 }
                 $data = [
                     'md5'    => md5_file($module_file),
@@ -233,9 +187,11 @@ class PostController extends BaseController
                 ];
             } else {
                 $this->sendError(500, 'Failed to upload file to server');
-                return false;
+
+                return null;
             }
         }
+
         return $data;
     }
 }

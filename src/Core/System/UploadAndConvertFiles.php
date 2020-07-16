@@ -26,6 +26,7 @@ class UploadAndConvertFiles
      */
     public static function uploadResumable($parameters): array
     {
+        $data=[];
         $data['result'] = 'ERROR';
         $di             = Di::getDefault();
         if ($di === null) {
@@ -52,11 +53,11 @@ class UploadAndConvertFiles
 
             if (isset($resumableIdentifier) && trim($resumableIdentifier) !== '') {
                 $temp_dir         = $uploadPath . '/' . Util::trimExtensionForFile(basename($resumableFilename));
-                $temp_dst_file    = $uploadPath . '/' . $upload_id . '/' . basename($resumableFilename);
+                $temp_dst_file    = $uploadPath . '/' . $upload_id . '/' . $upload_id.'_'.basename($resumableFilename);
                 $chunks_dest_file = $temp_dir . '/' . $resumableFilename . '.part' . $resumableChunkNumber;
             } else {
                 $temp_dir         = $uploadPath . '/' . $upload_id;
-                $temp_dst_file    = $temp_dir . '/' . basename($file->getClientFilename());
+                $temp_dst_file    = $temp_dir . '/' .$upload_id.'_'.basename($file->getClientFilename());
                 $chunks_dest_file = $temp_dst_file;
             }
             if ( ! Util::mwMkdir($temp_dir) || ! Util::mwMkdir(dirname($temp_dst_file))) {
@@ -121,6 +122,7 @@ class UploadAndConvertFiles
      */
     public static function statusUploadFile($postData):array
     {
+        $result=[];
         $result['result'] = 'ERROR';
         $di             = Di::getDefault();
         if ($di === null) {
@@ -153,6 +155,65 @@ class UploadAndConvertFiles
                 $result['d_status_progress'] = file_get_contents($progress_file);
             }
         }
+        return $result;
+    }
+
+    /**
+     * Конвертация файла в wav 8000.
+     *
+     * @param $filename
+     *
+     * @return mixed
+     */
+    public static function convertAudioFile($filename)
+    {
+        $result = [];
+        if ( ! file_exists($filename)) {
+            $result['result']  = 'Error';
+            $result['message'] = "File '{$filename}' not found.";
+
+            return $result;
+        }
+        $out          = [];
+        $tmp_filename = '/tmp/' . time() . "_" . basename($filename);
+        if (false === copy($filename, $tmp_filename)) {
+            $result['result']  = 'Error';
+            $result['message'] = "Unable to create temporary file '{$tmp_filename}'.";
+
+            return $result;
+        }
+
+        // Принудительно устанавливаем расширение файла в wav.
+        $n_filename     = Util::trimExtensionForFile($filename) . ".wav";
+        $n_filename_mp3 = Util::trimExtensionForFile($filename) . ".mp3";
+        // Конвертируем файл.
+        $tmp_filename = escapeshellcmd($tmp_filename);
+        $n_filename   = escapeshellcmd($n_filename);
+        $soxPath      = Util::which('sox');
+        Util::mwExec("{$soxPath} -v 0.99 -G '{$tmp_filename}' -c 1 -r 8000 -b 16 '{$n_filename}'", $out);
+        $result_str = implode('', $out);
+
+        $lamePath = Util::which('lame');
+        Util::mwExec("{$lamePath} -b 32 --silent '{$n_filename}' '{$n_filename_mp3}'", $out);
+        $result_mp3 = implode('', $out);
+
+        // Чистим мусор.
+        unlink($tmp_filename);
+        if ($result_str !== '' && $result_mp3 !== '') {
+            // Ошибка выполнения конвертации.
+            $result['result']  = 'Error';
+            $result['message'] = $result_str;
+
+            return $result;
+        }
+
+        if ($filename !== $n_filename && $filename !== $n_filename_mp3) {
+            @unlink($filename);
+        }
+
+        $result['result'] = 'Success';
+        $result['data']   = $n_filename_mp3;
+
         return $result;
     }
 }

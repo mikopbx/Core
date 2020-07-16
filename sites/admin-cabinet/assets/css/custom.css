@@ -288,8 +288,10 @@ div#pbx-version {
     top: .68571429em;
 }
 
-.ui.large.form .ui.button, .ui.buttons .button, .ui.buttons{
-    font-size: 1.2rem
+.ui.large.form .ui.icon.button,
+.ui.large.form .ui.buttons .button,
+.ui.large.form .ui.buttons{
+    font-size: 1.2rem;
 }
 
 /* ширина колонки статуса пользователя */
@@ -350,4 +352,11 @@ th.firewall-category > div > span {
  */
 a.ui.button.pbx-extensions-settings {
     margin-top: -7px;
+}
+
+/**
+Sound player slider
+ */
+#play-slider{
+    margin-top: 10px;
 }
