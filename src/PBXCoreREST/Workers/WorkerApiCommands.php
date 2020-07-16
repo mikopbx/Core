@@ -17,7 +17,8 @@ use MikoPBX\Core\System\{BeanstalkClient,
     Storage,
     System,
     UploadAndConvertFiles,
-    Util};
+    Util
+};
 use MikoPBX\Core\Workers\Cron\WorkerSafeScriptsCore;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\Workers\WorkerMergeUploadedFile;
@@ -49,16 +50,16 @@ class WorkerApiCommands extends WorkerBase
 
         // Every module config class can process requests under root rights,
         // if it described in Config class
-        $additionalModules = $this->di->getShared('pbxConfModules');
-        $this->additionalProcessors=[];
+        $additionalModules          = $this->di->getShared('pbxConfModules');
+        $this->additionalProcessors = [];
         foreach ($additionalModules as $moduleConfigObject) {
-            if ($moduleConfigObject->moduleUniqueId!=='InternalConfigModule'
+            if ($moduleConfigObject->moduleUniqueId !== 'InternalConfigModule'
                 && method_exists($moduleConfigObject, 'moduleRestAPICallback')
             ) {
                 $this->additionalProcessors[] = [
                     $moduleConfigObject->moduleUniqueId,
                     $moduleConfigObject,
-                    'moduleRestAPICallback'
+                    'moduleRestAPICallback',
                 ];
             }
         }
@@ -109,17 +110,22 @@ class WorkerApiCommands extends WorkerBase
                     $answer = $this->modulesCallBack($request);
                     break;
                 default:
-                    $answer = "Unknown processor - {$processor}";
+                    $answer = [
+                        'result' => 'ERROR',
+                        'data'   => "Unknown processor - {$processor}",
+                    ];
             }
         } catch (\Exception $exception) {
             $answer = 'Exception on WorkerApiCommands - ' . $exception->getMessage();
         }
-         $message->reply(json_encode($answer));
+        $message->reply(json_encode($answer));
 
-        if (array_key_exists('needRestartWorkers', $answer)
-             && $answer['needRestartWorkers']){
-             WorkerSafeScriptsCore::restartAllWorkers();
-         }
+        if (is_array($answer)
+            && array_key_exists('needRestartWorkers', $answer)
+            && $answer['needRestartWorkers']
+        ) {
+            WorkerSafeScriptsCore::restartAllWorkers();
+        }
     }
 
     /**
@@ -207,7 +213,7 @@ class WorkerApiCommands extends WorkerBase
             'result' => 'ERROR',
         ];
 
-        switch ($action){
+        switch ($action) {
             case 'reboot':
                 $result['result'] = 'Success';
                 System::rebootSync();
@@ -217,7 +223,7 @@ class WorkerApiCommands extends WorkerBase
                 System::shutdown();
                 break;
             case 'mergeUploadedFile':
-                $result['result'] = 'Success';
+                $result['result']     = 'Success';
                 $phpPath              = Util::which('php');
                 $workerDownloaderPath = Util::getFilePathByClassName(WorkerMergeUploadedFile::class);
                 Util::mwExecBg("{$phpPath} -f {$workerDownloaderPath} '{$data['settings_file']}'");
@@ -288,29 +294,32 @@ class WorkerApiCommands extends WorkerBase
             case 'downloadNewModule':
                 $module = $request['data']['uniqid'];
                 System::moduleStartDownload(
-                        $module,
-                        $request['data']['url'],
-                        $request['data']['md5']
+                    $module,
+                    $request['data']['url'],
+                    $request['data']['md5']
                 );
-                $result['uniqid']   = $module;
-                $result['result']   = 'Success';
+                $result['uniqid'] = $module;
+                $result['result'] = 'Success';
                 break;
             case 'moduleDownloadStatus':
-                $module = $request['data']['uniqid'];
+                $module             = $request['data']['uniqid'];
                 $result             = System::moduleDownloadStatus($module);
                 $result['function'] = $action;
                 $result['result']   = 'Success';
                 break;
             case 'installNewModule':
                 $moduleMetadata = UploadAndConvertFiles::getMetadataFromModuleFile($request['data']['filePath']);
-                if ($moduleMetadata['result']==='Error'){
+                if ($moduleMetadata['result'] === 'Error') {
                     return $moduleMetadata;
                 } else {
-                    $result = PbxExtensionUtils::installModule($request['data']['filePath'], $moduleMetadata['data']['uniqid']);
+                    $result = PbxExtensionUtils::installModule(
+                        $request['data']['filePath'],
+                        $moduleMetadata['data']['uniqid']
+                    );
                 }
                 break;
             case 'enableModule':
-                $moduleUniqueID = $request['data']['uniqid'];
+                $moduleUniqueID       = $request['data']['uniqid'];
                 $moduleStateProcessor = new PbxExtensionState($moduleUniqueID);
                 if ($moduleStateProcessor->enableModule() === false) {
                     $result['messages'] = $moduleStateProcessor->getMessages();
@@ -320,7 +329,7 @@ class WorkerApiCommands extends WorkerBase
                 }
                 break;
             case 'disableModule':
-                $moduleUniqueID = $request['data']['uniqid'];
+                $moduleUniqueID       = $request['data']['uniqid'];
                 $moduleStateProcessor = new PbxExtensionState($moduleUniqueID);
                 if ($moduleStateProcessor->disableModule() === false) {
                     $result['messages'] = $moduleStateProcessor->getMessages();
@@ -330,13 +339,17 @@ class WorkerApiCommands extends WorkerBase
                 }
                 break;
             case 'uninstallModule':
-                $result = PbxExtensionUtils::uninstallModule($request['data']['uniqid'], $request['data']['keepSettings']);
+                $result = PbxExtensionUtils::uninstallModule(
+                    $request['data']['uniqid'],
+                    $request['data']['keepSettings']
+                );
                 break;
             default:
                 $result['message'] = 'API action not found in systemCallBack;';
         }
 
         $result['function'] = $action;
+
         return $result;
     }
 
@@ -381,6 +394,36 @@ class WorkerApiCommands extends WorkerBase
     }
 
     /**
+     * Upload files callback
+     *
+     * @param $request
+     *
+     * @return array
+     */
+    private function uploadCallBack($request): array
+    {
+        $action   = $request['action'];
+        $postData = $request['data'];
+        switch ($action) {
+            case 'uploadResumable':
+                $result = UploadAndConvertFiles::uploadResumable($postData);
+                break;
+            case 'status':
+                $result = UploadAndConvertFiles::statusUploadFile($request['data']);
+                break;
+            default:
+                $result = [
+                    'result'  => 'ERROR',
+                    'message' => 'API action not found in uploadCallBack;',
+                ];
+        }
+
+        $result['function'] = $action;
+
+        return $result;
+    }
+
+    /**
      * Обработка команд управления модулями.
      *
      * @param array $request
@@ -409,34 +452,6 @@ class WorkerApiCommands extends WorkerBase
 
         $result['function'] = $action;
 
-        return $result;
-    }
-
-    /**
-     * Upload files callback
-     * @param $request
-     *
-     * @return array
-     */
-    private function uploadCallBack($request) :array
-    {
-        $action = $request['action'];
-        $postData   = $request['data'];
-        switch ($action) {
-            case 'uploadResumable':
-                $result = UploadAndConvertFiles::uploadResumable($postData);
-                break;
-            case 'status':
-                $result = UploadAndConvertFiles::statusUploadFile($request['data']);
-              break;
-            default:
-                $result = [
-                    'result' => 'ERROR',
-                    'message'=>'API action not found in uploadCallBack;'
-                ];
-        }
-
-        $result['function'] = $action;
         return $result;
     }
 

@@ -230,6 +230,7 @@ class UploadAndConvertFiles
      */
     public static function  getMetadataFromModuleFile(string $filePath): array
     {
+        $result=[];
         $result['result'] = 'Error';
         if (file_exists($filePath)) {
             $sevenZaPath = Util::which('7za');
