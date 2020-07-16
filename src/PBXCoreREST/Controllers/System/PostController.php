@@ -105,12 +105,6 @@ class PostController extends BaseController
                     return;
                 }
                 break;
-            case 'uploadNewModule':
-                $data = $this->uploadNewModule();
-                if ($data === null) {
-                    return;
-                }
-                break;
             default:
                 $data = $this->request->getPost();
         }
@@ -146,52 +140,4 @@ class PostController extends BaseController
         return $data;
     }
 
-    /**
-     * Upload extension module, or download it from internet if only url was sent
-     * @return array|null
-     */
-    private function uploadNewModule():?array
-    {
-        if ($this->request->hasFiles() === 0) {
-            $data = $this->request->getPost();
-        } else {
-            $tempDir     = $this->config->path('core.tempPath');
-            $module_file = "{$tempDir}/" . time() . '.zip';
-            if ($this->request->hasFiles() > 0) {
-                foreach ($this->request->getUploadedFiles() as $file) {
-                    $extension = Util::getExtensionOfFile($file->getName());
-                    if ($extension !== 'zip') {
-                        continue;
-                    }
-                    $file->moveTo($module_file);
-                    break;
-                }
-            }
-            if (file_exists($module_file)) {
-                $cmd = 'f="' . $module_file . '"; p=`7za l $f | grep module.json`;if [ "$?" == "0" ]; then 7za -so e -y -r $f `echo $p |  awk -F" " \'{print $6}\'`; fi';
-                Util::mwExec($cmd, $out);
-                $settings = json_decode(implode("\n", $out), true);
-
-                $module_uniqid = $settings['module_uniqid'] ?? null;
-                if ( ! $module_uniqid) {
-                    $this->sendError(
-                        400,
-                        'The" module_uniqid " in the module file is not described.the json or file does not exist.'
-                    );
-                }
-                $data = [
-                    'md5'    => md5_file($module_file),
-                    'url'    => "file://{$module_file}",
-                    'l_file' => $module_file,
-                    'uniqid' => $module_uniqid,
-                ];
-            } else {
-                $this->sendError(500, 'Failed to upload file to server');
-
-                return null;
-            }
-        }
-
-        return $data;
-    }
 }

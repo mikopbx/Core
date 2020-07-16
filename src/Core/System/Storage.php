@@ -1021,8 +1021,9 @@ class Storage
 
         $imgCacheDir = appPath('sites/admin-cabinet/assets/img/cache');
         Util::createUpdateSymlink($this->config->path('adminApplication.cacheDir') . '/img', $imgCacheDir);
+
         Util::createUpdateSymlink($this->config->path('core.phpSessionPath'), '/var/lib/php/session');
-        Util::createUpdateSymlink($this->config->path('core.tempPath'), '/ultmp');
+        Util::createUpdateSymlink($this->config->path('core.uploadPath'), '/ultmp');
 
         $filePath = appPath('src/Core/Asterisk/Configs/lua/extensions.lua');
         Util::createUpdateSymlink($filePath, '/etc/asterisk/extensions.lua');
@@ -1038,7 +1039,7 @@ class Storage
             $newFilename = "{$agiBinDir}/{$fileInfo['filename']}.{$fileInfo['extension']}";
             Util::createUpdateSymlink($file, $newFilename);
         }
-
+        $this->clearCacheFiles();
         $this->applyFolderRights();
     }
 
@@ -1107,6 +1108,43 @@ class Storage
                 $storage_settings->writeAttribute($key, $value);
             }
             $storage_settings->save();
+        }
+    }
+
+    /**
+     * Clear cache folders from old and orphaned files
+     */
+    public function clearCacheFiles()
+    {
+        $cacheDirs = [];
+        $cacheDirs[] = $this->config->path('core.uploadPath');
+        $cacheDirs[] = $this->config->path('core.downloadCachePath');
+        $cacheDirs[] = $this->config->path('adminApplication.cacheDir').'/js';
+        $cacheDirs[] = $this->config->path('adminApplication.cacheDir').'/css';
+        $cacheDirs[] = $this->config->path('adminApplication.cacheDir').'/img';
+        $cacheDirs[] = $this->config->path('adminApplication.cacheDir').'/volt';
+        $rmPath = Util::which('rm');
+        foreach ($cacheDirs as $cacheDir){
+            if (!empty($cacheDir)){
+                Util::mwExec("{$rmPath} -rf {$cacheDir}/*");
+            }
+        }
+    }
+
+    /**
+     * Clear cache folders from PHP sessions files
+     */
+    public static function clearSessionsFiles()
+    {
+        $di     = Di::getDefault();
+        if ($di===null){
+            return;
+        }
+        $config = $di->getShared('config');
+        $phpSessionPath = $config->path('core.phpSessionPath');
+        if (!empty($phpSessionPath)){
+            $rmPath = Util::which('rm');
+            Util::mwExec("{$rmPath} -rf {$phpSessionPath}/*");
         }
     }
 

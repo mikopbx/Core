@@ -21,6 +21,7 @@ use MikoPBX\Core\System\{BeanstalkClient,
 use MikoPBX\Core\Workers\Cron\WorkerSafeScriptsCore;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\Workers\WorkerMergeUploadedFile;
+use MikoPBX\Modules\PbxExtensionUtils;
 use MikoPBX\Modules\Setup\PbxExtensionSetupFailure;
 use MikoPBX\Modules\PbxExtensionState;
 use Phalcon\Exception;
@@ -113,8 +114,12 @@ class WorkerApiCommands extends WorkerBase
         } catch (\Exception $exception) {
             $answer = 'Exception on WorkerApiCommands - ' . $exception->getMessage();
         }
-
          $message->reply(json_encode($answer));
+
+        if (array_key_exists('needRestartWorkers', $answer)
+             && $answer['needRestartWorkers']){
+             WorkerSafeScriptsCore::restartAllWorkers();
+         }
     }
 
     /**
@@ -263,11 +268,11 @@ class WorkerApiCommands extends WorkerBase
                 $result['result']   = 'Success';
                 $result['filename'] = Util::stopLog();
                 break;
-            case 'statusUpgrade':
-                $result = System::statusUpgrade();
+            case 'downloadNewFirmware':
+                $result = System::downloadNewFirmware($request['data']);
                 break;
-            case 'upgradeOnline':
-                $result = System::upgradeOnline($request['data']);
+            case 'firmwareDownloadStatus':
+                $result = System::firmwareDownloadStatus();
                 break;
             case 'upgrade':
                 $result = System::upgradeFromImg($data['temp_filename']);
@@ -280,25 +285,33 @@ class WorkerApiCommands extends WorkerBase
                 Util::mwExec("{$mvPath} {$data['temp_filename']} {$data['filename']}");
                 $result = UploadAndConvertFiles::convertAudioFile($data['filename']);
                 break;
-            case 'uploadNewModule':
+            case 'downloadNewModule':
                 $module = $request['data']['uniqid'];
                 System::moduleStartDownload(
-                    $module,
-                    $request['data']['url'],
-                    $request['data']['md5']
+                        $module,
+                        $request['data']['url'],
+                        $request['data']['md5']
                 );
                 $result['uniqid']   = $module;
                 $result['result']   = 'Success';
                 break;
-            case 'statusUploadingNewModule':
+            case 'moduleDownloadStatus':
                 $module = $request['data']['uniqid'];
                 $result             = System::moduleDownloadStatus($module);
                 $result['function'] = $action;
                 $result['result']   = 'Success';
                 break;
+            case 'installNewModule':
+                $moduleMetadata = UploadAndConvertFiles::getMetadataFromModuleFile($request['data']['filePath']);
+                if ($moduleMetadata['result']==='Error'){
+                    return $moduleMetadata;
+                } else {
+                    $result = PbxExtensionUtils::installModule($request['data']['filePath'], $moduleMetadata['data']['uniqid']);
+                }
+                break;
             case 'enableModule':
-                $module = $request['data']['uniqid'];
-                $moduleStateProcessor = new PbxExtensionState($module);
+                $moduleUniqueID = $request['data']['uniqid'];
+                $moduleStateProcessor = new PbxExtensionState($moduleUniqueID);
                 if ($moduleStateProcessor->enableModule() === false) {
                     $result['messages'] = $moduleStateProcessor->getMessages();
                 } else {
@@ -307,8 +320,8 @@ class WorkerApiCommands extends WorkerBase
                 }
                 break;
             case 'disableModule':
-                $module = $request['data']['uniqid'];
-                $moduleStateProcessor = new PbxExtensionState($module);
+                $moduleUniqueID = $request['data']['uniqid'];
+                $moduleStateProcessor = new PbxExtensionState($moduleUniqueID);
                 if ($moduleStateProcessor->disableModule() === false) {
                     $result['messages'] = $moduleStateProcessor->getMessages();
                 } else {
@@ -317,29 +330,7 @@ class WorkerApiCommands extends WorkerBase
                 }
                 break;
             case 'uninstallModule':
-                $module = $request['data']['uniqid'];
-                $moduleClass = "\\Modules\\{$module}\\Setup\\PbxExtensionSetup";
-                if (class_exists($moduleClass)
-                    && method_exists($moduleClass, 'uninstallModule')) {
-                    $setup = new $moduleClass($module);
-                } else {
-                    // Заглушка которая позволяет удалить модуль из базы данных, которого нет на диске
-                    $moduleClass = PbxExtensionSetupFailure::class;
-                    $setup       = new $moduleClass($module);
-                }
-                $prams = json_decode($request['input'], true);
-                if (is_array($prams) && array_key_exists('keepSettings', $prams)) {
-                    $keepSettings = $prams['keepSettings'] === 'true';
-                } else {
-                    $keepSettings = false;
-                }
-                if ($setup->uninstallModule($keepSettings)) {
-                    $result['result'] = 'Success';
-                } else {
-                    $result['result'] = 'Error';
-                    $result['data']   = implode('<br>', $setup->getMessages());
-                }
-                WorkerSafeScriptsCore::restartAllWorkers();
+                $result = PbxExtensionUtils::uninstallModule($request['data']['uniqid'], $request['data']['keepSettings']);
                 break;
             default:
                 $result['message'] = 'API action not found in systemCallBack;';

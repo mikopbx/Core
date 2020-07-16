@@ -31,7 +31,7 @@ const upgradeStatusLoopWorker = {
 	},
 	worker() {
 		window.clearTimeout(upgradeStatusLoopWorker.timeoutHandle);
-		PbxApi.SystemGetModuleInstallStatus(
+		PbxApi.SystemModuleDownloadStatus(
 			upgradeStatusLoopWorker.moduleUniqid,
 			upgradeStatusLoopWorker.cbRefreshModuleStatus,
 			upgradeStatusLoopWorker.restartWorker,
@@ -41,20 +41,6 @@ const upgradeStatusLoopWorker = {
 		upgradeStatusLoopWorker.iterations += 1;
 		upgradeStatusLoopWorker.timeoutHandle =
 			window.setTimeout(upgradeStatusLoopWorker.worker, upgradeStatusLoopWorker.timeOut);
-		// Check installation status
-		if (response !== false && response.i_status === true) {
-			$('a.button').removeClass('disabled');
-			if (upgradeStatusLoopWorker.needEnableAfterInstall) {
-				PbxApi.SystemEnableModule(
-					upgradeStatusLoopWorker.moduleUniqid,
-					() => { extensionModules.reloadModuleAndPage(upgradeStatusLoopWorker.moduleUniqid); },
-				);
-			} else {
-				window.location = `${globalRootUrl}pbx-extension-modules/index/`;
-			}
-			// window.clearTimeout(upgradeStatusLoopWorker.timeoutHandle);
-		}
-
 		// Check download status
 		if (response === false
 			&& upgradeStatusLoopWorker.iterations < 50) {
@@ -70,13 +56,34 @@ const upgradeStatusLoopWorker = {
 			$(`#${upgradeStatusLoopWorker.moduleUniqid}`).find('i').removeClass('loading');
 			$('.new-module-row').find('i').addClass('download').removeClass('redo');
 			$('a.button').removeClass('disabled');
-		} else if (response.d_status === 'DOWNLOAD_IN_PROGRESS'
-			|| response.d_status === 'DOWNLOAD_COMPLETE') {
+		} else if (response.d_status === 'DOWNLOAD_IN_PROGRESS') {
 			if (upgradeStatusLoopWorker.oldPercent !== response.d_status_progress) {
 				upgradeStatusLoopWorker.iterations = 0;
 			}
 			$('i.loading.redo').closest('a').find('.percent').text(`${response.d_status_progress}%`);
 			upgradeStatusLoopWorker.oldPercent = response.d_status_progress;
+		} else if (response.d_status === 'DOWNLOAD_COMPLETE') {
+			PbxApi.SystemInstallModule(response.filePath, upgradeStatusLoopWorker.cbAfterModuleInstall);
+			window.clearTimeout(upgradeStatusLoopWorker.timeoutHandle);
 		}
+	},
+	cbAfterModuleInstall(response) {
+		if (response.length === 0 || response === false) {
+			UserMessage.showError(globalTranslate.ext_InstallationError);
+		} else {
+			// Check installation status
+			$('a.button').removeClass('disabled');
+			if (upgradeStatusLoopWorker.needEnableAfterInstall) {
+				PbxApi.SystemEnableModule(
+					upgradeStatusLoopWorker.moduleUniqid,
+					() => {
+						extensionModules.reloadModuleAndPage(upgradeStatusLoopWorker.moduleUniqid);
+					},
+				);
+			} else {
+				window.location = `${globalRootUrl}pbx-extension-modules/index/`;
+			}
+		}
+
 	},
 };

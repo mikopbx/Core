@@ -43,7 +43,7 @@ abstract class PbxExtensionSetupBase implements PbxExtensionSetupInterface
      *
      * @var string
      */
-    protected string $module_uniqid;
+    protected string $moduleUniqueID;
     /**
      * Module version from module.json
      *
@@ -114,14 +114,14 @@ abstract class PbxExtensionSetupBase implements PbxExtensionSetupInterface
     /**
      * PbxExtensionBase constructor.
      *
-     * @param $module_uniqid
+     * @param $moduleUniqueID
      *
      * @throws \Phalcon\Exception
      */
-    public function __construct($module_uniqid = null)
+    public function __construct($moduleUniqueID = null)
     {
-        if ($module_uniqid !== null) {
-            $this->module_uniqid = $module_uniqid;
+        if ($moduleUniqueID !== null) {
+            $this->moduleUniqueID = $moduleUniqueID;
         }
         $this->di      = DI::getDefault();
         if ($this->di === null){
@@ -130,7 +130,7 @@ abstract class PbxExtensionSetupBase implements PbxExtensionSetupInterface
         $this->db      = $this->di->getShared('db');
         $this->config  = $this->di->getShared('config');
         $this->license =  $this->di->getShared('license');
-        $this->moduleDir = $this->config->path('core.modulesDir') . '/' . $this->module_uniqid;
+        $this->moduleDir = $this->config->path('core.modulesDir') . '/' . $this->moduleUniqueID;
         $settings_file = "{$this->moduleDir}/module.json";
         if (file_exists($settings_file)) {
             $module_settings = json_decode(file_get_contents($settings_file), true);
@@ -213,7 +213,7 @@ abstract class PbxExtensionSetupBase implements PbxExtensionSetupInterface
         // IMG
         $moduleImageDir      = "{$this->moduleDir}/public/assets/img";
         $imgCacheDir = appPath('sites/admin-cabinet/assets/img/cache');
-        $moduleImageCacheDir = "{$imgCacheDir}/{$this->module_uniqid}";
+        $moduleImageCacheDir = "{$imgCacheDir}/{$this->moduleUniqueID}";
         if (file_exists($moduleImageCacheDir)){
             unlink($moduleImageCacheDir);
         }
@@ -223,7 +223,7 @@ abstract class PbxExtensionSetupBase implements PbxExtensionSetupInterface
         // CSS
         $moduleCSSDir      = "{$this->moduleDir}/public/assets/css";
         $cssCacheDir = appPath('sites/admin-cabinet/assets/css/cache');
-        $moduleCSSCacheDir = "{$cssCacheDir}/{$this->module_uniqid}";
+        $moduleCSSCacheDir = "{$cssCacheDir}/{$this->moduleUniqueID}";
         if (file_exists($moduleCSSCacheDir)){
             unlink($moduleCSSCacheDir);
         }
@@ -233,7 +233,7 @@ abstract class PbxExtensionSetupBase implements PbxExtensionSetupInterface
         // JS
         $moduleJSDir      = "{$this->moduleDir}/public/assets/js";
         $jsCacheDir = appPath('sites/admin-cabinet/assets/js/cache');
-        $moduleJSCacheDir = "{$jsCacheDir}/{$this->module_uniqid}";
+        $moduleJSCacheDir = "{$jsCacheDir}/{$this->moduleUniqueID}";
         if (file_exists($moduleJSCacheDir)){
             unlink($moduleJSCacheDir);
         }
@@ -251,7 +251,7 @@ abstract class PbxExtensionSetupBase implements PbxExtensionSetupInterface
         }
 
         // Restore Database settings
-        $backupPath = "{$modulesDir}/Backup/{$this->module_uniqid}";
+        $backupPath = "{$modulesDir}/Backup/{$this->moduleUniqueID}";
         if (is_dir($backupPath)) {
             $cpPath = Util::which('cp');
             Util::mwExec("{$cpPath} -r {$backupPath}/db/* {$this->moduleDir}/db/");
@@ -341,7 +341,7 @@ abstract class PbxExtensionSetupBase implements PbxExtensionSetupInterface
     public function unregisterModule(): bool
     {
         $result = true;
-        $module = PbxExtensionModules::findFirstByUniqid($this->module_uniqid);
+        $module = PbxExtensionModules::findFirstByUniqid($this->moduleUniqueID);
         if ($module) {
             $result = $result && $module->delete();
         }
@@ -363,7 +363,7 @@ abstract class PbxExtensionSetupBase implements PbxExtensionSetupInterface
         $cpPath = Util::which('cp');
         $rmPath = Util::which('rm');
         $modulesDir          = $this->config->path('core.modulesDir');
-        $backupPath = "{$modulesDir}/Backup/{$this->module_uniqid}";
+        $backupPath = "{$modulesDir}/Backup/{$this->moduleUniqueID}";
         Util::mwExec("{$rmPath} -rf {$backupPath}");
         if ($keepSettings) {
             Util::mwMkdir($backupPath);
@@ -374,21 +374,21 @@ abstract class PbxExtensionSetupBase implements PbxExtensionSetupInterface
         // Remove assets
         // IMG
         $imgCacheDir = appPath('sites/admin-cabinet/assets/img/cache');
-        $moduleImageCacheDir = "{$imgCacheDir}/{$this->module_uniqid}";
+        $moduleImageCacheDir = "{$imgCacheDir}/{$this->moduleUniqueID}";
         if (file_exists($moduleImageCacheDir)){
             unlink($moduleImageCacheDir);
         }
 
         // CSS
         $cssCacheDir = appPath('sites/admin-cabinet/assets/css/cache');
-        $moduleCSSCacheDir = "{$cssCacheDir}/{$this->module_uniqid}";
+        $moduleCSSCacheDir = "{$cssCacheDir}/{$this->moduleUniqueID}";
         if (file_exists($moduleCSSCacheDir)){
             unlink($moduleCSSCacheDir);
         }
 
         // JS
         $jsCacheDir = appPath('sites/admin-cabinet/assets/js/cache');
-        $moduleJSCacheDir = "{$jsCacheDir}/{$this->module_uniqid}";
+        $moduleJSCacheDir = "{$jsCacheDir}/{$this->moduleUniqueID}";
         if (file_exists($moduleJSCacheDir)){
             unlink($moduleJSCacheDir);
         }
@@ -422,16 +422,16 @@ abstract class PbxExtensionSetupBase implements PbxExtensionSetupInterface
             return false;
         }
 
-        $module = PbxExtensionModules::findFirstByUniqid($this->module_uniqid);
+        $module = PbxExtensionModules::findFirstByUniqid($this->moduleUniqueID);
         if ( ! $module) {
             $module           = new PbxExtensionModules();
-            $module->name     = $this->locString("Breadcrumb{$this->module_uniqid}");
+            $module->name     = $this->locString("Breadcrumb{$this->moduleUniqueID}");
             $module->disabled = '1';
         }
-        $module->uniqid        = $this->module_uniqid;
+        $module->uniqid        = $this->moduleUniqueID;
         $module->developer     = $this->developer;
         $module->version       = $this->version;
-        $module->description   = $this->locString("SubHeader{$this->module_uniqid}");
+        $module->description   = $this->locString("SubHeader{$this->moduleUniqueID}");
         $module->support_email = $this->support_email;
 
         return $module->save();
@@ -496,7 +496,7 @@ abstract class PbxExtensionSetupBase implements PbxExtensionSetupInterface
         $dbUpgrade = new UpdateDatabase();
         foreach ($results as $file) {
             $className        = pathinfo($file)['filename'];
-            $moduleModelClass = "\\Modules\\{$this->module_uniqid}\\Models\\{$className}";
+            $moduleModelClass = "\\Modules\\{$this->moduleUniqueID}\\Models\\{$className}";
             $upgradeResult = $dbUpgrade->createUpdateDbTableByAnnotations($moduleModelClass);
             if (!$upgradeResult){
                 return false;
@@ -517,19 +517,19 @@ abstract class PbxExtensionSetupBase implements PbxExtensionSetupInterface
      */
     public function addToSidebar(): bool
     {
-        $menuSettingsKey           = "AdditionalMenuItem{$this->module_uniqid}";
-        $unCamelizedControllerName = Text::uncamelize($this->module_uniqid, '-');
+        $menuSettingsKey           = "AdditionalMenuItem{$this->moduleUniqueID}";
+        $unCamelizedControllerName = Text::uncamelize($this->moduleUniqueID, '-');
         $menuSettings              = PbxSettings::findFirstByKey($menuSettingsKey);
         if ($menuSettings === null) {
             $menuSettings      = new PbxSettings();
             $menuSettings->key = $menuSettingsKey;
         }
         $value               = [
-            'uniqid'        => $this->module_uniqid,
+            'uniqid'        => $this->moduleUniqueID,
             'href'          => "/admin-cabinet/$unCamelizedControllerName",
             'group'         => 'maintenance',
             'iconClass'     => 'puzzle',
-            'caption'       => "Breadcrumb$this->module_uniqid",
+            'caption'       => "Breadcrumb$this->moduleUniqueID",
             'showAtSidebar' => true,
         ];
         $menuSettings->value = json_encode($value);

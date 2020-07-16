@@ -51,7 +51,7 @@ class ModulesDBConnectionsProvider extends DatabaseProviderBase implements Servi
             if ( ! is_array($jsonModuleDescription)) {
                 continue;
             }
-            $moduleUniqueId = $jsonModuleDescription['module_uniqid'];
+            $moduleUniqueId = $jsonModuleDescription['moduleUniqueID'];
             if ( ! isset($moduleUniqueId)) {
                 continue;
             }

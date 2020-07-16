@@ -21,6 +21,7 @@ use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\PBX;
+use MikoPBX\Core\System\Storage;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di;
 
@@ -61,12 +62,12 @@ class UpdateSystemConfig
         $previous_version = str_ireplace('-dev', '', $this->mikoPBXConfig->getGeneralSettings('PBXVersion'));
         $current_version  = str_ireplace('-dev', '', trim(file_get_contents('/etc/version')));
         if ($previous_version !== $current_version) {
+
             if (version_compare($previous_version, '1.0.0', '<=')) {
                 $this->fillInitialSettings();
                 $previous_version = '1.0.1';
                 Util::echoWithSyslog(' - UpdateConfigs: Upgrade applications up tp '.$previous_version.' ');
                 Util::echoGreenDone();
-
             }
 
             if (version_compare($previous_version, '6.2.110', '<')) {
@@ -100,6 +101,7 @@ class UpdateSystemConfig
             //...add here new updates //
 
             $this->mikoPBXConfig->setGeneralSettings('PBXVersion', trim(file_get_contents('/etc/version')));
+            Storage::clearSessionsFiles();
         }
 
         return true;

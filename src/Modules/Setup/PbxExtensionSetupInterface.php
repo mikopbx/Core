@@ -9,11 +9,11 @@ interface PbxExtensionSetupInterface
     /**
      * PbxExtensionBase constructor.
      *
-     * @param $module_uniqid
+     * @param $moduleUniqueID
      *
      * @throws \Phalcon\Exception
      */
-    public function __construct($module_uniqid = null);
+    public function __construct($moduleUniqueID = null);
 
     /**
      * Последовательный вызов процедур установки модуля расширения
