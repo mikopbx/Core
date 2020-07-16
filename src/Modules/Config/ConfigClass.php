@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 6 2020
+ * Written by Alexey Portnov, 7 2020
  */
 
 namespace MikoPBX\Modules\Config;
@@ -14,6 +14,12 @@ use ReflectionClass as ReflectionClassAlias;
 
 abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInterface, RestAPIConfigInterface
 {
+
+    /**
+     * ID Config class
+     */
+    public const ID_CONFIG_CLASS =  'InternalConfigModule';
+
     /**
      * Dependency injections
      */
@@ -72,7 +78,7 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
         $this->booting       = $this->di->getRegistry()->booting===true;
         $this->mikoPBXConfig = new MikoPBXConfig();
         $this->generalSettings = $this->mikoPBXConfig->getGeneralSettings();
-        $this->moduleUniqueId = 'InternalConfigModule';
+        $this->moduleUniqueId = ConfigClass::ID_CONFIG_CLASS;
         // Get child class parameters and define module Dir and UniqueID
         $reflector = new ReflectionClassAlias(static::class);
         $partsOfNameSpace = explode('\\', $reflector->getNamespaceName());
@@ -112,13 +118,13 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
         if (empty($addition)){
             return $result;
         }
-        if (!empty($this->moduleUniqueId)){
-            $result ='; ***** BEGIN BY '.$this->moduleUniqueId.PHP_EOL." *****\t";
+        if (!empty($this->moduleUniqueId) && ConfigClass::ID_CONFIG_CLASS !== $this->moduleUniqueId){
+            $result =PHP_EOL.'; ***** BEGIN BY '.$this->moduleUniqueId.PHP_EOL;
             $result .= $addition;
             if (substr($addition, -1)!=="\t"){
                 $result .="\t";
             }
-            $result .='; ***** END BY '.$this->moduleUniqueId.PHP_EOL." *****\t";
+            $result .=PHP_EOL.'; ***** END BY '.$this->moduleUniqueId.PHP_EOL;
         } else {
             $result .= $addition;
         }

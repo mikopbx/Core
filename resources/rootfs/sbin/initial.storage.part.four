@@ -34,7 +34,7 @@ if [ "$count" != "3" ];then
 fi;
 
 # Добавим 4ый раздел.
-/usr/sbin/parted --script --align optimal "${dev}" 'mkpart primary ext4 600MiB 100%';
+/sbin/parted --script --align optimal "${dev}" 'mkpart primary ext4 600MiB 100%';
 resultParted=$?;
 echo " - parted return ${resultParted}...";
 
@@ -83,7 +83,7 @@ if [ "$resultParted" = "0" ];then
             umount "$tmp_dir";
         fi;
     else
-        /etc/rc/shell_functions.sh killprocesses "$tmp_dir" -TERM 0;
+        /sbin/shell_functions.sh killprocesses "$tmp_dir" -TERM 0;
         umount "$tmp_dir";
     fi;
 

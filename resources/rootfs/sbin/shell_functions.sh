@@ -1,6 +1,6 @@
 #!/bin/sh
 # Пример вызова метода библиотеки:
-# /etc/rc/shell_functions.sh 'killprocesses' '/storage/usbdisk1' -TERM 3
+# /sbin/shell_functions.sh 'killprocesses' '/storage/usbdisk1' -TERM 3
 # $1 - имя метода
 # $2 ... $4 - параметры метода
 

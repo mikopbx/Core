@@ -3,8 +3,8 @@
 PATH=/sbin:/bin
 export PATH
 
-if [ -f /etc/rc/shell_functions.sh ]; then
-. /etc/rc/shell_functions.sh;
+if [ -f /sbin/shell_functions.sh ]; then
+. /sbin/shell_functions.sh;
 fi
 
 storage='/storage/usbdisk1';
