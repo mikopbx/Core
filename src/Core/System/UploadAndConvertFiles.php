@@ -1,10 +1,9 @@
 <?php
 /**
- * Copyright (C) MIKO LLC - All Rights Reserved
+ * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 7 2020
- *
+ * Written by Alexey Portnov, 7 2020
  */
 
 namespace MikoPBX\Core\System;
@@ -104,7 +103,7 @@ class UploadAndConvertFiles
                 file_put_contents($temp_dir . '/progress', '100');
 
                 Util::mwExecBg(
-                    '/etc/rc/shell_functions.sh killprocesses ' . $temp_dir . ' -TERM 0;rm -rf ' . $temp_dir,
+                    '/sbin/shell_functions.sh killprocesses ' . $temp_dir . ' -TERM 0;rm -rf ' . $temp_dir,
                     '/dev/null',
                     120
                 );

@@ -344,7 +344,7 @@ class Storage
         $umountPath = Util::which('umount');
         $rmPath = Util::which('rm');
         if (self::isStorageDiskMounted($dir)) {
-            Util::mwExec("/etc/rc/shell_functions.sh 'killprocesses' '$dir' -TERM 0");
+            Util::mwExec("/sbin/shell_functions.sh 'killprocesses' '$dir' -TERM 0");
             Util::mwExec("{$umountPath} {$dir}");
         }
         $result = ! self::isStorageDiskMounted($dir);

@@ -4,8 +4,8 @@ PATH=/sbin:/bin
 export PATH
 
 # Подключаем библиотеку функций.
-if [ -f /etc/rc/shell_functions.sh ]; then
-. /etc/rc/shell_functions.sh;
+if [ -f /sbin/shell_functions.sh ]; then
+. /sbin/shell_functions.sh;
 fi
 
 /bin/touch /tmp/freeoffload;

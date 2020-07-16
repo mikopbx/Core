@@ -95,7 +95,7 @@ if (strtolower(trim(fgets($fp)) ) === 'y') {
     Util::mwExec("{$mountPath} | {$grepPath} '^/dev/{$target_disk}' | {$busyboxPath} {$awkPath} '{print $3}'",$mnt_dirs);
     foreach ($mnt_dirs as $mnt){
         // Завершаем все связанные процессы.
-        Util::mwExec("/etc/rc/shell_functions.sh killprocesses '$mnt' -TERM 0;");
+        Util::mwExec("/sbin/shell_functions.sh killprocesses '$mnt' -TERM 0;");
         // Отмонтируем.
         Util::mwExec("{$umountPath} {$mnt}");
     }
