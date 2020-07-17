@@ -69,7 +69,7 @@ const upgradeStatusLoopWorker = {
 	},
 	cbAfterModuleInstall(response) {
 		if (response.length === 0 || response === false) {
-			UserMessage.showError(globalTranslate.ext_InstallationError);
+			UserMessage.showError(response,globalTranslate.ext_InstallationError);
 		} else {
 			// Check installation status
 			$('a.button').removeClass('disabled');

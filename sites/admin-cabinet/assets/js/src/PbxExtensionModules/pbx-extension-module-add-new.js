@@ -15,23 +15,24 @@ const addNewExtension = {
 	uploadInProgress: false,
 	initialize() {
 		addNewExtension.$progressBar.hide();
-		addNewExtension.$uploadButton.on('click', (e) => {
-			e.preventDefault();
-			if (
-				addNewExtension.$uploadButton.hasClass('loading')
-				|| addNewExtension.uploadInProgress
-			) { return; }
-			$('input:file', $(e.target).parents()).click();
-		});
-
-		$('input:file').on('change', (e) => {
-			if (e.target.files[0] !== undefined) {
-				const filename = e.target.files[0].name;
-				$('input:text', $(e.target).parent()).val(filename);
-				const data = $('input:file')[0].files[0];
-				PbxApi.SystemUploadFile(data, addNewExtension.cbResumableUploadFile);
-			}
-		});
+		PbxApi.SystemUploadFileAttachToBtn('add-new-button',['zip'], addNewExtension.cbResumableUploadFile);
+		// addNewExtension.$uploadButton.on('click', (e) => {
+		// 	e.preventDefault();
+		// 	if (
+		// 		addNewExtension.$uploadButton.hasClass('loading')
+		// 		|| addNewExtension.uploadInProgress
+		// 	) { return; }
+		// 	$('input:file', $(e.target).parents()).click();
+		// });
+		//
+		// $('input:file').on('change', (e) => {
+		// 	if (e.target.files[0] !== undefined) {
+		// 		const filename = e.target.files[0].name;
+		// 		$('input:text', $(e.target).parent()).val(filename);
+		// 		const data = $('input:file')[0].files[0];
+		// 		PbxApi.SystemUploadFile(data, addNewExtension.cbResumableUploadFile);
+		// 	}
+		// });
 	},
 	/**
 	 * Upload file by chunks
@@ -130,7 +131,7 @@ const mergingCheckWorker = {
 	cbAfterResponse(response) {
 		if (mergingCheckWorker.errorCounts > 10) {
 			mergingCheckWorker.$progressBarLabel.text(globalTranslate.ext_UploadError);
-			UserMessage.showError(globalTranslate.ext_UploadError);
+			UserMessage.showError(response, globalTranslate.ext_UploadError);
 			addNewExtension.$uploadButton.removeClass('loading');
 			window.clearTimeout(mergingCheckWorker.timeoutHandle);
 		}
@@ -153,7 +154,8 @@ const mergingCheckWorker = {
 		if (response===true){
 			window.location.reload();
 		} else {
-			UserMessage.showError(globalTranslate.ext_InstallationError);
+			UserMessage.showError(response,globalTranslate.ext_InstallationError);
+			addNewExtension.$uploadButton.removeClass('loading');
 		}
 	},
 };

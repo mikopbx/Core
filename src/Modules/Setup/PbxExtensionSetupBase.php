@@ -417,7 +417,7 @@ abstract class PbxExtensionSetupBase implements PbxExtensionSetupInterface
         $currentVersionPBX = PbxSettings::getValueByKey('PBXVersion');
         $currentVersionPBX = str_replace('-dev', '', $currentVersionPBX);
         if (version_compare($currentVersionPBX, $this->min_pbx_version) < 0) {
-            $this->messages[] = "Error: module depends minimum PBX ver $this->min_pbx_version";
+            $this->messages[] = "Module depends minimum PBX ver $this->min_pbx_version";
 
             return false;
         }

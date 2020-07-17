@@ -19,7 +19,7 @@
         <div class="ui red approve button">{{ t._('ext_Delete') }}</div>
     </div>
 </div>
-{{ link_to("#", '<i class="upload icon"></i>  '~t._('ext_AddNewExtension'), "class": "ui blue button add-new", "id":"add-new-button") }}
+<button class="ui blue button add-new" id="add-new-button"><i class="upload icon"></i>  {{ t._('ext_AddNewExtension') }} </button>
 <a href="https://github.com/mikopbx/ModuleTemplate" target="_blank" class="ui basic button add-new"><i class="plus icon"></i> {{ t._('ext_CreateNewExtension') }}</a>
 
 <div>

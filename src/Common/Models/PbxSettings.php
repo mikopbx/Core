@@ -95,7 +95,7 @@ class PbxSettings extends ModelsBase
             'MailTplVoicemailSubject'         => 'VoiceMail from PBX',
             'MailTplVoicemailBody'            => 'See attach',
             'VoicemailNotificationsEmail'     => 'admin@mycompany.com',
-            'PBXLanguage'                     => 'en-en',
+            'PBXLanguage'                     => 'en',
             'PBXInternalExtensionLength'      => '3',// Длина внутреннего номера
             'PBXRecordCalls'                  => '1',
             'PBXCallParkingExt'               => '800',
