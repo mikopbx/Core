@@ -8,7 +8,6 @@
 
 namespace MikoPBX\Core\System\Upgrade;
 
-
 use MikoPBX\Common\Models\AsteriskManagerUsers;
 use MikoPBX\Common\Models\Codecs;
 use MikoPBX\Common\Models\DialplanApplications;
@@ -350,6 +349,22 @@ class UpdateSystemConfig
         foreach ($soundFiles as $sound_file) {
             $sound_file->category = SoundFiles::CATEGORY_CUSTOM;
             $sound_file->update();
+        }
+
+        // Clean AstDB
+        $astDbPath = $this->config->path('astDatabase.dbfile');
+        if(file_exists($astDbPath)){
+            $table = 'astdb';
+            $sql = 'DELETE FROM '.$table.' WHERE key LIKE "/DND/SIP%" OR key LIKE "/CF/SIP%" OR key LIKE "/UserBuddyStatus/SIP%"';
+            $db = new \SQLite3($astDbPath);
+            try {
+                $db->exec($sql);
+            } catch (Exception $e) {
+                Util::sysLogMsg(__CLASS__, 'Can clean astdb from UserBuddyStatus...');
+                sleep(2);
+            }
+            $db->close();
+            unset($db);
         }
 
         // Add moh files to db and copy them to storage
