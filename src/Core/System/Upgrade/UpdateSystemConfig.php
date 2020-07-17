@@ -361,7 +361,7 @@ class UpdateSystemConfig
             $db = new \SQLite3($astDbPath);
             try {
                 $db->exec($sql);
-            } catch (Exception $e) {
+            } catch (\Exception $e) {
                 Util::sysLogMsg(__CLASS__, 'Can clean astdb from UserBuddyStatus...');
                 sleep(2);
             }
