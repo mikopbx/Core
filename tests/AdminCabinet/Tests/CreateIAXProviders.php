@@ -84,8 +84,6 @@ class CreateIAXProviders extends MikoPBXTestsBaseAlias
             'codecs'     =>[
                 'alaw'=>false,
                 'ulaw'=>true,
-                'g729'=>false,
-                'g723.1'=>true,
                 'g726'=>false,
                 'gsm'=>true,
                 'adpcm'=>false,

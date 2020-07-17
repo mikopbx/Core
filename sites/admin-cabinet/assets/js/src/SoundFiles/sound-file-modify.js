@@ -165,7 +165,22 @@ const soundFileModify = {
 	initialize() {
 		soundFileModify.$dropDowns.dropdown();
 		soundFileModify.initializeForm();
-		PbxApi.SystemUploadFileAttachToBtn('upload-sound-file',['mp3','wav'], soundFileModify.cbUploadResumable);
+
+		soundFileModify.$soundUploadButton.on('click', (e) => {
+			e.preventDefault();
+			$('input:file', $(e.target).parents()).click();
+		});
+
+		soundFileModify.$soundFileInput.on('change', (e) => {
+			const file = e.target.files[0];
+			if (file === undefined) return;
+			soundFileModify.$soundFileName.val(file.name.replace(/\.[^/.]+$/, ''));
+			soundFileModify.blob = window.URL || window.webkitURL;
+			const fileURL = soundFileModify.blob.createObjectURL(file);
+			sndPlayer.UpdateSource(fileURL);
+			PbxApi.SystemUploadFile(file, soundFileModify.cbUploadResumable);
+
+		});
 
 		if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
 			$('#only-https-field').addClass('disabled');

@@ -108,8 +108,6 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
             'codecs'     =>[
                 'alaw'=>true,
                 'ulaw'=>false,
-                'g729'=>true,
-                'g723.1'=>false,
                 'g726'=>true,
                 'gsm'=>false,
                 'adpcm'=>true,
@@ -144,8 +142,6 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
             'codecs'     =>[
                 'alaw'=>false,
                 'ulaw'=>true,
-                'g729'=>false,
-                'g723.1'=>true,
                 'g726'=>false,
                 'gsm'=>true,
                 'adpcm'=>false,
