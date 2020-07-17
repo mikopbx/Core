@@ -107,7 +107,7 @@ class ModulesConf extends ConfigClass
             'res_parking.so',
             // 'app_authenticate.so',          
             //'app_page.so',                               
-            'app_queue.so',
+            'pbx_lua.so',
             'app_senddtmf.so',
             'app_userevent.so',
             'app_chanspy.so',
@@ -121,9 +121,9 @@ class ModulesConf extends ConfigClass
             // 'bridge_softmix.so',
             // 'chan_bridge_media.so',
             'app_mp3.so',
-            'pbx_lua.so',
             'app_stack.so',
             'func_dialplan.so',
+            'app_queue.so',
         ];
 
         if (file_exists('/offload/asterisk/modules/res_pjproject.so')) {
