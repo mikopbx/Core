@@ -30,13 +30,14 @@ const PbxApi = {
 	systemStopLogsCapture: `${Config.pbxUrl}/pbxcore/api/system/stopLog`,
 	systemGetExternalIP: `${Config.pbxUrl}/pbxcore/api/system/getExternalIpInfo`,
 	systemUpgrade: `${Config.pbxUrl}/pbxcore/api/system/upgrade`, // Обновление АТС файлом
-	systemUpgradeOnline: `${Config.pbxUrl}/pbxcore/api/system/upgradeOnline`, // Обновление АТС онлайн
-	systemGetUpgradeStatus: `${Config.pbxUrl}/pbxcore/api/system/statusUpgrade`, // Получение статуса обновления
-	systemInstallModule: `${Config.pbxUrl}/pbxcore/api/system/uploadNewModule`,
+	systemDownloadNewFirmware: `${Config.pbxUrl}/pbxcore/api/system/downloadNewFirmware`, // Обновление АТС онлайн
+	systemGetFirmwareDownloadStatus: `${Config.pbxUrl}/pbxcore/api/system/firmwareDownloadStatus`, // Получение статуса обновления
+	systemDownloadNewModule: `${Config.pbxUrl}/pbxcore/api/system/downloadNewModule`,
+	systemInstallModule: `${Config.pbxUrl}/pbxcore/api/system/installNewModule`,
 	systemDeleteModule: `${Config.pbxUrl}/pbxcore/api/system/uninstallModule`,
 	systemDisableModule: `${Config.pbxUrl}/pbxcore/api/system/disableModule`,
 	systemEnableModule: `${Config.pbxUrl}/pbxcore/api/system/enableModule`,
-	systemInstallStatusModule: `${Config.pbxUrl}/pbxcore/api/system/statusUploadingNewModule`,
+	systemModuleDownloadStatus: `${Config.pbxUrl}/pbxcore/api/system/moduleDownloadStatus`,
 	systemUploadFile: `${Config.pbxUrl}/pbxcore/api/upload/uploadResumable`, // curl -F "file=@ModuleTemplate.zip" http://127.0.0.1/pbxcore/api/upload/uploadResumable
 	systemStatusUploadFile: `${Config.pbxUrl}/pbxcore/api/upload/status`, // curl -X POST -d '{"id": "1531474060"}' http://127.0.0.1/pbxcore/api/upload/status;
 	/**
@@ -482,14 +483,41 @@ const PbxApi = {
 			on: 'now',
 		});
 	},
+
+	/**
+	 * Install uploaded module
+	 * @param filePath
+	 * @param callback - функция колбека
+	 */
+	SystemInstallModule(filePath, callback) {
+		$.api({
+			url: PbxApi.systemInstallModule,
+			on: 'now',
+			method: 'POST',
+			data: {
+				filePath
+			},
+			successTest: PbxApi.successTest,
+			onSuccess() {
+				callback(true);
+			},
+			onFailure(response) {
+				callback(response.data);
+			},
+			onError(response) {
+				callback(response.data);
+			},
+		});
+	},
+
 	/**
 	 * Upload module as json with link by POST request
 	 * @param params
 	 * @param callback - функция колбека
 	 */
-	SystemInstallModule(params, callback) {
+	SystemDownloadNewModule(params, callback) {
 		$.api({
-			url: PbxApi.systemInstallModule,
+			url: PbxApi.systemDownloadNewModule,
 			on: 'now',
 			method: 'POST',
 			data: {
@@ -510,51 +538,7 @@ const PbxApi = {
 			},
 		});
 	},
-	/**
-	 * Upload module as file by POST request
-	 * @param file - Тело загружаемого файла
-	 * @param callback - функция колбека
-	 */
-	SystemUploadModule(file, callback) {
-		$.api({
-			on: 'now',
-			url: PbxApi.systemInstallModule,
-			method: 'POST',
-			cache: false,
-			processData: false,
-			contentType: false,
-			beforeSend: (settings) => {
-				const newSettings = settings;
-				const now = parseInt(Date.now() / 1000, 10);
-				newSettings.data = new FormData();
-				newSettings.data.append(`module_install_${now}`, file);
-				return newSettings;
-			},
-			successTest: PbxApi.successTest,
-			onSuccess: (response) => {
-				callback(response.data, true);
-			},
-			onFailure: (response) => {
-				callback(response.data, false);
-			},
-			xhr: () => {
-				const xhr = new window.XMLHttpRequest();
-				// прогресс загрузки на сервер
-				xhr.upload.addEventListener('progress', (evt) => {
-					if (evt.lengthComputable) {
-						const percentComplete = 100 * (evt.loaded / evt.total);
-						const json = {
-							function: 'upload_progress',
-							percent: percentComplete,
-						};
-						// Show upload progress on bar
-						callback(json, true);
-					}
-				}, false);
-				return xhr;
-			},
-		});
-	},
+
 	/**
 	 * Удаление модуля расширения
 	 *
@@ -589,9 +573,9 @@ const PbxApi = {
 	 * @param callback  функция для обработки результата
 	 * @param failureCallback
 	 */
-	SystemGetModuleInstallStatus(moduleUniqueID, callback, failureCallback) {
+	SystemModuleDownloadStatus(moduleUniqueID, callback, failureCallback) {
 		$.api({
-			url: PbxApi.systemInstallStatusModule,
+			url: PbxApi.systemModuleDownloadStatus,
 			on: 'now',
 			timeout: 3000,
 			method: 'POST',
@@ -664,9 +648,9 @@ const PbxApi = {
 	 * Установка обновления PBX
 	 *
 	 */
-	SystemUpgradeOnline(params, callback) {
+	SystemDownloadNewFirmware(params, callback) {
 		$.api({
-			url: PbxApi.systemUpgradeOnline,
+			url: PbxApi.systemDownloadNewFirmware,
 			on: 'now',
 			method: 'POST',
 			data: {
@@ -689,9 +673,9 @@ const PbxApi = {
 	/**
 	 * Получение статуса обновления станции
 	 */
-	SystemGetUpgradeStatus(callback) {
+	SystemGetFirmwareDownloadStatus(callback) {
 		$.api({
-			url: PbxApi.systemGetUpgradeStatus,
+			url: PbxApi.systemGetFirmwareDownloadStatus,
 			on: 'now',
 			successTest: PbxApi.successTest,
 			onSuccess(response) {

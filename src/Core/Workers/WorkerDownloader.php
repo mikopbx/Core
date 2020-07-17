@@ -7,6 +7,7 @@
  */
 
 namespace MikoPBX\Core\Workers;
+
 require_once 'Globals.php';
 
 use MikoPBX\Core\Workers\Cron\WorkerSafeScriptsCore;
@@ -20,7 +21,6 @@ class WorkerDownloader extends WorkerBase
     private array $settings;
     private string $progress_file = '';
     private string $error_file = '';
-    private string $installed_file = '';
     private int $file_size = 0;
 
     /**
@@ -35,7 +35,6 @@ class WorkerDownloader extends WorkerBase
             $this->settings = json_decode(file_get_contents($argv[1]), true);
         } else {
             echo 'Download error... Settings file does not exist';
-
             return;
         }
         $this->old_memory_limit = ini_get('memory_limit');
@@ -44,7 +43,6 @@ class WorkerDownloader extends WorkerBase
 
         $temp_dir             = dirname($this->settings['res_file']);
         $this->progress_file  = $temp_dir . '/progress';
-        $this->installed_file = $temp_dir . '/installed';
         $this->error_file     = $temp_dir . '/error';
         Util::mwMkdir($temp_dir);
 
@@ -62,22 +60,6 @@ class WorkerDownloader extends WorkerBase
     {
         if (empty($this->settings)) {
             return false;
-        }
-        if (strpos($this->settings['url'], 'file://') !== false) {
-            // Это локальный файл.
-            $src_file = str_replace('file://', '', $this->settings['url']);
-            $mvPath = Util::which('mv');
-            Util::mwExec("{$mvPath} {$src_file} {$this->settings['res_file']}");
-
-            if (file_exists($this->settings['res_file'])) {
-                file_put_contents($this->progress_file, 100);
-                $result = true;
-            } else {
-                file_put_contents($this->error_file, "Can not find module file {$src_file}", FILE_APPEND);
-                $result = false;
-            }
-
-            return $result;
         }
         if (file_exists($this->settings['res_file'])) {
             unlink($this->settings['res_file']);
@@ -115,9 +97,9 @@ class WorkerDownloader extends WorkerBase
      */
     private function remoteFileSize($url): int
     {
-        $ch = curl_init($url);
+        $ch       = curl_init($url);
         $fileSize = 0;
-        if ($ch!==false){
+        if ($ch !== false) {
             curl_setopt($ch, CURLOPT_NOBODY, 1);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, 0);
             curl_setopt($ch, CURLOPT_HEADER, 0);
@@ -127,6 +109,7 @@ class WorkerDownloader extends WorkerBase
             $fileSize = curl_getinfo($ch, CURLINFO_CONTENT_LENGTH_DOWNLOAD);
             curl_close($ch);
         }
+
         return $fileSize;
     }
 
@@ -135,7 +118,7 @@ class WorkerDownloader extends WorkerBase
      */
     public function action(): void
     {
-        if ( empty($this->settings) || ! isset($this->settings['action'])) {
+        if (empty($this->settings) || ! isset($this->settings['action'])) {
             return;
         }
         if ( ! file_exists($this->settings['res_file'])) {
@@ -153,85 +136,7 @@ class WorkerDownloader extends WorkerBase
 
             return;
         }
-        $rmPath = Util::which('rm');
-        // MD5 проверили, подтверждаем загрузку файла на 100%
-        if ('module_install' === $this->settings['action']) {
-            $error            = false;
-            $currentModuleDir = $this->di->getShared('config')->path('core.modulesDir') .'/'. $this->settings['module'];
-            $needBackup       = is_dir($currentModuleDir);
-            $path_class       = "\\Modules\\{$this->settings['module']}\\Setup\\PbxExtensionSetup";
-
-            // Kill all module processes
-            if (is_dir("{$currentModuleDir}/bin")) {
-                $busyboxPath = Util::which('busybox');
-                $killPath = Util::which('kill');
-                $lsofPath = Util::which('lsof');
-                $grepPath = Util::which('grep');
-                $awkPath = Util::which('awk');
-                $uniqPath = Util::which('uniq');
-                Util::mwExec(
-                    "{$busyboxPath} {$killPath} -9 $({$lsofPath} {$currentModuleDir}/bin/* |  {$busyboxPath} {$grepPath} -v COMMAND | {$busyboxPath} {$awkPath}  '{ print $2}' | {$busyboxPath} {$uniqPath})"
-                );
-            }
-
-            // Uninstall module with keep settings and backup db
-
-                if ($needBackup) {
-                    $config  = new MikoPBXConfig();
-                    $WEBPort = $config->getGeneralSettings('WEBPort');
-                    $url     = "http://127.0.0.1:{$WEBPort}/pbxcore/api/modules/{$this->settings['module']}/uninstall";
-
-                    $data        = [
-                        'uniqid'       => $this->settings['module'],
-                        'keepSettings' => 'true',
-                    ];
-                    $data_string = json_encode($data);
-                    $ch          = curl_init();
-                    curl_setopt($ch, CURLOPT_URL, $url);
-                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-                    curl_setopt($ch, CURLOPT_TIMEOUT, 15);
-                    curl_setopt($ch, CURLOPT_POST, 1);
-                    curl_setopt($ch, CURLOPT_POSTFIELDS, $data_string);
-                    curl_exec($ch);
-                    curl_close($ch);
-                }
-
-                if (is_dir($currentModuleDir)) {
-                    // Broken or very old module. Force uninstall.
-                    Util::mwExec("{$rmPath} -rf {$currentModuleDir}");
-                }
-
-            $semZaPath = Util::which('7za');
-            Util::mwExec("{$semZaPath} e -spf -aoa -o{$currentModuleDir} {$this->settings['res_file']}");
-            Util::addRegularWWWRights($currentModuleDir);
-
-            if (class_exists($path_class) && method_exists($path_class, 'installModule')) {
-                $setup = new $path_class($this->settings['module']);
-                if ( ! $setup->installModule()) {
-                    $error          = true;
-                    $result['data'] = 'Install error:' . implode('<br>', $setup->getMessages());
-                }
-            } else {
-                $result['data'] = "Install error: the class {$path_class} doesn't exist";
-                file_put_contents($this->error_file, $result['data'], FILE_APPEND);
-            }
-
-            if ($error) {
-                $result['result'] = 'Error';
-                file_put_contents($this->error_file, 'Install error ' . $result['data'], FILE_APPEND);
-            } else {
-                $result['result'] = 'Success';
-                file_put_contents($this->installed_file, '');
-                file_put_contents($this->progress_file, 100);
-                WorkerSafeScriptsCore::restartAllWorkers();
-            }
-            Util::mwExec("{$rmPath} -rf {$this->settings['res_file']}");
-        } elseif ('upgradeOnline' === $this->settings['action']) {
-            sleep(3);
-            unlink($this->progress_file);
-            System::upgradeFromImg();
-            file_put_contents($this->progress_file, 100);
-        }
+        file_put_contents($this->progress_file, 100);
     }
 
     /**

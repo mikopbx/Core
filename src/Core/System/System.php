@@ -592,40 +592,29 @@ class System
      */
     public static function upgradeFromImg(string $tempFilename): array
     {
-
         $result = [
             'result'  => 'Success',
             'message' => 'In progress...',
         ];
 
-        $di     = Di::getDefault();
-        if ($di !== null){
-            $tempDir = $di->getConfig()->path('core.tempPath');
-        } else {
-            $tempDir = '/tmp';
-        }
-        $upd_file = "{$tempDir}/update.img";
-        $cpPath = Util::which('cp');
-        $res    = Util::mwExec("{$cpPath} '{$tempFilename}' '{$upd_file}'") === 0;
-        if (!$res){
-            $result = [
+        if (!file_exists($tempFilename)){
+            return [
                 'result'  => 'ERROR',
                 'data' => "Update file '{$tempFilename}' not found.",
             ];
-            return $result;
         }
 
         if ( ! file_exists('/var/etc/cfdevice')) {
-            $result['result']  = 'Error';
-            $result['message'] = 'The system is not installed';
-            $result['path']    = $upd_file;
-
-            return $result;
+            return [
+                'result' => 'ERROR',
+                'data' => "The system is not installed",
+                'path'=> $tempFilename
+            ];
         }
         $dev = trim(file_get_contents('/var/etc/cfdevice'));
 
         $link = '/tmp/firmware_update.img';
-        Util::createUpdateSymlink($upd_file, $link);
+        Util::createUpdateSymlink($tempFilename, $link);
         $mikopbx_firmwarePath = Util::which('mikopbx_firmware');
         Util::mwExecBg("{$mikopbx_firmwarePath} recover_upgrade {$link} /dev/{$dev}");
 
@@ -633,22 +622,22 @@ class System
     }
 
     /**
-     * Download IMG from MikoPBX repository and upgrade it
+     * Download IMG from MikoPBX repository
      *
      * @param $data
      *
      * @return mixed
      */
-    public static function upgradeOnline($data)
+    public static function downloadNewFirmware($data)
     {
         $di     = Di::getDefault();
         if ($di !== null){
-            $tempDir = $di->getConfig()->path('core.tempPath');
+            $tempDir = $di->getConfig()->path('core.uploadPath');
         } else {
             $tempDir = '/tmp';
         }
         $rmPath = Util::which('rm');
-        $module  = 'upgradeOnline';
+        $module  = 'NewFirmware';
         if ( ! file_exists($tempDir . "/{$module}")) {
             Util::mwMkdir($tempDir . "/{$module}");
         } else {
@@ -677,13 +666,6 @@ class System
         );
         $phpPath = Util::which('php');
         Util::mwExecBg("{$phpPath} -f {$workerDownloaderPath} " . $tempDir . "/{$module}/download_settings.json");
-        // Ожидание запуска процесса загрузки.
-        usleep(500000);
-        $d_pid = Util::getPidOfProcess($tempDir . "/{$module}/download_settings.json");
-        if (empty($d_pid)) {
-            sleep(1);
-        }
-
         $result = [];
         $result['result'] = 'Success';
 
@@ -691,11 +673,11 @@ class System
     }
 
     /**
-     * Возвращает информацию по статусу загрузки файла обновления img.
+     * Return download Firnware from remote repository progress
      *
      * @return array
      */
-    public static function statusUpgrade(): array
+    public static function firmwareDownloadStatus(): array
     {
         clearstatcache();
         $result        = [
@@ -703,11 +685,11 @@ class System
         ];
         $di     = Di::getDefault();
         if ($di !== null){
-            $tempDir = $di->getConfig()->path('core.tempPath');
+            $tempDir = $di->getConfig()->path('core.uploadPath');
         } else {
             $tempDir = '/tmp';
         }
-        $modulesDir    = $tempDir . '/upgradeOnline';
+        $modulesDir    = $tempDir . '/NewFirmware';
         $progress_file = $modulesDir . '/progress';
 
         $error = '';
@@ -725,9 +707,10 @@ class System
         } elseif ('100' === file_get_contents($progress_file)) {
             $result['d_status_progress'] = '100';
             $result['d_status']          = 'DOWNLOAD_COMPLETE';
+            $result['filePath'] = "{$tempDir}/NewFirmware/update.img";
         } else {
             $result['d_status_progress'] = file_get_contents($progress_file);
-            $d_pid                       = Util::getPidOfProcess($tempDir . '/upgradeOnline/download_settings.json');
+            $d_pid                       = Util::getPidOfProcess($tempDir . '/NewFirmware/download_settings.json');
             if (empty($d_pid)) {
                 $result['d_status'] = 'DOWNLOAD_ERROR';
                 $error              = '';
@@ -738,71 +721,6 @@ class System
             } else {
                 $result['d_status'] = 'DOWNLOAD_IN_PROGRESS';
             }
-        }
-
-        return $result;
-    }
-
-    /**
-     * Возвращает статус скачивания модуля.
-     *
-     * @param $module Module ID
-     *
-     * @return array
-     */
-    public static function moduleDownloadStatus($module): array
-    {
-        clearstatcache();
-        $result        = [
-            'result' => 'Success',
-            'data'   => null,
-        ];
-        $di     = Di::getDefault();
-        if ($di !== null){
-            $tempDir = $di->getConfig()->path('core.tempPath');
-        } else {
-            $tempDir = '/tmp';
-        }
-        $moduleDirTmp  = $tempDir . '/' . $module;
-        $progress_file = $moduleDirTmp . '/progress';
-        $error         = '';
-        if (file_exists($moduleDirTmp . '/error')) {
-            $error = trim(file_get_contents($moduleDirTmp . '/error'));
-        }
-
-        // Ожидание запуска процесса загрузки.
-        $d_pid = Util::getPidOfProcess("{$moduleDirTmp}/download_settings.json");
-        if (empty($d_pid)) {
-            usleep(500000);
-        }
-
-        if ( ! file_exists($progress_file)) {
-            $result['d_status_progress'] = '0';
-            $result['d_status']          = 'NOT_FOUND';
-            $result['i_status']          = false;
-        } elseif ('' !== $error) {
-            $result['d_status']          = 'DOWNLOAD_ERROR';
-            $result['d_status_progress'] = file_get_contents($progress_file);
-            $result['d_error']           = $error;
-            $result['i_status']          = false;
-        } elseif ('100' === file_get_contents($progress_file)) {
-            $result['d_status_progress'] = '100';
-            $result['d_status']          = 'DOWNLOAD_COMPLETE';
-            $result['i_status']          = file_exists($moduleDirTmp . '/installed');
-        } else {
-            $result['d_status_progress'] = file_get_contents($progress_file);
-            $d_pid                       = Util::getPidOfProcess($moduleDirTmp . '/download_settings.json');
-            if (empty($d_pid)) {
-                $result['d_status'] = 'DOWNLOAD_ERROR';
-                $error              = '';
-                if (file_exists($moduleDirTmp . '/error')) {
-                    $error = file_get_contents($moduleDirTmp . '/error');
-                }
-                $result['d_error'] = $error;
-            } else {
-                $result['d_status'] = 'DOWNLOAD_IN_PROGRESS';
-            }
-            $result['i_status'] = false;
         }
 
         return $result;
@@ -821,7 +739,7 @@ class System
     {
         $di     = Di::getDefault();
         if ($di !== null){
-            $tempDir = $di->getConfig()->path('core.tempPath');
+            $tempDir = $di->getConfig()->path('core.uploadPath');
         } else {
             $tempDir = '/tmp';
         }
@@ -834,7 +752,7 @@ class System
             'url'      => $url,
             'module'   => $module,
             'md5'      => $md5,
-            'action'   => 'module_install',
+            'action'   => 'moduleInstall',
         ];
         if (file_exists("$moduleDirTmp/error")) {
             unlink("$moduleDirTmp/error");
@@ -851,6 +769,69 @@ class System
         $phpPath = Util::which('php');
         Util::mwExecBg("{$phpPath} -f {$workerDownloaderPath} $moduleDirTmp/download_settings.json");
     }
+
+    /**
+     * Возвращает статус скачивания модуля.
+     *
+     * @param $moduleUniqueID
+     *
+     * @return array
+     */
+    public static function moduleDownloadStatus(string $moduleUniqueID): array
+    {
+        clearstatcache();
+        $result        = [
+            'result' => 'Success',
+            'data'   => null,
+        ];
+        $di     = Di::getDefault();
+        if ($di !== null){
+            $tempDir = $di->getConfig()->path('core.uploadPath');
+        } else {
+            $tempDir = '/tmp';
+        }
+        $moduleDirTmp  = $tempDir . '/' . $moduleUniqueID;
+        $progress_file = $moduleDirTmp . '/progress';
+        $error         = '';
+        if (file_exists($moduleDirTmp . '/error')) {
+            $error = trim(file_get_contents($moduleDirTmp . '/error'));
+        }
+
+        // Ожидание запуска процесса загрузки.
+        $d_pid = Util::getPidOfProcess("{$moduleDirTmp}/download_settings.json");
+        if (empty($d_pid)) {
+            usleep(500000);
+        }
+
+        if ( ! file_exists($progress_file)) {
+            $result['d_status_progress'] = '0';
+            $result['d_status']          = 'NOT_FOUND';
+        } elseif ('' !== $error) {
+            $result['d_status']          = 'DOWNLOAD_ERROR';
+            $result['d_status_progress'] = file_get_contents($progress_file);
+            $result['d_error']           = $error;
+        } elseif ('100' === file_get_contents($progress_file)) {
+            $result['d_status_progress'] = '100';
+            $result['d_status']          = 'DOWNLOAD_COMPLETE';
+            $result['filePath'] =  "$moduleDirTmp/modulefile.zip";
+        } else {
+            $result['d_status_progress'] = file_get_contents($progress_file);
+            $d_pid                       = Util::getPidOfProcess($moduleDirTmp . '/download_settings.json');
+            if (empty($d_pid)) {
+                $result['d_status'] = 'DOWNLOAD_ERROR';
+                $error              = '';
+                if (file_exists($moduleDirTmp . '/error')) {
+                    $error = file_get_contents($moduleDirTmp . '/error');
+                }
+                $result['d_error'] = $error;
+            } else {
+                $result['d_status'] = 'DOWNLOAD_IN_PROGRESS';
+            }
+        }
+
+        return $result;
+    }
+
 
     /**
      * Получение информации о публичном IP.

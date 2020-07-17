@@ -72,7 +72,7 @@ const upgradeStatusLoopWorker = {
 	},
 	worker() {
 		window.clearTimeout(upgradeStatusLoopWorker.timeoutHandle);
-		PbxApi.SystemGetUpgradeStatus(upgradeStatusLoopWorker.cbRefreshUpgradeStatus);
+		PbxApi.SystemGetFirmwareDownloadStatus(upgradeStatusLoopWorker.cbRefreshUpgradeStatus);
 	},
 	cbRefreshUpgradeStatus(response) {
 		upgradeStatusLoopWorker.iterations += 1;
@@ -85,6 +85,7 @@ const upgradeStatusLoopWorker = {
 			window.clearTimeout(upgradeStatusLoopWorker.timeoutHandle);
 			$('i.loading.redo').closest('a').find('.percent').text(`${response.d_status_progress}%`);
 			$('i.loading.redo').addClass('sync').removeClass('redo');
+			PbxApi.SystemUpgrade(response.filePath, updatePBX.cbAfterStartUpdate);
 		} else if (response.d_status === 'DOWNLOAD_ERROR') {
 			window.clearTimeout(upgradeStatusLoopWorker.timeoutHandle);
 			UserMessage.showError(globalTranslate.upd_DownloadUpgradeError);
@@ -183,7 +184,7 @@ const updatePBX = {
 								params.size = $aLink.attr('data-size');
 								$aLink.find('i').addClass('loading');
 								updatePBX.upgradeInProgress = true;
-								PbxApi.SystemUpgradeOnline(params, updatePBX.cbAfterStartUpgradeOnline);
+								PbxApi.SystemDownloadNewFirmware(params, updatePBX.cbAfterStartDownloadFirmware);
 								return true;
 							},
 						})
@@ -256,7 +257,7 @@ const updatePBX = {
 	 * After start online upgrade we have to wait an answer,
 	 * and then start status check worker
 	 */
-	cbAfterStartUpgradeOnline(response) {
+	cbAfterStartDownloadFirmware(response) {
 		if (response === true) {
 			upgradeStatusLoopWorker.initialize();
 		} else {

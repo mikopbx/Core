@@ -432,6 +432,7 @@ class AssetProvider implements ServiceProviderInterface
                                 ->addJs('js/pbx/Update/update-api.js', true)
                                 ->addJs('js/vendor/datatable/dataTables.semanticui.js', true)
                                 ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-licensing.js', true)
+                                ->addJs('js/vendor/resumable.js', true)
                                 ->addJs(
                                     'js/pbx/PbxExtensionModules/pbx-extension-module-upgrade-status-worker.js',
                                     true

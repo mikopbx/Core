@@ -251,7 +251,7 @@ const extensionModules = {
 	 * @param needEnable - включить ли модуль после установки?
 	 */
 	installModule(params, needEnable) {
-		PbxApi.SystemInstallModule(params, (response) => {
+		PbxApi.SystemDownloadNewModule(params, (response) => {
 			if (response === true) {
 				upgradeStatusLoopWorker.initialize(params.uniqid, needEnable);
 			} else {

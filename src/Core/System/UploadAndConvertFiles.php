@@ -25,7 +25,7 @@ class UploadAndConvertFiles
      */
     public static function uploadResumable($parameters): array
     {
-        $data=[];
+        $data           = [];
         $data['result'] = 'ERROR';
         $di             = Di::getDefault();
         if ($di === null) {
@@ -36,13 +36,13 @@ class UploadAndConvertFiles
         $resumableIdentifier  = $parameters['resumableIdentifier'];
         $resumableChunkNumber = $parameters['resumableChunkNumber'];
         $resumableTotalSize   = $parameters['resumableTotalSize'];
-        $uploadPath              = $di->getShared('config')->path('core.uploadPath');
+        $uploadPath           = $di->getShared('config')->path('core.uploadPath');
 
         $factory = new StreamFactory();
 
         foreach ($parameters['files'] as $file_data) {
-            $stream   = $factory->createStreamFromFile($file_data['file_path'], 'r');
-            $file = new UploadedFile(
+            $stream = $factory->createStreamFromFile($file_data['file_path'], 'r');
+            $file   = new UploadedFile(
                 $stream,
                 $file_data['file_size'],
                 $file_data['file_error'],
@@ -52,15 +52,18 @@ class UploadAndConvertFiles
 
             if (isset($resumableIdentifier) && trim($resumableIdentifier) !== '') {
                 $temp_dir         = $uploadPath . '/' . Util::trimExtensionForFile(basename($resumableFilename));
-                $temp_dst_file    = $uploadPath . '/' . $upload_id . '/' . $upload_id.'_'.basename($resumableFilename);
+                $temp_dst_file    = $uploadPath . '/' . $upload_id . '/' . $upload_id . '_' . basename(
+                        $resumableFilename
+                    );
                 $chunks_dest_file = $temp_dir . '/' . $resumableFilename . '.part' . $resumableChunkNumber;
             } else {
                 $temp_dir         = $uploadPath . '/' . $upload_id;
-                $temp_dst_file    = $temp_dir . '/' .$upload_id.'_'.basename($file->getClientFilename());
+                $temp_dst_file    = $temp_dir . '/' . $upload_id . '_' . basename($file->getClientFilename());
                 $chunks_dest_file = $temp_dst_file;
             }
             if ( ! Util::mwMkdir($temp_dir) || ! Util::mwMkdir(dirname($temp_dst_file))) {
                 Util::sysLogMsg('UploadFile', "Error create dir '$temp_dir'");
+
                 return ['result' => 'ERROR', 'data' => "Error create dir 'temp_dir'"];
             }
             $file->moveTo($chunks_dest_file);
@@ -86,7 +89,7 @@ class UploadAndConvertFiles
                     );
 
                     // Отправляем задачу на склеивание файла.
-                    $phpPath              = Util::which('php');
+                    $phpPath               = Util::which('php');
                     $workerFilesMergerPath = Util::getFilePathByClassName(WorkerMergeUploadedFile::class);
                     Util::mwExecBg("{$phpPath} -f {$workerFilesMergerPath} '{$settings_file}'");
 
@@ -115,15 +118,16 @@ class UploadAndConvertFiles
 
     /**
      * Returns Status of uploading process
+     *
      * @param $postData
      *
      * @return array
      */
-    public static function statusUploadFile($postData):array
+    public static function statusUploadFile($postData): array
     {
-        $result=[];
+        $result           = [];
         $result['result'] = 'ERROR';
-        $di             = Di::getDefault();
+        $di               = Di::getDefault();
         if ($di === null) {
             return ['result' => 'ERROR', 'data' => 'Dependency injector not initialized'];
         }
@@ -154,6 +158,7 @@ class UploadAndConvertFiles
                 $result['d_status_progress'] = file_get_contents($progress_file);
             }
         }
+
         return $result;
     }
 
@@ -212,6 +217,43 @@ class UploadAndConvertFiles
 
         $result['result'] = 'Success';
         $result['data']   = $n_filename_mp3;
+
+        return $result;
+    }
+
+    /**
+     * Unpack ModuleFile and get metadata information
+     *
+     * @param $filePath
+     *
+     * @return mixed
+     */
+    public static function  getMetadataFromModuleFile(string $filePath): array
+    {
+        $result=[];
+        $result['result'] = 'Error';
+        if (file_exists($filePath)) {
+            $sevenZaPath = Util::which('7za');
+            $grepPath    = Util::which('grep');
+            $echoPath    = Util::which('echo');
+            $awkPath     = Util::which('awk');
+            // $cmd = 'f="' . $filePath . '"; p=`7za l $f | grep module.json`;if [ "$?" == "0" ]; then 7za -so e -y -r $f `echo $p |  awk -F" " \'{print $6}\'`; fi';
+            $cmd = 'f="' . $filePath . '"; p=`' . $sevenZaPath . ' l $f | ' . $grepPath . ' module.json`;if [ "$?" == "0" ]; then ' . $sevenZaPath . ' -so e -y -r $f `' . $echoPath . ' $p |  ' . $awkPath . ' -F" " \'{print $6}\'`; fi';
+
+            Util::mwExec($cmd, $out);
+            $settings = json_decode(implode("\n", $out), true);
+
+            $moduleUniqueID = $settings['moduleUniqueID'] ?? null;
+            if ( ! $moduleUniqueID) {
+                $result['data'] = 'The" moduleUniqueID " in the module file is not described.the json or file does not exist.';
+                return $result;
+            }
+            $result['result'] = 'Success';
+            $result['data']   = [
+                'filePath' => $filePath,
+                'uniqid' => $moduleUniqueID,
+            ];
+        }
 
         return $result;
     }
