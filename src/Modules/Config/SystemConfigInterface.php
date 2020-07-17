@@ -19,6 +19,11 @@ interface SystemConfigInterface
      */
     public function createCronTasks(&$tasks): void;
 
+    /**
+     * Create additional Nginx locations from modules
+     *
+     */
+    public function createNginxLocations(): string;
 
     /**
      * Обработчик события изменения данных в базе настроек mikopbx.db.

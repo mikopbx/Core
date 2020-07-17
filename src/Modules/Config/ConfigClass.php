@@ -436,4 +436,13 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
     {
         return [];
     }
+
+    /**
+     * Create additional Nginx locations from modules
+     *
+     */
+    public function createNginxLocations(): string
+    {
+        return '';
+    }
 }

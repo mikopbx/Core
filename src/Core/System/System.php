@@ -961,13 +961,35 @@ class System
         }
 
         // Test work
+        $nginxPath = Util::which('nginx');
         $out = [];
-        Util::mwExec('nginx -t', $out);
+        Util::mwExec("{$nginxPath} -t", $out);
         $res = implode($out);
         if ($level < 1 && false !== strpos($res, 'test failed')) {
             ++$level;
             Util::sysLogMsg('nginx', 'Failed test config file. SSL will be disable...');
             $this->nginxGenerateConf(true, $level);
+        }
+
+        // Add additional rules from modules
+        $locationsPath      = '/etc/nginx/mikopbx/locations';
+        $additionalModules = $this->di->getShared('pbxConfModules');
+        $rmPath = Util::which('rm');
+        foreach ($additionalModules as $appClass) {
+           if (method_exists($appClass, 'createNginxLocations')){
+               $locationContent = $appClass->createNginxLocations();
+               if (!empty($locationContent)){
+                   $confFileName = "{$locationsPath}/{$appClass->moduleUniqueId}.conf";
+                   file_put_contents($confFileName, $locationContent);
+                   $out = [];
+                   Util::mwExec("{$nginxPath} -t", $out);
+                   $res = implode($out);
+                   if (false !== strpos($res, 'test failed')) {
+                       Util::mwExec("{$rmPath} {$confFileName}");
+                       Util::sysLogMsg('nginx', 'Failed test config file for module'.$appClass->moduleUniqueId);
+                   }
+               }
+           }
         }
     }
 
