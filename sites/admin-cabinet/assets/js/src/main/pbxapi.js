@@ -126,7 +126,7 @@ const PbxApi = {
 			url: PbxApi.systemUnBanIp,
 			on: 'now',
 			method: 'POST',
-			data: JSON.stringify(data),
+			data: data,
 			successTest: PbxApi.successTest,
 			onSuccess(response) {
 				callback(response.data);
@@ -226,20 +226,6 @@ const PbxApi = {
 		});
 	},
 	/**
-	 * Обновляет настройки почты на сервере
-	 * @param callback
-	 */
-	UpdateMailSettings(callback) {
-		$.api({
-			url: PbxApi.systemReloadSMTP,
-			on: 'now',
-			successTest: PbxApi.successTest,
-			onSuccess(response) {
-				callback(response.data);
-			},
-		});
-	},
-	/**
 	 * Отпарвляет тестовое сообщение на почту
 	 * @param data
 	 */
@@ -248,7 +234,7 @@ const PbxApi = {
 			url: PbxApi.systemSendTestEmail,
 			on: 'now',
 			method: 'POST',
-			data: JSON.stringify(data),
+			data: data,
 			successTest: PbxApi.successTest,
 			onSuccess() {
 				callback(true);
@@ -268,7 +254,7 @@ const PbxApi = {
 			url: PbxApi.systemGetFileContent,
 			on: 'now',
 			method: 'POST',
-			data: JSON.stringify(data),
+			data: data,
 			onSuccess(response) {
 				if (response !== undefined) {
 					callback(response);
@@ -285,7 +271,7 @@ const PbxApi = {
 			url: PbxApi.systemSetDateTime,
 			on: 'now',
 			method: 'POST',
-			data: JSON.stringify(data),
+			data: data,
 		});
 	},
 	/**
@@ -394,40 +380,6 @@ const PbxApi = {
 		});
 	},
 
-	/**
-	 * Upload audio file to PBX system
-	 * @param file - blob body
-	 * @param category - category {moh, custom, etc...}
-	 * @param callback - callback function
-	 */
-	SystemUploadAudioFile(file, category, callback) {
-		$.api({
-			on: 'now',
-			url: PbxApi.systemUploadAudioFile,
-			method: 'POST',
-			cache: false,
-			processData: false,
-			contentType: false,
-			beforeSend: (settings) => {
-				const extension = file.name.slice((file.name.lastIndexOf('.') - 1 >>> 0) + 2);
-				const oldfileName = file.name.replace(`.${extension}`, '');
-				const newFileName = `${oldfileName}_${parseInt(Date.now() / 1000, 10)}.${extension}`;
-				const newSettings = settings;
-				// const newFile = new File([file], newFileName);
-				const blob = new Blob([file]);
-				blob.lastModifiedDate = new Date();
-				newSettings.data = new FormData();
-				// newSettings.data.append(newFileName, newFile);
-				newSettings.data.append('file', blob, newFileName);
-				newSettings.data.append('category', category);
-				return newSettings;
-			},
-			successTest: PbxApi.successTest,
-			onSuccess(response) {
-				callback(response.data);
-			},
-		});
-	},
 	/**
 	 * Upload audio file to PBX system
 	 * @param filePath - uploaded file
