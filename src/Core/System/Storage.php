@@ -1055,6 +1055,7 @@ class Storage
     {
         // Add Rights to the WWW dirs plus some core dirs
         $www_dirs  = [];
+        $exec_dirs = [];
         $arrConfig = $this->config->adminApplication->toArray();
         foreach ($arrConfig as $key => $entry) {
             if (stripos($key, 'path') === false
