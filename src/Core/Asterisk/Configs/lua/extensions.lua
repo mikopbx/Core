@@ -1,6 +1,11 @@
 -- Copyright © MIKO LLC - All Rights Reserved
 -- Unauthorized copying of this file, via any medium is strictly prohibited
 -- Proprietary and confidential
+-- Written by Alexey Portnov, 7 2020
+
+-- Copyright © MIKO LLC - All Rights Reserved
+-- Unauthorized copying of this file, via any medium is strictly prohibited
+-- Proprietary and confidential
 -- Written by Alexey Portnov, 6 2020
 
 
@@ -464,7 +469,16 @@ end
 
 function event_dial_app()
     local data = {}
-    local id        = get_variable('UNIQUEID')..'_'..generateRandomString(6);
+    local CHANNEL       = get_variable('CHANNEL');
+    local FROM_CHAN     = get_variable('FROM_CHAN');
+    local pt1c_UNIQUEID = get_variable('pt1c_UNIQUEID');
+
+    if(CHANNEL==FROM_CHAN and pt1c_UNIQUEID~='') then
+        id = pt1c_UNIQUEID;
+    else
+        id = get_variable('UNIQUEID')..'_'..generateRandomString(6);
+    end
+
     local extension = get_variable("APPEXTEN");
     if(extension == '')then
         extension = get_variable("EXTEN");
