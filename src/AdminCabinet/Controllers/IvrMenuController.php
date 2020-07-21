@@ -198,8 +198,6 @@ class IvrMenuController extends BaseController
         foreach ($ivrMenu as $name => $value) {
             switch ($name) {
                 case "extension":
-                    $ivrMenu->$name = $data[$name];
-                    break;
                 case "name":
                     $ivrMenu->$name = $data[$name];
                     break;
@@ -295,7 +293,7 @@ class IvrMenuController extends BaseController
         $this->db->begin();
         $ivrmenu = IvrMenu::findFirstByUniqid($uniqid);
 
-        $errors = false;
+        $errors = null;
         if ($ivrmenu !== null && ! $ivrmenu->Extensions->delete()) {
             $errors = $ivrmenu->Extensions->getMessages();
         }
@@ -307,7 +305,7 @@ class IvrMenuController extends BaseController
             $this->db->commit();
         }
 
-        return $this->forward('ivr-menu/index');
+        $this->forward('ivr-menu/index');
     }
 
 

@@ -37,7 +37,7 @@ const PbxApi = {
 	systemDeleteModule: `${Config.pbxUrl}/pbxcore/api/system/uninstallModule`,
 	systemDisableModule: `${Config.pbxUrl}/pbxcore/api/system/disableModule`,
 	systemEnableModule: `${Config.pbxUrl}/pbxcore/api/system/enableModule`,
-	systemModuleDownloadStatus: `${Config.pbxUrl}/pbxcore/api/system/moduleDownloadStatus`,
+	systemModuleDownloadStatus: `${Config.pbxUrl}/pbxcore/api/system/moduleDownloadStatus`, //TODO::Проверить статус ошибки скачивания в переменной message
 	systemUploadFile: `${Config.pbxUrl}/pbxcore/api/upload/uploadResumable`, // curl -F "file=@ModuleTemplate.zip" http://127.0.0.1/pbxcore/api/upload/uploadResumable
 	systemStatusUploadFile: `${Config.pbxUrl}/pbxcore/api/upload/status`, // curl -X POST -d '{"id": "1531474060"}' http://127.0.0.1/pbxcore/api/upload/status;
 	/**

@@ -206,7 +206,7 @@ class IncomingRoutesController extends BaseController
     public function deleteAction(string $ruleId)
     {
         if ((int)$ruleId === 1) {
-            return $this->forward('incoming-routes/index'); // Первая строка маршрут по умолчанию, ее не трогаем.
+            $this->forward('incoming-routes/index'); // Первая строка маршрут по умолчанию, ее не трогаем.
         }
 
         $rule = IncomingRoutingTable::findFirstByid($ruleId);
@@ -214,7 +214,7 @@ class IncomingRoutesController extends BaseController
             $rule->delete();
         }
 
-        return $this->forward('incoming-routes/index');
+        $this->forward('incoming-routes/index');
     }
 
     /**

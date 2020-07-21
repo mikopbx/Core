@@ -138,8 +138,6 @@ class DialplanApplicationsController extends BaseController
         foreach ($application as $name => $value) {
             switch ($name) {
                 case 'extension':
-                    $application->$name = $data[$name];
-                    break;
                 case 'name':
                     $application->$name = $data[$name];
                     break;
@@ -175,7 +173,7 @@ class DialplanApplicationsController extends BaseController
             return;
         }
         $this->db->begin();
-        $errors = false;
+        $errors = null;
         if ($appRecord->Extensions && ! $appRecord->Extensions->delete()) {
             $errors = $appRecord->Extensions->getMessages();
         }

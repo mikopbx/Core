@@ -9,7 +9,6 @@
 
 namespace MikoPBX\Common\Models;
 
-use MikoPBX\Core\System\Util;
 use Phalcon\Di;
 use Phalcon\Mvc\Model\Relation;
 

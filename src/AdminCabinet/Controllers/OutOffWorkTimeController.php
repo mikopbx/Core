@@ -189,7 +189,7 @@ class OutOffWorkTimeController extends BaseController
             $timeFrame->delete();
         }
 
-        return $this->forward('OutOffWorkTime/index');
+        $this->forward('OutOffWorkTime/index');
     }
 
 

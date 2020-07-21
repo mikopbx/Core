@@ -408,7 +408,6 @@ return [
     'ex_ValidateForwardingToBeFilled' => 'Dans les paramètres de routage, le numéro de transfert de délai d\'attente n\'est pas renseigné',
     'ex_RegeneratePassword' => 'Créer un nouveau mot de passe',
     'ex_Status' => 'Statut',
-    'ex_Deutsch' => 'Deutsch',
     'upd_UpgradeInProgress' => 'Les fichiers système sont en cours de mise à jour ...',
     'upd_UploadInProgress' => 'Téléchargement du fichier de mise à jour ...',
     'upd_Update' => 'Rafraîchir',

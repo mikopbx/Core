@@ -2,7 +2,6 @@
 
 namespace MikoPBX\AdminCabinet\Library;
 
-use MikoPBX\Providers\TranslationProvider;
 use Phalcon\Di\Injectable;
 
 /**

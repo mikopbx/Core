@@ -214,6 +214,8 @@ class BaseController extends Controller
                     $data['lastSentryEventId'] = SentrySdk::getCurrentHub()->getLastEventId();
                 }
                 $result = json_encode($data);
+            } else {
+                $result = '';
             }
 
             $this->response->setContent($result);

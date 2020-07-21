@@ -130,8 +130,6 @@ class ConferenceRoomsController extends BaseController
         foreach ($room as $name => $value) {
             switch ($name) {
                 case "extension":
-                    $room->$name = $data[$name];
-                    break;
                 case "name":
                     $room->$name = $data[$name];
                     break;
@@ -162,7 +160,7 @@ class ConferenceRoomsController extends BaseController
         $this->db->begin();
         $queue = ConferenceRooms::findFirstByUniqid($uniqid);
 
-        $errors = false;
+        $errors = null;
         if ($queue !== null && ! $queue->Extensions->delete()) {
             $errors = $queue->Extensions->getMessages();
         }
@@ -174,6 +172,6 @@ class ConferenceRoomsController extends BaseController
             $this->db->commit();
         }
 
-        return $this->forward('conference-rooms/index');
+        $this->forward('conference-rooms/index');
     }
 }

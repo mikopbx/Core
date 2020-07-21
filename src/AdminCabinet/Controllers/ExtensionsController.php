@@ -696,7 +696,7 @@ class ExtensionsController extends BaseController
         // Чтобы не было зацикливания при удалении сначала удалим
         // настройки переадресации у этой же учетной записи, т.к. она может ссылаться на себя
 
-        $errors = false;
+        $errors = null;
         if ($extension !== null && $extension->ExtensionForwardingRights
             && ! $extension->ExtensionForwardingRights->delete()) {
             $errors = $extension->ExtensionForwardingRights->getMessages();
@@ -716,7 +716,7 @@ class ExtensionsController extends BaseController
             $this->db->commit();
         }
 
-        return $this->forward('extensions/index');
+        $this->forward('extensions/index');
     }
 
     /**
