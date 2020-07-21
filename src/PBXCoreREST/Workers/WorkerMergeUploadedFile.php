@@ -6,11 +6,11 @@
  * Written by Alexey Portnov, 7 2020
  */
 
-namespace MikoPBX\Core\Workers;
+namespace MikoPBX\PBXCoreREST\Workers;
 require_once 'Globals.php';
-use MikoPBX\Core\System\{System, Util};
-use Nats\Message;
-use Phalcon\Exception;
+
+use MikoPBX\Core\Workers\WorkerBase;
+use MikoPBX\Core\System\Util;
 
 
 class WorkerMergeUploadedFile extends WorkerBase
@@ -43,7 +43,7 @@ class WorkerMergeUploadedFile extends WorkerBase
                     dirname($settings['result_file'])
                 );
             }
-            $res = file_exists($settings['result_file']);
+            // $res = file_exists($settings['result_file']);
             // Отложенное удаление файла.
             $rm_file = basename(dirname($settings['result_file'])) === 'tmp' ? $settings['result_file'] : dirname(
                 $settings['result_file']
