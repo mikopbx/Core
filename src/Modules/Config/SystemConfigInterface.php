@@ -66,4 +66,11 @@ interface SystemConfigInterface
     public function onBeforeModuleDisable(): bool;
 
 
+    /**
+     * Generates additional fail2ban jail conf rules
+     *
+     * @return string
+     */
+    public function generateFail2BanJails():string;
+
 }

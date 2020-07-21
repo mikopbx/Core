@@ -21,7 +21,6 @@ use MikoPBX\Core\Asterisk\AstDB;
 use MikoPBX\Modules\Config\ConfigClass;
 use MikoPBX\Core\System\{Network, Util};
 use MikoPBX\Core\Utilities\SubnetCalculator;
-use Phalcon\Di;
 
 class SIPConf extends ConfigClass
 {
@@ -63,97 +62,7 @@ class SIPConf extends ConfigClass
 
 
 
-    /**
-     * Получение статусов SIP пиров.
-     *
-     * @return array
-     */
-    public static function getPeersStatuses(): array
-    {
-        $result = [
-            'result' => 'ERROR',
-        ];
 
-        $am = Util::getAstManager('off');
-        $peers = $am->getPjSipPeers();
-        $am->Logoff();
-
-        $result['data']   = $peers;
-        $result['result'] = 'Success';
-
-        return $result;
-    }
-
-    /**
-     * Gets peer status
-     *
-     * @param $peer
-     *
-     * @return array
-     */
-    public static function getPeerStatus($peer): array
-    {
-        $result = [
-            'result' => 'ERROR',
-        ];
-
-        $am = Util::getAstManager('off');
-        $peers = $am->getPjSipPeer($peer);
-        $am->Logoff();
-
-        $result['data']   = $peers;
-        $result['result'] = 'Success';
-
-        return $result;
-    }
-
-    /**
-     * Ger SIP Registry status
-     */
-    public static function getRegistry(): array
-    {
-        $result = [
-            'result' => 'ERROR',
-        ];
-        $am     = Util::getAstManager('off');
-        $peers = $am->getPjSipRegistry();
-
-        $providers = Sip::find("type = 'friend'");
-        foreach ($providers as $provider) {
-            if ($provider->disabled === '1') {
-                $peers[] = [
-                    'state'    => 'OFF',
-                    'id'       => $provider->uniqid,
-                    'username' => $provider->username,
-                    'host'     => $provider->host,
-                ];
-                continue;
-            }
-            if ($provider->noregister === '1') {
-                $peers_status = $am->getPjSipPeer($provider->uniqid);
-                $peers[] = [
-                    'state'    => $peers_status['state'],
-                    'id'       => $provider->uniqid,
-                    'username' => $provider->username,
-                    'host'     => $provider->host,
-                ];
-                continue;
-            }
-
-            foreach ($peers as &$peer) {
-                if ($peer['host'] !== $provider->host || $peer['username'] !== $provider->username) {
-                    continue;
-                }
-                $peer['id'] = $provider->uniqid;
-            }
-            unset($peer);
-        }
-        $am->Logoff();
-        $result['data']   = $peers;
-        $result['result'] = 'Success';
-
-        return $result;
-    }
 
     /**
      * Генератора секции general pjsip.conf

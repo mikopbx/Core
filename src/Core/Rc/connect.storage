@@ -95,7 +95,7 @@ if(!empty($system_disk) && $system_disk === $target_disk_storage){
     $dev_disk = "/dev/$target_disk_storage";
     $part_disk = "{$dev_disk}1";
     if(!Storage::isStorageDisk("{$part_disk}")){
-        $storage->formatiskLocal($dev_disk);
+        $storage->formatDiskLocal($dev_disk);
     }
 }
 

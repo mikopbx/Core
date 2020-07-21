@@ -34,7 +34,6 @@ class WorkerNotifyByEmail extends WorkerBase
     /**
      * Main worker
      * @param $message
-     * @throws \PHPMailer\PHPMailer\Exception
      */
     public function workerNotifyByEmail($message): void
     {

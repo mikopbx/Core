@@ -10,7 +10,6 @@ namespace MikoPBX\PBXCoreREST\Controllers\Upload;
 
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
-use Phalcon\Di;
 
 /**
  * /api/upload/{name}

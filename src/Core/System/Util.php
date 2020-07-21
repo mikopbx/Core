@@ -55,101 +55,6 @@ class Util
     }
 
     /**
-     * Стартует запись логов.
-     *
-     * @param int $timeout
-     */
-    public static function startLog($timeout = 300): void
-    {
-        self::stopLog();
-        $dir_all_log = System::getLogDir();
-        $findPath    = self::which('find');
-        self::mwExec("{$findPath} {$dir_all_log}" . '/ -name *_start_all_log* | xargs rm -rf');
-        // Получим каталог с логами.
-        $dirlog = $dir_all_log . '/dir_start_all_log';
-        self::mwMkdir($dirlog);
-
-        $pingPath = self::which('ping');
-        self::mwExecBg("{$pingPath} 8.8.8.8 -w 2", "{$dirlog}/ping_8888.log");
-        self::mwExecBg("{$pingPath} ya.ru -w 2", "{$dirlog}/ping_8888.log");
-
-        $opensslPath = self::which('openssl');
-        self::mwExecBgWithTimeout(
-            "{$opensslPath} s_client -connect lm.miko.ru:443 > {$dirlog}/openssl_lm_miko_ru.log",
-            1
-        );
-        self::mwExecBgWithTimeout(
-            "{$opensslPath} s_client -connect lic.miko.ru:443 > {$dirlog}/openssl_lic_miko_ru.log",
-            1
-        );
-        $routePath = self::which('route');
-        self::mwExecBg("{$routePath} -n ", " {$dirlog}/rout_n.log");
-
-        $asteriskPath = self::which('asterisk');
-        self::mwExecBg("{$asteriskPath} -rx 'pjsip show registrations' ", " {$dirlog}/pjsip_show_registrations.log");
-        self::mwExecBg("{$asteriskPath} -rx 'pjsip show endpoints' ", " {$dirlog}/pjsip_show_endpoints.log");
-        self::mwExecBg("{$asteriskPath} -rx 'pjsip show contacts' ", " {$dirlog}/pjsip_show_contacts.log");
-
-        $php_log = '/var/log/php_error.log';
-        if (file_exists($php_log)) {
-            $cpPath = self::which('cp');
-            self::mwExec("{$cpPath} {$php_log} {$dirlog}");
-        }
-
-        $network     = new Network();
-        $arr_eth     = $network->getInterfacesNames();
-        $tcpdumpPath = self::which('tcpdump');
-        foreach ($arr_eth as $eth) {
-            self::mwExecBgWithTimeout(
-                "{$tcpdumpPath} -i {$eth} -n -s 0 -vvv -w {$dirlog}/{$eth}.pcap",
-                $timeout,
-                "{$dirlog}/{$eth}_out.log"
-            );
-        }
-    }
-
-    /**
-     * Завершает запись логов.
-     *
-     * @return string
-     */
-    public static function stopLog(): string
-    {
-        $dir_all_log = System::getLogDir();
-
-        self::killByName('timeout');
-        self::killByName('tcpdump');
-
-        $rmPath   = self::which('rm');
-        $findPath = self::which('find');
-        $za7Path  = self::which('7za');
-        $cpPath   = self::which('cp');
-
-        $dirlog = $dir_all_log . '/dir_start_all_log';
-        self::mwMkdir($dirlog);
-
-        $log_dir = System::getLogDir();
-        self::mwExec("{$cpPath} -R {$log_dir} {$dirlog}");
-
-        $result = $dir_all_log . '/arhive_start_all_log.zip';
-        if (file_exists($result)) {
-            self::mwExec("{$rmPath} -rf {$result}");
-        }
-        // Пакуем логи.
-        self::mwExec("{$za7Path} a -tzip -mx0 -spf '{$result}' '{$dirlog}'");
-        // Удаляем логи. Оставляем только архив.
-        self::mwExec("{$findPath} {$dir_all_log}" . '/ -name *_start_all_log | xargs rm -rf');
-
-        if (file_exists($dirlog)) {
-            self::mwExec("{$findPath} {$dirlog}" . '/ -name license.key | xargs rm -rf');
-        }
-        // Удаляем каталог логов.
-        self::mwExecBg("{$rmPath} -rf {$dirlog}");
-
-        return $result;
-    }
-
-    /**
      * Завершаем процесс по имени.
      *
      * @param $procName
@@ -552,34 +457,6 @@ class Util
     }
 
     /**
-     * Проверка авторизации.
-     *
-     * @param Phalcon\Http\Request $request
-     *
-     * @return bool
-     */
-    public static function checkAuthHttp($request)
-    {
-        $result   = false;
-        $userName = $request->getServer('PHP_AUTH_USER');
-        $password = $request->getServer('PHP_AUTH_PW');
-
-        $data = file_get_contents('/var/etc/http_auth');
-        if ("$data" == "{$userName}:{$password}") {
-            $result = true;
-        } else {
-            openlog("miko_ajam", LOG_PID | LOG_PERROR, LOG_AUTH);
-            syslog(
-                LOG_WARNING,
-                "From {$_SERVER['REMOTE_ADDR']}. UserAgent: ({$_SERVER['HTTP_USER_AGENT']}). Fail auth http."
-            );
-            closelog();
-        }
-
-        return $result;
-    }
-
-    /**
      * Возвращает указанное количество X.
      *
      * @param $length
@@ -662,33 +539,7 @@ class Util
         file_put_contents($filename, $data);
     }
 
-    /**
-     * Считывает содержимое файла, если есть разрешение.
-     *
-     * @param $filename
-     * @param $needOriginal
-     *
-     * @return array
-     */
-    public static function fileReadContent($filename, $needOriginal = true): array
-    {
-        $result = [];
-        $res    = CustomFiles::findFirst("filepath = '{$filename}'");
-        if ($res !== null) {
-            $filename_orgn = "{$filename}.orgn";
-            if ($needOriginal && file_exists($filename_orgn)) {
-                $filename = $filename_orgn;
-            }
-            $result['result'] = 'Success';
-            $result['data']   = rawurlencode(file_get_contents($filename));
-        } else {
-            $result['result']  = 'ERROR';
-            $result['data']    = '';
-            $result['message'] = 'There is no access to the file';
-        }
 
-        return $result;
-    }
 
     /**
      * Пишем лог в базу данных.
@@ -731,51 +582,7 @@ class Util
         return $result;
     }
 
-    /**
-     * Delete file from disk by filepath
-     *
-     * @param $filePath
-     *
-     * @return array
-     */
-    public static function removeAudioFile($filePath): array
-    {
-        $result    = [];
-        $extension = self::getExtensionOfFile($filePath);
-        if ( ! in_array($extension, ['mp3', 'wav', 'alaw'])) {
-            $result['result']  = 'Error';
-            $result['message'] = "It is forbidden to remove the file $extension.";
 
-            return $result;
-        }
-
-        if ( ! file_exists($filePath)) {
-            $result['result']  = 'Success';
-            $result['message'] = "File '{$filePath}' not found.";
-
-            return $result;
-        }
-
-        $out = [];
-
-        $arrDeletedFiles = [
-            escapeshellarg(self::trimExtensionForFile($filePath) . ".wav"),
-            escapeshellarg(self::trimExtensionForFile($filePath) . ".mp3"),
-            escapeshellarg(self::trimExtensionForFile($filePath) . ".alaw"),
-        ];
-
-        $rmPath = self::which('rm');
-        self::mwExec("{$rmPath} -rf " . implode(' ', $arrDeletedFiles), $out);
-        if (file_exists($filePath)) {
-            $result_str        = implode($out);
-            $result['result']  = 'Error';
-            $result['message'] = $result_str;
-        } else {
-            $result['result'] = 'Success';
-        }
-
-        return $result;
-    }
 
     /**
      * Получает расширение файла.

@@ -10,16 +10,18 @@
 namespace MikoPBX\Modules\Config;
 
 
+use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+
 interface RestAPIConfigInterface
 {
     /**
      * Returns array of additional routes for PBXCoreREST interface from module
-     * [ControllerClass, ActionMethod, RequestTemplate, HttpMethod, RootUrl ]
+     * [ControllerClass, ActionMethod, RequestTemplate, HttpMethod, RootUrl, NoAuth ]
      *
      * @return array
      * @example
-     *  [[GetController::class, 'callAction', '/pbxcore/api/backup/{actionName}', 'get', '/'],
-     *  [PostController::class, 'callAction', '/pbxcore/api/backup/{actionName}', 'post', '/']]
+     *  [[GetController::class, 'callAction', '/pbxcore/api/backup/{actionName}', 'get', '/', false],
+     *  [PostController::class, 'callAction', '/pbxcore/api/backup/{actionName}', 'post', '/', false]]
      */
     public function getPBXCoreRESTAdditionalRoutes(): array;
 
@@ -28,7 +30,7 @@ interface RestAPIConfigInterface
      *
      * @param array $request GET/POST parameters
      *
-     * @return array
+     * @return PBXApiResult
      */
-    public function moduleRestAPICallback(array $request): array;
+    public function moduleRestAPICallback(array $request): PBXApiResult;
 }

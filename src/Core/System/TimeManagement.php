@@ -9,7 +9,7 @@
 
 namespace MikoPBX\Core\System;
 
-
+use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di;
 
 class TimeManagement
@@ -31,35 +31,25 @@ class TimeManagement
      *
      * @param $date - 2015.12.31-01:01:20
      *
-     * @return array
+     * @return bool
      */
-    public static function setDate($date): array
+    public static function setDate($date): bool
     {
-        $result = [
-            'result' => 'ERROR',
-        ];
         // Преобразование числа к дате. Если необходимо.
         $date = Util::numberToDate($date);
         // Валидация даты.
         $re_date = '/^\d{4}\.\d{2}\.\d{2}\-\d{2}\:\d{2}\:\d{2}$/';
         preg_match_all($re_date, $date, $matches, PREG_SET_ORDER, 0);
         if (count($matches) > 0) {
-            $result['result'] = 'Success';
             $arr_data         = [];
             $datePath         = Util::which('date');
             Util::mwExec("{$datePath} -s '{$date}'", $arr_data);
-            $result['data'] = implode($arr_data);
-        } else {
-            $result['result'] = 'Success';
-            $result['data']   = 'Update timezone only.';
         }
 
-        $sys = new self();
+        $sys = new TimeManagement();
         $sys->timezoneConfigure();
-
-        return $result;
+        return true;
     }
-
 
     /**
      * Populates /etc/TZ with an appropriate time zone

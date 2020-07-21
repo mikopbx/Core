@@ -20,7 +20,7 @@ $revPath = Util::which('rev');
 Util::mwExec("{$dfPath} | {$grepPath} conf.recover | {$cutPath} -d \" \" -f 1 | {$revPath} | {$cutPath} -c 2- | {$revPath}", $out);
 $DEVICE=implode('', $out);
 
-$PBXVERSION = trim(file_get_contents('/etc/version'));
+// $PBXVERSION = trim(file_get_contents('/etc/version'));
 $VERSION    = trim(file_get_contents('/offload/version'));
 
 $REDON   ="\033[31;1m";

@@ -8,26 +8,21 @@
 
 namespace MikoPBX\PBXCoreREST\Workers;
 
-use MikoPBX\Core\Asterisk\CdrDb;
-use MikoPBX\Core\Asterisk\Configs\{IAXConf, SIPConf, VoiceMailConf};
-use MikoPBX\Core\System\{BeanstalkClient,
-    TimeManagement,
-    Firewall,
-    Notifications,
-    Storage,
-    System,
-    UploadAndConvertFiles,
-    Util
-};
+use MikoPBX\Core\Asterisk\Configs\VoiceMailConf;
+use MikoPBX\Core\System\{BeanstalkClient, Notifications, Storage, System, TimeManagement, Util};
 use MikoPBX\Core\Workers\Cron\WorkerSafeScriptsCore;
 use MikoPBX\Core\Workers\WorkerBase;
-use MikoPBX\Core\Workers\WorkerMergeUploadedFile;
-use MikoPBX\Modules\PbxExtensionUtils;
-use MikoPBX\Modules\Setup\PbxExtensionSetupFailure;
+use MikoPBX\PBXCoreREST\Lib\CdrDBProcessor;
+use MikoPBX\PBXCoreREST\Lib\FirewallManagementProcessor;
+use MikoPBX\PBXCoreREST\Lib\IAXStackProcessor;
+use MikoPBX\PBXCoreREST\Lib\LogsManagementProcessor;
+use MikoPBX\PBXCoreREST\Lib\NetworkManagementProcessor;
+use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use MikoPBX\PBXCoreREST\Lib\SIPStackProcessor;
+use MikoPBX\PBXCoreREST\Lib\SystemManagementProcessor;
+use MikoPBX\PBXCoreREST\Lib\FilesManagementProcessor;
 use MikoPBX\Modules\PbxExtensionState;
 use Phalcon\Exception;
-
-use function MikoPBX\Common\Config\appPath;
 
 require_once 'Globals.php';
 
@@ -67,7 +62,7 @@ class WorkerApiCommands extends WorkerBase
         while (true) {
             try {
                 $client->wait();
-            } catch (Exception $e) {
+            } catch (\Exception $e) {
                 global $errorLogger;
                 $errorLogger->captureException($e);
                 sleep(1);
@@ -89,150 +84,171 @@ class WorkerApiCommands extends WorkerBase
 
             switch ($processor) {
                 case 'cdr':
-                    $answer = $this->cdrCallBack($request);
+                    $res = $this->cdrCallBack($request);
                     break;
                 case 'sip':
-                    $answer = $this->sipCallBack($request);
+                    $res = $this->sipCallBack($request);
                     break;
                 case 'iax':
-                    $answer = $this->iaxCallBack($request);
+                    $res = $this->iaxCallBack($request);
                     break;
                 case 'system':
-                    $answer = $this->systemCallBack($request);
+                    $res = $this->systemCallBack($request);
                     break;
                 case 'storage':
-                    $answer = $this->storageCallBack($request);
+                    $res = $this->storageCallBack($request);
                     break;
                 case 'upload':
-                    $answer = $this->uploadCallBack($request);
+                    $res = $this->uploadCallBack($request);
                     break;
                 case 'modules':
-                    $answer = $this->modulesCallBack($request);
+                    $res = $this->modulesCallBack($request);
                     break;
                 default:
-                    $answer = [
-                        'result' => 'ERROR',
-                        'data'   => "Unknown processor - {$processor}",
-                    ];
+                    $res             = new PBXApiResult();
+                    $res->processor = __METHOD__;
+                    $res->success    = false;
+                    $res->messages[] = "Unknown processor - {$processor} in prepareAnswer";
             }
         } catch (\Exception $exception) {
-            $answer = 'Exception on WorkerApiCommands - ' . $exception->getMessage();
+            $res             = new PBXApiResult();
+            $res->processor = __METHOD__;
+            $res->messages[] = 'Exception on WorkerApiCommands - ' . $exception->getMessage();
         }
-        $message->reply(json_encode($answer));
+        $message->reply(json_encode($res->getResult()));
 
-        if (is_array($answer)
-            && array_key_exists('needRestartWorkers', $answer)
-            && $answer['needRestartWorkers']
+        if (is_array($res->data)
+            && array_key_exists('needRestartWorkers', $res->data)
+            && $res->data['needRestartWorkers']
         ) {
             WorkerSafeScriptsCore::restartAllWorkers();
         }
     }
 
     /**
-     * Запросы с CDR таблице
+     * Processes CDR table requests
      *
      * @param array $request
+     *
+     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     *
+     * @throws \Pheanstalk\Exception\DeadlineSoonException
      */
-    private function cdrCallBack($request): array
+    private function cdrCallBack($request): PBXApiResult
     {
         $action = $request['action'];
         switch ($action) {
             case 'getActiveCalls':
-                $result['data'] = CdrDb::getActiveCalls();
+                $res = CdrDBProcessor::getActiveCalls();
                 break;
             case 'getActiveChannels':
-                $result['data'] = CdrDb::getActiveChannels();
+                $res = CdrDBProcessor::getActiveChannels();
                 break;
             default:
-                $result = ["Unknown action - {$action}"];
+                $res             = new PBXApiResult();
+                $res->processor = __METHOD__;
+                $res->messages[] = "Unknown action - {$action} in cdrCallBack";
                 break;
         }
 
-        return $result;
+        $res->function = $action;
+
+        return $res;
     }
 
     /**
-     * Обработка команд SIP.
+     * Processes SIP requests
      *
      * @param array $request
+     *
+     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
      */
-    private function sipCallBack($request): array
+    private function sipCallBack($request): PBXApiResult
     {
         $action = $request['action'];
         $data   = $request['data'];
-
-        $result = [
-            'result' => 'ERROR',
-        ];
-        if ('getPeersStatuses' === $action) {
-            $result = SIPConf::getPeersStatuses();
-        } elseif ('getSipPeer' === $action) {
-            $result = SIPConf::getPeerStatus($data['peer']);
-        } elseif ('getRegistry' === $action) {
-            $result = SIPConf::getRegistry();
-        } else {
-            $result['data'] = 'API action not found in sipCallBack;';
-        }
-        $result['function'] = $action;
-
-        return $result;
-    }
-
-    /**
-     * Обработка команду IAX.
-     *
-     * @param array $request
-     */
-    private function iaxCallBack($request): array
-    {
-        $action = $request['action'];
-        $result = [
-            'result' => 'ERROR',
-        ];
-        if ('getRegistry' === $action) {
-            $result = IAXConf::getRegistry();
-        } else {
-            $result['data'] = 'API action not found in iaxCallBack;';
-        }
-        $result['function'] = $action;
-
-        return $result;
-    }
-
-    /**
-     * Обработка системных команд.
-     *
-     * @param array $request
-     */
-    private function systemCallBack($request)
-    {
-        $action = $request['action'];
-        $data   = $request['data'];
-
-        $result = [
-            'result' => 'ERROR',
-        ];
 
         switch ($action) {
+            case 'getPeersStatuses':
+                $res = SIPStackProcessor::getPeersStatuses();
+                break;
+            case 'getSipPeer':
+                $res = SIPStackProcessor::getPeerStatus($data['peer']);
+                break;
+            case 'getRegistry':
+                $res = SIPStackProcessor::getRegistry();
+                break;
+            default:
+                $res             = new PBXApiResult();
+                $res->processor = __METHOD__;
+                $res->messages[] = "Unknown action - {$action} in sipCallBack";
+                break;
+        }
+
+        $res->function = $action;
+
+        return $res;
+    }
+
+    /**
+     * Processes IAX requests
+     *
+     * @param array $request
+     *
+     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     */
+    private function iaxCallBack($request): PBXApiResult
+    {
+        $action = $request['action'];
+        switch ($action) {
+            case 'getRegistry':
+                $res = IAXStackProcessor::getRegistry();
+                break;
+            default:
+                $res             = new PBXApiResult();
+                $res->processor = __METHOD__;
+                $res->messages[] = "Unknown action - {$action} in iaxCallBack";
+                break;
+        }
+
+        $res->function = $action;
+
+        return $res;
+    }
+
+    /**
+     * Processes System requests
+     *
+     * @param array $request
+     *
+     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     */
+    private function systemCallBack($request): PBXApiResult
+    {
+        $action = $request['action'];
+        $data   = $request['data'];
+        $res    = new PBXApiResult();
+        $res->processor = __METHOD__;
+        switch ($action) {
             case 'reboot':
-                $result['result'] = 'Success';
                 System::rebootSync();
+                $res->success = true;
                 break;
             case 'shutdown':
-                $result['result'] = 'Success';
                 System::shutdown();
+                $res->success = true;
                 break;
             case 'mergeUploadedFile':
-                $result['result']     = 'Success';
                 $phpPath              = Util::which('php');
                 $workerDownloaderPath = Util::getFilePathByClassName(WorkerMergeUploadedFile::class);
                 Util::mwExecBg("{$phpPath} -f {$workerDownloaderPath} '{$data['settings_file']}'");
+                $res->success = true;
                 break;
             case 'setDate':
-                $result = TimeManagement::setDate($data['date']);
+                $res->success = TimeManagement::setDate($data['date']);
                 break;
             case 'getInfo':
-                $result = System::getInfo();
+                $res = SystemManagementProcessor::getInfo();
                 break;
             case 'sendMail':
                 if (isset($data['email']) && isset($data['subject']) && isset($data['body'])) {
@@ -241,218 +257,214 @@ class WorkerApiCommands extends WorkerBase
                         $data['body']    = base64_decode($data['body']);
                     }
                     $result = Notifications::sendMail($data['email'], $data['subject'], $data['body']);
+                    if ($result===true){
+                        $res->success    = true;
+                    } else {
+                        $res->success    = false;
+                        $res->messages[] = $result;
+                    }
                 } else {
-                    $result['message'] = 'Not all query parameters are populated.';
+                    $res->success    = false;
+                    $res->messages[] = 'Not all query parameters are set';
                 }
                 break;
             case 'fileReadContent':
-                $result = Util::fileReadContent($data['filename'], $data['needOriginal']);
+                $res = FilesManagementProcessor::fileReadContent($data['filename'], $data['needOriginal']);
                 break;
             case 'getExternalIpInfo':
-                $result = System::getExternalIpInfo();
+                $res = NetworkManagementProcessor::getExternalIpInfo();
                 break;
             case 'reloadMsmtp':
                 $notifications = new Notifications();
-                $result        = $notifications->configure();
-                $OtherConfigs  = new VoiceMailConf();
-                $OtherConfigs->generateConfig();
+                $notifications->configure();
+                $voiceMailConfig = new VoiceMailConf();
+                $voiceMailConfig->generateConfig();
                 $asteriskPath = Util::which('asterisk');
                 Util::mwExec("{$asteriskPath} -rx 'voicemail reload'");
+                $res->success = true;
                 break;
             case 'unBanIp':
-                $result = Firewall::fail2banUnbanAll($data['ip']);
+                $res = FirewallManagementProcessor::fail2banUnbanAll($data['ip']);
                 break;
             case 'getBanIp':
-                $result['result'] = 'Success';
-                $result['data']   = Firewall::getBanIp();
+                $res = FirewallManagementProcessor::getBanIp();
                 break;
             case 'startLog':
-                $result['result'] = 'Success';
-                Util::startLog();
+                $res = LogsManagementProcessor::startLog();
                 break;
             case 'stopLog':
-                $result['result']   = 'Success';
-                $result['filename'] = Util::stopLog();
+                $res = LogsManagementProcessor::stopLog();
                 break;
             case 'downloadNewFirmware':
-                $result = System::downloadNewFirmware($request['data']);
+                $res = FilesManagementProcessor::downloadNewFirmware($request['data']);
                 break;
             case 'firmwareDownloadStatus':
-                $result = System::firmwareDownloadStatus();
+                $res = FilesManagementProcessor::firmwareDownloadStatus();
                 break;
             case 'upgrade':
-                $result = System::upgradeFromImg($data['temp_filename']);
+                $res = SystemManagementProcessor::upgradeFromImg($data['temp_filename']);
                 break;
             case 'removeAudioFile':
-                $result = Util::removeAudioFile($data['filename']);
+                $res = FilesManagementProcessor::removeAudioFile($data['filename']);
                 break;
             case 'convertAudioFile':
                 $mvPath = Util::which('mv');
                 Util::mwExec("{$mvPath} {$data['temp_filename']} {$data['filename']}");
-                $result = UploadAndConvertFiles::convertAudioFile($data['filename']);
+                $res = FilesManagementProcessor::convertAudioFile($data['filename']);
                 break;
             case 'downloadNewModule':
                 $module = $request['data']['uniqid'];
-                System::moduleStartDownload(
-                    $module,
-                    $request['data']['url'],
-                    $request['data']['md5']
-                );
-                $result['uniqid'] = $module;
-                $result['result'] = 'Success';
+                $url    = $request['data']['url'];
+                $md5    = $request['data']['md5'];
+                $res    = FilesManagementProcessor::moduleStartDownload($module, $url, $md5);
                 break;
             case 'moduleDownloadStatus':
-                $module             = $request['data']['uniqid'];
-                $result             = System::moduleDownloadStatus($module);
-                $result['function'] = $action;
-                $result['result']   = 'Success';
+                $module = $request['data']['uniqid'];
+                $res    = FilesManagementProcessor::moduleDownloadStatus($module);
                 break;
             case 'installNewModule':
-                $moduleMetadata = UploadAndConvertFiles::getMetadataFromModuleFile($request['data']['filePath']);
-                if ($moduleMetadata['result'] === 'Error') {
-                    return $moduleMetadata;
-                } else {
-                    $result = PbxExtensionUtils::installModule(
-                        $request['data']['filePath'],
-                        $moduleMetadata['data']['uniqid']
-                    );
-                }
+                $filePath = $request['data']['filePath'];
+                $res      = FilesManagementProcessor::installModuleFromFile($filePath);
                 break;
             case 'enableModule':
                 $moduleUniqueID       = $request['data']['uniqid'];
                 $moduleStateProcessor = new PbxExtensionState($moduleUniqueID);
                 if ($moduleStateProcessor->enableModule() === false) {
-                    $result['messages'] = $moduleStateProcessor->getMessages();
+                    $res->success  = false;
+                    $res->messages = $moduleStateProcessor->getMessages();
                 } else {
-                    unset($result);
-                    $result['result'] = 'Success';
+                    $res->success = true;
                 }
                 break;
             case 'disableModule':
                 $moduleUniqueID       = $request['data']['uniqid'];
                 $moduleStateProcessor = new PbxExtensionState($moduleUniqueID);
                 if ($moduleStateProcessor->disableModule() === false) {
-                    $result['messages'] = $moduleStateProcessor->getMessages();
+                    $res->success  = false;
+                    $res->messages = $moduleStateProcessor->getMessages();
                 } else {
-                    unset($result);
-                    $result['result'] = 'Success';
+                    $res->success = true;
                 }
                 break;
             case 'uninstallModule':
-                $result = PbxExtensionUtils::uninstallModule(
-                    $request['data']['uniqid'],
-                    $request['data']['keepSettings']
-                );
+                $moduleUniqueID = $request['data']['uniqid'];
+                $keepSettings   = $request['data']['keepSettings'];
+                $res            = FilesManagementProcessor::uninstallModule($moduleUniqueID, $keepSettings);
                 break;
             default:
-                $result['message'] = 'API action not found in systemCallBack;';
+                $res             = new PBXApiResult();
+                $res->processor = __METHOD__;
+                $res->messages[] = "Unknown action - {$action} in systemCallBack";
         }
 
-        $result['function'] = $action;
+        $res->function = $action;
 
-        return $result;
+        return $res;
     }
 
     /**
-     * Обработка команд управления дисками.
+     * Processes Storage requests
      *
      * @param array $request
      *
-     * @return array
+     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
      */
-    private function storageCallBack($request): array
+    private function storageCallBack($request): PBXApiResult
     {
         $action = $request['action'];
         $data   = $request['data'];
-
-        $result = [
-            'result' => 'ERROR',
-            'data'   => null,
-        ];
-
-        if ('list' === $action) {
-            $st               = new Storage();
-            $result['result'] = 'Success';
-            $result['data']   = $st->getAllHdd();
-        } elseif ('mount' === $action) {
-            $res              = Storage::mountDisk($data['dev'], $data['format'], $data['dir']);
-            $result['result'] = ($res === true) ? 'Success' : 'ERROR';
-        } elseif ('umount' === $action) {
-            $res              = Storage::umountDisk($data['dir']);
-            $result['result'] = ($res === true) ? 'Success' : 'ERROR';
-        } elseif ('mkfs' === $action) {
-            $res              = Storage::mkfs_disk($data['dev']);
-            $result['result'] = ($res === true) ? 'Success' : 'ERROR';
-            $result['data']   = 'inprogress';
-        } elseif ('statusMkfs' === $action) {
-            $result['result'] = 'Success';
-            $result['data']   = Storage::statusMkfs($data['dev']);
+        $res    = new PBXApiResult();
+        $res->processor = __METHOD__;
+        switch ($action) {
+            case 'list':
+                $st           = new Storage();
+                $res->success = true;
+                $res->data    = $st->getAllHdd();
+                break;
+            case 'mount':
+                $res->success = Storage::mountDisk($data['dev'], $data['format'], $data['dir']);
+                break;
+            case 'umount':
+                $res->success = Storage::umountDisk($data['dir']);
+                break;
+            case 'mkfs':
+                $res->success = Storage::mkfs_disk($data['dev']);
+                if ($res->success) {
+                    $res->data['status'] = 'inprogress';
+                }
+                break;
+            case 'statusMkfs':
+                $res->success        = true;
+                $res->data['status'] = Storage::statusMkfs($data['dev']);
+                break;
+            default:
+                $res             = new PBXApiResult();
+                $res->processor = __METHOD__;
+                $res->messages[] = "Unknown action - {$action} in storageCallBack";
         }
-        $result['function'] = $action;
 
-        return $result;
+        $res->function = $action;
+
+        return $res;
     }
 
     /**
-     * Upload files callback
+     * Processes file upload requests
      *
      * @param $request
      *
-     * @return array
+     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
      */
-    private function uploadCallBack($request): array
+    private function uploadCallBack($request): PBXApiResult
     {
         $action   = $request['action'];
         $postData = $request['data'];
         switch ($action) {
             case 'uploadResumable':
-                $result = UploadAndConvertFiles::uploadResumable($postData);
+                $res = FilesManagementProcessor::uploadResumable($postData);
                 break;
             case 'status':
-                $result = UploadAndConvertFiles::statusUploadFile($request['data']);
+                $res = FilesManagementProcessor::statusUploadFile($request['data']);
                 break;
             default:
-                $result = [
-                    'result'  => 'ERROR',
-                    'message' => 'API action not found in uploadCallBack;',
-                ];
+                $res             = new PBXApiResult();
+                $res->processor = __METHOD__;
+                $res->messages[] = "Unknown action - {$action} in uploadCallBack";
         }
 
-        $result['function'] = $action;
+        $res->function = $action;
 
-        return $result;
+        return $res;
     }
 
     /**
-     * Обработка команд управления модулями.
+     * Processes modules API requests
      *
      * @param array $request
      *
-     * @return array
+     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
      */
-    private function modulesCallBack($request): array
+    private function modulesCallBack($request): PBXApiResult
     {
         clearstatcache();
 
         $action = $request['action'];
         $module = $request['module'];
 
-        $result = [
-            'result' => 'ERROR',
-            'data'   => null,
-        ];
+        $res             = new PBXApiResult();
+        $res->processor = __METHOD__;
+        $res->messages[] = "Unknown action - {$action} in modulesCallBack";
+        $res->function   = $action;
 
         // Try process request over additional modules
         foreach ($this->additionalProcessors as [$moduleUniqueId, $moduleConfigObject, $callBack]) {
             if (stripos($module, $moduleUniqueId) === 0) {
-                $result = $moduleConfigObject->$callBack($request);
+                $res = $moduleConfigObject->$callBack($request);
                 break;
             }
         }
 
-        $result['function'] = $action;
-
-        return $result;
+        return $res;
     }
 
 }
@@ -465,7 +477,7 @@ if (isset($argv) && count($argv) > 1 && $argv[1] === 'start') {
         try {
             $worker = new $workerClassname();
             $worker->start($argv);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             global $errorLogger;
             $errorLogger->captureException($e);
             Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage());

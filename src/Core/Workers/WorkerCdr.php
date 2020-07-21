@@ -12,7 +12,6 @@ require_once 'Globals.php';
 
 use MikoPBX\Common\Models\{CallDetailRecordsTmp, Users};
 use MikoPBX\Core\System\{BeanstalkClient, Util};
-use Phalcon\Exception as ExceptionAlias;
 
 /**
  * Class WorkerCdr

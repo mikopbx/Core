@@ -18,8 +18,8 @@ class AstDB
     /**
      * Ссылка на базу данных
      */
-    private $db = null;
-    private $am = null;
+    private ?SQLite3 $db;
+    private $am;
     private $di;
 
     /**
@@ -52,7 +52,7 @@ EOF;
         try {
             $this->db->exec('PRAGMA journal_mode=WAL;');
             $this->db->exec($sql);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->closeDb();
         }
     }
@@ -91,7 +91,7 @@ EOF;
         $sql = "INSERT" . " OR REPLACE INTO astdb (key, value) VALUES ('/{$family}/{$key}', '{$value}')";
         try {
             $result = $this->db->exec($sql);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->closeDb();
             $this->databasePut($family, $key, $value);
         }

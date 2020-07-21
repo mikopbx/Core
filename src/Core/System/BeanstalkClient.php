@@ -68,7 +68,6 @@ class BeanstalkClient
      * @param null $priority
      *
      * @return bool|mixed
-     * @throws \Pheanstalk\Exception\DeadlineSoonException
      */
     public function request($job_data, $timeout = 10, $priority = null)
     {

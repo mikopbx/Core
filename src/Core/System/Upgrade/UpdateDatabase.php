@@ -16,7 +16,6 @@ use Phalcon\Db\Index;
 use Phalcon\Di;
 use Phalcon\Di\Exception;
 use ReflectionClass;
-use ReflectionException;
 use RuntimeException;
 
 use function MikoPBX\Common\Config\appPath;
