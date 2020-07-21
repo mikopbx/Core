@@ -146,16 +146,18 @@ class AdvicesController extends BaseController
         $storageList = json_decode($output, false);
         if ($storageList !== null && property_exists($storageList, 'data')) {
             $storageDiskMounted = false;
-            foreach ($storageList->data as $disk) {
-                if (property_exists($disk, 'mounted')
-                    && strpos($disk->mounted, '/storage/usbdisk') !== false) {
-                    $storageDiskMounted = true;
-                    if ($disk->free_space < 500) {
-                        $messages['warning']
-                            = $this->translation->_(
-                            'adv_StorageDiskRunningOutOfFreeSpace',
-                            ['free' => $disk->free_space]
-                        );
+            if (is_array($storageList->data)){
+                foreach ($storageList->data as $disk) {
+                    if (property_exists($disk, 'mounted')
+                        && strpos($disk->mounted, '/storage/usbdisk') !== false) {
+                        $storageDiskMounted = true;
+                        if ($disk->free_space < 500) {
+                            $messages['warning']
+                                = $this->translation->_(
+                                'adv_StorageDiskRunningOutOfFreeSpace',
+                                ['free' => $disk->free_space]
+                            );
+                        }
                     }
                 }
             }
