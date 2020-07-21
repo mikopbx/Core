@@ -1010,7 +1010,10 @@ class Storage
         }
 
         $downloadCacheDir = appPath('sites/pbxcore/files/cache');
-        Util::mwMkdir($downloadCacheDir);
+        if(!$isLiveCd && strpos($downloadCacheDir, '/offload/') !== 0){
+            Util::mwMkdir($downloadCacheDir);
+        }
+
         Util::createUpdateSymlink($this->config->path('core.downloadCachePath'), $downloadCacheDir);
 
         $jsCacheDir = appPath('sites/admin-cabinet/assets/js/cache');
@@ -1030,7 +1033,9 @@ class Storage
 
         // Create symlinks to AGI-BIN
         $agiBinDir = $this->config->path('asterisk.astagidir');
-        Util::mwMkdir($agiBinDir);
+        if($isLiveCd && strpos($agiBinDir, '/offload/') !== 0){
+            Util::mwMkdir($agiBinDir);
+        }
 
         $roAgiBinFolder = appPath('src/Core/Asterisk/agi-bin');
         $files = glob("$roAgiBinFolder/*.{php}", GLOB_BRACE);

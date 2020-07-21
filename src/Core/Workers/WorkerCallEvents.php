@@ -1080,7 +1080,7 @@ class WorkerCallEvents extends WorkerBase
         if ($m_data === null) {
             $m_data = new CallDetailRecordsTmp();
             $is_new = true;
-        } elseif (isset($data['IS_ORGNT']) && $data['action'] == 'dial') {
+        } elseif (isset($data['IS_ORGNT']) && $data['IS_ORGNT'] !== false && $data['action'] == 'dial') {
             if (empty($m_data->endtime)) {
                 // Если это оригинация dial может прийти дважды.
                 if(!empty($m_data->src_num) && $m_data->src_num === $data['dst_num']){

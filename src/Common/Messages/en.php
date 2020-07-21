@@ -710,7 +710,7 @@ return [
     'sf_AddNewSoundFile' => 'Add a new sound file',
     'sf_FileNotFound' => 'Error - unable to play file',
     'sf_SelectAudioFile' => 'Select the audio file',
-    'sf_ValidationFileNotSelected' => 'Download the audio file first',
+    'sf_ValidationFileNotSelected' => 'You should upload audio file on the fitrst',
     'lic_ValidateCompanyNameEmpty' => 'Required field is not filled - the name of the company',
     'lic_ValidateContactEmail' => 'Required field is not filled - contact person email',
     'lic_ValidateContactName' => 'Required field is not filled - contact person',
