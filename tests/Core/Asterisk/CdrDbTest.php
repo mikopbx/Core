@@ -9,6 +9,7 @@
 
 namespace MikoPBX\Core\Asterisk;
 
+use MikoPBX\PBXCoreREST\Lib\CdrDBProcessor;
 use PHPUnit\Framework\TestCase;
 
 class CdrDbTest extends TestCase
@@ -16,7 +17,7 @@ class CdrDbTest extends TestCase
 
     public function testGetActiveChannels()
     {
-        $result = CdrDb::getActiveChannels();
+        $result = CdrDBProcessor::getActiveChannels();
         self::assertIsArray($result);
     }
 }

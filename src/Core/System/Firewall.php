@@ -376,17 +376,18 @@ class Firewall
         file_put_contents('/etc/fail2ban/filter.d/dropbear.conf', $conf);
 
         // Add module JAIL conf
-        $additionalModules = $this->di->getShared('pbxConfModules');
-        foreach ($additionalModules as $appClass) {
-           if (method_exists($appClass, 'generateFail2BanJails')){
-                $content = $appClass->generateFail2BanJails();
-                if (!empty($content)){
-                    $moduleUniqueId = $appClass->moduleUniqueId;
-                    file_put_contents("/etc/fail2ban/filter.d/{$moduleUniqueId}.conf", $content);
+        if ($this->di!==null){
+            $additionalModules = $this->di->getShared('pbxConfModules');
+            foreach ($additionalModules as $appClass) {
+                if (method_exists($appClass, 'generateFail2BanJails')){
+                    $content = $appClass->generateFail2BanJails();
+                    if (!empty($content)){
+                        $moduleUniqueId = $appClass->moduleUniqueId;
+                        file_put_contents("/etc/fail2ban/filter.d/{$moduleUniqueId}.conf", $content);
+                    }
                 }
-           }
+            }
         }
-
     }
 
     /**

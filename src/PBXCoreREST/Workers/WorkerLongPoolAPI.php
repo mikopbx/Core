@@ -120,7 +120,6 @@ class WorkerLongPoolAPI extends WorkerBase
      * @param $channel
      * @param $common_chan
      *
-     * @return false|string|null
      */
     private function execFunction($channel, $common_chan = null)
     {

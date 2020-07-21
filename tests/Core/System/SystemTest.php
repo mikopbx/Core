@@ -10,6 +10,7 @@
 namespace MikoPBX\Tests\Core\System;
 
 use MikoPBX\Core\System\System;
+use MikoPBX\PBXCoreREST\Lib\NetworkManagementProcessor;
 use MikoPBX\Tests\Unit\AbstractUnitTest;
 
 class SystemTest extends AbstractUnitTest
@@ -157,7 +158,7 @@ class SystemTest extends AbstractUnitTest
 
     public function testGetExternalIpInfo()
     {
-        $result = System::getExternalIpInfo();
+        $result = NetworkManagementProcessor::getExternalIpInfo();
         $this->assertIsArray($result);
     }
 }

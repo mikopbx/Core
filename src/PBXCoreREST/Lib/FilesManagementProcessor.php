@@ -623,7 +623,7 @@ class FilesManagementProcessor extends Injectable
         }
 
         if ($res->success) {
-            $result['needRestartWorkers'] = true;
+            $res->data['needRestartWorkers'] = true;
         }
 
         return $res;
