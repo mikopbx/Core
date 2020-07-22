@@ -17,11 +17,11 @@ use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\Workers\WorkerCallEvents;
 use MikoPBX\Core\Workers\WorkerCdr;
 use MikoPBX\Core\Workers\WorkerLicenseChecker;
-use MikoPBX\Core\Workers\WorkerLongPoolAPI;
 use MikoPBX\Core\Workers\WorkerModelsEvents;
 use MikoPBX\Core\Workers\WorkerNotifyByEmail;
 use MikoPBX\Core\Workers\WorkerNotifyError;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
+use MikoPBX\PBXCoreREST\Workers\WorkerLongPoolAPI;
 use Recoil\React\ReactKernel;
 
 class WorkerSafeScriptsCore extends WorkerBase

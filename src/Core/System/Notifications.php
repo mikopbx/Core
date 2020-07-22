@@ -8,7 +8,7 @@
 
 namespace MikoPBX\Core\System;
 
-use Phalcon\Exception;
+use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use PHPMailer;
 
 /**
@@ -25,18 +25,16 @@ class Notifications
      * @param      $message
      * @param bool $filename
      *
-     * @return array
-     * @throws \PHPMailer\PHPMailer\Exception
+     * @return bool|string
      */
-    public static function sendMail($to, $subject, $message, $filename = false): array
+    public static function sendMail($to, $subject, $message, $filename = false)
     {
         $mikoPBXConfig        = new MikoPBXConfig();
         $settings             = $mikoPBXConfig->getGeneralSettings();
         $enable_notifications = $settings['MailEnableNotifications'];
-        $result               = [];
 
         if ("$enable_notifications" != "1") {
-            return ['result' => 'ERROR', 'message' => 'Notifications disabled...'];
+            return 'Notifications disabled...';
         }
 
         if (isset($settings['MailSMTPSenderAddress']) && trim($settings['MailSMTPSenderAddress']) != '') {
@@ -48,7 +46,7 @@ class Notifications
         // require_once '/etc/inc/PHPMailer/Exception.php';
         // require_once '/etc/inc/PHPMailer/PHPMailer.php';
         // require_once '/etc/inc/PHPMailer/SMTP.php';
-
+        $messages = [];
         try {
             $mail = new PHPMailer\PHPMailer\PHPMailer();
             $mail->isSMTP();
@@ -97,33 +95,26 @@ class Notifications
             $mail->Body    = $message;
 
             if ( ! $mail->send()) {
-                $result['result']  = 'ERROR';
-                $result['message'] = $mail->ErrorInfo;
-            } else {
-                $result['result'] = 'Success';
+                $messages[] = $mail->ErrorInfo;
             }
-        } catch (Exception $e) {
-            $result['result']  = 'ERROR';
-            $result['message'] = $e->getMessage();
+        } catch (\Exception $e) {
+            $messages[] = $e->getMessage();
         }
 
-        if ('ERROR' == $result['result']) {
-            Util::sysLogMsg('PHPMailer', $result['message'], LOG_ERR);
+        if (count($messages)>0) {
+            Util::sysLogMsg('PHPMailer', implode(' ', $messages), LOG_ERR);
+            return implode(' ', $messages);
+        } else {
+            return true;
         }
-
-        return $result;
     }
 
     /**
      * Настройка msmtp.
      *
-     * @return array
      */
-    public function configure(): array
+    public function configure(): void
     {
-        $result = [
-            'result' => 'Success',
-        ];
 
         $mikoPBXConfig = new MikoPBXConfig();
         $settings      = $mikoPBXConfig->getGeneralSettings();
@@ -202,8 +193,6 @@ class Notifications
 
         Util::fileWriteContent("/etc/msmtp.conf", $conf);
         chmod("/etc/msmtp.conf", 384);
-
-        return $result;
     }
 
 }

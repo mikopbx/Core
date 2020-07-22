@@ -33,7 +33,7 @@ const currentCallsWorker = {
 		currentCallsWorker.worker();
 	},
 	worker() {
-		PbxApi.GetCurrentCalls(currentCallsWorker.cbGetCurrentCalls);
+		PbxApi.GetCurrentCalls(currentCallsWorker.cbGetCurrentCalls); //TODO::Проверить согласно новой структуре ответа PBXCore
 		currentCallsWorker.timeoutHandle
 			= window.setTimeout(currentCallsWorker.worker, currentCallsWorker.timeOut);
 	},

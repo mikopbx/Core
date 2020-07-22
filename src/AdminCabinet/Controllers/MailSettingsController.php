@@ -20,6 +20,7 @@ class MailSettingsController extends BaseController
      */
     public function modifyAction(): void
     {
+        $MailSettingsFields = [];
         $arrKeys = $this->getEmailSettingsArray();
         foreach ($arrKeys as $key) {
             $MailSettingsFields[$key] = PbxSettings::getValueByKey($key);

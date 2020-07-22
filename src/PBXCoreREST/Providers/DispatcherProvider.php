@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace MikoPBX\PBXCoreREST\Providers;
 
 
-use MikoPBX\PBXCoreREST\Plugins\SecurityPlugin;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 use Phalcon\Events\Event;
@@ -37,15 +36,8 @@ class DispatcherProvider implements ServiceProviderInterface
             function () {
                 // Create a events manager
                 $eventsManager = new EventsManager();
-                $eventsManager->attach(
-                    'micro:beforeExecuteRoute',
-                    function (Event $event, Micro $app) {
-                        SecurityPlugin::beforeExecuteRoute($event, $app);
-                    }
-                );
                 $dispatcher = new Dispatcher();
                 $dispatcher->setEventsManager($eventsManager);
-
                 return $dispatcher;
             }
         );

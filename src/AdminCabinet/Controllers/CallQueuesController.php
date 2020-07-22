@@ -198,8 +198,6 @@ class CallQueuesController extends BaseController
         foreach ($queue as $name => $value) {
             switch ($name) {
                 case "extension":
-                    $queue->$name = $data[$name];
-                    break;
                 case "name":
                     $queue->$name = $data[$name];
                     break;
@@ -215,12 +213,6 @@ class CallQueuesController extends BaseController
 
                 case "periodic_announce_sound_id":
                 case "redirect_to_extension_if_repeat_exceeded":
-                    if ( ! array_key_exists($name, $data) || empty($data[$name])) {
-                        $queue->$name = null;
-                        continue 2;
-                    }
-                    $queue->$name = $data[$name];
-                    break;
                 case "redirect_to_extension_if_empty":
                     if ( ! array_key_exists($name, $data) || empty($data[$name])) {
                         $queue->$name = null;
@@ -230,6 +222,7 @@ class CallQueuesController extends BaseController
 
                     break;
                 case "timeout_to_redirect_to_extension":
+                case "number_unanswered_calls_to_redirect":
                     if ( ! array_key_exists($name, $data)) {
                         continue 2;
                     }
@@ -249,16 +242,6 @@ class CallQueuesController extends BaseController
                     }
                     $queue->$name = $data[$name];
 
-                    break;
-                case "number_unanswered_calls_to_redirect":
-                    if ( ! array_key_exists($name, $data)) {
-                        continue 2;
-                    }
-                    if (empty($data[$name])) {
-                        $queue->$name = null;
-                    } else {
-                        $queue->$name = $data[$name];
-                    }
                     break;
                 case "redirect_to_extension_if_unanswered":
                     if ( ! array_key_exists($name, $data)
@@ -379,6 +362,6 @@ class CallQueuesController extends BaseController
             $this->db->commit();
         }
 
-        return $this->forward('call-queues/index');
+        $this->forward('call-queues/index');
     }
 }

@@ -43,7 +43,7 @@ class WorkerRemoveOldRecords extends WorkerBase
         }
         $monitor_dir = Storage::getMonitorDir();
         $out         = [];
-        $count_dir   = 1;
+        //$count_dir   = 1;
         $busyboxPath = Util::which('busybox');
         $sortPath = Util::which('sort');
         $findPath = Util::which('find');

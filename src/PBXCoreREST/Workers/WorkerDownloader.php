@@ -6,12 +6,12 @@
  * Written by Alexey Portnov, 2 2020
  */
 
-namespace MikoPBX\Core\Workers;
+namespace MikoPBX\PBXCoreREST\Workers;
 
 require_once 'Globals.php';
 
-use MikoPBX\Core\Workers\Cron\WorkerSafeScriptsCore;
-use MikoPBX\Core\System\{MikoPBXConfig, System, Util};
+use MikoPBX\Core\Workers\WorkerBase;
+use MikoPBX\Core\System\Util;
 
 
 class WorkerDownloader extends WorkerBase

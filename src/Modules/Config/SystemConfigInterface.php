@@ -19,6 +19,11 @@ interface SystemConfigInterface
      */
     public function createCronTasks(&$tasks): void;
 
+    /**
+     * Create additional Nginx locations from modules
+     *
+     */
+    public function createNginxLocations(): string;
 
     /**
      * Обработчик события изменения данных в базе настроек mikopbx.db.
@@ -60,5 +65,12 @@ interface SystemConfigInterface
      */
     public function onBeforeModuleDisable(): bool;
 
+
+    /**
+     * Generates additional fail2ban jail conf rules
+     *
+     * @return string
+     */
+    public function generateFail2BanJails():string;
 
 }

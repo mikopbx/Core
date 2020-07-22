@@ -1,6 +1,5 @@
 <?php
 namespace MikoPBX\AdminCabinet\Controllers;
-use MikoPBX\AdminCabinet\Controllers\BaseController;
 use MikoPBX\Common\Models\Users;
 
 /**
@@ -17,6 +16,8 @@ class UsersController extends BaseController {
 
     /**
      * Проверка на доступность емейл адреса
+     *
+     * @param $email
      */
     public function availableAction($email):void
     {

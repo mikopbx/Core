@@ -10,7 +10,6 @@
 namespace MikoPBX\PBXCoreREST\Controllers\System;
 
 use MikoPBX\Common\Models\SoundFiles;
-use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
 use Phalcon\Di;
 

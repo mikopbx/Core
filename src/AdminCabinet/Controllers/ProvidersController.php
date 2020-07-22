@@ -11,7 +11,6 @@ namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\{IaxProviderEditForm, SipProviderEditForm};
 use MikoPBX\Common\Models\{Codecs, Iax, IaxCodecs, Providers, Sip, SipCodecs};
-use Phalcon\Text;
 
 class ProvidersController extends BaseController
 {
@@ -150,6 +149,8 @@ class ProvidersController extends BaseController
                 $provider = Sip::findFirstByUniqid($uniqid);
                 break;
             }
+            default:
+                $provider = null;
         }
         if ($provider !== null) {
             $provider->disabled = '0';
@@ -179,6 +180,8 @@ class ProvidersController extends BaseController
                 $provider = Sip::findFirstByUniqid($uniqid);
                 break;
             }
+            default:
+                $provider = null;
         }
         if ($provider !== null) {
             $provider->disabled = '1';
@@ -271,6 +274,8 @@ class ProvidersController extends BaseController
             case 'sip':
                 $providerByType = $provider->Sip;
                 break;
+            default:
+                $providerByType = [];
         }
 
         foreach ($providerByType as $name => $value) {
@@ -379,7 +384,7 @@ class ProvidersController extends BaseController
 
         if ($provider !== null) {
             $this->db->begin();
-            $errors = false;
+            $errors = null;
             if ($provider->Iax) {
                 $iax = $provider->Iax;
                 if ( ! $iax->delete()) {

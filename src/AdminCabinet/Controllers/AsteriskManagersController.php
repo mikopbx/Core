@@ -16,7 +16,7 @@ use Phalcon\Mvc\Model\Resultset;
 class AsteriskManagersController extends BaseController
 {
 
-    private $arrCheckBoxes;
+    private array $arrCheckBoxes;
 
     /**
      * Инициализация базового класса

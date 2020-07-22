@@ -9,11 +9,9 @@
 namespace MikoPBX\Core\Asterisk;
 
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
-use MikoPBX\Core\System\{BeanstalkClient, MikoPBXConfig, Storage, Util};
+use MikoPBX\Core\System\{MikoPBXConfig, Storage, Util};
 use MikoPBX\Common\Models\CallEventsLogs;
-use MikoPBX\Core\Workers\WorkerCdr;
 use Phalcon\Di;
-use Pheanstalk\Exception\DeadlineSoonException;
 
 /**
  * Вспомогательные методы.
@@ -172,79 +170,6 @@ class CdrDb
         }
     }
 
-    /**
-     * Получение активных звонков по данным CDR.
-     * @return string
-     * @throws DeadlineSoonException
-     */
-    public static function getActiveCalls(): string
-    {
-        $filter  = [
-            'order'       => 'id',
-            'columns'     => 'start,answer,endtime,src_num,dst_num,did,linkedid',
-            'miko_tmp_db' => true,
-        ];
-        $client  = new BeanstalkClient(WorkerCdr::SELECT_CDR_TUBE);
-        $message = $client->request(json_encode($filter), 2);
-        if ($message == false) {
-            $content = '[]';
-        } else {
-            $content = $message;
-        }
 
-        return $content;
-    }
-
-    /**
-     * Получение активных каналов. Не завершенные звонки (endtime IS NULL).
-     * @return string
-     * @throws DeadlineSoonException
-     */
-    public static function getActiveChannels(): string
-    {
-        $filter  = [
-            'endtime IS NULL',
-            'order'               => 'id',
-            'columns'             => 'start,answer,src_chan,dst_chan,src_num,dst_num,did,linkedid',
-            'miko_tmp_db'         => true,
-            'miko_result_in_file' => true,
-        ];
-        $client  = new BeanstalkClient(WorkerCdr::SELECT_CDR_TUBE);
-        $message = $client->request(json_encode($filter), 2);
-        if ($message == false) {
-            $content = '[]';
-        } else {
-            $result_message = '[]';
-            $am             = Util::getAstManager('off');
-            $active_chans   = $am->GetChannels(true);
-            $am->Logoff();
-            $result_data = [];
-
-            $result = json_decode($message);
-            if (file_exists($result)) {
-                $data = json_decode(file_get_contents($result), true);
-                unlink($result);
-                foreach ($data as $row) {
-                    if ( ! isset($active_chans[$row['linkedid']])) {
-                        // Вызов уже не существует.
-                        continue;
-                    }
-                    if (empty($row['dst_chan']) && empty($row['src_chan'])) {
-                        // Это ошибочная ситуация. Игнорируем такой вызов.
-                        continue;
-                    }
-                    $channels = $active_chans[$row['linkedid']];
-                    if ((empty($row['src_chan']) || in_array($row['src_chan'], $channels))
-                        && (empty($row['dst_chan']) || in_array($row['dst_chan'], $channels))) {
-                        $result_data[] = $row;
-                    }
-                }
-                $result_message = json_encode($result_data, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
-            }
-            $content = $result_message;
-        }
-
-        return $content;
-    }
 
 }

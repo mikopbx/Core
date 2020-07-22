@@ -10,7 +10,7 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\{Iax, IaxCodecs};
 use MikoPBX\Modules\Config\ConfigClass;
-use MikoPBX\Core\System\{MikoPBXConfig, Util};
+use MikoPBX\Core\System\Util;
 
 class IAXConf extends ConfigClass
 {
@@ -31,66 +31,6 @@ class IAXConf extends ConfigClass
 
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/iax.conf', $conf);
         file_put_contents($this->config->path('asterisk.astetcdir') . '/iaxprov.conf', "[default]\ncodec=alaw\n");
-    }
-
-
-
-    /**
-     * Получение статусов регистраций IAX.
-     */
-    public static function getRegistry(): array
-    {
-        $result = [
-            'result' => 'ERROR',
-        ];
-        $peers  = [];
-        $providers = Iax::find();
-        foreach ($providers as $provider) {
-            $peers[] = [
-                'state'      => 'OFF',
-                'id'         => $provider->uniqid,
-                'username'   => trim($provider->username),
-                'host'       => trim($provider->host),
-                'noregister' => $provider->noregister,
-            ];
-        }
-
-        if (Iax::findFirst("disabled = '0'") !== null) {
-            // Find them over AMI
-            $am       = Util::getAstManager('off');
-            $amiRegs  = $am->IAXregistry(); // Registrations
-            $amiPeers = $am->IAXpeerlist(); // Peers
-            $am->Logoff();
-            foreach ($amiPeers as $amiPeer) {
-                $key = array_search($amiPeer['ObjectName'], array_column($peers, 'id'), true);
-                if ($key !== false) {
-                    $currentPeer = &$peers[$key];
-                    if ($currentPeer['noregister'] === '1') {
-                        // Пир без регистрации.
-                        $arr_status                   = explode(' ', $amiPeer['Status']);
-                        $currentPeer['state']         = strtoupper($arr_status[0]);
-                        $currentPeer['time-response'] = strtoupper(str_replace(['(', ')'], '', $arr_status[1]));
-                    } else {
-                        $currentPeer['state'] = 'Error register.';
-                        // Parse active registrations
-                        foreach ($amiRegs as $reg) {
-                            if (
-                                strcasecmp($reg['Addr'], $currentPeer['host']) === 0
-                                && strcasecmp($reg['Username'], $currentPeer['username']) === 0
-                            ) {
-                                $currentPeer['state'] = $reg['State'];
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        $result['data']   = $peers;
-        $result['result'] = 'Success';
-
-        return $result;
     }
 
 

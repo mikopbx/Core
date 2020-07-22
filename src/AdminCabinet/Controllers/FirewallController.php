@@ -330,7 +330,7 @@ class FirewallController extends BaseController
         $this->db->begin();
         $filterRecord = NetworkFilters::findFirstById($networkId);
 
-        $errors = false;
+        $errors = null;
         if ($filterRecord !== null && ! $filterRecord->delete()) {
             $errors = $filterRecord->getMessages();
         }
@@ -342,7 +342,7 @@ class FirewallController extends BaseController
             $this->db->commit();
         }
 
-        return $this->forward('firewall/index');
+        $this->forward('firewall/index');
     }
 
     /**

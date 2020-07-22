@@ -111,9 +111,7 @@ class RouterProvider implements ServiceProviderInterface
             [IaxGetController::class, 'callAction', '/pbxcore/api/iax/{actionName}', 'get', '/'],
 
             [CdrGetController::class, 'callAction', '/pbxcore/api/cdr/{actionName}', 'get', '/'],
-            [CdrGetController::class, 'recordsAction', '/pbxcore/api/cdr/records', 'get', '/'],
             [CdrGetController::class, 'playbackAction', '/pbxcore/api/cdr/playback', 'get', '/'],
-            [CdrGetController::class, 'getDataAction', '/pbxcore/api/cdr/getData', 'get', '/'],
 
             [StorageGetController::class, 'callAction', '/pbxcore/api/storage/{actionName}', 'get', '/'],
             [StoragePostController::class, 'callAction', '/pbxcore/api/storage/{actionName}', 'post', '/'],

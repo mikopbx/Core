@@ -9,6 +9,8 @@
 namespace MikoPBX\Modules\Config;
 
 use MikoPBX\Core\System\MikoPBXConfig;
+use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use Phalcon\Config;
 use Phalcon\Di;
 use ReflectionClass as ReflectionClassAlias;
 
@@ -33,7 +35,7 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
     /**
      * @var \Phalcon\Config
      */
-    protected \Phalcon\Config $config;
+    protected Config $config;
 
     /**
      * @var bool
@@ -409,22 +411,23 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
      *
      * @param array $request
      *
-     * @return array
+     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
      */
-    public function moduleRestAPICallback(array $request): array
+    public function moduleRestAPICallback(array $request): PBXApiResult
     {
-        $result = [];
+        $res = new PBXApiResult();
+        $res->processor = __METHOD__;
         $action = strtoupper($request['action']);
         switch ($action){
             case 'CHECK':
             case 'RELOAD':
-                $result['result']   = 'Success';
+                $res->success = true;
                 break;
             default:
-                $result['result']   = 'ERROR';
-                $result['data'] = 'API action not found in moduleRestAPICallback;';
+                $res->success = false;
+                $res->messages[] = 'API action not found in moduleRestAPICallback';
         }
-        return $result;
+        return $res;
     }
 
     /**
@@ -435,5 +438,24 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
     public function getPBXCoreRESTAdditionalRoutes(): array
     {
         return [];
+    }
+
+    /**
+     * Create additional Nginx locations from modules
+     *
+     */
+    public function createNginxLocations(): string
+    {
+        return '';
+    }
+
+    /**
+     * Generates additional fail2ban jail conf rules from modules
+     *
+     * @return string
+     */
+    public function generateFail2BanJails():string
+    {
+        return '';
     }
 }

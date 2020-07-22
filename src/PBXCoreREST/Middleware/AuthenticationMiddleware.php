@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Middleware;
 
+use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Http\Request;
 use MikoPBX\PBXCoreREST\Http\Response;
 use MikoPBX\PBXCoreREST\Traits\ResponseTrait;
 use Phalcon\Mvc\Micro;
 use Phalcon\Mvc\Micro\MiddlewareInterface;
+
 
 /**
  * Class AuthenticationMiddleware
@@ -35,37 +37,41 @@ class AuthenticationMiddleware implements MiddlewareInterface
             true !== $request->isLocalHostRequest()
             && true !== $request->isAuthorizedSessionRequest()
             && true !== $request->isDebugModeEnabled()
-            && true !== $this->isCTIClientSessionRequest($api) //TODO::Перенести в модуль панели 1
+            && true !== $this->thisIsModuleNoAuthRequest($api)
         ) {
+            Util::sysLogMsg('web_auth', "From: {$request->getClientAddress(true)} UserAgent:{$request->getUserAgent()} Cause: Wrong password");
             $this->halt(
                 $api,
                 $response::OK,
-                'Invalid Token'
+                'Invalid auth token'
             );
-
             return false;
         }
-
         return true;
     }
 
-    public function isCTIClientSessionRequest(Micro $api): bool
+
+    /**
+     * Check additional modules routes access rules
+     * @param \Phalcon\Mvc\Micro $api
+     *
+     * @return bool
+     */
+    public function thisIsModuleNoAuthRequest(Micro $api): bool
     {
-        // Исключения дла авторизации.content-disposition
-        $panel_pattern = [
-            '/pbxcore/api/miko_ajam/getvar', // Тут авторизация basic
-            '/pbxcore/api/cdr/records',      // Тут авторизация basic
-            '/pbxcore/api/cdr/playback',     // Защищен fail2ban
-            '/pbxcore/api/cdr/getData',
-        ];
-        // Текущий паттерн.
         $pattern  = $api->request->getURI(true);
 
-        // Проверяем авторизацию.
-        if ( in_array($pattern, $panel_pattern, true)) {
-            return true;
+        $additionalModules = $api->getService('pbxConfModules');
+        foreach ($additionalModules as $appClass) {
+            /** @var \MikoPBX\Modules\Config\ConfigClass; $appClass */
+            $additionalRoute = $appClass->getPBXCoreRESTAdditionalRoutes();
+            if (is_array($additionalRoute)
+                && count($additionalRoute)===6
+                && $additionalRoute[6]===true
+                && stripos($pattern, $additionalRoute[2])!==0){
+                return true; // Allow request without authentication
+            }
         }
-
         return false;
     }
 

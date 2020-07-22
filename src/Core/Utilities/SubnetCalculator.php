@@ -118,8 +118,8 @@ class SubnetCalculator
     /**
      * Subnet calculation
      *
-     * @param $string    sprintf format to determine if decimal, hex or binary
-     * @param $separator implode separator for formatting quads vs hex and binary
+     * @param $format    string sprintf format to determine if decimal, hex or binary
+     * @param $separator string implode separator for formatting quads vs hex and binary
      *
      * @return string subnet
      */

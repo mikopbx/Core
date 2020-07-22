@@ -11,7 +11,6 @@ namespace MikoPBX\Common\Providers;
 
 
 use MikoPBX\Core\System\Util;
-use Phalcon\Application\Exception;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 use Phalcon\Events\Manager;
@@ -32,7 +31,6 @@ class ModulesDBConnectionsProvider extends DatabaseProviderBase implements Servi
      *
      * @param $di - link to app dependency injector
      *
-     * @throws \Phalcon\Application\Exception
      */
     public function register(DiInterface $di): void
     {

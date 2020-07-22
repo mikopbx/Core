@@ -558,7 +558,6 @@ return [
     'ts_CurrentSettings' => 'Configuraciones actuales',
     'ts_SystemTime' => 'Hora del sistema',
     'ts_TimeZone' => 'Zona horaria',
-    'ex_English' => 'English',
     'ts_ModifySettings' => 'Nueva configuración',
     'ts_ManualAdjustDateTime' => 'Ajuste manual del tiempo',
     'ts_CurrentSystemTime' => 'Hora actual',

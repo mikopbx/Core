@@ -11,6 +11,7 @@ namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\LoginForm;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Core\System\Util;
 
 /**
  * SessionController
@@ -59,13 +60,9 @@ class SessionController extends BaseController
         } else {
             $this->view->success = false;
             $this->flash->error($this->translation->_('auth_WrongLoginPassword'));
-            if (openlog('web_auth', LOG_ODELAY, LOG_LOCAL7)) {
-                syslog(
-                    LOG_WARNING,
-                    "From: {$_SERVER['REMOTE_ADDR']} UserAgent:({$_SERVER['HTTP_USER_AGENT']}) Cause: Wrong password"
-                );
-                closelog();
-            }
+            $remoteAddress = $this->request->getClientAddress(true);
+            $userAgent = $this->request->getUserAgent();
+            Util::sysLogMsg('web_auth', "From: {$remoteAddress} UserAgent:{$userAgent} Cause: Wrong password");
         }
     }
 

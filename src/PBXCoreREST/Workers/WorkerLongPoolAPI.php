@@ -6,14 +6,15 @@
  * Written by Alexey Portnov, 7 2020
  */
 
-namespace MikoPBX\Core\Workers;
+namespace MikoPBX\PBXCoreREST\Workers;
 require_once 'Globals.php';
 use MikoPBX\Common\Models\LongPollSubscribe;
-use MikoPBX\Core\Asterisk\CdrDb;
-use MikoPBX\Core\Asterisk\Configs\{IAXConf, SIPConf};
 use MikoPBX\Core\System\BeanstalkClient;
 use MikoPBX\Core\System\Util;
-use Phalcon\Exception;
+use MikoPBX\Core\Workers\WorkerBase;
+use MikoPBX\PBXCoreREST\Lib\CdrDBProcessor;
+use MikoPBX\PBXCoreREST\Lib\IAXStackProcessor;
+use MikoPBX\PBXCoreREST\Lib\SIPStackProcessor;
 
 use function clearstatcache;
 
@@ -119,7 +120,6 @@ class WorkerLongPoolAPI extends WorkerBase
      * @param $channel
      * @param $common_chan
      *
-     * @return false|string|null
      */
     private function execFunction($channel, $common_chan = null)
     {
@@ -132,13 +132,13 @@ class WorkerLongPoolAPI extends WorkerBase
         if ('ping' === $channel) {
             $data_for_send = 'PONG';
         } elseif ('getActiveChannels' === $channel) {
-            $data_for_send = CdrDb::getActiveChannels();
+            $data_for_send = CdrDBProcessor::getActiveChannels()->getResult();
         } elseif ('getActiveCalls' === $channel) {
-            $data_for_send = CdrDb::getActiveCalls();
+            $data_for_send = CdrDBProcessor::getActiveCalls()->getResult();
         } elseif ('getRegistry' === $channel) {
             $result        = [
-                'SIP' => SIPConf::getRegistry(),
-                'IAX' => IAXConf::getRegistry(),
+                'SIP' => SIPStackProcessor::getRegistry()->getResult(),
+                'IAX' => IAXStackProcessor::getRegistry()->getResult(),
             ];
             $data_for_send = json_encode($result, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
         }
@@ -212,7 +212,7 @@ if (isset($argv) && count($argv) > 1) {
     try {
         $worker = new $workerClassname();
         $worker->start($argv);
-    } catch (Exception $e) {
+    } catch (\Exception $e) {
         global $errorLogger;
         $errorLogger->captureException($e);
         Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage());

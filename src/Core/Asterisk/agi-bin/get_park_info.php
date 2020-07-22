@@ -7,7 +7,7 @@
  * Written by Alexey Portnov, 5 2018
  */
 
-use MikoPBX\Core\System\{Util};
+use MikoPBX\Core\System\Util;
 
 require_once 'Globals.php';
 require_once 'phpagi.php';
@@ -41,5 +41,3 @@ $exten = $agi->get_variable("EXTEN", true);
 $PARK_CHAN = getActiveIdChannels($exten);
 $agi->set_variable("__pt1c_IS_PARK", "1");
 $agi->set_variable("pt1c_PARK_CHAN", $PARK_CHAN);
-
-?>
