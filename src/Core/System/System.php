@@ -651,7 +651,6 @@ class System
 
         // Устанавливаем пароль на пользователя ОС.
         $this->updateShellPassword();
-
         return $result;
     }
 

@@ -1,1 +1,30 @@
-PATH=/sbin:/usr/sbin:/bin:/usr/bin
+#!/bin/bash
+#
+# Copyright © MIKO LLC - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Alexey Portnov, 7 2020
+#
+
+PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/sbin
+export TERM=xterm-color
+export CLICOLOR=1
+export GREP_OPTIONS='--color=auto'
+export LSCOLORS=gxfxcxdxbxegedabagacad
+export HISTCONTROL=ignoredups
+export HISTFILESIZE=100000
+export HISTSIZE=5000
+
+shopt -s histappend
+shopt -s histreedit
+shopt -s histverify
+shopt -s autocd
+shopt -s cdspell
+shopt -s dirspell
+shopt -s cmdhist
+
+alias ls='ls --color=auto'
+alias myip="curl http://ipecho.net/plain; echo"
+
+PS1='\u@\h:\$ '
+PS2='>'

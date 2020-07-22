@@ -44,13 +44,13 @@ while : ; do
         clear;
         rm -rf /tmp/start_sh;
         if [ -f /etc/debian_version ] ; then
-            /bin/bash;
+            /bin/bash -login;
         elif [ "${SSH_CLIENT}x" = 'x' ] ; then
             # Перенаправляем потоки ввода вывода на консоль.
             exec < /dev/console > /dev/console  2>&1
-            exec /bin/sh;
+            exec /bin/bash -login;
         else
-            exec /bin/sh;
+            exec /bin/bash -login;
         fi
     fi
     # Убедимся, что раздел смонтирован.
