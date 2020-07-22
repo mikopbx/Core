@@ -167,17 +167,19 @@ class WorkerCallEvents extends WorkerBase
             $m_data = CallDetailRecordsTmp::find($filter);
             if (count($m_data->toArray()) === 1) {
                 /** @var CallDetailRecordsTmp $m_row_data */
-                $m_row_data           = $m_data[0];
-                $new_data             = $m_row_data->toArray();
-                $new_data['start']    = $data['answer'];
-                $new_data['answer']   = $data['answer'];
-                $new_data['endtime']  = null;
-                $new_data['dst_chan'] = $data['agi_channel'];
-                $new_data['dst_num']  = $data['dst_num'];
-                $new_data['UNIQUEID'] = $data['id'];
+                $m_row_data                 = $m_data[0];
+                $new_data                   = $m_row_data->toArray();
+                $new_data['start']          = $data['answer'];
+                $new_data['answer']         = $data['answer'];
+                $new_data['endtime']        = null;
+                $new_data['dst_chan']       = $data['agi_channel'];
+                $new_data['dst_num']        = $data['dst_num'];
+                $new_data['UNIQUEID']       = $data['id'];
+                $new_data['recordingfile']  = CdrDb::MixMonitor($new_data['dst_chan'],  'pickup_'.$new_data['UNIQUEID']);
+
+                unset($new_data['id']);
                 unset($new_data['end']);
                 self::insertDataToDbM($new_data);
-
                 /**
                  * Отправка UserEvent
                  */
