@@ -14,7 +14,6 @@
 {{ form.render('user_role') }}
 {{ form.render('user_avatar') }}
 {{ form.render('user_id') }}
-
 <input type="file" name ="file-select" id="file-select" style="display: none"/>
 
 <div class="ui top attached tabular menu" id="extensions-menu">
@@ -69,8 +68,8 @@
                <label >{{ t._('ex_Secret') }}</label>
                <div class="ui action input">
                    {{ form.render('sip_secret') }}
-                   <div class="ui teal labeled icon button" id="generate-new-password">
-                       <i class="refresh icon"></i>{{ t._('ex_RegeneratePassword') }}
+                   <div class="ui teal icon button" id="generate-new-password">
+                       <i class="refresh icon"></i>
                    </div>
                </div>
            </div>

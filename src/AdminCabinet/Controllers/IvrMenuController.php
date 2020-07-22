@@ -99,6 +99,8 @@ class IvrMenuController extends BaseController
         $this->view->form       = $form;
         $this->view->ivractions = $ivrActionsList;
         $this->view->represent  = $ivrmenu->getRepresent();
+        $this->view->extension  = $ivrmenu->extension;
+
     }
 
 

@@ -2,7 +2,10 @@
 
 {{ form.render('uniqid') }}
 {{ form.render('id') }}
-
+<div class="ui ribbon label" id="conference-extension-number">
+    <i class="phone icon"></i> {{ extension }}
+</div>
+<h3 class="ui hidden header "></h3>
 <div class="ten wide field">
     <label>{{ t._('cr_Name') }}</label>
     {{ form.render('name') }}

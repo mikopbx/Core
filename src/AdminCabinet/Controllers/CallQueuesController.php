@@ -45,8 +45,7 @@ class CallQueuesController extends BaseController
             $queue->announce_position           = 1;
             $queue->announce_hold_time          = 1;
             $queue->periodic_announce_frequency = 45;
-            $queue->extension
-                                                = Extensions::getNextFreeApplicationNumber();
+            $queue->extension                   = Extensions::getNextFreeApplicationNumber();
         } else {
             // Списк экстеншенов очереди
             $parameters = [
@@ -101,6 +100,7 @@ class CallQueuesController extends BaseController
         $this->view->form            = $form;
         $this->view->extensionsTable = $queueMembersList;
         $this->view->represent       = $queue->getRepresent();
+        $this->view->extension = $queue->extension;
     }
 
 
