@@ -266,9 +266,9 @@ class PbxExtensionState extends Injectable
      *
      * @param bool $enableAction
      *
-     * @return bool
+     * @return void
      */
-    private function refreshNginxLocations(&$configClass, bool $enableAction): bool
+    private function refreshNginxLocations(&$configClass, bool $enableAction): void
     {
         if ($configClass !== null
             && method_exists($configClass, 'createNginxLocations')
@@ -276,7 +276,9 @@ class PbxExtensionState extends Injectable
             if ($enableAction === false) {
                 $locationsPath = $this->di->getShared('config')->path('core.nginxLocationsPath');
                 $confFileName  = "{$locationsPath}/{$configClass->moduleUniqueId}.conf";
-                unlink($confFileName);
+                if (file_exists($confFileName)){
+                    unlink($confFileName);
+                }
             }
             $nginxConf = new NginxConf();
             $nginxConf->generateConf();
@@ -291,9 +293,9 @@ class PbxExtensionState extends Injectable
      *
      * @param bool $enableAction
      *
-     * @return bool
+     * @return void
      */
-    private function refreshFail2BanRules(&$configClass, bool $enableAction): bool
+    private function refreshFail2BanRules(&$configClass, bool $enableAction): void
     {
         if ($configClass !== null
             && method_exists($configClass, 'generateFail2BanJails')
@@ -301,7 +303,9 @@ class PbxExtensionState extends Injectable
             if ($enableAction === false) {
                 $filterPath   = Firewall::fail2banGetFilterPath();
                 $confFileName = "{$filterPath}/{$configClass->moduleUniqueId}.conf";
-                unlink($confFileName);
+                if (file_exists($confFileName)){
+                    unlink($confFileName);
+                }
             }
             Firewall::reloadFirewall();
         }
