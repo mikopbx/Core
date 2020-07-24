@@ -8,6 +8,7 @@
 
 namespace MikoPBX\Core\System;
 
+use MikoPBX\Core\System\Configs\PHPConf;
 use MikoPBX\Core\Workers\WorkerRemoveOldRecords;
 use MikoPBX\Common\Models\Storage as StorageModel;
 use MikoPBX\Common\Providers\ConfigProvider;
@@ -855,7 +856,7 @@ class Storage
         }
         $this->saveFstab($conf);
         $this->createWorkDirs();
-        System::setupPhpLog();
+        PHPConf::setupLog();
     }
 
     /**

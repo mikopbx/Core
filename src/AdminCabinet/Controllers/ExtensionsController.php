@@ -19,8 +19,10 @@ use MikoPBX\Common\Models\{Codecs,
     PbxSettings,
     Sip,
     SipCodecs,
-    Users};
+    Users
+};
 use Phalcon\Text;
+
 use function MikoPBX\Common\Config\appPath;
 
 class ExtensionsController extends BaseController
@@ -84,9 +86,9 @@ class ExtensionsController extends BaseController
                         $extensionTable[$extension->userid]['mobile'] = '';
                     }
                     if ($extension->avatar) {
-                        $filename = md5($extension->avatar);
+                        $filename    = md5($extension->avatar);
                         $imgCacheDir = appPath('sites/admin-cabinet/assets/img/cache');
-                        $imgFile  = "{$imgCacheDir}/$filename.jpg";
+                        $imgFile     = "{$imgCacheDir}/$filename.jpg";
                         if ( ! file_exists($imgFile)) {
                             $this->base64ToJpeg($extension->avatar, $imgFile);
                         }
@@ -228,11 +230,11 @@ class ExtensionsController extends BaseController
 
         $form = new ExtensionEditForm(
             $extension, [
-            'network_filters'        => $arrNetworkFilters,
-            'external_extension'     => $externalExtension,
-            'forwarding_extensions'  => $forwardingExtensions,
-            'internalextension_mask' => $internalExtensionMask,
-        ]
+                          'network_filters'        => $arrNetworkFilters,
+                          'external_extension'     => $externalExtension,
+                          'forwarding_extensions'  => $forwardingExtensions,
+                          'internalextension_mask' => $internalExtensionMask,
+                      ]
         );
 
         $this->view->form      = $form;
@@ -576,7 +578,7 @@ class ExtensionsController extends BaseController
                     'codec'  => $key,
                 ],
             ];
-            $searchKey = str_ireplace('.','_', $key);
+            $searchKey  = str_ireplace('.', '_', $key);
             if (array_key_exists('codec_' . $searchKey, $data) && $data['codec_' . $searchKey] === 'on') {
                 $newCodec = SipCodecs::findFirst($parameters);
                 if ($newCodec === null) {
@@ -628,8 +630,8 @@ class ExtensionsController extends BaseController
                     }
             }
         }
-        if (empty($forwardingRight->forwarding)){
-            $forwardingRight->ringlength=null;
+        if (empty($forwardingRight->forwarding)) {
+            $forwardingRight->ringlength = null;
         }
 
         if ($forwardingRight->save() === false) {
@@ -927,9 +929,11 @@ class ExtensionsController extends BaseController
 
             // Необходимо проверить к какому модулю относится эта запись
             // и включен ли этот модуль в данный момент
-            if ($type === 'MODULES'
-                && PbxExtensionModules::ifModule4ExtensionDisabled($record->number)) {
-                continue; // исключаем отключенные модули
+            if ($type === 'MODULES') {
+                $module = $this->findModuleByExtensionNumber($record->number);
+                if ($module === null || $module->disabled === '1') {
+                    continue; // исключаем отключенные модули
+                }
             }
             $represent        = $record->getRepresent();
             $clearedRepresent = strip_tags($represent);
@@ -965,5 +969,33 @@ class ExtensionsController extends BaseController
     {
         return strcmp($a['sorter'], $b['sorter']);
     }
+
+
+    /**
+     * Try to find module by extension number
+     *
+     * @param string $number
+     *
+     * @return mixed|null
+     */
+    private function findModuleByExtensionNumber(string $number)
+    {
+        $result         = null;
+        $extension      = Extensions::findFirst("number ='{$number}'");
+        $relatedLinks   = $extension->getRelatedLinks();
+        $moduleUniqueID = false;
+        foreach ($relatedLinks as $relation) {
+            $obj = $relation['object'];
+            if (strpos(get_class($obj), 'Modules\\') === 0) {
+                $moduleUniqueID = explode('Models\\', get_class($obj))[1];
+            }
+        }
+        if ($moduleUniqueID) {
+            $result = PbxExtensionModules::findFirstByUniqid($moduleUniqueID);
+        }
+
+        return $result;
+    }
+
 
 }

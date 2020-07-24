@@ -155,7 +155,7 @@ class WorkerCallEvents extends WorkerBase
     public static function Action_dial_answer($data): void
     {
         $mikoPBXConfig = new MikoPBXConfig();
-        $pickupexten   = $mikoPBXConfig->getPickupExten();
+        $pickupexten   = $mikoPBXConfig->getGeneralSettings('PickupExten');
         if (trim($data['dnid']) === $pickupexten) {
             // Pickup / перехват вызова.
             // Событие возникает, когда мы пытаемся перехватить вызов на соседний телефон.

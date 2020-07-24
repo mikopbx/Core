@@ -59,6 +59,9 @@ class ConferenceConf extends ConfigClass
 
         // Генерация внутреннего номерного плана.
         $conf = '';
+        $conf .= "[hangup_handler_meetme]\n\n";
+        $conf .= "exten => s,1,AGI(cdr_connector.php,hangup_chan_meetme)\n\t";
+        $conf .= "same => n,return\n\n";
         $conf .= "[conference-rooms] \n";
         $data = ConferenceRooms::find(['order' => 'extension']);
         foreach ($data as $conference) {

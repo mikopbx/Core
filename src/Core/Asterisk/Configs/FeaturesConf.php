@@ -19,12 +19,11 @@ class FeaturesConf extends ConfigClass
 
     protected function generateConfigProtected(): void
     {
-        $pickup_extension = $this->mikoPBXConfig->getPickupExten();
         $conf             = "[general]\n" .
             "featuredigittimeout = {$this->generalSettings['PBXFeatureDigitTimeout']}\n" .
             "atxfernoanswertimeout = {$this->generalSettings['PBXFeatureAtxferNoAnswerTimeout']}\n" .
             "transferdigittimeout = 3\n" .
-            "pickupexten = {$pickup_extension}\n" .
+            "pickupexten = {$this->generalSettings['PickupExten']}\n" .
             "atxferabort = *0\n" .
             "\n" .
             "[featuremap]\n" .

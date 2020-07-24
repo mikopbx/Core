@@ -58,7 +58,7 @@ class PbxExtensionStatus {
 			this.changeLabelText(globalTranslate.ext_ModuleDisabledStatusEnabled);
 			this.$disabilityFields.removeClass('disabled');
 		}
-		if (response.data !== undefined && response.data.messages !== undefined) {
+		if (response !== undefined && response.messages !== undefined) {
 			UserMessage.showMultiString(response.message, globalTranslate.ext_ModuleChangeStatusError);
 		}
 		this.$toggle.removeClass('disabled');
@@ -79,8 +79,8 @@ class PbxExtensionStatus {
 			this.changeLabelText(globalTranslate.ext_ModuleDisabledStatusDisabled);
 			this.$disabilityFields.addClass('disabled');
 		}
-		if (response.data !== undefined && response.data.messages !== undefined) {
-			UserMessage.showMultiString(response.data.messages, globalTranslate.ext_ModuleChangeStatusError);
+		if (response !== undefined && response.messages !== undefined) {
+			UserMessage.showMultiString(response.messages, globalTranslate.ext_ModuleChangeStatusError);
 		}
 		this.$toggle.removeClass('disabled');
 	}

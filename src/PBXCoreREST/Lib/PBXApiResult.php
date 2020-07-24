@@ -64,8 +64,8 @@ class PBXApiResult
     {
         return [
             'result'=>$this->success?self::SUCCESS:self::ERROR,
-            'data'=>(count($this->data)===1)?$this->data[0]:$this->data,
-            'messages'=>(count($this->messages)===1)?$this->messages[0]:$this->messages,
+            'data'=>(count($this->data)===1)?array_key_first($this->data):$this->data,
+            'messages'=>(count($this->messages)===1)?array_key_first($this->messages):$this->messages,
             'function'=>$this->function,
             'processor'=>$this->processor,
         ];

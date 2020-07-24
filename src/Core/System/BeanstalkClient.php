@@ -9,12 +9,12 @@
 namespace MikoPBX\Core\System;
 
 use Phalcon\Di;
+use Phalcon\Di\Injectable;
 use Pheanstalk\Job;
 use Pheanstalk\Pheanstalk;
 
-class BeanstalkClient
+class BeanstalkClient extends Injectable
 {
-    private $di;
     private $queue;
     private $connected;
     private $job_options;
@@ -32,7 +32,6 @@ class BeanstalkClient
      */
     public function __construct($tube = 'default')
     {
-        $this->di          = Di::getDefault();
         $tube              = str_replace("\\", '-', $tube);
         $this->tube        = $tube;
         $this->job_options = ['priority' => 250, 'delay' => 0, 'ttr' => 3600];

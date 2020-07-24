@@ -95,6 +95,7 @@ class PbxSettings extends ModelsBase
             'MailTplVoicemailSubject'         => 'VoiceMail from PBX',
             'MailTplVoicemailBody'            => 'See attach',
             'VoicemailNotificationsEmail'     => 'admin@mycompany.com',
+            'VoicemailExten'                  => '*001',
             'PBXLanguage'                     => 'en-en',
             'PBXInternalExtensionLength'      => '3',// Длина внутреннего номера
             'PBXRecordCalls'                  => '1',
@@ -108,6 +109,7 @@ class PbxSettings extends ModelsBase
             'PBXFirewallEnabled'              => '0',
             'PBXFail2BanEnabled'              => '0',
             'PBXTimezone'                     => 'Europe/Moscow',
+            'PickupExten'                     => '*8',
             'WebAdminLogin'                   => 'admin',
             'WebAdminPassword'                => 'admin',
             'WebAdminLanguage'                => 'en',

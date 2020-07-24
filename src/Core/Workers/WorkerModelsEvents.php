@@ -34,7 +34,14 @@ use MikoPBX\Common\Models\{AsteriskManagerUsers,
     SipCodecs,
     SoundFiles};
 use MikoPBX\Core\Asterisk\Configs\QueueConf;
-use MikoPBX\Core\System\{BeanstalkClient, Firewall, PBX, System};
+use MikoPBX\Core\System\{BeanstalkClient,
+    Configs\CronConf,
+    Configs\NatsConf,
+    Configs\NginxConf,
+    Configs\SSHConf,
+    Firewall,
+    PBX,
+    System};
 use Phalcon\Exception;
 
 ini_set('error_reporting', E_ALL);
@@ -291,24 +298,23 @@ class WorkerModelsEvents extends WorkerBase
      *
      * @return array
      */
-    private function startReload(): array
+    private function startReload(): void
     {
         if (count($this->modified_tables) === 0) {
-            return [];
+            return;
         }
         $delta = time() - $this->last_change;
         if ($delta < $this->timeout) {
-            return [];
+            return;
         }
 
-        $results = [];
         foreach ($this->PRIORITY_R as $method_name) {
             $action = $this->modified_tables[$method_name] ?? null;
             if ($action === null) {
                 continue;
             }
             if (method_exists($this, $method_name)) {
-                $results[$method_name] = $this->$method_name();
+                $this->$method_name();
             }
         }
 
@@ -316,91 +322,123 @@ class WorkerModelsEvents extends WorkerBase
             $appClass->modelsEventNeedReload($this->modified_tables);
         }
         $this->modified_tables = [];
-
-        return $results;
     }
 
 
-    public function reloadNats(): array
+    /**
+     * Restarts gnats queue server daemon
+     */
+    public function reloadNats():void
     {
-        $system = new System();
-
-        return $system->gnatsStart();
+        $natsConf = new NatsConf();
+        $natsConf->reStart();
     }
 
     /**
-     * @return array
+     * Reloads Asterisk dialplan
      */
-    public function reloadDialplan(): array
+    public function reloadDialplan(): void
     {
-        return PBX::dialplanReload();
+        PBX::dialplanReload();
     }
 
-    public function reloadManager(): array
+    /**
+     * Reloads Asterisk manager interface module
+     */
+    public function reloadManager(): void
     {
-        return PBX::managerReload();
+        PBX::managerReload();
     }
 
-    public function reloadQueues(): array
+    /**
+     * Generates queue.conf and restart asterisk queue module
+     */
+    public function reloadQueues(): void
     {
-        return QueueConf::queueReload();
+        QueueConf::queueReload();
     }
 
-    public function updateCustomFiles(): array
+    /**
+     * Updates custom changes in config files
+     */
+    public function updateCustomFiles(): void
     {
-        return System::updateCustomFiles();
+        System::updateCustomFiles();
     }
 
-    public function reloadFirewall(): array
+    /**
+     * Apply iptable settings and restart firewall
+     */
+    public function reloadFirewall(): void
     {
-        return Firewall::reloadFirewall();
+        Firewall::reloadFirewall();
     }
 
-    public function networkReload(): array
+    /**
+     *  Refresh networks configs and restarts network daemon
+     */
+    public function networkReload(): void
     {
         System::networkReload();
-
-        return ['result' => 'Success'];
     }
 
-    public function reloadIax(): array
+    /**
+     * Refresh IAX configs and reload iax2 module
+     */
+    public function reloadIax(): void
     {
-        return PBX::iaxReload();
+        PBX::iaxReload();
     }
 
-    public function reloadSip(): array
+    /**
+     * Refresh SIP configs and reload PJSIP module
+     */
+    public function reloadSip(): void
     {
-        return PBX::sipReload();
+        PBX::sipReload();
     }
 
-    public function reloadFeatures(): array
+    /**
+     *  Refresh features configs and reload features module
+     */
+    public function reloadFeatures(): void
     {
-        return PBX::featuresReload();
+        PBX::featuresReload();
     }
 
-    public function reloadCron(): array
+    /**
+     * Restarts CROND daemon
+     */
+    public function reloadCron(): void
     {
-        return System::invokeActions(['cron' => 0]);
+        $cron = new CronConf();
+        $cron->reStart();
     }
 
-    public function reloadNginx(): array
+    /**
+     * Restarts Nginx daemon
+     */
+    public function reloadNginx(): void
     {
-        $sys = new System();
-        $sys->nginxStart();
-
-        return ['result' => 'Success'];
+        $nginxConf  = new NginxConf();
+        $nginxConf->reStart();
     }
 
-    public function reloadSSH(): array
+    /**
+     * Configure SSH settings
+     */
+    public function reloadSSH(): void
     {
-        $system = new System();
-
-        return $system->sshdConfigure();
+        $sshConf = new SSHConf();
+        $sshConf->configure();
     }
 
-    public function reloadVoicemail(): array
+    /**
+     *  Reloads Asterisk voicemail module
+     */
+    public function reloadVoicemail(): void
     {
-        return PBX::voicemailReload();
+        PBX::voicemailReload();
     }
 
     public function timeoutHandler()

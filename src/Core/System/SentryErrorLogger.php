@@ -12,21 +12,19 @@ use Exception;
 use Sentry;
 
 /**
- * Class SentryErrorLogger подключет логирование PHP ошибок в облако, для инициализации достаточно вызвать
- * конструктор класса с указанием названия бибилотеки.
+ * Collects errors and send them to Sentry cloud for software improvement reasons
  */
 class SentryErrorLogger
 {
 
-    protected $dsn; // Идентификатор проекта в Sentry
-    protected $libraryName; // название библиотеки для тегирования ошибок, например pbxcore, web-interface и т.д.
-    protected $licKey; // текущий лицензионный ключ
-    protected $companyName; // Компания
-    protected $email; // Компания
-    protected $release; // Релиз АТС
-    protected $environment; // development или production, подменяется в teamcity
-    protected $enabled; // разрешил ли пользователь логирование ошибок в облако
-    protected $di;
+    protected $dsn; // Sentry unique ID
+    protected $libraryName;
+    protected $licKey;
+    protected $companyName;
+    protected $email;
+    protected $release; // MikoPBX release
+    protected $environment; // development or production
+    protected $enabled; // MikoPBX general settings "send errors to developers"
 
 
     public function __construct($libraryName)
@@ -51,7 +49,7 @@ class SentryErrorLogger
      * Если в настройках PBX разрешено отправлять сообщения об ошибках на сервер,
      * то функция инициализирует подпистему облачного логирования ошибок Sentry
      *
-     * @return Boolean - результат инициализации
+     * @return Boolean - initialization result
      */
     public function init(): bool
     {
@@ -85,7 +83,7 @@ class SentryErrorLogger
     }
 
     /**
-     * Обрабатывает ошибку и отправляет ее в Sentry
+     * Process errors and send it to sentry cloud
      *
      * @param Exception $e
      */

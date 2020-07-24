@@ -12,24 +12,13 @@ use Exception;
 use MikoPBX\Common\Models\{LanInterfaces};
 use MikoPBX\Core\Utilities\SubnetCalculator;
 use Phalcon\Di;
+use Phalcon\Di\Injectable;
 
 /**
  * Class Network
  */
-class Network
+class Network extends Injectable
 {
-    /**
-     * @var mixed|\Phalcon\Di\DiInterface|null
-     */
-    private $di;
-
-    /**
-     * Network constructor.
-     */
-    public function __construct()
-    {
-        $this->di = Di::getDefault();
-    }
 
     public static function startSipDump(): void
     {
@@ -637,8 +626,8 @@ class Network
      */
     public function hostsGenerate(): void
     {
-        $s = new System();
-        $s->hostnameConfigure();
+        $network = new Network();
+        $network->hostnameConfigure();
     }
 
     /**
@@ -1001,6 +990,23 @@ class Network
         }
         $interface['dns'] = $dnsSrv;
         return $interface;
+    }
+
+    /**
+     *  Setup hostname
+     **/
+    public function hostnameConfigure(): int
+    {
+        $data       = Network::getHostName();
+        $hosts_conf = "127.0.0.1 localhost\n" .
+            "127.0.0.1 {$data['hostname']}\n";
+        if ( ! empty($data['domain'])) {
+            $hosts_conf .= "127.0.0.1 {$data['hostname']}.{$data['domain']}\n";
+        }
+        Util::fileWriteContent('/etc/hosts', $hosts_conf);
+
+        $hostnamePath = Util::which('hostname');
+        return Util::mwExec($hostnamePath.' '. escapeshellarg("{$data['hostname']}"));
     }
 
 }

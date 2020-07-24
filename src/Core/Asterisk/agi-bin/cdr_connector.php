@@ -172,7 +172,7 @@ function Event_dial_answer($agi, $action)
     $PICKUPEER     = trim('' . $agi->get_variable("PICKUPEER", true));
     $data['dnid']  = $agi->request['agi_dnid'];
     $mikoPBXConfig = new MikoPBXConfig();
-    $pickupexten   = $mikoPBXConfig->getPickupExten();
+    $pickupexten   = $mikoPBXConfig->getGeneralSettings('PickupExten');
     if ('unknown' == $data['dnid'] && $PICKUPEER != '') {
         // Скорее всего ответ на вызов из 1С.
         $data['dnid'] = $pickupexten;

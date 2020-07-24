@@ -193,13 +193,13 @@ class ExtensionsConf extends ConfigClass
 
         $conf .= 'same => n,Goto(peer_${FROM_PEER},${EXTEN},1)' . "\n\n";
 
-        $pickupexten = $this->mikoPBXConfig->getPickupExten();
+        $pickupexten =  $this->generalSettings['PickupExten'];
         $conf        .= 'exten => _' . $pickupexten . $extension . ',1,Set(PICKUPEER=' . $technology . '/${FILTER(0-9,${EXTEN:2})})' . "\n\t";
         $conf        .= 'same => n,Set(pt1c_dnid=${EXTEN})' . "\n\t";
         $conf        .= 'same => n,PickupChan(${PICKUPEER})' . "\n\t";
         $conf        .= 'same => n,Hangup()' . "\n\n";
 
-        $voicemail_exten = $this->mikoPBXConfig->getVoicemailExten();
+        $voicemail_exten = $this->generalSettings['VoicemailExten'];
         $conf            .= 'exten => ' . $voicemail_exten . ',1,NoOp(NOTICE, Dialing out from ${CALLERID(all)} to VoiceMail)' . "\n\t";
         $conf            .= 'same => n,VoiceMailMain(admin@voicemailcontext,s)' . "\n\t";
         $conf            .= 'same => n,Hangup()' . "\n\n";
