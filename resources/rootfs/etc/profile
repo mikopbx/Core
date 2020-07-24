@@ -7,7 +7,7 @@
 #
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/sbin
-export TERM=xterm-color
+# export TERM=xterm-color
 export CLICOLOR=1
 export GREP_OPTIONS='--color=auto'
 export LSCOLORS=gxfxcxdxbxegedabagacad
