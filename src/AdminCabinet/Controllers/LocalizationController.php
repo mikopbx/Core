@@ -19,7 +19,7 @@ class LocalizationController extends BaseController
     public function getTranslatedArrayAction(): void
     {
         $arrStr = [];
-        foreach ($this->messages as $key => $value) {
+        foreach ($this->di->getShared('messages') as $key => $value) {
             $arrStr[$key] = str_replace(["\n", "  ", '"'], ['', '', '\\"'], $value);
         }
 

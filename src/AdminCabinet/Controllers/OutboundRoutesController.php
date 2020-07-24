@@ -63,9 +63,9 @@ class OutboundRoutesController extends BaseController
     /**
      * Карточка редактирования исходящего маршрута
      *
-     * @param null $id
+     * @param string $id
      */
-    public function modifyAction($id = null): void
+    public function modifyAction($id = ''): void
     {
         $rule = OutgoingRoutingTable::findFirstByid($id);
         if ($rule === null) {
@@ -142,9 +142,9 @@ class OutboundRoutesController extends BaseController
     /**
      * Удаление исходящего маршрута из базы данных
      *
-     * @param null $id
+     * @param string $id
      */
-    public function deleteAction($id = null): void
+    public function deleteAction($id = ''): void
     {
         $rule = OutgoingRoutingTable::findFirstByid($id);
         if ($rule !== null) {
@@ -157,9 +157,9 @@ class OutboundRoutesController extends BaseController
     /**
      * Изменение приоритета правила
      *
-     * @param null $ruleid
+     * @param string $ruleid
      */
-    public function changePriorityAction($ruleid = null): void
+    public function changePriorityAction($ruleid = ''): void
     {
         $this->view->disable();
         $result = false;
@@ -176,6 +176,14 @@ class OutboundRoutesController extends BaseController
         echo json_encode($result);
     }
 
+    /**
+     * Sort array
+     *
+     * @param $a
+     * @param $b
+     *
+     * @return int|null
+     */
     private function sortArrayByNameAndState($a, $b): ?int
     {
         $sDisabled = $this->translation->_('mo_Disabled');

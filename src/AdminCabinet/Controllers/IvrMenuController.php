@@ -28,9 +28,9 @@ class IvrMenuController extends BaseController
     /**
      * Карточка редактирования IVR меню
      *
-     * @param null $ivrmenuid идентификатор меню
+     * @param string $ivrmenuid идентификатор меню
      */
-    public function modifyAction($ivrmenuid = null): void
+    public function modifyAction($ivrmenuid = ''): void
     {
         $ivrmenu                = IvrMenu::findFirstByUniqid($ivrmenuid);
         $ivrActionsList         = [];
@@ -288,9 +288,9 @@ class IvrMenuController extends BaseController
     /**
      * Удаление ivr меню
      *
-     * @param null $uniqid
+     * @param string $uniqid
      */
-    public function deleteAction($uniqid = null)
+    public function deleteAction($uniqid = '')
     {
         $this->db->begin();
         $ivrmenu = IvrMenu::findFirstByUniqid($uniqid);

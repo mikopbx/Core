@@ -63,9 +63,9 @@ class OutOffWorkTimeController extends BaseController
     /**
      * Карточка редактирования записи нерабочего времени
      *
-     * @param null $id
+     * @param string $id
      */
-    public function modifyAction($id = null): void
+    public function modifyAction($id = ''): void
     {
         $timeFrame = OutWorkTimes::findFirstById($id);
         if ($timeFrame === null) {
@@ -180,9 +180,9 @@ class OutOffWorkTimeController extends BaseController
     /**
      * Удаление запси с данными о нерабочем времени
      *
-     * @param null $id
+     * @param string $id
      */
-    public function deleteAction($id = null)
+    public function deleteAction($id = '')
     {
         $timeFrame = OutWorkTimes::findFirstByid($id);
         if ($timeFrame !== null) {

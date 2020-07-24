@@ -10,6 +10,7 @@
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\Common\Models\{NetworkFilters, PbxSettings};
+use GuzzleHttp;
 use SimpleXMLElement;
 
 /**
@@ -127,6 +128,7 @@ class AdvicesController extends BaseController
      * Проверка подключен ли диск для хранения данных
      *
      * @return array
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     private function checkStorage(): array
     {
@@ -136,14 +138,12 @@ class AdvicesController extends BaseController
 
         $WEBPort = PbxSettings::getValueByKey('WEBPort');
         $url     = "http://127.0.0.1:{$WEBPort}/pbxcore/api/storage/list";
-        $ch      = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 3);
-        curl_setopt($ch, CURLOPT_COOKIE, session_name() . '=' . $_COOKIE[session_name()]);
-        $output = curl_exec($ch);
-        curl_close($ch);
-        $storageList = json_decode($output, false);
+        $client  = new GuzzleHttp\Client();
+        $res     = $client->request('GET', $url);
+        if ($res->getStatusCode() !== 200) {
+            return [];
+        }
+        $storageList = json_decode($res->getBody(), false);
         if ($storageList !== null && property_exists($storageList, 'data')) {
             $storageDiskMounted = false;
             $disks              = $storageList->data;
@@ -181,21 +181,22 @@ class AdvicesController extends BaseController
     {
         $PBXVersion = $this->getSessionData('PBXVersion');
 
-        $url = 'https://update.askozia.ru/';
-        $ch  = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 3);
-        curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt(
-            $ch,
-            CURLOPT_POSTFIELDS,
-            "TYPE=FIRMWAREGETNEWS&PBXVER={$PBXVersion}"
+        $client = new GuzzleHttp\Client();
+        $res    = $client->request(
+            'POST',
+            'https://update.askozia.ru/',
+            [
+                'form_params' => [
+                    'TYPE'   => 'FIRMWAREGETNEWS',
+                    'PBXVER' => $PBXVersion,
+                ],
+            ]
         );
+        if ($res->getStatusCode() !== 200) {
+            return [];
+        }
 
-        $output = curl_exec($ch);
-        curl_close($ch);
-        $answer = json_decode($output, false);
+        $answer = json_decode($res->getBody(), false);
         if ($answer !== null && $answer->newVersionAvailable === true) {
             $messages['info'] = $this->translation->_(
                 'adv_AvailableNewVersionPBX',

@@ -124,9 +124,9 @@ class FirewallController extends BaseController
     /**
      * Форма редактирования карточки сетевого фильтра
      *
-     * @param null $networkId
+     * @param string $networkId
      */
-    public function modifyAction($networkId = null): void
+    public function modifyAction(string $networkId = ''): void
     {
         $networkFilter = NetworkFilters::findFirstById($networkId);
         $firewallRules = FirewallRules::getDefaultRules();
@@ -323,9 +323,9 @@ class FirewallController extends BaseController
     /**
      * Удаление правил настройки firewall
      *
-     * @param null $networkId
+     * @param string $networkId
      */
-    public function deleteAction($networkId = null)
+    public function deleteAction(string $networkId = '')
     {
         $this->db->begin();
         $filterRecord = NetworkFilters::findFirstById($networkId);

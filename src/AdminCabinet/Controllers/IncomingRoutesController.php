@@ -88,9 +88,9 @@ class IncomingRoutesController extends BaseController
     /**
      * Карточка редактирования входящего маршрута
      *
-     * @param null $ruleId Идентификатор правила маршрутизации
+     * @param string $ruleId Идентификатор правила маршрутизации
      */
-    public function modifyAction($ruleId = null) :void
+    public function modifyAction(string $ruleId = '') :void
     {
         if ((int)$ruleId === 1) {
             $this->forward('incoming-routes/index');
