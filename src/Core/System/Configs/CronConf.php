@@ -94,7 +94,7 @@ class CronConf extends Injectable
      */
     public function reStart(): int
     {
-        $this->generateConfig($this->di->registry->booting);
+        $this->generateConfig($this->di->getShared('registry')->booting);
         if (Util::isSystemctl()) {
             $systemctlPath = Util::which('systemctl');
             Util::mwExec("{$systemctlPath} restart cron");

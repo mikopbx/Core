@@ -73,7 +73,7 @@ class MikoPBXConfig extends Injectable
                 return $settings;
             }
             $result = PbxSettings::getAllPbxSettings();
-            if ($cacheKey && $this->di->registry->booting !== true) {
+            if ($cacheKey && $this->di->getShared('registry')->booting !== true) {
                 $managedCache->set($cacheKey, $result, 3600);
             }
         } else {
