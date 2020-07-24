@@ -20,7 +20,6 @@ use ReflectionClass;
  */
 class Util
 {
-
     /**
      * @param $options
      * @param $manual_attributes

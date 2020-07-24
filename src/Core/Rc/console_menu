@@ -13,16 +13,7 @@ use PhpSchool\CliMenu\Style\SelectableStyle;
 
 use MikoPBX\Common\Models\Storage as StorageModel;
 
-use MikoPBX\Core\System\{
-    Util,
-    Network,
-    PBX,
-    Verify,
-    System,
-    MikoPBXConfig,
-    Firewall,
-    Storage
-};
+use MikoPBX\Core\System\{Configs\NginxConf, Util, Network, PBX, Verify, System, MikoPBXConfig, Firewall, Storage};
 use MikoPBX\Service\Main;
 require_once('Globals.php');
 
@@ -109,8 +100,8 @@ $setup_lan = function (CliMenuBuilder $b){
             $data['dhcp'] = 1;
             $network->updateNetSettings($data);
             $network->lanConfigure();
-            $system  = new System();
-            $system->nginxStart();
+            $nginxConf  = new NginxConf();
+            $nginxConf->reStart();
             sleep(2);
             exit(0);
         })
@@ -168,7 +159,8 @@ $setup_lan = function (CliMenuBuilder $b){
             $network->updateNetSettings($data);
             $network->resolvConfGenerate();
             $network->lanConfigure();
-            $system->nginxStart();
+            $nginxConf  = new NginxConf();
+            $nginxConf->reStart();
 
             echo Util::translate('Press ENTER to continue.');
             sleep(1);

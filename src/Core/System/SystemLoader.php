@@ -8,26 +8,24 @@
 
 namespace MikoPBX\Core\System;
 
+use MikoPBX\Core\System\Configs\CronConf;
+use MikoPBX\Core\System\Configs\NatsConf;
+use MikoPBX\Core\System\Configs\NginxConf;
+use MikoPBX\Core\System\Configs\SSHConf;
+use MikoPBX\Core\System\Configs\SyslogConf;
+use MikoPBX\Core\System\Configs\VMWareToolsConf;
 use MikoPBX\Core\System\Upgrade\UpdateDatabase;
 use MikoPBX\Core\System\Upgrade\UpdateSystemConfig;
-use MikoPBX\Service\Main; // at mikopbx.so
 use Phalcon\Di;
 
-class SystemLoader
+class SystemLoader extends Di\Injectable
 {
-    private $di;
-
-    public function __construct()
-    {
-        $this->di = Di::getDefault();
-    }
-
     /**
      * Load system services
      */
     public function startSystem(): bool
     {
-        $this->di->getRegistry()->booting = true;
+        $this->di->getShared('registry')->booting = true;
         $storage                          = new Storage();
         Util::echoWithSyslog(' - Mount storage disk... ');
         $storage->saveFstab();
@@ -35,8 +33,8 @@ class SystemLoader
         Util::echoGreenDone();
 
         Util::echoWithSyslog(' - Start syslogd daemon...');
-        $system = new System();
-        $system->syslogDaemonStart();
+        $syslogConf = new SyslogConf();
+        $syslogConf->reStart();
         Util::echoGreenDone();
 
         Util::echoWithSyslog(' - Update database ... '. PHP_EOL);
@@ -49,24 +47,25 @@ class SystemLoader
 
 
         Util::echoWithSyslog(' - Load kernel modules ... ');
+        $system = new System();
         $system->loadKernelModules();
         Util::echoGreenDone();
 
         Util::echoWithSyslog(' - Configuring VM tools ... ');
-        $system->vmwareToolsConfigure();
+        $vmwareTools = new VMWareToolsConf();
+        $vmwareTools->configure();
         Util::echoGreenDone();
 
         Util::echoWithSyslog(' - Configuring timezone ... ');
-        $sys = new TimeManagement();
-        $sys->timezoneConfigure();
+        $system->timezoneConfigure();
         Util::echoGreenDone();
 
         Util::echoWithSyslog(' - Configuring hostname ... ');
-        $system->hostnameConfigure();
+        $network = new Network();
+        $network->hostnameConfigure();
         Util::echoGreenDone();
 
         Util::echoWithSyslog(' - Configuring resolv.conf ... ');
-        $network = new Network();
         $network->resolvConfGenerate();
         Util::echoGreenDone();
 
@@ -79,7 +78,8 @@ class SystemLoader
         Util::echoGreenDone();
 
         Util::echoWithSyslog(' - Configuring SSH console ... ');
-        $system->sshdConfigure();
+        $sshConf = new SSHConf();
+        $sshConf->configure();
         Util::echoGreenDone();
 
         Util::echoWithSyslog(' - Configuring msmtp services... ');
@@ -87,7 +87,7 @@ class SystemLoader
         $notifications->configure();
         Util::echoGreenDone();
 
-        $this->di->getRegistry()->booting = false;
+        $this->di->getShared('registry')->booting = false;
 
         return true;
     }
@@ -99,17 +99,19 @@ class SystemLoader
      */
     public function startMikoPBX(): bool
     {
-        $this->di->getRegistry()->booting = true;
+        $this->di->getShared('registry')->booting = true;
         $system                           = new System();
         $pbx                              = new PBX();
 
         Util::echoWithSyslog(' - Start nats queue daemon...');
-        $system->gnatsStart();
+        $natsConf = new NatsConf();
+        $natsConf->reStart();
         Util::echoGreenDone();
 
         Util::echoWithSyslog(' - Start Nginx daemon...');
-        $system->nginxGenerateConf();
-        $system->nginxStart();
+        $nginx = new NginxConf();
+        $nginx->generateConf();
+        $nginx->reStart();
         Util::echoGreenDone();
 
         Util::echoWithSyslog(' - Configuring Asterisk...'.PHP_EOL);
@@ -121,10 +123,11 @@ class SystemLoader
         Util::echoGreenDone();
 
         Util::echoWithSyslog(' - Configuring Cron tasks... ');
-        $system->cronConfigure();
+        $cron = new CronConf();
+        $cron->reStart();
         Util::echoGreenDone();
 
-        $this->di->getRegistry()->booting = false;
+        $this->di->getShared('registry')->booting = false;
 
         return true;
     }

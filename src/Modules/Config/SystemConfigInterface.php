@@ -13,7 +13,7 @@ interface SystemConfigInterface
     public function onAfterPbxStarted(): void;
 
     /**
-     * Добавление задач в crond.
+     * Adds crond rules
      *
      * @param $tasks
      */

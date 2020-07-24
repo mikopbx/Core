@@ -9,7 +9,7 @@
 namespace MikoPBX\PBXCoreREST\Workers;
 
 use MikoPBX\Core\Asterisk\Configs\VoiceMailConf;
-use MikoPBX\Core\System\{BeanstalkClient, Notifications, Storage, System, TimeManagement, Util};
+use MikoPBX\Core\System\{BeanstalkClient, Notifications, Storage, System, Util};
 use MikoPBX\Core\Workers\Cron\WorkerSafeScriptsCore;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\PBXCoreREST\Lib\CdrDBProcessor;
@@ -245,7 +245,7 @@ class WorkerApiCommands extends WorkerBase
                 $res->success = true;
                 break;
             case 'setDate':
-                $res->success = TimeManagement::setDate($data['date']);
+                $res->success = System::setDate($data['date']);
                 break;
             case 'getInfo':
                 $res = SystemManagementProcessor::getInfo();

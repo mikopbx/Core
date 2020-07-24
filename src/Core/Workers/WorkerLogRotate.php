@@ -11,6 +11,7 @@ namespace MikoPBX\Core\Workers;
 
 
 use MikoPBX\Common\Models\PbxExtensionModules;
+use MikoPBX\Core\System\Configs\NatsConf;
 use MikoPBX\Core\System\PBX;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
@@ -26,7 +27,7 @@ class WorkerLogRotate extends WorkerBase
         $lastLogRotateTime = $this->di->getRegistry()->lastLogRotateTime;
         if ($lastLogRotateTime === null || time() - $lastLogRotateTime > 3600){
             //System Logs
-            System::gnatsLogRotate();
+            NatsConf::logRotate();
             System::rotatePhpLog();
             PBX::logRotate();
 

@@ -10,15 +10,11 @@ namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Models\{Fail2BanRules, FirewallRules, NetworkFilters};
 use Phalcon\Di;
+use Phalcon\Di\Injectable;
 use SQLite3;
 
-class Firewall
+class Firewall extends Injectable
 {
-    /**
-     * @var \Phalcon\Di\DiInterface|null
-     */
-    private $di;
-
     private bool $firewall_enable;
     private bool $fail2ban_enable;
 
@@ -27,51 +23,37 @@ class Firewall
      */
     public function __construct()
     {
-        $this->di     = Di::getDefault();
+        $mikoPBXConfig = new MikoPBXConfig();
 
-        $config = new MikoPBXConfig();
-
-        $firewall_enable       = $config->getGeneralSettings('PBXFirewallEnabled');
+        $firewall_enable       = $mikoPBXConfig->getGeneralSettings('PBXFirewallEnabled');
         $this->firewall_enable = ($firewall_enable === '1');
 
-        $fail2ban_enable       = $config->getGeneralSettings('PBXFail2BanEnabled');
+        $fail2ban_enable       = $mikoPBXConfig->getGeneralSettings('PBXFail2BanEnabled');
         $this->fail2ban_enable = ($fail2ban_enable === '1');
-
     }
 
     /**
-     * Рестарт firewall.
-     *
-     * @return array
+     * Apply iptable settings and restart firewall
      */
-    public static function reloadFirewall(): array
+    public static function reloadFirewall(): void
     {
-        $result = [];
-
-        $pid_file = '/var/run/service_reloadFirewall.pid';
+        $pid_file = '/var/run/service_reload_firewall.pid';
         if (file_exists($pid_file)) {
             $old_pid = file_get_contents($pid_file);
             $process = Util::getPidOfProcess("^{$old_pid}");
             if ($process !== '') {
-                $result['result'] = 'ERROR';
-                $result['data']   = 'Another restart process has not yet completed';
-
-                return $result;
+                return; // another restart process exists
             }
         }
         file_put_contents($pid_file, getmypid());
 
         $firewall = new Firewall();
         $firewall->applyConfig();
-
         unlink($pid_file);
-        $result['result'] = 'Success';
-
-        return $result;
     }
 
     /**
-     *    Установка правил Firewall.
+     * Apply iptable settings
      **/
     public function applyConfig(): void
     {
@@ -92,10 +74,10 @@ class Firewall
             $out                 = [];
             Util::fileWriteContent('/etc/firewall_additional', '');
 
-            $catPath = Util::which('cat');
-            $grepPath = Util::which('grep');
+            $catPath     = Util::which('cat');
+            $grepPath    = Util::which('grep');
             $busyboxPath = Util::which('busybox');
-            $awkPath = Util::which('awk');
+            $awkPath     = Util::which('awk');
             Util::mwExec(
                 "{$catPath} /etc/firewall_additional | {$grepPath} -v '|' | {$grepPath} -v '&'| {$grepPath} '^iptables' | {$busyboxPath} {$awkPath} -F ';' '{print $1}'",
                 $arr_commands_custom
@@ -159,8 +141,8 @@ class Firewall
         $filename = basename($res_file);
 
         $old_dir_db = '/cf/fail2ban';
-        $dir_db = '/var/spool/fail2ban';
-        $di     = Di::getDefault();
+        $dir_db     = '/var/spool/fail2ban';
+        $di         = Di::getDefault();
         if ($di !== null) {
             $dir_db = $di->getShared('config')->path('core.fail2banDbDir');
         }
@@ -193,13 +175,23 @@ class Firewall
     }
 
     /**
-     * Возвращает путь к файлу базы данных fail2ban.
+     * Returns fail2ban database path
      *
      * @return string
      */
     public static function fail2banGetDbPath(): string
     {
         return '/var/lib/fail2ban/fail2ban.sqlite3';
+    }
+
+    /**
+     * Returns fail2ban filters path
+     *
+     * @return string
+     */
+    public static function fail2banGetFilterPath(): string
+    {
+        return '/etc/fail2ban/filter.d';
     }
 
     /**
@@ -355,6 +347,8 @@ class Firewall
      */
     private function generateJails(): void
     {
+        $filterPath = self::fail2banGetFilterPath();
+
         $conf = "[INCLUDES]\n" .
             "before = common.conf\n" .
             "[Definition]\n" .
@@ -362,7 +356,7 @@ class Firewall
             'failregex = ^%(__prefix_line)sFrom:\s<HOST>\sUserAgent:(\S|\s)*Wrong password$' . "\n" .
             '            ^(\S|\s)*nginx:\s+\d+/\d+/\d+\s+(\S|\s)*status\s+403(\S|\s)*client:\s+<HOST>(\S|\s)*' . "\n" .
             "ignoreregex =\n";
-        file_put_contents('/etc/fail2ban/filter.d/mikopbx-www.conf', $conf);
+        file_put_contents("{$filterPath}/mikopbx-www.conf", $conf);
 
         $conf = "[INCLUDES]\n" .
             "before = common.conf\n" .
@@ -373,18 +367,16 @@ class Firewall
             '            ^[Bb]ad (PAM )?password attempt for .+ from <HOST>(:\d+)?$' . "\n" .
             '            ^[Ee]xit before auth \(user \'.+\', \d+ fails\): Max auth tries reached - user \'.+\' from <HOST>:\d+\s*$' . "\n" .
             "ignoreregex =\n";
-        file_put_contents('/etc/fail2ban/filter.d/dropbear.conf', $conf);
+        file_put_contents("{$filterPath}/dropbear.conf", $conf);
 
         // Add module JAIL conf
-        if ($this->di!==null){
-            $additionalModules = $this->di->getShared('pbxConfModules');
-            foreach ($additionalModules as $appClass) {
-                if (method_exists($appClass, 'generateFail2BanJails')){
-                    $content = $appClass->generateFail2BanJails();
-                    if (!empty($content)){
-                        $moduleUniqueId = $appClass->moduleUniqueId;
-                        file_put_contents("/etc/fail2ban/filter.d/{$moduleUniqueId}.conf", $content);
-                    }
+        $additionalModules = $this->di->getShared('pbxConfModules');
+        foreach ($additionalModules as $appClass) {
+            if (method_exists($appClass, 'generateFail2BanJails')) {
+                $content = $appClass->generateFail2BanJails();
+                if ( ! empty($content)) {
+                    $moduleUniqueId = $appClass->moduleUniqueId;
+                    file_put_contents("{$filterPath}/{$moduleUniqueId}.conf", $content);
                 }
             }
         }
@@ -405,8 +397,8 @@ class Firewall
         self::cleanFail2banDb();
         Util::killByName('fail2ban-server');
         $fail2banPath = Util::which('fail2ban-client');
-        $cmd_start = "{$fail2banPath} -x start";
-        $command   = "($cmd_start;) > /dev/null 2>&1 &";
+        $cmd_start    = "{$fail2banPath} -x start";
+        $command      = "($cmd_start;) > /dev/null 2>&1 &";
         Util::mwExec($command);
     }
 
@@ -464,8 +456,8 @@ class Firewall
     private function fail2banIsRunning(): bool
     {
         $fail2banPath = Util::which('fail2ban-client');
-        $res_ping = Util::mwExec("{$fail2banPath} ping");
-        $res_stat = Util::mwExec("{$fail2banPath} status");
+        $res_ping     = Util::mwExec("{$fail2banPath} ping");
+        $res_stat     = Util::mwExec("{$fail2banPath} status");
 
         $result = false;
         if ($res_ping === 0 && $res_stat === 0) {

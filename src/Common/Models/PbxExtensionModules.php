@@ -64,34 +64,6 @@ class PbxExtensionModules extends ModelsBase
      */
     public $disabled;
 
-    public static function ifModule4ExtensionDisabled(string $number): bool
-    {
-        $module = self::getModuleByExtension($number);
-        if ($module) {
-            return $module->disabled === '1';
-        }
-
-        return true;
-    }
-
-    public static function getModuleByExtension(string $number)
-    {
-        $result         = false;
-        $extension      = Extensions::findFirst("number ='{$number}'");
-        $relatedLinks   = $extension->getRelatedLinks();
-        $moduleUniqueID = false;
-        foreach ($relatedLinks as $relation) {
-            $obj = $relation['object'];
-            if (strpos(get_class($obj), 'Modules\\') === 0) {
-                $moduleUniqueID = explode('Models\\', get_class($obj))[1];
-            }
-        }
-        if ($moduleUniqueID) {
-            $result = self::findFirst("uniqid='{$moduleUniqueID}'");
-        }
-
-        return $result;
-    }
 
     public function initialize(): void
     {

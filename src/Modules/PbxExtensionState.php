@@ -14,6 +14,9 @@ use MikoPBX\Common\Models\FirewallRules;
 use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Core\System\Configs\NginxConf;
+use MikoPBX\Core\System\Firewall;
+use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use PDOException;
 use Phalcon\Di\Injectable;
@@ -34,11 +37,11 @@ class PbxExtensionState extends Injectable
 
     public function __construct(string $moduleUniqueID)
     {
-        $this->messages        = [];
-        $this->moduleUniqueID  = $moduleUniqueID;
-        $this->modulesRoot           = $this->di->getShared('config')->path('core.modulesDir');
-        $moduleJson            = "{$this->modulesRoot}/{$this->moduleUniqueID}/module.json";
-        if (!file_exists($moduleJson)){
+        $this->messages       = [];
+        $this->moduleUniqueID = $moduleUniqueID;
+        $this->modulesRoot    = $this->di->getShared('config')->path('core.modulesDir');
+        $moduleJson           = "{$this->modulesRoot}/{$this->moduleUniqueID}/module.json";
+        if ( ! file_exists($moduleJson)) {
             $this->messages[] = 'module.json not found for module ' . $this->moduleUniqueID;
 
             return;
@@ -168,8 +171,9 @@ class PbxExtensionState extends Injectable
 
         if ( ! $error) {
             // Если ошибок нет, включаем Firewall и модуль
-            if (!$this->enableFirewallSettings()) {
+            if ( ! $this->enableFirewallSettings()) {
                 $this->messages[] = 'Error on enable firewall settings';
+
                 return false;
             }
 
@@ -179,13 +183,20 @@ class PbxExtensionState extends Injectable
                 if (
                     $module->save() === true
                     && $this->configClass !== null
-                    && method_exists($this->configClass, 'onBeforeModuleEnable')) {
+                    && method_exists($this->configClass, 'onBeforeModuleEnable')
+                ) {
                     $this->configClass->onBeforeModuleEnable();
                 }
             }
+
+            // Restart Nginx if module has locations
+            $this->refreshNginxLocations($this->configClass, true);
+
+            // Reconfigure fail2ban
+            $this->refreshFail2BanRules($this->configClass);
         }
 
-        return !$error;
+        return ! $error;
     }
 
     /**
@@ -252,6 +263,52 @@ class PbxExtensionState extends Injectable
     }
 
     /**
+     * If module has additional locations we will generate it until next reboot
+     *
+     * @param      $configClass
+     *
+     * @param bool $enableAction
+     *
+     * @return bool
+     */
+    private function refreshNginxLocations(&$configClass, bool $enableAction): bool
+    {
+        if ($configClass !== null
+            && method_exists($configClass, 'createNginxLocations')
+            && ! empty($configClass->createNginxLocations())) {
+            if ($enableAction===false){
+                $locationsPath     = $this->di->getShared('config')->path('core.nginxLocationsPath');
+                $confFileName = "{$locationsPath}/{$configClass->moduleUniqueId}.conf";
+                unlink($confFileName);
+            }
+            $nginxConf = new NginxConf();
+            $nginxConf->generateConf();
+            $nginxConf->reStart();
+        }
+    }
+
+    /**
+     * If module has additional fail2ban rules we will generate it until next reboot
+     *
+     * @param $configClass
+     *
+     * @return bool
+     */
+    private function refreshFail2BanRules(&$configClass, bool $enableAction): bool
+    {
+        if ($configClass !== null
+            && method_exists($configClass, 'generateFail2BanJails')
+            && ! empty($configClass->generateFail2BanJails())) {
+            if ($enableAction===false){
+                $filterPath = self::fail2banGetFilterPath();
+                $confFileName = "{$filterPath}/{$configClass->moduleUniqueId}.conf";
+                unlink($confFileName);
+            }
+            Firewall::reloadFirewall();
+        }
+    }
+
+    /**
      * Disable extension module with checking relations
      *
      */
@@ -305,15 +362,14 @@ class PbxExtensionState extends Injectable
                 try {
                     $records = $moduleModelClass::find();
                     foreach ($records as $record) {
-                        if (!$record->beforeDelete()){
+                        if ( ! $record->beforeDelete()) {
                             $messages[] = $record->getMessages();
-                            $error = true;
+                            $error      = true;
                         }
                     }
-                } catch (PDOException $e){
+                } catch (PDOException $e) {
                     $this->messages[] = $e->getMessage();
                 }
-
             }
         }
         if ( ! $error) {
@@ -322,11 +378,11 @@ class PbxExtensionState extends Injectable
         $this->db->rollback(true); // Откатываем временную транзакцию
 
 
-
         if ( ! $error) {
             // Если ошибок нет, выключаем Firewall и модуль
-            if (! $this->disableFirewallSettings()) {
+            if ( ! $this->disableFirewallSettings()) {
                 $this->messages[] = 'Error on disable firewall settings';
+
                 return false;
             }
 
@@ -340,6 +396,8 @@ class PbxExtensionState extends Injectable
                     $this->configClass->onBeforeModuleDisable();
                 }
             }
+            // Refresh Nginx conf if module has any locations
+            $this->refreshNginxLocations($this->configClass, false);
         }
 
         // Kill module workers
@@ -347,11 +405,12 @@ class PbxExtensionState extends Injectable
             && $this->configClass !== null
             && method_exists($this->configClass, 'getModuleWorkers')) {
             $workersToKill = $this->configClass->getModuleWorkers();
-            foreach ($workersToKill as $moduleWorker){
+            foreach ($workersToKill as $moduleWorker) {
                 Util::killByName($moduleWorker['worker']);
             }
         }
-        return !$error;
+
+        return ! $error;
     }
 
     /**
@@ -380,6 +439,7 @@ class PbxExtensionState extends Injectable
         $this->db->begin(true);
         if ( ! $currentRules->delete()) {
             $this->messages[] = $currentRules->getMessages();
+
             return false;
         }
 
@@ -406,10 +466,12 @@ class PbxExtensionState extends Injectable
 
     /**
      * Return messages after function or methods execution
+     *
      * @return array
      */
     public function getMessages(): array
     {
-        return  $this->messages;
+        return $this->messages;
     }
+
 }

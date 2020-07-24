@@ -24,38 +24,15 @@ use MikoPBX\Core\Config\RegisterDIServices;
 use MikoPBX\Core\Workers\WorkerAmiListener;
 use MikoPBX\Core\Workers\WorkerCallEvents;
 use Phalcon\Di;
+use Phalcon\Di\Injectable;
 
 /**
  * Class PBX
  *
  * @package MikoPBX\Core\System
  */
-class PBX
+class PBX extends Injectable
 {
-    /**
-     * @var bool
-     */
-    public $booting;
-    private $di; // Link to the dependency injector
-    private $arrObject;
-    private $arr_gs;
-    /**
-     * @var \MikoPBX\Core\System\MikoPBXConfig
-     */
-    private $mikoPBXConfig;
-
-    /**
-     * PBX constructor.
-     */
-    public function __construct()
-    {
-        $this->di            = Di::getDefault();
-        $this->mikoPBXConfig = new MikoPBXConfig();
-        $this->arr_gs        = $this->mikoPBXConfig->getGeneralSettings();
-        $this->booting       = $this->di->getRegistry()->booting;
-        $this->arrObject     = $this->di->getShared('pbxConfModules');
-    }
-
     /**
      * Перезапуск процесса Asterisk.
      */
@@ -140,59 +117,33 @@ class PBX
     }
 
     /**
-     * Перезапуск модуля features.
-     *
-     * @return array
+     * Refresh features configs and reload features module
      */
-    public static function featuresReload(): array
+    public static function featuresReload(): void
     {
         $featuresConf = new FeaturesConf();
         $featuresConf->generateConfig();
-        $result       = [
-            'result' => 'Success',
-        ];
         $arr_out      = [];
         $asteriskPath = Util::which('asterisk');
         Util::mwExec("{$asteriskPath} -rx 'module reload features'", $arr_out);
-        $out = implode(' ', $arr_out);
-        if ( ! "Module 'features' reloaded successfully." === $out) {
-            $result['result'] = 'ERROR';
-        }
-        $result['data'] = $out;
-
-        return $result;
     }
 
     /**
-     * Перезапуск большинства модулей asterisk.
-     *
-     * @return array
+     * Restarts asterisk core
      */
-    public static function coreReload(): array
+    public static function coreReload(): void
     {
         $featuresConf = new FeaturesConf();
         $featuresConf->generateConfig();
-        $result       = [
-            'result' => 'Success',
-        ];
         $arr_out      = [];
         $asteriskPath = Util::which('asterisk');
         Util::mwExec("{$asteriskPath} -rx 'core reload'", $arr_out);
-        $out = implode(' ', $arr_out);
-        if ('' !== $out) {
-            $result['result'] = 'ERROR';
-        }
-        $result['data'] = $out;
-
-        return $result;
     }
 
     /**
-     * Перезапуск manager модуля.
-     *
-     * @return array
+     *  Reloads Asterisk manager interface module
      */
-    public static function managerReload(): array
+    public static function managerReload(): void
     {
         $managerCong = new ManagerConf();
         $managerCong->generateConfig();
@@ -200,66 +151,38 @@ class PBX
         $httpConf = new HttpConf();
         $httpConf->generateConfig();
 
-        $result       = [
-            'result' => 'Success',
-            'data'   => '',
-        ];
         $arr_out      = [];
         $asteriskPath = Util::which('asterisk');
         Util::mwExec("{$asteriskPath} -rx 'module reload manager'", $arr_out);
-        $out = implode(' ', $arr_out);
-        if ( ! "Module 'manager' reloaded successfully." === $out) {
-            $result['result'] = 'ERROR';
-        }
-        $result['data'] .= $out;
-
         Util::mwExec("{$asteriskPath} -rx 'module reload http'", $arr_out);
-        $out = implode(' ', $arr_out);
-        if ( ! "Module 'http' reloaded successfully." === trim($out)) {
-            $result['result'] = 'ERROR';
-        }
-        $result['data'] .= " $out";
-
-        return $result;
     }
 
-    public static function musicOnHoldReload(): array
+    /**
+     *  Reloads Asterisk music on hold module
+     */
+    public static function musicOnHoldReload(): void
     {
         $o = new MusicOnHoldConf();
         $o->generateConfig();
         $asteriskPath = Util::which('asterisk');
-        Util::mwExec("{$asteriskPath} -rx 'module reload manager'");
-
-        return [
-            'result' => 'Success',
-            'data'   => '',
-        ];
+        Util::mwExec("{$asteriskPath} -rx 'moh reload'");
     }
 
     /**
-     * Перезапуск модуля voicemail
-     *
-     * @return array
+     *  Reloads Asterisk voicemail module
      */
-    public static function voicemailReload(): array
+    public static function voicemailReload(): void
     {
         $o = new VoiceMailConf();
         $o->generateConfig();
-        $result       = [
-            'result' => 'Success',
-        ];
         $arr_out      = [];
         $asteriskPath = Util::which('asterisk');
         Util::mwExec("{$asteriskPath} -rx 'voicemail reload'", $arr_out);
-        $out = implode(' ', $arr_out);
-        if ('Reloading voicemail configuration...' !== $out) {
-            $result['result'] = 'ERROR';
-        }
-        $result['data'] = $out;
-
-        return $result;
     }
 
+    /**
+     *  Reloads Asterisk modules
+     */
     public static function modulesReload(): array
     {
         $pbx = new ModulesConf();
@@ -289,17 +212,13 @@ class PBX
     }
 
     /**
-     * Reload SIP
+     *  Refresh SIP configs and reload PJSIP module
      */
-    public static function sipReload(): array
+    public static function sipReload():void
     {
         $di     = Di::getDefault();
-        $result = [
-            'result'  => 'ERROR',
-            'message' => '',
-        ];
         if ($di === null) {
-            return $result;
+            return;
         }
         $network = new Network();
 
@@ -328,50 +247,29 @@ class PBX
         $sip = new SIPConf();
         $sip->generateConfig();
 
-
         $out = [];
         if ($old_hash === $now_hadh) {
             $asteriskPath = Util::which('asterisk');
             Util::mwExec("{$asteriskPath} -rx 'module reload acl'", $out);
             Util::mwExec("{$asteriskPath} -rx 'core reload'", $out);
-            $out_data = trim(implode('', $out));
-            if ($out_data !== '') {
-                $result['message'] .= $out_data;
-            }
         } else {
             // Завершаем каналы.
             $asteriskPath = Util::which('asterisk');
             Util::mwExec("{$asteriskPath} -rx 'channel request hangup all'", $out);
             usleep(500000);
             Util::mwExec("{$asteriskPath} -rx 'core restart now'", $out);
-            $out_data = trim(implode('', $out));
-            if ($out_data !== '') {
-                $result['message'] .= $out_data;
-            }
         }
-
-        if ($result['message'] === '') {
-            $result['result'] = 'Success';
-        }
-
-        return $result;
     }
 
     /**
-     * Перезапуск модуля IAX2;
+     * Refresh IAX configs and reload iax2 module
      */
-    public static function iaxReload(): array
+    public static function iaxReload(): void
     {
-        $result = [
-            'result' => 'ERROR',
-        ];
         $iax    = new IAXConf();
         $iax->generateConfig();
         $asteriskPath = Util::which('asterisk');
         Util::mwExec("{$asteriskPath} -rx 'iax2 reload'");
-        $result['result'] = 'Success';
-
-        return $result;
     }
 
     /**
@@ -419,17 +317,17 @@ class PBX
             'result' => 'ERROR',
         ];
 
-        if ( ! $this->booting) {
+        if ( ! $this->registry->booting) {
             $this->stop();
         }
         /**
          * Создание конфигурационных файлов.
          */
-        foreach ($this->arrObject as $appClass) {
+        foreach ($this->pbxConfModules as $appClass) {
             $appClass->generateConfig();
         }
         self::dialplanReload();
-        if ($this->booting) {
+        if ($this->registry->booting) {
             echo "   |- dialplan reload \033[32;1mdone\033[0m \n";
         }
         // Создание базы данных истории звонков.
@@ -451,28 +349,19 @@ class PBX
      *
      * @return array
      */
-    public static function dialplanReload(): array
+    public static function dialplanReload(): void
     {
-        $di      = Di::getDefault();
-        $booting = $di->getRegistry()->booting;
-        $result  = [
-            'result' => 'ERROR',
-        ];
+        $di = Di::getDefault();
         if ($di === null) {
-            return $result;
+            return;
         }
-
         $extensions = new ExtensionsConf();
         $extensions->generateConfig();
-        if ($booting !== true) {
+        if ($di->getRegistry()->booting !== true) {
             $path_asterisk = Util::which('asterisk');
             Util::mwExec("{$path_asterisk} -rx 'dialplan reload'");
             Util::mwExec("{$path_asterisk} -rx 'module reload pbx_lua.so'");
         }
-
-        $result['result'] = 'Success';
-
-        return $result;
     }
 
 }

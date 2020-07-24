@@ -1,0 +1,108 @@
+<?php
+/**
+ * Copyright (C) MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Nikolay Beketov, 7 2020
+ *
+ */
+
+namespace MikoPBX\Core\System\Configs;
+
+
+use MikoPBX\Core\System\MikoPBXConfig;
+use MikoPBX\Core\System\System;
+use MikoPBX\Core\System\Util;
+use Phalcon\Di;
+use Phalcon\Di\Injectable;
+
+class PHPConf extends Injectable
+{
+
+    /**
+     * Relocate PHP error log to storage mount
+     */
+    public static function setupLog(): void
+    {
+        $src_log_file = '/var/log/php_error.log';
+        $dst_log_file = self::getLogFile();
+        if ( ! file_exists($src_log_file)) {
+            file_put_contents($src_log_file, '');
+        }
+        $options = file_exists($dst_log_file) ? '>' : '';
+        $catPath = Util::which('cat');
+        Util::mwExec("{$catPath} {$src_log_file} 2> /dev/null >{$options} {$dst_log_file}");
+        Util::createUpdateSymlink($dst_log_file, $src_log_file);
+    }
+
+
+    /**
+     * Returns php error log filepath
+     * @return string
+     */
+    public static function getLogFile(): string
+    {
+        $logdir = System::getLogDir() . '/php';
+        Util::mwMkdir($logdir);
+        return "$logdir/error.log";
+    }
+
+    /**
+     * Rotate php error log
+     */
+    public static function rotateLog(): void
+    {
+        $asteriskPath = Util::which('asterisk');
+        $logrotatePath = Util::which('logrotate');
+
+        $max_size    = 2;
+        $f_name      = self::getLogFile();
+        $text_config = (string)($f_name) . " {
+    nocreate
+    nocopytruncate
+    delaycompress
+    nomissingok
+    start 0
+    rotate 9
+    size {$max_size}M
+    missingok
+    noolddir
+    postrotate
+        {$asteriskPath} -rx 'logger reload' > /dev/null 2> /dev/null
+    endscript
+}";
+        $di     = Di::getDefault();
+        if ($di !== null){
+            $varEtcPath = $di->getConfig()->path('core.varEtcPath');
+        } else {
+            $varEtcPath = '/var/etc';
+        }
+        $path_conf   = $varEtcPath . '/php_logrotate_' . basename($f_name) . '.conf';
+        file_put_contents($path_conf, $text_config);
+        $mb10 = $max_size * 1024 * 1024;
+
+        $options = '';
+        if (Util::mFileSize($f_name) > $mb10) {
+            $options = '-f';
+        }
+        Util::mwExecBg("{$logrotatePath} {$options} '{$path_conf}' > /dev/null 2> /dev/null");
+    }
+
+    /**
+     * Setup timezone for PHP
+     */
+    public static function phpTimeZoneConfigure(): void
+    {
+        $mikoPBXConfig = new MikoPBXConfig();
+        $timezone      = $mikoPBXConfig->getGeneralSettings('PBXTimezone');
+        date_default_timezone_set($timezone);
+        if (file_exists('/etc/TZ')) {
+            $catPath = Util::which('cat');
+            Util::mwExec("export TZ='$({$catPath} /etc/TZ)'");
+        }
+        $etcPhpIniPath = '/etc/php.ini';
+        $contents = file_get_contents($etcPhpIniPath);
+        $contents = preg_replace("/date.timezone(.*)/", 'date.timezone="'.$timezone.'"', $contents);
+        Util::fileWriteContent($etcPhpIniPath, $contents);
+    }
+}

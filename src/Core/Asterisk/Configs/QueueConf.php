@@ -227,26 +227,14 @@ class QueueConf extends ConfigClass
     }
 
     /**
-     * Генерация конфига очередей. Рестарт модуля очередей.
+     * Generates queue.conf and restart asterisk queue module
      */
-    public static function queueReload(): array
+    public static function queueReload(): void
     {
-        $result           = [
-            'result' => 'ERROR',
-        ];
         $queue            = new self();
         $queue->generateConfig();
         $out = [];
         $asteriskPath = Util::which('asterisk');
         Util::mwExec("{$asteriskPath} -rx 'queue reload all '", $out);
-        $out_data = trim(implode('', $out));
-        if ($out_data == '') {
-            $result['result'] = 'Success';
-        } else {
-            $result['result']  = 'ERROR';
-            $result['message'] = "$out_data";
-        }
-
-        return $result;
     }
 }
