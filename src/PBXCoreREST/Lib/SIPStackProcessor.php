@@ -1,10 +1,9 @@
 <?php
 /**
- * Copyright (C) MIKO LLC - All Rights Reserved
+ * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 7 2020
- *
+ * Written by Alexey Portnov, 7 2020
  */
 
 namespace MikoPBX\PBXCoreREST\Lib;
@@ -63,10 +62,9 @@ class SIPStackProcessor extends Injectable
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
-        $am     = Util::getAstManager('off');
-        $peers = $am->getPjSipRegistry();
-
-        $providers = Sip::find("type = 'friend'");
+        $am         = Util::getAstManager('off');
+        $peers      = $am->getPjSipRegistry();
+        $providers  = Sip::find("type = 'friend'");
         foreach ($providers as $provider) {
             if ($provider->disabled === '1') {
                 $peers[] = [
@@ -87,8 +85,10 @@ class SIPStackProcessor extends Injectable
                 ];
                 continue;
             }
-
             foreach ($peers as &$peer) {
+                if(!empty($peer['id'])){
+                    continue;
+                }
                 if ($peer['host'] !== $provider->host || $peer['username'] !== $provider->username) {
                     continue;
                 }
