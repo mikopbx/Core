@@ -19,14 +19,8 @@ use function MikoPBX\Common\Config\appPath;
 /**
  * Вспомогательные методы.
  */
-class Storage
+class Storage extends Di\Injectable
 {
-
-    /**
-     * @var \Phalcon\Di\DiInterface|null
-     */
-    private $di;
-
     /**
      * @var \Phalcon\Config
      */
@@ -37,7 +31,6 @@ class Storage
      */
     public function __construct()
     {
-        $this->di     = Di::getDefault();
         $this->config = $this->di->getShared('config');
     }
 

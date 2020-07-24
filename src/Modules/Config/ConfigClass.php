@@ -11,10 +11,10 @@ namespace MikoPBX\Modules\Config;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Config;
-use Phalcon\Di;
+use Phalcon\Di\Injectable;
 use ReflectionClass as ReflectionClassAlias;
 
-abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInterface, RestAPIConfigInterface
+abstract class ConfigClass extends Injectable implements SystemConfigInterface, AsteriskConfigInterface, RestAPIConfigInterface
 {
 
     /**
@@ -22,10 +22,6 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
      */
     public const ID_CONFIG_CLASS =  'InternalConfigModule';
 
-    /**
-     * Dependency injections
-     */
-    protected $di;
 
     /**
      * @var \MikoPBX\Core\System\MikoPBXConfig
@@ -75,9 +71,8 @@ abstract class ConfigClass implements SystemConfigInterface, AsteriskConfigInter
      */
     public function __construct()
     {
-        $this->di            = Di::getDefault();
         $this->config        = $this->di->getShared('config');
-        $this->booting       = $this->di->getRegistry()->booting===true;
+        $this->booting       = $this->di->getShared('registry')->booting===true;
         $this->mikoPBXConfig = new MikoPBXConfig();
         $this->generalSettings = $this->mikoPBXConfig->getGeneralSettings();
         $this->moduleUniqueId = ConfigClass::ID_CONFIG_CLASS;

@@ -24,13 +24,8 @@ use MikoPBX\Core\System\Storage;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di;
 
-class UpdateSystemConfig
+class UpdateSystemConfig extends Di\Injectable
 {
-    /**
-     * @var \Phalcon\Di\DiInterface|null
-     */
-    private $di;
-
     /**
      * @var \Phalcon\Config
      */
@@ -46,7 +41,6 @@ class UpdateSystemConfig
      */
     public function __construct()
     {
-        $this->di     = Di::getDefault();
         $this->config = $this->di->getShared('config');
         $this->mikoPBXConfig = new MikoPBXConfig();
     }

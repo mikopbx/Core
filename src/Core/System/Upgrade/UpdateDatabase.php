@@ -21,12 +21,8 @@ use RuntimeException;
 use function MikoPBX\Common\Config\appPath;
 
 
-class UpdateDatabase
+class UpdateDatabase extends Di\Injectable
 {
-    /**
-     * @var \Phalcon\Di\DiInterface|null
-     */
-    private $di;
 
     /**
      * @var \Phalcon\Config
@@ -34,16 +30,11 @@ class UpdateDatabase
     private $config;
 
     /**
-     * System constructor.
+     * UpdateDatabase constructor.
      *
-     * @throws \Phalcon\Di\Exception
      */
     public function __construct()
     {
-        $this->di     = Di::getDefault();
-        if ($this->di === null){
-            throw new Exception('\Phalcon\DI did not installed.');
-        }
         $this->config = $this->di->getShared('config');
     }
 

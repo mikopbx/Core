@@ -20,13 +20,8 @@ use ReflectionClass as ReflectionClassAlias;
  * Общие для всех модулей методы
  * Подключается при установке, удалении модуля
  */
-abstract class PbxExtensionBase
+abstract class PbxExtensionBase extends Di\Injectable
 {
-    /**
-     * Dependency injector
-     */
-    public  ?DiInterface $di;
-
     /**
      * Module directory
      * @var string
@@ -53,15 +48,9 @@ abstract class PbxExtensionBase
     /**
      * PbxExtensionBase constructor.
      *
-     * @throws \Phalcon\Di\Exception
      */
     public function __construct()
     {
-        $this->di      = Di::getDefault();
-
-        if ($this->di === null){
-            throw new Exception('\Phalcon\DI not installed');
-        }
         $this->config  = $this->di->getShared('config');
         $modulesDir    = $this->config->path('core.modulesDir');
 

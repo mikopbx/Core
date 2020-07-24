@@ -8,19 +8,14 @@
 
 namespace MikoPBX\Core\Workers;
 
-
-
 use AGI_AsteriskManager;
 use MikoPBX\Core\System\BeanstalkClient;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di;
 use Phalcon\Text;
 
-abstract class WorkerBase implements WorkerInterface
+abstract class WorkerBase extends Di\Injectable implements WorkerInterface
 {
-
-    /** @var Di $di */
-    protected $di;
     protected AGI_AsteriskManager $am;
     protected int $maxProc=0;
 
@@ -29,8 +24,6 @@ abstract class WorkerBase implements WorkerInterface
      */
     public function __construct()
     {
-        $this->di = Di::getDefault();
-
         $this->checkCountProcesses();
         $this->savePidFile();
     }

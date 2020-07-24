@@ -13,21 +13,19 @@ use Phalcon\Di;
 use Phalcon\Exception;
 use SQLite3;
 
-class AstDB
+class AstDB extends Di\Injectable
 {
     /**
      * Ссылка на базу данных
      */
     private ?SQLite3 $db;
     private $am;
-    private $di;
 
     /**
      * AstDB constructor.
      */
     public function __construct()
     {
-        $this->di = Di::getDefault();
         $this->am = Util::getAstManager('off');
         $this->db = new SQLite3($this->di->getShared('config')->path('astDatabase.dbfile'));
         $this->db->busyTimeout(1000);

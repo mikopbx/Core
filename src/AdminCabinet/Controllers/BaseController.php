@@ -29,19 +29,15 @@ use Sentry\SentrySdk;
  */
 class BaseController extends Controller
 {
-
-    protected $di;
     protected $actionName;
     protected $controllerName;
     protected $controllerNameUnCamelized;
-
 
     /**
      * Инициализация базововго класса
      */
     public function initialize(): void
     {
-        $this->di                        = $this->getDi();
         $this->actionName                = $this->dispatcher->getActionName();
         $this->controllerName            = Text::camelize($this->dispatcher->getControllerName(), '_');
         $this->controllerNameUnCamelized = Text::uncamelize($this->controllerName, '-');
@@ -52,7 +48,6 @@ class BaseController extends Controller
             $this->prepareView();
         }
     }
-
 
     /**
      * Инициализирует шаблонизатор View и устанавливает переменные системы для отображения

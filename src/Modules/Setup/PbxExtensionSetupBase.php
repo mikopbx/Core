@@ -14,6 +14,7 @@ use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings};
 use MikoPBX\Core\System\Util;
 use Phalcon\DI;
 use Phalcon\Di\Exception;
+use Phalcon\Di\Injectable;
 use Phalcon\Text;
 use Throwable;
 
@@ -24,7 +25,7 @@ use function MikoPBX\Common\Config\appPath;
  * Общие для всех модулей методы
  * Подключается при установке, удалении модуля
  */
-abstract class PbxExtensionSetupBase implements PbxExtensionSetupInterface
+abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionSetupInterface
 {
     /**
      * Trial product version identify number from module.json
@@ -98,13 +99,6 @@ abstract class PbxExtensionSetupBase implements PbxExtensionSetupInterface
     protected $license;
 
     /**
-     * Dependency injector
-     *
-     * @var \Phalcon\DI
-     */
-    private $di;
-
-    /**
      * Error and verbose messages
      *
      * @var array
@@ -116,16 +110,11 @@ abstract class PbxExtensionSetupBase implements PbxExtensionSetupInterface
      *
      * @param $moduleUniqueID
      *
-     * @throws \Phalcon\Exception
      */
     public function __construct($moduleUniqueID = null)
     {
         if ($moduleUniqueID !== null) {
             $this->moduleUniqueID = $moduleUniqueID;
-        }
-        $this->di      = DI::getDefault();
-        if ($this->di === null){
-            throw new Exception('\Phalcon\DI did not installed.');
         }
         $this->db      = $this->di->getShared('db');
         $this->config  = $this->di->getShared('config');
