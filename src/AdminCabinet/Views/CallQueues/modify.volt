@@ -3,7 +3,9 @@
 <input type="hidden" name="dirrty" id="dirrty"/>
 {{ form.render('id') }}
 {{ form.render('uniqid') }}
-
+<div class="ui ribbon label" id="queue-extension-number">
+    <i class="phone icon"></i> {{ extension }}
+</div>
 <h3 class="ui dividing header ">{{ t._("cq_QueueSetup") }}</h3>
 <div class="ten wide field">
     <label>{{ t._('cq_Name') }}</label>

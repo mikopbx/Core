@@ -42,6 +42,7 @@ class ConferenceRoomsController extends BaseController
         }
         $this->view->form      = new ConferenceRoomEditForm($record);
         $this->view->represent = $record->getRepresent();
+        $this->view->extension = $record->extension;
     }
 
 

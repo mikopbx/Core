@@ -2,7 +2,7 @@
 <html>
     <head>
         <meta charset="utf-8">
-{#        {{ get_title() }}#}
+        <title>{{ get_title() }}</title>
 {#        {% cache 'headerAssetsBeforeMetatags'~cacheName~'Cache.volt.php' %}#}
             {{ assets.outputCss('SemanticUICSS') }}
             {{ assets.outputCss('headerCSS') }}

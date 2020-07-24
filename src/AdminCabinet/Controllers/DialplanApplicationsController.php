@@ -46,6 +46,7 @@ class DialplanApplicationsController extends BaseController
         $this->view->applicationLogic = $app->getApplicationlogic();
         $this->view->form             = $form;
         $this->view->represent        = $app->getRepresent();
+        $this->view->extension        = $app->extension;
     }
 
 

@@ -3,7 +3,10 @@
         {{ form.render('id') }}
         {{ form.render('uniqid') }}
         {{ form.render('applicationlogic') }}
-
+<div class="ui ribbon label" id="dialplan-application-extension-number">
+    <i class="phone icon"></i> {{ extension }}
+</div>
+<h3 class="ui hidden header "></h3>
 <div class="ui top attached tabular menu" id="application-code-menu">
     <a class="item" data-tab="main">{{ t._('da_Main') }}</a>
     <a class="item active" data-tab="code">{{ t._('da_Applicationlogic') }}</a>

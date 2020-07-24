@@ -3,7 +3,10 @@
 
 {{ form.render('id') }}
 {{ form.render('uniqid') }}
-
+<div class="ui ribbon label" id="ivr-menu-extension-number">
+    <i class="phone icon"></i> {{ extension }}
+</div>
+<h3 class="ui hidden header "></h3>
 <div class="ten wide field">
     <label>{{ t._('iv_Name') }}</label>
     {{ form.render('name') }}

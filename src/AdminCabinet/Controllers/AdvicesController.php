@@ -146,18 +146,20 @@ class AdvicesController extends BaseController
         $storageList = json_decode($output, false);
         if ($storageList !== null && property_exists($storageList, 'data')) {
             $storageDiskMounted = false;
-            if (is_array($storageList->data)){
-                foreach ($storageList->data as $disk) {
-                    if (property_exists($disk, 'mounted')
-                        && strpos($disk->mounted, '/storage/usbdisk') !== false) {
-                        $storageDiskMounted = true;
-                        if ($disk->free_space < 500) {
-                            $messages['warning']
-                                = $this->translation->_(
-                                'adv_StorageDiskRunningOutOfFreeSpace',
-                                ['free' => $disk->free_space]
-                            );
-                        }
+            $disks              = $storageList->data;
+            if ( ! is_array($disks)) {
+                $disks = [$disks];
+            }
+            foreach ($disks as $disk) {
+                if (property_exists($disk, 'mounted')
+                    && strpos($disk->mounted, '/storage/usbdisk') !== false) {
+                    $storageDiskMounted = true;
+                    if ($disk->free_space < 500) {
+                        $messages['warning']
+                            = $this->translation->_(
+                            'adv_StorageDiskRunningOutOfFreeSpace',
+                            ['free' => $disk->free_space]
+                        );
                     }
                 }
             }
@@ -174,7 +176,8 @@ class AdvicesController extends BaseController
      *
      * @return array
      */
-    private function checkUpdates(): array
+    private
+    function checkUpdates(): array
     {
         $PBXVersion = $this->getSessionData('PBXVersion');
 
@@ -210,7 +213,8 @@ class AdvicesController extends BaseController
      * Проверка зарегистрирована ли копия Askozia
      *
      */
-    private function checkRegistration(): array
+    private
+    function checkRegistration(): array
     {
         $licKey = PbxSettings::getValueByKey('PBXLicense');
         if ( ! empty($licKey)) {
@@ -239,5 +243,4 @@ class AdvicesController extends BaseController
 
         return $messages ?? [];
     }
-
 }
