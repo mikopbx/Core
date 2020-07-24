@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 6 2020
+ * Written by Alexey Portnov, 7 2020
  */
 
 namespace MikoPBX\Core\System;
@@ -92,7 +92,8 @@ class PBX
             Util::mwExecBg("{$systemctlPath} restart asterisk");
         } else {
             $safe_asteriskPath = Util::which('safe_asterisk');
-            Util::mwExecBg("{$safe_asteriskPath} -fn");
+            // Ключ "-n" отключает подсветку цветом в CLI asterisk.
+            Util::mwExecBg("{$safe_asteriskPath} -f");
         }
     }
 
