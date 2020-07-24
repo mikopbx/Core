@@ -16,7 +16,6 @@ use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Configs\NginxConf;
 use MikoPBX\Core\System\Firewall;
-use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use PDOException;
 use Phalcon\Di\Injectable;
@@ -74,17 +73,17 @@ class PbxExtensionState extends Injectable
      */
     public function enableModule(): bool
     {
+        $error = false;
+
         if ($this->lic_feature_id > 0) {
             // Пробуем захватить фичу c учетом оффлан режима
             $result = $this->license->featureAvailable($this->lic_feature_id);
             if ($result['success'] === false) {
                 $this->messages[] = $this->license->translateLicenseErrorMessage($result['error']);
-
                 return false;
             }
         }
 
-        $error = false;
         $this->db->begin(true); // Временная транзакция, которая будет отменена после теста включения
 
         // Временно включим модуль, чтобы включить все связи и зависимости
@@ -114,8 +113,6 @@ class PbxExtensionState extends Injectable
         // Проверим нет ли битых ссылок, которые мешают включить модуль
         // например удалили сотрудника, а модуль указывает на его extension
         //
-
-
         $modelsFiles = glob("{$this->modulesRoot}/{$this->moduleUniqueID}/Models/*.php", GLOB_NOSORT);
         foreach ($modelsFiles as $file) {
             $className        = pathinfo($file)['filename'];
@@ -193,7 +190,7 @@ class PbxExtensionState extends Injectable
             $this->refreshNginxLocations($this->configClass, true);
 
             // Reconfigure fail2ban
-            $this->refreshFail2BanRules($this->configClass);
+            $this->refreshFail2BanRules($this->configClass, true);
         }
 
         return ! $error;
@@ -276,9 +273,9 @@ class PbxExtensionState extends Injectable
         if ($configClass !== null
             && method_exists($configClass, 'createNginxLocations')
             && ! empty($configClass->createNginxLocations())) {
-            if ($enableAction===false){
-                $locationsPath     = $this->di->getShared('config')->path('core.nginxLocationsPath');
-                $confFileName = "{$locationsPath}/{$configClass->moduleUniqueId}.conf";
+            if ($enableAction === false) {
+                $locationsPath = $this->di->getShared('config')->path('core.nginxLocationsPath');
+                $confFileName  = "{$locationsPath}/{$configClass->moduleUniqueId}.conf";
                 unlink($confFileName);
             }
             $nginxConf = new NginxConf();
@@ -290,7 +287,9 @@ class PbxExtensionState extends Injectable
     /**
      * If module has additional fail2ban rules we will generate it until next reboot
      *
-     * @param $configClass
+     * @param      $configClass
+     *
+     * @param bool $enableAction
      *
      * @return bool
      */
@@ -299,8 +298,8 @@ class PbxExtensionState extends Injectable
         if ($configClass !== null
             && method_exists($configClass, 'generateFail2BanJails')
             && ! empty($configClass->generateFail2BanJails())) {
-            if ($enableAction===false){
-                $filterPath = self::fail2banGetFilterPath();
+            if ($enableAction === false) {
+                $filterPath   = Firewall::fail2banGetFilterPath();
                 $confFileName = "{$filterPath}/{$configClass->moduleUniqueId}.conf";
                 unlink($confFileName);
             }
@@ -396,6 +395,9 @@ class PbxExtensionState extends Injectable
                     $this->configClass->onBeforeModuleDisable();
                 }
             }
+            // Reconfigure fail2ban
+            $this->refreshFail2BanRules($this->configClass, false);
+
             // Refresh Nginx conf if module has any locations
             $this->refreshNginxLocations($this->configClass, false);
         }

@@ -17,6 +17,8 @@ use Phalcon\Di;
 
 class System extends Di\Injectable
 {
+    private MikoPBXConfig $mikoPBXConfig;
+
     /**
      * System constructor
      */
@@ -32,10 +34,11 @@ class System extends Di\Injectable
      */
     public static function getLogDir(): string
     {
-        $di     = Di::getDefault();
-        if ($di !== null){
+        $di = Di::getDefault();
+        if ($di !== null) {
             return $di->getConfig()->path('core.logsPath');
         }
+
         return '/var/log';
     }
 
@@ -62,7 +65,7 @@ class System extends Di\Injectable
         foreach ($res_data as $file_data) {
             // Always restart asterisk after any custom file change
             $actions['asterisk_core_reload'] = 100;
-            $filename                       = basename($file_data->filepath);
+            $filename                        = basename($file_data->filepath);
             switch ($filename) {
                 case 'manager.conf':
                     $actions['manager'] = 10;
@@ -109,10 +112,9 @@ class System extends Di\Injectable
      * @param $actions
      *
      */
-    public static function invokeActions($actions):void
+    public static function invokeActions($actions): void
     {
         foreach ($actions as $action => $value) {
-            $res = null;
             switch ($action) {
                 case 'manager':
                     PBX::managerReload();
@@ -147,35 +149,61 @@ class System extends Di\Injectable
                     break;
                 default:
             }
-
         }
     }
 
     /**
-     * Loads additioanl kernel modules
+     * Setup system time
+     *
+     * @param $date - 2015.12.31-01:01:20
+     *
+     * @return bool
      */
-    public function loadKernelModules(): void
+    public static function setDate($date): bool
     {
-        $modprobePath = Util::which('modprobe');
-        $ulimitPath = Util::which('ulimit');
+        // Преобразование числа к дате. Если необходимо.
+        $date = Util::numberToDate($date);
+        // Валидация даты.
+        $re_date = '/^\d{4}\.\d{2}\.\d{2}\-\d{2}\:\d{2}\:\d{2}$/';
+        preg_match_all($re_date, $date, $matches, PREG_SET_ORDER, 0);
+        if (count($matches) > 0) {
+            $arr_data = [];
+            $datePath = Util::which('date');
+            Util::mwExec("{$datePath} -s '{$date}'", $arr_data);
+        }
 
-        Util::mwExec("{$modprobePath} -q dahdi");
-        Util::mwExec("{$modprobePath} -q dahdi_transcode");
-        Util::mwExec("{$ulimitPath} -n 4096");
-        Util::mwExec("{$ulimitPath} -p 4096");
+        $sys = new self();
+        $sys->timezoneConfigure();
+
+        return true;
     }
 
-
     /**
-     * Restart asterisk processor
+     * Populates /etc/TZ with an appropriate time zone
      */
-    public function onAfterPbxStarted(): void
+    public function timezoneConfigure(): void
     {
-        $additionalModules = $this->di->getShared('pbxConfModules');
-        foreach ($additionalModules as $appClass) {
-            /** @var \MikoPBX\Modules\Config\ConfigClass $appClass */
-            $appClass->onAfterPbxStarted();
+        $timezone = $this->mikoPBXConfig->getGeneralSettings('PBXTimezone');;
+        if (file_exists('/etc/TZ')) {
+            unlink("/etc/TZ");
         }
+        if (file_exists('/etc/localtime')) {
+            unlink("/etc/localtime");
+        }
+        if ($timezone) {
+            $zone_file = "/usr/share/zoneinfo/{$timezone}";
+            if ( ! file_exists($zone_file)) {
+                return;
+            }
+            $cpPath = Util::which('cp');
+            Util::mwExec("{$cpPath}  {$zone_file} /etc/localtime");
+            file_put_contents('/etc/TZ', $timezone);
+            putenv("TZ={$timezone}");
+            Util::mwExec("export TZ;");
+        }
+        $ntpConf = new NTPConf();
+        $ntpConf->configure();
+        PHPConf::phpTimeZoneConfigure();
     }
 
     /**
@@ -206,52 +234,28 @@ class System extends Di\Injectable
     }
 
     /**
-     * Setup system time
-     *
-     * @param $date - 2015.12.31-01:01:20
-     *
-     * @return bool
+     * Loads additioanl kernel modules
      */
-    public static function setDate($date): bool
+    public function loadKernelModules(): void
     {
-        // Преобразование числа к дате. Если необходимо.
-        $date = Util::numberToDate($date);
-        // Валидация даты.
-        $re_date = '/^\d{4}\.\d{2}\.\d{2}\-\d{2}\:\d{2}\:\d{2}$/';
-        preg_match_all($re_date, $date, $matches, PREG_SET_ORDER, 0);
-        if (count($matches) > 0) {
-            $arr_data         = [];
-            $datePath         = Util::which('date');
-            Util::mwExec("{$datePath} -s '{$date}'", $arr_data);
-        }
+        $modprobePath = Util::which('modprobe');
+        $ulimitPath   = Util::which('ulimit');
 
-        $sys = new self();
-        $sys->timezoneConfigure();
-        return true;
+        Util::mwExec("{$modprobePath} -q dahdi");
+        Util::mwExec("{$modprobePath} -q dahdi_transcode");
+        Util::mwExec("{$ulimitPath} -n 4096");
+        Util::mwExec("{$ulimitPath} -p 4096");
     }
 
     /**
-     * Populates /etc/TZ with an appropriate time zone
+     * Restart asterisk processor
      */
-    public function timezoneConfigure(): void
+    public function onAfterPbxStarted(): void
     {
-        $timezone = $this->mikoPBXConfig->getGeneralSettings('PBXTimezone');;
-        @unlink("/etc/TZ");
-        @unlink("/etc/localtime");
-
-        if ($timezone) {
-            $zone_file = "/usr/share/zoneinfo/{$timezone}";
-            if ( ! file_exists($zone_file)) {
-                return;
-            }
-            $cpPath = Util::which('cp');
-            Util::mwExec("{$cpPath}  {$zone_file} /etc/localtime");
-            file_put_contents('/etc/TZ', $timezone);
-            putenv("TZ={$timezone}");
-            Util::mwExec("export TZ;");
+        $additionalModules = $this->di->getShared('pbxConfModules');
+        foreach ($additionalModules as $appClass) {
+            /** @var \MikoPBX\Modules\Config\ConfigClass $appClass */
+            $appClass->onAfterPbxStarted();
         }
-        $ntpConf = new NTPConf();
-        $ntpConf->configure();
-        PHPConf::phpTimeZoneConfigure();
     }
 }

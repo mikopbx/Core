@@ -314,13 +314,8 @@ $menu = (new CliMenuBuilder())
             }
             $mikoPBXConfig->setGeneralSettings('PBXFirewallEnabled', $enable);
             $mikoPBXConfig->setGeneralSettings('PBXFail2BanEnabled', $enable);
-
-            $result = Firewall::reloadFirewall();
-            if($result['result'] !== 'Success'){
-                echo "Firewall error ... {$result['result']}";
-            }else{
-                echo "Firewall is {$action}d...";
-            }
+            Firewall::reloadFirewall();
+            echo "Firewall is {$action}d...";
         }
         exit(0);
     })

@@ -9,6 +9,7 @@
 namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Models\{Fail2BanRules, FirewallRules, NetworkFilters};
+use MikoPBX\Core\System\Configs\SyslogConf;
 use Phalcon\Di;
 use Phalcon\Di\Injectable;
 use SQLite3;
@@ -293,7 +294,7 @@ class Firewall extends Injectable
         $config = "[DEFAULT]\n" .
             "ignoreip = 127.0.0.1 {$user_whitelist}\n\n";
 
-        $syslog_file = System::getSyslogFile();
+        $syslog_file = SyslogConf::getSyslogFile();
 
         foreach ($jails as $jail => $action) {
             $config .= "[{$jail}]\n" .

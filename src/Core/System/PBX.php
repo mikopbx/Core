@@ -318,17 +318,17 @@ class PBX extends Injectable
             'result' => 'ERROR',
         ];
 
-        if ( ! $this->registry->booting) {
+        if ( ! $this->di->getShared('registry')->booting) {
             $this->stop();
         }
         /**
          * Создание конфигурационных файлов.
          */
-        foreach ($this->pbxConfModules as $appClass) {
+        foreach ($this->di->getShared('pbxConfModules') as $appClass) {
             $appClass->generateConfig();
         }
         self::dialplanReload();
-        if ($this->registry->booting) {
+        if ($this->di->getShared('registry')->booting) {
             echo "   |- dialplan reload \033[32;1mdone\033[0m \n";
         }
         // Создание базы данных истории звонков.
