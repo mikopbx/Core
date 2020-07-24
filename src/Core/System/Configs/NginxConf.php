@@ -31,20 +31,16 @@ class NginxConf extends Injectable
     }
 
     /**
-     *   Restart Nginx and php-fpm
+     *   Restart Nginx
      **/
     public function reStart(): void
     {
         if (Util::isSystemctl()) {
             $systemCtrlPath = Util::which('systemctl');
-            Util::mwExec("{$systemCtrlPath} restart php7.4-fpm");
             Util::mwExec("{$systemCtrlPath} restart nginx.service");
         } else {
-            $phpFPMPath = Util::which('php-fpm');
             $NginxPath  = Util::which('nginx');
-            Util::killByName('php-fpm');
             Util::killByName('nginx');
-            Util::mwExec("{$phpFPMPath} -c /etc/php.ini");
             Util::mwExec($NginxPath);
         }
     }

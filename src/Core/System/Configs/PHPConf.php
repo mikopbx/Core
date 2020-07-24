@@ -52,12 +52,11 @@ class PHPConf extends Injectable
      */
     public static function rotateLog(): void
     {
-        $asteriskPath = Util::which('asterisk');
         $logrotatePath = Util::which('logrotate');
 
         $max_size    = 2;
         $f_name      = self::getLogFile();
-        $text_config = (string)($f_name) . " {
+        $text_config = $f_name . " {
     nocreate
     nocopytruncate
     delaycompress
@@ -68,9 +67,9 @@ class PHPConf extends Injectable
     missingok
     noolddir
     postrotate
-        {$asteriskPath} -rx 'logger reload' > /dev/null 2> /dev/null
     endscript
 }";
+        // TODO::Доделать рестарт PHP-FPM после обновление лога
         $di     = Di::getDefault();
         if ($di !== null){
             $varEtcPath = $di->getConfig()->path('core.varEtcPath');
@@ -104,5 +103,20 @@ class PHPConf extends Injectable
         $contents = file_get_contents($etcPhpIniPath);
         $contents = preg_replace("/date.timezone(.*)/", 'date.timezone="'.$timezone.'"', $contents);
         Util::fileWriteContent($etcPhpIniPath, $contents);
+    }
+
+    /**
+     *   Restart php-fpm
+     **/
+    public function reStart(): void
+    {
+        if (Util::isSystemctl()) {
+            $systemCtrlPath = Util::which('systemctl');
+            Util::mwExec("{$systemCtrlPath} restart php7.4-fpm");
+        } else {
+            $phpFPMPath = Util::which('php-fpm');
+            Util::killByName('php-fpm');
+            Util::mwExec("{$phpFPMPath} -c /etc/php.ini");
+        }
     }
 }

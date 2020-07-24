@@ -11,6 +11,7 @@ namespace MikoPBX\Core\System;
 use MikoPBX\Core\System\Configs\CronConf;
 use MikoPBX\Core\System\Configs\NatsConf;
 use MikoPBX\Core\System\Configs\NginxConf;
+use MikoPBX\Core\System\Configs\PHPConf;
 use MikoPBX\Core\System\Configs\SSHConf;
 use MikoPBX\Core\System\Configs\SyslogConf;
 use MikoPBX\Core\System\Configs\VMWareToolsConf;
@@ -100,12 +101,15 @@ class SystemLoader extends Di\Injectable
     public function startMikoPBX(): bool
     {
         $this->di->getShared('registry')->booting = true;
-        $system                           = new System();
-        $pbx                              = new PBX();
 
         Util::echoWithSyslog(' - Start nats queue daemon...');
         $natsConf = new NatsConf();
         $natsConf->reStart();
+        Util::echoGreenDone();
+
+        Util::echoWithSyslog(' - Start php-fpm daemon...');
+        $phpFPM = new PHPConf();
+        $phpFPM->reStart();
         Util::echoGreenDone();
 
         Util::echoWithSyslog(' - Start Nginx daemon...');
@@ -115,10 +119,12 @@ class SystemLoader extends Di\Injectable
         Util::echoGreenDone();
 
         Util::echoWithSyslog(' - Configuring Asterisk...'.PHP_EOL);
+        $pbx                              = new PBX();
         $pbx->configure();
 
         Util::echoWithSyslog(' - Start Asterisk... ');
         $pbx->start();
+        $system                           = new System();
         $system->onAfterPbxStarted();
         Util::echoGreenDone();
 
