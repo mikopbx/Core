@@ -451,6 +451,7 @@ class ExtensionsController extends BaseController
             switch ($name) {
                 case 'id':
                     break;
+                case 'show_in_phonebook':
                 case 'is_general_user_number':
                     $extension->$name = '1';
                     break;
@@ -462,13 +463,6 @@ class ExtensionsController extends BaseController
                         $extension->$name = ($data[$name] === 'on') ? '1' : '0';
                     } else {
                         $extension->$name = '0';
-                    }
-                    break;
-                case 'show_in_phonebook':
-                    if (array_key_exists($name, $data)) {
-                        $extension->$name = ($data[$name] === 'on') ? '1' : '0';
-                    } else {
-                        $extension->$name = ($data['is_general_user_number'] === 'on') ? '1' : '0';
                     }
                     break;
                 case 'callerid':
@@ -890,14 +884,16 @@ class ExtensionsController extends BaseController
         switch ($type) {
             case 'all':
             {
-                $parameters = [];
+                $parameters = [
+                    'conditions' => 'show_in_phonebook="1"',
+                ];
                 break;
             }
             case 'phones':
             {
                 // Список телефоонных эктеншенов
                 $parameters = [
-                    'conditions' => 'type IN ({ids:array})',
+                    'conditions' => 'type IN ({ids:array}) AND show_in_phonebook="1"',
                     'bind'       => [
                         'ids' => ['SIP', 'EXTERNAL'],
                     ],
@@ -908,7 +904,7 @@ class ExtensionsController extends BaseController
             {
                 // Только внутренние
                 $parameters = [
-                    'conditions' => 'type IN ({ids:array})',
+                    'conditions' => 'type IN ({ids:array}) AND show_in_phonebook="1"',
                     'bind'       => [
                         'ids' => ['SIP'],
                     ],
@@ -917,7 +913,9 @@ class ExtensionsController extends BaseController
             }
             default:
             {
-                $parameters = [];
+                $parameters = [
+                    'conditions' => 'show_in_phonebook="1"',
+                ];
             }
         }
         $extensions = Extensions::find($parameters);

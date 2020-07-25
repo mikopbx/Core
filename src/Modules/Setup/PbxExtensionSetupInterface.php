@@ -9,11 +9,11 @@ interface PbxExtensionSetupInterface
     /**
      * PbxExtensionBase constructor.
      *
-     * @param $moduleUniqueID
+     * @param string $moduleUniqueID
      *
      * @throws \Phalcon\Exception
      */
-    public function __construct($moduleUniqueID = null);
+    public function __construct(string $moduleUniqueID = '');
 
     /**
      * Последовательный вызов процедур установки модуля расширения
@@ -59,21 +59,21 @@ interface PbxExtensionSetupInterface
      * Последовательный вызов процедур установки модуля расширения
      * с результата удаления
      *
-     * @param $keepSettings bool - сохранять настройки модуля при удалении
+     * @param bool $keepSettings - сохранять настройки модуля при удалении
      *
      * @return bool - результат удаления
      */
-    public function uninstallModule($keepSettings = false): bool;
+    public function uninstallModule(bool $keepSettings = false): bool;
 
     /**
      * Удаляет запись о модуле из PbxExtensionModules
      * Удаляет свою модель
      *
-     * @param  $keepSettings - оставляет таблицу с данными своей модели
+     * @param bool $keepSettings - оставляет таблицу с данными своей модели
      *
      * @return bool результат очистки
      */
-    public function unInstallDB($keepSettings = false): bool;
+    public function unInstallDB(bool $keepSettings = false): bool;
 
     /**
      * Удаляет запись о модуле из PbxExtensionModules
@@ -90,7 +90,7 @@ interface PbxExtensionSetupInterface
      *
      * @return bool результат удаления
      */
-    public function unInstallFiles($keepSettings = false);//: bool Пока мешает удалять и обновлять старые модули, раскоменитровать после релиза 2020.5;
+    public function unInstallFiles(bool $keepSettings = false);//: bool Пока мешает удалять и обновлять старые модули, раскоменитровать после релиза 2020.5;
 
     /**
      * Returns error messages

@@ -427,7 +427,9 @@ const extensionStatusLoopWorker = {
 	 */
 	initialize() {
 		DebuggerInfo.initialize();
-		extensionStatusLoopWorker.restartWorker();
+		if (extension.$formObj.form('get value','id')!==''){
+			extensionStatusLoopWorker.restartWorker();
+		}
 	},
 	restartWorker() {
 		window.clearTimeout(extensionStatusLoopWorker.timeoutHandle);

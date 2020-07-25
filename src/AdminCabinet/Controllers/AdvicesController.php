@@ -175,9 +175,9 @@ class AdvicesController extends BaseController
      * Проверка наличия обновлений
      *
      * @return array
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    private
-    function checkUpdates(): array
+    private function checkUpdates(): array
     {
         $PBXVersion = $this->getSessionData('PBXVersion');
 
@@ -211,11 +211,10 @@ class AdvicesController extends BaseController
     }
 
     /**
-     * Проверка зарегистрирована ли копия Askozia
+     * Проверка зарегистрирована ли копия MikoPBX
      *
      */
-    private
-    function checkRegistration(): array
+    private function checkRegistration(): array
     {
         $licKey = PbxSettings::getValueByKey('PBXLicense');
         if ( ! empty($licKey)) {

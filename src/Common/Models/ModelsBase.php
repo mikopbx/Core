@@ -63,10 +63,7 @@ abstract class ModelsBase extends Model
                 $className        = pathinfo($file)['filename'];
                 $moduleModelClass = "\\Modules\\{$module['uniqid']}\\Models\\{$className}";
                 if (class_exists($moduleModelClass) && method_exists($moduleModelClass, 'getDynamicRelations')) {
-                    $relations = $moduleModelClass::getDynamicRelations(static::class);
-                    foreach ($relations as $relation => $rule) {
-                        $this->$relation(...$rule);
-                    }
+                    $moduleModelClass::getDynamicRelations($this);
                 }
             }
         }

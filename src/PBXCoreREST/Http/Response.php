@@ -163,16 +163,6 @@ class Response extends PhResponse
     public function setPayloadSuccess($content = []): Response
     {
         $data = (true === is_array($content)) ? $content : ['data' => $content];
-        $data = (true === isset($data['data'])) ? $data : ['data' => $data];
-        if (is_array($data['data']) && array_key_exists('result', $data['data'])) {
-            $data['result'] = $data['data']['result'];
-            unset($data['data']['result']);
-        }
-        if (array_key_exists('result', $data) && is_string($data['result'])){
-            $data['result'] = strcasecmp($data['result'],'SUCCESS')===0;
-        } else {
-            $data['result'] = false;
-        }
         $this->setJsonContent($data);
 
         return $this;

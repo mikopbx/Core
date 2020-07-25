@@ -462,11 +462,12 @@ class Extensions extends ModelsBase
         $result    = [];
         $relations = $this->_modelsManager->getRelations(__CLASS__);
         foreach ($relations as $relation) {
-            if ($relation->getFields() === 'number'
+            $relationFields = $relation->getFields();
+            if ($relationFields === 'number'
                 ||
                 (
-                    is_array($relation->getFields())
-                    && in_array('number', $relation->getFields(), true)
+                    is_array($relationFields)
+                    && in_array('number', $relationFields, true)
                 )
             ) {
                 $referencedFields = $relation->getReferencedFields();

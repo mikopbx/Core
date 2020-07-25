@@ -82,7 +82,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
      *
      * @var string
      */
-    protected $moduleDir;
+    protected string $moduleDir;
 
     /**
      * Phalcon config service
@@ -103,15 +103,15 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
      *
      * @var array
      */
-    private $messages;
+    protected array $messages;
 
     /**
      * PbxExtensionBase constructor.
      *
-     * @param $moduleUniqueID
+     * @param string $moduleUniqueID
      *
      */
-    public function __construct($moduleUniqueID = null)
+    public function __construct(string $moduleUniqueID = null)
     {
         if ($moduleUniqueID !== null) {
             $this->moduleUniqueID = $moduleUniqueID;

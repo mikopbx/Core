@@ -80,7 +80,7 @@ class StorageTest extends AbstractUnitTest
     public function testGetAllHdd()
     {
         $this->storage = new Storage();
-        $this->storage->getAllHdd();
+        $res = $this->storage->getAllHdd();
         $this->assertTrue(true);
     }
 

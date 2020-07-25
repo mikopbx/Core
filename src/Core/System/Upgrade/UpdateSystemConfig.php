@@ -11,6 +11,7 @@ namespace MikoPBX\Core\System\Upgrade;
 use MikoPBX\Common\Models\AsteriskManagerUsers;
 use MikoPBX\Common\Models\Codecs;
 use MikoPBX\Common\Models\DialplanApplications;
+use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\Extensions as ExtensionsModel;
 use MikoPBX\Common\Models\FirewallRules;
 use MikoPBX\Common\Models\IvrMenu;
@@ -281,6 +282,8 @@ class UpdateSystemConfig extends Di\Injectable
      */
     private function updateConfigsUpToVer20202314(): void
     {
+
+
         $availCodecs = [
             // Видео кодеки.
             'h263p' => 'H.263+',
@@ -314,7 +317,7 @@ class UpdateSystemConfig extends Di\Injectable
                 continue;
             }
             if(!$codec->delete()){
-                Util::sysLogMsg(__CLASS__, 'Can not delete codec '.$codec->name. ' from \MikoPBX\Common\Models\Codecs');
+                Util::sysLogMsg(__CLASS__, 'Can not delete codec '.$codec->name. ' from MikoPBX\Common\Models\Codecs');
             }
         }
 
@@ -401,6 +404,16 @@ class UpdateSystemConfig extends Di\Injectable
                 $rmPath = Util::which('rm');
                 Util::mwExec("{$rmPath} -rf $old_cache_dir");
             }
+        }
+
+        // Update Extensions table
+        $parameters = [
+            'conditions' => 'not show_in_phonebook="1" AND is_general_user_number="1"',
+        ];
+        $wrongRecords = Extensions::find($parameters);
+        foreach ($wrongRecords as $extension){
+            $extension->show_in_phonebook='1';
+            $extension->update();
         }
     }
 
