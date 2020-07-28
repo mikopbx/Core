@@ -3,11 +3,12 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 2 2020
+ * Written by Alexey Portnov, 7 2020
  */
 
 namespace MikoPBX\PBXCoreREST\Workers;
 
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\Asterisk\Configs\VoiceMailConf;
 use MikoPBX\Core\System\{BeanstalkClient, Notifications, Storage, System, Util};
 use MikoPBX\Core\Workers\Cron\WorkerSafeScriptsCore;
@@ -249,6 +250,11 @@ class WorkerApiCommands extends WorkerBase
                 break;
             case 'getInfo':
                 $res = SystemManagementProcessor::getInfo();
+                break;
+            case 'updateMailSettings':
+                // TODO
+                $this->clearCache(PbxSettings::class);
+                $res->success = true;
                 break;
             case 'sendMail':
                 if (isset($data['email']) && isset($data['subject']) && isset($data['body'])) {

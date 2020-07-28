@@ -1,3 +1,10 @@
+/*
+ * Copyright © MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Alexey Portnov, 7 2020
+ */
+
 "use strict";
 
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
@@ -38,6 +45,7 @@ var PbxApi = {
   systemSetDateTime: "".concat(Config.pbxUrl, "/pbxcore/api/system/setDate"),
   // curl -X POST -d '{"date": "2015.12.31-01:01:20"}',
   systemSendTestEmail: "".concat(Config.pbxUrl, "/pbxcore/api/system/sendMail"),
+  updateMailSettings: "".concat(Config.pbxUrl, "/pbxcore/api/system/updateMailSettings"),
   // Отправить почту
   systemGetFileContent: "".concat(Config.pbxUrl, "/pbxcore/api/system/fileReadContent"),
   // Получить контент файла по имени
@@ -387,6 +395,38 @@ var PbxApi = {
     }
 
     return SendTestEmail;
+  }(),
+
+  /**
+   *
+   * @param callback
+   */
+  UpdateMailSettings: function () {
+    function UpdateMailSettings(callback) {
+      $.api({
+        url: PbxApi.updateMailSettings,
+        on: 'now',
+        successTest: PbxApi.successTest,
+        onSuccess: function () {
+          function onSuccess(response) {
+            callback(response.data);
+          }
+
+          return onSuccess;
+        }(),
+        onError: function () {
+          function onError(errorMessage, element, xhr) {
+            if (xhr.status === 403) {
+              window.location = "".concat(globalRootUrl, "session/index");
+            }
+          }
+
+          return onError;
+        }()
+      });
+    }
+
+    return UpdateMailSettings;
   }(),
 
   /**

@@ -1,9 +1,8 @@
 /*
- * Copyright (C) MIKO LLC - All Rights Reserved
+ * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 12 2019
- *
+ * Written by Alexey Portnov, 7 2020
  */
 /* global sessionStorage, globalRootUrl,Config */
 
@@ -25,6 +24,7 @@ const PbxApi = {
 	systemGetInfo: `${Config.pbxUrl}/pbxcore/api/system/getInfo`, // Получение информации о системе
 	systemSetDateTime: `${Config.pbxUrl}/pbxcore/api/system/setDate`, // curl -X POST -d '{"date": "2015.12.31-01:01:20"}',
 	systemSendTestEmail: `${Config.pbxUrl}/pbxcore/api/system/sendMail`, // Отправить почту
+	updateMailSettings: `${Config.pbxUrl}/pbxcore/api/system/updateMailSettings`,
 	systemGetFileContent: `${Config.pbxUrl}/pbxcore/api/system/fileReadContent`, // Получить контент файла по имени
 	systemStartLogsCapture: `${Config.pbxUrl}/pbxcore/api/system/startLog`,
 	systemStopLogsCapture: `${Config.pbxUrl}/pbxcore/api/system/stopLog`,
@@ -244,6 +244,27 @@ const PbxApi = {
 			},
 		});
 	},
+
+	/**
+	 * Получение статусов регистрации проовайдеров IAX
+	 * @param callback
+	 */
+	UpdateMailSettings(callback) {
+		$.api({
+			url: PbxApi.updateMailSettings,
+			on: 'now',
+			successTest: PbxApi.successTest,
+			onSuccess(response) {
+				callback(response.data);
+			},
+			onError(errorMessage, element, xhr) {
+				if (xhr.status === 403) {
+					window.location = `${globalRootUrl}session/index`;
+				}
+			},
+		});
+	},
+
 	/**
 	 * Получить контент файла конфигурации с сервера
 	 * @param data
