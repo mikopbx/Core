@@ -1,10 +1,9 @@
 <?php
 /**
- * Copyright (C) MIKO LLC - All Rights Reserved
+ * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 7 2020
- *
+ * Written by Alexey Portnov, 7 2020
  */
 
 namespace MikoPBX\Core\System\Configs;
@@ -31,6 +30,10 @@ class SSHConf extends Injectable
      **/
     public function configure()
     {
+        $lofFile = '/var/log/lastlog';
+        if(!file_exists($lofFile)){
+            file_put_contents($lofFile, '');
+        }
         $dropbear_dir = '/etc/dropbear';
         Util::mwMkdir($dropbear_dir);
 
