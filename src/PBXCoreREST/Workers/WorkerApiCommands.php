@@ -253,7 +253,6 @@ class WorkerApiCommands extends WorkerBase
                 break;
             case 'updateMailSettings':
                 // TODO
-                $this->clearCache(PbxSettings::class);
                 $res->success = true;
                 break;
             case 'sendMail':
