@@ -26,5 +26,5 @@ shopt -s cmdhist
 alias ls='ls --color=auto'
 alias myip="curl http://ipecho.net/plain; echo"
 
-PS1='\u@\h:\$ '
+PS1='\w \$ '
 PS2='>'
