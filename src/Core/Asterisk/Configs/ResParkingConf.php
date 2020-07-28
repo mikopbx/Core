@@ -20,13 +20,15 @@ class ResParkingConf extends ConfigClass
 
     protected string $description = 'res_parking.conf';
 
+    /**
+     * ResParkingConf constructor.
+     *
+     */
     public function __construct(){
         parent::__construct();
-
         // Вызов "getSettings" приемлем, так как идет работа с инициализированной переменной generalSettings.
         $this->getSettings();
     }
-
 
     protected function generateConfigProtected(): void
     {
