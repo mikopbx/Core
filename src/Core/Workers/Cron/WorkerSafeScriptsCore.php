@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 4 2020
+ * Written by Alexey Portnov, 7 2020
  */
 
 namespace MikoPBX\Core\Workers\Cron;
@@ -26,9 +26,9 @@ use Recoil\React\ReactKernel;
 
 class WorkerSafeScriptsCore extends WorkerBase
 {
-    public const CHECK_BY_BEANSTALK = 'checkWorkerBeanstalk';
-
-    public const CHECK_BY_AMI = 'checkWorkerAMI';
+    public const CHECK_BY_BEANSTALK     = 'checkWorkerBeanstalk';
+    public const CHECK_BY_AMI           = 'checkWorkerAMI';
+    public const CHECK_BY_PID_NOT_ALERT = 'checkPidNotAlert';
 
     /**
      * Prepare workers list to start and restart
@@ -49,12 +49,14 @@ class WorkerSafeScriptsCore extends WorkerBase
                     WorkerCdr::class,
                     WorkerCallEvents::class,
                     WorkerModelsEvents::class,
-                    WorkerLicenseChecker::class,
                     WorkerNotifyByEmail::class,
                     WorkerNotifyError::class,
                     WorkerLongPoolAPI::class,
                 ],
-
+            self::CHECK_BY_PID_NOT_ALERT =>
+                [
+                    WorkerLicenseChecker::class,
+                ]
         ];
         $arrModulesWorkers = [];
         $pbxConfModules    = $this->di->getShared('pbxConfModules');
@@ -127,13 +129,14 @@ class WorkerSafeScriptsCore extends WorkerBase
 
         $arrWorkers = $this->prepareWorkersList();
         ReactKernel::start(
-
             function () use ($arrWorkers) {
                 // Parallel execution https://github.com/recoilphp/recoil
                 foreach ($arrWorkers as $workerType => $workersWithCurrentType) {
                     foreach ($workersWithCurrentType as $worker) {
                         if ($workerType === self::CHECK_BY_BEANSTALK) {
                             yield $this->checkWorkerBeanstalk($worker);
+                        } elseif ($workerType === self::CHECK_BY_PID_NOT_ALERT) {
+                            yield $this->checkPidNotAlert($worker);
                         } elseif ($workerType === self::CHECK_BY_AMI) {
                             yield $this->checkWorkerAMI($worker);
                         }
@@ -145,7 +148,19 @@ class WorkerSafeScriptsCore extends WorkerBase
         Firewall::checkFail2ban();
     }
 
-
+    /**
+     * Check PID worker and start
+     * @param $workerClassName
+     * @return Generator
+     */
+    public function checkPidNotAlert($workerClassName): Generator{
+        $WorkerPID = Util::getPidOfProcess($workerClassName);
+        $result    = ($WorkerPID !== '');
+        if (false === $result) {
+            Util::restartPHPWorker($workerClassName);
+        }
+        yield;
+    }
 
     /**
      * Ping worker to check it, if it dead we kill and start it again
