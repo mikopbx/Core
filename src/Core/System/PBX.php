@@ -10,7 +10,8 @@ namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Models\Codecs;
 use MikoPBX\Core\Asterisk\CdrDb;
-use MikoPBX\Core\Asterisk\Configs\{ExtensionsConf,
+use MikoPBX\Core\Asterisk\Configs\{AclConf,
+    ExtensionsConf,
     FeaturesConf,
     HttpConf,
     IAXConf,
@@ -18,8 +19,7 @@ use MikoPBX\Core\Asterisk\Configs\{ExtensionsConf,
     ModulesConf,
     MusicOnHoldConf,
     SIPConf,
-    VoiceMailConf
-};
+    VoiceMailConf};
 use MikoPBX\Core\Config\RegisterDIServices;
 use MikoPBX\Core\Workers\WorkerAmiListener;
 use MikoPBX\Core\Workers\WorkerCallEvents;
@@ -247,6 +247,9 @@ class PBX extends Injectable
 
         $sip = new SIPConf();
         $sip->generateConfig();
+
+        $acl = new AclConf();
+        $acl->generateConfig();
 
         $out = [];
         if ($old_hash === $now_hadh) {
