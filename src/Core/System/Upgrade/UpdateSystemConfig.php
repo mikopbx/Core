@@ -302,8 +302,6 @@ class UpdateSystemConfig extends Di\Injectable
             'lpc10' => 'LPC-10',
             'speex' => 'Speex',
             'slin'  => 'Signed Linear PCM',
-            'wav'   => 'wav (SLIN)',
-            'wav49' => 'WAV (GSM)',
             'opus'  => 'Opus',
         ];
         $codecs = Codecs::find();
