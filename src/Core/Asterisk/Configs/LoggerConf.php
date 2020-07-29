@@ -1,10 +1,9 @@
 <?php
 /**
- * Copyright (C) MIKO LLC - All Rights Reserved
+ * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 5 2020
- *
+ * Written by Alexey Portnov, 7 2020
  */
 
 namespace MikoPBX\Core\Asterisk\Configs;
@@ -24,15 +23,14 @@ class LoggerConf extends ConfigClass
         Util::mwMkdir($logDir);
         $conf = "[general]\n";
         $conf .= "queue_log = no\n";
-        $conf .= "event_log = no\n";
         $conf .= "dateformat = %F %T\n";
         $conf .= "\n";
         $conf .= "[logfiles]\n";
-        // $conf .= "syslog.local0 => notice,warning,error\n";
         $conf .= "console => debug,error,verbose(10)\n\n";
         $conf .= "{$logDir}security_log => security\n";
         $conf .= "{$logDir}messages => notice,warning\n";
         $conf .= "{$logDir}error => error\n";
+        $conf .= "{$logDir}verbose => verbose(3),dtmf,fax\n";
         $conf .= "\n";
 
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/logger.conf', $conf);

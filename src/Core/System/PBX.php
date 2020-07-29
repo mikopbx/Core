@@ -79,6 +79,7 @@ class PBX extends Injectable
         self::rotatePbxLog('messages');
         self::rotatePbxLog('security_log');
         self::rotatePbxLog('error');
+        self::rotatePbxLog('verbose');
     }
 
     public static function rotatePbxLog($f_name): void
