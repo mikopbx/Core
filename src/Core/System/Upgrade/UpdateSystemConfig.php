@@ -300,7 +300,6 @@ class UpdateSystemConfig extends Di\Injectable
             'gsm'   => 'GSM',
             'ilbc'  => 'ILBC',
             'lpc10' => 'LPC-10',
-            'silk'  => 'SILK',
             'speex' => 'Speex',
             'slin'  => 'Signed Linear PCM',
             'wav'   => 'wav (SLIN)',
