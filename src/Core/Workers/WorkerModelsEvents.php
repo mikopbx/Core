@@ -56,6 +56,8 @@ class WorkerModelsEvents extends WorkerBase
 
     private const R_DIALPLAN = 'reloadDialplan';
 
+    private const R_PBX_SETTINGS = 'clearCachePbxSettings';
+
     private const R_CUSTOM_F = 'updateCustomFiles';
 
     private const R_FIREWALL = 'reloadFirewall';
@@ -104,6 +106,7 @@ class WorkerModelsEvents extends WorkerBase
         $this->arrObject = $this->di->getShared('pbxConfModules');
 
         $this->PRIORITY_R = [
+            self::R_PBX_SETTINGS,
             self::R_NETWORK,
             self::R_FIREWALL,
             self::R_SSH,
@@ -231,6 +234,7 @@ class WorkerModelsEvents extends WorkerBase
                 $this->modified_tables[self::R_DIALPLAN] = true;
                 break;
             case PbxSettings::class:
+                $this->modified_tables[self::R_PBX_SETTINGS] = true;
                 $this->pbxSettings->key = $data['recordId'] ?? '';
                 if ($this->pbxSettings->itHasFeaturesSettingsChanges()) {
                     $this->modified_tables[self::R_FEATURES] = true;
@@ -332,6 +336,14 @@ class WorkerModelsEvents extends WorkerBase
     {
         $natsConf = new NatsConf();
         $natsConf->reStart();
+    }
+
+    /**
+     * Clear cache pbx settings
+     */
+    public function clearCachePbxSettings():void
+    {
+        $this->pbxSettings->clearCache(PbxSettings::class);
     }
 
     /**
