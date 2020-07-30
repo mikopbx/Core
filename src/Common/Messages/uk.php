@@ -1,4 +1,11 @@
 <?php
+/**
+ * Copyright © MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Alexey Portnov, 7 2020
+ */
+
 return [
     'January' => 'Січень',
     'February' => 'Лютий',
@@ -962,7 +969,7 @@ return [
     'Enter the LAN DNS IP address: ' => 'Введіть адресу DNS сервера:',
     'Enter the LAN gateway IP address: ' => 'Введіть адресу шлюзу (LAN gateway IP address):',
     'Enter the new LAN subnet bit count: ' => 'Введіть значення маски:',
-    'Subnet masks are to be entered as bit counts (as in CIDR notation).' => 'Маска підмережі в CIDR форматі (1-31)',
+    'Subnet masks are to be entered as bit counts (as in CIDR notation).' => 'Маска підмережі в CIDR форматі (1-32)',
     'Enter the new LAN IP address: ' => 'Введіть новий LAN IP адреса:',
     'The LAN interface will now be configured ...' => 'Налаштування LAN інтерфейсу ...',
     'The LAN interface will now be configured via DHCP...' => 'LAN інтерфейс буде налаштований з використанням DHCP ...',

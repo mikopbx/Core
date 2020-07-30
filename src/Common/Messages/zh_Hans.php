@@ -1,4 +1,11 @@
 <?php
+/**
+ * Copyright © MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Alexey Portnov, 7 2020
+ */
+
 return [
     'March' => '三月',
     'April' => '四月',
@@ -934,7 +941,7 @@ return [
     'The LAN interface will now be configured via DHCP...' => 'LAN接口将使用DHCP配置...',
     'The LAN interface will now be configured ...' => '配置LAN接口...',
     'Enter the new LAN IP address: ' => '输入新的LAN IP地址：',
-    'Subnet masks are to be entered as bit counts (as in CIDR notation).' => 'CIDR格式的子网掩码（1-31）',
+    'Subnet masks are to be entered as bit counts (as in CIDR notation).' => 'CIDR格式的子网掩码（1-32）',
     'Enter the new LAN subnet bit count: ' => '输入掩码值：',
     'Enter the LAN gateway IP address: ' => '输入网关地址（LAN网关IP地址）：',
     'Enter the LAN DNS IP address: ' => '输入DNS服务器地址：',

@@ -948,7 +948,7 @@ return [
     'The LAN interface will now be configured via DHCP...'                => "LAN интерфейс будет настроен с использованием DHCP …",
     'The LAN interface will now be configured ...'                        => "Настройка LAN интерфейса …",
     'Enter the new LAN IP address: '                                      => 'Введите новый LAN IP адрес:',
-    'Subnet masks are to be entered as bit counts (as in CIDR notation).' => 'Маска подсети в CIDR формате (1-31)',
+    'Subnet masks are to be entered as bit counts (as in CIDR notation).' => 'Маска подсети в CIDR формате (1-32)',
     'Enter the new LAN subnet bit count: '                                => "Введите значение маски:",
     'Enter the LAN gateway IP address: '                                  => "Введите адрес шлюза (LAN gateway IP address):",
     'Enter the LAN DNS IP address: '                                      => 'Введите адрес DNS сервера:',

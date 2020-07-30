@@ -1,4 +1,11 @@
 <?php
+/**
+ * Copyright © MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Alexey Portnov, 7 2020
+ */
+
 return [
     'March' => 'Březen',
     'April' => 'Duben',
@@ -965,7 +972,7 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'Enter the LAN DNS IP address: ' => 'Zadejte adresu serveru DNS:',
     'Enter the LAN gateway IP address: ' => 'Zadejte adresu brány (adresa IP brány LAN):',
     'Enter the new LAN subnet bit count: ' => 'Zadejte hodnotu masky:',
-    'Subnet masks are to be entered as bit counts (as in CIDR notation).' => 'Maska podsítě ve formátu CIDR (1-31)',
+    'Subnet masks are to be entered as bit counts (as in CIDR notation).' => 'Maska podsítě ve formátu CIDR (1-32)',
     'Enter the new LAN IP address: ' => 'Zadejte novou IP adresu LAN:',
     'The LAN interface will now be configured ...' => 'Konfigurace rozhraní LAN ...',
     'The LAN interface will now be configured via DHCP...' => 'Rozhraní LAN bude konfigurováno pomocí DHCP ...',

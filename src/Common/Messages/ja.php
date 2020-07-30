@@ -1,4 +1,11 @@
 <?php
+/**
+ * Copyright © MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Alexey Portnov, 7 2020
+ */
+
 return [
     'November' => '11月',
     'December' => '12月',
@@ -975,7 +982,7 @@ return [
     'Enter the LAN DNS IP address: ' => 'DNSサーバーのアドレスを入力します。',
     'Enter the LAN gateway IP address: ' => 'ゲートウェイアドレス（LANゲートウェイIPアドレス）を入力します。',
     'Enter the new LAN subnet bit count: ' => 'マスク値を入力してください：',
-    'Subnet masks are to be entered as bit counts (as in CIDR notation).' => 'CIDR形式のサブネットマスク（1-31）',
+    'Subnet masks are to be entered as bit counts (as in CIDR notation).' => 'CIDR形式のサブネットマスク（1-32）',
     'Enter the new LAN IP address: ' => '新しいLAN IPアドレスを入力します。',
     'The LAN interface will now be configured ...' => 'LANインターフェースの設定...',
     'The LAN interface will now be configured via DHCP...' => 'LANインターフェイスはDHCPを使用して構成されます...',

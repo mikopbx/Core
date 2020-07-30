@@ -1,4 +1,11 @@
 <?php
+/**
+ * Copyright © MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Alexey Portnov, 7 2020
+ */
+
 return [
     'January' => 'Janvier',
     'sntry_SuccessMessage' => 'Merci pour votre aide!',
@@ -950,7 +957,7 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'Enter the LAN DNS IP address: ' => 'Saisissez l\'adresse du serveur DNS:',
     'Enter the LAN gateway IP address: ' => 'Saisissez l\'adresse de la passerelle (adresse IP de la passerelle LAN):',
     'Enter the new LAN subnet bit count: ' => 'Entrez la valeur du masque:',
-    'Subnet masks are to be entered as bit counts (as in CIDR notation).' => 'Masque de sous-réseau au format CIDR (1-31)',
+    'Subnet masks are to be entered as bit counts (as in CIDR notation).' => 'Masque de sous-réseau au format CIDR (1-32)',
     'Enter the new LAN IP address: ' => 'Saisissez la nouvelle adresse IP LAN:',
     'The LAN interface will now be configured ...' => 'Configuration de l\'interface LAN ...',
     'The LAN interface will now be configured via DHCP...' => 'L\'interface LAN sera configurée à l\'aide de DHCP ...',

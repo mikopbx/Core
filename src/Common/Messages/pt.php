@@ -1,4 +1,11 @@
 <?php
+/**
+ * Copyright © MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Alexey Portnov, 7 2020
+ */
+
 return [
     'сal_Last30Days' => 'Últimos 30 dias',
     'сal_LastWeek' => 'Últimos 7 dias',
@@ -975,7 +982,7 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'Enter the LAN DNS IP address: ' => 'Digite o endereço do servidor DNS:',
     'Enter the LAN gateway IP address: ' => 'Digite o endereço do gateway (endereço IP do gateway LAN):',
     'Enter the new LAN subnet bit count: ' => 'Digite o valor da máscara:',
-    'Subnet masks are to be entered as bit counts (as in CIDR notation).' => 'Máscara de sub-rede no formato CIDR (1-31)',
+    'Subnet masks are to be entered as bit counts (as in CIDR notation).' => 'Máscara de sub-rede no formato CIDR (1-32)',
     'Enter the new LAN IP address: ' => 'Digite o novo endereço IP da LAN:',
     'The LAN interface will now be configured ...' => 'Configurando a interface da LAN ...',
     'The LAN interface will now be configured via DHCP...' => 'A interface da LAN será configurada usando o DHCP ...',

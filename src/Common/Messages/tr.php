@@ -1,4 +1,11 @@
 <?php
+/**
+ * Copyright © MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Alexey Portnov, 7 2020
+ */
+
 return [
     'ex_ValidateForwardingToBeFilled' => 'Yönlendirme ayarlarında, zaman aşımı yönlendirme numarası doldurulmaz',
     'ex_ValidateRingingBeforeForwardOutOfRange' => 'Yönlendirme ayarlarında, aktarımdan önceki süre yanlış belirtilir. {RuleValue} arasında bir değer seçin.',
@@ -964,7 +971,7 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
     'Do you want to proceed? (y/n): ' => 'İşleme devam etmek istiyor musunuz? (y / n):',
     'The system will reboot. This may take a minute.' => 'Sistem yeniden başlatılacak. Birkaç dakika sürer.',
     'Enter the new LAN subnet bit count: ' => 'Maske değerini girin:',
-    'Subnet masks are to be entered as bit counts (as in CIDR notation).' => 'CIDR formatında alt ağ maskesi (1-31)',
+    'Subnet masks are to be entered as bit counts (as in CIDR notation).' => 'CIDR formatında alt ağ maskesi (1-32)',
     'Enter the new LAN IP address: ' => 'Yeni LAN IP adresini girin:',
     'The LAN interface will now be configured ...' => 'LAN arayüzünü yapılandırma ...',
     'The LAN interface will now be configured via DHCP...' => 'LAN arayüzü DHCP kullanılarak yapılandırılacaktır ...',

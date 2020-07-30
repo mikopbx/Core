@@ -1,4 +1,11 @@
 <?php
+/**
+ * Copyright © MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Alexey Portnov, 7 2020
+ */
+
 return [
     'tf_ActionPlayMessage' => 'Odtwórz plik <b>% message%</b>',
     'tf_ActionTransferToExtension' => 'Przekaż połączenie na <b>%message%</b>',
@@ -967,7 +974,7 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'Enter the LAN DNS IP address: ' => 'Wpisz adres serwera DNS:',
     'Enter the LAN gateway IP address: ' => 'Wprowadź adres bramy (adres IP bramy sieci LAN):',
     'Enter the new LAN subnet bit count: ' => 'Wprowadź wartość maski:',
-    'Subnet masks are to be entered as bit counts (as in CIDR notation).' => 'Maska podsieci w formacie CIDR (1-31)',
+    'Subnet masks are to be entered as bit counts (as in CIDR notation).' => 'Maska podsieci w formacie CIDR (1-32)',
     'Enter the new LAN IP address: ' => 'Wpisz nowy adres IP LAN:',
     'The LAN interface will now be configured ...' => 'Konfigurowanie interfejsu LAN ...',
     'The LAN interface will now be configured via DHCP...' => 'Interfejs LAN zostanie skonfigurowany przy użyciu DHCP ...',

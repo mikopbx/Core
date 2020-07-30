@@ -1,4 +1,11 @@
 <?php
+/**
+ * Copyright © MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Alexey Portnov, 7 2020
+ */
+
 return [
     'January' => 'Januar',
     'February' => 'Februar',
@@ -966,7 +973,7 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
     'Enter the LAN DNS IP address: ' => 'Geben Sie die DNS-Serveradresse ein:',
     'Enter the LAN gateway IP address: ' => 'Geben Sie die Gateway-Adresse (LAN-Gateway-IP-Adresse) ein:',
     'Enter the new LAN subnet bit count: ' => 'Geben Sie den Maskenwert ein:',
-    'Subnet masks are to be entered as bit counts (as in CIDR notation).' => 'Subnetzmaske im CIDR-Format (1-31)',
+    'Subnet masks are to be entered as bit counts (as in CIDR notation).' => 'Subnetzmaske im CIDR-Format (1-32)',
     'Enter the new LAN IP address: ' => 'Geben Sie die neue LAN-IP-Adresse ein:',
     'The LAN interface will now be configured ...' => 'LAN-Schnittstelle konfigurieren ...',
     'The LAN interface will now be configured via DHCP...' => 'Die LAN-Schnittstelle wird über DHCP konfiguriert ...',

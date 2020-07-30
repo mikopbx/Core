@@ -1,4 +1,11 @@
 <?php
+/**
+ * Copyright © MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Alexey Portnov, 7 2020
+ */
+
 return [
     'mm_SSHConsole' => 'Consola SSH',
     'ex_Email' => 'Correo electrónico',
@@ -966,7 +973,7 @@ Se puede activar una vez, después de lo cual el cupón se canjea.
     'Enter the LAN DNS IP address: ' => 'Ingrese la dirección del servidor DNS:',
     'Enter the LAN gateway IP address: ' => 'Ingrese la dirección de la puerta de enlace (dirección IP de la puerta de enlace LAN):',
     'Enter the new LAN subnet bit count: ' => 'Ingrese el valor de la máscara:',
-    'Subnet masks are to be entered as bit counts (as in CIDR notation).' => 'Máscara de subred en formato CIDR (1-31)',
+    'Subnet masks are to be entered as bit counts (as in CIDR notation).' => 'Máscara de subred en formato CIDR (1-32)',
     'Enter the new LAN IP address: ' => 'Ingrese la nueva dirección IP de LAN:',
     'The LAN interface will now be configured ...' => 'Configuración de la interfaz LAN ...',
     'The LAN interface will now be configured via DHCP...' => 'La interfaz LAN se configurará utilizando DHCP ...',

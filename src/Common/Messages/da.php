@@ -1,4 +1,11 @@
 <?php
+/**
+ * Copyright © MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Alexey Portnov, 7 2020
+ */
+
 return [
     'Oct' => 'oktober',
     'Nov' => 'november',
@@ -975,7 +982,7 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'Enter the LAN DNS IP address: ' => 'Indtast DNS-serveradressen:',
     'Enter the LAN gateway IP address: ' => 'Indtast gateway-adressen (LAN gateway IP-adresse):',
     'Enter the new LAN subnet bit count: ' => 'Indtast maskeværdien:',
-    'Subnet masks are to be entered as bit counts (as in CIDR notation).' => 'Subnetmaske i CIDR-format (1-31)',
+    'Subnet masks are to be entered as bit counts (as in CIDR notation).' => 'Subnetmaske i CIDR-format (1-32)',
     'Enter the new LAN IP address: ' => 'Indtast den nye LAN IP-adresse:',
     'The LAN interface will now be configured ...' => 'Konfigurerer LAN-grænsefladen ...',
     'The LAN interface will now be configured via DHCP...' => 'LAN-grænsefladen konfigureres ved hjælp af DHCP ...',

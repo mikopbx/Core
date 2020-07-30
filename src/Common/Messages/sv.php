@@ -1,4 +1,11 @@
 <?php
+/**
+ * Copyright © MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Alexey Portnov, 7 2020
+ */
+
 return [
     'ex_Online' => 'ansluten',
     'am_TableColumnDescription' => 'Anmärkningar',
@@ -972,7 +979,7 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'Enter the LAN DNS IP address: ' => 'Ange DNS-serveradressen:',
     'Enter the LAN gateway IP address: ' => 'Ange gateway-adressen (LAN-gateway-IP-adress):',
     'Enter the new LAN subnet bit count: ' => 'Ange maskvärdet:',
-    'Subnet masks are to be entered as bit counts (as in CIDR notation).' => 'Subnetmask i CIDR-format (1-31)',
+    'Subnet masks are to be entered as bit counts (as in CIDR notation).' => 'Subnetmask i CIDR-format (1-32)',
     'Enter the new LAN IP address: ' => 'Ange den nya LAN-IP-adressen:',
     'The LAN interface will now be configured ...' => 'Konfigurerar LAN-gränssnittet ...',
     'The LAN interface will now be configured via DHCP...' => 'LAN-gränssnittet kommer att konfigureras med DHCP ...',

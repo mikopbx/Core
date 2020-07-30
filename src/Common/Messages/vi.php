@@ -1,4 +1,11 @@
 <?php
+/**
+ * Copyright © MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Alexey Portnov, 7 2020
+ */
+
 return [
     'upd_UploadInProgress' => 'Đang tải xuống tệp cập nhật ...',
     'upd_UpgradeInProgress' => 'Các tập tin hệ thống đang được cập nhật ...',
@@ -964,7 +971,7 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá đ
     'Enter the LAN DNS IP address: ' => 'Nhập địa chỉ máy chủ DNS:',
     'Enter the LAN gateway IP address: ' => 'Nhập địa chỉ cổng (địa chỉ IP cổng LAN):',
     'Enter the new LAN subnet bit count: ' => 'Nhập giá trị mặt nạ:',
-    'Subnet masks are to be entered as bit counts (as in CIDR notation).' => 'Mặt nạ mạng con ở định dạng CIDR (1-31)',
+    'Subnet masks are to be entered as bit counts (as in CIDR notation).' => 'Mặt nạ mạng con ở định dạng CIDR (1-32)',
     'Enter the new LAN IP address: ' => 'Nhập địa chỉ IP LAN mới:',
     'The LAN interface will now be configured ...' => 'Định cấu hình giao diện LAN ...',
     'The LAN interface will now be configured via DHCP...' => 'Giao diện LAN sẽ được cấu hình bằng DHCP ...',

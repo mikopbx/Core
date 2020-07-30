@@ -1,4 +1,11 @@
 <?php
+/**
+ * Copyright © MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Alexey Portnov, 7 2020
+ */
+
 return [
     'BreadcrumbAsteriskManagersmodify' => 'Configurazione dell\'account',
     'or_PatternToMatch' => 'La regola funzionerà se',
@@ -964,7 +971,7 @@ Può essere attivato una volta, dopo di che il coupon viene riscattato.
     'Enter the LAN DNS IP address: ' => 'Inserisci l\'indirizzo del server DNS:',
     'Enter the LAN gateway IP address: ' => 'Immettere l\'indirizzo gateway (indirizzo IP gateway LAN):',
     'Enter the new LAN subnet bit count: ' => 'Immettere il valore della maschera:',
-    'Subnet masks are to be entered as bit counts (as in CIDR notation).' => 'Subnet mask in formato CIDR (1-31)',
+    'Subnet masks are to be entered as bit counts (as in CIDR notation).' => 'Subnet mask in formato CIDR (1-32)',
     'Enter the new LAN IP address: ' => 'Inserisci il nuovo indirizzo IP LAN:',
     'The LAN interface will now be configured ...' => 'Configurazione dell\'interfaccia LAN ...',
     'The LAN interface will now be configured via DHCP...' => 'L\'interfaccia LAN verrà configurata tramite DHCP ...',
