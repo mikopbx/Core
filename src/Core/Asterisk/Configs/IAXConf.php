@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 2 2020
+ * Written by Alexey Portnov, 7 2020
  */
 
 namespace MikoPBX\Core\Asterisk\Configs;
@@ -121,7 +121,7 @@ class IAXConf extends ConfigClass
         foreach ($providers as $provider) {
             $prov_config .= "[{$provider['uniqid']}];\n";
             $prov_config .= "type=friend\n";
-            $prov_config .= "auth=plaintext\n";
+            $prov_config .= "auth=md5\n";
             $prov_config .= "context={$provider['uniqid']}-incoming \n";
             $prov_config .= "language={$lang}\n";
             $prov_config .= "qualify=2000\n";
