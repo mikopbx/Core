@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 7 2020
+ * Written by Alexey Portnov, 8 2020
  */
 
 namespace MikoPBX\PBXCoreREST\Workers;
@@ -275,6 +275,9 @@ class WorkerApiCommands extends WorkerBase
                 break;
             case 'fileReadContent':
                 $res = FilesManagementProcessor::fileReadContent($data['filename'], $data['needOriginal']);
+                break;
+            case 'getLogFromFile':
+                $res = FilesManagementProcessor::getLogFromFile($data['filename'], $data['filter'], $data['lines']);
                 break;
             case 'getExternalIpInfo':
                 $res = NetworkManagementProcessor::getExternalIpInfo();

@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 7 2020
+ * Written by Alexey Portnov, 8 2020
  */
 
 return [
@@ -996,4 +996,10 @@ It can be activated once, after which the coupon becomes redeemed.
     'VLAN IP address assigned via' => 'VLAN IP: works through',
     'LAN IP address' => 'LAN IP set manually',
     'LAN IP address assigned via DHCP' => 'LAN IP assigned through DHCP server',
+    'sd_Filename'                                                         => 'Filename',
+    'sd_filter'                                                           => 'Filter',
+    'sd_lines'                                                            => 'Lines',
+    'da_ShowLog'                                                          => 'Show log',
+    'da_CapturePcap'                                                      => 'Capture pcap',
+    'da_log_ShowLastLog'                                                  => 'Show last log',
 ];

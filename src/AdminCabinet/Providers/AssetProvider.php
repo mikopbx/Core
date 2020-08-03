@@ -1,4 +1,10 @@
 <?php
+/**
+ * Copyright © MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Alexey Portnov, 8 2020
+ */
 
 declare(strict_types=1);
 /**
@@ -516,8 +522,13 @@ class AssetProvider implements ServiceProviderInterface
                     case 'SystemDiagnostic':
                         if ($action === 'index') {
                             $footerCollectionJS
+                                ->addJs('js/vendor/semantic/popup.min.js', true)
+                                ->addJs('js/vendor/semantic/dropdown.min.js', true)
                                 ->addJs('js/pbx/main/form.js', true)
                                 ->addJs('js/pbx/SystemDiagnostic/system-diagnostic-index.js', true);
+                            $footerCollectionACE
+                                ->addJs('js/vendor/ace/ace.js', true)
+                                ->addJs('js/vendor/ace/mode-julia.js', true);
                         }
                         break;
                     case 'TimeSettings':

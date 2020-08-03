@@ -2,7 +2,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 7 2020
+ * Written by Alexey Portnov, 8 2020
  */
 /* global sessionStorage, globalRootUrl,Config */
 
@@ -30,6 +30,7 @@ const PbxApi = {
 	systemStopLogsCapture: `${Config.pbxUrl}/pbxcore/api/system/stopLog`,
 	systemGetExternalIP: `${Config.pbxUrl}/pbxcore/api/system/getExternalIpInfo`,
 	systemUpgrade: `${Config.pbxUrl}/pbxcore/api/system/upgrade`, // Обновление АТС файлом
+	systemGetLogFromFile: `${Config.pbxUrl}/pbxcore/api/system/getLogFromFile`, // Обновление АТС файлом
 	systemDownloadNewFirmware: `${Config.pbxUrl}/pbxcore/api/system/downloadNewFirmware`, // Обновление АТС онлайн
 	systemGetFirmwareDownloadStatus: `${Config.pbxUrl}/pbxcore/api/system/firmwareDownloadStatus`, // Получение статуса обновления
 	systemDownloadNewModule: `${Config.pbxUrl}/pbxcore/api/system/downloadNewModule`,
@@ -391,6 +392,32 @@ const PbxApi = {
 			successTest: PbxApi.successTest,
 			onSuccess() {
 				callback(true);
+			},
+			onFailure(response) {
+				callback(response);
+			},
+			onError(response) {
+				callback(response);
+			},
+		});
+	},
+
+	/**
+	 * Get part log file
+	 * @param filename
+	 * @param filter
+	 * @param lines
+	 * @constructor
+	 */
+	GetLogFromFile(filename, filter, lines, callback) {
+		$.api({
+			url: PbxApi.systemGetLogFromFile,
+			on: 'now',
+			method: 'POST',
+			data: {filename:filename, filter:filter, lines:lines},
+			successTest: PbxApi.successTest,
+			onSuccess(response) {
+				callback(response.data);
 			},
 			onFailure(response) {
 				callback(response);

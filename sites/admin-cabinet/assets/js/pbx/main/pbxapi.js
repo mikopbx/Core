@@ -2,7 +2,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 7 2020
+ * Written by Alexey Portnov, 8 2020
  */
 
 "use strict";
@@ -53,6 +53,7 @@ var PbxApi = {
   systemStopLogsCapture: "".concat(Config.pbxUrl, "/pbxcore/api/system/stopLog"),
   systemGetExternalIP: "".concat(Config.pbxUrl, "/pbxcore/api/system/getExternalIpInfo"),
   systemUpgrade: "".concat(Config.pbxUrl, "/pbxcore/api/system/upgrade"),
+  systemGetLogFromFile: "".concat(Config.pbxUrl, "/pbxcore/api/system/getLogFromFile"),
   // Обновление АТС файлом
   systemDownloadNewFirmware: "".concat(Config.pbxUrl, "/pbxcore/api/system/downloadNewFirmware"),
   // Обновление АТС онлайн
@@ -641,6 +642,42 @@ var PbxApi = {
     }
 
     return SystemUpgrade;
+  }(),
+
+
+  GetLogFromFile: function () {
+    function GetLogFromFile(filename, filter, lines, callback) {
+      $.api({
+        url: PbxApi.systemGetLogFromFile,
+        on: 'now',
+        method: 'POST',
+        data: {filename:filename, filter:filter, lines:lines},
+        successTest: PbxApi.successTest,
+        onSuccess: function () {
+          function onSuccess(response) {
+            callback(response.data);
+          }
+
+          return onSuccess;
+        }(),
+        onFailure: function () {
+          function onFailure(response) {
+            callback(response);
+          }
+
+          return onFailure;
+        }(),
+        onError: function () {
+          function onError(response) {
+            callback(response);
+          }
+
+          return onError;
+        }()
+      });
+    }
+
+    return GetLogFromFile;
   }(),
 
   /**

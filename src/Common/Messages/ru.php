@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 7 2020
+ * Written by Alexey Portnov, 8 2020
  */
 
 return [
@@ -1001,4 +1001,10 @@ return [
     'Resize storage'                                                      => 'Увеличить размер диска для хранения данных, задействовав всю неразмеченную область',
     'Check storage'                                                       => 'Проверить диск на ошибки',
     'Storage unmounted'                                                   => 'Диск для хранения данных не подключен',
+    'sd_Filename'                                                         => 'Файл',
+    'sd_filter'                                                           => 'Фильтр',
+    'sd_lines'                                                            => 'Лимит',
+    'da_ShowLog'                                                          => 'Просмотр логов',
+    'da_CapturePcap'                                                      => 'Захват логов',
+    'da_log_ShowLastLog'                                                  => 'Отобразить',
 ];

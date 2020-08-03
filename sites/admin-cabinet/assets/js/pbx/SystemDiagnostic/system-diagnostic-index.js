@@ -1,3 +1,10 @@
+/*
+ * Copyright © MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Alexey Portnov, 8 2020
+ */
+
 "use strict";
 
 /*
@@ -8,12 +15,37 @@
  *
  */
 
-/* global sessionStorage, PbxApi */
+/* global sessionStorage, ace, PbxApi */
 var systemDiagnostic = {
   $startBtn: $('#start-capture-button'),
   $stopBtn: $('#stop-capture-button'),
+  $showBtn:  $('#show-last-log'),
+  viewer: '',
+  $tabMenuItems: $('#system-diagnostic-menu .item'),
+  $fileSelectDropDown: $('#system-diagnostic-form .type-select'),
+
   initialize: function () {
     function initialize() {
+      systemDiagnostic.$tabMenuItems.tab();
+      systemDiagnostic.$tabMenuItems.tab('change tab', 'show-log');
+      systemDiagnostic.$fileSelectDropDown.dropdown({
+        onChange: function () {
+          function onChange() {
+            // customFile.getFileContentFromServer();
+            console.log('Change filename...');
+          }
+          return onChange;
+        }()
+      });
+      systemDiagnostic.$showBtn.on('click', function (e) {
+        e.preventDefault();
+        let Lines = $('#lines').val();
+        if(!jQuery.isNumeric( Lines)){
+          Lines = 500;
+        }
+        PbxApi.GetLogFromFile($('#filenames').val(), $('#filter').val(), Lines , systemDiagnostic.cbUpdateLogText)
+      });
+
       if (sessionStorage.getItem('LogsCaptureStatus') === 'started') {
         systemDiagnostic.$startBtn.addClass('disabled loading');
         systemDiagnostic.$stopBtn.removeClass('disabled');
@@ -34,9 +66,28 @@ var systemDiagnostic = {
         systemDiagnostic.$stopBtn.addClass('disabled');
         PbxApi.SystemStopLogsCapture(systemDiagnostic.cbAfterStopLogsCapture);
       });
+
+      systemDiagnostic.initializeAce();
     }
 
     return initialize;
+  }(),
+  initializeAce: function () {
+    function initializeAce() {
+      var IniMode = ace.require('ace/mode/julia').Mode;
+      systemDiagnostic.viewer = ace.edit('application-code-readonly');
+      systemDiagnostic.viewer.setReadOnly(true);
+      systemDiagnostic.viewer.session.setMode(new IniMode());
+      systemDiagnostic.viewer.setTheme('ace/theme/monokai');
+      systemDiagnostic.viewer.resize();
+
+      var $codeElement = $('#application-code-readonly');
+      var Length = $codeElement.height() * 0.80;
+      $codeElement.height(Length);
+      $('.ace_gutter').hide();
+    }
+
+    return initializeAce;
   }(),
   cbAfterStopLogsCapture: function () {
     function cbAfterStopLogsCapture(response) {
@@ -44,6 +95,16 @@ var systemDiagnostic = {
     }
 
     return cbAfterStopLogsCapture;
+  }()
+  ,
+  cbUpdateLogText: function () {
+    function cbUpdateLogText(data) {
+      if (data !== undefined && data.length > 0) {
+        systemDiagnostic.viewer.setValue(data[0]);
+      }
+    }
+
+    return cbUpdateLogText;
   }()
 };
 $(document).ready(function () {

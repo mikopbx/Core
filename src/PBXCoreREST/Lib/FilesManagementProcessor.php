@@ -3,12 +3,13 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 7 2020
+ * Written by Alexey Portnov, 8 2020
  */
 
 namespace MikoPBX\PBXCoreREST\Lib;
 
 use MikoPBX\Common\Models\CustomFiles;
+use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Modules\PbxExtensionUtils;
 use MikoPBX\Modules\Setup\PbxExtensionSetupFailure;
@@ -290,6 +291,35 @@ class FilesManagementProcessor extends Injectable
             $res->messages[] = 'No access to the file '.$filename;
         }
 
+        return $res;
+    }
+
+    /**
+     * Получения данных из лог файла с возможностью фильтра и ограничения выборки.
+     * @param  string $filename
+     * @param  string $filter
+     * @param  int    $lines
+     * @return PBXApiResult
+     */
+    public static function getLogFromFile($filename = 'messages', $filter = '', $lines = 500): PBXApiResult
+    {
+        $res = new PBXApiResult();
+        if(!file_exists($filename)){
+            $filename = System::getLogDir() .'/'. $filename;
+        }
+        if(!file_exists($filename)){
+            $res->success    = false;
+            $res->messages[] = 'No access to the file '.$filename;
+        }else{
+            $res->success    = true;
+            $cat  = Util::which('cat');
+            $grep = Util::which('grep');
+            $tail = Util::which('tail');
+
+            $cmd = "{$cat} {$filename} | {$grep} ".escapeshellarg($filter)." | $tail -n ". escapeshellarg($lines);
+            Util::mwExec($cmd, $rows);
+            $res->data[] = implode("\n", $rows);
+        }
         return $res;
     }
 
