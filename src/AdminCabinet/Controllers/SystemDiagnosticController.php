@@ -20,7 +20,7 @@ class SystemDiagnosticController extends BaseController
 
         $fileData = FilesManagementProcessor::getLogFromFile(SystemDiagnosticForm::DEFAULT_FILENAME);
         if($fileData->success){
-            $this->view->content  = ($fileData->data[0]);
+            $this->view->content  = file_get_contents($fileData->data[0]);
         }
     }
 

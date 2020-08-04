@@ -67,6 +67,8 @@ const systemDiagnostic = {
 		var Length = $codeElement.height() * 0.80;
 		$codeElement.height(Length);
 		$('.ace_gutter').hide();
+
+		setTimeout(systemDiagnostic.cbUpdateLogText, 2000);
 	},
 	cbAfterStopLogsCapture(response) {
 		console.log(response);
@@ -75,6 +77,7 @@ const systemDiagnostic = {
 		if (data !== undefined && data.length > 0) {
 			systemDiagnostic.viewer.setValue(data[0]);
 		}
+		systemDiagnostic.viewer.gotoLine($('#lines').val())
 	},
 };
 

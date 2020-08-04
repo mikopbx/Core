@@ -19,7 +19,7 @@ class SystemDiagnosticForm extends Form{
     private $filelist;
     private $logDir;
 
-    public function initialize($options = null): void
+    public function initialize(): void
     {
         $this->logDir     = System::getLogDir();
         $this->filelist   = [];

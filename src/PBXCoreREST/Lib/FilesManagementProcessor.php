@@ -303,6 +303,10 @@ class FilesManagementProcessor extends Injectable
      */
     public static function getLogFromFile($filename = 'messages', $filter = '', $lines = 500): PBXApiResult
     {
+        if(!is_numeric($lines)){
+            $lines = 500;
+        }
+
         $res = new PBXApiResult();
         if(!file_exists($filename)){
             $filename = System::getLogDir() .'/'. $filename;
@@ -316,9 +320,12 @@ class FilesManagementProcessor extends Injectable
             $grep = Util::which('grep');
             $tail = Util::which('tail');
 
-            $cmd = "{$cat} {$filename} | {$grep} ".escapeshellarg($filter)." | $tail -n ". escapeshellarg($lines);
-            Util::mwExec($cmd, $rows);
-            $res->data[] = implode("\n", $rows);
+            $di         = Di::getDefault();
+            $dirsConfig = $di->getShared('config');
+            $filenameTmp   = $dirsConfig->path('core.tempPath') . '/tmp.log';
+            $cmd = "{$cat} {$filename} | {$grep} ".escapeshellarg($filter)." | $tail -n ". escapeshellarg($lines). "> $filenameTmp";
+            Util::mwExec("$cmd; chown www:www $filenameTmp");
+            $res->data[] = $filenameTmp;
         }
         return $res;
     }

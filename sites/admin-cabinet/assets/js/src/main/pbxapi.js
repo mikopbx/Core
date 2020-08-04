@@ -413,7 +413,7 @@ const PbxApi = {
 		$.api({
 			url: PbxApi.systemGetLogFromFile,
 			on: 'now',
-			method: 'POST',
+			method: 'GET',
 			data: {filename:filename, filter:filter, lines:lines},
 			successTest: PbxApi.successTest,
 			onSuccess(response) {

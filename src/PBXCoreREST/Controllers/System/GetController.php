@@ -1,4 +1,10 @@
 <?php
+/**
+ * Copyright © MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Alexey Portnov, 8 2020
+ */
 
 namespace MikoPBX\PBXCoreREST\Controllers\System;
 
@@ -40,7 +46,13 @@ class GetController extends BaseController
             ]
         );
         $connection     = $this->beanstalkConnection;
+
         if ($actionName === 'stopLog') {
+            $response = $connection->request($requestMessage, 60, 0);
+        } elseif ( $actionName === 'getLogFromFile' ){
+            $message = json_decode($requestMessage, true);
+            $message['data'] = $_GET;
+            $requestMessage = json_encode($message);
             $response = $connection->request($requestMessage, 60, 0);
         } else {
             $response = $connection->request($requestMessage, 5, 0);
@@ -48,16 +60,16 @@ class GetController extends BaseController
         if ($response !== false) {
             $response = json_decode($response, true);
             if ($actionName === 'stopLog') {
-                if ( ! file_exists($response['filename'])) {
+                if (!file_exists($response['filename'])) {
                     $this->response->setPayloadSuccess('Log file not found.');
 
                     return;
                 }
-                $scheme       = $this->request->getScheme();
-                $host         = $this->request->getHttpHost();
-                $port         = $this->request->getPort();
-                $uid          = Util::generateRandomString(36);
-                $di           = Di::getDefault();
+                $scheme = $this->request->getScheme();
+                $host = $this->request->getHttpHost();
+                $port = $this->request->getPort();
+                $uid = Util::generateRandomString(36);
+                $di = Di::getDefault();
                 $downloadLink = $di->getShared('config')->path('core.downloadCachePath');
 
                 $result_dir = "{$downloadLink}/{$uid}";
@@ -67,6 +79,17 @@ class GetController extends BaseController
                 Util::mwExec("{$lnPath} -s {$response['filename']} {$result_dir}/{$link_name}");
                 $this->response->redirect("{$scheme}://{$host}:{$port}/pbxcore/files/cache/{$uid}/{$link_name}");
                 $this->response->sendRaw();
+
+             }elseif ($actionName === 'getLogFromFile') {
+                $this->response->setPayloadSuccess('Log file not found.');
+                $filename = $response['data'][0]??'';
+                if (!file_exists($filename)) {
+                    $this->response->setPayloadSuccess('Log file not found.');
+                    return;
+                }
+                $response['data'][] = $filename;
+                $response['data'][0] = ''.file_get_contents($filename);
+                $this->response->setPayloadSuccess($response);
             } else {
                 $this->response->setPayloadSuccess($response);
             }
