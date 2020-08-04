@@ -21,13 +21,11 @@ const systemDiagnostic = {
 		systemDiagnostic.$fileSelectDropDown.dropdown({
 			onChange() {
 				// customFile.getFileContentFromServer();
-				console.log('Change filename...');
 			},
 		});
 
 		systemDiagnostic.$showBtn.on('click', (e) => {
 			e.preventDefault();
-			console.log('Start get log...');
 			let Lines = $('#lines').val();
 			if(!jQuery.isNumeric( Lines)){
 				Lines = 500;
