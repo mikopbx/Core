@@ -89,6 +89,7 @@ class GetController extends BaseController
                 }
                 $response['data'][] = $filename;
                 $response['data'][0] = ''.file_get_contents($filename);
+                unlink($filename);
                 $this->response->setPayloadSuccess($response);
             } else {
                 $this->response->setPayloadSuccess($response);
