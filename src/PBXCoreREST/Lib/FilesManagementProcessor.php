@@ -303,10 +303,6 @@ class FilesManagementProcessor extends Injectable
      */
     public static function getLogFromFile($filename = 'messages', $filter = '', $lines = 500): PBXApiResult
     {
-        if(!is_numeric($lines)){
-            $lines = 500;
-        }
-
         $res = new PBXApiResult();
         if(!file_exists($filename)){
             $filename = System::getLogDir() .'/'. $filename;
