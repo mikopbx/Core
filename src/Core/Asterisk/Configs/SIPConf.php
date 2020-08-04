@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 7 2020
+ * Written by Alexey Portnov, 8 2020
  */
 
 namespace MikoPBX\Core\Asterisk\Configs;
@@ -220,6 +220,7 @@ class SIPConf extends ConfigClass
             } else {
                 $contact = "sip:{$provider['host']}:{$port}";
             }
+
             $options     = [
                 'type'               => 'aor',
                 'max_contacts'       => '1',
@@ -228,6 +229,11 @@ class SIPConf extends ConfigClass
                 'minimum_expiration' => $this->generalSettings['SIPMinExpiry'],
                 'default_expiration' => $this->generalSettings['SIPDefaultExpiry'],
             ];
+            if($provider['qualify'] === '1'){
+                $options['qualify_frequency'] = $provider['qualifyfreq'];
+                $options['qualify_timeout']   = '3.0';
+            }
+
             $prov_config .= "[{$provider['uniqid']}]\n";
             $prov_config .= Util::overrideConfigurationArray($options, $manual_attributes, 'aor');
 
