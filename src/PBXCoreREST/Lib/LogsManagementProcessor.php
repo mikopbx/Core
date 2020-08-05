@@ -1,10 +1,9 @@
 <?php
 /**
- * Copyright (C) MIKO LLC - All Rights Reserved
+ * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 7 2020
- *
+ * Written by Alexey Portnov, 8 2020
  */
 
 namespace MikoPBX\PBXCoreREST\Lib;
@@ -13,6 +12,7 @@ namespace MikoPBX\PBXCoreREST\Lib;
 use MikoPBX\Core\System\Network;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
+use Phalcon\Di;
 use Phalcon\Di\Injectable;
 
 class LogsManagementProcessor extends Injectable
@@ -95,6 +95,7 @@ class LogsManagementProcessor extends Injectable
         $findPath = Util::which('find');
         $za7Path  = Util::which('7za');
         $cpPath   = Util::which('cp');
+        $chownPath   = Util::which('chown');
 
         $dirlog = $dir_all_log . '/dir_start_all_log';
         Util::mwMkdir($dirlog);
@@ -102,7 +103,10 @@ class LogsManagementProcessor extends Injectable
         $log_dir = System::getLogDir();
         Util::mwExec("{$cpPath} -R {$log_dir} {$dirlog}");
 
-        $result = $dir_all_log . '/arhive_start_all_log.zip';
+        $di         = Di::getDefault();
+        $dirsConfig = $di->getShared('config');
+        $result = $dirsConfig->path('core.tempPath') . '/arhive_start_all_log.zip';
+
         if (file_exists($result)) {
             Util::mwExec("{$rmPath} -rf {$result}");
         }
@@ -117,8 +121,20 @@ class LogsManagementProcessor extends Injectable
         // Удаляем каталог логов.
         Util::mwExecBg("{$rmPath} -rf {$dirlog}");
 
+
+        $uid = Util::generateRandomString(36);
+        $di = Di::getDefault();
+        $downloadLink = $di->getShared('config')->path('core.downloadCachePath');
+        $result_dir = "{$downloadLink}/{$uid}";
+        Util::mwMkdir($result_dir);
+        $link_name = md5($result) . '.' . Util::getExtensionOfFile($result);
+        $lnPath = Util::which('ln');
+
+        Util::mwExec("{$lnPath} -s {$result} {$result_dir}/{$link_name}");
+        Util::mwExec("{$chownPath} www:www {$result_dir}/{$link_name}");
+
         $res->success=true;
-        $res->data['filename'] = $result; // TODO::Переделать на download link
+        $res->data['filename'] = "{$uid}/{$link_name}";
         return $res;
     }
 }

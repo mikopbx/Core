@@ -318,7 +318,7 @@ class FilesManagementProcessor extends Injectable
 
             $di         = Di::getDefault();
             $dirsConfig = $di->getShared('config');
-            $filenameTmp   = $dirsConfig->path('core.tempPath') . '/tmp.log';
+            $filenameTmp   = $dirsConfig->path('core.tempPath') . '/'.__FUNCTION__.'_'.time().'.log';
             $cmd = "{$cat} {$filename} | {$grep} ".escapeshellarg($filter)." | $tail -n ". escapeshellarg($lines). "> $filenameTmp";
             Util::mwExec("$cmd; chown www:www $filenameTmp");
             $res->data[] = $filenameTmp;

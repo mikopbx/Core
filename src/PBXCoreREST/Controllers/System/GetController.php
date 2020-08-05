@@ -27,7 +27,7 @@ use Phalcon\Di;
  * Старт сбора логов.
  *   curl http://172.16.156.212/pbxcore/api/system/startLog;
  * Завершение сбора логов.
- *   curl http://172.16.156.212/pbxcore/api/system/stopLog;
+ *
  * Пинг АТС (описан в nginx.conf):
  *   curl http://172.16.156.223/pbxcore/api/system/ping
  * Получение информации о внешнем IP адресе:
@@ -60,24 +60,18 @@ class GetController extends BaseController
         if ($response !== false) {
             $response = json_decode($response, true);
             if ($actionName === 'stopLog') {
-                if (!file_exists($response['filename'])) {
-                    $this->response->setPayloadSuccess('Log file not found.');
-
+                $di = Di::getDefault();
+                $downloadLink = $di->getShared('config')->path('core.downloadCachePath');
+                $filename     = $downloadLink."/".$response['data']['filename']??'';
+                if (!file_exists($filename)) {
+                    $this->response->setPayloadSuccess('Log file not found.'.$filename);
                     return;
                 }
                 $scheme = $this->request->getScheme();
                 $host = $this->request->getHttpHost();
                 $port = $this->request->getPort();
-                $uid = Util::generateRandomString(36);
-                $di = Di::getDefault();
-                $downloadLink = $di->getShared('config')->path('core.downloadCachePath');
 
-                $result_dir = "{$downloadLink}/{$uid}";
-                Util::mwMkdir($result_dir);
-                $link_name = md5($response['filename']) . '.' . Util::getExtensionOfFile($response['filename']);
-                $lnPath = Util::which('ln');
-                Util::mwExec("{$lnPath} -s {$response['filename']} {$result_dir}/{$link_name}");
-                $this->response->redirect("{$scheme}://{$host}:{$port}/pbxcore/files/cache/{$uid}/{$link_name}");
+                $this->response->redirect("{$scheme}://{$host}:{$port}/pbxcore/files/cache/{$response['data']['filename']}");
                 $this->response->sendRaw();
 
              }elseif ($actionName === 'getLogFromFile') {
