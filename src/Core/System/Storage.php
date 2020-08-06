@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 7 2020
+ * Written by Alexey Portnov, 8 2020
  */
 
 namespace MikoPBX\Core\System;
@@ -1004,11 +1004,10 @@ class Storage extends Di\Injectable
         }
 
         $downloadCacheDir = appPath('sites/pbxcore/files/cache');
-        if(!$isLiveCd && strpos($downloadCacheDir, '/offload/') !== 0){
+        if(!$isLiveCd){
             Util::mwMkdir($downloadCacheDir);
+            Util::createUpdateSymlink($this->config->path('core.downloadCachePath'), $downloadCacheDir);
         }
-
-        Util::createUpdateSymlink($this->config->path('core.downloadCachePath'), $downloadCacheDir);
 
         $jsCacheDir = appPath('sites/admin-cabinet/assets/js/cache');
         Util::createUpdateSymlink($this->config->path('adminApplication.cacheDir') . '/js', $jsCacheDir);

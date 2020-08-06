@@ -64,12 +64,12 @@ class GetController extends BaseController
                 $downloadLink = $di->getShared('config')->path('core.downloadCachePath');
                 $filename     = $downloadLink."/".$response['data']['filename']??'';
                 if (!file_exists($filename)) {
-                    $this->response->setPayloadSuccess('Log file not found.'.$filename);
+                    $this->response->setPayloadSuccess('Log file not found.');
                     return;
                 }
                 $scheme = $this->request->getScheme();
-                $host = $this->request->getHttpHost();
-                $port = $this->request->getPort();
+                $host   = $this->request->getHttpHost();
+                $port   = $this->request->getPort();
 
                 $this->response->redirect("{$scheme}://{$host}:{$port}/pbxcore/files/cache/{$response['data']['filename']}");
                 $this->response->sendRaw();
