@@ -105,7 +105,10 @@ class LogsManagementProcessor extends Injectable
 
         $di         = Di::getDefault();
         $dirsConfig = $di->getShared('config');
-        $result = $dirsConfig->path('core.tempDir') . '/arhive_start_all_log.zip';
+
+        // Файл будет удален в cron скриптом cleaner_download_links.sh т.к. имя содержит "/temp-"
+        // через 5 минут, если не будет занят процессом.
+        $result     = $dirsConfig->path('core.tempDir') . '/temp-all-log-'.time().'.zip';
 
         if (file_exists($result)) {
             Util::mwExec("{$rmPath} -rf {$result}");

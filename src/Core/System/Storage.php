@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 7 2020
+ * Written by Alexey Portnov, 8 2020
  */
 
 namespace MikoPBX\Core\System;
@@ -13,7 +13,6 @@ use MikoPBX\Core\Workers\WorkerRemoveOldRecords;
 use MikoPBX\Common\Models\Storage as StorageModel;
 use MikoPBX\Common\Providers\ConfigProvider;
 use Phalcon\Di;
-
 use function MikoPBX\Common\Config\appPath;
 
 
@@ -951,6 +950,7 @@ class Storage extends Di\Injectable
         $this->di->remove('config');
         $this->di->register(new ConfigProvider());
         $this->config = $this->di->getShared('config');
+
     }
 
     /**
@@ -1031,11 +1031,10 @@ class Storage extends Di\Injectable
         }
 
         $downloadCacheDir = appPath('sites/pbxcore/files/cache');
-        if ( ! $isLiveCd && strpos($downloadCacheDir, '/offload/') !== 0) {
+        if ( ! $isLiveCd ) {
             Util::mwMkdir($downloadCacheDir);
+            Util::createUpdateSymlink($this->config->path('www.downloadCacheDir'), $downloadCacheDir);
         }
-
-        Util::createUpdateSymlink($this->config->path('www.downloadCacheDir'), $downloadCacheDir);
 
         $jsCacheDir = appPath('sites/admin-cabinet/assets/js/cache');
         Util::createUpdateSymlink($this->config->path('adminApplication.assetsCacheDir') . '/js', $jsCacheDir);
@@ -1157,5 +1156,4 @@ class Storage extends Di\Injectable
             $storage_settings->save();
         }
     }
-
 }
