@@ -85,7 +85,7 @@ class FirewallManagementProcessor extends Injectable
         }
         $q .= ' GROUP BY jail,ip';
 
-        $path_db = Firewall::fail2banGetDbPath();
+        $path_db = Firewall::FAIL2BAN_DB_PATH;
         $db      = new SQLite3($path_db);
         $db->busyTimeout(5000);
 
@@ -163,7 +163,7 @@ class FirewallManagementProcessor extends Injectable
         $res->processor = __METHOD__;
 
         $jail_q  = ($jail === '') ? '' : "AND jail = '{$jail}'";
-        $path_db = Firewall::fail2banGetDbPath();
+        $path_db = Firewall::FAIL2BAN_DB_PATH;
         $db      = new SQLite3($path_db);
         $db->busyTimeout(3000);
         if (false === Firewall::tableBanExists($db)) {

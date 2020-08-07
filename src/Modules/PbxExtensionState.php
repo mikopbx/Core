@@ -14,6 +14,7 @@ use MikoPBX\Common\Models\FirewallRules;
 use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\Configs\NginxConf;
 use MikoPBX\Core\System\Firewall;
 use MikoPBX\Core\System\Util;
@@ -173,24 +174,22 @@ class PbxExtensionState extends Injectable
 
                 return false;
             }
-
             $module = PbxExtensionModules::findFirstByUniqid($this->moduleUniqueID);
             if ($module !== null) {
                 $module->disabled = '0';
-                if (
-                    $module->save() === true
-                    && $this->configClass !== null
-                    && method_exists($this->configClass, 'onBeforeModuleEnable')
-                ) {
-                    $this->configClass->onBeforeModuleEnable();
+                if ($module->save() === true){
+                    if ($this->configClass !== null
+                        && method_exists($this->configClass, 'onBeforeModuleEnable')) {
+                        $this->configClass->onBeforeModuleEnable();
+                    }
                 }
             }
 
             // Restart Nginx if module has locations
-            $this->refreshNginxLocations($this->configClass, true);
+            $this->refreshNginxLocations($this->configClass);
 
             // Reconfigure fail2ban
-            $this->refreshFail2BanRules($this->configClass, true);
+            $this->refreshFail2BanRules($this->configClass);
         }
 
         return ! $error;
@@ -264,24 +263,16 @@ class PbxExtensionState extends Injectable
      *
      * @param      $configClass
      *
-     * @param bool $enableAction
      *
      * @return void
      */
-    private function refreshNginxLocations(&$configClass, bool $enableAction): void
+    private function refreshNginxLocations(&$configClass): void
     {
         if ($configClass !== null
             && method_exists($configClass, 'createNginxLocations')
             && ! empty($configClass->createNginxLocations())) {
-            if ($enableAction === false) {
-                $locationsPath = $this->di->getShared('config')->path('core.nginxLocationsPath');
-                $confFileName  = "{$locationsPath}/{$configClass->moduleUniqueId}.conf";
-                if (file_exists($confFileName)){
-                    unlink($confFileName);
-                }
-            }
             $nginxConf = new NginxConf();
-            $nginxConf->generateConf();
+            $nginxConf->generateModulesConf();
             $nginxConf->reStart();
         }
     }
@@ -291,22 +282,14 @@ class PbxExtensionState extends Injectable
      *
      * @param      $configClass
      *
-     * @param bool $enableAction
      *
      * @return void
      */
-    private function refreshFail2BanRules(&$configClass, bool $enableAction): void
+    private function refreshFail2BanRules(&$configClass): void
     {
         if ($configClass !== null
             && method_exists($configClass, 'generateFail2BanJails')
             && ! empty($configClass->generateFail2BanJails())) {
-            if ($enableAction === false) {
-                $filterPath   = Firewall::fail2banGetFilterPath();
-                $confFileName = "{$filterPath}/{$configClass->moduleUniqueId}.conf";
-                if (file_exists($confFileName)){
-                    unlink($confFileName);
-                }
-            }
             Firewall::reloadFirewall();
         }
     }
@@ -388,22 +371,21 @@ class PbxExtensionState extends Injectable
 
                 return false;
             }
-
             $module = PbxExtensionModules::findFirstByUniqid($this->moduleUniqueID);
             if ($module !== null) {
                 $module->disabled = '1';
-                if (
-                    $module->save() === true
-                    && $this->configClass !== null
-                    && method_exists($this->configClass, 'onBeforeModuleDisable')) {
-                    $this->configClass->onBeforeModuleDisable();
+                if ($module->save() === true){
+                    if ($this->configClass !== null
+                        && method_exists($this->configClass, 'onBeforeModuleDisable')) {
+                        $this->configClass->onBeforeModuleDisable();
+                    }
                 }
             }
             // Reconfigure fail2ban
-            $this->refreshFail2BanRules($this->configClass, false);
+            $this->refreshFail2BanRules($this->configClass);
 
             // Refresh Nginx conf if module has any locations
-            $this->refreshNginxLocations($this->configClass, false);
+            $this->refreshNginxLocations($this->configClass);
         }
 
         // Kill module workers

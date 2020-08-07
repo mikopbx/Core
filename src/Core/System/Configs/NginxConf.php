@@ -19,6 +19,7 @@ use Phalcon\Di\Injectable;
 class NginxConf extends Injectable
 {
     public const LOCATIONS_PATH = '/etc/nginx/mikopbx/locations';
+    public const MODULES_LOCATIONS_PATH = '/etc/nginx/mikopbx/modules_locations';
 
     private MikoPBXConfig $mikoPBXConfig;
 
@@ -36,10 +37,9 @@ class NginxConf extends Injectable
      **/
     public function reStart(): void
     {
-
-        $NginxPath  = Util::which('nginx');
-        $pid = Util::getPidOfProcess($NginxPath);
-        if (!empty($pid)) {
+        $NginxPath = Util::which('nginx');
+        $pid       = Util::getPidOfProcess($NginxPath);
+        if ( ! empty($pid)) {
             Util::mwExec("{$NginxPath} -s reload");
         } elseif (Util::isSystemctl()) {
             $systemCtrlPath = Util::which('systemctl');
@@ -48,7 +48,6 @@ class NginxConf extends Injectable
             Util::killByName('nginx');
             Util::mwExec($NginxPath);
         }
-
     }
 
     /**
@@ -109,30 +108,50 @@ class NginxConf extends Injectable
         }
 
         // Test work
-        $nginxPath = Util::which('nginx');
-        $out       = [];
-        Util::mwExec("{$nginxPath} -t", $out);
-        $res = implode($out);
-        if ($level < 1 && false !== strpos($res, 'test failed')) {
+        $currentConfigIsGood = $this->testCurrentNginxConfig();
+        if ($level < 1 && ! $currentConfigIsGood) {
             ++$level;
             Util::sysLogMsg('nginx', 'Failed test config file. SSL will be disable...');
             $this->generateConf(true, $level);
         }
-
         // Add additional rules from modules
-        $locationsPath     = self::LOCATIONS_PATH;
+        $this->generateModulesConf();
+    }
+
+    /**
+     * Test current nginx config on errors
+     *
+     * @return bool
+     */
+    private function testCurrentNginxConfig(): bool
+    {
+        $nginxPath = Util::which('nginx');
+        $out       = [];
+        Util::mwExec("{$nginxPath} -t", $out);
+        $res = implode($out);
+
+        return (false === stripos($res, 'test failed'));
+    }
+
+    /**
+     * Generate modules locations conf files
+     */
+    public function generateModulesConf(): void
+    {
+        $locationsPath     = self::MODULES_LOCATIONS_PATH;
+        if (!is_dir($locationsPath)){
+            Util::mwMkdir($locationsPath,true);
+        }
         $additionalModules = $this->di->getShared('pbxConfModules');
         $rmPath            = Util::which('rm');
+        Util::mwExec("{$rmPath} -rf {$locationsPath}/*.conf");
         foreach ($additionalModules as $appClass) {
             if (method_exists($appClass, 'createNginxLocations')) {
                 $locationContent = $appClass->createNginxLocations();
                 if ( ! empty($locationContent)) {
                     $confFileName = "{$locationsPath}/{$appClass->moduleUniqueId}.conf";
                     file_put_contents($confFileName, $locationContent);
-                    $out = [];
-                    Util::mwExec("{$nginxPath} -t", $out);
-                    $res = implode($out);
-                    if (false !== strpos($res, 'test failed')) {
+                    if ( ! $this->testCurrentNginxConfig()) {
                         Util::mwExec("{$rmPath} {$confFileName}");
                         Util::sysLogMsg('nginx', 'Failed test config file for module' . $appClass->moduleUniqueId);
                     }

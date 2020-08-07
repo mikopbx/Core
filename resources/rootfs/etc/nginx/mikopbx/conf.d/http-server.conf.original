@@ -6,4 +6,6 @@ server {
     # locations files
     include mikopbx/locations/*.conf;
 
+ 	# module locations files
+    include mikopbx/modules_locations/*.conf;
 }

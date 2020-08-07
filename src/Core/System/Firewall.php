@@ -16,6 +16,9 @@ use SQLite3;
 
 class Firewall extends Injectable
 {
+    public const FILTER_PATH = '/etc/fail2ban/filter.d';
+    public const FAIL2BAN_DB_PATH = '/var/lib/fail2ban/fail2ban.sqlite3';
+
     private bool $firewall_enable;
     private bool $fail2ban_enable;
 
@@ -138,7 +141,7 @@ class Firewall extends Injectable
      */
     public static function fail2banMakeDirs(): string
     {
-        $res_file = self::fail2banGetDbPath();
+        $res_file = self::FAIL2BAN_DB_PATH;
         $filename = basename($res_file);
 
         $old_dir_db = '/cf/fail2ban';
@@ -173,26 +176,6 @@ class Firewall extends Injectable
         }
 
         return $res_file;
-    }
-
-    /**
-     * Returns fail2ban database path
-     *
-     * @return string
-     */
-    public static function fail2banGetDbPath(): string
-    {
-        return '/var/lib/fail2ban/fail2ban.sqlite3';
-    }
-
-    /**
-     * Returns fail2ban filters path
-     *
-     * @return string
-     */
-    public static function fail2banGetFilterPath(): string
-    {
-        return '/etc/fail2ban/filter.d';
     }
 
     /**
@@ -348,7 +331,7 @@ class Firewall extends Injectable
      */
     private function generateJails(): void
     {
-        $filterPath = self::fail2banGetFilterPath();
+        $filterPath = self::FILTER_PATH;
 
         $conf = "[INCLUDES]\n" .
             "before = common.conf\n" .
@@ -371,13 +354,24 @@ class Firewall extends Injectable
         file_put_contents("{$filterPath}/dropbear.conf", $conf);
 
         // Add module JAIL conf
+       $this->generateModulesJails();
+    }
+
+    /**
+     * Generate Additional modules jails
+     */
+    public function generateModulesJails(): void
+    {
+        $filterPath = self::FILTER_PATH;
         $additionalModules = $this->di->getShared('pbxConfModules');
+        $rmPath            = Util::which('rm');
+        Util::mwExec("{$rmPath} -rf {$filterPath}/module_*.conf");
         foreach ($additionalModules as $appClass) {
             if (method_exists($appClass, 'generateFail2BanJails')) {
                 $content = $appClass->generateFail2BanJails();
                 if ( ! empty($content)) {
                     $moduleUniqueId = $appClass->moduleUniqueId;
-                    file_put_contents("{$filterPath}/{$moduleUniqueId}.conf", $content);
+                    file_put_contents("{$filterPath}/module_{$moduleUniqueId}.conf", $content);
                 }
             }
         }
@@ -412,7 +406,7 @@ class Firewall extends Injectable
         } else {
             $ban_time = '43800';
         }
-        $path_db = self::fail2banGetDbPath();
+        $path_db = self::FAIL2BAN_DB_PATH;
         $db      = new SQLite3($path_db);
         $db->busyTimeout(3000);
         if (false === self::tableBanExists($db)) {

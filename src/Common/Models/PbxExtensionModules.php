@@ -9,6 +9,7 @@
 
 namespace MikoPBX\Common\Models;
 
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
@@ -86,5 +87,24 @@ class PbxExtensionModules extends ModelsBase
         return $this->validate($validation);
     }
 
+    /**
+     * After change PBX modules need recreate shared services
+     */
+    public function afterSave(): void
+    {
+        parent::afterSave();
+        $this->di->remove('pbxConfModules');
+        $this->di->register(new PBXConfModulesProvider());
+    }
+
+    /**
+     * After change PBX modules need recreate shared services
+     */
+    public function afterDelete(): void
+    {
+        parent::afterDelete();
+        $this->di->remove('pbxConfModules');
+        $this->di->register(new PBXConfModulesProvider());
+    }
 }
 
