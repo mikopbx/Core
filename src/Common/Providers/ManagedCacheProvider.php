@@ -1,9 +1,9 @@
 <?php
-/**
+/*
  * Copyright (C) MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 7 2020
+ * Written by Nikolay Beketov, 8 2020
  *
  */
 
@@ -16,7 +16,7 @@ declare(strict_types=1);
  *
  */
 
-namespace MikoPBX\AdminCabinet\Providers;
+namespace MikoPBX\Common\Providers;
 
 
 use Phalcon\Cache;
@@ -38,16 +38,20 @@ class ManagedCacheProvider implements ServiceProviderInterface
      */
     public function register(DiInterface $di): void
     {
-        $tempPath = $di->getShared('config')->path('adminApplication.cacheDir');
+        if (posix_getuid() === 0) {
+            $tempDir = $di->getShared('config')->path('core.managedCacheDir');
+        } else {
+            $tempDir = $di->getShared('config')->path('www.managedCacheDir');
+        }
         $di->setShared(
             'managedCache',
-            function () use ($tempPath){
+            function () use ($tempDir){
                 $serializerFactory = new SerializerFactory();
 
                 $options = [
                     'defaultSerializer' => 'Php',
                     'lifetime'          => 7200,
-                    'storageDir'        => $tempPath,
+                    'storageDir'        => $tempDir,
                 ];
 
                 $adapter = new Stream ($serializerFactory, $options);

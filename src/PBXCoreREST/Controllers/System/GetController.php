@@ -61,7 +61,7 @@ class GetController extends BaseController
             $response = json_decode($response, true);
             if ($actionName === 'stopLog') {
                 $di = Di::getDefault();
-                $downloadLink = $di->getShared('config')->path('core.downloadCachePath');
+                $downloadLink = $di->getShared('config')->path('www.downloadCacheDir');
                 $filename     = $downloadLink."/".$response['data']['filename']??'';
                 if (!file_exists($filename)) {
                     $this->response->setPayloadSuccess('Log file not found.'.$filename);

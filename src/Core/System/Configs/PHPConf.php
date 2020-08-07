@@ -72,11 +72,11 @@ class PHPConf extends Injectable
         // TODO::Доделать рестарт PHP-FPM после обновление лога
         $di     = Di::getDefault();
         if ($di !== null){
-            $varEtcPath = $di->getConfig()->path('core.varEtcPath');
+            $varEtcDir = $di->getConfig()->path('core.varEtcDir');
         } else {
-            $varEtcPath = '/var/etc';
+            $varEtcDir = '/var/etc';
         }
-        $path_conf   = $varEtcPath . '/php_logrotate_' . basename($f_name) . '.conf';
+        $path_conf   = $varEtcDir . '/php_logrotate_' . basename($f_name) . '.conf';
         file_put_contents($path_conf, $text_config);
         $mb10 = $max_size * 1024 * 1024;
 

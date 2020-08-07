@@ -164,8 +164,8 @@ class Network extends Injectable
      */
     private function generatePdnsdConfig($named_dns): void
     {
-        $tempPath  = $this->di->getShared('config')->path('core.tempPath');
-        $cache_dir = $tempPath . '/pdnsd/cache';
+        $tempDir  = $this->di->getShared('config')->path('core.tempDir');
+        $cache_dir = $tempDir . '/pdnsd/cache';
         Util::mwMkdir($cache_dir);
 
         $conf = 'global {' . "\n" .

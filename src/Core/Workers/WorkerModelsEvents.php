@@ -45,7 +45,6 @@ use MikoPBX\Core\System\{BeanstalkClient,
 use Phalcon\Exception;
 
 ini_set('error_reporting', E_ALL);
-ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 
 class WorkerModelsEvents extends WorkerBase
@@ -300,7 +299,7 @@ class WorkerModelsEvents extends WorkerBase
     /**
      * Apply changes
      *
-     * @return array
+     * @return void
      */
     private function startReload(): void
     {

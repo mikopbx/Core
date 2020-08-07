@@ -12,11 +12,8 @@ use MikoPBX\Core\Config\RegisterDIServices;
 use MikoPBX\Core\System\Upgrade\UpdateDatabase;
 use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings};
 use MikoPBX\Core\System\Util;
-use Phalcon\DI;
-use Phalcon\Di\Exception;
 use Phalcon\Di\Injectable;
 use Phalcon\Text;
-use Throwable;
 
 use function MikoPBX\Common\Config\appPath;
 
@@ -108,8 +105,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
     /**
      * PbxExtensionBase constructor.
      *
-     * @param string $moduleUniqueID
-     *
+     * @param string|null $moduleUniqueID
      */
     public function __construct(string $moduleUniqueID = null)
     {
@@ -171,7 +167,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
                 $result           = false;
             }
             $this->fixFilesRights();
-        } catch (Throwable $exception) {
+        } catch (\Exception $exception) {
             $result         = false;
             $this->messages[] = $exception->getMessage();
         }
@@ -301,7 +297,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
                 $this->messages[] = ' unInstallFiles error';
                 $result           = false;
             }
-        } catch (Throwable $exception) {
+        } catch (\Exception $exception) {
             $result         = false;
             $this->messages[] = $exception->getMessage();
         }

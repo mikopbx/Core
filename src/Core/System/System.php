@@ -36,7 +36,7 @@ class System extends Di\Injectable
     {
         $di = Di::getDefault();
         if ($di !== null) {
-            return $di->getConfig()->path('core.logsPath');
+            return $di->getConfig()->path('core.logsDir');
         }
 
         return '/var/log';

@@ -1,4 +1,24 @@
 {
+  "beanstalk": {
+    "host": "127.0.0.1",
+    "port": 4229
+  },
+  "gnats": {
+    "host": "127.0.0.1",
+    "port": 4223
+  },
+  "asterisk": {
+    "astvarlibdir" : "/offload/asterisk",
+    "astetcdir" : "/etc/asterisk",
+    "astmoddir": "/offload/asterisk/modules",
+    "astagidir": "/var/lib/asterisk/agi-bin",
+    "astdbdir": "/mountpoint/mikopbx/persistence",
+    "astlogdir" : "/mountpoint/mikopbx/astlogs/asterisk",
+    "astspooldir" : "/mountpoint/mikopbx/voicemailarchive",
+    "mediadir": "/mountpoint/mikopbx/media",
+    "monitordir" : "/mountpoint/mikopbx/voicemailarchive/monitor",
+    "mohdir": "/mountpoint/mikopbx/media/moh"
+  },
   "database": {
     "debugMode": false,
     "adapter": "Sqlite",
@@ -26,42 +46,27 @@
   },
   "core": {
     "debugMode": false,
-    "backupPath": "/mountpoint/mikopbx/backup",
-    "cfPath": "/cf",
-    "varEtcPath": "/var/etc",
+    "cfDir": "/cf",
+    "varEtcDir": "/var/etc",
     "modulesDir": "/mountpoint/mikopbx/custom_modules",
-    "tempPath": "/mountpoint/mikopbx/tmp",
-    "uploadPath": "/mountpoint/mikopbx/tmp/upload_cache",
-    "logsPath": "/mountpoint/mikopbx/log",
-    "phpSessionPath": "/mountpoint/mikopbx/tmp/php_session",
+    "tempDir": "/mountpoint/mikopbx/tmp",
+    "logsDir": "/mountpoint/mikopbx/log",
     "mediaMountPoint": "/mountpoint",
     "fail2banDbDir": "/mountpoint/mikopbx/fail2ban",
-    "downloadCachePath": "/mountpoint/mikopbx/tmp/files_cache"
+    "managedCacheDir": "/mountpoint/mikopbx/tmp/managed_cache",
+    "modelsCacheDir": "/mountpoint/mikopbx/tmp/models_cache"
   },
-  "asterisk": {
-    "astvarlibdir" : "/offload/asterisk",
-    "astetcdir" : "/etc/asterisk",
-    "astmoddir": "/offload/asterisk/modules",
-    "astagidir": "/var/lib/asterisk/agi-bin",
-    "astdbdir": "/mountpoint/mikopbx/persistence",
-    "astlogdir" : "/mountpoint/mikopbx/astlogs/asterisk",
-    "astspooldir" : "/mountpoint/mikopbx/voicemailarchive",
-    "mediadir": "/mountpoint/mikopbx/media",
-    "monitordir" : "/mountpoint/mikopbx/voicemailarchive/monitor",
-    "mohdir": "/mountpoint/mikopbx/media/moh"
-  },
-  "beanstalk": {
-    "host": "127.0.0.1",
-    "port": 4229
-  },
-  "gnats": {
-    "host": "127.0.0.1",
-    "port": 4223
+  "www": {
+    "uploadDir": "/mountpoint/mikopbx/www_cache/upload_cache",
+    "phpSessionDir": "/mountpoint/mikopbx/www_cache/php_session",
+    "downloadCacheDir": "/mountpoint/mikopbx/www_cache/files_cache",
+    "managedCacheDir": "/mountpoint/mikopbx/www_cache/managed_cache",
+    "modelsCacheDir": "/mountpoint/mikopbx/www_cache/models_cache"
   },
   "adminApplication": {
     "debugMode": false,
     "baseUri": "/admin-cabinet/",
-    "cacheDir": "/mountpoint/mikopbx/tmp/www_cache",
+    "assetsCacheDir": "/mountpoint/mikopbx/tmp/www_cache",
     "voltCacheDir": "/mountpoint/mikopbx/tmp/www_cache/volt"
   }
 }

@@ -44,7 +44,7 @@ class FilesManagementProcessor extends Injectable
         $resumableIdentifier  = $parameters['resumableIdentifier'];
         $resumableChunkNumber = $parameters['resumableChunkNumber'];
         $resumableTotalSize   = $parameters['resumableTotalSize'];
-        $uploadPath           = $di->getShared('config')->path('core.uploadPath');
+        $uploadDir           = $di->getShared('config')->path('www.uploadDir');
 
         $factory = new StreamFactory();
 
@@ -59,13 +59,13 @@ class FilesManagementProcessor extends Injectable
             );
 
             if (isset($resumableIdentifier) && trim($resumableIdentifier) !== '') {
-                $temp_dir         = $uploadPath . '/' . Util::trimExtensionForFile(basename($resumableFilename));
-                $temp_dst_file    = $uploadPath . '/' . $upload_id . '/' . $upload_id . '_' . basename(
+                $temp_dir         = $uploadDir . '/' . Util::trimExtensionForFile(basename($resumableFilename));
+                $temp_dst_file    = $uploadDir . '/' . $upload_id . '/' . $upload_id . '_' . basename(
                         $resumableFilename
                     );
                 $chunks_dest_file = $temp_dir . '/' . $resumableFilename . '.part' . $resumableChunkNumber;
             } else {
-                $temp_dir         = $uploadPath . '/' . $upload_id;
+                $temp_dir         = $uploadDir . '/' . $upload_id;
                 $temp_dst_file    = $temp_dir . '/' . $upload_id . '_' . basename($file->getClientFilename());
                 $chunks_dest_file = $temp_dst_file;
             }
@@ -141,10 +141,10 @@ class FilesManagementProcessor extends Injectable
             $res->messages[]='Dependency injector not initialized';
             return $res;
         }
-        $uploadPath = $di->getShared('config')->path('core.uploadPath');
+        $uploadDir = $di->getShared('config')->path('www.uploadDir');
         if ($postData && isset($postData['id'])) {
             $upload_id     = $postData['id'];
-            $progress_dir  = $uploadPath . '/' . $upload_id;
+            $progress_dir  = $uploadDir . '/' . $upload_id;
             $progress_file = $progress_dir . '/progress';
 
             if (empty($upload_id)) {
@@ -318,7 +318,7 @@ class FilesManagementProcessor extends Injectable
 
             $di         = Di::getDefault();
             $dirsConfig = $di->getShared('config');
-            $filenameTmp   = $dirsConfig->path('core.tempPath') . '/'.__FUNCTION__.'_'.time().'.log';
+            $filenameTmp   = $dirsConfig->path('core.tempDir') . '/'.__FUNCTION__.'_'.time().'.log';
             $cmd = "{$cat} {$filename} | {$grep} ".escapeshellarg($filter)." | $tail -n ". escapeshellarg($lines). "> $filenameTmp";
             Util::mwExec("$cmd; chown www:www $filenameTmp");
             $res->data[] = $filenameTmp;
@@ -337,7 +337,7 @@ class FilesManagementProcessor extends Injectable
     {
         $di     = Di::getDefault();
         if ($di !== null){
-            $tempDir = $di->getConfig()->path('core.uploadPath');
+            $tempDir = $di->getConfig()->path('www.uploadDir');
         } else {
             $tempDir = '/tmp';
         }
@@ -382,7 +382,7 @@ class FilesManagementProcessor extends Injectable
     }
 
     /**
-     * Return download Firnware from remote repository progress
+     * Return download Firmware from remote repository progress
      *
      * @return PBXApiResult
      */
@@ -394,7 +394,7 @@ class FilesManagementProcessor extends Injectable
         $res->success = true;
         $di     = Di::getDefault();
         if ($di !== null){
-            $tempDir = $di->getConfig()->path('core.uploadPath');
+            $tempDir = $di->getConfig()->path('www.uploadDir');
         } else {
             $tempDir = '/tmp';
         }
@@ -436,7 +436,7 @@ class FilesManagementProcessor extends Injectable
     }
 
     /**
-     * Запуск процесса фоновой загрузки доп. модуля АТС.
+     * Start module download in background separate process
      *
      * @param $module
      * @param $url
@@ -450,7 +450,7 @@ class FilesManagementProcessor extends Injectable
         $res->processor = __METHOD__;
         $di     = Di::getDefault();
         if ($di !== null){
-            $tempDir = $di->getConfig()->path('core.uploadPath');
+            $tempDir = $di->getConfig()->path('www.uploadDir');
         } else {
             $tempDir = '/tmp';
         }
@@ -487,7 +487,7 @@ class FilesManagementProcessor extends Injectable
     }
 
     /**
-     * Возвращает статус скачивания модуля.
+     * Returns module download status
      *
      * @param $moduleUniqueID
      *
@@ -500,7 +500,7 @@ class FilesManagementProcessor extends Injectable
         $res->processor = __METHOD__;
         $di     = Di::getDefault();
         if ($di !== null){
-            $tempDir = $di->getConfig()->path('core.uploadPath');
+            $tempDir = $di->getConfig()->path('www.uploadDir');
         } else {
             $tempDir = '/tmp';
         }
@@ -689,27 +689,31 @@ class FilesManagementProcessor extends Injectable
         }
         // Uninstall module with keep settings and backup db
         $moduleClass = "\\Modules\\{$moduleUniqueID}\\Setup\\PbxExtensionSetup";
-        if (class_exists($moduleClass)
-            && method_exists($moduleClass, 'uninstallModule')) {
-            $setup = new $moduleClass($moduleUniqueID);
-        } else {
-            // Заглушка которая позволяет удалить модуль из базы данных, которого нет на диске
-            $moduleClass = PbxExtensionSetupFailure::class;
-            $setup       = new $moduleClass($moduleUniqueID);
-        }
-        if ($setup->uninstallModule($keepSettings)) {
-            $res->success = true;
-            $res->data['needRestartWorkers'] = true;
-        } else {
-            $res->success = false;
-            $res->messages[] = $setup->getMessages();
-        }
 
-        if (is_dir($currentModuleDir)) {
-            // Broken or very old module. Force uninstall.
-            $rmPath = Util::which('rm');
-            Util::mwExec("{$rmPath} -rf {$currentModuleDir}");
+        try {
+            if (class_exists($moduleClass)
+                && method_exists($moduleClass, 'uninstallModule')) {
+                $setup = new $moduleClass($moduleUniqueID);
+            } else {
+                // Заглушка которая позволяет удалить модуль из базы данных, которого нет на диске
+                $moduleClass = PbxExtensionSetupFailure::class;
+                $setup       = new $moduleClass($moduleUniqueID);
+            }
+            $setup->uninstallModule($keepSettings);
+        }  finally {
+            if (is_dir($currentModuleDir)) {
+                // Broken or very old module. Force uninstall.
+                $rmPath = Util::which('rm');
+                Util::mwExec("{$rmPath} -rf {$currentModuleDir}");
+
+                $moduleClass = PbxExtensionSetupFailure::class;
+                $setup       = new $moduleClass($moduleUniqueID);
+                $setup->unregisterModule();
+            }
+
         }
+        $res->success = true;
+        $res->data['needRestartWorkers'] = true;
         return $res;
     }
 }

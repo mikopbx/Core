@@ -105,8 +105,8 @@ class PBX extends Injectable
         {$asteriskPath} -rx 'logger reload' > /dev/null 2> /dev/null
     endscript
 }";
-        $varEtcPath  = $di->getShared('config')->path('core.varEtcPath');
-        $path_conf   = $varEtcPath . '/asterisk_logrotate_' . $f_name . '.conf';
+        $varEtcDir  = $di->getShared('config')->path('core.varEtcDir');
+        $path_conf   = $varEtcDir . '/asterisk_logrotate_' . $f_name . '.conf';
         file_put_contents($path_conf, $text_config);
         $mb10 = $max_size * 1024 * 1024;
 
@@ -240,9 +240,9 @@ class PBX extends Injectable
             }
         }
         $old_hash   = '';
-        $varEtcPath = $di->getShared('config')->path('core.varEtcPath');
-        if (file_exists($varEtcPath . '/topology_hash')) {
-            $old_hash = file_get_contents($varEtcPath . '/topology_hash');
+        $varEtcDir = $di->getShared('config')->path('core.varEtcDir');
+        if (file_exists($varEtcDir . '/topology_hash')) {
+            $old_hash = file_get_contents($varEtcDir . '/topology_hash');
         }
         $now_hadh = md5($topology . $exthostname . $extipaddr);
 

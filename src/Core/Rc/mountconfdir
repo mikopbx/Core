@@ -29,8 +29,8 @@ $NoCfDevice = <<<EOD
 EOD;
 
 $phalconConfig  = Di::getDefault()->get('config');
-$cfPath         = $phalconConfig->path('core.cfPath');
-$varEtcPath     = $phalconConfig->path('core.varEtcPath');
+$cfDir         = $phalconConfig->path('core.cfDir');
+$varEtcDir     = $phalconConfig->path('core.varEtcDir');
 $dbFile         = $phalconConfig->path('database.dbfile');
 $mountPath      = Util::which('mount');
 $unmountPath    = Util::which('umount');
@@ -76,7 +76,7 @@ while ($attempts--) {
         // Запустим проверку раздела диска
         $fsckPath = Util::which("fsck.{$format}");
         Util::mwExec("if [ -b /dev/{$disk}{$part} ]; then {$fsckPath} -f -p /dev/{$disk}{$part}; fi;");
-        if (Util::mwExec("{$mountPath} -t {$format} -rw UUID=\"{$uuid}\" {$cfPath}") !== 0) {
+        if (Util::mwExec("{$mountPath} -t {$format} -rw UUID=\"{$uuid}\" {$cfDir}") !== 0) {
             continue;
         }
 
@@ -98,7 +98,7 @@ while ($attempts--) {
             break;
         }
 
-        Util::mwExec("{$unmountPath} -f {$cfPath}");
+        Util::mwExec("{$unmountPath} -f {$cfDir}");
     }
     if ($cfgdevice) {
         break;
@@ -116,5 +116,5 @@ if ( ! $cfgdevice) {
     Util::mwExec($haltPath);
 } else {
     // Запишем в файл имя подключенного устройства.
-    file_put_contents("{$varEtcPath}/cfdevice", $cfgdevice);
+    file_put_contents("{$varEtcDir}/cfdevice", $cfgdevice);
 }

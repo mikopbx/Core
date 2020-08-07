@@ -105,7 +105,7 @@ class LogsManagementProcessor extends Injectable
 
         $di         = Di::getDefault();
         $dirsConfig = $di->getShared('config');
-        $result = $dirsConfig->path('core.tempPath') . '/arhive_start_all_log.zip';
+        $result = $dirsConfig->path('core.tempDir') . '/arhive_start_all_log.zip';
 
         if (file_exists($result)) {
             Util::mwExec("{$rmPath} -rf {$result}");
@@ -124,7 +124,7 @@ class LogsManagementProcessor extends Injectable
 
         $uid = Util::generateRandomString(36);
         $di = Di::getDefault();
-        $downloadLink = $di->getShared('config')->path('core.downloadCachePath');
+        $downloadLink = $di->getShared('config')->path('www.downloadCacheDir');
         $result_dir = "{$downloadLink}/{$uid}";
         Util::mwMkdir($result_dir);
         $link_name = md5($result) . '.' . Util::getExtensionOfFile($result);

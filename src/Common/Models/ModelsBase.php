@@ -88,29 +88,29 @@ abstract class ModelsBase extends Model
             return;
         }
         foreach ($errorMessages as $errorMessage) {
-            if ($errorMessage->getType()==='ConstraintViolation') {
-                    $arrMessageParts = explode('Common\\Models\\', $errorMessage->getMessage());
-                    if (count($arrMessageParts) === 2) {
-                        $relatedModel = $arrMessageParts[1];
-                    } else {
-                        $relatedModel = $errorMessage->getMessage();
+            if ($errorMessage->getType() === 'ConstraintViolation') {
+                $arrMessageParts = explode('Common\\Models\\', $errorMessage->getMessage());
+                if (count($arrMessageParts) === 2) {
+                    $relatedModel = $arrMessageParts[1];
+                } else {
+                    $relatedModel = $errorMessage->getMessage();
+                }
+                $relatedRecords  = $this->getRelated($relatedModel);
+                $newErrorMessage = $this->t('ConstraintViolation');
+                $newErrorMessage .= "<ul class='list'>";
+                if ($relatedRecords === false) {
+                    throw new Model\Exception('Error on models relationship ' . $errorMessage);
+                }
+                if ($relatedRecords instanceof Resultset) {
+                    foreach ($relatedRecords as $item) {
+                        $newErrorMessage .= '<li>' . $item->getRepresent(true) . '</li>';
                     }
-                    $relatedRecords  = $this->getRelated($relatedModel);
-                    $newErrorMessage = $this->t('ConstraintViolation');
-                    $newErrorMessage .= "<ul class='list'>";
-                    if ($relatedRecords === false) {
-                        throw new Model\Exception('Error on models relationship ' . $errorMessage);
-                    }
-                    if ($relatedRecords instanceof Resultset) {
-                        foreach ($relatedRecords as $item) {
-                            $newErrorMessage .= '<li>' . $item->getRepresent(true) . '</li>';
-                        }
-                    } else {
-                        $newErrorMessage .= '<li>' . $relatedRecords->getRepresent(true) . '</li>';
-                    }
-                    $newErrorMessage .= '</ul>';
-                    $errorMessage->setMessage($newErrorMessage);
-                    break;
+                } else {
+                    $newErrorMessage .= '<li>' . $relatedRecords->getRepresent(true) . '</li>';
+                }
+                $newErrorMessage .= '</ul>';
+                $errorMessage->setMessage($newErrorMessage);
+                break;
             }
         }
     }
@@ -172,7 +172,7 @@ abstract class ModelsBase extends Model
             if ( ! array_key_exists('action', $foreignKey)) {
                 continue;
             }
-            // Проверим есть ли записи в таблице которая запрещает удаление текущих данных
+            // Check if there are some record which restrict delete current record
             $relatedModel             = $relation->getReferencedModel();
             $mappedFields             = $relation->getFields();
             $mappedFields             = is_array($mappedFields)
@@ -194,8 +194,11 @@ abstract class ModelsBase extends Model
             }
             $relatedRecords = $relatedModel::find($parameters);
             switch ($foreignKey['action']) {
-                case Relation::ACTION_RESTRICT: // Запретим удаление и выведем информацию о том какие записи запретили удалять этот элемент
+                case Relation::ACTION_RESTRICT: // Restrict deletion and add message about unsatisfied undeleted links
                     foreach ($relatedRecords as $relatedRecord) {
+                        if (serialize($relatedRecord) === serialize($theFirstDeleteRecord)) {
+                            continue; // It is checked object
+                        }
                         $message = new Message(
                             $theFirstDeleteRecord->t(
                                 'mo_BeforeDeleteFirst',
@@ -216,7 +219,7 @@ abstract class ModelsBase extends Model
                         }
                     }
                     break;
-                case Relation::NO_ACTION: // Очистим ссылки на записи в таблицах зависимых
+                case Relation::NO_ACTION: // Clear all refs
                     break;
                 default:
                     break;
@@ -280,14 +283,21 @@ abstract class ModelsBase extends Model
      */
     public function clearCache($calledClass): void
     {
-        $managedCache = $this->getDI()->getManagedCache();
-        $category     = explode('\\', $calledClass)[3];
-        $keys         = $managedCache->getAdapter()->getKeys($category);
-        if (count($keys) > 0) {
-            $managedCache->deleteMultiple($keys);
+        if ($this->di->has('managedCache')) {
+            $managedCache = $this->di->getShared('managedCache');
+            $category     = explode('\\', $calledClass)[3];
+            $keys         = $managedCache->getAdapter()->getKeys($category);
+            if (count($keys) > 0) {
+                $managedCache->deleteMultiple($keys);
+            }
         }
-        if ($this->getDI()->has('modelsCache')) {
-            $this->getDI()->get('modelsCache')->delete($category);
+        if ($this->di->has('modelsCache')) {
+            $modelsCache = $this->di->getShared('modelsCache');
+            $category    = explode('\\', $calledClass)[3];
+            $keys        = $modelsCache->getAdapter()->getKeys($category);
+            if (count($keys) > 0) {
+                $modelsCache->deleteMultiple($keys);
+            }
         }
     }
 
@@ -311,7 +321,7 @@ abstract class ModelsBase extends Model
      */
     public function getRepresent($needLink = false): string
     {
-        if ($this->id === null) {
+        if (property_exists($this, 'id') && $this->id === null) {
             return $this->t('mo_NewElement');
         }
 
@@ -492,8 +502,7 @@ abstract class ModelsBase extends Model
                     . $this->name;
                 break;
             default:
-              $name = 'Unknown';
-
+                $name = 'Unknown';
         }
 
         if ($needLink) {
@@ -541,7 +550,7 @@ abstract class ModelsBase extends Model
      */
     public function getWebInterfaceLink(): string
     {
-        $url     = new Url();
+        $url  = new Url();
         $link = '#';
         switch (static::class) {
             case AsteriskManagerUsers::class:
@@ -663,9 +672,11 @@ abstract class ModelsBase extends Model
 
     /**
      * Возвращает массив полей, по которым следует добавить индекс в DB.
+     *
      * @return array
      */
-    public function getIndexColumn():array {
+    public function getIndexColumn(): array
+    {
         return [];
     }
 }

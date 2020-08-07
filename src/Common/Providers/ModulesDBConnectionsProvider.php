@@ -91,7 +91,7 @@ class ModulesDBConnectionsProvider extends DatabaseProviderBase implements Servi
                 $dbFileName = "{$dbDir}/module.db";
                 $dbFileExistBeforeAttachToConnection = file_exists($dbFileName);
 
-                $logDir = "{$config->path('core.logsPath')}/$moduleUniqueId/db";
+                $logDir = "{$config->path('core.logsDir')}/$moduleUniqueId/db";
                 $logFileName = "{$logDir}/queries.log";
                 if (!is_dir($logDir)){
                     Util::mwMkdir($logDir, true);

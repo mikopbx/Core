@@ -20,7 +20,7 @@ namespace MikoPBX\Common\Providers;
 
 
 use Phalcon\Cache;
-use Phalcon\Cache\Adapter\Memory;
+use Phalcon\Cache\Adapter\Stream;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 use Phalcon\Storage\SerializerFactory;
@@ -37,17 +37,23 @@ class ModelsCacheProvider implements ServiceProviderInterface
      */
     public function register(DiInterface $di): void
     {
+        if (posix_getuid() === 0) {
+            $tempDir = $di->getShared('config')->path('core.modelsCacheDir');
+        } else {
+            $tempDir = $di->getShared('config')->path('www.modelsCacheDir');
+        }
         $di->setShared(
             'modelsCache',
-            function () {
+            function () use ($tempDir){
                 $serializerFactory = new SerializerFactory();
 
                 $options = [
-                    'defaultSerializer' => 'Json',
-                    'lifetime'          => 3600,
+                    'defaultSerializer' => 'Php',
+                    'lifetime'          => 7200,
+                    'storageDir'        => $tempDir,
                 ];
 
-                $adapter = new Memory($serializerFactory, $options);
+                $adapter = new Stream ($serializerFactory, $options);
 
                 return new Cache($adapter);
             }

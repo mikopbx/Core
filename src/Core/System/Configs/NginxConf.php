@@ -31,18 +31,24 @@ class NginxConf extends Injectable
     }
 
     /**
-     *   Restart Nginx
+     * Restart Nginx gracefully
+     * https://www.cyberciti.biz/faq/howto-unix-linux-gracefully-reload-restart-nginx-webserver/
      **/
     public function reStart(): void
     {
-        if (Util::isSystemctl()) {
+
+        $NginxPath  = Util::which('nginx');
+        $pid = Util::getPidOfProcess($NginxPath);
+        if (!empty($pid)) {
+            Util::mwExec("{$NginxPath} -s reload");
+        } elseif (Util::isSystemctl()) {
             $systemCtrlPath = Util::which('systemctl');
-            Util::mwExec("{$systemCtrlPath} restart nginx.service");
+            Util::mwExec("{$systemCtrlPath}  nginx.service");
         } else {
-            $NginxPath  = Util::which('nginx');
             Util::killByName('nginx');
             Util::mwExec($NginxPath);
         }
+
     }
 
     /**

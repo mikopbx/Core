@@ -16,6 +16,7 @@ use ReflectionClass as ReflectionClassAlias;
 
 class ModulesModelsBase extends ModelsBase
 {
+    protected bool $initialized = false;
     protected string $moduleUniqueId;
 
     /**
@@ -32,6 +33,7 @@ class ModulesModelsBase extends ModelsBase
             $this->setConnectionService("{$this->moduleUniqueId}_module_db");
         }
         parent::initialize();
+        $this->initialized=true;
     }
 
     /**
@@ -43,6 +45,10 @@ class ModulesModelsBase extends ModelsBase
      */
     public function getRepresent($needLink = false): string
     {
+        if (!$this->initialized){
+            $this->initialize();
+        }
+
         if (property_exists($this, 'id') && $this->id === null) {
             return $this->t('mo_NewElement');
         }
@@ -80,6 +86,9 @@ class ModulesModelsBase extends ModelsBase
      */
     public function getWebInterfaceLink(): string
     {
+        if (!$this->initialized){
+            $this->initialize();
+        }
         if (isset($this->moduleUniqueId)) {
             $url  = new Url();
             $link = $url->get(Text::uncamelize($this->moduleUniqueId, '-'));

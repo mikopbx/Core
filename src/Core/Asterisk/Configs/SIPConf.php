@@ -152,8 +152,8 @@ class SIPConf extends ConfigClass
             }
         }
 
-        $varEtcPath = $this->config->path('core.varEtcPath');
-        file_put_contents($varEtcPath . '/topology_hash', md5($topology . $exthostname . $extipaddr));
+        $varEtcDir = $this->config->path('core.varEtcDir');
+        file_put_contents($varEtcDir . '/topology_hash', md5($topology . $exthostname . $extipaddr));
         $conf .= "\n";
 
         return $conf;
