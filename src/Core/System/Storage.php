@@ -1076,6 +1076,8 @@ class Storage extends Di\Injectable
         $cacheDirs   = [];
         $cacheDirs[] = $this->config->path('www.uploadDir');
         $cacheDirs[] = $this->config->path('www.downloadCacheDir');
+        $cacheDirs[] = $this->config->path('www.managedCacheDir');
+        $cacheDirs[] = $this->config->path('www.modelsCacheDir');
         $cacheDirs[] = $this->config->path('adminApplication.assetsCacheDir') . '/js';
         $cacheDirs[] = $this->config->path('adminApplication.assetsCacheDir') . '/css';
         $cacheDirs[] = $this->config->path('adminApplication.assetsCacheDir') . '/img';
@@ -1106,10 +1108,18 @@ class Storage extends Di\Injectable
             $www_dirs[] = $entry;
         }
 
-        $www_dirs[] = $this->config->path('database.logsDir');
-        $www_dirs[] = $this->config->path('www.phpSessionDir');
+        $arrConfig = $this->config->www->toArray();
+        foreach ($arrConfig as $key => $entry) {
+            if (stripos($key, 'path') === false
+                && stripos($key, 'dir') === false
+            ) {
+                continue;
+            }
+            $www_dirs[] = $entry;
+        }
+
         $www_dirs[] = $this->config->path('core.tempDir');
-        $www_dirs[] = $this->config->path('www.uploadDir');
+        $www_dirs[] = $this->config->path('database.logsDir');
         $www_dirs[] = '/etc/version';
         $www_dirs[] = appPath('/');
 

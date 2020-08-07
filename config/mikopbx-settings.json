@@ -57,11 +57,11 @@
     "modelsCacheDir": "/mountpoint/mikopbx/tmp/models_cache"
   },
   "www": {
-    "uploadDir": "/mountpoint/mikopbx/www_cache/upload_cache",
-    "phpSessionDir": "/mountpoint/mikopbx/www_cache/php_session",
-    "downloadCacheDir": "/mountpoint/mikopbx/www_cache/files_cache",
-    "managedCacheDir": "/mountpoint/mikopbx/www_cache/managed_cache",
-    "modelsCacheDir": "/mountpoint/mikopbx/www_cache/models_cache"
+    "uploadDir": "/mountpoint/mikopbx/tmp/www_cache/upload_cache",
+    "phpSessionDir": "/mountpoint/mikopbx/tmp/www_cache/php_session",
+    "downloadCacheDir": "/mountpoint/mikopbx/tmp/www_cache/files_cache",
+    "managedCacheDir": "/mountpoint/mikopbx/tmp/www_cache/managed_cache",
+    "modelsCacheDir": "/mountpoint/mikopbx/tmp/www_cache/models_cache"
   },
   "adminApplication": {
     "debugMode": false,
