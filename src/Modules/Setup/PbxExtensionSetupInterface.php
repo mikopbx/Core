@@ -13,7 +13,7 @@ interface PbxExtensionSetupInterface
      *
      * @throws \Phalcon\Exception
      */
-    public function __construct(string $moduleUniqueID = '');
+    public function __construct(string $moduleUniqueID);
 
     /**
      * Последовательный вызов процедур установки модуля расширения

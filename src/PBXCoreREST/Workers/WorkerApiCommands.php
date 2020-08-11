@@ -356,7 +356,7 @@ class WorkerApiCommands extends WorkerBase
                 break;
             case 'uninstallModule':
                 $moduleUniqueID = $request['data']['uniqid'];
-                $keepSettings   = $request['data']['keepSettings'];
+                $keepSettings   = $request['data']['keepSettings']==='true';
                 $res            = FilesManagementProcessor::uninstallModule($moduleUniqueID, $keepSettings);
                 break;
             default:

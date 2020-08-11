@@ -105,13 +105,12 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
     /**
      * PbxExtensionBase constructor.
      *
-     * @param string|null $moduleUniqueID
+     * @param string $moduleUniqueID
      */
-    public function __construct(string $moduleUniqueID = null)
+    public function __construct(string $moduleUniqueID)
     {
-        if ($moduleUniqueID !== null) {
-            $this->moduleUniqueID = $moduleUniqueID;
-        }
+        $this->moduleUniqueID = $moduleUniqueID;
+        $this->messages = [];
         $this->db      = $this->di->getShared('db');
         $this->config  = $this->di->getShared('config');
         $this->license =  $this->di->getShared('license');
@@ -342,8 +341,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
      *
      * @return bool результат удаления
      */
-    public function unInstallFiles($keepSettings = false
-    )//: bool Пока мешает удалять и обновлять старые модули, раскоменитровать после релиза 2020.5
+    public function unInstallFiles($keepSettings = false):bool
     {
         $cpPath = Util::which('cp');
         $rmPath = Util::which('rm');
