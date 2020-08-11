@@ -10,6 +10,7 @@ namespace MikoPBX\Core\System;
 
 use Exception;
 use MikoPBX\Common\Models\{LanInterfaces};
+use MikoPBX\Core\System\Configs\IptablesConf;
 use MikoPBX\Core\Utilities\SubnetCalculator;
 use Phalcon\Di;
 use Phalcon\Di\Injectable;
@@ -357,7 +358,7 @@ class Network extends Injectable
             Util::mwExecBg("/etc/rc/networking.set.mtu '{$eth}'");
         }
 
-        $firewall = new Firewall();
+        $firewall = new IptablesConf();
         $firewall->applyConfig();
 
         // Дополнительные "ручные" маршруты.
@@ -465,7 +466,7 @@ class Network extends Injectable
         Util::mwExec("{$systemctlPath} start networking");
         $this->hostsGenerate();
 
-        $firewall = new Firewall();
+        $firewall = new IptablesConf();
         $firewall->applyConfig();
     }
 

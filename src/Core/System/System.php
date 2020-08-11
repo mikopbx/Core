@@ -10,6 +10,7 @@ namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Models\CustomFiles;
 use MikoPBX\Core\System\Configs\CronConf;
+use MikoPBX\Core\System\Configs\IptablesConf;
 use MikoPBX\Core\System\Configs\PHPConf;
 use MikoPBX\Core\System\Configs\NTPConf;
 use MikoPBX\Core\Asterisk\Configs\{QueueConf};
@@ -139,7 +140,7 @@ class System extends Di\Injectable
                     System::setDate('');
                     break;
                 case 'firewall':
-                    Firewall::reloadFirewall();
+                    IptablesConf::reloadFirewall();
                     break;
                 case 'asterisk_core_reload':
                     PBX::sipReload();

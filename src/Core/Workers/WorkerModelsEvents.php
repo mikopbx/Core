@@ -36,6 +36,7 @@ use MikoPBX\Common\Models\{AsteriskManagerUsers,
 use MikoPBX\Core\Asterisk\Configs\QueueConf;
 use MikoPBX\Core\System\{BeanstalkClient,
     Configs\CronConf,
+    Configs\IptablesConf,
     Configs\NatsConf,
     Configs\NginxConf,
     Configs\SSHConf,
@@ -382,7 +383,7 @@ class WorkerModelsEvents extends WorkerBase
      */
     public function reloadFirewall(): void
     {
-        Firewall::reloadFirewall();
+        IptablesConf::reloadFirewall();
     }
 
     /**

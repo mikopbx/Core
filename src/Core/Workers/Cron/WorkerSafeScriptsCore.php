@@ -11,7 +11,7 @@ namespace MikoPBX\Core\Workers\Cron;
 require_once 'Globals.php';
 
 use Generator;
-use MikoPBX\Core\System\{BeanstalkClient, Firewall, PBX, Util};
+use MikoPBX\Core\System\{BeanstalkClient, Configs\Fail2BanConf, Firewall, PBX, Util};
 use MikoPBX\Core\Workers\WorkerAmiListener;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\Workers\WorkerCallEvents;
@@ -145,7 +145,7 @@ class WorkerSafeScriptsCore extends WorkerBase
             }
         );
 
-        Firewall::checkFail2ban();
+        Fail2BanConf::checkFail2ban();
     }
 
     /**
