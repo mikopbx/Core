@@ -47,7 +47,7 @@ class TranslationProvider implements ServiceProviderInterface
                 return $factory->newInstance(
                     'array',
                     [
-                        'content' => $di->getMessages(),
+                        'content' => $di->getShared('messages'),
                     ]
                 );
             }

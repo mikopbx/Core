@@ -64,12 +64,12 @@ class BaseController extends Controller
             $this->view->SSHPort    = '';
             $this->view->PBXLicense = '';
         }
-        $this->view->WebAdminLanguage   = $this->getSessionData('WebAdminLanguage');
-        $this->view->AvailableLanguages = json_encode($this->elements->getAvailableWebAdminLanguages());
-
         // Кеш версий модулей и атс, для правильной работы АТС при установке модулей
         $versionHash = $this->getVersionsHash();
         $this->session->set('versionHash', $versionHash);
+
+        $this->view->WebAdminLanguage   = $this->getSessionData('WebAdminLanguage');
+        $this->view->AvailableLanguages = json_encode($this->elements->getAvailableWebAdminLanguages());
 
         if ($roSession !== null && array_key_exists('SubmitMode', $roSession)) {
             $this->view->submitMode = $roSession['SubmitMode'];

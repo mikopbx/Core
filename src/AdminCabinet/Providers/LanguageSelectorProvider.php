@@ -25,7 +25,7 @@ class LanguageSelectorProvider implements ServiceProviderInterface
         $di->setShared(
             'language',
             function () {
-                $roSession = $this->get('sessionRO');
+                $roSession = $this->getShared('sessionRO');
                 if ($roSession !== null && array_key_exists(
                         'WebAdminLanguage',
                         $roSession
