@@ -350,6 +350,7 @@ class AssetProvider implements ServiceProviderInterface
                             $semanticCollectionJS->addJs('js/vendor/semantic/progress.min.js', true);
                             $footerCollectionJS
                                 ->addJs('js/vendor/jquery.address.min.js', true)
+                                ->addJs('js/vendor/jquery.tablednd.js', true)
                                 ->addJs('js/pbx/main/form.js', true)
                                 ->addJs('js/pbx/main/password-score.js', true)
                                 ->addJs(

@@ -10,6 +10,7 @@
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\GeneralSettingsEditForm;
+use MikoPBX\Common\Models\Codecs;
 use MikoPBX\Common\Models\PbxSettings;
 
 class GeneralSettingsController extends BaseController
@@ -20,6 +21,14 @@ class GeneralSettingsController extends BaseController
      */
     public function modifyAction(): void
     {
+        $parameters = [
+            'conditions'=>'type="audio"',
+            'order' => 'priority',
+        ];
+        $this->view->audioCodecs     = Codecs::find($parameters);
+        $parameters['conditions'] = 'type="video"';
+        $this->view->videoCodecs     = Codecs::find($parameters);
+
         $pbxSettings            = PbxSettings::getAllPbxSettings();
         $this->view->form       = new GeneralSettingsEditForm(null, $pbxSettings);
         $this->view->submitMode = null;
@@ -80,8 +89,17 @@ class GeneralSettingsController extends BaseController
             }
         }
 
+        $codecs = json_decode($data['codecs'], true);
+        foreach ($codecs as $codec){
+           $record = Codecs::findFirstById($codec['codecId']);
+           $record->priority = $codec['priority'];
+           $record->disabled = $codec['disabled']===true?'1':'0';
+           $record->update();
+        }
+
         $this->flash->success($this->translation->_('ms_SuccessfulSaved'));
         $this->view->success = true;
         $this->db->commit();
     }
+
 }

@@ -47,9 +47,6 @@ class CreateExtensionsTest extends MikoPBXTestsBase
             $this->selectDropdownItem('sip_networkfilterid', $params['sip_networkfilterid']);
 
            $this->changeInputField('sip_busylevel', $params['sip_busylevel']);
-            foreach ($params['codecs'] as $key=>$value){
-                $this->changeCheckBoxState('codec_'.$key, $value);
-            }
             $this->changeTextAreaValue('sip_manualattributes', $params['manualattributes']);
 
             //$filePath           =  __DIR__."/../assets/{$params['number']}.png";
@@ -95,9 +92,6 @@ class CreateExtensionsTest extends MikoPBXTestsBase
             $this->assertInputFieldValueEqual('sip_busylevel', $params['sip_busylevel']);
             $this->assertMenuItemSelected('sip_networkfilterid', $params['sip_networkfilterid']);
 
-            foreach ($params['codecs'] as $key=>$value){
-                $this->assertCheckBoxStageIsEqual('codec_'.$key, $value);
-            }
             $this->assertTextAreaValueIsEqual('sip_manualattributes', $params['manualattributes']);
     }
 
@@ -121,19 +115,7 @@ class CreateExtensionsTest extends MikoPBXTestsBase
                 'sip_networkfilterid'=>'none',
                 'manualattributes'=>'[endpoint]
 callerid=2546456<240>',
-                'codecs'     =>[
-                    'alaw'=>true,
-                    'ulaw'=>false,
-                    'g726'=>true,
-                    'gsm'=>false,
-                    'adpcm'=>true,
-                    'g722'=>false,
-                    'ilbc'=>true,
-                    'opus'=>false,
-                    'h264'=>true,
-                    'h263'=>false,
-                    'h263p'=>true
-                ],
+
             ]];
         $params[] = [
             [
@@ -147,20 +129,7 @@ callerid=2546456<240>',
                 'sip_dtmfmode'=>'inband',
                 'sip_networkfilterid'=>'none',
                 'manualattributes'=>'',
-                'codecs'     =>[
-                    'alaw'=>true,
-                    'ulaw'=>false,
-                    'g726'=>true,
-                    'gsm'=>false,
-                    'adpcm'=>true,
-                    'g722'=>false,
-                    'ilbc'=>true,
-                    'opus'=>false,
-                    'h264'=>true,
-                    'h263'=>false,
-                    'h263p'=>true
-
-                ]]];
+               ]];
 
         $params[] = [
             [
@@ -174,19 +143,7 @@ callerid=2546456<240>',
                 'sip_dtmfmode'=>'info',
                 'sip_networkfilterid'=>'4',
                 'manualattributes'=>'',
-                'codecs'     =>[
-                    'alaw'=>true,
-                    'ulaw'=>false,
-                    'g726'=>true,
-                    'gsm'=>false,
-                    'adpcm'=>true,
-                    'g722'=>false,
-                    'ilbc'=>true,
-                    'opus'=>false,
-                    'h264'=>true,
-                    'h263'=>false,
-                    'h263p'=>true
-                ]]];
+              ]];
         $params[] = [
             [
                 'number'   => 217,
@@ -199,19 +156,7 @@ callerid=2546456<240>',
                 'sip_dtmfmode'=>'auto',
                 'sip_networkfilterid'=>'none',
                 'manualattributes'=>'',
-                'codecs'     =>[
-                    'alaw'=>true,
-                    'ulaw'=>false,
-                    'g726'=>true,
-                    'gsm'=>false,
-                    'adpcm'=>true,
-                    'g722'=>false,
-                    'ilbc'=>true,
-                    'opus'=>false,
-                    'h264'=>true,
-                    'h263'=>false,
-                    'h263p'=>true
-                    ],
+
                 ]];
         $params[] = [
             [
@@ -225,19 +170,6 @@ callerid=2546456<240>',
                 'sip_dtmfmode'=>'rfc4733',
                 'sip_networkfilterid'=>'none',
                 'manualattributes'=>'',
-                'codecs'     =>[
-                    'alaw'=>true,
-                    'ulaw'=>false,
-                    'g726'=>true,
-                    'gsm'=>false,
-                    'adpcm'=>true,
-                    'g722'=>false,
-                    'ilbc'=>true,
-                    'opus'=>false,
-                    'h264'=>true,
-                    'h263'=>false,
-                    'h263p'=>true
-                ],
             ]];
         $params[] = [
             [
@@ -251,19 +183,6 @@ callerid=2546456<240>',
                 'sip_dtmfmode'=>'auto_info',
                 'sip_networkfilterid'=>'none',
                 'manualattributes'=>'',
-                'codecs'     =>[
-                    'alaw'=>true,
-                    'ulaw'=>false,
-                    'g726'=>true,
-                    'gsm'=>false,
-                    'adpcm'=>true,
-                    'g722'=>false,
-                    'ilbc'=>true,
-                    'opus'=>false,
-                    'h264'=>true,
-                    'h263'=>false,
-                    'h263p'=>true
-                ],
             ]];
         $params[] = [
             [
@@ -277,19 +196,6 @@ callerid=2546456<240>',
                 'sip_dtmfmode'=>'auto_info',
                 'sip_networkfilterid'=>'none',
                 'manualattributes'=>'',
-                'codecs'     =>[
-                    'alaw'=>true,
-                    'ulaw'=>false,
-                    'g726'=>true,
-                    'gsm'=>false,
-                    'adpcm'=>true,
-                    'g722'=>false,
-                    'ilbc'=>true,
-                    'opus'=>false,
-                    'h264'=>true,
-                    'h263'=>false,
-                    'h263p'=>true
-                ],
             ]];
 
         $params[] = [
@@ -304,19 +210,6 @@ callerid=2546456<240>',
                 'sip_dtmfmode'=>'auto_info',
                 'sip_networkfilterid'=>'none',
                 'manualattributes'=>'',
-                'codecs'     =>[
-                    'alaw'=>true,
-                    'ulaw'=>false,
-                    'g726'=>true,
-                    'gsm'=>false,
-                    'adpcm'=>true,
-                    'g722'=>false,
-                    'ilbc'=>true,
-                    'opus'=>false,
-                    'h264'=>true,
-                    'h263'=>false,
-                    'h263p'=>true
-                ],
             ]];
         $params[] = [
             [
@@ -330,19 +223,6 @@ callerid=2546456<240>',
                 'sip_dtmfmode'=>'auto_info',
                 'sip_networkfilterid'=>'none',
                 'manualattributes'=>'',
-                'codecs'     =>[
-                    'alaw'=>true,
-                    'ulaw'=>false,
-                    'g726'=>true,
-                    'gsm'=>false,
-                    'adpcm'=>true,
-                    'g722'=>false,
-                    'ilbc'=>true,
-                    'opus'=>false,
-                    'h264'=>true,
-                    'h263'=>false,
-                    'h263p'=>true
-                ],
             ]];
         $params[] = [
             [
@@ -356,19 +236,6 @@ callerid=2546456<240>',
                 'sip_dtmfmode'=>'auto_info',
                 'sip_networkfilterid'=>'none',
                 'manualattributes'=>'',
-                'codecs'     =>[
-                    'alaw'=>true,
-                    'ulaw'=>false,
-                    'g726'=>true,
-                    'gsm'=>false,
-                    'adpcm'=>true,
-                    'g722'=>false,
-                    'ilbc'=>true,
-                    'opus'=>false,
-                    'h264'=>true,
-                    'h263'=>false,
-                    'h263p'=>true
-                ],
             ]];
         $params[] = [
             [
@@ -382,19 +249,6 @@ callerid=2546456<240>',
                 'sip_dtmfmode'=>'auto_info',
                 'sip_networkfilterid'=>'none',
                 'manualattributes'=>'',
-                'codecs'     =>[
-                    'alaw'=>true,
-                    'ulaw'=>false,
-                    'g726'=>true,
-                    'gsm'=>false,
-                    'adpcm'=>true,
-                    'g722'=>false,
-                    'ilbc'=>true,
-                    'opus'=>false,
-                    'h264'=>true,
-                    'h263'=>false,
-                    'h263p'=>true
-                ],
             ]];
         $params[] = [
             [
@@ -408,19 +262,6 @@ callerid=2546456<240>',
                 'sip_dtmfmode'=>'auto_info',
                 'sip_networkfilterid'=>'none',
                 'manualattributes'=>'',
-                'codecs'     =>[
-                    'alaw'=>true,
-                    'ulaw'=>false,
-                    'g726'=>true,
-                    'gsm'=>false,
-                    'adpcm'=>true,
-                    'g722'=>false,
-                    'ilbc'=>true,
-                    'opus'=>false,
-                    'h264'=>true,
-                    'h263'=>false,
-                    'h263p'=>true
-                ],
             ]];
         $params[] = [
             [
@@ -434,19 +275,6 @@ callerid=2546456<240>',
                 'sip_dtmfmode'=>'auto_info',
                 'sip_networkfilterid'=>'none',
                 'manualattributes'=>'',
-                'codecs'     =>[
-                    'alaw'=>false,
-                    'ulaw'=>true,
-                    'g726'=>false,
-                    'gsm'=>true,
-                    'adpcm'=>false,
-                    'g722'=>true,
-                    'ilbc'=>false,
-                    'opus'=>true,
-                    'h264'=>false,
-                    'h263'=>true,
-                    'h263p'=>false
-                ],
             ]];
         $params[] = [
             [
@@ -460,19 +288,7 @@ callerid=2546456<240>',
                 'sip_dtmfmode'=>'auto_info',
                 'sip_networkfilterid'=>'none',
                 'manualattributes'=>'',
-                'codecs'     =>[
-                    'alaw'=>true,
-                    'ulaw'=>false,
-                    'g726'=>true,
-                    'gsm'=>false,
-                    'adpcm'=>true,
-                    'g722'=>false,
-                    'ilbc'=>true,
-                    'opus'=>false,
-                    'h264'=>true,
-                    'h263'=>false,
-                    'h263p'=>true
-                ],
+
             ]];
         $params[] = [
             [
@@ -486,19 +302,6 @@ callerid=2546456<240>',
                 'sip_dtmfmode'=>'auto_info',
                 'sip_networkfilterid'=>'none',
                 'manualattributes'=>'',
-                'codecs'     =>[
-                    'alaw'=>true,
-                    'ulaw'=>false,
-                    'g726'=>true,
-                    'gsm'=>false,
-                    'adpcm'=>true,
-                    'g722'=>false,
-                    'ilbc'=>true,
-                    'opus'=>false,
-                    'h264'=>true,
-                    'h263'=>false,
-                    'h263p'=>true
-                ],
             ]];
         $params[] = [
             [
@@ -512,19 +315,7 @@ callerid=2546456<240>',
                 'sip_dtmfmode'=>'auto_info',
                 'sip_networkfilterid'=>'none',
                 'manualattributes'=>'',
-                'codecs'     =>[
-                    'alaw'=>false,
-                    'ulaw'=>true,
-                    'g726'=>false,
-                    'gsm'=>true,
-                    'adpcm'=>false,
-                    'g722'=>true,
-                    'ilbc'=>false,
-                    'opus'=>true,
-                    'h264'=>false,
-                    'h263'=>true,
-                    'h263p'=>false
-                ],
+
             ]];
         $params[] = [
             [
@@ -538,19 +329,6 @@ callerid=2546456<240>',
                 'sip_dtmfmode'=>'auto_info',
                 'sip_networkfilterid'=>'none',
                 'manualattributes'=>'',
-                'codecs'     =>[
-                    'alaw'=>true,
-                    'ulaw'=>false,
-                    'g726'=>true,
-                    'gsm'=>false,
-                    'adpcm'=>true,
-                    'g722'=>false,
-                    'ilbc'=>true,
-                    'opus'=>false,
-                    'h264'=>true,
-                    'h263'=>false,
-                    'h263p'=>true
-                ],
             ]];
         $params[] = [
             [
@@ -565,19 +343,6 @@ callerid=2546456<240>',
                 'sip_networkfilterid'=>'none',
                 'manualattributes'=>'[endpoint]
 callerid=2546456<240>',
-                'codecs'     =>[
-                    'alaw'=>true,
-                    'ulaw'=>false,
-                    'g726'=>true,
-                    'gsm'=>false,
-                    'adpcm'=>true,
-                    'g722'=>false,
-                    'ilbc'=>true,
-                    'opus'=>false,
-                    'h264'=>true,
-                    'h263'=>false,
-                    'h263p'=>true
-                ],
             ]];
         $params[] = [
             [
@@ -592,19 +357,6 @@ callerid=2546456<240>',
                 'sip_networkfilterid'=>'none',
                 'manualattributes'=>'[endpoint]
 callerid=2546456<240>',
-                'codecs'     =>[
-                    'alaw'=>false,
-                    'ulaw'=>true,
-                    'g726'=>false,
-                    'gsm'=>true,
-                    'adpcm'=>false,
-                    'g722'=>true,
-                    'ilbc'=>false,
-                    'opus'=>true,
-                    'h264'=>false,
-                    'h263'=>true,
-                    'h263p'=>false
-                ],
             ]];
         $params[] = [
             [
@@ -619,19 +371,7 @@ callerid=2546456<240>',
                 'sip_networkfilterid'=>'none',
                 'manualattributes'=>'[endpoint]
 callerid=2546456<251>',
-                'codecs'     =>[
-                    'alaw'=>true,
-                    'ulaw'=>false,
-                    'g726'=>true,
-                    'gsm'=>false,
-                    'adpcm'=>true,
-                    'g722'=>false,
-                    'ilbc'=>true,
-                    'opus'=>false,
-                    'h264'=>true,
-                    'h263'=>false,
-                    'h263p'=>true
-                ],
+
             ]];
         $params[] = [
             [
@@ -646,19 +386,7 @@ callerid=2546456<251>',
                 'sip_networkfilterid'=>'none',
                 'manualattributes'=>'[endpoint]
 callerid=2546456<234>',
-                'codecs'     =>[
-                    'alaw'=>false,
-                    'ulaw'=>true,
-                    'g726'=>false,
-                    'gsm'=>true,
-                    'adpcm'=>false,
-                    'g722'=>true,
-                    'ilbc'=>false,
-                    'opus'=>true,
-                    'h264'=>false,
-                    'h263'=>true,
-                    'h263p'=>false
-                ]
+
             ]
         ];
         return $params;

@@ -8,7 +8,8 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
-use MikoPBX\Common\Models\{Iax, IaxCodecs};
+use MikoPBX\Common\Models\Codecs;
+use MikoPBX\Common\Models\Iax;
 use MikoPBX\Modules\Config\ConfigClass;
 use MikoPBX\Core\System\Util;
 
@@ -52,13 +53,12 @@ class IAXConf extends ConfigClass
 
             $arr_data['codecs'] = [];
             $filter             = [
-                "iaxuid=:id:",
-                'bind'  => ['id' => $peer->uniqid],
-                'order' => 'priority',
+                'conditions'=>'disabled="0"',
+                'order' => 'type, priority',
             ];
-            $codecs             = IaxCodecs::find($filter);
+            $codecs             = Codecs::find($filter);
             foreach ($codecs as $ob_codec) {
-                $arr_data['codecs'][] = $ob_codec->codec;
+                $arr_data['codecs'][] = $ob_codec->name;
             }
             $data_providers[] = $arr_data;
 

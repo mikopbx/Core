@@ -39,10 +39,6 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
             $this->changeInputField('qualifyfreq', $params['qualifyfreq']);
         }
 
-        foreach ($params['codecs'] as $key=>$value){
-            $this->changeCheckBoxState('codec_'.$key, $value);
-        }
-
         $this->changeInputField('defaultuser', $params['defaultuser']);
         $this->changeInputField('fromuser', $params['fromuser']);
         $this->changeInputField('fromdomain', $params['fromdomain']);
@@ -71,10 +67,6 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
         if ($params['qualify']){
             $this->assertInputFieldValueEqual('qualifyfreq', $params['qualifyfreq']);
         }
-        foreach ($params['codecs'] as $key=>$value){
-            $this->assertCheckBoxStageIsEqual('codec_'.$key, $value);
-        }
-
         $this->assertInputFieldValueEqual('defaultuser', $params['defaultuser']);
         $this->assertInputFieldValueEqual('fromuser', $params['fromuser']);
         $this->assertInputFieldValueEqual('fromdomain', $params['fromdomain']);
@@ -105,19 +97,6 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
             'nat'             => 'auto_force_rport',
             'qualify'         => false,
             'qualifyfreq'     =>62,
-            'codecs'     =>[
-                'alaw'=>true,
-                'ulaw'=>false,
-                'g726'=>true,
-                'gsm'=>false,
-                'adpcm'=>true,
-                'g722'=>false,
-                'ilbc'=>true,
-                'opus'=>false,
-                'h264'=>true,
-                'h263'=>false,
-                'h263p'=>true
-            ],
             'defaultuser'=>'',
             'fromuser'=>'',
             'fromdomain'=>'',
@@ -139,19 +118,6 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
             'nat'             => 'force_rport',
             'qualify'         => true,
             'qualifyfreq'     =>61,
-            'codecs'     =>[
-                'alaw'=>false,
-                'ulaw'=>true,
-                'g726'=>false,
-                'gsm'=>true,
-                'adpcm'=>false,
-                'g722'=>true,
-                'ilbc'=>false,
-                'opus'=>true,
-                'h264'=>false,
-                'h263'=>true,
-                'h263p'=>false
-            ],
             'defaultuser'=>'',
             'fromuser'=>'',
             'fromdomain'=>'',

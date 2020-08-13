@@ -10,7 +10,7 @@
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\{IaxProviderEditForm, SipProviderEditForm};
-use MikoPBX\Common\Models\{Codecs, Iax, IaxCodecs, Providers, Sip, SipCodecs};
+use MikoPBX\Common\Models\{Iax, Providers, Sip};
 
 class ProvidersController extends BaseController
 {
@@ -47,23 +47,9 @@ class ProvidersController extends BaseController
      */
     public function modifysipAction($uniqid = null): void
     {
-        // Списоок доступных кодеков
-        $codecs          = [];
-        $availableCodecs = Codecs::find();
-        foreach ($availableCodecs as $codec) {
-            $key                     = $codec->name;
-            $codecs[$key]            = $codec->toArray();
-            $codecs[$key]['enabled'] = false;
-        }
-
         $provider = Providers::findFirstByUniqid($uniqid);
 
-        if ($provider !== null) {
-            $enabledCodecs = $provider->Sip->Codecs;
-            foreach ($enabledCodecs as $codec) {
-                $codecs[$codec->codec]['enabled'] = true;
-            }
-        } else {
+        if ($provider === null) {
             $uniqid                     = strtoupper('SIP-' . time());
             $provider                   = new Providers();
             $provider->type             = 'SIP';
@@ -76,11 +62,8 @@ class ProvidersController extends BaseController
             $provider->Sip->disabled    = '0';
             $provider->Sip->qualifyfreq = 60;
             $provider->Sip->qualify     = '1';
-            $codecs['alaw']['enabled']  = true;
-            $codecs['ulaw']['enabled']  = true;
         }
 
-        $this->view->codecs    = $codecs;
         $this->view->form      = new SipProviderEditForm($provider->Sip);
         $this->view->represent = $provider->getRepresent();
     }
@@ -92,24 +75,10 @@ class ProvidersController extends BaseController
      */
     public function modifyiaxAction($uniqid = null): void
     {
-        // Списоок доступных кодеков
-        $codecs          = [];
-        $availableCodecs = Codecs::find();
-        foreach ($availableCodecs as $codec) {
-            $key                     = $codec->name;
-            $codecs[$key]            = $codec->toArray();
-            $codecs[$key]['enabled'] = false;
-        }
 
         $provider = Providers::findFirstByUniqid($uniqid);
 
-        if ($provider !== null) {
-            $enabledCodecs = $provider->Iax->Codecs;
-
-            foreach ($enabledCodecs as $codec) {
-                $codecs[$codec->codec]['enabled'] = true;
-            }
-        } else {
+        if ($provider === null) {
             $uniqid                    = strtoupper('IAX-' . time());
             $provider                  = new Providers();
             $provider->type            = 'IAX';
@@ -119,12 +88,8 @@ class ProvidersController extends BaseController
             $provider->Iax->uniqid     = $uniqid;
             $provider->Iax->disabled   = '0';
             $provider->Iax->qualify    = '1';
-            $codecs['alaw']['enabled'] = true;
-            $codecs['ulaw']['enabled'] = true;
         }
 
-
-        $this->view->codecs    = $codecs;
         $this->view->form      = new IaxProviderEditForm($provider->Iax);
         $this->view->represent = $provider->getRepresent();
     }
@@ -309,65 +274,6 @@ class ProvidersController extends BaseController
             $this->flash->warning(implode('<br>', $errors));
 
             return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * Сохранение параметров в таблицу  SipCodecs IaxCodecs
-     *
-     * @param array $data - POST дата
-     * @param bool  $type - sip или iax
-     *
-     * @return bool результат сохранения
-     */
-    private function saveCodecs($data, $type): bool
-    {
-        $availableCodecs = Codecs::find();
-        if ($type === 'iax') {
-            $classCodecs = IaxCodecs::class;
-            $fieldUid    = 'iaxuid';
-        } else { //sip
-            $classCodecs = SipCodecs::class;
-            $fieldUid    = 'sipuid';
-        }
-
-        foreach ($availableCodecs as $codec) {
-            $key        = $codec->name;
-            $parameters = [
-                'conditions' => "{$fieldUid}=:uniqid: AND codec=:codec:",
-                'bind'       => [
-                    'uniqid' => $data['uniqid'],
-                    'codec'  => $key,
-                ],
-            ];
-            $searchKey = str_ireplace('.','_', $key);
-            if (array_key_exists('codec_' . $searchKey, $data) && $data['codec_' . $searchKey] == 'on') {
-                $newCodec = $classCodecs::findFirst($parameters);
-                if ($newCodec === null) {
-                    $newCodec = new $classCodecs();
-                }
-                $newCodec->$fieldUid = $data['uniqid'];
-                $newCodec->priority  = 1;
-                $newCodec->codec     = $key;
-                if ($newCodec->save() === false) {
-                    $errors = $newCodec->getMessages();
-                    $this->flash->warning(implode('<br>', $errors));
-                    $this->view->success = false;
-
-                    return false;
-                }
-            } else {// Надо удалить лишний
-                $deletedCodecs = $classCodecs::find($parameters);
-                if ($deletedCodecs && $deletedCodecs->delete() === false) {
-                    $errors = $deletedCodecs->getMessages();
-                    $this->flash->warning(implode('<br>', $errors));
-                    $this->view->success = false;
-
-                    return false;
-                }
-            }
         }
 
         return true;

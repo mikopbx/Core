@@ -10,7 +10,7 @@
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\ExtensionEditForm;
-use MikoPBX\Common\Models\{Codecs,
+use MikoPBX\Common\Models\{
     ExtensionForwardingRights,
     Extensions,
     ExternalPhones,
@@ -18,7 +18,6 @@ use MikoPBX\Common\Models\{Codecs,
     PbxExtensionModules,
     PbxSettings,
     Sip,
-    SipCodecs,
     Users
 };
 use Phalcon\Text;
@@ -140,15 +139,6 @@ class ExtensionsController extends BaseController
      */
     public function modifyAction($id = null): void
     {
-        $codecs          = [];
-        $availableCodecs = Codecs::find();
-        foreach ($availableCodecs as $codec) {
-            $key                     = $codec->name;
-            $codecs[$key]            = $codec->toArray();
-            $codecs[$key]['enabled'] = false;
-        }
-
-
         $extension = Extensions::findFirstById($id);
 
         if ($extension === null) {
@@ -171,15 +161,8 @@ class ExtensionsController extends BaseController
 
             $extension->ExtensionForwardingRights = new ExtensionForwardingRights();
 
-            $codecs['alaw']['enabled'] = true;
-            $codecs['ulaw']['enabled'] = true;
             $this->view->avatar        = '';
         } else {
-            $enabledCodecs = $extension->Sip->Codecs;
-            foreach ($enabledCodecs as $codec) {
-                $codecs[$codec->codec]['enabled'] = true;
-            }
-
             $this->view->avatar = $extension->Users->avatar;
         }
 
@@ -238,7 +221,6 @@ class ExtensionsController extends BaseController
         );
 
         $this->view->form      = $form;
-        $this->view->codecs    = $codecs;
         $this->view->represent = $extension->getRepresent();
     }
 
@@ -329,13 +311,6 @@ class ExtensionsController extends BaseController
             return;
         }
 
-        // Заполним параметры Кодеков
-        if ( ! $this->saveSipCodecs($data)) {
-            $this->view->success = false;
-            $this->db->rollback();
-
-            return;
-        }
 
         // Заполним параметры маршрутизации
         if ( ! $this->saveForwardingRights($fwdEntity, $data)) {
@@ -548,56 +523,6 @@ class ExtensionsController extends BaseController
             $this->flash->error(implode('<br>', $errors));
 
             return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * Сохранение параметров в таблицу SipCodecs
-     *
-     * @param array $data - POST дата
-     *
-     * @return bool результат сохранения
-     */
-    private function saveSipCodecs($data): bool
-    {
-        $availableCodecs = Codecs::find();
-        foreach ($availableCodecs as $codec) {
-            $key        = $codec->name;
-            $parameters = [
-                'conditions' => 'sipuid=:sipuid: AND codec=:codec:',
-                'bind'       => [
-                    'sipuid' => $data['sip_uniqid'],
-                    'codec'  => $key,
-                ],
-            ];
-            $searchKey  = str_ireplace('.', '_', $key);
-            if (array_key_exists('codec_' . $searchKey, $data) && $data['codec_' . $searchKey] === 'on') {
-                $newCodec = SipCodecs::findFirst($parameters);
-                if ($newCodec === null) {
-                    $newCodec = new SipCodecs();
-                }
-                $newCodec->sipuid   = $data['sip_uniqid'];
-                $newCodec->priority = "1";
-                $newCodec->codec    = $key;
-                if ($newCodec->save() === false) {
-                    $errors = $newCodec->getMessages();
-                    $this->flash->error(implode('<br>', $errors));
-                    $this->view->success = false;
-
-                    return false;
-                }
-            } else {// Надо удалить лишний
-                $deletedCodecs = SipCodecs::find($parameters);
-                if ($deletedCodecs && $deletedCodecs->delete() === false) {
-                    $errors = $deletedCodecs->getMessages();
-                    $this->flash->error(implode('<br>', $errors));
-                    $this->view->success = false;
-
-                    return false;
-                }
-            }
         }
 
         return true;

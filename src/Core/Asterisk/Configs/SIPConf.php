@@ -15,7 +15,6 @@ use MikoPBX\Common\Models\{Codecs,
     OutgoingRoutingTable,
     PbxSettings,
     Sip,
-    SipCodecs,
     Users};
 use MikoPBX\Core\Asterisk\AstDB;
 use MikoPBX\Modules\Config\ConfigClass;
@@ -102,10 +101,10 @@ class SIPConf extends ConfigClass
                 $subnets[] = $net->permit;
             }
         }
-        $codecs    = Codecs::find()->toArray();
+        $codecs = $this->getCodecs();
         $codecConf = '';
         foreach ($codecs as $codec){
-            $codecConf.= "allow = {$codec['name']}\n";
+            $codecConf.= "allow = {$codec}\n";
         }
 
         $pbxVersion = PbxSettings::getValueByKey('PBXVersion');
@@ -418,7 +417,7 @@ class SIPConf extends ConfigClass
             $arr_data['deny']   = ($network_filter === null) ? '' : $network_filter->deny;
 
             // Получим используемые кодеки.
-            $arr_data['codecs'] = $this->getCodecs($sip_peer->uniqid);
+            $arr_data['codecs'] = $this->getCodecs();
 
             // Имя сотрудника.
             $extension = ExtensionsModel::findFirst("number = '{$sip_peer->extension}'");
@@ -456,21 +455,18 @@ class SIPConf extends ConfigClass
     /**
      * Возвращает доступные пиру кодеки.
      *
-     * @param $uniqid
-     *
      * @return array
      */
-    private function getCodecs($uniqid): array
+    private function getCodecs(): array
     {
         $arr_codecs = [];
         $filter     = [
-            "sipuid=:id:",
-            'bind'  => ['id' => $uniqid],
-            'order' => 'priority',
+            'conditions'=>'disabled="0"',
+            'order' => 'type, priority',
         ];
-        $codecs     = SipCodecs::find($filter);
+        $codecs     = Codecs::find($filter);
         foreach ($codecs as $codec_data) {
-            $arr_codecs[] = $codec_data->codec;
+            $arr_codecs[] = $codec_data->name;
         }
 
         return $arr_codecs;
@@ -496,7 +492,7 @@ class SIPConf extends ConfigClass
             $arr_data['deny']                       = ($network_filter === null) ? '' : $network_filter->deny;
 
             // Получим используемые кодеки.
-            $arr_data['codecs'] = $this->getCodecs($sip_peer->uniqid);
+            $arr_data['codecs'] = $this->getCodecs();
 
             $context_id = preg_replace("/[^a-z\d]/iu", '', $sip_peer->host . $sip_peer->port);
             if ( ! isset($this->contexts_data[$context_id])) {

@@ -17,7 +17,7 @@ $.fn.form.settings.rules.username = function (noregister, username) {
 const provider = {
 	$formObj: $('#save-provider-form'),
 	providerType: $('#providerType').val(),
-	$codecsCheckboxes: $('#save-provider-form .codecs, #save-provider-form .checkbox'),
+	$checkBoxes: $('#save-provider-form .checkbox'),
 	$accordions: $('#save-provider-form .ui.accordion'),
 	$dropDowns: $('#save-provider-form .ui.dropdown'),
 	validateRules: {
@@ -59,7 +59,7 @@ const provider = {
 		},
 	},
 	initialize() {
-		provider.$codecsCheckboxes.checkbox();
+		provider.$checkBoxes.checkbox();
 		provider.$accordions.accordion();
 		provider.$dropDowns.dropdown();
 		$('#qualify').checkbox({

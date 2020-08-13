@@ -21,14 +21,25 @@ class Codecs extends ModelsBase
     public $id;
 
     /**
-     * @Column(type="string", nullable=true)
+     * @Column(type="string", nullable=false)
      */
     public $name;
 
     /**
-     * @Column(type="string", nullable=true)
+     * Audio or Video codec
+     * @Column(type="string", nullable=false)
      */
     public $type;
+
+    /**
+     * @Column(type="integer", nullable=false, default=1)
+     */
+    public $priority;
+
+    /**
+     * @Column(type="integer", nullable=false, default=0)
+     */
+    public $disabled;
 
     /**
      * @Column(type="string", nullable=true)
@@ -39,37 +50,5 @@ class Codecs extends ModelsBase
     {
         $this->setSource('m_Codecs');
         parent::initialize();
-        $this->hasMany(
-            'name',
-            IaxCodecs::class,
-            'codec',
-            [
-                'alias'      => 'IaxCodecs',
-                'foreignKey' => [
-                    'allowNulls' => true,
-                    'action'     => Relation::ACTION_CASCADE,
-                ],
-                'params'     => [
-                    'order' => 'priority asc',
-                ],
-            ]
-        );
-
-
-        $this->hasMany(
-            'name',
-            SipCodecs::class,
-            'codec',
-            [
-                'alias'      => 'SipCodecs',
-                'foreignKey' => [
-                    'allowNulls' => true,
-                    'action'     => Relation::ACTION_CASCADE,
-                ],
-                'params'     => [
-                    'order' => 'priority asc',
-                ],
-            ]
-        );
     }
 }

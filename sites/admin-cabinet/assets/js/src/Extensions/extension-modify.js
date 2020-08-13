@@ -23,7 +23,6 @@ const extension = {
 	$email: $('#user_email'),
 	$formObj: $('#extensions-form'),
 	$tabMenuItems: $('#extensions-menu .item'),
-	$codecsCheckboxes: $('#extensions-form .codecs'),
 	forwardingSelect: '#extensions-form .forwarding-select',
 	validateRules: {
 		number: {
@@ -131,7 +130,6 @@ const extension = {
 		extension.defaultNumber = extension.$number.inputmask('unmaskedvalue');
 
 		extension.$tabMenuItems.tab();
-		extension.$codecsCheckboxes.checkbox();
 		$('#extensions-form .ui.accordion').accordion();
 		$('#extensions-form .dropdown').dropdown();
 

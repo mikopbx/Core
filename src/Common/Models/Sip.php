@@ -170,22 +170,6 @@ class Sip extends ModelsBase
                 ],
             ]
         );
-        $this->hasMany(
-            'uniqid',
-            SipCodecs::class,
-            'sipuid',
-            [
-                'alias'      => 'Codecs',
-                'foreignKey' => [
-                    'allowNulls' => true,
-                    'message'    => Codecs::class,
-                    'action'     => Relation::ACTION_CASCADE,
-                ],
-                'params'     => [
-                    'order' => 'priority asc',
-                ],
-            ]
-        );
 
         $this->belongsTo(
             'uniqid',

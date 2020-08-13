@@ -421,9 +421,6 @@ abstract class ModelsBase extends Model
             case Codecs::class:
                 $name = $this->name;
                 break;
-            case IaxCodecs::class:
-                $name = $this->codec;
-                break;
             case IncomingRoutingTable::class:
                 $name = $this->t('mo_RightNumber', ['id' => $this->id]);
                 break;
@@ -490,9 +487,6 @@ abstract class ModelsBase extends Model
                 } else { // Что это?
                     $name = $this->description;
                 }
-                break;
-            case SipCodecs::class:
-                $name = $this->codec;
                 break;
             case Users::class:
                 $name = '<i class="user outline icon"></i> ' . $this->username;
@@ -608,8 +602,6 @@ abstract class ModelsBase extends Model
                 break;
             case Codecs::class:
                 break;
-            case IaxCodecs::class:
-                break;
             case IncomingRoutingTable::class:
                 $link = $url->get('incoming-routes/modify/' . $this->id);
                 break;
@@ -648,8 +640,6 @@ abstract class ModelsBase extends Model
                 } elseif ($this->Providers) { // Это провайдер
                     $link = $url->get('providers/modifysip/' . $this->Providers->id);
                 }
-                break;
-            case SipCodecs::class:
                 break;
             case Users::class:
                 $parameters    = [

@@ -75,22 +75,6 @@ class Iax extends ModelsBase
     {
         $this->setSource('m_Iax');
         parent::initialize();
-        $this->hasMany(
-            'uniqid',
-            IaxCodecs::class,
-            'iaxuid',
-            [
-                'alias'      => 'Codecs',
-                'foreignKey' => [
-                    'allowNulls' => true,
-                    'action'     => Relation::ACTION_CASCADE,
-                ],
-                'params'     => [
-                    'order' => 'priority asc',
-                ],
-            ]
-        );
-
         $this->belongsTo(
             'uniqid',
             Providers::class,
