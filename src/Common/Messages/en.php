@@ -998,7 +998,7 @@ It can be activated once, after which the coupon becomes redeemed.
     'sd_Filename' => 'Filename',
     'sd_filter' => 'Filter',
     'sd_lines' => 'Lines',
-    'da_ShowLog' => 'Show log',
-    'da_CapturePcap' => 'Capture pcap',
-    'da_log_ShowLastLog' => 'Show last log',
+    'sd_ShowLog' => 'Show log',
+    'sd_CapturePcap' => 'Capture pcap',
+    'sd_ShowLastLog' => 'Show last log',
 ];

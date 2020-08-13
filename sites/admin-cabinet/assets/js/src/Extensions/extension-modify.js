@@ -29,6 +29,10 @@ const extension = {
 			identifier: 'number',
 			rules: [
 				{
+					type: 'number',
+					prompt: globalTranslate.ex_ValidateExtensionNumber,
+				},
+				{
 					type: 'empty',
 					prompt: globalTranslate.ex_ValidateNumberIsEmpty,
 				},

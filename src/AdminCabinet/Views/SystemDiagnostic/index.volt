@@ -1,6 +1,6 @@
 <div class="ui tabular menu" id="system-diagnostic-menu">
-    <a class="item active" data-tab="show-log">{{ t._('da_ShowLog') }}</a>
-    <a class="item" data-tab="capture-log">{{ t._('da_CapturePcap') }}</a>
+    <a class="item active" data-tab="show-log">{{ t._('sd_ShowLog') }}</a>
+    <a class="item" data-tab="capture-log">{{ t._('sd_CapturePcap') }}</a>
 </div>
 
 <div class="ui tab" data-tab="show-log">
@@ -31,7 +31,7 @@
             </div>
           </div>
           <button class="ui primary button" id="show-last-log">
-             {{ t._('da_log_ShowLastLog') }}
+             {{ t._('sd_ShowLastLog') }}
           </button>
         </div>
     </form>
