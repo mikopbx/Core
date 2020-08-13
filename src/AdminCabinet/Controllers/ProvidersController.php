@@ -178,14 +178,6 @@ class ProvidersController extends BaseController
             return;
         }
 
-        // Заполним параметры Кодеков
-        if ( ! $this->saveCodecs($data, $type)) {
-            $this->view->success = false;
-            $this->db->rollback();
-
-            return;
-        }
-
         $this->flash->success($this->translation->_('ms_SuccessfulSaved'));
         $this->view->success = true;
         $this->db->commit();
