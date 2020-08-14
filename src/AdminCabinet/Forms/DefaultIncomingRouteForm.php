@@ -13,6 +13,12 @@ use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Form;
 
+/**
+ * Class DefaultIncomingRouteForm
+ *
+ * @package MikoPBX\AdminCabinet\Forms
+ * @property \MikoPBX\Common\Providers\TranslationProvider translation
+ */
 class DefaultIncomingRouteForm extends Form
 {
     public function initialize($entity = null, $options = null): void

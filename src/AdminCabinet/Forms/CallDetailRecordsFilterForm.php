@@ -12,7 +12,12 @@ namespace MikoPBX\AdminCabinet\Forms;
 use Phalcon\Forms\Element\Text;
 use Phalcon\Forms\Form;
 
-
+/**
+ * Class CallDetailRecordsFilterForm
+ *
+ * @package MikoPBX\AdminCabinet\Forms
+ * @property \MikoPBX\Common\Providers\TranslationProvider translation
+ */
 class CallDetailRecordsFilterForm extends Form
 {
 

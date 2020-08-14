@@ -113,13 +113,16 @@ class ExtensionsController extends BaseController
      * @param $base64_string
      * @param $output_file
      *
-     * @return mixed
+     * @return void
      */
-    private function base64ToJpeg($base64_string, $output_file)
+    private function base64ToJpeg($base64_string, $output_file):void
     {
         // open the output file for writing
         $ifp = fopen($output_file, 'wb');
 
+        if ($ifp===false){
+            return;
+        }
         // split the string on commas
         // $data[ 0 ] == "data:image/png;base64"
         // $data[ 1 ] == <actual base64 string>
@@ -130,12 +133,11 @@ class ExtensionsController extends BaseController
 
         // clean up the file resource
         fclose($ifp);
-
-        return $output_file;
     }
 
     /**
-     * @param null $id - идентификатор внутреннего номера
+     * Change extension settings
+     * @param ?string $id modified extension id
      */
     public function modifyAction($id = null): void
     {
@@ -260,7 +262,7 @@ class ExtensionsController extends BaseController
 
         $data = $this->request->getPost();
 
-        $sipEntity = false;
+        $sipEntity = null;
 
         if (array_key_exists('sip_uniqid', $data)) {
             $sipEntity = SIP::findFirstByUniqid($data['sip_uniqid']);

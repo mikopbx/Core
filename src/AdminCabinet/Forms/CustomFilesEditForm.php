@@ -15,6 +15,12 @@ use Phalcon\Forms\Element\Text;
 use Phalcon\Forms\Element\TextArea;
 use Phalcon\Forms\Form;
 
+/**
+ * Class CustomFilesEditForm
+ *
+ * @package MikoPBX\AdminCabinet\Forms
+ * @property \MikoPBX\Common\Providers\TranslationProvider translation
+ */
 class CustomFilesEditForm extends Form
 {
     public function initialize($entity = null, $options = null): void

@@ -13,6 +13,12 @@ use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Text;
 use Phalcon\Forms\Form;
 
+/**
+ * Class SoundFilesEditForm
+ *
+ * @package MikoPBX\AdminCabinet\Forms
+ * @property \MikoPBX\Common\Providers\TranslationProvider translation
+ */
 class SoundFilesEditForm extends Form
 {
     public function initialize($entity = null, $options = null): void

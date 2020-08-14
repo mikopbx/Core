@@ -14,7 +14,12 @@ use Phalcon\Forms\Element\Numeric;
 use Phalcon\Forms\Element\Text;
 use Phalcon\Forms\Form;
 
-
+/**
+ * Class LicensingGetTrialForm
+ *
+ * @package MikoPBX\AdminCabinet\Forms
+ * @property \MikoPBX\Common\Providers\TranslationProvider translation
+ */
 class LicensingGetTrialForm extends Form
 {
 

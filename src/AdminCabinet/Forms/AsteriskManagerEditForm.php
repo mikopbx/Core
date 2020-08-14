@@ -16,7 +16,11 @@ use Phalcon\Forms\Element\Text;
 use Phalcon\Forms\Element\TextArea;
 use Phalcon\Forms\Form;
 
-
+/**
+ * Class AsteriskManagerEditForm
+ * @property \MikoPBX\Common\Providers\TranslationProvider translation
+ * @package MikoPBX\AdminCabinet\Forms
+ */
 class AsteriskManagerEditForm extends Form
 {
     public function initialize($entity = null, $options = null): void

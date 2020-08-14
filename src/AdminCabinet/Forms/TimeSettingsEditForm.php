@@ -14,7 +14,12 @@ use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
 use Phalcon\Forms\Form;
 
-
+/**
+ * Class TimeSettingsEditForm
+ *
+ * @package MikoPBX\AdminCabinet\Forms
+ * @property \MikoPBX\Common\Providers\TranslationProvider translation
+ */
 class TimeSettingsEditForm extends Form
 {
     public function initialize($entity = null, $options = null): void

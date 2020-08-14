@@ -16,6 +16,12 @@ use Phalcon\Forms\Element\Text;
 use Phalcon\Forms\Element\TextArea;
 use Phalcon\Forms\Form;
 
+/**
+ * Class Fail2BanEditForm
+ *
+ * @package MikoPBX\AdminCabinet\Forms
+ * @property \MikoPBX\Common\Providers\TranslationProvider translation
+ */
 class Fail2BanEditForm extends Form
 {
 

@@ -16,7 +16,12 @@ use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
 use Phalcon\Forms\Form;
 
-
+/**
+ * Class NetworkEditForm
+ *
+ * @package MikoPBX\AdminCabinet\Forms
+ * @property \MikoPBX\Common\Providers\TranslationProvider translation
+ */
 class NetworkEditForm extends Form
 {
     public function initialize($entity = null, $options = null): void

@@ -14,6 +14,17 @@ use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
 /**
+ * @property \MikoPBX\Common\Models\Sip Sip
+ * @property \MikoPBX\Common\Models\Users Users
+ * @property \MikoPBX\Common\Models\ExternalPhones ExternalPhones
+ * @property \MikoPBX\Common\Models\DialplanApplications DialplanApplications
+ * @property \MikoPBX\Common\Models\ConferenceRooms ConferenceRooms
+ * @property \MikoPBX\Common\Models\CallQueues CallQueues
+ * @property \MikoPBX\Common\Models\OutWorkTimes OutWorkTimes
+ * @property \MikoPBX\Common\Models\IvrMenu IvrMenu
+ * @property \MikoPBX\Common\Models\ExtensionForwardingRights ExtensionForwardingRights
+ *
+ *
  * @method static mixed findFirstByNumber(string|null $number)
  * @method static mixed findByUserid(int $userid)
  */

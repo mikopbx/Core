@@ -15,6 +15,12 @@ use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
 use Phalcon\Forms\Form;
 
+/**
+ * Class FirewallEditForm
+ *
+ * @package MikoPBX\AdminCabinet\Forms
+ * @property \MikoPBX\Common\Providers\TranslationProvider translation
+ */
 class FirewallEditForm extends Form
 {
     public function initialize($entity = null, $options = null): void
