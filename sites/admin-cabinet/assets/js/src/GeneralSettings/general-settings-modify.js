@@ -68,6 +68,28 @@ const generalSettingsModify = {
 				},
 			],
 		},
+		WEBPort: {
+			identifier: 'WEBPort',
+			rules: [
+				{
+					type: 'integer[1..65535]',
+					prompt: globalTranslate.gs_ValidateWEBPortOutOfRange,
+				},
+			],
+		},
+		WEBHTTPSPort: {
+			identifier: 'WEBHTTPSPort',
+			rules: [
+				{
+					type: 'integer[1..65535]',
+					prompt: globalTranslate.gs_ValidateWEBHTTPSPortOutOfRange,
+				},
+				{
+					type: 'different[WEBPort]',
+					prompt: globalTranslate.gs_ValidateWEBHTTPSPortNotEqualToWEBPort,
+				},
+			],
+		},
 	},
 	initialize() {
 		generalSettingsModify.$webAdminPassword.on('keyup', () => {
