@@ -12,7 +12,11 @@ use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
 /**
+ * Class PbxSettings
+ *
  * @method static mixed findFirstByKey(string $string)
+ *
+ * @package MikoPBX\Common\Models
  */
 class PbxSettings extends ModelsBase
 {

@@ -11,6 +11,11 @@ namespace MikoPBX\Common\Models;
 
 use Phalcon\Mvc\Model\Relation;
 
+/**
+ * Class SoundFiles
+ *
+ * @package MikoPBX\Common\Models
+ */
 class SoundFiles extends ModelsBase
 {
     public const CATEGORY_MOH = 'moh';

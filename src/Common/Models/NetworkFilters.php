@@ -13,6 +13,11 @@ use Phalcon\Di;
 use Phalcon\Mvc\Model\Relation;
 use Phalcon\Mvc\Model\ResultsetInterface;
 
+/**
+ * Class NetworkFilters
+ *
+ * @package MikoPBX\Common\Models
+ */
 class NetworkFilters extends ModelsBase
 {
     /**

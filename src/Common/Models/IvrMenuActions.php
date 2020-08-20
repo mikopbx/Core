@@ -11,6 +11,12 @@ namespace MikoPBX\Common\Models;
 
 use Phalcon\Mvc\Model\Relation;
 
+
+/**
+ * Class IvrMenuActions
+ *
+ * @package MikoPBX\Common\Models
+ */
 class IvrMenuActions extends ModelsBase
 {
 

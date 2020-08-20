@@ -8,6 +8,11 @@
 
 namespace MikoPBX\Common\Models;
 
+/**
+ * Class CallDetailRecordsBase
+ *
+ * @package MikoPBX\Common\Models
+ */
 abstract class CallDetailRecordsBase extends ModelsBase
 {
     /**

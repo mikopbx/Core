@@ -13,6 +13,11 @@ use Phalcon\Mvc\Model\Relation;
 use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
+/**
+ * Class CallQueueMembers
+ *
+ * @package MikoPBX\Common\Models
+ */
 class CallQueueMembers extends ModelsBase
 {
     /**

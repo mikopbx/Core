@@ -13,7 +13,11 @@ use Phalcon\Di;
 use Phalcon\Mvc\Model\Relation;
 
 /**
+ * Class FirewallRules
+ *
  * @method static mixed findByCategory(string $category)
+ *
+ * @package MikoPBX\Common\Models
  */
 class FirewallRules extends ModelsBase
 {

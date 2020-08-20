@@ -11,6 +11,11 @@ namespace MikoPBX\Common\Models;
 
 use Phalcon\Mvc\Model\Relation;
 
+/**
+ * Class OutWorkTimes
+ *
+ * @package MikoPBX\Common\Models
+ */
 class OutWorkTimes extends ModelsBase
 {
     /**

@@ -13,7 +13,11 @@ use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
 /**
+ * Class LanInterfaces
+ *
  * @method static findFirstByInternet(int $int)
+ *
+ * @package MikoPBX\Common\Models
  */
 class LanInterfaces extends ModelsBase
 {

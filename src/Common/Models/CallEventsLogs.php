@@ -8,6 +8,11 @@
 
 namespace MikoPBX\Common\Models;
 
+/**
+ * Class CallEventsLogs
+ *
+ * @package MikoPBX\Common\Models
+ */
 class CallEventsLogs extends ModelsBase
 {
 

@@ -22,6 +22,8 @@ use Phalcon\Text;
 use Phalcon\Url;
 
 /**
+ * Class ModelsBase
+ *
  * @method static mixed findFirstById(array|string|int $parameters = null)
  * @method static mixed findFirstByKey(string|null $parameters)
  * @method static mixed findFirstByUniqid(array|string|int $parameters = null)
@@ -35,6 +37,8 @@ use Phalcon\Url;
  * @method  array|MessageInterface[] getMessages(mixed $filter = null)
  * @method static AdapterInterface getReadConnection()
  * @method  Simple|false getRelated(string $alias, $arguments = null)
+ *
+ * @package MikoPBX\Common\Models
  */
 abstract class ModelsBase extends Model
 {

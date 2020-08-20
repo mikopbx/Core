@@ -9,6 +9,11 @@
 
 namespace MikoPBX\Common\Models;
 
+/**
+ * Class CallDetailRecords
+ *
+ * @package MikoPBX\Common\Models
+ */
 class CallDetailRecords extends CallDetailRecordsBase
 {
     public function initialize(): void

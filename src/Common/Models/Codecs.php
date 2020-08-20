@@ -9,8 +9,12 @@
 
 namespace MikoPBX\Common\Models;
 
-use Phalcon\Mvc\Model\Relation;
 
+/**
+ * Class Codecs
+ *
+ * @package MikoPBX\Common\Models
+ */
 class Codecs extends ModelsBase
 {
     /**

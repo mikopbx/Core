@@ -14,7 +14,11 @@ use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
 /**
+ * Class IvrMenu
+ *
  * @method static mixed findFirstByUniqid(array|string|int $parameters = null)
+ *
+ * @package MikoPBX\Common\Models
  */
 class IvrMenu extends ModelsBase
 {
@@ -90,6 +94,9 @@ class IvrMenu extends ModelsBase
      */
     public $description;
 
+    /**
+     *
+     */
     public function initialize(): void
     {
         $this->setSource('m_IvrMenu');

@@ -9,6 +9,11 @@
 
 namespace MikoPBX\Common\Models;
 
+/**
+ * Class Fail2BanRules
+ *
+ * @package MikoPBX\Common\Models
+ */
 class Fail2BanRules extends ModelsBase
 {
     /**

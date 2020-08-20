@@ -14,11 +14,15 @@ use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
 /**
+ * Class Providers
+ *
  * @property \MikoPBX\Common\Models\Iax Iax
  * @property \MikoPBX\Common\Models\Sip Sip
  * @property \MikoPBX\Common\Models\OutgoingRoutingTable OutgoingRouting
  *                                         
  * @method static mixed findFirstByUniqid(array|string|int $parameters = null)
+ *
+ * @package MikoPBX\Common\Models
  */
 class Providers extends ModelsBase
 {

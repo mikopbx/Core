@@ -12,6 +12,11 @@ namespace MikoPBX\Common\Models;
 use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
+/**
+ * Class CustomFiles
+ *
+ * @package MikoPBX\Common\Models
+ */
 class CustomFiles extends ModelsBase
 {
     /**

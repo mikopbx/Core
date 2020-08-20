@@ -11,6 +11,11 @@ namespace MikoPBX\Common\Models;
 
 use Phalcon\Mvc\Model\Relation;
 
+/**
+ * Class IncomingRoutingTable
+ *
+ * @package MikoPBX\Common\Models
+ */
 class IncomingRoutingTable extends ModelsBase
 {
     /**

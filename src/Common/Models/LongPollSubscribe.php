@@ -8,6 +8,11 @@
 
 namespace MikoPBX\Common\Models;
 
+/**
+ * Class LongPollSubscribe
+ *
+ * @package MikoPBX\Common\Models
+ */
 class LongPollSubscribe extends ModelsBase
 {
 
