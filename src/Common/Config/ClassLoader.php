@@ -38,7 +38,7 @@ class ClassLoader
             appPath('vendor/autoload.php'),
         ];
 
-        $modulesDir = $di->getConfig()->path('core.modulesDir');
+        $modulesDir = $di->getShared('config')->path('core.modulesDir');
         $nameSpaces = [
             'Modules' => $modulesDir,
         ];
@@ -47,32 +47,6 @@ class ClassLoader
         $loader->registerFiles($libraryFiles);
         $loader->registerNamespaces($nameSpaces);
         $loader->register();
-
-
-        // $loader = new Loader();
-        // $arDirs = [];
-        // /**
-        //  * We're a registering a set of directories taken from the configuration file
-        //  */
-        //
-        // $arNameSpaces = [
-        //     'Modules' => [
-        //         $config->path('core.modulesDir'),
-        //     ],
-        // ];
-        //
-        // $results = glob($config->path('core.modulesDir') . '/*/*/{controllers,forms}', GLOB_BRACE);
-        // foreach ($results as $path) {
-        //     $arDirs[] = $path;
-        // }
-        //
-        // $results = glob($config->path('core.modulesDir') . '/*/{setup}', GLOB_BRACE);
-        // foreach ($results as $path) {
-        //     $arDirs[] = $path;
-        // }
-        // $loader->registerNamespaces($arNameSpaces, true);
-        // $loader->registerDirs($arDirs, true);
-        // $loader->register();
 
     }
 

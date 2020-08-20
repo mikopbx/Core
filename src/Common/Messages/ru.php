@@ -830,7 +830,6 @@ return [
     'f2b_Jail_asterisk_error'                                     => 'Ошибки авторизации SIP или AMI (error)',
     'f2b_Jail_asterisk_public'                                    => 'Ошибки авторизации SIP или AMI (public)',
     'f2b_Jail_dropbear'                                           => 'Ошибки авторизации SSH сессий',
-    'f2b_Jail_mikoajam'                                           => 'Ошибки при авторизациии CTI клиентов или 1С панелей',
     'f2b_Jail_mikopbx-www'                                        => 'Ошбики авторизации в административном интерфейсе PBX',
     'f2b_WhiteList'                                               => 'Список адресов, которые никогда не блокируются',
     'f2b_MaxRetry'                                                => 'Количество попыток до блокировки',
