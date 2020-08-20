@@ -64,6 +64,7 @@ class IncomingRoutesController extends BaseController
         }
 
         // Список всех используемых эктеншенов
+        $forwardingExtensions = [];
         $forwardingExtensions[''] = $this->translation->_('ex_SelectNumber');
         $parameters               = [
             'conditions' => 'number IN ({ids:array})',
@@ -112,6 +113,7 @@ class IncomingRoutesController extends BaseController
         }
 
         // Список всех используемых эктеншенов
+        $forwardingExtensions = [];
         $forwardingExtensions[''] = $this->translation->_('ex_SelectNumber');
         $parameters               = [
             'conditions' => 'number IN ({ids:array})',

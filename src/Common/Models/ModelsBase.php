@@ -38,6 +38,8 @@ use Phalcon\Url;
  * @method static AdapterInterface getReadConnection()
  * @method  Simple|false getRelated(string $alias, $arguments = null)
  *
+ * @property \Phalcon\Di di
+ *
  * @package MikoPBX\Common\Models
  */
 abstract class ModelsBase extends Model

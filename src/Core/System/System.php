@@ -156,7 +156,7 @@ class System extends Di\Injectable
     /**
      * Setup system time
      *
-     * @param $date - 2015.12.31-01:01:20
+     * @param $date integer 2015.12.31-01:01:20
      *
      * @return bool
      */

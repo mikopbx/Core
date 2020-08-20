@@ -29,7 +29,7 @@ class ModulesDBConnectionsProvider extends DatabaseProviderBase implements Servi
     /**
      * DiServicesInstall constructor
      *
-     * @param $di - link to app dependency injector
+     * @param $di DiInterface link to app dependency injector
      *
      */
     public function register(DiInterface $di): void

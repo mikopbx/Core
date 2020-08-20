@@ -23,6 +23,7 @@ class FirewallController extends BaseController
     public function indexAction(): void
     {
         $calculator        = new Cidr();
+        $localAddresses    = [];
         $localAddresses[]  = '0.0.0.0/0';
         $conditions        = 'disabled=0 AND internet=0'; // Нам нужны только локальные включенные сети
         $networkInterfaces = LanInterfaces::find($conditions);

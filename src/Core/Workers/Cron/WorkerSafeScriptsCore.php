@@ -150,10 +150,10 @@ class WorkerSafeScriptsCore extends WorkerBase
 
     /**
      * Check PID worker and start
-     * @param $workerClassName
+     * @param $workerClassName string
      * @return Generator
      */
-    public function checkPidNotAlert($workerClassName): Generator{
+    public function checkPidNotAlert(string $workerClassName): Generator{
         $WorkerPID = Util::getPidOfProcess($workerClassName);
         $result    = ($WorkerPID !== '');
         if (false === $result) {
@@ -166,11 +166,11 @@ class WorkerSafeScriptsCore extends WorkerBase
      * Ping worker to check it, if it dead we kill and start it again
      * We use Beanstalk queue to send ping and check workers
      *
-     * @param $workerClassName
+     * @param $workerClassName string
      *
      * @return \Generator|null
      */
-    public function checkWorkerBeanstalk($workerClassName): ?Generator
+    public function checkWorkerBeanstalk(string $workerClassName): ?Generator
     {
         try {
             $WorkerPID = Util::getPidOfProcess($workerClassName);
@@ -197,12 +197,12 @@ class WorkerSafeScriptsCore extends WorkerBase
      * Ping worker to check it, if it dead we kill and start it again
      * We use AMI UserEvent to send ping and check workers
      *
-     * @param $workerClassName - service name
-     * @param $level           - recursion level
+     * @param $workerClassName string  service name
+     * @param $level           int  recursion level
      *
      * @return \Generator|null
      */
-    public function checkWorkerAMI($workerClassName, $level = 0): ?Generator
+    public function checkWorkerAMI(string $workerClassName, int $level = 0): ?Generator
     {
         try {
             $res_ping  = false;

@@ -34,6 +34,8 @@ class IvrMenuController extends BaseController
     {
         $ivrmenu                = IvrMenu::findFirstByUniqid($ivrmenuid);
         $ivrActionsList         = [];
+        $soundfilesList         = [];
+        $extensionList          = [];
         $soundfilesList[""]     = $this->translation->_("sf_SelectAudioFile");
         $extensionList[""]      = $this->translation->_("ex_SelectNumber");
         $extensionListForFilter = [];

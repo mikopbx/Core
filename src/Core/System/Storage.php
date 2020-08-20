@@ -951,6 +951,12 @@ class Storage extends Di\Injectable
         $this->di->register(new ConfigProvider());
         $this->config = $this->di->getShared('config');
 
+        // Delete boot cache folders
+        if (str_contains($mount_point, '/mountpoint')===false
+            && is_dir('/mountpoint')){
+            $rmPath = Util::which('rm');
+            Util::mwExec("{$rmPath} -rf /mountpoint");
+        }
     }
 
     /**

@@ -203,7 +203,7 @@ class UpdateSystemConfig extends Di\Injectable
                     $extension->number            = $app_number;
                     $extension->type              = 'DIALPLAN APPLICATION';
                     $extension->callerid          = $d_app->name;
-                    $extension->show_in_phonebook = true;
+                    $extension->show_in_phonebook = '1';
                     $extension->save();
                 }
             }
@@ -270,7 +270,7 @@ class UpdateSystemConfig extends Di\Injectable
                     $extension->number            = $app_number;
                     $extension->type              = 'DIALPLAN APPLICATION';
                     $extension->callerid          = $d_app->name;
-                    $extension->show_in_phonebook = true;
+                    $extension->show_in_phonebook = '1';
                     $extension->save();
                 }
             }

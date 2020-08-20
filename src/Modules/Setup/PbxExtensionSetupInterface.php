@@ -9,7 +9,7 @@ interface PbxExtensionSetupInterface
     /**
      * PbxExtensionBase constructor.
      *
-     * @param string $moduleUniqueID
+     * @param  $moduleUniqueID string
      *
      * @throws \Phalcon\Exception
      */
@@ -19,7 +19,7 @@ interface PbxExtensionSetupInterface
      * Последовательный вызов процедур установки модуля расширения
      * с текстового результата установки
      *
-     * @return bool - результат установки
+     * @return bool результат установки
      */
     public function installModule(): bool;
 
@@ -59,9 +59,9 @@ interface PbxExtensionSetupInterface
      * Последовательный вызов процедур установки модуля расширения
      * с результата удаления
      *
-     * @param bool $keepSettings - сохранять настройки модуля при удалении
+     * @param $keepSettings bool сохранять настройки модуля при удалении
      *
-     * @return bool - результат удаления
+     * @return bool результат удаления
      */
     public function uninstallModule(bool $keepSettings = false): bool;
 
@@ -69,7 +69,7 @@ interface PbxExtensionSetupInterface
      * Удаляет запись о модуле из PbxExtensionModules
      * Удаляет свою модель
      *
-     * @param bool $keepSettings - оставляет таблицу с данными своей модели
+     * @param  $keepSettings bool оставляет таблицу с данными своей модели
      *
      * @return bool результат очистки
      */
@@ -86,7 +86,7 @@ interface PbxExtensionSetupInterface
      * Выполняет удаление своих файлов с остановной процессов
      * при необходимости
      *
-     * @param bool $keepSettings сохранять настройки
+     * @param $keepSettings bool сохранять настройки
      *
      * @return bool результат удаления
      */
@@ -109,11 +109,11 @@ interface PbxExtensionSetupInterface
     /**
      * Возвращает перевод идентификатора на язык установленный в настройках PBX
      *
-     * @param $stringId - идентификатор фразы
+     * @param $stringId string идентификатор фразы
      *
      * @return string - перевод
      */
-    public function locString($stringId): string;
+    public function locString(string $stringId): string;
 
     /**
      * Обходит файлы с описанием моделей и создает таблицы в базе данных
