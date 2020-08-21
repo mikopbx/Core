@@ -38,7 +38,7 @@ class ExtensionsController extends BaseController
             'models'     => [
                 'Extensions' => Extensions::class,
             ],
-            'conditions' => 'Extensions.is_general_user_number = 1',
+            'conditions' => 'Extensions.is_general_user_number = "1"',
             'columns'    => [
                 'id'       => 'Extensions.id',
                 'username' => 'Users.username',
@@ -176,7 +176,7 @@ class ExtensionsController extends BaseController
         }
 
         $parameters        = [
-            'conditions' => 'type = "EXTERNAL" AND is_general_user_number = 1 AND userid=:userid:',
+            'conditions' => 'type = "EXTERNAL" AND is_general_user_number = "1" AND userid=:userid:',
             'bind'       => [
                 'userid' => $extension->userid,
             ],
@@ -351,7 +351,7 @@ class ExtensionsController extends BaseController
         } else {
             // Удалить номер мобильного если он был привязан к пользователю
             $parameters          = [
-                'conditions' => 'type="EXTERNAL" AND is_general_user_number = 1 AND userid=:userid:',
+                'conditions' => 'type="EXTERNAL" AND is_general_user_number = "1" AND userid=:userid:',
                 'bind'       => [
                     'userid' => $userEntity->id,
                 ],

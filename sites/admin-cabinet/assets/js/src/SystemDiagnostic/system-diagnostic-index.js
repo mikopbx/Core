@@ -63,18 +63,18 @@ const systemDiagnostic = {
 		systemDiagnostic.viewer.setTheme('ace/theme/monokai');
 		systemDiagnostic.viewer.resize();
 
-		var $codeElement = $('#application-code-readonly');
-		var Length = $codeElement.height() * 0.80;
+		const $codeElement = $('#application-code-readonly');
+		const Length = $codeElement.height() * 0.80;
 		$codeElement.height(Length);
 		$('.ace_gutter').hide();
 
 		setTimeout(systemDiagnostic.cbUpdateLogText, 2000);
 	},
 	cbAfterStopLogsCapture(response) {
-		console.log(response);
+		// console.log(response);
 	},
 	cbUpdateLogText(data) {
-		if (data !== undefined && data.length > 0) {
+		if (typeof (data) !== 'undefined' && data.length > 0) {
 			systemDiagnostic.viewer.setValue(data[0]);
 		}
 		systemDiagnostic.viewer.gotoLine($('#lines').val())

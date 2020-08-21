@@ -7,9 +7,8 @@
  */
 
 /* global PbxApi, globalTranslate, UserMessage */
-
 class PbxExtensionStatus {
-	constructor(uniqid, changeLabel = true) {
+	initialize(uniqid, changeLabel = true) {
 		this.$toggle = $(`.ui.toggle.checkbox[data-value="${uniqid}"]`);
 		if (changeLabel) {
 			this.$label = $(`.ui.toggle.checkbox[data-value="${uniqid}"]`).find('label');
@@ -89,6 +88,7 @@ class PbxExtensionStatus {
 $(document).ready(() => {
 	const uniqId = $('#module-status-toggle').attr('data-value');
 	if (uniqId) {
-		const pageStatus = new PbxExtensionStatus(uniqId, true);
+		const pageStatus = new PbxExtensionStatus();
+		pageStatus.initialize(uniqId, true);
 	}
 });

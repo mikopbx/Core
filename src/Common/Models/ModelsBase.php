@@ -580,9 +580,9 @@ abstract class ModelsBase extends Model
                 $link = $url->get('extensions/modify/' . $this->id);
                 break;
             case ExternalPhones::class:
-                if ($this->Extensions->is_general_user_number == 1) {
+                if ($this->Extensions->is_general_user_number === "1") {
                     $parameters    = [
-                        'conditions' => 'is_general_user_number=1 AND type="EXTERNAL" AND userid=:userid:',
+                        'conditions' => 'is_general_user_number="1" AND type="EXTERNAL" AND userid=:userid:',
                         'bind'       => [
                             'userid' => $this->Extensions->userid,
                         ],
@@ -640,7 +640,7 @@ abstract class ModelsBase extends Model
                 break;
             case Sip::class:
                 if ($this->Extensions) { // Это внутренний номер?
-                    if ($this->Extensions->is_general_user_number === 1) {
+                    if ($this->Extensions->is_general_user_number === "1") {
                         $link = $url->get('extensions/modify/' . $this->Extensions->id);
                     } else {
                         $link = '#';//TODO сделать если будет раздел для допоплнинельных номеров пользователя
