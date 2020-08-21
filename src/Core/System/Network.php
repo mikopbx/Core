@@ -33,13 +33,13 @@ class Network extends Injectable
         $log_dir = System::getLogDir() . '/pcapsipdump';
         Util::mwMkdir($log_dir);
 
-        $network = new Network();
-        $arr_eth = $network->getInterfacesNames();
+        $network         = new Network();
+        $arr_eth         = $network->getInterfacesNames();
         $pcapsipdumpPath = Util::which('pcapsipdump');
         foreach ($arr_eth as $eth) {
             $pid_file = "/var/run/pcapsipdump_{$eth}.pid";
             Util::mwExecBg(
-                $pcapsipdumpPath.' -T 120 -P ' . $pid_file . ' -i ' . $eth . ' -m \'^(INVITE|REGISTER)$\' -L ' . $log_dir . '/dump.db'
+                $pcapsipdumpPath . ' -T 120 -P ' . $pid_file . ' -i ' . $eth . ' -m \'^(INVITE|REGISTER)$\' -L ' . $log_dir . '/dump.db'
             );
         }
     }
@@ -50,9 +50,9 @@ class Network extends Injectable
     public function getInterfacesNames()
     {
         // Универсальная команда для получения всех PCI сетевых интерфейсов.
-        $lsPath = Util::which('ls');
+        $lsPath   = Util::which('ls');
         $grepPath = Util::which('grep');
-        $awkPath = Util::which('awk');
+        $awkPath  = Util::which('awk');
         Util::mwExec("{$lsPath} -l /sys/class/net | {$grepPath} pci | {$awkPath} '{ print $9 }'", $names);
 
         return $names;
@@ -66,7 +66,7 @@ class Network extends Injectable
         if (Util::isSystemctl()) {
             return;
         }
-        $busyboxPath = Util::which('busybox');
+        $busyboxPath  = Util::which('busybox');
         $ifconfigPath = Util::which('ifconfig');
         Util::mwExec("{$busyboxPath} {$ifconfigPath} lo 127.0.0.1");
     }
@@ -165,7 +165,7 @@ class Network extends Injectable
      */
     private function generatePdnsdConfig($named_dns): void
     {
-        $tempDir  = $this->di->getShared('config')->path('core.tempDir');
+        $tempDir   = $this->di->getShared('config')->path('core.tempDir');
         $cache_dir = $tempDir . '/pdnsd/cache';
         Util::mwMkdir($cache_dir);
 
@@ -195,7 +195,7 @@ class Network extends Injectable
         file_put_contents('/etc/pdnsd.conf', $conf);
 
         $pdnsdPath = Util::which('pdnsd');
-        $pid = Util::getPidOfProcess($pdnsdPath);
+        $pid       = Util::getPidOfProcess($pdnsdPath);
         if ( ! empty($pid)) {
             // Завершаем процесс.
             $busyboxPath = Util::which('busybox');
@@ -210,27 +210,6 @@ class Network extends Injectable
     }
 
     /**
-     * Настройка OpenVPN. Если в кастомизации системных файлов определн конфиг, то сеть поднимется.
-     */
-    public function openVpnConfigure(){
-        $confFile='/etc/openvpn.ovpn';
-        Util::fileWriteContent($confFile, '');
-        $data = file_get_contents($confFile);
-
-        $pidFile = '/var/run/openvpn.pid';
-        $pid = Util::getPidOfProcess('openvpn');
-        if ( ! empty($pid)) {
-            // Завершаем процесс.
-            $busyboxPath = Util::which('busybox');
-            Util::mwExec("{$busyboxPath} kill '$pid'");
-        }
-        if(!empty($data)){
-            $openvpnPath = Util::which('openvpn');
-            Util::mwExecBg("{$openvpnPath} --config /etc/openvpn.ovpn --writepid {$pidFile}", '/dev/null', 5);
-        }
-    }
-
-    /**
      * Configures LAN interface
      *
      * @return int
@@ -240,6 +219,7 @@ class Network extends Injectable
         if (Util::isSystemctl()) {
             $this->lanConfigureSystemCtl();
             $this->openVpnConfigure();
+
             return 0;
         }
         $busyboxPath = Util::which('busybox');
@@ -288,11 +268,11 @@ class Network extends Injectable
                 if ( ! empty($pid_pcc)) {
                     // Завершаем старый процесс.
                     $killPath = Util::which('kill');
-                    $catPath = Util::which('cat');
+                    $catPath  = Util::which('cat');
                     system("{$killPath} `{$catPath} {$pid_file}` {$pid_pcc}");
                 }
                 $udhcpcPath = Util::which('udhcpc');
-                $nohupPath = Util::which('nohup');
+                $nohupPath  = Util::which('nohup');
 
                 // Получаем IP и дожидаемся завершения процесса.
                 $workerPath     = '/etc/rc/udhcpc.configure';
@@ -326,14 +306,14 @@ class Network extends Injectable
                     continue;
                 }
 
-                $ifconfigPath = Util::which('ifconfig');
+                $ifconfigPath   = Util::which('ifconfig');
                 $arr_commands[] = "{$busyboxPath} {$ifconfigPath} $if_name $ipaddr netmask $subnet";
 
                 if ("" != trim($gateway)) {
                     $gw_param = "gw $gateway";
                 }
 
-                $routePath = Util::which('route');
+                $routePath      = Util::which('route');
                 $arr_commands[] = "{$busyboxPath} {$routePath} del default $if_name";
 
                 /** @var LanInterfaces $if_data */
@@ -365,9 +345,9 @@ class Network extends Injectable
         Util::fileWriteContent('/etc/static-routes', '');
         $arr_commands = [];
         $out          = [];
-        $grepPath = Util::which('grep');
-        $awkPath = Util::which('awk');
-        $catPath = Util::which('cat');
+        $grepPath     = Util::which('grep');
+        $awkPath      = Util::which('awk');
+        $catPath      = Util::which('cat');
         Util::mwExec(
             "{$catPath} /etc/static-routes | {$grepPath} '^rout' | {$busyboxPath} {$awkPath} -F ';' '{print $1}'",
             $arr_commands
@@ -375,6 +355,7 @@ class Network extends Injectable
         Util::mwExecCommands($arr_commands, $out, 'rout');
 
         $this->openVpnConfigure();
+
         return 0;
     }
 
@@ -384,13 +365,13 @@ class Network extends Injectable
      */
     public function lanConfigureSystemCtl(): void
     {
-        $networks = $this->getGeneralNetSettings();
-        $busyboxPath = Util::which('busybox');
-        $grepPath = Util::which('grep');
-        $awkPath = Util::which('awk');
-        $catPath = Util::which('cat');
+        $networks      = $this->getGeneralNetSettings();
+        $busyboxPath   = Util::which('busybox');
+        $grepPath      = Util::which('grep');
+        $awkPath       = Util::which('awk');
+        $catPath       = Util::which('cat');
         $systemctlPath = Util::which('systemctl');
-        $modprobePath = Util::which('modprobe');
+        $modprobePath  = Util::which('modprobe');
         Util::mwExec("{$systemctlPath} stop networking");
         Util::mwExec("{$modprobePath} 8021q");
         foreach ($networks as $if_data) {
@@ -601,9 +582,9 @@ class Network extends Injectable
      */
     private function addLanInterface($name, $general = false)
     {
-        $disabled = 0; // ($general==true)?0:1;
-        $dhcp     = 1; // ($general==true)?1:0;
-        $internet = ($general == true) ? 1 : 0;
+        $disabled = 0; // ($general===true)?0:1;
+        $dhcp     = 1; // ($general===true)?1:0;
+        $internet = ($general === true) ? 1 : 0;
 
         $data = new LanInterfaces();
         $data->writeAttribute('name', $name);
@@ -629,6 +610,45 @@ class Network extends Injectable
     {
         $network = new Network();
         $network->hostnameConfigure();
+    }
+
+    /**
+     *  Setup hostname
+     **/
+    public function hostnameConfigure(): void
+    {
+        $data       = Network::getHostName();
+        $hosts_conf = "127.0.0.1 localhost\n" .
+            "127.0.0.1 {$data['hostname']}\n";
+        if ( ! empty($data['domain'])) {
+            $hosts_conf .= "127.0.0.1 {$data['hostname']}.{$data['domain']}\n";
+        }
+        Util::fileWriteContent('/etc/hosts', $hosts_conf);
+
+        $hostnamePath = Util::which('hostname');
+        Util::mwExec($hostnamePath . ' ' . escapeshellarg("{$data['hostname']}"));
+    }
+
+    /**
+     * Настройка OpenVPN. Если в кастомизации системных файлов определн конфиг, то сеть поднимется.
+     */
+    public function openVpnConfigure()
+    {
+        $confFile = '/etc/openvpn.ovpn';
+        Util::fileWriteContent($confFile, '');
+        $data = file_get_contents($confFile);
+
+        $pidFile = '/var/run/openvpn.pid';
+        $pid     = Util::getPidOfProcess('openvpn');
+        if ( ! empty($pid)) {
+            // Завершаем процесс.
+            $busyboxPath = Util::which('busybox');
+            Util::mwExec("{$busyboxPath} kill '$pid'");
+        }
+        if ( ! empty($data)) {
+            $openvpnPath = Util::which('openvpn');
+            Util::mwExecBg("{$openvpnPath} --config /etc/openvpn.ovpn --writepid {$pidFile}", '/dev/null', 5);
+        }
     }
 
     /**
@@ -697,11 +717,13 @@ class Network extends Injectable
         // Добавляем пользовательские маршруты.
         if (file_exists('/etc/static-routes')) {
             $busyboxPath = Util::which('busybox');
-            $grepPath = Util::which('grep');
-            $awkPath = Util::which('awk');
-            $catPath = Util::which('cat');
-            $shPath = Util::which('sh');
-            Util::mwExec("{$catPath} /etc/static-routes | {$grepPath} '^rout' | {$busyboxPath} {$awkPath} -F ';' '{print $1}' | {$grepPath} '{$env_vars['interface']}' | {$shPath}");
+            $grepPath    = Util::which('grep');
+            $awkPath     = Util::which('awk');
+            $catPath     = Util::which('cat');
+            $shPath      = Util::which('sh');
+            Util::mwExec(
+                "{$catPath} /etc/static-routes | {$grepPath} '^rout' | {$busyboxPath} {$awkPath} -F ';' '{print $1}' | {$grepPath} '{$env_vars['interface']}' | {$shPath}"
+            );
         }
         $named_dns = [];
         if ('' !== $env_vars['dns']) {
@@ -811,7 +833,7 @@ class Network extends Injectable
     {
         /** @var \MikoPBX\Common\Models\LanInterfaces $res */
         $res = LanInterfaces::findFirst("interface = '$name' AND vlanid=0");
-        if ($res === null){
+        if ($res === null) {
             return;
         }
         foreach ($data as $key => $value) {
@@ -830,7 +852,7 @@ class Network extends Injectable
     {
         /** @var \MikoPBX\Common\Models\LanInterfaces $res */
         $res = LanInterfaces::findFirst("interface = '$name' AND vlanid=0");
-        if ($res === null){
+        if ($res === null) {
             return;
         }
         if (empty($res->primarydns) && ! empty($data['primarydns'])) {
@@ -853,9 +875,12 @@ class Network extends Injectable
      */
     public function getInterfaceNameById($id_net): string
     {
-        /** @var \MikoPBX\Common\Models\LanInterfaces $res */
-        $res            = LanInterfaces::findFirst("id = '$id_net'");
-        return ($res === null) ? '' : $res->interface;
+        $res = LanInterfaces::findFirstById($id_net);
+        if ($res !== null && $res->interface !== null) {
+            return $res->interface;
+        }
+
+        return '';
     }
 
     /**
@@ -971,11 +996,14 @@ class Network extends Injectable
             $interface['up'] = false;
         }
         $busyboxPath = Util::which('busybox');
-        $grepPath = Util::which('grep');
-        $cutPath = Util::which('cut');
-        $routePath = Util::which('route');
+        $grepPath    = Util::which('grep');
+        $cutPath     = Util::which('cut');
+        $routePath   = Util::which('route');
 
-        Util::mwExec("{$busyboxPath} {$routePath} -n | {$grepPath} {$name} | {$grepPath} \"^0.0.0.0\" | {$cutPath} -d ' ' -f 10", $matches);
+        Util::mwExec(
+            "{$busyboxPath} {$routePath} -n | {$grepPath} {$name} | {$grepPath} \"^0.0.0.0\" | {$cutPath} -d ' ' -f 10",
+            $matches
+        );
         $gw = (count($matches) > 0) ? $matches[0] : '';
         if (Verify::isIpAddress($gw)) {
             $interface['gateway'] = $gw;
@@ -990,24 +1018,8 @@ class Network extends Injectable
             }
         }
         $interface['dns'] = $dnsSrv;
+
         return $interface;
-    }
-
-    /**
-     *  Setup hostname
-     **/
-    public function hostnameConfigure(): int
-    {
-        $data       = Network::getHostName();
-        $hosts_conf = "127.0.0.1 localhost\n" .
-            "127.0.0.1 {$data['hostname']}\n";
-        if ( ! empty($data['domain'])) {
-            $hosts_conf .= "127.0.0.1 {$data['hostname']}.{$data['domain']}\n";
-        }
-        Util::fileWriteContent('/etc/hosts', $hosts_conf);
-
-        $hostnamePath = Util::which('hostname');
-        return Util::mwExec($hostnamePath.' '. escapeshellarg("{$data['hostname']}"));
     }
 
 }

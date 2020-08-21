@@ -26,27 +26,27 @@ class LongPollSubscribe extends ModelsBase
     /**
      * @Column(type="string", nullable=true)
      */
-    public $action;
+    public ?string $action = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $data;
+    public ?string $data = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $channel;
+    public ?string $channel = null;
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public $timeout;
+    public ?string $timeout = null;
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public $enable;
+    public ?string $enable = null;
 
 
     public function initialize(): void

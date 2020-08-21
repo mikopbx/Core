@@ -1123,7 +1123,7 @@ class WorkerCallEvents extends WorkerBase
             if ( ! array_key_exists($attribute, $f_list)) {
                 continue;
             }
-            if ($is_new == false && 'UNIQUEID' == $attribute) {
+            if ($is_new === false && 'UNIQUEID' == $attribute) {
                 continue;
             }
             $m_data->writeAttribute($attribute, $value);

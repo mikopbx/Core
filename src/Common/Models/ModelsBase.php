@@ -38,6 +38,7 @@ use Phalcon\Url;
  * @method static AdapterInterface getReadConnection()
  * @method  Simple|false getRelated(string $alias, $arguments = null)
  *
+ * @property \Phalcon\Mvc\Model\Manager _modelsManager
  * @property \Phalcon\Di di
  *
  * @package MikoPBX\Common\Models
@@ -112,7 +113,7 @@ abstract class ModelsBase extends Model
                         $newErrorMessage .= '<li>' . $item->getRepresent(true) . '</li>';
                     }
                 } else {
-                    $newErrorMessage .= '<li>' . $relatedRecords->getRepresent(true) . '</li>';
+                    $newErrorMessage .= '<li>Unknown object</li>';
                 }
                 $newErrorMessage .= '</ul>';
                 $errorMessage->setMessage($newErrorMessage);
@@ -263,13 +264,14 @@ abstract class ModelsBase extends Model
             }
 
             // Add changed fields set to benstalk queue
-            $queue = $this->getDI()->getShared('beanstalkConnection');
+            $queue = $this->di->getShared('beanstalkConnection');
 
             if ($this instanceof PbxSettings) {
-                $id = $this->key;
+                $idProperty = 'key';
             } else {
-                $id = $this->id;
+                $idProperty = 'id';
             }
+            $id = $this->$idProperty;
             $jobData = json_encode(
                 [
                     'model'         => get_class($this),

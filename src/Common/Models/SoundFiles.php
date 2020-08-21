@@ -29,15 +29,15 @@ class SoundFiles extends ModelsBase
     /**
      * @Column(type="string", nullable=true)
      */
-    public $name;
+    public ?string $name = null;
     /**
      * @Column(type="string", nullable=true)
      */
-    public $path;
+    public ?string $path = null;
     /**
      * @Column(type="string", nullable=true)
      */
-    public $category;
+    public ?string $category = null;
 
     public function initialize(): void
     {

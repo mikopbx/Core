@@ -98,7 +98,7 @@ class AdvicesController extends BaseController
             );
         }
 
-        return $messages ?? [];
+        return $messages;
     }
 
     /**
@@ -108,6 +108,7 @@ class AdvicesController extends BaseController
      */
     private function checkFirewalls(): array
     {
+        $messages = [];
         if (PbxSettings::getValueByKey('PBXFirewallEnabled') === '0') {
             $messages['warning'] = $this->translation->_(
                 'adv_FirewallDisabled',
@@ -121,7 +122,7 @@ class AdvicesController extends BaseController
             );
         }
 
-        return $messages ?? [];
+        return $messages;
     }
 
     /**
@@ -135,7 +136,7 @@ class AdvicesController extends BaseController
         if ( ! is_array($_COOKIE) || ! array_key_exists(session_name(), $_COOKIE)) {
             return [];
         }
-
+        $messages = [];
         $WEBPort = PbxSettings::getValueByKey('WEBPort');
         $url     = "http://127.0.0.1:{$WEBPort}/pbxcore/api/storage/list";
         $client  = new GuzzleHttp\Client();
@@ -168,7 +169,7 @@ class AdvicesController extends BaseController
             }
         }
 
-        return $messages ?? [];
+        return $messages;
     }
 
     /**
@@ -179,6 +180,7 @@ class AdvicesController extends BaseController
      */
     private function checkUpdates(): array
     {
+        $messages = [];
         $PBXVersion = $this->getSessionData('PBXVersion');
 
         $client = new GuzzleHttp\Client();
@@ -207,7 +209,7 @@ class AdvicesController extends BaseController
             );
         }
 
-        return $messages ?? [];
+        return $messages;
     }
 
     /**
@@ -216,6 +218,7 @@ class AdvicesController extends BaseController
      */
     private function checkRegistration(): array
     {
+        $messages = [];
         $licKey = PbxSettings::getValueByKey('PBXLicense');
         if ( ! empty($licKey)) {
             $checkBaseFeature = $this->license->featureAvailable(33);
@@ -241,6 +244,6 @@ class AdvicesController extends BaseController
             }
         }
 
-        return $messages ?? [];
+        return $messages;
     }
 }

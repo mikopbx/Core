@@ -38,31 +38,43 @@ class LicenseTest extends AbstractUnitTest
             "inn"         => "7894564153"
         ];
         $result =  $this->lic->getTrialLicense($data);
+        echo $result;
+        $this->assertTrue(true);
     }
 
     public function testCaptureFeature():void
     {
         $result = $this->lic->captureFeature(33);
+        echo $result;
+        $this->assertTrue(true);
     }
 
     public function testReleaseFeature():void
     {
         $result = $this->lic->releaseFeature(33);
+        echo $result;
+        $this->assertTrue(true);
     }
 
     public function testAddTrial():void
     {
         $result = $this->lic->addTrial(11);
+        echo $result;
+        $this->assertTrue(true);
     }
 
     public function testActivateCoupon():void
     {
         $result = $this->lic->activateCoupon('');
+        echo $result;
+        $this->assertTrue(true);
     }
 
     public function testGetLicenseInfo():void
     {
         $result = $this->lic->getLicenseInfo('');
+        echo $result;
+        $this->assertTrue(true);
     }
 
     public function testChangeLicenseKey():void
@@ -78,6 +90,8 @@ class LicenseTest extends AbstractUnitTest
     public function testFeatureAvailable():void
     {
         $result = $this->lic->featureAvailable(33);
+        echo $result;
+        $this->assertTrue(true);
     }
 
     public function testSendLicenseMetrics():void
@@ -90,6 +104,8 @@ class LicenseTest extends AbstractUnitTest
         $params['CountSipExtensions'] = $extensions->count();
 
         $result = $this->lic->sendLicenseMetrics("", $params);
+        echo $result;
+        $this->assertTrue(true);
     }
 
 }

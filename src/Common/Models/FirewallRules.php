@@ -31,37 +31,37 @@ class FirewallRules extends ModelsBase
     /**
      * @Column(type="string", nullable=true){'udp','tcp','icmp'}
      */
-    public $protocol;
+    public ?string $protocol = null;
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public $portfrom;
+    public ?string $portfrom = null;
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public $portto;
+    public ?string $portto = null;
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public $networkfilterid;
+    public ?string $networkfilterid = null;
 
     /**
      * @Column(type="string", nullable=true){'allow','block'}
      */
-    public $action;
+    public ?string $action = null;
 
     /**
      * @Column(type="string", nullable=true){'SIP','WEB','SSH','AMI','CTI','ICMP'}
      */
-    public $category;
+    public ?string $category = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $description;
+    public ?string $description = null;
 
     public static function getDefaultRules(): array
     {

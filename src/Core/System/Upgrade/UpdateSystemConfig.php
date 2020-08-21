@@ -335,7 +335,7 @@ class UpdateSystemConfig extends Di\Injectable
             $codecData->type        = $type;
             $codecData->description = $desc;
             if(!$codecData->save()){
-                Util::sysLogMsg(__CLASS__, 'Can not update codec info '.$codec->name. ' from \MikoPBX\Common\Models\Codecs');
+                Util::sysLogMsg(__CLASS__, 'Can not update codec info '.$codecData->name. ' from \MikoPBX\Common\Models\Codecs');
             }
         }
         unset($codecs);

@@ -233,7 +233,7 @@ class Util
      */
     public static function sysLogMsg($log_name, $text, $level = null): void
     {
-        $level = ($level == null) ? LOG_WARNING : $level;
+        $level = ($level === null) ? LOG_WARNING : $level;
         openlog("$log_name", LOG_PID | LOG_PERROR, LOG_AUTH);
         syslog($level, "$text");
         closelog();
@@ -622,9 +622,9 @@ class Util
      *
      * @param $filename
      *
-     * @return int
+     * @return float
      */
-    public static function getSizeOfFile($filename): int
+    public static function getSizeOfFile($filename): float
     {
         $result = 0;
         if (file_exists($filename)) {

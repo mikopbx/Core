@@ -45,7 +45,7 @@ class GetController extends BaseController
                 'action'    => $actionName,
             ]
         );
-        $connection     = $this->beanstalkConnection;
+        $connection     = $this->di->getShared('beanstalkConnection');
 
         if ($actionName === 'stopLog') {
             $response = $connection->request($requestMessage, 60, 0);

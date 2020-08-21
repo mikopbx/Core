@@ -32,42 +32,42 @@ class PbxExtensionModules extends ModelsBase
     /**
      * @Column(type="string", nullable=true)
      */
-    public $uniqid;
+    public ?string $uniqid = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $name;
+    public ?string $name = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $version;
+    public ?string $version = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $developer;
+    public ?string $developer = null;
 
     /**
      * @Column(type="string", nullable=true, column="supportemail")
      */
-    public $support_email;
+    public ?string $support_email = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $path;
+    public ?string $path = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $description;
+    public ?string $description = null;
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public $disabled;
+    public ?string $disabled = null;
 
 
     public function initialize(): void

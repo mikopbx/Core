@@ -133,7 +133,7 @@ class Storage extends Di\Injectable
             "{$blkidPath} -ofull {$device} | {$busyboxPath} {$sedPath} -r 's/[[:alnum:]]+=/\\n&/g' | {$busyboxPath} {$grepPath} \"^UUID\" | {$busyboxPath} {$awkPath} -F \"\\\"\" '{print $2}' | {$headPath} -n 1",
             $output
         );
-        if ($res == 0 && count($output) > 0) {
+        if ($res === 0 && count($output) > 0) {
             $result = $output[0];
         } else {
             $result = '';

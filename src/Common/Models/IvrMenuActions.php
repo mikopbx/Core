@@ -30,17 +30,17 @@ class IvrMenuActions extends ModelsBase
     /**
      * @Column(type="string", nullable=true)
      */
-    public $ivr_menu_id;
+    public ?string $ivr_menu_id = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $digits;
+    public ?string $digits = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $extension;
+    public ?string $extension = null;
 
 
     public function initialize(): void

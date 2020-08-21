@@ -30,17 +30,17 @@ class CallQueueMembers extends ModelsBase
     /**
      * @Column(type="string", nullable=true)
      */
-    public $queue;
+    public ?string $queue = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $extension;
+    public ?string $extension = null;
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public $priority;
+    public ?string $priority = null;
 
     public function initialize(): void
     {

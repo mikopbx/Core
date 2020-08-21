@@ -33,10 +33,10 @@ class AssetProvider implements ServiceProviderInterface
     {
         $di->set(
             'assets',
-            function () {
+            function () use ($di){
                 $manager    = new Manager();
-                $dispatcher = $this->get('dispatcher');
-                $session    = $this->get('session');
+                $dispatcher = $di->get('dispatcher');
+                $session    = $di->get('session');
                 $controller = $dispatcher->getControllerName();
                 $action     = $dispatcher->getActionName();
                 if ($action === null) {

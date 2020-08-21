@@ -35,49 +35,49 @@ class IvrMenu extends ModelsBase
      *
      * @Column(type="string", nullable=true)
      */
-    public $uniqid;
+    public ?string $uniqid = null;
 
     /**
      * Номер IVR меню
      *
      * @Column(type="string", nullable=true)
      */
-    public $extension;
+    public ?string $extension = null;
 
     /**
      * ID записи аудиоприветсвия
      *
      * @Column(type="string", nullable=true)
      */
-    public $audio_message_id;
+    public ?string $audio_message_id = null;
 
     /**
      * Название IVR меню
      *
      * @Column(type="string", nullable=true)
      */
-    public $name;
+    public ?string $name = null;
 
     /**
      * Ожидание ввода внутреннего номера после проигрывания приветсвитя
      * 7 секунд по-умолчанию
      * @Column(type="integer", nullable=true)
      */
-    public $timeout;
+    public ?string $timeout = null;
 
     /**
      * Номер на который уйдет вызов после $number_of_repeat попыток набора
      *
      * @Column(type="string", nullable=true)
      */
-    public $timeout_extension;
+    public ?string $timeout_extension = null;
 
     /**
      * Разрешить донабор любого внутреннего номера
      *
      * @Column(type="integer", nullable=true)
      */
-    public $allow_enter_any_internal_extension;
+    public ?string $allow_enter_any_internal_extension = null;
 
 
     /**

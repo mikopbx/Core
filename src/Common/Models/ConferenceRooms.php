@@ -31,21 +31,21 @@ class ConferenceRooms extends ModelsBase
 
     /**
      * @Primary
-     * @Column(type="string", nullable=false)
+     * @Column(type="string", nullable=true)
      */
-    public $uniqid;
+    public ?string $uniqid;
 
     /**
      * Link to Extension
      *
      * @Column(type="string", nullable=true)
      */
-    public $extension;
+    public ?string $extension = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $name;
+    public ?string $name = null;
 
 
     public function initialize(): void

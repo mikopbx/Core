@@ -25,30 +25,30 @@ class Codecs extends ModelsBase
     public $id;
 
     /**
-     * @Column(type="string", nullable=false)
+     * @Column(type="string", nullable=true)
      */
-    public $name;
+    public ?string $name = null;
 
     /**
      * Audio or Video codec
      * @Column(type="string", nullable=false)
      */
-    public $type;
+    public string $type='audio';
 
     /**
-     * @Column(type="integer", nullable=false, default=1)
+     * @Column(type="integer", nullable=false, default='1')
      */
-    public $priority;
+    public string $priority='1';
 
     /**
      * @Column(type="integer", nullable=false, default=0)
      */
-    public $disabled;
+    public string $disabled='0';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $description;
+    public ?string $description = null;
 
     public function initialize(): void
     {

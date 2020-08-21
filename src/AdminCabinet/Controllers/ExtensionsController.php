@@ -115,12 +115,12 @@ class ExtensionsController extends BaseController
      *
      * @return void
      */
-    private function base64ToJpeg($base64_string, $output_file):void
+    private function base64ToJpeg($base64_string, $output_file): void
     {
         // open the output file for writing
         $ifp = fopen($output_file, 'wb');
 
-        if ($ifp===false){
+        if ($ifp === false) {
             return;
         }
         // split the string on commas
@@ -137,6 +137,7 @@ class ExtensionsController extends BaseController
 
     /**
      * Change extension settings
+     *
      * @param ?string $id modified extension id
      */
     public function modifyAction($id = null): void
@@ -163,11 +164,11 @@ class ExtensionsController extends BaseController
 
             $extension->ExtensionForwardingRights = new ExtensionForwardingRights();
 
-            $this->view->avatar        = '';
+            $this->view->avatar = '';
         } else {
             $this->view->avatar = $extension->Users->avatar;
         }
-
+        $arrNetworkFilters         = [];
         $networkFilters            = NetworkFilters::getAllowedFiltersForType(['SIP']);
         $arrNetworkFilters['none'] = $this->translation->_('ex_NoNetworkFilter');
         foreach ($networkFilters as $filter) {
@@ -191,7 +192,7 @@ class ExtensionsController extends BaseController
             $externalExtension->ExternalPhones->disabled = '0';
         }
 
-
+        $forwardingExtensions  = [];
         $forwardingExtensions[''] = $this->translation->_('ex_SelectNumber');
 
         $parameters = [
@@ -883,20 +884,6 @@ class ExtensionsController extends BaseController
     }
 
     /**
-     * Сортировка массива extensions
-     *
-     * @param $a
-     * @param $b
-     *
-     * @return int
-     */
-    private function sortExtensionsArray($a, $b): int
-    {
-        return strcmp($a['sorter'], $b['sorter']);
-    }
-
-
-    /**
      * Try to find module by extension number
      *
      * @param string $number
@@ -920,6 +907,19 @@ class ExtensionsController extends BaseController
         }
 
         return $result;
+    }
+
+    /**
+     * Сортировка массива extensions
+     *
+     * @param $a
+     * @param $b
+     *
+     * @return int
+     */
+    private function sortExtensionsArray($a, $b): int
+    {
+        return strcmp($a['sorter'], $b['sorter']);
     }
 
 

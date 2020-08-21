@@ -28,52 +28,52 @@ class OutWorkTimes extends ModelsBase
     /**
      * @Column(type="string", nullable=true)
      */
-    public $date_from;
+    public ?string $date_from = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $date_to;
+    public ?string $date_to = null;
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public $weekday_from;
+    public ?string $weekday_from = null;
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public $weekday_to;
+    public ?string $weekday_to = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $time_from;
+    public ?string $time_from = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $time_to;
+    public ?string $time_to = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $action;
+    public ?string $action = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $extension;
+    public ?string $extension = null;
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public $audio_message_id;
+    public ?string $audio_message_id = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $description;
+    public ?string $description = null;
 
 
     public function initialize(): void

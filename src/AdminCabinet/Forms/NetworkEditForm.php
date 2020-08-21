@@ -40,7 +40,7 @@ class NetworkEditForm extends Form
             $cheskArr = ['checked' => 'checked', 'value' => null];
         }
         $this->add(new Check('usenat', $cheskArr));
-
+        $arrInterfaces = [];
         foreach ($options['eths'] as $eth) {
             $this->add(
                 new Hidden(

@@ -35,7 +35,10 @@ class SecurityPlugin extends Injectable
         $controller = strtoupper($dispatcher->getControllerName());
         if ($this->request->isAjax()) {
             if ($controller !== 'SESSION') {
-                if ( ! is_array($this->sessionRO) || ! array_key_exists('auth', $this->sessionRO)) {
+                $sessionRo = $this->di->getShared('sessionRO');
+                if ( ! is_array($sessionRo)
+                    || ! array_key_exists('auth', $sessionRo)
+                ) {
                     $this->response->setStatusCode(403, 'Forbidden')
                         ->sendHeaders();
                     $this->response->setContent('The user isn\'t authenticated');

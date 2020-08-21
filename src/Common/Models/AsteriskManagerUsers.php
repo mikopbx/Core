@@ -32,86 +32,86 @@ class AsteriskManagerUsers extends ModelsBase
      *
      * @Column(type="string", nullable=true)
      */
-    public $username;
+    public ?string $username = null;
 
     /**
      * AMI users password
      *
      * @Column(type="string", nullable=true)
      */
-    public $secret;
+    public ?string $secret = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $call;
+    public ?string $call = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $cdr;
+    public ?string $cdr = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $originate;
+    public ?string $originate = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $reporting;
+    public ?string $reporting = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $agent;
+    public ?string $agent = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $config;
+    public ?string $config = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $dialplan;
+    public ?string $dialplan = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $dtmf;
+    public ?string $dtmf = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $log;
+    public ?string $log = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $system;
+    public ?string $system = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $user;
+    public ?string $user = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $verbose;
+    public ?string $verbose = null;
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public $networkfilterid;
+    public ?string $networkfilterid = null;
 
     /**
      * AMI users Description
      *
      * @Column(type="string", nullable=true)
      */
-    public $description;
+    public ?string $description = null;
 
     public function initialize(): void
     {
