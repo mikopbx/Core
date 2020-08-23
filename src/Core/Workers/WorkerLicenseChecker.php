@@ -9,7 +9,6 @@
 namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
 use Exception;
-use MikoPBX\Core\System\BeanstalkClient;
 use MikoPBX\Core\System\Util;
 
 
@@ -18,12 +17,13 @@ class WorkerLicenseChecker extends WorkerBase
 
     public function start($argv): void
     {
-        $lastLicenseCheck = $this->di->get('managedCache')->get('lastLicenseCheck');
+        $managedCache = $this->di->get('managedCache');
+        $lastLicenseCheck = $managedCache->get('lastLicenseCheck');
         if ($lastLicenseCheck===null){
             $lic =  $this->di->getShared('license');
             $lic->checkPBX();
             $lic->checkModules();
-            $this->di->get('managedCache')->set('lastLicenseCheck', time(), 3600);
+            $managedCache->set('lastLicenseCheck', time(), 3600);
         }
     }
 

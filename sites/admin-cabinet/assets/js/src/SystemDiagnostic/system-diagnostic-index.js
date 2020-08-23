@@ -18,11 +18,7 @@ const systemDiagnostic = {
 		systemDiagnostic.$tabMenuItems.tab();
 		systemDiagnostic.$tabMenuItems.tab('change tab', 'show-log');
 
-		systemDiagnostic.$fileSelectDropDown.dropdown({
-			onChange() {
-				// customFile.getFileContentFromServer();
-			},
-		});
+		systemDiagnostic.$fileSelectDropDown.dropdown();
 
 		systemDiagnostic.$showBtn.on('click', (e) => {
 			e.preventDefault();
