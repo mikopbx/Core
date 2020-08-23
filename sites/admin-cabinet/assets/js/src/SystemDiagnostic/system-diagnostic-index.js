@@ -11,7 +11,7 @@ const systemDiagnostic = {
 	$stopBtn:  $('#stop-capture-button'),
 	$showBtn:  $('#show-last-log'),
 	viewer: '',
-	$tabMenuItems: $('#system-diagnostic-form .item'),
+	$tabMenuItems: $('#system-diagnostic-menu .item'),
 	$fileSelectDropDown: $('#system-diagnostic-form .type-select'),
 
 	initialize() {
