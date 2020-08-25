@@ -14,7 +14,6 @@ use MikoPBX\Core\Config\RegisterDIServices;
 use Phalcon\Db\Column;
 use Phalcon\Db\Index;
 use Phalcon\Di;
-use Phalcon\Di\Exception;
 use ReflectionClass;
 use RuntimeException;
 

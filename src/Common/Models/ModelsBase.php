@@ -53,7 +53,7 @@ abstract class ModelsBase extends Model
 
         // Пройдемся по модулям и подключим их отношения к текущей модели, если они описаны
         $cacheKey   = explode('\\', static::class)[3];
-        $modulesDir = $this->di->getConfig()->core->modulesDir;
+        $modulesDir = $this->di->getShared('config')->core->modulesDir;
         $parameters = [
             'conditions' => 'disabled=0',
             'cache'      => [
@@ -61,7 +61,6 @@ abstract class ModelsBase extends Model
                 'lifetime' => 5, //seconds
             ],
         ];
-
         $modules = PbxExtensionModules::find($parameters)->toArray();
         foreach ($modules as $module) {
             $moduleModelsDir = "{$modulesDir}/{$module['uniqid']}/Models";

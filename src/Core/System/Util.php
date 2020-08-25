@@ -161,7 +161,7 @@ class Util
     /**
      * Create folder if it not exist
      *
-     * @param      $parameters string one or multiple paths separated by space
+     * @param  $parameters string one or multiple paths separated by space
      *
      * @param bool $addWWWRights
      *

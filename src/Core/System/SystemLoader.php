@@ -46,7 +46,6 @@ class SystemLoader extends Di\Injectable
         $confUpdate = new UpdateSystemConfig();
         $confUpdate->updateConfigs();
 
-
         Util::echoWithSyslog(' - Load kernel modules ... ');
         $system = new System();
         $system->loadKernelModules();

@@ -83,9 +83,11 @@ class RegisterDIServices
         $di->remove('db');
         $di->remove('dbCDR');
         $di->remove('dbEventsLog');
+        $di->remove('modelsCache');
         $di->register(new MainDatabaseProvider());
         $di->register(new CDRDatabaseProvider());
         $di->register(new EventsLogDatabaseProvider());
+        $di->register(new ModelsCacheProvider());
     }
 
     /**
