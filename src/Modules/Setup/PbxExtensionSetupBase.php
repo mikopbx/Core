@@ -10,6 +10,7 @@ namespace MikoPBX\Modules\Setup;
 
 use MikoPBX\Core\Config\RegisterDIServices;
 use MikoPBX\Core\System\Upgrade\UpdateDatabase;
+use MikoPBX\Modules\PbxExtensionUtils;
 use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings};
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
@@ -185,56 +186,20 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
     }
 
     /**
-     * Выполняет копирование необходимых файлов, в папки системы
+     * Copies files, creates folders and symlinks for module
      *
-     * @return bool результат установки
+     * @return bool setup result
      */
     public function installFiles(): bool
     {
         // Create cache links for JS, CSS, IMG folders
+        PbxExtensionUtils::createAssetsSymlinks($this->moduleUniqueID);
 
+        // Create cache links for agi-bin scripts
+        PbxExtensionUtils::createAgiBinSymlinks($this->moduleUniqueID);
+
+        // Restore database settings
         $modulesDir          = $this->config->path('core.modulesDir');
-        // IMG
-        $moduleImageDir      = "{$this->moduleDir}/public/assets/img";
-        $imgCacheDir = appPath('sites/admin-cabinet/assets/img/cache');
-        $moduleImageCacheDir = "{$imgCacheDir}/{$this->moduleUniqueID}";
-        if (file_exists($moduleImageCacheDir)){
-            unlink($moduleImageCacheDir);
-        }
-        if (file_exists($moduleImageDir)) {
-            symlink($moduleImageDir, $moduleImageCacheDir);
-        }
-        // CSS
-        $moduleCSSDir      = "{$this->moduleDir}/public/assets/css";
-        $cssCacheDir = appPath('sites/admin-cabinet/assets/css/cache');
-        $moduleCSSCacheDir = "{$cssCacheDir}/{$this->moduleUniqueID}";
-        if (file_exists($moduleCSSCacheDir)){
-            unlink($moduleCSSCacheDir);
-        }
-        if (file_exists($moduleCSSDir)) {
-            symlink($moduleCSSDir, $moduleCSSCacheDir);
-        }
-        // JS
-        $moduleJSDir      = "{$this->moduleDir}/public/assets/js";
-        $jsCacheDir = appPath('sites/admin-cabinet/assets/js/cache');
-        $moduleJSCacheDir = "{$jsCacheDir}/{$this->moduleUniqueID}";
-        if (file_exists($moduleJSCacheDir)){
-            unlink($moduleJSCacheDir);
-        }
-        if (file_exists($moduleJSDir)) {
-            symlink($moduleJSDir, $moduleJSCacheDir);
-        }
-
-        // Create symlinks to AGI-BIN
-        $agiBinDir = $this->config->path('asterisk.astagidir');
-        $moduleAgiBinDir      = "{$this->moduleDir}/agi-bin";
-        $files = glob("$moduleAgiBinDir/*.{php}", GLOB_BRACE);
-        foreach($files as $file) {
-            $newFilename = $agiBinDir.'/'. pathinfo($file)['filename'];
-            Util::createUpdateSymlink($file, $newFilename);
-        }
-
-        // Restore Database settings
         $backupPath = "{$modulesDir}/Backup/{$this->moduleUniqueID}";
         if (is_dir($backupPath)) {
             $cpPath = Util::which('cp');

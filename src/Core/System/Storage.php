@@ -8,11 +8,14 @@
 
 namespace MikoPBX\Core\System;
 
+use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Core\System\Configs\PHPConf;
 use MikoPBX\Core\Workers\WorkerRemoveOldRecords;
 use MikoPBX\Common\Models\Storage as StorageModel;
 use MikoPBX\Common\Providers\ConfigProvider;
+use MikoPBX\Modules\PbxExtensionUtils;
 use Phalcon\Di;
+
 use function MikoPBX\Common\Config\appPath;
 
 
@@ -434,7 +437,7 @@ class Storage extends Di\Injectable
         if ($di === null) {
             return;
         }
-        $config         = $di->getShared('config');
+        $config        = $di->getShared('config');
         $phpSessionDir = $config->path('www.phpSessionDir');
         if ( ! empty($phpSessionDir)) {
             $rmPath = Util::which('rm');
@@ -537,7 +540,7 @@ class Storage extends Di\Injectable
         $disks = $this->diskGetDevices();
         $disks = array_unique($disks);
 
-        $cf_disk    = '';
+        $cf_disk   = '';
         $varEtcDir = $this->config->path('core.varEtcDir');
         if (file_exists($varEtcDir . '/cfdevice')) {
             $cf_disk = trim(file_get_contents($varEtcDir . '/cfdevice'));
@@ -837,7 +840,7 @@ class Storage extends Di\Injectable
     public function configure(): void
     {
         $cf_disk          = '';
-        $varEtcDir       = $this->config->path('core.varEtcDir');
+        $varEtcDir        = $this->config->path('core.varEtcDir');
         $storage_dev_file = "{$varEtcDir}/storage_device";
         if (file_exists($storage_dev_file)) {
             unlink($storage_dev_file);
@@ -952,8 +955,8 @@ class Storage extends Di\Injectable
         $this->config = $this->di->getShared('config');
 
         // Delete boot cache folders
-        if (str_contains($mount_point, '/mountpoint')===false
-            && is_dir('/mountpoint')){
+        if (str_contains($mount_point, '/mountpoint') === false
+             && is_dir('/mountpoint')) {
             $rmPath = Util::which('rm');
             Util::mwExec("{$rmPath} -rf /mountpoint");
         }
@@ -1037,19 +1040,12 @@ class Storage extends Di\Injectable
         }
 
         $downloadCacheDir = appPath('sites/pbxcore/files/cache');
-        if ( ! $isLiveCd ) {
+        if ( ! $isLiveCd) {
             Util::mwMkdir($downloadCacheDir);
             Util::createUpdateSymlink($this->config->path('www.downloadCacheDir'), $downloadCacheDir);
         }
 
-        $jsCacheDir = appPath('sites/admin-cabinet/assets/js/cache');
-        Util::createUpdateSymlink($this->config->path('adminApplication.assetsCacheDir') . '/js', $jsCacheDir);
-
-        $cssCacheDir = appPath('sites/admin-cabinet/assets/css/cache');
-        Util::createUpdateSymlink($this->config->path('adminApplication.assetsCacheDir') . '/css', $cssCacheDir);
-
-        $imgCacheDir = appPath('sites/admin-cabinet/assets/img/cache');
-        Util::createUpdateSymlink($this->config->path('adminApplication.assetsCacheDir') . '/img', $imgCacheDir);
+        $this->createAssetsSymlinks();
 
         Util::createUpdateSymlink($this->config->path('www.phpSessionDir'), '/var/lib/php/session');
         Util::createUpdateSymlink($this->config->path('www.uploadDir'), '/ultmp');
@@ -1071,7 +1067,24 @@ class Storage extends Di\Injectable
             Util::createUpdateSymlink($file, $newFilename);
         }
         $this->clearCacheFiles();
+        $this->createModulesCacheSymlinks();
         $this->applyFolderRights();
+    }
+
+
+    /**
+     * Creates JS, CSS, IMG cache folders and links
+     */
+    public function createAssetsSymlinks(): void
+    {
+        $jsCacheDir = appPath('sites/admin-cabinet/assets/js/cache');
+        Util::createUpdateSymlink($this->config->path('adminApplication.assetsCacheDir') . '/js', $jsCacheDir);
+
+        $cssCacheDir = appPath('sites/admin-cabinet/assets/css/cache');
+        Util::createUpdateSymlink($this->config->path('adminApplication.assetsCacheDir') . '/css', $cssCacheDir);
+
+        $imgCacheDir = appPath('sites/admin-cabinet/assets/img/cache');
+        Util::createUpdateSymlink($this->config->path('adminApplication.assetsCacheDir') . '/img', $imgCacheDir);
     }
 
     /**
@@ -1093,6 +1106,18 @@ class Storage extends Di\Injectable
             if ( ! empty($cacheDir)) {
                 Util::mwExec("{$rmPath} -rf {$cacheDir}/*");
             }
+        }
+    }
+
+    /**
+     * Restore modules cache folders and symlinks
+     */
+    public function createModulesCacheSymlinks(): void
+    {
+        $modules = PbxExtensionModules::find()->toArray();
+        foreach ($modules as $module) {
+            PbxExtensionUtils::createAssetsSymlinks($module['uniqid']);
+            PbxExtensionUtils::createAgiBinSymlinks($module['uniqid']);
         }
     }
 
