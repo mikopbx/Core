@@ -1,3 +1,10 @@
+/*
+ * Copyright © MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Alexey Portnov, 8 2020
+ */
+
 "use strict";
 
 /*
@@ -24,7 +31,7 @@ var incomingRouteModify = {
     timeout: {
       identifier: 'timeout',
       rules: [{
-        type: 'integer[10..180]',
+        type: 'integer[3..300]',
         prompt: globalTranslate.ir_ValidateTimeoutOutOfRange
       }]
     }
