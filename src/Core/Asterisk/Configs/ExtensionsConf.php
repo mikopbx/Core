@@ -1,5 +1,5 @@
 <?php
-/**
+/*
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
@@ -8,7 +8,7 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
-use MikoPBX\Common\Models\{IncomingRoutingTable, OutgoingRoutingTable, OutWorkTimes, Providers, SoundFiles};
+use MikoPBX\Common\Models\{Iax, IncomingRoutingTable, OutgoingRoutingTable, OutWorkTimes, Providers, Sip, SoundFiles};
 use MikoPBX\Modules\Config\ConfigClass;
 use MikoPBX\Core\System\{MikoPBXConfig, Util};
 use Phalcon\Di;
@@ -349,19 +349,17 @@ class ExtensionsConf extends ConfigClass
                     $id_dialplan                     = $rout_data['providerid'] . '-' . $rout_data['id'] . '-outgoing';
                     $provider_contexts[$id_dialplan] = $rout_data;
                     $conf                            .= $this->generateOutgoingRegexPattern($rout_data);
-                    break;
+                    continue;
             }
         }
         $conf .= 'same => n,ExecIf($["${peer_mobile}x" != "x"]?Hangup())' . " \n\t";
         $conf .= 'same => n,ExecIf($["${DIALSTATUS}" != "ANSWER" && "${BLINDTRANSFER}x" != "x" && "${ISTRANSFER}x" != "x"]?Gosub(${ISTRANSFER}dial_hangup,${EXTEN},1))' . "\n\t";
         $conf .= 'same => n,ExecIf($["${BLINDTRANSFER}x" != "x"]?AGI(check_redirect.php,${BLINDTRANSFER}))' . " \n\t";
-        // $conf.= 'same => n,ExecIf($["${ROUTFOUND}x" == "x"]?AGI(cdr_connector.php,dial))'." \n\t";
         $conf .= 'same => n,ExecIf($["${ROUTFOUND}x" == "x"]?Gosub(dial,${EXTEN},1))' . "\n\t";
 
         $conf .= 'same => n,Playback(silence/2,noanswer)' . " \n\t";
         $conf .= 'same => n,ExecIf($["${ROUTFOUND}x" != "x"]?Playback(followme/sorry,noanswer):Playback(cannot-complete-as-dialed,noanswer))' . " \n\t";
         $conf .= 'same => n,Hangup()' . " \n\n";
-        // $conf.= 'exten => h,1,AGI(cdr_connector.php,${ISTRANSFER}dial_hangup)'."\n";
         $conf .= 'exten => h,1,ExecIf($["${ISTRANSFER}x" != "x"]?Gosub(${ISTRANSFER}dial_hangup,${EXTEN},1))' . "\n\t";
 
         foreach ($provider_contexts as $id_dialplan => $rout) {
@@ -765,9 +763,11 @@ class ExtensionsConf extends ConfigClass
         $provider   = Providers::findFirstByUniqid($uniqueID);
         if ($provider !== null) {
             if ($provider->type === 'SIP') {
-                $technology = SIPConf::getTechnology();
+                $account    = Sip::findFirst('disabled="0" AND uniqid = "'.$uniqueID.'"');
+                $technology = ($account === null)?'':SIPConf::getTechnology();
             } elseif ($provider->type === 'IAX') {
-                $technology = 'IAX2';
+                $account    = Iax::findFirst('disabled="0" AND uniqid = "'.$uniqueID.'"');
+                $technology = ($account === null)?'':'IAX2';
             }
         }
 
