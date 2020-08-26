@@ -13,7 +13,10 @@ use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
 /**
+ * Class Storage
+ *
  * @method static mixed findFirstByUniqid(array|string|int $parameters = null)
+ * @package MikoPBX\Common\Models
  */
 class Storage extends ModelsBase
 {
@@ -27,58 +30,58 @@ class Storage extends ModelsBase
     /**
      * @Column(type="string", nullable=true)
      */
-    public $name;
+    public $name = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $device;
+    public $device = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $mountpoint;
+    public $mountpoint = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $uniqid;
+    public $uniqid = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $filesystemtype;
+    public ?string $filesystemtype = null;
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public $media;
+    public ?string $media = null;
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public $persistence;
+    public ?string $persistence = null;
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public $astlogs;
+    public ?string $astlogs = null;
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public $voicemailarchive;
+    public ?string $voicemailarchive = null;
 
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public $syslog;
+    public ?string $syslog = null;
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public $check_when_booting;
+    public $check_when_booting = null;
 
     public function initialize(): void
     {

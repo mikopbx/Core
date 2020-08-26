@@ -1123,7 +1123,7 @@ class WorkerCallEvents extends WorkerBase
             if ( ! array_key_exists($attribute, $f_list)) {
                 continue;
             }
-            if ($is_new == false && 'UNIQUEID' == $attribute) {
+            if ($is_new === false && 'UNIQUEID' == $attribute) {
                 continue;
             }
             $m_data->writeAttribute($attribute, $value);
@@ -1172,7 +1172,7 @@ class WorkerCallEvents extends WorkerBase
         if (isset($filter['miko_result_in_file'])) {
             $di         = Di::getDefault();
             $dirsConfig = $di->getShared('config');
-            $filename   = $dirsConfig->path('core.tempPath') . '/' . md5(microtime(true));
+            $filename   = $dirsConfig->path('core.tempDir') . '/' . md5(microtime(true));
             file_put_contents($filename, $res_data);
             Util::addRegularWWWRights($filename);
             $res_data = json_encode($filename);

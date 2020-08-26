@@ -12,6 +12,11 @@ namespace MikoPBX\Common\Models;
 use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
+/**
+ * Class CustomFiles
+ *
+ * @package MikoPBX\Common\Models
+ */
 class CustomFiles extends ModelsBase
 {
     /**
@@ -24,12 +29,12 @@ class CustomFiles extends ModelsBase
     /**
      * @Column(type="string", nullable=true)
      */
-    public $filepath;
+    public ?string $filepath = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $content;
+    public ?string $content = null;
 
     /**
      * Режим подмены файла
@@ -39,17 +44,17 @@ class CustomFiles extends ModelsBase
      *
      * @Column(type="string", nullable=true, default="none") {'append'|'override'|'none'}
      */
-    public $mode;
+    public ?string $mode = 'none';
 
     /**
-     * @Column(type="integer", nullable=true)
+     * @Column(type="integer", nullable=true, default="0")
      */
-    public $changed;
+    public ?string $changed = '0';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $description;
+    public ?string $description = null;
 
     public function initialize(): void
     {

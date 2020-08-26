@@ -18,8 +18,8 @@ class WorkerRemoveOldRecords extends WorkerBase
 
     public function start($argv): void
     {
-        $varEtcPath = $this->di->getShared('config')->path('core.varEtcPath');
-        $filename   = "{$varEtcPath}/storage_device";
+        $varEtcDir = $this->di->getShared('config')->path('core.varEtcDir');
+        $filename   = "{$varEtcDir}/storage_device";
         if (file_exists($filename)) {
             $mount_point = file_get_contents($filename);
         } else {

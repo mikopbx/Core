@@ -14,7 +14,11 @@ use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
 /**
+ * Class ConferenceRooms
+ *
  * @method static mixed findFirstByUniqid(array|string|int $parameters = null)
+ *
+ * @package MikoPBX\Common\Models
  */
 class ConferenceRooms extends ModelsBase
 {
@@ -27,21 +31,21 @@ class ConferenceRooms extends ModelsBase
 
     /**
      * @Primary
-     * @Column(type="string", nullable=false)
+     * @Column(type="string", nullable=true)
      */
-    public $uniqid;
+    public ?string $uniqid;
 
     /**
      * Link to Extension
      *
      * @Column(type="string", nullable=true)
      */
-    public $extension;
+    public ?string $extension = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $name;
+    public ?string $name = null;
 
 
     public function initialize(): void

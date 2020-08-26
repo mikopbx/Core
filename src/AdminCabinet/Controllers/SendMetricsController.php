@@ -21,7 +21,7 @@ class SendMetricsController extends BaseController
     {
         $licenseKey  = $this->getSessionData('PBXLicense');
         $dataMetrics = $this->prepareDate();
-        $this->license->sendLicenseMetrics($licenseKey, $dataMetrics);
+        $this->di->getShared('license')->sendLicenseMetrics($licenseKey, $dataMetrics);
     }
 
     /**

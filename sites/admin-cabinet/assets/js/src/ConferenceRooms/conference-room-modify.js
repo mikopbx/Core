@@ -29,6 +29,10 @@ const conference = {
 			identifier: 'extension',
 			rules: [
 				{
+					type: 'number',
+					prompt: globalTranslate.cr_ValidateExtensionNumber,
+				},
+				{
 					type: 'empty',
 					prompt: globalTranslate.cr_ValidateExtensionEmpty,
 				},

@@ -14,8 +14,23 @@ use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
 /**
+ * Class Extensions
+ *
+ * @property \MikoPBX\Common\Models\Sip Sip
+ * @property \MikoPBX\Common\Models\Users Users
+ * @property \MikoPBX\Common\Models\ExternalPhones ExternalPhones
+ * @property \MikoPBX\Common\Models\DialplanApplications DialplanApplications
+ * @property \MikoPBX\Common\Models\ConferenceRooms ConferenceRooms
+ * @property \MikoPBX\Common\Models\CallQueues CallQueues
+ * @property \MikoPBX\Common\Models\OutWorkTimes OutWorkTimes
+ * @property \MikoPBX\Common\Models\IvrMenu IvrMenu
+ * @property \MikoPBX\Common\Models\ExtensionForwardingRights ExtensionForwardingRights
+ *
+ *
  * @method static mixed findFirstByNumber(string|null $number)
  * @method static mixed findByUserid(int $userid)
+ *
+ * @package MikoPBX\Common\Models
  */
 class Extensions extends ModelsBase
 {
@@ -31,71 +46,50 @@ class Extensions extends ModelsBase
      *
      * @Column(type="string", nullable=true)
      */
-    public $number;
+    public ?string $number = null;
 
     /**
      * Тип внутреннего номера
      *
      * @Column(type="string", nullable=true)
      */
-    public $type;
+    public ?string $type = null;
 
     /**
      * Caller id для номера
      *
      * @Column(type="string", nullable=true)
      */
-    public $callerid;
+    public ?string $callerid = null;
 
     /**
      * Ссылка на таблицу пользователей, может быть NULL, если это не пользоваетель
      *
-     * @Column(type="integer", nullable=true) |null
+     * @Column(type="integer", nullable=true)
      */
-    public $userid;
+    public ?string $userid = null;
 
     /**
      * Признак отображения в телефонной книге, и при выборе в списках
      *
      * @Column(type="integer", nullable=true, default="1")
      */
-    public $show_in_phonebook;
+    public ?string $show_in_phonebook='1';
 
     /**
      * Признак возможности донабора этого номера звонящим из вне
      *
      * @Column(type="integer", nullable=true, default="1")
      */
-    public $public_access;
+    public ?string $public_access = '1';
 
     /**
      * Признак основного номера пользователя, который редактируется в его карточке
      *
-     * @Column(type="integer", nullable=true)
+     * @Column(type="integer", nullable=true, default="0")
      */
-    public $is_general_user_number;
+    public ?string $is_general_user_number = "0";
 
-    /**
-     * Возвращяет телефонную книгу
-     * return @array массив номер - представление
-     */
-    public static function getPhoneBookArray(): array
-    {
-        $query     = self::find();
-        $phoneBook = [];
-        foreach ($query as $record) {
-            if ( ! $record->show_in_phonebook) {
-                continue;
-            }
-            $phoneNumber = $record->number;
-            if (strlen($phoneNumber) > 10) {
-                $phoneNumber = substr($record->number, -10);
-            }
-            $phoneBook[$phoneNumber] = str_replace('"', '\\"', $record->getRepresent());
-        }
-
-        return $phoneBook;
-    }
 
     /**
      * Получает из базы следующий за последним введенным системным номером

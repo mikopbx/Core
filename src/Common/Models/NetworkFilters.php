@@ -13,6 +13,11 @@ use Phalcon\Di;
 use Phalcon\Mvc\Model\Relation;
 use Phalcon\Mvc\Model\ResultsetInterface;
 
+/**
+ * Class NetworkFilters
+ *
+ * @package MikoPBX\Common\Models
+ */
 class NetworkFilters extends ModelsBase
 {
     /**
@@ -25,27 +30,27 @@ class NetworkFilters extends ModelsBase
     /**
      * @Column(type="string", nullable=true)
      */
-    public $permit;
+    public ?string $permit = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $deny;
+    public ?string $deny = null;
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public $newer_block_ip;
+    public ?string $newer_block_ip = null;
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public $local_network;
+    public ?string $local_network = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $description;
+    public ?string $description = null;
 
     /**
      * Вернуть список подсетей с разрешенным типом трафика

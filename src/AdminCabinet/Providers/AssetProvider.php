@@ -33,10 +33,10 @@ class AssetProvider implements ServiceProviderInterface
     {
         $di->set(
             'assets',
-            function () {
+            function () use ($di){
                 $manager    = new Manager();
-                $dispatcher = $this->get('dispatcher');
-                $session    = $this->get('session');
+                $dispatcher = $di->get('dispatcher');
+                $session    = $di->get('session');
                 $controller = $dispatcher->getControllerName();
                 $action     = $dispatcher->getActionName();
                 if ($action === null) {
@@ -350,6 +350,7 @@ class AssetProvider implements ServiceProviderInterface
                             $semanticCollectionJS->addJs('js/vendor/semantic/progress.min.js', true);
                             $footerCollectionJS
                                 ->addJs('js/vendor/jquery.address.min.js', true)
+                                ->addJs('js/vendor/jquery.tablednd.js', true)
                                 ->addJs('js/pbx/main/form.js', true)
                                 ->addJs('js/pbx/main/password-score.js', true)
                                 ->addJs(

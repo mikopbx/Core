@@ -13,6 +13,12 @@ use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
 use Phalcon\Forms\Form;
 
+/**
+ * Class SystemDiagnosticForm
+ *
+ * @package MikoPBX\AdminCabinet\Forms
+ * @property \MikoPBX\Common\Providers\TranslationProvider translation
+ */
 class SystemDiagnosticForm extends Form{
 
     const   DEFAULT_FILENAME = 'asterisk/messages';

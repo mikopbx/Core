@@ -13,6 +13,11 @@ server {
 		add_header Strict-Transport-Security 'max-age=604800';
 		ssl_certificate        /etc/ssl/certs/nginx.crt;
 		ssl_certificate_key    /etc/ssl/private/nginx.key;
+
         # locations files
         include mikopbx/locations/*.conf;
+
+        # module locations files
+        include mikopbx/modules_locations/*.conf;
+
 }

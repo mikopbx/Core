@@ -12,11 +12,8 @@ use MikoPBX\Core\Config\RegisterDIServices;
 use MikoPBX\Core\System\Upgrade\UpdateDatabase;
 use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings};
 use MikoPBX\Core\System\Util;
-use Phalcon\DI;
-use Phalcon\Di\Exception;
 use Phalcon\Di\Injectable;
 use Phalcon\Text;
-use Throwable;
 
 use function MikoPBX\Common\Config\appPath;
 
@@ -109,13 +106,11 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
      * PbxExtensionBase constructor.
      *
      * @param string $moduleUniqueID
-     *
      */
-    public function __construct(string $moduleUniqueID = null)
+    public function __construct(string $moduleUniqueID)
     {
-        if ($moduleUniqueID !== null) {
-            $this->moduleUniqueID = $moduleUniqueID;
-        }
+        $this->moduleUniqueID = $moduleUniqueID;
+        $this->messages = [];
         $this->db      = $this->di->getShared('db');
         $this->config  = $this->di->getShared('config');
         $this->license =  $this->di->getShared('license');
@@ -171,7 +166,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
                 $result           = false;
             }
             $this->fixFilesRights();
-        } catch (Throwable $exception) {
+        } catch (\Exception $exception) {
             $result         = false;
             $this->messages[] = $exception->getMessage();
         }
@@ -285,11 +280,11 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
      * Последовательный вызов процедур установки модуля расширения
      * с результата удаления
      *
-     * @param $keepSettings bool - сохранять настройки модуля при удалении
+     * @param $keepSettings bool сохранять настройки модуля при удалении
      *
-     * @return bool - результат удаления
+     * @return bool результат удаления
      */
-    public function uninstallModule($keepSettings = false): bool
+    public function uninstallModule(bool $keepSettings = false): bool
     {
         $result = true;
         try {
@@ -301,7 +296,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
                 $this->messages[] = ' unInstallFiles error';
                 $result           = false;
             }
-        } catch (Throwable $exception) {
+        } catch (\Exception $exception) {
             $result         = false;
             $this->messages[] = $exception->getMessage();
         }
@@ -313,11 +308,11 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
      * Удаляет запись о модуле из PbxExtensionModules
      * Удаляет свою модель
      *
-     * @param  $keepSettings - оставляет таблицу с данными своей модели
+     * @param  $keepSettings bool оставляет таблицу с данными своей модели
      *
      * @return bool результат очистки
      */
-    public function unInstallDB($keepSettings = false): bool
+    public function unInstallDB(bool $keepSettings = false): bool
     {
         return $this->unregisterModule();
     }
@@ -342,12 +337,11 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
      * Выполняет удаление своих файлов с остановной процессов
      * при необходимости
      *
-     * @param bool $keepSettings сохранять настройки
+     * @param $keepSettings bool сохранять настройки
      *
      * @return bool результат удаления
      */
-    public function unInstallFiles($keepSettings = false
-    )//: bool Пока мешает удалять и обновлять старые модули, раскоменитровать после релиза 2020.5
+    public function unInstallFiles(bool $keepSettings = false):bool
     {
         $cpPath = Util::which('cp');
         $rmPath = Util::which('rm');
@@ -429,11 +423,11 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
     /**
      * Возвращает перевод идентификатора на язык установленный в настройках PBX
      *
-     * @param $stringId - идентификатор фразы
+     * @param $stringId string  идентификатор фразы
      *
-     * @return string - перевод
+     * @return string  перевод
      */
-    public function locString($stringId): string
+    public function locString(string $stringId): string
     {
         $language             = substr(PbxSettings::getValueByKey('WebAdminLanguage'), 0, 2);
         $translates           = [];

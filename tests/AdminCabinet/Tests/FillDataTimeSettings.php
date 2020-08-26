@@ -37,7 +37,7 @@ class FillDataTimeSettings extends MikoPBXTestsBase
         $this->assertMenuItemSelected('PBXTimezone',$params['PBXTimezone']);
 
         if ($params['PBXManualTimeSettings']){
-            $setupDate = self::$driver->executeScript("$('div#CalendarBlock div.input.calendar').calendar('get date')");
+            //$setupDate = self::$driver->executeScript("$('div#CalendarBlock div.input.calendar').calendar('get date')");
         } else {
             $this->assertInputFieldValueEqual('NTPServer', $params['NTPServer']);
         }

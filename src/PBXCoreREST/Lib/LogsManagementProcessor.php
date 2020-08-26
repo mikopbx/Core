@@ -108,7 +108,7 @@ class LogsManagementProcessor extends Injectable
 
         // Файл будет удален в cron скриптом cleaner_download_links.sh т.к. имя содержит "/temp-"
         // через 5 минут, если не будет занят процессом.
-        $result     = $dirsConfig->path('core.tempPath') . '/temp-all-log-'.time().'.zip';
+        $result     = $dirsConfig->path('core.tempDir') . '/temp-all-log-'.time().'.zip';
 
         if (file_exists($result)) {
             Util::mwExec("{$rmPath} -rf {$result}");
@@ -127,7 +127,7 @@ class LogsManagementProcessor extends Injectable
 
         $uid = Util::generateRandomString(36);
         $di = Di::getDefault();
-        $downloadLink = $di->getShared('config')->path('core.downloadCachePath');
+        $downloadLink = $di->getShared('config')->path('www.downloadCacheDir');
         $result_dir = "{$downloadLink}/{$uid}";
         Util::mwMkdir($result_dir);
         $link_name = md5($result) . '.' . Util::getExtensionOfFile($result);

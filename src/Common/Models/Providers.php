@@ -14,7 +14,15 @@ use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
 /**
+ * Class Providers
+ *
+ * @property \MikoPBX\Common\Models\Iax Iax
+ * @property \MikoPBX\Common\Models\Sip Sip
+ * @property \MikoPBX\Common\Models\OutgoingRoutingTable OutgoingRouting
+ *                                         
  * @method static mixed findFirstByUniqid(array|string|int $parameters = null)
+ *
+ * @package MikoPBX\Common\Models
  */
 class Providers extends ModelsBase
 {
@@ -29,22 +37,22 @@ class Providers extends ModelsBase
      * @Primary
      * @Column(type="string", nullable=true)
      */
-    public $uniqid;
+    public ?string $uniqid = null;
 
     /**
      * @Column(type="string", nullable=true){'SIP'|'IAX'}
      */
-    public $type;
+    public ?string $type = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $sipuid;
+    public ?string $sipuid = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $iaxuid;
+    public ?string $iaxuid = null;
 
 
     public function initialize(): void

@@ -12,7 +12,11 @@ use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
 /**
+ * Class PbxSettings
+ *
  * @method static mixed findFirstByKey(string $string)
+ *
+ * @package MikoPBX\Common\Models
  */
 class PbxSettings extends ModelsBase
 {
@@ -192,7 +196,6 @@ class PbxSettings extends ModelsBase
             case 'PBXFirewallEnabled':
             case 'PBXFail2BanEnabled':
                 return true;
-                break;
             default:
                 if (strpos($this->key, 'FirewallSettings') !== false) {
                     return true;
@@ -218,7 +221,6 @@ class PbxSettings extends ModelsBase
             case 'SIPMaxExpiry':
             case 'PBXLanguage':
                 return true;
-                break;
             default:
                 return false;
         }
@@ -234,7 +236,6 @@ class PbxSettings extends ModelsBase
         switch ($this->key) {
             case 'IAXPort':
                 return true;
-                break;
             default:
                 return false;
         }
@@ -252,7 +253,6 @@ class PbxSettings extends ModelsBase
             case 'AJAMPort':
             case 'AJAMPortTLS':
                 return true;
-                break;
             default:
                 return false;
         }
@@ -277,7 +277,6 @@ class PbxSettings extends ModelsBase
             case 'PBXFeatureDigitTimeout':
             case 'PBXFeatureAtxferNoAnswerTimeout':
                 return true;
-                break;
             default:
                 return false;
         }
@@ -298,7 +297,6 @@ class PbxSettings extends ModelsBase
             case 'SSHDssKey':
             case 'SSHecdsaKey':
                 return true;
-                break;
             default:
                 return false;
         }
@@ -318,7 +316,6 @@ class PbxSettings extends ModelsBase
             case 'WEBHTTPSPrivateKey':
             case 'RedirectToHttps':
                 return true;
-                break;
             default:
                 return false;
         }
@@ -334,7 +331,6 @@ class PbxSettings extends ModelsBase
         switch ($this->key) {
             case 'RestartEveryNight':
                 return true;
-                break;
             default:
                 return false;
         }
@@ -350,7 +346,6 @@ class PbxSettings extends ModelsBase
         switch ($this->key) {
             case 'PBXLanguage':
                 return true;
-                break;
             default:
                 return false;
         }
@@ -372,7 +367,6 @@ class PbxSettings extends ModelsBase
             case 'VoicemailNotificationsEmail':
             case 'SystemNotificationsEmail':
                 return true;
-                break;
             default:
                 return false;
         }

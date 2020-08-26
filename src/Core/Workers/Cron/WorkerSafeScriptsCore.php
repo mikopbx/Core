@@ -11,11 +11,12 @@ namespace MikoPBX\Core\Workers\Cron;
 require_once 'Globals.php';
 
 use Generator;
-use MikoPBX\Core\System\{BeanstalkClient, Firewall, PBX, Util};
+use MikoPBX\Core\System\{BeanstalkClient, PBX, Util};
 use MikoPBX\Core\Workers\WorkerAmiListener;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\Workers\WorkerCallEvents;
 use MikoPBX\Core\Workers\WorkerCdr;
+use MikoPBX\Core\Workers\WorkerCheckFail2BanAlive;
 use MikoPBX\Core\Workers\WorkerLicenseChecker;
 use MikoPBX\Core\Workers\WorkerModelsEvents;
 use MikoPBX\Core\Workers\WorkerNotifyByEmail;
@@ -26,52 +27,11 @@ use Recoil\React\ReactKernel;
 
 class WorkerSafeScriptsCore extends WorkerBase
 {
-    public const CHECK_BY_BEANSTALK     = 'checkWorkerBeanstalk';
-    public const CHECK_BY_AMI           = 'checkWorkerAMI';
+    public const CHECK_BY_BEANSTALK = 'checkWorkerBeanstalk';
+
+    public const CHECK_BY_AMI = 'checkWorkerAMI';
+
     public const CHECK_BY_PID_NOT_ALERT = 'checkPidNotAlert';
-
-    /**
-     * Prepare workers list to start and restart
-     * We collect core and modules workers
-     *
-     * @return array
-     */
-    private function prepareWorkersList(): array
-    {
-        $arrWorkers = [
-            self::CHECK_BY_AMI       =>
-                [
-                    WorkerAmiListener::class,
-                ],
-            self::CHECK_BY_BEANSTALK =>
-                [
-                    WorkerApiCommands::class,
-                    WorkerCdr::class,
-                    WorkerCallEvents::class,
-                    WorkerModelsEvents::class,
-                    WorkerNotifyByEmail::class,
-                    WorkerNotifyError::class,
-                    WorkerLongPoolAPI::class,
-                ],
-            self::CHECK_BY_PID_NOT_ALERT =>
-                [
-                    WorkerLicenseChecker::class,
-                ]
-        ];
-        $arrModulesWorkers = [];
-        $pbxConfModules    = $this->di->getShared('pbxConfModules');
-        foreach ($pbxConfModules as $pbxConfModule) {
-            $arrModulesWorkers[] = $pbxConfModule->getModuleWorkers();
-        }
-        $arrModulesWorkers = array_merge(...$arrModulesWorkers);
-        if (count($arrModulesWorkers) > 0) {
-            foreach ($arrModulesWorkers as $moduleWorker) {
-                $arrWorkers[$moduleWorker['type']][] = $moduleWorker['worker'];
-            }
-        }
-
-        return $arrWorkers;
-    }
 
     /**
      * Restart all workers in separate process,
@@ -80,8 +40,8 @@ class WorkerSafeScriptsCore extends WorkerBase
     public static function restartAllWorkers(): void
     {
         $workerSafeScriptsPath = Util::getFilePathByClassName(__CLASS__);
-        $phpPath = Util::which('php');
-        $WorkerSafeScripts = "{$phpPath} -f {$workerSafeScriptsPath} restart > /dev/null 2> /dev/null";
+        $phpPath               = Util::which('php');
+        $WorkerSafeScripts     = "{$phpPath} -f {$workerSafeScriptsPath} restart > /dev/null 2> /dev/null";
         Util::mwExecBg($WorkerSafeScripts);
     }
 
@@ -101,6 +61,50 @@ class WorkerSafeScriptsCore extends WorkerBase
                 }
             }
         );
+    }
+
+    /**
+     * Prepare workers list to start and restart
+     * We collect core and modules workers
+     *
+     * @return array
+     */
+    private function prepareWorkersList(): array
+    {
+        $arrWorkers        = [
+            self::CHECK_BY_AMI           =>
+                [
+                    WorkerAmiListener::class,
+                ],
+            self::CHECK_BY_BEANSTALK     =>
+                [
+                    WorkerApiCommands::class,
+                    WorkerCdr::class,
+                    WorkerCallEvents::class,
+                    WorkerModelsEvents::class,
+                    WorkerNotifyByEmail::class,
+                    WorkerNotifyError::class,
+                    WorkerLongPoolAPI::class,
+                ],
+            self::CHECK_BY_PID_NOT_ALERT =>
+                [
+                    WorkerLicenseChecker::class,
+                    WorkerCheckFail2BanAlive::class,
+                ],
+        ];
+        $arrModulesWorkers = [];
+        $pbxConfModules    = $this->di->getShared('pbxConfModules');
+        foreach ($pbxConfModules as $pbxConfModule) {
+            $arrModulesWorkers[] = $pbxConfModule->getModuleWorkers();
+        }
+        $arrModulesWorkers = array_merge(...$arrModulesWorkers);
+        if (count($arrModulesWorkers) > 0) {
+            foreach ($arrModulesWorkers as $moduleWorker) {
+                $arrWorkers[$moduleWorker['type']][] = $moduleWorker['worker'];
+            }
+        }
+
+        return $arrWorkers;
     }
 
     /**
@@ -126,7 +130,6 @@ class WorkerSafeScriptsCore extends WorkerBase
     public function start($argv): void
     {
         PBX::waitFullyBooted();
-
         $arrWorkers = $this->prepareWorkersList();
         ReactKernel::start(
             function () use ($arrWorkers) {
@@ -144,35 +147,20 @@ class WorkerSafeScriptsCore extends WorkerBase
                 }
             }
         );
-
-        Firewall::checkFail2ban();
-    }
-
-    /**
-     * Check PID worker and start
-     * @param $workerClassName
-     * @return Generator
-     */
-    public function checkPidNotAlert($workerClassName): Generator{
-        $WorkerPID = Util::getPidOfProcess($workerClassName);
-        $result    = ($WorkerPID !== '');
-        if (false === $result) {
-            Util::restartPHPWorker($workerClassName);
-        }
-        yield;
     }
 
     /**
      * Ping worker to check it, if it dead we kill and start it again
      * We use Beanstalk queue to send ping and check workers
      *
-     * @param $workerClassName
+     * @param $workerClassName string
      *
      * @return \Generator|null
      */
-    public function checkWorkerBeanstalk($workerClassName): ?Generator
+    public function checkWorkerBeanstalk(string $workerClassName): ?Generator
     {
         try {
+            $start     = microtime(true);
             $WorkerPID = Util::getPidOfProcess($workerClassName);
             $result    = false;
             if ($WorkerPID !== '') {
@@ -185,6 +173,13 @@ class WorkerSafeScriptsCore extends WorkerBase
                 Util::restartPHPWorker($workerClassName);
                 Util::sysLogMsg(__CLASS__, "Service {$workerClassName} started.");
             }
+            $time_elapsed_secs = microtime(true) - $start;
+            if ($time_elapsed_secs > 10) {
+                Util::sysLogMsg(
+                    __CLASS__,
+                    "WARNING: Service {$workerClassName} processed more than {$time_elapsed_secs} seconds"
+                );
+            }
         } catch (\Exception $e) {
             global $errorLogger;
             $errorLogger->captureException($e);
@@ -194,17 +189,43 @@ class WorkerSafeScriptsCore extends WorkerBase
     }
 
     /**
+     * Checks PID worker and start it it died
+     *
+     * @param $workerClassName string
+     *
+     * @return Generator
+     */
+    public function checkPidNotAlert(string $workerClassName): Generator
+    {
+        $start     = microtime(true);
+        $WorkerPID = Util::getPidOfProcess($workerClassName);
+        $result    = ($WorkerPID !== '');
+        if (false === $result) {
+            Util::restartPHPWorker($workerClassName);
+        }
+        $time_elapsed_secs = microtime(true) - $start;
+        if ($time_elapsed_secs > 10) {
+            Util::sysLogMsg(
+                __CLASS__,
+                "WARNING: Service {$workerClassName} processed more than {$time_elapsed_secs} seconds"
+            );
+        }
+        yield;
+    }
+
+    /**
      * Ping worker to check it, if it dead we kill and start it again
      * We use AMI UserEvent to send ping and check workers
      *
-     * @param $workerClassName - service name
-     * @param $level           - recursion level
+     * @param $workerClassName string  service name
+     * @param $level           int  recursion level
      *
      * @return \Generator|null
      */
-    public function checkWorkerAMI($workerClassName, $level = 0): ?Generator
+    public function checkWorkerAMI(string $workerClassName, int $level = 0): ?Generator
     {
         try {
+            $start     = microtime(true);
             $res_ping  = false;
             $WorkerPID = Util::getPidOfProcess($workerClassName);
             if ($WorkerPID !== '') {
@@ -225,6 +246,13 @@ class WorkerSafeScriptsCore extends WorkerBase
                 // Check service again
                 $this->checkWorkerAMI($workerClassName, $level + 1);
             }
+            $time_elapsed_secs = microtime(true) - $start;
+            if ($time_elapsed_secs > 10) {
+                Util::sysLogMsg(
+                    __CLASS__,
+                    "WARNING: Service {$workerClassName} processed more than {$time_elapsed_secs} seconds"
+                );
+            }
         } catch (\Exception $e) {
             global $errorLogger;
             $errorLogger->captureException($e);
@@ -238,11 +266,12 @@ class WorkerSafeScriptsCore extends WorkerBase
 $workerClassname = WorkerSafeScriptsCore::class;
 cli_set_process_title($workerClassname);
 try {
+    set_time_limit(55);
     if (isset($argv) && count($argv) > 1) {
         $worker = new $workerClassname();
         if (($argv[1] === 'start')) {
             $worker->start($argv);
-        } elseif ($argv[1] === 'restart'){
+        } elseif ($argv[1] === 'restart') {
             $worker->restart();
         }
     }

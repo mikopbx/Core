@@ -38,6 +38,7 @@ class CallDetailRecordsController extends BaseController
         $this->view->data            = [];
 
         // Посчитаем количество уникальных звонков без учета фильтров
+        $parameters = [];
         $parameters['columns'] = 'COUNT(DISTINCT(linkedid)) as rows';
         $recordsTotalReq       = CallDetailRecords::findFirst($parameters);
         if ($recordsTotalReq) {
@@ -166,8 +167,8 @@ class CallDetailRecordsController extends BaseController
      *
      * Подготовка параметров запроса для фильтрации CDR записей
      *
-     * @param $searchPhrase - поисковая фраза, которую ввел пользователь
-     * @param $parameters   - параметры запроса CDR
+     * @param string $searchPhrase поисковая фраза, которую ввел пользователь
+     * @param array $parameters   параметры запроса CDR
      */
     private function prepareConditionsForSearchPhrases(&$searchPhrase, &$parameters): void
     {

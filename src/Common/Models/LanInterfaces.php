@@ -13,7 +13,11 @@ use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
 /**
+ * Class LanInterfaces
+ *
  * @method static findFirstByInternet(int $int)
+ *
+ * @package MikoPBX\Common\Models
  */
 class LanInterfaces extends ModelsBase
 {
@@ -27,82 +31,82 @@ class LanInterfaces extends ModelsBase
     /**
      * @Column(type="string", nullable=true)
      */
-    public $name;
+    public ?string $name = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $interface;
+    public ?string $interface = null;
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public $vlanid;
+    public  ?string $vlanid = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $subnet;
+    public ?string $subnet = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $ipaddr;
+    public ?string $ipaddr = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $gateway;
+    public ?string $gateway = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $topology;
+    public ?string $topology = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $extipaddr;
+    public ?string $extipaddr = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $exthostname;
+    public ?string $exthostname = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $hostname;
+    public ?string $hostname = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $domain;
+    public ?string $domain = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $primarydns;
+    public ?string $primarydns = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $secondarydns;
+    public ?string $secondarydns = null;
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public $dhcp;
+    public ?string $dhcp = null;
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public $internet;
+    public ?string $internet = null;
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public $disabled;
+    public ?string $disabled = null;
 
     public function initialize(): void
     {

@@ -59,10 +59,10 @@
                </div>
            </div>
 
-           <div class="field">
-               <label >{{ t._('ex_Language') }}</label>
-               {{ form.render('user_language') }}
-           </div>
+{#           <div class="field">#}
+{#               <label >{{ t._('ex_Language') }}</label>#}
+{#               {{ form.render('user_language') }}#}
+{#           </div>#}
 
            <div class="field">
                <label >{{ t._('ex_Secret') }}</label>
@@ -121,8 +121,6 @@
                 <label >{{ t._('ex_NetworkFilter') }}</label>
                 {{ form.render('sip_networkfilterid') }}
             </div>
-            <h3 class="ui dividing header ">{{ t._("Codecs") }}</h3>
-            {{ partial("partials/codecs") }}
             <h3 class="ui dividing header ">{{ t._("ex_ManualAdditionalAttributes") }}</h3>
             <div class="field">
                 {{ form.render('sip_manualattributes') }}

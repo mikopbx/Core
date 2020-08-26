@@ -8,9 +8,11 @@
 
 namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
+
 use MikoPBX\Common\Models\{AsteriskManagerUsers,
     CallQueueMembers,
     CallQueues,
+    Codecs,
     ConferenceRooms,
     CustomFiles,
     DialplanApplications,
@@ -20,7 +22,6 @@ use MikoPBX\Common\Models\{AsteriskManagerUsers,
     Fail2BanRules,
     FirewallRules,
     Iax,
-    IaxCodecs,
     IncomingRoutingTable,
     IvrMenu,
     IvrMenuActions,
@@ -31,21 +32,18 @@ use MikoPBX\Common\Models\{AsteriskManagerUsers,
     PbxExtensionModules,
     PbxSettings,
     Sip,
-    SipCodecs,
     SoundFiles};
 use MikoPBX\Core\Asterisk\Configs\QueueConf;
 use MikoPBX\Core\System\{BeanstalkClient,
     Configs\CronConf,
+    Configs\IptablesConf,
     Configs\NatsConf,
     Configs\NginxConf,
     Configs\SSHConf,
-    Firewall,
     PBX,
     System};
-use Phalcon\Exception;
 
 ini_set('error_reporting', E_ALL);
-ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 
 class WorkerModelsEvents extends WorkerBase
@@ -205,8 +203,9 @@ class WorkerModelsEvents extends WorkerBase
                 $this->modified_tables[self::R_IAX]      = true;
                 $this->modified_tables[self::R_DIALPLAN] = true;
                 break;
-            case IaxCodecs::class:
+            case Codecs::class:
                 $this->modified_tables[self::R_IAX] = true;
+                $this->modified_tables[self::R_SIP]     = true;
                 break;
             case IncomingRoutingTable::class:
                 $this->modified_tables[self::R_DIALPLAN] = true;
@@ -279,9 +278,6 @@ class WorkerModelsEvents extends WorkerBase
                 $this->modified_tables[self::R_SIP]      = true;
                 $this->modified_tables[self::R_DIALPLAN] = true;
                 break;
-            case SipCodecs::class:
-                $this->modified_tables[self::R_SIP] = true;
-                break;
             case SoundFiles::class:
                 $this->modified_tables[self::R_DIALPLAN] = true;
                 break;
@@ -300,7 +296,7 @@ class WorkerModelsEvents extends WorkerBase
     /**
      * Apply changes
      *
-     * @return array
+     * @return void
      */
     private function startReload(): void
     {
@@ -383,7 +379,7 @@ class WorkerModelsEvents extends WorkerBase
      */
     public function reloadFirewall(): void
     {
-        Firewall::reloadFirewall();
+        IptablesConf::reloadFirewall();
     }
 
     /**

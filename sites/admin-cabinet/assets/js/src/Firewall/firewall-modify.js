@@ -11,7 +11,7 @@
 $.fn.form.settings.rules.ipaddr = function (value) {
 	let result = true;
 	const f = value.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
-	if (f == null) {
+	if (f === null) {
 		result = false;
 	} else {
 		for (let i = 1; i < 5; i += 1) {

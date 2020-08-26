@@ -14,8 +14,10 @@ use Phalcon\Text;
 
 /**
  * Elements
- *
  * Helps to build UI elements for the application
+ * 
+ * @property \MikoPBX\Common\Providers\TranslationProvider translation
+ *
  */
 class Elements extends Injectable
 {

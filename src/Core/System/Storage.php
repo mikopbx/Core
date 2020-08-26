@@ -41,10 +41,11 @@ class Storage extends Di\Injectable
      */
     public static function getMonitorDir(): string
     {
-        $di     = Di::getDefault();
-        if ($di !== null){
+        $di = Di::getDefault();
+        if ($di !== null) {
             return $di->getConfig()->path('asterisk.monitordir');
         }
+
         return '/tmp';
     }
 
@@ -55,10 +56,11 @@ class Storage extends Di\Injectable
      */
     public static function getMediaDir(): string
     {
-        $di     = Di::getDefault();
-        if ($di !== null){
+        $di = Di::getDefault();
+        if ($di !== null) {
             return $di->getConfig()->path('core.mediaMountPoint');
         }
+
         return '/tmp';
     }
 
@@ -84,12 +86,12 @@ class Storage extends Di\Injectable
         $storage  = new Storage();
         $uid_part = 'UUID=' . $storage->getUuid($device) . '';
         $format   = $storage->getFsType($device);
-        if($format === ''){
+        if ($format === '') {
             return false;
         }
-        $mountPath = Util::which('mount');
+        $mountPath  = Util::which('mount');
         $umountPath = Util::which('umount');
-        $rmPath = Util::which('rm');
+        $rmPath     = Util::which('rm');
 
         Util::mwExec("{$mountPath} -t {$format} {$uid_part} {$tmp_dir}", $out);
         if (is_dir("{$tmp_dir}/mikopbx") && trim(implode('', $out)) === '') {
@@ -120,18 +122,18 @@ class Storage extends Di\Injectable
         if (empty($device)) {
             return '';
         }
-        $blkidPath = Util::which('blkid');
+        $blkidPath   = Util::which('blkid');
         $busyboxPath = Util::which('busybox');
-        $sedPath = Util::which('sed');
-        $grepPath = Util::which('grep');
-        $awkPath = Util::which('awk');
-        $headPath = Util::which('head');
+        $sedPath     = Util::which('sed');
+        $grepPath    = Util::which('grep');
+        $awkPath     = Util::which('awk');
+        $headPath    = Util::which('head');
 
         $res = Util::mwExec(
             "{$blkidPath} -ofull {$device} | {$busyboxPath} {$sedPath} -r 's/[[:alnum:]]+=/\\n&/g' | {$busyboxPath} {$grepPath} \"^UUID\" | {$busyboxPath} {$awkPath} -F \"\\\"\" '{print $2}' | {$headPath} -n 1",
             $output
         );
-        if ($res == 0 && count($output) > 0) {
+        if ($res === 0 && count($output) > 0) {
             $result = $output[0];
         } else {
             $result = '';
@@ -149,11 +151,11 @@ class Storage extends Di\Injectable
      */
     public function getFsType($device): string
     {
-        $blkidPath = Util::which('blkid');
+        $blkidPath   = Util::which('blkid');
         $busyboxPath = Util::which('busybox');
-        $sedPath = Util::which('sed');
-        $grepPath = Util::which('grep');
-        $awkPath = Util::which('awk');
+        $sedPath     = Util::which('sed');
+        $grepPath    = Util::which('grep');
+        $awkPath     = Util::which('awk');
 
         $device = str_replace('/dev/', '', $device);
         $out    = [];
@@ -185,14 +187,14 @@ class Storage extends Di\Injectable
             return true;
         }
         if ('' === $filter) {
-            $di     = Di::getDefault();
-            if ($di !== null){
-                $varEtcPath = $di->getConfig()->path('core.varEtcPath');
+            $di = Di::getDefault();
+            if ($di !== null) {
+                $varEtcDir = $di->getConfig()->path('core.varEtcDir');
             } else {
-                $varEtcPath = '/var/etc';
+                $varEtcDir = '/var/etc';
             }
 
-            $filename   = "{$varEtcPath}/storage_device";
+            $filename = "{$varEtcDir}/storage_device";
             if (file_exists($filename)) {
                 $filter = file_get_contents($filename);
             } else {
@@ -201,10 +203,10 @@ class Storage extends Di\Injectable
         }
         $filter = escapeshellarg($filter);
 
-        $out = [];
-        $grepPath = Util::which('grep');
+        $out       = [];
+        $grepPath  = Util::which('grep');
         $mountPath = Util::which('mount');
-        $awkPath = Util::which('awk');
+        $awkPath   = Util::which('awk');
         Util::mwExec("{$mountPath} | {$grepPath} {$filter} | {$awkPath} '{print $3}'", $out);
         $mount_dir = trim(implode('', $out));
 
@@ -227,9 +229,9 @@ class Storage extends Di\Injectable
     {
         Util::mwMkdir($local_dir);
 
-        $out     = [];
+        $out         = [];
         $timeoutPath = Util::which('timeout');
-        $sshfsPath = Util::which('sshfs');
+        $sshfsPath   = Util::which('sshfs');
 
         $command = "{$timeoutPath} -t 3 {$sshfsPath} -p {$port} -o nonempty -o password_stdin -o 'StrictHostKeyChecking=no' " .
             "{$user}@{$host}:{$remout_dir} {$local_dir} << EOF\n" .
@@ -281,9 +283,9 @@ class Storage extends Di\Injectable
             $connect_line .= "$remout_dir";
         }
 
-        $timeoutPath = Util::which('timeout');
+        $timeoutPath   = Util::which('timeout');
         $curlftpfsPath = Util::which('curlftpfs');
-        $command = "{$timeoutPath} -t 3 {$curlftpfsPath}  -o allow_other -o {$auth_line}fsname={$host} {$connect_line} {$local_dir}";
+        $command       = "{$timeoutPath} -t 3 {$curlftpfsPath}  -o allow_other -o {$auth_line}fsname={$host} {$connect_line} {$local_dir}";
         Util::mwExec($command, $out);
         $response = trim(implode('', $out));
         if ('Terminated' === $response) {
@@ -336,7 +338,7 @@ class Storage extends Di\Injectable
     public static function umountDisk($dir): bool
     {
         $umountPath = Util::which('umount');
-        $rmPath = Util::which('rm');
+        $rmPath     = Util::which('rm');
         if (self::isStorageDiskMounted($dir)) {
             Util::mwExec("/sbin/shell_functions.sh 'killprocesses' '$dir' -TERM 0");
             Util::mwExec("{$umountPath} {$dir}");
@@ -361,13 +363,14 @@ class Storage extends Di\Injectable
     public function formatDiskLocal($device, $bg = false)
     {
         $partedPath = Util::which('parted');
-        $retVal = Util::mwExec(
+        $retVal     = Util::mwExec(
             "{$partedPath} --script --align optimal '{$device}' 'mklabel msdos mkpart primary ext4 0% 100%'"
         );
         Util::sysLogMsg(__CLASS__, "{$partedPath} returned {$retVal}");
         if (false === $bg) {
             sleep(1);
         }
+
         return $this->formatDiskLocalPart2($device, $bg);
     }
 
@@ -386,9 +389,9 @@ class Storage extends Di\Injectable
         } else {
             $device_id = "1";
         }
-        $format = 'ext4';
+        $format   = 'ext4';
         $mkfsPath = Util::which("mkfs.{$format}");
-        $cmd    = "{$mkfsPath} {$device}{$device_id}";
+        $cmd      = "{$mkfsPath} {$device}{$device_id}";
         if ($bg === false) {
             $retVal = Util::mwExec("{$cmd} 2>&1");
             Util::sysLogMsg(__CLASS__, "{$mkfsPath} returned {$retVal}");
@@ -397,6 +400,7 @@ class Storage extends Di\Injectable
             Util::mwExecBg($cmd);
             $retVal = true;
         }
+
         return $retVal;
     }
 
@@ -412,8 +416,8 @@ class Storage extends Di\Injectable
         if ( ! file_exists($dev)) {
             $dev = "/dev/{$dev}";
         }
-        $out = [];
-        $psPath = Util::which('ps');
+        $out      = [];
+        $psPath   = Util::which('ps');
         $grepPath = Util::which('grep');
         Util::mwExec("{$psPath} -A -f | {$grepPath} {$dev} | {$grepPath} mkfs | {$grepPath} -v grep", $out);
         $mount_dir = trim(implode('', $out));
@@ -422,12 +426,29 @@ class Storage extends Di\Injectable
     }
 
     /**
+     * Clear cache folders from PHP sessions files
+     */
+    public static function clearSessionsFiles()
+    {
+        $di = Di::getDefault();
+        if ($di === null) {
+            return;
+        }
+        $config         = $di->getShared('config');
+        $phpSessionDir = $config->path('www.phpSessionDir');
+        if ( ! empty($phpSessionDir)) {
+            $rmPath = Util::which('rm');
+            Util::mwExec("{$rmPath} -rf {$phpSessionDir}/*");
+        }
+    }
+
+    /**
      * Проверка свободного места на дисках. Уведомление в случае проблем.
      */
     public function checkFreeSpace(): void
     {
-        $util    = new Util();
-        $hdd     = $this->getAllHdd(true);
+        $util = new Util();
+        $hdd  = $this->getAllHdd(true);
         // Создание больщого файла для тестов.
         // head -c 1500MB /dev/urandom > /storage/usbdisk1/big_file.mp3
         foreach ($hdd as $disk) {
@@ -450,8 +471,8 @@ class Storage extends Di\Injectable
             }
 
             if ($disk['free_space'] < 100) {
-                $need_alert  = true;
-                $test_alert  = "The {$disk['id']} has less than 100MB of free space available. Old call records will be deleted.";
+                $need_alert = true;
+                $test_alert = "The {$disk['id']} has less than 100MB of free space available. Old call records will be deleted.";
                 Util::restartPHPWorker(WorkerRemoveOldRecords::class);
             }
 
@@ -482,10 +503,10 @@ class Storage extends Di\Injectable
         $res_disks = [];
 
         if (Util::isSystemctl()) {
-            $out = [];
+            $out      = [];
             $grepPath = Util::which('grep');
-            $dfPath = Util::which('df');
-            $awkPath = Util::which('awk');
+            $dfPath   = Util::which('df');
+            $awkPath  = Util::which('awk');
             Util::mwExec(
                 "{$dfPath} -k /storage/usbdisk1 | {$awkPath}  '{ print $1 \"|\" $3 \"|\" $4} ' | {$grepPath} -v 'Available'",
                 $out
@@ -517,9 +538,9 @@ class Storage extends Di\Injectable
         $disks = array_unique($disks);
 
         $cf_disk    = '';
-        $varEtcPath = $this->config->path('core.varEtcPath');
-        if (file_exists($varEtcPath . '/cfdevice')) {
-            $cf_disk = trim(file_get_contents($varEtcPath . '/cfdevice'));
+        $varEtcDir = $this->config->path('core.varEtcDir');
+        if (file_exists($varEtcDir . '/cfdevice')) {
+            $cf_disk = trim(file_get_contents($varEtcDir . '/cfdevice'));
         }
 
         foreach ($disks as $disk) {
@@ -579,14 +600,18 @@ class Storage extends Di\Injectable
      */
     private function cdromGetDevices(): array
     {
-        $grepPath = Util::which('grep');
-        $sysctlPath = Util::which('sysctl');
+        $grepPath    = Util::which('grep');
+        $sysctlPath  = Util::which('sysctl');
         $busyboxPath = Util::which('busybox');
-        $cutPath = Util::which('cut');
+        $cutPath     = Util::which('cut');
 
         return explode(
             " ",
-            trim(exec("{$sysctlPath} -n dev.cdrom.info | {$busyboxPath} {$grepPath} 'drive name' | {$busyboxPath} {$cutPath} -f 3"))
+            trim(
+                exec(
+                    "{$sysctlPath} -n dev.cdrom.info | {$busyboxPath} {$grepPath} 'drive name' | {$busyboxPath} {$cutPath} -f 3"
+                )
+            )
         );
     }
 
@@ -599,8 +624,9 @@ class Storage extends Di\Injectable
     {
         //  TODO // Переписать через использование lsblk.
         $grepPath = Util::which('grep');
-        $lsPath = Util::which('ls');
-        $trPath = Util::which('tr');
+        $lsPath   = Util::which('ls');
+        $trPath   = Util::which('tr');
+
         return explode(" ", trim(exec("{$lsPath} /dev | {$grepPath} '^[a-z]d[a-z]' | {$trPath} \"\n\" \" \"")));
     }
 
@@ -614,8 +640,8 @@ class Storage extends Di\Injectable
      */
     public static function diskIsMounted($disk, $filter = '/dev/')
     {
-        $out = [];
-        $grepPath = Util::which('grep');
+        $out       = [];
+        $grepPath  = Util::which('grep');
         $mountPath = Util::which('mount');
         Util::mwExec("{$mountPath} | {$grepPath} '{$filter}{$disk}'", $out);
         if (count($out) > 0) {
@@ -672,11 +698,11 @@ class Storage extends Di\Injectable
      */
     public function getFreeSpace($hdd)
     {
-        $out = [];
-        $hdd = escapeshellarg($hdd);
+        $out      = [];
+        $hdd      = escapeshellarg($hdd);
         $grepPath = Util::which('grep');
-        $awkPath = Util::which('awk');
-        $dfPath = Util::which('df');
+        $awkPath  = Util::which('awk');
+        $dfPath   = Util::which('df');
         Util::mwExec("{$dfPath} -m | {$grepPath} {$hdd} | {$awkPath} '{print $4}'", $out);
         $result = 0;
         foreach ($out as $res) {
@@ -698,9 +724,9 @@ class Storage extends Di\Injectable
      */
     public function determineFormatFs($device)
     {
-        $grepPath = Util::which('grep');
-        $lsPath = Util::which('ls');
-        $trPath = Util::which('tr');
+        $grepPath      = Util::which('grep');
+        $lsPath        = Util::which('ls');
+        $trPath        = Util::which('tr');
         $allow_formats = ['ext2', 'ext4', 'fat', 'ntfs', 'msdos'];
         $device        = str_replace('/dev/', '', $device);
         $devices       = explode(" ", trim(exec("{$lsPath} /dev | {$grepPath} '{$device}' | {$trPath} \"\n\" \" \"")));
@@ -736,8 +762,8 @@ class Storage extends Di\Injectable
             $need_unmount = false;
             $mount_dir    = '';
             if (self::isStorageDiskMounted("/dev/{$dev} ", $mount_dir)) {
-                $grepPath = Util::which('grep');
-                $awkPath = Util::which('awk');
+                $grepPath  = Util::which('grep');
+                $awkPath   = Util::which('awk');
                 $mountPath = Util::which('mount');
                 Util::mwExec("{$mountPath} | {$grepPath} '/dev/{$dev}' | {$awkPath} '{print $5}'", $out);
                 $fs         = trim(implode("", $out));
@@ -796,8 +822,8 @@ class Storage extends Di\Injectable
             $mountNtfs3gPath = Util::which('mount.ntfs-3g');
             Util::mwExec("{$mountNtfs3gPath} /dev/{$dev} {$dir}", $out);
         } else {
-            $storage  = new Storage();
-            $uid_part = 'UUID=' . $storage->getUuid("/dev/{$dev}") . '';
+            $storage   = new Storage();
+            $uid_part  = 'UUID=' . $storage->getUuid("/dev/{$dev}") . '';
             $mountPath = Util::which('mount');
             Util::mwExec("{$mountPath} -t {$format} {$uid_part} {$dir}", $out);
         }
@@ -811,14 +837,14 @@ class Storage extends Di\Injectable
     public function configure(): void
     {
         $cf_disk          = '';
-        $varEtcPath       = $this->config->path('core.varEtcPath');
-        $storage_dev_file = "{$varEtcPath}/storage_device";
+        $varEtcDir       = $this->config->path('core.varEtcDir');
+        $storage_dev_file = "{$varEtcDir}/storage_device";
         if (file_exists($storage_dev_file)) {
             unlink($storage_dev_file);
         }
 
-        if (file_exists($varEtcPath . '/cfdevice')) {
-            $cf_disk = trim(file_get_contents($varEtcPath . '/cfdevice'));
+        if (file_exists($varEtcDir . '/cfdevice')) {
+            $cf_disk = trim(file_get_contents($varEtcDir . '/cfdevice'));
         }
 
         $disks = $this->getDiskSettings();
@@ -906,7 +932,7 @@ class Storage extends Di\Injectable
     private function updateConfigWithNewMountPoint(string $mount_point): void
     {
         $staticSettingsFile     = '/etc/inc/mikopbx-settings.json';
-        $staticSettingsFileOrig =  appPath('config/mikopbx-settings.json');
+        $staticSettingsFileOrig = appPath('config/mikopbx-settings.json');
 
         $jsonString = file_get_contents($staticSettingsFileOrig);
         $data       = json_decode($jsonString, true, 512, JSON_THROW_ON_ERROR);
@@ -925,6 +951,12 @@ class Storage extends Di\Injectable
         $this->di->register(new ConfigProvider());
         $this->config = $this->di->getShared('config');
 
+        // Delete boot cache folders
+        if (str_contains($mount_point, '/mountpoint')===false
+            && is_dir('/mountpoint')){
+            $rmPath = Util::which('rm');
+            Util::mwExec("{$rmPath} -rf /mountpoint");
+        }
     }
 
     /**
@@ -934,16 +966,16 @@ class Storage extends Di\Injectable
      */
     public function saveFstab($conf = ''): void
     {
-        $varEtcPath = $this->config->path('core.varEtcPath');
+        $varEtcDir = $this->config->path('core.varEtcDir');
         // Точка монтирования доп. дисков.
         Util::mwMkdir('/storage');
         $chmodPath = Util::which('chmod');
         Util::mwExec("{$chmodPath} 755 /storage");
-        if ( ! file_exists($varEtcPath . '/cfdevice')) {
+        if ( ! file_exists($varEtcDir . '/cfdevice')) {
             return;
         }
         $fstab     = '';
-        $file_data = file_get_contents($varEtcPath . '/cfdevice');
+        $file_data = file_get_contents($varEtcDir . '/cfdevice');
         $cf_disk   = trim($file_data);
         if ('' == $cf_disk) {
             return;
@@ -976,8 +1008,9 @@ class Storage extends Di\Injectable
      *
      * @return void
      */
-    private function createWorkDirs(): void{
-        $path = '';
+    private function createWorkDirs(): void
+    {
+        $path      = '';
         $mountPath = Util::which('mount');
         Util::mwExec("{$mountPath} -o remount,rw /offload 2> /dev/null");
 
@@ -992,53 +1025,75 @@ class Storage extends Di\Injectable
                 if (file_exists($entry)) {
                     continue;
                 }
-                if($isLiveCd && strpos($entry, '/offload/') === 0){
+                if ($isLiveCd && strpos($entry, '/offload/') === 0) {
                     continue;
                 }
                 $path .= " $entry";
             }
         }
 
-        if (!empty($path)) {
+        if ( ! empty($path)) {
             Util::mwMkdir($path);
         }
 
         $downloadCacheDir = appPath('sites/pbxcore/files/cache');
-        if(!$isLiveCd){
+        if ( ! $isLiveCd ) {
             Util::mwMkdir($downloadCacheDir);
-            Util::createUpdateSymlink($this->config->path('core.downloadCachePath'), $downloadCacheDir);
+            Util::createUpdateSymlink($this->config->path('www.downloadCacheDir'), $downloadCacheDir);
         }
 
         $jsCacheDir = appPath('sites/admin-cabinet/assets/js/cache');
-        Util::createUpdateSymlink($this->config->path('adminApplication.cacheDir') . '/js', $jsCacheDir);
+        Util::createUpdateSymlink($this->config->path('adminApplication.assetsCacheDir') . '/js', $jsCacheDir);
 
         $cssCacheDir = appPath('sites/admin-cabinet/assets/css/cache');
-        Util::createUpdateSymlink($this->config->path('adminApplication.cacheDir') . '/css', $cssCacheDir);
+        Util::createUpdateSymlink($this->config->path('adminApplication.assetsCacheDir') . '/css', $cssCacheDir);
 
         $imgCacheDir = appPath('sites/admin-cabinet/assets/img/cache');
-        Util::createUpdateSymlink($this->config->path('adminApplication.cacheDir') . '/img', $imgCacheDir);
+        Util::createUpdateSymlink($this->config->path('adminApplication.assetsCacheDir') . '/img', $imgCacheDir);
 
-        Util::createUpdateSymlink($this->config->path('core.phpSessionPath'), '/var/lib/php/session');
-        Util::createUpdateSymlink($this->config->path('core.uploadPath'), '/ultmp');
+        Util::createUpdateSymlink($this->config->path('www.phpSessionDir'), '/var/lib/php/session');
+        Util::createUpdateSymlink($this->config->path('www.uploadDir'), '/ultmp');
 
         $filePath = appPath('src/Core/Asterisk/Configs/lua/extensions.lua');
         Util::createUpdateSymlink($filePath, '/etc/asterisk/extensions.lua');
 
         // Create symlinks to AGI-BIN
         $agiBinDir = $this->config->path('asterisk.astagidir');
-        if($isLiveCd && strpos($agiBinDir, '/offload/') !== 0){
+        if ($isLiveCd && strpos($agiBinDir, '/offload/') !== 0) {
             Util::mwMkdir($agiBinDir);
         }
 
         $roAgiBinFolder = appPath('src/Core/Asterisk/agi-bin');
-        $files = glob("$roAgiBinFolder/*.{php}", GLOB_BRACE);
+        $files          = glob("{$roAgiBinFolder}/*.{php}", GLOB_BRACE);
         foreach ($files as $file) {
-            $fileInfo = pathinfo($file);
+            $fileInfo    = pathinfo($file);
             $newFilename = "{$agiBinDir}/{$fileInfo['filename']}.{$fileInfo['extension']}";
             Util::createUpdateSymlink($file, $newFilename);
         }
         $this->clearCacheFiles();
         $this->applyFolderRights();
+    }
+
+    /**
+     * Clear cache folders from old and orphaned files
+     */
+    public function clearCacheFiles()
+    {
+        $cacheDirs   = [];
+        $cacheDirs[] = $this->config->path('www.uploadDir');
+        $cacheDirs[] = $this->config->path('www.downloadCacheDir');
+        $cacheDirs[] = $this->config->path('www.managedCacheDir');
+        $cacheDirs[] = $this->config->path('www.modelsCacheDir');
+        $cacheDirs[] = $this->config->path('adminApplication.assetsCacheDir') . '/js';
+        $cacheDirs[] = $this->config->path('adminApplication.assetsCacheDir') . '/css';
+        $cacheDirs[] = $this->config->path('adminApplication.assetsCacheDir') . '/img';
+        $cacheDirs[] = $this->config->path('adminApplication.voltCacheDir');
+        $rmPath      = Util::which('rm');
+        foreach ($cacheDirs as $cacheDir) {
+            if ( ! empty($cacheDir)) {
+                Util::mwExec("{$rmPath} -rf {$cacheDir}/*");
+            }
+        }
     }
 
     /**
@@ -1059,10 +1114,18 @@ class Storage extends Di\Injectable
             $www_dirs[] = $entry;
         }
 
-        $www_dirs[] = $this->config->path('database.logsPath');
-        $www_dirs[] = $this->config->path('core.phpSessionPath');
-        $www_dirs[] = $this->config->path('core.tempPath');
-        $www_dirs[] = $this->config->path('core.uploadPath');
+        $arrConfig = $this->config->www->toArray();
+        foreach ($arrConfig as $key => $entry) {
+            if (stripos($key, 'path') === false
+                && stripos($key, 'dir') === false
+            ) {
+                continue;
+            }
+            $www_dirs[] = $entry;
+        }
+
+        $www_dirs[] = $this->config->path('core.tempDir');
+        $www_dirs[] = $this->config->path('database.logsDir');
         $www_dirs[] = '/etc/version';
         $www_dirs[] = appPath('/');
 
@@ -1100,7 +1163,7 @@ class Storage extends Di\Injectable
             $storage_settings->save();
         } else {
             $storage_settings = StorageModel::findFirst("id = '$id'");
-            if ($storage_settings === null){
+            if ($storage_settings === null) {
                 return;
             }
             foreach ($data as $key => $value) {
@@ -1109,42 +1172,4 @@ class Storage extends Di\Injectable
             $storage_settings->save();
         }
     }
-
-    /**
-     * Clear cache folders from old and orphaned files
-     */
-    public function clearCacheFiles()
-    {
-        $cacheDirs = [];
-        $cacheDirs[] = $this->config->path('core.uploadPath');
-        $cacheDirs[] = $this->config->path('core.downloadCachePath');
-        $cacheDirs[] = $this->config->path('adminApplication.cacheDir').'/js';
-        $cacheDirs[] = $this->config->path('adminApplication.cacheDir').'/css';
-        $cacheDirs[] = $this->config->path('adminApplication.cacheDir').'/img';
-        $cacheDirs[] = $this->config->path('adminApplication.cacheDir').'/volt';
-        $rmPath = Util::which('rm');
-        foreach ($cacheDirs as $cacheDir){
-            if (!empty($cacheDir)){
-                Util::mwExec("{$rmPath} -rf {$cacheDir}/*");
-            }
-        }
-    }
-
-    /**
-     * Clear cache folders from PHP sessions files
-     */
-    public static function clearSessionsFiles()
-    {
-        $di     = Di::getDefault();
-        if ($di===null){
-            return;
-        }
-        $config = $di->getShared('config');
-        $phpSessionPath = $config->path('core.phpSessionPath');
-        if (!empty($phpSessionPath)){
-            $rmPath = Util::which('rm');
-            Util::mwExec("{$rmPath} -rf {$phpSessionPath}/*");
-        }
-    }
-
 }

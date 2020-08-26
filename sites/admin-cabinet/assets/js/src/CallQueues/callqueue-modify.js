@@ -41,6 +41,10 @@ const callQueue = {
 			identifier: 'extension',
 			rules: [
 				{
+					type: 'number',
+					prompt: globalTranslate.cq_ValidateExtensionNumber,
+				},
+				{
 					type: 'empty',
 					prompt: globalTranslate.cq_ValidateExtensionEmpty,
 				},

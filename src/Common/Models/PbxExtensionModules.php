@@ -9,11 +9,16 @@
 
 namespace MikoPBX\Common\Models;
 
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
 /**
+ * Class PbxExtensionModules
+ *
  * @method static mixed findFirstByUniqid(array|string|int $parameters = null)
+ *
+ * @package MikoPBX\Common\Models
  */
 class PbxExtensionModules extends ModelsBase
 {
@@ -27,42 +32,42 @@ class PbxExtensionModules extends ModelsBase
     /**
      * @Column(type="string", nullable=true)
      */
-    public $uniqid;
+    public ?string $uniqid = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $name;
+    public ?string $name = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $version;
+    public ?string $version = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $developer;
+    public ?string $developer = null;
 
     /**
      * @Column(type="string", nullable=true, column="supportemail")
      */
-    public $support_email;
+    public ?string $support_email = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $path;
+    public ?string $path = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $description;
+    public ?string $description = null;
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public $disabled;
+    public ?string $disabled = null;
 
 
     public function initialize(): void
@@ -86,5 +91,24 @@ class PbxExtensionModules extends ModelsBase
         return $this->validate($validation);
     }
 
+    /**
+     * After change PBX modules need recreate shared services
+     */
+    public function afterSave(): void
+    {
+        parent::afterSave();
+        $this->di->remove('pbxConfModules');
+        $this->di->register(new PBXConfModulesProvider());
+    }
+
+    /**
+     * After change PBX modules need recreate shared services
+     */
+    public function afterDelete(): void
+    {
+        parent::afterDelete();
+        $this->di->remove('pbxConfModules');
+        $this->di->register(new PBXConfModulesProvider());
+    }
 }
 

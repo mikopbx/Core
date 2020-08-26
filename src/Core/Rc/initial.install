@@ -80,8 +80,8 @@ echo '
 if (strtolower(trim(fgets($fp)) ) === 'y') {
     // Сохраним информацию о системном диске во временный файл.
     $config = Di::getDefault()->getConfig();
-    $varEtcPath = $config->path('core.varEtcPath');
-    file_put_contents($varEtcPath.'/cfdevice', $target_disk);
+    $varEtcDir = $config->path('core.varEtcDir');
+    file_put_contents($varEtcDir.'/cfdevice', $target_disk);
 
     echo "Installing PBX...\n";
     $mountPath = Util::which('mount');

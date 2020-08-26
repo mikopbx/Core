@@ -10,7 +10,7 @@
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\ExtensionEditForm;
-use MikoPBX\Common\Models\{Codecs,
+use MikoPBX\Common\Models\{
     ExtensionForwardingRights,
     Extensions,
     ExternalPhones,
@@ -18,7 +18,6 @@ use MikoPBX\Common\Models\{Codecs,
     PbxExtensionModules,
     PbxSettings,
     Sip,
-    SipCodecs,
     Users
 };
 use Phalcon\Text;
@@ -39,7 +38,7 @@ class ExtensionsController extends BaseController
             'models'     => [
                 'Extensions' => Extensions::class,
             ],
-            'conditions' => 'Extensions.is_general_user_number = 1',
+            'conditions' => 'Extensions.is_general_user_number = "1"',
             'columns'    => [
                 'id'       => 'Extensions.id',
                 'username' => 'Users.username',
@@ -114,13 +113,16 @@ class ExtensionsController extends BaseController
      * @param $base64_string
      * @param $output_file
      *
-     * @return mixed
+     * @return void
      */
-    private function base64ToJpeg($base64_string, $output_file)
+    private function base64ToJpeg($base64_string, $output_file): void
     {
         // open the output file for writing
         $ifp = fopen($output_file, 'wb');
 
+        if ($ifp === false) {
+            return;
+        }
         // split the string on commas
         // $data[ 0 ] == "data:image/png;base64"
         // $data[ 1 ] == <actual base64 string>
@@ -131,24 +133,15 @@ class ExtensionsController extends BaseController
 
         // clean up the file resource
         fclose($ifp);
-
-        return $output_file;
     }
 
     /**
-     * @param null $id - идентификатор внутреннего номера
+     * Change extension settings
+     *
+     * @param ?string $id modified extension id
      */
     public function modifyAction($id = null): void
     {
-        $codecs          = [];
-        $availableCodecs = Codecs::find();
-        foreach ($availableCodecs as $codec) {
-            $key                     = $codec->name;
-            $codecs[$key]            = $codec->toArray();
-            $codecs[$key]['enabled'] = false;
-        }
-
-
         $extension = Extensions::findFirstById($id);
 
         if ($extension === null) {
@@ -171,18 +164,11 @@ class ExtensionsController extends BaseController
 
             $extension->ExtensionForwardingRights = new ExtensionForwardingRights();
 
-            $codecs['alaw']['enabled'] = true;
-            $codecs['ulaw']['enabled'] = true;
-            $this->view->avatar        = '';
+            $this->view->avatar = '';
         } else {
-            $enabledCodecs = $extension->Sip->Codecs;
-            foreach ($enabledCodecs as $codec) {
-                $codecs[$codec->codec]['enabled'] = true;
-            }
-
             $this->view->avatar = $extension->Users->avatar;
         }
-
+        $arrNetworkFilters         = [];
         $networkFilters            = NetworkFilters::getAllowedFiltersForType(['SIP']);
         $arrNetworkFilters['none'] = $this->translation->_('ex_NoNetworkFilter');
         foreach ($networkFilters as $filter) {
@@ -190,7 +176,7 @@ class ExtensionsController extends BaseController
         }
 
         $parameters        = [
-            'conditions' => 'type = "EXTERNAL" AND is_general_user_number = 1 AND userid=:userid:',
+            'conditions' => 'type = "EXTERNAL" AND is_general_user_number = "1" AND userid=:userid:',
             'bind'       => [
                 'userid' => $extension->userid,
             ],
@@ -206,7 +192,7 @@ class ExtensionsController extends BaseController
             $externalExtension->ExternalPhones->disabled = '0';
         }
 
-
+        $forwardingExtensions  = [];
         $forwardingExtensions[''] = $this->translation->_('ex_SelectNumber');
 
         $parameters = [
@@ -238,7 +224,6 @@ class ExtensionsController extends BaseController
         );
 
         $this->view->form      = $form;
-        $this->view->codecs    = $codecs;
         $this->view->represent = $extension->getRepresent();
     }
 
@@ -278,7 +263,7 @@ class ExtensionsController extends BaseController
 
         $data = $this->request->getPost();
 
-        $sipEntity = false;
+        $sipEntity = null;
 
         if (array_key_exists('sip_uniqid', $data)) {
             $sipEntity = SIP::findFirstByUniqid($data['sip_uniqid']);
@@ -329,13 +314,6 @@ class ExtensionsController extends BaseController
             return;
         }
 
-        // Заполним параметры Кодеков
-        if ( ! $this->saveSipCodecs($data)) {
-            $this->view->success = false;
-            $this->db->rollback();
-
-            return;
-        }
 
         // Заполним параметры маршрутизации
         if ( ! $this->saveForwardingRights($fwdEntity, $data)) {
@@ -373,7 +351,7 @@ class ExtensionsController extends BaseController
         } else {
             // Удалить номер мобильного если он был привязан к пользователю
             $parameters          = [
-                'conditions' => 'type="EXTERNAL" AND is_general_user_number = 1 AND userid=:userid:',
+                'conditions' => 'type="EXTERNAL" AND is_general_user_number = "1" AND userid=:userid:',
                 'bind'       => [
                     'userid' => $userEntity->id,
                 ],
@@ -548,56 +526,6 @@ class ExtensionsController extends BaseController
             $this->flash->error(implode('<br>', $errors));
 
             return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * Сохранение параметров в таблицу SipCodecs
-     *
-     * @param array $data - POST дата
-     *
-     * @return bool результат сохранения
-     */
-    private function saveSipCodecs($data): bool
-    {
-        $availableCodecs = Codecs::find();
-        foreach ($availableCodecs as $codec) {
-            $key        = $codec->name;
-            $parameters = [
-                'conditions' => 'sipuid=:sipuid: AND codec=:codec:',
-                'bind'       => [
-                    'sipuid' => $data['sip_uniqid'],
-                    'codec'  => $key,
-                ],
-            ];
-            $searchKey  = str_ireplace('.', '_', $key);
-            if (array_key_exists('codec_' . $searchKey, $data) && $data['codec_' . $searchKey] === 'on') {
-                $newCodec = SipCodecs::findFirst($parameters);
-                if ($newCodec === null) {
-                    $newCodec = new SipCodecs();
-                }
-                $newCodec->sipuid   = $data['sip_uniqid'];
-                $newCodec->priority = "1";
-                $newCodec->codec    = $key;
-                if ($newCodec->save() === false) {
-                    $errors = $newCodec->getMessages();
-                    $this->flash->error(implode('<br>', $errors));
-                    $this->view->success = false;
-
-                    return false;
-                }
-            } else {// Надо удалить лишний
-                $deletedCodecs = SipCodecs::find($parameters);
-                if ($deletedCodecs && $deletedCodecs->delete() === false) {
-                    $errors = $deletedCodecs->getMessages();
-                    $this->flash->error(implode('<br>', $errors));
-                    $this->view->success = false;
-
-                    return false;
-                }
-            }
         }
 
         return true;
@@ -956,20 +884,6 @@ class ExtensionsController extends BaseController
     }
 
     /**
-     * Сортировка массива extensions
-     *
-     * @param $a
-     * @param $b
-     *
-     * @return int
-     */
-    private function sortExtensionsArray($a, $b): int
-    {
-        return strcmp($a['sorter'], $b['sorter']);
-    }
-
-
-    /**
      * Try to find module by extension number
      *
      * @param string $number
@@ -993,6 +907,19 @@ class ExtensionsController extends BaseController
         }
 
         return $result;
+    }
+
+    /**
+     * Сортировка массива extensions
+     *
+     * @param $a
+     * @param $b
+     *
+     * @return int
+     */
+    private function sortExtensionsArray($a, $b): int
+    {
+        return strcmp($a['sorter'], $b['sorter']);
     }
 
 

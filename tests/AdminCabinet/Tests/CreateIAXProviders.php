@@ -34,10 +34,6 @@ class CreateIAXProviders extends MikoPBXTestsBaseAlias
         $this->openAccordionOnThePage();
         $this->changeCheckBoxState('qualify', $params['qualify']);
 
-        foreach ($params['codecs'] as $key=>$value){
-            $this->changeCheckBoxState('codec_'.$key, $value);
-        }
-
         $this->changeCheckBoxState('noregister', $params['noregister']);
         $this->changeTextAreaValue('manualattributes', $params['manualattributes']);
 
@@ -59,10 +55,6 @@ class CreateIAXProviders extends MikoPBXTestsBaseAlias
 
         $this->assertCheckBoxStageIsEqual('qualify', $params['qualify']);
 
-        foreach ($params['codecs'] as $key=>$value){
-            $this->assertCheckBoxStageIsEqual('codec_'.$key, $value);
-        }
-
         $this->assertCheckBoxStageIsEqual('noregister', $params['noregister']);
         $this->assertTextAreaValueIsEqual('manualattributes', $params['manualattributes']);
     }
@@ -81,19 +73,6 @@ class CreateIAXProviders extends MikoPBXTestsBaseAlias
             'username'        => 'line1',
             'password'        => 'voxvoxSecret',
             'qualify'         => true,
-            'codecs'     =>[
-                'alaw'=>false,
-                'ulaw'=>true,
-                'g726'=>false,
-                'gsm'=>true,
-                'adpcm'=>false,
-                'g722'=>true,
-                'ilbc'=>false,
-                'opus'=>true,
-                'h264'=>false,
-                'h263'=>true,
-                'h263p'=>false
-            ],
             'noregister'=>true,
             'manualattributes'=>'',
         ]];

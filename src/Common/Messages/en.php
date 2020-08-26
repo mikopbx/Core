@@ -1,12 +1,11 @@
 <?php
-/**
+return [
+    /**
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
  * Written by Alexey Portnov, 8 2020
  */
-
-return [
     'January' => 'January',
     'February' => 'February',
     'March' => 'March',
@@ -96,8 +95,8 @@ return [
     'BreadcrumbFirewall' => 'Configuring the firewall',
     'BreadcrumbFirewallmodify' => 'Rule setting',
     'SubHeaderFirewall' => 'Restriction of access to the PBX by type of traffic and subnets',
-    'BreadcrumbGeneralSettings' => 'Connectivity',
-    'SubHeaderGeneralSettings' => 'Setting basic system parameters',
+    'BreadcrumbGeneralSettings' => 'PBX general settings',
+    'SubHeaderGeneralSettings' => 'Ports, codecs, passwords and system parameters',
     'BreadcrumbIvrMenu' => 'Interactive Voice Response (IVR) Menu',
     'BreadcrumbIvrMenumodify' => 'Setting Up an Interactive Voice Response (IVR) Menu',
     'SubHeaderIvrMenu' => 'Setting up the scheme and options for inbound routing',
@@ -996,10 +995,10 @@ It can be activated once, after which the coupon becomes redeemed.
     'VLAN IP address assigned via' => 'VLAN IP: works through',
     'LAN IP address' => 'LAN IP set manually',
     'LAN IP address assigned via DHCP' => 'LAN IP assigned through DHCP server',
-    'sd_Filename'                                                         => 'Filename',
-    'sd_filter'                                                           => 'Filter',
-    'sd_lines'                                                            => 'Lines',
-    'da_ShowLog'                                                          => 'Show log',
-    'da_CapturePcap'                                                      => 'Capture pcap',
-    'da_log_ShowLastLog'                                                  => 'Show last log',
+    'sd_Filename' => 'Filename',
+    'sd_filter' => 'Filter',
+    'sd_lines' => 'Lines',
+    'sd_ShowLog' => 'Show log',
+    'sd_CapturePcap' => 'Capture pcap',
+    'sd_ShowLastLog' => 'Show last log',
 ];

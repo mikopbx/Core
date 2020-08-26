@@ -14,7 +14,11 @@ use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
 /**
+ * Class CallQueues
+ *
  * @method static mixed findFirstByUniqid(array|string|int $parameters = null)
+ *
+ * @package MikoPBX\Common\Models
  */
 class CallQueues extends ModelsBase
 {
@@ -28,110 +32,110 @@ class CallQueues extends ModelsBase
     /**
      * @Column(type="string", nullable=true)
      */
-    public $uniqid;
+    public ?string $uniqid = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $name;
+    public ?string $name = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $extension;
+    public ?string $extension = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $strategy;
+    public ?string $strategy = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $seconds_to_ring_each_member;
+    public ?string $seconds_to_ring_each_member = null;
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public $seconds_for_wrapup;
+    public ?string $seconds_for_wrapup = null;
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public $recive_calls_while_on_a_call;
+    public ?string $recive_calls_while_on_a_call = null;
 
     /**
      * @Column(type="string", nullable=true){'ringing'|'musiconhold'}
      */
-    public $caller_hear;
+    public ?string $caller_hear = null;
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public $announce_position;
+    public ?string $announce_position = null;
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public $announce_hold_time;
+    public ?string $announce_hold_time = null;
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public $periodic_announce_sound_id;
+    public ?string $periodic_announce_sound_id = null;
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public $periodic_announce_frequency;
+    public ?string $periodic_announce_frequency = null;
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public $timeout_to_redirect_to_extension;
+    public ?string $timeout_to_redirect_to_extension = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $timeout_extension;
+    public ?string $timeout_extension = null;
 
     /**
      * Link to Extension number
      *
      * @Column(type="string", nullable=true)
      */
-    public $redirect_to_extension_if_empty;
+    public ?string $redirect_to_extension_if_empty = null;
 
     /**
      * Number unanswered calls before redirect
      *
      * @Column(type="integer", nullable=true)
      */
-    public $number_unanswered_calls_to_redirect;
+    public ?string $number_unanswered_calls_to_redirect = null;
 
     /**
      * Link to Extension number
      * @Column(type="string", nullable=true)
      */
-    public $redirect_to_extension_if_unanswered;
+    public ?string $redirect_to_extension_if_unanswered = null;
 
     /**
      * Number repeat queue cycle
      *
      * @Column(type="integer", nullable=true)
      */
-    public $number_repeat_unanswered_to_redirect;
+    public ?string $number_repeat_unanswered_to_redirect = null;
 
     /**
      * Link to Extension number
      * @Column(type="string", nullable=true)
      */
-    public $redirect_to_extension_if_repeat_exceeded;
+    public ?string $redirect_to_extension_if_repeat_exceeded = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $description;
+    public ?string $description = null;
 
     public function initialize(): void
     {

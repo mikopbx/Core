@@ -47,7 +47,7 @@ class CreateDefaultIncomingCallRule extends MikoPBXTestsBase
      */
     public function additionProvider() :array
     {
-
+        $params = [];
         $params[] = [[
             'action' => 'busy'
         ]];

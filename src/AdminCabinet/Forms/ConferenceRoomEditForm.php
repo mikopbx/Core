@@ -13,6 +13,12 @@ use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Text;
 use Phalcon\Forms\Form;
 
+/**
+ * Class ConferenceRoomEditForm
+ *
+ * @package MikoPBX\AdminCabinet\Forms
+ * @property \MikoPBX\Common\Providers\TranslationProvider translation
+ */
 class ConferenceRoomEditForm extends Form
 {
     public function initialize($entity = null, $options = null): void

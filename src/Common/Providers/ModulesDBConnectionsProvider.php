@@ -29,7 +29,7 @@ class ModulesDBConnectionsProvider extends DatabaseProviderBase implements Servi
     /**
      * DiServicesInstall constructor
      *
-     * @param $di - link to app dependency injector
+     * @param $di DiInterface link to app dependency injector
      *
      */
     public function register(DiInterface $di): void
@@ -46,9 +46,11 @@ class ModulesDBConnectionsProvider extends DatabaseProviderBase implements Servi
                 continue;
             }
             $jsonModuleDescription = json_decode($jsonString, true);
-            if ( ! is_array($jsonModuleDescription)) {
+            if ( ! is_array($jsonModuleDescription)
+                || !array_key_exists('moduleUniqueID', $jsonModuleDescription)) {
                 continue;
             }
+
             $moduleUniqueId = $jsonModuleDescription['moduleUniqueID'];
             if ( ! isset($moduleUniqueId)) {
                 continue;
@@ -91,7 +93,7 @@ class ModulesDBConnectionsProvider extends DatabaseProviderBase implements Servi
                 $dbFileName = "{$dbDir}/module.db";
                 $dbFileExistBeforeAttachToConnection = file_exists($dbFileName);
 
-                $logDir = "{$config->path('core.logsPath')}/$moduleUniqueId/db";
+                $logDir = "{$config->path('core.logsDir')}/$moduleUniqueId/db";
                 $logFileName = "{$logDir}/queries.log";
                 if (!is_dir($logDir)){
                     Util::mwMkdir($logDir, true);

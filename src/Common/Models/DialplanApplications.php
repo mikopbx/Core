@@ -14,7 +14,11 @@ use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
 /**
+ * Class DialplanApplications
+ *
  * @method static mixed findFirstByUniqid(array|string|int $parameters = null)
+ *
+ * @package MikoPBX\Common\Models
  */
 class DialplanApplications extends ModelsBase
 {
@@ -29,37 +33,37 @@ class DialplanApplications extends ModelsBase
      * @Primary
      * @Column(type="string", nullable=true)
      */
-    public $uniqid;
+    public ?string $uniqid = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $name;
+    public ?string $name = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $extension;
+    public ?string $extension = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $hint;
+    public ?string $hint = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $applicationlogic;
+    public ?string $applicationlogic = null;
 
     /**
      * @Column(type="string", nullable=true) {'plaintext'|'php'}
      */
-    public $type;
+    public string $type='plaintext';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $description;
+    public ?string $description = null;
 
     public function initialize(): void
     {

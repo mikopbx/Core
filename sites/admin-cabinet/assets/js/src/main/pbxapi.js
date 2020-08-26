@@ -502,10 +502,10 @@ const PbxApi = {
 				callback(true);
 			},
 			onFailure(response) {
-				callback(response.data);
+				callback(response.messages);
 			},
 			onError(response) {
-				callback(response.data);
+				callback(response.messages);
 			},
 		});
 	},

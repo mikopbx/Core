@@ -49,9 +49,7 @@
         </div>
 
         {{ partial("partials/natqualify") }}
-
-        <h3 class="ui dividing header ">{{ t._("Codecs") }}</h3>
-        {{ partial("partials/codecs") }}
+        
         <h3 class="ui dividing header ">{{ t._("pr_RegistrationSettings") }}</h3>
         {{ t._("pr_CustomFieldsDescriptions") }}
         <div class=" field">

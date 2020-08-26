@@ -20,11 +20,11 @@ use MikoPBX\AdminCabinet\Providers\{
     LanguageSelectorProvider,
     RouterProvider,
     SessionProvider,
-    ManagedCacheProvider,
     ViewProvider,
     VoltProvider};
 use MikoPBX\Common\Providers\{CDRDatabaseProvider,
     MainDatabaseProvider,
+    ManagedCacheProvider,
     ModelsCacheProvider,
     ModelsMetadataProvider,
     ModulesDBConnectionsProvider,

@@ -11,6 +11,11 @@ namespace MikoPBX\Common\Models;
 
 use Phalcon\Mvc\Model\Relation;
 
+/**
+ * Class OutgoingRoutingTable
+ *
+ * @package MikoPBX\Common\Models
+ */
 class OutgoingRoutingTable extends ModelsBase
 {
     /**
@@ -23,42 +28,42 @@ class OutgoingRoutingTable extends ModelsBase
     /**
      * @Column(type="string", nullable=true)
      */
-    public $rulename;
+    public ?string $rulename = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $providerid;
+    public ?string $providerid = null;
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public $priority;
+    public ?string $priority = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $numberbeginswith;
+    public ?string $numberbeginswith = null;
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public $restnumbers;
+    public ?string $restnumbers = null;
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public $trimfrombegin;
+    public ?string  $trimfrombegin = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $prepend;
+    public ?string $prepend = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $note;
+    public ?string $note = null;
 
 
     public function initialize(): void

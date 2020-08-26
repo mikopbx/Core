@@ -10,6 +10,7 @@ namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Models\CustomFiles;
 use MikoPBX\Core\System\Configs\CronConf;
+use MikoPBX\Core\System\Configs\IptablesConf;
 use MikoPBX\Core\System\Configs\PHPConf;
 use MikoPBX\Core\System\Configs\NTPConf;
 use MikoPBX\Core\Asterisk\Configs\{QueueConf};
@@ -36,7 +37,7 @@ class System extends Di\Injectable
     {
         $di = Di::getDefault();
         if ($di !== null) {
-            return $di->getConfig()->path('core.logsPath');
+            return $di->getConfig()->path('core.logsDir');
         }
 
         return '/var/log';
@@ -139,7 +140,7 @@ class System extends Di\Injectable
                     System::setDate('');
                     break;
                 case 'firewall':
-                    Firewall::reloadFirewall();
+                    IptablesConf::reloadFirewall();
                     break;
                 case 'asterisk_core_reload':
                     PBX::sipReload();
@@ -155,7 +156,7 @@ class System extends Di\Injectable
     /**
      * Setup system time
      *
-     * @param $date - 2015.12.31-01:01:20
+     * @param $date integer 2015.12.31-01:01:20
      *
      * @return bool
      */

@@ -24,14 +24,14 @@ class SessionProvider implements ServiceProviderInterface
 {
     public function register(DiInterface $di): void
     {
-        $phpSessionPath = $di->getShared('config')->path('core.phpSessionPath');
+        $phpSessionDir = $di->getShared('config')->path('www.phpSessionDir');
         $di->setShared(
             'session',
-            function () use ($phpSessionPath) {
+            function () use ($phpSessionDir) {
                 $session = new SessionManager();
                 $files   = new SessionAdapter(
                     [
-                        'savePath' => $phpSessionPath,
+                        'savePath' => $phpSessionDir,
                         'prefix'   => 'sess_',
                     ]
                 );

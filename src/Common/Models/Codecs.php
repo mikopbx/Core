@@ -9,8 +9,12 @@
 
 namespace MikoPBX\Common\Models;
 
-use Phalcon\Mvc\Model\Relation;
 
+/**
+ * Class Codecs
+ *
+ * @package MikoPBX\Common\Models
+ */
 class Codecs extends ModelsBase
 {
     /**
@@ -23,53 +27,32 @@ class Codecs extends ModelsBase
     /**
      * @Column(type="string", nullable=true)
      */
-    public $name;
+    public ?string $name = null;
+
+    /**
+     * Audio or Video codec
+     * @Column(type="string", nullable=false)
+     */
+    public string $type='audio';
+
+    /**
+     * @Column(type="integer", nullable=false, default='1')
+     */
+    public string $priority='1';
+
+    /**
+     * @Column(type="integer", nullable=false, default=0)
+     */
+    public string $disabled='0';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $type;
-
-    /**
-     * @Column(type="string", nullable=true)
-     */
-    public $description;
+    public ?string $description = null;
 
     public function initialize(): void
     {
         $this->setSource('m_Codecs');
         parent::initialize();
-        $this->hasMany(
-            'name',
-            IaxCodecs::class,
-            'codec',
-            [
-                'alias'      => 'IaxCodecs',
-                'foreignKey' => [
-                    'allowNulls' => true,
-                    'action'     => Relation::ACTION_CASCADE,
-                ],
-                'params'     => [
-                    'order' => 'priority asc',
-                ],
-            ]
-        );
-
-
-        $this->hasMany(
-            'name',
-            SipCodecs::class,
-            'codec',
-            [
-                'alias'      => 'SipCodecs',
-                'foreignKey' => [
-                    'allowNulls' => true,
-                    'action'     => Relation::ACTION_CASCADE,
-                ],
-                'params'     => [
-                    'order' => 'priority asc',
-                ],
-            ]
-        );
     }
 }

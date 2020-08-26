@@ -22,6 +22,8 @@ use Phalcon\Text;
 use Phalcon\Url;
 
 /**
+ * Class ModelsBase
+ *
  * @method static mixed findFirstById(array|string|int $parameters = null)
  * @method static mixed findFirstByKey(string|null $parameters)
  * @method static mixed findFirstByUniqid(array|string|int $parameters = null)
@@ -35,6 +37,11 @@ use Phalcon\Url;
  * @method  array|MessageInterface[] getMessages(mixed $filter = null)
  * @method static AdapterInterface getReadConnection()
  * @method  Simple|false getRelated(string $alias, $arguments = null)
+ *
+ * @property \Phalcon\Mvc\Model\Manager _modelsManager
+ * @property \Phalcon\Di di
+ *
+ * @package MikoPBX\Common\Models
  */
 abstract class ModelsBase extends Model
 {
@@ -88,29 +95,29 @@ abstract class ModelsBase extends Model
             return;
         }
         foreach ($errorMessages as $errorMessage) {
-            if ($errorMessage->getType()==='ConstraintViolation') {
-                    $arrMessageParts = explode('Common\\Models\\', $errorMessage->getMessage());
-                    if (count($arrMessageParts) === 2) {
-                        $relatedModel = $arrMessageParts[1];
-                    } else {
-                        $relatedModel = $errorMessage->getMessage();
+            if ($errorMessage->getType() === 'ConstraintViolation') {
+                $arrMessageParts = explode('Common\\Models\\', $errorMessage->getMessage());
+                if (count($arrMessageParts) === 2) {
+                    $relatedModel = $arrMessageParts[1];
+                } else {
+                    $relatedModel = $errorMessage->getMessage();
+                }
+                $relatedRecords  = $this->getRelated($relatedModel);
+                $newErrorMessage = $this->t('ConstraintViolation');
+                $newErrorMessage .= "<ul class='list'>";
+                if ($relatedRecords === false) {
+                    throw new Model\Exception('Error on models relationship ' . $errorMessage);
+                }
+                if ($relatedRecords instanceof Resultset) {
+                    foreach ($relatedRecords as $item) {
+                        $newErrorMessage .= '<li>' . $item->getRepresent(true) . '</li>';
                     }
-                    $relatedRecords  = $this->getRelated($relatedModel);
-                    $newErrorMessage = $this->t('ConstraintViolation');
-                    $newErrorMessage .= "<ul class='list'>";
-                    if ($relatedRecords === false) {
-                        throw new Model\Exception('Error on models relationship ' . $errorMessage);
-                    }
-                    if ($relatedRecords instanceof Resultset) {
-                        foreach ($relatedRecords as $item) {
-                            $newErrorMessage .= '<li>' . $item->getRepresent(true) . '</li>';
-                        }
-                    } else {
-                        $newErrorMessage .= '<li>' . $relatedRecords->getRepresent(true) . '</li>';
-                    }
-                    $newErrorMessage .= '</ul>';
-                    $errorMessage->setMessage($newErrorMessage);
-                    break;
+                } else {
+                    $newErrorMessage .= '<li>Unknown object</li>';
+                }
+                $newErrorMessage .= '</ul>';
+                $errorMessage->setMessage($newErrorMessage);
+                break;
             }
         }
     }
@@ -172,7 +179,7 @@ abstract class ModelsBase extends Model
             if ( ! array_key_exists('action', $foreignKey)) {
                 continue;
             }
-            // Проверим есть ли записи в таблице которая запрещает удаление текущих данных
+            // Check if there are some record which restrict delete current record
             $relatedModel             = $relation->getReferencedModel();
             $mappedFields             = $relation->getFields();
             $mappedFields             = is_array($mappedFields)
@@ -194,8 +201,11 @@ abstract class ModelsBase extends Model
             }
             $relatedRecords = $relatedModel::find($parameters);
             switch ($foreignKey['action']) {
-                case Relation::ACTION_RESTRICT: // Запретим удаление и выведем информацию о том какие записи запретили удалять этот элемент
+                case Relation::ACTION_RESTRICT: // Restrict deletion and add message about unsatisfied undeleted links
                     foreach ($relatedRecords as $relatedRecord) {
+                        if (serialize($relatedRecord) === serialize($theFirstDeleteRecord)) {
+                            continue; // It is checked object
+                        }
                         $message = new Message(
                             $theFirstDeleteRecord->t(
                                 'mo_BeforeDeleteFirst',
@@ -216,7 +226,7 @@ abstract class ModelsBase extends Model
                         }
                     }
                     break;
-                case Relation::NO_ACTION: // Очистим ссылки на записи в таблицах зависимых
+                case Relation::NO_ACTION: // Clear all refs
                     break;
                 default:
                     break;
@@ -254,13 +264,14 @@ abstract class ModelsBase extends Model
             }
 
             // Add changed fields set to benstalk queue
-            $queue = $this->getDI()->getShared('beanstalkConnection');
+            $queue = $this->di->getShared('beanstalkConnection');
 
             if ($this instanceof PbxSettings) {
-                $id = $this->key;
+                $idProperty = 'key';
             } else {
-                $id = $this->id;
+                $idProperty = 'id';
             }
+            $id = $this->$idProperty;
             $jobData = json_encode(
                 [
                     'model'         => get_class($this),
@@ -280,14 +291,21 @@ abstract class ModelsBase extends Model
      */
     public function clearCache($calledClass): void
     {
-        $managedCache = $this->getDI()->getManagedCache();
-        $category     = explode('\\', $calledClass)[3];
-        $keys         = $managedCache->getAdapter()->getKeys($category);
-        if (count($keys) > 0) {
-            $managedCache->deleteMultiple($keys);
+        if ($this->di->has('managedCache')) {
+            $managedCache = $this->di->getShared('managedCache');
+            $category     = explode('\\', $calledClass)[3];
+            $keys         = $managedCache->getAdapter()->getKeys($category);
+            if (count($keys) > 0) {
+                $managedCache->deleteMultiple($keys);
+            }
         }
-        if ($this->getDI()->has('modelsCache')) {
-            $this->getDI()->get('modelsCache')->delete($category);
+        if ($this->di->has('modelsCache')) {
+            $modelsCache = $this->di->getShared('modelsCache');
+            $category    = explode('\\', $calledClass)[3];
+            $keys        = $modelsCache->getAdapter()->getKeys($category);
+            if (count($keys) > 0) {
+                $modelsCache->deleteMultiple($keys);
+            }
         }
     }
 
@@ -311,7 +329,7 @@ abstract class ModelsBase extends Model
      */
     public function getRepresent($needLink = false): string
     {
-        if ($this->id === null) {
+        if (property_exists($this, 'id') && $this->id === null) {
             return $this->t('mo_NewElement');
         }
 
@@ -411,9 +429,6 @@ abstract class ModelsBase extends Model
             case Codecs::class:
                 $name = $this->name;
                 break;
-            case IaxCodecs::class:
-                $name = $this->codec;
-                break;
             case IncomingRoutingTable::class:
                 $name = $this->t('mo_RightNumber', ['id' => $this->id]);
                 break;
@@ -481,9 +496,6 @@ abstract class ModelsBase extends Model
                     $name = $this->description;
                 }
                 break;
-            case SipCodecs::class:
-                $name = $this->codec;
-                break;
             case Users::class:
                 $name = '<i class="user outline icon"></i> ' . $this->username;
                 break;
@@ -492,8 +504,7 @@ abstract class ModelsBase extends Model
                     . $this->name;
                 break;
             default:
-              $name = 'Unknown';
-
+                $name = 'Unknown';
         }
 
         if ($needLink) {
@@ -541,7 +552,7 @@ abstract class ModelsBase extends Model
      */
     public function getWebInterfaceLink(): string
     {
-        $url     = new Url();
+        $url  = new Url();
         $link = '#';
         switch (static::class) {
             case AsteriskManagerUsers::class:
@@ -569,9 +580,9 @@ abstract class ModelsBase extends Model
                 $link = $url->get('extensions/modify/' . $this->id);
                 break;
             case ExternalPhones::class:
-                if ($this->Extensions->is_general_user_number == 1) {
+                if ($this->Extensions->is_general_user_number === "1") {
                     $parameters    = [
-                        'conditions' => 'is_general_user_number=1 AND type="EXTERNAL" AND userid=:userid:',
+                        'conditions' => 'is_general_user_number="1" AND type="EXTERNAL" AND userid=:userid:',
                         'bind'       => [
                             'userid' => $this->Extensions->userid,
                         ],
@@ -598,8 +609,6 @@ abstract class ModelsBase extends Model
                 $link = $url->get('ivr-menu/modify/' . $this->IvrMenu->uniqid);
                 break;
             case Codecs::class:
-                break;
-            case IaxCodecs::class:
                 break;
             case IncomingRoutingTable::class:
                 $link = $url->get('incoming-routes/modify/' . $this->id);
@@ -631,7 +640,7 @@ abstract class ModelsBase extends Model
                 break;
             case Sip::class:
                 if ($this->Extensions) { // Это внутренний номер?
-                    if ($this->Extensions->is_general_user_number === 1) {
+                    if ($this->Extensions->is_general_user_number === "1") {
                         $link = $url->get('extensions/modify/' . $this->Extensions->id);
                     } else {
                         $link = '#';//TODO сделать если будет раздел для допоплнинельных номеров пользователя
@@ -639,8 +648,6 @@ abstract class ModelsBase extends Model
                 } elseif ($this->Providers) { // Это провайдер
                     $link = $url->get('providers/modifysip/' . $this->Providers->id);
                 }
-                break;
-            case SipCodecs::class:
                 break;
             case Users::class:
                 $parameters    = [
@@ -663,9 +670,11 @@ abstract class ModelsBase extends Model
 
     /**
      * Возвращает массив полей, по которым следует добавить индекс в DB.
+     *
      * @return array
      */
-    public function getIndexColumn():array {
+    public function getIndexColumn(): array
+    {
         return [];
     }
 }

@@ -9,6 +9,11 @@
 
 namespace MikoPBX\Common\Models;
 
+/**
+ * Class Fail2BanRules
+ *
+ * @package MikoPBX\Common\Models
+ */
 class Fail2BanRules extends ModelsBase
 {
     /**
@@ -21,22 +26,22 @@ class Fail2BanRules extends ModelsBase
     /**
      * @Column(type="integer", nullable=true)
      */
-    public $maxretry;
+    public ?string $maxretry = null;
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public $bantime;
+    public ?string $bantime = null;
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public $findtime;
+    public ?string $findtime = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $whitelist;
+    public ?string $whitelist = null;
 
     public function initialize(): void
     {

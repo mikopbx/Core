@@ -13,6 +13,11 @@ use Phalcon\Mvc\Model\Relation;
 use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
+/**
+ * Class ExtensionForwardingRights
+ *
+ * @package MikoPBX\Common\Models
+ */
 class ExtensionForwardingRights extends ModelsBase
 {
     /**
@@ -25,27 +30,27 @@ class ExtensionForwardingRights extends ModelsBase
     /**
      * @Column(type="string", nullable=true)
      */
-    public $extension;
+    public ?string $extension = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $forwarding;
+    public ?string $forwarding = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $forwardingonbusy;
+    public ?string $forwardingonbusy = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $forwardingonunavailable;
+    public ?string $forwardingonunavailable = null;
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public $ringlength;
+    public ?string $ringlength = null;
 
     public function initialize(): void
     {

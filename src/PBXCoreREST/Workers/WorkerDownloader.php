@@ -208,5 +208,3 @@ if (isset($argv) && count($argv) > 1) {
         Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage());
     }
 }
-
-// php -dxdebug.remote_autostart=On -f {$workersPath}/WorkerDownloader.php /storage/usbdisk1/mikopbx/tmp/ModuleCTIClient/download_settings.json

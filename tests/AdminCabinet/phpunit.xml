@@ -31,6 +31,7 @@
             <file>Tests/CreateDialPlanApplicationTest.php</file>
             <file>Tests/NetworkInterfacesTest.php</file>
             <file>Tests/ChangeExtensionsSettingsTest.php</file>
+            <file>Tests/ChangeCallQueueTest.php</file>
             <file>Tests/DeleteExtensionTest.php</file>
             <file>Tests/ChangeLicenseKeyTest.php</file>
             <file>Tests/InstallModulesTest</file>

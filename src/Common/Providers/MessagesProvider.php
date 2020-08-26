@@ -47,7 +47,6 @@ class MessagesProvider implements ServiceProviderInterface
 
                 $messages = [];
                 // Заглянем сначала в кеш переводов
-
                 if ($cacheKey) {
                     $translates = $di->get('managedCache')->get($cacheKey, 3600);
                     if (is_array($translates)) {

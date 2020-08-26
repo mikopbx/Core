@@ -245,9 +245,7 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
         $this->selectDropdownItem('sip_networkfilterid', $params['sip_networkfilterid']);
 
         $this->changeInputField('sip_busylevel', $params['sip_busylevel']);
-        foreach ($params['codecs'] as $key=>$value){
-            $this->changeCheckBoxState('codec_'.$key, $value);
-        }
+
         $this->changeTextAreaValue('sip_manualattributes', $params['manualattributes']);
 
         //$filePath           =  __DIR__."/../assets/{$params['number']}.png";
@@ -284,9 +282,7 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
         $this->assertInputFieldValueEqual('sip_busylevel', $params['sip_busylevel']);
         $this->assertMenuItemSelected('sip_networkfilterid', $params['sip_networkfilterid']);
 
-        foreach ($params['codecs'] as $key=>$value){
-            $this->assertCheckBoxStageIsEqual('codec_'.$key, $value);
-        }
+
         $this->assertTextAreaValueIsEqual('sip_manualattributes', $params['manualattributes']);
     }
 
@@ -316,19 +312,6 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
                 'fwd_forwardingonunavailable'=>'201',
                 'manualattributes'=>'[endpoint]
 callerid=2546456<235>',
-                'codecs'     =>[
-                    'alaw'=>false,
-                    'ulaw'=>true,
-                    'g726'=>false,
-                    'gsm'=>true,
-                    'adpcm'=>false,
-                    'g722'=>true,
-                    'ilbc'=>false,
-                    'opus'=>true,
-                    'h264'=>false,
-                    'h263'=>true,
-                    'h263p'=>false
-                ],
             ]];
         return $params;
     }

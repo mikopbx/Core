@@ -86,11 +86,11 @@ class WorkerAmiListener extends WorkerBase
         for ($i = 1; $i <= 10; $i++) {
             try {
                 $result_send = $this->client->publish($result);
-                if ($result_send == false) {
+                if ($result_send === false) {
                     $this->client->reconnect();
                 }
                 $message_is_sent = ($result_send !== false);
-                if ($message_is_sent == true) {
+                if ($message_is_sent === true) {
                     // Проверка
                     break;
                 }

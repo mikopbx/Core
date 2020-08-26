@@ -25,7 +25,9 @@ class ConfigProvider implements ServiceProviderInterface
     {
         $configPath = '/etc/inc/mikopbx-settings.json';
 
-        if ( ! file_exists($configPath) || ! is_readable($configPath)) {
+        if ( ! file_exists($configPath)
+            || ! is_readable($configPath)
+        ) {
             throw new Exception('Config file does not exist: ' . $configPath);
         }
 

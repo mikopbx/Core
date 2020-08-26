@@ -45,44 +45,47 @@ class GetController extends BaseController
                 'action'    => $actionName,
             ]
         );
-        $connection     = $this->beanstalkConnection;
+        $connection     = $this->di->getShared('beanstalkConnection');
 
         if ($actionName === 'stopLog') {
             $response = $connection->request($requestMessage, 60, 0);
-        } elseif ( $actionName === 'getLogFromFile' ){
-            $message = json_decode($requestMessage, true);
+        } elseif ($actionName === 'getLogFromFile') {
+            $message         = json_decode($requestMessage, true);
             $message['data'] = $_GET;
-            $requestMessage = json_encode($message);
-            $response = $connection->request($requestMessage, 60, 0);
+            $requestMessage  = json_encode($message);
+            $response        = $connection->request($requestMessage, 60, 0);
         } else {
             $response = $connection->request($requestMessage, 5, 0);
         }
         if ($response !== false) {
             $response = json_decode($response, true);
             if ($actionName === 'stopLog') {
-                $di = Di::getDefault();
-                $downloadLink = $di->getShared('config')->path('core.downloadCachePath');
-                $filename     = $downloadLink."/".$response['data']['filename']??'';
-                if (!file_exists($filename)) {
+                $di           = Di::getDefault();
+                $downloadLink = $di->getShared('config')->path('www.downloadCacheDir');
+                $filename     = $downloadLink . "/" . $response['data']['filename'] ?? '';
+                if ( ! file_exists($filename)) {
                     $this->response->setPayloadSuccess('Log file not found.');
+
                     return;
                 }
                 $scheme = $this->request->getScheme();
                 $host   = $this->request->getHttpHost();
                 $port   = $this->request->getPort();
 
-                $this->response->redirect("{$scheme}://{$host}:{$port}/pbxcore/files/cache/{$response['data']['filename']}");
+                $this->response->redirect(
+                    "{$scheme}://{$host}:{$port}/pbxcore/files/cache/{$response['data']['filename']}"
+                );
                 $this->response->sendRaw();
-
-             }elseif ($actionName === 'getLogFromFile') {
+            } elseif ($actionName === 'getLogFromFile') {
                 $this->response->setPayloadSuccess('Log file not found.');
-                $filename = $response['data'][0]??'';
-                if (!file_exists($filename)) {
+                $filename = $response['data'][0] ?? '';
+                if ( ! file_exists($filename)) {
                     $this->response->setPayloadSuccess('Log file not found.');
+
                     return;
                 }
-                $response['data'][] = $filename;
-                $response['data'][0] = ''.file_get_contents($filename);
+                $response['data'][]  = $filename;
+                $response['data'][0] = '' . file_get_contents($filename);
                 unlink($filename);
                 $this->response->setPayloadSuccess($response);
             } else {

@@ -22,15 +22,15 @@ class SessionReadOnlyProvider implements ServiceProviderInterface
 {
     public function register(DiInterface $di): void
     {
-        $phpSessionPath = $di->getShared('config')->path('core.phpSessionPath');
+        $phpSessionDir = $di->getShared('config')->path('www.phpSessionDir');
         $di->setShared(
             'sessionRO',
-            function () use ($phpSessionPath) {
+            function () use ($phpSessionDir) {
                 if ( ! is_array($_COOKIE) || ! array_key_exists(session_name(), $_COOKIE)) {
                     return null;
                 }
                 $session_name = preg_replace('/[^\da-z]/i', '', $_COOKIE[session_name()]);
-                $session_file = $phpSessionPath . '/sess_' . $session_name;
+                $session_file = $phpSessionDir . '/sess_' . $session_name;
                 if ( ! file_exists($session_file)) {
                     return null;
                 }

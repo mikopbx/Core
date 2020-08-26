@@ -8,6 +8,11 @@
 
 namespace MikoPBX\Common\Models;
 
+/**
+ * Class CallEventsLogs
+ *
+ * @package MikoPBX\Common\Models
+ */
 class CallEventsLogs extends ModelsBase
 {
 
@@ -21,22 +26,22 @@ class CallEventsLogs extends ModelsBase
     /**
      * @Column(type="string", nullable=true)
      */
-    public $eventtime;
+    public ?string $eventtime = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $app;
+    public ?string $app = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $linkedid;
+    public ?string $linkedid = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $datajson;
+    public ?string $datajson = null;
 
 
     public function initialize(): void

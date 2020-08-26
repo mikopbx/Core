@@ -38,6 +38,9 @@ class UpdateDatabase extends Di\Injectable
         $this->config = $this->di->getShared('config');
     }
 
+    /**
+     *
+     */
     public function updateDatabaseStructure(): void
     {
         try {
@@ -71,12 +74,12 @@ class UpdateDatabase extends Di\Injectable
     /**
      * Create, update DB structure by code description
      *
-     * @param $modelClassName - class name with namespace
+     * @param $modelClassName string class name with namespace
      *                        i.e. MikoPBX\Common\Models\Extensions or Modules\ModuleSmartIVR\Models\Settings
      *
      * @return bool
      */
-    public function createUpdateDbTableByAnnotations($modelClassName): bool
+    public function createUpdateDbTableByAnnotations(string $modelClassName): bool
     {
         $result = true;
         if (

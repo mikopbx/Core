@@ -15,7 +15,12 @@ use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
 use Phalcon\Forms\Form;
 
-
+/**
+ * Class PbxExtensionModuleSettingsForm
+ *
+ * @package MikoPBX\AdminCabinet\Forms
+ * @property \MikoPBX\Common\Providers\TranslationProvider translation
+ */
 class PbxExtensionModuleSettingsForm extends Form
 {
 

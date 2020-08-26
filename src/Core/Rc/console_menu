@@ -13,7 +13,16 @@ use PhpSchool\CliMenu\Style\SelectableStyle;
 
 use MikoPBX\Common\Models\Storage as StorageModel;
 
-use MikoPBX\Core\System\{Configs\NginxConf, Util, Network, PBX, Verify, System, MikoPBXConfig, Firewall, Storage};
+use MikoPBX\Core\System\{Configs\IptablesConf,
+    Configs\NginxConf,
+    Util,
+    Network,
+    PBX,
+    Verify,
+    System,
+    MikoPBXConfig,
+    Firewall,
+    Storage};
 use MikoPBX\Service\Main;
 require_once('Globals.php');
 
@@ -314,7 +323,7 @@ $menu = (new CliMenuBuilder())
             }
             $mikoPBXConfig->setGeneralSettings('PBXFirewallEnabled', $enable);
             $mikoPBXConfig->setGeneralSettings('PBXFail2BanEnabled', $enable);
-            Firewall::reloadFirewall();
+            IptablesConf::reloadFirewall();
             echo "Firewall is {$action}d...";
         }
         exit(0);

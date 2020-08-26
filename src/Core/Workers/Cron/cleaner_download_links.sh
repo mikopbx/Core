@@ -19,7 +19,7 @@
 #   Ссылка И ФАЙЛ будут уничтожены через 5 минут.
 #   Если имя файла содержит "/temp-", то он также будет удален.
 
-root_dir=$(grep -rn 'downloadCachePath' /etc/inc/mikopbx-settings.json | cut -d'"' -f4);
+root_dir=$(grep -rn 'downloadCacheDir' /etc/inc/mikopbx-settings.json | cut -d'"' -f4);
 if [ ! -d "${root_dir}" ]; then
     exit 2;
 fi

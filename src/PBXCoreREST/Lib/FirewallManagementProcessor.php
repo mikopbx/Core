@@ -11,6 +11,7 @@ namespace MikoPBX\PBXCoreREST\Lib;
 
 
 use MikoPBX\Common\Models\Fail2BanRules;
+use MikoPBX\Core\System\Configs\Fail2BanConf;
 use MikoPBX\Core\System\Firewall;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Util;
@@ -37,10 +38,8 @@ class FirewallManagementProcessor extends Injectable
             $res->success = false;
             $res->messages[]="Not valid ip '{$ip}'.";
         }
-        $config          = new MikoPBXConfig();
-        $fail2ban_enable = $config->getGeneralSettings('PBXFail2BanEnabled');
-        $enable          = ($fail2ban_enable == '1');
-        if ($enable) {
+        $fail2ban        = new Fail2BanConf();
+        if ($fail2ban->fail2ban_enable) {
             // Попробуем найти jail по данным DB.
             // fail2ban-client unban 172.16.156.1
             // TODO Util::mwExec("fail2ban-client unban {$ip}}");
@@ -85,11 +84,11 @@ class FirewallManagementProcessor extends Injectable
         }
         $q .= ' GROUP BY jail,ip';
 
-        $path_db = Firewall::fail2banGetDbPath();
+        $path_db = Fail2BanConf::FAIL2BAN_DB_PATH;
         $db      = new SQLite3($path_db);
         $db->busyTimeout(5000);
-
-        if (false === Firewall::tableBanExists($db)) {
+        $fail2ban = new Fail2BanConf();
+        if (false === $fail2ban->tableBanExists($db)) {
             // Таблица не существует. Бана нет.
             $res->success = true;
             return $res;
@@ -163,10 +162,11 @@ class FirewallManagementProcessor extends Injectable
         $res->processor = __METHOD__;
 
         $jail_q  = ($jail === '') ? '' : "AND jail = '{$jail}'";
-        $path_db = Firewall::fail2banGetDbPath();
+        $path_db = Fail2BanConf::FAIL2BAN_DB_PATH;
         $db      = new SQLite3($path_db);
         $db->busyTimeout(3000);
-        if (false === Firewall::tableBanExists($db)) {
+        $fail2ban = new Fail2BanConf();
+        if (false === $fail2ban->tableBanExists($db)) {
             // Таблица не существует. Бана нет.
             $res->success = true;
             return $res;

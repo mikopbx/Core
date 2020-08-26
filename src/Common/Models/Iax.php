@@ -14,7 +14,11 @@ use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
 /**
+ * Class Iax
+ *
  * @method static mixed findFirstByUniqid(array|string|int $parameters = null)
+ *
+ * @package MikoPBX\Common\Models
  */
 class Iax extends ModelsBase
 {
@@ -28,69 +32,53 @@ class Iax extends ModelsBase
     /**
      * @Column(type="string", nullable=true)
      */
-    public $uniqid;
+    public ?string $uniqid = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $username;
+    public ?string $username = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $secret;
+    public ?string $secret = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $host;
+    public ?string $host = null;
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public $qualify;
+    public ?string $qualify = null;
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public $disabled;
+    public ?string $disabled = null;
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public $noregister;
+    public ?string $noregister = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $manualattributes;
+    public ?string $manualattributes = null;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $description;
+    public ?string $description = null;
 
 
     public function initialize(): void
     {
         $this->setSource('m_Iax');
         parent::initialize();
-        $this->hasMany(
-            'uniqid',
-            IaxCodecs::class,
-            'iaxuid',
-            [
-                'alias'      => 'Codecs',
-                'foreignKey' => [
-                    'allowNulls' => true,
-                    'action'     => Relation::ACTION_CASCADE,
-                ],
-                'params'     => [
-                    'order' => 'priority asc',
-                ],
-            ]
-        );
-
         $this->belongsTo(
             'uniqid',
             Providers::class,

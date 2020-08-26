@@ -7,7 +7,6 @@
  */
 
 /* global Config, globalWebAdminLanguage, globalPBXLicense, globalPBXVersion */
-
 const UpdateApi = {
 	pbxPing: `${Config.updateUrl}/pbxcore/api/system/ping`,
 	pbxReloadAllModulesUrl: `${Config.pbxUrl}/pbxcore/api/pbx/reloadAllModules`, // Рестарт всех модулей АТС

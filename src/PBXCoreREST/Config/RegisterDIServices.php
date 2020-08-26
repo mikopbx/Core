@@ -17,9 +17,9 @@ use MikoPBX\Common\Providers\{CDRDatabaseProvider,
     ModelsMetadataProvider,
     PBXConfModulesProvider,
     RegistryProvider,
+    ManagedCacheProvider,
     SessionReadOnlyProvider};
 use MikoPBX\PBXCoreREST\Providers\{
-    ManagedCacheProvider,
     BeanstalkConnectionProvider,
     DispatcherProvider,
     RequestProvider,

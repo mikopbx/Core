@@ -12,6 +12,12 @@ namespace MikoPBX\AdminCabinet\Forms;
 use Phalcon\Forms\Element\Text;
 use Phalcon\Forms\Form;
 
+/**
+ * Class LicensingActivateCouponForm
+ *
+ * @package MikoPBX\AdminCabinet\Forms
+ * @property \MikoPBX\Common\Providers\TranslationProvider translation
+ */
 class LicensingActivateCouponForm extends Form
 {
 

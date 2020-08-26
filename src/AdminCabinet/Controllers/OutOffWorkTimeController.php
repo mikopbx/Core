@@ -71,7 +71,7 @@ class OutOffWorkTimeController extends BaseController
         if ($timeFrame === null) {
             $timeFrame = new OutWorkTimes();
         }
-
+        $forwardingExtensions = [];
         $forwardingExtensions[""] = $this->translation->_("ex_SelectNumber");
         $parameters               = [
             'conditions' => 'number = :extension:',
@@ -83,7 +83,7 @@ class OutOffWorkTimeController extends BaseController
         foreach ($extensions as $record) {
             $forwardingExtensions[$record->number] = $record->getRepresent();
         }
-
+        $audioMessages = [];
         $audioMessages[""] = $this->translation->_("sf_SelectAudioFile");
         $soundFiles        = SoundFiles::find('category="custom"');
         foreach ($soundFiles as $record) {

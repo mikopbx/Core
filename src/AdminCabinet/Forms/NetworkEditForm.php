@@ -16,7 +16,12 @@ use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
 use Phalcon\Forms\Form;
 
-
+/**
+ * Class NetworkEditForm
+ *
+ * @package MikoPBX\AdminCabinet\Forms
+ * @property \MikoPBX\Common\Providers\TranslationProvider translation
+ */
 class NetworkEditForm extends Form
 {
     public function initialize($entity = null, $options = null): void
@@ -35,7 +40,7 @@ class NetworkEditForm extends Form
             $cheskArr = ['checked' => 'checked', 'value' => null];
         }
         $this->add(new Check('usenat', $cheskArr));
-
+        $arrInterfaces = [];
         foreach ($options['eths'] as $eth) {
             $this->add(
                 new Hidden(

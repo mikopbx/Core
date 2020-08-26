@@ -1,11 +1,12 @@
 {{ form('general-settings/save', 'role': 'form', 'class': 'ui form large', 'id':'general-settings-form') }}
-
+<input type="hidden" name="dirrty" id="dirrty"/>
 <div class="ui grid">
     <div class="four wide column">
         <div class="ui vertical fluid tabular menu" id="general-settings-menu">
             <a class="item active" data-tab="general">{{ t._('gs_MainTab') }}</a>
             <a class="item" data-tab="features">{{ t._('gs_FeaturesTab') }}</a>
             <a class="item" data-tab="sip">{{ t._('gs_SIPTab') }}</a>
+            <a class="item" data-tab="codecs">{{ t._('gs_CodecsTab') }}</a>
             <a class="item" data-tab="ami">{{ t._('gs_AMITab') }}</a>
             <a class="item" data-tab="ssh">{{ t._('gs_SSHTab') }}</a>
             <a class="item" data-tab="web">{{ t._('gs_WebTab') }}</a>
@@ -120,6 +121,9 @@
             </div>
         </div>
 
+        <div class="ui  tab segment" data-tab="codecs">
+            {{ partial("GeneralSettings/codecs")}}
+        </div>
 
         <div class="ui tab segment" data-tab="ami">
             <div class="field">

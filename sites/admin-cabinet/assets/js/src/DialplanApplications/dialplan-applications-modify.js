@@ -33,6 +33,10 @@ const dialplanApplication = {
 			identifier: 'extension',
 			rules: [
 				{
+					type: 'number',
+					prompt: globalTranslate.da_ValidateExtensionNumber,
+				},
+				{
 					type: 'empty',
 					prompt: globalTranslate.da_ValidateExtensionIsEmpty,
 				},

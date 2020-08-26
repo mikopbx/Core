@@ -64,11 +64,11 @@ class NatsConf extends Injectable
         }
         $di     = Di::getDefault();
         if ($di !== null){
-            $varEtcPath = $di->getConfig()->path('core.varEtcPath');
+            $varEtcDir = $di->getConfig()->path('core.varEtcDir');
         } else {
-            $varEtcPath = '/var/etc';
+            $varEtcDir = '/var/etc';
         }
-        $path_conf  = $varEtcPath . '/gnatsd_logrotate.conf';
+        $path_conf  = $varEtcDir . '/gnatsd_logrotate.conf';
         file_put_contents($path_conf, $text_config);
         if (file_exists("{$log_dir}/gnatsd.log")) {
             $logrotatePath = Util::which('logrotate');

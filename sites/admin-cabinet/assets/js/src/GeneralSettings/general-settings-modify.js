@@ -10,6 +10,7 @@
 /* global globalRootUrl,globalTranslate, Form, PasswordScore */
 
 const generalSettingsModify = {
+	$dirrtyField: $('#dirrty'),
 	$formObj: $('#general-settings-form'),
 	$webAdminPassword: $('#WebAdminPassword'),
 	$sshPassword: $('#SSHPassword'),
@@ -67,6 +68,28 @@ const generalSettingsModify = {
 				},
 			],
 		},
+		WEBPort: {
+			identifier: 'WEBPort',
+			rules: [
+				{
+					type: 'integer[1..65535]',
+					prompt: globalTranslate.gs_ValidateWEBPortOutOfRange,
+				},
+			],
+		},
+		WEBHTTPSPort: {
+			identifier: 'WEBHTTPSPort',
+			rules: [
+				{
+					type: 'integer[1..65535]',
+					prompt: globalTranslate.gs_ValidateWEBHTTPSPortOutOfRange,
+				},
+				{
+					type: 'different[WEBPort]',
+					prompt: globalTranslate.gs_ValidateWEBHTTPSPortNotEqualToWEBPort,
+				},
+			],
+		},
 	},
 	initialize() {
 		generalSettingsModify.$webAdminPassword.on('keyup', () => {
@@ -89,11 +112,32 @@ const generalSettingsModify = {
 		});
 		$('#general-settings-form .checkbox').checkbox();
 		$('#general-settings-form .dropdown').dropdown();
+
+		$('#audio-codecs-table, #video-codecs-table').tableDnD({
+			onDrop() {
+				generalSettingsModify.$dirrtyField.val(Math.random());
+				generalSettingsModify.$dirrtyField.trigger('change');
+			},
+			onDragClass: 'hoveringRow',
+			dragHandle: '.dragHandle',
+		});
 		generalSettingsModify.initializeForm();
 	},
 	cbBeforeSendForm(settings) {
 		const result = settings;
 		result.data = generalSettingsModify.$formObj.form('get values');
+		const arrCodecs = [];
+		$('#audio-codecs-table .codec-row, #video-codecs-table .codec-row').each((index, obj) => {
+			if ($(obj).attr('id')) {
+				arrCodecs.push({
+					codecId: $(obj).attr('id'),
+					disabled: $(obj).find('.checkbox').checkbox('is unchecked'),
+					priority: index,
+				});
+			}
+		});
+		result.data.codecs = JSON.stringify(arrCodecs);
+
 		return result;
 	},
 	cbAfterSendForm() {
