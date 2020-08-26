@@ -1,3 +1,10 @@
+/*
+ * Copyright © MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Alexey Portnov, 8 2020
+ */
+
 "use strict";
 
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
@@ -77,7 +84,7 @@ var extension = {
       identifier: 'fwd_ringlength',
       depends: 'fwd_forwarding',
       rules: [{
-        type: 'integer[5..180]',
+        type: 'integer[3..180]',
         prompt: globalTranslate.ex_ValidateRingingBeforeForwardOutOfRange
       }]
     },
