@@ -64,28 +64,22 @@
             <label for="fromdomain">{{ t._('pr_FromDomain') }}</label>
             {{ form.render('fromdomain') }}
         </div>
-        <div class=" field">
-            <label>{{ t._('pr_ManualRegisterString') }}</label>
-            {{ form.render('manualregister') }}
-
+        <div class="ui segment">
+            <div class="field">
+                <div class="ui toggle checkbox" id="disablefromuser">
+                    {{ form.render('disablefromuser') }}
+                    <label>{{ t._('pr_DisableFromUser') }}</label>
+                </div>
+            </div>
         </div>
-
-            <div class="ui segment">
-                <div class="field">
-                    <div class="ui toggle checkbox" id="disablefromuser">
-                        {{ form.render('disablefromuser') }}
-                        <label>{{ t._('pr_DisableFromUser') }}</label>
-                    </div>
+        <div class="ui segment">
+            <div class="field">
+                <div class="ui toggle checkbox" id="noregister">
+                    {{ form.render('noregister') }}
+                    <label>{{ t._('pr_NoRegister') }}</label>
                 </div>
             </div>
-            <div class="ui segment">
-                <div class="field">
-                    <div class="ui toggle checkbox" id="noregister">
-                        {{ form.render('noregister') }}
-                        <label>{{ t._('pr_NoRegister') }}</label>
-                    </div>
-                </div>
-            </div>
+        </div>
         <div class="ui segment">
             <div class="field">
                 <div class="ui toggle checkbox" id="receive_calls_without_auth">
