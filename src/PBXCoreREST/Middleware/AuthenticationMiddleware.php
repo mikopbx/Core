@@ -1,4 +1,10 @@
 <?php
+/*
+ * Copyright © MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Alexey Portnov, 8 2020
+ */
 
 declare(strict_types=1);
 
@@ -53,23 +59,26 @@ class AuthenticationMiddleware implements MiddlewareInterface
 
     /**
      * Check additional modules routes access rules
-     * @param \Phalcon\Mvc\Micro $api
+     * @param Micro $api
      *
      * @return bool
      */
     public function thisIsModuleNoAuthRequest(Micro $api): bool
     {
         $pattern  = $api->request->getURI(true);
-
         $additionalModules = $api->getService('pbxConfModules');
         foreach ($additionalModules as $appClass) {
             /** @var \MikoPBX\Modules\Config\ConfigClass; $appClass */
-            $additionalRoute = $appClass->getPBXCoreRESTAdditionalRoutes();
-            if (is_array($additionalRoute)
-                && count($additionalRoute)===6
-                && $additionalRoute[6]===true
-                && stripos($pattern, $additionalRoute[2])!==0){
-                return true; // Allow request without authentication
+            $additionalRoutes = $appClass->getPBXCoreRESTAdditionalRoutes();
+            if(!is_array($additionalRoutes)){
+                continue;
+            }
+            foreach ($additionalRoutes as $additionalRoute){
+                $noAuth = $additionalRoute[5]??false;
+                if ($noAuth===true
+                    && stripos($pattern, $additionalRoute[2])!==0){
+                    return true; // Allow request without authentication
+                }
             }
         }
         return false;
