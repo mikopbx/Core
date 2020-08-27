@@ -59,7 +59,7 @@ class AuthenticationMiddleware implements MiddlewareInterface
 
     /**
      * Check additional modules routes access rules
-     * @param \Phalcon\Mvc\Micro $api
+     * @param Micro $api
      *
      * @return bool
      */
