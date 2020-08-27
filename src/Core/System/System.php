@@ -13,6 +13,7 @@ use MikoPBX\Core\System\Configs\CronConf;
 use MikoPBX\Core\System\Configs\IptablesConf;
 use MikoPBX\Core\System\Configs\PHPConf;
 use MikoPBX\Core\System\Configs\NTPConf;
+use MikoPBX\Core\Workers\Cron\WorkerSafeScriptsCore;
 use MikoPBX\Core\Asterisk\Configs\{QueueConf};
 use Phalcon\Di;
 
@@ -258,5 +259,18 @@ class System extends Di\Injectable
             /** @var \MikoPBX\Modules\Config\ConfigClass $appClass */
             $appClass->onAfterPbxStarted();
         }
+    }
+
+    /**
+     * Restart all workers in separate process,
+     * we use this method after module install or delete
+     */
+    public static function restartAllWorkers(): void
+    {
+        $workerSafeScriptsPath = Util::getFilePathByClassName(WorkerSafeScriptsCore::class);
+        $phpPath               = Util::which('php');
+        $WorkerSafeScripts     = "{$phpPath} -f {$workerSafeScriptsPath} restart > /dev/null 2> /dev/null";
+        Util::mwExecBg($WorkerSafeScripts,'/dev/null');
+        exit(0);
     }
 }

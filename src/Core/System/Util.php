@@ -229,7 +229,7 @@ class Util
      *
      * @param     $log_name
      * @param     $text
-     * @param int $level
+     * @param ?int $level
      */
     public static function sysLogMsg($log_name, $text, $level = null): void
     {

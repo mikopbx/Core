@@ -8,10 +8,9 @@
 
 namespace MikoPBX\PBXCoreREST\Workers;
 
-use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Asterisk\Configs\VoiceMailConf;
 use MikoPBX\Core\System\{BeanstalkClient, Notifications, Storage, System, Util};
-use MikoPBX\Core\Workers\Cron\WorkerSafeScriptsCore;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\PBXCoreREST\Lib\CdrDBProcessor;
 use MikoPBX\PBXCoreREST\Lib\FirewallManagementProcessor;
@@ -23,7 +22,6 @@ use MikoPBX\PBXCoreREST\Lib\SIPStackProcessor;
 use MikoPBX\PBXCoreREST\Lib\SystemManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\FilesManagementProcessor;
 use MikoPBX\Modules\PbxExtensionState;
-use Phalcon\Exception;
 
 require_once 'Globals.php';
 
@@ -44,8 +42,25 @@ class WorkerApiCommands extends WorkerBase
         $client->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
         $client->subscribe(__CLASS__, [$this, 'prepareAnswer']);
 
-        // Every module config class can process requests under root rights,
-        // if it described in Config class
+        $this->registerModulesProcessors();
+
+        while (true) {
+            try {
+                $client->wait();
+            } catch (\Exception $e) {
+                global $errorLogger;
+                $errorLogger->captureException($e);
+                sleep(1);
+            }
+        }
+    }
+
+    /**
+     * Every module config class can process requests under root rights,
+     * if it described in Config class
+     */
+    private function registerModulesProcessors():void
+    {
         $additionalModules          = $this->di->getShared('pbxConfModules');
         $this->additionalProcessors = [];
         foreach ($additionalModules as $moduleConfigObject) {
@@ -59,21 +74,10 @@ class WorkerApiCommands extends WorkerBase
                 ];
             }
         }
-
-        while (true) {
-            try {
-                $client->wait();
-            } catch (\Exception $e) {
-                global $errorLogger;
-                $errorLogger->captureException($e);
-                sleep(1);
-            }
-        }
     }
 
-
     /**
-     * Process request
+     * Process API request from frontend
      *
      * @param BeanstalkClient $message
      */
@@ -122,7 +126,7 @@ class WorkerApiCommands extends WorkerBase
             && array_key_exists('needRestartWorkers', $res->data)
             && $res->data['needRestartWorkers']
         ) {
-            WorkerSafeScriptsCore::restartAllWorkers();
+            System::restartAllWorkers();
         }
     }
 
@@ -133,7 +137,6 @@ class WorkerApiCommands extends WorkerBase
      *
      * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
      *
-     * @throws \Pheanstalk\Exception\DeadlineSoonException
      */
     private function cdrCallBack($request): PBXApiResult
     {
@@ -341,6 +344,8 @@ class WorkerApiCommands extends WorkerBase
                     $res->success  = false;
                     $res->messages = $moduleStateProcessor->getMessages();
                 } else {
+                    PBXConfModulesProvider::recreateModulesProvider();
+                    $this->registerModulesProcessors();
                     $res->success = true;
                 }
                 break;
@@ -351,6 +356,8 @@ class WorkerApiCommands extends WorkerBase
                     $res->success  = false;
                     $res->messages = $moduleStateProcessor->getMessages();
                 } else {
+                    PBXConfModulesProvider::recreateModulesProvider();
+                    $this->registerModulesProcessors();
                     $res->success = true;
                 }
                 break;
