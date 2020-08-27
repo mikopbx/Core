@@ -54,16 +54,29 @@ interface SystemConfigInterface
 
 
     /**
-     * Process enable action in web interface
+     * Process before enable action in web interface
      * @return bool
      */
     public function onBeforeModuleEnable(): bool;
 
     /**
-     * Process disable action in web interface
+     * Process after enable action in web interface
+     * @return void
+     */
+    public function onAfterModuleEnable(): void;
+
+
+    /**
+     * Process before disable action in web interface
      * @return bool
      */
     public function onBeforeModuleDisable(): bool;
+
+    /**
+     * Process after disable action in web interface
+     * @return void
+     */
+    public function onAfterModuleDisable(): void;
 
 
     /**

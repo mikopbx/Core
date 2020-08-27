@@ -24,7 +24,9 @@ const extensionModules = {
 		UpdateApi.getModulesUpdates(extensionModules.cbParseModuleUpdates);
 		extensionModules.$checkboxes.each((index, obj) => {
 			const uniqId = $(obj).attr('data-value');
-			extensionModules.checkBoxes.push(new PbxExtensionStatus(uniqId, false));
+			const pageStatus = new PbxExtensionStatus();
+			pageStatus.initialize(uniqId, false);
+			extensionModules.checkBoxes.push(pageStatus);
 		});
 	},
 	/**

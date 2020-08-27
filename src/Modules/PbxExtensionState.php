@@ -184,6 +184,11 @@ class PbxExtensionState extends Injectable
                 $module->save();
             }
 
+            if ($this->configClass !== null
+                && method_exists($this->configClass, 'onAfterModuleEnable')) {
+                $this->configClass->onAfterModuleEnable();
+            }
+
             // Restart Nginx if module has locations
             $this->refreshNginxLocations();
 
@@ -375,6 +380,12 @@ class PbxExtensionState extends Injectable
                 $module->disabled = '1';
                 $module->save();
             }
+
+            if ($this->configClass !== null
+                && method_exists($this->configClass, 'onAfterModuleDisable')) {
+                $this->configClass->onAfterModuleDisable();
+            }
+
             // Reconfigure fail2ban and restart iptables
             $this->refreshFail2BanRules();
 

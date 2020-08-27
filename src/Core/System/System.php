@@ -270,7 +270,6 @@ class System extends Di\Injectable
         $workerSafeScriptsPath = Util::getFilePathByClassName(WorkerSafeScriptsCore::class);
         $phpPath               = Util::which('php');
         $WorkerSafeScripts     = "{$phpPath} -f {$workerSafeScriptsPath} restart > /dev/null 2> /dev/null";
-        Util::mwExecBg($WorkerSafeScripts,'/dev/null');
-        exit(0);
+        Util::mwExecBg($WorkerSafeScripts,'/dev/null', 1);
     }
 }

@@ -14,13 +14,14 @@ use Phalcon\Config;
 use Phalcon\Di\Injectable;
 use ReflectionClass as ReflectionClassAlias;
 
-abstract class ConfigClass extends Injectable implements SystemConfigInterface, AsteriskConfigInterface, RestAPIConfigInterface
+abstract class ConfigClass extends Injectable implements SystemConfigInterface, AsteriskConfigInterface,
+                                                         RestAPIConfigInterface
 {
 
     /**
      * ID Config class
      */
-    public const ID_CONFIG_CLASS =  'InternalConfigModule';
+    public const ID_CONFIG_CLASS = 'InternalConfigModule';
 
 
     /**
@@ -40,6 +41,7 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface, 
 
     /**
      * Error and Notice messages
+     *
      * @var array
      */
     protected array $messages;
@@ -71,18 +73,18 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface, 
      */
     public function __construct()
     {
-        $this->config        = $this->di->getShared('config');
-        $this->booting       = $this->di->getShared('registry')->booting===true;
-        $this->mikoPBXConfig = new MikoPBXConfig();
+        $this->config          = $this->di->getShared('config');
+        $this->booting         = $this->di->getShared('registry')->booting === true;
+        $this->mikoPBXConfig   = new MikoPBXConfig();
         $this->generalSettings = $this->mikoPBXConfig->getGeneralSettings();
-        $this->moduleUniqueId = ConfigClass::ID_CONFIG_CLASS;
+        $this->moduleUniqueId  = ConfigClass::ID_CONFIG_CLASS;
         // Get child class parameters and define module Dir and UniqueID
-        $reflector = new ReflectionClassAlias(static::class);
+        $reflector        = new ReflectionClassAlias(static::class);
         $partsOfNameSpace = explode('\\', $reflector->getNamespaceName());
-        if (count($partsOfNameSpace)===3 && $partsOfNameSpace[0]==='Modules'){
-            $modulesDir    = $this->config->path('core.modulesDir');
+        if (count($partsOfNameSpace) === 3 && $partsOfNameSpace[0] === 'Modules') {
+            $modulesDir           = $this->config->path('core.modulesDir');
             $this->moduleUniqueId = $partsOfNameSpace[1];
-            $this->moduleDir =  $modulesDir.'/'.$this->moduleUniqueId;
+            $this->moduleDir      = $modulesDir . '/' . $this->moduleUniqueId;
         }
 
         $this->messages = [];
@@ -90,7 +92,6 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface, 
 
     public function getSettings(): void
     {
-
     }
 
     public function generateConfig(): void
@@ -105,26 +106,28 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface, 
 
     /**
      * Makes pretty module text block into config file
+     *
      * @param string $addition
      *
      * @return string
      */
-    protected function confBlockWithComments(string $addition):string
+    protected function confBlockWithComments(string $addition): string
     {
         $result = '';
-        if (empty($addition)){
+        if (empty($addition)) {
             return $result;
         }
-        if (!empty($this->moduleUniqueId) && ConfigClass::ID_CONFIG_CLASS !== $this->moduleUniqueId){
-            $result =PHP_EOL.'; ***** BEGIN BY '.$this->moduleUniqueId.PHP_EOL;
+        if ( ! empty($this->moduleUniqueId) && ConfigClass::ID_CONFIG_CLASS !== $this->moduleUniqueId) {
+            $result = PHP_EOL . '; ***** BEGIN BY ' . $this->moduleUniqueId . PHP_EOL;
             $result .= $addition;
-            if (substr($addition, -1)!=="\t"){
-                $result .="\t";
+            if (substr($addition, -1) !== "\t") {
+                $result .= "\t";
             }
-            $result .=PHP_EOL.'; ***** END BY '.$this->moduleUniqueId.PHP_EOL;
+            $result .= PHP_EOL . '; ***** END BY ' . $this->moduleUniqueId . PHP_EOL;
         } else {
             $result .= $addition;
         }
+
         return $result;
     }
 
@@ -134,7 +137,7 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface, 
      */
     protected function echoGenerateConfig(): void
     {
-        if ($this->booting === true && !empty($this->description)) {
+        if ($this->booting === true && ! empty($this->description)) {
             echo "   |- generate config {$this->description}... ";
         }
     }
@@ -142,7 +145,7 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface, 
     /**
      * Генерация конфигурационного файла asterisk.
      */
-    protected function generateConfigProtected():void
+    protected function generateConfigProtected(): void
     {
     }
 
@@ -151,7 +154,7 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface, 
      */
     protected function echoDone(): void
     {
-        if ($this->booting === true && !empty($this->description)) {
+        if ($this->booting === true && ! empty($this->description)) {
             echo "\033[32;1mdone\033[0m \n";
         }
     }
@@ -165,7 +168,7 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface, 
     }
 
     // Получаем строки include для секции internal-transfer.
-    public function getIncludeInternalTransfer() :string
+    public function getIncludeInternalTransfer(): string
     {
         // Генерация внутреннего номерного плана.
         return '';
@@ -227,7 +230,7 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface, 
      *
      * @return void
      */
-    public function generatePublicContext(&$conf) :void
+    public function generatePublicContext(&$conf): void
     {
     }
 
@@ -348,6 +351,7 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface, 
 
     /**
      * Returns array of workers classes for WorkerSafeScripts from module
+     *
      * @return array
      */
     public function getModuleWorkers(): array
@@ -357,6 +361,7 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface, 
 
     /**
      * Returns array of additional firewall rules for module
+     *
      * @return array
      */
     public function getDefaultFirewallRules(): array
@@ -366,15 +371,17 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface, 
 
     /**
      * Return messages after function or method execution
+     *
      * @return array
      */
     public function getMessages(): array
     {
-        return  $this->messages;
+        return $this->messages;
     }
 
     /**
      * Process enable action in web interface
+     *
      * @return bool
      */
     public function onBeforeModuleEnable(): bool
@@ -383,7 +390,17 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface, 
     }
 
     /**
+     * Process after enable action in web interface
+     *
+     * @return void
+     */
+    public function onAfterModuleEnable(): void
+    {
+    }
+
+    /**
      * Process disable action in web interface
+     *
      * @return bool
      */
     public function onBeforeModuleDisable(): bool
@@ -392,11 +409,20 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface, 
     }
 
     /**
+     * Process after disable action in web interface
+     *
+     * @return void
+     */
+    public function onAfterModuleDisable(): void
+    {
+    }
+
+    /**
      * Генератор modules.conf
      *
      * @return string
      */
-    public function generateModulesConf():string
+    public function generateModulesConf(): string
     {
         return '';
     }
@@ -410,18 +436,19 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface, 
      */
     public function moduleRestAPICallback(array $request): PBXApiResult
     {
-        $res = new PBXApiResult();
+        $res            = new PBXApiResult();
         $res->processor = __METHOD__;
-        $action = strtoupper($request['action']);
-        switch ($action){
+        $action         = strtoupper($request['action']);
+        switch ($action) {
             case 'CHECK':
             case 'RELOAD':
                 $res->success = true;
                 break;
             default:
-                $res->success = false;
+                $res->success    = false;
                 $res->messages[] = 'API action not found in moduleRestAPICallback';
         }
+
         return $res;
     }
 
@@ -449,8 +476,10 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface, 
      *
      * @return string
      */
-    public function generateFail2BanJails():string
+    public function generateFail2BanJails(): string
     {
         return '';
     }
+
+
 }

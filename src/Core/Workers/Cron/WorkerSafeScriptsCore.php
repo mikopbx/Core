@@ -34,18 +34,6 @@ class WorkerSafeScriptsCore extends WorkerBase
     public const CHECK_BY_PID_NOT_ALERT = 'checkPidNotAlert';
 
     /**
-     * Restart all workers in separate process,
-     * we use this method after module install or delete
-     */
-    public static function restartAllWorkers(): void
-    {
-        $workerSafeScriptsPath = Util::getFilePathByClassName(__CLASS__);
-        $phpPath               = Util::which('php');
-        $WorkerSafeScripts     = "{$phpPath} -f {$workerSafeScriptsPath} restart > /dev/null 2> /dev/null";
-        Util::mwExecBg($WorkerSafeScripts);
-    }
-
-    /**
      * Restart all registered workers
      */
     public function restart(): void
@@ -264,10 +252,9 @@ class WorkerSafeScriptsCore extends WorkerBase
 
 // Start worker process
 $workerClassname = WorkerSafeScriptsCore::class;
-cli_set_process_title($workerClassname);
 try {
-    set_time_limit(55);
     if (isset($argv) && count($argv) > 1) {
+        cli_set_process_title($workerClassname);
         $worker = new $workerClassname();
         if (($argv[1] === 'start')) {
             $worker->start($argv);

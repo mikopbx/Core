@@ -33,6 +33,8 @@ class WorkerApiCommands extends WorkerBase
      */
     private array $additionalProcessors;
 
+    private bool $needRestart = false;
+
     /**
      * @param $argv
      */
@@ -44,7 +46,7 @@ class WorkerApiCommands extends WorkerBase
 
         $this->registerModulesProcessors();
 
-        while (true) {
+        while ($this->needRestart===false) {
             try {
                 $client->wait();
             } catch (\Exception $e) {
@@ -127,6 +129,7 @@ class WorkerApiCommands extends WorkerBase
             && $res->data['needRestartWorkers']
         ) {
             System::restartAllWorkers();
+            $this->needRestart=true;
         }
     }
 
