@@ -21,7 +21,6 @@ namespace MikoPBX\Common\Providers;
 
 use Phalcon\Cache;
 use Phalcon\Cache\Adapter\Stream;
-use Phalcon\Cache\Adapter\Memory;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 use Phalcon\Storage\SerializerFactory;
