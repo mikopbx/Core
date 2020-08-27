@@ -20,6 +20,7 @@ namespace MikoPBX\Common\Providers;
 
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Modules\Config\ConfigClass;
+use Phalcon\Di;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 
@@ -90,4 +91,15 @@ class PBXConfModulesProvider implements ServiceProviderInterface
         }
         return  $arrObjects;
     }
+
+    /**
+     * Recreates modules service after enable or disable them
+     */
+    public static function recreateModulesProvider(): void
+    {
+        $di = Di::getDefault();
+        $di->remove('pbxConfModules');
+        $di->register(new self());
+    }
+
 }

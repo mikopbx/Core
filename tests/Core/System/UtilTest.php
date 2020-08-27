@@ -10,6 +10,7 @@
 namespace MikoPBX\Tests\Core\System;
 
 use MikoPBX\Core\System\Util;
+use MikoPBX\Core\Workers\Cron\WorkerSafeScriptsCore;
 use MikoPBX\Tests\Unit\AbstractUnitTest;
 use Modules\ModuleBitrix24Integration\Lib\WorkerBitrix24IntegrationAMI;
 
@@ -51,4 +52,13 @@ class UtilTest extends AbstractUnitTest
         $this->assertTrue(true);
 
     }
+
+    public function testGetFilePathByClassName(): void
+    {
+        $process = WorkerSafeScriptsCore::class;
+        $path = Util::getFilePathByClassName($process);
+
+        $this->assertFileExists($path);
+    }
+
 }
