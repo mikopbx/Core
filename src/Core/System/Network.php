@@ -1,9 +1,9 @@
 <?php
-/**
+/*
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 6 2020
+ * Written by Alexey Portnov, 8 2020
  */
 
 namespace MikoPBX\Core\System;
@@ -224,10 +224,11 @@ class Network extends Injectable
         }
         $busyboxPath = Util::which('busybox');
         $vconfigPath = Util::which('vconfig');
+        $killallPath = Util::which('killall');
 
         $networks     = $this->getGeneralNetSettings();
         $arr_commands = [];
-
+        $arr_commands[] = "{$killallPath} udhcpc";
         $eth_mtu = [];
         foreach ($networks as $if_data) {
             if ($if_data['disabled'] === '1') {

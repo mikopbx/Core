@@ -16,7 +16,6 @@
     </div>
 </div>
 <form class="ui large grey segment form" id="upgrade-form">
-    <input type="hidden" name="license-key" id="license-key" value="{{ licenseKey }}"/>
     <div class="field">
         <label>{{ t._('upd_FileName') }}</label>
         <div class="ui action input">

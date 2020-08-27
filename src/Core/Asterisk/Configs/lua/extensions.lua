@@ -1,6 +1,11 @@
 -- Copyright © MIKO LLC - All Rights Reserved
 -- Unauthorized copying of this file, via any medium is strictly prohibited
 -- Proprietary and confidential
+-- Written by Alexey Portnov, 8 2020
+
+-- Copyright © MIKO LLC - All Rights Reserved
+-- Unauthorized copying of this file, via any medium is strictly prohibited
+-- Proprietary and confidential
 -- Written by Alexey Portnov, 7 2020
 
 -- Copyright © MIKO LLC - All Rights Reserved
@@ -52,6 +57,31 @@ function getNowDate()
     return os.date("%Y-%m-%d %H:%M:%S.")..tostring(b):sub(3,5);
 end
 
+function getAccountName(channel)
+    local startPos = channel:find('/');
+    if ( startPos == nil) then
+        startPos = 0;
+    else
+        startPos = startPos + 1;
+    end
+
+    local dogPos   = channel:reverse():find('@');
+    if ( dogPos == nil) then
+        dogPos = 0;
+    else
+        dogPos = dogPos + 2;
+    end
+
+    local dashPos  = channel:reverse():find('-');
+    if ( dashPos == nil) then
+        dashPos = 1;
+    else
+        dashPos = channel:len() - dashPos;
+    end
+
+    local endPos   = math.max(dashPos, dogPos);
+    return channel:sub(startPos, endPos);
+end
 -- Возвращает значение переменной канала
 function get_variable(name)
     local p_result = '';
@@ -118,7 +148,7 @@ function event_dial(without_event)
 
     local from_account  = get_variable("FROM_PEER")
     if ( from_account=='' and string.lower(agi_channel):find("local/") == nil )then
-        from_account = agi_channel;
+        from_account = getAccountName(agi_channel);
     end
 
     local dst_num, src_num;
@@ -185,11 +215,11 @@ function event_dial_create_chan()
     data['event_time']  = getNowDate();
     data['UNIQUEID']	= id;
     data['dst_chan']	= get_variable("CHANNEL");
-    data['linkedid']          = get_variable("CDR(linkedid)");
+    data['linkedid']    = get_variable("CDR(linkedid)");
 
-    local is_local = string.lower(get_variable("CHANNEL")):find("local/") ~= nil
+    local is_local = string.lower(data['dst_chan']):find("local/") ~= nil
     if(is_local ~= true)then
-        data['to_account']  	= get_variable("CUT(CUT(CHANNEL(name),,1),/,2)");
+        data['to_account'] = getAccountName(data['dst_chan']);
         app["NoOp"]('to_account set to '..data['to_account']);
     end
 

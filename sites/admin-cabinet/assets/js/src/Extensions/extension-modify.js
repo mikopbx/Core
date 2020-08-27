@@ -1,9 +1,8 @@
 /*
- * Copyright (C) MIKO LLC - All Rights Reserved
+ * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 12 2019
- *
+ * Written by Alexey Portnov, 8 2020
  */
 
 /* global globalRootUrl, globalTranslate, Extensions, Form,
@@ -89,7 +88,7 @@ const extension = {
 			depends: 'fwd_forwarding',
 			rules: [
 				{
-					type: 'integer[5..180]',
+					type: 'integer[3..180]',
 					prompt: globalTranslate.ex_ValidateRingingBeforeForwardOutOfRange,
 				},
 			],

@@ -1,10 +1,9 @@
 <?php
-/**
- * Copyright (C) MIKO LLC - All Rights Reserved
+/*
+ * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 6 2018
- *
+ * Written by Alexey Portnov, 8 2020
  */
 
 namespace MikoPBX\AdminCabinet\Controllers;
@@ -444,7 +443,7 @@ class ExtensionsController extends BaseController
                     }
                     break;
                 case 'callerid':
-                    $extension->$name = $this->transliterate($data['user_username']);
+                    $extension->$name = preg_replace('/[^a-zA-Zа-яА-Я0-9 ]/ui', '', $data['user_username']);
                     break;
                 case 'userid':
                     $extension->$name = $userEntity->id;

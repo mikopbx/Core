@@ -1,9 +1,8 @@
 /*
- * Copyright (C) MIKO LLC - All Rights Reserved
+ * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 12 2019
- *
+ * Written by Alexey Portnov, 8 2020
  */
 
 /* global globalRootUrl,globalTranslate, Extensions, Form */
@@ -26,7 +25,7 @@ const incomingRouteModify = {
 			identifier: 'timeout',
 			rules: [
 				{
-					type: 'integer[10..180]',
+					type: 'integer[3..300]',
 					prompt: globalTranslate.ir_ValidateTimeoutOutOfRange,
 				},
 			],

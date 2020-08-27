@@ -11,7 +11,7 @@
         <tbody>
     {% endif %}
 
-    <tr class="codec-row" id="{{ codec.id }}" data-value="{{ code.priority }}">
+    <tr class="codec-row" id="{{ codec.id }}" data-value="{{ codec.priority }}">
         <td class="dragHandle"><i class="sort grey icon"></i></td>
         <td>
             <div class="ui toggle checkbox codecs">
@@ -41,7 +41,7 @@
             <tbody>
         {% endif %}
 
-    <tr class="codec-row" id="{{ codec.id }}" data-value="{{ code.priority }}">
+    <tr class="codec-row" id="{{ codec.id }}" data-value="{{ codec.priority }}">
         <td class="dragHandle"><i class="sort grey icon"></i></td>
         <td>
             <div class="ui toggle checkbox codecs">
