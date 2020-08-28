@@ -1,9 +1,9 @@
 <?php
-/**
+/*
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 7 2020
+ * Written by Alexey Portnov, 8 2020
  */
 
 namespace MikoPBX\Core\Asterisk\Configs;
@@ -89,6 +89,8 @@ class ModulesConf extends ConfigClass
             'func_logic.so',
             'func_strings.so',
             'func_periodic_hook.so',
+            'func_pjsip_contact.so',
+            'func_pjsip_aor.so',
             'pbx_config.so',
             'pbx_loopback.so',
             'pbx_spool.so',
