@@ -42,7 +42,6 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
         $this->changeInputField('defaultuser', $params['defaultuser']);
         $this->changeInputField('fromuser', $params['fromuser']);
         $this->changeInputField('fromdomain', $params['fromdomain']);
-        $this->changeInputField('manualregister', $params['manualregister']);
         $this->changeCheckBoxState('disablefromuser', $params['disablefromuser']);
         $this->changeCheckBoxState('noregister', $params['noregister']);
         $this->changeCheckBoxState('receive_calls_without_auth', $params['receive_calls_without_auth']);
@@ -70,7 +69,6 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
         $this->assertInputFieldValueEqual('defaultuser', $params['defaultuser']);
         $this->assertInputFieldValueEqual('fromuser', $params['fromuser']);
         $this->assertInputFieldValueEqual('fromdomain', $params['fromdomain']);
-        $this->assertInputFieldValueEqual('manualregister', $params['manualregister']);
         $this->assertCheckBoxStageIsEqual('disablefromuser', $params['disablefromuser']);
         $this->assertCheckBoxStageIsEqual('noregister', $params['noregister']);
         $this->assertCheckBoxStageIsEqual('receive_calls_without_auth', $params['receive_calls_without_auth']);
@@ -100,7 +98,6 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
             'defaultuser'=>'',
             'fromuser'=>'',
             'fromdomain'=>'',
-            'manualregister'=>'',
             'disablefromuser'=>false,
             'noregister'=>true,
             'receive_calls_without_auth'=>false,
@@ -121,7 +118,6 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
             'defaultuser'=>'',
             'fromuser'=>'',
             'fromdomain'=>'',
-            'manualregister'=>'',
             'disablefromuser'=>true,
             'noregister'=>true,
             'receive_calls_without_auth'=>true,

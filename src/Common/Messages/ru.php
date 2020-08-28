@@ -195,7 +195,6 @@ return [
     'pr_SIPPort'                                                  => 'Порт соединения SIP',
     'pr_DisableFromUser'                                          => 'Отключить использование поля fromuser',
     'pr_NoRegister'                                               => 'Отключить регистрацию',
-    'pr_ManualRegisterString'                                     => 'Переопределить строку регистрации (register)',
     'pr_ManualAdditionalAtributes'                                => 'Дополнительные параметры',
     'pr_UpdateStatus'                                             => 'Обновление статуса',
     'pr_Online'                                                   => 'Связь установлена',

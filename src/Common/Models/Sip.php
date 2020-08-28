@@ -119,10 +119,6 @@ class Sip extends ModelsBase
      */
     public ?string $manualattributes = '';
 
-    /**
-     * @Column(type="string", nullable=true)
-     */
-    public ?string $manualregister = '';
 
     /**
      * @Column(type="integer", nullable=true)

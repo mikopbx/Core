@@ -136,8 +136,6 @@ class SipProviderEditForm extends Form
         }
         $this->add(new Check('noregister', $cheskarr));
 
-        // Manualregister
-        $this->add(new Text('manualregister'));
 
         // Disablefromuser
         $cheskarr = ['value' => null];
