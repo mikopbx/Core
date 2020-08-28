@@ -119,10 +119,10 @@ class ConferenceRoomsController extends BaseController
     }
 
     /**
-     * Обновление параметров очереди
+     * Updates conference room properties
      *
-     * @param \MikoPBX\Common\Models\ConferenceRooms $room
-     * @param array                                  $data массив полей из POST запроса
+     * @param \MikoPBX\Common\Models\ConferenceRooms $room entity
+     * @param array                                  $data POST fields
      *
      * @return bool update result
      */

@@ -46,28 +46,28 @@ class Extensions extends ModelsBase
      *
      * @Column(type="string", nullable=true)
      */
-    public ?string $number = null;
+    public ?string $number = '';
 
     /**
      * Тип внутреннего номера
      *
      * @Column(type="string", nullable=true)
      */
-    public ?string $type = null;
+    public ?string $type = '';
 
     /**
      * Caller id для номера
      *
      * @Column(type="string", nullable=true)
      */
-    public ?string $callerid = null;
+    public ?string $callerid = '';
 
     /**
      * Ссылка на таблицу пользователей, может быть NULL, если это не пользоваетель
      *
      * @Column(type="integer", nullable=true)
      */
-    public ?string $userid = null;
+    public ?string $userid = '';
 
     /**
      * Признак отображения в телефонной книге, и при выборе в списках

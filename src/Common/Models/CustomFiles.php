@@ -29,7 +29,7 @@ class CustomFiles extends ModelsBase
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $filepath = null;
+    public ?string $filepath = '';
 
     /**
      * @Column(type="string", nullable=true)
@@ -54,7 +54,7 @@ class CustomFiles extends ModelsBase
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $description = null;
+    public ?string $description = '';
 
     public function initialize(): void
     {

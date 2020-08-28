@@ -23,14 +23,14 @@ class PbxSettings extends ModelsBase
 
     /**
      * @Primary
-     * @Column(type="string", nullable=true)
+     * @Column(type="string", nullable=false)
      */
     public string $key;
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public string $value;
+    public ?string $value;
 
     /**
      * Значениея по умолчанию для переменных станции

@@ -32,47 +32,47 @@ class Iax extends ModelsBase
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $uniqid = null;
+    public ?string $uniqid = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $username = null;
+    public ?string $username = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $secret = null;
+    public ?string $secret = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $host = null;
+    public ?string $host = '';
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public ?string $qualify = null;
+    public ?string $qualify = '';
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public ?string $disabled = null;
+    public ?string $disabled = '0';
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public ?string $noregister = null;
+    public ?string $noregister = '0';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $manualattributes = null;
+    public ?string $manualattributes = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $description = null;
+    public ?string $description = '';
 
 
     public function initialize(): void

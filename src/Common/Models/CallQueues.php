@@ -32,110 +32,110 @@ class CallQueues extends ModelsBase
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $uniqid = null;
+    public ?string $uniqid = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $name = null;
+    public ?string $name = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $extension = null;
+    public ?string $extension = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $strategy = null;
+    public ?string $strategy = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $seconds_to_ring_each_member = null;
+    public ?string $seconds_to_ring_each_member = '';
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public ?string $seconds_for_wrapup = null;
+    public ?string $seconds_for_wrapup = '';
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public ?string $recive_calls_while_on_a_call = null;
+    public ?string $recive_calls_while_on_a_call = '';
 
     /**
      * @Column(type="string", nullable=true){'ringing'|'musiconhold'}
      */
-    public ?string $caller_hear = null;
+    public ?string $caller_hear = 'ringing';
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public ?string $announce_position = null;
+    public ?string $announce_position = '';
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public ?string $announce_hold_time = null;
+    public ?string $announce_hold_time = '';
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public ?string $periodic_announce_sound_id = null;
+    public ?string $periodic_announce_sound_id = '';
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public ?string $periodic_announce_frequency = null;
+    public ?string $periodic_announce_frequency = '';
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public ?string $timeout_to_redirect_to_extension = null;
+    public ?string $timeout_to_redirect_to_extension = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $timeout_extension = null;
+    public ?string $timeout_extension = '';
 
     /**
      * Link to Extension number
      *
      * @Column(type="string", nullable=true)
      */
-    public ?string $redirect_to_extension_if_empty = null;
+    public ?string $redirect_to_extension_if_empty = '';
 
     /**
      * Number unanswered calls before redirect
      *
      * @Column(type="integer", nullable=true)
      */
-    public ?string $number_unanswered_calls_to_redirect = null;
+    public ?string $number_unanswered_calls_to_redirect = '';
 
     /**
      * Link to Extension number
      * @Column(type="string", nullable=true)
      */
-    public ?string $redirect_to_extension_if_unanswered = null;
+    public ?string $redirect_to_extension_if_unanswered = '';
 
     /**
      * Number repeat queue cycle
      *
      * @Column(type="integer", nullable=true)
      */
-    public ?string $number_repeat_unanswered_to_redirect = null;
+    public ?string $number_repeat_unanswered_to_redirect = '';
 
     /**
      * Link to Extension number
      * @Column(type="string", nullable=true)
      */
-    public ?string $redirect_to_extension_if_repeat_exceeded = null;
+    public ?string $redirect_to_extension_if_repeat_exceeded = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $description = null;
+    public ?string $description = '';
 
     public function initialize(): void
     {

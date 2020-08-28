@@ -28,42 +28,42 @@ class IncomingRoutingTable extends ModelsBase
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $rulename = null;
+    public ?string $rulename = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $number = null;
+    public ?string $number = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $extension = null;
+    public ?string $extension = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $provider = null;
+    public ?string $provider = '';
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public ?string $priority = null;
+    public ?string $priority = '0';
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public ?string $timeout = null;
+    public ?string $timeout = '30';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $action = null;
+    public ?string $action = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $note = null;
+    public ?string $note = '';
 
 
     public function initialize(): void

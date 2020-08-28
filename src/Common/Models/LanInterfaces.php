@@ -31,82 +31,82 @@ class LanInterfaces extends ModelsBase
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $name = null;
+    public ?string $name = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $interface = null;
+    public ?string $interface = '';
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public  ?string $vlanid = null;
+    public ?string $vlanid = '0';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $subnet = null;
+    public ?string $subnet = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $ipaddr = null;
+    public ?string $ipaddr = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $gateway = null;
+    public ?string $gateway = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $topology = null;
+    public ?string $topology = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $extipaddr = null;
+    public ?string $extipaddr = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $exthostname = null;
+    public ?string $exthostname = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $hostname = null;
+    public ?string $hostname = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $domain = null;
+    public ?string $domain = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $primarydns = null;
+    public ?string $primarydns = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $secondarydns = null;
+    public ?string $secondarydns = '';
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public ?string $dhcp = null;
+    public ?string $dhcp = '1';
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public ?string $internet = null;
+    public ?string $internet = '0';
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public ?string $disabled = null;
+    public ?string $disabled = '0';
 
     public function initialize(): void
     {

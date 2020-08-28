@@ -26,22 +26,22 @@ class CallEventsLogs extends ModelsBase
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $eventtime = null;
+    public ?string $eventtime = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $app = null;
+    public ?string $app = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $linkedid = null;
+    public ?string $linkedid = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $datajson = null;
+    public ?string $datajson = '';
 
 
     public function initialize(): void

@@ -26,119 +26,119 @@ abstract class CallDetailRecordsBase extends ModelsBase
      * Time call starts
      * @Column(type="string", nullable=true)
      */
-    public ?string $start = null;
+    public ?string $start = '';
 
     /**
      * Time when call ends
      * @Column(type="string", nullable=true)
      */
-    public ?string $endtime = null;
+    public ?string $endtime = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $answer = null;
+    public ?string $answer = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $src_chan = null;
+    public ?string $src_chan = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $src_num = null;
+    public ?string $src_num = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $dst_chan = null;
+    public ?string $dst_chan = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $dst_num = null;
+    public ?string $dst_num = '';
 
     /**
      * @Primary
      * @Column(type="string", nullable=true)
      */
-    public ?string $UNIQUEID = null;
+    public ?string $UNIQUEID = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $linkedid = null;
+    public ?string $linkedid = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $did = null;
+    public ?string $did = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $disposition = null;
+    public ?string $disposition = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $recordingfile = null;
+    public ?string $recordingfile = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $from_account = null;
+    public ?string $from_account = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $to_account = null;
+    public ?string $to_account = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $dialstatus = null;
+    public ?string $dialstatus = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $appname = null;
+    public ?string $appname = '';
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public ?string $transfer = null;
+    public ?string $transfer = '';
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public ?string $is_app = null;
+    public ?string $is_app = '';
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public ?string $duration = null;
+    public ?string $duration = '';
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public ?string $billsec = null;
+    public ?string $billsec = '';
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public ?string $work_completed = null;
+    public ?string $work_completed = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $src_call_id = null;
+    public ?string $src_call_id = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $dst_call_id = null;
+    public ?string $dst_call_id = '';
 
     public function getIndexColumn():array {
         return ['UNIQUEID', 'src_chan', 'dst_chan', 'linkedid', 'start', 'src_num', 'dst_num'];

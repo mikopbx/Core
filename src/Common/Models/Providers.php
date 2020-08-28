@@ -37,22 +37,22 @@ class Providers extends ModelsBase
      * @Primary
      * @Column(type="string", nullable=true)
      */
-    public ?string $uniqid = null;
+    public ?string $uniqid = '';
 
     /**
      * @Column(type="string", nullable=true){'SIP'|'IAX'}
      */
-    public ?string $type = null;
+    public ?string $type = 'SIP';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $sipuid = null;
+    public ?string $sipuid = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $iaxuid = null;
+    public ?string $iaxuid = '';
 
 
     public function initialize(): void

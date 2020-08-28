@@ -30,27 +30,27 @@ class NetworkFilters extends ModelsBase
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $permit = null;
+    public ?string $permit = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $deny = null;
+    public ?string $deny = '';
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public ?string $newer_block_ip = null;
+    public ?string $newer_block_ip = '';
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public ?string $local_network = null;
+    public ?string $local_network = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $description = null;
+    public ?string $description = '';
 
     /**
      * Вернуть список подсетей с разрешенным типом трафика

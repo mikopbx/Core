@@ -26,22 +26,22 @@ class Fail2BanRules extends ModelsBase
     /**
      * @Column(type="integer", nullable=true)
      */
-    public ?string $maxretry = null;
+    public ?string $maxretry = '5';
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public ?string $bantime = null;
+    public ?string $bantime = '86400';
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public ?string $findtime = null;
+    public ?string $findtime = '1800';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $whitelist = null;
+    public ?string $whitelist = '';
 
     public function initialize(): void
     {

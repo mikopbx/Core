@@ -30,58 +30,58 @@ class Storage extends ModelsBase
     /**
      * @Column(type="string", nullable=true)
      */
-    public $name = null;
+    public ?string $name = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $device = null;
+    public ?string $device = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $mountpoint = null;
+    public ?string $mountpoint = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public $uniqid = null;
+    public ?string $uniqid = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $filesystemtype = null;
+    public ?string $filesystemtype = '';
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public ?string $media = null;
+    public ?string $media = '';
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public ?string $persistence = null;
+    public ?string $persistence = '';
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public ?string $astlogs = null;
+    public ?string $astlogs = '';
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public ?string $voicemailarchive = null;
+    public ?string $voicemailarchive = '';
 
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public ?string $syslog = null;
+    public ?string $syslog = '';
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public $check_when_booting = null;
+    public ?string $check_when_booting = '';
 
     public function initialize(): void
     {

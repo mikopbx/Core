@@ -29,42 +29,42 @@ class Users extends ModelsBase
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $email = null;
+    public ?string $email = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $username = null;
+    public ?string $username = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $password = null;
+    public ?string $password = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $role = null;
+    public ?string $role = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $language = null;
+    public ?string $language = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public  ?string  $voicemailpincode = null;
+    public ?string  $voicemailpincode = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $ldapauth = null;
+    public ?string $ldapauth = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $avatar = null;
+    public ?string $avatar = '';
 
     public static function getRoleValues(): array
     {

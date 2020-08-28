@@ -33,37 +33,37 @@ class DialplanApplications extends ModelsBase
      * @Primary
      * @Column(type="string", nullable=true)
      */
-    public ?string $uniqid = null;
+    public ?string $uniqid = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $name = null;
+    public ?string $name = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $extension = null;
+    public ?string $extension = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $hint = null;
+    public ?string $hint = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $applicationlogic = null;
+    public ?string $applicationlogic = '';
 
     /**
      * @Column(type="string", nullable=true) {'plaintext'|'php'}
      */
-    public string $type='plaintext';
+    public ?string $type='plaintext';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $description = null;
+    public ?string $description = '';
 
     public function initialize(): void
     {

@@ -32,86 +32,86 @@ class AsteriskManagerUsers extends ModelsBase
      *
      * @Column(type="string", nullable=true)
      */
-    public ?string $username = null;
+    public ?string $username = '';
 
     /**
      * AMI users password
      *
      * @Column(type="string", nullable=true)
      */
-    public ?string $secret = null;
+    public ?string $secret = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $call = null;
+    public ?string $call = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $cdr = null;
+    public ?string $cdr = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $originate = null;
+    public ?string $originate = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $reporting = null;
+    public ?string $reporting = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $agent = null;
+    public ?string $agent = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $config = null;
+    public ?string $config = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $dialplan = null;
+    public ?string $dialplan = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $dtmf = null;
+    public ?string $dtmf = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $log = null;
+    public ?string $log = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $system = null;
+    public ?string $system = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $user = null;
+    public ?string $user = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $verbose = null;
+    public ?string $verbose = '';
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public ?string $networkfilterid = null;
+    public ?string $networkfilterid = '';
 
     /**
      * AMI users Description
      *
      * @Column(type="string", nullable=true)
      */
-    public ?string $description = null;
+    public ?string $description = '';
 
     public function initialize(): void
     {

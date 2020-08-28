@@ -32,117 +32,117 @@ class Sip extends ModelsBase
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $uniqid = null;
+    public ?string $uniqid = '';
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public ?string $disabled = null;
+    public ?string $disabled = '0';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $extension = null;
+    public ?string $extension = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $type = null;
+    public ?string $type = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $host = null;
+    public ?string $host = '';
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public ?string $port = null;
+    public ?string $port = '5060';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $username = null;
+    public ?string $username = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $secret = null;
+    public ?string $secret = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $defaultuser = null;
+    public ?string $defaultuser = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $fromuser = null;
+    public ?string $fromuser = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public  ?string $fromdomain = null;
+    public ?string $fromdomain = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $nat = null;
+    public ?string $nat = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $dtmfmode = null;
+    public ?string $dtmfmode = '';
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public ?string $qualifyfreq = null;
+    public ?string $qualifyfreq = '';
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public ?string $qualify = null;
+    public ?string $qualify = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $busylevel = null;
+    public ?string $busylevel = '';
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public ?string $networkfilterid = null;
+    public ?string $networkfilterid = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $manualattributes = null;
+    public ?string $manualattributes = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $manualregister = null;
+    public ?string $manualregister = '';
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public ?string $disablefromuser = null;
+    public ?string $disablefromuser = '';
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public ?string $noregister = null;
+    public ?string $noregister = '';
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public ?string $receive_calls_without_auth = null;
+    public ?string $receive_calls_without_auth = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $description = null;
+    public ?string $description = '';
 
 
     public function initialize(): void

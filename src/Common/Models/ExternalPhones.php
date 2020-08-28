@@ -32,33 +32,33 @@ class ExternalPhones extends ModelsBase
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $extension = null;
+    public ?string $extension = '';
 
     /**
      * @Primary
      * @Column(type="string", nullable=true)
      */
-    public ?string $uniqid = null;
+    public ?string $uniqid = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $dialstring = null;
+    public ?string $dialstring = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $manualdialplanincoming = null;
+    public ?string $manualdialplanincoming = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $manualdialplanoutgoing = null;
+    public ?string $manualdialplanoutgoing = '';
 
     /**
      * @Column(type="integer", nullable=true, default='0')
      */
-    public string $disabled = '0';
+    public ?string $disabled = '0';
 
     public function initialize(): void
     {

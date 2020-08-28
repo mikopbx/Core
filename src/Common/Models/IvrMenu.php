@@ -35,64 +35,64 @@ class IvrMenu extends ModelsBase
      *
      * @Column(type="string", nullable=true)
      */
-    public ?string $uniqid = null;
+    public ?string $uniqid = '';
 
     /**
      * Номер IVR меню
      *
      * @Column(type="string", nullable=true)
      */
-    public ?string $extension = null;
+    public ?string $extension = '';
 
     /**
      * ID записи аудиоприветсвия
      *
      * @Column(type="string", nullable=true)
      */
-    public ?string $audio_message_id = null;
+    public ?string $audio_message_id = '';
 
     /**
      * Название IVR меню
      *
      * @Column(type="string", nullable=true)
      */
-    public ?string $name = null;
+    public ?string $name = '';
 
     /**
      * Ожидание ввода внутреннего номера после проигрывания приветсвитя
      * 7 секунд по-умолчанию
-     * @Column(type="integer", nullable=true)
+     * @Column(type="integer", nullable=true, default="7")
      */
-    public ?string $timeout = null;
+    public ?string $timeout = '7';
 
     /**
      * Номер на который уйдет вызов после $number_of_repeat попыток набора
      *
      * @Column(type="string", nullable=true)
      */
-    public ?string $timeout_extension = null;
+    public ?string $timeout_extension = '';
 
     /**
      * Разрешить донабор любого внутреннего номера
      *
      * @Column(type="integer", nullable=true)
      */
-    public ?string $allow_enter_any_internal_extension = null;
+    public ?string $allow_enter_any_internal_extension = '';
 
 
     /**
      * Максимальное число повторов меню перед отправкой на номер по умолчанию
      *
-     * @Column(type="integer", nullable=true)
+     * @Column(type="integer", nullable=true, default="3")
      */
-    public $number_of_repeat;
+    public $number_of_repeat = '3';
 
     /**
      * Комментарий
      *
      * @Column(type="string", nullable=true)
      */
-    public $description;
+    public $description = '';
 
     /**
      *

@@ -30,27 +30,27 @@ class ExtensionForwardingRights extends ModelsBase
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $extension = null;
+    public ?string $extension = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $forwarding = null;
+    public ?string $forwarding = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $forwardingonbusy = null;
+    public ?string $forwardingonbusy = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $forwardingonunavailable = null;
+    public ?string $forwardingonunavailable = '';
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public ?string $ringlength = null;
+    public ?string $ringlength = '';
 
     public function initialize(): void
     {
