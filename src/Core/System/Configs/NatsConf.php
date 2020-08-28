@@ -83,8 +83,13 @@ class NatsConf extends Injectable
     {
         $confdir = '/etc/nats';
         Util::mwMkdir($confdir);
+
         $logdir = System::getLogDir() . '/nats';
         Util::mwMkdir($logdir);
+
+        $tempDir = $this->config->path('core.tempDir');
+        $sessionsDir = "{$tempDir}/nats_cache";
+        Util::mwMkdir($sessionsDir);
 
         $pid_file = '/var/run/gnatsd.pid';
         $settings = [
@@ -97,7 +102,7 @@ class NatsConf extends Injectable
             'max_connections'  => '1000',
             'max_payload'      => '1000000',
             'max_control_line' => '512',
-            'sessions_path'    => $logdir,
+            'sessions_path'    => $sessionsDir,
             'log_file'         => "{$logdir}/gnatsd.log",
         ];
         $config   = '';
@@ -108,13 +113,14 @@ class NatsConf extends Injectable
         Util::fileWriteContent($conf_file, $config);
 
         $lic = $this->mikoPBXConfig->getGeneralSettings('PBXLicense');
-        file_put_contents($logdir . '/license.key', $lic);
+        file_put_contents("{$sessionsDir}/license.key", $lic);
 
         if (file_exists($pid_file)) {
             $killPath = Util::which('kill');
             $catPath = Util::which('kill');
             Util::mwExec("{$killPath} $({$catPath} {$pid_file})");
         }
+
         $gnatsdPath = Util::which('gnatsd');
         Util::mwExecBg("{$gnatsdPath} --config {$conf_file}", "{$logdir}/gnats_process.log");
     }
