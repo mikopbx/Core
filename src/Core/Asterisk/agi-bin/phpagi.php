@@ -1,10 +1,10 @@
 <?php
 
-/**
+/*
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 6 2020
+ * Written by Alexey Portnov, 8 2020
  */
 
 if ( !class_exists('AGI_AsteriskManager')) {
@@ -876,7 +876,7 @@ class AGI
     public function exec($application, $options)
     {
         if (is_array($options)) {
-            $options = join('|', $options);
+            $options = join(',', $options);
         }
 
         return $this->evaluate("EXEC $application $options");
