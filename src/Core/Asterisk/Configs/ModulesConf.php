@@ -19,13 +19,8 @@ class ModulesConf extends ConfigClass
     {
         $conf = "[modules]\n" .
             "autoload=no\n";
-        $modules = [];
-        $modules[] = [
-            //'res_odbc.so',                              
-            //'res_config_odbc.so',                       
-            //'pbx_realtime.so',                          
-            //'res_sorcery_realtime.so',                  
-            //'res_config_sqlite3.so',
+
+        $modules = [
             'app_mixmonitor.so',
             'app_cdr.so',
             'app_exec.so',
