@@ -1,9 +1,9 @@
 <?php
-/**
+/*
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 7 2020
+ * Written by Alexey Portnov, 9 2020
  */
 
 namespace MikoPBX\Core\Workers;
@@ -39,7 +39,7 @@ class WorkerCallEvents extends WorkerBase
     public static function Action_app_end($data): void
     {
         $filter = [
-            'linkedid=:linkedid: AND is_app=1 AND endtime IS NULL',
+            'linkedid=:linkedid: AND is_app=1 AND endtime = ""',
             'bind' => [
                 'linkedid' => $data['linkedid'],
             ],
@@ -68,12 +68,12 @@ class WorkerCallEvents extends WorkerBase
             // Применимо только для Originate, когда в качестве звонящего используем два канала
             // мобильный и внутренний номер.
             $filter = [
-                '(UNIQUEID=:UNIQUEID: OR UNIQUEID=:org_id:) AND endtime IS NULL',
+                '(UNIQUEID=:UNIQUEID: OR UNIQUEID=:org_id:) AND endtime = ""',
                 'bind' => ['UNIQUEID' => $data['UNIQUEID'], 'org_id' => $data['org_id'],],
             ];
         } else {
             $filter = [
-                'UNIQUEID=:UNIQUEID: AND answer IS NULL AND endtime IS NULL',
+                'UNIQUEID=:UNIQUEID: AND answer = "" AND endtime = ""',
                 'bind' => [
                     'UNIQUEID' => $data['UNIQUEID'],
                 ],
@@ -193,7 +193,7 @@ class WorkerCallEvents extends WorkerBase
                 // Переменная ENDCALLONANSWER устанавливается при начале работы умной маршуртизации.
                 // Как только произошел ответ на вызов, отметим вызов на приложение как завершенный.
                 $filter = [
-                    'UNIQUEID<>:UNIQUEID: AND is_app=1 AND endtime IS NULL AND src_chan=:src_chan:',
+                    'UNIQUEID<>:UNIQUEID: AND is_app=1 AND endtime = "" AND src_chan=:src_chan:',
                     'bind' => [
                         'UNIQUEID' => $data['id'],
                         'src_chan' => $data['BRIDGEPEER'],
@@ -217,7 +217,7 @@ class WorkerCallEvents extends WorkerBase
                 // Применимо только для Originate, когда в качестве звонящего используем два канала
                 // мобильный и внутренний номер.
                 $filter = [
-                    '(UNIQUEID=:UNIQUEID: OR UNIQUEID=:org_id:) AND answer IS NULL AND endtime IS NULL',
+                    '(UNIQUEID=:UNIQUEID: OR UNIQUEID=:org_id:) AND answer = "" AND endtime = ""',
                     'bind' => [
                         'UNIQUEID' => $data['id'],
                         'org_id'   => $data['org_id'],
@@ -225,7 +225,7 @@ class WorkerCallEvents extends WorkerBase
                 ];
             } else {
                 $filter = [
-                    '(UNIQUEID=:UNIQUEID: OR UNIQUEID=:UNIQUEID_CHAN:) AND answer IS NULL AND endtime IS NULL',
+                    '(UNIQUEID=:UNIQUEID: OR UNIQUEID=:UNIQUEID_CHAN:) AND answer = "" AND endtime = ""',
                     'bind' => [
                         'UNIQUEID'      => $data['id'],
                         'UNIQUEID_CHAN' => $data['id'] . '_' . $data['agi_channel'],
@@ -242,7 +242,7 @@ class WorkerCallEvents extends WorkerBase
                     }
                     // Найдем все прочие CDR по данному originate и отметим как завершенные.
                     $filter      = [
-                        'linkedid=:linkedid: AND endtime IS NOT NULL AND src_chan <> :src_chan:',
+                        'linkedid=:linkedid: AND endtime <> "" AND src_chan <> :src_chan:',
                         'bind' => [
                             'linkedid' => $row->linkedid,
                             'src_chan' => $data['agi_channel'],
@@ -285,7 +285,7 @@ class WorkerCallEvents extends WorkerBase
         $channels       = [];
         $transfer_calls = [];
         $filter         = [
-            'linkedid=:linkedid: AND endtime IS NULL AND (src_chan=:src_chan: OR dst_chan=:dst_chan:)',
+            'linkedid=:linkedid: AND endtime = "" AND (src_chan=:src_chan: OR dst_chan=:dst_chan:)',
             'bind' => [
                 'linkedid' => $data['linkedid'],
                 'src_chan' => $data['agi_channel'],
@@ -401,7 +401,7 @@ class WorkerCallEvents extends WorkerBase
     {
         if (null === $calls_data) {
             $filter     = [
-                'linkedid=:linkedid: AND endtime IS NULL AND transfer=1 AND (src_chan=:chan: OR dst_chan=:chan:)',
+                'linkedid=:linkedid: AND endtime = "" AND transfer=1 AND (src_chan=:chan: OR dst_chan=:chan:)',
                 'bind'  => [
                     'linkedid' => $data['linkedid'],
                     'chan'     => $data['agi_channel'],
@@ -462,7 +462,7 @@ class WorkerCallEvents extends WorkerBase
             $row_data = $calls_data[0];
             $chan     = ($data['agi_channel'] === $row_data['src_chan']) ? $row_data['dst_chan'] : $row_data['src_chan'];
             $filter   = [
-                'linkedid=:linkedid: AND endtime IS NULL AND transfer=1 AND (src_chan=:chan: OR dst_chan=:chan:)',
+                'linkedid=:linkedid: AND endtime = "" AND transfer=1 AND (src_chan=:chan: OR dst_chan=:chan:)',
                 'bind'  => [
                     'linkedid' => $data['linkedid'],
                     'chan'     => $chan,
@@ -509,7 +509,7 @@ class WorkerCallEvents extends WorkerBase
     public static function Action_transfer_check($data): void
     {
         $filter = [
-            "linkedid=:linkedid: AND endtime IS NULL AND transfer=0 AND (src_chan=:src_chan: OR dst_chan=:src_chan:)",
+            'linkedid=:linkedid: AND endtime = "" AND transfer=0 AND (src_chan=:src_chan: OR dst_chan=:src_chan:)',
             'bind' => [
                 'linkedid' => $data['linkedid'],
                 'src_chan' => $data['src_chan'],
@@ -536,7 +536,7 @@ class WorkerCallEvents extends WorkerBase
     public static function Action_transfer_dial_create_chan($data): void
     {
         $filter     = [
-            'UNIQUEID=:UNIQUEID: AND endtime IS NULL AND answer IS NULL',
+            'UNIQUEID=:UNIQUEID: AND endtime = "" AND answer = ""',
             'bind' => [
                 'UNIQUEID' => $data['transfer_UNIQUEID'],
             ],
@@ -593,7 +593,7 @@ class WorkerCallEvents extends WorkerBase
     public static function Action_transfer_dial_answer($data): void
     {
         $filter = [
-            '(UNIQUEID=:UNIQUEID: OR UNIQUEID=:UNIQUEID_CHAN:) AND answer IS NULL AND endtime IS NULL',
+            '(UNIQUEID=:UNIQUEID: OR UNIQUEID=:UNIQUEID_CHAN:) AND answer = "" AND endtime = ""',
             'bind' => [
                 'UNIQUEID'      => $data['transfer_UNIQUEID'],
                 'UNIQUEID_CHAN' => $data['transfer_UNIQUEID'] . '_' . $data['agi_channel'],
@@ -627,7 +627,7 @@ class WorkerCallEvents extends WorkerBase
 
             // Найдем записанные ранее строки.
             $filter = [
-                'linkedid=:linkedid: AND endtime IS NULL AND (src_chan=:chan: OR dst_chan=:chan:)',
+                'linkedid=:linkedid: AND endtime = "" AND (src_chan=:chan: OR dst_chan=:chan:)',
                 'bind' => [
                     'linkedid' => $data['linkedid'],
                     'chan'     => $data['agi_channel'],
@@ -646,7 +646,7 @@ class WorkerCallEvents extends WorkerBase
             }
             // Попробуем начать запись разговора.
             $filter = [
-                'linkedid=:linkedid: AND endtime IS NULL AND transfer=1',
+                'linkedid=:linkedid: AND endtime = "" AND transfer=1',
                 'bind' => [
                     'linkedid' => $data['linkedid'],
                 ],
@@ -661,7 +661,7 @@ class WorkerCallEvents extends WorkerBase
             }
         } elseif ('' === $data['ANSWEREDTIME']) {
             $filter = [
-                'linkedid=:linkedid: AND endtime IS NULL AND (src_chan=:src_chan: OR dst_chan=:dst_chan:)',
+                'linkedid=:linkedid: AND endtime = "" AND (src_chan=:src_chan: OR dst_chan=:dst_chan:)',
                 'bind' => [
                     'linkedid' => $data['linkedid'],
                     'src_chan' => $data['TRANSFERERNAME'],
@@ -682,7 +682,7 @@ class WorkerCallEvents extends WorkerBase
 
             // Попробуем возобновить запись разговора.
             $filter = [
-                'linkedid=:linkedid: AND endtime IS NULL',
+                'linkedid=:linkedid: AND endtime = ""',
                 'bind' => [
                     'linkedid' => $data['linkedid'],
                 ],
@@ -830,7 +830,7 @@ class WorkerCallEvents extends WorkerBase
     public static function Action_queue_answer($data): void
     {
         $filter = [
-            "UNIQUEID=:UNIQUEID: AND answer IS NULL",
+            'UNIQUEID=:UNIQUEID: AND answer = ""',
             'bind' => [
                 'UNIQUEID' => $data['id'],
             ],
