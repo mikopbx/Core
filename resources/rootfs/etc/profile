@@ -3,7 +3,7 @@
 # Copyright © MIKO LLC - All Rights Reserved
 # Unauthorized copying of this file, via any medium is strictly prohibited
 # Proprietary and confidential
-# Written by Alexey Portnov, 7 2020
+# Written by Alexey Portnov, 9 2020
 #
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/sbin
@@ -27,5 +27,5 @@ alias ls='ls --color=auto'
 alias myip="curl http://ipecho.net/plain; echo"
 alias remount-offload="mount -o remount,rw /offload/"
 
-PS1='\w \$ '
+PS1='\w\$ '
 PS2='>'
