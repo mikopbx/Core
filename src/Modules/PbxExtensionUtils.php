@@ -1,10 +1,9 @@
 <?php
-/**
- * Copyright (C) MIKO LLC - All Rights Reserved
+/*
+ * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 6 2020
- *
+ * Written by Alexey Portnov, 9 2020
  */
 
 namespace MikoPBX\Modules;
@@ -112,6 +111,24 @@ class PbxExtensionUtils
         foreach ($files as $file) {
             $newFilename = $agiBinDir . '/' . pathinfo($file)['filename'];
             Util::createUpdateSymlink($file, $newFilename);
+        }
+    }
+
+    /**
+     * To grant permissions to files ./bin/* ./agi-bin/*
+     * @param string $moduleUniqueID
+     */
+    public static function grantPermissionsToFiles(string $moduleUniqueID):void{
+        $moduleDir = self::getModuleDir($moduleUniqueID);
+        $dirs = [
+            "{$moduleDir}/agi-bin",
+            "{$moduleDir}/bin"
+        ];
+        foreach ($dirs as $dir){
+            if(file_exists($dir) && is_dir($dir)){
+                $chmodOath = Util::which('chmod');
+                Util::mwExec("{$chmodOath} +x {$dir}/*");
+            }
         }
     }
 
