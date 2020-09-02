@@ -323,6 +323,7 @@ return [
     'cq_ValidateExtensionDouble'                                  => 'Внутренний номер, указанный для этой очереди, уже используется',
     'cq_ValidateExtensionNumber'                                  => 'Внутренний номер должен состоять только из чисел',
     'cq_ValidateNoExtensions'                                     => 'Не выбрано ни одного участника очереди',
+    'cq_CallerIDPrefix'                                           => 'Краткое название очереди для отображения перед CallerID абонента, например "Sales"',
     'dt_Info'                                                     => 'Записи с _START_ по _END_ из _TOTAL_',
     'dt_InfoEmpty'                                                => 'Нет ни одной записи, удовлетворяющей условиям отбора',
     'dt_InfoFiltered'                                             => '(отобрано из _MAX_ записей)',

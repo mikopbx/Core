@@ -221,6 +221,8 @@ class CallQueueEditForm extends Form
         );
         $this->add($extension);
 
+        // Caller ID prefix
+        $this->add(new Text('callerid_prefix'));
 
         // Description
         $rows = max(round(strlen($entity->description) / 95), 2);

@@ -135,6 +135,11 @@ class CallQueues extends ModelsBase
     /**
      * @Column(type="string", nullable=true)
      */
+    public ?string $callerid_prefix = '';
+
+    /**
+     * @Column(type="string", nullable=true)
+     */
     public ?string $description = '';
 
     public function initialize(): void
