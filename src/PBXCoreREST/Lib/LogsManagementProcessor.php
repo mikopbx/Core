@@ -8,7 +8,6 @@
 
 namespace MikoPBX\PBXCoreREST\Lib;
 
-
 use MikoPBX\Core\System\Network;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
@@ -17,12 +16,15 @@ use Phalcon\Di\Injectable;
 
 class LogsManagementProcessor extends Injectable
 {
+    public const DEFAULT_FILENAME = 'asterisk/messages';
+
     /**
      * Стартует запись логов.
      *
      * @param int $timeout
      *
      * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     * @throws \Exception
      */
     public static function startLog($timeout = 300): PBXApiResult
     {
@@ -81,6 +83,7 @@ class LogsManagementProcessor extends Injectable
      * Завершает запись логов.
      *
      * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     * @throws \Exception
      */
     public static function stopLog(): PBXApiResult
     {
@@ -140,4 +143,73 @@ class LogsManagementProcessor extends Injectable
         $res->data['filename'] = "{$uid}/{$link_name}";
         return $res;
     }
+
+    /**
+     * Returns list of log files to show them on web interface
+     *
+     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     */
+    public static function getLogsList(): PBXApiResult
+    {
+        $res = new PBXApiResult();
+        $res->processor = __METHOD__;
+        $logDir     = System::getLogDir();
+        $filesList = [];
+        $entries = FilesManagementProcessor::scanDirRecursively($logDir);
+        $entries = array_merge(...$entries);
+        foreach($entries as $entry) {
+            $relativePath = str_ireplace($logDir. '/', '', $entry);
+            $fileSize = ceil(filesize($entry)/1024);
+            $filesList[$relativePath] =
+            [
+                'path'=> $relativePath,
+                'size'=> "{$fileSize} kb",
+                'default'=>($relativePath===self::DEFAULT_FILENAME)
+            ];
+        }
+
+        ksort($filesList);
+        $res->success=true;
+        $res->data['files'] = $filesList;
+        return $res;
+    }
+
+    /**
+     * Gets log file content partially
+     *
+     * @param string $filename
+     * @param string $filter
+     * @param int    $lines
+     *
+     * @return PBXApiResult
+     */
+    public static function getLogFromFile($filename = 'messages', $filter = '', $lines = 500): PBXApiResult
+    {
+        $res = new PBXApiResult();
+        $res->processor = __METHOD__;
+        if ( ! file_exists($filename)) {
+            $filename = System::getLogDir() . '/' . $filename;
+        }
+        if ( ! file_exists($filename)) {
+            $res->success    = false;
+            $res->messages[] = 'No access to the file ' . $filename;
+        } else {
+            $res->success = true;
+            $cat          = Util::which('cat');
+            $grep         = Util::which('grep');
+            $tail         = Util::which('tail');
+
+            $di          = Di::getDefault();
+            $dirsConfig  = $di->getShared('config');
+            $filenameTmp = $dirsConfig->path('www.downloadCacheDir') . '/' . __FUNCTION__ . '_' . time() . '.log';
+            $cmd         = "{$cat} {$filename} | {$grep} " . escapeshellarg($filter) . " | $tail -n " . escapeshellarg(
+                    $lines
+                ) . "> $filenameTmp";
+            Util::mwExec("$cmd; chown www:www $filenameTmp");
+            $res->data['filename'] = $filenameTmp;
+        }
+
+        return $res;
+    }
+
 }

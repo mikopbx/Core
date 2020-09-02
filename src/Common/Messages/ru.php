@@ -1011,5 +1011,4 @@ return [
     'sd_lines'                                                            => 'Лимит',
     'sd_ShowLog'                                                          => 'Просмотр логов',
     'sd_CapturePcap'                                                      => 'Захват логов',
-    'sd_ShowLastLog'                                                  => 'Отобразить',
 ];

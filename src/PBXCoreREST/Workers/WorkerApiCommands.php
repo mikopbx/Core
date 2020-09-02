@@ -283,7 +283,7 @@ class WorkerApiCommands extends WorkerBase
                 $res = FilesManagementProcessor::fileReadContent($data['filename'], $data['needOriginal']);
                 break;
             case 'getLogFromFile':
-                $res = FilesManagementProcessor::getLogFromFile($data['filename'], $data['filter'], $data['lines']);
+                $res = LogsManagementProcessor::getLogFromFile($data['filename'], $data['filter'], $data['lines']);
                 break;
             case 'getExternalIpInfo':
                 $res = NetworkManagementProcessor::getExternalIpInfo();
@@ -308,6 +308,9 @@ class WorkerApiCommands extends WorkerBase
                 break;
             case 'stopLog':
                 $res = LogsManagementProcessor::stopLog();
+                break;
+            case 'getLogsList':
+                $res = LogsManagementProcessor::getLogsList();
                 break;
             case 'downloadNewFirmware':
                 $res = FilesManagementProcessor::downloadNewFirmware($request['data']);

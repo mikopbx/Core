@@ -28,6 +28,7 @@ const PbxApi = {
 	systemGetFileContent: `${Config.pbxUrl}/pbxcore/api/system/fileReadContent`, // Получить контент файла по имени
 	systemStartLogsCapture: `${Config.pbxUrl}/pbxcore/api/system/startLog`,
 	systemStopLogsCapture: `${Config.pbxUrl}/pbxcore/api/system/stopLog`,
+	systemGetLogsList: `${Config.pbxUrl}/pbxcore/api/system/getLogsList`, //curl http://127.0.0.1/pbxcore/api/system/getLogsList
 	systemGetExternalIP: `${Config.pbxUrl}/pbxcore/api/system/getExternalIpInfo`,
 	systemUpgrade: `${Config.pbxUrl}/pbxcore/api/system/upgrade`, // Обновление АТС файлом
 	systemGetLogFromFile: `${Config.pbxUrl}/pbxcore/api/system/getLogFromFile`, // Обновление АТС файлом
@@ -41,6 +42,7 @@ const PbxApi = {
 	systemModuleDownloadStatus: `${Config.pbxUrl}/pbxcore/api/system/moduleDownloadStatus`, //TODO::Проверить статус ошибки скачивания в переменной message
 	systemUploadFile: `${Config.pbxUrl}/pbxcore/api/upload/uploadResumable`, // curl -F "file=@ModuleTemplate.zip" http://127.0.0.1/pbxcore/api/upload/uploadResumable
 	systemStatusUploadFile: `${Config.pbxUrl}/pbxcore/api/upload/status`, // curl -X POST -d '{"id": "1531474060"}' http://127.0.0.1/pbxcore/api/upload/status;
+
 	/**
 	 * Проверка ответа на JSON
 	 * @param jsonString
@@ -377,7 +379,26 @@ const PbxApi = {
 		sessionStorage.setItem('LogsCaptureStatus', 'stopped');
 		window.location = PbxApi.systemStopLogsCapture;
 	},
-
+	/**
+	 * Gets system logs files list
+	 * @param callback function
+	 */
+	SystemGetLogsList(callback) {
+		$.api({
+			url: PbxApi.systemGetLogsList,
+			on: 'now',
+			successTest: PbxApi.successTest,
+			onSuccess(response) {
+				callback(response.data);
+			},
+			onFailure() {
+				callback(false);
+			},
+			onError() {
+				callback(false);
+			},
+		});
+	},
 	/**
 	 * Start system upgrade
 	 * @param filePath  tempFile path for upgrade
@@ -407,6 +428,7 @@ const PbxApi = {
 	 * @param filename
 	 * @param filter
 	 * @param lines
+	 * @param callback
 	 * @constructor
 	 */
 	GetLogFromFile(filename, filter, lines, callback) {
@@ -414,7 +436,7 @@ const PbxApi = {
 			url: PbxApi.systemGetLogFromFile,
 			on: 'now',
 			method: 'GET',
-			data: {filename:filename, filter:filter, lines:lines},
+			data: {filename, filter, lines},
 			successTest: PbxApi.successTest,
 			onSuccess(response) {
 				callback(response.data);

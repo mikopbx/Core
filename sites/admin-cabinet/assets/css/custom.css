@@ -360,3 +360,10 @@ Sound player slider
 #play-slider{
     margin-top: 10px;
 }
+
+/**
+Log file content
+ */
+#log-content-readonly{
+    min-height: 480px;
+}

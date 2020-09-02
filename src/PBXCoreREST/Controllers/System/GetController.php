@@ -78,15 +78,15 @@ class GetController extends BaseController
                 $this->response->sendRaw();
             } elseif ($actionName === 'getLogFromFile') {
                 $this->response->setPayloadSuccess('Log file not found.');
-                $filename = $response['data'][0] ?? '';
+                $filename = $response['data']['filename'] ?? '';
                 if ( ! file_exists($filename)) {
                     $this->response->setPayloadSuccess('Log file not found.');
 
                     return;
                 }
-                $response['data'][]  = $filename;
-                $response['data'][0] = '' . file_get_contents($filename);
-                unlink($filename);
+                $response['data']['filename']  = $filename;
+                $response['data']['content'] = '' . file_get_contents($filename);
+                //unlink($filename);
                 $this->response->setPayloadSuccess($response);
             } else {
                 $this->response->setPayloadSuccess($response);
