@@ -77,7 +77,7 @@ class TimeFrameEditForm extends Form
                             'id',
                             'name',
                         ],
-                        'useEmpty' => true,
+                        'useEmpty' => false,
                         'value'    => empty($entity->$key) ? -1 : $value,
                         'class'    => 'ui selection',
                     ]

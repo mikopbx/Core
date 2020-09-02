@@ -38,12 +38,12 @@ class OutWorkTimes extends ModelsBase
     /**
      * @Column(type="integer", nullable=true)
      */
-    public ?string $weekday_from = '-1';
+    public ?string $weekday_from = '';
 
     /**
      * @Column(type="integer", nullable=true)
      */
-    public ?string $weekday_to = '-1';
+    public ?string $weekday_to = '';
 
     /**
      * @Column(type="string", nullable=true)
