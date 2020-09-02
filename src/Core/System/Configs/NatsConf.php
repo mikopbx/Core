@@ -64,7 +64,7 @@ class NatsConf extends Injectable
         }
         $di     = Di::getDefault();
         if ($di !== null){
-            $varEtcDir = $di->getConfig()->path('core.varEtcDir');
+            $varEtcDir = $di->getShared('config')->path('core.varEtcDir');
         } else {
             $varEtcDir = '/var/etc';
         }
@@ -87,7 +87,7 @@ class NatsConf extends Injectable
         $logdir = System::getLogDir() . '/nats';
         Util::mwMkdir($logdir);
 
-        $tempDir = $this->config->path('core.tempDir');
+        $tempDir = $this->di->getShared('config')->path('core.tempDir');
         $sessionsDir = "{$tempDir}/nats_cache";
         Util::mwMkdir($sessionsDir);
 
