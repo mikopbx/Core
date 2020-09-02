@@ -228,7 +228,6 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
         self::$driver->executeScript('$("#mobile_number").trigger("change")');
         self::$driver->executeScript('extension.cbOnCompleteMobileNumber()');
         $this->changeInputField('user_email', $params['email']);
-        $this->selectDropdownItem('user_language', $params['user_language']);
         $this->changeInputField('sip_secret', $params['secret']);
 
         $this->changeTabOnCurrentPage('routing');
@@ -272,7 +271,6 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
         $this->assertMenuItemSelected('fwd_forwarding', $params['fwd_forwarding']);
         $this->assertMenuItemSelected('fwd_forwardingonunavailable', $params['fwd_forwardingonunavailable']);
         $this->changeTabOnCurrentPage('general');
-        $this->assertMenuItemSelected('user_language', $params['user_language']);
         $this->assertInputFieldValueEqual('sip_secret',  $params['secret']);
 
 
@@ -303,7 +301,6 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
                 'mobile'   => '79123125410',
                 'secret'   => '23542354wet2',
                 'sip_busylevel'=>2,
-                'user_language'=>'en-en',
                 'sip_dtmfmode'=>'inband',
                 'sip_networkfilterid'=>'4',
                 'fwd_ringlength'=>'30',

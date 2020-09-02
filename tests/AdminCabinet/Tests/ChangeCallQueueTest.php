@@ -21,7 +21,7 @@ class ChangeCallQueueTest extends MikoPBXTestsBase
      *
      * @param array $params ;
      */
-    public function testChangeExtension($params): void
+    public function testChangeCallQueueExtension($params): void
     {
         $this->clickSidebarMenuItemByHref('/admin-cabinet/call-queues/index/');
         $this->clickModifyButtonOnRowWithText($params['OldExtension']);
@@ -29,7 +29,7 @@ class ChangeCallQueueTest extends MikoPBXTestsBase
         $this->changeInputField('name', $params['name']);
 
         // Удаляем старых агентов
-        $xpath         = ('//a[contains(@class,"delete-row-button")]');
+        $xpath         = ('//div[contains(@class,"delete-row-button")]');
         $deleteButtons = self::$driver->findElements(WebDriverBy::xpath($xpath));
         foreach ($deleteButtons as $deleteButton) {
             $deleteButton->click();
@@ -117,8 +117,8 @@ class ChangeCallQueueTest extends MikoPBXTestsBase
             [
                 'description'                      => 'Sales department queue, the first line of agents2',
                 'name'                             => 'Sales department2',
-                'OldExtension'                        => 20020,
-                'extension'                     => 20021,
+                'OldExtension'                     => 20020,
+                'extension'                        => 20021,
                 'seconds_to_ring_each_member'      => 15,
                 'seconds_for_wrapup'               => 14,
                 'recive_calls_while_on_a_call'     => false,
