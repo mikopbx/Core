@@ -1,9 +1,9 @@
 <?php
-/**
+/*
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 7 2020
+ * Written by Alexey Portnov, 8 2020
  */
 
 namespace MikoPBX\Core\Asterisk\Configs;
@@ -19,13 +19,8 @@ class ModulesConf extends ConfigClass
     {
         $conf = "[modules]\n" .
             "autoload=no\n";
-        $modules = [];
-        $modules[] = [
-            //'res_odbc.so',                              
-            //'res_config_odbc.so',                       
-            //'pbx_realtime.so',                          
-            //'res_sorcery_realtime.so',                  
-            //'res_config_sqlite3.so',
+
+        $modules = [
             'app_mixmonitor.so',
             'app_cdr.so',
             'app_exec.so',
@@ -55,9 +50,6 @@ class ModulesConf extends ConfigClass
             //
             'codec_opus.so',
             'codec_resample.so',
-            //'codec_g729a.so';
-            //'codec_siren14.so';
-            //'codec_siren7.so';
             'codec_a_mu.so',
             'codec_ilbc.so',
             'codec_lpc10.so',
@@ -89,6 +81,8 @@ class ModulesConf extends ConfigClass
             'func_logic.so',
             'func_strings.so',
             'func_periodic_hook.so',
+            'func_pjsip_contact.so',
+            'func_pjsip_aor.so',
             'pbx_config.so',
             'pbx_loopback.so',
             'pbx_spool.so',
@@ -100,13 +94,9 @@ class ModulesConf extends ConfigClass
             'res_convert.so',
             'res_timing_dahdi.so',
             'res_mutestream.so',
-            // 'cdr_sqlite3_custom.so',        
-            // 'cdr_manager.so',               
-            // 'cel_sqlite3_custom.so',        
+
             'func_timeout.so',
             'res_parking.so',
-            // 'app_authenticate.so',          
-            //'app_page.so',                               
             'pbx_lua.so',
             'app_senddtmf.so',
             'app_userevent.so',
@@ -124,72 +114,62 @@ class ModulesConf extends ConfigClass
             'app_stack.so',
             'func_dialplan.so',
             'app_queue.so',
+            'res_crypto.so',
+            'res_pjproject.so',
+            'res_speech.so',
+            'res_sorcery_astdb.so',
+            'res_sorcery_config.so',
+            'res_sorcery_memory.so',
+
+            'chan_pjsip.so',
+            'func_pjsip_endpoint.so',
+            'res_http_websocket.so',
+            'res_musiconhold.so',
+            'res_pjproject.so',
+            'res_pjsip_acl.so',
+            'res_pjsip_authenticator_digest.so',
+            'res_pjsip_caller_id.so',
+            'res_pjsip_dialog_info_body_generator.so',
+            'res_pjsip_diversion.so',
+            'res_pjsip_dtmf_info.so',
+            'res_pjsip_endpoint_identifier_anonymous.so',
+            'res_pjsip_endpoint_identifier_ip.so',
+            'res_pjsip_endpoint_identifier_user.so',
+            'res_pjsip_exten_state.so',
+            'res_pjsip_header_funcs.so',
+            'res_pjsip_logger.so',
+            'res_pjsip_messaging.so',
+            'res_pjsip_mwi_body_generator.so',
+            'res_pjsip_mwi.so',
+            'res_pjsip_nat.so',
+            'res_pjsip_notify.so',
+            'res_pjsip_one_touch_record_info.so',
+            'res_pjsip_outbound_authenticator_digest.so',
+            'res_pjsip_outbound_publish.so',
+            'res_pjsip_outbound_registration.so',
+            'res_pjsip_path.so',
+            'res_pjsip_pidf_body_generator.so',
+            'res_pjsip_pidf_digium_body_supplement.so',
+            'res_pjsip_pidf_eyebeam_body_supplement.so',
+            'res_pjsip_publish_asterisk.so',
+            'res_pjsip_pubsub.so',
+            'res_pjsip_refer.so',
+            'res_pjsip_registrar.so',
+            'res_pjsip_rfc3326.so',
+            'res_pjsip_sdp_rtp.so',
+            'res_pjsip_send_to_voicemail.so',
+            'res_pjsip_session.so',
+            'res_pjsip.so',
+            'res_pjsip_t38.so',
+            'res_pjsip_transport_websocket.so',
+            'res_pjsip_xpidf_body_generator.so',
+            'res_pjsip_dlg_options.so',
+            'res_security_log.so',
         ];
+        file_put_contents($this->config->path('asterisk.astetcdir') . '/pjproject.conf', '');
+        file_put_contents($this->config->path('asterisk.astetcdir') . '/sorcery.conf', '');
+        file_put_contents($this->config->path('asterisk.astetcdir') . '/pjsip_notify.conf', '');
 
-        if (file_exists('/offload/asterisk/modules/res_pjproject.so')) {
-            $modules[] = [
-                'res_crypto.so',
-                'res_pjproject.so',
-                'res_speech.so',
-                'res_sorcery_astdb.so',
-                'res_sorcery_config.so',
-                'res_sorcery_memory.so',
-
-                'chan_pjsip.so',
-                'func_pjsip_endpoint.so',
-                'res_http_websocket.so',
-                'res_musiconhold.so',
-                'res_pjproject.so',
-                'res_pjsip_acl.so',
-                'res_pjsip_authenticator_digest.so',
-                'res_pjsip_caller_id.so',
-                'res_pjsip_dialog_info_body_generator.so',
-                'res_pjsip_diversion.so',
-                'res_pjsip_dtmf_info.so',
-                'res_pjsip_endpoint_identifier_anonymous.so',
-                'res_pjsip_endpoint_identifier_ip.so',
-                'res_pjsip_endpoint_identifier_user.so',
-                'res_pjsip_exten_state.so',
-                'res_pjsip_header_funcs.so',
-                'res_pjsip_logger.so',
-                'res_pjsip_messaging.so',
-                'res_pjsip_mwi_body_generator.so',
-                'res_pjsip_mwi.so',
-                'res_pjsip_nat.so',
-                'res_pjsip_notify.so',
-                'res_pjsip_one_touch_record_info.so',
-                'res_pjsip_outbound_authenticator_digest.so',
-                'res_pjsip_outbound_publish.so',
-                'res_pjsip_outbound_registration.so',
-                'res_pjsip_path.so',
-                'res_pjsip_pidf_body_generator.so',
-                'res_pjsip_pidf_digium_body_supplement.so',
-                'res_pjsip_pidf_eyebeam_body_supplement.so',
-                'res_pjsip_publish_asterisk.so',
-                'res_pjsip_pubsub.so',
-                'res_pjsip_refer.so',
-                'res_pjsip_registrar.so',
-                'res_pjsip_rfc3326.so',
-                'res_pjsip_sdp_rtp.so',
-                'res_pjsip_send_to_voicemail.so',
-                'res_pjsip_session.so',
-                'res_pjsip.so',
-                'res_pjsip_t38.so',
-                'res_pjsip_transport_websocket.so',
-                'res_pjsip_xpidf_body_generator.so',
-                'res_pjsip_dlg_options.so',
-                'res_security_log.so',
-            ];
-            file_put_contents($this->config->path('asterisk.astetcdir') . '/pjproject.conf', '');
-            file_put_contents($this->config->path('asterisk.astetcdir') . '/sorcery.conf', '');
-            file_put_contents($this->config->path('asterisk.astetcdir') . '/pjsip_notify.conf', '');
-        } else {
-            $modules[] = [
-                'chan_sip.so',
-                'app_macro.so',
-            ];
-        }
-        $modules = array_merge(...$modules);
         foreach ($modules as $value) {
             $conf .= "load => $value\n";
         }
