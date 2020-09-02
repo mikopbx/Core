@@ -443,7 +443,7 @@ class ExtensionsController extends BaseController
                     }
                     break;
                 case 'callerid':
-                    $extension->$name = preg_replace('/[^a-zA-Zа-яА-Я0-9 ]/ui', '', $data['user_username']);
+                    $extension->$name = $this->sanitizeCallerId($data['user_username']);
                     break;
                 case 'userid':
                     $extension->$name = $userEntity->id;

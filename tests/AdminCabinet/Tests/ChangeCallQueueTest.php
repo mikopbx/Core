@@ -29,7 +29,7 @@ class ChangeCallQueueTest extends MikoPBXTestsBase
         $this->changeInputField('name', $params['name']);
 
         // Удаляем старых агентов
-        $xpath         = ('//div[contains(@class,"delete-row-button")]');
+        $xpath         = ('//tr[@class="member-row"]//div[contains(@class,"delete-row-button")]');
         $deleteButtons = self::$driver->findElements(WebDriverBy::xpath($xpath));
         foreach ($deleteButtons as $deleteButton) {
             $deleteButton->click();

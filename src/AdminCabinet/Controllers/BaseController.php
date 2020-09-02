@@ -253,84 +253,13 @@ class BaseController extends Controller
     }
 
     /**
-     * Транслитерация переданной строки
-     *
-     * @param $string
+     * Remove all dangerous symbols from CallerID
+     * @param string $callerId
      *
      * @return string
      */
-    protected function transliterate($string): string
+    protected function sanitizeCallerId(string $callerId): string
     {
-        $converter = [
-            'а' => 'a',
-            'б' => 'b',
-            'в' => 'v',
-            'г' => 'g',
-            'д' => 'd',
-            'е' => 'e',
-            'ё' => 'e',
-            'ж' => 'zh',
-            'з' => 'z',
-            'и' => 'i',
-            'й' => 'y',
-            'к' => 'k',
-            'л' => 'l',
-            'м' => 'm',
-            'н' => 'n',
-            'о' => 'o',
-            'п' => 'p',
-            'р' => 'r',
-            'с' => 's',
-            'т' => 't',
-            'у' => 'u',
-            'ф' => 'f',
-            'х' => 'h',
-            'ц' => 'c',
-            'ч' => 'ch',
-            'ш' => 'sh',
-            'щ' => 'sch',
-            'ь' => 'i',
-            'ы' => 'y',
-            'ъ' => '',
-            'э' => 'e',
-            'ю' => 'yu',
-            'я' => 'ya',
-
-            'А' => 'A',
-            'Б' => 'B',
-            'В' => 'V',
-            'Г' => 'G',
-            'Д' => 'D',
-            'Е' => 'E',
-            'Ё' => 'E',
-            'Ж' => 'Zh',
-            'З' => 'Z',
-            'И' => 'I',
-            'Й' => 'Y',
-            'К' => 'K',
-            'Л' => 'L',
-            'М' => 'M',
-            'Н' => 'N',
-            'О' => 'O',
-            'П' => 'P',
-            'Р' => 'R',
-            'С' => 'S',
-            'Т' => 'T',
-            'У' => 'U',
-            'Ф' => 'F',
-            'Х' => 'H',
-            'Ц' => 'C',
-            'Ч' => 'Ch',
-            'Ш' => 'Sh',
-            'Щ' => 'Sch',
-            'Ь' => 'I',
-            'Ы' => 'Y',
-            'Ъ' => ' ',
-            'Э' => 'E',
-            'Ю' => 'Yu',
-            'Я' => 'Ya',
-        ];
-
-        return strtr($string, $converter);
+        return preg_replace('/[^a-zA-Zа-яА-Я0-9 ]/ui', '', $callerId);
     }
 }
