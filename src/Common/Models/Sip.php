@@ -97,7 +97,7 @@ class Sip extends ModelsBase
     /**
      * @Column(type="integer", nullable=true)
      */
-    public ?string $qualifyfreq = '';
+    public ?string $qualifyfreq = '60';
 
     /**
      * @Column(type="integer", nullable=true)
