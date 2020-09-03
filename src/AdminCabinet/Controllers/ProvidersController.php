@@ -60,7 +60,7 @@ class ProvidersController extends BaseController
             $provider->Sip->type        = 'friend';
             $provider->Sip->port        = 5060;
             $provider->Sip->disabled    = '0';
-            $provider->Sip->qualifyfreq = 60;
+            $provider->Sip->qualifyfreq = '60';
             $provider->Sip->qualify     = '1';
         }
 
