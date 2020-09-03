@@ -45,7 +45,7 @@ class ProvidersController extends BaseController
      *
      * @param string $uniqid Уникальный идентификатор провайдера, если мы открываем существующего
      */
-    public function modifysipAction($uniqid = null): void
+    public function modifysipAction(string $uniqid = ''): void
     {
         $provider = Providers::findFirstByUniqid($uniqid);
 
@@ -73,7 +73,7 @@ class ProvidersController extends BaseController
      *
      * @param string $uniqid Уникальный идентификатор провайдера, если мы открываем существующего
      */
-    public function modifyiaxAction($uniqid = null): void
+    public function modifyiaxAction(string $uniqid = ''): void
     {
 
         $provider = Providers::findFirstByUniqid($uniqid);
@@ -100,7 +100,7 @@ class ProvidersController extends BaseController
      * @param string $type   тип провайдера SIP или IAX
      * @param string $uniqid Уникальный идентификатор провайдера, если мы открываем существующего
      */
-    public function enableAction($type, $uniqid = null): void
+    public function enableAction(string $type, string $uniqid = ''): void
     {
         $this->view->success = false;
         switch ($type) {
@@ -131,7 +131,7 @@ class ProvidersController extends BaseController
      * @param string $type   тип провайдера SIP или IAX
      * @param string $uniqid Уникальный идентификатор провайдера, если мы открываем существующего
      */
-    public function disableAction($type, $uniqid = null): void
+    public function disableAction(string $type, string $uniqid = ''): void
     {
         $this->view->success = false;
         switch ($type) {
@@ -159,10 +159,10 @@ class ProvidersController extends BaseController
     /**
      * Сохранение провайдера AJAX запросом из формы
      *
-     * @param bool $type - sip или iax
+     * @param string $type - sip или iax
      *
      */
-    public function saveAction($type): void
+    public function saveAction(string $type): void
     {
         if ( ! $this->request->isPost()) {
             $this->forward('network/index');
@@ -192,11 +192,11 @@ class ProvidersController extends BaseController
      * Сохранение параметров в таблицу  Providers
      *
      * @param array $data - POST дата
-     * @param bool  $type - sip или iax
+     * @param string  $type - sip или iax
      *
      * @return bool результат сохранения
      */
-    private function saveProvider($data, $type): bool
+    private function saveProvider(array $data, string $type): bool
     {
         // Проверим это новый провайдер или старый
         $provider = Providers::findFirstByUniqid($data['uniqid']);
@@ -276,7 +276,7 @@ class ProvidersController extends BaseController
      *
      * @param string $uniqid Уникальный идентификатор провайдера
      */
-    public function deleteAction($uniqid = null): void
+    public function deleteAction(string $uniqid = ''): void
     {
         $provider = Providers::findFirstByUniqid($uniqid);
 
