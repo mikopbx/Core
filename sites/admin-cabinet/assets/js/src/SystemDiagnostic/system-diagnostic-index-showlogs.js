@@ -6,8 +6,35 @@
  */
 /* global ace, PbxApi */
 
+
+const updateLogViewWorker = {
+	timeOut: 3000,
+	timeOutHandle: '',
+	errorCounts: 0,
+	initialize() {
+		updateLogViewWorker.restartWorker();
+	},
+	restartWorker() {
+		window.clearTimeout(updateLogViewWorker.timeoutHandle);
+		updateLogViewWorker.worker();
+	},
+	worker() {
+		const data = systemDiagnosticLogs.$formObj.form('get values');
+		PbxApi.SyslogGetLogFromFile(data.filename, data.filter, data.lines, systemDiagnosticLogs.cbUpdateLogText);
+		updateLogViewWorker.timeoutHandle = window.setTimeout(
+			updateLogViewWorker.worker,
+			updateLogViewWorker.timeOut,
+		);
+	},
+	stop() {
+		window.clearTimeout(updateLogViewWorker.timeoutHandle);
+	}
+};
+
 const systemDiagnosticLogs = {
 	$showBtn: $('#show-last-log'),
+	$downloadBtn: $('#download-file'),
+	$showAutoBtn: $('#show-last-log-auto'),
 	viewer: '',
 	$fileSelectDropDown: $('#system-diagnostic-form .filenames-select'),
 	logsItems: [],
@@ -22,6 +49,24 @@ const systemDiagnosticLogs = {
 			e.preventDefault();
 			const data = systemDiagnosticLogs.$formObj.form('get values');
 			PbxApi.SyslogGetLogFromFile(data.filename, data.filter, data.lines, systemDiagnosticLogs.cbUpdateLogText);
+		});
+
+		systemDiagnosticLogs.$downloadBtn.on('click', (e) => {
+			e.preventDefault();
+			const data = systemDiagnosticLogs.$formObj.form('get values');
+			PbxApi.SyslogDownloadLogFile(data.filename, systemDiagnosticLogs.cbDownloadFile);
+		});
+
+		systemDiagnosticLogs.$showAutoBtn.on('click', (e) => {
+			e.preventDefault();
+			const $reloadIcon = systemDiagnosticLogs.$showAutoBtn.find('i.refresh');
+			if ($reloadIcon.hasClass('loading')){
+				$reloadIcon.removeClass('loading');
+				updateLogViewWorker.stop();
+			} else {
+				$reloadIcon.addClass('loading');
+				updateLogViewWorker.initialize();
+			}
 		});
 	},
 	initializeAce() {
@@ -84,6 +129,15 @@ const systemDiagnosticLogs = {
 		const column = systemDiagnosticLogs.viewer.session.getLine(row).length; // or simply Infinity
 		systemDiagnosticLogs.viewer.gotoLine(row + 1, column);
 	},
+	/**
+	 * After push button download file
+	 * @param response
+	 */
+	cbDownloadFile(response){
+		if (response!==false){
+			window.location = response.filename;
+		}
+	}
 };
 
 $(document).ready(() => {

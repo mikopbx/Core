@@ -17,7 +17,6 @@ const mergingCheckWorker = {
 	fileID: null,
 	filePath: '',
 	initialize(fileID, filePath) {
-		// Запустим обновление статуса провайдера
 		mergingCheckWorker.fileID = fileID;
 		mergingCheckWorker.filePath = filePath;
 		mergingCheckWorker.restartWorker(fileID);

@@ -26,6 +26,7 @@ use MikoPBX\PBXCoreREST\Controllers\{Cdr\GetController as CdrGetController,
     Storage\GetController as StorageGetController,
     Storage\PostController as StoragePostController,
     Syslog\GetController as SyslogGetController,
+    Syslog\PostController as SyslogPostController,
     System\GetController as SystemGetController,
     System\PostController as SystemPostController,
     Upload\PostController as UploadPostController};
@@ -121,6 +122,7 @@ class RouterProvider implements ServiceProviderInterface
             [SystemPostController::class, 'callAction', '/pbxcore/api/system/{actionName}', 'post', '/'],
 
             [SyslogGetController::class, 'callAction', '/pbxcore/api/syslog/{actionName}', 'get', '/'],
+            [SyslogPostController::class, 'callAction', '/pbxcore/api/syslog/{actionName}', 'post', '/'],
 
             [UploadPostController::class, 'callAction', '/pbxcore/api/upload/{actionName}', 'post', '/'],
 

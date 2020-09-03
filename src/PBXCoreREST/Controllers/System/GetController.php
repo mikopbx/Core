@@ -36,6 +36,6 @@ class GetController extends BaseController
 {
     public function callAction($actionName): void
     {
-        $this->sendRequestToBackendWorker('storage', $actionName, $_REQUEST);
+        $this->sendRequestToBackendWorker('system', $actionName, $_REQUEST);
     }
 }

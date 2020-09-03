@@ -11,6 +11,7 @@ namespace MikoPBX\PBXCoreREST\Lib;
 use MikoPBX\Core\System\Network;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
+use MikoPBX\PBXCoreREST\Workers\WorkerMakeLogFilesArchive;
 use Phalcon\Di;
 use Phalcon\Di\Injectable;
 
@@ -42,6 +43,12 @@ class LogsManagementProcessor extends Injectable
             case 'stopLog':
                 $res = LogsManagementProcessor::stopLog();
                 break;
+            case 'downloadLogsArchive':
+                $res = LogsManagementProcessor::downloadLogsArchive($data['filename']);
+                break;
+            case 'downloadLogFile':
+                $res = LogsManagementProcessor::downloadLogFile($data['filename']);
+                break;
             case 'getLogsList':
                 $res = LogsManagementProcessor::getLogsList();
                 break;
@@ -62,7 +69,7 @@ class LogsManagementProcessor extends Injectable
      * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
      * @throws \Exception
      */
-    public static function startLog($timeout = 300): PBXApiResult
+    private static function startLog($timeout = 300): PBXApiResult
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
@@ -116,67 +123,70 @@ class LogsManagementProcessor extends Injectable
     }
 
     /**
-     * Завершает запись логов.
+     * Prepare log archive file
      *
      * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
      * @throws \Exception
      */
-    public static function stopLog(): PBXApiResult
+    private static function stopLog(): PBXApiResult
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
-        $dir_all_log = System::getLogDir();
-
-        Util::killByName('timeout');
-        Util::killByName('tcpdump');
-
-        $rmPath   = Util::which('rm');
-        $findPath = Util::which('find');
-        $za7Path  = Util::which('7za');
-        $cpPath   = Util::which('cp');
-        $chownPath   = Util::which('chown');
-
-        $dirlog = $dir_all_log . '/dir_start_all_log';
-        Util::mwMkdir($dirlog);
-
-        $log_dir = System::getLogDir();
-        Util::mwExec("{$cpPath} -R {$log_dir} {$dirlog}");
-
         $di         = Di::getDefault();
         $dirsConfig = $di->getShared('config');
+        $temp_dir = $dirsConfig->path('core.tempDir');
+        $futureFileName = $temp_dir . '/temp-all-log-'.time().'.zip';
+        $res->data['filename'] = $futureFileName;
+        $res->success = true;
 
-        // Файл будет удален в cron скриптом cleaner_download_links.sh т.к. имя содержит "/temp-"
-        // через 5 минут, если не будет занят процессом.
-        $result     = $dirsConfig->path('core.tempDir') . '/temp-all-log-'.time().'.zip';
+        // Create background task
+        $merge_settings['result_file'] = $futureFileName;
+        $settings_file  = "{$temp_dir}/logs_archive_settings.json";
+        file_put_contents(
+            $settings_file,
+            json_encode($merge_settings, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT)
+        );
+        $phpPath               = Util::which('php');
+        $workerFilesMergerPath = Util::getFilePathByClassName(WorkerMakeLogFilesArchive::class);
+        Util::mwExecBg("{$phpPath} -f {$workerFilesMergerPath} '{$settings_file}'");
 
-        if (file_exists($result)) {
-            Util::mwExec("{$rmPath} -rf {$result}");
+        return $res;
+    }
+
+    /**
+     * Check if archive ready then create download link
+     *
+     * @param string $resultFile
+     *
+     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     * @throws \Exception
+     */
+    private static function downloadLogsArchive(string $resultFile): PBXApiResult
+    {
+        $res = new PBXApiResult();
+        $res->processor = __METHOD__;
+
+        $progress_file = "{$resultFile}.progress";
+        if (!file_exists($progress_file)){
+            $res->messages[]='Archive does not exist. Try again!';
+        } elseif (file_exists($progress_file) && file_get_contents($progress_file)==='100'){
+            $uid = Util::generateRandomString(36);
+            $di = Di::getDefault();
+            $downloadLink = $di->getShared('config')->path('www.downloadCacheDir');
+            $result_dir = "{$downloadLink}/{$uid}";
+            Util::mwMkdir($result_dir);
+            $link_name = 'MikoPBXLogs_'.basename($resultFile);
+            $lnPath = Util::which('ln');
+            $chownPath      = Util::which('chown');
+            Util::mwExec("{$lnPath} -s {$resultFile} {$result_dir}/{$link_name}");
+            Util::mwExec("{$chownPath} www:www {$result_dir}/{$link_name}");
+            $res->success=true;
+            $res->data['status'] = "READY";
+            $res->data['filename'] = "{$uid}/{$link_name}";
+        } else {
+            $res->success=true;
+            $res->data['status'] = "preparing";
         }
-        // Пакуем логи.
-        Util::mwExec("{$za7Path} a -tzip -mx0 -spf '{$result}' '{$dirlog}'");
-        // Удаляем логи. Оставляем только архив.
-        Util::mwExec("{$findPath} {$dir_all_log}" . '/ -name *_start_all_log | xargs rm -rf');
-
-        if (file_exists($dirlog)) {
-            Util::mwExec("{$findPath} {$dirlog}" . '/ -name license.key | xargs rm -rf');
-        }
-        // Удаляем каталог логов.
-        Util::mwExecBg("{$rmPath} -rf {$dirlog}");
-
-
-        $uid = Util::generateRandomString(36);
-        $di = Di::getDefault();
-        $downloadLink = $di->getShared('config')->path('www.downloadCacheDir');
-        $result_dir = "{$downloadLink}/{$uid}";
-        Util::mwMkdir($result_dir);
-        $link_name = md5($result) . '.' . Util::getExtensionOfFile($result);
-        $lnPath = Util::which('ln');
-
-        Util::mwExec("{$lnPath} -s {$result} {$result_dir}/{$link_name}");
-        Util::mwExec("{$chownPath} www:www {$result_dir}/{$link_name}");
-
-        $res->success=true;
-        $res->data['filename'] = "{$uid}/{$link_name}";
         return $res;
     }
 
@@ -185,7 +195,7 @@ class LogsManagementProcessor extends Injectable
      *
      * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
      */
-    public static function getLogsList(): PBXApiResult
+    private static function getLogsList(): PBXApiResult
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
@@ -219,13 +229,11 @@ class LogsManagementProcessor extends Injectable
      *
      * @return PBXApiResult
      */
-    public static function getLogFromFile($filename = 'messages', $filter = '', $lines = 500): PBXApiResult
+    private static function getLogFromFile(string $filename, string $filter='', $lines = 500): PBXApiResult
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
-        if ( ! file_exists($filename)) {
-            $filename = System::getLogDir() . '/' . $filename;
-        }
+        $filename = System::getLogDir() . '/' . $filename;
         if ( ! file_exists($filename)) {
             $res->success    = false;
             $res->messages[] = 'No access to the file ' . $filename;
@@ -248,4 +256,36 @@ class LogsManagementProcessor extends Injectable
         return $res;
     }
 
+    /**
+     * Prepares downloadable log file
+     *
+     * @param string $filename
+     *
+     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     * @throws \Exception
+     */
+    private static function downloadLogFile(string $filename):PBXApiResult
+    {
+        $res = new PBXApiResult();
+        $res->processor = __METHOD__;
+        $filename = System::getLogDir() . '/' . $filename;
+        if ( ! file_exists($filename)) {
+            $res->success    = false;
+            $res->messages[] = 'File does not exist ' . $filename;
+        } else {
+            $uid = Util::generateRandomString(36);
+            $di = Di::getDefault();
+            $downloadLink = $di->getShared('config')->path('www.downloadCacheDir');
+            $result_dir = "{$downloadLink}/{$uid}";
+            Util::mwMkdir($result_dir);
+            $link_name = basename($filename);
+            $lnPath = Util::which('ln');
+            $chownPath      = Util::which('chown');
+            Util::mwExec("{$lnPath} -s {$filename} {$result_dir}/{$link_name}");
+            Util::mwExec("{$chownPath} www:www {$result_dir}/{$link_name}");
+            $res->success=true;
+            $res->data['filename'] = "{$uid}/{$link_name}";
+        }
+        return $res;
+    }
 }
