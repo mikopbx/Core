@@ -22,6 +22,37 @@ use Phalcon\Http\Message\UploadedFile;
 
 class FilesManagementProcessor extends Injectable
 {
+
+
+    /**
+     * Processes file upload requests
+     *
+     * @param array $request
+     *
+     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     */
+    public static function uploadCallBack(array $request): PBXApiResult
+    {
+        $action   = $request['action'];
+        $postData = $request['data'];
+        switch ($action) {
+            case 'uploadResumable':
+                $res = FilesManagementProcessor::uploadResumable($postData);
+                break;
+            case 'status':
+                $res = FilesManagementProcessor::statusUploadFile($request['data']);
+                break;
+            default:
+                $res             = new PBXApiResult();
+                $res->processor = __METHOD__;
+                $res->messages[] = "Unknown action - {$action} in uploadCallBack";
+        }
+
+        $res->function = $action;
+
+        return $res;
+    }
+
     /**
      * Process resumable upload files
      *

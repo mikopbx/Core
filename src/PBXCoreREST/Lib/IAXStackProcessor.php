@@ -17,6 +17,32 @@ use Phalcon\Di\Injectable;
 class IAXStackProcessor extends Injectable
 {
     /**
+     * Processes IAX requests
+     *
+     * @param array $request
+     *
+     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     */
+    public static function iaxCallBack(array $request): PBXApiResult
+    {
+        $action = $request['action'];
+        switch ($action) {
+            case 'getRegistry':
+                $res = IAXStackProcessor::getRegistry();
+                break;
+            default:
+                $res             = new PBXApiResult();
+                $res->processor = __METHOD__;
+                $res->messages[] = "Unknown action - {$action} in iaxCallBack";
+                break;
+        }
+
+        $res->function = $action;
+
+        return $res;
+    }
+
+    /**
      * Получение статусов регистраций IAX
      *
      * @return PBXApiResult

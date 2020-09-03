@@ -22,13 +22,13 @@ const systemDiagnosticCapture = {
 			e.preventDefault();
 			systemDiagnosticCapture.$startBtn.addClass('disabled loading');
 			systemDiagnosticCapture.$stopBtn.removeClass('disabled');
-			PbxApi.SystemStartLogsCapture();
+			PbxApi.SyslogStartLogsCapture();
 		});
 		systemDiagnosticCapture.$stopBtn.on('click', (e) => {
 			e.preventDefault();
 			systemDiagnosticCapture.$startBtn.removeClass('disabled loading');
 			systemDiagnosticCapture.$stopBtn.addClass('disabled');
-			PbxApi.SystemStopLogsCapture();
+			PbxApi.SyslogStopLogsCapture();
 		});
 
 	},

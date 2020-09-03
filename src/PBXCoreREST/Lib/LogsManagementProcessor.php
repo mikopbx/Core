@@ -19,6 +19,42 @@ class LogsManagementProcessor extends Injectable
     public const DEFAULT_FILENAME = 'asterisk/messages';
 
     /**
+     * Processes System requests
+     *
+     * @param array $request
+     *
+     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     * @throws \Exception
+     */
+    public static function syslogCallBack(array $request): PBXApiResult
+    {
+        $action = $request['action'];
+        $data   = $request['data'];
+        $res    = new PBXApiResult();
+        $res->processor = __METHOD__;
+        switch ($action) {
+            case 'getLogFromFile':
+                $res = LogsManagementProcessor::getLogFromFile($data['filename'], $data['filter'], $data['lines']);
+                break;
+            case 'startLog':
+                $res = LogsManagementProcessor::startLog();
+                break;
+            case 'stopLog':
+                $res = LogsManagementProcessor::stopLog();
+                break;
+            case 'getLogsList':
+                $res = LogsManagementProcessor::getLogsList();
+                break;
+            default:
+                $res->messages[] = "Unknown action - {$action} in syslogCallBack";
+        }
+
+        $res->function = $action;
+
+        return $res;
+    }
+
+    /**
      * Стартует запись логов.
      *
      * @param int $timeout

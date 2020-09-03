@@ -16,12 +16,12 @@ const systemDiagnosticLogs = {
 	$fileName: $('#system-diagnostic-form .filename'),
 	initialize() {
 		systemDiagnosticLogs.initializeAce();
-		PbxApi.SystemGetLogsList(systemDiagnosticLogs.cbFormatDropdownResults);
+		PbxApi.SyslogGetLogsList(systemDiagnosticLogs.cbFormatDropdownResults);
 
 		systemDiagnosticLogs.$showBtn.on('click', (e) => {
 			e.preventDefault();
 			const data = systemDiagnosticLogs.$formObj.form('get values');
-			PbxApi.GetLogFromFile(data.filename, data.filter, data.lines, systemDiagnosticLogs.cbUpdateLogText);
+			PbxApi.SyslogGetLogFromFile(data.filename, data.filter, data.lines, systemDiagnosticLogs.cbUpdateLogText);
 		});
 	},
 	initializeAce() {
@@ -72,7 +72,7 @@ const systemDiagnosticLogs = {
 		}
 		systemDiagnosticLogs.$formObj.form('set value', 'filename', value);
 		const data = systemDiagnosticLogs.$formObj.form('get values');
-		PbxApi.GetLogFromFile(data.filename, data.filter, data.lines, systemDiagnosticLogs.cbUpdateLogText);
+		PbxApi.SyslogGetLogFromFile(data.filename, data.filter, data.lines, systemDiagnosticLogs.cbUpdateLogText);
 	},
 	/**
 	 * Updates log view

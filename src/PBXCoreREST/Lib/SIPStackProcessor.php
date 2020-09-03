@@ -16,6 +16,40 @@ use Phalcon\Di\Injectable;
 class SIPStackProcessor extends Injectable
 {
     /**
+     * Processes SIP requests
+     *
+     * @param array $request
+     *
+     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     */
+    public static function sipCallBack(array $request): PBXApiResult
+    {
+        $action = $request['action'];
+        $data   = $request['data'];
+
+        switch ($action) {
+            case 'getPeersStatuses':
+                $res = self::getPeersStatuses();
+                break;
+            case 'getSipPeer':
+                $res = self::getPeerStatus($data['peer']);
+                break;
+            case 'getRegistry':
+                $res = self::getRegistry();
+                break;
+            default:
+                $res             = new PBXApiResult();
+                $res->processor = __METHOD__;
+                $res->messages[] = "Unknown action - {$action} in sipCallBack";
+                break;
+        }
+
+        $res->function = $action;
+
+        return $res;
+    }
+
+    /**
      * Получение статусов SIP пиров.
      *
      * @return PBXApiResult

@@ -26,12 +26,12 @@ const PbxApi = {
 	systemSendTestEmail: `${Config.pbxUrl}/pbxcore/api/system/sendMail`, // Отправить почту
 	updateMailSettings: `${Config.pbxUrl}/pbxcore/api/system/updateMailSettings`,
 	systemGetFileContent: `${Config.pbxUrl}/pbxcore/api/system/fileReadContent`, // Получить контент файла по имени
-	systemStartLogsCapture: `${Config.pbxUrl}/pbxcore/api/system/startLog`,
-	systemStopLogsCapture: `${Config.pbxUrl}/pbxcore/api/system/stopLog`,
-	systemGetLogsList: `${Config.pbxUrl}/pbxcore/api/system/getLogsList`, //curl http://127.0.0.1/pbxcore/api/system/getLogsList
+	syslogStartLogsCapture: `${Config.pbxUrl}/pbxcore/api/syslog/startLog`,
+	syslogStopLogsCapture: `${Config.pbxUrl}/pbxcore/api/syslog/stopLog`,
+	syslogGetLogsList: `${Config.pbxUrl}/pbxcore/api/syslog/getLogsList`, //curl http://127.0.0.1/pbxcore/api/system/getLogsList
+	syslogGetLogFromFile: `${Config.pbxUrl}/pbxcore/api/syslog/getLogFromFile`,
 	systemGetExternalIP: `${Config.pbxUrl}/pbxcore/api/system/getExternalIpInfo`,
 	systemUpgrade: `${Config.pbxUrl}/pbxcore/api/system/upgrade`, // Обновление АТС файлом
-	systemGetLogFromFile: `${Config.pbxUrl}/pbxcore/api/system/getLogFromFile`, // Обновление АТС файлом
 	systemDownloadNewFirmware: `${Config.pbxUrl}/pbxcore/api/system/downloadNewFirmware`, // Обновление АТС онлайн
 	systemGetFirmwareDownloadStatus: `${Config.pbxUrl}/pbxcore/api/system/firmwareDownloadStatus`, // Получение статуса обновления
 	systemDownloadNewModule: `${Config.pbxUrl}/pbxcore/api/system/downloadNewModule`,
@@ -360,32 +360,32 @@ const PbxApi = {
 		});
 	},
 	/**
-	 * Запуск сборщика системных логов
+	 * Start logs collection and pickup TCP packages
 	 */
-	SystemStartLogsCapture() {
+	SyslogStartLogsCapture() {
 		sessionStorage.setItem('LogsCaptureStatus', 'started');
 		setTimeout(() => {
 			sessionStorage.setItem('LogsCaptureStatus', 'stopped');
 		}, 5000);
 		$.api({
-			url: PbxApi.systemStartLogsCapture,
+			url: PbxApi.syslogStartLogsCapture,
 			on: 'now',
 		});
 	},
 	/**
-	 * Остановка сборщика системных логов
+	 * Stop tcp dump and start making file for download
 	 */
-	SystemStopLogsCapture() {
+	SyslogStopLogsCapture() {
 		sessionStorage.setItem('LogsCaptureStatus', 'stopped');
-		window.location = PbxApi.systemStopLogsCapture;
+		window.location = PbxApi.syslogStopLogsCapture;
 	},
 	/**
-	 * Gets system logs files list
+	 * Gets logs files list
 	 * @param callback function
 	 */
-	SystemGetLogsList(callback) {
+	SyslogGetLogsList(callback) {
 		$.api({
-			url: PbxApi.systemGetLogsList,
+			url: PbxApi.syslogGetLogsList,
 			on: 'now',
 			successTest: PbxApi.successTest,
 			onSuccess(response) {
@@ -399,6 +399,33 @@ const PbxApi = {
 			},
 		});
 	},
+
+	/**
+	 * Get logfiles strings partially and filtered
+	 * @param filename
+	 * @param filter
+	 * @param lines
+	 * @param callback function
+	 */
+	SyslogGetLogFromFile(filename, filter, lines, callback) {
+		$.api({
+			url: PbxApi.syslogGetLogFromFile,
+			on: 'now',
+			method: 'GET',
+			data: {filename, filter, lines},
+			successTest: PbxApi.successTest,
+			onSuccess(response) {
+				callback(response.data);
+			},
+			onFailure(response) {
+				callback(response);
+			},
+			onError(response) {
+				callback(response);
+			},
+		});
+	},
+
 	/**
 	 * Start system upgrade
 	 * @param filePath  tempFile path for upgrade
@@ -423,32 +450,7 @@ const PbxApi = {
 		});
 	},
 
-	/**
-	 * Get part log file
-	 * @param filename
-	 * @param filter
-	 * @param lines
-	 * @param callback
-	 * @constructor
-	 */
-	GetLogFromFile(filename, filter, lines, callback) {
-		$.api({
-			url: PbxApi.systemGetLogFromFile,
-			on: 'now',
-			method: 'GET',
-			data: {filename, filter, lines},
-			successTest: PbxApi.successTest,
-			onSuccess(response) {
-				callback(response.data);
-			},
-			onFailure(response) {
-				callback(response);
-			},
-			onError(response) {
-				callback(response);
-			},
-		});
-	},
+
 
 	/**
 	 * Upload audio file to PBX system
