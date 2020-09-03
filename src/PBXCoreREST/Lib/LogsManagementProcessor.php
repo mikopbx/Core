@@ -140,6 +140,7 @@ class LogsManagementProcessor extends Injectable
         $res->success = true;
 
         // Create background task
+        $merge_settings = [];
         $merge_settings['result_file'] = $futureFileName;
         $settings_file  = "{$temp_dir}/logs_archive_settings.json";
         file_put_contents(

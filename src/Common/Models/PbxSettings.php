@@ -103,6 +103,7 @@ class PbxSettings extends ModelsBase
             'PBXLanguage'                     => 'en-en',
             'PBXInternalExtensionLength'      => '3',// Длина внутреннего номера
             'PBXRecordCalls'                  => '1',
+            'PBXSplitAudioThread'             => '0',
             'PBXCallParkingExt'               => '800',
             'PBXCallParkingStartSlot'         => '801',
             'PBXCallParkingEndSlot'           => '820',
@@ -119,6 +120,7 @@ class PbxSettings extends ModelsBase
             'WebAdminLanguage'                => 'en',
             'SystemNotificationsEmail'        => 'admin@mycompany.com',
             'SendMetrics'                     => '1',
+
 
         ];
     }

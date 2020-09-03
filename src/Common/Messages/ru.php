@@ -551,6 +551,7 @@ return [
     'gs_PBXFeatureBlindTransfer'                                  => 'Комбинация для безусловного перевода',
     'gs_PBXFeatureDigitTimeout'                                   => 'Максимальный таймаут в миллисекундах при вводе добавочного',
     'gs_PBXFeatureAtxferNoAnswerTimeout'                          => 'Время возврата вызова, если нет ответа после безусловного перевода',
+    'gs_PBXSplitAudioThread'                                      => 'Сохранять записи в стерео режиме',
     'gs_SIPPort'                                                  => 'SIP порт для регистрации телефонов на этой станции',
     'gs_SIPDefaultExpiry'                                         => 'Время, через которое регистрация будет сброшена',
     'gs_SIPMinExpiry'                                             => 'SIPMinExpiry',
