@@ -132,6 +132,18 @@ class MikoPBXTestsBase extends BrowserStackTest
     }
 
     /**
+     * Assert that menu item not selected
+     *
+     * @param      $name         string menu name
+     */
+    protected function assertMenuItemNotSelected(string $name): void
+    {
+        $xpath             = '//select[@name="' . $name . '"]/option[@selected="selected"]';
+        $this->assertElementNotFound(WebDriverBy::xpath($xpath));
+
+    }
+
+    /**
      * Change textarea with name $name value to $value
      *
      * @param string $name
