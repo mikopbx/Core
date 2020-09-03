@@ -54,7 +54,7 @@ class WorkerMakeLogFilesArchive extends WorkerBase
             Util::mwExec("{$rmPath} -rf {$resultFile}");
         }
         // Пакуем логи.
-        Util::mwExec("{$za7Path} a -tzip -mx0 -spf '{$resultFile}' '{$dirlog}'");
+        Util::mwExec("{$za7Path} a -tzip -mx5 -spf '{$resultFile}' '{$dirlog}'");
 
         // Удаляем логи. Оставляем только архив.
         Util::mwExec("{$findPath} {$dir_all_log}" . '/ -name *_start_all_log | xargs rm -rf');
