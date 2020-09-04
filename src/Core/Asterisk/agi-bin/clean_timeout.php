@@ -22,6 +22,6 @@ $am->SetVar($srcChannel, "MASTER_CHANNEL(M_DIALSTATUS)", 'ANSWER');
 
 // Перестрахова на случай с перехватом звонка через *8.
 $timeoutChannel = $am->GetVar($srcChannel, 'MASTER_CHANNEL(M_TIMEOUT_CHANNEL)', null, false);
-if(!empty($timeoutChannel)){
+if(is_string($timeoutChannel) && !empty($timeoutChannel)){
     $am->SetVar($timeoutChannel, "TIMEOUT(absolute)", '0');
 }
