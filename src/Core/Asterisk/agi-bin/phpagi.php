@@ -4,7 +4,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 8 2020
+ * Written by Alexey Portnov, 9 2020
  */
 
 if ( !class_exists('AGI_AsteriskManager')) {
@@ -312,9 +312,10 @@ class AGI
     {
         $broken = ['code' => 500, 'result' => -1, 'data' => ''];
 
-        if($this->out === false || $this->in === false){
+        if( !is_resource($this->out) || !is_resource($this->in) ){
             return $broken;
         }
+
         if ( !fwrite($this->out, trim($command) . "\n")) {
             return $broken;
         }
