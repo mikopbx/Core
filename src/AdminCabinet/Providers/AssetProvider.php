@@ -526,7 +526,9 @@ class AssetProvider implements ServiceProviderInterface
                                 ->addJs('js/vendor/semantic/popup.min.js', true)
                                 ->addJs('js/vendor/semantic/dropdown.min.js', true)
                                 ->addJs('js/pbx/main/form.js', true)
-                                ->addJs('js/pbx/SystemDiagnostic/system-diagnostic-index.js', true);
+                                ->addJs('js/pbx/SystemDiagnostic/system-diagnostic-index.js', true)
+                                ->addJs('js/pbx/SystemDiagnostic/system-diagnostic-index-showlogs.js', true)
+                                ->addJs('js/pbx/SystemDiagnostic/system-diagnostic-index-logcapture.js', true);
                             $footerCollectionACE
                                 ->addJs('js/vendor/ace/ace.js', true)
                                 ->addJs('js/vendor/ace/mode-julia.js', true);
@@ -570,11 +572,11 @@ class AssetProvider implements ServiceProviderInterface
 
 
                 // Сохраним перевод в файл если его еще нет
-                $language   = $this->get('language');
+                $language   = $di->getShared('language');
                 $langJSFile = "js/cache/localization-{$language}-{$version}.min.js";
                 if ( ! file_exists($langJSFile)) {
                     $arrStr = [];
-                    foreach ($this->get('messages') as $key => $value) {
+                    foreach ($di->getShared('messages') as $key => $value) {
                         $arrStr[$key] = str_replace(
                             "'",
                             "\\'",

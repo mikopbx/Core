@@ -80,7 +80,7 @@ class TimeSettingsController extends BaseController
         $timezone_offsets = [];
         foreach ($timezones as $timezone) {
             $tz                          = new DateTimeZone($timezone);
-            $timezone_offsets[$timezone] = $tz->getOffset(new DateTime());
+            $timezone_offsets[$timezone] = (int)$tz->getOffset(new DateTime());
         }
 
         // sort timezone by offset
@@ -89,7 +89,7 @@ class TimeSettingsController extends BaseController
         $timezone_list = [];
         foreach ($timezone_offsets as $timezone => $offset) {
             $offset_prefix    = $offset < 0 ? '-' : '+';
-            $offset_formatted = gmdate('H:i', abs($offset));
+            $offset_formatted = gmdate('H:i', $offset);
 
             $pretty_offset = "UTC${offset_prefix}${offset_formatted}";
 

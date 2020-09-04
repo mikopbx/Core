@@ -8,7 +8,7 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
-use MikoPBX\Core\System\System;
+use Phalcon\Forms\Element\Numeric;
 use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
 use Phalcon\Forms\Form;
@@ -19,56 +19,20 @@ use Phalcon\Forms\Form;
  * @package MikoPBX\AdminCabinet\Forms
  * @property \MikoPBX\Common\Providers\TranslationProvider translation
  */
-class SystemDiagnosticForm extends Form{
-
-    const   DEFAULT_FILENAME = 'asterisk/messages';
-    private $filelist;
-    private $logDir;
+class SystemDiagnosticForm extends Form
+{
 
     public function initialize(): void
     {
-        $this->logDir     = System::getLogDir();
-        $this->filelist   = [];
-        $this->findFilesInDir('asterisk');
-        $this->findFilesInDir('system');
-        $this->findFilesInDir('php');
-        $this->findFilesInDir('nats', 'log');
-
-        $select = new Select(
-            'filenames',
-            $this->filelist
-            , [
-                'using'    => [
-                    'id',
-                    'name',
-                ],
-                'useEmpty' => false,
-                'class'    => 'ui selection dropdown type-select',
-            ]
+        // Filenames dropdown
+        $filenames = new Select(
+            'filenames', [], ['class'    => 'ui fluid selection search dropdown filenames-select']
         );
 
-        if(key_exists(self::DEFAULT_FILENAME, $this->filelist)){
-            $select->setDefault(self::DEFAULT_FILENAME);
-        }
+        $this->add($filenames);
 
-        $this->add($select);
         $this->add(new Text('filter', ['value' => '']));
-        $this->add(new Text('lines',  ['value' => '500']));
+        $this->add(new Numeric('lines',  ['value' => '500']));
 
-    }
-
-    private function findFilesInDir($subDir, $exten=''){
-        $entries = scandir($this->logDir."/{$subDir}");
-        foreach($entries as $entry) {
-            if($entry == '.' || $entry == '..'){
-                continue;
-            }
-
-            if(!empty($exten) && $exten !== substr($entry,(-1)*strlen($exten)) ){
-                continue;
-            }
-
-            $this->filelist["{$subDir}/{$entry}"] = "{$subDir}/{$entry}";
-        }
     }
 }

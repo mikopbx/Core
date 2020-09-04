@@ -104,8 +104,17 @@ class CreateOutOfWorkPeriodsTest extends MikoPBXTestsBase
         $this->assertTextAreaValueIsEqual('description', $params['description']);
         $this->assertInputFieldValueEqual('date_from', $params['date_from']);
         $this->assertInputFieldValueEqual('date_to', $params['date_to']);
-        $this->assertMenuItemSelected('weekday_from', $params['weekday_from']);
-        $this->assertMenuItemSelected('weekday_to', $params['weekday_to']);
+        if($params['weekday_from']>0) {
+            $this->assertMenuItemSelected('weekday_from', $params['weekday_from']);
+        } else {
+            $this->assertMenuItemNotSelected('weekday_from');
+        }
+        if($params['weekday_to']>0) {
+            $this->assertMenuItemSelected('weekday_to', $params['weekday_to']);
+        } else {
+            $this->assertMenuItemNotSelected('weekday_to');
+        }
+
         $this->assertInputFieldValueEqual('time_from', $params['time_from']);
         $this->assertInputFieldValueEqual('time_to', $params['time_to']);
 

@@ -125,7 +125,7 @@ class IvrMenuController extends BaseController
             $extension                    = new Extensions();
             $extension->type              = "IVR MENU";
             $extension->number            = $data["extension"];
-            $extension->callerid          = $this->transliterate($data["name"]);
+            $extension->callerid          = $this->sanitizeCallerId($data["name"]);
             $extension->userid            = null;
             $extension->show_in_phonebook = 1;
             $extension->public_access     = 1;
@@ -177,7 +177,7 @@ class IvrMenuController extends BaseController
     private function updateExtension(Extensions $extension, array $data): bool
     {
         $extension->number   = $data['extension'];
-        $extension->callerid = $this->transliterate($data['name']);
+        $extension->callerid = $this->sanitizeCallerId($data['name']);
         if ($extension->save() === false) {
             $errors = $extension->getMessages();
             $this->flash->error(implode('<br>', $errors));

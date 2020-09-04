@@ -15,6 +15,12 @@ const PbxApi = {
 	pbxGetPeerStatus: `${Config.pbxUrl}/pbxcore/api/sip/getSipPeer`,
 	pbxGetActiveCalls: `${Config.pbxUrl}/pbxcore/api/cdr/getActiveCalls`, // Получить активные звонки,
 	pbxGetActiveChannels: `${Config.pbxUrl}/pbxcore/api/cdr/getActiveChannels`, // Получить активные звонки,
+	syslogStartLogsCapture: `${Config.pbxUrl}/pbxcore/api/syslog/startLog`,
+	syslogStopLogsCapture: `${Config.pbxUrl}/pbxcore/api/syslog/stopLog`,
+	syslogGetLogsList: `${Config.pbxUrl}/pbxcore/api/syslog/getLogsList`, //curl http://127.0.0.1/pbxcore/api/system/getLogsList
+	syslogGetLogFromFile: `${Config.pbxUrl}/pbxcore/api/syslog/getLogFromFile`,
+	syslogDownloadLogFile: `${Config.pbxUrl}/pbxcore/api/syslog/downloadLogFile`, //Download logfile by name
+	syslogDownloadLogsArchive: `${Config.pbxUrl}/pbxcore/api/syslog/downloadLogsArchive`, // Ask for zipped logs and PCAP file
 	systemConvertAudioFile: `${Config.pbxUrl}/pbxcore/api/system/convertAudioFile`,
 	systemRemoveAudioFile: `${Config.pbxUrl}/pbxcore/api/system/removeAudioFile`,
 	systemReboot: `${Config.pbxUrl}/pbxcore/api/system/reboot`, // Рестарт ОС
@@ -26,11 +32,8 @@ const PbxApi = {
 	systemSendTestEmail: `${Config.pbxUrl}/pbxcore/api/system/sendMail`, // Отправить почту
 	updateMailSettings: `${Config.pbxUrl}/pbxcore/api/system/updateMailSettings`,
 	systemGetFileContent: `${Config.pbxUrl}/pbxcore/api/system/fileReadContent`, // Получить контент файла по имени
-	systemStartLogsCapture: `${Config.pbxUrl}/pbxcore/api/system/startLog`,
-	systemStopLogsCapture: `${Config.pbxUrl}/pbxcore/api/system/stopLog`,
 	systemGetExternalIP: `${Config.pbxUrl}/pbxcore/api/system/getExternalIpInfo`,
 	systemUpgrade: `${Config.pbxUrl}/pbxcore/api/system/upgrade`, // Обновление АТС файлом
-	systemGetLogFromFile: `${Config.pbxUrl}/pbxcore/api/system/getLogFromFile`, // Обновление АТС файлом
 	systemDownloadNewFirmware: `${Config.pbxUrl}/pbxcore/api/system/downloadNewFirmware`, // Обновление АТС онлайн
 	systemGetFirmwareDownloadStatus: `${Config.pbxUrl}/pbxcore/api/system/firmwareDownloadStatus`, // Получение статуса обновления
 	systemDownloadNewModule: `${Config.pbxUrl}/pbxcore/api/system/downloadNewModule`,
@@ -41,6 +44,7 @@ const PbxApi = {
 	systemModuleDownloadStatus: `${Config.pbxUrl}/pbxcore/api/system/moduleDownloadStatus`, //TODO::Проверить статус ошибки скачивания в переменной message
 	systemUploadFile: `${Config.pbxUrl}/pbxcore/api/upload/uploadResumable`, // curl -F "file=@ModuleTemplate.zip" http://127.0.0.1/pbxcore/api/upload/uploadResumable
 	systemStatusUploadFile: `${Config.pbxUrl}/pbxcore/api/upload/status`, // curl -X POST -d '{"id": "1531474060"}' http://127.0.0.1/pbxcore/api/upload/status;
+
 	/**
 	 * Проверка ответа на JSON
 	 * @param jsonString
@@ -349,7 +353,7 @@ const PbxApi = {
 		});
 	},
 	/**
-	 * Выключение станции
+	 * ShutDown MikoPBX
 	 */
 	SystemShutDown() {
 		$.api({
@@ -357,27 +361,142 @@ const PbxApi = {
 			on: 'now',
 		});
 	},
+
 	/**
-	 * Запуск сборщика системных логов
+	 * Start logs collection and pickup TCP packages
+	 * @param callback function
 	 */
-	SystemStartLogsCapture() {
-		sessionStorage.setItem('LogsCaptureStatus', 'started');
-		setTimeout(() => {
-			sessionStorage.setItem('LogsCaptureStatus', 'stopped');
-		}, 5000);
+	SyslogStartLogsCapture(callback) {
 		$.api({
-			url: PbxApi.systemStartLogsCapture,
+			url: PbxApi.syslogStartLogsCapture,
 			on: 'now',
+			successTest: PbxApi.successTest,
+			onSuccess(response) {
+				callback(response.data);
+			},
+			onFailure() {
+				callback(false);
+			},
+			onError() {
+				callback(false);
+			},
 		});
 	},
 	/**
-	 * Остановка сборщика системных логов
+	 * Stop tcp dump and start making file for download
+	 * @param callback function
 	 */
-	SystemStopLogsCapture() {
+	SyslogStopLogsCapture(callback) {
 		sessionStorage.setItem('LogsCaptureStatus', 'stopped');
-		window.location = PbxApi.systemStopLogsCapture;
+		$.api({
+			url: PbxApi.syslogStopLogsCapture,
+			on: 'now',
+			successTest: PbxApi.successTest,
+			onSuccess(response) {
+				callback(response.data);
+			},
+			onFailure() {
+				callback(false);
+			},
+			onError() {
+				callback(false);
+			},
+		});
+	},
+	/**
+	 * Gets logs files list
+	 * @param callback function
+	 */
+	SyslogGetLogsList(callback) {
+		$.api({
+			url: PbxApi.syslogGetLogsList,
+			on: 'now',
+			successTest: PbxApi.successTest,
+			onSuccess(response) {
+				callback(response.data);
+			},
+			onFailure() {
+				callback(false);
+			},
+			onError() {
+				callback(false);
+			},
+		});
 	},
 
+	/**
+	 * Get logfiles strings partially and filtered
+	 * @param filename
+	 * @param filter
+	 * @param lines
+	 * @param callback function
+	 */
+	SyslogGetLogFromFile(filename, filter, lines, callback) {
+		$.api({
+			url: PbxApi.syslogGetLogFromFile,
+			on: 'now',
+			method: 'POST',
+			data: {filename, filter, lines},
+			successTest: PbxApi.successTest,
+			onSuccess(response) {
+				callback(response.data);
+			},
+			onFailure(response) {
+				callback(response);
+			},
+			onError(response) {
+				callback(response);
+			},
+		});
+	},
+
+	/**
+	 * Download logfile by name
+	 * @param filename
+	 * @param callback function
+	 */
+	SyslogDownloadLogFile(filename, callback) {
+		$.api({
+			url: PbxApi.syslogDownloadLogFile,
+			on: 'now',
+			method: 'POST',
+			data: {filename},
+			successTest: PbxApi.successTest,
+			onSuccess(response) {
+				callback(response.data);
+			},
+			onFailure(response) {
+				callback(false);
+			},
+			onError(response) {
+				callback(false);
+			},
+		});
+	},
+
+	/**
+	 * Ask for zipped logs and PCAP file
+	 * @param filename
+	 * @param callback function
+	 */
+	SyslogDownloadLogsArchive(filename, callback) {
+		$.api({
+			url: PbxApi.syslogDownloadLogsArchive,
+			on: 'now',
+			method: 'POST',
+			data: {filename},
+			successTest: PbxApi.successTest,
+			onSuccess(response) {
+				callback(response.data);
+			},
+			onFailure(response) {
+				callback(response);
+			},
+			onError(response) {
+				callback(response);
+			},
+		});
+	},
 	/**
 	 * Start system upgrade
 	 * @param filePath  tempFile path for upgrade
@@ -402,31 +521,7 @@ const PbxApi = {
 		});
 	},
 
-	/**
-	 * Get part log file
-	 * @param filename
-	 * @param filter
-	 * @param lines
-	 * @constructor
-	 */
-	GetLogFromFile(filename, filter, lines, callback) {
-		$.api({
-			url: PbxApi.systemGetLogFromFile,
-			on: 'now',
-			method: 'GET',
-			data: {filename:filename, filter:filter, lines:lines},
-			successTest: PbxApi.successTest,
-			onSuccess(response) {
-				callback(response.data);
-			},
-			onFailure(response) {
-				callback(response);
-			},
-			onError(response) {
-				callback(response);
-			},
-		});
-	},
+
 
 	/**
 	 * Upload audio file to PBX system

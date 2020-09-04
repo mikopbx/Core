@@ -5,40 +5,44 @@
 
 <div class="ui tab" data-tab="show-log">
     <form class="ui form" id="system-diagnostic-form">
-        <div class="fields">
-          <div class="field ui form">
-            <div class="inline field small">
-              <label>
-                  {{ t._('sd_Filename') }}
-              </label>
-              {{ form.render('filenames') }}
+        <input type="hidden" name="filename" id="filename"/>
+        <div class="inline fields">
+            <div class="nine wide field">
+                <label>
+                    {{ t._('sd_Filename') }}
+                </label>
+                {{ form.render('filenames') }}
             </div>
-          </div>
-          <div class="field ui form">
-            <div class="inline field small">
-              <label>
-                  {{ t._('sd_lines') }}
-              </label>
-              {{ form.render('lines') }}
+            <div class="two wide field">
+                <label>
+                    {{ t._('sd_lines') }}
+                </label>
+                {{ form.render('lines') }}
             </div>
-          </div>
-          <div class="field ui form">
-            <div class="inline field small">
-              <label>
-                  {{ t._('sd_filter') }}
-              </label>
-              {{ form.render('filter') }}
+            <div class="three wide field">
+                <label>
+                    {{ t._('sd_filter') }}
+                </label>
+                {{ form.render('filter') }}
             </div>
-          </div>
-          <button class="ui primary button" id="show-last-log">
-             {{ t._('sd_ShowLastLog') }}
-          </button>
+            <div class="field">
+                <div class="ui buttons">
+                    <div class="ui icon button" id="download-file"><i class="download icon"></i></div>
+                    <div class="ui icon button" id="show-last-log"><i class="refresh icon"></i></div>
+                    <div class="ui icon button" id="show-last-log-auto">
+                        <i class="icons">
+                            <i class="refresh icon"></i>
+                            <i class="corner font icon"></i>
+                        </i>
+                    </div>
+                </div>
+            </div>
         </div>
     </form>
 
-    <div id="application-code-readonly" class="application-code"><pre>{{ content|e }}</pre></div>
-    <div id="application-code" class="hidden"></div>
-
+    <div id="log-content-readonly" class="log-content-readonly">
+        <pre></pre>
+    </div>
 </div>
 
 <div class="ui tab" data-tab="capture-log">

@@ -14,6 +14,8 @@ const manager = {
 	$childrenCheckBoxes: $('#save-ami-form .list .child.checkbox'),
 	$allCheckBoxes: $('#save-ami-form .list .checkbox'),
 	$unCheckButton: $('.uncheck.button'),
+	$username: $('#username'),
+	originalName:'',
 	validateRules: {
 		username: {
 			identifier: 'username',
@@ -21,6 +23,10 @@ const manager = {
 				{
 					type: 'empty',
 					prompt: globalTranslate.am_ValidationAMINameIsEmpty,
+				},
+				{
+					type: 'existRule[username-error]',
+					prompt: globalTranslate.am_ErrorThisUsernameInNotAvailable,
 				},
 			],
 		},
@@ -84,7 +90,52 @@ const manager = {
 			e.preventDefault();
 			manager.$allCheckBoxes.checkbox('uncheck');
 		});
+		manager.$username.on('change', (value)=>{
+			const userId = manager.$formObj.form('get value','id');
+			const newValue = manager.$formObj.form('get value','username');
+			manager.checkAvailability(manager.originalName, newValue, 'username', userId);
+		});
 		manager.initializeForm();
+		manager.originalName = manager.$formObj.form('get value','username');
+	},
+	/**
+	 * Checks if username doesn't exist in database
+	 * @param oldName
+	 * @param newName
+	 * @param cssClassName
+	 * @param userId
+	 * @returns {*}
+	 */
+	checkAvailability(oldName, newName, cssClassName = 'username', userId = '') {
+		if (oldName === newName) {
+			$(`.ui.input.${cssClassName}`).parent().removeClass('error');
+			$(`#${cssClassName}-error`).addClass('hidden');
+			return;
+		}
+		$.api({
+			url: `${globalRootUrl}asterisk-managers/available/{value}`,
+			stateContext: `.ui.input.${cssClassName}`,
+			on: 'now',
+			beforeSend(settings) {
+				const result = settings;
+				result.urlData = {
+					value: newName,
+				};
+				return result;
+			},
+			onSuccess(response) {
+				if (response.nameAvailable) {
+					$(`.ui.input.${cssClassName}`).parent().removeClass('error');
+					$(`#${cssClassName}-error`).addClass('hidden');
+				} else if (userId.length > 0 && response.userId === userId) {
+					$(`.ui.input.${cssClassName}`).parent().removeClass('error');
+					$(`#${cssClassName}-error`).addClass('hidden');
+				} else {
+					$(`.ui.input.${cssClassName}`).parent().addClass('error');
+					$(`#${cssClassName}-error`).removeClass('hidden');
+				}
+			},
+		});
 	},
 	cbBeforeSendForm(settings) {
 		const result = settings;
@@ -105,6 +156,8 @@ const manager = {
 
 };
 
+// Check uniqueness Username
+$.fn.form.settings.rules.existRule = (value, parameter) => $(`#${parameter}`).hasClass('hidden');
 
 $(document).ready(() => {
 	manager.initialize();

@@ -22,6 +22,37 @@ use Phalcon\Http\Message\UploadedFile;
 
 class FilesManagementProcessor extends Injectable
 {
+
+
+    /**
+     * Processes file upload requests
+     *
+     * @param array $request
+     *
+     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     */
+    public static function uploadCallBack(array $request): PBXApiResult
+    {
+        $action   = $request['action'];
+        $postData = $request['data'];
+        switch ($action) {
+            case 'uploadResumable':
+                $res = FilesManagementProcessor::uploadResumable($postData);
+                break;
+            case 'status':
+                $res = FilesManagementProcessor::statusUploadFile($request['data']);
+                break;
+            default:
+                $res             = new PBXApiResult();
+                $res->processor = __METHOD__;
+                $res->messages[] = "Unknown action - {$action} in uploadCallBack";
+        }
+
+        $res->function = $action;
+
+        return $res;
+    }
+
     /**
      * Process resumable upload files
      *
@@ -31,12 +62,13 @@ class FilesManagementProcessor extends Injectable
      */
     public static function uploadResumable($parameters): PBXApiResult
     {
-        $res = new PBXApiResult();
+        $res            = new PBXApiResult();
         $res->processor = __METHOD__;
         $di             = Di::getDefault();
         if ($di === null) {
-            $res->success = false;
-            $res->messages[]='Dependency injector not initialized';
+            $res->success    = false;
+            $res->messages[] = 'Dependency injector not initialized';
+
             return $res;
         }
         $upload_id            = $parameters['upload_id'];
@@ -44,7 +76,7 @@ class FilesManagementProcessor extends Injectable
         $resumableIdentifier  = $parameters['resumableIdentifier'];
         $resumableChunkNumber = $parameters['resumableChunkNumber'];
         $resumableTotalSize   = $parameters['resumableTotalSize'];
-        $uploadDir           = $di->getShared('config')->path('www.uploadDir');
+        $uploadDir            = $di->getShared('config')->path('www.uploadDir');
 
         $factory = new StreamFactory();
 
@@ -71,8 +103,9 @@ class FilesManagementProcessor extends Injectable
             }
             if ( ! Util::mwMkdir($temp_dir) || ! Util::mwMkdir(dirname($temp_dst_file))) {
                 Util::sysLogMsg('UploadFile', "Error create dir '$temp_dir'");
-                $res->success = false;
-                $res->messages[] ="Error create dir '{$temp_dir}'";
+                $res->success    = false;
+                $res->messages[] = "Error create dir '{$temp_dir}'";
+
                 return $res;
             }
             $file->moveTo($chunks_dest_file);
@@ -133,12 +166,13 @@ class FilesManagementProcessor extends Injectable
      */
     public static function statusUploadFile($postData): PBXApiResult
     {
-        $res = new PBXApiResult();
+        $res            = new PBXApiResult();
         $res->processor = __METHOD__;
-        $di               = Di::getDefault();
+        $di             = Di::getDefault();
         if ($di === null) {
-            $res->success = false;
-            $res->messages[]='Dependency injector not initialized';
+            $res->success    = false;
+            $res->messages[] = 'Dependency injector not initialized';
+
             return $res;
         }
         $uploadDir = $di->getShared('config')->path('www.uploadDir');
@@ -148,23 +182,23 @@ class FilesManagementProcessor extends Injectable
             $progress_file = $progress_dir . '/progress';
 
             if (empty($upload_id)) {
-                $res->success = false;
+                $res->success                   = false;
                 $res->data['d_status_progress'] = '0';
                 $res->data['d_status']          = 'ID_NOT_SET';
             } elseif ( ! file_exists($progress_file) && file_exists($progress_dir)) {
-                $res->success = true;
+                $res->success                   = true;
                 $res->data['d_status_progress'] = '0';
                 $res->data['d_status']          = 'INPROGRESS';
             } elseif ( ! file_exists($progress_dir)) {
-                $res->success = false;
+                $res->success                   = false;
                 $res->data['d_status_progress'] = '0';
                 $res->data['d_status']          = 'NOT_FOUND';
             } elseif ('100' === file_get_contents($progress_file)) {
-                $res->success = true;
+                $res->success                   = true;
                 $res->data['d_status_progress'] = '100';
                 $res->data['d_status']          = 'UPLOAD_COMPLETE';
             } else {
-                $res->success = true;
+                $res->success                   = true;
                 $res->data['d_status_progress'] = file_get_contents($progress_file);
             }
         }
@@ -181,18 +215,20 @@ class FilesManagementProcessor extends Injectable
      */
     public static function convertAudioFile($filename): PBXApiResult
     {
-        $res = new PBXApiResult();
+        $res            = new PBXApiResult();
         $res->processor = __METHOD__;
         if ( ! file_exists($filename)) {
-            $res->success = false;
-            $res->messages[]="File '{$filename}' not found.";
+            $res->success    = false;
+            $res->messages[] = "File '{$filename}' not found.";
+
             return $res;
         }
         $out          = [];
         $tmp_filename = '/tmp/' . time() . "_" . basename($filename);
         if (false === copy($filename, $tmp_filename)) {
-            $res->success = false;
+            $res->success    = false;
             $res->messages[] = "Unable to create temporary file '{$tmp_filename}'.";
+
             return $res;
         }
 
@@ -214,8 +250,9 @@ class FilesManagementProcessor extends Injectable
         unlink($tmp_filename);
         if ($result_str !== '' && $result_mp3 !== '') {
             // Ошибка выполнения конвертации.
-            $res->success = false;
+            $res->success    = false;
             $res->messages[] = $result_str;
+
             return $res;
         }
 
@@ -224,7 +261,7 @@ class FilesManagementProcessor extends Injectable
         }
 
         $res->success = true;
-        $res->data[]   = $n_filename_mp3;
+        $res->data[]  = $n_filename_mp3;
 
         return $res;
     }
@@ -236,9 +273,9 @@ class FilesManagementProcessor extends Injectable
      *
      * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
      */
-    public static function  getMetadataFromModuleFile(string $filePath): PBXApiResult
+    public static function getMetadataFromModuleFile(string $filePath): PBXApiResult
     {
-        $res = new PBXApiResult();
+        $res            = new PBXApiResult();
         $res->processor = __METHOD__;
 
         if (file_exists($filePath)) {
@@ -246,7 +283,7 @@ class FilesManagementProcessor extends Injectable
             $grepPath    = Util::which('grep');
             $echoPath    = Util::which('echo');
             $awkPath     = Util::which('awk');
-            $cmd = 'f="' . $filePath . '"; p=`' . $sevenZaPath . ' l $f | ' . $grepPath . ' module.json`;if [ "$?" == "0" ]; then ' . $sevenZaPath . ' -so e -y -r $f `' . $echoPath . ' $p |  ' . $awkPath . ' -F" " \'{print $6}\'`; fi';
+            $cmd         = 'f="' . $filePath . '"; p=`' . $sevenZaPath . ' l $f | ' . $grepPath . ' module.json`;if [ "$?" == "0" ]; then ' . $sevenZaPath . ' -so e -y -r $f `' . $echoPath . ' $p |  ' . $awkPath . ' -F" " \'{print $6}\'`; fi';
 
             Util::mwExec($cmd, $out);
             $settings = json_decode(implode("\n", $out), true);
@@ -254,12 +291,13 @@ class FilesManagementProcessor extends Injectable
             $moduleUniqueID = $settings['moduleUniqueID'] ?? null;
             if ( ! $moduleUniqueID) {
                 $res->messages[] = 'The" moduleUniqueID " in the module file is not described.the json or file does not exist.';
+
                 return $res;
             }
             $res->success = true;
-            $res->data   = [
+            $res->data    = [
                 'filePath' => $filePath,
-                'uniqid' => $moduleUniqueID,
+                'uniqid'   => $moduleUniqueID,
             ];
         }
 
@@ -276,55 +314,25 @@ class FilesManagementProcessor extends Injectable
      */
     public static function fileReadContent($filename, $needOriginal = true): PBXApiResult
     {
-        $res = new PBXApiResult();
+        $res            = new PBXApiResult();
         $res->processor = __METHOD__;
-        $customFile    = CustomFiles::findFirst("filepath = '{$filename}'");
+        $customFile     = CustomFiles::findFirst("filepath = '{$filename}'");
         if ($customFile !== null) {
             $filename_orgn = "{$filename}.orgn";
             if ($needOriginal && file_exists($filename_orgn)) {
                 $filename = $filename_orgn;
             }
             $res->success = true;
-            $res->data[]   = rawurlencode(file_get_contents($filename));
+            $res->data[]  = rawurlencode(file_get_contents($filename));
         } else {
-            $res->success = false;
-            $res->messages[] = 'No access to the file '.$filename;
-        }
-
-        return $res;
-    }
-
-    /**
-     * Получения данных из лог файла с возможностью фильтра и ограничения выборки.
-     * @param  string $filename
-     * @param  string $filter
-     * @param  int    $lines
-     * @return PBXApiResult
-     */
-    public static function getLogFromFile($filename = 'messages', $filter = '', $lines = 500): PBXApiResult
-    {
-        $res = new PBXApiResult();
-        if(!file_exists($filename)){
-            $filename = System::getLogDir() .'/'. $filename;
-        }
-        if(!file_exists($filename)){
             $res->success    = false;
-            $res->messages[] = 'No access to the file '.$filename;
-        }else{
-            $res->success    = true;
-            $cat  = Util::which('cat');
-            $grep = Util::which('grep');
-            $tail = Util::which('tail');
-
-            $di         = Di::getDefault();
-            $dirsConfig = $di->getShared('config');
-            $filenameTmp   = $dirsConfig->path('core.tempDir') . '/'.__FUNCTION__.'_'.time().'.log';
-            $cmd = "{$cat} {$filename} | {$grep} ".escapeshellarg($filter)." | $tail -n ". escapeshellarg($lines). "> $filenameTmp";
-            Util::mwExec("$cmd; chown www:www $filenameTmp");
-            $res->data[] = $filenameTmp;
+            $res->messages[] = 'No access to the file ' . $filename;
         }
+
         return $res;
     }
+
+
 
     /**
      * Download IMG from MikoPBX repository
@@ -335,14 +343,14 @@ class FilesManagementProcessor extends Injectable
      */
     public static function downloadNewFirmware($data): PBXApiResult
     {
-        $di     = Di::getDefault();
-        if ($di !== null){
+        $di = Di::getDefault();
+        if ($di !== null) {
             $tempDir = $di->getConfig()->path('www.uploadDir');
         } else {
             $tempDir = '/tmp';
         }
         $rmPath = Util::which('rm');
-        $module  = 'NewFirmware';
+        $module = 'NewFirmware';
         if ( ! file_exists($tempDir . "/{$module}")) {
             Util::mwMkdir($tempDir . "/{$module}");
         } else {
@@ -372,11 +380,11 @@ class FilesManagementProcessor extends Injectable
         $phpPath = Util::which('php');
         Util::mwExecBg("{$phpPath} -f {$workerDownloaderPath} " . $tempDir . "/{$module}/download_settings.json");
 
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
-        $res->success = true;
-        $res->data['filename']=$download_settings['res_file'];
-        $res->data['d_status']='DOWNLOAD_IN_PROGRESS';
+        $res                   = new PBXApiResult();
+        $res->processor        = __METHOD__;
+        $res->success          = true;
+        $res->data['filename'] = $download_settings['res_file'];
+        $res->data['d_status'] = 'DOWNLOAD_IN_PROGRESS';
 
         return $res;
     }
@@ -389,11 +397,11 @@ class FilesManagementProcessor extends Injectable
     public static function firmwareDownloadStatus(): PBXApiResult
     {
         clearstatcache();
-        $res = new PBXApiResult();
+        $res            = new PBXApiResult();
         $res->processor = __METHOD__;
-        $res->success = true;
-        $di     = Di::getDefault();
-        if ($di !== null){
+        $res->success   = true;
+        $di             = Di::getDefault();
+        if ($di !== null) {
             $tempDir = $di->getConfig()->path('www.uploadDir');
         } else {
             $tempDir = '/tmp';
@@ -416,13 +424,13 @@ class FilesManagementProcessor extends Injectable
         } elseif ('100' === file_get_contents($progress_file)) {
             $res->data['d_status_progress'] = '100';
             $res->data['d_status']          = 'DOWNLOAD_COMPLETE';
-            $res->data['filePath'] = "{$tempDir}/NewFirmware/update.img";
+            $res->data['filePath']          = "{$tempDir}/NewFirmware/update.img";
         } else {
             $res->data['d_status_progress'] = file_get_contents($progress_file);
-            $d_pid                       = Util::getPidOfProcess($tempDir . '/NewFirmware/download_settings.json');
+            $d_pid                          = Util::getPidOfProcess($tempDir . '/NewFirmware/download_settings.json');
             if (empty($d_pid)) {
                 $res->data['d_status'] = 'DOWNLOAD_ERROR';
-                $error              = '';
+                $error                 = '';
                 if (file_exists($modulesDir . '/error')) {
                     $error = file_get_contents($modulesDir . '/error');
                 }
@@ -446,10 +454,10 @@ class FilesManagementProcessor extends Injectable
      */
     public static function moduleStartDownload($module, $url, $md5): PBXApiResult
     {
-        $res = new PBXApiResult();
+        $res            = new PBXApiResult();
         $res->processor = __METHOD__;
-        $di     = Di::getDefault();
-        if ($di !== null){
+        $di             = Di::getDefault();
+        if ($di !== null) {
             $tempDir = $di->getConfig()->path('www.uploadDir');
         } else {
             $tempDir = '/tmp';
@@ -477,12 +485,13 @@ class FilesManagementProcessor extends Injectable
             json_encode($download_settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
         );
         $workerDownloaderPath = Util::getFilePathByClassName(WorkerDownloader::class);
-        $phpPath = Util::which('php');
+        $phpPath              = Util::which('php');
         Util::mwExecBg("{$phpPath} -f {$workerDownloaderPath} $moduleDirTmp/download_settings.json");
 
-        $res->data['uniqid'] = $module;
+        $res->data['uniqid']   = $module;
         $res->data['d_status'] = 'DOWNLOAD_IN_PROGRESS';
-        $res->success = true;
+        $res->success          = true;
+
         return $res;
     }
 
@@ -496,10 +505,10 @@ class FilesManagementProcessor extends Injectable
     public static function moduleDownloadStatus(string $moduleUniqueID): PBXApiResult
     {
         clearstatcache();
-        $res = new PBXApiResult();
+        $res            = new PBXApiResult();
         $res->processor = __METHOD__;
-        $di     = Di::getDefault();
-        if ($di !== null){
+        $di             = Di::getDefault();
+        if ($di !== null) {
             $tempDir = $di->getConfig()->path('www.uploadDir');
         } else {
             $tempDir = '/tmp';
@@ -520,33 +529,34 @@ class FilesManagementProcessor extends Injectable
         if ( ! file_exists($progress_file)) {
             $res->data['d_status_progress'] = '0';
             $res->data['d_status']          = 'NOT_FOUND';
-            $res->success = false;
+            $res->success                   = false;
         } elseif ('' !== $error) {
             $res->data['d_status']          = 'DOWNLOAD_ERROR';
             $res->data['d_status_progress'] = file_get_contents($progress_file);
             $res->data['d_error']           = $error;
-            $res->success = false;
+            $res->success                   = false;
         } elseif ('100' === file_get_contents($progress_file)) {
             $res->data['d_status_progress'] = '100';
             $res->data['d_status']          = 'DOWNLOAD_COMPLETE';
-            $res->data['filePath'] =  "$moduleDirTmp/modulefile.zip";
-            $res->success = true;
+            $res->data['filePath']          = "$moduleDirTmp/modulefile.zip";
+            $res->success                   = true;
         } else {
             $res->data['d_status_progress'] = file_get_contents($progress_file);
-            $d_pid                       = Util::getPidOfProcess($moduleDirTmp . '/download_settings.json');
+            $d_pid                          = Util::getPidOfProcess($moduleDirTmp . '/download_settings.json');
             if (empty($d_pid)) {
                 $res->data['d_status'] = 'DOWNLOAD_ERROR';
-                $error              = '';
+                $error                 = '';
                 if (file_exists($moduleDirTmp . '/error')) {
                     $error = file_get_contents($moduleDirTmp . '/error');
                 }
                 $res->messages[] = $error;
-                $res->success = false;
+                $res->success    = false;
             } else {
                 $res->data['d_status'] = 'DOWNLOAD_IN_PROGRESS';
-                $res->success = true;
+                $res->success          = true;
             }
         }
+
         return $res;
     }
 
@@ -559,18 +569,20 @@ class FilesManagementProcessor extends Injectable
      */
     public static function removeAudioFile($filePath): PBXApiResult
     {
-        $res = new PBXApiResult();
+        $res            = new PBXApiResult();
         $res->processor = __METHOD__;
-        $extension = Util::getExtensionOfFile($filePath);
+        $extension      = Util::getExtensionOfFile($filePath);
         if ( ! in_array($extension, ['mp3', 'wav', 'alaw'])) {
-            $res->success = false;
+            $res->success    = false;
             $res->messages[] = "It is forbidden to remove the file type $extension.";
+
             return $res;
         }
 
         if ( ! file_exists($filePath)) {
-            $res->success = true;
-            $res->data['message']="File '{$filePath}' already deleted";
+            $res->success         = true;
+            $res->data['message'] = "File '{$filePath}' already deleted";
+
             return $res;
         }
 
@@ -585,7 +597,7 @@ class FilesManagementProcessor extends Injectable
         $rmPath = Util::which('rm');
         Util::mwExec("{$rmPath} -rf " . implode(' ', $arrDeletedFiles), $out);
         if (file_exists($filePath)) {
-            $res->success = false;
+            $res->success  = false;
             $res->messages = $out;
         } else {
             $res->success = true;
@@ -604,15 +616,16 @@ class FilesManagementProcessor extends Injectable
      */
     public static function installModuleFromFile($filePath): PBXApiResult
     {
-        $res = new PBXApiResult();
+        $res            = new PBXApiResult();
         $res->processor = __METHOD__;
         $moduleMetadata = FilesManagementProcessor::getMetadataFromModuleFile($filePath);
-        if (!$moduleMetadata->success) {
+        if ( ! $moduleMetadata->success) {
             return $moduleMetadata;
         } else {
             $moduleUniqueID = $moduleMetadata->data['uniqid'];
-            $res = self::installModule($filePath, $moduleUniqueID);
+            $res            = self::installModule($filePath, $moduleUniqueID);
         }
+
         return $res;
     }
 
@@ -625,15 +638,15 @@ class FilesManagementProcessor extends Injectable
      *
      * @return PBXApiResult
      */
-    public static function installModule(string $filePath, string $moduleUniqueID):PBXApiResult
+    public static function installModule(string $filePath, string $moduleUniqueID): PBXApiResult
     {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
-        $res->success = true;
+        $res              = new PBXApiResult();
+        $res->processor   = __METHOD__;
+        $res->success     = true;
         $currentModuleDir = PbxExtensionUtils::getModuleDir($moduleUniqueID);
         $needBackup       = is_dir($currentModuleDir);
 
-        if ($needBackup){
+        if ($needBackup) {
             self::uninstallModule($moduleUniqueID, true);
         }
 
@@ -641,18 +654,17 @@ class FilesManagementProcessor extends Injectable
         Util::mwExec("{$semZaPath} e -spf -aoa -o{$currentModuleDir} {$filePath}");
         Util::addRegularWWWRights($currentModuleDir);
 
-        $pbxExtensionSetupClass       = "\\Modules\\{$moduleUniqueID}\\Setup\\PbxExtensionSetup";
+        $pbxExtensionSetupClass = "\\Modules\\{$moduleUniqueID}\\Setup\\PbxExtensionSetup";
         if (class_exists($pbxExtensionSetupClass)
-            && method_exists($pbxExtensionSetupClass, 'installModule'))
-        {
+            && method_exists($pbxExtensionSetupClass, 'installModule')) {
             $setup = new $pbxExtensionSetupClass($moduleUniqueID);
             if ( ! $setup->installModule()) {
-                $res->success = false;
+                $res->success    = false;
                 $res->messages[] = $setup->getMessages();
             }
         } else {
-            $res->success = false;
-            $res->messages[]  = "Install error: the class {$pbxExtensionSetupClass} not exists";
+            $res->success    = false;
+            $res->messages[] = "Install error: the class {$pbxExtensionSetupClass} not exists";
         }
 
         if ($res->success) {
@@ -664,16 +676,17 @@ class FilesManagementProcessor extends Injectable
 
     /**
      * Uninstall module
+     *
      * @param string $moduleUniqueID
      *
      * @param bool   $keepSettings
      *
      * @return PBXApiResult
      */
-    public static function uninstallModule(string $moduleUniqueID, bool $keepSettings):PBXApiResult
+    public static function uninstallModule(string $moduleUniqueID, bool $keepSettings): PBXApiResult
     {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
+        $res              = new PBXApiResult();
+        $res->processor   = __METHOD__;
         $currentModuleDir = PbxExtensionUtils::getModuleDir($moduleUniqueID);
         // Kill all module processes
         if (is_dir("{$currentModuleDir}/bin")) {
@@ -700,7 +713,7 @@ class FilesManagementProcessor extends Injectable
                 $setup       = new $moduleClass($moduleUniqueID);
             }
             $setup->uninstallModule($keepSettings);
-        }  finally {
+        } finally {
             if (is_dir($currentModuleDir)) {
                 // Broken or very old module. Force uninstall.
                 $rmPath = Util::which('rm');
@@ -710,10 +723,41 @@ class FilesManagementProcessor extends Injectable
                 $setup       = new $moduleClass($moduleUniqueID);
                 $setup->unregisterModule();
             }
-
         }
-        $res->success = true;
+        $res->success                    = true;
         $res->data['needRestartWorkers'] = true;
+
         return $res;
+    }
+
+    /**
+     *
+     * Scans a directory just like scandir(), only recursively
+     * returns a hierarchical array representing the directory structure
+     *
+     * @param string $dir      directory to scan
+     *
+     * @return array
+     */
+    public static function scanDirRecursively(string $dir): array
+    {
+        $list = [];
+
+        //get directory contents
+        foreach (scandir($dir) as $d) {
+            //ignore any of the files in the array
+            if (in_array($d, ['.', '..'])) {
+                continue;
+            }
+            //if current file ($d) is a directory, call scanDirRecursively
+            if (is_dir($dir . '/' . $d)) {
+                $list[] = self::scanDirRecursively($dir . '/' . $d);
+                //otherwise, add the file to the list
+            } elseif (is_file($dir . '/' . $d) || is_link($dir . '/' . $d)) {
+                $list[] = $dir . '/' . $d;
+            }
+        }
+
+        return $list;
     }
 }

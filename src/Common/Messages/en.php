@@ -1000,5 +1000,4 @@ It can be activated once, after which the coupon becomes redeemed.
     'sd_lines' => 'Lines',
     'sd_ShowLog' => 'Show log',
     'sd_CapturePcap' => 'Capture pcap',
-    'sd_ShowLastLog' => 'Show last log',
 ];

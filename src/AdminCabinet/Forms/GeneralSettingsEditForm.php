@@ -145,6 +145,7 @@ class GeneralSettingsEditForm extends Form
                 case 'RestartEveryNight':
                 case 'SendMetrics':
                 case 'RedirectToHttps':
+                case 'PBXSplitAudioThread':
                 case '***ALL CHECK BOXES ABOVE***':
                     $cheskarr = ['value' => null];
                     if ($value) {

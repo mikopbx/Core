@@ -1,9 +1,16 @@
 {{ form('asterisk-managers/save', 'role': 'form', 'class': 'ui large form', 'id':'save-ami-form') }}
 {{ form.render('id') }}
 
+
 <div class="field">
-    <label>{{ t._('am_Username') }}</label>
-    {{ form.render('username') }}
+    <label >{{ t._('am_Username') }}</label>
+    <div class="ui icon input username">
+        <i class="search icon"></i>
+        {{ form.render('username') }}
+    </div>
+    <div class="ui top pointing red label hidden" id="username-error">
+        {{ t._("am_ErrorThisUsernameInNotAvailable") }}
+    </div>
 </div>
 <div class="field">
     <label>{{ t._('am_Secret') }}</label>

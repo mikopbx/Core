@@ -155,7 +155,7 @@ class ExtensionsController extends BaseController
             $extension->Sip->uniqid            = strtoupper('SIP-PHONE-' . md5(time()));
             $extension->Sip->busylevel         = 1;
             $extension->Sip->qualify           = '1';
-            $extension->Sip->qualifyfreq       = 60;
+            $extension->Sip->qualifyfreq       = '60';
             $extension->number                 = $this->getNextInternalNumber();
 
             $extension->Users       = new Users();
@@ -443,7 +443,7 @@ class ExtensionsController extends BaseController
                     }
                     break;
                 case 'callerid':
-                    $extension->$name = preg_replace('/[^a-zA-Zа-яА-Я0-9 ]/ui', '', $data['user_username']);
+                    $extension->$name = $this->sanitizeCallerId($data['user_username']);
                     break;
                 case 'userid':
                     $extension->$name = $userEntity->id;

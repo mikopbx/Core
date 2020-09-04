@@ -8,13 +8,25 @@
 
 const DeleteSomething = {
 	initialize() {
+		$('.two-steps-delete').closest( 'td' ).on('dblclick', (e) => {
+			e.preventDefault();
+			e.stopImmediatePropagation();
+		});
 		$('body').on('click', '.two-steps-delete', (e) => {
 			e.preventDefault();
 			e.stopImmediatePropagation();
 			const $button = $(e.target).closest('a');
-			$button.removeClass('two-steps-delete');
 			const $icon = $button.find('i.trash');
-			$icon.removeClass('trash').addClass('close');
+			if ($button.hasClass('disabled')){
+				return;
+			}
+			$button.addClass('disabled');
+			setTimeout(() => {
+				if ($button.length) {
+					$button.removeClass('two-steps-delete').removeClass('disabled');
+					$icon.removeClass('trash').addClass('close');
+				}
+			}, 200);
 			setTimeout(() => {
 				if ($button.length) {
 					$button.addClass('two-steps-delete');

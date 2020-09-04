@@ -14,9 +14,41 @@ use MikoPBX\Core\System\BeanstalkClient;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Workers\WorkerCdr;
 use Phalcon\Di\Injectable;
+use phpDocumentor\Reflection\Types\Self_;
 
 class CdrDBProcessor extends Injectable
 {
+    /**
+     * Processes CDR table requests
+     *
+     * @param array $request
+     *
+     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     *
+     */
+    public static function cdrCallBack(array $request): PBXApiResult
+    {
+        $action = $request['action'];
+        switch ($action) {
+            case 'getActiveCalls':
+                $res = self::getActiveCalls();
+                break;
+            case 'getActiveChannels':
+                $res = self::getActiveChannels();
+                break;
+            default:
+                $res             = new PBXApiResult();
+                $res->processor = __METHOD__;
+                $res->messages[] = "Unknown action - {$action} in cdrCallBack";
+                break;
+        }
+
+        $res->function = $action;
+
+        return $res;
+    }
+
+
     /**
      * Получение активных звонков по данным CDR.
      * @return PBXApiResult

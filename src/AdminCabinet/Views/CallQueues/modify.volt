@@ -72,6 +72,11 @@
                 {{ t._("cq_ThisNumberIsNotFree") }}
             </div>
         </div>
+        <div class="field">
+            <label>{{ t._('cq_CallerIDPrefix') }}</label>
+            {{ form.render('callerid_prefix') }}
+        </div>
+
         <div class="ui hidden divider"></div>
         <h3 class="ui dividing header ">{{ t._("cq_QueueMemberSettings") }}</h3>
 

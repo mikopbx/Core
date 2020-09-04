@@ -19,7 +19,7 @@ class AsteriskManagersController extends BaseController
     private array $arrCheckBoxes;
 
     /**
-     * Инициализация базового класса
+     * Base class initialization
      */
     public function initialize(): void
     {
@@ -41,7 +41,7 @@ class AsteriskManagersController extends BaseController
     }
 
     /**
-     * Построение списка пользователей Asterisk Managers
+     * Generates Asterisk Managers index page
      */
     public function indexAction()
     {
@@ -61,11 +61,11 @@ class AsteriskManagersController extends BaseController
 
 
     /**
-     * Форма настроек пользователя Asterisk Managers
+     * Modifies Asterisk Managers by Webinterface
      *
-     * @param string $id идентификатор редактируемого пользователя
+     * @param string $id AsteriskManagerUsers record ID
      */
-    public function modifyAction($id = null)
+    public function modifyAction($id = '')
     {
         $manager = AsteriskManagerUsers::findFirstById($id);
         if ($manager === null) {
@@ -100,7 +100,7 @@ class AsteriskManagersController extends BaseController
 
 
     /**
-     * Сохраенение настроек Asterisk Manager
+     * Save Asterisk Manager User settings
      */
     public function saveAction(): void
     {
@@ -136,7 +136,7 @@ class AsteriskManagersController extends BaseController
         }
 
         if ($errors) {
-            $this->flash->warning(implode('<br>', $errors));
+            $this->flash->error(implode('<br>', $errors));
             $this->view->success = false;
         } else {
             $this->flash->success($this->translation->_('ms_SuccessfulSaved'));
@@ -146,18 +146,37 @@ class AsteriskManagersController extends BaseController
     }
 
     /**
-     * Удаление Asterisk Manager
+     * Deletes Asterisk Manager
      *
-     * @param int|string $amiId
+     * @param string $amiId
      *
      * @return void
      */
-    public function deleteAction($amiId = null): void
+    public function deleteAction(string $amiId = ''): void
     {
         $manager = AsteriskManagerUsers::findFirstByid($amiId);
         if ($manager !== null) {
             $manager->delete();
         }
         $this->forward('asterisk-managers/index');
+    }
+
+    /**
+     * Checks uniqueness for AMI username from JS.
+     *
+     * @param string $username
+     *
+     * @return void  result send by ControllerBase::afterExecuteRoute()
+     */
+    public function availableAction(string $username): void
+    {
+        $result = true;
+        $amiUser = AsteriskManagerUsers::findFirst("username = '{$username}'");
+        if ($amiUser !== null) {
+            $result             = false;
+            $this->view->userId = $amiUser->id;
+        }
+        $this->view->nameAvailable = $result;
+        $this->view->success = true;
     }
 }
