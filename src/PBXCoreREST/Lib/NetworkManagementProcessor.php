@@ -44,7 +44,8 @@ class NetworkManagementProcessor extends Injectable
         curl_close($curl);
         if (Util::isJson($resultrequest)) {
             $res->success = true;
-            $res->data[]   = json_decode($resultrequest, true);
+            $response = json_decode($resultrequest, true);
+            $res->data['ip']   = $response['ip'];
         } else {
             $res->messages[] = 'Error format data ' . $resultrequest;
         }

@@ -81,9 +81,6 @@ class SystemManagementProcessor extends Injectable
             case 'fileReadContent':
                 $res = FilesManagementProcessor::fileReadContent($data['filename'], $data['needOriginal']);
                 break;
-            case 'getLogFromFile':
-                $res = LogsManagementProcessor::getLogFromFile($data['filename'], $data['filter'], $data['lines']);
-                break;
             case 'getExternalIpInfo':
                 $res = NetworkManagementProcessor::getExternalIpInfo();
                 break;
@@ -101,15 +98,6 @@ class SystemManagementProcessor extends Injectable
                 break;
             case 'getBanIp':
                 $res = FirewallManagementProcessor::getBanIp();
-                break;
-            case 'startLog':
-                $res = LogsManagementProcessor::startLog();
-                break;
-            case 'stopLog':
-                $res = LogsManagementProcessor::stopLog();
-                break;
-            case 'getLogsList':
-                $res = LogsManagementProcessor::getLogsList();
                 break;
             case 'downloadNewFirmware':
                 $res = FilesManagementProcessor::downloadNewFirmware($request['data']);

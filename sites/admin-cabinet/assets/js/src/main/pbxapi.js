@@ -312,10 +312,7 @@ const PbxApi = {
 			onSuccess(response) {
 				callback(response.data);
 			},
-			onError(errorMessage, element, xhr) {
-				if (xhr.status === 403) {
-					window.location = `${globalRootUrl}session/index`;
-				}
+			onError() {
 				callback(false);
 			},
 		});

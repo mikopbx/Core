@@ -129,7 +129,7 @@ const networks = {
 		networks.initializeForm();
 	},
 	/**
-	 * Обработчик API функции по возврату структуры с IP адресом маршрутизатора
+	 * Gets external IP by request to remote server
 	 */
 	cbAfterGetExternalIp(response) {
 		if (response === false) {
