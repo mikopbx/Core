@@ -22,7 +22,7 @@ use Phalcon\Text;
 class Elements extends Injectable
 {
 
-    private $_headerMenu
+    private array $_headerMenu
         = [
             'setup'   => [
                 'caption'   => 'mm_Setup',

@@ -117,7 +117,7 @@ class Fail2BanConf extends Injectable
      *
      * @return bool
      */
-    public function tableBanExists($db): bool
+    public function tableBanExists(SQLite3 $db): bool
     {
         $q_check      = 'SELECT name FROM sqlite_master WHERE type = "table" AND name="bans"';
         $result_check = $db->query($q_check);

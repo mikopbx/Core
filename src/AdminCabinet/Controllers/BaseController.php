@@ -29,9 +29,9 @@ use Sentry\SentrySdk;
  */
 class BaseController extends Controller
 {
-    protected $actionName;
-    protected $controllerName;
-    protected $controllerNameUnCamelized;
+    protected string $actionName;
+    protected string $controllerName;
+    protected string $controllerNameUnCamelized;
 
     /**
      * Инициализация базововго класса
@@ -146,7 +146,7 @@ class BaseController extends Controller
      *
      * @return string
      */
-    protected function getSessionData($key): string
+    protected function getSessionData(string $key): string
     {
         $roSession = $this->sessionRO;
         if ($roSession !== null && array_key_exists($key, $roSession) && ! empty($roSession[$key])) {
@@ -237,7 +237,7 @@ class BaseController extends Controller
      *
      * @param string $uri
      */
-    protected function forward($uri): void
+    protected function forward(string $uri): void
     {
         $uriParts = explode('/', $uri);
         $params   = array_slice($uriParts, 2);

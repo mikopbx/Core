@@ -279,6 +279,8 @@ class WorkerCallEvents extends WorkerBase
      * Завершение / уничтожение канала.
      *
      * @param $data
+     *
+     * @throws \Exception
      */
     public static function Action_hangup_chan($data): void
     {
@@ -395,7 +397,7 @@ class WorkerCallEvents extends WorkerBase
      *
      * @param       $action
      * @param       $data
-     * @param array $calls_data
+     * @param ?array $calls_data
      */
     public static function Action_CreateRowTransfer($action, $data, $calls_data = null): void
     {
@@ -1062,6 +1064,7 @@ class WorkerCallEvents extends WorkerBase
      * @param array $data
      *
      * @return bool
+     * @throws \Exception
      */
     public static function insertDataToDbM($data): bool
     {

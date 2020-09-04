@@ -21,9 +21,8 @@ class PostController extends BaseController
 {
     public function callAction($actionName): void
     {
-        $data           = [];
-        $data['result'] = 'ERROR';
         $data   = $this->request->getPost();
+        $data['result'] = 'ERROR';
 
         if ($this->request->hasFiles() > 0) {
             $data = [
@@ -53,6 +52,7 @@ class PostController extends BaseController
             }
             $actionName = 'uploadResumable';
         }
+
         $this->sendRequestToBackendWorker('upload', $actionName, $data);
     }
 }

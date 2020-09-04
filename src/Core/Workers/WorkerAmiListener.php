@@ -15,7 +15,7 @@ use AGI_AsteriskManager;
 
 class WorkerAmiListener extends WorkerBase
 {
-    protected $client;
+    protected BeanstalkClient $client;
 
     protected AGI_AsteriskManager $am;
     protected int $maxProc=1;
@@ -79,7 +79,7 @@ class WorkerAmiListener extends WorkerBase
      *
      * @param string $result - данные в ормате json для отправки.
      */
-    private function actionSendToBeanstalk($result): void
+    private function actionSendToBeanstalk(string $result): void
     {
         $message_is_sent = false;
         $error           = '';

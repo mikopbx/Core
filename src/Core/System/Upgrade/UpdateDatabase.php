@@ -77,6 +77,7 @@ class UpdateDatabase extends Di\Injectable
      *                        i.e. MikoPBX\Common\Models\Extensions or Modules\ModuleSmartIVR\Models\Settings
      *
      * @return bool
+     * @throws \ReflectionException
      */
     public function createUpdateDbTableByAnnotations(string $modelClassName): bool
     {

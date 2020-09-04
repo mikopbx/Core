@@ -30,7 +30,7 @@ class SoundFilesController extends BaseController
      *
      * @param string $id редактируемой записи
      */
-    public function modifyAction(string $id = null): void
+    public function modifyAction(string $id = ''): void
     {
         if (in_array($id, [SoundFiles::CATEGORY_CUSTOM, SoundFiles::CATEGORY_MOH], true)) {
             $file           = new SoundFiles();
@@ -97,7 +97,7 @@ class SoundFilesController extends BaseController
      *
      * @param string $id
      */
-    public function deleteAction(string $id = null): void
+    public function deleteAction(string $id = ''): void
     {
         $soundFile = SoundFiles::findFirstById($id);
         $errors    = null;
@@ -117,7 +117,7 @@ class SoundFilesController extends BaseController
      *
      * @param string $id
      */
-    public function getPathByIdAction(string $id = null): void
+    public function getPathByIdAction(string $id = ''): void
     {
         $soundFile = SoundFiles::findFirstById($id);
         if ($soundFile !== null) {

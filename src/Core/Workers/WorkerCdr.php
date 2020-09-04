@@ -36,7 +36,6 @@ class WorkerCdr extends WorkerBase
      *
      * @param $argv
      *
-     * @throws \Pheanstalk\Exception\DeadlineSoonException
      */
     public function start($argv): void
     {

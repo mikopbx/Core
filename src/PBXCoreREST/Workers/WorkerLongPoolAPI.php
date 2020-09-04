@@ -83,7 +83,7 @@ class WorkerLongPoolAPI extends WorkerBase
      *
      * @return string
      */
-    private function getData($url)
+    private function getData(string $url)
     {
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -120,6 +120,7 @@ class WorkerLongPoolAPI extends WorkerBase
      * @param $channel
      * @param $common_chan
      *
+     * @return array|false|string|null
      */
     private function execFunction($channel, $common_chan = null)
     {
@@ -190,7 +191,7 @@ class WorkerLongPoolAPI extends WorkerBase
      *
      * @return string
      */
-    private function postData($url, $data)
+    private function postData(string $url, string $data)
     {
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_POST, 1);

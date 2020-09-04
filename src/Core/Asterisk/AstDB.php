@@ -8,9 +8,9 @@
 
 namespace MikoPBX\Core\Asterisk;
 
+use AGI_AsteriskManager;
 use MikoPBX\Core\System\{Util};
 use Phalcon\Di;
-use Phalcon\Exception;
 use SQLite3;
 
 class AstDB extends Di\Injectable
@@ -19,7 +19,7 @@ class AstDB extends Di\Injectable
      * Ссылка на базу данных
      */
     private ?SQLite3 $db;
-    private $am;
+    private AGI_AsteriskManager $am;
 
     /**
      * AstDB constructor.

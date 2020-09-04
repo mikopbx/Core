@@ -756,7 +756,7 @@ class ExtensionsConf extends ConfigClass
      *
      * @return null|string
      */
-    public function getTechByID($uniqueID): string
+    public function getTechByID(string $uniqueID): string
     {
         $technology = '';
         $provider   = Providers::findFirstByUniqid($uniqueID);

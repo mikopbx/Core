@@ -30,7 +30,7 @@ class CallQueuesController extends BaseController
      *
      * @param string $uniqid - идентификатор редактируемой очереди
      */
-    public function modifyAction(string $uniqid = null): void
+    public function modifyAction(string $uniqid = ''): void
     {
         $queue            = CallQueues::findFirstByUniqid($uniqid);
         $queueMembersList = [];
@@ -293,7 +293,7 @@ class CallQueuesController extends BaseController
                 ],
             ];
             $queueMembers = CallQueueMembers::find($parameters);
-            if (count($queueMembers) > 1) {
+            if (is_countable($queueMembers) && count($queueMembers) > 1) {
                 // откуда то взались лишние. Надо их всех удалить и создать нового
                 if ($queueMembers->delete() === false) {
                     $errors = $queueMembers->getMessages();
@@ -302,7 +302,7 @@ class CallQueuesController extends BaseController
                     return false;
                 }
                 $queueMember = new CallQueueMembers();
-            } elseif (count($queueMembers) === 1) {
+            } elseif (is_countable($queueMembers) && count($queueMembers) === 1) {
                 $queueMember = $queueMembers->getFirst();
             } else {
                 $queueMember = new CallQueueMembers();

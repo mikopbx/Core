@@ -352,7 +352,6 @@ class PBX extends Injectable
     /**
      * Запуск генератора dialplan.
      *
-     * @return array
      */
     public static function dialplanReload(): void
     {

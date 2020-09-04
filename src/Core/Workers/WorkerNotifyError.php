@@ -13,9 +13,9 @@ use Exception;
 
 class WorkerNotifyError extends WorkerBase
 {
-    private $queue = [];
-    private $starting_point = 0;
-    private $interval = 28800;
+    private array $queue = [];
+    private int $starting_point = 0;
+    private int $interval = 28800;
     protected int $maxProc=1;
 
     /**

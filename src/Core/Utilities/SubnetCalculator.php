@@ -66,6 +66,8 @@ class SubnetCalculator
      *
      * @param string $ip IP address in dotted quad notation.
      * @param int CIDR network size.
+     *
+     * @throws \Phalcon\Exception
      */
     public function __construct($ip, $network_size)
     {
@@ -182,7 +184,7 @@ class SubnetCalculator
      * Each of the above is provided in dotted quads, hexedecimal, and binary notation.
      * Also contains number of IP addresses and number of addressable hosts, IP address range, and broadcast address.
      *
-     * @return string Associated array of subnet calculations.
+     * @return array Associated array of subnet calculations.
      */
     public function getSubnetArrayReport()
     {

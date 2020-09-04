@@ -132,7 +132,7 @@ class PbxSettings extends ModelsBase
      *
      * @return string - результат из базы или значение по умолчанию
      */
-    public static function getValueByKey($key): string
+    public static function getValueByKey(string $key): string
     {
 
         $result = parent::findFirstByKey($key);

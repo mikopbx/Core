@@ -95,7 +95,7 @@ class WorkerDownloader extends WorkerBase
      *
      * @return int || void
      */
-    private function remoteFileSize($url): int
+    private function remoteFileSize(string $url): int
     {
         $ch       = curl_init($url);
         $fileSize = 0;

@@ -32,7 +32,7 @@ class DialplanApplicationsController extends BaseController
      *
      * @param string $uniqid идентификатор редактируемого Dialplan Application
      */
-    public function modifyAction(string $uniqid = null): void
+    public function modifyAction(string $uniqid = ''): void
     {
         $app = DialplanApplications::findFirstByUniqid($uniqid);
         if ($app === null) {

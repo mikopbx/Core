@@ -79,7 +79,7 @@ class System extends Di\Injectable
                     $actions['modules'] = 10;
                     break;
                 case 'http.conf':
-                    $actions['manager'] = 10;
+                    $actions['manager'] = 10; //
                     break;
                 case 'root': // crontabs
                     $actions['cron'] = 10;
@@ -135,7 +135,7 @@ class System extends Di\Injectable
                     QueueConf::queueReload();
                     break;
                 case 'features':
-                    PBX::managerReload();
+                    PBX::managerReload(); //
                     break;
                 case 'systemtime':
                     System::setDate('');
@@ -157,7 +157,7 @@ class System extends Di\Injectable
     /**
      * Setup system time
      *
-     * @param $date integer 2015.12.31-01:01:20
+     * @param $date 2015.12.31-01:01:20
      *
      * @return bool
      */
@@ -185,7 +185,7 @@ class System extends Di\Injectable
      */
     public function timezoneConfigure(): void
     {
-        $timezone = $this->mikoPBXConfig->getGeneralSettings('PBXTimezone');;
+        $timezone = $this->mikoPBXConfig->getGeneralSettings('PBXTimezone');
         if (file_exists('/etc/TZ')) {
             unlink("/etc/TZ");
         }

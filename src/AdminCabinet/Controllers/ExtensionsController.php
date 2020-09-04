@@ -385,7 +385,7 @@ class ExtensionsController extends BaseController
      *
      * @return bool результат сохранения
      */
-    private function saveUser(Users $userEntity, $data)
+    private function saveUser(Users $userEntity, array $data)
     {
         // Заполним параметры пользователя
         foreach ($userEntity as $name => $value) {
@@ -422,7 +422,7 @@ class ExtensionsController extends BaseController
      *
      * @return bool результат сохранения
      */
-    private function saveExtension(Extensions $extension, Users $userEntity, $data, $isMobile = false): bool
+    private function saveExtension(Extensions $extension, Users $userEntity, array $data, $isMobile = false): bool
     {
         foreach ($extension as $name => $value) {
             switch ($name) {
@@ -476,7 +476,7 @@ class ExtensionsController extends BaseController
      *
      * @return bool результат сохранения
      */
-    private function saveSip(Sip $sipEntity, $data): bool
+    private function saveSip(Sip $sipEntity, array $data): bool
     {
         foreach ($sipEntity as $name => $value) {
             switch ($name) {
@@ -573,7 +573,7 @@ class ExtensionsController extends BaseController
      *
      * @return bool результат сохранения
      */
-    private function saveExternalPhones(ExternalPhones $externalPhone, $data): bool
+    private function saveExternalPhones(ExternalPhones $externalPhone, array $data): bool
     {
         foreach ($externalPhone as $name => $value) {
             switch ($name) {
@@ -611,7 +611,7 @@ class ExtensionsController extends BaseController
      *
      * @param string $id - записи внутренненго номера
      */
-    public function deleteAction($id = null)
+    public function deleteAction($id = '')
     {
         $this->db->begin();
         $extension = Extensions::findFirstById($id);
@@ -649,7 +649,7 @@ class ExtensionsController extends BaseController
      *
      * @return void параметры помещаются в view и обрабатваются через ControllerBase::afterExecuteRoute()
      */
-    public function availableAction($number = null): void
+    public function availableAction($number = ''): void
     {
         $result = true;
         // Проверим пересечение с внутренним номерным планом
@@ -679,7 +679,7 @@ class ExtensionsController extends BaseController
      *
      * @return void
      */
-    public function disableAction($number = null): void
+    public function disableAction($number = ''): void
     {
         $extension = Extensions::findFirstByNumber($number);
         if ($extension !== null) {

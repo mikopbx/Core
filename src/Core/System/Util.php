@@ -195,7 +195,7 @@ class Util
      * @param string $className
      * @param string $param
      */
-    public static function restartPHPWorker($className, $param = 'start'): void
+    public static function restartPHPWorker(string $className, string $param = 'start'): void
     {
         $workerPath = self::getFilePathByClassName($className);
         if ( ! empty($workerPath)) {
@@ -285,7 +285,7 @@ class Util
      *
      * @return string
      */
-    public static function which($cmd): string
+    public static function which(string $cmd): string
     {
         global $_ENV;
         if (array_key_exists('PATH', $_ENV)) {
@@ -675,7 +675,7 @@ class Util
      * @param string $totalSize - original file size (in bytes)
      * @return bool
      */
-    public static function createFileFromChunks($temp_dir, $totalSize): bool {
+    public static function createFileFromChunks(string $temp_dir, string $totalSize): bool {
         // count all the parts of this file
         $total_files_on_server_size = 0;
         foreach (scandir($temp_dir) as $file) {
@@ -762,7 +762,7 @@ class Util
      *
      * @link http://php.net/manual/en/function.rmdir.php
      */
-    public static function rRmDir($dir): void
+    public static function rRmDir(string $dir): void
     {
         if (is_dir($dir)) {
             $objects = scandir($dir);
@@ -783,9 +783,9 @@ class Util
     /**
      * Генерация сертификата средствами openssl.
      *
-     * @param array $options
-     * @param array $config_args_pkey
-     * @param array $config_args_csr
+     * @param ?array $options
+     * @param ?array $config_args_pkey
+     * @param ?array $config_args_csr
      *
      * @return array
      */
@@ -897,7 +897,7 @@ class Util
      * @param string $tube
      * @param        $data
      */
-    public function addJobToBeanstalk($tube, $data): void
+    public function addJobToBeanstalk(string $tube, $data): void
     {
         $queue = new BeanstalkClient($tube);
         $queue->publish(json_encode($data));

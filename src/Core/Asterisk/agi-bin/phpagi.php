@@ -291,7 +291,7 @@ class AGI
      */
     public function verbose($message, $level = 1)
     {
-        $ret = ['code' => 500, 'result' => -1, 'data' => ''];;
+        $ret = ['code' => 500, 'result' => -1, 'data' => ''];
         foreach (explode("\n", str_replace("\r\n", "\n", print_r($message, true))) as $msg) {
             $ret = $this->evaluate("VERBOSE \"$msg\" $level");
         }

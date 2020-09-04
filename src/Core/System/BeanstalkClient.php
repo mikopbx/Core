@@ -136,7 +136,7 @@ class BeanstalkClient extends Injectable
      * @param string           $tube     - listening tube
      * @param array | callable $callback - worker
      */
-    public function subscribe($tube, $callback): void
+    public function subscribe(string $tube, $callback): void
     {
         $tube = str_replace("\\", '-', $tube);
         $this->queue->watch($tube);

@@ -26,6 +26,8 @@ class SecurityPlugin extends Injectable
      *
      * @param Event      $event
      * @param Dispatcher $dispatcher
+     *
+     * @return bool
      */
     public function beforeDispatch(Event $event, Dispatcher $dispatcher):bool
     {

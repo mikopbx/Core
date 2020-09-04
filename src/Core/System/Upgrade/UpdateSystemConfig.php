@@ -316,12 +316,10 @@ class UpdateSystemConfig extends Di\Injectable
             'opus'  => 'Opus',
         ];
         $codecs = Codecs::find();
-        $savedCodecs = [];
         // Удалим лишние кодеки
         /** @var \MikoPBX\Common\Models\Codecs $codec */
         foreach ($codecs as $codec){
             if(array_key_exists($codec->name, $availCodecs)){
-                $savedCodecs[] = $codec->name;
                 continue;
             }
             if(!$codec->delete()){

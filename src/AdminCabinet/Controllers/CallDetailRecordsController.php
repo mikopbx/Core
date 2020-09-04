@@ -170,7 +170,7 @@ class CallDetailRecordsController extends BaseController
      * @param string $searchPhrase поисковая фраза, которую ввел пользователь
      * @param array $parameters   параметры запроса CDR
      */
-    private function prepareConditionsForSearchPhrases(&$searchPhrase, &$parameters): void
+    private function prepareConditionsForSearchPhrases(string &$searchPhrase, array &$parameters): void
     {
         $parameters['conditions'] = '';
 

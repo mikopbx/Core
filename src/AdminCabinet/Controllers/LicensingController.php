@@ -26,7 +26,7 @@ class LicensingController extends BaseController
      *
      * @param $backurl string адрес возврата на исходную страницу, откуда была переадресация сюда
      */
-    public function modifyAction($backurl = null): void
+    public function modifyAction($backurl = ''): void
     {
         if ($this->language === 'ru') {
             $this->view->modulesExampleImgPath = $this->url->get('assets/img/modules-example-ru.png');

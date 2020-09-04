@@ -288,7 +288,7 @@ abstract class ModelsBase extends Model
      *
      * @param $calledClass string модель, с чей кеш будем чистить в полном формате
      */
-    public function clearCache($calledClass): void
+    public function clearCache(string $calledClass): void
     {
         if ($this->di->has('managedCache')) {
             $managedCache = $this->di->getShared('managedCache');
@@ -358,6 +358,7 @@ abstract class ModelsBase extends Model
                     . $this->name;
                 break;
             case ExtensionForwardingRights::class:
+                //ExtensionForwardingRights
                 $name = $this->Extensions->getRepresent();
                 break;
             case Extensions::class:
@@ -432,6 +433,7 @@ abstract class ModelsBase extends Model
                 $name = $this->t('mo_RightNumber', ['id' => $this->id]);
                 break;
             case LanInterfaces::class:
+                // LanInterfaces
                 $name = $this->name;
                 break;
             case NetworkFilters::class:
