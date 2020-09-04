@@ -12,16 +12,16 @@ use MikoPBX\Core\System\Util;
 require_once 'Globals.php';
 require_once 'phpagi.php';
 
-$agi       = new AGI();
-$channel   = $agi->get_variable('MASTER_CHANNEL(M_TIMEOUT_CHANNEL)', true);
-$FROM_CHAN = $agi->get_variable('FROM_CHAN', true);
+$agi        = new AGI();
+$channel    = $agi->get_variable('MASTER_CHANNEL(M_TIMEOUT_CHANNEL)', true);
+$srcChannel = $agi->get_variable('FROM_CHAN', true);
 
 $am = Util::getAstManager('off');
 $am->SetVar($channel, 'TIMEOUT(absolute)', '0');
-$am->SetVar($FROM_CHAN, "MASTER_CHANNEL(M_DIALSTATUS)", 'ANSWER');
+$am->SetVar($srcChannel, "MASTER_CHANNEL(M_DIALSTATUS)", 'ANSWER');
 
 // Перестрахова на случай с перехватом звонка через *8.
-$t_channel = $am->GetVar($FROM_CHAN, 'MASTER_CHANNEL(M_TIMEOUT_CHANNEL)', false);
-if($t_channel && !empty($t_channel)){
-    $am->SetVar($t_channel, "TIMEOUT(absolute)", '0');
+$timeoutChannel = $am->GetVar($srcChannel, 'MASTER_CHANNEL(M_TIMEOUT_CHANNEL)', null, false);
+if(is_string($timeoutChannel) && !empty($timeoutChannel)){
+    $am->SetVar($timeoutChannel, "TIMEOUT(absolute)", '0');
 }

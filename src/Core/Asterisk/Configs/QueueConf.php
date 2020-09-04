@@ -1,9 +1,9 @@
 <?php
-/**
+/*
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 7 2020
+ * Written by Alexey Portnov, 9 2020
  */
 
 namespace MikoPBX\Core\Asterisk\Configs;
@@ -140,7 +140,6 @@ class QueueConf extends ConfigClass
         // Генерация внутреннего номерного плана.
         $conf = "[queue_agent_answer]\n";
         $conf .= "exten => s,1,NoOp(--- Answer Queue ---)\n\t";
-        // $conf .= "same => n,AGI(cdr_connector.php,queue_answer)\n\t";
         $conf .= 'same => n,Gosub(queue_answer,${EXTEN},1)' . "\n\t";
         $conf .= "same => n,Return()\n\n";
 
@@ -191,24 +190,26 @@ class QueueConf extends ConfigClass
         $queue_ext_conf = '';
         $db_data = $this->getQueueData();
         foreach ($db_data as $queue) {
+            $calleridPrefix = preg_replace('/[^a-zA-Zа-яА-Я0-9 ]/ui', '', $queue['callerid_prefix']??'');
+
             $queue_ext_conf .= "exten => {$queue['extension']},1,NoOp(--- Start Queue ---) \n\t";
             $queue_ext_conf .= "same => n,Answer() \n\t";
             $queue_ext_conf .= 'same => n,Set(__QUEUE_SRC_CHAN=${CHANNEL})' . "\n\t";
             $queue_ext_conf .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" == "Local"]?Gosub(set_orign_chan,s,1))' . "\n\t";
             $queue_ext_conf .= 'same => n,Set(CHANNEL(hangup_handler_wipe)=hangup_handler,s,1)' . "\n\t";
-            // $queue_ext_conf .= 'same => n,AGI(cdr_connector.php,queue_start)'."\n\t";
             $queue_ext_conf .= 'same => n,Gosub(queue_start,${EXTEN},1)' . "\n\t";
 
             $options = '';
             if (isset($queue['caller_hear']) && $queue['caller_hear'] === 'ringing') {
                 $options .= 'r'; // Установить КПВ (гудки) вместо Музыки на Удержании для ожидающих в очереди
             }
-            $ringlength     = (trim(
-                    $queue['timeout_to_redirect_to_extension']
-                ) == '') ? 120 : $queue['timeout_to_redirect_to_extension'];
+            $ringlength     = (trim($queue['timeout_to_redirect_to_extension']) == '') ? 300 : $queue['timeout_to_redirect_to_extension'];
+            if(!empty($calleridPrefix)){
+                $queue_ext_conf .= "same => n,Set(CALLERID(name)={$calleridPrefix}:".'${CALLERID(name)}'.") \n\t";
+            }
+
             $queue_ext_conf .= "same => n,Queue({$queue['uniqid']},kT{$options},,,{$ringlength},,,queue_agent_answer) \n\t";
             // Оповестим о завершении работы очереди.
-            // $queue_ext_conf .= 'same => n,AGI(cdr_connector.php,queue_end)'."\n\t";
             $queue_ext_conf .= 'same => n,Gosub(queue_end,${EXTEN},1)' . "\n\t";
 
             if (trim($queue['timeout_extension']) !== '') {
