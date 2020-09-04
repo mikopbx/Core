@@ -171,7 +171,7 @@ class IptablesConf extends Injectable
             $action        = ($rule->action === 'allow') ? 'ACCEPT' : 'DROP';
             $arr_command[] = $this->getIptablesInputRule($port, $other_data, $action);
         }
-        // Разрешим все локальные подключения.
+        // Allow all local connections
         $arr_command[] = $this->getIptablesInputRule('', '-s 127.0.0.1 ', 'ACCEPT');
     }
 
