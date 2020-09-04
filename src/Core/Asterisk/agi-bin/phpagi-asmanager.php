@@ -1,9 +1,9 @@
 <?php
-/**
+/*
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 6 2020
+ * Written by Alexey Portnov, 9 2020
  */
 
 use MikoPBX\Core\System\Util;
@@ -1397,22 +1397,22 @@ class AGI_AsteriskManager
      * @link http://www.voip-info.org/wiki-Asterisk+Manager+API+Action+GetVar
      * @link http://www.voip-info.org/wiki-Asterisk+variables
      *
-     * @param string $channel  Channel to read variable from
-     * @param string $variable
-     * @param string $actionid message matching variable
-     * @param bool   $ret_array
+     * @param string      $channel  Channel to read variable from
+     * @param string      $variable
+     * @param null|string $actionId message matching variable
+     * @param bool        $retArray
      *
      * @return string | array
      */
-    public function GetVar($channel, $variable, $actionid = null, $ret_array = true)
+    public function GetVar($channel, $variable, $actionId = null, $retArray = true)
     {
         $parameters = ['Channel' => $channel, 'Variable' => $variable];
-        if ($actionid) {
-            $parameters['ActionID'] = $actionid;
+        if ($actionId) {
+            $parameters['ActionID'] = $actionId;
         }
 
         $data = $this->sendRequest('GetVar', $parameters);
-        if ($ret_array != true) {
+        if ($retArray != true) {
             $data = (isset($data['Value']) && $data['Value']) ? $data['Value'] : '';
         }
 
