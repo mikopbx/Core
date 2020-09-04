@@ -93,10 +93,12 @@ class UpdateSystemConfig extends Di\Injectable
                 Util::echoGreenDone();
             }
 
-            //...add here new updates //
+            //... add new updates procedures above this comment line... //
+
+            $this->updateConfigEveryRelease();
 
             $this->mikoPBXConfig->setGeneralSettings('PBXVersion', trim(file_get_contents('/etc/version')));
-            Storage::clearSessionsFiles();
+
         }
 
         return true;
@@ -114,6 +116,15 @@ class UpdateSystemConfig extends Di\Injectable
                 $module->delete();
             }
         }
+    }
+
+    /**
+     * Every new release routines
+     */
+    private function updateConfigEveryRelease():void
+    {
+        Storage::clearSessionsFiles();
+        IptablesConf::updateFirewallRules();
     }
 
     /**
@@ -412,9 +423,6 @@ class UpdateSystemConfig extends Di\Injectable
             $extension->show_in_phonebook='1';
             $extension->update();
         }
-
-        // Update firewall settings
-        IptablesConf::updateFirewallRules();
     }
 
 }
