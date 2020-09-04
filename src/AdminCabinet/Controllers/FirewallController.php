@@ -170,7 +170,7 @@ class FirewallController extends BaseController
             $filterRecord = new NetworkFilters();
         }
 
-        // Заполним параметры записи Network Filter
+        // Update network filters Network Filter
         if ( ! $this->updateNetworkFilters($filterRecord, $data)) {
             $this->view->success = false;
             $this->db->rollback();
@@ -183,7 +183,7 @@ class FirewallController extends BaseController
             $this->view->reload = "firewall/modify/{$filterRecord->id}";
         }
 
-        // Заполним параметры Firewall
+        // Update firewall rules Firewall
         $data['id'] = $filterRecord->id;
         if ( ! $this->updateFirewallRules($data)) {
             $this->view->success = false;
@@ -246,15 +246,15 @@ class FirewallController extends BaseController
     }
 
     /**
-     * Обновление параметров firewall
+     * Updates firewall rules
      *
-     * @param array $data массив полей из POST запроса
+     * @param array $data POST parameters array
      *
      * @return bool update result
      */
     private function updateFirewallRules(array $data): bool
     {
-        // Получим правила по умолчанию
+        // Get default rules
         $defaultRules      = FirewallRules::getDefaultRules();
         $countDefaultRules = 0;
         foreach ($defaultRules as $key => $value) {
@@ -263,8 +263,7 @@ class FirewallController extends BaseController
             }
         }
 
-
-        // Удалим все предыдущие правила
+        // Delete outdated records
         $parameters        = [
             'conditions' => 'networkfilterid=:networkfilterid:',
             'bind'       => [
@@ -279,7 +278,6 @@ class FirewallController extends BaseController
                 $errors = $firewallRules->getMessages();
                 $this->flash->error(implode('<br>', $errors));
                 $this->view->success = false;
-
                 return false;
             } else {
                 $currentRulesCount--;

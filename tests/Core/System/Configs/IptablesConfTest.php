@@ -20,4 +20,10 @@ class IptablesConfTest extends AbstractUnitTest
         $firewall = new IptablesConf();
         $firewall->applyConfig();
     }
+
+    public function testUpdateFirewallRules()
+    {
+        IptablesConf::updateFirewallRules();
+        $this->assertTrue(true);
+    }
 }

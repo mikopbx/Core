@@ -175,4 +175,47 @@ class IptablesConf extends Injectable
         $arr_command[] = $this->getIptablesInputRule('', '-s 127.0.0.1 ', 'ACCEPT');
     }
 
+    /**
+     * Updates firewall rules according to default template
+     *
+     */
+    public static function updateFirewallRules(): void
+    {
+        // Store current conditions
+        $currentRules  = [];
+        $firewallRules = FirewallRules::find();
+        foreach ($firewallRules as $firewallRule) {
+            $currentRules[$firewallRule->networkfilterid][$firewallRule->category] =
+                        [
+                            'action'      => $firewallRule->action,
+                            'description' => $firewallRule->description
+                        ];
+        }
+        // Delete outdated records
+        $firewallRules->delete();
+
+        $defaultRules   = FirewallRules::getDefaultRules();
+        $networkFilters = NetworkFilters::find();
+
+        foreach ($networkFilters as $networkFilter) {
+            foreach ($defaultRules as $key => $value) {
+                foreach ($value['rules'] as $rule) {
+                    $newRule                  = new FirewallRules();
+                    $newRule->networkfilterid = $networkFilter->id;
+                    $newRule->protocol        = $rule['protocol'];
+                    $newRule->portfrom        = $rule['portfrom'];
+                    $newRule->portto          = $rule['portto'];
+                    $newRule->category        = $key;
+
+                    if (array_key_exists($key, $currentRules[$networkFilter->id])) {
+                        $newRule->action = $currentRules[$networkFilter->id][$key]['action'];
+                    } else {
+                        $newRule->action = 'block';
+                    }
+                    $newRule->description = $currentRules[$networkFilter->id][$key]['description'];
+                    $newRule->save();
+                }
+            }
+        }
+    }
 }

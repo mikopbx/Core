@@ -59,7 +59,7 @@ class NetworkFilters extends ModelsBase
      *
      * @return ResultsetInterface
      */
-    public static function getAllowedFiltersForType($arrTrafficCategory): ResultsetInterface
+    public static function getAllowedFiltersForType(array $arrTrafficCategory): ResultsetInterface
     {
         $di         = DI::getDefault();
         $parameters = [

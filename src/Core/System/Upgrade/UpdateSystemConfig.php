@@ -19,6 +19,7 @@ use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\SoundFiles;
+use MikoPBX\Core\System\Configs\IptablesConf;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\PBX;
 use MikoPBX\Core\System\Storage;
@@ -86,8 +87,8 @@ class UpdateSystemConfig extends Di\Injectable
             }
 
             if (version_compare($previous_version, '2020.2.314', '<')) {
-                $this->updateConfigsUpToVer20202314();
-                $previous_version = '2020.2.314';
+                $this->updateConfigsUpToVer20202573();
+                $previous_version = '2020.2.573';
                 Util::echoWithSyslog(' - UpdateConfigs: Upgrade applications up tp '.$previous_version.' ');
                 Util::echoGreenDone();
             }
@@ -280,9 +281,8 @@ class UpdateSystemConfig extends Di\Injectable
     /**
      * Update to 2020.2.314
      */
-    private function updateConfigsUpToVer20202314(): void
+    private function updateConfigsUpToVer20202573(): void
     {
-
 
         $availCodecs = [
             // Видео кодеки.
@@ -412,6 +412,9 @@ class UpdateSystemConfig extends Di\Injectable
             $extension->show_in_phonebook='1';
             $extension->update();
         }
+
+        // Update firewall settings
+        IptablesConf::updateFirewallRules();
     }
 
 }
