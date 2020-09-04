@@ -1,12 +1,11 @@
 <?php
-/**
+return [
+    /**
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
  * Written by Alexey Portnov, 7 2020
  */
-
-return [
     'November' => '11月',
     'December' => '12月',
     'Jan' => 'Jan',
@@ -167,8 +166,6 @@ return [
     'ms_SuccessfulSaved' => '設定を保存しました',
     'ms_SuccessfulDeleted' => 'データを削除しました',
     'Codecs' => 'コーデック',
-    'cd_Audio' => 'オーディオ',
-    'cd_Video' => 'ビデオ',
     'pr_ProviderName' => 'プロバイダー名',
     'pr_ProviderLogin' => 'ユーザー名',
     'pr_ProviderPassword' => 'パスワード',
@@ -184,7 +181,6 @@ return [
     'pr_SIPPort' => 'SIP接続ポート',
     'pr_DisableFromUser' => 'fromuserフィールドの使用を無効にする',
     'pr_NoRegister' => '登録をオフにする',
-    'pr_ManualRegisterString' => '登録文字列を上書きする（登録）',
     'pr_ManualAdditionalAtributes' => '追加オプション',
     'pr_UpdateStatus' => 'ステータス更新',
     'pr_Online' => '接続が確立されました',
@@ -692,7 +688,6 @@ return [
     'repFail2BanRules' => 'Fail2Banルール-%は%を表します',
     'repFirewallRules' => 'ファイアウォールルール-%は%を表します',
     'repIax' => 'IAXアカウント-%は%を表します',
-    'repIaxCodecs' => 'IAXコーデックのセットアップ-%は%を表します',
     'repIncomingRoutingTable' => '受信ルーティングルール-%は%を表します',
     'repLanInterfaces' => 'システムファイル-%は%を表します',
     'repNetworkFilters' => 'サージプロテクター-%は%を表します',
@@ -700,7 +695,6 @@ return [
     'repOutWorkTimes' => '非稼働時間-%は%を表します',
     'repPbxSettings' => 'ステーション設定-%は%を表します',
     'repSip' => 'SIPアカウント-%は%を表します',
-    'repSipCodecs' => 'SIPコーデック-%は%を表します',
     'repSoundFiles' => 'サウンドファイル-%は%を表します',
     'repIvrMenu' => 'IVRメニュー-%は%を表します',
     'repIvrMenuActions' => 'メンバーIVRメニュー-%は%を表します',
@@ -806,7 +800,6 @@ return [
     'f2b_Jail_asterisk_error' => 'SIPまたはAMI承認エラー（エラー）',
     'f2b_Jail_asterisk_public' => 'SIPまたはAMI承認エラー（公開）',
     'f2b_Jail_dropbear' => 'SSHセッション認証エラー',
-    'f2b_Jail_mikoajam' => 'CTIクライアントまたは1Cパネルの承認中のエラー',
     'f2b_Jail_mikopbx-www' => 'PBX管理インターフェイスの承認エラー',
     'f2b_WhiteList' => 'ブロックされないアドレスのリスト',
     'f2b_MaxRetry' => 'ブロックするまでの試行回数',

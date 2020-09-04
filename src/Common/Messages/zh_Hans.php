@@ -1,12 +1,11 @@
 <?php
-/**
+return [
+    /**
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
  * Written by Alexey Portnov, 7 2020
  */
-
-return [
     'March' => '三月',
     'April' => '四月',
     'May' => '五月',
@@ -178,8 +177,6 @@ return [
     'ms_SuccessfulSaved' => '设置已保存',
     'ms_SuccessfulDeleted' => '资料已删除',
     'Codecs' => '编解码器',
-    'cd_Audio' => '音讯',
-    'cd_Video' => '录影带',
     'pr_ProviderName' => '提供商名称',
     'pr_ProviderLogin' => '用户名',
     'pr_ProviderPassword' => '密码',
@@ -195,7 +192,6 @@ return [
     'pr_SIPPort' => 'SIP连接端口',
     'pr_DisableFromUser' => '禁用使用fromuser字段',
     'pr_NoRegister' => '关闭注册',
-    'pr_ManualRegisterString' => '覆盖注册字符串（寄存器）',
     'pr_ManualAdditionalAtributes' => '其他选项',
     'pr_UpdateStatus' => '状态更新',
     'pr_Online' => '建立连接',
@@ -689,7 +685,6 @@ return [
     'repFail2BanRules' => 'Fail2Ban规则-%代表%',
     'repFirewallRules' => '防火墙规则-%代表%',
     'repIax' => 'IAX帐户-%代表%',
-    'repIaxCodecs' => 'IAX编解码器设置-%代表%',
     'repIncomingRoutingTable' => '入站路由规则-%代表%',
     'repLanInterfaces' => '系统文件-%代表%',
     'repNetworkFilters' => '电涌保护器-%代表%',
@@ -697,7 +692,6 @@ return [
     'repOutWorkTimes' => '非工作时间-%代表%',
     'repPbxSettings' => '电台设置-%代表%',
     'repSip' => 'SIP帐户-%代表%',
-    'repSipCodecs' => 'SIP编解码器-%代表%',
     'repSoundFiles' => '声音文件-%代表%',
     'repIvrMenu' => 'IVR菜单-%代表%',
     'repIvrMenuActions' => '会员IVR菜单-%代表%',
@@ -804,7 +798,6 @@ return [
     'f2b_Jail_asterisk_error' => 'SIP或AMI授权错误（错误）',
     'f2b_Jail_asterisk_public' => 'SIP或AMI授权错误（公开）',
     'f2b_Jail_dropbear' => 'SSH会话授权错误',
-    'f2b_Jail_mikoajam' => 'CTI客户端或1C面板授权过程中的错误',
     'f2b_Jail_mikopbx-www' => 'PBX管理界面中的授权错误',
     'f2b_WhiteList' => '永不阻止的地址列表',
     'f2b_MaxRetry' => '阻止之前的尝试次数',

@@ -1,12 +1,11 @@
 <?php
-/**
+return [
+    /**
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
  * Written by Alexey Portnov, 7 2020
  */
-
-return [
     'BreadcrumbAsteriskManagersmodify' => 'Configurazione dell\'account',
     'or_PatternToMatch' => 'La regola funzionerà se',
     'or_NumberBeginsWithTheDigits' => 'Il numero inizia con',
@@ -198,8 +197,6 @@ return [
     'ms_SuccessfulSaved' => 'Impostazioni salvate',
     'ms_SuccessfulDeleted' => 'Dati cancellati',
     'Codecs' => 'codec',
-    'cd_Audio' => 'audio',
-    'cd_Video' => 'video',
     'pr_ProviderName' => 'Nome del provider',
     'pr_ProviderLogin' => 'accesso',
     'pr_ProviderPassword' => 'password',
@@ -215,7 +212,6 @@ return [
     'pr_SIPPort' => 'Porta di connessione SIP',
     'pr_DisableFromUser' => 'Disabilitare utilizzando il campo fromuser',
     'pr_NoRegister' => 'Disattiva la registrazione',
-    'pr_ManualRegisterString' => 'Sostituisci stringa di registrazione (registro)',
     'pr_ManualAdditionalAtributes' => 'Opzioni aggiuntive',
     'pr_UpdateStatus' => 'Aggiornamento dello stato',
     'pr_Online' => 'Connessione stabilita',
@@ -694,7 +690,6 @@ return [
     'repFail2BanRules' => 'Regola Fail2Ban -%rappresenta%',
     'repFirewallRules' => 'Regola firewall:%rappresenta%',
     'repIax' => 'Conto IAX -%rappresenta%',
-    'repIaxCodecs' => 'Impostazione codec IAX -%rappresentano%',
     'repIncomingRoutingTable' => 'Regola di routing in entrata -%rappresenta%',
     'repLanInterfaces' => 'File di sistema -%rappresentano%',
     'repNetworkFilters' => 'Surge Protector -%rappresentano%',
@@ -702,7 +697,6 @@ return [
     'repOutWorkTimes' => 'Ore non lavorative -%rappresenta%',
     'repPbxSettings' => 'Impostazioni della stazione:%rappresenta%',
     'repSip' => 'Conto SIP -%rappresenta%',
-    'repSipCodecs' => 'Codec SIP -%rappresenta%',
     'repSoundFiles' => 'File audio:%rappresenta%',
     'repIvrMenu' => 'Menu IVR -%rappresenta%',
     'repIvrMenuActions' => 'Menu IVR membro -%rappresenta%',
@@ -806,7 +800,6 @@ Può essere attivato una volta, dopo di che il coupon viene riscattato.
     'f2b_Jail_asterisk_error' => 'Errori di autorizzazione SIP o AMI (errore)',
     'f2b_Jail_asterisk_public' => 'Errori di autorizzazione SIP o AMI (pubblici)',
     'f2b_Jail_dropbear' => 'Errori di autorizzazione della sessione SSH',
-    'f2b_Jail_mikoajam' => 'Errori durante l\'autorizzazione dei client CTI o dei pannelli 1C',
     'f2b_Jail_mikopbx-www' => 'Errori di autorizzazione nell\'interfaccia amministrativa del PBX',
     'f2b_WhiteList' => 'Elenco di indirizzi che non sono mai bloccati',
     'f2b_MaxRetry' => 'Numero di tentativi prima del blocco',

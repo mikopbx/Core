@@ -1,12 +1,11 @@
 <?php
-/**
+return [
+    /**
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
  * Written by Alexey Portnov, 7 2020
  */
-
-return [
     'January' => 'Januar',
     'February' => 'Februar',
     'March' => 'März',
@@ -180,8 +179,6 @@ return [
     'ms_SuccessfulSaved' => 'Einstellungen gespeichert',
     'ms_SuccessfulDeleted' => 'Daten gelöscht',
     'Codecs' => 'Codecs',
-    'cd_Audio' => 'Audio',
-    'cd_Video' => 'Video',
     'pr_ProviderName' => 'Provider-Name',
     'pr_ProviderLogin' => 'Login/Benutzername',
     'pr_ProviderPassword' => 'Passwort',
@@ -197,7 +194,6 @@ return [
     'pr_SIPPort' => 'SIP Port (5060)',
     'pr_DisableFromUser' => '\'fromuser\' nicht benutzen',
     'pr_NoRegister' => 'bei diesen provider nicht registrieren',
-    'pr_ManualRegisterString' => 'die Registrierung komplett durch einen eigenen Inhalt überschreiben (register=)',
     'pr_ManualAdditionalAtributes' => 'Erweiterte Einstellungen',
     'pr_UpdateStatus' => 'Status update',
     'pr_Online' => 'Die Verbindung ist hergestellt.',
@@ -692,7 +688,6 @@ return [
     'repFail2BanRules' => 'Fail2Ban Regel - %represent%',
     'repFirewallRules' => 'Firewall Regel- %represent%',
     'repIax' => 'IAX Konto - %represent%',
-    'repIaxCodecs' => 'IAX Codec - %represent%',
     'repIncomingRoutingTable' => 'Eingehende Regel - %represent%',
     'repLanInterfaces' => 'System-Datei - %represent%',
     'repNetworkFilters' => 'Netzwerkfilter - %represent%',
@@ -700,7 +695,6 @@ return [
     'repOutWorkTimes' => 'Nacht- und Urlaubsschalter - %represent%',
     'repPbxSettings' => 'PBX Einstellungen - %represent%',
     'repSip' => 'SIP Konto - %represent%',
-    'repSipCodecs' => 'SIP Codec - %represent%',
     'repSoundFiles' => 'Audio-Datei - %represent%',
     'repIvrMenu' => 'IVR Menü - %represent%',
     'repIvrMenuActions' => 'IVR Menü Mitglied - %represent%',
@@ -805,7 +799,6 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
     'f2b_Jail_asterisk_error' => 'SIP oder AMI Autorisierungsfehler (error)',
     'f2b_Jail_asterisk_public' => 'SIP oder AMI Autorisierungsfehler (public)',
     'f2b_Jail_dropbear' => 'SSH Autorisierungsfehler',
-    'f2b_Jail_mikoajam' => 'CTI oder 1C Panel Autorisierungsfehler',
     'f2b_Jail_mikopbx-www' => 'PBX Admin-Oberfläche  Autorisierungsfehler',
     'f2b_WhiteList' => 'Liste der IP-Adressen, welche niemals gesperrt werden (Whitelist)',
     'f2b_MaxRetry' => 'Anzahl der Fehlversuche bis zur Sperrung',

@@ -1,12 +1,11 @@
 <?php
-/**
+return [
+    /**
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
  * Written by Alexey Portnov, 7 2020
  */
-
-return [
     'January' => 'Janvier',
     'sntry_SuccessMessage' => 'Merci pour votre aide!',
     'sntry_ErrorFormEntry' => 'Les champs ne sont pas remplis, corrigez et réessayez!',
@@ -114,7 +113,6 @@ return [
     'repIvrMenuActions' => 'Menu IVR des membres -% représente%',
     'repIvrMenu' => 'Menu IVR -% représente%',
     'repSoundFiles' => 'Fichier son -% représente%',
-    'repSipCodecs' => 'Codec SIP -% représente%',
     'repSip' => 'Compte SIP -% représente%',
     'repPbxSettings' => 'Paramètres de la station -% représente%',
     'repOutWorkTimes' => 'Heures non travaillées -% représente%',
@@ -122,7 +120,6 @@ return [
     'repNetworkFilters' => 'Parasurtenseur -% représente%',
     'repLanInterfaces' => 'Fichier système -% représente%',
     'repIncomingRoutingTable' => 'Règle de routage entrant -% représente%',
-    'repIaxCodecs' => 'Configuration du codec IAX -% représente%',
     'repIax' => 'Compte IAX -% représente%',
     'repFirewallRules' => 'Règle de pare-feu -% représente%',
     'repFail2BanRules' => 'Règle Fail2Ban -% représente%',
@@ -438,7 +435,6 @@ return [
     'f2b_MaxRetry' => 'Nombre de tentatives avant le blocage',
     'f2b_WhiteList' => 'Liste d\'adresses qui ne sont jamais bloquées',
     'f2b_Jail_mikopbx-www' => 'Erreurs d\'autorisation dans l\'interface d\'administration PBX',
-    'f2b_Jail_mikoajam' => 'Erreurs lors de l\'autorisation des clients CTI ou des panneaux 1C',
     'f2b_Jail_dropbear' => 'Erreurs d\'autorisation de session SSH',
     'f2b_Jail_asterisk_public' => 'Erreurs d\'autorisation SIP ou AMI (publiques)',
     'f2b_Jail_asterisk_error' => 'Erreurs d\'autorisation SIP ou AMI (erreur)',
@@ -711,7 +707,6 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'pr_Online' => 'Connexion établie',
     'pr_UpdateStatus' => 'Mise à jour du statut',
     'pr_ManualAdditionalAtributes' => 'Options supplémentaires',
-    'pr_ManualRegisterString' => 'Remplacer la chaîne d\'enregistrement (s\'inscrire)',
     'pr_NoRegister' => 'Désactiver l\'enregistrement',
     'pr_DisableFromUser' => 'Désactiver à l\'aide du champ fromuser',
     'pr_SIPPort' => 'Port de connexion SIP',
@@ -727,8 +722,6 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'pr_ProviderPassword' => 'Mot de passe',
     'pr_ProviderLogin' => 'Identifiant',
     'pr_ProviderName' => 'Nom du fournisseur',
-    'cd_Video' => 'Vidéo',
-    'cd_Audio' => 'Audio',
     'Codecs' => 'Codecs',
     'ms_SuccessfulDeleted' => 'Données supprimées',
     'ms_SuccessfulSaved' => 'Paramètres enregistrés',

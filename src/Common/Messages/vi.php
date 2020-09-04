@@ -1,12 +1,11 @@
 <?php
-/**
+return [
+    /**
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
  * Written by Alexey Portnov, 7 2020
  */
-
-return [
     'upd_UploadInProgress' => 'Đang tải xuống tệp cập nhật ...',
     'upd_UpgradeInProgress' => 'Các tập tin hệ thống đang được cập nhật ...',
     'ext_TableColumnDescription' => 'Tên mô-đun',
@@ -262,8 +261,6 @@ return [
     'f2b_Reason' => 'Lý do',
     'ms_SuccessfulDeleted' => 'Dữ liệu đã bị xóa',
     'Codecs' => 'Codec',
-    'cd_Audio' => 'Âm thanh',
-    'cd_Video' => 'Video',
     'pr_ProviderName' => 'Tên nhà cung cấp',
     'pr_ProviderLogin' => 'Tên đăng nhập',
     'pr_ProviderPassword' => 'Mật khẩu',
@@ -279,7 +276,6 @@ return [
     'pr_SIPPort' => 'Cổng kết nối SIP',
     'pr_DisableFromUser' => 'Vô hiệu hóa sử dụng trường fromuser',
     'pr_NoRegister' => 'Tắt đăng ký',
-    'pr_ManualRegisterString' => 'Ghi đè chuỗi đăng ký (đăng ký)',
     'pr_ManualAdditionalAtributes' => 'Tùy chọn bổ sung',
     'pr_UpdateStatus' => 'Cập nhật trạng thái',
     'pr_Online' => 'Kết nối được thiết lập',
@@ -768,7 +764,6 @@ return [
     'repFail2BanRules' => 'Quy tắc Fail2Ban -% đại diện cho%',
     'repFirewallRules' => 'Quy tắc tường lửa -% đại diện cho%',
     'repIax' => 'Tài khoản IAX -% đại diện cho%',
-    'repIaxCodecs' => 'Thiết lập codec IAX -% đại diện cho%',
     'repIncomingRoutingTable' => 'Quy tắc định tuyến trong nước -% đại diện cho%',
     'repLanInterfaces' => 'Tệp hệ thống -% đại diện cho%',
     'repNetworkFilters' => 'Bảo vệ sốc điện -% đại diện cho%',
@@ -776,7 +771,6 @@ return [
     'repOutWorkTimes' => 'Giờ không làm việc -% đại diện cho%',
     'repPbxSettings' => 'Cài đặt trạm -% đại diện cho%',
     'repSip' => 'Tài khoản SIP -% đại diện cho%',
-    'repSipCodecs' => 'Codec SIP -% đại diện cho%',
     'repSoundFiles' => 'Tệp âm thanh -% đại diện cho%',
     'repIvrMenu' => 'Menu IVR -% đại diện cho%',
     'repIvrMenuActions' => 'Menu IVR thành viên -% đại diện cho%',
@@ -879,7 +873,6 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá đ
     'f2b_Jail_asterisk_error' => 'Lỗi ủy quyền SIP hoặc AMI (lỗi)',
     'f2b_Jail_asterisk_public' => 'Lỗi ủy quyền SIP hoặc AMI (công khai)',
     'f2b_Jail_dropbear' => 'Lỗi ủy quyền phiên SSH',
-    'f2b_Jail_mikoajam' => 'Lỗi trong khi ủy quyền của khách hàng CTI hoặc bảng 1C',
     'f2b_Jail_mikopbx-www' => 'Lỗi ủy quyền trong giao diện quản trị tổng đài',
     'f2b_WhiteList' => 'Danh sách các địa chỉ không bao giờ bị chặn',
     'f2b_MaxRetry' => 'Số lần thử trước khi chặn',

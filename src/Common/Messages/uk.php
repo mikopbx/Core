@@ -1,12 +1,11 @@
 <?php
-/**
+return [
+    /**
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
  * Written by Alexey Portnov, 7 2020
  */
-
-return [
     'January' => 'Січень',
     'February' => 'Лютий',
     'March' => 'Березень',
@@ -199,8 +198,6 @@ return [
     'ms_SuccessfulSaved' => 'Налаштування збережені',
     'ms_SuccessfulDeleted' => 'Дані видалені',
     'Codecs' => 'Кодеки',
-    'cd_Audio' => 'Аудіо',
-    'cd_Video' => 'Відео',
     'pr_ProviderName' => 'Назва провайдера',
     'pr_ProviderLogin' => 'Логін',
     'pr_ProviderPassword' => 'Пароль',
@@ -216,7 +213,6 @@ return [
     'pr_SIPPort' => 'Порт з\'єднання SIP',
     'pr_DisableFromUser' => 'Відключити використання поля fromuser',
     'pr_NoRegister' => 'Відключити реєстрацію',
-    'pr_ManualRegisterString' => 'Перевизначити рядок реєстрації (register)',
     'pr_ManualAdditionalAtributes' => 'Додаткові параметри',
     'pr_UpdateStatus' => 'Оновлення статусу',
     'pr_Online' => 'Зв\'язок встановлено',
@@ -702,7 +698,6 @@ return [
     'repFail2BanRules' => 'Правило Fail2Ban - %represent%',
     'repFirewallRules' => 'Правило Firewall - %represent%',
     'repIax' => 'Обліковий запис IAX - %represent%',
-    'repIaxCodecs' => 'Налаштування кодека IAX - %represent%',
     'repIncomingRoutingTable' => 'Правило вхідної маршрутизації - %represent%',
     'repLanInterfaces' => 'Системний файл - %represent%',
     'repNetworkFilters' => 'Мережевий фільтр - %represent%',
@@ -710,7 +705,6 @@ return [
     'repOutWorkTimes' => 'Неробочий час - %represent%',
     'repPbxSettings' => 'Налаштування станції - %represent%',
     'repSip' => 'Обліковий запис SIP - %represent%',
-    'repSipCodecs' => 'Кодек SIP - %represent%',
     'repSoundFiles' => 'Звуковий файл - %represent%',
     'repIvrMenu' => 'IVR меню - %represent%',
     'repIvrMenuActions' => 'Участник IVR меню - %represent%',
@@ -813,7 +807,6 @@ return [
     'f2b_Unban' => 'Розблокувати',
     'f2b_Jail_asterisk' => 'Помилки авторизації SIP або AMI',
     'f2b_Jail_dropbear' => 'Помилки авторизації SSH сесій',
-    'f2b_Jail_mikoajam' => 'Помилки при авторизації CTI клієнтів або 1С чи BAS панелей',
     'f2b_Jail_mikopbx-www' => 'Помилки авторизації в адміністративному інтерфейсі PBX',
     'f2b_WhiteList' => 'Список адрес, які ніколи не блокуються',
     'f2b_MaxRetry' => 'Кількість спроб до блокування',

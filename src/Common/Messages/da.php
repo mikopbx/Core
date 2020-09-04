@@ -1,12 +1,11 @@
 <?php
-/**
+return [
+    /**
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
  * Written by Alexey Portnov, 7 2020
  */
-
-return [
     'Oct' => 'oktober',
     'Nov' => 'november',
     'Dec' => 'december',
@@ -154,8 +153,6 @@ return [
     'ms_SuccessfulSaved' => 'Indstillinger gemt',
     'ms_SuccessfulDeleted' => 'Data slettet',
     'Codecs' => 'codecs',
-    'cd_Audio' => 'lyd',
-    'cd_Video' => 'video',
     'pr_ProviderName' => 'Udbyderens navn',
     'pr_ProviderLogin' => 'logon',
     'pr_ProviderPassword' => 'adgangskode',
@@ -170,7 +167,6 @@ return [
     'pr_SIPPort' => 'SIP-forbindelsesport',
     'pr_DisableFromUser' => 'Deaktiver ved hjælp af brugerbrugerfeltet',
     'pr_NoRegister' => 'Sluk for registrering',
-    'pr_ManualRegisterString' => 'Overstyre registreringsstreng (register)',
     'pr_ManualAdditionalAtributes' => 'Yderligere muligheder',
     'pr_UpdateStatus' => 'Statusopdatering',
     'pr_Online' => 'Forbindelse etableret',
@@ -692,7 +688,6 @@ return [
     'repFail2BanRules' => 'Fail2Ban-regel -% repræsenterer%',
     'repFirewallRules' => 'Firewall-regel -% repræsenterer%',
     'repIax' => 'IAX-konto -% repræsenterer%',
-    'repIaxCodecs' => 'IAX-codecopsætning -% repræsenterer%',
     'repIncomingRoutingTable' => 'Regler for indgående routing -% repræsenterer%',
     'repLanInterfaces' => 'Systemfil -% repræsenterer%',
     'repNetworkFilters' => 'Overspændingsbeskytter -% repræsenterer%',
@@ -700,7 +695,6 @@ return [
     'repOutWorkTimes' => 'Arbejdstid -% repræsenterer%',
     'repPbxSettings' => 'Stationsindstillinger -% repræsenterer%',
     'repSip' => 'SIP-konto -% repræsenterer%',
-    'repSipCodecs' => 'SIP Codec -% repræsenterer%',
     'repSoundFiles' => 'Lydfil -% repræsenterer%',
     'repIvrMenu' => 'IVR-menu -% repræsenterer%',
     'repIvrMenuActions' => 'Medlem IVR-menu -% repræsenterer%',
@@ -806,7 +800,6 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'f2b_Jail_asterisk_error' => 'SIP- eller AMI-godkendelsesfejl (fejl)',
     'f2b_Jail_asterisk_public' => 'SIP- eller AMI-godkendelsesfejl (offentlig)',
     'f2b_Jail_dropbear' => 'SSH session godkendelsesfejl',
-    'f2b_Jail_mikoajam' => 'Fejl under godkendelse af CTI-klienter eller 1C-paneler',
     'f2b_Jail_mikopbx-www' => 'Autoriseringsfejl i PBX-administrationsgrænsefladen',
     'f2b_WhiteList' => 'Liste over adresser, der aldrig er blokeret',
     'f2b_MaxRetry' => 'Antal forsøg inden blokering',

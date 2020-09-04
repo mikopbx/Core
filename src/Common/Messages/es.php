@@ -1,12 +1,11 @@
 <?php
-/**
+return [
+    /**
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
  * Written by Alexey Portnov, 7 2020
  */
-
-return [
     'mm_SSHConsole' => 'Consola SSH',
     'ex_Email' => 'Correo electrónico',
     'bt_ToolTipEdit' => 'Editar',
@@ -136,8 +135,6 @@ return [
     'ms_SuccessfulSaved' => 'Configuraciones guardadas',
     'ms_SuccessfulDeleted' => 'Datos eliminados',
     'Codecs' => 'Códecs',
-    'cd_Audio' => 'Audio',
-    'cd_Video' => 'Video',
     'pr_ProviderName' => 'Nombre del proveedor',
     'pr_ProviderLogin' => 'Nombre de usuario',
     'pr_ProviderPassword' => 'Contraseña',
@@ -153,7 +150,6 @@ return [
     'pr_SIPPort' => 'Puerto de conexión SIP',
     'pr_DisableFromUser' => 'Deshabilitar usando el campo del usuario',
     'pr_NoRegister' => 'Desactiva el registro',
-    'pr_ManualRegisterString' => 'Anular cadena de registro (registro)',
     'pr_ManualAdditionalAtributes' => 'Opciones adicionales',
     'pr_UpdateStatus' => 'Actualización de estado',
     'pr_Online' => 'Conexión establecida',
@@ -675,7 +671,6 @@ return [
     'repFail2BanRules' => 'Regla Fail2Ban -% representa%',
     'repFirewallRules' => 'Regla de firewall:% representa%',
     'repIax' => 'Cuenta IAX -% representa%',
-    'repIaxCodecs' => 'Configuración del códec IAX:% representa%',
     'repIncomingRoutingTable' => 'Regla de enrutamiento entrante -% representa%',
     'repLanInterfaces' => 'Archivo del sistema -% representa%',
     'repNetworkFilters' => 'Protector de sobretensión -% representa%',
@@ -683,7 +678,6 @@ return [
     'repOutWorkTimes' => 'Horas no laborales:% representa%',
     'repPbxSettings' => 'Configuración de la estación:% representa%',
     'repSip' => 'Cuenta SIP -% representa%',
-    'repSipCodecs' => 'Códec SIP -% representa%',
     'repSoundFiles' => 'Archivo de sonido -% representa%',
     'repIvrMenu' => 'Menú IVR -% representa%',
     'repIvrMenuActions' => 'Menú IVR para miembros:% representa%',
@@ -790,7 +784,6 @@ Se puede activar una vez, después de lo cual el cupón se canjea.
     'f2b_Jail_asterisk_error' => 'Errores de autorización SIP o AMI (error)',
     'f2b_Jail_asterisk_public' => 'Errores de autorización SIP o AMI (público)',
     'f2b_Jail_dropbear' => 'Errores de autorización de sesión SSH',
-    'f2b_Jail_mikoajam' => 'Errores durante la autorización de clientes CTI o paneles 1C',
     'f2b_Jail_mikopbx-www' => 'Errores de autorización en la interfaz administrativa de PBX',
     'f2b_WhiteList' => 'Lista de direcciones que nunca están bloqueadas',
     'f2b_MaxRetry' => 'Número de intentos antes de bloquear',

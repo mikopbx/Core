@@ -1,12 +1,11 @@
 <?php
-/**
+return [
+    /**
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
  * Written by Alexey Portnov, 7 2020
  */
-
-return [
     'tf_ActionPlayMessage' => 'Odtwórz plik <b>% message%</b>',
     'tf_ActionTransferToExtension' => 'Przekaż połączenie na <b>%message%</b>',
     'tf_TableColumnDatePeriod' => 'Okres',
@@ -254,7 +253,6 @@ return [
     'repFail2BanRules' => 'Reguła Fail2Ban -% reprezentuje%',
     'repFirewallRules' => 'Reguła zapory -% reprezentuje%',
     'repIax' => 'Konto IAX -% reprezentuje%',
-    'repIaxCodecs' => 'Konfiguracja kodeka IAX -% reprezentuje%',
     'repIncomingRoutingTable' => 'Reguła routingu przychodzącego -% reprezentuje%',
     'repLanInterfaces' => 'Plik systemowy -% reprezentuje%',
     'repNetworkFilters' => 'Ochrona przeciwprzepięciowa -% reprezentuje%',
@@ -262,7 +260,6 @@ return [
     'repOutWorkTimes' => 'Godziny wolne od pracy -% reprezentuje%',
     'repPbxSettings' => 'Ustawienia stacji -% reprezentuje%',
     'repSip' => 'Konto SIP -% reprezentuje%',
-    'repSipCodecs' => 'Kodek SIP -% reprezentuje%',
     'repSoundFiles' => 'Plik dźwiękowy -% reprezentuje%',
     'repIvrMenu' => 'Menu IVR -% reprezentuje%',
     'repIvrMenuActions' => 'Menu użytkownika IVR -% reprezentuje%',
@@ -393,7 +390,6 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'f2b_Jail_asterisk_error' => 'Błędy autoryzacji SIP lub AMI (błąd)',
     'f2b_Jail_asterisk_public' => 'Błędy autoryzacji SIP lub AMI (publiczne)',
     'f2b_Jail_dropbear' => 'Błędy autoryzacji sesji SSH',
-    'f2b_Jail_mikoajam' => 'Błędy podczas autoryzacji klientów CTI lub paneli 1C',
     'f2b_Jail_mikopbx-www' => 'Błędy autoryzacji w interfejsie administracyjnym PBX',
     'f2b_WhiteList' => 'Lista adresów, które nigdy nie są blokowane',
     'f2b_MaxRetry' => 'Liczba prób przed zablokowaniem',
@@ -658,8 +654,6 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'bt_ToolTipUpgradeOnline' => 'Aktualizuj online',
     'ms_SuccessfulSaved' => 'Ustawienia zapisane',
     'ms_SuccessfulDeleted' => 'Dane zostały usunięte',
-    'cd_Audio' => 'Audio',
-    'cd_Video' => 'Wideo',
     'pr_ProviderName' => 'Nazwa dostawcy',
     'pr_ProviderLogin' => 'Nazwa użytkownika',
     'pr_ProviderPassword' => 'Hasło',
@@ -673,7 +667,6 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'pr_ValidationProviderLoginIsEmpty' => 'Wprowadź login w celu autoryzacji u dostawcy',
     'pr_DisableFromUser' => 'Wyłącz za pomocą pola fromuser',
     'pr_NoRegister' => 'Wyłącz rejestrację',
-    'pr_ManualRegisterString' => 'Zastąp ciąg rejestracyjny (rejestr)',
     'pr_ManualAdditionalAtributes' => 'Dodatkowe opcje',
     'pr_UpdateStatus' => 'Aktualizacja statusu',
     'pr_Online' => 'Połączenie ustanowione',

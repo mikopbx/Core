@@ -1,12 +1,11 @@
 <?php
-/**
+return [
+    /**
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
  * Written by Alexey Portnov, 7 2020
  */
-
-return [
     'ex_ValidateForwardingToBeFilled' => 'Yönlendirme ayarlarında, zaman aşımı yönlendirme numarası doldurulmaz',
     'ex_ValidateRingingBeforeForwardOutOfRange' => 'Yönlendirme ayarlarında, aktarımdan önceki süre yanlış belirtilir. {RuleValue} arasında bir değer seçin.',
     'ex_ValidateNumberIsEmpty' => 'Çalışan uzantısı doldurulmadı',
@@ -322,7 +321,6 @@ Bir kez etkinleştirilebilir, bundan sonra kupon kullanılır.
     'repFail2BanRules' => 'Hata2Ban Kuralı -%% \'yi temsil eder',
     'repFirewallRules' => 'Güvenlik Duvarı Kuralı -%% \'yi temsil eder',
     'repIax' => 'IAX Hesabı -%% \'yi temsil eder',
-    'repIaxCodecs' => 'IAX kodek kurulumu -%% \'yi temsil ediyor',
     'repOutgoingRoutingTable' => 'Giden Kuralı -%% \'yi temsil eder',
     'repOutWorkTimes' => 'Çalışma dışı saatler -%% \'yi temsil eder',
     'repPbxSettings' => 'İstasyon ayarları -%% \'yi temsil eder',
@@ -508,8 +506,6 @@ Bir kez etkinleştirilebilir, bundan sonra kupon kullanılır.
     'ms_SuccessfulSaved' => 'Ayarlar kaydedildi',
     'ms_SuccessfulDeleted' => 'Veriler silindi',
     'Codecs' => 'codec',
-    'cd_Audio' => 'ses',
-    'cd_Video' => 'video',
     'pr_ProviderName' => 'Sağlayıcı Adı',
     'pr_ProviderLogin' => 'giriş',
     'pr_ProviderPassword' => 'şifre',
@@ -525,7 +521,6 @@ Bir kez etkinleştirilebilir, bundan sonra kupon kullanılır.
     'pr_SIPPort' => 'SIP Bağlantı Portu',
     'pr_DisableFromUser' => 'Kullanıcı alanını kullanarak devre dışı bırak',
     'pr_NoRegister' => 'Kaydı kapat',
-    'pr_ManualRegisterString' => 'Kayıt dizesini geçersiz kıl (register)',
     'pr_ManualAdditionalAtributes' => 'Ek seçenekler',
     'pr_UpdateStatus' => 'Durum Güncellemesi',
     'pr_Online' => 'Bağlantı kuruldu',
@@ -741,7 +736,6 @@ Bir kez etkinleştirilebilir, bundan sonra kupon kullanılır.
     'cf_ColumnNote' => 'Bir not',
     'repExtensionForwardingRights' => 'Çalışan Yönlendirme Ayarları -%,% \'yi temsil eder',
     'repSip' => 'SIP Hesabı -%% \'yi temsil eder',
-    'repSipCodecs' => 'SIP Kodek -%% \'yi temsil eder',
     'repSoundFiles' => 'Ses dosyası -%% temsil eder',
     'lic_ValidateCompanyNameEmpty' => 'Zorunlu alan doldurulmadı - şirket adı',
     'lic_ValidateContactEmail' => 'Gerekli alan doldurulmamış - ilgili kişinin e-postası',
@@ -831,7 +825,6 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
     'f2b_Jail_asterisk' => 'SIP veya AMI yetkilendirme hataları',
     'f2b_Jail_asterisk_security_log' => 'SIP veya AMI yetkilendirme hataları (security_log)',
     'f2b_Jail_asterisk_error' => 'SIP veya AMI yetkilendirme hataları (hata)',
-    'f2b_Jail_mikoajam' => 'CTI istemcilerinin veya 1C panellerinin yetkilendirilmesi sırasında hatalar',
     'f2b_Jail_mikopbx-www' => 'PBX Yönetim Arayüzündeki Yetkilendirme Hataları',
     'f2b_WhiteList' => 'Asla engellenmeyen adreslerin listesi',
     'f2b_BanTime' => 'Kilitleme (saniye)',

@@ -1,12 +1,11 @@
 <?php
-/**
+return [
+    /**
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
  * Written by Alexey Portnov, 7 2020
  */
-
-return [
     'сal_Last30Days' => 'Últimos 30 dias',
     'сal_LastWeek' => 'Últimos 7 dias',
     'сal_Yesterday' => 'Ontem',
@@ -88,7 +87,6 @@ return [
     'f2b_MaxRetry' => 'Número de tentativas antes do bloqueio',
     'f2b_WhiteList' => 'Lista de endereços que nunca são bloqueados',
     'f2b_Jail_mikopbx-www' => 'Erros de autorização na interface administrativa do PBX',
-    'f2b_Jail_mikoajam' => 'Erros durante a autorização de clientes CTI ou painéis 1C',
     'f2b_Jail_dropbear' => 'Erros de autorização de sessão SSH',
     'f2b_Jail_asterisk_public' => 'Erros de autorização SIP ou AMI (público)',
     'f2b_Jail_asterisk_error' => 'Erros de autorização SIP ou AMI (erro)',
@@ -500,7 +498,6 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'repIvrMenuActions' => 'Menu IVR do membro -% representa%',
     'repIvrMenu' => 'Menu IVR -% representa%',
     'repSoundFiles' => 'Arquivo de som -% representa%',
-    'repSipCodecs' => 'Codec SIP -% representa%',
     'repSip' => 'Conta SIP -% representa%',
     'repPbxSettings' => 'Configurações da estação -% representam%',
     'repOutWorkTimes' => 'Horas de folga -% representam%',
@@ -508,7 +505,6 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'repNetworkFilters' => 'Protetor contra sobretensão -% representa%',
     'repLanInterfaces' => 'Arquivo do sistema -% representa%',
     'repIncomingRoutingTable' => 'Regra de roteamento de entrada -% representa%',
-    'repIaxCodecs' => 'Configuração do codec IAX -% representa%',
     'repIax' => 'Conta IAX -% representa%',
     'repFirewallRules' => 'Regra de firewall -% representa%',
     'repFail2BanRules' => 'Regra Fail2Ban -% representa%',
@@ -693,7 +689,6 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'pr_Online' => 'Conexão estabelecida',
     'pr_UpdateStatus' => 'Atualização de status',
     'pr_ManualAdditionalAtributes' => 'Opções adicionais',
-    'pr_ManualRegisterString' => 'Substituir sequência de registro (register)',
     'pr_NoRegister' => 'Desativar registro',
     'pr_DisableFromUser' => 'Desativar usando o campo fromuser',
     'pr_SIPPort' => 'Porta de conexão SIP',
@@ -709,8 +704,6 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'pr_ProviderPassword' => 'Senha',
     'pr_ProviderLogin' => 'Nome de usuário',
     'pr_ProviderName' => 'Nome do Fornecedor',
-    'cd_Video' => 'Vídeo',
-    'cd_Audio' => 'Áudio',
     'Codecs' => 'Codecs',
     'ms_SuccessfulDeleted' => 'Dados excluídos',
     'ms_SuccessfulSaved' => 'Configurações salvas',

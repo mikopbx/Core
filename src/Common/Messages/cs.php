@@ -1,12 +1,11 @@
 <?php
-/**
+return [
+    /**
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
  * Written by Alexey Portnov, 7 2020
  */
-
-return [
     'March' => 'Březen',
     'April' => 'Duben',
     'May' => 'Květen',
@@ -181,8 +180,6 @@ return [
     'ms_SuccessfulSaved' => 'Nastavení bylo uloženo',
     'ms_SuccessfulDeleted' => 'Data byla smazána',
     'Codecs' => 'Kodeky',
-    'cd_Audio' => 'Zvuk',
-    'cd_Video' => 'Video',
     'pr_ProviderName' => 'Jméno poskytovatele',
     'pr_ProviderLogin' => 'Uživatelské jméno',
     'pr_ProviderPassword' => 'Heslo',
@@ -198,7 +195,6 @@ return [
     'pr_SIPPort' => 'Port pro připojení SIP',
     'pr_DisableFromUser' => 'Zakázat použití pole fromuser',
     'pr_NoRegister' => 'Vypněte registraci',
-    'pr_ManualRegisterString' => 'Přepsat registrační řetězec (registrovat)',
     'pr_ManualAdditionalAtributes' => 'Další možnosti',
     'pr_UpdateStatus' => 'Aktualizace stavu',
     'pr_Online' => 'Spojení navázáno',
@@ -675,13 +671,11 @@ return [
     'repFail2BanRules' => 'Fail2Ban Rule -% představuje%',
     'repFirewallRules' => 'Pravidlo Firewallu -% představuje%',
     'repIax' => 'Účet IAX -% představuje%',
-    'repIaxCodecs' => 'Nastavení kodeku IAX -% představuje%',
     'repIncomingRoutingTable' => 'Pravidlo příchozího směrování -% představuje%',
     'repLanInterfaces' => 'Systémový soubor -% představuje%',
     'repNetworkFilters' => 'Přepěťová ochrana -% představuje%',
     'repPbxSettings' => 'Nastavení stanice -% představuje%',
     'repSip' => 'Účet SIP -% představuje%',
-    'repSipCodecs' => 'Kodek SIP -% představuje%',
     'repSoundFiles' => 'Zvukový soubor -% představuje%',
     'repIvrMenu' => 'Nabídka IVR -% představuje%',
     'repIvrMenuActions' => 'Nabídka člena IVR -% představuje%',
@@ -773,7 +767,6 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'f2b_Jail_asterisk_error' => 'Chyby autorizace SIP nebo AMI (chyba)',
     'f2b_Jail_asterisk_public' => 'Chyby autorizace SIP nebo AMI (veřejné)',
     'f2b_Jail_dropbear' => 'Chyby autorizace relace SSH',
-    'f2b_Jail_mikoajam' => 'Chyby při autorizaci klientů CTI nebo 1C panelů',
     'f2b_Jail_mikopbx-www' => 'Chyby autorizace v administrativním rozhraní PBX',
     'f2b_WhiteList' => 'Seznam adres, které nejsou nikdy blokovány',
     'f2b_MaxRetry' => 'Počet pokusů před blokováním',

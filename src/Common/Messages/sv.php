@@ -1,12 +1,11 @@
 <?php
-/**
+return [
+    /**
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
  * Written by Alexey Portnov, 7 2020
  */
-
-return [
     'ex_Online' => 'ansluten',
     'am_TableColumnDescription' => 'Anmärkningar',
     'am_Read' => 'läsning',
@@ -337,14 +336,12 @@ Det kan aktiveras en gång, varefter kupongen löses in.
     'repFail2BanRules' => 'Fail2Ban-regel -% representerar%',
     'repFirewallRules' => 'Brandväggsregel -% representerar%',
     'repIax' => 'IAX-konto -% representerar%',
-    'repIaxCodecs' => 'IAX-codec-inställning -% representerar%',
     'repIncomingRoutingTable' => 'Inkommande routingregel -% representerar%',
     'repLanInterfaces' => 'Systemfil -% representerar%',
     'repNetworkFilters' => 'Överspänningsskydd -% representerar%',
     'repOutWorkTimes' => 'Arbetstider -% representerar%',
     'repPbxSettings' => 'Stationsinställningar -% representerar%',
     'repSip' => 'SIP-konto -% representerar%',
-    'repSipCodecs' => 'SIP Codec -% representerar%',
     'repSoundFiles' => 'Ljudfil -% representerar%',
     'repIvrMenu' => 'IVR-meny -% representerar%',
     'repIvrMenuActions' => 'Medlem IVR-meny -% representerar%',
@@ -441,7 +438,6 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'f2b_Jail_asterisk_error' => 'SIP- eller AMI-godkännandefel (fel)',
     'f2b_Jail_asterisk_public' => 'SIP- eller AMI-godkännandefel (offentligt)',
     'f2b_Jail_dropbear' => 'SSH-sessionstillståndstillstånd',
-    'f2b_Jail_mikoajam' => 'Fel vid godkännande av CTI-klienter eller 1C-paneler',
     'f2b_Jail_mikopbx-www' => 'Autoriseringsfel i PBX-administrativa gränssnitt',
     'f2b_WhiteList' => 'Lista över adresser som aldrig är blockerade',
     'f2b_MaxRetry' => 'Antal försök innan blockering',
@@ -654,8 +650,6 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'ms_SuccessfulSaved' => 'Inställningar sparade',
     'ms_SuccessfulDeleted' => 'Data raderas',
     'Codecs' => 'codecs',
-    'cd_Audio' => 'audio',
-    'cd_Video' => 'video',
     'pr_ProviderName' => 'Leverantörens namn',
     'pr_ProviderLogin' => 'inloggning',
     'pr_ProviderPassword' => 'lösenord',
@@ -671,7 +665,6 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'pr_SIPPort' => 'SIP-anslutningsport',
     'pr_DisableFromUser' => 'Inaktivera med användarfältet',
     'pr_NoRegister' => 'Stäng av registreringen',
-    'pr_ManualRegisterString' => 'Återstyr registreringssträng (register)',
     'pr_ManualAdditionalAtributes' => 'Ytterligare alternativ',
     'pr_UpdateStatus' => 'Statusuppdatering',
     'pr_Online' => 'Anslutning etablerad',
