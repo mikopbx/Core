@@ -991,4 +991,21 @@ class Util
         return $manual_data;
     }
 
+    /**
+     * Converts multidimensional array into single array
+     * @param $array
+     *
+     * @return array
+     */
+    public static function flattenArray(array $array) {
+        $result = [];
+        foreach ($array as $value) {
+            if (is_array($value)) {
+                $result = array_merge($result, self::flattenArray($value));
+            } else {
+                $result[] = $value;
+            }
+        }
+        return $result;
+    }
 }

@@ -203,14 +203,23 @@ class LogsManagementProcessor extends Injectable
         $logDir     = System::getLogDir();
         $filesList = [];
         $entries = FilesManagementProcessor::scanDirRecursively($logDir);
-        $entries = array_merge(...$entries);
+        $entries = Util::flattenArray($entries);
         foreach($entries as $entry) {
+            $fileSize = filesize($entry);
+            $now  = time();
+            if ($fileSize===0
+                ||$now-filemtime($entry)>604800 // Older than 10 days
+            )
+            {
+                continue;
+            }
+
             $relativePath = str_ireplace($logDir. '/', '', $entry);
-            $fileSize = ceil(filesize($entry)/1024);
+            $fileSizeKB = ceil($fileSize/1024);
             $filesList[$relativePath] =
             [
                 'path'=> $relativePath,
-                'size'=> "{$fileSize} kb",
+                'size'=> "{$fileSizeKB} kb",
                 'default'=>($relativePath===self::DEFAULT_FILENAME)
             ];
         }
