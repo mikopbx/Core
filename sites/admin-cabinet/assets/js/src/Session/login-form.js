@@ -33,7 +33,13 @@ const loginForm = {
 	},
 	initialize() {
 		loginForm.initializeForm();
-		$('input').on('input', () => {
+		$('input')
+			.keyup((event)=> {
+			if (event.keyCode === 13) {
+				loginForm.$submitButton.click();
+			}
+		})
+			.on('input', () => {
 			$('.message.ajax').remove();
 		});
 	},
