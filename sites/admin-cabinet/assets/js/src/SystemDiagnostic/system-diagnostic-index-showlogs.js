@@ -70,16 +70,23 @@ const systemDiagnosticLogs = {
 		});
 	},
 	initializeAce() {
+		const aceHeight = window.innerHeight-300;
+		const rowsCount = Math.round(aceHeight/16.3);
+		$(window).load(function() {
+			$('.log-content-readonly').css('min-height', `${aceHeight}px`);
+		});
 		const IniMode = ace.require('ace/mode/julia').Mode;
 		systemDiagnosticLogs.viewer = ace.edit('log-content-readonly');
-		systemDiagnosticLogs.viewer.setReadOnly(true);
 		systemDiagnosticLogs.viewer.session.setMode(new IniMode());
 		systemDiagnosticLogs.viewer.setTheme('ace/theme/monokai');
 		systemDiagnosticLogs.viewer.resize();
-		systemDiagnosticLogs.viewer.setShowPrintMargin(false);
-		systemDiagnosticLogs.viewer.setOptions({
-			maxLines: 45,
-		});
+		systemDiagnosticLogs.viewer.renderer.setShowGutter(false);
+		 systemDiagnosticLogs.viewer.setOptions({
+			 showLineNumbers:false,
+			 showPrintMargin: false,
+			 readOnly: true,
+			 maxLines: rowsCount,
+		 });
 	},
 	/**
 	 * Makes formatted menu structure

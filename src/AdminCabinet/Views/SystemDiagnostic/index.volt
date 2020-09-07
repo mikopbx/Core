@@ -7,13 +7,13 @@
     <form class="ui form" id="system-diagnostic-form">
         <input type="hidden" name="filename" id="filename"/>
         <div class="inline fields">
-            <div class="nine wide field">
+            <div class="eight wide field">
                 <label>
                     {{ t._('sd_Filename') }}
                 </label>
                 {{ form.render('filenames') }}
             </div>
-            <div class="two wide field">
+            <div class="three wide field">
                 <label>
                     {{ t._('sd_lines') }}
                 </label>
