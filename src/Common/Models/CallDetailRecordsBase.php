@@ -1,9 +1,9 @@
 <?php
-/**
+/*
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 6 2020
+ * Written by Alexey Portnov, 9 2020
  */
 
 namespace MikoPBX\Common\Models;
@@ -60,7 +60,6 @@ abstract class CallDetailRecordsBase extends ModelsBase
     public ?string $dst_num = '';
 
     /**
-     * @Primary
      * @Column(type="string", nullable=true)
      */
     public ?string $UNIQUEID = '';
