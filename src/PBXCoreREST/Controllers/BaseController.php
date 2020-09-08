@@ -16,7 +16,8 @@ use Phalcon\Mvc\Controller;
 
 /**
  * Class BaseController
- *
+ * @property \MikoPBX\PBXCoreREST\Http\Response $response
+ * @property \MikoPBX\PBXCoreREST\Http\Request $request
  */
 class BaseController extends Controller
 {
