@@ -104,11 +104,13 @@ class PostController extends BaseController
                     return;
                 }
                 break;
+            case 'fileReadContent':
+                $this->fileReadContent();
+                break;
             default:
                 $data = $this->request->getPost();
+                $this->sendRequestToBackendWorker('system', $actionName, $data);
         }
-
-        $this->sendRequestToBackendWorker('system', $actionName, $data);
     }
 
     /**
@@ -116,14 +118,14 @@ class PostController extends BaseController
      *
      * @return array|null
      */
-    private function convertAudioFile():?array
+    private function convertAudioFile(): ?array
     {
-        $data = [];
-        $category = $this->request->getPost('category');
+        $data                  = [];
+        $category              = $this->request->getPost('category');
         $data['temp_filename'] = $this->request->getPost('temp_filename');
-        $di       = Di::getDefault();
-        $mediaDir = $di->getShared('config')->path('asterisk.mediadir');
-        $mohDir   = $di->getShared('config')->path('asterisk.mohdir');
+        $di                    = Di::getDefault();
+        $mediaDir              = $di->getShared('config')->path('asterisk.mediadir');
+        $mohDir                = $di->getShared('config')->path('asterisk.mohdir');
         switch ($category) {
             case SoundFiles::CATEGORY_MOH:
                 $data['filename'] = "{$mohDir}/" . basename($data['temp_filename']);
@@ -136,7 +138,39 @@ class PostController extends BaseController
 
                 return null;
         }
+
         return $data;
+    }
+
+    /**
+     * Parses content of file and puts it to answer
+     *
+     */
+    private function fileReadContent(): void
+    {
+        $requestMessage = json_encode(
+            [
+                'processor' => 'system',
+                'data'      => $this->request->getPost(),
+                'action'    => 'fileReadContent',
+            ]
+        );
+        $connection     = $this->di->getShared('beanstalkConnection');
+        $response       = $connection->request($requestMessage, 5, 0);
+        if ($response !== false) {
+            $response = json_decode($response, true);
+            $filename = $response['data']['filename'] ?? '';
+            if ( ! file_exists($filename)) {
+                $response['messages'][] = 'Config file not found';
+            } else {
+                $response['data']['filename'] = $filename;
+                $response['data']['content']  = '' . file_get_contents($filename);
+                unlink($filename);
+            }
+            $this->response->setPayloadSuccess($response);
+        } else {
+            $this->sendError(500);
+        }
     }
 
 }
