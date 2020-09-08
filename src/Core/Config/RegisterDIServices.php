@@ -1,4 +1,10 @@
 <?php
+/*
+ * Copyright © MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Alexey Portnov, 9 2020
+ */
 
 declare(strict_types=1);
 /**
@@ -11,7 +17,9 @@ declare(strict_types=1);
 
 namespace MikoPBX\Core\Config;
 
-use MikoPBX\Common\Providers\{CDRDatabaseProvider,
+use MikoPBX\Common\Providers\{AmiConnectionCommand,
+    AmiConnectionListener,
+    CDRDatabaseProvider,
     LicenseProvider,
     MainDatabaseProvider,
     ModelsCacheProvider,
@@ -56,6 +64,9 @@ class RegisterDIServices
 
             // Inject Queue connection
             NatsConnectionProvider::class,
+            // AMI Connectors
+            AmiConnectionCommand::class,
+            AmiConnectionListener::class,
 
             // Inject License Worker
             LicenseProvider::class,

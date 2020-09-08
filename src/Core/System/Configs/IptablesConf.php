@@ -1,9 +1,9 @@
 <?php
-/**
+/*
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 4 2020
+ * Written by Alexey Portnov, 9 2020
  */
 
 namespace MikoPBX\Core\System\Configs;
@@ -65,9 +65,6 @@ class IptablesConf extends Injectable
             $arr_command[] = $this->getIptablesInputRule('', '-m conntrack --ctstate ESTABLISHED,RELATED');
             // Добавляем разрешения на сервисы.
             $this->addFirewallRules($arr_command);
-            // Все остальное запрещаем.
-            $arr_command[] = $this->getIptablesInputRule('', '', 'DROP');
-
             // Кастомизация правил firewall.
             $arr_commands_custom = [];
             $out                 = [];
@@ -81,6 +78,8 @@ class IptablesConf extends Injectable
                 "{$catPath} /etc/firewall_additional | {$grepPath} -v '|' | {$grepPath} -v '&'| {$grepPath} '^iptables' | {$busyboxPath} {$awkPath} -F ';' '{print $1}'",
                 $arr_commands_custom
             );
+
+            $dropCommand = $this->getIptablesInputRule('', '', 'DROP');
             if (Util::isSystemctl()) {
                 Util::mwMkdir('/etc/iptables');
                 file_put_contents('/etc/iptables/iptables.mikopbx', implode("\n", $arr_command));
@@ -89,11 +88,18 @@ class IptablesConf extends Injectable
                     "\n" . implode("\n", $arr_commands_custom),
                     FILE_APPEND
                 );
+                file_put_contents(
+                    '/etc/iptables/iptables.mikopbx',
+                    "\n" . $dropCommand,
+                    FILE_APPEND
+                );
                 $systemctlPath = Util::which('systemctl');
                 Util::mwExec("{$systemctlPath} restart mikopbx_iptables");
             } else {
                 Util::mwExecCommands($arr_command, $out, 'firewall');
                 Util::mwExecCommands($arr_commands_custom, $out, 'firewall_additional');
+                // Все остальное запрещаем.
+                Util::mwExec($dropCommand);
             }
         }
 

@@ -1,14 +1,13 @@
 <?php
-/**
+/*
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 2 2020
+ * Written by Alexey Portnov, 9 2020
  */
 
 namespace MikoPBX\Core\Asterisk;
 
-use AGI_AsteriskManager;
 use MikoPBX\Core\System\{Util};
 use Phalcon\Di;
 use SQLite3;
@@ -19,7 +18,7 @@ class AstDB extends Di\Injectable
      * Ссылка на базу данных
      */
     private ?SQLite3 $db;
-    private AGI_AsteriskManager $am;
+    private AsteriskManager $am;
 
     /**
      * AstDB constructor.

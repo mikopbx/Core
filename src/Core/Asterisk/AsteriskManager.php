@@ -6,11 +6,9 @@
  * Written by Alexey Portnov, 9 2020
  */
 
-use MikoPBX\Core\System\Util;
+namespace MikoPBX\Core\Asterisk;
 
-if ( !class_exists('AGI')) {
-    require_once __DIR__.DIRECTORY_SEPARATOR.'phpagi.php';
-}
+use MikoPBX\Core\System\Util;
 
 /**
  * Asterisk Manager class
@@ -20,7 +18,7 @@ if ( !class_exists('AGI')) {
  * @example examples/sip_show_peer.php Get information about a sip peer
  * @package phpAGI
  */
-class AGI_AsteriskManager
+class AsteriskManager
 {
     /**
      * Config variables
@@ -416,16 +414,16 @@ class AGI_AsteriskManager
             $parameters = [];
             try {
                 $buffer = trim(@fgets($this->socket, 4096));
-            } catch (Exception $e) {
+            } catch (\Exception $e) {
                 return [];
             }
             while ($buffer !== '') {
-                $a = strpos($buffer, ':');
-                if ($a) {
+                $pos = strpos($buffer, ':');
+                if ($pos) {
                     if ( ! count($parameters)) {
-                        $type = strtolower(substr($buffer, 0, $a));
+                        $type = strtolower(substr($buffer, 0, $pos));
                     }
-                    $parameters[substr($buffer, 0, $a)] = substr($buffer, $a + 2);
+                    $parameters[substr($buffer, 0, $pos)] = substr($buffer, $pos + 2);
                 }
                 $buffer = trim(fgets($this->socket, 4096));
             }
@@ -1152,7 +1150,12 @@ class AGI_AsteriskManager
      */
     public function SetVar($channel, $variable, $value)
     {
-        return $this->sendRequest('SetVar', ['Channel' => $channel, 'Variable' => $variable, 'Value' => $value]);
+        $params = [
+            'Channel'   => $channel,
+            'Variable'  => $variable,
+            'Value'     => $value
+        ];
+        return $this->sendRequestTimeout('SetVar', $params);
     }
 
     /**
@@ -1161,7 +1164,7 @@ class AGI_AsteriskManager
      * @link http://www.voip-info.org/wiki-Asterisk+Manager+API+Action+Status
      *
      * @param string $channel
-     * @param string $actionid message matching variable
+     * @param null|string $actionid message matching variable
      *
      * @return array
      */
@@ -1411,7 +1414,7 @@ class AGI_AsteriskManager
             $parameters['ActionID'] = $actionId;
         }
 
-        $data = $this->sendRequest('GetVar', $parameters);
+        $data = $this->sendRequestTimeout('GetVar', $parameters);
         if ($retArray != true) {
             $data = (isset($data['Value']) && $data['Value']) ? $data['Value'] : '';
         }

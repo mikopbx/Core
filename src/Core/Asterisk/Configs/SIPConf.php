@@ -1,9 +1,9 @@
 <?php
-/**
+/*
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 8 2020
+ * Written by Alexey Portnov, 9 2020
  */
 
 namespace MikoPBX\Core\Asterisk\Configs;
@@ -108,6 +108,23 @@ class SIPConf extends ConfigClass
         }
 
         $pbxVersion = PbxSettings::getValueByKey('PBXVersion');
+        $natConf = '';
+        if ($topology === 'private') {
+            foreach ($subnets as $net) {
+                $natConf .= "local_net={$net}\n";
+            }
+            if ( ! empty($exthostname)) {
+                $parts = explode(':', $exthostname);
+                $natConf  .= 'external_media_address=' . $parts[0] . "\n";
+                $natConf  .= 'external_signaling_address=' . $parts[0] . "\n";
+                $natConf  .= 'external_signaling_port=' . ($parts[1] ?? '5060');
+            } elseif ( ! empty($extipaddr)) {
+                $parts = explode(':', $extipaddr);
+                $natConf  .= 'external_media_address=' . $parts[0] . "\n";
+                $natConf  .= 'external_signaling_address=' . $parts[0] . "\n";
+                $natConf  .= 'external_signaling_port=' . ($parts[1] ?? '5060');
+            }
+        }
 
         $conf = "[general] \n" .
             "disable_multi_domain=on\n" .
@@ -121,35 +138,21 @@ class SIPConf extends ConfigClass
             "type = endpoint\n" .
             "{$codecConf}" .
             "timers = no\n" .
-            "context = public-direct-dial\n\n" .
+            "context = public-direct-dial\n\n".
 
             "[transport-udp]\n" .
             "type = transport\n" .
             "protocol = udp\n" .
-            "bind=0.0.0.0:{$this->generalSettings['SIPPort']}\n\n".
+            "bind=0.0.0.0:{$this->generalSettings['SIPPort']}\n".
+            "{$natConf}\n\n".
 
             "[transport-tcp]\n" .
             "type = transport\n" .
             "protocol = tcp\n" .
-            "bind=0.0.0.0:{$this->generalSettings['SIPPort']}\n";
+            "bind=0.0.0.0:{$this->generalSettings['SIPPort']}\n".
+            "{$natConf}\n\n";
 
-        if ($topology === 'private') {
-            foreach ($subnets as $net) {
-                $conf .= "local_net={$net}\n";
-            }
 
-            if ( ! empty($exthostname)) {
-                $parts = explode(':', $exthostname);
-                $conf  .= 'external_media_address=' . $parts[0] . "\n";
-                $conf  .= 'external_signaling_address=' . $parts[0] . "\n";
-                $conf  .= 'external_signaling_port=' . ($parts[1] ?? '5060');
-            } elseif ( ! empty($extipaddr)) {
-                $parts = explode(':', $extipaddr);
-                $conf  .= 'external_media_address=' . $parts[0] . "\n";
-                $conf  .= 'external_signaling_address=' . $parts[0] . "\n";
-                $conf  .= 'external_signaling_port=' . ($parts[1] ?? '5060');
-            }
-        }
 
         $varEtcDir = $this->config->path('core.varEtcDir');
         file_put_contents($varEtcDir . '/topology_hash', md5($topology . $exthostname . $extipaddr));

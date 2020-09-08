@@ -1,17 +1,17 @@
 <?php
-/**
+/*
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 6 2020
+ * Written by Alexey Portnov, 9 2020
  */
 
 namespace MikoPBX\Core\System;
 
-use AGI_AsteriskManager;
 use DateTime;
 use Exception;
 use MikoPBX\Common\Models\{CallEventsLogs, CustomFiles};
+use MikoPBX\Core\Asterisk\AsteriskManager;
 use Phalcon\Di;
 use ReflectionClass;
 
@@ -370,36 +370,27 @@ class Util
      *
      * @param string $events
      *
-     * @return AGI_AsteriskManager
+     * @return AsteriskManager
      */
-    public static function getAstManager($events = 'on'): AGI_AsteriskManager
+    public static function getAstManager($events = 'on'): AsteriskManager
     {
-        global $g;
-        require_once 'phpagi.php';
-        if (isset($g['AGI_AsteriskManager'])) {
-            /** @var AGI_AsteriskManager $am */
-            $am = $g['AGI_AsteriskManager'];
-            // Проверка на разрыв соединения.
-            if (is_resource($am->socket)) {
-                $res = $am->sendRequestTimeout('Ping');
-                if (isset($res['Response']) && trim($res['Response']) != '') {
-                    // Уже есть подключенный экземпляр класса.
-                    return $am;
-                }
-            } else {
-                unset($g['AGI_AsteriskManager']);
+        if($events === 'on'){
+            $nameService = 'amiListner';
+        }else{
+            $nameService = 'amiCommander';
+        }
+
+        $di = Di::getDefault();
+        $am = $di->getShared($nameService);
+        if (is_resource($am->socket)) {
+            $res = $am->sendRequestTimeout('Ping');
+            if (isset($res['Response']) && trim($res['Response']) != '') {
+                // Уже есть подключенный экземпляр класса.
+                return $am;
             }
         }
-        $config = new MikoPBXConfig();
-        $port   = $config->getGeneralSettings('AMIPort');
 
-        $am  = new AGI_AsteriskManager();
-        $res = $am->connect("127.0.0.1:{$port}", null, null, $events);
-        if (true === $res) {
-            $g['AGI_AsteriskManager'] = $am;
-        }
-
-        return $am;
+        return $di->get($nameService);
     }
 
     /**
@@ -592,7 +583,7 @@ class Util
     public static function getExtensionOfFile($filename)
     {
         $path_parts = pathinfo($filename);
-        return $path_parts['extension'];
+        return $path_parts['extension']??'';
     }
 
     /**

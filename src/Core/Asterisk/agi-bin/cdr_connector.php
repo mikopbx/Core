@@ -7,11 +7,11 @@
  * Written by Alexey Portnov, 5 2018
  */
 
+use MikoPBX\Core\Asterisk\AGI;
 use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\Asterisk\Configs\{ResParkingConf};
 use MikoPBX\Core\System\{MikoPBXConfig, Util};
 
-require_once 'phpagi.php';
 require_once 'Globals.php';
 
 /**

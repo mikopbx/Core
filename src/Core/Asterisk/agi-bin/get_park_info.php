@@ -8,9 +8,9 @@
  */
 
 use MikoPBX\Core\System\Util;
+use MikoPBX\Core\Asterisk\AGI;
 
 require_once 'Globals.php';
-require_once 'phpagi.php';
 
 // Функция позволяет получить активные каналы. 
 // Возвращает ассоциативный массив. Ключ - Linkedid, значение - массив каналов. 

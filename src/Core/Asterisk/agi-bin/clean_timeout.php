@@ -8,9 +8,7 @@
  */
 
 use MikoPBX\Core\System\Util;
-
 require_once 'Globals.php';
-require_once 'phpagi.php';
 
 $agi        = new AGI();
 $channel    = $agi->get_variable('MASTER_CHANNEL(M_TIMEOUT_CHANNEL)', true);
