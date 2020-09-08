@@ -1,9 +1,9 @@
 <?php
-/**
+/*
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 6 2020
+ * Written by Alexey Portnov, 9 2020
  */
 
 namespace MikoPBX\Core\System;
@@ -592,7 +592,7 @@ class Util
     public static function getExtensionOfFile($filename)
     {
         $path_parts = pathinfo($filename);
-        return $path_parts['extension'];
+        return $path_parts['extension']??'';
     }
 
     /**
