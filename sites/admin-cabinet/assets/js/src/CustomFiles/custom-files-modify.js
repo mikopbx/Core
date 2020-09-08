@@ -78,7 +78,7 @@ const customFile = {
 	},
 	cbGetFileContentFromServer(response) {
 		if (response !== undefined) {
-			const fileContent = decodeURIComponent(response.data['content']);
+			const fileContent = decodeURIComponent(response.data.content);
 			customFile.viewer.setValue(fileContent);
 			customFile.hideShowCode();
 		}
