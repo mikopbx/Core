@@ -81,7 +81,7 @@ const systemDiagnosticLogs = {
 		systemDiagnosticLogs.viewer.setTheme('ace/theme/monokai');
 		systemDiagnosticLogs.viewer.resize();
 		systemDiagnosticLogs.viewer.renderer.setShowGutter(false);
-		 systemDiagnosticLogs.viewer.setOptions({
+		systemDiagnosticLogs.viewer.setOptions({
 			 showLineNumbers:false,
 			 showPrintMargin: false,
 			 readOnly: true,
