@@ -16,6 +16,7 @@ use MikoPBX\PBXCoreREST\Lib\LogsManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Lib\SIPStackProcessor;
 use MikoPBX\PBXCoreREST\Lib\StorageManagementProcessor;
+use MikoPBX\PBXCoreREST\Lib\SysinfoManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\SystemManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\FilesManagementProcessor;
 
@@ -100,6 +101,9 @@ class WorkerApiCommands extends WorkerBase
                     break;
                 case 'syslog':
                     $res = LogsManagementProcessor::syslogCallBack($request);
+                    break;
+                case 'sysinfo':
+                    $res = SysinfoManagementProcessor::sysinfoCallBack($request);
                     break;
                 case 'storage':
                     $res = StorageManagementProcessor::storageCallBack($request);

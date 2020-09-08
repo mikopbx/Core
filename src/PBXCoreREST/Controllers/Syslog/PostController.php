@@ -32,6 +32,61 @@ class PostController extends BaseController
 {
     public function callAction($actionName): void
     {
+        $data = null;
+        switch ($actionName) {
+            case 'getLogFromFile':
+                $this->getLogFromFileAction();
+                break;
+            case 'downloadLogFile':
+            case 'downloadLogsArchive':
+                $this->downloadFileAction($actionName);
+                break;
+            default:
+                $data = $this->request->getPost();
+                $this->sendRequestToBackendWorker('syslog', $actionName, $data);
+        }
+    }
+
+    /**
+     * Parses file content and puts it to answer
+     */
+    private function getLogFromFileAction(): void
+    {
+        $requestMessage = json_encode(
+            [
+                'processor' => 'syslog',
+                'data'      => $this->request->getPost(),
+                'action'    => 'getLogFromFile',
+            ]
+        );
+        $connection     = $this->di->getShared('beanstalkConnection');
+        $response       = $connection->request($requestMessage, 5, 0);
+
+        if ($response !== false) {
+            $response = json_decode($response, true);
+
+            $filename = $response['data']['filename'] ?? '';
+            if ( ! file_exists($filename)) {
+                $response['messages'][] = 'Log file not found';
+            } else {
+                $response['data']['filename'] = $filename;
+                $response['data']['content']  = '' . file_get_contents($filename);
+                unlink($filename);
+            }
+
+            $this->response->setPayloadSuccess($response);
+        } else {
+            $this->sendError(500);
+        }
+    }
+
+    /**
+     * Prepares downloadable link for log file or archive
+     *
+     * @param string $actionName
+     */
+    private function downloadFileAction(string $actionName): void
+    {
         $requestMessage = json_encode(
             [
                 'processor' => 'syslog',
@@ -40,34 +95,21 @@ class PostController extends BaseController
             ]
         );
         $connection     = $this->di->getShared('beanstalkConnection');
-        $response = $connection->request($requestMessage, 5, 0);
+        $response       = $connection->request($requestMessage, 5, 0);
 
         if ($response !== false) {
             $response = json_decode($response, true);
-            if ($actionName === 'getLogFromFile') {
-                $filename = $response['data']['filename'] ?? '';
+            if (array_key_exists('filename', $response['data'])) {
+                $di           = Di::getDefault();
+                $downloadLink = $di->getShared('config')->path('www.downloadCacheDir');
+                $filename     = $downloadLink . "/" . $response['data']['filename'] ?? '';
                 if ( ! file_exists($filename)) {
-                    $response['messages'][]='Log file not found';
+                    $response['messages'][] = 'File not found';
                 } else {
-                    $response['data']['filename']  = $filename;
-                    $response['data']['content'] = '' . file_get_contents($filename);
-                    unlink($filename);
-                }
-            } elseif ($actionName === 'downloadLogsArchive'
-                || $actionName === 'downloadLogFile') {
-                if (array_key_exists('filename', $response['data'])){
-                    $di           = Di::getDefault();
-                    $downloadLink = $di->getShared('config')->path('www.downloadCacheDir');
-                    $filename     = $downloadLink . "/" . $response['data']['filename'] ?? '';
-                    if ( ! file_exists($filename)) {
-                        $response['messages'][]='File not found';
-                    } else {
-
-                        $scheme = $this->request->getScheme();
-                        $host   = $this->request->getHttpHost();
-                        $port   = $this->request->getPort();
-                        $response['data']['filename']  = "{$scheme}://{$host}:{$port}/pbxcore/files/cache/{$response['data']['filename']}";
-                    }
+                    $scheme                       = $this->request->getScheme();
+                    $host                         = $this->request->getHttpHost();
+                    $port                         = $this->request->getPort();
+                    $response['data']['filename'] = "{$scheme}://{$host}:{$port}/pbxcore/files/cache/{$response['data']['filename']}";
                 }
             }
             $this->response->setPayloadSuccess($response);

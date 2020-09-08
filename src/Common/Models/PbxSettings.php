@@ -55,7 +55,6 @@ class PbxSettings extends ModelsBase
     public static function getDefaultArrayValues(): array
     {
         return [
-            'Version'                         => '1',
             'Name'                            => 'PBX system',
             'VirtualHardwareType'             => 'REAL',//VMWARE,HYPERV,AWS,AZURE
             'Description'                     => '',
@@ -114,6 +113,7 @@ class PbxSettings extends ModelsBase
             'PBXFirewallEnabled'              => '0',
             'PBXFail2BanEnabled'              => '0',
             'PBXTimezone'                     => 'Europe/Moscow',
+            'PBXVersion'                      => '1',
             'PickupExten'                     => '*8',
             'WebAdminLogin'                   => 'admin',
             'WebAdminPassword'                => 'admin',

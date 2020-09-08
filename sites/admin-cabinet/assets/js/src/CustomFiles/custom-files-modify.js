@@ -39,11 +39,22 @@ const customFile = {
 		customFile.getFileContentFromServer();
 	},
 	hideShowCode() {
-		switch (customFile.$formObj.form('get value', 'mode')) {
+		const aceHeight = window.innerHeight-500;
+		const rowsCount = Math.round(aceHeight/16.3);
+		$(window).load(function() {
+			$('.application-code-readonly').css('min-height', `${aceHeight}px`);
+			$('.application-code').css('min-height', `${aceHeight}px`);
+		});
+		const mode = customFile.$formObj.form('get value', 'mode');
+		switch (mode) {
 			case 'none':
 				customFile.viewer.navigateFileStart();
 				customFile.$appCodeFromServer.show();
 				customFile.$appCode.hide();
+				customFile.viewer.setOptions({
+					maxLines: rowsCount,
+				});
+				customFile.viewer.resize()
 				break;
 			case 'append':
 				customFile.$appCodeFromServer.show();
@@ -54,16 +65,20 @@ const customFile = {
 			case 'override':
 				customFile.editor.navigateFileStart();
 				customFile.$appCodeFromServer.hide();
-				customFile.editor.setValue(customFile.viewer.getValue());
+				customFile.editor.setValue(customFile.$formObj.form('get value', 'content'));
 				customFile.$appCode.show();
+				customFile.editor.setOptions({
+					maxLines: rowsCount,
+				});
+				customFile.editor.resize()
 				break;
 			default:
 				break;
 		}
 	},
 	cbGetFileContentFromServer(response) {
-		if (response !== undefined && response.data.length > 0) {
-			const fileContent = decodeURIComponent(response.data);
+		if (response !== undefined) {
+			const fileContent = decodeURIComponent(response.data.content);
 			customFile.viewer.setValue(fileContent);
 			customFile.hideShowCode();
 		}
@@ -77,14 +92,20 @@ const customFile = {
 	initializeAce() {
 		const IniMode = ace.require('ace/mode/julia').Mode;
 		customFile.viewer = ace.edit('application-code-readonly');
-		customFile.viewer.setReadOnly(true);
 		customFile.viewer.session.setMode(new IniMode());
 		customFile.viewer.setTheme('ace/theme/monokai');
+		customFile.viewer.setOptions({
+			showPrintMargin: false,
+			readOnly: true
+		});
 		customFile.viewer.resize();
 
 		customFile.editor = ace.edit('application-code');
 		customFile.editor.setTheme('ace/theme/monokai');
 		customFile.editor.session.setMode(new IniMode());
+		customFile.editor.setOptions({
+			showPrintMargin: false,
+		});
 		customFile.editor.resize();
 	},
 	cbBeforeSendForm(settings) {

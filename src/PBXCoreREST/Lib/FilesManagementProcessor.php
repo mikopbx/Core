@@ -44,7 +44,7 @@ class FilesManagementProcessor extends Injectable
                 break;
             default:
                 $res             = new PBXApiResult();
-                $res->processor = __METHOD__;
+                $res->processor  = __METHOD__;
                 $res->messages[] = "Unknown action - {$action} in uploadCallBack";
         }
 
@@ -267,44 +267,6 @@ class FilesManagementProcessor extends Injectable
     }
 
     /**
-     * Unpack ModuleFile and get metadata information
-     *
-     * @param $filePath
-     *
-     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
-     */
-    public static function getMetadataFromModuleFile(string $filePath): PBXApiResult
-    {
-        $res            = new PBXApiResult();
-        $res->processor = __METHOD__;
-
-        if (file_exists($filePath)) {
-            $sevenZaPath = Util::which('7za');
-            $grepPath    = Util::which('grep');
-            $echoPath    = Util::which('echo');
-            $awkPath     = Util::which('awk');
-            $cmd         = 'f="' . $filePath . '"; p=`' . $sevenZaPath . ' l $f | ' . $grepPath . ' module.json`;if [ "$?" == "0" ]; then ' . $sevenZaPath . ' -so e -y -r $f `' . $echoPath . ' $p |  ' . $awkPath . ' -F" " \'{print $6}\'`; fi';
-
-            Util::mwExec($cmd, $out);
-            $settings = json_decode(implode("\n", $out), true);
-
-            $moduleUniqueID = $settings['moduleUniqueID'] ?? null;
-            if ( ! $moduleUniqueID) {
-                $res->messages[] = 'The" moduleUniqueID " in the module file is not described.the json or file does not exist.';
-
-                return $res;
-            }
-            $res->success = true;
-            $res->data    = [
-                'filePath' => $filePath,
-                'uniqid'   => $moduleUniqueID,
-            ];
-        }
-
-        return $res;
-    }
-
-    /**
      * Считывает содержимое файла, если есть разрешение.
      *
      * @param $filename
@@ -323,7 +285,13 @@ class FilesManagementProcessor extends Injectable
                 $filename = $filename_orgn;
             }
             $res->success = true;
-            $res->data[]  = rawurlencode(file_get_contents($filename));
+            $cat          = Util::which('cat');
+            $di           = Di::getDefault();
+            $dirsConfig   = $di->getShared('config');
+            $filenameTmp  = $dirsConfig->path('www.downloadCacheDir') . '/' . __FUNCTION__ . '_' . time() . '.conf';
+            $cmd          = "{$cat} {$filename} > $filenameTmp";
+            Util::mwExec("$cmd; chown www:www $filenameTmp");
+            $res->data['filename'] = $filenameTmp;
         } else {
             $res->success    = false;
             $res->messages[] = 'No access to the file ' . $filename;
@@ -331,8 +299,6 @@ class FilesManagementProcessor extends Injectable
 
         return $res;
     }
-
-
 
     /**
      * Download IMG from MikoPBX repository
@@ -630,6 +596,44 @@ class FilesManagementProcessor extends Injectable
     }
 
     /**
+     * Unpack ModuleFile and get metadata information
+     *
+     * @param $filePath
+     *
+     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     */
+    public static function getMetadataFromModuleFile(string $filePath): PBXApiResult
+    {
+        $res            = new PBXApiResult();
+        $res->processor = __METHOD__;
+
+        if (file_exists($filePath)) {
+            $sevenZaPath = Util::which('7za');
+            $grepPath    = Util::which('grep');
+            $echoPath    = Util::which('echo');
+            $awkPath     = Util::which('awk');
+            $cmd         = 'f="' . $filePath . '"; p=`' . $sevenZaPath . ' l $f | ' . $grepPath . ' module.json`;if [ "$?" == "0" ]; then ' . $sevenZaPath . ' -so e -y -r $f `' . $echoPath . ' $p |  ' . $awkPath . ' -F" " \'{print $6}\'`; fi';
+
+            Util::mwExec($cmd, $out);
+            $settings = json_decode(implode("\n", $out), true);
+
+            $moduleUniqueID = $settings['moduleUniqueID'] ?? null;
+            if ( ! $moduleUniqueID) {
+                $res->messages[] = 'The" moduleUniqueID " in the module file is not described.the json or file does not exist.';
+
+                return $res;
+            }
+            $res->success = true;
+            $res->data    = [
+                'filePath' => $filePath,
+                'uniqid'   => $moduleUniqueID,
+            ];
+        }
+
+        return $res;
+    }
+
+    /**
      * Install module from file
      *
      * @param string $filePath
@@ -735,7 +739,7 @@ class FilesManagementProcessor extends Injectable
      * Scans a directory just like scandir(), only recursively
      * returns a hierarchical array representing the directory structure
      *
-     * @param string $dir      directory to scan
+     * @param string $dir directory to scan
      *
      * @return array
      */
