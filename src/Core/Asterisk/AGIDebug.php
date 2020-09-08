@@ -9,6 +9,12 @@
 namespace MikoPBX\Core\Asterisk;
 
 class AGIDebug extends AGI {
+    private string $scriptName;
+
+    private function __construct($scriptName){
+        $this->scriptName = $scriptName;
+    }
+
     public function exec($v1, $v2)
     {
         echo "exec($v1, $v2)\n";
@@ -24,7 +30,7 @@ class AGIDebug extends AGI {
         $value           = [];
         $value['result'] = 1;
 
-        if ('10000666' == PT1C_SKRIPTNAME) {
+        if ('10000666' == $this->scriptName) {
             switch ($_varName) {
                 case 'v1':
                     $value['data'] = 'SIP/204';
@@ -44,7 +50,7 @@ class AGIDebug extends AGI {
                 default:
                     $value['data'] = '';
             }
-        } elseif ('10000555' == PT1C_SKRIPTNAME) {
+        } elseif ('10000555' == $this->scriptName) {
             switch ($_varName) {
                 case 'v1':
                     $value['data'] = 'SIP/201';
@@ -61,7 +67,7 @@ class AGIDebug extends AGI {
                 default:
                     $value['data'] = '';
             }
-        } elseif ('1C_HistoryFax.php' == PT1C_SKRIPTNAME) {
+        } elseif ('1C_HistoryFax.php' == $this->scriptName) {
             switch ($_varName) {
                 case 'v1':
                     $value['data'] = 'SIP/1000';
@@ -75,7 +81,7 @@ class AGIDebug extends AGI {
                 default:
                     $value['data'] = '';
             }
-        } elseif ('10000777' == PT1C_SKRIPTNAME) {
+        } elseif ('10000777' == $this->scriptName) {
             switch ($_varName) {
                 case 'chan':
                     $value['data'] = 'SIP/204';

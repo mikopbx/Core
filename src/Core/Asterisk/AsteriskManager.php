@@ -8,6 +8,8 @@
 
 namespace MikoPBX\Core\Asterisk;
 
+use MikoPBX\Core\System\Util;
+
 /**
  * Asterisk Manager class
  *
@@ -412,16 +414,16 @@ class AsteriskManager
             $parameters = [];
             try {
                 $buffer = trim(@fgets($this->socket, 4096));
-            } catch (Exception $e) {
+            } catch (\Exception $e) {
                 return [];
             }
             while ($buffer !== '') {
-                $a = strpos($buffer, ':');
-                if ($a) {
+                $pos = strpos($buffer, ':');
+                if ($pos) {
                     if ( ! count($parameters)) {
-                        $type = strtolower(substr($buffer, 0, $a));
+                        $type = strtolower(substr($buffer, 0, $pos));
                     }
-                    $parameters[substr($buffer, 0, $a)] = substr($buffer, $a + 2);
+                    $parameters[substr($buffer, 0, $pos)] = substr($buffer, $pos + 2);
                 }
                 $buffer = trim(fgets($this->socket, 4096));
             }

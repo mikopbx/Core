@@ -352,6 +352,11 @@ class WorkerCallEvents extends WorkerBase
                     // Вызов уже завершен. Не интересно.
                     continue;
                 }
+                if(!is_string($BRIDGEPEER)){
+                    // Дополнительная проверка.
+                    continue;
+                }
+
                 $linkedid = $am->GetVar($data_chan['chan'], 'CDR(linkedid)', null, false);
                 $CALLERID = $am->GetVar($BRIDGEPEER, 'CALLERID(num)', null, false);
                 if ( ! empty($linkedid) && $linkedid !== $data['linkedid']) {
