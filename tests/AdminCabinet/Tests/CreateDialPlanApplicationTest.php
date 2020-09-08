@@ -1,10 +1,9 @@
 <?php
-/**
- * Copyright (C) MIKO LLC - All Rights Reserved
+/*
+ * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 5 2020
- *
+ * Written by Alexey Portnov, 9 2020
  */
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
@@ -88,7 +87,6 @@ n,Goto(5)',
             'type'=>"php",
             'applicationlogic'=>'<?php
 require_once \'Globals.php\';
-require_once \'phpagi.php\';
 
 $ivr    = new SmartIVR();
 $result = $ivr->startIVR();',

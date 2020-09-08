@@ -1,14 +1,14 @@
 <?php
-/**
+/*
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 7 2020
+ * Written by Alexey Portnov, 9 2020
  */
 
 namespace MikoPBX\Core\Workers;
 
-use AGI_AsteriskManager;
+use MikoPBX\Core\Asterisk\AsteriskManager;
 use MikoPBX\Core\System\BeanstalkClient;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di;
@@ -16,7 +16,7 @@ use Phalcon\Text;
 
 abstract class WorkerBase extends Di\Injectable implements WorkerInterface
 {
-    protected AGI_AsteriskManager $am;
+    protected AsteriskManager $am;
     protected int $maxProc=0;
 
     /**

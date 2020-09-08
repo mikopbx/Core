@@ -9,8 +9,8 @@
 
 use MikoPBX\Core\System\{BeanstalkClient, Util};
 use MikoPBX\Core\Workers\WorkerCdr;
+use MikoPBX\Core\Asterisk\AGI;
 
-require_once 'phpagi.php';
 require_once 'Globals.php';
 
 $chan       = trim($argv[1]);

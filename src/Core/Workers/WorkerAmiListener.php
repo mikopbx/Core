@@ -1,9 +1,9 @@
 <?php
-/**
+/*
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 7 2020
+ * Written by Alexey Portnov, 9 2020
  */
 
 namespace MikoPBX\Core\Workers;
@@ -11,13 +11,13 @@ require_once 'Globals.php';
 
 use MikoPBX\Core\System\{BeanstalkClient, Util};
 use Exception as ExceptionAlias;
-use AGI_AsteriskManager;
+use MikoPBX\Core\Asterisk\AsteriskManager;
 
 class WorkerAmiListener extends WorkerBase
 {
     protected BeanstalkClient $client;
 
-    protected AGI_AsteriskManager $am;
+    protected AsteriskManager $am;
     protected int $maxProc=1;
 
     /**

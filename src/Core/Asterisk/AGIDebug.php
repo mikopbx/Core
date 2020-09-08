@@ -1,16 +1,14 @@
 <?php
-/**
+/*
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 2 2020
+ * Written by Alexey Portnov, 9 2020
  */
 
-/**
- *  Заглушка для отладки скрипта.
- */
-class _AGI
-{
+namespace MikoPBX\Core\Asterisk;
+
+class AGIDebug extends AGI {
     public function exec($v1, $v2)
     {
         echo "exec($v1, $v2)\n";

@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 8 2020
+ * Written by Alexey Portnov, 9 2020
  */
 
 namespace MikoPBX\Core\Asterisk\Configs;
@@ -82,7 +82,6 @@ class ExtensionsConf extends ConfigClass
         $conf .= 'same => n,Dial(Local/${EXTEN}@internal-users/n${ADDITIONAL_PEER},60,TteKkHhb(originate_create_chan,s,1))' . " \n\n";
 
         $conf .= '[macro-dial_answer]' . "\n";
-        // $conf.= 'exten => s,1,AGI(cdr_connector.php,${ISTRANSFER}dial_answer)'."\n\n";
         $conf .= 'exten => s,1,Gosub(${ISTRANSFER}dial_answer,${EXTEN},1)' . "\n\n";
 
         $conf .= '[originate_create_chan]' . " \n";
