@@ -36,33 +36,20 @@ class WorkerMakeLogFilesArchive extends WorkerBase
         $progress_file = "{$resultFile}.progress";
         file_put_contents($progress_file, '0');
 
-        Util::killByName('timeout');
-        Util::killByName('tcpdump');
-
         $rmPath      = Util::which('rm');
-        $findPath    = Util::which('find');
         $za7Path     = Util::which('7za');
-        $cpPath      = Util::which('cp');
-        $dir_all_log = System::getLogDir();
-        $dirlog      = $dir_all_log . '/dir_start_all_log';
-        Util::mwMkdir($dirlog);
-
-        $log_dir = System::getLogDir();
-        Util::mwExec("{$cpPath} -R {$log_dir} {$dirlog}");
 
         if (file_exists($resultFile)) {
             Util::mwExec("{$rmPath} -rf {$resultFile}");
         }
-        // Пакуем логи.
-        Util::mwExec("{$za7Path} a -tzip -mx5 -spf '{$resultFile}' '{$dirlog}'");
 
-        // Удаляем логи. Оставляем только архив.
-        Util::mwExec("{$findPath} {$dir_all_log}" . '/ -name *_start_all_log | xargs rm -rf');
-
-        // Удаляем каталог логов.
-        Util::mwExecBg("{$rmPath} -rf {$dirlog}");
-
+        $logDir = System::getLogDir();
+        Util::mwExec("{$za7Path} a -tzip -mx5 -spf '{$resultFile}' '{$logDir}'");
+        $tcpDumpDir = "{$logDir}/tcpDump";
         file_put_contents($progress_file, '100');
+
+        // Delete TCP dump
+        Util::mwExec("{$rmPath} -rf $tcpDumpDir");
     }
 }
 

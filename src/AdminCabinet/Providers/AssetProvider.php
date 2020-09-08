@@ -528,6 +528,7 @@ class AssetProvider implements ServiceProviderInterface
                                 ->addJs('js/pbx/main/form.js', true)
                                 ->addJs('js/pbx/SystemDiagnostic/system-diagnostic-index.js', true)
                                 ->addJs('js/pbx/SystemDiagnostic/system-diagnostic-index-showlogs.js', true)
+                                ->addJs('js/pbx/SystemDiagnostic/system-diagnostic-index-sysinfo.js', true)
                                 ->addJs('js/pbx/SystemDiagnostic/system-diagnostic-index-logcapture.js', true);
                             $footerCollectionACE
                                 ->addJs('js/vendor/ace/ace.js', true)

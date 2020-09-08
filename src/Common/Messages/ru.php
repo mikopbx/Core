@@ -1009,4 +1009,8 @@ return [
     'sd_ShowLog'                                                          => 'Просмотр логов',
     'sd_CapturePcap'                                                      => 'Захват логов',
     'sd_DownloadPcapFileError'                                            => 'Ошибка при формировании архива логов',
+    'sd_SystemInformation'                                                => 'Информация о системе',
+    'sd_CollectingInfo'                                                   => 'Сбор служебной информации',
+    'sd_PackingLogFiles'                                                  => 'Упаковка собранных данных',
+
 ];

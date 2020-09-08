@@ -27,12 +27,10 @@ const PbxApi = {
 	systemShutDown: `${Config.pbxUrl}/pbxcore/api/system/shutdown`, // Выключить машину
 	systemGetBannedIp: `${Config.pbxUrl}/pbxcore/api/system/getBanIp`, // Получение забаненных ip
 	systemUnBanIp: `${Config.pbxUrl}/pbxcore/api/system/unBanIp`, // Снятие бана IP адреса curl -X POST -d '{"ip": "172.16.156.1"}'
-	systemGetInfo: `${Config.pbxUrl}/pbxcore/api/system/getInfo`, // Получение информации о системе
 	systemSetDateTime: `${Config.pbxUrl}/pbxcore/api/system/setDate`, // curl -X POST -d '{"date": "2015.12.31-01:01:20"}',
 	systemSendTestEmail: `${Config.pbxUrl}/pbxcore/api/system/sendMail`, // Отправить почту
 	updateMailSettings: `${Config.pbxUrl}/pbxcore/api/system/updateMailSettings`,
 	systemGetFileContent: `${Config.pbxUrl}/pbxcore/api/system/fileReadContent`, // Получить контент файла по имени
-	systemGetExternalIP: `${Config.pbxUrl}/pbxcore/api/system/getExternalIpInfo`,
 	systemUpgrade: `${Config.pbxUrl}/pbxcore/api/system/upgrade`, // Обновление АТС файлом
 	systemDownloadNewFirmware: `${Config.pbxUrl}/pbxcore/api/system/downloadNewFirmware`, // Обновление АТС онлайн
 	systemGetFirmwareDownloadStatus: `${Config.pbxUrl}/pbxcore/api/system/firmwareDownloadStatus`, // Получение статуса обновления
@@ -44,6 +42,8 @@ const PbxApi = {
 	systemModuleDownloadStatus: `${Config.pbxUrl}/pbxcore/api/system/moduleDownloadStatus`, //TODO::Проверить статус ошибки скачивания в переменной message
 	systemUploadFile: `${Config.pbxUrl}/pbxcore/api/upload/uploadResumable`, // curl -F "file=@ModuleTemplate.zip" http://127.0.0.1/pbxcore/api/upload/uploadResumable
 	systemStatusUploadFile: `${Config.pbxUrl}/pbxcore/api/upload/status`, // curl -X POST -d '{"id": "1531474060"}' http://127.0.0.1/pbxcore/api/upload/status;
+	sysinfoGetInfo: `${Config.pbxUrl}/pbxcore/api/sysinfo/getInfo`, // Get system information
+	sysinfoGetExternalIP: `${Config.pbxUrl}/pbxcore/api/sysinfo/getExternalIpInfo`, //Get external IP address,
 
 	/**
 	 * Проверка ответа на JSON
@@ -306,7 +306,7 @@ const PbxApi = {
 	 */
 	GetExternalIp(callback) {
 		$.api({
-			url: PbxApi.systemGetExternalIP,
+			url: PbxApi.sysinfoGetExternalIP,
 			on: 'now',
 			successTest: PbxApi.successTest,
 			onSuccess(response) {
@@ -356,6 +356,26 @@ const PbxApi = {
 		$.api({
 			url: PbxApi.systemShutDown,
 			on: 'now',
+		});
+	},
+	/**
+	 * Gets system information
+	 * @param callback function
+	 */
+	SysInfoGetInfo(callback) {
+		$.api({
+			url: PbxApi.sysinfoGetInfo,
+			on: 'now',
+			successTest: PbxApi.successTest,
+			onSuccess(response) {
+				callback(response.data);
+			},
+			onFailure() {
+				callback(false);
+			},
+			onError() {
+				callback(false);
+			},
 		});
 	},
 

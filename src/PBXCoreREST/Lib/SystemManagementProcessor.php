@@ -13,7 +13,6 @@ namespace MikoPBX\PBXCoreREST\Lib;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Asterisk\Configs\VoiceMailConf;
 use MikoPBX\Core\System\Notifications;
-use MikoPBX\Core\System\Storage;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Modules\PbxExtensionState;
@@ -31,9 +30,9 @@ class SystemManagementProcessor extends Injectable
      */
     public static function systemCallBack(array $request): PBXApiResult
     {
-        $action = $request['action'];
-        $data   = $request['data'];
-        $res    = new PBXApiResult();
+        $action         = $request['action'];
+        $data           = $request['data'];
+        $res            = new PBXApiResult();
         $res->processor = __METHOD__;
         switch ($action) {
             case 'reboot':
@@ -53,9 +52,6 @@ class SystemManagementProcessor extends Injectable
             case 'setDate':
                 $res->success = System::setDate($data['date']);
                 break;
-            case 'getInfo':
-                $res = SystemManagementProcessor::getInfo();
-                break;
             case 'updateMailSettings':
                 // TODO
                 $res->success = true;
@@ -67,8 +63,8 @@ class SystemManagementProcessor extends Injectable
                         $data['body']    = base64_decode($data['body']);
                     }
                     $result = Notifications::sendMail($data['email'], $data['subject'], $data['body']);
-                    if ($result===true){
-                        $res->success    = true;
+                    if ($result === true) {
+                        $res->success = true;
                     } else {
                         $res->success    = false;
                         $res->messages[] = $result;
@@ -80,9 +76,6 @@ class SystemManagementProcessor extends Injectable
                 break;
             case 'fileReadContent':
                 $res = FilesManagementProcessor::fileReadContent($data['filename'], $data['needOriginal']);
-                break;
-            case 'getExternalIpInfo':
-                $res = NetworkManagementProcessor::getExternalIpInfo();
                 break;
             case 'reloadMsmtp':
                 $notifications = new Notifications();
@@ -139,7 +132,7 @@ class SystemManagementProcessor extends Injectable
                 } else {
                     PBXConfModulesProvider::recreateModulesProvider();
                     $res->data['needReloadModules'] = true;
-                    $res->success = true;
+                    $res->success                   = true;
                 }
                 break;
             case 'disableModule':
@@ -151,97 +144,23 @@ class SystemManagementProcessor extends Injectable
                 } else {
                     PBXConfModulesProvider::recreateModulesProvider();
                     $res->data['needReloadModules'] = true;
-                    $res->success = true;
+                    $res->success                   = true;
                 }
                 break;
             case 'uninstallModule':
                 $moduleUniqueID = $request['data']['uniqid'];
-                $keepSettings   = $request['data']['keepSettings']==='true';
+                $keepSettings   = $request['data']['keepSettings'] === 'true';
                 $res            = FilesManagementProcessor::uninstallModule($moduleUniqueID, $keepSettings);
                 break;
             default:
                 $res             = new PBXApiResult();
-                $res->processor = __METHOD__;
+                $res->processor  = __METHOD__;
                 $res->messages[] = "Unknown action - {$action} in systemCallBack";
         }
 
         $res->function = $action;
 
         return $res;
-    }
-
-    /**
-     * Получение сведений о системе.
-     *
-     * @return PBXApiResult
-     */
-    public static function getInfo(): PBXApiResult
-    {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
-        $res->success = true;
-
-        $storage        = new Storage();
-        $res->data           = [
-            'disks'  => $storage->getAllHdd(),
-            'cpu'    => self::getCpu(),
-            'uptime' => self::getUpTime(),
-            'mem'    => self::getMemInfo(),
-        ];
-        $res->processor = __METHOD__;
-        return $res;
-    }
-
-    /**
-     * Возвращает информацию по загрузке CPU.
-     */
-    public static function getCpu()
-    {
-        $ut = [];
-        $grepPath = Util::which('grep');
-        $mpstatPath = Util::which('mpstat');
-        Util::mwExec("{$mpstatPath} | {$grepPath} all", $ut);
-        preg_match("/^.*\s+all\s+.*\s+.*\s+.*\s+.*\s+.*\s+.*\s+.*\s+.*\s+(.*)\s*.*/i", $ut[0], $matches);
-        $rv = 100 - $matches[1];
-
-        if (100 < $rv) {
-            $rv = 100;
-        }
-
-        return round($rv, 2);
-    }
-
-    /**
-     * Получаем информацию по времени работы ПК.
-     */
-    public static function getUpTime(): string
-    {
-        $ut = [];
-        $uptimePath = Util::which('uptime');
-        $awkPath = Util::which('awk');
-        Util::mwExec("{$uptimePath} | {$awkPath} -F \" |,\" '{print $5}'", $ut);
-
-        return implode('', $ut);
-    }
-
-    /**
-     * Получаем информацию по оперативной памяти.
-     */
-    public static function getMemInfo(): array
-    {
-        $result = [];
-        $out    = [];
-        $catPath = Util::which('cat');
-        $grepPath = Util::which('grep');
-        $awkPath = Util::which('awk');
-        Util::mwExec("{$catPath} /proc/meminfo | {$grepPath} -C 0 'Inactive:' | {$awkPath} '{print $2}'", $out);
-        $result['inactive'] = round((1 * implode($out)) / 1024, 2);
-        Util::mwExec("{$catPath} /proc/meminfo | {$grepPath} -C 0 'MemFree:' | {$awkPath} '{print $2}'", $out);
-        $result['free'] = round((1 * implode($out)) / 1024, 2);
-        Util::mwExec("{$catPath} /proc/meminfo | {$grepPath} -C 0 'MemTotal:' | {$awkPath} '{print $2}'", $out);
-        $result['total'] = round((1 * implode($out)) / 1024, 2);
-
-        return $result;
     }
 
     /**
@@ -253,21 +172,23 @@ class SystemManagementProcessor extends Injectable
      */
     public static function upgradeFromImg(string $tempFilename): PBXApiResult
     {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
-        $res->success = true;
-        $res->data['message']='In progress...';
+        $res                  = new PBXApiResult();
+        $res->processor       = __METHOD__;
+        $res->success         = true;
+        $res->data['message'] = 'In progress...';
 
 
-        if (!file_exists($tempFilename)){
-            $res->success = false;
-            $res->messages[]="Update file '{$tempFilename}' not found.";
+        if ( ! file_exists($tempFilename)) {
+            $res->success    = false;
+            $res->messages[] = "Update file '{$tempFilename}' not found.";
+
             return $res;
         }
 
         if ( ! file_exists('/var/etc/cfdevice')) {
-            $res->success = false;
-            $res->messages[]="The system is not installed";
+            $res->success    = false;
+            $res->messages[] = "The system is not installed";
+
             return $res;
         }
         $dev = trim(file_get_contents('/var/etc/cfdevice'));
@@ -276,6 +197,7 @@ class SystemManagementProcessor extends Injectable
         Util::createUpdateSymlink($tempFilename, $link);
         $mikopbx_firmwarePath = Util::which('mikopbx_firmware');
         Util::mwExecBg("{$mikopbx_firmwarePath} recover_upgrade {$link} /dev/{$dev}");
+
         return $res;
     }
 

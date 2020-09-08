@@ -46,6 +46,7 @@ const archivePackingCheckWorker = {
 			systemDiagnosticCapture.$startBtn.removeClass('disabled loading');
 			window.location = response.filename;
 			window.clearTimeout(archivePackingCheckWorker.timeoutHandle);
+			systemDiagnosticCapture.$dimmer.removeClass('active');
 		} else if (response.status !== undefined) {
 			archivePackingCheckWorker.errorCounts = 0;
 		} else {
@@ -58,7 +59,12 @@ const systemDiagnosticCapture = {
 	$startBtn: $('#start-capture-button'),
 	$stopBtn: $('#stop-capture-button'),
 	$showBtn: $('#show-last-log'),
+	$dimmer:  $('#capture-log-dimmer'),
 	initialize() {
+		const segmentHeight = window.innerHeight-300;
+		$(window).load(function() {
+			systemDiagnosticCapture.$dimmer.closest('div').css('min-height', `${segmentHeight}px`);
+		});
 		if (sessionStorage.getItem('LogsCaptureStatus') === 'started') {
 			systemDiagnosticCapture.$startBtn.addClass('disabled loading');
 			systemDiagnosticCapture.$stopBtn.removeClass('disabled');
@@ -76,6 +82,7 @@ const systemDiagnosticCapture = {
 			e.preventDefault();
 			systemDiagnosticCapture.$startBtn.removeClass('loading');
 			systemDiagnosticCapture.$stopBtn.addClass('loading');
+			systemDiagnosticCapture.$dimmer.addClass('active');
 			PbxApi.SyslogStopLogsCapture(systemDiagnosticCapture.cbAfterStopCapture);
 
 		});
