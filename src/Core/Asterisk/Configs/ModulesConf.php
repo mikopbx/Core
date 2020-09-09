@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 8 2020
+ * Written by Alexey Portnov, 9 2020
  */
 
 namespace MikoPBX\Core\Asterisk\Configs;
@@ -92,6 +92,8 @@ class ModulesConf extends ConfigClass
             'res_rtp_asterisk.so',
             'res_srtp.so',
             'res_convert.so',
+            'res_timing_timerfd.so',
+            'res_timing_pthread.so',
             'res_timing_dahdi.so',
             'res_mutestream.so',
 

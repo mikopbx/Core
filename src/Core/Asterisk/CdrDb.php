@@ -1,9 +1,9 @@
 <?php
-/**
+/*
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 6 2020
+ * Written by Alexey Portnov, 9 2020
  */
 
 namespace MikoPBX\Core\Asterisk;
@@ -108,7 +108,7 @@ class CdrDb
                 if ($sub_dir === null) {
                     $sub_dir = date('Y/m/d/H/');
                 }
-                $f = $monitor_dir . $sub_dir . $file_name;
+                $f = "{$monitor_dir}/{$sub_dir}{$file_name}";
             } else {
                 $f         = Util::trimExtensionForFile($full_name);
                 $file_name = basename($f);
@@ -149,7 +149,7 @@ class CdrDb
         $monitor_dir = Storage::getMonitorDir();
         $sub_dir     = date("Y/m/d/H/");
 
-        return "{$monitor_dir}{$sub_dir}{$file_name}";
+        return "{$monitor_dir}/{$sub_dir}{$file_name}";
     }
 
     /**
