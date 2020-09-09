@@ -24,6 +24,7 @@ use ReflectionException;
 
 /**
  * @property \MikoPBX\Service\License license
+ *
  */
 class PbxExtensionState extends Injectable
 {
@@ -76,7 +77,7 @@ class PbxExtensionState extends Injectable
         $error = false;
 
         if ($this->lic_feature_id > 0) {
-            // Пробуем захватить фичу c учетом оффлан режима
+            // Try to capture feature if it set
             $result = $this->license->featureAvailable($this->lic_feature_id);
             if ($result['success'] === false) {
                 $this->messages[] = $this->license->translateLicenseErrorMessage($result['error']);
@@ -84,9 +85,11 @@ class PbxExtensionState extends Injectable
             }
         }
 
-        $this->db->begin(true); // Временная транзакция, которая будет отменена после теста включения
+        // Temporary transaction, we will rollback it after checks
+        $this->db->begin(true);
 
         // Временно включим модуль, чтобы включить все связи и зависимости
+        // Temporary disable module and disable all links
         $module = PbxExtensionModules::findFirstByUniqid($this->moduleUniqueID);
         if ($module !== null) {
             $module->disabled = '0';
@@ -95,6 +98,8 @@ class PbxExtensionState extends Injectable
 
         // Если в конфигурационном классе модуля есть функция корректного включения, вызовем ее,
         // например модуль умной маршртутизации прописывает себя в маршруты
+        //
+        // If module config has special function before enable, we will execute it
 
         if ($this->configClass !== null
             && method_exists($this->configClass, 'onBeforeModuleEnable')
@@ -103,7 +108,7 @@ class PbxExtensionState extends Injectable
             if ( ! empty($messages)) {
                 $this->messages = $messages;
             } else {
-                $this->messages[] = 'Error on the Module enable function at onBeforeModuleEnable';
+                $this->messages[] = 'Error on the enableModule function at onBeforeModuleEnable';
             }
             $this->db->rollback(true); // Откатываем временную транзакцию
 
@@ -188,6 +193,8 @@ class PbxExtensionState extends Injectable
                 && method_exists($this->configClass, 'onAfterModuleEnable')) {
                 $this->configClass->onAfterModuleEnable();
             }
+
+            $this->messages = array_merge($this->messages, $this->configClass->getMessages());
 
             // Restart Nginx if module has locations
             $this->refreshNginxLocations();
@@ -385,6 +392,7 @@ class PbxExtensionState extends Injectable
                 && method_exists($this->configClass, 'onAfterModuleDisable')) {
                 $this->configClass->onAfterModuleDisable();
             }
+            $this->messages = array_merge($this->messages, $this->configClass->getMessages()) ;
 
             // Reconfigure fail2ban and restart iptables
             $this->refreshFail2BanRules();

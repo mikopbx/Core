@@ -52,13 +52,16 @@ class PbxExtensionStatus {
 			event.initEvent('ConfigDataChanged', false, true);
 			window.dispatchEvent(event);
 			this.$disabilityFields.addClass('disabled');
+			if (response.data.changedObjects !== undefined){
+				UserMessage.showMultiString(response.data.changedObjects, globalTranslate.ext_ModuleChangedObjects);
+			}
 		} else {
 			this.$toggle.checkbox('set checked');
 			this.changeLabelText(globalTranslate.ext_ModuleDisabledStatusEnabled);
 			this.$disabilityFields.removeClass('disabled');
-		}
-		if (response !== undefined && response.messages !== undefined) {
-			UserMessage.showMultiString(response.message, globalTranslate.ext_ModuleChangeStatusError);
+			if (response !== undefined && response.messages !== undefined) {
+				UserMessage.showMultiString(response.messages, globalTranslate.ext_ModuleChangeStatusError);
+			}
 		}
 		this.$toggle.removeClass('disabled');
 	}
@@ -73,13 +76,16 @@ class PbxExtensionStatus {
 			event.initEvent('ConfigDataChanged', false, true);
 			window.dispatchEvent(event);
 			this.$disabilityFields.removeClass('disabled');
+			if (response.data.changedObjects !== undefined){
+				UserMessage.showMultiString(response.data.changedObjects, globalTranslate.ext_ModuleChangedObjects);
+			}
 		} else {
 			this.$toggle.checkbox('set unchecked');
 			this.changeLabelText(globalTranslate.ext_ModuleDisabledStatusDisabled);
 			this.$disabilityFields.addClass('disabled');
-		}
-		if (response !== undefined && response.messages !== undefined) {
-			UserMessage.showMultiString(response.messages, globalTranslate.ext_ModuleChangeStatusError);
+			if (response !== undefined && response.messages !== undefined) {
+				UserMessage.showMultiString(response.messages, globalTranslate.ext_ModuleChangeStatusError);
+			}
 		}
 		this.$toggle.removeClass('disabled');
 	}
