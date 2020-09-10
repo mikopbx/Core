@@ -34,7 +34,7 @@ if [ "${mounted}x" != "x" ];then
 fi;
 
 totalMb=$(($(busybox blockdev --getsize64 "${dev}") / 1024 / 1024));
-if [ "$totalMb" -le "0" ]; then
+if [ "$totalMb" -le "600" ]; then
   # Диск имеет размер, меньше 600Мб. Нет смысла пытаться создавать 4ый раздел.
   exit 0;
 fi
