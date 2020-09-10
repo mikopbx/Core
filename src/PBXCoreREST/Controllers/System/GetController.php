@@ -13,17 +13,21 @@ use MikoPBX\PBXCoreREST\Controllers\BaseController;
 use Phalcon\Di;
 
 /**
- * /pbxcore/api/system/{name} Управление системой в целом (GET)
- * Рестарт ОС.
+ * /pbxcore/api/system/{name} System management (GET)
+ *
+ * Shutdown system
  *   curl http://172.16.156.212/pbxcore/api/system/shutdown;
- * Рестарт ОС.
+ *
+ * Reboot system
  *   curl http://172.16.156.212/pbxcore/api/system/reboot;
- * Получения забаненных ip
+ *
+ * Get list of banned IP by fail2ban
  *   curl http://172.16.156.212/pbxcore/api/system/getBanIp;
- * Настройка msmtp
+ *
+ * Reload smtp notification service
  *   curl http://172.16.156.212/pbxcore/api/system/reloadMsmtp;
  *
- * Пинг АТС (описан в nginx.conf):
+ * Ping backend (described in nginx.conf):
  *   curl http://172.16.156.223/pbxcore/api/system/ping
  *
  *

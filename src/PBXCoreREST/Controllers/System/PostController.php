@@ -14,28 +14,30 @@ use MikoPBX\PBXCoreREST\Controllers\BaseController;
 use Phalcon\Di;
 
 /**
- * /pbxcore/api/system/{name}' Управление системой в целом (POST).
+ * /pbxcore/api/system/{name}' System management (POST).
  *
- * Установка системного времени
+ * Setup system time
  *   curl -X POST -d '{"date": "2015.12.31-01:01:20"}' http://172.16.156.212/pbxcore/api/system/setDate;
  *
- * Отправка email.
- *   curl -X POST -d '{"email": "apor@miko.ru", "subject":"Привет от mikopbx", "body":"Тестовое сообщение", "encode":
+ * Send email
+ *   curl -X POST -d '{"email": "apor@miko.ru", "subject":"Hi from mikopbx", "body":"Test message", "encode":
  *   ""}' http://172.16.156.223/pbxcore/api/system/sendMail;
  *     'encode' - может быть пустой строкой или 'base64', на случай, если subject и body передаются в base64;
  *
- * Снятие бана IP адреса
+ * Unban IP address
  *   curl -X POST -d '{"ip": "172.16.156.1"}' http://172.16.156.212/pbxcore/api/system/unBanIp;
- *   Пример ответа:
+ *   Answer example:
  *   {"result":"Success","data":[{"jail":"asterisk","ip":"172.16.156.1","timeofban":1522326119}],"function":"getBanIp"}
  *
- * Получение содержимого файла.
+ * Get config file content
  *   curl -X POST -d '{"filename": "/etc/asterisk/asterisk.conf"}'
- *   http://172.16.156.212/pbxcore/api/system/fileReadContent; Примеры ответа:
+ *   http://172.16.156.212/pbxcore/api/system/fileReadContent;
+ *
+ * Answer example:
  *   {"result":"ERROR","message":"API action not found;","function":"fileReadContent"}
  *   {"result":"Success","data":"W2RpcmVj","function":"fileReadContent"}
  *
- * Конвертация аудио файла:
+ * Convert audiofile:
  *   curl -X POST -d '{"filename": "/tmp/WelcomeMaleMusic.mp3"}'
  *   http://172.16.156.212/pbxcore/api/system/convertAudioFile; Пример ответа:
  *   {
@@ -44,31 +46,21 @@ use Phalcon\Di;
  *      "function": "convertAudioFile"
  *   }
  *
- * Загрузка аудио файла на АТС:
- *   curl  -X POST -d '{"filename": "/storage/usbdisk1/mikopbx/tmp/1577195443/test.mp3"}'
- *   http://127.0.0.1/pbxcore/api/system/uploadAudioFile -H 'Cookie: XDEBUG_SESSION=PHPSTORM'; curl  -F
- *   "file=@/storage/usbdisk1/mikopbx/voicemailarchive/monitor/2019/11/29/10/mikopbx-15750140_201_YNrXH1KHDj.mp3"
- *   http://127.0.0.1/pbxcore/api/system/uploadAudioFile;
  *
- * Пример ответа:
- *   {
- *      "result": "Success",
- *      "filename": "/tmp/WelcomeMaleMusic.wav",
- *      "function": "uploadAudioFile"
- *   }
- *
- * Удаление аудио файла:
+ * Delete audiofile:
  *   curl -X POST -d '{"filename": "/storage/usbdisk1/mikopbx/tmp/2233333.wav"}'
  *   http://172.16.156.212/pbxcore/api/system/removeAudioFile;
  *
  *
- * Обновление системы (офлайн) curl -X POST -d
+ * System upgrade (from file)
+ * curl -X POST -d
  *   '{"filename": "/storage/usbdisk1/mikopbx/tmp/2019.4.200-mikopbx-generic-x86-64-linux.img"}'
  *   http://127.0.0.1/pbxcore/api/system/upgrade -H 'Cookie: XDEBUG_SESSION=PHPSTORM'; curl -F
  *   "file=@1.0.5-9.0-svn-mikopbx-x86-64-cross-linux.img" http://172.16.156.212/pbxcore/api/system/upgrade;
  *
  *
- * Онлайн обновление АТС. curl -X POST -d '{"md5":"df7622068d0d58700a2a624d991b6c1f", "url":
+ * System upgrade (over link)
+ * curl -X POST -d '{"md5":"df7622068d0d58700a2a624d991b6c1f", "url":
  *   "https://www.askozia.ru/upload/update/firmware/6.2.96-9.0-svn-mikopbx-x86-64-cross-linux.img"}'
  *   http://172.16.156.223/pbxcore/api/system/upgradeOnline;
  *
@@ -90,7 +82,6 @@ use Phalcon\Di;
  * Uninstall module:
  * curl -X POST -d '{"uniqid":"ModuleSmartIVR"} http://172.16.156.223/pbxcore/api/system/uninstallModule
  *
- *
  */
 class PostController extends BaseController
 {
@@ -99,10 +90,7 @@ class PostController extends BaseController
         $data = null;
         switch ($actionName) {
             case 'convertAudioFile':
-                $data = $this->convertAudioFile();
-                if ($data === null) {
-                    return;
-                }
+                $this->convertAudioFile();
                 break;
             case 'fileReadContent':
                 $this->fileReadContent();
@@ -116,9 +104,8 @@ class PostController extends BaseController
     /**
      * Categorize and store uploaded audio files
      *
-     * @return array|null
      */
-    private function convertAudioFile(): ?array
+    private function convertAudioFile(): void
     {
         $data                  = [];
         $category              = $this->request->getPost('category');
@@ -135,11 +122,22 @@ class PostController extends BaseController
                 break;
             default:
                 $this->sendError(400, 'Category not set');
-
-                return null;
         }
-
-        return $data;
+        $requestMessage = json_encode(
+            [
+                'processor' => 'system',
+                'data'      => $data,
+                'action'    => 'convertAudioFile',
+            ]
+        );
+        $connection     = $this->di->getShared('beanstalkConnection');
+        $response       = $connection->request($requestMessage, 15, 0);
+        if ($response !== false) {
+            $response = json_decode($response, true);
+            $this->response->setPayloadSuccess($response);
+        } else {
+            $this->sendError(500);
+        }
     }
 
     /**
