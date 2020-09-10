@@ -83,18 +83,20 @@ const UserMessage = {
 				previousMessage = value;
 			});
 		} else {
+			let content = '';
 			$.each(messagesArray, (index, value) => {
 				let newValue = value;
 				if (previousMessage !== value) {
 					if (Array.isArray(newValue)) {
 						newValue = newValue.join('<br>');
 					}
-					UserMessage.$ajaxMessagesDiv
-						.after(`<div class="ui ${index} message ajax">${newValue}</div>`);
-					UserMessage.scrollToMessages();
+					content = `${content}<br>${newValue}`;
 				}
 				previousMessage = value;
 			});
+			UserMessage.$ajaxMessagesDiv
+				.after(`<div class="ui warning message ajax"><div class="ui header">${header}</div>${content}</div>`);
+			UserMessage.scrollToMessages();
 		}
 	},
 	scrollToMessages() {

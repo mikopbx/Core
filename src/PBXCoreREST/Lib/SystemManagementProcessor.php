@@ -131,6 +131,7 @@ class SystemManagementProcessor extends Injectable
                     $res->messages = $moduleStateProcessor->getMessages();
                 } else {
                     PBXConfModulesProvider::recreateModulesProvider();
+                    $res->data = $moduleStateProcessor->getMessages();
                     $res->data['needReloadModules'] = true;
                     $res->success                   = true;
                 }
@@ -143,6 +144,7 @@ class SystemManagementProcessor extends Injectable
                     $res->messages = $moduleStateProcessor->getMessages();
                 } else {
                     PBXConfModulesProvider::recreateModulesProvider();
+                    $res->data = $moduleStateProcessor->getMessages();
                     $res->data['needReloadModules'] = true;
                     $res->success                   = true;
                 }

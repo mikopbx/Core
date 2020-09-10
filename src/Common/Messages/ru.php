@@ -862,6 +862,7 @@ return [
     'ext_ModuleDisabledStatusDisabled'                                    => 'Модуль отключен',
     'ext_ModuleDisabledStatusEnabled'                                     => 'Модуль включен',
     'ext_ModuleStatusChanging'                                            => 'Изменяем состояния модуля …',
+    'ext_ModuleChangedObjects'                                            => 'Изменены следующие объекты',
     'ext_ExternalDescription'                                             => 'Описание на сайте',
     'ext_DeleteTitle'                                                     => 'Удаление модуля расширения',
     'ext_DeleteDescription'                                               => 'Перед удалением модуля будет выполнена проверка на наличие перекрестных ссылок между другими модулями и системными настройками.',

@@ -554,31 +554,33 @@ abstract class ModelsBase extends Model
     public function getWebInterfaceLink(): string
     {
         $url  = new Url();
+
+        $baseUri = $this->di->getShared('config')->path('adminApplication.baseUri');
         $link = '#';
         switch (static::class) {
             case AsteriskManagerUsers::class:
-                $link = $url->get('asterisk-managers/modify/' . $this->id);
+                $link = $url->get('asterisk-managers/modify/' . $this->id,null,null, $baseUri);
                 break;
             case CallQueueMembers::class:
-                $link = $url->get('call-queues/modify/' . $this->CallQueues->uniqid);
+                $link = $url->get('call-queues/modify/' . $this->CallQueues->uniqid,null,null, $baseUri);
                 break;
             case CallQueues::class:
-                $link = $url->get('call-queues/modify/' . $this->uniqid);
+                $link = $url->get('call-queues/modify/' . $this->uniqid,null,null, $baseUri);
                 break;
             case ConferenceRooms::class:
-                $link = $url->get('conference-rooms/modify/' . $this->uniqid);
+                $link = $url->get('conference-rooms/modify/' . $this->uniqid,null,null, $baseUri);
                 break;
             case CustomFiles::class:
-                $link = $url->get('custom-files/modify/' . $this->id);
+                $link = $url->get('custom-files/modify/' . $this->id,null,null, $baseUri);
                 break;
             case DialplanApplications::class:
-                $link = $url->get('dialplan-applications/modify/' . $this->uniqid);
+                $link = $url->get('dialplan-applications/modify/' . $this->uniqid,null,null, $baseUri);
                 break;
             case ExtensionForwardingRights::class:
 
                 break;
             case Extensions::class:
-                $link = $url->get('extensions/modify/' . $this->id);
+                $link = $url->get('extensions/modify/' . $this->id,null,null, $baseUri);
                 break;
             case ExternalPhones::class:
                 if ($this->Extensions->is_general_user_number === "1") {
@@ -589,7 +591,7 @@ abstract class ModelsBase extends Model
                         ],
                     ];
                     $needExtension = Extensions::findFirst($parameters);
-                    $link          = $url->get('extensions/modify/' . $needExtension->id);
+                    $link          = $url->get('extensions/modify/' . $needExtension->id,null,null, $baseUri);
                 } else {
                     $link = '#';//TODO сделать если будет раздел для допоплнинельных номеров пользователя
                 }
@@ -598,56 +600,56 @@ abstract class ModelsBase extends Model
                 $link = '#';//TODO сделать если будет fail2ban
                 break;
             case FirewallRules::class:
-                $link = $url->get('firewall/modify/' . $this->NetworkFilters->id);
+                $link = $url->get('firewall/modify/' . $this->NetworkFilters->id,null,null, $baseUri);
                 break;
             case Iax::class:
-                $link = $url->get('providers/modifyiax/' . $this->Providers->id);
+                $link = $url->get('providers/modifyiax/' . $this->Providers->id,null,null, $baseUri);
                 break;
             case IvrMenu::class:
-                $link = $url->get('ivr-menu/modify/' . $this->uniqid);
+                $link = $url->get('ivr-menu/modify/' . $this->uniqid,null,null, $baseUri);
                 break;
             case IvrMenuActions::class:
-                $link = $url->get('ivr-menu/modify/' . $this->IvrMenu->uniqid);
+                $link = $url->get('ivr-menu/modify/' . $this->IvrMenu->uniqid,null,null, $baseUri);
                 break;
             case Codecs::class:
                 break;
             case IncomingRoutingTable::class:
-                $link = $url->get('incoming-routes/modify/' . $this->id);
+                $link = $url->get('incoming-routes/modify/' . $this->id,null,null, $baseUri);
                 break;
             case LanInterfaces::class:
-                $link = $url->get('network/index/');
+                $link = $url->get('network/index/',null,null, $baseUri);
                 break;
             case NetworkFilters::class:
-                $link = $url->get('firewall/modify/' . $this->id);
+                $link = $url->get('firewall/modify/' . $this->id,null,null, $baseUri);
                 break;
             case OutgoingRoutingTable::class:
-                $link = $url->get('outbound-routes/modify/' . $this->id);
+                $link = $url->get('outbound-routes/modify/' . $this->id,null,null, $baseUri);
                 break;
             case OutWorkTimes::class:
-                $link = $url->get('out-off-work-time/modify/' . $this->id);
+                $link = $url->get('out-off-work-time/modify/' . $this->id,null,null, $baseUri);
                 break;
             case Providers::class:
                 if ($this->type === "IAX") {
-                    $link = $url->get('providers/modifyiax/' . $this->uniqid);
+                    $link = $url->get('providers/modifyiax/' . $this->uniqid,null,null, $baseUri);
                 } else {
-                    $link = $url->get('providers/modifysip/' . $this->uniqid);
+                    $link = $url->get('providers/modifysip/' . $this->uniqid,null,null, $baseUri);
                 }
                 break;
             case PbxSettings::class:
                 $link = $url->get('general-settings/index');
                 break;
             case PbxExtensionModules::class:
-                $link = $url->get(Text::uncamelize($this->uniqid));
+                $link = $url->get(Text::uncamelize($this->uniqid),null,null, $baseUri);
                 break;
             case Sip::class:
                 if ($this->Extensions) { // Это внутренний номер?
                     if ($this->Extensions->is_general_user_number === "1") {
-                        $link = $url->get('extensions/modify/' . $this->Extensions->id);
+                        $link = $url->get('extensions/modify/' . $this->Extensions->id,null,null, $baseUri);
                     } else {
                         $link = '#';//TODO сделать если будет раздел для допоплнинельных номеров пользователя
                     }
                 } elseif ($this->Providers) { // Это провайдер
-                    $link = $url->get('providers/modifysip/' . $this->Providers->id);
+                    $link = $url->get('providers/modifysip/' . $this->Providers->id,null,null, $baseUri);
                 }
                 break;
             case Users::class:
@@ -658,10 +660,10 @@ abstract class ModelsBase extends Model
                     ],
                 ];
                 $needExtension = Extensions::findFirst($parameters);
-                $link          = $url->get('extensions/modify/' . $needExtension->id);
+                $link          = $url->get('extensions/modify/' . $needExtension->id,null,null, $baseUri);
                 break;
             case SoundFiles::class:
-                $link = $url->get('sound-files/modify/' . $this->id);
+                $link = $url->get('sound-files/modify/' . $this->id,null,null, $baseUri);
                 break;
             default:
         }
@@ -677,5 +679,15 @@ abstract class ModelsBase extends Model
     public function getIndexColumn(): array
     {
         return [];
+    }
+
+    /**
+     * Returns Identity field name for current model
+     * @return string
+     */
+    public function getIdentityFieldName():string
+    {
+        $metaData = $this->di->get('modelsMetadata');
+        return $metaData->getIdentityField($this);
     }
 }
