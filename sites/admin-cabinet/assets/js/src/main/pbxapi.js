@@ -44,6 +44,7 @@ const PbxApi = {
 	systemStatusUploadFile: `${Config.pbxUrl}/pbxcore/api/upload/status`, // curl -X POST -d '{"id": "1531474060"}' http://127.0.0.1/pbxcore/api/upload/status;
 	sysinfoGetInfo: `${Config.pbxUrl}/pbxcore/api/sysinfo/getInfo`, // Get system information
 	sysinfoGetExternalIP: `${Config.pbxUrl}/pbxcore/api/sysinfo/getExternalIpInfo`, //Get external IP address,
+	advicesGetList: `${Config.pbxUrl}/pbxcore/api/advices/getList`,
 
 	/**
 	 * Проверка ответа на JSON
@@ -921,7 +922,28 @@ const PbxApi = {
 			},
 		});
 	},
-
+	/**
+	 * Makes the list of notifications about system, firewall, passwords, wrong settings
+	 *
+	 * @param callback
+	 *
+	 */
+	AdvicesGetList(callback) {
+		$.api({
+			url: PbxApi.advicesGetList,
+			on: 'now',
+			successTest: PbxApi.successTest,
+			onSuccess(response) {
+				callback(response.data);
+			},
+			onFailure() {
+				callback(false);
+			},
+			onError() {
+				callback(false);
+			},
+		});
+	},
 };
 
 // export default PbxApi;

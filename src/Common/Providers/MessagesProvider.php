@@ -33,10 +33,10 @@ class MessagesProvider implements ServiceProviderInterface
             function () use ($di, $coreConfig) {
                 $cacheKey = false;
                 if (php_sapi_name() === 'cli'){
-                    if (!empty($_ENV['SSH_CLIENT'])) {
-                        $language = 'en';
-                    } elseif (cli_get_process_title()=== WorkerApiCommands::class){
+                    if (cli_get_process_title()=== WorkerApiCommands::class){
                         $language = PbxSettings::getValueByKey('WebAdminLanguage');
+                    } elseif (!empty($_ENV['SSH_CLIENT'])) {
+                        $language = 'en';
                     } else {
                         $language = PbxSettings::getValueByKey('SSHLanguage');
                     }

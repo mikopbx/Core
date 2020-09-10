@@ -45,32 +45,22 @@ const advicesWorker = {
 		}
 	},
 	worker() {
-		$.api({
-			url: `${globalRootUrl}advices/getAdvices`,
-			on: 'now',
-			onSuccess(response) {
-				advicesWorker.cbAfterResponse(response);
-			},
-			onError(errorMessage, element, xhr) {
-				if (xhr.status === 403) {
-					window.location = `${globalRootUrl}session/index`;
-				}
-			},
-		});
+		PbxApi.AdvicesGetList(advicesWorker.cbAfterResponse);
 	},
 	cbAfterResponse(response) {
-		if (response === undefined) return;
+		if (response === false) {
+			return;
+		}
 		advicesWorker.$advices.html('');
-		if (response.success === true
-			&& response.message !== undefined) {
+		if (response.advices !== undefined) {
 			let htmlMessages = '';
 			let countMessages = 0;
 			let iconBellClass = '';
 			htmlMessages += '<div class="ui relaxed divided list">';
 
-			if (response.message.error !== undefined
-				&& response.message.error.length > 0) {
-				$.each(response.message.error, (key, value) => {
+			if (response.advices.error !== undefined
+				&& response.advices.error.length > 0) {
+				$.each(response.advices.error, (key, value) => {
 					htmlMessages += '<div class="item">';
 					htmlMessages += '<i class="frown outline red icon"></i>';
 					htmlMessages += '<div class="content">';
@@ -80,9 +70,9 @@ const advicesWorker = {
 					countMessages += 1;
 				});
 			}
-			if (response.message.warning !== undefined
-				&& response.message.warning.length > 0) {
-				$.each(response.message.warning, (key, value) => {
+			if (response.advices.warning !== undefined
+				&& response.advices.warning.length > 0) {
+				$.each(response.advices.warning, (key, value) => {
 					htmlMessages += '<div class="item">';
 					htmlMessages += '<i class="meh outline yellow icon"></i>';
 					htmlMessages += '<div class="content">';
@@ -92,9 +82,9 @@ const advicesWorker = {
 					countMessages += 1;
 				});
 			}
-			if (response.message.info !== undefined
-				&& response.message.info.length > 0) {
-				$.each(response.message.info, (key, value) => {
+			if (response.advices.info !== undefined
+				&& response.advices.info.length > 0) {
+				$.each(response.advices.info, (key, value) => {
 					htmlMessages += '<div class="item">';
 					htmlMessages += '<i class="smile outline blue icon"></i>';
 					htmlMessages += '<div class="content">';
@@ -105,15 +95,15 @@ const advicesWorker = {
 				});
 			}
 
-			if (response.message.error !== undefined
-				&& response.message.error.length > 0) {
+			if (response.advices.error !== undefined
+				&& response.advices.error.length > 0) {
 				iconBellClass = 'red large icon bell';
-			} else if (response.message.warning !== undefined
-				&& response.message.warning.length > 0){
+			} else if (response.advices.warning !== undefined
+				&& response.advices.warning.length > 0){
 				iconBellClass = 'yellow icon bell';
 
-			} else if (response.message.info !== undefined
-				&& response.message.info.length > 0){
+			} else if (response.advices.info !== undefined
+				&& response.advices.info.length > 0){
 				iconBellClass = 'blue icon bell';
 			}
 
@@ -122,29 +112,24 @@ const advicesWorker = {
 			advicesWorker.$advices.html(htmlMessages);
 			sessionStorage.setItem(`previousAdvice${globalWebAdminLanguage}`, htmlMessages);
 
-			// // Проверим есть ли обновление системы
-			// $('a[href="/admin-cabinet/update/index/"] > i').removeClass('loading');
-			// if (response.message.info !== undefined
-			// 	&& response.message.info.length > 0) {
-			// 	$.each(response.message.info, (key, value) => {
-			// 		if (value.indexOf('/admin-cabinet/update/index/') > -1) {
-			// 			$('a[href="/admin-cabinet/update/index/"] > i').addClass('loading');
-			// 		}
-			// 	});
-			// }
-			advicesWorker.$advicesBellButton
-				.html(`<i class="${iconBellClass}"></i>${countMessages}`)
-				.popup({
-					position: 'bottom left',
-					popup: advicesWorker.$advices,
-					delay: {
-						show: 300,
-						hide: 10000,
-					},
-				});
-			advicesWorker.$advicesBellButton.find('i')
-				.transition('set looping')
-				.transition('pulse', '1000ms');
+			if (countMessages>0){
+				advicesWorker.$advicesBellButton
+					.html(`<i class="${iconBellClass}"></i>${countMessages}`)
+					.popup({
+						position: 'bottom left',
+						popup: advicesWorker.$advices,
+						delay: {
+							show: 300,
+							hide: 10000,
+						},
+					});
+				advicesWorker.$advicesBellButton.find('i')
+					.transition('set looping')
+					.transition('pulse', '1000ms');
+			} else {
+				advicesWorker.$advicesBellButton
+					.html(`<i class="grey icon bell"></i>`)
+			}
 			sessionStorage.setItem(`previousAdviceBell${globalWebAdminLanguage}`, advicesWorker.$advicesBellButton.html());
 			advicesWorker.timeoutHandle = window.setTimeout(
 				advicesWorker.worker,

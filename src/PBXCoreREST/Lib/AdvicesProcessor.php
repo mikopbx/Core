@@ -7,25 +7,78 @@
  *
  */
 
-namespace MikoPBX\AdminCabinet\Controllers;
+namespace MikoPBX\PBXCoreREST\Lib;
 
+use MikoPBX\Core\System\Storage;
 use MikoPBX\Common\Models\{NetworkFilters, PbxSettings};
 use GuzzleHttp;
+use Phalcon\Di\Injectable;
 use SimpleXMLElement;
 
 /**
- * @property \MikoPBX\Service\License license
+ * Class AdvicesProcessor
+ *
+ * @package MikoPBX\PBXCoreREST\Lib
+ *
+ * @property \MikoPBX\Common\Providers\LicenseProvider license
+ * @property \MikoPBX\Common\Providers\TranslationProvider translation
+ * @property \Phalcon\Config                               config
  */
-class AdvicesController extends BaseController
+class AdvicesProcessor extends Injectable
 {
 
+    public string $baseUri = '';
+
     /**
-     * Вызывается через AJAX периодически из веб интервейса,
-     * формирует список советов для администратора PBX о неправильных настройках
+     * AdvicesProcessor constructor.
+     *
      */
-    public function getAdvicesAction(): void
+    public function __construct()
     {
-        $arrMessages     = [[]];
+        $this->baseUri = $this->config->path('adminApplication.baseUri');
+    }
+
+
+    /**
+     * Processes Advices request
+     *
+     * @param array $request
+     *
+     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     */
+    public static function advicesCallBack(array $request): PBXApiResult
+    {
+        $action = $request['action'];
+
+        switch ($action) {
+            case 'getList':
+                $proc = new AdvicesProcessor();
+                $res  = $proc->getAdvicesAction();
+                break;
+            default:
+                $res             = new PBXApiResult();
+                $res->processor  = __METHOD__;
+                $res->messages[] = "Unknown action - {$action} in advicesCallBack";
+                break;
+        }
+
+        $res->function = $action;
+
+        return $res;
+    }
+
+
+    /**
+     * Makes list of notifications about system, firewall, passwords, wrong settings
+     *
+     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     */
+    private function getAdvicesAction(): PBXApiResult
+    {
+        $res            = new PBXApiResult();
+        $res->processor = __METHOD__;
+
+        $arrMessages     = [];
         $arrAdvicesTypes = [
             ['type' => 'checkPasswords', 'cacheTime' => 15],
             ['type' => 'checkFirewalls', 'cacheTime' => 15],
@@ -33,15 +86,17 @@ class AdvicesController extends BaseController
             ['type' => 'checkUpdates', 'cacheTime' => 3600],
             ['type' => 'checkRegistration', 'cacheTime' => 86400],
         ];
-        $language        = $this->getSessionData('WebAdminLanguage');
-        $roSession       = $this->sessionRO;
+
+        $managedCache = $this->getDI()->getShared('managedCache');
+
+        $language = PbxSettings::getValueByKey('WebAdminLanguage');
 
         foreach ($arrAdvicesTypes as $adviceType) {
             $currentAdvice = $adviceType['type'];
-            if ($roSession !== null && array_key_exists($currentAdvice, $roSession)) {
-                $oldResult = json_decode($roSession[$currentAdvice], true);
-                if ($language === $oldResult['LastLanguage']
-                    && (time() - $oldResult['LastTimeStamp'] < $adviceType['cacheTime'])) {
+            $cacheTime     = $adviceType['cacheTime'];
+            if ($managedCache->has($currentAdvice)) {
+                $oldResult = json_decode($managedCache->get($currentAdvice), true);
+                if ($language === $oldResult['LastLanguage']) {
                     $arrMessages[] = $oldResult['LastMessage'];
                     continue;
                 }
@@ -50,20 +105,19 @@ class AdvicesController extends BaseController
             if ( ! empty($newResult)) {
                 $arrMessages[] = $newResult;
             }
-            $this->session->set(
+            $managedCache->set(
                 $currentAdvice,
                 json_encode(
                     [
-                        'LastLanguage'  => $language,
-                        'LastMessage'   => $newResult,
-                        'LastTimeStamp' => time(),
-                    ],
-                    JSON_THROW_ON_ERROR
-                )
+                        'LastLanguage' => $language,
+                        'LastMessage'  => $newResult,
+                    ]
+                ),
+                $cacheTime
             );
         }
-        $this->view->success = true;
-        $result              = [];
+        $res->success = true;
+        $result       = [];
         foreach ($arrMessages as $message) {
             foreach ($message as $key => $value) {
                 if ( ! empty($value)) {
@@ -71,11 +125,13 @@ class AdvicesController extends BaseController
                 }
             }
         }
-        $this->view->message = $result;
+        $res->data['advices'] = $result;
+
+        return $res;
     }
 
     /**
-     * Проверка установлены ли корректно пароли
+     * Check passwords quality
      *
      * @return array
      */
@@ -83,18 +139,16 @@ class AdvicesController extends BaseController
     {
         $messages           = [];
         $arrOfDefaultValues = PbxSettings::getDefaultArrayValues();
-        if ($arrOfDefaultValues['WebAdminPassword']
-            === PbxSettings::getValueByKey('WebAdminPassword')) {
+        if ($arrOfDefaultValues['WebAdminPassword'] === PbxSettings::getValueByKey('WebAdminPassword')) {
             $messages['warning'] = $this->translation->_(
                 'adv_YouUseDefaultWebPassword',
-                ['url' => $this->url->get('general-settings/modify/#/passwords')]
+                ['url' => $this->url->get('general-settings/modify/#/passwords', null, null, $this->baseUri)]
             );
         }
-        if ($arrOfDefaultValues['SSHPassword']
-            === PbxSettings::getValueByKey('SSHPassword')) {
+        if ($arrOfDefaultValues['SSHPassword'] === PbxSettings::getValueByKey('SSHPassword')) {
             $messages['warning'] = $this->translation->_(
                 'adv_YouUseDefaultSSHPassword',
-                ['url' => $this->url->get('general-settings/modify/#/ssh')]
+                ['url' => $this->url->get('general-settings/modify/#/ssh', null, null, $this->baseUri)]
             );
         }
 
@@ -102,7 +156,7 @@ class AdvicesController extends BaseController
     }
 
     /**
-     * Проверка включен ли Firewall
+     * Check firewall status
      *
      * @return array
      */
@@ -112,13 +166,13 @@ class AdvicesController extends BaseController
         if (PbxSettings::getValueByKey('PBXFirewallEnabled') === '0') {
             $messages['warning'] = $this->translation->_(
                 'adv_FirewallDisabled',
-                ['url' => $this->url->get('firewall/index/')]
+                ['url' => $this->url->get('firewall/index/', null, null, $this->baseUri)]
             );
         }
         if (NetworkFilters::count() === 0) {
             $messages['warning'] = $this->translation->_(
                 'adv_NetworksNotConfigured',
-                ['url' => $this->url->get('firewall/index/')]
+                ['url' => $this->url->get('firewall/index/', null, null, $this->baseUri)]
             );
         }
 
@@ -126,62 +180,49 @@ class AdvicesController extends BaseController
     }
 
     /**
-     * Проверка подключен ли диск для хранения данных
+     * Check storage is mount and how many space available
      *
      * @return array
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     *
      */
     private function checkStorage(): array
     {
-        if ( ! is_array($_COOKIE) || ! array_key_exists(session_name(), $_COOKIE)) {
-            return [];
+        $messages           = [];
+        $st                 = new Storage();
+        $storageDiskMounted = false;
+        $disks              = $st->getAllHdd();
+        if ( ! is_array($disks)) {
+            $disks = [$disks];
         }
-        $messages = [];
-        $WEBPort = PbxSettings::getValueByKey('WEBPort');
-        $url     = "http://127.0.0.1:{$WEBPort}/pbxcore/api/storage/list";
-        $client  = new GuzzleHttp\Client();
-        $res     = $client->request('GET', $url);
-        if ($res->getStatusCode() !== 200) {
-            return [];
-        }
-        $storageList = json_decode($res->getBody(), false);
-        if ($storageList !== null && property_exists($storageList, 'data')) {
-            $storageDiskMounted = false;
-            $disks              = $storageList->data;
-            if ( ! is_array($disks)) {
-                $disks = [$disks];
-            }
-            foreach ($disks as $disk) {
-                if (property_exists($disk, 'mounted')
-                    && strpos($disk->mounted, '/storage/usbdisk') !== false) {
-                    $storageDiskMounted = true;
-                    if ($disk->free_space < 500) {
-                        $messages['warning']
-                            = $this->translation->_(
-                            'adv_StorageDiskRunningOutOfFreeSpace',
-                            ['free' => $disk->free_space]
-                        );
-                    }
+        foreach ($disks as $disk) {
+            if (array_key_exists('mounted', $disk)
+                && strpos($disk['mounted'], '/storage/usbdisk') !== false) {
+                $storageDiskMounted = true;
+                if ($disk['free_space'] < 500) {
+                    $messages['warning']
+                        = $this->translation->_(
+                        'adv_StorageDiskRunningOutOfFreeSpace',
+                        ['free' => $disk['free_space']]
+                    );
                 }
             }
-            if ($storageDiskMounted === false) {
-                $messages['error'] = $this->translation->_('adv_StorageDiskUnMounted');
-            }
         }
-
+        if ($storageDiskMounted === false) {
+            $messages['error'] = $this->translation->_('adv_StorageDiskUnMounted');
+        }
         return $messages;
     }
 
     /**
-     * Проверка наличия обновлений
+     * Check new version PBX
      *
      * @return array
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
     private function checkUpdates(): array
     {
-        $messages = [];
-        $PBXVersion = $this->getSessionData('PBXVersion');
+        $messages   = [];
+        $PBXVersion = PbxSettings::getValueByKey('PBXVersion');
 
         $client = new GuzzleHttp\Client();
         $res    = $client->request(
@@ -203,7 +244,7 @@ class AdvicesController extends BaseController
             $messages['info'] = $this->translation->_(
                 'adv_AvailableNewVersionPBX',
                 [
-                    'url' => $this->url->get('update/index/'),
+                    'url' => $this->url->get('update/index/', null, null, $this->baseUri),
                     'ver' => $answer->version,
                 ]
             );
@@ -213,20 +254,22 @@ class AdvicesController extends BaseController
     }
 
     /**
-     * Проверка зарегистрирована ли копия MikoPBX
+     * Check mikopbx license status
      *
      */
     private function checkRegistration(): array
     {
         $messages = [];
-        $licKey = PbxSettings::getValueByKey('PBXLicense');
+        $licKey   = PbxSettings::getValueByKey('PBXLicense');
+        $language   = PbxSettings::getValueByKey('WebAdminLanguage');
+
         if ( ! empty($licKey)) {
             $checkBaseFeature = $this->license->featureAvailable(33);
             if ($checkBaseFeature['success'] === false) {
-                if ($this->language === 'ru') {
+                if ($language === 'ru') {
                     $url = 'https://wiki.mikopbx.com/licensing#faq_chavo';
                 } else {
-                    $url = "https://wiki.mikopbx.com/{$this->language}:licensing#faq_chavo";
+                    $url = "https://wiki.mikopbx.com/{$language}:licensing#faq_chavo";
                 }
 
                 $messages['warning'] = $this->translation->_(
