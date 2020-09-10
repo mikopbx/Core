@@ -15,6 +15,25 @@ use MikoPBX\Service\License;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 
+/**
+ * Class LicenseProvider
+ *
+ * @package MikoPBX\Common\Providers
+ *
+ * @method  bool checkModules()
+ * @method  bool checkPBX()
+ * @method  string| \SimpleXMLElement getLicenseInfo(string $key)
+ * @method  bool | string getTrialLicense(array $params)
+ * @method  bool | string addTrial(string $productId)
+ * @method  bool | string activateCoupon(string $coupon)
+ * @method  void changeLicenseKey(string $newKey)
+ * @method  void sendLicenseMetrics(string $key, array $params)
+ * @method  array captureFeature(string $featureId)
+ * @method  array featureAvailable(string $featureId)
+ * @method  array releaseFeature(string $featureId)
+ * @method  string translateLicenseErrorMessage(string $message)
+ *
+ */
 class LicenseProvider implements ServiceProviderInterface
 {
     public function register(DiInterface $di): void
@@ -28,7 +47,6 @@ class LicenseProvider implements ServiceProviderInterface
                 } else {
                     $serverUrl = 'http://127.0.0.1:8223';
                 }
-
                 return new License($serverUrl);
             }
         );
