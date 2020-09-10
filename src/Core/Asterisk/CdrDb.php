@@ -58,7 +58,6 @@ class CdrDb
     {
         $am          = Util::getAstManager('off');
         $channels_id = $am->GetChannels(true);
-        $am->Logoff();
 
         /** @var CallDetailRecordsTmp $data_cdr */
         /** @var CallDetailRecordsTmp $row_cdr */
