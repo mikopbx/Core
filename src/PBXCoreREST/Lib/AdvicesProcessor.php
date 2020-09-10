@@ -27,18 +27,6 @@ use SimpleXMLElement;
 class AdvicesProcessor extends Injectable
 {
 
-    public string $baseUri = '';
-
-    /**
-     * AdvicesProcessor constructor.
-     *
-     */
-    public function __construct()
-    {
-        $this->baseUri = $this->config->path('adminApplication.baseUri');
-    }
-
-
     /**
      * Processes Advices request
      *
@@ -142,13 +130,13 @@ class AdvicesProcessor extends Injectable
         if ($arrOfDefaultValues['WebAdminPassword'] === PbxSettings::getValueByKey('WebAdminPassword')) {
             $messages['warning'] = $this->translation->_(
                 'adv_YouUseDefaultWebPassword',
-                ['url' => $this->url->get('general-settings/modify/#/passwords', null, null, $this->baseUri)]
+                ['url' => $this->url->get('general-settings/modify/#/passwords')]
             );
         }
         if ($arrOfDefaultValues['SSHPassword'] === PbxSettings::getValueByKey('SSHPassword')) {
             $messages['warning'] = $this->translation->_(
                 'adv_YouUseDefaultSSHPassword',
-                ['url' => $this->url->get('general-settings/modify/#/ssh', null, null, $this->baseUri)]
+                ['url' => $this->url->get('general-settings/modify/#/ssh')]
             );
         }
 
@@ -166,13 +154,13 @@ class AdvicesProcessor extends Injectable
         if (PbxSettings::getValueByKey('PBXFirewallEnabled') === '0') {
             $messages['warning'] = $this->translation->_(
                 'adv_FirewallDisabled',
-                ['url' => $this->url->get('firewall/index/', null, null, $this->baseUri)]
+                ['url' => $this->url->get('firewall/index/')]
             );
         }
         if (NetworkFilters::count() === 0) {
             $messages['warning'] = $this->translation->_(
                 'adv_NetworksNotConfigured',
-                ['url' => $this->url->get('firewall/index/', null, null, $this->baseUri)]
+                ['url' => $this->url->get('firewall/index/')]
             );
         }
 
@@ -244,7 +232,7 @@ class AdvicesProcessor extends Injectable
             $messages['info'] = $this->translation->_(
                 'adv_AvailableNewVersionPBX',
                 [
-                    'url' => $this->url->get('update/index/', null, null, $this->baseUri),
+                    'url' => $this->url->get('update/index/'),
                     'ver' => $answer->version,
                 ]
             );
