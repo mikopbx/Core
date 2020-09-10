@@ -1,14 +1,14 @@
 <?php
-/**
+/*
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 5 2020
+ * Written by Alexey Portnov, 9 2020
  */
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
-use MikoPBX\Common\Models\{IvrMenu, IvrMenuActions, SoundFiles};
+use MikoPBX\Common\Models\{IvrMenu, IvrMenuActions, Sip, SoundFiles};
 use MikoPBX\Modules\Config\ConfigClass;
 use MikoPBX\Core\System\{Util};
 
@@ -22,6 +22,16 @@ class IVRConf extends ConfigClass
      */
     public function extensionGenContexts(): string
     {
+        $arr_lens = [];
+        $db_data = Sip::find("type = 'peer' AND ( disabled <> '1')")->toArray();
+        /** @var Sip $sip_peer */
+        foreach ($db_data as $sip_peer) {
+            $len = strlen($sip_peer['extension']);
+            if(!in_array($len, $arr_lens)){
+                $arr_lens[] = $len;
+            }
+        }
+
         $db_data           = IvrMenu::find()->toArray();
         // Генерация внутреннего номерного плана.
         $conf = '';
@@ -53,6 +63,7 @@ class IVRConf extends ConfigClass
                 $conf .= "same => n,Goto(t,1)\n";
             }
             $res = IvrMenuActions::find("ivr_menu_id = '{$ivr['uniqid']}'");
+
             foreach ($res as $ext) {
                 $conf .= "exten => {$ext->digits},1,Goto(internal,{$ext->extension},1)\n";
             }
@@ -60,9 +71,12 @@ class IVRConf extends ConfigClass
             $conf .= "exten => t,1,Goto(s,6)\n";
 
             if ($ivr['allow_enter_any_internal_extension'] === '1') {
-                $extension = Util::getExtensionX($this->generalSettings['PBXInternalExtensionLength']);
-                $conf .= 'exten => _' . $extension . ',1,ExecIf($["${PJSIP_ENDPOINT(${EXTEN},auth)}x" == "x"]?Goto(s,1))' . "\n\t";
-                $conf .= 'same => n,Goto(internal,${EXTEN},1)' . "\n";
+                foreach ($arr_lens as $len){
+                    $extension = Util::getExtensionX($len);
+                    $conf .= 'exten => _'.$extension.',1,ExecIf($["${DIALPLAN_EXISTS(internal,${EXTEN},1)}" == "0"]?Goto(i,1))' . "\n\t";
+                    $conf .= 'same => n,ExecIf($["${PJSIP_ENDPOINT(${EXTEN},auth)}x" == "x"]?Goto(i,1))' . "\n\t";
+                    $conf .= 'same => n,Goto(internal,${EXTEN},1)' . "\n";
+                }
             }
         }
 

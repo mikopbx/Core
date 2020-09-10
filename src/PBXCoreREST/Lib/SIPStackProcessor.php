@@ -1,9 +1,9 @@
 <?php
-/**
+/*
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 7 2020
+ * Written by Alexey Portnov, 9 2020
  */
 
 namespace MikoPBX\PBXCoreREST\Lib;
@@ -56,9 +56,8 @@ class SIPStackProcessor extends Injectable
      */
     public static function getPeersStatuses(): PBXApiResult
     {
-        $am = Util::getAstManager('off');
-        $peers = $am->getPjSipPeers();
-        $am->Logoff();
+        $am     = Util::getAstManager('off');
+        $peers  = $am->getPjSipPeers();
 
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
@@ -78,7 +77,6 @@ class SIPStackProcessor extends Injectable
     {
         $am = Util::getAstManager('off');
         $peers = $am->getPjSipPeer($peer);
-        $am->Logoff();
 
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
@@ -130,7 +128,6 @@ class SIPStackProcessor extends Injectable
             }
             unset($peer);
         }
-        $am->Logoff();
         $res->data = $peers;
         $res->success = true;
         $res->processor = __METHOD__;

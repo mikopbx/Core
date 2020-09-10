@@ -1,10 +1,9 @@
 <?php
-/**
- * Copyright (C) MIKO LLC - All Rights Reserved
+/*
+ * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 7 2020
- *
+ * Written by Alexey Portnov, 9 2020
  */
 
 namespace MikoPBX\PBXCoreREST\Lib;
@@ -99,7 +98,6 @@ class CdrDBProcessor extends Injectable
         } else {
             $am             = Util::getAstManager('off');
             $active_chans   = $am->GetChannels(true);
-            $am->Logoff();
             $result_data = [];
 
             $result = json_decode($message);

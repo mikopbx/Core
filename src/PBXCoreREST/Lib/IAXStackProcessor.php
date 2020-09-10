@@ -1,10 +1,9 @@
 <?php
-/**
- * Copyright (C) MIKO LLC - All Rights Reserved
+/*
+ * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 7 2020
- *
+ * Written by Alexey Portnov, 9 2020
  */
 
 namespace MikoPBX\PBXCoreREST\Lib;
@@ -68,7 +67,6 @@ class IAXStackProcessor extends Injectable
             $am       = Util::getAstManager('off');
             $amiRegs  = $am->IAXregistry(); // Registrations
             $amiPeers = $am->IAXpeerlist(); // Peers
-            $am->Logoff();
             foreach ($amiPeers as $amiPeer) {
                 $key = array_search($amiPeer['ObjectName'], array_column($peers, 'id'), true);
                 if ($key !== false) {

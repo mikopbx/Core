@@ -504,7 +504,6 @@ class AsteriskManager
             $this->_loggedIn = false;
             $this->log("Failed to login.");
             $this->disconnect();
-
             return false;
         }
         $this->_loggedIn = true;
@@ -555,7 +554,7 @@ class AsteriskManager
      *
      * @link http://www.voip-info.org/wiki-Asterisk+Manager+API+Action+Logoff
      */
-    public function Logoff()
+    private function Logoff()
     {
         return $this->sendRequestTimeout('Logoff');
     }
