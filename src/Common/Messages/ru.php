@@ -964,6 +964,7 @@ return [
     'running'                                                             => 'включен',
     'stopped'                                                             => 'отключен',
     'Firewall is now'                                                     => 'Firewall сейчас',
+    'Firewall disabled'                                                   => 'Firewall отключен',
     'Do you want disable firewall now? (y/n): '                           => 'Отключить? (y/n):',
     'Do you want enable firewall now? (y/n): '                            => 'Включить? (y/n):',
     'Storage disk is already mounted...'                                  => 'Диск для хранения данных уже смонтирован',

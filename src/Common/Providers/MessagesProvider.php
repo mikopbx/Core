@@ -12,8 +12,10 @@ declare(strict_types=1);
 namespace MikoPBX\Common\Providers;
 
 use MikoPBX\Core\System\MikoPBXConfig;
+use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
+use MikoPBX\Common\Models\PbxSettings;
 
 use function MikoPBX\Common\Config\appPath;
 
@@ -33,9 +35,10 @@ class MessagesProvider implements ServiceProviderInterface
                 if (php_sapi_name() === 'cli'){
                     if (!empty($_ENV['SSH_CLIENT'])) {
                         $language = 'en';
+                    } elseif (cli_get_process_title()=== WorkerApiCommands::class){
+                        $language = PbxSettings::getValueByKey('WebAdminLanguage');
                     } else {
-                        $conf     = new MikoPBXConfig();
-                        $language = $conf->getGeneralSettings('SSHLanguage');
+                        $language = PbxSettings::getValueByKey('SSHLanguage');
                     }
                 } else {
                     $language = $di->get('language');

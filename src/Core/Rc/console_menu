@@ -2,6 +2,7 @@
 <?php
 namespace MikoPBX\Core\Rc;
 
+use MikoPBX\Common\Models\PbxSettings;
 use PhpSchool\CliMenu\CliMenu;
 use PhpSchool\CliMenu\Builder\CliMenuBuilder;
 use PhpSchool\CliMenu\Action\GoBackAction;
@@ -13,80 +14,93 @@ use PhpSchool\CliMenu\Style\SelectableStyle;
 
 use MikoPBX\Common\Models\Storage as StorageModel;
 
-use MikoPBX\Core\System\{Configs\IptablesConf,
+use MikoPBX\Core\System\{
+    Configs\IptablesConf,
     Configs\NginxConf,
     Util,
     Network,
-    PBX,
     Verify,
     System,
     MikoPBXConfig,
-    Firewall,
-    Storage};
+    Storage
+};
 use MikoPBX\Service\Main;
+
 require_once('Globals.php');
 
 Util::setCyrillicFont();
-function getBannerText(){
-    $network  = new Network();
+function getBannerText()
+{
+    $network = new Network();
 
     $livecd_text = '';
-    if(file_exists('/offload/livecd')){
+    if (file_exists('/offload/livecd')) {
         $livecd_text = Util::translate('PBX is running in Live or Recovery mode');
     }
 
-    if(file_exists('/offload/version')){
+    if (file_exists('/offload/version')) {
         $version_file = '/offload/version';
-    }else{
+    } else {
         $version_file = '/etc/version';
     }
 
-    $version 		= trim(file_get_contents($version_file));
-    $buildtime  	= trim(file_get_contents('/etc/version.buildtime'));
-    $copyright_info = 'MikoPBX is Copyright (C) 2006-2020. All rights reserved.' . PHP_EOL.
-        "    \033[01;31m".$livecd_text."\033[39m";
+    $version        = trim(file_get_contents($version_file));
+    $buildtime      = trim(file_get_contents('/etc/version.buildtime'));
+    $copyright_info = 'MikoPBX is Copyright (C) 2006-2020. All rights reserved.' . PHP_EOL .
+        "    \033[01;31m" . $livecd_text . "\033[39m";
 
     $networks = $network->getEnabledLanInterfaces();
-    $ip_text = ['','','','','']; $id_text=0;
-    foreach ($networks as $if_data){
+    $ip_text  = ['', '', '', '', ''];
+    $id_text  = 0;
+    foreach ($networks as $if_data) {
         $if_data['interface_orign'] = $if_data['interface'];
         $if_data['interface']       = ($if_data['vlanid'] > 0) ? "vlan{$if_data['vlanid']}" : $if_data['interface'];
-        $interface = $network->getInterface($if_data['interface']);
+        $interface                  = $network->getInterface($if_data['interface']);
 
         if ($if_data['dhcp'] === '1') {
             $ip_line = Util::translate('LAN IP address assigned via DHCP');
-        } elseif($if_data['vlanid'] > 0){
-            $ip_line = Util::translate('VLAN IP address assigned via')." {$if_data['interface_orign']}";
+        } elseif ($if_data['vlanid'] > 0) {
+            $ip_line = Util::translate('VLAN IP address assigned via') . " {$if_data['interface_orign']}";
         } else {
             $ip_line = Util::translate('LAN IP address');
         }
 
         $ip_info = 'unassigned';
-        if ( !empty($interface['ipaddr']) ) {
+        if ( ! empty($interface['ipaddr'])) {
             $ip_info = "\033[01;33m{$interface['ipaddr']}\033[39m";
         }
 
-        if (!empty($interface['mac'])){
+        if ( ! empty($interface['mac'])) {
             $ip_text[$id_text] = "{$if_data['interface']}: {$ip_line} {$ip_info}";
             $id_text++;
         }
     }
 
-    $broken= '';
-    if(!Util::isSystemctl()){
-        $files = Main::checkForCorruptedFiles();
-        if(count($files)!=0){
-            $broken = "    \033[01;31m".Util::translate('The integrity of the system is broken')."...\033[39m";
+    $broken = function () {
+        if ( ! Util::isSystemctl()) {
+            $files = Main::checkForCorruptedFiles();
+            if (count($files) !== 0) {
+                return "    \033[01;31m" . Util::translate('The integrity of the system is broken') . "\033[39m";
+            }
+        } else {
+            return 'debian';
         }
-    }else{
-        $buildtime = 'debian';
-    }
-    $storageWarning = '';
-    if(!Storage::isStorageDiskMounted() && !file_exists('/offload/livecd') ){
-        $storageWarning = "    \033[01;31m".Util::translate('Storage unmounted')."...\033[39m";
-    }
+    };
 
-    $this_is   = Util::translate('this_is');
+    $storageWarning = function () {
+        if ( ! Storage::isStorageDiskMounted() && ! file_exists('/offload/livecd')) {
+            return "    \033[01;31m" . Util::translate('Storage unmounted') . "\033[39m";
+        }
+    };
+
+    $firewallWarning = function () {
+        if (PbxSettings::getValueByKey('PBXFirewallEnabled') === '0') {
+            return "    \033[01;31m" . Util::translate('Firewall disabled') . "\033[39m";
+        }
+    };
+
+    $this_is = Util::translate('this_is');
+
     return <<<EOD
 
 *** {$this_is}\033[01;32mMikoPBX v.{$version}\033[39m
@@ -95,129 +109,201 @@ function getBannerText(){
 {$ip_text[0]}
 {$ip_text[1]}
 {$ip_text[2]}
-{$storageWarning} 
-{$broken}
+{$storageWarning()} 
+{$firewallWarning()}
+{$broken()}
 
 EOD;
 }
 
-$setup_lan = function (CliMenuBuilder $b){
+$setup_lan = function (CliMenuBuilder $b) {
     $b->setTitle(Util::translate('Choose action'))
-        ->addItem('[1] '.Util::translate('Configuring using DHCP'), function (CliMenu $menu) {
-            echo Util::translate('The LAN interface will now be configured via DHCP...');
-            $network = new Network();
-            $data['dhcp'] = 1;
-            $network->updateNetSettings($data);
-            $network->lanConfigure();
-            $nginxConf  = new NginxConf();
-            $nginxConf->reStart();
-            sleep(2);
-            exit(0);
-        })
-        ->addItem('[2] '.Util::translate('Manual setting'), function (CliMenu $menu) {
-            $network = new Network();
-            $system  = new System();
+        ->addItem(
+            '[1] ' . Util::translate('Configuring using DHCP'),
+            function (CliMenu $menu) {
+                echo Util::translate('The LAN interface will now be configured via DHCP...');
+                $network      = new Network();
+                $data['dhcp'] = 1;
+                $network->updateNetSettings($data);
+                $network->lanConfigure();
+                $nginxConf = new NginxConf();
+                $nginxConf->reStart();
+                sleep(2);
+                exit(0);
+            }
+        )
+        ->addItem(
+            '[2] ' . Util::translate('Manual setting'),
+            function (CliMenu $menu) {
+                $network = new Network();
+                $system  = new System();
 
-            $style = (new MenuStyle())
-                ->setBg('white')
-                ->setFg('black');
+                $style = (new MenuStyle())
+                    ->setBg('white')
+                    ->setFg('black');
 
-            $input_ip = new class (new InputIO($menu, $menu->getTerminal()), $style) extends Text {
-                public function validate(string $value) : bool {
-                    return Verify::isIpAddress($value);
-                }
-            };
-            $el_lanip = $input_ip
-                ->setPromptText(Util::translate('Enter the new LAN IP address: '))
-                ->setValidationFailedText(Util::translate('WARNING'))
-                ->ask();
-            $lanip = $el_lanip->fetch();
+                $input_ip = new class (new InputIO($menu, $menu->getTerminal()), $style) extends Text {
+                    public function validate(string $value): bool
+                    {
+                        return Verify::isIpAddress($value);
+                    }
+                };
+                $el_lanip = $input_ip
+                    ->setPromptText(Util::translate('Enter the new LAN IP address: '))
+                    ->setValidationFailedText(Util::translate('WARNING'))
+                    ->ask();
+                $lanip    = $el_lanip->fetch();
 
-            $promt_text = Util::translate('Subnet masks are to be entered as bit counts (as in CIDR notation).');
-            $input_bits = new class (new InputIO($menu, $menu->getTerminal()), $style) extends Text {
-                public function validate(string $lanbits) : bool {
-                    echo $lanbits;
-                    return (is_numeric($lanbits) && ($lanbits >= 1) && ($lanbits <= 32));
-                }
-            };
-            $el_lanip = $input_bits
-                ->setPromptText($promt_text)
-                ->setValidationFailedText('e.g. 32 = 255.255.255.255, 24 = 255.255.255.0')
-                ->ask();
-            $lanbits = $el_lanip->fetch();
+                $promt_text = Util::translate('Subnet masks are to be entered as bit counts (as in CIDR notation).');
+                $input_bits = new class (new InputIO($menu, $menu->getTerminal()), $style) extends Text {
+                    public function validate(string $lanbits): bool
+                    {
+                        echo $lanbits;
 
-            $el_lanip = $input_ip
-                ->setPromptText(Util::translate('Enter the LAN gateway IP address: '))
-                ->setValidationFailedText(Util::translate('WARNING'))
-                ->ask();
-            $gwip = $el_lanip->fetch();
-            $el_lanip = $input_ip
-                ->setPromptText(Util::translate('Enter the LAN DNS IP address: '))
-                ->setValidationFailedText(Util::translate('WARNING'))
-                ->ask();
-            $dnsip = $el_lanip->fetch();
+                        return (is_numeric($lanbits) && ($lanbits >= 1) && ($lanbits <= 32));
+                    }
+                };
+                $el_lanip   = $input_bits
+                    ->setPromptText($promt_text)
+                    ->setValidationFailedText('e.g. 32 = 255.255.255.255, 24 = 255.255.255.0')
+                    ->ask();
+                $lanbits    = $el_lanip->fetch();
 
-            $data = [];
-            $data['ipaddr']  	= $lanip;
-            $data['subnet']  	= $lanbits;
-            $data['gateway'] 	= $gwip;
-            $data['primarydns'] = $dnsip;
-            $data['dhcp']       = '0';
+                $el_lanip = $input_ip
+                    ->setPromptText(Util::translate('Enter the LAN gateway IP address: '))
+                    ->setValidationFailedText(Util::translate('WARNING'))
+                    ->ask();
+                $gwip     = $el_lanip->fetch();
+                $el_lanip = $input_ip
+                    ->setPromptText(Util::translate('Enter the LAN DNS IP address: '))
+                    ->setValidationFailedText(Util::translate('WARNING'))
+                    ->ask();
+                $dnsip    = $el_lanip->fetch();
 
-            echo Util::translate('The LAN interface will now be configured ...');
-            $network->updateNetSettings($data);
-            $network->resolvConfGenerate();
-            $network->lanConfigure();
-            $nginxConf  = new NginxConf();
-            $nginxConf->reStart();
+                $data               = [];
+                $data['ipaddr']     = $lanip;
+                $data['subnet']     = $lanbits;
+                $data['gateway']    = $gwip;
+                $data['primarydns'] = $dnsip;
+                $data['dhcp']       = '0';
 
-            echo Util::translate('Press ENTER to continue.');
-            sleep(1);
-            exit(0);
+                echo Util::translate('The LAN interface will now be configured ...');
+                $network->updateNetSettings($data);
+                $network->resolvConfGenerate();
+                $network->lanConfigure();
+                $nginxConf = new NginxConf();
+                $nginxConf->reStart();
 
-        })
+                echo Util::translate('Press ENTER to continue.');
+                sleep(1);
+                exit(0);
+            }
+        )
         ->setWidth(75)
         ->setBackgroundColour('black', 'black')
         ->enableAutoShortcuts()
         ->disableDefaultItems()
-        ->addItem('[3] '.Util::translate('Cancel'), new GoBackAction());
+        ->addItem('[3] ' . Util::translate('Cancel'), new GoBackAction());
 };
-$additional_items   = [];
-$is_live_cd = file_exists('/offload/livecd');
-if($is_live_cd){
-    if(file_exists('/conf.recover/conf')){
-        $live_cd_text = '[8] '.Util::translate('Install or recover');
-        $additional_items[] = [$live_cd_text, function (CliMenu $menu) {
-            echo "\e[?25h";
-            $menu->close();
-            file_put_contents('/tmp/ejectcd', '');
-            include '/etc/rc/initial.recovery';
-            exit(0);
-        }];
-    }else{
-        $live_cd_text = '[8] '.Util::translate('Install on Hard Drive');
-        $additional_items[] = [$live_cd_text, function (CliMenu $menu) {
-            echo "\e[?25h";
-            $menu->close();
-            file_put_contents('/tmp/ejectcd', '');
-            include '/etc/rc/initial.install';
-            exit(0);
-        }];
+
+$setupLanguage = function (CliMenuBuilder $b) {
+    $languages = [
+        'en' => Util::translate('ex_English'),
+        'ru' => Util::translate('ex_Russian'),
+        'de' => Util::translate('ex_Deutsch'),
+        'es' => Util::translate('ex_Spanish'),
+        'fr' => Util::translate('ex_French'),
+        'pt' => Util::translate('ex_Portuguese'),
+        'uk' => Util::translate('ex_Ukrainian'),
+        'it' => Util::translate('ex_Italian'),
+        'da' => Util::translate('ex_Danish'),
+        'pl' => Util::translate('ex_Polish'),
+        'sv' => Util::translate('ex_Swedish'),
+
+
+        // not able to show in console without additional shell fonts, maybe later we add it
+        // 'cs'      => Util::translate('ex_Czech'),
+        // 'tr'      => Util::translate('ex_Turkish'),
+        // 'ja'      => Util::translate('ex_Japanese'),
+        // 'vi'      => Util::translate('ex_Vietnamese'),
+        // 'zh_Hans' => Util::translate('ex_Chinese'),
+    ];
+
+    $b->setTitle('Choose shell language')
+        ->setWidth(75)
+        ->setBackgroundColour('black', 'black')
+        ->enableAutoShortcuts()
+        ->disableDefaultItems();
+
+    $selectionApply = function ($language) {
+        $mikoPBXConfig = new MikoPBXConfig();
+        $mikoPBXConfig->setGeneralSettings('SSHLanguage', $language);
+        sleep(1);
+        exit(0);
+    };
+    $index          = 1;
+    foreach ($languages as $language => $name) {
+        $b->addItem(
+            "[{$index}] {$name}",
+            function () use ($selectionApply, $language) {
+                $selectionApply($language);
+            }
+        );
+        $index++;
+    }
+    $b->addItem("[{$index}] Cancel", new GoBackAction());
+
+    if (!empty($_ENV['SSH_CLIENT'])) {
+        $b->disableMenu();
+    };
+};
+
+
+$additional_items = [];
+$is_live_cd       = file_exists('/offload/livecd');
+if ($is_live_cd) {
+    if (file_exists('/conf.recover/conf')) {
+        $live_cd_text       = '[8] ' . Util::translate('Install or recover');
+        $additional_items[] = [
+            $live_cd_text,
+            function (CliMenu $menu) {
+                echo "\e[?25h";
+                $menu->close();
+                file_put_contents('/tmp/ejectcd', '');
+                include '/etc/rc/initial.recovery';
+                exit(0);
+            },
+        ];
+    } else {
+        $live_cd_text       = '[8] ' . Util::translate('Install on Hard Drive');
+        $additional_items[] = [
+            $live_cd_text,
+            function (CliMenu $menu) {
+                echo "\e[?25h";
+                $menu->close();
+                file_put_contents('/tmp/ejectcd', '');
+                include '/etc/rc/initial.install';
+                exit(0);
+            },
+        ];
     }
 }
 
-$additional_items[] = ['[9] '.Util::translate('Console'), function (CliMenu $menu) {
-    // Включаем курсор.
-    echo "\e[?25h";
-    $menu->close();
-    file_put_contents('/tmp/start_sh', '');
-    exit(0);
-}];
+$additional_items[] = [
+    '[9] ' . Util::translate('Console'),
+    function (CliMenu $menu) {
+        // Включаем курсор.
+        echo "\e[?25h";
+        $menu->close();
+        file_put_contents('/tmp/start_sh', '');
+        exit(0);
+    },
+];
 
 $separator      = '-';
 $titleWidth     = 75;
-$title          = str_repeat($separator, 2).'  '.Util::translate("PBX console setup").'  ';
-$titleSeparator = mb_substr($title.str_repeat($separator, $titleWidth - mb_strlen($title)),0,$titleWidth);
+$title          = str_repeat($separator, 2) . '  ' . Util::translate("PBX console setup") . '  ';
+$titleSeparator = mb_substr($title . str_repeat($separator, $titleWidth - mb_strlen($title)), 0, $titleWidth);
 
 $menu = (new CliMenuBuilder())
     ->setTitle(getBannerText())
@@ -227,233 +313,260 @@ $menu = (new CliMenuBuilder())
     ->setMarginAuto()
     ->setForegroundColour('white', 'white')
     ->setBackgroundColour('black', 'black')
-    ->modifySelectableStyle(function (SelectableStyle $style) {
-        $style->setSelectedMarker(' ')
-            ->setUnselectedMarker(' ')
-        ;
-    })
+    ->modifySelectableStyle(
+        function (SelectableStyle $style) {
+            $style->setSelectedMarker(' ')
+                ->setUnselectedMarker(' ');
+        }
+    )
     ->setWidth($titleWidth)
-    ->addItem(' ', function (CliMenu $menu) {})
-    ->addItem('[1] '.Util::translate('Change language'), function (CliMenu $menu) {
-        $mikoPBXConfig     = new MikoPBXConfig();
-        $lang       = $mikoPBXConfig->getGeneralSettings('SSHLanguage');
-        $new_lang   = ('en' === $lang)?'ru':'en';
-        $mikoPBXConfig->setGeneralSettings('SSHLanguage', $new_lang);
-
-        PBX::dialplanReload();
-        PBX::iaxReload();
-        PBX::sipReload();
-        PBX::featuresReload();
-
-        sleep(1);
-        exit(0);
-    })
+    ->addItem(
+        ' ',
+        function (CliMenu $menu) {
+        }
+    )
+    ->addSubMenu('[1] Change language', $setupLanguage)
     // LAN
-    ->addSubMenu('[2] '.Util::translate('Set up LAN IP address'), $setup_lan)
-    ->addSubMenu('[3] '.Util::translate('Reboot system'), function (CliMenuBuilder $b){
-        $b->setTitle(Util::translate('Choose action'))
-            ->enableAutoShortcuts()
-            ->addItem('[1] '.Util::translate('Reboot'), function (CliMenu $menu) {
-                $menu->close();
-                file_put_contents('/tmp/rebooting', '1');
-                exit(0);
-            })
-            ->addItem('[2] '.Util::translate('Power off'), function (CliMenu $menu) {
-                $menu->close();
-                file_put_contents('/tmp/shutdown', '1');
-                exit(0);
-            })
-            ->setWidth(75)
-            ->setForegroundColour('white', 'white')
-            ->setBackgroundColour('black', 'black')
-            ->disableDefaultItems()
-            ->addItem('[3] '.Util::translate('Cancel'), new GoBackAction());
-    })
-    ->addItem('[4] '.Util::translate('Ping host'), function (CliMenu $menu) {
-        $style = (new MenuStyle())
-            ->setBg('white')
-            ->setFg('black');
-
-        $input_ip = new class (new InputIO($menu, $menu->getTerminal()), $style) extends Text { };
-        $el_lanip = $input_ip
-            ->setPromptText(Util::translate('Enter a host name or IP address: (Press ESC to exit)'))
-            ->setValidationFailedText(Util::translate('WARNING'))
-            ->ask();
-        $pinghost = $el_lanip->fetch();
-
-        $command = '';
-        if(!empty($pinghost)){
-            $command.='echo "start ping host '.escapeshellarg($pinghost).'";';
-        }
-        $pingPath    = Util::which('ping');
-        $timeoutPath = Util::which('timeout');
-        passthru("{$command} {$timeoutPath} -t 4 {$pingPath} -c3 " . escapeshellarg($pinghost));
-        passthru("{$command} {$timeoutPath} -t 4 {$pingPath} -c3 " . escapeshellarg($pinghost));
-    })
-    ->addItem('[5] '.Util::translate('Firewall'), function (CliMenu $menu) {
-        $mikoPBXConfig = new MikoPBXConfig();
-        $firewall_enable = $mikoPBXConfig->getGeneralSettings('PBXFirewallEnabled');
-
-        if($firewall_enable === '1'){
-            $action = 'disable';
-        }else{
-            $action = 'enable';
-        }
-
-        $promt_text = Util::translate("Do you want {$action} firewall now? (y/n): ");
-        $style = (new MenuStyle())
-            ->setBg('white')
-            ->setFg('black');
-
-        $input_ip = new class (new InputIO($menu, $menu->getTerminal()), $style) extends Text {
-            public function validate(string $value) : bool {
-                return ($value === 'y' || $value === 'n');
-            }
-        };
-        $el_lanip = $input_ip
-            ->setPromptText($promt_text)
-            ->setValidationFailedText(Util::translate('WARNING'). ': y/n')
-            ->ask();
-        $result = $el_lanip->fetch();
-
-        if($result === 'y'){
-            $enable = '0';
-            if('enable' === $action){
-                $enable = '1';
-            }
-            $mikoPBXConfig->setGeneralSettings('PBXFirewallEnabled', $enable);
-            $mikoPBXConfig->setGeneralSettings('PBXFail2BanEnabled', $enable);
-            IptablesConf::reloadFirewall();
-            echo "Firewall is {$action}d...";
-        }
-        exit(0);
-    })
-    ->addSubMenu('[6] '.Util::translate('Storage'), function (CliMenuBuilder $b) {
-        $b->setTitle(Util::translate('Choose action'))
-            ->addItem('[1] '.Util::translate('Connect storage'), function (CliMenu $menu) {
-                $menu->close();
-                include '/etc/rc/connect.storage';
-                sleep(1);
-                exit(0);
-            })
-            ->addItem('[2] '.Util::translate('Check storage'), function (CliMenu $menu) {
-                /** @var \MikoPBX\Common\Models\Storage $data */
-                $data = StorageModel::findFirst();
-                if($data === null){
-                    echo "\n " . Util::translate('Valid disks not found...') . " \n";
-                    return;
-                }
-                $style = (new MenuStyle())
-                    ->setBg('white')
-                    ->setFg('black');
-
-                $input_ip = new class (new InputIO($menu, $menu->getTerminal()), $style) extends Text {
-                    public function validate(string $value) : bool {
-                        return ($value === 'y' || $value === 'n');
+    ->addSubMenu('[2] ' . Util::translate('Set up LAN IP address'), $setup_lan)
+    ->addSubMenu(
+        '[3] ' . Util::translate('Reboot system'),
+        function (CliMenuBuilder $b) {
+            $b->setTitle(Util::translate('Choose action'))
+                ->enableAutoShortcuts()
+                ->addItem(
+                    '[1] ' . Util::translate('Reboot'),
+                    function (CliMenu $menu) {
+                        $menu->close();
+                        file_put_contents('/tmp/rebooting', '1');
+                        exit(0);
                     }
-                };
-                $el_lanip = $input_ip
-                    ->setPromptText(Util::translate('All processes will be completed. Continue? (y/n):'))
-                    ->setValidationFailedText(Util::translate('WARNING'). ': y/n')
-                    ->ask();
-                $result = $el_lanip->fetch();
-
-                $menu->close();
-                if($result !== 'y'){
-                    sleep(2);
-                    exit(0);
-                }
-
-                $dev_name = file_exists("{$data->device}4")?"{$data->device}4":"{$data->device}1";
-
-                passthru('/sbin/freestorage');
-                passthru('e2fsck -f -p '.escapeshellarg($dev_name), $return_var);
-                echo "check return $return_var";
-                sleep(2);
-                system('/sbin/mikopbx_reboot');
-            })
-            ->addItem('[3] '.Util::translate('Resize storage'), function (CliMenu $menu) {
-                /** @var \MikoPBX\Common\Models\Storage $data */
-                $data = StorageModel::findFirst();
-                if($data === null){
-                    echo "\n " . Util::translate('Valid disks not found...') . " \n";
-                    return;
-                }
-                $style = (new MenuStyle())
-                    ->setBg('white')
-                    ->setFg('black');
-
-                $input_ip = new class (new InputIO($menu, $menu->getTerminal()), $style) extends Text {
-                    public function validate(string $value) : bool {
-                        return ($value === 'y' || $value === 'n');
+                )
+                ->addItem(
+                    '[2] ' . Util::translate('Power off'),
+                    function (CliMenu $menu) {
+                        $menu->close();
+                        file_put_contents('/tmp/shutdown', '1');
+                        exit(0);
                     }
-                };
-                $el_lanip = $input_ip
-                    ->setPromptText(Util::translate('All processes will be completed. Continue? (y/n):'))
-                    ->setValidationFailedText(Util::translate('WARNING'). ': y/n')
-                    ->ask();
-                $result = $el_lanip->fetch();
-                $menu->close();
-                if($result !== 'y'){
-                    sleep(2);
-                    exit(0);
-                }
+                )
+                ->setWidth(75)
+                ->setForegroundColour('white', 'white')
+                ->setBackgroundColour('black', 'black')
+                ->disableDefaultItems()
+                ->addItem('[3] ' . Util::translate('Cancel'), new GoBackAction());
+        }
+    )
+    ->addItem(
+        '[4] ' . Util::translate('Ping host'),
+        function (CliMenu $menu) {
+            $style = (new MenuStyle())
+                ->setBg('white')
+                ->setFg('black');
 
-                passthru('/sbin/freestorage');
-                passthru('/etc/rc/resize_storage_part '.escapeshellarg($data->device),$return_var);
-                echo "resize storage return $return_var";
-                sleep(2);
-                if($return_var === 0){
-                    $mikopbx_rebootPath = Util::which('mikopbx_reboot');
-                    Util::mwExecBg($mikopbx_rebootPath);
-                }
+            $input_ip = new class (new InputIO($menu, $menu->getTerminal()), $style) extends Text {
+            };
+            $el_lanip = $input_ip
+                ->setPromptText(Util::translate('Enter a host name or IP address: (Press ESC to exit)'))
+                ->setValidationFailedText(Util::translate('WARNING'))
+                ->ask();
+            $pinghost = $el_lanip->fetch();
 
-            })
-            ->setWidth(75)
-            ->enableAutoShortcuts()
-            ->setForegroundColour('white', 'white')
-            ->setBackgroundColour('black', 'black')
-            ->disableDefaultItems()
-            ->addItem('[4] '.Util::translate('Cancel'), new GoBackAction());
-    })
-
-    ->addItem('[7] '.Util::translate('Reset admin password'), function (CliMenu $menu) {
-        $style = (new MenuStyle())
-            ->setBg('white')
-            ->setFg('black');
-
-        $input_ip = new class (new InputIO($menu, $menu->getTerminal()), $style) extends Text {
-            public function validate(string $value) : bool {
-                return ($value === 'y' || $value === 'n');
+            $command = '';
+            if ( ! empty($pinghost)) {
+                $command .= 'echo "start ping host ' . escapeshellarg($pinghost) . '";';
             }
-        };
-        $el_lanip = $input_ip
-            ->setPromptText('Do you want reset password? (y/n):')
-            ->setValidationFailedText(Util::translate('WARNING'). ': y/n')
-            ->ask();
-        $result = $el_lanip->fetch();
+            $pingPath    = Util::which('ping');
+            $timeoutPath = Util::which('timeout');
+            passthru("{$command} {$timeoutPath} -t 4 {$pingPath} -c3 " . escapeshellarg($pinghost));
+            passthru("{$command} {$timeoutPath} -t 4 {$pingPath} -c3 " . escapeshellarg($pinghost));
+        }
+    )
+    ->addItem(
+        '[5] ' . Util::translate('Firewall'),
+        function (CliMenu $menu) {
+            $mikoPBXConfig   = new MikoPBXConfig();
+            $firewall_enable = $mikoPBXConfig->getGeneralSettings('PBXFirewallEnabled');
 
-        if($result !== 'y'){
+            if ($firewall_enable === '1') {
+                $action = 'disable';
+            } else {
+                $action = 'enable';
+            }
+
+            $promt_text = Util::translate("Do you want {$action} firewall now? (y/n): ");
+            $style      = (new MenuStyle())
+                ->setBg('white')
+                ->setFg('black');
+
+            $input_ip = new class (new InputIO($menu, $menu->getTerminal()), $style) extends Text {
+                public function validate(string $value): bool
+                {
+                    return ($value === 'y' || $value === 'n');
+                }
+            };
+            $el_lanip = $input_ip
+                ->setPromptText($promt_text)
+                ->setValidationFailedText(Util::translate('WARNING') . ': y/n')
+                ->ask();
+            $result   = $el_lanip->fetch();
+
+            if ($result === 'y') {
+                $enable = '0';
+                if ('enable' === $action) {
+                    $enable = '1';
+                }
+                $mikoPBXConfig->setGeneralSettings('PBXFirewallEnabled', $enable);
+                $mikoPBXConfig->setGeneralSettings('PBXFail2BanEnabled', $enable);
+                IptablesConf::reloadFirewall();
+                echo "Firewall is {$action}d...";
+            }
+            exit(0);
+        }
+    )
+    ->addSubMenu(
+        '[6] ' . Util::translate('Storage'),
+        function (CliMenuBuilder $b) {
+            $b->setTitle(Util::translate('Choose action'))
+                ->addItem(
+                    '[1] ' . Util::translate('Connect storage'),
+                    function (CliMenu $menu) {
+                        $menu->close();
+                        include '/etc/rc/connect.storage';
+                        sleep(1);
+                        exit(0);
+                    }
+                )
+                ->addItem(
+                    '[2] ' . Util::translate('Check storage'),
+                    function (CliMenu $menu) {
+                        /** @var \MikoPBX\Common\Models\Storage $data */
+                        $data = StorageModel::findFirst();
+                        if ($data === null) {
+                            echo "\n " . Util::translate('Valid disks not found...') . " \n";
+
+                            return;
+                        }
+                        $style = (new MenuStyle())
+                            ->setBg('white')
+                            ->setFg('black');
+
+                        $input_ip = new class (new InputIO($menu, $menu->getTerminal()), $style) extends Text {
+                            public function validate(string $value): bool
+                            {
+                                return ($value === 'y' || $value === 'n');
+                            }
+                        };
+                        $el_lanip = $input_ip
+                            ->setPromptText(Util::translate('All processes will be completed. Continue? (y/n):'))
+                            ->setValidationFailedText(Util::translate('WARNING') . ': y/n')
+                            ->ask();
+                        $result   = $el_lanip->fetch();
+
+                        $menu->close();
+                        if ($result !== 'y') {
+                            sleep(2);
+                            exit(0);
+                        }
+
+                        $dev_name = file_exists("{$data->device}4") ? "{$data->device}4" : "{$data->device}1";
+
+                        passthru('/sbin/freestorage');
+                        passthru('e2fsck -f -p ' . escapeshellarg($dev_name), $return_var);
+                        echo "check return $return_var";
+                        sleep(2);
+                        system('/sbin/mikopbx_reboot');
+                    }
+                )
+                ->addItem(
+                    '[3] ' . Util::translate('Resize storage'),
+                    function (CliMenu $menu) {
+                        /** @var \MikoPBX\Common\Models\Storage $data */
+                        $data = StorageModel::findFirst();
+                        if ($data === null) {
+                            echo "\n " . Util::translate('Valid disks not found...') . " \n";
+
+                            return;
+                        }
+                        $style = (new MenuStyle())
+                            ->setBg('white')
+                            ->setFg('black');
+
+                        $input_ip = new class (new InputIO($menu, $menu->getTerminal()), $style) extends Text {
+                            public function validate(string $value): bool
+                            {
+                                return ($value === 'y' || $value === 'n');
+                            }
+                        };
+                        $el_lanip = $input_ip
+                            ->setPromptText(Util::translate('All processes will be completed. Continue? (y/n):'))
+                            ->setValidationFailedText(Util::translate('WARNING') . ': y/n')
+                            ->ask();
+                        $result   = $el_lanip->fetch();
+                        $menu->close();
+                        if ($result !== 'y') {
+                            sleep(2);
+                            exit(0);
+                        }
+
+                        passthru('/sbin/freestorage');
+                        passthru('/etc/rc/resize_storage_part ' . escapeshellarg($data->device), $return_var);
+                        echo "resize storage return $return_var";
+                        sleep(2);
+                        if ($return_var === 0) {
+                            $mikopbx_rebootPath = Util::which('mikopbx_reboot');
+                            Util::mwExecBg($mikopbx_rebootPath);
+                        }
+                    }
+                )
+                ->setWidth(75)
+                ->enableAutoShortcuts()
+                ->setForegroundColour('white', 'white')
+                ->setBackgroundColour('black', 'black')
+                ->disableDefaultItems()
+                ->addItem('[4] ' . Util::translate('Cancel'), new GoBackAction());
+        }
+    )
+    ->addItem(
+        '[7] ' . Util::translate('Reset admin password'),
+        function (CliMenu $menu) {
+            $style = (new MenuStyle())
+                ->setBg('white')
+                ->setFg('black');
+
+            $input_ip = new class (new InputIO($menu, $menu->getTerminal()), $style) extends Text {
+                public function validate(string $value): bool
+                {
+                    return ($value === 'y' || $value === 'n');
+                }
+            };
+            $el_lanip = $input_ip
+                ->setPromptText('Do you want reset password? (y/n):')
+                ->setValidationFailedText(Util::translate('WARNING') . ': y/n')
+                ->ask();
+            $result   = $el_lanip->fetch();
+
+            if ($result !== 'y') {
+                sleep(2);
+                exit(0);
+            }
+            $mikoPBXConfig = new MikoPBXConfig();
+            $res_login     = $mikoPBXConfig->deleteGeneralSettings('WebAdminLogin');
+            $res_password  = $mikoPBXConfig->deleteGeneralSettings('WebAdminPassword');
+
+            if ($res_login === true && $res_password === true) {
+                echo Util::translate('Password successfully reset. New login: admin. New password: admin.');
+            } else {
+                echo Util::translate('Error resetting password.');
+            }
             sleep(2);
             exit(0);
         }
-        $mikoPBXConfig = new MikoPBXConfig();
-        $res_login    = $mikoPBXConfig->deleteGeneralSettings('WebAdminLogin');
-        $res_password = $mikoPBXConfig->deleteGeneralSettings('WebAdminPassword');
-
-        if($res_login === true && $res_password === true){
-            echo Util::translate('Password successfully reset. New login: admin. New password: admin.');
-        }else{
-            echo Util::translate('Error resetting password.');
-        }
-        sleep(2);
-        exit(0);
-    })
+    )
     ->addItems($additional_items)
     ->disableDefaultItems()
     ->build();
 
-if ($menu->getTerminal()->isInteractive()){
+if ($menu->getTerminal()->isInteractive()) {
     try {
         $menu->open();
     } catch (InvalidTerminalException $e) {
