@@ -195,7 +195,7 @@ class Network extends Injectable
 
         $pdnsdConfFile  = '/etc/pdnsd.conf';
         $savedConf = '';
-        if(fileExists($pdnsdConfFile)){
+        if(file_exists($pdnsdConfFile)){
             $savedConf = file_get_contents($pdnsdConfFile);
         }
         if($savedConf != $conf){
