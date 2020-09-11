@@ -42,6 +42,7 @@ const PbxApi = {
 	systemModuleDownloadStatus: `${Config.pbxUrl}/pbxcore/api/system/moduleDownloadStatus`, //TODO::Проверить статус ошибки скачивания в переменной message
 	systemUploadFile: `${Config.pbxUrl}/pbxcore/api/upload/uploadResumable`, // curl -F "file=@ModuleTemplate.zip" http://127.0.0.1/pbxcore/api/upload/uploadResumable
 	systemStatusUploadFile: `${Config.pbxUrl}/pbxcore/api/upload/status`, // curl -X POST -d '{"id": "1531474060"}' http://127.0.0.1/pbxcore/api/upload/status;
+	systemChangeCoreLanguage: `${Config.pbxUrl}/pbxcore/api/system/updateCoreLanguage`, // Update WorkerApiCommands language
 	sysinfoGetInfo: `${Config.pbxUrl}/pbxcore/api/sysinfo/getInfo`, // Get system information
 	sysinfoGetExternalIP: `${Config.pbxUrl}/pbxcore/api/sysinfo/getExternalIpInfo`, //Get external IP address,
 	advicesGetList: `${Config.pbxUrl}/pbxcore/api/advices/getList`,
@@ -923,6 +924,15 @@ const PbxApi = {
 		});
 	},
 	/**
+	 * Update WorkerApiCommands language
+	 */
+	SystemChangeCoreLanguage() {
+		$.api({
+			url: PbxApi.systemChangeCoreLanguage,
+			on: 'now',
+		});
+	},
+	/**
 	 * Makes the list of notifications about system, firewall, passwords, wrong settings
 	 *
 	 * @param callback
@@ -944,6 +954,6 @@ const PbxApi = {
 			},
 		});
 	},
-};
 
-// export default PbxApi;
+
+};

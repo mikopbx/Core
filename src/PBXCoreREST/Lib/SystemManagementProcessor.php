@@ -10,13 +10,16 @@
 namespace MikoPBX\PBXCoreREST\Lib;
 
 
+use MikoPBX\Common\Providers\MessagesProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
+use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\Asterisk\Configs\VoiceMailConf;
 use MikoPBX\Core\System\Notifications;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Modules\PbxExtensionState;
 use MikoPBX\PBXCoreREST\Workers\WorkerMergeUploadedFile;
+use Phalcon\Di;
 use Phalcon\Di\Injectable;
 
 class SystemManagementProcessor extends Injectable
@@ -51,6 +54,13 @@ class SystemManagementProcessor extends Injectable
                 break;
             case 'setDate':
                 $res->success = System::setDate($data['date']);
+                break;
+            case 'updateCoreLanguage':
+                $di = Di::getDefault();
+                $di->remove('messages');
+                $di->remove('translation');
+                $di->register(new MessagesProvider());
+                $di->register(new TranslationProvider());
                 break;
             case 'updateMailSettings':
                 // TODO
