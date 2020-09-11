@@ -1,5 +1,4 @@
-
-    {{ link_to("asterisk-managers/modify", '<i class="add circle icon"></i> '~t._('am_AddNewUser'), "class": "ui blue button") }}
+{{ link_to("asterisk-managers/modify", '<i class="add circle icon"></i> '~t._('am_AddNewUser'), "class": "ui blue button") }}
 
     {% for user in amiUsers %}
         {% if loop.first %}
@@ -12,7 +11,7 @@
                 <th>{{ t._('am_TableColumnNetworkFilter') }}</th>
                 <th>{{ t._('am_TableColumnDescription') }}</th>
 
-                <th ></th>
+                <th></th>
             </tr>
             </thead>
             <tbody>
@@ -55,8 +54,9 @@
             </td>
             <td>
                 {% if not (user['description'] is empty) %}
-                    <div class="ui basic icon button" data-content="{{ user['description'] }}" data-position="top right" data-variation="wide">
-                        <i class="file text  icon" ></i>
+                    <div class="ui basic icon button" data-content="{{ user['description'] }}" data-position="top right"
+                         data-variation="wide">
+                        <i class="file text  icon"></i>
                     </div>
                 {% endif %}
             </td>
@@ -65,8 +65,7 @@
                     'id': user['id'],
                     'edit' : 'asterisk-managers/modify/',
                     'delete': 'asterisk-managers/delete/'
-                ])
-            }}
+                ]) }}
         </tr>
 
         {% if loop.last %}

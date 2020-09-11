@@ -1,4 +1,3 @@
-
 <div class="five wide field">
     <label for="nat">{{ t._('qf_NatMode') }}</label>
 

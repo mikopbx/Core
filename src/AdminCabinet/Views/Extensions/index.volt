@@ -4,7 +4,7 @@
             <table class="ui selectable compact table" id="extensions-table" data-page-length='12'>
             <thead>
             <tr>
-                {#<th></th>#}
+                {# <th></th> #}
                 <th></th>
                 <th>{{ t._('ex_Name') }}</th>
                 <th class="center aligned">{{ t._('ex_Extension') }}</th>
@@ -17,13 +17,15 @@
         {% endif %}
 
         <tr class="extension-row" id="{{ extension['id'] }}" data-value="{{ extension['number'] }}">
-            {#<td class="collapsing">#}
-                {#<div class="ui fitted slider checkbox">#}
-                    {#<input type="checkbox" {% if extension['status']!='disabled' %} checked {% endif %} data-value="{{ extension['number'] }}"> <label></label>#}
-                {#</div>#}
-            {#</td>#}
-            <td class="center aligned {{ extension['status'] }} disability center aligned extension-status"><i class="spinner loading icon"></i></td>
-            <td class="{{ extension['status'] }} disability"><img src="{{ extension['avatar'] }}" class="ui avatar image"
+            {# <td class="collapsing"> #}
+            {# <div class="ui fitted slider checkbox"> #}
+            {# <input type="checkbox" {% if extension['status']!='disabled' %} checked {% endif %} data-value="{{ extension['number'] }}"> <label></label> #}
+            {# </div> #}
+            {# </td> #}
+            <td class="center aligned {{ extension['status'] }} disability center aligned extension-status"><i
+                        class="spinner loading icon"></i></td>
+            <td class="{{ extension['status'] }} disability"><img src="{{ extension['avatar'] }}"
+                                                                  class="ui avatar image"
                                                                   data-value="{{ extension['userid'] }}"> {{ extension['username'] }}
             </td>
             <td class="center aligned {{ extension['status'] }} disability">{{ extension['number'] }}</td>
@@ -33,14 +35,13 @@
                 </div>
             </td>
             <td class="{{ extension['status'] }} disability">{{ extension['email'] }}</td>
-                {{ partial("partials/tablesbuttons",
-                    [
-                        'id': extension['id'],
-                        'clipboard' : extension['secret'],
-                        'edit' : 'extensions/modify/',
-                        'delete': 'extensions/delete/'
-                    ])
-                }}
+            {{ partial("partials/tablesbuttons",
+                [
+                    'id': extension['id'],
+                    'clipboard' : extension['secret'],
+                    'edit' : 'extensions/modify/',
+                    'delete': 'extensions/delete/'
+                ]) }}
         </tr>
         {% if loop.last %}
 

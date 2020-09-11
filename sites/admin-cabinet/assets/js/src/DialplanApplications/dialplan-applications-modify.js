@@ -67,12 +67,20 @@ const dialplanApplication = {
 		dialplanApplication.defaultExtension = dialplanApplication.$formObj.form('get value', 'extension');
 	},
 	initializeAce() {
+		const aceHeight = window.innerHeight-380;
+		const rowsCount = Math.round(aceHeight/16.3);
+		$(window).load(function() {
+			$('.application-code').css('min-height', `${aceHeight}px`);
+		});
 		dialplanApplication.editor = ace.edit('application-code');
 		dialplanApplication.editor.setTheme('ace/theme/monokai');
 		dialplanApplication.editor.resize();
 		dialplanApplication.editor.getSession().on('change', () => {
 			dialplanApplication.$dirrtyField.val(Math.random());
 			dialplanApplication.$dirrtyField.trigger('change');
+		});
+		dialplanApplication.editor.setOptions({
+			maxLines: rowsCount,
 		});
 	},
 	changeAceMode() {

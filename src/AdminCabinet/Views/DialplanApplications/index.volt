@@ -1,5 +1,4 @@
-
-    {{ link_to("dialplan-applications/modify", '<i class="add circle icon"></i> '~t._('da_AddNewDialplanApp'), "class": "ui blue button", "id":"add-new-button") }}
+{{ link_to("dialplan-applications/modify", '<i class="add circle icon"></i> '~t._('da_AddNewDialplanApp'), "class": "ui blue button", "id":"add-new-button") }}
 
     {% for record in apps %}
         {% if loop.first %}
@@ -32,8 +31,7 @@
                     'id': record.uniqid,
                     'edit' : 'dialplan-applications/modify/',
                     'delete': 'dialplan-applications/delete/'
-                ])
-            }}
+                ]) }}
         </tr>
 
         {% if loop.last %}

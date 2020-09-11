@@ -13,14 +13,16 @@
     </div>
     <div class="actions">
         <div class="ui checkbox" id="keepModuleSettings">
-            <input type="checkbox" checked = "checked"> <label>{{ t._('ext_KeepModuleSettings') }}</label>
+            <input type="checkbox" checked="checked"> <label>{{ t._('ext_KeepModuleSettings') }}</label>
         </div>
         <div class="ui cancel button">{{ t._('ext_Cancel') }}</div>
         <div class="ui red approve button">{{ t._('ext_Delete') }}</div>
     </div>
 </div>
-<button class="ui blue button add-new" id="add-new-button"><i class="upload icon"></i>  {{ t._('ext_AddNewExtension') }} </button>
-<a href="https://github.com/mikopbx/ModuleTemplate" target="_blank" class="ui basic button add-new"><i class="plus icon"></i> {{ t._('ext_CreateNewExtension') }}</a>
+<button class="ui blue button add-new" id="add-new-button"><i class="upload icon"></i> {{ t._('ext_AddNewExtension') }}
+</button>
+<a href="https://github.com/mikopbx/ModuleTemplate" target="_blank" class="ui basic button add-new"><i
+            class="plus icon"></i> {{ t._('ext_CreateNewExtension') }}</a>
 
 <div>
     <input type="file" name="update-file" accept=".zip" style="display: none!important;"/>
@@ -56,12 +58,12 @@
                     class="features">{{ t._('SubHeader'~module['uniqid']) }}</span></td>
         <td class="{{ module['status'] }} disability">{{ module['developer'] }}</td>
         <td class="{{ module['status'] }} disability version">{{ module['version'] }}</td>
-            {{ partial("partials/tablesbuttons",
-                [
-                    'id': '',
-                    'edit' : module['classname'],
-                    'delete': 'pbx-extension-modules/delete/'
-                ]) }}
+        {{ partial("partials/tablesbuttons",
+            [
+                'id': '',
+                'edit' : module['classname'],
+                'delete': 'pbx-extension-modules/delete/'
+            ]) }}
     </tr>
     {% if loop.last %}
         </tbody>

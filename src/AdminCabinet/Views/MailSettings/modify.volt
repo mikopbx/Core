@@ -1,4 +1,3 @@
-
 {{ form('mail-settings/save', 'role': 'form', 'class': 'ui form large', 'id': 'mail-settings-form') }}
 <div class="ui top attached tabular menu" id="mail-settings-menu">
     <a class="item active" data-tab="smtp">{{ t._('ms_SMTPSettings') }}</a>
@@ -37,12 +36,12 @@
 
     <div class="five wide field">
         <label>{{ t._('ms_SMTPSenderAddress') }}</label>
-            {{ form.render('MailSMTPSenderAddress') }}
-        </div>
+        {{ form.render('MailSMTPSenderAddress') }}
+    </div>
     <div class="five wide field">
         <label>{{ t._('ms_SMTPFromUsername') }}</label>
-            {{ form.render('MailSMTPFromUsername') }}
-        </div>
+        {{ form.render('MailSMTPFromUsername') }}
+    </div>
     <div class=" field">
         <div class="ui segment">
             <div class="ui toggle checkbox">

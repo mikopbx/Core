@@ -17,7 +17,7 @@
         {% endif %}
 
 
-        <tr class="menu-row" id="{{ record.uniqid }}" >
+        <tr class="menu-row" id="{{ record.uniqid }}">
             <td class="centered">{{ record.extension }}</td>
             <td>{{ record.name }}</td>
             <td>
@@ -29,15 +29,16 @@
             </td>
             <td>
                 <small>
-                    {% if record.TimeoutExtensions  %}
+                    {% if record.TimeoutExtensions %}
                         {{ record.TimeoutExtensions.getRepresent() }}
                     {% endif %}
                 </small>
             </td>
             <td>
                 {% if not (record.description is empty) %}
-                    <div class="ui basic icon button" data-content="{{ record.description }}" data-position="top right" data-variation="wide">
-                        <i class="file text  icon" ></i>
+                    <div class="ui basic icon button" data-content="{{ record.description }}" data-position="top right"
+                         data-variation="wide">
+                        <i class="file text  icon"></i>
                     </div>
                 {% endif %}
             </td>
@@ -46,9 +47,8 @@
                     'id': record.uniqid,
                     'edit' : 'ivr-menu/modify/',
                     'delete': 'ivr-menu/delete/'
-                ])
-            }}
-            </tr>
+                ]) }}
+        </tr>
 
         {% if loop.last %}
 

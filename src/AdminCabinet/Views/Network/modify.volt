@@ -15,7 +15,8 @@
         {% if eth.id=='new' %}
             <a class="item" data-tab="{{ eth.id }}"><i class="icon plus"></i></a>
         {% else %}
-            <a class="item {% if loop.first %}active{% endif %}" data-tab="{{ eth.id }}">{{ eth.name}} ({{ eth.interface }}{% if eth.vlanid>0 %}.{{ eth.vlanid }}{% endif %})</a>
+            <a class="item {% if loop.first %}active{% endif %}" data-tab="{{ eth.id }}">{{ eth.name }}
+                ({{ eth.interface }}{% if eth.vlanid>0 %}.{{ eth.vlanid }}{% endif %})</a>
         {% endif %}
     {% endfor %}
 
@@ -25,7 +26,7 @@
         {% if eth.id=='new' %}
             <div class="four fields">
                 <div class="field">
-                    <label >{{ t._('nw_SelectInterface') }}</label>
+                    <label>{{ t._('nw_SelectInterface') }}</label>
                     {{ form.render('interface_'~eth.id) }}
                 </div>
             </div>
@@ -34,7 +35,7 @@
         {% endif %}
         <div class="four fields">
             <div class="field">
-                <label >{{ t._('nw_InterfaceName') }}</label>
+                <label>{{ t._('nw_InterfaceName') }}</label>
                 {{ form.render('name_'~eth.id) }}
             </div>
         </div>
@@ -47,22 +48,23 @@
         <input type="hidden" name="notdhcp_{{ eth.id }}" id="not-dhcp-{{ eth.id }}"/>
         <div class="four fields" id="ip-address-group-{{ eth.id }}">
             <div class="field">
-                <label >{{ t._('nw_IPAddress') }}</label>
+                <label>{{ t._('nw_IPAddress') }}</label>
                 {{ form.render('ipaddr_'~eth.id) }}
             </div>
             <div class="field">
-                <label >{{ t._('nw_NetworkMask') }}</label>
+                <label>{{ t._('nw_NetworkMask') }}</label>
                 {{ form.render('subnet_'~eth.id) }}
             </div>
         </div>
         <div class="ten fields">
             <div class="field">
-                <label >{{ t._('nw_VlanID') }}</label>
+                <label>{{ t._('nw_VlanID') }}</label>
                 {{ form.render('vlanid_'~eth.id) }}
             </div>
         </div>
         {% if   in_array(eth.interface, deletableEths) %}
-            <a class="ui icon button delete-interface" data-value="{{ eth.id }}"><i class="icon trash"></i>{{ t._('nw_DeleteCurrentInterface') }}</a>
+            <a class="ui icon button delete-interface" data-value="{{ eth.id }}"><i
+                        class="icon trash"></i>{{ t._('nw_DeleteCurrentInterface') }}</a>
         {% endif %}
         {% if   eth.id == 'new' %}
             <a class="ui icon button delete-interface-new"><i
@@ -100,37 +102,37 @@
     </div>
 </div>
 <div class="ui segment">
-<div class="two fields">
-    <div class="field">
+    <div class="two fields">
+        <div class="field">
 
-        <div class="ui toggle checkbox" id="usenat-checkbox">
+            <div class="ui toggle checkbox" id="usenat-checkbox">
                 {{ form.render('usenat') }}
                 <label>{{ t._('nw_AllowNatPortForwarding') }}</label>
             </div>
 
-    </div>
-</div>
-<div class="field nated-settings-group">
-    <label>{{ t._('nw_PublicAddress') }}</label>
-    <div class="inline fields">
-        <div class="six wide field">
-            {{ form.render('extipaddr') }}
-        </div>
-        <div class="ten wide field">
-            <button class="ui black small button" id="getmyip"><i
-                        class="ui icon globe"></i>{{ t._('nw_LookUpExternalIp') }}
-            </button>
         </div>
     </div>
-</div>
-<div class="field nated-settings-group">
-    <label>{{ t._('nw_PublicHostName') }}</label>
-    <div class="four fields">
-        <div class="field">
-            {{ form.render('exthostname') }}
+    <div class="field nated-settings-group">
+        <label>{{ t._('nw_PublicAddress') }}</label>
+        <div class="inline fields">
+            <div class="six wide field">
+                {{ form.render('extipaddr') }}
+            </div>
+            <div class="ten wide field">
+                <button class="ui black small button" id="getmyip"><i
+                            class="ui icon globe"></i>{{ t._('nw_LookUpExternalIp') }}
+                </button>
+            </div>
         </div>
     </div>
-</div>
+    <div class="field nated-settings-group">
+        <label>{{ t._('nw_PublicHostName') }}</label>
+        <div class="four fields">
+            <div class="field">
+                {{ form.render('exthostname') }}
+            </div>
+        </div>
+    </div>
 </div>
 {{ partial("partials/submitbutton",['indexurl':'']) }}
 <div class="ui clearing hidden divider"></div>

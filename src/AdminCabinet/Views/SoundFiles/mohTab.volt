@@ -16,17 +16,17 @@
             <table>
                 <tr>
                     <td class="one wide">
-                                {% if record.path is empty %}
-                                    <i class="ui icon play disabled"></i>
-                                    <audio preload="none" id="audio-player-{{ record.id }}">
-                                        <source src=""/>
-                                    </audio>
-                                {% else %}
-                                    <i class="ui icon play"></i>
-                                       <audio preload="metadata" id="audio-player-{{ record.id }}">
-                                             <source src="{{ '/pbxcore/api/cdr/playback?view='~record.path }}"/>
-                                       </audio>
-                                {% endif %}
+                        {% if record.path is empty %}
+                            <i class="ui icon play disabled"></i>
+                            <audio preload="none" id="audio-player-{{ record.id }}">
+                                <source src=""/>
+                            </audio>
+                        {% else %}
+                            <i class="ui icon play"></i>
+                            <audio preload="metadata" id="audio-player-{{ record.id }}">
+                                <source src="{{ '/pbxcore/api/cdr/playback?view='~record.path }}"/>
+                            </audio>
+                        {% endif %}
                     </td>
                     <td>
                         <div class="ui range cdr-player"></div>
@@ -36,7 +36,8 @@
                         {% if record.path is empty %}
                             <i class="ui icon download" data-value=""></i>
                         {% else %}
-                            <i class="ui icon download" data-value="{{ '/pbxcore/api/cdr/playback?view='~record.path~'&download=1&filename='~record.name~'.mp3' }}"></i>
+                            <i class="ui icon download"
+                               data-value="{{ '/pbxcore/api/cdr/playback?view='~record.path~'&download=1&filename='~record.name~'.mp3' }}"></i>
                         {% endif %}
 
                     </td>
@@ -49,8 +50,7 @@
                 'id': record.id,
                 'edit' : 'sound-files/modify/',
                 'delete': 'sound-files/delete/'
-            ])
-        }}
+            ]) }}
     </tr>
 
     {% if loop.last %}

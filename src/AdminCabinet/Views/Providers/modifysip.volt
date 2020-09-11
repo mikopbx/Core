@@ -1,4 +1,5 @@
-<div class="ui grey top right attached label" id="status"><i class="spinner loading icon"></i>{{ t._("pr_UpdateStatus") }}</div>
+<div class="ui grey top right attached label" id="status"><i
+            class="spinner loading icon"></i>{{ t._("pr_UpdateStatus") }}</div>
 {{ form('providers/save/sip', 'role': 'form', 'class': 'ui large form', 'id':'save-provider-form') }}
 
 {{ form.render('id') }}
@@ -6,7 +7,6 @@
 {{ form.render('type') }}
 {{ form.render('disabled') }}
 {{ form.render('providerType') }}
-
 
 
 <div class="ten wide required field">
@@ -49,7 +49,7 @@
         </div>
 
         {{ partial("partials/natqualify") }}
-        
+
         <h3 class="ui dividing header ">{{ t._("pr_RegistrationSettings") }}</h3>
         {{ t._("pr_CustomFieldsDescriptions") }}
         <div class=" field">

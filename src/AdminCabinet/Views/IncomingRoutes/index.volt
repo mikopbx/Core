@@ -29,32 +29,30 @@
                             'timeout':rule['timeout'],
                             'provider':rule['provider'],
                             'callerid':rule['callerid']
-                        ])
-                    }}
+                        ]) }}
                 {% elseif rule['provider'] is empty %}
                     {{ t._('ir_RuleDescriptionWithoutProvider',
                         [
                             'timeout':rule['timeout'],
                             'callerid':rule['callerid'],
                             'number':rule['number']
-                        ])
-                    }}
+                        ]) }}
                 {% else %}
                     {{ t._('ir_RuleDescriptionWithNumberAndWithProvider',
                         [
-                        'timeout':rule['timeout'],
-                        'provider':rule['provider'],
-                        'callerid':rule['callerid'],
-                        'number':rule['number']
-                        ])
-                    }}
+                            'timeout':rule['timeout'],
+                            'provider':rule['provider'],
+                            'callerid':rule['callerid'],
+                            'number':rule['number']
+                        ]) }}
                 {% endif %}
 
             </td>
             <td>
                 {% if not (rule['note'] is empty) and rule['note']|length>20 %}
-                    <div class="ui basic icon button" data-content="{{ rule['note'] }}" data-variation="wide" data-position="top right">
-                        <i class="file text  icon" ></i>
+                    <div class="ui basic icon button" data-content="{{ rule['note'] }}" data-variation="wide"
+                         data-position="top right">
+                        <i class="file text  icon"></i>
                     </div>
                 {% else %}
                     {{ rule['note'] }}
@@ -65,8 +63,7 @@
                     'id': rule['id'],
                     'edit' : 'incoming-routes/modify/',
                     'delete': 'incoming-routes/delete/'
-                ])
-            }}
+                ]) }}
         </tr>
 
         {% if loop.last %}
@@ -75,7 +72,7 @@
             </table>
         {% endif %}
     {% endfor %}
-    <div class="ui hidden divider"></div>
+<div class="ui hidden divider"></div>
 {{ form('incoming-routes/save', 'role': 'form', 'class': 'ui grey segment form', 'id':'default-rule-form') }}
     {% for element in form %}
         {% if element.getName() =='action' %}
@@ -87,7 +84,7 @@
         {% endif %}
     {% endfor %}
 
-    <h3 class="ui header">{{ t._("ir_DefaultRoute") }}</h3>
+<h3 class="ui header">{{ t._("ir_DefaultRoute") }}</h3>
 <div class="two fields">
     <div class="inline field">
         <label>{{ t._('ir_ActionSelect') }}</label>
@@ -100,6 +97,6 @@
     </div>
 </div>
 
-    {{ partial("partials/submitbutton",['indexurl':'']) }}
+{{ partial("partials/submitbutton",['indexurl':'']) }}
 <div class="ui clearing hidden divider"></div>
-    </form>
+</form>

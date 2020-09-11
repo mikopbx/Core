@@ -79,6 +79,7 @@ const LanguageSelect = {
 		if (value === globalWebAdminLanguage) {
 			return;
 		}
+		PbxApi.SystemChangeCoreLanguage();
 		$.api({
 			url: `${globalRootUrl}session/changeLanguage/`,
 			data: { newLanguage: value },

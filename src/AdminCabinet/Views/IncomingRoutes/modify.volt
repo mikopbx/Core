@@ -6,13 +6,13 @@
 {{ form.render('action') }}
 
 <div class="ten wide field">
-    <label >{{ t._('ir_Note') }}</label>
+    <label>{{ t._('ir_Note') }}</label>
     {{ form.render('note') }}
 </div>
 <h3 class="ui dividing header ">{{ t._("ir_RuleAssignIf") }}</h3>
 
 <div class="ten wide field">
-    <label >{{ t._('ir_Provider') }}</label>
+    <label>{{ t._('ir_Provider') }}</label>
     {{ form.render('provider') }}
 </div>
 
@@ -24,12 +24,12 @@
 <h3 class="ui dividing header ">{{ t._("ir_CallTransferTo") }}</h3>
 
 <div class="ten wide field">
-    <label >{{ t._('ir_Extension') }}</label>
+    <label>{{ t._('ir_Extension') }}</label>
     {{ form.render('extension') }}
 </div>
 
 <div class="field">
-    <label >{{ t._('ir_TimeoutToTransferDefault') }}</label>
+    <label>{{ t._('ir_TimeoutToTransferDefault') }}</label>
     {{ form.render('timeout') }}
 </div>
 

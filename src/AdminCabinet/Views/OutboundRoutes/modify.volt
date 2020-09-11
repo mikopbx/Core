@@ -9,16 +9,16 @@
 </div>
 
 <div class="ten wide field">
-    <label >{{ t._('or_Note') }}</label>
+    <label>{{ t._('or_Note') }}</label>
     {{ form.render('note') }}
 </div>
 <h3 class="ui dividing header ">{{ t._("or_PatternToMatch") }}</h3>
 <div class="inline field">
-    <label >{{ t._('or_NumberBeginsWithTheDigits') }}</label>
+    <label>{{ t._('or_NumberBeginsWithTheDigits') }}</label>
     {{ form.render('numberbeginswith') }}
 </div>
 <div class="inline field">
-    <label >{{ t._('or_TheRestOfTheNumberMustBe') }}</label>
+    <label>{{ t._('or_TheRestOfTheNumberMustBe') }}</label>
     {{ form.render('restnumbers') }}
 </div>
 
@@ -34,7 +34,7 @@
 <h3 class="ui dividing header ">{{ t._("or_CallThrough") }}</h3>
 
 <div class="five wide field">
-    <label >{{ t._('or_Provider') }}</label>
+    <label>{{ t._('or_Provider') }}</label>
     {{ form.render('providerid') }}
 </div>
 {{ partial("partials/submitbutton",['indexurl':'outbound-routes/index/']) }}

@@ -151,7 +151,7 @@ class IptablesConf extends Injectable
     {
         /** @var \MikoPBX\Common\Models\FirewallRules $result */
         /** @var \MikoPBX\Common\Models\FirewallRules $rule */
-        $result = FirewallRules::find();
+        $result = FirewallRules::find('action="allow"');
         foreach ($result as $rule) {
             if ($rule->portfrom !== $rule->portto && trim($rule->portto) !== '') {
                 $port = "{$rule->portfrom}:{$rule->portto}";

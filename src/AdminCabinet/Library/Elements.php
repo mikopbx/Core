@@ -355,7 +355,7 @@ class Elements extends Injectable
     }
 
     /**
-     * Получить иконку по имени контроллера
+     * Returns icon html by controller name
      *
      * @param $controllerName
      *

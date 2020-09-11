@@ -16,10 +16,10 @@
             <tbody>
         {% endif %}
 
-        <tr class="frame-row" id="{{ record['id']}}">
+        <tr class="frame-row" id="{{ record['id'] }}">
 
-            <td>{{ record['date_from']}}{% if record['date_from']!=record['date_to'] %} - {{ record['date_to']}}{% endif %}</td>
-            <td>{{ record['weekday_from']}}{% if record['weekday_from']!=record['weekday_to'] %} - {{ record['weekday_to']}}{% endif %}</td>
+            <td>{{ record['date_from'] }}{% if record['date_from']!=record['date_to'] %} - {{ record['date_to'] }}{% endif %}</td>
+            <td>{{ record['weekday_from'] }}{% if record['weekday_from']!=record['weekday_to'] %} - {{ record['weekday_to'] }}{% endif %}</td>
             <td>{{ record['time_from'] }}{% if record['time_from']!=record['time_to'] %} - {{ record['time_to'] }}{% endif %}</td>
             <td>
                 {% if (record['action'] =='playmessage') %}
@@ -30,8 +30,9 @@
             </td>
             <td class="collapsing">
                 {% if not (record['description'] is empty) %}
-                    <div class="ui basic icon button" data-variation="wide" data-content="{{ record['description'] }}" data-position="top right">
-                        <i class="file text  icon" ></i>
+                    <div class="ui basic icon button" data-variation="wide" data-content="{{ record['description'] }}"
+                         data-position="top right">
+                        <i class="file text  icon"></i>
                     </div>
                 {% endif %}
             </td>
@@ -40,8 +41,7 @@
                     'id': record['id'],
                     'edit' : 'out-off-work-time/modify/',
                     'delete': 'out-off-work-time/delete/'
-                ])
-            }}
+                ]) }}
         </tr>
 
         {% if loop.last %}

@@ -12,7 +12,7 @@
 </div>
 
 <div class="six wide field">
-    <label >{{ t._('cr_Extensions') }}</label>
+    <label>{{ t._('cr_Extensions') }}</label>
     <div class="ui icon input extension">
         <i class="search icon"></i>
         {{ form.render('extension') }}

@@ -3,9 +3,9 @@
 
 
 {% if (controller!="Session") %}
-    {{ partial("partials/topMenu")}}
-    {{ partial("partials/leftsidebar")}}
-<div id="main" class="ui main-content-wrapper pusher">
+    {{ partial("partials/topMenu") }}
+    {{ partial("partials/leftsidebar") }}
+    <div id="main" class="ui main-content-wrapper pusher">
         <div id="debug-info"></div>
         <div class="ui container">
 
@@ -15,17 +15,28 @@
 
             <!--HEADER-->
             <h1 class="ui {% if (action=='index') %}dividing{% endif %} header">
-                {{ elements.getIconByController(controller) }}
-                <div class="content">
-                    {{ t._('Breadcrumb'~controller) }}
-                    <div class="sub header">{{ t._('SubHeader'~controller) }}
-                        {% if not urlToWiki is empty %}
+                {% if represent is empty %}
+                    {{ elements.getIconByController(controller) }}
+                    <div class="content">
+                        {{ t._('Breadcrumb'~controller) }}
+                        <div class="sub header">{{ t._('SubHeader'~controller) }}
+                            {% if not urlToWiki is empty %}
+                                <a href="{{ urlToWiki }}" target="_blank"
+                                   data-content="{{ t._("GoToWikiDocumentation") }}"
+                                   data-variation="wide"> <i class="small blue question icon"></i></a>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="content">
+                        {{ represent }} {% if not urlToWiki is empty %}
                             <a href="{{ urlToWiki }}" target="_blank"
                                data-content="{{ t._("GoToWikiDocumentation") }}"
                                data-variation="wide"> <i class="small blue question icon"></i></a>
                         {% endif %}
                     </div>
-                </div>
+                {% endif %}
+
             </h1>
             <!--/ HEADER-->
 
@@ -56,15 +67,15 @@
             <div id="pbx-version">MIKOPBX ver: {{ PBXVersion }}</div>
         </div>
         <!--CONNECTION DIMMER-->
-    <div class="ui page dimmer transition hidden" id="connection-dimmer">
-        <div class="content">
-            <h2 class="ui inverted icon header">
-                <i class="asterisk loading icon"></i>
-                {{ t._("DimmerWaitForPBXIsOnline") }}
-            </h2>
-            <div>{{ t._("DimmerWaitForPBXOnlineDescription") }}</div>
+        <div class="ui page dimmer transition hidden" id="connection-dimmer">
+            <div class="content">
+                <h2 class="ui inverted icon header">
+                    <i class="asterisk loading icon"></i>
+                    {{ t._("DimmerWaitForPBXIsOnline") }}
+                </h2>
+                <div>{{ t._("DimmerWaitForPBXOnlineDescription") }}</div>
+            </div>
         </div>
-    </div>
         <!--/ CONNECTION DIMMER-->
     </div>
 {% else %}

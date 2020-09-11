@@ -9,12 +9,12 @@
 <div class="field">
     <div class="ui toggle checkbox">
         {{ form.render('show-at-sidebar') }}
-        <label >{{ t._('ext_ShowModuleItemAtMainMenu') }}</label>
+        <label>{{ t._('ext_ShowModuleItemAtMainMenu') }}</label>
     </div>
 </div>
 
 <div class="field">
-    <label >{{ t._('ext_SelectMenuGroup') }}</label>
+    <label>{{ t._('ext_SelectMenuGroup') }}</label>
     {{ form.render('menu-group') }}
 </div>
 <div class="field">

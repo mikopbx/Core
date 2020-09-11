@@ -1,5 +1,4 @@
-
-    {{ link_to("call-queues/modify", '<i class="add circle icon"></i> '~t._('cq_AddNewQueue'), "class": "ui blue button", 'id':'add-new-button') }}
+{{ link_to("call-queues/modify", '<i class="add circle icon"></i> '~t._('cq_AddNewQueue'), "class": "ui blue button", 'id':'add-new-button') }}
 
     {% for queue in queues %}
         {% if loop.first %}
@@ -17,30 +16,30 @@
         {% endif %}
 
 
-        <tr class="queue-row" id="{{ queue.uniqid }}" >
+        <tr class="queue-row" id="{{ queue.uniqid }}">
             <td>{{ queue.name }}</td>
             <td class="center aligned">{{ queue.extension }}</td>
             <td>
                 <small>
-                {% for member in queue.CallQueueMembers %}
-                    {{ member.Extensions.getRepresent() }}<br>
-                {% endfor %}
+                    {% for member in queue.CallQueueMembers %}
+                        {{ member.Extensions.getRepresent() }}<br>
+                    {% endfor %}
                 </small>
             </td>
-             <td>
+            <td>
                 {% if not (queue.description is empty) %}
-                    <div class="ui basic icon button" data-content="{{ queue.description }}" data-position="top right" data-variation="wide">
-                        <i class="file text  icon" ></i>
+                    <div class="ui basic icon button" data-content="{{ queue.description }}" data-position="top right"
+                         data-variation="wide">
+                        <i class="file text  icon"></i>
                     </div>
                 {% endif %}
             </td>
-                {{ partial("partials/tablesbuttons",
-                    [
-                        'id': queue.uniqid,
-                        'edit' : 'call-queues/modify/',
-                        'delete': 'call-queues/delete/'
-                    ])
-                }}
+            {{ partial("partials/tablesbuttons",
+                [
+                    'id': queue.uniqid,
+                    'edit' : 'call-queues/modify/',
+                    'delete': 'call-queues/delete/'
+                ]) }}
         </tr>
 
         {% if loop.last %}

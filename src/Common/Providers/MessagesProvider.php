@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace MikoPBX\Common\Providers;
 
-use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
@@ -21,9 +20,10 @@ use function MikoPBX\Common\Config\appPath;
 
 class MessagesProvider implements ServiceProviderInterface
 {
-
     /**
-     * @inheritDoc
+     * Prepares translation array of texts provider
+     *
+     * @param \Phalcon\Di\DiInterface $di
      */
     public function register(DiInterface $di): void
     {
@@ -84,8 +84,6 @@ class MessagesProvider implements ServiceProviderInterface
                     $langArr = require $path;
                     if (is_array($langArr)) {
                         $extensionsTranslates[] = $langArr;
-                    } else {
-                        $extensionsTranslates[] = $messages; // Поддержка старых модулей
                     }
                 }
                 if ($extensionsTranslates !== [[]]) {
@@ -101,8 +99,6 @@ class MessagesProvider implements ServiceProviderInterface
                         $langArr = require $path;
                         if (is_array($langArr)) {
                             $additionalTranslates[] = $langArr;
-                        } else {
-                            $additionalTranslates[] = $messages; // Поддержка старых модулей
                         }
                     }
                     if ($additionalTranslates !== [[]]) {
