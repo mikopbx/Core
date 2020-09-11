@@ -31,7 +31,9 @@ use MikoPBX\PBXCoreREST\Controllers\{Cdr\GetController as CdrGetController,
     Sysinfo\PostController as SysinfoPostController,
     System\GetController as SystemGetController,
     System\PostController as SystemPostController,
-    Upload\PostController as UploadPostController};
+    Upload\PostController as UploadPostController,
+    Advices\GetController as AdvicesGetController
+};
 use MikoPBX\PBXCoreREST\Middleware\AuthenticationMiddleware;
 use MikoPBX\PBXCoreREST\Middleware\NotFoundMiddleware;
 use MikoPBX\PBXCoreREST\Middleware\ResponseMiddleware;
@@ -130,6 +132,8 @@ class RouterProvider implements ServiceProviderInterface
             [SysinfoPostController::class, 'callAction', '/pbxcore/api/sysinfo/{actionName}', 'post', '/'],
 
             [UploadPostController::class, 'callAction', '/pbxcore/api/upload/{actionName}', 'post', '/'],
+
+            [AdvicesGetController::class, 'callAction', '/pbxcore/api/advices/{actionName}', 'get', '/'],
 
             [
                 ModulesControllerBase::class,

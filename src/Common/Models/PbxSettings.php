@@ -374,4 +374,20 @@ class PbxSettings extends ModelsBase
         }
     }
 
+    /**
+     * Check if this changes influence to translations
+     *
+     * @return bool
+     */
+    public function itHasVisualLanguageSettings(): bool
+    {
+        switch ($this->key) {
+            case 'SSHLanguage':
+            case 'WebAdminLanguage':
+            return true;
+            default:
+                return false;
+        }
+    }
+
 }

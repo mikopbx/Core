@@ -41,7 +41,9 @@ use MikoPBX\Core\System\{BeanstalkClient,
     Configs\NginxConf,
     Configs\SSHConf,
     PBX,
-    System};
+    System,
+    Util};
+use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 
 ini_set('error_reporting', E_ALL);
 ini_set('display_startup_errors', 1);
@@ -80,16 +82,15 @@ class WorkerModelsEvents extends WorkerBase
 
     private const R_VOICEMAIL = 'reloadVoicemail';
 
-    private $last_change;
-    private $modified_tables;
+    private const R_REST_API_WORKER = 'reloadRestAPIWorker';
 
-    /**
-     * @var PbxSettings
-     */
-    private $pbxSettings;
-    private $timeout = 3;
-    private $arrObject;
-    private $PRIORITY_R;
+    private int $last_change;
+    private array $modified_tables;
+
+    private PbxSettings $pbxSettings;
+    private int $timeout = 3;
+    private array $arrObject;
+    private array $PRIORITY_R;
     protected int $maxProc=1;
 
 
@@ -120,6 +121,7 @@ class WorkerModelsEvents extends WorkerBase
             self::R_MANAGERS,
             self::R_CUSTOM_F,
             self::R_VOICEMAIL,
+            self::R_REST_API_WORKER,
         ];
 
         $this->modified_tables = [];
@@ -264,6 +266,9 @@ class WorkerModelsEvents extends WorkerBase
                 }
                 if ($this->pbxSettings->itHasVoiceMailParametersChanges()) {
                     $this->modified_tables[self::R_VOICEMAIL] = true;
+                }
+                if ($this->pbxSettings->itHasVisualLanguageSettings()) {
+                    $this->modified_tables[self::R_REST_API_WORKER] = true;
                 }
                 if ('PBXInternalExtensionLength' === $this->pbxSettings->key) {
                     $this->modified_tables[self::R_DIALPLAN] = true;
@@ -449,6 +454,17 @@ class WorkerModelsEvents extends WorkerBase
         PBX::voicemailReload();
     }
 
+    /**
+     *  Reloads WorkerApiCommands worker
+     */
+    public function reloadRestAPIWorker(): void
+    {
+        Util::restartPHPWorker(WorkerApiCommands::class);
+    }
+
+    /**
+     *
+     */
     public function timeoutHandler()
     {
         // Обязательная обработка.
@@ -459,7 +475,7 @@ class WorkerModelsEvents extends WorkerBase
 }
 
 /**
- * Основной цикл демона.
+ * Start point
  */
 $workerClassname = WorkerModelsEvents::class;
 if (isset($argv) && count($argv) > 1 && $argv[1] === 'start') {

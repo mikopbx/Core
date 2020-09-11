@@ -10,6 +10,7 @@ namespace MikoPBX\PBXCoreREST\Workers;
 
 use MikoPBX\Core\System\{BeanstalkClient, System, Util};
 use MikoPBX\Core\Workers\WorkerBase;
+use MikoPBX\PBXCoreREST\Lib\AdvicesProcessor;
 use MikoPBX\PBXCoreREST\Lib\CdrDBProcessor;
 use MikoPBX\PBXCoreREST\Lib\IAXStackProcessor;
 use MikoPBX\PBXCoreREST\Lib\LogsManagementProcessor;
@@ -87,6 +88,9 @@ class WorkerApiCommands extends WorkerBase
             $processor = $request['processor'];
 
             switch ($processor) {
+                case 'advices':
+                    $res = AdvicesProcessor::advicesCallBack($request);
+                    break;
                 case 'cdr':
                     $res = CdrDBProcessor::cdrCallBack($request);
                     break;
@@ -146,6 +150,7 @@ class WorkerApiCommands extends WorkerBase
         }
 
     }
+
 
     /**
      * Processes modules API requests
