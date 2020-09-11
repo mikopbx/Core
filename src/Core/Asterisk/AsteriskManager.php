@@ -574,10 +574,9 @@ class AsteriskManager
 
         // read the header
         $str = $this->getStringDataFromSocket();
-        if ($str == false) {
+        if ($str === '') {
             // a problem.
             $this->log("Asterisk Manager header not received.");
-
             return false;
         }
 
