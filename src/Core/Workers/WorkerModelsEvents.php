@@ -1,9 +1,9 @@
 <?php
-/**
+/*
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 7 2020
+ * Written by Alexey Portnov, 9 2020
  */
 
 namespace MikoPBX\Core\Workers;
@@ -84,6 +84,8 @@ class WorkerModelsEvents extends WorkerBase
 
     private const R_REST_API_WORKER = 'reloadRestAPIWorker';
 
+    private const R_MOH_RELOAD = 'reloadMoh';
+
     private int $last_change;
     private array $modified_tables;
 
@@ -122,6 +124,7 @@ class WorkerModelsEvents extends WorkerBase
             self::R_CUSTOM_F,
             self::R_VOICEMAIL,
             self::R_REST_API_WORKER,
+            self::R_MOH_RELOAD
         ];
 
         $this->modified_tables = [];
@@ -214,6 +217,9 @@ class WorkerModelsEvents extends WorkerBase
                 break;
             case IvrMenu::class:
                 $this->modified_tables[self::R_DIALPLAN] = true;
+                break;
+            case SoundFiles::class:
+                $this->modified_tables[self::R_MOH_RELOAD] = true;
                 break;
             case IvrMenuActions::class:
                 $this->modified_tables[self::R_DIALPLAN] = true;
@@ -401,6 +407,14 @@ class WorkerModelsEvents extends WorkerBase
     public function reloadIax(): void
     {
         PBX::iaxReload();
+    }
+
+    /**
+     * Reload MOH file list in Asterisk.
+     */
+    public function reloadMoh(): void
+    {
+        PBX::mohReload();
     }
 
     /**

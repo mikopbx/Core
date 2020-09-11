@@ -1,9 +1,9 @@
 <?php
-/**
+/*
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 7 2020
+ * Written by Alexey Portnov, 9 2020
  */
 
 namespace MikoPBX\Core\System;
@@ -277,6 +277,11 @@ class PBX extends Injectable
         Util::mwExec("{$asteriskPath} -rx 'iax2 reload'");
     }
 
+    public static function mohReload(): void
+    {
+        $asteriskPath = Util::which('asterisk');
+        Util::mwExec("{$asteriskPath} -rx 'moh reload'");
+    }
     /**
      * Ожидаем полной загрузки asterisk.
      *
