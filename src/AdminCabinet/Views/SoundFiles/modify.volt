@@ -29,7 +29,8 @@
                             </div>
                         </div>
                     </div>
-                    <button class="ui large button" id="stop-record-button">{{ t._('sf_StopRecordSoundFileButton') }}</button>
+                    <button class="ui large button"
+                            id="stop-record-button">{{ t._('sf_StopRecordSoundFileButton') }}</button>
                 </div>
             </div>
         </div>

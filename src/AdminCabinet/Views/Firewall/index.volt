@@ -13,7 +13,9 @@
             <tr>
                 <th></th>
                 {% for category in rule['category'] %}
-                    <th width="20px" class="firewall-category"><div><span>{{ category['name'] }}</span></div></th>
+                    <th width="20px" class="firewall-category">
+                        <div><span>{{ category['name'] }}</span></div>
+                    </th>
                 {% endfor %}
                 <th></th>
             </tr>
@@ -22,40 +24,42 @@
         {% endif %}
 
         <tr class="rule-row" id="{{ rule['id'] }}">
-            <td>{{ rule['network'] }} - {{ rule['description'] }}{% if rule['id'] is empty %} <br> <span class="features">{{ t._('fw_NeedConfigureRule')}}</span>{% endif %}</td>
+            <td>{{ rule['network'] }} - {{ rule['description'] }}{% if rule['id'] is empty %} <br> <span
+                        class="features">{{ t._('fw_NeedConfigureRule') }}</span>{% endif %}</td>
             {% for category in rule['category'] %}
                 <td class="center aligned marks">
                     <i class="icons">
-                    {% if category['action']=='allow'%}
-                        <i class="icon checkmark green" data-value="on"></i>
-                    {% elseif PBXFirewallEnabled=="1" %}
-                        <i class="icon close red" data-value="off"></i>
-                        <i class="icon corner close red" style="display: none;"></i>
-                    {% elseif PBXFirewallEnabled=="0" %}
-                        <i class="icon checkmark green" data-value="off"></i>
-                        <i class="icon corner close red "></i>
-                    {% endif %}
+                        {% if category['action']=='allow' %}
+                            <i class="icon checkmark green" data-value="on"></i>
+                        {% elseif PBXFirewallEnabled=="1" %}
+                            <i class="icon close red" data-value="off"></i>
+                            <i class="icon corner close red" style="display: none;"></i>
+                        {% elseif PBXFirewallEnabled=="0" %}
+                            <i class="icon checkmark green" data-value="off"></i>
+                            <i class="icon corner close red "></i>
+                        {% endif %}
                     </i>
 
                 </td>
             {% endfor %}
             <td class="right aligned collapsing">
                 <div class="ui small basic icon buttons">
-                {% if rule['id'] is empty %}
-                    <form action="{{ url('firewall/modify/') }}" method="post">
-                        <input type="hidden" name="permit" value="{{ rule['network']}}" />
-                        <input type="hidden" name="description" value="{{ rule['description']}}" />
-                        <button class="ui icon basic mini button" type="submit"><i class="icon edit blue"></i></button>
-                        {{ link_to("firewall/delete/", '<i class="icon trash red"></i> ', "class": "ui disabled button") }}
-                    </form>
-                {% else %}
-                    {{ link_to("firewall/modify/" ~ rule['id'], '<i class="icon edit blue"></i> ', "class": "ui button edit popuped", "data-content": t._('bt_ToolTipEdit')) }}
-                    {% if rule['permanent'] %}
-                        {{ link_to("firewall/delete/" ~ rule['id'], '<i class="icon trash red"></i> ', "class": "ui disabled button") }}
+                    {% if rule['id'] is empty %}
+                        <form action="{{ url('firewall/modify/') }}" method="post">
+                            <input type="hidden" name="permit" value="{{ rule['network'] }}"/>
+                            <input type="hidden" name="description" value="{{ rule['description'] }}"/>
+                            <button class="ui icon basic mini button" type="submit"><i class="icon edit blue"></i>
+                            </button>
+                            {{ link_to("firewall/delete/", '<i class="icon trash red"></i> ', "class": "ui disabled button") }}
+                        </form>
                     {% else %}
-                        {{ link_to("firewall/delete/" ~ rule['id'], '<i class="icon trash red"></i> ', "class": "ui button two-steps-delete popuped",  "data-content":t._('bt_ToolTipDelete')) }}
+                        {{ link_to("firewall/modify/" ~ rule['id'], '<i class="icon edit blue"></i> ', "class": "ui button edit popuped", "data-content": t._('bt_ToolTipEdit')) }}
+                        {% if rule['permanent'] %}
+                            {{ link_to("firewall/delete/" ~ rule['id'], '<i class="icon trash red"></i> ', "class": "ui disabled button") }}
+                        {% else %}
+                            {{ link_to("firewall/delete/" ~ rule['id'], '<i class="icon trash red"></i> ', "class": "ui button two-steps-delete popuped",  "data-content":t._('bt_ToolTipDelete')) }}
+                        {% endif %}
                     {% endif %}
-                {% endif %}
                 </div>
             </td>
         </tr>

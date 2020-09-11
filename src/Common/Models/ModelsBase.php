@@ -8,6 +8,7 @@
 
 namespace MikoPBX\Common\Models;
 
+use MikoPBX\AdminCabinet\Library\Elements;
 use MikoPBX\Core\System\Util;
 use Phalcon\Db\Adapter\AdapterInterface;
 use Phalcon\Db\RawValue;
@@ -39,7 +40,7 @@ use Phalcon\Url;
  * @method  Simple|false getRelated(string $alias, $arguments = null)
  *
  * @property \Phalcon\Mvc\Model\Manager _modelsManager
- * @property \Phalcon\Di di
+ * @property \Phalcon\Di                di
  *
  * @package MikoPBX\Common\Models
  */
@@ -61,7 +62,7 @@ abstract class ModelsBase extends Model
                 'lifetime' => 5, //seconds
             ],
         ];
-        $modules = PbxExtensionModules::find($parameters)->toArray();
+        $modules    = PbxExtensionModules::find($parameters)->toArray();
         foreach ($modules as $module) {
             $moduleModelsDir = "{$modulesDir}/{$module['uniqid']}/Models";
             $results         = glob($moduleModelsDir . '/*.php', GLOB_NOSORT);
@@ -270,7 +271,7 @@ abstract class ModelsBase extends Model
             } else {
                 $idProperty = 'id';
             }
-            $id = $this->$idProperty;
+            $id      = $this->$idProperty;
             $jobData = json_encode(
                 [
                     'model'         => get_class($this),
@@ -328,52 +329,62 @@ abstract class ModelsBase extends Model
      */
     public function getRepresent($needLink = false): string
     {
-        if (property_exists($this, 'id') && $this->id === null) {
-            return $this->t('mo_NewElement');
-        }
-
         switch (static::class) {
             case AsteriskManagerUsers::class:
-                $name = '<i class="asterisk icon"></i> ' . $this->username;
+                $name = '<i class="asterisk icon"></i> ';
+                if (empty($this->id)) {
+                    $name .= $this->t('mo_NewElementAsteriskManagerUsers');
+                } else {
+                    $name .= $this->t('repAsteriskManagerUsers', ['represent' => $this->username]);
+                }
                 break;
             case CallQueueMembers::class:
                 $name = $this->Extensions->getRepresent();
                 break;
             case CallQueues::class:
-                $name = '<i class="users icon"></i> '
-                    . $this->t('mo_CallQueueShort4Dropdown') . ': '
-                    . $this->name;
+                $name = '<i class="users icon"></i> ';
+                if (empty($this->id)) {
+                    $name .= $this->t('mo_NewElementCallQueues');
+                } else {
+                    $name .= $this->t('mo_CallQueueShort4Dropdown') . ': ' . $this->name;
+                }
                 break;
             case ConferenceRooms::class:
-                $name = '<i class="phone volume icon"></i> '
-                    . $this->t('mo_ConferenceRoomsShort4Dropdown') . ': '
-                    . $this->name;
+                $name = '<i class="phone volume icon"></i> ';
+                if (empty($this->id)) {
+                    $name .= $this->t('mo_NewElementConferenceRooms');
+                } else {
+                    $name .= $this->t('mo_ConferenceRoomsShort4Dropdown') . ': ' . $this->name;;
+                }
                 break;
             case CustomFiles::class:
                 $name = "<i class='file icon'></i> {$this->filepath}";
                 break;
             case DialplanApplications::class:
-                $name = '<i class="php icon"></i> '
-                    . $this->t('mo_ApplicationShort4Dropdown') . ': '
-                    . $this->name;
+                $name = '<i class="php icon"></i> ';
+                if (empty($this->id)) {
+                    $name .= $this->t('mo_NewElementDialplanApplications');
+                } else {
+                    $name .= $this->t('mo_ApplicationShort4Dropdown') . ': ' . $this->name;;
+                }
                 break;
             case ExtensionForwardingRights::class:
-                //ExtensionForwardingRights
                 $name = $this->Extensions->getRepresent();
                 break;
             case Extensions::class:
                 // Для внутреннего номера бывают разные представления
-                if ($this->userid > 0) {
-                    if ($this->type === 'EXTERNAL') {
-                        $icon = '<i class="icons"><i class="user outline icon"></i><i class="top right corner alternate mobile icon"></i></i>';
-                    } else {
-                        $icon = '<i class="icons"><i class="user outline icon"></i></i>';
-                    }
+                if ($this->type === 'EXTERNAL') {
+                    $icon = '<i class="icons"><i class="user outline icon"></i><i class="top right corner alternate mobile icon"></i></i>';
+                } else {
+                    $icon = '<i class="icons"><i class="user outline icon"></i></i>';
+                }
+                if (empty($this->id)) {
+                    $name = "{$icon} {$this->t('mo_NewElementExtensions')}";
+                } elseif ($this->userid > 0) {
                     $name = '';
                     if (isset($this->Users->username)) {
                         $name = $this->trimName($this->Users->username);
                     }
-
                     $name = "{$icon} {$name} <{$this->number}>";
                 } else {
                     switch (strtoupper($this->type)) {
@@ -412,16 +423,22 @@ abstract class ModelsBase extends Model
                 $name = $this->category;
                 break;
             case Iax::class:
-                if ($this->disabled > 0) {
-                    $name = "<i class='server icon'></i> {$this->description} ({$this->t( 'mo_Disabled' )})";
+                $name = '<i class="server icon"></i> ';
+                if (empty($this->id)) {
+                    $name .= $this->t('mo_NewElementIax');
+                } elseif ($this->disabled === '1') {
+                    $name .= "{$this->description} ({$this->t( 'mo_Disabled' )})";
                 } else {
-                    $name = '<i class="server icon"></i> ' . $this->description;
+                    $name .= $this->description;
                 }
                 break;
             case IvrMenu::class:
-                $name = '<i class="sitemap icon"></i> '
-                    . $this->t('mo_IVRMenuShort4Dropdown') . ': '
-                    . $this->name;
+                $name = '<i class="sitemap icon"></i> ';
+                if (empty($this->id)) {
+                    $name .= $this->t('mo_NewElementIvrMenu');
+                } else {
+                    $name .= $this->t('mo_IVRMenuShort4Dropdown') . ': ' . $this->name;
+                }
                 break;
             case IvrMenuActions::class:
                 $name = $this->IvrMenu->name;
@@ -430,24 +447,45 @@ abstract class ModelsBase extends Model
                 $name = $this->name;
                 break;
             case IncomingRoutingTable::class:
-                $name = $this->t('mo_RightNumber', ['id' => $this->id]);
+                $name = '<i class="map signs icon"></i> ';
+                if (empty($this->id)) {
+                    $name .= $this->t('mo_NewElementIncomingRoutingTable');
+                } elseif ( ! empty($this->note)) {
+                    $name .= $this->t('repIncomingRoutingTable', ['represent' => $this->note]);
+                } else {
+                    $name .= $this->t('repIncomingRoutingTableNumber', ['represent' => $this->id]);
+                }
                 break;
             case LanInterfaces::class:
                 // LanInterfaces
                 $name = $this->name;
                 break;
             case NetworkFilters::class:
-                $name = '<i class="globe icon"></i> ' . $this->description . '('
-                    . $this->t('fw_PermitNetwork') . ': ' . $this->permit
-                    . ')';
+                $name = '<i class="globe icon"></i> ';
+                if (empty($this->id)) {
+                    $name .= $this->t('mo_NewElementNetworkFilters');
+                } else {
+                    $name .= $this->description . '('
+                        . $this->t('fw_PermitNetwork') . ': ' . $this->permit
+                        . ')';
+                }
                 break;
             case OutgoingRoutingTable::class:
-                $name = $this->rulename;
+                $name = '<i class="random icon"></i> ';
+                if (empty($this->id)) {
+                    $name .= $this->t('mo_NewElementOutgoingRoutingTable');
+                } elseif ( ! empty($this->rulename)) {
+                    $name .= $this->t('repOutgoingRoutingTable', ['represent' => $this->rulename]);
+                } else {
+                    $name .= $this->t('repOutgoingRoutingTableNumber', ['represent' => $this->id]);
+                }
                 break;
             case OutWorkTimes::class:
                 $name = '<i class="time icon"></i> ';
-                if ( ! empty($this->description)) {
-                    $name .= $this->description;
+                if (empty($this->id)) {
+                    $name .= $this->t('mo_NewElementOutWorkTimes');
+                } elseif ( ! empty($this->description)) {
+                    $name .= $this->t('repOutWorkTimes', ['represent' => $this->description]);
                 } else {
                     $represent = '';
                     if (is_numeric($this->date_from)) {
@@ -484,25 +522,27 @@ abstract class ModelsBase extends Model
                     . $this->name;
                 break;
             case Sip::class:
-                if ($this->Extensions) { // Это внутренний номер?
-                    $name = $this->Extensions->getRepresent();
-                } elseif ($this->Providers) { // Это провайдер
-                    if ($this->disabled > 0) {
-                        $name = "<i class='server icon'></i> {$this->description} ({$this->t( 'mo_Disabled' )})";
-                    } else {
-                        $name = '<i class="server icon"></i> '
-                            . $this->description;
-                    }
-                } else { // Что это?
-                    $name = $this->description;
+                $name = '<i class="server icon"></i> ';
+                if (empty($this->id)) {
+                    $name .= $this->t('mo_NewElementSip');
+                } elseif ($this->disabled === '1') {
+                    $name .= "{$this->description} ({$this->t( 'mo_Disabled' )})";
+                } else {
+                    $name .= $this->description;
                 }
+
                 break;
             case Users::class:
                 $name = '<i class="user outline icon"></i> ' . $this->username;
                 break;
             case SoundFiles::class:
-                $name = '<i class="file audio outline icon"></i> '
-                    . $this->name;
+                $name = '<i class="file audio outline icon"></i> ';
+                if (empty($this->id)) {
+                    $name .= $this->t('mo_NewElementSoundFiles');
+                } else {
+                    $name .= $this->t('repSoundFiles', ['represent' => $this->name]);
+                }
+
                 break;
             default:
                 $name = 'Unknown';
@@ -553,34 +593,34 @@ abstract class ModelsBase extends Model
      */
     public function getWebInterfaceLink(): string
     {
-        $url  = new Url();
+        $url = new Url();
 
         $baseUri = $this->di->getShared('config')->path('adminApplication.baseUri');
-        $link = '#';
+        $link    = '#';
         switch (static::class) {
             case AsteriskManagerUsers::class:
-                $link = $url->get('asterisk-managers/modify/' . $this->id,null,null, $baseUri);
+                $link = $url->get('asterisk-managers/modify/' . $this->id, null, null, $baseUri);
                 break;
             case CallQueueMembers::class:
-                $link = $url->get('call-queues/modify/' . $this->CallQueues->uniqid,null,null, $baseUri);
+                $link = $url->get('call-queues/modify/' . $this->CallQueues->uniqid, null, null, $baseUri);
                 break;
             case CallQueues::class:
-                $link = $url->get('call-queues/modify/' . $this->uniqid,null,null, $baseUri);
+                $link = $url->get('call-queues/modify/' . $this->uniqid, null, null, $baseUri);
                 break;
             case ConferenceRooms::class:
-                $link = $url->get('conference-rooms/modify/' . $this->uniqid,null,null, $baseUri);
+                $link = $url->get('conference-rooms/modify/' . $this->uniqid, null, null, $baseUri);
                 break;
             case CustomFiles::class:
-                $link = $url->get('custom-files/modify/' . $this->id,null,null, $baseUri);
+                $link = $url->get('custom-files/modify/' . $this->id, null, null, $baseUri);
                 break;
             case DialplanApplications::class:
-                $link = $url->get('dialplan-applications/modify/' . $this->uniqid,null,null, $baseUri);
+                $link = $url->get('dialplan-applications/modify/' . $this->uniqid, null, null, $baseUri);
                 break;
             case ExtensionForwardingRights::class:
 
                 break;
             case Extensions::class:
-                $link = $url->get('extensions/modify/' . $this->id,null,null, $baseUri);
+                $link = $url->get('extensions/modify/' . $this->id, null, null, $baseUri);
                 break;
             case ExternalPhones::class:
                 if ($this->Extensions->is_general_user_number === "1") {
@@ -591,7 +631,7 @@ abstract class ModelsBase extends Model
                         ],
                     ];
                     $needExtension = Extensions::findFirst($parameters);
-                    $link          = $url->get('extensions/modify/' . $needExtension->id,null,null, $baseUri);
+                    $link          = $url->get('extensions/modify/' . $needExtension->id, null, null, $baseUri);
                 } else {
                     $link = '#';//TODO сделать если будет раздел для допоплнинельных номеров пользователя
                 }
@@ -600,56 +640,56 @@ abstract class ModelsBase extends Model
                 $link = '#';//TODO сделать если будет fail2ban
                 break;
             case FirewallRules::class:
-                $link = $url->get('firewall/modify/' . $this->NetworkFilters->id,null,null, $baseUri);
+                $link = $url->get('firewall/modify/' . $this->NetworkFilters->id, null, null, $baseUri);
                 break;
             case Iax::class:
-                $link = $url->get('providers/modifyiax/' . $this->Providers->id,null,null, $baseUri);
+                $link = $url->get('providers/modifyiax/' . $this->Providers->id, null, null, $baseUri);
                 break;
             case IvrMenu::class:
-                $link = $url->get('ivr-menu/modify/' . $this->uniqid,null,null, $baseUri);
+                $link = $url->get('ivr-menu/modify/' . $this->uniqid, null, null, $baseUri);
                 break;
             case IvrMenuActions::class:
-                $link = $url->get('ivr-menu/modify/' . $this->IvrMenu->uniqid,null,null, $baseUri);
+                $link = $url->get('ivr-menu/modify/' . $this->IvrMenu->uniqid, null, null, $baseUri);
                 break;
             case Codecs::class:
                 break;
             case IncomingRoutingTable::class:
-                $link = $url->get('incoming-routes/modify/' . $this->id,null,null, $baseUri);
+                $link = $url->get('incoming-routes/modify/' . $this->id, null, null, $baseUri);
                 break;
             case LanInterfaces::class:
-                $link = $url->get('network/index/',null,null, $baseUri);
+                $link = $url->get('network/index/', null, null, $baseUri);
                 break;
             case NetworkFilters::class:
-                $link = $url->get('firewall/modify/' . $this->id,null,null, $baseUri);
+                $link = $url->get('firewall/modify/' . $this->id, null, null, $baseUri);
                 break;
             case OutgoingRoutingTable::class:
-                $link = $url->get('outbound-routes/modify/' . $this->id,null,null, $baseUri);
+                $link = $url->get('outbound-routes/modify/' . $this->id, null, null, $baseUri);
                 break;
             case OutWorkTimes::class:
-                $link = $url->get('out-off-work-time/modify/' . $this->id,null,null, $baseUri);
+                $link = $url->get('out-off-work-time/modify/' . $this->id, null, null, $baseUri);
                 break;
             case Providers::class:
                 if ($this->type === "IAX") {
-                    $link = $url->get('providers/modifyiax/' . $this->uniqid,null,null, $baseUri);
+                    $link = $url->get('providers/modifyiax/' . $this->uniqid, null, null, $baseUri);
                 } else {
-                    $link = $url->get('providers/modifysip/' . $this->uniqid,null,null, $baseUri);
+                    $link = $url->get('providers/modifysip/' . $this->uniqid, null, null, $baseUri);
                 }
                 break;
             case PbxSettings::class:
                 $link = $url->get('general-settings/index');
                 break;
             case PbxExtensionModules::class:
-                $link = $url->get(Text::uncamelize($this->uniqid),null,null, $baseUri);
+                $link = $url->get(Text::uncamelize($this->uniqid), null, null, $baseUri);
                 break;
             case Sip::class:
                 if ($this->Extensions) { // Это внутренний номер?
                     if ($this->Extensions->is_general_user_number === "1") {
-                        $link = $url->get('extensions/modify/' . $this->Extensions->id,null,null, $baseUri);
+                        $link = $url->get('extensions/modify/' . $this->Extensions->id, null, null, $baseUri);
                     } else {
                         $link = '#';//TODO сделать если будет раздел для допоплнинельных номеров пользователя
                     }
                 } elseif ($this->Providers) { // Это провайдер
-                    $link = $url->get('providers/modifysip/' . $this->Providers->id,null,null, $baseUri);
+                    $link = $url->get('providers/modifysip/' . $this->Providers->id, null, null, $baseUri);
                 }
                 break;
             case Users::class:
@@ -660,10 +700,10 @@ abstract class ModelsBase extends Model
                     ],
                 ];
                 $needExtension = Extensions::findFirst($parameters);
-                $link          = $url->get('extensions/modify/' . $needExtension->id,null,null, $baseUri);
+                $link          = $url->get('extensions/modify/' . $needExtension->id, null, null, $baseUri);
                 break;
             case SoundFiles::class:
-                $link = $url->get('sound-files/modify/' . $this->id,null,null, $baseUri);
+                $link = $url->get('sound-files/modify/' . $this->id, null, null, $baseUri);
                 break;
             default:
         }
@@ -683,11 +723,13 @@ abstract class ModelsBase extends Model
 
     /**
      * Returns Identity field name for current model
+     *
      * @return string
      */
-    public function getIdentityFieldName():string
+    public function getIdentityFieldName(): string
     {
         $metaData = $this->di->get('modelsMetadata');
+
         return $metaData->getIdentityField($this);
     }
 }

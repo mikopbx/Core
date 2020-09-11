@@ -13,6 +13,7 @@ const customFile = {
 	$typeSelectDropDown: $('#custom-file-form .type-select'),
 	$appCode: $('#application-code'),
 	$appCodeFromServer: $('#application-code-readonly'),
+	$dirrtyField: $('#dirrty'),
 	editor: '',
 	viewer: '',
 	validateRules: {
@@ -39,7 +40,7 @@ const customFile = {
 		customFile.getFileContentFromServer();
 	},
 	hideShowCode() {
-		const aceHeight = window.innerHeight-500;
+		const aceHeight = window.innerHeight-475;
 		const rowsCount = Math.round(aceHeight/16.3);
 		$(window).load(function() {
 			$('.application-code-readonly').css('min-height', `${aceHeight}px`);
@@ -61,6 +62,10 @@ const customFile = {
 				customFile.viewer.navigateFileEnd();
 				customFile.editor.setValue(customFile.$formObj.form('get value', 'content'));
 				customFile.$appCode.show();
+				customFile.editor.getSession().on('change', () => {
+					customFile.$dirrtyField.val(Math.random());
+					customFile.$dirrtyField.trigger('change');
+				});
 				break;
 			case 'override':
 				customFile.editor.navigateFileStart();
@@ -71,6 +76,10 @@ const customFile = {
 					maxLines: rowsCount,
 				});
 				customFile.editor.resize()
+				customFile.editor.getSession().on('change', () => {
+					customFile.$dirrtyField.val(Math.random());
+					customFile.$dirrtyField.trigger('change');
+				});
 				break;
 			default:
 				break;
@@ -130,7 +139,6 @@ const customFile = {
 		Form.validateRules = customFile.validateRules;
 		Form.cbBeforeSendForm = customFile.cbBeforeSendForm;
 		Form.cbAfterSendForm = customFile.cbAfterSendForm;
-		Form.enableDirrity = false;
 		Form.initialize();
 	},
 };

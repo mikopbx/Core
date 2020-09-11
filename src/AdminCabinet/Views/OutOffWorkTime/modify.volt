@@ -2,67 +2,67 @@
 {{ form.render('id') }}
 <div class="two fields">
     <div class="field">
-    <div class="field">
-        <label>{{ t._('tf_DateDaysFrom') }}</label>
-        <div class="two fields">
+        <div class="field">
+            <label>{{ t._('tf_DateDaysFrom') }}</label>
+            <div class="two fields">
 
-            <div class=" field calendar-select" id="range-days-start">
-                <div class="ui input left icon calendar">
-                    <i class="calendar icon"></i>
-                    {{ form.render('date_from') }}
+                <div class=" field calendar-select" id="range-days-start">
+                    <div class="ui input left icon calendar">
+                        <i class="calendar icon"></i>
+                        {{ form.render('date_from') }}
+                    </div>
+                </div>
+
+                <div class=" field calendar-select" id="range-days-end">
+                    <div class="ui input left icon calendar">
+                        <i class="calendar icon"></i>
+                        {{ form.render('date_to') }}
+                    </div>
+                </div>
+                <div class="item">
+                    <div class="ui large icon button" id="erase-dates"><i class="eraser icon"></i></div>
                 </div>
             </div>
+        </div>
+        <div class="field">
+            <label>{{ t._('tf_WeekDaysFrom') }}</label>
+            <div class="two fields">
+                <div class="field">
 
-            <div class=" field calendar-select" id="range-days-end">
-                <div class="ui input left icon calendar">
-                    <i class="calendar icon"></i>
-                    {{ form.render('date_to') }}
+                    {{ form.render('weekday_from') }}
+                </div>
+                <div class="field">
+                    {{ form.render('weekday_to') }}
+                </div>
+                <div class="item">
+                    <div class="ui large icon button" id="erase-weekdays"><i class="eraser icon"></i></div>
                 </div>
             </div>
-            <div class="item">
-                <div class="ui large icon button" id="erase-dates"><i class="eraser icon"></i></div>
+        </div>
+        <div class="field">
+
+            <label>{{ t._('tf_TimePeriodFrom') }}</label>
+            <div class="two fields">
+
+                <div class=" field time-select" id="range-time-start">
+                    <div class="ui input left icon calendar">
+                        <i class="time icon"></i>
+                        {{ form.render('time_from') }}
+                    </div>
+                </div>
+
+                <div class=" field time-select" id="range-time-end">
+                    <div class="ui input left icon calendar">
+                        <i class="time icon"></i>
+                        {{ form.render('time_to') }}
+                    </div>
+                </div>
+                <div class="item">
+                    <div class="ui large icon button" id="erase-timeperiod"><i class="eraser icon"></i></div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="field">
-        <label>{{ t._('tf_WeekDaysFrom') }}</label>
-        <div class="two fields">
-            <div class="field">
-
-                {{ form.render('weekday_from') }}
-            </div>
-            <div class="field">
-                {{ form.render('weekday_to') }}
-            </div>
-            <div class="item">
-                <div class="ui large icon button" id="erase-weekdays"><i class="eraser icon"></i></div>
-            </div>
-        </div>
-    </div>
-    <div class="field">
-
-        <label>{{ t._('tf_TimePeriodFrom') }}</label>
-        <div class="two fields">
-
-            <div class=" field time-select" id="range-time-start">
-                <div class="ui input left icon calendar">
-                    <i class="time icon"></i>
-                    {{ form.render('time_from') }}
-                </div>
-            </div>
-
-            <div class=" field time-select" id="range-time-end">
-                <div class="ui input left icon calendar">
-                    <i class="time icon"></i>
-                    {{ form.render('time_to') }}
-                </div>
-            </div>
-            <div class="item">
-                <div class="ui large icon button" id="erase-timeperiod"><i class="eraser icon"></i></div>
-            </div>
-        </div>
-    </div>
-</div>
 </div>
 <div class="two fields">
     <div class="field">
@@ -80,7 +80,8 @@
                 {{ form.render('audio_message_id') }}
             </div>
             <div class="one wide field">
-                <div class="ui basic icon button large action-playback-button" data-value="audio_message_id"><i class="play icon"></i></div>
+                <div class="ui basic icon button large action-playback-button" data-value="audio_message_id"><i
+                            class="play icon"></i></div>
             </div>
         </div>
     </div>
