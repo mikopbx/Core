@@ -150,7 +150,7 @@ class AsteriskManager
             if ( ! is_resource($this->socket)) {
                 return false;
             }
-            $buffer = $this->getDataFromSocket(true);
+            $buffer = $this->getStringDataFromSocket();
             while (!empty($buffer)) {
                 $a = strpos($buffer, ':');
                 if ($a) {
@@ -159,7 +159,7 @@ class AsteriskManager
                     }
                     $parameters[substr($buffer, 0, $a)] = substr($buffer, $a + 2);
                 }
-                $buffer = $this->getDataFromSocket(true);
+                $buffer = $this->getStringDataFromSocket();
             }
 
             if ($type === '' && count($this->Ping()) === 0) {
@@ -264,10 +264,10 @@ class AsteriskManager
                         if ($event_text === 'Follows') {
                             // A follows response means there is a miltiline field that follows.
                             $parameters['data'] = '';
-                            $buff               = $this->getDataFromSocket(true);
+                            $buff               = $this->getStringDataFromSocket();
                             while (substr($buff, 0, 6) !== '--END ') {
                                 $parameters['data'] .= $buff;
-                                $buff               = $this->getDataFromSocket(true);
+                                $buff               = $this->getStringDataFromSocket();
                             }
                         }
                     } elseif ('Queue status will follow' === $event_text) {
@@ -311,7 +311,7 @@ class AsteriskManager
                     // store parameter in $parameters
                     $parameters[substr($buffer, 0, $a)] = $event_text;
                 }
-                $buffer = $this->getDataFromSocket(true);
+                $buffer = $this->getStringDataFromSocket();
             }
 
             // Process response
@@ -336,10 +336,9 @@ class AsteriskManager
 
     /**
      * Читает данные из сокета. Если возникает ошибка возвращает ее.
-     * @param  bool $dataOnly
-     * @return array | string
+     * @return array
      */
-    private function getDataFromSocket($dataOnly = false) {
+    private function getDataFromSocket() {
         $response = [];
         if(!is_resource($this->socket)){
             $response['error'] = 'Socket not init.';
@@ -357,10 +356,17 @@ class AsteriskManager
         }catch (\Exception $e){
             $response['error'] = $e->getMessage();
         }
-        if($dataOnly){
-            $response = trim($response['data']??'');
-        }
+
         return $response;
+    }
+
+    /**
+     * Читает данные из сокета
+     * @return string
+     */
+    private function getStringDataFromSocket() {
+        $response = $this->getDataFromSocket();
+        return $response['data'] ?? '';
     }
 
     /**
@@ -396,7 +402,7 @@ class AsteriskManager
         $m                  = [];
         do {
             $value = '';
-            $buff  = $this->getDataFromSocket(true).$value;
+            $buff  = $this->getStringDataFromSocket().$value;
             $a_pos = strpos($buff, ':');
             if ( ! $a_pos) {
                 if (count($m) > 0) {
@@ -493,7 +499,7 @@ class AsteriskManager
         do {
             $type       = '';
             $parameters = [];
-            $buffer = $this->getDataFromSocket(true);
+            $buffer = $this->getStringDataFromSocket();
             while ($buffer !== '') {
                 $pos = strpos($buffer, ':');
                 if ($pos) {
@@ -502,7 +508,7 @@ class AsteriskManager
                     }
                     $parameters[substr($buffer, 0, $pos)] = substr($buffer, $pos + 2);
                 }
-                $buffer = $this->getDataFromSocket(true);
+                $buffer = $this->getStringDataFromSocket();
             }
             if ($type === '' && count($this->Ping()) === 0) {
                 $timeout = $allow_timeout;
@@ -521,9 +527,9 @@ class AsteriskManager
     /**
      * Connect to Asterisk
      *
-     * @param string $server
-     * @param string $username
-     * @param string $secret
+     * @param ?string $server
+     * @param ?string $username
+     * @param ?string $secret
      * @param string $events
      *
      * @return bool true on success
@@ -567,7 +573,7 @@ class AsteriskManager
         stream_set_timeout($this->socket, 1, 0);
 
         // read the header
-        $str = $this->getDataFromSocket(true);
+        $str = $this->getStringDataFromSocket();
         if ($str == false) {
             // a problem.
             $this->log("Asterisk Manager header not received.");
@@ -677,7 +683,7 @@ class AsteriskManager
      * Execute Command
      *
      * @param string $command
-     * @param string $actionid message matching variable
+     * @param ?string $actionid message matching variable
      *
      * @return array
      * @example examples/sip_show_peer.php Get information about a sip peer
@@ -699,13 +705,13 @@ class AsteriskManager
      *
      * @link http://www.voip-info.org/wiki-Asterisk+Manager+API+Action+Events
      *
-     * @param string $eventmask is either 'on', 'off', or 'system,call,log'
+     * @param string $eventMask is either 'on', 'off', or 'system,call,log'
      *
      * @return array
      */
-    public function Events($eventmask)
+    public function Events($eventMask)
     {
-        return $this->sendRequest('Events', ['EventMask' => $eventmask]);
+        return $this->sendRequest('Events', ['EventMask' => $eventMask]);
     }
 
     /**
@@ -715,7 +721,7 @@ class AsteriskManager
      *
      * @param string $exten    Extension to check state on
      * @param string $context  Context for extension
-     * @param string $actionid message matching variable
+     * @param ?string $actionid message matching variable
      *
      * @return array
      */
