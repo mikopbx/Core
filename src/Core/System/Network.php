@@ -194,11 +194,13 @@ class Network extends Injectable
             '}';
 
         $pdnsdConfFile  = '/etc/pdnsd.conf';
-        $savedConf      = file_get_contents($pdnsdConfFile);
+        $savedConf = '';
+        if(fileExists($pdnsdConfFile)){
+            $savedConf = file_get_contents($pdnsdConfFile);
+        }
         if($savedConf != $conf){
             file_put_contents($pdnsdConfFile, $conf);
         }
-
         $pdnsdPath = Util::which('pdnsd');
         $pid       = Util::getPidOfProcess($pdnsdPath);
         if (!empty($pid) && $savedConf === $conf) {
