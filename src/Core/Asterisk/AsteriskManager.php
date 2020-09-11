@@ -242,13 +242,13 @@ class AsteriskManager
             }
 
             $response = $this->getDataFromSocket();
-            if(isset($data['error'])) {
+            if(isset($response['error'])) {
                 usleep(500000);
                 if($this->connectDefault()){
                     $response = $this->getDataFromSocket();
                 }
             }
-            if(isset($data['error'])) {
+            if(isset($response['error'])) {
                 return $parameters;
             }
             $buffer = $response['data']??'';
@@ -345,7 +345,7 @@ class AsteriskManager
             return $response;
         }
         try {
-            $resultFgets = fgets($this->socket, 4096);
+            $resultFgets = @fgets($this->socket, 4096);
             if($resultFgets !== false){
                 $buffer = trim($resultFgets);
                 $response['data']  = $buffer;
@@ -353,7 +353,7 @@ class AsteriskManager
                 $response['error'] = 'Read data error.';
             }
 
-        }catch (Exception $e){
+        }catch (\Exception $e){
             $response['error'] = $e->getMessage();
         }
         return $response;
@@ -374,7 +374,7 @@ class AsteriskManager
             if($resultWrite === false){
                 $result = false;
             }
-        }catch (Exception $e){
+        }catch (\Exception $e){
             $result = false;
         }
         return $result;
@@ -392,7 +392,7 @@ class AsteriskManager
         $m                  = [];
         do {
             $value = '';
-            $buff  = fgets($this->socket, 4096).$value;
+            $buff  = @fgets($this->socket, 4096).$value;
             $a_pos = strpos($buff, ':');
             if ( ! $a_pos) {
                 if (count($m) > 0) {
@@ -502,7 +502,7 @@ class AsteriskManager
                     }
                     $parameters[substr($buffer, 0, $pos)] = substr($buffer, $pos + 2);
                 }
-                $buffer = trim(fgets($this->socket, 4096));
+                $buffer = trim(@fgets($this->socket, 4096));
             }
             if ($type === '' && count($this->Ping()) === 0) {
                 $timeout = $allow_timeout;
@@ -567,7 +567,7 @@ class AsteriskManager
         stream_set_timeout($this->socket, 1, 0);
 
         // read the header
-        $str = fgets($this->socket);
+        $str = @fgets($this->socket);
         if ($str == false) {
             // a problem.
             $this->log("Asterisk Manager header not received.");
