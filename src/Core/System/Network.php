@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 8 2020
+ * Written by Alexey Portnov, 9 2020
  */
 
 namespace MikoPBX\Core\System;
@@ -163,7 +163,7 @@ class Network extends Injectable
      *
      * @param $named_dns
      */
-    private function generatePdnsdConfig($named_dns): void
+    public function generatePdnsdConfig($named_dns): void
     {
         $tempDir   = $this->di->getShared('config')->path('core.tempDir');
         $cache_dir = $tempDir . '/pdnsd/cache';
@@ -192,11 +192,26 @@ class Network extends Injectable
             '	interval=10m;' . "\n" .
             '	purge_cache=off;' . "\n" .
             '}';
-        file_put_contents('/etc/pdnsd.conf', $conf);
+
+        $pdnsdConfFile  = '/etc/pdnsd.conf';
+        $savedConf      = file_get_contents($pdnsdConfFile);
+        if($savedConf != $conf){
+            file_put_contents($pdnsdConfFile, $conf);
+        }
 
         $pdnsdPath = Util::which('pdnsd');
         $pid       = Util::getPidOfProcess($pdnsdPath);
-        if ( ! empty($pid)) {
+        if (!empty($pid) && $savedConf === $conf) {
+            // Выполним дополнительную проверку, работает ли сервер.
+            $resultResolve = gethostbynamel('lic.miko.ru');
+            if($resultResolve !== false){
+                // Ничего делать не нужно. Конфиг не изменился. Рестарт не требуется.
+                return;
+            }
+            // Выполним reload сервера DNS.
+        }
+
+        if (!empty($pid)) {
             // Завершаем процесс.
             $busyboxPath = Util::which('busybox');
             Util::mwExec("{$busyboxPath} kill '$pid'");
