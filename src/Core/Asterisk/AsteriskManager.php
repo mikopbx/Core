@@ -81,7 +81,7 @@ class AsteriskManager
     /**
      * Constructor
      *
-     * @param string $config    is the name of the config file to parse or a parent agi from which to read the config
+     * @param ?string $config    is the name of the config file to parse or a parent agi from which to read the config
      * @param array  $optconfig is an array of configuration vars and vals, stuffed into $this->config['asmanager']
      */
     public function __construct($config = null, $optconfig = [])
@@ -136,7 +136,7 @@ class AsteriskManager
         if ( ! is_resource($this->socket)) {
             return [];
         }
-        @fwrite($this->socket, $req);
+        $this->sendDataToSocket($req);
 
         // Замеряем время.
         $time_start = $this->microtimeFloat();
@@ -150,7 +150,7 @@ class AsteriskManager
             if ( ! is_resource($this->socket)) {
                 return false;
             }
-            $buffer = trim(@fgets($this->socket, 4096));
+            $buffer = $this->getDataFromSocket(true);
             while (!empty($buffer)) {
                 $a = strpos($buffer, ':');
                 if ($a) {
@@ -159,7 +159,7 @@ class AsteriskManager
                     }
                     $parameters[substr($buffer, 0, $a)] = substr($buffer, $a + 2);
                 }
-                $buffer = trim(fgets($this->socket, 4096));
+                $buffer = $this->getDataFromSocket(true);
             }
 
             if ($type === '' && count($this->Ping()) === 0) {
@@ -237,7 +237,7 @@ class AsteriskManager
         do {
             $type       = null;
             $parameters = [];
-            if ( !is_resource($this->socket) && ! $this->connectDefault()) {
+            if ( !is_resource($this->socket) && !$this->connectDefault()) {
                 return $parameters;
             }
 
@@ -264,10 +264,10 @@ class AsteriskManager
                         if ($event_text === 'Follows') {
                             // A follows response means there is a miltiline field that follows.
                             $parameters['data'] = '';
-                            $buff               = fgets($this->socket, 4096);
+                            $buff               = $this->getDataFromSocket(true);
                             while (substr($buff, 0, 6) !== '--END ') {
                                 $parameters['data'] .= $buff;
-                                $buff               = fgets($this->socket, 4096);
+                                $buff               = $this->getDataFromSocket(true);
                             }
                         }
                     } elseif ('Queue status will follow' === $event_text) {
@@ -311,7 +311,7 @@ class AsteriskManager
                     // store parameter in $parameters
                     $parameters[substr($buffer, 0, $a)] = $event_text;
                 }
-                $buffer = trim(fgets($this->socket, 4096));
+                $buffer = $this->getDataFromSocket(true);
             }
 
             // Process response
@@ -336,9 +336,10 @@ class AsteriskManager
 
     /**
      * Читает данные из сокета. Если возникает ошибка возвращает ее.
-     * @return array
+     * @param  bool $dataOnly
+     * @return array | string
      */
-    private function getDataFromSocket() : array{
+    private function getDataFromSocket($dataOnly = false) {
         $response = [];
         if(!is_resource($this->socket)){
             $response['error'] = 'Socket not init.';
@@ -355,6 +356,9 @@ class AsteriskManager
 
         }catch (\Exception $e){
             $response['error'] = $e->getMessage();
+        }
+        if($dataOnly){
+            $response = trim($response['data']??'');
         }
         return $response;
     }
@@ -392,7 +396,7 @@ class AsteriskManager
         $m                  = [];
         do {
             $value = '';
-            $buff  = @fgets($this->socket, 4096).$value;
+            $buff  = $this->getDataFromSocket(true).$value;
             $a_pos = strpos($buff, ':');
             if ( ! $a_pos) {
                 if (count($m) > 0) {
@@ -489,11 +493,7 @@ class AsteriskManager
         do {
             $type       = '';
             $parameters = [];
-            try {
-                $buffer = trim(@fgets($this->socket, 4096));
-            } catch (\Exception $e) {
-                return [];
-            }
+            $buffer = $this->getDataFromSocket(true);
             while ($buffer !== '') {
                 $pos = strpos($buffer, ':');
                 if ($pos) {
@@ -502,7 +502,7 @@ class AsteriskManager
                     }
                     $parameters[substr($buffer, 0, $pos)] = substr($buffer, $pos + 2);
                 }
-                $buffer = trim(@fgets($this->socket, 4096));
+                $buffer = $this->getDataFromSocket(true);
             }
             if ($type === '' && count($this->Ping()) === 0) {
                 $timeout = $allow_timeout;
@@ -567,7 +567,7 @@ class AsteriskManager
         stream_set_timeout($this->socket, 1, 0);
 
         // read the header
-        $str = @fgets($this->socket);
+        $str = $this->getDataFromSocket(true);
         if ($str == false) {
             // a problem.
             $this->log("Asterisk Manager header not received.");
@@ -606,7 +606,7 @@ class AsteriskManager
         if ( ! is_resource($this->socket)) {
             return [];
         }
-        @fwrite($this->socket, $req);
+        $this->sendDataToSocket($req);
 
         return $this->waitResponse();
     }
