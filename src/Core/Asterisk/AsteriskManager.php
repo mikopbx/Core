@@ -28,6 +28,9 @@ class AsteriskManager
      */
     public $config;
 
+    /** @var string  */
+    private string $listenEvents;
+
     /**
      * Socket
      *
@@ -194,12 +197,28 @@ class AsteriskManager
             $req .= "$var: $val\r\n";
         }
         $req .= "\r\n";
-        if ( ! is_resource($this->socket)) {
+        if ( ! is_resource($this->socket) && !$this->connectDefault()) {
             return [];
         }
-        @fwrite($this->socket, $req);
+        $result = $this->sendDataToSocket($req);
+        if(!$result) {
+            usleep(500000);
+            if($this->connectDefault()){
+                $result = $this->sendDataToSocket($req);
+            }
+        }
 
-        return $this->waitResponse(true);
+        $response = [];
+        if($result){
+            $response = $this->waitResponse(true);
+        }
+
+        return $response;
+    }
+
+    private function connectDefault():bool{
+        $this->connect(null, null, null, $this->listenEvents);
+        return $this->loggedIn();
     }
 
     /**
@@ -218,10 +237,22 @@ class AsteriskManager
         do {
             $type       = null;
             $parameters = [];
-            if ( ! is_resource($this->socket)) {
+            if ( !is_resource($this->socket) && ! $this->connectDefault()) {
                 return $parameters;
             }
-            $buffer = trim(@fgets($this->socket, 4096));
+
+            $response = $this->getDataFromSocket();
+            if(isset($data['error'])) {
+                usleep(500000);
+                if($this->connectDefault()){
+                    $response = $this->getDataFromSocket();
+                }
+            }
+            if(isset($data['error'])) {
+                return $parameters;
+            }
+            $buffer = $response['data']??'';
+
             while ($buffer !== '') {
                 $a = strpos($buffer, ':');
                 if ($a) {
@@ -301,6 +332,52 @@ class AsteriskManager
         } while ($type !== 'response' && ! $timeout);
 
         return $parameters;
+    }
+
+    /**
+     * Читает данные из сокета. Если возникает ошибка возвращает ее.
+     * @return array
+     */
+    private function getDataFromSocket() : array{
+        $response = [];
+        if(!is_resource($this->socket)){
+            $response['error'] = 'Socket not init.';
+            return $response;
+        }
+        try {
+            $resultFgets = fgets($this->socket, 4096);
+            if($resultFgets !== false){
+                $buffer = trim($resultFgets);
+                $response['data']  = $buffer;
+            }else{
+                $response['error'] = 'Read data error.';
+            }
+
+        }catch (Exception $e){
+            $response['error'] = $e->getMessage();
+        }
+        return $response;
+    }
+
+    /**
+     * Отправляет данные в сокет.
+     * @param $req
+     * @return bool
+     */
+    private function sendDataToSocket($req) : bool{
+        if(!is_resource($this->socket)){
+            return false;
+        }
+        $result = true;
+        try {
+            $resultWrite = @fwrite($this->socket, $req);
+            if($resultWrite === false){
+                $result = false;
+            }
+        }catch (Exception $e){
+            $result = false;
+        }
+        return $result;
     }
 
     private function waitResponseGetSubData(&$parameters, $end_string = '', $event_as_array = true): void
@@ -455,6 +532,7 @@ class AsteriskManager
      */
     public function connect($server = null, $username = null, $secret = null, $events = 'on')
     {
+        $this->listenEvents = $events;
         // use config if not specified
         if (is_null($server)) {
             $server = $this->config['asmanager']['server'];
@@ -483,7 +561,6 @@ class AsteriskManager
         $this->socket = @fsockopen($this->server, $this->port, $errno, $errstr, $timeout);
         if ($this->socket == false) {
             $this->log("Unable to connect to manager {$this->server}:{$this->port} ($errno): $errstr");
-
             return false;
         }
         // PT1C;
