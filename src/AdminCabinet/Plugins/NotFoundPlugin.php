@@ -2,7 +2,7 @@
 
 namespace MikoPBX\AdminCabinet\Plugins;
 
-use Exception;
+use Error;
 use Phalcon\Di\Injectable;
 use Phalcon\Events\Event;
 use Phalcon\Mvc\Dispatcher as MvcDispatcher;
@@ -21,11 +21,11 @@ class NotFoundPlugin extends Injectable
      *
      * @param Event         $event
      * @param MvcDispatcher $dispatcher
-     * @param Exception     $exception
+     * @param Error     $exception
      *
      * @return bool
      */
-    public function beforeException(Event $event, MvcDispatcher $dispatcher, Exception $exception): bool
+    public function beforeException(Event $event, MvcDispatcher $dispatcher, Error $exception): bool
     {
         if ($exception instanceof DispatcherException) {
             switch ($exception->getCode()) {

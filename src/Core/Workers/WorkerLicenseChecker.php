@@ -8,7 +8,7 @@
 
 namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
-use Exception;
+use Error;
 use MikoPBX\Core\System\Util;
 
 
@@ -36,7 +36,7 @@ if (isset($argv) && count($argv) > 1) {
     try {
         $worker = new $workerClassname();
         $worker->start($argv);
-    } catch (Exception $e) {
+    } catch (Error $e) {
         global $errorLogger;
         $errorLogger->captureException($e);
         Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage());

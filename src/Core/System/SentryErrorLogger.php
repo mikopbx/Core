@@ -85,9 +85,9 @@ class SentryErrorLogger
     /**
      * Process errors and send it to sentry cloud
      *
-     * @param Exception $e
+     * @param \Error $e
      */
-    public function captureException(Exception $e): void
+    public function captureException(\Error $e): void
     {
         Sentry\captureException($e);
     }

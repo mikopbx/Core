@@ -8,11 +8,10 @@
 
 namespace MikoPBX\Core\System;
 
-use Exception;
+use Error;
 use MikoPBX\Common\Models\{LanInterfaces};
 use MikoPBX\Core\System\Configs\IptablesConf;
 use MikoPBX\Core\Utilities\SubnetCalculator;
-use Phalcon\Di;
 use Phalcon\Di\Injectable;
 
 /**
@@ -319,7 +318,7 @@ class Network extends Injectable
                 try {
                     $calc_subnet = new SubnetCalculator($ipaddr, $subnet);
                     $subnet      = $calc_subnet->getSubnetMask();
-                } catch (Exception $e) {
+                } catch (Error $e) {
                     echo "Caught exception: $ipaddr $subnet", $e->getMessage(), "\n";
                     continue;
                 }
@@ -446,7 +445,7 @@ class Network extends Injectable
                 try {
                     $calc_subnet = new SubnetCalculator($ipaddr, $subnet);
                     $subnet      = $calc_subnet->getSubnetMask();
-                } catch (Exception $e) {
+                } catch (Error $e) {
                     echo "Caught exception: $ipaddr $subnet", $e->getMessage(), "\n";
                     continue;
                 }

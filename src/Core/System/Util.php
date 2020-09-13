@@ -217,7 +217,7 @@ class Util
         try {
             $reflection = new ReflectionClass($className);
             $filename   = $reflection->getFileName();
-        } catch (Exception $exception) {
+        } catch (\ReflectionException $exception) {
             self::sysLogMsg('Util', 'Error ' . $exception->getMessage());
         }
 

@@ -940,7 +940,7 @@ class Storage extends Di\Injectable
         try {
             $data       = json_decode($jsonString, true, 512, JSON_THROW_ON_ERROR);
         } catch (\JsonException $exception ){
-            die("{$staticSettingsFileOrig} has broken format");
+            throw new \Error("{$staticSettingsFileOrig} has broken format");
         }
         foreach ($data as $rootKey => $rootEntry) {
             foreach ($rootEntry as $nestedKey => $entry) {

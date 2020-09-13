@@ -168,7 +168,7 @@ class WorkerSafeScriptsCore extends WorkerBase
                     "WARNING: Service {$workerClassName} processed more than {$time_elapsed_secs} seconds"
                 );
             }
-        } catch (\Exception $e) {
+        } catch (\Error $e) {
             global $errorLogger;
             $errorLogger->captureException($e);
             Util::sysLogMsg($workerClassName . '_EXCEPTION', $e->getMessage());
@@ -241,7 +241,7 @@ class WorkerSafeScriptsCore extends WorkerBase
                     "WARNING: Service {$workerClassName} processed more than {$time_elapsed_secs} seconds"
                 );
             }
-        } catch (\Exception $e) {
+        } catch (\Error $e) {
             global $errorLogger;
             $errorLogger->captureException($e);
             Util::sysLogMsg($workerClassName . '_EXCEPTION', $e->getMessage());
@@ -262,7 +262,7 @@ try {
             $worker->restart();
         }
     }
-} catch (\Exception $e) {
+} catch (\Error $e) {
     global $errorLogger;
     $errorLogger->captureException($e);
     Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage());

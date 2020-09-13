@@ -10,7 +10,7 @@ namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
 
 use MikoPBX\Core\System\{BeanstalkClient, Util};
-use Exception as ExceptionAlias;
+use Error;
 use MikoPBX\Core\Asterisk\AsteriskManager;
 
 class WorkerAmiListener extends WorkerBase
@@ -94,7 +94,7 @@ class WorkerAmiListener extends WorkerBase
                     // Проверка
                     break;
                 }
-            } catch (ExceptionAlias $e) {
+            } catch (Error $e) {
                 $this->client = new BeanstalkClient(WorkerCallEvents::class);
                 $error        = $e->getMessage();
             }
@@ -117,7 +117,7 @@ if (isset($argv) && count($argv) > 1 && $argv[1] === 'start') {
     try {
         $worker = new $workerClassname();
         $worker->start($argv);
-    } catch (ExceptionAlias $e) {
+    } catch (Error $e) {
         global $errorLogger;
         $errorLogger->captureException($e);
         Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage());

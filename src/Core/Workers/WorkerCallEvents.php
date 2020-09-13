@@ -10,7 +10,7 @@ namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
 
 use MikoPBX\Common\Models\{CallDetailRecords, CallDetailRecordsTmp};
-use Exception as ExceptionAlias;
+use Error;
 use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\System\{BeanstalkClient, MikoPBXConfig, Util};
 use Phalcon\Di;
@@ -280,7 +280,7 @@ class WorkerCallEvents extends WorkerBase
      *
      * @param $data
      *
-     * @throws \Exception
+     * @throws \Error
      */
     public static function Action_hangup_chan($data): void
     {
@@ -1069,7 +1069,7 @@ class WorkerCallEvents extends WorkerBase
      * @param array $data
      *
      * @return bool
-     * @throws \Exception
+     * @throws \Error
      */
     public static function insertDataToDbM($data): bool
     {
@@ -1159,7 +1159,7 @@ class WorkerCallEvents extends WorkerBase
                 $res = CallDetailRecords::find($filter);
             }
             $res_data = json_encode($res->toArray());
-        } catch (ExceptionAlias $e) {
+        } catch (Error $e) {
             $res_data = '[]';
         }
 
@@ -1172,7 +1172,9 @@ class WorkerCallEvents extends WorkerBase
             try {
                 $res      = CallDetailRecords::find($filter['add_pack_query']);
                 $res_data = json_encode($res->toArray(), JSON_THROW_ON_ERROR);
-            } catch (ExceptionAlias $e) {
+            } catch (Error $e) {
+                $res_data = '[]';
+            } catch (\JsonException $e) {
                 $res_data = '[]';
             }
         }
@@ -1205,7 +1207,7 @@ if ($action === 'start') {
         /** @var WorkerCallEvents $worker */
         $worker = new $workerClassname();
         $worker->start($argv);
-    } catch (ExceptionAlias $e) {
+    } catch (Error $e) {
         global $errorLogger;
         $errorLogger->captureException($e);
         Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage());
