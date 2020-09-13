@@ -11,7 +11,7 @@ use MikoPBX\AdminCabinet\Config\RegisterDIServices;
 use Phalcon\Di\FactoryDefault;
 use Phalcon\Mvc\Application;
 use MikoPBX\Core\System\SentryErrorLogger;
-use Phalcon\Exception;
+use Error;
 use MikoPBX\AdminCabinet\Utilities\Debug\PhpError;
 use Whoops\Handler\PrettyPageHandler;
 use Whoops\Run;
@@ -45,7 +45,7 @@ if (class_exists(PrettyPageHandler::class)){
 try {
     $application = new Application($di);
 	echo $application->handle($_SERVER['REQUEST_URI'])->getContent();
-} catch (Exception $e) {
+} catch (Error $e) {
 	$errorLogger->captureException($e);
 	PhpError::exceptionHandler($e);
 	echo $e->getMessage();

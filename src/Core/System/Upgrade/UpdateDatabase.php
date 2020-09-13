@@ -67,7 +67,7 @@ class UpdateDatabase extends Di\Injectable
             try {
                 $this->createUpdateDbTableByAnnotations($moduleModelClass);
             } catch (Error $exception){
-                Util::echoWithSyslog('Errors within update table '.$className.' '.$e->getMessage());
+                Util::echoWithSyslog('Errors within update table '.$className.' '.$exception->getMessage());
             }
         }
         return $result;
