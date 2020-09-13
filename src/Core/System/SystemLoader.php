@@ -42,6 +42,9 @@ class SystemLoader extends Di\Injectable
         $dbUpdater = new UpdateDatabase();
         $dbUpdater->updateDatabaseStructure();
 
+        Util::echoWithSyslog(' - Create modules links and folders ... '. PHP_EOL);
+        $storage->createWorkDirsAfterDBUpgrade();
+
         Util::echoWithSyslog(' - Update configs and applications ... '. PHP_EOL);
         $confUpdate = new UpdateSystemConfig();
         $confUpdate->updateConfigs();

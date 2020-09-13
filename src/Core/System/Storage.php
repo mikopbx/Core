@@ -930,7 +930,6 @@ class Storage extends Di\Injectable
      *
      * @param string $mount_point
      *
-     * @throws \JsonException
      */
     private function updateConfigWithNewMountPoint(string $mount_point): void
     {
@@ -938,7 +937,11 @@ class Storage extends Di\Injectable
         $staticSettingsFileOrig = appPath('config/mikopbx-settings.json');
 
         $jsonString = file_get_contents($staticSettingsFileOrig);
-        $data       = json_decode($jsonString, true, 512, JSON_THROW_ON_ERROR);
+        try {
+            $data       = json_decode($jsonString, true, 512, JSON_THROW_ON_ERROR);
+        } catch (\JsonException $exception ){
+            die("{$staticSettingsFileOrig} has broken format");
+        }
         foreach ($data as $rootKey => $rootEntry) {
             foreach ($rootEntry as $nestedKey => $entry) {
                 if (stripos($entry, '/mountpoint') !== false) {
@@ -946,6 +949,7 @@ class Storage extends Di\Injectable
                 }
             }
         }
+
         $newJsonString = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
         file_put_contents($staticSettingsFile, $newJsonString);
 
@@ -1067,10 +1071,21 @@ class Storage extends Di\Injectable
             Util::createUpdateSymlink($file, $newFilename);
         }
         $this->clearCacheFiles();
-        $this->createModulesCacheSymlinks();
-        $this->applyFolderRights();
+        Util::mwExec("{$mountPath} -o remount,ro /offload 2> /dev/null");
+
     }
 
+    /**
+     * Create system folders and links after upgrade and connect config DB
+     */
+    public function createWorkDirsAfterDBUpgrade():void
+    {
+        $mountPath = Util::which('mount');
+        Util::mwExec("{$mountPath} -o remount,rw /offload 2> /dev/null");
+        $this->createModulesCacheSymlinks();
+        $this->applyFolderRights();
+        Util::mwExec("{$mountPath} -o remount,ro /offload 2> /dev/null");
+    }
 
     /**
      * Creates JS, CSS, IMG cache folders and links
