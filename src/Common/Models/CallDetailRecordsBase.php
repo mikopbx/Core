@@ -12,6 +12,7 @@ namespace MikoPBX\Common\Models;
  * Class CallDetailRecordsBase
  *
  * @package MikoPBX\Common\Models
+ *
  */
 abstract class CallDetailRecordsBase extends ModelsBase
 {
@@ -139,8 +140,5 @@ abstract class CallDetailRecordsBase extends ModelsBase
      */
     public ?string $dst_call_id = '';
 
-    public function getIndexColumn():array {
-        return ['UNIQUEID', 'src_chan', 'dst_chan', 'linkedid', 'start', 'src_num', 'dst_num'];
-    }
 
 }

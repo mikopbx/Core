@@ -12,6 +12,12 @@ namespace MikoPBX\Common\Models;
  * Class CallEventsLogs
  *
  * @package MikoPBX\Common\Models
+ *
+ * @Indexes(
+ *     [name='eventtime', columns=['eventtime'], type=''],
+ *     [name='app', columns=['app'], type=''],
+ *     [name='linkedid', columns=['linkedid'], type='']
+ * )
  */
 class CallEventsLogs extends ModelsBase
 {
@@ -52,7 +58,4 @@ class CallEventsLogs extends ModelsBase
         $this->setConnectionService('dbEventsLog');
     }
 
-    public function getIndexColumn(): array{
-        return ['eventtime', 'linkedid', 'app'];
-    }
 }

@@ -712,16 +712,6 @@ abstract class ModelsBase extends Model
     }
 
     /**
-     * Возвращает массив полей, по которым следует добавить индекс в DB.
-     *
-     * @return array
-     */
-    public function getIndexColumn(): array
-    {
-        return [];
-    }
-
-    /**
      * Returns Identity field name for current model
      *
      * @return string
