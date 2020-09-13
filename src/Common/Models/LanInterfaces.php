@@ -94,17 +94,17 @@ class LanInterfaces extends ModelsBase
     public ?string $secondarydns = '';
 
     /**
-     * @Column(type="integer", nullable=true)
+     * @Column(type="string", length=1, nullable=false)
      */
     public ?string $dhcp = '1';
 
     /**
-     * @Column(type="integer", nullable=true)
+     * @Column(type="string", length=1, nullable=false)
      */
     public ?string $internet = '0';
 
     /**
-     * @Column(type="integer", nullable=true)
+     * @Column(type="string", length=1, nullable=false)
      */
     public ?string $disabled = '0';
 

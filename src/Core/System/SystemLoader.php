@@ -44,10 +44,12 @@ class SystemLoader extends Di\Injectable
 
         Util::echoWithSyslog(' - Create modules links and folders ... '. PHP_EOL);
         $storage->createWorkDirsAfterDBUpgrade();
+        Util::echoGreenDone();
 
         Util::echoWithSyslog(' - Update configs and applications ... '. PHP_EOL);
         $confUpdate = new UpdateSystemConfig();
         $confUpdate->updateConfigs();
+        Util::echoGreenDone();
 
         Util::echoWithSyslog(' - Load kernel modules ... ');
         $system = new System();

@@ -41,7 +41,7 @@ class Codecs extends ModelsBase
     public ?string $priority='1';
 
     /**
-     * @Column(type="integer", nullable=true, default="0")
+     * @Column(type="string", length=1, nullable=false)
      */
     public ?string $disabled='0';
 

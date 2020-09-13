@@ -65,7 +65,7 @@ class PbxExtensionModules extends ModelsBase
     public ?string $description = '';
 
     /**
-     * @Column(type="integer", nullable=true)
+     * @Column(type="string", length=1, nullable=false)
      */
     public ?string $disabled = '1';
 

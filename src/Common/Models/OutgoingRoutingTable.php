@@ -53,7 +53,7 @@ class OutgoingRoutingTable extends ModelsBase
     /**
      * @Column(type="integer", nullable=true)
      */
-    public ?string  $trimfrombegin = '0';
+    public ?string $trimfrombegin = '0';
 
     /**
      * @Column(type="string", nullable=true)

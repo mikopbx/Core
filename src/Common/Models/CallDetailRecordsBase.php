@@ -111,7 +111,7 @@ abstract class CallDetailRecordsBase extends ModelsBase
     public ?string $transfer = '';
 
     /**
-     * @Column(type="integer", nullable=true)
+     * @Column(type="string", length=1, nullable=true)
      */
     public ?string $is_app = '';
 
@@ -126,7 +126,7 @@ abstract class CallDetailRecordsBase extends ModelsBase
     public ?string $billsec = '';
 
     /**
-     * @Column(type="integer", nullable=true)
+     * @Column(type="string", length=1, nullable=true)
      */
     public ?string $work_completed = '';
 

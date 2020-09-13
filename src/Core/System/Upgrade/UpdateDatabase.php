@@ -127,16 +127,20 @@ class UpdateDatabase extends Di\Injectable
 
         // Set data types
         $propertiesAnnotations = $modelAnnotation->getPropertiesAnnotations();
-        $attributeTypes        = $metaData->getDataTypes($model);
-        foreach ($attributeTypes as $attribute => $type) {
-            $table_structure[$attribute]['type'] = $type;
-            // Try to find size of field
-            if (array_key_exists($attribute, $propertiesAnnotations)) {
-                $propertyDescription = $propertiesAnnotations[$attribute];
-                if ($propertyDescription->has('Column')
-                    && $propertyDescription->get('Column')->hasArgument('length')
-                ) {
-                    $table_structure[$attribute]['size'] = $propertyDescription->get('Column')->getArgument('length');
+        if ($propertiesAnnotations !== false) {
+            $attributeTypes = $metaData->getDataTypes($model);
+            foreach ($attributeTypes as $attribute => $type) {
+                $table_structure[$attribute]['type'] = $type;
+                // Try to find size of field
+                if (array_key_exists($attribute, $propertiesAnnotations)) {
+                    $propertyDescription = $propertiesAnnotations[$attribute];
+                    if ($propertyDescription->has('Column')
+                        && $propertyDescription->get('Column')->hasArgument('length')
+                    ) {
+                        $table_structure[$attribute]['size'] = $propertyDescription->get('Column')->getArgument(
+                            'length'
+                        );
+                    }
                 }
             }
         }
@@ -204,10 +208,11 @@ class UpdateDatabase extends Di\Injectable
 
         // Create additional indexes
         $modelClassAnnotation = $modelAnnotation->getClassAnnotations();
-        if ($modelClassAnnotation->has('Indexes')) {
+        if ($modelClassAnnotation !== false
+            && $modelClassAnnotation->has('Indexes')) {
             $additionalIndexes = $modelClassAnnotation->get('Indexes')->getArguments();
             foreach ($additionalIndexes as $index) {
-                $indexName = "i_{$tableName}_{$index['name']}";
+                $indexName           = "i_{$tableName}_{$index['name']}";
                 $indexes[$indexName] = new Index($indexName, $index['columns'], $index['type']);
             }
         }
@@ -328,6 +333,12 @@ DROP TABLE  {$tableName}";
                         continue;
                     }
 
+                    // Description for "length" is integer, but table structure store it as string
+                    if ($compared_setting === 'getSize'
+                        && (string)$oldField->$compared_setting() === (string)$newField->$compared_setting()) {
+                        continue;
+                    }
+
                     return true; // find different columns
                 }
             }
@@ -339,21 +350,21 @@ DROP TABLE  {$tableName}";
 
     /**
      * @param string $tableName
-     * @param mixed $connectionService DependencyInjection connection service used to read data
-     * @param array $indexes
+     * @param mixed  $connectionService DependencyInjection connection service used to read data
+     * @param array  $indexes
      *
      * @return bool
      */
-    private function updateIndexes(string $tableName, $connectionService, array $indexes):bool
+    private function updateIndexes(string $tableName, $connectionService, array $indexes): bool
     {
-        $result = true;
+        $result         = true;
         $currentIndexes = $connectionService->describeIndexes($tableName);
 
         // Drop not exist indexes
-        foreach ($currentIndexes as $indexName => $currentIndex){
-           if(stripos($indexName, 'sqlite_autoindex')===false
-           && !array_key_exists($indexName, $indexes)
-           ) {
+        foreach ($currentIndexes as $indexName => $currentIndex) {
+            if (stripos($indexName, 'sqlite_autoindex') === false
+                && ! array_key_exists($indexName, $indexes)
+            ) {
                 Util::echoWithSyslog(" - UpdateDatabase: Delete index: {$indexName} ");
                 $result = $result + $connectionService->dropIndex($tableName, '', $indexName);
                 Util::echoGreenDone();
@@ -361,10 +372,10 @@ DROP TABLE  {$tableName}";
         }
 
         // Add/update exist indexes
-        foreach ($indexes as $indexName =>$describedIndex){
-            if (array_key_exists($indexName, $currentIndexes)){
+        foreach ($indexes as $indexName => $describedIndex) {
+            if (array_key_exists($indexName, $currentIndexes)) {
                 $currentIndex = $currentIndexes[$indexName];
-                if ($describedIndex->getColumns() !== $currentIndex->getColumns()){
+                if ($describedIndex->getColumns() !== $currentIndex->getColumns()) {
                     Util::echoWithSyslog(" - UpdateDatabase: Update index: {$indexName} ");
                     $result = $result + $connectionService->dropIndex($tableName, '', $indexName);
                     $result = $result + $connectionService->addIndex($tableName, '', $describedIndex);

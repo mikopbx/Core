@@ -9,6 +9,7 @@
 namespace MikoPBX\PBXCoreREST\Workers;
 
 use MikoPBX\Core\System\{BeanstalkClient, System, Util};
+use Error;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\PBXCoreREST\Lib\AdvicesProcessor;
 use MikoPBX\PBXCoreREST\Lib\CdrDBProcessor;
@@ -124,7 +125,7 @@ class WorkerApiCommands extends WorkerBase
                     $res->success    = false;
                     $res->messages[] = "Unknown processor - {$processor} in prepareAnswer";
             }
-        } catch (\Exception $exception) {
+        } catch (Error $exception) {
             $res             = new PBXApiResult();
             $res->processor = __METHOD__;
             $res->messages[] = 'Exception on WorkerApiCommands - ' . $exception->getMessage();

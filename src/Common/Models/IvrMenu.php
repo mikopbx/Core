@@ -75,9 +75,9 @@ class IvrMenu extends ModelsBase
     /**
      * Разрешить донабор любого внутреннего номера
      *
-     * @Column(type="integer", nullable=true)
+     *  @Column(type="string", length=1, nullable=true, default="0")
      */
-    public ?string $allow_enter_any_internal_extension = '';
+    public ?string $allow_enter_any_internal_extension = '0';
 
 
     /**
