@@ -256,8 +256,10 @@ class FilesManagementProcessor extends Injectable
             return $res;
         }
 
-        if ($filename !== $n_filename && $filename !== $n_filename_mp3) {
-            @unlink($filename);
+        if (file_exists($filename)
+            && $filename !== $n_filename
+            && $filename !== $n_filename_mp3) {
+            unlink($filename);
         }
 
         $res->success = true;

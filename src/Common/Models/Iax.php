@@ -50,7 +50,7 @@ class Iax extends ModelsBase
     public ?string $host = '';
 
     /**
-     * @Column(type="integer", nullable=true)
+     * @Column(type="string", length=1, nullable=true)
      */
     public ?string $qualify = '';
 

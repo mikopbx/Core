@@ -23,7 +23,7 @@ use Phalcon\Forms\Form;
  */
 class CustomFilesEditForm extends Form
 {
-    public function initialize($entity = null, $options = null): void
+    public function initialize($entity = null): void
     {
         foreach ($entity as $key => $value) {
             switch ($key) {

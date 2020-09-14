@@ -21,7 +21,7 @@ use Phalcon\Forms\Form;
 class LicensingActivateCouponForm extends Form
 {
 
-    public function initialize($entity = null, $options = null): void
+    public function initialize(): void
     {
         $this->add(new Text('coupon'));
     }

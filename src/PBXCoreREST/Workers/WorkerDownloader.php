@@ -34,22 +34,21 @@ class WorkerDownloader extends WorkerBase
         if (file_exists($argv[1])) {
             $this->settings = json_decode(file_get_contents($argv[1]), true);
         } else {
-            echo 'Download error... Settings file does not exist';
+            Util::sysLogMsg("WorkerDownloader", 'Wrong settings');
             return;
         }
         $this->old_memory_limit = ini_get('memory_limit');
-        register_shutdown_function([$this, 'shutdownHandler']);
         ini_set('memory_limit', '300M');
 
-        $temp_dir             = dirname($this->settings['res_file']);
-        $this->progress_file  = $temp_dir . '/progress';
-        $this->error_file     = $temp_dir . '/error';
+        $temp_dir            = dirname($this->settings['res_file']);
+        $this->progress_file = $temp_dir . '/progress';
+        $this->error_file    = $temp_dir . '/error';
         Util::mwMkdir($temp_dir);
 
         if ($this->getFile()) {
             $this->action();
         } else {
-            echo 'Download error... ';
+            Util::sysLogMsg("WorkerDownloader", 'Download error...');
         }
     }
 
@@ -70,7 +69,9 @@ class WorkerDownloader extends WorkerBase
 
         $fp = fopen($this->settings['res_file'], 'w');
         $ch = curl_init();
-
+        if ($ch !== false) {
+            return false;
+        }
         curl_setopt($ch, CURLOPT_FILE, $fp);
         curl_setopt($ch, CURLOPT_URL, $this->settings['url']);
         curl_setopt($ch, CURLOPT_PROGRESSFUNCTION, [$this, 'progress']);
@@ -93,7 +94,7 @@ class WorkerDownloader extends WorkerBase
      *
      * @param string $url
      *
-     * @return int || void
+     * @return int
      */
     private function remoteFileSize(string $url): int
     {
@@ -148,32 +149,13 @@ class WorkerDownloader extends WorkerBase
     }
 
     /**
-     * Обработка фатальных ошибок скрипта.
-     */
-    public function shutdownHandler(): void
-    {
-        if (@is_array($e = @error_get_last())) {
-            if (file_exists($this->error_file)) {
-                file_put_contents(
-                    $this->error_file,
-                    json_encode(error_get_last(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
-                );
-            } else {
-                Util::sysLogMsg('FileWorkerDownloader', json_encode(error_get_last()));
-            }
-        }
-    }
-
-    /**
      * Обработка прогресса скачивания файла.
      *
      * @param $resource
      * @param $download_size
      * @param $downloaded
-     * @param $upload_size
-     * @param $uploaded
      */
-    public function progress($resource, $download_size, $downloaded, $upload_size, $uploaded): void
+    public function progress($resource, $download_size, $downloaded): void
     {
         if ($download_size === 0) {
             return;
@@ -202,7 +184,7 @@ if (isset($argv) && count($argv) > 1) {
     try {
         $worker = new $workerClassname();
         $worker->start($argv);
-    } catch (\Exception $e) {
+    } catch (\Error $e) {
         global $errorLogger;
         $errorLogger->captureException($e);
         Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage());

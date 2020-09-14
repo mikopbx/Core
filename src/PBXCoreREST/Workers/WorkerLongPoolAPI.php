@@ -81,11 +81,14 @@ class WorkerLongPoolAPI extends WorkerBase
      *
      * @param string $url
      *
-     * @return string
+     * @return array
      */
-    private function getData(string $url)
+    private function getData(string $url):array
     {
         $ch = curl_init($url);
+        if ($ch===false){
+            return [];
+        }
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_TIMEOUT, 1);
         $resultrequest = curl_exec($ch);
@@ -94,6 +97,9 @@ class WorkerLongPoolAPI extends WorkerBase
         return json_decode($resultrequest, true);
     }
 
+    /**
+     *
+     */
     private function setChannelsData(): void
     {
         /** @var \MikoPBX\Common\Models\LongPollSubscribe $sub */
@@ -213,7 +219,7 @@ if (isset($argv) && count($argv) > 1) {
     try {
         $worker = new $workerClassname();
         $worker->start($argv);
-    } catch (\Exception $e) {
+    } catch (\Error $e) {
         global $errorLogger;
         $errorLogger->captureException($e);
         Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage());

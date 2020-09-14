@@ -17,19 +17,15 @@ class WorkerMergeUploadedFile extends WorkerBase
 {
     public function start($argv): void
     {
-        if (count($argv) <= 1) {
-            // Не переданы аргументы.
-            exit(2);
-        }
         $settings_file = trim($argv[1]);
         if ( ! file_exists($settings_file)) {
-            // Не найлен файл с настройками.
-            exit(3);
+            Util::sysLogMsg("WorkerMergeUploadedFile", 'File with settings not found');
+            return;
         }
         $file_data = json_decode(file_get_contents($settings_file), true);
         if ( ! isset($file_data['action'])) {
-            // Не корректный формат файла с настройками.
-            exit(4);
+            Util::sysLogMsg("WorkerMergeUploadedFile", 'Wrong json settings');
+            return;
         }
 
         if ($file_data['action'] === 'merge') {
@@ -66,7 +62,7 @@ if (isset($argv) && count($argv) > 1) {
     try {
         $worker = new $workerClassname();
         $worker->start($argv);
-    } catch (\Exception $e) {
+    } catch (\Error $e) {
         global $errorLogger;
         $errorLogger->captureException($e);
         Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage());

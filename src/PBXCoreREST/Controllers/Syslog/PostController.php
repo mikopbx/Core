@@ -32,7 +32,6 @@ class PostController extends BaseController
 {
     public function callAction($actionName): void
     {
-        $data = null;
         switch ($actionName) {
             case 'getLogFromFile':
                 $this->getLogFromFileAction();

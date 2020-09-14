@@ -16,13 +16,14 @@ use Pheanstalk\Pheanstalk;
 class BeanstalkClient extends Injectable
 {
     private $queue;
-    private $connected;
-    private $job_options;
+    private bool $connected = false;
+    private array $job_options;
     private $subscriptions = [];
-    private $tube;
-    private $reconnectsCount = 0;
+    private string $tube;
+    private int $reconnectsCount = 0;
     private $message;
     private $timeout_handler;
+    private $error_handler;
 
 
     /**
@@ -32,8 +33,7 @@ class BeanstalkClient extends Injectable
      */
     public function __construct($tube = 'default')
     {
-        $tube              = str_replace("\\", '-', $tube);
-        $this->tube        = $tube;
+        $this->tube        = str_replace("\\", '-', $tube);;
         $this->job_options = ['priority' => 250, 'delay' => 0, 'ttr' => 3600];
         $this->reconnect();
         // foreach ($this->subscriptions as $key => $subscription) {
@@ -64,7 +64,7 @@ class BeanstalkClient extends Injectable
      *
      * @param      $job_data
      * @param int  $timeout
-     * @param null $priority
+     * @param ?int $priority
      *
      * @return bool|mixed
      */
@@ -104,7 +104,7 @@ class BeanstalkClient extends Injectable
      *
      * @param       $job_data
      * @param       $priority
-     * @param null  $tube
+     * @param ?string  $tube
      *
      * @return \Pheanstalk\Job
      */
@@ -220,12 +220,12 @@ class BeanstalkClient extends Injectable
     }
 
     /**
-     * TODO // Обработка ошибок.
      *
-     * @param $err_handler
+     * @param $handler
      */
-    public function setErrorHandler($err_handler): void
+    public function setErrorHandler($handler): void
     {
+        $this->error_handler = $handler;
     }
 
     /**

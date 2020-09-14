@@ -24,7 +24,7 @@ use Phalcon\Forms\Form;
  */
 class IncomingRouteEditForm extends Form
 {
-    public function initialize($entity = null, $options = null): void
+    public function initialize(/** @scrutinizer ignore-unused */ $entity = null, $options = null): void
     {
         // ID
         $this->add(new Hidden('id'));

@@ -23,7 +23,7 @@ class WorkerRemoveOldRecords extends WorkerBase
         if (file_exists($filename)) {
             $mount_point = file_get_contents($filename);
         } else {
-            exit(0);
+            return;
         }
         $out = [];
         $busyboxPath = Util::which('busybox');
@@ -39,7 +39,7 @@ class WorkerRemoveOldRecords extends WorkerBase
         $free_space = $s->getFreeSpace($dev);
         if ($free_space > $MIN_SPACE) {
             // Очистка диска не требуется.
-            exit(0);
+            return;
         }
         $monitor_dir = Storage::getMonitorDir();
         $out         = [];

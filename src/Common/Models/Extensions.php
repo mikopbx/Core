@@ -67,7 +67,7 @@ class Extensions extends ModelsBase
      *
      * @Column(type="integer", nullable=true)
      */
-    public ?string $userid = '';
+    public ?int $userid = null;
 
     /**
      * Признак отображения в телефонной книге, и при выборе в списках

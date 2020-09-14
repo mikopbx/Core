@@ -68,8 +68,8 @@ class ModulesControllerBase extends BaseController
                     $this->response->setContentLength($size);
                     $this->response->sendHeaders();
                     fpassthru($fp);
+                    fclose($fp);
                 }
-                fclose($fp);
                 if (isset($response['need_delete']) && $response['need_delete'] == true) {
                     unlink($response['filename']);
                 }

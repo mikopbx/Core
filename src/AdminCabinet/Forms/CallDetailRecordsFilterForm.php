@@ -21,7 +21,7 @@ use Phalcon\Forms\Form;
 class CallDetailRecordsFilterForm extends Form
 {
 
-    public function initialize($entity = null, $options = null): void
+    public function initialize(/** @scrutinizer ignore-unused */ $entity = null, $options = null): void
     {
         $this->add(
             new Text(

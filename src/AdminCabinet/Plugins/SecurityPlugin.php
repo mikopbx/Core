@@ -29,7 +29,7 @@ class SecurityPlugin extends Injectable
      *
      * @return bool
      */
-    public function beforeDispatch(Event $event, Dispatcher $dispatcher):bool
+    public function beforeDispatch(/** @scrutinizer ignore-unused */ Event $event, Dispatcher $dispatcher):bool
     {
         if ($_SERVER['REMOTE_ADDR'] === '127.0.0.1') {
             return true;

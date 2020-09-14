@@ -98,7 +98,7 @@ class Fail2BanConf extends Injectable
         if ($res !== null) {
             $ban_time = $res->bantime;
         } else {
-            $ban_time = '43800';
+            $ban_time = 43800;
         }
         $path_db = self::FAIL2BAN_DB_PATH;
         $db      = new SQLite3($path_db);
@@ -162,21 +162,22 @@ class Fail2BanConf extends Injectable
         $create_link = false;
 
         // Символическая ссылка на базу данных.
-        if (@filetype($res_file) !== 'link') {
-            @unlink($res_file);
-            $create_link = true;
-        } elseif (readlink($res_file) === "$old_dir_db/$filename") {
-            @unlink($res_file);
-            $create_link = true;
-            if (file_exists("$old_dir_db/$filename")) {
-                // Перемещаем файл в новое местоположение.
-                $mvPath = Util::which('mv');
-                Util::mwExec("{$mvPath} '$old_dir_db/$filename' '$dir_db/$filename'");
+        if (file_exists($res_file)){
+            if (filetype($res_file) !== 'link') {
+                unlink($res_file);
+                $create_link = true;
+            } elseif (readlink($res_file) === "$old_dir_db/$filename") {
+                unlink($res_file);
+                $create_link = true;
+                if (file_exists("$old_dir_db/$filename")) {
+                    // Перемещаем файл в новое местоположение.
+                    $mvPath = Util::which('mv');
+                    Util::mwExec("{$mvPath} '$old_dir_db/$filename' '$dir_db/$filename'");
+                }
             }
         }
-
         if ($create_link === true) {
-            @symlink("$dir_db/$filename", $res_file);
+            Util::createUpdateSymlink("$dir_db/$filename", $res_file);
         }
 
         return $res_file;

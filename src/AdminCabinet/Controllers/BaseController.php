@@ -184,15 +184,7 @@ class BaseController extends Controller
     public function afterExecuteRoute(Dispatcher $dispatcher)
     {
         if ($this->request->isAjax() === true) {
-            $this->view->disableLevel(
-                [
-                    View::LEVEL_ACTION_VIEW     => true,
-                    View::LEVEL_LAYOUT          => true,
-                    View::LEVEL_MAIN_LAYOUT     => true,
-                    View::LEVEL_AFTER_TEMPLATE  => true,
-                    View::LEVEL_BEFORE_TEMPLATE => true,
-                ]
-            );
+            $this->view->setRenderLevel(View::LEVEL_NO_RENDER);
             $this->response->setContentType('application/json', 'UTF-8');
             $data = $this->view->getParamsToView();
 

@@ -49,8 +49,7 @@ class ModulesModelsBase extends ModelsBase
             $this->initialize();
         }
 
-        if (property_exists($this, 'id')
-            && $this->id === null) {
+        if ($this->readAttribute('id') === null) {
             return $this->t('mo_NewElement');
         }
 

@@ -37,10 +37,13 @@ class VoltProvider implements ServiceProviderInterface
                 $compiler->addFunction('in_array', 'in_array');
 
                 if ($appConfig->debugMode === true) {
-                    array_map(
-                        'unlink',
-                        glob($appConfig->voltCacheDir . '/*.php')
-                    );
+                    $cacheFiles = glob($appConfig->voltCacheDir . '/*.php');
+                    if ($cacheFiles!==false){
+                        array_map(
+                            'unlink',
+                            $cacheFiles
+                        );
+                    }
                     $volt->setOptions(
                         [
                             'compileAlways' => true,
