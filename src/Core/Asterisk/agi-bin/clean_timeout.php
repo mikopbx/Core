@@ -8,6 +8,7 @@
  */
 
 use MikoPBX\Core\System\Util;
+use MikoPBX\Core\Asterisk\AGI;
 require_once 'Globals.php';
 
 $agi        = new AGI();

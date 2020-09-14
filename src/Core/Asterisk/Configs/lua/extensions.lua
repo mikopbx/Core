@@ -1,6 +1,11 @@
 -- Copyright © MIKO LLC - All Rights Reserved
 -- Unauthorized copying of this file, via any medium is strictly prohibited
 -- Proprietary and confidential
+-- Written by Alexey Portnov, 9 2020
+
+-- Copyright © MIKO LLC - All Rights Reserved
+-- Unauthorized copying of this file, via any medium is strictly prohibited
+-- Proprietary and confidential
 -- Written by Alexey Portnov, 8 2020
 
 -- Copyright © MIKO LLC - All Rights Reserved
@@ -555,7 +560,7 @@ extensions = {
     transfer_dial={},
     lua_dial_create_chan={},
     dial_answer={},
-    transfer_dial_create_chan={},
+    lua_transfer_dial_create_chan={},
     transfer_dial_answer={},
     transfer_dial_hangup={},
     hangup_chan={},
@@ -570,7 +575,7 @@ extensions.dial["_.!"]                      = function() event_dial() end
 extensions.transfer_dial["_.!"]             = function() event_transfer_dial() end
 extensions.lua_dial_create_chan["_.!"]      = function() event_dial_create_chan() end
 extensions.dial_answer["_.!"]               = function() event_dial_answer() end
-extensions.transfer_dial_create_chan["_.!"] = function() event_transfer_dial_create_chan() end
+extensions.lua_transfer_dial_create_chan["_.!"] = function() event_transfer_dial_create_chan() end
 extensions.transfer_dial_answer["_.!"]      = function() event_transfer_dial_answer() end
 extensions.transfer_dial_hangup["_.!"]      = function() event_transfer_dial_hangup() end
 extensions.hangup_chan["_.!"]               = function() event_hangup_chan() end

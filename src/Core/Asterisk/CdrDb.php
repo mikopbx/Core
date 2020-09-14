@@ -121,6 +121,12 @@ class CdrDb
             $lamePath = Util::which('lame');
             $chmodPath = Util::which('chmod');
 
+            $arr = $am->GetChannels(false);
+            if(!in_array($channel, $arr)){
+                self::LogEvent("MixMonitor: Channel {$channel} not found.");
+                return '';
+            }
+
             $res        = $am->MixMonitor(
                 $channel,
                 "{$f}.wav",
