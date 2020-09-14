@@ -50,17 +50,17 @@ class Iax extends ModelsBase
     public ?string $host = '';
 
     /**
-     * @Column(type="integer", nullable=true)
+     * @Column(type="string", length=1, nullable=true)
      */
     public ?string $qualify = '';
 
     /**
-     * @Column(type="integer", nullable=true)
+     * @Column(type="string", length=1, nullable=false)
      */
     public ?string $disabled = '0';
 
     /**
-     * @Column(type="integer", nullable=true)
+     *  @Column(type="string", length=1, nullable=true, default="0")
      */
     public ?string $noregister = '0';
 

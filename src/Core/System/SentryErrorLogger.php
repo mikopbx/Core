@@ -5,11 +5,13 @@
  * Proprietary and confidential
  * Written by Alexey Portnov, 2 2020
  */
+declare(strict_types=1);
 
 namespace MikoPBX\Core\System;
 
-use Exception;
-use Sentry;
+use Sentry\ClientBuilder;
+use Sentry\SentrySdk;
+use Sentry\State\Scope;
 
 /**
  * Collects errors and send them to Sentry cloud for software improvement reasons
@@ -17,14 +19,14 @@ use Sentry;
 class SentryErrorLogger
 {
 
-    protected $dsn; // Sentry unique ID
-    protected $libraryName;
-    protected $licKey;
-    protected $companyName;
-    protected $email;
-    protected $release; // MikoPBX release
-    protected $environment; // development or production
-    protected $enabled; // MikoPBX general settings "send errors to developers"
+    protected string $dsn; // Sentry unique ID
+    protected string $libraryName;
+    protected string $licKey;
+    protected string $companyName;
+    protected string $email;
+    protected string $release; // MikoPBX release
+    protected string $environment; // development or production
+    protected bool $enabled; // MikoPBX general settings "send errors to developers"
 
 
     public function __construct($libraryName)
@@ -54,15 +56,17 @@ class SentryErrorLogger
     public function init(): bool
     {
         if ($this->enabled) {
-            Sentry\init(
-                [
-                    'dsn'         => $this->dsn,
-                    'release'     => $this->release,
-                    'environment' => $this->environment,
-                ]
-            );
-            Sentry\configureScope(
-                function (Sentry\State\Scope $scope): void {
+            $options = [
+                'dsn'         => $this->dsn,
+                'release'     => $this->release,
+                'environment' => $this->environment,
+            ];
+            $client = ClientBuilder::create($options)->getClient();
+
+            SentrySdk::init()->bindClient($client);
+
+            SentrySdk::getCurrentHub()->configureScope(
+                function (Scope $scope): void {
                     if (isset($this->email)) {
                         $scope->setUser(['id' => $this->email], true);
                     }
@@ -85,11 +89,11 @@ class SentryErrorLogger
     /**
      * Process errors and send it to sentry cloud
      *
-     * @param Exception $e
+     * @param \Error $e
      */
-    public function captureException(Exception $e): void
+    public function captureException(\Error $e): void
     {
-        Sentry\captureException($e);
+        SentrySdk::getCurrentHub()->captureException($e);
     }
 }
 

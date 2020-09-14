@@ -60,7 +60,7 @@ class CallQueues extends ModelsBase
     public ?string $seconds_for_wrapup = '';
 
     /**
-     * @Column(type="integer", nullable=true)
+     * @Column(type="string", length=1, nullable=true)
      */
     public ?string $recive_calls_while_on_a_call = '';
 

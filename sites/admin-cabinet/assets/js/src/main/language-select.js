@@ -5,7 +5,7 @@
  * Written by Nikolay Beketov, 4 2020
  *
  */
-/* global globalWebAdminLanguage, globalAvailableLanguages, globalTranslate, globalRootUrl */
+/* global globalWebAdminLanguage, globalAvailableLanguages, globalTranslate, globalRootUrl, PbxApi*/
 
 const LanguageSelect = {
 	$selector: $('#web-admin-language-selector'),

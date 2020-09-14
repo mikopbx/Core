@@ -12,6 +12,7 @@ namespace MikoPBX\Common\Models;
  * Class CallDetailRecordsBase
  *
  * @package MikoPBX\Common\Models
+ *
  */
 abstract class CallDetailRecordsBase extends ModelsBase
 {
@@ -110,7 +111,7 @@ abstract class CallDetailRecordsBase extends ModelsBase
     public ?string $transfer = '';
 
     /**
-     * @Column(type="integer", nullable=true)
+     * @Column(type="string", length=1, nullable=true)
      */
     public ?string $is_app = '';
 
@@ -125,7 +126,7 @@ abstract class CallDetailRecordsBase extends ModelsBase
     public ?string $billsec = '';
 
     /**
-     * @Column(type="integer", nullable=true)
+     * @Column(type="string", length=1, nullable=true)
      */
     public ?string $work_completed = '';
 
@@ -139,8 +140,5 @@ abstract class CallDetailRecordsBase extends ModelsBase
      */
     public ?string $dst_call_id = '';
 
-    public function getIndexColumn():array {
-        return ['UNIQUEID', 'src_chan', 'dst_chan', 'linkedid', 'start', 'src_num', 'dst_num'];
-    }
 
 }

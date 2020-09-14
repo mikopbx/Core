@@ -44,9 +44,9 @@ class LongPollSubscribe extends ModelsBase
     public ?string $timeout = '';
 
     /**
-     * @Column(type="integer", nullable=true)
+     *  @Column(type="string", length=1, nullable=true, default="0")
      */
-    public ?string $enable = '';
+    public ?string $enable = '0';
 
 
     public function initialize(): void

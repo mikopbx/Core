@@ -87,18 +87,6 @@ function getBannerText()
         }
     };
 
-    $storageWarning = function () {
-        if ( ! Storage::isStorageDiskMounted() && ! file_exists('/offload/livecd')) {
-            return "    \033[01;31m" . Util::translate('Storage unmounted') . "\033[39m";
-        }
-    };
-
-    $firewallWarning = function () {
-        if (PbxSettings::getValueByKey('PBXFirewallEnabled') === '0') {
-            return "    \033[01;31m" . Util::translate('Firewall disabled') . "\033[39m";
-        }
-    };
-
     $this_is = Util::translate('this_is');
 
     return <<<EOD
@@ -109,12 +97,22 @@ function getBannerText()
 {$ip_text[0]}
 {$ip_text[1]}
 {$ip_text[2]}
-{$storageWarning()} 
-{$firewallWarning()}
 {$broken()}
 
 EOD;
 }
+
+$firewallWarning = function () {
+    if (PbxSettings::getValueByKey('PBXFirewallEnabled') === '0') {
+        return "\033[01;31m (" . Util::translate('Firewall disabled') . ") \033[39m";
+    }
+};
+
+$storageWarning = function () {
+    if ( ! Storage::isStorageDiskMounted() && ! file_exists('/offload/livecd')) {
+        return "    \033[01;31m (" . Util::translate('Storage unmounted') . ") \033[39m";
+    }
+};
 
 $setup_lan = function (CliMenuBuilder $b) {
     $b->setTitle(Util::translate('Choose action'))
@@ -382,7 +380,7 @@ $menu = (new CliMenuBuilder())
         }
     )
     ->addItem(
-        '[5] ' . Util::translate('Firewall'),
+        '[5] ' . Util::translate('Firewall').$firewallWarning(),
         function (CliMenu $menu) {
             $mikoPBXConfig   = new MikoPBXConfig();
             $firewall_enable = $mikoPBXConfig->getGeneralSettings('PBXFirewallEnabled');
@@ -424,7 +422,7 @@ $menu = (new CliMenuBuilder())
         }
     )
     ->addSubMenu(
-        '[6] ' . Util::translate('Storage'),
+        '[6] ' . Util::translate('Storage').$storageWarning(),
         function (CliMenuBuilder $b) {
             $b->setTitle(Util::translate('Choose action'))
                 ->addItem(

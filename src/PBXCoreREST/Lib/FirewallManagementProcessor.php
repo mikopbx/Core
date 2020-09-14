@@ -24,11 +24,11 @@ class FirewallManagementProcessor extends Injectable
     /**
      * Удалить адрес из бана.
      *
-     * @param $ip
+     * @param string $ip
      *
      * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
      */
-    public static function fail2banUnbanAll($ip): PBXApiResult
+    public static function fail2banUnbanAll(string $ip): PBXApiResult
     {
         $ip     = trim($ip);
         $res = new PBXApiResult();
@@ -60,11 +60,11 @@ class FirewallManagementProcessor extends Injectable
     /**
      * Возвращает массив забаненных ip. Либо данные по конкретному адресу.
      *
-     * @param null $ip
+     * @param ?string $ip
      *
      * @return PBXApiResult
      */
-    public static function getBanIp($ip = null): PBXApiResult
+    public static function getBanIp(?string $ip = null): PBXApiResult
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
@@ -109,12 +109,12 @@ class FirewallManagementProcessor extends Injectable
     /**
      * Удалить из бана конкретный IP из конкретного jail.
      *
-     * @param $ip
-     * @param $jail
+     * @param string $ip
+     * @param string $jail
      *
      * @return PBXApiResult
      */
-    public static function fail2banUnban($ip, $jail): PBXApiResult
+    public static function fail2banUnban(string $ip, string $jail): PBXApiResult
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
@@ -151,12 +151,12 @@ class FirewallManagementProcessor extends Injectable
     /**
      * Удаление бана из базы.
      *
-     * @param        $ip
+     * @param string $ip
      * @param string $jail
      *
      * @return PBXApiResult
      */
-    public static function fail2banUnbanDb($ip, $jail = ''): PBXApiResult
+    public static function fail2banUnbanDb(string $ip, string $jail = ''): PBXApiResult
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;

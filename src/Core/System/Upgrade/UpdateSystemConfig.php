@@ -364,8 +364,8 @@ class UpdateSystemConfig extends Di\Injectable
             $db = new \SQLite3($astDbPath);
             try {
                 $db->exec($sql);
-            } catch (\Exception $e) {
-                Util::sysLogMsg(__CLASS__, 'Can clean astdb from UserBuddyStatus...');
+            } catch (\Error $e) {
+                Util::sysLogMsg(__CLASS__, 'Can clean astdb from UserBuddyStatus...'.$e->getMessage());
                 sleep(2);
             }
             $db->close();

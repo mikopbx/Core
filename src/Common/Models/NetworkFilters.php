@@ -38,14 +38,14 @@ class NetworkFilters extends ModelsBase
     public ?string $deny = '';
 
     /**
-     * @Column(type="integer", nullable=true)
+     * @Column(type="string", length=1, nullable=true, default="0")
      */
-    public ?string $newer_block_ip = '';
+    public ?string $newer_block_ip = '0';
 
     /**
-     * @Column(type="integer", nullable=true)
+     * @Column(type="string", length=1, nullable=true, default="0")
      */
-    public ?string $local_network = '';
+    public ?string $local_network = '0';
 
     /**
      * @Column(type="string", nullable=true)

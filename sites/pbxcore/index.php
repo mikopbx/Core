@@ -8,7 +8,7 @@
 namespace MikoPBX\PbxCore;
 use MikoPBX\PBXCoreREST\Config\{RegisterDIServices};
 use Phalcon\Di\FactoryDefault;
-use Phalcon\Exception;
+use Error;
 use MikoPBX\Core\System\{SentryErrorLogger, Util};
 use Phalcon\Mvc\Micro;
 
@@ -31,7 +31,7 @@ try {
     //Load application services
     RegisterDIServices::init($di);
     $application->handle($_SERVER['REQUEST_URI']);
-} catch (Exception $e) {
+} catch (Error $e) {
     $errorLogger->captureException($e);
     echo $e->getMessage();
     Util::sysLogMsg('pbx_core_api', $e->getMessage() );

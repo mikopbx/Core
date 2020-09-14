@@ -110,7 +110,9 @@ abstract class ModelsBase extends Model
                 }
                 if ($relatedRecords instanceof Resultset) {
                     foreach ($relatedRecords as $item) {
-                        $newErrorMessage .= '<li>' . $item->getRepresent(true) . '</li>';
+                        if ($item instanceof ModelsBase) {
+                            $newErrorMessage .= '<li>' . $item->getRepresent(true) . '</li>';
+                        }
                     }
                 } else {
                     $newErrorMessage .= '<li>Unknown object</li>';
@@ -141,11 +143,11 @@ abstract class ModelsBase extends Model
      */
     public function beforeValidationOnCreate(): void
     {
-        $metaData      = $metaData = $this->di->get('modelsMetadata');
+        $metaData      = $this->di->get('modelsMetadata');
         $defaultValues = $metaData->getDefaultValues($this);
         foreach ($defaultValues as $field => $value) {
-            if ( ! isset($this->{$field}) || $this->{$field} === null) {
-                $this->{$field} = new RawValue($value);
+            if ( ! isset($this->{$field})) {
+                $this->{$field} = $value;
             }
         }
     }
@@ -709,16 +711,6 @@ abstract class ModelsBase extends Model
         }
 
         return $link;
-    }
-
-    /**
-     * Возвращает массив полей, по которым следует добавить индекс в DB.
-     *
-     * @return array
-     */
-    public function getIndexColumn(): array
-    {
-        return [];
     }
 
     /**

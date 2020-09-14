@@ -37,14 +37,18 @@ class SystemLoader extends Di\Injectable
         $syslogConf = new SyslogConf();
         $syslogConf->reStart();
         Util::echoGreenDone();
-
-        Util::echoWithSyslog(' - Update database ... '. PHP_EOL);
+        
         $dbUpdater = new UpdateDatabase();
         $dbUpdater->updateDatabaseStructure();
 
-        Util::echoWithSyslog(' - Update configs and applications ... '. PHP_EOL);
+        Util::echoWithSyslog(' - Create modules links and folders ... ');
+        $storage->createWorkDirsAfterDBUpgrade();
+        Util::echoGreenDone();
+
+        Util::echoWithSyslog(' - Update configs and applications ... ');
         $confUpdate = new UpdateSystemConfig();
         $confUpdate->updateConfigs();
+        Util::echoGreenDone();
 
         Util::echoWithSyslog(' - Load kernel modules ... ');
         $system = new System();

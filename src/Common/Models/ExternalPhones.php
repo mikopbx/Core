@@ -56,9 +56,10 @@ class ExternalPhones extends ModelsBase
     public ?string $manualdialplanoutgoing = '';
 
     /**
-     * @Column(type="integer", nullable=true, default='0')
+     * @Column(type="string", length=1, nullable=false)
      */
     public ?string $disabled = '0';
+
 
     public function initialize(): void
     {

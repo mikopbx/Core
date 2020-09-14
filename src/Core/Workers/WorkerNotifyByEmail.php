@@ -8,7 +8,7 @@
 
 namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
-use Exception;
+use Error;
 use MikoPBX\Core\System\{BeanstalkClient, MikoPBXConfig, Notifications, Util};
 
 
@@ -96,7 +96,7 @@ if ($action === 'start') {
         try {
             $worker = new $workerClassname();
             $worker->start($argv);
-        } catch (Exception $e) {
+        } catch (Error $e) {
             global $errorLogger;
             $errorLogger->captureException($e);
             Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage());

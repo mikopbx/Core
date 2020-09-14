@@ -8,7 +8,7 @@
 
 namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
-use Exception;
+use Error;
 use MikoPBX\Core\System\{Storage, Util};
 
 
@@ -23,7 +23,7 @@ class WorkerRemoveOldRecords extends WorkerBase
         if (file_exists($filename)) {
             $mount_point = file_get_contents($filename);
         } else {
-            exit(0);
+            return;
         }
         $out = [];
         $busyboxPath = Util::which('busybox');
@@ -39,7 +39,7 @@ class WorkerRemoveOldRecords extends WorkerBase
         $free_space = $s->getFreeSpace($dev);
         if ($free_space > $MIN_SPACE) {
             // Очистка диска не требуется.
-            exit(0);
+            return;
         }
         $monitor_dir = Storage::getMonitorDir();
         $out         = [];
@@ -77,7 +77,7 @@ if (isset($argv) && count($argv) > 1) {
     try {
         $worker = new $workerClassname();
         $worker->start($argv);
-    } catch (Exception $e) {
+    } catch (Error $e) {
         global $errorLogger;
         $errorLogger->captureException($e);
         Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage());

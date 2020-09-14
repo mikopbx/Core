@@ -35,15 +35,19 @@ class SessionController extends BaseController
      */
     private function flushCache(): void
     {
-       @$this->di->get('modelsCache')->clear();
-       @$this->di->get('managedCache')->clear();
+        if ($this->di->has('modelsCache')) {
+            $this->di->getShared('modelsCache')->clear();
+        }
+        if ($this->di->has('managedCache')) {
+            $this->di->getShared('managedCache')->clear();
+        }
     }
 
     /**
      * This action authenticate and logs an user into the application
      *
      */
-    public function startAction():void
+    public function startAction(): void
     {
         if ( ! $this->request->isPost()) {
             $this->forward('session/index');
@@ -61,7 +65,7 @@ class SessionController extends BaseController
             $this->view->success = false;
             $this->flash->error($this->translation->_('auth_WrongLoginPassword'));
             $remoteAddress = $this->request->getClientAddress(true);
-            $userAgent = $this->request->getUserAgent();
+            $userAgent     = $this->request->getUserAgent();
             Util::sysLogMsg('web_auth', "From: {$remoteAddress} UserAgent:{$userAgent} Cause: Wrong password");
         }
     }

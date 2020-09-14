@@ -1,9 +1,4 @@
 <?php
-
-namespace MikoPBX\Core\Utilities;
-
-use Phalcon\Exception;
-
 /**
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
@@ -11,6 +6,8 @@ use Phalcon\Exception;
  * Written by Alexey Portnov, 2 2020
  */
 
+namespace MikoPBX\Core\Utilities;
+use Error;
 /**
  * Network calculator for subnet mask and other classless (CIDR) network information.
  *
@@ -67,7 +64,6 @@ class SubnetCalculator
      * @param string $ip IP address in dotted quad notation.
      * @param int CIDR network size.
      *
-     * @throws \Phalcon\Exception
      */
     public function __construct($ip, $network_size)
     {
@@ -85,15 +81,15 @@ class SubnetCalculator
      * @param string $ip           IP address in dotted quads format.
      * @param int    $network_size Network.
      *
-     * @throws Exception IP or network size not valid.
+     * @throws Error IP or network size not valid.
      */
     private function validateInputs($ip, $network_size)
     {
         if ( ! filter_var($ip, FILTER_VALIDATE_IP)) {
-            throw new Exception("IP address $ip not valid.");
+            throw new Error("IP address $ip not valid.");
         }
         if (($network_size < 1) || ($network_size > 32)) {
-            throw new Exception("Network size $network_size not valid.");
+            throw new Error("Network size $network_size not valid.");
         }
     }
 

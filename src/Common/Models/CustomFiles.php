@@ -47,7 +47,7 @@ class CustomFiles extends ModelsBase
     public ?string $mode = 'none';
 
     /**
-     * @Column(type="integer", nullable=true, default="0")
+     * @Column(type="string", length=1, nullable=true, default="0")
      */
     public ?string $changed = '0';
 

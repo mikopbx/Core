@@ -28,7 +28,7 @@ class NormalizeControllerNamePlugin extends Injectable
      * @param Event      $event
      * @param Dispatcher $dispatcher
      */
-    public function beforeDispatch(Event $event, Dispatcher $dispatcher): void
+    public function beforeDispatch(/** @scrutinizer ignore-unused */ Event $event, Dispatcher $dispatcher): void
     {
         $controller = $dispatcher->getControllerName();
         if (strpos($controller, '-') > 0) {
@@ -53,7 +53,7 @@ class NormalizeControllerNamePlugin extends Injectable
      * @param Event      $event
      * @param Dispatcher $dispatcher
      */
-    public function afterDispatchLoop(Event $event, Dispatcher $dispatcher): void
+    public function afterDispatchLoop(/** @scrutinizer ignore-unused */ Event $event, Dispatcher $dispatcher): void
     {
         $controller = $dispatcher->getControllerName();
 

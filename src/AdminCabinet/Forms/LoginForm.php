@@ -21,7 +21,7 @@ use Phalcon\Forms\Form;
  */
 class LoginForm extends Form
 {
-    public function initialize($entity = null, $options = null): void
+    public function initialize(): void
     {
         $login = new Text('login');
         $this->add($login);

@@ -24,7 +24,6 @@ class GetController extends BaseController
 {
     public function callAction($actionName): void
     {
-        $data = null;
         switch ($actionName) {
             case 'getInfo':
                 $this->getInfoAction();

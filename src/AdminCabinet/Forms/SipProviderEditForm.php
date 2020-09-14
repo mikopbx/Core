@@ -26,7 +26,7 @@ use Phalcon\Forms\Form;
  */
 class SipProviderEditForm extends Form
 {
-    public function initialize($entity = null, $options = null): void
+    public function initialize($entity = null): void
     {
         // Не нужны провайдеру
         // Busylevel

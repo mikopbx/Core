@@ -15,7 +15,7 @@ use Phalcon\Db\Column;
 use Phalcon\Db\Index;
 use Phalcon\Di;
 use ReflectionClass;
-use RuntimeException;
+use Error;
 
 use function MikoPBX\Common\Config\appPath;
 
@@ -46,8 +46,8 @@ class UpdateDatabase extends Di\Injectable
             RegisterDIServices::recreateDBConnections(); // after storage remount
             $this->updateDbStructureByModelsAnnotations();
             RegisterDIServices::recreateDBConnections(); // if we change anything in structure
-        } catch (RuntimeException $e) {
-            echo "Errors within database upgrade process";
+        } catch (Error $e) {
+            Util::echoWithSyslog('Errors within database upgrade process '.$e->getMessage());
         }
     }
 
@@ -64,9 +64,12 @@ class UpdateDatabase extends Di\Injectable
         foreach ($results as $file) {
             $className        = pathinfo($file)['filename'];
             $moduleModelClass = "MikoPBX\\Common\\Models\\{$className}";
-            $this->createUpdateDbTableByAnnotations($moduleModelClass);
+            try {
+                $this->createUpdateDbTableByAnnotations($moduleModelClass);
+            } catch (Error $exception){
+                Util::echoWithSyslog('Errors within update table '.$className.' '.$exception->getMessage());
+            }
         }
-
         return $result;
     }
 
@@ -77,7 +80,6 @@ class UpdateDatabase extends Di\Injectable
      *                        i.e. MikoPBX\Common\Models\Extensions or Modules\ModuleSmartIVR\Models\Settings
      *
      * @return bool
-     * @throws \ReflectionException
      */
     public function createUpdateDbTableByAnnotations(string $modelClassName): bool
     {
@@ -88,11 +90,14 @@ class UpdateDatabase extends Di\Injectable
             return true;
         }
         // Test is abstract
-        $reflection = new ReflectionClass($modelClassName);
-        if ($reflection->isAbstract()) {
-            return true;
+        try {
+            $reflection = new ReflectionClass($modelClassName);
+            if ($reflection->isAbstract()) {
+                return true;
+            }
+        } catch (\ReflectionException $exception) {
+            return false;
         }
-
         $model                 = new $modelClassName();
         $connectionServiceName = $model->getReadConnectionService();
         if (empty($connectionServiceName)) {
@@ -101,8 +106,13 @@ class UpdateDatabase extends Di\Injectable
 
         $connectionService = $this->di->getShared($connectionServiceName);
         $metaData          = $this->di->get('modelsMetadata');
-        $table_structure   = [];
-        $indexes           = [];
+
+        //https://docs.phalcon.io/4.0/ru-ru/annotations
+        $modelAnnotation = $this->di->get('annotations')->get($model);
+
+        $tableName       = $model->getSource();
+        $table_structure = [];
+        $indexes         = [];
 
         // Create columns list by code annotations
         $newColNames       = $metaData->getAttributes($model);
@@ -116,6 +126,26 @@ class UpdateDatabase extends Di\Injectable
                 'primary'   => false,
             ];
             $previousAttribute           = $attribute;
+        }
+
+        // Set data types
+        $propertiesAnnotations = $modelAnnotation->getPropertiesAnnotations();
+        if ($propertiesAnnotations !== false) {
+            $attributeTypes = $metaData->getDataTypes($model);
+            foreach ($attributeTypes as $attribute => $type) {
+                $table_structure[$attribute]['type'] = $type;
+                // Try to find size of field
+                if (array_key_exists($attribute, $propertiesAnnotations)) {
+                    $propertyDescription = $propertiesAnnotations[$attribute];
+                    if ($propertyDescription->has('Column')
+                        && $propertyDescription->get('Column')->hasArgument('length')
+                    ) {
+                        $table_structure[$attribute]['size'] = $propertyDescription->get('Column')->getArgument(
+                            'length'
+                        );
+                    }
+                }
+            }
         }
 
         // For each numeric column change type
@@ -140,10 +170,10 @@ class UpdateDatabase extends Di\Injectable
         }
 
         // Set primary keys
-        $primaryKeys = $metaData->getPrimaryKeyAttributes($model);
-        foreach ($primaryKeys as $attribute) {
-            $indexes[$attribute] = new Index($attribute, [$attribute], 'UNIQUE');
-        }
+        // $primaryKeys = $metaData->getPrimaryKeyAttributes($model);
+        // foreach ($primaryKeys as $attribute) {
+        //     $indexes[$attribute] = new Index($attribute, [$attribute], 'UNIQUE');
+        // }
 
         // Set bind types
         $bindTypes = $metaData->getBindTypes($model);
@@ -179,6 +209,17 @@ class UpdateDatabase extends Di\Injectable
             ];
         }
 
+        // Create additional indexes
+        $modelClassAnnotation = $modelAnnotation->getClassAnnotations();
+        if ($modelClassAnnotation !== false
+            && $modelClassAnnotation->has('Indexes')) {
+            $additionalIndexes = $modelClassAnnotation->get('Indexes')->getArguments();
+            foreach ($additionalIndexes as $index) {
+                $indexName           = "i_{$tableName}_{$index['name']}";
+                $indexes[$indexName] = new Index($indexName, $index['columns'], $index['type']);
+            }
+        }
+
         // Create new table structure
         $columns = [];
         foreach ($table_structure as $colName => $colType) {
@@ -189,29 +230,19 @@ class UpdateDatabase extends Di\Injectable
             'columns' => $columns,
             'indexes' => $indexes,
         ];
-        $tableName  = $model->getSource();
+
         $connectionService->begin();
 
         if ( ! $connectionService->tableExists($tableName)) {
-            Util::echoWithSyslog(' - UpdateDatabase: Create new table: '.$tableName.' ');
+            Util::echoWithSyslog(' - UpdateDatabase: Create new table: ' . $tableName . ' ');
             $result = $connectionService->createTable($tableName, '', $columnsNew);
-            if($result === true){
-                $indexColumn = $model->getIndexColumn();
-                foreach ($indexColumn as $columnName){
-                    if(!key_exists($columnName, $table_structure)){
-                        continue;
-                    }
-                    $index       = new Index("i_{$tableName}_".$columnName, [$columnName]);
-                    $connectionService->addIndex($tableName, '', $index);
-                }
-            }
             Util::echoGreenDone();
         } else {
             // Table exists, we have to check/upgrade its structure
             $currentColumnsArr = $connectionService->describeColumns($tableName, '');
 
             if ($this->isTableStructureNotEqual($currentColumnsArr, $columns)) {
-                Util::echoWithSyslog(' - UpdateDatabase: Upgrade table: '.$tableName.' ');
+                Util::echoWithSyslog(' - UpdateDatabase: Upgrade table: ' . $tableName . ' ');
                 // Create new table and copy all data
                 $currentStateColumnList = [];
                 $oldColNames            = []; // Старые названия колонок
@@ -245,6 +276,10 @@ DROP TABLE  {$tableName}";
             }
         }
 
+
+        if ($result) {
+            $this->updateIndexes($tableName, $connectionService, $indexes);
+        }
 
         if ($result) {
             $connectionService->commit();
@@ -301,11 +336,61 @@ DROP TABLE  {$tableName}";
                         continue;
                     }
 
+                    // Description for "length" is integer, but table structure store it as string
+                    if ($compared_setting === 'getSize'
+                        && (string)$oldField->$compared_setting() === (string)$newField->$compared_setting()) {
+                        continue;
+                    }
+
                     return true; // find different columns
                 }
             }
         }
 
         return false;
+    }
+
+
+    /**
+     * @param string $tableName
+     * @param mixed  $connectionService DependencyInjection connection service used to read data
+     * @param array  $indexes
+     *
+     * @return bool
+     */
+    private function updateIndexes(string $tableName, $connectionService, array $indexes): bool
+    {
+        $result         = true;
+        $currentIndexes = $connectionService->describeIndexes($tableName);
+
+        // Drop not exist indexes
+        foreach ($currentIndexes as $indexName => $currentIndex) {
+            if (stripos($indexName, 'sqlite_autoindex') === false
+                && ! array_key_exists($indexName, $indexes)
+            ) {
+                Util::echoWithSyslog(" - UpdateDatabase: Delete index: {$indexName} ");
+                $result = $result + $connectionService->dropIndex($tableName, '', $indexName);
+                Util::echoGreenDone();
+            }
+        }
+
+        // Add/update exist indexes
+        foreach ($indexes as $indexName => $describedIndex) {
+            if (array_key_exists($indexName, $currentIndexes)) {
+                $currentIndex = $currentIndexes[$indexName];
+                if ($describedIndex->getColumns() !== $currentIndex->getColumns()) {
+                    Util::echoWithSyslog(" - UpdateDatabase: Update index: {$indexName} ");
+                    $result = $result + $connectionService->dropIndex($tableName, '', $indexName);
+                    $result = $result + $connectionService->addIndex($tableName, '', $describedIndex);
+                    Util::echoGreenDone();
+                }
+            } else {
+                Util::echoWithSyslog(" - UpdateDatabase: Add new index: {$indexName} ");
+                $result = $result + $connectionService->addIndex($tableName, '', $describedIndex);
+                Util::echoGreenDone();
+            }
+        }
+
+        return $result;
     }
 }

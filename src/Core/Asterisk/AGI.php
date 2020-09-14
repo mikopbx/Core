@@ -196,7 +196,7 @@ class AGI
      * @param string $cmd       command to find
      * @param string $checkpath path to check
      *
-     * @return string the path to the command
+     * @return string|bool the path to the command
      */
     public function which($cmd, $checkpath = null)
     {

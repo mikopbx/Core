@@ -52,11 +52,11 @@ class ResParkingConf extends ConfigClass
      * Функция позволяет получить активные каналы.
      * Возвращает ассоциативный массив. Ключ - Linkedid, значение - массив каналов.
      *
-     * @param null $EXTEN
+     * @param ?string $EXTEN
      *
      * @return null
      */
-    public static function getParkslotData($EXTEN = null)
+    public static function getParkslotData(?string $EXTEN = null)
     {
         $ParkeeChannel = null;
         $am            = Util::getAstManager('off');

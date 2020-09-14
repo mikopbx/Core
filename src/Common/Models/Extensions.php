@@ -67,26 +67,25 @@ class Extensions extends ModelsBase
      *
      * @Column(type="integer", nullable=true)
      */
-    public ?string $userid = '';
+    public ?int $userid = null;
 
     /**
      * Признак отображения в телефонной книге, и при выборе в списках
-     *
-     * @Column(type="integer", nullable=true, default="1")
+     * @Column(type="string", length=1, nullable=true, default="1")
      */
     public ?string $show_in_phonebook='1';
 
     /**
      * Признак возможности донабора этого номера звонящим из вне
      *
-     * @Column(type="integer", nullable=true, default="1")
+     *  @Column(type="string", length=1, nullable=true, default="1")
      */
     public ?string $public_access = '1';
 
     /**
      * Признак основного номера пользователя, который редактируется в его карточке
      *
-     * @Column(type="integer", nullable=true, default="0")
+     *  @Column(type="string", length=1, nullable=true, default="0")
      */
     public ?string $is_general_user_number = "0";
 

@@ -23,7 +23,7 @@ use Phalcon\Forms\Form;
  */
 class MailSettingsEditForm extends Form
 {
-    public function initialize($entity = null, $options = null): void
+    public function initialize(/** @scrutinizer ignore-unused */ $entity = null, $options = null): void
     {
         foreach ($options as $key => $value) {
             switch ($key) {
