@@ -303,6 +303,10 @@ class WorkerCallEvents extends WorkerBase
             }
             if ($row->dialstatus === 'ORIGINATE') {
                 $row->writeAttribute('dialstatus', '');
+                if($row->answer === ''){
+                    $newId = $row->linkedid.'_'.$row->src_num.'_'.substr($row->src_chan, strpos($row->src_chan,'-') +1);
+                    $row->writeAttribute('UNIQUEID', $newId);
+                }
             }
             $row->writeAttribute('endtime', $data['end']);
             $row->writeAttribute('transfer', 0);
@@ -984,6 +988,7 @@ class WorkerCallEvents extends WorkerBase
         }
         $tube->reply(json_encode(true));
     }
+
 
     /**
      * Получения CDR к обработке.
