@@ -356,7 +356,9 @@ class PbxExtensionState extends Injectable
                     $records = $moduleModelClass::find();
                     foreach ($records as $record) {
                         if ( ! $record->beforeDelete()) {
-                            $messages[] = $record->getMessages();
+                            foreach ($record->getMessages() as $message){
+                                $this->messages[] = $message->getMessage();
+                            }
                             $error      = true;
                         }
                     }

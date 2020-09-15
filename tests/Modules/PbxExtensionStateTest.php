@@ -23,7 +23,7 @@ class PbxExtensionStateTest extends AbstractUnitTest
         if ($result===true){
             $this->assertTrue(true);
         } else {
-           $this->assertTrue(false, $this->testGetMessages());
+           $this->assertTrue(false, implode(' ', $this->state->getMessages()));
         }
     }
 
@@ -34,15 +34,9 @@ class PbxExtensionStateTest extends AbstractUnitTest
         if ($result===true){
             $this->assertTrue(true);
         } else {
-            $this->assertTrue(false, $this->testGetMessages());
+            $this->assertTrue(false, implode(' ', $this->state->getMessages()));
         }
 
-    }
-
-    public function testGetMessages():string
-    {
-        $this->state = new PbxExtensionState('ModuleTelegramNotify');
-        return implode(' ', $this->state->getMessages());
     }
 
 }

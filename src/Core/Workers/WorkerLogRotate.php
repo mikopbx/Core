@@ -8,7 +8,7 @@
  */
 
 namespace MikoPBX\Core\Workers;
-
+require_once 'Globals.php';
 
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Core\System\Configs\NatsConf;

@@ -97,7 +97,7 @@ const Extensions = {
 	 * @returns  dropdown settings
 	 */
 	getDropdownSettingsWithoutEmpty(cbOnChange = null) {
-		const result = {
+		return {
 			apiSettings: {
 				url: `${globalRootUrl}extensions/getForSelect/all`,
 				// cache: false,
@@ -120,7 +120,6 @@ const Extensions = {
 				menu: Extensions.customDropdownMenu,
 			},
 		};
-		return result;
 	},
 	/**
 	 * Makes dropdown menu for internal extensions without empty field
@@ -128,7 +127,7 @@ const Extensions = {
 	 * @returns dropdown settings
 	 */
 	getDropdownSettingsOnlyInternalWithoutEmpty(cbOnChange = null) {
-		const result = {
+		return {
 			apiSettings: {
 				url: `${globalRootUrl}extensions/getForSelect/internal`,
 				// cache: false,
@@ -151,7 +150,6 @@ const Extensions = {
 				menu: Extensions.customDropdownMenu,
 			},
 		};
-		return result;
 	},
 	/**
 	 * Makes dropdown menu for internal extensions with empty field
@@ -159,7 +157,7 @@ const Extensions = {
 	 * @returns dropdown settings
 	 */
 	getDropdownSettingsOnlyInternalWithEmpty(cbOnChange = null) {
-		const result = {
+		return {
 			apiSettings: {
 				url: `${globalRootUrl}extensions/getForSelect/internal`,
 				// cache: false,
@@ -184,7 +182,6 @@ const Extensions = {
 			},
 
 		};
-		return result;
 	},
 	/**
 	 * Checks if newNumber doesn't exist in database
