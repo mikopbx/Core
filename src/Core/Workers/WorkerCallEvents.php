@@ -28,10 +28,10 @@ class WorkerCallEvents extends WorkerBase
     /**
      * Инициирует запись разговора на канале.
      *
-     * @param      $channel
-     * @param      $file_name
-     * @param null $sub_dir
-     * @param null $full_name
+     * @param string    $channel
+     * @param ?string   $file_name
+     * @param ?string   $sub_dir
+     * @param ?string   $full_name
      *
      * @return string
      */
@@ -89,8 +89,7 @@ class WorkerCallEvents extends WorkerBase
 
     /**
      * Останавливает запись разговора на канале.
-     *
-     * @param $channel
+     * @param string $channel
      */
     public function StopMixMonitor($channel): void
     {
