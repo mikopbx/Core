@@ -12,23 +12,109 @@ require_once 'Globals.php';
 use MikoPBX\Common\Models\{CallDetailRecords, CallDetailRecordsTmp};
 use Error;
 use MikoPBX\Core\Asterisk\CdrDb;
-use MikoPBX\Core\System\{BeanstalkClient, MikoPBXConfig, Util};
+use MikoPBX\Core\System\{BeanstalkClient, MikoPBXConfig, Storage, Util};
 use Phalcon\Di;
+use phpDocumentor\Reflection\Types\True_;
 
 class WorkerCallEvents extends WorkerBase
 {
     // Максимальное количество экземпляров данныого класса.
-    protected int $maxProc=1;
+    protected int $maxProc = 1;
+
+    protected array $mixMonitorChannels = [];
+    protected bool  $record_calls       = true;
+    protected bool  $split_audio_thread = false;
+
+    /**
+     * Инициирует запись разговора на канале.
+     *
+     * @param      $channel
+     * @param      $file_name
+     * @param null $sub_dir
+     * @param null $full_name
+     *
+     * @return string
+     */
+    public function MixMonitor($channel, $file_name = null, $sub_dir = null, $full_name = null): string
+    {
+        $res_file = $this->mixMonitorChannels[$channel]??'';
+        if($res_file !== ''){
+            return $res_file;
+        }
+
+        $res_file           = '';
+        $file_name = str_replace('/', '_', $file_name);
+        if ($this->record_calls) {
+            if ( ! file_exists($full_name)) {
+                $monitor_dir = Storage::getMonitorDir();
+                if ($sub_dir === null) {
+                    $sub_dir = date('Y/m/d/H/');
+                }
+                $f = "{$monitor_dir}/{$sub_dir}{$file_name}";
+            } else {
+                $f         = Util::trimExtensionForFile($full_name);
+                $file_name = basename($f);
+            }
+            if ($this->split_audio_thread) {
+                $options = "abr({$f}_in.wav)t({$f}_out.wav)";
+            } else {
+                $options = 'ab';
+            }
+            $nicePath   = Util::which('nice');
+            $lamePath   = Util::which('lame');
+            $chmodPath  = Util::which('chmod');
+
+            $arr = $this->am->GetChannels(false);
+            if(!in_array($channel, $arr)){
+                CdrDb::LogEvent("MixMonitor: Channel {$channel} not found.");
+                return '';
+            }
+            $res        = $this->am->MixMonitor(
+                $channel,
+                "{$f}.wav",
+                $options,
+                "{$nicePath} -n 19 {$lamePath} -b 32 --silent \"{$f}.wav\" \"{$f}.mp3\" && {$chmodPath} o+r \"{$f}.mp3\""
+            );
+            $res['cmd'] = "MixMonitor($channel, $file_name)";
+            CdrDb::LogEvent(json_encode($res));
+            $res_file = "{$f}.mp3";
+
+            $this->mixMonitorChannels[$channel] = $res_file;
+
+            $this->am->UserEvent('StartRecording', ['recordingfile' => $res_file, 'recchan' => $channel]);
+        }
+
+        return $res_file;
+    }
+
+    /**
+     * Останавливает запись разговора на канале.
+     *
+     * @param $channel
+     */
+    public function StopMixMonitor($channel): void
+    {
+        if(isset($this->mixMonitorChannels[$channel])){
+            unset($this->mixMonitorChannels[$channel]);
+        }else{
+            return;
+        }
+        if ($this->record_calls) {
+            $res        = $this->am->StopMixMonitor($channel);
+            $res['cmd'] = "StopMixMonitor($channel)";
+            CdrDb::LogEvent(json_encode($res));
+        }
+    }
 
     /**
      * Обработка события начала телефонного звонка.
      *
      * @param $data
      */
-    public static function Action_dial($data): void
+    public function Action_dial($data): void
     {
-        self::insertDataToDbM($data);
-        self::Action_app_end($data);
+        $this->insertDataToDbM($data);
+        $this->Action_app_end($data);
     }
 
     /**
@@ -36,7 +122,7 @@ class WorkerCallEvents extends WorkerBase
      *
      * @param $data
      */
-    public static function Action_app_end($data): void
+    public function Action_app_end($data): void
     {
         $filter = [
             'linkedid=:linkedid: AND is_app=1 AND endtime = ""',
@@ -61,7 +147,7 @@ class WorkerCallEvents extends WorkerBase
      *
      * @param $data
      */
-    public static function Action_dial_create_chan($data): void
+    public function Action_dial_create_chan($data): void
     {
         if (isset($data['org_id'])) {
             // Вероятно необходимо переопределить искать по двум ID.
@@ -121,12 +207,13 @@ class WorkerCallEvents extends WorkerBase
                 $row->writeAttribute('src_chan', $data['dst_chan']);
             } else {
                 if ( ! $rec_start) {
-                    $data['recordingfile'] = CdrDb::MixMonitor(
+                    $data['recordingfile'] = $this->MixMonitor(
                         $data['dst_chan'],
                         $row->UNIQUEID,
                         null,
                         $row->recordingfile
                     );
+
                     $row->writeAttribute('recordingfile', $data['recordingfile']);
                     $rec_start = true;
                 }
@@ -152,7 +239,7 @@ class WorkerCallEvents extends WorkerBase
      *
      * @param $data
      */
-    public static function Action_dial_answer($data): void
+    public function Action_dial_answer($data): void
     {
         $mikoPBXConfig = new MikoPBXConfig();
         $pickupexten   = $mikoPBXConfig->getGeneralSettings('PickupExten');
@@ -175,18 +262,17 @@ class WorkerCallEvents extends WorkerBase
                 $new_data['dst_chan']       = $data['agi_channel'];
                 $new_data['dst_num']        = $data['dst_num'];
                 $new_data['UNIQUEID']       = $data['id'];
-                $new_data['recordingfile']  = CdrDb::MixMonitor($new_data['dst_chan'],  'pickup_'.$new_data['UNIQUEID']);
+                $new_data['recordingfile']  = $this->MixMonitor($new_data['dst_chan'],  'pickup_'.$new_data['UNIQUEID']);
 
                 unset($new_data['id']);
                 unset($new_data['end']);
-                self::insertDataToDbM($new_data);
+                $this->insertDataToDbM($new_data);
                 /**
                  * Отправка UserEvent
                  */
                 $new_data['action'] = 'answer_pickup_create_cdr';
-                $am                 = Util::getAstManager('off');
                 $AgiData            = base64_encode(json_encode($new_data));
-                $am->UserEvent('CdrConnector', ['AgiData' => $AgiData]);
+                $this->am->UserEvent('CdrConnector', ['AgiData' => $AgiData]);
             }
         } else {
             if ( ! empty($data['ENDCALLONANSWER'])) {
@@ -280,10 +366,14 @@ class WorkerCallEvents extends WorkerBase
      *
      * @param $data
      *
-     * @throws \Error
+     * @throws Error | \Exception
      */
-    public static function Action_hangup_chan($data): void
+    public function Action_hangup_chan($data): void
     {
+        if(isset($this->mixMonitorChannels[$data['agi_channel']])){
+            unset($this->mixMonitorChannels[$data['agi_channel']]);
+        }
+
         $channels       = [];
         $transfer_calls = [];
         $filter         = [
@@ -339,19 +429,18 @@ class WorkerCallEvents extends WorkerBase
         }
 
         // Проверим, возможно это обычный трансфер.
-        self::Action_CreateRowTransfer('hangup_chan', $data, $transfer_calls);
+        $this->Action_CreateRowTransfer('hangup_chan', $data, $transfer_calls);
 
         $not_local = (stripos($data['agi_channel'], 'local/') === false);
         if ($not_local === true && $data['OLD_LINKEDID'] === $data['linkedid']) {
-            $am           = Util::getAstManager('off');
-            $active_chans = $am->GetChannels(false);
+            $active_chans = $this->am->GetChannels(false);
             // TODO / Намек на SIP трансфер.
             foreach ($channels as $data_chan) {
                 if ( ! in_array($data_chan['chan'], $active_chans, true)) {
                     // Вызов уже завершен. Не интересно.
                     continue;
                 }
-                $BRIDGEPEER = $am->GetVar($data_chan['chan'], 'BRIDGEPEER', null, false);
+                $BRIDGEPEER = $this->am->GetVar($data_chan['chan'], 'BRIDGEPEER', null, false);
                 if ( ! in_array($BRIDGEPEER, $active_chans, true)) {
                     // Вызов уже завершен. Не интересно.
                     continue;
@@ -361,8 +450,8 @@ class WorkerCallEvents extends WorkerBase
                     continue;
                 }
 
-                $linkedid = $am->GetVar($data_chan['chan'], 'CDR(linkedid)', null, false);
-                $CALLERID = $am->GetVar($BRIDGEPEER, 'CALLERID(num)', null, false);
+                $linkedid = $this->am->GetVar($data_chan['chan'], 'CDR(linkedid)', null, false);
+                $CALLERID = $this->am->GetVar($BRIDGEPEER, 'CALLERID(num)', null, false);
                 if ( ! empty($linkedid) && $linkedid !== $data['linkedid']) {
                     $n_data['action']        = 'sip_transfer';
                     $n_data['src_chan']      = $data_chan['out'] ? $data_chan['chan'] : $BRIDGEPEER;
@@ -374,11 +463,11 @@ class WorkerCallEvents extends WorkerBase
                     $n_data['linkedid']      = $linkedid;
                     $n_data['UNIQUEID']      = $data['linkedid'] . Util::generateRandomString();
                     $n_data['transfer']      = '0';
-                    $n_data['recordingfile'] = CdrDb::MixMonitor($n_data['dst_chan'], $n_data['UNIQUEID']);
+                    $n_data['recordingfile'] = $this->MixMonitor($n_data['dst_chan'], $n_data['UNIQUEID']);
                     $n_data['did']           = $data_chan['did'];
                     // $data['from_account'] = $from_account;
                     Util::logMsgDb('call_events', json_encode($n_data));
-                    self::insertDataToDbM($n_data);
+                    $this->insertDataToDbM($n_data);
                     $filter = [
                         'linkedid=:linkedid:',
                         'bind' => ['linkedid' => $data['linkedid']],
@@ -392,9 +481,8 @@ class WorkerCallEvents extends WorkerBase
                     /**
                      * Отправка UserEvent
                      */
-                    $am      = Util::getAstManager('off');
                     $AgiData = base64_encode(json_encode($n_data));
-                    $am->UserEvent('CdrConnector', ['AgiData' => $AgiData]);
+                    $this->am->UserEvent('CdrConnector', ['AgiData' => $AgiData]);
                 }
             } // Обход текущих каналов.
 
@@ -408,7 +496,7 @@ class WorkerCallEvents extends WorkerBase
      * @param       $data
      * @param ?array $calls_data
      */
-    public static function Action_CreateRowTransfer($action, $data, $calls_data = null): void
+    public function Action_CreateRowTransfer($action, $data, $calls_data = null): void
     {
         if (null === $calls_data) {
             $filter     = [
@@ -441,9 +529,9 @@ class WorkerCallEvents extends WorkerBase
                 }
             }
             // Запись разговора.
-            CdrDb::StopMixMonitor($insert_data['src_chan']);
-            CdrDb::StopMixMonitor($insert_data['dst_chan']);
-            $recordingfile = CdrDb::MixMonitor(
+            $this->StopMixMonitor($insert_data['src_chan']);
+            $this->StopMixMonitor($insert_data['dst_chan']);
+            $recordingfile = $this->MixMonitor(
                 $insert_data['dst_chan'],
                 'transfer_' . $insert_data['src_num'] . '_' . $insert_data['dst_num'] . '_' . $data['linkedid']
             );
@@ -461,31 +549,41 @@ class WorkerCallEvents extends WorkerBase
              * Отправка UserEvent
              */
             $insert_data['action'] = 'transfer_dial_create_cdr';
-            $am                    = Util::getAstManager('off');
-            $AgiData               = base64_encode(json_encode($insert_data));
-            $am->UserEvent('CdrConnector', ['AgiData' => $AgiData]);
 
-            self::insertDataToDbM($insert_data);
+            $AgiData               = base64_encode(json_encode($insert_data));
+            $this->am->UserEvent('CdrConnector', ['AgiData' => $AgiData]);
+
+            $this->insertDataToDbM($insert_data);
             CdrDb::LogEvent(json_encode($insert_data));
-        } elseif (empty($calls_data[0]['answer']) && count(
-                $calls_data
-            ) === 1 && ! empty($calls_data[0]['recordingfile'])) {
+        } elseif (empty($calls_data[0]['answer']) && count($calls_data) === 1 && ! empty($calls_data[0]['recordingfile'])) {
+            // Возобновление записи разговора при срыве переадресации.
             $row_data = $calls_data[0];
             $chan     = ($data['agi_channel'] === $row_data['src_chan']) ? $row_data['dst_chan'] : $row_data['src_chan'];
             $filter   = [
-                'linkedid=:linkedid: AND endtime = "" AND transfer=1 AND (src_chan=:chan: OR dst_chan=:chan:)',
+                'linkedid=:linkedid: AND endtime = ""',
                 'bind'  => [
                     'linkedid' => $data['linkedid'],
-                    'chan'     => $chan,
                 ],
                 'order' => 'is_app',
             ];
             /** @var CallDetailRecordsTmp $not_ended_cdr */
-            $not_ended_cdr = CallDetailRecordsTmp::findFirst($filter);
-            if ($not_ended_cdr !== null) {
-                CdrDb::StopMixMonitor($not_ended_cdr->src_chan);
-                // Cdr::StopMixMonitor($not_ended_cdr->dst_chan);
-                CdrDb::MixMonitor($not_ended_cdr->dst_chan, '', '', $not_ended_cdr->recordingfile);
+            $cdr = CallDetailRecordsTmp::find($filter);
+            /** @var CallDetailRecordsTmp $row */
+            $not_ended_cdr = null;
+            $transferNotComplete = false;
+            foreach ($cdr as $row){
+                if($row->transfer === '1' && ($row->src_chan === $chan || $row->dst_chan === $chan) ){
+                    $not_ended_cdr = $row;
+                }
+                if($row->answer === '' && $row->endtime === ''
+                    && ($row->src_chan === $chan || $row->dst_chan === $chan) ){
+                    $transferNotComplete = true;
+                }
+            }
+
+            if ($not_ended_cdr !== null && !$transferNotComplete) {
+                $this->StopMixMonitor($not_ended_cdr->src_chan);
+                $this->MixMonitor($not_ended_cdr->dst_chan, '', '', $not_ended_cdr->recordingfile);
             }
         }
     }
@@ -495,9 +593,9 @@ class WorkerCallEvents extends WorkerBase
      *
      * @param $data
      */
-    public static function Action_dial_hangup($data): void
+    public function Action_dial_hangup($data): void
     {
-        // self::Action_CreateRowTransfer('dial_hangup', $data);
+        // $this->Action_CreateRowTransfer('dial_hangup', $data);
     }
 
     /**
@@ -505,11 +603,11 @@ class WorkerCallEvents extends WorkerBase
      *
      * @param $data
      */
-    public static function Action_transfer_dial($data): void
+    public function Action_transfer_dial($data): void
     {
-        self::Action_transfer_check($data);
-        self::insertDataToDbM($data);
-        self::Action_app_end($data);
+        $this->Action_transfer_check($data);
+        $this->insertDataToDbM($data);
+        $this->Action_app_end($data);
     }
 
     /**
@@ -517,7 +615,7 @@ class WorkerCallEvents extends WorkerBase
      *
      * @param $data
      */
-    public static function Action_transfer_check($data): void
+    public function Action_transfer_check($data): void
     {
         $filter = [
             'linkedid=:linkedid: AND endtime = "" AND transfer=0 AND (src_chan=:src_chan: OR dst_chan=:src_chan:)',
@@ -531,8 +629,8 @@ class WorkerCallEvents extends WorkerBase
         $m_data = CallDetailRecordsTmp::find($filter);
         foreach ($m_data as $row) {
             // Пробуем остановить записть разговора.
-            CdrDb::StopMixMonitor($row->dst_chan);
-            CdrDb::StopMixMonitor($row->src_chan);
+            $this->StopMixMonitor($row->dst_chan);
+            $this->StopMixMonitor($row->src_chan);
             // Установим признак переадресации.
             $row->writeAttribute('transfer', 1);
             $row->save();
@@ -544,7 +642,7 @@ class WorkerCallEvents extends WorkerBase
      *
      * @param $data
      */
-    public static function Action_transfer_dial_create_chan($data): void
+    public function Action_transfer_dial_create_chan($data): void
     {
         $filter     = [
             'UNIQUEID=:UNIQUEID: AND endtime = "" AND answer = ""',
@@ -580,7 +678,7 @@ class WorkerCallEvents extends WorkerBase
                 $row_create = true;
             }
 
-            $data['recordingfile'] = CdrDb::MixMonitor($data['dst_chan'], $row->UNIQUEID);
+            $data['recordingfile'] = $this->MixMonitor($data['dst_chan'], $row->UNIQUEID);
             // конец проверки
             ///
 
@@ -601,7 +699,7 @@ class WorkerCallEvents extends WorkerBase
      *
      * @param $data
      */
-    public static function Action_transfer_dial_answer($data): void
+    public function Action_transfer_dial_answer($data): void
     {
         $filter = [
             '(UNIQUEID=:UNIQUEID: OR UNIQUEID=:UNIQUEID_CHAN:) AND answer = "" AND endtime = ""',
@@ -628,13 +726,13 @@ class WorkerCallEvents extends WorkerBase
      *
      * @param $data
      */
-    public static function Action_transfer_dial_hangup($data): void
+    public function Action_transfer_dial_hangup($data): void
     {
         $pos = stripos($data['agi_channel'], 'local/');
         if ($pos === false) {
             // Это НЕ локальный канал.
             // Если это завершение переадресации (консультативной). Создадим новую строку CDR.
-            // self::Action_CreateRowTransfer('transfer_dial_hangup', $data);
+            // $this->Action_CreateRowTransfer('transfer_dial_hangup', $data);
 
             // Найдем записанные ранее строки.
             $filter = [
@@ -668,7 +766,7 @@ class WorkerCallEvents extends WorkerBase
                 $info      = pathinfo($res->recordingfile);
                 $data_time = ($res->answer == null) ? $res->start : $res->answer;
                 $subdir    = date('Y/m/d/H/', strtotime($data_time));
-                CdrDb::MixMonitor($res->src_chan, $info['filename'], $subdir);
+                $this->MixMonitor($res->src_chan, $info['filename'], $subdir);
             }
         } elseif ('' === $data['ANSWEREDTIME']) {
             $filter = [
@@ -703,7 +801,7 @@ class WorkerCallEvents extends WorkerBase
                 $info      = pathinfo($row->recordingfile);
                 $data_time = ($row->answer == null) ? $row->start : $row->answer;
                 $subdir    = date('Y/m/d/H/', strtotime($data_time));
-                CdrDb::MixMonitor($row->src_chan, $info['filename'], $subdir);
+                $this->MixMonitor($row->src_chan, $info['filename'], $subdir);
                 // Снимем со строк признак переадресации.
                 $row->writeAttribute('transfer', 0);
                 if ( ! $row->save()) {
@@ -718,10 +816,10 @@ class WorkerCallEvents extends WorkerBase
      *
      * @param $data
      */
-    public static function Action_dial_app($data): void
+    public function Action_dial_app($data): void
     {
-        self::Action_app_end($data);
-        self::insertDataToDbM($data);
+        $this->Action_app_end($data);
+        $this->insertDataToDbM($data);
     }
 
     /**
@@ -729,9 +827,9 @@ class WorkerCallEvents extends WorkerBase
      *
      * @param $data
      */
-    public static function Action_dial_outworktimes($data): void
+    public function Action_dial_outworktimes($data): void
     {
-        self::insertDataToDbM($data);
+        $this->insertDataToDbM($data);
     }
 
     /**
@@ -739,20 +837,20 @@ class WorkerCallEvents extends WorkerBase
      *
      * @param $data
      */
-    public static function Action_queue_start($data): void
+    public function Action_queue_start($data): void
     {
         if ($data['transfer'] == '1') {
             // Если это трансфер выполним поиск связанных данных.
-            self::Action_transfer_check($data);
+            $this->Action_transfer_check($data);
         }
         if (isset($data['start'])) {
             // Это новая строка.
-            self::insertDataToDbM($data);
+            $this->insertDataToDbM($data);
         } else {
             // Требуется только обновление данных.
-            self::updateDataInDbM($data);
+            $this->updateDataInDbM($data);
         }
-        self::Action_app_end($data);
+        $this->Action_app_end($data);
     }
 
     /**
@@ -760,9 +858,9 @@ class WorkerCallEvents extends WorkerBase
      *
      * @param $data
      */
-    public static function Action_meetme_dial($data): void
+    public function Action_meetme_dial($data): void
     {
-        CdrDb::StopMixMonitor($data['src_chan']);
+        $this->StopMixMonitor($data['src_chan']);
 
         if (strpos($data['src_chan'], 'internal-originate') !== false) {
             // Уточним канал и ID записи;
@@ -791,8 +889,8 @@ class WorkerCallEvents extends WorkerBase
                 $m_data->save();
             }
         } else {
-            self::insertDataToDbM($data);
-            self::Action_app_end($data);
+            $this->insertDataToDbM($data);
+            $this->Action_app_end($data);
         }
     }
 
@@ -801,12 +899,12 @@ class WorkerCallEvents extends WorkerBase
      *
      * @param $data
      */
-    public static function Action_unpark_call($data): void
+    public function Action_unpark_call($data): void
     {
-        $data['recordingfile'] = CdrDb::MixMonitor($data['dst_chan'], $data['UNIQUEID']);
-        self::insertDataToDbM($data);
+        $data['recordingfile'] = $this->MixMonitor($data['dst_chan'], $data['UNIQUEID']);
+        $this->insertDataToDbM($data);
         if (is_array($data['data_parking'])) {
-            self::insertDataToDbM($data['data_parking']);
+            $this->insertDataToDbM($data['data_parking']);
         }
         $filter = [
             "linkedid=:linkedid: AND src_chan=:src_chan:",
@@ -828,9 +926,9 @@ class WorkerCallEvents extends WorkerBase
      *
      * @param $data
      */
-    public static function Action_unpark_call_timeout($data): void
+    public function Action_unpark_call_timeout($data): void
     {
-        self::insertDataToDbM($data);
+        $this->insertDataToDbM($data);
     }
 
     /**
@@ -838,7 +936,7 @@ class WorkerCallEvents extends WorkerBase
      *
      * @param $data
      */
-    public static function Action_queue_answer($data): void
+    public function Action_queue_answer($data): void
     {
         $filter = [
             'UNIQUEID=:UNIQUEID: AND answer = ""',
@@ -864,7 +962,7 @@ class WorkerCallEvents extends WorkerBase
      *
      * @param $data
      */
-    public static function Action_queue_end($data): void
+    public function Action_queue_end($data): void
     {
         $filter = [
             "UNIQUEID=:UNIQUEID:",
@@ -893,7 +991,7 @@ class WorkerCallEvents extends WorkerBase
      *
      * @param $data
      */
-    public static function Action_hangup_chan_meetme($data): void
+    public function Action_hangup_chan_meetme($data): void
     {
         clearstatcache();
         $recordingfile = '';
@@ -961,6 +1059,12 @@ class WorkerCallEvents extends WorkerBase
      */
     public function start($argv): void
     {
+        $this->mixMonitorChannels = [];
+        $mikoPBXConfig            = new MikoPBXConfig();
+        $this->record_calls       = $mikoPBXConfig->getGeneralSettings('PBXRecordCalls') === '1';
+        $this->split_audio_thread = $mikoPBXConfig->getGeneralSettings('PBXSplitAudioThread') === '1';
+        $this->am                 = Util::getAstManager('off');
+
         // PID сохраняем при начале работы Worker.
         $client = new BeanstalkClient(self::class);
         $client->subscribe(self::class, [$this, 'callEventsWorker']);
@@ -999,7 +1103,7 @@ class WorkerCallEvents extends WorkerBase
     {
         $q    = $tube->getBody();
         $data = json_decode($q, true);
-        $res  = self::updateDataInDbM($data);
+        $res  = $this->updateDataInDbM($data);
         $tube->reply(json_encode($res));
     }
 
@@ -1010,7 +1114,7 @@ class WorkerCallEvents extends WorkerBase
      *
      * @return bool
      */
-    public static function updateDataInDbM($data): bool
+    public function updateDataInDbM($data): bool
     {
         if (empty($data['UNIQUEID'])) {
             Util::sysLogMsg(__FUNCTION__, 'UNIQUEID is empty ' . json_encode($data));
@@ -1060,9 +1164,8 @@ class WorkerCallEvents extends WorkerBase
             unset($insert_data['is_app']);
             unset($insert_data['transfer']);
 
-            $am      = Util::getAstManager('off');
             $AgiData = base64_encode(json_encode($insert_data));
-            $am->UserEvent('CdrConnector', ['AgiData' => $AgiData]);
+            $this->am->UserEvent('CdrConnector', ['AgiData' => $AgiData]);
         }
 
         return $res;
@@ -1074,7 +1177,7 @@ class WorkerCallEvents extends WorkerBase
      * @param array $data
      *
      * @return bool
-     * @throws \Error
+     * @throws Error
      */
     public static function insertDataToDbM($data): bool
     {

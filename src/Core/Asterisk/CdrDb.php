@@ -83,66 +83,6 @@ class CdrDb
     }
 
     /**
-     * Инициирует запись разговора на канале.
-     *
-     * @param      $channel
-     * @param      $file_name
-     * @param null $sub_dir
-     * @param null $full_name
-     *
-     * @return string
-     */
-    public static function MixMonitor($channel, $file_name = null, $sub_dir = null, $full_name = null): string
-    {
-        $res_file           = '';
-        $mikoPBXConfig      = new MikoPBXConfig();
-        $record_calls       = $mikoPBXConfig->getGeneralSettings('PBXRecordCalls');
-        $split_audio_thread = $mikoPBXConfig->getGeneralSettings('PBXSplitAudioThread');
-
-        $file_name = str_replace('/', '_', $file_name);
-        if (isset($record_calls) && $record_calls === '1') {
-            $am = Util::getAstManager('off');
-            if ( ! file_exists($full_name)) {
-                $monitor_dir = Storage::getMonitorDir();
-                if ($sub_dir === null) {
-                    $sub_dir = date('Y/m/d/H/');
-                }
-                $f = "{$monitor_dir}/{$sub_dir}{$file_name}";
-            } else {
-                $f         = Util::trimExtensionForFile($full_name);
-                $file_name = basename($f);
-            }
-            if ($split_audio_thread === '1') {
-                $options = "abr({$f}_in.wav)t({$f}_out.wav)";
-            } else {
-                $options = 'ab';
-            }
-            $nicePath = Util::which('nice');
-            $lamePath = Util::which('lame');
-            $chmodPath = Util::which('chmod');
-
-            $arr = $am->GetChannels(false);
-            if(!in_array($channel, $arr)){
-                self::LogEvent("MixMonitor: Channel {$channel} not found.");
-                return '';
-            }
-
-            $res        = $am->MixMonitor(
-                $channel,
-                "{$f}.wav",
-                $options,
-                "{$nicePath} -n 19 {$lamePath} -b 32 --silent \"{$f}.wav\" \"{$f}.mp3\" && {$chmodPath} o+r \"{$f}.mp3\""
-            );
-            $res['cmd'] = "MixMonitor($channel, $file_name)";
-            self::LogEvent(json_encode($res));
-            $res_file = "{$f}.mp3";
-            $am->UserEvent('StartRecording', ['recordingfile' => $res_file, 'recchan' => $channel]);
-        }
-
-        return $res_file;
-    }
-
-    /**
      * Формирует путь к файлу записи без расширения.
      *
      * @param $file_name
@@ -156,25 +96,4 @@ class CdrDb
 
         return "{$monitor_dir}/{$sub_dir}{$file_name}";
     }
-
-    /**
-     * Останавливает запись разговора на канале.
-     *
-     * @param $channel
-     */
-    public static function StopMixMonitor($channel): void
-    {
-        $mikoPBXConfig = new MikoPBXConfig();
-        $record_calls  = $mikoPBXConfig->getGeneralSettings('PBXRecordCalls');
-
-        if (isset($record_calls) && $record_calls === '1') {
-            $am         = Util::getAstManager('off');
-            $res        = $am->StopMixMonitor($channel);
-            $res['cmd'] = "StopMixMonitor($channel)";
-            self::LogEvent(json_encode($res));
-        }
-    }
-
-
-
 }

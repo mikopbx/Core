@@ -674,7 +674,7 @@ return [
     'cf_Path' => 'Dateipfad und Name',
     'cf_Description' => 'Hinweis/Kommentar zu den Änderungen',
     'cf_Mode' => 'Einstellung',
-    'mo_BeforeDeleteFirst' => 'Before delete first %represent%',
+    'mo_BeforeDeleteFirst' => 'Es gibt Verweise auf das Objekt -% repräsentiert%',
     'ConstraintViolation' => '<div class=\'header\'>Verletzung der Logik-Integrität</div>',
     'repAsteriskManagerUsers' => 'AMI Zugriff - %represent%',
     'repCallQueues' => 'Warteschlange - %represent%',
