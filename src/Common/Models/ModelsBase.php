@@ -81,19 +81,10 @@ abstract class ModelsBase extends Model
      * сохраняются или удаляютмя модели или неправильно настроены зависимости между ними.
      * Эта функция формирует список ссылок на объект который мы пытаемся удалить
      *
-     * При описании отношений необходимо в foreignKey секцию добавлять атрибут
-     * message в котором указывать алиас посе слова Models,
-     * например Models\IvrMenuTimeout, иначе метод getRelated не сможет найти зависимые
-     * записи в моделях
      */
     public function onValidationFails(): void
     {
         $errorMessages = $this->getMessages();
-        if (php_sapi_name() === 'cli') {
-            Util::sysLogMsg(__CLASS__, implode(' ', $errorMessages));
-
-            return;
-        }
         foreach ($errorMessages as $errorMessage) {
             if ($errorMessage->getType() === 'ConstraintViolation') {
                 $arrMessageParts = explode('Common\\Models\\', $errorMessage->getMessage());
@@ -114,11 +105,14 @@ abstract class ModelsBase extends Model
                             $newErrorMessage .= '<li>' . $item->getRepresent(true) . '</li>';
                         }
                     }
+                } elseif ($relatedRecords instanceof ModelsBase) {
+                    $newErrorMessage .= '<li>' . $relatedRecords->getRepresent(true) . '</li>';
                 } else {
                     $newErrorMessage .= '<li>Unknown object</li>';
                 }
                 $newErrorMessage .= '</ul>';
-                $errorMessage->setMessage($newErrorMessage);
+                $message = new Message($newErrorMessage);
+                $this->appendMessage($message);
                 break;
             }
         }
@@ -159,9 +153,9 @@ abstract class ModelsBase extends Model
      * @return bool
      */
     public function beforeDelete(): bool
-    {
+     {
         return $this->checkRelationsSatisfaction($this, $this);
-    }
+     }
 
     /**
      *  Check whether this object has unsatisfied relations or not
@@ -173,6 +167,108 @@ abstract class ModelsBase extends Model
      */
     private function checkRelationsSatisfaction($theFirstDeleteRecord, $currentDeleteRecord): bool
     {
+    //     /**
+    //      * Get the models manager
+    //      */
+    //     $manager = $currentDeleteRecord->modelsManager;
+    //
+    //     /**
+    //      * We check if some of the hasOne/hasMany relations is a foreign key
+    //      */
+    //     $relations = $manager->getHasOneAndHasMany($currentDeleteRecord);
+    //
+    //     $error = false;
+    //
+    //     foreach ($relations as $relation) {
+    //         /**
+    //          * Check if the relation has a virtual foreign key
+    //          */
+    //         $foreignKey = $relation->getForeignKey();
+    //
+    //         if ($foreignKey === false) {
+    //             continue;
+    //         }
+    //
+    //         /**
+    //          * By default action is restrict
+    //          */
+    //         $action = Relation::ACTION_RESTRICT;
+    //
+    //         /**
+    //          * Try to find a different action in the foreign key's options
+    //          */
+    //         if (is_array($foreignKey) && isset($foreignKey['action'])) {
+    //             $action = (int)$foreignKey['action'];
+    //         }
+    //
+    //         /**
+    //          * Check only if the operation is restrict
+    //          */
+    //         if ($action !== Relation::ACTION_RESTRICT) {
+    //             continue;
+    //         }
+    //
+    //         $relationClass = $relation->getReferencedModel();
+    //
+    //         /**
+    //          * Load a plain instance from the models manager
+    //          */
+    //         $referencedModel = $manager->load($relationClass);
+    //
+    //         $fields           = $relation->getFields();
+    //         $referencedFields = $relation->getReferencedFields();
+    //
+    //         /**
+    //          * Create the checking conditions. A relation can has many fields or
+    //          * a single one
+    //          */
+    //         $conditions = [];
+    //         $bindParams = [];
+    //
+    //         if (is_array($fields)) {
+    //             foreach ($fields as $position => $field) {
+    //                 $value        = $currentDeleteRecord->readAttribute($field);
+    //                 $conditions[] = "[" . $referencedFields[$position] . "] = ?" . $position;
+    //                 $bindParams[] = $value;
+    //             }
+    //         } else {
+    //             $value        = $currentDeleteRecord->readAttribute($fields);
+    //             $conditions[] = "[" . $referencedFields . "] = ?0";
+    //             $bindParams[] = $value;
+    //         }
+    //
+    //         /**
+    //          * We don't trust the actual values in the object and then we're
+    //          * passing the values using bound parameters
+    //          * Let's make the checking
+    //          */
+    //         if ($referencedModel->count([join(" AND ", $conditions), "bind" => $bindParams])) {
+    //             /**
+    //              * Create a message
+    //              */
+    //             $this->appendMessage(
+    //                 new Message(
+    //                     $theFirstDeleteRecord->t(
+    //                         'mo_BeforeDeleteFirst',
+    //                         [
+    //                             'represent' => $relationClass->getRepresent(true),
+    //                         ]
+    //                     ),
+    //                     $fields,
+    //                     "ConstraintViolationBeforeDelete"
+    //                 )
+    //             );
+    //
+    //             $error = true;
+    //
+    //             break;
+    //         }
+    //     }
+    //
+    //     return ! $error;
+    // }
+    //
+
         $result = true;
         $relations
                 = $currentDeleteRecord->_modelsManager->getRelations(get_class($currentDeleteRecord));
@@ -205,7 +301,9 @@ abstract class ModelsBase extends Model
             switch ($foreignKey['action']) {
                 case Relation::ACTION_RESTRICT: // Restrict deletion and add message about unsatisfied undeleted links
                     foreach ($relatedRecords as $relatedRecord) {
-                        if (serialize($relatedRecord) === serialize($theFirstDeleteRecord)) {
+                        if (serialize($relatedRecord) === serialize($theFirstDeleteRecord)
+                            || serialize($relatedRecord) === serialize($currentDeleteRecord)
+                        ) {
                             continue; // It is checked object
                         }
                         $message = new Message(
@@ -221,10 +319,21 @@ abstract class ModelsBase extends Model
                     }
                     break;
                 case Relation::ACTION_CASCADE: // Удалим все зависимые записи
-                    foreach ($relatedRecords as $record) {
-                        $result = $result && $record->checkRelationsSatisfaction($theFirstDeleteRecord, $record);
+                    foreach ($relatedRecords as $relatedRecord) {
+                        if (serialize($relatedRecord) === serialize($theFirstDeleteRecord)
+                        || serialize($relatedRecord) === serialize($currentDeleteRecord)
+                        ) {
+                            continue; // It is checked object
+                        }
+                        $result = $result && $relatedRecord->checkRelationsSatisfaction($theFirstDeleteRecord, $relatedRecord);
                         if ($result) {
-                            $result = $record->delete();
+                            $result = $relatedRecord->delete();
+                        }
+                        if ($result===false){
+                            $messages = $relatedRecord->getMessages();
+                            foreach ($messages as $message){
+                                $theFirstDeleteRecord->appendMessage($message);
+                            }
                         }
                     }
                     break;
