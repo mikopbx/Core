@@ -397,7 +397,6 @@ class Util
      * Генератор произвольной строки.
      * @param int $length
      * @return string
-     * @throws Exception
      */
     public static function generateRandomString($length = 10): string
     {
@@ -405,7 +404,11 @@ class Util
         $charactersLength = strlen($characters);
         $randomString     = '';
         for ($i = 0; $i < $length; $i++) {
-            $randomString .= $characters[random_int(0, $charactersLength - 1)];
+            try {
+                $randomString .= $characters[random_int(0, $charactersLength - 1)];
+            }catch (\Exception $e ){
+                $randomString = '';
+            }
         }
 
         return $randomString;
