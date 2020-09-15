@@ -41,8 +41,6 @@ class WorkerCallEvents extends WorkerBase
         if($res_file !== ''){
             return $res_file;
         }
-        print_r("Start MixMonitor on $channel\n");
-        print_r("\n");
 
         $res_file           = '';
         $file_name = str_replace('/', '_', $file_name);
