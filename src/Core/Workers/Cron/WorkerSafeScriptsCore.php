@@ -18,6 +18,7 @@ use MikoPBX\Core\Workers\WorkerCallEvents;
 use MikoPBX\Core\Workers\WorkerCdr;
 use MikoPBX\Core\Workers\WorkerCheckFail2BanAlive;
 use MikoPBX\Core\Workers\WorkerLicenseChecker;
+use MikoPBX\Core\Workers\WorkerLogRotate;
 use MikoPBX\Core\Workers\WorkerModelsEvents;
 use MikoPBX\Core\Workers\WorkerNotifyByEmail;
 use MikoPBX\Core\Workers\WorkerNotifyError;
@@ -78,6 +79,7 @@ class WorkerSafeScriptsCore extends WorkerBase
                 [
                     WorkerLicenseChecker::class,
                     WorkerCheckFail2BanAlive::class,
+                    WorkerLogRotate::class
                 ],
         ];
         $arrModulesWorkers = [];

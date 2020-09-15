@@ -124,10 +124,10 @@ class PbxExtensionUtils
             "{$moduleDir}/agi-bin",
             "{$moduleDir}/bin"
         ];
+        $pathChmod = Util::which('chmod');
         foreach ($dirs as $dir){
             if(file_exists($dir) && is_dir($dir)){
-                $chmodOath = Util::which('chmod');
-                Util::mwExec("{$chmodOath} +x {$dir}/*");
+                Util::mwExec("{$pathChmod} +x {$dir}/*");
             }
         }
     }

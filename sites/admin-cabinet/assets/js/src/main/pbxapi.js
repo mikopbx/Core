@@ -63,10 +63,10 @@ const PbxApi = {
 			if (o && typeof o === 'object') {
 				return o;
 			}
+			return false;
 		} catch (e) {
-			//
+			return false;
 		}
-		return false;
 	},
 
 	/**

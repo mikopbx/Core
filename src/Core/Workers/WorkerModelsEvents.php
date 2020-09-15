@@ -86,6 +86,8 @@ class WorkerModelsEvents extends WorkerBase
 
     private const R_MOH_RELOAD = 'reloadMoh';
 
+    private const R_CONF_MODULES = 'reloadPbxConfModules';
+
     private int $last_change;
     private array $modified_tables;
 
@@ -107,6 +109,8 @@ class WorkerModelsEvents extends WorkerBase
         $this->arrObject = $this->di->getShared('pbxConfModules');
 
         $this->PRIORITY_R = [
+            self::R_CONF_MODULES,
+            self::R_REST_API_WORKER,
             self::R_PBX_SETTINGS,
             self::R_NETWORK,
             self::R_FIREWALL,
@@ -123,7 +127,6 @@ class WorkerModelsEvents extends WorkerBase
             self::R_MANAGERS,
             self::R_CUSTOM_F,
             self::R_VOICEMAIL,
-            self::R_REST_API_WORKER,
             self::R_MOH_RELOAD
         ];
 
@@ -293,6 +296,7 @@ class WorkerModelsEvents extends WorkerBase
                 $this->modified_tables[self::R_DIALPLAN] = true;
                 break;
             case PbxExtensionModules::class:
+                $this->modified_tables[self::R_CONF_MODULES] = true;
                 $this->modified_tables[self::R_CRON] = true;
                 break;
             default:
@@ -477,11 +481,18 @@ class WorkerModelsEvents extends WorkerBase
     }
 
     /**
-     *
+     *  Reloads modules property
+     */
+    public function reloadPbxConfModules():void
+    {
+        $this->arrObject = $this->di->getShared('pbxConfModules');
+    }
+
+    /**
+     * Timeout handles
      */
     public function timeoutHandler()
     {
-        // Обязательная обработка.
         $this->last_change = time() - $this->timeout;
         $this->startReload();
     }
