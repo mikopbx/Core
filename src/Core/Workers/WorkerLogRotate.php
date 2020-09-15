@@ -25,8 +25,9 @@ class WorkerLogRotate extends WorkerBase
      */
     public function start($params): void
     {
-        $lastLogRotateTime = $this->di->getRegistry()->lastLogRotateTime;
-        if ($lastLogRotateTime === null || time() - $lastLogRotateTime > 3600){
+        $managedCache = $this->di->get('managedCache');
+        $lastLogRotate = $managedCache->get('lastCoreWorkerLogRotateProcessing');
+        if ($lastLogRotate===null){
             //System Logs
             NatsConf::logRotate();
             PHPConf::rotateLog();
@@ -37,8 +38,7 @@ class WorkerLogRotate extends WorkerBase
             foreach ($plugins as $plugin) {
                 $this->logRotate($plugin['uniqid']);
             }
-
-            $this->di->getRegistry()->lastLogRotateTime = time();
+            $managedCache->set('lastCoreWorkerLogRotateProcessing', time(), 3600);
         }
     }
 
