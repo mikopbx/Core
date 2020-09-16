@@ -124,16 +124,17 @@ const PbxApi = {
 		});
 	},
 	/**
-	 * Разблокировка IP адреса в fail2ban
+	 * Delete IP from fail2ban list
+	 * @param ipAddress
 	 * @param callback
 	 * @returns {boolean}
 	 */
-	SystemUnBanIp(data, callback) {
+	SystemUnBanIp(ipAddress, callback) {
 		$.api({
 			url: PbxApi.systemUnBanIp,
 			on: 'now',
 			method: 'POST',
-			data: data,
+			data: {ip: ipAddress},
 			successTest: PbxApi.successTest,
 			onSuccess(response) {
 				callback(response.data);
@@ -445,17 +446,20 @@ const PbxApi = {
 
 	/**
 	 * Get logfiles strings partially and filtered
-	 * @param filename
-	 * @param filter
-	 * @param lines
+	 * @param params
 	 * @param callback function
 	 */
-	SyslogGetLogFromFile(filename, filter, lines, callback) {
+	SyslogGetLogFromFile(params, callback) {
 		$.api({
 			url: PbxApi.syslogGetLogFromFile,
 			on: 'now',
 			method: 'POST',
-			data: {filename, filter, lines},
+			data: {
+				filename: params.filename,
+				filter: params.filter,
+				lines: params.lines,
+				offset: params.offset
+			},
 			successTest: PbxApi.successTest,
 			onSuccess(response) {
 				callback(response.data);

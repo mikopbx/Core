@@ -19,8 +19,7 @@ const updateLogViewWorker = {
 		updateLogViewWorker.worker();
 	},
 	worker() {
-		const data = systemDiagnosticLogs.$formObj.form('get values');
-		PbxApi.SyslogGetLogFromFile(data.filename, data.filter, data.lines, systemDiagnosticLogs.cbUpdateLogText);
+		systemDiagnosticLogs.updateLogFromServer();
 		updateLogViewWorker.timeoutHandle = window.setTimeout(
 			updateLogViewWorker.worker,
 			updateLogViewWorker.timeOut,
@@ -47,8 +46,7 @@ const systemDiagnosticLogs = {
 
 		systemDiagnosticLogs.$showBtn.on('click', (e) => {
 			e.preventDefault();
-			const data = systemDiagnosticLogs.$formObj.form('get values');
-			PbxApi.SyslogGetLogFromFile(data.filename, data.filter, data.lines, systemDiagnosticLogs.cbUpdateLogText);
+			systemDiagnosticLogs.updateLogFromServer();
 		});
 
 		systemDiagnosticLogs.$downloadBtn.on('click', (e) => {
@@ -68,10 +66,15 @@ const systemDiagnosticLogs = {
 				updateLogViewWorker.initialize();
 			}
 		});
+		$('input').keyup((event)=> {
+			if (event.keyCode === 13) {
+				systemDiagnosticLogs.updateLogFromServer();
+			}
+		});
 	},
 	initializeAce() {
 		const aceHeight = window.innerHeight-300;
-		const rowsCount = Math.round(aceHeight/16.3);
+		const rowsCount = Math.round(aceHeight/15.7);
 		$(window).load(function() {
 			$('.log-content-readonly').css('min-height', `${aceHeight}px`);
 		});
@@ -123,8 +126,11 @@ const systemDiagnosticLogs = {
 			return;
 		}
 		systemDiagnosticLogs.$formObj.form('set value', 'filename', value);
-		const data = systemDiagnosticLogs.$formObj.form('get values');
-		PbxApi.SyslogGetLogFromFile(data.filename, data.filter, data.lines, systemDiagnosticLogs.cbUpdateLogText);
+		systemDiagnosticLogs.updateLogFromServer();
+	},
+	updateLogFromServer(){
+		const params = systemDiagnosticLogs.$formObj.form('get values');
+		PbxApi.SyslogGetLogFromFile(params, systemDiagnosticLogs.cbUpdateLogText);
 	},
 	/**
 	 * Updates log view

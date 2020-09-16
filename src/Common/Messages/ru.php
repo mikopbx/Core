@@ -1022,6 +1022,7 @@ return [
     'Storage unmounted'                                                   => 'Диск для хранения данных не подключен',
     'sd_Filename'                                                         => 'Файл',
     'sd_filter'                                                           => 'Фильтр',
+    'sd_offset'                                                           => 'Офсет',
     'sd_lines'                                                            => 'Лимит',
     'sd_ShowLog'                                                          => 'Просмотр логов',
     'sd_CapturePcap'                                                      => 'Захват логов',

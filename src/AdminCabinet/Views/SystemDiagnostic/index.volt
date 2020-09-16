@@ -7,14 +7,21 @@
 <div class="ui tab" data-tab="show-log">
     <form class="ui form" id="system-diagnostic-form">
         <input type="hidden" name="filename" id="filename"/>
+        <input type="hidden" name="offset" id="offset" value=0/>
         <div class="inline fields">
-            <div class="eight wide field">
+            <div class="seven wide field">
                 <label>
                     {{ t._('sd_Filename') }}
                 </label>
                 {{ form.render('filenames') }}
             </div>
-            <div class="three wide field">
+            <div class="two wide field">
+                <label>
+                    {{ t._('sd_offset') }}
+                </label>
+                {{ form.render('offset') }}
+            </div>
+            <div class="two wide field">
                 <label>
                     {{ t._('sd_lines') }}
                 </label>
