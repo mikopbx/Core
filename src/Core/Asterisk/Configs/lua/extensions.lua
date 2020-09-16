@@ -6,6 +6,11 @@
 -- Copyright © MIKO LLC - All Rights Reserved
 -- Unauthorized copying of this file, via any medium is strictly prohibited
 -- Proprietary and confidential
+-- Written by Alexey Portnov, 9 2020
+
+-- Copyright © MIKO LLC - All Rights Reserved
+-- Unauthorized copying of this file, via any medium is strictly prohibited
+-- Proprietary and confidential
 -- Written by Alexey Portnov, 8 2020
 
 -- Copyright © MIKO LLC - All Rights Reserved
@@ -304,10 +309,15 @@ function event_dial_answer()
         data['id'] = get_variable('UNIQUEID')..'_'..generateRandomString(6);
     end
 
-    set_variable("__pt1c_UNIQUEID", id);
-    set_variable("MASTER_CHANNEL(M_DIALSTATUS)", 'ANSWER');
-    app["AGI"]('/usr/www/src/Core/Asterisk/agi-bin/clean_timeout.php');
-    set_variable("MASTER_CHANNEL(M_TIMEOUT_CHANNEL)", '');
+    local masterChannel = get_variable('MASTER_CHANNEL(CHANNEL)');
+    if(string.lower(masterChannel):find("local/") == nil)then
+        -- Таймату устанавливается только на реальный канал при входящем через провайдера.
+        -- Если masterChannel локальный канал, то скорее всего идет Originate.
+        set_variable("__pt1c_UNIQUEID", id);
+        set_variable("MASTER_CHANNEL(M_DIALSTATUS)", 'ANSWER');
+        app["AGI"]('/usr/www/src/Core/Asterisk/agi-bin/clean_timeout.php');
+        set_variable("MASTER_CHANNEL(M_TIMEOUT_CHANNEL)", '');
+    end
 
     userevent_return(data)
     return data;
