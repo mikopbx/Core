@@ -82,37 +82,37 @@ class ExtensionEditForm extends Form
             )
         );
 
-        // Language
-        $language = new Select(
-            'user_language',
-            [
-                'en-en' => $this->translation->_('ex_English'),
-                'en-gb' => $this->translation->_('ex_EnglishUK'),
-                'ru-ru' => $this->translation->_('ex_Russian'),
-                'de-de' => $this->translation->_('ex_Deutsch'),
-                'da-dk' => $this->translation->_('ex_Danish'),
-                'es-es' => $this->translation->_('ex_Spanish'),
-                'fr-ca' => $this->translation->_('ex_French'),
-                'it-it' => $this->translation->_('ex_Italian'),
-                'ja-jp' => $this->translation->_('ex_Japanese'),
-                'nl-nl' => $this->translation->_('ex_Dutch'),
-                'pl-pl' => $this->translation->_('ex_Polish'),
-                'pt-br' => $this->translation->_('ex_Portuguese'),
-                'sv-sv' => $this->translation->_('ex_Swedish'),
-                'cs-cs' => $this->translation->_('ex_Czech'),
-                'tr-tr' => $this->translation->_('ex_Turkish'),
-            ]
-            , [
-                'using'    => [
-                    'id',
-                    'name',
-                ],
-                'value'    => $entity->Users->language,
-                'useEmpty' => false,
-                'class'    => 'ui selection dropdown language-select',
-            ]
-        );
-        $this->add($language);
+        // // Language
+        // $language = new Select(
+        //     'user_language',
+        //     [
+        //         'en-en' => $this->translation->_('ex_English'),
+        //         'en-gb' => $this->translation->_('ex_EnglishUK'),
+        //         'ru-ru' => $this->translation->_('ex_Russian'),
+        //         'de-de' => $this->translation->_('ex_Deutsch'),
+        //         'da-dk' => $this->translation->_('ex_Danish'),
+        //         'es-es' => $this->translation->_('ex_Spanish'),
+        //         'fr-ca' => $this->translation->_('ex_French'),
+        //         'it-it' => $this->translation->_('ex_Italian'),
+        //         'ja-jp' => $this->translation->_('ex_Japanese'),
+        //         'nl-nl' => $this->translation->_('ex_Dutch'),
+        //         'pl-pl' => $this->translation->_('ex_Polish'),
+        //         'pt-br' => $this->translation->_('ex_Portuguese'),
+        //         'sv-sv' => $this->translation->_('ex_Swedish'),
+        //         'cs-cs' => $this->translation->_('ex_Czech'),
+        //         'tr-tr' => $this->translation->_('ex_Turkish'),
+        //     ]
+        //     , [
+        //         'using'    => [
+        //             'id',
+        //             'name',
+        //         ],
+        //         'value'    => $entity->Users->language,
+        //         'useEmpty' => false,
+        //         'class'    => 'ui selection dropdown language-select',
+        //     ]
+        // );
+        // $this->add($language);
 
 
         // Picture
@@ -234,14 +234,7 @@ class ExtensionEditForm extends Form
         // Description
         $this->add(new Text('sip_description', ["value" => $entity->Sip->description]));
 
-        // EXTERNAL
-        // Extension
-        // // TODO: Для корректной конвертации удалим 8 и добавим 7 в номер
-        // $tempNumber = $options['external_extension']->number;
-        // if (substr($tempNumber,0,1)=='8' and strlen($tempNumber)==11){
-        // 	$lastSymbols = substr($tempNumber,1,10);
-        // 	$tempNumber = "7{$lastSymbols}";
-        // }
+        // EXTERNAL Extension
         $this->add(new Text('mobile_number', ["value" => $options['external_extension']->number]));
         // Uniqid
         $this->add(new Hidden('mobile_uniqid', ["value" => $options['external_extension']->ExternalPhones->uniqid]));

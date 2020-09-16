@@ -211,7 +211,7 @@ class ExtensionsController extends BaseController
 
         // Ограничим длинну внутреннего номера согласно настройкам
         $extensionsLength      = PbxSettings::getValueByKey('PBXInternalExtensionLength');
-        $internalExtensionMask = '9{' . $extensionsLength . '}';
+        $internalExtensionMask = "9{3,{$extensionsLength}}";
 
         $form = new ExtensionEditForm(
             $extension, [
@@ -240,8 +240,7 @@ class ExtensionsController extends BaseController
             $query = 200;
         }
         $result       = (int)$query + 1;
-        $extensionsLength
-                      = PbxSettings::getValueByKey('PBXInternalExtensionLength');
+        $extensionsLength = PbxSettings::getValueByKey('PBXInternalExtensionLength');
         $maxExtension = (10 ** $extensionsLength) - 1;
 
         return ($result <= $maxExtension) ? $result : '';
