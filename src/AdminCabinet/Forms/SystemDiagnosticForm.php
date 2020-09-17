@@ -33,6 +33,7 @@ class SystemDiagnosticForm extends Form
 
         $this->add(new Text('filter', ['value' => '']));
         $this->add(new Numeric('lines',  ['value' => '500']));
+        $this->add(new Numeric('offset',  ['value' => '0']));
 
     }
 }

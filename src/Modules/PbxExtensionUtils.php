@@ -109,7 +109,7 @@ class PbxExtensionUtils
         $moduleAgiBinDir = "{$moduleDir}/agi-bin";
         $files           = glob("$moduleAgiBinDir/*.{php}", GLOB_BRACE);
         foreach ($files as $file) {
-            $newFilename = $agiBinDir . '/' . pathinfo($file)['filename'].'.php';
+            $newFilename = $agiBinDir . '/' . basename($file);
             Util::createUpdateSymlink($file, $newFilename);
         }
 

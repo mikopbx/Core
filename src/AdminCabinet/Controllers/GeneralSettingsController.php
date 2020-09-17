@@ -59,6 +59,7 @@ class GeneralSettingsController extends BaseController
                 case 'AMIEnabled':
                 case 'RestartEveryNight':
                 case 'RedirectToHttps':
+                case 'PBXSplitAudioThread':
                 case '***ALL CHECK BOXES ABOVE***':
                     $record->value = ($data[$key] === 'on') ? '1' : '0';
                     break;

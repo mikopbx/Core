@@ -15,7 +15,7 @@ use MikoPBX\PBXCoreREST\Workers\WorkerMakeLogFilesArchive;
 use Phalcon\Di;
 use Phalcon\Di\Injectable;
 
-class LogsManagementProcessor extends Injectable
+class SysLogsManagementProcessor extends Injectable
 {
     public const DEFAULT_FILENAME = 'asterisk/messages';
 
@@ -35,22 +35,22 @@ class LogsManagementProcessor extends Injectable
         $res->processor = __METHOD__;
         switch ($action) {
             case 'getLogFromFile':
-                $res = LogsManagementProcessor::getLogFromFile($data['filename'], $data['filter'], $data['lines']);
+                $res = self::getLogFromFile($data['filename'], $data['filter'], $data['lines'], $data['offset']);
                 break;
             case 'startLog':
-                $res = LogsManagementProcessor::startLog();
+                $res = self::startLog();
                 break;
             case 'stopLog':
-                $res = LogsManagementProcessor::stopLog();
+                $res = self::stopLog();
                 break;
             case 'downloadLogsArchive':
-                $res = LogsManagementProcessor::downloadLogsArchive($data['filename']);
+                $res = self::downloadLogsArchive($data['filename']);
                 break;
             case 'downloadLogFile':
-                $res = LogsManagementProcessor::downloadLogFile($data['filename']);
+                $res = self::downloadLogFile($data['filename']);
                 break;
             case 'getLogsList':
-                $res = LogsManagementProcessor::getLogsList();
+                $res = self::getLogsList();
                 break;
             default:
                 $res->messages[] = "Unknown action - {$action} in syslogCallBack";
@@ -67,10 +67,11 @@ class LogsManagementProcessor extends Injectable
      * @param string $filename
      * @param string $filter
      * @param int    $lines
+     * @param int    $offset
      *
      * @return PBXApiResult
      */
-    private static function getLogFromFile(string $filename, string $filter = '', $lines = 500): PBXApiResult
+    private static function getLogFromFile(string $filename, string $filter = '', $lines = 500, $offset = 0): PBXApiResult
     {
         $res            = new PBXApiResult();
         $res->processor = __METHOD__;
@@ -80,17 +81,29 @@ class LogsManagementProcessor extends Injectable
             $res->messages[] = 'No access to the file ' . $filename;
         } else {
             $res->success = true;
-            $cat          = Util::which('cat');
+            $head         = Util::which('head');
             $grep         = Util::which('grep');
             $tail         = Util::which('tail');
+            $filter       = escapeshellarg($filter);
+            $offset       = (int)$offset;
+            $lines        = (int)$lines;
+            $linesPlusOffset = $lines+$offset;
 
             $di          = Di::getDefault();
             $dirsConfig  = $di->getShared('config');
             $filenameTmp = $dirsConfig->path('www.downloadCacheDir') . '/' . __FUNCTION__ . '_' . time() . '.log';
-            $cmd         = "{$cat} {$filename} | {$grep} " . escapeshellarg($filter) . " | $tail -n " . escapeshellarg(
-                    $lines
-                ) . "> $filenameTmp";
+            if (empty($filter)){
+                $cmd         = "{$tail} -n {$linesPlusOffset} {$filename}";
+            } else {
+                $cmd         = "{$grep} {$filter} {$filename} | $tail -n {$linesPlusOffset}";
+            }
+            if ($offset>0){
+                $cmd .= " | {$head} -n {$lines}";
+            }
+            $cmd .= " > $filenameTmp";
+
             Util::mwExec("$cmd; chown www:www $filenameTmp");
+            $res->data['cmd']=$cmd;
             $res->data['filename'] = $filenameTmp;
         }
 

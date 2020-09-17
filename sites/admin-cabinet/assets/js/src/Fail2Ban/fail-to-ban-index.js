@@ -47,8 +47,7 @@ const fail2BanIndex = {
 		PbxApi.SystemGetBannedIp(fail2BanIndex.cbGetBannedIpList);
 		fail2BanIndex.$bannedIpList.on('click', fail2BanIndex.$unbanButons, (e) => {
 			const unbannedIp = $(e.target).attr('data-value');
-			const data = {ip: unbannedIp};
-			PbxApi.SystemUnBanIp(data, fail2BanIndex.cbAfterUnBanIp);
+			PbxApi.SystemUnBanIp(unbannedIp, fail2BanIndex.cbAfterUnBanIp);
 		});
 
 		fail2BanIndex.$enableCheckBox.checkbox({
