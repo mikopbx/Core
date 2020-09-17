@@ -257,7 +257,7 @@ class ExtensionsConf extends ConfigClass
         $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1) ' . " \n\t";
         // Совершаем вызов пира.
         $conf .= 'same => n,Set(DST_CONTACT=${PJSIP_DIAL_CONTACTS(${EXTEN})})' . " \n\t";
-        $conf .= 'same => n,ExecIf($["${FIELDQTY(DST_CONTACT,&)}" == "2"]?Set(__PT1C_SIP_HEADER=${EMPTY_VAR}))' . " \n\t";
+        $conf .= 'same => n,ExecIf($["${FIELDQTY(DST_CONTACT,&)}" != "1"]?Set(__PT1C_SIP_HEADER=${EMPTY_VAR}))' . " \n\t";
         $conf .= 'same => n,ExecIf($["${DST_CONTACT}x" != "x"]?Dial(${DST_CONTACT},${ringlength},TtekKHhU(${ISTRANSFER}dial_answer)b(dial_create_chan,s,1)):Set(DIALSTATUS=CHANUNAVAIL))' . " \n\t";
         $conf .= 'same => n(fw_start),NoOp(dial_hangup)' . " \n\t";
 
