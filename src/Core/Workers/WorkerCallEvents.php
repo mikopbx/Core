@@ -24,6 +24,7 @@ class WorkerCallEvents extends WorkerBase
     protected array $mixMonitorChannels = [];
     protected bool  $record_calls       = true;
     protected bool  $split_audio_thread = false;
+    protected array $checkChanHangupTransfer = [];
 
     /**
      * Инициирует запись разговора на канале.
@@ -369,10 +370,6 @@ class WorkerCallEvents extends WorkerBase
      */
     public function Action_hangup_chan($data): void
     {
-        if(isset($this->mixMonitorChannels[$data['agi_channel']])){
-            unset($this->mixMonitorChannels[$data['agi_channel']]);
-        }
-
         $channels       = [];
         $transfer_calls = [];
         $filter         = [
@@ -433,7 +430,7 @@ class WorkerCallEvents extends WorkerBase
         $not_local = (stripos($data['agi_channel'], 'local/') === false);
         if ($not_local === true && $data['OLD_LINKEDID'] === $data['linkedid']) {
             $active_chans = $this->am->GetChannels(false);
-            // TODO / Намек на SIP трансфер.
+            // Намек на SIP трансфер.
             foreach ($channels as $data_chan) {
                 if ( ! in_array($data_chan['chan'], $active_chans, true)) {
                     // Вызов уже завершен. Не интересно.
@@ -484,7 +481,14 @@ class WorkerCallEvents extends WorkerBase
                     $this->am->UserEvent('CdrConnector', ['AgiData' => $AgiData]);
                 }
             } // Обход текущих каналов.
+        }
 
+        // Очистим память.
+        if(isset($this->checkChanHangupTransfer[$data['agi_channel']])){
+            unset($this->checkChanHangupTransfer[$data['agi_channel']]);
+        }
+        if(isset($this->mixMonitorChannels[$data['agi_channel']])){
+            unset($this->mixMonitorChannels[$data['agi_channel']]);
         }
     }
 
@@ -497,6 +501,12 @@ class WorkerCallEvents extends WorkerBase
      */
     public function Action_CreateRowTransfer($action, $data, $calls_data = null): void
     {
+        if( isset($this->checkChanHangupTransfer[$data['agi_channel']]) ) {
+            return;
+        }else{
+            $this->checkChanHangupTransfer[$data['agi_channel']] = $action;
+        }
+
         if (null === $calls_data) {
             $filter     = [
                 'linkedid=:linkedid: AND endtime = "" AND transfer=1 AND (src_chan=:chan: OR dst_chan=:chan:)',
@@ -585,16 +595,6 @@ class WorkerCallEvents extends WorkerBase
                 $this->MixMonitor($not_ended_cdr->dst_chan, '', '', $not_ended_cdr->recordingfile);
             }
         }
-    }
-
-    /**
-     * Завершение звонка. Завершение прееадресации.
-     *
-     * @param $data
-     */
-    public function Action_dial_hangup($data): void
-    {
-        // $this->Action_CreateRowTransfer('dial_hangup', $data);
     }
 
     /**
@@ -1060,7 +1060,8 @@ class WorkerCallEvents extends WorkerBase
      */
     public function start($argv): void
     {
-        $this->mixMonitorChannels = [];
+        $this->mixMonitorChannels       = [];
+        $this->checkChanHangupTransfer  = [];
         $mikoPBXConfig            = new MikoPBXConfig();
         $this->record_calls       = $mikoPBXConfig->getGeneralSettings('PBXRecordCalls') === '1';
         $this->split_audio_thread = $mikoPBXConfig->getGeneralSettings('PBXSplitAudioThread') === '1';
