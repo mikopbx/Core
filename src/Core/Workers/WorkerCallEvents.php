@@ -510,7 +510,7 @@ class WorkerCallEvents extends WorkerBase
             $calls_data = $m_data->toArray();
         }
 
-        if (count($calls_data) > 1) {
+        if (count($calls_data) === 2) {
             $insert_data = [];
             foreach ($calls_data as $row_data) {
                 if ($row_data['src_chan'] === $data['agi_channel']) {
@@ -731,7 +731,7 @@ class WorkerCallEvents extends WorkerBase
         if ($pos === false) {
             // Это НЕ локальный канал.
             // Если это завершение переадресации (консультативной). Создадим новую строку CDR.
-            // $this->Action_CreateRowTransfer('transfer_dial_hangup', $data);
+            $this->Action_CreateRowTransfer('transfer_dial_hangup', $data);
 
             // Найдем записанные ранее строки.
             $filter = [
@@ -745,6 +745,8 @@ class WorkerCallEvents extends WorkerBase
             /** @var CallDetailRecordsTmp $row */
             $m_data = CallDetailRecordsTmp::find($filter);
             foreach ($m_data as $row) {
+                $this->StopMixMonitor($row->src_chan);
+                $this->StopMixMonitor($row->dst_chan);
                 // Завершим вызов в CDR.
                 $row->writeAttribute('endtime', $data['end']);
                 $row->writeAttribute('transfer', 0);
