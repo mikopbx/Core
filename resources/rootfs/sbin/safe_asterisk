@@ -1,0 +1,168 @@
+#!/bin/sh
+#
+# Copyright © MIKO LLC - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Alexey Portnov, 9 2020
+#
+
+# vim:textwidth=80:tabstop=4:shiftwidth=4:smartindent:autoindent
+
+astSBinDir=$(dirname "$(command -v asterisk)");
+EXEC=$(command -v crash_asterisk);
+astVarRunDir='/var/asterisk/run';
+astVarLogDir=$(grep -rn 'logsDir' /etc/inc/mikopbx-settings.json | cut -d'"' -f4);
+
+cliArgs="$*"					    # Grab any args passed to safe_asterisk
+TTY=1
+
+SYSLOG=local0					    # Which syslog facility to use (disabled if blank)
+DUMPDROP=/tmp
+SLEEPSECS=4
+ASTPIDFILE="${astVarRunDir}/asterisk.pid"
+
+# comment this line out to have this script _not_ kill all mpg123 processes when
+# asterisk exits
+KILLALLMPG123=1
+
+# run asterisk with this priority
+PRIORITY=0
+
+# set max files open with ulimit. On linux systems, this will be automatically
+# set to the system's maximum files open devided by two, if not set here.
+# MAXFILES=32768
+
+message() {
+	echo "$1" >&2
+	if test "x$SYSLOG" != "x" ; then
+	    logger -p "${SYSLOG}.warn" -t "safe_asterisk[$$]" "$1"
+	fi
+}
+
+# Check if Asterisk is already running.  If it is, then bug out, because
+# starting safe_asterisk when Asterisk is running is very bad.
+astVersion=$("${astSBinDir}/asterisk" -nrx 'core show version' | cut -c 1-8);
+if test "$astVersion" = "Asterisk" ; then
+	message "Asterisk is already running.  $0 will exit now."
+	exit 1
+fi
+
+# since we're going to change priority and open files limits, we need to be
+# root. if running asterisk as other users, pass that to asterisk on the command
+# line.
+# if we're not root, fall back to standard everything.
+if test "$(id -u)" != 0 ; then
+	echo "Oops. I'm not root. Falling back to standard prio and file max." >&2
+	echo "This is NOT suitable for large systems." >&2
+	PRIORITY=0
+	message "safe_asterisk was started by $(id)."
+else
+  if test "x$MAXFILES" = "x" ; then
+    # just check if file-max is readable
+    if test -r /proc/sys/fs/file-max ; then
+      MAXFILES=$(( $(cat /proc/sys/fs/file-max) / 2 ))
+    fi
+  fi
+
+	# set the process's filemax to whatever set above
+	ulimit -n $MAXFILES
+
+	if test ! -d ${astVarRunDir} ; then
+		mkdir -p ${astVarRunDir}
+		chmod 770 ${astVarRunDir}
+	fi
+
+fi
+
+#
+ulimit -s unlimited
+# Don't fork when running "safely"
+#
+ASTARGS=""
+if test "x$TTY" != "x" ; then
+	if test -c /dev/tty${TTY} ; then
+		TTY=tty${TTY}
+	elif test -c /dev/vc/${TTY} ; then
+		TTY=vc/${TTY}
+	else
+		message "Cannot find specified TTY (${TTY})"
+		exit 1
+	fi
+fi
+
+#
+# Don't die if stdout/stderr can't be written to
+#
+trap '' PIPE
+
+#
+# Run scripts to set any environment variables or do any other system-specific setup needed
+#
+
+if test -d /etc/asterisk/startup.d ; then
+  startScript='/etc/asterisk/startup.d/startup.sh';
+  if test -r "${startScript}" ; then
+    . "script"
+  fi
+fi
+
+run_asterisk()
+{
+	while :; do 
+
+    astVersion=$("${astSBinDir}/asterisk" -nrx 'core show version' | cut -c 1-8);
+    if test "$astVersion" = "Asterisk" ; then
+			sleep $SLEEPSECS
+			continue
+		fi
+		
+		sleep 3
+		
+    astVersion=$("${astSBinDir}/asterisk" -nrx 'core show version' | cut -c 1-8);
+    if test "$astVersion" = "Asterisk" ; then
+			sleep $SLEEPSECS
+			continue
+		fi
+
+		cd /tmp || exit;
+		if test "x$TTY" != "x" ; then
+			stty sane < /dev/${TTY}
+			nice -n $PRIORITY "${astSBinDir}/asterisk" "${cliArgs}" "${ASTARGS}" > "/dev/${TTY}" 2>&1 < "/dev/${TTY}";
+		else
+			nice -n $PRIORITY "${astSBinDir}/asterisk" "${cliArgs}" "${ASTARGS}";
+		fi
+		EXITSTATUS=$?
+		message "Asterisk ended with exit status $EXITSTATUS"
+		if test "x$EXITSTATUS" = "x0" ; then
+			# Properly shutdown....
+			message "Asterisk shutdown normally."
+			if test "x$EXEC" != "x" ; then
+				$EXEC
+			fi
+			sleep 30
+		elif test "0$EXITSTATUS" -gt "128" ; then
+			EXITSIGNAL=$((EXITSTATUS - 128));
+			echo "Asterisk exited on signal $EXITSIGNAL."
+			if test "x$EXEC" != "x" ; then
+				$EXEC
+			fi
+		else
+			message "Asterisk died with code $EXITSTATUS."
+
+			PID=$(cat ${ASTPIDFILE});
+			DATE=$(date "+%Y-%m-%dT%H:%M:%S%z");
+			if test -f "/tmp/core.${PID}" ; then
+				mv "/tmp/core.${PID}" "${DUMPDROP}/core.$(hostname)-$DATE" &
+			elif test -f /tmp/core ; then
+				mv /tmp/core "${DUMPDROP}/core.$(hostname)-$DATE" &
+			fi
+		fi
+		message "Automatically restarting Asterisk."
+		sleep $SLEEPSECS
+		if test "0$KILLALLMPG123" -gt "0" ; then
+			pkill -9 mpg123
+		fi
+	done
+}
+
+run_asterisk &
