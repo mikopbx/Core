@@ -11,6 +11,11 @@
 -- Copyright © MIKO LLC - All Rights Reserved
 -- Unauthorized copying of this file, via any medium is strictly prohibited
 -- Proprietary and confidential
+-- Written by Alexey Portnov, 9 2020
+
+-- Copyright © MIKO LLC - All Rights Reserved
+-- Unauthorized copying of this file, via any medium is strictly prohibited
+-- Proprietary and confidential
 -- Written by Alexey Portnov, 8 2020
 
 -- Copyright © MIKO LLC - All Rights Reserved
@@ -254,6 +259,14 @@ end
 -- Обработка события ответа на звонок. Соединение абонентов.
 function event_dial_answer()
     local data = {}
+
+    local mixFileName = get_variable("MIX_FILE_NAME");
+    if(IS_ORGNT ~= '')then
+        local mixCommand = get_variable("MIX_CMD");
+        app["MixMonitor"](mixFileName .. ",ab," .. mixCommand);
+        app["MSet"]("MIX_FILE_NAME=,MIX_CMD=");
+    end
+
     data['answer']  	= getNowDate();
     local id = get_variable("pt1c_UNIQUEID");
 
@@ -391,6 +404,14 @@ end
 -- Обработка события ответа на переадресацию. Соединение абонентов.
 function event_transfer_dial_answer()
     local data = {}
+
+    local mixFileName = get_variable("MIX_FILE_NAME");
+    if(IS_ORGNT ~= '')then
+        local mixCommand = get_variable("MIX_CMD");
+        app["MixMonitor"](mixFileName .. ",ab," .. mixCommand);
+        app["MSet"]("MIX_FILE_NAME=,MIX_CMD=");
+    end
+
     data['answer']            = getNowDate()
     data['transfer_UNIQUEID'] = get_variable("transfer_UNIQUEID");
     data['action']            = 'transfer_dial_answer';

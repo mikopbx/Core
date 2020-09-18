@@ -81,9 +81,6 @@ class ExtensionsConf extends ConfigClass
         $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1)' . "\n\t";
         $conf .= 'same => n,Dial(Local/${EXTEN}@internal-users/n${ADDITIONAL_PEER},60,TteKkHhb(originate_create_chan,s,1))' . " \n\n";
 
-        $conf .= '[macro-dial_answer]' . "\n";
-        $conf .= 'exten => s,1,Gosub(${ISTRANSFER}dial_answer,${EXTEN},1)' . "\n\n";
-
         $conf .= '[originate_create_chan]' . " \n";
         $conf .= 'exten => s,1,Set(CHANNEL(hangup_handler_wipe)=hangup_handler,s,1)' . "\n\t";
         $conf .= 'same => n,return' . " \n\n";

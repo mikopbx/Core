@@ -33,17 +33,18 @@ class WorkerCallEvents extends WorkerBase
      * @param ?string   $file_name
      * @param ?string   $sub_dir
      * @param ?string   $full_name
+     * @param bool      $onlySetVar
      *
      * @return string
      */
-    public function MixMonitor($channel, $file_name = null, $sub_dir = null, $full_name = null): string
+    public function MixMonitor($channel, $file_name = null, $sub_dir = null, $full_name = null, $onlySetVar = false): string
     {
-        $res_file = $this->mixMonitorChannels[$channel]??'';
-        if($res_file !== ''){
-            return $res_file;
+        $resFile = $this->mixMonitorChannels[$channel]??'';
+        if($resFile !== ''){
+            return $resFile;
         }
 
-        $res_file           = '';
+        $resFile           = '';
         $file_name = str_replace('/', '_', $file_name);
         if ($this->record_calls) {
             if ( ! file_exists($full_name)) {
@@ -70,22 +71,24 @@ class WorkerCallEvents extends WorkerBase
                 CdrDb::LogEvent("MixMonitor: Channel {$channel} not found.");
                 return '';
             }
-            $res        = $this->am->MixMonitor(
-                $channel,
-                "{$f}.wav",
-                $options,
-                "{$nicePath} -n 19 {$lamePath} -b 32 --silent \"{$f}.wav\" \"{$f}.mp3\" && {$chmodPath} o+r \"{$f}.mp3\""
-            );
-            $res['cmd'] = "MixMonitor($channel, $file_name)";
-            CdrDb::LogEvent(json_encode($res));
-            $res_file = "{$f}.mp3";
 
-            $this->mixMonitorChannels[$channel] = $res_file;
+            $srcFile = "{$f}.wav";
+            $resFile = "{$f}.mp3";
+            $command = "{$nicePath} -n 19 {$lamePath} -b 32 --silent '{$srcFile}' '{$resFile}' && {$chmodPath} o+r '{$resFile}'";
+            if($onlySetVar){
+                $this->am->SetVar($channel, 'MIX_FILE_NAME', $srcFile);
+                $this->am->SetVar($channel, 'MIX_CMD', $command);
+            }else{
+                $res        = $this->am->MixMonitor($channel, $srcFile, $options, $command);
+                $res['cmd'] = "MixMonitor($channel, $file_name)";
+                CdrDb::LogEvent(json_encode($res));
+            }
 
-            $this->am->UserEvent('StartRecording', ['recordingfile' => $res_file, 'recchan' => $channel]);
+            $this->mixMonitorChannels[$channel] = $resFile;
+            $this->am->UserEvent('StartRecording', ['recordingfile' => $resFile, 'recchan' => $channel]);
         }
 
-        return $res_file;
+        return $resFile;
     }
 
     /**
@@ -207,13 +210,7 @@ class WorkerCallEvents extends WorkerBase
                 $row->writeAttribute('src_chan', $data['dst_chan']);
             } else {
                 if ( ! $rec_start) {
-                    $data['recordingfile'] = $this->MixMonitor(
-                        $data['dst_chan'],
-                        $row->UNIQUEID,
-                        null,
-                        $row->recordingfile
-                    );
-
+                    $data['recordingfile'] = $this->MixMonitor($data['dst_chan'], $row->UNIQUEID,null, $row->recordingfile,true);
                     $row->writeAttribute('recordingfile', $data['recordingfile']);
                     $rec_start = true;
                 }
@@ -677,7 +674,7 @@ class WorkerCallEvents extends WorkerBase
                 $row_create = true;
             }
 
-            $data['recordingfile'] = $this->MixMonitor($data['dst_chan'], $row->UNIQUEID);
+            $data['recordingfile'] = $this->MixMonitor($data['dst_chan'], $row->UNIQUEID, null, null, true);
             // конец проверки
             ///
 
