@@ -27,9 +27,9 @@ n=$((n + 1))
 ctime=$(date +%Y-%d-%m_%H-%M);
 echo "${ctime}: Asterisk crashed (last: ${last_crash}): ${ctime}.log" >> /tmp/ac_log
 
-dmesg | tail -n 20 > "/tmp/ac_log_dmesg_$ctime.log"
-tail -n 30 "$logDir/system/messages" > "/tmp/ac_log_logread_$ctime.log"
-tail -n 30 "$logDir/php/error.log" > "/tmp/ac_log_logread_$ctime.log"
+dmesg | tail -n 20 > "/tmp/ac_log_$ctime.log"
+tail -n 60 "$logDir/system/messages" >> "/tmp/ac_log_$ctime.log"
+tail -n 500 "$logDir/php/error.log" >> "/tmp/ac_log_$ctime.log"
 
 if [ $last_crash -lt 15 ]; then
 	# asterisk crashes too fast (maybe on execution)

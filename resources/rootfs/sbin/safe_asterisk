@@ -14,7 +14,7 @@ astVarRunDir='/var/asterisk/run';
 astVarLogDir=$(grep -rn 'logsDir' /etc/inc/mikopbx-settings.json | cut -d'"' -f4);
 
 cliArgs="$*"					    # Grab any args passed to safe_asterisk
-TTY=1
+TTY=9
 
 SYSLOG=local0					    # Which syslog facility to use (disabled if blank)
 DUMPDROP=/tmp
@@ -160,7 +160,7 @@ run_asterisk()
 		message "Automatically restarting Asterisk."
 		sleep $SLEEPSECS
 		if test "0$KILLALLMPG123" -gt "0" ; then
-			pkill -9 mpg123
+			killall -9 mpg123 > /dev/null 2> /dev/null
 		fi
 	done
 }
