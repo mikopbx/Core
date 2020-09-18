@@ -46,7 +46,14 @@ class SIPConf extends ConfigClass
         $conf .= $this->generatePeersPj();
 
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/pjsip.conf', $conf);
+        $pjConf = '[log_mappings]'."\n".
+            'type=log_mappings'."\n".
+            'asterisk_error = 0'."\n".
+            'asterisk_warning = 2'."\n".
+            'asterisk_debug = 1,3,4,5,6'."\n\n";
 
+        file_put_contents($this->config->path('asterisk.astetcdir') . '/pjproject.conf', $pjConf);
+        file_put_contents($this->config->path('asterisk.astetcdir') . '/sorcery.conf', '');
 
         $db = new AstDB();
         foreach ($this->data_peers as $peer) {

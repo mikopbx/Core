@@ -1,10 +1,9 @@
 <?php
-/**
- * Copyright (C) MIKO LLC - All Rights Reserved
+/*
+ * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 5 2020
- *
+ * Written by Alexey Portnov, 9 2020
  */
 
 namespace MikoPBX\Core\Asterisk\Configs;
@@ -40,10 +39,12 @@ class AsteriskConf extends ConfigClass
             "verbose = 0\n" .
             "debug = 0\n" .
             "dumpcore = no\n" .
-            "internal_timing = yes\n" .
+            "transcode_via_sln = no\n" .
             "hideconnect = yes\n" .
             "defaultlanguage = {$lang}\n" .
-            "lockmode=flock\n" .
+            "cache_media_frames = yes\n" .
+            "cache_record_files = yes\n" .
+            "record_cache_dir = /tmp\n" .
             "systemname = mikopbx\n";
 
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/asterisk.conf', $conf);
