@@ -11,6 +11,7 @@ namespace MikoPBX\PBXCoreREST\Controllers\Syslog;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
 use Phalcon\Di;
+use Phalcon\Filter;
 
 /**
  * /pbxcore/api/syslog/{name}' Get system logs (POST).
@@ -69,7 +70,7 @@ class PostController extends BaseController
                 $response['messages'][] = 'Log file not found';
             } else {
                 $response['data']['filename'] = $filename;
-                $response['data']['content']  = '' . file_get_contents($filename);
+                $response['data']['content']  = mb_convert_encoding('' . file_get_contents($filename), 'UTF-8', 'UTF-8');
                 unlink($filename);
             }
 
