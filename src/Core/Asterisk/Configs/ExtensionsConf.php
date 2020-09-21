@@ -172,6 +172,10 @@ class ExtensionsConf extends ConfigClass
         $conf .= 'exten => failed,1,Hangup()' . "\n";
 
         $conf .= 'exten => _.!,1,ExecIf($[ "${EXTEN}" == "h" ]?Hangup())' . "\n\t";
+        // Фильтр спецсимволов. Разершаем только цифры.
+        $conf .= 'same => n,Set(cleanNumber=${FILTER(\*\#1234567890,${EXTEN})})' . "\n\t";
+        $conf .= 'same => n,ExecIf($["${EXTEN}" != "${cleanNumber}"]?Goto(${CONTEXT},${cleanNumber},$[${PRIORITY} + 1]))' . "\n\t";
+
         $conf .= 'same => n,Set(__FROM_CHAN=${CHANNEL})' . "\n\t";
         $conf .= 'same => n,ExecIf($["${OLD_LINKEDID}x" == "x"]?Set(__OLD_LINKEDID=${CDR(linkedid)}))' . "\n\t";
         $conf .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" != "Local"]?Gosub(set_from_peer,s,1))' . "\n\t";
