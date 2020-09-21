@@ -21,6 +21,11 @@
 -- Copyright © MIKO LLC - All Rights Reserved
 -- Unauthorized copying of this file, via any medium is strictly prohibited
 -- Proprietary and confidential
+-- Written by Alexey Portnov, 9 2020
+
+-- Copyright © MIKO LLC - All Rights Reserved
+-- Unauthorized copying of this file, via any medium is strictly prohibited
+-- Proprietary and confidential
 -- Written by Alexey Portnov, 8 2020
 
 -- Copyright © MIKO LLC - All Rights Reserved
@@ -266,7 +271,7 @@ function event_dial_answer()
     local data = {}
 
     local mixFileName = get_variable("MIX_FILE_NAME");
-    if(IS_ORGNT ~= '')then
+    if(mixFileName ~= '')then
         local mixCommand = get_variable("MIX_CMD");
         app["MixMonitor"](mixFileName .. ",ab," .. mixCommand);
         app["MSet"]("MIX_FILE_NAME=,MIX_CMD=");
@@ -412,7 +417,7 @@ function event_transfer_dial_answer()
     local data = {}
 
     local mixFileName = get_variable("MIX_FILE_NAME");
-    if(IS_ORGNT ~= '')then
+    if(mixFileName ~= '')then
         local mixCommand = get_variable("MIX_CMD");
         app["MixMonitor"](mixFileName .. ",ab," .. mixCommand);
         app["MSet"]("MIX_FILE_NAME=,MIX_CMD=");
