@@ -742,8 +742,6 @@ class WorkerCallEvents extends WorkerBase
             /** @var CallDetailRecordsTmp $row */
             $m_data = CallDetailRecordsTmp::find($filter);
             foreach ($m_data as $row) {
-                $this->StopMixMonitor($row->src_chan);
-                $this->StopMixMonitor($row->dst_chan);
                 // Завершим вызов в CDR.
                 $row->writeAttribute('endtime', $data['end']);
                 $row->writeAttribute('transfer', 0);
@@ -1085,7 +1083,7 @@ class WorkerCallEvents extends WorkerBase
     public function callEventsWorker($tube): void
     {
         $data      = json_decode($tube->getBody(), true);
-        $funcName = "Action_".$data['action'];
+        $funcName = "Action_".$data['action']??'';
         if ( method_exists($this, $funcName) ) {
             $this->$funcName($data);
         }
