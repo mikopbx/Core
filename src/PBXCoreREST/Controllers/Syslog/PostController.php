@@ -69,7 +69,7 @@ class PostController extends BaseController
                 $response['messages'][] = 'Log file not found';
             } else {
                 $response['data']['filename'] = $filename;
-                $response['data']['content']  = '' . file_get_contents($filename);
+                $response['data']['content']  = mb_convert_encoding('' . file_get_contents($filename), 'UTF-8', 'UTF-8');
                 unlink($filename);
             }
 
