@@ -11,7 +11,6 @@ namespace MikoPBX\PBXCoreREST\Controllers\Syslog;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
 use Phalcon\Di;
-use Phalcon\Filter;
 
 /**
  * /pbxcore/api/syslog/{name}' Get system logs (POST).

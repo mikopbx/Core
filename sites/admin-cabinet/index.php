@@ -33,8 +33,8 @@ RegisterDIServices::init($di);
 $errorLogger = new SentryErrorLogger('admin-cabinet');
 $errorLogger->init();
 
-register_shutdown_function([PhpError::class,'runtimeShutdown']);
-set_error_handler([PhpError::class,'errorHandler']);
+// register_shutdown_function([PhpError::class,'runtimeShutdown']);
+// set_error_handler([PhpError::class,'errorHandler']);
 
 if (class_exists(PrettyPageHandler::class)){
     $whoops = new Run();
