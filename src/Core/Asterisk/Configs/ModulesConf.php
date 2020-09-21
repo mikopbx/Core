@@ -168,9 +168,6 @@ class ModulesConf extends ConfigClass
             'res_pjsip_dlg_options.so',
             'res_security_log.so',
         ];
-        file_put_contents($this->config->path('asterisk.astetcdir') . '/pjproject.conf', '');
-        file_put_contents($this->config->path('asterisk.astetcdir') . '/sorcery.conf', '');
-        file_put_contents($this->config->path('asterisk.astetcdir') . '/pjsip_notify.conf', '');
 
         foreach ($modules as $value) {
             $conf .= "load => $value\n";

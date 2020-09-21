@@ -24,6 +24,7 @@ class WorkerCallEvents extends WorkerBase
     protected array $mixMonitorChannels = [];
     protected bool  $record_calls       = true;
     protected bool  $split_audio_thread = false;
+    protected array $checkChanHangupTransfer = [];
 
     /**
      * Инициирует запись разговора на канале.
@@ -32,17 +33,18 @@ class WorkerCallEvents extends WorkerBase
      * @param ?string   $file_name
      * @param ?string   $sub_dir
      * @param ?string   $full_name
+     * @param bool      $onlySetVar
      *
      * @return string
      */
-    public function MixMonitor($channel, $file_name = null, $sub_dir = null, $full_name = null): string
+    public function MixMonitor($channel, $file_name = null, $sub_dir = null, $full_name = null, $onlySetVar = false): string
     {
-        $res_file = $this->mixMonitorChannels[$channel]??'';
-        if($res_file !== ''){
-            return $res_file;
+        $resFile = $this->mixMonitorChannels[$channel]??'';
+        if($resFile !== ''){
+            return $resFile;
         }
 
-        $res_file           = '';
+        $resFile           = '';
         $file_name = str_replace('/', '_', $file_name);
         if ($this->record_calls) {
             if ( ! file_exists($full_name)) {
@@ -69,22 +71,24 @@ class WorkerCallEvents extends WorkerBase
                 CdrDb::LogEvent("MixMonitor: Channel {$channel} not found.");
                 return '';
             }
-            $res        = $this->am->MixMonitor(
-                $channel,
-                "{$f}.wav",
-                $options,
-                "{$nicePath} -n 19 {$lamePath} -b 32 --silent \"{$f}.wav\" \"{$f}.mp3\" && {$chmodPath} o+r \"{$f}.mp3\""
-            );
-            $res['cmd'] = "MixMonitor($channel, $file_name)";
-            CdrDb::LogEvent(json_encode($res));
-            $res_file = "{$f}.mp3";
 
-            $this->mixMonitorChannels[$channel] = $res_file;
+            $srcFile = "{$f}.wav";
+            $resFile = "{$f}.mp3";
+            $command = "{$nicePath} -n 19 {$lamePath} -b 32 --silent '{$srcFile}' '{$resFile}' && {$chmodPath} o+r '{$resFile}'";
+            if($onlySetVar){
+                $this->am->SetVar($channel, 'MIX_FILE_NAME', $srcFile);
+                $this->am->SetVar($channel, 'MIX_CMD', $command);
+            }else{
+                $res        = $this->am->MixMonitor($channel, $srcFile, $options, $command);
+                $res['cmd'] = "MixMonitor($channel, $file_name)";
+                CdrDb::LogEvent(json_encode($res));
+            }
 
-            $this->am->UserEvent('StartRecording', ['recordingfile' => $res_file, 'recchan' => $channel]);
+            $this->mixMonitorChannels[$channel] = $resFile;
+            $this->am->UserEvent('StartRecording', ['recordingfile' => $resFile, 'recchan' => $channel]);
         }
 
-        return $res_file;
+        return $resFile;
     }
 
     /**
@@ -206,13 +210,7 @@ class WorkerCallEvents extends WorkerBase
                 $row->writeAttribute('src_chan', $data['dst_chan']);
             } else {
                 if ( ! $rec_start) {
-                    $data['recordingfile'] = $this->MixMonitor(
-                        $data['dst_chan'],
-                        $row->UNIQUEID,
-                        null,
-                        $row->recordingfile
-                    );
-
+                    $data['recordingfile'] = $this->MixMonitor($data['dst_chan'], $row->UNIQUEID,null, $row->recordingfile,true);
                     $row->writeAttribute('recordingfile', $data['recordingfile']);
                     $rec_start = true;
                 }
@@ -369,10 +367,6 @@ class WorkerCallEvents extends WorkerBase
      */
     public function Action_hangup_chan($data): void
     {
-        if(isset($this->mixMonitorChannels[$data['agi_channel']])){
-            unset($this->mixMonitorChannels[$data['agi_channel']]);
-        }
-
         $channels       = [];
         $transfer_calls = [];
         $filter         = [
@@ -433,7 +427,7 @@ class WorkerCallEvents extends WorkerBase
         $not_local = (stripos($data['agi_channel'], 'local/') === false);
         if ($not_local === true && $data['OLD_LINKEDID'] === $data['linkedid']) {
             $active_chans = $this->am->GetChannels(false);
-            // TODO / Намек на SIP трансфер.
+            // Намек на SIP трансфер.
             foreach ($channels as $data_chan) {
                 if ( ! in_array($data_chan['chan'], $active_chans, true)) {
                     // Вызов уже завершен. Не интересно.
@@ -484,7 +478,14 @@ class WorkerCallEvents extends WorkerBase
                     $this->am->UserEvent('CdrConnector', ['AgiData' => $AgiData]);
                 }
             } // Обход текущих каналов.
+        }
 
+        // Очистим память.
+        if(isset($this->checkChanHangupTransfer[$data['agi_channel']])){
+            unset($this->checkChanHangupTransfer[$data['agi_channel']]);
+        }
+        if(isset($this->mixMonitorChannels[$data['agi_channel']])){
+            unset($this->mixMonitorChannels[$data['agi_channel']]);
         }
     }
 
@@ -497,6 +498,12 @@ class WorkerCallEvents extends WorkerBase
      */
     public function Action_CreateRowTransfer($action, $data, $calls_data = null): void
     {
+        if( isset($this->checkChanHangupTransfer[$data['agi_channel']]) ) {
+            return;
+        }else{
+            $this->checkChanHangupTransfer[$data['agi_channel']] = $action;
+        }
+
         if (null === $calls_data) {
             $filter     = [
                 'linkedid=:linkedid: AND endtime = "" AND transfer=1 AND (src_chan=:chan: OR dst_chan=:chan:)',
@@ -510,7 +517,7 @@ class WorkerCallEvents extends WorkerBase
             $calls_data = $m_data->toArray();
         }
 
-        if (count($calls_data) > 1) {
+        if (count($calls_data) === 2) {
             $insert_data = [];
             foreach ($calls_data as $row_data) {
                 if ($row_data['src_chan'] === $data['agi_channel']) {
@@ -585,16 +592,6 @@ class WorkerCallEvents extends WorkerBase
                 $this->MixMonitor($not_ended_cdr->dst_chan, '', '', $not_ended_cdr->recordingfile);
             }
         }
-    }
-
-    /**
-     * Завершение звонка. Завершение прееадресации.
-     *
-     * @param $data
-     */
-    public function Action_dial_hangup($data): void
-    {
-        // $this->Action_CreateRowTransfer('dial_hangup', $data);
     }
 
     /**
@@ -677,7 +674,7 @@ class WorkerCallEvents extends WorkerBase
                 $row_create = true;
             }
 
-            $data['recordingfile'] = $this->MixMonitor($data['dst_chan'], $row->UNIQUEID);
+            $data['recordingfile'] = $this->MixMonitor($data['dst_chan'], $row->UNIQUEID, null, null, true);
             // конец проверки
             ///
 
@@ -731,7 +728,7 @@ class WorkerCallEvents extends WorkerBase
         if ($pos === false) {
             // Это НЕ локальный канал.
             // Если это завершение переадресации (консультативной). Создадим новую строку CDR.
-            // $this->Action_CreateRowTransfer('transfer_dial_hangup', $data);
+            $this->Action_CreateRowTransfer('transfer_dial_hangup', $data);
 
             // Найдем записанные ранее строки.
             $filter = [
@@ -745,6 +742,8 @@ class WorkerCallEvents extends WorkerBase
             /** @var CallDetailRecordsTmp $row */
             $m_data = CallDetailRecordsTmp::find($filter);
             foreach ($m_data as $row) {
+                $this->StopMixMonitor($row->src_chan);
+                $this->StopMixMonitor($row->dst_chan);
                 // Завершим вызов в CDR.
                 $row->writeAttribute('endtime', $data['end']);
                 $row->writeAttribute('transfer', 0);
@@ -1058,7 +1057,8 @@ class WorkerCallEvents extends WorkerBase
      */
     public function start($argv): void
     {
-        $this->mixMonitorChannels = [];
+        $this->mixMonitorChannels       = [];
+        $this->checkChanHangupTransfer  = [];
         $mikoPBXConfig            = new MikoPBXConfig();
         $this->record_calls       = $mikoPBXConfig->getGeneralSettings('PBXRecordCalls') === '1';
         $this->split_audio_thread = $mikoPBXConfig->getGeneralSettings('PBXSplitAudioThread') === '1';

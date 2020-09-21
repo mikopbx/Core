@@ -1,0 +1,64 @@
+#!/bin/sh
+
+#
+# Copyright © MIKO LLC - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Alexey Portnov, 9 2020
+#
+
+configFile='/etc/inc/mikopbx-settings.json';
+logDir=$(grep -rn 'logsDir' "$configFile" | cut -d'"' -f4);
+astlogdir=$(grep -rn 'astlogdir' "$configFile" | cut -d'"' -f4);
+dbDir=$(grep -rn 'astdbdir' "$configFile" | cut -d'"' -f4);
+
+nfilename="/tmp/ac_counter"
+n=0
+timestamp=0
+touch $nfilename
+# shellcheck source=/tmp/ac_counter
+. "$nfilename"
+
+time_now=$(date +%s);
+last_crash=$((time_now - timestamp));
+timestamp=$(date +%s);
+
+n=$((n + 1))
+ctime=$(date +%Y-%d-%m_%H-%M);
+echo "${ctime}: Asterisk crashed (last: ${last_crash}): ${ctime}.log" >> /tmp/ac_log
+
+dmesg | tail -n 20 > "/tmp/ac_log_$ctime.log"
+tail -n 60 "$logDir/system/messages" >> "/tmp/ac_log_$ctime.log"
+tail -n 500 "$logDir/php/error.log" >> "/tmp/ac_log_$ctime.log"
+
+if [ $last_crash -lt 15 ]; then
+	# asterisk crashes too fast (maybe on execution)
+	# maybe the astdb is corrupted (sometimes happens)
+	if [ -d "$dbDir" ]; then
+		sqlite3 "$dbDir/astdb.sqlite3" 'vacuum';
+		resultCheck=$?;
+    if test "$resultCheck" != "0" ; then
+		  rm -f "$dbDir/*"
+		  echo "$ctime: Removed astdb from $dbDir (maybe corrupted)" >> /tmp/ac_log;
+		fi
+	fi
+fi
+
+if [ $n -eq 5 ]; then
+	echo "$ctime: Wait a few seconds after saving sip phone" >> /tmp/ac_log
+	sleep 5;
+fi
+
+if [ $n -eq 8 ]; then
+	if [ -d "$logDir" ]; then
+		tar -czf "$astlogdir/asterisk_log_backup_$ctime.tar.gz" "$logDir/asterisk/verbose $logDir/asterisk/messages $logDir/asterisk/error"
+		echo "$ctime: Logs compressed (maybe the storage is full)" >> /tmp/ac_log
+	fi
+fi
+
+if [ $n -eq 20 ]; then
+	n=0
+fi
+
+echo "n=$n
+timestamp=$timestamp" > $nfilename

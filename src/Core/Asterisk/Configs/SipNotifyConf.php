@@ -1,10 +1,9 @@
 <?php
-/**
- * Copyright (C) MIKO LLC - All Rights Reserved
+/*
+ * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 5 2020
- *
+ * Written by Alexey Portnov, 9 2020
  */
 
 namespace MikoPBX\Core\Asterisk\Configs;
@@ -25,20 +24,21 @@ class SipNotifyConf extends ConfigClass
         $conf = '';
         $conf .= "[yealink-reboot]\n" .
             "Event=>check-sync\;reboot=true\n" .
-            "Content-Length=>0\n";
-        $conf .= "\n";
+            "Content-Length=>0\n".
+            "Content=>\n\n";
 
         $conf .= "[snom-reboot]\n" .
             "Event=>check-sync\;reboot=true\n" .
-            $conf .= "\n";
+            "Content=>\n\n";
         // Пример
         // CLI> sip notify yealink-action-ok autoprovision_user
         // http://support.yealink.com/faq/faqInfo?id=173
         $conf .= "[yealink-action-ok]\n" .
             "Content-Type=>message/sipfrag\n" .
             "Event=>ACTION-URI\n" .
-            "Content=>key=SPEAKER\n";
+            "Content=>key=SPEAKER\n".
+            "Content=>\n\n";
 
-        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/sip_notify.conf', $conf);
+        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/pjsip_notify.conf', $conf);
     }
 }
