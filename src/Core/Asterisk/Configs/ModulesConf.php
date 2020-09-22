@@ -62,6 +62,7 @@ class ModulesConf extends ConfigClass
             'format_wav_gsm.so',
             'format_ogg_vorbis.so',
             'format_mp3.so',
+            'format_ogg_opus.so',
 
             'format_g726.so',
             'format_h263.so',
