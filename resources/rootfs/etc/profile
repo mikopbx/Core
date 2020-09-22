@@ -29,3 +29,5 @@ alias remount-offload="mount -o remount,rw /offload/"
 
 PS1='\w\$ '
 PS2='>'
+
+export LANG=en_US.utf8
