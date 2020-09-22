@@ -1117,7 +1117,7 @@ class Storage extends Di\Injectable
         unlink($swapFile);
 
         $st = new Storage();
-        $size = $st->getStorageFreeSpaceMb(true);
+        $size = $st->getStorageFreeSpaceMb();
         $swapSize = 0;
         if($size > 4000){
             $swapSize = 2048;
@@ -1126,7 +1126,6 @@ class Storage extends Di\Injectable
         }elseif ($size > 1000){
             $swapSize = 512;
         }
-
         if($swapSize === 0){
             return;
         }
