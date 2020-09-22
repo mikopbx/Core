@@ -230,11 +230,12 @@ class Util
      * @param     $log_name
      * @param     $text
      * @param ?int $level
+     * @param ?int $facility
      */
-    public static function sysLogMsg($log_name, $text, $level = null): void
+    public static function sysLogMsg($log_name, $text, $level = null, $facility=LOG_AUTH): void
     {
         $level = ($level === null) ? LOG_WARNING : $level;
-        openlog("$log_name", LOG_PID | LOG_PERROR, LOG_AUTH);
+        openlog("$log_name", LOG_PID | LOG_PERROR, $facility);
         syslog($level, "$text");
         closelog();
     }

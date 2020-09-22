@@ -1,9 +1,9 @@
 <?php
-/**
+/*
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 6 2020
+ * Written by Alexey Portnov, 9 2020
  */
 
 namespace MikoPBX\Core\System;
@@ -31,6 +31,10 @@ class SystemLoader extends Di\Injectable
         Util::echoWithSyslog(' - Mount storage disk... ');
         $storage->saveFstab();
         $storage->configure();
+        Util::echoGreenDone();
+
+        Util::echoWithSyslog(' - Connect swap... ');
+        $storage->mountSwap();
         Util::echoGreenDone();
 
         Util::echoWithSyslog(' - Start syslogd daemon...');

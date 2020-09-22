@@ -1,9 +1,9 @@
 <?php
-/**
+/*
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 8 2020
+ * Written by Alexey Portnov, 9 2020
  */
 
 namespace MikoPBX\Core\System;
@@ -492,6 +492,27 @@ class Storage extends Di\Injectable
             // Добавляем задачу на уведомление.
             $util->addJobToBeanstalk('WorkerNotifyError_storage', $data);
         }
+    }
+
+    /**
+     * Возвращает свободное место на диске для хранения данных.
+     * @return int
+     */
+    public function getStorageFreeSpaceMb() :int{
+        $size = 0;
+        $mntDir = '';
+        $mounted = self::isStorageDiskMounted('',$mntDir);
+        if(!$mounted){
+            return 0;
+        }
+        $hd = $this->getAllHdd(true);
+        foreach ($hd as $disk){
+            if($disk['mounted'] === $mntDir){
+                $size = $disk['free_space'];
+                break;
+            }
+        }
+        return $size;
     }
 
     /**
@@ -1085,6 +1106,44 @@ class Storage extends Di\Injectable
         $this->createModulesCacheSymlinks();
         $this->applyFolderRights();
         Util::mwExec("{$mountPath} -o remount,ro /offload 2> /dev/null");
+    }
+
+    public function mountSwap(){
+
+        $tempDir = $this->di->getConfig()->path('core.tempDir');
+        $swapFile = "{$tempDir}/swapfile";
+        $swapOffCmd = Util::which('swapoff');
+        Util::mwExec("{$swapOffCmd} {$swapFile}");
+        unlink($swapFile);
+
+        $st = new Storage();
+        $size = $st->getStorageFreeSpaceMb(true);
+        $swapSize = 0;
+        if($size > 4000){
+            $swapSize = 2048;
+        }elseif ($size > 2000){
+            $swapSize = 1024;
+        }elseif ($size > 1000){
+            $swapSize = 512;
+        }
+
+        if($swapSize === 0){
+            return;
+        }
+
+        $bs = 1024;
+        $countBlock = $swapSize * $bs;
+        $ddCmd = Util::which('dd');
+
+        Util::sysLogMsg('Swap', 'make swap '. $swapFile, LOG_INFO, LOG_INFO);
+        Util::mwExec("{$ddCmd} if=/dev/zero of={$swapFile} bs={$bs} count={$countBlock}");
+
+        $mkSwapCmd = Util::which('mkswap');
+        Util::mwExec("{$mkSwapCmd} {$swapFile}");
+
+        $swapOnCmd = Util::which('swapon');
+        $result = Util::mwExec("{$swapOnCmd} {$swapFile}");
+        Util::sysLogMsg('Swap', 'connect swap result: '.$result, LOG_INFO, LOG_INFO);
     }
 
     /**
