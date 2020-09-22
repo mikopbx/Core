@@ -153,12 +153,11 @@ class SIPConf extends ConfigClass
             "bind=0.0.0.0:{$this->generalSettings['SIPPort']}\n".
             "{$natConf}\n\n".
 
-            // TODO
-            // "[transport-tcp]\n" .
-            // "type = transport\n" .
-            // "protocol = tcp\n" .
-            // "bind=0.0.0.0:{$this->generalSettings['SIPPort']}\n".
-            // "{$natConf}\n\n".
+            "[transport-tcp]\n" .
+            "type = transport\n" .
+            "protocol = tcp\n" .
+            "bind=0.0.0.0:{$this->generalSettings['SIPPort']}\n".
+            "{$natConf}\n\n".
             '';
 
         $varEtcDir = $this->config->path('core.varEtcDir');
