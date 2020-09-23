@@ -31,3 +31,56 @@ PS1='\w\$ '
 PS2='>'
 
 export LANG=en_US.utf8
+
+pbxConsoleCommands()
+{
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    # Подкоманды первого уровня
+    subcommands_1="cron services service"
+    subCommandsServices="restart start stop" # возможные подкоманды для history
+    # Цикл определения автодополнения при вводе подкоманды первого уровня
+    if [[ ${COMP_CWORD} == 1 ]] ; then
+        COMPREPLY=( $(compgen -W "${subcommands_1}" -- ${cur}) )
+        return 0
+    fi
+
+    subcmd_1="${COMP_WORDS[1]}" #К данному моменту подкоманда первого уровня уже введена, и мы её выбираем в эту переменную
+    case "${subcmd_1}" in #Дальше смотри, что она из себя представляет
+    services)
+        # Введены script history; надо подставить import или export
+        if [[ ${COMP_CWORD} == 2 ]] ; then
+            cmd='stop-all start-all restart-all';
+            COMPREPLY=( $(compgen -W "${cmd}" -- ${cur}) )
+            return 0
+        fi
+        ;;
+    service)
+        # Введены script history; надо подставить import или export
+        if [[ ${COMP_CWORD} == 3 ]] ; then
+            cmd='stop';
+            COMPREPLY=( $(compgen -W "${cmd}" -- ${cur}) )
+            return 0
+        fi
+
+        if [[ ${COMP_CWORD} == 2 ]] ; then
+            # Получим имена сервисов.
+            subCommandsServices=$(ps | grep php | grep Worker | cut -d '}' -f2 | tr '\\' '/' | xargs basename -a);
+            COMPREPLY=( $(compgen -W "${subCommandsServices}" -- ${cur}) )
+            return 0
+        fi
+        ;;
+    cron)
+        # Введены script history; надо подставить import или export
+        if [[ ${COMP_CWORD} == 2 ]] ; then
+            cmd='stop start show restart';
+            COMPREPLY=( $(compgen -W "${cmd}" -- ${cur}) )
+            return 0
+        fi
+        ;;
+    esac
+    return 0
+
+}
+
+complete -F pbxConsoleCommands pbx-console

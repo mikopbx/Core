@@ -1,9 +1,9 @@
 <?php
-/**
+/*
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 7 2020
+ * Written by Alexey Portnov, 9 2020
  */
 
 namespace MikoPBX\Core\Workers\Cron;
@@ -260,7 +260,7 @@ try {
         $worker = new $workerClassname();
         if (($argv[1] === 'start')) {
             $worker->start($argv);
-        } elseif ($argv[1] === 'restart') {
+        } elseif ($argv[1] === 'restart' || $argv[1] === 'reload') {
             $worker->restart();
         }
     }
