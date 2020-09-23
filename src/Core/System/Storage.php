@@ -1114,7 +1114,9 @@ class Storage extends Di\Injectable
         $swapFile = "{$tempDir}/swapfile";
         $swapOffCmd = Util::which('swapoff');
         Util::mwExec("{$swapOffCmd} {$swapFile}");
-        unlink($swapFile);
+        if(file_exists($swapFile)){
+            unlink($swapFile);
+        }
 
         $st = new Storage();
         $size = $st->getStorageFreeSpaceMb();
