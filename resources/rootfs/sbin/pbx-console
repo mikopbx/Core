@@ -8,7 +8,7 @@
 #
 
 subcmd=$1;
-
+safeScript=$(crontab -l | cut -d ' ' -f8 | grep Safe);
 case "${subcmd}" in
 services)
    action=$2;
@@ -23,11 +23,19 @@ services)
       fi
       ;;
    start-all)
-      /usr/bin/php -f /offload/rootfs/usr/www/src/Core/Workers/Cron/WorkerSafeScriptsCore.php start
-      ;;
+     if [ -f "$safeScript" ]; then
+       /usr/bin/php -f "$safeScript" start
+     else
+        echo 'Safe script not found.';
+     fi
+     ;;
    restart-all)
-      /usr/bin/php -f /offload/rootfs/usr/www/src/Core/Workers/Cron/WorkerSafeScriptsCore.php restart
-      ;;
+     if [ -f "$safeScript" ]; then
+       /usr/bin/php -f "$safeScript" restart
+     else
+        echo 'Safe script not found.';
+     fi
+     ;;
   esac
   ;;
 service)
