@@ -179,6 +179,7 @@ class Util
                         && ! mkdir($path, 0755, true)
                         && ! is_dir($path)) {
                         $result = false;
+                        self::sysLogMsg('Util', 'Error on create folder '.$path);
                     }
                     if ($addWWWRights) {
                         self::addRegularWWWRights($path);

@@ -40,7 +40,7 @@ class PBXConfModulesProvider implements ServiceProviderInterface
      */
     public function register(DiInterface $di): void
     {
-        $di->set(
+        $di->setShared(
             self::SERVICE_NAME,
             function (){
                 return array_merge(

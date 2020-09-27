@@ -872,7 +872,6 @@ class Storage extends Di\Injectable
             if ($disk['media'] === '1' || ! file_exists($storage_dev_file)) {
                 file_put_contents($storage_dev_file, "/storage/usbdisk{$disk['id']}");
                 $this->updateConfigWithNewMountPoint("/storage/usbdisk{$disk['id']}");
-                $this->updateEnvironmentAfterChangeMountPoint();
             }
 
             $str_uid     = 'UUID=' . $this->getUuid($dev) . '';
@@ -957,7 +956,7 @@ class Storage extends Di\Injectable
 
         $newJsonString = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
         file_put_contents($staticSettingsFile, $newJsonString);
-
+        $this->updateEnvironmentAfterChangeMountPoint();
     }
 
 
@@ -969,6 +968,7 @@ class Storage extends Di\Injectable
     {
         // Update config variable
         ConfigProvider::recreateConfigProvider();
+        $this->config = $this->di->getShared('config');
 
         // Reload classes from system and storage disks
         ClassLoader::init();
