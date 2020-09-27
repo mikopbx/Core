@@ -8,7 +8,11 @@
 
 namespace MikoPBX\Core\System;
 
+use Error;
+use JsonException;
+use MikoPBX\Common\Config\ClassLoader;
 use MikoPBX\Common\Models\PbxExtensionModules;
+use MikoPBX\Core\Config\RegisterDIServices;
 use MikoPBX\Core\System\Configs\PHPConf;
 use MikoPBX\Core\Workers\WorkerRemoveOldRecords;
 use MikoPBX\Common\Models\Storage as StorageModel;
@@ -495,27 +499,6 @@ class Storage extends Di\Injectable
     }
 
     /**
-     * Возвращает свободное место на диске для хранения данных.
-     * @return int
-     */
-    public function getStorageFreeSpaceMb() :int{
-        $size = 0;
-        $mntDir = '';
-        $mounted = self::isStorageDiskMounted('',$mntDir);
-        if(!$mounted){
-            return 0;
-        }
-        $hd = $this->getAllHdd(true);
-        foreach ($hd as $disk){
-            if($disk['mounted'] === $mntDir){
-                $size = $disk['free_space'];
-                break;
-            }
-        }
-        return $size;
-    }
-
-    /**
      * Возвращает все подключенные HDD.
      *
      * @param bool $mounted_only
@@ -889,6 +872,7 @@ class Storage extends Di\Injectable
             if ($disk['media'] === '1' || ! file_exists($storage_dev_file)) {
                 file_put_contents($storage_dev_file, "/storage/usbdisk{$disk['id']}");
                 $this->updateConfigWithNewMountPoint("/storage/usbdisk{$disk['id']}");
+                $this->updateEnvironmentAfterChangeMountPoint();
             }
 
             $str_uid     = 'UUID=' . $this->getUuid($dev) . '';
@@ -959,9 +943,9 @@ class Storage extends Di\Injectable
 
         $jsonString = file_get_contents($staticSettingsFileOrig);
         try {
-            $data       = json_decode($jsonString, true, 512, JSON_THROW_ON_ERROR);
-        } catch (\JsonException $exception ){
-            throw new \Error("{$staticSettingsFileOrig} has broken format");
+            $data = json_decode($jsonString, true, 512, JSON_THROW_ON_ERROR);
+        } catch (JsonException $exception) {
+            throw new Error("{$staticSettingsFileOrig} has broken format");
         }
         foreach ($data as $rootKey => $rootEntry) {
             foreach ($rootEntry as $nestedKey => $entry) {
@@ -974,21 +958,29 @@ class Storage extends Di\Injectable
         $newJsonString = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
         file_put_contents($staticSettingsFile, $newJsonString);
 
-        // Update config variable
-        $this->di->remove('config');
-        $this->di->register(new ConfigProvider());
-        $this->config = $this->di->getShared('config');
+    }
 
-        // Delete boot cache folders
-        if (str_contains($mount_point, '/mountpoint') === false
-             && is_dir('/mountpoint')) {
-            $rmPath = Util::which('rm');
-            Util::mwExec("{$rmPath} -rf /mountpoint");
-        }
+
+    /**
+     * Recreates DI services and reloads config from JSON file
+     *
+     */
+    private function updateEnvironmentAfterChangeMountPoint(): void
+    {
+        // Update config variable
+        ConfigProvider::recreateConfigProvider();
+
+        // Reload classes from system and storage disks
+        ClassLoader::init();
+
+        // Reload all providers
+        RegisterDIServices::init();
+
     }
 
     /**
-     * Генерация файла fstab. Монтирование разделов.
+     * Generates fstab file
+     * Mounts volumes
      *
      * @param string $conf
      */
@@ -1032,7 +1024,7 @@ class Storage extends Di\Injectable
     }
 
     /**
-     * Create system folders
+     * Creates system folders according to config file
      *
      * @return void
      */
@@ -1093,62 +1085,11 @@ class Storage extends Di\Injectable
         }
         $this->clearCacheFiles();
         Util::mwExec("{$mountPath} -o remount,ro /offload 2> /dev/null");
-
-    }
-
-    /**
-     * Create system folders and links after upgrade and connect config DB
-     */
-    public function createWorkDirsAfterDBUpgrade():void
-    {
-        $mountPath = Util::which('mount');
-        Util::mwExec("{$mountPath} -o remount,rw /offload 2> /dev/null");
-        $this->createModulesCacheSymlinks();
-        $this->applyFolderRights();
-        Util::mwExec("{$mountPath} -o remount,ro /offload 2> /dev/null");
-    }
-
-    public function mountSwap(){
-
-        $tempDir = $this->di->getConfig()->path('core.tempDir');
-        $swapFile = "{$tempDir}/swapfile";
-        $swapOffCmd = Util::which('swapoff');
-        Util::mwExec("{$swapOffCmd} {$swapFile}");
-        if(file_exists($swapFile)){
-            unlink($swapFile);
-        }
-
-        $st = new Storage();
-        $size = $st->getStorageFreeSpaceMb();
-        $swapSize = 0;
-        if($size > 4000){
-            $swapSize = 2048;
-        }elseif ($size > 2000){
-            $swapSize = 1024;
-        }elseif ($size > 1000){
-            $swapSize = 512;
-        }
-        if($swapSize === 0){
-            return;
-        }
-
-        $bs = 1024;
-        $countBlock = $swapSize * $bs;
-        $ddCmd = Util::which('dd');
-
-        Util::sysLogMsg('Swap', 'make swap '. $swapFile, LOG_INFO, LOG_INFO);
-        Util::mwExec("{$ddCmd} if=/dev/zero of={$swapFile} bs={$bs} count={$countBlock}");
-
-        $mkSwapCmd = Util::which('mkswap');
-        Util::mwExec("{$mkSwapCmd} {$swapFile}");
-
-        $swapOnCmd = Util::which('swapon');
-        $result = Util::mwExec("{$swapOnCmd} {$swapFile}");
-        Util::sysLogMsg('Swap', 'connect swap result: '.$result, LOG_INFO, LOG_INFO);
     }
 
     /**
      * Creates JS, CSS, IMG cache folders and links
+     *
      */
     public function createAssetsSymlinks(): void
     {
@@ -1163,9 +1104,9 @@ class Storage extends Di\Injectable
     }
 
     /**
-     * Clear cache folders from old and orphaned files
+     * Clears cache folders from old and orphaned files
      */
-    public function clearCacheFiles()
+    public function clearCacheFiles(): void
     {
         $cacheDirs   = [];
         $cacheDirs[] = $this->config->path('www.uploadDir');
@@ -1182,6 +1123,23 @@ class Storage extends Di\Injectable
                 Util::mwExec("{$rmPath} -rf {$cacheDir}/*");
             }
         }
+
+        // Delete boot cache folders
+        if (is_dir('/mountpoint')) {
+            Util::mwExec("{$rmPath} -rf /mountpoint");
+        }
+    }
+
+    /**
+     * Create system folders and links after upgrade and connect config DB
+     */
+    public function createWorkDirsAfterDBUpgrade(): void
+    {
+        $mountPath = Util::which('mount');
+        Util::mwExec("{$mountPath} -o remount,rw /offload 2> /dev/null");
+        $this->createModulesCacheSymlinks();
+        $this->applyFolderRights();
+        Util::mwExec("{$mountPath} -o remount,ro /offload 2> /dev/null");
     }
 
     /**
@@ -1197,7 +1155,7 @@ class Storage extends Di\Injectable
     }
 
     /**
-     * Fix permissions for Folder and Files
+     * Fixes permissions for Folder and Files
      */
     private function applyFolderRights(): void
     {
@@ -1239,6 +1197,70 @@ class Storage extends Di\Injectable
 
         $mountPath = Util::which('mount');
         Util::mwExec("{$mountPath} -o remount,ro /offload 2> /dev/null");
+    }
+
+    /**
+     * Creates swap file on storage
+     */
+    public function mountSwap(): void
+    {
+        $tempDir    = $this->config->path('core.tempDir');
+        $swapFile   = "{$tempDir}/swapfile";
+        $swapOffCmd = Util::which('swapoff');
+        Util::mwExec("{$swapOffCmd} {$swapFile}");
+        if (file_exists($swapFile)) {
+            unlink($swapFile);
+        }
+
+        $size     = $this->getStorageFreeSpaceMb();
+        $swapSize = 0;
+        if ($size > 4000) {
+            $swapSize = 2048;
+        } elseif ($size > 2000) {
+            $swapSize = 1024;
+        } elseif ($size > 1000) {
+            $swapSize = 512;
+        }
+        if ($swapSize === 0) {
+            return;
+        }
+
+        $bs         = 1024;
+        $countBlock = $swapSize * $bs;
+        $ddCmd      = Util::which('dd');
+
+        Util::sysLogMsg('Swap', 'make swap ' . $swapFile, LOG_INFO, LOG_INFO);
+        Util::mwExec("{$ddCmd} if=/dev/zero of={$swapFile} bs={$bs} count={$countBlock}");
+
+        $mkSwapCmd = Util::which('mkswap');
+        Util::mwExec("{$mkSwapCmd} {$swapFile}");
+
+        $swapOnCmd = Util::which('swapon');
+        $result    = Util::mwExec("{$swapOnCmd} {$swapFile}");
+        Util::sysLogMsg('Swap', 'connect swap result: ' . $result, LOG_INFO, LOG_INFO);
+    }
+
+    /**
+     * Returns free space on mounted storage disk
+     *
+     * @return int size in megabytes
+     */
+    public function getStorageFreeSpaceMb(): int
+    {
+        $size    = 0;
+        $mntDir  = '';
+        $mounted = self::isStorageDiskMounted('', $mntDir);
+        if ( ! $mounted) {
+            return 0;
+        }
+        $hd = $this->getAllHdd(true);
+        foreach ($hd as $disk) {
+            if ($disk['mounted'] === $mntDir) {
+                $size = $disk['free_space'];
+                break;
+            }
+        }
+        return $size;
     }
 
     /**

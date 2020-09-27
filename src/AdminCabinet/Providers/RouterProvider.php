@@ -28,13 +28,17 @@ use Phalcon\Mvc\Router;
  */
 class RouterProvider implements ServiceProviderInterface
 {
+    public const SERVICE_NAME = 'router';
+
     /**
+     * Register router service provider
+     *
      * @param \Phalcon\Di\DiInterface $di
      */
     public function register(DiInterface $di): void
     {
         $di->set(
-            'router',
+            self::SERVICE_NAME,
             function () {
                 $router = new Router();
 

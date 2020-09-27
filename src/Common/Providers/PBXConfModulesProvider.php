@@ -31,15 +31,17 @@ use function MikoPBX\Common\Config\appPath;
  */
 class PBXConfModulesProvider implements ServiceProviderInterface
 {
+    public const SERVICE_NAME = 'pbxConfModules';
+
     /**
-     * Register db service provider
+     * Registers pbxConfModules service provider
      *
      * @param \Phalcon\Di\DiInterface $di
      */
     public function register(DiInterface $di): void
     {
-        $di->setShared(
-            'pbxConfModules',
+        $di->set(
+            self::SERVICE_NAME,
             function (){
                 return array_merge(
                     self::getCoreConfModules(),
@@ -50,7 +52,7 @@ class PBXConfModulesProvider implements ServiceProviderInterface
     }
 
     /**
-     * Create array of AsteriskConfModules
+     * Creates array of AsteriskConfModules
      * @return array
      */
     public static function getCoreConfModules():array
@@ -72,13 +74,13 @@ class PBXConfModulesProvider implements ServiceProviderInterface
     }
 
     /**
-     * Create array of AsteriskConfModules
+     * Creates array of AsteriskConfModules
      * @return array
      */
     public static function getExtensionsConfModules():array
     {
         $arrObjects = [];
-        $modules = PbxExtensionModules::find('disabled=0')->toArray();
+        $modules = PbxExtensionModules::find('disabled="0"')->toArray();
         foreach ($modules as $value) {
             $class_name      = str_replace('Module', '', $value['uniqid']);
             $full_class_name = "\\Modules\\{$value['uniqid']}\\Lib\\{$class_name}Conf";
@@ -89,6 +91,7 @@ class PBXConfModulesProvider implements ServiceProviderInterface
                 }
             }
         }
+
         return  $arrObjects;
     }
 
@@ -98,7 +101,7 @@ class PBXConfModulesProvider implements ServiceProviderInterface
     public static function recreateModulesProvider(): void
     {
         $di = Di::getDefault();
-        $di->remove('pbxConfModules');
+        $di->remove(self::SERVICE_NAME);
         $di->register(new self());
     }
 

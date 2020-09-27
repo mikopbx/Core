@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace MikoPBX\Common\Providers;
 
-
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 
@@ -20,14 +19,16 @@ use Phalcon\Di\ServiceProviderInterface;
  */
 class CDRDatabaseProvider extends DatabaseProviderBase implements ServiceProviderInterface
 {
+    public const SERVICE_NAME = 'dbCDR';
+
     /**
-     * Register db service provider
+     * Register dbCDR service provider
      *
      * @param \Phalcon\Di\DiInterface $di
      */
     public function register(DiInterface $di): void
     {
         $dbConfig = $di->getShared('config')->get('cdrDatabase')->toArray();
-        $this->registerDBService('dbCDR', $di, $dbConfig);
+        $this->registerDBService(self::SERVICE_NAME, $di, $dbConfig);
     }
 }

@@ -20,10 +20,17 @@ use Phalcon\Di\ServiceProviderInterface;
  */
 class LanguageSelectorProvider implements ServiceProviderInterface
 {
+    public const SERVICE_NAME = 'language';
+
+    /**
+     * Register language service provider
+     *
+     * @param \Phalcon\Di\DiInterface $di
+     */
     public function register(DiInterface $di): void
     {
         $di->setShared(
-            'language',
+            self::SERVICE_NAME,
             function () use ($di){
                 $roSession = $di->getShared('sessionRO');
                 if ($roSession !== null && array_key_exists(

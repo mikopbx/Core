@@ -24,6 +24,8 @@ use Whoops\Handler\PrettyPageHandler;
  */
 class DispatcherProvider implements ServiceProviderInterface
 {
+    public const SERVICE_NAME = 'dispatcher';
+
     /**
      * Register dispatcher service provider
      *
@@ -32,7 +34,7 @@ class DispatcherProvider implements ServiceProviderInterface
     public function register(DiInterface $di): void
     {
         $di->setShared(
-            'dispatcher',
+            self::SERVICE_NAME,
             function () {
                 $eventsManager = new EventsManager();
 

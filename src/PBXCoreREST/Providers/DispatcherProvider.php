@@ -24,6 +24,8 @@ use Phalcon\Mvc\Micro;
  */
 class DispatcherProvider implements ServiceProviderInterface
 {
+    public const SERVICE_NAME = 'dispatcher';
+
     /**
      * Register dispatcher service provider
      *
@@ -32,7 +34,7 @@ class DispatcherProvider implements ServiceProviderInterface
     public function register(DiInterface $di): void
     {
         $di->setShared(
-            'dispatcher',
+            self::SERVICE_NAME,
             function () {
                 // Create a events manager
                 $eventsManager = new EventsManager();

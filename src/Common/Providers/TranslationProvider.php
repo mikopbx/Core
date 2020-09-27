@@ -30,6 +30,8 @@ use Phalcon\Translate\TranslateFactory;
  */
 class TranslationProvider implements ServiceProviderInterface
 {
+    public const SERVICE_NAME = 'translation';
+
     /**
      * Register translation service provider
      *
@@ -38,7 +40,7 @@ class TranslationProvider implements ServiceProviderInterface
     public function register(DiInterface $di): void
     {
         $di->setShared(
-            'translation',
+            self::SERVICE_NAME,
             function () use ($di) {
                 $interpolator = new InterpolatorFactory();
                 $factory      = new TranslateFactory($interpolator);

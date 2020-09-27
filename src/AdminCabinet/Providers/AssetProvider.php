@@ -24,15 +24,16 @@ use function MikoPBX\Common\Config\appPath;
 
 class AssetProvider implements ServiceProviderInterface
 {
+    public const SERVICE_NAME = 'assets';
     /**
-     * Register dispatcher service provider
+     * Register assets service provider
      *
      * @param \Phalcon\Di\DiInterface $di
      */
     public function register(DiInterface $di): void
     {
         $di->set(
-            'assets',
+            self::SERVICE_NAME,
             function () use ($di){
                 $manager    = new Manager();
                 $dispatcher = $di->get('dispatcher');

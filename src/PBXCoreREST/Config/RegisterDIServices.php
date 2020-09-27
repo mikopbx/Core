@@ -30,7 +30,7 @@ use Phalcon\Di\DiInterface;
 class RegisterDIServices
 {
     /**
-     * Register dispatcher service provider
+     * Initialize services on dependency injector
      *
      * @param \Phalcon\Di\DiInterface $di
      */
@@ -66,6 +66,11 @@ class RegisterDIServices
         ];
 
         foreach ($pbxRestAPIProviders as $provider) {
+            // Delete previous provider
+            if (property_exists($provider,'SERVICE_NAME')
+                && $di->has($provider::SERVICE_NAME)) {
+                $di->remove($provider::SERVICE_NAME);
+            }
             $di->register(new $provider());
         }
     }

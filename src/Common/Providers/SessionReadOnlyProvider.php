@@ -20,11 +20,18 @@ use Phalcon\Di\ServiceProviderInterface;
  */
 class SessionReadOnlyProvider implements ServiceProviderInterface
 {
+    public const SERVICE_NAME = 'sessionRO';
+
+    /**
+     * Register session read only service provider
+     *
+     * @param \Phalcon\Di\DiInterface $di
+     */
     public function register(DiInterface $di): void
     {
         $phpSessionDir = $di->getShared('config')->path('www.phpSessionDir');
         $di->setShared(
-            'sessionRO',
+            self::SERVICE_NAME,
             function () use ($phpSessionDir) {
                 if ( ! is_array($_COOKIE) || ! array_key_exists(session_name(), $_COOKIE)) {
                     return null;

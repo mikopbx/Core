@@ -28,11 +28,18 @@ use Phalcon\Url;
  */
 class UrlProvider implements ServiceProviderInterface
 {
+    public const SERVICE_NAME = 'url';
+
+    /**
+     * Register url service provider
+     *
+     * @param \Phalcon\Di\DiInterface $di
+     */
     public function register(DiInterface $di): void
     {
-        $baseUri = $di->getShared('config')->adminApplication->baseUri;
+        $baseUri = $di->getShared('config')->path('adminApplication.baseUri');
         $di->setShared(
-            'url',
+            self::SERVICE_NAME,
             function () use ($baseUri) {
                 $url = new Url();
                 $url->setBaseUri($baseUri);

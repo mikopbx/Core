@@ -29,6 +29,8 @@ use Phalcon\Mvc\Model\MetaData\Strategy\Annotations as StrategyAnnotations;
  */
 class ModelsMetadataProvider implements ServiceProviderInterface
 {
+    public const SERVICE_NAME = 'modelsMetadata';
+
     /**
      * Register Models metadata service provider
      *
@@ -37,7 +39,7 @@ class ModelsMetadataProvider implements ServiceProviderInterface
     public function register(DiInterface $di): void
     {
         $di->setShared(
-            'modelsMetadata',
+            self::SERVICE_NAME,
             function () {
                 $metaData = new Memory(
                     [

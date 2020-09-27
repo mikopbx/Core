@@ -30,8 +30,10 @@ use Phalcon\Storage\SerializerFactory;
  */
 class ModelsCacheProvider implements ServiceProviderInterface
 {
+    public const SERVICE_NAME = 'modelsCache';
+
     /**
-     * Register Models metadata service provider
+     * Register Models cache service provider
      *
      * @param \Phalcon\Di\DiInterface $di
      */
@@ -44,7 +46,7 @@ class ModelsCacheProvider implements ServiceProviderInterface
         }
 
         $di->setShared(
-            'modelsCache',
+            self::SERVICE_NAME,
             function () use ($tempDir){
                 $serializerFactory = new SerializerFactory();
                 $options = [

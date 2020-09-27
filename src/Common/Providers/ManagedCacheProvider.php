@@ -31,8 +31,10 @@ use Phalcon\Storage\SerializerFactory;
  */
 class ManagedCacheProvider implements ServiceProviderInterface
 {
+    public const SERVICE_NAME = 'managedCache';
+
     /**
-     * Register Models metadata service provider
+     * Register managedCache service provider
      *
      * @param \Phalcon\Di\DiInterface $di
      */
@@ -44,7 +46,7 @@ class ManagedCacheProvider implements ServiceProviderInterface
             $tempDir = $di->getShared('config')->path('www.managedCacheDir');
         }
         $di->setShared(
-            'managedCache',
+            self::SERVICE_NAME,
             function () use ($tempDir){
                 $serializerFactory = new SerializerFactory();
 

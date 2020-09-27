@@ -27,15 +27,17 @@ use Phalcon\Registry;
  */
 class RegistryProvider implements ServiceProviderInterface
 {
+    public const SERVICE_NAME = 'registry';
+
     /**
-     * Register db service provider
+     * Register registry service provider
      *
      * @param \Phalcon\Di\DiInterface $di
      */
     public function register(DiInterface $di): void
     {
         $di->setShared(
-            'registry',
+            self::SERVICE_NAME,
             function () {
                 return new Registry();
             }

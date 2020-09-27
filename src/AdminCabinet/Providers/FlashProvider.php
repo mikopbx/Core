@@ -21,10 +21,17 @@ use Phalcon\Flash\Session as FlashSession;
  */
 class FlashProvider implements ServiceProviderInterface
 {
+    public const SERVICE_NAME = 'flash';
+
+    /**
+     * Register flash service provider
+     *
+     * @param \Phalcon\Di\DiInterface $di
+     */
     public function register(DiInterface $di): void
     {
         $di->setShared(
-            'flash',
+            self::SERVICE_NAME,
             function () {
                 $cssClasses = [
                     'error'   => 'ui negative message',
