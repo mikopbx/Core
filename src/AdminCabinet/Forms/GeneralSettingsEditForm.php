@@ -122,6 +122,7 @@ class GeneralSettingsEditForm extends Form
                     $extLength = new Select(
                         $key,
                         [
+                            2 => $this->translation->_('gs_TwoDigthts'),
                             3 => $this->translation->_('gs_ThreeDigthts'),
                             4 => $this->translation->_('gs_FourDigthts'),
                             5 => $this->translation->_('gs_FiveDigthts'),
