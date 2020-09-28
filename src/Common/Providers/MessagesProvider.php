@@ -20,8 +20,11 @@ use function MikoPBX\Common\Config\appPath;
 
 class MessagesProvider implements ServiceProviderInterface
 {
+    public const SERVICE_NAME = 'messages';
+
+
     /**
-     * Prepares translation array of texts provider
+     * Register messages service provider
      *
      * @param \Phalcon\Di\DiInterface $di
      */
@@ -29,7 +32,7 @@ class MessagesProvider implements ServiceProviderInterface
     {
         $coreConfig = $di->getShared('config')->path('core');
         $di->setShared(
-            'messages',
+            self::SERVICE_NAME,
             function () use ($di, $coreConfig) {
                 $cacheKey = false;
                 if (php_sapi_name() === 'cli'){

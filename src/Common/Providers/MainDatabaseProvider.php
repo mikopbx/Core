@@ -26,6 +26,8 @@ use Phalcon\Di\ServiceProviderInterface;
  */
 class MainDatabaseProvider extends DatabaseProviderBase implements ServiceProviderInterface
 {
+    public const SERVICE_NAME = 'db';
+
     /**
      * Register db service provider
      *
@@ -34,6 +36,6 @@ class MainDatabaseProvider extends DatabaseProviderBase implements ServiceProvid
     public function register(DiInterface $di): void
     {
         $dbConfig = $di->getShared('config')->get('database')->toArray();
-        $this->registerDBService('db', $di, $dbConfig);
+        $this->registerDBService(self::SERVICE_NAME, $di, $dbConfig);
     }
 }

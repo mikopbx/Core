@@ -22,8 +22,10 @@ use Phalcon\Di\ServiceProviderInterface;
  */
 class NatsConnectionProvider implements ServiceProviderInterface
 {
+    public const SERVICE_NAME = 'natsConnection';
+
     /**
-     * Register db service provider
+     * Registers natsConnection service provider
      *
      * @param \Phalcon\Di\DiInterface $di
      */
@@ -31,7 +33,7 @@ class NatsConnectionProvider implements ServiceProviderInterface
     {
         $gnatsConfig = $di->getShared('config')->get('gnats');
         $di->setShared(
-            'natsConnection',
+            self::SERVICE_NAME,
             function () use ($gnatsConfig) {
                 $connectionOptions = new NatsConnectionOptions();
                 $host              = $gnatsConfig->host;

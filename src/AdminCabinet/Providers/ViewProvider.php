@@ -22,10 +22,17 @@ use function MikoPBX\Common\Config\appPath;
  */
 class ViewProvider implements ServiceProviderInterface
 {
+    public const SERVICE_NAME = 'view';
+
+    /**
+     * Register view service provider
+     *
+     * @param \Phalcon\Di\DiInterface $di
+     */
     public function register(DiInterface $di): void
     {
         $di->setShared(
-            'view',
+            self::SERVICE_NAME,
             function () {
                 $viewsDir = appPath('src/AdminCabinet/Views');
                 $view = new View();

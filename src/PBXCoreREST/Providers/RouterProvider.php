@@ -49,7 +49,11 @@ use Phalcon\Mvc\Micro\Collection;
  */
 class RouterProvider implements ServiceProviderInterface
 {
+    public const SERVICE_NAME = '';
+
     /**
+     * Register response service provider
+     *
      * @param \Phalcon\Di\DiInterface $di
      */
     public function register(DiInterface $di): void

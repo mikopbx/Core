@@ -22,11 +22,18 @@ use Phalcon\Session\Manager as SessionManager;
  */
 class SessionProvider implements ServiceProviderInterface
 {
+    public const SERVICE_NAME = 'session';
+
+    /**
+     * Register session service provider
+     *
+     * @param \Phalcon\Di\DiInterface $di
+     */
     public function register(DiInterface $di): void
     {
         $phpSessionDir = $di->getShared('config')->path('www.phpSessionDir');
         $di->setShared(
-            'session',
+            self::SERVICE_NAME,
             function () use ($phpSessionDir) {
                 $session = new SessionManager();
                 $files   = new SessionAdapter(

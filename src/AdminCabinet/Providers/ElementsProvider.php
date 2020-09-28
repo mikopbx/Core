@@ -21,10 +21,17 @@ use Phalcon\Di\ServiceProviderInterface;
  */
 class ElementsProvider implements ServiceProviderInterface
 {
+    public const SERVICE_NAME = 'elements';
+
+    /**
+     * Register elements service provider
+     *
+     * @param \Phalcon\Di\DiInterface $di
+     */
     public function register(DiInterface $di): void
     {
         $di->setShared(
-            'elements',
+            self::SERVICE_NAME,
             function () {
                 return new Elements();
             }

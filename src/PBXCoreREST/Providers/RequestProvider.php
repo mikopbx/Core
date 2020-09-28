@@ -19,11 +19,15 @@ use Phalcon\Di\ServiceProviderInterface;
 
 class RequestProvider implements ServiceProviderInterface
 {
+    public const SERVICE_NAME = 'request';
+
     /**
-     * @param DiInterface $container
+     * Register request service provider
+     *
+     * @param \Phalcon\Di\DiInterface $di
      */
-    public function register(DiInterface $container): void
+    public function register(DiInterface $di): void
     {
-        $container->setShared('request', new Request());
+        $di->setShared(self::SERVICE_NAME, new Request());
     }
 }

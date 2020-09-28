@@ -19,13 +19,17 @@ use Phalcon\Di\ServiceProviderInterface;
 
 class ResponseProvider implements ServiceProviderInterface
 {
+    public const SERVICE_NAME = 'response';
+
     /**
-     * @param DiInterface $container
+     * Register response service provider
+     *
+     * @param \Phalcon\Di\DiInterface $di
      */
-    public function register(DiInterface $container): void
+    public function register(DiInterface $di): void
     {
-        $container->setShared(
-            'response',
+        $di->setShared(
+            self::SERVICE_NAME,
             function () {
                 $response = new Response();
 

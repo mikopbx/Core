@@ -22,15 +22,17 @@ use Phalcon\Di\ServiceProviderInterface;
  */
 class BeanstalkConnectionProvider implements ServiceProviderInterface
 {
+    public const SERVICE_NAME = 'beanstalkConnection';
+
     /**
-     * Register db service provider
+     * Register beanstalkConnection service provider
      *
      * @param \Phalcon\Di\DiInterface $di
      */
     public function register(DiInterface $di): void
     {
         $di->setShared(
-            'beanstalkConnection',
+            self::SERVICE_NAME,
             function () {
                 return new BeanstalkClient(WorkerApiCommands::class);
             }

@@ -18,12 +18,19 @@ use Phalcon\Mvc\View\Engine\Volt as VoltEngine;
 
 class VoltProvider implements ServiceProviderInterface
 {
+    public const SERVICE_NAME = 'volt';
+
+    /**
+     * Register volt service provider
+     *
+     * @param \Phalcon\Di\DiInterface $di
+     */
     public function register(DiInterface $di): void
     {
         $view      = $di->getShared('view');
         $appConfig = $di->getShared('config')->adminApplication;
         $di->setShared(
-            'volt',
+            self::SERVICE_NAME,
             function () use ($view, $di, $appConfig) {
                 $voltCacheDir = $appConfig->voltCacheDir . '/';
                 $volt         = new VoltEngine($view, $di);

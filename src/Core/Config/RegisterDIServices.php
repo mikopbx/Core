@@ -20,6 +20,7 @@ namespace MikoPBX\Core\Config;
 use MikoPBX\Common\Providers\{AmiConnectionCommand,
     AmiConnectionListener,
     CDRDatabaseProvider,
+    ConfigProvider,
     LicenseProvider,
     MainDatabaseProvider,
     ModelsCacheProvider,
@@ -31,7 +32,8 @@ use MikoPBX\Common\Providers\{AmiConnectionCommand,
     RegistryProvider,
     TranslationProvider,
     MessagesProvider,
-    UrlProvider};
+    UrlProvider
+};
 use MikoPBX\Core\Providers\EventsLogDatabaseProvider;
 use Phalcon\Di;
 
@@ -43,8 +45,12 @@ class RegisterDIServices
      */
     public static function init(): void
     {
-        $di                    = Di::getDefault();
-        $adminCabinetProviders = [
+        $di            = Di::getDefault();
+        $providersList = [
+
+            // Inject Config provider
+            // ConfigProvider::class,
+
             // Inject Registry provider
             RegistryProvider::class,
 
@@ -80,7 +86,12 @@ class RegisterDIServices
 
         ];
 
-        foreach ($adminCabinetProviders as $provider) {
+        foreach ($providersList as $provider) {
+            // Delete previous provider
+            if (property_exists($provider,'SERVICE_NAME')
+                && $di->has($provider::SERVICE_NAME)) {
+                $di->remove($provider::SERVICE_NAME);
+            }
             $di->register(new $provider());
         }
     }
@@ -90,15 +101,24 @@ class RegisterDIServices
      */
     public static function recreateDBConnections(): void
     {
+        $dbProvidersList = [
+            MainDatabaseProvider::class,
+            CDRDatabaseProvider::class,
+            EventsLogDatabaseProvider::class,
+
+            ModelsCacheProvider::class // We must clear cache also
+        ];
+
         $di = Di::getDefault();
-        $di->remove('db');
-        $di->remove('dbCDR');
-        $di->remove('dbEventsLog');
-        $di->remove('modelsCache');
-        $di->register(new MainDatabaseProvider());
-        $di->register(new CDRDatabaseProvider());
-        $di->register(new EventsLogDatabaseProvider());
-        $di->register(new ModelsCacheProvider());
+
+        foreach ($dbProvidersList as $provider) {
+            // Delete previous provider
+            if (property_exists($provider,'SERVICE_NAME')
+                && $di->has($provider::SERVICE_NAME)) {
+                $di->remove($provider::SERVICE_NAME);
+            }
+            $di->register(new $provider());
+        }
     }
 
     /**
@@ -109,4 +129,6 @@ class RegisterDIServices
         $di = Di::getDefault();
         $di->register(new ModulesDBConnectionsProvider());
     }
+
+
 }

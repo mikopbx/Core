@@ -40,7 +40,7 @@ use Phalcon\Di\DiInterface;
 class RegisterDIServices
 {
     /**
-     * Register dispatcher service provider
+     * Initialize services on dependency injector
      *
      * @param \Phalcon\Di\DiInterface $di
      */
@@ -91,25 +91,12 @@ class RegisterDIServices
         ];
 
         foreach ($adminCabinetProviders as $provider) {
+            // Delete previous provider
+            if (property_exists($provider,'SERVICE_NAME')
+                && $di->has($provider::SERVICE_NAME)) {
+                $di->remove($provider::SERVICE_NAME);
+            }
             $di->register(new $provider());
         }
-
-        // $di->set(
-        //     'viewCache', function () use ($config) {
-        //
-        //     //Cache for one day
-        //     $frontCache = new Output([
-        //         'lifetime' => $config->adminApplication->debugMode ? 1 : 86400,
-        //     ]);
-        //
-        //     //Set file cache
-        //     $cache = new File($frontCache, [
-        //         'cacheDir' => $config->adminApplication->cacheDir,
-        //     ]);
-        //
-        //     return $cache;
-        // }
-        // );
-
     }
 }

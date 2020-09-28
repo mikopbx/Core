@@ -183,7 +183,6 @@ class IptablesConf extends Injectable
 
     /**
      * Updates firewall rules according to default template
-     *
      */
     public static function updateFirewallRules(): void
     {
