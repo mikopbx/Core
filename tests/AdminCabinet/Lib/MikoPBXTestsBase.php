@@ -29,9 +29,10 @@ class MikoPBXTestsBase extends BrowserStackTest
      */
     protected function assertElementNotFound($by): void
     {
+
         $els = self::$driver->findElements($by);
         if (count($els)) {
-            $this->fail("Unexpectedly element was found by " . $by . PHP_EOL);
+            $this->fail("Unexpectedly element was found by " . $by->getValue() . PHP_EOL);
         }
         // increment assertion counter
         $this->assertTrue(true);
