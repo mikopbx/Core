@@ -19,6 +19,7 @@ declare(strict_types=1);
 namespace MikoPBX\Common\Providers;
 
 
+use MikoPBX\Core\System\Util;
 use Phalcon\Di\DiInterface;
 use Phalcon\Events\Manager as EventsManager;
 use Phalcon\Logger;
@@ -42,6 +43,12 @@ abstract class DatabaseProviderBase
             $serviceName,
             function () use ($dbConfig) {
                 $dbclass    = 'Phalcon\Db\Adapter\Pdo\\' . $dbConfig['adapter'];
+
+                $folderWithDB = dirname($dbConfig['dbfile']);
+                if (!is_dir($folderWithDB)){
+                    Util::mwMkdir($folderWithDB, true);
+                }
+
                 $connection = new $dbclass(
                     [
                         'dbname' => $dbConfig['dbfile'],
