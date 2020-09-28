@@ -45,7 +45,7 @@ class ModelsCacheProvider implements ServiceProviderInterface
             $tempDir = $di->getShared('config')->path('www.modelsCacheDir');
         }
 
-        $di->set(
+        $di->setShared(
             self::SERVICE_NAME,
             function () use ($tempDir){
                 $serializerFactory = new SerializerFactory();
