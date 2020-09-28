@@ -52,7 +52,7 @@ class Network extends Injectable
         $lsPath   = Util::which('ls');
         $grepPath = Util::which('grep');
         $awkPath  = Util::which('awk');
-        Util::mwExec("{$lsPath} -l /sys/class/net | {$grepPath} pci | {$awkPath} '{ print $9 }'", $names);
+        Util::mwExec("{$lsPath} -l /sys/class/net | {$grepPath} devices | {$grepPath} -v virtual | {$awkPath} '{ print $9 }'", $names);
 
         return $names;
     }
