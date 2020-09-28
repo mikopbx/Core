@@ -58,7 +58,7 @@ class WorkerCallEvents extends WorkerBase
                 $file_name = basename($f);
             }
             if ($this->split_audio_thread) {
-                $options = "abr({$f}_in.wav)t({$f}_out.wav)";
+                $options = "abSr({$f}_in.wav)t({$f}_out.wav)";
             } else {
                 $options = 'ab';
             }
