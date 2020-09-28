@@ -3,41 +3,6 @@
 -- Proprietary and confidential
 -- Written by Alexey Portnov, 9 2020
 
--- Copyright © MIKO LLC - All Rights Reserved
--- Unauthorized copying of this file, via any medium is strictly prohibited
--- Proprietary and confidential
--- Written by Alexey Portnov, 9 2020
-
--- Copyright © MIKO LLC - All Rights Reserved
--- Unauthorized copying of this file, via any medium is strictly prohibited
--- Proprietary and confidential
--- Written by Alexey Portnov, 9 2020
-
--- Copyright © MIKO LLC - All Rights Reserved
--- Unauthorized copying of this file, via any medium is strictly prohibited
--- Proprietary and confidential
--- Written by Alexey Portnov, 9 2020
-
--- Copyright © MIKO LLC - All Rights Reserved
--- Unauthorized copying of this file, via any medium is strictly prohibited
--- Proprietary and confidential
--- Written by Alexey Portnov, 9 2020
-
--- Copyright © MIKO LLC - All Rights Reserved
--- Unauthorized copying of this file, via any medium is strictly prohibited
--- Proprietary and confidential
--- Written by Alexey Portnov, 8 2020
-
--- Copyright © MIKO LLC - All Rights Reserved
--- Unauthorized copying of this file, via any medium is strictly prohibited
--- Proprietary and confidential
--- Written by Alexey Portnov, 7 2020
-
--- Copyright © MIKO LLC - All Rights Reserved
--- Unauthorized copying of this file, via any medium is strictly prohibited
--- Proprietary and confidential
--- Written by Alexey Portnov, 6 2020
-
 
 -- Инициализация вспомогательных процедур и функций.
 JSON = (loadfile "/usr/www/src/Core/Asterisk/Configs/lua/JSON.lua")();
@@ -208,6 +173,7 @@ function event_dial(without_event)
     data['transfer']  	 = '0';
     data['agi_channel']  = agi_channel;
     data['did']		     = get_variable("FROM_DID");
+    data['verbose_call_id']	= get_variable("CHANNEL(callid)");
 
     local is_pjsip = string.lower(get_variable("CHANNEL")):find("pjsip/") ~= nil
     if(is_pjsip) then
@@ -374,6 +340,7 @@ function event_transfer_dial()
     data['linkedid']  	= get_variable("CDR(linkedid)");
     data['src_chan'] 	= channel;
     data['did']		    = get_variable("FROM_DID");
+    data['verbose_call_id']	= get_variable("CHANNEL(callid)");
     data['UNIQUEID']  	= id;
     local is_pjsip = string.lower(get_variable("CHANNEL")):find("pjsip/") ~= nil
     if(is_pjsip) then
