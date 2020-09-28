@@ -959,6 +959,7 @@ class Storage extends Di\Injectable
     {
         // Update config variable
         ConfigProvider::recreateConfigProvider();
+        $this->config = $this->di->get('config');
 
         // Reload classes from system and storage disks
         ClassLoader::init();
