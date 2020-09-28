@@ -26,6 +26,7 @@ use ReflectionException;
  */
 class ModulesDBConnectionsProvider extends DatabaseProviderBase implements ServiceProviderInterface
 {
+    public const SERVICE_NAME = '';
     /**
      * DiServicesInstall constructor
      *

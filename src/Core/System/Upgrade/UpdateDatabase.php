@@ -20,25 +20,17 @@ use Error;
 use function MikoPBX\Common\Config\appPath;
 
 
+/**
+ * Class UpdateDatabase
+ *
+ * @package MikoPBX\Core\System\Upgrade
+ * @property \Phalcon\Config config
+ */
 class UpdateDatabase extends Di\Injectable
 {
 
     /**
-     * @var \Phalcon\Config
-     */
-    private $config;
-
-    /**
-     * UpdateDatabase constructor.
-     *
-     */
-    public function __construct()
-    {
-        $this->config = $this->di->getShared('config');
-    }
-
-    /**
-     *
+     * Updates database structure according to models annotations
      */
     public function updateDatabaseStructure(): void
     {

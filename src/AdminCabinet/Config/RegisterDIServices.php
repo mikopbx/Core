@@ -92,10 +92,7 @@ class RegisterDIServices
 
         foreach ($adminCabinetProviders as $provider) {
             // Delete previous provider
-            if (property_exists($provider,'SERVICE_NAME')
-                && $di->has($provider::SERVICE_NAME)) {
-                $di->remove($provider::SERVICE_NAME);
-            }
+            $di->remove($provider::SERVICE_NAME);
             $di->register(new $provider());
         }
     }

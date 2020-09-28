@@ -20,7 +20,6 @@ namespace MikoPBX\Core\Config;
 use MikoPBX\Common\Providers\{AmiConnectionCommand,
     AmiConnectionListener,
     CDRDatabaseProvider,
-    ConfigProvider,
     LicenseProvider,
     MainDatabaseProvider,
     ModelsCacheProvider,
@@ -88,10 +87,7 @@ class RegisterDIServices
 
         foreach ($providersList as $provider) {
             // Delete previous provider
-            if (property_exists($provider,'SERVICE_NAME')
-                && $di->has($provider::SERVICE_NAME)) {
-                $di->remove($provider::SERVICE_NAME);
-            }
+            $di->remove($provider::SERVICE_NAME);
             $di->register(new $provider());
         }
     }
@@ -102,21 +98,18 @@ class RegisterDIServices
     public static function recreateDBConnections(): void
     {
         $dbProvidersList = [
+            ModelsCacheProvider::class, // Always recreate it before change DB providers
+
             MainDatabaseProvider::class,
             CDRDatabaseProvider::class,
-            EventsLogDatabaseProvider::class,
-
-            ModelsCacheProvider::class // We must clear cache also
+            EventsLogDatabaseProvider::class
         ];
 
         $di = Di::getDefault();
 
         foreach ($dbProvidersList as $provider) {
             // Delete previous provider
-            if (property_exists($provider,'SERVICE_NAME')
-                && $di->has($provider::SERVICE_NAME)) {
-                $di->remove($provider::SERVICE_NAME);
-            }
+            $di->remove($provider::SERVICE_NAME);
             $di->register(new $provider());
         }
     }

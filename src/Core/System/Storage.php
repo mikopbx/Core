@@ -24,22 +24,13 @@ use function MikoPBX\Common\Config\appPath;
 
 
 /**
- * Вспомогательные методы.
+ * Class Storage
+ *
+ * @package MikoPBX\Core\System
+ * @property \Phalcon\Config config
  */
 class Storage extends Di\Injectable
 {
-    /**
-     * @var \Phalcon\Config
-     */
-    private $config;
-
-    /**
-     * System constructor.
-     */
-    public function __construct()
-    {
-        $this->config = $this->di->getShared('config');
-    }
 
     /**
      * Возвращает директорию для хранения файлов записей разговоров.
@@ -968,7 +959,6 @@ class Storage extends Di\Injectable
     {
         // Update config variable
         ConfigProvider::recreateConfigProvider();
-        $this->config = $this->di->getShared('config');
 
         // Reload classes from system and storage disks
         ClassLoader::init();
