@@ -140,5 +140,8 @@ abstract class CallDetailRecordsBase extends ModelsBase
      */
     public ?string $dst_call_id = '';
 
-
+    /**
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $verbose_call_id = '';
 }
