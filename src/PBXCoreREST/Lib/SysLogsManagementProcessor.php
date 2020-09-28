@@ -1,9 +1,9 @@
 <?php
-/**
+/*
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 8 2020
+ * Written by Alexey Portnov, 9 2020
  */
 
 namespace MikoPBX\PBXCoreREST\Lib;
@@ -95,7 +95,7 @@ class SysLogsManagementProcessor extends Injectable
             if (empty($filter)){
                 $cmd         = "{$tail} -n {$linesPlusOffset} {$filename}";
             } else {
-                $cmd         = "{$grep} {$filter} {$filename} | $tail -n {$linesPlusOffset}";
+                $cmd         = "{$grep} -F {$filter} {$filename} | $tail -n {$linesPlusOffset}";
             }
             if ($offset>0){
                 $cmd .= " | {$head} -n {$lines}";
