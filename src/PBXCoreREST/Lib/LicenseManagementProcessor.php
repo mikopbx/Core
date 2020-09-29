@@ -8,13 +8,21 @@
 
 namespace MikoPBX\PBXCoreREST\Lib;
 
-use MikoPBX\Core\System\Network;
-use MikoPBX\Core\System\System;
-use MikoPBX\Core\System\Util;
-use MikoPBX\PBXCoreREST\Workers\WorkerMakeLogFilesArchive;
-use Phalcon\Di;
+use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Core\System\MikoPBXConfig;
 use Phalcon\Di\Injectable;
+use Phalcon\Text;
+use SimpleXMLElement;
 
+
+/**
+ * Class LicenseManagementProcessor
+ *
+ * @package MikoPBX\PBXCoreREST\Lib
+ * @property \MikoPBX\Common\Providers\LicenseProvider     license
+ * @property \MikoPBX\Common\Providers\TranslationProvider translation
+ * @property \Phalcon\Config                               config
+ */
 class LicenseManagementProcessor extends Injectable
 {
 
@@ -24,7 +32,7 @@ class LicenseManagementProcessor extends Injectable
      * @param array $request
      *
      * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
-     * @throws \Exception
+     *
      */
     public static function licenseCallBack(array $request): PBXApiResult
     {
@@ -33,9 +41,27 @@ class LicenseManagementProcessor extends Injectable
         $res            = new PBXApiResult();
         $res->processor = __METHOD__;
         switch ($action) {
-            case 'getLogFromFile':
-                $res = self::getLogFromFile($data['filename'], $data['filter'], $data['lines'], $data['offset']);
+            case 'resetKey':
+                $proc = new LicenseManagementProcessor();
+                $res = $proc->resetLicenseAction();
                 break;
+            case 'processUserRequest':
+                $proc = new LicenseManagementProcessor();
+                $res = $proc->processUserRequestAction($data);
+                break;
+            case 'getLicenseInfo':
+                $proc = new LicenseManagementProcessor();
+                $res = $proc->getLicenseInfoAction();
+                break;
+            case 'getMikoPBXFeatureStatus':
+                $proc = new LicenseManagementProcessor();
+                $res = $proc->getMikoPBXFeatureStatusAction();
+                break;
+            case 'captureFeatureForProductId':
+                $proc = new LicenseManagementProcessor();
+                $res = $proc->captureFeatureForProductIdAction($data);
+                break;
+
             default:
                 $res->messages[] = "Unknown action - {$action} in licenseCallBack";
         }
@@ -45,37 +71,157 @@ class LicenseManagementProcessor extends Injectable
         return $res;
     }
 
-
     /**
-     * Стартует запись логов.
-     *
-     * @param int $timeout
+     * Reset license key
      *
      * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
-     * @throws \Exception
      */
-    private static function startLog($timeout = 300): PBXApiResult
+    private function resetLicenseAction():PBXApiResult
     {
-        $res            = new PBXApiResult();
-        $res->processor = __METHOD__;
-        $logDir         = System::getLogDir();
-
-        // TCP dump
-        $tcpDumpDir  = "{$logDir}/tcpDump";
-        Util::mwMkdir($tcpDumpDir);
-        $network     = new Network();
-        $arr_eth     = $network->getInterfacesNames();
-        $tcpdumpPath = Util::which('tcpdump');
-        foreach ($arr_eth as $eth) {
-            Util::mwExecBgWithTimeout(
-                "{$tcpdumpPath} -i {$eth} -n -s 0 -vvv -w {$tcpDumpDir}/{$eth}.pcap",
-                $timeout,
-                "{$tcpDumpDir}/{$eth}_out.log"
-            );
-        }
+        $mikoPBXConfig = new MikoPBXConfig();
+        $res           = new PBXApiResult();
+        $mikoPBXConfig->deleteGeneralSettings('PBXLicense');
         $res->success = true;
+        $this->license->changeLicenseKey('');
+        return $res;
+    }
+
+
+
+    /**
+     * Check and update license key on database
+     *
+     * @param array $data
+     *
+     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     */
+    private function processUserRequestAction(array $data): PBXApiResult
+    {
+        $mikoPBXConfig = new MikoPBXConfig();
+        $res           = new PBXApiResult();
+        if (strlen($data['licKey']) === 28
+            && Text::startsWith($data['licKey'], 'MIKO-')
+        ) {
+            $oldLicKey = $mikoPBXConfig->getGeneralSettings('PBXLicense');
+            if ($oldLicKey !== $data['licKey']) {
+                $licenseInfo = $this->license->getLicenseInfo($data['licKey']);
+                if ($licenseInfo instanceof SimpleXMLElement) {
+                    $mikoPBXConfig->setGeneralSettings('PBXLicense', $data['licKey']);
+                    $this->license->changeLicenseKey($data['licKey']);
+                    $this->license->addTrial('11'); // MikoPBX forever license
+                    $res->success = true;
+                } elseif ( ! empty($licenseInfo) && strpos($licenseInfo, '2026') !== false) {
+                    $res->success    = false;
+                    $res->messages[] = $this->translation->_('lic_FailedCheckLicense2026');
+                } elseif ( ! empty($licenseInfo)) {
+                    $res->messages[] = $licenseInfo;
+                    $res->success    = false;
+                } else {
+                    $res->messages[] = $this->translation->_('lic_FailedCheckLicense');
+                    $res->success    = false;
+                }
+            }
+            if ( ! empty($data['coupon'])) {
+                $result = $this->license->activateCoupon($data['coupon']);
+                if ($result === true) {
+                    $res->messages[] = $this->translation->_('lic_SuccessfulCouponActivated');
+                    $res->success    = true;
+                } else {
+                    $res->messages[] = $this->license->translateLicenseErrorMessage($result);
+                    $res->success    = false;
+                }
+            }
+        } else { // Only add trial for license key
+            $newLicenseKey = $this->license->getTrialLicense($data);
+            if (strlen($newLicenseKey) === 28 && Text::startsWith($newLicenseKey, 'MIKO-')) {
+                $mikoPBXConfig->setGeneralSettings('PBXLicense', $data['licKey']);
+                $this->license->changeLicenseKey($data['licKey']);
+            } else {
+                // No internet connection, or wrong data sent to license server, or something else
+                $res->messages[] = $this->license->translateLicenseErrorMessage($newLicenseKey);
+                $res->success    = false;
+            }
+        }
+        return $res;
+    }
+
+
+    /**
+     * Returns license info from license server by key
+     *
+     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     */
+    private function getLicenseInfoAction(): PBXApiResult
+    {
+        $res = new PBXApiResult();
+        $licenseKey = PbxSettings::getValueByKey('PBXLicense');
+        if ((strlen($licenseKey) === 28
+            && Text::startsWith($licenseKey, 'MIKO-')
+        )) {
+            $licenseInfo              = $this->license->getLicenseInfo($licenseKey);
+            $res->success             = true;
+            $res->data['licenseInfo'] = json_encode($licenseInfo);
+        } else {
+            $res->messages[] = 'License key is wrong or empty';
+        }
 
         return $res;
     }
+
+    /**
+     * Check for free MikoPBX base license
+     *
+     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     */
+    private function getMikoPBXFeatureStatusAction(): PBXApiResult
+    {
+        $res = new PBXApiResult();
+        $checkBaseFeature = $this->license->featureAvailable(33);
+        if ($checkBaseFeature['success'] === false) {
+            $res->success = false;
+            $res->messages[] = $this->license->translateLicenseErrorMessage($checkBaseFeature['error']);
+        } else {
+            $res->success = true;
+        }
+        return $res;
+    }
+
+    /**
+     * Tries to capture feature.
+     *
+     * If it fails we try to get trial and then try capture again.
+     *
+     * @param array $data
+     *
+     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     */
+    private function captureFeatureForProductIdAction(array $data): PBXApiResult
+    {
+        $res = new PBXApiResult();
+        $licFeatureId = $data['licFeatureId'];
+        $licProductId = $data['licProductId'];
+
+        if ( ! isset($licFeatureId, $licProductId)) {
+            $res->messages[]='The feature id or product id is empty.';
+            return $res;
+        }
+        $res->success = true;
+        if ($licFeatureId > 0) {
+            // 1.Try to capture feature
+            $result = $this->license->captureFeature($licFeatureId);
+            if ($result['success'] === false) {
+                // Add trial
+                $this->license->addTrial($licProductId);
+                // 2.Try to capture feature
+                $result = $this->license->captureFeature($licFeatureId);
+                if ($result['success'] === false) {
+                    $res->messages[] = $this->license->translateLicenseErrorMessage($result['error']);
+                    $res->success = false;
+                }
+            }
+        }
+        return $res;
+    }
+
 
 }

@@ -46,6 +46,11 @@ const PbxApi = {
 	sysinfoGetInfo: `${Config.pbxUrl}/pbxcore/api/sysinfo/getInfo`, // Get system information
 	sysinfoGetExternalIP: `${Config.pbxUrl}/pbxcore/api/sysinfo/getExternalIpInfo`, //Get external IP address,
 	advicesGetList: `${Config.pbxUrl}/pbxcore/api/advices/getList`,
+	licenseResetKey: `${Config.pbxUrl}/pbxcore/api/license/resetKey`,
+	licenseProcessUserRequest: `${Config.pbxUrl}/pbxcore/api/license/processUserRequest`,
+	licenseGetLicenseInfo: `${Config.pbxUrl}/pbxcore/api/license/getLicenseInfo`,
+	licenseGetMikoPBXFeatureStatus: `${Config.pbxUrl}/pbxcore/api/license/getMikoPBXFeatureStatus`,
+	licenseCaptureFeatureForProductId: `${Config.pbxUrl}/pbxcore/api/license/captureFeatureForProductId`,
 
 	/**
 	 * Проверка ответа на JSON
@@ -959,5 +964,124 @@ const PbxApi = {
 		});
 	},
 
+	/**
+	 * Reset license key settings
+	 *
+	 * @param callback
+	 *
+	 */
+	LicenseResetLicenseKey(callback) {
+		$.api({
+			url: PbxApi.licenseResetKey,
+			on: 'now',
+			successTest: PbxApi.successTest,
+			onSuccess(response) {
+				callback(response.data);
+			},
+			onFailure() {
+				callback(false);
+			},
+			onError() {
+				callback(false);
+			},
+		});
+	},
 
+	/**
+	 * Update license key, get new one, activate coupon
+	 *
+	 * @param formData
+	 * @param callback
+	 */
+	LicenseProcessUserRequest(formData, callback) {
+		$.api({
+			url: PbxApi.licenseProcessUserRequest,
+			on: 'now',
+			method: 'POST',
+			data: formData,
+			successTest: PbxApi.successTest,
+			onSuccess(response) {
+				callback(response.data, true);
+			},
+			onFailure(response) {
+				callback(response, false);
+			},
+			onError() {
+				callback(false);
+			},
+		});
+	},
+
+	/**
+	 * Get license information from license server
+	 *
+	 * @param callback
+	 *
+	 */
+	LicenseGetLicenseInfo(callback) {
+		$.api({
+			url: PbxApi.licenseGetLicenseInfo,
+			on: 'now',
+			successTest: PbxApi.successTest,
+			onSuccess(response) {
+				callback(response.data);
+			},
+			onFailure(response) {
+				callback(response.data);
+			},
+			onError() {
+				callback(false);
+			},
+		});
+	},
+
+	/**
+	 * Check whether license system works good or not
+	 *
+	 * @param callback
+	 *
+	 */
+	LicenseGetMikoPBXFeatureStatus(callback) {
+		$.api({
+			url: PbxApi.licenseGetMikoPBXFeatureStatus,
+			on: 'now',
+			successTest: PbxApi.successTest,
+			onSuccess() {
+				callback(true);
+			},
+			onFailure(response) {
+				callback(response);
+			},
+			onError() {
+				callback(false);
+			},
+		});
+	},
+
+	/**
+	 * Tries to capture feature.
+	 * If it fails we try to get trial and then try capture again.
+	 *
+	 * @param licProductId
+	 * @param licFeatureId
+	 * @param callback
+	 */
+	LicenseCaptureFeatureForProductId(licProductId, licFeatureId, callback) {
+		$.api({
+			url: PbxApi.licenseCaptureFeatureForProductId,
+			on: 'now',
+			method: 'POST',
+			data: {licFeatureId, licProductId},
+			successTest: PbxApi.successTest,
+			onSuccess(response) {
+				callback(response.data);
+			},
+			onFailure() {
+				callback(false);
+			},
+			onError() {
+				callback(false);
+			},
+		});
+	},
 };

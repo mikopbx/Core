@@ -15,14 +15,13 @@ use Phalcon\Forms\Element\Text;
 use Phalcon\Forms\Form;
 
 /**
- * Class LicensingGetTrialForm
+ * Class LicensingGetKeyForm
  *
  * @package MikoPBX\AdminCabinet\Forms
  * @property \MikoPBX\Common\Providers\TranslationProvider translation
  */
-class LicensingGetTrialForm extends Form
+class LicensingGetKeyForm extends Form
 {
-
     public function initialize(): void
     {
         $this->add(new Text('companyname'));

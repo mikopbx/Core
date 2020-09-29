@@ -75,27 +75,27 @@
             <div class="ui divider"></div>
 
         </div>
-        <div id="getTrialLicenseSection">
-            <h2 class="ui header">{{ t._('lic_GetTrialForm') }}</h2>
+        <div id="getNewKeyLicenseSection">
+            <h2 class="ui header">{{ t._('lic_GetKeyForm') }}</h2>
             <div class="field required">
                 <label>{{ t._('lic_CompanyName') }}</label>
-                {{ getTrialForm.render('companyname') }}
+                {{ getKeyForm.render('companyname') }}
             </div>
             <div class="field required">
                 <label>{{ t._('lic_Email') }}</label>
-                {{ getTrialForm.render('email') }}
+                {{ getKeyForm.render('email') }}
             </div>
             <div class="field required">
                 <label>{{ t._('lic_Contact') }}</label>
-                {{ getTrialForm.render('contact') }}
+                {{ getKeyForm.render('contact') }}
             </div>
             <div class="field">
                 <label>{{ t._('lic_Phone') }}</label>
-                {{ getTrialForm.render('telefone') }}
+                {{ getKeyForm.render('telefone') }}
             </div>
             <div class="field">
                 <label>{{ t._('lic_Inn') }}</label>
-                {{ getTrialForm.render('inn') }}
+                {{ getKeyForm.render('inn') }}
             </div>
             <div class="ui hidden divider"></div>
         </div>
