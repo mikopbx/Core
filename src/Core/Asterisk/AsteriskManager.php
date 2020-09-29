@@ -326,9 +326,6 @@ class AsteriskManager
                     break;
                 case 'response':
                     break;
-                default:
-                    $this->log('Unhandled response packet from Manager: ' . print_r($parameters, true));
-                    break;
             }
         } while ($type !== 'response' && ! $timeout);
 
@@ -437,7 +434,6 @@ class AsteriskManager
     {
         $ret = false;
         $e   = strtolower($parameters['Event']);
-        $this->log("Got event.. $e");
 
         $handler = '';
         if (isset($this->event_handlers[$e])) {
@@ -448,10 +444,7 @@ class AsteriskManager
         if (is_array($handler)) {
             call_user_func($handler, $parameters);
         } elseif (function_exists($handler)) {
-            $this->log("Execute handler $handler");
             $ret = $handler($e, $parameters, $this->server, $this->port);
-        } else {
-            $this->log("No event handler for event '$e'");
         }
 
         return $ret;
@@ -554,7 +547,7 @@ class AsteriskManager
 
         $this->socket = @fsockopen($this->server, $this->port, $errno, $errstr, $timeout);
         if ($this->socket == false) {
-            $this->log("Unable to connect to manager {$this->server}:{$this->port} ($errno): $errstr");
+            Util::sysLogMsg('asmanager', "Unable to connect to manager {$this->server}:{$this->port} ($errno): $errstr");
             return false;
         }
         // PT1C;
@@ -564,7 +557,7 @@ class AsteriskManager
         $str = $this->getStringDataFromSocket();
         if ($str === '') {
             // a problem.
-            $this->log("Asterisk Manager header not received.");
+            Util::sysLogMsg('asmanager', "Asterisk Manager header not received.");
             return false;
         }
 
@@ -572,7 +565,7 @@ class AsteriskManager
         $res = $this->sendRequest('login', ['Username' => $username, 'Secret' => $secret, 'Events' => $events]);
         if ($res['Response'] != 'Success') {
             $this->_loggedIn = false;
-            $this->log("Failed to login.");
+            Util::sysLogMsg('asmanager', "Failed to login.");
             $this->disconnect();
             return false;
         }
@@ -1510,8 +1503,6 @@ class AsteriskManager
     {
         $event = strtolower($event);
         if (isset($this->event_handlers[$event])) {
-            $this->log("$event handler is already defined, not over-writing.");
-
             return false;
         }
         $this->event_handlers[$event] = $callback;
