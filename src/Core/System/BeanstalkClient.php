@@ -1,9 +1,9 @@
 <?php
-/**
+/*
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 2 2020
+ * Written by Alexey Portnov, 9 2020
  */
 
 namespace MikoPBX\Core\System;
@@ -36,9 +36,6 @@ class BeanstalkClient extends Injectable
         $this->tube        = str_replace("\\", '-', $tube);;
         $this->job_options = ['priority' => 250, 'delay' => 0, 'ttr' => 3600];
         $this->reconnect();
-        // foreach ($this->subscriptions as $key => $subscription) {
-        //     $this->queue->watch($key);
-        // }
     }
 
     public function reconnect(): void
@@ -79,7 +76,7 @@ class BeanstalkClient extends Injectable
             $job_data,
             'inbox_tube' => $inbox_tube,
         ];
-        $id             = $this->publish($requestMessage, $priority);
+        $this->publish($requestMessage, $priority);
 
         // Получаем ответ от сервера.
         $job = $this->queue->reserveWithTimeout($timeout);
@@ -88,12 +85,6 @@ class BeanstalkClient extends Injectable
             $this->queue->delete($job);
         }
 
-        // Проверим, не зависла ли задача. Удалим, не актуальна.
-        //   $fail_job = $this->queue->peek($id);
-        //   if ($fail_job !== false) {
-        //       // Задача не была обработана, завершаем.
-        //       $this->queue->delete($fail_job);
-        //
         $this->queue->ignore($inbox_tube);
 
         return $this->message;
@@ -163,10 +154,7 @@ class BeanstalkClient extends Injectable
             }
             if (is_array($this->timeout_handler)) {
                 call_user_func($this->timeout_handler);
-            } elseif (is_callable($this->timeout_handler) === true) {
-                $this->timeout_handler();
             }
-
             return;
         }
 
