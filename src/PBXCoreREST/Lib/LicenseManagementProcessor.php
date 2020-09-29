@@ -80,6 +80,7 @@ class LicenseManagementProcessor extends Injectable
     {
         $mikoPBXConfig = new MikoPBXConfig();
         $res           = new PBXApiResult();
+        $res->processor = __METHOD__;
         $mikoPBXConfig->deleteGeneralSettings('PBXLicense');
         $res->success = true;
         $this->license->changeLicenseKey('');
@@ -99,6 +100,7 @@ class LicenseManagementProcessor extends Injectable
     {
         $mikoPBXConfig = new MikoPBXConfig();
         $res           = new PBXApiResult();
+        $res->processor = __METHOD__;
         if (strlen($data['licKey']) === 28
             && Text::startsWith($data['licKey'], 'MIKO-')
         ) {
@@ -134,8 +136,9 @@ class LicenseManagementProcessor extends Injectable
         } else { // Only add trial for license key
             $newLicenseKey = $this->license->getTrialLicense($data);
             if (strlen($newLicenseKey) === 28 && Text::startsWith($newLicenseKey, 'MIKO-')) {
-                $mikoPBXConfig->setGeneralSettings('PBXLicense', $data['licKey']);
-                $this->license->changeLicenseKey($data['licKey']);
+                $mikoPBXConfig->setGeneralSettings('PBXLicense', $newLicenseKey);
+                $this->license->changeLicenseKey($newLicenseKey);
+                $res->success    = true;
             } else {
                 // No internet connection, or wrong data sent to license server, or something else
                 $res->messages[] = $this->license->translateLicenseErrorMessage($newLicenseKey);
@@ -154,6 +157,7 @@ class LicenseManagementProcessor extends Injectable
     private function getLicenseInfoAction(): PBXApiResult
     {
         $res = new PBXApiResult();
+        $res->processor = __METHOD__;
         $licenseKey = PbxSettings::getValueByKey('PBXLicense');
         if ((strlen($licenseKey) === 28
             && Text::startsWith($licenseKey, 'MIKO-')
@@ -176,6 +180,7 @@ class LicenseManagementProcessor extends Injectable
     private function getMikoPBXFeatureStatusAction(): PBXApiResult
     {
         $res = new PBXApiResult();
+        $res->processor = __METHOD__;
         $checkBaseFeature = $this->license->featureAvailable(33);
         if ($checkBaseFeature['success'] === false) {
             $res->success = false;
@@ -198,6 +203,7 @@ class LicenseManagementProcessor extends Injectable
     private function captureFeatureForProductIdAction(array $data): PBXApiResult
     {
         $res = new PBXApiResult();
+        $res->processor = __METHOD__;
         $licFeatureId = $data['licFeatureId'];
         $licProductId = $data['licProductId'];
 
@@ -222,6 +228,5 @@ class LicenseManagementProcessor extends Injectable
         }
         return $res;
     }
-
 
 }
