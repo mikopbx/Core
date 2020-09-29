@@ -69,6 +69,11 @@ class AGI
     public $config;
 
     /**
+     * @var bool
+     */
+    private bool $conLogBusy;
+
+    /**
      * Input Stream
      *
      * @access private
@@ -105,6 +110,7 @@ class AGI
      */
     public function __construct($config = null, $optconfig = [])
     {
+        $this->conLogBusy = false;
         // load config
         if ( ! is_null($config) && file_exists($config)) {
             $configData = parse_ini_file($config, true);
@@ -169,19 +175,12 @@ class AGI
             } elseif (file_exists('/dev/fd/3')) {
                 // may need to mount fdescfs
                 $this->audio = fopen('/dev/fd/3', 'r');
-            } else {
-                $this->conlog('Unable to open audio stream');
             }
 
             if ($this->audio) {
                 stream_set_blocking($this->audio, 0);
             }
         }
-
-        $this->conlog('AGI Request:');
-        $this->conlog(print_r($this->request, true));
-        $this->conlog('PHPAGI internal configuration:');
-        $this->conlog(print_r($this->config, true));
     }
 
     // *********************************************************************************************************
@@ -244,29 +243,6 @@ class AGI
             $base .= DIRECTORY_SEPARATOR;
         }
         return true;
-    }
-
-    /**
-     * Log to console if debug mode.
-     *
-     * @param string $str
-     * @param int    $vbl verbose level
-     *
-     * @example examples/ping.php Ping an IP address
-     *
-     */
-    public function conlog($str, $vbl = 1)
-    {
-        static $busy = false;
-
-        if ($this->config['phpagi']['debug'] != false) {
-            if ( ! $busy) // no conlogs inside conlog!!!
-            {
-                $busy = true;
-                $this->verbose($str, $vbl);
-                $busy = false;
-            }
-        }
     }
 
     /**
@@ -359,7 +335,6 @@ class AGI
         if ($ret['code'] != AGIRES_OK) // some sort of error
         {
             $ret['data'] = $str;
-            $this->conlog(print_r($ret, true));
         } else // normal AGIRES_OK response
         {
             $parse    = explode(' ', trim($str));
@@ -384,11 +359,6 @@ class AGI
                 }
             }
             $ret['data'] = trim($ret['data']);
-        }
-
-        // log some errors
-        if ($ret['result'] < 0) {
-            $this->conlog("$command returned {$ret['result']}");
         }
 
         return $ret;

@@ -1,4 +1,10 @@
 <?php
+/*
+ * Copyright © MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Alexey Portnov, 9 2020
+ */
 
 namespace MikoPBX\AdminCabinet\Library;
 
@@ -45,7 +51,7 @@ class Cidr extends Injectable
         $netmask = explode(".", $netmask);
 
         foreach ($netmask as $octect) {
-            $bits += strlen(str_replace("0", "", decbin($octect)));
+            $bits += strlen(str_replace("0", "", decbin((int)$octect)));
         }
 
         return $bits;

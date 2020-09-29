@@ -70,25 +70,25 @@ class Util
     /**
      * Выполняет системную команду exec().
      *
-     * @param      $command
-     * @param null $oarr
-     * @param null $retval
+     * @param $command
+     * @param $outArr
+     * @param $retVal
      *
      * @return int
      */
-    public static function mwExec($command, &$oarr = null, &$retval = null): ?int
+    public static function mwExec($command, &$outArr = null, &$retVal = null): ?int
     {
-        $retval = 0;
-        $oarr   = [];
+        $retVal = 0;
+        $outArr   = [];
         $di     = Di::getDefault();
 
         if ($di !== null && $di->getShared('config')->path('core.debugMode')) {
             echo "mwExec(): $command\n";
         } else {
-            exec("$command 2>&1", $oarr, $retval);
+            exec("$command 2>&1", $outArr, $retVal);
         }
 
-        return $retval;
+        return $retVal;
     }
 
     /**
@@ -517,7 +517,7 @@ class Util
             file_put_contents($filename_orgn, $data);
         }
 
-        if ( ! $res) {
+        if ($res === null) {
             // Файл еще не зарегистрирован в базе. Сделаем это.
             $res = new CustomFiles();
             $res->writeAttribute('filepath', $filename);
@@ -771,7 +771,9 @@ class Util
                     }
                 }
             }
-            reset($objects);
+            if($objects !== false){
+                reset($objects);
+            }
             rmdir($dir);
         }
     }

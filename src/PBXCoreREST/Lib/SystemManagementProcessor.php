@@ -1,10 +1,9 @@
 <?php
-/**
- * Copyright (C) MIKO LLC - All Rights Reserved
+/*
+ * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 7 2020
- *
+ * Written by Alexey Portnov, 9 2020
  */
 
 namespace MikoPBX\PBXCoreREST\Lib;
@@ -54,6 +53,11 @@ class SystemManagementProcessor extends Injectable
                 break;
             case 'setDate':
                 $res->success = System::setDate($data['date']);
+                if($res->success){
+                    $res->data['needRestartWorkers'] = true;
+                    $res->data['needReloadModules']  = true;
+                    $res->data['needReloadWWW']      = true;
+                }
                 break;
             case 'updateCoreLanguage':
                 $di = Di::getDefault();

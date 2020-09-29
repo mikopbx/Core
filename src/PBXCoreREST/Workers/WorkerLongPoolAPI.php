@@ -1,9 +1,9 @@
 <?php
-/**
+/*
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 7 2020
+ * Written by Alexey Portnov, 9 2020
  */
 
 namespace MikoPBX\PBXCoreREST\Workers;
@@ -44,7 +44,7 @@ class WorkerLongPoolAPI extends WorkerBase
         while (true) {
             $data = $this->getData('http://localhost/pbxcore/api/long/channels-stats?id=ALL');
             $this->setChannelsData();
-            if ($data && isset($data['infos'])) {
+            if (is_array($data) && isset($data['infos'])) {
                 foreach ($data['infos'] as $channel_data) {
                     $url = 'http://localhost/pbxcore/api/long/pub?id=' . $channel_data['channel'];
 
@@ -86,7 +86,7 @@ class WorkerLongPoolAPI extends WorkerBase
     private function getData(string $url):array
     {
         $ch = curl_init($url);
-        if ($ch===false){
+        if (!is_resource($ch)) {
             return [];
         }
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -131,10 +131,9 @@ class WorkerLongPoolAPI extends WorkerBase
     private function execFunction($channel, $common_chan = null)
     {
         clearstatcache();
-        if ( ! $this->checkAction($channel, $data, $common_chan)) {
+        if ( ! $this->checkAction($channel, $common_chan)) {
             return '';
         }
-        $data          = null;
         $data_for_send = null;
         if ('ping' === $channel) {
             $data_for_send = 'PONG';
@@ -157,12 +156,11 @@ class WorkerLongPoolAPI extends WorkerBase
      * Проверка допустимости выполнения дейсвтия в данный момент времени.
      *
      * @param $channel
-     * @param $data
      * @param $common_chan
      *
      * @return bool
      */
-    private function checkAction($channel, &$data, $common_chan = null)
+    private function checkAction($channel, $common_chan = null)
     {
         if ( ! $common_chan) {
             $actions = $GLOBALS['ACTIONS'];
@@ -174,13 +172,13 @@ class WorkerLongPoolAPI extends WorkerBase
         if ( ! $actions) {
             return $enable;
         }
-        $data = null;
+        // $data = null;
         $now  = time();
 
         $action_data = $actions[$channel] ?? null;
         if ($action_data !== null) {
             $timeout = $action_data['timeout'];
-            $data    = $action_data['data'];
+            // $data    = $action_data['data'];
             if (($now - $action_data['last_action']) > $timeout) {
                 $enable = true;
             }
@@ -195,19 +193,22 @@ class WorkerLongPoolAPI extends WorkerBase
      * @param string $url
      * @param string $data
      *
-     * @return string
+     * @return ?string
      */
     private function postData(string $url, string $data)
     {
         $ch = curl_init($url);
+        if (!is_resource($ch)) {
+            return null;
+        }
         curl_setopt($ch, CURLOPT_POST, 1);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_TIMEOUT, 1);
-        $resultrequest = curl_exec($ch);
+        $resultRequest = curl_exec($ch);
         curl_close($ch);
 
-        return json_decode($resultrequest, true);
+        return json_decode($resultRequest, true);
     }
 
 }

@@ -1,10 +1,9 @@
 <?php
-/**
- * Copyright (C) MIKO LLC - All Rights Reserved
+/*
+ * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 7 2020
- *
+ * Written by Alexey Portnov, 9 2020
  */
 
 namespace MikoPBX\Core\System\Configs;
@@ -47,6 +46,19 @@ class NginxConf extends Injectable
         } else {
             Util::killByName('nginx');
             Util::mwExec($NginxPath);
+        }
+    }
+
+    /**
+     * Stop Nginx gracefully
+     * https://www.cyberciti.biz/faq/howto-unix-linux-gracefully-reload-restart-nginx-webserver/
+     **/
+    public function stop(): void
+    {
+        $NginxPath = Util::which('nginx');
+        $pid       = Util::getPidOfProcess($NginxPath);
+        if ( ! empty($pid)) {
+            Util::mwExec("{$NginxPath} -s quit");
         }
     }
 

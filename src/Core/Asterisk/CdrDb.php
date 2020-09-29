@@ -44,7 +44,7 @@ class CdrDb
         if ($id == '' && $di !== null) {
             $dbname = $di->getShared('config')->path('cdrDatabase.dbfile');
         } else {
-            $id     = str_replace('mikopbx-', '', $id);
+            $id     = (int) str_replace('mikopbx-', '', $id);
             $dbname = 'cdr/' . date("Y/m/d/H/", $id) . $id . ".db";
         }
 

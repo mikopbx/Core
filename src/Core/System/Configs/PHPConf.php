@@ -1,10 +1,9 @@
 <?php
-/**
- * Copyright (C) MIKO LLC - All Rights Reserved
+/*
+ * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 7 2020
- *
+ * Written by Alexey Portnov, 9 2020
  */
 
 namespace MikoPBX\Core\System\Configs;
@@ -99,9 +98,8 @@ class PHPConf extends Injectable
             $catPath = Util::which('cat');
             Util::mwExec("export TZ='$({$catPath} /etc/TZ)'");
         }
-        $etcPhpIniPath = '/etc/php.ini';
-        $contents = file_get_contents($etcPhpIniPath);
-        $contents = preg_replace("/date.timezone(.*)/", 'date.timezone="'.$timezone.'"', $contents);
+        $etcPhpIniPath = '/etc/php.d/01-timezone.ini';
+        $contents = 'date.timezone="'.$timezone.'"';
         Util::fileWriteContent($etcPhpIniPath, $contents);
     }
 
@@ -115,6 +113,10 @@ class PHPConf extends Injectable
             Util::mwExec("{$systemCtrlPath} restart php7.4-fpm");
         } else {
             $phpFPMPath = Util::which('php-fpm');
+            // Отправляем запрос на graceful shutdown;
+            Util::mwExec('kill -SIGQUIT "$(cat /var/run/php-fpm.pid)"');
+            sleep(1);
+            // Принудительно завершаем.
             Util::killByName('php-fpm');
             Util::mwExec("{$phpFPMPath} -c /etc/php.ini");
         }

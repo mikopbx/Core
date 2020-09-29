@@ -16,6 +16,7 @@ class AstDB extends Di\Injectable
 {
     /**
      * Ссылка на базу данных
+     * @var SQLite3|null
      */
     private ?SQLite3 $db;
     private AsteriskManager $am;
@@ -59,7 +60,7 @@ EOF;
      */
     public function closeDb(): void
     {
-        if ($this->db == null) {
+        if ($this->db === null) {
             return;
         }
 
@@ -79,10 +80,10 @@ EOF;
     public function databasePut($family, $key, $value): bool
     {
         $result = false;
-        if ($this->db == null || $this->am->loggedIn()) {
+        if ($this->db === null || $this->am->loggedIn()) {
             $result = $this->databasePutAmi($family, $key, $value);
         }
-        if ($result == true || $this->db == null) {
+        if ($result === true || $this->db === null) {
             return $result;
         }
         $sql = "INSERT" . " OR REPLACE INTO astdb (key, value) VALUES ('/{$family}/{$key}', '{$value}')";

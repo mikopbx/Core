@@ -87,8 +87,9 @@ class AsteriskManager
     public function __construct($config = null, $optconfig = [])
     {
         // load config
-        if ( ! is_null($config) && file_exists($config)) {
-            $this->config = parse_ini_file($config, true);
+        if ( !is_null($config) && file_exists($config)) {
+            $arrData = parse_ini_file($config, true);
+            $this->config = ($arrData === false)?[]:$arrData;
         }
 
         // If optconfig is specified, stuff vals and vars into 'asmanager' config array.
@@ -325,9 +326,6 @@ class AsteriskManager
                     break;
                 case 'response':
                     break;
-                default:
-                    $this->log('Unhandled response packet from Manager: ' . print_r($parameters, true));
-                    break;
             }
         } while ($type !== 'response' && ! $timeout);
 
@@ -436,7 +434,6 @@ class AsteriskManager
     {
         $ret = false;
         $e   = strtolower($parameters['Event']);
-        $this->log("Got event.. $e");
 
         $handler = '';
         if (isset($this->event_handlers[$e])) {
@@ -447,26 +444,10 @@ class AsteriskManager
         if (is_array($handler)) {
             call_user_func($handler, $parameters);
         } elseif (function_exists($handler)) {
-            $this->log("Execute handler $handler");
             $ret = $handler($e, $parameters, $this->server, $this->port);
-        } else {
-            $this->log("No event handler for event '$e'");
         }
 
         return $ret;
-    }
-
-    /**
-     * Log a message
-     *
-     * @param string $message
-     * @param int    $level from 1 to 4
-     */
-    public function log($message, $level = 1)
-    {
-        if ($this->pagi != false) {
-            $this->pagi->conlog($message, $level);
-        }
     }
 
     public function microtimeFloat()
@@ -554,7 +535,7 @@ class AsteriskManager
         if (strpos($server, ':') !== false) {
             $c            = explode(':', $server);
             $this->server = $c[0];
-            $this->port   = $c[1];
+            $this->port   = (int)$c[1];
         } else {
             $this->server = $server;
             $this->port   = $this->config['asmanager']['port'];
@@ -566,7 +547,7 @@ class AsteriskManager
 
         $this->socket = @fsockopen($this->server, $this->port, $errno, $errstr, $timeout);
         if ($this->socket == false) {
-            $this->log("Unable to connect to manager {$this->server}:{$this->port} ($errno): $errstr");
+            Util::sysLogMsg('asmanager', "Unable to connect to manager {$this->server}:{$this->port} ($errno): $errstr");
             return false;
         }
         // PT1C;
@@ -576,7 +557,7 @@ class AsteriskManager
         $str = $this->getStringDataFromSocket();
         if ($str === '') {
             // a problem.
-            $this->log("Asterisk Manager header not received.");
+            Util::sysLogMsg('asmanager', "Asterisk Manager header not received.");
             return false;
         }
 
@@ -584,7 +565,7 @@ class AsteriskManager
         $res = $this->sendRequest('login', ['Username' => $username, 'Secret' => $secret, 'Events' => $events]);
         if ($res['Response'] != 'Success') {
             $this->_loggedIn = false;
-            $this->log("Failed to login.");
+            Util::sysLogMsg('asmanager', "Failed to login.");
             $this->disconnect();
             return false;
         }
@@ -623,7 +604,7 @@ class AsteriskManager
      */
     public function disconnect()
     {
-        if ($this->_loggedIn == true) {
+        if ($this->_loggedIn === true) {
             $this->logoff();
         }
         if (is_resource($this->socket)) {
@@ -749,9 +730,9 @@ class AsteriskManager
             $channels = $res['data']['CoreShowChannel'];
         }
         $channels_id = [];
-        if (null != $channels) {
+        if (null !== $channels) {
             foreach ($channels as $chan) {
-                if ($group == true) {
+                if ($group === true) {
                     if ( ! isset($chan['Linkedid'])) {
                         continue;
                     }
@@ -1015,17 +996,17 @@ class AsteriskManager
      * @link http://www.voip-info.org/wiki-Asterisk+Manager+API+Action+Originate
      *
      * @param string $channel     Channel name to call
-     * @param string $exten       Extension to use (requires 'Context' and 'Priority')
-     * @param string $context     Context to use (requires 'Exten' and 'Priority')
-     * @param string $priority    Priority to use (requires 'Exten' and 'Context')
-     * @param string $application Application to use
-     * @param string $data        Data to use (requires 'Application')
-     * @param int    $timeout     How long to wait for call to be answered (in ms)
-     * @param string $callerid    Caller ID to be set on the outgoing channel
-     * @param string $variable    Channel variable to set (VAR1=value1|VAR2=value2)
-     * @param string $account     Account code
+     * @param ?string $exten       Extension to use (requires 'Context' and 'Priority')
+     * @param ?string $context     Context to use (requires 'Exten' and 'Priority')
+     * @param ?string $priority    Priority to use (requires 'Exten' and 'Context')
+     * @param ?string $application Application to use
+     * @param ?string $data        Data to use (requires 'Application')
+     * @param ?int    $timeout     How long to wait for call to be answered (in ms)
+     * @param ?string $callerid    Caller ID to be set on the outgoing channel
+     * @param ?string $variable    Channel variable to set (VAR1=value1|VAR2=value2)
+     * @param ?string $account     Account code
      * @param bool   $async       true fast origination
-     * @param string $actionid    message matching variable
+     * @param ?string $actionid    message matching variable
      *
      * @return array
      */
@@ -1045,37 +1026,35 @@ class AsteriskManager
     ) {
         $parameters = ['Channel' => $channel];
 
-        if ($exten) {
+        if (!empty($exten)) {
             $parameters['Exten'] = $exten;
         }
-        if ($context) {
+        if (!empty($context)) {
             $parameters['Context'] = $context;
         }
-        if ($priority) {
+        if (!empty($priority)) {
             $parameters['Priority'] = $priority;
         }
-
-        if ($application) {
+        if (!empty($application)) {
             $parameters['Application'] = $application;
         }
-        if ($data) {
+        if (!empty($data)) {
             $parameters['Data'] = $data;
         }
-
-        if ($timeout) {
+        if (!empty($timeout)) {
             $parameters['Timeout'] = $timeout;
         }
-        if ($callerid) {
+        if (!empty($callerid)) {
             $parameters['CallerID'] = $callerid;
         }
-        if ($variable) {
+        if (!empty($variable)) {
             $parameters['Variable'] = $variable;
         }
-        if ($account) {
+        if (!empty($account)) {
             $parameters['Account'] = $account;
         }
         $parameters['Async'] = ($async === true) ? 'true' : 'false';
-        if ($actionid) {
+        if (!empty($actionid)) {
             $parameters['ActionID'] = $actionid;
         }
 
@@ -1496,7 +1475,7 @@ class AsteriskManager
         }
 
         $data = $this->sendRequestTimeout('GetVar', $parameters);
-        if ($retArray != true) {
+        if ($retArray !== true) {
             $data = (isset($data['Value']) && $data['Value']) ? $data['Value'] : '';
         }
 
@@ -1524,8 +1503,6 @@ class AsteriskManager
     {
         $event = strtolower($event);
         if (isset($this->event_handlers[$event])) {
-            $this->log("$event handler is already defined, not over-writing.");
-
             return false;
         }
         $this->event_handlers[$event] = $callback;

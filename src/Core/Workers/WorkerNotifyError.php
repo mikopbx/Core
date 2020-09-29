@@ -1,9 +1,9 @@
 <?php
-/**
+/*
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 7 2020
+ * Written by Alexey Portnov, 9 2020
  */
 
 namespace MikoPBX\Core\Workers;
@@ -105,14 +105,7 @@ class WorkerNotifyError extends WorkerBase
         if (empty($body)) {
             return;
         }
-        $mail_body = '';
-        if (is_array($body)) {
-            foreach ($body as $key => $val) {
-                $mail_body .= "$key: $val <br>";
-            }
-        } else {
-            $mail_body = trim($body);
-        }
+        $mail_body = trim($body);
         // Наполняем массив уникальными даными.
         $this->queue[$mail_body] = 'Storage error:';
     }

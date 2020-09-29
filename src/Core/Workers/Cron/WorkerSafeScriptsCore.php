@@ -67,13 +67,13 @@ class WorkerSafeScriptsCore extends WorkerBase
                 ],
             self::CHECK_BY_BEANSTALK     =>
                 [
-                    WorkerApiCommands::class,
                     WorkerCdr::class,
                     WorkerCallEvents::class,
                     WorkerModelsEvents::class,
                     WorkerNotifyByEmail::class,
                     WorkerNotifyError::class,
                     WorkerLongPoolAPI::class,
+                    WorkerApiCommands::class,
                 ],
             self::CHECK_BY_PID_NOT_ALERT =>
                 [

@@ -1,9 +1,9 @@
 <?php
-/**
+/*
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 7 2020
+ * Written by Alexey Portnov, 9 2020
  */
 
 namespace MikoPBX\Core\Asterisk\Configs;
@@ -54,21 +54,21 @@ class ResParkingConf extends ConfigClass
      *
      * @param ?string $EXTEN
      *
-     * @return null
+     * @return null | array
      */
-    public static function getParkslotData(?string $EXTEN = null)
+    public static function getParkslotData(?string $EXTEN = null) : ?array
     {
         $ParkeeChannel = null;
         $am            = Util::getAstManager('off');
         $res           = $am->ParkedCalls('default');
-        if (count($res['data']) == 0) {
+        if (count($res['data']) === 0) {
             return null;
         }
 
         foreach ($res['data']['ParkedCall'] as $park_row) {
-            if ($park_row['ParkingSpace'] == $EXTEN || $EXTEN == null) {
+            if ($park_row['ParkingSpace'] === $EXTEN || $EXTEN === null) {
                 $var_data                = $am->GetVar($park_row['ParkeeChannel'], 'pt1c_is_dst');
-                $park_row['pt1c_is_dst'] = ($var_data["Value"] == '1');
+                $park_row['pt1c_is_dst'] = ($var_data["Value"] === '1');
                 $ParkeeChannel           = $park_row;
             }
         }
@@ -126,7 +126,7 @@ class ResParkingConf extends ConfigClass
         $conf .= "exten => s,1,NoOp(This is all that happens to parked calls if they time out.)\n\t";
         $conf .= 'same => n,Set(FROM_PEER=${EMPTYVAR})' . "\n\t";
         $conf .= 'same => n,AGI(cdr_connector.php,unpark_call_timeout)' . "\n\t";
-        $conf .= 'same => n,Goto(internal,${PARKER:4},1)' . "\n\t";
+        $conf .= 'same => n,Goto(internal,${CUT(PARKER,/,2)},1)' . "\n\t";
         $conf .= 'same => n,Hangup()' . "\n\n";
 
         return $conf;
