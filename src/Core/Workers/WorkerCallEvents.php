@@ -760,7 +760,7 @@ class WorkerCallEvents extends WorkerBase
             $res = CallDetailRecordsTmp::findFirst($filter);
             if ($res !== null) {
                 $info      = pathinfo($res->recordingfile);
-                $data_time = ($res->answer == null) ? $res->start : $res->answer;
+                $data_time = (empty($res->answer)) ? $res->start : $res->answer;
                 $subdir    = date('Y/m/d/H/', strtotime($data_time));
                 $this->MixMonitor($res->src_chan, $info['filename'], $subdir);
             }

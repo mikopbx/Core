@@ -732,7 +732,7 @@ class AsteriskManager
         $channels_id = [];
         if (null !== $channels) {
             foreach ($channels as $chan) {
-                if ($group == true) {
+                if ($group === true) {
                     if ( ! isset($chan['Linkedid'])) {
                         continue;
                     }
@@ -1475,7 +1475,7 @@ class AsteriskManager
         }
 
         $data = $this->sendRequestTimeout('GetVar', $parameters);
-        if ($retArray != true) {
+        if ($retArray !== true) {
             $data = (isset($data['Value']) && $data['Value']) ? $data['Value'] : '';
         }
 

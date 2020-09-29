@@ -100,7 +100,7 @@ class WorkerAmiListener extends WorkerBase
             }
         }
 
-        if ($message_is_sent == false) {
+        if ($message_is_sent === false) {
             Util::sysLogMsg('CDR_AMI_Connector', "Error send data to queue. " . $error);
         }
         // Логируем оповещение.
