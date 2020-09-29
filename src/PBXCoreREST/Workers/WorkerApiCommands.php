@@ -8,7 +8,7 @@
 
 namespace MikoPBX\PBXCoreREST\Workers;
 
-use MikoPBX\Core\System\{BeanstalkClient, System, Util};
+use MikoPBX\Core\System\{BeanstalkClient, Configs\NginxConf, Configs\PHPConf, System, Util};
 use Error;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\PBXCoreREST\Lib\AdvicesProcessor;
@@ -137,12 +137,18 @@ class WorkerApiCommands extends WorkerBase
 
         $message->reply(json_encode($res->getResult()));
 
-        // Check if new code added from modules
-        if (is_array($res->data)
-            && array_key_exists('needRestartWorkers', $res->data)
-            && $res->data['needRestartWorkers']
-        ) {
-            System::restartAllWorkers();
+        // Перезапускаем web сервер.
+        $needReloadWWW = $res->data['needReloadWWW']??false;
+        if ($needReloadWWW === true) {
+            $nginxConf = new NginxConf();
+            // Остановим nginx.
+            $nginxConf->stop();
+            // Необходимо перезапустить php-fpm
+            $phpConf = new PHPConf();
+            $phpConf->reStart();
+            // Перезапускаем nginx
+            $nginxConf->reStart();
+            // Перезапускаем текущий процесс (отложенно).
             $this->needRestart=true;
         }
 
@@ -154,6 +160,14 @@ class WorkerApiCommands extends WorkerBase
             $this->registerModulesProcessors();
         }
 
+        // Check if new code added from modules
+        if (is_array($res->data)
+            && array_key_exists('needRestartWorkers', $res->data)
+            && $res->data['needRestartWorkers']
+        ) {
+            System::restartAllWorkers();
+            $this->needRestart=true;
+        }
     }
 
 
