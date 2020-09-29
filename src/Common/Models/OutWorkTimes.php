@@ -22,7 +22,7 @@ class OutWorkTimes extends ModelsBase
      * @Identity
      * @Column(type="integer", nullable=false)
      */
-    public int $id;
+    public $id;
 
     /**
      * @Column(type="string", nullable=true)
