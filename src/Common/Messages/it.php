@@ -718,7 +718,6 @@ return [
     'lic_ValidateContactName' => 'Il campo obbligatorio non è compilato - persona di contatto',
     'lic_ValidateCouponEmpty' => 'Il campo obbligatorio non è compilato - coupon',
     'lic_ValidateLicenseKeyEmpty' => 'Il campo obbligatorio non è compilato - Chiave di licenza',
-    'lic_GetTrialForm' => 'registrazione',
     'lic_ActivateCoupon' => 'Attivazione coupon',
     'lic_LicenseKey' => 'Chiave di licenza',
     'lic_CompanyName' => 'Nome dell\'organizzazione',

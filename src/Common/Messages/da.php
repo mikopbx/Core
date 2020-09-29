@@ -717,7 +717,6 @@ return [
     'lic_ValidateContactName' => 'Det krævede felt udfyldes ikke - kontaktperson',
     'lic_ValidateCouponEmpty' => 'Det krævede felt udfyldes ikke - kupon',
     'lic_ValidateLicenseKeyEmpty' => 'Påkrævet felt er ikke udfyldt - Licensnøgle',
-    'lic_GetTrialForm' => 'registrering',
     'lic_ActivateCoupon' => 'Kuponaktivering',
     'lic_LicenseKey' => 'Licensnøgle',
     'lic_CompanyName' => 'Organisationsnavn',

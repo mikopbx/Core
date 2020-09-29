@@ -727,7 +727,6 @@ return [
     'lic_ValidateContactName' => 'Не заповнене обов\'язкове поле - контактна особа',
     'lic_ValidateCouponEmpty' => 'Не заповнене обов\'язкове поле - купон',
     'lic_ValidateLicenseKeyEmpty' => 'Не заповнене обов\'язкове поле - Ліцензійний ключ',
-    'lic_GetTrialForm' => 'Реєстрація',
     'lic_ActivateCoupon' => 'Активація купона',
     'lic_LicenseKey' => 'Ліцензійний ключ',
     'lic_CompanyName' => 'Назва організації',

@@ -68,7 +68,6 @@ return [
     'lic_ValidateContactName' => 'Gerekli alan doldurulmamış - ilgili kişi',
     'lic_ValidateCouponEmpty' => 'Zorunlu alan dolu - kupon',
     'lic_ValidateLicenseKeyEmpty' => 'Zorunlu alan dolu - Lisans anahtarı',
-    'lic_GetTrialForm' => 'kayıt',
     'lic_ActivateCoupon' => 'Kupon aktivasyonu',
     'lic_LicenseKey' => 'Lisans anahtarı',
     'lic_CompanyName' => 'Kuruluş Adı',

@@ -717,7 +717,6 @@ return [
     'lic_ValidateContactName' => 'Benötigte Angaben fehlen - Kontaktperson',
     'lic_ValidateCouponEmpty' => 'Benötigte Angaben fehlen - Coupon',
     'lic_ValidateLicenseKeyEmpty' => 'Benötigte Angaben fehlen - Lizenzschlüssel',
-    'lic_GetTrialForm' => 'Registrierung',
     'lic_ActivateCoupon' => 'Coupon aktivieren',
     'lic_LicenseKey' => 'Lizenzschlüssel',
     'lic_CompanyName' => 'Firmenname',

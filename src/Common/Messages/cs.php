@@ -693,7 +693,6 @@ return [
     'sf_SelectAudioFile' => 'Vyberte zvukový soubor',
     'lic_ValidateContactName' => 'Povinné pole není vyplněno - kontaktní osoba',
     'lic_ValidateLicenseKeyEmpty' => 'Povinné pole není vyplněno - licenční klíč',
-    'lic_GetTrialForm' => 'Registrace',
     'lic_ActivateCoupon' => 'Aktivace kupónu',
     'lic_LicenseKey' => 'Licenční klíč',
     'lic_CompanyName' => 'Název organizace',
