@@ -1,9 +1,9 @@
 <?php
-/**
+/*
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 7 2020
+ * Written by Alexey Portnov, 9 2020
  */
 
 namespace MikoPBX\Core\System;
@@ -155,9 +155,9 @@ class System extends Di\Injectable
     }
 
     /**
-     * Setup system time
+     * Setup system time 2015.12.31-01:01:20
      *
-     * @param $date 2015.12.31-01:01:20
+     * @param string $date
      *
      * @return bool
      */
