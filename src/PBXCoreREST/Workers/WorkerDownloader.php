@@ -1,9 +1,9 @@
 <?php
-/**
+/*
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 2 2020
+ * Written by Alexey Portnov, 9 2020
  */
 
 namespace MikoPBX\PBXCoreREST\Workers;
@@ -69,7 +69,7 @@ class WorkerDownloader extends WorkerBase
 
         $fp = fopen($this->settings['res_file'], 'w');
         $ch = curl_init();
-        if ($ch !== false) {
+        if (!is_resource($ch)) {
             return false;
         }
         curl_setopt($ch, CURLOPT_FILE, $fp);

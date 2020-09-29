@@ -86,7 +86,7 @@ class WorkerLongPoolAPI extends WorkerBase
     private function getData(string $url):array
     {
         $ch = curl_init($url);
-        if ($ch===false){
+        if (!is_resource($ch)) {
             return [];
         }
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -198,7 +198,7 @@ class WorkerLongPoolAPI extends WorkerBase
     private function postData(string $url, string $data)
     {
         $ch = curl_init($url);
-        if ($ch===false){
+        if (!is_resource($ch)) {
             return null;
         }
         curl_setopt($ch, CURLOPT_POST, 1);
