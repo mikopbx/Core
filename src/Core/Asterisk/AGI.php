@@ -69,6 +69,11 @@ class AGI
     public $config;
 
     /**
+     * @var bool
+     */
+    private bool $conLogBusy;
+
+    /**
      * Input Stream
      *
      * @access private
@@ -105,6 +110,7 @@ class AGI
      */
     public function __construct($config = null, $optconfig = [])
     {
+        $this->conLogBusy = false;
         // load config
         if ( ! is_null($config) && file_exists($config)) {
             $configData = parse_ini_file($config, true);
@@ -257,14 +263,13 @@ class AGI
      */
     public function conlog($str, $vbl = 1)
     {
-        static $busy = false;
-
-        if ($this->config['phpagi']['debug'] != false) {
-            if ( ! $busy) // no conlogs inside conlog!!!
+        $this->conLogBusy = false;
+        if ($this->config['phpagi']['debug'] !== false) {
+            if ($this->conLogBusy === false)
             {
-                $busy = true;
+                $this->conLogBusy = true;
                 $this->verbose($str, $vbl);
-                $busy = false;
+                $this->conLogBusy = false;
             }
         }
     }
