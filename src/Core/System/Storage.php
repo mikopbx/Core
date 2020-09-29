@@ -887,11 +887,8 @@ class Storage extends Di\Injectable
     {
         $data = [];
         if ('' === $id) {
-            $pbxSettings = StorageModel::find();
-            if ($pbxSettings) {
-                // Возвращаем данные до модификации.
-                $data = $pbxSettings->toArray();
-            }
+            // Возвращаем данные до модификации.
+            $data = StorageModel::find()->toArray();
         } else {
             $pbxSettings = StorageModel::findFirst("id='$id'");
             if ($pbxSettings !== null) {
