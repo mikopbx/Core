@@ -26,7 +26,6 @@ class WorkerCdr extends WorkerBase
 
 
     private $client_queue;
-    private $timeout = 10;
     private $internal_numbers = [];
     private $no_answered_calls = [];
 
@@ -93,7 +92,9 @@ class WorkerCdr extends WorkerBase
         $result = json_decode($result_data, true);
         if (file_exists($result)) {
             $file_data = json_decode(file_get_contents($result), true);
-            unlink($result);
+            if(!is_dir($result)){
+                Util::mwExec("rm -rf {$result}");
+            }
             $result = $file_data;
         }
         if ( ! is_array($result) && ! is_object($result)) {
@@ -114,8 +115,8 @@ class WorkerCdr extends WorkerBase
                 // Если каналов не существует с ID, то можно удалить временные файлы.
                 $p_info = pathinfo($row['recordingfile']);
                 $fname  = $p_info['dirname'] . '/' . $p_info['filename'] . '.wav';
-                if (file_exists($fname)) {
-                    @unlink($fname);
+                if (file_exists($fname) && !is_dir($fname)) {
+                    Util::mwExec("rm -rf {$fname}");
                 }
             }
             $start      = strtotime($row['start']);
@@ -149,14 +150,16 @@ class WorkerCdr extends WorkerBase
                         if ( ! file_exists($file)) {
                             continue;
                         }
-                        @unlink($file);
+                        if(!is_dir($file)){
+                            Util::mwExec("rm -rf {$file}");
+                        }
                     }
                 }
             }
 
             if ($disposition !== 'ANSWERED') {
-                if (file_exists($row['recordingfile'])) {
-                    @unlink($row['recordingfile']);
+                if (file_exists($row['recordingfile']) && !is_dir($row['recordingfile'])) {
+                    Util::mwExec("rm -rf {$row['recordingfile']}");
                 }
             } elseif (  ! empty($row['recordingfile']) &&
                         ! file_exists(Util::trimExtensionForFile($row['recordingfile']) . 'wav') &&
