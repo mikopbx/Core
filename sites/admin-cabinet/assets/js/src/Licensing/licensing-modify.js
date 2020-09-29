@@ -287,7 +287,7 @@ const licensingModify = {
 	},
 	cbAfterSendForm() {
 		licensingModify.defaultLicenseKey = licensingModify.$licKey.val();
-		sessionStorage.clear('previousLicenseCheckResult');
+		sessionStorage.removeItem('previousLicenseCheckResult');
 	},
 	initializeForm() {
 		Form.$formObj = licensingModify.$formObj;
