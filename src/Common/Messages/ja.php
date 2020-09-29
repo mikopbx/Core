@@ -717,7 +717,6 @@ return [
     'lic_ValidateContactName' => '必須フィールドが入力されていません-担当者',
     'lic_ValidateCouponEmpty' => '必須フィールドに入力されていません-クーポン',
     'lic_ValidateLicenseKeyEmpty' => '必須フィールドに入力されていません-ライセンスキー',
-    'lic_GetTrialForm' => '登録',
     'lic_ActivateCoupon' => 'クーポンアクティベーション',
     'lic_LicenseKey' => 'ライセンスキー',
     'lic_CompanyName' => '組織名',

@@ -792,7 +792,6 @@ return [
     'lic_ValidateContactName' => 'Trường bắt buộc không được điền - người liên hệ',
     'lic_ValidateCouponEmpty' => 'Trường bắt buộc không được điền - phiếu giảm giá',
     'lic_ValidateLicenseKeyEmpty' => 'Trường bắt buộc không được điền - Khóa giấy phép',
-    'lic_GetTrialForm' => 'Đăng ký',
     'lic_ActivateCoupon' => 'Kích hoạt phiếu giảm giá',
     'lic_LicenseKey' => 'Khóa giấy phép',
     'lic_CompanyName' => 'Tên tổ chức',

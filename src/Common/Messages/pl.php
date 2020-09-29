@@ -284,7 +284,6 @@ return [
     'lic_Coupon' => 'Kupon przedłużenia licencji',
     'lic_ValidateCouponEmpty' => 'Wymagane pole nie jest wypełnione - kupon',
     'lic_ValidateLicenseKeyEmpty' => 'Wymagane pole nie jest wypełnione - Klucz licencyjny',
-    'lic_GetTrialForm' => 'Rejestracja',
     'lic_ActivateCoupon' => 'Aktywacja kuponu',
     'lic_LicenseKey' => 'Klucz licencyjny',
     'lic_CompanyName' => 'Nazwa organizacji',

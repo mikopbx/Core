@@ -700,7 +700,6 @@ return [
     'lic_ValidateContactName' => 'El campo requerido no está lleno - persona de contacto',
     'lic_ValidateCouponEmpty' => 'El campo requerido no está lleno - cupón',
     'lic_ValidateLicenseKeyEmpty' => 'El campo requerido no está lleno - Clave de licencia',
-    'lic_GetTrialForm' => 'Registro',
     'lic_ActivateCoupon' => 'Activación de cupones',
     'lic_LicenseKey' => 'Clave de licencia',
     'lic_CompanyName' => 'Nombre de la organización',

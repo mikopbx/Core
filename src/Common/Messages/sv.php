@@ -360,7 +360,6 @@ Det kan aktiveras en gång, varefter kupongen löses in.
     'lic_ValidateContactName' => 'Obligatoriskt fält är inte fyllt - kontaktperson',
     'lic_ValidateCouponEmpty' => 'Det obligatoriska fältet är inte fyllt - kupong',
     'lic_ValidateLicenseKeyEmpty' => 'Obligatoriskt fält är inte fyllt - Licensnyckel',
-    'lic_GetTrialForm' => 'registrering',
     'lic_ActivateCoupon' => 'Kupongaktivering',
     'lic_LicenseKey' => 'Licensnyckel',
     'lic_CompanyName' => 'Organisationsnamn',

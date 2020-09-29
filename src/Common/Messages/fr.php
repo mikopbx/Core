@@ -90,7 +90,6 @@ return [
     'lic_CompanyName' => 'Nom de l\'organisation',
     'lic_LicenseKey' => 'Clé de licence',
     'lic_ActivateCoupon' => 'Activation du coupon',
-    'lic_GetTrialForm' => 'Inscription',
     'lic_ValidateLicenseKeyEmpty' => 'Le champ obligatoire n\'est pas rempli - Clé de licence',
     'lic_ValidateCouponEmpty' => 'Le champ obligatoire n\'est pas rempli - coupon',
     'lic_ValidateContactName' => 'Le champ obligatoire n\'est pas rempli - personne à contacter',
