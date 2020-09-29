@@ -546,7 +546,7 @@ class Network extends Injectable
         $net_mask = explode(".", $net_mask);
 
         foreach ($net_mask as $oct_ect) {
-            $bits += strlen(str_replace("0", "", decbin($oct_ect)));
+            $bits += strlen(str_replace("0", "", decbin((int)$oct_ect)));
         }
 
         return $bits;
