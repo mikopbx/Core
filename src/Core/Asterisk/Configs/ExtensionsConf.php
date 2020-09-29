@@ -698,8 +698,8 @@ class ExtensionsConf extends ConfigClass
                 $times = "{$time_from}-{$time_to}";
             }
 
-            $weekday_from = $out_data->weekday_from;
-            $weekday_to   = $out_data->weekday_to;
+            $weekday_from = (string) $out_data->weekday_from;
+            $weekday_to   = (string) $out_data->weekday_to;
             $arr_weekday  = [null, "mon", "tue", "wed", "thu", "fri", "sat", "sun"];
             if (empty($weekday_from) && empty($weekday_to)) {
                 $weekdays = '*';
