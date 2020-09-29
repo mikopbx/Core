@@ -399,12 +399,12 @@ function Event_unpark_call($agi, $action)
     $data['did']          = $agi->get_variable("FROM_DID", true);
     $data['answer']       = $data['start'];
 
-    if (null == $park_row) {
+    if (null === $park_row) {
         $data['src_chan'] = $channel;
         $data['src_num']  = $agi->request['agi_callerid'];
         $data['dst_num']  = $agi->request['agi_extension'];
         $data['dst_chan'] = 'Park:' . $agi->request['agi_extension'];
-    } elseif (true == $park_row['pt1c_is_dst']) {
+    } elseif (true === $park_row['pt1c_is_dst']) {
         $data['src_chan'] = $channel;
         $data['dst_chan'] = $park_row['ParkeeChannel'];
         $data['src_num']  = $agi->request['agi_callerid'];
@@ -416,7 +416,7 @@ function Event_unpark_call($agi, $action)
         $data['dst_num']  = $agi->request['agi_callerid'];
     }
 
-    if (trim($park_row['ParkingDuration']) != '') {
+    if (trim($park_row['ParkingDuration']) !== '') {
         $time_start           = date("Y-m-d H:i:s", time() - 1 * ($park_row['ParkingDuration']));
         $data_parking         = [
             'UNIQUEID' => $id . '_' . Util::generateRandomString(3),
