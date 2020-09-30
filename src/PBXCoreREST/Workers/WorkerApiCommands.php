@@ -14,6 +14,7 @@ use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\PBXCoreREST\Lib\AdvicesProcessor;
 use MikoPBX\PBXCoreREST\Lib\CdrDBProcessor;
 use MikoPBX\PBXCoreREST\Lib\IAXStackProcessor;
+use MikoPBX\PBXCoreREST\Lib\LicenseManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\SysLogsManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Lib\SIPStackProcessor;
@@ -119,6 +120,9 @@ class WorkerApiCommands extends WorkerBase
                     break;
                 case 'upload':
                     $res = FilesManagementProcessor::uploadCallBack($request);
+                    break;
+                case 'license':
+                    $res = LicenseManagementProcessor::licenseCallBack($request);
                     break;
                 case 'modules':
                     $res = $this->modulesCallBack($request);

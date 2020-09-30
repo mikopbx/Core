@@ -714,7 +714,6 @@ return [
     'lic_ValidateContactName' => '必填字段未填写-联系人',
     'lic_ValidateCouponEmpty' => '必填字段未填写-优惠券',
     'lic_ValidateLicenseKeyEmpty' => '必填字段未填写-许可证密钥',
-    'lic_GetTrialForm' => '报名',
     'lic_ActivateCoupon' => '优惠券激活',
     'lic_LicenseKey' => '许可证密钥',
     'lic_CompanyName' => '机构名称',

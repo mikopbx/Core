@@ -32,7 +32,9 @@ use MikoPBX\PBXCoreREST\Controllers\{Cdr\GetController as CdrGetController,
     System\GetController as SystemGetController,
     System\PostController as SystemPostController,
     Upload\PostController as UploadPostController,
-    Advices\GetController as AdvicesGetController
+    Advices\GetController as AdvicesGetController,
+    License\GetController as LicenseGetController,
+    License\PostController as LicensePostController
 };
 use MikoPBX\PBXCoreREST\Middleware\AuthenticationMiddleware;
 use MikoPBX\PBXCoreREST\Middleware\NotFoundMiddleware;
@@ -138,6 +140,9 @@ class RouterProvider implements ServiceProviderInterface
             [UploadPostController::class, 'callAction', '/pbxcore/api/upload/{actionName}', 'post', '/'],
 
             [AdvicesGetController::class, 'callAction', '/pbxcore/api/advices/{actionName}', 'get', '/'],
+
+            [LicenseGetController::class, 'callAction', '/pbxcore/api/license/{actionName}', 'get', '/'],
+            [LicensePostController::class, 'callAction', '/pbxcore/api/license/{actionName}', 'post', '/'],
 
             [
                 ModulesControllerBase::class,

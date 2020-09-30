@@ -717,7 +717,6 @@ return [
     'lic_ValidateContactName' => 'Required field is not filled - contact person',
     'lic_ValidateCouponEmpty' => 'Required field is not filled - coupon',
     'lic_ValidateLicenseKeyEmpty' => 'Required field is not filled - license key',
-    'lic_GetTrialForm' => 'Registration',
     'lic_ActivateCoupon' => 'Coupon activation',
     'lic_LicenseKey' => 'License key',
     'lic_CompanyName' => 'Company name',

@@ -8,7 +8,6 @@
 
 /* global globalRootUrl, globalTranslate, Form, sessionStorage */
 
-
 $.fn.form.settings.rules.checkEmptyIfLicenseKeyEmpty = function (value) {
 	return ($('#licKey').val().length === 28 || value.length > 0);
 };
@@ -17,6 +16,9 @@ const licensingModify = {
 	$formObj: $('#licencing-modify-form'),
 	$emptyLicenseKeyInfo: $('#empty-license-key-info'),
 	$filledLicenseKeyInfo: $('#filled-license-key-info'),
+	$getNewKeyLicenseSection: $('#getNewKeyLicenseSection'),
+	$couponSection: $('#couponSection'),
+	$formErrorMessages: $('#form-error-messages'),
 	$licKey: $('#licKey'),
 	$coupon: $('#coupon'),
 	$email: $('#email'),
@@ -91,76 +93,27 @@ const licensingModify = {
 		});
 		licensingModify.$email.inputmask('email');
 		licensingModify.defaultLicenseKey = licensingModify.$licKey.val();
+
 		licensingModify.$licensingMenu.tab({
 			history: true,
 			historyType: 'hash',
 		});
-		licensingModify.$resetButton.api({
-			url: `${globalRootUrl}licensing/resetSettings`,
-			method: 'GET',
-			beforeSend(settings) {
-				$(this).addClass('loading disabled');
-				return settings;
-			},
-			onSuccess(response) {
-				$(this).removeClass('loading disabled');
-				licensingModify.$ajaxMessages.remove();
-				if (response.success) window.location.reload();
-			},
-			onFailure(response) {
-				$(this).removeClass('loading disabled');
-				$('form').after(response);
-			},
+
+		licensingModify.$resetButton.on('click',()=>{
+			licensingModify.$formObj.addClass('loading disabled');
+			PbxApi.LicenseResetLicenseKey(licensingModify.cbAfterResetLicenseKey);
 		});
 
 		licensingModify.cbOnLicenceKeyInputChange();
-		licensingModify.initializeForm();
 
+		licensingModify.initializeForm();
 
 		if (licensingModify.defaultLicenseKey.length === 28) {
 			licensingModify.$filledLicenseKeyInfo
 				.html(`${licensingModify.defaultLicenseKey} <i class="spinner loading icon"></i>`)
 				.show();
-
-			//  Проверим доступность фичии
-			$.api({
-				url: `${globalRootUrl}licensing/getBaseFeatureStatus/${licensingModify.defaultLicenseKey}`,
-				on: 'now',
-				successTest(response) {
-					// test whether a JSON response is valid
-					return response !== undefined
-						&& Object.keys(response).length > 0
-						&& response.success === true;
-				},
-				onSuccess() {
-					licensingModify.$formObj.removeClass('error').addClass('success');
-					licensingModify.$ajaxMessages.remove();
-					licensingModify.$filledLicenseKeyInfo.after(`<div class="ui success message ajax"><i class="check green icon"></i> ${globalTranslate.lic_LicenseKeyValid}</div>`);
-					$('.spinner.loading.icon').remove();
-				},
-				onFailure(response) {
-					licensingModify.$formObj.addClass('error').removeClass('success');
-					licensingModify.$ajaxMessages.remove();
-					licensingModify.$filledLicenseKeyInfo.after(`<div class="ui error message ajax"><i class="exclamation triangle red icon"></i> ${response.message}</div>`);
-					$('.spinner.loading.icon').remove();
-				},
-			});
-
-
-			// Получим информациию о лицензии
-			$.api({
-				url: `${globalRootUrl}licensing/getLicenseInfo/${licensingModify.defaultLicenseKey}`,
-				on: 'now',
-				onSuccess(response) {
-					licensingModify.cbShowLicenseInfo(response);
-				},
-				onError(errorMessage, element, xhr) {
-					if (xhr.status === 403) {
-						window.location = `${globalRootUrl}session/index`;
-					}
-				},
-			});
-			// PbxApi.CheckLicense(licensingModify.cbCheckLicenseKey);
+			PbxApi.LicenseGetMikoPBXFeatureStatus(licensingModify.cbAfterGetMikoPBXFeatureStatus);
+			PbxApi.LicenseGetLicenseInfo(licensingModify.cbAfterGetLicenseInfo);
 			licensingModify.$emptyLicenseKeyInfo.hide();
 		} else {
 			licensingModify.$filledLicenseKeyInfo.hide();
@@ -170,9 +123,48 @@ const licensingModify = {
 		if (licensingModify.defaultLicenseKey !== '') {
 			licensingModify.$licensingMenu.tab('change tab', 'management');
 		}
+
+
 	},
 	/**
-	 * Обработчик при вводе ключа
+	 * After send ResetLicenseKey callback
+	 * @param response
+	 */
+	cbAfterResetLicenseKey(response){
+		licensingModify.$formObj.removeClass('loading disabled');
+		if (response!==false) window.location.reload();
+	},
+	/**
+	 * After send GetLicenseInfo callback
+	 * @param response
+	 */
+	cbAfterGetMikoPBXFeatureStatus(response){
+		$('.spinner.loading.icon').remove();
+		licensingModify.$ajaxMessages.remove();
+		if (response===true){
+			licensingModify.$formObj.removeClass('error').addClass('success');
+			licensingModify.$filledLicenseKeyInfo.after(`<div class="ui success message ajax"><i class="check green icon"></i> ${globalTranslate.lic_LicenseKeyValid}</div>`);
+		} else {
+			licensingModify.$formObj.addClass('error').removeClass('success');
+			licensingModify.$filledLicenseKeyInfo.after(`<div class="ui error message ajax"><i class="exclamation triangle red icon"></i> ${response.message}</div>`);
+		}
+	},
+
+	/**
+	 * After send GetLicenseInfo callback
+	 * @param response
+	 */
+	cbAfterGetLicenseInfo(response){
+		if (response.licenseInfo !== 'null') {
+			licensingModify.showLicenseInfo(response.licenseInfo);
+			licensingModify.$licenseDetailInfo.show();
+		} else {
+			licensingModify.$licenseDetailInfo.hide();
+		}
+	},
+
+	/**
+	 * On change license key input field
 	 */
 	cbOnLicenceKeyInputChange() {
 		const licKey = licensingModify.$licKey.val();
@@ -180,31 +172,19 @@ const licensingModify = {
 			licensingModify.$formObj.find('.reginfo input').each((index, obj) => {
 				$(obj).attr('hidden', '');
 			});
-			$('#getTrialLicenseSection').hide();
-			$('#couponSection').show();
-			$('#form-error-messages').empty();
+			licensingModify.$getNewKeyLicenseSection.hide();
+			licensingModify.$couponSection.show();
+			licensingModify.$formErrorMessages.empty();
 		} else {
 			licensingModify.$formObj.find('.reginfo input').each((index, obj) => {
 				$(obj).removeAttr('hidden');
 			});
-			$('#getTrialLicenseSection').show();
-			$('#couponSection').hide();
+			licensingModify.$getNewKeyLicenseSection.show();
+			licensingModify.$couponSection.hide();
 		}
 	},
 	/**
-	 * Показать GetLicenseInfo
-	 * @param response
-	 */
-	cbShowLicenseInfo(response) {
-		if (response !== undefined && response.message !== 'null') {
-			licensingModify.showLicenseInfo(response.message);
-			licensingModify.$licenseDetailInfo.show();
-		} else {
-			licensingModify.$licenseDetailInfo.hide();
-		}
-	},
-	/**
-	 * Обработка вставки ключа из буффера обмена
+	 * Callback after paste license key
 	 */
 	cbOnLicenceKeyBeforePaste(pastedValue) {
 		if (pastedValue.indexOf('MIKO-') === -1) {
@@ -214,7 +194,7 @@ const licensingModify = {
 		return pastedValue.replace(/\s+/g, '');
 	},
 	/**
-	 * Обработка вставки купона из буффера обмена
+	 * Callback after paste license coupon
 	 */
 	cbOnCouponBeforePaste(pastedValue) {
 		if (pastedValue.indexOf('MIKOUPD-') === -1) {
@@ -224,7 +204,7 @@ const licensingModify = {
 		return pastedValue.replace(/\s+/g, '');
 	},
 	/**
-	 * Строит отображение информации о лицензировании ПП
+	 * Parses and builds license info presentation
 	 */
 	showLicenseInfo(message) {
 		const licenseData = JSON.parse(message);
@@ -280,18 +260,30 @@ const licensingModify = {
 			$('#productDetails tbody').append(row);
 		});
 	},
+	/**
+	 * After update license key, get new one, activate coupon
+	 * @param response
+	 * @param success
+	 */
+	cbAfterFormProcessing(response, success) {
+		if (success===true){
+			window.location.reload();
+		} else {
+			UserMessage.showError(response.messages)
+		}
+	},
 	cbBeforeSendForm(settings) {
 		const result = settings;
 		result.data = licensingModify.$formObj.form('get values');
+		PbxApi.LicenseProcessUserRequest(result.data, licensingModify.cbAfterFormProcessing);
 		return result;
 	},
 	cbAfterSendForm() {
-		licensingModify.defaultLicenseKey = licensingModify.$licKey.val();
-		sessionStorage.removeItem('previousLicenseCheckResult');
+
 	},
 	initializeForm() {
 		Form.$formObj = licensingModify.$formObj;
-		Form.url = `${globalRootUrl}licensing/updateLicense`;
+		Form.url = `${globalRootUrl}licensing/save`;
 		Form.validateRules = licensingModify.validateRules;
 		Form.cbBeforeSendForm = licensingModify.cbBeforeSendForm;
 		Form.cbAfterSendForm = licensingModify.cbAfterSendForm;

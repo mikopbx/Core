@@ -170,7 +170,6 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'lic_CompanyName' => 'Nome da organização',
     'lic_LicenseKey' => 'Chave de licença',
     'lic_ActivateCoupon' => 'Ativação do cupom',
-    'lic_GetTrialForm' => 'Registo',
     'lic_ValidateLicenseKeyEmpty' => 'O campo obrigatório não está preenchido - chave de licença',
     'lic_ValidateCouponEmpty' => 'O campo obrigatório não é preenchido - cupom',
     'lic_ValidateContactName' => 'O campo obrigatório não está preenchido - pessoa de contato',
