@@ -16,9 +16,9 @@ class AstDB extends Di\Injectable
 {
     /**
      * Ссылка на базу данных
-     * @var SQLite3|null
+     * @var SQLite3
      */
-    private ?SQLite3 $db;
+    private SQLite3 $db;
     private AsteriskManager $am;
 
     /**
@@ -65,7 +65,6 @@ EOF;
         }
 
         $this->db->close();
-        $this->db = null;
     }
 
     /**
