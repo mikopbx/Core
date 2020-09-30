@@ -27,7 +27,11 @@ class ModulesConf extends ConfigClass
             'app_dial.so',
             'app_directed_pickup.so',
             'app_echo.so',
+
             'app_meetme.so',
+            // 'app_confbridge.so',
+            // 'app_page.so',
+
             'app_milliwatt.so',
             'app_originate.so',
             'app_playback.so',
@@ -38,7 +42,7 @@ class ModulesConf extends ConfigClass
             'app_voicemail.so',
             'chan_dahdi.so',
             'chan_iax2.so',
-            //
+
             'codec_alaw.so',
             'codec_dahdi.so',
             'codec_g722.so',
@@ -111,7 +115,7 @@ class ModulesConf extends ConfigClass
             'bridge_builtin_features.so',
             'bridge_builtin_interval_features.so',
             // 'bridge_native_rtp.so',
-            // 'bridge_softmix.so',
+            'bridge_softmix.so',
             // 'chan_bridge_media.so',
             'app_mp3.so',
             'app_stack.so',

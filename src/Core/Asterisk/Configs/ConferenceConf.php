@@ -1,9 +1,9 @@
 <?php
-/**
+/*
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 2 2020
+ * Written by Alexey Portnov, 9 2020
  */
 
 namespace MikoPBX\Core\Asterisk\Configs;
@@ -14,6 +14,13 @@ use MikoPBX\Modules\Config\ConfigClass;
 
 class ConferenceConf extends ConfigClass
 {
+
+    protected string $description = 'confbridge.conf';
+    protected function generateConfigProtected(): void
+    {
+        $conf = "";
+        file_put_contents($this->config->path('asterisk.astetcdir') . '/confbridge.conf', $conf);
+    }
 
     /**
      * Возвращает номерной план для internal контекста.
