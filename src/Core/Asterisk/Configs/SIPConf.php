@@ -139,6 +139,7 @@ class SIPConf extends ConfigClass
 
             "[global] \n" .
             "type = global\n" .
+            "endpoint_identifier_order=username,ip,anonymous\n" .
             "user_agent = mikopbx-{$pbxVersion}\n\n" .
 
             "[anonymous]\n" .
