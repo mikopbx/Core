@@ -141,8 +141,6 @@ class WorkerApiCommands extends WorkerBase
         $needReloadWWW = $res->data['needReloadWWW']??false;
         if ($needReloadWWW === true) {
             $nginxConf = new NginxConf();
-            // Остановим nginx.
-            $nginxConf->stop();
             // Необходимо перезапустить php-fpm
             $phpConf = new PHPConf();
             $phpConf->reStart();

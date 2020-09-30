@@ -37,9 +37,9 @@ class NginxConf extends Injectable
     public function reStart(): void
     {
         $NginxPath = Util::which('nginx');
-        $pid       = Util::getPidOfProcess($NginxPath);
-        if ( ! empty($pid)) {
-            Util::mwExec("{$NginxPath} -s reload");
+        $pid       = Util::getPidOfProcess('master process nginx');
+        if (!empty($pid)) {
+            Util::mwExec("$NginxPath -s reload");
         } elseif (Util::isSystemctl()) {
             $systemCtrlPath = Util::which('systemctl');
             Util::mwExec("{$systemCtrlPath}  nginx.service");
@@ -50,15 +50,33 @@ class NginxConf extends Injectable
     }
 
     /**
-     * Stop Nginx gracefully
+     * Reload Nginx gracefully
      * https://www.cyberciti.biz/faq/howto-unix-linux-gracefully-reload-restart-nginx-webserver/
      **/
-    public function stop(): void
+    public function reloadGracefully(): void
     {
         $NginxPath = Util::which('nginx');
-        $pid       = Util::getPidOfProcess($NginxPath);
-        if ( ! empty($pid)) {
-            Util::mwExec("{$NginxPath} -s quit");
+        $killPath  = Util::which('kill');
+        $pid       = Util::getPidOfProcess('nginx: master process');
+        if (!empty($pid)) {
+            Util::mwExec("$NginxPath -s quit");
+            echo $killPath.' -QUIT '.$pid."\n";
+        }
+        $timeStart = time();
+        while (true){
+            if(time() - $timeStart > 20){
+                break;
+            }
+            usleep(50000);
+            $pid = Util::getPidOfProcess('nginx: master process');
+            if($pid !== ''){
+                continue;
+            }
+            $result = Util::mwExec($NginxPath);
+            if($result === 0){
+                break;
+            }
+            echo "RESULT -- $result\n";
         }
     }
 

@@ -76,7 +76,7 @@ class Util
      *
      * @return int
      */
-    public static function mwExec($command, &$outArr = null, &$retVal = null): ?int
+    public static function mwExec($command, &$outArr = null, &$retVal = null): int
     {
         $retVal = 0;
         $outArr   = [];

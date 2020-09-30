@@ -115,7 +115,7 @@ class PHPConf extends Injectable
             $phpFPMPath = Util::which('php-fpm');
             // Отправляем запрос на graceful shutdown;
             Util::mwExec('kill -SIGQUIT "$(cat /var/run/php-fpm.pid)"');
-            sleep(1);
+            usleep(100000);
             // Принудительно завершаем.
             Util::killByName('php-fpm');
             Util::mwExec("{$phpFPMPath} -c /etc/php.ini");

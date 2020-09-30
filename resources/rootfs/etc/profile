@@ -32,7 +32,7 @@ PS2='>'
 
 export LANG=en_US.utf8
 
-pbxConsoleCommands()
+_pbxConsoleCommands()
 {
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
@@ -83,4 +83,4 @@ pbxConsoleCommands()
 
 }
 
-complete -F pbxConsoleCommands pbx-console
+complete -F _pbxConsoleCommands pbx-console
