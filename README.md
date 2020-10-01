@@ -20,7 +20,7 @@ MikoPBX is an open source GUI (graphical user interface) that controls and manag
 
 The russian [website](https://www.mikopbx.ru)
 
-The english [website](https://www.mikopbx.com) under construction  
+The english [website](https://www.mikopbx.com) 
 
 The instalation [instruction](https://wiki.mikopbx.com/quickstart_lancher)
 
@@ -34,4 +34,7 @@ The chat with developers you can find on [telegram](https://t.me/mikopbx_dev)
 </p>
 
 
-Description under construction...
+MikoPBX is full-featured phone solution with top performance level, high stability and rich functionality. You can install MikoPBX on premise (hardware installation) or in any type of cloud-services (Google cloud, Amazon Cloud Solution, Microsoft Azure etc.)
+
+The system has easy and convenient web interface, call recording, conference calls, voice mail, call transfers and pickup, call queues, interactive voice response(IVR) menu, inbound and outbound call rules. Also you can find holidays and night-time calls switcher there. Apart from MikoPBX has custom call-flow programming module and marketplace with paid and free extensions. All general business functionality is absolutely free forever!
+
