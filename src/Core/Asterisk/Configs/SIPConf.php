@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 9 2020
+ * Written by Alexey Portnov, 10 2020
  */
 
 namespace MikoPBX\Core\Asterisk\Configs;
@@ -28,10 +28,19 @@ class SIPConf extends ConfigClass
     protected $data_peers;
     protected $data_providers;
     protected $data_rout;
-    protected $technology;
-    protected $contexts_data = [];
+    protected string $technology;
+    protected array  $contexts_data;
 
     protected string $description = 'pjsip.conf';
+
+    /**
+     *
+     * @return array
+     */
+    public function dependenceModels(): array
+    {
+        return [Sip::class, Users::class];
+    }
 
     /**
      * Генератор sip.conf
@@ -65,10 +74,6 @@ class SIPConf extends ConfigClass
             $db->databasePut('FW_UNAV', "{$peer['extension']}", trim($peer['forwardingonunavailable']));
         }
     }
-
-
-
-
 
     /**
      * Генератора секции general pjsip.conf
@@ -299,8 +304,6 @@ class SIPConf extends ConfigClass
         return $conf;
     }
 
-
-
     /**
      * Генератор сеции пиров для sip.conf
      *
@@ -395,6 +398,7 @@ class SIPConf extends ConfigClass
      */
     public function getSettings(): void
     {
+        $this->contexts_data  = [];
         // Настройки для текущего класса.
         $this->data_peers     = $this->getPeers();
         $this->data_providers = $this->getProviders();

@@ -1,9 +1,9 @@
 <?php
-/**
+/*
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 7 2020
+ * Written by Alexey Portnov, 10 2020
  */
 
 namespace MikoPBX\Modules\Config;
@@ -481,5 +481,13 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface, 
         return '';
     }
 
+    /**
+     *
+     * @return array
+     */
+    public function dependenceModels(): array
+    {
+        return [];
+    }
 
 }

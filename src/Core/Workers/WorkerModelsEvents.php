@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 9 2020
+ * Written by Alexey Portnov, 10 2020
  */
 
 namespace MikoPBX\Core\Workers;
@@ -92,7 +92,7 @@ class WorkerModelsEvents extends WorkerBase
     private array $modified_tables;
 
     private PbxSettings $pbxSettings;
-    private int $timeout = 3;
+    private int $timeout = 2;
     private array $arrObject;
     private array $PRIORITY_R;
     protected int $maxProc=1;
@@ -169,8 +169,19 @@ class WorkerModelsEvents extends WorkerBase
     private function fillModifiedTables($data): void
     {
         $count_changes = count($this->modified_tables);
-
         $called_class = $data['model'] ?? '';
+
+        // Обновление настроек в объектах, в оперативной памяти.
+        $additionalModules = $this->di->getShared('pbxConfModules');
+        foreach ($additionalModules as $appClass) {
+            // Проверим, зависит ли объект от измененных данных.
+            $dependences = $appClass->dependenceModels();
+            if (in_array($called_class, $dependences)){
+                // Получаем новые настройки.
+                $appClass->getSettings();
+            }
+        }
+
         switch ($called_class) {
             case AsteriskManagerUsers::class:
                 $this->modified_tables[self::R_MANAGERS] = true;

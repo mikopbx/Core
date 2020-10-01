@@ -3,11 +3,12 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 9 2020
+ * Written by Alexey Portnov, 10 2020
  */
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Modules\Config\ConfigClass;
 use MikoPBX\Core\System\Util;
 
@@ -19,6 +20,15 @@ class ResParkingConf extends ConfigClass
 
 
     protected string $description = 'res_parking.conf';
+
+    /**
+     *
+     * @return array
+     */
+    public function dependenceModels(): array
+    {
+        return [PbxSettings::class];
+    }
 
     /**
      * ResParkingConf constructor.

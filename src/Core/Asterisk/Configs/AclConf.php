@@ -1,10 +1,9 @@
 <?php
-/**
- * Copyright (C) MIKO LLC - All Rights Reserved
+/*
+ * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 5 2020
- *
+ * Written by Alexey Portnov, 10 2020
  */
 
 namespace MikoPBX\Core\Asterisk\Configs;
@@ -19,6 +18,16 @@ class AclConf extends ConfigClass
 {
     protected string $description = 'acl.conf';
     protected array $data_peers;
+
+    /**
+     *
+     * @return array
+     */
+    public function dependenceModels(): array
+    {
+        return [Sip::class, NetworkFilters::class];
+    }
+
     /**
      * Получение настроек.
      */
