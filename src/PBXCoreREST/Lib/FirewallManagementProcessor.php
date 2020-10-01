@@ -1,10 +1,9 @@
 <?php
-/**
- * Copyright (C) MIKO LLC - All Rights Reserved
+/*
+ * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Nikolay Beketov, 7 2020
- *
+ * Written by Alexey Portnov, 10 2020
  */
 
 namespace MikoPBX\PBXCoreREST\Lib;
@@ -40,16 +39,8 @@ class FirewallManagementProcessor extends Injectable
         }
         $fail2ban        = new Fail2BanConf();
         if ($fail2ban->fail2ban_enable) {
-            // Попробуем найти jail по данным DB.
-            // fail2ban-client unban 172.16.156.1
-            // TODO Util::mwExec("fail2ban-client unban {$ip}}");
-            $data = self::getBanIp($ip);
-            foreach ($data as $row) {
-                $res = self::fail2banUnban($ip, $row['jail']);
-                if (!$res->success) {
-                    return $res;
-                }
-            }
+            $fail2ban = Util::which('fail2ban-client');
+            $res->success  = (Util::mwExec("{$fail2ban} unban {$ip}}") === 0);
         } else {
             $res = self::fail2banUnbanDb($ip);
         }
