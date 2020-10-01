@@ -1,5 +1,8 @@
 [![Translation status](https://weblate.mikopbx.com/widgets/mikopbx/-/admin-web-interface/svg-badge.svg)](https://weblate.mikopbx.com/engage/mikopbx/?utm_source=widget)
-
+[![GitHub All Releases](https://img.shields.io/github/downloads/mikopbx/core/total)](https://github.com/mikopbx/Core/releases)
+[![GitHub last commit (branch)](https://img.shields.io/github/last-commit/mikopbx/core/develop?label=last%20commit%20on%20develop)](https://github.com/mikopbx/Core/tree/develop)
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/mikopbx/Core/badges/quality-score.png?b=develop)](https://scrutinizer-ci.com/g/mikopbx/Core/?branch=develop)
+![GitHub](https://img.shields.io/github/license/mikopbx/core)
 # MikoPBX - free phone system for small business
 ```
                                                                                      
