@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 9 2020
+ * Written by Alexey Portnov, 10 2020
  */
 
 namespace MikoPBX\Core\Asterisk;
@@ -11,7 +11,7 @@ namespace MikoPBX\Core\Asterisk;
 class AGIDebug extends AGI {
     private string $scriptName;
 
-    private function __construct($scriptName){
+    function __construct($scriptName){
         $this->scriptName = $scriptName;
     }
 
