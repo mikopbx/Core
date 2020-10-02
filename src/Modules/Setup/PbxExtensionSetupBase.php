@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 9 2020
+ * Written by Alexey Portnov, 10 2020
  */
 
 namespace MikoPBX\Modules\Setup;
@@ -198,9 +198,6 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
         // Create cache links for agi-bin scripts
         PbxExtensionUtils::createAgiBinSymlinks($this->moduleUniqueID);
 
-        // Grant permissions to files ./bin/* ./agi-bin/*
-        PbxExtensionUtils::grantPermissionsToFiles($this->moduleUniqueID);
-
         // Restore database settings
         $modulesDir          = $this->config->path('core.modulesDir');
         $backupPath = "{$modulesDir}/Backup/{$this->moduleUniqueID}";
@@ -220,11 +217,15 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
     {
         // Add regular www rights
         Util::addRegularWWWRights($this->moduleDir);
-
-        // Add executable right to module's binary
-        $binDir = $this->moduleDir.'/bin';
-        if (is_dir($binDir)){
-            Util::addExecutableRights($binDir);
+        $dirs = [
+            "{$this->moduleDir}/agi-bin",
+            "{$this->moduleDir}/bin"
+        ];
+        foreach ($dirs as $dir) {
+            if(file_exists($dir) && is_dir($dir)){
+                // Add executable right to module's binary
+                Util::addExecutableRights($dir);
+            }
         }
 
         return true;
