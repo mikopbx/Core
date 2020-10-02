@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 9 2020
+ * Written by Alexey Portnov, 10 2020
  */
 
 namespace MikoPBX\Core\Workers;
@@ -1256,6 +1256,12 @@ class WorkerCallEvents extends WorkerBase
     {
         $q      = $tube->getBody();
         $filter = json_decode($q, true);
+
+        if($this->filterNotValid($filter)){
+            $tube->reply('[]');
+            return;
+        }
+
         $res    = null;
         try {
             if (isset($filter['miko_tmp_db'])) {
@@ -1274,6 +1280,12 @@ class WorkerCallEvents extends WorkerBase
                 $arr[] = $row[$filter['columns']];
             }
             $filter['add_pack_query']['bind'][$filter['columns']] = $arr;
+
+            if($this->filterNotValid($filter['add_pack_query'])){
+                $tube->reply('[]');
+                return;
+            }
+
             try {
                 $res      = CallDetailRecords::find($filter['add_pack_query']);
                 $res_data = json_encode($res->toArray(), JSON_THROW_ON_ERROR);
@@ -1294,6 +1306,26 @@ class WorkerCallEvents extends WorkerBase
         }
 
         $tube->reply($res_data);
+    }
+
+    /**
+     * Проверка фильтра на корректность bind параметров.
+     * @param $filter
+     */
+    private function filterNotValid($filter){
+        $haveErrors = false;
+        if(isset($filter['bind'])){
+            if(is_array($filter)){
+                foreach ($filter['bind'] as $bindValue) {
+                    if(empty($bindValue)){
+                        $haveErrors = true;
+                    }
+                }
+            }else{
+                $haveErrors = true;
+            }
+        }
+        return $haveErrors;
     }
 
     public function errorHandler($m): void
