@@ -3,7 +3,7 @@
  * Copyright © MIKO LLC - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- * Written by Alexey Portnov, 9 2020
+ * Written by Alexey Portnov, 10 2020
  */
 
 namespace MikoPBX\PBXCoreREST\Workers;
@@ -93,56 +93,31 @@ class WorkerApiCommands extends WorkerBase
             $request   = json_decode($message->getBody(), true, 512, JSON_THROW_ON_ERROR);
             $processor = $request['processor'];
 
-            switch ($processor) {
-                case 'advices':
-                    $res = AdvicesProcessor::advicesCallBack($request);
-                    break;
-                case 'cdr':
-                    $res = CdrDBProcessor::cdrCallBack($request);
-                    break;
-                case 'sip':
-                    $res = SIPStackProcessor::sipCallBack($request);
-                    break;
-                case 'iax':
-                    $res = IAXStackProcessor::iaxCallBack($request);
-                    break;
-                case 'system':
-                    $res = SystemManagementProcessor::systemCallBack($request);
-                    break;
-                case 'syslog':
-                    $res = SysLogsManagementProcessor::syslogCallBack($request);
-                    break;
-                case 'sysinfo':
-                    $res = SysinfoManagementProcessor::sysinfoCallBack($request);
-                    break;
-                case 'storage':
-                    $res = StorageManagementProcessor::storageCallBack($request);
-                    break;
-                case 'upload':
-                    $res = FilesManagementProcessor::uploadCallBack($request);
-                    break;
-                case 'license':
-                    $res = LicenseManagementProcessor::licenseCallBack($request);
-                    break;
-                case 'modules':
-                    $res = $this->modulesCallBack($request);
-                    break;
-                default:
-                    $res             = new PBXApiResult();
-                    $res->processor = __METHOD__;
-                    $res->success    = false;
-                    $res->messages[] = "Unknown processor - {$processor} in prepareAnswer";
+            $methodName = "{$processor}CallBack";
+            if(method_exists($this, $methodName)){
+                $res = $this->$methodName($request);
+            }else{
+                $res             = new PBXApiResult();
+                $res->processor = __METHOD__;
+                $res->success    = false;
+                $res->messages[] = "Unknown processor - {$processor} in prepareAnswer";
             }
         } catch (Error $exception) {
             $res             = new PBXApiResult();
             $res->processor = __METHOD__;
             $res->messages[] = 'Exception on WorkerApiCommands - ' . $exception->getMessage();
         }
-
         $message->reply(json_encode($res->getResult()));
+        $this->checkNeedReload($res->data);
+    }
 
+    /**
+     * Проверим необходимость рестрата сервисов.
+     * @param array $data
+     */
+    private function checkNeedReload(array $data): void{
         // Перезапускаем web сервер.
-        $needReloadWWW = $res->data['needReloadWWW']??false;
+        $needReloadWWW = $data['needReloadWWW']??false;
         if ($needReloadWWW === true) {
             $nginxConf = new NginxConf();
             // Необходимо перезапустить php-fpm
@@ -155,30 +130,135 @@ class WorkerApiCommands extends WorkerBase
         }
 
         // Check if modules change state
-        if (is_array($res->data)
-            && array_key_exists('needReloadModules', $res->data)
-            && $res->data['needReloadModules']
-        ) {
+        $needReloadModules = $data['needReloadModules']??false;
+        if ($needReloadModules) {
             $this->registerModulesProcessors();
         }
 
         // Check if new code added from modules
-        if (is_array($res->data)
-            && array_key_exists('needRestartWorkers', $res->data)
-            && $res->data['needRestartWorkers']
-        ) {
+        $needRestartWorkers = $data['needRestartWorkers']??false;
+        if ($needRestartWorkers) {
             System::restartAllWorkers();
             $this->needRestart=true;
         }
     }
 
+    /**
+     * Processes modules API requests
+     * @param array $request
+     * @return PBXApiResult
+     */
+    private function advicesCallBack(array $request): PBXApiResult
+    {
+        return AdvicesProcessor::advicesCallBack($request);
+    }
+
+    /**
+     * Processes modules API requests
+     * @param array $request
+     * @return PBXApiResult
+     */
+    private function cdrCallBack(array $request): PBXApiResult
+    {
+        return CdrDBProcessor::cdrCallBack($request);
+    }
+
+    /**
+     * Processes modules API requests
+     * @param array $request
+     * @return PBXApiResult
+     * @throws \Exception
+     */
+    private function systemCallBack(array $request): PBXApiResult
+    {
+        return SystemManagementProcessor::systemCallBack($request);
+    }
+
+    /**
+     * Processes modules API requests
+     * @param array $request
+     * @return PBXApiResult
+     */
+    private function iaxCallBack(array $request): PBXApiResult
+    {
+        return IAXStackProcessor::iaxCallBack($request);
+    }
+
+    /**
+     * Processes modules API requests
+     * @param array $request
+     * @return PBXApiResult
+     */
+    private function sipCallBack(array $request): PBXApiResult
+    {
+        return SIPStackProcessor::sipCallBack($request);
+    }
+
+    /**
+     * Processes modules API requests
+     * @param array $request
+     * @return PBXApiResult
+     * @throws \Exception
+     */
+    private function syslogCallBack(array $request): PBXApiResult
+    {
+        return SysLogsManagementProcessor::syslogCallBack($request);
+    }
 
     /**
      * Processes modules API requests
      *
      * @param array $request
      *
-     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     * @return PBXApiResult
+     */
+    private function sysinfoCallBack(array $request): PBXApiResult
+    {
+        return SysinfoManagementProcessor::sysinfoCallBack($request);
+    }
+
+    /**
+     * Processes modules API requests
+     *
+     * @param array $request
+     *
+     * @return PBXApiResult
+     */
+    private function storageCallBack(array $request): PBXApiResult
+    {
+        return StorageManagementProcessor::storageCallBack($request);
+    }
+
+    /**
+     * Processes modules API requests
+     *
+     * @param array $request
+     *
+     * @return PBXApiResult
+     */
+    private function uploadCallBack(array $request): PBXApiResult
+    {
+        return FilesManagementProcessor::uploadCallBack($request);
+    }
+
+    /**
+     * Processes modules API requests
+     *
+     * @param array $request
+     *
+     * @return PBXApiResult
+     */
+    private function licenseCallBack(array $request): PBXApiResult
+    {
+        return LicenseManagementProcessor::licenseCallBack($request);
+    }
+
+    /**
+     * Processes modules API requests
+     *
+     * @param array $request
+     *
+     * @return PBXApiResult
      */
     private function modulesCallBack(array $request): PBXApiResult
     {
