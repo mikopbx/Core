@@ -1,6 +1,11 @@
 -- Copyright © MIKO LLC - All Rights Reserved
 -- Unauthorized copying of this file, via any medium is strictly prohibited
 -- Proprietary and confidential
+-- Written by Alexey Portnov, 10 2020
+
+-- Copyright © MIKO LLC - All Rights Reserved
+-- Unauthorized copying of this file, via any medium is strictly prohibited
+-- Proprietary and confidential
 -- Written by Alexey Portnov, 9 2020
 
 
@@ -236,6 +241,7 @@ end
 function event_dial_answer()
     local data = {}
 
+    app["Wait"]("0.2");
     local mixFileName = get_variable("MIX_FILE_NAME");
     if(mixFileName ~= '')then
         local mixCommand = get_variable("MIX_CMD");
