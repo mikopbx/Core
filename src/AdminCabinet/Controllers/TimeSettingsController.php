@@ -30,10 +30,6 @@ class TimeSettingsController extends BaseController
         $timeSettingsFields     = PbxSettings::find($parameters);
         $readibleTimeZones      = $this->generateTimezoneList();
         $form                   = new TimeSettingsEditForm($timeSettingsFields, $readibleTimeZones);
-        $this->view->params     = [
-            'currenttime'     => date('d/m/Y H:i:s', time()),
-            'currenttimezone' => date_default_timezone_get(),
-        ];
         $this->view->form       = $form;
         $this->view->submitMode = null;
     }
@@ -100,7 +96,7 @@ class TimeSettingsController extends BaseController
     }
 
     /**
-     * Сохранение данных о настройках времени
+     * Save timezone settings
      */
     public function saveAction()
     {
@@ -144,7 +140,5 @@ class TimeSettingsController extends BaseController
         $this->view->success = true;
         $this->view->reload  = 'time-settings/modify';
         $this->db->commit();
-        $PBXTimezone = PbxSettings::getValueByKey("PBXTimezone");
-        $this->session->set('timezone', $PBXTimezone);
     }
 }

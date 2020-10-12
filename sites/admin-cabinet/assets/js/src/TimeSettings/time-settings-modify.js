@@ -14,11 +14,11 @@ const timeSettings = {
 	validateRules: {
 		CurrentDateTime: {
 			depends: 'PBXManualTimeSettings',
-			identifier: 'CurrentDateTime',
+			identifier: 'ManualDateTime',
 			rules: [
 				{
 					type: 'empty',
-					prompt: globalTranslate.cq_ValidateNameEmpty,
+					prompt: globalTranslate.ts_ValidateDateTime,
 				},
 			],
 		},
@@ -28,12 +28,6 @@ const timeSettings = {
 			fullTextSearch: true,
 		});
 
-		$('#CalendarBlock').calendar({
-			firstDayOfWeek: SemanticLocalization.calendarFirstDayOfWeek,
-			ampm: false,
-			text: SemanticLocalization.calendarText,
-		});
-
 		$('.checkbox').checkbox({
 			onChange() {
 				timeSettings.toggleDisabledFieldClass();
@@ -41,10 +35,6 @@ const timeSettings = {
 		});
 		timeSettings.initializeForm();
 		timeSettings.toggleDisabledFieldClass();
-	},
-	formattedDate() {
-		const date = Date.parse(timeSettings.$formObj.form('get value', 'CurrentDateTime'));
-		return date / 1000;
 	},
 	toggleDisabledFieldClass() {
 		if (timeSettings.$formObj.form('get value', 'PBXManualTimeSettings') === 'on') {
@@ -61,7 +51,12 @@ const timeSettings = {
 		return result;
 	},
 	cbAfterSendForm() {
-		PbxApi.UpdateDateTime({date: timeSettings.formattedDate()});
+		if (timeSettings.$formObj.form('get value', 'PBXManualTimeSettings') === 'on') {
+			const manualDate = timeSettings.$formObj.form('get value', 'ManualDateTime');
+			const timestamp = Date.parse(manualDate)/1000;
+			console.debug(`Set new system date: ${manualDate} timestamp: ${timestamp}`);
+			PbxApi.UpdateDateTime(timestamp);
+		}
 	},
 	initializeForm() {
 		Form.$formObj = timeSettings.$formObj;

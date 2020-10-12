@@ -39,6 +39,8 @@ use MikoPBX\Core\System\{BeanstalkClient,
     Configs\IptablesConf,
     Configs\NatsConf,
     Configs\NginxConf,
+    Configs\NTPConf,
+    Configs\PHPConf,
     Configs\SSHConf,
     PBX,
     System,
@@ -74,6 +76,10 @@ class WorkerModelsEvents extends WorkerBase
 
     private const R_NGINX = 'reloadNginx';
 
+    private const R_PHP_FPM = 'reloadPHPFPM';
+
+    private const R_TIMEZONE = 'updateTomeZone';
+
     private const R_SSH = 'reloadSSH';
 
     private const R_LICENSE = 'reloadLicense';
@@ -84,9 +90,11 @@ class WorkerModelsEvents extends WorkerBase
 
     private const R_REST_API_WORKER = 'reloadRestAPIWorker';
 
-    private const R_MOH_RELOAD = 'reloadMoh';
+    private const R_MOH = 'reloadMoh';
 
     private const R_CONF_MODULES = 'reloadPbxConfModules';
+
+    private const R_NTP = 'reloadNtp';
 
     private int $last_change;
     private array $modified_tables;
@@ -117,6 +125,9 @@ class WorkerModelsEvents extends WorkerBase
             self::R_SSH,
             self::R_LICENSE,
             self::R_NATS,
+            self::R_TIMEZONE,
+            self::R_NTP,
+            self::R_PHP_FPM,
             self::R_NGINX,
             self::R_CRON,
             self::R_FEATURES,
@@ -127,7 +138,7 @@ class WorkerModelsEvents extends WorkerBase
             self::R_MANAGERS,
             self::R_CUSTOM_F,
             self::R_VOICEMAIL,
-            self::R_MOH_RELOAD
+            self::R_MOH
         ];
 
         $this->modified_tables = [];
@@ -233,7 +244,8 @@ class WorkerModelsEvents extends WorkerBase
                 $this->modified_tables[self::R_DIALPLAN] = true;
                 break;
             case SoundFiles::class:
-                $this->modified_tables[self::R_MOH_RELOAD] = true;
+                $this->modified_tables[self::R_MOH] = true;
+                $this->modified_tables[self::R_DIALPLAN] = true;
                 break;
             case IvrMenuActions::class:
                 $this->modified_tables[self::R_DIALPLAN] = true;
@@ -290,20 +302,22 @@ class WorkerModelsEvents extends WorkerBase
                 if ($this->pbxSettings->itHasVisualLanguageSettings()) {
                     $this->modified_tables[self::R_REST_API_WORKER] = true;
                 }
-                if ('PBXInternalExtensionLength' === $this->pbxSettings->key) {
-                    $this->modified_tables[self::R_DIALPLAN] = true;
-                    $this->modified_tables[self::R_SIP]      = true;
-                }
-                if ('PBXLicense' === $this->pbxSettings->key) {
+                if ($this->pbxSettings->itHasLicenseSettings()) {
                     $this->modified_tables[self::R_LICENSE] = true;
                     $this->modified_tables[self::R_NATS]    = true;
+                }
+                if ($this->pbxSettings->itHasTimeZoneSettings()) {
+                    $this->modified_tables[self::R_TIMEZONE]    = true;
+                    $this->modified_tables[self::R_NGINX]    = true;
+                    $this->modified_tables[self::R_PHP_FPM]    = true;
+                    $this->modified_tables[self::R_REST_API_WORKER] = true; //TODO::Зачем?
+                }
+                if ($this->pbxSettings->itHasNTPSettings()) {
+                    $this->modified_tables[self::R_NTP]    = true;
                 }
                 break;
             case Sip::class:
                 $this->modified_tables[self::R_SIP]      = true;
-                $this->modified_tables[self::R_DIALPLAN] = true;
-                break;
-            case SoundFiles::class:
                 $this->modified_tables[self::R_DIALPLAN] = true;
                 break;
             case PbxExtensionModules::class:
@@ -458,6 +472,15 @@ class WorkerModelsEvents extends WorkerBase
     }
 
     /**
+     * Restarts NTP daemon
+     */
+    public function reloadNtp(): void
+    {
+        $ntpConf = new NTPConf();
+        $ntpConf->configure();
+    }
+
+    /**
      * Restarts Nginx daemon
      */
     public function reloadNginx(): void
@@ -467,12 +490,30 @@ class WorkerModelsEvents extends WorkerBase
     }
 
     /**
+     * Restarts PHP-FPM daemon
+     */
+    public function reloadPHPFPM(): void
+    {
+        $phpConf = new PHPConf();
+        $phpConf->reStart();
+    }
+
+    /**
      * Configure SSH settings
      */
     public function reloadSSH(): void
     {
         $sshConf = new SSHConf();
         $sshConf->configure();
+    }
+
+    /**
+     * Reconfigure TomeZone settings
+     */
+    public function updateTomeZone(): void
+    {
+        $system = new System();
+        $system->timezoneConfigure();
     }
 
     /**

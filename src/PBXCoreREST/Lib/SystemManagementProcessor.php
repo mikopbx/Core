@@ -52,12 +52,8 @@ class SystemManagementProcessor extends Injectable
                 $res->success = true;
                 break;
             case 'setDate':
-                $res->success = System::setDate($data['date']);
-                if($res->success){
-                    $res->data['needRestartWorkers'] = true;
-                    $res->data['needReloadModules']  = true;
-                    $res->data['needReloadWWW']      = true;
-                }
+                $res->success = System::setDate($data['timestamp']);
+                $res->data = $data;
                 break;
             case 'updateCoreLanguage':
                 $di = Di::getDefault();
@@ -67,7 +63,7 @@ class SystemManagementProcessor extends Injectable
                 $di->register(new TranslationProvider());
                 break;
             case 'updateMailSettings':
-                // TODO
+                // TODO:
                 $res->success = true;
                 break;
             case 'sendMail':

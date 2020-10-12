@@ -10,8 +10,10 @@
 namespace MikoPBX\AdminCabinet\Forms;
 
 use Phalcon\Forms\Element\Check;
+use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
+use Phalcon\Forms\Element\TextArea;
 use Phalcon\Forms\Form;
 
 /**
@@ -24,13 +26,6 @@ class TimeSettingsEditForm extends Form
 {
     public function initialize($entity = null, $options = null): void
     {
-//        $arrNtpServersVariants = array(
-//            'ru.pool.ntp.org' => 'ru.pool.ntp.org',
-//            'europe.pool.ntp.org' => 'europe.pool.ntp.org',
-//            'asia.pool.ntp.org' => 'asia.pool.ntp.org',
-//            'north-america.pool.ntp.org'=>'north-america.pool.ntp.org',
-//            'south-america.pool.ntp.org'=>'south-america.pool.ntp.org'
-//        );
 
         foreach ($entity as $item) {
             switch ($item->key) {
@@ -50,6 +45,9 @@ class TimeSettingsEditForm extends Form
                     $this->add($ntpserver);
                     break;
                 }
+                case 'NTPServer':
+                    $this->add(new TextArea($item->key, ['value' => $item->value, "rows" => 4]));
+                    break;
                 case 'PBXManualTimeSettings' :
                 {
                     $cheskarr = ['value' => null];
@@ -72,12 +70,8 @@ class TimeSettingsEditForm extends Form
             }
         }
 
-        $this->add(
-            new Text(
-                'CurrentDateTime', [
-                'value' => date('m/d/Y H:i:s', time()),
-            ]
-            )
-        );
+        $this->add(new Text('ManualDateTime', ['value' =>  time()]));
+        $this->add(new Hidden('SystemDateTime', ['value' => time()]));
+
     }
 }

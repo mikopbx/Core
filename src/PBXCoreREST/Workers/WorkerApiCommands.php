@@ -112,22 +112,11 @@ class WorkerApiCommands extends WorkerBase
     }
 
     /**
-     * Проверим необходимость рестрата сервисов.
+     * Checks if the module or worker needs to be reloaded.
+     *
      * @param array $data
      */
     private function checkNeedReload(array $data): void{
-        // Перезапускаем web сервер.
-        $needReloadWWW = $data['needReloadWWW']??false;
-        if ($needReloadWWW === true) {
-            $nginxConf = new NginxConf();
-            // Необходимо перезапустить php-fpm
-            $phpConf = new PHPConf();
-            $phpConf->reStart();
-            // Перезапускаем nginx
-            $nginxConf->reStart();
-            // Перезапускаем текущий процесс (отложенно).
-            $this->needRestart=true;
-        }
 
         // Check if modules change state
         $needReloadModules = $data['needReloadModules']??false;

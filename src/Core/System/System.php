@@ -91,7 +91,7 @@ class System extends Di\Injectable
                     $actions['features'] = 10;
                     break;
                 case 'ntp.conf':
-                    $actions['systemtime'] = 100;
+                    $actions['ntp'] = 100;
                     break;
                 case 'jail.local': // fail2ban
                     $actions['firewall'] = 100;
@@ -137,8 +137,9 @@ class System extends Di\Injectable
                 case 'features':
                     PBX::managerReload(); //
                     break;
-                case 'systemtime':
-                    System::setDate('');
+                case 'ntp':
+                    $ntpConf = new NTPConf();
+                    $ntpConf->configure();
                     break;
                 case 'firewall':
                     IptablesConf::reloadFirewall();
@@ -155,29 +156,17 @@ class System extends Di\Injectable
     }
 
     /**
-     * Setup system time 2015.12.31-01:01:20
+     * Setup system time
      *
-     * @param string $date
+     * @param int $timeStamp
      *
      * @return bool
      */
-    public static function setDate($date): bool
+    public static function setDate(int $timeStamp): bool
     {
-        // Преобразование числа к дате. Если необходимо.
-        $date = Util::numberToDate($date);
-        // Валидация даты.
-        $re_date = '/^\d{4}\.\d{2}\.\d{2}\-\d{2}\:\d{2}\:\d{2}$/';
-        preg_match_all($re_date, $date, $matches, PREG_SET_ORDER, 0);
-        if (count($matches) > 0) {
-            $arr_data = [];
-            $datePath = Util::which('date');
-            Util::mwExec("{$datePath} -s '{$date}'", $arr_data);
-        }
-
-        $sys = new self();
-        $sys->timezoneConfigure();
-
-        return true;
+      $datePath = Util::which('date');
+      Util::mwExec("{$datePath} +%s -s @{$timeStamp}");
+      return true;
     }
 
     /**
@@ -203,8 +192,6 @@ class System extends Di\Injectable
             putenv("TZ={$timezone}");
             Util::mwExec("export TZ;");
         }
-        $ntpConf = new NTPConf();
-        $ntpConf->configure();
         PHPConf::phpTimeZoneConfigure();
     }
 
@@ -236,7 +223,7 @@ class System extends Di\Injectable
     }
 
     /**
-     * Loads additioanl kernel modules
+     * Loads additional kernel modules
      */
     public function loadKernelModules(): void
     {
