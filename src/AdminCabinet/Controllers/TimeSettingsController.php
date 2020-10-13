@@ -122,7 +122,9 @@ class TimeSettingsController extends BaseController
                     break;
                 case "NTPServer":
                     $ntp_servers   = preg_split('/\r\n|\r|\n| |,/', $data[$key]);
-                    $record->value = implode(PHP_EOL, $ntp_servers);
+                    if (is_array($ntp_servers)){
+                        $record->value = implode(PHP_EOL, $ntp_servers);
+                    }
                     break;
                 default:
                     if ( ! array_key_exists($key, $data)) {
