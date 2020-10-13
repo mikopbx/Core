@@ -1,5 +1,4 @@
 {{ form('time-settings/save', 'role': 'form', 'class': 'ui large form', 'id':'time-settings-form') }}
-{{ form.render('SystemDateTime') }}
 <div class="three fields">
     <div class="field">
         <label>{{ t._('ts_TimeZone') }}</label>

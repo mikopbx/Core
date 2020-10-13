@@ -70,8 +70,7 @@ class TimeSettingsEditForm extends Form
             }
         }
 
-        $this->add(new Text('ManualDateTime', ['value' =>  time()]));
-        $this->add(new Hidden('SystemDateTime', ['value' => time()]));
+        $this->add(new Text('ManualDateTime', ['value' =>  '']));
 
     }
 }

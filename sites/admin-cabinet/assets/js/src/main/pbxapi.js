@@ -27,6 +27,7 @@ const PbxApi = {
 	systemShutDown: `${Config.pbxUrl}/pbxcore/api/system/shutdown`, // Выключить машину
 	systemGetBannedIp: `${Config.pbxUrl}/pbxcore/api/system/getBanIp`, // Получение забаненных ip
 	systemUnBanIp: `${Config.pbxUrl}/pbxcore/api/system/unBanIp`, // Снятие бана IP адреса curl -X POST -d '{"ip": "172.16.156.1"}'
+	systemGetDateTime: `${Config.pbxUrl}/pbxcore/api/system/getDate`,//curl http://172.16.156.223/pbxcore/api/system/getDate
 	systemSetDateTime: `${Config.pbxUrl}/pbxcore/api/system/setDate`, // Set system date curl -X POST -d timestamp=1602509882 http://127.0.0.1/pbxcore/api/system/setDate
 	systemSendTestEmail: `${Config.pbxUrl}/pbxcore/api/system/sendMail`, // Отправить почту
 	updateMailSettings: `${Config.pbxUrl}/pbxcore/api/system/updateMailSettings`,
@@ -297,15 +298,31 @@ const PbxApi = {
 		});
 	},
 	/**
-	 * Updates the linux datetime
-	 * @param timestamp
+	 * Get the linux datetime
 	 */
-	UpdateDateTime(timestamp) {
+	GetDateTime(callback) {
+		$.api({
+			url: PbxApi.systemGetDateTime,
+			on: 'now',
+			successTest: PbxApi.successTest,
+			onSuccess(response) {
+				callback(response.data);
+			},
+			onError() {
+				callback(false);
+			},
+		});
+	},
+	/**
+	 * Updates the linux datetime
+	 * @param data
+	 */
+	UpdateDateTime(data) {
 		$.api({
 			url: PbxApi.systemSetDateTime,
 			on: 'now',
 			method: 'POST',
-			data: {timestamp},
+			data: data,
 		});
 	},
 	/**

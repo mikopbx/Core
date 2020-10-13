@@ -8,7 +8,10 @@
 
 namespace MikoPBX\Core\System;
 
+use DateTime;
+use DateTimeZone;
 use MikoPBX\Common\Models\CustomFiles;
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Configs\CronConf;
 use MikoPBX\Core\System\Configs\IptablesConf;
 use MikoPBX\Core\System\Configs\PHPConf;
@@ -158,41 +161,35 @@ class System extends Di\Injectable
     /**
      * Setup system time
      *
-     * @param int $timeStamp
+     * @param int    $timeStamp
+     * @param string $remote_tz
      *
      * @return bool
+     * @throws \Exception
      */
-    public static function setDate(int $timeStamp): bool
+    public static function setDate(int $timeStamp, string $remote_tz): bool
     {
-      $datePath = Util::which('date');
-      Util::mwExec("{$datePath} +%s -s @{$timeStamp}");
-      return true;
-    }
-
-    /**
-     * Populates /etc/TZ with an appropriate time zone
-     */
-    public function timezoneConfigure(): void
-    {
-        $timezone = $this->mikoPBXConfig->getGeneralSettings('PBXTimezone');
+        $datePath = Util::which('date');
+        $db_tz = PbxSettings::getValueByKey('PBXTimezone');
+        $origin_tz = '';
         if (file_exists('/etc/TZ')) {
-            unlink("/etc/TZ");
+            $origin_tz = file_get_contents("/etc/TZ");
         }
-        if (file_exists('/etc/localtime')) {
-            unlink("/etc/localtime");
+        if ($origin_tz !== $db_tz){
+            self::timezoneConfigure();
         }
-        if ($timezone) {
-            $zone_file = "/usr/share/zoneinfo/{$timezone}";
-            if ( ! file_exists($zone_file)) {
-                return;
-            }
-            $cpPath = Util::which('cp');
-            Util::mwExec("{$cpPath}  {$zone_file} /etc/localtime");
-            file_put_contents('/etc/TZ', $timezone);
-            putenv("TZ={$timezone}");
-            Util::mwExec("export TZ;");
-        }
-        PHPConf::phpTimeZoneConfigure();
+        $origin_tz = $db_tz;
+        $origin_dtz = new DateTimeZone($origin_tz);
+        $remote_dtz = new DateTimeZone($remote_tz);
+        $origin_dt  = new DateTime('now', $origin_dtz);
+        $remote_dt  = new DateTime('now', $remote_dtz);
+        $offset     = $origin_dtz->getOffset($origin_dt) - $remote_dtz->getOffset($remote_dt);
+        $timeStamp  = $timeStamp - $offset;
+        Util::mwExec("{$datePath} +%s -s @{$timeStamp}");
+        // Для 1 января должно быть передано 1577829662
+        // Установлено 1577818861
+
+        return true;
     }
 
     /**
@@ -223,6 +220,46 @@ class System extends Di\Injectable
     }
 
     /**
+     * Restart all workers in separate process,
+     * we use this method after module install or delete
+     */
+    public static function restartAllWorkers(): void
+    {
+        $workerSafeScriptsPath = Util::getFilePathByClassName(WorkerSafeScriptsCore::class);
+        $phpPath               = Util::which('php');
+        $WorkerSafeScripts     = "{$phpPath} -f {$workerSafeScriptsPath} restart > /dev/null 2> /dev/null";
+        Util::mwExecBg($WorkerSafeScripts, '/dev/null', 1);
+    }
+
+    /**
+     * Populates /etc/TZ with an appropriate time zone
+     */
+    public static function timezoneConfigure(): void
+    {
+        $timezone = PbxSettings::getValueByKey('PBXTimezone');
+        if (file_exists('/etc/TZ')) {
+            unlink("/etc/TZ");
+        }
+        if (file_exists('/etc/localtime')) {
+            unlink("/etc/localtime");
+        }
+        if ($timezone) {
+            $zone_file = "/usr/share/zoneinfo/{$timezone}";
+            if ( ! file_exists($zone_file)) {
+                return;
+            }
+            $cpPath = Util::which('cp');
+            Util::mwExec("{$cpPath}  {$zone_file} /etc/localtime");
+            file_put_contents('/etc/TZ', $timezone);
+            putenv("TZ={$timezone}");
+            Util::mwExec("export TZ;");
+
+            PHPConf::phpTimeZoneConfigure();
+        }
+
+    }
+
+    /**
      * Loads additional kernel modules
      */
     public function loadKernelModules(): void
@@ -246,17 +283,5 @@ class System extends Di\Injectable
             /** @var \MikoPBX\Modules\Config\ConfigClass $appClass */
             $appClass->onAfterPbxStarted();
         }
-    }
-
-    /**
-     * Restart all workers in separate process,
-     * we use this method after module install or delete
-     */
-    public static function restartAllWorkers(): void
-    {
-        $workerSafeScriptsPath = Util::getFilePathByClassName(WorkerSafeScriptsCore::class);
-        $phpPath               = Util::which('php');
-        $WorkerSafeScripts     = "{$phpPath} -f {$workerSafeScriptsPath} restart > /dev/null 2> /dev/null";
-        Util::mwExecBg($WorkerSafeScripts,'/dev/null', 1);
     }
 }

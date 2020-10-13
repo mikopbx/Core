@@ -43,6 +43,7 @@ const timeSettings = {
 		} else {
 			$('#SetNtpServerBlock').removeClass('disabled');
 			$('#SetDateTimeBlock').addClass('disabled');
+			clockWorker.restartWorker();
 		}
 	},
 	cbBeforeSendForm(settings) {
@@ -53,9 +54,9 @@ const timeSettings = {
 	cbAfterSendForm() {
 		if (timeSettings.$formObj.form('get value', 'PBXManualTimeSettings') === 'on') {
 			const manualDate = timeSettings.$formObj.form('get value', 'ManualDateTime');
-			const timestamp = Date.parse(manualDate)/1000;
-			console.debug(`Set new system date: ${manualDate} timestamp: ${timestamp}`);
-			PbxApi.UpdateDateTime(timestamp);
+			const timestamp = Date.parse(`${manualDate}`)/1000;
+			const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+			PbxApi.UpdateDateTime({timestamp, userTimeZone});
 		}
 	},
 	initializeForm() {

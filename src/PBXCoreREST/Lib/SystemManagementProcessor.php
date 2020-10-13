@@ -29,6 +29,8 @@ class SystemManagementProcessor extends Injectable
      * @param array $request
      *
      * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     *
+     * @throws \Exception
      */
     public static function systemCallBack(array $request): PBXApiResult
     {
@@ -51,9 +53,12 @@ class SystemManagementProcessor extends Injectable
                 Util::mwExecBg("{$phpPath} -f {$workerDownloaderPath} '{$data['settings_file']}'");
                 $res->success = true;
                 break;
+            case 'getDate':
+                $res->success = true;
+                $res->data['timestamp'] = time();
+                break;
             case 'setDate':
-                $res->success = System::setDate($data['timestamp']);
-                $res->data = $data;
+                $res->success = System::setDate($data['timestamp'], $data['userTimeZone']);
                 break;
             case 'updateCoreLanguage':
                 $di = Di::getDefault();

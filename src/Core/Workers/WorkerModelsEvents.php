@@ -494,8 +494,7 @@ class WorkerModelsEvents extends WorkerBase
      */
     public function reloadPHPFPM(): void
     {
-        $phpConf = new PHPConf();
-        $phpConf->reStart();
+        PHPConf::reStart();
     }
 
     /**
@@ -512,8 +511,7 @@ class WorkerModelsEvents extends WorkerBase
      */
     public function updateTomeZone(): void
     {
-        $system = new System();
-        $system->timezoneConfigure();
+        System::timezoneConfigure();
     }
 
     /**

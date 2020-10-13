@@ -117,8 +117,7 @@ class SystemLoader extends Di\Injectable
         Util::echoGreenDone();
 
         Util::echoWithSyslog(' - Start php-fpm daemon...');
-        $phpFPM = new PHPConf();
-        $phpFPM->reStart();
+        PHPConf::reStart();
         Util::echoGreenDone();
 
         Util::echoWithSyslog(' - Start Nginx daemon...');

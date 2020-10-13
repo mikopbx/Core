@@ -138,7 +138,7 @@ class TimeSettingsController extends BaseController
 
         $this->flash->success($this->translation->_('ms_SuccessfulSaved'));
         $this->view->success = true;
-        $this->view->reload  = 'time-settings/modify';
+       // $this->view->reload  = 'time-settings/modify';
         $this->db->commit();
     }
 }
