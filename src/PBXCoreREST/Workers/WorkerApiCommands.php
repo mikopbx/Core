@@ -95,7 +95,7 @@ class WorkerApiCommands extends WorkerBase
             $request   = json_decode($message->getBody(), true, 512, JSON_THROW_ON_ERROR);
             $processor = $request['processor'];
 
-            if (array_key_exists($this->processors, $processor)) {
+            if (array_key_exists($processor, $this->processors)) {
                 $res = $this->processors[$processor]::callback($request);
             } else {
                 $res             = new PBXApiResult();

@@ -147,7 +147,7 @@ class SystemManagementProcessor extends Injectable
                 } else {
                     PBXConfModulesProvider::recreateModulesProvider();
                     $res->data = $moduleStateProcessor->getMessages();
-                   // $res->data['needRestartWorkers'] = true; //TODO:: Проверить надо ли это
+                    $res->data['needRestartWorkers'] = true; //TODO:: Проверить надо ли это
                     $res->success                   = true;
                 }
                 break;
@@ -160,7 +160,7 @@ class SystemManagementProcessor extends Injectable
                 } else {
                     PBXConfModulesProvider::recreateModulesProvider();
                     $res->data = $moduleStateProcessor->getMessages();
-                   // $res->data['needRestartWorkers'] = true; //TODO:: Проверить надо ли это
+                    $res->data['needRestartWorkers'] = true; //TODO:: Проверить надо ли это
                     $res->success                   = true;
                 }
                 break;
