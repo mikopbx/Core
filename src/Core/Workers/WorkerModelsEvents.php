@@ -310,7 +310,7 @@ class WorkerModelsEvents extends WorkerBase
                     $this->modified_tables[self::R_TIMEZONE]    = true;
                     $this->modified_tables[self::R_NGINX]    = true;
                     $this->modified_tables[self::R_PHP_FPM]    = true;
-                    $this->modified_tables[self::R_REST_API_WORKER] = true; //TODO::Зачем?
+                    $this->modified_tables[self::R_REST_API_WORKER] = true;
                 }
                 if ($this->pbxSettings->itHasNTPSettings()) {
                     $this->modified_tables[self::R_NTP]    = true;
@@ -476,8 +476,7 @@ class WorkerModelsEvents extends WorkerBase
      */
     public function reloadNtp(): void
     {
-        $ntpConf = new NTPConf();
-        $ntpConf->configure();
+        NTPConf::configure();
     }
 
     /**

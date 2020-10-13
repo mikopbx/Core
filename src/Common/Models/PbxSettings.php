@@ -422,6 +422,7 @@ class PbxSettings extends ModelsBase
     public function itHasNTPSettings(): bool
     {
         switch ($this->key) {
+            case 'PBXManualTimeSettings':
             case 'NTPServer':
                 return true;
             default:

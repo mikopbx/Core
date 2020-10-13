@@ -141,8 +141,7 @@ class System extends Di\Injectable
                     PBX::managerReload(); //
                     break;
                 case 'ntp':
-                    $ntpConf = new NTPConf();
-                    $ntpConf->configure();
+                    NTPConf::configure();
                     break;
                 case 'firewall':
                     IptablesConf::reloadFirewall();

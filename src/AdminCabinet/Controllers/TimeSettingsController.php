@@ -118,7 +118,11 @@ class TimeSettingsController extends BaseController
             switch ($key) {
                 case "PBXManualTimeSettings":
                 case "***ALL CHECK BOXES ABOVE***":
-                    $record->value = ($data[$key] === 'on') ? "1" : "0";
+                    $record->value = ($data[$key] === 'on') ? '1' : '0';
+                    break;
+                case "NTPServer":
+                    $ntp_servers   = preg_split('/\r\n|\r|\n| |,/', $data[$key]);
+                    $record->value = implode(PHP_EOL, $ntp_servers);
                     break;
                 default:
                     if ( ! array_key_exists($key, $data)) {
@@ -138,7 +142,7 @@ class TimeSettingsController extends BaseController
 
         $this->flash->success($this->translation->_('ms_SuccessfulSaved'));
         $this->view->success = true;
-       // $this->view->reload  = 'time-settings/modify';
+        // $this->view->reload  = 'time-settings/modify';
         $this->db->commit();
     }
 }
