@@ -34,7 +34,7 @@ class LicenseManagementProcessor extends Injectable
      * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
      *
      */
-    public static function licenseCallBack(array $request): PBXApiResult
+    public static function callBack(array $request): PBXApiResult
     {
         $action         = $request['action'];
         $data           = $request['data'];

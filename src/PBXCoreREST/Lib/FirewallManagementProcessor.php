@@ -11,8 +11,6 @@ namespace MikoPBX\PBXCoreREST\Lib;
 
 use MikoPBX\Common\Models\Fail2BanRules;
 use MikoPBX\Core\System\Configs\Fail2BanConf;
-use MikoPBX\Core\System\Firewall;
-use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\System\Verify;
 use Phalcon\Di\Injectable;

@@ -31,7 +31,7 @@ class FilesManagementProcessor extends Injectable
      *
      * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
      */
-    public static function uploadCallBack(array $request): PBXApiResult
+    public static function callBack(array $request): PBXApiResult
     {
         $action   = $request['action'];
         $postData = $request['data'];

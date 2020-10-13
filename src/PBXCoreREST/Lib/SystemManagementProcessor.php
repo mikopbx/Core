@@ -32,7 +32,7 @@ class SystemManagementProcessor extends Injectable
      *
      * @throws \Exception
      */
-    public static function systemCallBack(array $request): PBXApiResult
+    public static function callBack(array $request): PBXApiResult
     {
         $action         = $request['action'];
         $data           = $request['data'];
@@ -147,7 +147,7 @@ class SystemManagementProcessor extends Injectable
                 } else {
                     PBXConfModulesProvider::recreateModulesProvider();
                     $res->data = $moduleStateProcessor->getMessages();
-                    $res->data['needReloadModules'] = true;
+                   // $res->data['needRestartWorkers'] = true; //TODO:: Проверить надо ли это
                     $res->success                   = true;
                 }
                 break;
@@ -160,7 +160,7 @@ class SystemManagementProcessor extends Injectable
                 } else {
                     PBXConfModulesProvider::recreateModulesProvider();
                     $res->data = $moduleStateProcessor->getMessages();
-                    $res->data['needReloadModules'] = true;
+                   // $res->data['needRestartWorkers'] = true; //TODO:: Проверить надо ли это
                     $res->success                   = true;
                 }
                 break;

@@ -15,6 +15,7 @@ use MikoPBX\PBXCoreREST\Lib\AdvicesProcessor;
 use MikoPBX\PBXCoreREST\Lib\CdrDBProcessor;
 use MikoPBX\PBXCoreREST\Lib\IAXStackProcessor;
 use MikoPBX\PBXCoreREST\Lib\LicenseManagementProcessor;
+use MikoPBX\PBXCoreREST\Lib\PbxExtensionsProcessor;
 use MikoPBX\PBXCoreREST\Lib\SysLogsManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Lib\SIPStackProcessor;
@@ -28,17 +29,19 @@ require_once 'Globals.php';
 class WorkerApiCommands extends WorkerBase
 {
     /**
-     * Modules can expose additional REST methods and processors,
-     * look at src/Modules/Config/RestAPIConfigInterface.php
-     */
-    private array $additionalProcessors;
-
-    private bool $needRestart = false;
-    /**
-     * Максимаольное кол-во запущенных процессов.
+     * The maximum parallel worker processes
+     *
      * @var int
      */
-    protected int $maxProc=1;
+    protected int $maxProc = 1;
+
+    /**
+     * Available REST API processors
+     */
+    private array $processors;
+
+
+    private bool $needRestart = false;
 
     /**
      * @param $argv
@@ -49,9 +52,9 @@ class WorkerApiCommands extends WorkerBase
         $client->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
         $client->subscribe(__CLASS__, [$this, 'prepareAnswer']);
 
-        $this->registerModulesProcessors();
+        $this->registerProcessors();
 
-        while ($this->needRestart===false) {
+        while ($this->needRestart === false) {
             try {
                 $client->wait();
             } catch (\Error $e) {
@@ -62,24 +65,23 @@ class WorkerApiCommands extends WorkerBase
     }
 
     /**
-     * Every module config class can process requests under root rights,
-     * if it described in Config class
+     * Prepares list of available processors
      */
-    private function registerModulesProcessors():void
+    private function registerProcessors(): void
     {
-        $additionalModules          = $this->di->getShared('pbxConfModules');
-        $this->additionalProcessors = [];
-        foreach ($additionalModules as $moduleConfigObject) {
-            if ($moduleConfigObject->moduleUniqueId !== 'InternalConfigModule'
-                && method_exists($moduleConfigObject, 'moduleRestAPICallback')
-            ) {
-                $this->additionalProcessors[] = [
-                    $moduleConfigObject->moduleUniqueId,
-                    $moduleConfigObject,
-                    'moduleRestAPICallback',
-                ];
-            }
-        }
+        $this->processors = [
+            'advices' => AdvicesProcessor::class,
+            'cdr'     => CdrDBProcessor::class,
+            'iax'     => IAXStackProcessor::class,
+            'license' => LicenseManagementProcessor::class,
+            'sip'     => SIPStackProcessor::class,
+            'storage' => StorageManagementProcessor::class,
+            'system'  => SystemManagementProcessor::class,
+            'syslog'  => SysLogsManagementProcessor::class,
+            'sysinfo' => SysinfoManagementProcessor::class,
+            'upload'  => FilesManagementProcessor::class,
+            'modules' => PbxExtensionsProcessor::class
+        ];
     }
 
     /**
@@ -93,18 +95,17 @@ class WorkerApiCommands extends WorkerBase
             $request   = json_decode($message->getBody(), true, 512, JSON_THROW_ON_ERROR);
             $processor = $request['processor'];
 
-            $methodName = "{$processor}CallBack";
-            if(method_exists($this, $methodName)){
-                $res = $this->$methodName($request);
-            }else{
+            if (array_key_exists($this->processors, $processor)) {
+                $res = $this->processors[$processor]::callback($request);
+            } else {
                 $res             = new PBXApiResult();
-                $res->processor = __METHOD__;
+                $res->processor  = __METHOD__;
                 $res->success    = false;
                 $res->messages[] = "Unknown processor - {$processor} in prepareAnswer";
             }
         } catch (Error $exception) {
             $res             = new PBXApiResult();
-            $res->processor = __METHOD__;
+            $res->processor  = __METHOD__;
             $res->messages[] = 'Exception on WorkerApiCommands - ' . $exception->getMessage();
         }
         $message->reply(json_encode($res->getResult()));
@@ -116,162 +117,15 @@ class WorkerApiCommands extends WorkerBase
      *
      * @param array $data
      */
-    private function checkNeedReload(array $data): void{
-
-        // Check if modules change state
-        $needReloadModules = $data['needReloadModules']??false;
-        if ($needReloadModules) {
-            $this->registerModulesProcessors();
-        }
-
+    private function checkNeedReload(array $data): void
+    {
         // Check if new code added from modules
-        $needRestartWorkers = $data['needRestartWorkers']??false;
+        $needRestartWorkers = $data['needRestartWorkers'] ?? false;
         if ($needRestartWorkers) {
             System::restartAllWorkers();
-            $this->needRestart=true;
+            $this->needRestart = true;
         }
     }
-
-    /**
-     * Processes modules API requests
-     * @param array $request
-     * @return PBXApiResult
-     */
-    private function advicesCallBack(array $request): PBXApiResult
-    {
-        return AdvicesProcessor::advicesCallBack($request);
-    }
-
-    /**
-     * Processes modules API requests
-     * @param array $request
-     * @return PBXApiResult
-     */
-    private function cdrCallBack(array $request): PBXApiResult
-    {
-        return CdrDBProcessor::cdrCallBack($request);
-    }
-
-    /**
-     * Processes modules API requests
-     * @param array $request
-     * @return PBXApiResult
-     * @throws \Exception
-     */
-    private function systemCallBack(array $request): PBXApiResult
-    {
-        return SystemManagementProcessor::systemCallBack($request);
-    }
-
-    /**
-     * Processes modules API requests
-     * @param array $request
-     * @return PBXApiResult
-     */
-    private function iaxCallBack(array $request): PBXApiResult
-    {
-        return IAXStackProcessor::iaxCallBack($request);
-    }
-
-    /**
-     * Processes modules API requests
-     * @param array $request
-     * @return PBXApiResult
-     */
-    private function sipCallBack(array $request): PBXApiResult
-    {
-        return SIPStackProcessor::sipCallBack($request);
-    }
-
-    /**
-     * Processes modules API requests
-     * @param array $request
-     * @return PBXApiResult
-     * @throws \Exception
-     */
-    private function syslogCallBack(array $request): PBXApiResult
-    {
-        return SysLogsManagementProcessor::syslogCallBack($request);
-    }
-
-    /**
-     * Processes modules API requests
-     *
-     * @param array $request
-     *
-     * @return PBXApiResult
-     */
-    private function sysinfoCallBack(array $request): PBXApiResult
-    {
-        return SysinfoManagementProcessor::sysinfoCallBack($request);
-    }
-
-    /**
-     * Processes modules API requests
-     *
-     * @param array $request
-     *
-     * @return PBXApiResult
-     */
-    private function storageCallBack(array $request): PBXApiResult
-    {
-        return StorageManagementProcessor::storageCallBack($request);
-    }
-
-    /**
-     * Processes modules API requests
-     *
-     * @param array $request
-     *
-     * @return PBXApiResult
-     */
-    private function uploadCallBack(array $request): PBXApiResult
-    {
-        return FilesManagementProcessor::uploadCallBack($request);
-    }
-
-    /**
-     * Processes modules API requests
-     *
-     * @param array $request
-     *
-     * @return PBXApiResult
-     */
-    private function licenseCallBack(array $request): PBXApiResult
-    {
-        return LicenseManagementProcessor::licenseCallBack($request);
-    }
-
-    /**
-     * Processes modules API requests
-     *
-     * @param array $request
-     *
-     * @return PBXApiResult
-     */
-    private function modulesCallBack(array $request): PBXApiResult
-    {
-        clearstatcache();
-
-        $action = $request['action'];
-        $module = $request['module'];
-
-        $res             = new PBXApiResult();
-        $res->processor = __METHOD__;
-        $res->messages[] = "Unknown action - {$action} in modulesCallBack";
-        $res->function   = $action;
-
-        // Try process request over additional modules
-        foreach ($this->additionalProcessors as [$moduleUniqueId, $moduleConfigObject, $callBack]) {
-            if (stripos($module, $moduleUniqueId) === 0) {
-                $res = $moduleConfigObject->$callBack($request);
-                break;
-            }
-        }
-
-        return $res;
-    }
-
 }
 
 // Start worker process
