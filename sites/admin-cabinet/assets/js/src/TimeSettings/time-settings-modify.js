@@ -6,7 +6,7 @@
  *
  */
 
-/* global globalRootUrl, globalTranslate, SemanticLocalization, Form, PbxApi */
+/* global globalRootUrl, globalTranslate, SemanticLocalization, Form, PbxApi, clockWorker */
 
 const timeSettings = {
 	$number: $('#extension'),
