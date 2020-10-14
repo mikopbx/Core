@@ -17,11 +17,10 @@ use Phalcon\Di;
  * /pbxcore/api/system/{name}' System management (POST).
  *
  * Setup system time
- *   curl -X POST -d '{"date": "2015.12.31-01:01:20"}' http://172.16.156.212/pbxcore/api/system/setDate;
+ *   curl -X POST -d timestamp=1602509882 http://127.0.0.1/pbxcore/api/system/setDate
  *
  * Send email
- *   curl -X POST -d '{"email": "apor@miko.ru", "subject":"Hi from mikopbx", "body":"Test message", "encode":
- *   ""}' http://172.16.156.223/pbxcore/api/system/sendMail;
+ *   curl -X POST -d '{"email": "apor@miko.ru", "subject":"Hi from mikopbx", "body":"Test message", "encode":""}' http://172.16.156.223/pbxcore/api/system/sendMail;
  *     'encode' - может быть пустой строкой или 'base64', на случай, если subject и body передаются в base64;
  *
  * Unban IP address

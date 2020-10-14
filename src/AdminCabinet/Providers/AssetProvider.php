@@ -538,10 +538,9 @@ class AssetProvider implements ServiceProviderInterface
                         break;
                     case 'TimeSettings':
                         if ($action === 'modify') {
-                            $semanticCollectionCSS->addCss('css/vendor/semantic/calendar.min.css', true);
-                            $semanticCollectionJS->addJs('js/vendor/semantic/calendar.min.js', true);
                             $footerCollectionJS
                                 ->addJs('js/pbx/main/form.js', true)
+                                ->addJs('js/pbx/TimeSettings/time-settings-worker.js', true)
                                 ->addJs('js/pbx/TimeSettings/time-settings-modify.js', true);
                         }
                         break;

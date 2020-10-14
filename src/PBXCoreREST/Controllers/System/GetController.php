@@ -30,7 +30,8 @@ use Phalcon\Di;
  * Ping backend (described in nginx.conf):
  *   curl http://172.16.156.223/pbxcore/api/system/ping
  *
- *
+ * Get system date:
+ *   curl http://172.16.156.223/pbxcore/api/system/getDate
  */
 class GetController extends BaseController
 {

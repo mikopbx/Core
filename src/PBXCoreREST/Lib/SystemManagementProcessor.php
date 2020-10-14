@@ -29,8 +29,10 @@ class SystemManagementProcessor extends Injectable
      * @param array $request
      *
      * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     *
+     * @throws \Exception
      */
-    public static function systemCallBack(array $request): PBXApiResult
+    public static function callBack(array $request): PBXApiResult
     {
         $action         = $request['action'];
         $data           = $request['data'];
@@ -51,13 +53,12 @@ class SystemManagementProcessor extends Injectable
                 Util::mwExecBg("{$phpPath} -f {$workerDownloaderPath} '{$data['settings_file']}'");
                 $res->success = true;
                 break;
+            case 'getDate':
+                $res->success = true;
+                $res->data['timestamp'] = time();
+                break;
             case 'setDate':
-                $res->success = System::setDate($data['date']);
-                if($res->success){
-                    $res->data['needRestartWorkers'] = true;
-                    $res->data['needReloadModules']  = true;
-                    $res->data['needReloadWWW']      = true;
-                }
+                $res->success = System::setDate($data['timestamp'], $data['userTimeZone']);
                 break;
             case 'updateCoreLanguage':
                 $di = Di::getDefault();
@@ -67,7 +68,7 @@ class SystemManagementProcessor extends Injectable
                 $di->register(new TranslationProvider());
                 break;
             case 'updateMailSettings':
-                // TODO
+                // TODO:
                 $res->success = true;
                 break;
             case 'sendMail':
@@ -146,7 +147,7 @@ class SystemManagementProcessor extends Injectable
                 } else {
                     PBXConfModulesProvider::recreateModulesProvider();
                     $res->data = $moduleStateProcessor->getMessages();
-                    $res->data['needReloadModules'] = true;
+                    $res->data['needRestartWorkers'] = true; //TODO:: Проверить надо ли это
                     $res->success                   = true;
                 }
                 break;
@@ -159,7 +160,7 @@ class SystemManagementProcessor extends Injectable
                 } else {
                     PBXConfModulesProvider::recreateModulesProvider();
                     $res->data = $moduleStateProcessor->getMessages();
-                    $res->data['needReloadModules'] = true;
+                    $res->data['needRestartWorkers'] = true; //TODO:: Проверить надо ли это
                     $res->success                   = true;
                 }
                 break;

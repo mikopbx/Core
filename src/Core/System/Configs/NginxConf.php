@@ -42,7 +42,7 @@ class NginxConf extends Injectable
             Util::mwExec("$NginxPath -s reload");
         } elseif (Util::isSystemctl()) {
             $systemCtrlPath = Util::which('systemctl');
-            Util::mwExec("{$systemCtrlPath}  nginx.service");
+            Util::mwExec("{$systemCtrlPath} restart nginx.service");
         } else {
             Util::killByName('nginx');
             Util::mwExec($NginxPath);

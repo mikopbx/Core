@@ -9,7 +9,7 @@
 namespace MikoPBX\Core\System\Configs;
 
 
-use MikoPBX\Core\System\MikoPBXConfig;
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di;
@@ -91,8 +91,7 @@ class PHPConf extends Injectable
      */
     public static function phpTimeZoneConfigure(): void
     {
-        $mikoPBXConfig = new MikoPBXConfig();
-        $timezone      = $mikoPBXConfig->getGeneralSettings('PBXTimezone');
+        $timezone      = PbxSettings::getValueByKey('PBXTimezone');
         date_default_timezone_set($timezone);
         if (file_exists('/etc/TZ')) {
             $catPath = Util::which('cat');
@@ -100,13 +99,13 @@ class PHPConf extends Injectable
         }
         $etcPhpIniPath = '/etc/php.d/01-timezone.ini';
         $contents = 'date.timezone="'.$timezone.'"';
-        Util::fileWriteContent($etcPhpIniPath, $contents);
+        file_put_contents($etcPhpIniPath, $contents);
     }
 
     /**
      *   Restart php-fpm
      **/
-    public function reStart(): void
+    public static function reStart(): void
     {
         if (Util::isSystemctl()) {
             $systemCtrlPath = Util::which('systemctl');

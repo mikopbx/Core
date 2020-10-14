@@ -30,10 +30,6 @@ class TimeSettingsController extends BaseController
         $timeSettingsFields     = PbxSettings::find($parameters);
         $readibleTimeZones      = $this->generateTimezoneList();
         $form                   = new TimeSettingsEditForm($timeSettingsFields, $readibleTimeZones);
-        $this->view->params     = [
-            'currenttime'     => date('d/m/Y H:i:s', time()),
-            'currenttimezone' => date_default_timezone_get(),
-        ];
         $this->view->form       = $form;
         $this->view->submitMode = null;
     }
@@ -100,7 +96,7 @@ class TimeSettingsController extends BaseController
     }
 
     /**
-     * Сохранение данных о настройках времени
+     * Save timezone settings
      */
     public function saveAction()
     {
@@ -122,7 +118,13 @@ class TimeSettingsController extends BaseController
             switch ($key) {
                 case "PBXManualTimeSettings":
                 case "***ALL CHECK BOXES ABOVE***":
-                    $record->value = ($data[$key] === 'on') ? "1" : "0";
+                    $record->value = ($data[$key] === 'on') ? '1' : '0';
+                    break;
+                case "NTPServer":
+                    $ntp_servers   = preg_split('/\r\n|\r|\n| |,/', $data[$key]);
+                    if (is_array($ntp_servers)){
+                        $record->value = implode(PHP_EOL, $ntp_servers);
+                    }
                     break;
                 default:
                     if ( ! array_key_exists($key, $data)) {
@@ -142,9 +144,7 @@ class TimeSettingsController extends BaseController
 
         $this->flash->success($this->translation->_('ms_SuccessfulSaved'));
         $this->view->success = true;
-        $this->view->reload  = 'time-settings/modify';
+        // $this->view->reload  = 'time-settings/modify';
         $this->db->commit();
-        $PBXTimezone = PbxSettings::getValueByKey("PBXTimezone");
-        $this->session->set('timezone', $PBXTimezone);
     }
 }

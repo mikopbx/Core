@@ -6,7 +6,7 @@
  *
  */
 
-/* global globalRootUrl, globalTranslate, SemanticLocalization, Form, PbxApi */
+/* global globalRootUrl, globalTranslate, SemanticLocalization, Form, PbxApi, clockWorker */
 
 const timeSettings = {
 	$number: $('#extension'),
@@ -14,11 +14,11 @@ const timeSettings = {
 	validateRules: {
 		CurrentDateTime: {
 			depends: 'PBXManualTimeSettings',
-			identifier: 'CurrentDateTime',
+			identifier: 'ManualDateTime',
 			rules: [
 				{
 					type: 'empty',
-					prompt: globalTranslate.cq_ValidateNameEmpty,
+					prompt: globalTranslate.ts_ValidateDateTime,
 				},
 			],
 		},
@@ -26,12 +26,6 @@ const timeSettings = {
 	initialize() {
 		$('#PBXTimezone').dropdown({
 			fullTextSearch: true,
-		});
-
-		$('#CalendarBlock').calendar({
-			firstDayOfWeek: SemanticLocalization.calendarFirstDayOfWeek,
-			ampm: false,
-			text: SemanticLocalization.calendarText,
 		});
 
 		$('.checkbox').checkbox({
@@ -42,10 +36,6 @@ const timeSettings = {
 		timeSettings.initializeForm();
 		timeSettings.toggleDisabledFieldClass();
 	},
-	formattedDate() {
-		const date = Date.parse(timeSettings.$formObj.form('get value', 'CurrentDateTime'));
-		return date / 1000;
-	},
 	toggleDisabledFieldClass() {
 		if (timeSettings.$formObj.form('get value', 'PBXManualTimeSettings') === 'on') {
 			$('#SetDateTimeBlock').removeClass('disabled');
@@ -53,6 +43,7 @@ const timeSettings = {
 		} else {
 			$('#SetNtpServerBlock').removeClass('disabled');
 			$('#SetDateTimeBlock').addClass('disabled');
+			clockWorker.restartWorker();
 		}
 	},
 	cbBeforeSendForm(settings) {
@@ -61,7 +52,12 @@ const timeSettings = {
 		return result;
 	},
 	cbAfterSendForm() {
-		PbxApi.UpdateDateTime({date: timeSettings.formattedDate()});
+		if (timeSettings.$formObj.form('get value', 'PBXManualTimeSettings') === 'on') {
+			const manualDate = timeSettings.$formObj.form('get value', 'ManualDateTime');
+			const timestamp = Date.parse(`${manualDate}`)/1000;
+			const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+			PbxApi.UpdateDateTime({timestamp, userTimeZone});
+		}
 	},
 	initializeForm() {
 		Form.$formObj = timeSettings.$formObj;

@@ -26,7 +26,7 @@ class FillDataTimeSettings extends MikoPBXTestsBase
         $this->selectDropdownItem('PBXTimezone', $params['PBXTimezone']);
         $this->changeCheckBoxState('PBXManualTimeSettings', $params['PBXManualTimeSettings']);
         if ($params['PBXManualTimeSettings']){
-            self::$driver->executeScript("$('div#CalendarBlock div.input.calendar').calendar('set startDate', new Date())");
+            $this->changeInputField('ManualDateTime', $params['ManualDateTime']);
         } else {
             $this->changeInputField('NTPServer', $params['NTPServer']);
         }
@@ -37,7 +37,7 @@ class FillDataTimeSettings extends MikoPBXTestsBase
         $this->assertMenuItemSelected('PBXTimezone',$params['PBXTimezone']);
 
         if ($params['PBXManualTimeSettings']){
-            //$setupDate = self::$driver->executeScript("$('div#CalendarBlock div.input.calendar').calendar('get date')");
+            // $this->assertInputFieldValueEqual('ManualDateTime', $params['ManualDateTime']);
         } else {
             $this->assertInputFieldValueEqual('NTPServer', $params['NTPServer']);
         }
@@ -52,15 +52,15 @@ class FillDataTimeSettings extends MikoPBXTestsBase
         $params = [];
         $params[] = [[
             'PBXTimezone' => 'Europe/Riga',
-            'PBXManualTimeSettings'    => false,
-            'CurrentDateTime'    => '',
-            'NTPServer'    => 'ntp5.stratum1.ru',
+            'PBXManualTimeSettings'    => true,
+            'ManualDateTime'    => '01/01/2020, 1:01:01 PM',
+            'NTPServer'    => '',
         ]];
         $params[] = [[
             'PBXTimezone' => 'Europe/Riga',
-            'PBXManualTimeSettings'    => true,
-            'CurrentDateTime'    => '',
-            'NTPServer'    => '',
+            'PBXManualTimeSettings'    => false,
+            'ManualDateTime'    => '',
+            'NTPServer'    => 'ntp5.stratum1.ru',
         ]];
         return $params;
     }

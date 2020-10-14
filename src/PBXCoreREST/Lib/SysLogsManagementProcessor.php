@@ -27,7 +27,7 @@ class SysLogsManagementProcessor extends Injectable
      * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
      * @throws \Exception
      */
-    public static function syslogCallBack(array $request): PBXApiResult
+    public static function callBack(array $request): PBXApiResult
     {
         $action         = $request['action'];
         $data           = $request['data'];

@@ -1,18 +1,4 @@
 {{ form('time-settings/save', 'role': 'form', 'class': 'ui large form', 'id':'time-settings-form') }}
-<h3 class="ui dividing header">{{ t._("ts_CurrentSettings") }}</h3>
-<div class="three fields">
-    <div class="field">
-        <label>{{ t._('ts_SystemTime') }}</label>
-        {{ params['currenttime'] }}
-    </div>
-</div>
-<div class="three fields">
-    <div class="field">
-        <label>{{ t._('ts_TimeZone') }}</label>
-        {{ params['currenttimezone'] }}
-    </div>
-</div>
-<h3 class="ui dividing header">{{ t._("ts_ModifySettings") }}</h3>
 <div class="three fields">
     <div class="field">
         <label>{{ t._('ts_TimeZone') }}</label>
@@ -32,7 +18,7 @@
         <label>{{ t._('ts_CurrentSystemTime') }}</label>
         <div class="ui input left icon calendar">
             <i class="calendar icon"></i>
-            {{ form.render('CurrentDateTime') }}
+            {{ form.render('ManualDateTime') }}
         </div>
     </div>
 </div>

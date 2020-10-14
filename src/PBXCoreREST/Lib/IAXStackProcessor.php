@@ -22,7 +22,7 @@ class IAXStackProcessor extends Injectable
      *
      * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
      */
-    public static function iaxCallBack(array $request): PBXApiResult
+    public static function callBack(array $request): PBXApiResult
     {
         $action = $request['action'];
         switch ($action) {

@@ -32,25 +32,11 @@ class PbxSettings extends ModelsBase
      */
     public ?string $value;
 
-    /**
-     * Значениея по умолчанию для переменных станции
-     *
-     * @return array - результат из базы или значение по умолчанию
-     */
-    public static function getAllPbxSettings(): array
-    {
-        $arrOfDefaultValues = self::getDefaultArrayValues();
-        foreach ($arrOfDefaultValues as $key => $record) {
-            $arrOfDefaultValues[$key] = self::getValueByKey($key);
-        }
-
-        return $arrOfDefaultValues;
-    }
 
     /**
-     * Значения по умолчанию для переменных станции
+     * Prepares default values for PbxSettings keys
      *
-     * @return array - значения по умолчанию
+     * @return array default values
      */
     public static function getDefaultArrayValues(): array
     {
@@ -97,6 +83,7 @@ class PbxSettings extends ModelsBase
             'MailTplMissedCallFooter'         => '',
             'MailTplVoicemailSubject'         => 'VoiceMail from PBX',
             'MailTplVoicemailBody'            => 'See attach',
+            'NTPServer'                       =>  '0.pool.ntp.org'.PHP_EOL.'1.pool.ntp.org'.PHP_EOL,
             'VoicemailNotificationsEmail'     => 'admin@mycompany.com',
             'VoicemailExten'                  => '*001',
             'PBXLanguage'                     => 'en-en',
@@ -126,11 +113,26 @@ class PbxSettings extends ModelsBase
     }
 
     /**
-     * Значение по умолчанию для переменных станции
+     *  Returns default or saved values for all predefined keys if it exists on DB
      *
-     * @param $key string - ключ значения
+     * @return array
+     */
+    public static function getAllPbxSettings(): array
+    {
+        $arrOfDefaultValues = self::getDefaultArrayValues();
+        foreach ($arrOfDefaultValues as $key => $record) {
+            $arrOfDefaultValues[$key] = self::getValueByKey($key);
+        }
+
+        return $arrOfDefaultValues;
+    }
+
+    /**
+     * Returns default or saved value for key if it exists on DB
      *
-     * @return string - результат из базы или значение по умолчанию
+     * @param $key string value key
+     *
+     * @return string
      */
     public static function getValueByKey(string $key): string
     {
@@ -154,6 +156,10 @@ class PbxSettings extends ModelsBase
         parent::initialize();
     }
 
+    /**
+     * Before PbxSettings entity save callback
+     * @return bool
+     */
     public function validation(): bool
     {
         $validation = new Validation();
@@ -169,6 +175,9 @@ class PbxSettings extends ModelsBase
         return $this->validate($validation);
     }
 
+    /**
+     * After PbxSettings entity save callback
+     */
     public function afterSave(): void
     {
         parent::afterSave();
@@ -178,7 +187,7 @@ class PbxSettings extends ModelsBase
     }
 
     /**
-     * Проверяем на наличие параметров сетевых портов и firewall
+     *  Check if this changes influence to the iptables daemon
      *
      * @return bool
      */
@@ -208,7 +217,7 @@ class PbxSettings extends ModelsBase
     }
 
     /**
-     * Проверяем на наличие параметров SIP
+     * Check if this changes influence to the pjsip.conf
      *
      * @return bool
      */
@@ -229,7 +238,7 @@ class PbxSettings extends ModelsBase
     }
 
     /**
-     * Проверяем на наличие параметров IAX портов
+     * Check if this changes influence to the iax2.conf
      *
      * @return bool
      */
@@ -244,7 +253,7 @@ class PbxSettings extends ModelsBase
     }
 
     /**
-     * Проверяем на наличие параметров AMI AJAM портов
+     * Check if this changes influence to the manager.conf
      *
      * @return bool
      */
@@ -261,7 +270,7 @@ class PbxSettings extends ModelsBase
     }
 
     /**
-     * Проверяем на наличие параметров изменения настроек features
+     * Check if this changes influence to the features.conf
      *
      * @return bool
      */
@@ -285,7 +294,7 @@ class PbxSettings extends ModelsBase
     }
 
     /**
-     * Проверяем на наличие параметров SSH
+     * Check if this changes influence to the SSHd daemon
      *
      * @return bool
      */
@@ -305,7 +314,7 @@ class PbxSettings extends ModelsBase
     }
 
     /**
-     * Проверяем на наличие параметров Web
+     * Check if this changes influence to the Nginx daemon
      *
      * @return bool
      */
@@ -324,7 +333,7 @@ class PbxSettings extends ModelsBase
     }
 
     /**
-     * Проверяем на наличие параметров требующих перезапуска cron
+     * Check if this changes influence to the Crond daemon
      *
      * @return bool
      */
@@ -339,7 +348,7 @@ class PbxSettings extends ModelsBase
     }
 
     /**
-     * Проверяем на наличие параметров требующих перезапуска dialplan
+     *  Check if this changes influence to the extensions.conf
      *
      * @return bool
      */
@@ -390,4 +399,49 @@ class PbxSettings extends ModelsBase
         }
     }
 
+    /**
+     * Check if this changes influence to timezone and logs
+     *
+     * @return bool
+     */
+    public function itHasTimeZoneSettings(): bool
+    {
+        switch ($this->key) {
+            case 'PBXTimezone':
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * Check if this changes influence to NTP daemon settings
+     *
+     * @return bool
+     */
+    public function itHasNTPSettings(): bool
+    {
+        switch ($this->key) {
+            case 'PBXManualTimeSettings':
+            case 'NTPServer':
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * Check if this changes influence licensing
+     *
+     * @return bool
+     */
+    public function itHasLicenseSettings(): bool
+    {
+        switch ($this->key) {
+            case 'PBXLicense':
+                return true;
+            default:
+                return false;
+        }
+    }
 }
