@@ -423,7 +423,7 @@ class UpdateSystemConfig extends Di\Injectable
         ];
         $extensions = Extensions::find();
         foreach ($extensions as $extension){
-            if (array_key_exists($extension->type, $showInPhonebookTypes)){
+            if (in_array($extension->type, $showInPhonebookTypes)){
                 $extension->show_in_phonebook='1';
                 $extension->update();
             }
