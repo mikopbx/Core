@@ -73,7 +73,6 @@
     </div>
 </div>
 <div class="ui bottom attached tab segment" data-tab="missed">
-    <h3 class="ui dividing header ">{{ t._("ms_MissedCalls") }}</h3>
     <div class="field">
         <label for="MailTplMissedCallSubject">{{ t._('ms_MissedCallSubject') }}</label>
 
@@ -96,7 +95,6 @@
 </div>
 
 <div class="ui bottom attached tab segment" data-tab="voicemail">
-    <h3 class="ui dividing header ">{{ t._("ms_Voicemail") }}</h3>
     <div class="ten wide field">
         <label for="VoicemailNotificationsEmail">{{ t._('ms_VoicemailCommonEmail') }}</label>
         {{ form.render('VoicemailNotificationsEmail') }}
