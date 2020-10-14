@@ -37,7 +37,7 @@ class ConferenceRoomsController extends BaseController
         $record = ConferenceRooms::findFirstByUniqid($uniqid);
         if ($record === null) {
             $record            = new ConferenceRooms();
-            $record->uniqid    = strtoupper('CONFERENCE-' . md5(time()));
+            $record->uniqid    = Extensions::TYPE_CONFERENCE.strtoupper('-' . md5(time()));
             $record->extension = Extensions::getNextFreeApplicationNumber();
         }
         $this->view->form      = new ConferenceRoomEditForm($record);
@@ -60,7 +60,7 @@ class ConferenceRoomsController extends BaseController
         if ($room === null) {
             $room                         = new ConferenceRooms();
             $extension                    = new Extensions();
-            $extension->type              = "CONFERENCE";
+            $extension->type              = Extensions::TYPE_CONFERENCE;
             $extension->number            = $data["extension"];
             $extension->callerid          = $this->sanitizeCallerId($data["name"]);
             $extension->userid            = null;

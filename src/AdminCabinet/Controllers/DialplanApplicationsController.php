@@ -67,7 +67,7 @@ class DialplanApplicationsController extends BaseController
             $appRecord = new DialplanApplications();
 
             $extension                    = new Extensions();
-            $extension->type              = 'DIALPLAN APPLICATION';
+            $extension->type              = Extensions::TYPE_DIALPLAN_APPLICATION;
             $extension->number            = $data['extension'];
             $extension->callerid          = $this->sanitizeCallerId($data['name']);
             $extension->userid            = null;

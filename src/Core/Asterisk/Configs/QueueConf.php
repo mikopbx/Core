@@ -9,6 +9,7 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\CallQueues;
+use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Modules\Config\ConfigClass;
 use MikoPBX\Core\System\{Util};
 
@@ -109,7 +110,7 @@ class QueueConf extends ConfigClass
                     [
                         'agent'      => $agent->extension,
                         'priority'   => $agent->priority,
-                        'isExternal' => ($agent->Extensions->type === "EXTERNAL"),
+                        'isExternal' => ($agent->Extensions->type === Extensions::TYPE_EXTERNAL),
                     ];
             }
             $arrResult[$queueUniqid]['agents'] = $arrAgents;

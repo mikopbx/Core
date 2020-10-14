@@ -38,7 +38,7 @@ class CallQueuesController extends BaseController
         $extensionList    = [];
         if ($queue === null) {
             $queue                              = new CallQueues();
-            $queue->uniqid                      = strtoupper('QUEUE-' . md5($queue->id . time()));
+            $queue->uniqid                      = Extensions::TYPE_QUEUE.strtoupper('-' . md5($queue->id . time()));
             $queue->caller_hear                 = 'moh';
             $queue->seconds_to_ring_each_member = 20;
             $queue->seconds_for_wrapup          = 15;
@@ -119,7 +119,7 @@ class CallQueuesController extends BaseController
         if ($queue === null) {
             $queue                        = new CallQueues();
             $extension                    = new Extensions();
-            $extension->type              = "QUEUE";
+            $extension->type              = Extensions::TYPE_QUEUE;
             $extension->number            = $data["extension"];
             $extension->callerid          = $this->sanitizeCallerId($data["name"]);
             $extension->userid            = null;

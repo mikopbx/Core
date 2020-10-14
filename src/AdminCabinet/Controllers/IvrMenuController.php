@@ -123,7 +123,7 @@ class IvrMenuController extends BaseController
             $ivrMenuRecord = new IvrMenu();
 
             $extension                    = new Extensions();
-            $extension->type              = "IVR MENU";
+            $extension->type              = Extensions::TYPE_IVR_MENU;
             $extension->number            = $data["extension"];
             $extension->callerid          = $this->sanitizeCallerId($data["name"]);
             $extension->userid            = null;
