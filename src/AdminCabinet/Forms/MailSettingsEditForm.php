@@ -38,8 +38,9 @@ class MailSettingsEditForm extends Form
                     break;
 
                 case 'MailTplMissedCallBody' :
-                case 'MailTplVoicemailBody' :
                 case 'MailTplMissedCallFooter' :
+                case 'MailTplVoicemailBody' :
+                case 'MailTplVoicemailFooter' :
 
                     $this->add(
                         new TextArea(

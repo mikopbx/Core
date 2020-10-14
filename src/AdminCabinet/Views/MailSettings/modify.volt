@@ -1,7 +1,8 @@
 {{ form('mail-settings/save', 'role': 'form', 'class': 'ui form large', 'id': 'mail-settings-form') }}
 <div class="ui top attached tabular menu" id="mail-settings-menu">
     <a class="item active" data-tab="smtp">{{ t._('ms_SMTPSettings') }}</a>
-    <a class="item" data-tab="notifications">{{ t._('ms_NotificationTemplates') }}</a>
+    <a class="item" data-tab="missed">{{ t._('ms_NotificationTemplatesMissed') }}</a>
+    <a class="item" data-tab="voicemail">{{ t._('ms_NotificationTemplatesVoicemail') }}</a>
 </div>
 
 <div class="ui bottom attached tab segment active" data-tab="smtp">
@@ -71,7 +72,7 @@
         {{ form.render('SystemNotificationsEmail') }}
     </div>
 </div>
-<div class="ui bottom attached tab segment" data-tab="notifications">
+<div class="ui bottom attached tab segment" data-tab="missed">
     <h3 class="ui dividing header ">{{ t._("ms_MissedCalls") }}</h3>
     <div class="field">
         <label for="MailTplMissedCallSubject">{{ t._('ms_MissedCallSubject') }}</label>
@@ -92,8 +93,15 @@
         {{ form.render('MailTplMissedCallFooter') }}
 
     </div>
+</div>
 
+<div class="ui bottom attached tab segment" data-tab="voicemail">
     <h3 class="ui dividing header ">{{ t._("ms_Voicemail") }}</h3>
+    <div class="ten wide field">
+        <label for="VoicemailNotificationsEmail">{{ t._('ms_VoicemailCommonEmail') }}</label>
+        {{ form.render('VoicemailNotificationsEmail') }}
+    </div>
+
     <div class="field">
         <label for="MailTplVoicemailSubject">{{ t._('ms_VoicemailSubject') }}</label>
 
@@ -108,18 +116,12 @@
 
     </div>
     <div class="field">
-        <label for="MailTplVoicemailFooter">{{ t._('ms_VoicemailBody') }}</label>
+        <label for="MailTplVoicemailFooter">{{ t._('ms_VoicemailFooter') }}</label>
 
-        {{ form.render('MailTplVoicemailBody') }}
-
-    </div>
-
-    <div class="five wide field">
-        <label for="VoicemailNotificationsEmail">{{ t._('ms_VoicemailCommonEmail') }}</label>
-
-        {{ form.render('VoicemailNotificationsEmail') }}
+        {{ form.render('MailTplVoicemailFooter') }}
 
     </div>
+
 
 </div>
 
