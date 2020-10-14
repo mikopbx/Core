@@ -659,7 +659,6 @@ return [
     'ts_CurrentSystemTime' => 'Thời gian hiện tại',
     'ts_NTPServer' => 'Máy chủ NTP',
     'ms_SMTPSettings' => 'Cài đặt tin nhắn',
-    'ms_NotificationTemplates' => 'Mẫu cảnh báo',
     'ms_SMTPHost' => 'Máy chủ SMTP',
     'ms_SMTPPort' => 'Cổng SMTP',
     'ms_SMTPUsername' => 'Đăng nhập SMTP',

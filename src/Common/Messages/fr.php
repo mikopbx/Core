@@ -223,7 +223,6 @@ return [
     'ms_SMTPUsername' => 'Connexion SMTP',
     'ms_SMTPPort' => 'Port SMTP',
     'ms_SMTPHost' => 'Hôte SMTP',
-    'ms_NotificationTemplates' => 'Modèles d\'alerte',
     'ms_SMTPSettings' => 'Paramètres des messages',
     'ts_NTPServer' => 'Serveur NTP',
     'ts_CurrentSystemTime' => 'Heure actuelle',

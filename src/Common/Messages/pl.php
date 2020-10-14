@@ -162,7 +162,6 @@ return [
     'ts_CurrentSystemTime' => 'Aktualny czas',
     'ts_NTPServer' => 'Serwer NTP',
     'ms_SMTPSettings' => 'Ustawienia wiadomości',
-    'ms_NotificationTemplates' => 'Szablony alertów',
     'ms_SMTPPort' => 'Port SMTP',
     'ms_SMTPUsername' => 'Logowanie SMTP',
     'ms_SMTPPassword' => 'Hasło SMTP',

@@ -594,7 +594,6 @@ return [
     'ts_CurrentSystemTime' => 'Поточний час',
     'ts_NTPServer' => 'NTP сервер',
     'ms_SMTPSettings' => 'Налаштування надсилання повідомлень',
-    'ms_NotificationTemplates' => 'Шаблони сповіщень',
     'ms_SMTPHost' => 'SMTP хост',
     'ms_SMTPPort' => 'SMTP порт',
     'ms_SMTPUsername' => 'SMTP логін',
