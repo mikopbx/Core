@@ -111,8 +111,7 @@ abstract class ModelsBase extends Model
                     $newErrorMessage .= '<li>Unknown object</li>';
                 }
                 $newErrorMessage .= '</ul>';
-                $message = new Message($newErrorMessage);
-                $this->appendMessage($message);
+                $errorMessage->setMessage($newErrorMessage);
                 break;
             }
         }

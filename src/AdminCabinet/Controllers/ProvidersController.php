@@ -75,19 +75,18 @@ class ProvidersController extends BaseController
      */
     public function modifyiaxAction(string $uniqid = ''): void
     {
-
         $provider = Providers::findFirstByUniqid($uniqid);
 
         if ($provider === null) {
-            $uniqid                    = strtoupper('IAX-' . time());
-            $provider                  = new Providers();
-            $provider->type            = 'IAX';
-            $provider->uniqid          = $uniqid;
-            $provider->iaxuid          = $uniqid;
-            $provider->Iax             = new Iax();
-            $provider->Iax->uniqid     = $uniqid;
-            $provider->Iax->disabled   = '0';
-            $provider->Iax->qualify    = '1';
+            $uniqid                  = strtoupper('IAX-' . time());
+            $provider                = new Providers();
+            $provider->type          = 'IAX';
+            $provider->uniqid        = $uniqid;
+            $provider->iaxuid        = $uniqid;
+            $provider->Iax           = new Iax();
+            $provider->Iax->uniqid   = $uniqid;
+            $provider->Iax->disabled = '0';
+            $provider->Iax->qualify  = '1';
         }
 
         $this->view->form      = new IaxProviderEditForm($provider->Iax);
@@ -191,8 +190,8 @@ class ProvidersController extends BaseController
     /**
      * Сохранение параметров в таблицу  Providers
      *
-     * @param array $data - POST дата
-     * @param string  $type - sip или iax
+     * @param array  $data - POST дата
+     * @param string $type - sip или iax
      *
      * @return bool результат сохранения
      */
@@ -278,32 +277,39 @@ class ProvidersController extends BaseController
      */
     public function deleteAction(string $uniqid = ''): void
     {
+        if ($uniqid === '') {
+            return;
+        }
+
         $provider = Providers::findFirstByUniqid($uniqid);
+        if ($provider === null) {
+            return;
+        }
 
-        if ($provider !== null) {
-            $this->db->begin();
-            $errors = null;
-            if ($provider->Iax) {
-                $iax = $provider->Iax;
-                if ( ! $iax->delete()) {
-                    $errors = $iax->getMessages();
-                }
-            }
 
-            if ($errors === false && $provider->Sip) {
-                $sip = $provider->Sip;
-                if ( ! $sip->delete()) {
-                    $errors = $sip->getMessages();
-                }
-            }
-
-            if ($errors) {
-                $this->flash->warning(implode('<br>', $errors));
-                $this->db->rollback();
-            } else {
-                $this->db->commit();
+        $this->db->begin();
+        $errors = false;
+        if ($provider->Iax) {
+            $iax = $provider->Iax;
+            if ( ! $iax->delete()) {
+                $errors = $iax->getMessages();
             }
         }
+
+        if ($errors === false && $provider->Sip) {
+            $sip = $provider->Sip;
+            if ( ! $sip->delete()) {
+                $errors = $sip->getMessages();
+            }
+        }
+
+        if ($errors) {
+            $this->flash->warning(implode('<br>', $errors));
+            $this->db->rollback();
+        } else {
+            $this->db->commit();
+        }
+
 
         $this->forward('providers/index');
     }

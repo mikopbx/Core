@@ -154,6 +154,10 @@ class AsteriskManagersController extends BaseController
      */
     public function deleteAction(string $amiId = ''): void
     {
+        if ($amiId === '') {
+            return;
+        }
+
         $manager = AsteriskManagerUsers::findFirstByid($amiId);
         if ($manager !== null) {
             $manager->delete();

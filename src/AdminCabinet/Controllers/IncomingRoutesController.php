@@ -222,11 +222,11 @@ class IncomingRoutesController extends BaseController
     /**
      * Изменение приоритета маршрута
      *
-     * @param string|NULL $ruleId
+     * @param string $ruleId
      */
-    public function changePriorityAction(string $ruleId = null)
+    public function changePriorityAction(string $ruleId = '')
     {
-        if ((int)$ruleId === 1) {
+        if ((int)$ruleId === 1 || $ruleId==='') {
             return;
         } // Первая строка маршрут по умолчанию, ее не трогаем.
 

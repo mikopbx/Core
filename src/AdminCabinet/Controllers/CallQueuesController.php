@@ -38,7 +38,7 @@ class CallQueuesController extends BaseController
         $extensionList    = [];
         if ($queue === null) {
             $queue                              = new CallQueues();
-            $queue->uniqid                      = Extensions::TYPE_QUEUE.strtoupper('-' . md5($queue->id . time()));
+            $queue->uniqid                      = Extensions::TYPE_QUEUE . strtoupper('-' . md5($queue->id . time()));
             $queue->caller_hear                 = 'moh';
             $queue->seconds_to_ring_each_member = 20;
             $queue->seconds_for_wrapup          = 15;
@@ -93,14 +93,14 @@ class CallQueuesController extends BaseController
 
         $form                        = new CallQueueEditForm(
             $queue, [
-            'extensions' => $extensionList,
-            'soundfiles' => $soundfilesList,
-        ]
+                      'extensions' => $extensionList,
+                      'soundfiles' => $soundfilesList,
+                  ]
         );
         $this->view->form            = $form;
         $this->view->extensionsTable = $queueMembersList;
         $this->view->represent       = $queue->getRepresent();
-        $this->view->extension = $queue->extension;
+        $this->view->extension       = $queue->extension;
     }
 
 
@@ -345,16 +345,23 @@ class CallQueuesController extends BaseController
      *
      * @param string $uniqid
      */
-    public function deleteAction(string $uniqid = null)
+    public function deleteAction(string $uniqid = ''): void
     {
-        $this->db->begin();
-        $queue = CallQueues::findFirstByUniqid($uniqid);
-
-        $errors = false;
-        if ($queue !== null && ! $queue->Extensions->delete()) {
-            $errors = $queue->Extensions->getMessages();
+        if ($uniqid === '') {
+            return;
         }
 
+        $queue = CallQueues::findFirstByUniqid($uniqid);
+        if ($queue === null) {
+            return;
+        }
+        $errors = false;
+
+        $this->db->begin();
+        $extension = $queue->Extensions;
+        if ( ! $extension->delete()) {
+            $errors = $extension->getMessages();
+        }
         if ($errors) {
             $this->flash->warning(implode('<br>', $errors));
             $this->db->rollback();

@@ -154,16 +154,23 @@ class ConferenceRoomsController extends BaseController
     /**
      * Удаление конференцкомнаты
      *
-     * @param string|NULL $uniqid
+     * @param string $uniqid
      */
-    public function deleteAction(string $uniqid = null)
+    public function deleteAction(string $uniqid = '')
     {
-        $this->db->begin();
-        $queue = ConferenceRooms::findFirstByUniqid($uniqid);
+        if ($uniqid === '') {
+            return;
+        }
 
-        $errors = null;
-        if ($queue !== null && ! $queue->Extensions->delete()) {
-            $errors = $queue->Extensions->getMessages();
+        $conference = ConferenceRooms::findFirstByUniqid($uniqid);
+        if ($conference === null) {
+            return;
+        }
+        $this->db->begin();
+        $errors = false;
+        $extension = $conference->Extensions;
+        if (!$extension->delete()) {
+            $errors = $extension->getMessages();
         }
 
         if ($errors) {

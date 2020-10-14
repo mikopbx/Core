@@ -294,12 +294,20 @@ class IvrMenuController extends BaseController
      */
     public function deleteAction($uniqid = '')
     {
-        $this->db->begin();
-        $ivrmenu = IvrMenu::findFirstByUniqid($uniqid);
+        if ($uniqid === '') {
+            return;
+        }
 
-        $errors = null;
-        if ($ivrmenu !== null && ! $ivrmenu->Extensions->delete()) {
-            $errors = $ivrmenu->Extensions->getMessages();
+        $ivrMenu = IvrMenu::findFirstByUniqid($uniqid);
+        if ($ivrMenu === null) {
+            return;
+        }
+
+        $this->db->begin();
+        $errors = false;
+        $extension = $ivrMenu->Extensions;
+        if ( ! $extension->delete()) {
+            $errors = $extension->getMessages();
         }
 
         if ($errors) {
