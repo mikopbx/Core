@@ -176,7 +176,6 @@ const outOfWorkTimeRecord = {
 		});
 		outOfWorkTimeRecord.initializeForm();
 		outOfWorkTimeRecord.$forwardingSelectDropdown.dropdown(Extensions.getDropdownSettingsWithoutEmpty());
-		Extensions.fixBugDropdownIcon();
 		outOfWorkTimeRecord.toggleDisabledFieldClass();
 		outOfWorkTimeRecord.changeDateFormat();
 	},

@@ -183,7 +183,6 @@ const ivrMenu = {
 	},
 	rebuildActionExtensionsDropdown() {
 		$('#ivr-menu-form .forwarding-select').dropdown(Extensions.getDropdownSettingsWithoutEmpty(ivrMenu.cbOnExtensionSelect));
-		Extensions.fixBugDropdownIcon();
 		$('.delete-action-row').on('click', function (e) {
 			e.preventDefault();
 			const id = $(this).attr('data-value');

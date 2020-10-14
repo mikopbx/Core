@@ -69,7 +69,6 @@ const callQueue = {
 			},
 		});
 		$(callQueue.forwardingSelect).dropdown(Extensions.getDropdownSettingsWithEmpty());
-		Extensions.fixBugDropdownIcon();
 		// Динамическая прововерка свободен ли внутренний номер
 		callQueue.$number.on('change', () => {
 			const newNumber = callQueue.$formObj.form('get value', 'extension');

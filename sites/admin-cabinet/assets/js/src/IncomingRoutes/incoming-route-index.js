@@ -63,7 +63,6 @@ const incomingRoutes = {
 
 		incomingRoutes.initializeForm();
 		$('.forwarding-select').dropdown(Extensions.getDropdownSettingsWithoutEmpty());
-		Extensions.fixBugDropdownIcon();
 
 		$('.rule-row td').on('dblclick', (e) => {
 			const id = $(e.target).closest('tr').attr('id');
