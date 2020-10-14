@@ -412,6 +412,7 @@ class WorkerCallEvents extends WorkerBase
                     'out'  => true,
                 ];
             } else {
+                $this->StopMixMonitor($row->dst_chan);
                 $channels[] = [
                     'chan' => $row->dst_chan,
                     'did'  => $row->did,
