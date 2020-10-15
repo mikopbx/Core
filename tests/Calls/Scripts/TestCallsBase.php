@@ -219,8 +219,9 @@ class TestCallsBase {
         $this->printInfo("Copying configuration files...");
         Util::mwExec("cp -R {$confDir}/* {$rootDir}/asterisk/");
 
+        $cmdAsterisk = Util::which('asterisk');
         $this->printInfo("Reload dialplan... ");
-        Util::mwExec("asterisk -C '{$astConf}' -rx 'dialplan reload'");
+        Util::mwExec("{$cmdAsterisk} -C '{$astConf}' -rx 'dialplan reload'");
         // Util::mwExec("asterisk -C '{$astConf}' -rx 'module reload res_pjsip.so'");
     }
 }
