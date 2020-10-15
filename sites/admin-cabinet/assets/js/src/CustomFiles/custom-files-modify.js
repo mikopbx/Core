@@ -70,7 +70,12 @@ const customFile = {
 			case 'override':
 				customFile.editor.navigateFileStart();
 				customFile.$appCodeFromServer.hide();
-				customFile.editor.setValue(customFile.$formObj.form('get value', 'content'));
+				const changedContent = customFile.$formObj.form('get value', 'content');
+				if (changedContent.length>0){
+					customFile.editor.getSession().setValue(changedContent);
+				} else {
+					customFile.editor.getSession().setValue(customFile.viewer.getValue());
+				}
 				customFile.$appCode.show();
 				customFile.editor.setOptions({
 					maxLines: rowsCount,
@@ -87,8 +92,7 @@ const customFile = {
 	},
 	cbGetFileContentFromServer(response) {
 		if (response !== undefined) {
-			const fileContent = decodeURIComponent(response.data.content);
-			customFile.viewer.setValue(fileContent);
+			customFile.viewer.getSession().setValue(response.data.content);
 			customFile.hideShowCode();
 		}
 	},
