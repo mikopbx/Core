@@ -31,6 +31,7 @@ class ChangeLicenseKeyTest extends MikoPBXTestsBase
         $tab = self::$driver->findElement(WebDriverBy::xpath($xpath));
         $tab->click();
 
+        $this->changeTabOnCurrentPage('management');
         $licKey = str_ireplace('MIKO-','', $licenseKey);
         $this->changeInputField('licKey', $licKey);
 

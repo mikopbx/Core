@@ -20,6 +20,17 @@ class BrowserStackTest extends TestCase
      */
     public static function setUpBeforeClass(): void
     {
+
+
+    }
+
+    /**
+     * Before execute test we set it name to RemoteWebdriver
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
         $CONFIG  = $GLOBALS['CONFIG'];
         $task_id = getenv('TASK_ID') ? getenv('TASK_ID') : 0;
 
@@ -44,25 +55,18 @@ class BrowserStackTest extends TestCase
 
         $caps['project'] = "MikoPBX";
         $caps['build'] = $GLOBALS['BUILD_NUMBER'];
+        $caps['name'] = $this->getName();
 
         self::$driver = RemoteWebDriver::create($url, $caps);
 
-    }
+        // $sessionID = self::$driver->getSessionID();
+        // $name = $this->getName();
 
-    /**
-     * Before execute test we set it name to RemoteWebdriver
-     * @throws \GuzzleHttp\Exception\GuzzleException
-     */
-    public function setUp(): void
-    {
-        parent::setUp();
-        $sessionID = self::$driver->getSessionID();
-        $name = $this->getName();
-        $client = new GuzzleHttpClient();
-        $client->request('PUT', "https://api.browserstack.com/automate/sessions/{$sessionID}.json", [
-            'auth' => [$GLOBALS['BROWSERSTACK_USERNAME'], $GLOBALS['BROWSERSTACK_ACCESS_KEY']],
-            'json' => ['name' => $name]
-        ]);
+        // $client = new GuzzleHttpClient();
+        // $client->request('PUT', "https://api.browserstack.com/automate/sessions/{$sessionID}.json", [
+        //     'auth' => [$GLOBALS['BROWSERSTACK_USERNAME'], $GLOBALS['BROWSERSTACK_ACCESS_KEY']],
+        //     'json' => ['name' => $name]
+        // ]);
     }
 
     /**
