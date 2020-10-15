@@ -390,7 +390,6 @@ class AssetProvider implements ServiceProviderInterface
                                 ->addJs('js/vendor/inputmask/jquery.inputmask.js', true)
                                 ->addJs('js/vendor/inputmask/bindings/inputmask.binding.js', true)
                                 ->addJs('js/vendor/jquery.address.min.js', true)
-                                // ->addJs( 'js/vendor/inputmask/inputmask.extensions.js',TRUE )
                                 ->addJs('js/vendor/inputmask/init.js', true)
                                 ->addJs('js/pbx/main/form.js', true)
                                 ->addJs('js/pbx/Licensing/licensing-modify.js', true);

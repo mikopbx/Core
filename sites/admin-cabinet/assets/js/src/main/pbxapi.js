@@ -52,6 +52,7 @@ const PbxApi = {
 	licenseGetLicenseInfo: `${Config.pbxUrl}/pbxcore/api/license/getLicenseInfo`,
 	licenseGetMikoPBXFeatureStatus: `${Config.pbxUrl}/pbxcore/api/license/getMikoPBXFeatureStatus`,
 	licenseCaptureFeatureForProductId: `${Config.pbxUrl}/pbxcore/api/license/captureFeatureForProductId`,
+	licenseSendPBXMetrics: `${Config.pbxUrl}/pbxcore/api/license/sendPBXMetrics`,
 
 	/**
 	 * Проверка ответа на JSON
@@ -1101,4 +1102,26 @@ const PbxApi = {
 			},
 		});
 	},
+	/**
+	 * Sends PBX metrics
+	 *
+	 * @param callback
+	 */
+	LicenseSendPBXMetrics(callback) {
+		$.api({
+			url: PbxApi.licenseSendPBXMetrics,
+			on: 'now',
+			successTest: PbxApi.successTest,
+			onSuccess() {
+				callback(true);
+			},
+			onFailure() {
+				callback(false);
+			},
+			onError() {
+				callback(false);
+			},
+		});
+	},
+
 };

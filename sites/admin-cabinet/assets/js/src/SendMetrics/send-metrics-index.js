@@ -6,17 +6,21 @@
  *
  */
 
-/* global globalRootUrl, sessionStorage */
+/* global sessionStorage, PbxApi */
+const sendMetrics = {
+	initialize(){
+		const isMetricsSend = sessionStorage.getItem('MetricsAlreadySent');
+		if (isMetricsSend === null) {
+			PbxApi.LicenseSendPBXMetrics(sendMetrics.cbAfterMetricsSent);
 
-$(document).ready(() => {
-	const isMetricsSend = sessionStorage.getItem('MetricsAlreadySent');
-	if (isMetricsSend === null) {
-		$.api({
-			url: `${globalRootUrl}send-metrics/index`,
-			on: 'now',
-			onSuccess() {
-				sessionStorage.setItem('MetricsAlreadySent', 'true');
-			},
-		});
+		}
+	},
+	cbAfterMetricsSent(result){
+		if (result===true){
+			sessionStorage.setItem('MetricsAlreadySent', 'true');
+		}
 	}
+}
+$(document).ready(() => {
+	sendMetrics.initialize();
 });
