@@ -28,7 +28,7 @@ class FillDataTimeSettings extends MikoPBXTestsBase
         if ($params['PBXManualTimeSettings']){
             $this->changeInputField('ManualDateTime', $params['ManualDateTime']);
         } else {
-            $this->changeInputField('NTPServer', $params['NTPServer']);
+            $this->changeTextAreaValue('NTPServer', $params['NTPServer']);
         }
         // Сохраняем правило
         $this->submitForm('time-settings-form');
@@ -39,7 +39,7 @@ class FillDataTimeSettings extends MikoPBXTestsBase
         if ($params['PBXManualTimeSettings']){
             // $this->assertInputFieldValueEqual('ManualDateTime', $params['ManualDateTime']);
         } else {
-            $this->assertInputFieldValueEqual('NTPServer', $params['NTPServer']);
+            $this->assertTextAreaValueIsEqual('NTPServer', $params['NTPServer']);
         }
     }
 
