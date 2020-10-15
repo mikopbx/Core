@@ -22,7 +22,7 @@ use Phalcon\Di\ServiceProviderInterface;
  *
  * @method  bool checkModules()
  * @method  bool checkPBX()
- * @method  string| \SimpleXMLElement getLicenseInfo(string $key)
+ * @method  \SimpleXMLElement|string getLicenseInfo(string $key)
  * @method  bool | string getTrialLicense(array $params)
  * @method  bool | string addTrial(string $productId)
  * @method  bool | string activateCoupon(string $coupon)

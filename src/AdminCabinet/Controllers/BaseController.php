@@ -34,7 +34,7 @@ class BaseController extends Controller
     protected string $controllerNameUnCamelized;
 
     /**
-     * Инициализация базововго класса
+     * Initializes base class
      */
     public function initialize(): void
     {
@@ -50,7 +50,8 @@ class BaseController extends Controller
     }
 
     /**
-     * Инициализирует шаблонизатор View и устанавливает переменные системы для отображения
+     * Prepares some environments to every controller and view
+     *
      */
     protected function prepareView(): void
     {
@@ -130,7 +131,7 @@ class BaseController extends Controller
         $this->view->represent       = '';
         $this->view->cacheName       = "{$this->controllerName}{$this->actionName}{$this->language}{$versionHash}";
 
-        // Подключим нужный View
+        // If it is module we have to use another template
         if ($this->moduleName === 'PBXExtension') {
             $this->view->setTemplateAfter('modules');
         } else {
@@ -140,9 +141,9 @@ class BaseController extends Controller
     }
 
     /**
-     * Берет данные из сессии или из базы данных и записывает в кеш
+     * Gets data from session or database if it not exists in session store
      *
-     * @param $key string параметры сессии
+     * @param $key string session parameter
      *
      * @return string
      */
@@ -160,7 +161,7 @@ class BaseController extends Controller
     }
 
     /**
-     * Генерирует хеш из версий установленных модулей и АТС, для корректного склеивания JS, CSS и локализаций.
+     * Generates common hash sum for correct combine CSS and JS according to installed modules
      *
      */
     private function getVersionsHash(): string
@@ -175,13 +176,11 @@ class BaseController extends Controller
     }
 
     /**
-     * Постобработка запроса
-     *
-     * @param \Phalcon\Mvc\Dispatcher $dispatcher
+     * Changes the AJAX response by expected format
      *
      * @return \Phalcon\Http\Response|\Phalcon\Http\ResponseInterface
      */
-    public function afterExecuteRoute(Dispatcher $dispatcher)
+    public function afterExecuteRoute()
     {
         if ($this->request->isAjax() === true) {
             $this->view->setRenderLevel(View::LEVEL_NO_RENDER);
@@ -212,7 +211,7 @@ class BaseController extends Controller
     }
 
     /**
-     * Перехват события перед обработкой в контроллере
+     * Callback before execute any route
      */
     public function beforeExecuteRoute(): void
     {
@@ -225,7 +224,7 @@ class BaseController extends Controller
     }
 
     /**
-     * Перевод страниц без перезагрузки страниц
+     * Change page without reload browser page
      *
      * @param string $uri
      */

@@ -36,7 +36,7 @@ class OutgoingRoutingTable extends ModelsBase
     public ?string $providerid = '';
 
     /**
-     * @Column(type="integer", nullable=true)
+     * @Column(type="string", nullable=true)
      */
     public ?string $priority = '0';
 
@@ -46,12 +46,12 @@ class OutgoingRoutingTable extends ModelsBase
     public ?string $numberbeginswith = '';
 
     /**
-     * @Column(type="integer", nullable=true)
+     * @Column(type="string", nullable=true)
      */
     public ?string $restnumbers = '9';
 
     /**
-     * @Column(type="integer", nullable=true)
+     * @Column(type="string", nullable=true)
      */
     public ?string $trimfrombegin = '0';
 

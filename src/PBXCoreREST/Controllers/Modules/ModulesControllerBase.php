@@ -58,7 +58,7 @@ class ModulesControllerBase extends BaseController
             $response = json_decode($response, true);
             if (isset($response['fpassthru'])) {
                 $fp = fopen($response['filename'], "rb");
-                if ($fp) {
+                if ($fp!==false) {
                     $size = filesize($response['filename']);
                     $name = basename($response['filename']);
                     $this->response->setHeader('Content-Description', "config file");

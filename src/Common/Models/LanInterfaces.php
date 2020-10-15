@@ -24,9 +24,9 @@ class LanInterfaces extends ModelsBase
     /**
      * @Primary
      * @Identity
-     * @Column(type="integer", nullable=false)
+     * @Column(type="string", nullable=false)
      */
-    public $id;
+    public ?string $id;
 
     /**
      * @Column(type="string", nullable=true)
@@ -39,7 +39,7 @@ class LanInterfaces extends ModelsBase
     public ?string $interface = '';
 
     /**
-     * @Column(type="integer", nullable=true)
+     * @Column(type="string", nullable=true)
      */
     public ?string $vlanid = '0';
 

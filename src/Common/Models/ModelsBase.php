@@ -659,9 +659,6 @@ abstract class ModelsBase extends Model
         }
 
         if ($needLink) {
-            if (empty($name)) {
-                $name = $this->t('repLink');
-            }
             $link     = $this->getWebInterfaceLink();
             $category = explode('\\', static::class)[3];
             $result   = $this->t(

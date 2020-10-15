@@ -18,7 +18,7 @@ class OutboundRoutesController extends BaseController
 
 
     /**
-     * Построениие списка исходящих маршрутов
+     * Builds the list outgoing routes
      */
     public function indexAction(): void
     {
@@ -61,7 +61,7 @@ class OutboundRoutesController extends BaseController
     }
 
     /**
-     * Карточка редактирования исходящего маршрута
+     * Shows the edit form for an outbound route
      *
      * @param string $id
      */
@@ -80,7 +80,7 @@ class OutboundRoutesController extends BaseController
 
         uasort($providersList, [__CLASS__, "sortArrayByNameAndState"]);
 
-        if ($rule->restnumbers == -1) {
+        if ($rule->restnumbers === '-1') {
             $rule->restnumbers = '';
         }
         $this->view->form      = new OutgoingRouteEditForm($rule, $providersList);
@@ -108,7 +108,7 @@ class OutboundRoutesController extends BaseController
                     if ( ! array_key_exists($name, $data)) {
                         continue 2;
                     }
-                    $rule->$name = $data[$name] == '' ? -1 : $data[$name];
+                    $rule->$name = $data[$name] === '' ? '-1' : $data[$name];
                     break;
                 }
                 default:
