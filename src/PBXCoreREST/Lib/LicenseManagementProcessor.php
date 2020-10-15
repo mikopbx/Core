@@ -132,14 +132,19 @@ class LicenseManagementProcessor extends Injectable
                 if ($result === true) {
                     $res->messages[] = $this->translation->_('lic_SuccessfulCouponActivated');
                     $res->success    = true;
-                } else {
+                } elseif (is_string($result)) {
                     $res->messages[] = $this->license->translateLicenseErrorMessage($result);
+                    $res->success    = false;
+                } else {
+                    $res->messages[] = 'Unknown error';
                     $res->success    = false;
                 }
             }
         } else { // Only add trial for license key
             $newLicenseKey = $this->license->getTrialLicense($data);
-            if (strlen($newLicenseKey) === 28 && Text::startsWith($newLicenseKey, 'MIKO-')) {
+            if (is_string($newLicenseKey)
+                && strlen($newLicenseKey) === 28
+                && Text::startsWith($newLicenseKey, 'MIKO-')) {
                 $mikoPBXConfig->setGeneralSettings('PBXLicense', $newLicenseKey);
                 $this->license->changeLicenseKey($newLicenseKey);
                 $res->success    = true;

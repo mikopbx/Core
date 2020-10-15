@@ -179,9 +179,6 @@ class AdvicesProcessor extends Injectable
         $st                 = new Storage();
         $storageDiskMounted = false;
         $disks              = $st->getAllHdd();
-        if ( ! is_array($disks)) {
-            $disks = [$disks];
-        }
         foreach ($disks as $disk) {
             if (array_key_exists('mounted', $disk)
                 && strpos($disk['mounted'], '/storage/usbdisk') !== false) {

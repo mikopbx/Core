@@ -16,36 +16,37 @@ class NetworkController extends BaseController
 {
 
     /**
-     * Форма настроек сетевых интерфейсов
+     * Lan cards settings form
      */
     public function modifyAction(): void
     {
         $networkInterfaces = LanInterfaces::find();
         foreach ($networkInterfaces as $record) {
-            if ($record->disabled != 1) {
+            if ($record->disabled !== '1') {
                 $arrEth[] = $record;
             }
         }
         $template         = new LanInterfaces();
         $template->id     = 'new';
-        $template->dhcp   = 1;
-        $template->vlanid = 4095;
+        $template->dhcp   = '1';
+        $template->vlanid = '4095';
 
         $arrEth['new'] = $template;
 
-        $internetInterface = LanInterfaces::findFirstByInternet(1);
+        $internetInterface = LanInterfaces::findFirstByInternet('1');
         if ($internetInterface === null) {
             $internetInterface = new LanInterfaces();
         }
-        // Найдем дополнительные интерфейсы, которые можно удалить
+
+        // We will find additional interfaces which we can delete
         $deletableInterfaces = [];
-        $countInterfaces     = LanInterfaces::count(["group" => "interface"]);
+        $countInterfaces     = LanInterfaces::count(['group' => 'interface']);
         foreach ($countInterfaces as $record) {
             if ($record->rowcount > 1) {
                 $deletableInterfaces[] = $record->interface;
             }
         }
-        $form                      = new NetworkEditForm($internetInterface, ["eths" => $arrEth]);
+        $form                      = new NetworkEditForm($internetInterface, ['eths' => $arrEth]);
         $this->view->form          = $form;
         $this->view->eths          = $arrEth;
         $this->view->deletableEths = $deletableInterfaces;
@@ -53,7 +54,7 @@ class NetworkController extends BaseController
     }
 
     /**
-     * Сохранение настроек сетевых интерфейсов
+     * Saves the lan cards settings
      */
     public function saveAction(): void
     {
@@ -65,7 +66,7 @@ class NetworkController extends BaseController
         $this->db->begin();
         $networkInterfaces = LanInterfaces::find();
 
-        // Обновим настройки текущих интерфейсов
+        // Update interface settings
         foreach ($networkInterfaces as $eth) {
             $this->fillEthStructure($eth, $data);
             if ($eth->save() === false) {
@@ -78,7 +79,7 @@ class NetworkController extends BaseController
             }
         }
 
-        // Сохраним настройки дополнительного интерфейса если он передан
+        // Save additional interface settings if it exists
         if ($data['interface_new'] != '') {
             $eth     = new LanInterfaces();
             $eth->id = 'new';
@@ -102,7 +103,7 @@ class NetworkController extends BaseController
     }
 
     /**
-     * Заполнение структуры сетевого интерфейса
+     * Fills network interface settings
      *
      * @param $eth
      * @param $data
@@ -110,11 +111,11 @@ class NetworkController extends BaseController
     private function fillEthStructure($eth, $data): void
     {
         foreach ($eth as $name => $value) {
-            $itIsInternetInterfce = $eth->id == $data['internet_interface'];
+            $itIsInternetInterfce = $eth->id === $data['internet_interface'];
             switch ($name) {
                 case 'topology':
                     if ($itIsInternetInterfce) {
-                        $eth->$name = ($data['usenat'] == 'on') ? 'private' : 'public';
+                        $eth->$name = ($data['usenat'] === 'on') ? 'private' : 'public';
                     } else {
                         $eth->$name = '';
                     }
@@ -122,7 +123,7 @@ class NetworkController extends BaseController
                 case 'extipaddr':
                     if ($itIsInternetInterfce) {
                         if (array_key_exists($name, $data)) {
-                            $eth->$name = ($data['usenat'] == 'on') ? $data[$name] : $data['ipaddr_' . $eth->id];
+                            $eth->$name = ($data['usenat'] === 'on') ? $data[$name] : $data['ipaddr_' . $eth->id];
                         } else {
                             $eth->$name = $data['ipaddr_' . $eth->id];
                         }
@@ -134,7 +135,7 @@ class NetworkController extends BaseController
                 case 'exthostname':
                     if ($itIsInternetInterfce) {
                         if (array_key_exists($name, $data)) {
-                            $eth->$name = ($data['usenat'] == 'on') ? $data[$name] : $data['hostname'];
+                            $eth->$name = ($data['usenat'] === 'on') ? $data[$name] : $data['hostname'];
                         } else {
                             $eth->$name = $data['hostname'];
                         }
@@ -144,21 +145,21 @@ class NetworkController extends BaseController
                     break;
                 case 'dhcp':
                     if (array_key_exists($name . '_' . $eth->id, $data)) {
-                        $eth->$name = ($data['dhcp_' . $eth->id]) == 'on' ? "1" : "0";
+                        $eth->$name = ($data['dhcp_' . $eth->id]) === 'on' ? '1' : '0';
                     }
                     break;
                 case 'internet':
-                    $eth->$name = $itIsInternetInterfce ? 1 : 0;
+                    $eth->$name = $itIsInternetInterfce ? '1' : '0';
                     break;
                 case 'ipaddr':
                 case 'subnet':
                     $eth->$name = '';
                     if (array_key_exists($name . '_' . $eth->id, $data)) {
-                        $eth->$name = ($data['dhcp_' . $eth->id]) == 'on' ? '' : $data[$name . '_' . $eth->id];
+                        $eth->$name = ($data['dhcp_' . $eth->id]) === 'on' ? '' : $data[$name . '_' . $eth->id];
                     }
                     break;
                 case 'interface':
-                    if ($eth->id == 'new') {
+                    if ($eth->id === 'new') {
                         $eth->$name = LanInterfaces::findFirstById($data[$name . '_' . $eth->id])->interface;
                     }
                     break;
@@ -182,9 +183,9 @@ class NetworkController extends BaseController
     }
 
     /**
-     * Удаление дополнительного сетевого интерфейса
+     * Delete a lan interface by ID
      *
-     * @param string $ethId
+     * @param string $ethId interface id
      */
     public function deleteAction($ethId = ''): void
     {
@@ -193,7 +194,6 @@ class NetworkController extends BaseController
             $errors = $eth->getMessages();
             $this->flash->warning(implode('<br>', $errors));
             $this->view->success = false;
-
             return;
         }
         $this->view->success = true;
