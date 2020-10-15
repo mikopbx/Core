@@ -35,7 +35,6 @@ const incomingRouteModify = {
 		incomingRouteModify.$providerDropDown.dropdown();
 		incomingRouteModify.initializeForm();
 		incomingRouteModify.$forwardingSelectDropdown.dropdown(Extensions.getDropdownSettingsWithoutEmpty());
-		Extensions.fixBugDropdownIcon();
 	},
 	cbBeforeSendForm(settings) {
 		const result = settings;

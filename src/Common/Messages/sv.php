@@ -240,7 +240,6 @@ Det kan aktiveras en gång, varefter kupongen löses in.
     'ts_CurrentSystemTime' => 'Aktuell tid',
     'ts_NTPServer' => 'NTP-server',
     'ms_SMTPSettings' => 'Meddelandeinställningar',
-    'ms_NotificationTemplates' => 'Varningsmallar',
     'ms_SMTPHost' => 'SMTP-värd',
     'ms_SMTPPort' => 'SMTP-port',
     'ms_SMTPUsername' => 'SMTP-inloggning',

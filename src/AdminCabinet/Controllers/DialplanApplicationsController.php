@@ -67,7 +67,7 @@ class DialplanApplicationsController extends BaseController
             $appRecord = new DialplanApplications();
 
             $extension                    = new Extensions();
-            $extension->type              = 'DIALPLAN APPLICATION';
+            $extension->type              = Extensions::TYPE_DIALPLAN_APPLICATION;
             $extension->number            = $data['extension'];
             $extension->callerid          = $this->sanitizeCallerId($data['name']);
             $extension->userid            = null;
@@ -165,18 +165,24 @@ class DialplanApplicationsController extends BaseController
     /**
      * Удаление приложения
      *
-     * @param string|NULL $uniqid идентификатор редактируемого Dialplan Application
+     * @param string $uniqid идентификатор редактируемого Dialplan Application
      */
-    public function deleteAction(string $uniqid = null):void
+    public function deleteAction(string $uniqid = ''):void
     {
+        if ($uniqid === '') {
+            return;
+        }
+
         $appRecord = DialplanApplications::findFirstByUniqid($uniqid);
         if ($appRecord === null) {
             return;
         }
+
         $this->db->begin();
-        $errors = null;
-        if ($appRecord->Extensions && ! $appRecord->Extensions->delete()) {
-            $errors = $appRecord->Extensions->getMessages();
+        $errors = false;
+        $extension = $appRecord->Extensions;
+        if ( ! $extension->delete()) {
+            $errors = $extension->getMessages();
         }
 
         if ($errors) {

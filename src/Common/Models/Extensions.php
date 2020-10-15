@@ -16,14 +16,14 @@ use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 /**
  * Class Extensions
  *
- * @property \MikoPBX\Common\Models\Sip Sip
- * @property \MikoPBX\Common\Models\Users Users
- * @property \MikoPBX\Common\Models\ExternalPhones ExternalPhones
- * @property \MikoPBX\Common\Models\DialplanApplications DialplanApplications
- * @property \MikoPBX\Common\Models\ConferenceRooms ConferenceRooms
- * @property \MikoPBX\Common\Models\CallQueues CallQueues
- * @property \MikoPBX\Common\Models\OutWorkTimes OutWorkTimes
- * @property \MikoPBX\Common\Models\IvrMenu IvrMenu
+ * @property \MikoPBX\Common\Models\Sip                       Sip
+ * @property \MikoPBX\Common\Models\Users                     Users
+ * @property \MikoPBX\Common\Models\ExternalPhones            ExternalPhones
+ * @property \MikoPBX\Common\Models\DialplanApplications      DialplanApplications
+ * @property \MikoPBX\Common\Models\ConferenceRooms           ConferenceRooms
+ * @property \MikoPBX\Common\Models\CallQueues                CallQueues
+ * @property \MikoPBX\Common\Models\OutWorkTimes              OutWorkTimes
+ * @property \MikoPBX\Common\Models\IvrMenu                   IvrMenu
  * @property \MikoPBX\Common\Models\ExtensionForwardingRights ExtensionForwardingRights
  *
  *
@@ -34,6 +34,15 @@ use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
  */
 class Extensions extends ModelsBase
 {
+
+    public const  TYPE_DIALPLAN_APPLICATION = 'DIALPLAN APPLICATION';
+    public const  TYPE_SIP = 'SIP';
+    public const  TYPE_QUEUE = 'QUEUE';
+    public const  TYPE_EXTERNAL = 'EXTERNAL';
+    public const  TYPE_IVR_MENU = 'IVR MENU';
+    public const  TYPE_CONFERENCE = 'CONFERENCE';
+    public const  TYPE_MODULES = 'MODULES';
+
     /**
      * @Primary
      * @Identity
@@ -73,19 +82,19 @@ class Extensions extends ModelsBase
      * Признак отображения в телефонной книге, и при выборе в списках
      * @Column(type="string", length=1, nullable=true, default="1")
      */
-    public ?string $show_in_phonebook='1';
+    public ?string $show_in_phonebook = '1';
 
     /**
      * Признак возможности донабора этого номера звонящим из вне
      *
-     *  @Column(type="string", length=1, nullable=true, default="1")
+     * @Column(type="string", length=1, nullable=true, default="1")
      */
     public ?string $public_access = '1';
 
     /**
      * Признак основного номера пользователя, который редактируется в его карточке
      *
-     *  @Column(type="string", length=1, nullable=true, default="0")
+     * @Column(type="string", length=1, nullable=true, default="0")
      */
     public ?string $is_general_user_number = "0";
 

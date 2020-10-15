@@ -100,9 +100,15 @@ class SoundFilesController extends BaseController
      */
     public function deleteAction(string $id = ''): void
     {
+        if ($id === '') {
+            return;
+        }
         $soundFile = SoundFiles::findFirstById($id);
-        $errors    = null;
-        if ($soundFile !== null && ! $soundFile->delete()) {
+        if ($soundFile === null){
+            return;
+        }
+        $errors    = false;
+        if (! $soundFile->delete()) {
             $errors = $soundFile->getMessages();
         }
         if ($errors) {

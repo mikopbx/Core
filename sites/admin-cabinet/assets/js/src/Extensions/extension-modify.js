@@ -147,7 +147,6 @@ const extension = {
 		});
 
 		$(extension.forwardingSelect).dropdown(Extensions.getDropdownSettingsWithEmpty());
-		Extensions.fixBugDropdownIcon();
 
 		if ($('#sip_secret').val() === '') extension.generateNewSipPassword();
 

@@ -566,7 +566,6 @@ return [
     'ts_CurrentSystemTime' => 'Hora actual',
     'ts_NTPServer' => 'Servidor NTP',
     'ms_SMTPSettings' => 'Configuraciones de mensajes',
-    'ms_NotificationTemplates' => 'Plantillas de alerta',
     'ms_SMTPHost' => 'Host SMTP',
     'ms_SMTPPort' => 'Puerto SMTP',
     'ms_SMTPUsername' => 'Inicio de sesión SMTP',

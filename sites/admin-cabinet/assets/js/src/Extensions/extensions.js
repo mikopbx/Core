@@ -20,14 +20,6 @@ const Extensions = {
 		sessionStorage.removeItem(`${globalRootUrl}extensions/getForSelect/all`);
 	},
 	/**
-	 * Fix dropdown bug, menu didn't open if we click on icon
-	 */
-	fixBugDropdownIcon() {
-		$('.forwarding-select .dropdown.icon').on('click', (e) => {
-			$(e.target).parent().find('.text').trigger('click');
-		});
-	},
-	/**
 	 * Makes formatted menu structure
 	 */
 	formatDropdownResults(response, addEmpty) {

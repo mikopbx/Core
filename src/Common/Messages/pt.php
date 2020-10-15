@@ -180,7 +180,6 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'sf_FileNotFound' => 'Erro - não é possível reproduzir o arquivo',
     'ms_SMTPPort' => 'Porta SMTP',
     'ms_SMTPHost' => 'Host SMTP',
-    'ms_NotificationTemplates' => 'Modelos de alerta',
     'ms_SMTPSettings' => 'Configurações de mensagem',
     'ts_NTPServer' => 'Servidor NTP',
     'ts_CurrentSystemTime' => 'Hora atual',

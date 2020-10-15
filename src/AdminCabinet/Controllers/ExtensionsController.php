@@ -71,7 +71,7 @@ class ExtensionsController extends BaseController
 
         foreach ($extensions as $extension) {
             switch ($extension->type) {
-                case 'SIP':
+                case Extensions::TYPE_SIP:
                     $extensionTable[$extension->userid]['userid']   = $extension->userid;
                     $extensionTable[$extension->userid]['number']   = $extension->number;
                     $extensionTable[$extension->userid]['status']   = ($extension->disabled === '1') ? 'disabled' : '';
@@ -97,7 +97,7 @@ class ExtensionsController extends BaseController
                     }
 
                     break;
-                case 'EXTERNAL':
+                case Extensions::TYPE_EXTERNAL:
                     $extensionTable[$extension->userid]['mobile'] = $extension->number;
                     break;
                 default:
@@ -148,11 +148,11 @@ class ExtensionsController extends BaseController
             $extension->show_in_phonebook      = '1';
             $extension->public_access          = '0';
             $extension->is_general_user_number = '1';
-            $extension->type                   = 'SIP';
+            $extension->type                   = Extensions::TYPE_SIP;
             $extension->Sip                    = new Sip();
             $extension->Sip->disabled          = 0;
             $extension->Sip->type              = 'peer';
-            $extension->Sip->uniqid            = strtoupper('SIP-PHONE-' . md5(time()));
+            $extension->Sip->uniqid            = Extensions::TYPE_SIP.strtoupper('-PHONE-' . md5(time()));
             $extension->Sip->busylevel         = 1;
             $extension->Sip->qualify           = '1';
             $extension->Sip->qualifyfreq       = 60;
@@ -175,7 +175,7 @@ class ExtensionsController extends BaseController
         }
 
         $parameters        = [
-            'conditions' => 'type = "EXTERNAL" AND is_general_user_number = "1" AND userid=:userid:',
+            'conditions' => 'type = "'.Extensions::TYPE_EXTERNAL.'" AND is_general_user_number = "1" AND userid=:userid:',
             'bind'       => [
                 'userid' => $extension->userid,
             ],
@@ -184,10 +184,10 @@ class ExtensionsController extends BaseController
         if ($externalExtension === null) {
             $externalExtension                           = new Extensions();
             $externalExtension->userid                   = $extension->userid;
-            $externalExtension->type                     = 'EXTERNAL';
+            $externalExtension->type                     = Extensions::TYPE_EXTERNAL;
             $externalExtension->is_general_user_number   = '1';
             $externalExtension->ExternalPhones           = new ExternalPhones();
-            $externalExtension->ExternalPhones->uniqid   = strtoupper('EXTERNAL-' . md5(time()));
+            $externalExtension->ExternalPhones->uniqid   = Extensions::TYPE_EXTERNAL.strtoupper('-' . md5(time()));
             $externalExtension->ExternalPhones->disabled = '0';
         }
 
@@ -232,7 +232,7 @@ class ExtensionsController extends BaseController
     private function getNextInternalNumber()
     {
         $parameters = [
-            'conditions' => 'type = "SIP"',
+            'conditions' => 'type = "'.Extensions::TYPE_SIP.'"',
             'column'     => 'number',
         ];
         $query      = Extensions::maximum($parameters);
@@ -349,7 +349,7 @@ class ExtensionsController extends BaseController
         } else {
             // Удалить номер мобильного если он был привязан к пользователю
             $parameters          = [
-                'conditions' => 'type="EXTERNAL" AND is_general_user_number = "1" AND userid=:userid:',
+                'conditions' => 'type="'.Extensions::TYPE_EXTERNAL.'" AND is_general_user_number = "1" AND userid=:userid:',
                 'bind'       => [
                     'userid' => $userEntity->id,
                 ],
@@ -432,7 +432,7 @@ class ExtensionsController extends BaseController
                     $extension->$name = '1';
                     break;
                 case 'type':
-                    $extension->$name = $isMobile ? 'EXTERNAL' : 'SIP';
+                    $extension->$name = $isMobile ? Extensions::TYPE_EXTERNAL : Extensions::TYPE_SIP;
                     break;
                 case 'public_access':
                     if (array_key_exists($name, $data)) {
@@ -685,10 +685,10 @@ class ExtensionsController extends BaseController
             $extensions = Extensions::findByUserid($extension->userid);
             foreach ($extensions as $extension) {
                 switch ($extension->type) {
-                    case 'SIP':
+                    case Extensions::TYPE_SIP:
                         $extension->Sip->disabled = '1';
                         break;
-                    case 'EXTERNAL':
+                    case Extensions::TYPE_EXTERNAL:
                         $extension->ExternalPhones->disabled = '1';
                         break;
                 }
@@ -712,17 +712,17 @@ class ExtensionsController extends BaseController
      *
      * @return void
      */
-    public function enableAction($number = null): void
+    public function enableAction($number = ''): void
     {
         $extension = Extensions::findFirstByNumber($number);
         if ($extension !== null) {
             $extensions = Extensions::findByUserid($extension->userid);
             foreach ($extensions as $extension) {
                 switch ($extension->type) {
-                    case 'SIP':
+                    case Extensions::TYPE_SIP:
                         $extension->Sip->disabled = '0';
                         break;
-                    case 'EXTERNAL':
+                    case Extensions::TYPE_EXTERNAL:
                         $extension->ExternalPhones->disabled = '1';
                         break;
                 }
@@ -821,7 +821,7 @@ class ExtensionsController extends BaseController
                 $parameters = [
                     'conditions' => 'type IN ({ids:array}) AND show_in_phonebook="1"',
                     'bind'       => [
-                        'ids' => ['SIP', 'EXTERNAL'],
+                        'ids' => [Extensions::TYPE_SIP, Extensions::TYPE_EXTERNAL],
                     ],
                 ];
                 break;
@@ -832,7 +832,7 @@ class ExtensionsController extends BaseController
                 $parameters = [
                     'conditions' => 'type IN ({ids:array}) AND show_in_phonebook="1"',
                     'bind'       => [
-                        'ids' => ['SIP'],
+                        'ids' => [Extensions::TYPE_SIP],
                     ],
                 ];
                 break;
@@ -853,7 +853,7 @@ class ExtensionsController extends BaseController
 
             // Необходимо проверить к какому модулю относится эта запись
             // и включен ли этот модуль в данный момент
-            if ($type === 'MODULES') {
+            if ($type === Extensions::TYPE_MODULES) {
                 $module = $this->findModuleByExtensionNumber($record->number);
                 if ($module === null || $module->disabled === '1') {
                     continue; // исключаем отключенные модули

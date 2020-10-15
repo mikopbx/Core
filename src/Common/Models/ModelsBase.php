@@ -111,8 +111,7 @@ abstract class ModelsBase extends Model
                     $newErrorMessage .= '<li>Unknown object</li>';
                 }
                 $newErrorMessage .= '</ul>';
-                $message = new Message($newErrorMessage);
-                $this->appendMessage($message);
+                $errorMessage->setMessage($newErrorMessage);
                 break;
             }
         }
@@ -484,7 +483,7 @@ abstract class ModelsBase extends Model
                 break;
             case Extensions::class:
                 // Для внутреннего номера бывают разные представления
-                if ($this->type === 'EXTERNAL') {
+                if ($this->type === Extensions::TYPE_EXTERNAL) {
                     $icon = '<i class="icons"><i class="user outline icon"></i><i class="top right corner alternate mobile icon"></i></i>';
                 } else {
                     $icon = '<i class="icons"><i class="user outline icon"></i></i>';
@@ -499,26 +498,26 @@ abstract class ModelsBase extends Model
                     $name = "{$icon} {$name} <{$this->number}>";
                 } else {
                     switch (strtoupper($this->type)) {
-                        case 'CONFERENCE':
+                        case Extensions::TYPE_CONFERENCE:
                             $name = $this->ConferenceRooms->getRepresent();
                             break;
-                        case 'QUEUE':
+                        case Extensions::TYPE_QUEUE:
                             $name = $this->CallQueues->getRepresent();
                             break;
-                        case 'DIALPLAN APPLICATION':
+                        case Extensions::TYPE_DIALPLAN_APPLICATION:
                             $name = $this->DialplanApplications->getRepresent();
                             break;
-                        case 'IVR MENU':
+                        case Extensions::TYPE_IVR_MENU:
                             $name = $this->IvrMenu->getRepresent();
                             break;
-                        case 'MODULES':
+                        case Extensions::TYPE_MODULES:
                             $name = '<i class="puzzle piece icon"></i> '
                                 . $this->t('mo_ModuleShort4Dropdown')
                                 . ': '
                                 . $this->callerid;
                             break;
-                        case 'EXTERNAL':
-                        case 'SIP':
+                        case Extensions::TYPE_EXTERNAL:
+                        case Extensions::TYPE_SIP:
                         default:
                             $name = "{$this->callerid} <{$this->number}>";
                     }
@@ -736,7 +735,7 @@ abstract class ModelsBase extends Model
             case ExternalPhones::class:
                 if ($this->Extensions->is_general_user_number === "1") {
                     $parameters    = [
-                        'conditions' => 'is_general_user_number="1" AND type="EXTERNAL" AND userid=:userid:',
+                        'conditions' => 'is_general_user_number="1" AND type="'.Extensions::TYPE_EXTERNAL.'" AND userid=:userid:',
                         'bind'       => [
                             'userid' => $this->Extensions->userid,
                         ],

@@ -12,7 +12,6 @@ use MikoPBX\Common\Models\AsteriskManagerUsers;
 use MikoPBX\Common\Models\Codecs;
 use MikoPBX\Common\Models\DialplanApplications;
 use MikoPBX\Common\Models\Extensions;
-use MikoPBX\Common\Models\Extensions as ExtensionsModel;
 use MikoPBX\Common\Models\FirewallRules;
 use MikoPBX\Common\Models\IvrMenu;
 use MikoPBX\Common\Models\NetworkFilters;
@@ -209,11 +208,11 @@ class UpdateSystemConfig extends Di\Injectable
             $d_app->uniqid           = 'DIALPLAN-APPLICATION-' . md5(time());
 
             if ($d_app->save()) {
-                $extension = ExtensionsModel::findFirst("number = '{$app_number}'");
+                $extension = Extensions::findFirst("number = '{$app_number}'");
                 if ($extension === null) {
-                    $extension                    = new ExtensionsModel();
+                    $extension                    = new Extensions();
                     $extension->number            = $app_number;
-                    $extension->type              = 'DIALPLAN APPLICATION';
+                    $extension->type              = Extensions::TYPE_DIALPLAN_APPLICATION;
                     $extension->callerid          = $d_app->name;
                     $extension->show_in_phonebook = '1';
                     $extension->save();
@@ -276,11 +275,11 @@ class UpdateSystemConfig extends Di\Injectable
             $d_app->uniqid           = 'DIALPLAN-APPLICATION-' . md5(time());
 
             if ($d_app->save()) {
-                $extension = ExtensionsModel::findFirst("number = '{$app_number}'");
+                $extension = Extensions::findFirst("number = '{$app_number}'");
                 if ($extension === null) {
-                    $extension                    = new ExtensionsModel();
+                    $extension                    = new Extensions();
                     $extension->number            = $app_number;
-                    $extension->type              = 'DIALPLAN APPLICATION';
+                    $extension->type              = Extensions::TYPE_DIALPLAN_APPLICATION;
                     $extension->callerid          = $d_app->name;
                     $extension->show_in_phonebook = '1';
                     $extension->save();
@@ -413,13 +412,21 @@ class UpdateSystemConfig extends Di\Injectable
         }
 
         // Update Extensions table
-        $parameters = [
-            'conditions' => 'not show_in_phonebook="1" AND is_general_user_number="1"',
+        $showInPhonebookTypes=[
+            Extensions::TYPE_DIALPLAN_APPLICATION,
+            Extensions::TYPE_SIP,
+            Extensions::TYPE_EXTERNAL,
+            Extensions::TYPE_QUEUE,
+            Extensions::TYPE_IVR_MENU,
+            Extensions::TYPE_CONFERENCE,
+
         ];
-        $wrongRecords = Extensions::find($parameters);
-        foreach ($wrongRecords as $extension){
-            $extension->show_in_phonebook='1';
-            $extension->update();
+        $extensions = Extensions::find();
+        foreach ($extensions as $extension){
+            if (in_array($extension->type, $showInPhonebookTypes)){
+                $extension->show_in_phonebook='1';
+                $extension->update();
+            }
         }
     }
 

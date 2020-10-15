@@ -27,6 +27,9 @@ class VoiceMailConf extends ConfigClass
         $emailbody = $this->generalSettings['MailTplVoicemailBody'];
         $emailbody = str_replace(["\n", "\t"], ['\n', ''], $emailbody);
 
+        $emailfooter = $this->generalSettings['MailTplVoicemailFooter'];
+        $emailfooter = str_replace(["\n", "\t"], ['\n', ''], $emailfooter);
+
         $from = $this->generalSettings['MailSMTPSenderAddress'];
         if (empty($from)) {
             $from =  $this->generalSettings['MailSMTPUsername'];
@@ -49,7 +52,7 @@ class VoiceMailConf extends ConfigClass
             "pbxskip=yes\n" .
             "fromstring=VoiceMail\n" .
             "emailsubject={$emailsubject}\n" .
-            "emailbody={$emailbody}\n" .
+            "emailbody={$emailbody}\n\n{$emailfooter}\n" .
             "emaildateformat=%A, %d %B %Y в %H:%M:%S\n" .
             "pagerdateformat=%T %D\n" .
             "mailcmd={$msmtpPath} --file=/etc/msmtp.conf -t\n" .

@@ -37,7 +37,7 @@ class ConferenceRoomsController extends BaseController
         $record = ConferenceRooms::findFirstByUniqid($uniqid);
         if ($record === null) {
             $record            = new ConferenceRooms();
-            $record->uniqid    = strtoupper('CONFERENCE-' . md5(time()));
+            $record->uniqid    = Extensions::TYPE_CONFERENCE.strtoupper('-' . md5(time()));
             $record->extension = Extensions::getNextFreeApplicationNumber();
         }
         $this->view->form      = new ConferenceRoomEditForm($record);
@@ -60,7 +60,7 @@ class ConferenceRoomsController extends BaseController
         if ($room === null) {
             $room                         = new ConferenceRooms();
             $extension                    = new Extensions();
-            $extension->type              = "CONFERENCE";
+            $extension->type              = Extensions::TYPE_CONFERENCE;
             $extension->number            = $data["extension"];
             $extension->callerid          = $this->sanitizeCallerId($data["name"]);
             $extension->userid            = null;
@@ -154,16 +154,23 @@ class ConferenceRoomsController extends BaseController
     /**
      * Удаление конференцкомнаты
      *
-     * @param string|NULL $uniqid
+     * @param string $uniqid
      */
-    public function deleteAction(string $uniqid = null)
+    public function deleteAction(string $uniqid = '')
     {
-        $this->db->begin();
-        $queue = ConferenceRooms::findFirstByUniqid($uniqid);
+        if ($uniqid === '') {
+            return;
+        }
 
-        $errors = null;
-        if ($queue !== null && ! $queue->Extensions->delete()) {
-            $errors = $queue->Extensions->getMessages();
+        $conference = ConferenceRooms::findFirstByUniqid($uniqid);
+        if ($conference === null) {
+            return;
+        }
+        $this->db->begin();
+        $errors = false;
+        $extension = $conference->Extensions;
+        if (!$extension->delete()) {
+            $errors = $extension->getMessages();
         }
 
         if ($errors) {

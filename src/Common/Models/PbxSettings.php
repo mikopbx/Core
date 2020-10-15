@@ -83,6 +83,7 @@ class PbxSettings extends ModelsBase
             'MailTplMissedCallFooter'         => '',
             'MailTplVoicemailSubject'         => 'VoiceMail from PBX',
             'MailTplVoicemailBody'            => 'See attach',
+            'MailTplVoicemailFooter'          => '',
             'NTPServer'                       =>  '0.pool.ntp.org'.PHP_EOL.'1.pool.ntp.org'.PHP_EOL,
             'VoicemailNotificationsEmail'     => 'admin@mycompany.com',
             'VoicemailExten'                  => '*001',
