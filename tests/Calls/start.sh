@@ -9,6 +9,7 @@
 #
 
 echo -e "\e[01;35mInit asterisk...\e[0m";
+remount-offload;
 
 dirName=$(dirname "$0");
 pidDir="${dirName}/run/asterisk.pid";
