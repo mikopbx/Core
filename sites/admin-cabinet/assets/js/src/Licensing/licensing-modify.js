@@ -14,6 +14,7 @@ $.fn.form.settings.rules.checkEmptyIfLicenseKeyEmpty = function (value) {
 
 const licensingModify = {
 	$formObj: $('#licencing-modify-form'),
+	$dirrtyField: $('#dirrty'),
 	$emptyLicenseKeyInfo: $('#empty-license-key-info'),
 	$filledLicenseKeyInfo: $('#filled-license-key-info'),
 	$getNewKeyLicenseSection: $('#getNewKeyLicenseSection'),
@@ -95,7 +96,6 @@ const licensingModify = {
 		licensingModify.defaultLicenseKey = licensingModify.$licKey.val();
 
 		licensingModify.$licensingMenu.tab({
-			history: true,
 			historyType: 'hash',
 		});
 
@@ -269,17 +269,17 @@ const licensingModify = {
 		if (success===true){
 			window.location.reload();
 		} else {
-			UserMessage.showError(response.messages)
+			UserMessage.showMultiString(response.messages);
+			licensingModify.$dirrtyField.val(Math.random());
+			licensingModify.$dirrtyField.trigger('change');
 		}
 	},
 	cbBeforeSendForm(settings) {
-		const result = settings;
-		result.data = licensingModify.$formObj.form('get values');
-		PbxApi.LicenseProcessUserRequest(result.data, licensingModify.cbAfterFormProcessing);
-		return result;
+		return settings;
 	},
 	cbAfterSendForm() {
-
+		const formData = licensingModify.$formObj.form('get values');
+		PbxApi.LicenseProcessUserRequest(formData, licensingModify.cbAfterFormProcessing);
 	},
 	initializeForm() {
 		Form.$formObj = licensingModify.$formObj;

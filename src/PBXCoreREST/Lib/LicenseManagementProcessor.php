@@ -8,6 +8,7 @@
 
 namespace MikoPBX\PBXCoreREST\Lib;
 
+use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\MikoPBXConfig;
 use Phalcon\Di\Injectable;
@@ -61,7 +62,10 @@ class LicenseManagementProcessor extends Injectable
                 $proc = new LicenseManagementProcessor();
                 $res = $proc->captureFeatureForProductIdAction($data);
                 break;
-
+            case 'sendPBXMetrics':
+                $proc = new LicenseManagementProcessor();
+                $res = $proc->sendMetricsAction();
+                break;
             default:
                 $res->messages[] = "Unknown action - {$action} in licenseCallBack";
         }
@@ -229,4 +233,37 @@ class LicenseManagementProcessor extends Injectable
         return $res;
     }
 
+    /**
+     * Sends PBX metrics to the MIKO company
+     *
+     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     */
+    private function sendMetricsAction(): PBXApiResult
+    {
+        $res = new PBXApiResult();
+        $res->processor = __METHOD__;
+        $res->success= true;
+
+        // License Key
+        $licenseKey = PbxSettings::getValueByKey('PBXLicense');
+
+        $dataMetrics = [];
+
+        // PBXVersion
+        $dataMetrics['PBXname'] = 'MikoPBX@' . PbxSettings::getValueByKey('PBXVersion');
+
+        // SIP Extensions count
+        $extensions                   = Extensions::find('type="'.Extensions::TYPE_SIP.'"');
+        $dataMetrics['CountSipExtensions'] = $extensions->count();
+
+        // Interface language
+        $dataMetrics['WebAdminLanguage'] = PbxSettings::getValueByKey('WebAdminLanguage');
+
+        // PBX language
+        $dataMetrics['PBXLanguage'] = PbxSettings::getValueByKey('PBXLanguage');
+
+        $this->license->sendLicenseMetrics($licenseKey, $dataMetrics);
+
+        return $res;
+    }
 }
