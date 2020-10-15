@@ -584,7 +584,6 @@ return [
     'ts_CurrentSystemTime' => 'Nuværende tid',
     'ts_NTPServer' => 'NTP-server',
     'ms_SMTPSettings' => 'Meddelelsesindstillinger',
-    'ms_NotificationTemplates' => 'Alarmskabeloner',
     'ms_SMTPHost' => 'SMTP vært',
     'ms_SMTPPort' => 'SMTP-port',
     'ms_SMTPUsername' => 'SMTP-login',

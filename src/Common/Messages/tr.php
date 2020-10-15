@@ -243,7 +243,6 @@ Bir kez etkinleştirilebilir, bundan sonra kupon kullanılır.
     'ts_CurrentSystemTime' => 'Şimdiki zaman',
     'ts_NTPServer' => 'NTP sunucusu',
     'ms_SMTPSettings' => 'Mesaj Ayarları',
-    'ms_NotificationTemplates' => 'Uyarı Şablonları',
     'ms_SMTPHost' => 'SMTP ana bilgisayarı',
     'ms_SMTPPort' => 'SMTP bağlantı noktası',
     'ms_SMTPUsername' => 'SMTP girişi',

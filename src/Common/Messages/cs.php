@@ -578,7 +578,6 @@ return [
     'ts_CurrentSystemTime' => 'Aktuální čas',
     'ts_NTPServer' => 'NTP server',
     'ms_SMTPSettings' => 'Nastavení zprávy',
-    'ms_NotificationTemplates' => 'Výstražné šablony',
     'ms_SMTPHost' => 'Hostitel SMTP',
     'ms_SMTPPort' => 'Port SMTP',
     'ms_SMTPUsername' => 'Přihlášení k SMTP',

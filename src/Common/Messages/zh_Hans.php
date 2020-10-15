@@ -582,7 +582,6 @@ return [
     'ts_CurrentSystemTime' => '当前时间',
     'ts_NTPServer' => 'NTP服务器',
     'ms_SMTPSettings' => '讯息设定',
-    'ms_NotificationTemplates' => '警报模板',
     'ms_SMTPHost' => 'SMTP主机',
     'ms_SMTPPort' => 'SMTP端口',
     'ms_SMTPUsername' => 'SMTP登录',
