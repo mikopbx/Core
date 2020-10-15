@@ -66,7 +66,7 @@ class ExtensionsController extends BaseController
                 ],
             ],
         ];
-        $query      = $this->_modelsManager->createBuilder($parameters)->getQuery();
+        $query      = $this->di->get('modelsManager')->createBuilder($parameters)->getQuery();
         $extensions = $query->execute();
 
         foreach ($extensions as $extension) {

@@ -26,7 +26,6 @@ use Sentry\SentrySdk;
  * @property \Phalcon\Flash\Session                        flash
  * @property \Phalcon\Tag                                  tag
  * @property \Phalcon\Config\Adapter\Json                  config
- * @property \Phalcon\Mvc\Model\Manager                    _modelsManager
  */
 class BaseController extends Controller
 {
