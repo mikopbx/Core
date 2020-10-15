@@ -9,7 +9,7 @@
 #
 
 echo -e "\e[01;35mInit asterisk...\e[0m";
-remount-offload;
+/bin/mount -o remount,rw /offload/
 
 dirName=$(dirname "$0");
 pidDir="${dirName}/run/asterisk.pid";
@@ -24,11 +24,11 @@ sed "s/PATH/$escapeDirName/" < "${dirName}/asterisk/asterisk-pattern.conf" > "${
 
 # start asterisk.
 astConf="${dirName}/asterisk/asterisk.conf";
-asterisk -C "$astConf";
+/usr/sbin/asterisk -C "$astConf";
 echo -e "\e[01;32m-> \e[0mWaiting start asterisk...";
 sleep 1;
 # Ожидаем запуска Asterisk.
-asterisk -C "$astConf" -rx 'core waitfullybooted' > /dev/null;
+/usr/sbin/asterisk -C "$astConf" -rx 'core waitfullybooted' > /dev/null;
 echo -e "\e[01;32m-> \e[0mWaiting fully boot asterisk...";
 echo;
 # Ждем регистрации.
@@ -36,9 +36,11 @@ sleep 3;
 # Выполнение теста. Originate через AMI.
 
 export astConf dirName;
-tests=$(find "${dirName}/Scripts" -type f -name "start.php" | sort);
+tests=$(/bin/find "${dirName}/Scripts" -type f -name "start.php" | /bin/sort);
 for file in $tests
 do
-  php -f "${file}";
+  /usr/bin/php -f "${file}";
 done
+
+/usr/sbin/asterisk -C "$astConf" -rx 'core stop now' > /dev/null;
 

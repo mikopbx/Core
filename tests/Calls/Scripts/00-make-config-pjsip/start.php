@@ -28,11 +28,12 @@ foreach ($db_data as $peer){
 $dirName = getenv('dirName');
 $astConf = getenv('astConf');
 
+$cmdAsterisk = Util::which('asterisk');
 file_put_contents("$dirName/asterisk/pjsip.conf", $config);
-Util::mwExec("asterisk -C '$astConf' -rx 'module reload res_pjsip.so'");
+Util::mwExec("{$cmdAsterisk} -C '$astConf' -rx 'module reload res_pjsip.so'");
 
 sleep(2);
-$result = Util::mwExec('asterisk -rx"core show hints" | grep PJSIP/ | grep -v Idle', $out);
+$result = Util::mwExec($cmdAsterisk.' -rx"core show hints" | grep PJSIP/ | grep -v Idle', $out);
 if($result !== 1){
     file_put_contents('php://stderr', "\033[01;31m-> ".'Not all endpoint are registered: '. implode($out)."\033[39m \n");
 }else{
