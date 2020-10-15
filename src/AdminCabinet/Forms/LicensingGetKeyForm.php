@@ -9,7 +9,6 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
-use Phalcon\Forms\Element\Email;
 use Phalcon\Forms\Element\Numeric;
 use Phalcon\Forms\Element\Text;
 use Phalcon\Forms\Form;
@@ -25,7 +24,7 @@ class LicensingGetKeyForm extends Form
     public function initialize(): void
     {
         $this->add(new Text('companyname'));
-        $this->add(new Email('email'));
+        $this->add(new Text('email'));
         $this->add(new Text('contact'));
         $this->add(new Numeric('inn'));
         $this->add(new Text('telefone'));

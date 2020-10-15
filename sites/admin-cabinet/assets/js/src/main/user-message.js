@@ -5,38 +5,41 @@
  * Written by Nikolay Beketov, 12 2019
  *
  */
-
+/* global globalTranslate */
 const UserMessage = {
 	$ajaxMessagesDiv: $('#ajax-messages'),
 	showError(text, header = '') {
-		$('body')
-			.toast({
-				class: 'error',
-				displayTime: 0,
-				message: text,
-				title: header,
-				compact: false,
-			});
+		let html = '<div class="ui error message ajax">';
+		if (header!==''){
+			html +=`<div class="header">${header}</div>`
+		} else {
+			html +=`<div class="header">${globalTranslate.msg_ErrorHeader}</div>`
+		}
+		html += `<p>${text}</p></div>`;
+		UserMessage.$ajaxMessagesDiv.after(html);
+		UserMessage.scrollToMessages();
 	},
 	showWraning(text, header = '') {
-		$('body')
-			.toast({
-				class: 'warning',
-				displayTime: 0,
-				message: text,
-				title: header,
-				compact: false,
-			});
+		let html = '<div class="ui warning message ajax">';
+		if (header!==''){
+			html +=`<div class="header">${header}</div>`
+		} else {
+			html +=`<div class="header">${globalTranslate.msg_WarningHeader}</div>`
+		}
+		html += `<p>${text}</p></div>`;
+		UserMessage.$ajaxMessagesDiv.after(html);
+		UserMessage.scrollToMessages();
 	},
 	showInformation(text, header = '') {
-		$('body')
-			.toast({
-				class: 'success',
-				displayTime: 5000,
-				message: text,
-				title: header,
-				compact: false,
-			});
+		let html = '<div class="ui info message ajax">';
+		if (header!==''){
+			html +=`<div class="header">${header}</div>`
+		} else {
+			html +=`<div class="header">${globalTranslate.msg_infoHeader}</div>`
+		}
+		html += `<p>${text}</p></div>`;
+		UserMessage.$ajaxMessagesDiv.after(html);
+		UserMessage.scrollToMessages();
 	},
 	showMultiString(messages, header = '') {
 		$('.ui.message.ajax').remove();
@@ -101,7 +104,7 @@ const UserMessage = {
 	},
 	scrollToMessages() {
 		$('html, body').animate({
-			scrollTop: UserMessage.$ajaxMessagesDiv.offset().top,
+			scrollTop: UserMessage.$ajaxMessagesDiv.offset().top-50,
 		}, 2000);
 	},
 };

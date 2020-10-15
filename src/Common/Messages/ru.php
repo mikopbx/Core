@@ -1034,5 +1034,8 @@ return [
     'sd_SystemInformation'                                                => 'Информация о системе',
     'sd_CollectingInfo'                                                   => 'Сбор служебной информации',
     'sd_PackingLogFiles'                                                  => 'Упаковка собранных данных',
+    'msg_ErrorHeader'                                                     => 'Ошибка',
+    'msg_WarningHeader'                                                   => 'Внимание',
+    'msg_infoHeader'                                                      => 'Информация',
 
 ];
