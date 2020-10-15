@@ -95,7 +95,6 @@ const licensingModify = {
 		licensingModify.defaultLicenseKey = licensingModify.$licKey.val();
 
 		licensingModify.$licensingMenu.tab({
-			history: true,
 			historyType: 'hash',
 		});
 
