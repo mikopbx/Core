@@ -136,8 +136,8 @@ const advicesWorker = {
 				advicesWorker.timeOut,
 			);
 		} else if (response.success === true
-			&& response.message !== undefined
-			&& response.message.length === 0) {
+			&& response.advices !== undefined
+			&& response.advices.length === 0) {
 			sessionStorage.removeItem(`previousAdvice${globalWebAdminLanguage}`);
 			sessionStorage.removeItem(`previousAdviceBell${globalWebAdminLanguage}`);
 			advicesWorker.$advicesBellButton

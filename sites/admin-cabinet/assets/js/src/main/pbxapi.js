@@ -1099,25 +1099,26 @@ const PbxApi = {
 	 * Tries to capture feature.
 	 * If it fails we try to get trial and then try capture again.
 	 *
-	 * @param licProductId
-	 * @param licFeatureId
+	 * @param params
 	 * @param callback
 	 */
-	LicenseCaptureFeatureForProductId(licProductId, licFeatureId, callback) {
+	LicenseCaptureFeatureForProductId(params, callback) {
+		const licFeatureId = params.licFeatureId;
+		const licProductId = params.licProductId;
 		$.api({
 			url: PbxApi.licenseCaptureFeatureForProductId,
 			on: 'now',
 			method: 'POST',
 			data: {licFeatureId, licProductId},
 			successTest: PbxApi.successTest,
-			onSuccess(response) {
-				callback(response.data);
+			onSuccess() {
+				callback(params, true);
 			},
-			onFailure() {
-				callback(false);
+			onFailure(response) {
+				callback(response.messages, false);
 			},
 			onError() {
-				callback(false);
+				callback('', false);
 			},
 		});
 	},

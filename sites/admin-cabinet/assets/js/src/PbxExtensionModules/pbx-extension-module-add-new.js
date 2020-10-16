@@ -16,23 +16,6 @@ const addNewExtension = {
 	initialize() {
 		addNewExtension.$progressBar.hide();
 		PbxApi.SystemUploadFileAttachToBtn('add-new-button',['zip'], addNewExtension.cbResumableUploadFile);
-		// addNewExtension.$uploadButton.on('click', (e) => {
-		// 	e.preventDefault();
-		// 	if (
-		// 		addNewExtension.$uploadButton.hasClass('loading')
-		// 		|| addNewExtension.uploadInProgress
-		// 	) { return; }
-		// 	$('input:file', $(e.target).parents()).click();
-		// });
-		//
-		// $('input:file').on('change', (e) => {
-		// 	if (e.target.files[0] !== undefined) {
-		// 		const filename = e.target.files[0].name;
-		// 		$('input:text', $(e.target).parent()).val(filename);
-		// 		const data = $('input:file')[0].files[0];
-		// 		PbxApi.SystemUploadFile(data, addNewExtension.cbResumableUploadFile);
-		// 	}
-		// });
 	},
 	/**
 	 * Upload file by chunks
@@ -82,26 +65,7 @@ const addNewExtension = {
 		const filePath = json.data.filename;
 		mergingCheckWorker.initialize(fileID, filePath);
 	},
-	cbAfterUploadFile(response, success) {
-		if (response.length === 0 || response === false || success === false) {
-			addNewExtension.$uploadButton.removeClass('loading');
-			addNewExtension.uploadInProgress = false;
-			UserMessage.showError(globalTranslate.ext_UploadError);
-		} else if (response.function === 'upload_progress' && success) {
-			addNewExtension.$progressBar.progress({
-				percent: parseInt(response.percent, 10),
-			});
-			if (response.percent < 100) {
-				addNewExtension.$progressBarLabel.text(globalTranslate.ext_UploadInProgress);
-			} else {
-				addNewExtension.$progressBarLabel.text(globalTranslate.ext_InstallationInProgress);
-			}
-		} else if (response.function === 'uploadNewModule' && success) {
-			upgradeStatusLoopWorker.initialize(response.uniqid, false);
-		} else {
-			UserMessage.showMultiString(response.message);
-		}
-	},
+
 };
 
 const mergingCheckWorker = {
