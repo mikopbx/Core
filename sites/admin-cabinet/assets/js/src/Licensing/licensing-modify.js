@@ -146,7 +146,7 @@ const licensingModify = {
 			licensingModify.$filledLicenseKeyInfo.after(`<div class="ui success message ajax"><i class="check green icon"></i> ${globalTranslate.lic_LicenseKeyValid}</div>`);
 		} else {
 			licensingModify.$formObj.addClass('error').removeClass('success');
-			licensingModify.$filledLicenseKeyInfo.after(`<div class="ui error message ajax"><i class="exclamation triangle red icon"></i> ${response.message}</div>`);
+			licensingModify.$filledLicenseKeyInfo.after(`<div class="ui error message ajax"><i class="exclamation triangle red icon"></i> ${response.messages}</div>`);
 		}
 	},
 
