@@ -15,7 +15,7 @@
     <div class="ui center aligned basic segment">
         <img src="{{ modulesExampleImgPath }}" class="ui fluid image"/>
         <div class="ui hidden divider"></div>
-        <a class="ui blue primary button" href="#management">{{ t._('lic_MarketplaceAction') }}</a>
+        <a class="ui blue primary button" href="#management" id="changePageToLicensing">{{ t._('lic_MarketplaceAction') }}</a>
     </div>
 
 </div>

@@ -15,6 +15,7 @@ $.fn.form.settings.rules.checkEmptyIfLicenseKeyEmpty = function (value) {
 const licensingModify = {
 	$formObj: $('#licencing-modify-form'),
 	$dirrtyField: $('#dirrty'),
+	$goToLicenseManagementBTN:$('#changePageToLicensing'),
 	$emptyLicenseKeyInfo: $('#empty-license-key-info'),
 	$filledLicenseKeyInfo: $('#filled-license-key-info'),
 	$getNewKeyLicenseSection: $('#getNewKeyLicenseSection'),
@@ -124,6 +125,10 @@ const licensingModify = {
 			licensingModify.$licensingMenu.tab('change tab', 'management');
 		}
 
+		licensingModify.$goToLicenseManagementBTN.on('click',(e)=>{
+			e.preventDefault();
+			licensingModify.$licensingMenu.tab('change tab', 'management');
+		});
 
 	},
 	/**
