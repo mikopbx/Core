@@ -16,22 +16,26 @@ use Phalcon\Di;
  * /pbxcore/api/system/{name} System management (GET)
  *
  * Shutdown system
- *   curl http://172.16.156.212/pbxcore/api/system/shutdown;
+ *   curl http://127.0.0.1/pbxcore/api/system/shutdown;
  *
  * Reboot system
- *   curl http://172.16.156.212/pbxcore/api/system/reboot;
+ *   curl http://127.0.0.1/pbxcore/api/system/reboot;
  *
  * Get list of banned IP by fail2ban
- *   curl http://172.16.156.212/pbxcore/api/system/getBanIp;
+ *   curl http://127.0.0.1/pbxcore/api/system/getBanIp;
  *
  * Reload smtp notification service
- *   curl http://172.16.156.212/pbxcore/api/system/reloadMsmtp;
+ *   curl http://127.0.0.1/pbxcore/api/system/reloadMsmtp;
  *
  * Ping backend (described in nginx.conf):
- *   curl http://172.16.156.223/pbxcore/api/system/ping
+ *   curl http://127.0.0.1/pbxcore/api/system/ping
  *
  * Get system date:
- *   curl http://172.16.156.223/pbxcore/api/system/getDate
+ *   curl http://127.0.0.1/pbxcore/api/system/getDate
+ *
+ * Restore default system settings
+ *   curl http://127.0.0.1/pbxcore/api/system/restoreDefault
+ *
  */
 class GetController extends BaseController
 {

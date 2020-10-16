@@ -274,7 +274,6 @@ class Util
 
         if ($WorkerPID === '' && ('start' === $action || 'restart' === $action)) {
             self::mwExec("{$path_nohup} {$cmd} {$param}  > {$out_file} 2>&1 &", $out);
-            // usleep(500000);
         }
 
         return true;

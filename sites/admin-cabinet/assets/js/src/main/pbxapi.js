@@ -44,6 +44,7 @@ const PbxApi = {
 	systemUploadFile: `${Config.pbxUrl}/pbxcore/api/upload/uploadResumable`, // curl -F "file=@ModuleTemplate.zip" http://127.0.0.1/pbxcore/api/upload/uploadResumable
 	systemStatusUploadFile: `${Config.pbxUrl}/pbxcore/api/upload/status`, // curl -X POST -d '{"id": "1531474060"}' http://127.0.0.1/pbxcore/api/upload/status;
 	systemChangeCoreLanguage: `${Config.pbxUrl}/pbxcore/api/system/updateCoreLanguage`, // Update WorkerApiCommands language
+	systemRestoreDefaultSettings: `${Config.pbxUrl}/pbxcore/api/system/restoreDefault`, // Delete all system settings
 	sysinfoGetInfo: `${Config.pbxUrl}/pbxcore/api/sysinfo/getInfo`, // Get system information
 	sysinfoGetExternalIP: `${Config.pbxUrl}/pbxcore/api/sysinfo/getExternalIpInfo`, //Get external IP address,
 	advicesGetList: `${Config.pbxUrl}/pbxcore/api/advices/getList`,
@@ -959,6 +960,24 @@ const PbxApi = {
 			on: 'now',
 		});
 	},
+	/**
+	 * Delete all system settings
+	 */
+	SystemRestoreDefaultSettings(callback) {
+		$.api({
+			url: PbxApi.systemRestoreDefaultSettings,
+			on: 'now',
+			successTest: PbxApi.successTest,
+			onSuccess() {
+				callback(true);
+			},
+			onFailure(response) {
+				callback(response.messages);
+			},
+		});
+	},
+
+
 	/**
 	 * Makes the list of notifications about system, firewall, passwords, wrong settings
 	 *
