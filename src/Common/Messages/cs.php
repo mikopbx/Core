@@ -1009,4 +1009,5 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'sd_lines' => 'Omezit',
     'sd_filter' => 'Filtr',
     'sd_Filename' => 'Soubor',
+    'lic_GetKeyForm' => 'Registrace',
 ];
