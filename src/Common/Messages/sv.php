@@ -1009,4 +1009,5 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'gs_ValidateWEBPortOutOfRange' => 'HTTP-portfältet är felaktigt. Välj ett värde mellan {ruleValue}.',
     'gs_PBXSplitAudioThread' => 'Spara inspelningar i stereo',
     'cq_ValidateExtensionNumber' => 'Tilläggsnummer får endast bestå av siffror',
+    'lic_GetKeyForm' => 'registrering',
 ];
