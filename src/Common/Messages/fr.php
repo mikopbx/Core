@@ -1009,4 +1009,5 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'sd_ShowLog' => 'Affichage des journaux',
     'upd_UpgradeError' => 'Erreur lors de la mise à jour de MikoPBX',
     'cq_CallerIDPrefix' => 'Nom court de la file d\'attente à afficher devant le CallerID de l\'appelant, par exemple "Sales"',
+    'lic_GetKeyForm' => 'Inscription',
 ];
