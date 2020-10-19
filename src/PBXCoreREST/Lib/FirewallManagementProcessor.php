@@ -96,48 +96,6 @@ class FirewallManagementProcessor extends Injectable
     }
 
     /**
-     * Удалить из бана конкретный IP из конкретного jail.
-     *
-     * @param string $ip
-     * @param string $jail
-     *
-     * @return PBXApiResult
-     */
-    public static function fail2banUnban(string $ip, string $jail): PBXApiResult
-    {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
-
-        $ip  = trim($ip);
-        // Валидация...
-        // $matches = [];
-        // preg_match_all('/^[a-z-]+$/', $jail, $matches, PREG_SET_ORDER);
-        if ( ! Verify::isIpAddress($ip)) {
-            // это НЕ IP адрес, или не корректно указан jail.
-            $res->messages[]='Not valid ip or jail.';
-            return $res;
-        }
-        $path_sock = '/var/run/fail2ban/fail2ban.sock';
-        if (file_exists($path_sock) && filetype($path_sock) === 'socket') {
-            $out = [];
-            $fail2banPath = Util::which('fail2ban-client');
-            Util::mwExec("{$fail2banPath} set {$jail} unbanip {$ip} 2>&1", $out);
-            $res_data = trim(implode('', $out));
-            if ($res_data !== $ip && $res_data !== "IP $ip is not banned") {
-                $res->messages[] = 'Error fail2ban-client. ' . $res_data;
-                return $res;
-            }
-        } else {
-            $res->messages[] = 'Fail2ban not run.';
-            return $res;
-        }
-
-        $res = self::fail2banUnbanDb($ip, $jail);
-
-        return $res;
-    }
-
-    /**
      * Удаление бана из базы.
      *
      * @param string $ip

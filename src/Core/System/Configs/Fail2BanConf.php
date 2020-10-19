@@ -79,35 +79,11 @@ class Fail2BanConf extends Injectable
 
             return;
         }
-        // Чистим битые строки, не улдаленные после отмены бана.
-        $this->cleanFail2banDb();
         Util::killByName('fail2ban-server');
         $fail2banPath = Util::which('fail2ban-client');
         $cmd_start    = "{$fail2banPath} -x start";
         $command      = "($cmd_start;) > /dev/null 2>&1 &";
         Util::mwExec($command);
-    }
-
-    /**
-     * Cleans all fail2ban blocks
-     */
-    public function cleanFail2banDb(): void
-    {
-        /** @var \MikoPBX\Common\Models\Fail2BanRules $res */
-        $res = Fail2BanRules::findFirst("id = '1'");
-        if ($res !== null) {
-            $ban_time = $res->bantime;
-        } else {
-            $ban_time = 43800;
-        }
-        $path_db = self::FAIL2BAN_DB_PATH;
-        $db      = new SQLite3($path_db);
-        $db->busyTimeout(3000);
-        if (false === $this->tableBanExists($db)) {
-            return;
-        }
-        $q = 'DELETE' . ' from bans WHERE (timeofban+' . $ban_time . ')<' . time();
-        $db->query($q);
     }
 
     /**
