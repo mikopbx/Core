@@ -1009,4 +1009,5 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'gs_ValidateWEBPortOutOfRange' => 'Pole portu HTTP jest nieprawidłowe. Wybierz wartość między {ruleValue}.',
     'gs_PBXSplitAudioThread' => 'Zapisuj nagrania w stereo',
     'cq_ValidateExtensionNumber' => 'Numer wewnętrzny może zawierać tylko cyfry',
+    'lic_GetKeyForm' => 'Rejestracja',
 ];
