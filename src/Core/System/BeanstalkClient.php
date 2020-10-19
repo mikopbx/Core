@@ -261,7 +261,7 @@ class BeanstalkClient extends Injectable
                 // Нужно удалить все Jobs.
                 $this->queue->watch($tube);
                 while (true){
-                    $job = $this->queue->reserveWithTimeout(0.5);
+                    $job = $this->queue->reserveWithTimeout(1);
                     if($job === null){
                         break;
                     }
