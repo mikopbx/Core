@@ -1009,4 +1009,5 @@ return [
     'gs_PBXSplitAudioThread' => '録音をステレオで保存する',
     'ex_ValidateExtensionNumber' => '内線番号は数字のみで構成する必要があります',
     'cq_ValidateExtensionNumber' => '内線番号は数字のみで構成する必要があります',
+    'lic_GetKeyForm' => '登録',
 ];
