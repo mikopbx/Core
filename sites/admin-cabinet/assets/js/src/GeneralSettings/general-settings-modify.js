@@ -123,6 +123,20 @@ const generalSettingsModify = {
 		});
 		generalSettingsModify.initializeForm();
 	},
+	checkDeleteAllConditions(){
+		const deleteAllInput = generalSettingsModify.$formObj.form('get value', 'deleteAllInput');
+		if (deleteAllInput === globalTranslate.gs_EnterDeleteAllPhrase){
+			PbxApi.SystemRestoreDefaultSettings(generalSettingsModify.cbAfterRestoreDefaultSettings);
+		}
+
+	},
+	cbAfterRestoreDefaultSettings(response){
+		if (response===true){
+			UserMessage.showInformation(globalTranslate.gs_AllSettingsDeleted);
+		} else {
+			UserMessage.showError(response);
+		}
+	},
 	cbBeforeSendForm(settings) {
 		const result = settings;
 		result.data = generalSettingsModify.$formObj.form('get values');
@@ -141,6 +155,7 @@ const generalSettingsModify = {
 		return result;
 	},
 	cbAfterSendForm() {
+		generalSettingsModify.checkDeleteAllConditions();
 
 	},
 	initializeForm() {

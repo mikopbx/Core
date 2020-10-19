@@ -11,11 +11,12 @@
             <a class="item" data-tab="ssh">{{ t._('gs_SSHTab') }}</a>
             <a class="item" data-tab="web">{{ t._('gs_WebTab') }}</a>
             <a class="item" data-tab="passwords">{{ t._('gs_Passwords') }}</a>
+            <a class="item" data-tab="restoreDefault">{{ t._('gs_DangerZone') }}</a>
 
         </div>
     </div>
     <div class="twelve wide column">
-        <div class="ui  tab segment active" data-tab="general">
+        <div class="ui tab segment active" data-tab="general">
             <div class="field">
                 <label>{{ t._('gs_PBXName') }}</label>
                 {{ form.render('Name') }}
@@ -68,7 +69,7 @@
         </div>
 
 
-        <div class="ui  tab segment" data-tab="features">
+        <div class="ui tab segment" data-tab="features">
 
             <div class="field">
                 <label>{{ t._('gs_PBXCallParkingExt') }}</label>
@@ -101,7 +102,7 @@
         </div>
 
 
-        <div class="ui  tab segment" data-tab="sip">
+        <div class="ui tab segment" data-tab="sip">
             <div class="field">
                 <label>{{ t._('gs_SIPPort') }}</label>
                 {{ form.render('SIPPort') }}
@@ -129,7 +130,7 @@
             </div>
         </div>
 
-        <div class="ui  tab segment" data-tab="codecs">
+        <div class="ui tab segment" data-tab="codecs">
             {{ partial("GeneralSettings/codecs") }}
         </div>
 
@@ -208,7 +209,7 @@
             {% endif %}
         </div>
 
-        <div class="ui  tab segment" data-tab="web">
+        <div class="ui tab segment" data-tab="web">
             <div class="inline fields">
                 <div class="field">
                     <label for="WEBPort">{{ t._('gs_WebPort') }}</label>
@@ -263,6 +264,18 @@
                 {{ t._('gs_DefaultPasswordWarning') }}
             </div>
         </div>
+
+        <div class="ui tab segment" data-tab="restoreDefault">
+            <div class="ui warning message">
+                <div class="ui header">{{ t._('gs_RestoreAllSettingsHeader')}}</div>
+                <p>{{ t._('gs_RestoreAllSettingsMessage')}}</p>
+            </div>
+            <div class="field">
+                <label>{{ t._('gs_EnterDeleteAllPhrasePreText') }} <br><br>{{ t._('gs_EnterDeleteAllPhrase') }}</label>
+                <input type="text" name="deleteAllInput" value=""/>
+            </div>
+        </div>
+
     </div>
 </div>
 

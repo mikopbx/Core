@@ -8,7 +8,7 @@
 
 /* global globalRootUrl, PbxApi, globalTranslate,
 UpdateApi, UserMessage, globalPBXVersion, SemanticLocalization,
-upgradeStatusLoopWorker, licensing, PbxExtensionStatus */
+upgradeStatusLoopWorker, PbxExtensionStatus */
 
 
 const extensionModules = {
@@ -97,7 +97,7 @@ const extensionModules = {
 			params.action = 'install';
 			params.aLink = $aLink;
 
-			licensing.captureFeature(params, extensionModules.cbAfterLicenseCheck);
+			PbxApi.LicenseCaptureFeatureForProductId(params, extensionModules.cbAfterLicenseCheck);
 		});
 		$('a.update').on('click', (e) => {
 			e.preventDefault();
@@ -112,7 +112,7 @@ const extensionModules = {
 			params.uniqid = $aLink.attr('data-uniqid');
 			params.size = $aLink.attr('data-size');
 			params.aLink = $aLink;
-			licensing.captureFeature(params, extensionModules.cbAfterLicenseCheck);
+			PbxApi.LicenseCaptureFeatureForProductId(params, extensionModules.cbAfterLicenseCheck);
 		});
 		$('a.delete').on('click', (e) => {
 			e.preventDefault();
@@ -191,14 +191,21 @@ const extensionModules = {
 	 * Если фича захвачена, обращаемся к серверу
 	 * обновлений за получениием дистрибутива
 	 * @param params
-	 * @returns {boolean}
+	 * @param result
 	 */
-	cbAfterLicenseCheck(params) {
-		UpdateApi.GetModuleInstallLink(
-			params,
-			extensionModules.cbGetModuleInstallLinkSuccess,
-			extensionModules.cbGetModuleInstallLinkFailure,
-		);
+	cbAfterLicenseCheck(params, result) {
+		if (result===true){
+			UpdateApi.GetModuleInstallLink(
+				params,
+				extensionModules.cbGetModuleInstallLinkSuccess,
+				extensionModules.cbGetModuleInstallLinkFailure,
+			);
+		} else if (result===false && params.length > 0){
+			UserMessage.showError(params);
+		} else {
+			UserMessage.showError(globalTranslate.ext_NoLicenseAvailable);
+		}
+		$('a.button').removeClass('disabled');
 	},
 	/**
 	 * Если сайт вернул ссылку на обновление
@@ -257,8 +264,8 @@ const extensionModules = {
 			if (response === true) {
 				upgradeStatusLoopWorker.initialize(params.uniqid, needEnable);
 			} else {
-				if (response.message !== undefined) {
-					UserMessage.showMultiString(response.message);
+				if (response.messages !== undefined) {
+					UserMessage.showMultiString(response.messages);
 				} else {
 					UserMessage.showMultiString(globalTranslate.ext_InstallationError);
 				}

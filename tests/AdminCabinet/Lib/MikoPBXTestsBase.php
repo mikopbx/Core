@@ -458,7 +458,7 @@ class MikoPBXTestsBase extends BrowserStackTest
             $xpath = "//div[contains(@class, 'tabular') and contains(@class, 'menu')]//a[contains(@data-tab,'{$anchor}')]";
             $tab   = self::$driver->findElement(WebDriverBy::xpath($xpath));
             $actions = new WebDriverActions(self::$driver);
-            $actions->moveToElement($tab);
+            $actions->moveToElement($tab, null, 100);
             $actions->perform();
             $tab->click();
         } catch (NoSuchElementException $e) {

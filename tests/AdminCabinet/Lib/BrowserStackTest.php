@@ -13,6 +13,8 @@ class BrowserStackTest extends TestCase
 {
     protected static RemoteWebDriver $driver;
     protected static BrowserStackLocal $bs_local;
+    protected static bool $testResult;
+    protected static array $failureConditions;
 
     /**
      * Before all tests
@@ -44,8 +46,9 @@ class BrowserStackTest extends TestCase
 
         $caps['project'] = "MikoPBX";
         $caps['build'] = $GLOBALS['BUILD_NUMBER'];
-
         self::$driver = RemoteWebDriver::create($url, $caps);
+        self::$testResult = true;
+        self::$failureConditions = [];
 
     }
 
@@ -57,7 +60,8 @@ class BrowserStackTest extends TestCase
     {
         parent::setUp();
         $sessionID = self::$driver->getSessionID();
-        $name = $this->getName();
+        $name = $this->getName(false);
+
         $client = new GuzzleHttpClient();
         $client->request('PUT', "https://api.browserstack.com/automate/sessions/{$sessionID}.json", [
             'auth' => [$GLOBALS['BROWSERSTACK_USERNAME'], $GLOBALS['BROWSERSTACK_ACCESS_KEY']],
@@ -72,10 +76,21 @@ class BrowserStackTest extends TestCase
     public function tearDown(): void
     {
         parent::tearDown();
-        $sessionID = self::$driver->getSessionID();
-        $status = $this->getStatus()===0?'passed':'failed';
-        $statusMessage = $this->getStatusMessage();
+        if ($this->getStatus()!==0){
+            self::$testResult = false;
+            self::$failureConditions[] = 'Test: '.$this->getName().' Message:'. $this->getStatusMessage();
+        }
+    }
+
+    /**
+     * After all tests
+     */
+    public static function tearDownAfterClass(): void
+    {
         $client = new GuzzleHttpClient();
+        $sessionID = self::$driver->getSessionID();
+        $status = self::$testResult?'passed':'failed';
+        $statusMessage = implode(PHP_EOL, self::$failureConditions);
         $client->request('PUT', "https://api.browserstack.com/automate/sessions/{$sessionID}.json", [
             'auth' => [$GLOBALS['BROWSERSTACK_USERNAME'], $GLOBALS['BROWSERSTACK_ACCESS_KEY']],
             'json' => [
@@ -85,13 +100,6 @@ class BrowserStackTest extends TestCase
         ]);
 
 
-    }
-
-    /**
-     * After all tests
-     */
-    public static function tearDownAfterClass(): void
-    {
         self::$driver->quit();
         if (self::$bs_local) {
             self::$bs_local->stop();

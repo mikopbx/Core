@@ -374,9 +374,6 @@ const webkitRecorder = {
 		sndPlayer.UpdateSource(fileURL);
 		const blobFile = new File([webkitRecorder.chunks[0]], 'blob'+ new Date().getTime()+'.wav');
 		PbxApi.SystemUploadFile(blobFile, soundFileModify.cbUploadResumable);
-		// const category = soundFileModify.$formObj.form('get value', 'category');
-		//
-		// PbxApi.SystemUploadAudioFile(blobFile, category, soundFileModify.cbAfterUploadFile);
 		webkitRecorder.$recordLabel.removeClass('red');
 		webkitRecorder.$stopButton.addClass('disabled');
 		webkitRecorder.$recordButton.removeClass('disabled');
