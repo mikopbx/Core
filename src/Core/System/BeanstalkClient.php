@@ -15,10 +15,11 @@ use Pheanstalk\Pheanstalk;
 
 class BeanstalkClient extends Injectable
 {
-    private $queue;
+    /** @var Pheanstalk */
+    private Pheanstalk $queue;
     private bool $connected = false;
     private array $job_options;
-    private $subscriptions = [];
+    private array $subscriptions = [];
     private string $tube;
     private int $reconnectsCount = 0;
     private $message;
@@ -92,9 +93,10 @@ class BeanstalkClient extends Injectable
             $this->message = $job->getData();
             $this->queue->delete($job);
         }
-
         $this->queue->ignore($inbox_tube);
 
+        // Чистим мусор.
+        $this->cleanTube();
         return $this->message;
     }
 
@@ -239,5 +241,36 @@ class BeanstalkClient extends Injectable
     public function reconnectsCount(): int
     {
         return $this->reconnectsCount;
+    }
+
+    /**
+     * Очистка зависших заданий.
+     */
+    public function cleanTube(){
+        $tubes = $this->queue->listTubes();
+        foreach ($tubes as $tube){
+            if(strpos($tube, "INBOX_") !== 0){
+                continue;
+            }
+            try {
+                $statData = $this->queue->statsTube($tube)->getArrayCopy();
+                $watching = $statData['current-watching'];
+                if($watching !== '0'){
+                    continue;
+                }
+                // Нужно удалить все Jobs.
+                $this->queue->watch($tube);
+                while (true){
+                    $job = $this->queue->reserveWithTimeout(0.5);
+                    if($job === null){
+                        break;
+                    }
+                    $this->queue->delete($job);
+                }
+            }catch (\Pheanstalk\Exception\DeadlineSoonException $e){
+                continue;
+            }
+
+        }
     }
 }
