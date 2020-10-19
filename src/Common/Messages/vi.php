@@ -1009,4 +1009,5 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá đ
     'gs_ValidateWEBPortOutOfRange' => 'Trường cổng HTTP không chính xác. Chọn một giá trị giữa {ruleValue}.',
     'gs_PBXSplitAudioThread' => 'Lưu bản ghi âm trong âm thanh nổi',
     'cq_ValidateExtensionNumber' => 'Số máy nhánh chỉ được bao gồm các số',
+    'lic_GetKeyForm' => 'Đăng ký',
 ];
