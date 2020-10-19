@@ -21,8 +21,7 @@ class CelConf extends ConfigClass
     {
         $conf = "[general]\n" .
             "enable=yes\n" .
-            //"apps=all\n".
-            "events=BRIDGE_ENTER,BRIDGE_EXIT\n" .
+            "events=CHAN_START,CHAN_END,ANSWER\n" .
             "dateformat = %F %T\n\n" .
             "[manager]\n" .
             "enabled = yes\n\n";
