@@ -25,23 +25,31 @@ class BeanstalkClient extends Injectable
     private $timeout_handler;
     private $error_handler;
 
+    private string $port;
 
     /**
      * BeanstalkClient constructor.
      *
      * @param string $tube
+     * @param string $port
      */
-    public function __construct($tube = 'default')
+    public function __construct($tube = 'default', $port = '')
     {
         $this->tube        = str_replace("\\", '-', $tube);;
         $this->job_options = ['priority' => 250, 'delay' => 0, 'ttr' => 3600];
+        $this->port = $port;
         $this->reconnect();
     }
 
     public function reconnect(): void
     {
-        $config      = $this->di->get('config')->beanstalk;
-        $this->queue = Pheanstalk::create($config->host, $config->port);
+        $config = $this->di->get('config')->beanstalk;
+        $port   = $config->port;
+        if(!empty($this->port) && is_numeric($this->port)){
+            $port = $this->port;
+        }
+
+        $this->queue = Pheanstalk::create($config->host, $port);
         $this->queue->useTube($this->tube);
         $this->connected = true;
     }
@@ -134,7 +142,6 @@ class BeanstalkClient extends Injectable
         $this->queue->ignore('default');
         $this->subscriptions[$tube] = $callback;
     }
-
     /**
      * Job worker
      *
@@ -143,7 +150,6 @@ class BeanstalkClient extends Injectable
     public function wait($timeout = 10): void
     {
         $this->message = null;
-
         $start = microtime(true);
         $job   = $this->queue->reserveWithTimeout($timeout);
         if ($job === null) {
@@ -159,7 +165,13 @@ class BeanstalkClient extends Injectable
         }
 
         // Processing job over callable function attached in $this->subscribe
-        $this->message   = unserialize($job->getData(), [false]);
+        if(json_decode($job->getData(), true) !==null){
+            $mData =  $job->getData();
+        }else{
+            $mData = unserialize($job->getData(), [false]);
+        }
+        $this->message = $mData;
+
         $stats           = $this->queue->statsJob($job);
         $requestFormTube = $stats['tube'];
         $func            = $this->subscriptions[$requestFormTube] ?? null;
