@@ -1009,4 +1009,5 @@ return [
     'gs_PBXSplitAudioThread' => 'Зберігати записи в стерео режимі',
     'ex_ValidateExtensionNumber' => 'Внутрішній номер повинен складатися тільки з чисел',
     'cq_ValidateExtensionNumber' => 'Внутрішній номер повинен складатися тільки з чисел',
+    'lic_GetKeyForm' => 'Реєстрація',
 ];

@@ -1009,4 +1009,5 @@ Se puede activar una vez, después de lo cual el cupón se canjea.
     'ex_ValidateExtensionNumber' => 'El número de extensión solo debe constar de números',
     'cq_ValidateExtensionNumber' => 'El número de extensión solo debe constar de números',
     'da_ValidateExtensionNumber' => 'El número de extensión solo debe constar de números',
+    'lic_GetKeyForm' => 'Registro',
 ];

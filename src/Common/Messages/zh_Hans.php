@@ -1009,4 +1009,5 @@ return [
     'gs_PBXSplitAudioThread' => '以立体声保存录音',
     'ex_ValidateExtensionNumber' => '分机号码只能由数字组成',
     'cq_ValidateExtensionNumber' => '分机号码只能由数字组成',
+    'lic_GetKeyForm' => '报名',
 ];

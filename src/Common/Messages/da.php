@@ -1009,4 +1009,5 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'gs_ValidateWEBPortOutOfRange' => 'HTTP-portfeltet er forkert. Vælg en værdi mellem {ruleValue}.',
     'ex_ValidateExtensionNumber' => 'Udvidelsesnummer må kun bestå af tal',
     'cq_ValidateExtensionNumber' => 'Udvidelsesnummer må kun bestå af tal',
+    'lic_GetKeyForm' => 'registrering',
 ];
