@@ -644,10 +644,10 @@ const PbxApi = {
 				callback(true);
 			},
 			onFailure(response) {
-				callback(response.messages);
+				callback(response);
 			},
 			onError(response) {
-				callback(response.messages);
+				callback(response);
 			},
 		});
 	},
