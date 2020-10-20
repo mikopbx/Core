@@ -14,9 +14,9 @@
     "astagidir": "/var/lib/asterisk/agi-bin",
     "astdbdir": "/mountpoint/mikopbx/persistence",
     "astlogdir" : "/mountpoint/mikopbx/astlogs/asterisk",
-    "astspooldir" : "/mountpoint/mikopbx/voicemailarchive",
+    "astspooldir" : "/mountpoint/mikopbx/astspool",
     "mediadir": "/mountpoint/mikopbx/media",
-    "monitordir" : "/mountpoint/mikopbx/voicemailarchive/monitor",
+    "monitordir" : "/mountpoint/mikopbx/astspool/monitor",
     "mohdir": "/mountpoint/mikopbx/media/moh"
   },
   "database": {
