@@ -6,9 +6,7 @@
  *
  */
 
-/* global globalRootUrl, PbxApi, globalTranslate,
-UpdateApi, UserMessage, globalPBXVersion, SemanticLocalization,
-upgradeStatusLoopWorker, PbxExtensionStatus */
+/* global globalRootUrl, PbxApi, globalTranslate, UpdateApi, UserMessage, globalPBXVersion, SemanticLocalization, upgradeStatusLoopWorker, PbxExtensionStatus */
 
 
 const extensionModules = {
