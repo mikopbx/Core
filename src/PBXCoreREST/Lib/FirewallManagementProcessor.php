@@ -74,6 +74,12 @@ class FirewallManagementProcessor extends Injectable
         $q .= ' GROUP BY jail,ip';
 
         $path_db = Fail2BanConf::FAIL2BAN_DB_PATH;
+        if(!file_exists($path_db)){
+            // Таблица не существует. Бана нет.
+            $res->success    = false;
+            $res->messages[] = "DB {$path_db} not found";
+            return $res;
+        }
         $db      = new SQLite3($path_db);
         $db->busyTimeout(5000);
         $fail2ban = new Fail2BanConf();
@@ -110,6 +116,12 @@ class FirewallManagementProcessor extends Injectable
 
         $jail_q  = ($jail === '') ? '' : "AND jail = '{$jail}'";
         $path_db = Fail2BanConf::FAIL2BAN_DB_PATH;
+        if(!file_exists($path_db)){
+            // Таблица не существует. Бана нет.
+            $res->success    = false;
+            $res->messages[] = "DB {$path_db} not found";
+            return $res;
+        }
         $db      = new SQLite3($path_db);
         $db->busyTimeout(3000);
         $fail2ban = new Fail2BanConf();
