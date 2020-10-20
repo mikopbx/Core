@@ -1010,4 +1010,5 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
     'sd_Filename' => 'Datei',
     'Storage unmounted' => 'Speicherdiskette nicht angeschlossen',
     'da_ValidateExtensionNumber' => 'Die Nebenstellennummer darf nur aus Nummern bestehen',
+    'lic_GetKeyForm' => 'Registrierung',
 ];

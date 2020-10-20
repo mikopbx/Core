@@ -1009,4 +1009,5 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'gs_ValidateWEBPortOutOfRange' => 'O campo da porta HTTP está incorreto. Escolha um valor entre {ruleValue}.',
     'gs_PBXSplitAudioThread' => 'Salvar gravações em estéreo',
     'cq_ValidateExtensionNumber' => 'O número do ramal deve consistir apenas em números',
+    'lic_GetKeyForm' => 'Registo',
 ];

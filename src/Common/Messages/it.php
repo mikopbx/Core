@@ -1009,4 +1009,5 @@ Può essere attivato una volta, dopo di che il coupon viene riscattato.
     'gs_ValidateWEBPortOutOfRange' => 'Il campo della porta HTTP non è corretto. Scegli un valore tra {ruleValue}.',
     'gs_PBXSplitAudioThread' => 'Salva le registrazioni in stereo',
     'cq_ValidateExtensionNumber' => 'Il numero di interno deve essere composto solo da numeri',
+    'lic_GetKeyForm' => 'registrazione',
 ];

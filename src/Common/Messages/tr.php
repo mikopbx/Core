@@ -1009,4 +1009,5 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
     'gs_ValidateWEBPortOutOfRange' => 'HTTP bağlantı noktası alanı yanlış. {RuleValue} arasında bir değer seçin.',
     'gs_PBXSplitAudioThread' => 'Kayıtları stereo olarak kaydedin',
     'ex_ValidateExtensionNumber' => 'Dahili numara yalnızca sayılardan oluşmalıdır',
+    'lic_GetKeyForm' => 'kayıt',
 ];
