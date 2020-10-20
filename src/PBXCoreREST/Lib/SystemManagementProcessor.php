@@ -10,11 +10,9 @@ namespace MikoPBX\PBXCoreREST\Lib;
 
 
 use MikoPBX\Common\Models\AsteriskManagerUsers;
-use MikoPBX\Common\Models\CallQueues;
-use MikoPBX\Common\Models\ConferenceRooms;
+use MikoPBX\Common\Models\CallDetailRecords;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\IncomingRoutingTable;
-use MikoPBX\Common\Models\IvrMenu;
 use MikoPBX\Common\Models\OutgoingRoutingTable;
 use MikoPBX\Common\Models\OutWorkTimes;
 use MikoPBX\Common\Models\PbxExtensionModules;
@@ -240,6 +238,12 @@ class SystemManagementProcessor extends Injectable
     {
         $res                             = new PBXApiResult();
         $res->processor                  = __METHOD__;
+        $di = DI::getDefault();
+        if ($di===null){
+            $res->messages[]='Error on DI initialize';
+            return $res;
+        }
+
         $res->success                    = true;
         $res->data['needRestartWorkers'] = true;
         $rm                              = Util::which('rm');
@@ -349,6 +353,19 @@ class SystemManagementProcessor extends Injectable
                 $res->messages[] = $record->getMessages();
                 $res->success    = false;
             }
+        }
+
+        // Delete CallRecords
+        $records = CallDetailRecords::find();
+        if ( ! $records->delete()) {
+            $res->messages[] = $records->getMessages();
+            $res->success    = false;
+        }
+
+        // Delete CallRecords sound files
+        $callRecordsPath  = $di->getShared('config')->path('asterisk.monitordir');
+        if (stripos($callRecordsPath, '/storage/usbdisk1/mikopbx') !== false) {
+             Util::mwExec("{$rm} -rf {$callRecordsPath}/*");
         }
 
         return $res;
