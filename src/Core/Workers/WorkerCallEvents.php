@@ -77,7 +77,8 @@ class WorkerCallEvents extends WorkerBase
             $command = "{$nicePath} -n 19 {$lamePath} -b 32 --silent '{$srcFile}' '{$resFile}' && {$chmodPath} o+r '{$resFile}'";
             if($onlySetVar){
                 $this->am->SetVar($channel, 'MIX_FILE_NAME', $srcFile);
-                $this->am->SetVar($channel, 'MIX_CMD', $command);
+                $this->am->SetVar($channel, 'MIX_CMD',       $command);
+                $this->am->SetVar($channel, 'MIX_OPTIONS',   $options);
             }else{
                 $res        = $this->am->MixMonitor($channel, $srcFile, $options, $command);
                 $res['cmd'] = "MixMonitor($channel, $file_name)";
