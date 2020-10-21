@@ -284,7 +284,7 @@ DROP TABLE  {$tableName}";
     }
 
     /**
-     * Compare database structure with metadata info
+     * Compares database structure with metadata info
      *
      * @param $currentTableStructure
      * @param $newTableStructure

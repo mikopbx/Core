@@ -109,7 +109,7 @@ class PostController extends BaseController
         $category              = $this->request->getPost('category');
         $data['temp_filename'] = $this->request->getPost('temp_filename');
         $di                    = Di::getDefault();
-        $mediaDir              = $di->getShared('config')->path('asterisk.mediadir');
+        $mediaDir              = $di->getShared('config')->path('asterisk.customSoundDir');
         $mohDir                = $di->getShared('config')->path('asterisk.mohdir');
         switch ($category) {
             case SoundFiles::CATEGORY_MOH:
