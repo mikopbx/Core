@@ -432,7 +432,7 @@ class PbxSettings extends ModelsBase
     }
 
     /**
-     * Check if this changes influence licensing
+     * Check if this changes influence to licensing
      *
      * @return bool
      */
@@ -445,4 +445,23 @@ class PbxSettings extends ModelsBase
                 return false;
         }
     }
+
+    /**
+     * Check if this changes influence to call recording
+     *
+     * @return bool
+     */
+    public function itHasCallRecordSettings(): bool
+    {
+        switch ($this->key) {
+            case 'PBXRecordCalls':
+            case 'PBXSplitAudioThread':
+                return true;
+            default:
+                return false;
+        }
+    }
+
+
+
 }

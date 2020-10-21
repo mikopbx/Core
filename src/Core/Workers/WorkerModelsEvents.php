@@ -90,6 +90,8 @@ class WorkerModelsEvents extends WorkerBase
 
     private const R_REST_API_WORKER = 'reloadRestAPIWorker';
 
+    private const R_CALL_EVENTS_WORKER = 'reloadWorkerCallEvents';
+
     private const R_MOH = 'reloadMoh';
 
     private const R_CONF_MODULES = 'reloadPbxConfModules';
@@ -138,7 +140,8 @@ class WorkerModelsEvents extends WorkerBase
             self::R_MANAGERS,
             self::R_CUSTOM_F,
             self::R_VOICEMAIL,
-            self::R_MOH
+            self::R_MOH,
+            self::R_CALL_EVENTS_WORKER,
         ];
 
         $this->modified_tables = [];
@@ -315,6 +318,10 @@ class WorkerModelsEvents extends WorkerBase
                 if ($this->pbxSettings->itHasNTPSettings()) {
                     $this->modified_tables[self::R_NTP]    = true;
                 }
+                if ($this->pbxSettings->itHasCallRecordSettings()) {
+                    $this->modified_tables[ self::R_CALL_EVENTS_WORKER]  = true;
+                }
+
                 break;
             case Sip::class:
                 $this->modified_tables[self::R_SIP]      = true;
@@ -527,6 +534,15 @@ class WorkerModelsEvents extends WorkerBase
     public function reloadRestAPIWorker(): void
     {
         Util::restartPHPWorker(WorkerApiCommands::class);
+    }
+
+
+    /**
+     *  Reloads WorkerCallEvents worker
+     */
+    public function reloadWorkerCallEvents(): void
+    {
+        Util::restartPHPWorker(WorkerCallEvents::class);
     }
 
     /**
