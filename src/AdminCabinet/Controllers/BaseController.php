@@ -244,7 +244,7 @@ class BaseController extends Controller
     }
 
     /**
-     * Remove all dangerous symbols from CallerID
+     * Removes all dangerous symbols from CallerID
      * @param string $callerId
      *
      * @return string
@@ -253,4 +253,5 @@ class BaseController extends Controller
     {
         return preg_replace('/[^a-zA-Zа-яА-Я0-9 ]/ui', '', $callerId);
     }
+
 }

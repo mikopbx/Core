@@ -23,7 +23,7 @@ use Phalcon\Forms\Form;
  */
 class DialplanApplicationEditForm extends Form
 {
-    public function initialize($entity = null): void
+    public function initialize($entity): void
     {
         foreach ($entity as $key => $value) {
             switch ($key) {
@@ -55,7 +55,7 @@ class DialplanApplicationEditForm extends Form
                     $this->add($select);
                     break;
                 case "applicationlogic":
-                    $this->add(new Hidden($key, ['value' => '']));
+                    $this->add(new Hidden($key, ['value' => $entity->getApplicationlogic()]));
                     break;
                 default:
                     $this->add(new Text($key));

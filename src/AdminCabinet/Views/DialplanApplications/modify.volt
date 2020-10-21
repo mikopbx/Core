@@ -1,8 +1,8 @@
 {{ form('dialplan-applications/save', 'role': 'form', 'class': 'ui form large', 'id':'dialplan-application-form') }}
 <input type="hidden" name="dirrty" id="dirrty"/>
 {{ form.render('id') }}
-        {{ form.render('uniqid') }}
-        {{ form.render('applicationlogic') }}
+{{ form.render('uniqid') }}
+{{ form.render('applicationlogic') }}
 <div class="ui ribbon label" id="dialplan-application-extension-number">
     <i class="phone icon"></i> {{ extension }}
 </div>
@@ -42,12 +42,9 @@
     </div>
 </div>
 <div class="ui bottom attached tab segment active" data-tab="code">
-    {# <div class="ui segment"> #}
-    {# <label class="ui top attached label"></label> #}
     <div id="application-code" class="application-code">
-        <pre>{{ applicationLogic|e }}</pre>
+        <pre></pre>
     </div>
-    {# </div> #}
 </div>
 
 {{ partial("partials/submitbutton",['indexurl':'dialplan-applications/index/']) }}

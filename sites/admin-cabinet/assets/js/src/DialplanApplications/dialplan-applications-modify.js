@@ -60,19 +60,20 @@ const dialplanApplication = {
 			const newNumber = dialplanApplication.$formObj.form('get value', 'extension');
 			Extensions.checkAvailability(dialplanApplication.defaultExtension, newNumber);
 		});
-
-		dialplanApplication.initializeAce();
 		dialplanApplication.initializeForm();
+		dialplanApplication.initializeAce();
 		dialplanApplication.changeAceMode();
 		dialplanApplication.defaultExtension = dialplanApplication.$formObj.form('get value', 'extension');
 	},
 	initializeAce() {
+		const applicationLogic = dialplanApplication.$formObj.form('get value','applicationlogic');
 		const aceHeight = window.innerHeight-380;
 		const rowsCount = Math.round(aceHeight/16.3);
 		$(window).load(function() {
 			$('.application-code').css('min-height', `${aceHeight}px`);
 		});
 		dialplanApplication.editor = ace.edit('application-code');
+		dialplanApplication.editor.getSession().setValue(applicationLogic);
 		dialplanApplication.editor.setTheme('ace/theme/monokai');
 		dialplanApplication.editor.resize();
 		dialplanApplication.editor.getSession().on('change', () => {
@@ -81,6 +82,8 @@ const dialplanApplication = {
 		});
 		dialplanApplication.editor.setOptions({
 			maxLines: rowsCount,
+			showPrintMargin: false,
+			showLineNumbers: false,
 		});
 	},
 	changeAceMode() {
@@ -88,8 +91,14 @@ const dialplanApplication = {
 		let NewMode;
 		if (mode === 'php') {
 			NewMode = ace.require('ace/mode/php').Mode;
+			dialplanApplication.editor.setOptions({
+				showLineNumbers: true,
+			});
 		} else {
 			NewMode = ace.require('ace/mode/julia').Mode;
+			dialplanApplication.editor.setOptions({
+				showLineNumbers: false,
+			});
 		}
 		dialplanApplication.editor.session.setMode(new NewMode());
 		dialplanApplication.editor.setTheme('ace/theme/monokai');

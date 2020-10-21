@@ -16,9 +16,8 @@ use MikoPBX\Common\Models\{DialplanApplications, Extensions};
 class DialplanApplicationsController extends BaseController
 {
 
-
     /**
-     * Построение списка файлов
+     * Builds list of dialplan applications
      */
     public function indexAction(): void
     {
@@ -28,9 +27,9 @@ class DialplanApplicationsController extends BaseController
     }
 
     /**
-     * Форма настроек DialplanApplications
+     * Creates DialplanApplications modify form
      *
-     * @param string $uniqid идентификатор редактируемого Dialplan Application
+     * @param string $uniqid Dialplan Application record ID
      */
     public function modifyAction(string $uniqid = ''): void
     {
@@ -43,7 +42,6 @@ class DialplanApplicationsController extends BaseController
         }
 
         $form                         = new DialplanApplicationEditForm($app);
-        $this->view->applicationLogic = $app->getApplicationlogic();
         $this->view->form             = $form;
         $this->view->represent        = $app->getRepresent();
         $this->view->extension        = $app->extension;
@@ -51,7 +49,7 @@ class DialplanApplicationsController extends BaseController
 
 
     /**
-     * Сохраенение настроек Dialplan Applications
+     * Saves Dialplan Application record settings
      */
     public function saveAction(): void
     {
@@ -104,10 +102,10 @@ class DialplanApplicationsController extends BaseController
     }
 
     /**
-     * Обновление параметров внутреннего номера
+     * Updates Extensions by POST data
      *
      * @param \MikoPBX\Common\Models\Extensions $extension
-     * @param array                             $data массив полей из POST запроса
+     * @param array                             $data POST data
      *
      * @return bool update result
      */
@@ -126,10 +124,10 @@ class DialplanApplicationsController extends BaseController
     }
 
     /**
-     * Обновление параметров приложения
+     * Updates DialplanApplication by POST data
      *
      * @param \MikoPBX\Common\Models\DialplanApplications $application
-     * @param array                                       $data массив полей из POST запроса
+     * @param array                                       $data POST data
      *
      * @return bool update result
      */
@@ -163,9 +161,9 @@ class DialplanApplicationsController extends BaseController
     }
 
     /**
-     * Удаление приложения
+     * Deletes DialplanApplications from database
      *
-     * @param string $uniqid идентификатор редактируемого Dialplan Application
+     * @param string $uniqid Dialplan Application record ID
      */
     public function deleteAction(string $uniqid = ''):void
     {
