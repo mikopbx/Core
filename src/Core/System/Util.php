@@ -16,7 +16,7 @@ use Phalcon\Di;
 use ReflectionClass;
 
 /**
- * Вспомогательные методы.
+ * Universal commands and procedures
  */
 class Util
 {
@@ -54,7 +54,7 @@ class Util
     }
 
     /**
-     * Завершаем процесс по имени.
+     * Kills process/daemon by name
      *
      * @param $procName
      *
@@ -68,7 +68,7 @@ class Util
     }
 
     /**
-     * Выполняет системную команду exec().
+     * Executes command exec().
      *
      * @param $command
      * @param $outArr
@@ -92,7 +92,7 @@ class Util
     }
 
     /**
-     * Выполняет системную команду exec() в фоне.
+     * Executes command exec() as background process.
      *
      * @param $command
      * @param $out_file
@@ -115,7 +115,7 @@ class Util
     }
 
     /**
-     * Выполняет системную команду exec() в фоне.
+     * Executes command exec() as background process with an execution timeout.
      *
      * @param        $command
      * @param int    $timeout
@@ -136,7 +136,7 @@ class Util
     }
 
     /**
-     * Выполнение нескольких команд.
+     * Executes multiple commands.
      *
      * @param        $arr_cmds
      * @param array  $out
@@ -159,7 +159,7 @@ class Util
     }
 
     /**
-     * Create folder if it not exist
+     * Create folder if it not exist.
      *
      * @param  $parameters string one or multiple paths separated by space
      *
@@ -226,7 +226,7 @@ class Util
     }
 
     /**
-     * Добавить сообщение в Syslog.
+     * Add message to Syslog.
      *
      * @param     $log_name
      * @param     $text
@@ -242,8 +242,8 @@ class Util
     }
 
     /**
-     * Управление процессом / демоном.
-     * Получние информации по статусу процесса.
+     * Manages a daemon/worker process
+     * Returns process statuses by name of it
      *
      * @param $cmd
      * @param $param
@@ -260,21 +260,30 @@ class Util
 
         $WorkerPID = self::getPidOfProcess($proc_name);
 
-        if ('status' === $action) {
-            $status = ($WorkerPID !== '') ? 'Started' : 'Stoped';
-
-            return ['status' => $status, 'app' => $proc_name, 'PID' => $WorkerPID];
-        }
-        $out = [];
-
-        if ($WorkerPID !== '' && ('stop' === $action || 'restart' === $action)) {
-            self::mwExec("{$path_kill} -9 {$WorkerPID}  > /dev/null 2>&1 &", $out);
-            $WorkerPID = '';
-        }
-
-        if ($WorkerPID === '' && ('start' === $action || 'restart' === $action)) {
-            self::mwExec("{$path_nohup} {$cmd} {$param}  > {$out_file} 2>&1 &", $out);
-        }
+         switch ($action) {
+             case 'status':
+                 $status = ($WorkerPID !== '') ? 'Started' : 'Stoped';
+                 return ['status' => $status, 'app' => $proc_name, 'PID' => $WorkerPID];
+             case 'restart':
+                 // Firstly start new process
+                 self::mwExec("{$path_nohup} {$cmd} {$param}  > {$out_file} 2>&1 &");
+                 // Then kill the old one
+                 if ($WorkerPID !== '') {
+                     self::mwExec("{$path_kill} -9 {$WorkerPID}  > /dev/null 2>&1 &");
+                 }
+                 break;
+             case 'stop':
+                 if ($WorkerPID !== '') {
+                     self::mwExec("{$path_kill} -9 {$WorkerPID}  > /dev/null 2>&1 &");
+                 }
+                 break;
+             case 'start':
+                 if ($WorkerPID === '') {
+                     self::mwExec("{$path_nohup} {$cmd} {$param}  > {$out_file} 2>&1 &");
+                 }
+                 break;
+             default:
+         }
 
         return true;
     }
