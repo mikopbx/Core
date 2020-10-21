@@ -41,7 +41,7 @@ const addNewExtension = {
 			case 'error':
 				addNewExtension.$progressBarLabel.text(globalTranslate.ext_UploadError);
 				addNewExtension.$uploadButton.removeClass('loading');
-				UserMessage.showError(globalTranslate.ext_UploadError);
+				UserMessage.showMultiString(globalTranslate.ext_UploadError);
 				break;
 			default:
 		}
@@ -53,12 +53,12 @@ const addNewExtension = {
 	 */
 	checkStatusFileMerging(response) {
 		if (response === undefined || PbxApi.tryParseJSON(response) === false) {
-			UserMessage.showError(`${globalTranslate.ext_UploadError}`);
+			UserMessage.showMultiString(`${globalTranslate.ext_UploadError}`);
 			return;
 		}
 		const json = JSON.parse(response);
 		if (json === undefined || json.data === undefined) {
-			UserMessage.showError(`${globalTranslate.ext_UploadError}`);
+			UserMessage.showMultiString(`${globalTranslate.ext_UploadError}`);
 			return;
 		}
 		const fileID = json.data.upload_id;
@@ -95,7 +95,7 @@ const mergingCheckWorker = {
 	cbAfterResponse(response) {
 		if (mergingCheckWorker.errorCounts > 10) {
 			mergingCheckWorker.$progressBarLabel.text(globalTranslate.ext_UploadError);
-			UserMessage.showError(response, globalTranslate.ext_UploadError);
+			UserMessage.showMultiString(response, globalTranslate.ext_UploadError);
 			addNewExtension.$uploadButton.removeClass('loading');
 			window.clearTimeout(mergingCheckWorker.timeoutHandle);
 		}

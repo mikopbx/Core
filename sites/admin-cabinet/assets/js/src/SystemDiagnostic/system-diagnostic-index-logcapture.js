@@ -28,7 +28,7 @@ const archivePackingCheckWorker = {
 	},
 	cbAfterResponse(response) {
 		if (archivePackingCheckWorker.errorCounts > 50) {
-			UserMessage.showError(globalTranslate.sd_DownloadPcapFileError);
+			UserMessage.showMultiString(globalTranslate.sd_DownloadPcapFileError);
 			systemDiagnosticCapture.$stopBtn
 				.removeClass('disabled loading')
 				.addClass('disabled');

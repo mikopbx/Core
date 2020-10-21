@@ -52,7 +52,7 @@ const upgradeStatusLoopWorker = {
 			window.clearTimeout(upgradeStatusLoopWorker.timeoutHandle);
 			let errorMessage = (response.d_error !== undefined) ? response.d_error : '';
 			errorMessage = errorMessage.replace(/\n/g, '<br>');
-			UserMessage.showError(errorMessage, globalTranslate.ext_UpdateModuleError);
+			UserMessage.showMultiString(errorMessage, globalTranslate.ext_UpdateModuleError);
 			$(`#${upgradeStatusLoopWorker.moduleUniqid}`).find('i').removeClass('loading');
 			$('.new-module-row').find('i').addClass('download').removeClass('redo');
 			$('a.button').removeClass('disabled');
@@ -69,7 +69,7 @@ const upgradeStatusLoopWorker = {
 	},
 	cbAfterModuleInstall(response) {
 		if (response.length === 0 || response === false) {
-			UserMessage.showError(response,globalTranslate.ext_InstallationError);
+			UserMessage.showMultiString(response,globalTranslate.ext_InstallationError);
 		} else {
 			// Check installation status
 			$('a.button').removeClass('disabled');

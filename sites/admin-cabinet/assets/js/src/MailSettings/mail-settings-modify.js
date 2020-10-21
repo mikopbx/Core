@@ -47,7 +47,7 @@ const mailSettings = {
 		if (message === true) {
 			UserMessage.showInformation(globalTranslate.ms_TestEmailSentSuccessfully);
 		} else if (message.length > 0) {
-			UserMessage.showError(message);
+			UserMessage.showMultiString(message);
 		}
 	},
 	cbBeforeSendForm(settings) {

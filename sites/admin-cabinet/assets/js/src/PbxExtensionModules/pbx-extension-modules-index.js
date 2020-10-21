@@ -199,9 +199,9 @@ const extensionModules = {
 				extensionModules.cbGetModuleInstallLinkFailure,
 			);
 		} else if (result===false && params.length > 0){
-			UserMessage.showError(params);
+			UserMessage.showMultiString(params);
 		} else {
-			UserMessage.showError(globalTranslate.ext_NoLicenseAvailable);
+			UserMessage.showMultiString(globalTranslate.ext_NoLicenseAvailable);
 		}
 		$('a.button').removeClass('disabled');
 	},
@@ -234,7 +234,7 @@ const extensionModules = {
 		} else {
 			params.aLink.find('i').removeClass('loading redo').addClass('download');
 		}
-		UserMessage.showError(globalTranslate.ext_GetLinkError);
+		UserMessage.showMultiString(globalTranslate.ext_GetLinkError);
 	},
 	/**
 	 * Сначала отключим модуль, если получится, то отправим команду на обновление
@@ -331,7 +331,7 @@ const extensionModules = {
 			$('.ui.message.ajax').remove();
 			let errorMessage = (result.data !== undefined) ? result.data : '';
 			errorMessage = errorMessage.replace(/\n/g, '<br>');
-			UserMessage.showError(errorMessage, globalTranslate.ext_DeleteModuleError);
+			UserMessage.showMultiString(errorMessage, globalTranslate.ext_DeleteModuleError);
 		}
 	},
 	/**

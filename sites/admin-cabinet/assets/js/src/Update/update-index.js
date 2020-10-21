@@ -35,7 +35,7 @@ const mergingCheckWorker = {
 	cbAfterResponse(response) {
 		if (mergingCheckWorker.errorCounts > 10) {
 			mergingCheckWorker.$progressBarLabel.text(globalTranslate.upd_UploadError);
-			UserMessage.showError(globalTranslate.upd_UploadError);
+			UserMessage.showMultiString(globalTranslate.upd_UploadError);
 			updatePBX.$submitButton.removeClass('loading');
 			window.clearTimeout(mergingCheckWorker.timeoutHandle);
 		}
@@ -87,7 +87,7 @@ const upgradeStatusLoopWorker = {
 			PbxApi.SystemUpgrade(response.filePath, updatePBX.cbAfterStartUpdate);
 		} else if (response.d_status === 'DOWNLOAD_ERROR') {
 			window.clearTimeout(upgradeStatusLoopWorker.timeoutHandle);
-			UserMessage.showError(globalTranslate.upd_DownloadUpgradeError);
+			UserMessage.showMultiString(globalTranslate.upd_DownloadUpgradeError);
 			$('i.loading.redo').addClass('redo').removeClass('loading');
 		}
 	},
@@ -214,7 +214,7 @@ const updatePBX = {
 			case 'error':
 				updatePBX.$progressBarLabel.text(globalTranslate.upd_UploadError);
 				updatePBX.$submitButton.removeClass('loading');
-				UserMessage.showError(globalTranslate.upd_UploadError);
+				UserMessage.showMultiString(globalTranslate.upd_UploadError);
 				break;
 			default:
 
@@ -228,12 +228,12 @@ const updatePBX = {
 	 */
 	checkStatusFileMerging(response) {
 		if (response === undefined || PbxApi.tryParseJSON(response) === false) {
-			UserMessage.showError(`${globalTranslate.upd_UploadError}`);
+			UserMessage.showMultiString(`${globalTranslate.upd_UploadError}`);
 			return;
 		}
 		const json = JSON.parse(response);
 		if (json === undefined || json.data === undefined) {
-			UserMessage.showError(`${globalTranslate.upd_UploadError}`);
+			UserMessage.showMultiString(`${globalTranslate.upd_UploadError}`);
 			return;
 		}
 		const fileID = json.data.upload_id;
@@ -247,7 +247,7 @@ const updatePBX = {
 	 */
 	cbAfterStartUpdate(response) {
 		if (response.length === 0 || response === false) {
-			UserMessage.showError(globalTranslate.upd_UpgradeError);
+			UserMessage.showMultiString(globalTranslate.upd_UpgradeError);
 		} else {
 			updatePBX.$submitButton.removeClass('loading');
 		}

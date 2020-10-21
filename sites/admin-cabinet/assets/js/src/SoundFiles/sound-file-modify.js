@@ -33,7 +33,7 @@ const mergingCheckWorker = {
 	},
 	cbAfterResponse(response) {
 		if (mergingCheckWorker.errorCounts > 10) {
-			UserMessage.showError(globalTranslate.sf_UploadError);
+			UserMessage.showMultiString(globalTranslate.sf_UploadError);
 			soundFileModify.$submitButton.removeClass('loading');
 			soundFileModify.$formObj.removeClass('loading');
 			window.clearTimeout(mergingCheckWorker.timeoutHandle);
@@ -203,7 +203,7 @@ const soundFileModify = {
 					soundFileModify.$soundFileName.val(params.file.fileName);
 					soundFileModify.checkStatusFileMerging(params.response);
 				} else {
-					UserMessage.showError(`${globalTranslate.sf_UploadError}`);
+					UserMessage.showMultiString(`${globalTranslate.sf_UploadError}`);
 				}
 
 				break;
@@ -213,7 +213,7 @@ const soundFileModify = {
 			case 'error':
 				soundFileModify.$submitButton.removeClass('loading');
 				soundFileModify.$formObj.removeClass('loading');
-				UserMessage.showError(`${globalTranslate.sf_UploadError}<br>${params.message}`);
+				UserMessage.showMultiString(`${globalTranslate.sf_UploadError}<br>${params.message}`);
 				break;
 			default:
 		}
@@ -225,12 +225,12 @@ const soundFileModify = {
 	 */
 	checkStatusFileMerging(response) {
 		if (response === undefined || PbxApi.tryParseJSON(response) === false) {
-			UserMessage.showError(`${globalTranslate.sf_UploadError}`);
+			UserMessage.showMultiString(`${globalTranslate.sf_UploadError}`);
 			return;
 		}
 		const json = JSON.parse(response);
 		if (json === undefined || json.data === undefined) {
-			UserMessage.showError(`${globalTranslate.sf_UploadError}`);
+			UserMessage.showMultiString(`${globalTranslate.sf_UploadError}`);
 			return;
 		}
 		const fileID = json.data.upload_id;
@@ -243,7 +243,7 @@ const soundFileModify = {
 	 */
 	cbAfterConvertFile(filename) {
 		if (filename === false){
-			UserMessage.showError(`${globalTranslate.sf_UploadError}`);
+			UserMessage.showMultiString(`${globalTranslate.sf_UploadError}`);
 		} else {
 			soundFileModify.trashBin.push(soundFileModify.$formObj.form('get value', 'path'));
 			soundFileModify.$formObj.form('set value', 'path', filename);

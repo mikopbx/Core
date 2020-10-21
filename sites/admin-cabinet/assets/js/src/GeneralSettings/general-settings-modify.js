@@ -134,7 +134,7 @@ const generalSettingsModify = {
 		if (response===true){
 			UserMessage.showInformation(globalTranslate.gs_AllSettingsDeleted);
 		} else {
-			UserMessage.showError(response);
+			UserMessage.showMultiString(response);
 		}
 	},
 	cbBeforeSendForm(settings) {
