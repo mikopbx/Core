@@ -267,7 +267,7 @@ class BeanstalkClient extends Injectable
                     }
                     $this->queue->delete($job);
                 }
-            }catch (\Pheanstalk\Exception\DeadlineSoonException $e){
+            }catch (\Exception $e){
                 continue;
             }
 
