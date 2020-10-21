@@ -6,8 +6,7 @@
  *
  */
 
-/* global globalRootUrl, ClipboardJS, PbxApi, SemanticLocalization,
-DebuggerInfo, InputMaskPatterns */
+/* global globalRootUrl, ClipboardJS, PbxApi, SemanticLocalization, DebuggerInfo, InputMaskPatterns */
 
 const extensionsTable = {
 	maskList: null,

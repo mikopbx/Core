@@ -7,7 +7,7 @@
  */
 
 
-/* global globalRootUrl,globalTranslate, Form, PasswordScore */
+/* global globalRootUrl,globalTranslate, Form, PasswordScore, PbxApi, UserMessage */
 
 const generalSettingsModify = {
 	$dirrtyField: $('#dirrty'),

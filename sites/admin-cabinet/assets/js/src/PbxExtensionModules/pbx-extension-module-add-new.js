@@ -118,7 +118,7 @@ const mergingCheckWorker = {
 		if (response===true){
 			window.location.reload();
 		} else {
-			UserMessage.showError(response, globalTranslate.ext_InstallationError);
+			UserMessage.showMultiString(response, globalTranslate.ext_InstallationError);
 			addNewExtension.$uploadButton.removeClass('loading');
 		}
 	},

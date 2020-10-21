@@ -8,7 +8,18 @@
 /* global globalTranslate */
 const UserMessage = {
 	$ajaxMessagesDiv: $('#ajax-messages'),
-	showError(text, header = '') {
+	convertToText(text){
+		if ((Array.isArray(text) || typeof text === 'object')
+			&& Object.keys(text).length > 0
+			&& text.messages !== undefined
+		) {
+			return text.messages;
+		} else {
+			return text;
+		}
+	},
+	showError(message, header = '') {
+		const text = UserMessage.convertToText(message);
 		let html = '<div class="ui error message ajax">';
 		if (header!==''){
 			html +=`<div class="header">${header}</div>`
@@ -19,7 +30,8 @@ const UserMessage = {
 		UserMessage.$ajaxMessagesDiv.after(html);
 		UserMessage.scrollToMessages();
 	},
-	showWraning(text, header = '') {
+	showWraning(message, header = '') {
+		const text = UserMessage.convertToText(message);
 		let html = '<div class="ui warning message ajax">';
 		if (header!==''){
 			html +=`<div class="header">${header}</div>`
@@ -30,7 +42,8 @@ const UserMessage = {
 		UserMessage.$ajaxMessagesDiv.after(html);
 		UserMessage.scrollToMessages();
 	},
-	showInformation(text, header = '') {
+	showInformation(message, header = '') {
+		const text = UserMessage.convertToText(message);
 		let html = '<div class="ui info message ajax">';
 		if (header!==''){
 			html +=`<div class="header">${header}</div>`
@@ -41,7 +54,8 @@ const UserMessage = {
 		UserMessage.$ajaxMessagesDiv.after(html);
 		UserMessage.scrollToMessages();
 	},
-	showMultiString(messages, header = '') {
+	showMultiString(message, header = '') {
+		let messages = UserMessage.convertToText(message);
 		$('.ui.message.ajax').remove();
 		if (!messages) return;
 
