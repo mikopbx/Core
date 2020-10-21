@@ -203,7 +203,7 @@ const soundFileModify = {
 					soundFileModify.$soundFileName.val(params.file.fileName);
 					soundFileModify.checkStatusFileMerging(params.response);
 				} else {
-					UserMessage.showMultiString(`${globalTranslate.sf_UploadError}`);
+					UserMessage.showMultiString(params, globalTranslate.sf_UploadError);
 				}
 
 				break;
@@ -213,7 +213,7 @@ const soundFileModify = {
 			case 'error':
 				soundFileModify.$submitButton.removeClass('loading');
 				soundFileModify.$formObj.removeClass('loading');
-				UserMessage.showMultiString(`${globalTranslate.sf_UploadError}<br>${params.message}`);
+				UserMessage.showMultiString(params, globalTranslate.sf_UploadError);
 				break;
 			default:
 		}

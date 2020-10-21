@@ -881,7 +881,7 @@ const PbxApi = {
 		});
 	},
 	/**
-	 * Подключение обработчкика загрузки файлов по частям
+	 * Enables upload by chunk resumable worker
 	 */
 	SystemUploadFile(file, callback) {
 		const r = new Resumable({
@@ -931,7 +931,7 @@ const PbxApi = {
 	},
 
 	/**
-	 * Получение статуса закачки файла
+	 * Gets uploading status
 	 */
 	SystemGetStatusUploadFile(fileId, callback) {
 		$.api({
