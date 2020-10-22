@@ -194,7 +194,7 @@ class AGI
     {
         $broken = ['code' => 500, 'result' => -1, 'data' => ''];
 
-        if( !is_resource($this->out) || !is_resource($this->in) ){
+        if( !is_resource($this->out) ){
             return $broken;
         }
 
@@ -203,27 +203,81 @@ class AGI
         }
         fflush($this->out);
 
-        // Read result.  Occasionally, a command return a string followed by an extra new line.
-        // When this happens, our script will ignore the new line, but it will still be in the
-        // buffer.  So, if we get a blank line, it is probably the result of a previous
-        // command.  We read until we get a valid result or asterisk hangs up.  One offending
-        // command is SEND TEXT.
+        // parse result
+        $str = '';
+        $ret = [];
+        if($this->evaluateReadResponse($str, $ret)){
+            return $broken;
+        }
+
+        $this->evaluateParseResponse($str, $ret);
+
+        return $ret;
+    }
+
+    /**
+     * Разбор ответа сервера.
+     * @param $str
+     * @param $ret
+     */
+    private function evaluateParseResponse($str, &$ret):void{
+        $ret['result'] = null;
+        $ret['data']   = '';
+        if ($ret['code'] != AGIRES_OK){
+            // some sort of error
+            $ret['data'] = $str;
+        }else{
+            // Normal AGI RES OK response
+            $parse    = explode(' ', trim($str));
+            $in_token = false;
+            foreach ($parse as $token) {
+                if ($in_token){
+                    // we previously hit a token starting with ')' but not ending in ')'
+                    $ret['data'] .= ' ' . trim($token, '() ');
+                    if ($token[strlen($token) - 1] == ')') {
+                        $in_token = false;
+                    }
+                }elseif ($token[0] == '('){
+                    if ($token[strlen($token) - 1] != ')') {
+                        $in_token = true;
+                    }
+                    $ret['data'] .= ' ' . trim($token, '() ');
+                }elseif (strpos($token, '=')){
+                    $token          = explode('=', $token);
+                    $ret[$token[0]] = $token[1];
+                }elseif ($token != ''){
+                    $ret['data'] .= ' ' . $token;
+                }
+            }
+            $ret['data'] = trim($ret['data']);
+        }
+    }
+
+    /**
+     * Чтение ответа сервера.
+     * @param string $str
+     * @param array  $ret
+     * @return bool
+     */
+    private function evaluateReadResponse(string & $str, array & $ret): bool{
+        $result = true;
+        if(!is_resource($this->in)){
+            return $result;
+        }
+
         $count = 0;
         do {
             $str = trim(fgets($this->in, 4096));
         } while ($str == '' && $count++ < 5);
 
         if ($count >= 5) {
-            //          $this->conlog("evaluate error on read for $command");
-            return $broken;
+            return false;
         }
 
-        // parse result
-        $ret = [];
         $ret['code'] = substr($str, 0, 3);
         $str         = trim(substr($str, 3));
 
-        if ($str[0] === '-') // we have a multiline response!
+        if ($str[0] === '-') // We have a multiline response!
         {
             $count = 0;
             $str   = substr($str, 1) . "\n";
@@ -234,43 +288,11 @@ class AGI
                 $count = (trim($line) == '') ? $count + 1 : 0;
             }
             if ($count >= 5) {
-                //            $this->conlog("evaluate error on multiline read for $command");
-                return $broken;
+                $result = false;
             }
         }
 
-        $ret['result'] = null;
-        $ret['data']   = '';
-        if ($ret['code'] != AGIRES_OK) // some sort of error
-        {
-            $ret['data'] = $str;
-        } else // normal AGIRES_OK response
-        {
-            $parse    = explode(' ', trim($str));
-            $in_token = false;
-            foreach ($parse as $token) {
-                if ($in_token) // we previously hit a token starting with ')' but not ending in ')'
-                {
-                    $ret['data'] .= ' ' . trim($token, '() ');
-                    if ($token[strlen($token) - 1] == ')') {
-                        $in_token = false;
-                    }
-                } elseif ($token[0] == '(') {
-                    if ($token[strlen($token) - 1] != ')') {
-                        $in_token = true;
-                    }
-                    $ret['data'] .= ' ' . trim($token, '() ');
-                } elseif (strpos($token, '=')) {
-                    $token          = explode('=', $token);
-                    $ret[$token[0]] = $token[1];
-                } elseif ($token != '') {
-                    $ret['data'] .= ' ' . $token;
-                }
-            }
-            $ret['data'] = trim($ret['data']);
-        }
-
-        return $ret;
+        return $result;
     }
 
     /**
