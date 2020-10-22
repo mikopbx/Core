@@ -57,10 +57,12 @@ class UpdateSystemConfig extends Di\Injectable
             uksort($upgradeClasses, [__CLASS__, "sortArrayByReleaseNumber"]);
 
             foreach ($upgradeClasses as $releaseNumber => $upgradeClass) {
-                $processor = new $upgradeClass();
-                $processor->processUpdate();
-                Util::echoWithSyslog(' - UpdateConfigs: Upgrade system up to ' . $releaseNumber . ' ');
-                Util::echoGreenDone();
+                if (version_compare($previous_version, $releaseNumber, '<')) {
+                    $processor = new $upgradeClass();
+                    $processor->processUpdate();
+                    Util::echoWithSyslog(' - UpdateConfigs: Upgrade system up to ' . $releaseNumber . ' ');
+                    Util::echoGreenDone();
+                }
             }
 
             $this->updateConfigEveryNewRelease();
