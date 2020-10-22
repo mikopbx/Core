@@ -51,9 +51,10 @@ class SystemLoader extends Di\Injectable
         $storage->createWorkDirsAfterDBUpgrade();
         Util::echoGreenDone();
 
-        Util::echoWithSyslog(' - Update configs and applications ... ');
+        Util::echoWithSyslog(' - Update configs and applications ... '."\n");
         $confUpdate = new UpdateSystemConfig();
         $confUpdate->updateConfigs();
+        Util::echoWithSyslog(' - Update configs ... ');
         Util::echoGreenDone();
 
         Util::echoWithSyslog(' - Load kernel modules ... ');
