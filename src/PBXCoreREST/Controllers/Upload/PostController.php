@@ -29,12 +29,9 @@ class PostController extends BaseController
                 'resumableFilename'    => $this->request->getPost('resumableFilename'),
                 'resumableIdentifier'  => $this->request->getPost('resumableIdentifier'),
                 'resumableChunkNumber' => $this->request->getPost('resumableChunkNumber'),
+                'resumableTotalChunks' => $this->request->getPost('resumableTotalChunks'),
                 'resumableTotalSize'   => $this->request->getPost('resumableTotalSize'),
-                'upload_id'            => time(),
             ];
-            if (isset($data['resumableIdentifier'])){
-                $data['upload_id'] = (int) filter_var($data['resumableIdentifier'], FILTER_SANITIZE_NUMBER_INT);
-            }
             foreach ($this->request->getUploadedFiles() as $file) {
                     $data['files'][]= [
                         'file_path' => $file->getTempName(),
