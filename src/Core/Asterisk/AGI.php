@@ -128,33 +128,6 @@ class AGI
     // *********************************************************************************************************
 
     /**
-     * Make a folder recursively.
-     *
-     * @access private
-     *
-     * @param string $folder
-     * @param int    $perms
-     *
-     * @return bool
-     */
-    public function make_folder($folder, $perms = 0755)
-    {
-        $f    = explode(DIRECTORY_SEPARATOR, $folder);
-        $base = '';
-        $c    = count($f);
-        for ($i = 0; $i < $c; $i++) {
-            $base .= $f[$i];
-            if ($f[$i] !== '' && ! file_exists($base)) {
-                if (mkdir($base, $perms) === false) {
-                    return false;
-                }
-            }
-            $base .= DIRECTORY_SEPARATOR;
-        }
-        return true;
-    }
-
-    /**
      * Sends $message to the Asterisk console via the 'verbose' message system.
      *
      * If the Asterisk verbosity level is $level or greater, send $message to the console.
@@ -378,25 +351,6 @@ class AGI
     }
 
     /**
-     * Sets a global variable, using Asterisk 1.6 syntax.
-     *
-     * @link http://www.voip-info.org/wiki/view/Asterisk+cmd+Set
-     *
-     * @param string           $pVariable
-     * @param string|int|float $pValue
-     *
-     * @return array, see evaluate for return information. ['result'] is 1 on sucess, 0 otherwise
-     */
-    public function set_global_var($pVariable, $pValue)
-    {
-        if (is_numeric($pValue)) {
-            return $this->evaluate("Set({$pVariable}={$pValue},g);");
-        } else {
-            return $this->evaluate("Set({$pVariable}=\"{$pValue}\",g);");
-        }
-    }
-
-    /**
      * Sets a variable, using Asterisk 1.6 syntax.
      *
      * @link http://www.voip-info.org/wiki/view/Asterisk+cmd+Set
@@ -440,37 +394,6 @@ class AGI
     }
 
     /**
-     * Fetch the value of a full variable.
-     *
-     *
-     * @link http://www.voip-info.org/wiki/view/get+full+variable
-     * @link http://www.voip-info.org/wiki-Asterisk+variables
-     *
-     * @param string $variable name
-     * @param string $channel  channel
-     * @param bool   $getvalue return the value only
-     *
-     * @return array | string, see evaluate for return information. ['result'] is 0 if variable hasn't been set, 1 if it has.
-     *                ['data'] holds the value.  returns value if $getvalue is TRUE
-     */
-    public function get_fullvariable($variable, $channel = '', $getvalue = false)
-    {
-        if ($channel == '') {
-            $req = $variable;
-        } else {
-            $req = $variable . ' ' . $channel;
-        }
-
-        $res = $this->evaluate('GET FULL VARIABLE ' . $req);
-
-        if ($getvalue === false) {
-            return ($res);
-        }
-
-        return ($res['data']);
-    }
-
-    /**
      * Hangup the specified channel. If no channel name is given, hang up the current channel.
      *
      * With power comes responsibility. Hanging up channels other than your own isn't something
@@ -502,61 +425,6 @@ class AGI
     public function noop($string = "")
     {
         return $this->evaluate("NOOP \"$string\"");
-    }
-
-    /**
-     * Receive a character of text from a connected channel. Waits up to $timeout milliseconds for
-     * a character to arrive, or infinitely if $timeout is zero.
-     *
-     * @link http://www.voip-info.org/wiki-receive+char
-     *
-     * @param int $timeout milliseconds
-     *
-     * @return array, see evaluate for return information. ['result'] is 0 on timeout or not supported, -1 on failure.
-     *                Otherwise it is the decimal value of the DTMF tone. Use chr() to convert to ASCII.
-     */
-    public function receive_char($timeout = -1)
-    {
-        return $this->evaluate("RECEIVE CHAR $timeout");
-    }
-
-    /**
-     * Record sound to a file until an acceptable DTMF digit is received or a specified amount of
-     * time has passed. Optionally the file BEEP is played before recording begins.
-     *
-     * @link http://www.voip-info.org/wiki-record+file
-     *
-     * @param string $file     to record, without extension, often created in /var/lib/asterisk/sounds
-     * @param string $format   of the file. GSM and WAV are commonly used formats. MP3 is read-only and thus cannot be
-     *                         used.
-     * @param string $escape_digits
-     * @param int    $timeout  is the maximum record time in milliseconds, or -1 for no timeout.
-     * @param int    $offset   to seek to without exceeding the end of the file.
-     * @param bool   $beep
-     * @param int    $silence  number of seconds of silence allowed before the function returns despite the
-     *                         lack of dtmf digits or reaching timeout.
-     *
-     * @return array, see evaluate for return information. ['result'] is -1 on error, 0 on hangup, otherwise a decimal
-     *                value of the DTMF tone. Use chr() to convert to ASCII.
-     */
-    public function record_file(
-        $file,
-        $format,
-        $escape_digits = '',
-        $timeout = -1,
-        $offset = null,
-        $beep = false,
-        $silence = null
-    ) {
-        $cmd = trim("RECORD FILE $file $format \"$escape_digits\" $timeout $offset");
-        if ($beep) {
-            $cmd .= ' BEEP';
-        }
-        if ( ! is_null($silence)) {
-            $cmd .= " s=$silence";
-        }
-
-        return $this->evaluate($cmd);
     }
 
     /**
@@ -670,21 +538,6 @@ class AGI
     }
 
     /**
-     * Enable or disable TDD transmission/reception on the current channel.
-     *
-     * @link http://www.voip-info.org/wiki-tdd+mode
-     *
-     * @param string $setting can be on, off or mate
-     *
-     * @return array, see evaluate for return information. ['result'] is 1 on sucess, 0 if the channel is not TDD
-     *                capable.
-     */
-    public function tdd_mode($setting)
-    {
-        return $this->evaluate("TDD MODE $setting");
-    }
-
-    /**
      * Set absolute maximum time of call.
      *
      * Note that the timeout is set from the current time forward, not counting the number of seconds the call has
@@ -724,47 +577,6 @@ class AGI
         }
 
         return $this->evaluate("EXEC $application $options");
-    }
-
-    /**
-     * Executes an AGI compliant application.
-     *
-     * @param string $command
-     * @param string $args
-     *
-     * @return array, see evaluate for return information. ['result'] is -1 on hangup or if application requested
-     *                hangup, or 0 on non-hangup exit.
-     */
-    public function exec_agi($command, $args)
-    {
-        return $this->exec("AGI $command", $args);
-    }
-
-    /**
-     * Set Language.
-     *
-     * @param string $language code
-     *
-     * @return array, see evaluate for return information.
-     */
-    public function exec_setlanguage($language = 'en')
-    {
-        return $this->exec('Set', 'CHANNEL(language)=' . $language);
-    }
-
-    /**
-     * Do ENUM Lookup.
-     *
-     * Note: to retrieve the result, use
-     *   get_variable('ENUM');
-     *
-     * @param $exten
-     *
-     * @return array, see evaluate for return information.
-     */
-    public function exec_enumlookup($exten)
-    {
-        return $this->exec('EnumLookup', $exten);
     }
 
     /**
@@ -817,81 +629,6 @@ class AGI
     // *********************************************************************************************************
     // **                             APPLICATIONS                                                                                        **
     // *********************************************************************************************************
-
-    /**
-     * Say the given digit string, returning early if any of the given DTMF escape digits are received on the channel.
-     *
-     * @link http://www.voip-info.org/wiki-say+digits
-     *
-     * @param int    $digits
-     * @param string $escape_digits
-     *
-     * @return array, see evaluate for return information. ['result'] is -1 on hangup or error, 0 if playback completes
-     *                with no digit received, otherwise a decimal value of the DTMF tone.  Use chr() to convert to
-     *                ASCII.
-     */
-    public function say_digits($digits, $escape_digits = '')
-    {
-        return $this->evaluate("SAY DIGITS $digits \"$escape_digits\"");
-    }
-
-    /**
-     * Say the given number, returning early if any of the given DTMF escape digits are received on the channel.
-     *
-     * @link http://www.voip-info.org/wiki-say+number
-     *
-     * @param int    $number
-     * @param string $escape_digits
-     *
-     * @return array, see evaluate for return information. ['result'] is -1 on hangup or error, 0 if playback completes
-     *                with no digit received, otherwise a decimal value of the DTMF tone.  Use chr() to convert to
-     *                ASCII.
-     */
-    public function say_number($number, $escape_digits = '')
-    {
-        return $this->evaluate("SAY NUMBER $number \"$escape_digits\"");
-    }
-
-    /**
-     * Say the given character string, returning early if any of the given DTMF escape digits are received on the
-     * channel.
-     *
-     * @link http://www.voip-info.org/wiki-say+phonetic
-     *
-     * @param string $text
-     * @param string $escape_digits
-     *
-     * @return array, see evaluate for return information. ['result'] is -1 on hangup or error, 0 if playback completes
-     *                with no digit received, otherwise a decimal value of the DTMF tone.  Use chr() to convert to
-     *                ASCII.
-     */
-    public function say_phonetic($text, $escape_digits = '')
-    {
-        return $this->evaluate("SAY PHONETIC $text \"$escape_digits\"");
-    }
-
-    /**
-     * Say a given time, returning early if any of the given DTMF escape digits are received on the channel.
-     *
-     * @link http://www.voip-info.org/wiki-say+time
-     *
-     * @param ?int    $time
-     *                      (UTC).
-     * @param string $escape_digits
-     *
-     * @return array, see evaluate for return information. ['result'] is -1 on hangup or error, 0 if playback completes
-     *                with no digit received, otherwise a decimal value of the DTMF tone.  Use chr() to convert to
-     *                ASCII.
-     */
-    public function say_time($time = null, $escape_digits = '')
-    {
-        if (is_null($time)) {
-            $time = time();
-        }
-
-        return $this->evaluate("SAY TIME $time \"$escape_digits\"");
-    }
-
 
     /**
      * Play the given audio file, allowing playback to be interrupted by a DTMF digit. This command is similar to the
@@ -975,81 +712,5 @@ class AGI
     public function wait_for_digit($timeout = -1)
     {
         return $this->evaluate("WAIT FOR DIGIT $timeout");
-    }
-
-    /**
-     * setContext - Set context, extension and priority.
-     *
-     * @param string $context
-     * @param string $extension
-     * @param string $priority
-     */
-    public function setContext($context, $extension = 's', $priority = "1")
-    {
-        $this->set_context($context);
-        $this->set_extension($extension);
-        $this->set_priority($priority);
-    }
-
-    /**
-     * Sets the context for continuation upon exiting the application.
-     *
-     * Setting the context does NOT automatically reset the extension and the priority; if you want to start at the top
-     * of the new context you should set extension and priority yourself.
-     *
-     * If you specify a non-existent context you receive no error indication (['result'] is still 0) but you do get a
-     * warning message on the Asterisk console.
-     *
-     * @link http://www.voip-info.org/wiki-set+context
-     *
-     * @param string $context
-     *
-     * @return array, see evaluate for return information.
-     */
-    public function set_context($context)
-    {
-        return $this->evaluate("SET CONTEXT $context");
-    }
-
-    /**
-     * Set the extension to be used for continuation upon exiting the application.
-     *
-     * Setting the extension does NOT automatically reset the priority. If you want to start with the first priority of
-     * the extension you should set the priority yourself.
-     *
-     * If you specify a non-existent extension you receive no error indication (['result'] is still 0) but you do
-     * get a warning message on the Asterisk console.
-     *
-     * @link http://www.voip-info.org/wiki-set+extension
-     *
-     * @param string $extension
-     *
-     * @return array, see evaluate for return information.
-     */
-    public function set_extension($extension)
-    {
-        return $this->evaluate("SET EXTENSION $extension");
-    }
-
-
-    // *********************************************************************************************************
-    // **                             PRIVATE                                                                                             **
-    // *********************************************************************************************************
-
-    /**
-     * Set the priority to be used for continuation upon exiting the application.
-     *
-     * If you specify a non-existent priority you receive no error indication (['result'] is still 0)
-     * and no warning is issued on the Asterisk console.
-     *
-     * @link http://www.voip-info.org/wiki-set+priority
-     *
-     * @param string $priority
-     *
-     * @return array, see evaluate for return information.
-     */
-    public function set_priority($priority)
-    {
-        return $this->evaluate("SET PRIORITY $priority");
     }
 }
