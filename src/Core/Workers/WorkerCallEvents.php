@@ -370,6 +370,91 @@ class WorkerCallEvents extends WorkerBase
     {
         $channels       = [];
         $transfer_calls = [];
+
+        $this->hangupChanEndCalls($data, $transfer_calls, $channels);
+        // Проверим, возможно это обычный трансфер.
+        $this->Action_CreateRowTransfer('hangup_chan', $data, $transfer_calls);
+
+        $this->hangupChanCheckSipTrtansfer($data, $channels);
+
+        // Очистим память.
+        if(isset($this->checkChanHangupTransfer[$data['agi_channel']])){
+            unset($this->checkChanHangupTransfer[$data['agi_channel']]);
+        }
+        if(isset($this->mixMonitorChannels[$data['agi_channel']])){
+            unset($this->mixMonitorChannels[$data['agi_channel']]);
+        }
+    }
+
+    /**
+     * Проверяем на SIP трансфер.
+     * @param $data
+     * @param $channels
+     */
+    private function hangupChanCheckSipTrtansfer($data, $channels):void{
+        $not_local = (stripos($data['agi_channel'], 'local/') === false);
+        if($not_local === false || $data['OLD_LINKEDID'] !== $data['linkedid']) {
+            return;
+        }
+        $active_chans = $this->am->GetChannels(false);
+        // Намек на SIP трансфер.
+        foreach ($channels as $data_chan) {
+            if ( ! in_array($data_chan['chan'], $active_chans, true)) {
+                // Вызов уже завершен. Не интересно.
+                continue;
+            }
+            $BRIDGEPEER = $this->am->GetVar($data_chan['chan'], 'BRIDGEPEER', null, false);
+            if ( ! in_array($BRIDGEPEER, $active_chans, true) || !is_string($BRIDGEPEER)) {
+                // Вызов уже завершен. Не интересно.
+                continue;
+            }
+
+            $linkedid = $this->am->GetVar($data_chan['chan'], 'CDR(linkedid)', null, false);
+            if ( empty($linkedid) || $linkedid === $data['linkedid']) {
+                continue;
+            }
+
+            $CALLERID = $this->am->GetVar($BRIDGEPEER, 'CALLERID(num)', null, false);
+            $n_data['action']        = 'sip_transfer';
+            $n_data['src_chan']      = $data_chan['out'] ? $data_chan['chan'] : $BRIDGEPEER;
+            $n_data['src_num']       = $data_chan['out'] ? $data_chan['num'] : $CALLERID;
+            $n_data['dst_chan']      = $data_chan['out'] ? $BRIDGEPEER : $data_chan['chan'];
+            $n_data['dst_num']       = $data_chan['out'] ? $CALLERID : $data_chan['num'];
+            $n_data['start']         = date('Y-m-d H:i:s');
+            $n_data['answer']        = date('Y-m-d H:i:s');
+            $n_data['linkedid']      = $linkedid;
+            $n_data['UNIQUEID']      = $data['linkedid'] . Util::generateRandomString();
+            $n_data['transfer']      = '0';
+            $n_data['recordingfile'] = $this->MixMonitor($n_data['dst_chan'], $n_data['UNIQUEID']);
+            $n_data['did']           = $data_chan['did'];
+
+            Util::logMsgDb('call_events', json_encode($n_data));
+            $this->insertDataToDbM($n_data);
+            $filter = [
+                'linkedid=:linkedid:',
+                'bind' => ['linkedid' => $data['linkedid']],
+            ];
+            $m_data = CallDetailRecordsTmp::find($filter);
+            foreach ($m_data as $row) {
+                $row->writeAttribute('linkedid', $linkedid);
+                $row->save();
+            }
+
+            /**
+             * Отправка UserEvent
+             */
+            $AgiData = base64_encode(json_encode($n_data));
+            $this->am->UserEvent('CdrConnector', ['AgiData' => $AgiData]);
+        } // Обход текущих каналов.
+    }
+
+    /**
+     * Обработка события уничтожения канала.
+     * @param array $data
+     * @param array $transfer_calls
+     * @param array $channels
+     */
+    private function hangupChanEndCalls(array $data, array &$transfer_calls, array &$channels):void{
         $filter         = [
             'linkedid=:linkedid: AND endtime = "" AND (src_chan=:src_chan: OR dst_chan=:dst_chan:)',
             'bind' => [
@@ -421,73 +506,6 @@ class WorkerCallEvents extends WorkerBase
                     'out'  => false,
                 ];
             }
-        }
-
-        // Проверим, возможно это обычный трансфер.
-        $this->Action_CreateRowTransfer('hangup_chan', $data, $transfer_calls);
-
-        $not_local = (stripos($data['agi_channel'], 'local/') === false);
-        if ($not_local === true && $data['OLD_LINKEDID'] === $data['linkedid']) {
-            $active_chans = $this->am->GetChannels(false);
-            // Намек на SIP трансфер.
-            foreach ($channels as $data_chan) {
-                if ( ! in_array($data_chan['chan'], $active_chans, true)) {
-                    // Вызов уже завершен. Не интересно.
-                    continue;
-                }
-                $BRIDGEPEER = $this->am->GetVar($data_chan['chan'], 'BRIDGEPEER', null, false);
-                if ( ! in_array($BRIDGEPEER, $active_chans, true)) {
-                    // Вызов уже завершен. Не интересно.
-                    continue;
-                }
-                if(!is_string($BRIDGEPEER)){
-                    // Дополнительная проверка.
-                    continue;
-                }
-
-                $linkedid = $this->am->GetVar($data_chan['chan'], 'CDR(linkedid)', null, false);
-                $CALLERID = $this->am->GetVar($BRIDGEPEER, 'CALLERID(num)', null, false);
-                if ( ! empty($linkedid) && $linkedid !== $data['linkedid']) {
-                    $n_data['action']        = 'sip_transfer';
-                    $n_data['src_chan']      = $data_chan['out'] ? $data_chan['chan'] : $BRIDGEPEER;
-                    $n_data['src_num']       = $data_chan['out'] ? $data_chan['num'] : $CALLERID;
-                    $n_data['dst_chan']      = $data_chan['out'] ? $BRIDGEPEER : $data_chan['chan'];
-                    $n_data['dst_num']       = $data_chan['out'] ? $CALLERID : $data_chan['num'];
-                    $n_data['start']         = date('Y-m-d H:i:s');
-                    $n_data['answer']        = date('Y-m-d H:i:s');
-                    $n_data['linkedid']      = $linkedid;
-                    $n_data['UNIQUEID']      = $data['linkedid'] . Util::generateRandomString();
-                    $n_data['transfer']      = '0';
-                    $n_data['recordingfile'] = $this->MixMonitor($n_data['dst_chan'], $n_data['UNIQUEID']);
-                    $n_data['did']           = $data_chan['did'];
-                    // $data['from_account'] = $from_account;
-                    Util::logMsgDb('call_events', json_encode($n_data));
-                    $this->insertDataToDbM($n_data);
-                    $filter = [
-                        'linkedid=:linkedid:',
-                        'bind' => ['linkedid' => $data['linkedid']],
-                    ];
-                    $m_data = CallDetailRecordsTmp::find($filter);
-                    foreach ($m_data as $row) {
-                        $row->writeAttribute('linkedid', $linkedid);
-                        $row->save();
-                    }
-
-                    /**
-                     * Отправка UserEvent
-                     */
-                    $AgiData = base64_encode(json_encode($n_data));
-                    $this->am->UserEvent('CdrConnector', ['AgiData' => $AgiData]);
-                }
-            } // Обход текущих каналов.
-        }
-
-        // Очистим память.
-        if(isset($this->checkChanHangupTransfer[$data['agi_channel']])){
-            unset($this->checkChanHangupTransfer[$data['agi_channel']]);
-        }
-        if(isset($this->mixMonitorChannels[$data['agi_channel']])){
-            unset($this->mixMonitorChannels[$data['agi_channel']]);
         }
     }
 
