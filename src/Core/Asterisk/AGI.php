@@ -61,14 +61,6 @@ class AGI
     public array $request;
 
     /**
-     * Config variables
-     *
-     * @var array
-     * @access public
-     */
-    public $config;
-
-    /**
      * @var bool
      */
     private bool $conLogBusy;
@@ -88,14 +80,6 @@ class AGI
     public $out = null;
 
     /**
-     * Audio Stream
-     *
-     * @access public
-     */
-    public $audio = null;
-
-
-    /**
      * Application option delimiter
      *
      * @access public
@@ -104,53 +88,23 @@ class AGI
 
     /**
      * Constructor
-     *
-     * @param string $config    is the name of the config file to parse
-     * @param array  $optconfig is an array of configuration vars and vals, stuffed into $this->config['phpagi']
      */
-    public function __construct($config = null, $optconfig = [])
+    public function __construct()
     {
         $this->conLogBusy = false;
-        // load config
-        if ( ! is_null($config) && file_exists($config)) {
-            $configData = parse_ini_file($config, true);
-            if($configData !== false){
-                $this->config = $configData;
-            }
-        }
-
-        // If optconfig is specified, stuff vals and vars into 'phpagi' config array.
-        foreach ($optconfig as $var => $val) {
-            $this->config['phpagi'][$var] = $val;
-        }
-
-        // add default values to config for uninitialized values
-        if ( ! isset($this->config['phpagi']['error_handler'])) {
-            $this->config['phpagi']['error_handler'] = true;
-        }
-        if ( ! isset($this->config['phpagi']['debug'])) {
-            $this->config['phpagi']['debug'] = false;
-        }
-        if ( ! isset($this->config['phpagi']['admin'])) {
-            $this->config['phpagi']['admin'] = null;
-        }
-
-        // festival TTS config
-        if ( ! isset($this->config['festival']['text2wave'])) {
-            $this->config['festival']['text2wave'] = $this->which('text2wave');
-        }
-
-        // swift TTS config
-        if ( ! isset($this->config['cepstral']['swift'])) {
-            $this->config['cepstral']['swift'] = $this->which('swift');
-        }
-
         ob_implicit_flush(1);
+        // Open stdin & stdout.
+        $this->in  = defined('STDIN') ? STDIN  : fopen('php://stdin',  'r');
+        $this->out = defined('STDOUT')? STDOUT : fopen('php://stdout', 'w');
+        $this->request = [];
 
-        // open stdin & stdout
-        $this->in  = defined('STDIN') ? STDIN :   fopen('php://stdin',  'r');
-        $this->out = defined('STDOUT') ? STDOUT : fopen('php://stdout', 'w');
+        $this->readRequestData();
+    }
 
+    /**
+     * Считываем переданные скрипту переменные.
+     */
+    private function readRequestData(){
         if($this->in !== false){
             $str = PHP_EOL;
             // read the request
@@ -167,56 +121,11 @@ class AGI
                 $str = $resIn;
             }
         }
-
-        // open audio if eagi detected
-        if ($this->request['agi_enhanced'] == '1.0') {
-            if (file_exists('/proc/' . getmypid() . '/fd/3')) {
-                $this->audio = fopen('/proc/' . getmypid() . '/fd/3', 'r');
-            } elseif (file_exists('/dev/fd/3')) {
-                // may need to mount fdescfs
-                $this->audio = fopen('/dev/fd/3', 'r');
-            }
-
-            if ($this->audio) {
-                stream_set_blocking($this->audio, 0);
-            }
-        }
     }
 
     // *********************************************************************************************************
     // **                             COMMANDS                                                                                            **
     // *********************************************************************************************************
-
-    /**
-     * Find an execuable in the path.
-     *
-     * @access private
-     *
-     * @param string $cmd       command to find
-     * @param string $checkpath path to check
-     *
-     * @return string|bool the path to the command
-     */
-    public function which($cmd, $checkpath = null)
-    {
-        global $_ENV;
-        $chpath = is_null($checkpath) ? $_ENV['PATH'] : $checkpath;
-
-        foreach (explode(':', $chpath) as $path) {
-            if (is_executable("$path/$cmd")) {
-                return "$path/$cmd";
-            }
-        }
-
-        if (is_null($checkpath)) {
-            return $this->which(
-                $cmd,
-                '/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:' . '/usr/X11R6/bin:/usr/local/apache/bin:/usr/local/mysql/bin'
-            );
-        }
-
-        return false;
-    }
 
     /**
      * Make a folder recursively.
