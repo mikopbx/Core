@@ -311,61 +311,6 @@ class AGI
     }
 
     /**
-     * Get the status of the specified channel. If no channel name is specified, return the status of the current
-     * channel.
-     *
-     * @link http://www.voip-info.org/wiki-channel+status
-     *
-     * @param string $channel
-     *
-     * @return array, see evaluate for return information. ['data'] contains description.
-     */
-    public function channel_status($channel = '')
-    {
-        $ret = $this->evaluate("CHANNEL STATUS $channel");
-        switch ($ret['result']) {
-            case -1:
-                $ret['data'] = trim("There is no channel that matches $channel");
-                break;
-            case AST_STATE_DOWN:
-                $ret['data'] = 'Channel is down and available';
-                break;
-            case AST_STATE_RESERVED:
-                $ret['data'] = 'Channel is down, but reserved';
-                break;
-            case AST_STATE_OFFHOOK:
-                $ret['data'] = 'Channel is off hook';
-                break;
-            case AST_STATE_DIALING:
-                $ret['data'] = 'Digits (or equivalent) have been dialed';
-                break;
-            case AST_STATE_RING:
-                $ret['data'] = 'Line is ringing';
-                break;
-            case AST_STATE_RINGING:
-                $ret['data'] = 'Remote end is ringing';
-                break;
-            case AST_STATE_UP:
-                $ret['data'] = 'Line is up';
-                break;
-            case AST_STATE_BUSY:
-                $ret['data'] = 'Line is busy';
-                break;
-            case AST_STATE_DIALING_OFFHOOK:
-                $ret['data'] = 'Digits (or equivalent) have been dialed while offhook';
-                break;
-            case AST_STATE_PRERING:
-                $ret['data'] = 'Channel has detected an incoming call and is waiting for ring';
-                break;
-            default:
-                $ret['data'] = "Unknown ({$ret['result']})";
-                break;
-        }
-
-        return $ret;
-    }
-
-    /**
      * Deletes an entry in the Asterisk database for a given family and key.
      *
      * @link http://www.voip-info.org/wiki-database+del
@@ -875,40 +820,6 @@ class AGI
 
     /**
      * Say the given digit string, returning early if any of the given DTMF escape digits are received on the channel.
-     * Return early if $buffer is adequate for request.
-     *
-     * @link http://www.voip-info.org/wiki-say+digits
-     *
-     * @param string $buffer
-     * @param int    $digits
-     * @param string $escape_digits
-     *
-     * @return array, see evaluate for return information. ['result'] is -1 on hangup or error, 0 if playback completes
-     *                with no digit received, otherwise a decimal value of the DTMF tone.  Use chr() to convert to
-     *                ASCII.
-     */
-    public function fastpass_say_digits(&$buffer, $digits, $escape_digits = '')
-    {
-        $proceed = false;
-        if ($escape_digits != '' && $buffer != '') {
-            if ( ! strpos(chr(255) . $escape_digits, $buffer[strlen($buffer) - 1])) {
-                $proceed = true;
-            }
-        }
-        if ($buffer == '' || $proceed) {
-            $res = $this->say_digits($digits, $escape_digits);
-            if ($res['code'] == AGIRES_OK && $res['result'] > 0) {
-                $buffer .= chr($res['result']);
-            }
-
-            return $res;
-        }
-
-        return ['code' => AGIRES_OK, 'result' => ord($buffer[strlen($buffer) - 1])];
-    }
-
-    /**
-     * Say the given digit string, returning early if any of the given DTMF escape digits are received on the channel.
      *
      * @link http://www.voip-info.org/wiki-say+digits
      *
@@ -922,40 +833,6 @@ class AGI
     public function say_digits($digits, $escape_digits = '')
     {
         return $this->evaluate("SAY DIGITS $digits \"$escape_digits\"");
-    }
-
-    /**
-     * Say the given number, returning early if any of the given DTMF escape digits are received on the channel.
-     * Return early if $buffer is adequate for request.
-     *
-     * @link http://www.voip-info.org/wiki-say+number
-     *
-     * @param string $buffer
-     * @param int    $number
-     * @param string $escape_digits
-     *
-     * @return array, see evaluate for return information. ['result'] is -1 on hangup or error, 0 if playback completes
-     *                with no digit received, otherwise a decimal value of the DTMF tone.  Use chr() to convert to
-     *                ASCII.
-     */
-    public function fastpass_say_number(&$buffer, $number, $escape_digits = '')
-    {
-        $proceed = false;
-        if ($escape_digits != '' && $buffer != '') {
-            if ( ! strpos(chr(255) . $escape_digits, $buffer[strlen($buffer) - 1])) {
-                $proceed = true;
-            }
-        }
-        if ($buffer == '' || $proceed) {
-            $res = $this->say_number($number, $escape_digits);
-            if ($res['code'] == AGIRES_OK && $res['result'] > 0) {
-                $buffer .= chr($res['result']);
-            }
-
-            return $res;
-        }
-
-        return ['code' => AGIRES_OK, 'result' => ord($buffer[strlen($buffer) - 1])];
     }
 
     /**
@@ -977,40 +854,6 @@ class AGI
 
     /**
      * Say the given character string, returning early if any of the given DTMF escape digits are received on the
-     * channel. Return early if $buffer is adequate for request.
-     *
-     * @link http://www.voip-info.org/wiki-say+phonetic
-     *
-     * @param string $buffer
-     * @param string $text
-     * @param string $escape_digits
-     *
-     * @return array, see evaluate for return information. ['result'] is -1 on hangup or error, 0 if playback completes
-     *                with no digit received, otherwise a decimal value of the DTMF tone.  Use chr() to convert to
-     *                ASCII.
-     */
-    public function fastpass_say_phonetic(&$buffer, $text, $escape_digits = '')
-    {
-        $proceed = false;
-        if ($escape_digits != '' && $buffer != '') {
-            if ( ! strpos(chr(255) . $escape_digits, $buffer[strlen($buffer) - 1])) {
-                $proceed = true;
-            }
-        }
-        if ($buffer == '' || $proceed) {
-            $res = $this->say_phonetic($text, $escape_digits);
-            if ($res['code'] == AGIRES_OK && $res['result'] > 0) {
-                $buffer .= chr($res['result']);
-            }
-
-            return $res;
-        }
-
-        return ['code' => AGIRES_OK, 'result' => ord($buffer[strlen($buffer) - 1])];
-    }
-
-    /**
-     * Say the given character string, returning early if any of the given DTMF escape digits are received on the
      * channel.
      *
      * @link http://www.voip-info.org/wiki-say+phonetic
@@ -1027,52 +870,12 @@ class AGI
         return $this->evaluate("SAY PHONETIC $text \"$escape_digits\"");
     }
 
-
-    // *********************************************************************************************************
-    // **                             FAST PASSING                                                                                        **
-    // *********************************************************************************************************
-
-    /**
-     * Say a given time, returning early if any of the given DTMF escape digits are received on the channel.
-     * Return early if $buffer is adequate for request.
-     *
-     * @link http://www.voip-info.org/wiki-say+time
-     *
-     * @param string $buffer
-     * @param int    $time  number of seconds elapsed since 00:00:00 on January 1, 1970, Coordinated Universal Time
-     *                      (UTC).
-     * @param string $escape_digits
-     *
-     * @return array, see evaluate for return information. ['result'] is -1 on hangup or error, 0 if playback completes
-     *                with no digit received, otherwise a decimal value of the DTMF tone.  Use chr() to convert to
-     *                ASCII.
-     */
-    public function fastpass_say_time(&$buffer, $time = null, $escape_digits = '')
-    {
-        $proceed = false;
-        if ($escape_digits != '' && $buffer != '') {
-            if ( ! strpos(chr(255) . $escape_digits, $buffer[strlen($buffer) - 1])) {
-                $proceed = true;
-            }
-        }
-        if ($buffer == '' || $proceed) {
-            $res = $this->say_time($time, $escape_digits);
-            if ($res['code'] == AGIRES_OK && $res['result'] > 0) {
-                $buffer .= chr($res['result']);
-            }
-
-            return $res;
-        }
-
-        return ['code' => AGIRES_OK, 'result' => ord($buffer[strlen($buffer) - 1])];
-    }
-
     /**
      * Say a given time, returning early if any of the given DTMF escape digits are received on the channel.
      *
      * @link http://www.voip-info.org/wiki-say+time
      *
-     * @param int    $time  number of seconds elapsed since 00:00:00 on January 1, 1970, Coordinated Universal Time
+     * @param ?int    $time
      *                      (UTC).
      * @param string $escape_digits
      *
@@ -1089,41 +892,6 @@ class AGI
         return $this->evaluate("SAY TIME $time \"$escape_digits\"");
     }
 
-    /**
-     * Play the given audio file, allowing playback to be interrupted by a DTMF digit. This command is similar to the
-     * GET DATA command but this command returns after the first DTMF digit has been pressed while GET DATA can
-     * accumulated any number of digits before returning. Return early if $buffer is adequate for request.
-     *
-     * @link http://www.voip-info.org/wiki-stream+file
-     *
-     * @param string $buffer
-     * @param string $filename without extension, often in /var/lib/asterisk/sounds
-     * @param string $escape_digits
-     * @param int    $offset
-     *
-     * @return array, see evaluate for return information. ['result'] is -1 on hangup or error, 0 if playback completes
-     *                with no digit received, otherwise a decimal value of the DTMF tone.  Use chr() to convert to
-     *                ASCII.
-     */
-    public function fastpass_stream_file(&$buffer, $filename, $escape_digits = '', $offset = 0)
-    {
-        $proceed = false;
-        if ($escape_digits != '' && $buffer != '') {
-            if ( ! strpos(chr(255) . $escape_digits, $buffer[strlen($buffer) - 1])) {
-                $proceed = true;
-            }
-        }
-        if ($buffer == '' || $proceed) {
-            $res = $this->stream_file($filename, $escape_digits, $offset);
-            if ($res['code'] == AGIRES_OK && $res['result'] > 0) {
-                $buffer .= chr($res['result']);
-            }
-
-            return $res;
-        }
-
-        return ['code' => AGIRES_OK, 'result' => ord($buffer[strlen($buffer) - 1]), 'endpos' => 0];
-    }
 
     /**
      * Play the given audio file, allowing playback to be interrupted by a DTMF digit. This command is similar to the
@@ -1152,73 +920,6 @@ class AGI
 
     /**
      * Plays the given file and receives DTMF data.
-     * Return early if $buffer is adequate for request.
-     *
-     * This is similar to STREAM FILE, but this command can accept and return many DTMF digits,
-     * while STREAM FILE returns immediately after the first DTMF digit is detected.
-     *
-     * Asterisk looks for the file to play in /var/lib/asterisk/sounds by default.
-     *
-     * If the user doesn't press any keys when the message plays, there is $timeout milliseconds
-     * of silence then the command ends.
-     *
-     * The user has the opportunity to press a key at any time during the message or the
-     * post-message silence. If the user presses a key while the message is playing, the
-     * message stops playing. When the first key is pressed a timer starts counting for
-     * $timeout milliseconds. Every time the user presses another key the timer is restarted.
-     * The command ends when the counter goes to zero or the maximum number of digits is entered,
-     * whichever happens first.
-     *
-     * If you don't specify a time out then a default timeout of 2000 is used following a pressed
-     * digit. If no digits are pressed then 6 seconds of silence follow the message.
-     *
-     * If you don't specify $max_digits then the user can enter as many digits as they want.
-     *
-     * Pressing the # key has the same effect as the timer running out: the command ends and
-     * any previously keyed digits are returned. A side effect of this is that there is no
-     * way to read a # key using this command.
-     *
-     * @link http://www.voip-info.org/wiki-get+data
-     *
-     * @param string $buffer
-     * @param string $filename file to play. Do not include file extension.
-     * @param int    $timeout  milliseconds
-     * @param int    $max_digits
-     *
-     * @return array, see evaluate for return information. ['result'] holds the digits and ['data'] holds the timeout
-     *                if present.
-     *
-     * This differs from other commands with return DTMF as numbers representing ASCII characters.
-     */
-    public function fastpass_getData(&$buffer, $filename, $timeout = null, $max_digits = null)
-    {
-        if (is_null($max_digits) || strlen($buffer) < $max_digits) {
-            if ($buffer == '') {
-                $res = $this->getData($filename, $timeout, $max_digits);
-                if ($res['code'] == AGIRES_OK) {
-                    $buffer .= $res['result'];
-                }
-
-                return $res;
-            } else {
-                while (is_null($max_digits) || strlen($buffer) < $max_digits) {
-                    $res = $this->wait_for_digit();
-                    if ($res['code'] != AGIRES_OK) {
-                        return $res;
-                    }
-                    if ($res['result'] == ord('#')) {
-                        break;
-                    }
-                    $buffer .= chr($res['result']);
-                }
-            }
-        }
-
-        return ['code' => AGIRES_OK, 'result' => $buffer];
-    }
-
-    /**
-     * Plays the given file and receives DTMF data.
      *
      * This is similar to STREAM FILE, but this command can accept and return many DTMF digits,
      * while STREAM FILE returns immediately after the first DTMF digit is detected.
@@ -1245,8 +946,8 @@ class AGI
      * way to read a # key using this command.
      *
      * @param string $filename file to play. Do not include file extension.
-     * @param int    $timeout  milliseconds
-     * @param int    $max_digits
+     * @param ?int    $timeout  milliseconds
+     * @param ?int    $max_digits
      *
      * @return array, see evaluate for return information. ['result'] holds the digits and ['data'] holds the timeout
      *                if present.
@@ -1350,54 +1051,5 @@ class AGI
     public function set_priority($priority)
     {
         return $this->evaluate("SET PRIORITY $priority");
-    }
-
-    /**
-     * Parse caller id.
-     *
-     * @param string $callerid
-     *
-     * @return array('Name'=>$name, 'Number'=>$number)
-     * @example examples/dtmf.php Get DTMF tones from the user and say the digits
-     * @example examples/input.php Get text input from the user and say it back
-     *
-     * "name" <proto:user@server:port>
-     *
-     */
-    public function parse_callerid($callerid = null)
-    {
-        if (is_null($callerid)) {
-            $callerid = $this->request['agi_callerid'];
-        }
-
-        $ret      = ['name' => '', 'protocol' => '', 'username' => '', 'host' => '', 'port' => ''];
-        $callerid = trim($callerid);
-
-        if ($callerid[0] == '"' || $callerid[0] == "'") {
-            $d           = $callerid[0];
-            $callerid    = explode($d, substr($callerid, 1));
-            $ret['name'] = array_shift($callerid);
-            $callerid    = join($d, $callerid);
-        }
-
-        $callerid = explode('@', trim($callerid, '<> '));
-        $username = explode(':', array_shift($callerid));
-        if (count($username) == 1) {
-            $ret['username'] = $username[0];
-        } else {
-            $ret['protocol'] = array_shift($username);
-            $ret['username'] = join(':', $username);
-        }
-
-        $callerid = join('@', $callerid);
-        $host     = explode(':', $callerid);
-        if (count($host) == 1) {
-            $ret['host'] = $host[0];
-        } else {
-            $ret['host'] = array_shift($host);
-            $ret['port'] = join(':', $host);
-        }
-
-        return $ret;
     }
 }
