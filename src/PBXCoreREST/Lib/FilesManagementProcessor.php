@@ -9,7 +9,6 @@
 namespace MikoPBX\PBXCoreREST\Lib;
 
 use MikoPBX\Common\Models\CustomFiles;
-use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Modules\PbxExtensionUtils;
 use MikoPBX\Modules\Setup\PbxExtensionSetupFailure;
@@ -22,8 +21,6 @@ use Phalcon\Http\Message\UploadedFile;
 
 class FilesManagementProcessor extends Injectable
 {
-
-
     /**
      * Processes file upload requests
      *
@@ -56,101 +53,52 @@ class FilesManagementProcessor extends Injectable
     /**
      * Process resumable upload files
      *
-     * @param $parameters
+     * @param array $parameters
      *
      * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
      */
-    public static function uploadResumable($parameters): PBXApiResult
+    public static function uploadResumable(array $parameters): PBXApiResult
     {
         $res            = new PBXApiResult();
         $res->processor = __METHOD__;
         $di             = Di::getDefault();
         if ($di === null) {
             $res->success    = false;
-            $res->messages[] = 'Dependency injector not initialized';
-
+            $res->messages[] = 'Dependency injector does not initialized';
             return $res;
         }
-        $upload_id            = $parameters['upload_id'];
-        $resumableFilename    = $parameters['resumableFilename'];
-        $resumableIdentifier  = $parameters['resumableIdentifier'];
-        $resumableChunkNumber = $parameters['resumableChunkNumber'];
-        $resumableTotalSize   = $parameters['resumableTotalSize'];
-        $uploadDir            = $di->getShared('config')->path('www.uploadDir');
+        $parameters['uploadDir'] = $di->getShared('config')->path('www.uploadDir');
+        $parameters['tempDir'] = "{$parameters['uploadDir']}/{$parameters['resumableIdentifier']}";
+        if ( ! Util::mwMkdir($parameters['tempDir'])) {
+            $res->messages[] = 'Temp dir does not exist ' . $parameters['tempDir'];
+            return $res;
+        }
 
-        $factory = new StreamFactory();
+        $fileName                           = pathinfo($parameters['resumableFilename'], PATHINFO_BASENAME);
+        $parameters['fullUploadedFileName'] = "{$parameters['tempDir']}/{$fileName}";
+
+        // Delete old progress and result file
+        $oldMergeProgressFile = "{$parameters['tempDir']}/merging_progress";
+        if (file_exists($oldMergeProgressFile)){
+            unlink($oldMergeProgressFile);
+        }
+        if (file_exists($parameters['fullUploadedFileName'])){
+            unlink($parameters['fullUploadedFileName']);
+        }
 
         foreach ($parameters['files'] as $file_data) {
-            $stream = $factory->createStreamFromFile($file_data['file_path'], 'r');
-            $file   = new UploadedFile(
-                $stream,
-                $file_data['file_size'],
-                $file_data['file_error'],
-                $file_data['file_name'],
-                $file_data['file_type']
-            );
-
-            if (isset($resumableIdentifier) && trim($resumableIdentifier) !== '') {
-                $temp_dir         = $uploadDir . '/' . Util::trimExtensionForFile(basename($resumableFilename));
-                $temp_dst_file    = $uploadDir . '/' . $upload_id . '/' . $upload_id . '_' . basename(
-                        $resumableFilename
-                    );
-                $chunks_dest_file = $temp_dir . '/' . $resumableFilename . '.part' . $resumableChunkNumber;
-            } else {
-                $temp_dir         = $uploadDir . '/' . $upload_id;
-                $temp_dst_file    = $temp_dir . '/' . $upload_id . '_' . basename($file->getClientFilename());
-                $chunks_dest_file = $temp_dst_file;
-            }
-            if ( ! Util::mwMkdir($temp_dir) || ! Util::mwMkdir(dirname($temp_dst_file))) {
-                Util::sysLogMsg('UploadFile', "Error create dir '$temp_dir'");
-                $res->success    = false;
-                $res->messages[] = "Error create dir '{$temp_dir}'";
-
+            if (!self::moveUploadedPartToSeparateDir($parameters, $file_data)){
+                $res->messages[] = 'Does not found any uploaded chunks on with path '.$file_data['file_path'];
                 return $res;
             }
-            $file->moveTo($chunks_dest_file);
-            // if (file_exists($file->))
-            if ($resumableFilename) {
-                $res->success = true;
-                // Передача файлов частями.
-                $result = Util::createFileFromChunks($temp_dir, $resumableTotalSize);
-                if ($result === true) {
-                    $merge_settings = [
-                        'data'   => [
-                            'result_file'          => $temp_dst_file,
-                            'temp_dir'             => $temp_dir,
-                            'resumableFilename'    => $resumableFilename,
-                            'resumableTotalChunks' => $resumableChunkNumber,
-                        ],
-                        'action' => 'merge',
-                    ];
-                    $settings_file  = "{$temp_dir}/merge_settings";
-                    file_put_contents(
-                        $settings_file,
-                        json_encode($merge_settings, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT)
-                    );
+            $res->success           = true;
+            $res->data['upload_id'] = $parameters['resumableIdentifier'];
+            $res->data['filename']  = $parameters['fullUploadedFileName'];
 
-                    // Отправляем задачу на склеивание файла.
-                    $phpPath               = Util::which('php');
-                    $workerFilesMergerPath = Util::getFilePathByClassName(WorkerMergeUploadedFile::class);
-                    Util::mwExecBg("{$phpPath} -f {$workerFilesMergerPath} '{$settings_file}'");
-                    $res->data['upload_id'] = $upload_id;
-                    $res->data['filename']  = $temp_dst_file;
-                    $res->data['d_status']  = 'INPROGRESS';
-                }
+            if (self::tryToMergeChunksIfAllPartsUploaded($parameters)) {
+                $res->data['d_status'] = 'MERGING';
             } else {
-                $res->success = true;
-                // Передача файла целиком.
-                $res->data['upload_id'] = $upload_id;
-                $res->data['filename']  = $temp_dst_file;
-                $res->data['d_status']  = 'UPLOAD_COMPLETE';
-                file_put_contents($temp_dir . '/progress', '100');
-
-                Util::mwExecBg(
-                    '/sbin/shell_functions.sh killprocesses ' . $temp_dir . ' -TERM 0;rm -rf ' . $temp_dir,
-                    '/dev/null',
-                    120
-                );
+                $res->data['d_status'] = 'WAITING_FOR_NEXT_PART';
             }
         }
 
@@ -158,50 +106,119 @@ class FilesManagementProcessor extends Injectable
     }
 
     /**
+     * Moves uploaded file part to separate directory with "upload_id" name on the system uploadDir folder.
+     *
+     * @param array $parameters data from of resumable request
+     * @param array $file_data  data from uploaded file part
+     *
+     * @return bool
+     */
+    private static function moveUploadedPartToSeparateDir(array $parameters, array $file_data):bool
+    {
+        if ( ! file_exists($file_data['file_path'])) {
+            return false;
+        }
+        $factory          = new StreamFactory();
+        $stream           = $factory->createStreamFromFile($file_data['file_path'], 'r');
+        $file             = new UploadedFile(
+            $stream,
+            $file_data['file_size'],
+            $file_data['file_error'],
+            $file_data['file_name'],
+            $file_data['file_type']
+        );
+        $chunks_dest_file = "{$parameters['tempDir']}/{$parameters['resumableFilename']}.part{$parameters['resumableChunkNumber']}";
+        if (file_exists($chunks_dest_file)){
+            $rm = Util::which('rm');
+            Util::mwExec("{$rm} -f {$chunks_dest_file}");
+        }
+        $file->moveTo($chunks_dest_file);
+        return true;
+    }
+
+    /**
+     * If the size of all the chunks on the server is equal to the size of the file uploaded starts a merge process.
+     *
+     * @param array $parameters
+     *
+     * @return bool
+     */
+    private static function tryToMergeChunksIfAllPartsUploaded(array $parameters): bool
+    {
+        $totalFilesOnServerSize = 0;
+        foreach (scandir($parameters['tempDir']) as $file) {
+            $totalFilesOnServerSize += filesize($parameters['tempDir'] . '/' . $file);
+        }
+
+        if ($totalFilesOnServerSize >= $parameters['resumableTotalSize']) {
+            // Parts upload complete
+            $merge_settings = [
+                    'fullUploadedFileName' => $parameters['fullUploadedFileName'],
+                    'tempDir'              => $parameters['tempDir'],
+                    'resumableFilename'    => $parameters['resumableFilename'],
+                    'resumableTotalSize'   => $parameters['resumableTotalSize'],
+                    'resumableTotalChunks' => $parameters['resumableTotalChunks'],
+            ];
+            $settings_file  = "{$parameters['tempDir']}/merge_settings";
+            file_put_contents(
+                $settings_file,
+                json_encode($merge_settings, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT)
+            );
+
+            // We will start the background process to merge parts into one file
+            $phpPath               = Util::which('php');
+            $workerFilesMergerPath = Util::getFilePathByClassName(WorkerMergeUploadedFile::class);
+            Util::mwExecBg("{$phpPath} -f {$workerFilesMergerPath} '{$settings_file}'");
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * Returns Status of uploading process
      *
-     * @param $postData
+     * @param array $postData
      *
      * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
      */
-    public static function statusUploadFile($postData): PBXApiResult
+    public static function statusUploadFile(array $postData): PBXApiResult
     {
         $res            = new PBXApiResult();
         $res->processor = __METHOD__;
         $di             = Di::getDefault();
         if ($di === null) {
-            $res->success    = false;
-            $res->messages[] = 'Dependency injector not initialized';
+            $res->messages[] = 'Dependency injector does not initialized';
 
             return $res;
         }
         $uploadDir = $di->getShared('config')->path('www.uploadDir');
-        if ($postData && isset($postData['id'])) {
-            $upload_id     = $postData['id'];
-            $progress_dir  = $uploadDir . '/' . $upload_id;
-            $progress_file = $progress_dir . '/progress';
 
-            if (empty($upload_id)) {
-                $res->success                   = false;
-                $res->data['d_status_progress'] = '0';
-                $res->data['d_status']          = 'ID_NOT_SET';
-            } elseif ( ! file_exists($progress_file) && file_exists($progress_dir)) {
-                $res->success                   = true;
-                $res->data['d_status_progress'] = '0';
-                $res->data['d_status']          = 'INPROGRESS';
-            } elseif ( ! file_exists($progress_dir)) {
-                $res->success                   = false;
-                $res->data['d_status_progress'] = '0';
-                $res->data['d_status']          = 'NOT_FOUND';
-            } elseif ('100' === file_get_contents($progress_file)) {
-                $res->success                   = true;
-                $res->data['d_status_progress'] = '100';
-                $res->data['d_status']          = 'UPLOAD_COMPLETE';
-            } else {
-                $res->success                   = true;
-                $res->data['d_status_progress'] = file_get_contents($progress_file);
-            }
+        $upload_id     = $postData['id'] ?? null;
+        $progress_dir  = $uploadDir . '/' . $upload_id;
+        $progress_file = $progress_dir . '/merging_progress';
+        if (empty($upload_id)) {
+            $res->success                   = false;
+            $res->data['d_status_progress'] = '0';
+            $res->data['d_status']          = 'ID_NOT_SET';
+            $res->messages[]                = 'Upload ID does not set';
+        } elseif ( ! file_exists($progress_file) && file_exists($progress_dir)) {
+            $res->success                   = true;
+            $res->data['d_status_progress'] = '0';
+            $res->data['d_status']          = 'INPROGRESS';
+        } elseif ( ! file_exists($progress_dir)) {
+            $res->success                   = false;
+            $res->data['d_status_progress'] = '0';
+            $res->data['d_status']          = 'NOT_FOUND';
+            $res->messages[]                = 'Does not found anything with path: ' . $progress_dir;
+        } elseif ('100' === file_get_contents($progress_file)) {
+            $res->success                   = true;
+            $res->data['d_status_progress'] = '100';
+            $res->data['d_status']          = 'UPLOAD_COMPLETE';
+        } else {
+            $res->success                   = true;
+            $res->data['d_status_progress'] = file_get_contents($progress_file);
         }
+
 
         return $res;
     }
@@ -291,8 +308,8 @@ class FilesManagementProcessor extends Injectable
             $di           = Di::getDefault();
             $dirsConfig   = $di->getShared('config');
             $filenameTmp  = $dirsConfig->path('www.downloadCacheDir') . '/' . __FUNCTION__ . '_' . time() . '.conf';
-            $cmd          = "{$cat} {$filename} > $filenameTmp";
-            Util::mwExec("$cmd; chown www:www $filenameTmp");
+            $cmd          = "{$cat} {$filename} > {$filenameTmp}";
+            Util::mwExec("{$cmd}; chown www:www {$filenameTmp}");
             $res->data['filename'] = $filenameTmp;
         } else {
             $res->success    = false;

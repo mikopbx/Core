@@ -7,6 +7,7 @@
  */
 
 namespace MikoPBX\PBXCoreREST\Workers;
+
 require_once 'Globals.php';
 
 use MikoPBX\Core\Workers\WorkerBase;
@@ -20,40 +21,70 @@ class WorkerMergeUploadedFile extends WorkerBase
         $settings_file = trim($argv[1]);
         if ( ! file_exists($settings_file)) {
             Util::sysLogMsg("WorkerMergeUploadedFile", 'File with settings not found');
+
             return;
         }
-        $file_data = json_decode(file_get_contents($settings_file), true);
-        if ( ! isset($file_data['action'])) {
-            Util::sysLogMsg("WorkerMergeUploadedFile", 'Wrong json settings');
-            return;
+        $settings = json_decode(file_get_contents($settings_file), true);
+        $progress_file = $settings['tempDir'] . '/merging_progress';
+        $this->mergeFilesInDirectory(
+            $settings['tempDir'],
+            $settings['resumableFilename'],
+            $settings['resumableTotalChunks'],
+            $settings['fullUploadedFileName'],
+            $progress_file
+        );
+
+        // Check filesize is equal uploaded size
+        $resultFileSize = filesize($settings['fullUploadedFileName']);
+        if ((int)$settings['resumableTotalSize'] === $resultFileSize){
+            file_put_contents($progress_file, '100');
+        } else {
+            Util::sysLogMsg('UploadFile', "File {$settings['fullUploadedFileName']} size {$resultFileSize} does not equal {$settings['resumableTotalSize']}");
         }
 
-        if ($file_data['action'] === 'merge') {
-            $settings = $file_data['data'];
-            if ( ! file_exists($settings['result_file'])) {
-                Util::mergeFilesInDirectory(
-                    $settings['temp_dir'],
-                    $settings['resumableFilename'],
-                    $settings['resumableTotalChunks'],
-                    $settings['result_file'],
-                    dirname($settings['result_file'])
-                );
-            }
-            // $res = file_exists($settings['result_file']);
-            // Отложенное удаление файла.
-            $rm_file = basename(dirname($settings['result_file'])) === 'tmp' ? $settings['result_file'] : dirname(
-                $settings['result_file']
-            );
-            Util::mwExecBg(
-                '/sbin/shell_functions.sh killprocesses ' . $rm_file . ' -TERM 0;rm -rf ' . $rm_file,
-                '/dev/null',
-                120
-            );
-        }
+        // Delete uploaded file after 10 minutes
+        Util::mwExecBg(
+            '/sbin/shell_functions.sh killprocesses ' . $settings['tempDir'] . ' -TERM 0;rm -rf ' . $settings['tempDir'],
+            '/dev/null',
+            600
+        );
     }
 
-}
+    /**
+     * Glues uploaded parts of file to en one with fileName
+     *
+     * @param string $tempDir
+     * @param string $fileName
+     * @param int    $total_files
+     * @param string $result_file
+     * @param string $progress_file
+     */
+    private function mergeFilesInDirectory(
+        string $tempDir,
+        string $fileName,
+        int $total_files,
+        string $result_file,
+        string $progress_file
+    ): void {
+        file_put_contents($progress_file, '0');
+        // Restore original file from chunks
+        if (($fp = fopen($result_file, 'w')) !== false) {
+            for ($i = 1; $i <= $total_files; $i++) {
+                $tmp_file = $tempDir . '/' . $fileName . '.part' . $i;
+                fwrite($fp, file_get_contents($tmp_file));
+                unlink($tmp_file);
+                $currentProgress = round($i / $total_files * 100)-1; //Up to 99%
+                file_put_contents($progress_file, $currentProgress, 2);
+            }
+            fclose($fp);
+        } else {
+            Util::sysLogMsg('UploadFile', 'cannot create the destination file - ' . $result_file);
 
+            return;
+        }
+        Util::sysLogMsg('UploadFile', 'destination file - ' . $result_file);
+    }
+}
 
 // Start worker process
 $workerClassname = WorkerMergeUploadedFile::class;

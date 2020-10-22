@@ -88,8 +88,10 @@ class WorkerApiCommands extends WorkerBase
      * Process API request from frontend
      *
      * @param BeanstalkClient $message
+     *
+     * @throws \JsonException
      */
-    public function prepareAnswer($message): void
+    public function prepareAnswer(BeanstalkClient $message): void
     {
         try {
             $request   = json_decode($message->getBody(), true, 512, JSON_THROW_ON_ERROR);
