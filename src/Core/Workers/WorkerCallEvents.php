@@ -404,21 +404,17 @@ class WorkerCallEvents extends WorkerBase
                 continue;
             }
             $BRIDGEPEER = $this->am->GetVar($data_chan['chan'], 'BRIDGEPEER', null, false);
-            if ( ! in_array($BRIDGEPEER, $active_chans, true)) {
+            if ( ! in_array($BRIDGEPEER, $active_chans, true) || !is_string($BRIDGEPEER)) {
                 // Вызов уже завершен. Не интересно.
-                continue;
-            }
-            if(!is_string($BRIDGEPEER)){
-                // Дополнительная проверка.
                 continue;
             }
 
             $linkedid = $this->am->GetVar($data_chan['chan'], 'CDR(linkedid)', null, false);
-            $CALLERID = $this->am->GetVar($BRIDGEPEER, 'CALLERID(num)', null, false);
             if ( empty($linkedid) || $linkedid === $data['linkedid']) {
                 continue;
             }
 
+            $CALLERID = $this->am->GetVar($BRIDGEPEER, 'CALLERID(num)', null, false);
             $n_data['action']        = 'sip_transfer';
             $n_data['src_chan']      = $data_chan['out'] ? $data_chan['chan'] : $BRIDGEPEER;
             $n_data['src_num']       = $data_chan['out'] ? $data_chan['num'] : $CALLERID;
@@ -451,6 +447,7 @@ class WorkerCallEvents extends WorkerBase
             $this->am->UserEvent('CdrConnector', ['AgiData' => $AgiData]);
         } // Обход текущих каналов.
     }
+
     /**
      * Обработка события уничтожения канала.
      * @param array $data
