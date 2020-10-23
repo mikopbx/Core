@@ -37,6 +37,7 @@ class AssetProvider implements ServiceProviderInterface
     private Collection $semanticCollectionJS;
     private Collection $footerCollectionACE;
     private Collection $footerCollectionLoc;
+    private Collection $headerCollectionSentryJS;
     private string $cssCacheDir;
     private string $jsCacheDir;
     private Manager $manager;

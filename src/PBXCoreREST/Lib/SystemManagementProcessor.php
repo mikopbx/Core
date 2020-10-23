@@ -248,53 +248,25 @@ class SystemManagementProcessor extends Injectable
         $res->data['needRestartWorkers'] = true;
         $rm                              = Util::which('rm');
 
-        // Delete all providers
-        $records = Providers::find();
-        if ( ! $records->delete()) {
-            $res->messages[] = $records->getMessages();
-            $res->success    = false;
+        // Pre delete some types
+        $clearThisModels=[
+            [Providers::class=>''],
+            [OutgoingRoutingTable::class=>''],
+            [IncomingRoutingTable::class=>''],
+            [OutWorkTimes::class=>''],
+            [AsteriskManagerUsers::class=>''],
+            [Extensions::class=>'type="'.Extensions::TYPE_IVR_MENU.'"'],  // IVR Menu
+            [Extensions::class=>'type="'.Extensions::TYPE_CONFERENCE.'"'],  // CONFERENCE
+            [Extensions::class=>'type="'.Extensions::TYPE_QUEUE.'"'],  // QUEUE
+        ];
+
+        foreach ($clearThisModels as [$class_name, $parameters]){
+            $records =  call_user_func([$class_name, 'find'], $parameters);
+            if ( ! $records->delete()) {
+                $res->messages[] = $records->getMessages();
+                $res->success    = false;
+            }
         }
-
-        // Delete routes
-        $records = OutgoingRoutingTable::find();
-        if ( ! $records->delete()) {
-            $res->messages[] = $records->getMessages();
-            $res->success    = false;
-        }
-
-        $records = IncomingRoutingTable::find();
-        if ( ! $records->delete()) {
-            $res->messages[] = $records->getMessages();
-            $res->success    = false;
-        }
-
-        // Delete out of work settings
-        $records = OutWorkTimes::find();
-        if ( ! $records->delete()) {
-            $res->messages[] = $records->getMessages();
-            $res->success    = false;
-        }
-
-        // AMI Users
-        $records = AsteriskManagerUsers::find();
-        if ( ! $records->delete()) {
-            $res->messages[] = $records->getMessages();
-            $res->success    = false;
-        }
-
-        // Pre delete some extensions type
-        // IVR Menu
-        $records = Extensions::find('type="'.Extensions::TYPE_IVR_MENU.'"');
-        $records->delete();
-
-        // CONFERENCE
-        $records = Extensions::find('type="'.Extensions::TYPE_CONFERENCE.'"');
-        $records->delete();
-
-        // QUEUE
-        $records = Extensions::find('type="'.Extensions::TYPE_QUEUE.'"');
-        $records->delete();
-
 
         // Other extensions
         $parameters     = [

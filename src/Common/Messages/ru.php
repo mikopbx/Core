@@ -613,7 +613,7 @@ return [
     'gs_RestoreAllSettingsHeader'                                         => 'Внимание!',
     'gs_RestoreAllSettingsMessage'                                        => 'Будут удалены все настройки, история вызовов, файлы записей разговоров и установленные модули расширений.',
     'gs_EnterDeleteAllPhrasePreText'                                      => 'Для очистки системы введите в поле ввода следующую фразу:',
-    'gs_EnterDeleteAllPhrase'                                             => 'удалить все',
+    'gs_EnterDeleteAllPhrase'                                             => 'удалить всё',
     'gs_AllSettingsDeleted'                                               => 'Все настройки удалены',
     'ts_CurrentSettings'                                                  => 'Текущие настройки',
     'ts_SystemTime'                                                       => 'Системное время',
