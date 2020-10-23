@@ -58,7 +58,7 @@ class TestCallsBase {
      */
     protected function printInfo($text) : void
     {
-        echo "\033[01;32m-> \033[39m$text \n";
+        echo "\033[01;32m-> \033[39mTEST_ERROR: $text \n";
     }
 
     /**
