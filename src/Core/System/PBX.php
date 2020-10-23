@@ -356,7 +356,7 @@ class PBX extends Injectable
     }
 
     /**
-     * Запуск генератора dialplan.
+     * Refresh extensions.conf file and reloads asterisk dialplan.
      *
      */
     public static function dialplanReload(): void
