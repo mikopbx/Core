@@ -42,4 +42,6 @@ if($result !== 1){
 
     echo "\033[01;32m-> \033[39mEndpoints connected successfully \n";
 }
+
+sleep(5);
 echo "\033[01;32m-> \033[39mEnd test \n\n";

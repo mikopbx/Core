@@ -223,5 +223,6 @@ class TestCallsBase {
         $this->printInfo("Reload dialplan... ");
         Util::mwExec("{$cmdAsterisk} -C '{$astConf}' -rx 'dialplan reload'");
         // Util::mwExec("asterisk -C '{$astConf}' -rx 'module reload res_pjsip.so'");
+        sleep(5);
     }
 }
