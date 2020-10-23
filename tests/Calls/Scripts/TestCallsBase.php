@@ -49,7 +49,7 @@ class TestCallsBase {
      */
     protected function printError($text) : void
     {
-        file_put_contents('php://stderr', "\033[01;31m-> ".$text."\033[39m \n");
+        file_put_contents('php://stderr', "\033[01;31m-> TEST_ERROR: ".$text."\033[39m \n");
     }
 
     /**
@@ -58,7 +58,7 @@ class TestCallsBase {
      */
     protected function printInfo($text) : void
     {
-        echo "\033[01;32m-> \033[39mTEST_ERROR: $text \n";
+        echo "\033[01;32m-> \033[39m$text \n";
     }
 
     /**
