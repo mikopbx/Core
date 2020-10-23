@@ -41,6 +41,7 @@ const systemDiagnosticLogs = {
 	$formObj: $('#system-diagnostic-form'),
 	$fileName: $('#system-diagnostic-form .filename'),
 	initialize() {
+		systemDiagnosticLogs.$fileSelectDropDown.dropdown();
 		systemDiagnosticLogs.initializeAce();
 		PbxApi.SyslogGetLogsList(systemDiagnosticLogs.cbFormatDropdownResults);
 
