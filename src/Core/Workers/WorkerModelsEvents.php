@@ -328,6 +328,7 @@ class WorkerModelsEvents extends WorkerBase
                 $this->modified_tables[self::R_DIALPLAN] = true;
                 break;
             case PbxExtensionModules::class:
+                $this->modified_tables[self::R_DIALPLAN] = true;
                 $this->modified_tables[self::R_CONF_MODULES] = true;
                 $this->modified_tables[self::R_CRON] = true;
                 break;
