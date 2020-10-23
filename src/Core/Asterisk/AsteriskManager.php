@@ -1024,39 +1024,27 @@ class AsteriskManager
         $async = true,
         $actionid = null
     ) {
-        $parameters = ['Channel' => $channel];
 
-        if (!empty($exten)) {
-            $parameters['Exten'] = $exten;
+        $parameters = [
+            'Exten'         => $exten,
+            'Context'       => $context,
+            'Priority'      => $priority,
+            'Application'   => $application,
+            'Data'          => $data,
+            'Timeout'       => $timeout,
+            'CallerID'      => $callerid,
+            'Variable'      => $variable,
+            'Account'       => $account,
+            'ActionID'      => $actionid
+        ];
+        $keys = array_keys($parameters);
+        foreach ($keys as $key){
+            if(empty($parameters[$key])){
+                unset($parameters[$key]);
+            }
         }
-        if (!empty($context)) {
-            $parameters['Context'] = $context;
-        }
-        if (!empty($priority)) {
-            $parameters['Priority'] = $priority;
-        }
-        if (!empty($application)) {
-            $parameters['Application'] = $application;
-        }
-        if (!empty($data)) {
-            $parameters['Data'] = $data;
-        }
-        if (!empty($timeout)) {
-            $parameters['Timeout'] = $timeout;
-        }
-        if (!empty($callerid)) {
-            $parameters['CallerID'] = $callerid;
-        }
-        if (!empty($variable)) {
-            $parameters['Variable'] = $variable;
-        }
-        if (!empty($account)) {
-            $parameters['Account'] = $account;
-        }
-        $parameters['Async'] = ($async === true) ? 'true' : 'false';
-        if (!empty($actionid)) {
-            $parameters['ActionID'] = $actionid;
-        }
+        $parameters['Channel'] = $channel;
+        $parameters['Async']   = ($async === true) ? 'true' : 'false';
 
         return $this->sendRequest('Originate', $parameters);
     }

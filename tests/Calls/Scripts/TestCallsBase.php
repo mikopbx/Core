@@ -49,7 +49,7 @@ class TestCallsBase {
      */
     protected function printError($text) : void
     {
-        file_put_contents('php://stderr', "\033[01;31m-> ".$text."\033[39m \n");
+        file_put_contents('php://stderr', "\033[01;31m-> TEST_ERROR: ".$text."\033[39m \n");
     }
 
     /**
