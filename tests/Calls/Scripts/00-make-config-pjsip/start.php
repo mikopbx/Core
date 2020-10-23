@@ -32,7 +32,9 @@ $cmdAsterisk = Util::which('asterisk');
 file_put_contents("$dirName/asterisk/pjsip.conf", $config);
 Util::mwExec("{$cmdAsterisk} -C '$astConf' -rx 'module reload res_pjsip.so'");
 
-sleep(2);
+$duration = count($db_data->toArray())*2;
+echo "\033[01;32m-> \033[39mWaiting for registration of peers {$duration} s... \n";
+sleep($duration);
 $result = Util::mwExec($cmdAsterisk.' -rx"core show hints" | grep PJSIP/ | grep -v Idle', $out);
 if($result !== 1){
     file_put_contents('php://stderr', "\033[01;31m-> ".'Not all endpoint are registered: '. implode($out)."\033[39m \n");
