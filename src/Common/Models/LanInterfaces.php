@@ -24,9 +24,9 @@ class LanInterfaces extends ModelsBase
     /**
      * @Primary
      * @Identity
-     * @Column(type="string", nullable=false)
+     * @Column(type="integer", nullable=false)
      */
-    public ?string $id;
+    public $id;
 
     /**
      * @Column(type="string", nullable=true)

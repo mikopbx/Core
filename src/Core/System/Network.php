@@ -599,22 +599,17 @@ class Network extends Injectable
      */
     private function addLanInterface($name, $general = false)
     {
-        $disabled = 0; // ($general===true)?0:1;
-        $dhcp     = 1; // ($general===true)?1:0;
-        $internet = ($general === true) ? 1 : 0;
-
         $data = new LanInterfaces();
-        $data->writeAttribute('name', $name);
-        $data->writeAttribute('interface', $name);
-        $data->writeAttribute('dhcp', $dhcp);
-        $data->writeAttribute('internet', $internet);
-        $data->writeAttribute('disabled', $disabled);
-        $data->writeAttribute('vlanid', 0);
-        $data->writeAttribute('hostname', 'mikopbx');
-        $data->writeAttribute('domain', '');
-        $data->writeAttribute('topology', 'private');
-        $data->writeAttribute('primarydns', '');
-
+        $data->name      = $name;
+        $data->interface = $name;
+        $data->dhcp      = '1';
+        $data->internet  = ($general === true) ? '1' : '0';;
+        $data->disabled  = '0';
+        $data->vlanid    = '0';
+        $data->hostname  = 'mikopbx';
+        $data->domain    = '';
+        $data->topology  = 'private';
+        $data->primarydns= '';
         $data->save();
 
         return $data->toArray();
