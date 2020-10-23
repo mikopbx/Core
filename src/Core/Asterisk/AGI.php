@@ -179,7 +179,7 @@ class AGI
         // parse result
         $str = '';
         $ret = [];
-        if($this->evaluateReadResponse($str, $ret)){
+        if(!$this->evaluateReadResponse($str, $ret)){
             return $broken;
         }
 
