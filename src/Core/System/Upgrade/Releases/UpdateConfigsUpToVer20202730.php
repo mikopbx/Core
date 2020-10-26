@@ -63,7 +63,6 @@ class UpdateConfigsUpToVer20202730 extends Injectable implements UpgradeSystemCo
             'h263p' => 'H.263+',
             'h263'  => 'H.263',
             'h264'  => 'H.264',
-
             // Аудио кодеки
             'adpcm' => 'ADPCM',
             'alaw'  => 'G.711 A-law',
@@ -79,28 +78,56 @@ class UpdateConfigsUpToVer20202730 extends Injectable implements UpgradeSystemCo
             'opus'  => 'Opus',
         ];
         $codecs = Codecs::find();
-
         // Удалим лишние кодеки
-        /** @var \MikoPBX\Common\Models\Codecs $codec */
+        /** @var Codecs $codec */
         foreach ($codecs as $codec){
             if(array_key_exists($codec->name, $availCodecs)){
+                $this->checkDisabledCodec($codec);
                 continue;
             }
             if(!$codec->delete()){
                 Util::sysLogMsg(__CLASS__, 'Can not delete codec '.$codec->name. ' from MikoPBX\Common\Models\Codecs');
             }
         }
+        $this->addNewCodecs($availCodecs);
+        $this->disableCodecs();
 
+    }
+
+    private function disableCodecs(){
+        $availCodecs = [
+            'h264'  => 'H.264',
+            'alaw'  => 'G.711 A-law',
+            'ulaw'  => 'G.711 µ-law',
+        ];
+
+        $codecs = Codecs::find();
+        // Удалим лишние кодеки
+        /** @var Codecs $codec */
+        foreach ($codecs as $codec){
+            if(array_key_exists($codec->name, $availCodecs)){
+                continue;
+            }
+            $codec->disabled = '1';
+            $codec->save();
+        }
+    }
+
+    /**
+     * Добавляет кодеки, которых нет в исходном массиве.
+     * @param $availCodecs
+     */
+    private function addNewCodecs($availCodecs):void{
         foreach ($availCodecs as $availCodec => $desc){
             $codecData = Codecs::findFirst('name="'.$availCodec.'"');
             if ($codecData === null) {
-                $codecData              = new Codecs();
+                $codecData = new Codecs();
             }elseif($codecData->description === $desc){
                 unset($codecData);
                 continue;
             }
             $codecData->name        = $availCodec;
-            if(substr($availCodec,0,3) === 'h26'){
+            if(strpos($availCodec, 'h26') === 0){
                 $type = 'video';
             }else{
                 $type = 'audio';
@@ -110,6 +137,17 @@ class UpdateConfigsUpToVer20202730 extends Injectable implements UpgradeSystemCo
             if(!$codecData->save()){
                 Util::sysLogMsg(__CLASS__, 'Can not update codec info '.$codecData->name. ' from \MikoPBX\Common\Models\Codecs');
             }
+        }
+    }
+
+    /**
+     * Проверка корректности заполнения поля "disabled" для кодека.
+     * @param Codecs $codec
+     */
+    private function checkDisabledCodec(Codecs $codec):void{
+        if(!in_array($codec->disabled, ['0', '1'], true)){
+            $codec->disabled = '0';
+            $codec->save();
         }
     }
 
