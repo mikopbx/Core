@@ -99,6 +99,8 @@ class UpdateConfigsUpToVer20202730 extends Injectable implements UpgradeSystemCo
             'h264'  => 'H.264',
             'alaw'  => 'G.711 A-law',
             'ulaw'  => 'G.711 µ-law',
+            'opus'  => 'Opus',
+            'ilbc'  => 'ILBC',
         ];
 
         $codecs = Codecs::find();
