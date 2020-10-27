@@ -248,7 +248,6 @@ const updatePBX = {
 	cbAfterStartUpdate(response) {
 		if (response.length === 0 || response === false) {
 			UserMessage.showMultiString(globalTranslate.upd_UpgradeError);
-		} else {
 			updatePBX.$submitButton.removeClass('loading');
 		}
 	},
