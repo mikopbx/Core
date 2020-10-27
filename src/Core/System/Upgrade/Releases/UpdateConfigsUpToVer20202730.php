@@ -33,14 +33,14 @@ class UpdateConfigsUpToVer20202730 extends Injectable implements UpgradeSystemCo
      */
     public function __construct()
     {
-        $this->config = $this->getDI()->getShared('config');
+        $this->config        = $this->getDI()->getShared('config');
         $this->mikoPBXConfig = new MikoPBXConfig();
-        $this->isLiveCD =  file_exists('/offload/livecd');
+        $this->isLiveCD      = file_exists('/offload/livecd');
     }
 
-    public function processUpdate():void
+    public function processUpdate(): void
     {
-        if ($this->isLiveCD){
+        if ($this->isLiveCD) {
             return;
         }
 
@@ -49,6 +49,7 @@ class UpdateConfigsUpToVer20202730 extends Injectable implements UpgradeSystemCo
         $this->cleanAstDB();
         $this->copyMohFilesToStorage();
         $this->removeOldCacheFolders();
+        $this->removeOldSessionsFiles();
         $this->updateExtensionsTable();
         $this->moveReadOnlySoundsToStorage();
     }
@@ -77,37 +78,88 @@ class UpdateConfigsUpToVer20202730 extends Injectable implements UpgradeSystemCo
             'slin'  => 'Signed Linear PCM',
             'opus'  => 'Opus',
         ];
-        $codecs = Codecs::find();
+        $codecs      = Codecs::find();
         // Удалим лишние кодеки
         /** @var Codecs $codec */
-        foreach ($codecs as $codec){
-            if(array_key_exists($codec->name, $availCodecs)){
+        foreach ($codecs as $codec) {
+            if (array_key_exists($codec->name, $availCodecs)) {
                 $this->checkDisabledCodec($codec);
                 continue;
             }
-            if(!$codec->delete()){
-                Util::sysLogMsg(__CLASS__, 'Can not delete codec '.$codec->name. ' from MikoPBX\Common\Models\Codecs');
+            if ( ! $codec->delete()) {
+                Util::sysLogMsg(
+                    __CLASS__,
+                    'Can not delete codec ' . $codec->name . ' from MikoPBX\Common\Models\Codecs'
+                );
             }
         }
         $this->addNewCodecs($availCodecs);
         $this->disableCodecs();
-
     }
 
-    private function disableCodecs(){
+    /**
+     * Проверка корректности заполнения поля "disabled" для кодека.
+     *
+     * @param Codecs $codec
+     */
+    private function checkDisabledCodec(Codecs $codec): void
+    {
+        if ( ! in_array($codec->disabled, ['0', '1'], true)) {
+            $codec->disabled = '0';
+            $codec->save();
+        }
+    }
+
+    /**
+     * Добавляет кодеки, которых нет в исходном массиве.
+     *
+     * @param $availCodecs
+     */
+    private function addNewCodecs($availCodecs): void
+    {
+        foreach ($availCodecs as $availCodec => $desc) {
+            $codecData = Codecs::findFirst('name="' . $availCodec . '"');
+            if ($codecData === null) {
+                $codecData = new Codecs();
+            } elseif ($codecData->description === $desc) {
+                unset($codecData);
+                continue;
+            }
+            $codecData->name = $availCodec;
+            if (strpos($availCodec, 'h26') === 0) {
+                $type = 'video';
+            } else {
+                $type = 'audio';
+            }
+            $codecData->type        = $type;
+            $codecData->description = $desc;
+            if ( ! $codecData->save()) {
+                Util::sysLogMsg(
+                    __CLASS__,
+                    'Can not update codec info ' . $codecData->name . ' from \MikoPBX\Common\Models\Codecs'
+                );
+            }
+        }
+    }
+
+    /**
+     *
+     */
+    private function disableCodecs(): void
+    {
         $availCodecs = [
-            'h264'  => 'H.264',
-            'alaw'  => 'G.711 A-law',
-            'ulaw'  => 'G.711 µ-law',
-            'opus'  => 'Opus',
-            'ilbc'  => 'ILBC',
+            'h264' => 'H.264',
+            'alaw' => 'G.711 A-law',
+            'ulaw' => 'G.711 µ-law',
+            'opus' => 'Opus',
+            'ilbc' => 'ILBC',
         ];
 
         $codecs = Codecs::find();
         // Удалим лишние кодеки
         /** @var Codecs $codec */
-        foreach ($codecs as $codec){
-            if(array_key_exists($codec->name, $availCodecs)){
+        foreach ($codecs as $codec) {
+            if (array_key_exists($codec->name, $availCodecs)) {
                 continue;
             }
             $codec->disabled = '1';
@@ -116,48 +168,10 @@ class UpdateConfigsUpToVer20202730 extends Injectable implements UpgradeSystemCo
     }
 
     /**
-     * Добавляет кодеки, которых нет в исходном массиве.
-     * @param $availCodecs
-     */
-    private function addNewCodecs($availCodecs):void{
-        foreach ($availCodecs as $availCodec => $desc){
-            $codecData = Codecs::findFirst('name="'.$availCodec.'"');
-            if ($codecData === null) {
-                $codecData = new Codecs();
-            }elseif($codecData->description === $desc){
-                unset($codecData);
-                continue;
-            }
-            $codecData->name        = $availCodec;
-            if(strpos($availCodec, 'h26') === 0){
-                $type = 'video';
-            }else{
-                $type = 'audio';
-            }
-            $codecData->type        = $type;
-            $codecData->description = $desc;
-            if(!$codecData->save()){
-                Util::sysLogMsg(__CLASS__, 'Can not update codec info '.$codecData->name. ' from \MikoPBX\Common\Models\Codecs');
-            }
-        }
-    }
-
-    /**
-     * Проверка корректности заполнения поля "disabled" для кодека.
-     * @param Codecs $codec
-     */
-    private function checkDisabledCodec(Codecs $codec):void{
-        if(!in_array($codec->disabled, ['0', '1'], true)){
-            $codec->disabled = '0';
-            $codec->save();
-        }
-    }
-
-    /**
      * Updates category attribute on SoundFiles table
      * Add custom category to all sound files
      */
-    private function addCustomCategoryToSoundFiles()
+    private function addCustomCategoryToSoundFiles(): void
     {
         $soundFiles = SoundFiles::find();
         foreach ($soundFiles as $sound_file) {
@@ -169,17 +183,17 @@ class UpdateConfigsUpToVer20202730 extends Injectable implements UpgradeSystemCo
     /**
      * Clean UserBuddyStatus on AstDB
      */
-    private function cleanAstDB()
+    private function cleanAstDB(): void
     {
         $astDbPath = $this->config->path('astDatabase.dbfile');
-        if(file_exists($astDbPath)){
+        if (file_exists($astDbPath)) {
             $table = 'astdb';
-            $sql = 'DELETE FROM '.$table.' WHERE key LIKE "/DND/SIP%" OR key LIKE "/CF/SIP%" OR key LIKE "/UserBuddyStatus/SIP%"';
-            $db = new \SQLite3($astDbPath);
+            $sql   = 'DELETE FROM ' . $table . ' WHERE key LIKE "/DND/SIP%" OR key LIKE "/CF/SIP%" OR key LIKE "/UserBuddyStatus/SIP%"';
+            $db    = new \SQLite3($astDbPath);
             try {
                 $db->exec($sql);
             } catch (\Error $e) {
-                Util::sysLogMsg(__CLASS__, 'Can clean astdb from UserBuddyStatus...'.$e->getMessage());
+                Util::sysLogMsg(__CLASS__, 'Can clean astdb from UserBuddyStatus...' . $e->getMessage());
                 sleep(2);
             }
             $db->close();
@@ -190,10 +204,10 @@ class UpdateConfigsUpToVer20202730 extends Injectable implements UpgradeSystemCo
     /**
      * Copies MOH sound files to storage and creates record on SoundFiles table
      */
-    private function copyMohFilesToStorage():void
+    private function copyMohFilesToStorage(): void
     {
-        $oldMohDir     = $this->config->path('asterisk.astvarlibdir') . '/sounds/moh';
-        if(!file_exists($oldMohDir)){
+        $oldMohDir = $this->config->path('asterisk.astvarlibdir') . '/sounds/moh';
+        if ( ! file_exists($oldMohDir)) {
             return;
         }
         $currentMohDir = $this->config->path('asterisk.mohdir');
@@ -217,9 +231,9 @@ class UpdateConfigsUpToVer20202730 extends Injectable implements UpgradeSystemCo
     }
 
     /**
-     * Remove old cache folders
+     * Removes old cache folders
      */
-    private function removeOldCacheFolders():void
+    private function removeOldCacheFolders(): void
     {
         $mediaMountPoint = $this->config->path('core.mediaMountPoint');
         $oldCacheDirs    = [
@@ -235,11 +249,35 @@ class UpdateConfigsUpToVer20202730 extends Injectable implements UpgradeSystemCo
         }
     }
     /**
+     * Removes old sessions files
+     */
+    private function removeOldSessionsFiles(): void
+    {
+        $mediaMountPoint = $this->config->path('core.mediaMountPoint');
+        $oldCacheDirs    = [
+            "$mediaMountPoint/mikopbx/log/nats/license.key",
+            "$mediaMountPoint/mikopbx/log/nats/*.cache",
+            "$mediaMountPoint/mikopbx/log/pdnsd/cache",
+            "$mediaMountPoint/mikopbx/log/Module*",
+            "$mediaMountPoint/mikopbx/php_session",
+            "$mediaMountPoint/mikopbx/tmp/*",
+            "$mediaMountPoint/mikopbx/log/ProvisioningServerPnP",
+        ];
+        foreach ($oldCacheDirs as $old_cache_dir) {
+            if (is_dir($old_cache_dir)) {
+                $rmPath = Util::which('rm');
+                Util::mwExec("{$rmPath} -rf $old_cache_dir");
+            }
+        }
+    }
+
+
+    /**
      * Updates show_in_phonebook attribute on Extensions table
      */
-    private function updateExtensionsTable():void
+    private function updateExtensionsTable(): void
     {
-        $showInPhonebookTypes=[
+        $showInPhonebookTypes = [
             Extensions::TYPE_DIALPLAN_APPLICATION,
             Extensions::TYPE_SIP,
             Extensions::TYPE_EXTERNAL,
@@ -248,10 +286,10 @@ class UpdateConfigsUpToVer20202730 extends Injectable implements UpgradeSystemCo
             Extensions::TYPE_CONFERENCE,
 
         ];
-        $extensions = Extensions::find();
-        foreach ($extensions as $extension){
-            if (in_array($extension->type, $showInPhonebookTypes)){
-                $extension->show_in_phonebook='1';
+        $extensions           = Extensions::find();
+        foreach ($extensions as $extension) {
+            if (in_array($extension->type, $showInPhonebookTypes)) {
+                $extension->show_in_phonebook = '1';
                 $extension->update();
             }
         }
@@ -261,16 +299,16 @@ class UpdateConfigsUpToVer20202730 extends Injectable implements UpgradeSystemCo
      * Moves predefined sound files to storage disk
      * Changes SoundFiles records
      */
-    private function moveReadOnlySoundsToStorage():void
+    private function moveReadOnlySoundsToStorage(): void
     {
-        $currentMediaDir = $this->config->path('asterisk.customSoundDir').'/';
-        if (!is_dir($currentMediaDir)){
+        $currentMediaDir = $this->config->path('asterisk.customSoundDir') . '/';
+        if ( ! is_dir($currentMediaDir)) {
             Util::mwMkdir($currentMediaDir);
         }
         $soundFiles = SoundFiles::find();
-        foreach ($soundFiles as $soundFile){
-            if (stripos($soundFile->path, '/offload/asterisk/sounds/other/')===0){
-                $newPath = $currentMediaDir.pathinfo($soundFile->path)['basename'];
+        foreach ($soundFiles as $soundFile) {
+            if (stripos($soundFile->path, '/offload/asterisk/sounds/other/') === 0) {
+                $newPath = $currentMediaDir . pathinfo($soundFile->path)['basename'];
                 if (copy($soundFile->path, $newPath)) {
                     $soundFile->path = $newPath;
                     $soundFile->update();
@@ -278,4 +316,6 @@ class UpdateConfigsUpToVer20202730 extends Injectable implements UpgradeSystemCo
             }
         }
     }
+
+
 }

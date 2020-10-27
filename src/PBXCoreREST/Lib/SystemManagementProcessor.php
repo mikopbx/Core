@@ -273,9 +273,10 @@ class SystemManagementProcessor extends Injectable
             'conditions' => 'not number IN ({ids:array})',
             'bind'       => [
                 'ids' => [
-                    '000063', //Reads back the extension
-                    '000064', //0000MILLI
-                    '10003246'//Echo test
+                    '000063', // Reads back the extension
+                    '000064', // 0000MILLI
+                    '10003246',// Echo test
+                    '10000100' // Voicemail
                 ],
             ],
         ];

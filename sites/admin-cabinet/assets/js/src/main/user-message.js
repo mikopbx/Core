@@ -87,10 +87,7 @@ const UserMessage = {
 				if (Array.isArray(newValue)) {
 					newValue = newValue.join('<br>');
 				}
-				if (newValue.length > 100) {
-					UserMessage.$ajaxMessagesDiv.after(`<div class="ui ${index} message ajax">${newValue}</div>`);
-					UserMessage.scrollToMessages();
-				} else if (index === 'error') {
+				if (index === 'error') {
 					UserMessage.showError(newValue, header);
 				} else if (index === 'info') {
 					UserMessage.showInformation(newValue, header);
@@ -111,9 +108,7 @@ const UserMessage = {
 				}
 				previousMessage = value;
 			});
-			UserMessage.$ajaxMessagesDiv
-				.after(`<div class="ui warning message ajax"><div class="ui header">${header}</div>${content}</div>`);
-			UserMessage.scrollToMessages();
+			UserMessage.showWraning(content, header);
 		}
 	},
 	scrollToMessages() {

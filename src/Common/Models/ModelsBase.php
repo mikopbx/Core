@@ -8,10 +8,8 @@
 
 namespace MikoPBX\Common\Models;
 
-use MikoPBX\AdminCabinet\Library\Elements;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Modules\PbxExtensionUtils;
 use Phalcon\Db\Adapter\AdapterInterface;
-use Phalcon\Db\RawValue;
 use Phalcon\Messages\Message;
 use Phalcon\Messages\MessageInterface;
 use Phalcon\Mvc\Model;
@@ -46,15 +44,24 @@ use Phalcon\Url;
  */
 abstract class ModelsBase extends Model
 {
+    /**
+     * All models with lover than this version in module.json won't be attached as children
+     */
+    public const MIN_MODULE_MODEL_VER = '2020.2.468';
 
     public function initialize(): void
     {
         self::setup(['orm.events' => true]);
         $this->keepSnapshots(true);
+        $this->addExtensionModulesRelations();
+    }
 
-        // Пройдемся по модулям и подключим их отношения к текущей модели, если они описаны
+    /**
+     * Attaches model's relationships from modules models classes
+     */
+    private function addExtensionModulesRelations()
+    {
         $cacheKey   = explode('\\', static::class)[3];
-        $modulesDir = $this->di->getShared('config')->core->modulesDir;
         $parameters = [
             'conditions' => 'disabled=0',
             'cache'      => [
@@ -64,17 +71,33 @@ abstract class ModelsBase extends Model
         ];
         $modules    = PbxExtensionModules::find($parameters)->toArray();
         foreach ($modules as $module) {
-            $moduleModelsDir = "{$modulesDir}/{$module['uniqid']}/Models";
+            $moduleDir = PbxExtensionUtils::getModuleDir($module['uniqid']);
+
+            $moduleJson = "{$moduleDir}/module.json";
+            if ( ! file_exists($moduleJson)) {
+                continue;
+            }
+            $jsonString            = file_get_contents($moduleJson);
+            $jsonModuleDescription = json_decode($jsonString, true);
+            $minPBXVersion         = $jsonModuleDescription['min_pbx_version'] ?? '1.0.0';
+            if (version_compare($minPBXVersion, self::MIN_MODULE_MODEL_VER, '<')) {
+                continue;
+            }
+
+            $moduleModelsDir = "{$moduleDir}/Models";
             $results         = glob($moduleModelsDir . '/*.php', GLOB_NOSORT);
             foreach ($results as $file) {
                 $className        = pathinfo($file)['filename'];
                 $moduleModelClass = "\\Modules\\{$module['uniqid']}\\Models\\{$className}";
-                if (class_exists($moduleModelClass) && method_exists($moduleModelClass, 'getDynamicRelations')) {
+
+                if (class_exists($moduleModelClass)
+                    && method_exists($moduleModelClass, 'getDynamicRelations')) {
                     $moduleModelClass::getDynamicRelations($this);
                 }
             }
         }
     }
+
 
     /**
      * Обработчик ошибок валидации, обычно сюда попадаем если неправильно
@@ -132,308 +155,9 @@ abstract class ModelsBase extends Model
     }
 
     /**
-     * Fill default values from annotations
-     */
-    public function beforeValidationOnCreate(): void
-    {
-        $metaData      = $this->di->get('modelsMetadata');
-        $defaultValues = $metaData->getDefaultValues($this);
-        foreach ($defaultValues as $field => $value) {
-            if ( ! isset($this->{$field})) {
-                $this->{$field} = $value;
-            }
-        }
-    }
-
-    /**
-     * Функция позволяет вывести список зависимостей с сылками,
-     * которые мешают удалению текущей сущности
+     * Returns a model's element representation
      *
-     * @return bool
-     */
-    public function beforeDelete(): bool
-     {
-        return $this->checkRelationsSatisfaction($this, $this);
-     }
-
-    /**
-     *  Check whether this object has unsatisfied relations or not
-     *
-     * @param $theFirstDeleteRecord
-     * @param $currentDeleteRecord
-     *
-     * @return bool
-     */
-    private function checkRelationsSatisfaction($theFirstDeleteRecord, $currentDeleteRecord): bool
-    {
-    //     /**
-    //      * Get the models manager
-    //      */
-    //     $manager = $currentDeleteRecord->modelsManager;
-    //
-    //     /**
-    //      * We check if some of the hasOne/hasMany relations is a foreign key
-    //      */
-    //     $relations = $manager->getHasOneAndHasMany($currentDeleteRecord);
-    //
-    //     $error = false;
-    //
-    //     foreach ($relations as $relation) {
-    //         /**
-    //          * Check if the relation has a virtual foreign key
-    //          */
-    //         $foreignKey = $relation->getForeignKey();
-    //
-    //         if ($foreignKey === false) {
-    //             continue;
-    //         }
-    //
-    //         /**
-    //          * By default action is restrict
-    //          */
-    //         $action = Relation::ACTION_RESTRICT;
-    //
-    //         /**
-    //          * Try to find a different action in the foreign key's options
-    //          */
-    //         if (is_array($foreignKey) && isset($foreignKey['action'])) {
-    //             $action = (int)$foreignKey['action'];
-    //         }
-    //
-    //         /**
-    //          * Check only if the operation is restrict
-    //          */
-    //         if ($action !== Relation::ACTION_RESTRICT) {
-    //             continue;
-    //         }
-    //
-    //         $relationClass = $relation->getReferencedModel();
-    //
-    //         /**
-    //          * Load a plain instance from the models manager
-    //          */
-    //         $referencedModel = $manager->load($relationClass);
-    //
-    //         $fields           = $relation->getFields();
-    //         $referencedFields = $relation->getReferencedFields();
-    //
-    //         /**
-    //          * Create the checking conditions. A relation can has many fields or
-    //          * a single one
-    //          */
-    //         $conditions = [];
-    //         $bindParams = [];
-    //
-    //         if (is_array($fields)) {
-    //             foreach ($fields as $position => $field) {
-    //                 $value        = $currentDeleteRecord->readAttribute($field);
-    //                 $conditions[] = "[" . $referencedFields[$position] . "] = ?" . $position;
-    //                 $bindParams[] = $value;
-    //             }
-    //         } else {
-    //             $value        = $currentDeleteRecord->readAttribute($fields);
-    //             $conditions[] = "[" . $referencedFields . "] = ?0";
-    //             $bindParams[] = $value;
-    //         }
-    //
-    //         /**
-    //          * We don't trust the actual values in the object and then we're
-    //          * passing the values using bound parameters
-    //          * Let's make the checking
-    //          */
-    //         if ($referencedModel->count([join(" AND ", $conditions), "bind" => $bindParams])) {
-    //             /**
-    //              * Create a message
-    //              */
-    //             $this->appendMessage(
-    //                 new Message(
-    //                     $theFirstDeleteRecord->t(
-    //                         'mo_BeforeDeleteFirst',
-    //                         [
-    //                             'represent' => $relationClass->getRepresent(true),
-    //                         ]
-    //                     ),
-    //                     $fields,
-    //                     "ConstraintViolationBeforeDelete"
-    //                 )
-    //             );
-    //
-    //             $error = true;
-    //
-    //             break;
-    //         }
-    //     }
-    //
-    //     return ! $error;
-    // }
-    //
-
-        $result = true;
-        $relations
-                = $currentDeleteRecord->_modelsManager->getRelations(get_class($currentDeleteRecord));
-        foreach ($relations as $relation) {
-            $foreignKey = $relation->getOption('foreignKey');
-            if ( ! array_key_exists('action', $foreignKey)) {
-                continue;
-            }
-            // Check if there are some record which restrict delete current record
-            $relatedModel             = $relation->getReferencedModel();
-            $mappedFields             = $relation->getFields();
-            $mappedFields             = is_array($mappedFields)
-                ? $mappedFields : [$mappedFields];
-            $referencedFields         = $relation->getReferencedFields();
-            $referencedFields         = is_array($referencedFields)
-                ? $referencedFields : [$referencedFields];
-            $parameters['conditions'] = '';
-            $parameters['bind']       = [];
-            foreach ($referencedFields as $index => $referencedField) {
-                $parameters['conditions']             .= $index > 0
-                    ? ' OR ' : '';
-                $parameters['conditions']             .= $referencedField
-                    . '= :field'
-                    . $index . ':';
-                $bindField
-                                                      = $mappedFields[$index];
-                $parameters['bind']['field' . $index] = $currentDeleteRecord->$bindField;
-            }
-            $relatedRecords = $relatedModel::find($parameters);
-            switch ($foreignKey['action']) {
-                case Relation::ACTION_RESTRICT: // Restrict deletion and add message about unsatisfied undeleted links
-                    foreach ($relatedRecords as $relatedRecord) {
-                        if (serialize($relatedRecord) === serialize($theFirstDeleteRecord)
-                            || serialize($relatedRecord) === serialize($currentDeleteRecord)
-                        ) {
-                            continue; // It is checked object
-                        }
-                        $message = new Message(
-                            $theFirstDeleteRecord->t(
-                                'mo_BeforeDeleteFirst',
-                                [
-                                    'represent' => $relatedRecord->getRepresent(true),
-                                ]
-                            )
-                        );
-                        $theFirstDeleteRecord->appendMessage($message);
-                        $result = false;
-                    }
-                    break;
-                case Relation::ACTION_CASCADE: // Удалим все зависимые записи
-                    foreach ($relatedRecords as $relatedRecord) {
-                        if (serialize($relatedRecord) === serialize($theFirstDeleteRecord)
-                        || serialize($relatedRecord) === serialize($currentDeleteRecord)
-                        ) {
-                            continue; // It is checked object
-                        }
-                        $result = $result && $relatedRecord->checkRelationsSatisfaction($theFirstDeleteRecord, $relatedRecord);
-                        if ($result) {
-                            $result = $relatedRecord->delete();
-                        }
-                        if ($result===false){
-                            $messages = $relatedRecord->getMessages();
-                            foreach ($messages as $message){
-                                $theFirstDeleteRecord->appendMessage($message);
-                            }
-                        }
-                    }
-                    break;
-                case Relation::NO_ACTION: // Clear all refs
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        return $result;
-    }
-
-    /**
-     * После сохранения данных любой модели
-     */
-    public function afterSave(): void
-    {
-        $this->processSettingsChanges('afterSave');
-        $this->clearCache(static::class);
-    }
-
-    /**
-     * Готовит массив действий для перезапуска модулей ядра системы
-     * и Asterisk
-     *
-     * @param $action string  быть afterSave или afterDelete
-     */
-    private function processSettingsChanges(string $action): void
-    {
-        if (php_sapi_name() !== 'cli') {
-            if ( ! $this->hasSnapshotData()) {
-                return;
-            } // nothing changed
-
-            $changedFields = $this->getUpdatedFields();
-            if (empty($changedFields) && $action === 'afterSave') {
-                return;
-            }
-
-            // Add changed fields set to benstalk queue
-            $queue = $this->di->getShared('beanstalkConnection');
-
-            if ($this instanceof PbxSettings) {
-                $idProperty = 'key';
-            } else {
-                $idProperty = 'id';
-            }
-            $id      = $this->$idProperty;
-            $jobData = json_encode(
-                [
-                    'model'         => get_class($this),
-                    'recordId'      => $id,
-                    'action'        => $action,
-                    'changedFields' => $changedFields,
-                ]
-            );
-            $queue->publish($jobData);
-        }
-    }
-
-    /**
-     * Очистка кешей при сохранении данных в базу
-     *
-     * @param $calledClass string модель, с чей кеш будем чистить в полном формате
-     */
-    public function clearCache(string $calledClass): void
-    {
-        if ($this->di->has('managedCache')) {
-            $managedCache = $this->di->getShared('managedCache');
-            $category     = explode('\\', $calledClass)[3];
-            $keys         = $managedCache->getAdapter()->getKeys($category);
-            if (count($keys) > 0) {
-                $managedCache->deleteMultiple($keys);
-            }
-        }
-        if ($this->di->has('modelsCache')) {
-            $modelsCache = $this->di->getShared('modelsCache');
-            $category    = explode('\\', $calledClass)[3];
-            $keys        = $modelsCache->getAdapter()->getKeys($category);
-            if (count($keys) > 0) {
-                $modelsCache->deleteMultiple($keys);
-            }
-        }
-    }
-
-    /**
-     * После удаления данных любой модели
-     */
-    public function afterDelete(): void
-    {
-        $this->processSettingsChanges('afterDelete');
-        $this->clearCache(static::class);
-    }
-
-    /**
-     * Возвращает предстваление элемента базы данных
-     *  для сообщения об ошибках с ссылкой на элемент или для выбора в списках
-     *  строкой
-     *
-     * @param bool $needLink - предстваление с ссылкой
+     * @param bool $needLink add link to element
      *
      * @return string
      */
@@ -732,7 +456,7 @@ abstract class ModelsBase extends Model
             case ExternalPhones::class:
                 if ($this->Extensions->is_general_user_number === "1") {
                     $parameters    = [
-                        'conditions' => 'is_general_user_number="1" AND type="'.Extensions::TYPE_EXTERNAL.'" AND userid=:userid:',
+                        'conditions' => 'is_general_user_number="1" AND type="' . Extensions::TYPE_EXTERNAL . '" AND userid=:userid:',
                         'bind'       => [
                             'userid' => $this->Extensions->userid,
                         ],
@@ -816,6 +540,306 @@ abstract class ModelsBase extends Model
         }
 
         return $link;
+    }
+
+    /**
+     * Fill default values from annotations
+     */
+    public function beforeValidationOnCreate(): void
+    {
+        $metaData      = $this->di->get('modelsMetadata');
+        $defaultValues = $metaData->getDefaultValues($this);
+        foreach ($defaultValues as $field => $value) {
+            if ( ! isset($this->{$field})) {
+                $this->{$field} = $value;
+            }
+        }
+    }
+
+    /**
+     * Функция позволяет вывести список зависимостей с сылками,
+     * которые мешают удалению текущей сущности
+     *
+     * @return bool
+     */
+    public function beforeDelete(): bool
+    {
+        return $this->checkRelationsSatisfaction($this, $this);
+    }
+
+    /**
+     *  Check whether this object has unsatisfied relations or not
+     *
+     * @param $theFirstDeleteRecord
+     * @param $currentDeleteRecord
+     *
+     * @return bool
+     */
+    private function checkRelationsSatisfaction($theFirstDeleteRecord, $currentDeleteRecord): bool
+    {
+        //     /**
+        //      * Get the models manager
+        //      */
+        //     $manager = $currentDeleteRecord->modelsManager;
+        //
+        //     /**
+        //      * We check if some of the hasOne/hasMany relations is a foreign key
+        //      */
+        //     $relations = $manager->getHasOneAndHasMany($currentDeleteRecord);
+        //
+        //     $error = false;
+        //
+        //     foreach ($relations as $relation) {
+        //         /**
+        //          * Check if the relation has a virtual foreign key
+        //          */
+        //         $foreignKey = $relation->getForeignKey();
+        //
+        //         if ($foreignKey === false) {
+        //             continue;
+        //         }
+        //
+        //         /**
+        //          * By default action is restrict
+        //          */
+        //         $action = Relation::ACTION_RESTRICT;
+        //
+        //         /**
+        //          * Try to find a different action in the foreign key's options
+        //          */
+        //         if (is_array($foreignKey) && isset($foreignKey['action'])) {
+        //             $action = (int)$foreignKey['action'];
+        //         }
+        //
+        //         /**
+        //          * Check only if the operation is restrict
+        //          */
+        //         if ($action !== Relation::ACTION_RESTRICT) {
+        //             continue;
+        //         }
+        //
+        //         $relationClass = $relation->getReferencedModel();
+        //
+        //         /**
+        //          * Load a plain instance from the models manager
+        //          */
+        //         $referencedModel = $manager->load($relationClass);
+        //
+        //         $fields           = $relation->getFields();
+        //         $referencedFields = $relation->getReferencedFields();
+        //
+        //         /**
+        //          * Create the checking conditions. A relation can has many fields or
+        //          * a single one
+        //          */
+        //         $conditions = [];
+        //         $bindParams = [];
+        //
+        //         if (is_array($fields)) {
+        //             foreach ($fields as $position => $field) {
+        //                 $value        = $currentDeleteRecord->readAttribute($field);
+        //                 $conditions[] = "[" . $referencedFields[$position] . "] = ?" . $position;
+        //                 $bindParams[] = $value;
+        //             }
+        //         } else {
+        //             $value        = $currentDeleteRecord->readAttribute($fields);
+        //             $conditions[] = "[" . $referencedFields . "] = ?0";
+        //             $bindParams[] = $value;
+        //         }
+        //
+        //         /**
+        //          * We don't trust the actual values in the object and then we're
+        //          * passing the values using bound parameters
+        //          * Let's make the checking
+        //          */
+        //         if ($referencedModel->count([join(" AND ", $conditions), "bind" => $bindParams])) {
+        //             /**
+        //              * Create a message
+        //              */
+        //             $this->appendMessage(
+        //                 new Message(
+        //                     $theFirstDeleteRecord->t(
+        //                         'mo_BeforeDeleteFirst',
+        //                         [
+        //                             'represent' => $relationClass->getRepresent(true),
+        //                         ]
+        //                     ),
+        //                     $fields,
+        //                     "ConstraintViolationBeforeDelete"
+        //                 )
+        //             );
+        //
+        //             $error = true;
+        //
+        //             break;
+        //         }
+        //     }
+        //
+        //     return ! $error;
+        // }
+        //
+
+        $result = true;
+        $relations
+                = $currentDeleteRecord->_modelsManager->getRelations(get_class($currentDeleteRecord));
+        foreach ($relations as $relation) {
+            $foreignKey = $relation->getOption('foreignKey');
+            if ( ! array_key_exists('action', $foreignKey)) {
+                continue;
+            }
+            // Check if there are some record which restrict delete current record
+            $relatedModel             = $relation->getReferencedModel();
+            $mappedFields             = $relation->getFields();
+            $mappedFields             = is_array($mappedFields)
+                ? $mappedFields : [$mappedFields];
+            $referencedFields         = $relation->getReferencedFields();
+            $referencedFields         = is_array($referencedFields)
+                ? $referencedFields : [$referencedFields];
+            $parameters['conditions'] = '';
+            $parameters['bind']       = [];
+            foreach ($referencedFields as $index => $referencedField) {
+                $parameters['conditions']             .= $index > 0
+                    ? ' OR ' : '';
+                $parameters['conditions']             .= $referencedField
+                    . '= :field'
+                    . $index . ':';
+                $bindField
+                                                      = $mappedFields[$index];
+                $parameters['bind']['field' . $index] = $currentDeleteRecord->$bindField;
+            }
+            $relatedRecords = $relatedModel::find($parameters);
+            switch ($foreignKey['action']) {
+                case Relation::ACTION_RESTRICT: // Restrict deletion and add message about unsatisfied undeleted links
+                    foreach ($relatedRecords as $relatedRecord) {
+                        if (serialize($relatedRecord) === serialize($theFirstDeleteRecord)
+                            || serialize($relatedRecord) === serialize($currentDeleteRecord)
+                        ) {
+                            continue; // It is checked object
+                        }
+                        $message = new Message(
+                            $theFirstDeleteRecord->t(
+                                'mo_BeforeDeleteFirst',
+                                [
+                                    'represent' => $relatedRecord->getRepresent(true),
+                                ]
+                            )
+                        );
+                        $theFirstDeleteRecord->appendMessage($message);
+                        $result = false;
+                    }
+                    break;
+                case Relation::ACTION_CASCADE: // Удалим все зависимые записи
+                    foreach ($relatedRecords as $relatedRecord) {
+                        if (serialize($relatedRecord) === serialize($theFirstDeleteRecord)
+                            || serialize($relatedRecord) === serialize($currentDeleteRecord)
+                        ) {
+                            continue; // It is checked object
+                        }
+                        $result = $result && $relatedRecord->checkRelationsSatisfaction(
+                                $theFirstDeleteRecord,
+                                $relatedRecord
+                            );
+                        if ($result) {
+                            $result = $relatedRecord->delete();
+                        }
+                        if ($result === false) {
+                            $messages = $relatedRecord->getMessages();
+                            foreach ($messages as $message) {
+                                $theFirstDeleteRecord->appendMessage($message);
+                            }
+                        }
+                    }
+                    break;
+                case Relation::NO_ACTION: // Clear all refs
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * После сохранения данных любой модели
+     */
+    public function afterSave(): void
+    {
+        $this->processSettingsChanges('afterSave');
+        $this->clearCache(static::class);
+    }
+
+    /**
+     * Готовит массив действий для перезапуска модулей ядра системы
+     * и Asterisk
+     *
+     * @param $action string  быть afterSave или afterDelete
+     */
+    private function processSettingsChanges(string $action): void
+    {
+        if (php_sapi_name() !== 'cli') {
+            if ( ! $this->hasSnapshotData()) {
+                return;
+            } // nothing changed
+
+            $changedFields = $this->getUpdatedFields();
+            if (empty($changedFields) && $action === 'afterSave') {
+                return;
+            }
+
+            // Add changed fields set to benstalk queue
+            $queue = $this->di->getShared('beanstalkConnection');
+
+            if ($this instanceof PbxSettings) {
+                $idProperty = 'key';
+            } else {
+                $idProperty = 'id';
+            }
+            $id      = $this->$idProperty;
+            $jobData = json_encode(
+                [
+                    'model'         => get_class($this),
+                    'recordId'      => $id,
+                    'action'        => $action,
+                    'changedFields' => $changedFields,
+                ]
+            );
+            $queue->publish($jobData);
+        }
+    }
+
+    /**
+     * Очистка кешей при сохранении данных в базу
+     *
+     * @param $calledClass string модель, с чей кеш будем чистить в полном формате
+     */
+    public function clearCache(string $calledClass): void
+    {
+        if ($this->di->has('managedCache')) {
+            $managedCache = $this->di->getShared('managedCache');
+            $category     = explode('\\', $calledClass)[3];
+            $keys         = $managedCache->getAdapter()->getKeys($category);
+            if (count($keys) > 0) {
+                $managedCache->deleteMultiple($keys);
+            }
+        }
+        if ($this->di->has('modelsCache')) {
+            $modelsCache = $this->di->getShared('modelsCache');
+            $category    = explode('\\', $calledClass)[3];
+            $keys        = $modelsCache->getAdapter()->getKeys($category);
+            if (count($keys) > 0) {
+                $modelsCache->deleteMultiple($keys);
+            }
+        }
+    }
+
+    /**
+     * После удаления данных любой модели
+     */
+    public function afterDelete(): void
+    {
+        $this->processSettingsChanges('afterDelete');
+        $this->clearCache(static::class);
     }
 
     /**
