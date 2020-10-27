@@ -69,8 +69,8 @@ class DialplanApplicationsController extends BaseController
             $extension->number            = $data['extension'];
             $extension->callerid          = $this->sanitizeCallerId($data['name']);
             $extension->userid            = null;
-            $extension->show_in_phonebook = 0;
-            $extension->public_access     = 0;
+            $extension->show_in_phonebook = '1';
+            $extension->public_access     = '0';
         } else {
             $extension = $appRecord->Extensions;
         }
@@ -113,6 +113,7 @@ class DialplanApplicationsController extends BaseController
     {
         $extension->number   = $data['extension'];
         $extension->callerid = $this->sanitizeCallerId($data['name']);
+        $extension->show_in_phonebook = '1';
         if ($extension->save() === false) {
             $errors = $extension->getMessages();
             $this->flash->error(implode('<br>', $errors));
