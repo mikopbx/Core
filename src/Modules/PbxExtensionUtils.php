@@ -9,6 +9,7 @@
 namespace MikoPBX\Modules;
 
 
+use MikoPBX\Common\Models\ModelsBase;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di;
@@ -115,6 +116,39 @@ class PbxExtensionUtils
 
         $pathChmod = Util::which('chmod');
         Util::mwExec("{$pathChmod} +x {$agiBinDir}/*");
+    }
+
+    /**
+     * Disables incompatible modules
+     */
+    public static function disableOldModules(): void
+    {
+        $parameters = [
+            'conditions' => 'disabled=0',
+        ];
+        $modules    = PbxExtensionModules::find($parameters)->toArray();
+        foreach ($modules as $module) {
+            $needDisable = false;
+            $moduleDir   = PbxExtensionUtils::getModuleDir($module['uniqid']);
+            $moduleJson  = "{$moduleDir}/module.json";
+            if ( ! file_exists($moduleJson)) {
+                $needDisable = true;
+            }
+            $jsonString            = file_get_contents($moduleJson);
+            $jsonModuleDescription = json_decode($jsonString, true);
+            $minPBXVersion         = $jsonModuleDescription['min_pbx_version'] ?? '1.0.0';
+            if (version_compare($minPBXVersion, ModelsBase::MIN_MODULE_MODEL_VER, '<')) {
+                $needDisable = true;
+            }
+            if ($needDisable) {
+                $moduleStateProcessor = new PbxExtensionState($module['uniqid']);
+                if ($moduleStateProcessor->disableModule() === false) {
+                    $currentModule = PbxExtensionModules::findFirstByUniqid($module['uniqid']);
+                    $currentModule->disabled = '1';
+                    $currentModule->update();
+                }
+            }
+        }
     }
 
 }

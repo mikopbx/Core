@@ -13,6 +13,7 @@ use MikoPBX\Core\System\Configs\IptablesConf;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Storage;
 use MikoPBX\Core\System\Util;
+use MikoPBX\Modules\PbxExtensionUtils;
 use Phalcon\Config as ConfigAlias;
 use Phalcon\Di;
 
@@ -91,6 +92,7 @@ class UpdateSystemConfig extends Di\Injectable
      */
     private function updateConfigEveryNewRelease(): void
     {
+        PbxExtensionUtils::disableOldModules();
         Storage::clearSessionsFiles();
         IptablesConf::updateFirewallRules();
     }
@@ -107,4 +109,7 @@ class UpdateSystemConfig extends Di\Injectable
     {
         return version_compare($a, $b);
     }
+
+
+
 }

@@ -11,13 +11,10 @@ namespace MikoPBX\Core\System\Upgrade\Releases;
 
 use MikoPBX\Common\Models\Codecs;
 use MikoPBX\Common\Models\Extensions;
-use MikoPBX\Common\Models\ModelsBase;
-use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Upgrade\UpgradeSystemConfigInterface;
 use MikoPBX\Core\System\Util;
-use MikoPBX\Modules\PbxExtensionUtils;
 use Phalcon\Config as ConfigAlias;
 use Phalcon\Di\Injectable;
 
@@ -52,9 +49,9 @@ class UpdateConfigsUpToVer20202730 extends Injectable implements UpgradeSystemCo
         $this->cleanAstDB();
         $this->copyMohFilesToStorage();
         $this->removeOldCacheFolders();
+        $this->removeOldSessionsFiles();
         $this->updateExtensionsTable();
         $this->moveReadOnlySoundsToStorage();
-        $this->disableOldModules();
     }
 
     /**
@@ -234,7 +231,7 @@ class UpdateConfigsUpToVer20202730 extends Injectable implements UpgradeSystemCo
     }
 
     /**
-     * Remove old cache folders
+     * Removes old cache folders
      */
     private function removeOldCacheFolders(): void
     {
@@ -251,6 +248,29 @@ class UpdateConfigsUpToVer20202730 extends Injectable implements UpgradeSystemCo
             }
         }
     }
+    /**
+     * Removes old sessions files
+     */
+    private function removeOldSessionsFiles(): void
+    {
+        $mediaMountPoint = $this->config->path('core.mediaMountPoint');
+        $oldCacheDirs    = [
+            "$mediaMountPoint/mikopbx/log/nats/license.key",
+            "$mediaMountPoint/mikopbx/log/nats/*.cache",
+            "$mediaMountPoint/mikopbx/log/pdnsd/cache",
+            "$mediaMountPoint/mikopbx/log/Module*",
+            "$mediaMountPoint/mikopbx/php_session",
+            "$mediaMountPoint/mikopbx/tmp/*",
+            "$mediaMountPoint/mikopbx/log/ProvisioningServerPnP",
+        ];
+        foreach ($oldCacheDirs as $old_cache_dir) {
+            if (is_dir($old_cache_dir)) {
+                $rmPath = Util::which('rm');
+                Util::mwExec("{$rmPath} -rf $old_cache_dir");
+            }
+        }
+    }
+
 
     /**
      * Updates show_in_phonebook attribute on Extensions table
@@ -297,32 +317,5 @@ class UpdateConfigsUpToVer20202730 extends Injectable implements UpgradeSystemCo
         }
     }
 
-    /**
-     * Disables incompatible modules
-     */
-    private function disableOldModules(): void
-    {
-        $parameters = [
-            'conditions' => 'disabled=0',
-        ];
-        $modules    = PbxExtensionModules::find($parameters);
-        foreach ($modules as $module) {
-            $needDisable = false;
-            $moduleDir   = PbxExtensionUtils::getModuleDir($module->uniqid);
-            $moduleJson  = "{$moduleDir}/module.json";
-            if ( ! file_exists($moduleJson)) {
-                $needDisable = true;
-            }
-            $jsonString            = file_get_contents($moduleJson);
-            $jsonModuleDescription = json_decode($jsonString, true);
-            $minPBXVersion         = $jsonModuleDescription['min_pbx_version'] ?? '1.0.0';
-            if (version_compare($minPBXVersion, ModelsBase::MIN_MODULE_MODEL_VER, '<')) {
-                $needDisable = true;
-            }
-            if ($needDisable) {
-                $module->disabled = '1';
-                $module->update();
-            }
-        }
-    }
+
 }
