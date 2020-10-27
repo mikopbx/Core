@@ -1072,6 +1072,7 @@ class Storage extends Di\Injectable
             Util::createUpdateSymlink($file, $newFilename);
         }
         $this->clearCacheFiles();
+        $this->applyFolderRights();
         Util::mwExec("{$mountPath} -o remount,ro /offload 2> /dev/null");
     }
 
@@ -1113,7 +1114,7 @@ class Storage extends Di\Injectable
         }
 
         // Delete boot cache folders
-        if (is_dir('/mountpoint')) {
+        if (is_dir('/mountpoint') && self::isStorageDiskMounted()) {
             Util::mwExec("{$rmPath} -rf /mountpoint");
         }
     }
