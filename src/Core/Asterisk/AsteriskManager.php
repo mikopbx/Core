@@ -343,7 +343,7 @@ class AsteriskManager
             return $response;
         }
         try {
-            $resultFgets = @fgets($this->socket, 4096);
+            $resultFgets = fgets($this->socket, 4096);
             if($resultFgets !== false){
                 $buffer = trim($resultFgets);
                 $response['data']  = $buffer;
@@ -378,7 +378,7 @@ class AsteriskManager
         }
         $result = true;
         try {
-            $resultWrite = @fwrite($this->socket, $req);
+            $resultWrite = fwrite($this->socket, $req);
             if($resultWrite === false){
                 $result = false;
             }
