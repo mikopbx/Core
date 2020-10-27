@@ -39,13 +39,14 @@ class PbxExtensionState extends Injectable
     {
         $this->messages       = [];
         $this->moduleUniqueID = $moduleUniqueID;
-        $this->modulesRoot    = $this->di->getShared('config')->path('core.modulesDir');
+        $this->modulesRoot    = $this->getDI()->getShared('config')->path('core.modulesDir');
         $moduleJson           = "{$this->modulesRoot}/{$this->moduleUniqueID}/module.json";
         if ( ! file_exists($moduleJson)) {
             $this->messages[] = 'module.json not found for module ' . $this->moduleUniqueID;
 
             return;
         }
+
         $jsonString            = file_get_contents($moduleJson);
         $jsonModuleDescription = json_decode($jsonString, true);
         if ( ! is_array($jsonModuleDescription)) {
@@ -53,6 +54,7 @@ class PbxExtensionState extends Injectable
 
             return;
         }
+
         if (array_key_exists('lic_feature_id', $jsonModuleDescription)) {
             $this->lic_feature_id = $jsonModuleDescription['lic_feature_id'];
         } else {
