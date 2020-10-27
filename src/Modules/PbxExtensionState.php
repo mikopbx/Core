@@ -83,6 +83,7 @@ class PbxExtensionState extends Injectable
             $result = $this->license->featureAvailable($this->lic_feature_id);
             if ($result['success'] === false) {
                 $this->messages[] = $this->license->translateLicenseErrorMessage($result['error']);
+
                 return false;
             }
         }
@@ -121,27 +122,22 @@ class PbxExtensionState extends Injectable
         // например удалили сотрудника, а модуль указывает на его extension
         //
         $modelsFiles = glob("{$this->modulesRoot}/{$this->moduleUniqueID}/Models/*.php", GLOB_NOSORT);
+        $translator = $this->di->getShared('translation');
         foreach ($modelsFiles as $file) {
             $className        = pathinfo($file)['filename'];
             $moduleModelClass = "\\Modules\\{$this->moduleUniqueID}\\Models\\{$className}";
 
-            if (
-                ! class_exists($moduleModelClass)
-                || count(get_class_vars($moduleModelClass)) === 0) {
-                continue;
-            }
-
-            // Test whether this class abstract or not
             try {
+                if (!class_exists($moduleModelClass)){
+                    continue;
+                }
                 $reflection = new ReflectionClass($moduleModelClass);
                 if ($reflection->isAbstract()) {
                     continue;
                 }
-            } catch (ReflectionException $exception) {
-                continue;
-            }
-            $translator = $this->di->getShared('translation');
-            if (class_exists($moduleModelClass)) {
+                if (count($reflection->getProperties()) === 0) {
+                    continue;
+                }
                 $records = $moduleModelClass::find();
                 foreach ($records as $record) {
                     $relations = $record->_modelsManager->getRelations(get_class($record));
@@ -166,7 +162,16 @@ class PbxExtensionState extends Injectable
                         }
                     }
                 }
+            } catch (ReflectionException $exception) {
+                $error = true;
+            } catch (PDOException $exception) {
+                $this->messages[] = $exception->getMessage();
+                $error = true;
+            } catch (\Error $exception){
+                $this->messages[] = $exception->getMessage();
+                $error = true;
             }
+
         }
         if ( ! $error) {
             $this->messages = [];
@@ -181,8 +186,7 @@ class PbxExtensionState extends Injectable
                 return false;
             }
             if ($this->configClass !== null
-                && method_exists($this->configClass, 'onBeforeModuleEnable'))
-            {
+                && method_exists($this->configClass, 'onBeforeModuleEnable')) {
                 $this->configClass->onBeforeModuleEnable();
             }
             $module = PbxExtensionModules::findFirstByUniqid($this->moduleUniqueID);
@@ -196,7 +200,10 @@ class PbxExtensionState extends Injectable
                 $this->configClass->onAfterModuleEnable();
             }
 
-            $this->messages = array_merge($this->messages, $this->configClass->getMessages());
+            if ($this->configClass !== null
+                && method_exists($this->configClass, 'getMessages')) {
+                $this->messages = array_merge($this->messages, $this->configClass->getMessages());
+            }
 
             // Restart Nginx if module has locations
             $this->refreshNginxLocations();
@@ -337,36 +344,34 @@ class PbxExtensionState extends Injectable
         foreach ($modelsFiles as $file) {
             $className        = pathinfo($file)['filename'];
             $moduleModelClass = "\\Modules\\{$this->moduleUniqueID}\\Models\\{$className}";
-
-            if (
-                ! class_exists($moduleModelClass)
-                || count(get_class_vars($moduleModelClass)) === 0) {
-                continue;
-            }
-
-            // Test whether this class abstract or not
             try {
+                if (!class_exists($moduleModelClass)){
+                    continue;
+                }
                 $reflection = new ReflectionClass($moduleModelClass);
                 if ($reflection->isAbstract()) {
                     continue;
                 }
-            } catch (ReflectionException $exception) {
-                continue;
-            }
-            if (class_exists($moduleModelClass)) {
-                try {
-                    $records = $moduleModelClass::find();
-                    foreach ($records as $record) {
-                        if ( ! $record->beforeDelete()) {
-                            foreach ($record->getMessages() as $message){
-                                $this->messages[] = $message->getMessage();
-                            }
-                            $error      = true;
-                        }
-                    }
-                } catch (PDOException $e) {
-                    $this->messages[] = $e->getMessage();
+                if (count($reflection->getProperties()) === 0) {
+                    continue;
                 }
+                $records = $moduleModelClass::find();
+                foreach ($records as $record) {
+                    if ( ! $record->beforeDelete()) {
+                        foreach ($record->getMessages() as $message) {
+                            $this->messages[] = $message->getMessage();
+                        }
+                        $error = true;
+                    }
+                }
+            } catch (ReflectionException $exception) {
+                $error = true;
+            } catch (PDOException $exception) {
+                $this->messages[] = $exception->getMessage();
+                $error = true;
+            } catch (\Error $exception){
+                $this->messages[] = $exception->getMessage();
+                $error = true;
             }
         }
         if ( ! $error) {
@@ -396,7 +401,11 @@ class PbxExtensionState extends Injectable
                 && method_exists($this->configClass, 'onAfterModuleDisable')) {
                 $this->configClass->onAfterModuleDisable();
             }
-            $this->messages = array_merge($this->messages, $this->configClass->getMessages()) ;
+
+            if ($this->configClass !== null
+                && method_exists($this->configClass, 'getMessages')) {
+                $this->messages = array_merge($this->messages, $this->configClass->getMessages());
+            }
 
             // Reconfigure fail2ban and restart iptables
             $this->refreshFail2BanRules();
