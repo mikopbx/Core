@@ -60,7 +60,14 @@ class PbxExtensionState extends Injectable
         } else {
             $this->lic_feature_id = 0;
         }
+        $this->reloadConfigClass();
+    }
 
+    /**
+     * Recreates module's ClassNameConf class
+     */
+    private function reloadConfigClass(): void
+    {
         $class_name      = str_replace('Module', '', $this->moduleUniqueID);
         $configClassName = "\\Modules\\{$this->moduleUniqueID}\\Lib\\{$class_name}Conf";
         if (class_exists($configClassName)) {
@@ -76,8 +83,6 @@ class PbxExtensionState extends Injectable
      */
     public function enableModule(): bool
     {
-        $error = false;
-
         if ($this->lic_feature_id > 0) {
             // Try to capture feature if it set
             $result = $this->license->featureAvailable($this->lic_feature_id);
@@ -87,132 +92,46 @@ class PbxExtensionState extends Injectable
                 return false;
             }
         }
+        $success = $this->makeBeforeEnableTest();
+        if ( ! $success) {
+            return false;
+        }
 
-        // Temporary transaction, we will rollback it after checks
-        $this->db->begin(true);
+        $this->reloadConfigClass();
+        // Если ошибок нет, включаем Firewall и модуль
+        if ( ! $this->enableFirewallSettings()) {
+            $this->messages[] = 'Error on enable firewall settings';
 
-        // Временно включим модуль, чтобы включить все связи и зависимости
-        // Temporary disable module and disable all links
+            return false;
+        }
+        if ($this->configClass !== null
+            && method_exists($this->configClass, 'onBeforeModuleEnable')) {
+            $this->configClass->onBeforeModuleEnable();
+        }
         $module = PbxExtensionModules::findFirstByUniqid($this->moduleUniqueID);
         if ($module !== null) {
             $module->disabled = '0';
             $module->save();
         }
 
-        // Если в конфигурационном классе модуля есть функция корректного включения, вызовем ее,
-        // например модуль умной маршртутизации прописывает себя в маршруты
-        //
-        // If module config has special function before enable, we will execute it
+        if ($this->configClass !== null
+            && method_exists($this->configClass, 'onAfterModuleEnable')) {
+            $this->configClass->onAfterModuleEnable();
+        }
 
         if ($this->configClass !== null
-            && method_exists($this->configClass, 'onBeforeModuleEnable')
-            && $this->configClass->onBeforeModuleEnable() === false) {
-            $messages = $this->configClass->getMessages();
-            if ( ! empty($messages)) {
-                $this->messages = $messages;
-            } else {
-                $this->messages[] = 'Error on the enableModule function at onBeforeModuleEnable';
-            }
-            $this->db->rollback(true); // Откатываем временную транзакцию
-
-            return false;
+            && method_exists($this->configClass, 'getMessages')) {
+            $this->messages = array_merge($this->messages, $this->configClass->getMessages());
         }
 
-        // Проверим нет ли битых ссылок, которые мешают включить модуль
-        // например удалили сотрудника, а модуль указывает на его extension
-        //
-        $modelsFiles = glob("{$this->modulesRoot}/{$this->moduleUniqueID}/Models/*.php", GLOB_NOSORT);
-        $translator = $this->di->getShared('translation');
-        foreach ($modelsFiles as $file) {
-            $className        = pathinfo($file)['filename'];
-            $moduleModelClass = "\\Modules\\{$this->moduleUniqueID}\\Models\\{$className}";
+        // Restart Nginx if module has locations
+        $this->refreshNginxLocations();
 
-            try {
-                if (!class_exists($moduleModelClass)){
-                    continue;
-                }
-                $reflection = new ReflectionClass($moduleModelClass);
-                if ($reflection->isAbstract()) {
-                    continue;
-                }
-                if (count($reflection->getProperties()) === 0) {
-                    continue;
-                }
-                $records = $moduleModelClass::find();
-                foreach ($records as $record) {
-                    $relations = $record->_modelsManager->getRelations(get_class($record));
-                    foreach ($relations as $relation) {
-                        $alias        = $relation->getOption('alias');
-                        $checkedValue = $record->$alias;
-                        $foreignKey   = $relation->getOption('foreignKey');
-                        // В модуле указан заперт на NULL в описании модели,
-                        // а параметр этот не заполнен в настройках модуля
-                        // например в модуле маршрутизации, резервный номер
-                        if ($checkedValue === false
-                            && array_key_exists('allowNulls', $foreignKey)
-                            && $foreignKey['allowNulls'] === false
-                        ) {
-                            $this->messages[] = $translator->_(
-                                'mo_ModuleSettingsError',
-                                [
-                                    'modulename' => $record->getRepresent(true),
-                                ]
-                            );
-                            $error            = true;
-                        }
-                    }
-                }
-            } catch (ReflectionException $exception) {
-                $error = true;
-            } catch (PDOException $exception) {
-                $this->messages[] = $exception->getMessage();
-                $error = true;
-            } catch (\Error $exception){
-                $this->messages[] = $exception->getMessage();
-                $error = true;
-            }
+        // Reconfigure fail2ban and restart iptables
+        $this->refreshFail2BanRules();
 
-        }
-        if ( ! $error) {
-            $this->messages = [];
-        }
-        $this->db->rollback(true); // Откатываем временную транзакцию
 
-        if ( ! $error) {
-            // Если ошибок нет, включаем Firewall и модуль
-            if ( ! $this->enableFirewallSettings()) {
-                $this->messages[] = 'Error on enable firewall settings';
-
-                return false;
-            }
-            if ($this->configClass !== null
-                && method_exists($this->configClass, 'onBeforeModuleEnable')) {
-                $this->configClass->onBeforeModuleEnable();
-            }
-            $module = PbxExtensionModules::findFirstByUniqid($this->moduleUniqueID);
-            if ($module !== null) {
-                $module->disabled = '0';
-                $module->save();
-            }
-
-            if ($this->configClass !== null
-                && method_exists($this->configClass, 'onAfterModuleEnable')) {
-                $this->configClass->onAfterModuleEnable();
-            }
-
-            if ($this->configClass !== null
-                && method_exists($this->configClass, 'getMessages')) {
-                $this->messages = array_merge($this->messages, $this->configClass->getMessages());
-            }
-
-            // Restart Nginx if module has locations
-            $this->refreshNginxLocations();
-
-            // Reconfigure fail2ban and restart iptables
-            $this->refreshFail2BanRules();
-        }
-
-        return ! $error;
+        return true;
     }
 
     /**
@@ -316,11 +235,66 @@ class PbxExtensionState extends Injectable
      */
     public function disableModule(): bool
     {
-        $error = false;
+        $success = $this->makeBeforeDisableTest();
+        if ( ! $success) {
+            return false;
+        }
+        $this->reloadConfigClass();
+        // Если ошибок нет, выключаем Firewall и модуль
+        if ( ! $this->disableFirewallSettings()) {
+            $this->messages[] = 'Error on disable firewall settings';
 
+            return false;
+        }
+        if ($this->configClass !== null
+            && method_exists($this->configClass, 'onBeforeModuleDisable')) {
+            $this->configClass->onBeforeModuleDisable();
+        }
+        $module = PbxExtensionModules::findFirstByUniqid($this->moduleUniqueID);
+        if ($module !== null) {
+            $module->disabled = '1';
+            $module->save();
+        }
+
+        if ($this->configClass !== null
+            && method_exists($this->configClass, 'onAfterModuleDisable')) {
+            $this->configClass->onAfterModuleDisable();
+        }
+
+        if ($this->configClass !== null
+            && method_exists($this->configClass, 'getMessages')) {
+            $this->messages = array_merge($this->messages, $this->configClass->getMessages());
+        }
+
+        // Reconfigure fail2ban and restart iptables
+        $this->refreshFail2BanRules();
+
+        // Refresh Nginx conf if module has any locations
+        $this->refreshNginxLocations();
+
+        // Kill module workers
+        if ($this->configClass !== null
+            && method_exists($this->configClass, 'getModuleWorkers')) {
+            $workersToKill = $this->configClass->getModuleWorkers();
+            foreach ($workersToKill as $moduleWorker) {
+                Util::killByName($moduleWorker['worker']);
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Makes before disable test to check dependency
+     *
+     * @return bool
+     */
+    private function makeBeforeDisableTest(): bool
+    {
         // Проверим, нет ли настроенных зависимостей у других модулей
         // Попробуем удалить все настройки модуля
         $this->db->begin(true);
+        $success = true;
 
         if ($this->configClass !== null
             && method_exists($this->configClass, 'onBeforeModuleDisable')
@@ -336,7 +310,6 @@ class PbxExtensionState extends Injectable
             return false;
         }
 
-
         // Попытаемся удалить текущий модуль, если ошибок не будет, значит можно выклчать
         // Например на модуль может ссылаться запись в таблице Extensions, которую надо удалить при отключении
         // модуля
@@ -345,7 +318,7 @@ class PbxExtensionState extends Injectable
             $className        = pathinfo($file)['filename'];
             $moduleModelClass = "\\Modules\\{$this->moduleUniqueID}\\Models\\{$className}";
             try {
-                if (!class_exists($moduleModelClass)){
+                if ( ! class_exists($moduleModelClass)) {
                     continue;
                 }
                 $reflection = new ReflectionClass($moduleModelClass);
@@ -361,70 +334,28 @@ class PbxExtensionState extends Injectable
                         foreach ($record->getMessages() as $message) {
                             $this->messages[] = $message->getMessage();
                         }
-                        $error = true;
+                        $success = false;
                     }
                 }
             } catch (ReflectionException $exception) {
-                $error = true;
+                $success          = false;
+                $this->messages[] = $exception->getMessage();
             } catch (PDOException $exception) {
                 $this->messages[] = $exception->getMessage();
-                $error = true;
-            } catch (\Error $exception){
+                $success          = false;
+            } catch (\Error $exception) {
                 $this->messages[] = $exception->getMessage();
-                $error = true;
+                $success          = false;
             }
         }
-        if ( ! $error) {
+        if ($success) {
             $this->messages = [];
         }
-        $this->db->rollback(true); // Откатываем временную транзакцию
 
+        // Откатываем временную транзакцию
+        $this->db->rollback(true);
 
-        if ( ! $error) {
-            // Если ошибок нет, выключаем Firewall и модуль
-            if ( ! $this->disableFirewallSettings()) {
-                $this->messages[] = 'Error on disable firewall settings';
-
-                return false;
-            }
-            if ($this->configClass !== null
-                && method_exists($this->configClass, 'onBeforeModuleDisable')) {
-                $this->configClass->onBeforeModuleDisable();
-            }
-            $module = PbxExtensionModules::findFirstByUniqid($this->moduleUniqueID);
-            if ($module !== null) {
-                $module->disabled = '1';
-                $module->save();
-            }
-
-            if ($this->configClass !== null
-                && method_exists($this->configClass, 'onAfterModuleDisable')) {
-                $this->configClass->onAfterModuleDisable();
-            }
-
-            if ($this->configClass !== null
-                && method_exists($this->configClass, 'getMessages')) {
-                $this->messages = array_merge($this->messages, $this->configClass->getMessages());
-            }
-
-            // Reconfigure fail2ban and restart iptables
-            $this->refreshFail2BanRules();
-
-            // Refresh Nginx conf if module has any locations
-            $this->refreshNginxLocations();
-        }
-
-        // Kill module workers
-        if ( ! $error
-            && $this->configClass !== null
-            && method_exists($this->configClass, 'getModuleWorkers')) {
-            $workersToKill = $this->configClass->getModuleWorkers();
-            foreach ($workersToKill as $moduleWorker) {
-                Util::killByName($moduleWorker['worker']);
-            }
-        }
-
-        return ! $error;
+        return $success;
     }
 
     /**
@@ -486,6 +417,109 @@ class PbxExtensionState extends Injectable
     public function getMessages(): array
     {
         return $this->messages;
+    }
+
+    /**
+     * Makes before enable test to check dependency
+     *
+     * @return bool
+     */
+    private function makeBeforeEnableTest(): bool
+    {
+        $success = true;
+        // Temporary transaction, we will rollback it after checks
+        $this->db->begin(true);
+
+        // Временно включим модуль, чтобы включить все связи и зависимости
+        // Temporary disable module and disable all links
+        $module = PbxExtensionModules::findFirstByUniqid($this->moduleUniqueID);
+        if ($module !== null) {
+            $module->disabled = '0';
+            $module->save();
+        }
+
+        // Если в конфигурационном классе модуля есть функция корректного включения, вызовем ее,
+        // например модуль умной маршртутизации прописывает себя в маршруты
+        //
+        // If module config has special function before enable, we will execute it
+
+        if ($this->configClass !== null
+            && method_exists($this->configClass, 'onBeforeModuleEnable')
+            && $this->configClass->onBeforeModuleEnable() === false) {
+            $messages = $this->configClass->getMessages();
+            if ( ! empty($messages)) {
+                $this->messages = $messages;
+            } else {
+                $this->messages[] = 'Error on the enableModule function at onBeforeModuleEnable';
+            }
+            $this->db->rollback(true); // Откатываем временную транзакцию
+
+            return false;
+        }
+
+        // Проверим нет ли битых ссылок, которые мешают включить модуль
+        // например удалили сотрудника, а модуль указывает на его extension
+        //
+        $modelsFiles = glob("{$this->modulesRoot}/{$this->moduleUniqueID}/Models/*.php", GLOB_NOSORT);
+        $translator  = $this->di->getShared('translation');
+        foreach ($modelsFiles as $file) {
+            $className        = pathinfo($file)['filename'];
+            $moduleModelClass = "\\Modules\\{$this->moduleUniqueID}\\Models\\{$className}";
+
+            try {
+                if ( ! class_exists($moduleModelClass)) {
+                    continue;
+                }
+                $reflection = new ReflectionClass($moduleModelClass);
+                if ($reflection->isAbstract()) {
+                    continue;
+                }
+                if (count($reflection->getProperties()) === 0) {
+                    continue;
+                }
+                $records = $moduleModelClass::find();
+                foreach ($records as $record) {
+                    $relations = $record->_modelsManager->getRelations(get_class($record));
+                    foreach ($relations as $relation) {
+                        $alias        = $relation->getOption('alias');
+                        $checkedValue = $record->$alias;
+                        $foreignKey   = $relation->getOption('foreignKey');
+                        // В модуле указан заперт на NULL в описании модели,
+                        // а параметр этот не заполнен в настройках модуля
+                        // например в модуле маршрутизации, резервный номер
+                        if ($checkedValue === false
+                            && array_key_exists('allowNulls', $foreignKey)
+                            && $foreignKey['allowNulls'] === false
+                        ) {
+                            $this->messages[] = $translator->_(
+                                'mo_ModuleSettingsError',
+                                [
+                                    'modulename' => $record->getRepresent(true),
+                                ]
+                            );
+                            $success          = false;
+                        }
+                    }
+                }
+            } catch (ReflectionException $exception) {
+                $this->messages[] = $exception->getMessage();
+                $success          = false;
+            } catch (PDOException $exception) {
+                $this->messages[] = $exception->getMessage();
+                $success          = false;
+            } catch (\Error $exception) {
+                $this->messages[] = $exception->getMessage();
+                $success          = false;
+            }
+        }
+        if ($success) {
+            $this->messages = [];
+        }
+
+        // Откатываем временную транзакцию
+        $this->db->rollback(true);
+
+        return $success;
     }
 
 }
