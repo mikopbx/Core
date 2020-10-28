@@ -47,6 +47,24 @@ service)
     echo "PBX service ${2} not started.";
   fi
   ;;
+debug)
+  # завершаем работу сервиса
+  pbxConsole="$0";
+  scriptName="$2";
+  ipDebager="$3";
+
+  pathToFile=$(find /usr/www/src/ -name "${scriptName}.php")
+  if [ ! -f "$pathToFile" ];then
+    echo "File ${scriptName}.php not found.";
+    exit 2;
+  fi
+
+  "${pbxConsole}" cron stop;
+  "${pbxConsole}" service "${scriptName}" stop;
+  export XDEBUG_CONFIG="remote_enable=1 remote_mode=req remote_autostart=0 remote_port=9000 remote_host=${ipDebager} remote_connect_back=0";
+  cp /etc/php.d/15-xdebug.ini.disabled /etc/php.d/15-xdebug.ini;
+  php -f "$pathToFile" start;
+  ;;
 cron)
   action=$2;
   case "${action}" in
