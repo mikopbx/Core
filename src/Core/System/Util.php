@@ -393,11 +393,7 @@ class Util
         $di = Di::getDefault();
         $am = $di->getShared($nameService);
         if (is_resource($am->socket)) {
-            $res = $am->sendRequestTimeout('Ping');
-            if (isset($res['Response']) && trim($res['Response']) != '') {
-                // Уже есть подключенный экземпляр класса.
-                return $am;
-            }
+            return $am;
         }
 
         return $di->get($nameService);

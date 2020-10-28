@@ -9,6 +9,7 @@
 namespace MikoPBX\Core\Asterisk;
 
 use MikoPBX\Core\System\Util;
+use mysql_xdevapi\Result;
 
 /**
  * Asterisk Manager class
@@ -193,14 +194,18 @@ class AsteriskManager
      */
     public function sendRequestTimeout($action, $parameters = [])
     {
-        $req = "Action: $action\r\n";
+        if ( ! is_resource($this->socket) && !$this->connectDefault()) {
+            return [];
+        }
+        // Прописываем обязательные поля.
+        $parameters['Action']   = $action;
+        $parameters['ActionID'] = $parameters['ActionID'] ?? "{$action}_".getmypid();
+        $req = "";
         foreach ($parameters as $var => $val) {
             $req .= "$var: $val\r\n";
         }
         $req .= "\r\n";
-        if ( ! is_resource($this->socket) && !$this->connectDefault()) {
-            return [];
-        }
+
         $result = $this->sendDataToSocket($req);
         if(!$result) {
             usleep(500000);
@@ -213,7 +218,6 @@ class AsteriskManager
         if($result){
             $response = $this->waitResponse(true);
         }
-
         return $response;
     }
 
@@ -238,98 +242,131 @@ class AsteriskManager
         do {
             $type       = null;
             $parameters = [];
-            if ( !is_resource($this->socket) && !$this->connectDefault()) {
-                return $parameters;
-            }
+            $response   = [];
 
-            $response = $this->getDataFromSocket();
-            if(isset($response['error'])) {
-                usleep(500000);
-                if($this->connectDefault()){
-                    $response = $this->getDataFromSocket();
-                }
-            }
-            if(isset($response['error'])) {
+            if(!$this->waitResponseGetInitialData($response)) {
                 return $parameters;
             }
             $buffer = $response['data']??'';
-
             while ($buffer !== '') {
                 $a = strpos($buffer, ':');
                 if ($a) {
-                    $key        = '';
-                    $value      = '';
                     $event_text = substr($buffer, $a + 2);
-                    if ( ! count($parameters)) {
-                        $type = strtolower(substr($buffer, 0, $a));
-                        if ($event_text === 'Follows') {
-                            // A follows response means there is a miltiline field that follows.
-                            $parameters['data'] = '';
-                            $buff               = $this->getStringDataFromSocket();
-                            while (substr($buff, 0, 6) !== '--END ') {
-                                $parameters['data'] .= $buff;
-                                $buff               = $this->getStringDataFromSocket();
-                            }
-                        }
-                    } elseif ('Queue status will follow' === $event_text) {
-                        // QueueStatus
-                        $this->waitResponseGetSubData($parameters, 'QueueStatusComplete');
-                    } elseif ('Channels will follow' === $event_text) {
-                        // CoreShowChannels
-                        $this->waitResponseGetSubData($parameters, 'CoreShowChannelsComplete');
-                    } elseif ('Result will follow' === $event_text) {
-                        // DBGet
-                        $this->waitResponseGetSubData($parameters, 'DBGetComplete');
-                    } elseif ('Parked calls will follow' === $event_text) {
-                        // ParkedCalls
-                        $this->waitResponseGetSubData($parameters, 'ParkedCallsComplete');
-                    } elseif ('Peer status list will follow' === $event_text) {
-                        // SipShowPeers
-                        $this->waitResponseGetSubData($parameters, 'PeerlistComplete');
-                    } elseif ('IAX Peer status list will follow' === $event_text) {
-                        // IAXpeerlist
-                        $this->waitResponseGetSubData($parameters, 'PeerlistComplete');
-                    } elseif ('Registrations will follow' === $event_text) {
-                        // SipShowRegistry
-                        $this->waitResponseGetSubData($parameters, 'RegistrationsComplete');
-                    } elseif ('A listing of Endpoints follows, presented as EndpointList events' === $event_text) {
-                        // PJSIPShowEndpoints
-                        $this->waitResponseGetSubData($parameters, 'EndpointListComplete');
-                    } elseif ('Following are Events for each object associated with the Endpoint' === $event_text) {
-                        //  PJSIPShowEndpoint
-                        $this->waitResponseGetSubData($parameters, 'EndpointDetailComplete', false);
-                    } elseif ('Following are Events for each Outbound registration' === $event_text) {
-                        // PJSIPShowRegistrationsOutbound
-                        $this->waitResponseGetSubData($parameters, 'OutboundRegistrationDetailComplete');
-                    } elseif ('Meetme user list will follow' === $event_text) {
-                        // MeetmeList
-                        $this->waitResponseGetSubData($parameters, 'MeetmeListComplete');
-                    } elseif ('Meetme conferences will follow' === $event_text) {
-                        // MeetmeList
-                        $this->waitResponseGetSubData($parameters, 'MeetmeListRoomsComplete');
-                    }
-                    unset($key, $value);
-                    // store parameter in $parameters
+                    $this->waitResponseGetEventType($parameters, $buffer, $a, $type);
+                    $this->waitResponseReadFollowsPart($event_text,$parameters);
+                    $this->waitResponseReadCompletePart($event_text, $parameters);
                     $parameters[substr($buffer, 0, $a)] = $event_text;
                 }
                 $buffer = $this->getStringDataFromSocket();
             }
-
-            // Process response
-            switch ($type) {
-                case '':
-                    // Timeout occured
-                    $timeout = $allow_timeout;
-                    break;
-                case 'event':
-                    $this->processEvent($parameters);
-                    break;
-                case 'response':
-                    break;
-            }
+            $this->waitResponseProcessResponse($type, $timeout, $allow_timeout, $parameters);
         } while ($type !== 'response' && ! $timeout);
 
         return $parameters;
+    }
+
+    /**
+     * Получение первичных данных из соекта.
+     * @param $response
+     * @return bool
+     */
+    private function waitResponseGetInitialData(& $response):bool{
+        if ( !is_resource($this->socket) && !$this->connectDefault()) {
+            return false;
+        }
+        $result = true;
+        $response = $this->getDataFromSocket();
+        if(isset($response['error'])) {
+            usleep(500000);
+            if($this->connectDefault()){
+                $response = $this->getDataFromSocket();
+            }
+        }
+        if(isset($response['error'])) {
+            $result = false;
+        }
+        return $result;
+    }
+
+    /**
+     * Ответ получен, обработка ответа.
+     * @param $type
+     * @param $timeout
+     * @param $allow_timeout
+     * @param $parameters
+     */
+    private function waitResponseProcessResponse($type, & $timeout, $allow_timeout, $parameters):void{
+        switch ($type) {
+            case '':
+                // Timeout occured
+                $timeout = $allow_timeout;
+                break;
+            case 'event':
+                $this->processEvent($parameters);
+                break;
+            case 'response':
+                break;
+        }
+    }
+
+    /**
+     * Получаем тип ивента.
+     * @param $parameters
+     * @param $buffer
+     * @param $a
+     * @param $type
+     */
+    private function waitResponseGetEventType($parameters, $buffer, $a, & $type):void{
+        if ( ! count($parameters)) {
+            $type = strtolower(substr($buffer, 0, $a));
+        }
+    }
+
+    /**
+     * Получение мноопакетного ответа.
+     * @param $event_text
+     * @param $parameters
+     */
+    private function waitResponseReadFollowsPart($event_text, & $parameters):void{
+        if ( ($event_text === 'Follows') && !count($parameters)) {
+            // A follows response means there is a miltiline field that follows.
+            $parameters['data'] = '';
+            $buff               = $this->getStringDataFromSocket();
+            while (strpos($buff, '--END ') !== 0) {
+                $parameters['data'] .= $buff;
+                $buff               = $this->getStringDataFromSocket();
+            }
+        }
+    }
+
+    /**
+     * Индивидуальная обработка для ряда запросов.
+     * Многопакетные ответы.
+     * @param $event_text
+     * @param $parameters
+     */
+    private function waitResponseReadCompletePart($event_text, & $parameters):void{
+        $settings = [
+            'Queue status will follow'          => 'QueueStatusComplete',
+            'Channels will follow'              => 'CoreShowChannelsComplete',
+            'Result will follow'                => 'DBGetComplete',
+            'Parked calls will follow'          => 'ParkedCallsComplete',
+            'Peer status list will follow'      => 'PeerlistComplete',
+            'IAX Peer status list will follow'  => 'PeerlistComplete',
+            'Registrations will follow'         => 'RegistrationsComplete',
+            'Meetme user list will follow'      => 'MeetmeListComplete',
+            'Meetme conferences will follow'    => 'MeetmeListRoomsComplete',
+            'Following are Events for each object associated with the Endpoint' => 'EndpointDetailComplete',
+            'Following are Events for each Outbound registration'               => 'OutboundRegistrationDetailComplete',
+            'A listing of Endpoints follows, presented as EndpointList events'  => 'EndpointListComplete'
+        ];
+        $eventsAsNotArray = [ 'EndpointDetailComplete' ];
+
+        $endString = $settings[$event_text]??false;
+        if($endString !== false){
+            $NotArray = !in_array($endString,$eventsAsNotArray);
+            $this->waitResponseGetSubData($parameters, $endString, $NotArray);
+        }
     }
 
     /**
