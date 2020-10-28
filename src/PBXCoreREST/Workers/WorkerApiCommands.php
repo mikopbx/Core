@@ -8,7 +8,7 @@
 
 namespace MikoPBX\PBXCoreREST\Workers;
 
-use MikoPBX\Core\System\{BeanstalkClient, Configs\NginxConf, Configs\PHPConf, System, Util};
+use MikoPBX\Core\System\{BeanstalkClient, System, Util};
 use Error;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\PBXCoreREST\Lib\AdvicesProcessor;
@@ -110,7 +110,7 @@ class WorkerApiCommands extends WorkerBase
             $res->processor  = __METHOD__;
             $res->messages[] = 'Exception on WorkerApiCommands - ' . $exception->getMessage();
         }
-        $message->reply(json_encode($res->getResult()));
+        $message->reply(json_encode($res->getResult(), JSON_THROW_ON_ERROR));
         $this->checkNeedReload($res->data);
     }
 
