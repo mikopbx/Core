@@ -14,6 +14,7 @@ use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Workers\WorkerMakeLogFilesArchive;
 use Phalcon\Di;
 use Phalcon\Di\Injectable;
+use phpDocumentor\Reflection\Types\Self_;
 
 class SysLogsManagementProcessor extends Injectable
 {
@@ -264,7 +265,7 @@ class SysLogsManagementProcessor extends Injectable
         $res->processor = __METHOD__;
         $logDir         = System::getLogDir();
         $filesList      = [];
-        $entries        = FilesManagementProcessor::scanDirRecursively($logDir);
+        $entries        = self::scanDirRecursively($logDir);
         $entries        = Util::flattenArray($entries);
         foreach ($entries as $entry) {
             $fileSize = filesize($entry);
@@ -290,5 +291,36 @@ class SysLogsManagementProcessor extends Injectable
         $res->data['files'] = $filesList;
 
         return $res;
+    }
+
+    /**
+     *
+     * Scans a directory just like scandir(), only recursively
+     * returns a hierarchical array representing the directory structure
+     *
+     * @param string $dir directory to scan
+     *
+     * @return array
+     */
+    private static function scanDirRecursively(string $dir): array
+    {
+        $list = [];
+
+        //get directory contents
+        foreach (scandir($dir) as $d) {
+            //ignore any of the files in the array
+            if (in_array($d, ['.', '..'])) {
+                continue;
+            }
+            //if current file ($d) is a directory, call scanDirRecursively
+            if (is_dir($dir . '/' . $d)) {
+                $list[] = self::scanDirRecursively($dir . '/' . $d);
+                //otherwise, add the file to the list
+            } elseif (is_file($dir . '/' . $d) || is_link($dir . '/' . $d)) {
+                $list[] = $dir . '/' . $d;
+            }
+        }
+
+        return $list;
     }
 }

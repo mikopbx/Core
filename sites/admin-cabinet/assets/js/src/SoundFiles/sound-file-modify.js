@@ -25,7 +25,7 @@ const mergingCheckWorker = {
 		mergingCheckWorker.worker();
 	},
 	worker() {
-		PbxApi.SystemGetStatusUploadFile(mergingCheckWorker.fileID, mergingCheckWorker.cbAfterResponse);
+		PbxApi.FilesGetStatusUploadFile(mergingCheckWorker.fileID, mergingCheckWorker.cbAfterResponse);
 		mergingCheckWorker.timeoutHandle = window.setTimeout(
 			mergingCheckWorker.worker,
 			mergingCheckWorker.timeOut,
@@ -178,7 +178,7 @@ const soundFileModify = {
 			soundFileModify.blob = window.URL || window.webkitURL;
 			const fileURL = soundFileModify.blob.createObjectURL(file);
 			sndPlayer.UpdateSource(fileURL);
-			PbxApi.SystemUploadFile(file, soundFileModify.cbUploadResumable);
+			PbxApi.FilesUploadFile(file, soundFileModify.cbUploadResumable);
 
 		});
 
@@ -261,7 +261,7 @@ const soundFileModify = {
 	},
 	cbAfterSendForm() {
 		soundFileModify.trashBin.forEach((filepath) => {
-			if (filepath) PbxApi.SystemRemoveAudioFile(filepath);
+			if (filepath) PbxApi.FilesRemoveAudioFile(filepath);
 		});
 	},
 	initializeForm() {
@@ -373,7 +373,7 @@ const webkitRecorder = {
 		const fileURL = URL.createObjectURL(soundFileModify.blob);
 		sndPlayer.UpdateSource(fileURL);
 		const blobFile = new File([webkitRecorder.chunks[0]], 'blob'+ new Date().getTime()+'.wav');
-		PbxApi.SystemUploadFile(blobFile, soundFileModify.cbUploadResumable);
+		PbxApi.FilesUploadFile(blobFile, soundFileModify.cbUploadResumable);
 		webkitRecorder.$recordLabel.removeClass('red');
 		webkitRecorder.$stopButton.addClass('disabled');
 		webkitRecorder.$recordButton.removeClass('disabled');

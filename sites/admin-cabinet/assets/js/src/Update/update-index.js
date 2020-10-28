@@ -26,7 +26,7 @@ const mergingCheckWorker = {
 		mergingCheckWorker.worker();
 	},
 	worker() {
-		PbxApi.SystemGetStatusUploadFile(mergingCheckWorker.fileID, mergingCheckWorker.cbAfterResponse);
+		PbxApi.FilesGetStatusUploadFile(mergingCheckWorker.fileID, mergingCheckWorker.cbAfterResponse);
 		mergingCheckWorker.timeoutHandle = window.setTimeout(
 			mergingCheckWorker.worker,
 			mergingCheckWorker.timeOut,
@@ -71,7 +71,7 @@ const upgradeStatusLoopWorker = {
 	},
 	worker() {
 		window.clearTimeout(upgradeStatusLoopWorker.timeoutHandle);
-		PbxApi.SystemGetFirmwareDownloadStatus(upgradeStatusLoopWorker.cbRefreshUpgradeStatus);
+		PbxApi.FilesFirmwareDownloadStatus(upgradeStatusLoopWorker.cbRefreshUpgradeStatus);
 	},
 	cbRefreshUpgradeStatus(response) {
 		upgradeStatusLoopWorker.iterations += 1;
@@ -134,7 +134,7 @@ const updatePBX = {
 									updatePBX.$submitButton.addClass('loading');
 									updatePBX.upgradeInProgress = true;
 									const data = $('input:file')[0].files[0];
-									PbxApi.SystemUploadFile(data,updatePBX.cbResumableUploadFile);
+									PbxApi.FilesUploadFile(data,updatePBX.cbResumableUploadFile);
 									return true;
 								},
 							})
@@ -183,7 +183,7 @@ const updatePBX = {
 								params.size = $aLink.attr('data-size');
 								$aLink.find('i').addClass('loading');
 								updatePBX.upgradeInProgress = true;
-								PbxApi.SystemDownloadNewFirmware(params, updatePBX.cbAfterStartDownloadFirmware);
+								PbxApi.FilesDownloadNewFirmware(params, updatePBX.cbAfterStartDownloadFirmware);
 								return true;
 							},
 						})

@@ -86,7 +86,7 @@ const mergingCheckWorker = {
 		mergingCheckWorker.worker();
 	},
 	worker() {
-		PbxApi.SystemGetStatusUploadFile(mergingCheckWorker.fileID, mergingCheckWorker.cbAfterResponse);
+		PbxApi.FilesGetStatusUploadFile(mergingCheckWorker.fileID, mergingCheckWorker.cbAfterResponse);
 		mergingCheckWorker.timeoutHandle = window.setTimeout(
 			mergingCheckWorker.worker,
 			mergingCheckWorker.timeOut,

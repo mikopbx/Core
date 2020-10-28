@@ -17,7 +17,7 @@ const upgradeStatusLoopWorker = {
 	timeOutHandle: '',
 	moduleUniqid: '',
 	iterations: 0,
-	oldPercent: 0,
+	oldPercent: '0',
 	needEnableAfterInstall: false,
 	initialize(uniqid, needEnable) {
 		upgradeStatusLoopWorker.moduleUniqid = uniqid;
@@ -31,7 +31,7 @@ const upgradeStatusLoopWorker = {
 	},
 	worker() {
 		window.clearTimeout(upgradeStatusLoopWorker.timeoutHandle);
-		PbxApi.SystemModuleDownloadStatus(
+		PbxApi.FilesModuleDownloadStatus(
 			upgradeStatusLoopWorker.moduleUniqid,
 			upgradeStatusLoopWorker.cbRefreshModuleStatus,
 			upgradeStatusLoopWorker.restartWorker,

@@ -90,9 +90,6 @@ class PostController extends BaseController
             case 'convertAudioFile':
                 $this->convertAudioFile();
                 break;
-            case 'fileReadContent':
-                $this->fileReadContent();
-                break;
             default:
                 $data = $this->request->getPost();
                 $this->sendRequestToBackendWorker('system', $actionName, $data);
@@ -101,7 +98,6 @@ class PostController extends BaseController
 
     /**
      * Categorize and store uploaded audio files
-     *
      */
     private function convertAudioFile(): void
     {
@@ -132,37 +128,6 @@ class PostController extends BaseController
         $response       = $connection->request($requestMessage, 15, 0);
         if ($response !== false) {
             $response = json_decode($response, true);
-            $this->response->setPayloadSuccess($response);
-        } else {
-            $this->sendError(500);
-        }
-    }
-
-    /**
-     * Parses content of file and puts it to answer
-     *
-     */
-    private function fileReadContent(): void
-    {
-        $requestMessage = json_encode(
-            [
-                'processor' => 'system',
-                'data'      => $this->request->getPost(),
-                'action'    => 'fileReadContent',
-            ]
-        );
-        $connection     = $this->di->getShared('beanstalkConnection');
-        $response       = $connection->request($requestMessage, 5, 0);
-        if ($response !== false) {
-            $response = json_decode($response, true);
-            $filename = $response['data']['filename'] ?? '';
-            if ( ! file_exists($filename)) {
-                $response['messages'][] = 'Config file not found';
-            } else {
-                $response['data']['filename'] = $filename;
-                $response['data']['content']  = mb_convert_encoding('' . file_get_contents($filename), 'UTF-8', 'UTF-8');
-                unlink($filename);
-            }
             $this->response->setPayloadSuccess($response);
         } else {
             $this->sendError(500);

@@ -24,9 +24,6 @@ use Phalcon\Di;
  * Get list of banned IP by fail2ban
  *   curl http://127.0.0.1/pbxcore/api/system/getBanIp;
  *
- * Reload smtp notification service
- *   curl http://127.0.0.1/pbxcore/api/system/reloadMsmtp;
- *
  * Ping backend (described in nginx.conf):
  *   curl http://127.0.0.1/pbxcore/api/system/ping
  *
