@@ -18,9 +18,9 @@ use MikoPBX\Core\System\Util;
 use Phalcon\Config as ConfigAlias;
 use Phalcon\Di\Injectable;
 
-class UpdateConfigsUpToVer20202730 extends Injectable implements UpgradeSystemConfigInterface
+class UpdateConfigsUpToVer20202754 extends Injectable implements UpgradeSystemConfigInterface
 {
-    public const PBX_VERSION = '2020.2.730';
+    public const PBX_VERSION = '2020.2.754';
 
     private ConfigAlias $config;
 
@@ -38,6 +38,9 @@ class UpdateConfigsUpToVer20202730 extends Injectable implements UpgradeSystemCo
         $this->isLiveCD      = file_exists('/offload/livecd');
     }
 
+    /**
+     * Updates system configuration according to new rules
+     */
     public function processUpdate(): void
     {
         if ($this->isLiveCD) {
@@ -98,7 +101,7 @@ class UpdateConfigsUpToVer20202730 extends Injectable implements UpgradeSystemCo
     }
 
     /**
-     * Проверка корректности заполнения поля "disabled" для кодека.
+     * Checks whether it correct field "disabled" for codec record.
      *
      * @param Codecs $codec
      */
@@ -111,11 +114,11 @@ class UpdateConfigsUpToVer20202730 extends Injectable implements UpgradeSystemCo
     }
 
     /**
-     * Добавляет кодеки, которых нет в исходном массиве.
+     * Adds new codecs from $availCodecs array if it doesn't exist
      *
-     * @param $availCodecs
+     * @param array $availCodecs
      */
-    private function addNewCodecs($availCodecs): void
+    private function addNewCodecs(array $availCodecs): void
     {
         foreach ($availCodecs as $availCodec => $desc) {
             $codecData = Codecs::findFirst('name="' . $availCodec . '"');
@@ -143,7 +146,7 @@ class UpdateConfigsUpToVer20202730 extends Injectable implements UpgradeSystemCo
     }
 
     /**
-     *
+     * Disables unusable codecs
      */
     private function disableCodecs(): void
     {
