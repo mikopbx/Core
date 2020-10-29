@@ -57,7 +57,7 @@ class WorkerApiCommands extends WorkerBase
         while ($this->needRestart === false) {
             try {
                 $client->wait();
-            } catch (\Error $e) {
+            } catch (Error $e) {
                 global $errorLogger;
                 $errorLogger->captureException($e);
             }
