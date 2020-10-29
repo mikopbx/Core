@@ -21,8 +21,6 @@ const PbxApi = {
 	syslogGetLogFromFile: `${Config.pbxUrl}/pbxcore/api/syslog/getLogFromFile`,
 	syslogDownloadLogFile: `${Config.pbxUrl}/pbxcore/api/syslog/downloadLogFile`, //Download logfile by name
 	syslogDownloadLogsArchive: `${Config.pbxUrl}/pbxcore/api/syslog/downloadLogsArchive`, // Ask for zipped logs and PCAP file
-	systemConvertAudioFile: `${Config.pbxUrl}/pbxcore/api/system/convertAudioFile`,
-	systemRemoveAudioFile: `${Config.pbxUrl}/pbxcore/api/system/removeAudioFile`,
 	systemReboot: `${Config.pbxUrl}/pbxcore/api/system/reboot`, // Рестарт ОС
 	systemShutDown: `${Config.pbxUrl}/pbxcore/api/system/shutdown`, // Выключить машину
 	systemGetBannedIp: `${Config.pbxUrl}/pbxcore/api/system/getBanIp`, // Получение забаненных ip
@@ -30,21 +28,23 @@ const PbxApi = {
 	systemGetDateTime: `${Config.pbxUrl}/pbxcore/api/system/getDate`,//curl http://172.16.156.223/pbxcore/api/system/getDate
 	systemSetDateTime: `${Config.pbxUrl}/pbxcore/api/system/setDate`, // Set system date curl -X POST -d timestamp=1602509882 http://127.0.0.1/pbxcore/api/system/setDate
 	systemSendTestEmail: `${Config.pbxUrl}/pbxcore/api/system/sendMail`, // Отправить почту
+	systemChangeCoreLanguage: `${Config.pbxUrl}/pbxcore/api/system/updateCoreLanguage`, // Update WorkerApiCommands language
+	systemRestoreDefaultSettings: `${Config.pbxUrl}/pbxcore/api/system/restoreDefault`, // Delete all system settings
+	systemConvertAudioFile: `${Config.pbxUrl}/pbxcore/api/system/convertAudioFile`,
 	updateMailSettings: `${Config.pbxUrl}/pbxcore/api/system/updateMailSettings`,
-	systemGetFileContent: `${Config.pbxUrl}/pbxcore/api/system/fileReadContent`, // Получить контент файла по имени
 	systemUpgrade: `${Config.pbxUrl}/pbxcore/api/system/upgrade`, // Обновление АТС файлом
-	systemDownloadNewFirmware: `${Config.pbxUrl}/pbxcore/api/system/downloadNewFirmware`, // Обновление АТС онлайн
-	systemGetFirmwareDownloadStatus: `${Config.pbxUrl}/pbxcore/api/system/firmwareDownloadStatus`, // Получение статуса обновления
-	systemDownloadNewModule: `${Config.pbxUrl}/pbxcore/api/system/downloadNewModule`,
 	systemInstallModule: `${Config.pbxUrl}/pbxcore/api/system/installNewModule`,
 	systemDeleteModule: `${Config.pbxUrl}/pbxcore/api/system/uninstallModule`,
 	systemDisableModule: `${Config.pbxUrl}/pbxcore/api/system/disableModule`,
 	systemEnableModule: `${Config.pbxUrl}/pbxcore/api/system/enableModule`,
-	systemModuleDownloadStatus: `${Config.pbxUrl}/pbxcore/api/system/moduleDownloadStatus`, //TODO::Проверить статус ошибки скачивания в переменной message
-	systemUploadFile: `${Config.pbxUrl}/pbxcore/api/upload/uploadResumable`, // curl -F "file=@ModuleTemplate.zip" http://127.0.0.1/pbxcore/api/upload/uploadResumable
-	systemStatusUploadFile: `${Config.pbxUrl}/pbxcore/api/upload/status`, // curl -X POST -d '{"id": "1531474060"}' http://127.0.0.1/pbxcore/api/upload/status;
-	systemChangeCoreLanguage: `${Config.pbxUrl}/pbxcore/api/system/updateCoreLanguage`, // Update WorkerApiCommands language
-	systemRestoreDefaultSettings: `${Config.pbxUrl}/pbxcore/api/system/restoreDefault`, // Delete all system settings
+	filesUploadFile: `${Config.pbxUrl}/pbxcore/api/files/uploadResumable`,
+	filesStatusUploadFile: `${Config.pbxUrl}/pbxcore/api/files/statusUploadFile`,
+	filesGetFileContent: `${Config.pbxUrl}/pbxcore/api/files/fileReadContent`, // Получить контент файла по имени
+	filesRemoveAudioFile: `${Config.pbxUrl}/pbxcore/api/files/removeAudioFile`,
+	filesDownloadNewFirmware: `${Config.pbxUrl}/pbxcore/api/files/downloadNewFirmware`, // Обновление АТС онлайн
+	filesFirmwareDownloadStatus: `${Config.pbxUrl}/pbxcore/api/files/firmwareDownloadStatus`, // Получение статуса обновления
+	filesDownloadNewModule: `${Config.pbxUrl}/pbxcore/api/files/downloadNewModule`,
+	filesModuleDownloadStatus: `${Config.pbxUrl}/pbxcore/api/files/moduleDownloadStatus`,
 	sysinfoGetInfo: `${Config.pbxUrl}/pbxcore/api/sysinfo/getInfo`, // Get system information
 	sysinfoGetExternalIP: `${Config.pbxUrl}/pbxcore/api/sysinfo/getExternalIpInfo`, //Get external IP address,
 	advicesGetList: `${Config.pbxUrl}/pbxcore/api/advices/getList`,
@@ -282,13 +282,13 @@ const PbxApi = {
 	},
 
 	/**
-	 * Получить контент файла конфигурации с сервера
+	 * Gets file content from server
 	 * @param data
 	 * @param callback
 	 */
 	GetFileContent(data, callback) {
 		$.api({
-			url: PbxApi.systemGetFileContent,
+			url: PbxApi.filesGetFileContent,
 			on: 'now',
 			method: 'POST',
 			data: data,
@@ -568,10 +568,8 @@ const PbxApi = {
 		});
 	},
 
-
-
 	/**
-	 * Upload audio file to PBX system
+	 * Convert audio file to wav with 8000 bitrate
 	 * @param filePath - uploaded file
 	 * @param category - category {moh, custom, etc...}
 	 * @param callback - callback function
@@ -595,14 +593,14 @@ const PbxApi = {
 		});
 	},
 	/**
-	 * Delete audio file from disk
+	 * Deletes audio file from disk
 	 * @param filePath - full path to the file
 	 * @param fileId
 	 * @param callback - callback function
 	 */
-	SystemRemoveAudioFile(filePath, fileId=null, callback=null) {
+	FilesRemoveAudioFile(filePath, fileId=null, callback=null) {
 		$.api({
-			url: PbxApi.systemRemoveAudioFile,
+			url: PbxApi.filesRemoveAudioFile,
 			on: 'now',
 			method: 'POST',
 			data: {filename:filePath},
@@ -653,13 +651,13 @@ const PbxApi = {
 	},
 
 	/**
-	 * Upload module as json with link by POST request
+	 * Uploads module as json with link by POST request
 	 * @param params
 	 * @param callback - функция колбека
 	 */
-	SystemDownloadNewModule(params, callback) {
+	FilesDownloadNewModule(params, callback) {
 		$.api({
-			url: PbxApi.systemDownloadNewModule,
+			url: PbxApi.filesDownloadNewModule,
 			on: 'now',
 			method: 'POST',
 			data: {
@@ -710,14 +708,14 @@ const PbxApi = {
 		});
 	},
 	/**
-	 * Проверка статуса установки модуля
-	 * @param moduleUniqueID  uniqid модуля
-	 * @param callback  функция для обработки результата
+	 * Gets module download status
+	 * @param moduleUniqueID
+	 * @param callback
 	 * @param failureCallback
 	 */
-	SystemModuleDownloadStatus(moduleUniqueID, callback, failureCallback) {
+	FilesModuleDownloadStatus(moduleUniqueID, callback, failureCallback) {
 		$.api({
-			url: PbxApi.systemModuleDownloadStatus,
+			url: PbxApi.filesModuleDownloadStatus,
 			on: 'now',
 			timeout: 3000,
 			method: 'POST',
@@ -787,12 +785,12 @@ const PbxApi = {
 		});
 	},
 	/**
-	 * Установка обновления PBX
+	 * Downloads new firmware from provided url
 	 *
 	 */
-	SystemDownloadNewFirmware(params, callback) {
+	FilesDownloadNewFirmware(params, callback) {
 		$.api({
-			url: PbxApi.systemDownloadNewFirmware,
+			url: PbxApi.filesDownloadNewFirmware,
 			on: 'now',
 			method: 'POST',
 			data: {
@@ -813,11 +811,11 @@ const PbxApi = {
 	},
 
 	/**
-	 * Получение статуса обновления станции
+	 * Gets firmware download status
 	 */
-	SystemGetFirmwareDownloadStatus(callback) {
+	FilesFirmwareDownloadStatus(callback) {
 		$.api({
-			url: PbxApi.systemGetFirmwareDownloadStatus,
+			url: PbxApi.filesFirmwareDownloadStatus,
 			on: 'now',
 			successTest: PbxApi.successTest,
 			onSuccess(response) {
@@ -836,7 +834,7 @@ const PbxApi = {
 	 */
 	SystemUploadFileAttachToBtn(buttonId, fileTypes, callback) {
 		const r = new Resumable({
-			target: PbxApi.systemUploadFile,
+			target: PbxApi.filesUploadFile,
 			testChunks: false,
 			chunkSize: 30 * 1024 * 1024,
 			maxFiles: 1,
@@ -883,9 +881,9 @@ const PbxApi = {
 	/**
 	 * Enables upload by chunk resumable worker
 	 */
-	SystemUploadFile(file, callback) {
+	FilesUploadFile(file, callback) {
 		const r = new Resumable({
-			target: PbxApi.systemUploadFile,
+			target: PbxApi.filesUploadFile,
 			testChunks: false,
 			chunkSize: 30 * 1024 * 1024,
 			maxFiles: 1,
@@ -933,9 +931,9 @@ const PbxApi = {
 	/**
 	 * Gets uploading status
 	 */
-	SystemGetStatusUploadFile(fileId, callback) {
+	FilesGetStatusUploadFile(fileId, callback) {
 		$.api({
-			url: PbxApi.systemStatusUploadFile,
+			url: PbxApi.filesStatusUploadFile,
 			on: 'now',
 			method: 'POST',
 			data: {id:fileId},

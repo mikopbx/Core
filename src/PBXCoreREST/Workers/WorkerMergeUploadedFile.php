@@ -20,8 +20,7 @@ class WorkerMergeUploadedFile extends WorkerBase
     {
         $settings_file = trim($argv[1]);
         if ( ! file_exists($settings_file)) {
-            Util::sysLogMsg("WorkerMergeUploadedFile", 'File with settings not found');
-
+            Util::sysLogMsg(__CLASS__, 'File with settings not found');
             return;
         }
         $settings = json_decode(file_get_contents($settings_file), true);
@@ -51,7 +50,7 @@ class WorkerMergeUploadedFile extends WorkerBase
     }
 
     /**
-     * Glues uploaded parts of file to en one with fileName
+     * Merges uploaded parts of file to en one with fileName
      *
      * @param string $tempDir
      * @param string $fileName

@@ -48,7 +48,7 @@ class WorkerDownloader extends WorkerBase
         if ($this->getFile()) {
             $this->action();
         } else {
-            Util::sysLogMsg("WorkerDownloader", 'Download error...');
+            Util::sysLogMsg(__CLASS__, 'Download error...');
         }
     }
 
@@ -127,9 +127,9 @@ class WorkerDownloader extends WorkerBase
 
             return;
         }
-        if ( ! file_exists($this->settings['res_file']) || md5_file(
-                $this->settings['res_file']
-            ) !== $this->settings['md5']) {
+        if ( ! file_exists($this->settings['res_file'])
+            || md5_file($this->settings['res_file']) !== $this->settings['md5'])
+        {
             if (file_exists($this->settings['res_file'])) {
                 unlink($this->settings['res_file']);
             }
@@ -180,7 +180,6 @@ class WorkerDownloader extends WorkerBase
 // Start worker process
 $workerClassname = WorkerDownloader::class;
 if (isset($argv) && count($argv) > 1) {
-    cli_set_process_title($workerClassname);
     try {
         $worker = new $workerClassname();
         $worker->start($argv);

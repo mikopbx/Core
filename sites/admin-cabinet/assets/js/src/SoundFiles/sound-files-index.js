@@ -166,7 +166,7 @@ const soundFiles = {
 			e.preventDefault();
 			const fileName = $(e.target).closest('tr').attr('data-value');
 			const fileId = $(e.target).closest('tr').attr('id');
-			PbxApi.SystemRemoveAudioFile(fileName, fileId, soundFiles.cbAfterDelete);
+			PbxApi.FilesRemoveAudioFile(fileName, fileId, soundFiles.cbAfterDelete);
 		});
 	},
 	/**

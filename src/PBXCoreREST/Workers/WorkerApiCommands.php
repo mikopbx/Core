@@ -79,7 +79,7 @@ class WorkerApiCommands extends WorkerBase
             'system'  => SystemManagementProcessor::class,
             'syslog'  => SysLogsManagementProcessor::class,
             'sysinfo' => SysinfoManagementProcessor::class,
-            'upload'  => FilesManagementProcessor::class,
+            'files'  => FilesManagementProcessor::class,
             'modules' => PbxExtensionsProcessor::class
         ];
     }

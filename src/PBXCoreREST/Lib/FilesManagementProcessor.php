@@ -10,8 +10,6 @@ namespace MikoPBX\PBXCoreREST\Lib;
 
 use MikoPBX\Common\Models\CustomFiles;
 use MikoPBX\Core\System\Util;
-use MikoPBX\Modules\PbxExtensionUtils;
-use MikoPBX\Modules\Setup\PbxExtensionSetupFailure;
 use MikoPBX\PBXCoreREST\Workers\WorkerDownloader;
 use MikoPBX\PBXCoreREST\Workers\WorkerMergeUploadedFile;
 use Phalcon\Di;
@@ -36,8 +34,30 @@ class FilesManagementProcessor extends Injectable
             case 'uploadResumable':
                 $res = FilesManagementProcessor::uploadResumable($postData);
                 break;
-            case 'status':
+            case 'statusUploadFile':
                 $res = FilesManagementProcessor::statusUploadFile($request['data']);
+                break;
+            case 'removeAudioFile':
+                $res = FilesManagementProcessor::removeAudioFile($postData['filename']);
+                break;
+            case 'fileReadContent':
+                $res = FilesManagementProcessor::fileReadContent($postData['filename'], $postData['needOriginal']);
+                break;
+            case 'downloadNewFirmware':
+                $res = FilesManagementProcessor::downloadNewFirmware($request['data']);
+                break;
+            case 'firmwareDownloadStatus':
+                $res = FilesManagementProcessor::firmwareDownloadStatus();
+                break;
+            case 'downloadNewModule':
+                $module = $request['data']['uniqid'];
+                $url    = $request['data']['url'];
+                $md5    = $request['data']['md5'];
+                $res    = FilesManagementProcessor::moduleStartDownload($module, $url, $md5);
+                break;
+            case 'moduleDownloadStatus':
+                $module = $request['data']['uniqid'];
+                $res    = FilesManagementProcessor::moduleDownloadStatus($module);
                 break;
             default:
                 $res             = new PBXApiResult();
@@ -224,69 +244,7 @@ class FilesManagementProcessor extends Injectable
     }
 
     /**
-     * Конвертация файла в wav 8000.
-     *
-     * @param $filename
-     *
-     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
-     */
-    public static function convertAudioFile($filename): PBXApiResult
-    {
-        $res            = new PBXApiResult();
-        $res->processor = __METHOD__;
-        if ( ! file_exists($filename)) {
-            $res->success    = false;
-            $res->messages[] = "File '{$filename}' not found.";
-
-            return $res;
-        }
-        $out          = [];
-        $tmp_filename = '/tmp/' . time() . "_" . basename($filename);
-        if (false === copy($filename, $tmp_filename)) {
-            $res->success    = false;
-            $res->messages[] = "Unable to create temporary file '{$tmp_filename}'.";
-
-            return $res;
-        }
-
-        // Принудительно устанавливаем расширение файла в wav.
-        $n_filename     = Util::trimExtensionForFile($filename) . ".wav";
-        $n_filename_mp3 = Util::trimExtensionForFile($filename) . ".mp3";
-        // Конвертируем файл.
-        $tmp_filename = escapeshellcmd($tmp_filename);
-        $n_filename   = escapeshellcmd($n_filename);
-        $soxPath      = Util::which('sox');
-        Util::mwExec("{$soxPath} -v 0.99 -G '{$tmp_filename}' -c 1 -r 8000 -b 16 '{$n_filename}'", $out);
-        $result_str = implode('', $out);
-
-        $lamePath = Util::which('lame');
-        Util::mwExec("{$lamePath} -b 32 --silent '{$n_filename}' '{$n_filename_mp3}'", $out);
-        $result_mp3 = implode('', $out);
-
-        // Чистим мусор.
-        unlink($tmp_filename);
-        if ($result_str !== '' && $result_mp3 !== '') {
-            // Ошибка выполнения конвертации.
-            $res->success    = false;
-            $res->messages[] = $result_str;
-
-            return $res;
-        }
-
-        if (file_exists($filename)
-            && $filename !== $n_filename
-            && $filename !== $n_filename_mp3) {
-            unlink($filename);
-        }
-
-        $res->success = true;
-        $res->data[]  = $n_filename_mp3;
-
-        return $res;
-    }
-
-    /**
-     * Считывает содержимое файла, если есть разрешение.
+     * Returns file content
      *
      * @param $filename
      * @param $needOriginal
@@ -320,7 +278,7 @@ class FilesManagementProcessor extends Injectable
     }
 
     /**
-     * Download IMG from MikoPBX repository
+     * Downloads IMG from MikoPBX repository
      *
      * @param $data
      *
@@ -375,7 +333,7 @@ class FilesManagementProcessor extends Injectable
     }
 
     /**
-     * Return download Firmware from remote repository progress
+     * Returns download Firmware from remote repository progress
      *
      * @return PBXApiResult
      */
@@ -429,7 +387,7 @@ class FilesManagementProcessor extends Injectable
     }
 
     /**
-     * Start module download in background separate process
+     * Starts module download in background separate process
      *
      * @param $module
      * @param $url
@@ -530,11 +488,11 @@ class FilesManagementProcessor extends Injectable
             $d_pid                          = Util::getPidOfProcess($moduleDirTmp . '/download_settings.json');
             if (empty($d_pid)) {
                 $res->data['d_status'] = 'DOWNLOAD_ERROR';
-                $error                 = '';
                 if (file_exists($moduleDirTmp . '/error')) {
-                    $error = file_get_contents($moduleDirTmp . '/error');
+                    $res->messages[] = file_get_contents($moduleDirTmp . '/error');
+                } else {
+                    $res->messages[]                 = "Download process interrupted at {$res->data['d_status_progress']}%";
                 }
-                $res->messages[] = $error;
                 $res->success    = false;
             } else {
                 $res->data['d_status'] = 'DOWNLOAD_IN_PROGRESS';
@@ -591,28 +549,6 @@ class FilesManagementProcessor extends Injectable
         return $res;
     }
 
-    /**
-     * Install new additional extension module
-     *
-     * @param $filePath
-     *
-     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
-     *
-     */
-    public static function installModuleFromFile($filePath): PBXApiResult
-    {
-        $res            = new PBXApiResult();
-        $res->processor = __METHOD__;
-        $moduleMetadata = FilesManagementProcessor::getMetadataFromModuleFile($filePath);
-        if ( ! $moduleMetadata->success) {
-            return $moduleMetadata;
-        } else {
-            $moduleUniqueID = $moduleMetadata->data['uniqid'];
-            $res            = self::installModule($filePath, $moduleUniqueID);
-        }
-
-        return $res;
-    }
 
     /**
      * Unpack ModuleFile and get metadata information
@@ -652,135 +588,5 @@ class FilesManagementProcessor extends Injectable
         return $res;
     }
 
-    /**
-     * Install module from file
-     *
-     * @param string $filePath
-     *
-     * @param string $moduleUniqueID
-     *
-     * @return PBXApiResult
-     */
-    public static function installModule(string $filePath, string $moduleUniqueID): PBXApiResult
-    {
-        $res              = new PBXApiResult();
-        $res->processor   = __METHOD__;
-        $res->success     = true;
-        $currentModuleDir = PbxExtensionUtils::getModuleDir($moduleUniqueID);
-        $needBackup       = is_dir($currentModuleDir);
 
-        if ($needBackup) {
-            self::uninstallModule($moduleUniqueID, true);
-        }
-
-        $semZaPath = Util::which('7za');
-        Util::mwExec("{$semZaPath} e -spf -aoa -o{$currentModuleDir} {$filePath}");
-        Util::addRegularWWWRights($currentModuleDir);
-
-        $pbxExtensionSetupClass = "\\Modules\\{$moduleUniqueID}\\Setup\\PbxExtensionSetup";
-        if (class_exists($pbxExtensionSetupClass)
-            && method_exists($pbxExtensionSetupClass, 'installModule')) {
-            $setup = new $pbxExtensionSetupClass($moduleUniqueID);
-            if ( ! $setup->installModule()) {
-                $res->success    = false;
-                $res->messages[] = $setup->getMessages();
-            }
-        } else {
-            $res->success    = false;
-            $res->messages[] = "Install error: the class {$pbxExtensionSetupClass} not exists";
-        }
-
-        if ($res->success) {
-            $res->data['needRestartWorkers'] = true;
-        }
-
-        return $res;
-    }
-
-    /**
-     * Uninstall module
-     *
-     * @param string $moduleUniqueID
-     *
-     * @param bool   $keepSettings
-     *
-     * @return PBXApiResult
-     */
-    public static function uninstallModule(string $moduleUniqueID, bool $keepSettings): PBXApiResult
-    {
-        $res              = new PBXApiResult();
-        $res->processor   = __METHOD__;
-        $currentModuleDir = PbxExtensionUtils::getModuleDir($moduleUniqueID);
-        // Kill all module processes
-        if (is_dir("{$currentModuleDir}/bin")) {
-            $busyboxPath = Util::which('busybox');
-            $killPath    = Util::which('kill');
-            $lsofPath    = Util::which('lsof');
-            $grepPath    = Util::which('grep');
-            $awkPath     = Util::which('awk');
-            $uniqPath    = Util::which('uniq');
-            Util::mwExec(
-                "{$busyboxPath} {$killPath} -9 $({$lsofPath} {$currentModuleDir}/bin/* |  {$busyboxPath} {$grepPath} -v COMMAND | {$busyboxPath} {$awkPath}  '{ print $2}' | {$busyboxPath} {$uniqPath})"
-            );
-        }
-        // Uninstall module with keep settings and backup db
-        $moduleClass = "\\Modules\\{$moduleUniqueID}\\Setup\\PbxExtensionSetup";
-
-        try {
-            if (class_exists($moduleClass)
-                && method_exists($moduleClass, 'uninstallModule')) {
-                $setup = new $moduleClass($moduleUniqueID);
-            } else {
-                // Заглушка которая позволяет удалить модуль из базы данных, которого нет на диске
-                $moduleClass = PbxExtensionSetupFailure::class;
-                $setup       = new $moduleClass($moduleUniqueID);
-            }
-            $setup->uninstallModule($keepSettings);
-        } finally {
-            if (is_dir($currentModuleDir)) {
-                // Broken or very old module. Force uninstall.
-                $rmPath = Util::which('rm');
-                Util::mwExec("{$rmPath} -rf {$currentModuleDir}");
-
-                $moduleClass = PbxExtensionSetupFailure::class;
-                $setup       = new $moduleClass($moduleUniqueID);
-                $setup->unregisterModule();
-            }
-        }
-        $res->success                    = true;
-        $res->data['needRestartWorkers'] = true;
-
-        return $res;
-    }
-
-    /**
-     *
-     * Scans a directory just like scandir(), only recursively
-     * returns a hierarchical array representing the directory structure
-     *
-     * @param string $dir directory to scan
-     *
-     * @return array
-     */
-    public static function scanDirRecursively(string $dir): array
-    {
-        $list = [];
-
-        //get directory contents
-        foreach (scandir($dir) as $d) {
-            //ignore any of the files in the array
-            if (in_array($d, ['.', '..'])) {
-                continue;
-            }
-            //if current file ($d) is a directory, call scanDirRecursively
-            if (is_dir($dir . '/' . $d)) {
-                $list[] = self::scanDirRecursively($dir . '/' . $d);
-                //otherwise, add the file to the list
-            } elseif (is_file($dir . '/' . $d) || is_link($dir . '/' . $d)) {
-                $list[] = $dir . '/' . $d;
-            }
-        }
-
-        return $list;
-    }
 }
