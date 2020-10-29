@@ -38,7 +38,7 @@ class FirewallManagementProcessor extends Injectable
         $fail2ban        = new Fail2BanConf();
         if ($fail2ban->fail2ban_enable) {
             $fail2ban = Util::which('fail2ban-client');
-            $res->success  = (Util::mwExec("{$fail2ban} unban {$ip}}") === 0);
+            $res->success  = (Util::mwExec("{$fail2ban} unban {$ip}") === 0);
         } else {
             $res = self::fail2banUnbanDb($ip);
         }
