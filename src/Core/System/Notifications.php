@@ -24,16 +24,16 @@ class Notifications
      * @param      $message
      * @param bool $filename
      *
-     * @return bool|string
+     * @return bool
      */
-    public static function sendMail($to, $subject, $message, $filename = false)
+    public static function sendMail($to, $subject, $message, $filename = false):bool
     {
         $mikoPBXConfig        = new MikoPBXConfig();
         $settings             = $mikoPBXConfig->getGeneralSettings();
         $enable_notifications = $settings['MailEnableNotifications'];
 
         if ($enable_notifications !== "1") {
-            return 'Notifications disabled...';
+            return false;
         }
 
         if (isset($settings['MailSMTPSenderAddress']) && trim($settings['MailSMTPSenderAddress']) !== '') {
@@ -98,7 +98,7 @@ class Notifications
 
         if (count($messages)>0) {
             Util::sysLogMsg('PHPMailer', implode(' ', $messages), LOG_ERR);
-            return implode(' ', $messages);
+            return false;
         }
         return true;
     }
@@ -107,7 +107,8 @@ class Notifications
         $mikoPBXConfig        = new MikoPBXConfig();
         $settings             = $mikoPBXConfig->getGeneralSettings();
         $systemNotificationsEmail = $settings['SystemNotificationsEmail'];
-        return self::sendMail($systemNotificationsEmail, 'Test mail from MIKO PBX', '<b>Test message</b><hr>');
+        $result = self::sendMail($systemNotificationsEmail, 'Test mail from MIKO PBX', '<b>Test message</b><hr>');
+        return ($result===true);
     }
 
     /**
