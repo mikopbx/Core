@@ -437,13 +437,15 @@ class AssetProvider implements ServiceProviderInterface
                 );
             $this->footerCollectionJS->addJs('js/vendor/datatable/dataTables.semanticui.js', true)
                 ->addJs('js/vendor/range/range.min.js', true)
+                ->addJs('js/vendor/jquery.address.min.js', true)
+                ->addJs('js/pbx/SoundFiles/sound-files-index-player.js', true)
                 ->addJs('js/pbx/SoundFiles/sound-files-index.js', true);
         } elseif ($action === 'modify') {
             $this->headerCollectionCSS->addCss('css/vendor/range/range.css');
 
             $this->headerCollectionJS
                 ->addJs(
-                    'js/vendor/webrtc//MediaStreamRecorder.min.js',
+                    'js/vendor/webrtc/MediaStreamRecorder.min.js',
                     true
                 )
                 ->addJs('js/vendor/webrtc/adapter-latest.min.js', true);
@@ -452,6 +454,9 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/vendor/range/range.min.js', true)
                 ->addJs('js/pbx/main/form.js', true)
                 ->addJs('js/vendor/resumable.js', true)
+                ->addJs('js/pbx/SoundFiles/sound-file-modify-player.js', true)
+                ->addJs('js/pbx/SoundFiles/sound-file-modify-upload-worker.js', true)
+                ->addJs('js/pbx/SoundFiles/sound-file-modify-webkit-recorder.js', true)
                 ->addJs('js/pbx/SoundFiles/sound-file-modify.js', true);
         }
     }
