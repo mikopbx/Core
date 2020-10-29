@@ -10,7 +10,6 @@ namespace MikoPBX\Core\Rc;
 use MikoPBX\Core\Config\RegisterDIServices;
 use MikoPBX\Core\Workers\WorkerAmiListener;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
-use Phalcon\Logger\Adapter\Syslog;
 use MikoPBX\Core\System\{Configs\SyslogConf, Upgrade\UpdateDatabase, Util, Storage, PBX, System};
 use MikoPBX\Core\Asterisk\CdrDb;
 
@@ -130,8 +129,8 @@ $pbx = new PBX();
 $pbx->configure();
 
 // Перезапускае связанные со storage процессы.
-Util::restartPHPWorker(WorkerApiCommands::class);
-Util::restartPHPWorker(WorkerAmiListener::class);
+Util::processPHPWorker(WorkerApiCommands::class);
+Util::processPHPWorker(WorkerAmiListener::class);
 
 if(Storage::isStorageDiskMounted()){
     echo "\n ".Util::translate('Storage disk is already mounted...')." \n\n";

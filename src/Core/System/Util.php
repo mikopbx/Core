@@ -191,19 +191,21 @@ class Util
     }
 
     /**
-     * Restart PHP workers
+     * Process PHP workers
      *
      * @param string $className
      * @param string $param
+     * @param string $action
      */
-    public static function restartPHPWorker(string $className, string $param = 'start'): void
+    public static function processPHPWorker(string $className, string $param = 'start', string $action='restart'): void
     {
         $workerPath = self::getFilePathByClassName($className);
         if ( ! empty($workerPath)) {
             $command = "php -f {$workerPath}";
-            self::processWorker($command, $param, $className, 'restart');
+            self::processWorker($command, $param, $className, $action);
         }
     }
+
 
     /**
      * Try to find full path to php file by class name
@@ -281,6 +283,9 @@ class Util
                  if ($WorkerPID === '') {
                      self::mwExec("{$path_nohup} {$cmd} {$param}  > {$out_file} 2>&1 &");
                  }
+                 break;
+             case 'multiStart':
+                 self::mwExec("{$path_nohup} {$cmd} {$param}  > {$out_file} 2>&1 &");
                  break;
              default:
          }

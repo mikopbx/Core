@@ -24,6 +24,7 @@ use MikoPBX\Core\Workers\WorkerNotifyByEmail;
 use MikoPBX\Core\Workers\WorkerNotifyError;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use MikoPBX\PBXCoreREST\Workers\WorkerLongPoolAPI;
+use Pheanstalk\Exception\DeadlineSoonException;
 use Recoil\React\ReactKernel;
 
 class WorkerSafeScriptsCore extends WorkerBase
@@ -106,7 +107,7 @@ class WorkerSafeScriptsCore extends WorkerBase
      */
     public function restartWorker($workerClassName): ?Generator
     {
-        Util::restartPHPWorker($workerClassName);
+        Util::processPHPWorker($workerClassName);
         yield;
     }
 
@@ -160,7 +161,7 @@ class WorkerSafeScriptsCore extends WorkerBase
                 $result = $queue->request('ping', 15, 0);
             }
             if (false === $result) {
-                Util::restartPHPWorker($workerClassName);
+                Util::processPHPWorker($workerClassName);
                 Util::sysLogMsg(__CLASS__, "Service {$workerClassName} started.");
             }
             $time_elapsed_secs = microtime(true) - $start;
@@ -173,6 +174,8 @@ class WorkerSafeScriptsCore extends WorkerBase
         } catch (\Error $e) {
             global $errorLogger;
             $errorLogger->captureException($e);
+            Util::sysLogMsg($workerClassName . '_EXCEPTION', $e->getMessage());
+        } catch (DeadlineSoonException $e) {
             Util::sysLogMsg($workerClassName . '_EXCEPTION', $e->getMessage());
         }
         yield;
@@ -191,7 +194,7 @@ class WorkerSafeScriptsCore extends WorkerBase
         $WorkerPID = Util::getPidOfProcess($workerClassName);
         $result    = ($WorkerPID !== '');
         if (false === $result) {
-            Util::restartPHPWorker($workerClassName);
+            Util::processPHPWorker($workerClassName);
         }
         $time_elapsed_secs = microtime(true) - $start;
         if ($time_elapsed_secs > 10) {
@@ -228,7 +231,7 @@ class WorkerSafeScriptsCore extends WorkerBase
             }
 
             if ($res_ping === false && $level < 10) {
-                Util::restartPHPWorker($workerClassName);
+                Util::processPHPWorker($workerClassName);
                 Util::sysLogMsg(__CLASS__, "Service {$workerClassName} started.");
                 // Wait 1 second while service will be ready to listen requests
                 sleep(1);

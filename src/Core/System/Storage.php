@@ -471,7 +471,7 @@ class Storage extends Di\Injectable
             if ($disk['free_space'] < 100) {
                 $need_alert = true;
                 $test_alert = "The {$disk['id']} has less than 100MB of free space available. Old call records will be deleted.";
-                Util::restartPHPWorker(WorkerRemoveOldRecords::class);
+                Util::processPHPWorker(WorkerRemoveOldRecords::class);
             }
 
             if ( ! $need_alert) {

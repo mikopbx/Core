@@ -23,6 +23,7 @@ use MikoPBX\PBXCoreREST\Lib\StorageManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\SysinfoManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\SystemManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\FilesManagementProcessor;
+use Pheanstalk\Exception\DeadlineSoonException;
 
 require_once 'Globals.php';
 
@@ -33,7 +34,7 @@ class WorkerApiCommands extends WorkerBase
      *
      * @var int
      */
-    protected int $maxProc = 1;
+    protected int $maxProc = 2;
 
     /**
      * Available REST API processors
@@ -45,6 +46,8 @@ class WorkerApiCommands extends WorkerBase
 
     /**
      * @param $argv
+     *
+     * @throws \Pheanstalk\Exception\DeadlineSoonException
      */
     public function start($argv): void
     {
@@ -55,12 +58,7 @@ class WorkerApiCommands extends WorkerBase
         $this->registerProcessors();
 
         while ($this->needRestart === false) {
-            try {
-                $client->wait();
-            } catch (Error $e) {
-                global $errorLogger;
-                $errorLogger->captureException($e);
-            }
+            $client->wait();
         }
     }
 
@@ -141,6 +139,8 @@ if (isset($argv) && count($argv) > 1 && $argv[1] === 'start') {
         } catch (\Error $e) {
             global $errorLogger;
             $errorLogger->captureException($e);
+            Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage());
+        } catch (DeadlineSoonException $e) {
             Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage());
         }
     }

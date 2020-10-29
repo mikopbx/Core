@@ -17,7 +17,7 @@ interface WorkerInterface
      *
      * @param BeanstalkClient $message
      */
-    public function pingCallBack($message): void;
+    public function pingCallBack(BeanstalkClient $message): void;
 
     /**
      * Create PID file for worker
