@@ -8,7 +8,6 @@
 
 namespace MikoPBX\Core\System;
 
-use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use PHPMailer;
 
 /**
@@ -33,19 +32,15 @@ class Notifications
         $settings             = $mikoPBXConfig->getGeneralSettings();
         $enable_notifications = $settings['MailEnableNotifications'];
 
-        if ("$enable_notifications" != "1") {
+        if ($enable_notifications !== "1") {
             return 'Notifications disabled...';
         }
 
-        if (isset($settings['MailSMTPSenderAddress']) && trim($settings['MailSMTPSenderAddress']) != '') {
+        if (isset($settings['MailSMTPSenderAddress']) && trim($settings['MailSMTPSenderAddress']) !== '') {
             $from_address = $settings['MailSMTPSenderAddress'];
         } else {
             $from_address = $settings['MailSMTPUsername'];
         }
-        // Loaded over Composer
-        // require_once '/etc/inc/PHPMailer/Exception.php';
-        // require_once '/etc/inc/PHPMailer/PHPMailer.php';
-        // require_once '/etc/inc/PHPMailer/SMTP.php';
         $messages = [];
         try {
             $mail = new PHPMailer\PHPMailer\PHPMailer();
@@ -53,7 +48,7 @@ class Notifications
             $mail->SMTPDebug = 0;
 
             $mail->Host = $settings['MailSMTPHost'];
-            if ($settings["MailSMTPUseTLS"] == "1") {
+            if ($settings["MailSMTPUseTLS"] === "1") {
                 $mail->SMTPSecure = 'tls';
             } else {
                 $mail->SMTPSecure = '';
@@ -65,7 +60,7 @@ class Notifications
                 $mail->SMTPAuth = true;
                 $mail->Username = $settings['MailSMTPUsername'];
                 $mail->Password = $settings['MailSMTPPassword'];
-                if ($settings["MailSMTPCertCheck"] != '1') {
+                if ($settings["MailSMTPCertCheck"] !== '1') {
                     $mail->SMTPOptions = [
                         'ssl' => [
                             'verify_peer'       => false,
@@ -104,9 +99,15 @@ class Notifications
         if (count($messages)>0) {
             Util::sysLogMsg('PHPMailer', implode(' ', $messages), LOG_ERR);
             return implode(' ', $messages);
-        } else {
-            return true;
         }
+        return true;
+    }
+
+    public static function sendTestMail(): bool{
+        $mikoPBXConfig        = new MikoPBXConfig();
+        $settings             = $mikoPBXConfig->getGeneralSettings();
+        $systemNotificationsEmail = $settings['SystemNotificationsEmail'];
+        return self::sendMail($systemNotificationsEmail, 'Test mail from MIKO PBX', '<b>Test message</b><hr>');
     }
 
     /**

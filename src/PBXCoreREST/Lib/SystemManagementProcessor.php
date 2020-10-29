@@ -69,8 +69,7 @@ class SystemManagementProcessor extends Injectable
                 self::updateCoreLanguageAction();
                 break;
             case 'updateMailSettings':
-                // TODO:
-                $res->success = true;
+                $res->success = Notifications::sendTestMail();
                 break;
             case 'sendMail':
                 if (isset($data['email']) && isset($data['subject']) && isset($data['body'])) {
