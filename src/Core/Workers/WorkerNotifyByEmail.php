@@ -46,7 +46,14 @@ class WorkerNotifyByEmail extends WorkerBase
         $template_body   = $settings['MailTplMissedCallBody'];
         $template_Footer = $settings['MailTplMissedCallFooter'];
         $emails          = [];
+
+        $tmpArray = [];
         foreach ($data as $call) {
+            $keyHash = $call['email'].$call['start'].$call['from_number'].$call['to_number'];
+            if(in_array($keyHash, $tmpArray, true)){
+                continue;
+            }
+            $tmpArray[] = $keyHash;
             /**
              * 'language'
              * 'is_internal'
