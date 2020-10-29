@@ -42,6 +42,9 @@ class BeanstalkClient extends Injectable
         $this->reconnect();
     }
 
+    /**
+     * Recreates connection to the beanstalkd server
+     */
     public function reconnect(): void
     {
         $config = $this->di->get('config')->beanstalk;
@@ -56,7 +59,7 @@ class BeanstalkClient extends Injectable
     }
 
     /**
-     * Попытка подключения к серверу очередей.
+     * Returns connection status
      *
      * @return bool
      */
@@ -66,13 +69,15 @@ class BeanstalkClient extends Injectable
     }
 
     /**
-     * Отпрвка запроса с ожиданием ответа.
+     * Sends request and wait for answer from processor
      *
      * @param      $job_data
      * @param int  $timeout
      * @param ?int $priority
      *
      * @return bool|mixed
+     *
+     * @throws \Pheanstalk\Exception\DeadlineSoonException
      */
     public function request($job_data, $timeout = 10, $priority = null)
     {
@@ -101,7 +106,7 @@ class BeanstalkClient extends Injectable
     }
 
     /**
-     * Put a job in a beanstalkd server queue
+     * Puts a job in a beanstalkd server queue
      *
      * @param       $job_data
      * @param       $priority
@@ -144,10 +149,13 @@ class BeanstalkClient extends Injectable
         $this->queue->ignore('default');
         $this->subscriptions[$tube] = $callback;
     }
+
     /**
      * Job worker
      *
      * @param int $timeout
+     *
+     * @throws \Pheanstalk\Exception\DeadlineSoonException
      */
     public function wait($timeout = 10): void
     {
@@ -189,7 +197,7 @@ class BeanstalkClient extends Injectable
     }
 
     /**
-     * Получение данных запроса.
+     * Gets request body
      *
      * @return string
      */
@@ -208,7 +216,7 @@ class BeanstalkClient extends Injectable
     }
 
     /**
-     * Отправка результата выполнения запроса.
+     * Sends response to queue
      *
      * @param $response
      */
@@ -238,13 +246,16 @@ class BeanstalkClient extends Injectable
         $this->timeout_handler = $handler;
     }
 
+    /**
+     * @return int
+     */
     public function reconnectsCount(): int
     {
         return $this->reconnectsCount;
     }
 
     /**
-     * Очистка зависших заданий.
+     * Drops orphaned tasks
      */
     public function cleanTube(){
         $tubes = $this->queue->listTubes();

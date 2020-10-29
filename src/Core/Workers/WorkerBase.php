@@ -28,6 +28,9 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
         $this->savePidFile();
     }
 
+    /**
+     * Calculates how many processes have started already and kill excess or old processes
+     */
     private function checkCountProcesses(): void{
         $activeProcesses = Util::getPidOfProcess(static::class, getmypid());
         if($this->maxProc === 1){
@@ -53,6 +56,9 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
         }
     }
 
+    /**
+     * Saves pid to pidfile
+     */
     private function savePidFile(): void {
         $activeProcesses = Util::getPidOfProcess(static::class);
         file_put_contents($this->getPidFile(), $activeProcesses);

@@ -21,6 +21,8 @@ const Form = {
 	contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
 	keyboardShortcuts: true,
 	enableDirrity: true,
+	afterSubmitIndexUrl: '',
+	afterSubmitModifyUrl: '',
 	oldFormValues: [],
 	initialize() {
 		if (Form.enableDirrity) Form.initializeDirrity();
@@ -142,14 +144,22 @@ const Form = {
 					&& Form.$submitModeInput.val() === 'SaveSettings') {
 					window.location = globalRootUrl + response.reload;
 				} else if (response.success && Form.$submitModeInput.val() === 'SaveSettingsAndAddNew') {
-					const emptyUrl = window.location.href.split('modify');
-					if (emptyUrl.length > 1) {
-						window.location = `${emptyUrl[0]}modify/`;
+					if (Form.afterSubmitModifyUrl.length > 1){
+						window.location = Form.afterSubmitModifyUrl;
+					} else {
+						const emptyUrl = window.location.href.split('modify');
+						if (emptyUrl.length > 1) {
+							window.location = `${emptyUrl[0]}modify/`;
+						}
 					}
 				} else if (response.success && Form.$submitModeInput.val() === 'SaveSettingsAndExit') {
-					const emptyUrl = window.location.href.split('modify');
-					if (emptyUrl.length > 1) {
-						window.location = `${emptyUrl[0]}`;
+					if (Form.afterSubmitIndexUrl.length > 1){
+						window.location = Form.afterSubmitIndexUrl;
+					} else {
+						const emptyUrl = window.location.href.split('modify');
+						if (emptyUrl.length > 1) {
+							window.location = `${emptyUrl[0]}index/`;
+						}
 					}
 				} else if (response.success
 						&& response.reload.length > 0) {
