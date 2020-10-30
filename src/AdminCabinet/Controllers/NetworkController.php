@@ -26,16 +26,18 @@ class NetworkController extends BaseController
                 $arrEth[] = $record;
             }
         }
+
         $template         = new LanInterfaces();
-        $template->id     = 'new';
+        $template->id     = 0;
         $template->dhcp   = '1';
         $template->vlanid = '4095';
 
-        $arrEth['new'] = $template;
+        $arrEth[] = $template;
 
         $internetInterface = LanInterfaces::findFirstByInternet('1');
         if ($internetInterface === null) {
             $internetInterface = new LanInterfaces();
+            $internetInterface->id     = 1;
         }
 
         // We will find additional interfaces which we can delete
@@ -80,13 +82,13 @@ class NetworkController extends BaseController
         }
 
         // Save additional interface settings if it exists
-        if ($data['interface_new'] != '') {
+        if ($data['interface_0'] !== '') {
             $eth     = new LanInterfaces();
-            $eth->id = 'new';
+            $eth->id = 0;
             $this->fillEthStructure($eth, $data);
-            $eth->id       = '';
+            $eth->id = null;
             $eth->disabled = '0';
-            if ($eth->save() === false) {
+            if ($eth->create() === false) {
                 $errors = $eth->getMessages();
                 $this->flash->warning(implode('<br>', $errors));
                 $this->view->success = false;
@@ -159,7 +161,7 @@ class NetworkController extends BaseController
                     }
                     break;
                 case 'interface':
-                    if ($eth->id === 'new') {
+                    if ($eth->id === 0) {
                         $eth->$name = LanInterfaces::findFirstById($data[$name . '_' . $eth->id])->interface;
                     }
                     break;

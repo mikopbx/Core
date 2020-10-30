@@ -630,6 +630,10 @@ class AssetProvider implements ServiceProviderInterface
     {
         if ($action === 'modify') {
             $this->footerCollectionJS
+                ->addJs('js/vendor/inputmask/inputmask.js', true)
+                ->addJs('js/vendor/inputmask/jquery.inputmask.js', true)
+                ->addJs('js/vendor/inputmask/bindings/inputmask.binding.js', true)
+                ->addJs('js/vendor/inputmask/init.js', true)
                 ->addJs('js/pbx/main/form.js', true)
                 ->addJs('js/pbx/Network/network-modify.js', true);
         }

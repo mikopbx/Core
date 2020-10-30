@@ -39,7 +39,7 @@ const sndPlayer = {
 	},
 	cbCanPlayThrough() {
 		sndPlayer.duration = sndPlayer.slider.duration;
-		console.log(`New duration ${sndPlayer.slider.readyState}`);
+		// console.log(`New duration ${sndPlayer.slider.readyState}`);
 		if (sndPlayer.duration > 0) {
 			sndPlayer.$slider.range('set value', 0);
 			sndPlayer.$playerSegment.show();
