@@ -82,13 +82,13 @@ class NetworkController extends BaseController
         }
 
         // Save additional interface settings if it exists
-        if ($data['interface_0'] != '') {
+        if ($data['interface_0'] !== '') {
             $eth     = new LanInterfaces();
             $eth->id = 0;
             $this->fillEthStructure($eth, $data);
-            $eth->id       = '';
+            $eth->id = null;
             $eth->disabled = '0';
-            if ($eth->save() === false) {
+            if ($eth->create() === false) {
                 $errors = $eth->getMessages();
                 $this->flash->warning(implode('<br>', $errors));
                 $this->view->success = false;

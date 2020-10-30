@@ -13,6 +13,7 @@ const networks = {
 	$formObj: $('#network-form'),
 	$dropDowns: $('#network-form .dropdown'),
 	$extipaddr:$('#extipaddr'),
+	$ipaddressInput: $('.ipaddress'),
 	vlansArray: {},
 	validateRules: {
 		gateway: {
@@ -125,6 +126,7 @@ const networks = {
 			$('#dhcp-0-checkbox').checkbox('check');
 			$('#eth-interfaces-menu .item').tab('change tab', $('#eth-interfaces-menu a.item').first().attr('data-tab'));
 		});
+		networks.$ipaddressInput.inputmask({alias: 'ip', 'placeholder': '_'});
 
 		networks.initializeForm();
 	},
