@@ -1,0 +1,30 @@
+#!/usr/bin/php -f
+<?php
+namespace MikoPBX\Core\Rc;
+
+use MikoPBX\Core\System\{
+    Util,
+    Network
+};
+
+require_once('Globals.php');
+if (count($argv) === 2 && 'start' == $argv[1]) {
+    $network = new Network();
+    $network->resolvConfGenerate();
+    $network->loConfigure();
+    $network->lanConfigure();
+} elseif (count($argv) === 2 && 'stop' == $argv[1]) {
+    if (Util::isSystemctl()) {
+        $systemctlPath = Util::which('systemctl');
+        Util::mwExec("{$systemctlPath} stop networking");
+    } else {
+        $network      = new Network();
+        $if_list      = $network->getInterfaces();
+        $arr_commands = [];
+        $ifconfigPath = Util::which('ifconfig');
+        foreach ($if_list as $if_name => $data) {
+            $arr_commands[] = "{$ifconfigPath} $if_name down";
+        }
+        Util::mwExecCommands($arr_commands, $out, 'net_stop');
+    }
+}

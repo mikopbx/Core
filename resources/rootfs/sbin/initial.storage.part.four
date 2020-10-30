@@ -1,0 +1,119 @@
+#!/bin/sh
+#
+# Copyright © MIKO LLC - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Alexey Portnov, 9 2020
+#
+
+if [ "$1" != "create" ];then
+	exit 6;
+fi;
+
+if [ "${2}x" == "x" ];then
+    cf_file='/var/etc/cfdevice';
+    if [ ! -f "$cf_file" ];then
+        exit 5;
+    fi;
+    # Получим "системный" диск.
+    dev=$(/bin/busybox cat "$cf_file");
+    dev="/dev/${dev}";
+else
+    dev=$2;
+fi;
+
+# Проверим, существует ли блочное устройство.
+if [ ! -b "${dev}" ];then
+	exit 4;
+fi;
+
+# Проверим смотирован ли диск.
+mounted=$(mount | /bin/busybox grep "${dev}");
+if [ "${mounted}x" != "x" ];then
+	exit 7;
+fi;
+
+totalMb=$(($(busybox blockdev --getsize64 "${dev}") / 1024 / 1024));
+if [ "$totalMb" -le "600" ]; then
+  # Диск имеет размер, меньше 600Мб. Нет смысла пытаться создавать 4ый раздел.
+  exit 0;
+fi
+
+# Получим информацию по разделам диска.
+count=$(/sbin/sfdisk -l "${dev}" | /bin/busybox grep "^/dev" | /bin/busybox wc -l);
+if [ "$count" != "3" ];then
+  # Добавляем раздел, только если диск имеет 3 раздела. Системный диск.
+  exit 0;
+fi;
+
+# Добавим 4ый раздел.
+/sbin/parted --script --align optimal "${dev}" 'mkpart primary ext4 600MiB 100%';
+resultParted=$?;
+echo " - parted return ${resultParted}...";
+
+tryCount=1;
+while [ ! -b "${dev}4" ]; do
+  /sbin/blockdev --rereadpt "${dev}" > /dev/null 2>&1;
+  if [ -b "${dev}4" ]; then
+    break;
+  fi
+
+  tryCount=`expr $tryCount + 1`;
+  if [ $tryCount = "25" ]; then
+    echo " - partition ${dev}4 waiting fail...";
+    break;
+  fi
+  sleep 1;
+done
+
+if [ "$resultParted" = "0" ];then
+    # e2fsck -f -p "${dev}4" 2> /dev/null > /dev/null;
+    # echo " - e2fsck... exit code $?";
+    tmp_dir='/tmp/test_mnt';
+    # Создаем файловую систему.
+    mkdir -p "$tmp_dir";
+
+    type=$(/sbin/blkid -o full "${dev}4" | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^TYPE" | /bin/busybox awk -F "\"" '{print $2}' | /bin/busybox head -n 1);
+    mount -t "$type" "${dev}4" "$tmp_dir" 2> /dev/null > /dev/null;
+    mountResult=$?;
+    if [ "$mountResult" != "0" ]; then
+        echo " - mount ${dev}4 exit code $mountResult";
+        type='ext4';
+        # Создаем файловую систему ext2.
+        "mkfs.${type}" "${dev}4" 2> /dev/null > /dev/null;
+        mkfsResult=$?;
+        if [ "$mkfsResult" != "0" ]; then
+            echo " - ERROR: mkfs on '${dev}4' type '${type}' exit code '$mkfsResult'"
+        fi;
+
+	      uuid=$(/sbin/blkid -ofull "${dev}4" | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^UUID" | /bin/busybox awk -F "\"" '{print $2}' | /bin/busybox head -n 1);
+		    mount -t "${type}" -rw UUID="$uuid" "$tmp_dir"
+        if [ "$?" != "0" ]; then
+            echo " - ERROR: can not mount '${dev}4' type: '${type}' uuid: '${uuid}' exit code '$?'"
+            sleep 30;
+        else
+            sleep 3;
+            umount "$tmp_dir";
+        fi;
+    else
+        /sbin/shell_functions.sh killprocesses "$tmp_dir" -TERM 0;
+        umount "$tmp_dir";
+    fi;
+
+    if [ "$?" == "0" ]; then
+        # Удаляем временную директорию.
+        rm -rf /tmp/test_mnt;
+        echo " - сheck filesystem on ${dev}4";
+        "/sbin/fsck.${type}" -a "${dev}4" > /dev/null 2>&1;
+        if [ "$?" != "0" ]; then
+            echo " - ERROR: сheck fs on '${dev}4' type: '${type}' exit code '$?'"
+        else
+            echo " - сheck completed..."
+        fi;
+    else
+        echo " - ERROR: umount ${dev}4 exit code $?"
+    fi;
+else
+    echo " - partition ${dev}4 not found...";
+    echo " - ${dev} - the disk size is probably less than 600Mb.";
+fi;

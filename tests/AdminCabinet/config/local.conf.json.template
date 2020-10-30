@@ -1,0 +1,26 @@
+{
+  "server": "hub-cloud.browserstack.com",
+  "user": "bsuser63039",
+  "key": "hqQXx7KMkEj3yMqoHArr",
+  "forcelocal": true,
+  "capabilities": {
+    "build": "MikoPBXTest",
+    "name": "local_test",
+    "os" : "Windows",
+    "os_version" : "10",
+    "browserName" : "Chrome",
+    "browser_version" : "81.0",
+    "resolution" : "1280x1024",
+    "browserstack.local" : true,
+    "browserstack.selenium_version" : "3.5.2",
+    "browserstack.debug": true,
+    "browserstack.localIdentifier": "mikoPBXLocal",
+    "acceptSslCerts": true,
+    "fixSessionCapabilities": true,
+    "remoteFiles": true
+  },
+	"MIKO_LICENSE_KEY": "",
+  "environments": [{
+    "browser": "chrome"
+  }]
+}

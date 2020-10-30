@@ -1,0 +1,87 @@
+#!/bin/bash
+#
+# Copyright © MIKO LLC - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Alexey Portnov, 9 2020
+#
+
+PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/sbin
+# export TERM=xterm-color
+export CLICOLOR=1
+export GREP_OPTIONS='--color=auto'
+export LSCOLORS=gxfxcxdxbxegedabagacad
+export HISTCONTROL=ignoredups
+export HISTFILESIZE=100000
+export HISTSIZE=5000
+
+shopt -s histappend
+shopt -s histreedit
+shopt -s histverify
+shopt -s autocd
+shopt -s cdspell
+shopt -s dirspell
+shopt -s cmdhist
+
+alias ls='ls --color=auto'
+alias myip="curl http://ipecho.net/plain; echo"
+alias remount-offload="mount -o remount,rw /offload/"
+alias xdebug-enable="mv /etc/php.d/15-xdebug.ini.disabled  /etc/php.d/15-xdebug.ini"
+
+PS1='\w\$ '
+PS2='>'
+
+export LANG=en_US.utf8
+
+_pbxConsoleCommands()
+{
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    # Подкоманды первого уровня
+    subcommands_1="cron services service"
+    subCommandsServices="restart start stop" # возможные подкоманды для history
+    # Цикл определения автодополнения при вводе подкоманды первого уровня
+    if [[ ${COMP_CWORD} == 1 ]] ; then
+        COMPREPLY=( $(compgen -W "${subcommands_1}" -- ${cur}) )
+        return 0
+    fi
+
+    subcmd_1="${COMP_WORDS[1]}" #К данному моменту подкоманда первого уровня уже введена, и мы её выбираем в эту переменную
+    case "${subcmd_1}" in #Дальше смотри, что она из себя представляет
+    services)
+        # Введены script history; надо подставить import или export
+        if [[ ${COMP_CWORD} == 2 ]] ; then
+            cmd='stop-all start-all restart-all';
+            COMPREPLY=( $(compgen -W "${cmd}" -- ${cur}) )
+            return 0
+        fi
+        ;;
+    service)
+        # Введены script history; надо подставить import или export
+        if [[ ${COMP_CWORD} == 3 ]] ; then
+            cmd='stop';
+            COMPREPLY=( $(compgen -W "${cmd}" -- ${cur}) )
+            return 0
+        fi
+
+        if [[ ${COMP_CWORD} == 2 ]] ; then
+            # Получим имена сервисов.
+            subCommandsServices=$(ps | grep php | grep Worker | cut -d '}' -f2 | tr '\\' '/' | xargs basename -a);
+            COMPREPLY=( $(compgen -W "${subCommandsServices}" -- ${cur}) )
+            return 0
+        fi
+        ;;
+    cron)
+        # Введены script history; надо подставить import или export
+        if [[ ${COMP_CWORD} == 2 ]] ; then
+            cmd='stop start show restart';
+            COMPREPLY=( $(compgen -W "${cmd}" -- ${cur}) )
+            return 0
+        fi
+        ;;
+    esac
+    return 0
+
+}
+
+complete -F _pbxConsoleCommands pbx-console

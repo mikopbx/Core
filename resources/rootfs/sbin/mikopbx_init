@@ -1,0 +1,72 @@
+#!/bin/sh
+
+echo "Start ${0}";
+delta=1; i=0;
+while : ; do
+
+    if [ ! -t 0 ] || [ ! -t 1 ] ; then
+        # Это НЕ TTY. Меню необходимо отключить.
+        exit 2;
+    fi
+    if [ "$i" -gt 3 ]; then
+        # Это установка системы. Меню необходимо отключить.
+        exit 1;
+    fi
+
+    if [ "$delta" == "0" ]; then
+        # Это установка системы. Меню необходимо отключить.
+        i=`expr $i + 1`;
+    else
+        i=0;
+    fi
+    start_time=$(date +%s);
+
+    if [ -f /tmp/ejectcd ]; then
+        # Это установка системы. Меню необходимо отключить.
+        sleep 20;
+    fi
+
+    if [ -f /tmp/rebooting ]; then
+        echo "Waiting for a reboot (${0})";
+        /sbin/mikopbx_reboot;
+        # Ожидаем перезагрузки 10 секунд.
+        # dd if=/dev/urandom bs=1 count=10 2>/dev/null | pv -pL 1 | dd of=/dev/null 2>/dev/null;
+    fi
+    if [ -f /tmp/shutdown ]; then
+        echo "Waiting for a shutdown (${0})";
+        /sbin/shutdown;
+        # Ожидаем перезагрузки 10 секунд.
+        # dd if=/dev/urandom bs=1 count=10 2>/dev/null | pv -pL 1 | dd of=/dev/null 2>/dev/null;
+    fi
+
+    # Проверим, возможно требуется запустить shell.
+    if [ -f /tmp/start_sh ]; then
+        clear;
+        rm -rf /tmp/start_sh;
+        if [ -f /etc/debian_version ] ; then
+            /bin/bash -login;
+        elif [ "${SSH_CLIENT}x" = 'x' ] ; then
+            # Перенаправляем потоки ввода вывода на консоль.
+            exec < /dev/console > /dev/console  2>&1
+            exec /bin/bash -login;
+        else
+            exec /bin/bash -login;
+        fi
+    fi
+    # Убедимся, что раздел смонтирован.
+    if [ ! -f /tmp/freeoffload ]; then
+        clear;
+        # Консольное меню зависит от /offload раздела.
+        /etc/rc/console_menu 2>/dev/null;
+        resultMenu=$?;
+        if [ $resultMenu -gt 0 ]; then
+            sleep 5;
+            /bin/sh;
+        fi;
+    else
+        sleep 5;
+    fi
+
+    end_time=$(date +%s);
+    delta=`expr $end_time - $start_time`;
+done

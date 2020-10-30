@@ -1,0 +1,68 @@
+{
+    "name": "mikopbx/core",
+    "description": "Free PBX system for SMB based on Asterisk",
+    "require": {
+        "ext-curl": "*",
+        "ext-iconv": "*",
+        "ext-json": "*",
+        "ext-openssl": "*",
+        "ext-phalcon": "~4.0.6",
+        "ext-posix": "*",
+        "ext-simplexml": "*",
+        "ext-sockets": "*",
+        "ext-sqlite3": "*",
+        "ext-zip": "*",
+        "ext-pdo": "*",
+        "pda/pheanstalk": "^4.0",
+        "php-school/cli-menu": "^4.0",
+        "php-school/terminal": "^0.2.1",
+        "phpmailer/phpmailer": "^6.1",
+        "recoil/react": "^1.0",
+        "recoil/recoil": "^1.0",
+        "repejota/nats": "0.8.4",
+        "sentry/sdk": "^2.1.0"
+    },
+    "require-dev": {
+        "roave/security-advisories": "dev-master",
+        "phpunit/phpunit-selenium": "^8.0",
+        "php-webdriver/webdriver": "^1.8",
+        "browserstack/browserstack-local": "^1.1",
+        "filp/whoops": "^2.7",
+        "blackfire/php-sdk": "^1.22",
+        "phalcon/incubator-test": "v1.0.0-alpha.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "MikoPBX\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "MikoPBX\\Tests\\": "tests/"
+        }
+    },
+    "type": "application",
+    "keywords": [
+        "pbx",
+        "asterisk",
+        "freepbx"
+    ],
+    "license": "GPL-3.0-or-later",
+    "homepage": "https://github.com/mikopbx/Core",
+    "authors": [
+        {
+            "name": "Alexey Portnov",
+            "email": "apor@miko.ru"
+        },
+        {
+            "name": "Nikolay Beketov",
+            "email": "nbek@miko.ru"
+        }
+    ],
+    "config": {
+        "sort-packages": true,
+        "platform": {
+            "php": "7.4.6"
+        }
+    }
+}

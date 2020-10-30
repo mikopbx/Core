@@ -1,0 +1,73 @@
+{
+  "beanstalk": {
+    "host": "127.0.0.1",
+    "port": 4229
+  },
+  "gnats": {
+    "host": "127.0.0.1",
+    "port": 4223
+  },
+  "asterisk": {
+    "astvarlibdir" : "/offload/asterisk",
+    "astetcdir" : "/etc/asterisk",
+    "astmoddir": "/offload/asterisk/modules",
+    "astagidir": "/var/lib/asterisk/agi-bin",
+    "astdbdir": "/mountpoint/mikopbx/persistence",
+    "astlogdir" : "/mountpoint/mikopbx/astlogs/asterisk",
+    "astspooldir" : "/mountpoint/mikopbx/astspool",
+    "mediadir": "/mountpoint/mikopbx/media",
+    "monitordir" : "/mountpoint/mikopbx/astspool/monitor",
+    "mohdir": "/mountpoint/mikopbx/media/moh",
+    "customSoundDir": "/mountpoint/mikopbx/media/custom"
+  },
+  "database": {
+    "debugMode": false,
+    "adapter": "Sqlite",
+    "dbfile": "/cf/conf/mikopbx.db",
+    "debugLogFile": "/mountpoint/mikopbx/log/debug-mikopbx-queries.log"
+  },
+  "cdrDatabase": {
+    "debugMode": false,
+    "adapter": "Sqlite",
+    "dbfile": "/mountpoint/mikopbx/astlogs/asterisk/cdr.db",
+    "debugLogFile": "/mountpoint/mikopbx/log/debug-cdr-queries.log"
+  },
+  "eventsLogDatabase": {
+    "debugMode": false,
+    "adapter": "Sqlite",
+    "dbfile": "/mountpoint/mikopbx/astlogs/asterisk/events_log.db",
+    "debugLogFile": "/mountpoint/mikopbx/debug-events_log-queries.log"
+  },
+  "astDatabase": {
+    "adapter": "Sqlite",
+    "dbfile": "/mountpoint/mikopbx/persistence/astdb.sqlite3"
+  },
+  "modulesDatabases": {
+    "debugMode": false
+  },
+  "core": {
+    "debugMode": false,
+    "cfDir": "/cf",
+    "varEtcDir": "/var/etc",
+    "modulesDir": "/mountpoint/mikopbx/custom_modules",
+    "tempDir": "/mountpoint/mikopbx/tmp",
+    "logsDir": "/mountpoint/mikopbx/log",
+    "mediaMountPoint": "/mountpoint",
+    "fail2banDbDir": "/mountpoint/mikopbx/fail2ban",
+    "managedCacheDir": "/mountpoint/mikopbx/tmp/managed_cache",
+    "modelsCacheDir": "/mountpoint/mikopbx/tmp/models_cache"
+  },
+  "www": {
+    "uploadDir": "/mountpoint/mikopbx/tmp/www_cache/upload_cache",
+    "phpSessionDir": "/mountpoint/mikopbx/tmp/www_cache/php_session",
+    "downloadCacheDir": "/mountpoint/mikopbx/tmp/www_cache/files_cache",
+    "managedCacheDir": "/mountpoint/mikopbx/tmp/www_cache/managed_cache",
+    "modelsCacheDir": "/mountpoint/mikopbx/tmp/www_cache/models_cache"
+  },
+  "adminApplication": {
+    "debugMode": false,
+    "baseUri": "/admin-cabinet/",
+    "assetsCacheDir": "/mountpoint/mikopbx/tmp/www_cache",
+    "voltCacheDir": "/mountpoint/mikopbx/tmp/www_cache/volt"
+  }
+}

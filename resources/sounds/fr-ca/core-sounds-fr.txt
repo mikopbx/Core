@@ -1,0 +1,527 @@
+; Core Asterisk Sounds in French
+
+activated: activé
+added: ajouté
+agent-alreadyon: Cet agent est présentemnet en ligne. Composez votre numéro d'agent suivi du dièse.
+agent-incorrect: Échec à l'ouverture de session. Veuillez recomposez votre numéro d'agent suivi du dièse.
+agent-loggedoff: Vous n'êtes plus en ligne.
+agent-loginok: Vous êtes maintenant en ligne.
+agent-newlocation: Composez le nouveau numéro de poste suivi du dièse ou, pour un service immédiat, appuyez sur dièse dès maintenant.
+agent-pass: Composez votre mot de passe suivi du dièse.
+agent-user: Ouverture de session. Entrez votre numéro d'agent suivi du dièse.
+all-circuits-busy-now: Toutes les lignes sont occupées pour l'instant
+ascending-2tone: [ascending tones]
+astcc-followed-by-the-pound-key: suivi du dièse
+at-tone-time-exactly: Au timbre sonore, l'heure sera exactement
+auth-incorrect: Échec à l'ouverture de session. Composez votre mot de passe suivi du dièse.
+auth-thankyou: Merci.
+beeperr: (ahooga)
+call-forwarding: renvoi d'appel
+call-fwd-no-ans: renvoi d'appel lorsque pas de réponse
+call-fwd-on-busy: renvoi d'appel lorsque occupé
+call-fwd-unconditional: renvoi d'appel sans condition
+call-waiting: appel en attente
+calling: Telephoner
+cancelled: annulé
+cannot-complete-as-dialed: Votre appel ne peut être complété tel que composé
+check-number-dial-again: Veuillez vérifier le numéro et composer de nouveau.
+conf-adminmenu-162: Pour activer ou désactiver le mode sourdine, veuillez appuyer sur 1. Pour vérrouiller ou dévérouiller la conférence, appuyez sur 2. Pour éjecter le dernier participant, appuyez sur 3. Pour réduire ou augmenter le volume de la conférence, appuyez sur 4 ou 6. Pour prolonger la conférence, appuyez sur 5. Pour réduire ou augmenter votre volume, appuyez sur 7 ou 9. Pour quitter, appuyez sur 8.
+conf-adminmenu-18: Pour activer ou désactiver le mode sourdine, veuillez appuyer sur 1. Pour vérrouiller ou dévérouiller la conférence, appuyez sur 2. Pour éjecter le dernier participant, appuyez sur 3. Pour réduire ou augmenter le volume de la conférence, appuyez sur 4 ou 6. Pour prolonger la conférence, appuyez sur 5. Pour réduire ou augmenter votre volume, appuyez sur 7 ou 9. Pour plus d'options, appuyez sur 8.
+conf-adminmenu-menu8: Pour énumérer tous les usagers présents dans la conférence, veuillez appuyez sur 1. Pour éjecter tous les usagers réguliers, appuyez sur deux. Pour activer ou désactiver le mode sourdine de tous les usagers réguliers, appuyez sur 3. Pour enregistrer ce tte conférence, appuyez sur 4. Pour quitter ce menu et retourner à la conférence, appuyez sur 8.
+conf-adminmenu: “Pour activer ou désactiver le mode sourdine, veuillez appuyer sur 1. Pour vérrouiller ou dévérouiller la conférence, appuyez sur 2. Pour éjecter le dernier participant, appuyez sur 3. Pour réduire ou augmenter le volume de la conférence, appuyez sur 4 ou 6. Pour réduire ou augmenter votre volume, appuyez sur 7 ou 9. Pour quitter, appuyez sur 8.”
+conf-enteringno: Vous entrez dans la conférence:
+conf-errormenu: Ce choix n'est pas valide
+conf-extended: La conférence a été prolongée.
+conf-full: Cette conférence est pleine.
+conf-getchannel: Veuillez composer votre numéro de canal suivi du dièse.
+conf-getconfno: Veuillez composez votre numéro de conférence suivi du dièse.
+conf-getpin: Veuillez composer le code d'accès de la conférence.
+conf-hasjoin: s'est joint à la conférence.
+conf-hasleft: a quitté la conférence.
+conf-invalid: Ce numéro de conférence n'est pas valide. Veuillez réessayer de nouveau.
+conf-invalidpin: Ce code d'accès est invalide pour cette conférence
+conf-kicked: Vous avez étez expulsé de cette conférence.
+conf-leaderhasleft: Le responsable a quitté la conférence.
+conf-locked: Cette conférence est verouillée
+conf-lockednow: Cette conférence est maintenant verouillée.
+conf-muted: Vous êtes maintenant en mode discret.
+conf-noempty: Aucune conférence n'est libre pour l'instant.
+conf-nonextended: La conférence ne peut être prolongée.
+conf-now-muted: La conférence est maintenant en mode discret.
+conf-now-recording: La conférence est maintenant enregistrée.
+conf-now-unmuted: La conférence n'est plus en mode discret.
+conf-onlyone: Il n'y a qu'un seul participant dans cette conférence.
+conf-onlyperson: Vous êtes présentement le seul participant dans cette conférence.
+conf-otherinparty: autres participants dans cette conférence.
+conf-placeintoconf: Vous allez maintenant joindre la conférence.
+conf-roll-callcomplete: La liste des présences est maintenant complétée.
+conf-thereare: Il y a présentement
+conf-unlockednow: Cette conférence est maintenant déverouillée
+conf-unmuted: Vous pouvez maintenant parler.
+conf-usermenu-162: Pour activer ou désactiver le mode sourdine, veuillez appuyez sur 1. Pour réduire ou augmenter le volume de la conférence, appuyez sur 4 ou 6. Pour prolonger la conférence, appuyez sur 5. Pour réduire ou augmenter votre volume, appuyez sur 7 ou 9. Pour quitter ce menu et retourner à la conférence, appuyez sur 8.
+conf-usermenu: “Pour activer ou désactiver le mode sourdine, veuillez appuyez sur 1. Pour réduire ou augmenter le volume de la conférence, appuyez sur 4 ou 6. Pour réduire ou augmenter votre volume, appuyez sur 7 ou 9. Pour quitter, appuyez sur 8.”
+conf-userswilljoin: utilisateurs se joindront à la conférence.
+conf-userwilljoin: utilisateur se joindra à la conférence.
+conf-waitforleader: La conférence débutera dès l'arrivé du responsable.
+confbridge-begin-glorious-a: La conférence débutera dès l'arrivé du responsable.
+confbridge-begin-glorious-b: La conférence débutera dès l'arrivé du responsable.
+confbridge-begin-glorious-c: La conférence débutera dès l'arrivé du responsable.
+confbridge-binaural-off: Audio 3D désactivé
+confbridge-binaural-on: Audio 3D activé
+confbridge-conf-begin: La conférence va maintenant débuter.
+confbridge-conf-end: La conférence est maintenant terminée.
+confbridge-dec-list-vol-in: Pour diminuer le volume des autres participants...
+confbridge-dec-list-vol-out: ... pour diminuer le volume des autres participants.
+confbridge-dec-talk-vol-in: Pour diminuer le volume de votre voix, tel qu'entendue par les autres participants...
+confbridge-dec-talk-vol-out: ... pour diminuer le volume de votre voix, tel qu'entendue par les autres participants."
+confbridge-has-joined: ... a joint la conférence.
+confbridge-has-left: ... a quitté la conférence.
+confbridge-inc-list-vol-in: Pour augmenter le volume des autres participants...
+confbridge-inc-list-vol-out: pour augmenter le volume des autres participants.
+confbridge-inc-talk-vol-in: Pour augmenter le volume de votre voix, tel qu'entendue par les autres participants..."
+confbridge-inc-talk-vol-out: ...pour augmenter le volume de votre voix, tel qu'entendue par les autres participants."
+confbridge-invalid: Vous avez entré une option invalide.
+confbridge-join: (beep)
+confbridge-leave-in: Pour quitter la conférence...
+confbridge-leave-out: ... pour quitter la conférence
+confbridge-lock-extended: ... pour vérouiller ou déverrouiller la conférence. Lorsqu'une conférence est verouillée, seul les responsables de cette conférence peuvent la joindre."
+confbridge-lock-in: pour vérouiller ou déverrouiller la conférence.
+confbridge-lock-no-join: Cette conférence est présentement verouillée et ne peut être joint.
+confbridge-lock-out-0: ... pour vérouiller ou déverrouiller la conférence.
+confbridge-locked: Cette conférence est maintenant vérouillée.
+confbridge-menu-exit-in: Pour quitter le menu...
+confbridge-menu-exit-out: ... pour quitter le menu.
+confbridge-mute-extended: ...pour activer ou désactiver le mode discrétion. Lorsque vous êtes en mode discrétion, les autres participants ne pourront vous entendre. Toutefois, vous pourrez toujours entendre les autres participants."
+confbridge-mute-in: Pour activer ou désactiver le mode discrétion, ..."
+confbridge-mute-out: ...pour activer ou désactiver le mode discrétion.
+confbridge-muted: Mode discrétion activé.
+confbridge-only-one: Il n'y a qu'un seul participant dans cette conférence.
+confbridge-only-participant: Vous êtes présentement le seul participant dans cette conférence.
+confbridge-participants: ... participants dans cette conférence.
+confbridge-pin-bad: Vous avez entré un trop grand nombre de codes d'identification personnel invalides.
+confbridge-pin: Entrez votre code d'identification personnel, suivi du dièse."
+confbridge-remove-last-in: Pour retirer le dernier participant s'étant joint à la conférence...
+confbridge-remove-last-out: ... pour retirer le dernier participant s'étant joint à la conférence.
+confbridge-removed: Vous avez été retiré de cette conférence.
+confbridge-rest-list-vol-in: Pour réinitialiser le volume de la conférence au niveau par défaut...
+confbridge-rest-list-vol-out: ...pour réinitialiser le volume de la conférence au niveau par défaut.
+confbridge-rest-talk-vol-in: Pour réinitialiser le volume de votre voix au niveau par défaut...
+confbridge-rest-talk-vol-out: ... pour réinitialiser le volume de votre voix au niveau par défaut.
+confbridge-there-are: Il y a présentement ...
+confbridge-unlocked: La conférence est maintenant dévérouillée.
+confbridge-unmuted: Mode discrétion désactivé.
+de-activated: désactivé
+demo-abouttotry: Je vais maintenant tenter une connection Inter-Asterisk Exchange avec un serveur de démonstration situé chez Digium. Pour que cela fonctionne vous devez être connecté à Internet. Veuillez attendre pendant que je tente d'établir la connexion.
+demo-congrats: Felicitation, vous avez bien installé et exécuté le projet libre Asterisk. Vous avez aussi installé quelques fichiers audios et les fichiers de configuration qui devraient vous aider à démarrer. Comme avec tout central téléphonique, vous naviguerez dans cette démonstration en appuyant sur les chiffres. Si vous utilisez un pilote de canaux Console, au lieu d'un vrai téléphone, vous pouvez utilisez les commandes Dial, Answer et Hangup pour simuler les actions d'un téléphone standard.
+demo-echodone: Le test d'écho est maintenant terminé.
+demo-echotest: Vous etes sur le point d'entreprendre un test d'écho. Dans ce mode, tout ce que vous direz vous sera répété dès que reçu. Le but de ce test est pour vous donner un exemple audible de latence entre vous et et la machine qui exécute l'application de test d'écho. Vous pourrez quitter le test en raccrochant ou en appuyant sur dièse.
+demo-enterkeywords: Veuillez entrer un ou plusieurs mots clés, séparés par l'étoile puis appuyez sur dièse.
+demo-instruct: Si vous voulez avoir plus d'information technique à propos d'Asterisk, appuyez sur 2 maintenant. Si vous préférez tester les capacités de voix sur IP d'Asterisk, vous pouvez composer 500 pour essayer une démo IAX, sur un serveur chez Digium. Pour que ce test fonctionne, vous devez être connecté à l'Internet et avoir au moins une connexion avec un modem 28.8 kilobits. Pour effectuer un test d'écho, composer 600. Ce test est fort utile lorsque vous êtes connecté à ce serveur Asterisk, a partir d'un autre endroit. La configuration de base n'a qu'un seul usager avec le poste 1234 et le mot de passe 4242. Cet usager est configuré pour faire sonner la console quand son poste est appelé. Si vous composer 1234, vous pouvez essayer de faire sonner la console. Si la console est occupée ou non-disponible, vous pourrez laisser un message vocal. Pour récupérer les messages vocaux de cet usager, composer le poste 8500, afin d'entrer dans le système de la messagerie vocale. Finalement, vous pouvez appuyez sur dièse pour vous déconnecter du central téléphonique.
+demo-moreinfo: Ce message n'a pas encore été écrit.
+demo-nogo: Je suis désolé, la connexion avec le serveur de démontration de Digium n'a pu être établie. Vous trouverez des information de déboguage sur la console d'Asterisk.
+demo-nomatch: Désolé, il n'y a pas d'entrées pour ces mots clés.
+demo-thanks: Au revoir. Merci d'avoir essayé le projet libre Asterisk.
+descending-2tone: [descending tones]
+dictate/both_help: Pour faire une pause, appuyez sur étoile, pour entrer un nouveau fichier de dictée, appuyez sur dièse.
+dictate/enter_filename: Veuillez composer le numéro de fichier pour la dictée, suivi du dièse ou appuyez seulement sur dièse pour quitter.
+dictate/forhelp: pour l'aide, appuyez sur 0.
+dictate/pause: pause
+dictate/paused: suspendu
+dictate/play_help: pour enregistrer, appuyez sur 1. pour faire une écoute rapide 2, pour reculer 7, et pour avancer appuyez sur 8.
+dictate/playback: écoute
+dictate/playback_mode: mode écoute
+dictate/record: enregistrer
+dictate/record_help: pour revenir au mode écoute, appuyez sur 1, pour tronquer et recommencer, appuyez sur 8.
+dictate/record_mode: mode d'enregistrement
+dictate/truncating_audio: Mise a jour de l'enregistrement
+digits/0: zéro
+digits/10: dix
+digits/11: onze
+digits/12: douze
+digits/13: treize
+digits/14: quatorze
+digits/15: quinze
+digits/16: seize
+digits/17: dix-sept
+digits/18: dix-huit
+digits/19: dix-neuf
+digits/1: un
+digits/20: vingt
+digits/2: deux
+digits/30: trente
+digits/3: trois
+digits/40: quarante
+digits/4: quatre
+digits/50: cinquante
+digits/5: cinq
+digits/60: soixante
+digits/6: six
+digits/70: soixante-dix
+digits/7: sept
+digits/80: quatre-vingt
+digits/8: huit
+digits/90: quatre-vingt-dix
+digits/9: neuf
+digits/a-m: A.M.
+digits/day-0: Dimanche
+digits/day-1: Lundi
+digits/day-2: Mardi
+digits/day-3: Mercredi
+digits/day-4: Jeudi
+digits/day-5: Vendredi
+digits/day-6: Samedi
+digits/h-10: dixième
+digits/h-11: onzième
+digits/h-12: douzième
+digits/h-13: treizième
+digits/h-14: quatorzième
+digits/h-15: quinzième
+digits/h-16: seixième
+digits/h-17: dix-septième
+digits/h-18: dix-huitième
+digits/h-19: dix-neuvième
+digits/h-1: premier
+digits/h-20: vingtième
+digits/h-2: deuxième
+digits/h-30: trentième
+digits/h-3: troisième
+digits/h-40: quarantième
+digits/h-4: quatrième
+digits/h-50: cinquantième
+digits/h-5: cinquième
+digits/h-60: soixantième
+digits/h-6: sixième
+digits/h-70: soixante-dixième
+digits/h-7: septième
+digits/h-80: soixante-dixième
+digits/h-8: huitième
+digits/h-90: quatre-vingt-dixième
+digits/h-9: neuvième
+digits/h-billion: millardième
+digits/h-hundred: centième
+digits/h-million: millionième
+digits/h-thousand: millième
+digits/hundred: cent
+digits/million: million
+digits/minus: moins
+digits/mon-0: Janvier
+digits/mon-10: Novembre
+digits/mon-11: Décembre
+digits/mon-1: Février
+digits/mon-2: Mars
+digits/mon-3: Avril
+digits/mon-4: Mai
+digits/mon-5: Juin
+digits/mon-6: Juillet
+digits/mon-7: Août
+digits/mon-8: Septembre
+digits/mon-9: Octobre
+digits/oclock: heure
+digits/p-m: P.M.
+digits/pound: dièse
+digits/star: étoile
+digits/thousand: mille
+digits/today: aujourd'hui
+digits/tomorrow: demain
+digits/yesterday: hier
+dir-firstlast: premieres lettres du prénom ou nom de la personne que vous désirez joindre.
+dir-instr: S'il s'agit de la personne que vous tentez de joindre, appuyez sur 1. Sinon, appuyez sur étoile.
+dir-intro-fn: Bienvenue dans le répertoire d'Asterisk. À l'aide de votre clavier téléphonique, veuillez composer les 3 premières lettres du prénom de la personne que vous tentez de joindre. Pour la lettre Q, appuyez sur 7 et pour la lettre Z, appuyer sur 9.
+dir-intro: Bienvenue dans le répertoire d'Asterisk. À l'aide de votre clavier téléphonique, veuillez composer les 3 premières lettres du nom de famille de la personne que vous tentez de joindre. Pour la lettre Q, appuyez sur 7 et pour la lettre Z, appuyer sur  9.
+dir-last: premieres lettres du nom de la personne que vous désirez joindre.
+dir-multi1: appuyez sur
+dir-multi2: pour
+dir-multi3: la extension
+dir-multi9: Appuyez sur 9 pour plus d'entrées.
+dir-nomatch: Aucune entrée ne correspond à votre sélection.
+dir-nomore: Aucune autre entrée ne correspond à votre sélection dans le répertoire.
+dir-pls-enter: Veuillez entrer les
+dir-usingkeypad:
+dir-welcome:
+disabled: désactivé
+do-not-disturb: Ne pas déranger
+dollars: dollars
+enabled: activé
+enter-num-blacklist: Veuillez entrez le numéro à bannir
+entr-num-rmv-blklist: Veuillez entrer le numéro à rayer de la liste noire
+extension: poste
+feature-not-avail-line: Cette fonctionnalité n'est pas disponible sur cette ligne.
+followme/call-from: Appel entrant de
+followme/no-recording: Vous avez un appel entrant
+followme/options: Pour accepter cet appel appuyez sur 1, pour le refuser, appuyez sur 2.
+followme/pls-hold-while-try: Veuillez demeurez en ligne pendant que j'essai de localiser la personne que vous désirez joindre.
+followme/sorry: Désolé, je n'ai pas réussi à localiser la personne que vous désirez joindre.
+followme/status: La personne que vous désirez joindre n'est pas à son bureau, je vais tenter de la localiser pour vous.
+for: Pour (emphase)
+from-unknown-caller: d'un appelant inconnu
+goodbye: Aurevoir
+hello-world: Salut tout le monde.
+hello: Allo
+hours: heures
+if-correct-press: Si c'est exact appuyer…
+im-sorry: Je suis désolé
+info-about-last-call: Information à propos du dernier appel
+invalid: Désolé, ce numéro de poste n'est pas valide.  Veuillez essayer de nouveau.
+is-in-use: est en utilisation
+is-set-to: est fixé à
+is: est
+letters/a: a
+letters/at: arobas
+letters/b: b
+letters/c: c
+letters/d: d
+letters/dash: trait d'union
+letters/dollar: dollar
+letters/dot: point
+letters/e: e
+letters/equals: égal
+letters/exclaimation-point: point d'exclamation
+letters/f: f
+letters/g: g
+letters/h: h
+letters/i: i
+letters/j: j
+letters/k: k
+letters/l: l
+letters/m: m
+letters/n: n
+letters/o: o
+letters/p: p
+letters/plus: plus
+letters/q: q
+letters/r: r
+letters/s: s
+letters/slash: barre-oblique
+letters/space: espace
+letters/t: t
+letters/u: u
+letters/v: v
+letters/w: w
+letters/x: x
+letters/y: y
+letters/z: z
+location: Endroit
+lowercase: Minuscule
+minute: minute
+minutes: minutes
+num-was-successfully: le numéro a été correctement
+number-not-answering: le numéro ne répond pas
+number: numéro
+one-moment-please: un moment s'il-vous-plaît
+pbx-invalid: Désolé, ce numéro de poste n'est pas valide.  Veuillez essayer de nouveau.
+pbx-invalidpark: Désolé, il n'y a pas d'appels en attente à ce poste. Veuillez essayer de nouveau.
+pbx-parkingfailed: Tentative de placement d'appel échoué.
+pbx-transfer: Transfert.
+phonetic/a_p: alpha
+phonetic/b_p: bravo
+phonetic/c_p: charlie
+phonetic/d_p: delta
+phonetic/e_p: echo
+phonetic/f_p: foxtrot
+phonetic/g_p: golf
+phonetic/h_p: hotel
+phonetic/i_p: india
+phonetic/j_p: juliet
+phonetic/k_p: kilo
+phonetic/l_p: lima
+phonetic/m_p: mike
+phonetic/n_p: november
+phonetic/o_p: oscar
+phonetic/p_p: papa
+phonetic/q_p: quebec
+phonetic/r_p: romeo
+phonetic/s_p: sierra
+phonetic/t_p: tango
+phonetic/u_p: uniform
+phonetic/v_p: victor
+phonetic/w_p: whiskey
+phonetic/x_p: xray
+phonetic/y_p: yankee
+phonetic/z_p: zulu
+please-try-again: Essayez à nouveau
+please-try-call-later: Veuillez reessayer plus tard.
+pls-hold-while-try: Veuillez patienter pendant que l'on achemine votre appel
+pls-try-call-later: Veuillez essayer votre appel plus tard
+pm-invalid-option: Cette option est invalide, veuillez essayer a nouveau
+priv-callee-options: Si desirez qu'a partir de maintenant cet appelant vous conctact directement , appuyez sur 1. Si vous desirez que cet appelant soit toujours envoyez a votre boite vocale, 2. Pour envoyer cet appelant dans les menus de tortures, 3. Pour envoyer cet appelant au menu poli (ne m'appelez plus, jamais), 4. Si vous desirez envoyer cet appelant a votre boite vocale, maintenant, mais qu'il soit, a l'avenir, autorise a joindre directement, appuyez sur 5.
+priv-callpending: J'ai un appelant qui attend, qui se décrit comme...
+priv-introsaved: Merci. Veuillez attendre pendant que je tente d'établir la connexion avec votre destinataire.
+priv-recordintro: À la tonalité, veuillez dire votre nom.
+privacy-incorrect: Désolé, ce numéro n'est pas valide.
+privacy-prompt: Veuillez entrer votre numéro de téléphone en commençant par l'indicatif régional.
+privacy-thankyou: Merci
+privacy-to-blacklist-last-caller: Le dernier appel etait de ...
+privacy-unident: Le numéro que vous tentez de joindre n'accepte pas les appels inconnus.
+queue-callswaiting: En attente pour parler à un préposé
+queue-holdtime: Le temps d'attente est évalué à
+queue-less-than: moins de
+queue-minute: minute
+queue-minutes: minutes
+queue-periodic-announce: Tous nos représentants sont presentement occupes. Veuillez demeurez en ligne et le prochain représentant disponible vous répondra sous peu.
+queue-quantity1: Il y a présentement plus de
+queue-quantity2: appelants en attente pour parler à un représentant.
+queue-reporthold: Temps d'attente
+queue-seconds: Secondes
+queue-thankyou: Merci de votre patience.
+queue-thereare: Vous êtes présentement l'appellant numéro
+queue-youarenext: votre appel sera le prochain à être traité.
+removed: Enleve
+screen-callee-options: Vous avez ces options:Pous accepter l'appel immédiatement, appuyez sur 1. Pour dirigez cet appel à la boite vocale, 2. Pour envoyer cet appel dans les menus de torture, 3. Pour envoyer cet appelant au menu poli (ne m'appelez plus, jamais), appuyez sur 4.
+second-time: seconde
+second: seconde
+seconds: secondes
+simul-call-limit-reached: La limite d'appel simultane a ete atteinte
+something-terribly-wrong: Il y a quelque chose de vraiment mauvais.
+sorry-youre-having-problems: Desole, vous avez des problemes
+sorry: Nous somme desolé
+speed-dial-empty: La composition abregée que vous avez accédez n'existe pas.
+speed-dial: Composition abregée
+spy-agent: Agent
+spy-console: la console
+spy-dahdi:
+spy-h323: H 3 23
+spy-iax2: "eeks"
+spy-iax: I A X
+spy-jingle: tintement
+spy-local: local
+spy-mgcp: M G C P
+spy-misdn: M I S D N
+spy-mobile: Bluetooth
+spy-nbs: N B S
+spy-sip: SIP
+spy-skinny: Skinny
+spy-unistim: Unistim
+spy-usbradio: Radio U S B
+spy-zap: Zap
+ss-noservice: Le numéro composé n'est pas en service. Veuillez vérifier le numéro et essayer de nouveau.
+telephone-number: Numero de telephone
+time: Heure
+to-call-this-number: Pour appeler ce numero
+to-extension: A l'extension
+to-listen-to-it: Pour l'ecouter
+to-rerecord-it: Pour le re-enregistrer
+transfer: Veuillez patienter, pendant que je tente d'établir la connexion.
+tt-allbusy: Tous nos préposés sont présentement occupés. Votre appel est important pour nous, merci de bien vouloir patienter afin de conserver votre priorité d'appel
+tt-monkeys: [Son de singes qui crient]
+tt-monkeysintro: Ils ont étés emportés par des singes.
+tt-somethingwrong: Ça ne fonctionne vraiment pas.
+tt-weasels: Des fouineurs ont mangé notre système téléphonique.
+unidentified-no-callback: Non-identifié ou retenu et ne peut pas etre rappler
+uppercase: Majuscule
+vm-advopts: pour les options avancés, appuyez sur 3
+vm-and: et
+vm-calldiffnum: pour entrer un numéro différent, appuyez sur 2
+vm-changeto: Changer pour quel dossier?
+vm-Cust1: Dossier 5
+vm-Cust2: Dossier 6
+vm-Cust3: Dossier 7
+vm-Cust4: Dossier 8
+vm-Cust5: Dossier 9
+vm-delete: Pour effacer ce message, appuyez sur 7.
+vm-deleted: Message effacé.
+vm-dialout: Veuillez patienter pendant que j'établi la connexion.
+vm-duration: Ce message dure
+vm-enter-num-to-call: entrez le numéro que vous désirez appeler.
+vm-extension: poste
+vm-Family: famille
+vm-first: premier
+vm-for: pour
+vm-forward-multiple: Pour envoyer ce message, appuyez sur 1. Pour ajouter un autre destinataire, appuyez sur 2.
+vm-forward: Pour entrer un numéro de poste, appuyez sur 1, pour accéder au répertoire, appuyez sur 2.
+vm-forwardoptions: Pour ajouter une note au message avant de le transmettre, appuyez sur 1, pour transmettre le message tel quel, appuyez sur 2.
+vm-Friends: amis
+vm-from-extension: du poste
+vm-from-phonenumber: du numéro de téléphone
+vm-from: de
+vm-goodbye: Au revoir.
+vm-helpexit: Pour l'aide, appuyez sur étoile; pour quitter, appuyez sur dièse.
+vm-INBOX: nouveau
+vm-incorrect-mailbox: Accès refusé. Veuillez recomposer votre numéro de boite vocale.
+vm-incorrect: Accès refusé.
+vm-instructions: Pour écouter vos messages appuyez sur 1. Vous pouvez, en tout temps, quitter la messagerie vocale en appuyant sur dièse.
+vm-intro: Veuillez laissez votre message après le bip sonore. Lorsque vous aurez terminé, veuillez raccrocher ou appuyez sur dièse.
+vm-invalid-password:
+vm-invalidpassword: Ceci n'est pas un mot de passe valide. Veuillez essayer de nouveau.
+vm-isonphone: est présentement en ligne
+vm-isunavail: n'est pas disponible
+vm-last: dernier
+vm-leavemsg: Pour envoyer un message vocal, appuyez sur 5.
+vm-login: Messagerie Asterisk. Veuillez composer votre numéro de boite vocale.
+vm-mailboxfull: Désolé, mais cette boîte vocale ne peut recevoir de nouveaux messages.
+vm-marked-nonurgent: Le status d'urgent a été enlevé pour ce message.
+vm-marked-urgent: Ce message a été qualifié d'urgent.
+vm-message: message
+vm-messages: messages
+vm-minutes: minutes
+vm-mismatch: Les mots de passes que vous avez entrés ne correspondent pas.  Veuillez essayer de nouveau.
+vm-msgforwarded: Votre message a été acheminé.
+vm-msginstruct: Pour écouter le message suivant, appuyez sur 6, pour répétér ce message appuyez sur  5, pour écouter le message précédent appuyez sur 4, pour effacer ou récupérer un message appuyez sur  7, pour quitter la boite vocale appuyez sur dièse. Durant l'écoute du message,  vous pouvez appuyez sur * pour revenir et sur # pour une avance rapide.
+vm-msgsaved: Votre message a été sauvegardé.
+vm-newpassword: Veuillez composer votre nouveau mot de passe, suivi du dièse.
+vm-newuser: Bienvenue à la messagerie Comedian. Pour commencer, nous allons vous aider à configurer votre votre boîte vocale.
+vm-next: Pour passer au message suivant, appuyez sur 6.
+vm-no: aucun
+vm-nobodyavail: Personne n'est en mesure de prendre votre appel en ce moment.
+vm-nobox: Vous ne pouvez répondre à ce message car l'expéditeur ne possède pas de boîte vocale.
+vm-nomore: Aucun autre message.
+vm-nonumber: désolé, ce numéro m'est inconnu.
+vm-num-i-have: le numéro est.
+vm-Old: ancien
+vm-onefor-full: Appuyez sur un pour écouter vos
+vm-onefor: Appuyez sur 1 pour
+vm-options: Pour enregistrer: votre message de non-disponibilité, appuyez sur 1.  Votre message occupé,  2. votre nom, 3. Votre message temporaire, 4. Pour changer votre mot de passe, appuyez sur 5.Pour retourner au menu principal, appuyez sur étoile.
+vm-opts-full: Pour accéder aux messages sauvegardés dans d'autres répertoires, appuyez sur 2, pour enregistrer un message pour une autre boite vocale, appuyez sur 3 , pour la gestion des messages d'acceuil et des mot de passes, appuyez sur 0.
+vm-opts: Pour changer de dossiers appuyez sur 2, pour les options avancées, appuyez sur 3, pour les options de la boîte vocale, appuyez sur zéro.
+vm-passchanged: Votre mot de passe a été changé.
+vm-password: mot de passe
+vm-pls-try-again: Veuillez essayez de nouveau.
+vm-press: appuyez sur...
+vm-prev: Pour le message précédent, appuyez sur 4.
+vm-reachoper: pour obtenir la réception, appuyez sur 0
+vm-rec-busy: Après le bip sonore, enregistrez votre message indiquant que vous êtes occupés et appuyez sur dièse.
+vm-rec-name: Après le timbre sonore, dites votre nom et appuyer sur dièse.
+vm-rec-temp: Après le bip, enregistrez votre message temporaire, puis appuyez sur dièse.
+vm-rec-unv: Après le timbre sonore, enregistrez votre message indiquant que vous n'etes pas disponible et appuyez sur dièse.
+vm-received: reçu
+vm-record-prepend: À la tonalité, veuillez enregistrer une introduction pour le message transféré, lorsque terminé, appuyez sur dièse.vm-review-nonurgent: Pour enlever ce message d'urgent, veuillez faire 4.
+vm-reenterpassword: Composez votre mot de passe de nouveau, suivi du dièse.
+vm-repeat: Pour réentendre ce message, appuyez sur 5.
+vm-review-nonurgent: Pour enlever le status urgent de ce message, veuillez faire le 4.
+vm-review-urgent: Pour noter ce message d'urgent, veuillez faire 4.
+vm-review: Pour accepter l'enregistrement appuyez sur 1, pour l'écouter, 2, pour ré-enregistrer, appuyez sur 3.
+vm-saved: conservé
+vm-savedto: conservé dans
+vm-savefolder: Dans quel dossier souhaitez-vous conserver ce message?
+vm-savemessage: ou pour conserver ce message, appuyez sur 9
+vm-saveoper: pour accepter cet enregistrement, appuyez sur 1, ou continuez à patienter
+vm-sorry: Désolé, je n'ai pas bien compris votre réponse.
+vm-star-cancel: pour annuler, appuyez sur étoile
+vm-starmain: pour retourner au menu principal, appuyez sur étoile
+vm-tempgreetactive: Votre message temporaire est actuellement en fonction.
+vm-tempgreeting2: Pour enregistrer votre message temporaire, appuyez sur 1. Pour effacer votre message temporaire appuyez sur 2.
+vm-tempgreeting: Pour enregistrer votre message temporaire, appuyez sur 1.
+vm-tempremoved: Votre message d'accueil - temporaire - a été supprimé.
+vm-then-pound: ensuite appuyez sur dièse
+vm-theperson: La personne au poste
+vm-tmpexists: Il y a déjà un message d'acceuil temporaire, ce qui remplacera votre message d'accueil standard.
+vm-tocallback: pour joindre la personne qui a envoyé ce message, appuyez sur 2
+vm-tocallnum: pour joindre ce numéro, appuyez sur 1
+vm-tocancel: ...ou sur dièse pour annuler.
+vm-tocancelmsg: Pour annuler ce message, appuyer sur étoile.
+vm-toenternumber: pour entrer un numéro, appuyez sur 1
+vm-toforward: Pour transférer ce message à un autre utilisateur, appuyez sur 8
+vm-tohearenv: pour entendre l'enveloppe du message, appuyez sur 3
+vm-tomakecall: pour placer un appel, appuyez sur 4
+vm-tooshort: votre message est trop court
+vm-toreply: pour répondre, appuyer sur 1
+vm-torerecord: pour ré-enregistrer votre message, appuyez sur 3.
+vm-undelete: Pour récupérer ce message, appuyez sur 7.
+vm-undeleted: Message récupéré.
+vm-unknown-caller: d'un appellant inconnu
+vm-Urgent: urgent
+vm-whichbox: Pour laisser un message, entrez le numéro de la boîte vocale.
+vm-Work: travail
+vm-youhave: vous avez
+with: Avec
+you-entered: Vous avez entrer
+your: Votre

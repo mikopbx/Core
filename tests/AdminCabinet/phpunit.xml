@@ -1,0 +1,40 @@
+<!--
+  ~ Copyright (C) MIKO LLC - All Rights Reserved
+  ~ Unauthorized copying of this file, via any medium is strictly prohibited
+  ~ Proprietary and confidential
+  ~ Written by Nikolay Beketov, 5 2020
+  ~
+  -->
+
+ <phpunit bootstrap="../../vendor/autoload.php">
+    <testsuites>
+        <testsuite name="TestMikoPBX">
+            <file>Tests/LoginTest.php</file>
+            <file>Tests/FillPBXSettingsTest.php</file>
+            <file>Tests/CustomFileChangeTest.php</file>
+            <file>Tests/CreateAudioFilesTest.php</file>
+            <file>Tests/CreateSIPProviders.php</file>
+            <file>Tests/CreateIAXProviders.php</file>
+            <file>Tests/CreateIncomingCallRules.php</file>
+            <file>Tests/CreateDefaultIncomingCallRule.php</file>
+            <file>Tests/CreateOutgoingCallRules.php</file>
+            <file>Tests/CreateOutOfWorkPeriodsTest.php</file>
+            <file>Tests/CreateCallQueue.php</file>
+            <file>Tests/CreateIVRMenusTest.php</file>
+            <file>Tests/CreateExtensionsTest.php</file>
+            <file>Tests/FillDataTimeSettings.php</file>
+            <file>Tests/CreateMOHAudioFilesTest.php</file>
+            <file>Tests/CreateAmiUsersTest.php</file>
+            <file>Tests/CreateFail2BanRules.php</file>
+            <file>Tests/CreateFirewallRules.php</file>
+            <file>Tests/CreateConferenceRoomsTest.php</file>
+            <file>Tests/CreateDialPlanApplicationTest.php</file>
+            <file>Tests/NetworkInterfacesTest.php</file>
+            <file>Tests/ChangeExtensionsSettingsTest.php</file>
+            <file>Tests/ChangeCallQueueTest.php</file>
+            <file>Tests/DeleteExtensionTest.php</file>
+            <file>Tests/ChangeLicenseKeyTest.php</file>
+            <file>Tests/InstallModulesTest</file>
+        </testsuite>
+    </testsuites>
+</phpunit>

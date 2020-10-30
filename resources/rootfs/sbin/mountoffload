@@ -1,0 +1,224 @@
+#!/bin/sh
+
+MD5_BUILD_INFO=$(/bin/busybox md5sum /etc/version.buildtime 2>/dev/null | /bin/busybox awk '{print $1}' 2>/dev/null);
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+
+export PATH
+
+createBootConfFiles()
+{
+  usrDir='/offload/rootfs/usr';
+
+  rcDir="${usrDir}/www/src/Core/Rc";
+  if [ -d "${rcDir}" ]; then
+        echo " - Create symlink for /etc/rc ..."
+        rm -rf /etc/rc;
+        ln -s "${rcDir}" /etc/rc;
+        # chmod +x -R "${rcDir}"
+  fi
+  sleep 5;
+
+  confFile="${usrDir}/www/config/mikopbx-settings.json";
+  if [ -f "${confFile}" ]; then
+        echo " - Copy phalcon config file to /etc/inc ..."
+        mkdir -p /etc/inc/;
+        cp "$confFile" /etc/inc/;
+  fi
+}
+
+checkOffloadDisk()
+{
+  CHECK_RESULT=0; # Все ок
+  pathToFile="/offload/version.buildtime";
+  if [ ! -f "${pathToFile}"  ] ; then
+    echo " - File ${pathToFile} not found";
+    CHECK_RESULT=1; # Файл не существует.
+	else
+    md5OffloadBI=$(/bin/busybox md5sum $pathToFile 2>/dev/null | /bin/busybox awk '{print $1}' 2>/dev/null);
+    if [ ! "${md5OffloadBI}" = "${MD5_BUILD_INFO}" ] ; then
+      CHECK_RESULT=2; # Хэш сумма не сходится.
+      echo " - Hash file ${pathToFile} verification failed";
+   fi
+	fi
+}
+
+mountoffload()
+{
+	disk=$1;
+	uuid=$(/sbin/blkid -ofull $1 | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^UUID" | /bin/busybox awk -F "\"" '{print $2}' | /bin/busybox head -n 1);
+  type=$(/sbin/blkid -ofull $1 | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^TYPE="| /bin/busybox awk -F "\"" '{print $2}' | /bin/busybox head -n 1);
+	umount -f /offload 2> /dev/null
+	mount -t "${type}" -r UUID="$uuid" /offload 2> /dev/null;
+
+  MOUNT_RESULT=$?;
+  checkOffloadDisk;
+  if [ ! "${CHECK_RESULT}" = "0" ] ; then
+	  umount -f /offload 2> /dev/null
+	  MOUNT_RESULT="${CHECK_RESULT}";
+    sleep 3;
+  fi
+	createBootConfFiles
+}
+
+mountConfRecover()
+{
+	offloaddisk=$1;
+	echo " - Attempting to mount existing configuration..."
+	
+	# Создаем каталог для монтирования (старая конфигурация). 
+	rec_dir='/conf.recover/';
+	mkdir -p "${rec_dir}";
+	
+	# Получаем список дисков. 
+	diskrs=$(fdisk -l | grep "^/dev/" | busybox cut -c 6-8 | busybox uniq)
+	for diskr in $diskrs
+	do
+		if [ "${diskr}" = "${offloaddisk}" ]; then
+			# Проверка на уже смонтированный диск.
+			echo " - Skip ${diskr}, already mount..."
+			continue
+		fi
+
+		if [ ! -b "/dev/${diskr}3" ]; then
+			echo " - Skip ${diskr}, part 3 not found..."
+			continue
+		fi;
+
+	    type=$(/sbin/blkid -o full "/dev/${diskr}3" | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^TYPE" | /bin/busybox awk -F "\"" '{print $2}' | /bin/busybox head -n 1);
+		if [ -f "/sbin/fsck.${type}" ]; then
+		    "/sbin/fsck.${type}" -f -p "/dev/${diskr}3" > /dev/null 2> /dev/null;
+		    echo " - Trying fsck /dev/${diskr}3 ... returned: $?"
+		fi
+
+        uuid=$(/sbin/blkid -o full "/dev/${diskr}3" | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^UUID" | /bin/busybox awk -F "\"" '{print $2}' | /bin/busybox head -n 1);
+		mount -t "${type}" -r UUID="${uuid}" "${rec_dir}"
+		echo " - Trying mount ${diskr} fs ${type} ... returned: $?"
+		if [ -d "${rec_dir}conf" ] && [ ! -f "${rec_dir}livecd"  ] ; then
+			echo " - Found existing configuration on ${diskr}3!"
+			exit 0
+		else
+			umount -f "${rec_dir}" > /dev/null 2> /dev/null;
+			rm -rf "${rec_dir}";
+		fi
+	done
+	
+}
+
+rm -rf /tmp/freeoffload;
+
+################################################################################
+# LIVE CD-ROM / LIVE USB
+################################################################################
+echo " - Waiting for connect device....."
+busybox sleep 4;
+
+cddev=$(/sbin/sysctl -n dev.cdrom.info | /bin/busybox grep "drive name" | /bin/busybox cut -f 3)
+length=0
+/sbin/blkid /dev/${cddev} > /dev/null 2>&1
+if [ "$?" -eq 0 ]; then
+	length=${#cddev}
+fi
+echo " - Attempting to mount /boot partition..."
+if [ "$length" -gt 2 ]; then
+	disks=${cddev}
+else
+	disks=$(fdisk -l | grep "^/dev/" | /bin/busybox cut -c 6-8 | /bin/busybox uniq)
+fi
+for disk in $disks
+do
+	if [ "$length" -gt 2 ]; then
+		mountoffload /dev/${disk};
+	else
+		mountoffload /dev/${disk}1;
+	fi
+	echo " - Trying ${disk} mount returned: $MOUNT_RESULT"
+	if [ -f /offload/livecd ]; then
+		echo " - Found LIVECD flag file...";
+		createBootConfFiles
+		mountConfRecover $disk;
+		# Все, что необходимо было смонтировано. 
+		exit 0
+	fi
+	umount -f /offload 2> /dev/null
+done
+
+################################################################################
+# HDD
+################################################################################
+
+echo
+echo " - Attempting to mount /offload partition..."
+disks=$(fdisk -l | /bin/busybox grep "^/dev/" | /bin/busybox cut -c 6-8 | /bin/busybox uniq)
+for disk in $disks
+do
+	mountoffload /dev/${disk}2;
+	echo " - Trying ${disk} mount returned: $MOUNT_RESULT"
+	if [ -d /offload/rootfs ]; then
+		echo " - Found rootfs!"
+		exit 0
+	fi
+	umount -f /offload > /dev/null
+	echo " - Failed to find rootfs!"
+done
+
+################################################################################
+# SD CARD
+################################################################################
+
+echo
+mountoffload /dev/mmcblk0p2;
+echo " - Trying mmcblk0 mount returned: $MOUNT_RESULT"
+if [ -d /offload/rootfs ]; then
+    echo " - found rootfs on SD CARD!"
+    exit 0
+fi
+umount -f /offload
+echo " - Failed to find rootfs!"
+
+################################################################################
+# USB 
+################################################################################
+
+echo
+echo " - Waiting for disks to settle and trying again..."
+/bin/busybox sleep 10
+
+echo " - checking for liveusb..."
+echo " - attempting to mount /boot partition..."
+disks=$(fdisk -l | /bin/busybox grep "^/dev/" | /bin/busybox cut -c 6-8 | /bin/busybox uniq)
+for disk in $disks
+do
+	mountoffload /dev/${disk}1;
+	echo " - trying ${disk} mount returned: $MOUNT_RESULT"
+	if [ -f /offload/livecd ]; then
+		echo " - found LIVE USB flag file...";
+		mountConfRecover $disk;
+		exit 0
+	fi
+	umount -f /offload
+done
+
+echo
+disks=$(fdisk -l | /bin/busybox grep "^/dev/" | /bin/busybox cut -c 6-8 | /bin/busybox uniq)
+for disk in $disks
+do
+	mountoffload /dev/${disk}2;
+	echo " - trying ${disk} mount returned: $MOUNT_RESULT"
+	if [ -d /offload/rootfs ]; then
+		echo " - found rootfs!"
+		exit 0
+	fi
+	echo " - failed to find rootfs!"
+done
+
+echo
+echo "The system was unable to find the /offload partition!"
+echo
+echo "Send in the output of (ls /dev) and (fdisk -l) to the"
+echo "development team to get this fixed."
+echo "Thanks...and sorry this is not already working better!"
+echo
+echo "Here's a prompt, see what you can see..."
+exec /bin/sh
+
+exit 1

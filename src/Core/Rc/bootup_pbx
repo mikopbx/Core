@@ -1,0 +1,30 @@
+#!/usr/bin/php -f
+<?php
+ /**
+  * Copyright © MIKO LLC - All Rights Reserved
+  * Unauthorized copying of this file, via any medium is strictly prohibited
+  * Proprietary and confidential
+  * Written by Alexey Portnov, 5 2018
+  */
+namespace MikoPBX\Core\Rc;
+
+use MikoPBX\Core\System\{
+    Util,
+    SystemLoader
+};
+require_once('Globals.php');
+
+Util::echoWithSyslog(' - Start /etc/rc/bootup_pbx ...'.PHP_EOL);
+while (true){
+     $pid = Util::getPidOfProcess('beanstalkd');
+     if(empty($pid)){
+         Util::echoWithSyslog(' - Wait for start beanstalkd deamon ...'.PHP_EOL);
+         sleep(2);
+     }else{
+         Util::echoWithSyslog(' - Start SystemLoader ...'.PHP_EOL);
+         $mikoPBX = new SystemLoader();
+         $mikoPBX->startMikoPBX();
+         break;
+     }
+}
+

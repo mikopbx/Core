@@ -1,0 +1,17 @@
+"use strict";
+
+/*
+ * Copyright (C) MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Nikolay Beketov, 12 2019
+ *
+ */
+$(document).ready(function () {
+  $('.popuped').popup();
+  $('div[data-content], a[data-content]').popup();
+  $('#loader').removeClass('active');
+  $('#loader-row').hide();
+  $('#content-frame').show();
+});
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy9tYWluL2Zvb3Rlci5qcyJdLCJuYW1lcyI6WyIkIiwiZG9jdW1lbnQiLCJyZWFkeSIsInBvcHVwIiwicmVtb3ZlQ2xhc3MiLCJoaWRlIiwic2hvdyJdLCJtYXBwaW5ncyI6Ijs7QUFBQTs7Ozs7OztBQVNBQSxDQUFDLENBQUNDLFFBQUQsQ0FBRCxDQUFZQyxLQUFaLENBQWtCLFlBQU07QUFDdkJGLEVBQUFBLENBQUMsQ0FBQyxVQUFELENBQUQsQ0FBY0csS0FBZDtBQUNBSCxFQUFBQSxDQUFDLENBQUMsb0NBQUQsQ0FBRCxDQUF3Q0csS0FBeEM7QUFDQUgsRUFBQUEsQ0FBQyxDQUFDLFNBQUQsQ0FBRCxDQUFhSSxXQUFiLENBQXlCLFFBQXpCO0FBQ0FKLEVBQUFBLENBQUMsQ0FBQyxhQUFELENBQUQsQ0FBaUJLLElBQWpCO0FBQ0FMLEVBQUFBLENBQUMsQ0FBQyxnQkFBRCxDQUFELENBQW9CTSxJQUFwQjtBQUNBLENBTkQiLCJzb3VyY2VzQ29udGVudCI6WyIvKlxuICogQ29weXJpZ2h0IChDKSBNSUtPIExMQyAtIEFsbCBSaWdodHMgUmVzZXJ2ZWRcbiAqIFVuYXV0aG9yaXplZCBjb3B5aW5nIG9mIHRoaXMgZmlsZSwgdmlhIGFueSBtZWRpdW0gaXMgc3RyaWN0bHkgcHJvaGliaXRlZFxuICogUHJvcHJpZXRhcnkgYW5kIGNvbmZpZGVudGlhbFxuICogV3JpdHRlbiBieSBOaWtvbGF5IEJla2V0b3YsIDEyIDIwMTlcbiAqXG4gKi9cblxuXG4kKGRvY3VtZW50KS5yZWFkeSgoKSA9PiB7XG5cdCQoJy5wb3B1cGVkJykucG9wdXAoKTtcblx0JCgnZGl2W2RhdGEtY29udGVudF0sIGFbZGF0YS1jb250ZW50XScpLnBvcHVwKCk7XG5cdCQoJyNsb2FkZXInKS5yZW1vdmVDbGFzcygnYWN0aXZlJyk7XG5cdCQoJyNsb2FkZXItcm93JykuaGlkZSgpO1xuXHQkKCcjY29udGVudC1mcmFtZScpLnNob3coKTtcbn0pO1xuIl19

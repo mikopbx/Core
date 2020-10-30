@@ -1,0 +1,11 @@
+server {
+    listen      <WEBPort>;
+    server_name   default;
+    resolver <DNS>;
+
+    # locations files
+    include mikopbx/locations/*.conf;
+
+ 	# module locations files
+    include mikopbx/modules_locations/*.conf;
+}

@@ -1,0 +1,10 @@
+#!/bin/sh
+/sbin/freeupoffload
+/sbin/freestorage
+
+if [ "$1" = "-r" ]
+then
+    /sbin/mikopbx_reboot;
+else
+	/sbin/poweroff;
+fi

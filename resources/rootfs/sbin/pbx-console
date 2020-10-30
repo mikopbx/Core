@@ -1,0 +1,102 @@
+#!/bin/sh
+
+#
+# Copyright © MIKO LLC - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Alexey Portnov, 9 2020
+#
+
+subcmd=$1;
+safeScript=$(crontab -l | cut -d ' ' -f8 | grep Safe);
+case "${subcmd}" in
+services)
+   action=$2;
+   case "${action}" in
+   stop-all)
+      pids=$(ps | grep php | grep Worker | cut -d ' ' -f1);
+      if [ "${pids}x" != "x" ];then
+        echo 'Killing all PBX services.';
+        kill "$pids";
+      else
+        echo 'PBX services not started.';
+      fi
+      ;;
+   start-all)
+     if [ -f "$safeScript" ]; then
+       /usr/bin/php -f "$safeScript" start
+     else
+        echo 'Safe script not found.';
+     fi
+     ;;
+   restart-all)
+     if [ -f "$safeScript" ]; then
+       /usr/bin/php -f "$safeScript" restart
+     else
+        echo 'Safe script not found.';
+     fi
+     ;;
+  esac
+  ;;
+service)
+  pids=$(ps | grep "$2" | grep -v grep | grep -v "$0" | cut -d ' ' -f1);
+  if [ "${pids}x" != "x" ];then
+    echo "Killing PBX service ${2}. PID ${pids}.";
+    kill "${pids}";
+  else
+    echo "PBX service ${2} not started.";
+  fi
+  ;;
+debug)
+  # завершаем работу сервиса
+  pbxConsole="$0";
+  scriptName="$2";
+  ipDebager="$3";
+
+  pathToFile=$(find /usr/www/src/ -name "${scriptName}.php")
+  if [ ! -f "$pathToFile" ];then
+    echo "File ${scriptName}.php not found.";
+    exit 2;
+  fi
+
+  "${pbxConsole}" cron stop;
+  "${pbxConsole}" service "${scriptName}" stop;
+  export XDEBUG_CONFIG="remote_enable=1 remote_mode=req remote_autostart=0 remote_port=9000 remote_host=${ipDebager} remote_connect_back=0";
+  cp /etc/php.d/15-xdebug.ini.disabled /etc/php.d/15-xdebug.ini;
+  php -f "$pathToFile" start;
+  ;;
+cron)
+  action=$2;
+  case "${action}" in
+    stop)
+      ps | grep -v grep | grep crond > /dev/null;
+      result=$?;
+      if [ "$result" = "0" ];then
+        echo 'Killing cron.';
+        killall crond;
+      else
+        echo 'Cron not started.';
+      fi
+      ;;
+    restart)
+      pbx-console cron stop;
+      echo 'Starting cron.';
+      /usr/sbin/crond -L /dev/null -l 8
+      ;;
+    start)
+      ps | grep -v grep | grep crond > /dev/null;
+      result=$?;
+      if [ "$result" = "1" ];then
+        echo 'Starting cron.';
+        /usr/sbin/crond -L /dev/null -l 8
+      else
+        echo 'Cron already started.';
+      fi
+      ;;
+    show)
+      ps | head -n 1;
+      ps | grep crond | grep -v grep;
+      ;;
+  esac
+  ;;
+esac

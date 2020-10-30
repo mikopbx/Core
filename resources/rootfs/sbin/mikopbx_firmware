@@ -1,0 +1,85 @@
+#!/bin/sh
+
+CFDEVICE=`cat /var/etc/cfdevice`;
+
+case $1 in
+enable)
+	#/sbin/mdmfs -s 20m md1 /ultmp > /dev/null 2>&1
+	;;
+	
+recover_upgrade)
+	
+	# $2 firmware image
+	# $3 device
+
+	# get out of /usr/www
+	cd /;
+	sleep 5;
+	exec </dev/console >/dev/console 2>/dev/console;
+
+	echo;
+	echo "Firmware upgrade in progress...";
+	echo " - backing up configuration...";
+	mkdir -p /tmp/configbak;
+
+    img_file="$2";
+    if [ -f /offload/livecd ]; then
+	    cp -p /conf.recover/conf/* /tmp/configbak;
+        echo " - unmounting /conf.recover...";
+        /bin/umount -f /conf.recover;
+    else
+	    cp -R /cf/conf/* /tmp/configbak;
+
+	    mounted_storage=`mount | /bin/busybox grep storage | /bin/busybox awk  '{ print $1}'`;
+        if [ "/dev/${CFDEVICE}4" != "${mounted_storage}" ]; then
+            # Storage на отдельном диске.
+            img_file="$2";
+        else
+            # Storage на диске основном диске,
+            # так как его нужно отмнонтировать, то перемещамем образ в RAM.
+            echo " - move img to RAM ...";
+            tmp_img=$(basename "$2");
+            img_file="/tmp/${tmp_img}";
+            # Перемещаем img файл в /tmp. Storage будет отмонтирован.
+            src_file=`readlink -f "$2"`;
+            if [ "${src_file}" != "${img_file}" ]; then
+              mv "${src_file}" "${img_file}";
+            fi
+
+            echo " - free storage ...";
+            /sbin/freestorage;
+        fi
+
+        # Отключаем основной диск.
+	    /sbin/freeupoffload;
+    fi
+
+	echo " - installing image..."
+	if [ -r "${img_file}" ]; then
+		  # /bin/gunzip -c "${img_file}" | dd of=$3 bs=512 > /dev/null 2>&1;
+		  /bin/pv -p "${img_file}" | /bin/gunzip | dd of=$3 bs=512 > /dev/null 2>&1;
+	    echo " - dd end working..."
+      # Обновляем таблицу разделов.
+      /sbin/initial.storage.part.four create $3;
+      echo " - disk part four result ${?}...";
+	fi
+	/sbin/blockdev --rereadpt $3 > /dev/null 2>&1;
+	sleep 3;
+    if [ -f /offload/livecd ]; then
+        echo " - re-mounting /conf.recover read/write...";
+        /bin/mount -w -o noatime ${3}3 /conf.recover;
+    	rm -f /conf.recover/conf/*;
+        echo " - restoring configuration";
+        cp -p /tmp/configbak/* /conf.recover/conf/;
+        touch /tmp/ejectcd;
+    else
+        /bin/mount -w -o noatime ${3}3 /cf/;
+	    cp /tmp/configbak/* /cf/conf/;
+        rm -rf "${img_file}";
+    fi
+
+	echo " - rebooting system...";
+	/sbin/mikopbx_reboot;
+	;;
+
+esac

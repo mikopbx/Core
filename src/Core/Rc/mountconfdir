@@ -1,0 +1,120 @@
+#!/usr/bin/php -f
+<?php
+/**
+ * Copyright © MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Alexey Portnov, 5 2018
+ */
+
+namespace MikoPBX\Core\Rc;
+
+
+use Phalcon\Di;
+use MikoPBX\Core\System\{
+    Util,
+    Storage
+};
+
+require_once('Globals.php');
+
+$NoCfDevice = <<<EOD
+
+*******************************************************************************
+* FATAL ERROR                                                                 *
+* The device that contains the configuration file (mikopbx.db) could not be   *
+* found. MikoPBX can not continue booting.                                     *
+*******************************************************************************
+
+EOD;
+
+$phalconConfig  = Di::getDefault()->get('config');
+$cfDir         = $phalconConfig->path('core.cfDir');
+$varEtcDir     = $phalconConfig->path('core.varEtcDir');
+$dbFile         = $phalconConfig->path('database.dbfile');
+$mountPath      = Util::which('mount');
+$unmountPath    = Util::which('umount');
+$fdiskPath      = Util::which('fdisk');
+$grepPath       = Util::which('grep');
+$cutPath        = Util::which('cut');
+$uniqPath       = Util::which('uniq');
+$sqlite3Path    = Util::which('sqlite3');
+$rmPath         = Util::which('rm');
+$mvPath         = Util::which('mv');
+$haltPath       = Util::which('halt');
+
+
+$cfgdevice = '';
+/* check if there's already an fstab (NFS booting?) */
+if (file_exists('/etc/fstab')) {
+    return; // Обработка не требуется.
+}
+
+if (file_exists('/offload/livecd')) {
+    $d_path_info = pathinfo($dbFile);
+    // Копируем файл базы данных настроек.
+    copy('/offload/conf/mikopbx.db', $dbFile);
+    Util::addRegularWWWRights($d_path_info);
+    Util::addRegularWWWRights($dbFile);
+    return; // Обработка не требуется.
+}
+
+
+$storage = new Storage();
+/* iterate through the disks fdisk finds until one contains a mikopbx.db */
+$attempts = 2;
+while ($attempts--) {
+    Util::mwExec("{$fdiskPath} -l | {$grepPath} \"^/dev/\" | {$cutPath} -c 6-8 | {$uniqPath}", $disks);
+    // " - Mount storage... "
+    echo "\n - Found disks: " . implode(', ', $disks) . "\n";
+    foreach ($disks as $disk) {
+        echo " - Looking for configuration on: $disk\n";
+        $part = (strpos($disk, 'mmcblk') !== false) ? 'p3' : '3';
+
+        $uuid   = $storage->getUuid("/dev/{$disk}{$part}");
+        $format = $storage->getFsType("{$disk}{$part}");
+        // Запустим проверку раздела диска
+        $fsckPath = Util::which("fsck.{$format}");
+        Util::mwExec("if [ -b /dev/{$disk}{$part} ]; then {$fsckPath} -f -p /dev/{$disk}{$part}; fi;");
+        if (Util::mwExec("{$mountPath} -t {$format} -rw UUID=\"{$uuid}\" {$cfDir}") !== 0) {
+            continue;
+        }
+
+        if (file_exists($dbFile) && filesize($dbFile) > 0) {
+            $cfgdevice    = $disk;
+            $cfgpartition = $cfgdevice . $part;
+            echo " - Found configuration on $cfgpartition.\n";
+            $old_db_name = '/cf/conf/mikozia.db';
+            if (file_exists($old_db_name)) {
+                @unlink($dbFile);
+                @rename($old_db_name, $dbFile);
+            }
+            if (Util::mwExec("{$sqlite3Path} {$dbFile} 'VACUUM'") !== 0) {
+                $tmp_name = '/tmp/' . time() . '.db.dmp';
+                Util::mwExec("{$sqlite3Path} {$dbFile} .dump | {$sqlite3Path} {$tmp_name}");
+                Util::mwExec("{$rmPath} {$dbFile}*");
+                Util::mwExec("{$mvPath} {$tmp_name} {$dbFile}");
+            }
+            break;
+        }
+
+        Util::mwExec("{$unmountPath} -f {$cfDir}");
+    }
+    if ($cfgdevice) {
+        break;
+    }
+    if ($attempts) {
+        echo " - Configuration not found.\n";
+        echo " - Waiting for devices to settle and attempting again.\n";
+        sleep(3);
+    }
+}
+
+if ( ! $cfgdevice) {
+    /* no device found, print an error and die */
+    echo $NoCfDevice;
+    Util::mwExec($haltPath);
+} else {
+    // Запишем в файл имя подключенного устройства.
+    file_put_contents("{$varEtcDir}/cfdevice", $cfgdevice);
+}

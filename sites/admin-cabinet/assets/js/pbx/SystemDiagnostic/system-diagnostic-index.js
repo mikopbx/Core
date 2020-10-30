@@ -1,0 +1,25 @@
+"use strict";
+
+/*
+ * Copyright © MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Nikolay Beketov, 8 2020
+ */
+
+/* global sessionStorage, ace, PbxApi */
+var systemDiagnostic = {
+  $tabMenuItems: $('#system-diagnostic-menu .item'),
+  initialize: function () {
+    function initialize() {
+      systemDiagnostic.$tabMenuItems.tab();
+      systemDiagnostic.$tabMenuItems.tab('change tab', 'show-log');
+    }
+
+    return initialize;
+  }()
+};
+$(document).ready(function () {
+  systemDiagnostic.initialize();
+});
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy9TeXN0ZW1EaWFnbm9zdGljL3N5c3RlbS1kaWFnbm9zdGljLWluZGV4LmpzIl0sIm5hbWVzIjpbInN5c3RlbURpYWdub3N0aWMiLCIkdGFiTWVudUl0ZW1zIiwiJCIsImluaXRpYWxpemUiLCJ0YWIiLCJkb2N1bWVudCIsInJlYWR5Il0sIm1hcHBpbmdzIjoiOztBQUFBOzs7Ozs7O0FBTUE7QUFFQSxJQUFNQSxnQkFBZ0IsR0FBRztBQUN4QkMsRUFBQUEsYUFBYSxFQUFFQyxDQUFDLENBQUMsK0JBQUQsQ0FEUTtBQUV4QkMsRUFBQUEsVUFGd0I7QUFBQSwwQkFFWDtBQUNaSCxNQUFBQSxnQkFBZ0IsQ0FBQ0MsYUFBakIsQ0FBK0JHLEdBQS9CO0FBQ0FKLE1BQUFBLGdCQUFnQixDQUFDQyxhQUFqQixDQUErQkcsR0FBL0IsQ0FBbUMsWUFBbkMsRUFBaUQsVUFBakQ7QUFDQTs7QUFMdUI7QUFBQTtBQUFBLENBQXpCO0FBUUFGLENBQUMsQ0FBQ0csUUFBRCxDQUFELENBQVlDLEtBQVosQ0FBa0IsWUFBTTtBQUN2Qk4sRUFBQUEsZ0JBQWdCLENBQUNHLFVBQWpCO0FBQ0EsQ0FGRCIsInNvdXJjZXNDb250ZW50IjpbIi8qXG4gKiBDb3B5cmlnaHQgwqkgTUlLTyBMTEMgLSBBbGwgUmlnaHRzIFJlc2VydmVkXG4gKiBVbmF1dGhvcml6ZWQgY29weWluZyBvZiB0aGlzIGZpbGUsIHZpYSBhbnkgbWVkaXVtIGlzIHN0cmljdGx5IHByb2hpYml0ZWRcbiAqIFByb3ByaWV0YXJ5IGFuZCBjb25maWRlbnRpYWxcbiAqIFdyaXR0ZW4gYnkgTmlrb2xheSBCZWtldG92LCA4IDIwMjBcbiAqL1xuLyogZ2xvYmFsIHNlc3Npb25TdG9yYWdlLCBhY2UsIFBieEFwaSAqL1xuXG5jb25zdCBzeXN0ZW1EaWFnbm9zdGljID0ge1xuXHQkdGFiTWVudUl0ZW1zOiAkKCcjc3lzdGVtLWRpYWdub3N0aWMtbWVudSAuaXRlbScpLFxuXHRpbml0aWFsaXplKCkge1xuXHRcdHN5c3RlbURpYWdub3N0aWMuJHRhYk1lbnVJdGVtcy50YWIoKTtcblx0XHRzeXN0ZW1EaWFnbm9zdGljLiR0YWJNZW51SXRlbXMudGFiKCdjaGFuZ2UgdGFiJywgJ3Nob3ctbG9nJyk7XG5cdH0sXG59O1xuXG4kKGRvY3VtZW50KS5yZWFkeSgoKSA9PiB7XG5cdHN5c3RlbURpYWdub3N0aWMuaW5pdGlhbGl6ZSgpO1xufSk7XG5cbiJdfQ==
