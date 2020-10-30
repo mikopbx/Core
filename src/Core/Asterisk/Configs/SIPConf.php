@@ -84,6 +84,7 @@ class SIPConf extends ConfigClass
     private function generateGeneralPj(): string
     {
         $network = new Network();
+        $lang    = $this->generalSettings['PBXLanguage'];
 
         $topology    = 'public';
         $extipaddr   = '';
@@ -149,7 +150,8 @@ class SIPConf extends ConfigClass
 
             "[anonymous]\n" .
             "type = endpoint\n" .
-            "{$codecConf}" .
+            $codecConf.
+            "language={$lang}\n".
             "timers = no\n" .
             "context = public-direct-dial\n\n".
 
