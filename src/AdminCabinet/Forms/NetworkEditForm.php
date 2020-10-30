@@ -138,8 +138,8 @@ class NetworkEditForm extends Form
             }
         }
 
-        unset($arrInterfaces['new']);
-        unset($arrRealInterfaces['new']);
+        unset($arrInterfaces['0']);
+        unset($arrRealInterfaces['0']);
         // Выбор интернет интерфейса
         $internetInterface = new Select(
             'internet_interface', $arrInterfaces, [
@@ -157,7 +157,7 @@ class NetworkEditForm extends Form
 
         // Поля для вновь добавляемого интерфейса
         $newInterface = new Select(
-            'interface_new', $arrRealInterfaces, [
+            'interface_0', $arrRealInterfaces, [
             'using'    => [
                 'id',
                 'name',

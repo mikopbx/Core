@@ -112,17 +112,17 @@ const networks = {
 		});
 
 		// Очистка настроек дополнительного сетевого
-		$('.delete-interface-new').on('click', () => {
+		$('.delete-interface-0').on('click', () => {
 			const initialValues = {
-				interface_new: '',
-				name_new: '',
-				dhcp_new: 'on',
-				ipaddr_new: '',
-				subnet_new: '0',
+				interface_0: '',
+				name_0: '',
+				dhcp_0: 'on',
+				ipaddr_0: '',
+				subnet_0: '0',
 			};
 			networks.$formObj.form('set values', initialValues);
-			$('#interface_new').dropdown('restore defaults');
-			$('#dhcp-new-checkbox').checkbox('check');
+			$('#interface_0').dropdown('restore defaults');
+			$('#dhcp-0-checkbox').checkbox('check');
 			$('#eth-interfaces-menu .item').tab('change tab', $('#eth-interfaces-menu a.item').first().attr('data-tab'));
 		});
 
@@ -279,15 +279,15 @@ $.fn.form.settings.rules.checkVlan = (vlanValue, param) => {
 	let result = true;
 	const vlansArray = {};
 	const allValues = networks.$formObj.form('get values');
-	if (allValues.interface_new !== undefined && allValues.interface_new > 0) {
-		const newEthName = allValues[`interface_${allValues.interface_new}`];
-		vlansArray[newEthName] = [allValues.vlanid_new];
-		if (allValues.vlanid_new === '') {
+	if (allValues.interface_0 !== undefined && allValues.interface_0 > 0) {
+		const newEthName = allValues[`interface_${allValues.interface_0}`];
+		vlansArray[newEthName] = [allValues.vlanid_0];
+		if (allValues.vlanid_0 === '') {
 			result = false;
 		}
 	}
 	$.each(allValues, (index, value) => {
-		if (index === 'interface_new' || index === 'vlanid_new') return;
+		if (index === 'interface_0' || index === 'vlanid_0') return;
 		if (index.indexOf('vlanid') >= 0) {
 			const ethName = allValues[`interface_${index.split('_')[1]}`];
 			if ($.inArray(value, vlansArray[ethName]) >= 0

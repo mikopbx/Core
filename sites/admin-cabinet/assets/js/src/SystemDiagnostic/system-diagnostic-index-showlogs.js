@@ -41,7 +41,15 @@ const systemDiagnosticLogs = {
 	$formObj: $('#system-diagnostic-form'),
 	$fileName: $('#system-diagnostic-form .filename'),
 	initialize() {
-		systemDiagnosticLogs.$fileSelectDropDown.dropdown();
+		systemDiagnosticLogs.$fileSelectDropDown.dropdown(
+			{
+				values: systemDiagnosticLogs.logsItems,
+				onChange: systemDiagnosticLogs.cbOnChangeFile,
+				ignoreCase: true,
+				fullTextSearch: true,
+				forceSelection: false,
+			}
+		);
 		systemDiagnosticLogs.initializeAce();
 		PbxApi.SyslogGetLogsList(systemDiagnosticLogs.cbFormatDropdownResults);
 
@@ -108,15 +116,8 @@ const systemDiagnosticLogs = {
 				selected: item.default
 			});
 		});
-		systemDiagnosticLogs.$fileSelectDropDown.dropdown(
-			{
-				values: systemDiagnosticLogs.logsItems,
-				onChange: systemDiagnosticLogs.cbOnChangeFile,
-				ignoreCase: true,
-				fullTextSearch: true,
-				forceSelection: false,
-			}
-		);
+
+		systemDiagnosticLogs.$fileSelectDropDown.dropdown('change values', systemDiagnosticLogs.logsItems);
 	},
 	/**
 	 * Callback after change log file in select
@@ -129,6 +130,9 @@ const systemDiagnosticLogs = {
 		systemDiagnosticLogs.$formObj.form('set value', 'filename', value);
 		systemDiagnosticLogs.updateLogFromServer();
 	},
+	/**
+	 * Asks log file content from server
+	 */
 	updateLogFromServer(){
 		const params = systemDiagnosticLogs.$formObj.form('get values');
 		PbxApi.SyslogGetLogFromFile(params, systemDiagnosticLogs.cbUpdateLogText);

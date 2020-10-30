@@ -17,7 +17,8 @@ use Phalcon\Text;
 abstract class WorkerBase extends Di\Injectable implements WorkerInterface
 {
     protected AsteriskManager $am;
-    protected int $maxProc=0;
+    protected int $maxProc = 0;
+    public int $currentProcId = 1;
 
     /**
      * Workers shared constructor
@@ -31,22 +32,31 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
     /**
      * Calculates how many processes have started already and kill excess or old processes
      */
-    private function checkCountProcesses(): void{
+    private function checkCountProcesses(): void
+    {
         $activeProcesses = Util::getPidOfProcess(static::class, getmypid());
-        if($this->maxProc === 1){
-            if(!empty($activeProcesses)){
+        if ($this->maxProc === 1) {
+            if ( ! empty($activeProcesses)) {
                 $killApp = Util::which('kill');
                 // Завершаем старый процесс.
                 Util::mwExec("{$killApp} {$activeProcesses}");
             }
-        }elseif ($this->maxProc > 1){
+        } elseif ($this->maxProc > 1) {
             // Лимит процессов может быть превышен. Удаление лишних процессов.
             $processes = explode(' ', $activeProcesses);
+
+            // Запустим нехдостающие процессы
+            $countProc = count($processes);
+            while ($countProc < $this->maxProc) {
+                Util::processPHPWorker(static::class,'start','multiStart');
+                $countProc++;
+            }
             // Получим количество лишних процессов.
             $countProc = count($processes) - $this->maxProc;
             $killApp   = Util::which('kill');
-            while ($countProc >= 0){
-                if(!isset($processes[$countProc])){
+            // Завершим лишние
+            while ($countProc >= 0) {
+                if ( ! isset($processes[$countProc])) {
                     break;
                 }
                 // Завершаем старый процесс.
@@ -59,7 +69,8 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
     /**
      * Saves pid to pidfile
      */
-    private function savePidFile(): void {
+    private function savePidFile(): void
+    {
         $activeProcesses = Util::getPidOfProcess(static::class);
         file_put_contents($this->getPidFile(), $activeProcesses);
     }
@@ -78,9 +89,28 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
      *
      * @param BeanstalkClient $message
      */
-    public function pingCallBack($message): void
+    public function pingCallBack(BeanstalkClient $message): void
     {
         $message->reply(json_encode($message->getBody() . ':pong'));
+    }
+
+    /**
+     * If it was Ping request to check worker, we answer Pong and return True
+     *
+     * @param $parameters
+     *
+     * @return bool
+     */
+    public function replyOnPingRequest($parameters): bool
+    {
+        $pingTube = $this->makePingTubeName(static::class);
+        if ($pingTube === $parameters['UserEvent']) {
+            $this->am->UserEvent("{$pingTube}Pong", []);
+
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -93,21 +123,5 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
     public function makePingTubeName(string $workerClassName): string
     {
         return Text::camelize("ping_{$workerClassName}", '\\');
-    }
-
-    /**
-     * If it was Ping request to check worker, we answer Pong and return True
-     * @param $parameters
-     *
-     * @return bool
-     */
-    public function replyOnPingRequest($parameters):bool
-    {
-        $pingTube = $this->makePingTubeName(static::class);
-        if ( $pingTube === $parameters['UserEvent']) {
-            $this->am->UserEvent("{$pingTube}Pong", []);
-            return true;
-        }
-        return false;
     }
 }

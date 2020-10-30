@@ -532,7 +532,7 @@ class WorkerModelsEvents extends WorkerBase
      */
     public function reloadRestAPIWorker(): void
     {
-        Util::restartPHPWorker(WorkerApiCommands::class);
+        Util::processPHPWorker(WorkerApiCommands::class);
     }
 
 
@@ -541,7 +541,7 @@ class WorkerModelsEvents extends WorkerBase
      */
     public function reloadWorkerCallEvents(): void
     {
-        Util::restartPHPWorker(WorkerCallEvents::class);
+        Util::processPHPWorker(WorkerCallEvents::class);
     }
 
     /**

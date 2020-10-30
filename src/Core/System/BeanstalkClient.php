@@ -10,6 +10,7 @@ namespace MikoPBX\Core\System;
 
 use Phalcon\Di;
 use Phalcon\Di\Injectable;
+use Pheanstalk\Contract\PheanstalkInterface;
 use Pheanstalk\Job;
 use Pheanstalk\Pheanstalk;
 
@@ -73,13 +74,17 @@ class BeanstalkClient extends Injectable
      *
      * @param      $job_data
      * @param int  $timeout
-     * @param ?int $priority
+     * @param int $priority
      *
      * @return bool|mixed
      *
      * @throws \Pheanstalk\Exception\DeadlineSoonException
      */
-    public function request($job_data, $timeout = 10, $priority = null)
+    public function request(
+        $job_data,
+        int $timeout = 10,
+        int $priority = PheanstalkInterface::DEFAULT_PRIORITY
+    )
     {
         $this->message = false;
         $inbox_tube    = uniqid('INBOX_', true);
@@ -90,7 +95,7 @@ class BeanstalkClient extends Injectable
             $job_data,
             'inbox_tube' => $inbox_tube,
         ];
-        $this->publish($requestMessage, $priority);
+        $this->publish($requestMessage, $priority, null, 0, $timeout);
 
         // Получаем ответ от сервера.
         $job = $this->queue->reserveWithTimeout($timeout);
@@ -108,27 +113,31 @@ class BeanstalkClient extends Injectable
     /**
      * Puts a job in a beanstalkd server queue
      *
-     * @param       $job_data
-     * @param       $priority
-     * @param ?string  $tube
+     * @param mixed   $job_data data to worker
+     * @param int     $priority Jobs with smaller priority values will be scheduled
+     *                          before jobs with larger priorities. The most urgent priority is 0;
+     *                          the least urgent priority is 4294967295.
+     * @param ?string $tube tube name
+     * @param int     $delay delay before insert job into work query
+     * @param int     $ttr time to execute this job
      *
      * @return \Pheanstalk\Job
      */
-    public function publish($job_data, $priority = null, $tube = null): Job
+    public function publish(
+        $job_data,
+        int $priority = PheanstalkInterface::DEFAULT_PRIORITY,
+        $tube = null,
+        int $delay = PheanstalkInterface::DEFAULT_DELAY,
+        int $ttr = PheanstalkInterface::DEFAULT_TTR): Job
     {
         $tube = str_replace("\\", '-', $tube);
         // Change tube
         if ( ! empty($tube) && $this->tube !== $tube) {
             $this->queue->useTube($tube);
         }
-
         $job_data = serialize($job_data);
         // Send JOB to queue
-        if (is_numeric($priority)) {
-            $result = $this->queue->put($job_data, $priority);
-        } else {
-            $result = $this->queue->put($job_data);
-        }
+        $result = $this->queue->put($job_data, $priority, $delay, $ttr);
 
         // Return original tube
         $this->queue->useTube($this->tube);

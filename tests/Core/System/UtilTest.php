@@ -35,10 +35,10 @@ class UtilTest extends AbstractUnitTest
         $this->assertTrue(true);
     }
 
-    public function testRestartPHPWorker(): void
+    public function testProcessPHPWorker(): void
     {
         $process = WorkerBitrix24IntegrationAMI::class;
-        Util::restartPHPWorker($process);
+        Util::processPHPWorker($process);
         $this->assertTrue(true);
     }
 
