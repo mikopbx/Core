@@ -29,7 +29,7 @@ class TestCallsBase {
     public function __construct(){
         $db_data = $this->getIdlePeers();
         if(count($db_data) < 3){
-            $this->printError('Need '.count($db_data).' SIP account (endpoint).');
+            $this->printError('Need 3 SIP account (endpoint).');
             return;
         }
         // Отбираем первые учетные записи.

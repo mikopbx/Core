@@ -34,7 +34,7 @@ $cmdAsterisk = Util::which('asterisk');
 file_put_contents("$dirName/asterisk/pjsip.conf", $config);
 Util::mwExec("{$cmdAsterisk} -C '$astConf' -rx 'module reload res_pjsip.so'");
 
-$duration = count($db_data->toArray())*2;
+$duration = count($db_data->toArray())*3;
 echo "\033[01;32m-> \033[39mWaiting for registration of peers {$duration} s... \n";
 sleep($duration);
 $result = Util::mwExec($cmdAsterisk.' -rx"core show hints" | grep PJSIP/ | grep Idle', $out);
