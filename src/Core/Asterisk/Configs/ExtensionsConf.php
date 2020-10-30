@@ -253,7 +253,8 @@ class ExtensionsConf extends ConfigClass
 
         // Как долго звонить пиру.
         $conf .= 'same => n,Set(ringlength=${DB(FW_TIME/${EXTEN})})' . " \n\t";
-        $conf .= 'same => n,ExecIf($["${ringlength}x" == "x" || "${QUEUE_SRC_CHAN}x" != "x"]?Set(ringlength=600))' . " \n\t";
+        $conf .= 'same => n,ExecIf($["${ringlength}x" == "x"]?Set(ringlength=600))' . " \n\t";
+        $conf .= 'same => n,ExecIf($["${QUEUE_SRC_CHAN}x" != "x" && "${ISTRANSFER}x" == "x"]?Set(ringlength=600))' . " \n\t";
 
         $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1) ' . " \n\t";
         // Совершаем вызов пира.
@@ -264,8 +265,8 @@ class ExtensionsConf extends ConfigClass
 
         // QUEUE_SRC_CHAN - установлена, если вызов сервершен агенту очереди.
         // Проверяем нужна ли переадресация
-        $expression = '$["${DIALSTATUS}" != "ANSWER" && "${QUEUE_SRC_CHAN}x" == "x"]';
-        $conf       .= 'same => n,ExecIf(' . $expression . '?Goto(internal-fw,${EXTEN},1))' . " \n\t";
+        $conf       .= 'same => n,ExecIf($["${DIALSTATUS}" != "ANSWER" && "${ISTRANSFER}x" != "x"]?Goto(internal-fw,${EXTEN},1))' . " \n\t";
+        $conf       .= 'same => n,ExecIf($["${DIALSTATUS}" != "ANSWER" && "${QUEUE_SRC_CHAN}x" == "x"]?Goto(internal-fw,${EXTEN},1))' . " \n\t";
         $conf       .= 'same => n,ExecIf($["${BLINDTRANSFER}x" != "x"]?AGI(check_redirect.php,${BLINDTRANSFER}))' . " \n\t";
         $conf       .= 'same => n,Hangup()' . "\n\n";
 
