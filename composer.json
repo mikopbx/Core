@@ -1,6 +1,7 @@
 {
     "name": "mikopbx/core",
     "description": "Free PBX system for SMB based on Asterisk",
+    "homepage": "https://www.mikopbx.com",
     "require": {
         "ext-curl": "*",
         "ext-iconv": "*",
@@ -45,18 +46,36 @@
     "keywords": [
         "pbx",
         "asterisk",
-        "freepbx"
+        "freepbx",
+        "mikopbx",
+        "sip",
+        "voip",
+        "phalcon",
+        "telephony",
+        "uc"
+
     ],
     "license": "GPL-3.0-or-later",
-    "homepage": "https://github.com/mikopbx/Core",
+    "support": {
+        "email": "help@mikopbx.com",
+        "wiki": "https://wiki.mikopbx.com",
+        "issues": "https://github.com/mikopbx/Core/issues",
+        "source": "https://github.com/mikopbx/Core",
+        "forum": "https://qa.askozia.ru",
+        "telegramm": "https://t.me/mikopbx_dev"
+    },
     "authors": [
         {
             "name": "Alexey Portnov",
-            "email": "apor@miko.ru"
+            "email": "apor@miko.ru",
+            "homepage": "https://www.facebook.com/PortnovAlexey",
+            "role": "Developer"
         },
         {
             "name": "Nikolay Beketov",
-            "email": "nbek@miko.ru"
+            "email": "nbek@miko.ru",
+            "homepage": "http://facebook.com/jorikfon",
+            "role": "Developer"
         }
     ],
     "config": {
