@@ -74,13 +74,17 @@ class BeanstalkClient extends Injectable
      *
      * @param      $job_data
      * @param int  $timeout
-     * @param ?int $priority
+     * @param int $priority
      *
      * @return bool|mixed
      *
      * @throws \Pheanstalk\Exception\DeadlineSoonException
      */
-    public function request($job_data, $timeout = 10, $priority = null)
+    public function request(
+        $job_data,
+        int $timeout = 10,
+        int $priority = PheanstalkInterface::DEFAULT_PRIORITY
+    )
     {
         $this->message = false;
         $inbox_tube    = uniqid('INBOX_', true);
