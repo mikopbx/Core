@@ -65,12 +65,24 @@ class WorkerNotifyByEmail extends WorkerBase
             if (empty($template_body)) {
                 $email = Util::translate('You have missing call');
             } else {
-                $email = str_replace("\n", "<br>", $template_body);
-                $email = str_replace("NOTIFICATION_MISSEDCAUSE", 'NOANSWER', $email);
-                $email = str_replace("NOTIFICATION_CALLERID", $call['from_number'], $email);
-                $email = str_replace("NOTIFICATION_TO", $call['to_number'], $email);
-                $email = str_replace("NOTIFICATION_DURATION", $call['duration'], $email);
-                $email = str_replace("NOTIFICATION_DATE", $call['start'], $email);
+                $email = str_replace(
+                    array(
+                        "\n",
+                        "NOTIFICATION_MISSEDCAUSE",
+                        "NOTIFICATION_CALLERID",
+                        "NOTIFICATION_TO",
+                        "NOTIFICATION_DURATION",
+                        "NOTIFICATION_DATE"
+                    ),
+                    array("<br>",
+                        'NOANSWER',
+                        $call['from_number'],
+                        $call['to_number'],
+                        $call['duration'],
+                        $call['start']
+                    ),
+                    $template_body
+                );
             }
             $emails[$call['email']] .= "$email <br> <hr> <br>";
         }
