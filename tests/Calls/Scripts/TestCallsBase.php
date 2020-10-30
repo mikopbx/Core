@@ -9,7 +9,6 @@
 namespace MikoPBX\Tests\Calls\Scripts;
 use MikoPBX\Common\Models\CallDetailRecords;
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
-use MikoPBX\Common\Models\Sip;
 use MikoPBX\Core\Asterisk\AsteriskManager;
 use MikoPBX\Core\System\Util;
 
@@ -28,19 +27,36 @@ class TestCallsBase {
     private AsteriskManager $am;
 
     public function __construct(){
-        $db_data = Sip::find("type = 'peer' AND ( disabled <> '1')")->toArray();
+        $db_data = $this->getIdlePeers();
         if(count($db_data) < 3){
-            $this->printError('Need two SIP account (endpoint).');
+            $this->printError('Need '.count($db_data).' SIP account (endpoint).');
             return;
         }
         // Отбираем первые учетные записи.
-        $this->aNum = $db_data[0]['extension'];
-        $this->bNum = $db_data[1]['extension'];
-        $this->cNum = $db_data[2]['extension'];
+        $this->aNum = $db_data[0];
+        $this->bNum = $db_data[1];
+        $this->cNum = $db_data[2];
 
         $this->am = new AsteriskManager();
         $this->am->connect('127.0.0.1:5039');
         $this->nonStrictComparison = ['duration', 'billsec', 'fileDuration'];
+    }
+
+    /**
+     * Возвращает список доступных пиров.
+     * @return array
+     */
+    protected function getIdlePeers():array{
+        $am = Util::getAstManager('off');
+        $result = $am->getPjSipPeers();
+        $db_data = array();
+        foreach ($result as $peer){
+            if($peer['state']!== 'OK' || ! is_numeric($peer['id'])){
+                continue;
+            }
+            $db_data[] = $peer['id'];
+        }
+        return $db_data;
     }
 
     /**
@@ -147,7 +163,7 @@ class TestCallsBase {
     /**
      * Инициализация эталона таблицы CDR.
      */
-    private function initSampleCdr(){
+    private function initSampleCdr():void{
         $this->printInfo("Init sample cdr table...");
         foreach ($this->sampleCDR as $index => $row) {
             foreach ($row as $key => $value){
@@ -176,28 +192,21 @@ class TestCallsBase {
             }else{
                 Util::mwExec("soxi {$row['recordingfile']} | grep Duration | awk '{print $3}' | awk -F '.'  '{print $1}'", $out);
                 $timeData = explode(':', implode($out));
-                $d = (int)$timeData[0]??0;
-                $h = (int)$timeData[1]??0;
-                $s = (int)$timeData[2]??0;
+                $d = (int)($timeData[0]??0);
+                $h = (int)($timeData[1]??0);
+                $s = (int)($timeData[2]??0);
                 $seconds = $s + 60*$h + $d*24*60;
                 $row['fileDuration'] = (string)$seconds;
                 $this->printInfo('Rec. file:'.basename($row['recordingfile']).", sox duration: ".implode($out).", duration: ".$row['fileDuration']);
             }
             $cdrS = $this->sampleCDR[$index];
             foreach ($cdrS as $key => $data){
-                if(in_array($key, $this->nonStrictComparison)){
-                    $isOk = false;
-                    $valRow = (int) $row[$key];
-                    $valSample = (int) $data;
-                    if($valRow === $valSample){
-                        $isOk = true;
-                    }elseif ($valRow === ($valSample-1)){
-                        $isOk = true;
-                    }elseif ($valRow === ($valSample+1)){
-                        $isOk = true;
-                    }
-                    if($isOk === false){
-                        $this->printError("Index row '{$index}', key '{$key}' {$row[$key]} !== {$data}");
+                if(in_array($key, $this->nonStrictComparison, true)){
+                    $valRow     = (int) $row[$key];
+                    $valSample  = (int) $data;
+                    $values = [$valSample, ($valSample-1), ($valSample+1)];
+                    if( !in_array($valRow, $values) ){
+                        $this->printError("Index row '{$index}', key '{$key}' {$valRow} !== {$data}");
                     }
                 }elseif($row[$key] !== $data){
                     $this->printError("Index row '{$index}', key '{$key}' {$row[$key]} !== {$data}");
