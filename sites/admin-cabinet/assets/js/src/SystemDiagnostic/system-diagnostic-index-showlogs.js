@@ -130,6 +130,9 @@ const systemDiagnosticLogs = {
 		systemDiagnosticLogs.$formObj.form('set value', 'filename', value);
 		systemDiagnosticLogs.updateLogFromServer();
 	},
+	/**
+	 * Asks log file content from server
+	 */
 	updateLogFromServer(){
 		const params = systemDiagnosticLogs.$formObj.form('get values');
 		PbxApi.SyslogGetLogFromFile(params, systemDiagnosticLogs.cbUpdateLogText);
