@@ -12,7 +12,7 @@
 
 <div class="ui top attached tabular menu" id="eth-interfaces-menu">
     {% for eth in eths %}
-        {% if eth.id=='new' %}
+        {% if eth.id===0 %}
             <a class="item" data-tab="{{ eth.id }}"><i class="icon plus"></i></a>
         {% else %}
             <a class="item {% if loop.first %}active{% endif %}" data-tab="{{ eth.id }}">{{ eth.name }}
@@ -23,7 +23,7 @@
 </div>
 {% for eth in eths %}
     <div class="ui bottom attached tab segment {% if loop.first %}active{% endif %}" data-tab="{{ eth.id }}">
-        {% if eth.id=='new' %}
+        {% if eth.id===0 %}
             <div class="four fields">
                 <div class="field">
                     <label>{{ t._('nw_SelectInterface') }}</label>
@@ -66,8 +66,8 @@
             <a class="ui icon button delete-interface" data-value="{{ eth.id }}"><i
                         class="icon trash"></i>{{ t._('nw_DeleteCurrentInterface') }}</a>
         {% endif %}
-        {% if   eth.id == 'new' %}
-            <a class="ui icon button delete-interface-new"><i
+        {% if   eth.id === 0 %}
+            <a class="ui icon button delete-interface-0"><i
                         class="icon trash"></i>{{ t._('nw_DeleteCurrentInterface') }}</a>
         {% endif %}
     </div>
