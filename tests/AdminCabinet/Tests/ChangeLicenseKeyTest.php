@@ -27,9 +27,10 @@ class ChangeLicenseKeyTest extends MikoPBXTestsBase
         $this->changeTabOnCurrentPage('management');
 
         // Сбрасываем привязку к ключу
-        $xpath         = "id('reset-license')";
-        $tab = self::$driver->findElement(WebDriverBy::xpath($xpath));
-        $tab->click();
+        $xpath = "id('reset-license')";
+        $resetButton = self::$driver->findElement(WebDriverBy::xpath($xpath));
+        $resetButton->click();
+        $this->waitForAjax();
 
         $this->clickSidebarMenuItemByHref('/admin-cabinet/licensing/modify/');
         $this->changeTabOnCurrentPage('management');

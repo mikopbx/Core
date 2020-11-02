@@ -7,9 +7,10 @@
  */
 
 /* global Config, globalWebAdminLanguage, globalPBXLicense, globalPBXVersion */
+
 const UpdateApi = {
 	/**
-	 * Запрашивает на сайте новые версии модулей PBX
+	 * Asks for available modules versions
 	 * @returns {boolean}
 	 */
 	getModulesUpdates(cbSuccess) {
@@ -33,7 +34,14 @@ const UpdateApi = {
 			onSuccess: cbSuccess,
 		});
 	},
-
+	/**
+	 * Asks for installation link
+	 * @param params
+	 * @param cbSuccess
+	 * @param cbFailure
+	 * @returns {boolean}
+	 * @constructor
+	 */
 	GetModuleInstallLink(params, cbSuccess, cbFailure) {
 		const requestData = {
 			TYPE: 'MODULEGETLINK',
