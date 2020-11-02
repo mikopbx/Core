@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace MikoPBX\Common\Providers;
 
+use Error;
+use MikoPBX\Core\System\Util;
 use MikoPBX\Service\License;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
@@ -48,7 +50,13 @@ class LicenseProvider implements ServiceProviderInterface
         $di->setShared(
             self::SERVICE_NAME,
             function () {
-                return new License('http://127.0.0.1:8223');
+                $provider = null;
+                try {
+                    $provider =  new License('http://127.0.0.1:8223');
+                } catch (Error $exception){
+                    Util::sysLogMsg(__CLASS__, $exception);
+                }
+                return $provider;
             }
         );
     }
