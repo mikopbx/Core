@@ -16,9 +16,9 @@ use Phalcon\Text;
 
 abstract class WorkerBase extends Di\Injectable implements WorkerInterface
 {
-    protected AsteriskManager $am;
-    protected int $maxProc = 0;
     public int $currentProcId = 1;
+    protected AsteriskManager $am;
+    protected int $maxProc = 1;
 
     /**
      * Workers shared constructor
@@ -48,7 +48,7 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
             // Запустим нехдостающие процессы
             $countProc = count($processes);
             while ($countProc < $this->maxProc) {
-                Util::processPHPWorker(static::class,'start','multiStart');
+                Util::processPHPWorker(static::class, 'start', 'multiStart');
                 $countProc++;
             }
             // Получим количество лишних процессов.
@@ -72,7 +72,19 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
     private function savePidFile(): void
     {
         $activeProcesses = Util::getPidOfProcess(static::class);
-        file_put_contents($this->getPidFile(), $activeProcesses);
+        $processes       = explode(' ', $activeProcesses);
+        if (count($processes) === 1) {
+            file_put_contents($this->getPidFile(), $activeProcesses);
+        } else {
+            $pidFile = pathinfo($this->getPidFile(), PATHINFO_BASENAME);
+            // Delete old PID files
+            $rm = Util::which('rm');
+            Util::mwExec("{$rm} -rf {$pidFile}*");
+            $i = 1;
+            foreach ($processes as $process) {
+                file_put_contents("{$pidFile}-{$i}.pid", $process);
+            }
+        }
     }
 
     /**
@@ -81,6 +93,7 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
     public function getPidFile(): string
     {
         $name = str_replace("\\", '-', static::class);
+
         return "/var/run/{$name}.pid";
     }
 
@@ -114,7 +127,7 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
     }
 
     /**
-     * Make ping tube from classname and ping word
+     * Makes ping tube from classname and ping word
      *
      * @param string $workerClassName
      *
@@ -123,5 +136,16 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
     public function makePingTubeName(string $workerClassName): string
     {
         return Text::camelize("ping_{$workerClassName}", '\\');
+    }
+
+    /**
+     * Deletes old PID files
+     */
+    public function __destruct()
+    {
+        $pidFile = pathinfo($this->getPidFile(), PATHINFO_BASENAME);
+        // Delete old PID files
+        $rm = Util::which('rm');
+        Util::mwExec("{$rm} -rf {$pidFile}*");
     }
 }

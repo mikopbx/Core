@@ -795,11 +795,13 @@ const PbxApi = {
 			method: 'POST',
 			data: {
 				md5:params.md5,
+				size:params.size,
+				version:params.version,
 				url:params.updateLink
 			},
 			successTest: PbxApi.successTest,
-			onSuccess() {
-				callback(true);
+			onSuccess(response) {
+				callback(response.data);
 			},
 			onFailure(response) {
 				callback(response);
@@ -812,11 +814,15 @@ const PbxApi = {
 
 	/**
 	 * Gets firmware download status
+	 * @param {string} filename
+	 * @param {function(*): (undefined)} callback
 	 */
-	FilesFirmwareDownloadStatus(callback) {
+	FilesFirmwareDownloadStatus(filename, callback) {
 		$.api({
 			url: PbxApi.filesFirmwareDownloadStatus,
 			on: 'now',
+			method: 'POST',
+			data: {filename},
 			successTest: PbxApi.successTest,
 			onSuccess(response) {
 				callback(response.data);

@@ -61,7 +61,9 @@ const upgradeStatusLoopWorker = {
 	timeOut: 1000,
 	timeOutHandle: '',
 	iterations: 0,
-	initialize() {
+	filename: '',
+	initialize(filename) {
+		upgradeStatusLoopWorker.filename = filename;
 		upgradeStatusLoopWorker.iterations = 0;
 		upgradeStatusLoopWorker.restartWorker();
 	},
@@ -71,7 +73,7 @@ const upgradeStatusLoopWorker = {
 	},
 	worker() {
 		window.clearTimeout(upgradeStatusLoopWorker.timeoutHandle);
-		PbxApi.FilesFirmwareDownloadStatus(upgradeStatusLoopWorker.cbRefreshUpgradeStatus);
+		PbxApi.FilesFirmwareDownloadStatus(upgradeStatusLoopWorker.filename, upgradeStatusLoopWorker.cbRefreshUpgradeStatus);
 	},
 	cbRefreshUpgradeStatus(response) {
 		upgradeStatusLoopWorker.iterations += 1;
@@ -164,7 +166,7 @@ const updatePBX = {
 				response.firmware.forEach((obj) => {
 					const version = obj.version.replace(/\D/g, '');
 					if (parseInt(version, 10) > parseInt(currentVerison, 10)) {
-						updatePBX.AddNewVersionInformation(obj);
+						updatePBX.addNewVersionInformation(obj);
 					}
 				});
 
@@ -180,6 +182,7 @@ const updatePBX = {
 								const $aLink = $(e.target).closest('a');
 								params.updateLink = $aLink.attr('href');
 								params.md5 = $aLink.attr('data-md5');
+								params.version = $aLink.attr('data-version');
 								params.size = $aLink.attr('data-size');
 								$aLink.find('i').addClass('loading');
 								updatePBX.upgradeInProgress = true;
@@ -194,7 +197,8 @@ const updatePBX = {
 	},
 	/**
 	 * Upload file by chunks
-	 * @param response
+	 * @param action
+	 * @param params
 	 */
 	cbResumableUploadFile(action, params){
 		switch (action) {
@@ -256,8 +260,8 @@ const updatePBX = {
 	 * and then start status check worker
 	 */
 	cbAfterStartDownloadFirmware(response) {
-		if (response === true) {
-			upgradeStatusLoopWorker.initialize();
+		if (response.filename !== undefined) {
+			upgradeStatusLoopWorker.initialize(response.filename);
 		} else {
 			updatePBX.upgradeInProgress = false;
 			$('i.loading.redo').removeClass('loading');
@@ -266,7 +270,7 @@ const updatePBX = {
 	/**
 	 * Add new block of update information on page
 	 */
-	AddNewVersionInformation(obj) {
+	addNewVersionInformation(obj) {
 		$('#online-updates-block').show();
 		let markdownText = decodeURIComponent(obj.description);
 		markdownText = markdownText.replace(/<br>/g, '\r');
@@ -282,7 +286,8 @@ const updatePBX = {
     		<div class="ui small basic icon buttons action-buttons">
     			<a href="${obj.href}" class="ui button redo popuped" 
     				data-content = "${globalTranslate.bt_ToolTipUpgradeOnline}"
-					data-md5 ="${obj.md5}" data-size ="${obj.size}">
+					data-md5 ="${obj.md5}" data-size ="${obj.size}"
+					data-version = "${obj.version}" >
 					<i class="icon redo blue"></i>
 					<span class="percent"></span>
 				</a>
