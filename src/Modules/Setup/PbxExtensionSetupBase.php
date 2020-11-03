@@ -478,10 +478,10 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
         }
         $value               = [
             'uniqid'        => $this->moduleUniqueID,
-            'href'          => "/admin-cabinet/$unCamelizedControllerName",
-            'group'         => 'maintenance',
+            'href'          => "/admin-cabinet/{$unCamelizedControllerName}",
+            'group'         => 'modules',
             'iconClass'     => 'puzzle',
-            'caption'       => "Breadcrumb$this->moduleUniqueID",
+            'caption'       => "Breadcrumb{$this->moduleUniqueID}",
             'showAtSidebar' => true,
         ];
         $menuSettings->value = json_encode($value);
