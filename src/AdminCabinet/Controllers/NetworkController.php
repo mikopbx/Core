@@ -161,7 +161,7 @@ class NetworkController extends BaseController
                     }
                     break;
                 case 'interface':
-                    if ($eth->id === 0) {
+                    if ($eth->id === '0') {
                         $eth->$name = LanInterfaces::findFirstById($data[$name . '_' . $eth->id])->interface;
                     }
                     break;
