@@ -68,12 +68,12 @@ class AdvicesProcessor extends Injectable
 
         $arrMessages     = [];
         $arrAdvicesTypes = [
+            ['type' => 'isConnected', 'cacheTime' => 15],
             ['type' => 'checkPasswords', 'cacheTime' => 15],
             ['type' => 'checkFirewalls', 'cacheTime' => 15],
             ['type' => 'checkStorage', 'cacheTime' => 120],
             ['type' => 'checkUpdates', 'cacheTime' => 3600],
             ['type' => 'checkRegistration', 'cacheTime' => 86400],
-            ['type' => 'isConnected', 'cacheTime' => 15],
         ];
 
         $managedCache = $this->getDI()->getShared('managedCache');
@@ -285,7 +285,7 @@ class AdvicesProcessor extends Injectable
     {
         $messages = [];
         $connected = @fsockopen("www.google.com", 443);
-        if ($connected) {
+        if ($connected !== false) {
             fclose($connected);
         } else {
             $messages['warning'] = $this->translation->_('adv_ProblemWithInternetConnection');

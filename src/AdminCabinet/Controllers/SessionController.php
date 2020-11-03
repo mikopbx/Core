@@ -9,6 +9,7 @@
 
 namespace MikoPBX\AdminCabinet\Controllers;
 
+use GuzzleHttp\Client;
 use MikoPBX\AdminCabinet\Forms\LoginForm;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Util;
@@ -59,6 +60,7 @@ class SessionController extends BaseController
         $password = PbxSettings::getValueByKey('WebAdminPassword');
         if ($password === $passFromUser && $login === $loginFromUser) {
             $this->_registerSession('admins');
+            $this->updateSystemLanguage();
             $this->view->success = true;
             $this->view->reload  = 'index/index';
         } else {
@@ -84,6 +86,27 @@ class SessionController extends BaseController
     }
 
     /**
+     * Updates system settings for language
+     *
+     */
+    private function updateSystemLanguage(): void
+    {
+        $newLanguage = $this->session->get('WebAdminLanguage');
+        if ( ! isset($newLanguage)) {
+            return;
+        }
+        $languageSettings = PbxSettings::findFirstByKey('WebAdminLanguage');
+        if ($languageSettings === null) {
+            $languageSettings      = new PbxSettings();
+            $languageSettings->key = 'WebAdminLanguage';
+        }
+        if ($newLanguage !== $languageSettings->value) {
+            $languageSettings->value = $newLanguage;
+            $languageSettings->save();
+        }
+    }
+
+    /**
      * Process language change
      */
     public function changeLanguageAction(): void
@@ -92,13 +115,7 @@ class SessionController extends BaseController
         if (array_key_exists($newLanguage, $this->elements->getAvailableWebAdminLanguages())) {
             $this->session->set('WebAdminLanguage', $newLanguage);
             if ($this->session->has('auth')) {
-                $languageSettings = PbxSettings::findFirstByKey('WebAdminLanguage');
-                if ($languageSettings === null) {
-                    $languageSettings      = new PbxSettings();
-                    $languageSettings->key = 'WebAdminLanguage';
-                }
-                $languageSettings->value = $newLanguage;
-                $languageSettings->save();
+                $this->updateSystemLanguage();
             }
             $this->view->success = true;
         } else {
