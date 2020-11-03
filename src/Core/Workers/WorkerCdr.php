@@ -12,6 +12,7 @@ require_once 'Globals.php';
 
 use MikoPBX\Common\Models\{CallDetailRecordsTmp, Users};
 use MikoPBX\Core\System\{BeanstalkClient, Util};
+use Pheanstalk\Contract\PheanstalkInterface;
 
 /**
  * Class WorkerCdr
@@ -198,7 +199,7 @@ class WorkerCdr extends WorkerBase
                 unset($this->no_answered_calls[$linkedid]);
             }
             unset($data['tmp_linked_id']);
-            $this->client_queue->publish(json_encode($data), null, self::UPDATE_CDR_TUBE);
+            $this->client_queue->publish(json_encode($data), PheanstalkInterface::DEFAULT_PRIORITY, self::UPDATE_CDR_TUBE);
         }
 
         $this->notifyByEmail();
@@ -258,7 +259,7 @@ class WorkerCdr extends WorkerBase
     private function notifyByEmail(): void
     {
         foreach ($this->no_answered_calls as $call) {
-            $this->client_queue->publish(json_encode($call), null, WorkerNotifyByEmail::class);
+            $this->client_queue->publish(json_encode($call), PheanstalkInterface::DEFAULT_PRIORITY, WorkerNotifyByEmail::class);
         }
         $this->no_answered_calls = [];
     }
