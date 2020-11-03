@@ -282,7 +282,7 @@ class Network extends Injectable
                  */
                 $pid_file = "/var/run/udhcpc_{$if_name}";
                 $pid_pcc  = Util::getPidOfProcess($pid_file);
-                if ( ! empty($pid_pcc)) {
+                if ( ! empty($pid_pcc) && file_exists($pid_file)) {
                     // Завершаем старый процесс.
                     $killPath = Util::which('kill');
                     $catPath  = Util::which('cat');
