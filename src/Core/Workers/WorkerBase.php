@@ -84,6 +84,7 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
             $i = 1;
             foreach ($processes as $process) {
                 file_put_contents("{$pidFile}-{$i}.pid", $process);
+                $i++;
             }
         }
     }
