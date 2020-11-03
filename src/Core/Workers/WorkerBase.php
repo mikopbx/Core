@@ -76,7 +76,8 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
         if (count($processes) === 1) {
             file_put_contents($this->getPidFile(), $activeProcesses);
         } else {
-            $pidFile = pathinfo($this->getPidFile(), PATHINFO_BASENAME);
+            $pidFilesDir = dirname($this->getPidFile());
+            $pidFile = $pidFilesDir.'/'.pathinfo($this->getPidFile(), PATHINFO_BASENAME);
             // Delete old PID files
             $rm = Util::which('rm');
             Util::mwExec("{$rm} -rf {$pidFile}*");
@@ -143,7 +144,8 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
      */
     public function __destruct()
     {
-        $pidFile = pathinfo($this->getPidFile(), PATHINFO_BASENAME);
+        $pidFilesDir = dirname($this->getPidFile());
+        $pidFile = $pidFilesDir.'/'.pathinfo($this->getPidFile(), PATHINFO_BASENAME);
         // Delete old PID files
         $rm = Util::which('rm');
         Util::mwExec("{$rm} -rf {$pidFile}*");
