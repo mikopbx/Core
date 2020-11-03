@@ -778,6 +778,7 @@ return [
     'lic_Coupon'                                                          => 'Купон для обновления лицензии',
     'lic_ActivateCouponButton'                                            => 'Активировать купон',
     'lic_SaveLicenseKeyButton'                                            => 'Сохранить ключ',
+    'lic_GetTrialErrorCheckInternet'                                      => 'Не удалось пройти регистрацию, проверьте наличие Internet на MikoPBX',
     'lic_LicenseKeyMessage'                                               => '<div class=\'ui message \'>Лицензионный ключ используется для хранения всех ваших лицензий от любых продуктов МИКО.<br>
 Если у вас уже есть ключ, вы можете просто вписать его в это поле.<br>
 Если ключ у вас был, но вы его забыли, поищите в почте входящие письма по адресу lic@miko.ru<br>
@@ -930,6 +931,7 @@ return [
     'adv_ThisCopyIsNotRegistered'                                         => 'Эта копия программы не лицензирована - <a href=\'%url%\'>Бесплатная активация</a>',
     'adv_StorageDiskRunningOutOfFreeSpace'                                => 'На диске для хранения заканчивается свободное место (%free% Mb)</a>',
     'adv_ThisCopyHasLicensingTroubles'                                    => 'Проблема с лицензией PBX: %error%  - <a target="_blank" href=\'%url%\'>как исправить</a>',
+    'adv_ProblemWithInternetConnection'                                   => 'Отсутсвует подключение к Internet. Возможны проблемы в работе платных модулей.',
     'сal_Today'                                                           => 'Сегодня',
     'сal_Yesterday'                                                       => 'Вчера',
     'сal_LastWeek'                                                        => 'Последние 7 дней',

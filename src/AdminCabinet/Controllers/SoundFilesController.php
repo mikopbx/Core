@@ -45,6 +45,7 @@ class SoundFilesController extends BaseController
 
         $form                  = new SoundFilesEditForm($file);
         $this->view->form      = $form;
+        $this->view->category  = $file->category;
         $this->view->audioPath = empty($file->path) ? '' : "/pbxcore/api/cdr/playback?view={$file->path}";
         $this->view->represent = $file->getRepresent();
     }

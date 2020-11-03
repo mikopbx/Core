@@ -61,8 +61,7 @@
 
 
 {{ partial("partials/submitbutton",[
-    'indexurl':'sound-files/index',
-    ''
+    'indexurl':'sound-files/index/#/'~category
 ]) }}
 </form>
 
