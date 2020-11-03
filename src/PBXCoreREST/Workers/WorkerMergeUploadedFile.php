@@ -21,6 +21,7 @@ class WorkerMergeUploadedFile extends WorkerBase
         $settings_file = trim($argv[1]);
         if ( ! file_exists($settings_file)) {
             Util::sysLogMsg(__CLASS__, 'File with settings not found');
+
             return;
         }
         $settings = json_decode(file_get_contents($settings_file), true);
@@ -35,10 +36,13 @@ class WorkerMergeUploadedFile extends WorkerBase
 
         // Check filesize is equal uploaded size
         $resultFileSize = filesize($settings['fullUploadedFileName']);
-        if ((int)$settings['resumableTotalSize'] === $resultFileSize){
+        if ((int)$settings['resumableTotalSize'] === $resultFileSize) {
             file_put_contents($progress_file, '100');
         } else {
-            Util::sysLogMsg('UploadFile', "File {$settings['fullUploadedFileName']} size {$resultFileSize} does not equal {$settings['resumableTotalSize']}");
+            Util::sysLogMsg(
+                'UploadFile',
+                "File {$settings['fullUploadedFileName']} size {$resultFileSize} does not equal {$settings['resumableTotalSize']}"
+            );
         }
 
         // Delete uploaded file after 10 minutes
@@ -72,7 +76,8 @@ class WorkerMergeUploadedFile extends WorkerBase
                 $tmp_file = $tempDir . '/' . $fileName . '.part' . $i;
                 fwrite($fp, file_get_contents($tmp_file));
                 unlink($tmp_file);
-                $currentProgress = round($i / $total_files * 100)-1; //Up to 99%
+                $currentProgress = round($i / $total_files * 100);
+                $currentProgress = $currentProgress < 99 ? $currentProgress : 99;
                 file_put_contents($progress_file, $currentProgress, 2);
             }
             fclose($fp);

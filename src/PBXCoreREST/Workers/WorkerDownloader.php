@@ -28,13 +28,13 @@ class WorkerDownloader extends WorkerBase
      *
      * @param $argv
      */
-
     public function start($argv): void
     {
         if (file_exists($argv[1])) {
             $this->settings = json_decode(file_get_contents($argv[1]), true);
         } else {
-            Util::sysLogMsg("WorkerDownloader", 'Wrong settings');
+            Util::sysLogMsg(__CLASS__, 'Wrong download settings');
+
             return;
         }
         $this->old_memory_limit = ini_get('memory_limit');
@@ -43,17 +43,16 @@ class WorkerDownloader extends WorkerBase
         $temp_dir            = dirname($this->settings['res_file']);
         $this->progress_file = $temp_dir . '/progress';
         $this->error_file    = $temp_dir . '/error';
-        Util::mwMkdir($temp_dir);
 
-        if ($this->getFile()) {
-            $this->action();
-        } else {
+        $result = $this->getFile();
+        $result = $result && $this->checkFile();
+        if ( ! $result) {
             Util::sysLogMsg(__CLASS__, 'Download error...');
         }
     }
 
     /**
-     * Скачивание файла с удаленного ресурса.
+     * Downloads file from remote resource by link
      */
     public function getFile(): bool
     {
@@ -63,13 +62,17 @@ class WorkerDownloader extends WorkerBase
         if (file_exists($this->settings['res_file'])) {
             unlink($this->settings['res_file']);
         }
-        $this->file_size = $this->remoteFileSize($this->settings['url']);
+        if (isset($this->settings['size'])){
+            $this->file_size = $this->settings['size'];
+        } else {
+            $this->file_size = $this->remoteFileSize($this->settings['url']);
+        }
 
         file_put_contents($this->progress_file, 0);
 
         $fp = fopen($this->settings['res_file'], 'w');
         $ch = curl_init();
-        if (!is_resource($ch)) {
+        if ( ! is_resource($ch)) {
             return false;
         }
         curl_setopt($ch, CURLOPT_FILE, $fp);
@@ -115,41 +118,43 @@ class WorkerDownloader extends WorkerBase
     }
 
     /**
-     * Выполнение действия с загруженным файлом.
+     * Checks file md5 sum and size
      */
-    public function action(): void
+    public function checkFile(): bool
     {
-        if (empty($this->settings) || ! isset($this->settings['action'])) {
-            return;
-        }
         if ( ! file_exists($this->settings['res_file'])) {
-            file_put_contents($this->error_file, 'File does not uploaded', FILE_APPEND);
+            file_put_contents($this->error_file, 'File did not upload', FILE_APPEND);
 
-            return;
+            return false;
         }
-        if ( ! file_exists($this->settings['res_file'])
-            || md5_file($this->settings['res_file']) !== $this->settings['md5'])
-        {
-            if (file_exists($this->settings['res_file'])) {
-                unlink($this->settings['res_file']);
-            }
-            file_put_contents($this->error_file, 'Error check sum.', FILE_APPEND);
+        if (md5_file($this->settings['res_file']) !== $this->settings['md5']) {
+            unlink($this->settings['res_file']);
+            file_put_contents($this->error_file, 'Error on comparing MD5 sum', FILE_APPEND);
 
-            return;
+            return false;
+        }
+        if ($this->file_size !== filesize($this->settings['res_file'])) {
+            unlink($this->settings['res_file']);
+            file_put_contents($this->error_file, 'Error on comparing file size', FILE_APPEND);
+
+            return false;
         }
         file_put_contents($this->progress_file, 100);
+
+        return true;
     }
 
     /**
-     * Возвращаем memory_limit в исходную.
+     * Returns memory_limit to default value.
      */
     public function __destruct()
     {
         ini_set('memory_limit', $this->old_memory_limit);
+
     }
 
     /**
-     * Обработка прогресса скачивания файла.
+     * Calculates download progress and writes it on progress_file.
      *
      * @param $resource
      * @param $download_size
@@ -168,10 +173,8 @@ class WorkerDownloader extends WorkerBase
         $delta = $new_progress - $this->progress;
         if ($delta > 1) {
             $this->progress = round($new_progress, 0);
+            $this->progress = $this->progress < 99 ? $this->progress : 99;
             file_put_contents($this->progress_file, $this->progress);
-        }
-        if ($this->file_size === $downloaded) {
-            file_put_contents($this->progress_file, 100);
         }
     }
 

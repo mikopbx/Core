@@ -47,7 +47,7 @@ class FilesManagementProcessor extends Injectable
                 $res = FilesManagementProcessor::downloadNewFirmware($request['data']);
                 break;
             case 'firmwareDownloadStatus':
-                $res = FilesManagementProcessor::firmwareDownloadStatus();
+                $res = FilesManagementProcessor::firmwareDownloadStatus($postData['filename']);
                 break;
             case 'downloadNewModule':
                 $module = $request['data']['uniqid'];
@@ -85,12 +85,14 @@ class FilesManagementProcessor extends Injectable
         if ($di === null) {
             $res->success    = false;
             $res->messages[] = 'Dependency injector does not initialized';
+
             return $res;
         }
         $parameters['uploadDir'] = $di->getShared('config')->path('www.uploadDir');
-        $parameters['tempDir'] = "{$parameters['uploadDir']}/{$parameters['resumableIdentifier']}";
+        $parameters['tempDir']   = "{$parameters['uploadDir']}/{$parameters['resumableIdentifier']}";
         if ( ! Util::mwMkdir($parameters['tempDir'])) {
             $res->messages[] = 'Temp dir does not exist ' . $parameters['tempDir'];
+
             return $res;
         }
 
@@ -99,16 +101,17 @@ class FilesManagementProcessor extends Injectable
 
         // Delete old progress and result file
         $oldMergeProgressFile = "{$parameters['tempDir']}/merging_progress";
-        if (file_exists($oldMergeProgressFile)){
+        if (file_exists($oldMergeProgressFile)) {
             unlink($oldMergeProgressFile);
         }
-        if (file_exists($parameters['fullUploadedFileName'])){
+        if (file_exists($parameters['fullUploadedFileName'])) {
             unlink($parameters['fullUploadedFileName']);
         }
 
         foreach ($parameters['files'] as $file_data) {
-            if (!self::moveUploadedPartToSeparateDir($parameters, $file_data)){
-                $res->messages[] = 'Does not found any uploaded chunks on with path '.$file_data['file_path'];
+            if ( ! self::moveUploadedPartToSeparateDir($parameters, $file_data)) {
+                $res->messages[] = 'Does not found any uploaded chunks on with path ' . $file_data['file_path'];
+
                 return $res;
             }
             $res->success           = true;
@@ -133,7 +136,7 @@ class FilesManagementProcessor extends Injectable
      *
      * @return bool
      */
-    private static function moveUploadedPartToSeparateDir(array $parameters, array $file_data):bool
+    private static function moveUploadedPartToSeparateDir(array $parameters, array $file_data): bool
     {
         if ( ! file_exists($file_data['file_path'])) {
             return false;
@@ -148,11 +151,12 @@ class FilesManagementProcessor extends Injectable
             $file_data['file_type']
         );
         $chunks_dest_file = "{$parameters['tempDir']}/{$parameters['resumableFilename']}.part{$parameters['resumableChunkNumber']}";
-        if (file_exists($chunks_dest_file)){
+        if (file_exists($chunks_dest_file)) {
             $rm = Util::which('rm');
             Util::mwExec("{$rm} -f {$chunks_dest_file}");
         }
         $file->moveTo($chunks_dest_file);
+
         return true;
     }
 
@@ -173,11 +177,11 @@ class FilesManagementProcessor extends Injectable
         if ($totalFilesOnServerSize >= $parameters['resumableTotalSize']) {
             // Parts upload complete
             $merge_settings = [
-                    'fullUploadedFileName' => $parameters['fullUploadedFileName'],
-                    'tempDir'              => $parameters['tempDir'],
-                    'resumableFilename'    => $parameters['resumableFilename'],
-                    'resumableTotalSize'   => $parameters['resumableTotalSize'],
-                    'resumableTotalChunks' => $parameters['resumableTotalChunks'],
+                'fullUploadedFileName' => $parameters['fullUploadedFileName'],
+                'tempDir'              => $parameters['tempDir'],
+                'resumableFilename'    => $parameters['resumableFilename'],
+                'resumableTotalSize'   => $parameters['resumableTotalSize'],
+                'resumableTotalChunks' => $parameters['resumableTotalChunks'],
             ];
             $settings_file  = "{$parameters['tempDir']}/merge_settings";
             file_put_contents(
@@ -189,8 +193,10 @@ class FilesManagementProcessor extends Injectable
             $phpPath               = Util::which('php');
             $workerFilesMergerPath = Util::getFilePathByClassName(WorkerMergeUploadedFile::class);
             Util::mwExecBg("{$phpPath} -f {$workerFilesMergerPath} '{$settings_file}'");
+
             return true;
         }
+
         return false;
     }
 
@@ -244,6 +250,52 @@ class FilesManagementProcessor extends Injectable
     }
 
     /**
+     * Delete file from disk by filepath
+     *
+     * @param $filePath
+     *
+     * @return PBXApiResult
+     */
+    public static function removeAudioFile($filePath): PBXApiResult
+    {
+        $res            = new PBXApiResult();
+        $res->processor = __METHOD__;
+        $extension      = Util::getExtensionOfFile($filePath);
+        if ( ! in_array($extension, ['mp3', 'wav', 'alaw'])) {
+            $res->success    = false;
+            $res->messages[] = "It is forbidden to remove the file type $extension.";
+
+            return $res;
+        }
+
+        if ( ! file_exists($filePath)) {
+            $res->success         = true;
+            $res->data['message'] = "File '{$filePath}' already deleted";
+
+            return $res;
+        }
+
+        $out = [];
+
+        $arrDeletedFiles = [
+            escapeshellarg(Util::trimExtensionForFile($filePath) . ".wav"),
+            escapeshellarg(Util::trimExtensionForFile($filePath) . ".mp3"),
+            escapeshellarg(Util::trimExtensionForFile($filePath) . ".alaw"),
+        ];
+
+        $rmPath = Util::which('rm');
+        Util::mwExec("{$rmPath} -rf " . implode(' ', $arrDeletedFiles), $out);
+        if (file_exists($filePath)) {
+            $res->success  = false;
+            $res->messages = $out;
+        } else {
+            $res->success = true;
+        }
+
+        return $res;
+    }
+
+    /**
      * Returns file content
      *
      * @param $filename
@@ -288,40 +340,33 @@ class FilesManagementProcessor extends Injectable
     {
         $di = Di::getDefault();
         if ($di !== null) {
-            $tempDir = $di->getConfig()->path('www.uploadDir');
+            $uploadDir = $di->getConfig()->path('www.uploadDir');
         } else {
-            $tempDir = '/tmp';
+            $uploadDir = '/tmp';
         }
-        $rmPath = Util::which('rm');
-        $module = 'NewFirmware';
-        if ( ! file_exists($tempDir . "/{$module}")) {
-            Util::mwMkdir($tempDir . "/{$module}");
+        $firmwareDirTmp = "{$uploadDir}/{$data['version']}";
+
+        if (file_exists($firmwareDirTmp)) {
+            $rmPath = Util::which('rm');
+            Util::mwExec("{$rmPath} -rf {$firmwareDirTmp}/* ");
         } else {
-            // Чистим файлы, загруженные онлайн.
-            Util::mwExec("{$rmPath} -rf {$tempDir}/{$module}/* ");
-        }
-        if (file_exists("{$tempDir}/update.img")) {
-            // Чистим вручную загруженный файл.
-            Util::mwExec("{$rmPath} -rf {$tempDir}/update.img");
+            Util::mwMkdir($firmwareDirTmp);
         }
 
         $download_settings = [
-            'res_file' => "{$tempDir}/{$module}/update.img",
+            'res_file' => "{$firmwareDirTmp}/update.img",
             'url'      => $data['url'],
-            'module'   => $module,
+            'size'     => $data['size'],
             'md5'      => $data['md5'],
-            'action'   => $module,
         ];
 
         $workerDownloaderPath = Util::getFilePathByClassName(WorkerDownloader::class);
-
-        file_put_contents($tempDir . "/{$module}/progress", '0');
         file_put_contents(
-            $tempDir . "/{$module}/download_settings.json",
+            "{$firmwareDirTmp}/download_settings.json",
             json_encode($download_settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
         );
         $phpPath = Util::which('php');
-        Util::mwExecBg("{$phpPath} -f {$workerDownloaderPath} " . $tempDir . "/{$module}/download_settings.json");
+        Util::mwExecBg("{$phpPath} -f {$workerDownloaderPath} {$firmwareDirTmp}/download_settings.json");
 
         $res                   = new PBXApiResult();
         $res->processor        = __METHOD__;
@@ -335,51 +380,58 @@ class FilesManagementProcessor extends Injectable
     /**
      * Returns download Firmware from remote repository progress
      *
+     * @param string $imgFileName
+     *
      * @return PBXApiResult
      */
-    public static function firmwareDownloadStatus(): PBXApiResult
+    public static function firmwareDownloadStatus(string $imgFileName): PBXApiResult
     {
         clearstatcache();
         $res            = new PBXApiResult();
         $res->processor = __METHOD__;
         $res->success   = true;
-        $di             = Di::getDefault();
-        if ($di !== null) {
-            $tempDir = $di->getConfig()->path('www.uploadDir');
-        } else {
-            $tempDir = '/tmp';
-        }
-        $modulesDir    = $tempDir . '/NewFirmware';
-        $progress_file = $modulesDir . '/progress';
 
+        $firmwareDirTmp = dirname($imgFileName);
+        $progress_file  = $firmwareDirTmp . '/progress';
+
+        // Wait until download process started
+        $d_pid = Util::getPidOfProcess("{$firmwareDirTmp}/download_settings.json");
+        if (empty($d_pid)) {
+            usleep(500000);
+        }
         $error = '';
-        if (file_exists($modulesDir . '/error')) {
-            $error = trim(file_get_contents($modulesDir . '/error'));
+        if (file_exists("{$firmwareDirTmp}/error")) {
+            $error = trim(file_get_contents("{$firmwareDirTmp}/error"));
         }
 
         if ( ! file_exists($progress_file)) {
             $res->data['d_status_progress'] = '0';
-            $res->data['d_status']          = 'NOT_FOUND';
+            $res->messages[]                = 'NOT_FOUND';
+            $res->success                   = false;
         } elseif ('' !== $error) {
             $res->data['d_status']          = 'DOWNLOAD_ERROR';
             $res->data['d_status_progress'] = file_get_contents($progress_file);
-            $res->data['d_error']           = $error;
+            $res->messages[]                = file_get_contents("{$firmwareDirTmp}/error");
+            $res->success                   = false;
         } elseif ('100' === file_get_contents($progress_file)) {
             $res->data['d_status_progress'] = '100';
             $res->data['d_status']          = 'DOWNLOAD_COMPLETE';
-            $res->data['filePath']          = "{$tempDir}/NewFirmware/update.img";
+            $res->data['filePath']          = $imgFileName;
+            $res->success                   = true;
         } else {
             $res->data['d_status_progress'] = file_get_contents($progress_file);
-            $d_pid                          = Util::getPidOfProcess($tempDir . '/NewFirmware/download_settings.json');
+            $d_pid                          = Util::getPidOfProcess("{$firmwareDirTmp}/download_settings.json");
             if (empty($d_pid)) {
                 $res->data['d_status'] = 'DOWNLOAD_ERROR';
-                $error                 = '';
-                if (file_exists($modulesDir . '/error')) {
-                    $error = file_get_contents($modulesDir . '/error');
+                if (file_exists("{$firmwareDirTmp}/error")) {
+                    $res->messages[] = file_get_contents("{$firmwareDirTmp}/error");
+                } else {
+                    $res->messages[] = "Download process interrupted at {$res->data['d_status_progress']}%";
                 }
-                $res->data['d_error'] = $error;
+                $res->success = false;
             } else {
                 $res->data['d_status'] = 'DOWNLOAD_IN_PROGRESS';
+                $res->success          = true;
             }
         }
 
@@ -463,7 +515,7 @@ class FilesManagementProcessor extends Injectable
             $error = trim(file_get_contents($moduleDirTmp . '/error'));
         }
 
-        // Ожидание запуска процесса загрузки.
+        // Wait until download process started
         $d_pid = Util::getPidOfProcess("{$moduleDirTmp}/download_settings.json");
         if (empty($d_pid)) {
             usleep(500000);
@@ -477,6 +529,7 @@ class FilesManagementProcessor extends Injectable
             $res->data['d_status']          = 'DOWNLOAD_ERROR';
             $res->data['d_status_progress'] = file_get_contents($progress_file);
             $res->data['d_error']           = $error;
+            $res->messages[]                = file_get_contents($moduleDirTmp . '/error');
             $res->success                   = false;
         } elseif ('100' === file_get_contents($progress_file)) {
             $res->data['d_status_progress'] = '100';
@@ -491,9 +544,9 @@ class FilesManagementProcessor extends Injectable
                 if (file_exists($moduleDirTmp . '/error')) {
                     $res->messages[] = file_get_contents($moduleDirTmp . '/error');
                 } else {
-                    $res->messages[]                 = "Download process interrupted at {$res->data['d_status_progress']}%";
+                    $res->messages[] = "Download process interrupted at {$res->data['d_status_progress']}%";
                 }
-                $res->success    = false;
+                $res->success = false;
             } else {
                 $res->data['d_status'] = 'DOWNLOAD_IN_PROGRESS';
                 $res->success          = true;
@@ -502,53 +555,6 @@ class FilesManagementProcessor extends Injectable
 
         return $res;
     }
-
-    /**
-     * Delete file from disk by filepath
-     *
-     * @param $filePath
-     *
-     * @return PBXApiResult
-     */
-    public static function removeAudioFile($filePath): PBXApiResult
-    {
-        $res            = new PBXApiResult();
-        $res->processor = __METHOD__;
-        $extension      = Util::getExtensionOfFile($filePath);
-        if ( ! in_array($extension, ['mp3', 'wav', 'alaw'])) {
-            $res->success    = false;
-            $res->messages[] = "It is forbidden to remove the file type $extension.";
-
-            return $res;
-        }
-
-        if ( ! file_exists($filePath)) {
-            $res->success         = true;
-            $res->data['message'] = "File '{$filePath}' already deleted";
-
-            return $res;
-        }
-
-        $out = [];
-
-        $arrDeletedFiles = [
-            escapeshellarg(Util::trimExtensionForFile($filePath) . ".wav"),
-            escapeshellarg(Util::trimExtensionForFile($filePath) . ".mp3"),
-            escapeshellarg(Util::trimExtensionForFile($filePath) . ".alaw"),
-        ];
-
-        $rmPath = Util::which('rm');
-        Util::mwExec("{$rmPath} -rf " . implode(' ', $arrDeletedFiles), $out);
-        if (file_exists($filePath)) {
-            $res->success  = false;
-            $res->messages = $out;
-        } else {
-            $res->success = true;
-        }
-
-        return $res;
-    }
-
 
     /**
      * Unpack ModuleFile and get metadata information
