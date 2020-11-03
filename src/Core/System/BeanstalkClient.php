@@ -162,11 +162,11 @@ class BeanstalkClient extends Injectable
     /**
      * Job worker
      *
-     * @param int $timeout
+     * @param float $timeout
      *
      * @throws \Pheanstalk\Exception\DeadlineSoonException
      */
-    public function wait($timeout = 10): void
+    public function wait(float $timeout = 10): void
     {
         $this->message = null;
         $start = microtime(true);
