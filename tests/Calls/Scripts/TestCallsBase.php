@@ -30,6 +30,7 @@ class TestCallsBase {
         $db_data = $this->getIdlePeers();
         if(count($db_data) < 3){
             $this->printError('Need 3 SIP account (endpoint).');
+            exit(1);
             return;
         }
         // Отбираем первые учетные записи.

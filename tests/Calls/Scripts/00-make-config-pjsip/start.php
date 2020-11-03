@@ -13,7 +13,7 @@ require_once 'Globals.php';
 $testName = basename(__DIR__);
 echo "\033[01;35mStart test {$testName}\033[39m \n";
 
-$limitPeers = 5;
+$limitPeers = 10;
 $db_data = Sip::find([
     "type = 'peer' AND ( disabled <> '1')",
     'limit' => $limitPeers
