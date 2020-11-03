@@ -20,8 +20,7 @@
 
 </div>
 <div class="ui bottom attached tab segment" data-tab="management">
-
-    <div id="licenseKeySection">
+    <div id="licenseKeySection" class="disabled">
         <h2 class="ui header">{{ t._('lic_LicenseKey') }}</h2>
 
         <div id="empty-license-key-info">
