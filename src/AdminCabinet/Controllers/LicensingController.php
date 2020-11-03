@@ -46,6 +46,7 @@ class LicensingController extends BaseController
         $getKeyForm             = new LicensingGetKeyForm();
         $this->view->getKeyForm = $getKeyForm;
         $this->view->submitMode = null;
+
     }
 
     /**
@@ -55,6 +56,5 @@ class LicensingController extends BaseController
     {
         $this->session->remove('PBXLicense');
     }
-
 
 }
