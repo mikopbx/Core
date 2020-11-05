@@ -18,8 +18,9 @@ use MikoPBX\Common\Models\{Codecs,
     Users};
 use MikoPBX\Core\Asterisk\AstDB;
 use MikoPBX\Modules\Config\ConfigClass;
-use MikoPBX\Core\System\{Network, Util};
+use MikoPBX\Core\System\{MikoPBXConfig, Network, Util};
 use MikoPBX\Core\Utilities\SubnetCalculator;
+use Phalcon\Di;
 
 class SIPConf extends ConfigClass
 {
@@ -83,37 +84,9 @@ class SIPConf extends ConfigClass
      */
     private function generateGeneralPj(): string
     {
-        $network = new Network();
         $lang    = $this->generalSettings['PBXLanguage'];
+        [$topology, $extipaddr, $exthostname, $subnets] = $this->getTopologyData();
 
-        $topology    = 'public';
-        $extipaddr   = '';
-        $exthostname = '';
-        $networks    = $network->getEnabledLanInterfaces();
-        $subnets     = [];
-        foreach ($networks as $if_data) {
-            $lan_config = $network->getInterface($if_data['interface']);
-            if (empty($lan_config['ipaddr']) || empty($lan_config['subnet'])) {
-                continue;
-            }
-            $sub = new SubnetCalculator($lan_config['ipaddr'], $lan_config['subnet']);
-            $net = $sub->getNetworkPortion() . '/' . $lan_config['subnet'];
-            if ($if_data['topology'] === 'private' && in_array($net, $subnets, true) === false) {
-                $subnets[] = $net;
-            }
-            if (trim($if_data['internet']) === '1') {
-                $topology    = trim($if_data['topology']);
-                $extipaddr   = trim($if_data['extipaddr']);
-                $exthostname = trim($if_data['exthostname']);
-            }
-        }
-
-        $networks = NetworkFilters::find('local_network=1');
-        foreach ($networks as $net) {
-            if (in_array($net->permit, $subnets, true) === false) {
-                $subnets[] = $net->permit;
-            }
-        }
         $codecs = $this->getCodecs();
         $codecConf = '';
         foreach ($codecs as $codec){
@@ -169,10 +142,78 @@ class SIPConf extends ConfigClass
             '';
 
         $varEtcDir = $this->config->path('core.varEtcDir');
-        file_put_contents($varEtcDir . '/topology_hash', md5($topology . $exthostname . $extipaddr));
+        file_put_contents($varEtcDir . '/topology_hash', md5($topology . $exthostname . $extipaddr. $this->generalSettings['SIPPort']));
         $conf .= "\n";
 
         return $conf;
+    }
+
+    /**
+     * Проверка ключевых параметров.
+     * Если параметры изменены, то необходим рестарт Asterisk процесса.
+     * @return bool
+     */
+    public function needAsteriskRestart():bool{
+        $di     = Di::getDefault();
+        if ($di === null) {
+            return false;
+        }
+        $mikoPBXConfig  = new MikoPBXConfig();
+        [$topology, $extipaddr, $exthostname] = $this->getTopologyData();
+
+        $generalSettings = $mikoPBXConfig->getGeneralSettings();
+        $now_hadh = md5($topology . $exthostname . $extipaddr. $generalSettings['SIPPort']);
+        $old_hash   = '';
+        $varEtcDir = $di->getShared('config')->path('core.varEtcDir');
+        if (file_exists($varEtcDir . '/topology_hash')) {
+            $old_hash = file_get_contents($varEtcDir . '/topology_hash');
+        }
+
+        return $old_hash !== $now_hadh;
+    }
+
+    /**
+     * @return array
+     */
+    private function getTopologyData():array{
+        $network = new Network();
+
+        $topology    = 'public';
+        $extipaddr   = '';
+        $exthostname = '';
+        $networks    = $network->getEnabledLanInterfaces();
+        $subnets     = [];
+        foreach ($networks as $if_data) {
+            $lan_config = $network->getInterface($if_data['interface']);
+            if (empty($lan_config['ipaddr']) || empty($lan_config['subnet'])) {
+                continue;
+            }
+            $sub = new SubnetCalculator($lan_config['ipaddr'], $lan_config['subnet']);
+            $net = $sub->getNetworkPortion() . '/' . $lan_config['subnet'];
+            if ($if_data['topology'] === 'private' && in_array($net, $subnets, true) === false) {
+                $subnets[] = $net;
+            }
+            if (trim($if_data['internet']) === '1') {
+                $topology    = trim($if_data['topology']);
+                $extipaddr   = trim($if_data['extipaddr']);
+                $exthostname = trim($if_data['exthostname']);
+            }
+        }
+
+        $networks = NetworkFilters::find('local_network=1');
+        foreach ($networks as $net) {
+            if (in_array($net->permit, $subnets, true) === false) {
+                $subnets[] = $net->permit;
+            }
+        }
+
+        return array(
+            $topology,
+            $extipaddr,
+            $exthostname,
+            $subnets,
+        );
+
     }
 
     /**
