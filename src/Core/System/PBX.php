@@ -222,47 +222,23 @@ class PBX extends Injectable
         if ($di === null) {
             return;
         }
-        $network = new Network();
-
-        $topology    = 'public';
-        $extipaddr   = '';
-        $exthostname = '';
-        $networks    = $network->getEnabledLanInterfaces();
-        foreach ($networks as $if_data) {
-            $lan_config = $network->getInterface($if_data['interface']);
-            if (null === $lan_config['ipaddr'] || null === $lan_config['subnet']) {
-                continue;
-            }
-            if (trim($if_data['internet']) === '1') {
-                $topology    = trim($if_data['topology']);
-                $extipaddr   = trim($if_data['extipaddr']);
-                $exthostname = trim($if_data['exthostname']);
-            }
-        }
-        $old_hash   = '';
-        $varEtcDir = $di->getShared('config')->path('core.varEtcDir');
-        if (file_exists($varEtcDir . '/topology_hash')) {
-            $old_hash = file_get_contents($varEtcDir . '/topology_hash');
-        }
-        $now_hadh = md5($topology . $exthostname . $extipaddr);
-
         $sip = new SIPConf();
+        $needRestart = $sip->needAsteriskRestart();
         $sip->generateConfig();
 
         $acl = new AclConf();
         $acl->generateConfig();
 
-        $out = [];
-        if ($old_hash === $now_hadh) {
-            $asteriskPath = Util::which('asterisk');
-            Util::mwExec("{$asteriskPath} -rx 'module reload acl'", $out);
-            Util::mwExec("{$asteriskPath} -rx 'core reload'", $out);
+        $asteriskPath = Util::which('asterisk');
+        if ($needRestart === false) {
+            Util::mwExec("{$asteriskPath} -rx 'module reload acl'");
+            Util::mwExec("{$asteriskPath} -rx 'core reload'");
         } else {
+            Util::sysLogMsg('SIP RELOAD', 'Need reload asterisk',LOG_INFO, LOG_INFO);
             // Завершаем каналы.
-            $asteriskPath = Util::which('asterisk');
-            Util::mwExec("{$asteriskPath} -rx 'channel request hangup all'", $out);
+            Util::mwExec("{$asteriskPath} -rx 'channel request hangup all'");
             usleep(500000);
-            Util::mwExec("{$asteriskPath} -rx 'core restart now'", $out);
+            Util::mwExec("{$asteriskPath} -rx 'core restart now'");
         }
     }
 

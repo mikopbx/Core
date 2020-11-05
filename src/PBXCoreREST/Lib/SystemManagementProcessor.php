@@ -65,9 +65,6 @@ class SystemManagementProcessor extends Injectable
             case 'setDate':
                 $res->success = System::setDate($data['timestamp'], $data['userTimeZone']);
                 break;
-            case 'updateCoreLanguage':
-                self::updateCoreLanguageAction();
-                break;
             case 'updateMailSettings':
                 $res->success = Notifications::sendTestMail();
                 break;
@@ -487,17 +484,5 @@ class SystemManagementProcessor extends Injectable
         $res->data[]  = $n_filename_mp3;
 
         return $res;
-    }
-
-    /**
-     * Changes core language
-     */
-    private static function updateCoreLanguageAction(): void
-    {
-        $di = Di::getDefault();
-        $di->remove('messages');
-        $di->remove('translation');
-        $di->register(new MessagesProvider());
-        $di->register(new TranslationProvider());
     }
 }

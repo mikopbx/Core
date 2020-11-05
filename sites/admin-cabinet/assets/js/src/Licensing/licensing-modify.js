@@ -273,11 +273,13 @@ const licensingModify = {
 	cbAfterFormProcessing(response, success) {
 		if (success===true){
 			window.location.reload();
-		} else {
+		} else if (response.messages !== undefined) {
 			UserMessage.showMultiString(response.messages);
-			licensingModify.$dirrtyField.val(Math.random());
-			licensingModify.$dirrtyField.trigger('change');
+		}else {
+			UserMessage.showError(globalTranslate.lic_GetTrialErrorCheckInternet);
 		}
+		licensingModify.$dirrtyField.val(Math.random());
+		licensingModify.$dirrtyField.trigger('change');
 	},
 	cbBeforeSendForm(settings) {
 		return settings;

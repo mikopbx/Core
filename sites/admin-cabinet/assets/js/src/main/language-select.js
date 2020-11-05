@@ -8,6 +8,7 @@
 /* global globalWebAdminLanguage, globalAvailableLanguages, globalTranslate, globalRootUrl, PbxApi*/
 
 const LanguageSelect = {
+	possibleLanguages:[],
 	$selector: $('#web-admin-language-selector'),
 	initialize() {
 		if (LanguageSelect.$selector === undefined) {
@@ -33,6 +34,7 @@ const LanguageSelect = {
 				v.selected = true;
 			}
 			resArray.push(v);
+			LanguageSelect.possibleLanguages.push(key);
 		});
 		return resArray;
 	},
@@ -79,7 +81,10 @@ const LanguageSelect = {
 		if (value === globalWebAdminLanguage) {
 			return;
 		}
-		PbxApi.SystemChangeCoreLanguage();
+		if (!LanguageSelect.possibleLanguages.includes(value)){
+			LanguageSelect.$selector.dropdown("set selected", globalWebAdminLanguage);
+			return;
+		}
 		$.api({
 			url: `${globalRootUrl}session/changeLanguage/`,
 			data: { newLanguage: value },

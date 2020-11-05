@@ -28,7 +28,6 @@ const PbxApi = {
 	systemGetDateTime: `${Config.pbxUrl}/pbxcore/api/system/getDate`,//curl http://172.16.156.223/pbxcore/api/system/getDate
 	systemSetDateTime: `${Config.pbxUrl}/pbxcore/api/system/setDate`, // Set system date curl -X POST -d timestamp=1602509882 http://127.0.0.1/pbxcore/api/system/setDate
 	systemSendTestEmail: `${Config.pbxUrl}/pbxcore/api/system/sendMail`, // Отправить почту
-	systemChangeCoreLanguage: `${Config.pbxUrl}/pbxcore/api/system/updateCoreLanguage`, // Update WorkerApiCommands language
 	systemRestoreDefaultSettings: `${Config.pbxUrl}/pbxcore/api/system/restoreDefault`, // Delete all system settings
 	systemConvertAudioFile: `${Config.pbxUrl}/pbxcore/api/system/convertAudioFile`,
 	updateMailSettings: `${Config.pbxUrl}/pbxcore/api/system/updateMailSettings`,
@@ -795,11 +794,13 @@ const PbxApi = {
 			method: 'POST',
 			data: {
 				md5:params.md5,
+				size:params.size,
+				version:params.version,
 				url:params.updateLink
 			},
 			successTest: PbxApi.successTest,
-			onSuccess() {
-				callback(true);
+			onSuccess(response) {
+				callback(response.data);
 			},
 			onFailure(response) {
 				callback(response);
@@ -812,11 +813,15 @@ const PbxApi = {
 
 	/**
 	 * Gets firmware download status
+	 * @param {string} filename
+	 * @param {function(*): (undefined)} callback
 	 */
-	FilesFirmwareDownloadStatus(callback) {
+	FilesFirmwareDownloadStatus(filename, callback) {
 		$.api({
 			url: PbxApi.filesFirmwareDownloadStatus,
 			on: 'now',
+			method: 'POST',
+			data: {filename},
 			successTest: PbxApi.successTest,
 			onSuccess(response) {
 				callback(response.data);

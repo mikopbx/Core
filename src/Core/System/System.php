@@ -279,8 +279,12 @@ class System extends Di\Injectable
     {
         $additionalModules = $this->di->getShared('pbxConfModules');
         foreach ($additionalModules as $appClass) {
-            /** @var \MikoPBX\Modules\Config\ConfigClass $appClass */
-            $appClass->onAfterPbxStarted();
+            try {
+                /** @var \MikoPBX\Modules\Config\ConfigClass $appClass */
+                $appClass->onAfterPbxStarted();
+            }catch (\Error $e){
+                Util::sysLogMsg('onAfterPbxStarted', $e->getMessage());
+            }
         }
     }
 }

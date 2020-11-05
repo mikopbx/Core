@@ -119,7 +119,7 @@ class NetworkEditForm extends Form
                 ],
                 'useEmpty' => false,
                 'value'    => $eth->subnet,
-                'class'    => 'ui search selection dropdown ipaddress',
+                'class'    => 'ui search selection dropdown',
             ]
             );
             $this->add($mask);

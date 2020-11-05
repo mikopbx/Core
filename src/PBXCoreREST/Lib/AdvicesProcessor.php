@@ -68,6 +68,7 @@ class AdvicesProcessor extends Injectable
 
         $arrMessages     = [];
         $arrAdvicesTypes = [
+            ['type' => 'isConnected', 'cacheTime' => 15],
             ['type' => 'checkPasswords', 'cacheTime' => 15],
             ['type' => 'checkFirewalls', 'cacheTime' => 15],
             ['type' => 'checkStorage', 'cacheTime' => 120],
@@ -272,6 +273,23 @@ class AdvicesProcessor extends Injectable
             }
         }
 
+        return $messages;
+    }
+
+    /**
+     * Checks whether internet connection is available or not
+     *
+     * @return array
+     */
+    private function isConnected(): array
+    {
+        $messages = [];
+        $connected = @fsockopen("www.google.com", 443);
+        if ($connected !== false) {
+            fclose($connected);
+        } else {
+            $messages['warning'] = $this->translation->_('adv_ProblemWithInternetConnection');
+        }
         return $messages;
     }
 }

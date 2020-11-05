@@ -8,7 +8,6 @@
 
 namespace MikoPBX\Core\System;
 
-use Phalcon\Di;
 use Phalcon\Di\Injectable;
 use Pheanstalk\Contract\PheanstalkInterface;
 use Pheanstalk\Job;
@@ -95,7 +94,7 @@ class BeanstalkClient extends Injectable
             $job_data,
             'inbox_tube' => $inbox_tube,
         ];
-        $this->publish($requestMessage, $priority, null, 0, $timeout);
+        $this->publish($requestMessage, null, $priority, 0, $timeout);
 
         // Получаем ответ от сервера.
         $job = $this->queue->reserveWithTimeout($timeout);
@@ -114,21 +113,16 @@ class BeanstalkClient extends Injectable
      * Puts a job in a beanstalkd server queue
      *
      * @param mixed   $job_data data to worker
+     * @param ?string $tube tube name
      * @param int     $priority Jobs with smaller priority values will be scheduled
      *                          before jobs with larger priorities. The most urgent priority is 0;
      *                          the least urgent priority is 4294967295.
-     * @param ?string $tube tube name
      * @param int     $delay delay before insert job into work query
      * @param int     $ttr time to execute this job
      *
      * @return \Pheanstalk\Job
      */
-    public function publish(
-        $job_data,
-        int $priority = PheanstalkInterface::DEFAULT_PRIORITY,
-        $tube = null,
-        int $delay = PheanstalkInterface::DEFAULT_DELAY,
-        int $ttr = PheanstalkInterface::DEFAULT_TTR): Job
+    public function publish($job_data, $tube = null, int $priority = PheanstalkInterface::DEFAULT_PRIORITY, int $delay = PheanstalkInterface::DEFAULT_DELAY, int $ttr = PheanstalkInterface::DEFAULT_TTR): Job
     {
         $tube = str_replace("\\", '-', $tube);
         // Change tube
@@ -162,11 +156,11 @@ class BeanstalkClient extends Injectable
     /**
      * Job worker
      *
-     * @param int $timeout
+     * @param float $timeout
      *
      * @throws \Pheanstalk\Exception\DeadlineSoonException
      */
-    public function wait($timeout = 10): void
+    public function wait(float $timeout = 10): void
     {
         $this->message = null;
         $start = microtime(true);
