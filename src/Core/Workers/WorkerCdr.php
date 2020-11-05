@@ -26,7 +26,7 @@ class WorkerCdr extends WorkerBase
     protected int $maxProc=1;
 
 
-    private $client_queue;
+    private BeanstalkClient $client_queue;
     private $internal_numbers = [];
     private $no_answered_calls = [];
 
@@ -199,7 +199,7 @@ class WorkerCdr extends WorkerBase
                 unset($this->no_answered_calls[$linkedid]);
             }
             unset($data['tmp_linked_id']);
-            $this->client_queue->publish(json_encode($data), PheanstalkInterface::DEFAULT_PRIORITY, self::UPDATE_CDR_TUBE);
+            $this->client_queue->publish(json_encode($data), self::UPDATE_CDR_TUBE);
         }
 
         $this->notifyByEmail();
@@ -214,9 +214,7 @@ class WorkerCdr extends WorkerBase
     private function getActiveIdChannels(): array
     {
         $am           = Util::getAstManager('off');
-        $active_chans = $am->GetChannels(true);
-
-        return $active_chans;
+        return $am->GetChannels(true);
     }
 
     /**
@@ -259,7 +257,7 @@ class WorkerCdr extends WorkerBase
     private function notifyByEmail(): void
     {
         foreach ($this->no_answered_calls as $call) {
-            $this->client_queue->publish(json_encode($call), PheanstalkInterface::DEFAULT_PRIORITY, WorkerNotifyByEmail::class);
+            $this->client_queue->publish(json_encode($call), WorkerNotifyByEmail::class);
         }
         $this->no_answered_calls = [];
     }
