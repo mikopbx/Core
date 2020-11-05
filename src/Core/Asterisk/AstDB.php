@@ -109,7 +109,8 @@ EOF;
     {
         $result   = false;
         $res_data = $this->am->DBPut($family, $key, $value);
-        if (is_array($res_data) && 'Success' == $res_data['Response']) {
+        $response = $res_data['Response'] ?? '';
+        if (is_array($res_data) && 'Success' === $response) {
             $result = true;
         }
 
