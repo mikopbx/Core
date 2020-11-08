@@ -9,7 +9,6 @@
 
 namespace MikoPBX\AdminCabinet\Controllers;
 
-use GuzzleHttp\Client;
 use MikoPBX\AdminCabinet\Forms\LoginForm;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Util;
@@ -99,6 +98,7 @@ class SessionController extends BaseController
         if ($languageSettings === null) {
             $languageSettings      = new PbxSettings();
             $languageSettings->key = 'WebAdminLanguage';
+            $languageSettings->value = PbxSettings::getDefaultArrayValues()['WebAdminLanguage'];
         }
         if ($newLanguage !== $languageSettings->value) {
             $languageSettings->value = $newLanguage;

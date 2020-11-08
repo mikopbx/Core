@@ -193,10 +193,13 @@ class BeanstalkClient extends Injectable
             call_user_func($func, $this);
         } elseif (is_callable($func) === true) {
             $func($this);
-        } else {
-            return;
         }
-        $this->queue->delete($job);
+
+        try {
+            $this->queue->delete($job);
+        }catch (\Pheanstalk\Exception\JobNotFoundException $e){
+        }catch (\Error $e){
+        }
     }
 
     /**
