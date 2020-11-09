@@ -14,6 +14,7 @@ use MikoPBX\Core\System\Configs\Fail2BanConf;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\System\Verify;
 use Phalcon\Di\Injectable;
+
 use SQLite3;
 
 class FirewallManagementProcessor extends Injectable
@@ -58,39 +59,16 @@ class FirewallManagementProcessor extends Injectable
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
 
-        $banRule = Fail2BanRules::findFirst("id = '1'");
-        if ($banRule !== null) {
-            $ban_time = $banRule->bantime;
-        } else {
-            $ban_time = '43800';
-        }
-
-        // Добавленн фильтр по времени бана. возвращаем только адреса, которые еще НЕ разбанены.
-        $q = 'SELECT' . ' DISTINCT jail,ip,MAX(timeofban) AS timeofban, MAX(timeofban+' . $ban_time . ') AS timeunban FROM bans where (timeofban+' . $ban_time . ')>' . time(
-            );
-        if ($ip !== null) {
-            $q .= " AND ip='{$ip}'";
-        }
-        $q .= ' GROUP BY jail,ip';
-
-        $path_db = Fail2BanConf::FAIL2BAN_DB_PATH;
-        if(!file_exists($path_db)){
+        $db = self::getDbConnection();
+        if(!$db){
             // Таблица не существует. Бана нет.
             $res->success    = false;
-            $res->messages[] = "DB {$path_db} not found";
+            $res->messages[] = 'DB '.Fail2BanConf::FAIL2BAN_DB_PATH.' not found';
             return $res;
         }
-        $db      = new SQLite3($path_db);
-        $db->busyTimeout(5000);
-        $fail2ban = new Fail2BanConf();
-        if (false === $fail2ban->tableBanExists($db)) {
-            // Таблица не существует. Бана нет.
-            $res->success = true;
-            return $res;
-        }
-
-        $results = $db->query($q);
-        $result = [];
+        $query   = self::getQueryBanIp($ip);
+        $results = $db->query($query);
+        $result  = [];
         if (false !== $results && $results->numColumns() > 0) {
             while ($banRule = $results->fetchArray(SQLITE3_ASSOC)) {
                 $result[] = $banRule;
@@ -99,6 +77,45 @@ class FirewallManagementProcessor extends Injectable
         $res->success = true;
         $res->data = $result;
         return $res;
+    }
+
+     public static function getDbConnection(){
+         if(!file_exists(Fail2BanConf::FAIL2BAN_DB_PATH)){
+             return null;
+         }
+         try {
+             $db      = new SQLite3(Fail2BanConf::FAIL2BAN_DB_PATH);
+         }catch (\Exception $e){
+             return null;
+         }
+         $db->busyTimeout(5000);
+         $fail2ban = new Fail2BanConf();
+         if (false === $fail2ban->tableBanExists($db)) {
+             return null;
+         }
+
+         return $db;
+    }
+
+    /**
+     * Возвращает запрос SQL для получения забаненных IP.
+     * @param $ip
+     * @return string
+     */
+    public static function getQueryBanIp($ip):string{
+        $banRule = Fail2BanRules::findFirst("id = '1'");
+        if ($banRule !== null) {
+            $ban_time = $banRule->bantime;
+        } else {
+            $ban_time = '43800';
+        }
+        // Добавленн фильтр по времени бана. возвращаем только адреса, которые еще НЕ разбанены.
+        $q = 'SELECT' . ' DISTINCT jail,ip,MAX(timeofban) AS timeofban, MAX(timeofban+' . $ban_time . ') AS timeunban FROM bans where (timeofban+' . $ban_time . ')>' . time();
+        if ($ip !== null) {
+            $q .= " AND ip='{$ip}'";
+        }
+        $q .= ' GROUP BY jail,ip';
+        return $q;
     }
 
     /**
