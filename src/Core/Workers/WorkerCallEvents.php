@@ -37,7 +37,7 @@ class WorkerCallEvents extends WorkerBase
      *
      * @return string
      */
-    public function MixMonitor(string $channel, $file_name = null, $sub_dir = null, $full_name = null, $onlySetVar = false): string
+    public function MixMonitor($channel, $file_name = null, $sub_dir = null, $full_name = null, $onlySetVar = false): string
     {
         $resFile = $this->mixMonitorChannels[$channel]??'';
         if($resFile !== ''){

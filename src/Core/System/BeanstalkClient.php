@@ -198,7 +198,10 @@ class BeanstalkClient extends Injectable
         try {
             $this->queue->delete($job);
         }catch (\Pheanstalk\Exception\JobNotFoundException $e){
+            // Игнорируем ошибку, задачи не существует, нечего удалять.
         }catch (\Error $e){
+            // Аналогично, нечего удалять.
+            // Если задача и не удалена, то это будет исправлено позже при очистке.
         }
     }
 
