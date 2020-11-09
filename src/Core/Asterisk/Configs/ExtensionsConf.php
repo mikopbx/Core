@@ -193,7 +193,7 @@ class ExtensionsConf extends ConfigClass
 
         $conf .= 'same => n,Goto(peer_${FROM_PEER},${EXTEN},1)' . "\n\n";
 
-        $pickupexten =  $this->generalSettings['PickupExten'];
+        $pickupexten =  $this->generalSettings['PBXFeaturePickupExten'];
         $conf        .= 'exten => _' . $pickupexten . $extension . ',1,Set(PICKUPEER=' . $technology . '/${FILTER(0-9,${EXTEN:2})})' . "\n\t";
         $conf        .= 'same => n,Set(pt1c_dnid=${EXTEN})' . "\n\t";
         $conf        .= 'same => n,PickupChan(${PICKUPEER})' . "\n\t";

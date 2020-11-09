@@ -3,12 +3,6 @@
 -- Proprietary and confidential
 -- Written by Alexey Portnov, 10 2020
 
--- Copyright © MIKO LLC - All Rights Reserved
--- Unauthorized copying of this file, via any medium is strictly prohibited
--- Proprietary and confidential
--- Written by Alexey Portnov, 9 2020
-
-
 -- Инициализация вспомогательных процедур и функций.
 JSON = (loadfile "/usr/www/src/Core/Asterisk/Configs/lua/JSON.lua")();
 local b='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'

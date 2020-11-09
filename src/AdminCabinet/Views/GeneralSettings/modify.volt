@@ -92,12 +92,20 @@
                 {{ form.render('PBXFeatureBlindTransfer') }}
             </div>
             <div class="field">
+                <label>{{ t._('gs_PBXFeaturePickupExten') }}</label>
+                {{ form.render('PBXFeaturePickupExten') }}
+            </div>
+            <div class="field">
                 <label>{{ t._('gs_PBXFeatureDigitTimeout') }}</label>
                 {{ form.render('PBXFeatureDigitTimeout') }}
             </div>
             <div class="field">
                 <label>{{ t._('gs_PBXFeatureAtxferNoAnswerTimeout') }}</label>
                 {{ form.render('PBXFeatureAtxferNoAnswerTimeout') }}
+            </div>
+            <div class="field">
+                <label>{{ t._('gs_PBXFeatureTransferDigitTimeout') }}</label>
+                {{ form.render('PBXFeatureTransferDigitTimeout') }}
             </div>
         </div>
 
