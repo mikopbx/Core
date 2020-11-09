@@ -75,6 +75,9 @@ class GeneralSettingsController extends BaseController
                     $record->value = ($data[$key] === 'on') ? '1' : '0';
                     $this->session->set('SendMetrics', $record->value);
                     break;
+                case 'PBXFeatureTransferDigitTimeout':
+                    $record->value = ceil((int)$data['PBXFeatureDigitTimeout']/1000);
+                    break;
                 default:
                     if (array_key_exists($key, $data)) {
                         $record->value = $data[$key];

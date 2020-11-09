@@ -289,6 +289,7 @@ class PbxSettings extends ModelsBase
             case 'PBXFeatureBlindTransfer':
             case 'PBXFeatureDigitTimeout':
             case 'PBXFeatureAtxferNoAnswerTimeout':
+            case 'PBXFeatureTransferDigitTimeout':
             case 'PBXFeaturePickupExten':
                 return true;
             default:
