@@ -550,7 +550,6 @@ return [
     'gs_SIPDefaultExpiry' => 'Час, через яке реєстрація буде скинута',
     'gs_SIPMinExpiry' => 'SIPMinExpiry',
     'gs_SIPMaxExpiry' => 'SIPMaxExpiry',
-    'gs_RtpSettings' => 'Налаштування діапазону RTP',
     'gs_RTPPortFrom' => 'Перший RTP порт',
     'gs_RTPPortTo' => 'Останній RTP порт',
     'gs_AMIEnabled' => 'Використовувати AMI інтерфейс',
