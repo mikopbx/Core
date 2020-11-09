@@ -267,7 +267,6 @@ return [
     'gs_AMIEnabled' => 'Utiliser l\'interface AMI',
     'gs_RTPPortTo' => 'Dernier port RTP',
     'gs_RTPPortFrom' => 'Premier port RTP',
-    'gs_RtpSettings' => 'Paramètres de plage RTP',
     'gs_SIPMaxExpiry' => 'SIPMaxExpiry',
     'gs_SIPMinExpiry' => 'SIPMinExpiry',
     'gs_SIPDefaultExpiry' => 'Délai après lequel l\'enregistrement sera réinitialisé',

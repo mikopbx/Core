@@ -540,7 +540,6 @@ return [
     'gs_SIPDefaultExpiry' => 'Čas, po kterém bude registrace resetována',
     'gs_SIPMinExpiry' => 'SIPMinExpiry',
     'gs_SIPMaxExpiry' => 'SIPMaxExpiry',
-    'gs_RtpSettings' => 'Nastavení rozsahu RTP',
     'gs_RTPPortFrom' => 'První port RTP',
     'gs_RTPPortTo' => 'Poslední port RTP',
     'gs_AMIEnabled' => 'Použijte rozhraní AMI',

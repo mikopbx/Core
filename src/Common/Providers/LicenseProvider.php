@@ -50,13 +50,12 @@ class LicenseProvider implements ServiceProviderInterface
         $di->setShared(
             self::SERVICE_NAME,
             function () {
-                $provider = null;
                 try {
-                    $provider =  new License('http://127.0.0.1:8223');
+                    return new License('http://127.0.0.1:8223');
                 } catch (Error $exception){
                     Util::sysLogMsg(__CLASS__, $exception);
                 }
-                return $provider;
+                return null;
             }
         );
     }

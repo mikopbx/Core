@@ -43,7 +43,6 @@ class WorkerCallEvents extends WorkerBase
         if($resFile !== ''){
             return $resFile;
         }
-
         $resFile           = '';
         $file_name = str_replace('/', '_', $file_name);
         if ($this->record_calls) {
@@ -63,18 +62,16 @@ class WorkerCallEvents extends WorkerBase
                 $options = 'ab';
             }
             $nicePath   = Util::which('nice');
-            $lamePath   = Util::which('lame');
-            $chmodPath  = Util::which('chmod');
+            $wav2mp3Path= Util::which('wav2mp3.sh');
 
             $arr = $this->am->GetChannels(false);
-            if(!in_array($channel, $arr)){
+            if(!in_array($channel, $arr, true)){
                 CdrDb::LogEvent("MixMonitor: Channel {$channel} not found.");
                 return '';
             }
-
             $srcFile = "{$f}.wav";
             $resFile = "{$f}.mp3";
-            $command = "{$nicePath} -n 19 {$lamePath} -b 32 --silent '{$srcFile}' '{$resFile}' && {$chmodPath} o+r '{$resFile}'";
+            $command = "{$nicePath} -n 19 {$wav2mp3Path} '{$f}'";
             if($onlySetVar){
                 $this->am->SetVar($channel, 'MIX_FILE_NAME', $srcFile);
                 $this->am->SetVar($channel, 'MIX_CMD',       $command);
@@ -240,7 +237,7 @@ class WorkerCallEvents extends WorkerBase
     public function Action_dial_answer($data): void
     {
         $mikoPBXConfig = new MikoPBXConfig();
-        $pickupexten   = $mikoPBXConfig->getGeneralSettings('PickupExten');
+        $pickupexten   = $mikoPBXConfig->getGeneralSettings('PBXFeaturePickupExten');
         if (trim($data['dnid']) === $pickupexten) {
             // Pickup / перехват вызова.
             // Событие возникает, когда мы пытаемся перехватить вызов на соседний телефон.

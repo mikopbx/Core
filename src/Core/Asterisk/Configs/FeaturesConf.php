@@ -22,8 +22,8 @@ class FeaturesConf extends ConfigClass
         $conf             = "[general]\n" .
             "featuredigittimeout = {$this->generalSettings['PBXFeatureDigitTimeout']}\n" .
             "atxfernoanswertimeout = {$this->generalSettings['PBXFeatureAtxferNoAnswerTimeout']}\n" .
-            "transferdigittimeout = 3\n" .
-            "pickupexten = {$this->generalSettings['PickupExten']}\n" .
+            "transferdigittimeout = {$this->generalSettings['PBXFeatureTransferDigitTimeout']}\n" .
+            "pickupexten = {$this->generalSettings['PBXFeaturePickupExten']}\n" .
             "atxferabort = *0\n" .
             "\n" .
             "[featuremap]\n" .

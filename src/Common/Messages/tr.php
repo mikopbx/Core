@@ -35,7 +35,6 @@ return [
     'gs_PBXName' => 'PBX sistem adı',
     'gs_PBXDescription' => 'Ek açıklama',
     'gs_PBXCallParkingStartSlot' => 'İlk Park Yuvası',
-    'gs_RtpSettings' => 'RTP Aralığı Ayarları',
     'gs_SSHPort' => 'SSH bağlantı noktası',
     'gs_WebPort' => 'HTTP bağlantı noktası',
     'gs_WebHTTPSPort' => 'HTTPs bağlantı noktası',

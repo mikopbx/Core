@@ -491,6 +491,7 @@ class WorkerModelsEvents extends WorkerBase
     public function reloadNginx(): void
     {
         $nginxConf  = new NginxConf();
+        $nginxConf->generateConf();
         $nginxConf->reStart();
     }
 
