@@ -1045,6 +1045,7 @@ return [
     'sd_DownloadPcapFileError'                                            => 'Ошибка при формировании архива логов',
     'sd_SystemInformation'                                                => 'Информация о системе',
     'sd_CollectingInfo'                                                   => 'Сбор служебной информации',
+    'sd_CollectingLogsInfo'                                               => 'Получение списка файлов с логами',
     'sd_PackingLogFiles'                                                  => 'Упаковка собранных данных',
     'msg_ErrorHeader'                                                     => 'Ошибка',
     'msg_WarningHeader'                                                   => 'Внимание',
