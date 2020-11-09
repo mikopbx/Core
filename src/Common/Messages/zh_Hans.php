@@ -536,7 +536,6 @@ return [
     'gs_SIPDefaultExpiry' => '重置注册的时间',
     'gs_SIPMinExpiry' => 'SIPMinExpiry',
     'gs_SIPMaxExpiry' => 'SIPMaxExpiry',
-    'gs_RtpSettings' => 'RTP范围设置',
     'gs_RTPPortFrom' => '第一个RTP端口',
     'gs_RTPPortTo' => '最后一个RTP端口',
     'gs_AMIEnabled' => '使用AMI界面',

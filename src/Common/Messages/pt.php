@@ -224,7 +224,6 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'gs_AMIEnabled' => 'Usar interface AMI',
     'gs_RTPPortTo' => 'Última porta RTP',
     'gs_RTPPortFrom' => 'Primeira porta RTP',
-    'gs_RtpSettings' => 'Configurações de intervalo RTP',
     'gs_SIPMaxExpiry' => 'SIPMaxExpiry',
     'gs_SIPMinExpiry' => 'SIPMinExpiry',
     'gs_SIPDefaultExpiry' => 'Tempo após o qual o registro será redefinido',

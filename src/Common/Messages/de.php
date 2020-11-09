@@ -538,7 +538,6 @@ return [
     'gs_SIPDefaultExpiry' => 'Zeit nach der eine Registrierung zurückgesetzt wird',
     'gs_SIPMinExpiry' => 'SIP Gültigkeit der Registrierung - Minmum',
     'gs_SIPMaxExpiry' => 'SIP Gültigkeit der Registrierung - Maximum',
-    'gs_RtpSettings' => 'RTP Port Bereich',
     'gs_RTPPortFrom' => 'Erster RTP Port',
     'gs_RTPPortTo' => 'Letzter RTP Port',
     'gs_AMIEnabled' => 'AMI Interface erreichbar',

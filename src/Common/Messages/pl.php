@@ -98,7 +98,6 @@ return [
     'gs_WebTab' => 'Interfejs sieciowy',
     'gs_PBXName' => 'Nazwa systemu PBX',
     'gs_SIPMaxExpiry' => 'SIPMaxExpiry',
-    'gs_RtpSettings' => 'Ustawienia zakresu RTP',
     'gs_RTPPortFrom' => 'Pierwszy port RTP',
     'gs_PBXDescription' => 'Dodatkowy opis',
     'gs_PBXLanguage' => 'Język komunikatów audio systemu',

@@ -538,7 +538,6 @@ return [
     'gs_SIPDefaultExpiry' => 'Default expiration time in seconds for contacts that are dynamically bound to an AoR',
     'gs_SIPMinExpiry' => 'Minimum keep alive time for an AoR',
     'gs_SIPMaxExpiry' => 'Maximum time to keep an AoR',
-    'gs_RtpSettings' => 'The port range which RTP streams should use',
     'gs_RTPPortFrom' => 'First RTP port',
     'gs_RTPPortTo' => 'Last RTP port',
     'gs_AMIEnabled' => 'Use the AMI interface',
