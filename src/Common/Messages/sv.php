@@ -199,7 +199,6 @@ Det kan aktiveras en gång, varefter kupongen löses in.
     'gs_SIPDefaultExpiry' => 'Tid efter vilken registrering kommer att återställas',
     'gs_SIPMinExpiry' => 'SIPMinExpiry',
     'gs_SIPMaxExpiry' => 'SIPMaxExpiry',
-    'gs_RtpSettings' => 'RTP Range Inställningar',
     'gs_RTPPortFrom' => 'Första RTP-porten',
     'gs_RTPPortTo' => 'Sista RTP-port',
     'gs_AMIEnabled' => 'Använd AMI-gränssnitt',

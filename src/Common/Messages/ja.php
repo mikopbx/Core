@@ -537,7 +537,6 @@ return [
     'gs_SIPDefaultExpiry' => '登録がリセットされるまでの時間',
     'gs_SIPMinExpiry' => 'SIPMinExpiry',
     'gs_SIPMaxExpiry' => 'SIPMaxExpiry',
-    'gs_RtpSettings' => 'RTP範囲設定',
     'gs_RTPPortFrom' => '最初のRTPポート',
     'gs_RTPPortTo' => '最後のRTPポート',
     'gs_AMIEnabled' => 'AMIインターフェイスを使用する',

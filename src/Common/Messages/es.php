@@ -521,7 +521,6 @@ return [
     'gs_SIPDefaultExpiry' => 'Tiempo después del cual se restablecerá el registro',
     'gs_SIPMinExpiry' => 'SIPMinExpiry',
     'gs_SIPMaxExpiry' => 'SIPMaxExpiry',
-    'gs_RtpSettings' => 'Configuración de rango de RTP',
     'gs_RTPPortFrom' => 'Primer puerto RTP',
     'gs_RTPPortTo' => 'Último puerto RTP',
     'gs_AMIEnabled' => 'Usar interfaz AMI',

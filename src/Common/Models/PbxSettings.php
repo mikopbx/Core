@@ -96,13 +96,14 @@ class PbxSettings extends ModelsBase
             'PBXCallParkingEndSlot'           => '820',
             'PBXFeatureAttendedTransfer'      => '##',
             'PBXFeatureBlindTransfer'         => '**',
+            'PBXFeaturePickupExten'           => '*8',
             'PBXFeatureDigitTimeout'          => '2500',
             'PBXFeatureAtxferNoAnswerTimeout' => '45',
+            'PBXFeatureTransferDigitTimeout'  => '3',
             'PBXFirewallEnabled'              => '0',
             'PBXFail2BanEnabled'              => '0',
             'PBXTimezone'                     => 'Europe/Moscow',
             'PBXVersion'                      => '1',
-            'PickupExten'                     => '*8',
             'WebAdminLogin'                   => 'admin',
             'WebAdminPassword'                => 'admin',
             'WebAdminLanguage'                => 'en',
@@ -288,6 +289,8 @@ class PbxSettings extends ModelsBase
             case 'PBXFeatureBlindTransfer':
             case 'PBXFeatureDigitTimeout':
             case 'PBXFeatureAtxferNoAnswerTimeout':
+            case 'PBXFeatureTransferDigitTimeout':
+            case 'PBXFeaturePickupExten':
                 return true;
             default:
                 return false;

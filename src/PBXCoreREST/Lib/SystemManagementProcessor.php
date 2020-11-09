@@ -216,11 +216,13 @@ class SystemManagementProcessor extends Injectable
             [Extensions::class=>'type="'.Extensions::TYPE_QUEUE.'"'],  // QUEUE
         ];
 
-        foreach ($clearThisModels as [$class_name, $parameters]){
-            $records =  call_user_func([$class_name, 'find'], $parameters);
-            if ( ! $records->delete()) {
-                $res->messages[] = $records->getMessages();
-                $res->success    = false;
+        foreach ($clearThisModels as $modelParams){
+            foreach ($modelParams as $key=>$value) {
+                $records = call_user_func([$key, 'find'], $value);
+                if ( ! $records->delete()) {
+                    $res->messages[] = $records->getMessages();
+                    $res->success    = false;
+                }
             }
         }
 

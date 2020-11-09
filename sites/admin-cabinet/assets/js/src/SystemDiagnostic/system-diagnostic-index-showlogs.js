@@ -38,9 +38,14 @@ const systemDiagnosticLogs = {
 	$fileSelectDropDown: $('#system-diagnostic-form .filenames-select'),
 	logsItems: [],
 	defaultLogItem: null,
+	$dimmer: $('#get-logs-dimmer'),
 	$formObj: $('#system-diagnostic-form'),
 	$fileName: $('#system-diagnostic-form .filename'),
 	initialize() {
+		const aceHeight = window.innerHeight-300;
+		$(window).load(function() {
+			systemDiagnosticLogs.$dimmer.closest('div').css('min-height', `${aceHeight}px`);
+		});
 		systemDiagnosticLogs.$fileSelectDropDown.dropdown(
 			{
 				values: systemDiagnosticLogs.logsItems,
@@ -116,7 +121,6 @@ const systemDiagnosticLogs = {
 				selected: item.default
 			});
 		});
-
 		systemDiagnosticLogs.$fileSelectDropDown.dropdown('change values', systemDiagnosticLogs.logsItems);
 	},
 	/**
@@ -146,6 +150,7 @@ const systemDiagnosticLogs = {
 		const row = systemDiagnosticLogs.viewer.session.getLength() - 1;
 		const column = systemDiagnosticLogs.viewer.session.getLine(row).length; // or simply Infinity
 		systemDiagnosticLogs.viewer.gotoLine(row + 1, column);
+		systemDiagnosticLogs.$dimmer.removeClass('active');
 	},
 	/**
 	 * After push button download file

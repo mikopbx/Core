@@ -538,7 +538,6 @@ return [
     'gs_SIPDefaultExpiry' => 'Tid, hvorefter registrering nulstilles',
     'gs_SIPMinExpiry' => 'SIPMinExpiry',
     'gs_SIPMaxExpiry' => 'SIPMaxExpiry',
-    'gs_RtpSettings' => 'RTP Range Settings',
     'gs_RTPPortFrom' => 'Første RTP-port',
     'gs_RTPPortTo' => 'Sidste RTP-port',
     'gs_AMIEnabled' => 'Brug AMI-interface',

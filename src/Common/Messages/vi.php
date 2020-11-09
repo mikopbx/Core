@@ -614,7 +614,6 @@ return [
     'gs_SIPDefaultExpiry' => 'Thời gian sau đó đăng ký sẽ được thiết lập lại',
     'gs_SIPMinExpiry' => 'SIPMinExpiry',
     'gs_SIPMaxExpiry' => 'SIPMaxExpiry',
-    'gs_RtpSettings' => 'Cài đặt phạm vi RTP',
     'gs_RTPPortFrom' => 'Cổng RTP đầu tiên',
     'gs_RTPPortTo' => 'Cổng RTP cuối cùng',
     'gs_AMIEnabled' => 'Sử dụng giao diện AMI',
