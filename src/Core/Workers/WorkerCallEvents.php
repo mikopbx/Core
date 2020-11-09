@@ -37,13 +37,12 @@ class WorkerCallEvents extends WorkerBase
      *
      * @return string
      */
-    public function MixMonitor($channel, $file_name = null, $sub_dir = null, $full_name = null, $onlySetVar = false): string
+    public function MixMonitor(string $channel, $file_name = null, $sub_dir = null, $full_name = null, $onlySetVar = false): string
     {
         $resFile = $this->mixMonitorChannels[$channel]??'';
         if($resFile !== ''){
             return $resFile;
         }
-
         $resFile           = '';
         $file_name = str_replace('/', '_', $file_name);
         if ($this->record_calls) {
@@ -63,18 +62,16 @@ class WorkerCallEvents extends WorkerBase
                 $options = 'ab';
             }
             $nicePath   = Util::which('nice');
-            $lamePath   = Util::which('lame');
-            $chmodPath  = Util::which('chmod');
+            $wav2mp3Path= Util::which('wav2mp3.sh');
 
             $arr = $this->am->GetChannels(false);
-            if(!in_array($channel, $arr)){
+            if(!in_array($channel, $arr, true)){
                 CdrDb::LogEvent("MixMonitor: Channel {$channel} not found.");
                 return '';
             }
-
             $srcFile = "{$f}.wav";
             $resFile = "{$f}.mp3";
-            $command = "{$nicePath} -n 19 {$lamePath} -b 32 --silent '{$srcFile}' '{$resFile}' && {$chmodPath} o+r '{$resFile}'";
+            $command = "{$nicePath} -n 19 {$wav2mp3Path} '{$f}'";
             if($onlySetVar){
                 $this->am->SetVar($channel, 'MIX_FILE_NAME', $srcFile);
                 $this->am->SetVar($channel, 'MIX_CMD',       $command);
