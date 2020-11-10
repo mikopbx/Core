@@ -281,10 +281,10 @@ function event_dial_answer()
     local PICKUPEER      = get_variable("PICKUPEER");
     data['dnid']         = get_variable('pt1c_dnid');
     if('' == data['dnid'])then
-        data['dnid']         = get_variable('CDR(dnid)');
+        data['dnid']     = get_variable('CDR(dnid)');
     end
 
-    local pickupexten    = '*8'; -- TODO
+    local pickupexten    = get_variable('PICKUP_EXTEN');
     if(data['dnid'] == 'unknown' and PICKUPEER ~= '')then
         -- Скорее всего ответ на вызов из 1С
         data['dnid']   = pickupexten;
@@ -519,9 +519,9 @@ function event_dial_app()
     local pt1c_UNIQUEID = get_variable('pt1c_UNIQUEID');
 
     if(CHANNEL==FROM_CHAN and pt1c_UNIQUEID~='') then
-        id = pt1c_UNIQUEID;
+        local id = pt1c_UNIQUEID;
     else
-        id = get_variable('UNIQUEID')..'_'..generateRandomString(6);
+        local id = get_variable('UNIQUEID')..'_'..generateRandomString(6);
     end
 
     local extension = get_variable("APPEXTEN");
