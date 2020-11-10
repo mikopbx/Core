@@ -248,7 +248,7 @@ class WorkerCallEvents extends WorkerBase
                 $new_data                   = $m_row_data->toArray();
                 $new_data['start']          = $data['answer'];
                 $new_data['answer']         = $data['answer'];
-                $new_data['endtime']        = null;
+                $new_data['endtime']        = '';
                 $new_data['dst_chan']       = $data['agi_channel'];
                 $new_data['dst_num']        = $data['dst_num'];
                 $new_data['UNIQUEID']       = $data['id'];
