@@ -19,6 +19,7 @@ use MikoPBX\Core\System\Configs\NTPConf;
 use MikoPBX\Core\Workers\Cron\WorkerSafeScriptsCore;
 use MikoPBX\Core\Asterisk\Configs\{QueueConf};
 use Phalcon\Di;
+use Throwable;
 
 class System extends Di\Injectable
 {
@@ -282,7 +283,7 @@ class System extends Di\Injectable
             try {
                 /** @var \MikoPBX\Modules\Config\ConfigClass $appClass */
                 $appClass->onAfterPbxStarted();
-            }catch (\Error $e){
+            }catch (Throwable $e){
                 Util::sysLogMsg('onAfterPbxStarted', $e->getMessage());
             }
         }

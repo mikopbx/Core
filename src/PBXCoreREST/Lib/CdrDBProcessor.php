@@ -13,7 +13,6 @@ use MikoPBX\Core\System\BeanstalkClient;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Workers\WorkerCdr;
 use Phalcon\Di\Injectable;
-use phpDocumentor\Reflection\Types\Self_;
 
 class CdrDBProcessor extends Injectable
 {
@@ -68,7 +67,7 @@ class CdrDBProcessor extends Injectable
         if ($message === false) {
             $res->data = [];
         }else{
-            $res->data[] = $message;
+                $res->data[] = $message;
         }
         return $res;
     }

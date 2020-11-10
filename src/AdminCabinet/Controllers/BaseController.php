@@ -10,7 +10,7 @@
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings};
-use Phalcon\Mvc\{Controller, Dispatcher, View};
+use Phalcon\Mvc\{Controller, View};
 use Phalcon\Tag;
 use Phalcon\Text;
 use Sentry\SentrySdk;

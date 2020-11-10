@@ -11,8 +11,6 @@ namespace MikoPBX\Modules;
 
 use Phalcon\Config;
 use Phalcon\Di;
-use Phalcon\Di\DiInterface;
-use Phalcon\Di\Exception;
 use ReflectionClass as ReflectionClassAlias;
 
 /**
@@ -51,7 +49,7 @@ abstract class PbxExtensionBase extends Di\Injectable
      */
     public function __construct()
     {
-        $this->config  = $this->di->getShared('config');
+        $this->config  = $this->getDI()->getShared('config');
         $modulesDir    = $this->config->path('core.modulesDir');
 
         if (empty($this->moduleUniqueId)){

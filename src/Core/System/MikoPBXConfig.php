@@ -9,7 +9,6 @@
 namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Models\PbxSettings;
-use Phalcon\Di;
 use Phalcon\Di\Injectable;
 
 /**

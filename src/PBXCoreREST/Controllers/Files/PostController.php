@@ -9,10 +9,8 @@
 
 namespace MikoPBX\PBXCoreREST\Controllers\Files;
 
-use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
-use Phalcon\Di;
 
 /**
  * /pbxcore/api/files/{name}' Files management (POST).

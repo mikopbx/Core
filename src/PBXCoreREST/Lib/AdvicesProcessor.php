@@ -123,6 +123,7 @@ class AdvicesProcessor extends Injectable
      * Check passwords quality
      *
      * @return array
+     * @noinspection PhpUnusedPrivateMethodInspection
      */
     private function checkPasswords(): array
     {
@@ -148,6 +149,7 @@ class AdvicesProcessor extends Injectable
      * Check firewall status
      *
      * @return array
+     * @noinspection PhpUnusedPrivateMethodInspection
      */
     private function checkFirewalls(): array
     {
@@ -173,6 +175,7 @@ class AdvicesProcessor extends Injectable
      *
      * @return array
      *
+     * @noinspection PhpUnusedPrivateMethodInspection
      */
     private function checkStorage(): array
     {
@@ -204,6 +207,7 @@ class AdvicesProcessor extends Injectable
      *
      * @return array
      * @throws \GuzzleHttp\Exception\GuzzleException
+     * @noinspection PhpUnusedPrivateMethodInspection
      */
     private function checkUpdates(): array
     {
@@ -242,6 +246,7 @@ class AdvicesProcessor extends Injectable
     /**
      * Check mikopbx license status
      *
+     * @noinspection PhpUnusedPrivateMethodInspection
      */
     private function checkRegistration(): array
     {
@@ -280,6 +285,7 @@ class AdvicesProcessor extends Injectable
      * Checks whether internet connection is available or not
      *
      * @return array
+     * @noinspection PhpUnusedPrivateMethodInspection
      */
     private function isConnected(): array
     {

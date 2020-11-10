@@ -12,8 +12,6 @@ namespace MikoPBX\Core\Asterisk\Configs;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Modules\Config\ConfigClass;
 
-use function MikoPBX\Common\Config\appPath;
-
 class AsteriskConf extends ConfigClass
 {
     protected string $description = 'asterisk.conf';

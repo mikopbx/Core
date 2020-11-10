@@ -8,11 +8,11 @@
 
 namespace MikoPBX\Core\System;
 
-use Error;
 use MikoPBX\Common\Models\{LanInterfaces};
 use MikoPBX\Core\System\Configs\IptablesConf;
 use MikoPBX\Core\Utilities\SubnetCalculator;
 use Phalcon\Di\Injectable;
+use Throwable;
 
 /**
  * Class Network
@@ -318,7 +318,7 @@ class Network extends Injectable
                 try {
                     $calc_subnet = new SubnetCalculator($ipaddr, $subnet);
                     $subnet      = $calc_subnet->getSubnetMask();
-                } catch (Error $e) {
+                } catch (Throwable $e) {
                     echo "Caught exception: $ipaddr $subnet", $e->getMessage(), "\n";
                     continue;
                 }
@@ -445,7 +445,7 @@ class Network extends Injectable
                 try {
                     $calc_subnet = new SubnetCalculator($ipaddr, $subnet);
                     $subnet      = $calc_subnet->getSubnetMask();
-                } catch (Error $e) {
+                } catch (Throwable $e) {
                     echo "Caught exception: $ipaddr $subnet", $e->getMessage(), "\n";
                     continue;
                 }
@@ -603,7 +603,7 @@ class Network extends Injectable
         $data->name      = $name;
         $data->interface = $name;
         $data->dhcp      = '1';
-        $data->internet  = ($general === true) ? '1' : '0';;
+        $data->internet  = ($general === true) ? '1' : '0';
         $data->disabled  = '0';
         $data->vlanid    = '0';
         $data->hostname  = 'mikopbx';

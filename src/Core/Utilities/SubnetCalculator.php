@@ -8,6 +8,7 @@
 
 namespace MikoPBX\Core\Utilities;
 use Error;
+
 /**
  * Network calculator for subnet mask and other classless (CIDR) network information.
  *
@@ -64,6 +65,7 @@ class SubnetCalculator
      * @param string $ip IP address in dotted quad notation.
      * @param int CIDR network size.
      *
+     * @throws \Throwable
      */
     public function __construct($ip, $network_size)
     {
@@ -81,7 +83,7 @@ class SubnetCalculator
      * @param string $ip           IP address in dotted quads format.
      * @param int    $network_size Network.
      *
-     * @throws Error IP or network size not valid.
+     * @throws \Throwable IP or network size not valid.
      */
     private function validateInputs($ip, $network_size)
     {

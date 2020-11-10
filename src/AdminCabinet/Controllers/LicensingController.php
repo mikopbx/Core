@@ -13,8 +13,6 @@ use MikoPBX\AdminCabinet\Forms\LicensingActivateCouponForm;
 use MikoPBX\AdminCabinet\Forms\LicensingChangeLicenseKeyForm;
 use MikoPBX\AdminCabinet\Forms\LicensingGetKeyForm;
 use MikoPBX\Common\Models\PbxSettings;
-use Phalcon\Text;
-use SimpleXMLElement;
 
 /**
  * @property \MikoPBX\Service\License license

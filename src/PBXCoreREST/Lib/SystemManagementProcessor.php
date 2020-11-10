@@ -18,17 +18,13 @@ use MikoPBX\Common\Models\OutWorkTimes;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\Providers;
 use MikoPBX\Common\Models\SoundFiles;
-use MikoPBX\Common\Providers\MessagesProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
-use MikoPBX\Common\Providers\TranslationProvider;
-use MikoPBX\Core\Asterisk\Configs\VoiceMailConf;
 use MikoPBX\Core\System\Notifications;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Modules\PbxExtensionState;
 use MikoPBX\Modules\PbxExtensionUtils;
 use MikoPBX\Modules\Setup\PbxExtensionSetupFailure;
-use MikoPBX\PBXCoreREST\Workers\WorkerMergeUploadedFile;
 use Phalcon\Di;
 use Phalcon\Di\Injectable;
 
@@ -137,7 +133,7 @@ class SystemManagementProcessor extends Injectable
                 $res->success = true;
             } else {
                 $res->success    = false;
-                $res->messages[] = $result;
+                $res->messages[] = 'Notifications::sendMail method returned false';
             }
         } else {
             $res->success    = false;

@@ -188,7 +188,7 @@ abstract class ModelsBase extends Model
                 if (empty($this->id)) {
                     $name .= $this->t('mo_NewElementConferenceRooms');
                 } else {
-                    $name .= $this->t('mo_ConferenceRoomsShort4Dropdown') . ': ' . $this->name;;
+                    $name .= $this->t('mo_ConferenceRoomsShort4Dropdown') . ': ' . $this->name;
                 }
                 break;
             case CustomFiles::class:
@@ -199,7 +199,7 @@ abstract class ModelsBase extends Model
                 if (empty($this->id)) {
                     $name .= $this->t('mo_NewElementDialplanApplications');
                 } else {
-                    $name .= $this->t('mo_ApplicationShort4Dropdown') . ': ' . $this->name;;
+                    $name .= $this->t('mo_ApplicationShort4Dropdown') . ': ' . $this->name;
                 }
                 break;
             case ExtensionForwardingRights::class:

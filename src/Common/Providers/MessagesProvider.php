@@ -38,8 +38,6 @@ class MessagesProvider implements ServiceProviderInterface
                 if (php_sapi_name() === 'cli'){
                     if (cli_get_process_title()=== WorkerApiCommands::class){
                         $language = PbxSettings::getValueByKey('WebAdminLanguage');
-                    } elseif (!empty($_ENV['SSH_CLIENT'])) {
-                        $language = 'en';
                     } else {
                         $language = PbxSettings::getValueByKey('SSHLanguage');
                     }
@@ -51,7 +49,6 @@ class MessagesProvider implements ServiceProviderInterface
                     }
                 }
 
-                $messages = [];
                 // Заглянем сначала в кеш переводов
                 if ($cacheKey) {
                     $translates = $di->get('managedCache')->get($cacheKey, 3600);

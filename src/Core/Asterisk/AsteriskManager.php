@@ -9,7 +9,7 @@
 namespace MikoPBX\Core\Asterisk;
 
 use MikoPBX\Core\System\Util;
-use mysql_xdevapi\Result;
+use Throwable;
 
 /**
  * Asterisk Manager class
@@ -388,7 +388,7 @@ class AsteriskManager
                 $response['error'] = 'Read data error.';
             }
 
-        }catch (\Exception $e){
+        }catch (Throwable $e){
             $response['error'] = $e->getMessage();
         }
 
@@ -419,7 +419,7 @@ class AsteriskManager
             if($resultWrite === false){
                 $result = false;
             }
-        }catch (\Exception $e){
+        }catch (Throwable $e){
             $result = false;
         }
         return $result;

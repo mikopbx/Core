@@ -9,7 +9,7 @@
 namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
 use MikoPBX\Core\System\{BeanstalkClient, MikoPBXConfig, Notifications, Util};
-use Error;
+use Throwable;
 
 class WorkerNotifyError extends WorkerBase
 {
@@ -120,7 +120,7 @@ if (isset($argv) && count($argv) > 1 && $argv[1] === 'start') {
     try {
         $worker = new $workerClassname();
         $worker->start($argv);
-    } catch (Error $e) {
+    } catch (Throwable $e) {
         global $errorLogger;
         $errorLogger->captureException($e);
         Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage());

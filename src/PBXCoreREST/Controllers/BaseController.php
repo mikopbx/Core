@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace MikoPBX\PBXCoreREST\Controllers;
 
 use Phalcon\Mvc\Controller;
+use Throwable;
 
 
 /**
@@ -40,7 +41,7 @@ class BaseController extends Controller
             } else {
                 $this->sendError(500);
             }
-        } catch (\JsonException $e) {
+        } catch (Throwable $e) {
             $this->sendError(400);
         }
     }

@@ -8,9 +8,7 @@
 
 namespace MikoPBX\PBXCoreREST\Controllers\Syslog;
 
-use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
-use Phalcon\Di;
 
 /**
  * /pbxcore/api/syslog/{name} Get system logs (GET)

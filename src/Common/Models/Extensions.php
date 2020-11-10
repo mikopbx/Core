@@ -425,7 +425,7 @@ class Extensions extends ModelsBase
                         'conditions' => $referencedField . '= :oldNumber:',
                         'bind'       => ['oldNumber' => $snapShotData['number']],
                     ];
-                    $relatedRecords = $relatedModel::find($parameters);
+                    $relatedRecords = call_user_func([$relatedModel, 'find'], $parameters);
                     foreach ($relatedRecords as $relatedRecord) {
                         $relatedRecord->update([$referencedField => $this->number]);
                     }
@@ -480,7 +480,7 @@ class Extensions extends ModelsBase
                         'conditions' => $referencedField . '= :Number:',
                         'bind'       => ['Number' => $this->number],
                     ];
-                    $relatedRecords = $relatedModel::find($parameters);
+                    $relatedRecords = call_user_func([$relatedModel, 'find'], $parameters);
                     foreach ($relatedRecords as $relatedRecord) {
                         $result[] = [
                             'object'         => $relatedRecord,

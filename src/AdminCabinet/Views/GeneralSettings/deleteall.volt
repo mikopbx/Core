@@ -6,6 +6,6 @@
     </div>
 </div>
 <div class="field">
-    <label></label>
+    <label for="deleteAllInput"></label>
     <input type="text" name="deleteAllInput" value=""/>
 </div>

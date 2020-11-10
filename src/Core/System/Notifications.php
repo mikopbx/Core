@@ -9,6 +9,7 @@
 namespace MikoPBX\Core\System;
 
 use PHPMailer;
+use Throwable;
 
 /**
  * Уведомления.
@@ -92,7 +93,7 @@ class Notifications
             if ( ! $mail->send()) {
                 $messages[] = $mail->ErrorInfo;
             }
-        } catch (\Exception $e) {
+        } catch (Throwable $e) {
             $messages[] = $e->getMessage();
         }
 
