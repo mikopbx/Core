@@ -69,22 +69,7 @@ class SystemManagementProcessor extends Injectable
                 $res->success = Notifications::sendTestMail();
                 break;
             case 'sendMail':
-                if (isset($data['email']) && isset($data['subject']) && isset($data['body'])) {
-                    if (isset($data['encode']) && $data['encode'] === 'base64') {
-                        $data['subject'] = base64_decode($data['subject']);
-                        $data['body']    = base64_decode($data['body']);
-                    }
-                    $result = Notifications::sendMail($data['email'], $data['subject'], $data['body']);
-                    if ($result === true) {
-                        $res->success = true;
-                    } else {
-                        $res->success    = false;
-                        $res->messages[] = $result;
-                    }
-                } else {
-                    $res->success    = false;
-                    $res->messages[] = 'Not all query parameters are set';
-                }
+                $res = self::sendMail($data);
                 break;
             case 'unBanIp':
                 $res = FirewallManagementProcessor::fail2banUnbanAll($data['ip']);
@@ -93,37 +78,19 @@ class SystemManagementProcessor extends Injectable
                 $res = FirewallManagementProcessor::getBanIp();
                 break;
             case 'upgrade':
-                $res = SystemManagementProcessor::upgradeFromImg($data['temp_filename']);
+                $res = self::upgradeFromImg($data['temp_filename']);
                 break;
             case 'installNewModule':
                 $filePath = $request['data']['filePath'];
-                $res      = SystemManagementProcessor::installModuleFromFile($filePath);
+                $res      = self::installModuleFromFile($filePath);
                 break;
             case 'enableModule':
-                $moduleUniqueID       = $request['data']['uniqid'];
-                $moduleStateProcessor = new PbxExtensionState($moduleUniqueID);
-                if ($moduleStateProcessor->enableModule() === false) {
-                    $res->success  = false;
-                    $res->messages = $moduleStateProcessor->getMessages();
-                } else {
-                    PBXConfModulesProvider::recreateModulesProvider();
-                    $res->data                       = $moduleStateProcessor->getMessages();
-                    $res->data['needRestartWorkers'] = true; //TODO:: Проверить надо ли это
-                    $res->success                    = true;
-                }
+                $moduleUniqueID = $request['data']['uniqid'];
+                $res            = self::enableModule($moduleUniqueID);
                 break;
             case 'disableModule':
-                $moduleUniqueID       = $request['data']['uniqid'];
-                $moduleStateProcessor = new PbxExtensionState($moduleUniqueID);
-                if ($moduleStateProcessor->disableModule() === false) {
-                    $res->success  = false;
-                    $res->messages = $moduleStateProcessor->getMessages();
-                } else {
-                    PBXConfModulesProvider::recreateModulesProvider();
-                    $res->data                       = $moduleStateProcessor->getMessages();
-                    $res->data['needRestartWorkers'] = true; //TODO:: Проверить надо ли это
-                    $res->success                    = true;
-                }
+                $moduleUniqueID = $request['data']['uniqid'];
+                $res            = self::disableModule($moduleUniqueID);
                 break;
             case 'uninstallModule':
                 $moduleUniqueID = $request['data']['uniqid'];
@@ -145,6 +112,37 @@ class SystemManagementProcessor extends Injectable
         }
 
         $res->function = $action;
+
+        return $res;
+    }
+
+    /**
+     * Sends test email to admin address
+     *
+     * @param                                       $data
+     *
+     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult $res
+     */
+    private static function sendMail($data): PBXApiResult
+    {
+        $res            = new PBXApiResult();
+        $res->processor = __METHOD__;
+        if (isset($data['email']) && isset($data['subject']) && isset($data['body'])) {
+            if (isset($data['encode']) && $data['encode'] === 'base64') {
+                $data['subject'] = base64_decode($data['subject']);
+                $data['body']    = base64_decode($data['body']);
+            }
+            $result = Notifications::sendMail($data['email'], $data['subject'], $data['body']);
+            if ($result === true) {
+                $res->success = true;
+            } else {
+                $res->success    = false;
+                $res->messages[] = $result;
+            }
+        } else {
+            $res->success    = false;
+            $res->messages[] = 'Not all query parameters were set';
+        }
 
         return $res;
     }
@@ -183,121 +181,6 @@ class SystemManagementProcessor extends Injectable
         Util::createUpdateSymlink($tempFilename, $link);
         $mikopbx_firmwarePath = Util::which('mikopbx_firmware');
         Util::mwExecBg("{$mikopbx_firmwarePath} recover_upgrade {$link} /dev/{$dev}");
-
-        return $res;
-    }
-
-    /**
-     * Deletes all settings and uploaded files
-     */
-    private static function restoreDefaultSettings(): PBXApiResult
-    {
-        $res                             = new PBXApiResult();
-        $res->processor                  = __METHOD__;
-        $di = DI::getDefault();
-        if ($di===null){
-            $res->messages[]='Error on DI initialize';
-            return $res;
-        }
-
-        $res->success                    = true;
-        $res->data['needRestartWorkers'] = true;
-        $rm                              = Util::which('rm');
-
-        // Pre delete some types
-        $clearThisModels=[
-            [Providers::class=>''],
-            [OutgoingRoutingTable::class=>''],
-            [IncomingRoutingTable::class=>''],
-            [OutWorkTimes::class=>''],
-            [AsteriskManagerUsers::class=>''],
-            [Extensions::class=>'type="'.Extensions::TYPE_IVR_MENU.'"'],  // IVR Menu
-            [Extensions::class=>'type="'.Extensions::TYPE_CONFERENCE.'"'],  // CONFERENCE
-            [Extensions::class=>'type="'.Extensions::TYPE_QUEUE.'"'],  // QUEUE
-        ];
-
-        foreach ($clearThisModels as $modelParams){
-            foreach ($modelParams as $key=>$value) {
-                $records = call_user_func([$key, 'find'], $value);
-                if ( ! $records->delete()) {
-                    $res->messages[] = $records->getMessages();
-                    $res->success    = false;
-                }
-            }
-        }
-
-        // Other extensions
-        $parameters     = [
-            'conditions' => 'not number IN ({ids:array})',
-            'bind'       => [
-                'ids' => [
-                    '000063', // Reads back the extension
-                    '000064', // 0000MILLI
-                    '10003246',// Echo test
-                    '10000100' // Voicemail
-                ],
-            ],
-        ];
-        $stopDeleting   = false;
-        $countRecords   = Extensions::count($parameters);
-        $deleteAttempts = 0;
-        while ($stopDeleting === false) {
-            $record = Extensions::findFirst($parameters);
-            if ($record === null) {
-                $stopDeleting = true;
-                continue;
-            }
-            if ( ! $record->delete()) {
-                $deleteAttempts += 1;
-            }
-            if ($deleteAttempts > $countRecords * 10) {
-                $stopDeleting    = true; // Prevent loop
-                $res->messages[] = $record->getMessages();
-            }
-        }
-
-        // SoundFiles
-        $parameters = [
-            'conditions' => 'category = :custom:',
-            'bind'       => [
-                'custom' => SoundFiles::CATEGORY_CUSTOM,
-            ],
-        ];
-        $records    = SoundFiles::find($parameters);
-
-        foreach ($records as $record) {
-            if (stripos($record->path, '/storage/usbdisk1/mikopbx') !== false) {
-                Util::mwExec("{$rm} -rf {$record->path}");
-                if ( ! $record->delete()) {
-                    $res->messages[] = $record->getMessages();
-                    $res->success    = false;
-                }
-            }
-        }
-
-        // PbxExtensions
-        $records = PbxExtensionModules::find();
-        foreach ($records as $record) {
-            $moduleDir = PbxExtensionUtils::getModuleDir($record->uniqid);
-            Util::mwExec("{$rm} -rf {$moduleDir}");
-            if ( ! $record->delete()) {
-                $res->messages[] = $record->getMessages();
-                $res->success    = false;
-            }
-        }
-
-        // Delete CallRecords
-        $records = CallDetailRecords::find();
-        if ( ! $records->delete()) {
-            $res->messages[] = $records->getMessages();
-            $res->success    = false;
-        }
-
-        // Delete CallRecords sound files
-        $callRecordsPath  = $di->getShared('config')->path('asterisk.monitordir');
-        if (stripos($callRecordsPath, '/storage/usbdisk1/mikopbx') !== false) {
-             Util::mwExec("{$rm} -rf {$callRecordsPath}/*");
-        }
 
         return $res;
     }
@@ -427,6 +310,172 @@ class SystemManagementProcessor extends Injectable
     }
 
     /**
+     * Enables extension module
+     *
+     * @param string $moduleUniqueID
+     *
+     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult $res
+     */
+    private static function enableModule(string $moduleUniqueID): PBXApiResult
+    {
+        $res                  = new PBXApiResult();
+        $res->processor       = __METHOD__;
+        $moduleStateProcessor = new PbxExtensionState($moduleUniqueID);
+        if ($moduleStateProcessor->enableModule() === false) {
+            $res->success  = false;
+            $res->messages = $moduleStateProcessor->getMessages();
+        } else {
+            PBXConfModulesProvider::recreateModulesProvider();
+            $res->data                       = $moduleStateProcessor->getMessages();
+            $res->data['needRestartWorkers'] = true;
+            $res->success                    = true;
+        }
+
+        return $res;
+    }
+
+    /**
+     * Вшыфидуы extension module
+     *
+     * @param string $moduleUniqueID
+     *
+     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult $res
+     */
+    private static function disableModule(string $moduleUniqueID): PBXApiResult
+    {
+        $res                  = new PBXApiResult();
+        $res->processor       = __METHOD__;
+        $moduleStateProcessor = new PbxExtensionState($moduleUniqueID);
+        if ($moduleStateProcessor->disableModule() === false) {
+            $res->success  = false;
+            $res->messages = $moduleStateProcessor->getMessages();
+        } else {
+            PBXConfModulesProvider::recreateModulesProvider();
+            $res->data                       = $moduleStateProcessor->getMessages();
+            $res->data['needRestartWorkers'] = true; //TODO:: Проверить надо ли это
+            $res->success                    = true;
+        }
+
+        return $res;
+    }
+
+    /**
+     * Deletes all settings and uploaded files
+     */
+    private static function restoreDefaultSettings(): PBXApiResult
+    {
+        $res            = new PBXApiResult();
+        $res->processor = __METHOD__;
+        $di             = DI::getDefault();
+        if ($di === null) {
+            $res->messages[] = 'Error on DI initialize';
+
+            return $res;
+        }
+
+        $res->success                    = true;
+        $res->data['needRestartWorkers'] = true;
+        $rm                              = Util::which('rm');
+
+        // Pre delete some types
+        $clearThisModels = [
+            [Providers::class => ''],
+            [OutgoingRoutingTable::class => ''],
+            [IncomingRoutingTable::class => ''],
+            [OutWorkTimes::class => ''],
+            [AsteriskManagerUsers::class => ''],
+            [Extensions::class => 'type="' . Extensions::TYPE_IVR_MENU . '"'],  // IVR Menu
+            [Extensions::class => 'type="' . Extensions::TYPE_CONFERENCE . '"'],  // CONFERENCE
+            [Extensions::class => 'type="' . Extensions::TYPE_QUEUE . '"'],  // QUEUE
+        ];
+
+        foreach ($clearThisModels as $modelParams) {
+            foreach ($modelParams as $key => $value) {
+                $records = call_user_func([$key, 'find'], $value);
+                if ( ! $records->delete()) {
+                    $res->messages[] = $records->getMessages();
+                    $res->success    = false;
+                }
+            }
+        }
+
+        // Other extensions
+        $parameters     = [
+            'conditions' => 'not number IN ({ids:array})',
+            'bind'       => [
+                'ids' => [
+                    '000063', // Reads back the extension
+                    '000064', // 0000MILLI
+                    '10003246',// Echo test
+                    '10000100' // Voicemail
+                ],
+            ],
+        ];
+        $stopDeleting   = false;
+        $countRecords   = Extensions::count($parameters);
+        $deleteAttempts = 0;
+        while ($stopDeleting === false) {
+            $record = Extensions::findFirst($parameters);
+            if ($record === null) {
+                $stopDeleting = true;
+                continue;
+            }
+            if ( ! $record->delete()) {
+                $deleteAttempts += 1;
+            }
+            if ($deleteAttempts > $countRecords * 10) {
+                $stopDeleting    = true; // Prevent loop
+                $res->messages[] = $record->getMessages();
+            }
+        }
+
+        // SoundFiles
+        $parameters = [
+            'conditions' => 'category = :custom:',
+            'bind'       => [
+                'custom' => SoundFiles::CATEGORY_CUSTOM,
+            ],
+        ];
+        $records    = SoundFiles::find($parameters);
+
+        foreach ($records as $record) {
+            if (stripos($record->path, '/storage/usbdisk1/mikopbx') !== false) {
+                Util::mwExec("{$rm} -rf {$record->path}");
+                if ( ! $record->delete()) {
+                    $res->messages[] = $record->getMessages();
+                    $res->success    = false;
+                }
+            }
+        }
+
+        // PbxExtensions
+        $records = PbxExtensionModules::find();
+        foreach ($records as $record) {
+            $moduleDir = PbxExtensionUtils::getModuleDir($record->uniqid);
+            Util::mwExec("{$rm} -rf {$moduleDir}");
+            if ( ! $record->delete()) {
+                $res->messages[] = $record->getMessages();
+                $res->success    = false;
+            }
+        }
+
+        // Delete CallRecords
+        $records = CallDetailRecords::find();
+        if ( ! $records->delete()) {
+            $res->messages[] = $records->getMessages();
+            $res->success    = false;
+        }
+
+        // Delete CallRecords sound files
+        $callRecordsPath = $di->getShared('config')->path('asterisk.monitordir');
+        if (stripos($callRecordsPath, '/storage/usbdisk1/mikopbx') !== false) {
+            Util::mwExec("{$rm} -rf {$callRecordsPath}/*");
+        }
+
+        return $res;
+    }
+
+    /**
      * Converts file to wav file with 8000 bitrate
      *
      * @param $filename
@@ -487,4 +536,5 @@ class SystemManagementProcessor extends Injectable
 
         return $res;
     }
+
 }
