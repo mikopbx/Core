@@ -238,10 +238,9 @@ function event_dial_answer()
     app["Wait"]("0.2");
     local mixFileName = get_variable("MIX_FILE_NAME");
     if(mixFileName ~= '')then
-        local mixCommand = get_variable("MIX_CMD");
         local mixOptions = get_variable("MIX_OPTIONS");
-        app["MixMonitor"](mixFileName .. ","..mixOptions.."," .. mixCommand);
-        app["MSet"]("MIX_FILE_NAME=,MIX_CMD=");
+        app["MixMonitor"](mixFileName .. ","..mixOptions);
+        app["Set"]("MIX_FILE_NAME=");
         app["NoOp"]('Start MixMonitor on channel '.. get_variable("CHANNEL"));
     end
 
@@ -386,10 +385,9 @@ function event_transfer_dial_answer()
 
     local mixFileName = get_variable("MIX_FILE_NAME");
     if(mixFileName ~= '')then
-        local mixCommand = get_variable("MIX_CMD");
         local mixOptions = get_variable("MIX_OPTIONS");
-        app["MixMonitor"](mixFileName .. ","..mixOptions.."," .. mixCommand);
-        app["MSet"]("MIX_FILE_NAME=,MIX_CMD=");
+        app["MixMonitor"](mixFileName .. ","..mixOptions);
+        app["Set"]("MIX_FILE_NAME=");
         app["NoOp"]('Start MixMonitor on channel '.. get_variable("CHANNEL"));
     end
 

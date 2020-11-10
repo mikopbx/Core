@@ -950,12 +950,14 @@ class AsteriskManager
      *
      * @return array
      */
-    public function MixMonitor($channel, $file, $options, $command)
+    public function MixMonitor($channel, $file, $options, $command='')
     {
         $parameters            = ['Channel' => $channel];
         $parameters['File']    = $file;
         $parameters['options'] = $options;
-        $parameters['Command'] = $command;
+        if(!empty($command)){
+            $parameters['Command'] = $command;
+        }
 
         return $this->sendRequestTimeout('MixMonitor', $parameters);
     }
