@@ -107,7 +107,7 @@ class WorkerCdr extends WorkerBase
             $dialstatus = trim($row['dialstatus']);
 
             $duration = max(($end - $start), 0);
-            $billsec  = ($end !== 0 && $answer !== 0) ? ($end - $answer) : 0;
+            $billsec  = ($end && $answer) ? ($end - $answer) : 0;
 
             [$disposition, $row] = $this->setDisposition($billsec, $dialstatus, $row);
             [$row, $billsec]     = $this->checkBillsecMakeRecFile($billsec, $row);
