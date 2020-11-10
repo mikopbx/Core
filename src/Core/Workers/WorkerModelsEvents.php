@@ -275,6 +275,7 @@ class WorkerModelsEvents extends WorkerBase
                 $this->pbxSettings->key = $data['recordId'] ?? '';
                 if ($this->pbxSettings->itHasFeaturesSettingsChanges()) {
                     $this->modified_tables[self::R_FEATURES] = true;
+                    $this->modified_tables[self::R_DIALPLAN] = true;
                 }
                 if ($this->pbxSettings->itHasAMIParametersChanges()) {
                     $this->modified_tables[self::R_MANAGERS] = true;

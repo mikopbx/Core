@@ -60,9 +60,6 @@ class WorkerCallEvents extends WorkerBase
             } else {
                 $options = 'ab';
             }
-            $nicePath   = Util::which('nice');
-            $wav2mp3Path= Util::which('wav2mp3.sh');
-
             $arr = $this->am->GetChannels(false);
             if(!in_array($channel, $arr, true)){
                 CdrDb::LogEvent("MixMonitor: Channel {$channel} not found.");
@@ -70,13 +67,11 @@ class WorkerCallEvents extends WorkerBase
             }
             $srcFile = "{$f}.wav";
             $resFile = "{$f}.mp3";
-            $command = "{$nicePath} -n 19 {$wav2mp3Path} '{$f}'";
             if($onlySetVar){
                 $this->am->SetVar($channel, 'MIX_FILE_NAME', $srcFile);
-                $this->am->SetVar($channel, 'MIX_CMD',       $command);
                 $this->am->SetVar($channel, 'MIX_OPTIONS',   $options);
             }else{
-                $res        = $this->am->MixMonitor($channel, $srcFile, $options, $command);
+                $res        = $this->am->MixMonitor($channel, $srcFile, $options);
                 $res['cmd'] = "MixMonitor($channel, $file_name)";
                 CdrDb::LogEvent(json_encode($res));
             }
@@ -252,7 +247,7 @@ class WorkerCallEvents extends WorkerBase
                 $new_data                   = $m_row_data->toArray();
                 $new_data['start']          = $data['answer'];
                 $new_data['answer']         = $data['answer'];
-                $new_data['endtime']        = null;
+                $new_data['endtime']        = '';
                 $new_data['dst_chan']       = $data['agi_channel'];
                 $new_data['dst_num']        = $data['dst_num'];
                 $new_data['UNIQUEID']       = $data['id'];

@@ -128,6 +128,7 @@ class PBX extends Injectable
         $arr_out      = [];
         $asteriskPath = Util::which('asterisk');
         Util::mwExec("{$asteriskPath} -rx 'module reload features'", $arr_out);
+        Util::mwExec("{$asteriskPath} -rx 'module reload res_parking'", $arr_out);
     }
 
     /**
