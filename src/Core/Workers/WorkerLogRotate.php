@@ -35,7 +35,7 @@ class WorkerLogRotate extends WorkerBase
             PBX::logRotate();
 
             //Modules Logs
-            $plugins = PbxExtensionModules::find('disabled="0"')->toArray();
+            $plugins = PbxExtensionModules::getEnabledModulesArray();
             foreach ($plugins as $plugin) {
                 $this->logRotate($plugin['uniqid']);
             }
