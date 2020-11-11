@@ -27,11 +27,10 @@ class TestCallsBase {
     private AsteriskManager $am;
 
     public function __construct(){
-        $db_data = $this->getIdlePeers();
+        $db_data = self::getIdlePeers();
         if(count($db_data) < 3){
-            $this->printError('Need 3 SIP account (endpoint).');
+            self::printError('Need 3 SIP account (endpoint).');
             exit(1);
-            return;
         }
         // Отбираем первые учетные записи.
         $this->aNum = $db_data[0];
@@ -47,7 +46,7 @@ class TestCallsBase {
      * Возвращает список доступных пиров.
      * @return array
      */
-    protected function getIdlePeers():array{
+    public static function getIdlePeers():array{
         $am = Util::getAstManager('off');
         $result = $am->getPjSipPeers();
         $db_data = array();
@@ -64,7 +63,7 @@ class TestCallsBase {
      * Вывод информации об ошибке.
      * @param $text
      */
-    protected function printError($text) : void
+    public static  function printError($text) : void
     {
         file_put_contents('php://stderr', "\033[01;31m-> TEST_ERROR: ".$text."\033[39m \n");
     }
@@ -73,7 +72,7 @@ class TestCallsBase {
      * Вывод информации.
      * @param $text
      */
-    protected function printInfo($text) : void
+    public static function printInfo($text) : void
     {
         echo "\033[01;32m-> \033[39m$text \n";
     }
@@ -82,7 +81,7 @@ class TestCallsBase {
      * Вывод заголовка.
      * @param $text
      */
-    protected function printHeader($text) : void
+    public static  function printHeader($text) : void
     {
         echo "\033[01;35m$text\033[39m \n";
     }
@@ -92,7 +91,7 @@ class TestCallsBase {
      */
     protected function cleanCdr():void
     {
-        $this->printInfo('Clearing the CDR table...');
+        self::printInfo('Clearing the CDR table...');
         // Очистка таблиц.
         $rows = CallDetailRecords::find();
         /** @var CallDetailRecords $row */
@@ -112,7 +111,7 @@ class TestCallsBase {
      * @return array
      */
     public function originateWait():array{
-        $this->printInfo('Start originate... ');
+        self::printInfo('Start originate... ');
         $result = $this->am->Originate(
             'Local/'.$this->aNum.'@orgn-wait',
             $this->bNum,
@@ -132,7 +131,7 @@ class TestCallsBase {
         // Util::mwExec('pbx-console service WorkerCdr stop');
         // Util::mwExec('pbx-console services start-all');
 
-        $this->printInfo('Result originate: '.$result['Response']??'none');
+        self::printInfo('Result originate: '.$result['Response']??'none');
         sleep(5);
         return $result;
     }
@@ -144,7 +143,7 @@ class TestCallsBase {
      */
     public function runTest(string $testName, array $sampleCDR): void{
 
-        $this->printHeader('Start test '. $testName .' ...');
+        self::printHeader('Start test '. $testName .' ...');
         $this->testDirName = $testName;
         $this->sampleCDR   = $sampleCDR;
 
@@ -158,14 +157,14 @@ class TestCallsBase {
         $this->sampleCDR            = [];
         $this->nonStrictComparison  = [];
 
-        $this->printInfo("End test\n");
+        self::printInfo("End test\n");
     }
 
     /**
      * Инициализация эталона таблицы CDR.
      */
     private function initSampleCdr():void{
-        $this->printInfo("Init sample cdr table...");
+        self::printInfo("Init sample cdr table...");
         foreach ($this->sampleCDR as $index => $row) {
             foreach ($row as $key => $value){
                 if(in_array($value, ['aNum', 'bNum', 'cNum'])){
@@ -183,13 +182,13 @@ class TestCallsBase {
         // Проверяем результат.
         $rows = CallDetailRecords::find()->toArray();
         if(count($rows) !== count($this->sampleCDR)){
-            $this->printError('Call history compromised. Count:'.count($rows).", need: ".count($this->sampleCDR));
+            self::printError('Call history compromised. Count:'.count($rows).", need: ".count($this->sampleCDR));
             return;
         }
-        $this->printInfo('Create CDR successfully');
+        self::printInfo('Create CDR successfully');
         foreach ($rows as $index => $row){
             if(!file_exists($row['recordingfile'])){
-                $this->printError("File not found '{$row['recordingfile']}'");
+                self::printError("File not found '{$row['recordingfile']}'");
             }else{
                 Util::mwExec("soxi {$row['recordingfile']} | grep Duration | awk '{print $3}' | awk -F '.'  '{print $1}'", $out);
                 $timeData = explode(':', implode($out));
@@ -198,7 +197,7 @@ class TestCallsBase {
                 $s = (int)($timeData[2]??0);
                 $seconds = $s + 60*$h + $d*24*60;
                 $row['fileDuration'] = (string)$seconds;
-                $this->printInfo('Rec. file:'.basename($row['recordingfile']).", sox duration: ".implode($out).", duration: ".$row['fileDuration']);
+                self::printInfo('Rec. file:'.basename($row['recordingfile']).", sox duration: ".implode($out).", duration: ".$row['fileDuration']);
             }
             $cdrS = $this->sampleCDR[$index];
             foreach ($cdrS as $key => $data){
@@ -207,15 +206,15 @@ class TestCallsBase {
                     $valSample  = (int) $data;
                     $values = [$valSample, ($valSample-1), ($valSample+1)];
                     if( !in_array($valRow, $values) ){
-                        $this->printError("Index row '{$index}', key '{$key}' {$valRow} !== {$data}");
+                        self::printError("Index row '{$index}', key '{$key}' {$valRow} !== {$data}");
                     }
                 }elseif($row[$key] !== $data){
-                    $this->printError("Index row '{$index}', key '{$key}' {$row[$key]} !== {$data}");
+                    self::printError("Index row '{$index}', key '{$key}' {$row[$key]} !== {$data}");
                 }
             }
 
             if(!file_exists($row['recordingfile'])){
-                $this->printError("File not found '{$row['recordingfile']}'");
+                self::printError("File not found '{$row['recordingfile']}'");
             }
         }
     }
@@ -226,11 +225,11 @@ class TestCallsBase {
         $confDir = __DIR__."/{$this->testDirName}/configs";
         $astConf = "{$rootDir}/asterisk/asterisk.conf";
 
-        $this->printInfo("Copying configuration files...");
+        self::printInfo("Copying configuration files...");
         Util::mwExec("cp -R {$confDir}/* {$rootDir}/asterisk/");
 
         $cmdAsterisk = Util::which('asterisk');
-        $this->printInfo("Reload dialplan... ");
+        self::printInfo("Reload dialplan... ");
         Util::mwExec("{$cmdAsterisk} -C '{$astConf}' -rx 'dialplan reload'");
         // Util::mwExec("asterisk -C '{$astConf}' -rx 'module reload res_pjsip.so'");
         sleep(5);

@@ -30,10 +30,8 @@ sleep 1;
 # Ожидаем запуска Asterisk.
 /usr/sbin/asterisk -C "$astConf" -rx 'core waitfullybooted' > /dev/null;
 echo -e "\e[01;32m-> \e[0mWaiting fully boot asterisk...";
+echo -e "\e[01;32m-> \e[0mEnd init";
 echo;
-# Ждем регистрации.
-sleep 3;
-# Выполнение теста. Originate через AMI.
 
 export astConf dirName;
 initTests=$(/bin/find "${dirName}/Scripts" -type f -name "start.php" | /bin/sort | grep '/00-');
