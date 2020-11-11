@@ -518,10 +518,11 @@ function event_dial_app()
     local FROM_CHAN     = get_variable('FROM_CHAN');
     local pt1c_UNIQUEID = get_variable('pt1c_UNIQUEID');
 
+    local id = '';
     if(CHANNEL==FROM_CHAN and pt1c_UNIQUEID~='') then
-        local id = pt1c_UNIQUEID;
+        id = pt1c_UNIQUEID;
     else
-        local id = get_variable('UNIQUEID')..'_'..generateRandomString(6);
+        id = get_variable('UNIQUEID')..'_'..generateRandomString(6);
     end
 
     local extension = get_variable("APPEXTEN");
