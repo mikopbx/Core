@@ -14,6 +14,7 @@ use Generator;
 use MikoPBX\Core\System\{BeanstalkClient, PBX, Util};
 use MikoPBX\Core\Workers\WorkerAmiListener;
 use MikoPBX\Core\Workers\WorkerBase;
+use MikoPBX\Core\Workers\WorkerBeanstalkdTidyUp;
 use MikoPBX\Core\Workers\WorkerCallEvents;
 use MikoPBX\Core\Workers\WorkerCdr;
 use MikoPBX\Core\Workers\WorkerCheckFail2BanAlive;
@@ -81,7 +82,8 @@ class WorkerSafeScriptsCore extends WorkerBase
                 [
                     WorkerLicenseChecker::class,
                     WorkerCheckFail2BanAlive::class,
-                    WorkerLogRotate::class
+                    WorkerLogRotate::class,
+                    WorkerBeanstalkdTidyUp::class
                 ],
         ];
         $arrModulesWorkers = [];

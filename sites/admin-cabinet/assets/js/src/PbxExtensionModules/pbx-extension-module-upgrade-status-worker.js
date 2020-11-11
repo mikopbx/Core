@@ -63,6 +63,7 @@ const upgradeStatusLoopWorker = {
 			$('i.loading.redo').closest('a').find('.percent').text(`${response.d_status_progress}%`);
 			upgradeStatusLoopWorker.oldPercent = response.d_status_progress;
 		} else if (response.d_status === 'DOWNLOAD_COMPLETE') {
+			$('i.loading.redo').closest('a').find('.percent').text('100%');
 			PbxApi.SystemInstallModule(response.filePath, upgradeStatusLoopWorker.cbAfterModuleInstall);
 			window.clearTimeout(upgradeStatusLoopWorker.timeoutHandle);
 		}
