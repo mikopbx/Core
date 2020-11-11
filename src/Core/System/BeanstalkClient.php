@@ -173,6 +173,8 @@ class BeanstalkClient extends Injectable
                 while ($job = $this->queue->peekReady()) {
                     $this->queue->delete($job);
                 }
+            }catch (\Pheanstalk\Exception\JobNotFoundException $e){
+                // Это не ошибка. Задача уже была удалена ранее из очереди.
             } catch (Throwable $exception){
                 Util::sysLogMsg(__METHOD__, 'Exception: '.$exception->getMessage());
             }
