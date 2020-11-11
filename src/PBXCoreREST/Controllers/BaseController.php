@@ -34,7 +34,7 @@ class BaseController extends Controller
         }
         try {
             $message = json_encode($requestMessage, JSON_THROW_ON_ERROR);
-            $response       = $this->di->getShared('beanstalkConnection')->request($message, 10, 0);
+            $response       = $this->di->getShared('beanstalkConnection')->request($message, 30, 0);
             if ($response !== false) {
                 $response = json_decode($response, true, 512, JSON_THROW_ON_ERROR);
                 $this->response->setPayloadSuccess($response);

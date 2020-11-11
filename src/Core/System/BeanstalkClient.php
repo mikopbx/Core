@@ -111,9 +111,6 @@ class BeanstalkClient extends Injectable
         }
         $this->queue->ignore($inbox_tube);
 
-        // Чистим мусор.
-        $this->cleanTube();
-
         return $this->message;
     }
 
@@ -155,24 +152,30 @@ class BeanstalkClient extends Injectable
     /**
      * Drops orphaned tasks
      */
-    public function cleanTube()
+    public function cleanTubes()
     {
         $tubes = $this->queue->listTubes();
         foreach ($tubes as $tube) {
-            if (strpos($tube, "INBOX_") !== 0) {
-                continue;
-            }
             try {
-                $statData = $this->queue->statsTube($tube)->getArrayCopy();
-                $watching = $statData['current-watching'];
-                if ($watching !== '0') {
-                    continue;
-                }
-                // Нужно удалить все Jobs.
-                $this->queue->watch($tube);
-                while ($job = $this->queue->peekReady()) {
+                $this->queue->watchOnly($tube);
+                // Delete buried jobs
+                while ($job = $this->queue->peekBuried()) {
+                    $id = $job->getId();
                     $this->queue->delete($job);
+                    Util::sysLogMsg(__METHOD__, "Deleted buried job with ID {$id} from {$tube}");
                 }
+
+                // Delete outdated jobs
+                while ($job = $this->queue->peekReady()) {
+                    $jobStats = $this->queue->statsJob($job);
+                    if ($jobStats->age>$jobStats->timeout*2){
+                        $id = $job->getId();
+                        $this->queue->delete($job);
+                        Util::sysLogMsg(__METHOD__, "Deleted outdated job with ID {$id} from {$tube}");
+                    }
+                }
+                $this->queue->watchOnly('default');
+
             } catch (Throwable $exception){
                 Util::sysLogMsg(__METHOD__, 'Exception: '.$exception->getMessage());
             }
