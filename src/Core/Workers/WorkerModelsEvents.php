@@ -26,6 +26,7 @@ use MikoPBX\Common\Models\{AsteriskManagerUsers,
     IvrMenu,
     IvrMenuActions,
     LanInterfaces,
+    ModelsBase,
     NetworkFilters,
     OutgoingRoutingTable,
     OutWorkTimes,
@@ -58,9 +59,7 @@ class WorkerModelsEvents extends WorkerBase
     private const R_QUEUES = 'reloadQueues';
 
     private const R_DIALPLAN = 'reloadDialplan';
-
-    private const R_PBX_SETTINGS = 'clearCachePbxSettings';
-
+    
     private const R_CUSTOM_F = 'updateCustomFiles';
 
     private const R_FIREWALL = 'reloadFirewall';
@@ -101,8 +100,7 @@ class WorkerModelsEvents extends WorkerBase
 
     private int $last_change;
     private array $modified_tables;
-
-    private PbxSettings $pbxSettings;
+    
     private int $timeout = 2;
     private array $arrObject;
     private array $PRIORITY_R;
@@ -122,7 +120,6 @@ class WorkerModelsEvents extends WorkerBase
         $this->PRIORITY_R = [
             self::R_CONF_MODULES,
             self::R_REST_API_WORKER,
-            self::R_PBX_SETTINGS,
             self::R_NETWORK,
             self::R_FIREWALL,
             self::R_SSH,
@@ -146,7 +143,6 @@ class WorkerModelsEvents extends WorkerBase
         ];
 
         $this->modified_tables = [];
-        $this->pbxSettings     = new PbxSettings();
 
         $client = new BeanstalkClient();
         $client->subscribe(self::class, [$this, 'processModelChanges']);
@@ -160,11 +156,11 @@ class WorkerModelsEvents extends WorkerBase
     }
 
     /**
-     * Parser for received Beanstalk message
+     * Parses for received Beanstalk message
      *
      * @param BeanstalkClient $message
      */
-    public function processModelChanges($message): void
+    public function processModelChanges(BeanstalkClient $message): void
     {
         $receivedMessage = json_decode($message->getBody(), true);
         $this->fillModifiedTables($receivedMessage);
@@ -177,7 +173,7 @@ class WorkerModelsEvents extends WorkerBase
     }
 
     /**
-     * Collect changes to determine which modules must be reloaded or reconfigured
+     * Collects changes to determine which modules must be reloaded or reconfigured
      *
      * @param $data
      */
@@ -185,6 +181,9 @@ class WorkerModelsEvents extends WorkerBase
     {
         $count_changes = count($this->modified_tables);
         $called_class = $data['model'] ?? '';
+
+        // Clear all caches on any changed models
+        PbxSettings::clearCache($called_class);
 
         // Обновление настроек в объектах, в оперативной памяти.
         $additionalModules = $this->di->getShared('pbxConfModules');
@@ -271,56 +270,58 @@ class WorkerModelsEvents extends WorkerBase
                 $this->modified_tables[self::R_DIALPLAN] = true;
                 break;
             case PbxSettings::class:
-                $this->modified_tables[self::R_PBX_SETTINGS] = true;
-                $this->pbxSettings->key = $data['recordId'] ?? '';
-                if ($this->pbxSettings->itHasFeaturesSettingsChanges()) {
+                $pbxSettings = PbxSettings::findFirstByKey($data['recordId']);
+                if ($pbxSettings===null){
+                    return;
+                }
+                if ($pbxSettings->itHasFeaturesSettingsChanges()) {
                     $this->modified_tables[self::R_FEATURES] = true;
                     $this->modified_tables[self::R_DIALPLAN] = true;
                 }
-                if ($this->pbxSettings->itHasAMIParametersChanges()) {
+                if ($pbxSettings->itHasAMIParametersChanges()) {
                     $this->modified_tables[self::R_MANAGERS] = true;
                 }
-                if ($this->pbxSettings->itHasIaxParametersChanges()) {
+                if ($pbxSettings->itHasIaxParametersChanges()) {
                     $this->modified_tables[self::R_IAX] = true;
                 }
-                if ($this->pbxSettings->itHasSipParametersChanges()) {
+                if ($pbxSettings->itHasSipParametersChanges()) {
                     $this->modified_tables[self::R_SIP] = true;
                 }
-                if ($this->pbxSettings->itHasSSHParametersChanges()) {
+                if ($pbxSettings->itHasSSHParametersChanges()) {
                     $this->modified_tables[self::R_SSH] = true;
                 }
-                if ($this->pbxSettings->itHasFirewallParametersChanges()) {
+                if ($pbxSettings->itHasFirewallParametersChanges()) {
                     $this->modified_tables[self::R_FIREWALL] = true;
                 }
-                if ($this->pbxSettings->itHasWebParametersChanges()) {
+                if ($pbxSettings->itHasWebParametersChanges()) {
                     $this->modified_tables[self::R_NGINX] = true;
                 }
-                if ($this->pbxSettings->itHasCronParametersChanges()) {
+                if ($pbxSettings->itHasCronParametersChanges()) {
                     $this->modified_tables[self::R_CRON] = true;
                 }
-                if ($this->pbxSettings->itHasDialplanParametersChanges()) {
+                if ($pbxSettings->itHasDialplanParametersChanges()) {
                     $this->modified_tables[self::R_DIALPLAN] = true;
                 }
-                if ($this->pbxSettings->itHasVoiceMailParametersChanges()) {
+                if ($pbxSettings->itHasVoiceMailParametersChanges()) {
                     $this->modified_tables[self::R_VOICEMAIL] = true;
                 }
-                if ($this->pbxSettings->itHasVisualLanguageSettings()) {
+                if ($pbxSettings->itHasVisualLanguageSettings()) {
                     $this->modified_tables[self::R_REST_API_WORKER] = true;
                 }
-                if ($this->pbxSettings->itHasLicenseSettings()) {
+                if ($pbxSettings->itHasLicenseSettings()) {
                     $this->modified_tables[self::R_LICENSE] = true;
                     $this->modified_tables[self::R_NATS]    = true;
                 }
-                if ($this->pbxSettings->itHasTimeZoneSettings()) {
+                if ($pbxSettings->itHasTimeZoneSettings()) {
                     $this->modified_tables[self::R_TIMEZONE]    = true;
                     $this->modified_tables[self::R_NGINX]    = true;
                     $this->modified_tables[self::R_PHP_FPM]    = true;
                     $this->modified_tables[self::R_REST_API_WORKER] = true;
                 }
-                if ($this->pbxSettings->itHasNTPSettings()) {
+                if ($pbxSettings->itHasNTPSettings()) {
                     $this->modified_tables[self::R_NTP]    = true;
                 }
-                if ($this->pbxSettings->itHasCallRecordSettings()) {
+                if ($pbxSettings->itHasCallRecordSettings()) {
                     $this->modified_tables[ self::R_CALL_EVENTS_WORKER]  = true;
                 }
                 break;
@@ -339,6 +340,7 @@ class WorkerModelsEvents extends WorkerBase
             // Начинаем отсчет времени при получении первой задачи.
             $this->last_change = time();
         }
+
     }
 
     /**
@@ -382,14 +384,7 @@ class WorkerModelsEvents extends WorkerBase
         $natsConf->reStart();
     }
 
-    /**
-     * Clear cache pbx settings
-     */
-    public function clearCachePbxSettings():void
-    {
-        $this->pbxSettings->clearCache(PbxSettings::class);
-    }
-
+    
     /**
      * Reloads Asterisk dialplan
      */
