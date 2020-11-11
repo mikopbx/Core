@@ -11,11 +11,12 @@ declare(strict_types=1);
 
 namespace MikoPBX\Common\Providers;
 
-use Error;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Service\License;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
+use SimpleXMLElement;
+use Throwable;
 
 /**
  * Class LicenseProvider
@@ -24,7 +25,7 @@ use Phalcon\Di\ServiceProviderInterface;
  *
  * @method  bool checkModules()
  * @method  bool checkPBX()
- * @method  \SimpleXMLElement|string getLicenseInfo(string $key)
+ * @method  SimpleXMLElement|string getLicenseInfo(string $key)
  * @method  bool | string getTrialLicense(array $params)
  * @method  bool | string addTrial(string $productId)
  * @method  bool | string activateCoupon(string $coupon)
@@ -52,7 +53,7 @@ class LicenseProvider implements ServiceProviderInterface
             function () {
                 try {
                     return new License('http://127.0.0.1:8223');
-                } catch (Error $exception){
+                } catch (Throwable $exception){
                     Util::sysLogMsg(__CLASS__, $exception);
                 }
                 return null;

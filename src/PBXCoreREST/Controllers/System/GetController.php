@@ -8,9 +8,7 @@
 
 namespace MikoPBX\PBXCoreREST\Controllers\System;
 
-use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
-use Phalcon\Di;
 
 /**
  * /pbxcore/api/system/{name} System management (GET)

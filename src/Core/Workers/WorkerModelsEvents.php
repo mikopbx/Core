@@ -46,6 +46,7 @@ use MikoPBX\Core\System\{BeanstalkClient,
     System,
     Util};
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
+use Throwable;
 
 ini_set('error_reporting', E_ALL);
 ini_set('display_startup_errors', 1);
@@ -574,7 +575,7 @@ if (isset($argv) && count($argv) > 1 && $argv[1] === 'start') {
     try {
         $worker = new $workerClassname();
         $worker->start($argv);
-    } catch (\Error $e) {
+    } catch (Throwable $e) {
         global $errorLogger;
         $errorLogger->captureException($e);
         sleep(1);

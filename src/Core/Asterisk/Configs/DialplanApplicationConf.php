@@ -11,8 +11,6 @@ namespace MikoPBX\Core\Asterisk\Configs;
 use MikoPBX\Common\Models\DialplanApplications;
 use MikoPBX\Modules\Config\ConfigClass;
 
-use function MikoPBX\Common\Config\appPath;
-
 class DialplanApplicationConf extends ConfigClass
 {
 

@@ -15,6 +15,7 @@ use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings};
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
 use Phalcon\Text;
+use Throwable;
 
 use function MikoPBX\Common\Config\appPath;
 
@@ -112,9 +113,9 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
     {
         $this->moduleUniqueID = $moduleUniqueID;
         $this->messages = [];
-        $this->db      = $this->di->getShared('db');
-        $this->config  = $this->di->getShared('config');
-        $this->license =  $this->di->getShared('license');
+        $this->db      = $this->getDI()->getShared('db');
+        $this->config  = $this->getDI()->getShared('config');
+        $this->license =  $this->getDI()->getShared('license');
         $this->moduleDir = $this->config->path('core.modulesDir') . '/' . $this->moduleUniqueID;
         $settings_file = "{$this->moduleDir}/module.json";
         if (file_exists($settings_file)) {
@@ -167,7 +168,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
                 $result           = false;
             }
             $this->fixFilesRights();
-        } catch (\Exception $exception) {
+        } catch (Throwable $exception) {
             $result         = false;
             $this->messages[] = $exception->getMessage();
         }
@@ -265,7 +266,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
                 $this->messages[] = ' unInstallFiles error';
                 $result           = false;
             }
-        } catch (\Exception $exception) {
+        } catch (Throwable $exception) {
             $result         = false;
             $this->messages[] = $exception->getMessage();
         }

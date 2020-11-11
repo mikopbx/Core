@@ -134,7 +134,6 @@ $setup_lan = function (CliMenuBuilder $b) {
             '[2] ' . Util::translate('Manual setting'),
             function (CliMenu $menu) {
                 $network = new Network();
-                $system  = new System();
 
                 $style = (new MenuStyle())
                     ->setBg('white')
@@ -251,9 +250,9 @@ $setupLanguage = function (CliMenuBuilder $b) {
     }
     $b->addItem("[{$index}] Cancel", new GoBackAction());
 
-    if (!empty($_ENV['SSH_CLIENT'])) {
-        $b->disableMenu();
-    };
+    // if (!empty($_ENV['SSH_CLIENT'])) {
+    //     $b->disableMenu();
+    // }
 };
 
 

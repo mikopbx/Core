@@ -14,7 +14,6 @@ use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Workers\WorkerMakeLogFilesArchive;
 use Phalcon\Di;
 use Phalcon\Di\Injectable;
-use phpDocumentor\Reflection\Types\Self_;
 
 class SysLogsManagementProcessor extends Injectable
 {

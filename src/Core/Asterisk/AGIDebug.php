@@ -8,10 +8,12 @@
 
 namespace MikoPBX\Core\Asterisk;
 
-class AGIDebug extends AGI {
+class AGIDebug extends AGI
+{
     private string $scriptName;
 
-    function __construct($scriptName){
+    public function __construct($scriptName)
+    {
         $this->scriptName = $scriptName;
     }
 

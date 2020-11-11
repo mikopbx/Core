@@ -14,6 +14,8 @@ use MikoPBX\Common\Models\{CallEventsLogs, CustomFiles};
 use MikoPBX\Core\Asterisk\AsteriskManager;
 use Phalcon\Di;
 use ReflectionClass;
+use ReflectionException;
+use Throwable;
 
 /**
  * Universal commands and procedures
@@ -220,7 +222,7 @@ class Util
         try {
             $reflection = new ReflectionClass($className);
             $filename   = $reflection->getFileName();
-        } catch (\ReflectionException $exception) {
+        } catch (ReflectionException $exception) {
             self::sysLogMsg('Util', 'Error ' . $exception->getMessage());
         }
 
@@ -417,7 +419,7 @@ class Util
         for ($i = 0; $i < $length; $i++) {
             try {
                 $randomString .= $characters[random_int(0, $charactersLength - 1)];
-            }catch (\Exception $e ){
+            }catch (Throwable $e ){
                 $randomString = '';
             }
         }

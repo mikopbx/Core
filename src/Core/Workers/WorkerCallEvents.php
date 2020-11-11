@@ -10,11 +10,10 @@ namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
 
 use MikoPBX\Common\Models\{CallDetailRecords, CallDetailRecordsTmp};
-use Error;
 use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\System\{BeanstalkClient, MikoPBXConfig, Storage, Util};
 use Phalcon\Di;
-use phpDocumentor\Reflection\Types\True_;
+use Throwable;
 
 class WorkerCallEvents extends WorkerBase
 {
@@ -356,7 +355,7 @@ class WorkerCallEvents extends WorkerBase
      *
      * @param $data
      *
-     * @throws Error | \Exception
+     * @throws \Throwable
      */
     public function Action_hangup_chan($data): void
     {
@@ -1186,7 +1185,6 @@ class WorkerCallEvents extends WorkerBase
      * @param array $data
      *
      * @return bool
-     * @throws Error
      */
     public static function insertDataToDbM($data): bool
     {
@@ -1282,7 +1280,7 @@ class WorkerCallEvents extends WorkerBase
                 $res = CallDetailRecords::find($filter);
             }
             $res_data = json_encode($res->toArray());
-        } catch (Error $e) {
+        } catch (Throwable $e) {
             $res_data = '[]';
         }
 
@@ -1301,9 +1299,7 @@ class WorkerCallEvents extends WorkerBase
             try {
                 $res      = CallDetailRecords::find($filter['add_pack_query']);
                 $res_data = json_encode($res->toArray(), JSON_THROW_ON_ERROR);
-            } catch (Error $e) {
-                $res_data = '[]';
-            } catch (\JsonException $e) {
+            } catch (Throwable $e) {
                 $res_data = '[]';
             }
         }
@@ -1322,7 +1318,10 @@ class WorkerCallEvents extends WorkerBase
 
     /**
      * Проверка фильтра на корректность bind параметров.
+     *
      * @param $filter
+     *
+     * @return bool
      */
     private function filterNotValid($filter){
         $haveErrors = false;
@@ -1356,7 +1355,7 @@ if ($action === 'start') {
         /** @var WorkerCallEvents $worker */
         $worker = new $workerClassname();
         $worker->start($argv);
-    } catch (Error $e) {
+    } catch (Throwable $e) {
         global $errorLogger;
         $errorLogger->captureException($e);
         Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage());

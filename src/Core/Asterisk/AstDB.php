@@ -8,6 +8,7 @@
 
 namespace MikoPBX\Core\Asterisk;
 
+use Throwable;
 use MikoPBX\Core\System\{Util};
 use Phalcon\Di;
 use SQLite3;
@@ -27,7 +28,7 @@ class AstDB extends Di\Injectable
     public function __construct()
     {
         $this->am = Util::getAstManager('off');
-        $this->db = new SQLite3($this->di->getShared('config')->path('astDatabase.dbfile'));
+        $this->db = new SQLite3($this->getDI()->getShared('config')->path('astDatabase.dbfile'));
         $this->db->busyTimeout(1000);
         $this->db->enableExceptions(true);
         $this->createDb();
@@ -50,7 +51,7 @@ EOF;
         try {
             $this->db->exec('PRAGMA journal_mode=WAL;');
             $this->db->exec($sql);
-        } catch (\Exception $e) {
+        } catch (Throwable $e) {
             $this->closeDb();
         }
     }
@@ -88,7 +89,7 @@ EOF;
         $sql = "INSERT" . " OR REPLACE INTO astdb (key, value) VALUES ('/{$family}/{$key}', '{$value}')";
         try {
             $result = $this->db->exec($sql);
-        } catch (\Exception $e) {
+        } catch (Throwable $e) {
             $this->closeDb();
             $this->databasePut($family, $key, $value);
         }

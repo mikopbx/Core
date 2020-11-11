@@ -16,6 +16,7 @@ use MikoPBX\Core\System\Verify;
 use Phalcon\Di\Injectable;
 
 use SQLite3;
+use Throwable;
 
 class FirewallManagementProcessor extends Injectable
 {
@@ -85,7 +86,7 @@ class FirewallManagementProcessor extends Injectable
          }
          try {
              $db      = new SQLite3(Fail2BanConf::FAIL2BAN_DB_PATH);
-         }catch (\Exception $e){
+         }catch (Throwable $e){
              return null;
          }
          $db->busyTimeout(5000);

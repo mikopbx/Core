@@ -48,7 +48,7 @@ class TopMenuSearchController extends BaseController
         ];
         $results    = [[]];
         foreach ($arrClasses as $itemClass) {
-            $records       = $itemClass::find();
+            $records = call_user_func([$itemClass, 'find']);
             $categoryItems = [];
             foreach ($records as $record) {
                 if ($itemClass === Users::class && $record->id === '1') {

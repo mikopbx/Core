@@ -21,6 +21,7 @@ use PDOException;
 use Phalcon\Di\Injectable;
 use ReflectionClass;
 use ReflectionException;
+use Throwable;
 
 /**
  * @property \MikoPBX\Service\License license
@@ -343,7 +344,7 @@ class PbxExtensionState extends Injectable
             } catch (PDOException $exception) {
                 $this->messages[] = $exception->getMessage();
                 $success          = false;
-            } catch (\Error $exception) {
+            } catch (Throwable $exception) {
                 $this->messages[] = $exception->getMessage();
                 $success          = false;
             }
@@ -507,7 +508,7 @@ class PbxExtensionState extends Injectable
             } catch (PDOException $exception) {
                 $this->messages[] = $exception->getMessage();
                 $success          = false;
-            } catch (\Error $exception) {
+            } catch (Throwable $exception) {
                 $this->messages[] = $exception->getMessage();
                 $success          = false;
             }

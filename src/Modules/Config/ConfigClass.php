@@ -73,8 +73,8 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface, 
      */
     public function __construct()
     {
-        $this->config          = $this->di->getShared('config');
-        $this->booting         = $this->di->getShared('registry')->booting === true;
+        $this->config          = $this->getDI()->getShared('config');
+        $this->booting         = $this->getDI()->getShared('registry')->booting === true;
         $this->mikoPBXConfig   = new MikoPBXConfig();
         $this->generalSettings = $this->mikoPBXConfig->getGeneralSettings();
         $this->moduleUniqueId  = ConfigClass::ID_CONFIG_CLASS;

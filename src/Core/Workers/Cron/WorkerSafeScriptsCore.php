@@ -23,9 +23,8 @@ use MikoPBX\Core\Workers\WorkerModelsEvents;
 use MikoPBX\Core\Workers\WorkerNotifyByEmail;
 use MikoPBX\Core\Workers\WorkerNotifyError;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
-use MikoPBX\PBXCoreREST\Workers\WorkerLongPoolAPI;
-use Pheanstalk\Exception\DeadlineSoonException;
 use Recoil\React\ReactKernel;
+use Throwable;
 
 class WorkerSafeScriptsCore extends WorkerBase
 {
@@ -37,6 +36,8 @@ class WorkerSafeScriptsCore extends WorkerBase
 
     /**
      * Restart all registered workers
+     *
+     * @throws \Throwable
      */
     public function restart(): void
     {
@@ -171,11 +172,9 @@ class WorkerSafeScriptsCore extends WorkerBase
                     "WARNING: Service {$workerClassName} processed more than {$time_elapsed_secs} seconds"
                 );
             }
-        } catch (\Error $e) {
+        } catch (Throwable $e) {
             global $errorLogger;
             $errorLogger->captureException($e);
-            Util::sysLogMsg($workerClassName . '_EXCEPTION', $e->getMessage());
-        } catch (DeadlineSoonException $e) {
             Util::sysLogMsg($workerClassName . '_EXCEPTION', $e->getMessage());
         }
         yield;
@@ -246,7 +245,7 @@ class WorkerSafeScriptsCore extends WorkerBase
                     "WARNING: Service {$workerClassName} processed more than {$time_elapsed_secs} seconds"
                 );
             }
-        } catch (\Error $e) {
+        } catch (Throwable $e) {
             global $errorLogger;
             $errorLogger->captureException($e);
             Util::sysLogMsg($workerClassName . '_EXCEPTION', $e->getMessage());
@@ -267,7 +266,7 @@ try {
             $worker->restart();
         }
     }
-} catch (\Error $e) {
+} catch (Throwable $e) {
     global $errorLogger;
     $errorLogger->captureException($e);
     Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage());

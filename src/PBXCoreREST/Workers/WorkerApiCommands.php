@@ -9,7 +9,6 @@
 namespace MikoPBX\PBXCoreREST\Workers;
 
 use MikoPBX\Core\System\{BeanstalkClient, System, Util};
-use Error;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\PBXCoreREST\Lib\AdvicesProcessor;
 use MikoPBX\PBXCoreREST\Lib\CdrDBProcessor;
@@ -23,7 +22,7 @@ use MikoPBX\PBXCoreREST\Lib\StorageManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\SysinfoManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\SystemManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\FilesManagementProcessor;
-use Pheanstalk\Exception\DeadlineSoonException;
+use Throwable;
 
 require_once 'Globals.php';
 
@@ -47,7 +46,6 @@ class WorkerApiCommands extends WorkerBase
     /**
      * @param $argv
      *
-     * @throws \Pheanstalk\Exception\DeadlineSoonException
      */
     public function start($argv): void
     {
@@ -87,10 +85,11 @@ class WorkerApiCommands extends WorkerBase
      *
      * @param BeanstalkClient $message
      *
-     * @throws \JsonException
      */
     public function prepareAnswer(BeanstalkClient $message): void
     {
+        $res             = new PBXApiResult();
+        $res->processor  = __METHOD__;
         try {
             $request   = json_decode($message->getBody(), true, 512, JSON_THROW_ON_ERROR);
             $processor = $request['processor'];
@@ -98,18 +97,16 @@ class WorkerApiCommands extends WorkerBase
             if (array_key_exists($processor, $this->processors)) {
                 $res = $this->processors[$processor]::callback($request);
             } else {
-                $res             = new PBXApiResult();
-                $res->processor  = __METHOD__;
                 $res->success    = false;
                 $res->messages[] = "Unknown processor - {$processor} in prepareAnswer";
             }
-        } catch (Error $exception) {
-            $res             = new PBXApiResult();
-            $res->processor  = __METHOD__;
+        } catch (Throwable $exception) {
             $res->messages[] = 'Exception on WorkerApiCommands - ' . $exception->getMessage();
+        } finally {
+            $message->reply(json_encode($res->getResult()));
+            $this->checkNeedReload($res->data);
         }
-        $message->reply(json_encode($res->getResult(), JSON_THROW_ON_ERROR));
-        $this->checkNeedReload($res->data);
+
     }
 
     /**
@@ -136,11 +133,9 @@ if (isset($argv) && count($argv) > 1 && $argv[1] === 'start') {
         try {
             $worker = new $workerClassname();
             $worker->start($argv);
-        } catch (\Error $e) {
+        } catch (Throwable $e) {
             global $errorLogger;
             $errorLogger->captureException($e);
-            Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage());
-        } catch (DeadlineSoonException $e) {
             Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage());
         }
     }
