@@ -18,6 +18,7 @@ $db_data = Sip::find([
     "type = 'peer' AND ( disabled <> '1')",
     'limit' => $limitPeers
 ]);
+$limitPeers = min(count($db_data->toArray()), $limitPeers);
 
 $enpointPattern = file_get_contents(__DIR__.'/configs/pjsip-pattern-endpoint.conf');
 $config         = file_get_contents(__DIR__.'/configs/pjsip-pattern.conf');
