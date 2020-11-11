@@ -5,14 +5,15 @@
  * Proprietary and confidential
  * Written by Alexey Portnov, 10 2020
  */
-
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Core\System\Util;
+use MikoPBX\Tests\Calls\Scripts\TestCallsBase;
 require_once 'Globals.php';
 
 $testName = basename(__DIR__);
-echo "\033[01;35mStart test {$testName}\033[39m \n";
+TestCallsBase::printHeader("Start test {$testName}");
 
+TestCallsBase::printInfo("Get data peers...");
 $limitPeers = 10;
 $db_data = Sip::find([
     "type = 'peer' AND ( disabled <> '1')",
@@ -20,6 +21,7 @@ $db_data = Sip::find([
 ]);
 $limitPeers = min(count($db_data->toArray()), $limitPeers);
 
+TestCallsBase::printInfo("Make pjsip.conf...");
 $enpointPattern = file_get_contents(__DIR__.'/configs/pjsip-pattern-endpoint.conf');
 $config         = file_get_contents(__DIR__.'/configs/pjsip-pattern.conf');
 /** @var Sip $peer */
@@ -31,19 +33,29 @@ foreach ($db_data as $peer){
 $dirName = getenv('dirName');
 $astConf = getenv('astConf');
 
-$cmdAsterisk = Util::which('asterisk');
+
+TestCallsBase::printInfo("Copy pjsip.conf...");
 file_put_contents("$dirName/asterisk/pjsip.conf", $config);
+
+TestCallsBase::printInfo("Reload res_pjsip...");
+$cmdAsterisk = Util::which('asterisk');
 Util::mwExec("{$cmdAsterisk} -C '$astConf' -rx 'module reload res_pjsip.so'");
 
-$duration = count($db_data->toArray())*3;
-echo "\033[01;32m-> \033[39mWaiting for registration of peers {$duration} s... \n";
-sleep($duration);
-$result = Util::mwExec($cmdAsterisk.' -rx"core show hints" | grep PJSIP/ | grep Idle', $out);
-if(count($out) !== $limitPeers){
-    file_put_contents('php://stderr', "\033[01;31m-> ".'Not all endpoint are registered: '. implode("\n", $out)."\033[39m \n");
-}else{
-    echo "\033[01;32m-> \033[39mEndpoints connected successfully \n";
-}
+$duration = 120;
+$start = time();
+TestCallsBase::printInfo("Waiting for registration of peers. Wait max {$duration} s...");
+do{
+    sleep(1);
+    $idlePeers = TestCallsBase::getIdlePeers();
+    if ((time() - $start) >= $duration){
+        break;
+    }
+}while(count($idlePeers) < $limitPeers);
 
-sleep(5);
-echo "\033[01;32m-> \033[39mEnd test \n\n";
+TestCallsBase::printInfo('Time waiting '.(time() - $start).'s...');
+if(count($idlePeers) !== $limitPeers){
+    TestCallsBase::printError('Not all endpoint are registered:');
+}else{
+    TestCallsBase::printInfo('Endpoints connected successfully');
+}
+TestCallsBase::printInfo('End test ');

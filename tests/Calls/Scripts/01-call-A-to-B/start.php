@@ -9,7 +9,7 @@ use \MikoPBX\Tests\Calls\Scripts\TestCallsBase;
 require_once __DIR__.'/../TestCallsBase.php';
 
 $sampleCDR   = [];
-$sampleCDR[] = ['src_num'=>'aNum', 'dst_num'=>'bNum', 'duration'=>'14', 'billsec'=>'10', 'fileDuration' => '10'];
+$sampleCDR[] = ['src_num'=>'aNum', 'dst_num'=>'bNum', 'duration'=>'7', 'billsec'=>'5', 'fileDuration' => '5'];
 
 $testName = basename(__DIR__);
 $test = new TestCallsBase();
