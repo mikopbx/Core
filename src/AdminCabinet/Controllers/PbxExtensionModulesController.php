@@ -120,16 +120,15 @@ class PbxExtensionModulesController extends BaseController
     }
 
 
-
     /**
-     * Генерирует дополнительные пункты меню в интерфейс
+     * Prepares sidebar additional items for modules
      */
     public function sidebarIncludeAction(): void
     {
         $result  = [];
-        $modules = PbxExtensionModules::find('disabled="0"');
+        $modules = PbxExtensionModules::getEnabledModulesArray();
         foreach ($modules as $module) {
-            $menuSettings         = "AdditionalMenuItem{$module->uniqid}";
+            $menuSettings         = "AdditionalMenuItem{$module['uniqid']}";
             $previousMenuSettings = PbxSettings::findFirstByKey($menuSettings);
             if ($previousMenuSettings !== null) {
                 $result['items'][] = json_decode($previousMenuSettings->value, true);

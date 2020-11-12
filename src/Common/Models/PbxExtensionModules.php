@@ -110,5 +110,21 @@ class PbxExtensionModules extends ModelsBase
         $this->di->remove('pbxConfModules');
         $this->di->register(new PBXConfModulesProvider());
     }
+
+    /**
+     * Prepares array of enabled modules params for reading
+     * @return array
+     */
+    public static function getEnabledModulesArray(): array
+    {
+        $parameters = [
+            'conditions' => 'disabled="0"',
+            'cache' => [
+                'key'=>'PbxExtensionModules-Enabled',
+                'lifetime' => 3600,
+            ]
+        ];
+        return PbxExtensionModules::find($parameters)->toArray();
+    }
 }
 

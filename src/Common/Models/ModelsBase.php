@@ -10,6 +10,7 @@ namespace MikoPBX\Common\Models;
 
 use MikoPBX\Modules\PbxExtensionUtils;
 use Phalcon\Db\Adapter\AdapterInterface;
+use Phalcon\Di;
 use Phalcon\Messages\Message;
 use Phalcon\Messages\MessageInterface;
 use Phalcon\Mvc\Model;
@@ -61,15 +62,7 @@ abstract class ModelsBase extends Model
      */
     private function addExtensionModulesRelations()
     {
-        $cacheKey   = explode('\\', static::class)[3];
-        $parameters = [
-            'conditions' => 'disabled=0',
-            'cache'      => [
-                'key'      => $cacheKey,
-                'lifetime' => 5, //seconds
-            ],
-        ];
-        $modules    = PbxExtensionModules::find($parameters)->toArray();
+        $modules = PbxExtensionModules::getEnabledModulesArray();
         foreach ($modules as $module) {
             $moduleDir = PbxExtensionUtils::getModuleDir($module['uniqid']);
 
@@ -761,19 +754,18 @@ abstract class ModelsBase extends Model
     }
 
     /**
-     * После сохранения данных любой модели
+     * After save processor
      */
     public function afterSave(): void
     {
         $this->processSettingsChanges('afterSave');
-        $this->clearCache(static::class);
+        self::clearCache(static::class);
     }
 
     /**
-     * Готовит массив действий для перезапуска модулей ядра системы
-     * и Asterisk
+     * Sends changed fields and settings to backend worker WorkerModelsEvents
      *
-     * @param $action string  быть afterSave или afterDelete
+     * @param $action string may be afterSave or afterDelete
      */
     private function processSettingsChanges(string $action): void
     {
@@ -809,22 +801,26 @@ abstract class ModelsBase extends Model
     }
 
     /**
-     * Очистка кешей при сохранении данных в базу
+     * Invalidates cached records contains model name in cache key value
      *
-     * @param $calledClass string модель, с чей кеш будем чистить в полном формате
+     * @param $calledClass string full model class name
      */
-    public function clearCache(string $calledClass): void
+    public static function clearCache(string $calledClass): void
     {
-        if ($this->di->has('managedCache')) {
-            $managedCache = $this->di->getShared('managedCache');
+        $di = Di::getDefault();
+        if ($di === null) {
+            return;
+        }
+        if ($di->has('managedCache')) {
+            $managedCache = $di->getShared('managedCache');
             $category     = explode('\\', $calledClass)[3];
             $keys         = $managedCache->getAdapter()->getKeys($category);
             if (count($keys) > 0) {
                 $managedCache->deleteMultiple($keys);
             }
         }
-        if ($this->di->has('modelsCache')) {
-            $modelsCache = $this->di->getShared('modelsCache');
+        if ($di->has('modelsCache')) {
+            $modelsCache = $di->getShared('modelsCache');
             $category    = explode('\\', $calledClass)[3];
             $keys        = $modelsCache->getAdapter()->getKeys($category);
             if (count($keys) > 0) {
@@ -839,7 +835,7 @@ abstract class ModelsBase extends Model
     public function afterDelete(): void
     {
         $this->processSettingsChanges('afterDelete');
-        $this->clearCache(static::class);
+        self::clearCache(static::class);
     }
 
     /**

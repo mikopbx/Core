@@ -25,12 +25,12 @@ class PbxSettings extends ModelsBase
      * @Primary
      * @Column(type="string", nullable=false)
      */
-    public string $key;
+    public string $key='';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $value;
+    public ?string $value = null;
 
 
     /**
@@ -138,18 +138,29 @@ class PbxSettings extends ModelsBase
      */
     public static function getValueByKey(string $key): string
     {
+        $cacheKey   = explode('\\', static::class)[3];
+        $parameters= [
+            'cache' => [
+                'key'=>$cacheKey.'-getValueByKey',
+                'lifetime' => 300,
+            ]
+        ];
+        $currentSettings = parent::find($parameters);
 
-        $result = parent::findFirstByKey($key);
-        if ($result === null || $result->value === null) {
-            $arrOfDefaultValues = self::getDefaultArrayValues();
-            if ( ! array_key_exists($key, $arrOfDefaultValues)) {
-                return '';
+        foreach ($currentSettings as $record){
+            if ($record->key===$key
+                && isset($record->value)
+            ){
+                return $record->value;
             }
+        }
 
+        $arrOfDefaultValues = self::getDefaultArrayValues();
+        if (array_key_exists($key, $arrOfDefaultValues)) {
             return $arrOfDefaultValues[$key];
         }
 
-        return $result->value;
+        return '';
     }
 
     public function initialize(): void

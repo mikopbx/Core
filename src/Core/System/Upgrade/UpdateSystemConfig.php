@@ -79,9 +79,9 @@ class UpdateSystemConfig extends Di\Injectable
     private function deleteLostModules(): void
     {
         /** @var \MikoPBX\Common\Models\PbxExtensionModules $modules */
-        $modules = PbxExtensionModules::find();
+        $modules = PbxExtensionModules::find()->toArray();
         foreach ($modules as $module) {
-            if ( ! is_dir("{$this->config->path('core.modulesDir')}/{$module->uniqid}")) {
+            if ( ! is_dir("{$this->config->path('core.modulesDir')}/{$module['uniqid']}")) {
                 $module->delete();
             }
         }

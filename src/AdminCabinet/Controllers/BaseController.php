@@ -167,9 +167,9 @@ class BaseController extends Controller
     private function getVersionsHash(): string
     {
         $result          = PbxSettings::getValueByKey('PBXVersion');
-        $modulesVersions = PbxExtensionModules::find(['columns' => 'id,version']);
+        $modulesVersions = PbxExtensionModules::getEnabledModulesArray();
         foreach ($modulesVersions as $module) {
-            $result .= "{$module->version}{$module->version}";
+            $result .= "{$module['id']}{$module['version']}";
         }
 
         return md5($result);

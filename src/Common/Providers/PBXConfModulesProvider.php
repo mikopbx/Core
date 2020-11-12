@@ -80,7 +80,7 @@ class PBXConfModulesProvider implements ServiceProviderInterface
     public static function getExtensionsConfModules():array
     {
         $arrObjects = [];
-        $modules = PbxExtensionModules::find('disabled="0"')->toArray();
+        $modules = PbxExtensionModules::getEnabledModulesArray();
         foreach ($modules as $value) {
             $class_name      = str_replace('Module', '', $value['uniqid']);
             $full_class_name = "\\Modules\\{$value['uniqid']}\\Lib\\{$class_name}Conf";
