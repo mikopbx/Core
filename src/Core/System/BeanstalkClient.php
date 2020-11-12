@@ -12,6 +12,7 @@ use Phalcon\Di\Injectable;
 use Pheanstalk\Contract\PheanstalkInterface;
 use Pheanstalk\Job;
 use Pheanstalk\Pheanstalk;
+use Pheanstalk\Contract\ResponseInterface;
 use Throwable;
 
 class BeanstalkClient extends Injectable
@@ -100,12 +101,10 @@ class BeanstalkClient extends Injectable
             if ($job !== null) {
                 $this->message = $job->getData();
                 $this->queue->delete($job);
-                $job = null;
             }
         } catch (Throwable $exception){
             Util::sysLogMsg(__METHOD__, 'Exception: '.$exception->getMessage());
-        } finally {
-            if ($job !== null){
+            if ($job !== null) {
                 $this->queue->bury($job);
             }
         }
@@ -157,7 +156,7 @@ class BeanstalkClient extends Injectable
         $tubes = $this->queue->listTubes();
         foreach ($tubes as $tube) {
             try {
-                $this->queue->watchOnly($tube);
+                $this->queue->useTube($tube);
                 // Delete buried jobs
                 while ($job = $this->queue->peekBuried()) {
                     $id = $job->getId();
@@ -168,13 +167,17 @@ class BeanstalkClient extends Injectable
                 // Delete outdated jobs
                 while ($job = $this->queue->peekReady()) {
                     $jobStats = $this->queue->statsJob($job);
-                    if ($jobStats->age>$jobStats->timeout*2){
+                    if (! $jobStats instanceof ResponseInterface){
+                        continue;
+                    }
+                    $age = (int)($jobStats->age);
+                    $expectedTimeToExecute = ((int)($jobStats->ttr))*2;
+                    if ($age>$expectedTimeToExecute){
                         $id = $job->getId();
                         $this->queue->delete($job);
                         Util::sysLogMsg(__METHOD__, "Deleted outdated job with ID {$id} from {$tube}");
                     }
                 }
-                $this->queue->watchOnly('default');
 
             } catch (Throwable $exception){
                 Util::sysLogMsg(__METHOD__, 'Exception: '.$exception->getMessage());

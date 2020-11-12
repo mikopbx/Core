@@ -394,6 +394,9 @@ class ExtensionsController extends BaseController
                         $userEntity->$name = ($userEntity->$name === 'user') ? 'user' : $data['user_' . $name]; // не повышаем роль
                     }
                     break;
+                case 'language':
+                    $userEntity->$name = PbxSettings::getValueByKey('PBXLanguage');
+                    break;
                 default:
                     if (array_key_exists('user_' . $name, $data)) {
                         $userEntity->$name = $data['user_' . $name];

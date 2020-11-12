@@ -126,5 +126,20 @@ class PbxExtensionModules extends ModelsBase
         ];
         return PbxExtensionModules::find($parameters)->toArray();
     }
+
+    /**
+     * Prepares array of modules params for reading
+     * @return array
+     */
+    public static function getModulesArray(): array
+    {
+        $parameters = [
+            'cache' => [
+                'key'=>'PbxExtensionModules-All',
+                'lifetime' => 3600,
+            ]
+        ];
+        return PbxExtensionModules::find($parameters)->toArray();
+    }
 }
 

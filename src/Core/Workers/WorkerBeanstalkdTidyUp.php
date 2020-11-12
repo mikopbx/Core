@@ -31,7 +31,7 @@ class WorkerBeanstalkdTidyUp extends WorkerBase
         if ($lastTubesCheck === null){
             $client = new BeanstalkClient();
             $client->cleanTubes();
-            $managedCache->set('lastTubesCheck', time(), 600);
+            $managedCache->set('lastTubesCheck', time(), 300);
         }
     }
 
