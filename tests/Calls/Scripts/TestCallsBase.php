@@ -124,14 +124,15 @@ class TestCallsBase {
             "__A_NUM={$this->aNum},__B_NUM={$this->bNum},__C_NUM={$this->cNum}",
             null,
             '0');
+        self::printInfo('Result originate: '.$result['Response']??'none');
 
+        self::printInfo('Wait end call... ');
         while (count($this->am->GetChannels(false))>0){
             sleep(1);
         }
         // Util::mwExec('pbx-console service WorkerCdr stop');
         // Util::mwExec('pbx-console services start-all');
 
-        self::printInfo('Result originate: '.$result['Response']??'none');
         sleep(5);
         return $result;
     }
