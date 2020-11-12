@@ -9,6 +9,10 @@
 
 namespace MikoPBX\PBXCoreREST\Controllers\System;
 
+use MikoPBX\Common\Models\Extensions;
+use MikoPBX\Common\Models\ModelsBase;
+use MikoPBX\Common\Models\PbxExtensionModules;
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
 use Phalcon\Di;
@@ -89,6 +93,19 @@ class PostController extends BaseController
         switch ($actionName) {
             case 'convertAudioFile':
                 $this->convertAudioFile();
+                break;
+            case 'installNewModule':
+            case 'enableModule':
+            case 'disableModule':
+            case 'uninstallModule':
+                $data = $this->request->getPost();
+                $this->sendRequestToBackendWorker('system', $actionName, $data);
+                // Clear WWW models cache after successfully install or remove module
+                if ($this->response->getStatusCode()===200){
+                    PbxExtensionModules::clearCache(Extensions::class);
+                    PbxExtensionModules::clearCache(PbxExtensionModules::class);
+                    PbxExtensionModules::clearCache(PbxSettings::class);
+                }
                 break;
             default:
                 $data = $this->request->getPost();

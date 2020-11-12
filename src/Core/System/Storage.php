@@ -1136,7 +1136,7 @@ class Storage extends Di\Injectable
      */
     public function createModulesCacheSymlinks(): void
     {
-        $modules = PbxExtensionModules::find()->toArray();
+        $modules = PbxExtensionModules::getModulesArray();
         foreach ($modules as $module) {
             PbxExtensionUtils::createAssetsSymlinks($module['uniqid']);
             PbxExtensionUtils::createAgiBinSymlinks($module['uniqid']);
@@ -1172,7 +1172,7 @@ class Storage extends Di\Injectable
         }
 
         $www_dirs[] = $this->config->path('core.tempDir');
-        $www_dirs[] = $this->config->path('database.logsDir');
+        $www_dirs[] = $this->config->path('core.logsDir');
         $www_dirs[] = '/etc/version';
         $www_dirs[] = appPath('/');
 
