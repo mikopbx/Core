@@ -12,6 +12,7 @@ use Phalcon\Di\Injectable;
 use Pheanstalk\Contract\PheanstalkInterface;
 use Pheanstalk\Job;
 use Pheanstalk\Pheanstalk;
+use Pheanstalk\Contract\ResponseInterface;
 use Throwable;
 
 class BeanstalkClient extends Injectable
@@ -166,6 +167,9 @@ class BeanstalkClient extends Injectable
                 // Delete outdated jobs
                 while ($job = $this->queue->peekReady()) {
                     $jobStats = $this->queue->statsJob($job);
+                    if (! $jobStats instanceof ResponseInterface){
+                        continue;
+                    }
                     $age = (int)($jobStats->age);
                     $expectedTimeToExecute = ((int)($jobStats->ttr))*2;
                     if ($age>$expectedTimeToExecute){
