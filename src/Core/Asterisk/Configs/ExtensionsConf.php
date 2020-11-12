@@ -10,7 +10,7 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\{Iax, IncomingRoutingTable, OutgoingRoutingTable, OutWorkTimes, Providers, Sip, SoundFiles};
 use MikoPBX\Modules\Config\ConfigClass;
-use MikoPBX\Core\System\{MikoPBXConfig, Util};
+use MikoPBX\Core\System\{MikoPBXConfig, Storage, Util};
 use Phalcon\Di;
 
 class ExtensionsConf extends ConfigClass
@@ -24,8 +24,12 @@ class ExtensionsConf extends ConfigClass
     {
         /** @scrutinizer ignore-call */
         $additionalModules = $this->di->getShared('pbxConfModules');
-        $conf              = "[globals] \n";
-        $conf              .= "TRANSFER_CONTEXT=internal-transfer; \n";
+        $conf = "[globals] \n".
+                "TRANSFER_CONTEXT=internal-transfer; \n";
+        if($this->generalSettings['PBXRecordCalls'] === '1'){
+            $conf.="MONITOR_DIR=".Storage::getMonitorDir()." \n";
+            $conf.="MONITOR_STEREO=".$this->generalSettings['PBXSplitAudioThread']." \n";
+        }
         foreach ($additionalModules as $appClass) {
             $addition = $appClass->extensionGlobals();
             if (!empty($addition)){

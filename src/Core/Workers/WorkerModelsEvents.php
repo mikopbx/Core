@@ -321,7 +321,8 @@ class WorkerModelsEvents extends WorkerBase
                     $this->modified_tables[self::R_NTP]    = true;
                 }
                 if ($this->pbxSettings->itHasCallRecordSettings()) {
-                    $this->modified_tables[ self::R_CALL_EVENTS_WORKER]  = true;
+                    $this->modified_tables[self::R_CALL_EVENTS_WORKER]  = true;
+                    $this->modified_tables[self::R_DIALPLAN]  = true;
                 }
                 break;
             case Sip::class:

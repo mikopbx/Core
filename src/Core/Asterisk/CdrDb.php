@@ -19,36 +19,16 @@ use Phalcon\Di;
 class CdrDb
 {
     /**
-     * Сохраниение лога по звонку.
-     *
-     * @param $data
-     */
-    public static function LogEvent($data): void
-    {
-        if (is_file('/tmp/debug')) {
-            file_put_contents('/tmp/dial_log', $data . "\n", FILE_APPEND);
-        }
-    }
-
-    /**
      * Возвращает путь к базе данных истории звонков.
-     *
-     * @param string $id
-     *
      * @return string
      */
-    public static function getPathToDB($id = ''): string
+    public static function getPathToDB(): string
     {
         $di = Di::getDefault();
-
-        if ($id == '' && $di !== null) {
-            $dbname = $di->getShared('config')->path('cdrDatabase.dbfile');
-        } else {
-            $id     = (int) str_replace('mikopbx-', '', $id);
-            $dbname = 'cdr/' . date("Y/m/d/H/", $id) . $id . ".db";
+        if ($di === null) {
+            return '';
         }
-
-        return $dbname;
+        return $di->getShared('config')->path('cdrDatabase.dbfile');
     }
 
     /**
