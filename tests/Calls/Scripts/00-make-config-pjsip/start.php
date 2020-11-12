@@ -58,4 +58,5 @@ if(count($idlePeers) !== $limitPeers){
 }else{
     TestCallsBase::printInfo('Endpoints connected successfully');
 }
-TestCallsBase::printInfo('End test ');
+sleep(5);
+TestCallsBase::printInfo("End test \n");

@@ -59,7 +59,7 @@ class WorkerModelsEvents extends WorkerBase
     private const R_QUEUES = 'reloadQueues';
 
     private const R_DIALPLAN = 'reloadDialplan';
-    
+
     private const R_CUSTOM_F = 'updateCustomFiles';
 
     private const R_FIREWALL = 'reloadFirewall';
@@ -100,11 +100,10 @@ class WorkerModelsEvents extends WorkerBase
 
     private int $last_change;
     private array $modified_tables;
-    
+
     private int $timeout = 2;
     private array $arrObject;
     private array $PRIORITY_R;
-    protected int $maxProc=1;
 
 
     /**
@@ -190,7 +189,7 @@ class WorkerModelsEvents extends WorkerBase
         foreach ($additionalModules as $appClass) {
             // Проверим, зависит ли объект от измененных данных.
             $dependences = $appClass->dependenceModels();
-            if (in_array($called_class, $dependences)){
+            if (in_array($called_class, $dependences, true)){
                 // Получаем новые настройки.
                 $appClass->getSettings();
             }
@@ -207,29 +206,27 @@ class WorkerModelsEvents extends WorkerBase
                 $this->modified_tables[self::R_QUEUES]   = true;
                 $this->modified_tables[self::R_DIALPLAN] = true;
                 break;
+            case ExternalPhones::class:
+            case Extensions::class:
+            case DialplanApplications::class:
+            case IncomingRoutingTable::class:
+            case IvrMenu::class:
+            case IvrMenuActions::class:
+            case OutgoingRoutingTable::class:
+            case OutWorkTimes::class:
             case ConferenceRooms::class:
                 $this->modified_tables[self::R_DIALPLAN] = true;
                 break;
             case CustomFiles::class:
                 $this->modified_tables[self::R_CUSTOM_F] = true;
                 break;
-            case DialplanApplications::class:
-                $this->modified_tables[self::R_DIALPLAN] = true;
-                break;
+            case Sip::class:
             case ExtensionForwardingRights::class:
                 $this->modified_tables[self::R_SIP]      = true;
                 $this->modified_tables[self::R_DIALPLAN] = true;
                 break;
-            case Extensions::class:
-                $this->modified_tables[self::R_DIALPLAN] = true;
-                break;
-            case ExternalPhones::class:
-                $this->modified_tables[self::R_DIALPLAN] = true;
-                break;
-            case Fail2BanRules::class:
-                $this->modified_tables[self::R_FIREWALL] = true;
-                break;
             case FirewallRules::class:
+            case Fail2BanRules::class:
                 $this->modified_tables[self::R_FIREWALL] = true;
                 break;
             case Iax::class:
@@ -240,17 +237,8 @@ class WorkerModelsEvents extends WorkerBase
                 $this->modified_tables[self::R_IAX] = true;
                 $this->modified_tables[self::R_SIP]     = true;
                 break;
-            case IncomingRoutingTable::class:
-                $this->modified_tables[self::R_DIALPLAN] = true;
-                break;
-            case IvrMenu::class:
-                $this->modified_tables[self::R_DIALPLAN] = true;
-                break;
             case SoundFiles::class:
                 $this->modified_tables[self::R_MOH] = true;
-                $this->modified_tables[self::R_DIALPLAN] = true;
-                break;
-            case IvrMenuActions::class:
                 $this->modified_tables[self::R_DIALPLAN] = true;
                 break;
             case LanInterfaces::class:
@@ -262,12 +250,6 @@ class WorkerModelsEvents extends WorkerBase
                 $this->modified_tables[self::R_FIREWALL] = true;
                 $this->modified_tables[self::R_SIP]      = true;
                 $this->modified_tables[self::R_MANAGERS] = true;
-                break;
-            case OutgoingRoutingTable::class:
-                $this->modified_tables[self::R_DIALPLAN] = true;
-                break;
-            case OutWorkTimes::class:
-                $this->modified_tables[self::R_DIALPLAN] = true;
                 break;
             case PbxSettings::class:
                 $pbxSettings = PbxSettings::findFirstByKey($data['recordId']);
@@ -322,12 +304,9 @@ class WorkerModelsEvents extends WorkerBase
                     $this->modified_tables[self::R_NTP]    = true;
                 }
                 if ($pbxSettings->itHasCallRecordSettings()) {
-                    $this->modified_tables[ self::R_CALL_EVENTS_WORKER]  = true;
+                    $this->modified_tables[self::R_CALL_EVENTS_WORKER]  = true;
+                    $this->modified_tables[self::R_DIALPLAN]  = true;
                 }
-                break;
-            case Sip::class:
-                $this->modified_tables[self::R_SIP]      = true;
-                $this->modified_tables[self::R_DIALPLAN] = true;
                 break;
             case PbxExtensionModules::class:
                 $this->modified_tables[self::R_CONF_MODULES] = true;
@@ -384,7 +363,7 @@ class WorkerModelsEvents extends WorkerBase
         $natsConf->reStart();
     }
 
-    
+
     /**
      * Reloads Asterisk dialplan
      */
@@ -553,7 +532,7 @@ class WorkerModelsEvents extends WorkerBase
     /**
      * Timeout handles
      */
-    public function timeoutHandler()
+    public function timeoutHandler():void
     {
         $this->last_change = time() - $this->timeout;
         $this->startReload();
