@@ -10,7 +10,7 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\{Codecs,
     ExtensionForwardingRights,
-    Extensions as ExtensionsModel,
+    Extensions,
     NetworkFilters,
     OutgoingRoutingTable,
     PbxSettings,
@@ -477,7 +477,7 @@ class SIPConf extends ConfigClass
             $arr_data['codecs'] = $this->getCodecs();
 
             // Имя сотрудника.
-            $extension = ExtensionsModel::findFirst("number = '{$sip_peer->extension}'");
+            $extension = Extensions::findFirst("number = '{$sip_peer->extension}'");
             if (null === $extension) {
                 $arr_data['publicaccess'] = false;
                 $arr_data['language']     = '';

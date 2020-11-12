@@ -10,7 +10,7 @@ namespace MikoPBX\Core\Workers;
 
 require_once 'Globals.php';
 
-use MikoPBX\Common\Models\{CallDetailRecordsTmp, Users};
+use MikoPBX\Common\Models\{CallDetailRecordsTmp, Extensions, Users};
 use MikoPBX\Core\System\{BeanstalkClient, Util};
 use Throwable;
 
@@ -62,22 +62,47 @@ class WorkerCdr extends WorkerBase
         }
     }
 
+    /**
+     * Fills settings
+     */
     private function initSettings()
     {
         $this->internal_numbers  = [];
         $this->no_answered_calls = [];
-        $users                   = Users::find();
-        foreach ($users as $user) {
-            if (empty($user->email)) {
+
+        $parameters = [
+            'models'     => [
+                'Users' => Users::class,
+            ],
+            'columns'=>[
+                'email'=>'Users.email',
+                'language'=>'Users.language',
+                'number'=>'Extensions.number'
+            ],
+            'joins'      => [
+                'Extensions' => [
+                    0 => Extensions::class,
+                    1 => 'Extensions.userid=Users.id',
+                    2 => 'Extensions',
+                    3 => 'INNER',
+                ],
+            ],
+            'cache' => [
+                'key'=>'Users-WorkerCdr',
+                'lifetime' => 3600,
+            ]
+        ];
+
+        $query   = $this->di->get('modelsManager')->createBuilder($parameters)->getQuery();
+        $results = $query->execute();
+        foreach ($results as $record) {
+            if (empty($record->email)) {
                 continue;
             }
-
-            foreach ($user->Extensions as $exten) {
-                $this->internal_numbers[$exten->number] = [
-                    'email'    => $user->email,
-                    'language' => $user->language,
-                ];
-            }
+            $this->internal_numbers[$record->number] = [
+                'email'    => $record->email,
+                'language' => $record->language,
+            ];
         }
     }
 
