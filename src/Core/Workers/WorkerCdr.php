@@ -276,7 +276,9 @@ class WorkerCdr extends WorkerBase
             if (file_exists($row['recordingfile']) && !is_dir($row['recordingfile'])) {
                 Util::mwExec("rm -rf {$row['recordingfile']}");
             }
-        } elseif (!empty($row['recordingfile']) && !file_exists(Util::trimExtensionForFile($row['recordingfile']) . 'wav') && !file_exists($row['recordingfile'])) {
+        } elseif (!empty($row['recordingfile']) &&
+            !file_exists(Util::trimExtensionForFile($row['recordingfile']) . '.wav') &&
+            !file_exists($row['recordingfile'])) {
             /** @var CallDetailRecordsTmp $rec_data */
             $rec_data = CallDetailRecordsTmp::findFirst("linkedid='{$row['linkedid']}' AND dst_chan='{$row['dst_chan']}'");
             if ($rec_data !== null) {
