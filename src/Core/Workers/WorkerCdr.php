@@ -70,19 +70,17 @@ class WorkerCdr extends WorkerBase
         $this->internal_numbers  = [];
         $this->no_answered_calls = [];
 
+        $usersClass = Users::class;
         $parameters = [
-            'models'     => [
-                'Users' => Users::class,
-            ],
             'columns'=>[
-                'email'=>'Users.email',
-                'language'=>'Users.language',
+                'email'=>'email',
+                'language'=>'language',
                 'number'=>'Extensions.number'
             ],
             'joins'      => [
                 'Extensions' => [
                     0 => Extensions::class,
-                    1 => 'Extensions.userid=Users.id',
+                    1 => "Extensions.userid={$usersClass}.id",
                     2 => 'Extensions',
                     3 => 'INNER',
                 ],
@@ -93,8 +91,7 @@ class WorkerCdr extends WorkerBase
             ]
         ];
 
-        $query   = $this->di->get('modelsManager')->createBuilder($parameters)->getQuery();
-        $results = $query->execute();
+        $results   = Users::find($parameters);
         foreach ($results as $record) {
             if (empty($record->email)) {
                 continue;
