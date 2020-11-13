@@ -37,8 +37,8 @@ class BeanstalkClient extends Injectable
      */
     public function __construct($tube = 'default', $port = '')
     {
-        $this->tube        = str_replace("\\", '-', $tube);
-        $this->port        = $port;
+        $this->tube = str_replace("\\", '-', $tube);
+        $this->port = $port;
         $this->reconnect();
     }
 
@@ -102,8 +102,8 @@ class BeanstalkClient extends Injectable
                 $this->message = $job->getData();
                 $this->queue->delete($job);
             }
-        } catch (Throwable $exception){
-            Util::sysLogMsg(__METHOD__, 'Exception: '.$exception->getMessage());
+        } catch (Throwable $exception) {
+            Util::sysLogMsg(__METHOD__, 'Exception: ' . $exception->getMessage());
             if ($job !== null) {
                 $this->queue->bury($job);
             }
@@ -167,20 +167,22 @@ class BeanstalkClient extends Injectable
                 // Delete outdated jobs
                 while ($job = $this->queue->peekReady()) {
                     $jobStats = $this->queue->statsJob($job);
-                    if (! $jobStats instanceof ResponseInterface){
+                    if (
+                        ! property_exists($jobStats, 'age')
+                        || ! property_exists($jobStats, 'ttr')
+                    ) {
                         continue;
                     }
-                    $age = (int)($jobStats->age);
-                    $expectedTimeToExecute = ((int)($jobStats->ttr))*2;
-                    if ($age>$expectedTimeToExecute){
+                    $age                   = (int)($jobStats->age);
+                    $expectedTimeToExecute = ((int)($jobStats->ttr)) * 2;
+                    if ($age > $expectedTimeToExecute) {
                         $id = $job->getId();
                         $this->queue->delete($job);
                         Util::sysLogMsg(__METHOD__, "Deleted outdated job with ID {$id} from {$tube}");
                     }
                 }
-
-            } catch (Throwable $exception){
-                Util::sysLogMsg(__METHOD__, 'Exception: '.$exception->getMessage());
+            } catch (Throwable $exception) {
+                Util::sysLogMsg(__METHOD__, 'Exception: ' . $exception->getMessage());
             }
         }
     }
@@ -209,11 +211,11 @@ class BeanstalkClient extends Injectable
     {
         $this->message = null;
         $start         = microtime(true);
-        $job = null;
+        $job           = null;
         try {
-            $job  = $this->queue->reserveWithTimeout($timeout);
-        } catch (Throwable $exception){
-            Util::sysLogMsg(__METHOD__, 'Exception: '.$exception->getMessage());
+            $job = $this->queue->reserveWithTimeout($timeout);
+        } catch (Throwable $exception) {
+            Util::sysLogMsg(__METHOD__, 'Exception: ' . $exception->getMessage());
         }
 
         if ($job === null) {
@@ -241,7 +243,7 @@ class BeanstalkClient extends Injectable
         $requestFormTube = $stats['tube'];
         $func            = $this->subscriptions[$requestFormTube] ?? null;
 
-        if ($func===null){
+        if ($func === null) {
             // Action not found
             $this->queue->bury($job);
         } else {
@@ -258,7 +260,6 @@ class BeanstalkClient extends Injectable
                 $this->queue->bury($job);
             }
         }
-
     }
 
     /**
@@ -317,5 +318,31 @@ class BeanstalkClient extends Injectable
     public function reconnectsCount(): int
     {
         return $this->reconnectsCount;
+    }
+
+    /**
+     * Gets all messages from tube and clean it
+     *
+     * @param string $tube
+     *
+     * @return array
+     */
+    public function getMessagesFromTube(string $tube = ''): array
+    {
+        if ($tube !== '') {
+            $this->queue->useTube($tube);
+        }
+        $arrayOfMessages = [];
+        while ($job = $this->queue->peekReady()) {
+            if (json_decode($job->getData(), true) !== null) {
+                $mData = $job->getData();
+            } else {
+                $mData = unserialize($job->getData(), [false]);
+            }
+            $arrayOfMessages[] = $mData;
+            $this->queue->delete($job);
+        }
+
+        return $arrayOfMessages;
     }
 }

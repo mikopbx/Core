@@ -12,7 +12,10 @@ declare(strict_types=1);
 namespace MikoPBX\AdminCabinet\Providers;
 
 
-use MikoPBX\AdminCabinet\{Plugins\NormalizeControllerNamePlugin, Plugins\NotFoundPlugin, Plugins\SecurityPlugin};
+use MikoPBX\AdminCabinet\{Plugins\CacheCleanerPlugin,
+    Plugins\NormalizeControllerNamePlugin,
+    Plugins\NotFoundPlugin,
+    Plugins\SecurityPlugin};
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 use Phalcon\Events\Manager as EventsManager;
@@ -37,6 +40,12 @@ class DispatcherProvider implements ServiceProviderInterface
             self::SERVICE_NAME,
             function () {
                 $eventsManager = new EventsManager();
+
+
+                /**
+                 * FrontEnd cache cleaner plugin
+                 */
+                $eventsManager->attach('dispatch:beforeDispatch', new CacheCleanerPlugin());
 
                 /**
                  * Camelize Controller name

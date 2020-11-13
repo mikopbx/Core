@@ -8,6 +8,8 @@
 
 namespace MikoPBX\Common\Models;
 
+use MikoPBX\AdminCabinet\Plugins\CacheCleanerPlugin;
+use MikoPBX\Core\System\BeanstalkClient;
 use MikoPBX\Modules\PbxExtensionUtils;
 use Phalcon\Db\Adapter\AdapterInterface;
 use Phalcon\Di;
@@ -20,6 +22,7 @@ use Phalcon\Mvc\Model\Resultset\Simple;
 use Phalcon\Mvc\Model\ResultsetInterface;
 use Phalcon\Text;
 use Phalcon\Url;
+use Pheanstalk\Contract\PheanstalkInterface;
 
 /**
  * Class ModelsBase
@@ -769,44 +772,58 @@ abstract class ModelsBase extends Model
      */
     private function processSettingsChanges(string $action): void
     {
-        if (php_sapi_name() !== 'cli') {
-            if ( ! $this->hasSnapshotData()) {
-                return;
-            } // nothing changed
-
-            $changedFields = $this->getUpdatedFields();
-            if (empty($changedFields) && $action === 'afterSave') {
-                return;
-            }
-
-            // Add changed fields set to benstalk queue
-            $queue = $this->di->getShared('beanstalkConnection');
-
-            if ($this instanceof PbxSettings) {
-                $idProperty = 'key';
-            } else {
-                $idProperty = 'id';
-            }
-            $id      = $this->$idProperty;
-            $jobData = json_encode(
-                [
-                    'model'         => get_class($this),
-                    'recordId'      => $id,
-                    'action'        => $action,
-                    'changedFields' => $changedFields,
-                ]
-            );
-            $queue->publish($jobData);
+        if (php_sapi_name() === 'cli') {
+            return;
         }
+        if ( ! $this->hasSnapshotData()) {
+            return;
+        } // nothing changed
+
+        $changedFields = $this->getUpdatedFields();
+        if (empty($changedFields) && $action === 'afterSave') {
+            return;
+        }
+
+        $this->sendChangesToBackend($action, $changedFields);
+    }
+
+    /**
+     * Sends changed fileds and class to WorkerModelsEvents
+     *
+     * @param $action
+     * @param $changedFields
+     */
+    private function sendChangesToBackend($action, $changedFields): void
+    {
+        // Add changed fields set to Beanstalkd queue
+        $queue = $this->di->getShared('beanstalkConnection');
+
+        if ($this instanceof PbxSettings) {
+            $idProperty = 'key';
+        } else {
+            $idProperty = 'id';
+        }
+        $id      = $this->$idProperty;
+        $jobData = json_encode(
+            [
+                'model'         => get_class($this),
+                'recordId'      => $id,
+                'action'        => $action,
+                'changedFields' => $changedFields,
+            ]
+        );
+        $queue->publish($jobData);
     }
 
     /**
      * Invalidates cached records contains model name in cache key value
      *
-     * @param $calledClass string full model class name
+     * @param      $calledClass string full model class name
+     * @param bool $needClearFrontedCache
      */
-    public static function clearCache(string $calledClass): void
+    public static function clearCache(string $calledClass, bool $needClearFrontedCache = true): void
     {
+        //TODO::Доделать очистку кеша для ACPU. Прямая команда возарвщает истину, а методу удаления здесь возвращает ложь
         $di = Di::getDefault();
         if ($di === null) {
             return;
@@ -815,17 +832,30 @@ abstract class ModelsBase extends Model
             $managedCache = $di->getShared('managedCache');
             $category     = explode('\\', $calledClass)[3];
             $keys         = $managedCache->getAdapter()->getKeys($category);
-            if (count($keys) > 0) {
-                $managedCache->deleteMultiple($keys);
+            // Delete all items from the cache
+            foreach ($keys as $key) {
+                $managedCache->delete($key);
             }
         }
         if ($di->has('modelsCache')) {
             $modelsCache = $di->getShared('modelsCache');
             $category    = explode('\\', $calledClass)[3];
             $keys        = $modelsCache->getAdapter()->getKeys($category);
-            if (count($keys) > 0) {
-                $modelsCache->deleteMultiple($keys);
+            // Delete all items from the cache
+            foreach ($keys as $key) {
+                $modelsCache->delete($key);
             }
+        }
+        if ($needClearFrontedCache
+            && php_sapi_name() === 'cli') {
+            $client = new BeanstalkClient();
+            $client->publish(
+                $calledClass,
+                CacheCleanerPlugin::class,
+                PheanstalkInterface::DEFAULT_PRIORITY,
+                PheanstalkInterface::DEFAULT_DELAY,
+                3600
+            );
         }
     }
 

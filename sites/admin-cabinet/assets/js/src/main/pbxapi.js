@@ -1067,7 +1067,7 @@ const PbxApi = {
 				callback(response.data);
 			},
 			onFailure(response) {
-				callback(response.data);
+				callback(response);
 			},
 			onError() {
 				callback(false);

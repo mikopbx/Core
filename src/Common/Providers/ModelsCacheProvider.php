@@ -20,10 +20,10 @@ namespace MikoPBX\Common\Providers;
 
 
 use Phalcon\Cache;
-use Phalcon\Cache\Adapter\Stream;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 use Phalcon\Storage\SerializerFactory;
+use Phalcon\Cache\AdapterFactory;
 
 /**
  * Main database connection is created based in the parameters defined in the configuration file
@@ -40,22 +40,24 @@ class ModelsCacheProvider implements ServiceProviderInterface
     public function register(DiInterface $di): void
     {
         if (posix_getuid() === 0) {
-            $tempDir = $di->getShared('config')->path('core.modelsCacheDir');
+            $prefix = 'Back-models-';
         } else {
-            $tempDir = $di->getShared('config')->path('www.modelsCacheDir');
+            $prefix = 'Front-models-';
         }
-
         $di->setShared(
             self::SERVICE_NAME,
-            function () use ($tempDir){
+            function () use ($prefix){
                 $serializerFactory = new SerializerFactory();
+                $adapterFactory    = new AdapterFactory($serializerFactory);
+
                 $options = [
                     'defaultSerializer' => 'php',
                     'lifetime'          => 7200,
-                    'storageDir' => $tempDir
+                    'prefix'            => $prefix,
                 ];
 
-                $adapter = new Stream ($serializerFactory, $options);
+                $adapter = $adapterFactory->newInstance('apcu', $options);
+
                 return new Cache($adapter);
             }
         );

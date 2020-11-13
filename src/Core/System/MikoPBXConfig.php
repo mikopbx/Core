@@ -65,7 +65,7 @@ class MikoPBXConfig extends Injectable
     public function getGeneralSettings($db_key = '')
     {
         if ($db_key === '') {
-            $cacheKey     = 'PbxSettings.getGeneralSettings';
+            $cacheKey     = 'PbxSettings-getGeneralSettings';
             $managedCache = $this->di->getShared('managedCache');
             $settings     = $managedCache->get($cacheKey);
             if ($settings !== null && is_array($settings)) {

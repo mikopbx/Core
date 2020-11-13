@@ -181,7 +181,7 @@ class WorkerModelsEvents extends WorkerBase
         $called_class = $data['model'] ?? '';
 
         // Clear all caches on any changed models
-        PbxSettings::clearCache($called_class);
+        PbxSettings::clearCache($called_class, false);
 
         // Обновление настроек в объектах, в оперативной памяти.
         $additionalModules = $this->di->getShared('pbxConfModules');
