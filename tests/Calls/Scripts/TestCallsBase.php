@@ -15,6 +15,8 @@ use MikoPBX\Core\System\Util;
 require_once 'Globals.php';
 
 class TestCallsBase {
+    public const ACtION_ORIGINATE = 'Originate';
+    public const ACtION_WAIT = 'Wait';
 
     private string $aNum;
     private string $bNum;
@@ -38,7 +40,6 @@ class TestCallsBase {
         $this->cNum = $db_data[2];
 
         $this->am = new AsteriskManager();
-        $this->am->connect('127.0.0.1:5039');
         $this->nonStrictComparison = ['duration', 'billsec', 'fileDuration'];
     }
 
@@ -108,13 +109,22 @@ class TestCallsBase {
 
     /**
      * Совершает звонок и ждет его завершения.
-     * @return array
      */
-    public function originateWait():array{
-        self::printInfo('Start originate... ');
+    public function originateWait():void{
+        $this->actionOriginate($this->aNum, $this->bNum);
+        self::printInfo('Wait end call... ');
+        while (count($this->am->GetChannels(false))>0){
+            sleep(1);
+        }
+        sleep(5);
+    }
+
+    private function actionOriginate(string $src, string $dst):void{
+        $this->am->connect('127.0.0.1:5039');
+        self::printInfo("Start originate... $src to $dst");
         $result = $this->am->Originate(
-            'Local/'.$this->aNum.'@orgn-wait',
-            $this->bNum,
+            'Local/'.$src.'@orgn-wait',
+            $dst,
             'out-to-exten',
             '1',
             null,
@@ -125,24 +135,16 @@ class TestCallsBase {
             null,
             '0');
         self::printInfo('Result originate: '.$result['Response']??'none');
-
-        self::printInfo('Wait end call... ');
-        while (count($this->am->GetChannels(false))>0){
-            sleep(1);
-        }
-        // Util::mwExec('pbx-console service WorkerCdr stop');
-        // Util::mwExec('pbx-console services start-all');
-
-        sleep(5);
-        return $result;
+        // $this->am->disconnect();
     }
 
     /**
      * Старт работы теста.
      * @param string $testName
      * @param array  $sampleCDR
+     * @param ?array  $rules
      */
-    public function runTest(string $testName, array $sampleCDR): void{
+    public function runTest(string $testName, array $sampleCDR, ?array $rules=null): void{
 
         self::printHeader('Start test '. $testName .' ...');
         $this->testDirName = $testName;
@@ -152,13 +154,58 @@ class TestCallsBase {
         $this->cleanCdr();
 
         $this->initSampleCdr();
-        $this->originateWait();
+        if(count($rules) === 0 ){
+            $this->originateWait();
+        }else{
+            $this->invokeRules($rules);
+        }
 
         $this->checkCdr();
         $this->sampleCDR            = [];
         $this->nonStrictComparison  = [];
 
         self::printInfo("End test\n");
+    }
+
+    /**
+     * @param $rules
+     */
+    private function invokeRules($rules):void{
+        foreach ($rules as $rule){
+            [$action] = $rule;
+            $method = "invoke{$action}";
+            if (method_exists($this, $method)){
+                $this->$method($rule);
+            }
+        }
+        // echo "--\n";
+        while (count($this->am->GetChannels(false))>0){
+            sleep(1);
+        }
+    }
+
+    private function invokeOriginate($rule):void{
+        [$action, $src, $dst] = $rule;
+        if($action !== self::ACtION_ORIGINATE){
+            return;
+        }
+        if(property_exists(self::class, $src)){
+            $src = $this->$src;
+        }
+        if(property_exists(self::class, $dst)){
+            $dst = $this->$dst;
+        }
+
+        $this->actionOriginate($src, $dst);
+    }
+
+    private function invokeWait($rule):void{
+        [$action, $time] = $rule;
+        if($action !== self::ACtION_WAIT && !is_numeric($time)){
+            return;
+        }
+        self::printInfo('Waiting : '.$time."s.");
+        sleep($time);
     }
 
     /**
@@ -180,6 +227,7 @@ class TestCallsBase {
      */
     protected function checkCdr(): void
     {
+        sleep(4);
         // Проверяем результат.
         $rows = CallDetailRecords::find()->toArray();
         if(count($rows) !== count($this->sampleCDR)){
@@ -189,7 +237,9 @@ class TestCallsBase {
         self::printInfo('Create CDR successfully');
         foreach ($rows as $index => $row){
             if(!file_exists($row['recordingfile'])){
-                self::printError("File not found '{$row['recordingfile']}'");
+                if($row['billsec'] > 0){
+                    self::printError("File not found '{$row['recordingfile']}'");
+                }
             }else{
                 Util::mwExec("soxi {$row['recordingfile']} | grep Duration | awk '{print $3}' | awk -F '.'  '{print $1}'", $out);
                 $timeData = explode(':', implode($out));
@@ -212,10 +262,6 @@ class TestCallsBase {
                 }elseif($row[$key] !== $data){
                     self::printError("Index row '{$index}', key '{$key}' {$row[$key]} !== {$data}");
                 }
-            }
-
-            if(!file_exists($row['recordingfile'])){
-                self::printError("File not found '{$row['recordingfile']}'");
             }
         }
     }
