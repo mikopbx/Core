@@ -823,7 +823,6 @@ abstract class ModelsBase extends Model
      */
     public static function clearCache(string $calledClass, bool $needClearFrontedCache = true): void
     {
-        //TODO::Доделать очистку кеша для ACPU. Прямая команда возарвщает истину, а методу удаления здесь возвращает ложь
         $di = Di::getDefault();
         if ($di === null) {
             return;
