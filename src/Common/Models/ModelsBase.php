@@ -850,7 +850,9 @@ abstract class ModelsBase extends Model
             }
         }
         if ($needClearFrontedCache
-            && php_sapi_name() === 'cli') {
+            && php_sapi_name() === 'cli'
+            && $di->getShared('registry')->booting!==true
+        ) {
             $client = new BeanstalkClient();
             $client->publish(
                 $calledClass,

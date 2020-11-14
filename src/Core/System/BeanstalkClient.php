@@ -12,7 +12,6 @@ use Phalcon\Di\Injectable;
 use Pheanstalk\Contract\PheanstalkInterface;
 use Pheanstalk\Job;
 use Pheanstalk\Pheanstalk;
-use Pheanstalk\Contract\ResponseInterface;
 use Throwable;
 
 class BeanstalkClient extends Injectable
