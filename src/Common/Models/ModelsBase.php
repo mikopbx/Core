@@ -853,14 +853,14 @@ abstract class ModelsBase extends Model
             && php_sapi_name() === 'cli'
             && $di->getShared('registry')->booting!==true
         ) {
-            $client = new BeanstalkClient();
-            $client->publish(
-                $calledClass,
-                CacheCleanerPlugin::class,
-                PheanstalkInterface::DEFAULT_PRIORITY,
-                PheanstalkInterface::DEFAULT_DELAY,
-                3600
-            );
+            // $client = new BeanstalkClient();
+            // $client->publish(
+            //     $calledClass,
+            //     CacheCleanerPlugin::class,
+            //     PheanstalkInterface::DEFAULT_PRIORITY,
+            //     PheanstalkInterface::DEFAULT_DELAY,
+            //     3600
+            // );
         }
     }
 
