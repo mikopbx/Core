@@ -9,7 +9,6 @@
 
 namespace MikoPBX\AdminCabinet\Plugins;
 
-use MikoPBX\Core\System\BeanstalkClient;
 use Phalcon\Di\Injectable;
 
 /**
@@ -26,11 +25,13 @@ class CacheCleanerPlugin extends Injectable
      */
     public function beforeDispatch(): bool
     {
-        $client = new BeanstalkClient(self::class);
-        $arrayOfClearedModels = $client->getMessagesFromTube();
-        foreach ($arrayOfClearedModels as $clearedModel){
-            if (class_exists($clearedModel)){
-                call_user_func([$clearedModel, 'clearCache'], $clearedModel);
+        $queue = $this->getDI()->getShared('beanstalkConnectionCache');
+        if ($queue !== null) {
+            $arrayOfClearedModels = $queue->getMessagesFromTube();
+            foreach ($arrayOfClearedModels as $clearedModel) {
+                if (class_exists($clearedModel)) {
+                    call_user_func([$clearedModel, 'clearCache'], $clearedModel);
+                }
             }
         }
         return true;

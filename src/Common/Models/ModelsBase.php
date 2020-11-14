@@ -788,7 +788,7 @@ abstract class ModelsBase extends Model
     }
 
     /**
-     * Sends changed fileds and class to WorkerModelsEvents
+     * Sends changed fields and class to WorkerModelsEvents
      *
      * @param $action
      * @param $changedFields
@@ -796,8 +796,10 @@ abstract class ModelsBase extends Model
     private function sendChangesToBackend($action, $changedFields): void
     {
         // Add changed fields set to Beanstalkd queue
-        $queue = $this->di->getShared('beanstalkConnection');
-
+        $queue = $this->di->getShared('beanstalkConnectionModels');
+        if ($queue===null){
+            return;
+        }
         if ($this instanceof PbxSettings) {
             $idProperty = 'key';
         } else {
@@ -831,7 +833,7 @@ abstract class ModelsBase extends Model
             $managedCache = $di->getShared('managedCache');
             $category     = explode('\\', $calledClass)[3];
             $keys         = $managedCache->getAdapter()->getKeys($category);
-            $prefix = $managedCache->getAdapter()->getPrefix();
+            $prefix       = $managedCache->getAdapter()->getPrefix();
             // Delete all items from the cache
             foreach ($keys as $key) {
                 $unPrefixedKey = str_ireplace($prefix, '', $key);
@@ -842,7 +844,7 @@ abstract class ModelsBase extends Model
             $modelsCache = $di->getShared('modelsCache');
             $category    = explode('\\', $calledClass)[3];
             $keys        = $modelsCache->getAdapter()->getKeys($category);
-            $prefix = $modelsCache->getAdapter()->getPrefix();
+            $prefix      = $modelsCache->getAdapter()->getPrefix();
             // Delete all items from the cache
             foreach ($keys as $key) {
                 $unPrefixedKey = str_ireplace($prefix, '', $key);
@@ -850,17 +852,17 @@ abstract class ModelsBase extends Model
             }
         }
         if ($needClearFrontedCache
-            && php_sapi_name() === 'cli'
-            && $di->getShared('registry')->booting!==true
-        ) {
-            // $client = new BeanstalkClient();
-            // $client->publish(
-            //     $calledClass,
-            //     CacheCleanerPlugin::class,
-            //     PheanstalkInterface::DEFAULT_PRIORITY,
-            //     PheanstalkInterface::DEFAULT_DELAY,
-            //     3600
-            // );
+            && php_sapi_name() === 'cli') {
+            $queue = $di->getShared('beanstalkConnectionCache');
+            if ($queue!==null) {
+                $queue->publish(
+                    $calledClass,
+                    CacheCleanerPlugin::class,
+                    PheanstalkInterface::DEFAULT_PRIORITY,
+                    PheanstalkInterface::DEFAULT_DELAY,
+                    3600
+                );
+            }
         }
     }
 
