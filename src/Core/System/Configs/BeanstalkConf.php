@@ -32,5 +32,14 @@ class BeanstalkConf extends Injectable
             Util::killByName('beanstalkd');
             Util::mwExecBg("{$beanstalkdPath} {$conf}");
         }
+        while (true) {
+            $pid = Util::getPidOfProcess('beanstalkd');
+            if (empty($pid)) {
+                Util::echoWithSyslog(' - Wait for start beanstalkd deamon ...' . PHP_EOL);
+                sleep(2);
+            } else {
+                break;
+            }
+        }
     }
 }
