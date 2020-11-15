@@ -853,18 +853,15 @@ abstract class ModelsBase extends Model
         }
         if ($needClearFrontedCache
             && php_sapi_name() === 'cli'
-            && $di->getShared('registry')->booting !== true
         ) {
             $queue = $di->getShared('beanstalkConnectionCache');
-            if ($queue!==null) {
-                $queue->publish(
+            $queue->publish(
                     $calledClass,
                     CacheCleanerPlugin::class,
                     PheanstalkInterface::DEFAULT_PRIORITY,
                     PheanstalkInterface::DEFAULT_DELAY,
                     3600
                 );
-            }
         }
     }
 

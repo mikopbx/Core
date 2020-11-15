@@ -14,6 +14,7 @@ namespace MikoPBX\Common\Providers;
 
 use MikoPBX\AdminCabinet\Plugins\CacheCleanerPlugin;
 use MikoPBX\Core\System\BeanstalkClient;
+use MikoPBX\Core\System\Util;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 
@@ -23,6 +24,7 @@ use Phalcon\Di\ServiceProviderInterface;
 class BeanstalkConnectionCacheProvider implements ServiceProviderInterface
 {
     public const SERVICE_NAME = 'beanstalkConnectionCache';
+
     /**
      * Register beanstalkConnectionCache service provider
      *
@@ -33,7 +35,17 @@ class BeanstalkConnectionCacheProvider implements ServiceProviderInterface
         $di->setShared(
             self::SERVICE_NAME,
             function () {
-                return new BeanstalkClient(CacheCleanerPlugin::class);
+                while (true) {
+                    $pid = Util::getPidOfProcess('beanstalkd');
+                    if (empty($pid)) {
+                        Util::echoWithSyslog(' - Wait for start beanstalkd deamon ...' . PHP_EOL);
+                        sleep(2);
+                    } else {
+                        $queue = new BeanstalkClient(CacheCleanerPlugin::class);
+                        break;
+                    }
+                }
+                return $queue;
             }
         );
     }

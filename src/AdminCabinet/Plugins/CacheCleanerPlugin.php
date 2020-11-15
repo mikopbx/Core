@@ -26,14 +26,14 @@ class CacheCleanerPlugin extends Injectable
     public function beforeDispatch(): bool
     {
         $queue = $this->getDI()->getShared('beanstalkConnectionCache');
-        if ($queue !== null) {
-            $arrayOfClearedModels = $queue->getMessagesFromTube();
-            foreach ($arrayOfClearedModels as $clearedModel) {
-                if (class_exists($clearedModel)) {
-                    call_user_func([$clearedModel, 'clearCache'], $clearedModel);
-                }
+
+        $arrayOfClearedModels = $queue->getMessagesFromTube();
+        foreach ($arrayOfClearedModels as $clearedModel) {
+            if (class_exists($clearedModel)) {
+                call_user_func([$clearedModel, 'clearCache'], $clearedModel);
             }
         }
+
         return true;
     }
 }
