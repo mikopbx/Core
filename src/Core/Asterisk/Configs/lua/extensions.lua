@@ -239,7 +239,15 @@ function event_dial_answer()
 
     local id     = get_variable("pt1c_UNIQUEID");
     local monDir = get_variable("MONITOR_DIR");
-    if(monDir ~= '' and string.lower(data['agi_channel']):find("local/") == nil )then
+
+    -- Проверка на Originate
+    local isOriginatePt1c = get_variable("pt1c_is_dst");
+    local fromPeer        = get_variable("FROM_PEER");
+    -- Обычно pt1c_is_dst=1 fromPeer не назначен для начального канала
+    -- Запись следует включать на канале назначения.
+    local isSrcChan = (isOriginatePt1c ~= '1' or fromPeer~='');
+
+    if(monDir ~= '' and string.lower(data['agi_channel']):find("local/") == nil and isSrcChan) then
         -- Активируем запись разговора.
         -- Только для реальных каналов.
         local mixFileName = ''..monDir..'/'.. os.date("%Y/%m/%d/%H")..'/'..id;
