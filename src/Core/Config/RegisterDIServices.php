@@ -20,6 +20,7 @@ namespace MikoPBX\Core\Config;
 use MikoPBX\Common\Providers\{AmiConnectionCommand,
     AmiConnectionListener,
     BeanstalkConnectionCacheProvider,
+    BeanstalkConnectionModelsProvider,
     CDRDatabaseProvider,
     LicenseProvider,
     MainDatabaseProvider,
@@ -70,6 +71,7 @@ class RegisterDIServices
             // Inject Queue connection
             NatsConnectionProvider::class,
             BeanstalkConnectionCacheProvider::class,
+            BeanstalkConnectionModelsProvider::class,
 
             // AMI Connectors
             AmiConnectionCommand::class,
