@@ -16,6 +16,7 @@ require_once 'Globals.php';
 
 class TestCallsBase {
     public const ACtION_ORIGINATE = 'Originate';
+    public const ACtION_GENERAL_ORIGINATE = 'GeneralOriginate';
     public const ACtION_WAIT = 'Wait';
 
     private string $aNum;
@@ -40,6 +41,7 @@ class TestCallsBase {
         $this->cNum = $db_data[2];
 
         $this->am = new AsteriskManager();
+        $this->am->connect('127.0.0.1:5039');
         $this->nonStrictComparison = ['duration', 'billsec', 'fileDuration'];
     }
 
@@ -119,8 +121,12 @@ class TestCallsBase {
         sleep(5);
     }
 
+    /**
+     * Originate на тестовой станции.
+     * @param string $src
+     * @param string $dst
+     */
     private function actionOriginate(string $src, string $dst):void{
-        $this->am->connect('127.0.0.1:5039');
         self::printInfo("Start originate... $src to $dst");
         $result = $this->am->Originate(
             'Local/'.$src.'@orgn-wait',
@@ -197,6 +203,28 @@ class TestCallsBase {
         }
 
         $this->actionOriginate($src, $dst);
+    }
+
+    /**
+     * Originate на основной (тестируемой) АТС.
+     * @param array $rule
+     * @throws \Exception
+     */
+    private function invokeGeneralOriginate(array $rule):void{
+        [$action, $src, $dst] = $rule;
+        if($action !== self::ACtION_GENERAL_ORIGINATE){
+            return;
+        }
+        if(property_exists(self::class, $src)){
+            $src = $this->$src;
+        }
+        if(property_exists(self::class, $dst)){
+            $dst = $this->$dst;
+        }
+        self::printInfo("Start originate... $src to $dst");
+        $result = Util::amiOriginate($src, '', $dst);
+        sleep(3);
+        self::printInfo('Result originate: '.$result['Response']??'none');
     }
 
     private function invokeWait($rule):void{

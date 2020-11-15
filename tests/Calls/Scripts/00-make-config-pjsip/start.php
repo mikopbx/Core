@@ -40,6 +40,7 @@ file_put_contents("$dirName/asterisk/pjsip.conf", $config);
 TestCallsBase::printInfo("Reload res_pjsip...");
 $cmdAsterisk = Util::which('asterisk');
 Util::mwExec("{$cmdAsterisk} -C '$astConf' -rx 'module reload res_pjsip.so'");
+Util::mwExec("{$cmdAsterisk} -C '$astConf' -rx 'pjsip send register *all'");
 
 $duration = 120;
 $start = time();
