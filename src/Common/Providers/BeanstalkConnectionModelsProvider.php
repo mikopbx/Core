@@ -20,7 +20,6 @@ namespace MikoPBX\Common\Providers;
 
 
 use MikoPBX\Core\System\BeanstalkClient;
-use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Workers\WorkerModelsEvents;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
@@ -41,17 +40,7 @@ class BeanstalkConnectionModelsProvider implements ServiceProviderInterface
         $di->setShared(
             self::SERVICE_NAME,
             function () {
-                while (true) {
-                    $pid = Util::getPidOfProcess('beanstalkd');
-                    if (empty($pid)) {
-                        Util::echoWithSyslog(' - Wait for start beanstalkd deamon ...' . PHP_EOL);
-                        sleep(2);
-                    } else {
-                        $queue = new BeanstalkClient(WorkerModelsEvents::class);
-                        break;
-                    }
-                }
-                return $queue;
+                return new BeanstalkClient(WorkerModelsEvents::class);
             }
         );
     }

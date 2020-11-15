@@ -142,11 +142,10 @@ class WorkerModelsEvents extends WorkerBase
 
         $this->modified_tables = [];
 
-        $client = new BeanstalkClient();
+        $client = $this->di->getShared('beanstalkConnectionModels');
         $client->subscribe(self::class, [$this, 'processModelChanges']);
         $client->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
         $client->setTimeoutHandler([$this, 'timeoutHandler']);
-
 
         while (true) {
             $client->wait();
