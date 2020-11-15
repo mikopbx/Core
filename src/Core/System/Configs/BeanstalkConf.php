@@ -30,7 +30,7 @@ class BeanstalkConf extends Injectable
             Util::mwExec("{$systemCtrlPath} restart beanstalkd.service");
         } else {
             Util::killByName('beanstalkd');
-            Util::mwExec("{$beanstalkdPath} {$conf}");
+            Util::mwExecBg("{$beanstalkdPath} {$conf}");
         }
     }
 }
