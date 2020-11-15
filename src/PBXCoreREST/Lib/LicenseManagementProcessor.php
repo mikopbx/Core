@@ -108,6 +108,7 @@ class LicenseManagementProcessor extends Injectable
         if (strlen($data['licKey']) === 28
             && Text::startsWith($data['licKey'], 'MIKO-')
         ) {
+            PbxSettings::clearCache(PbxSettings::class, false);
             $oldLicKey = $mikoPBXConfig->getGeneralSettings('PBXLicense');
             if ($oldLicKey !== $data['licKey']) {
                 $licenseInfo = $this->license->getLicenseInfo($data['licKey']);

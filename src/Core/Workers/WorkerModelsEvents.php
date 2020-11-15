@@ -142,11 +142,10 @@ class WorkerModelsEvents extends WorkerBase
 
         $this->modified_tables = [];
 
-        $client = new BeanstalkClient();
+        $client = $this->di->getShared('beanstalkConnectionModels');
         $client->subscribe(self::class, [$this, 'processModelChanges']);
         $client->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
         $client->setTimeoutHandler([$this, 'timeoutHandler']);
-
 
         while (true) {
             $client->wait();
@@ -181,7 +180,7 @@ class WorkerModelsEvents extends WorkerBase
         $called_class = $data['model'] ?? '';
 
         // Clear all caches on any changed models
-        PbxSettings::clearCache($called_class);
+        PbxSettings::clearCache($called_class, false);
 
         // Обновление настроек в объектах, в оперативной памяти.
         $additionalModules = $this->di->getShared('pbxConfModules');

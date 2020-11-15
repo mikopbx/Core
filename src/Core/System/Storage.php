@@ -1100,8 +1100,6 @@ class Storage extends Di\Injectable
         $cacheDirs   = [];
         $cacheDirs[] = $this->config->path('www.uploadDir');
         $cacheDirs[] = $this->config->path('www.downloadCacheDir');
-        $cacheDirs[] = $this->config->path('www.managedCacheDir');
-        $cacheDirs[] = $this->config->path('www.modelsCacheDir');
         $cacheDirs[] = $this->config->path('adminApplication.assetsCacheDir') . '/js';
         $cacheDirs[] = $this->config->path('adminApplication.assetsCacheDir') . '/css';
         $cacheDirs[] = $this->config->path('adminApplication.assetsCacheDir') . '/img';
