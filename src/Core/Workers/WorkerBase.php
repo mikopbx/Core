@@ -34,34 +34,33 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
      */
     private function checkCountProcesses(): void
     {
-        $activeProcesses = Util::getPidOfProcess(static::class, getmypid());
-        if ($this->maxProc === 1) {
-            if ( ! empty($activeProcesses)) {
-                $killApp = Util::which('kill');
-                // Завершаем старый процесс.
-                Util::mwExec("{$killApp} {$activeProcesses}");
-            }
-        } elseif ($this->maxProc > 1) {
-            // Лимит процессов может быть превышен. Удаление лишних процессов.
-            $processes = explode(' ', $activeProcesses);
-
-            // Запустим нехдостающие процессы
-            $countProc = count($processes);
+        $activeAnotherProcesses = Util::getPidOfProcess(static::class, getmypid());
+        $processes = explode(' ', $activeAnotherProcesses);
+        if (empty($processes[0])){
+            array_shift($processes);
+        }
+        $countProc = count($processes)+1;
+        $killApp = Util::which('kill');
+        if ($this->maxProc === 1 && $countProc > 1) {
+            // Kill old processes with timeout, maybe it is soft restart and worker die without any help
+            Util::mwExecBgWithTimeout("{$killApp} {$activeAnotherProcesses}", 5);
+        } elseif ($this->maxProc > $countProc) {
+            // Start additional processes
             while ($countProc < $this->maxProc) {
                 Util::processPHPWorker(static::class, 'start', 'multiStart');
                 $countProc++;
             }
+        } elseif ($this->maxProc < $countProc) {
             // Получим количество лишних процессов.
-            $countProc = count($processes) - $this->maxProc;
-            $killApp   = Util::which('kill');
+            $countProc4Kill = $countProc - $this->maxProc;
             // Завершим лишние
-            while ($countProc >= 0) {
-                if ( ! isset($processes[$countProc])) {
+            while ($countProc4Kill >= 0) {
+                if ( ! isset($processes[$countProc4Kill])) {
                     break;
                 }
-                // Завершаем старый процесс.
-                Util::mwExec("{$killApp} {$processes[$countProc]}");
-                $countProc--;
+                // Kill old processes with timeout, maybe it is soft restart and worker die without any help
+                Util::mwExecBgWithTimeout("{$killApp} {$processes[$countProc4Kill]}", 5);
+                $countProc4Kill--;
             }
         }
     }

@@ -58,7 +58,7 @@ class PostController extends BaseController
                 'action'    => 'getLogFromFile',
             ]
         );
-        $connection     = $this->di->getShared('beanstalkConnection');
+        $connection     = $this->di->getShared('beanstalkConnectionWorkerAPI');
         $response       = $connection->request($requestMessage, 5, 0);
 
         if ($response !== false) {
@@ -93,7 +93,7 @@ class PostController extends BaseController
                 'action'    => $actionName,
             ]
         );
-        $connection     = $this->di->getShared('beanstalkConnection');
+        $connection     = $this->di->getShared('beanstalkConnectionWorkerAPI');
         $response       = $connection->request($requestMessage, 5, 0);
 
         if ($response !== false) {

@@ -51,7 +51,7 @@ class WorkerApiCommands extends WorkerBase
      */
     public function start($argv): void
     {
-        $this->beanstalk = $this->di->getShared('beanstalkConnection');
+        $this->beanstalk = $this->di->getShared('beanstalkConnectionWorkerAPI');
         $this->beanstalk->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
         $this->beanstalk->subscribe(__CLASS__, [$this, 'prepareAnswer']);
 

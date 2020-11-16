@@ -1,4 +1,11 @@
 <?php
+/*
+ * Copyright (C) MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Nikolay Beketov, 11 2020
+ *
+ */
 
 declare(strict_types=1);
 /**
@@ -9,7 +16,7 @@ declare(strict_types=1);
  *
  */
 
-namespace MikoPBX\PBXCoreREST\Providers;
+namespace MikoPBX\Common\Providers;
 
 
 use MikoPBX\Core\System\BeanstalkClient;
@@ -20,9 +27,9 @@ use Phalcon\Di\ServiceProviderInterface;
 /**
  * Main database connection is created based in the parameters defined in the configuration file
  */
-class BeanstalkConnectionProvider implements ServiceProviderInterface
+class BeanstalkConnectionWorkerAPIProvider implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = 'beanstalkConnection';
+    public const SERVICE_NAME = 'beanstalkConnectionWorkerAPI';
 
     /**
      * Register beanstalkConnection service provider

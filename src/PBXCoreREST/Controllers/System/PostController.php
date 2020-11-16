@@ -141,7 +141,7 @@ class PostController extends BaseController
                 'action'    => 'convertAudioFile',
             ]
         );
-        $connection     = $this->di->getShared('beanstalkConnection');
+        $connection     = $this->di->getShared('beanstalkConnectionWorkerAPI');
         $response       = $connection->request($requestMessage, 15, 0);
         if ($response !== false) {
             $response = json_decode($response, true);
