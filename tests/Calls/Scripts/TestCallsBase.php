@@ -158,7 +158,6 @@ class TestCallsBase {
             null,
             '0');
         self::printInfo('Result originate: '.$result['Response']??'none');
-        // $this->am->disconnect();
     }
 
     /**
