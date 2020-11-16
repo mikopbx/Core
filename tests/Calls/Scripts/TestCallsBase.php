@@ -22,6 +22,7 @@ class TestCallsBase {
     private string $aNum;
     private string $bNum;
     private string $cNum;
+    private string $offNum;
 
     private array  $sampleCDR;
     private array  $nonStrictComparison;
@@ -39,6 +40,9 @@ class TestCallsBase {
         $this->aNum = $db_data[0];
         $this->bNum = $db_data[1];
         $this->cNum = $db_data[2];
+
+        $offPeers = self::getOffPeers();
+        $this->offNum = $offPeers[0]??'';
 
         $this->am = new AsteriskManager();
         $this->am->connect('127.0.0.1:5039');
@@ -58,6 +62,19 @@ class TestCallsBase {
                 continue;
             }
             $db_data[] = $peer['id'];
+        }
+        return $db_data;
+    }
+
+    /** Возвращает недоступные пиры */
+    public static function getOffPeers():array{
+        $am = Util::getAstManager('off');
+        $result = $am->getPjSipPeers();
+        $db_data = array();
+        foreach ($result as $peer){
+            if($peer['state']!== 'OK' && is_numeric($peer['id'])){
+                $db_data[] = $peer['id'];
+            }
         }
         return $db_data;
     }
@@ -137,7 +154,7 @@ class TestCallsBase {
             null,
             '1',
             null,
-            "__A_NUM={$this->aNum},__B_NUM={$this->bNum},__C_NUM={$this->cNum}",
+            "__A_NUM={$this->aNum},__B_NUM={$this->bNum},__C_NUM={$this->cNum},__OFF_NUM={$this->offNum}",
             null,
             '0');
         self::printInfo('Result originate: '.$result['Response']??'none');
@@ -243,7 +260,7 @@ class TestCallsBase {
         self::printInfo("Init sample cdr table...");
         foreach ($this->sampleCDR as $index => $row) {
             foreach ($row as $key => $value){
-                if(in_array($value, ['aNum', 'bNum', 'cNum'])){
+                if(property_exists(self::class, $value)){
                     $this->sampleCDR[$index][$key] = $this->$value;
                 }
             }
