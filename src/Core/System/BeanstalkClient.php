@@ -156,26 +156,32 @@ class BeanstalkClient extends Injectable
         foreach ($tubes as $tube) {
             try {
                 $this->queue->useTube($tube);
+                $queueStats = $this->queue->stats()->getArrayCopy();
+
                 // Delete buried jobs
+                $countBuried=$queueStats['current-jobs-buried'];
                 while ($job = $this->queue->peekBuried()) {
+                    $countBuried--;
+                    if ($countBuried<0){
+                        break;
+                    }
                     $id = $job->getId();
                     $this->queue->delete($job);
                     Util::sysLogMsg(__METHOD__, "Deleted buried job with ID {$id} from {$tube}");
                 }
 
                 // Delete outdated jobs
+                $countReady=$queueStats['current-jobs-ready'];
                 while ($job = $this->queue->peekReady()) {
-                    $jobStats = $this->queue->statsJob($job);
-                    if (
-                        ! property_exists($jobStats, 'age')
-                        || ! property_exists($jobStats, 'ttr')
-                    ) {
-                        continue;
+                    $countReady--;
+                    if ($countReady<0){
+                        break;
                     }
-                    $age                   = (int)($jobStats->age);
-                    $expectedTimeToExecute = ((int)($jobStats->ttr)) * 2;
+                    $id = $job->getId();
+                    $jobStats = $this->queue->statsJob($job)->getArrayCopy();
+                    $age                   = (int)$jobStats['age'];
+                    $expectedTimeToExecute = (int)$jobStats['ttr'] * 2;
                     if ($age > $expectedTimeToExecute) {
-                        $id = $job->getId();
                         $this->queue->delete($job);
                         Util::sysLogMsg(__METHOD__, "Deleted outdated job with ID {$id} from {$tube}");
                     }
