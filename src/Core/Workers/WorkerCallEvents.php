@@ -605,9 +605,29 @@ class WorkerCallEvents extends WorkerBase
      */
     public function Action_transfer_dial($data): void
     {
+        // Завершаем предыдущий неудачный Dial.
+        // Необходимо в том случае, если не был создан канал назначения.
+        $this->transferDialEndFailCdr($data);
+
         $this->Action_transfer_check($data);
         self::insertDataToDbM($data);
         $this->Action_app_end($data);
+    }
+
+    private function transferDialEndFailCdr($data):void{
+        $filter = [
+            'transfer=1 AND endtime = "" AND dst_chan="" AND linkedid=:linkedid:',
+            'bind' => [
+                'linkedid' => $data['linkedid']
+            ],
+        ];
+        $m_data = CallDetailRecordsTmp::find($filter);
+        /** @var CallDetailRecordsTmp $row */
+        foreach ($m_data as $row) {
+            // Установим признак переадресации.
+            $row->writeAttribute('endtime', $data['start']);
+            $row->save();
+        }
     }
 
     /**
