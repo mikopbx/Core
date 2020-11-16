@@ -23,7 +23,6 @@ use Throwable;
  */
 class WorkerBeanstalkdTidyUp extends WorkerBase
 {
-
     public function start($argv): void
     {
         $managedCache = $this->di->get('managedCache');

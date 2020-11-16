@@ -22,6 +22,7 @@ use MikoPBX\PBXCoreREST\Lib\StorageManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\SysinfoManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\SystemManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\FilesManagementProcessor;
+use MikoPBX\PBXCoreREST\Lib\WorkersManagementProcessor;
 use Throwable;
 
 require_once 'Globals.php';
@@ -33,13 +34,14 @@ class WorkerApiCommands extends WorkerBase
      *
      * @var int
      */
-    protected int $maxProc = 1;
+    protected int $maxProc = 2;
 
     /**
      * Available REST API processors
      */
     private array $processors;
 
+    private BeanstalkClient $beanstalk;
 
     private bool $needRestart = false;
 
@@ -49,14 +51,14 @@ class WorkerApiCommands extends WorkerBase
      */
     public function start($argv): void
     {
-        $client = new BeanstalkClient();
-        $client->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
-        $client->subscribe(__CLASS__, [$this, 'prepareAnswer']);
+        $this->beanstalk = $this->di->getShared('beanstalkConnection');
+        $this->beanstalk->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
+        $this->beanstalk->subscribe(__CLASS__, [$this, 'prepareAnswer']);
 
         $this->registerProcessors();
 
         while ($this->needRestart === false) {
-            $client->wait();
+            $this->beanstalk->wait();
         }
     }
 
@@ -75,8 +77,9 @@ class WorkerApiCommands extends WorkerBase
             'system'  => SystemManagementProcessor::class,
             'syslog'  => SysLogsManagementProcessor::class,
             'sysinfo' => SysinfoManagementProcessor::class,
-            'files'  => FilesManagementProcessor::class,
-            'modules' => PbxExtensionsProcessor::class
+            'files'   => FilesManagementProcessor::class,
+            'modules' => PbxExtensionsProcessor::class,
+            'workers' => WorkersManagementProcessor::class,
         ];
     }
 
@@ -88,8 +91,8 @@ class WorkerApiCommands extends WorkerBase
      */
     public function prepareAnswer(BeanstalkClient $message): void
     {
-        $res             = new PBXApiResult();
-        $res->processor  = __METHOD__;
+        $res            = new PBXApiResult();
+        $res->processor = __METHOD__;
         try {
             $request   = json_decode($message->getBody(), true, 512, JSON_THROW_ON_ERROR);
             $processor = $request['processor'];
@@ -106,7 +109,6 @@ class WorkerApiCommands extends WorkerBase
             $message->reply(json_encode($res->getResult()));
             $this->checkNeedReload($res->data);
         }
-
     }
 
     /**
@@ -119,8 +121,23 @@ class WorkerApiCommands extends WorkerBase
         // Check if new code added from modules
         $needRestartWorkers = $data['needRestartWorkers'] ?? false;
         if ($needRestartWorkers) {
+            // Send restart to another workers processors
+            $otherActiveProcesses = Util::getPidOfProcess(__CLASS__, getmypid());
+            $processes            = explode(' ', $otherActiveProcesses);
+            if (count($processes) > 0) {
+                $requestMessage = json_encode(
+                    [
+                        'processor' => 'workers',
+                        'data'      => $processes,
+                        'action'    => 'needRestartAPIWorkers',
+                    ]
+                );
+                $this->beanstalk->publish($requestMessage, self::class, 0);
+                $this->needRestart = true;
+            }
+
+            // Restart all another workers
             System::restartAllWorkers();
-            $this->needRestart = true;
         }
     }
 }
