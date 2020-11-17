@@ -358,7 +358,7 @@ class Util
         if (file_exists($filename)) {
             $duPath  = self::which('du');
             $awkPath = self::which('awk');
-            self::mwExec("{$duPath} -d 0 -k '{$filename}' | {$awkPath}  '{ print $1}'", $out);
+            Processes::mwExec("{$duPath} -d 0 -k '{$filename}' | {$awkPath}  '{ print $1}'", $out);
             $time_str = implode($out);
             preg_match_all('/^\d+$/', $time_str, $matches, PREG_SET_ORDER, 0);
             if (count($matches) > 0) {
@@ -418,7 +418,7 @@ class Util
      */
     public static function mwExec($command, &$outArr = null, &$retVal = null): int
     {
-        self::sysLogMsg('Util', 'Deprecated call ' . __METHOD__);
+        self::sysLogMsg('Util', 'Deprecated call ' . __METHOD__ . ' from ' . static::class);
 
         return Processes::mwExec($command, $outArr, $retVal);
     }
@@ -429,7 +429,7 @@ class Util
     public static function setCyrillicFont(): void
     {
         $setfontPath = self::which('setfont');
-        self::mwExec("{$setfontPath} /usr/share/consolefonts/Cyr_a8x16.psfu.gz 2>/dev/null");
+        Processes::mwExec("{$setfontPath} /usr/share/consolefonts/Cyr_a8x16.psfu.gz 2>/dev/null");
     }
 
     /**
@@ -558,7 +558,7 @@ class Util
             // Если необходимо, удаляем старую ссылку.
             if ($need_create_link) {
                 $cpPath = self::which('cp');
-                self::mwExec("{$cpPath} {$old_target}/* {$target}");
+                Processes::mwExec("{$cpPath} {$old_target}/* {$target}");
                 unlink($link);
             }
         } elseif (is_dir($link)) {
@@ -571,7 +571,7 @@ class Util
         self::mwMkdir($target);
         if ($need_create_link) {
             $lnPath = self::which('ln');
-            self::mwExec("{$lnPath} -s {$target}  {$link}");
+            Processes::mwExec("{$lnPath} -s {$target}  {$link}");
         }
 
         return $need_create_link;
@@ -621,9 +621,9 @@ class Util
             $findPath  = self::which('find');
             $chownPath = self::which('chown');
             $chmodPath = self::which('chmod');
-            self::mwExec("{$findPath} {$folder} -type d -exec {$chmodPath} 755 {} \;");
-            self::mwExec("{$findPath} {$folder} -type f -exec {$chmodPath} 644 {} \;");
-            self::mwExec("{$chownPath} -R www:www {$folder}");
+            Processes::mwExec("{$findPath} {$folder} -type d -exec {$chmodPath} 755 {} \;");
+            Processes::mwExec("{$findPath} {$folder} -type f -exec {$chmodPath} 644 {} \;");
+            Processes::mwExec("{$chownPath} -R www:www {$folder}");
         }
     }
 
@@ -648,7 +648,7 @@ class Util
         if (posix_getuid() === 0) {
             $findPath  = self::which('find');
             $chmodPath = self::which('chmod');
-            self::mwExec("{$findPath} {$folder} -type f -exec {$chmodPath} 755 {} \;");
+            Processes::mwExec("{$findPath} {$folder} -type f -exec {$chmodPath} 755 {} \;");
         }
     }
 
@@ -761,7 +761,7 @@ class Util
      */
     public static function getPidOfProcess($name, $exclude = ''): string
     {
-        self::sysLogMsg('Util', 'Deprecated call ' . __METHOD__);
+        self::sysLogMsg('Util', 'Deprecated call ' . __METHOD__ . ' from ' . static::class);
 
         return Processes::getPidOfProcess($name, $exclude);
     }
@@ -781,7 +781,7 @@ class Util
      */
     public static function processWorker($cmd, $param, $proc_name, $action, $out_file = '/dev/null')
     {
-        self::sysLogMsg('Util', 'Deprecated call ' . __METHOD__);
+        self::sysLogMsg('Util', 'Deprecated call ' . __METHOD__ . ' from ' . static::class);
 
         return Processes::processWorker($cmd, $param, $proc_name, $action, $out_file);
     }
@@ -799,7 +799,7 @@ class Util
         string $param = 'start',
         string $action = 'restart'
     ): void {
-        self::sysLogMsg('Util', 'Deprecated call ' . __METHOD__);
+        self::sysLogMsg('Util', 'Deprecated call ' . __METHOD__ . ' from ' . static::class);
         Processes::processPHPWorker($className, $param, $action);
     }
 
@@ -813,7 +813,7 @@ class Util
      */
     public static function killByName($procName): ?int
     {
-        self::sysLogMsg('Util', 'Deprecated call ' . __METHOD__);
+        self::sysLogMsg('Util', 'Deprecated call ' . __METHOD__ . ' from ' . static::class);
 
         return Processes::killByName($procName);
     }
@@ -828,7 +828,7 @@ class Util
      */
     public static function mwExecBg($command, $out_file = '/dev/null', $sleep_time = 0): void
     {
-        self::sysLogMsg('Util', 'Deprecated call ' . __METHOD__);
+        self::sysLogMsg('Util', 'Deprecated call ' . __METHOD__ . ' from ' . static::class);
         Processes::mwExecBg($command, $out_file, $sleep_time);
     }
 
@@ -842,7 +842,7 @@ class Util
      */
     public static function mwExecBgWithTimeout($command, $timeout = 4, $logname = '/dev/null'): void
     {
-        self::sysLogMsg('Util', 'Deprecated call ' . __METHOD__);
+        self::sysLogMsg('Util', 'Deprecated call ' . __METHOD__ . ' from ' . static::class);
         Processes::mwExecBgWithTimeout($command, $timeout, $logname);
     }
 
@@ -856,7 +856,7 @@ class Util
      */
     public static function mwExecCommands($arr_cmds, &$out = [], $logname = ''): void
     {
-        self::sysLogMsg('Util', 'Deprecated call ' . __METHOD__);
+        self::sysLogMsg('Util', 'Deprecated call ' . __METHOD__ . ' from ' . static::class);
         Processes::mwExecCommands($arr_cmds, $out, $logname);
     }
 

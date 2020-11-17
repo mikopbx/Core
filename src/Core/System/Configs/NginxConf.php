@@ -38,7 +38,7 @@ class NginxConf extends Injectable
     public function reStart(): void
     {
         $NginxPath = Util::which('nginx');
-        $pid       = Workers::getPidOfProcess('master process nginx');
+        $pid       = Processes::getPidOfProcess('master process nginx');
         if (!empty($pid)) {
             Processes::mwExec("$NginxPath -s reload");
         } elseif (Util::isSystemctl()) {

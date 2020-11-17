@@ -25,14 +25,14 @@ use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 
 /**
- * Main database connection is created based in the parameters defined in the configuration file
+ *  We register the beansTalk connection to process the REST API commands
  */
-class BeanstalkConnectionWorkerAPIProvider implements ServiceProviderInterface
+class BeanstalkConnectionWorkerApiProvider implements ServiceProviderInterface
 {
     public const SERVICE_NAME = 'beanstalkConnectionWorkerAPI';
 
     /**
-     * Register beanstalkConnection service provider
+     * Register beanstalkConnectionWorkerAPI service provider
      *
      * @param \Phalcon\Di\DiInterface $di
      */

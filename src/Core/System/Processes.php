@@ -156,12 +156,12 @@ class Processes
                     self::mwExec("{$path_nohup} {$command} {$param}  > /dev/null 2>&1 &");
                     // Then kill the old one
                     if ($WorkerPID !== '') {
-                        self::mwExec("{$path_kill} -9 {$WorkerPID}  > /dev/null 2>&1 &");
+                        self::mwExec("{$path_kill} SIGTERM {$WorkerPID}  > /dev/null 2>&1 &");
                     }
                     break;
                 case 'stop':
                     if ($WorkerPID !== '') {
-                        self::mwExec("{$path_kill} -9 {$WorkerPID}  > /dev/null 2>&1 &");
+                        self::mwExec("{$path_kill} SIGTERM {$WorkerPID}  > /dev/null 2>&1 &");
                     }
                     break;
                 case 'start':

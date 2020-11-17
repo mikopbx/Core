@@ -40,9 +40,6 @@ class WorkerApiCommands extends WorkerBase
      */
     private array $processors;
 
-    private BeanstalkClient $beanstalk;
-
-    private bool $needRestart = false;
 
     /**
      * @param $argv
@@ -50,14 +47,14 @@ class WorkerApiCommands extends WorkerBase
      */
     public function start($argv): void
     {
-        $this->beanstalk = $this->di->getShared('beanstalkConnectionWorkerAPI');
-        $this->beanstalk->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
-        $this->beanstalk->subscribe(__CLASS__, [$this, 'prepareAnswer']);
+        $beanstalk = $this->di->getShared('beanstalkConnectionWorkerAPI');
+        $beanstalk->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
+        $beanstalk->subscribe(__CLASS__, [$this, 'prepareAnswer']);
 
         $this->registerProcessors();
 
         while ($this->needRestart === false) {
-            $this->beanstalk->wait();
+            $beanstalk->wait();
         }
     }
 
