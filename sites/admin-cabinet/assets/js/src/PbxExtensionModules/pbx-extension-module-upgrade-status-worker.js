@@ -78,7 +78,7 @@ const upgradeStatusLoopWorker = {
 				PbxApi.SystemEnableModule(
 					upgradeStatusLoopWorker.moduleUniqid,
 					() => {
-						extensionModules.reloadModuleAndPage(upgradeStatusLoopWorker.moduleUniqid);
+						window.location = `${globalRootUrl}pbx-extension-modules/index/`;
 					},
 				);
 			} else {

@@ -614,16 +614,6 @@ const PbxApi = {
 	},
 
 	/**
-	 * Перезапуск модулей расширений
-	 */
-	SystemReloadModule(moduleName) {
-		$.api({
-			url: `${Config.pbxUrl}/pbxcore/api/modules/${moduleName}/reload`,
-			on: 'now',
-		});
-	},
-
-	/**
 	 * Install uploaded module
 	 * @param filePath
 	 * @param callback - функция колбека
