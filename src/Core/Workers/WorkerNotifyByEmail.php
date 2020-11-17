@@ -26,7 +26,7 @@ class WorkerNotifyByEmail extends WorkerBase
         $client->subscribe(__CLASS__, [$this, 'workerNotifyByEmail']);
         $client->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
 
-        while (true) {
+        while ($this->needRestart === false) {
             $client->wait();
         }
     }

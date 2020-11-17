@@ -44,7 +44,7 @@ class WorkerAmiListener extends WorkerBase
         $this->setFilter();
 
         $this->am->addEventHandler("userevent", [$this, "callback"]);
-        while (true) {
+        while ($this->needRestart === false) {
             $result = $this->am->waitUserEvent(true);
             if ($result === []) {
                 // Нужен реконнект.

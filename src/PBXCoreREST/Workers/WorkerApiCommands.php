@@ -22,7 +22,6 @@ use MikoPBX\PBXCoreREST\Lib\StorageManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\SysinfoManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\SystemManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\FilesManagementProcessor;
-use MikoPBX\PBXCoreREST\Lib\WorkersManagementProcessor;
 use Throwable;
 
 require_once 'Globals.php';
@@ -78,8 +77,7 @@ class WorkerApiCommands extends WorkerBase
             'syslog'  => SysLogsManagementProcessor::class,
             'sysinfo' => SysinfoManagementProcessor::class,
             'files'   => FilesManagementProcessor::class,
-            'modules' => PbxExtensionsProcessor::class,
-            'workers' => WorkersManagementProcessor::class,
+            'modules' => PbxExtensionsProcessor::class
         ];
     }
 
@@ -99,6 +97,9 @@ class WorkerApiCommands extends WorkerBase
 
             if (array_key_exists($processor, $this->processors)) {
                 $res = $this->processors[$processor]::callback($request);
+                if ($res->success) {
+                    $this->checkNeedReload($request);
+                }
             } else {
                 $res->success    = false;
                 $res->messages[] = "Unknown processor - {$processor} in prepareAnswer";
@@ -107,39 +108,70 @@ class WorkerApiCommands extends WorkerBase
             $res->messages[] = 'Exception on WorkerApiCommands - ' . $exception->getMessage();
         } finally {
             $message->reply(json_encode($res->getResult()));
-            $this->checkNeedReload($res->data);
         }
     }
 
     /**
      * Checks if the module or worker needs to be reloaded.
      *
-     * @param array $data
+     * @param array $request
      */
-    private function checkNeedReload(array $data): void
+    private function checkNeedReload(array $request): void
     {
-        // Check if new code added from modules
-        $needRestartWorkers = $data['needRestartWorkers'] ?? false;
-        if ($needRestartWorkers) {
-            // Send restart to another workers processors
-            $otherActiveProcesses = Util::getPidOfProcess(__CLASS__, getmypid());
-            $processes            = explode(' ', $otherActiveProcesses);
-            if (count($processes) > 0) {
-                $requestMessage = json_encode(
-                    [
-                        'processor' => 'workers',
-                        'data'      => $processes,
-                        'action'    => 'needRestartAPIWorkers',
-                    ]
-                );
-                $this->beanstalk->publish($requestMessage, self::class, 0);
-                $this->needRestart = true;
-            }
+        // Prevent loop
+        if ($request['processor'] === 'workers'
+            && $request['action'] === 'needRestartAPIWorkers') {
+            $this->needRestart = true;
 
-            // Restart all another workers
-            System::restartAllWorkers();
+            return;
         }
+
+        // Check if new code added from modules
+        $restartActions = $this->getNeedRestartActions();
+        foreach ($restartActions as $processor => $actions) {
+            foreach ($actions as $action) {
+                if ($processor === $request['processor']
+                    && $action === $request['action']) {
+                    $this->needRestart = true;
+                    break;
+                }
+            }
+        }
+
+        if ($this->needRestart) {
+            // Send soft restart to another workers processors
+            $activeAnotherProcesses = Util::getPidOfProcess(self::class, getmypid());
+            $processes              = explode(' ', $activeAnotherProcesses);
+            if (empty($processes[0])) {
+                array_shift($processes);
+            }
+            foreach ($processes as $process) {
+                posix_kill($process, SIGTERM);
+            }
+        }
+
+        // Restart all another workers
+        System::restartAllWorkers();
     }
+
+    /**
+     * Prepares array of processor => action depends restart this kind worker
+     *
+     * @return \string[][]
+     */
+    private function getNeedRestartActions(): array
+    {
+        return [
+            'system'  => [
+                'enableModule',
+                'disableModule',
+                'uninstallModule',
+                'installNewModule',
+                'restoreDefaultSettings',
+            ],
+        ];
+    }
+
 }
 
 // Start worker process

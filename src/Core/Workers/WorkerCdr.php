@@ -52,7 +52,7 @@ class WorkerCdr extends WorkerBase
 
         $this->initSettings();
 
-        while (true) {
+        while ($this->needRestart === false) {
             $result = $this->client_queue->request(json_encode($filter), 10);
 
             if ($result !== false) {

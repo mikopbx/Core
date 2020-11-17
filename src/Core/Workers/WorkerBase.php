@@ -19,14 +19,29 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
     public int $currentProcId = 1;
     protected AsteriskManager $am;
     protected int $maxProc = 1;
+    protected bool $needRestart = false;
 
     /**
      * Workers shared constructor
      */
     public function __construct()
     {
+        pcntl_async_signals(true);
+        pcntl_signal(
+            SIGTERM, [$this,'signalHandler']
+        );
+
         $this->checkCountProcesses();
         $this->savePidFile();
+    }
+
+    /**
+     * Process async system signal
+     *
+     */
+    public function signalHandler(): void
+    {
+        $this->needRestart=true;
     }
 
     /**

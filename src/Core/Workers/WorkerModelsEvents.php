@@ -147,7 +147,7 @@ class WorkerModelsEvents extends WorkerBase
         $client->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
         $client->setTimeoutHandler([$this, 'timeoutHandler']);
 
-        while (true) {
+        while ($this->needRestart === false) {
             $client->wait();
         }
     }
