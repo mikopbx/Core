@@ -338,12 +338,6 @@ class PbxExtensionState extends Injectable
                         $success = false;
                     }
                 }
-            } catch (ReflectionException $exception) {
-                $success          = false;
-                $this->messages[] = $exception->getMessage();
-            } catch (PDOException $exception) {
-                $this->messages[] = $exception->getMessage();
-                $success          = false;
             } catch (Throwable $exception) {
                 $this->messages[] = $exception->getMessage();
                 $success          = false;
@@ -502,12 +496,6 @@ class PbxExtensionState extends Injectable
                         }
                     }
                 }
-            } catch (ReflectionException $exception) {
-                $this->messages[] = $exception->getMessage();
-                $success          = false;
-            } catch (PDOException $exception) {
-                $this->messages[] = $exception->getMessage();
-                $success          = false;
             } catch (Throwable $exception) {
                 $this->messages[] = $exception->getMessage();
                 $success          = false;
