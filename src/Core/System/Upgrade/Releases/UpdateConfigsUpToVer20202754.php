@@ -13,6 +13,7 @@ use MikoPBX\Common\Models\Codecs;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Core\System\MikoPBXConfig;
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Upgrade\UpgradeSystemConfigInterface;
 use MikoPBX\Core\System\Util;
 use Phalcon\Config as ConfigAlias;
@@ -249,7 +250,7 @@ class UpdateConfigsUpToVer20202754 extends Injectable implements UpgradeSystemCo
         foreach ($oldCacheDirs as $old_cache_dir) {
             if (is_dir($old_cache_dir)) {
                 $rmPath = Util::which('rm');
-                Util::mwExec("{$rmPath} -rf $old_cache_dir");
+                Processes::mwExec("{$rmPath} -rf $old_cache_dir");
             }
         }
     }
@@ -271,7 +272,7 @@ class UpdateConfigsUpToVer20202754 extends Injectable implements UpgradeSystemCo
         foreach ($oldCacheDirs as $old_cache_dir) {
             if (is_dir($old_cache_dir)) {
                 $rmPath = Util::which('rm');
-                Util::mwExec("{$rmPath} -rf $old_cache_dir");
+                Processes::mwExec("{$rmPath} -rf $old_cache_dir");
             }
         }
     }

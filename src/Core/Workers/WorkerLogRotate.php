@@ -14,6 +14,7 @@ use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Core\System\Configs\NatsConf;
 use MikoPBX\Core\System\Configs\PHPConf;
 use MikoPBX\Core\System\PBX;
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use Throwable;
@@ -70,7 +71,7 @@ class WorkerLogRotate extends WorkerBase
             $pathConf = '/tmp/'.pathinfo($file)['filename'].'.conf';
             file_put_contents($pathConf, $textConfig);
             $logrotatePath = Util::which('logrotate');
-            Util::mwExec("{$logrotatePath} '{$pathConf}' > /dev/null 2> /dev/null");
+            Processes::mwExec("{$logrotatePath} '{$pathConf}' > /dev/null 2> /dev/null");
             if (file_exists($pathConf)) {
                 unlink($pathConf);
             }

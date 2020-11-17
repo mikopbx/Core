@@ -8,7 +8,8 @@
 
 namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
-use MikoPBX\Core\System\{Storage, Util};
+
+use MikoPBX\Core\System\{Processes, Storage, Util};
 use Throwable;
 
 
@@ -31,7 +32,7 @@ class WorkerRemoveOldRecords extends WorkerBase
         $grepPath = Util::which('grep');
         $awkPath = Util::which('awk');
         $headPath = Util::which('head');
-        Util::mwExec("{$mountPath} | {$busyboxPath} {$grepPath} {$mount_point} | {$busyboxPath} {$awkPath} '{print $1}' | {$headPath} -n 1", $out);
+        Processes::mwExec("{$mountPath} | {$busyboxPath} {$grepPath} {$mount_point} | {$busyboxPath} {$awkPath} '{print $1}' | {$headPath} -n 1", $out);
         $dev = implode('', $out);
 
         $s          = new Storage();
@@ -49,7 +50,7 @@ class WorkerRemoveOldRecords extends WorkerBase
         $findPath = Util::which('find');
         $awkPath = Util::which('awk');
         $headPath = Util::which('head');
-        Util::mwExec(
+        Processes::mwExec(
             "{$findPath} {$monitor_dir}/*/*/*  -maxdepth 0 -type d  -printf '%T+ %p\n' 2> /dev/null | {$sortPath} | {$headPath} -n 10 | {$busyboxPath} {$awkPath} '{print $2}'",
             $out
         );
@@ -65,7 +66,7 @@ class WorkerRemoveOldRecords extends WorkerBase
             }
             $busyboxPath = Util::which('busybox');
             $rmPath = Util::which('rm');
-            Util::mwExec("{$busyboxPath} {$rmPath} -rf {$dir_info}");
+            Processes::mwExec("{$busyboxPath} {$rmPath} -rf {$dir_info}");
         }
     }
 }

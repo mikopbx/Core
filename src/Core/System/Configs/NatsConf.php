@@ -13,6 +13,7 @@ namespace MikoPBX\Core\System\Configs;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\Processes;
 use Phalcon\Di;
 use Phalcon\Di\Injectable;
 
@@ -35,7 +36,7 @@ class NatsConf extends Injectable
     {
         $log_dir = System::getLogDir() . '/nats';
         $gnatsdPath = Util::which('gnatsd');
-        $pid     = Util::getPidOfProcess($gnatsdPath, 'custom_modules');
+        $pid     = Processes::getPidOfProcess($gnatsdPath, 'custom_modules');
         $max_size = 1;
         if (empty($pid)) {
             $natsConf = new self();
@@ -72,7 +73,7 @@ class NatsConf extends Injectable
         file_put_contents($path_conf, $text_config);
         if (file_exists("{$log_dir}/gnatsd.log")) {
             $logrotatePath = Util::which('logrotate');
-            Util::mwExecBg("{$logrotatePath} $options '{$path_conf}' > /dev/null 2> /dev/null");
+            Processes::mwExecBg("{$logrotatePath} $options '{$path_conf}' > /dev/null 2> /dev/null");
         }
     }
 
@@ -118,10 +119,10 @@ class NatsConf extends Injectable
         if (file_exists($pid_file)) {
             $killPath = Util::which('kill');
             $catPath = Util::which('kill');
-            Util::mwExec("{$killPath} $({$catPath} {$pid_file})");
+            Processes::mwExec("{$killPath} $({$catPath} {$pid_file})");
         }
 
         $gnatsdPath = Util::which('gnatsd');
-        Util::mwExecBg("{$gnatsdPath} --config {$conf_file}", "{$logdir}/gnats_process.log");
+        Processes::mwExecBg("{$gnatsdPath} --config {$conf_file}", "{$logdir}/gnats_process.log");
     }
 }

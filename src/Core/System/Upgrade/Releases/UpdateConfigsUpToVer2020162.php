@@ -15,6 +15,7 @@ use MikoPBX\Common\Models\FirewallRules;
 use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\PBX;
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Upgrade\UpgradeSystemConfigInterface;
 use MikoPBX\Core\System\Util;
 use Phalcon\Config as ConfigAlias;
@@ -55,7 +56,7 @@ class UpdateConfigsUpToVer2020162 extends Injectable implements UpgradeSystemCon
         $astdb_file = $this->config->path('astDatabase.dbfile');
         if (file_exists($astdb_file)) {
             // С переходом на PJSIP удалим статусы SIP.
-            Util::mwExec("{$sqlite3Path}  {$astdb_file} 'DELETE FROM astdb WHERE key LIKE \"/UserBuddyStatus/SIP%\"'");
+            Processes::mwExec("{$sqlite3Path}  {$astdb_file} 'DELETE FROM astdb WHERE key LIKE \"/UserBuddyStatus/SIP%\"'");
         }
 
         PBX::checkCodec('ilbc', 'iLBC', 'audio');

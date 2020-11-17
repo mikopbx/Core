@@ -48,13 +48,13 @@ class PBX extends Injectable
      */
     public function stop(): void
     {
-        Util::killByName('safe_asterisk');
+        Processes::killByName('safe_asterisk');
         sleep(1);
         $asteriskPath = Util::which('asterisk');
-        Util::mwExec("{$asteriskPath} -rx 'core stop now'");
-        Util::processWorker('', '', WorkerCallEvents::class, 'stop');
-        Util::processWorker('', '', WorkerAmiListener::class, 'stop');
-        Util::killByName('asterisk');
+        Processes::mwExec("{$asteriskPath} -rx 'core stop now'");
+        Processes::processWorker('', '', WorkerCallEvents::class, 'stop');
+        Processes::processWorker('', '', WorkerAmiListener::class, 'stop');
+        Processes::killByName('asterisk');
     }
 
     /**
@@ -66,11 +66,11 @@ class PBX extends Injectable
         Network::startSipDump();
         if (Util::isSystemctl()) {
             $systemctlPath = Util::which('systemctl');
-            Util::mwExecBg("{$systemctlPath} restart asterisk");
+            Processes::mwExecBg("{$systemctlPath} restart asterisk");
         } else {
             $safe_asteriskPath = Util::which('safe_asterisk');
             // Ключ "-n" отключает подсветку цветом в CLI asterisk.
-            Util::mwExecBg("{$safe_asteriskPath} -f");
+            Processes::mwExecBg("{$safe_asteriskPath} -f");
         }
     }
 
@@ -115,7 +115,7 @@ class PBX extends Injectable
             $options = '-f';
         }
         $logrotatePath = Util::which('logrotate');
-        Util::mwExecBg("{$logrotatePath} {$options} '{$path_conf}' > /dev/null 2> /dev/null");
+        Processes::mwExecBg("{$logrotatePath} {$options} '{$path_conf}' > /dev/null 2> /dev/null");
     }
 
     /**
@@ -127,8 +127,8 @@ class PBX extends Injectable
         $featuresConf->generateConfig();
         $arr_out      = [];
         $asteriskPath = Util::which('asterisk');
-        Util::mwExec("{$asteriskPath} -rx 'module reload features'", $arr_out);
-        Util::mwExec("{$asteriskPath} -rx 'module reload res_parking'", $arr_out);
+        Processes::mwExec("{$asteriskPath} -rx 'module reload features'", $arr_out);
+        Processes::mwExec("{$asteriskPath} -rx 'module reload res_parking'", $arr_out);
     }
 
     /**
@@ -140,7 +140,7 @@ class PBX extends Injectable
         $featuresConf->generateConfig();
         $arr_out      = [];
         $asteriskPath = Util::which('asterisk');
-        Util::mwExec("{$asteriskPath} -rx 'core reload'", $arr_out);
+        Processes::mwExec("{$asteriskPath} -rx 'core reload'", $arr_out);
     }
 
     /**
@@ -156,8 +156,8 @@ class PBX extends Injectable
 
         $arr_out      = [];
         $asteriskPath = Util::which('asterisk');
-        Util::mwExec("{$asteriskPath} -rx 'module reload manager'", $arr_out);
-        Util::mwExec("{$asteriskPath} -rx 'module reload http'", $arr_out);
+        Processes::mwExec("{$asteriskPath} -rx 'module reload manager'", $arr_out);
+        Processes::mwExec("{$asteriskPath} -rx 'module reload http'", $arr_out);
     }
 
     /**
@@ -168,7 +168,7 @@ class PBX extends Injectable
         $o = new MusicOnHoldConf();
         $o->generateConfig();
         $asteriskPath = Util::which('asterisk');
-        Util::mwExec("{$asteriskPath} -rx 'moh reload'");
+        Processes::mwExec("{$asteriskPath} -rx 'moh reload'");
     }
 
     /**
@@ -180,7 +180,7 @@ class PBX extends Injectable
         $o->generateConfig();
         $arr_out      = [];
         $asteriskPath = Util::which('asterisk');
-        Util::mwExec("{$asteriskPath} -rx 'voicemail reload'", $arr_out);
+        Processes::mwExec("{$asteriskPath} -rx 'voicemail reload'", $arr_out);
     }
 
     /**
@@ -192,7 +192,7 @@ class PBX extends Injectable
         $pbx->generateConfig();
         $arr_out      = [];
         $asteriskPath = Util::which('asterisk');
-        Util::mwExec("{$asteriskPath} -rx 'core restart now'", $arr_out);
+        Processes::mwExec("{$asteriskPath} -rx 'core restart now'", $arr_out);
 
         return [
             'result' => 'Success',
@@ -232,14 +232,14 @@ class PBX extends Injectable
 
         $asteriskPath = Util::which('asterisk');
         if ($needRestart === false) {
-            Util::mwExec("{$asteriskPath} -rx 'module reload acl'");
-            Util::mwExec("{$asteriskPath} -rx 'core reload'");
+            Processes::mwExec("{$asteriskPath} -rx 'module reload acl'");
+            Processes::mwExec("{$asteriskPath} -rx 'core reload'");
         } else {
             Util::sysLogMsg('SIP RELOAD', 'Need reload asterisk',LOG_INFO, LOG_INFO);
             // Завершаем каналы.
-            Util::mwExec("{$asteriskPath} -rx 'channel request hangup all'");
+            Processes::mwExec("{$asteriskPath} -rx 'channel request hangup all'");
             usleep(500000);
-            Util::mwExec("{$asteriskPath} -rx 'core restart now'");
+            Processes::mwExec("{$asteriskPath} -rx 'core restart now'");
         }
     }
 
@@ -251,13 +251,13 @@ class PBX extends Injectable
         $iax    = new IAXConf();
         $iax->generateConfig();
         $asteriskPath = Util::which('asterisk');
-        Util::mwExec("{$asteriskPath} -rx 'iax2 reload'");
+        Processes::mwExec("{$asteriskPath} -rx 'iax2 reload'");
     }
 
     public static function mohReload(): void
     {
         $asteriskPath = Util::which('asterisk');
-        Util::mwExec("{$asteriskPath} -rx 'moh reload'");
+        Processes::mwExec("{$asteriskPath} -rx 'moh reload'");
     }
     /**
      * Ожидаем полной загрузки asterisk.
@@ -277,7 +277,7 @@ class PBX extends Injectable
         $timeoutPath  = Util::which('timeout');
         $asteriskPath = Util::which('asterisk');
         while (true) {
-            $execResult = Util::mwExec(
+            $execResult = Processes::mwExec(
                 "{$timeoutPath} {$options} 1 {$asteriskPath} -rx'core waitfullybooted'",
                 $out
             );
@@ -346,8 +346,8 @@ class PBX extends Injectable
         $extensions->generateConfig();
         if ($di->getRegistry()->booting !== true) {
             $path_asterisk = Util::which('asterisk');
-            Util::mwExec("{$path_asterisk} -rx 'dialplan reload'");
-            Util::mwExec("{$path_asterisk} -rx 'module reload pbx_lua.so'");
+            Processes::mwExec("{$path_asterisk} -rx 'dialplan reload'");
+            Processes::mwExec("{$path_asterisk} -rx 'module reload pbx_lua.so'");
         }
     }
 

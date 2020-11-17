@@ -120,7 +120,7 @@ class PbxExtensionUtils
         }
 
         $pathChmod = Util::which('chmod');
-        Util::mwExec("{$pathChmod} +x {$agiBinDir}/*");
+        Processes::mwExec("{$pathChmod} +x {$agiBinDir}/*");
     }
 
     /**

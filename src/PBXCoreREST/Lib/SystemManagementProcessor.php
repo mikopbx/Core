@@ -20,6 +20,7 @@ use MikoPBX\Common\Models\Providers;
 use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\Notifications;
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Modules\PbxExtensionState;
@@ -98,7 +99,7 @@ class SystemManagementProcessor extends Injectable
                 break;
             case 'convertAudioFile':
                 $mvPath = Util::which('mv');
-                Util::mwExec("{$mvPath} {$request['data']['temp_filename']} {$request['data']['filename']}");
+                Processes::mwExec("{$mvPath} {$request['data']['temp_filename']} {$request['data']['filename']}");
                 $res = self::convertAudioFile($request['data']['filename']);
                 break;
             default:
@@ -176,7 +177,7 @@ class SystemManagementProcessor extends Injectable
         $link = '/tmp/firmware_update.img';
         Util::createUpdateSymlink($tempFilename, $link);
         $mikopbx_firmwarePath = Util::which('mikopbx_firmware');
-        Util::mwExecBg("{$mikopbx_firmwarePath} recover_upgrade {$link} /dev/{$dev}");
+        Processes::mwExecBg("{$mikopbx_firmwarePath} recover_upgrade {$link} /dev/{$dev}");
 
         return $res;
     }
@@ -226,7 +227,7 @@ class SystemManagementProcessor extends Injectable
         }
 
         $semZaPath = Util::which('7za');
-        Util::mwExec("{$semZaPath} e -spf -aoa -o{$currentModuleDir} {$filePath}");
+        Processes::mwExec("{$semZaPath} e -spf -aoa -o{$currentModuleDir} {$filePath}");
         Util::addRegularWWWRights($currentModuleDir);
 
         $pbxExtensionSetupClass = "\\Modules\\{$moduleUniqueID}\\Setup\\PbxExtensionSetup";
@@ -266,7 +267,7 @@ class SystemManagementProcessor extends Injectable
             $grepPath    = Util::which('grep');
             $awkPath     = Util::which('awk');
             $uniqPath    = Util::which('uniq');
-            Util::mwExec(
+            Processes::mwExec(
                 "{$busyboxPath} {$killPath} -9 $({$lsofPath} {$currentModuleDir}/bin/* |  {$busyboxPath} {$grepPath} -v COMMAND | {$busyboxPath} {$awkPath}  '{ print $2}' | {$busyboxPath} {$uniqPath})"
             );
         }
@@ -287,7 +288,7 @@ class SystemManagementProcessor extends Injectable
             if (is_dir($currentModuleDir)) {
                 // Broken or very old module. Force uninstall.
                 $rmPath = Util::which('rm');
-                Util::mwExec("{$rmPath} -rf {$currentModuleDir}");
+                Processes::mwExec("{$rmPath} -rf {$currentModuleDir}");
 
                 $moduleClass = PbxExtensionSetupFailure::class;
                 $setup       = new $moduleClass($moduleUniqueID);
@@ -426,7 +427,7 @@ class SystemManagementProcessor extends Injectable
 
         foreach ($records as $record) {
             if (stripos($record->path, '/storage/usbdisk1/mikopbx') !== false) {
-                Util::mwExec("{$rm} -rf {$record->path}");
+                Processes::mwExec("{$rm} -rf {$record->path}");
                 if ( ! $record->delete()) {
                     $res->messages[] = $record->getMessages();
                     $res->success    = false;
@@ -438,7 +439,7 @@ class SystemManagementProcessor extends Injectable
         $records = PbxExtensionModules::find();
         foreach ($records as $record) {
             $moduleDir = PbxExtensionUtils::getModuleDir($record->uniqid);
-            Util::mwExec("{$rm} -rf {$moduleDir}");
+            Processes::mwExec("{$rm} -rf {$moduleDir}");
             if ( ! $record->delete()) {
                 $res->messages[] = $record->getMessages();
                 $res->success    = false;
@@ -455,7 +456,7 @@ class SystemManagementProcessor extends Injectable
         // Delete CallRecords sound files
         $callRecordsPath = $di->getShared('config')->path('asterisk.monitordir');
         if (stripos($callRecordsPath, '/storage/usbdisk1/mikopbx') !== false) {
-            Util::mwExec("{$rm} -rf {$callRecordsPath}/*");
+            Processes::mwExec("{$rm} -rf {$callRecordsPath}/*");
         }
 
         return $res;
@@ -494,11 +495,11 @@ class SystemManagementProcessor extends Injectable
         $tmp_filename = escapeshellcmd($tmp_filename);
         $n_filename   = escapeshellcmd($n_filename);
         $soxPath      = Util::which('sox');
-        Util::mwExec("{$soxPath} -v 0.99 -G '{$tmp_filename}' -c 1 -r 8000 -b 16 '{$n_filename}'", $out);
+        Processes::mwExec("{$soxPath} -v 0.99 -G '{$tmp_filename}' -c 1 -r 8000 -b 16 '{$n_filename}'", $out);
         $result_str = implode('', $out);
 
         $lamePath = Util::which('lame');
-        Util::mwExec("{$lamePath} -b 32 --silent '{$n_filename}' '{$n_filename_mp3}'", $out);
+        Processes::mwExec("{$lamePath} -b 32 --silent '{$n_filename}' '{$n_filename_mp3}'", $out);
         $result_mp3 = implode('', $out);
 
         // Чистим мусор.

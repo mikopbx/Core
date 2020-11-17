@@ -10,6 +10,7 @@
 namespace MikoPBX\Core\System\Configs;
 
 
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
@@ -30,16 +31,16 @@ class SyslogConf extends Injectable
         $busyboxPath = Util::which('busybox');
         $logreadPath = Util::which('logread');
         $killPath = Util::which('kill');
-        $pid = Util::getPidOfProcess($syslogdPath);
+        $pid = Processes::getPidOfProcess($syslogdPath);
         if ( ! empty($pid)) {
             $options = file_exists($log_file) ? '>' : '';
-            Util::mwExec("{$busyboxPath} {$logreadPath} 2> /dev/null >" . $options . $log_file);
+            Processes::mwExec("{$busyboxPath} {$logreadPath} 2> /dev/null >" . $options . $log_file);
             // Завершаем процесс.
-            Util::mwExec("{$busyboxPath} {$killPath} '$pid'");
+            Processes::mwExec("{$busyboxPath} {$killPath} '$pid'");
         }
 
         Util::createUpdateSymlink($log_file, $syslog_file);
-        Util::mwExec("{$syslogdPath} -O {$log_file} -b 10 -s 10240");
+        Processes::mwExec("{$syslogdPath} -O {$log_file} -b 10 -s 10240");
     }
 
     /**

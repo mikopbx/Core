@@ -11,6 +11,7 @@ namespace MikoPBX\Core\System\Configs;
 
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Network;
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\System\Verify;
 use Phalcon\Di\Injectable;
@@ -37,15 +38,15 @@ class NginxConf extends Injectable
     public function reStart(): void
     {
         $NginxPath = Util::which('nginx');
-        $pid       = Util::getPidOfProcess('master process nginx');
+        $pid       = Workers::getPidOfProcess('master process nginx');
         if (!empty($pid)) {
-            Util::mwExec("$NginxPath -s reload");
+            Processes::mwExec("$NginxPath -s reload");
         } elseif (Util::isSystemctl()) {
             $systemCtrlPath = Util::which('systemctl');
-            Util::mwExec("{$systemCtrlPath} restart nginx.service");
+            Processes::mwExec("{$systemCtrlPath} restart nginx.service");
         } else {
-            Util::killByName('nginx');
-            Util::mwExec($NginxPath);
+            Processes::killByName('nginx');
+            Processes::mwExec($NginxPath);
         }
     }
 
@@ -57,9 +58,9 @@ class NginxConf extends Injectable
     {
         $NginxPath = Util::which('nginx');
         $killPath  = Util::which('kill');
-        $pid       = Util::getPidOfProcess('nginx: master process');
+        $pid       = Processes::getPidOfProcess('nginx: master process');
         if (!empty($pid)) {
-            Util::mwExec("$NginxPath -s quit");
+            Processes::mwExec("$NginxPath -s quit");
             echo $killPath.' -QUIT '.$pid."\n";
         }
         $timeStart = time();
@@ -68,11 +69,11 @@ class NginxConf extends Injectable
                 break;
             }
             usleep(50000);
-            $pid = Util::getPidOfProcess('nginx: master process');
+            $pid = Processes::getPidOfProcess('nginx: master process');
             if($pid !== ''){
                 continue;
             }
-            $result = Util::mwExec($NginxPath);
+            $result = Processes::mwExec($NginxPath);
             if($result === 0){
                 break;
             }
@@ -157,7 +158,7 @@ class NginxConf extends Injectable
     {
         $nginxPath = Util::which('nginx');
         $out       = [];
-        Util::mwExec("{$nginxPath} -t", $out);
+        Processes::mwExec("{$nginxPath} -t", $out);
         $res = implode($out);
 
         return (false === stripos($res, 'test failed'));
@@ -174,7 +175,7 @@ class NginxConf extends Injectable
         }
         $additionalModules = $this->di->getShared('pbxConfModules');
         $rmPath            = Util::which('rm');
-        Util::mwExec("{$rmPath} -rf {$locationsPath}/*.conf");
+        Processes::mwExec("{$rmPath} -rf {$locationsPath}/*.conf");
         foreach ($additionalModules as $appClass) {
             if (method_exists($appClass, 'createNginxLocations')) {
                 $locationContent = $appClass->createNginxLocations();
@@ -182,7 +183,7 @@ class NginxConf extends Injectable
                     $confFileName = "{$locationsPath}/{$appClass->moduleUniqueId}.conf";
                     file_put_contents($confFileName, $locationContent);
                     if ( ! $this->testCurrentNginxConfig()) {
-                        Util::mwExec("{$rmPath} {$confFileName}");
+                        Processes::mwExec("{$rmPath} {$confFileName}");
                         Util::sysLogMsg('nginx', 'Failed test config file for module' . $appClass->moduleUniqueId);
                     }
                 }

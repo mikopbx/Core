@@ -14,16 +14,15 @@ use PhpSchool\CliMenu\Style\SelectableStyle;
 
 use MikoPBX\Common\Models\Storage as StorageModel;
 
-use MikoPBX\Core\System\{
-    Configs\IptablesConf,
+use MikoPBX\Core\System\{Configs\IptablesConf,
     Configs\NginxConf,
+    Processes,
     Util,
     Network,
     Verify,
     System,
     MikoPBXConfig,
-    Storage
-};
+    Storage};
 use MikoPBX\Service\Main;
 
 require_once('Globals.php');
@@ -511,7 +510,7 @@ $menu = (new CliMenuBuilder())
                         sleep(2);
                         if ($return_var === 0) {
                             $mikopbx_rebootPath = Util::which('mikopbx_reboot');
-                            Util::mwExecBg($mikopbx_rebootPath);
+                            Processes::mwExecBg($mikopbx_rebootPath);
                         }
                     }
                 )

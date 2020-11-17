@@ -12,6 +12,7 @@ namespace MikoPBX\PBXCoreREST\Lib;
 use Exception;
 use MikoPBX\Common\Models\CustomFiles;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Service\Main;
 use Phalcon\Di;
@@ -113,7 +114,7 @@ class SysinfoManagementProcessor extends Injectable
         $content    .= PHP_EOL . PHP_EOL;
         $datePath = Util::which('date');
         $ut         = [];
-        Util::mwExec($datePath, $ut);
+        Processes::mwExec($datePath, $ut);
         $content .= implode(PHP_EOL, $ut). PHP_EOL;
         $content .= PHP_EOL . PHP_EOL;
         return $content;
@@ -145,7 +146,7 @@ class SysinfoManagementProcessor extends Injectable
         $content    .= PHP_EOL . PHP_EOL;
         $uptimePath = Util::which('uptime');
         $ut         = [];
-        Util::mwExec($uptimePath, $ut);
+        Processes::mwExec($uptimePath, $ut);
         $uptime  = implode(PHP_EOL, $ut);
         $content .= $uptime . PHP_EOL;
         $content .= PHP_EOL . PHP_EOL;
@@ -164,7 +165,7 @@ class SysinfoManagementProcessor extends Injectable
         $ut         = [];
         $grepPath   = Util::which('grep');
         $mpstatPath = Util::which('mpstat');
-        Util::mwExec("{$mpstatPath} | {$grepPath} all", $ut);
+        Processes::mwExec("{$mpstatPath} | {$grepPath} all", $ut);
         preg_match("/^.*\s+all\s+.*\s+.*\s+.*\s+.*\s+.*\s+.*\s+.*\s+.*\s+(.*)\s*.*/i", $ut[0], $matches);
         $rv = 100 - $matches[1];
 
@@ -191,19 +192,19 @@ class SysinfoManagementProcessor extends Injectable
         $grepPath = Util::which('grep');
         $awkPath  = Util::which('awk');
         $freePath = Util::which('free');
-        Util::mwExec("{$catPath} /proc/meminfo | {$grepPath} -C 0 'Inactive:' | {$awkPath} '{print $2}'", $out);
+        Processes::mwExec("{$catPath} /proc/meminfo | {$grepPath} -C 0 'Inactive:' | {$awkPath} '{print $2}'", $out);
         $inactive = round((1 * implode($out)) / 1024, 2);
         $content  .= "inactive = {$inactive}" . PHP_EOL;
-        Util::mwExec("{$catPath} /proc/meminfo | {$grepPath} -C 0 'MemFree:' | {$awkPath} '{print $2}'", $out);
+        Processes::mwExec("{$catPath} /proc/meminfo | {$grepPath} -C 0 'MemFree:' | {$awkPath} '{print $2}'", $out);
         $free    = round((1 * implode($out)) / 1024, 2);
         $content .= "free = {$free}" . PHP_EOL;
-        Util::mwExec("{$catPath} /proc/meminfo | {$grepPath} -C 0 'MemTotal:' | {$awkPath} '{print $2}'", $out);
+        Processes::mwExec("{$catPath} /proc/meminfo | {$grepPath} -C 0 'MemTotal:' | {$awkPath} '{print $2}'", $out);
         $total   = round((1 * implode($out)) / 1024, 2);
         $content .= "total = {$total}" . PHP_EOL . PHP_EOL;
 
         $content .= '────────────────────────────────────────── Free ─────────────────────────────────────────';
         $content .= PHP_EOL . PHP_EOL;
-        Util::mwExec($freePath, $out);
+        Processes::mwExec($freePath, $out);
         $content .= implode(PHP_EOL, $out) . PHP_EOL;
         $content .= PHP_EOL . PHP_EOL;
         return $content;
@@ -220,7 +221,7 @@ class SysinfoManagementProcessor extends Injectable
         $content .= PHP_EOL . PHP_EOL;
         $dfPath  = Util::which('df');
         $out     = [];
-        Util::mwExec("{$dfPath} -h", $out);
+        Processes::mwExec("{$dfPath} -h", $out);
         $dfOut   = implode(PHP_EOL, $out);
         $content .= $dfOut . PHP_EOL;
         $content .= PHP_EOL . PHP_EOL;
@@ -238,7 +239,7 @@ class SysinfoManagementProcessor extends Injectable
         $content      .= PHP_EOL . PHP_EOL;
         $ifconfigPath = Util::which('ifconfig');
         $out          = [];
-        Util::mwExec($ifconfigPath, $out);
+        Processes::mwExec($ifconfigPath, $out);
         $ifconfigOut = implode(PHP_EOL, $out);
         $content     .= $ifconfigOut . PHP_EOL;
         $content .= PHP_EOL . PHP_EOL;
@@ -256,7 +257,7 @@ class SysinfoManagementProcessor extends Injectable
         $content .= PHP_EOL . PHP_EOL;
         $arpPath = Util::which('arp');
         $out     = [];
-        Util::mwExec($arpPath, $out);
+        Processes::mwExec($arpPath, $out);
         $arpOut  = implode(PHP_EOL, $out);
         $content .= $arpOut . PHP_EOL;
         $content .= PHP_EOL . PHP_EOL;
@@ -274,7 +275,7 @@ class SysinfoManagementProcessor extends Injectable
         $content   .= PHP_EOL . PHP_EOL;
         $routePath = Util::which('route');
         $out       = [];
-        Util::mwExec($routePath, $out);
+        Processes::mwExec($routePath, $out);
         $routeOut = implode(PHP_EOL, $out);
         $content  .= $routeOut . PHP_EOL;
         $content .= PHP_EOL . PHP_EOL;
@@ -292,7 +293,7 @@ class SysinfoManagementProcessor extends Injectable
         $content      .= PHP_EOL . PHP_EOL;
         $iptablesPath = Util::which('iptables');
         $out          = [];
-        Util::mwExec("{$iptablesPath} -S", $out);
+        Processes::mwExec("{$iptablesPath} -S", $out);
         $iptablesOut = implode(PHP_EOL, $out);
         $content     .= $iptablesOut . PHP_EOL;
         $content .= PHP_EOL . PHP_EOL;
@@ -310,9 +311,9 @@ class SysinfoManagementProcessor extends Injectable
         $content  .= PHP_EOL . PHP_EOL;
         $pingPath = Util::which('ping');
         $out      = [];
-        Util::mwExec("{$pingPath} 8.8.8.8 -w 2", $out);
+        Processes::mwExec("{$pingPath} 8.8.8.8 -w 2", $out);
         $pingOut = implode(PHP_EOL, $out);
-        Util::mwExec("{$pingPath} ya.ru -w 2", $out);
+        Processes::mwExec("{$pingPath} ya.ru -w 2", $out);
         $ping2Out = implode(PHP_EOL, $out);
         $content  .= $pingOut . PHP_EOL;
         $content  .= PHP_EOL . PHP_EOL;
@@ -333,7 +334,7 @@ class SysinfoManagementProcessor extends Injectable
         $content = '─────────────────────────────────────── openssl ─────────────────────────────────────────';
         $content .= PHP_EOL . PHP_EOL;
         $out     = [];
-        Util::mwExec("{$opensslPath} s_client -connect lic.miko.ru:443", $out);
+        Processes::mwExec("{$opensslPath} s_client -connect lic.miko.ru:443", $out);
         $opensslOut = implode(PHP_EOL, $out);
         $content    .= $opensslOut . PHP_EOL;
         $content .= PHP_EOL . PHP_EOL;
@@ -351,19 +352,19 @@ class SysinfoManagementProcessor extends Injectable
 
         $content = '────────────────────────────────── asterisk registrations ────────────────────────────────';
         $content .= PHP_EOL . PHP_EOL;
-        Util::mwExec("{$asteriskPath} -rx 'pjsip show registrations' ", $out);
+        Processes::mwExec("{$asteriskPath} -rx 'pjsip show registrations' ", $out);
         $asteriskOut = implode(PHP_EOL, $out);
         $content     .= $asteriskOut . PHP_EOL;
 
         $content .= '────────────────────────────────── asterisk endpoints ───────────────────────────────────';
         $content .= PHP_EOL . PHP_EOL;
-        Util::mwExec("{$asteriskPath} -rx 'pjsip show endpoints' ", $out);
+        Processes::mwExec("{$asteriskPath} -rx 'pjsip show endpoints' ", $out);
         $asteriskOut = implode(PHP_EOL, $out);
         $content     .= $asteriskOut . PHP_EOL;
 
         $content .= '─────────────────────────────────── asterisk contacts ───────────────────────────────────';
         $content .= PHP_EOL . PHP_EOL;
-        Util::mwExec("{$asteriskPath} -rx 'pjsip show contacts' ", $out);
+        Processes::mwExec("{$asteriskPath} -rx 'pjsip show contacts' ", $out);
         $asteriskOut = implode(PHP_EOL, $out);
         $content     .= $asteriskOut . PHP_EOL;
         $content .= PHP_EOL . PHP_EOL;

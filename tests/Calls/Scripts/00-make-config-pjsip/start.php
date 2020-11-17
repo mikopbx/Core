@@ -6,6 +6,7 @@
  * Written by Alexey Portnov, 10 2020
  */
 use MikoPBX\Common\Models\Sip;
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Tests\Calls\Scripts\TestCallsBase;
 require_once 'Globals.php';
@@ -39,7 +40,7 @@ file_put_contents("$dirName/asterisk/pjsip.conf", $config);
 
 TestCallsBase::printInfo("Reload res_pjsip...");
 $cmdAsterisk = Util::which('asterisk');
-Util::mwExec("{$cmdAsterisk} -C '$astConf' -rx 'module reload res_pjsip.so'");
+Processes::mwExec("{$cmdAsterisk} -C '$astConf' -rx 'module reload res_pjsip.so'");
 
 $duration = 120;
 $start = time();

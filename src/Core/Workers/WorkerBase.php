@@ -11,6 +11,7 @@ namespace MikoPBX\Core\Workers;
 use MikoPBX\Core\Asterisk\AsteriskManager;
 use MikoPBX\Core\System\BeanstalkClient;
 use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\Processes;
 use Phalcon\Di;
 use Phalcon\Text;
 
@@ -49,7 +50,7 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
      */
     private function checkCountProcesses(): void
     {
-        $activeAnotherProcesses = Util::getPidOfProcess(static::class, getmypid());
+        $activeAnotherProcesses = Processes::getPidOfProcess(static::class, getmypid());
         $processes = explode(' ', $activeAnotherProcesses);
         if (empty($processes[0])){
             array_shift($processes);
@@ -58,11 +59,11 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
         $killApp = Util::which('kill');
         if ($this->maxProc === 1 && $countProc > 1) {
             // Kill old processes with timeout, maybe it is soft restart and worker die without any help
-            Util::mwExecBgWithTimeout("{$killApp} {$activeAnotherProcesses}", 5);
+            Processes::mwExecBgWithTimeout("{$killApp} {$activeAnotherProcesses}", 5);
         } elseif ($this->maxProc > $countProc) {
             // Start additional processes
             while ($countProc < $this->maxProc) {
-                Util::processPHPWorker(static::class, 'start', 'multiStart');
+                Processes::processPHPWorker(static::class, 'start', 'multiStart');
                 $countProc++;
             }
         } elseif ($this->maxProc < $countProc) {
@@ -74,7 +75,7 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
                     break;
                 }
                 // Kill old processes with timeout, maybe it is soft restart and worker die without any help
-                Util::mwExecBgWithTimeout("{$killApp} {$processes[$countProc4Kill]}", 5);
+                Processes::mwExecBgWithTimeout("{$killApp} {$processes[$countProc4Kill]}", 5);
                 $countProc4Kill--;
             }
         }
@@ -85,7 +86,7 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
      */
     private function savePidFile(): void
     {
-        $activeProcesses = Util::getPidOfProcess(static::class);
+        $activeProcesses = Processes::getPidOfProcess(static::class);
         $processes       = explode(' ', $activeProcesses);
         if (count($processes) === 1) {
             file_put_contents($this->getPidFile(), $activeProcesses);
@@ -94,7 +95,7 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
             $pidFile = $pidFilesDir.'/'.pathinfo($this->getPidFile(), PATHINFO_BASENAME);
             // Delete old PID files
             $rm = Util::which('rm');
-            Util::mwExec("{$rm} -rf {$pidFile}*");
+            Processes::mwExec("{$rm} -rf {$pidFile}*");
             $i = 1;
             foreach ($processes as $process) {
                 file_put_contents("{$pidFile}-{$i}.pid", $process);
@@ -163,6 +164,6 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
         $pidFile = $pidFilesDir.'/'.pathinfo($this->getPidFile(), PATHINFO_BASENAME);
         // Delete old PID files
         $rm = Util::which('rm');
-        Util::mwExec("{$rm} -rf {$pidFile}*");
+        Processes::mwExec("{$rm} -rf {$pidFile}*");
     }
 }

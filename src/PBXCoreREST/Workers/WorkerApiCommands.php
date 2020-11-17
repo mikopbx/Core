@@ -8,7 +8,7 @@
 
 namespace MikoPBX\PBXCoreREST\Workers;
 
-use MikoPBX\Core\System\{BeanstalkClient, System, Util};
+use MikoPBX\Core\System\{BeanstalkClient, System, Util, Processes};
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\PBXCoreREST\Lib\AdvicesProcessor;
 use MikoPBX\PBXCoreREST\Lib\CdrDBProcessor;
@@ -140,7 +140,7 @@ class WorkerApiCommands extends WorkerBase
 
         if ($this->needRestart) {
             // Send soft restart to another workers processors
-            $activeAnotherProcesses = Util::getPidOfProcess(self::class, getmypid());
+            $activeAnotherProcesses = Processes::getPidOfProcess(self::class, getmypid());
             $processes              = explode(' ', $activeAnotherProcesses);
             if (empty($processes[0])) {
                 array_shift($processes);
@@ -151,7 +151,7 @@ class WorkerApiCommands extends WorkerBase
         }
 
         // Restart all another workers
-        System::restartAllWorkers();
+        Processes::restartAllWorkers();
     }
 
     /**

@@ -10,6 +10,7 @@ namespace MikoPBX\Core\System\Configs;
 
 
 use MikoPBX\Core\System\MikoPBXConfig;
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
 
@@ -56,7 +57,7 @@ class SSHConf extends Injectable
             // If key not exists, we will generate and store new one into file and database
             if ( ! file_exists($res_keyfilepath)) {
                 // Generation
-                Util::mwExec("{$dropbearkeyPath} -t $keytype -f $res_keyfilepath");
+                Processes::mwExec("{$dropbearkeyPath} -t $keytype -f $res_keyfilepath");
                 // Storing
                 $new_key = base64_encode(file_get_contents($res_keyfilepath));
                 $this->mikoPBXConfig->setGeneralSettings("$db_key", "$new_key");
@@ -64,9 +65,9 @@ class SSHConf extends Injectable
         }
         $ssh_port = escapeshellcmd($this->mikoPBXConfig->getGeneralSettings('SSHPort'));
         // Restart dropbear
-        Util::killByName('dropbear');
+        Processes::killByName('dropbear');
         usleep(500000);
-        Util::mwExec("{$dropbearPath} -p '{$ssh_port}' -c /etc/rc/hello > /var/log/dropbear_start.log");
+        Processes::mwExec("{$dropbearPath} -p '{$ssh_port}' -c /etc/rc/hello > /var/log/dropbear_start.log");
         $this->generateAuthorizedKeys();
         $this->updateShellPassword();
     }
@@ -90,6 +91,6 @@ class SSHConf extends Injectable
         $password = $this->mikoPBXConfig->getGeneralSettings('SSHPassword');
         $echoPath = Util::which('echo');
         $chpasswdPath = Util::which('chpasswd');
-        Util::mwExec("{$echoPath} \"root:$password\" | {$chpasswdPath}");
+        Processes::mwExec("{$echoPath} \"root:$password\" | {$chpasswdPath}");
     }
 }

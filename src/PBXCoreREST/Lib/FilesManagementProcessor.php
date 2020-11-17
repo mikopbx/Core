@@ -9,6 +9,7 @@
 namespace MikoPBX\PBXCoreREST\Lib;
 
 use MikoPBX\Common\Models\CustomFiles;
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Workers\WorkerDownloader;
 use MikoPBX\PBXCoreREST\Workers\WorkerMergeUploadedFile;
@@ -159,7 +160,7 @@ class FilesManagementProcessor extends Injectable
         $chunks_dest_file = "{$parameters['tempDir']}/{$parameters['resumableFilename']}.part{$parameters['resumableChunkNumber']}";
         if (file_exists($chunks_dest_file)) {
             $rm = Util::which('rm');
-            Util::mwExec("{$rm} -f {$chunks_dest_file}");
+            Processes::mwExec("{$rm} -f {$chunks_dest_file}");
         }
         $file->moveTo($chunks_dest_file);
 
@@ -198,7 +199,7 @@ class FilesManagementProcessor extends Injectable
             // We will start the background process to merge parts into one file
             $phpPath               = Util::which('php');
             $workerFilesMergerPath = Util::getFilePathByClassName(WorkerMergeUploadedFile::class);
-            Util::mwExecBg("{$phpPath} -f {$workerFilesMergerPath} '{$settings_file}'");
+            Processes::mwExecBg("{$phpPath} -f {$workerFilesMergerPath} '{$settings_file}'");
 
             return true;
         }
@@ -290,7 +291,7 @@ class FilesManagementProcessor extends Injectable
         ];
 
         $rmPath = Util::which('rm');
-        Util::mwExec("{$rmPath} -rf " . implode(' ', $arrDeletedFiles), $out);
+        Processes::mwExec("{$rmPath} -rf " . implode(' ', $arrDeletedFiles), $out);
         if (file_exists($filePath)) {
             $res->success  = false;
             $res->messages = $out;
@@ -325,7 +326,7 @@ class FilesManagementProcessor extends Injectable
             $dirsConfig   = $di->getShared('config');
             $filenameTmp  = $dirsConfig->path('www.downloadCacheDir') . '/' . __FUNCTION__ . '_' . time() . '.conf';
             $cmd          = "{$cat} {$filename} > {$filenameTmp}";
-            Util::mwExec("{$cmd}; chown www:www {$filenameTmp}");
+            Processes::mwExec("{$cmd}; chown www:www {$filenameTmp}");
             $res->data['filename'] = $filenameTmp;
         } else {
             $res->success    = false;
@@ -354,7 +355,7 @@ class FilesManagementProcessor extends Injectable
 
         if (file_exists($firmwareDirTmp)) {
             $rmPath = Util::which('rm');
-            Util::mwExec("{$rmPath} -rf {$firmwareDirTmp}/* ");
+            Processes::mwExec("{$rmPath} -rf {$firmwareDirTmp}/* ");
         } else {
             Util::mwMkdir($firmwareDirTmp);
         }
@@ -372,7 +373,7 @@ class FilesManagementProcessor extends Injectable
             json_encode($download_settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
         );
         $phpPath = Util::which('php');
-        Util::mwExecBg("{$phpPath} -f {$workerDownloaderPath} {$firmwareDirTmp}/download_settings.json");
+        Processes::mwExecBg("{$phpPath} -f {$workerDownloaderPath} {$firmwareDirTmp}/download_settings.json");
 
         $res                   = new PBXApiResult();
         $res->processor        = __METHOD__;
@@ -401,7 +402,7 @@ class FilesManagementProcessor extends Injectable
         $progress_file  = $firmwareDirTmp . '/progress';
 
         // Wait until download process started
-        $d_pid = Util::getPidOfProcess("{$firmwareDirTmp}/download_settings.json");
+        $d_pid = Processes::getPidOfProcess("{$firmwareDirTmp}/download_settings.json");
         if (empty($d_pid)) {
             usleep(500000);
         }
@@ -426,7 +427,7 @@ class FilesManagementProcessor extends Injectable
             $res->success                   = true;
         } else {
             $res->data['d_status_progress'] = file_get_contents($progress_file);
-            $d_pid                          = Util::getPidOfProcess("{$firmwareDirTmp}/download_settings.json");
+            $d_pid                          = Processes::getPidOfProcess("{$firmwareDirTmp}/download_settings.json");
             if (empty($d_pid)) {
                 $res->data['d_status'] = 'DOWNLOAD_ERROR';
                 if (file_exists("{$firmwareDirTmp}/error")) {
@@ -487,7 +488,7 @@ class FilesManagementProcessor extends Injectable
         );
         $workerDownloaderPath = Util::getFilePathByClassName(WorkerDownloader::class);
         $phpPath              = Util::which('php');
-        Util::mwExecBg("{$phpPath} -f {$workerDownloaderPath} $moduleDirTmp/download_settings.json");
+        Processes::mwExecBg("{$phpPath} -f {$workerDownloaderPath} $moduleDirTmp/download_settings.json");
 
         $res->data['uniqid']   = $module;
         $res->data['d_status'] = 'DOWNLOAD_IN_PROGRESS';
@@ -522,7 +523,7 @@ class FilesManagementProcessor extends Injectable
         }
 
         // Wait until download process started
-        $d_pid = Util::getPidOfProcess("{$moduleDirTmp}/download_settings.json");
+        $d_pid = Processes::getPidOfProcess("{$moduleDirTmp}/download_settings.json");
         if (empty($d_pid)) {
             usleep(500000);
         }
@@ -544,7 +545,7 @@ class FilesManagementProcessor extends Injectable
             $res->success                   = true;
         } else {
             $res->data['d_status_progress'] = file_get_contents($progress_file);
-            $d_pid                          = Util::getPidOfProcess($moduleDirTmp . '/download_settings.json');
+            $d_pid                          = Processes::getPidOfProcess($moduleDirTmp . '/download_settings.json');
             if (empty($d_pid)) {
                 $res->data['d_status'] = 'DOWNLOAD_ERROR';
                 if (file_exists($moduleDirTmp . '/error')) {
@@ -581,7 +582,7 @@ class FilesManagementProcessor extends Injectable
             $awkPath     = Util::which('awk');
             $cmd         = 'f="' . $filePath . '"; p=`' . $sevenZaPath . ' l $f | ' . $grepPath . ' module.json`;if [ "$?" == "0" ]; then ' . $sevenZaPath . ' -so e -y -r $f `' . $echoPath . ' $p |  ' . $awkPath . ' -F" " \'{print $6}\'`; fi';
 
-            Util::mwExec($cmd, $out);
+            Processes::mwExec($cmd, $out);
             $settings = json_decode(implode("\n", $out), true);
 
             $moduleUniqueID = $settings['moduleUniqueID'] ?? null;

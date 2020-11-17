@@ -11,7 +11,7 @@ namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
 
 use MikoPBX\Common\Models\{CallDetailRecordsTmp, Extensions, Users};
-use MikoPBX\Core\System\{BeanstalkClient, Util};
+use MikoPBX\Core\System\{BeanstalkClient, Processes, Util};
 use Throwable;
 
 /**
@@ -246,7 +246,7 @@ class WorkerCdr extends WorkerBase
                     if (!file_exists($file) || is_dir($file)) {
                         continue;
                     }
-                    Util::mwExec("rm -rf '{$file}'");
+                    Processes::mwExec("rm -rf '{$file}'");
                 }
             }
         } elseif (trim($row['recordingfile']) !== '') {
@@ -255,7 +255,7 @@ class WorkerCdr extends WorkerBase
             // Запускаем процесс конвертации в mp3
             $wav2mp3Path = Util::which('wav2mp3.sh');
             $nicePath = Util::which('nice');
-            Util::mwExecBg("{$nicePath} -n 19 {$wav2mp3Path} '{$p_info['dirname']}/{$p_info['filename']}'");
+            Processes::mwExecBg("{$nicePath} -n 19 {$wav2mp3Path} '{$p_info['dirname']}/{$p_info['filename']}'");
             // В последствии конвертации (успешной) исходные файлы будут удалены.
         }
         return array($row, $billsec);
@@ -270,7 +270,7 @@ class WorkerCdr extends WorkerBase
         if (file_exists($result)) {
             $file_data = json_decode(file_get_contents($result), true);
             if (!is_dir($result)) {
-                Util::mwExec("rm -rf {$result}");
+                Processes::mwExec("rm -rf {$result}");
             }
             $result = $file_data;
         }
@@ -296,7 +296,7 @@ class WorkerCdr extends WorkerBase
 
         if ($disposition !== 'ANSWERED') {
             if (file_exists($row['recordingfile']) && !is_dir($row['recordingfile'])) {
-                Util::mwExec("rm -rf {$row['recordingfile']}");
+                Processes::mwExec("rm -rf {$row['recordingfile']}");
             }
         } elseif (!empty($row['recordingfile']) &&
             !file_exists(Util::trimExtensionForFile($row['recordingfile']) . '.wav') &&

@@ -11,6 +11,7 @@ namespace MikoPBX\Core\System\Configs;
 use MikoPBX\Common\Models\{FirewallRules, NetworkFilters};
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\Processes;
 use Phalcon\Di\Injectable;
 
 class IptablesConf extends Injectable
@@ -39,7 +40,7 @@ class IptablesConf extends Injectable
         $pid_file = '/var/run/service_reload_firewall.pid';
         if (file_exists($pid_file)) {
             $old_pid = file_get_contents($pid_file);
-            $process = Util::getPidOfProcess("^{$old_pid}");
+            $process = Processes::getPidOfProcess("^{$old_pid}");
             if ($process !== '') {
                 return; // another restart process exists
             }
@@ -74,7 +75,7 @@ class IptablesConf extends Injectable
             $grepPath    = Util::which('grep');
             $busyboxPath = Util::which('busybox');
             $awkPath     = Util::which('awk');
-            Util::mwExec(
+            Processes::mwExec(
                 "{$catPath} /etc/firewall_additional | {$grepPath} -v '|' | {$grepPath} -v '&'| {$grepPath} '^iptables' | {$busyboxPath} {$awkPath} -F ';' '{print $1}'",
                 $arr_commands_custom
             );
@@ -94,12 +95,12 @@ class IptablesConf extends Injectable
                     FILE_APPEND
                 );
                 $systemctlPath = Util::which('systemctl');
-                Util::mwExec("{$systemctlPath} restart mikopbx_iptables");
+                Processes::mwExec("{$systemctlPath} restart mikopbx_iptables");
             } else {
-                Util::mwExecCommands($arr_command, $out, 'firewall');
-                Util::mwExecCommands($arr_commands_custom, $out, 'firewall_additional');
+                Processes::mwExecCommands($arr_command, $out, 'firewall');
+                Processes::mwExecCommands($arr_commands_custom, $out, 'firewall_additional');
                 // Все остальное запрещаем.
-                Util::mwExec($dropCommand);
+                Processes::mwExec($dropCommand);
             }
         }
 
@@ -118,8 +119,8 @@ class IptablesConf extends Injectable
     private function dropAllRules(): void
     {
         $iptablesPath = Util::which('iptables');
-        Util::mwExec("{$iptablesPath} -F");
-        Util::mwExec("{$iptablesPath} -X");
+        Processes::mwExec("{$iptablesPath} -F");
+        Processes::mwExec("{$iptablesPath} -X");
     }
 
     /**

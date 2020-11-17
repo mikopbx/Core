@@ -43,6 +43,7 @@ use MikoPBX\Core\System\{BeanstalkClient,
     Configs\PHPConf,
     Configs\SSHConf,
     PBX,
+    Processes,
     System,
     Util};
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
@@ -507,7 +508,7 @@ class WorkerModelsEvents extends WorkerBase
      */
     public function reloadRestAPIWorker(): void
     {
-        Util::processPHPWorker(WorkerApiCommands::class);
+        Processes::processPHPWorker(WorkerApiCommands::class);
     }
 
 
@@ -516,7 +517,7 @@ class WorkerModelsEvents extends WorkerBase
      */
     public function reloadWorkerCallEvents(): void
     {
-        Util::processPHPWorker(WorkerCallEvents::class);
+        Processes::processPHPWorker(WorkerCallEvents::class);
     }
 
     /**

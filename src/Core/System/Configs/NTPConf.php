@@ -9,6 +9,7 @@
 namespace MikoPBX\Core\System\Configs;
 
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
 
@@ -35,14 +36,14 @@ server 2.pool.ntp.org';
         Util::fileWriteContent('/etc/ntp.conf', $ntp_conf);
         if (Util::isSystemctl()) {
             $systemctlPath = Util::which('systemctl');
-            Util::mwExec("{$systemctlPath} restart ntpd.service");
+            Processes::mwExec("{$systemctlPath} restart ntpd.service");
         } else {
-            Util::killByName("ntpd");
+            Processes::killByName("ntpd");
             usleep(500000);
             $manual_time = PbxSettings::getValueByKey('PBXManualTimeSettings');
             if ($manual_time !== '1') {
                 $ntpdPath = Util::which('ntpd');
-                Util::mwExec($ntpdPath);
+                Processes::mwExec($ntpdPath);
             }
         }
     }
