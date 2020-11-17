@@ -200,7 +200,7 @@ class TestCallsBase {
                 $this->$method($rule);
             }
         }
-        // echo "--\n";
+        sleep(5);
         while (count($this->am->GetChannels(false))>0){
             sleep(1);
         }
@@ -239,7 +239,6 @@ class TestCallsBase {
         }
         self::printInfo("Start originate... $src to $dst");
         $result = Util::amiOriginate($src, '', $dst);
-        sleep(3);
         self::printInfo('Result originate: '.$result['Response']??'none');
     }
 
