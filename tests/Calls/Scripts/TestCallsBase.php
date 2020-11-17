@@ -142,8 +142,9 @@ class TestCallsBase {
      * Originate на тестовой станции.
      * @param string $src
      * @param string $dst
+     * @return bool
      */
-    private function actionOriginate(string $src, string $dst):void{
+    private function actionOriginate(string $src, string $dst):bool{
         self::printInfo("Start originate... $src to $dst");
         $result = $this->am->Originate(
             'Local/'.$src.'@orgn-wait',
@@ -158,6 +159,8 @@ class TestCallsBase {
             null,
             '0');
         self::printInfo('Result originate: '.$result['Response']??'none');
+
+        return $result['Response'] !== 'Error';
     }
 
     /**
@@ -218,7 +221,13 @@ class TestCallsBase {
             $dst = $this->$dst;
         }
 
-        $this->actionOriginate($src, $dst);
+        $i=0;
+        while ($i<=5){
+            $i++;
+            if($this->actionOriginate($src, $dst)){
+                break;
+            }
+        }
     }
 
     /**
