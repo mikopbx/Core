@@ -483,6 +483,7 @@ class ExtensionsConf extends ConfigClass
             return '';
         }
         $additionalModules = $di->getShared('pbxConfModules');
+        $confExtensions    = ConferenceConf::getConferenceExtensions();
 
         if ('none' === $provider) {
             // Звонки по sip uri.
@@ -569,8 +570,15 @@ class ExtensionsConf extends ConfigClass
                     $rout_data_dial[$rout_number] = '';
                 }
 
-                $dial_command                 = " \n\t" . 'same => n,' . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?' . "Dial(Local/{$rout['extension']}@internal-incoming/n,{$timeout},cTKg));";
-                $rout_data_dial[$rout_number] .= " \n\t" . "same => n,Set(M_TIMEOUT={$timeout})";
+                if(in_array($rout['extension'], $confExtensions, true)){
+                    // Это конференция. Тут не требуется обработка таймаута ответа.
+                    // Вызов будет отвечен сразу конференцией.
+                    $dial_command = " \n\t" . 'same => n,' . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?' . "Goto(internal,{$rout['extension']},1));";
+                    $rout_data_dial[$rout_number] .= "";
+                }else{
+                    $dial_command                 = " \n\t" . 'same => n,' . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?' . "Dial(Local/{$rout['extension']}@internal-incoming/n,{$timeout},cTKg));";
+                    $rout_data_dial[$rout_number] .= " \n\t" . "same => n,Set(M_TIMEOUT={$timeout})";
+                }
                 $rout_data_dial[$rout_number] .= $dial_command;
 
                 if (is_array($provider)) {
@@ -631,15 +639,20 @@ class ExtensionsConf extends ConfigClass
         $conf   .= "\n" . "[{$uniqid}-incoming]\n";
         foreach ($dialplan as $dpln) {
             $conf .= $dpln . "\n";
-            if (null == $default_action && 'none' !== $provider) {
+            if (null === $default_action && 'none' !== $provider) {
                 continue;
             }
             if ('extension' === $default_action->action) {
                 // Обязательно проверяем "DIALSTATUS", в случае с парковой через AMI вызова это необходимо.
                 // При ответе может отработать следующий приоритет.
                 $conf .= "\t" . 'same => n,Set(M_TIMEOUT=0)' . "\n";
-                $conf .= "\t" . "same => n," . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?' . "Dial(Local/{$default_action->extension}@internal/n,,cTKg)); default action" . "\n";
-
+                if(in_array($default_action->extension, $confExtensions, true)){
+                    // Это конференция. Тут не требуется обработка таймаута ответа.
+                    // Вызов будет отвечен сразу конференцией.
+                    $conf .= "\t" . "same => n," . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?' . "Goto(internal,{$default_action->extension},1)); default action" . "\n";
+                }else {
+                    $conf .= "\t" . "same => n," . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?' . "Dial(Local/{$default_action->extension}@internal/n,,cTKg)); default action" . "\n";
+                }
                 foreach ($additionalModules as $appClass) {
                     $addition = $appClass->generateIncomingRoutAfterDialContext($uniqid);
                     if (!empty($addition)){
