@@ -131,7 +131,7 @@ class Processes
         $workerSafeScriptsPath = Util::getFilePathByClassName(WorkerSafeScriptsCore::class);
         $phpPath               = Util::which('php');
         $WorkerSafeScripts     = "{$phpPath} -f {$workerSafeScriptsPath} restart > /dev/null 2> /dev/null";
-        self::mwExecBg($WorkerSafeScripts, '/dev/null', 1);
+        self::mwExec($WorkerSafeScripts);
     }
 
 
@@ -154,6 +154,7 @@ class Processes
                 case 'restart':
                     // Firstly start new process
                     self::mwExec("{$path_nohup} {$command} {$param}  > /dev/null 2>&1 &");
+
                     // Then kill the old one
                     if ($WorkerPID !== '') {
                         self::mwExec("{$path_kill} SIGUSR1 {$WorkerPID}  > /dev/null 2>&1 &");

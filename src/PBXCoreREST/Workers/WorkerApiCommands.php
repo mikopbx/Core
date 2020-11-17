@@ -33,7 +33,7 @@ class WorkerApiCommands extends WorkerBase
      *
      * @var int
      */
-    protected int $maxProc = 1;
+    protected int $maxProc = 2;
 
     /**
      * Available REST API processors
@@ -55,6 +55,10 @@ class WorkerApiCommands extends WorkerBase
 
         while ($this->needRestart === false) {
             $beanstalk->wait();
+        }
+        if ($this->needRestart){
+            Processes::processPHPWorker(self::class,'start','restart');
+            Processes::restartAllWorkers();
         }
     }
 
@@ -94,18 +98,20 @@ class WorkerApiCommands extends WorkerBase
 
             if (array_key_exists($processor, $this->processors)) {
                 $res = $this->processors[$processor]::callback($request);
-                if ($res->success) {
-                    $this->checkNeedReload($request);
-                }
             } else {
                 $res->success    = false;
                 $res->messages[] = "Unknown processor - {$processor} in prepareAnswer";
             }
         } catch (Throwable $exception) {
             $res->messages[] = 'Exception on WorkerApiCommands - ' . $exception->getMessage();
+            $request        = [];
         } finally {
             $message->reply(json_encode($res->getResult()));
+            if ($res->success) {
+                $this->checkNeedReload($request);
+            }
         }
+
     }
 
     /**
@@ -115,14 +121,6 @@ class WorkerApiCommands extends WorkerBase
      */
     private function checkNeedReload(array $request): void
     {
-        // Prevent loop
-        if ($request['processor'] === 'workers'
-            && $request['action'] === 'needRestartAPIWorkers') {
-            $this->needRestart = true;
-
-            return;
-        }
-
         // Check if new code added from modules
         $restartActions = $this->getNeedRestartActions();
         foreach ($restartActions as $processor => $actions) {
@@ -130,41 +128,26 @@ class WorkerApiCommands extends WorkerBase
                 if ($processor === $request['processor']
                     && $action === $request['action']) {
                     $this->needRestart = true;
-                    break;
+                    return;
                 }
             }
         }
-
-        if ($this->needRestart) {
-            // Send soft restart to another workers processors
-            $activeAnotherProcesses = Processes::getPidOfProcess(self::class, getmypid());
-            $processes              = explode(' ', $activeAnotherProcesses);
-            if (empty($processes[0])) {
-                array_shift($processes);
-            }
-            foreach ($processes as $process) {
-                posix_kill($process, SIGTERM);
-            }
-        }
-
-        // Restart all another workers
-        Processes::restartAllWorkers();
     }
 
     /**
      * Prepares array of processor => action depends restart this kind worker
      *
-     * @return \string[][]
+     * @return array
      */
     private function getNeedRestartActions(): array
     {
         return [
             'system'  => [
-                'enableModule',
-                'disableModule',
-                'uninstallModule',
-                'installNewModule',
-                'restoreDefaultSettings',
+                 'enableModule',
+                 'disableModule',
+                 'uninstallModule',
+                 'installNewModule',
+                 'restoreDefaultSettings',
             ],
         ];
     }

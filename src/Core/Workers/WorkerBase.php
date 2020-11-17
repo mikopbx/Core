@@ -42,38 +42,36 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
      */
     private function checkCountProcesses(): void
     {
-        //TODO:: Мешает отладке, позже включу
-
-        // $activeAnotherProcesses = Processes::getPidOfProcess(static::class, getmypid());
-        // $processes              = explode(' ', $activeAnotherProcesses);
-        // if (empty($processes[0])) {
-        //     array_shift($processes);
-        // }
-        // $countProc = count($processes) + 1;
-        // $killApp   = Util::which('kill');
-        // if ($this->maxProc === 1 && $countProc > 1) {
-        //     // Kill old processes with timeout, maybe it is soft restart and worker die without any help
-        //     Processes::mwExec("{$killApp} SIGUSR1 {$activeAnotherProcesses}");
-        // } elseif ($this->maxProc > $countProc) {
-        //     // Start additional processes
-        //     while ($countProc < $this->maxProc) {
-        //         sleep(3);
-        //         Processes::processPHPWorker(static::class, 'start', 'multiStart');
-        //         $countProc++;
-        //     }
-        // } elseif ($this->maxProc < $countProc) {
-        //     // Получим количество лишних процессов.
-        //     $countProc4Kill = $countProc - $this->maxProc;
-        //     // Завершим лишние
-        //     while ($countProc4Kill >= 0) {
-        //         if ( ! isset($processes[$countProc4Kill])) {
-        //             break;
-        //         }
-        //         // Kill old processes with timeout, maybe it is soft restart and worker die without any help
-        //         Processes::mwExec("{$killApp} SIGUSR1 {$processes[$countProc4Kill]}");
-        //         $countProc4Kill--;
-        //     }
-        // }
+        $activeAnotherProcesses = Processes::getPidOfProcess(static::class, getmypid());
+        $processes              = explode(' ', $activeAnotherProcesses);
+        if (empty($processes[0])) {
+            array_shift($processes);
+        }
+        $countProc = count($processes) + 1;
+        $killApp   = Util::which('kill');
+        if ($this->maxProc === 1 && $countProc > 1) {
+            // Kill old processes with timeout, maybe it is soft restart and worker die without any help
+            Processes::mwExec("{$killApp} SIGUSR1 {$activeAnotherProcesses}");
+        } elseif ($this->maxProc > $countProc) {
+            // Start additional processes
+            while ($countProc < $this->maxProc) {
+                sleep(3);
+                Processes::processPHPWorker(static::class, 'start', 'multiStart');
+                $countProc++;
+            }
+        } elseif ($this->maxProc < $countProc) {
+            // Получим количество лишних процессов.
+            $countProc4Kill = $countProc - $this->maxProc;
+            // Завершим лишние
+            while ($countProc4Kill >= 0) {
+                if ( ! isset($processes[$countProc4Kill])) {
+                    break;
+                }
+                // Kill old processes with timeout, maybe it is soft restart and worker die without any help
+                Processes::mwExec("{$killApp} SIGUSR1 {$processes[$countProc4Kill]}");
+                $countProc4Kill--;
+            }
+        }
     }
 
     /**
@@ -113,7 +111,7 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
      * Process async system signal
      *
      */
-    public function signalHandler($signal): void
+    public function signalHandler(): void
     {
         $this->needRestart = true;
     }

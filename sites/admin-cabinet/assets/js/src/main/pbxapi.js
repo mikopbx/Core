@@ -4,7 +4,7 @@
  * Proprietary and confidential
  * Written by Alexey Portnov, 8 2020
  */
-/* global sessionStorage, globalRootUrl,Config */
+/* global sessionStorage, globalRootUrl, Config, Resumable */
 
 const PbxApi = {
 	pbxPing: `${Config.pbxUrl}/pbxcore/api/system/ping`,

@@ -29,7 +29,7 @@ const advicesWorker = {
 	cbOnDataChanged() {
 		sessionStorage.removeItem(`previousAdvice${globalWebAdminLanguage}`);
 		sessionStorage.removeItem(`previousAdviceBell${globalWebAdminLanguage}`);
-		advicesWorker.restartWorker();
+		setTimeout(advicesWorker.restartWorker,3000);
 	},
 	/**
 	 * Показывает старые советы до получения обвноления со станции
