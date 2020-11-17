@@ -72,4 +72,13 @@ class ExternalPhonesConf extends ConfigClass
         return $conf;
     }
 
+    /**
+     *
+     * @return array
+     */
+    public function dependenceModels(): array
+    {
+        return [ExternalPhones::class];
+    }
+
 }
