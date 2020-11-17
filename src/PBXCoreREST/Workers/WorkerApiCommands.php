@@ -33,7 +33,7 @@ class WorkerApiCommands extends WorkerBase
      *
      * @var int
      */
-    protected int $maxProc = 2;
+    protected int $maxProc = 1;
 
     /**
      * Available REST API processors
