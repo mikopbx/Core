@@ -17,11 +17,13 @@ require_once 'Globals.php';
 
 class TestCallsBase {
     public const ACtION_ORIGINATE = 'Originate';
+    public const ACtION_GENERAL_ORIGINATE = 'GeneralOriginate';
     public const ACtION_WAIT = 'Wait';
 
     private string $aNum;
     private string $bNum;
     private string $cNum;
+    private string $offNum;
 
     private array  $sampleCDR;
     private array  $nonStrictComparison;
@@ -40,7 +42,11 @@ class TestCallsBase {
         $this->bNum = $db_data[1];
         $this->cNum = $db_data[2];
 
+        $offPeers = self::getOffPeers();
+        $this->offNum = $offPeers[0]??'';
+
         $this->am = new AsteriskManager();
+        $this->am->connect('127.0.0.1:5039');
         $this->nonStrictComparison = ['duration', 'billsec', 'fileDuration'];
     }
 
@@ -57,6 +63,19 @@ class TestCallsBase {
                 continue;
             }
             $db_data[] = $peer['id'];
+        }
+        return $db_data;
+    }
+
+    /** Возвращает недоступные пиры */
+    public static function getOffPeers():array{
+        $am = Util::getAstManager('off');
+        $result = $am->getPjSipPeers();
+        $db_data = array();
+        foreach ($result as $peer){
+            if($peer['state']!== 'OK' && is_numeric($peer['id'])){
+                $db_data[] = $peer['id'];
+            }
         }
         return $db_data;
     }
@@ -120,8 +139,12 @@ class TestCallsBase {
         sleep(5);
     }
 
+    /**
+     * Originate на тестовой станции.
+     * @param string $src
+     * @param string $dst
+     */
     private function actionOriginate(string $src, string $dst):void{
-        $this->am->connect('127.0.0.1:5039');
         self::printInfo("Start originate... $src to $dst");
         $result = $this->am->Originate(
             'Local/'.$src.'@orgn-wait',
@@ -132,11 +155,10 @@ class TestCallsBase {
             null,
             '1',
             null,
-            "__A_NUM={$this->aNum},__B_NUM={$this->bNum},__C_NUM={$this->cNum}",
+            "__A_NUM={$this->aNum},__B_NUM={$this->bNum},__C_NUM={$this->cNum},__OFF_NUM={$this->offNum}",
             null,
             '0');
         self::printInfo('Result originate: '.$result['Response']??'none');
-        // $this->am->disconnect();
     }
 
     /**
@@ -179,7 +201,7 @@ class TestCallsBase {
                 $this->$method($rule);
             }
         }
-        // echo "--\n";
+        sleep(5);
         while (count($this->am->GetChannels(false))>0){
             sleep(1);
         }
@@ -200,6 +222,27 @@ class TestCallsBase {
         $this->actionOriginate($src, $dst);
     }
 
+    /**
+     * Originate на основной (тестируемой) АТС.
+     * @param array $rule
+     * @throws \Exception
+     */
+    private function invokeGeneralOriginate(array $rule):void{
+        [$action, $src, $dst] = $rule;
+        if($action !== self::ACtION_GENERAL_ORIGINATE){
+            return;
+        }
+        if(property_exists(self::class, $src)){
+            $src = $this->$src;
+        }
+        if(property_exists(self::class, $dst)){
+            $dst = $this->$dst;
+        }
+        self::printInfo("Start originate... $src to $dst");
+        $result = Util::amiOriginate($src, '', $dst);
+        self::printInfo('Result originate: '.$result['Response']??'none');
+    }
+
     private function invokeWait($rule):void{
         [$action, $time] = $rule;
         if($action !== self::ACtION_WAIT && !is_numeric($time)){
@@ -216,7 +259,7 @@ class TestCallsBase {
         self::printInfo("Init sample cdr table...");
         foreach ($this->sampleCDR as $index => $row) {
             foreach ($row as $key => $value){
-                if(in_array($value, ['aNum', 'bNum', 'cNum'])){
+                if(property_exists(self::class, $value)){
                     $this->sampleCDR[$index][$key] = $this->$value;
                 }
             }

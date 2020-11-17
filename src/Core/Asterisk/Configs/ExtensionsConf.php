@@ -394,9 +394,9 @@ class ExtensionsConf extends ConfigClass
             $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(' . $rout['providerid'] . '-outgoing-custom,${EXTEN},1)}" == "1"]?' . $rout['providerid'] . '-outgoing-custom,${EXTEN},1)' . "\n\t";
 
             if ($rout['technology'] === IAXConf::TYPE_IAX2) {
-                $conf .= 'same => n,Dial(' . $rout['technology'] . '/' . $rout['providerid'] . '/${number},600,${DOPTIONS}TKU(dial_answer)b(dial_create_chan,s,1))' . "\n\t";
+                $conf .= 'same => n,Dial(' . $rout['technology'] . '/' . $rout['providerid'] . '/${number},600,${DOPTIONS}TKU(${ISTRANSFER}dial_answer)b(dial_create_chan,s,1))' . "\n\t";
             } else {
-                $conf .= 'same => n,Dial(' . $rout['technology'] . '/${number}@' . $rout['providerid'] . ',600,${DOPTIONS}TKU(dial_answer)b(dial_create_chan,s,1))' . "\n\t";
+                $conf .= 'same => n,Dial(' . $rout['technology'] . '/${number}@' . $rout['providerid'] . ',600,${DOPTIONS}TKU(${ISTRANSFER}dial_answer)b(dial_create_chan,s,1))' . "\n\t";
             }
             foreach ($additionalModules as $appClass) {
                 $addition = $appClass->generateOutRoutAfterDialContext($rout);

@@ -46,7 +46,7 @@ fi
 
 tests="$initTests $tests"
 for file in $tests; do
-  /usr/bin/php -f "${file}";
+  /usr/bin/timeout -t 180 /usr/bin/php -f "${file}";
 done
 
 /usr/sbin/asterisk -C "$astConf" -rx 'core stop now' > /dev/null;
