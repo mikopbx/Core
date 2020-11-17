@@ -241,11 +241,6 @@ class SystemManagementProcessor extends Injectable
             $res->success    = false;
             $res->messages[] = "Install error: the class {$pbxExtensionSetupClass} not exists";
         }
-
-        if ($res->success) {
-            $res->data['needRestartWorkers'] = true;
-        }
-
         return $res;
     }
 
@@ -300,8 +295,6 @@ class SystemManagementProcessor extends Injectable
             }
         }
         $res->success                    = true;
-        $res->data['needRestartWorkers'] = true;
-
         return $res;
     }
 
@@ -323,7 +316,6 @@ class SystemManagementProcessor extends Injectable
         } else {
             PBXConfModulesProvider::recreateModulesProvider();
             $res->data                       = $moduleStateProcessor->getMessages();
-            $res->data['needRestartWorkers'] = true;
             $res->success                    = true;
         }
 
@@ -348,7 +340,6 @@ class SystemManagementProcessor extends Injectable
         } else {
             PBXConfModulesProvider::recreateModulesProvider();
             $res->data                       = $moduleStateProcessor->getMessages();
-            $res->data['needRestartWorkers'] = true; //TODO:: Проверить надо ли это
             $res->success                    = true;
         }
 
@@ -370,7 +361,6 @@ class SystemManagementProcessor extends Injectable
         }
 
         $res->success                    = true;
-        $res->data['needRestartWorkers'] = true;
         $rm                              = Util::which('rm');
 
         // Pre delete some types
