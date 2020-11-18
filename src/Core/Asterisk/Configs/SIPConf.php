@@ -307,7 +307,7 @@ class SIPConf extends ConfigClass
                     $provider['fromuser']
                 ) === '') ? "{$provider['username']}; username" : "{$provider['fromuser']}; fromuser";
             $from_user  = ($provider['disablefromuser'] === '1') ? null : $from;
-            $lang       = $this->generalSettings['PBXLanguage'];
+            $language   = $this->generalSettings['PBXLanguage'];
 
             if (count($this->contexts_data[$provider['context_id']]) === 1) {
                 $context_id = $provider['uniqid'];
@@ -330,13 +330,16 @@ class SIPConf extends ConfigClass
                 'from_user'       => $from_user,
                 'from_domain'     => $fromdomain,
                 'sdp_session'     => 'mikopbx',
-                'language'        => $lang,
+                'language'        => $language,
                 'aors'            => $provider['uniqid'],
                 'timers'          => ' no',
             ];
             if ('1' !== $provider['receive_calls_without_auth']) {
                 $options['outbound_auth'] = "{$provider['uniqid']}-OUT";
             }
+
+            self::getToneZone($options, $language);
+
             $prov_config .= "[{$provider['uniqid']}]\n";
             $prov_config .= Util::overrideConfigurationArray($options, $manual_attributes, 'endpoint');
         }
@@ -345,6 +348,27 @@ class SIPConf extends ConfigClass
         $conf .= $prov_config;
 
         return $conf;
+    }
+
+    public static function getToneZone(array &$options, string $lang):void {
+        $settings = [
+            'ru-ru' => 'ru',
+            'en-gb' => 'uk',
+            'de-de' => 'de',
+            'da-dk' => 'dk',
+            'es-es' => 'es',
+            'fr-ca' => 'fr',
+            'it-it' => 'it',
+            'ja-jp' => 'jp',
+            'nl-nl' => 'nl',
+            'pl-pl' => 'pl',
+            'pt-br' => 'pt',
+        ];
+        $toneZone = $settings[$lang]??'';
+        if(!empty($toneZone)){
+            $options['inband_progress'] = 'yes';
+            $options['tone_zone'] = $toneZone;
+        }
     }
 
     /**
@@ -402,7 +426,6 @@ class SIPConf extends ConfigClass
                 'ice_support'          => 'no',
                 'direct_media'         => 'no',
                 'callerid'             => "{$calleridname} <{$peer['extension']}>",
-                // 'webrtc'   => 'yes',
                 'send_pai'             => 'yes',
                 'call_group'           => '1',
                 'pickup_group'         => '1',
@@ -416,6 +439,8 @@ class SIPConf extends ConfigClass
                 'acl'                  => "acl_{$peer['extension']}",
                 'timers'               => ' no',
             ];
+            self::getToneZone($options, $language);
+
             // ---------------- //
             $conf .= "[{$peer['extension']}] \n";
             $conf .= Util::overrideConfigurationArray($options, $manual_attributes, 'endpoint');
