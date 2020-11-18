@@ -28,7 +28,7 @@ class Network extends Injectable
             return;
         }
 
-        Util::killByName('pcapsipdump');
+        Processes::killByName('pcapsipdump');
         $log_dir = System::getLogDir() . '/pcapsipdump';
         Util::mwMkdir($log_dir);
 
@@ -37,7 +37,7 @@ class Network extends Injectable
         $pcapsipdumpPath = Util::which('pcapsipdump');
         foreach ($arr_eth as $eth) {
             $pid_file = "/var/run/pcapsipdump_{$eth}.pid";
-            Util::mwExecBg(
+            Processes::mwExecBg(
                 $pcapsipdumpPath . ' -T 120 -P ' . $pid_file . ' -i ' . $eth . ' -m \'^(INVITE|REGISTER)$\' -L ' . $log_dir . '/dump.db'
             );
         }
@@ -52,7 +52,7 @@ class Network extends Injectable
         $lsPath   = Util::which('ls');
         $grepPath = Util::which('grep');
         $awkPath  = Util::which('awk');
-        Util::mwExec("{$lsPath} -l /sys/class/net | {$grepPath} devices | {$grepPath} -v virtual | {$awkPath} '{ print $9 }'", $names);
+        Processes::mwExec("{$lsPath} -l /sys/class/net | {$grepPath} devices | {$grepPath} -v virtual | {$awkPath} '{ print $9 }'", $names);
 
         return $names;
     }
@@ -67,7 +67,7 @@ class Network extends Injectable
         }
         $busyboxPath  = Util::which('busybox');
         $ifconfigPath = Util::which('ifconfig');
-        Util::mwExec("{$busyboxPath} {$ifconfigPath} lo 127.0.0.1");
+        Processes::mwExec("{$busyboxPath} {$ifconfigPath} lo 127.0.0.1");
     }
 
     /**
@@ -105,7 +105,7 @@ class Network extends Injectable
             }
             file_put_contents('/etc/systemd/resolved.conf', $s_resolv_conf);
             $systemctlPath = Util::which('systemctl');
-            Util::mwExec("{$systemctlPath} restart systemd-resolved");
+            Processes::mwExec("{$systemctlPath} restart systemd-resolved");
         } else {
             file_put_contents('/etc//resolv.conf', $resolv_conf);
         }
@@ -201,7 +201,7 @@ class Network extends Injectable
             file_put_contents($pdnsdConfFile, $conf);
         }
         $pdnsdPath = Util::which('pdnsd');
-        $pid       = Util::getPidOfProcess($pdnsdPath);
+        $pid       = Processes::getPidOfProcess($pdnsdPath);
         if (!empty($pid) && $savedConf === $conf) {
             // Выполним дополнительную проверку, работает ли сервер.
             $resultResolve = gethostbynamel('lic.miko.ru');
@@ -215,13 +215,13 @@ class Network extends Injectable
         if (!empty($pid)) {
             // Завершаем процесс.
             $busyboxPath = Util::which('busybox');
-            Util::mwExec("{$busyboxPath} kill '$pid'");
+            Processes::mwExec("{$busyboxPath} kill '$pid'");
         }
         if (Util::isSystemctl()) {
             $systemctlPath = Util::which('systemctl');
-            Util::mwExec("{$systemctlPath} restart pdnsd");
+            Processes::mwExec("{$systemctlPath} restart pdnsd");
         } else {
-            Util::mwExec("{$pdnsdPath} -c /etc/pdnsd.conf -4");
+            Processes::mwExec("{$pdnsdPath} -c /etc/pdnsd.conf -4");
         }
     }
 
@@ -281,7 +281,7 @@ class Network extends Injectable
                  * -n - Exit if lease is not obtained
                  */
                 $pid_file = "/var/run/udhcpc_{$if_name}";
-                $pid_pcc  = Util::getPidOfProcess($pid_file);
+                $pid_pcc  = Processes::getPidOfProcess($pid_file);
                 if ( ! empty($pid_pcc) && file_exists($pid_file)) {
                     // Завершаем старый процесс.
                     $killPath = Util::which('kill');
@@ -348,11 +348,11 @@ class Network extends Injectable
             }
         }
         $out = null;
-        Util::mwExecCommands($arr_commands, $out, 'net');
+        Processes::mwExecCommands($arr_commands, $out, 'net');
         $this->hostsGenerate();
 
         foreach ($eth_mtu as $eth) {
-            Util::mwExecBg("/etc/rc/networking.set.mtu '{$eth}'");
+            Processes::mwExecBg("/etc/rc/networking.set.mtu '{$eth}'");
         }
 
         $firewall = new IptablesConf();
@@ -365,11 +365,11 @@ class Network extends Injectable
         $grepPath     = Util::which('grep');
         $awkPath      = Util::which('awk');
         $catPath      = Util::which('cat');
-        Util::mwExec(
+        Processes::mwExec(
             "{$catPath} /etc/static-routes | {$grepPath} '^rout' | {$busyboxPath} {$awkPath} -F ';' '{print $1}'",
             $arr_commands
         );
-        Util::mwExecCommands($arr_commands, $out, 'rout');
+        Processes::mwExecCommands($arr_commands, $out, 'rout');
 
         $this->openVpnConfigure();
 
@@ -389,8 +389,8 @@ class Network extends Injectable
         $catPath       = Util::which('cat');
         $systemctlPath = Util::which('systemctl');
         $modprobePath  = Util::which('modprobe');
-        Util::mwExec("{$systemctlPath} stop networking");
-        Util::mwExec("{$modprobePath} 8021q");
+        Processes::mwExec("{$systemctlPath} stop networking");
+        Processes::mwExec("{$modprobePath} 8021q");
         foreach ($networks as $if_data) {
             $if_name = trim($if_data['interface']);
             if ('' == $if_name) {
@@ -399,7 +399,7 @@ class Network extends Injectable
             $conf_file = "/etc/network/interfaces.d/{$if_name}";
             if ($if_data['disabled'] == 1) {
                 $ifdownPath = Util::which('ifdown');
-                Util::mwExec("{$ifdownPath} eth0");
+                Processes::mwExec("{$ifdownPath} eth0");
                 if (file_exists($if_name)) {
                     unlink($conf_file);
                 }
@@ -416,7 +416,7 @@ class Network extends Injectable
                     "| {$busyboxPath} awk -F ';' '{print $1}' " .
                     "| {$grepPath} '{$if_name}\$' " .
                     "| {$awkPath} -F 'dev {$if_name}' '{ print $1 }'";
-                Util::mwExec($command, $result);
+                Processes::mwExec($command, $result);
             }
             $routs_add = ltrim(implode("\npost-up ", $result));
             $routs_rem = ltrim(implode("\npre-down ", $result));
@@ -461,7 +461,7 @@ class Network extends Injectable
             file_put_contents("/etc/network/interfaces.d/{$if_name}", $lan_config);
         }
         $systemctlPath = Util::which('systemctl');
-        Util::mwExec("{$systemctlPath} start networking");
+        Processes::mwExec("{$systemctlPath} start networking");
         $this->hostsGenerate();
 
         $firewall = new IptablesConf();
@@ -638,7 +638,7 @@ class Network extends Injectable
         Util::fileWriteContent('/etc/hosts', $hosts_conf);
 
         $hostnamePath = Util::which('hostname');
-        Util::mwExec($hostnamePath . ' ' . escapeshellarg("{$data['hostname']}"));
+        Processes::mwExec($hostnamePath . ' ' . escapeshellarg("{$data['hostname']}"));
     }
 
     /**
@@ -651,15 +651,15 @@ class Network extends Injectable
         $data = file_get_contents($confFile);
 
         $pidFile = '/var/run/openvpn.pid';
-        $pid     = Util::getPidOfProcess('openvpn');
+        $pid     = Processes::getPidOfProcess('openvpn');
         if ( ! empty($pid)) {
             // Завершаем процесс.
             $busyboxPath = Util::which('busybox');
-            Util::mwExec("{$busyboxPath} kill '$pid'");
+            Processes::mwExec("{$busyboxPath} kill '$pid'");
         }
         if ( ! empty($data)) {
             $openvpnPath = Util::which('openvpn');
-            Util::mwExecBg("{$openvpnPath} --config /etc/openvpn.ovpn --writepid {$pidFile}", '/dev/null', 5);
+            Processes::mwExecBg("{$openvpnPath} --config /etc/openvpn.ovpn --writepid {$pidFile}", '/dev/null', 5);
         }
     }
 
@@ -701,12 +701,12 @@ class Network extends Injectable
 
         // Настраиваем интерфейс.
         $busyboxPath = Util::which('busybox');
-        Util::mwExec("{$busyboxPath} ifconfig {$env_vars['interface']} {$env_vars['ip']} $BROADCAST $NET_MASK");
+        Processes::mwExec("{$busyboxPath} ifconfig {$env_vars['interface']} {$env_vars['ip']} $BROADCAST $NET_MASK");
 
         // Удаляем старые маршруты по умолчанию.
         while (true) {
             $out = [];
-            Util::mwExec("route del default gw 0.0.0.0 dev {$env_vars['interface']}", $out);
+            Processes::mwExec("route del default gw 0.0.0.0 dev {$env_vars['interface']}", $out);
             if (trim(implode('', $out)) != '') {
                 // Произошла ошибка, значит все маршруты очищены.
                 break;
@@ -723,7 +723,7 @@ class Network extends Injectable
             // ТОЛЬКО, если этот интерфейс для интернет, создаем дефолтный маршрут.
             $routers = explode(' ', $env_vars['router']);
             foreach ($routers as $router) {
-                Util::mwExec("route add default gw {$router} dev {$env_vars['interface']}");
+                Processes::mwExec("route add default gw {$router} dev {$env_vars['interface']}");
             }
         }
         // Добавляем пользовательские маршруты.
@@ -733,7 +733,7 @@ class Network extends Injectable
             $awkPath     = Util::which('awk');
             $catPath     = Util::which('cat');
             $shPath      = Util::which('sh');
-            Util::mwExec(
+            Processes::mwExec(
                 "{$catPath} /etc/static-routes | {$grepPath} '^rout' | {$busyboxPath} {$awkPath} -F ';' '{print $1}' | {$grepPath} '{$env_vars['interface']}' | {$shPath}"
             );
         }
@@ -766,7 +766,7 @@ class Network extends Injectable
         ];
         $this->updateDnsSettings($data, $env_vars['interface']);
 
-        Util::mwExecBg("/etc/rc/networking.set.mtu '{$env_vars['interface']}'");
+        Processes::mwExecBg("/etc/rc/networking.set.mtu '{$env_vars['interface']}'");
     }
 
     /**
@@ -918,7 +918,7 @@ class Network extends Injectable
         if ( ! Util::isSystemctl()) {
             // Для MIKO LFS Edition.
             $busyboxPath = Util::which('busybox');
-            Util::mwExec("{$busyboxPath} ifconfig $interface 192.168.2.1 netmask 255.255.255.0");
+            Processes::mwExec("{$busyboxPath} ifconfig $interface 192.168.2.1 netmask 255.255.255.0");
         }
         $data = [
             'subnet'  => '24',
@@ -983,7 +983,7 @@ class Network extends Injectable
 
         // Получаем ifconfig's для interface $name.
         $busyboxPath = Util::which('busybox');
-        Util::mwExec("{$busyboxPath} ifconfig $name 2>/dev/null", $output);
+        Processes::mwExec("{$busyboxPath} ifconfig $name 2>/dev/null", $output);
         $output = implode(" ", $output);
 
         // Парсим mac
@@ -1012,7 +1012,7 @@ class Network extends Injectable
         $cutPath     = Util::which('cut');
         $routePath   = Util::which('route');
 
-        Util::mwExec(
+        Processes::mwExec(
             "{$busyboxPath} {$routePath} -n | {$grepPath} {$name} | {$grepPath} \"^0.0.0.0\" | {$cutPath} -d ' ' -f 10",
             $matches
         );
@@ -1021,7 +1021,7 @@ class Network extends Injectable
             $interface['gateway'] = $gw;
         }
         $catPath = Util::which('cat');
-        Util::mwExec("{$catPath} /etc/resolv.conf | {$grepPath} nameserver | {$cutPath} -d ' ' -f 2", $dnsout);
+        Processes::mwExec("{$catPath} /etc/resolv.conf | {$grepPath} nameserver | {$cutPath} -d ' ' -f 2", $dnsout);
 
         $dnsSrv = [];
         foreach ($dnsout as $line) {

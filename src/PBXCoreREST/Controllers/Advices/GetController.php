@@ -24,6 +24,6 @@ class GetController extends BaseController
      */
     public function callAction($actionName): void
     {
-        $this->sendRequestToBackendWorker('advices', $actionName);
+        $this->sendRequestToBackendWorker('advices', $actionName, [],'', 10, 2048);
     }
 }

@@ -277,14 +277,6 @@ const extensionModules = {
 		});
 	},
 	/**
-	 * Перезапуск модуля и перезагрузка страницы
-	 * @param uniqid - ID модуля
-	 */
-	reloadModuleAndPage(uniqid) {
-		PbxApi.SystemReloadModule(uniqid);
-		window.location = `${globalRootUrl}pbx-extension-modules/index/`;
-	},
-	/**
 	 * Сначала отключим модуль, если получится, то отправим команду на удаление
 	 * и обновим страничку
 	 * @param params - параметры запроса.

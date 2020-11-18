@@ -10,7 +10,7 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\{IvrMenu, IvrMenuActions, Sip, SoundFiles};
 use MikoPBX\Modules\Config\ConfigClass;
-use MikoPBX\Core\System\{Util};
+use MikoPBX\Core\System\{Processes, Util};
 
 class IVRConf extends ConfigClass
 {
@@ -113,7 +113,7 @@ class IVRConf extends ConfigClass
             $soxiPath = Util::which('soxi');
             $awkPath = Util::which('awk');
             $grepPath = Util::which('grep');
-            Util::mwExec("{$soxiPath}  {$filename} 2>/dev/null | {$grepPath} Duration | {$awkPath}  '{ print $3}'", $out);
+            Processes::mwExec("{$soxiPath}  {$filename} 2>/dev/null | {$grepPath} Duration | {$awkPath}  '{ print $3}'", $out);
             $time_str = implode($out);
             preg_match_all('/^\d{2}:\d{2}:\d{2}.?\d{0,2}$/', $time_str, $matches, PREG_SET_ORDER, 0);
             if (count($matches) > 0) {

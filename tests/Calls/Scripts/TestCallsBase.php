@@ -10,6 +10,7 @@ namespace MikoPBX\Tests\Calls\Scripts;
 use MikoPBX\Common\Models\CallDetailRecords;
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
 use MikoPBX\Core\Asterisk\AsteriskManager;
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 
 require_once 'Globals.php';
@@ -293,7 +294,7 @@ class TestCallsBase {
                     self::printError("File not found '{$row['recordingfile']}'");
                 }
             }else{
-                Util::mwExec("soxi {$row['recordingfile']} | grep Duration | awk '{print $3}' | awk -F '.'  '{print $1}'", $out);
+                Processes::mwExec("soxi {$row['recordingfile']} | grep Duration | awk '{print $3}' | awk -F '.'  '{print $1}'", $out);
                 $timeData = explode(':', implode($out));
                 $d = (int)($timeData[0]??0);
                 $h = (int)($timeData[1]??0);
@@ -325,12 +326,12 @@ class TestCallsBase {
         $astConf = "{$rootDir}/asterisk/asterisk.conf";
 
         self::printInfo("Copying configuration files...");
-        Util::mwExec("cp -R {$confDir}/* {$rootDir}/asterisk/");
+        Processes::mwExec("cp -R {$confDir}/* {$rootDir}/asterisk/");
 
         $cmdAsterisk = Util::which('asterisk');
         self::printInfo("Reload dialplan... ");
-        Util::mwExec("{$cmdAsterisk} -C '{$astConf}' -rx 'dialplan reload'");
-        // Util::mwExec("asterisk -C '{$astConf}' -rx 'module reload res_pjsip.so'");
+        Processes::mwExec("{$cmdAsterisk} -C '{$astConf}' -rx 'dialplan reload'");
+        // Processes::mwExec("asterisk -C '{$astConf}' -rx 'module reload res_pjsip.so'");
         sleep(5);
     }
 }

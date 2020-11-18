@@ -21,6 +21,7 @@ use MikoPBX\Common\Providers\{AmiConnectionCommand,
     AmiConnectionListener,
     BeanstalkConnectionCacheProvider,
     BeanstalkConnectionModelsProvider,
+    BeanstalkConnectionWorkerApiProvider,
     CDRDatabaseProvider,
     LicenseProvider,
     MainDatabaseProvider,
@@ -72,6 +73,8 @@ class RegisterDIServices
             NatsConnectionProvider::class,
             BeanstalkConnectionCacheProvider::class,
             BeanstalkConnectionModelsProvider::class,
+            BeanstalkConnectionWorkerApiProvider::class,
+
 
             // AMI Connectors
             AmiConnectionCommand::class,

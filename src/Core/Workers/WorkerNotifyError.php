@@ -31,7 +31,7 @@ class WorkerNotifyError extends WorkerBase
         $client->subscribe('WorkerNotifyError_storage', [$this, 'onStorageError']);
         $client->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
 
-        while (true) {
+        while ($this->needRestart === false) {
             $client->wait();
         }
     }

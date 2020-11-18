@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace MikoPBX\PBXCoreREST\Controllers;
 
 use Phalcon\Mvc\Controller;
+use Pheanstalk\Pheanstalk;
 use Throwable;
 
 
@@ -22,7 +23,14 @@ use Throwable;
  */
 class BaseController extends Controller
 {
-    public function sendRequestToBackendWorker($processor, $actionName, $payload = null, $modulename=''): void
+    public function sendRequestToBackendWorker(
+        string $processor,
+        string $actionName,
+        $payload = null,
+        string $modulename='',
+        int $maxTimeout = 10,
+        int $priority = Pheanstalk::DEFAULT_PRIORITY
+    ): void
     {
         $requestMessage = [
             'processor' => $processor,
@@ -34,7 +42,7 @@ class BaseController extends Controller
         }
         try {
             $message = json_encode($requestMessage, JSON_THROW_ON_ERROR);
-            $response       = $this->di->getShared('beanstalkConnection')->request($message, 10, 0);
+            $response       = $this->di->getShared('beanstalkConnectionWorkerAPI')->request($message, $maxTimeout, $priority);
             if ($response !== false) {
                 $response = json_decode($response, true, 512, JSON_THROW_ON_ERROR);
                 $this->response->setPayloadSuccess($response);
@@ -42,7 +50,7 @@ class BaseController extends Controller
                 $this->sendError(500);
             }
         } catch (Throwable $e) {
-            $this->sendError(400);
+            $this->sendError(400, $e->getMessage());
         }
     }
 

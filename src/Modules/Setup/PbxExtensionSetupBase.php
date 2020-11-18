@@ -9,6 +9,7 @@
 namespace MikoPBX\Modules\Setup;
 
 use MikoPBX\Core\Config\RegisterDIServices;
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Upgrade\UpdateDatabase;
 use MikoPBX\Modules\PbxExtensionUtils;
 use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings};
@@ -204,7 +205,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
         $backupPath = "{$modulesDir}/Backup/{$this->moduleUniqueID}";
         if (is_dir($backupPath)) {
             $cpPath = Util::which('cp');
-            Util::mwExec("{$cpPath} -r {$backupPath}/db/* {$this->moduleDir}/db/");
+            Processes::mwExec("{$cpPath} -r {$backupPath}/db/* {$this->moduleDir}/db/");
         }
         return true;
     }
@@ -317,12 +318,12 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
         $rmPath = Util::which('rm');
         $modulesDir          = $this->config->path('core.modulesDir');
         $backupPath = "{$modulesDir}/Backup/{$this->moduleUniqueID}";
-        Util::mwExec("{$rmPath} -rf {$backupPath}");
+        Processes::mwExec("{$rmPath} -rf {$backupPath}");
         if ($keepSettings) {
             Util::mwMkdir($backupPath);
-            Util::mwExec("{$cpPath} -r {$this->moduleDir}/db {$backupPath}/");
+            Processes::mwExec("{$cpPath} -r {$this->moduleDir}/db {$backupPath}/");
         }
-        Util::mwExec("{$rmPath} -rf {$this->moduleDir}");
+        Processes::mwExec("{$rmPath} -rf {$this->moduleDir}");
 
         // Remove assets
         // IMG

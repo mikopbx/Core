@@ -11,6 +11,7 @@ namespace MikoPBX\Core\System\Configs;
 
 
 use MikoPBX\Core\System\MikoPBXConfig;
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Workers\Cron\WorkerSafeScriptsCore;
 use Phalcon\Di\Injectable;
@@ -81,7 +82,7 @@ class CronConf extends Injectable
         }
 
         if ($boot === true) {
-            Util::mwExecBg($WorkerSafeScripts);
+            Processes::mwExecBg($WorkerSafeScripts);
         }
 
         Util::fileWriteContent($cron_filename, $conf);
@@ -97,11 +98,11 @@ class CronConf extends Injectable
         $this->generateConfig($this->di->getShared('registry')->booting);
         if (Util::isSystemctl()) {
             $systemctlPath = Util::which('systemctl');
-            Util::mwExec("{$systemctlPath} restart cron");
+            Processes::mwExec("{$systemctlPath} restart cron");
         } else {
             $crondPath = Util::which('crond');
-            Util::killByName($crondPath);
-            Util::mwExec("{$crondPath} -L /dev/null -l 8");
+            Processes::killByName($crondPath);
+            Processes::mwExec("{$crondPath} -L /dev/null -l 8");
         }
 
         return 0;

@@ -16,6 +16,7 @@ use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Configs\NginxConf;
 use MikoPBX\Core\System\Configs\IptablesConf;
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use PDOException;
 use Phalcon\Di\Injectable;
@@ -278,7 +279,7 @@ class PbxExtensionState extends Injectable
             && method_exists($this->configClass, 'getModuleWorkers')) {
             $workersToKill = $this->configClass->getModuleWorkers();
             foreach ($workersToKill as $moduleWorker) {
-                Util::killByName($moduleWorker['worker']);
+                Processes::killByName($moduleWorker['worker']);
             }
         }
 
@@ -338,12 +339,6 @@ class PbxExtensionState extends Injectable
                         $success = false;
                     }
                 }
-            } catch (ReflectionException $exception) {
-                $success          = false;
-                $this->messages[] = $exception->getMessage();
-            } catch (PDOException $exception) {
-                $this->messages[] = $exception->getMessage();
-                $success          = false;
             } catch (Throwable $exception) {
                 $this->messages[] = $exception->getMessage();
                 $success          = false;
@@ -502,12 +497,6 @@ class PbxExtensionState extends Injectable
                         }
                     }
                 }
-            } catch (ReflectionException $exception) {
-                $this->messages[] = $exception->getMessage();
-                $success          = false;
-            } catch (PDOException $exception) {
-                $this->messages[] = $exception->getMessage();
-                $success          = false;
             } catch (Throwable $exception) {
                 $this->messages[] = $exception->getMessage();
                 $success          = false;

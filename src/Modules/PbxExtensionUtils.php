@@ -11,6 +11,7 @@ namespace MikoPBX\Modules;
 
 use MikoPBX\Common\Models\ModelsBase;
 use MikoPBX\Common\Models\PbxExtensionModules;
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di;
 
@@ -120,7 +121,7 @@ class PbxExtensionUtils
         }
 
         $pathChmod = Util::which('chmod');
-        Util::mwExec("{$pathChmod} +x {$agiBinDir}/*");
+        Processes::mwExec("{$pathChmod} +x {$agiBinDir}/*");
     }
 
     /**

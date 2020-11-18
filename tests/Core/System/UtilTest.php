@@ -9,6 +9,7 @@
 
 namespace MikoPBX\Tests\Core\System;
 
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Workers\Cron\WorkerSafeScriptsCore;
 use MikoPBX\Tests\Unit\AbstractUnitTest;
@@ -22,7 +23,7 @@ class UtilTest extends AbstractUnitTest
         $resultCode = 0;
         $output = [];
         $path_asterisk  = Util::which('asterisk');
-        Util::mwExec("{$path_asterisk} -rx 'dialplan reload'", $output,$resultCode);
+        Processes::mwExec("{$path_asterisk} -rx 'dialplan reload'", $output,$resultCode);
         $this->assertIsArray($output);
         $this->assertIsInt($resultCode);
         $this->assertStringContainsStringIgnoringCase('Dialplan reloaded.', implode(' ', $output));
@@ -31,14 +32,14 @@ class UtilTest extends AbstractUnitTest
     public function testkillByName(): void
     {
         $process = WorkerBitrix24IntegrationAMI::class;
-        Util::killByName($process);
+        Processes::killByName($process);
         $this->assertTrue(true);
     }
 
     public function testProcessPHPWorker(): void
     {
         $process = WorkerBitrix24IntegrationAMI::class;
-        Util::processPHPWorker($process);
+        Processes::processPHPWorker($process);
         $this->assertTrue(true);
     }
 

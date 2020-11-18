@@ -12,6 +12,7 @@ namespace MikoPBX\Core\System\Configs;
 use MikoPBX\Common\Models\Fail2BanRules;
 use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Core\System\MikoPBXConfig;
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\System\Verify;
@@ -57,8 +58,8 @@ class Fail2BanConf extends Injectable
     private function fail2banIsRunning(): bool
     {
         $fail2banPath = Util::which('fail2ban-client');
-        $res_ping     = Util::mwExec("{$fail2banPath} ping");
-        $res_stat     = Util::mwExec("{$fail2banPath} status");
+        $res_ping     = Processes::mwExec("{$fail2banPath} ping");
+        $res_stat     = Processes::mwExec("{$fail2banPath} status");
 
         $result = false;
         if ($res_ping === 0 && $res_stat === 0) {
@@ -75,15 +76,15 @@ class Fail2BanConf extends Injectable
     {
         if (Util::isSystemctl()) {
             $systemctlPath = Util::which('systemctl');
-            Util::mwExec("{$systemctlPath} restart fail2ban");
+            Processes::mwExec("{$systemctlPath} restart fail2ban");
 
             return;
         }
-        Util::killByName('fail2ban-server');
+        Processes::killByName('fail2ban-server');
         $fail2banPath = Util::which('fail2ban-client');
         $cmd_start    = "{$fail2banPath} -x start";
         $command      = "($cmd_start;) > /dev/null 2>&1 &";
-        Util::mwExec($command);
+        Processes::mwExec($command);
     }
 
     /**
@@ -108,10 +109,10 @@ class Fail2BanConf extends Injectable
     {
         if (Util::isSystemctl()) {
             $systemctlPath = Util::which('systemctl');
-            Util::mwExec("{$systemctlPath} stop fail2ban");
+            Processes::mwExec("{$systemctlPath} stop fail2ban");
         } else {
             $fail2banPath = Util::which('fail2ban-client');
-            Util::mwExec("{$fail2banPath} -x stop");
+            Processes::mwExec("{$fail2banPath} -x stop");
         }
     }
 
@@ -148,7 +149,7 @@ class Fail2BanConf extends Injectable
                 if (file_exists("$old_dir_db/$filename")) {
                     // Перемещаем файл в новое местоположение.
                     $mvPath = Util::which('mv');
-                    Util::mwExec("{$mvPath} '$old_dir_db/$filename' '$dir_db/$filename'");
+                    Processes::mwExec("{$mvPath} '$old_dir_db/$filename' '$dir_db/$filename'");
                 }
             }
         }
@@ -287,7 +288,7 @@ class Fail2BanConf extends Injectable
         $filterPath        = self::FILTER_PATH;
         $additionalModules = $this->di->getShared('pbxConfModules');
         $rmPath            = Util::which('rm');
-        Util::mwExec("{$rmPath} -rf {$filterPath}/module_*.conf");
+        Processes::mwExec("{$rmPath} -rf {$filterPath}/module_*.conf");
         foreach ($additionalModules as $appClass) {
             if (method_exists($appClass, 'generateFail2BanJails')) {
                 $content = $appClass->generateFail2BanJails();

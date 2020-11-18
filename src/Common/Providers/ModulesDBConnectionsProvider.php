@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace MikoPBX\Common\Providers;
 
 
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
@@ -102,7 +103,7 @@ class ModulesDBConnectionsProvider extends DatabaseProviderBase implements Servi
                 if (!is_dir($logDir)){
                     Util::mwMkdir($logDir, true);
                     $touchPath = Util::which('touch');
-                    Util::mwExec("{$touchPath} {$logFileName}");
+                    Processes::mwExec("{$touchPath} {$logFileName}");
                     Util::addRegularWWWRights($logDir);
                 }
 

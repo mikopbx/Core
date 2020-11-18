@@ -6,9 +6,7 @@
  * Written by Alexey Portnov, 5 2020
  */
 namespace MikoPBX\Core\Rc;
-use MikoPBX\Core\System\{
-    Util
-};
+use MikoPBX\Core\System\{Processes, Util};
 require_once('Globals.php');
 $fp = fopen('php://stdin', 'r');
 
@@ -17,7 +15,7 @@ $dfPath = Util::which('df');
 $grepPath = Util::which('grep');
 $cutPath = Util::which('cut');
 $revPath = Util::which('rev');
-Util::mwExec("{$dfPath} | {$grepPath} conf.recover | {$cutPath} -d \" \" -f 1 | {$revPath} | {$cutPath} -c 2- | {$revPath}", $out);
+Processes::mwExec("{$dfPath} | {$grepPath} conf.recover | {$cutPath} -d \" \" -f 1 | {$revPath} | {$cutPath} -c 2- | {$revPath}", $out);
 $DEVICE=implode('', $out);
 
 // $PBXVERSION = trim(file_get_contents('/etc/version'));
@@ -48,7 +46,7 @@ switch ($input) {
     case 2:
         file_put_contents('/tmp/ejectcd', '');
         $mikopbx_firmwarePath = Util::which('mikopbx_firmware');
-        Util::mwExecBg("{$mikopbx_firmwarePath} recover_upgrade /offload/firmware.img.gz ${DEVICE}");
+        Processes::mwExecBg("{$mikopbx_firmwarePath} recover_upgrade /offload/firmware.img.gz ${DEVICE}");
         sleep(600);
         break;
     case 3:

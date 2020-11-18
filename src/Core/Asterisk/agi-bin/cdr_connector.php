@@ -10,7 +10,7 @@
 use MikoPBX\Core\Asterisk\AGI;
 use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\Asterisk\Configs\{ResParkingConf};
-use MikoPBX\Core\System\{MikoPBXConfig, Util};
+use MikoPBX\Core\System\{MikoPBXConfig, Processes, Util};
 
 require_once 'Globals.php';
 
@@ -680,7 +680,7 @@ function Event_hangup_chan_meetme($agi, $action): array
     $nicePath = Util::which('nice');
     $chmodPath = Util::which('chmod');
     $command               = "{$nicePath} -n 19 {$lamePath} -b 32 --silent \"{$recordingfile}.wav\" \"{$recordingfile}.mp3\" && {$chmodPath} o+r \"{$recordingfile}.mp3\"";
-    Util::mwExecBg($command);
+    Processes::mwExecBg($command);
 
     return $data;
 }

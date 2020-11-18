@@ -90,7 +90,7 @@ class PostController extends BaseController
                 'action'    => 'fileReadContent',
             ]
         );
-        $connection     = $this->di->getShared('beanstalkConnection');
+        $connection     = $this->di->getShared('beanstalkConnectionWorkerAPI');
         $response       = $connection->request($requestMessage, 5, 0);
         if ($response !== false) {
             $response = json_decode($response, true);

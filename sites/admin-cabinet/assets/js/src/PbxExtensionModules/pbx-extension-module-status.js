@@ -44,7 +44,6 @@ class PbxExtensionStatus {
 	cbAfterModuleDisable(response, success) {
 		if (success) {
 			this.$toggle.checkbox('set unchecked');
-			PbxApi.SystemReloadModule(this.uniqid);
 			this.changeLabelText(globalTranslate.ext_ModuleDisabledStatusDisabled);
 			const event = document.createEvent('Event');
 			event.initEvent('ModuleStatusChanged', false, true);
@@ -68,7 +67,6 @@ class PbxExtensionStatus {
 	cbAfterModuleEnable(response, success) {
 		if (success) {
 			this.$toggle.checkbox('set checked');
-			PbxApi.SystemReloadModule(this.uniqid);
 			this.changeLabelText(globalTranslate.ext_ModuleDisabledStatusEnabled);
 			const event = document.createEvent('Event');
 			event.initEvent('ModuleStatusChanged', false, true);
