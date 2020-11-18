@@ -777,7 +777,7 @@ class WorkerCallEvents extends WorkerBase
                     Util::sysLogMsg('Action_transfer_dial_answer', implode(' ', $row->getMessages()));
                 }
             }
-            // Попробуем начать запись разговора.
+            // Попробуем возобновить запись разговора.
             $filter = [
                 'linkedid=:linkedid: AND endtime = "" AND transfer=1',
                 'bind' => [
@@ -790,7 +790,7 @@ class WorkerCallEvents extends WorkerBase
                 $info      = pathinfo($res->recordingfile);
                 $data_time = (empty($res->answer)) ? $res->start : $res->answer;
                 $subdir    = date('Y/m/d/H/', strtotime($data_time));
-                $this->MixMonitor($res->src_chan, $info['filename'], $subdir);
+                $this->MixMonitor($res->dst_chan, $info['filename'], $subdir);
             }
         } elseif ('' === $data['ANSWEREDTIME']) {
             $filter = [
@@ -823,9 +823,9 @@ class WorkerCallEvents extends WorkerBase
             $m_data = CallDetailRecordsTmp::find($filter);
             foreach ($m_data as $row) {
                 $info      = pathinfo($row->recordingfile);
-                $data_time = ($row->answer == null) ? $row->start : $row->answer;
+                $data_time = ($row->answer === '') ? $row->start : $row->answer;
                 $subdir    = date('Y/m/d/H/', strtotime($data_time));
-                $this->MixMonitor($row->src_chan, $info['filename'], $subdir);
+                $this->MixMonitor($row->dst_chan, $info['filename'], $subdir);
                 // Снимем со строк признак переадресации.
                 $row->writeAttribute('transfer', 0);
                 if ( ! $row->save()) {
