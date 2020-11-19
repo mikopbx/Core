@@ -394,7 +394,7 @@ class WorkerCallEvents extends WorkerBase
                 continue;
             }
 
-            $linkedid = $this->am->GetVar($data_chan['chan'], 'CDR(linkedid)', null, false);
+            $linkedid = $this->am->GetVar($data_chan['chan'], 'CHANNEL(linkedid)', null, false);
             if ( empty($linkedid) || $linkedid === $data['linkedid']) {
                 continue;
             }

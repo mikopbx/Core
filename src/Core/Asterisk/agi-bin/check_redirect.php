@@ -16,7 +16,7 @@ require_once 'Globals.php';
 $chan       = trim($argv[1]);
 $agi        = new AGI();
 $DIALSTATUS = $agi->get_variable('DIALSTATUS', true);
-$linkedid   = $agi->get_variable('CDR(linkedid)', true);
+$linkedid   = $agi->get_variable('CHANNEL(linkedid)', true);
 if ($chan === '' && 'ANSWER' === $DIALSTATUS) {
     exit;
 }
