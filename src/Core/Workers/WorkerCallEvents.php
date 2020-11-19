@@ -1215,8 +1215,11 @@ class WorkerCallEvents extends WorkerBase
         /** @var CallDetailRecordsTmp $m_data */
         $m_data = CallDetailRecordsTmp::findFirst(
             [
-                "UNIQUEID=:id:",
-                'bind' => ['id' => $data['UNIQUEID'],],
+                "UNIQUEID=:id: AND linkedid=:linkedid:",
+                'bind' => [
+                    'id'       => $data['UNIQUEID'],
+                    'linkedid' => $data['linkedid']
+                ],
             ]
         );
         if ($m_data === null) {
