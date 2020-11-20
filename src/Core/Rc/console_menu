@@ -24,7 +24,6 @@ use MikoPBX\Core\System\{Configs\IptablesConf,
     MikoPBXConfig,
     Storage};
 use MikoPBX\Service\Main;
-
 require_once('Globals.php');
 
 Util::setCyrillicFont();
@@ -103,7 +102,7 @@ EOD;
 
 $firewallWarning = function () {
     if (PbxSettings::getValueByKey('PBXFirewallEnabled') === '0') {
-        return "\033[01;31m (" . Util::translate('Firewall disabled') . ") \033[39m";
+        return "\033[01;34m (" . Util::translate('Firewall disabled') . ") \033[39m";
     }
 };
 
