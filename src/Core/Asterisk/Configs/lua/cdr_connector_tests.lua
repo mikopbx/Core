@@ -26,7 +26,7 @@ function tests:t_dial()
     }
     channel['CALLERID(num)'] = ask_var:new('74952293042')
     channel['CHANNEL(peername)'] = ask_var:new('104')
-    channel['CDR(linkedid)'] = ask_var:new('1557224457.0022')
+    channel['CHANNEL(linkedid)'] = ask_var:new('1557224457.0022')
 
     local number_test;
 
@@ -183,7 +183,7 @@ function tests:t_event_dial_create_chan()
     }
     channel['CALLERID(num)']     = ask_var:new('74952293042')
     channel['CHANNEL(peername)'] = ask_var:new('')
-    channel['CDR(linkedid)']     = ask_var:new('1557224457.0022')
+    channel['CHANNEL(linkedid)'] = ask_var:new('1557224457.0022')
 
     number_test = 11
     local res = event_dial_create_chan();
@@ -231,7 +231,7 @@ function tests:t_event_dial_answer()
     }
     channel['CALLERID(num)'] = ask_var:new('74952293042')
     channel['CHANNEL(peername)'] = ask_var:new('104')
-    channel['CDR(linkedid)'] = ask_var:new('1557224457.0022')
+    channel['CHANNEL(linkedid)'] = ask_var:new('1557224457.0022')
 
     number_test = 14
     channel['peer_mobile']  = ask_var:new('89257184444')
@@ -307,7 +307,7 @@ function tests:t_event_transfer_dial_hangup()
     }
     channel['CALLERID(num)'] = ask_var:new('74952293042')
     channel['CHANNEL(peername)'] = ask_var:new('104')
-    channel['CDR(linkedid)'] = ask_var:new('1557224457.0022')
+    channel['CHANNEL(linkedid)'] = ask_var:new('1557224457.0022')
 
     number_test = 20
     channel['peer_mobile']  = ask_var:new('89257184444')
@@ -350,7 +350,7 @@ function tests:t_event_hangup_chan()
     }
     channel['CALLERID(num)'] = ask_var:new('74952293042')
     channel['CHANNEL(peername)'] = ask_var:new('104')
-    channel['CDR(linkedid)'] = ask_var:new('1557224457.0022')
+    channel['CHANNEL(linkedid)'] = ask_var:new('1557224457.0022')
 
     local number_test = 23
     channel['DIALSTATUS']  = ask_var:new('ANSWER')
@@ -393,7 +393,7 @@ function tests:t_event_queue_start()
     }
     channel['CALLERID(num)']    = ask_var:new('74952293042')
     channel['CHANNEL(peername)']= ask_var:new('104')
-    channel['CDR(linkedid)']    = ask_var:new('1557224457.0022')
+    channel['CHANNEL(linkedid)']    = ask_var:new('1557224457.0022')
     channel['CDR(dstchannel)']  = ask_var:new('')
 
     local number_test = 26
@@ -446,7 +446,7 @@ function tests:t_event_dial_app()
     }
     channel['CALLERID(num)']    = ask_var:new('74952293042')
     channel['CHANNEL(peername)']= ask_var:new('104')
-    channel['CDR(linkedid)']    = ask_var:new('1557224457.0022')
+    channel['CHANNEL(linkedid)']    = ask_var:new('1557224457.0022')
     channel['CDR(dstchannel)']  = ask_var:new('')
 
 

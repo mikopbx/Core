@@ -391,7 +391,7 @@ class WorkerCallEvents extends WorkerBase
                 continue;
             }
 
-            $linkedid = $this->am->GetVar($data_chan['chan'], 'CDR(linkedid)', null, false);
+            $linkedid = $this->am->GetVar($data_chan['chan'], 'CHANNEL(linkedid)', null, false);
             if ( empty($linkedid) || $linkedid === $data['linkedid']) {
                 continue;
             }
@@ -1212,8 +1212,11 @@ class WorkerCallEvents extends WorkerBase
         /** @var CallDetailRecordsTmp $m_data */
         $m_data = CallDetailRecordsTmp::findFirst(
             [
-                "UNIQUEID=:id:",
-                'bind' => ['id' => $data['UNIQUEID'],],
+                "UNIQUEID=:id: AND linkedid=:linkedid:",
+                'bind' => [
+                    'id'       => $data['UNIQUEID'],
+                    'linkedid' => $data['linkedid']
+                ],
             ]
         );
         if ($m_data === null) {
