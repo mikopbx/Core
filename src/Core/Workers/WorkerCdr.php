@@ -23,8 +23,6 @@ class WorkerCdr extends WorkerBase
 
     public const SELECT_CDR_TUBE = 'select_cdr_tube';
     public const UPDATE_CDR_TUBE = 'update_cdr_tube';
-    protected int $maxProc=1;
-
 
     private BeanstalkClient $client_queue;
     private $internal_numbers = [];

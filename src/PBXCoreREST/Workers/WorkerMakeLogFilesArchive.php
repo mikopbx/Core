@@ -10,6 +10,7 @@ namespace MikoPBX\PBXCoreREST\Workers;
 
 require_once 'Globals.php';
 
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\System\Util;

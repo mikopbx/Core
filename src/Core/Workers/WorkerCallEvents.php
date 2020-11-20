@@ -17,9 +17,6 @@ use Throwable;
 
 class WorkerCallEvents extends WorkerBase
 {
-    // Максимальное количество экземпляров данныого класса.
-    protected int $maxProc = 1;
-
     protected array $mixMonitorChannels = [];
     protected bool  $record_calls       = true;
     protected bool  $split_audio_thread = false;

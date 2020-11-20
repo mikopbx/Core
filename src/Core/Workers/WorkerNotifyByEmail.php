@@ -14,7 +14,6 @@ use Throwable;
 
 class WorkerNotifyByEmail extends WorkerBase
 {
-    protected int $maxProc=1;
     /**
      * Entry point
      *

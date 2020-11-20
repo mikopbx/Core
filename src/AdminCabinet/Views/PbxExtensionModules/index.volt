@@ -54,7 +54,7 @@
                 <input type="checkbox" {% if module['status']!=='disabled' %} checked {% endif %}/> <label></label>
             </div>
         </td>
-        <td class="{{ module['status'] }} disability">{{ t._('Breadcrumb'~module['uniqid']) }}<br><span
+        <td class="{{ module['status'] }} disability">{{ t._('Breadcrumb'~module['uniqid']) }} <i class="status-icon"></i><br><span
                     class="features">{{ t._('SubHeader'~module['uniqid']) }}</span></td>
         <td class="{{ module['status'] }} disability">{{ module['developer'] }}</td>
         <td class="{{ module['status'] }} disability version">{{ module['version'] }}</td>

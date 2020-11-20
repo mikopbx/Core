@@ -17,15 +17,15 @@ use Phalcon\Text;
 
 abstract class WorkerBase extends Di\Injectable implements WorkerInterface
 {
-    public int $currentProcId = 1;
     protected AsteriskManager $am;
-    protected int $maxProc = 1;
+    public int $maxProc = 1;
     protected bool $needRestart = false;
 
     /**
      * Workers shared constructor
+     * Do not remove FINAL there, use START function to add something
      */
-    public function __construct()
+    final public function __construct()
     {
         pcntl_async_signals(true);
         pcntl_signal(
@@ -33,45 +33,7 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
             [$this, 'signalHandler']
         );
 
-        $this->checkCountProcesses();
         $this->savePidFile();
-    }
-
-    /**
-     * Calculates how many processes have started already and kill excess or old processes
-     */
-    private function checkCountProcesses(): void
-    {
-        $activeAnotherProcesses = Processes::getPidOfProcess(static::class, getmypid());
-        $processes              = explode(' ', $activeAnotherProcesses);
-        if (empty($processes[0])) {
-            array_shift($processes);
-        }
-        $countProc = count($processes) + 1;
-        $killApp   = Util::which('kill');
-        if ($this->maxProc === 1 && $countProc > 1) {
-            // Kill old processes with timeout, maybe it is soft restart and worker die without any help
-            Processes::mwExec("{$killApp} SIGUSR1 {$activeAnotherProcesses}");
-        } elseif ($this->maxProc > $countProc) {
-            // Start additional processes
-            while ($countProc < $this->maxProc) {
-                sleep(3);
-                Processes::processPHPWorker(static::class, 'start', 'multiStart');
-                $countProc++;
-            }
-        } elseif ($this->maxProc < $countProc) {
-            // Получим количество лишних процессов.
-            $countProc4Kill = $countProc - $this->maxProc;
-            // Завершим лишние
-            while ($countProc4Kill >= 0) {
-                if ( ! isset($processes[$countProc4Kill])) {
-                    break;
-                }
-                // Kill old processes with timeout, maybe it is soft restart and worker die without any help
-                Processes::mwExec("{$killApp} SIGUSR1 {$processes[$countProc4Kill]}");
-                $countProc4Kill--;
-            }
-        }
     }
 
     /**
@@ -162,10 +124,6 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
      */
     public function __destruct()
     {
-        $pidFilesDir = dirname($this->getPidFile());
-        $pidFile     = $pidFilesDir . '/' . pathinfo($this->getPidFile(), PATHINFO_BASENAME);
-        // Delete old PID files
-        $rm = Util::which('rm');
-        Processes::mwExec("{$rm} -rf {$pidFile}*");
+        $this->savePidFile();
     }
 }

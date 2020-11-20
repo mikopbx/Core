@@ -10,6 +10,7 @@
 class PbxExtensionStatus {
 	initialize(uniqid, changeLabel = true) {
 		this.$toggle = $(`.ui.toggle.checkbox[data-value="${uniqid}"]`);
+		this.$statusIcon = $(`tr#${uniqid} i.status-icon`);
 		if (changeLabel) {
 			this.$label = $(`.ui.toggle.checkbox[data-value="${uniqid}"]`).find('label');
 		} else {
@@ -30,12 +31,14 @@ class PbxExtensionStatus {
 		}
 	}
 	cbOnChecked() {
+		this.$statusIcon.addClass('spinner loading icon');
 		this.$toggle.addClass('disabled');
 		this.changeLabelText(globalTranslate.ext_ModuleStatusChanging);
 		const cbAfterModuleEnable = $.proxy(this.cbAfterModuleEnable, this);
 		PbxApi.SystemEnableModule(this.uniqid, cbAfterModuleEnable);
 	}
 	cbOnUnchecked() {
+		this.$statusIcon.addClass('spinner loading icon');
 		this.$toggle.addClass('disabled');
 		this.changeLabelText(globalTranslate.ext_ModuleStatusChanging);
 		const cbAfterModuleDisable = $.proxy(this.cbAfterModuleDisable, this);
@@ -44,6 +47,7 @@ class PbxExtensionStatus {
 	cbAfterModuleDisable(response, success) {
 		if (success) {
 			this.$toggle.checkbox('set unchecked');
+			this.$statusIcon.removeClass('spinner loading icon');
 			this.changeLabelText(globalTranslate.ext_ModuleDisabledStatusDisabled);
 			const event = document.createEvent('Event');
 			event.initEvent('ModuleStatusChanged', false, true);
@@ -63,6 +67,7 @@ class PbxExtensionStatus {
 			}
 		}
 		this.$toggle.removeClass('disabled');
+		this.$statusIcon.removeClass('spinner loading icon');
 	}
 	cbAfterModuleEnable(response, success) {
 		if (success) {
@@ -86,6 +91,7 @@ class PbxExtensionStatus {
 			}
 		}
 		this.$toggle.removeClass('disabled');
+		this.$statusIcon.removeClass('spinner loading icon');
 	}
 }
 
