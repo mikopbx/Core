@@ -284,6 +284,17 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface, 
     }
 
     /**
+     * Переопределение опций Endpoint в pjsip.conf
+     * @param string $id
+     * @param array $options
+     * @return array
+     */
+    public function overridePJSIPOptions(string $id, array $options):array{
+
+        return $options;
+    }
+
+    /**
      * Кастомизация исходящего контекста для конкретного маршрута.
      *
      * @param $rout
