@@ -15,7 +15,6 @@ use Throwable;
 
 class WorkerRemoveOldRecords extends WorkerBase
 {
-    protected int $maxProc=1;
 
     public function start($argv): void
     {

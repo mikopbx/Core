@@ -10,6 +10,8 @@
 class PbxExtensionStatus {
 	initialize(uniqid, changeLabel = true) {
 		this.$toggle = $(`.ui.toggle.checkbox[data-value="${uniqid}"]`);
+		this.$allToggles = $(`.ui.toggle.checkbox`);
+		this.$statusIcon = $(`tr#${uniqid} i.status-icon`);
 		if (changeLabel) {
 			this.$label = $(`.ui.toggle.checkbox[data-value="${uniqid}"]`).find('label');
 		} else {
@@ -30,13 +32,17 @@ class PbxExtensionStatus {
 		}
 	}
 	cbOnChecked() {
-		this.$toggle.addClass('disabled');
+		this.$statusIcon.addClass('spinner loading icon');
+		this.$allToggles.addClass('disabled');
+		$('a.button').addClass('disabled');
 		this.changeLabelText(globalTranslate.ext_ModuleStatusChanging);
 		const cbAfterModuleEnable = $.proxy(this.cbAfterModuleEnable, this);
 		PbxApi.SystemEnableModule(this.uniqid, cbAfterModuleEnable);
 	}
 	cbOnUnchecked() {
-		this.$toggle.addClass('disabled');
+		this.$statusIcon.addClass('spinner loading icon');
+		this.$allToggles.addClass('disabled');
+		$('a.button').addClass('disabled');
 		this.changeLabelText(globalTranslate.ext_ModuleStatusChanging);
 		const cbAfterModuleDisable = $.proxy(this.cbAfterModuleDisable, this);
 		PbxApi.SystemDisableModule(this.uniqid, cbAfterModuleDisable);
@@ -44,6 +50,7 @@ class PbxExtensionStatus {
 	cbAfterModuleDisable(response, success) {
 		if (success) {
 			this.$toggle.checkbox('set unchecked');
+			this.$statusIcon.removeClass('spinner loading icon');
 			this.changeLabelText(globalTranslate.ext_ModuleDisabledStatusDisabled);
 			const event = document.createEvent('Event');
 			event.initEvent('ModuleStatusChanged', false, true);
@@ -62,7 +69,9 @@ class PbxExtensionStatus {
 				UserMessage.showMultiString(response.messages, globalTranslate.ext_ModuleChangeStatusError);
 			}
 		}
-		this.$toggle.removeClass('disabled');
+		this.$allToggles.removeClass('disabled');
+		$('a.button').removeClass('disabled');
+		this.$statusIcon.removeClass('spinner loading icon');
 	}
 	cbAfterModuleEnable(response, success) {
 		if (success) {
@@ -85,7 +94,9 @@ class PbxExtensionStatus {
 				UserMessage.showMultiString(response.messages, globalTranslate.ext_ModuleChangeStatusError);
 			}
 		}
-		this.$toggle.removeClass('disabled');
+		this.$allToggles.removeClass('disabled');
+		this.$statusIcon.removeClass('spinner loading icon');
+		$('a.button').removeClass('disabled');
 	}
 }
 

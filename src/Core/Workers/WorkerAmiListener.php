@@ -18,7 +18,6 @@ class WorkerAmiListener extends WorkerBase
     protected BeanstalkClient $client;
 
     protected AsteriskManager $am;
-    protected int $maxProc=1;
 
     /**
      * Установка фильтра

@@ -33,7 +33,7 @@ class WorkerApiCommands extends WorkerBase
      *
      * @var int
      */
-    protected int $maxProc = 2;
+    public int $maxProc = 2;
 
     /**
      * Available REST API processors
@@ -57,7 +57,6 @@ class WorkerApiCommands extends WorkerBase
             $beanstalk->wait();
         }
         if ($this->needRestart){
-            Processes::processPHPWorker(self::class,'start','restart');
             Processes::restartAllWorkers();
         }
     }

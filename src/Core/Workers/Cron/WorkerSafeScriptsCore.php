@@ -110,9 +110,7 @@ class WorkerSafeScriptsCore extends WorkerBase
      */
     public function restartWorker($workerClassName): ?Generator
     {
-        if ($workerClassName!==WorkerApiCommands::class){
-            Processes::processPHPWorker($workerClassName);
-        }
+        Processes::processPHPWorker($workerClassName, 'start','restart');
         yield;
     }
 

@@ -16,7 +16,6 @@ class WorkerNotifyError extends WorkerBase
     private array $queue = [];
     private int $starting_point = 0;
     private int $interval = 28800;
-    protected int $maxProc=1;
 
     /**
      * Наполняем очередь уведомлениями.

@@ -17,7 +17,8 @@ class WorkerSafeScriptsCoreTest extends AbstractUnitTest
 
     public function testRestartAllWorkers():void
     {
-        WorkerSafeScriptsCore::restartAllWorkers();
+        $worker = new WorkerSafeScriptsCore();
+        $worker->restart();
         $this->assertTrue(true);
     }
 

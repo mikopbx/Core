@@ -42,7 +42,7 @@ class Processes
     public static function mwExec($command, &$outArr = null, &$retVal = null): int
     {
         $retVal = 0;
-        $outArr   = [];
+        $outArr = [];
         $di     = Di::getDefault();
 
         if ($di !== null && $di->getShared('config')->path('core.debugMode')) {
@@ -52,29 +52,6 @@ class Processes
         }
 
         return $retVal;
-    }
-
-    /**
-     * Executes command exec() as background process.
-     *
-     * @param $command
-     * @param $out_file
-     * @param $sleep_time
-     */
-    public static function mwExecBg($command, $out_file = '/dev/null', $sleep_time = 0): void
-    {
-        $nohupPath = Util::which('nohup');
-        $shPath    = Util::which('sh');
-        $rmPath    = Util::which('rm');
-        $sleepPath = Util::which('sleep');
-        if ($sleep_time > 0) {
-            $filename = '/tmp/' . time() . '_noop.sh';
-            file_put_contents($filename, "{$sleepPath} {$sleep_time}; {$command}; {$rmPath} -rf {$filename}");
-            $noop_command = "{$nohupPath} {$shPath} {$filename} > {$out_file} 2>&1 &";
-        } else {
-            $noop_command = "{$nohupPath} {$command} > {$out_file} 2>&1 &";
-        }
-        exec($noop_command);
     }
 
     /**
@@ -121,7 +98,6 @@ class Processes
         }
     }
 
-
     /**
      * Restart all workers in separate process,
      * we use this method after module install or delete
@@ -134,93 +110,85 @@ class Processes
         self::mwExec($WorkerSafeScripts);
     }
 
-
     /**
      * Process PHP workers
      *
      * @param string $className
-     * @param string $param
+     * @param string $paramForPHPWorker
      * @param string $action
      */
-    public static function processPHPWorker(string $className, string $param = 'start', string $action='restart'): void
-    {
+    public static function processPHPWorker(
+        string $className,
+        string $paramForPHPWorker = 'start',
+        string $action = 'restart'
+    ): void {
         $workerPath = Util::getFilePathByClassName($className);
-        if ( ! empty($workerPath)) {
-            $command = "php -f {$workerPath}";
-            $path_kill  = Util::which('kill');
-            $path_nohup = Util::which('nohup');
-            $WorkerPID = self::getPidOfProcess($className);
-            switch ($action) {
-                case 'restart':
-                    // Firstly start new process
-                    self::mwExec("{$path_nohup} {$command} {$param}  > /dev/null 2>&1 &");
-
-                    // Then kill the old one
-                    if ($WorkerPID !== '') {
-                        self::mwExec("{$path_kill} SIGUSR1 {$WorkerPID}  > /dev/null 2>&1 &");
-                    }
-                    break;
-                case 'stop':
-                    if ($WorkerPID !== '') {
-                        self::mwExec("{$path_kill} SIGUSR1 {$WorkerPID}  > /dev/null 2>&1 &");
-                    }
-                    break;
-                case 'start':
-                    if ($WorkerPID === '') {
-                        self::mwExec("{$path_nohup} {$command} {$param}  > /dev/null 2>&1 &");
-                    }
-                    break;
-                case 'multiStart':
-                    self::mwExec("{$path_nohup} {$command} {$param}  > /dev/null 2>&1 &");
-                    break;
-                default:
-            }
+        if (empty($workerPath)) {
+            return;
         }
-    }
+        $command         = "php -f {$workerPath}";
+        $path_kill       = Util::which('kill');
+        $activeProcesses = self::getPidOfProcess($className);
+        $processes       = explode(' ', $activeProcesses);
+        if (empty($processes[0])) {
+            array_shift($processes);
+        }
+        $currentProcCount = count($processes);
 
-    /**
-     * Manages a daemon/worker process
-     * Returns process statuses by name of it
-     *
-     * @param $cmd
-     * @param $param
-     * @param $proc_name
-     * @param $action
-     * @param $out_file
-     *
-     * @return array | bool
-     */
-    public static function processWorker($cmd, $param, $proc_name, $action, $out_file = '/dev/null')
-    {
-        $path_kill  = Util::which('kill');
-        $path_nohup = Util::which('nohup');
-
-        $WorkerPID = self::getPidOfProcess($proc_name);
+        if ( ! class_exists($className)) {
+            return;
+        }
+        $workerObject    = new $className();
+        $neededProcCount = $workerObject->maxProc;
 
         switch ($action) {
-            case 'status':
-                $status = ($WorkerPID !== '') ? 'Started' : 'Stoped';
-                return ['status' => $status, 'app' => $proc_name, 'PID' => $WorkerPID];
             case 'restart':
-                if ($WorkerPID !== '') {
-                    self::mwExec("{$path_kill} -9 {$WorkerPID}  > /dev/null 2>&1 &");
+                // Stop all old workers
+                if ($activeProcesses !== '') {
+                    self::mwExec("{$path_kill} SIGUSR1 {$activeProcesses}  > /dev/null 2>&1 &");
+                    self::mwExecBgWithTimeout("{$path_kill} SIGTERM {$activeProcesses}", 10);
+                    $currentProcCount = 0;
                 }
-                self::mwExec("{$path_nohup} {$cmd} {$param}  > {$out_file} 2>&1 &");
+
+                // Start new processes
+                while ($currentProcCount < $neededProcCount) {
+                    self::mwExecBg("{$command} {$paramForPHPWorker}");
+                    $currentProcCount++;
+                }
+
                 break;
             case 'stop':
-                if ($WorkerPID !== '') {
-                    self::mwExec("{$path_kill} -9 {$WorkerPID}  > /dev/null 2>&1 &");
+                if ($activeProcesses !== '') {
+                    self::mwExec("{$path_kill} SIGUSR1 {$activeProcesses}  > /dev/null 2>&1 &");
+                    self::mwExecBgWithTimeout("{$path_kill} SIGTERM {$activeProcesses}", 10);
                 }
                 break;
             case 'start':
-                if ($WorkerPID === '') {
-                    self::mwExec("{$path_nohup} {$cmd} {$param}  > {$out_file} 2>&1 &");
+                if ($currentProcCount === $neededProcCount) {
+                    return;
+                } elseif ($neededProcCount > $currentProcCount) {
+                    // Start additional processes
+                    while ($currentProcCount < $neededProcCount) {
+                        self::mwExecBg("{$command} {$paramForPHPWorker}");
+                        $currentProcCount++;
+                    }
+                } elseif ($currentProcCount > $neededProcCount) {
+                    // Find redundant processes
+                    $countProc4Kill = $neededProcCount - $currentProcCount;
+                    // Send SIGUSR1 command to them
+                    while ($countProc4Kill >= 0) {
+                        if ( ! isset($processes[$countProc4Kill])) {
+                            break;
+                        }
+                        // Kill old processes with timeout, maybe it is soft restart and worker die without any help
+                        self::mwExec("{$path_kill} SIGUSR1 {$processes[$countProc4Kill]}  > /dev/null 2>&1 &");
+                        self::mwExecBgWithTimeout("{$path_kill} SIGTERM {$processes[$countProc4Kill]}", 10);
+                        $countProc4Kill--;
+                    }
                 }
                 break;
             default:
         }
-
-        return true;
     }
 
     /**
@@ -249,6 +217,75 @@ class Processes
         );
 
         return trim(implode(' ', $out));
+    }
+
+    /**
+     * Executes command exec() as background process.
+     *
+     * @param $command
+     * @param $out_file
+     * @param $sleep_time
+     */
+    public static function mwExecBg($command, $out_file = '/dev/null', $sleep_time = 0): void
+    {
+        $nohupPath = Util::which('nohup');
+        $shPath    = Util::which('sh');
+        $rmPath    = Util::which('rm');
+        $sleepPath = Util::which('sleep');
+        if ($sleep_time > 0) {
+            $filename = '/tmp/' . time() . '_noop.sh';
+            file_put_contents($filename, "{$sleepPath} {$sleep_time}; {$command}; {$rmPath} -rf {$filename}");
+            $noop_command = "{$nohupPath} {$shPath} {$filename} > {$out_file} 2>&1 &";
+        } else {
+            $noop_command = "{$nohupPath} {$command} > {$out_file} 2>&1 &";
+        }
+        exec($noop_command);
+    }
+
+    /**
+     * Manages a daemon/worker process
+     * Returns process statuses by name of it
+     *
+     * @param $cmd
+     * @param $param
+     * @param $proc_name
+     * @param $action
+     * @param $out_file
+     *
+     * @return array | bool
+     */
+    public static function processWorker($cmd, $param, $proc_name, $action, $out_file = '/dev/null')
+    {
+        $path_kill  = Util::which('kill');
+        $path_nohup = Util::which('nohup');
+
+        $WorkerPID = self::getPidOfProcess($proc_name);
+
+        switch ($action) {
+            case 'status':
+                $status = ($WorkerPID !== '') ? 'Started' : 'Stoped';
+
+                return ['status' => $status, 'app' => $proc_name, 'PID' => $WorkerPID];
+            case 'restart':
+                if ($WorkerPID !== '') {
+                    self::mwExec("{$path_kill} -9 {$WorkerPID}  > /dev/null 2>&1 &");
+                }
+                self::mwExec("{$path_nohup} {$cmd} {$param}  > {$out_file} 2>&1 &");
+                break;
+            case 'stop':
+                if ($WorkerPID !== '') {
+                    self::mwExec("{$path_kill} -9 {$WorkerPID}  > /dev/null 2>&1 &");
+                }
+                break;
+            case 'start':
+                if ($WorkerPID === '') {
+                    self::mwExec("{$path_nohup} {$cmd} {$param}  > {$out_file} 2>&1 &");
+                }
+                break;
+            default:
+        }
+
+        return true;
     }
 
 }

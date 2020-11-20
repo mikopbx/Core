@@ -200,10 +200,12 @@ const extensionModules = {
 			);
 		} else if (result===false && params.length > 0){
 			UserMessage.showMultiString(params);
+			$('a.button').removeClass('disabled');
 		} else {
 			UserMessage.showMultiString(globalTranslate.ext_NoLicenseAvailable);
+			$('a.button').removeClass('disabled');
 		}
-		$('a.button').removeClass('disabled');
+
 	},
 	/**
 	 * Если сайт вернул ссылку на обновление
@@ -267,7 +269,7 @@ const extensionModules = {
 				} else {
 					UserMessage.showMultiString(globalTranslate.ext_InstallationError);
 				}
-				$('a.button').removeClass('disabled');
+				params.aLink.removeClass('disabled');
 				if (params.action === 'update') {
 					params.aLink.find('i').removeClass('loading');
 				} else {
