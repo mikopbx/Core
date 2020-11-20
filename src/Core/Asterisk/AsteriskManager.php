@@ -1447,7 +1447,7 @@ class AsteriskManager
             return $result;
         }
         foreach ($conf_data['data']['MeetmeList'] as $user_data) {
-            $user_data['linkedid']  = $this->GetVar($user_data['Channel'], 'CDR(linkedid)', null, false);
+            $user_data['linkedid']  = $this->GetVar($user_data['Channel'], 'CHANNEL(linkedid)', null, false);
             $user_data['meetme_id'] = $this->GetVar($user_data['Channel'], 'MEETMEUNIQUEID', null, false);
 
             foreach ($vars as $var) {
