@@ -20,7 +20,7 @@ namespace MikoPBX\Common\Providers;
 
 
 use Phalcon\Cache;
-use Phalcon\Cache\AdapterFactory;
+use Phalcon\Cache\Adapter\Stream;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 use Phalcon\Storage\SerializerFactory;
@@ -41,23 +41,22 @@ class ManagedCacheProvider implements ServiceProviderInterface
     public function register(DiInterface $di): void
     {
         if (posix_getuid() === 0) {
-            $prefix = 'Back-managed-';
+            $tempDir = $di->getShared('config')->path('core.managedCacheDir');
         } else {
-            $prefix = 'Front-managed-';
+            $tempDir = $di->getShared('config')->path('www.managedCacheDir');
         }
         $di->setShared(
             self::SERVICE_NAME,
-            function () use ($prefix) {
+            function () use ($tempDir){
                 $serializerFactory = new SerializerFactory();
-                $adapterFactory    = new AdapterFactory($serializerFactory);
 
                 $options = [
-                    'defaultSerializer' => 'php',
+                    'defaultSerializer' => 'Php',
                     'lifetime'          => 7200,
-                    'prefix'            => $prefix,
+                    'storageDir'        => $tempDir,
                 ];
 
-                $adapter = $adapterFactory->newInstance('apcu', $options);
+                $adapter = new Stream ($serializerFactory, $options);
 
                 return new Cache($adapter);
             }

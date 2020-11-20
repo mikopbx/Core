@@ -833,22 +833,18 @@ abstract class ModelsBase extends Model
             $managedCache = $di->getShared('managedCache');
             $category     = explode('\\', $calledClass)[3];
             $keys         = $managedCache->getAdapter()->getKeys($category);
-            $prefix       = $managedCache->getAdapter()->getPrefix();
             // Delete all items from the cache
-            foreach ($keys as $key) {
-                $unPrefixedKey = str_ireplace($prefix, '', $key);
-                $managedCache->delete($unPrefixedKey);
+            if (count($keys) > 0) {
+                $managedCache->deleteMultiple($keys);
             }
         }
         if ($di->has('modelsCache')) {
             $modelsCache = $di->getShared('modelsCache');
             $category    = explode('\\', $calledClass)[3];
             $keys        = $modelsCache->getAdapter()->getKeys($category);
-            $prefix      = $modelsCache->getAdapter()->getPrefix();
             // Delete all items from the cache
-            foreach ($keys as $key) {
-                $unPrefixedKey = str_ireplace($prefix, '', $key);
-                $modelsCache->delete($unPrefixedKey);
+            if (count($keys) > 0) {
+                $modelsCache->deleteMultiple($keys);
             }
         }
         if ($needClearFrontedCache
@@ -858,7 +854,7 @@ abstract class ModelsBase extends Model
             $queue->publish(
                     $calledClass,
                     CacheCleanerPlugin::class,
-                    PheanstalkInterface::DEFAULT_PRIORITY,
+                    0,
                     PheanstalkInterface::DEFAULT_DELAY,
                     3600
                 );
