@@ -73,7 +73,6 @@ const upgradeStatusLoopWorker = {
 			UserMessage.showMultiString(response,globalTranslate.ext_InstallationError);
 		} else {
 			// Check installation status
-			$('a.button').removeClass('disabled');
 			if (upgradeStatusLoopWorker.needEnableAfterInstall) {
 				PbxApi.SystemEnableModule(
 					upgradeStatusLoopWorker.moduleUniqid,

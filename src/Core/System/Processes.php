@@ -146,6 +146,7 @@ class Processes
                 // Stop all old workers
                 if ($activeProcesses !== '') {
                     self::mwExec("{$path_kill} SIGUSR1 {$activeProcesses}  > /dev/null 2>&1 &");
+                    self::mwExecBgWithTimeout("{$path_kill} SIGTERM {$activeProcesses}", 10);
                     $currentProcCount = 0;
                 }
 
@@ -159,6 +160,7 @@ class Processes
             case 'stop':
                 if ($activeProcesses !== '') {
                     self::mwExec("{$path_kill} SIGUSR1 {$activeProcesses}  > /dev/null 2>&1 &");
+                    self::mwExecBgWithTimeout("{$path_kill} SIGTERM {$activeProcesses}", 10);
                 }
                 break;
             case 'start':
@@ -180,6 +182,7 @@ class Processes
                         }
                         // Kill old processes with timeout, maybe it is soft restart and worker die without any help
                         self::mwExec("{$path_kill} SIGUSR1 {$processes[$countProc4Kill]}  > /dev/null 2>&1 &");
+                        self::mwExecBgWithTimeout("{$path_kill} SIGTERM {$processes[$countProc4Kill]}", 10);
                         $countProc4Kill--;
                     }
                 }

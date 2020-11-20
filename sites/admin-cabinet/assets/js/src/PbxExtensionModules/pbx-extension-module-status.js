@@ -10,6 +10,7 @@
 class PbxExtensionStatus {
 	initialize(uniqid, changeLabel = true) {
 		this.$toggle = $(`.ui.toggle.checkbox[data-value="${uniqid}"]`);
+		this.$allToggles = $(`.ui.toggle.checkbox`);
 		this.$statusIcon = $(`tr#${uniqid} i.status-icon`);
 		if (changeLabel) {
 			this.$label = $(`.ui.toggle.checkbox[data-value="${uniqid}"]`).find('label');
@@ -32,14 +33,16 @@ class PbxExtensionStatus {
 	}
 	cbOnChecked() {
 		this.$statusIcon.addClass('spinner loading icon');
-		this.$toggle.addClass('disabled');
+		this.$allToggles.addClass('disabled');
+		$('a.button').addClass('disabled');
 		this.changeLabelText(globalTranslate.ext_ModuleStatusChanging);
 		const cbAfterModuleEnable = $.proxy(this.cbAfterModuleEnable, this);
 		PbxApi.SystemEnableModule(this.uniqid, cbAfterModuleEnable);
 	}
 	cbOnUnchecked() {
 		this.$statusIcon.addClass('spinner loading icon');
-		this.$toggle.addClass('disabled');
+		this.$allToggles.addClass('disabled');
+		$('a.button').addClass('disabled');
 		this.changeLabelText(globalTranslate.ext_ModuleStatusChanging);
 		const cbAfterModuleDisable = $.proxy(this.cbAfterModuleDisable, this);
 		PbxApi.SystemDisableModule(this.uniqid, cbAfterModuleDisable);
@@ -66,7 +69,8 @@ class PbxExtensionStatus {
 				UserMessage.showMultiString(response.messages, globalTranslate.ext_ModuleChangeStatusError);
 			}
 		}
-		this.$toggle.removeClass('disabled');
+		this.$allToggles.removeClass('disabled');
+		$('a.button').removeClass('disabled');
 		this.$statusIcon.removeClass('spinner loading icon');
 	}
 	cbAfterModuleEnable(response, success) {
@@ -90,8 +94,9 @@ class PbxExtensionStatus {
 				UserMessage.showMultiString(response.messages, globalTranslate.ext_ModuleChangeStatusError);
 			}
 		}
-		this.$toggle.removeClass('disabled');
+		this.$allToggles.removeClass('disabled');
 		this.$statusIcon.removeClass('spinner loading icon');
+		$('a.button').removeClass('disabled');
 	}
 }
 
