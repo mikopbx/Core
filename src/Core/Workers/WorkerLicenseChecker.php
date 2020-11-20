@@ -25,7 +25,6 @@ class WorkerLicenseChecker extends WorkerBase
             $lic->checkPBX();
             $lic->checkModules();
             $managedCache->set('lastLicenseCheck', time(), 3600);
-            Util::sysLogMsg(__METHOD__, 'Check'); //TODO:: Убрать
         }
     }
 
