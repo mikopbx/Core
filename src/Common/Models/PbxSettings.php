@@ -129,7 +129,7 @@ class PbxSettings extends ModelsBase
             'PBXFirewallEnabled'              => '0',
             'PBXFail2BanEnabled'              => '0',
             'PBXTimezone'                     => 'Europe/Moscow',
-            'PBXVersion'                      => '1',
+            'PBXVersion'                      => '2020.1.1',
             'WebAdminLogin'                   => 'admin',
             'WebAdminPassword'                => 'admin',
             'WebAdminLanguage'                => 'en',
