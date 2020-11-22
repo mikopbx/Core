@@ -9,14 +9,13 @@
 namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
 use MikoPBX\Core\System\{BeanstalkClient, MikoPBXConfig, Notifications, Util};
-use Error;
+use Throwable;
 
 class WorkerNotifyError extends WorkerBase
 {
     private array $queue = [];
     private int $starting_point = 0;
     private int $interval = 28800;
-    protected int $maxProc=1;
 
     /**
      * Наполняем очередь уведомлениями.
@@ -31,7 +30,7 @@ class WorkerNotifyError extends WorkerBase
         $client->subscribe('WorkerNotifyError_storage', [$this, 'onStorageError']);
         $client->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
 
-        while (true) {
+        while ($this->needRestart === false) {
             $client->wait();
         }
     }
@@ -120,7 +119,7 @@ if (isset($argv) && count($argv) > 1 && $argv[1] === 'start') {
     try {
         $worker = new $workerClassname();
         $worker->start($argv);
-    } catch (Error $e) {
+    } catch (Throwable $e) {
         global $errorLogger;
         $errorLogger->captureException($e);
         Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage());

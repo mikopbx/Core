@@ -11,6 +11,7 @@ namespace MikoPBX\Core\System\Configs;
 
 
 use MikoPBX\Core\System\MikoPBXConfig;
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 
 class VMWareToolsConf
@@ -31,7 +32,7 @@ class VMWareToolsConf
      */
     public function configure(): void
     {
-        Util::killByName("vmtoolsd");
+        Processes::killByName("vmtoolsd");
         $virtualHW = $this->mikoPBXConfig->getGeneralSettings('VirtualHardwareType');
         if ('VMWARE' === $virtualHW) {
             $conf = "[logging]\n"
@@ -47,7 +48,7 @@ class VMWareToolsConf
 
             file_put_contents("{$dirVM}/tools.conf", $conf);
             $vmtoolsdPath = Util::which('vmtoolsd');
-            Util::mwExec("{$vmtoolsdPath} --background=/var/run/vmtoolsd.pid > /dev/null 2> /dev/null");
+            Processes::mwExec("{$vmtoolsdPath} --background=/var/run/vmtoolsd.pid > /dev/null 2> /dev/null");
         }
     }
 }

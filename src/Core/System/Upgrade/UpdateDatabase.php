@@ -15,7 +15,8 @@ use Phalcon\Db\Column;
 use Phalcon\Db\Index;
 use Phalcon\Di;
 use ReflectionClass;
-use Error;
+
+use Throwable;
 
 use function MikoPBX\Common\Config\appPath;
 
@@ -38,7 +39,7 @@ class UpdateDatabase extends Di\Injectable
             RegisterDIServices::recreateDBConnections(); // after storage remount
             $this->updateDbStructureByModelsAnnotations();
             RegisterDIServices::recreateDBConnections(); // if we change anything in structure
-        } catch (Error $e) {
+        } catch (Throwable $e) {
             Util::echoWithSyslog('Errors within database upgrade process '.$e->getMessage());
         }
     }
@@ -58,7 +59,7 @@ class UpdateDatabase extends Di\Injectable
             $moduleModelClass = "MikoPBX\\Common\\Models\\{$className}";
             try {
                 $this->createUpdateDbTableByAnnotations($moduleModelClass);
-            } catch (Error $exception){
+            } catch (Throwable $exception){
                 Util::echoWithSyslog('Errors within update table '.$className.' '.$exception->getMessage());
             }
         }
@@ -87,7 +88,7 @@ class UpdateDatabase extends Di\Injectable
             if ($reflection->isAbstract()) {
                 return true;
             }
-        } catch (\ReflectionException $exception) {
+        } catch (Throwable $exception) {
             return false;
         }
         $model                 = new $modelClassName();

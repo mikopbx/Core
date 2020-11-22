@@ -8,9 +8,8 @@
 
 namespace MikoPBX\Core\System;
 
-use MikoPBX\Common\Providers\PBXConfModulesProvider;
+use MikoPBX\Core\System\Configs\BeanstalkConf;
 use MikoPBX\Core\System\Configs\CronConf;
-use MikoPBX\Core\System\Configs\IptablesConf;
 use MikoPBX\Core\System\Configs\NatsConf;
 use MikoPBX\Core\System\Configs\NginxConf;
 use MikoPBX\Core\System\Configs\PHPConf;
@@ -39,9 +38,19 @@ class SystemLoader extends Di\Injectable
         $storage->mountSwap();
         Util::echoGreenDone();
 
+        Util::echoWithSyslog(' - Configuring network loopback interface ... ');
+        $network = new Network();
+        $network->loConfigure();
+        Util::echoGreenDone();
+
         Util::echoWithSyslog(' - Start syslogd daemon...');
         $syslogConf = new SyslogConf();
         $syslogConf->reStart();
+        Util::echoGreenDone();
+
+        Util::echoWithSyslog(' - Start beanstalkd daemon...');
+        $beanstalkConf = new BeanstalkConf();
+        $beanstalkConf->reStart();
         Util::echoGreenDone();
         
         $dbUpdater = new UpdateDatabase();
@@ -72,16 +81,11 @@ class SystemLoader extends Di\Injectable
         Util::echoGreenDone();
 
         Util::echoWithSyslog(' - Configuring hostname ... ');
-        $network = new Network();
         $network->hostnameConfigure();
         Util::echoGreenDone();
 
         Util::echoWithSyslog(' - Configuring resolv.conf ... ');
         $network->resolvConfGenerate();
-        Util::echoGreenDone();
-
-        Util::echoWithSyslog(' - Configuring network loopback interface ... ');
-        $network->loConfigure();
         Util::echoGreenDone();
 
         Util::echoWithSyslog(' - Configuring LAN interface ... ');

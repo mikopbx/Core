@@ -10,9 +10,11 @@ namespace MikoPBX\PBXCoreREST\Workers;
 
 require_once 'Globals.php';
 
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\System\Util;
+use Throwable;
 
 class WorkerMakeLogFilesArchive extends WorkerBase
 {
@@ -36,16 +38,16 @@ class WorkerMakeLogFilesArchive extends WorkerBase
         $za7Path     = Util::which('7za');
 
         if (file_exists($resultFile)) {
-            Util::mwExec("{$rmPath} -rf {$resultFile}");
+            Processes::mwExec("{$rmPath} -rf {$resultFile}");
         }
 
         $logDir = System::getLogDir();
-        Util::mwExec("{$za7Path} a -tzip -mx5 -spf '{$resultFile}' '{$logDir}'");
+        Processes::mwExec("{$za7Path} a -tzip -mx5 -spf '{$resultFile}' '{$logDir}'");
         $tcpDumpDir = "{$logDir}/tcpDump";
         file_put_contents($progress_file, '100');
 
         // Delete TCP dump
-        Util::mwExec("{$rmPath} -rf $tcpDumpDir");
+        Processes::mwExec("{$rmPath} -rf $tcpDumpDir");
     }
 }
 
@@ -56,7 +58,7 @@ if (isset($argv) && count($argv) > 1) {
     try {
         $worker = new $workerClassname();
         $worker->start($argv);
-    } catch (\Error $e) {
+    } catch (Throwable $e) {
         global $errorLogger;
         $errorLogger->captureException($e);
         Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage());

@@ -9,12 +9,12 @@
 namespace MikoPBX\PBXCoreREST\Lib;
 
 use MikoPBX\Core\System\Network;
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Workers\WorkerMakeLogFilesArchive;
 use Phalcon\Di;
 use Phalcon\Di\Injectable;
-use phpDocumentor\Reflection\Types\Self_;
 
 class SysLogsManagementProcessor extends Injectable
 {
@@ -103,7 +103,7 @@ class SysLogsManagementProcessor extends Injectable
             }
             $cmd .= " > $filenameTmp";
 
-            Util::mwExec("$cmd; chown www:www $filenameTmp");
+            Processes::mwExec("$cmd; chown www:www $filenameTmp");
             $res->data['cmd']=$cmd;
             $res->data['filename'] = $filenameTmp;
         }
@@ -132,7 +132,7 @@ class SysLogsManagementProcessor extends Injectable
         $arr_eth     = $network->getInterfacesNames();
         $tcpdumpPath = Util::which('tcpdump');
         foreach ($arr_eth as $eth) {
-            Util::mwExecBgWithTimeout(
+            Processes::mwExecBgWithTimeout(
                 "{$tcpdumpPath} -i {$eth} -n -s 0 -vvv -w {$tcpDumpDir}/{$eth}.pcap",
                 $timeout,
                 "{$tcpDumpDir}/{$eth}_out.log"
@@ -166,8 +166,8 @@ class SysLogsManagementProcessor extends Injectable
         $res->data['filename'] = $futureFileName;
         $res->success          = true;
 
-        Util::killByName('timeout');
-        Util::killByName('tcpdump');
+        Processes::killByName('timeout');
+        Processes::killByName('tcpdump');
 
         // Create background task
         $merge_settings                = [];
@@ -179,7 +179,7 @@ class SysLogsManagementProcessor extends Injectable
         );
         $phpPath               = Util::which('php');
         $workerFilesMergerPath = Util::getFilePathByClassName(WorkerMakeLogFilesArchive::class);
-        Util::mwExecBg("{$phpPath} -f {$workerFilesMergerPath} '{$settings_file}'");
+        Processes::mwExecBg("{$phpPath} -f {$workerFilesMergerPath} '{$settings_file}'");
 
         return $res;
     }
@@ -245,8 +245,8 @@ class SysLogsManagementProcessor extends Injectable
             $link_name = basename($filename);
             $lnPath    = Util::which('ln');
             $chownPath = Util::which('chown');
-            Util::mwExec("{$lnPath} -s {$filename} {$result_dir}/{$link_name}");
-            Util::mwExec("{$chownPath} www:www {$result_dir}/{$link_name}");
+            Processes::mwExec("{$lnPath} -s {$filename} {$result_dir}/{$link_name}");
+            Processes::mwExec("{$chownPath} www:www {$result_dir}/{$link_name}");
             $res->success          = true;
             $res->data['filename'] = "{$uid}/{$link_name}";
         }

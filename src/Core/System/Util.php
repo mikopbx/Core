@@ -14,12 +14,15 @@ use MikoPBX\Common\Models\{CallEventsLogs, CustomFiles};
 use MikoPBX\Core\Asterisk\AsteriskManager;
 use Phalcon\Di;
 use ReflectionClass;
+use ReflectionException;
+use Throwable;
 
 /**
  * Universal commands and procedures
  */
 class Util
 {
+
     /**
      * @param $options
      * @param $manual_attributes
@@ -54,315 +57,12 @@ class Util
     }
 
     /**
-     * Kills process/daemon by name
-     *
-     * @param $procName
-     *
-     * @return int|null
-     */
-    public static function killByName($procName): ?int
-    {
-        $killallPath = self::which('killall');
-
-        return self::mwExec($killallPath . ' ' . escapeshellarg($procName));
-    }
-
-    /**
-     * Executes command exec().
-     *
-     * @param $command
-     * @param $outArr
-     * @param $retVal
-     *
-     * @return int
-     */
-    public static function mwExec($command, &$outArr = null, &$retVal = null): int
-    {
-        $retVal = 0;
-        $outArr   = [];
-        $di     = Di::getDefault();
-
-        if ($di !== null && $di->getShared('config')->path('core.debugMode')) {
-            echo "mwExec(): $command\n";
-        } else {
-            exec("$command 2>&1", $outArr, $retVal);
-        }
-
-        return $retVal;
-    }
-
-    /**
-     * Executes command exec() as background process.
-     *
-     * @param $command
-     * @param $out_file
-     * @param $sleep_time
-     */
-    public static function mwExecBg($command, $out_file = '/dev/null', $sleep_time = 0): void
-    {
-        $nohupPath = self::which('nohup');
-        $shPath    = self::which('sh');
-        $rmPath    = self::which('rm');
-        $sleepPath = self::which('sleep');
-        if ($sleep_time > 0) {
-            $filename = '/tmp/' . time() . '_noop.sh';
-            file_put_contents($filename, "{$sleepPath} {$sleep_time}; {$command}; {$rmPath} -rf {$filename}");
-            $noop_command = "{$nohupPath} {$shPath} {$filename} > {$out_file} 2>&1 &";
-        } else {
-            $noop_command = "{$nohupPath} {$command} > {$out_file} 2>&1 &";
-        }
-        exec($noop_command);
-    }
-
-    /**
-     * Executes command exec() as background process with an execution timeout.
-     *
-     * @param        $command
-     * @param int    $timeout
-     * @param string $logname
-     */
-    public static function mwExecBgWithTimeout($command, $timeout = 4, $logname = '/dev/null'): void
-    {
-        $di = Di::getDefault();
-
-        if ($di !== null && $di->getShared('config')->path('core.debugMode')) {
-            echo "mwExecBg(): $command\n";
-
-            return;
-        }
-        $nohupPath   = self::which('nohup');
-        $timeoutPath = self::which('timeout');
-        exec("{$nohupPath} {$timeoutPath} -t {$timeout} {$command} > {$logname} 2>&1 &");
-    }
-
-    /**
-     * Executes multiple commands.
-     *
-     * @param        $arr_cmds
-     * @param array  $out
-     * @param string $logname
-     */
-    public static function mwExecCommands($arr_cmds, &$out = [], $logname = ''): void
-    {
-        $out = [];
-        foreach ($arr_cmds as $cmd) {
-            $out[]   = "$cmd;";
-            $out_cmd = [];
-            self::mwExec($cmd, $out_cmd);
-            $out = array_merge($out, $out_cmd);
-        }
-
-        if ($logname !== '') {
-            $result = implode("\n", $out);
-            file_put_contents("/tmp/{$logname}_commands.log", $result);
-        }
-    }
-
-    /**
-     * Create folder if it not exist.
-     *
-     * @param  $parameters string one or multiple paths separated by space
-     *
-     * @param bool $addWWWRights
-     *
-     * @return bool
-     */
-    public static function mwMkdir(string $parameters, bool $addWWWRights=false): bool
-    {
-        $result = true;
-        if (posix_getuid() === 0) {
-            $arrPaths = explode(' ', $parameters);
-            if (count($arrPaths) > 0) {
-                foreach ($arrPaths as $path) {
-                    if ( ! empty($path)
-                        && ! file_exists($path)
-                        && ! mkdir($path, 0755, true)
-                        && ! is_dir($path)) {
-                        $result = false;
-                        self::sysLogMsg('Util', 'Error on create folder '.$path);
-                    }
-                    if ($addWWWRights) {
-                        self::addRegularWWWRights($path);
-                    }
-                }
-            }
-        }
-        return $result;
-    }
-
-    /**
-     * Process PHP workers
-     *
-     * @param string $className
-     * @param string $param
-     * @param string $action
-     */
-    public static function processPHPWorker(string $className, string $param = 'start', string $action='restart'): void
-    {
-        $workerPath = self::getFilePathByClassName($className);
-        if ( ! empty($workerPath)) {
-            $command = "php -f {$workerPath}";
-            self::processWorker($command, $param, $className, $action);
-        }
-    }
-
-
-    /**
-     * Try to find full path to php file by class name
-     *
-     * @param $className
-     *
-     * @return string|null
-     */
-    public static function getFilePathByClassName($className): ?string
-    {
-        $filename = null;
-        try {
-            $reflection = new ReflectionClass($className);
-            $filename   = $reflection->getFileName();
-        } catch (\ReflectionException $exception) {
-            self::sysLogMsg('Util', 'Error ' . $exception->getMessage());
-        }
-
-        return $filename;
-    }
-
-    /**
-     * Add message to Syslog.
-     *
-     * @param     $log_name
-     * @param     $text
-     * @param ?int $level
-     * @param ?int $facility
-     */
-    public static function sysLogMsg($log_name, $text, $level = null, $facility=LOG_AUTH): void
-    {
-        $level = ($level === null) ? LOG_WARNING : $level;
-        openlog("$log_name", LOG_PID | LOG_PERROR, $facility);
-        syslog($level, "$text");
-        closelog();
-    }
-
-    /**
-     * Manages a daemon/worker process
-     * Returns process statuses by name of it
-     *
-     * @param $cmd
-     * @param $param
-     * @param $proc_name
-     * @param $action
-     * @param $out_file
-     *
-     * @return array | bool
-     */
-    public static function processWorker($cmd, $param, $proc_name, $action, $out_file = '/dev/null')
-    {
-        $path_kill  = self::which('kill');
-        $path_nohup = self::which('nohup');
-
-        $WorkerPID = self::getPidOfProcess($proc_name);
-
-         switch ($action) {
-             case 'status':
-                 $status = ($WorkerPID !== '') ? 'Started' : 'Stoped';
-                 return ['status' => $status, 'app' => $proc_name, 'PID' => $WorkerPID];
-             case 'restart':
-                 // Firstly start new process
-                 self::mwExec("{$path_nohup} {$cmd} {$param}  > {$out_file} 2>&1 &");
-                 // Then kill the old one
-                 if ($WorkerPID !== '') {
-                     self::mwExec("{$path_kill} -9 {$WorkerPID}  > /dev/null 2>&1 &");
-                 }
-                 break;
-             case 'stop':
-                 if ($WorkerPID !== '') {
-                     self::mwExec("{$path_kill} -9 {$WorkerPID}  > /dev/null 2>&1 &");
-                 }
-                 break;
-             case 'start':
-                 if ($WorkerPID === '') {
-                     self::mwExec("{$path_nohup} {$cmd} {$param}  > {$out_file} 2>&1 &");
-                 }
-                 break;
-             case 'multiStart':
-                 self::mwExec("{$path_nohup} {$cmd} {$param}  > {$out_file} 2>&1 &");
-                 break;
-             default:
-         }
-
-        return true;
-    }
-
-    /**
-     * Return full path to executable binary
-     *
-     * @param string $cmd - name of file
-     *
-     * @return string
-     */
-    public static function which(string $cmd): string
-    {
-        global $_ENV;
-        if (array_key_exists('PATH', $_ENV)) {
-            $binaryFolders = $_ENV['PATH'];
-
-            foreach (explode(':', $binaryFolders) as $path) {
-                if (is_executable("{$path}/{$cmd}")) {
-                    return "{$path}/{$cmd}";
-                }
-            }
-        }
-        $binaryFolders =
-            [
-                '/bin',
-                '/sbin',
-                '/usr/bin',
-                '/usr/sbin',
-                '/usr/local/bin',
-                '/usr/local/sbin',
-            ];
-        foreach ($binaryFolders as $path) {
-            if (is_executable("{$path}/{$cmd}")) {
-                return "{$path}/{$cmd}";
-            }
-        }
-
-        return $cmd;
-    }
-
-    /**
-     * Возвращает PID процесса по его имени.
-     *
-     * @param        $name
-     * @param string $exclude
-     *
-     * @return string
-     */
-    public static function getPidOfProcess($name, $exclude = ''): string
-    {
-        $path_ps   = self::which('ps');
-        $path_grep = self::which('grep');
-        $path_awk  = self::which('awk');
-
-        $name       = addslashes($name);
-        $filter_cmd = '';
-        if ( ! empty($exclude)) {
-            $filter_cmd = "| $path_grep -v " . escapeshellarg($exclude);
-        }
-        $out = [];
-        self::mwExec(
-            "{$path_ps} -A -o 'pid,args' {$filter_cmd} | {$path_grep} '{$name}' | {$path_grep} -v grep | {$path_awk} ' {print $1} '",
-            $out
-        );
-
-        return trim(implode(' ', $out));
-    }
-
-    /**
      * Инициация телефонного звонка.
+     *
      * @param $peer_number
      * @param $peer_mobile
      * @param $dest_number
+     *
      * @return array
      * @throws Exception
      */
@@ -374,10 +74,19 @@ class Util
         $IS_ORGNT = self::generateRandomString();
         $variable = "_IS_ORGNT={$IS_ORGNT},pt1c_cid={$dest_number},_extenfrom1c={$peer_number},__peer_mobile={$peer_mobile},_FROM_PEER={$peer_number}";
 
-        return $am->Originate($channel,
-                              $dest_number,
-                              $context,
-                      '1', null, null, null, null, $variable, null, true);
+        return $am->Originate(
+            $channel,
+            $dest_number,
+            $context,
+            '1',
+            null,
+            null,
+            null,
+            null,
+            $variable,
+            null,
+            true
+        );
     }
 
     /**
@@ -389,9 +98,9 @@ class Util
      */
     public static function getAstManager($events = 'on'): AsteriskManager
     {
-        if($events === 'on'){
+        if ($events === 'on') {
             $nameService = 'amiListner';
-        }else{
+        } else {
             $nameService = 'amiCommander';
         }
 
@@ -406,7 +115,9 @@ class Util
 
     /**
      * Генератор произвольной строки.
+     *
      * @param int $length
+     *
      * @return string
      */
     public static function generateRandomString($length = 10): string
@@ -417,7 +128,7 @@ class Util
         for ($i = 0; $i < $length; $i++) {
             try {
                 $randomString .= $characters[random_int(0, $charactersLength - 1)];
-            }catch (\Exception $e ){
+            } catch (Throwable $e) {
                 $randomString = '';
             }
         }
@@ -543,8 +254,6 @@ class Util
         file_put_contents($filename, $data);
     }
 
-
-
     /**
      * Пишем лог в базу данных.
      *
@@ -569,6 +278,22 @@ class Util
     }
 
     /**
+     * Add message to Syslog.
+     *
+     * @param      $log_name
+     * @param      $text
+     * @param ?int $level
+     * @param ?int $facility
+     */
+    public static function sysLogMsg($log_name, $text, $level = null, $facility = LOG_AUTH): void
+    {
+        $level = ($level === null) ? LOG_WARNING : $level;
+        openlog("$log_name", LOG_PID | LOG_PERROR, $facility);
+        syslog($level, "$text");
+        closelog();
+    }
+
+    /**
      * Возвращает текущую дату в виде строки с точностью до милисекунд.
      *
      * @return string
@@ -586,18 +311,18 @@ class Util
         return $result;
     }
 
-
-
     /**
      * Получает расширение файла.
      *
      * @param        $filename
+     *
      * @return mixed
      */
     public static function getExtensionOfFile($filename)
     {
         $path_parts = pathinfo($filename);
-        return $path_parts['extension']??'';
+
+        return $path_parts['extension'] ?? '';
     }
 
     /**
@@ -620,8 +345,6 @@ class Util
         return $filename;
     }
 
-
-
     /**
      * Получаем размер файла / директории.
      *
@@ -635,7 +358,7 @@ class Util
         if (file_exists($filename)) {
             $duPath  = self::which('du');
             $awkPath = self::which('awk');
-            self::mwExec("{$duPath} -d 0 -k '{$filename}' | {$awkPath}  '{ print $1}'", $out);
+            Processes::mwExec("{$duPath} -d 0 -k '{$filename}' | {$awkPath}  '{ print $1}'", $out);
             $time_str = implode($out);
             preg_match_all('/^\d+$/', $time_str, $matches, PREG_SET_ORDER, 0);
             if (count($matches) > 0) {
@@ -647,12 +370,66 @@ class Util
     }
 
     /**
+     * Return full path to executable binary
+     *
+     * @param string $cmd - name of file
+     *
+     * @return string
+     */
+    public static function which(string $cmd): string
+    {
+        global $_ENV;
+        if (array_key_exists('PATH', $_ENV)) {
+            $binaryFolders = $_ENV['PATH'];
+
+            foreach (explode(':', $binaryFolders) as $path) {
+                if (is_executable("{$path}/{$cmd}")) {
+                    return "{$path}/{$cmd}";
+                }
+            }
+        }
+        $binaryFolders =
+            [
+                '/bin',
+                '/sbin',
+                '/usr/bin',
+                '/usr/sbin',
+                '/usr/local/bin',
+                '/usr/local/sbin',
+            ];
+        foreach ($binaryFolders as $path) {
+            if (is_executable("{$path}/{$cmd}")) {
+                return "{$path}/{$cmd}";
+            }
+        }
+
+        return $cmd;
+    }
+
+    /**
+     * DEPRICATED
+     * Executes command exec().
+     *
+     * @param $command
+     * @param $outArr
+     * @param $retVal
+     *
+     * @return int
+     */
+    public static function mwExec($command, &$outArr = null, &$retVal = null): int
+    {
+        self::sysLogMsg('Util', 'Deprecated call ' . __METHOD__ . ' from ' . static::class);
+
+        return Processes::mwExec($command, $outArr, $retVal);
+    }
+
+    /**
      * Устанавливаем шрифт для консоли.
      */
     public static function setCyrillicFont(): void
     {
         $setfontPath = self::which('setfont');
-        self::mwExec("{$setfontPath} /usr/share/consolefonts/Cyr_a8x16.psfu.gz 2>/dev/null");
+        Processes::mwExec("{$setfontPath} /usr/share/consolefonts/Cyr_a8x16.psfu.gz 2>/dev/null");
     }
 
     /**
@@ -693,7 +470,7 @@ class Util
                     }
                 }
             }
-            if($objects !== false){
+            if ($objects !== false) {
                 reset($objects);
             }
             rmdir($dir);
@@ -781,7 +558,7 @@ class Util
             // Если необходимо, удаляем старую ссылку.
             if ($need_create_link) {
                 $cpPath = self::which('cp');
-                self::mwExec("{$cpPath} {$old_target}/* {$target}");
+                Processes::mwExec("{$cpPath} {$old_target}/* {$target}");
                 unlink($link);
             }
         } elseif (is_dir($link)) {
@@ -794,10 +571,60 @@ class Util
         self::mwMkdir($target);
         if ($need_create_link) {
             $lnPath = self::which('ln');
-            self::mwExec("{$lnPath} -s {$target}  {$link}");
+            Processes::mwExec("{$lnPath} -s {$target}  {$link}");
         }
 
         return $need_create_link;
+    }
+
+    /**
+     * Create folder if it not exist.
+     *
+     * @param      $parameters string one or multiple paths separated by space
+     *
+     * @param bool $addWWWRights
+     *
+     * @return bool
+     */
+    public static function mwMkdir(string $parameters, bool $addWWWRights = false): bool
+    {
+        $result = true;
+        if (posix_getuid() === 0) {
+            $arrPaths = explode(' ', $parameters);
+            if (count($arrPaths) > 0) {
+                foreach ($arrPaths as $path) {
+                    if ( ! empty($path)
+                        && ! file_exists($path)
+                        && ! mkdir($path, 0755, true)
+                        && ! is_dir($path)) {
+                        $result = false;
+                        self::sysLogMsg('Util', 'Error on create folder ' . $path);
+                    }
+                    if ($addWWWRights) {
+                        self::addRegularWWWRights($path);
+                    }
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Apply regular rights for folders and files
+     *
+     * @param $folder
+     */
+    public static function addRegularWWWRights($folder): void
+    {
+        if (posix_getuid() === 0) {
+            $findPath  = self::which('find');
+            $chownPath = self::which('chown');
+            $chmodPath = self::which('chmod');
+            Processes::mwExec("{$findPath} {$folder} -type d -exec {$chmodPath} 755 {} \;");
+            Processes::mwExec("{$findPath} {$folder} -type f -exec {$chmodPath} 644 {} \;");
+            Processes::mwExec("{$chownPath} -R www:www {$folder}");
+        }
     }
 
     /**
@@ -812,35 +639,6 @@ class Util
     }
 
     /**
-     * Добавляем задачу для уведомлений.
-     *
-     * @param string $tube
-     * @param        $data
-     */
-    public function addJobToBeanstalk(string $tube, $data): void
-    {
-        $queue = new BeanstalkClient($tube);
-        $queue->publish(json_encode($data));
-    }
-
-    /**
-     * Apply regular rights for folders and files
-     *
-     * @param $folder
-     */
-    public static function addRegularWWWRights($folder): void
-    {
-        if (posix_getuid() === 0) {
-            $findPath  = self::which('find');
-            $chownPath = self::which('chown');
-            $chmodPath = self::which('chmod');
-            self::mwExec("{$findPath} {$folder} -type d -exec {$chmodPath} 755 {} \;");
-            self::mwExec("{$findPath} {$folder} -type f -exec {$chmodPath} 644 {} \;");
-            self::mwExec("{$chownPath} -R www:www {$folder}");
-        }
-    }
-
-    /**
      * Apply executable rights for files
      *
      * @param $folder
@@ -850,7 +648,7 @@ class Util
         if (posix_getuid() === 0) {
             $findPath  = self::which('find');
             $chmodPath = self::which('chmod');
-            self::mwExec("{$findPath} {$folder} -type f -exec {$chmodPath} 755 {} \;");
+            Processes::mwExec("{$findPath} {$folder} -type f -exec {$chmodPath} 755 {} \;");
         }
     }
 
@@ -893,7 +691,7 @@ class Util
                     if (strpos($row, '=') === false) {
                         continue;
                     }
-                    $key = '';
+                    $key       = '';
                     $arr_value = explode('=', $row);
                     if (count($arr_value) > 1) {
                         $key = trim($arr_value[0]);
@@ -913,11 +711,13 @@ class Util
 
     /**
      * Converts multidimensional array into single array
+     *
      * @param $array
      *
      * @return array
      */
-    public static function flattenArray(array $array) {
+    public static function flattenArray(array $array)
+    {
         $result = [];
         foreach ($array as $value) {
             if (is_array($value)) {
@@ -926,8 +726,151 @@ class Util
                 $result[] = $value;
             }
         }
+
         return $result;
     }
 
-    
+    /**
+     * Try to find full path to php file by class name
+     *
+     * @param $className
+     *
+     * @return string|null
+     */
+    public static function getFilePathByClassName($className): ?string
+    {
+        $filename = null;
+        try {
+            $reflection = new ReflectionClass($className);
+            $filename   = $reflection->getFileName();
+        } catch (ReflectionException $exception) {
+            self::sysLogMsg('Util', 'Error ' . $exception->getMessage());
+        }
+
+        return $filename;
+    }
+
+    /**
+     * DEPRICATED
+     * Возвращает PID процесса по его имени.
+     *
+     * @param        $name
+     * @param string $exclude
+     *
+     * @return string
+     */
+    public static function getPidOfProcess($name, $exclude = ''): string
+    {
+        self::sysLogMsg('Util', 'Deprecated call ' . __METHOD__ . ' from ' . static::class);
+
+        return Processes::getPidOfProcess($name, $exclude);
+    }
+
+    /**
+     * DEPRICATED
+     * Manages a daemon/worker process
+     * Returns process statuses by name of it
+     *
+     * @param $cmd
+     * @param $param
+     * @param $proc_name
+     * @param $action
+     * @param $out_file
+     *
+     * @return array | bool
+     */
+    public static function processWorker($cmd, $param, $proc_name, $action, $out_file = '/dev/null')
+    {
+        self::sysLogMsg('Util', 'Deprecated call ' . __METHOD__ . ' from ' . static::class);
+
+        return Processes::processWorker($cmd, $param, $proc_name, $action, $out_file);
+    }
+
+    /**
+     * DEPRICATED
+     * Process PHP workers
+     *
+     * @param string $className
+     * @param string $param
+     * @param string $action
+     */
+    public static function processPHPWorker(
+        string $className,
+        string $param = 'start',
+        string $action = 'restart'
+    ): void {
+        self::sysLogMsg('Util', 'Deprecated call ' . __METHOD__ . ' from ' . static::class);
+        Processes::processPHPWorker($className, $param, $action);
+    }
+
+    /**
+     * DEPRICATED
+     * Kills process/daemon by name
+     *
+     * @param $procName
+     *
+     * @return int|null
+     */
+    public static function killByName($procName): ?int
+    {
+        self::sysLogMsg('Util', 'Deprecated call ' . __METHOD__ . ' from ' . static::class);
+
+        return Processes::killByName($procName);
+    }
+
+    /**
+     * DEPRICATED
+     * Executes command exec() as background process.
+     *
+     * @param $command
+     * @param $out_file
+     * @param $sleep_time
+     */
+    public static function mwExecBg($command, $out_file = '/dev/null', $sleep_time = 0): void
+    {
+        self::sysLogMsg('Util', 'Deprecated call ' . __METHOD__ . ' from ' . static::class);
+        Processes::mwExecBg($command, $out_file, $sleep_time);
+    }
+
+    /**
+     * DEPRICATED
+     * Executes command exec() as background process with an execution timeout.
+     *
+     * @param        $command
+     * @param int    $timeout
+     * @param string $logname
+     */
+    public static function mwExecBgWithTimeout($command, $timeout = 4, $logname = '/dev/null'): void
+    {
+        self::sysLogMsg('Util', 'Deprecated call ' . __METHOD__ . ' from ' . static::class);
+        Processes::mwExecBgWithTimeout($command, $timeout, $logname);
+    }
+
+    /**
+     * DEPRICATED
+     * Executes multiple commands.
+     *
+     * @param        $arr_cmds
+     * @param array  $out
+     * @param string $logname
+     */
+    public static function mwExecCommands($arr_cmds, &$out = [], $logname = ''): void
+    {
+        self::sysLogMsg('Util', 'Deprecated call ' . __METHOD__ . ' from ' . static::class);
+        Processes::mwExecCommands($arr_cmds, $out, $logname);
+    }
+
+    /**
+     * Добавляем задачу для уведомлений.
+     *
+     * @param string $tube
+     * @param        $data
+     */
+    public function addJobToBeanstalk(string $tube, $data): void
+    {
+        $queue = new BeanstalkClient($tube);
+        $queue->publish(json_encode($data));
+    }
+
+
 }

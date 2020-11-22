@@ -8,12 +8,7 @@
 namespace MikoPBX\Core\Rc;
 
 use Phalcon\Di;
-use MikoPBX\Core\System\{
-    Util,
-    Storage,
-    System,
-    MikoPBXConfig
-};
+use MikoPBX\Core\System\{Processes, Util, Storage, System, MikoPBXConfig};
 require_once('Globals.php');
 
 $fp = fopen('php://stdin', 'rb');
@@ -92,12 +87,12 @@ if (strtolower(trim(fgets($fp)) ) === 'y') {
 
     // Получим все смонтированные разделы:
     $mnt_dirs = [];
-    Util::mwExec("{$mountPath} | {$grepPath} '^/dev/{$target_disk}' | {$busyboxPath} {$awkPath} '{print $3}'",$mnt_dirs);
+    Processes::mwExec("{$mountPath} | {$grepPath} '^/dev/{$target_disk}' | {$busyboxPath} {$awkPath} '{print $3}'",$mnt_dirs);
     foreach ($mnt_dirs as $mnt){
         // Завершаем все связанные процессы.
-        Util::mwExec("/sbin/shell_functions.sh killprocesses '$mnt' -TERM 0;");
+        Processes::mwExec("/sbin/shell_functions.sh killprocesses '$mnt' -TERM 0;");
         // Отмонтируем.
-        Util::mwExec("{$umountPath} {$mnt}");
+        Processes::mwExec("{$umountPath} {$mnt}");
     }
     echo " - Unpacking img...\n";
     $pvPath = Util::which('pv');
@@ -116,7 +111,7 @@ if (strtolower(trim(fgets($fp)) ) === 'y') {
 	echo 'Copying configuration...';
 	Util::mwMkdir('/mnttmp');
     /** Монтируем диск с настройками */
-	Util::mwExec("{$mountPath} -w -o noatime /dev/{$target_disk}3 /mnttmp");
+    Processes::mwExec("{$mountPath} -w -o noatime /dev/{$target_disk}3 /mnttmp");
 
     $mikoPBXconfig = new MikoPBXConfig();
     $lang = $mikoPBXconfig->getGeneralSettings('SSHLanguage');
@@ -130,7 +125,7 @@ if (strtolower(trim(fgets($fp)) ) === 'y') {
     $result_db_file = '/mnttmp/conf/mikopbx.db';
     /** Копируем файл базы данных настроек. */
     $cpPath = Util::which('cp');
-    Util::mwExec("{$cpPath} {$filename} {$result_db_file}");
+    Processes::mwExec("{$cpPath} {$filename} {$result_db_file}");
     $sqlite3Path = Util::which('sqlite3');
 
     system("{$sqlite3Path} {$filename}".'  .dump | grep \'^INSERT INTO "m_Storage"\' > /tmp/dmp_storage.sql');
@@ -140,7 +135,7 @@ if (strtolower(trim(fgets($fp)) ) === 'y') {
     system("{$sqlite3Path} {$result_db_file} < /tmp/dmp_storage.sql");
 
     // Фиксируем флаг необходимости очистки кэш web.
-	Util::mwExec("{$umountPath} /mnttmp");
+    Processes::mwExec("{$umountPath} /mnttmp");
 	echo "done\n";
 
     // Фиксируем флаг необходимости вынуить CD диск.

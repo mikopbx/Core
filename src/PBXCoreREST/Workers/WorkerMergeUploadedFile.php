@@ -10,8 +10,10 @@ namespace MikoPBX\PBXCoreREST\Workers;
 
 require_once 'Globals.php';
 
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\System\Util;
+use Throwable;
 
 
 class WorkerMergeUploadedFile extends WorkerBase
@@ -46,7 +48,7 @@ class WorkerMergeUploadedFile extends WorkerBase
         }
 
         // Delete uploaded file after 10 minutes
-        Util::mwExecBg(
+        Processes::mwExecBg(
             '/sbin/shell_functions.sh killprocesses ' . $settings['tempDir'] . ' -TERM 0;rm -rf ' . $settings['tempDir'],
             '/dev/null',
             600
@@ -97,7 +99,7 @@ if (isset($argv) && count($argv) > 1) {
     try {
         $worker = new $workerClassname();
         $worker->start($argv);
-    } catch (\Error $e) {
+    } catch (Throwable $e) {
         global $errorLogger;
         $errorLogger->captureException($e);
         Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage());

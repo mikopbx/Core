@@ -53,7 +53,7 @@ class ModulesControllerBase extends BaseController
             'processor'      => 'modules',
         ]);
 
-        $response   = $this->di->getShared('beanstalkConnection')->request($request, 100, 0);
+        $response   = $this->di->getShared('beanstalkConnectionWorkerAPI')->request($request, 30, 0);
         if ($response !== false) {
             $response = json_decode($response, true);
             if (isset($response['fpassthru'])) {

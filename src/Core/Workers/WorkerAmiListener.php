@@ -10,15 +10,14 @@ namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
 
 use MikoPBX\Core\System\{BeanstalkClient, Util};
-use Error;
 use MikoPBX\Core\Asterisk\AsteriskManager;
+use Throwable;
 
 class WorkerAmiListener extends WorkerBase
 {
     protected BeanstalkClient $client;
 
     protected AsteriskManager $am;
-    protected int $maxProc=1;
 
     /**
      * Установка фильтра
@@ -44,7 +43,7 @@ class WorkerAmiListener extends WorkerBase
         $this->setFilter();
 
         $this->am->addEventHandler("userevent", [$this, "callback"]);
-        while (true) {
+        while ($this->needRestart === false) {
             $result = $this->am->waitUserEvent(true);
             if ($result === []) {
                 // Нужен реконнект.
@@ -94,7 +93,7 @@ class WorkerAmiListener extends WorkerBase
                     // Проверка
                     break;
                 }
-            } catch (Error $e) {
+            } catch (Throwable $e) {
                 $this->client = new BeanstalkClient(WorkerCallEvents::class);
                 $error        = $e->getMessage();
             }
@@ -117,7 +116,7 @@ if (isset($argv) && count($argv) > 1 && $argv[1] === 'start') {
     try {
         $worker = new $workerClassname();
         $worker->start($argv);
-    } catch (Error $e) {
+    } catch (Throwable $e) {
         global $errorLogger;
         $errorLogger->captureException($e);
         Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage());

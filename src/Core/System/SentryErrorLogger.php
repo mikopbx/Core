@@ -12,6 +12,7 @@ namespace MikoPBX\Core\System;
 use Sentry\ClientBuilder;
 use Sentry\SentrySdk;
 use Sentry\State\Scope;
+use Throwable;
 
 /**
  * Collects errors and send them to Sentry cloud for software improvement reasons
@@ -89,9 +90,9 @@ class SentryErrorLogger
     /**
      * Process errors and send it to sentry cloud
      *
-     * @param \Error $e
+     * @param Throwable $e
      */
-    public function captureException(\Error $e): void
+    public function captureException(Throwable $e): void
     {
         SentrySdk::getCurrentHub()->captureException($e);
     }

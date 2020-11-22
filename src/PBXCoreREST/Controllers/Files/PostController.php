@@ -9,10 +9,8 @@
 
 namespace MikoPBX\PBXCoreREST\Controllers\Files;
 
-use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
-use Phalcon\Di;
 
 /**
  * /pbxcore/api/files/{name}' Files management (POST).
@@ -92,7 +90,7 @@ class PostController extends BaseController
                 'action'    => 'fileReadContent',
             ]
         );
-        $connection     = $this->di->getShared('beanstalkConnection');
+        $connection     = $this->di->getShared('beanstalkConnectionWorkerAPI');
         $response       = $connection->request($requestMessage, 5, 0);
         if ($response !== false) {
             $response = json_decode($response, true);

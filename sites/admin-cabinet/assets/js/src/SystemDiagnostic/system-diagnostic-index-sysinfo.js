@@ -14,9 +14,8 @@ const systemDiagnosticSysyinfo = {
 	$contentFiled: $('#sysinfo-content-readonly'),
 	initialize() {
 		const aceHeight = window.innerHeight-300;
-		$(window).load(function() {
-			systemDiagnosticSysyinfo.$dimmer.closest('div').css('min-height', `${aceHeight}px`);
-		});
+		systemDiagnosticSysyinfo.$dimmer.closest('div').css('min-height', `${aceHeight}px`);
+
 		systemDiagnosticSysyinfo.$contentFiled.hide();
 		systemDiagnosticSysyinfo.$tabMenuItems.on('click',(e)=>{
 			if ($(e.target).attr('data-tab')==='show-sysinfo'

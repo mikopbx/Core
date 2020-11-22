@@ -29,18 +29,18 @@ class PbxExtensionModulesController extends BaseController
         // Очистим кеш хранилища для получения актульной информации о свободном месте
         $this->session->remove('checkStorage');
 
-        $modules     = PbxExtensionModules::find();
+        $modules     = PbxExtensionModules::getModulesArray();
         $modulesList = [];
         foreach ($modules as $module) {
-            $unCamelizedControllerName = Text::uncamelize($module->uniqid, '-');
+            $unCamelizedControllerName = Text::uncamelize($module['uniqid'], '-');
             $modulesList[]             = [
-                'uniqid'      => $module->uniqid,
-                'name'        => $module->name,
-                'description' => $module->description,
-                'developer'   => $module->developer,
-                'version'     => $module->version,
+                'uniqid'      => $module['uniqid'],
+                'name'        => $module['name'],
+                'description' => $module['description'],
+                'developer'   => $module['developer'],
+                'version'     => $module['version'],
                 'classname'   => $unCamelizedControllerName,
-                'status'      => ($module->disabled === '1') ? 'disabled' : '',
+                'status'      => ($module['disabled'] === '1') ? 'disabled' : '',
                 'permanent'   => true,
             ];
         }
@@ -120,16 +120,15 @@ class PbxExtensionModulesController extends BaseController
     }
 
 
-
     /**
-     * Генерирует дополнительные пункты меню в интерфейс
+     * Prepares sidebar additional items for modules
      */
     public function sidebarIncludeAction(): void
     {
         $result  = [];
-        $modules = PbxExtensionModules::find('disabled="0"');
+        $modules = PbxExtensionModules::getEnabledModulesArray();
         foreach ($modules as $module) {
-            $menuSettings         = "AdditionalMenuItem{$module->uniqid}";
+            $menuSettings         = "AdditionalMenuItem{$module['uniqid']}";
             $previousMenuSettings = PbxSettings::findFirstByKey($menuSettings);
             if ($previousMenuSettings !== null) {
                 $result['items'][] = json_decode($previousMenuSettings->value, true);
@@ -138,5 +137,7 @@ class PbxExtensionModulesController extends BaseController
         $this->view->message = $result;
         $this->view->success = true;
     }
+
+
 
 }

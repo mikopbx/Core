@@ -14,10 +14,8 @@ namespace MikoPBX\PBXCoreREST\Providers;
 
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
-use Phalcon\Events\Event;
 use Phalcon\Events\Manager as EventsManager;
 use Phalcon\Mvc\Dispatcher;
-use Phalcon\Mvc\Micro;
 
 /**
  *  We register the events manager

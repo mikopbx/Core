@@ -10,6 +10,7 @@ namespace MikoPBX\Core\System\Configs;
 
 
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di;
@@ -30,7 +31,7 @@ class PHPConf extends Injectable
         }
         $options = file_exists($dst_log_file) ? '>' : '';
         $catPath = Util::which('cat');
-        Util::mwExec("{$catPath} {$src_log_file} 2> /dev/null >{$options} {$dst_log_file}");
+        Processes::mwExec("{$catPath} {$src_log_file} 2> /dev/null >{$options} {$dst_log_file}");
         Util::createUpdateSymlink($dst_log_file, $src_log_file);
     }
 
@@ -83,7 +84,7 @@ class PHPConf extends Injectable
         if (Util::mFileSize($f_name) > $mb10) {
             $options = '-f';
         }
-        Util::mwExecBg("{$logrotatePath} {$options} '{$path_conf}' > /dev/null 2> /dev/null");
+        Processes::mwExecBg("{$logrotatePath} {$options} '{$path_conf}' > /dev/null 2> /dev/null");
     }
 
     /**
@@ -95,7 +96,7 @@ class PHPConf extends Injectable
         date_default_timezone_set($timezone);
         if (file_exists('/etc/TZ')) {
             $catPath = Util::which('cat');
-            Util::mwExec("export TZ='$({$catPath} /etc/TZ)'");
+            Processes::mwExec("export TZ='$({$catPath} /etc/TZ)'");
         }
         $etcPhpIniPath = '/etc/php.d/01-timezone.ini';
         $contents = 'date.timezone="'.$timezone.'"';
@@ -109,15 +110,15 @@ class PHPConf extends Injectable
     {
         if (Util::isSystemctl()) {
             $systemCtrlPath = Util::which('systemctl');
-            Util::mwExec("{$systemCtrlPath} restart php7.4-fpm");
+            Processes::mwExec("{$systemCtrlPath} restart php7.4-fpm");
         } else {
             $phpFPMPath = Util::which('php-fpm');
             // Отправляем запрос на graceful shutdown;
-            Util::mwExec('kill -SIGQUIT "$(cat /var/run/php-fpm.pid)"');
+            Processes::mwExec('kill -SIGQUIT "$(cat /var/run/php-fpm.pid)"');
             usleep(100000);
             // Принудительно завершаем.
-            Util::killByName('php-fpm');
-            Util::mwExec("{$phpFPMPath} -c /etc/php.ini");
+            Processes::killByName('php-fpm');
+            Processes::mwExec("{$phpFPMPath} -c /etc/php.ini");
         }
     }
 }

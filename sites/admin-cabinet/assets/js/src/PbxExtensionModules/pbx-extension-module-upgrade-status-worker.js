@@ -63,6 +63,7 @@ const upgradeStatusLoopWorker = {
 			$('i.loading.redo').closest('a').find('.percent').text(`${response.d_status_progress}%`);
 			upgradeStatusLoopWorker.oldPercent = response.d_status_progress;
 		} else if (response.d_status === 'DOWNLOAD_COMPLETE') {
+			$('i.loading.redo').closest('a').find('.percent').text('100%');
 			PbxApi.SystemInstallModule(response.filePath, upgradeStatusLoopWorker.cbAfterModuleInstall);
 			window.clearTimeout(upgradeStatusLoopWorker.timeoutHandle);
 		}
@@ -72,12 +73,11 @@ const upgradeStatusLoopWorker = {
 			UserMessage.showMultiString(response,globalTranslate.ext_InstallationError);
 		} else {
 			// Check installation status
-			$('a.button').removeClass('disabled');
 			if (upgradeStatusLoopWorker.needEnableAfterInstall) {
 				PbxApi.SystemEnableModule(
 					upgradeStatusLoopWorker.moduleUniqid,
 					() => {
-						extensionModules.reloadModuleAndPage(upgradeStatusLoopWorker.moduleUniqid);
+						window.location = `${globalRootUrl}pbx-extension-modules/index/`;
 					},
 				);
 			} else {

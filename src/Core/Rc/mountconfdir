@@ -11,10 +11,7 @@ namespace MikoPBX\Core\Rc;
 
 
 use Phalcon\Di;
-use MikoPBX\Core\System\{
-    Util,
-    Storage
-};
+use MikoPBX\Core\System\{Processes, Util, Storage};
 
 require_once('Globals.php');
 
@@ -64,7 +61,7 @@ $storage = new Storage();
 /* iterate through the disks fdisk finds until one contains a mikopbx.db */
 $attempts = 2;
 while ($attempts--) {
-    Util::mwExec("{$fdiskPath} -l | {$grepPath} \"^/dev/\" | {$cutPath} -c 6-8 | {$uniqPath}", $disks);
+    Processes::mwExec("{$fdiskPath} -l | {$grepPath} \"^/dev/\" | {$cutPath} -c 6-8 | {$uniqPath}", $disks);
     // " - Mount storage... "
     echo "\n - Found disks: " . implode(', ', $disks) . "\n";
     foreach ($disks as $disk) {
@@ -75,8 +72,8 @@ while ($attempts--) {
         $format = $storage->getFsType("{$disk}{$part}");
         // Запустим проверку раздела диска
         $fsckPath = Util::which("fsck.{$format}");
-        Util::mwExec("if [ -b /dev/{$disk}{$part} ]; then {$fsckPath} -f -p /dev/{$disk}{$part}; fi;");
-        if (Util::mwExec("{$mountPath} -t {$format} -rw UUID=\"{$uuid}\" {$cfDir}") !== 0) {
+        Processes::mwExec("if [ -b /dev/{$disk}{$part} ]; then {$fsckPath} -f -p /dev/{$disk}{$part}; fi;");
+        if (Processes::mwExec("{$mountPath} -t {$format} -rw UUID=\"{$uuid}\" {$cfDir}") !== 0) {
             continue;
         }
 
@@ -89,16 +86,16 @@ while ($attempts--) {
                 @unlink($dbFile);
                 @rename($old_db_name, $dbFile);
             }
-            if (Util::mwExec("{$sqlite3Path} {$dbFile} 'VACUUM'") !== 0) {
+            if (Processes::mwExec("{$sqlite3Path} {$dbFile} 'VACUUM'") !== 0) {
                 $tmp_name = '/tmp/' . time() . '.db.dmp';
-                Util::mwExec("{$sqlite3Path} {$dbFile} .dump | {$sqlite3Path} {$tmp_name}");
-                Util::mwExec("{$rmPath} {$dbFile}*");
-                Util::mwExec("{$mvPath} {$tmp_name} {$dbFile}");
+                Processes::mwExec("{$sqlite3Path} {$dbFile} .dump | {$sqlite3Path} {$tmp_name}");
+                Processes::mwExec("{$rmPath} {$dbFile}*");
+                Processes::mwExec("{$mvPath} {$tmp_name} {$dbFile}");
             }
             break;
         }
 
-        Util::mwExec("{$unmountPath} -f {$cfDir}");
+        Processes::mwExec("{$unmountPath} -f {$cfDir}");
     }
     if ($cfgdevice) {
         break;
@@ -113,7 +110,7 @@ while ($attempts--) {
 if ( ! $cfgdevice) {
     /* no device found, print an error and die */
     echo $NoCfDevice;
-    Util::mwExec($haltPath);
+    Processes::mwExec($haltPath);
 } else {
     // Запишем в файл имя подключенного устройства.
     file_put_contents("{$varEtcDir}/cfdevice", $cfgdevice);

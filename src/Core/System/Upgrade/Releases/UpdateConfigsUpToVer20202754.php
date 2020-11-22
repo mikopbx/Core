@@ -13,10 +13,13 @@ use MikoPBX\Common\Models\Codecs;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Core\System\MikoPBXConfig;
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Upgrade\UpgradeSystemConfigInterface;
 use MikoPBX\Core\System\Util;
 use Phalcon\Config as ConfigAlias;
 use Phalcon\Di\Injectable;
+use SQLite3;
+use Throwable;
 
 class UpdateConfigsUpToVer20202754 extends Injectable implements UpgradeSystemConfigInterface
 {
@@ -192,10 +195,10 @@ class UpdateConfigsUpToVer20202754 extends Injectable implements UpgradeSystemCo
         if (file_exists($astDbPath)) {
             $table = 'astdb';
             $sql   = 'DELETE FROM ' . $table . ' WHERE key LIKE "/DND/SIP%" OR key LIKE "/CF/SIP%" OR key LIKE "/UserBuddyStatus/SIP%"';
-            $db    = new \SQLite3($astDbPath);
+            $db    = new SQLite3($astDbPath);
             try {
                 $db->exec($sql);
-            } catch (\Error $e) {
+            } catch (Throwable $e) {
                 Util::sysLogMsg(__CLASS__, 'Can clean astdb from UserBuddyStatus...' . $e->getMessage());
                 sleep(2);
             }
@@ -247,7 +250,7 @@ class UpdateConfigsUpToVer20202754 extends Injectable implements UpgradeSystemCo
         foreach ($oldCacheDirs as $old_cache_dir) {
             if (is_dir($old_cache_dir)) {
                 $rmPath = Util::which('rm');
-                Util::mwExec("{$rmPath} -rf $old_cache_dir");
+                Processes::mwExec("{$rmPath} -rf $old_cache_dir");
             }
         }
     }
@@ -269,7 +272,7 @@ class UpdateConfigsUpToVer20202754 extends Injectable implements UpgradeSystemCo
         foreach ($oldCacheDirs as $old_cache_dir) {
             if (is_dir($old_cache_dir)) {
                 $rmPath = Util::which('rm');
-                Util::mwExec("{$rmPath} -rf $old_cache_dir");
+                Processes::mwExec("{$rmPath} -rf $old_cache_dir");
             }
         }
     }

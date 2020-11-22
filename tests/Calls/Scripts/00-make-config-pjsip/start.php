@@ -5,44 +5,103 @@
  * Proprietary and confidential
  * Written by Alexey Portnov, 10 2020
  */
-
 use MikoPBX\Common\Models\Sip;
+use MikoPBX\Core\System\PBX;
 use MikoPBX\Core\System\Util;
+use MikoPBX\Tests\Calls\Scripts\TestCallsBase;
+use MikoPBX\Common\Models\OutgoingRoutingTable;
+use MikoPBX\Core\System\Processes;
 require_once 'Globals.php';
 
 $testName = basename(__DIR__);
-echo "\033[01;35mStart test {$testName}\033[39m \n";
+TestCallsBase::printHeader("Start test {$testName}");
 
-$limitPeers = 10;
-$db_data = Sip::find([
-    "type = 'peer' AND ( disabled <> '1')",
+TestCallsBase::printInfo("Get data peers...");
+$limitPeers = 5;
+$peers = Sip::find([
+    "type = 'peer' AND disabled <> '1'",
     'limit' => $limitPeers
-]);
+])->toArray();
 
+$limitProviders = 2;
+// Подбираем учетки провайдеров.
+$providers = Sip::find([
+    "type='friend' AND disabled<>'1' and noregister='1'",
+    'limit' => $limitProviders
+])->toArray();
+
+$limitPeers = min(count($peers), $limitPeers);
+$peers = array_merge(... [$peers, $providers]);
+
+TestCallsBase::printInfo("Make pjsip.conf...");
 $enpointPattern = file_get_contents(__DIR__.'/configs/pjsip-pattern-endpoint.conf');
 $config         = file_get_contents(__DIR__.'/configs/pjsip-pattern.conf');
-/** @var Sip $peer */
-foreach ($db_data as $peer){
-    $conf = str_replace(array('<ENDPOINT>', '<PASSWORD>'), array($peer->extension, $peer->secret), $enpointPattern);
+foreach ($peers as $peer){
+    $columnName = ($peer["type"] === 'friend')?'uniqid':'extension';
+    $conf = str_replace(array('<ENDPOINT>', '<PASSWORD>'), array($peer[$columnName], $peer['secret']), $enpointPattern);
     $config .= "\n$conf \n";
 }
 
 $dirName = getenv('dirName');
 $astConf = getenv('astConf');
 
-$cmdAsterisk = Util::which('asterisk');
+TestCallsBase::printInfo("Copy pjsip.conf...");
 file_put_contents("$dirName/asterisk/pjsip.conf", $config);
-Util::mwExec("{$cmdAsterisk} -C '$astConf' -rx 'module reload res_pjsip.so'");
 
-$duration = count($db_data->toArray())*3;
-echo "\033[01;32m-> \033[39mWaiting for registration of peers {$duration} s... \n";
-sleep($duration);
-$result = Util::mwExec($cmdAsterisk.' -rx"core show hints" | grep PJSIP/ | grep Idle', $out);
-if(count($out) !== $limitPeers){
-    file_put_contents('php://stderr', "\033[01;31m-> ".'Not all endpoint are registered: '. implode("\n", $out)."\033[39m \n");
+TestCallsBase::printInfo("Reload res_pjsip...");
+$cmdAsterisk = Util::which('asterisk');
+Processes::mwExec("{$cmdAsterisk} -C '$astConf' -rx 'module reload res_pjsip.so'");
+Processes::mwExec("{$cmdAsterisk} -C '$astConf' -rx 'pjsip send register *all'");
+
+$duration = 120;
+$start = time();
+TestCallsBase::printInfo("Waiting for registration of peers. Wait max {$duration} s...");
+do{
+    sleep(1);
+    $idlePeers = TestCallsBase::getIdlePeers();
+    if ((time() - $start) >= $duration){
+        break;
+    }
+}while(count($idlePeers) < $limitPeers);
+
+TestCallsBase::printInfo('Time waiting '.(time() - $start).'s...');
+if(count($idlePeers) !== $limitPeers){
+    TestCallsBase::printError('Not all endpoint are registered:');
 }else{
-    echo "\033[01;32m-> \033[39mEndpoints connected successfully \n";
+    TestCallsBase::printInfo('Endpoints connected successfully');
+}
+
+$needChangePriority = false;
+foreach ($providers as $provider){
+    $rout = OutgoingRoutingTable::findFirst("providerid='{$provider['uniqid']}' AND numberbeginswith='(7|8)'");
+    if($rout !== null){
+        continue;
+    }
+    $needChangePriority = true;
+    $newRout = new OutgoingRoutingTable();
+    $newRout->rulename   = 'Test out rout №1';
+    $newRout->providerid = $provider['uniqid'];
+    $newRout->priority = 0;
+    $newRout->numberbeginswith = '(7|8)';
+    $newRout->restnumbers = '10';
+    $newRout->trimfrombegin = '0';
+    $newRout->prepend = '';
+    $newRout->note = 'TEST_CALLS';
+    $newRout->save();
+}
+if($needChangePriority === true){
+    // Опишем исходящие маршруты.
+    $outRouts = OutgoingRoutingTable::find();
+    /** @var OutgoingRoutingTable $rout */
+    foreach ($outRouts as $rout){
+        if($rout->note === 'TEST_CALLS'){
+            continue;
+        }
+        $rout->priority += 5;
+        $rout->save();
+    }
+    PBX::dialplanReload();
 }
 
 sleep(5);
-echo "\033[01;32m-> \033[39mEnd test \n\n";
+TestCallsBase::printInfo("End test \n");

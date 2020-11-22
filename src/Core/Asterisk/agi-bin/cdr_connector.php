@@ -10,7 +10,7 @@
 use MikoPBX\Core\Asterisk\AGI;
 use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\Asterisk\Configs\{ResParkingConf};
-use MikoPBX\Core\System\{MikoPBXConfig, Util};
+use MikoPBX\Core\System\{MikoPBXConfig, Processes, Util};
 
 require_once 'Globals.php';
 
@@ -78,7 +78,7 @@ function Event_dial($agi, $action)
     $data['src_num']      = $src_num;
     $data['dst_num']      = $dst_num;
     $data['start']        = $now;
-    $data['linkedid']     = $agi->get_variable("CDR(linkedid)", true);
+    $data['linkedid']     = $agi->get_variable("CHANNEL(linkedid)", true);
     $data['UNIQUEID']     = $id;
     $data['transfer']     = '0';
     $data['agi_channel']  = $agi->request['agi_channel'];
@@ -107,7 +107,7 @@ function Event_dial_create_chan($agi, $action)
     $data['action']     = "$action";
     $data['dst_chan']   = $agi->request['agi_channel'];
     $data['UNIQUEID']   = $id;
-    $data['linkedid']   = $agi->get_variable("CDR(linkedid)", true);
+    $data['linkedid']   = $agi->get_variable("CHANNEL(linkedid)", true);
     $data['event_time'] = $now;
 
     if (stripos($data['dst_chan'], 'local/') === false) {
@@ -148,7 +148,7 @@ function Event_dial_answer($agi, $action)
     $data['id']          = $id;
     $data['dst_num']     = $agi->request['agi_callerid'];
     $data['agi_channel'] = $agi->request['agi_channel'];
-    $data['linkedid']    = $agi->get_variable("CDR(linkedid)", true);
+    $data['linkedid']    = $agi->get_variable("CHANNEL(linkedid)", true);
 
     $data['ENDCALLONANSWER'] = $agi->get_variable("ENDCALLONANSWER", true);
     $data['BRIDGEPEER']      = $agi->get_variable("FROM_CHAN", true);
@@ -208,7 +208,7 @@ function Event_dial_hangup_DEPRECATED($agi, $action)
     $data['end']         = $now;
     $data['id']          = $agi->get_variable("pt1c_UNIQUEID", true);
     $data['agi_channel'] = $agi->request['agi_channel'];
-    $data['linkedid']    = $agi->get_variable("CDR(linkedid)", true);
+    $data['linkedid']    = $agi->get_variable("CHANNEL(linkedid)", true);
     $data['did']         = $agi->get_variable("FROM_DID", true);
 
     $data['agi_threadid'] = $agi->request['agi_uniqueid'] . '_' . Util::generateRandomString();
@@ -248,7 +248,7 @@ function Event_transfer_dial($agi, $action)
     $data                = [];
     $data['action']      = "$action";
     $data['agi_channel'] = $channel;// $agi->request['agi_channel'];
-    $data['linkedid']    = $agi->get_variable("CDR(linkedid)", true);
+    $data['linkedid']    = $agi->get_variable("CHANNEL(linkedid)", true);
     $data['src_chan']    = $channel;
     $data['did']         = $agi->get_variable("FROM_DID", true);
     $data['start']       = $now;
@@ -277,7 +277,7 @@ function Event_transfer_dial_create_chan($agi, $action)
     $data['dst_chan']          = $agi->request['agi_channel'];
     $data['transfer_UNIQUEID'] = "$id";
     $data['action']            = "$action";
-    $data['linkedid']          = $agi->get_variable("CDR(linkedid)", true);
+    $data['linkedid']          = $agi->get_variable("CHANNEL(linkedid)", true);
 
     return $data;
 }
@@ -299,7 +299,7 @@ function Event_transfer_dial_answer($agi, $action)
     $data['transfer_UNIQUEID'] = "$id";
     $data['action']            = "$action";
     $data['agi_channel']       = $agi->request['agi_channel'];
-    $data['linkedid']          = $agi->get_variable("CDR(linkedid)", true);
+    $data['linkedid']          = $agi->get_variable("CHANNEL(linkedid)", true);
 
     return $data;
 }
@@ -317,7 +317,7 @@ function Event_transfer_dial_hangup($agi, $action)
     $now                  = Util::getNowDate();
     $data                 = [];
     $data['end']          = $now;
-    $data['linkedid']     = $agi->get_variable("CDR(linkedid)", true);
+    $data['linkedid']     = $agi->get_variable("CHANNEL(linkedid)", true);
     $data['did']          = $agi->get_variable("FROM_DID", true);
     $data['action']       = "$action";
     $data['agi_channel']  = $agi->request['agi_channel'];
@@ -352,7 +352,7 @@ function Event_hangup_chan($agi, $action)
     $data['did']          = $agi->get_variable("FROM_DID", true);
     $data['agi_threadid'] = $agi->request['agi_uniqueid'] . '_' . Util::generateRandomString();
 
-    $data['linkedid']   = $agi->get_variable("CDR(linkedid)", true);
+    $data['linkedid']   = $agi->get_variable("CHANNEL(linkedid)", true);
     $data['dialstatus'] = $agi->get_variable("DIALSTATUS", true);
     if ('ANSWER' == $data['dialstatus']) {
         $data['dialstatus'] = "ANSWERED";
@@ -391,7 +391,7 @@ function Event_unpark_call($agi, $action)
     $data                 = [];
     $data['action']       = "$action";
     $data['UNIQUEID']     = $id;
-    $data['linkedid_old'] = $agi->get_variable("CDR(linkedid)", true);
+    $data['linkedid_old'] = $agi->get_variable("CHANNEL(linkedid)", true);
     $data['agi_channel']  = $channel;
     $data['linkedid']     = $park_row['ParkeeLinkedid'];
     $data['start']        = $now;
@@ -467,7 +467,7 @@ function Event_unpark_call_timeout($agi, $action)
         'did'      => $agi->get_variable("FROM_DID", true),
         'UNIQUEID' => $id,
         'transfer' => '0',
-        'linkedid' => $agi->get_variable("CDR(linkedid)", true),
+        'linkedid' => $agi->get_variable("CHANNEL(linkedid)", true),
         'PARKER'   => $agi->get_variable("PARKER", true),
     ];
 
@@ -509,13 +509,13 @@ function Event_queue_start($agi, $action)
         'did'      => $agi->get_variable("FROM_DID", true),
         'is_app'   => '1',
         'UNIQUEID' => $id,
-        'linkedid' => $agi->get_variable("CDR(linkedid)", true),
+        'linkedid' => $agi->get_variable("CHANNEL(linkedid)", true),
     ];
     if ( ! empty($time_start)) {
         $data['src_chan'] = $agi->get_variable("QUEUE_SRC_CHAN", true);
         $data['src_num']  = $agi->request['agi_callerid'];
         $data['start']    = $time_start;
-        $data['linkedid'] = $agi->get_variable("CDR(linkedid)", true);
+        $data['linkedid'] = $agi->get_variable("CHANNEL(linkedid)", true);
         $data['transfer'] = '0';
         $agi->set_variable("__pt1c_q_UNIQUEID", "$id");
     }
@@ -545,7 +545,7 @@ function Event_queue_answer($agi, $action)
     $data['answer']      = $now;
     $data['id']          = $id;
     $data['agi_channel'] = $agi->request['agi_channel'];
-    $data['linkedid']    = $agi->get_variable("CDR(linkedid)", true);
+    $data['linkedid']    = $agi->get_variable("CHANNEL(linkedid)", true);
 
     return $data;
 }
@@ -568,7 +568,7 @@ function Event_queue_end($agi, $action)
     $data['id']          = $id;
     $data['dialstatus']  = $agi->get_variable("QUEUESTATUS", true);
     $data['agi_channel'] = $agi->request['agi_channel'];
-    $data['linkedid']    = $agi->get_variable("CDR(linkedid)", true);
+    $data['linkedid']    = $agi->get_variable("CHANNEL(linkedid)", true);
 
     return $data;
 }
@@ -644,7 +644,7 @@ function Event_meetme_dial($agi, $action)
         'did'           => $agi->get_variable('FROM_DID', true),
         'transfer'      => '0',
         'UNIQUEID'      => $id,
-        'linkedid'      => $agi->get_variable('CDR(linkedid)', true),
+        'linkedid'      => $agi->get_variable('CHANNEL(linkedid)', true),
     ];
     $agi->set_variable('MEETME_RECORDINGFILE', $recordingfile);
     $agi->set_variable('__pt1c_q_UNIQUEID', $id);
@@ -665,7 +665,7 @@ function Event_hangup_chan_meetme($agi, $action): array
     $now                 = Util::getNowDate();
     $data                = [];
     $data['action']      = $action;
-    $data['linkedid']    = $agi->get_variable('CDR(linkedid)', true);
+    $data['linkedid']    = $agi->get_variable('CHANNEL(linkedid)', true);
     $data['src_chan']    = $agi->request['agi_channel'];
     $data['agi_channel'] = $agi->request['agi_channel'];
     $data['end']         = $now;
@@ -680,7 +680,7 @@ function Event_hangup_chan_meetme($agi, $action): array
     $nicePath = Util::which('nice');
     $chmodPath = Util::which('chmod');
     $command               = "{$nicePath} -n 19 {$lamePath} -b 32 --silent \"{$recordingfile}.wav\" \"{$recordingfile}.mp3\" && {$chmodPath} o+r \"{$recordingfile}.mp3\"";
-    Util::mwExecBg($command);
+    Processes::mwExecBg($command);
 
     return $data;
 }

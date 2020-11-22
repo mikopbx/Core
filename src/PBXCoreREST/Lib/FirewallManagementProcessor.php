@@ -11,11 +11,13 @@ namespace MikoPBX\PBXCoreREST\Lib;
 
 use MikoPBX\Common\Models\Fail2BanRules;
 use MikoPBX\Core\System\Configs\Fail2BanConf;
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\System\Verify;
 use Phalcon\Di\Injectable;
 
 use SQLite3;
+use Throwable;
 
 class FirewallManagementProcessor extends Injectable
 {
@@ -39,7 +41,7 @@ class FirewallManagementProcessor extends Injectable
         $fail2ban        = new Fail2BanConf();
         if ($fail2ban->fail2ban_enable) {
             $fail2ban = Util::which('fail2ban-client');
-            $res->success  = (Util::mwExec("{$fail2ban} unban {$ip}") === 0);
+            $res->success  = (Processes::mwExec("{$fail2ban} unban {$ip}") === 0);
         } else {
             $res = self::fail2banUnbanDb($ip);
         }
@@ -85,7 +87,7 @@ class FirewallManagementProcessor extends Injectable
          }
          try {
              $db      = new SQLite3(Fail2BanConf::FAIL2BAN_DB_PATH);
-         }catch (\Exception $e){
+         }catch (Throwable $e){
              return null;
          }
          $db->busyTimeout(5000);

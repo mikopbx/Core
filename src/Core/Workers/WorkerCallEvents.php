@@ -10,17 +10,13 @@ namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
 
 use MikoPBX\Common\Models\{CallDetailRecords, CallDetailRecordsTmp};
-use Error;
 use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\System\{BeanstalkClient, MikoPBXConfig, Storage, Util};
 use Phalcon\Di;
-use phpDocumentor\Reflection\Types\True_;
+use Throwable;
 
 class WorkerCallEvents extends WorkerBase
 {
-    // Максимальное количество экземпляров данныого класса.
-    protected int $maxProc = 1;
-
     protected array $mixMonitorChannels = [];
     protected bool  $record_calls       = true;
     protected bool  $split_audio_thread = false;
@@ -33,11 +29,10 @@ class WorkerCallEvents extends WorkerBase
      * @param ?string   $file_name
      * @param ?string   $sub_dir
      * @param ?string   $full_name
-     * @param bool      $onlySetVar
      *
      * @return string
      */
-    public function MixMonitor($channel, $file_name = null, $sub_dir = null, $full_name = null, $onlySetVar = false): string
+    public function MixMonitor($channel, $file_name = null, $sub_dir = null, $full_name = null): string
     {
         $resFile = $this->mixMonitorChannels[$channel]??'';
         if($resFile !== ''){
@@ -46,47 +41,42 @@ class WorkerCallEvents extends WorkerBase
         $resFile           = '';
         $file_name = str_replace('/', '_', $file_name);
         if ($this->record_calls) {
-            if ( ! file_exists($full_name)) {
-                $monitor_dir = Storage::getMonitorDir();
-                if ($sub_dir === null) {
-                    $sub_dir = date('Y/m/d/H/');
-                }
-                $f = "{$monitor_dir}/{$sub_dir}{$file_name}";
-            } else {
-                $f         = Util::trimExtensionForFile($full_name);
-                $file_name = basename($f);
-            }
-            if ($this->split_audio_thread) {
-                $options = "abSr({$f}_in.wav)t({$f}_out.wav)";
-            } else {
-                $options = 'ab';
-            }
-            $nicePath   = Util::which('nice');
-            $wav2mp3Path= Util::which('wav2mp3.sh');
-
+            [$f, $options] = $this->setMonitorFilenameOptions($full_name, $sub_dir, $file_name);
             $arr = $this->am->GetChannels(false);
             if(!in_array($channel, $arr, true)){
-                CdrDb::LogEvent("MixMonitor: Channel {$channel} not found.");
                 return '';
             }
             $srcFile = "{$f}.wav";
             $resFile = "{$f}.mp3";
-            $command = "{$nicePath} -n 19 {$wav2mp3Path} '{$f}'";
-            if($onlySetVar){
-                $this->am->SetVar($channel, 'MIX_FILE_NAME', $srcFile);
-                $this->am->SetVar($channel, 'MIX_CMD',       $command);
-                $this->am->SetVar($channel, 'MIX_OPTIONS',   $options);
-            }else{
-                $res        = $this->am->MixMonitor($channel, $srcFile, $options, $command);
-                $res['cmd'] = "MixMonitor($channel, $file_name)";
-                CdrDb::LogEvent(json_encode($res));
-            }
-
+            $this->am->MixMonitor($channel, $srcFile, $options);
             $this->mixMonitorChannels[$channel] = $resFile;
             $this->am->UserEvent('StartRecording', ['recordingfile' => $resFile, 'recchan' => $channel]);
         }
-
         return $resFile;
+    }
+
+    /**
+     * @param string|null $full_name
+     * @param string|null $sub_dir
+     * @param string|null $file_name
+     * @return array
+     */
+    private function setMonitorFilenameOptions(?string $full_name, ?string $sub_dir, ?string $file_name): array{
+        if (!file_exists($full_name)) {
+            $monitor_dir = Storage::getMonitorDir();
+            if ($sub_dir === null) {
+                $sub_dir = date('Y/m/d/H/');
+            }
+            $f = "{$monitor_dir}/{$sub_dir}{$file_name}";
+        } else {
+            $f = Util::trimExtensionForFile($full_name);
+        }
+        if ($this->split_audio_thread) {
+            $options = "abSr({$f}_in.wav)t({$f}_out.wav)";
+        } else {
+            $options = 'ab';
+        }
+        return array($f, $options);
     }
 
     /**
@@ -101,9 +91,7 @@ class WorkerCallEvents extends WorkerBase
             return;
         }
         if ($this->record_calls) {
-            $res        = $this->am->StopMixMonitor($channel);
-            $res['cmd'] = "StopMixMonitor($channel)";
-            CdrDb::LogEvent(json_encode($res));
+            $this->am->StopMixMonitor($channel);
         }
     }
 
@@ -114,7 +102,7 @@ class WorkerCallEvents extends WorkerBase
      */
     public function Action_dial($data): void
     {
-        $this->insertDataToDbM($data);
+        self::insertDataToDbM($data);
         $this->Action_app_end($data);
     }
 
@@ -167,7 +155,6 @@ class WorkerCallEvents extends WorkerBase
             ];
         }
 
-        $rec_start  = false;
         $row_create = false;
         /** @var CallDetailRecordsTmp $m_data */
         /** @var CallDetailRecordsTmp $row */
@@ -201,17 +188,11 @@ class WorkerCallEvents extends WorkerBase
             }
             // конец проверки
             ///
-
             if ($row->dialstatus === 'ORIGINATE') {
                 $account_col = 'from_account';
                 // При оригинации меняется местами srs_chan в поле dst_chan.
                 $row->writeAttribute('src_chan', $data['dst_chan']);
             } else {
-                if ( ! $rec_start) {
-                    $data['recordingfile'] = $this->MixMonitor($data['dst_chan'], $row->UNIQUEID,null, $row->recordingfile,true);
-                    $row->writeAttribute('recordingfile', $data['recordingfile']);
-                    $rec_start = true;
-                }
                 $account_col = 'to_account';
                 $row->writeAttribute('dst_chan', $data['dst_chan']);
             }
@@ -253,15 +234,14 @@ class WorkerCallEvents extends WorkerBase
                 $new_data                   = $m_row_data->toArray();
                 $new_data['start']          = $data['answer'];
                 $new_data['answer']         = $data['answer'];
-                $new_data['endtime']        = null;
+                $new_data['endtime']        = '';
                 $new_data['dst_chan']       = $data['agi_channel'];
                 $new_data['dst_num']        = $data['dst_num'];
                 $new_data['UNIQUEID']       = $data['id'];
                 $new_data['recordingfile']  = $this->MixMonitor($new_data['dst_chan'],  'pickup_'.$new_data['UNIQUEID']);
 
-                unset($new_data['id']);
-                unset($new_data['end']);
-                $this->insertDataToDbM($new_data);
+                unset($new_data['id'], $new_data['end']);
+                self::insertDataToDbM($new_data);
                 /**
                  * Отправка UserEvent
                  */
@@ -345,11 +325,16 @@ class WorkerCallEvents extends WorkerBase
                     $row->writeAttribute('UNIQUEID', $data['id']);
                     $row->save();
                     break;
-                } else {
-                    $row->writeAttribute('answer', $data['answer']);
+                }
+
+                $row->writeAttribute('answer', $data['answer']);
+                $recFile = $data['recordingfile']??'';
+                if(!empty($recFile)){
+                    $this->mixMonitorChannels[$data['agi_channel']] = $recFile;
+                    $row->writeAttribute('recordingfile', $recFile);
                 }
                 $res = $row->save();
-                if ( ! $res) {
+                if ( !$res) {
                     Util::sysLogMsg('Action_dial_answer', implode(' ', $row->getMessages()));
                 }
             }
@@ -361,7 +346,7 @@ class WorkerCallEvents extends WorkerBase
      *
      * @param $data
      *
-     * @throws Error | \Exception
+     * @throws \Throwable
      */
     public function Action_hangup_chan($data): void
     {
@@ -406,7 +391,7 @@ class WorkerCallEvents extends WorkerBase
                 continue;
             }
 
-            $linkedid = $this->am->GetVar($data_chan['chan'], 'CDR(linkedid)', null, false);
+            $linkedid = $this->am->GetVar($data_chan['chan'], 'CHANNEL(linkedid)', null, false);
             if ( empty($linkedid) || $linkedid === $data['linkedid']) {
                 continue;
             }
@@ -426,7 +411,7 @@ class WorkerCallEvents extends WorkerBase
             $n_data['did']           = $data_chan['did'];
 
             Util::logMsgDb('call_events', json_encode($n_data));
-            $this->insertDataToDbM($n_data);
+            self::insertDataToDbM($n_data);
             $filter = [
                 'linkedid=:linkedid:',
                 'bind' => ['linkedid' => $data['linkedid']],
@@ -517,9 +502,9 @@ class WorkerCallEvents extends WorkerBase
     {
         if( isset($this->checkChanHangupTransfer[$data['agi_channel']]) ) {
             return;
-        }else{
-            $this->checkChanHangupTransfer[$data['agi_channel']] = $action;
         }
+
+        $this->checkChanHangupTransfer[$data['agi_channel']] = $action;
 
         if (null === $calls_data) {
             $filter     = [
@@ -576,8 +561,7 @@ class WorkerCallEvents extends WorkerBase
             $AgiData               = base64_encode(json_encode($insert_data));
             $this->am->UserEvent('CdrConnector', ['AgiData' => $AgiData]);
 
-            $this->insertDataToDbM($insert_data);
-            CdrDb::LogEvent(json_encode($insert_data));
+            self::insertDataToDbM($insert_data);
         } elseif (empty($calls_data[0]['answer']) && count($calls_data) === 1 && ! empty($calls_data[0]['recordingfile'])) {
             // Возобновление записи разговора при срыве переадресации.
             $row_data = $calls_data[0];
@@ -618,9 +602,29 @@ class WorkerCallEvents extends WorkerBase
      */
     public function Action_transfer_dial($data): void
     {
+        // Завершаем предыдущий неудачный Dial.
+        // Необходимо в том случае, если не был создан канал назначения.
+        $this->transferDialEndFailCdr($data);
+
         $this->Action_transfer_check($data);
-        $this->insertDataToDbM($data);
+        self::insertDataToDbM($data);
         $this->Action_app_end($data);
+    }
+
+    private function transferDialEndFailCdr($data):void{
+        $filter = [
+            'transfer=1 AND endtime = "" AND dst_chan="" AND linkedid=:linkedid:',
+            'bind' => [
+                'linkedid' => $data['linkedid']
+            ],
+        ];
+        $m_data = CallDetailRecordsTmp::find($filter);
+        /** @var CallDetailRecordsTmp $row */
+        foreach ($m_data as $row) {
+            // Установим признак переадресации.
+            $row->writeAttribute('endtime', $data['start']);
+            $row->save();
+        }
     }
 
     /**
@@ -691,7 +695,6 @@ class WorkerCallEvents extends WorkerBase
                 $row_create = true;
             }
 
-            $data['recordingfile'] = $this->MixMonitor($data['dst_chan'], $row->UNIQUEID, null, null, true);
             // конец проверки
             ///
 
@@ -727,8 +730,13 @@ class WorkerCallEvents extends WorkerBase
         $m_data = CallDetailRecordsTmp::find($filter);
         foreach ($m_data as $row) {
             $row->writeAttribute('answer', $data['answer']);
+            $recFile = $data['recordingfile']??'';
+            if(!empty($recFile)){
+                $this->mixMonitorChannels[$data['agi_channel']] = $recFile;
+                $row->writeAttribute('recordingfile', $recFile);
+            }
             $res = $row->save();
-            if ( ! $res) {
+            if ( !$res) {
                 Util::sysLogMsg('Action_transfer_dial_answer', implode(' ', $row->getMessages()));
             }
         }
@@ -766,7 +774,7 @@ class WorkerCallEvents extends WorkerBase
                     Util::sysLogMsg('Action_transfer_dial_answer', implode(' ', $row->getMessages()));
                 }
             }
-            // Попробуем начать запись разговора.
+            // Попробуем возобновить запись разговора.
             $filter = [
                 'linkedid=:linkedid: AND endtime = "" AND transfer=1',
                 'bind' => [
@@ -779,7 +787,7 @@ class WorkerCallEvents extends WorkerBase
                 $info      = pathinfo($res->recordingfile);
                 $data_time = (empty($res->answer)) ? $res->start : $res->answer;
                 $subdir    = date('Y/m/d/H/', strtotime($data_time));
-                $this->MixMonitor($res->src_chan, $info['filename'], $subdir);
+                $this->MixMonitor($res->dst_chan, $info['filename'], $subdir);
             }
         } elseif ('' === $data['ANSWEREDTIME']) {
             $filter = [
@@ -812,9 +820,9 @@ class WorkerCallEvents extends WorkerBase
             $m_data = CallDetailRecordsTmp::find($filter);
             foreach ($m_data as $row) {
                 $info      = pathinfo($row->recordingfile);
-                $data_time = ($row->answer == null) ? $row->start : $row->answer;
+                $data_time = ($row->answer === '') ? $row->start : $row->answer;
                 $subdir    = date('Y/m/d/H/', strtotime($data_time));
-                $this->MixMonitor($row->src_chan, $info['filename'], $subdir);
+                $this->MixMonitor($row->dst_chan, $info['filename'], $subdir);
                 // Снимем со строк признак переадресации.
                 $row->writeAttribute('transfer', 0);
                 if ( ! $row->save()) {
@@ -832,7 +840,7 @@ class WorkerCallEvents extends WorkerBase
     public function Action_dial_app($data): void
     {
         $this->Action_app_end($data);
-        $this->insertDataToDbM($data);
+        self::insertDataToDbM($data);
     }
 
     /**
@@ -842,7 +850,7 @@ class WorkerCallEvents extends WorkerBase
      */
     public function Action_dial_outworktimes($data): void
     {
-        $this->insertDataToDbM($data);
+        self::insertDataToDbM($data);
     }
 
     /**
@@ -852,13 +860,13 @@ class WorkerCallEvents extends WorkerBase
      */
     public function Action_queue_start($data): void
     {
-        if ($data['transfer'] == '1') {
+        if ($data['transfer'] === '1') {
             // Если это трансфер выполним поиск связанных данных.
             $this->Action_transfer_check($data);
         }
         if (isset($data['start'])) {
             // Это новая строка.
-            $this->insertDataToDbM($data);
+            self::insertDataToDbM($data);
         } else {
             // Требуется только обновление данных.
             $this->updateDataInDbM($data);
@@ -902,7 +910,7 @@ class WorkerCallEvents extends WorkerBase
                 $m_data->save();
             }
         } else {
-            $this->insertDataToDbM($data);
+            self::insertDataToDbM($data);
             $this->Action_app_end($data);
         }
     }
@@ -915,9 +923,9 @@ class WorkerCallEvents extends WorkerBase
     public function Action_unpark_call($data): void
     {
         $data['recordingfile'] = $this->MixMonitor($data['dst_chan'], $data['UNIQUEID']);
-        $this->insertDataToDbM($data);
+        self::insertDataToDbM($data);
         if (is_array($data['data_parking'])) {
-            $this->insertDataToDbM($data['data_parking']);
+            self::insertDataToDbM($data['data_parking']);
         }
         $filter = [
             "linkedid=:linkedid: AND src_chan=:src_chan:",
@@ -941,7 +949,7 @@ class WorkerCallEvents extends WorkerBase
      */
     public function Action_unpark_call_timeout($data): void
     {
-        $this->insertDataToDbM($data);
+        self::insertDataToDbM($data);
     }
 
     /**
@@ -1087,7 +1095,7 @@ class WorkerCallEvents extends WorkerBase
         $client->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
         $client->setErrorHandler([$this, 'errorHandler']);
 
-        while (true) {
+        while ($this->needRestart === false) {
             $client->wait();
         }
     }
@@ -1150,7 +1158,7 @@ class WorkerCallEvents extends WorkerBase
             if ( ! array_key_exists($attribute, $f_list)) {
                 continue;
             }
-            if ('UNIQUEID' == $attribute) {
+            if ('UNIQUEID' === $attribute) {
                 continue;
             }
             $m_data->writeAttribute($attribute, $value);
@@ -1191,7 +1199,6 @@ class WorkerCallEvents extends WorkerBase
      * @param array $data
      *
      * @return bool
-     * @throws Error
      */
     public static function insertDataToDbM($data): bool
     {
@@ -1205,14 +1212,17 @@ class WorkerCallEvents extends WorkerBase
         /** @var CallDetailRecordsTmp $m_data */
         $m_data = CallDetailRecordsTmp::findFirst(
             [
-                "UNIQUEID=:id:",
-                'bind' => ['id' => $data['UNIQUEID'],],
+                "UNIQUEID=:id: AND linkedid=:linkedid:",
+                'bind' => [
+                    'id'       => $data['UNIQUEID'],
+                    'linkedid' => $data['linkedid']
+                ],
             ]
         );
         if ($m_data === null) {
             $m_data = new CallDetailRecordsTmp();
             $is_new = true;
-        } elseif (isset($data['IS_ORGNT']) && $data['IS_ORGNT'] !== false && $data['action'] == 'dial') {
+        } elseif (isset($data['IS_ORGNT']) && $data['IS_ORGNT'] !== false && $data['action'] === 'dial') {
             if (empty($m_data->endtime)) {
                 // Если это оригинация dial может прийти дважды.
                 if(!empty($m_data->src_num) && $m_data->src_num === $data['dst_num']){
@@ -1220,32 +1230,31 @@ class WorkerCallEvents extends WorkerBase
                     $m_data->save();
                 }
                 return true;
-            } else {
-                // Предыдущие звонки завершены. Текущий вызов новый, к примеру через резервного провайдера.
-                // Меняем идентификатор предыдущих звонков.
-                $m_data->UNIQUEID .= Util::generateRandomString(5);
-                // Чистим путь к файлу записи.
-                $m_data->recordingfile = "";
-                $m_data->save();
-
-                $new_m_data               = new CallDetailRecordsTmp();
-                $new_m_data->UNIQUEID     = $data['UNIQUEID'];
-                $new_m_data->start        = $data['start'];
-                $new_m_data->src_chan     = $m_data->src_chan;
-                $new_m_data->src_num      = $m_data->src_num;
-                $new_m_data->dst_num      = $data['src_num'];
-                $new_m_data->did          = $data['did'];
-                $new_m_data->from_account = $data['from_account'];
-                $new_m_data->linkedid     = $data['linkedid'];
-                $new_m_data->transfer     = $data['transfer'];
-
-                $res = $new_m_data->save();
-                if ( ! $res) {
-                    Util::sysLogMsg(__FUNCTION__, implode(' ', $m_data->getMessages()));
-                }
-
-                return $res;
             }
+            // Предыдущие звонки завершены. Текущий вызов новый, к примеру через резервного провайдера.
+            // Меняем идентификатор предыдущих звонков.
+            $m_data->UNIQUEID .= Util::generateRandomString(5);
+            // Чистим путь к файлу записи.
+            $m_data->recordingfile = "";
+            $m_data->save();
+
+            $new_m_data               = new CallDetailRecordsTmp();
+            $new_m_data->UNIQUEID     = $data['UNIQUEID'];
+            $new_m_data->start        = $data['start'];
+            $new_m_data->src_chan     = $m_data->src_chan;
+            $new_m_data->src_num      = $m_data->src_num;
+            $new_m_data->dst_num      = $data['src_num'];
+            $new_m_data->did          = $data['did'];
+            $new_m_data->from_account = $data['from_account'];
+            $new_m_data->linkedid     = $data['linkedid'];
+            $new_m_data->transfer     = $data['transfer'];
+
+            $res = $new_m_data->save();
+            if ( ! $res) {
+                Util::sysLogMsg(__FUNCTION__, implode(' ', $m_data->getMessages()));
+            }
+
+            return $res;
         }
 
         $f_list = $m_data->toArray();
@@ -1253,7 +1262,7 @@ class WorkerCallEvents extends WorkerBase
             if ( ! array_key_exists($attribute, $f_list)) {
                 continue;
             }
-            if ($is_new === false && 'UNIQUEID' == $attribute) {
+            if ($is_new === false && 'UNIQUEID' === $attribute) {
                 continue;
             }
             $m_data->writeAttribute($attribute, $value);
@@ -1287,7 +1296,7 @@ class WorkerCallEvents extends WorkerBase
                 $res = CallDetailRecords::find($filter);
             }
             $res_data = json_encode($res->toArray());
-        } catch (Error $e) {
+        } catch (Throwable $e) {
             $res_data = '[]';
         }
 
@@ -1306,9 +1315,7 @@ class WorkerCallEvents extends WorkerBase
             try {
                 $res      = CallDetailRecords::find($filter['add_pack_query']);
                 $res_data = json_encode($res->toArray(), JSON_THROW_ON_ERROR);
-            } catch (Error $e) {
-                $res_data = '[]';
-            } catch (\JsonException $e) {
+            } catch (Throwable $e) {
                 $res_data = '[]';
             }
         }
@@ -1327,7 +1334,10 @@ class WorkerCallEvents extends WorkerBase
 
     /**
      * Проверка фильтра на корректность bind параметров.
+     *
      * @param $filter
+     *
+     * @return bool
      */
     private function filterNotValid($filter){
         $haveErrors = false;
@@ -1361,7 +1371,7 @@ if ($action === 'start') {
         /** @var WorkerCallEvents $worker */
         $worker = new $workerClassname();
         $worker->start($argv);
-    } catch (Error $e) {
+    } catch (Throwable $e) {
         global $errorLogger;
         $errorLogger->captureException($e);
         Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage());

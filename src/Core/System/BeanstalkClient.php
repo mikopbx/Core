@@ -12,13 +12,13 @@ use Phalcon\Di\Injectable;
 use Pheanstalk\Contract\PheanstalkInterface;
 use Pheanstalk\Job;
 use Pheanstalk\Pheanstalk;
+use Throwable;
 
 class BeanstalkClient extends Injectable
 {
     /** @var Pheanstalk */
     private Pheanstalk $queue;
     private bool $connected = false;
-    private array $job_options;
     private array $subscriptions = [];
     private string $tube;
     private int $reconnectsCount = 0;
@@ -36,8 +36,7 @@ class BeanstalkClient extends Injectable
      */
     public function __construct($tube = 'default', $port = '')
     {
-        $this->tube        = str_replace("\\", '-', $tube);;
-        $this->job_options = ['priority' => 250, 'delay' => 0, 'ttr' => 3600];
+        $this->tube = str_replace("\\", '-', $tube);
         $this->port = $port;
         $this->reconnect();
     }
@@ -49,7 +48,7 @@ class BeanstalkClient extends Injectable
     {
         $config = $this->di->get('config')->beanstalk;
         $port   = $config->port;
-        if(!empty($this->port) && is_numeric($this->port)){
+        if ( ! empty($this->port) && is_numeric($this->port)) {
             $port = $this->port;
         }
 
@@ -73,18 +72,16 @@ class BeanstalkClient extends Injectable
      *
      * @param      $job_data
      * @param int  $timeout
-     * @param int $priority
+     * @param int  $priority
      *
      * @return bool|mixed
      *
-     * @throws \Pheanstalk\Exception\DeadlineSoonException
      */
     public function request(
         $job_data,
         int $timeout = 10,
         int $priority = PheanstalkInterface::DEFAULT_PRIORITY
-    )
-    {
+    ) {
         $this->message = false;
         $inbox_tube    = uniqid('INBOX_', true);
         $this->queue->watch($inbox_tube);
@@ -97,15 +94,21 @@ class BeanstalkClient extends Injectable
         $this->publish($requestMessage, null, $priority, 0, $timeout);
 
         // Получаем ответ от сервера.
-        $job = $this->queue->reserveWithTimeout($timeout);
-        if ($job !== null) {
-            $this->message = $job->getData();
-            $this->queue->delete($job);
+        $job = null;
+        try {
+            $job = $this->queue->reserveWithTimeout($timeout);
+            if ($job !== null) {
+                $this->message = $job->getData();
+                $this->queue->delete($job);
+            }
+        } catch (Throwable $exception) {
+            Util::sysLogMsg(__METHOD__, 'Exception: ' . $exception->getMessage());
+            if ($job !== null) {
+                $this->queue->bury($job);
+            }
         }
         $this->queue->ignore($inbox_tube);
 
-        // Чистим мусор.
-        $this->cleanTube();
         return $this->message;
     }
 
@@ -113,17 +116,22 @@ class BeanstalkClient extends Injectable
      * Puts a job in a beanstalkd server queue
      *
      * @param mixed   $job_data data to worker
-     * @param ?string $tube tube name
+     * @param ?string $tube     tube name
      * @param int     $priority Jobs with smaller priority values will be scheduled
      *                          before jobs with larger priorities. The most urgent priority is 0;
      *                          the least urgent priority is 4294967295.
-     * @param int     $delay delay before insert job into work query
-     * @param int     $ttr time to execute this job
+     * @param int     $delay    delay before insert job into work query
+     * @param int     $ttr      time to execute this job
      *
      * @return \Pheanstalk\Job
      */
-    public function publish($job_data, $tube = null, int $priority = PheanstalkInterface::DEFAULT_PRIORITY, int $delay = PheanstalkInterface::DEFAULT_DELAY, int $ttr = PheanstalkInterface::DEFAULT_TTR): Job
-    {
+    public function publish(
+        $job_data,
+        $tube = null,
+        int $priority = PheanstalkInterface::DEFAULT_PRIORITY,
+        int $delay = PheanstalkInterface::DEFAULT_DELAY,
+        int $ttr = PheanstalkInterface::DEFAULT_TTR
+    ): Job {
         $tube = str_replace("\\", '-', $tube);
         // Change tube
         if ( ! empty($tube) && $this->tube !== $tube) {
@@ -137,6 +145,51 @@ class BeanstalkClient extends Injectable
         $this->queue->useTube($this->tube);
 
         return $result;
+    }
+
+    /**
+     * Drops orphaned tasks
+     */
+    public function cleanTubes()
+    {
+        $tubes = $this->queue->listTubes();
+        foreach ($tubes as $tube) {
+            try {
+                $this->queue->useTube($tube);
+                $queueStats = $this->queue->stats()->getArrayCopy();
+
+                // Delete buried jobs
+                $countBuried=$queueStats['current-jobs-buried'];
+                while ($job = $this->queue->peekBuried()) {
+                    $countBuried--;
+                    if ($countBuried<0){
+                        break;
+                    }
+                    $id = $job->getId();
+                    $this->queue->delete($job);
+                    Util::sysLogMsg(__METHOD__, "Deleted buried job with ID {$id} from {$tube}");
+                }
+
+                // Delete outdated jobs
+                $countReady=$queueStats['current-jobs-ready'];
+                while ($job = $this->queue->peekReady()) {
+                    $countReady--;
+                    if ($countReady<0){
+                        break;
+                    }
+                    $id = $job->getId();
+                    $jobStats = $this->queue->statsJob($job)->getArrayCopy();
+                    $age                   = (int)$jobStats['age'];
+                    $expectedTimeToExecute = (int)$jobStats['ttr'] * 2;
+                    if ($age > $expectedTimeToExecute) {
+                        $this->queue->delete($job);
+                        Util::sysLogMsg(__METHOD__, "Deleted outdated job with ID {$id} from {$tube}");
+                    }
+                }
+            } catch (Throwable $exception) {
+                Util::sysLogMsg(__METHOD__, 'Exception: ' . $exception->getMessage());
+            }
+        }
     }
 
     /**
@@ -158,13 +211,18 @@ class BeanstalkClient extends Injectable
      *
      * @param float $timeout
      *
-     * @throws \Pheanstalk\Exception\DeadlineSoonException
      */
     public function wait(float $timeout = 10): void
     {
         $this->message = null;
-        $start = microtime(true);
-        $job   = $this->queue->reserveWithTimeout($timeout);
+        $start         = microtime(true);
+        $job           = null;
+        try {
+            $job = $this->queue->reserveWithTimeout($timeout);
+        } catch (Throwable $exception) {
+            Util::sysLogMsg(__METHOD__, 'Exception: ' . $exception->getMessage());
+        }
+
         if ($job === null) {
             $worktime = (microtime(true) - $start);
             if ($worktime < 0.5) {
@@ -174,13 +232,14 @@ class BeanstalkClient extends Injectable
             if (is_array($this->timeout_handler)) {
                 call_user_func($this->timeout_handler);
             }
+
             return;
         }
 
         // Processing job over callable function attached in $this->subscribe
-        if(json_decode($job->getData(), true) !==null){
-            $mData =  $job->getData();
-        }else{
+        if (json_decode($job->getData(), true) !== null) {
+            $mData = $job->getData();
+        } else {
             $mData = unserialize($job->getData(), [false]);
         }
         $this->message = $mData;
@@ -189,19 +248,22 @@ class BeanstalkClient extends Injectable
         $requestFormTube = $stats['tube'];
         $func            = $this->subscriptions[$requestFormTube] ?? null;
 
-        if (is_array($func)) {
-            call_user_func($func, $this);
-        } elseif (is_callable($func) === true) {
-            $func($this);
-        }
-
-        try {
-            $this->queue->delete($job);
-        }catch (\Pheanstalk\Exception\JobNotFoundException $e){
-            // Игнорируем ошибку, задачи не существует, нечего удалять.
-        }catch (\Error $e){
-            // Аналогично, нечего удалять.
-            // Если задача и не удалена, то это будет исправлено позже при очистке.
+        if ($func === null) {
+            // Action not found
+            $this->queue->bury($job);
+        } else {
+            try {
+                if (is_array($func)) {
+                    call_user_func($func, $this);
+                } elseif (is_callable($func) === true) {
+                    $func($this);
+                }
+                // Removes the job from the queue when it has been successfully completed
+                $this->queue->delete($job);
+            } catch (Throwable $e) {
+                // Marks the job as terminally failed and no workers will restart it.
+                $this->queue->bury($job);
+            }
         }
     }
 
@@ -264,33 +326,28 @@ class BeanstalkClient extends Injectable
     }
 
     /**
-     * Drops orphaned tasks
+     * Gets all messages from tube and clean it
+     *
+     * @param string $tube
+     *
+     * @return array
      */
-    public function cleanTube(){
-        $tubes = $this->queue->listTubes();
-        foreach ($tubes as $tube){
-            if(strpos($tube, "INBOX_") !== 0){
-                continue;
-            }
-            try {
-                $statData = $this->queue->statsTube($tube)->getArrayCopy();
-                $watching = $statData['current-watching'];
-                if($watching !== '0'){
-                    continue;
-                }
-                // Нужно удалить все Jobs.
-                $this->queue->watch($tube);
-                while (true){
-                    $job = $this->queue->reserveWithTimeout(1);
-                    if($job === null){
-                        break;
-                    }
-                    $this->queue->delete($job);
-                }
-            }catch (\Exception $e){
-                continue;
-            }
-
+    public function getMessagesFromTube(string $tube = ''): array
+    {
+        if ($tube !== '') {
+            $this->queue->useTube($tube);
         }
+        $arrayOfMessages = [];
+        while ($job = $this->queue->peekReady()) {
+            if (json_decode($job->getData(), true) !== null) {
+                $mData = $job->getData();
+            } else {
+                $mData = unserialize($job->getData(), [false]);
+            }
+            $arrayOfMessages[] = $mData;
+            $this->queue->delete($job);
+        }
+
+        return $arrayOfMessages;
     }
 }

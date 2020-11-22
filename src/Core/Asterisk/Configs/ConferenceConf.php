@@ -30,9 +30,9 @@ class ConferenceConf extends ConfigClass
     public function extensionGenInternal(): string
     {
         $conf = '';
-        $data = ConferenceRooms::find(['order' => 'extension']);
+        $data = self::getConferenceExtensions();
         foreach ($data as $conference) {
-            $conf .= "exten => {$conference->extension},1,Goto(conference-rooms,{$conference->extension},1)" . "\n";
+            $conf .= "exten => {$conference},1,Goto(conference-rooms,{$conference},1)" . "\n";
         }
         $conf .= "\n";
 
@@ -45,9 +45,9 @@ class ConferenceConf extends ConfigClass
     public function extensionGenInternalTransfer(): string
     {
         $conf = '';
-        $data = ConferenceRooms::find(['order' => 'extension']);
+        $data = self::getConferenceExtensions();
         foreach ($data as $conference) {
-            $conf .= "exten => {$conference->extension},1,Goto(conference-rooms,{$conference->extension},1)" . "\n";
+            $conf .= "exten => {$conference},1,Goto(conference-rooms,{$conference},1)" . "\n";
         }
         $conf .= "\n";
 
@@ -70,9 +70,9 @@ class ConferenceConf extends ConfigClass
         $conf .= "exten => s,1,AGI(cdr_connector.php,hangup_chan_meetme)\n\t";
         $conf .= "same => n,return\n\n";
         $conf .= "[conference-rooms] \n";
-        $data = ConferenceRooms::find(['order' => 'extension']);
+        $data = self::getConferenceExtensions();
         foreach ($data as $conference) {
-            $conf .= 'exten => ' . $conference->extension . ',1,NoOp(---)' . "\n\t";
+            $conf .= 'exten => ' . $conference . ',1,NoOp(---)' . "\n\t";
             $conf .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" == "Local"]?Hangup())' . "\n\t";
             $conf .= 'same => n,AGI(cdr_connector.php,meetme_dial)' . "\n\t";
             $conf .= 'same => n,Answer()' . "\n\t";
@@ -92,12 +92,25 @@ class ConferenceConf extends ConfigClass
     public function extensionGenHints(): string
     {
         $conf = '';
-        $data = ConferenceRooms::find(['order' => 'extension']);
+        $data = self::getConferenceExtensions();
         foreach ($data as $conference) {
-            $conf .= "exten => {$conference->extension},hint,Custom:{$conference->extension} \n";
+            $conf .= "exten => {$conference},hint,Custom:{$conference} \n";
         }
 
         return $conf;
+    }
+
+    /**
+     * Возвращает массив номеров конференц комнат.
+     * @return array
+     */
+    public static function getConferenceExtensions():array{
+        $confExtensions = [];
+        $conferences = ConferenceRooms::find(['order' => 'extension', 'columns' => 'extension'])->toArray();
+        foreach ($conferences as $conference){
+            $confExtensions[] = $conference['extension'];
+        }
+        return $confExtensions;
     }
 
 }

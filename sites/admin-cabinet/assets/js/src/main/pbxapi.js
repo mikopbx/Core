@@ -4,7 +4,7 @@
  * Proprietary and confidential
  * Written by Alexey Portnov, 8 2020
  */
-/* global sessionStorage, globalRootUrl,Config */
+/* global sessionStorage, globalRootUrl, Config, Resumable */
 
 const PbxApi = {
 	pbxPing: `${Config.pbxUrl}/pbxcore/api/system/ping`,
@@ -614,16 +614,6 @@ const PbxApi = {
 	},
 
 	/**
-	 * Перезапуск модулей расширений
-	 */
-	SystemReloadModule(moduleName) {
-		$.api({
-			url: `${Config.pbxUrl}/pbxcore/api/modules/${moduleName}/reload`,
-			on: 'now',
-		});
-	},
-
-	/**
 	 * Install uploaded module
 	 * @param filePath
 	 * @param callback - функция колбека
@@ -1067,7 +1057,7 @@ const PbxApi = {
 				callback(response.data);
 			},
 			onFailure(response) {
-				callback(response.data);
+				callback(response);
 			},
 			onError() {
 				callback(false);

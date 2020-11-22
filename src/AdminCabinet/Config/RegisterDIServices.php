@@ -13,7 +13,6 @@ namespace MikoPBX\AdminCabinet\Config;
 
 use MikoPBX\AdminCabinet\Providers\{
     AssetProvider,
-    BeanstalkConnectionProvider,
     DispatcherProvider,
     ElementsProvider,
     FlashProvider,
@@ -22,7 +21,10 @@ use MikoPBX\AdminCabinet\Providers\{
     SessionProvider,
     ViewProvider,
     VoltProvider};
-use MikoPBX\Common\Providers\{CDRDatabaseProvider,
+use MikoPBX\Common\Providers\{
+    BeanstalkConnectionCacheProvider,
+    BeanstalkConnectionModelsProvider,
+    CDRDatabaseProvider,
     MainDatabaseProvider,
     ManagedCacheProvider,
     ModelsCacheProvider,
@@ -72,7 +74,8 @@ class RegisterDIServices
             SessionReadOnlyProvider::class,
 
             // Inject Queue connection
-            BeanstalkConnectionProvider::class,
+            BeanstalkConnectionModelsProvider::class,
+            BeanstalkConnectionCacheProvider::class,
 
             // Inject translation
             MessagesProvider::class,

@@ -8,8 +8,7 @@
 
 namespace MikoPBX\PBXCoreREST\Workers;
 
-use MikoPBX\Core\System\{BeanstalkClient, System, Util};
-use Error;
+use MikoPBX\Core\System\{BeanstalkClient, System, Util, Processes};
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\PBXCoreREST\Lib\AdvicesProcessor;
 use MikoPBX\PBXCoreREST\Lib\CdrDBProcessor;
@@ -23,7 +22,7 @@ use MikoPBX\PBXCoreREST\Lib\StorageManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\SysinfoManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\SystemManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\FilesManagementProcessor;
-use Pheanstalk\Exception\DeadlineSoonException;
+use Throwable;
 
 require_once 'Globals.php';
 
@@ -34,7 +33,7 @@ class WorkerApiCommands extends WorkerBase
      *
      * @var int
      */
-    protected int $maxProc = 2;
+    public int $maxProc = 2;
 
     /**
      * Available REST API processors
@@ -42,23 +41,23 @@ class WorkerApiCommands extends WorkerBase
     private array $processors;
 
 
-    private bool $needRestart = false;
-
     /**
      * @param $argv
      *
-     * @throws \Pheanstalk\Exception\DeadlineSoonException
      */
     public function start($argv): void
     {
-        $client = new BeanstalkClient();
-        $client->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
-        $client->subscribe(__CLASS__, [$this, 'prepareAnswer']);
+        $beanstalk = $this->di->getShared('beanstalkConnectionWorkerAPI');
+        $beanstalk->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
+        $beanstalk->subscribe(__CLASS__, [$this, 'prepareAnswer']);
 
         $this->registerProcessors();
 
         while ($this->needRestart === false) {
-            $client->wait();
+            $beanstalk->wait();
+        }
+        if ($this->needRestart){
+            Processes::restartAllWorkers();
         }
     }
 
@@ -77,7 +76,7 @@ class WorkerApiCommands extends WorkerBase
             'system'  => SystemManagementProcessor::class,
             'syslog'  => SysLogsManagementProcessor::class,
             'sysinfo' => SysinfoManagementProcessor::class,
-            'files'  => FilesManagementProcessor::class,
+            'files'   => FilesManagementProcessor::class,
             'modules' => PbxExtensionsProcessor::class
         ];
     }
@@ -87,10 +86,11 @@ class WorkerApiCommands extends WorkerBase
      *
      * @param BeanstalkClient $message
      *
-     * @throws \JsonException
      */
     public function prepareAnswer(BeanstalkClient $message): void
     {
+        $res            = new PBXApiResult();
+        $res->processor = __METHOD__;
         try {
             $request   = json_decode($message->getBody(), true, 512, JSON_THROW_ON_ERROR);
             $processor = $request['processor'];
@@ -98,34 +98,59 @@ class WorkerApiCommands extends WorkerBase
             if (array_key_exists($processor, $this->processors)) {
                 $res = $this->processors[$processor]::callback($request);
             } else {
-                $res             = new PBXApiResult();
-                $res->processor  = __METHOD__;
                 $res->success    = false;
                 $res->messages[] = "Unknown processor - {$processor} in prepareAnswer";
             }
-        } catch (Error $exception) {
-            $res             = new PBXApiResult();
-            $res->processor  = __METHOD__;
+        } catch (Throwable $exception) {
             $res->messages[] = 'Exception on WorkerApiCommands - ' . $exception->getMessage();
+            $request        = [];
+        } finally {
+            $message->reply(json_encode($res->getResult()));
+            if ($res->success) {
+                $this->checkNeedReload($request);
+            }
         }
-        $message->reply(json_encode($res->getResult(), JSON_THROW_ON_ERROR));
-        $this->checkNeedReload($res->data);
+
     }
 
     /**
      * Checks if the module or worker needs to be reloaded.
      *
-     * @param array $data
+     * @param array $request
      */
-    private function checkNeedReload(array $data): void
+    private function checkNeedReload(array $request): void
     {
         // Check if new code added from modules
-        $needRestartWorkers = $data['needRestartWorkers'] ?? false;
-        if ($needRestartWorkers) {
-            System::restartAllWorkers();
-            $this->needRestart = true;
+        $restartActions = $this->getNeedRestartActions();
+        foreach ($restartActions as $processor => $actions) {
+            foreach ($actions as $action) {
+                if ($processor === $request['processor']
+                    && $action === $request['action']) {
+                    $this->needRestart = true;
+                    return;
+                }
+            }
         }
     }
+
+    /**
+     * Prepares array of processor => action depends restart this kind worker
+     *
+     * @return array
+     */
+    private function getNeedRestartActions(): array
+    {
+        return [
+            'system'  => [
+                 'enableModule',
+                 'disableModule',
+                 'uninstallModule',
+                 'installNewModule',
+                 'restoreDefaultSettings',
+            ],
+        ];
+    }
+
 }
 
 // Start worker process
@@ -136,11 +161,9 @@ if (isset($argv) && count($argv) > 1 && $argv[1] === 'start') {
         try {
             $worker = new $workerClassname();
             $worker->start($argv);
-        } catch (\Error $e) {
+        } catch (Throwable $e) {
             global $errorLogger;
             $errorLogger->captureException($e);
-            Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage());
-        } catch (DeadlineSoonException $e) {
             Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage());
         }
     }

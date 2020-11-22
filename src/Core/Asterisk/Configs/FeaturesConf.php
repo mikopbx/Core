@@ -38,4 +38,11 @@ class FeaturesConf extends ConfigClass
 
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/features.conf', $conf);
     }
+
+    // Секция global для extensions.conf.
+    public function extensionGlobals(): string
+    {
+        // Генерация хинтов.
+        return "PICKUP_EXTEN={$this->generalSettings['PBXFeaturePickupExten']}\n";
+    }
 }

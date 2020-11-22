@@ -19,5 +19,6 @@ class WorkerLicenseCheckerTest extends AbstractUnitTest
     {
         $worker = new WorkerLicenseChecker();
         $worker->start(['start']);
+        $this->assertTrue(true);
     }
 }

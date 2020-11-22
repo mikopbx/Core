@@ -9,6 +9,10 @@
 
 namespace MikoPBX\PBXCoreREST\Controllers\System;
 
+use MikoPBX\Common\Models\Extensions;
+use MikoPBX\Common\Models\ModelsBase;
+use MikoPBX\Common\Models\PbxExtensionModules;
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
 use Phalcon\Di;
@@ -90,6 +94,19 @@ class PostController extends BaseController
             case 'convertAudioFile':
                 $this->convertAudioFile();
                 break;
+            case 'installNewModule':
+            case 'enableModule':
+            case 'disableModule':
+            case 'uninstallModule':
+                $data = $this->request->getPost();
+                $this->sendRequestToBackendWorker('system', $actionName, $data);
+                // Clear WWW models cache after successfully install or remove module
+                if ($this->response->getStatusCode()===200){
+                    PbxExtensionModules::clearCache(Extensions::class);
+                    PbxExtensionModules::clearCache(PbxExtensionModules::class);
+                    PbxExtensionModules::clearCache(PbxSettings::class);
+                }
+                break;
             default:
                 $data = $this->request->getPost();
                 $this->sendRequestToBackendWorker('system', $actionName, $data);
@@ -124,7 +141,7 @@ class PostController extends BaseController
                 'action'    => 'convertAudioFile',
             ]
         );
-        $connection     = $this->di->getShared('beanstalkConnection');
+        $connection     = $this->di->getShared('beanstalkConnectionWorkerAPI');
         $response       = $connection->request($requestMessage, 15, 0);
         if ($response !== false) {
             $response = json_decode($response, true);

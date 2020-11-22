@@ -11,9 +11,10 @@ namespace MikoPBX\Core\Workers\Cron;
 require_once 'Globals.php';
 
 use Generator;
-use MikoPBX\Core\System\{BeanstalkClient, PBX, Util};
+use MikoPBX\Core\System\{BeanstalkClient, PBX, Processes, Util};
 use MikoPBX\Core\Workers\WorkerAmiListener;
 use MikoPBX\Core\Workers\WorkerBase;
+use MikoPBX\Core\Workers\WorkerBeanstalkdTidyUp;
 use MikoPBX\Core\Workers\WorkerCallEvents;
 use MikoPBX\Core\Workers\WorkerCdr;
 use MikoPBX\Core\Workers\WorkerCheckFail2BanAlive;
@@ -23,9 +24,8 @@ use MikoPBX\Core\Workers\WorkerModelsEvents;
 use MikoPBX\Core\Workers\WorkerNotifyByEmail;
 use MikoPBX\Core\Workers\WorkerNotifyError;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
-use MikoPBX\PBXCoreREST\Workers\WorkerLongPoolAPI;
-use Pheanstalk\Exception\DeadlineSoonException;
 use Recoil\React\ReactKernel;
+use Throwable;
 
 class WorkerSafeScriptsCore extends WorkerBase
 {
@@ -37,6 +37,8 @@ class WorkerSafeScriptsCore extends WorkerBase
 
     /**
      * Restart all registered workers
+     *
+     * @throws \Throwable
      */
     public function restart(): void
     {
@@ -68,19 +70,20 @@ class WorkerSafeScriptsCore extends WorkerBase
                 ],
             self::CHECK_BY_BEANSTALK     =>
                 [
+                    WorkerApiCommands::class,
                     WorkerCdr::class,
                     WorkerCallEvents::class,
                     WorkerModelsEvents::class,
                     WorkerNotifyByEmail::class,
                     WorkerNotifyError::class,
                     //WorkerLongPoolAPI::class,
-                    WorkerApiCommands::class,
                 ],
             self::CHECK_BY_PID_NOT_ALERT =>
                 [
                     WorkerLicenseChecker::class,
                     WorkerCheckFail2BanAlive::class,
-                    WorkerLogRotate::class
+                    WorkerLogRotate::class,
+                    WorkerBeanstalkdTidyUp::class
                 ],
         ];
         $arrModulesWorkers = [];
@@ -107,7 +110,7 @@ class WorkerSafeScriptsCore extends WorkerBase
      */
     public function restartWorker($workerClassName): ?Generator
     {
-        Util::processPHPWorker($workerClassName);
+        Processes::processPHPWorker($workerClassName, 'start','restart');
         yield;
     }
 
@@ -152,16 +155,16 @@ class WorkerSafeScriptsCore extends WorkerBase
     {
         try {
             $start     = microtime(true);
-            $WorkerPID = Util::getPidOfProcess($workerClassName);
+            $WorkerPID = Processes::getPidOfProcess($workerClassName);
             $result    = false;
             if ($WorkerPID !== '') {
                 // We had service PID, so we will ping it
                 $queue = new BeanstalkClient($this->makePingTubeName($workerClassName));
                 // Check service with higher priority
-                $result = $queue->request('ping', 15, 0);
+                $result = $queue->request('ping', 15, 1);
             }
             if (false === $result) {
-                Util::processPHPWorker($workerClassName);
+                Processes::processPHPWorker($workerClassName);
                 Util::sysLogMsg(__CLASS__, "Service {$workerClassName} started.");
             }
             $time_elapsed_secs = microtime(true) - $start;
@@ -171,11 +174,9 @@ class WorkerSafeScriptsCore extends WorkerBase
                     "WARNING: Service {$workerClassName} processed more than {$time_elapsed_secs} seconds"
                 );
             }
-        } catch (\Error $e) {
+        } catch (Throwable $e) {
             global $errorLogger;
             $errorLogger->captureException($e);
-            Util::sysLogMsg($workerClassName . '_EXCEPTION', $e->getMessage());
-        } catch (DeadlineSoonException $e) {
             Util::sysLogMsg($workerClassName . '_EXCEPTION', $e->getMessage());
         }
         yield;
@@ -191,10 +192,10 @@ class WorkerSafeScriptsCore extends WorkerBase
     public function checkPidNotAlert(string $workerClassName): Generator
     {
         $start     = microtime(true);
-        $WorkerPID = Util::getPidOfProcess($workerClassName);
+        $WorkerPID = Processes::getPidOfProcess($workerClassName);
         $result    = ($WorkerPID !== '');
         if (false === $result) {
-            Util::processPHPWorker($workerClassName);
+            Processes::processPHPWorker($workerClassName);
         }
         $time_elapsed_secs = microtime(true) - $start;
         if ($time_elapsed_secs > 10) {
@@ -220,7 +221,7 @@ class WorkerSafeScriptsCore extends WorkerBase
         try {
             $start     = microtime(true);
             $res_ping  = false;
-            $WorkerPID = Util::getPidOfProcess($workerClassName);
+            $WorkerPID = Processes::getPidOfProcess($workerClassName);
             if ($WorkerPID !== '') {
                 // We had service PID, so we will ping it
                 $am       = Util::getAstManager();
@@ -231,7 +232,7 @@ class WorkerSafeScriptsCore extends WorkerBase
             }
 
             if ($res_ping === false && $level < 10) {
-                Util::processPHPWorker($workerClassName);
+                Processes::processPHPWorker($workerClassName);
                 Util::sysLogMsg(__CLASS__, "Service {$workerClassName} started.");
                 // Wait 1 second while service will be ready to listen requests
                 sleep(1);
@@ -246,7 +247,7 @@ class WorkerSafeScriptsCore extends WorkerBase
                     "WARNING: Service {$workerClassName} processed more than {$time_elapsed_secs} seconds"
                 );
             }
-        } catch (\Error $e) {
+        } catch (Throwable $e) {
             global $errorLogger;
             $errorLogger->captureException($e);
             Util::sysLogMsg($workerClassName . '_EXCEPTION', $e->getMessage());
@@ -267,7 +268,7 @@ try {
             $worker->restart();
         }
     }
-} catch (\Error $e) {
+} catch (Throwable $e) {
     global $errorLogger;
     $errorLogger->captureException($e);
     Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage());

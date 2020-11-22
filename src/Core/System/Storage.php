@@ -91,18 +91,18 @@ class Storage extends Di\Injectable
         $umountPath = Util::which('umount');
         $rmPath     = Util::which('rm');
 
-        Util::mwExec("{$mountPath} -t {$format} {$uid_part} {$tmp_dir}", $out);
+        Processes::mwExec("{$mountPath} -t {$format} {$uid_part} {$tmp_dir}", $out);
         if (is_dir("{$tmp_dir}/mikopbx") && trim(implode('', $out)) === '') {
             // $out - пустая строка, ошибок нет
             // присутствует каталог mikopbx.
             $result = true;
         }
         if (self::isStorageDiskMounted($device)) {
-            Util::mwExec("{$umountPath} {$device}");
+            Processes::mwExec("{$umountPath} {$device}");
         }
 
         if ( ! self::isStorageDiskMounted($device)) {
-            Util::mwExec("{$rmPath} -rf '{$tmp_dir}'");
+            Processes::mwExec("{$rmPath} -rf '{$tmp_dir}'");
         }
 
         return $result;
@@ -127,7 +127,7 @@ class Storage extends Di\Injectable
         $awkPath     = Util::which('awk');
         $headPath    = Util::which('head');
 
-        $res = Util::mwExec(
+        $res = Processes::mwExec(
             "{$blkidPath} -ofull {$device} | {$busyboxPath} {$sedPath} -r 's/[[:alnum:]]+=/\\n&/g' | {$busyboxPath} {$grepPath} \"^UUID\" | {$busyboxPath} {$awkPath} -F \"\\\"\" '{print $2}' | {$headPath} -n 1",
             $output
         );
@@ -157,7 +157,7 @@ class Storage extends Di\Injectable
 
         $device = str_replace('/dev/', '', $device);
         $out    = [];
-        Util::mwExec(
+        Processes::mwExec(
             "{$blkidPath} -ofull /dev/{$device} | {$busyboxPath} {$sedPath} -r 's/[[:alnum:]]+=/\\n&/g' | {$busyboxPath} {$grepPath} \"^TYPE=\" | {$busyboxPath} {$awkPath} -F \"\\\"\" '{print $2}'",
             $out
         );
@@ -205,7 +205,7 @@ class Storage extends Di\Injectable
         $grepPath  = Util::which('grep');
         $mountPath = Util::which('mount');
         $awkPath   = Util::which('awk');
-        Util::mwExec("{$mountPath} | {$grepPath} {$filter} | {$awkPath} '{print $3}'", $out);
+        Processes::mwExec("{$mountPath} | {$grepPath} {$filter} | {$awkPath} '{print $3}'", $out);
         $mount_dir = trim(implode('', $out));
 
         return ($mount_dir !== '');
@@ -236,7 +236,7 @@ class Storage extends Di\Injectable
             "{$pass}\n" .
             "EOF\n";
         // file_put_contents('/tmp/sshfs_'.$host, $command);
-        Util::mwExec($command, $out);
+        Processes::mwExec($command, $out);
         $response = trim(implode('', $out));
         if ('Terminated' == $response) {
             // Удаленный сервер не ответил / или не корректно указан пароль.
@@ -284,7 +284,7 @@ class Storage extends Di\Injectable
         $timeoutPath   = Util::which('timeout');
         $curlftpfsPath = Util::which('curlftpfs');
         $command       = "{$timeoutPath} -t 3 {$curlftpfsPath}  -o allow_other -o {$auth_line}fsname={$host} {$connect_line} {$local_dir}";
-        Util::mwExec($command, $out);
+        Processes::mwExec($command, $out);
         $response = trim(implode('', $out));
         if ('Terminated' === $response) {
             // Удаленный сервер не ответил / или не корректно указан пароль.
@@ -338,13 +338,13 @@ class Storage extends Di\Injectable
         $umountPath = Util::which('umount');
         $rmPath     = Util::which('rm');
         if (self::isStorageDiskMounted($dir)) {
-            Util::mwExec("/sbin/shell_functions.sh 'killprocesses' '$dir' -TERM 0");
-            Util::mwExec("{$umountPath} {$dir}");
+            Processes::mwExec("/sbin/shell_functions.sh 'killprocesses' '$dir' -TERM 0");
+            Processes::mwExec("{$umountPath} {$dir}");
         }
         $result = ! self::isStorageDiskMounted($dir);
         if ($result && file_exists($dir)) {
             // Если диск не смонтирован, то удаляем каталог.
-            Util::mwExec("{$rmPath} -rf '{$dir}'");
+            Processes::mwExec("{$rmPath} -rf '{$dir}'");
         }
 
         return $result;
@@ -361,7 +361,7 @@ class Storage extends Di\Injectable
     public function formatDiskLocal($device, $bg = false)
     {
         $partedPath = Util::which('parted');
-        $retVal     = Util::mwExec(
+        $retVal     = Processes::mwExec(
             "{$partedPath} --script --align optimal '{$device}' 'mklabel msdos mkpart primary ext4 0% 100%'"
         );
         Util::sysLogMsg(__CLASS__, "{$partedPath} returned {$retVal}");
@@ -391,11 +391,11 @@ class Storage extends Di\Injectable
         $mkfsPath = Util::which("mkfs.{$format}");
         $cmd      = "{$mkfsPath} {$device}{$device_id}";
         if ($bg === false) {
-            $retVal = Util::mwExec("{$cmd} 2>&1");
+            $retVal = Processes::mwExec("{$cmd} 2>&1");
             Util::sysLogMsg(__CLASS__, "{$mkfsPath} returned {$retVal}");
         } else {
             usleep(200000);
-            Util::mwExecBg($cmd);
+            Processes::mwExecBg($cmd);
             $retVal = true;
         }
 
@@ -417,7 +417,7 @@ class Storage extends Di\Injectable
         $out      = [];
         $psPath   = Util::which('ps');
         $grepPath = Util::which('grep');
-        Util::mwExec("{$psPath} -A -f | {$grepPath} {$dev} | {$grepPath} mkfs | {$grepPath} -v grep", $out);
+        Processes::mwExec("{$psPath} -A -f | {$grepPath} {$dev} | {$grepPath} mkfs | {$grepPath} -v grep", $out);
         $mount_dir = trim(implode('', $out));
 
         return empty($mount_dir) ? 'ended' : 'inprogress';
@@ -436,7 +436,7 @@ class Storage extends Di\Injectable
         $phpSessionDir = $config->path('www.phpSessionDir');
         if ( ! empty($phpSessionDir)) {
             $rmPath = Util::which('rm');
-            Util::mwExec("{$rmPath} -rf {$phpSessionDir}/*");
+            Processes::mwExec("{$rmPath} -rf {$phpSessionDir}/*");
         }
     }
 
@@ -471,7 +471,7 @@ class Storage extends Di\Injectable
             if ($disk['free_space'] < 100) {
                 $need_alert = true;
                 $test_alert = "The {$disk['id']} has less than 100MB of free space available. Old call records will be deleted.";
-                Util::processPHPWorker(WorkerRemoveOldRecords::class);
+                Processes::processPHPWorker(WorkerRemoveOldRecords::class);
             }
 
             if ( ! $need_alert) {
@@ -505,7 +505,7 @@ class Storage extends Di\Injectable
             $grepPath = Util::which('grep');
             $dfPath   = Util::which('df');
             $awkPath  = Util::which('awk');
-            Util::mwExec(
+            Processes::mwExec(
                 "{$dfPath} -k /storage/usbdisk1 | {$awkPath}  '{ print $1 \"|\" $3 \"|\" $4} ' | {$grepPath} -v 'Available'",
                 $out
             );
@@ -641,7 +641,7 @@ class Storage extends Di\Injectable
         $out       = [];
         $grepPath  = Util::which('grep');
         $mountPath = Util::which('mount');
-        Util::mwExec("{$mountPath} | {$grepPath} '{$filter}{$disk}'", $out);
+        Processes::mwExec("{$mountPath} | {$grepPath} '{$filter}{$disk}'", $out);
         if (count($out) > 0) {
             $res_out = end($out);
         } else {
@@ -701,7 +701,7 @@ class Storage extends Di\Injectable
         $grepPath = Util::which('grep');
         $awkPath  = Util::which('awk');
         $dfPath   = Util::which('df');
-        Util::mwExec("{$dfPath} -m | {$grepPath} {$hdd} | {$awkPath} '{print $4}'", $out);
+        Processes::mwExec("{$dfPath} -m | {$grepPath} {$hdd} | {$awkPath} '{print $4}'", $out);
         $result = 0;
         foreach ($out as $res) {
             if ( ! is_numeric($res)) {
@@ -763,7 +763,7 @@ class Storage extends Di\Injectable
                 $grepPath  = Util::which('grep');
                 $awkPath   = Util::which('awk');
                 $mountPath = Util::which('mount');
-                Util::mwExec("{$mountPath} | {$grepPath} '/dev/{$dev}' | {$awkPath} '{print $5}'", $out);
+                Processes::mwExec("{$mountPath} | {$grepPath} '/dev/{$dev}' | {$awkPath} '{print $5}'", $out);
                 $fs         = trim(implode("", $out));
                 $fs         = ($fs == 'fuseblk') ? 'ntfs' : $fs;
                 $free_space = $this->getFreeSpace("/dev/{$dev} ");
@@ -818,12 +818,12 @@ class Storage extends Di\Injectable
         $dev = str_replace('/dev/', '', $dev);
         if ('ntfs' == $format) {
             $mountNtfs3gPath = Util::which('mount.ntfs-3g');
-            Util::mwExec("{$mountNtfs3gPath} /dev/{$dev} {$dir}", $out);
+            Processes::mwExec("{$mountNtfs3gPath} /dev/{$dev} {$dir}", $out);
         } else {
             $storage   = new Storage();
             $uid_part  = 'UUID=' . $storage->getUuid("/dev/{$dev}") . '';
             $mountPath = Util::which('mount');
-            Util::mwExec("{$mountPath} -t {$format} {$uid_part} {$dir}", $out);
+            Processes::mwExec("{$mountPath} -t {$format} {$uid_part} {$dir}", $out);
         }
 
         return self::isStorageDiskMounted("/dev/{$dev} ");
@@ -978,7 +978,7 @@ class Storage extends Di\Injectable
         // Точка монтирования доп. дисков.
         Util::mwMkdir('/storage');
         $chmodPath = Util::which('chmod');
-        Util::mwExec("{$chmodPath} 755 /storage");
+        Processes::mwExec("{$chmodPath} 755 /storage");
         if ( ! file_exists($varEtcDir . '/cfdevice')) {
             return;
         }
@@ -1007,7 +1007,7 @@ class Storage extends Di\Injectable
         // Дублируем для работы vmtoolsd.
         file_put_contents("/etc/mtab", $fstab);
         $mountPath = Util::which('mount');
-        Util::mwExec("{$mountPath} -a 2> /dev/null");
+        Processes::mwExec("{$mountPath} -a 2> /dev/null");
         Util::addRegularWWWRights('/cf');
     }
 
@@ -1020,7 +1020,7 @@ class Storage extends Di\Injectable
     {
         $path      = '';
         $mountPath = Util::which('mount');
-        Util::mwExec("{$mountPath} -o remount,rw /offload 2> /dev/null");
+        Processes::mwExec("{$mountPath} -o remount,rw /offload 2> /dev/null");
 
         $isLiveCd = file_exists('/offload/livecd');
         // Create dirs
@@ -1073,7 +1073,7 @@ class Storage extends Di\Injectable
         }
         $this->clearCacheFiles();
         $this->applyFolderRights();
-        Util::mwExec("{$mountPath} -o remount,ro /offload 2> /dev/null");
+        Processes::mwExec("{$mountPath} -o remount,ro /offload 2> /dev/null");
     }
 
     /**
@@ -1109,13 +1109,13 @@ class Storage extends Di\Injectable
         $rmPath      = Util::which('rm');
         foreach ($cacheDirs as $cacheDir) {
             if ( ! empty($cacheDir)) {
-                Util::mwExec("{$rmPath} -rf {$cacheDir}/*");
+                Processes::mwExec("{$rmPath} -rf {$cacheDir}/*");
             }
         }
 
         // Delete boot cache folders
         if (is_dir('/mountpoint') && self::isStorageDiskMounted()) {
-            Util::mwExec("{$rmPath} -rf /mountpoint");
+            Processes::mwExec("{$rmPath} -rf /mountpoint");
         }
     }
 
@@ -1125,10 +1125,10 @@ class Storage extends Di\Injectable
     public function createWorkDirsAfterDBUpgrade(): void
     {
         $mountPath = Util::which('mount');
-        Util::mwExec("{$mountPath} -o remount,rw /offload 2> /dev/null");
+        Processes::mwExec("{$mountPath} -o remount,rw /offload 2> /dev/null");
         $this->createModulesCacheSymlinks();
         $this->applyFolderRights();
-        Util::mwExec("{$mountPath} -o remount,ro /offload 2> /dev/null");
+        Processes::mwExec("{$mountPath} -o remount,ro /offload 2> /dev/null");
     }
 
     /**
@@ -1136,7 +1136,7 @@ class Storage extends Di\Injectable
      */
     public function createModulesCacheSymlinks(): void
     {
-        $modules = PbxExtensionModules::find()->toArray();
+        $modules = PbxExtensionModules::getModulesArray();
         foreach ($modules as $module) {
             PbxExtensionUtils::createAssetsSymlinks($module['uniqid']);
             PbxExtensionUtils::createAgiBinSymlinks($module['uniqid']);
@@ -1172,7 +1172,7 @@ class Storage extends Di\Injectable
         }
 
         $www_dirs[] = $this->config->path('core.tempDir');
-        $www_dirs[] = $this->config->path('database.logsDir');
+        $www_dirs[] = $this->config->path('core.logsDir');
         $www_dirs[] = '/etc/version';
         $www_dirs[] = appPath('/');
 
@@ -1185,7 +1185,7 @@ class Storage extends Di\Injectable
         Util::addExecutableRights(implode(' ', $exec_dirs));
 
         $mountPath = Util::which('mount');
-        Util::mwExec("{$mountPath} -o remount,ro /offload 2> /dev/null");
+        Processes::mwExec("{$mountPath} -o remount,ro /offload 2> /dev/null");
     }
 
     /**
@@ -1196,7 +1196,7 @@ class Storage extends Di\Injectable
         $tempDir    = $this->config->path('core.tempDir');
         $swapFile   = "{$tempDir}/swapfile";
         $swapOffCmd = Util::which('swapoff');
-        Util::mwExec("{$swapOffCmd} {$swapFile}");
+        Processes::mwExec("{$swapOffCmd} {$swapFile}");
         if (file_exists($swapFile)) {
             unlink($swapFile);
         }
@@ -1219,13 +1219,13 @@ class Storage extends Di\Injectable
         $ddCmd      = Util::which('dd');
 
         Util::sysLogMsg('Swap', 'make swap ' . $swapFile, LOG_INFO, LOG_INFO);
-        Util::mwExec("{$ddCmd} if=/dev/zero of={$swapFile} bs={$bs} count={$countBlock}");
+        Processes::mwExec("{$ddCmd} if=/dev/zero of={$swapFile} bs={$bs} count={$countBlock}");
 
         $mkSwapCmd = Util::which('mkswap');
-        Util::mwExec("{$mkSwapCmd} {$swapFile}");
+        Processes::mwExec("{$mkSwapCmd} {$swapFile}");
 
         $swapOnCmd = Util::which('swapon');
-        $result    = Util::mwExec("{$swapOnCmd} {$swapFile}");
+        $result    = Processes::mwExec("{$swapOnCmd} {$swapFile}");
         Util::sysLogMsg('Swap', 'connect swap result: ' . $result, LOG_INFO, LOG_INFO);
     }
 

@@ -14,18 +14,16 @@ use PhpSchool\CliMenu\Style\SelectableStyle;
 
 use MikoPBX\Common\Models\Storage as StorageModel;
 
-use MikoPBX\Core\System\{
-    Configs\IptablesConf,
+use MikoPBX\Core\System\{Configs\IptablesConf,
     Configs\NginxConf,
+    Processes,
     Util,
     Network,
     Verify,
     System,
     MikoPBXConfig,
-    Storage
-};
+    Storage};
 use MikoPBX\Service\Main;
-
 require_once('Globals.php');
 
 Util::setCyrillicFont();
@@ -104,7 +102,7 @@ EOD;
 
 $firewallWarning = function () {
     if (PbxSettings::getValueByKey('PBXFirewallEnabled') === '0') {
-        return "\033[01;31m (" . Util::translate('Firewall disabled') . ") \033[39m";
+        return "\033[01;34m (" . Util::translate('Firewall disabled') . ") \033[39m";
     }
 };
 
@@ -134,7 +132,6 @@ $setup_lan = function (CliMenuBuilder $b) {
             '[2] ' . Util::translate('Manual setting'),
             function (CliMenu $menu) {
                 $network = new Network();
-                $system  = new System();
 
                 $style = (new MenuStyle())
                     ->setBg('white')
@@ -251,9 +248,9 @@ $setupLanguage = function (CliMenuBuilder $b) {
     }
     $b->addItem("[{$index}] Cancel", new GoBackAction());
 
-    if (!empty($_ENV['SSH_CLIENT'])) {
-        $b->disableMenu();
-    };
+    // if (!empty($_ENV['SSH_CLIENT'])) {
+    //     $b->disableMenu();
+    // }
 };
 
 
@@ -512,7 +509,7 @@ $menu = (new CliMenuBuilder())
                         sleep(2);
                         if ($return_var === 0) {
                             $mikopbx_rebootPath = Util::which('mikopbx_reboot');
-                            Util::mwExecBg($mikopbx_rebootPath);
+                            Processes::mwExecBg($mikopbx_rebootPath);
                         }
                     }
                 )

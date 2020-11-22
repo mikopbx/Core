@@ -9,7 +9,7 @@
 namespace MikoPBX\Core\Asterisk;
 
 use MikoPBX\Core\System\Util;
-use mysql_xdevapi\Result;
+use Throwable;
 
 /**
  * Asterisk Manager class
@@ -388,7 +388,7 @@ class AsteriskManager
                 $response['error'] = 'Read data error.';
             }
 
-        }catch (\Exception $e){
+        }catch (Throwable $e){
             $response['error'] = $e->getMessage();
         }
 
@@ -419,7 +419,7 @@ class AsteriskManager
             if($resultWrite === false){
                 $result = false;
             }
-        }catch (\Exception $e){
+        }catch (Throwable $e){
             $result = false;
         }
         return $result;
@@ -950,12 +950,14 @@ class AsteriskManager
      *
      * @return array
      */
-    public function MixMonitor($channel, $file, $options, $command)
+    public function MixMonitor($channel, $file, $options, $command='')
     {
         $parameters            = ['Channel' => $channel];
         $parameters['File']    = $file;
         $parameters['options'] = $options;
-        $parameters['Command'] = $command;
+        if(!empty($command)){
+            $parameters['Command'] = $command;
+        }
 
         return $this->sendRequestTimeout('MixMonitor', $parameters);
     }
@@ -1445,7 +1447,7 @@ class AsteriskManager
             return $result;
         }
         foreach ($conf_data['data']['MeetmeList'] as $user_data) {
-            $user_data['linkedid']  = $this->GetVar($user_data['Channel'], 'CDR(linkedid)', null, false);
+            $user_data['linkedid']  = $this->GetVar($user_data['Channel'], 'CHANNEL(linkedid)', null, false);
             $user_data['meetme_id'] = $this->GetVar($user_data['Channel'], 'MEETMEUNIQUEID', null, false);
 
             foreach ($vars as $var) {

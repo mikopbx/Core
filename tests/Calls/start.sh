@@ -30,16 +30,23 @@ sleep 1;
 # Ожидаем запуска Asterisk.
 /usr/sbin/asterisk -C "$astConf" -rx 'core waitfullybooted' > /dev/null;
 echo -e "\e[01;32m-> \e[0mWaiting fully boot asterisk...";
+echo -e "\e[01;32m-> \e[0mEnd init";
 echo;
-# Ждем регистрации.
-sleep 3;
-# Выполнение теста. Originate через AMI.
 
 export astConf dirName;
-tests=$(/bin/find "${dirName}/Scripts" -type f -name "start.php" | /bin/sort);
-for file in $tests
-do
-  /usr/bin/php -f "${file}";
+initTests=$(/bin/find "${dirName}/Scripts" -type f -name "start.php" | /bin/sort | grep '/00-');
+
+if [ "$1" != '' ]; then
+  # Выполняем только конкретные тесты
+  tests=$(/bin/find "${dirName}/Scripts" -type f -name "start.php" | /bin/sort | grep -v '/00-' | grep "/${1}");
+else
+  # Все тесты.
+  tests=$(/bin/find "${dirName}/Scripts" -type f -name "start.php" | /bin/sort | grep -v '/00-');
+fi
+
+tests="$initTests $tests"
+for file in $tests; do
+  /usr/bin/timeout -t 180 /usr/bin/php -f "${file}";
 done
 
 /usr/sbin/asterisk -C "$astConf" -rx 'core stop now' > /dev/null;

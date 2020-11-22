@@ -1,4 +1,11 @@
 <?php
+/*
+ * Copyright (C) MIKO LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Nikolay Beketov, 11 2020
+ *
+ */
 
 declare(strict_types=1);
 /**
@@ -9,7 +16,7 @@ declare(strict_types=1);
  *
  */
 
-namespace MikoPBX\AdminCabinet\Providers;
+namespace MikoPBX\Common\Providers;
 
 
 use MikoPBX\Core\System\BeanstalkClient;
@@ -20,11 +27,11 @@ use Phalcon\Di\ServiceProviderInterface;
 /**
  *  We register the beansTalk connection for send models changes to backend application
  */
-class BeanstalkConnectionProvider implements ServiceProviderInterface
+class BeanstalkConnectionModelsProvider implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = 'beanstalkConnection';
+    public const SERVICE_NAME = 'beanstalkConnectionModels';
     /**
-     * Register beanstalkConnection service provider
+     * Register beanstalkConnectionModels service provider
      *
      * @param \Phalcon\Di\DiInterface $di
      */

@@ -47,7 +47,7 @@ class GetController extends BaseController
                 'action'    => 'getInfo',
             ]
         );
-        $connection     = $this->di->getShared('beanstalkConnection');
+        $connection     = $this->di->getShared('beanstalkConnectionWorkerAPI');
         $response       = $connection->request($requestMessage, 30, 0);
         if ($response !== false) {
             $response = json_decode($response, true);

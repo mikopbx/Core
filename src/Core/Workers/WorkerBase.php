@@ -11,59 +11,29 @@ namespace MikoPBX\Core\Workers;
 use MikoPBX\Core\Asterisk\AsteriskManager;
 use MikoPBX\Core\System\BeanstalkClient;
 use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\Processes;
 use Phalcon\Di;
 use Phalcon\Text;
 
 abstract class WorkerBase extends Di\Injectable implements WorkerInterface
 {
-    public int $currentProcId = 1;
     protected AsteriskManager $am;
-    protected int $maxProc = 1;
+    public int $maxProc = 1;
+    protected bool $needRestart = false;
 
     /**
      * Workers shared constructor
+     * Do not remove FINAL there, use START function to add something
      */
-    public function __construct()
+    final public function __construct()
     {
-        $this->checkCountProcesses();
+        pcntl_async_signals(true);
+        pcntl_signal(
+            SIGUSR1,
+            [$this, 'signalHandler']
+        );
+
         $this->savePidFile();
-    }
-
-    /**
-     * Calculates how many processes have started already and kill excess or old processes
-     */
-    private function checkCountProcesses(): void
-    {
-        $activeProcesses = Util::getPidOfProcess(static::class, getmypid());
-        if ($this->maxProc === 1) {
-            if ( ! empty($activeProcesses)) {
-                $killApp = Util::which('kill');
-                // Завершаем старый процесс.
-                Util::mwExec("{$killApp} {$activeProcesses}");
-            }
-        } elseif ($this->maxProc > 1) {
-            // Лимит процессов может быть превышен. Удаление лишних процессов.
-            $processes = explode(' ', $activeProcesses);
-
-            // Запустим нехдостающие процессы
-            $countProc = count($processes);
-            while ($countProc < $this->maxProc) {
-                Util::processPHPWorker(static::class, 'start', 'multiStart');
-                $countProc++;
-            }
-            // Получим количество лишних процессов.
-            $countProc = count($processes) - $this->maxProc;
-            $killApp   = Util::which('kill');
-            // Завершим лишние
-            while ($countProc >= 0) {
-                if ( ! isset($processes[$countProc])) {
-                    break;
-                }
-                // Завершаем старый процесс.
-                Util::mwExec("{$killApp} {$processes[$countProc]}");
-                $countProc--;
-            }
-        }
     }
 
     /**
@@ -71,16 +41,16 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
      */
     private function savePidFile(): void
     {
-        $activeProcesses = Util::getPidOfProcess(static::class);
+        $activeProcesses = Processes::getPidOfProcess(static::class);
         $processes       = explode(' ', $activeProcesses);
         if (count($processes) === 1) {
             file_put_contents($this->getPidFile(), $activeProcesses);
         } else {
             $pidFilesDir = dirname($this->getPidFile());
-            $pidFile = $pidFilesDir.'/'.pathinfo($this->getPidFile(), PATHINFO_BASENAME);
+            $pidFile     = $pidFilesDir . '/' . pathinfo($this->getPidFile(), PATHINFO_BASENAME);
             // Delete old PID files
             $rm = Util::which('rm');
-            Util::mwExec("{$rm} -rf {$pidFile}*");
+            Processes::mwExec("{$rm} -rf {$pidFile}*");
             $i = 1;
             foreach ($processes as $process) {
                 file_put_contents("{$pidFile}-{$i}.pid", $process);
@@ -97,6 +67,15 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
         $name = str_replace("\\", '-', static::class);
 
         return "/var/run/{$name}.pid";
+    }
+
+    /**
+     * Process async system signal
+     *
+     */
+    public function signalHandler(): void
+    {
+        $this->needRestart = true;
     }
 
     /**
@@ -145,10 +124,6 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
      */
     public function __destruct()
     {
-        $pidFilesDir = dirname($this->getPidFile());
-        $pidFile = $pidFilesDir.'/'.pathinfo($this->getPidFile(), PATHINFO_BASENAME);
-        // Delete old PID files
-        $rm = Util::which('rm');
-        Util::mwExec("{$rm} -rf {$pidFile}*");
+        $this->savePidFile();
     }
 }

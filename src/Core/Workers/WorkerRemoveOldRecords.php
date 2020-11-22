@@ -8,13 +8,13 @@
 
 namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
-use Error;
-use MikoPBX\Core\System\{Storage, Util};
+
+use MikoPBX\Core\System\{Processes, Storage, Util};
+use Throwable;
 
 
 class WorkerRemoveOldRecords extends WorkerBase
 {
-    protected int $maxProc=1;
 
     public function start($argv): void
     {
@@ -31,7 +31,7 @@ class WorkerRemoveOldRecords extends WorkerBase
         $grepPath = Util::which('grep');
         $awkPath = Util::which('awk');
         $headPath = Util::which('head');
-        Util::mwExec("{$mountPath} | {$busyboxPath} {$grepPath} {$mount_point} | {$busyboxPath} {$awkPath} '{print $1}' | {$headPath} -n 1", $out);
+        Processes::mwExec("{$mountPath} | {$busyboxPath} {$grepPath} {$mount_point} | {$busyboxPath} {$awkPath} '{print $1}' | {$headPath} -n 1", $out);
         $dev = implode('', $out);
 
         $s          = new Storage();
@@ -49,7 +49,7 @@ class WorkerRemoveOldRecords extends WorkerBase
         $findPath = Util::which('find');
         $awkPath = Util::which('awk');
         $headPath = Util::which('head');
-        Util::mwExec(
+        Processes::mwExec(
             "{$findPath} {$monitor_dir}/*/*/*  -maxdepth 0 -type d  -printf '%T+ %p\n' 2> /dev/null | {$sortPath} | {$headPath} -n 10 | {$busyboxPath} {$awkPath} '{print $2}'",
             $out
         );
@@ -65,7 +65,7 @@ class WorkerRemoveOldRecords extends WorkerBase
             }
             $busyboxPath = Util::which('busybox');
             $rmPath = Util::which('rm');
-            Util::mwExec("{$busyboxPath} {$rmPath} -rf {$dir_info}");
+            Processes::mwExec("{$busyboxPath} {$rmPath} -rf {$dir_info}");
         }
     }
 }
@@ -77,7 +77,7 @@ if (isset($argv) && count($argv) > 1) {
     try {
         $worker = new $workerClassname();
         $worker->start($argv);
-    } catch (Error $e) {
+    } catch (Throwable $e) {
         global $errorLogger;
         $errorLogger->captureException($e);
         Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage());

@@ -10,7 +10,7 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\{Iax, IncomingRoutingTable, OutgoingRoutingTable, OutWorkTimes, Providers, Sip, SoundFiles};
 use MikoPBX\Modules\Config\ConfigClass;
-use MikoPBX\Core\System\{MikoPBXConfig, Util};
+use MikoPBX\Core\System\{MikoPBXConfig, Storage, Util};
 use Phalcon\Di;
 
 class ExtensionsConf extends ConfigClass
@@ -24,8 +24,12 @@ class ExtensionsConf extends ConfigClass
     {
         /** @scrutinizer ignore-call */
         $additionalModules = $this->di->getShared('pbxConfModules');
-        $conf              = "[globals] \n";
-        $conf              .= "TRANSFER_CONTEXT=internal-transfer; \n";
+        $conf = "[globals] \n".
+                "TRANSFER_CONTEXT=internal-transfer; \n";
+        if($this->generalSettings['PBXRecordCalls'] === '1'){
+            $conf.="MONITOR_DIR=".Storage::getMonitorDir()." \n";
+            $conf.="MONITOR_STEREO=".$this->generalSettings['PBXSplitAudioThread']." \n";
+        }
         foreach ($additionalModules as $appClass) {
             $addition = $appClass->extensionGlobals();
             if (!empty($addition)){
@@ -177,7 +181,7 @@ class ExtensionsConf extends ConfigClass
         $conf .= 'same => n,ExecIf($["${EXTEN}" != "${cleanNumber}"]?Goto(${CONTEXT},${cleanNumber},$[${PRIORITY} + 1]))' . "\n\t";
 
         $conf .= 'same => n,Set(__FROM_CHAN=${CHANNEL})' . "\n\t";
-        $conf .= 'same => n,ExecIf($["${OLD_LINKEDID}x" == "x"]?Set(__OLD_LINKEDID=${CDR(linkedid)}))' . "\n\t";
+        $conf .= 'same => n,ExecIf($["${OLD_LINKEDID}x" == "x"]?Set(__OLD_LINKEDID=${CHANNEL(linkedid)}))' . "\n\t";
         $conf .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" != "Local"]?Gosub(set_from_peer,s,1))' . "\n\t";
         $conf .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" == "Local"]?Gosub(set_orign_chan,s,1))' . "\n\t";
 
@@ -390,9 +394,9 @@ class ExtensionsConf extends ConfigClass
             $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(' . $rout['providerid'] . '-outgoing-custom,${EXTEN},1)}" == "1"]?' . $rout['providerid'] . '-outgoing-custom,${EXTEN},1)' . "\n\t";
 
             if ($rout['technology'] === IAXConf::TYPE_IAX2) {
-                $conf .= 'same => n,Dial(' . $rout['technology'] . '/' . $rout['providerid'] . '/${number},600,${DOPTIONS}TKU(dial_answer)b(dial_create_chan,s,1))' . "\n\t";
+                $conf .= 'same => n,Dial(' . $rout['technology'] . '/' . $rout['providerid'] . '/${number},600,${DOPTIONS}TKU(${ISTRANSFER}dial_answer)b(dial_create_chan,s,1))' . "\n\t";
             } else {
-                $conf .= 'same => n,Dial(' . $rout['technology'] . '/${number}@' . $rout['providerid'] . ',600,${DOPTIONS}TKU(dial_answer)b(dial_create_chan,s,1))' . "\n\t";
+                $conf .= 'same => n,Dial(' . $rout['technology'] . '/${number}@' . $rout['providerid'] . ',600,${DOPTIONS}TKU(${ISTRANSFER}dial_answer)b(dial_create_chan,s,1))' . "\n\t";
             }
             foreach ($additionalModules as $appClass) {
                 $addition = $appClass->generateOutRoutAfterDialContext($rout);
@@ -479,6 +483,7 @@ class ExtensionsConf extends ConfigClass
             return '';
         }
         $additionalModules = $di->getShared('pbxConfModules');
+        $confExtensions    = ConferenceConf::getConferenceExtensions();
 
         if ('none' === $provider) {
             // Звонки по sip uri.
@@ -565,8 +570,15 @@ class ExtensionsConf extends ConfigClass
                     $rout_data_dial[$rout_number] = '';
                 }
 
-                $dial_command                 = " \n\t" . 'same => n,' . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?' . "Dial(Local/{$rout['extension']}@internal-incoming/n,{$timeout},cTKg));";
-                $rout_data_dial[$rout_number] .= " \n\t" . "same => n,Set(M_TIMEOUT={$timeout})";
+                if(in_array($rout['extension'], $confExtensions, true)){
+                    // Это конференция. Тут не требуется обработка таймаута ответа.
+                    // Вызов будет отвечен сразу конференцией.
+                    $dial_command = " \n\t" . 'same => n,' . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?' . "Goto(internal,{$rout['extension']},1));";
+                    $rout_data_dial[$rout_number] .= "";
+                }else{
+                    $dial_command                 = " \n\t" . 'same => n,' . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?' . "Dial(Local/{$rout['extension']}@internal-incoming/n,{$timeout},cTKg));";
+                    $rout_data_dial[$rout_number] .= " \n\t" . "same => n,Set(M_TIMEOUT={$timeout})";
+                }
                 $rout_data_dial[$rout_number] .= $dial_command;
 
                 if (is_array($provider)) {
@@ -627,15 +639,20 @@ class ExtensionsConf extends ConfigClass
         $conf   .= "\n" . "[{$uniqid}-incoming]\n";
         foreach ($dialplan as $dpln) {
             $conf .= $dpln . "\n";
-            if (null == $default_action && 'none' !== $provider) {
+            if (null === $default_action && 'none' !== $provider) {
                 continue;
             }
             if ('extension' === $default_action->action) {
                 // Обязательно проверяем "DIALSTATUS", в случае с парковой через AMI вызова это необходимо.
                 // При ответе может отработать следующий приоритет.
                 $conf .= "\t" . 'same => n,Set(M_TIMEOUT=0)' . "\n";
-                $conf .= "\t" . "same => n," . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?' . "Dial(Local/{$default_action->extension}@internal/n,,cTKg)); default action" . "\n";
-
+                if(in_array($default_action->extension, $confExtensions, true)){
+                    // Это конференция. Тут не требуется обработка таймаута ответа.
+                    // Вызов будет отвечен сразу конференцией.
+                    $conf .= "\t" . "same => n," . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?' . "Goto(internal,{$default_action->extension},1)); default action" . "\n";
+                }else {
+                    $conf .= "\t" . "same => n," . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?' . "Dial(Local/{$default_action->extension}@internal/n,,cTKg)); default action" . "\n";
+                }
                 foreach ($additionalModules as $appClass) {
                     $addition = $appClass->generateIncomingRoutAfterDialContext($uniqid);
                     if (!empty($addition)){

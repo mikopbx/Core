@@ -12,8 +12,6 @@ namespace MikoPBX\Core\Asterisk\Configs;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Modules\Config\ConfigClass;
 
-use function MikoPBX\Common\Config\appPath;
-
 class AsteriskConf extends ConfigClass
 {
     protected string $description = 'asterisk.conf';
@@ -42,9 +40,6 @@ class AsteriskConf extends ConfigClass
             "transcode_via_sln = no\n" .
             "hideconnect = yes\n" .
             "defaultlanguage = {$lang}\n" .
-            "cache_media_frames = yes\n" .
-            "cache_record_files = yes\n" .
-            "record_cache_dir = /tmp\n" .
             "systemname = mikopbx\n";
 
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/asterisk.conf', $conf);

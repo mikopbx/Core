@@ -25,13 +25,39 @@ class PbxSettings extends ModelsBase
      * @Primary
      * @Column(type="string", nullable=false)
      */
-    public string $key;
+    public string $key = '';
 
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $value;
+    public ?string $value = null;
 
+    /**
+     *  Returns default or saved values for all predefined keys if it exists on DB
+     *
+     * @return array
+     */
+    public static function getAllPbxSettings(): array
+    {
+        $arrayOfSettings = self::getDefaultArrayValues();
+
+        $cacheKey        = explode('\\', static::class)[3];
+        $parameters      = [
+            'cache' => [
+                'key'      => $cacheKey . '-getAllPbxSettings',
+                'lifetime' => 300,
+            ],
+        ];
+        $currentSettings = parent::find($parameters);
+
+        foreach ($currentSettings as $record) {
+            if (isset($record->value)) {
+                $arrayOfSettings[$record->key] = $record->value;
+            }
+        }
+
+        return $arrayOfSettings;
+    }
 
     /**
      * Prepares default values for PbxSettings keys
@@ -84,7 +110,7 @@ class PbxSettings extends ModelsBase
             'MailTplVoicemailSubject'         => 'VoiceMail from PBX',
             'MailTplVoicemailBody'            => 'See attach',
             'MailTplVoicemailFooter'          => '',
-            'NTPServer'                       =>  '0.pool.ntp.org'.PHP_EOL.'1.pool.ntp.org'.PHP_EOL,
+            'NTPServer'                       => '0.pool.ntp.org' . PHP_EOL . '1.pool.ntp.org' . PHP_EOL,
             'VoicemailNotificationsEmail'     => 'admin@mycompany.com',
             'VoicemailExten'                  => '*001',
             'PBXLanguage'                     => 'en-en',
@@ -103,30 +129,14 @@ class PbxSettings extends ModelsBase
             'PBXFirewallEnabled'              => '0',
             'PBXFail2BanEnabled'              => '0',
             'PBXTimezone'                     => 'Europe/Moscow',
-            'PBXVersion'                      => '1',
+            'PBXVersion'                      => '2020.1.1',
             'WebAdminLogin'                   => 'admin',
             'WebAdminPassword'                => 'admin',
             'WebAdminLanguage'                => 'en',
             'SystemNotificationsEmail'        => 'admin@mycompany.com',
             'SendMetrics'                     => '1',
 
-
         ];
-    }
-
-    /**
-     *  Returns default or saved values for all predefined keys if it exists on DB
-     *
-     * @return array
-     */
-    public static function getAllPbxSettings(): array
-    {
-        $arrOfDefaultValues = self::getDefaultArrayValues();
-        foreach ($arrOfDefaultValues as $key => $record) {
-            $arrOfDefaultValues[$key] = self::getValueByKey($key);
-        }
-
-        return $arrOfDefaultValues;
     }
 
     /**
@@ -138,18 +148,29 @@ class PbxSettings extends ModelsBase
      */
     public static function getValueByKey(string $key): string
     {
+        $cacheKey        = explode('\\', static::class)[3];
+        $parameters      = [
+            'cache' => [
+                'key'      => $cacheKey . '-getValueByKey',
+                'lifetime' => 300,
+            ],
+        ];
+        $currentSettings = parent::find($parameters);
 
-        $result = parent::findFirstByKey($key);
-        if ($result === null || $result->value === null) {
-            $arrOfDefaultValues = self::getDefaultArrayValues();
-            if ( ! array_key_exists($key, $arrOfDefaultValues)) {
-                return '';
+        foreach ($currentSettings as $record) {
+            if ($record->key === $key
+                && isset($record->value)
+            ) {
+                return $record->value;
             }
+        }
 
+        $arrOfDefaultValues = self::getDefaultArrayValues();
+        if (array_key_exists($key, $arrOfDefaultValues)) {
             return $arrOfDefaultValues[$key];
         }
 
-        return $result->value;
+        return '';
     }
 
     public function initialize(): void
@@ -160,6 +181,7 @@ class PbxSettings extends ModelsBase
 
     /**
      * Before PbxSettings entity save callback
+     *
      * @return bool
      */
     public function validation(): bool
@@ -397,7 +419,7 @@ class PbxSettings extends ModelsBase
         switch ($this->key) {
             case 'SSHLanguage':
             case 'WebAdminLanguage':
-            return true;
+                return true;
             default:
                 return false;
         }
@@ -464,7 +486,6 @@ class PbxSettings extends ModelsBase
                 return false;
         }
     }
-
 
 
 }

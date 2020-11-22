@@ -10,15 +10,20 @@ namespace MikoPBX\Tests\Calls\Scripts;
 use MikoPBX\Common\Models\CallDetailRecords;
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
 use MikoPBX\Core\Asterisk\AsteriskManager;
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 
 require_once 'Globals.php';
 
 class TestCallsBase {
+    public const ACtION_ORIGINATE = 'Originate';
+    public const ACtION_GENERAL_ORIGINATE = 'GeneralOriginate';
+    public const ACtION_WAIT = 'Wait';
 
     private string $aNum;
     private string $bNum;
     private string $cNum;
+    private string $offNum;
 
     private array  $sampleCDR;
     private array  $nonStrictComparison;
@@ -27,16 +32,18 @@ class TestCallsBase {
     private AsteriskManager $am;
 
     public function __construct(){
-        $db_data = $this->getIdlePeers();
+        $db_data = self::getIdlePeers();
         if(count($db_data) < 3){
-            $this->printError('Need 3 SIP account (endpoint).');
+            self::printError('Need 3 SIP account (endpoint).');
             exit(1);
-            return;
         }
         // Отбираем первые учетные записи.
         $this->aNum = $db_data[0];
         $this->bNum = $db_data[1];
         $this->cNum = $db_data[2];
+
+        $offPeers = self::getOffPeers();
+        $this->offNum = $offPeers[0]??'';
 
         $this->am = new AsteriskManager();
         $this->am->connect('127.0.0.1:5039');
@@ -47,7 +54,7 @@ class TestCallsBase {
      * Возвращает список доступных пиров.
      * @return array
      */
-    protected function getIdlePeers():array{
+    public static function getIdlePeers():array{
         $am = Util::getAstManager('off');
         $result = $am->getPjSipPeers();
         $db_data = array();
@@ -60,11 +67,24 @@ class TestCallsBase {
         return $db_data;
     }
 
+    /** Возвращает недоступные пиры */
+    public static function getOffPeers():array{
+        $am = Util::getAstManager('off');
+        $result = $am->getPjSipPeers();
+        $db_data = array();
+        foreach ($result as $peer){
+            if($peer['state']!== 'OK' && is_numeric($peer['id'])){
+                $db_data[] = $peer['id'];
+            }
+        }
+        return $db_data;
+    }
+
     /**
      * Вывод информации об ошибке.
      * @param $text
      */
-    protected function printError($text) : void
+    public static  function printError($text) : void
     {
         file_put_contents('php://stderr', "\033[01;31m-> TEST_ERROR: ".$text."\033[39m \n");
     }
@@ -73,7 +93,7 @@ class TestCallsBase {
      * Вывод информации.
      * @param $text
      */
-    protected function printInfo($text) : void
+    public static function printInfo($text) : void
     {
         echo "\033[01;32m-> \033[39m$text \n";
     }
@@ -82,7 +102,7 @@ class TestCallsBase {
      * Вывод заголовка.
      * @param $text
      */
-    protected function printHeader($text) : void
+    public static  function printHeader($text) : void
     {
         echo "\033[01;35m$text\033[39m \n";
     }
@@ -92,7 +112,7 @@ class TestCallsBase {
      */
     protected function cleanCdr():void
     {
-        $this->printInfo('Clearing the CDR table...');
+        self::printInfo('Clearing the CDR table...');
         // Очистка таблиц.
         $rows = CallDetailRecords::find();
         /** @var CallDetailRecords $row */
@@ -109,42 +129,50 @@ class TestCallsBase {
 
     /**
      * Совершает звонок и ждет его завершения.
-     * @return array
      */
-    public function originateWait():array{
-        $this->printInfo('Start originate... ');
+    public function originateWait():void{
+        $this->actionOriginate($this->aNum, $this->bNum);
+        self::printInfo('Wait end call... ');
+        while (count($this->am->GetChannels(false))>0){
+            sleep(1);
+        }
+        sleep(5);
+    }
+
+    /**
+     * Originate на тестовой станции.
+     * @param string $src
+     * @param string $dst
+     * @return bool
+     */
+    private function actionOriginate(string $src, string $dst):bool{
+        self::printInfo("Start originate... $src to $dst");
         $result = $this->am->Originate(
-            'Local/'.$this->aNum.'@orgn-wait',
-            $this->bNum,
+            'Local/'.$src.'@orgn-wait',
+            $dst,
             'out-to-exten',
             '1',
             null,
             null,
             '1',
             null,
-            "__A_NUM={$this->aNum},__B_NUM={$this->bNum},__C_NUM={$this->cNum}",
+            "__A_NUM={$this->aNum},__B_NUM={$this->bNum},__C_NUM={$this->cNum},__OFF_NUM={$this->offNum}",
             null,
             '0');
+        self::printInfo('Result originate: '.$result['Response']??'none');
 
-        while (count($this->am->GetChannels(false))>0){
-            sleep(1);
-        }
-        // Util::mwExec('pbx-console service WorkerCdr stop');
-        // Util::mwExec('pbx-console services start-all');
-
-        $this->printInfo('Result originate: '.$result['Response']??'none');
-        sleep(5);
-        return $result;
+        return $result['Response'] !== 'Error';
     }
 
     /**
      * Старт работы теста.
      * @param string $testName
      * @param array  $sampleCDR
+     * @param ?array  $rules
      */
-    public function runTest(string $testName, array $sampleCDR): void{
+    public function runTest(string $testName, array $sampleCDR, ?array $rules=null): void{
 
-        $this->printHeader('Start test '. $testName .' ...');
+        self::printHeader('Start test '. $testName .' ...');
         $this->testDirName = $testName;
         $this->sampleCDR   = $sampleCDR;
 
@@ -152,23 +180,95 @@ class TestCallsBase {
         $this->cleanCdr();
 
         $this->initSampleCdr();
-        $this->originateWait();
+        if(count($rules) === 0 ){
+            $this->originateWait();
+        }else{
+            $this->invokeRules($rules);
+        }
 
         $this->checkCdr();
         $this->sampleCDR            = [];
         $this->nonStrictComparison  = [];
 
-        $this->printInfo("End test\n");
+        self::printInfo("End test\n");
+    }
+
+    /**
+     * @param $rules
+     */
+    private function invokeRules($rules):void{
+        foreach ($rules as $rule){
+            [$action] = $rule;
+            $method = "invoke{$action}";
+            if (method_exists($this, $method)){
+                $this->$method($rule);
+            }
+        }
+        sleep(5);
+        while (count($this->am->GetChannels(false))>0){
+            sleep(1);
+        }
+    }
+
+    private function invokeOriginate($rule):void{
+        [$action, $src, $dst] = $rule;
+        if($action !== self::ACtION_ORIGINATE){
+            return;
+        }
+        if(property_exists(self::class, $src)){
+            $src = $this->$src;
+        }
+        if(property_exists(self::class, $dst)){
+            $dst = $this->$dst;
+        }
+
+        $i=0;
+        while ($i<=5){
+            $i++;
+            if($this->actionOriginate($src, $dst)){
+                break;
+            }
+        }
+    }
+
+    /**
+     * Originate на основной (тестируемой) АТС.
+     * @param array $rule
+     * @throws \Exception
+     */
+    private function invokeGeneralOriginate(array $rule):void{
+        [$action, $src, $dst] = $rule;
+        if($action !== self::ACtION_GENERAL_ORIGINATE){
+            return;
+        }
+        if(property_exists(self::class, $src)){
+            $src = $this->$src;
+        }
+        if(property_exists(self::class, $dst)){
+            $dst = $this->$dst;
+        }
+        self::printInfo("Start originate... $src to $dst");
+        $result = Util::amiOriginate($src, '', $dst);
+        self::printInfo('Result originate: '.$result['Response']??'none');
+    }
+
+    private function invokeWait($rule):void{
+        [$action, $time] = $rule;
+        if($action !== self::ACtION_WAIT && !is_numeric($time)){
+            return;
+        }
+        self::printInfo('Waiting : '.$time."s.");
+        sleep($time);
     }
 
     /**
      * Инициализация эталона таблицы CDR.
      */
     private function initSampleCdr():void{
-        $this->printInfo("Init sample cdr table...");
+        self::printInfo("Init sample cdr table...");
         foreach ($this->sampleCDR as $index => $row) {
             foreach ($row as $key => $value){
-                if(in_array($value, ['aNum', 'bNum', 'cNum'])){
+                if(property_exists(self::class, $value)){
                     $this->sampleCDR[$index][$key] = $this->$value;
                 }
             }
@@ -180,25 +280,28 @@ class TestCallsBase {
      */
     protected function checkCdr(): void
     {
+        sleep(4);
         // Проверяем результат.
         $rows = CallDetailRecords::find()->toArray();
         if(count($rows) !== count($this->sampleCDR)){
-            $this->printError('Call history compromised. Count:'.count($rows).", need: ".count($this->sampleCDR));
+            self::printError('Call history compromised. Count:'.count($rows).", need: ".count($this->sampleCDR));
             return;
         }
-        $this->printInfo('Create CDR successfully');
+        self::printInfo('Create CDR successfully');
         foreach ($rows as $index => $row){
             if(!file_exists($row['recordingfile'])){
-                $this->printError("File not found '{$row['recordingfile']}'");
+                if($row['billsec'] > 0){
+                    self::printError("File not found '{$row['recordingfile']}'");
+                }
             }else{
-                Util::mwExec("soxi {$row['recordingfile']} | grep Duration | awk '{print $3}' | awk -F '.'  '{print $1}'", $out);
+                Processes::mwExec("soxi {$row['recordingfile']} | grep Duration | awk '{print $3}' | awk -F '.'  '{print $1}'", $out);
                 $timeData = explode(':', implode($out));
                 $d = (int)($timeData[0]??0);
                 $h = (int)($timeData[1]??0);
                 $s = (int)($timeData[2]??0);
                 $seconds = $s + 60*$h + $d*24*60;
                 $row['fileDuration'] = (string)$seconds;
-                $this->printInfo('Rec. file:'.basename($row['recordingfile']).", sox duration: ".implode($out).", duration: ".$row['fileDuration']);
+                self::printInfo('Rec. file:'.basename($row['recordingfile']).", sox duration: ".implode($out).", duration: ".$row['fileDuration']);
             }
             $cdrS = $this->sampleCDR[$index];
             foreach ($cdrS as $key => $data){
@@ -207,15 +310,11 @@ class TestCallsBase {
                     $valSample  = (int) $data;
                     $values = [$valSample, ($valSample-1), ($valSample+1)];
                     if( !in_array($valRow, $values) ){
-                        $this->printError("Index row '{$index}', key '{$key}' {$valRow} !== {$data}");
+                        self::printError("Index row '{$index}', key '{$key}' {$valRow} !== {$data}");
                     }
                 }elseif($row[$key] !== $data){
-                    $this->printError("Index row '{$index}', key '{$key}' {$row[$key]} !== {$data}");
+                    self::printError("Index row '{$index}', key '{$key}' {$row[$key]} !== {$data}");
                 }
-            }
-
-            if(!file_exists($row['recordingfile'])){
-                $this->printError("File not found '{$row['recordingfile']}'");
             }
         }
     }
@@ -226,13 +325,13 @@ class TestCallsBase {
         $confDir = __DIR__."/{$this->testDirName}/configs";
         $astConf = "{$rootDir}/asterisk/asterisk.conf";
 
-        $this->printInfo("Copying configuration files...");
-        Util::mwExec("cp -R {$confDir}/* {$rootDir}/asterisk/");
+        self::printInfo("Copying configuration files...");
+        Processes::mwExec("cp -R {$confDir}/* {$rootDir}/asterisk/");
 
         $cmdAsterisk = Util::which('asterisk');
-        $this->printInfo("Reload dialplan... ");
-        Util::mwExec("{$cmdAsterisk} -C '{$astConf}' -rx 'dialplan reload'");
-        // Util::mwExec("asterisk -C '{$astConf}' -rx 'module reload res_pjsip.so'");
+        self::printInfo("Reload dialplan... ");
+        Processes::mwExec("{$cmdAsterisk} -C '{$astConf}' -rx 'dialplan reload'");
+        // Processes::mwExec("asterisk -C '{$astConf}' -rx 'module reload res_pjsip.so'");
         sleep(5);
     }
 }

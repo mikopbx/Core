@@ -2,7 +2,9 @@
 
 <!--#!/usr/bin/php -f-->
 
-<?php
+
+use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\Processes;<?php
 //namespace MikoPBX\Core\Rc;
 // /**
 //  * Copyright © MIKO LLC - All Rights Reserved
@@ -67,8 +69,8 @@
 //
 // echo " - Start models worker...";
 // $workersPath = appPath('src/Core/Workers');
-// Util::mwExecBg("/etc/rc/worker_reload 'php -f {$workersPath}/WorkerModelsEvents.php' ");
-// Util::mwExecBg("/etc/rc/worker_reload 'php -f {$workersPath}/WorkerLongPoolAPI.php' ");
+// Processes::mwExecBg("/etc/rc/worker_reload 'php -f {$workersPath}/WorkerModelsEvents.php' ");
+// Processes::mwExecBg("/etc/rc/worker_reload 'php -f {$workersPath}/WorkerLongPoolAPI.php' ");
 //
 // echo " - Configuring gnats services...";
 // $system->gnatsStart();

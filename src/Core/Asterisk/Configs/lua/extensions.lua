@@ -167,7 +167,7 @@ function event_dial(without_event)
     data['src_chan'] 	 = channel;
     data['src_num']  	 = src_num;
     data['dst_num']  	 = dst_num;
-    data['linkedid']  	 = get_variable("CDR(linkedid)");
+    data['linkedid']  	 = get_variable("CHANNEL(linkedid)");
     data['UNIQUEID']  	 = id;
     data['transfer']  	 = '0';
     data['agi_channel']  = agi_channel;
@@ -205,7 +205,7 @@ function event_dial_create_chan()
     data['event_time']  = getNowDate();
     data['UNIQUEID']	= id;
     data['dst_chan']	= get_variable("CHANNEL");
-    data['linkedid']    = get_variable("CDR(linkedid)");
+    data['linkedid']    = get_variable("CHANNEL(linkedid)");
 
     local is_local = string.lower(data['dst_chan']):find("local/") ~= nil
     if(is_local ~= true)then
@@ -234,24 +234,39 @@ end
 -- Обработка события ответа на звонок. Соединение абонентов.
 function event_dial_answer()
     local data = {}
-
-    app["Wait"]("0.2");
-    local mixFileName = get_variable("MIX_FILE_NAME");
-    if(mixFileName ~= '')then
-        local mixCommand = get_variable("MIX_CMD");
-        local mixOptions = get_variable("MIX_OPTIONS");
-        app["MixMonitor"](mixFileName .. ","..mixOptions.."," .. mixCommand);
-        app["MSet"]("MIX_FILE_NAME=,MIX_CMD=");
-        app["NoOp"]('Start MixMonitor on channel '.. get_variable("CHANNEL"));
-    end
-
     data['answer']  	= getNowDate();
-    local id = get_variable("pt1c_UNIQUEID");
+    data['agi_channel'] = get_variable("CHANNEL");
+
+    local id     = get_variable("pt1c_UNIQUEID");
+    local monDir = get_variable("MONITOR_DIR");
+
+    -- Проверка на Originate
+    local isOriginatePt1c = get_variable("pt1c_is_dst");
+    local fromPeer        = get_variable("FROM_PEER");
+    -- Обычно pt1c_is_dst=1 fromPeer не назначен для начального канала
+    -- Запись следует включать на канале назначения.
+    local isSrcChan = (isOriginatePt1c ~= '1' or fromPeer~='');
+
+    if(monDir ~= '' and string.lower(data['agi_channel']):find("local/") == nil and isSrcChan) then
+        -- Активируем запись разговора.
+        -- Только для реальных каналов.
+        local mixFileName = ''..monDir..'/'.. os.date("%Y/%m/%d/%H")..'/'..id;
+        local stereoMode = get_variable("MONITOR_STEREO");
+        local mixOptions = '';
+        if('1' == stereoMode )then
+            mixOptions = "abSr("..mixFileName.."_in.wav)t("..mixFileName.."_out.wav)";
+        else
+            mixOptions = 'ab';
+        end
+        app["MixMonitor"](mixFileName .. ".wav,"..mixOptions);
+        app["NoOp"]('Start MixMonitor on channel '.. get_variable("CHANNEL"));
+        data['recordingfile']  	= mixFileName .. ".mp3";
+        app["UserEvent"]("StartRecording,recordingfile:"..data['recordingfile']..',recchan:'..data['agi_channel']);
+    end
 
     data['action']      = 'dial_answer';
     data['id'] 		    = id;
-    data['agi_channel'] = get_variable("CHANNEL");
-    data['linkedid']  	= get_variable("CDR(linkedid)");
+    data['linkedid']  	= get_variable("CHANNEL(linkedid)");
 
     data['ENDCALLONANSWER']= get_variable("ENDCALLONANSWER");
     data['BRIDGEPEER']     = get_variable("FROM_CHAN");
@@ -282,10 +297,10 @@ function event_dial_answer()
     local PICKUPEER      = get_variable("PICKUPEER");
     data['dnid']         = get_variable('pt1c_dnid');
     if('' == data['dnid'])then
-        data['dnid']         = get_variable('CDR(dnid)');
+        data['dnid']     = get_variable('CDR(dnid)');
     end
 
-    local pickupexten    = '*8'; -- TODO
+    local pickupexten    = get_variable('PICKUP_EXTEN');
     if(data['dnid'] == 'unknown' and PICKUPEER ~= '')then
         -- Скорее всего ответ на вызов из 1С
         data['dnid']   = pickupexten;
@@ -338,7 +353,7 @@ function event_transfer_dial()
 
     data['action']  	= "transfer_dial";
     data['agi_channel'] = channel;
-    data['linkedid']  	= get_variable("CDR(linkedid)");
+    data['linkedid']  	= get_variable("CHANNEL(linkedid)");
     data['src_chan'] 	= channel;
     data['did']		    = get_variable("FROM_DID");
     data['verbose_call_id']	= get_variable("CHANNEL(callid)");
@@ -368,7 +383,7 @@ function event_transfer_dial_create_chan()
     data['transfer_UNIQUEID'] = get_variable("transfer_UNIQUEID");
     data['dst_chan'] 		  = get_variable("CHANNEL");
     data['action']  		  = "transfer_dial_create_chan";
-    data['linkedid']  		  = get_variable("CDR(linkedid)");
+    data['linkedid']  		  = get_variable("CHANNEL(linkedid)");
 
     local is_pjsip = string.lower(data['dst_chan']):find("pjsip/") ~= nil
     if(is_pjsip) then
@@ -384,20 +399,31 @@ end
 function event_transfer_dial_answer()
     local data = {}
 
-    local mixFileName = get_variable("MIX_FILE_NAME");
-    if(mixFileName ~= '')then
-        local mixCommand = get_variable("MIX_CMD");
-        local mixOptions = get_variable("MIX_OPTIONS");
-        app["MixMonitor"](mixFileName .. ","..mixOptions.."," .. mixCommand);
-        app["MSet"]("MIX_FILE_NAME=,MIX_CMD=");
-        app["NoOp"]('Start MixMonitor on channel '.. get_variable("CHANNEL"));
-    end
-
+    local id = get_variable("transfer_UNIQUEID");
+    data['transfer_UNIQUEID'] = id;
     data['answer']            = getNowDate()
-    data['transfer_UNIQUEID'] = get_variable("transfer_UNIQUEID");
     data['action']            = 'transfer_dial_answer';
     data['agi_channel']       = get_variable("CHANNEL");
-    data['linkedid']          = get_variable("CDR(linkedid)");
+    data['linkedid']          = get_variable("CHANNEL(linkedid)");
+
+    local monDir = get_variable("MONITOR_DIR");
+    if(monDir ~= '' and string.lower(data['agi_channel']):find("local/") == nil )then
+        -- Активируем запись разговора.
+        -- Только для реальных каналов.
+        local mixFileName = ''..monDir..'/'.. os.date("%Y/%m/%d/%H")..'/'..id;
+        local stereoMode = get_variable("MONITOR_STEREO");
+        local mixOptions = '';
+        if('1' == stereoMode )then
+            mixOptions = "abSr("..mixFileName.."_in.wav)t("..mixFileName.."_out.wav)";
+        else
+            mixOptions = 'ab';
+        end
+        app["MixMonitor"](mixFileName .. ".wav,"..mixOptions);
+        app["NoOp"]('Start MixMonitor on channel '.. data['agi_channel']);
+        data['recordingfile']  	= mixFileName .. ".mp3";
+        app["UserEvent"]("StartRecording,recordingfile:"..data['recordingfile']..',recchan:'..data['agi_channel']);
+    end
+
     userevent_return(data)
     return data;
 end
@@ -407,7 +433,7 @@ function event_transfer_dial_hangup()
     local data = {}
     data['action']  	= "transfer_dial_hangup";
     data['end']         = getNowDate()
-    data['linkedid']  	= get_variable("CDR(linkedid)");
+    data['linkedid']  	= get_variable("CHANNEL(linkedid)");
     data['did']		    = get_variable("FROM_DID");
     data['agi_channel'] = get_variable("CHANNEL");
     data['agi_threadid']= get_variable('UNIQUEID')..'_'..generateRandomString(6);
@@ -430,7 +456,7 @@ function event_hangup_chan()
     data['end']  		= getNowDate();
     data['did']		    = get_variable("FROM_DID");
     data['agi_threadid']= get_variable('UNIQUEID')..'_'..generateRandomString(6);
-    data['linkedid']  	= get_variable("CDR(linkedid)");
+    data['linkedid']  	= get_variable("CHANNEL(linkedid)");
     data['dialstatus']  = get_variable("DIALSTATUS");
     data['agi_channel'] = get_variable("CHANNEL");
     data['OLD_LINKEDID']= get_variable("OLD_LINKEDID");
@@ -468,7 +494,7 @@ function event_queue_start()
     data['did']  	    = FROM_DID;
     data['is_app']  	= '1';
     data['UNIQUEID']  	= id;
-    data['linkedid']  	= get_variable("CDR(linkedid)");
+    data['linkedid']  	= get_variable("CHANNEL(linkedid)");
 
     if(time_start ~= nil)then
         data['src_chan'] = get_variable("QUEUE_SRC_CHAN");
@@ -494,7 +520,7 @@ function event_queue_answer()
     data['answer']  	= getNowDate();
     data['id'] 		    = get_variable("pt1c_q_UNIQUEID");
     data['agi_channel'] = get_variable('CHANNEL');
-    data['linkedid']  	= get_variable("CDR(linkedid)");
+    data['linkedid']  	= get_variable("CHANNEL(linkedid)");
 
     userevent_return(data)
     return data;
@@ -508,7 +534,7 @@ function event_queue_end()
     data['id'] 		    = get_variable("pt1c_q_UNIQUEID");
     data['dialstatus']  = get_variable("QUEUESTATUS");
     data['agi_channel'] = get_variable('CHANNEL');
-    data['linkedid']  	= get_variable("CDR(linkedid)");
+    data['linkedid']  	= get_variable("CHANNEL(linkedid)");
 
     userevent_return(data)
     return data;
@@ -520,6 +546,7 @@ function event_dial_app()
     local FROM_CHAN     = get_variable('FROM_CHAN');
     local pt1c_UNIQUEID = get_variable('pt1c_UNIQUEID');
 
+    local id = '';
     if(CHANNEL==FROM_CHAN and pt1c_UNIQUEID~='') then
         id = pt1c_UNIQUEID;
     else
@@ -660,7 +687,7 @@ if(channel == nil) then
     }
     channel['CALLERID(num)']    = ask_var:new('74952293042')
     channel['CHANNEL(peername)']= ask_var:new('104')
-    channel['CDR(linkedid)']    = ask_var:new('1557224457.0022')
+    channel['CHANNEL(linkedid)']    = ask_var:new('1557224457.0022')
     channel['CDR(dstchannel)']  = ask_var:new('')
     channel['CDR(dnid)']        = ask_var:new('')
 end

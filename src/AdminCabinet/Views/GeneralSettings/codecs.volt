@@ -17,7 +17,7 @@
             <div class="ui toggle checkbox codecs">
                 <input type="checkbox" name="codec_{{ codec.name }}" {% if codec.disabled==='0' %} checked {% endif %}
                        tabindex="0" class="hidden">
-                <label>{{ codec.description }}</label>
+                <label for="codec_{{ codec.name }}">{{ codec.description }}</label>
             </div>
         </td>
     </tr>
@@ -48,7 +48,7 @@
             <div class="ui toggle checkbox codecs">
                 <input type="checkbox" name="codec_{{ codec.name }}" {% if codec.disabled==='0' %} checked {% endif %}
                        tabindex="0" class="hidden">
-                <label>{{ codec.description }}</label>
+                <label for="codec_{{ codec.name }}" >{{ codec.description }}</label>
             </div>
         </td>
     </tr>

@@ -34,6 +34,7 @@ const systemDiagnosticLogs = {
 	$showBtn: $('#show-last-log'),
 	$downloadBtn: $('#download-file'),
 	$showAutoBtn: $('#show-last-log-auto'),
+	$logContent: $('#log-content-readonly'),
 	viewer: '',
 	$fileSelectDropDown: $('#system-diagnostic-form .filenames-select'),
 	logsItems: [],
@@ -42,10 +43,8 @@ const systemDiagnosticLogs = {
 	$formObj: $('#system-diagnostic-form'),
 	$fileName: $('#system-diagnostic-form .filename'),
 	initialize() {
-		const aceHeight = window.innerHeight-300;
-		$(window).load(function() {
-			systemDiagnosticLogs.$dimmer.closest('div').css('min-height', `${aceHeight}px`);
-		});
+		const aceHeight = window.innerHeight-250;
+		systemDiagnosticLogs.$dimmer.closest('div').css('min-height', `${aceHeight}px`);
 		systemDiagnosticLogs.$fileSelectDropDown.dropdown(
 			{
 				values: systemDiagnosticLogs.logsItems,
@@ -87,23 +86,21 @@ const systemDiagnosticLogs = {
 		});
 	},
 	initializeAce() {
-		const aceHeight = window.innerHeight-300;
-		const rowsCount = Math.round(aceHeight/15.7);
-		$(window).load(function() {
-			$('.log-content-readonly').css('min-height', `${aceHeight}px`);
-		});
 		const IniMode = ace.require('ace/mode/julia').Mode;
 		systemDiagnosticLogs.viewer = ace.edit('log-content-readonly');
 		systemDiagnosticLogs.viewer.session.setMode(new IniMode());
 		systemDiagnosticLogs.viewer.setTheme('ace/theme/monokai');
-		systemDiagnosticLogs.viewer.resize();
 		systemDiagnosticLogs.viewer.renderer.setShowGutter(false);
 		systemDiagnosticLogs.viewer.setOptions({
-			 showLineNumbers:false,
-			 showPrintMargin: false,
-			 readOnly: true,
-			 maxLines: rowsCount,
-		 });
+			showLineNumbers:false,
+			showPrintMargin: false,
+			readOnly: true,
+		});
+		$(window).load(function() {
+			const aceHeight = window.innerHeight-systemDiagnosticLogs.$logContent.offset().top-50;
+			$('.log-content-readonly').css('min-height', `${aceHeight}px`);
+			systemDiagnosticLogs.viewer.resize();
+		});
 	},
 	/**
 	 * Makes formatted menu structure
@@ -160,7 +157,7 @@ const systemDiagnosticLogs = {
 		if (response!==false){
 			window.location = response.filename;
 		}
-	}
+	},
 };
 
 $(document).ready(() => {

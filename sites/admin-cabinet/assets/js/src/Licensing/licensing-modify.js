@@ -160,7 +160,7 @@ const licensingModify = {
 	 * @param response
 	 */
 	cbAfterGetLicenseInfo(response){
-		if (response.licenseInfo !== 'null') {
+		if (response.licenseInfo !== undefined) {
 			licensingModify.showLicenseInfo(response.licenseInfo);
 			licensingModify.$licenseDetailInfo.show();
 		} else {

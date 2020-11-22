@@ -10,7 +10,7 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\{Codecs,
     ExtensionForwardingRights,
-    Extensions as ExtensionsModel,
+    Extensions,
     NetworkFilters,
     OutgoingRoutingTable,
     PbxSettings,
@@ -68,11 +68,11 @@ class SIPConf extends ConfigClass
         $db = new AstDB();
         foreach ($this->data_peers as $peer) {
             // Помещаем в AstDB сведения по маршуртизации.
-            $ringlength = ($peer['ringlength'] == 0) ? '' : trim($peer['ringlength']);
-            $db->databasePut('FW_TIME', "{$peer['extension']}", $ringlength);
-            $db->databasePut('FW', "{$peer['extension']}", trim($peer['forwarding']));
-            $db->databasePut('FW_BUSY', "{$peer['extension']}", trim($peer['forwardingonbusy']));
-            $db->databasePut('FW_UNAV', "{$peer['extension']}", trim($peer['forwardingonunavailable']));
+            $ringlength = ($peer['ringlength'] === '0') ? '' : trim($peer['ringlength']);
+            $db->databasePut('FW_TIME', $peer['extension'], $ringlength);
+            $db->databasePut('FW', $peer['extension'], trim($peer['forwarding']));
+            $db->databasePut('FW_BUSY', $peer['extension'], trim($peer['forwardingonbusy']));
+            $db->databasePut('FW_UNAV', $peer['extension'], trim($peer['forwardingonunavailable']));
         }
     }
 
@@ -188,7 +188,12 @@ class SIPConf extends ConfigClass
             if (empty($lan_config['ipaddr']) || empty($lan_config['subnet'])) {
                 continue;
             }
-            $sub = new SubnetCalculator($lan_config['ipaddr'], $lan_config['subnet']);
+            try {
+                $sub = new SubnetCalculator($lan_config['ipaddr'], $lan_config['subnet']);
+            }catch (\Throwable $e){
+                Util::sysLogMsg(self::class, $e->getMessage());
+                continue;
+            }
             $net = $sub->getNetworkPortion() . '/' . $lan_config['subnet'];
             if ($if_data['topology'] === 'private' && in_array($net, $subnets, true) === false) {
                 $subnets[] = $net;
@@ -230,121 +235,244 @@ class SIPConf extends ConfigClass
         if ($this->data_providers===null){
             $this->getSettings();
         }
+        $additionalModules = $this->di->getShared('pbxConfModules');
         foreach ($this->data_providers as $provider) {
             $manual_attributes = Util::parseIniSettings(base64_decode($provider['manualattributes'] ?? ''));
-            $port              = (trim($provider['port']) === '') ? '5060' : $provider['port'];
+            $provider['port']  = (trim($provider['port']) === '') ? '5060' : $provider['port'];
 
-            $need_register = $provider['noregister'] !== '1';
-            if ($need_register) {
-                $options     = [
-                    'type'     => 'auth',
-                    'username' => $provider['username'],
-                    'password' => $provider['secret'],
-                ];
-                $reg_strings .= "[REG-AUTH-{$provider['uniqid']}]\n";
-                $reg_strings .= Util::overrideConfigurationArray($options, $manual_attributes, 'registration-auth');
+            $reg_strings .= $this->generateProviderRegistrationAuth($provider, $additionalModules, $manual_attributes);
+            $reg_strings .= $this->generateProviderRegistration($provider, $additionalModules, $manual_attributes);
+            $prov_config .= $this->generateProviderOutAuth($provider, $additionalModules, $manual_attributes);
 
-                $options     = [
-                    'type'                        => 'registration',
-                    // 'transport'                   => 'transport-udp',
-                    'outbound_auth'               => "REG-AUTH-{$provider['uniqid']}",
-                    'contact_user'                => $provider['username'],
-                    'retry_interval'              => '30',
-                    'max_retries'                 => '100',
-                    'forbidden_retry_interval'    => '300',
-                    'fatal_retry_interval'        => '300',
-                    'expiration'                  => $this->generalSettings['SIPDefaultExpiry'],
-                    'server_uri'                  => "sip:{$provider['host']}:{$port}",
-                    'client_uri'                  => "sip:{$provider['username']}@{$provider['host']}:{$port}",
-                ];
-                $reg_strings .= "[REG-{$provider['uniqid']}] \n";
-                $reg_strings .= Util::overrideConfigurationArray($options, $manual_attributes, 'registration');
-            }
-
-            if ('1' !== $provider['receive_calls_without_auth']) {
-                $options     = [
-                    'type'     => 'auth',
-                    'username' => $provider['username'],
-                    'password' => $provider['secret'],
-                ];
-                $prov_config .= "[{$provider['uniqid']}-OUT]\n";
-                $prov_config .= Util::overrideConfigurationArray($options, $manual_attributes, 'endpoint-auth');
-            }
-
-            $defaultuser = (trim($provider['defaultuser']) === '') ? $provider['username'] : $provider['defaultuser'];
-            if ( ! empty($defaultuser) && '1' !== $provider['receive_calls_without_auth']) {
-                $contact = "sip:$defaultuser@{$provider['host']}:{$port}";
-            } else {
-                $contact = "sip:{$provider['host']}:{$port}";
-            }
-
-            $options     = [
-                'type'               => 'aor',
-                'max_contacts'       => '1',
-                'contact'            => $contact,
-                'maximum_expiration' => $this->generalSettings['SIPMaxExpiry'],
-                'minimum_expiration' => $this->generalSettings['SIPMinExpiry'],
-                'default_expiration' => $this->generalSettings['SIPDefaultExpiry'],
-            ];
-            if($provider['qualify'] === '1'){
-                $options['qualify_frequency'] = $provider['qualifyfreq'];
-                $options['qualify_timeout']   = '3.0';
-            }
-
-            $prov_config .= "[{$provider['uniqid']}]\n";
-            $prov_config .= Util::overrideConfigurationArray($options, $manual_attributes, 'aor');
-
-            $options     = [
-                'type'     => 'identify',
-                'endpoint' => $provider['uniqid'],
-                'match'    => $provider['host'],
-            ];
-            $prov_config .= "[{$provider['uniqid']}]\n";
-            $prov_config .= Util::overrideConfigurationArray($options, $manual_attributes, 'identify');
-
-            $fromdomain = (trim($provider['fromdomain']) === '') ? $provider['host'] : $provider['fromdomain'];
-            $from       = (trim(
-                    $provider['fromuser']
-                ) === '') ? "{$provider['username']}; username" : "{$provider['fromuser']}; fromuser";
-            $from_user  = ($provider['disablefromuser'] === '1') ? null : $from;
-            $lang       = $this->generalSettings['PBXLanguage'];
-
-            if (count($this->contexts_data[$provider['context_id']]) === 1) {
-                $context_id = $provider['uniqid'];
-            } else {
-                $context_id = $provider['context_id'];
-            }
-            $dtmfmode = ($provider['dtmfmode'] === 'rfc2833') ? 'rfc4733' : $provider['dtmfmode'];
-            $options  = [
-                'type'            => 'endpoint',
-                '100rel'          => "no",
-                'context'         => "{$context_id}-incoming",
-                'dtmf_mode'       => $dtmfmode,
-                'disallow'        => 'all',
-                'allow'           => $provider['codecs'],
-                'rtp_symmetric'   => 'yes',
-                'force_rport'     => 'yes',
-                'rewrite_contact' => 'yes',
-                'ice_support'     => 'no',
-                'direct_media'    => 'no',
-                'from_user'       => $from_user,
-                'from_domain'     => $fromdomain,
-                'sdp_session'     => 'mikopbx',
-                'language'        => $lang,
-                'aors'            => $provider['uniqid'],
-                'timers'          => ' no',
-            ];
-            if ('1' !== $provider['receive_calls_without_auth']) {
-                $options['outbound_auth'] = "{$provider['uniqid']}-OUT";
-            }
-            $prov_config .= "[{$provider['uniqid']}]\n";
-            $prov_config .= Util::overrideConfigurationArray($options, $manual_attributes, 'endpoint');
+            $prov_config .= $this->generateProviderAor($provider, $additionalModules, $manual_attributes);
+            $prov_config .= $this->generateProviderIdentify($provider, $additionalModules, $manual_attributes);
+            $prov_config .= $this->generateProviderEndpoint($provider, $additionalModules, $manual_attributes);
         }
 
         $conf .= $reg_strings;
         $conf .= $prov_config;
-
         return $conf;
+    }
+
+    /**
+     * Генерация Auth для секции Registration провайдера.
+     * @param array $provider
+     * @param array $additionalModules
+     * @param array $manual_attributes
+     * @return string
+     */
+    private function generateProviderRegistrationAuth(array $provider, array $additionalModules, array $manual_attributes): string{
+        $conf = '';
+        if($provider['noregister'] === '1'){
+            return $conf;
+        }
+        $options     = [
+            'type'     => 'registration-auth',
+            'username' => $provider['username'],
+            'password' => $provider['secret'],
+        ];
+        foreach ($additionalModules as $Object) {
+            $options = $Object->overridePJSIPOptions($provider['uniqid'], $options);
+        }
+        $options['type'] = 'auth';
+        $conf .= "[REG-AUTH-{$provider['uniqid']}]\n";
+        $conf .= Util::overrideConfigurationArray($options, $manual_attributes, 'registration-auth');
+        return $conf;
+    }
+
+    /**
+     * Генерация Registration провайдера.
+     * @param array $provider
+     * @param array $additionalModules
+     * @param array $manual_attributes
+     * @return string
+     */
+    private function generateProviderRegistration(array $provider, array $additionalModules, array $manual_attributes): string{
+        $conf = '';
+        if($provider['noregister'] === '1'){
+            return $conf;
+        }
+        $options     = [
+            'type'                        => 'registration',
+            'outbound_auth'               => "REG-AUTH-{$provider['uniqid']}",
+            'contact_user'                => $provider['username'],
+            'retry_interval'              => '30',
+            'max_retries'                 => '100',
+            'forbidden_retry_interval'    => '300',
+            'fatal_retry_interval'        => '300',
+            'expiration'                  => $this->generalSettings['SIPDefaultExpiry'],
+            'server_uri'                  => "sip:{$provider['host']}:{$provider['port']}",
+            'client_uri'                  => "sip:{$provider['username']}@{$provider['host']}:{$provider['port']}",
+        ];
+        foreach ($additionalModules as $Object) {
+            $options = $Object->overridePJSIPOptions($provider['uniqid'], $options);
+        }
+        $conf .= "[REG-{$provider['uniqid']}] \n";
+        $conf .= Util::overrideConfigurationArray($options, $manual_attributes, 'registration');
+        return $conf;
+    }
+
+    /**
+     * Генерация Auth провайдера.
+     * @param array $provider
+     * @param array $additionalModules
+     * @param array $manual_attributes
+     * @return string
+     */
+    private function generateProviderOutAuth(array $provider, array $additionalModules, array $manual_attributes): string{
+        $conf = '';
+        if ('1' === $provider['receive_calls_without_auth']) {
+            return $conf;
+        }
+        $options     = [
+            'type'     => 'endpoint-auth',
+            'username' => $provider['username'],
+            'password' => $provider['secret'],
+        ];
+        foreach ($additionalModules as $Object) {
+            $options = $Object->overridePJSIPOptions($provider['uniqid'], $options);
+        }
+        $options['type'] = 'auth';
+        $conf .= "[{$provider['uniqid']}-OUT]\n";
+        $conf .= Util::overrideConfigurationArray($options, $manual_attributes, 'endpoint-auth');
+        return $conf;
+    }
+
+    /**
+     * Генерация AOR для Endpoint.
+     * @param array $provider
+     * @param array $additionalModules
+     * @param array $manual_attributes
+     * @return string
+     */
+    private function generateProviderAor(array $provider, array $additionalModules, array $manual_attributes): string{
+        $conf = '';
+        $defaultuser = (trim($provider['defaultuser']) === '') ? $provider['username'] : $provider['defaultuser'];
+        if ( ! empty($defaultuser) && '1' !== $provider['receive_calls_without_auth']) {
+            $contact = "sip:$defaultuser@{$provider['host']}:{$provider['port']}";
+        } else {
+            $contact = "sip:{$provider['host']}:{$provider['port']}";
+        }
+        $options     = [
+            'type'               => 'aor',
+            'max_contacts'       => '1',
+            'contact'            => $contact,
+            'maximum_expiration' => $this->generalSettings['SIPMaxExpiry'],
+            'minimum_expiration' => $this->generalSettings['SIPMinExpiry'],
+            'default_expiration' => $this->generalSettings['SIPDefaultExpiry'],
+        ];
+        if($provider['qualify'] === '1'){
+            $options['qualify_frequency'] = $provider['qualifyfreq'];
+            $options['qualify_timeout']   = '3.0';
+        }
+        foreach ($additionalModules as $Object) {
+            $options = $Object->overridePJSIPOptions($provider['uniqid'], $options);
+        }
+        $conf .= "[{$provider['uniqid']}]\n";
+        $conf .= Util::overrideConfigurationArray($options, $manual_attributes, 'aor');
+        return $conf;
+    }
+
+    /**
+     * Генерация Endpoint провайдера.
+     * @param array $provider
+     * @param array $additionalModules
+     * @param array $manual_attributes
+     * @return string
+     */
+    private function generateProviderEndpoint(array $provider, array $additionalModules, array $manual_attributes): string{
+        $conf = '';
+        $fromdomain = (trim($provider['fromdomain']) === '') ? $provider['host'] : $provider['fromdomain'];
+        $from       = (trim(
+                $provider['fromuser']
+            ) === '') ? "{$provider['username']}; username" : "{$provider['fromuser']}; fromuser";
+        $from_user  = ($provider['disablefromuser'] === '1') ? null : $from;
+        $language   = $this->generalSettings['PBXLanguage'];
+
+        if (count($this->contexts_data[$provider['context_id']]) === 1) {
+            $context_id = $provider['uniqid'];
+        } else {
+            $context_id = $provider['context_id'];
+        }
+        $dtmfmode = ($provider['dtmfmode'] === 'rfc2833') ? 'rfc4733' : $provider['dtmfmode'];
+        $options  = [
+            'type'            => 'endpoint',
+            '100rel'          => "no",
+            'context'         => "{$context_id}-incoming",
+            'dtmf_mode'       => $dtmfmode,
+            'disallow'        => 'all',
+            'allow'           => $provider['codecs'],
+            'rtp_symmetric'   => 'yes',
+            'force_rport'     => 'yes',
+            'rewrite_contact' => 'yes',
+            'ice_support'     => 'no',
+            'direct_media'    => 'no',
+            'from_user'       => $from_user,
+            'from_domain'     => $fromdomain,
+            'sdp_session'     => 'mikopbx',
+            'language'        => $language,
+            'aors'            => $provider['uniqid'],
+            'timers'          => ' no',
+        ];
+        if ('1' !== $provider['receive_calls_without_auth']) {
+            $options['outbound_auth'] = "{$provider['uniqid']}-OUT";
+        }
+        self::getToneZone($options, $language);
+        foreach ($additionalModules as $Object) {
+            $options = $Object->overridePJSIPOptions($provider['uniqid'], $options);
+        }
+        $conf .= "[{$provider['uniqid']}]\n";
+        $conf .= Util::overrideConfigurationArray($options, $manual_attributes, 'endpoint');
+        return $conf;
+    }
+
+
+    /**
+     * Генерация AOR для Endpoint.
+     * @param array $provider
+     * @param array $additionalModules
+     * @param array $manual_attributes
+     * @return string
+     */
+    private function generateProviderIdentify(array $provider, array $additionalModules, array $manual_attributes): string{
+        $conf = '';
+        $options     = [
+            'type'     => 'identify',
+            'endpoint' => $provider['uniqid'],
+            'match'    => $provider['host'],
+        ];
+        foreach ($additionalModules as $Object) {
+            $options = $Object->overridePJSIPOptions($provider['uniqid'], $options);
+        }
+        $conf .= "[{$provider['uniqid']}]\n";
+        $conf .= Util::overrideConfigurationArray($options, $manual_attributes, 'identify');
+        return $conf;
+    }
+
+
+    /**
+     * @param array  $options
+     * @param string $lang
+     */
+    public static function getToneZone(array &$options, string $lang):void {
+        $settings = [
+            'ru-ru' => 'ru',
+            'en-gb' => 'uk',
+            'de-de' => 'de',
+            'da-dk' => 'dk',
+            'es-es' => 'es',
+            'fr-ca' => 'fr',
+            'it-it' => 'it',
+            'ja-jp' => 'jp',
+            'nl-nl' => 'nl',
+            'pl-pl' => 'pl',
+            'pt-br' => 'pt',
+        ];
+        $toneZone = $settings[$lang]??'';
+        if(!empty($toneZone)){
+            $options['inband_progress'] = 'yes';
+            $options['tone_zone'] = $toneZone;
+        }
     }
 
     /**
@@ -364,67 +492,23 @@ class SIPConf extends ConfigClass
 
         foreach ($this->data_peers as $peer) {
             $manual_attributes = Util::parseIniSettings($peer['manualattributes'] ?? '');
-
-            $language = str_replace('_', '-', strtolower($lang));
-            $language = (trim($language) === '') ? 'en-en' : $language;
-
-            $calleridname = (trim($peer['calleridname']) === '') ? $peer['extension'] : $peer['calleridname'];
-            $busylevel    = (trim($peer['busylevel']) === '') ? '1' : '' . $peer['busylevel'];
-
-            $options = [
-                'type'     => 'auth',
-                'username' => $peer['extension'],
-                'password' => $peer['secret'],
-            ];
-            $conf    .= "[{$peer['extension']}] \n";
-            $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'auth');
-
-            $options = [
-                'type'              => 'aor',
-                'qualify_frequency' => '60',
-                'qualify_timeout'   => '5',
-                'max_contacts'      => '5',
-            ];
-            $conf    .= "[{$peer['extension']}] \n";
-            $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'aor');
-
-            $dtmfmode = ($peer['dtmfmode'] === 'rfc2833') ? 'rfc4733' : $peer['dtmfmode'];
-            $options  = [
-                'type'                 => 'endpoint',
-                // 'transport'            => 'transport-udp',
-                'context'              => 'all_peers',
-                'dtmf_mode'            => $dtmfmode,
-                'disallow'             => 'all',
-                'allow'                => $peer['codecs'],
-                'rtp_symmetric'        => 'yes',
-                'force_rport'          => 'yes',
-                'rewrite_contact'      => 'yes',
-                'ice_support'          => 'no',
-                'direct_media'         => 'no',
-                'callerid'             => "{$calleridname} <{$peer['extension']}>",
-                // 'webrtc'   => 'yes',
-                'send_pai'             => 'yes',
-                'call_group'           => '1',
-                'pickup_group'         => '1',
-                'sdp_session'          => 'mikopbx',
-                'language'             => $language,
-                'mailboxes'            => 'admin@voicemailcontext',
-                'device_state_busy_at' => $busylevel,
-                'aors'                 => $peer['extension'],
-                'auth'                 => $peer['extension'],
-                'outbound_auth'        => $peer['extension'],
-                'acl'                  => "acl_{$peer['extension']}",
-                'timers'               => ' no',
-            ];
-            // ---------------- //
-            $conf .= "[{$peer['extension']}] \n";
-            $conf .= Util::overrideConfigurationArray($options, $manual_attributes, 'endpoint');
-
-            foreach ($additionalModules as $Object) {
-                $conf .= $Object->generatePeerPjAdditionalOptions($peer);
-            }
+            $conf .= $this->generatePeerAuth($peer, $additionalModules, $manual_attributes);
+            $conf .= $this->generatePeerAor($peer, $additionalModules, $manual_attributes);
+            $conf .= $this->generatePeerEndpoint($lang, $peer, $additionalModules, $manual_attributes);
         }
 
+        $conf .= $this->generatePeersAdditional($additionalModules);
+
+        return $conf;
+    }
+
+    /**
+     * Генерация AOR для Endpoint.
+     * @param       $additionalModules
+     * @return string
+     */
+    private function generatePeersAdditional($additionalModules): string{
+        $conf = '';
         foreach ($additionalModules as $Object) {
             // Prevent cycling, skip current class
             if (is_a($Object, __CLASS__)) {
@@ -432,9 +516,108 @@ class SIPConf extends ConfigClass
             }
             $conf .= $Object->generatePeersPj();
         }
-
         return $conf;
     }
+
+    /**
+     * Генерация AOR для Endpoint.
+     * @param       $peer
+     * @param       $additionalModules
+     * @param array $manual_attributes
+     * @return string
+     */
+    private function generatePeerAuth($peer, $additionalModules, array $manual_attributes): string{
+        $conf = '';
+        $options = [
+            'type'     => 'auth',
+            'username' => $peer['extension'],
+            'password' => $peer['secret'],
+        ];
+        foreach ($additionalModules as $Object) {
+            $options = $Object->overridePJSIPOptions($peer['extension'], $options);
+        }
+        $conf    .= "[{$peer['extension']}] \n";
+        $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'auth');
+        return $conf;
+    }
+
+    /**
+     * Генерация AOR для Endpoint.
+     * @param       $peer
+     * @param       $additionalModules
+     * @param array $manual_attributes
+     * @return string
+     */
+    private function generatePeerAor($peer, $additionalModules, array $manual_attributes): string{
+        $conf = '';
+        $options = [
+            'type'              => 'aor',
+            'qualify_frequency' => '60',
+            'qualify_timeout'   => '5',
+            'max_contacts'      => '5',
+        ];
+        foreach ($additionalModules as $Object) {
+            $options = $Object->overridePJSIPOptions($peer['extension'], $options);
+        }
+        $conf .= "[{$peer['extension']}] \n";
+        $conf .= Util::overrideConfigurationArray($options, $manual_attributes, 'aor');
+        return $conf;
+    }
+
+    /**
+     * Генерация endpoint.
+     * @param        $lang
+     * @param        $peer
+     * @param        $additionalModules
+     * @param array  $manual_attributes
+     * @return string
+     */
+    private function generatePeerEndpoint($lang, $peer, $additionalModules, array $manual_attributes): string{
+        $conf = '';
+        $language = str_replace('_', '-', strtolower($lang));
+        $language = (trim($language) === '') ? 'en-en' : $language;
+
+        $calleridname = (trim($peer['calleridname']) === '') ? $peer['extension'] : $peer['calleridname'];
+        $busylevel = (trim($peer['busylevel']) === '') ? '1' : '' . $peer['busylevel'];
+
+        $dtmfmode = ($peer['dtmfmode'] === 'rfc2833') ? 'rfc4733' : $peer['dtmfmode'];
+        $options = [
+            'type' => 'endpoint',
+            'context' => 'all_peers',
+            'dtmf_mode' => $dtmfmode,
+            'disallow' => 'all',
+            'allow' => $peer['codecs'],
+            'rtp_symmetric' => 'yes',
+            'force_rport' => 'yes',
+            'rewrite_contact' => 'yes',
+            'ice_support' => 'no',
+            'direct_media' => 'no',
+            'callerid' => "{$calleridname} <{$peer['extension']}>",
+            'send_pai' => 'yes',
+            'call_group' => '1',
+            'pickup_group' => '1',
+            'sdp_session' => 'mikopbx',
+            'language' => $language,
+            'mailboxes' => 'admin@voicemailcontext',
+            'device_state_busy_at' => $busylevel,
+            'aors' => $peer['extension'],
+            'auth' => $peer['extension'],
+            'outbound_auth' => $peer['extension'],
+            'acl' => "acl_{$peer['extension']}",
+            'timers' => ' no',
+        ];
+        self::getToneZone($options, $language);
+        foreach ($additionalModules as $Object) {
+            $options = $Object->overridePJSIPOptions($peer['extension'], $options);
+        }
+        $conf .= "[{$peer['extension']}] \n";
+        $conf .= Util::overrideConfigurationArray($options, $manual_attributes, 'endpoint');
+        foreach ($additionalModules as $Object) {
+            $conf .= $Object->generatePeerPjAdditionalOptions($peer);
+        }
+        return $conf;
+    }
+
 
     /**
      * Получение настроек.
@@ -456,18 +639,18 @@ class SIPConf extends ConfigClass
      */
     private function getPeers(): array
     {
-        /** @var \MikoPBX\Common\Models\NetworkFilters $network_filter */
-        /** @var \MikoPBX\Common\Models\Sip $sip_peer */
-        /** @var \MikoPBX\Common\Models\Extensions $extension */
-        /** @var \MikoPBX\Common\Models\Users $user */
-        /** @var \MikoPBX\Common\Models\ExtensionForwardingRights $extensionForwarding */
+        /** @var NetworkFilters $network_filter */
+        /** @var Sip $sip_peer */
+        /** @var Extensions $extension */
+        /** @var Users $user */
+        /** @var ExtensionForwardingRights $extensionForwarding */
 
         $data    = [];
         $db_data = Sip::find("type = 'peer' AND ( disabled <> '1')");
         foreach ($db_data as $sip_peer) {
             $arr_data       = $sip_peer->toArray();
             $network_filter = null;
-            if (null != $sip_peer->networkfilterid) {
+            if (!empty($sip_peer->networkfilterid)) {
                 $network_filter = NetworkFilters::findFirst($sip_peer->networkfilterid);
             }
             $arr_data['permit'] = ($network_filter === null) ? '' : $network_filter->permit;
@@ -477,7 +660,7 @@ class SIPConf extends ConfigClass
             $arr_data['codecs'] = $this->getCodecs();
 
             // Имя сотрудника.
-            $extension = ExtensionsModel::findFirst("number = '{$sip_peer->extension}'");
+            $extension = Extensions::findFirst("number = '{$sip_peer->extension}'");
             if (null === $extension) {
                 $arr_data['publicaccess'] = false;
                 $arr_data['language']     = '';
@@ -536,8 +719,8 @@ class SIPConf extends ConfigClass
      */
     private function getProviders(): array
     {
-        /** @var \MikoPBX\Common\Models\Sip $sip_peer */
-        /** @var \MikoPBX\Common\Models\NetworkFilters $network_filter */
+        /** @var Sip $sip_peer */
+        /** @var NetworkFilters $network_filter */
         // Получим настройки всех аккаунтов.
         $data    = [];
         $db_data = Sip::find("type = 'friend' AND ( disabled <> '1')");
@@ -574,10 +757,10 @@ class SIPConf extends ConfigClass
         if ($this->data_peers===null){
             $this->getSettings();
         }
-        /** @var \MikoPBX\Common\Models\OutgoingRoutingTable $rout */
-        /** @var \MikoPBX\Common\Models\OutgoingRoutingTable $routs */
-        /** @var \MikoPBX\Common\Models\Sip $db_data */
-        /** @var \MikoPBX\Common\Models\Sip $sip_peer */
+        /** @var OutgoingRoutingTable $rout */
+        /** @var OutgoingRoutingTable $routs */
+        /** @var Sip $db_data */
+        /** @var Sip $sip_peer */
 
         $data    = [];
         $routs   = OutgoingRoutingTable::find(['order' => 'priority']);
@@ -695,4 +878,5 @@ class SIPConf extends ConfigClass
     {
         return self::TYPE_PJSIP;
     }
+
 }

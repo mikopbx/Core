@@ -9,11 +9,13 @@
 namespace MikoPBX\Modules;
 
 
-use Error as ErrorAlias;
 use MikoPBX\Common\Models\ModelsBase;
 use MikoPBX\Common\Models\PbxExtensionModules;
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di;
+
+use Throwable;
 
 use function MikoPBX\Common\Config\appPath;
 
@@ -119,7 +121,7 @@ class PbxExtensionUtils
         }
 
         $pathChmod = Util::which('chmod');
-        Util::mwExec("{$pathChmod} +x {$agiBinDir}/*");
+        Processes::mwExec("{$pathChmod} +x {$agiBinDir}/*");
     }
 
     /**
@@ -148,7 +150,7 @@ class PbxExtensionUtils
                 try {
                     $moduleStateProcessor = new PbxExtensionState($module['uniqid']);
                     $moduleStateProcessor->disableModule();
-                } catch (ErrorAlias $exception) {
+                } catch (Throwable $exception) {
                     Util::sysLogMsg(__CLASS__, "Can not disable module {$module['uniqid']} Message: {$exception}");
                 } finally {
                     $currentModule           = PbxExtensionModules::findFirstByUniqid($module['uniqid']);

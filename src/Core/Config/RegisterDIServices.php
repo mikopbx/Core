@@ -19,6 +19,9 @@ namespace MikoPBX\Core\Config;
 
 use MikoPBX\Common\Providers\{AmiConnectionCommand,
     AmiConnectionListener,
+    BeanstalkConnectionCacheProvider,
+    BeanstalkConnectionModelsProvider,
+    BeanstalkConnectionWorkerApiProvider,
     CDRDatabaseProvider,
     LicenseProvider,
     MainDatabaseProvider,
@@ -31,8 +34,7 @@ use MikoPBX\Common\Providers\{AmiConnectionCommand,
     RegistryProvider,
     TranslationProvider,
     MessagesProvider,
-    UrlProvider
-};
+    UrlProvider};
 use MikoPBX\Core\Providers\EventsLogDatabaseProvider;
 use Phalcon\Di;
 
@@ -69,6 +71,11 @@ class RegisterDIServices
 
             // Inject Queue connection
             NatsConnectionProvider::class,
+            BeanstalkConnectionCacheProvider::class,
+            BeanstalkConnectionModelsProvider::class,
+            BeanstalkConnectionWorkerApiProvider::class,
+
+
             // AMI Connectors
             AmiConnectionCommand::class,
             AmiConnectionListener::class,

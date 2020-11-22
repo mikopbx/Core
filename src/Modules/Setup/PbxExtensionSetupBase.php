@@ -9,12 +9,14 @@
 namespace MikoPBX\Modules\Setup;
 
 use MikoPBX\Core\Config\RegisterDIServices;
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Upgrade\UpdateDatabase;
 use MikoPBX\Modules\PbxExtensionUtils;
 use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings};
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
 use Phalcon\Text;
+use Throwable;
 
 use function MikoPBX\Common\Config\appPath;
 
@@ -112,9 +114,9 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
     {
         $this->moduleUniqueID = $moduleUniqueID;
         $this->messages = [];
-        $this->db      = $this->di->getShared('db');
-        $this->config  = $this->di->getShared('config');
-        $this->license =  $this->di->getShared('license');
+        $this->db      = $this->getDI()->getShared('db');
+        $this->config  = $this->getDI()->getShared('config');
+        $this->license =  $this->getDI()->getShared('license');
         $this->moduleDir = $this->config->path('core.modulesDir') . '/' . $this->moduleUniqueID;
         $settings_file = "{$this->moduleDir}/module.json";
         if (file_exists($settings_file)) {
@@ -167,7 +169,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
                 $result           = false;
             }
             $this->fixFilesRights();
-        } catch (\Exception $exception) {
+        } catch (Throwable $exception) {
             $result         = false;
             $this->messages[] = $exception->getMessage();
         }
@@ -203,7 +205,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
         $backupPath = "{$modulesDir}/Backup/{$this->moduleUniqueID}";
         if (is_dir($backupPath)) {
             $cpPath = Util::which('cp');
-            Util::mwExec("{$cpPath} -r {$backupPath}/db/* {$this->moduleDir}/db/");
+            Processes::mwExec("{$cpPath} -r {$backupPath}/db/* {$this->moduleDir}/db/");
         }
         return true;
     }
@@ -265,7 +267,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
                 $this->messages[] = ' unInstallFiles error';
                 $result           = false;
             }
-        } catch (\Exception $exception) {
+        } catch (Throwable $exception) {
             $result         = false;
             $this->messages[] = $exception->getMessage();
         }
@@ -316,12 +318,12 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
         $rmPath = Util::which('rm');
         $modulesDir          = $this->config->path('core.modulesDir');
         $backupPath = "{$modulesDir}/Backup/{$this->moduleUniqueID}";
-        Util::mwExec("{$rmPath} -rf {$backupPath}");
+        Processes::mwExec("{$rmPath} -rf {$backupPath}");
         if ($keepSettings) {
             Util::mwMkdir($backupPath);
-            Util::mwExec("{$cpPath} -r {$this->moduleDir}/db {$backupPath}/");
+            Processes::mwExec("{$cpPath} -r {$this->moduleDir}/db {$backupPath}/");
         }
-        Util::mwExec("{$rmPath} -rf {$this->moduleDir}");
+        Processes::mwExec("{$rmPath} -rf {$this->moduleDir}");
 
         // Remove assets
         // IMG

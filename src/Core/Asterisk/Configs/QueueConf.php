@@ -11,7 +11,7 @@ namespace MikoPBX\Core\Asterisk\Configs;
 use MikoPBX\Common\Models\CallQueues;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Modules\Config\ConfigClass;
-use MikoPBX\Core\System\{Util};
+use MikoPBX\Core\System\{Processes, Util};
 
 class QueueConf extends ConfigClass
 {
@@ -237,6 +237,6 @@ class QueueConf extends ConfigClass
         $queue->generateConfig();
         $out = [];
         $asteriskPath = Util::which('asterisk');
-        Util::mwExec("{$asteriskPath} -rx 'queue reload all '", $out);
+        Processes::mwExec("{$asteriskPath} -rx 'queue reload all '", $out);
     }
 }
