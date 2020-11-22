@@ -14,15 +14,12 @@ use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Storage;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Modules\PbxExtensionUtils;
-use Phalcon\Config as ConfigAlias;
 use Phalcon\Di;
 
 use function MikoPBX\Common\Config\appPath;
 
 class UpdateSystemConfig extends Di\Injectable
 {
-
-    private ConfigAlias $config;
 
     private MikoPBXConfig $mikoPBXConfig;
 
@@ -31,7 +28,6 @@ class UpdateSystemConfig extends Di\Injectable
      */
     public function __construct()
     {
-        $this->config        = $this->getDI()->getShared('config');
         $this->mikoPBXConfig = new MikoPBXConfig();
     }
 
@@ -80,8 +76,9 @@ class UpdateSystemConfig extends Di\Injectable
     {
         /** @var \MikoPBX\Common\Models\PbxExtensionModules $modules */
         $modules = PbxExtensionModules::find();
+        $modulesDir = $this->getDI()->getShared('config')->path('core.modulesDir');
         foreach ($modules as $module) {
-            if ( ! is_dir("{$this->config->path('core.modulesDir')}/{$module->uniqid}")) {
+            if ( ! is_dir("{$modulesDir}/{$module->uniqid}")) {
                 $module->delete();
             }
         }

@@ -62,19 +62,10 @@ class MikoPBXConfig extends Injectable
      *
      * @return array|string
      */
-    public function getGeneralSettings($db_key = '')
+    public function getGeneralSettings(string $db_key = '')
     {
         if ($db_key === '') {
-            $cacheKey     = 'PbxSettings-getGeneralSettings';
-            $managedCache = $this->di->getShared('managedCache');
-            $settings     = $managedCache->get($cacheKey);
-            if ($settings !== null && is_array($settings)) {
-                return $settings;
-            }
             $result = PbxSettings::getAllPbxSettings();
-            if ($cacheKey && $this->di->getShared('registry')->booting !== true) {
-                $managedCache->set($cacheKey, $result, 3600);
-            }
         } else {
             $result = PbxSettings::getValueByKey($db_key);
         }
