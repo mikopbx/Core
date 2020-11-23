@@ -44,8 +44,7 @@ use MikoPBX\Core\System\{BeanstalkClient,
     Configs\SSHConf,
     PBX,
     Processes,
-    System,
-    Util};
+    System};
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use Throwable;
 

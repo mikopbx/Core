@@ -19,7 +19,7 @@ class UpdateSystemConfigTest extends \MikoPBX\Tests\Unit\AbstractUnitTest
     public function testUpdateConfigs()
     {
         $mikoPBXConfig = new MikoPBXConfig();
-        $mikoPBXConfig->setGeneralSettings('PBXVersion','2020.2.615');
+        $mikoPBXConfig->setGeneralSettings('PBXVersion','2020.2.700');
         $confUpdate = new UpdateSystemConfig();
         $confUpdate->updateConfigs();
     }

@@ -292,7 +292,13 @@ class UpdateConfigsUpToVer20202754 extends Injectable implements UpgradeSystemCo
             Extensions::TYPE_CONFERENCE,
 
         ];
-        $extensions           = Extensions::find();
+        $parameters=[
+            'conditions'=>'show_in_phonebook!=1 and type IN ({ids:array})',
+            'bind'       => [
+                'ids' => $showInPhonebookTypes,
+            ],
+        ];
+        $extensions           = Extensions::find($parameters);
         foreach ($extensions as $extension) {
             if (in_array($extension->type, $showInPhonebookTypes)) {
                 $extension->show_in_phonebook = '1';

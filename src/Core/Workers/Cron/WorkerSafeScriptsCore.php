@@ -260,7 +260,7 @@ class WorkerSafeScriptsCore extends WorkerBase
 $workerClassname = WorkerSafeScriptsCore::class;
 try {
     if (isset($argv) && count($argv) > 1) {
-        cli_set_process_title($workerClassname);
+        cli_set_process_title("{$workerClassname} {$argv[1]}");
         $worker = new $workerClassname();
         if (($argv[1] === 'start')) {
             $worker->start($argv);
