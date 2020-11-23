@@ -218,7 +218,9 @@ class IptablesConf extends Injectable
                     } else {
                         $newRule->action = 'block';
                     }
-                    $newRule->description = $currentRules[$networkFilter->id][$key]['description'];
+                    if (key_exists($key, $currentRules[$networkFilter->id])){
+                        $newRule->description = $currentRules[$networkFilter->id][$key]['description'];
+                    }
                     $newRule->save();
                 }
             }

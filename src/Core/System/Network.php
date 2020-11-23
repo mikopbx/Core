@@ -107,7 +107,7 @@ class Network extends Injectable
             $systemctlPath = Util::which('systemctl');
             Processes::mwExec("{$systemctlPath} restart systemd-resolved");
         } else {
-            file_put_contents('/etc//resolv.conf', $resolv_conf);
+            file_put_contents('/etc/resolv.conf', $resolv_conf);
         }
 
         $this->generatePdnsdConfig($named_dns);
@@ -197,7 +197,7 @@ class Network extends Injectable
         if(file_exists($pdnsdConfFile)){
             $savedConf = file_get_contents($pdnsdConfFile);
         }
-        if($savedConf != $conf){
+        if($savedConf !== $conf){
             file_put_contents($pdnsdConfFile, $conf);
         }
         $pdnsdPath = Util::which('pdnsd');
@@ -215,7 +215,8 @@ class Network extends Injectable
         if (!empty($pid)) {
             // Завершаем процесс.
             $busyboxPath = Util::which('busybox');
-            Processes::mwExec("{$busyboxPath} kill '$pid'");
+            $killPath = Util::which('kill');
+            Processes::mwExec("{$busyboxPath} {$killPath} '$pid'");
         }
         if (Util::isSystemctl()) {
             $systemctlPath = Util::which('systemctl');
@@ -843,13 +844,13 @@ class Network extends Injectable
      */
     public function updateIfSettings($data, $name): void
     {
-        /** @var \MikoPBX\Common\Models\LanInterfaces $res */
+        /** @var LanInterfaces $res */
         $res = LanInterfaces::findFirst("interface = '$name' AND vlanid=0");
-        if ($res === null) {
+        if ($res === null || !$this->settingsIsChange($data, $res->toArray()) ) {
             return;
         }
         foreach ($data as $key => $value) {
-            $res->writeAttribute("$key", "$value");
+            $res->writeAttribute($key, $value);
         }
         $res->save();
     }
@@ -862,20 +863,36 @@ class Network extends Injectable
      */
     public function updateDnsSettings($data, $name): void
     {
-        /** @var \MikoPBX\Common\Models\LanInterfaces $res */
+        /** @var LanInterfaces $res */
         $res = LanInterfaces::findFirst("interface = '$name' AND vlanid=0");
-        if ($res === null) {
+        if ($res === null || !$this->settingsIsChange($data, $res->toArray())) {
             return;
         }
-        if (empty($res->primarydns) && ! empty($data['primarydns'])) {
-            $res->writeAttribute('primarydns', $data['primarydns']);
-        } elseif (empty($res->secondarydns) && $res->primarydns !== $data['primarydns']) {
-            $res->writeAttribute('secondarydns', $data['primarydns']);
+        foreach ($data as $key => $value) {
+            $res->writeAttribute($key, $value);
         }
-        if (empty($res->secondarydns) && ! empty($data['secondarydns'])) {
-            $res->writeAttribute('secondarydns', $data['secondarydns']);
+        if (empty($res->primarydns) && !empty($res->secondarydns)) {
+            $res->primarydns    = $res->secondarydns;
+            $res->secondarydns  = '';
         }
         $res->save();
+    }
+
+    /**
+     * Сравнение двух массивов.
+     * @param array $data
+     * @param array $dbData
+     * @return bool
+     */
+    private function settingsIsChange(array $data, array $dbData):bool{
+        $isChange = false;
+        foreach ($data as $key => $value){
+            if(!isset($dbData[$key]) || $value === $dbData[$key]){
+                continue;
+            }
+            $isChange = true;
+        }
+        return $isChange;
     }
 
     /**

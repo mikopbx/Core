@@ -268,6 +268,7 @@ class UpdateConfigsUpToVer20202754 extends Injectable implements UpgradeSystemCo
             "$mediaMountPoint/mikopbx/php_session",
             "$mediaMountPoint/mikopbx/tmp/*",
             "$mediaMountPoint/mikopbx/log/ProvisioningServerPnP",
+            "/cf/conf/need_clean_cashe_www",
         ];
         foreach ($oldCacheDirs as $old_cache_dir) {
             if (is_dir($old_cache_dir)) {
@@ -292,7 +293,13 @@ class UpdateConfigsUpToVer20202754 extends Injectable implements UpgradeSystemCo
             Extensions::TYPE_CONFERENCE,
 
         ];
-        $extensions           = Extensions::find();
+        $parameters=[
+            'conditions'=>'show_in_phonebook!=1 and type IN ({ids:array})',
+            'bind'       => [
+                'ids' => $showInPhonebookTypes,
+            ],
+        ];
+        $extensions           = Extensions::find($parameters);
         foreach ($extensions as $extension) {
             if (in_array($extension->type, $showInPhonebookTypes)) {
                 $extension->show_in_phonebook = '1';

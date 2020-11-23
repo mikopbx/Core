@@ -69,6 +69,9 @@ const fail2BanIndex = {
 		});
 	},
 	cbGetBannedIpList(response) {
+		if (response===false){
+			return;
+		}
 		let htmlTable = `<h2 class="ui header">${globalTranslate.f2b_TableBannedHeader}</h2>`;
 		htmlTable += '<table class="ui very compact table">';
 		htmlTable += '<thead>';

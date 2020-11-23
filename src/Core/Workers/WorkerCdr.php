@@ -25,8 +25,8 @@ class WorkerCdr extends WorkerBase
     public const UPDATE_CDR_TUBE = 'update_cdr_tube';
 
     private BeanstalkClient $client_queue;
-    private $internal_numbers = [];
-    private $no_answered_calls = [];
+    private array $internal_numbers  = [];
+    private array $no_answered_calls = [];
 
 
     /**
@@ -38,12 +38,9 @@ class WorkerCdr extends WorkerBase
     public function start($argv): void
     {
         $filter = [
-            '(work_completed<>1 OR work_completed IS NULL) AND endtime IS NOT NULL',
-            'miko_tmp_db'         => true,
-            'columns'             => 'start,answer,src_num,dst_num,dst_chan,endtime,linkedid,recordingfile,dialstatus,UNIQUEID',
-            'miko_result_in_file' => true,
+            'work_completed<>1 AND endtime<>""',
+            'columns'=> 'start,answer,src_num,dst_num,dst_chan,endtime,linkedid,recordingfile,dialstatus,UNIQUEID'
         ];
-
 
         $this->client_queue = new BeanstalkClient(self::SELECT_CDR_TUBE);
         $this->client_queue->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
@@ -51,10 +48,9 @@ class WorkerCdr extends WorkerBase
         $this->initSettings();
 
         while ($this->needRestart === false) {
-            $result = $this->client_queue->request(json_encode($filter), 10);
-
-            if ($result !== false) {
-                $this->updateCdr();
+            $result = CallDetailRecordsTmp::find($filter)->toArray();
+            if (!empty($result)) {
+                $this->updateCdr($result);
             }
             $this->client_queue->wait(5); // instead of sleep
         }
@@ -63,7 +59,7 @@ class WorkerCdr extends WorkerBase
     /**
      * Fills settings
      */
-    private function initSettings()
+    private function initSettings(): void
     {
         $this->internal_numbers  = [];
         $this->no_answered_calls = [];
@@ -103,15 +99,11 @@ class WorkerCdr extends WorkerBase
 
     /**
      * Обработчик результата запроса.
-     *
+     * @param $result
      */
-    private function updateCdr(): void
+    private function updateCdr($result): void
     {
         $this->initSettings();
-        $result = $this->getCheckResult();
-        if (count($result) < 1) {
-            return;
-        }
         $arr_update_cdr = [];
         // Получаем идентификаторы активных каналов.
         $channels_id = $this->getActiveIdChannels();
@@ -257,25 +249,6 @@ class WorkerCdr extends WorkerBase
             // В последствии конвертации (успешной) исходные файлы будут удалены.
         }
         return array($row, $billsec);
-    }
-
-    /**
-     */
-    private function getCheckResult(){
-        $result_data = $this->client_queue->getBody();
-        // Получаем результат.
-        $result = json_decode($result_data, true);
-        if (file_exists($result)) {
-            $file_data = json_decode(file_get_contents($result), true);
-            if (!is_dir($result)) {
-                Processes::mwExec("rm -rf {$result}");
-            }
-            $result = $file_data;
-        }
-        if ( ! is_array($result) && ! is_object($result)) {
-            $result = [];
-        }
-        return $result;
     }
 
     /**
