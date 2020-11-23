@@ -38,8 +38,9 @@ class UpdateSystemConfig extends Di\Injectable
     public function updateConfigs(): bool
     {
         $this->deleteLostModules();
-
-        $previous_version = str_ireplace('-dev', '', PbxSettings::findFirstByKey('PBXVersion'));
+        // Clear all caches on any changed models
+        PbxSettings::clearCache(PbxSettings::class, true);
+        $previous_version = str_ireplace('-dev', '', $this->mikoPBXConfig->getGeneralSettings('PBXVersion'));
         $current_version  = str_ireplace('-dev', '', trim(file_get_contents('/etc/version')));
         if ($previous_version !== $current_version) {
             $upgradeClasses      = [];
