@@ -107,7 +107,7 @@ class Network extends Injectable
             $systemctlPath = Util::which('systemctl');
             Processes::mwExec("{$systemctlPath} restart systemd-resolved");
         } else {
-            file_put_contents('/etc//resolv.conf', $resolv_conf);
+            file_put_contents('/etc/resolv.conf', $resolv_conf);
         }
 
         $this->generatePdnsdConfig($named_dns);
@@ -197,7 +197,7 @@ class Network extends Injectable
         if(file_exists($pdnsdConfFile)){
             $savedConf = file_get_contents($pdnsdConfFile);
         }
-        if($savedConf != $conf){
+        if($savedConf !== $conf){
             file_put_contents($pdnsdConfFile, $conf);
         }
         $pdnsdPath = Util::which('pdnsd');
@@ -215,7 +215,8 @@ class Network extends Injectable
         if (!empty($pid)) {
             // Завершаем процесс.
             $busyboxPath = Util::which('busybox');
-            Processes::mwExec("{$busyboxPath} kill '$pid'");
+            $killPath = Util::which('kill');
+            Processes::mwExec("{$busyboxPath} {$killPath} '$pid'");
         }
         if (Util::isSystemctl()) {
             $systemctlPath = Util::which('systemctl');
