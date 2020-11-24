@@ -3,6 +3,7 @@
 [![GitHub last commit (branch)](https://img.shields.io/github/last-commit/mikopbx/core/develop?label=last%20commit%20on%20develop)](https://github.com/mikopbx/Core/tree/develop)
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/mikopbx/Core/badges/quality-score.png?b=develop)](https://scrutinizer-ci.com/g/mikopbx/Core/?branch=develop)
 ![GitHub](https://img.shields.io/github/license/mikopbx/core)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fmikopbx%2FCore.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fmikopbx%2FCore?ref=badge_shield)
 # MikoPBX - free phone system for small business
 ```
                                                                                      
@@ -41,3 +42,7 @@ MikoPBX is full-featured phone solution with top performance level, high stabili
 
 The system has easy and convenient web interface, call recording, conference calls, voice mail, call transfers and pickup, call queues, interactive voice response(IVR) menu, inbound and outbound call rules. Also you can find holidays and night-time calls switcher there. Apart from MikoPBX has custom call-flow programming module and marketplace with paid and free extensions. All general business functionality is absolutely free forever!
 
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fmikopbx%2FCore.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fmikopbx%2FCore?ref=badge_large)
