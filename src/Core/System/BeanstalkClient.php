@@ -51,9 +51,11 @@ class BeanstalkClient extends Injectable
         if ( ! empty($this->port) && is_numeric($this->port)) {
             $port = $this->port;
         }
-
         $this->queue = Pheanstalk::create($config->host, $port);
         $this->queue->useTube($this->tube);
+        foreach ($this->subscriptions as $tube => $callback){
+            $this->subscribe($tube, $callback);
+        }
         $this->connected = true;
     }
 
@@ -226,6 +228,7 @@ class BeanstalkClient extends Injectable
         if ($job === null) {
             $worktime = (microtime(true) - $start);
             if ($worktime < 0.5) {
+                usleep(100000);
                 // Что то не то, вероятно потеряна связь с сервером очередей.
                 $this->reconnect();
             }
