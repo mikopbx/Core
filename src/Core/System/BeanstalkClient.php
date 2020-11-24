@@ -227,9 +227,11 @@ class BeanstalkClient extends Injectable
 
         if ($job === null) {
             $worktime = (microtime(true) - $start);
-            if ($worktime < 0.5) {
+            if ($worktime < $timeout) {
                 usleep(100000);
-                // Что то не то, вероятно потеряна связь с сервером очередей.
+                // Если время ожидания $worktime меньше значения таймаута $timeout
+                // И задача не получена $job === null
+                // Что то не то, вероятно потеряна связь с сервером очередей
                 $this->reconnect();
             }
             if (is_array($this->timeout_handler)) {
