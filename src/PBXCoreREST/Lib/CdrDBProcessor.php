@@ -84,7 +84,7 @@ class CdrDBProcessor extends Injectable
         $res->success = true;
 
         $filter  = [
-            'endtime IS NULL',
+            'endtime=""',
             'order'               => 'id',
             'columns'             => 'start,answer,src_chan,dst_chan,src_num,dst_num,did,linkedid',
             'miko_tmp_db'         => true,
