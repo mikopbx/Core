@@ -64,7 +64,7 @@
         "issues": "https://github.com/mikopbx/Core/issues",
         "source": "https://github.com/mikopbx/Core",
         "forum": "https://qa.askozia.ru",
-        "telegramm": "https://t.me/mikopbx_dev"
+        "chat": "https://t.me/mikopbx_dev"
     },
     "authors": [
         {
@@ -78,6 +78,12 @@
             "email": "nbek@miko.ru",
             "homepage": "http://facebook.com/jorikfon",
             "role": "Developer"
+        }
+    ],
+    "funding": [
+        {
+            "type": "patreon",
+            "url": "https://www.patreon.com/mikopbx"
         }
     ],
     "config": {
