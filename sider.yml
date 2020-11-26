@@ -1,0 +1,79 @@
+# linter:
+# # https://help.sider.review/getting-started/custom-configuration
+
+#   # https://help.sider.review/tools/php/code-sniffer
+#   code_sniffer:
+#     dir: app/
+#     standard: CakePHP
+
+#   # https://help.sider.review/tools/php/phpmd
+#   phpmd:
+#     target:
+#       - index.php
+#       - wp-content
+#     rule: codesize,unusedcode
+#     minimumpriority: 3
+#     suffixes: php,phtml
+#     exclude: app/Vendor/
+#     strict: true
+#     custom_rule_path:
+#       - Custom_PHPMD_Rule.php
+#       - custom/phpmd/rules/**/*.php
+
+#   # https://help.sider.review/tools/javascript/eslint
+#   eslint:
+#     dir: frontend/app
+#     config: .my_eslintrc
+#     ext: ".js,.jsx,.es6"
+#     ignore-path: .my_eslintignore
+#     no-ignore: true
+#     ignore-pattern: "/src/vendor/*"
+#     global: "require,exports:true"
+#     quiet: true
+
+#   # https://help.sider.review/tools/css/stylelint
+#   stylelint:
+#     npm_install: false
+#     config: my_stylelintrc.yaml
+#     syntax: sugarss
+#     ignore-path: .gitignore
+#     ignore-disables: true
+#     report-needless-disables: true
+#     quiet: true
+#     glob: "**/*.{css,scss}"
+
+#   # https://help.sider.review/tools/others/misspell
+#   misspell:
+#     exclude:
+#       - vendor
+#       - "**/*.min.js"
+#       - exclude_file.rb
+#     targets:
+#       - target_directory
+#       - another_target_directory/foo.rb
+#       - bar.rb
+#     locale: UK
+#     ignore: center,behavior
+
+#   # https://help.sider.review/tools/shellscript/shellcheck
+#   shellcheck:
+#     target: "src/**/*.{sh,bash}"
+#     include: "SC2104,SC2105"
+#     exclude: "SC1000,SC1118"
+#     enable: "all"
+#     shell: "bash"
+#     severity: "error"
+#     norc: true
+
+# # https://help.sider.review/getting-started/custom-configuration#ignore
+# ignore:
+#   - "*.pdf"
+#   - "*.mp4"
+#   - "images/**"
+
+# # https://help.sider.review/getting-started/custom-configuration#branchesexclude
+# branches:
+#   exclude:
+#     - master
+#     - development
+#     - /^release-.*$/
