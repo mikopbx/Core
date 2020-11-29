@@ -10,21 +10,7 @@
 const outboundRoutes = {
 	initialize() {
 		$('#routingTable').tableDnD({
-			onDrop() {
-				$('.rule-row').each((index, obj) => {
-					const ruleId = $(obj).attr('id');
-					const oldPriority = parseInt($(obj).attr('data-value'), 10);
-					const newPriority = obj.rowIndex;
-					if (oldPriority !== newPriority) {
-						$.api({
-							on: 'now',
-							url: `${globalRootUrl}outbound-routes/changePriority/${ruleId}`,
-							method: 'POST',
-							data: {newPriority},
-						});
-					}
-				});
-			},
+			onDrop: outboundRoutes.cbOnDrop,
 			onDragClass: 'hoveringRow',
 			dragHandle: '.dragHandle',
 		});
@@ -33,6 +19,27 @@ const outboundRoutes = {
 			const id = $(e.target).closest('tr').attr('id');
 			window.location = `${globalRootUrl}outbound-routes/modify/${id}`;
 		});
+	},
+	cbOnDrop() {
+		let priorityWasChanged = false;
+		const priorityData = {};
+		$('.rule-row').each((index, obj) => {
+			const ruleId = $(obj).attr('id');
+			const oldPriority = parseInt($(obj).attr('data-value'), 10);
+			const newPriority = obj.rowIndex;
+			if (oldPriority !== newPriority) {
+				priorityWasChanged = true;
+				priorityData[ruleId]=newPriority;
+			}
+		});
+		if (priorityWasChanged) {
+			$.api({
+				on: 'now',
+				url: `${globalRootUrl}outbound-routes/changePriority`,
+				method: 'POST',
+				data: priorityData,
+			});
+		}
 	},
 };
 

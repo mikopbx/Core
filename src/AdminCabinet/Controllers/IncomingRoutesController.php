@@ -23,7 +23,6 @@ class IncomingRoutesController extends BaseController
     {
         $parameters = [
             'conditions' => 'id>1',
-            'order'      => 'priority',
         ];
 
         $rules        = IncomingRoutingTable::find($parameters);
@@ -53,6 +52,7 @@ class IncomingRoutesController extends BaseController
 
             $routingTable[] = $values;
         }
+        usort($routingTable, [__CLASS__, 'sortArrayByPriority']);
         //Маршрут по умолчанию
         $defaultRule = IncomingRoutingTable::findFirstById(1);
         if ($defaultRule === null) {
@@ -64,7 +64,7 @@ class IncomingRoutesController extends BaseController
         }
 
         // Список всех используемых эктеншенов
-        $forwardingExtensions = [];
+        $forwardingExtensions     = [];
         $forwardingExtensions[''] = $this->translation->_('ex_SelectNumber');
         $parameters               = [
             'conditions' => 'number IN ({ids:array})',
@@ -85,13 +85,31 @@ class IncomingRoutesController extends BaseController
         $this->view->submitMode   = null;
     }
 
+    /**
+     * Sorts array by priority field
+     *
+     * @param $a
+     * @param $b
+     *
+     * @return int|null
+     */
+    public function sortArrayByPriority($a, $b): ?int
+    {
+        $a = (int)$a['priority'];
+        $b = (int)$b['priority'];
+        if ($a === $b) {
+            return 0;
+        } else {
+            return ($a < $b) ? -1 : 1;
+        }
+    }
 
     /**
      * Карточка редактирования входящего маршрута
      *
      * @param string $ruleId Идентификатор правила маршрутизации
      */
-    public function modifyAction(string $ruleId = '') :void
+    public function modifyAction(string $ruleId = ''): void
     {
         if ((int)$ruleId === 1) {
             $this->forward('incoming-routes/index');
@@ -113,7 +131,7 @@ class IncomingRoutesController extends BaseController
         }
 
         // Список всех используемых эктеншенов
-        $forwardingExtensions = [];
+        $forwardingExtensions     = [];
         $forwardingExtensions[''] = $this->translation->_('ex_SelectNumber');
         $parameters               = [
             'conditions' => 'number IN ({ids:array})',
@@ -220,27 +238,24 @@ class IncomingRoutesController extends BaseController
     }
 
     /**
-     * Изменение приоритета маршрута
+     * Changes rules priority
      *
-     * @param string $ruleId
      */
-    public function changePriorityAction(string $ruleId = '')
+    public function changePriorityAction(): void
     {
-        if ((int)$ruleId === 1 || $ruleId==='') {
-            return;
-        } // Первая строка маршрут по умолчанию, ее не трогаем.
-
         $this->view->disable();
-        $result = false;
+        $result = true;
 
         if ( ! $this->request->isPost()) {
             return;
         }
-        $data = $this->request->getPost();
-        $rule = IncomingRoutingTable::findFirstById($ruleId);
-        if ($rule !== null) {
-            $rule->priority = (int)$data['newPriority'];
-            $result         = $rule->update();
+        $priorityTable = $this->request->getPost();
+        $rules = IncomingRoutingTable::find();
+        foreach ($rules as $rule){
+            if (array_key_exists ( $rule->id, $priorityTable)){
+                $rule->priority = $priorityTable[$rule->id];
+                $result         .= $rule->update();
+            }
         }
         echo json_encode($result);
     }

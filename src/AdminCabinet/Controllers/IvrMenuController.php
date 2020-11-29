@@ -17,13 +17,34 @@ class IvrMenuController extends BaseController
 
 
     /**
-     * Построение списка IVR меню
+     * Builds IVR menu representation
      */
     public function indexAction(): void
     {
-        $this->view->ivrmenu = IvrMenu::find();
-    }
+        $records = IvrMenuActions::find();
+        $ivrMenuActions=[];
+        foreach ($records as $record) {
+            $ivrMenuActions[$record->ivr_menu_id][$record->id]=[
+                'digits'=>$record->digits,
+                'represent'=>$record->Extensions===null?'ERROR':$record->Extensions->getRepresent()
+            ];
+        }
 
+        $records = IvrMenu::find();
+        $ivrMenuList=[];
+        foreach ($records as $record) {
+            usort($ivrMenuActions[$record->uniqid], [__CLASS__, 'sortArrayByDigits']);
+            $ivrMenuList[]=[
+                'uniqid'=>$record->uniqid,
+                'name'=>$record->name,
+                'extension'=>$record->extension,
+                'actions'=>$ivrMenuActions[$record->uniqid],
+                'description'=>$record->description,
+                'timeoutExtension'=>$record->TimeoutExtensions===null?'ERROR':$record->TimeoutExtensions->getRepresent()
+            ];
+        }
+        $this->view->ivrmenu = $ivrMenuList;
+    }
 
     /**
      * Карточка редактирования IVR меню
@@ -50,7 +71,6 @@ class IvrMenuController extends BaseController
             $extensionListForFilter[] = $ivrmenu->timeout_extension;
             // Списк экстеншенов очереди
             $parameters = [
-                'order'      => 'digits',
                 'conditions' => 'ivr_menu_id=:menu:',
                 'bind'       => [
                     'menu' => $ivrmenu->uniqid,
@@ -71,6 +91,7 @@ class IvrMenuController extends BaseController
                 $extensionListForFilter[] = $action->extension;
             }
         }
+        usort($ivrActionsList, [__CLASS__, 'sortArrayByDigits']);
 
         // Список всех эктеншенов выбранных ранее для правил адресации
         if (count($extensionListForFilter) > 0) {
@@ -105,6 +126,24 @@ class IvrMenuController extends BaseController
 
     }
 
+    /**
+     * Sorts array by digits field
+     *
+     * @param $a
+     * @param $b
+     *
+     * @return int|null
+     */
+    public function sortArrayByDigits($a, $b): ?int
+    {
+        $a = (int)$a['digits'];
+        $b = (int)$b['digits'];
+        if ($a === $b) {
+            return 0;
+        } else {
+            return ($a < $b) ? -1 : 1;
+        }
+    }
 
     /**
      * Сохранение ivr меню
