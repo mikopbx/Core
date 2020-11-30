@@ -340,15 +340,17 @@ class ExtensionsConf extends ConfigClass
         // Описываем возможность прыжка в пользовательский sub контекст.
         $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1)' . "\n\t";
 
-        /** @var \MikoPBX\Common\Models\OutgoingRoutingTable $routs */
-        /** @var \MikoPBX\Common\Models\OutgoingRoutingTable $rout */
-        $routs             = OutgoingRoutingTable::find(['order' => 'priority']);
+        /** @var OutgoingRoutingTable $routs */
+        /** @var OutgoingRoutingTable $rout */
+        $routs             = OutgoingRoutingTable::find(['order' => 'priority'])->toArray();
+        uasort($routs, 'ExtensionsConf::sortArrayByPriorityComparison');
+
         $provider_contexts = [];
 
         foreach ($routs as $rout) {
-            $technology = $this->getTechByID($rout->providerid);
+            $technology = $this->getTechByID($rout['providerid']);
             if ($technology !== '') {
-                    $rout_data                       = $rout->toArray();
+                    $rout_data                       = $rout;
                     $rout_data['technology']         = $technology;
                     $id_dialplan                     = $rout_data['providerid'] . '-' . $rout_data['id'] . '-outgoing';
                     $provider_contexts[$id_dialplan] = $rout_data;
@@ -369,7 +371,6 @@ class ExtensionsConf extends ConfigClass
         foreach ($provider_contexts as $id_dialplan => $rout) {
             $conf .= "\n[{$id_dialplan}]\n";
             if (isset($rout['trimfrombegin']) && $rout['trimfrombegin'] > 0) {
-                // $exten_var = '${ADDPLUS}${EXTEN:'.$rout['trimfrombegin'].'}';
                 $exten_var    = '${EXTEN:' . $rout['trimfrombegin'] . '}';
                 $change_exten = 'same => n,ExecIf($["${EXTEN}" != "${number}"]?Goto(${CONTEXT},${number},$[${PRIORITY} + 1]))' . "\n\t";
             } else {
@@ -411,6 +412,15 @@ class ExtensionsConf extends ConfigClass
             $conf .= 'same => n,Set(pt1c_UNIQUEID=${EMPTY_VALUE})' . "\n\t";
             $conf .= 'same => n,return' . "\n";
         }
+    }
+
+    public static function sortArrayByPriorityComparison(array $a, array $b):int{
+        $aPriority = (int)($a['priority']??9999);
+        $bPriority = (int)($b['priority']??9999);
+        if ($aPriority === $bPriority) {
+            return 0;
+        }
+        return ($aPriority < $bPriority) ? -1 : 1;
     }
 
     /**
@@ -506,11 +516,12 @@ class ExtensionsConf extends ConfigClass
                 'order' => 'provider,priority,extension',
             ];
         }
-        /** @var \MikoPBX\Common\Models\IncomingRoutingTable $default_action */
+        /** @var IncomingRoutingTable $default_action */
         $default_action = IncomingRoutingTable::findFirst('priority = 9999');
-        /** @var \MikoPBX\Common\Models\IncomingRoutingTable $m_data */
+        /** @var IncomingRoutingTable $m_data */
         $m_data = IncomingRoutingTable::find($filter);
         $data   = $m_data->toArray();
+        uasort($data, 'ExtensionsConf::sortArrayByPriorityComparison');
 
         $need_def_rout = true;
         foreach ($data as $rout) {
