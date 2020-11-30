@@ -343,7 +343,7 @@ class ExtensionsConf extends ConfigClass
         /** @var OutgoingRoutingTable $routs */
         /** @var OutgoingRoutingTable $rout */
         $routs             = OutgoingRoutingTable::find(['order' => 'priority'])->toArray();
-        uasort($routs, 'ExtensionsConf::sortArrayByPriorityComparison');
+        uasort($routs, __CLASS__.'::sortArrayByPriority');
 
         $provider_contexts = [];
 
@@ -414,9 +414,9 @@ class ExtensionsConf extends ConfigClass
         }
     }
 
-    public static function sortArrayByPriorityComparison(array $a, array $b):int{
-        $aPriority = (int)($a['priority']??9999);
-        $bPriority = (int)($b['priority']??9999);
+    public static function sortArrayByPriority(array $a, array $b):int{
+        $aPriority = (int)($a['priority']??0);
+        $bPriority = (int)($b['priority']??0);
         if ($aPriority === $bPriority) {
             return 0;
         }
@@ -521,7 +521,7 @@ class ExtensionsConf extends ConfigClass
         /** @var IncomingRoutingTable $m_data */
         $m_data = IncomingRoutingTable::find($filter);
         $data   = $m_data->toArray();
-        uasort($data, 'ExtensionsConf::sortArrayByPriorityComparison');
+        uasort($data, __CLASS__.'::sortArrayByPriority');
 
         $need_def_rout = true;
         foreach ($data as $rout) {
