@@ -88,6 +88,7 @@ class OutboundRoutesController extends BaseController
         $rule = OutgoingRoutingTable::findFirstByid($id);
         if ($rule === null) {
             $rule = new OutgoingRoutingTable();
+            $rule->priority = (int)OutgoingRoutingTable::maximum(['column' => 'priority'])+1;
         }
 
         $providers     = Providers::find();

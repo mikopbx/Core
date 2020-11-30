@@ -117,7 +117,12 @@ class IncomingRoutesController extends BaseController
 
         $rule = IncomingRoutingTable::findFirstByid($ruleId);
         if ($rule === null) {
+            $parameters = [
+                'column' => 'priority',
+                'conditions'=>'id!=1'
+            ];
             $rule = new IncomingRoutingTable();
+            $rule->priority = (int)IncomingRoutingTable::maximum($parameters)+1;
         }
 
         // Список провайдеров
