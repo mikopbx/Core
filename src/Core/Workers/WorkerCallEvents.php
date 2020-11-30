@@ -1341,10 +1341,11 @@ class WorkerCallEvents extends WorkerBase
      */
     private function filterNotValid($filter){
         $haveErrors = false;
+        $validValue = ['0',''];
         if(isset($filter['bind'])){
             if(is_array($filter)){
                 foreach ($filter['bind'] as $bindValue) {
-                    if(empty($bindValue)){
+                    if(empty($bindValue) && !in_array($bindValue, $validValue, true)){
                         $haveErrors = true;
                     }
                 }
