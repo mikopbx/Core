@@ -22,7 +22,7 @@ class OutboundRoutesController extends BaseController
      */
     public function indexAction(): void
     {
-        $rules        = OutgoingRoutingTable::find(['order' => 'priority']);
+        $rules        = OutgoingRoutingTable::find();
         $routingTable = [];
         foreach ($rules as $rule) {
             $provider = $rule->Providers;
@@ -56,10 +56,28 @@ class OutboundRoutesController extends BaseController
                 ];
             }
         }
-
+        usort($routingTable, [__CLASS__, 'sortArrayByPriority']);
         $this->view->routingTable = $routingTable;
     }
 
+    /**
+     * Sorts array by Priority field
+     *
+     * @param $a
+     * @param $b
+     *
+     * @return int|null
+     */
+    public function sortArrayByPriority($a, $b): ?int
+    {
+        $a = (int)$a['priority'];
+        $b = (int)$b['priority'];
+        if ($a === $b) {
+            return 0;
+        } else {
+            return ($a < $b) ? -1 : 1;
+        }
+    }
     /**
      * Shows the edit form for an outbound route
      *
@@ -155,29 +173,30 @@ class OutboundRoutesController extends BaseController
     }
 
     /**
-     * Изменение приоритета правила
+     * Changes rules priority
      *
-     * @param string $ruleid
      */
-    public function changePriorityAction($ruleid = ''): void
+    public function changePriorityAction(): void
     {
         $this->view->disable();
-        $result = false;
+        $result = true;
 
         if ( ! $this->request->isPost()) {
             return;
         }
-        $data = $this->request->getPost();
-        $rule = OutgoingRoutingTable::findFirstById($ruleid);
-        if ($rule !== null) {
-            $rule->priority = intval($data['newPriority']);
-            $result         = $rule->update();
+        $priorityTable = $this->request->getPost();
+        $rules = OutgoingRoutingTable::find();
+        foreach ($rules as $rule){
+            if (array_key_exists ( $rule->id, $priorityTable)){
+                $rule->priority = $priorityTable[$rule->id];
+                $result         .= $rule->update();
+            }
         }
         echo json_encode($result);
     }
 
     /**
-     * Sort array
+     * Sort array by name and state
      *
      * @param $a
      * @param $b

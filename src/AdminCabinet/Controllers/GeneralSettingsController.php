@@ -23,15 +23,35 @@ class GeneralSettingsController extends BaseController
     {
         $parameters = [
             'conditions'=>'type="audio"',
-            'order' => 'priority',
         ];
         $this->view->audioCodecs     = Codecs::find($parameters);
+        usort($this->view->audioCodecs, [__CLASS__, 'sortArrayByPriority']);
         $parameters['conditions'] = 'type="video"';
         $this->view->videoCodecs     = Codecs::find($parameters);
+        usort($this->view->videoCodecs, [__CLASS__, 'sortArrayByPriority']);
 
         $pbxSettings            = PbxSettings::getAllPbxSettings();
         $this->view->form       = new GeneralSettingsEditForm(null, $pbxSettings);
         $this->view->submitMode = null;
+    }
+
+    /**
+     * Sorts array by Priority field
+     *
+     * @param $a
+     * @param $b
+     *
+     * @return int|null
+     */
+    public function sortArrayByPriority($a, $b): ?int
+    {
+        $a = (int)$a->priority;
+        $b = (int)$b->priority;
+        if ($a === $b) {
+            return 0;
+        } else {
+            return ($a < $b) ? -1 : 1;
+        }
     }
 
     /**

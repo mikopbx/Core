@@ -17,26 +17,26 @@
         {% endif %}
 
 
-        <tr class="menu-row" id="{{ record.uniqid }}">
-            <td class="centered">{{ record.extension }}</td>
-            <td>{{ record.name }}</td>
+        <tr class="menu-row" id="{{ record['uniqid'] }}">
+            <td class="centered">{{ record['extension'] }}</td>
+            <td>{{ record['name'] }}</td>
             <td>
                 <small>
-                    {% for action in record.IvrMenuActions %}
-                        {{ action.digits }} - {{ action.Extensions.getRepresent() }}<br>
+                    {% for action in record['actions'] %}
+                            {{ action['digits'] }} - {{ action['represent'] }}<br>
                     {% endfor %}
                 </small>
             </td>
             <td>
                 <small>
-                    {% if record.TimeoutExtensions %}
-                        {{ record.TimeoutExtensions.getRepresent() }}
+                    {% if record['timeoutExtension'] %}
+                        {{ record['timeoutExtension'] }}
                     {% endif %}
                 </small>
             </td>
             <td>
-                {% if not (record.description is empty) %}
-                    <div class="ui basic icon button" data-content="{{ record.description }}" data-position="top right"
+                {% if not (record['description'] is empty) %}
+                    <div class="ui basic icon button" data-content="{{ record['description'] }}" data-position="top right"
                          data-variation="wide">
                         <i class="file text  icon"></i>
                     </div>
@@ -44,7 +44,7 @@
             </td>
             {{ partial("partials/tablesbuttons",
                 [
-                    'id': record.uniqid,
+                    'id': record['uniqid'],
                     'edit' : 'ivr-menu/modify/',
                     'delete': 'ivr-menu/delete/'
                 ]) }}

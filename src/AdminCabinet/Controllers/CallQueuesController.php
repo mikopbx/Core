@@ -16,14 +16,53 @@ class CallQueuesController extends BaseController
 {
 
     /**
-     * Получение списка очередей вызовово
+     *  Builds call queues representation
      */
     public function indexAction(): void
     {
-        $queues             = CallQueues::find();
-        $this->view->queues = $queues;
+        $records = CallQueueMembers::find();
+        $callQueueMembers=[];
+        foreach ($records as $record) {
+            $callQueueMembers[$record->queue][$record->id]=[
+                'priority'=>$record->priority,
+                'represent'=>$record->Extensions===null?'ERROR':$record->Extensions->getRepresent()
+            ];
+        }
+
+        $records = CallQueues::find();
+        $callQueuesList=[];
+        foreach ($records as $record) {
+            usort($callQueueMembers[$record->uniqid], [__CLASS__, 'sortArrayByPriority']);
+            $callQueuesList[]=[
+                'uniqid'=>$record->uniqid,
+                'name'=>$record->name,
+                'extension'=>$record->extension,
+                'members'=>$callQueueMembers[$record->uniqid],
+                'description'=>$record->description,
+            ];
+        }
+        $this->view->callQueuesList = $callQueuesList;
+
     }
 
+    /**
+     * Sorts array by priority field
+     *
+     * @param $a
+     * @param $b
+     *
+     * @return int|null
+     */
+    public function sortArrayByPriority($a, $b): ?int
+    {
+        $a = (int)$a['priority'];
+        $b = (int)$b['priority'];
+        if ($a === $b) {
+            return 0;
+        } else {
+            return ($a < $b) ? -1 : 1;
+        }
+    }
 
     /**
      * Карточка редактирования очереди
@@ -49,7 +88,6 @@ class CallQueuesController extends BaseController
         } else {
             // Списк экстеншенов очереди
             $parameters = [
-                'order'      => 'priority',
                 'conditions' => 'queue=:queue:',
                 'bind'       => [
                     'queue' => $queue->uniqid,
@@ -60,9 +98,11 @@ class CallQueuesController extends BaseController
                 $queueMembersList[] = [
                     'id'       => $member->id,
                     'number'   => $member->extension,
-                    'callerid' => $member->Extensions->getRepresent(),
+                    'priority'  => $member->priority,
+                    'callerid' => $member->Extensions===null?'ERROR':$member->Extensions->getRepresent(),
                 ];
             }
+            usort($queueMembersList, [__CLASS__, 'sortArrayByPriority']);
         }
 
         $extensionList[""] = $this->translation->_("ex_SelectNumber");
