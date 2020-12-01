@@ -23,13 +23,13 @@ const sshConsole = {
 		const isSafari = navigator.vendor && navigator.vendor.indexOf('Apple') > -1 && navigator.userAgent && !navigator.userAgent.match('CriOS');
 		if (isChrome) {
 			sshConsole.detect(
-				'chrome-extension://pnhechapfaindjhompbnflcldabbghjo',
+				'chrome-extension://iodihamcpbpeioajjeobimgagajmlibd',
 				() => {
-					sshConsole.link = `chrome-extension://pnhechapfaindjhompbnflcldabbghjo/html/nassh.html#root@${window.location.hostname}:${globalSSHPort}`;
+					sshConsole.link = `ssh://root@${window.location.hostname}:${globalSSHPort}`;
 					sshConsole.target = '_blank';
 				},
 				() => {
-					sshConsole.link = 'https://chrome.google.com/webstore/detail/secure-shell/pnhechapfaindjhompbnflcldabbghjo';
+					sshConsole.link = 'https://chrome.google.com/webstore/detail/iodihamcpbpeioajjeobimgagajmlibd';
 					sshConsole.target = '_blank';
 				},
 			);
