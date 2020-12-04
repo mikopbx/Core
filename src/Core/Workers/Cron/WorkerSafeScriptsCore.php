@@ -81,9 +81,9 @@ class WorkerSafeScriptsCore extends WorkerBase
             self::CHECK_BY_PID_NOT_ALERT =>
                 [
                     WorkerLicenseChecker::class,
+                    WorkerBeanstalkdTidyUp::class,
                     WorkerCheckFail2BanAlive::class,
                     WorkerLogRotate::class,
-                    WorkerBeanstalkdTidyUp::class
                 ],
         ];
         $arrModulesWorkers = [];
@@ -261,6 +261,11 @@ $workerClassname = WorkerSafeScriptsCore::class;
 try {
     if (isset($argv) && count($argv) > 1) {
         cli_set_process_title("{$workerClassname} {$argv[1]}");
+        $activeProcesses = Processes::getPidOfProcess("{$workerClassname} {$argv[1]}", posix_getpid());
+        if (!empty($activeProcesses)){
+            Util::sysLogMsg($workerClassname, "WARNING: Other started process {$activeProcesses} is working now...");
+            return;
+        }
         $worker = new $workerClassname();
         if (($argv[1] === 'start')) {
             $worker->start($argv);

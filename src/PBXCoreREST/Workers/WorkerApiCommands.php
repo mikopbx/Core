@@ -9,6 +9,7 @@
 namespace MikoPBX\PBXCoreREST\Workers;
 
 use MikoPBX\Core\System\{BeanstalkClient, Util, Processes};
+use MikoPBX\Common\Providers\BeanstalkConnectionWorkerApiProvider;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\PBXCoreREST\Lib\AdvicesProcessor;
 use MikoPBX\PBXCoreREST\Lib\CdrDBProcessor;
@@ -22,6 +23,7 @@ use MikoPBX\PBXCoreREST\Lib\StorageManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\SysinfoManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\SystemManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\FilesManagementProcessor;
+use Phalcon\Di;
 use Throwable;
 
 require_once 'Globals.php';
@@ -47,7 +49,7 @@ class WorkerApiCommands extends WorkerBase
      */
     public function start($argv): void
     {
-        $beanstalk = $this->di->getShared('beanstalkConnectionWorkerAPI');
+        $beanstalk = $this->di->getShared(BeanstalkConnectionWorkerApiProvider::SERVICE_NAME);
         $beanstalk->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
         $beanstalk->subscribe(__CLASS__, [$this, 'prepareAnswer']);
 

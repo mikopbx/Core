@@ -30,9 +30,10 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
         pcntl_async_signals(true);
         pcntl_signal(
             SIGUSR1,
-            [$this, 'signalHandler']
+            [$this, 'signalHandler'],
+            false
         );
-
+        register_shutdown_function( [$this, 'shutdownHandler']);
         $this->savePidFile();
     }
 
@@ -73,10 +74,22 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
      * Process async system signal
      *
      */
-    public function signalHandler(): void
+    public function signalHandler(int $signal): void
     {
+        Util::sysLogMsg(static::class, "Receive signal to restart  ".$signal);
         $this->needRestart = true;
     }
+
+    /**
+     * Process shutdown event
+     *
+     */
+    public function shutdownHandler(): void
+    {
+        $e = error_get_last();
+        Util::sysLogMsg(static::class, "shutdownHandler ". print_r($e,true));
+    }
+
 
     /**
      * Ping callback for keep alive check

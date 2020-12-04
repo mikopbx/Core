@@ -9,6 +9,7 @@
 namespace MikoPBX\Common\Models;
 
 use MikoPBX\AdminCabinet\Plugins\CacheCleanerPlugin;
+use MikoPBX\Common\Providers\BeanstalkConnectionModelsProvider;
 use MikoPBX\Core\System\BeanstalkClient;
 use MikoPBX\Modules\PbxExtensionUtils;
 use Phalcon\Db\Adapter\AdapterInterface;
@@ -772,9 +773,6 @@ abstract class ModelsBase extends Model
      */
     private function processSettingsChanges(string $action): void
     {
-        if (php_sapi_name() === 'cli') {
-            return;
-        }
         if ( ! $this->hasSnapshotData()) {
             return;
         } // nothing changed
@@ -783,7 +781,6 @@ abstract class ModelsBase extends Model
         if (empty($changedFields) && $action === 'afterSave') {
             return;
         }
-
         $this->sendChangesToBackend($action, $changedFields);
     }
 
@@ -796,7 +793,7 @@ abstract class ModelsBase extends Model
     private function sendChangesToBackend($action, $changedFields): void
     {
         // Add changed fields set to Beanstalkd queue
-        $queue = $this->di->getShared('beanstalkConnectionModels');
+        $queue = $this->di->getShared(BeanstalkConnectionModelsProvider::SERVICE_NAME);
         if ($queue===null){
             return;
         }

@@ -18,6 +18,7 @@ use MikoPBX\Common\Models\OutWorkTimes;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\Providers;
 use MikoPBX\Common\Models\SoundFiles;
+use MikoPBX\Common\Providers\BeanstalkConnectionWorkerApiProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\Notifications;
 use MikoPBX\Core\System\Processes;
@@ -324,7 +325,7 @@ class SystemManagementProcessor extends Injectable
     }
 
     /**
-     * Вшыфидуы extension module
+     * Disables extension module
      *
      * @param string $moduleUniqueID
      *
@@ -342,6 +343,7 @@ class SystemManagementProcessor extends Injectable
             PBXConfModulesProvider::recreateModulesProvider();
             $res->data                       = $moduleStateProcessor->getMessages();
             $res->success                    = true;
+
         }
 
         return $res;

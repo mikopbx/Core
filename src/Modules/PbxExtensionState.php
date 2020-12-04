@@ -18,6 +18,7 @@ use MikoPBX\Core\System\Configs\NginxConf;
 use MikoPBX\Core\System\Configs\IptablesConf;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
+use MikoPBX\Modules\Config\ConfigClass;
 use PDOException;
 use Phalcon\Di\Injectable;
 use ReflectionClass;
@@ -33,7 +34,7 @@ class PbxExtensionState extends Injectable
     private array $messages;
     private $lic_feature_id;
     private string $moduleUniqueID;
-    private $configClass;
+    private ?ConfigClass $configClass;
     private $modulesRoot;
 
 
@@ -114,11 +115,6 @@ class PbxExtensionState extends Injectable
         if ($module !== null) {
             $module->disabled = '0';
             $module->save();
-        }
-
-        if ($this->configClass !== null
-            && method_exists($this->configClass, 'onAfterModuleEnable')) {
-            $this->configClass->onAfterModuleEnable();
         }
 
         if ($this->configClass !== null
@@ -256,11 +252,6 @@ class PbxExtensionState extends Injectable
         if ($module !== null) {
             $module->disabled = '1';
             $module->save();
-        }
-
-        if ($this->configClass !== null
-            && method_exists($this->configClass, 'onAfterModuleDisable')) {
-            $this->configClass->onAfterModuleDisable();
         }
 
         if ($this->configClass !== null

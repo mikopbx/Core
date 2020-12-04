@@ -214,7 +214,7 @@ class BeanstalkClient extends Injectable
      * @param float $timeout
      *
      */
-    public function wait(float $timeout = 10): void
+    public function wait(float $timeout = 5): void
     {
         $this->message = null;
         $start         = microtime(true);
@@ -268,6 +268,7 @@ class BeanstalkClient extends Injectable
             } catch (Throwable $e) {
                 // Marks the job as terminally failed and no workers will restart it.
                 $this->queue->bury($job);
+                Util::sysLogMsg(__METHOD__.'_EXCEPTION', $e->getMessage());
             }
         }
     }

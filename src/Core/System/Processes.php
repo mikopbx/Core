@@ -50,7 +50,6 @@ class Processes
         } else {
             exec("$command 2>&1", $outArr, $retVal);
         }
-
         return $retVal;
     }
 
@@ -122,6 +121,7 @@ class Processes
         string $paramForPHPWorker = 'start',
         string $action = 'restart'
     ): void {
+        Util::sysLogMsg(__METHOD__, "processPHPWorker ". $className." action-".$action,);
         $workerPath = Util::getFilePathByClassName($className);
         if (empty($workerPath)) {
             return;
@@ -145,8 +145,8 @@ class Processes
             case 'restart':
                 // Stop all old workers
                 if ($activeProcesses !== '') {
-                    self::mwExec("{$path_kill} SIGUSR1 {$activeProcesses}  > /dev/null 2>&1 &");
-                    self::mwExecBgWithTimeout("{$path_kill} SIGTERM {$activeProcesses}", 10);
+                    self::mwExec("{$path_kill} -SIGUSR1 {$activeProcesses}  > /dev/null 2>&1 &");
+                    self::mwExecBgWithTimeout("{$path_kill} -SIGTERM {$activeProcesses}", 10);
                     $currentProcCount = 0;
                 }
 
@@ -159,8 +159,8 @@ class Processes
                 break;
             case 'stop':
                 if ($activeProcesses !== '') {
-                    self::mwExec("{$path_kill} SIGUSR1 {$activeProcesses}  > /dev/null 2>&1 &");
-                    self::mwExecBgWithTimeout("{$path_kill} SIGTERM {$activeProcesses}", 10);
+                    self::mwExec("{$path_kill} -SIGUSR2 {$activeProcesses}  > /dev/null 2>&1 &");
+                    self::mwExecBgWithTimeout("{$path_kill} -SIGTERM {$activeProcesses}", 10);
                 }
                 break;
             case 'start':
@@ -181,8 +181,8 @@ class Processes
                             break;
                         }
                         // Kill old processes with timeout, maybe it is soft restart and worker die without any help
-                        self::mwExec("{$path_kill} SIGUSR1 {$processes[$countProc4Kill]}  > /dev/null 2>&1 &");
-                        self::mwExecBgWithTimeout("{$path_kill} SIGTERM {$processes[$countProc4Kill]}", 10);
+                        self::mwExec("{$path_kill} -SIGUSR1 {$processes[$countProc4Kill]}  > /dev/null 2>&1 &");
+                        self::mwExecBgWithTimeout("{$path_kill} -SIGTERM {$processes[$countProc4Kill]}", 10);
                         $countProc4Kill--;
                     }
                 }
