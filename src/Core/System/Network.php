@@ -935,15 +935,10 @@ class Network extends Injectable
         if ( ! Util::isSystemctl()) {
             // Для MIKO LFS Edition.
             $busyboxPath = Util::which('busybox');
-            $ifconfigPath = Util::which('ifconfig');
-            Processes::mwExec("{$busyboxPath} {$ifconfigPath} {$interface} 192.168.2.1 netmask 255.255.255.0");
+            Processes::mwExec("{$busyboxPath} ifconfig {$interface} up");
+            Processes::mwExec("{$busyboxPath} ifconfig {$interface} 192.168.2.1 netmask 255.255.255.0");
         }
-//        $data = [
-//            'subnet'  => '24',
-//            'ipaddr'  => '192.168.2.1',
-//            'gateway' => '',
-//        ];
-//        $this->updateIfSettings($data, $interface);
+
     }
 
     /**
