@@ -879,7 +879,7 @@ class Network extends Injectable
     }
 
     /**
-     * Сравнение двух массивов.
+     * Compares two array
      * @param array $data
      * @param array $dbData
      * @return bool
@@ -889,7 +889,8 @@ class Network extends Injectable
         foreach ($data as $key => $value){
             if(!isset($dbData[$key]) || $value === $dbData[$key]){
                 continue;
-            }
+            } 
+            Util::sysLogMsg(__METHOD__, "Find new network settings: {$key} old value: {$dbData[$key]}   new value: {$value}");
             $isChange = true;
         }
         return $isChange;
@@ -935,7 +936,8 @@ class Network extends Injectable
         if ( ! Util::isSystemctl()) {
             // Для MIKO LFS Edition.
             $busyboxPath = Util::which('busybox');
-            Processes::mwExec("{$busyboxPath} ifconfig $interface 192.168.2.1 netmask 255.255.255.0");
+            $ifconfigPath = Util::which('ifconfig');
+            Processes::mwExec("{$busyboxPath} {$ifconfigPath} {$interface} 192.168.2.1 netmask 255.255.255.0");
         }
         $data = [
             'subnet'  => '24',
