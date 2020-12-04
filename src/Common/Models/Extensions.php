@@ -427,7 +427,8 @@ class Extensions extends ModelsBase
                     ];
                     $relatedRecords = call_user_func([$relatedModel, 'find'], $parameters);
                     foreach ($relatedRecords as $relatedRecord) {
-                        $relatedRecord->update([$referencedField => $this->number]);
+                        $relatedRecord->$referencedField = $this->number;
+                        $relatedRecord->save();
                     }
                 }
             }
