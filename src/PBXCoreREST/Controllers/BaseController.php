@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Controllers;
 
+use MikoPBX\Common\Providers\BeanstalkConnectionWorkerApiProvider;
 use Phalcon\Mvc\Controller;
 use Pheanstalk\Pheanstalk;
 use Throwable;
@@ -42,7 +43,8 @@ class BaseController extends Controller
         }
         try {
             $message = json_encode($requestMessage, JSON_THROW_ON_ERROR);
-            $response       = $this->di->getShared('beanstalkConnectionWorkerAPI')->request($message, $maxTimeout, $priority);
+            $beanstalkQueue = $this->di->getShared(BeanstalkConnectionWorkerApiProvider::SERVICE_NAME);
+            $response       = $beanstalkQueue->request($message, $maxTimeout, $priority);
             if ($response !== false) {
                 $response = json_decode($response, true, 512, JSON_THROW_ON_ERROR);
                 $this->response->setPayloadSuccess($response);

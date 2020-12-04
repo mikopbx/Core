@@ -94,19 +94,6 @@ class PostController extends BaseController
             case 'convertAudioFile':
                 $this->convertAudioFile();
                 break;
-            case 'installNewModule':
-            case 'enableModule':
-            case 'disableModule':
-            case 'uninstallModule':
-                $data = $this->request->getPost();
-                $this->sendRequestToBackendWorker('system', $actionName, $data);
-                // Clear WWW models cache after successfully install or remove module TODO// может это уже не надо? Есть очистка при обновлении страницы
-                if ($this->response->getStatusCode()===200){
-                    PbxExtensionModules::clearCache(Extensions::class);
-                    PbxExtensionModules::clearCache(PbxExtensionModules::class);
-                    PbxExtensionModules::clearCache(PbxSettings::class);
-                }
-                break;
             default:
                 $data = $this->request->getPost();
                 $this->sendRequestToBackendWorker('system', $actionName, $data);
