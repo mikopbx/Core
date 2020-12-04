@@ -621,8 +621,7 @@ class Network extends Injectable
      */
     public function hostsGenerate(): void
     {
-        $network = new Network();
-        $network->hostnameConfigure();
+        $this->hostnameConfigure();
     }
 
     /**
@@ -630,7 +629,7 @@ class Network extends Injectable
      **/
     public function hostnameConfigure(): void
     {
-        $data       = Network::getHostName();
+        $data       = self::getHostName();
         $hosts_conf = "127.0.0.1 localhost\n" .
             "127.0.0.1 {$data['hostname']}\n";
         if ( ! empty($data['domain'])) {
@@ -639,13 +638,13 @@ class Network extends Injectable
         Util::fileWriteContent('/etc/hosts', $hosts_conf);
 
         $hostnamePath = Util::which('hostname');
-        Processes::mwExec($hostnamePath . ' ' . escapeshellarg("{$data['hostname']}"));
+        Processes::mwExec($hostnamePath . ' ' . escapeshellarg($data['hostname']));
     }
 
     /**
      * Настройка OpenVPN. Если в кастомизации системных файлов определн конфиг, то сеть поднимется.
      */
-    public function openVpnConfigure()
+    public function openVpnConfigure():void
     {
         $confFile = '/etc/openvpn.ovpn';
         Util::fileWriteContent($confFile, '');
@@ -697,8 +696,8 @@ class Network extends Injectable
         foreach ($env_vars as $key => $value) {
             $env_vars[$key] = trim(getenv($key));
         }
-        $BROADCAST = ($env_vars['broadcast'] == '') ? "" : "broadcast {$env_vars['broadcast']}";
-        $NET_MASK  = ($env_vars['subnet'] == '') ? "" : "netmask {$env_vars['subnet']}";
+        $BROADCAST = ($env_vars['broadcast'] === '') ? "" : "broadcast {$env_vars['broadcast']}";
+        $NET_MASK  = ($env_vars['subnet'] === '') ? "" : "netmask {$env_vars['subnet']}";
 
         // Настраиваем интерфейс.
         $busyboxPath = Util::which('busybox');
@@ -708,7 +707,7 @@ class Network extends Injectable
         while (true) {
             $out = [];
             Processes::mwExec("route del default gw 0.0.0.0 dev {$env_vars['interface']}", $out);
-            if (trim(implode('', $out)) != '') {
+            if (trim(implode('', $out)) !== '') {
                 // Произошла ошибка, значит все маршруты очищены.
                 break;
             }
@@ -717,10 +716,10 @@ class Network extends Injectable
             } // Иначе бесконечный цикл.
         }
         // Добавляем маршруты по умолчанию.
-        /** @var \MikoPBX\Common\Models\LanInterfaces $if_data */
+        /** @var LanInterfaces $if_data */
         $if_data = LanInterfaces::findFirst("interface = '{$env_vars['interface']}'");
-        $is_inet = ($if_data !== null) ? $if_data->internet : 0;
-        if ('' != $env_vars['router'] && $is_inet == 1) {
+        $is_inet = ($if_data !== null) ? (int)$if_data->internet : 0;
+        if ('' !== $env_vars['router'] && $is_inet === 1) {
             // ТОЛЬКО, если этот интерфейс для интернет, создаем дефолтный маршрут.
             $routers = explode(' ', $env_vars['router']);
             foreach ($routers as $router) {
@@ -742,7 +741,7 @@ class Network extends Injectable
         if ('' !== $env_vars['dns']) {
             $named_dns = explode(' ', $env_vars['dns']);
         }
-        if ($is_inet == 1) {
+        if ($is_inet === 1) {
             // ТОЛЬКО, если этот интерфейс для интернет, правим resolv.conf.
             // Прописываем основные DNS.
             $this->generatePdnsdConfig($named_dns);
@@ -939,12 +938,12 @@ class Network extends Injectable
             $ifconfigPath = Util::which('ifconfig');
             Processes::mwExec("{$busyboxPath} {$ifconfigPath} {$interface} 192.168.2.1 netmask 255.255.255.0");
         }
-        $data = [
-            'subnet'  => '24',
-            'ipaddr'  => '192.168.2.1',
-            'gateway' => '',
-        ];
-        $this->updateIfSettings($data, $interface);
+//        $data = [
+//            'subnet'  => '24',
+//            'ipaddr'  => '192.168.2.1',
+//            'gateway' => '',
+//        ];
+//        $this->updateIfSettings($data, $interface);
     }
 
     /**

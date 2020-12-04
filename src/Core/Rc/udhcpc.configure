@@ -1,14 +1,16 @@
 #!/usr/bin/php -f
 <?php
 use MikoPBX\Core\System\Network;
+use MikoPBX\Core\System\Util;
 
 require_once 'Globals.php';
 
 $action  = strtolower(trim($argv[1]));
 $network = new Network();
+Util::sysLogMsg(basename(__FILE__), "Starting action {$action}...");
+
 if ($action === 'deconfig') {
     $network->udhcpcConfigureDeconfig();
 } elseif ('bound' === $action || 'renew' === $action) {
     $network->udhcpcConfigureRenewBound();
 }
-   
