@@ -82,7 +82,8 @@ abstract class DatabaseProviderBase
                                       //  $statement = preg_replace('/\?/', " = '{$value}'", $statement, 1);
                                     }
                                 }
-                                $logger->debug($statement);
+                                $callStack = json_encode(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS,50), JSON_PRETTY_PRINT);
+                                $logger->debug("Request: \n {$statement}\nCall stack:\n{$callStack} \n\n\n\n");
                             }
                         }
                     );
