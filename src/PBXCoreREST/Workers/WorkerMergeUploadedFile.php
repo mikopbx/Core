@@ -22,7 +22,7 @@ class WorkerMergeUploadedFile extends WorkerBase
     {
         $settings_file = trim($argv[1]);
         if ( ! file_exists($settings_file)) {
-            Util::sysLogMsg(__CLASS__, 'File with settings not found');
+            Util::sysLogMsg(__CLASS__, 'File with settings not found', LOG_ERR);
 
             return;
         }
@@ -43,7 +43,8 @@ class WorkerMergeUploadedFile extends WorkerBase
         } else {
             Util::sysLogMsg(
                 'UploadFile',
-                "File {$settings['fullUploadedFileName']} size {$resultFileSize} does not equal {$settings['resumableTotalSize']}"
+                "File {$settings['fullUploadedFileName']} size {$resultFileSize} does not equal {$settings['resumableTotalSize']}",
+                LOG_ERR
             );
         }
 
@@ -84,11 +85,11 @@ class WorkerMergeUploadedFile extends WorkerBase
             }
             fclose($fp);
         } else {
-            Util::sysLogMsg('UploadFile', 'cannot create the destination file - ' . $result_file);
+            Util::sysLogMsg('UploadFile', 'cannot create the destination file - ' . $result_file, LOG_ERR);
 
             return;
         }
-        Util::sysLogMsg('UploadFile', 'destination file - ' . $result_file);
+        Util::sysLogMsg('UploadFile', 'destination file - ' . $result_file, LOG_NOTICE);
     }
 }
 
@@ -102,6 +103,6 @@ if (isset($argv) && count($argv) > 1) {
     } catch (Throwable $e) {
         global $errorLogger;
         $errorLogger->captureException($e);
-        Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage());
+        Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage(), LOG_ERR);
     }
 }

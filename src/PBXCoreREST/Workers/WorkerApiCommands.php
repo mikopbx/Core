@@ -23,7 +23,6 @@ use MikoPBX\PBXCoreREST\Lib\StorageManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\SysinfoManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\SystemManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\FilesManagementProcessor;
-use Phalcon\Di;
 use Throwable;
 
 require_once 'Globals.php';
@@ -166,7 +165,7 @@ if (isset($argv) && count($argv) > 1 && $argv[1] === 'start') {
         } catch (Throwable $e) {
             global $errorLogger;
             $errorLogger->captureException($e);
-            Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage());
+            Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage(), LOG_ERR);
         }
     }
 }

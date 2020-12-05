@@ -34,7 +34,7 @@ try {
 } catch (Throwable $e) {
     $errorLogger->captureException($e);
     echo $e->getMessage();
-    Util::sysLogMsg('pbx_core_api', $e->getMessage() );
+    Util::sysLogMsg('PBXCoreREST index.php', $e->getMessage() , LOG_ERR);
 }
 
 

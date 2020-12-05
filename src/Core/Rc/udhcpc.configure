@@ -7,7 +7,7 @@ require_once 'Globals.php';
 
 $action  = strtolower(trim($argv[1]));
 $network = new Network();
-Util::sysLogMsg(basename(__FILE__), "Starting action {$action}...");
+Util::sysLogMsg(basename(__FILE__), "Starting action {$action}...", LOG_DEBUG);
 
 if ($action === 'deconfig') {
     $network->udhcpcConfigureDeconfig();

@@ -235,7 +235,7 @@ class PBX extends Injectable
             Processes::mwExec("{$asteriskPath} -rx 'module reload acl'");
             Processes::mwExec("{$asteriskPath} -rx 'core reload'");
         } else {
-            Util::sysLogMsg('SIP RELOAD', 'Need reload asterisk',LOG_INFO, LOG_INFO);
+            Util::sysLogMsg('SIP RELOAD', 'Need reload asterisk',LOG_INFO);
             // Завершаем каналы.
             Processes::mwExec("{$asteriskPath} -rx 'channel request hangup all'");
             usleep(500000);

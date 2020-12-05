@@ -113,7 +113,7 @@ class NginxConf extends Injectable
         $currentConfigIsGood = $this->testCurrentNginxConfig();
         if ($level < 1 && ! $currentConfigIsGood) {
             ++$level;
-            Util::sysLogMsg('nginx', 'Failed test config file. SSL will be disable...');
+            Util::sysLogMsg('nginx', 'Failed test config file. SSL will be disable...', LOG_ERR);
             $this->generateConf(true, $level);
         }
         // Add additional rules from modules
@@ -155,7 +155,7 @@ class NginxConf extends Injectable
                     file_put_contents($confFileName, $locationContent);
                     if ( ! $this->testCurrentNginxConfig()) {
                         Processes::mwExec("{$rmPath} {$confFileName}");
-                        Util::sysLogMsg('nginx', 'Failed test config file for module' . $appClass->moduleUniqueId);
+                        Util::sysLogMsg('nginx', 'Failed test config file for module' . $appClass->moduleUniqueId, LOG_ERR);
                     }
                 }
             }

@@ -24,6 +24,7 @@ use MikoPBX\Common\Providers\{AmiConnectionCommand,
     BeanstalkConnectionWorkerApiProvider,
     CDRDatabaseProvider,
     LicenseProvider,
+    LoggerProvider,
     MainDatabaseProvider,
     ModelsCacheProvider,
     ManagedCacheProvider,
@@ -49,8 +50,8 @@ class RegisterDIServices
         $di            = Di::getDefault();
         $providersList = [
 
-            // Inject Config provider
-            // ConfigProvider::class,
+            // Inject Logger provider
+            LoggerProvider::class,
 
             // Inject Registry provider
             RegistryProvider::class,

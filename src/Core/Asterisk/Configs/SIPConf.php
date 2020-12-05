@@ -191,7 +191,7 @@ class SIPConf extends ConfigClass
             try {
                 $sub = new SubnetCalculator($lan_config['ipaddr'], $lan_config['subnet']);
             }catch (\Throwable $e){
-                Util::sysLogMsg(self::class, $e->getMessage());
+                Util::sysLogMsg(self::class, $e->getMessage(), LOG_ERR);
                 continue;
             }
             $net = $sub->getNetworkPortion() . '/' . $lan_config['subnet'];

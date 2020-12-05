@@ -277,7 +277,7 @@ DROP TABLE  {$tableName}";
         if ($result) {
             $connectionService->commit();
         } else {
-            Util::sysLogMsg('createUpdateDbTableByAnnotations', "Error: Failed on create/update table {$tableName}");
+            Util::sysLogMsg('createUpdateDbTableByAnnotations', "Error: Failed on create/update table {$tableName}", LOG_ERR);
             $connectionService->rollback();
         }
 

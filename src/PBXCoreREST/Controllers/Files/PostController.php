@@ -135,7 +135,7 @@ class PostController extends BaseController
                 if ($file->getError()) {
                     $data['data'] = 'error ' . $file->getError() . ' in file ' . $file->getTempName();
                     $this->sendError(400, $data['data']);
-                    Util::sysLogMsg('UploadFile', 'error ' . $file->getError() . ' in file ' . $file->getTempName());
+                    Util::sysLogMsg('UploadFile', 'error ' . $file->getError() . ' in file ' . $file->getTempName(), LOG_ERR);
                     return;
                 }
             }

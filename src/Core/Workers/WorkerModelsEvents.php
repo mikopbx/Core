@@ -184,7 +184,7 @@ class WorkerModelsEvents extends WorkerBase
 
         $count_changes = count($this->modified_tables);
         $called_class  = $data['model'] ?? '';
-        Util::sysLogMsg(__METHOD__, "New changes ".$called_class);
+        Util::sysLogMsg(__METHOD__, "New changes ".$called_class, LOG_DEBUG);
 
         // Clear all caches on any changed models on backend
         PbxSettings::clearCache($called_class, false);
@@ -349,7 +349,7 @@ class WorkerModelsEvents extends WorkerBase
                 continue;
             }
             if (method_exists($this, $method_name)) {
-                Util::sysLogMsg(__METHOD__, "Process changes by {$method_name}");
+                Util::sysLogMsg(__METHOD__, "Process changes by {$method_name}", LOG_DEBUG);
                 if ($parameters === null) {
                     $this->$method_name();
                 } else {

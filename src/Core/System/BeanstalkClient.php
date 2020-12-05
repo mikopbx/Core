@@ -103,7 +103,7 @@ class BeanstalkClient extends Injectable
                 $this->queue->delete($job);
             }
         } catch (Throwable $exception) {
-            Util::sysLogMsg(__METHOD__, 'Exception: ' . $exception->getMessage());
+            Util::sysLogMsg(__METHOD__, 'Exception: ' . $exception->getMessage(), LOG_ERR);
             if (isset($job)) {
                 $this->queue->bury($job);
             }
@@ -168,7 +168,7 @@ class BeanstalkClient extends Injectable
                     }
                     $id = $job->getId();
                     $this->queue->delete($job);
-                    Util::sysLogMsg(__METHOD__, "Deleted buried job with ID {$id} from {$tube}");
+                    Util::sysLogMsg(__METHOD__, "Deleted buried job with ID {$id} from {$tube}", LOG_WARNING);
                 }
 
                 // Delete outdated jobs
@@ -184,11 +184,11 @@ class BeanstalkClient extends Injectable
                     $expectedTimeToExecute = (int)$jobStats['ttr'] * 2;
                     if ($age > $expectedTimeToExecute) {
                         $this->queue->delete($job);
-                        Util::sysLogMsg(__METHOD__, "Deleted outdated job with ID {$id} from {$tube}");
+                        Util::sysLogMsg(__METHOD__, "Deleted outdated job with ID {$id} from {$tube}", LOG_WARNING);
                     }
                 }
             } catch (Throwable $exception) {
-                Util::sysLogMsg(__METHOD__, 'Exception: ' . $exception->getMessage());
+                Util::sysLogMsg(__METHOD__, 'Exception: ' . $exception->getMessage(), LOG_ERR);
             }
         }
     }
@@ -220,7 +220,7 @@ class BeanstalkClient extends Injectable
         try {
             $job = $this->queue->reserveWithTimeout((int)$timeout);
         } catch (Throwable $exception) {
-            Util::sysLogMsg(__METHOD__, 'Exception: ' . $exception->getMessage());
+            Util::sysLogMsg(__METHOD__, 'Exception: ' . $exception->getMessage(), LOG_ERR);
         }
 
         if (!isset($job)) {
@@ -266,7 +266,7 @@ class BeanstalkClient extends Injectable
             } catch (Throwable $e) {
                 // Marks the job as terminally failed and no workers will restart it.
                 $this->queue->bury($job);
-                Util::sysLogMsg(__METHOD__.'_EXCEPTION', $e->getMessage());
+                Util::sysLogMsg(__METHOD__.'_EXCEPTION', $e->getMessage(), LOG_ERR);
             }
         }
     }

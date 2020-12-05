@@ -95,7 +95,8 @@ class UpdateConfigsUpToVer20202754 extends Injectable implements UpgradeSystemCo
             if ( ! $codec->delete()) {
                 Util::sysLogMsg(
                     __CLASS__,
-                    'Can not delete codec ' . $codec->name . ' from MikoPBX\Common\Models\Codecs'
+                    'Can not delete codec ' . $codec->name . ' from MikoPBX\Common\Models\Codecs',
+                    LOG_ERR
                 );
             }
         }
@@ -142,7 +143,8 @@ class UpdateConfigsUpToVer20202754 extends Injectable implements UpgradeSystemCo
             if ( ! $codecData->save()) {
                 Util::sysLogMsg(
                     __CLASS__,
-                    'Can not update codec info ' . $codecData->name . ' from \MikoPBX\Common\Models\Codecs'
+                    'Can not update codec info ' . $codecData->name . ' from \MikoPBX\Common\Models\Codecs',
+                    LOG_ERR
                 );
             }
         }
@@ -199,7 +201,7 @@ class UpdateConfigsUpToVer20202754 extends Injectable implements UpgradeSystemCo
             try {
                 $db->exec($sql);
             } catch (Throwable $e) {
-                Util::sysLogMsg(__CLASS__, 'Can clean astdb from UserBuddyStatus...' . $e->getMessage());
+                Util::sysLogMsg(__CLASS__, 'Can clean astdb from UserBuddyStatus...' . $e->getMessage(), LOG_ERR);
                 sleep(2);
             }
             $db->close();

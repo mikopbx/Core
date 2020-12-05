@@ -21,10 +21,10 @@ use MikoPBX\AdminCabinet\Providers\{
     SessionProvider,
     ViewProvider,
     VoltProvider};
-use MikoPBX\Common\Providers\{
-    BeanstalkConnectionCacheProvider,
+use MikoPBX\Common\Providers\{BeanstalkConnectionCacheProvider,
     BeanstalkConnectionModelsProvider,
     CDRDatabaseProvider,
+    LoggerAuthProvider,
     MainDatabaseProvider,
     ManagedCacheProvider,
     ModelsCacheProvider,
@@ -89,7 +89,10 @@ class RegisterDIServices
             PBXConfModulesProvider::class,
 
             // Inject Registry
-            RegistryProvider::class
+            RegistryProvider::class,
+
+             // Inject LoggerAuth
+            LoggerAuthProvider::class
 
         ];
 

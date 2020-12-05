@@ -14,6 +14,7 @@ namespace MikoPBX\PBXCoreREST\Config;
 use MikoPBX\Common\Providers\{BeanstalkConnectionCacheProvider,
     BeanstalkConnectionWorkerApiProvider,
     CDRDatabaseProvider,
+    LoggerAuthProvider,
     MainDatabaseProvider,
     ModelsCacheProvider,
     ModelsMetadataProvider,
@@ -64,6 +65,9 @@ class RegisterDIServices
             RequestProvider::class,
             RouterProvider::class,
             SessionReadOnlyProvider::class,
+
+            // Inject LoggerAuth
+            LoggerAuthProvider::class
 
         ];
 

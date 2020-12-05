@@ -121,7 +121,7 @@ class Processes
         string $paramForPHPWorker = 'start',
         string $action = 'restart'
     ): void {
-        Util::sysLogMsg(__METHOD__, "processPHPWorker ". $className." action-".$action,);
+        Util::sysLogMsg(__METHOD__, "processPHPWorker ". $className." action-".$action, LOG_DEBUG);
         $workerPath = Util::getFilePathByClassName($className);
         if (empty($workerPath)) {
             return;

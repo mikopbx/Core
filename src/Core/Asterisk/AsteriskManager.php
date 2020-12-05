@@ -584,7 +584,7 @@ class AsteriskManager
 
         $this->socket = @fsockopen($this->server, $this->port, $errno, $errstr, $timeout);
         if ($this->socket == false) {
-            Util::sysLogMsg('asmanager', "Unable to connect to manager {$this->server}:{$this->port} ($errno): $errstr");
+            Util::sysLogMsg('asmanager', "Unable to connect to manager {$this->server}:{$this->port} ($errno): $errstr", LOG_ERR);
             return false;
         }
         // PT1C;
@@ -594,7 +594,7 @@ class AsteriskManager
         $str = $this->getStringDataFromSocket();
         if ($str === '') {
             // a problem.
-            Util::sysLogMsg('asmanager', "Asterisk Manager header not received.");
+            Util::sysLogMsg('asmanager', "Asterisk Manager header not received.", LOG_ERR);
             return false;
         }
 
@@ -602,7 +602,7 @@ class AsteriskManager
         $res = $this->sendRequest('login', ['Username' => $username, 'Secret' => $secret, 'Events' => $events]);
         if ($res['Response'] != 'Success') {
             $this->_loggedIn = false;
-            Util::sysLogMsg('asmanager', "Failed to login.");
+            Util::sysLogMsg('asmanager', "Failed to login.", LOG_ERR);
             $this->disconnect();
             return false;
         }
