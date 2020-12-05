@@ -254,4 +254,32 @@ class BaseController extends Controller
         return preg_replace('/[^a-zA-Zа-яА-Я0-9 ]/ui', '', $callerId);
     }
 
+    /**
+     * Sorts array by priority field
+     *
+     * @param $a
+     * @param $b
+     *
+     * @return int|null
+     */
+    protected function sortArrayByPriority($a, $b): ?int
+    {
+        if (is_array($a)){
+            $a = (int)$a['priority'];
+        } else {
+            $a = (int)$a->priority;
+        }
+
+        if (is_array($b)){
+            $b = (int)$b['priority'];
+        } else {
+            $b = (int)$b->priority;
+        }
+
+        if ($a === $b) {
+            return 0;
+        } else {
+            return ($a < $b) ? -1 : 1;
+        }
+    }
 }

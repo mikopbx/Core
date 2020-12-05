@@ -85,24 +85,6 @@ class IncomingRoutesController extends BaseController
         $this->view->submitMode   = null;
     }
 
-    /**
-     * Sorts array by priority field
-     *
-     * @param $a
-     * @param $b
-     *
-     * @return int|null
-     */
-    public function sortArrayByPriority($a, $b): ?int
-    {
-        $a = (int)$a['priority'];
-        $b = (int)$b['priority'];
-        if ($a === $b) {
-            return 0;
-        } else {
-            return ($a < $b) ? -1 : 1;
-        }
-    }
 
     /**
      * Карточка редактирования входящего маршрута

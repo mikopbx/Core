@@ -289,8 +289,8 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface, 
      * @param array $options
      * @return array
      */
-    public function overridePJSIPOptions(string $id, array $options):array{
-
+    public function overridePJSIPOptions(/** @scrutinizer ignore-unused */ string $id, array $options):array
+    {
         return $options;
     }
 
@@ -452,7 +452,6 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface, 
         $action         = strtoupper($request['action']);
         switch ($action) {
             case 'CHECK':
-            case 'RELOAD':
                 $res->success = true;
                 break;
             default:

@@ -18,22 +18,41 @@ class ExtensionsConf extends ConfigClass
     protected string $description = 'extensions.conf';
 
     /**
+     * Sorts array by priority field
+     *
+     * @param $a
+     * @param $b
+     *
+     * @return int|null
+     */
+    public static function sortArrayByPriority(array $a, array $b): int
+    {
+        $aPriority = (int)($a['priority'] ?? 0);
+        $bPriority = (int)($b['priority'] ?? 0);
+        if ($aPriority === $bPriority) {
+            return 0;
+        }
+
+        return ($aPriority < $bPriority) ? -1 : 1;
+    }
+
+    /**
      * Основной генератор extensions.conf
      */
     protected function generateConfigProtected(): void
     {
         /** @scrutinizer ignore-call */
         $additionalModules = $this->di->getShared('pbxConfModules');
-        $conf = "[globals] \n".
-                "TRANSFER_CONTEXT=internal-transfer; \n";
-        if($this->generalSettings['PBXRecordCalls'] === '1'){
-            $conf.="MONITOR_DIR=".Storage::getMonitorDir()." \n";
-            $conf.="MONITOR_STEREO=".$this->generalSettings['PBXSplitAudioThread']." \n";
+        $conf              = "[globals] \n" .
+            "TRANSFER_CONTEXT=internal-transfer; \n";
+        if ($this->generalSettings['PBXRecordCalls'] === '1') {
+            $conf .= "MONITOR_DIR=" . Storage::getMonitorDir() . " \n";
+            $conf .= "MONITOR_STEREO=" . $this->generalSettings['PBXSplitAudioThread'] . " \n";
         }
         foreach ($additionalModules as $appClass) {
             $addition = $appClass->extensionGlobals();
-            if (!empty($addition)){
-                $conf .=$appClass->confBlockWithComments($addition);
+            if ( ! empty($addition)) {
+                $conf .= $appClass->confBlockWithComments($addition);
             }
         }
         $conf .= "\n";
@@ -145,8 +164,8 @@ class ExtensionsConf extends ConfigClass
         $additionalModules = $this->di->getShared('pbxConfModules');
         foreach ($additionalModules as $appClass) {
             $addition = $appClass->extensionGenContexts();
-            if (!empty($addition)){
-                $conf .=$appClass->confBlockWithComments($addition);
+            if ( ! empty($addition)) {
+                $conf .= $appClass->confBlockWithComments($addition);
             }
         }
         $conf .= "\n";
@@ -197,7 +216,7 @@ class ExtensionsConf extends ConfigClass
 
         $conf .= 'same => n,Goto(peer_${FROM_PEER},${EXTEN},1)' . "\n\n";
 
-        $pickupexten =  $this->generalSettings['PBXFeaturePickupExten'];
+        $pickupexten = $this->generalSettings['PBXFeaturePickupExten'];
         $conf        .= 'exten => _' . $pickupexten . $extension . ',1,Set(PICKUPEER=' . $technology . '/${FILTER(0-9,${EXTEN:2})})' . "\n\t";
         $conf        .= 'same => n,Set(pt1c_dnid=${EXTEN})' . "\n\t";
         $conf        .= 'same => n,PickupChan(${PICKUPEER})' . "\n\t";
@@ -218,15 +237,15 @@ class ExtensionsConf extends ConfigClass
 
         foreach ($additionalModules as $appClass) {
             $addition = $appClass->getIncludeInternal();
-            if (!empty($addition)){
-                $conf .=$appClass->confBlockWithComments($addition);
+            if ( ! empty($addition)) {
+                $conf .= $appClass->confBlockWithComments($addition);
             }
         }
 
         foreach ($additionalModules as $appClass) {
             $addition = $appClass->extensionGenInternal();
-            if (!empty($addition)){
-                $conf .=$appClass->confBlockWithComments($addition);
+            if ( ! empty($addition)) {
+                $conf .= $appClass->confBlockWithComments($addition);
             }
         }
 
@@ -269,10 +288,10 @@ class ExtensionsConf extends ConfigClass
 
         // QUEUE_SRC_CHAN - установлена, если вызов сервершен агенту очереди.
         // Проверяем нужна ли переадресация
-        $conf       .= 'same => n,ExecIf($["${DIALSTATUS}" != "ANSWER" && "${ISTRANSFER}x" != "x"]?Goto(internal-fw,${EXTEN},1))' . " \n\t";
-        $conf       .= 'same => n,ExecIf($["${DIALSTATUS}" != "ANSWER" && "${QUEUE_SRC_CHAN}x" == "x"]?Goto(internal-fw,${EXTEN},1))' . " \n\t";
-        $conf       .= 'same => n,ExecIf($["${BLINDTRANSFER}x" != "x"]?AGI(check_redirect.php,${BLINDTRANSFER}))' . " \n\t";
-        $conf       .= 'same => n,Hangup()' . "\n\n";
+        $conf .= 'same => n,ExecIf($["${DIALSTATUS}" != "ANSWER" && "${ISTRANSFER}x" != "x"]?Goto(internal-fw,${EXTEN},1))' . " \n\t";
+        $conf .= 'same => n,ExecIf($["${DIALSTATUS}" != "ANSWER" && "${QUEUE_SRC_CHAN}x" == "x"]?Goto(internal-fw,${EXTEN},1))' . " \n\t";
+        $conf .= 'same => n,ExecIf($["${BLINDTRANSFER}x" != "x"]?AGI(check_redirect.php,${BLINDTRANSFER}))' . " \n\t";
+        $conf .= 'same => n,Hangup()' . "\n\n";
 
         $conf .= 'exten => h,1,ExecIf($["${ISTRANSFER}x" != "x"]?Gosub(${ISTRANSFER}dial_hangup,${EXTEN},1))' . "\n\n";
     }
@@ -288,16 +307,16 @@ class ExtensionsConf extends ConfigClass
         $conf              .= "[internal-transfer] \n";
 
         foreach ($additionalModules as $appClass) {
-            $addition= $appClass->getIncludeInternalTransfer();
-            if (!empty($addition)){
-                $conf .=$appClass->confBlockWithComments($addition);
+            $addition = $appClass->getIncludeInternalTransfer();
+            if ( ! empty($addition)) {
+                $conf .= $appClass->confBlockWithComments($addition);
             }
         }
 
         foreach ($additionalModules as $appClass) {
-            $addition= $appClass->extensionGenInternalTransfer();
-            if (!empty($addition)){
-                $conf .=$appClass->confBlockWithComments($addition);
+            $addition = $appClass->extensionGenInternalTransfer();
+            if ( ! empty($addition)) {
+                $conf .= $appClass->confBlockWithComments($addition);
             }
         }
         $conf .= 'exten => h,1,Gosub(transfer_dial_hangup,${EXTEN},1)' . "\n\n";
@@ -314,8 +333,8 @@ class ExtensionsConf extends ConfigClass
         $conf              .= "[internal-hints] \n";
         foreach ($additionalModules as $appClass) {
             $addition = $appClass->extensionGenHints();
-            if (!empty($addition)){
-                $conf .=$appClass->confBlockWithComments($addition);
+            if ( ! empty($addition)) {
+                $conf .= $appClass->confBlockWithComments($addition);
             }
         }
         $conf .= "\n\n";
@@ -342,20 +361,20 @@ class ExtensionsConf extends ConfigClass
 
         /** @var OutgoingRoutingTable $routs */
         /** @var OutgoingRoutingTable $rout */
-        $routs             = OutgoingRoutingTable::find(['order' => 'priority'])->toArray();
-        uasort($routs, __CLASS__.'::sortArrayByPriority');
+        $routs = OutgoingRoutingTable::find(['order' => 'priority'])->toArray();
+        uasort($routs, __CLASS__ . '::sortArrayByPriority');
 
         $provider_contexts = [];
 
         foreach ($routs as $rout) {
             $technology = $this->getTechByID($rout['providerid']);
             if ($technology !== '') {
-                    $rout_data                       = $rout;
-                    $rout_data['technology']         = $technology;
-                    $id_dialplan                     = $rout_data['providerid'] . '-' . $rout_data['id'] . '-outgoing';
-                    $provider_contexts[$id_dialplan] = $rout_data;
-                    $conf                            .= $this->generateOutgoingRegexPattern($rout_data);
-                    continue;
+                $rout_data                       = $rout;
+                $rout_data['technology']         = $technology;
+                $id_dialplan                     = $rout_data['providerid'] . '-' . $rout_data['id'] . '-outgoing';
+                $provider_contexts[$id_dialplan] = $rout_data;
+                $conf                            .= $this->generateOutgoingRegexPattern($rout_data);
+                continue;
             }
         }
         $conf .= 'same => n,ExecIf($["${peer_mobile}x" != "x"]?Hangup())' . " \n\t";
@@ -381,8 +400,8 @@ class ExtensionsConf extends ConfigClass
             $conf .= $change_exten;
             foreach ($additionalModules as $appClass) {
                 $addition = $appClass->generateOutRoutContext($rout);
-                if (!empty($addition)){
-                    $conf .=$appClass->confBlockWithComments($addition);
+                if ( ! empty($addition)) {
+                    $conf .= $appClass->confBlockWithComments($addition);
                 }
             }
             $conf .= 'same => n,ExecIf($["${number}x" == "x"]?Hangup())' . "\n\t";
@@ -401,8 +420,8 @@ class ExtensionsConf extends ConfigClass
             }
             foreach ($additionalModules as $appClass) {
                 $addition = $appClass->generateOutRoutAfterDialContext($rout);
-                if (!empty($addition)){
-                    $conf .=$appClass->confBlockWithComments($addition);
+                if ( ! empty($addition)) {
+                    $conf .= $appClass->confBlockWithComments($addition);
                 }
             }
             $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(' . $rout['providerid'] . '-outgoing-after-dial-custom,${EXTEN}),1}" == "1"]?' . $rout['providerid'] . '-outgoing-after-dial-custom,${EXTEN},1)' . "\n\t";
@@ -414,13 +433,28 @@ class ExtensionsConf extends ConfigClass
         }
     }
 
-    public static function sortArrayByPriority(array $a, array $b):int{
-        $aPriority = (int)($a['priority']??0);
-        $bPriority = (int)($b['priority']??0);
-        if ($aPriority === $bPriority) {
-            return 0;
+    /**
+     * Генератор extension для контекста outgoing.
+     *
+     * @param string $uniqueID
+     *
+     * @return null|string
+     */
+    public function getTechByID(string $uniqueID): string
+    {
+        $technology = '';
+        $provider   = Providers::findFirstByUniqid($uniqueID);
+        if ($provider !== null) {
+            if ($provider->type === 'SIP') {
+                $account    = Sip::findFirst('disabled="0" AND uniqid = "' . $uniqueID . '"');
+                $technology = ($account === null) ? '' : SIPConf::getTechnology();
+            } elseif ($provider->type === 'IAX') {
+                $account    = Iax::findFirst('disabled="0" AND uniqid = "' . $uniqueID . '"');
+                $technology = ($account === null) ? '' : 'IAX2';
+            }
         }
-        return ($aPriority < $bPriority) ? -1 : 1;
+
+        return $technology;
     }
 
     /**
@@ -459,7 +493,7 @@ class ExtensionsConf extends ConfigClass
         $conf              .= self::generateIncomingContextPeers('none', '', '');
         $conf              .= "[public-direct-dial] \n";
         foreach ($additionalModules as $appClass) {
-            if ($appClass instanceof $this){
+            if ($appClass instanceof $this) {
                 continue;
             }
             $appClass->generatePublicContext($conf);
@@ -486,10 +520,10 @@ class ExtensionsConf extends ConfigClass
      */
     public static function generateIncomingContextPeers($provider, $login = '', $uniqid = ''): string
     {
-        $conf              = '';
-        $dialplan          = [];
-        $di = Di::getDefault();
-        if ($di===null){
+        $conf     = '';
+        $dialplan = [];
+        $di       = Di::getDefault();
+        if ($di === null) {
             return '';
         }
         $additionalModules = $di->getShared('pbxConfModules');
@@ -521,7 +555,7 @@ class ExtensionsConf extends ConfigClass
         /** @var IncomingRoutingTable $m_data */
         $m_data = IncomingRoutingTable::find($filter);
         $data   = $m_data->toArray();
-        uasort($data, __CLASS__.'::sortArrayByPriority');
+        uasort($data, __CLASS__ . '::sortArrayByPriority');
 
         $need_def_rout = true;
         foreach ($data as $rout) {
@@ -559,11 +593,11 @@ class ExtensionsConf extends ConfigClass
                 $rout_data .= 'same => n,Gosub(add-trim-prefix-clid,${EXTEN},1)' . "\n\t";
 
                 foreach ($additionalModules as $appClass) {
-                     $addition = $appClass->generateIncomingRoutBeforeDial($rout_number);
-                     if (!empty($addition)){
-                         $rout_data .=$appClass->confBlockWithComments($addition);
-                     }
-                 }
+                    $addition = $appClass->generateIncomingRoutBeforeDial($rout_number);
+                    if ( ! empty($addition)) {
+                        $rout_data .= $appClass->confBlockWithComments($addition);
+                    }
+                }
 
                 // Перехват на ответственного.
                 $rout_data .= 'same => n,UserEvent(Interception,CALLERID: ${CALLERID(num)},chan1c: ${CHANNEL},FROM_DID: ${FROM_DID})' . "\n\t";
@@ -581,12 +615,12 @@ class ExtensionsConf extends ConfigClass
                     $rout_data_dial[$rout_number] = '';
                 }
 
-                if(in_array($rout['extension'], $confExtensions, true)){
+                if (in_array($rout['extension'], $confExtensions, true)) {
                     // Это конференция. Тут не требуется обработка таймаута ответа.
                     // Вызов будет отвечен сразу конференцией.
-                    $dial_command = " \n\t" . 'same => n,' . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?' . "Goto(internal,{$rout['extension']},1));";
+                    $dial_command                 = " \n\t" . 'same => n,' . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?' . "Goto(internal,{$rout['extension']},1));";
                     $rout_data_dial[$rout_number] .= "";
-                }else{
+                } else {
                     $dial_command                 = " \n\t" . 'same => n,' . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?' . "Dial(Local/{$rout['extension']}@internal-incoming/n,{$timeout},cTKg));";
                     $rout_data_dial[$rout_number] .= " \n\t" . "same => n,Set(M_TIMEOUT={$timeout})";
                 }
@@ -627,13 +661,13 @@ class ExtensionsConf extends ConfigClass
             if ($add_login_pattern && array_key_exists('X!', $rout_data_dial) && isset($dialplan['X!'])) {
                 $dialplan[$login]       = str_replace('_X!,1', "{$login},1", $dialplan['X!']);
                 $rout_data_dial[$login] = $rout_data_dial['X!'];
-            }elseif($add_login_pattern === true && $need_def_rout === true && count($data) === 1){
+            } elseif ($add_login_pattern === true && $need_def_rout === true && count($data) === 1) {
                 // Только маршрут "По умолчанию".
-                $dialplan[$login]       = str_replace('_X!,1', "{$login},1", $dialplan['X!']);
+                $dialplan[$login] = str_replace('_X!,1', "{$login},1", $dialplan['X!']);
             }
         } elseif (is_array($provider)) {
             foreach (array_values($provider) as $_login) {
-                   $dialplan[$_login] = str_replace('_X!,1', "{$_login},1", $dialplan['X!']);
+                $dialplan[$_login] = str_replace('_X!,1', "{$_login},1", $dialplan['X!']);
             }
         }
 
@@ -657,17 +691,17 @@ class ExtensionsConf extends ConfigClass
                 // Обязательно проверяем "DIALSTATUS", в случае с парковой через AMI вызова это необходимо.
                 // При ответе может отработать следующий приоритет.
                 $conf .= "\t" . 'same => n,Set(M_TIMEOUT=0)' . "\n";
-                if(in_array($default_action->extension, $confExtensions, true)){
+                if (in_array($default_action->extension, $confExtensions, true)) {
                     // Это конференция. Тут не требуется обработка таймаута ответа.
                     // Вызов будет отвечен сразу конференцией.
                     $conf .= "\t" . "same => n," . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?' . "Goto(internal,{$default_action->extension},1)); default action" . "\n";
-                }else {
+                } else {
                     $conf .= "\t" . "same => n," . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?' . "Dial(Local/{$default_action->extension}@internal/n,,cTKg)); default action" . "\n";
                 }
                 foreach ($additionalModules as $appClass) {
                     $addition = $appClass->generateIncomingRoutAfterDialContext($uniqid);
-                    if (!empty($addition)){
-                         $conf .=$appClass->confBlockWithComments($addition);
+                    if ( ! empty($addition)) {
+                        $conf .= $appClass->confBlockWithComments($addition);
                     }
                 }
                 $conf .= " \t" . 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-after-dial-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-after-dial-custom,${EXTEN},1)' . "\n";
@@ -727,8 +761,8 @@ class ExtensionsConf extends ConfigClass
                 $times = "{$time_from}-{$time_to}";
             }
 
-            $weekday_from = (string) $out_data->weekday_from;
-            $weekday_to   = (string) $out_data->weekday_to;
+            $weekday_from = (string)$out_data->weekday_from;
+            $weekday_to   = (string)$out_data->weekday_to;
             $arr_weekday  = [null, "mon", "tue", "wed", "thu", "fri", "sat", "sun"];
             if (empty($weekday_from) && empty($weekday_to)) {
                 $weekdays = '*';
@@ -776,29 +810,5 @@ class ExtensionsConf extends ConfigClass
         $conf .= $conf_out_set_var;
 
         return $conf;
-    }
-
-    /**
-     * Генератор extension для контекста outgoing.
-     *
-     * @param string $uniqueID
-     *
-     * @return null|string
-     */
-    public function getTechByID(string $uniqueID): string
-    {
-        $technology = '';
-        $provider   = Providers::findFirstByUniqid($uniqueID);
-        if ($provider !== null) {
-            if ($provider->type === 'SIP') {
-                $account    = Sip::findFirst('disabled="0" AND uniqid = "'.$uniqueID.'"');
-                $technology = ($account === null)?'':SIPConf::getTechnology();
-            } elseif ($provider->type === 'IAX') {
-                $account    = Iax::findFirst('disabled="0" AND uniqid = "'.$uniqueID.'"');
-                $technology = ($account === null)?'':'IAX2';
-            }
-        }
-
-        return $technology;
     }
 }
