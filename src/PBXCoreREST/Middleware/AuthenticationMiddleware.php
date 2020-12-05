@@ -20,6 +20,7 @@ use Phalcon\Mvc\Micro\MiddlewareInterface;
 
 /**
  * Class AuthenticationMiddleware
+ * @property \Phalcon\Logger    loggerAuth
  */
 class AuthenticationMiddleware implements MiddlewareInterface
 {

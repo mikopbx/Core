@@ -11,6 +11,7 @@ namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings};
 use Phalcon\Mvc\{Controller, View};
+use Phalcon\Logger;
 use Phalcon\Tag;
 use Phalcon\Text;
 use Sentry\SentrySdk;
@@ -26,6 +27,7 @@ use Sentry\SentrySdk;
  * @property \Phalcon\Flash\Session                        flash
  * @property \Phalcon\Tag                                  tag
  * @property \Phalcon\Config\Adapter\Json                  config
+ * @property \Phalcon\Logger                                loggerAuth
  */
 class BaseController extends Controller
 {
