@@ -162,30 +162,24 @@ class FirewallController extends BaseController
         }
 
         $this->db->begin();
-
         $data         = $this->request->getPost();
         $networkId    = $this->request->getPost('id');
-        $filterRecord = NetworkFilters::findFirstById($networkId);
-        if ($filterRecord === null) {
-            $filterRecord = new NetworkFilters();
-        }
-
         // Update network filters Network Filter
-        if ( ! $this->updateNetworkFilters($filterRecord, $data)) {
+        $filterRecordId = $this->updateNetworkFilters($networkId, $data);
+        if (empty($filterRecordId)) {
             $this->view->success = false;
             $this->db->rollback();
-
             return;
         }
 
         // If it was new entity we will reload page with new ID
         if (empty($data['id'])) {
-            $this->view->reload = "firewall/modify/{$filterRecord->id}";
+            $this->view->reload = "firewall/modify/{$filterRecordId}";
         }
 
         // Update firewall rules Firewall
-        $data['id'] = $filterRecord->id;
-        if ( ! $this->updateFirewallRules($data)) {
+        $data['id'] = $filterRecordId;
+        if (!$this->updateFirewallRules($data)) {
             $this->view->success = false;
             $this->db->rollback();
 
@@ -200,13 +194,18 @@ class FirewallController extends BaseController
     /**
      * Заполним параметры записи Network Filter
      *
-     * @param \MikoPBX\Common\Models\NetworkFilters $filterRecord
+     * @param string $networkId
      * @param array                                 $data массив полей из POST запроса
      *
-     * @return bool update result
+     * @return string update result
      */
-    private function updateNetworkFilters(NetworkFilters $filterRecord, array $data): bool
+    private function updateNetworkFilters(string $networkId, array $data): string
     {
+        $filterRecord = NetworkFilters::findFirstById($networkId);
+        if ($filterRecord === null) {
+            $filterRecord = new NetworkFilters();
+        }
+
         $calculator = new Cidr();
         // Заполним параметры записи Network Filter
         foreach ($filterRecord as $name => $value) {
@@ -239,10 +238,10 @@ class FirewallController extends BaseController
             $errors = $filterRecord->getMessages();
             $this->flash->error(implode('<br>', $errors));
 
-            return false;
+            return '';
         }
 
-        return true;
+        return $filterRecord->toArray()['id'];
     }
 
     /**
@@ -272,6 +271,8 @@ class FirewallController extends BaseController
         ];
         $firewallRules     = FirewallRules::find($parameters);
         $currentRulesCount = $firewallRules->count();
+
+        $needUpdateFirewallRules = false;
         while ($countDefaultRules < $currentRulesCount) {
             $firewallRules->next();
             if ($firewallRules->current()->delete() === false) {
@@ -279,11 +280,14 @@ class FirewallController extends BaseController
                 $this->flash->error(implode('<br>', $errors));
                 $this->view->success = false;
                 return false;
-            } else {
-                $currentRulesCount--;
             }
+            $currentRulesCount--;
+            $needUpdateFirewallRules = true;
         }
-        $firewallRules = FirewallRules::find($parameters);
+
+        if($needUpdateFirewallRules){
+            $firewallRules = FirewallRules::find($parameters);
+        }
         $rowId         = 0;
         foreach ($defaultRules as $key => $value) {
             foreach ($value['rules'] as $rule) {
