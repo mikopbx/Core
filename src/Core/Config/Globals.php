@@ -11,7 +11,10 @@ namespace MikoPBX\Core\Config;
 use MikoPBX\Core\System\SentryErrorLogger;
 use Phalcon\Di\FactoryDefault\Cli;
 
-
+if(PHP_SAPI !== "cli"){
+    // Этот скрипт только для CLI.
+    return;
+}
 // Initialize dependency injector
 $di = new Cli();
 
