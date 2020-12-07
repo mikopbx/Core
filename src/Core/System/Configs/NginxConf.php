@@ -37,47 +37,18 @@ class NginxConf extends Injectable
      **/
     public function reStart(): void
     {
-        $NginxPath = Util::which('nginx');
+        $nginxPath = Util::which('nginx');
+        $killPath = Util::which('kill');
         $pid       = Processes::getPidOfProcess('master process nginx');
         if (!empty($pid)) {
-            Processes::mwExec("$NginxPath -s reload");
+            // reload Nginx workers gracefully
+            Processes::mwExec("{$killPath} -SIGHUP {$pid} ");
         } elseif (Util::isSystemctl()) {
             $systemCtrlPath = Util::which('systemctl');
             Processes::mwExec("{$systemCtrlPath} restart nginx.service");
         } else {
             Processes::killByName('nginx');
-            Processes::mwExec($NginxPath);
-        }
-    }
-
-    /**
-     * Reload Nginx gracefully
-     * https://www.cyberciti.biz/faq/howto-unix-linux-gracefully-reload-restart-nginx-webserver/
-     **/
-    public function reloadGracefully(): void
-    {
-        $NginxPath = Util::which('nginx');
-        $killPath  = Util::which('kill');
-        $pid       = Processes::getPidOfProcess('nginx: master process');
-        if (!empty($pid)) {
-            Processes::mwExec("$NginxPath -s quit");
-            echo $killPath.' -QUIT '.$pid."\n";
-        }
-        $timeStart = time();
-        while (true){
-            if(time() - $timeStart > 20){
-                break;
-            }
-            usleep(50000);
-            $pid = Processes::getPidOfProcess('nginx: master process');
-            if($pid !== ''){
-                continue;
-            }
-            $result = Processes::mwExec($NginxPath);
-            if($result === 0){
-                break;
-            }
-            echo "RESULT -- $result\n";
+            Processes::mwExec($nginxPath);
         }
     }
 
@@ -142,7 +113,7 @@ class NginxConf extends Injectable
         $currentConfigIsGood = $this->testCurrentNginxConfig();
         if ($level < 1 && ! $currentConfigIsGood) {
             ++$level;
-            Util::sysLogMsg('nginx', 'Failed test config file. SSL will be disable...');
+            Util::sysLogMsg('nginx', 'Failed test config file. SSL will be disable...', LOG_ERR);
             $this->generateConf(true, $level);
         }
         // Add additional rules from modules
@@ -184,7 +155,7 @@ class NginxConf extends Injectable
                     file_put_contents($confFileName, $locationContent);
                     if ( ! $this->testCurrentNginxConfig()) {
                         Processes::mwExec("{$rmPath} {$confFileName}");
-                        Util::sysLogMsg('nginx', 'Failed test config file for module' . $appClass->moduleUniqueId);
+                        Util::sysLogMsg('nginx', 'Failed test config file for module' . $appClass->moduleUniqueId, LOG_ERR);
                     }
                 }
             }

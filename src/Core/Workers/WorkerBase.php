@@ -73,10 +73,11 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
     /**
      * Process async system signal
      *
+     * @param int $signal
      */
     public function signalHandler(int $signal): void
     {
-        Util::sysLogMsg(static::class, "Receive signal to restart  ".$signal);
+        Util::sysLogMsg(static::class, "Receive signal to restart  ".$signal, LOG_DEBUG);
         $this->needRestart = true;
     }
 
@@ -87,7 +88,7 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
     public function shutdownHandler(): void
     {
         $e = error_get_last();
-        Util::sysLogMsg(static::class, "shutdownHandler ". print_r($e,true));
+        Util::sysLogMsg(static::class, "shutdownHandler ". print_r($e,true), LOG_DEBUG);
     }
 
 

@@ -151,7 +151,7 @@ class PbxExtensionUtils
                     $moduleStateProcessor = new PbxExtensionState($module['uniqid']);
                     $moduleStateProcessor->disableModule();
                 } catch (Throwable $exception) {
-                    Util::sysLogMsg(__CLASS__, "Can not disable module {$module['uniqid']} Message: {$exception}");
+                    Util::sysLogMsg(__CLASS__, "Can not disable module {$module['uniqid']} Message: {$exception}", LOG_ERR);
                 } finally {
                     $currentModule           = PbxExtensionModules::findFirstByUniqid($module['uniqid']);
                     if ($currentModule->disabled==='0'){

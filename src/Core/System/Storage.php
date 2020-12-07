@@ -1218,7 +1218,7 @@ class Storage extends Di\Injectable
         $countBlock = $swapSize * $bs;
         $ddCmd      = Util::which('dd');
 
-        Util::sysLogMsg('Swap', 'make swap ' . $swapFile, LOG_INFO, LOG_INFO);
+        Util::sysLogMsg('Swap', 'make swap ' . $swapFile, LOG_INFO);
         Processes::mwExec("{$ddCmd} if=/dev/zero of={$swapFile} bs={$bs} count={$countBlock}");
 
         $mkSwapCmd = Util::which('mkswap');
@@ -1226,7 +1226,7 @@ class Storage extends Di\Injectable
 
         $swapOnCmd = Util::which('swapon');
         $result    = Processes::mwExec("{$swapOnCmd} {$swapFile}");
-        Util::sysLogMsg('Swap', 'connect swap result: ' . $result, LOG_INFO, LOG_INFO);
+        Util::sysLogMsg('Swap', 'connect swap result: ' . $result, LOG_INFO);
     }
 
     /**

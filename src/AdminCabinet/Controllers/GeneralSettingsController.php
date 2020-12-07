@@ -17,42 +17,22 @@ class GeneralSettingsController extends BaseController
 {
 
     /**
-     * Построение формы настроек
+     * Builds general settings form
      */
     public function modifyAction(): void
     {
-        $parameters = [
-            'conditions'=>'type="audio"',
-        ];
-        $this->view->audioCodecs     = Codecs::find($parameters);
-        usort($this->view->audioCodecs, [__CLASS__, 'sortArrayByPriority']);
-        $parameters['conditions'] = 'type="video"';
-        $this->view->videoCodecs     = Codecs::find($parameters);
-        usort($this->view->videoCodecs, [__CLASS__, 'sortArrayByPriority']);
-
+        $audioCodecs     = Codecs::find(['conditions'=>'type="audio"'])->toArray();
+        usort($audioCodecs, [__CLASS__, 'sortArrayByPriority']);
+        $this->view->audioCodecs = $audioCodecs;
+        $videoCodecs     = Codecs::find(['conditions'=>'type="video"'])->toArray();
+        usort($videoCodecs, [__CLASS__, 'sortArrayByPriority']);
+        $this->view->videoCodecs = $videoCodecs;
         $pbxSettings            = PbxSettings::getAllPbxSettings();
         $this->view->form       = new GeneralSettingsEditForm(null, $pbxSettings);
         $this->view->submitMode = null;
     }
 
-    /**
-     * Sorts array by Priority field
-     *
-     * @param $a
-     * @param $b
-     *
-     * @return int|null
-     */
-    public function sortArrayByPriority($a, $b): ?int
-    {
-        $a = (int)$a->priority;
-        $b = (int)$b->priority;
-        if ($a === $b) {
-            return 0;
-        } else {
-            return ($a < $b) ? -1 : 1;
-        }
-    }
+
 
     /**
      * Сохранение настроек системы

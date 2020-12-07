@@ -1,60 +1,4 @@
 <?php
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/**
- * Copyright © MIKO LLC - All Rights Reserved
- * Unauthorized copying of this file, via any medium is strictly prohibited
- * Proprietary and confidential
- * Written by Alexey Portnov, 8 2020
- */
 
 declare(strict_types=1);
 /**
@@ -177,13 +121,8 @@ class AssetProvider implements ServiceProviderInterface
     {
         if (file_exists('/tmp/sendmetrics')) {
             $this->headerCollectionSentryJS->addjs(
-                '//browser.sentry-cdn.com/5.27.0/bundle.min.js',
-                false,
-                false,
-                [
-                    'crossorigin' => 'anonymous',
-                    'integrity'   => 'sha384-odt6g+qg66eR/WbXcAHMweT2Ab+eHnyzmeJOodbqYhP2rQdeJbPgDM/xbi5jj2tx',
-                ]
+                'assets/js/vendor/sentry/bundle.min.js',
+                true
             );
             $this->headerCollectionSentryJS->addJs(
                 "assets/js/pbx/main/sentry-error-logger.js?v={$version}",

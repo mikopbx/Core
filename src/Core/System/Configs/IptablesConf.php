@@ -162,7 +162,7 @@ class IptablesConf extends Injectable
             /** @var \MikoPBX\Common\Models\NetworkFilters $network_filter */
             $network_filter = NetworkFilters::findFirst($rule->networkfilterid);
             if ($network_filter === null) {
-                Util::sysLogMsg('Firewall', "network_filter_id not found {$rule->networkfilterid}");
+                Util::sysLogMsg('Firewall', "network_filter_id not found {$rule->networkfilterid}", LOG_WARNING);
                 continue;
             }
             if ('0.0.0.0/0' === $network_filter->permit && $rule->action !== 'allow') {

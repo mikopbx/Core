@@ -100,7 +100,7 @@ class WorkerAmiListener extends WorkerBase
         }
 
         if ($message_is_sent === false) {
-            Util::sysLogMsg('CDR_AMI_Connector', "Error send data to queue. " . $error);
+            Util::sysLogMsg(__METHOD__, "Error send data to queue. " . $error, LOG_ERR);
         }
         // Логируем оповещение.
         Util::logMsgDb('WorkerCallEvents::class', json_decode($result, true));
@@ -119,7 +119,7 @@ if (isset($argv) && count($argv) > 1 && $argv[1] === 'start') {
     } catch (Throwable $e) {
         global $errorLogger;
         $errorLogger->captureException($e);
-        Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage());
+        Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage(), LOG_ERR);
     }
 }
 

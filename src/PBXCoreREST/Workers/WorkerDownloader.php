@@ -34,7 +34,7 @@ class WorkerDownloader extends WorkerBase
         if (file_exists($argv[1])) {
             $this->settings = json_decode(file_get_contents($argv[1]), true);
         } else {
-            Util::sysLogMsg(__CLASS__, 'Wrong download settings');
+            Util::sysLogMsg(__CLASS__, 'Wrong download settings', LOG_ERR);
 
             return;
         }
@@ -48,7 +48,7 @@ class WorkerDownloader extends WorkerBase
         $result = $this->getFile();
         $result = $result && $this->checkFile();
         if ( ! $result) {
-            Util::sysLogMsg(__CLASS__, 'Download error...');
+            Util::sysLogMsg(__CLASS__, 'Download error...', LOG_ERR);
         }
     }
 
@@ -190,6 +190,6 @@ if (isset($argv) && count($argv) > 1) {
     } catch (Throwable $e) {
         global $errorLogger;
         $errorLogger->captureException($e);
-        Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage());
+        Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage(), LOG_ERR);
     }
 }

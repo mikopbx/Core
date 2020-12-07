@@ -22,12 +22,12 @@ class WorkerMakeLogFilesArchive extends WorkerBase
     {
         $settings_file = trim($argv[1]);
         if ( ! file_exists($settings_file)) {
-            Util::sysLogMsg("WorkerMakeLogFilesArchive", 'File with settings not found');
+            Util::sysLogMsg("WorkerMakeLogFilesArchive", 'File with settings not found', LOG_ERR);
             return;
         }
         $file_data = json_decode(file_get_contents($settings_file), true);
         if ( ! isset($file_data['result_file'])) {
-            Util::sysLogMsg("WorkerMakeLogFilesArchive", 'Wrong settings');
+            Util::sysLogMsg("WorkerMakeLogFilesArchive", 'Wrong settings', LOG_ERR);
             return;
         }
         $resultFile = $file_data['result_file'];
@@ -61,6 +61,6 @@ if (isset($argv) && count($argv) > 1) {
     } catch (Throwable $e) {
         global $errorLogger;
         $errorLogger->captureException($e);
-        Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage());
+        Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage(), LOG_ERR);
     }
 }

@@ -67,7 +67,7 @@ class SessionController extends BaseController
             $this->flash->error($this->translation->_('auth_WrongLoginPassword'));
             $remoteAddress = $this->request->getClientAddress(true);
             $userAgent     = $this->request->getUserAgent();
-            Util::sysLogMsg('web_auth', "From: {$remoteAddress} UserAgent:{$userAgent} Cause: Wrong password");
+            $this->loggerAuth->warning("From: {$remoteAddress} UserAgent:{$userAgent} Cause: Wrong password");
         }
     }
 

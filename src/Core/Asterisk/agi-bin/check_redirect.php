@@ -41,8 +41,8 @@ try {
             $agi->exec_goto('internal', $exten, '1');
         }
     } else {
-        Util::sysLogMsg('CheckRedirect', "Error get data from queue 'WorkerCdr::SELECT_CDR_TUBE'. ");
+        Util::sysLogMsg('CheckRedirect', "Error get data from queue 'WorkerCdr::SELECT_CDR_TUBE'. ", LOG_ERR);
     }
-} catch (Exception $e) {
-    Util::sysLogMsg('CheckRedirect', $e->getMessage());
+} catch (\Throwable $e) {
+    Util::sysLogMsg('CheckRedirect', $e->getMessage(), LOG_ERR);
 }

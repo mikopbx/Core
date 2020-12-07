@@ -20,6 +20,7 @@ use Phalcon\Mvc\Micro\MiddlewareInterface;
 
 /**
  * Class AuthenticationMiddleware
+ * @property \Phalcon\Logger    loggerAuth
  */
 class AuthenticationMiddleware implements MiddlewareInterface
 {
@@ -45,7 +46,7 @@ class AuthenticationMiddleware implements MiddlewareInterface
             && true !== $request->isDebugModeEnabled()
             && true !== $this->thisIsModuleNoAuthRequest($api)
         ) {
-            Util::sysLogMsg('web_auth', "From: {$request->getClientAddress(true)} UserAgent:{$request->getUserAgent()} Cause: Wrong password");
+            $this->loggerAuth->warning("From: {$request->getClientAddress(true)} UserAgent:{$request->getUserAgent()} Cause: Wrong password");
             $this->halt(
                 $api,
                 $response::OK,

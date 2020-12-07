@@ -885,11 +885,11 @@ class Network extends Injectable
      */
     private function settingsIsChange(array $data, array $dbData):bool{
         $isChange = false;
-        foreach ($data as $key => $value){
-            if(!isset($dbData[$key]) || $value === $dbData[$key]){
+        foreach ($dbData as $key => $value){
+            if(!isset($data[$key]) || (string)$value === (string)$data[$key]){
                 continue;
             } 
-            Util::sysLogMsg(__METHOD__, "Find new network settings: {$key} old value: {$dbData[$key]}   new value: {$value}");
+            Util::sysLogMsg(__METHOD__, "Find new network settings: {$key} changed {$value}=>{$data[$key]}");
             $isChange = true;
         }
         return $isChange;

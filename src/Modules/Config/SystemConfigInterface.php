@@ -8,7 +8,7 @@ interface SystemConfigInterface
 {
 
     /**
-     * Будет вызван после старта asterisk.
+     * The callback function will execute after PBX started.
      */
     public function onAfterPbxStarted(): void;
 
@@ -20,7 +20,7 @@ interface SystemConfigInterface
     public function createCronTasks(&$tasks): void;
 
     /**
-     * Create additional Nginx locations from modules
+     * Create additional Nginx locations from modules.
      *
      */
     public function createNginxLocations(): string;

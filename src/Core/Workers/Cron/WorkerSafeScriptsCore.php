@@ -165,19 +165,20 @@ class WorkerSafeScriptsCore extends WorkerBase
             }
             if (false === $result) {
                 Processes::processPHPWorker($workerClassName);
-                Util::sysLogMsg(__CLASS__, "Service {$workerClassName} started.");
+                Util::sysLogMsg(__METHOD__, "Service {$workerClassName} started.", LOG_NOTICE);
             }
             $time_elapsed_secs = microtime(true) - $start;
             if ($time_elapsed_secs > 10) {
                 Util::sysLogMsg(
-                    __CLASS__,
-                    "WARNING: Service {$workerClassName} processed more than {$time_elapsed_secs} seconds"
+                    __METHOD__,
+                    "WARNING: Service {$workerClassName} processed more than {$time_elapsed_secs} seconds",
+                    LOG_WARNING
                 );
             }
         } catch (Throwable $e) {
             global $errorLogger;
             $errorLogger->captureException($e);
-            Util::sysLogMsg($workerClassName . '_EXCEPTION', $e->getMessage());
+            Util::sysLogMsg($workerClassName . '_EXCEPTION', $e->getMessage(), LOG_ERR);
         }
         yield;
     }
@@ -201,7 +202,8 @@ class WorkerSafeScriptsCore extends WorkerBase
         if ($time_elapsed_secs > 10) {
             Util::sysLogMsg(
                 __CLASS__,
-                "WARNING: Service {$workerClassName} processed more than {$time_elapsed_secs} seconds"
+                "WARNING: Service {$workerClassName} processed more than {$time_elapsed_secs} seconds",
+                LOG_WARNING
             );
         }
         yield;
@@ -227,13 +229,13 @@ class WorkerSafeScriptsCore extends WorkerBase
                 $am       = Util::getAstManager();
                 $res_ping = $am->pingAMIListner($this->makePingTubeName($workerClassName));
                 if (false === $res_ping) {
-                    Util::sysLogMsg('checkWorkerAMI', 'Restart...');
+                    Util::sysLogMsg(__METHOD__, 'Restart...', LOG_ERR);
                 }
             }
 
             if ($res_ping === false && $level < 10) {
                 Processes::processPHPWorker($workerClassName);
-                Util::sysLogMsg(__CLASS__, "Service {$workerClassName} started.");
+                Util::sysLogMsg(__METHOD__, "Service {$workerClassName} started.", LOG_NOTICE);
                 // Wait 1 second while service will be ready to listen requests
                 sleep(1);
 
@@ -243,14 +245,15 @@ class WorkerSafeScriptsCore extends WorkerBase
             $time_elapsed_secs = microtime(true) - $start;
             if ($time_elapsed_secs > 10) {
                 Util::sysLogMsg(
-                    __CLASS__,
-                    "WARNING: Service {$workerClassName} processed more than {$time_elapsed_secs} seconds"
+                    __METHOD__,
+                    "WARNING: Service {$workerClassName} processed more than {$time_elapsed_secs} seconds",
+                    LOG_WARNING
                 );
             }
         } catch (Throwable $e) {
             global $errorLogger;
             $errorLogger->captureException($e);
-            Util::sysLogMsg($workerClassName . '_EXCEPTION', $e->getMessage());
+            Util::sysLogMsg($workerClassName . '_EXCEPTION', $e->getMessage(), LOG_ERR);
         }
         yield;
     }
@@ -263,7 +266,7 @@ try {
         cli_set_process_title("{$workerClassname} {$argv[1]}");
         $activeProcesses = Processes::getPidOfProcess("{$workerClassname} {$argv[1]}", posix_getpid());
         if (!empty($activeProcesses)){
-            Util::sysLogMsg($workerClassname, "WARNING: Other started process {$activeProcesses} is working now...");
+            Util::sysLogMsg($workerClassname, "WARNING: Other started process {$activeProcesses} is working now...", LOG_DEBUG);
             return;
         }
         $worker = new $workerClassname();
@@ -276,5 +279,5 @@ try {
 } catch (Throwable $e) {
     global $errorLogger;
     $errorLogger->captureException($e);
-    Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage());
+    Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage(), LOG_ERR);
 }
