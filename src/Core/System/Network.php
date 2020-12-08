@@ -60,7 +60,7 @@ class Network extends Injectable
     /**
      * Up loopback.
      **/
-    public function loConfigure()
+    public function loConfigure():void
     {
         if (Util::isSystemctl()) {
             return;
@@ -124,7 +124,7 @@ class Network extends Injectable
             'hostname' => 'mikopbx',
             'domain'   => '',
         ];
-        /** @var \MikoPBX\Common\Models\LanInterfaces $res */
+        /** @var LanInterfaces $res */
         $res = LanInterfaces::findFirst("internet = '1'");
         if (null !== $res) {
             $data['hostname'] = $res->hostname;
@@ -143,13 +143,13 @@ class Network extends Injectable
     public function getHostDNS(): array
     {
         $dns = [];
-        /** @var \MikoPBX\Common\Models\LanInterfaces $res */
+        /** @var LanInterfaces $res */
         $res = LanInterfaces::findFirst("internet = '1'");
         if (null !== $res) {
-            if ( ! empty($res->primarydns) && '127.0.0.1' != $res->primarydns) {
+            if ( ! empty($res->primarydns) && '127.0.0.1' !== $res->primarydns) {
                 $dns[] = $res->primarydns;
             }
-            if ( ! empty($res->secondarydns) && '127.0.0.1' != $res->secondarydns) {
+            if ( ! empty($res->secondarydns) && '127.0.0.1' !== $res->secondarydns) {
                 $dns[] = $res->secondarydns;
             }
         }
@@ -327,7 +327,7 @@ class Network extends Injectable
                 $ifconfigPath   = Util::which('ifconfig');
                 $arr_commands[] = "{$busyboxPath} {$ifconfigPath} $if_name $ipaddr netmask $subnet";
 
-                if ("" != trim($gateway)) {
+                if ("" !== trim($gateway)) {
                     $gw_param = "gw $gateway";
                 }
 
@@ -336,9 +336,9 @@ class Network extends Injectable
 
                 /** @var LanInterfaces $if_data */
                 $if_data = LanInterfaces::findFirst("id = '{$if_data['id']}'");
-                $is_inet = ($if_data !== null) ? $if_data->internet : 0;
+                $is_inet = ($if_data !== null) ? (string)$if_data->internet : '0';
                 // Добавляем маршруты по умолчанию.
-                if ($is_inet == 1) {
+                if ($is_inet === '1') {
                     // ТОЛЬКО, если этот интерфейс для интернет, создаем дефолтный маршрут.
                     $arr_commands[] = "{$busyboxPath} {$routePath} add default $gw_param dev $if_name";
                 }
@@ -373,7 +373,6 @@ class Network extends Injectable
         Processes::mwExecCommands($arr_commands, $out, 'rout');
 
         $this->openVpnConfigure();
-
         return 0;
     }
 
@@ -394,11 +393,11 @@ class Network extends Injectable
         Processes::mwExec("{$modprobePath} 8021q");
         foreach ($networks as $if_data) {
             $if_name = trim($if_data['interface']);
-            if ('' == $if_name) {
+            if ('' === $if_name) {
                 continue;
             }
             $conf_file = "/etc/network/interfaces.d/{$if_name}";
-            if ($if_data['disabled'] == 1) {
+            if ($if_data['disabled'] === '1') {
                 $ifdownPath = Util::which('ifdown');
                 Processes::mwExec("{$ifdownPath} eth0");
                 if (file_exists($if_name)) {
@@ -493,11 +492,11 @@ class Network extends Injectable
                     $if_data['subnet'] = $this->netMaskToCidr($if_data['subnet']);
                 }
 
-                $key = array_search($if_data['interface_orign'], $src_array_eth);
+                $key = array_search($if_data['interface_orign'], $src_array_eth, true);
                 if ($key !== false) {
                     // Интерфейс найден.
                     // Удаляем элемент массива, если это не VLAN.
-                    if ($if_data['vlanid'] == 0) {
+                    if ($if_data['vlanid'] === '0') {
                         unset($array_eth[$key]);
                         $this->enableLanInterface($if_data['interface_orign']);
                     }
@@ -508,6 +507,7 @@ class Network extends Injectable
                     $if_data['disabled'] = 1;
                 }
             }
+            unset($if_data);
         } elseif (count($array_eth) > 0) {
             $networks = [];
             // Настраиваем основной интерфейс.
@@ -523,7 +523,7 @@ class Network extends Injectable
         }
         $res = LanInterfaces::findFirst("internet = '1' AND disabled='0'");
         if (null === $res) {
-            /** @var \MikoPBX\Common\Models\LanInterfaces $eth_settings */
+            /** @var LanInterfaces $eth_settings */
             $eth_settings = LanInterfaces::findFirst("disabled='0'");
             if ($eth_settings !== null) {
                 $eth_settings->internet = 1;
@@ -803,15 +803,15 @@ class Network extends Injectable
         }
 
         // Добавляем маршруты по умолчанию.
-        /** @var \MikoPBX\Common\Models\LanInterfaces $if_data */
+        /** @var LanInterfaces $if_data */
         $if_data = LanInterfaces::findFirst("interface = '{$env_vars['interface']}'");
-        $is_inet = ($if_data !== null) ? $if_data->internet : 0;
+        $is_inet = ($if_data !== null) ? (string)$if_data->internet : '0';
 
         $named_dns = [];
         if ('' !== $env_vars['dns']) {
             $named_dns = explode(' ', $env_vars['dns']);
         }
-        if ($is_inet == 1) {
+        if ($is_inet === '1') {
             // ТОЛЬКО, если этот интерфейс для интернет, правим resolv.conf.
             // Прописываем основные DNS.
             $this->generatePdnsdConfig($named_dns);
@@ -919,7 +919,7 @@ class Network extends Injectable
      */
     public function getEnabledLanInterfaces(): array
     {
-        /** @var \MikoPBX\Common\Models\LanInterfaces $res */
+        /** @var LanInterfaces $res */
         $res = LanInterfaces::find('disabled=0');
 
         return $res->toArray();
@@ -1015,7 +1015,7 @@ class Network extends Injectable
         // Поднят ли интерфейс?
         preg_match("/\s+(UP)\s+/", $output, $matches);
         $status = (count($matches) > 0) ? $matches[1] : '';
-        if ($status == "UP") {
+        if ($status === "UP") {
             $interface['up'] = true;
         } else {
             $interface['up'] = false;
