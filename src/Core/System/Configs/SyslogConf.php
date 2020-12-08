@@ -9,7 +9,6 @@
 
 namespace MikoPBX\Core\System\Configs;
 
-
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
@@ -17,30 +16,42 @@ use Phalcon\Di\Injectable;
 
 class SyslogConf extends Injectable
 {
+    public const CONF_FILE='/etc/rsyslog.conf';
+    public const PROC_NAME='rsyslogd';
+
     /**
      * Restarts syslog daemon
      */
     public function reStart(): void
     {
-        $syslog_file = '/var/log/messages';
-        $log_file    = self::getSyslogFile();
-        if ( ! file_exists($syslog_file)) {
-            file_put_contents($syslog_file, '');
-        }
-        $syslogdPath = Util::which('syslogd');
-        $busyboxPath = Util::which('busybox');
-        $logreadPath = Util::which('logread');
-        $killPath = Util::which('kill');
-        $pid = Processes::getPidOfProcess($syslogdPath);
+        $this->generateConfigFile();
+        $syslogPath = Util::which(self::PROC_NAME);
+        $pid = Processes::getPidOfProcess(self::PROC_NAME);
         if ( ! empty($pid)) {
-            $options = file_exists($log_file) ? '>' : '';
-            Processes::mwExec("{$busyboxPath} {$logreadPath} 2> /dev/null >" . $options . $log_file);
+            $busyboxPath = Util::which('busybox');
             // Завершаем процесс.
-            Processes::mwExec("{$busyboxPath} {$killPath} '$pid'");
+            Processes::mwExec("{$busyboxPath} kill '$pid'");
         }
+        Processes::mwExec($syslogPath);
+    }
 
-        Util::createUpdateSymlink($log_file, $syslog_file);
-        Processes::mwExec("{$syslogdPath} -O {$log_file} -b 10 -s 10240");
+    /**
+     * Генерация конфигурационного файла.
+     */
+    private function generateConfigFile():void{
+        $log_file    = self::getSyslogFile();
+        $conf = ''."\n".
+                '$ModLoad imuxsock'."\n".
+                '$ModLoad imklog'."\n".
+                'template(name="mikopbx" type="string"'."\n".
+                '  string="%TIMESTAMP:::date-rfc3164% %syslogfacility-text%.%syslogseverity-text% %syslogtag% %msg%\n"'."\n".
+                ')'."\n".
+                '$ActionFileDefaultTemplate mikopbx'."\n".
+                '$IncludeConfig /etc/rsyslog.d/*.conf'."\n".
+                '*.* '."{$log_file}\n";
+        Util::fileWriteContent(self::CONF_FILE, $conf);
+        Util::createUpdateSymlink($log_file, '/var/log/messages');
+
     }
 
     /**
