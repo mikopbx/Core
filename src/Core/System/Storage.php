@@ -1195,25 +1195,42 @@ class Storage extends Di\Injectable
     {
         $tempDir    = $this->config->path('core.tempDir');
         $swapFile   = "{$tempDir}/swapfile";
+
         $swapOffCmd = Util::which('swapoff');
         Processes::mwExec("{$swapOffCmd} {$swapFile}");
+
+        $this->makeSwapFile($swapFile);
+        if (!file_exists($swapFile)) {
+            return;
+        }
+        $swapOnCmd = Util::which('swapon');
+        $result    = Processes::mwExec("{$swapOnCmd} {$swapFile}");
+        Util::sysLogMsg('Swap', 'connect swap result: ' . $result, LOG_INFO);
+    }
+
+    /**
+     * Создает swap файл на storage.
+     * @param $swapFile
+     */
+    private function makeSwapFile($swapFile):void{
+        $swapLabel  = Util::which('swaplabel');
+        if(Processes::mwExec("{$swapLabel} {$swapFile}") === 0){
+            // Файл уже существует.
+            return;
+        }
         if (file_exists($swapFile)) {
             unlink($swapFile);
         }
 
         $size     = $this->getStorageFreeSpaceMb();
-        $swapSize = 0;
-        if ($size > 4000) {
-            $swapSize = 2048;
-        } elseif ($size > 2000) {
+        if ($size > 2000) {
             $swapSize = 1024;
         } elseif ($size > 1000) {
             $swapSize = 512;
-        }
-        if ($swapSize === 0) {
+        }else{
+            // Не достаточно свободного места.
             return;
         }
-
         $bs         = 1024;
         $countBlock = $swapSize * $bs;
         $ddCmd      = Util::which('dd');
@@ -1223,10 +1240,6 @@ class Storage extends Di\Injectable
 
         $mkSwapCmd = Util::which('mkswap');
         Processes::mwExec("{$mkSwapCmd} {$swapFile}");
-
-        $swapOnCmd = Util::which('swapon');
-        $result    = Processes::mwExec("{$swapOnCmd} {$swapFile}");
-        Util::sysLogMsg('Swap', 'connect swap result: ' . $result, LOG_INFO);
     }
 
     /**
