@@ -23,7 +23,7 @@ class SyslogConf extends Injectable
      * Restarts syslog daemon
      */
     public function reStart(): void
-    {
+    {   Processes::killByName('syslogd');
         $this->generateConfigFile();
         $syslogPath = Util::which(self::PROC_NAME);
         $pid = Processes::getPidOfProcess(self::PROC_NAME);
