@@ -51,6 +51,7 @@ class SyslogConf extends Injectable
                 '*.* '."{$log_file}\n";
         Util::fileWriteContent(self::CONF_FILE, $conf);
         Util::createUpdateSymlink($log_file, '/var/log/messages');
+        Util::mwMkdir('/etc/rsyslog.d');
 
     }
 
