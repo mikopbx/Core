@@ -36,7 +36,7 @@ The system has an easy and convenient web interface, call recording, conference 
 * The english [website](https://www.mikopbx.com)
 
 ## Getting Started
-1. Download [latest released](https://github.com/mikopbx/Core/releases/download/latest) ISO file in assets section
+1. Download [latest released](https://github.com/mikopbx/Core/releases/latest) ISO file in assets section
 2. Create a new virtual machine (e.g. VMware Player)
 3. Select **Other Linux 4.x kernel 64-bit** on the virtual machine settings
 4. Boot from ISO firmware and install MikoPBX on storage according to internal instructions.
@@ -49,7 +49,7 @@ Or follow our wiki for [additional instructions](https://wiki.mikopbx.com/en:set
 * Easy to install and easy to setup.
 * Multilanguage interface with community-supported translation service.
 * Wiki documentation with context helpers on the web interface.
-* Latest PJSIP stack and [Asterisk](https://www.asterisk.org) LTS 16 release installed.
+* Latest PJSIP stack and Asterisk LTS 16 release installed.
 * Fail2Ban and iptables already included.
 * Modular architecture.
 * Plugins marketplace.
