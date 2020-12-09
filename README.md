@@ -40,7 +40,7 @@ The system has an easy and convenient web interface, call recording, conference 
 2. Create a new virtual machine (e.g. VMware Player)
 3. Select **Other Linux 4.x kernel 64-bit** on the virtual machine settings
 4. Boot from ISO firmware and install MikoPBX on storage according to internal instructions.
-5. Continue set up your PBX system over a web interface with default credentials (Username: *admin*  password: *admin*)
+5. Continue set up your PBX system over a web interface with default credentials Username: *admin*  password: *admin*
 
 Or follow our wiki for [additional instructions](https://wiki.mikopbx.com/en:setup#live_cd).
 
