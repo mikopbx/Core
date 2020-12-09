@@ -89,7 +89,7 @@ The chat with developers you can find on [telegram](https://t.me/mikopbx_dev)
 ## Interface and documentation translation
 We have already translated the web interface on several languages by Google translation service for the next list of languages:
 <p align="center">
-<img src="https://github.com/mikopbx/assets/raw/master/img/screenshots/LanguageSettings.png"/>
+<img src="https://github.com/mikopbx/assets/raw/master/img/screenshots/LanguageSettings2.png"/>
 </p>
 
 If you find some mistakes, you are welcome to fix it on [Weblate](https://weblate.mikopbx.com) translation service.
@@ -116,6 +116,6 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License along with this program.  
+You should have received a copy of the GNU General Public License along with this program.
 If not, see <https://www.gnu.org/licenses/>.
 The software licensed under the GPL-3.0 License.
