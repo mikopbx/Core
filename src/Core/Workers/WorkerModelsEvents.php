@@ -45,6 +45,7 @@ use MikoPBX\Core\System\{BeanstalkClient,
     Configs\NTPConf,
     Configs\PHPConf,
     Configs\SSHConf,
+    Configs\SyslogConf,
     PBX,
     Processes,
     System,
@@ -82,6 +83,7 @@ class WorkerModelsEvents extends WorkerBase
     private const R_PHP_FPM = 'reloadPHPFPM';
 
     private const R_TIMEZONE = 'updateTomeZone';
+    private const R_SYSLOG   = 'restartSyslogD';
 
     private const R_SSH = 'reloadSSH';
 
@@ -119,13 +121,14 @@ class WorkerModelsEvents extends WorkerBase
         $this->arrObject = $this->di->getShared('pbxConfModules');
 
         $this->PRIORITY_R = [
+            self::R_TIMEZONE,
+            self::R_SYSLOG,
             self::R_REST_API_WORKER,
             self::R_NETWORK,
             self::R_FIREWALL,
             self::R_SSH,
             self::R_LICENSE,
             self::R_NATS,
-            self::R_TIMEZONE,
             self::R_NTP,
             self::R_PHP_FPM,
             self::R_NGINX,
@@ -301,6 +304,7 @@ class WorkerModelsEvents extends WorkerBase
                     $this->modified_tables[self::R_NGINX]           = true;
                     $this->modified_tables[self::R_PHP_FPM]         = true;
                     $this->modified_tables[self::R_REST_API_WORKER] = true;
+                    $this->modified_tables[self::R_SYSLOG]        = true;
                 }
                 if ($pbxSettings->itHasNTPSettings()) {
                     $this->modified_tables[self::R_NTP] = true;
@@ -505,6 +509,16 @@ class WorkerModelsEvents extends WorkerBase
     public function updateTomeZone(): void
     {
         System::timezoneConfigure();
+    }
+
+    /**
+     * Перезапуск rsyslog.
+     */
+    public function restartSyslogD(): void
+    {
+        // Рестарт демона Syslog.
+        $syslogConf = new SyslogConf();
+        $syslogConf->reStart();
     }
 
     /**
