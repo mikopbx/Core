@@ -28,6 +28,12 @@ class SystemLoader extends Di\Injectable
     public function startSystem(): bool
     {
         $this->di->getShared('registry')->booting = true;
+
+        $system = new System();
+        Util::echoWithSyslog(' - Configuring timezone ... ');
+        $system::timezoneConfigure();
+        Util::echoGreenDone();
+
         $storage                          = new Storage();
         Util::echoWithSyslog(' - Mount storage disk... ');
         $storage->saveFstab();
@@ -67,17 +73,12 @@ class SystemLoader extends Di\Injectable
         Util::echoGreenDone();
 
         Util::echoWithSyslog(' - Load kernel modules ... ');
-        $system = new System();
         $system->loadKernelModules();
         Util::echoGreenDone();
 
         Util::echoWithSyslog(' - Configuring VM tools ... ');
         $vmwareTools = new VMWareToolsConf();
         $vmwareTools->configure();
-        Util::echoGreenDone();
-
-        Util::echoWithSyslog(' - Configuring timezone ... ');
-        $system->timezoneConfigure();
         Util::echoGreenDone();
 
         Util::echoWithSyslog(' - Configuring hostname ... ');
