@@ -69,11 +69,10 @@ MikoPBX usually loads from read-only *offload* partition. If you want to change 
 
 If you want to add some new functionality, we strongly advise you look at [ModuleTemplate](https://github.com/mikopbx/ModuleTemplate) repository.
 
-For some easy customisations, you can use a dialplan application point on a menu.
+For some easy customisations, you can use a dialplan application point on a menu. Dialplan application supports PHP-AGI or Asterisk Dialplan language.
  <p align="center">
      <img src="https://github.com/mikopbx/assets/raw/master/img/screenshots/ApplicationEditor.png"/>
  </p>
- Dialplan application supports PHP-AGI or Asterisk Dialplan language.
 
 Or direct system file customisation on the web interface.
 <p align="center">
