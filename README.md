@@ -89,7 +89,7 @@ The chat with developers you can find on [telegram](https://t.me/mikopbx_dev)
 ## Interface and documentation translation
 We have already translated the web interface on several languages by Google translation service for the next list of languages:
 <p align="center">
-<img src="https://github.com/mikopbx/assets/raw/master/img/screenshots/LanguageSettings2.png"/>
+<img src="https://github.com/mikopbx/assets/raw/master/img/screenshots/LanguageSettings2.png" height="500"/>
 </p>
 
 If you find some mistakes, you are welcome to fix it on [Weblate](https://weblate.mikopbx.com) translation service.
