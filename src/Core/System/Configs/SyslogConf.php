@@ -16,15 +16,20 @@ use Phalcon\Di\Injectable;
 
 class SyslogConf extends Injectable
 {
-    public const CONF_FILE='/etc/rsyslog.conf';
-    public const PROC_NAME='rsyslogd';
+    public const CONF_FILE   ='/etc/rsyslog.conf';
+    public const PROC_NAME   ='rsyslogd';
+    public const SYS_LOG_LINK='/var/log/messages';
 
     /**
      * Restarts syslog daemon
      */
     public function reStart(): void
-    {   Processes::killByName('syslogd');
+    {
         $this->generateConfigFile();
+
+        $logreadPath = Util::which('logread');
+        Processes::mwExec("{$logreadPath} >> " . self::SYS_LOG_LINK);
+        Processes::killByName('syslogd');
         $syslogPath = Util::which(self::PROC_NAME);
         $pid = Processes::getPidOfProcess(self::PROC_NAME);
         if ( ! empty($pid)) {
@@ -42,7 +47,7 @@ class SyslogConf extends Injectable
         $log_file    = self::getSyslogFile();
         $conf = ''."\n".
                 '$ModLoad imuxsock'."\n".
-                '$ModLoad imklog'."\n".
+                // '$ModLoad imklog'."\n".
                 'template(name="mikopbx" type="string"'."\n".
                 '  string="%TIMESTAMP:::date-rfc3164% %syslogfacility-text%.%syslogseverity-text% %syslogtag% %msg%\n"'."\n".
                 ')'."\n".
@@ -50,7 +55,7 @@ class SyslogConf extends Injectable
                 '$IncludeConfig /etc/rsyslog.d/*.conf'."\n".
                 '*.* '."{$log_file}\n";
         Util::fileWriteContent(self::CONF_FILE, $conf);
-        Util::createUpdateSymlink($log_file, '/var/log/messages');
+        Util::createUpdateSymlink($log_file, self::SYS_LOG_LINK);
         Util::mwMkdir('/etc/rsyslog.d');
 
     }
