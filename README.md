@@ -20,7 +20,7 @@
 ```
 
 ## What's MikoPBX?
-MikoPBX is an open-source GUI (graphical user interface) that controls and manages Asterisk© (PBX). MikoPBX is licensed under GPL. MikoPBX is an entirely modular GUI for Asterisk written in PHP and Javascript. Meaning you can simply write any module you can think of and distribute it free of cost to your clients so that they can take advantage of beneficial features in [Asterisk](http://www.asterisk.org/ "Asterisk Home Page")
+MikoPBX is an open-source GUI (graphical user interface) that controls and manages Asterisk (PBX). MikoPBX is licensed under GPL. MikoPBX is an entirely modular GUI for Asterisk written in PHP and Javascript. Meaning you can simply write any module you can think of and distribute it free of cost to your clients so that they can take advantage of beneficial features in [Asterisk](http://www.asterisk.org/ "Asterisk Home Page")
 
 <p align="center">
     <a href="https://www.mikopbx.com">
@@ -40,14 +40,14 @@ The system has an easy and convenient web interface, call recording, conference 
 2. Create a new virtual machine (e.g. VMware Player)
 3. Select **Other Linux 4.x kernel 64-bit** on the virtual machine settings
 4. Boot from ISO firmware and install MikoPBX on storage according to internal instructions.
-5. Continue set up your PBX system over a web interface with default credentials Username: *admin*  password: *admin*
+5. Continue set up your PBX system over a web interface with default credentials. Username: *admin*  password: *admin*
 
 Or follow our wiki for [additional instructions](https://wiki.mikopbx.com/en:setup#live_cd).
 
 ## Features
 * A very little Linux distributive.
 * Easy to install and easy to setup.
-* Multilanguage interface with community-supported translation service.
+* Multilingual interface with community-supported translation service.
 * Wiki documentation with context helpers on the web interface.
 * Latest PJSIP stack and Asterisk LTS 16 release installed.
 * Fail2Ban and iptables already included.
@@ -65,11 +65,7 @@ Up to 25 | 3 GHz x86-64, 1 GB RAM
 More than 25 | Dual CPUs 3 GHz x86-64, 2 MB RAM or more
 
 ## How to modify your system
-MikoPBX usually loads from read-only *offload* partition. If you want to change something in the core module, you should remount the partition to *write mode* with a console (SSH) command **remount-offload**
-
-If you want to add some new functionality, we strongly advise you look at [ModuleTemplate](https://github.com/mikopbx/ModuleTemplate) repository.
-
-For some easy customisations, you can use a dialplan application point on a menu. Dialplan application supports PHP-AGI or Asterisk Dialplan language.
+For some easy customisations, you can use a dialplan application point on a menu. The *dialplan applications* supports PHP-AGI or Asterisk Dialplan language.
  <p align="center">
      <img src="https://github.com/mikopbx/assets/raw/master/img/screenshots/ApplicationEditor.png"/>
  </p>
@@ -78,6 +74,10 @@ Or direct system file customisation on the web interface.
 <p align="center">
 <img src="https://github.com/mikopbx/assets/raw/master/img/screenshots/SystemFileCustomization.png"/>
 </p>
+
+MikoPBX usually loads from read-only *offload* partition. If you want to change something in the core module, you should remount the partition to *write mode* with a console (SSH) command **remount-offload**
+
+If you want to add some new functionality, we strongly advise you look at [ModuleTemplate](https://github.com/mikopbx/ModuleTemplate) repository.
 
 ## How to report bugs and issues?
 Be free to report about it [here](https://github.com/mikopbx/Core/issues)
@@ -95,7 +95,7 @@ We have already translated the web interface on several languages by Google tran
 If you find some mistakes, you are welcome to fix it on [Weblate](https://weblate.mikopbx.com) translation service.
 
 ## Support
-We offer [paid support](https://www.mikopbx.com/support/) from MIKO LLC., the company behind MikoPBX.
+We offer [paid support](https://www.mikopbx.com/support/) from MIKO LLC., the company behind  MikoPBX.
 
 Or you can ask for community help [here](https://github.com/mikopbx/Core/discussions) or [here](https://qa.askozia.ru)
 
@@ -103,4 +103,19 @@ Or you can ask for community help [here](https://github.com/mikopbx/Core/discuss
 Become a sponsor and get your logo on our README on Github with a link to your site. [Become a sponsor](https://patreon.com/mikopbx)
 
 ## License
-MikoPBX is open source software licensed under the GPL-3.0 License.
+MikoPBX© - free phone system for small business
+Copyright © 2017-2021 Alexey Portnov and Nikolay Beketov
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with this program.  
+If not, see <https://www.gnu.org/licenses/>.
+The software licensed under the GPL-3.0 License.
