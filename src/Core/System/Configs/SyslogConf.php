@@ -26,10 +26,12 @@ class SyslogConf extends Injectable
     public function reStart(): void
     {
         $this->generateConfigFile();
-
-        $logreadPath = Util::which('logread');
-        Processes::mwExec("{$logreadPath} >> " . self::SYS_LOG_LINK);
-        Processes::killByName('syslogd');
+        $pidSyslogD = Processes::getPidOfProcess('syslogd', self::PROC_NAME);
+        if(!empty($pidSyslogD)){
+            $logreadPath = Util::which('logread');
+            Processes::mwExec("{$logreadPath} >> " . self::SYS_LOG_LINK);
+            Processes::killByName('syslogd');
+        }
         $syslogPath = Util::which(self::PROC_NAME);
         $pid = Processes::getPidOfProcess(self::PROC_NAME);
         if ( ! empty($pid)) {
