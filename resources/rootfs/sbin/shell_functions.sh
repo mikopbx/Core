@@ -53,9 +53,6 @@ f_umount()
     device=$(/bin/mount | /bin/busybox grep "$filter" | /bin/busybox awk  '{ print $1}');
     mountPoint=$(/bin/mount | /bin/busybox grep "$filter" | /bin/busybox awk  '{ print $3}');
 
-    killprocesses "$device" -KILL 0;
-    killprocesses "$mountPoint" -KILL 0;
-
     res=$(/bin/mount | /bin/busybox grep "^${device}");
     if [ "${res}x" != "x" ]; then
         echo " |   - try umount device=${device}, mount point=${mountPoint}";
