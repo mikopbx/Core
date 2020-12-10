@@ -47,6 +47,7 @@ class SyslogConf extends Injectable
      */
     private function generateConfigFile():void{
         $log_file    = self::getSyslogFile();
+        file_put_contents($log_file, '', FILE_APPEND);
         $conf = ''."\n".
                 '$ModLoad imuxsock'."\n".
                 // '$ModLoad imklog'."\n".
