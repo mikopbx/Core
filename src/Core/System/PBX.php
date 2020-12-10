@@ -270,9 +270,9 @@ class PBX extends Injectable
         $result     = false;
         $out        = [];
         if (Util::isSystemctl()) {
-            $options = '';
-        } else {
             $options = '-t';
+        } else {
+            $options = '';
         }
         $timeoutPath  = Util::which('timeout');
         $asteriskPath = Util::which('asterisk');
