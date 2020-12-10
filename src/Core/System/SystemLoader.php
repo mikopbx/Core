@@ -29,12 +29,17 @@ class SystemLoader extends Di\Injectable
     {
         $this->di->getShared('registry')->booting = true;
 
+        Util::echoWithSyslog(' - Start beanstalkd daemon...');
+        $beanstalkConf = new BeanstalkConf();
+        $beanstalkConf->reStart();
+        Util::echoGreenDone();
+
         $system = new System();
         Util::echoWithSyslog(' - Configuring timezone ... ');
         $system::timezoneConfigure();
         Util::echoGreenDone();
 
-        $storage                          = new Storage();
+        $storage       = new Storage();
         Util::echoWithSyslog(' - Mount storage disk... ');
         $storage->saveFstab();
         $storage->configure();
@@ -44,19 +49,9 @@ class SystemLoader extends Di\Injectable
         $storage->mountSwap();
         Util::echoGreenDone();
 
-        Util::echoWithSyslog(' - Configuring network loopback interface ... ');
-        $network = new Network();
-        $network->loConfigure();
-        Util::echoGreenDone();
-
         Util::echoWithSyslog(' - Start syslogd daemon...');
         $syslogConf = new SyslogConf();
         $syslogConf->reStart();
-        Util::echoGreenDone();
-
-        Util::echoWithSyslog(' - Start beanstalkd daemon...');
-        $beanstalkConf = new BeanstalkConf();
-        $beanstalkConf->reStart();
         Util::echoGreenDone();
         
         $dbUpdater = new UpdateDatabase();
@@ -82,6 +77,7 @@ class SystemLoader extends Di\Injectable
         Util::echoGreenDone();
 
         Util::echoWithSyslog(' - Configuring hostname ... ');
+        $network = new Network();
         $network->hostnameConfigure();
         Util::echoGreenDone();
 

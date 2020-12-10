@@ -1,3 +1,4 @@
+::sysinit:/bin/busybox ifconfig lo 127.0.0.1
 ::sysinit:/sbin/syslogd -S -C512
 ::sysinit:/sbin/mikopbx_boot_init 2> /dev/null
 ::sysinit:/etc/rc/bootup 2> /dev/null
