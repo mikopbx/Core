@@ -11,6 +11,8 @@ namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\LoginForm;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Providers\ManagedCacheProvider;
+use MikoPBX\Common\Providers\ModelsCacheProvider;
 use MikoPBX\Core\System\Util;
 
 /**
@@ -35,11 +37,11 @@ class SessionController extends BaseController
      */
     private function flushCache(): void
     {
-        if ($this->di->has('modelsCache')) {
-            $this->di->getShared('modelsCache')->clear();
+        if ($this->di->has(ModelsCacheProvider::SERVICE_NAME)) {
+            $this->di->getShared(ModelsCacheProvider::SERVICE_NAME)->clear();
         }
-        if ($this->di->has('managedCache')) {
-            $this->di->getShared('managedCache')->clear();
+        if ($this->di->has(ManagedCacheProvider::SERVICE_NAME)) {
+            $this->di->getShared(ManagedCacheProvider::SERVICE_NAME)->clear();
         }
     }
 

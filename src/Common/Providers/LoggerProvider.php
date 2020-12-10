@@ -15,6 +15,7 @@ use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 use Phalcon\Logger;
 use Phalcon\Logger\Adapter\Syslog;
+use Phalcon\Logger\Formatter\Line;
 
 /**
  * Logger provider writes messages to main log file
@@ -46,6 +47,8 @@ class LoggerProvider implements ServiceProviderInterface
                         'facility' => LOG_DAEMON,
                     ]
                 );
+                $formatter = new Line('%message%');
+                $adapter->setFormatter($formatter);
                 $logger =  new Logger('messages');
                 $logger->addAdapter('main', $adapter);
                 $logger->setLogLevel($logLevel);

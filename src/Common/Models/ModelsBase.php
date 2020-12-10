@@ -10,6 +10,10 @@ namespace MikoPBX\Common\Models;
 
 use MikoPBX\AdminCabinet\Plugins\CacheCleanerPlugin;
 use MikoPBX\Common\Providers\BeanstalkConnectionModelsProvider;
+use MikoPBX\Common\Providers\ManagedCacheProvider;
+use MikoPBX\Common\Providers\ModelsCacheProvider;
+use MikoPBX\Common\Providers\ModelsMetadataProvider;
+use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\System\BeanstalkClient;
 use MikoPBX\Modules\PbxExtensionUtils;
 use Phalcon\Db\Adapter\AdapterInterface;
@@ -148,7 +152,7 @@ abstract class ModelsBase extends Model
      */
     public function t($message, $parameters = [])
     {
-        return $this->getDI()->getShared('translation')->t($message, $parameters);
+        return $this->getDI()->getShared(TranslationProvider::SERVICE_NAME)->t($message, $parameters);
     }
 
     /**
@@ -544,7 +548,7 @@ abstract class ModelsBase extends Model
      */
     public function beforeValidationOnCreate(): void
     {
-        $metaData      = $this->di->get('modelsMetadata');
+        $metaData      = $this->di->get(ModelsMetadataProvider::SERVICE_NAME);
         $defaultValues = $metaData->getDefaultValues($this);
         foreach ($defaultValues as $field => $value) {
             if ( ! isset($this->{$field})) {
@@ -826,8 +830,8 @@ abstract class ModelsBase extends Model
         if ($di === null) {
             return;
         }
-        if ($di->has('managedCache')) {
-            $managedCache = $di->getShared('managedCache');
+        if ($di->has(ManagedCacheProvider::SERVICE_NAME)) {
+            $managedCache = $di->get(ManagedCacheProvider::SERVICE_NAME);
             $category     = explode('\\', $calledClass)[3];
             $keys         = $managedCache->getAdapter()->getKeys($category);
             // Delete all items from the cache
@@ -835,8 +839,8 @@ abstract class ModelsBase extends Model
                 $managedCache->deleteMultiple($keys);
             }
         }
-        if ($di->has('modelsCache')) {
-            $modelsCache = $di->getShared('modelsCache');
+        if ($di->has(ModelsCacheProvider::SERVICE_NAME)) {
+            $modelsCache = $di->getShared(ModelsCacheProvider::SERVICE_NAME);
             $category    = explode('\\', $calledClass)[3];
             $keys        = $modelsCache->getAdapter()->getKeys($category);
             // Delete all items from the cache
@@ -847,7 +851,7 @@ abstract class ModelsBase extends Model
         if ($needClearFrontedCache
             && php_sapi_name() === 'cli'
         ) {
-            $queue = $di->getShared('beanstalkConnectionCache');
+            $queue = $di->getShared(BeanstalkConnectionModelsProvider::SERVICE_NAME);
             $queue->publish(
                     $calledClass,
                     CacheCleanerPlugin::class,

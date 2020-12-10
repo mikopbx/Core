@@ -9,6 +9,7 @@
 namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
 
+use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Core\System\BeanstalkClient;
 use MikoPBX\Core\System\Util;
 use Throwable;
@@ -25,7 +26,7 @@ class WorkerBeanstalkdTidyUp extends WorkerBase
 {
     public function start($argv): void
     {
-        $managedCache = $this->di->get('managedCache');
+        $managedCache = $this->di->get(ManagedCacheProvider::SERVICE_NAME);
         $lastTubesCheck = $managedCache->get('lastTubesCheck');
         if ($lastTubesCheck === null){
             $client = new BeanstalkClient();

@@ -9,6 +9,7 @@
 
 namespace MikoPBX\PBXCoreREST\Controllers\Modules;
 
+use MikoPBX\Common\Providers\BeanstalkConnectionWorkerApiProvider;
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
 
 class ModulesControllerBase extends BaseController
@@ -53,7 +54,7 @@ class ModulesControllerBase extends BaseController
             'processor'      => 'modules',
         ]);
 
-        $response   = $this->di->getShared('beanstalkConnectionWorkerAPI')->request($request, 30, 0);
+        $response   = $this->di->getShared(BeanstalkConnectionWorkerApiProvider::SERVICE_NAME)->request($request, 30, 0);
         if ($response !== false) {
             $response = json_decode($response, true);
             if (isset($response['fpassthru'])) {

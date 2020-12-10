@@ -9,6 +9,7 @@
 namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
 
+use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Core\System\Util;
 use Throwable;
 
@@ -18,7 +19,7 @@ class WorkerLicenseChecker extends WorkerBase
 
     public function start($argv): void
     {
-        $managedCache = $this->di->get('managedCache');
+        $managedCache = $this->di->get(ManagedCacheProvider::SERVICE_NAME);
         $lastLicenseCheck = $managedCache->get('lastLicenseCheck');
         if ($lastLicenseCheck===null){
             $lic =  $this->di->getShared('license');

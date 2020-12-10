@@ -9,6 +9,7 @@
 
 namespace MikoPBX\PBXCoreREST\Controllers\Syslog;
 
+use MikoPBX\Common\Providers\BeanstalkConnectionWorkerApiProvider;
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
 use Phalcon\Di;
 
@@ -58,7 +59,7 @@ class PostController extends BaseController
                 'action'    => 'getLogFromFile',
             ]
         );
-        $connection     = $this->di->getShared('beanstalkConnectionWorkerAPI');
+        $connection     = $this->di->getShared(BeanstalkConnectionWorkerApiProvider::SERVICE_NAME);
         $response       = $connection->request($requestMessage, 5, 0);
 
         if ($response !== false) {
@@ -93,7 +94,7 @@ class PostController extends BaseController
                 'action'    => $actionName,
             ]
         );
-        $connection     = $this->di->getShared('beanstalkConnectionWorkerAPI');
+        $connection     = $this->di->getShared(BeanstalkConnectionWorkerApiProvider::SERVICE_NAME);
         $response       = $connection->request($requestMessage, 5, 0);
 
         if ($response !== false) {
