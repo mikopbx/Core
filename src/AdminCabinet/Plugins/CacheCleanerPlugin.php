@@ -9,6 +9,7 @@
 
 namespace MikoPBX\AdminCabinet\Plugins;
 
+use MikoPBX\Common\Providers\BeanstalkConnectionCacheProvider;
 use Phalcon\Di\Injectable;
 
 /**
@@ -25,7 +26,7 @@ class CacheCleanerPlugin extends Injectable
      */
     public function beforeDispatch(): bool
     {
-        $queue = $this->getDI()->getShared('beanstalkConnectionCache');
+        $queue = $this->getDI()->getShared(BeanstalkConnectionCacheProvider::SERVICE_NAME);
 
         $arrayOfClearedModels = $queue->getMessagesFromTube();
         foreach ($arrayOfClearedModels as $clearedModel) {

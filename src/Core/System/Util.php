@@ -291,7 +291,6 @@ class Util
         /** @var \Phalcon\Logger $logger */
         $logger = Di::getDefault()->getShared(LoggerProvider::SERVICE_NAME);
         $logger->log($level, "{$message} on {$ident}" );
-
         // openlog("$ident", LOG_PID | LOG_PERROR, $facility);
         // syslog($level, "$text");
         // closelog();

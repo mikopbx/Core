@@ -51,7 +51,7 @@ class MessagesProvider implements ServiceProviderInterface
 
                 // Заглянем сначала в кеш переводов
                 if ($cacheKey) {
-                    $translates = $di->get('managedCache')->get($cacheKey, 3600);
+                    $translates = $di->get(ManagedCacheProvider::SERVICE_NAME)->get($cacheKey, 3600);
                     if (is_array($translates)) {
                         return $translates;
                     }
@@ -106,7 +106,7 @@ class MessagesProvider implements ServiceProviderInterface
                     }
                 }
                 if ($cacheKey) {
-                    $di->get('managedCache')->set($cacheKey, $translates);
+                    $di->get(ManagedCacheProvider::SERVICE_NAME)->set($cacheKey, $translates);
                 }
 
                 // Return a translation object

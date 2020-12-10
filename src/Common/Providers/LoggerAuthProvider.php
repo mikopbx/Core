@@ -15,6 +15,7 @@ use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 use Phalcon\Logger;
 use Phalcon\Logger\Adapter\Syslog;
+use Phalcon\Logger\Formatter\Line;
 
 /**
  * LoggerAuth provider writes messages to main log file
@@ -40,6 +41,8 @@ class LoggerAuthProvider implements ServiceProviderInterface
                         'facility' => LOG_AUTH,
                     ]
                 );
+                $formatter = new Line('%message%');
+                $adapter->setFormatter($formatter);
                 $logger =  new Logger('messages');
                 $logger->addAdapter('main', $adapter);
                 return $logger;

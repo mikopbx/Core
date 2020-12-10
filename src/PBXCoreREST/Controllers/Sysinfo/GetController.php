@@ -8,6 +8,7 @@
 
 namespace MikoPBX\PBXCoreREST\Controllers\Sysinfo;
 
+use MikoPBX\Common\Providers\BeanstalkConnectionWorkerApiProvider;
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
 
 /**
@@ -47,7 +48,7 @@ class GetController extends BaseController
                 'action'    => 'getInfo',
             ]
         );
-        $connection     = $this->di->getShared('beanstalkConnectionWorkerAPI');
+        $connection     = $this->di->getShared(BeanstalkConnectionWorkerApiProvider::SERVICE_NAME);
         $response       = $connection->request($requestMessage, 30, 0);
         if ($response !== false) {
             $response = json_decode($response, true);

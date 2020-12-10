@@ -9,6 +9,7 @@
 
 namespace MikoPBX\PBXCoreREST\Lib;
 
+use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Core\System\Storage;
 use MikoPBX\Common\Models\{NetworkFilters, PbxSettings};
 use GuzzleHttp;
@@ -76,7 +77,7 @@ class AdvicesProcessor extends Injectable
             ['type' => 'checkRegistration', 'cacheTime' => 86400],
         ];
 
-        $managedCache = $this->getDI()->getShared('managedCache');
+        $managedCache = $this->getDI()->getShared(ManagedCacheProvider::SERVICE_NAME);
 
         $language = PbxSettings::getValueByKey('WebAdminLanguage');
 

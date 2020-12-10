@@ -154,6 +154,7 @@ class BeanstalkClient extends Injectable
     public function cleanTubes()
     {
         $tubes = $this->queue->listTubes();
+        $deletedJobInfo = [];
         foreach ($tubes as $tube) {
             try {
                 $this->queue->useTube($tube);
@@ -167,8 +168,9 @@ class BeanstalkClient extends Injectable
                         break;
                     }
                     $id = $job->getId();
+                    Util::sysLogMsg(__METHOD__, "Deleted buried job with ID {$id} from {$tube} with message {$job->getData()}", LOG_DEBUG);
                     $this->queue->delete($job);
-                    Util::sysLogMsg(__METHOD__, "Deleted buried job with ID {$id} from {$tube}", LOG_WARNING);
+                    $deletedJobInfo[]="{$id} from {$tube}";
                 }
 
                 // Delete outdated jobs
@@ -183,13 +185,17 @@ class BeanstalkClient extends Injectable
                     $age                   = (int)$jobStats['age'];
                     $expectedTimeToExecute = (int)$jobStats['ttr'] * 2;
                     if ($age > $expectedTimeToExecute) {
+                        Util::sysLogMsg(__METHOD__, "Deleted outdated job with ID {$id} from {$tube} with message {$job->getData()}", LOG_DEBUG);
                         $this->queue->delete($job);
-                        Util::sysLogMsg(__METHOD__, "Deleted outdated job with ID {$id} from {$tube}", LOG_WARNING);
+                        $deletedJobInfo[]="{$id} from {$tube}";
                     }
                 }
             } catch (Throwable $exception) {
                 Util::sysLogMsg(__METHOD__, 'Exception: ' . $exception->getMessage(), LOG_ERR);
             }
+        }
+        if (count($deletedJobInfo)>0){
+            Util::sysLogMsg(__METHOD__, "Delete outdated jobs".implode(PHP_EOL, $deletedJobInfo), LOG_WARNING);
         }
     }
 

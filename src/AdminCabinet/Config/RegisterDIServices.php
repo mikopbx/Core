@@ -25,6 +25,7 @@ use MikoPBX\Common\Providers\{BeanstalkConnectionCacheProvider,
     BeanstalkConnectionModelsProvider,
     CDRDatabaseProvider,
     LoggerAuthProvider,
+    LoggerProvider,
     MainDatabaseProvider,
     ManagedCacheProvider,
     ModelsCacheProvider,
@@ -91,8 +92,9 @@ class RegisterDIServices
             // Inject Registry
             RegistryProvider::class,
 
-             // Inject LoggerAuth
-            LoggerAuthProvider::class
+             // Inject Logger
+            LoggerAuthProvider::class,
+            LoggerProvider::class
 
         ];
 

@@ -11,6 +11,7 @@ namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
 
 use MikoPBX\Common\Models\PbxExtensionModules;
+use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Core\System\Configs\NatsConf;
 use MikoPBX\Core\System\Configs\PHPConf;
 use MikoPBX\Core\System\PBX;
@@ -27,7 +28,7 @@ class WorkerLogRotate extends WorkerBase
      */
     public function start($params): void
     {
-        $managedCache = $this->di->get('managedCache');
+        $managedCache = $this->di->get(ManagedCacheProvider::SERVICE_NAME);
         $lastLogRotate = $managedCache->get('lastCoreWorkerLogRotateProcessing');
         if ($lastLogRotate===null){
             //System Logs
