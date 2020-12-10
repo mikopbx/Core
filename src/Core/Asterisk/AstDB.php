@@ -21,13 +21,22 @@ class AstDB extends Di\Injectable
      */
     private SQLite3 $db;
     private AsteriskManager $am;
+    private bool $booting;
 
     /**
      * AstDB constructor.
      */
     public function __construct()
     {
-        $this->am = Util::getAstManager('off');
+        $di = Di::getDefault();
+        $this->booting = ($di->getShared('registry')->booting === true);
+
+        if(!$this->booting){
+            Util::echoWithSyslog(' - Start Util::getAstManager'.PHP_EOL);
+            $this->am = Util::getAstManager('off');
+            Util::echoWithSyslog(' - End call Util::getAstManager...'.PHP_EOL);
+        }
+
         $this->db = new SQLite3($this->getDI()->getShared('config')->path('astDatabase.dbfile'));
         $this->db->busyTimeout(1000);
         $this->db->enableExceptions(true);
@@ -80,7 +89,7 @@ EOF;
     public function databasePut($family, $key, $value): bool
     {
         $result = false;
-        if ($this->db === null || $this->am->loggedIn()) {
+        if (!$this->booting && ($this->db === null || $this->am->loggedIn()) ) {
             $result = $this->databasePutAmi($family, $key, $value);
         }
         if ($result === true || $this->db === null) {

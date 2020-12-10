@@ -122,12 +122,6 @@ class SystemLoader extends Di\Injectable
         PHPConf::reStart();
         Util::echoGreenDone();
 
-        Util::echoWithSyslog(' - Start Nginx daemon...');
-        $nginx = new NginxConf();
-        $nginx->generateConf();
-        $nginx->reStart();
-        Util::echoGreenDone();
-
         Util::echoWithSyslog(' - Configuring Asterisk...'.PHP_EOL);
         $pbx                              = new PBX();
         $pbx->configure();
@@ -138,9 +132,19 @@ class SystemLoader extends Di\Injectable
         $system->onAfterPbxStarted();
         Util::echoGreenDone();
 
+        Util::echoWithSyslog(' - Wait asterisk fully booted... ');
+        PBX::waitFullyBooted();
+        Util::echoGreenDone();
+
         Util::echoWithSyslog(' - Configuring Cron tasks... ');
         $cron = new CronConf();
         $cron->reStart();
+        Util::echoGreenDone();
+
+        Util::echoWithSyslog(' - Start Nginx daemon...');
+        $nginx = new NginxConf();
+        $nginx->generateConf();
+        $nginx->reStart();
         Util::echoGreenDone();
 
         $this->di->getShared('registry')->booting = false;

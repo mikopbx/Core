@@ -36,8 +36,14 @@ class CdrDb
      */
     public static function checkDb(): void
     {
-        $am          = Util::getAstManager('off');
-        $channels_id = $am->GetChannels(true);
+        $di = Di::getDefault();
+        $booting = ($di->getShared('registry')->booting === true);
+
+        // Если booting, то asterisk не запущен.
+        if(!$booting){
+            $am          = Util::getAstManager('off');
+            $channels_id = $am->GetChannels();
+        }
 
         /** @var CallDetailRecordsTmp $data_cdr */
         /** @var CallDetailRecordsTmp $row_cdr */
