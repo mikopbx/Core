@@ -45,13 +45,29 @@ killprocess_by_name()
 
 f_umount()
 {
-    res=$(/bin/mount | /bin/busybox grep "${1} type");
+    if [ -b "$1" ]; then
+      filter="^$1";
+    else
+      filter="${1} type";
+    fi
+    device=$(/bin/mount | /bin/busybox grep "$filter" | /bin/busybox awk  '{ print $1}');
+    mountPoint=$(/bin/mount | /bin/busybox grep "$filter" | /bin/busybox awk  '{ print $3}');
+
+    killprocesses "$device" -KILL 0;
+    killprocesses "$mountPoint" -KILL 0;
+
+    res=$(/bin/mount | /bin/busybox grep "^${device}");
     if [ "${res}x" != "x" ]; then
-        result=$(/bin/umount -f "$1" 2>&1);
+        echo " |   - try umount device=${device}, mount point=${mountPoint}";
+        result=$(/bin/umount -f "$device" 2>&1);
         if [ "${result}x" != "x" ]; then
-            echo " |   - ERROR umount ${result}";
-            /bin/umount -l "$1" > /dev/null 2 > /dev/null;
+            /bin/umount -l "$device" >/dev/null 2> /dev/null;
         fi
+    fi
+
+    res=$(/bin/mount | /bin/busybox grep "^${device}");
+    if [ "${res}x" != "x" ]; then
+       echo " |   - ERROR umount '${device}' / '${mountPoint}'";
     fi
 }
 

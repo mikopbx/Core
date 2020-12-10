@@ -1,6 +1,6 @@
 #!/bin/sh
 
-PATH=/sbin:/bin
+PATH=/sbin:/bin:/usr/bin:/usr/sbin
 export PATH
 
 if [ -f /sbin/shell_functions.sh ]; then
@@ -14,9 +14,11 @@ if [ -f "$file_storage_device" ] ; then
     storage=$(cat "$file_storage_device");
 fi;
 
+killprocess_by_name 'cron' -KILL 0;
+killprocess_by_name 'safe_asterisk' -KILL 0;
 killprocess_by_name 'pdnsd' -KILL 0;
 killprocesses '/sbin/monitord' -KILL 1;
 killprocesses "$storage" -TERM 3;
-killprocesses "$storage" -KILL 0;
+killprocesses "$storage" -KILL 1;
 
 f_umount "$storage";
