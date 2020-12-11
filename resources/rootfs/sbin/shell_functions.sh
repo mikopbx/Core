@@ -43,6 +43,18 @@ killprocess_by_name()
     sleep "$3"
 }
 
+freeSwapByName(){
+  storage=$1;
+  handles=$(/sbin/swapon -s | /bin/busybox grep "$storage" | /bin/busybox awk  '{ print $1}');
+  for handle in $handles
+  do
+      if [ -f "$handle" ] || [ -b "$handle" ]; then
+        /sbin/swapoff "$handle";
+        echo " |   - umount swap ${handle} return $?"
+      fi
+  done
+}
+
 f_umount()
 {
     if [ -b "$1" ]; then
@@ -52,6 +64,10 @@ f_umount()
     fi
     device=$(/bin/mount | /bin/busybox grep "$filter" | /bin/busybox awk  '{ print $1}');
     mountPoint=$(/bin/mount | /bin/busybox grep "$filter" | /bin/busybox awk  '{ print $3}');
+
+    if [ "${device}x" = "x" ]; then
+      return;
+    fi;
 
     res=$(/bin/mount | /bin/busybox grep "^${device}");
     if [ "${res}x" != "x" ]; then
