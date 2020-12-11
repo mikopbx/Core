@@ -38,7 +38,7 @@ class CdrDb
     {
         $di = Di::getDefault();
         $booting = ($di->getShared('registry')->booting === true);
-
+        $channels_id = [];
         // Если booting, то asterisk не запущен.
         if(!$booting){
             $am          = Util::getAstManager('off');
