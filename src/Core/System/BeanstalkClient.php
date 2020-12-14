@@ -77,14 +77,14 @@ class BeanstalkClient extends Injectable
      * @param int  $timeout
      * @param int  $priority
      *
-     * @return bool|mixed
+     * @return bool|string
      *
      */
-    public function reqrequestuest(
+    public function request(
         $job_data,
         int $timeout = 10,
         int $priority = PheanstalkInterface::DEFAULT_PRIORITY
-    ) {
+    ): bool|string {
         $this->message = false;
         $inbox_tube    = uniqid(self::INBOX_PREFIX, true);
         $this->queue->watch($inbox_tube);
