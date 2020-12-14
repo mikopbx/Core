@@ -1167,6 +1167,10 @@ class WorkerCallEvents extends WorkerBase
         if ( ! $res) {
             Util::sysLogMsg(__FUNCTION__, implode(' ', $m_data->getMessages()), LOG_ERR);
         }
+        if($res && $m_data->work_completed === "1"){
+            // Удаляем данные из временной таблицы, они уже перемещены в постоянную.
+            $m_data->delete();
+        }
 
         /**
          * Отправка UserEvent
