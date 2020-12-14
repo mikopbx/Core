@@ -35,6 +35,7 @@ class WorkerLogRotate extends WorkerBase
             NatsConf::logRotate();
             PHPConf::rotateLog();
             PBX::logRotate();
+            SyslogConf::rotatePbxLog();
 
             //Modules Logs
             $plugins = PbxExtensionModules::getEnabledModulesArray();

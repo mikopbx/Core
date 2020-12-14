@@ -12,6 +12,7 @@ namespace MikoPBX\Core\System\Configs;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
+use Phalcon\Di;
 use Phalcon\Di\Injectable;
 
 class SyslogConf extends Injectable
@@ -72,5 +73,45 @@ class SyslogConf extends Injectable
         $logdir = System::getLogDir() . '/system';
         Util::mwMkdir($logdir);
         return "$logdir/messages";
+    }
+
+
+    public static function rotatePbxLog(): void
+    {
+        $syslogPath  = Util::which(self::PROC_NAME);
+        $killAllPath = Util::which('killall');
+        $chownPath   = Util::which('chown');
+        $touchPath   = Util::which('touch');
+
+        $di          = Di::getDefault();
+        $max_size    = 3;
+        $logFile     = self::getSyslogFile();
+        $text_config = "{$logFile} {
+    nocreate
+    nocopytruncate
+    delaycompress
+    nomissingok
+    start 0
+    rotate 9
+    size {$max_size}M
+    missingok
+    noolddir
+    postrotate
+        {$killAllPath} ".self::PROC_NAME." > /dev/null 2> /dev/null
+        {$touchPath} {$logFile}
+        {$chownPath} www:www {$logFile}> /dev/null 2> /dev/null
+        {$syslogPath} > /dev/null 2> /dev/null
+    endscript
+}";
+        $varEtcDir  = $di->getShared('config')->path('core.varEtcDir');
+        $path_conf   = $varEtcDir . '/'.self::PROC_NAME.'_logrotate.conf';
+        file_put_contents($path_conf, $text_config);
+        $mb10 = $max_size * 1024 * 1024;
+        $options = '';
+        if (Util::mFileSize($logFile) > $mb10) {
+            $options = '-f';
+        }
+        $logrotatePath = Util::which('logrotate');
+        Processes::mwExecBg("{$logrotatePath} {$options} '{$path_conf}' > /dev/null 2> /dev/null");
     }
 }
