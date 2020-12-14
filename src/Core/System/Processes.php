@@ -71,7 +71,7 @@ class Processes
         }
         $nohupPath   = Util::which('nohup');
         $timeoutPath = Util::which('timeout');
-        exec("{$nohupPath} {$timeoutPath} -t {$timeout} {$command} > {$logname} 2>&1 &");
+        exec("{$nohupPath} {$timeoutPath} {$timeout} {$command} > {$logname} 2>&1 &");
     }
 
     /**

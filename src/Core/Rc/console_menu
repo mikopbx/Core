@@ -372,8 +372,8 @@ $menu = (new CliMenuBuilder())
             }
             $pingPath    = Util::which('ping');
             $timeoutPath = Util::which('timeout');
-            passthru("{$command} {$timeoutPath} -t 4 {$pingPath} -c3 " . escapeshellarg($pinghost));
-            passthru("{$command} {$timeoutPath} -t 4 {$pingPath} -c3 " . escapeshellarg($pinghost));
+            passthru("{$command} {$timeoutPath} 4 {$pingPath} -c3 " . escapeshellarg($pinghost));
+            passthru("{$command} {$timeoutPath} 4 {$pingPath} -c3 " . escapeshellarg($pinghost));
         }
     )
     ->addItem(

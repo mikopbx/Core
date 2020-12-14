@@ -231,7 +231,7 @@ class Storage extends Di\Injectable
         $timeoutPath = Util::which('timeout');
         $sshfsPath   = Util::which('sshfs');
 
-        $command = "{$timeoutPath} -t 3 {$sshfsPath} -p {$port} -o nonempty -o password_stdin -o 'StrictHostKeyChecking=no' " .
+        $command = "{$timeoutPath} 3 {$sshfsPath} -p {$port} -o nonempty -o password_stdin -o 'StrictHostKeyChecking=no' " .
             "{$user}@{$host}:{$remout_dir} {$local_dir} << EOF\n" .
             "{$pass}\n" .
             "EOF\n";
@@ -283,7 +283,7 @@ class Storage extends Di\Injectable
 
         $timeoutPath   = Util::which('timeout');
         $curlftpfsPath = Util::which('curlftpfs');
-        $command       = "{$timeoutPath} -t 3 {$curlftpfsPath}  -o allow_other -o {$auth_line}fsname={$host} {$connect_line} {$local_dir}";
+        $command       = "{$timeoutPath} 3 {$curlftpfsPath}  -o allow_other -o {$auth_line}fsname={$host} {$connect_line} {$local_dir}";
         Processes::mwExec($command, $out);
         $response = trim(implode('', $out));
         if ('Terminated' === $response) {
