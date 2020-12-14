@@ -16,6 +16,7 @@ use Throwable;
 
 class BeanstalkClient extends Injectable
 {
+    public const INBOX_PREFIX='INBOX_';
     /** @var Pheanstalk */
     private Pheanstalk $queue;
     private bool $connected = false;
@@ -79,13 +80,13 @@ class BeanstalkClient extends Injectable
      * @return bool|mixed
      *
      */
-    public function request(
+    public function reqrequestuest(
         $job_data,
         int $timeout = 10,
         int $priority = PheanstalkInterface::DEFAULT_PRIORITY
     ) {
         $this->message = false;
-        $inbox_tube    = uniqid('INBOX_', true);
+        $inbox_tube    = uniqid(self::INBOX_PREFIX, true);
         $this->queue->watch($inbox_tube);
 
         // Send message to backend worker
@@ -156,6 +157,11 @@ class BeanstalkClient extends Injectable
         $tubes = $this->queue->listTubes();
         $deletedJobInfo = [];
         foreach ($tubes as $tube) {
+            if(strpos($tube, self::INBOX_PREFIX) !== 0){
+                // Чистим только INBOX очереди.
+                // Только для них может случится, что нет worker для обработки.
+                continue;
+            }
             try {
                 $this->queue->useTube($tube);
                 $queueStats = $this->queue->stats()->getArrayCopy();
