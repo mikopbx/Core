@@ -209,7 +209,7 @@ class QueueConf extends ConfigClass
                 $queue_ext_conf .= "same => n,Set(CALLERID(name)={$calleridPrefix}:".'${CALLERID(name)}'.") \n\t";
             }
 
-            $queue_ext_conf .= "same => n,Queue({$queue['uniqid']},CkT{$options},,,{$ringlength},,,queue_agent_answer) \n\t";
+            $queue_ext_conf .= "same => n,Queue({$queue['uniqid']},kT{$options},,,{$ringlength},,,queue_agent_answer) \n\t";
             // Оповестим о завершении работы очереди.
             $queue_ext_conf .= 'same => n,Gosub(queue_end,${EXTEN},1)' . "\n\t";
 

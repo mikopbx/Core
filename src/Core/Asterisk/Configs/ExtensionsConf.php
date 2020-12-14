@@ -102,7 +102,7 @@ class ExtensionsConf extends ConfigClass
 
         // Описываем возможность прыжка в пользовательский sub контекст.
         $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1)' . "\n\t";
-        $conf .= 'same => n,Dial(Local/${EXTEN}@internal-users/n${ADDITIONAL_PEER},60,cTteKkHhb(originate_create_chan,s,1))' . " \n\n";
+        $conf .= 'same => n,Dial(Local/${EXTEN}@internal-users/n${ADDITIONAL_PEER},60,TteKkHhb(originate_create_chan,s,1))' . " \n\n";
 
         $conf .= '[originate_create_chan]' . " \n";
         $conf .= 'exten => s,1,Set(CHANNEL(hangup_handler_wipe)=hangup_handler,s,1)' . "\n\t";
@@ -283,7 +283,7 @@ class ExtensionsConf extends ConfigClass
         // Совершаем вызов пира.
         $conf .= 'same => n,Set(DST_CONTACT=${PJSIP_DIAL_CONTACTS(${EXTEN})})' . " \n\t";
         $conf .= 'same => n,ExecIf($["${FIELDQTY(DST_CONTACT,&)}" != "1"]?Set(__PT1C_SIP_HEADER=${EMPTY_VAR}))' . " \n\t";
-        $conf .= 'same => n,ExecIf($["${DST_CONTACT}x" != "x"]?Dial(${DST_CONTACT},${ringlength},cTtekKHhU(${ISTRANSFER}dial_answer)b(dial_create_chan,s,1)):Set(DIALSTATUS=CHANUNAVAIL))' . " \n\t";
+        $conf .= 'same => n,ExecIf($["${DST_CONTACT}x" != "x"]?Dial(${DST_CONTACT},${ringlength},TtekKHhU(${ISTRANSFER}dial_answer)b(dial_create_chan,s,1)):Set(DIALSTATUS=CHANUNAVAIL))' . " \n\t";
         $conf .= 'same => n(fw_start),NoOp(dial_hangup)' . " \n\t";
 
         // QUEUE_SRC_CHAN - установлена, если вызов сервершен агенту очереди.
@@ -621,7 +621,7 @@ class ExtensionsConf extends ConfigClass
                     $dial_command                 = " \n\t" . 'same => n,' . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?' . "Goto(internal,{$rout['extension']},1));";
                     $rout_data_dial[$rout_number] .= "";
                 } else {
-                    $dial_command                 = " \n\t" . 'same => n,' . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?' . "Dial(Local/{$rout['extension']}@internal-incoming/n,{$timeout},cTKg));";
+                    $dial_command                 = " \n\t" . 'same => n,' . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?' . "Dial(Local/{$rout['extension']}@internal-incoming/n,{$timeout},TKg));";
                     $rout_data_dial[$rout_number] .= " \n\t" . "same => n,Set(M_TIMEOUT={$timeout})";
                 }
                 $rout_data_dial[$rout_number] .= $dial_command;
@@ -696,7 +696,7 @@ class ExtensionsConf extends ConfigClass
                     // Вызов будет отвечен сразу конференцией.
                     $conf .= "\t" . "same => n," . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?' . "Goto(internal,{$default_action->extension},1)); default action" . "\n";
                 } else {
-                    $conf .= "\t" . "same => n," . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?' . "Dial(Local/{$default_action->extension}@internal/n,,cTKg)); default action" . "\n";
+                    $conf .= "\t" . "same => n," . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?' . "Dial(Local/{$default_action->extension}@internal/n,,TKg)); default action" . "\n";
                 }
                 foreach ($additionalModules as $appClass) {
                     $addition = $appClass->generateIncomingRoutAfterDialContext($uniqid);
