@@ -600,9 +600,8 @@ class ExtensionsConf extends ConfigClass
                 $rout_data .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" != "Local"]?Gosub(set_from_peer,s,1))' . "\n\t";
                 $rout_data .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" == "Local"]?Set(__FROM_PEER=${CALLERID(num)}))' . "\n\t";
 
-                // TODO / Подмена входящего callerid.
-                $rout_data .= 'same => n,Gosub(add-trim-prefix-clid,${EXTEN},1)' . "\n\t";
-
+                $rout_data .= 'same => n,Gosub(add-trim-prefix-clid,${EXTEN},1)'."\n\t";
+                $rout_data .= 'same => n,Gosub(check-out-work-time,${EXTEN},1)'."\n\t";
                 foreach ($additionalModules as $appClass) {
                     $addition = $appClass->generateIncomingRoutBeforeDial($rout_number);
                     if ( ! empty($addition)) {
@@ -610,10 +609,7 @@ class ExtensionsConf extends ConfigClass
                     }
                 }
 
-                // Перехват на ответственного.
-                $rout_data .= 'same => n,UserEvent(Interception,CALLERID: ${CALLERID(num)},chan1c: ${CHANNEL},FROM_DID: ${FROM_DID})' . "\n\t";
                 // Проверим распискние для входящих внешних звонков.
-                $rout_data .= 'same => n,Gosub(check-out-work-time,${EXTEN},1)';
                 // Описываем возможность прыжка в пользовательский sub контекст.
                 $rout_data .= " \n\t" . 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1)';
             }
