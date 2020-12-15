@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     'BreadcrumbAsteriskManagersmodify' => 'Configurazione dell\'account',
     'or_PatternToMatch' => 'La regola funzionerà se',
     'or_NumberBeginsWithTheDigits' => 'Il numero inizia con',
@@ -1056,4 +1055,12 @@ Può essere attivato una volta, dopo di che il coupon viene riscattato.
     'msg_WarningHeader' => 'Attenzione',
     'msg_ErrorHeader' => 'Errore',
     'mo_NewElementAsteriskManagerUsers' => 'Nuovo account per l\'AMI dell\'utente',
+    'sd_CollectingLogsInfo' => 'Ottenere un elenco di file di registro',
+    'gs_SevenDigthts' => '7 cifre',
+    'gs_SIPPortSettings' => 'Impostazioni della porta per la segnalazione SIP e l\'intervallo RTP',
+    'gs_KeepAliveHeader' => 'Impostazioni della durata della registrazione',
+    'gs_PBXFeaturePickupExten' => 'Combinazione per rispondere alle chiamate in arrivo',
+    'gs_CallRecordTab' => 'Registrazione delle chiamate',
+    'adv_ProblemWithInternetConnection' => 'Non c\'è connessione a Internet. Potrebbero esserci problemi nel funzionamento dei moduli a pagamento.',
+    'lic_GetTrialErrorCheckInternet' => 'Registrazione non riuscita, verifica la presenza di Internet su MikoPBX',
 ];
