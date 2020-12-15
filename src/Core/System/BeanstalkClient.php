@@ -1,9 +1,20 @@
 <?php
 /*
- * Copyright © MIKO LLC - All Rights Reserved
- * Unauthorized copying of this file, via any medium is strictly prohibited
- * Proprietary and confidential
- * Written by Alexey Portnov, 9 2020
+ * MikoPBX - free phone system for small business
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace MikoPBX\Core\System;
@@ -16,7 +27,8 @@ use Throwable;
 
 class BeanstalkClient extends Injectable
 {
-    public const INBOX_PREFIX='INBOX_';
+    public const INBOX_PREFIX = 'INBOX_';
+
     /** @var Pheanstalk */
     private Pheanstalk $queue;
     private bool $connected = false;
@@ -54,10 +66,24 @@ class BeanstalkClient extends Injectable
         }
         $this->queue = Pheanstalk::create($config->host, $port);
         $this->queue->useTube($this->tube);
-        foreach ($this->subscriptions as $tube => $callback){
+        foreach ($this->subscriptions as $tube => $callback) {
             $this->subscribe($tube, $callback);
         }
         $this->connected = true;
+    }
+
+    /**
+     * Subscribe on new message in tube
+     *
+     * @param string           $tube     - listening tube
+     * @param array | callable $callback - worker
+     */
+    public function subscribe(string $tube, $callback): void
+    {
+        $tube = str_replace("\\", '-', $tube);
+        $this->queue->watch($tube);
+        $this->queue->ignore('default');
+        $this->subscriptions[$tube] = $callback;
     }
 
     /**
@@ -78,13 +104,13 @@ class BeanstalkClient extends Injectable
      * @param int  $priority
      *
      * @return bool|string
-     *
      */
     public function request(
         $job_data,
         int $timeout = 10,
         int $priority = PheanstalkInterface::DEFAULT_PRIORITY
-    ): bool|string {
+    ): bool|string
+    {
         $this->message = false;
         $inbox_tube    = uniqid(self::INBOX_PREFIX, true);
         $this->queue->watch($inbox_tube);
@@ -154,7 +180,7 @@ class BeanstalkClient extends Injectable
      */
     public function cleanTubes()
     {
-        $tubes = $this->queue->listTubes();
+        $tubes          = $this->queue->listTubes();
         $deletedJobInfo = [];
         foreach ($tubes as $tube) {
             try {
@@ -162,56 +188,50 @@ class BeanstalkClient extends Injectable
                 $queueStats = $this->queue->stats()->getArrayCopy();
 
                 // Delete buried jobs
-                $countBuried=$queueStats['current-jobs-buried'];
+                $countBuried = $queueStats['current-jobs-buried'];
                 while ($job = $this->queue->peekBuried()) {
                     $countBuried--;
-                    if ($countBuried<0){
+                    if ($countBuried < 0) {
                         break;
                     }
                     $id = $job->getId();
-                    Util::sysLogMsg(__METHOD__, "Deleted buried job with ID {$id} from {$tube} with message {$job->getData()}", LOG_DEBUG);
+                    Util::sysLogMsg(
+                        __METHOD__,
+                        "Deleted buried job with ID {$id} from {$tube} with message {$job->getData()}",
+                        LOG_DEBUG
+                    );
                     $this->queue->delete($job);
-                    $deletedJobInfo[]="{$id} from {$tube}";
+                    $deletedJobInfo[] = "{$id} from {$tube}";
                 }
 
                 // Delete outdated jobs
-                $countReady=$queueStats['current-jobs-ready'];
+                $countReady = $queueStats['current-jobs-ready'];
                 while ($job = $this->queue->peekReady()) {
                     $countReady--;
-                    if ($countReady<0){
+                    if ($countReady < 0) {
                         break;
                     }
-                    $id = $job->getId();
-                    $jobStats = $this->queue->statsJob($job)->getArrayCopy();
+                    $id                    = $job->getId();
+                    $jobStats              = $this->queue->statsJob($job)->getArrayCopy();
                     $age                   = (int)$jobStats['age'];
                     $expectedTimeToExecute = (int)$jobStats['ttr'] * 2;
                     if ($age > $expectedTimeToExecute) {
-                        Util::sysLogMsg(__METHOD__, "Deleted outdated job with ID {$id} from {$tube} with message {$job->getData()}", LOG_DEBUG);
+                        Util::sysLogMsg(
+                            __METHOD__,
+                            "Deleted outdated job with ID {$id} from {$tube} with message {$job->getData()}",
+                            LOG_DEBUG
+                        );
                         $this->queue->delete($job);
-                        $deletedJobInfo[]="{$id} from {$tube}";
+                        $deletedJobInfo[] = "{$id} from {$tube}";
                     }
                 }
             } catch (Throwable $exception) {
                 Util::sysLogMsg(__METHOD__, 'Exception: ' . $exception->getMessage(), LOG_ERR);
             }
         }
-        if (count($deletedJobInfo)>0){
-            Util::sysLogMsg(__METHOD__, "Delete outdated jobs".implode(PHP_EOL, $deletedJobInfo), LOG_WARNING);
+        if (count($deletedJobInfo) > 0) {
+            Util::sysLogMsg(__METHOD__, "Delete outdated jobs" . implode(PHP_EOL, $deletedJobInfo), LOG_WARNING);
         }
-    }
-
-    /**
-     * Subscribe on new message in tube
-     *
-     * @param string           $tube     - listening tube
-     * @param array | callable $callback - worker
-     */
-    public function subscribe(string $tube, $callback): void
-    {
-        $tube = str_replace("\\", '-', $tube);
-        $this->queue->watch($tube);
-        $this->queue->ignore('default');
-        $this->subscriptions[$tube] = $callback;
     }
 
     /**
@@ -230,7 +250,7 @@ class BeanstalkClient extends Injectable
             Util::sysLogMsg(__METHOD__, 'Exception: ' . $exception->getMessage(), LOG_ERR);
         }
 
-        if (!isset($job)) {
+        if ( ! isset($job)) {
             $workTime = (microtime(true) - $start);
             if ($workTime < $timeout) {
                 usleep(100000);
@@ -273,7 +293,7 @@ class BeanstalkClient extends Injectable
             } catch (Throwable $e) {
                 // Marks the job as terminally failed and no workers will restart it.
                 $this->queue->bury($job);
-                Util::sysLogMsg(__METHOD__.'_EXCEPTION', $e->getMessage(), LOG_ERR);
+                Util::sysLogMsg(__METHOD__ . '_EXCEPTION', $e->getMessage(), LOG_ERR);
             }
         }
     }
