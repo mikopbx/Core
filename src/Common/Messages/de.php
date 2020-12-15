@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     'January' => 'Januar',
     'February' => 'Februar',
     'March' => 'März',
@@ -1057,4 +1056,12 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
     'msg_infoHeader' => 'Information',
     'msg_WarningHeader' => 'Beachtung',
     'msg_ErrorHeader' => 'Error',
+    'sd_CollectingLogsInfo' => 'Eine Liste der Protokolldateien abrufen',
+    'gs_SevenDigthts' => '7 Ziffern',
+    'gs_SIPPortSettings' => 'Porteinstellungen für SIP-Signalisierung und RTP-Bereich',
+    'gs_KeepAliveHeader' => 'Einstellungen für die Registrierungsdauer',
+    'gs_PBXFeaturePickupExten' => 'Kombination zum Annehmen eingehender Anrufe',
+    'gs_CallRecordTab' => 'Anrufaufzeichnung',
+    'adv_ProblemWithInternetConnection' => 'Es besteht keine Internetverbindung. Beim Betrieb kostenpflichtiger Module können Probleme auftreten.',
+    'lic_GetTrialErrorCheckInternet' => 'Registrierung fehlgeschlagen, auf MikoPBX nach Internet suchen',
 ];
