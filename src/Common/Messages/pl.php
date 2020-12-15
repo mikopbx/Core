@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     'tf_ActionPlayMessage' => 'Odtwórz plik <b>% message%</b>',
     'tf_ActionTransferToExtension' => 'Przekaż połączenie na <b>%message%</b>',
     'tf_TableColumnDatePeriod' => 'Okres',
@@ -1056,4 +1055,12 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'ms_VoicemailFooter' => 'Poczta głosowa - piwnica',
     'gs_RestoreAllSettingsMessage' => 'Wszystkie ustawienia, historia połączeń, pliki nagrywania rozmów i zainstalowane wtyczki zostaną usunięte.',
     'mo_NewElementNetworkFilters' => 'Nowa reguła zapory sieciowej dla podsieci / adresu',
+    'sd_CollectingLogsInfo' => 'Pobieranie listy plików dziennika',
+    'gs_SevenDigthts' => '7 cyfr',
+    'gs_SIPPortSettings' => 'Ustawienia portów dla sygnalizacji SIP i zakresu RTP',
+    'gs_KeepAliveHeader' => 'Ustawienia czasu trwania rejestracji',
+    'gs_PBXFeaturePickupExten' => 'Kombinacja do odbierania połączeń przychodzących',
+    'gs_CallRecordTab' => 'Nagranie rozmowy',
+    'adv_ProblemWithInternetConnection' => 'Brak połączenia z Internetem. Mogą wystąpić problemy w działaniu płatnych modułów.',
+    'lic_GetTrialErrorCheckInternet' => 'Rejestracja nie powiodła się, sprawdź Internet w MikoPBX',
 ];

@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     'сal_Last30Days' => 'Últimos 30 dias',
     'сal_LastWeek' => 'Últimos 7 dias',
     'сal_Yesterday' => 'Ontem',
@@ -1056,4 +1055,12 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'msg_infoHeader' => 'Em formação',
     'msg_WarningHeader' => 'Atenção',
     'msg_ErrorHeader' => 'Erro',
+    'sd_CollectingLogsInfo' => 'Obtendo uma lista de arquivos de log',
+    'gs_SevenDigthts' => '7 dígitos',
+    'gs_SIPPortSettings' => 'Configurações de porta para sinalização SIP e faixa RTP',
+    'gs_KeepAliveHeader' => 'Configurações de duração do registro',
+    'gs_PBXFeaturePickupExten' => 'Combinação para atender chamadas',
+    'gs_CallRecordTab' => 'Gravação de chamadas',
+    'adv_ProblemWithInternetConnection' => 'Não há conexão com a Internet. Pode haver problemas na operação de módulos pagos.',
+    'lic_GetTrialErrorCheckInternet' => 'Falha no registro, verifique se há Internet no MikoPBX',
 ];

@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     'January' => 'Січень',
     'February' => 'Лютий',
     'March' => 'Березень',
@@ -1056,4 +1055,12 @@ return [
     'msg_WarningHeader' => 'Увага',
     'msg_ErrorHeader' => 'Помилка',
     'gs_RestoreAllSettingsMessage' => 'Будуть видалені всі налаштування, історія викликів, файли записів розмов і встановлені модулі розширень.',
+    'sd_CollectingLogsInfo' => 'Отримання списку файлів з балками',
+    'gs_SevenDigthts' => '7 цифр',
+    'gs_SIPPortSettings' => 'Налаштування портів для SIP сигналізації і діапазону RTP',
+    'gs_KeepAliveHeader' => 'Налаштування тривалості дії реєстрації',
+    'gs_PBXFeaturePickupExten' => 'Комбінація для перехоплення вхідних викликів',
+    'gs_CallRecordTab' => 'запис разговров',
+    'adv_ProblemWithInternetConnection' => 'Відсутнє підключення до Internet. Можливі проблеми в роботі платних модулів.',
+    'lic_GetTrialErrorCheckInternet' => 'Неможливо пройти реєстрацію, перевірте наявність Internet на MikoPBX',
 ];

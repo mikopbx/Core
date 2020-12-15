@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     'ex_Online' => 'ansluten',
     'am_TableColumnDescription' => 'Anmärkningar',
     'am_Read' => 'läsning',
@@ -1056,4 +1055,12 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'msg_infoHeader' => 'Information',
     'msg_WarningHeader' => 'Uppmärksamhet',
     'msg_ErrorHeader' => 'Fel',
+    'sd_CollectingLogsInfo' => 'Få en lista över loggfiler',
+    'gs_SevenDigthts' => '7 siffror',
+    'gs_SIPPortSettings' => 'Portinställningar för SIP-signalering och RTP-intervall',
+    'gs_KeepAliveHeader' => 'Inställningar för registreringstid',
+    'gs_PBXFeaturePickupExten' => 'Kombination för att ta emot inkommande samtal',
+    'gs_CallRecordTab' => 'Inspelning av samtal',
+    'adv_ProblemWithInternetConnection' => 'Det finns ingen internetanslutning. Det kan vara problem med driften av betalda moduler.',
+    'lic_GetTrialErrorCheckInternet' => 'Registreringen misslyckades, kolla efter Internet på MikoPBX',
 ];
