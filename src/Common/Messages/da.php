@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     'Oct' => 'oktober',
     'Nov' => 'november',
     'Dec' => 'december',
@@ -1056,4 +1055,12 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'gs_RestoreAllSettingsMessage' => 'Alle indstillinger, opkaldshistorik, opkaldsoptagelsesfiler og installerede plugins slettes.',
     'msg_ErrorHeader' => 'Fejl',
     'mo_NewElementOutgoingRoutingTable' => 'Ny regel for behandling af udgående opkald',
+    'sd_CollectingLogsInfo' => 'Få en liste over logfiler',
+    'gs_SevenDigthts' => '7 cifre',
+    'gs_SIPPortSettings' => 'Portindstillinger for SIP-signalering og RTP-rækkevidde',
+    'gs_KeepAliveHeader' => 'Indstillinger for registreringsvarighed',
+    'gs_PBXFeaturePickupExten' => 'Kombination til afhentning af indgående opkald',
+    'gs_CallRecordTab' => 'Optagelse af opkald',
+    'adv_ProblemWithInternetConnection' => 'Der er ingen internetforbindelse. Der kan være problemer i betjeningen af betalte moduler.',
+    'lic_GetTrialErrorCheckInternet' => 'Registrering mislykkedes, tjek for internet på MikoPBX',
 ];
