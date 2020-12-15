@@ -1,10 +1,20 @@
 <?php
-/**
- * Copyright (C) MIKO LLC - All Rights Reserved
- * Unauthorized copying of this file, via any medium is strictly prohibited
- * Proprietary and confidential
- * Written by Nikolay Beketov, 5 2018
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace MikoPBX\AdminCabinet\Controllers;
@@ -162,30 +172,24 @@ class FirewallController extends BaseController
         }
 
         $this->db->begin();
-
         $data         = $this->request->getPost();
         $networkId    = $this->request->getPost('id');
-        $filterRecord = NetworkFilters::findFirstById($networkId);
-        if ($filterRecord === null) {
-            $filterRecord = new NetworkFilters();
-        }
-
         // Update network filters Network Filter
-        if ( ! $this->updateNetworkFilters($filterRecord, $data)) {
+        $filterRecordId = $this->updateNetworkFilters($networkId, $data);
+        if (empty($filterRecordId)) {
             $this->view->success = false;
             $this->db->rollback();
-
             return;
         }
 
         // If it was new entity we will reload page with new ID
         if (empty($data['id'])) {
-            $this->view->reload = "firewall/modify/{$filterRecord->id}";
+            $this->view->reload = "firewall/modify/{$filterRecordId}";
         }
 
         // Update firewall rules Firewall
-        $data['id'] = $filterRecord->id;
-        if ( ! $this->updateFirewallRules($data)) {
+        $data['id'] = $filterRecordId;
+        if (!$this->updateFirewallRules($data)) {
             $this->view->success = false;
             $this->db->rollback();
 
@@ -200,13 +204,18 @@ class FirewallController extends BaseController
     /**
      * Заполним параметры записи Network Filter
      *
-     * @param \MikoPBX\Common\Models\NetworkFilters $filterRecord
+     * @param string $networkId
      * @param array                                 $data массив полей из POST запроса
      *
-     * @return bool update result
+     * @return string update result
      */
-    private function updateNetworkFilters(NetworkFilters $filterRecord, array $data): bool
+    private function updateNetworkFilters(string $networkId, array $data): string
     {
+        $filterRecord = NetworkFilters::findFirstById($networkId);
+        if ($filterRecord === null) {
+            $filterRecord = new NetworkFilters();
+        }
+
         $calculator = new Cidr();
         // Заполним параметры записи Network Filter
         foreach ($filterRecord as $name => $value) {
@@ -239,10 +248,10 @@ class FirewallController extends BaseController
             $errors = $filterRecord->getMessages();
             $this->flash->error(implode('<br>', $errors));
 
-            return false;
+            return '';
         }
 
-        return true;
+        return $filterRecord->toArray()['id'];
     }
 
     /**
@@ -272,6 +281,8 @@ class FirewallController extends BaseController
         ];
         $firewallRules     = FirewallRules::find($parameters);
         $currentRulesCount = $firewallRules->count();
+
+        $needUpdateFirewallRules = false;
         while ($countDefaultRules < $currentRulesCount) {
             $firewallRules->next();
             if ($firewallRules->current()->delete() === false) {
@@ -279,11 +290,14 @@ class FirewallController extends BaseController
                 $this->flash->error(implode('<br>', $errors));
                 $this->view->success = false;
                 return false;
-            } else {
-                $currentRulesCount--;
             }
+            $currentRulesCount--;
+            $needUpdateFirewallRules = true;
         }
-        $firewallRules = FirewallRules::find($parameters);
+
+        if($needUpdateFirewallRules){
+            $firewallRules = FirewallRules::find($parameters);
+        }
         $rowId         = 0;
         foreach ($defaultRules as $key => $value) {
             foreach ($value['rules'] as $rule) {

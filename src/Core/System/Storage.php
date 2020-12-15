@@ -1,9 +1,20 @@
 <?php
 /*
- * Copyright © MIKO LLC - All Rights Reserved
- * Unauthorized copying of this file, via any medium is strictly prohibited
- * Proprietary and confidential
- * Written by Alexey Portnov, 9 2020
+ * MikoPBX - free phone system for small business
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace MikoPBX\Core\System;
@@ -231,7 +242,7 @@ class Storage extends Di\Injectable
         $timeoutPath = Util::which('timeout');
         $sshfsPath   = Util::which('sshfs');
 
-        $command = "{$timeoutPath} -t 3 {$sshfsPath} -p {$port} -o nonempty -o password_stdin -o 'StrictHostKeyChecking=no' " .
+        $command = "{$timeoutPath} 3 {$sshfsPath} -p {$port} -o nonempty -o password_stdin -o 'StrictHostKeyChecking=no' " .
             "{$user}@{$host}:{$remout_dir} {$local_dir} << EOF\n" .
             "{$pass}\n" .
             "EOF\n";
@@ -283,7 +294,7 @@ class Storage extends Di\Injectable
 
         $timeoutPath   = Util::which('timeout');
         $curlftpfsPath = Util::which('curlftpfs');
-        $command       = "{$timeoutPath} -t 3 {$curlftpfsPath}  -o allow_other -o {$auth_line}fsname={$host} {$connect_line} {$local_dir}";
+        $command       = "{$timeoutPath} 3 {$curlftpfsPath}  -o allow_other -o {$auth_line}fsname={$host} {$connect_line} {$local_dir}";
         Processes::mwExec($command, $out);
         $response = trim(implode('', $out));
         if ('Terminated' === $response) {
@@ -1195,38 +1206,51 @@ class Storage extends Di\Injectable
     {
         $tempDir    = $this->config->path('core.tempDir');
         $swapFile   = "{$tempDir}/swapfile";
+
         $swapOffCmd = Util::which('swapoff');
         Processes::mwExec("{$swapOffCmd} {$swapFile}");
+
+        $this->makeSwapFile($swapFile);
+        if (!file_exists($swapFile)) {
+            return;
+        }
+        $swapOnCmd = Util::which('swapon');
+        $result    = Processes::mwExec("{$swapOnCmd} {$swapFile}");
+        Util::sysLogMsg('Swap', 'connect swap result: ' . $result, LOG_INFO);
+    }
+
+    /**
+     * Создает swap файл на storage.
+     * @param $swapFile
+     */
+    private function makeSwapFile($swapFile):void{
+        $swapLabel  = Util::which('swaplabel');
+        if(Processes::mwExec("{$swapLabel} {$swapFile}") === 0){
+            // Файл уже существует.
+            return;
+        }
         if (file_exists($swapFile)) {
             unlink($swapFile);
         }
 
         $size     = $this->getStorageFreeSpaceMb();
-        $swapSize = 0;
-        if ($size > 4000) {
-            $swapSize = 2048;
-        } elseif ($size > 2000) {
+        if ($size > 2000) {
             $swapSize = 1024;
         } elseif ($size > 1000) {
             $swapSize = 512;
-        }
-        if ($swapSize === 0) {
+        }else{
+            // Не достаточно свободного места.
             return;
         }
-
         $bs         = 1024;
         $countBlock = $swapSize * $bs;
         $ddCmd      = Util::which('dd');
 
-        Util::sysLogMsg('Swap', 'make swap ' . $swapFile, LOG_INFO, LOG_INFO);
+        Util::sysLogMsg('Swap', 'make swap ' . $swapFile, LOG_INFO);
         Processes::mwExec("{$ddCmd} if=/dev/zero of={$swapFile} bs={$bs} count={$countBlock}");
 
         $mkSwapCmd = Util::which('mkswap');
         Processes::mwExec("{$mkSwapCmd} {$swapFile}");
-
-        $swapOnCmd = Util::which('swapon');
-        $result    = Processes::mwExec("{$swapOnCmd} {$swapFile}");
-        Util::sysLogMsg('Swap', 'connect swap result: ' . $result, LOG_INFO, LOG_INFO);
     }
 
     /**

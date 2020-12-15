@@ -1,9 +1,20 @@
 <?php
 /*
- * Copyright © MIKO LLC - All Rights Reserved
- * Unauthorized copying of this file, via any medium is strictly prohibited
- * Proprietary and confidential
- * Written by Alexey Portnov, 9 2020
+ * MikoPBX - free phone system for small business
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace MikoPBX\Core\System;
@@ -60,7 +71,7 @@ class Network extends Injectable
     /**
      * Up loopback.
      **/
-    public function loConfigure()
+    public function loConfigure():void
     {
         if (Util::isSystemctl()) {
             return;
@@ -124,7 +135,7 @@ class Network extends Injectable
             'hostname' => 'mikopbx',
             'domain'   => '',
         ];
-        /** @var \MikoPBX\Common\Models\LanInterfaces $res */
+        /** @var LanInterfaces $res */
         $res = LanInterfaces::findFirst("internet = '1'");
         if (null !== $res) {
             $data['hostname'] = $res->hostname;
@@ -143,13 +154,13 @@ class Network extends Injectable
     public function getHostDNS(): array
     {
         $dns = [];
-        /** @var \MikoPBX\Common\Models\LanInterfaces $res */
+        /** @var LanInterfaces $res */
         $res = LanInterfaces::findFirst("internet = '1'");
         if (null !== $res) {
-            if ( ! empty($res->primarydns) && '127.0.0.1' != $res->primarydns) {
+            if ( ! empty($res->primarydns) && '127.0.0.1' !== $res->primarydns) {
                 $dns[] = $res->primarydns;
             }
-            if ( ! empty($res->secondarydns) && '127.0.0.1' != $res->secondarydns) {
+            if ( ! empty($res->secondarydns) && '127.0.0.1' !== $res->secondarydns) {
                 $dns[] = $res->secondarydns;
             }
         }
@@ -327,7 +338,7 @@ class Network extends Injectable
                 $ifconfigPath   = Util::which('ifconfig');
                 $arr_commands[] = "{$busyboxPath} {$ifconfigPath} $if_name $ipaddr netmask $subnet";
 
-                if ("" != trim($gateway)) {
+                if ("" !== trim($gateway)) {
                     $gw_param = "gw $gateway";
                 }
 
@@ -336,9 +347,9 @@ class Network extends Injectable
 
                 /** @var LanInterfaces $if_data */
                 $if_data = LanInterfaces::findFirst("id = '{$if_data['id']}'");
-                $is_inet = ($if_data !== null) ? $if_data->internet : 0;
+                $is_inet = ($if_data !== null) ? (string)$if_data->internet : '0';
                 // Добавляем маршруты по умолчанию.
-                if ($is_inet == 1) {
+                if ($is_inet === '1') {
                     // ТОЛЬКО, если этот интерфейс для интернет, создаем дефолтный маршрут.
                     $arr_commands[] = "{$busyboxPath} {$routePath} add default $gw_param dev $if_name";
                 }
@@ -373,7 +384,6 @@ class Network extends Injectable
         Processes::mwExecCommands($arr_commands, $out, 'rout');
 
         $this->openVpnConfigure();
-
         return 0;
     }
 
@@ -394,11 +404,11 @@ class Network extends Injectable
         Processes::mwExec("{$modprobePath} 8021q");
         foreach ($networks as $if_data) {
             $if_name = trim($if_data['interface']);
-            if ('' == $if_name) {
+            if ('' === $if_name) {
                 continue;
             }
             $conf_file = "/etc/network/interfaces.d/{$if_name}";
-            if ($if_data['disabled'] == 1) {
+            if ($if_data['disabled'] === '1') {
                 $ifdownPath = Util::which('ifdown');
                 Processes::mwExec("{$ifdownPath} eth0");
                 if (file_exists($if_name)) {
@@ -493,11 +503,11 @@ class Network extends Injectable
                     $if_data['subnet'] = $this->netMaskToCidr($if_data['subnet']);
                 }
 
-                $key = array_search($if_data['interface_orign'], $src_array_eth);
+                $key = array_search($if_data['interface_orign'], $src_array_eth, true);
                 if ($key !== false) {
                     // Интерфейс найден.
                     // Удаляем элемент массива, если это не VLAN.
-                    if ($if_data['vlanid'] == 0) {
+                    if ($if_data['vlanid'] === '0') {
                         unset($array_eth[$key]);
                         $this->enableLanInterface($if_data['interface_orign']);
                     }
@@ -508,6 +518,7 @@ class Network extends Injectable
                     $if_data['disabled'] = 1;
                 }
             }
+            unset($if_data);
         } elseif (count($array_eth) > 0) {
             $networks = [];
             // Настраиваем основной интерфейс.
@@ -523,7 +534,7 @@ class Network extends Injectable
         }
         $res = LanInterfaces::findFirst("internet = '1' AND disabled='0'");
         if (null === $res) {
-            /** @var \MikoPBX\Common\Models\LanInterfaces $eth_settings */
+            /** @var LanInterfaces $eth_settings */
             $eth_settings = LanInterfaces::findFirst("disabled='0'");
             if ($eth_settings !== null) {
                 $eth_settings->internet = 1;
@@ -621,8 +632,7 @@ class Network extends Injectable
      */
     public function hostsGenerate(): void
     {
-        $network = new Network();
-        $network->hostnameConfigure();
+        $this->hostnameConfigure();
     }
 
     /**
@@ -630,7 +640,7 @@ class Network extends Injectable
      **/
     public function hostnameConfigure(): void
     {
-        $data       = Network::getHostName();
+        $data       = self::getHostName();
         $hosts_conf = "127.0.0.1 localhost\n" .
             "127.0.0.1 {$data['hostname']}\n";
         if ( ! empty($data['domain'])) {
@@ -639,13 +649,13 @@ class Network extends Injectable
         Util::fileWriteContent('/etc/hosts', $hosts_conf);
 
         $hostnamePath = Util::which('hostname');
-        Processes::mwExec($hostnamePath . ' ' . escapeshellarg("{$data['hostname']}"));
+        Processes::mwExec($hostnamePath . ' ' . escapeshellarg($data['hostname']));
     }
 
     /**
      * Настройка OpenVPN. Если в кастомизации системных файлов определн конфиг, то сеть поднимется.
      */
-    public function openVpnConfigure()
+    public function openVpnConfigure():void
     {
         $confFile = '/etc/openvpn.ovpn';
         Util::fileWriteContent($confFile, '');
@@ -697,8 +707,8 @@ class Network extends Injectable
         foreach ($env_vars as $key => $value) {
             $env_vars[$key] = trim(getenv($key));
         }
-        $BROADCAST = ($env_vars['broadcast'] == '') ? "" : "broadcast {$env_vars['broadcast']}";
-        $NET_MASK  = ($env_vars['subnet'] == '') ? "" : "netmask {$env_vars['subnet']}";
+        $BROADCAST = ($env_vars['broadcast'] === '') ? "" : "broadcast {$env_vars['broadcast']}";
+        $NET_MASK  = ($env_vars['subnet'] === '') ? "" : "netmask {$env_vars['subnet']}";
 
         // Настраиваем интерфейс.
         $busyboxPath = Util::which('busybox');
@@ -708,7 +718,7 @@ class Network extends Injectable
         while (true) {
             $out = [];
             Processes::mwExec("route del default gw 0.0.0.0 dev {$env_vars['interface']}", $out);
-            if (trim(implode('', $out)) != '') {
+            if (trim(implode('', $out)) !== '') {
                 // Произошла ошибка, значит все маршруты очищены.
                 break;
             }
@@ -717,10 +727,10 @@ class Network extends Injectable
             } // Иначе бесконечный цикл.
         }
         // Добавляем маршруты по умолчанию.
-        /** @var \MikoPBX\Common\Models\LanInterfaces $if_data */
+        /** @var LanInterfaces $if_data */
         $if_data = LanInterfaces::findFirst("interface = '{$env_vars['interface']}'");
-        $is_inet = ($if_data !== null) ? $if_data->internet : 0;
-        if ('' != $env_vars['router'] && $is_inet == 1) {
+        $is_inet = ($if_data !== null) ? (int)$if_data->internet : 0;
+        if ('' !== $env_vars['router'] && $is_inet === 1) {
             // ТОЛЬКО, если этот интерфейс для интернет, создаем дефолтный маршрут.
             $routers = explode(' ', $env_vars['router']);
             foreach ($routers as $router) {
@@ -742,7 +752,7 @@ class Network extends Injectable
         if ('' !== $env_vars['dns']) {
             $named_dns = explode(' ', $env_vars['dns']);
         }
-        if ($is_inet == 1) {
+        if ($is_inet === 1) {
             // ТОЛЬКО, если этот интерфейс для интернет, правим resolv.conf.
             // Прописываем основные DNS.
             $this->generatePdnsdConfig($named_dns);
@@ -804,15 +814,15 @@ class Network extends Injectable
         }
 
         // Добавляем маршруты по умолчанию.
-        /** @var \MikoPBX\Common\Models\LanInterfaces $if_data */
+        /** @var LanInterfaces $if_data */
         $if_data = LanInterfaces::findFirst("interface = '{$env_vars['interface']}'");
-        $is_inet = ($if_data !== null) ? $if_data->internet : 0;
+        $is_inet = ($if_data !== null) ? (string)$if_data->internet : '0';
 
         $named_dns = [];
         if ('' !== $env_vars['dns']) {
             $named_dns = explode(' ', $env_vars['dns']);
         }
-        if ($is_inet == 1) {
+        if ($is_inet === '1') {
             // ТОЛЬКО, если этот интерфейс для интернет, правим resolv.conf.
             // Прописываем основные DNS.
             $this->generatePdnsdConfig($named_dns);
@@ -879,17 +889,18 @@ class Network extends Injectable
     }
 
     /**
-     * Сравнение двух массивов.
+     * Compares two array
      * @param array $data
      * @param array $dbData
      * @return bool
      */
     private function settingsIsChange(array $data, array $dbData):bool{
         $isChange = false;
-        foreach ($data as $key => $value){
-            if(!isset($dbData[$key]) || $value === $dbData[$key]){
+        foreach ($dbData as $key => $value){
+            if(!isset($data[$key]) || (string)$value === (string)$data[$key]){
                 continue;
-            }
+            } 
+            Util::sysLogMsg(__METHOD__, "Find new network settings: {$key} changed {$value}=>{$data[$key]}");
             $isChange = true;
         }
         return $isChange;
@@ -919,7 +930,7 @@ class Network extends Injectable
      */
     public function getEnabledLanInterfaces(): array
     {
-        /** @var \MikoPBX\Common\Models\LanInterfaces $res */
+        /** @var LanInterfaces $res */
         $res = LanInterfaces::find('disabled=0');
 
         return $res->toArray();
@@ -935,14 +946,10 @@ class Network extends Injectable
         if ( ! Util::isSystemctl()) {
             // Для MIKO LFS Edition.
             $busyboxPath = Util::which('busybox');
-            Processes::mwExec("{$busyboxPath} ifconfig $interface 192.168.2.1 netmask 255.255.255.0");
+            Processes::mwExec("{$busyboxPath} ifconfig {$interface} up");
+            Processes::mwExec("{$busyboxPath} ifconfig {$interface} 192.168.2.1 netmask 255.255.255.0");
         }
-        $data = [
-            'subnet'  => '24',
-            'ipaddr'  => '192.168.2.1',
-            'gateway' => '',
-        ];
-        $this->updateIfSettings($data, $interface);
+
     }
 
     /**
@@ -1019,7 +1026,7 @@ class Network extends Injectable
         // Поднят ли интерфейс?
         preg_match("/\s+(UP)\s+/", $output, $matches);
         $status = (count($matches) > 0) ? $matches[1] : '';
-        if ($status == "UP") {
+        if ($status === "UP") {
             $interface['up'] = true;
         } else {
             $interface['up'] = false;

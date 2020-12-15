@@ -1,14 +1,30 @@
 <?php
-/**
- * Copyright © MIKO LLC - All Rights Reserved
- * Unauthorized copying of this file, via any medium is strictly prohibited
- * Proprietary and confidential
- * Written by Alexey Portnov, 6 2020
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace MikoPBX\Common\Models;
 
 use MikoPBX\AdminCabinet\Plugins\CacheCleanerPlugin;
+use MikoPBX\Common\Providers\BeanstalkConnectionModelsProvider;
+use MikoPBX\Common\Providers\ManagedCacheProvider;
+use MikoPBX\Common\Providers\ModelsCacheProvider;
+use MikoPBX\Common\Providers\ModelsMetadataProvider;
+use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\System\BeanstalkClient;
 use MikoPBX\Modules\PbxExtensionUtils;
 use Phalcon\Db\Adapter\AdapterInterface;
@@ -147,7 +163,7 @@ abstract class ModelsBase extends Model
      */
     public function t($message, $parameters = [])
     {
-        return $this->getDI()->getShared('translation')->t($message, $parameters);
+        return $this->getDI()->getShared(TranslationProvider::SERVICE_NAME)->t($message, $parameters);
     }
 
     /**
@@ -543,7 +559,7 @@ abstract class ModelsBase extends Model
      */
     public function beforeValidationOnCreate(): void
     {
-        $metaData      = $this->di->get('modelsMetadata');
+        $metaData      = $this->di->get(ModelsMetadataProvider::SERVICE_NAME);
         $defaultValues = $metaData->getDefaultValues($this);
         foreach ($defaultValues as $field => $value) {
             if ( ! isset($this->{$field})) {
@@ -772,9 +788,12 @@ abstract class ModelsBase extends Model
      */
     private function processSettingsChanges(string $action): void
     {
-        if (php_sapi_name() === 'cli') {
-            return;
-        }
+       $doNotTrackThisDB = ['dbCDR','dbEventsLog'];
+
+       if (in_array($this->getReadConnectionService(), $doNotTrackThisDB) ){
+           return;
+       }
+
         if ( ! $this->hasSnapshotData()) {
             return;
         } // nothing changed
@@ -783,7 +802,6 @@ abstract class ModelsBase extends Model
         if (empty($changedFields) && $action === 'afterSave') {
             return;
         }
-
         $this->sendChangesToBackend($action, $changedFields);
     }
 
@@ -796,7 +814,7 @@ abstract class ModelsBase extends Model
     private function sendChangesToBackend($action, $changedFields): void
     {
         // Add changed fields set to Beanstalkd queue
-        $queue = $this->di->getShared('beanstalkConnectionModels');
+        $queue = $this->di->getShared(BeanstalkConnectionModelsProvider::SERVICE_NAME);
         if ($queue===null){
             return;
         }
@@ -829,8 +847,8 @@ abstract class ModelsBase extends Model
         if ($di === null) {
             return;
         }
-        if ($di->has('managedCache')) {
-            $managedCache = $di->getShared('managedCache');
+        if ($di->has(ManagedCacheProvider::SERVICE_NAME)) {
+            $managedCache = $di->get(ManagedCacheProvider::SERVICE_NAME);
             $category     = explode('\\', $calledClass)[3];
             $keys         = $managedCache->getAdapter()->getKeys($category);
             // Delete all items from the cache
@@ -838,8 +856,8 @@ abstract class ModelsBase extends Model
                 $managedCache->deleteMultiple($keys);
             }
         }
-        if ($di->has('modelsCache')) {
-            $modelsCache = $di->getShared('modelsCache');
+        if ($di->has(ModelsCacheProvider::SERVICE_NAME)) {
+            $modelsCache = $di->getShared(ModelsCacheProvider::SERVICE_NAME);
             $category    = explode('\\', $calledClass)[3];
             $keys        = $modelsCache->getAdapter()->getKeys($category);
             // Delete all items from the cache
@@ -850,7 +868,7 @@ abstract class ModelsBase extends Model
         if ($needClearFrontedCache
             && php_sapi_name() === 'cli'
         ) {
-            $queue = $di->getShared('beanstalkConnectionCache');
+            $queue = $di->getShared(BeanstalkConnectionModelsProvider::SERVICE_NAME);
             $queue->publish(
                     $calledClass,
                     CacheCleanerPlugin::class,

@@ -1,9 +1,20 @@
 <?php
-/**
- * Copyright © MIKO LLC - All Rights Reserved
- * Unauthorized copying of this file, via any medium is strictly prohibited
- * Proprietary and confidential
- * Written by Alexey Portnov, 7 2020
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace MikoPBX\PBXCoreREST\Workers;
@@ -22,7 +33,7 @@ class WorkerMergeUploadedFile extends WorkerBase
     {
         $settings_file = trim($argv[1]);
         if ( ! file_exists($settings_file)) {
-            Util::sysLogMsg(__CLASS__, 'File with settings not found');
+            Util::sysLogMsg(__CLASS__, 'File with settings not found', LOG_ERR);
 
             return;
         }
@@ -43,7 +54,8 @@ class WorkerMergeUploadedFile extends WorkerBase
         } else {
             Util::sysLogMsg(
                 'UploadFile',
-                "File {$settings['fullUploadedFileName']} size {$resultFileSize} does not equal {$settings['resumableTotalSize']}"
+                "File {$settings['fullUploadedFileName']} size {$resultFileSize} does not equal {$settings['resumableTotalSize']}",
+                LOG_ERR
             );
         }
 
@@ -84,11 +96,11 @@ class WorkerMergeUploadedFile extends WorkerBase
             }
             fclose($fp);
         } else {
-            Util::sysLogMsg('UploadFile', 'cannot create the destination file - ' . $result_file);
+            Util::sysLogMsg('UploadFile', 'cannot create the destination file - ' . $result_file, LOG_ERR);
 
             return;
         }
-        Util::sysLogMsg('UploadFile', 'destination file - ' . $result_file);
+        Util::sysLogMsg('UploadFile', 'destination file - ' . $result_file, LOG_NOTICE);
     }
 }
 
@@ -102,6 +114,6 @@ if (isset($argv) && count($argv) > 1) {
     } catch (Throwable $e) {
         global $errorLogger;
         $errorLogger->captureException($e);
-        Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage());
+        Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage(), LOG_ERR);
     }
 }

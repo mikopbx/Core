@@ -1,9 +1,20 @@
 <?php
 /*
- * Copyright © MIKO LLC - All Rights Reserved
- * Unauthorized copying of this file, via any medium is strictly prohibited
- * Proprietary and confidential
- * Written by Alexey Portnov, 10 2020
+ * MikoPBX - free phone system for small business
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace MikoPBX\Core\Workers;
@@ -126,7 +137,7 @@ class WorkerCallEvents extends WorkerBase
             $row->writeAttribute('endtime', $data['start']);
             $res = $row->update();
             if ( ! $res) {
-                Util::sysLogMsg('Action_app_end', implode(' ', $row->getMessages()));
+                Util::sysLogMsg('Action_app_end', implode(' ', $row->getMessages()), LOG_DEBUG);
             }
         }
     }
@@ -205,7 +216,7 @@ class WorkerCallEvents extends WorkerBase
             }
             $res = $row->save();
             if ( ! $res) {
-                Util::sysLogMsg('Action_dial_create_chan', implode(' ', $row->getMessages()));
+                Util::sysLogMsg('Action_dial_create_chan', implode(' ', $row->getMessages()), LOG_DEBUG);
             }
         }
     }
@@ -268,7 +279,7 @@ class WorkerCallEvents extends WorkerBase
                     $row->writeAttribute('is_app', 1);
                     $res = $row->save();
                     if ( ! $res) {
-                        Util::sysLogMsg('ENDCALLONANSWER', implode(' ', $row->getMessages()));
+                        Util::sysLogMsg('ENDCALLONANSWER', implode(' ', $row->getMessages()), LOG_DEBUG);
                     }
                 }
             }
@@ -335,7 +346,7 @@ class WorkerCallEvents extends WorkerBase
                 }
                 $res = $row->save();
                 if ( !$res) {
-                    Util::sysLogMsg('Action_dial_answer', implode(' ', $row->getMessages()));
+                    Util::sysLogMsg('Action_dial_answer', implode(' ', $row->getMessages()), LOG_DEBUG);
                 }
             }
         }
@@ -469,7 +480,7 @@ class WorkerCallEvents extends WorkerBase
             }
             $res = $row->update();
             if ( ! $res) {
-                Util::sysLogMsg('Action_hangup_chan', implode(' ', $row->getMessages()));
+                Util::sysLogMsg('Action_hangup_chan', implode(' ', $row->getMessages()), LOG_DEBUG);
             }
 
             if ($row->src_chan !== $data['agi_channel']) {
@@ -705,7 +716,7 @@ class WorkerCallEvents extends WorkerBase
             }
             $res = $row->save();
             if ( ! $res) {
-                Util::sysLogMsg('Action_transfer_dial_create_chan', implode(' ', $row->getMessages()));
+                Util::sysLogMsg('Action_transfer_dial_create_chan', implode(' ', $row->getMessages()), LOG_DEBUG);
             }
         }
     }
@@ -737,7 +748,7 @@ class WorkerCallEvents extends WorkerBase
             }
             $res = $row->save();
             if ( !$res) {
-                Util::sysLogMsg('Action_transfer_dial_answer', implode(' ', $row->getMessages()));
+                Util::sysLogMsg('Action_transfer_dial_answer', implode(' ', $row->getMessages()), LOG_DEBUG);
             }
         }
     }
@@ -771,7 +782,7 @@ class WorkerCallEvents extends WorkerBase
                 $row->writeAttribute('endtime', $data['end']);
                 $row->writeAttribute('transfer', 0);
                 if ( ! $row->save()) {
-                    Util::sysLogMsg('Action_transfer_dial_answer', implode(' ', $row->getMessages()));
+                    Util::sysLogMsg('Action_transfer_dial_answer', implode(' ', $row->getMessages()), LOG_DEBUG);
                 }
             }
             // Попробуем возобновить запись разговора.
@@ -806,7 +817,7 @@ class WorkerCallEvents extends WorkerBase
                 $row->writeAttribute('endtime', $data['end']);
                 $row->writeAttribute('transfer', 0);
                 if ( ! $row->save()) {
-                    Util::sysLogMsg('Action_transfer_dial_answer', implode(' ', $row->getMessages()));
+                    Util::sysLogMsg('Action_transfer_dial_answer', implode(' ', $row->getMessages()), LOG_DEBUG);
                 }
             }
 
@@ -826,7 +837,7 @@ class WorkerCallEvents extends WorkerBase
                 // Снимем со строк признак переадресации.
                 $row->writeAttribute('transfer', 0);
                 if ( ! $row->save()) {
-                    Util::sysLogMsg('Action_transfer_dial_answer', implode(' ', $row->getMessages()));
+                    Util::sysLogMsg('Action_transfer_dial_answer', implode(' ', $row->getMessages()), LOG_DEBUG);
                 }
             }
         }
@@ -973,7 +984,7 @@ class WorkerCallEvents extends WorkerBase
             $row->writeAttribute('endtime', $data['answer']);
             $res = $row->save();
             if ( ! $res) {
-                Util::sysLogMsg('Action_queue_answer', implode(' ', $row->getMessages()));
+                Util::sysLogMsg('Action_queue_answer', implode(' ', $row->getMessages()), LOG_DEBUG);
             }
         }
     }
@@ -1002,7 +1013,7 @@ class WorkerCallEvents extends WorkerBase
             }
             $res = $row->save();
             if ( ! $res) {
-                Util::sysLogMsg('Action_queue_end', implode(' ', $row->getMessages()));
+                Util::sysLogMsg('Action_queue_end', implode(' ', $row->getMessages()), LOG_DEBUG);
             }
         }
     }
@@ -1048,7 +1059,7 @@ class WorkerCallEvents extends WorkerBase
             $row->writeAttribute('linkedid', $data['meetme_id']);
             $res = $row->save();
             if ( ! $res) {
-                Util::sysLogMsg('Action_hangup_chan_meetme', implode(' ', $row->getMessages()));
+                Util::sysLogMsg('Action_hangup_chan_meetme', implode(' ', $row->getMessages()), LOG_DEBUG);
             }
         }
 
@@ -1069,7 +1080,7 @@ class WorkerCallEvents extends WorkerBase
             }
             $res = $row->save();
             if ( ! $res) {
-                Util::sysLogMsg('Action_hangup_chan_meetme', implode(' ', $row->getMessages()));
+                Util::sysLogMsg('Action_hangup_chan_meetme', implode(' ', $row->getMessages()), LOG_DEBUG);
             }
         }
     }
@@ -1139,7 +1150,7 @@ class WorkerCallEvents extends WorkerBase
     public function updateDataInDbM($data): bool
     {
         if (empty($data['UNIQUEID'])) {
-            Util::sysLogMsg(__FUNCTION__, 'UNIQUEID is empty ' . json_encode($data));
+            Util::sysLogMsg(__FUNCTION__, 'UNIQUEID is empty ' . json_encode($data), LOG_DEBUG);
 
             return false;
         }
@@ -1165,7 +1176,11 @@ class WorkerCallEvents extends WorkerBase
         }
         $res = $m_data->save();
         if ( ! $res) {
-            Util::sysLogMsg(__FUNCTION__, implode(' ', $m_data->getMessages()));
+            Util::sysLogMsg(__FUNCTION__, implode(' ', $m_data->getMessages()), LOG_ERR);
+        }
+        if($res && $m_data->work_completed === "1"){
+            // Удаляем данные из временной таблицы, они уже перемещены в постоянную.
+            $m_data->delete();
         }
 
         /**
@@ -1203,7 +1218,7 @@ class WorkerCallEvents extends WorkerBase
     public static function insertDataToDbM($data): bool
     {
         if (empty($data['UNIQUEID'])) {
-            Util::sysLogMsg(__FUNCTION__, 'UNIQUEID is empty ' . json_encode($data));
+            Util::sysLogMsg(__FUNCTION__, 'UNIQUEID is empty ' . json_encode($data), LOG_DEBUG);
 
             return false;
         }
@@ -1251,7 +1266,7 @@ class WorkerCallEvents extends WorkerBase
 
             $res = $new_m_data->save();
             if ( ! $res) {
-                Util::sysLogMsg(__FUNCTION__, implode(' ', $m_data->getMessages()));
+                Util::sysLogMsg(__FUNCTION__, implode(' ', $m_data->getMessages()), LOG_ERR);
             }
 
             return $res;
@@ -1269,7 +1284,7 @@ class WorkerCallEvents extends WorkerBase
         }
         $res = $m_data->save();
         if ( ! $res) {
-            Util::sysLogMsg(__FUNCTION__, implode(' ', $m_data->getMessages()));
+            Util::sysLogMsg(__FUNCTION__, implode(' ', $m_data->getMessages()), LOG_ERR);
         }
 
         return $res;
@@ -1341,10 +1356,11 @@ class WorkerCallEvents extends WorkerBase
      */
     private function filterNotValid($filter){
         $haveErrors = false;
+        $validValue = ['0',''];
         if(isset($filter['bind'])){
             if(is_array($filter)){
                 foreach ($filter['bind'] as $bindValue) {
-                    if(empty($bindValue)){
+                    if(empty($bindValue) && !in_array($bindValue, $validValue, true)){
                         $haveErrors = true;
                     }
                 }
@@ -1357,7 +1373,7 @@ class WorkerCallEvents extends WorkerBase
 
     public function errorHandler($m): void
     {
-        Util::sysLogMsg(self::class . '_ERROR', $m);
+        Util::sysLogMsg(self::class . '_ERROR', $m, LOG_ERR);
     }
 }
 
@@ -1374,7 +1390,7 @@ if ($action === 'start') {
     } catch (Throwable $e) {
         global $errorLogger;
         $errorLogger->captureException($e);
-        Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage());
+        Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage(), LOG_ERR);
     }
 }
 

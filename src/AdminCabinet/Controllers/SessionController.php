@@ -1,16 +1,28 @@
 <?php
-/**
- * Copyright (C) MIKO LLC - All Rights Reserved
- * Unauthorized copying of this file, via any medium is strictly prohibited
- * Proprietary and confidential
- * Written by Nikolay Beketov, 6 2018
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\LoginForm;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Providers\ManagedCacheProvider;
+use MikoPBX\Common\Providers\ModelsCacheProvider;
 use MikoPBX\Core\System\Util;
 
 /**
@@ -35,11 +47,11 @@ class SessionController extends BaseController
      */
     private function flushCache(): void
     {
-        if ($this->di->has('modelsCache')) {
-            $this->di->getShared('modelsCache')->clear();
+        if ($this->di->has(ModelsCacheProvider::SERVICE_NAME)) {
+            $this->di->getShared(ModelsCacheProvider::SERVICE_NAME)->clear();
         }
-        if ($this->di->has('managedCache')) {
-            $this->di->getShared('managedCache')->clear();
+        if ($this->di->has(ManagedCacheProvider::SERVICE_NAME)) {
+            $this->di->getShared(ManagedCacheProvider::SERVICE_NAME)->clear();
         }
     }
 
@@ -67,7 +79,7 @@ class SessionController extends BaseController
             $this->flash->error($this->translation->_('auth_WrongLoginPassword'));
             $remoteAddress = $this->request->getClientAddress(true);
             $userAgent     = $this->request->getUserAgent();
-            Util::sysLogMsg('web_auth', "From: {$remoteAddress} UserAgent:{$userAgent} Cause: Wrong password");
+            $this->loggerAuth->warning("From: {$remoteAddress} UserAgent:{$userAgent} Cause: Wrong password");
         }
     }
 

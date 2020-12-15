@@ -11,13 +11,13 @@
         <tbody>
     {% endif %}
 
-    <tr class="codec-row" id="{{ codec.id }}" data-value="{{ codec.priority }}">
+    <tr class="codec-row" id="{{ codec['id'] }}" data-value="{{ codec['priority'] }}">
         <td class="dragHandle"><i class="sort grey icon"></i></td>
         <td>
             <div class="ui toggle checkbox codecs">
-                <input type="checkbox" name="codec_{{ codec.name }}" {% if codec.disabled==='0' %} checked {% endif %}
+                <input type="checkbox" name="codec_{{ codec['name'] }}" {% if codec['disabled']==='0' %} checked {% endif %}
                        tabindex="0" class="hidden">
-                <label for="codec_{{ codec.name }}">{{ codec.description }}</label>
+                <label for="codec_{{ codec['name'] }}">{{ codec['description'] }}</label>
             </div>
         </td>
     </tr>
@@ -42,13 +42,13 @@
         <tbody>
     {% endif %}
 
-    <tr class="codec-row" id="{{ codec.id }}" data-value="{{ codec.priority }}">
+    <tr class="codec-row" id="{{ codec['id'] }}" data-value="{{ codec['priority'] }}">
         <td class="dragHandle"><i class="sort grey icon"></i></td>
         <td>
             <div class="ui toggle checkbox codecs">
-                <input type="checkbox" name="codec_{{ codec.name }}" {% if codec.disabled==='0' %} checked {% endif %}
+                <input type="checkbox" name="codec_{{ codec['name'] }}" {% if codec['disabled']==='0' %} checked {% endif %}
                        tabindex="0" class="hidden">
-                <label for="codec_{{ codec.name }}" >{{ codec.description }}</label>
+                <label for="codec_{{ codec['name'] }}" >{{ codec['description'] }}</label>
             </div>
         </td>
     </tr>

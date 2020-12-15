@@ -1,10 +1,21 @@
 <?php
 return [
-    /**
- * Copyright © MIKO LLC - All Rights Reserved
- * Unauthorized copying of this file, via any medium is strictly prohibited
- * Proprietary and confidential
- * Written by Alexey Portnov, 7 2020
+    /*
+ * MikoPBX - free phone system for small business
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
     'November' => '11月',
     'December' => '12月',
@@ -1044,4 +1055,12 @@ return [
     'msg_infoHeader' => '情報',
     'msg_WarningHeader' => '注意',
     'msg_ErrorHeader' => 'エラー',
+    'sd_CollectingLogsInfo' => 'ログファイルのリストを取得する',
+    'gs_SevenDigthts' => '7桁',
+    'gs_SIPPortSettings' => 'SIPシグナリングとRTP範囲のポート設定',
+    'gs_KeepAliveHeader' => '登録期間の設定',
+    'gs_PBXFeaturePickupExten' => '着信をピックアップするための組み合わせ',
+    'gs_CallRecordTab' => '通話録音',
+    'adv_ProblemWithInternetConnection' => 'インターネット接続はありません。有料モジュールの操作に問題がある可能性があります。',
+    'lic_GetTrialErrorCheckInternet' => '登録に失敗しました。MikoPBXでインターネットを確認してください',
 ];

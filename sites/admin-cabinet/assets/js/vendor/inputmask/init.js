@@ -1,6 +1,5 @@
 Inputmask.extendAliases({
     'email':{
-        mask: "*{1,30}[.*{1,30}][.*{1,30}][.*{1,30}][.*{1,30}]@*{1,20}[.*{1,20}][.*{1,20}][.*{2,6}][.*{2,6}]",
         greedy: false,
         onBeforePaste: function (pastedValue, opts) {
             pastedValue = pastedValue.toLowerCase();

@@ -1,10 +1,20 @@
 <?php
-/**
- * Copyright (C) MIKO LLC - All Rights Reserved
- * Unauthorized copying of this file, via any medium is strictly prohibited
- * Proprietary and confidential
- * Written by Nikolay Beketov, 5 2018
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace MikoPBX\AdminCabinet\Controllers;
@@ -17,13 +27,34 @@ class IvrMenuController extends BaseController
 
 
     /**
-     * Построение списка IVR меню
+     * Builds IVR menu representation
      */
     public function indexAction(): void
     {
-        $this->view->ivrmenu = IvrMenu::find();
-    }
+        $records = IvrMenuActions::find();
+        $ivrMenuActions=[];
+        foreach ($records as $record) {
+            $ivrMenuActions[$record->ivr_menu_id][$record->id]=[
+                'digits'=>$record->digits,
+                'represent'=>$record->Extensions===null?'ERROR':$record->Extensions->getRepresent()
+            ];
+        }
 
+        $records = IvrMenu::find();
+        $ivrMenuList=[];
+        foreach ($records as $record) {
+            usort($ivrMenuActions[$record->uniqid], [__CLASS__, 'sortArrayByDigits']);
+            $ivrMenuList[]=[
+                'uniqid'=>$record->uniqid,
+                'name'=>$record->name,
+                'extension'=>$record->extension,
+                'actions'=>$ivrMenuActions[$record->uniqid],
+                'description'=>$record->description,
+                'timeoutExtension'=>$record->TimeoutExtensions===null?'ERROR':$record->TimeoutExtensions->getRepresent()
+            ];
+        }
+        $this->view->ivrmenu = $ivrMenuList;
+    }
 
     /**
      * Карточка редактирования IVR меню
@@ -50,7 +81,6 @@ class IvrMenuController extends BaseController
             $extensionListForFilter[] = $ivrmenu->timeout_extension;
             // Списк экстеншенов очереди
             $parameters = [
-                'order'      => 'digits',
                 'conditions' => 'ivr_menu_id=:menu:',
                 'bind'       => [
                     'menu' => $ivrmenu->uniqid,
@@ -71,6 +101,7 @@ class IvrMenuController extends BaseController
                 $extensionListForFilter[] = $action->extension;
             }
         }
+        usort($ivrActionsList, [__CLASS__, 'sortArrayByDigits']);
 
         // Список всех эктеншенов выбранных ранее для правил адресации
         if (count($extensionListForFilter) > 0) {
@@ -105,6 +136,24 @@ class IvrMenuController extends BaseController
 
     }
 
+    /**
+     * Sorts array by digits field
+     *
+     * @param $a
+     * @param $b
+     *
+     * @return int|null
+     */
+    public function sortArrayByDigits($a, $b): ?int
+    {
+        $a = (int)$a['digits'];
+        $b = (int)$b['digits'];
+        if ($a === $b) {
+            return 0;
+        } else {
+            return ($a < $b) ? -1 : 1;
+        }
+    }
 
     /**
      * Сохранение ivr меню

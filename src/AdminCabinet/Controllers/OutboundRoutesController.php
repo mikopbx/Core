@@ -1,10 +1,20 @@
 <?php
-/**
- * Copyright (C) MIKO LLC - All Rights Reserved
- * Unauthorized copying of this file, via any medium is strictly prohibited
- * Proprietary and confidential
- * Written by Nikolay Beketov, 5 2018
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace MikoPBX\AdminCabinet\Controllers;
@@ -22,7 +32,7 @@ class OutboundRoutesController extends BaseController
      */
     public function indexAction(): void
     {
-        $rules        = OutgoingRoutingTable::find(['order' => 'priority']);
+        $rules        = OutgoingRoutingTable::find();
         $routingTable = [];
         foreach ($rules as $rule) {
             $provider = $rule->Providers;
@@ -56,9 +66,10 @@ class OutboundRoutesController extends BaseController
                 ];
             }
         }
-
+        usort($routingTable, [__CLASS__, 'sortArrayByPriority']);
         $this->view->routingTable = $routingTable;
     }
+
 
     /**
      * Shows the edit form for an outbound route
@@ -70,6 +81,7 @@ class OutboundRoutesController extends BaseController
         $rule = OutgoingRoutingTable::findFirstByid($id);
         if ($rule === null) {
             $rule = new OutgoingRoutingTable();
+            $rule->priority = (int)OutgoingRoutingTable::maximum(['column' => 'priority'])+1;
         }
 
         $providers     = Providers::find();
@@ -155,29 +167,30 @@ class OutboundRoutesController extends BaseController
     }
 
     /**
-     * Изменение приоритета правила
+     * Changes rules priority
      *
-     * @param string $ruleid
      */
-    public function changePriorityAction($ruleid = ''): void
+    public function changePriorityAction(): void
     {
         $this->view->disable();
-        $result = false;
+        $result = true;
 
         if ( ! $this->request->isPost()) {
             return;
         }
-        $data = $this->request->getPost();
-        $rule = OutgoingRoutingTable::findFirstById($ruleid);
-        if ($rule !== null) {
-            $rule->priority = intval($data['newPriority']);
-            $result         = $rule->update();
+        $priorityTable = $this->request->getPost();
+        $rules = OutgoingRoutingTable::find();
+        foreach ($rules as $rule){
+            if (array_key_exists ( $rule->id, $priorityTable)){
+                $rule->priority = $priorityTable[$rule->id];
+                $result         .= $rule->update();
+            }
         }
         echo json_encode($result);
     }
 
     /**
-     * Sort array
+     * Sort array by name and state
      *
      * @param $a
      * @param $b

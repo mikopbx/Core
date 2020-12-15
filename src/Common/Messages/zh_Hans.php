@@ -1,10 +1,21 @@
 <?php
 return [
-    /**
- * Copyright © MIKO LLC - All Rights Reserved
- * Unauthorized copying of this file, via any medium is strictly prohibited
- * Proprietary and confidential
- * Written by Alexey Portnov, 7 2020
+    /*
+ * MikoPBX - free phone system for small business
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
     'March' => '三月',
     'April' => '四月',
@@ -1044,4 +1055,12 @@ return [
     'msg_infoHeader' => '信息',
     'msg_WarningHeader' => '注意',
     'msg_ErrorHeader' => '错误',
+    'sd_CollectingLogsInfo' => '获取日志文件列表',
+    'gs_SevenDigthts' => '7位数',
+    'gs_SIPPortSettings' => 'SIP信令和RTP范围的端口设置',
+    'gs_KeepAliveHeader' => '注册期限设置',
+    'gs_PBXFeaturePickupExten' => '接听来电的组合',
+    'gs_CallRecordTab' => '通话录音',
+    'adv_ProblemWithInternetConnection' => '没有互联网连接。付费模块的操作可能存在问题。',
+    'lic_GetTrialErrorCheckInternet' => '注册失败，请检查MikoPBX上的Internet',
 ];

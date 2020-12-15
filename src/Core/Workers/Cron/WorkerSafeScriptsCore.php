@@ -1,9 +1,20 @@
 <?php
 /*
- * Copyright © MIKO LLC - All Rights Reserved
- * Unauthorized copying of this file, via any medium is strictly prohibited
- * Proprietary and confidential
- * Written by Alexey Portnov, 9 2020
+ * MikoPBX - free phone system for small business
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace MikoPBX\Core\Workers\Cron;
@@ -81,9 +92,9 @@ class WorkerSafeScriptsCore extends WorkerBase
             self::CHECK_BY_PID_NOT_ALERT =>
                 [
                     WorkerLicenseChecker::class,
+                    WorkerBeanstalkdTidyUp::class,
                     WorkerCheckFail2BanAlive::class,
                     WorkerLogRotate::class,
-                    WorkerBeanstalkdTidyUp::class
                 ],
         ];
         $arrModulesWorkers = [];
@@ -165,19 +176,20 @@ class WorkerSafeScriptsCore extends WorkerBase
             }
             if (false === $result) {
                 Processes::processPHPWorker($workerClassName);
-                Util::sysLogMsg(__CLASS__, "Service {$workerClassName} started.");
+                Util::sysLogMsg(__METHOD__, "Service {$workerClassName} started.", LOG_NOTICE);
             }
             $time_elapsed_secs = microtime(true) - $start;
             if ($time_elapsed_secs > 10) {
                 Util::sysLogMsg(
-                    __CLASS__,
-                    "WARNING: Service {$workerClassName} processed more than {$time_elapsed_secs} seconds"
+                    __METHOD__,
+                    "WARNING: Service {$workerClassName} processed more than {$time_elapsed_secs} seconds",
+                    LOG_WARNING
                 );
             }
         } catch (Throwable $e) {
             global $errorLogger;
             $errorLogger->captureException($e);
-            Util::sysLogMsg($workerClassName . '_EXCEPTION', $e->getMessage());
+            Util::sysLogMsg($workerClassName . '_EXCEPTION', $e->getMessage(), LOG_ERR);
         }
         yield;
     }
@@ -201,7 +213,8 @@ class WorkerSafeScriptsCore extends WorkerBase
         if ($time_elapsed_secs > 10) {
             Util::sysLogMsg(
                 __CLASS__,
-                "WARNING: Service {$workerClassName} processed more than {$time_elapsed_secs} seconds"
+                "WARNING: Service {$workerClassName} processed more than {$time_elapsed_secs} seconds",
+                LOG_WARNING
             );
         }
         yield;
@@ -227,13 +240,13 @@ class WorkerSafeScriptsCore extends WorkerBase
                 $am       = Util::getAstManager();
                 $res_ping = $am->pingAMIListner($this->makePingTubeName($workerClassName));
                 if (false === $res_ping) {
-                    Util::sysLogMsg('checkWorkerAMI', 'Restart...');
+                    Util::sysLogMsg(__METHOD__, 'Restart...', LOG_ERR);
                 }
             }
 
             if ($res_ping === false && $level < 10) {
                 Processes::processPHPWorker($workerClassName);
-                Util::sysLogMsg(__CLASS__, "Service {$workerClassName} started.");
+                Util::sysLogMsg(__METHOD__, "Service {$workerClassName} started.", LOG_NOTICE);
                 // Wait 1 second while service will be ready to listen requests
                 sleep(1);
 
@@ -243,14 +256,15 @@ class WorkerSafeScriptsCore extends WorkerBase
             $time_elapsed_secs = microtime(true) - $start;
             if ($time_elapsed_secs > 10) {
                 Util::sysLogMsg(
-                    __CLASS__,
-                    "WARNING: Service {$workerClassName} processed more than {$time_elapsed_secs} seconds"
+                    __METHOD__,
+                    "WARNING: Service {$workerClassName} processed more than {$time_elapsed_secs} seconds",
+                    LOG_WARNING
                 );
             }
         } catch (Throwable $e) {
             global $errorLogger;
             $errorLogger->captureException($e);
-            Util::sysLogMsg($workerClassName . '_EXCEPTION', $e->getMessage());
+            Util::sysLogMsg($workerClassName . '_EXCEPTION', $e->getMessage(), LOG_ERR);
         }
         yield;
     }
@@ -261,6 +275,11 @@ $workerClassname = WorkerSafeScriptsCore::class;
 try {
     if (isset($argv) && count($argv) > 1) {
         cli_set_process_title("{$workerClassname} {$argv[1]}");
+        $activeProcesses = Processes::getPidOfProcess("{$workerClassname} {$argv[1]}", posix_getpid());
+        if (!empty($activeProcesses)){
+            Util::sysLogMsg($workerClassname, "WARNING: Other started process {$activeProcesses} is working now...", LOG_DEBUG);
+            return;
+        }
         $worker = new $workerClassname();
         if (($argv[1] === 'start')) {
             $worker->start($argv);
@@ -271,5 +290,5 @@ try {
 } catch (Throwable $e) {
     global $errorLogger;
     $errorLogger->captureException($e);
-    Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage());
+    Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage(), LOG_ERR);
 }

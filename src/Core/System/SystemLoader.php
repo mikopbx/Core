@@ -1,9 +1,20 @@
 <?php
 /*
- * Copyright © MIKO LLC - All Rights Reserved
- * Unauthorized copying of this file, via any medium is strictly prohibited
- * Proprietary and confidential
- * Written by Alexey Portnov, 9 2020
+ * MikoPBX - free phone system for small business
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace MikoPBX\Core\System;
@@ -28,7 +39,18 @@ class SystemLoader extends Di\Injectable
     public function startSystem(): bool
     {
         $this->di->getShared('registry')->booting = true;
-        $storage                          = new Storage();
+
+        Util::echoWithSyslog(' - Start beanstalkd daemon...');
+        $beanstalkConf = new BeanstalkConf();
+        $beanstalkConf->reStart();
+        Util::echoGreenDone();
+
+        $system = new System();
+        Util::echoWithSyslog(' - Configuring timezone ... ');
+        $system::timezoneConfigure();
+        Util::echoGreenDone();
+
+        $storage       = new Storage();
         Util::echoWithSyslog(' - Mount storage disk... ');
         $storage->saveFstab();
         $storage->configure();
@@ -38,19 +60,9 @@ class SystemLoader extends Di\Injectable
         $storage->mountSwap();
         Util::echoGreenDone();
 
-        Util::echoWithSyslog(' - Configuring network loopback interface ... ');
-        $network = new Network();
-        $network->loConfigure();
-        Util::echoGreenDone();
-
         Util::echoWithSyslog(' - Start syslogd daemon...');
         $syslogConf = new SyslogConf();
         $syslogConf->reStart();
-        Util::echoGreenDone();
-
-        Util::echoWithSyslog(' - Start beanstalkd daemon...');
-        $beanstalkConf = new BeanstalkConf();
-        $beanstalkConf->reStart();
         Util::echoGreenDone();
         
         $dbUpdater = new UpdateDatabase();
@@ -67,7 +79,6 @@ class SystemLoader extends Di\Injectable
         Util::echoGreenDone();
 
         Util::echoWithSyslog(' - Load kernel modules ... ');
-        $system = new System();
         $system->loadKernelModules();
         Util::echoGreenDone();
 
@@ -76,11 +87,8 @@ class SystemLoader extends Di\Injectable
         $vmwareTools->configure();
         Util::echoGreenDone();
 
-        Util::echoWithSyslog(' - Configuring timezone ... ');
-        $system->timezoneConfigure();
-        Util::echoGreenDone();
-
         Util::echoWithSyslog(' - Configuring hostname ... ');
+        $network = new Network();
         $network->hostnameConfigure();
         Util::echoGreenDone();
 
@@ -125,12 +133,6 @@ class SystemLoader extends Di\Injectable
         PHPConf::reStart();
         Util::echoGreenDone();
 
-        Util::echoWithSyslog(' - Start Nginx daemon...');
-        $nginx = new NginxConf();
-        $nginx->generateConf();
-        $nginx->reStart();
-        Util::echoGreenDone();
-
         Util::echoWithSyslog(' - Configuring Asterisk...'.PHP_EOL);
         $pbx                              = new PBX();
         $pbx->configure();
@@ -141,9 +143,19 @@ class SystemLoader extends Di\Injectable
         $system->onAfterPbxStarted();
         Util::echoGreenDone();
 
+        Util::echoWithSyslog(' - Wait asterisk fully booted... ');
+        PBX::waitFullyBooted();
+        Util::echoGreenDone();
+
         Util::echoWithSyslog(' - Configuring Cron tasks... ');
         $cron = new CronConf();
         $cron->reStart();
+        Util::echoGreenDone();
+
+        Util::echoWithSyslog(' - Start Nginx daemon...');
+        $nginx = new NginxConf();
+        $nginx->generateConf();
+        $nginx->reStart();
         Util::echoGreenDone();
 
         $this->di->getShared('registry')->booting = false;

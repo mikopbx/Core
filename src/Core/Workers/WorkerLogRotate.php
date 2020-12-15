@@ -1,18 +1,30 @@
 <?php
-/**
- * Copyright (C) MIKO LLC - All Rights Reserved
- * Unauthorized copying of this file, via any medium is strictly prohibited
- * Proprietary and confidential
- * Written by Nikolay Beketov, 6 2020
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
 
 use MikoPBX\Common\Models\PbxExtensionModules;
+use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Core\System\Configs\NatsConf;
 use MikoPBX\Core\System\Configs\PHPConf;
+use MikoPBX\Core\System\Configs\SyslogConf;
 use MikoPBX\Core\System\PBX;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\System;
@@ -27,13 +39,14 @@ class WorkerLogRotate extends WorkerBase
      */
     public function start($params): void
     {
-        $managedCache = $this->di->get('managedCache');
+        $managedCache = $this->di->get(ManagedCacheProvider::SERVICE_NAME);
         $lastLogRotate = $managedCache->get('lastCoreWorkerLogRotateProcessing');
         if ($lastLogRotate===null){
             //System Logs
             NatsConf::logRotate();
             PHPConf::rotateLog();
             PBX::logRotate();
+            SyslogConf::rotatePbxLog();
 
             //Modules Logs
             $plugins = PbxExtensionModules::getEnabledModulesArray();
@@ -86,9 +99,9 @@ if (isset($argv) && count($argv) > 1) {
     try {
         $worker = new $workerClassname();
         $worker->start($argv);
-    } catch (Throwable $e) {
+    } catch (\Throwable $e) {
         global $errorLogger;
         $errorLogger->captureException($e);
-        Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage());
+        Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage(), LOG_ERR);
     }
 }

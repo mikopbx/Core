@@ -1,12 +1,24 @@
 <?php
 /*
- * Copyright © MIKO LLC - All Rights Reserved
- * Unauthorized copying of this file, via any medium is strictly prohibited
- * Proprietary and confidential
- * Written by Alexey Portnov, 10 2020
+ * MikoPBX - free phone system for small business
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace MikoPBX\Core\Workers;
+
 require_once 'Globals.php';
 
 use MikoPBX\Common\Models\{AsteriskManagerUsers,
@@ -32,7 +44,9 @@ use MikoPBX\Common\Models\{AsteriskManagerUsers,
     PbxExtensionModules,
     PbxSettings,
     Sip,
-    SoundFiles};
+    SoundFiles
+};
+use MikoPBX\Common\Providers\BeanstalkConnectionModelsProvider;
 use MikoPBX\Core\Asterisk\Configs\QueueConf;
 use MikoPBX\Core\System\{BeanstalkClient,
     Configs\CronConf,
@@ -42,9 +56,11 @@ use MikoPBX\Core\System\{BeanstalkClient,
     Configs\NTPConf,
     Configs\PHPConf,
     Configs\SSHConf,
+    Configs\SyslogConf,
     PBX,
     Processes,
-    System};
+    System,
+    Util};
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use Throwable;
 
@@ -78,6 +94,7 @@ class WorkerModelsEvents extends WorkerBase
     private const R_PHP_FPM = 'reloadPHPFPM';
 
     private const R_TIMEZONE = 'updateTomeZone';
+    private const R_SYSLOG   = 'restartSyslogD';
 
     private const R_SSH = 'reloadSSH';
 
@@ -91,9 +108,9 @@ class WorkerModelsEvents extends WorkerBase
 
     private const R_CALL_EVENTS_WORKER = 'reloadWorkerCallEvents';
 
-    private const R_MOH = 'reloadMoh';
+    private const R_PBX_EXTENSION_STATE = 'afterModuleStateChanged';
 
-    private const R_CONF_MODULES = 'reloadPbxConfModules';
+    private const R_MOH = 'reloadMoh';
 
     private const R_NTP = 'reloadNtp';
 
@@ -112,18 +129,17 @@ class WorkerModelsEvents extends WorkerBase
      */
     public function start($argv): void
     {
-
         $this->arrObject = $this->di->getShared('pbxConfModules');
 
         $this->PRIORITY_R = [
-            self::R_CONF_MODULES,
+            self::R_TIMEZONE,
+            self::R_SYSLOG,
             self::R_REST_API_WORKER,
             self::R_NETWORK,
             self::R_FIREWALL,
             self::R_SSH,
             self::R_LICENSE,
             self::R_NATS,
-            self::R_TIMEZONE,
             self::R_NTP,
             self::R_PHP_FPM,
             self::R_NGINX,
@@ -138,11 +154,12 @@ class WorkerModelsEvents extends WorkerBase
             self::R_VOICEMAIL,
             self::R_MOH,
             self::R_CALL_EVENTS_WORKER,
+            self::R_PBX_EXTENSION_STATE,
         ];
 
         $this->modified_tables = [];
 
-        $client = $this->di->getShared('beanstalkConnectionModels');
+        $client = $this->di->getShared(BeanstalkConnectionModelsProvider::SERVICE_NAME);
         $client->subscribe(self::class, [$this, 'processModelChanges']);
         $client->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
         $client->setTimeoutHandler([$this, 'timeoutHandler']);
@@ -150,6 +167,8 @@ class WorkerModelsEvents extends WorkerBase
         while ($this->needRestart === false) {
             $client->wait();
         }
+        // Execute all collected changes before exit
+        $this->timeoutHandler();
     }
 
     /**
@@ -172,23 +191,22 @@ class WorkerModelsEvents extends WorkerBase
     /**
      * Collects changes to determine which modules must be reloaded or reconfigured
      *
-     * @param $data
+     * @param array $data
      */
-    private function fillModifiedTables($data): void
+    private function fillModifiedTables(array $data): void
     {
-        $count_changes = count($this->modified_tables);
-        $called_class = $data['model'] ?? '';
 
-        // Clear all caches on any changed models
+        $count_changes = count($this->modified_tables);
+        $called_class  = $data['model'] ?? '';
+        Util::sysLogMsg(__METHOD__, "New changes ".$called_class, LOG_DEBUG);
+
+        // Clear all caches on any changed models on backend
         PbxSettings::clearCache($called_class, false);
 
-        // Обновление настроек в объектах, в оперативной памяти.
-        $additionalModules = $this->di->getShared('pbxConfModules');
-        foreach ($additionalModules as $appClass) {
-            // Проверим, зависит ли объект от измененных данных.
-            $dependences = $appClass->dependenceModels();
-            if (in_array($called_class, $dependences, true)){
-                // Получаем новые настройки.
+        // Get new settings gor dependence modules
+        foreach ($this->arrObject as $appClass) {
+            $dependencies = $appClass->dependenceModels();
+            if (in_array($called_class, $dependencies, true)) {
                 $appClass->getSettings();
             }
         }
@@ -233,10 +251,10 @@ class WorkerModelsEvents extends WorkerBase
                 break;
             case Codecs::class:
                 $this->modified_tables[self::R_IAX] = true;
-                $this->modified_tables[self::R_SIP]     = true;
+                $this->modified_tables[self::R_SIP] = true;
                 break;
             case SoundFiles::class:
-                $this->modified_tables[self::R_MOH] = true;
+                $this->modified_tables[self::R_MOH]      = true;
                 $this->modified_tables[self::R_DIALPLAN] = true;
                 break;
             case LanInterfaces::class:
@@ -251,7 +269,7 @@ class WorkerModelsEvents extends WorkerBase
                 break;
             case PbxSettings::class:
                 $pbxSettings = PbxSettings::findFirstByKey($data['recordId']);
-                if ($pbxSettings===null){
+                if ($pbxSettings === null) {
                     return;
                 }
                 if ($pbxSettings->itHasFeaturesSettingsChanges()) {
@@ -293,22 +311,27 @@ class WorkerModelsEvents extends WorkerBase
                     $this->modified_tables[self::R_NATS]    = true;
                 }
                 if ($pbxSettings->itHasTimeZoneSettings()) {
-                    $this->modified_tables[self::R_TIMEZONE]    = true;
-                    $this->modified_tables[self::R_NGINX]    = true;
-                    $this->modified_tables[self::R_PHP_FPM]    = true;
+                    $this->modified_tables[self::R_TIMEZONE]        = true;
+                    $this->modified_tables[self::R_NGINX]           = true;
+                    $this->modified_tables[self::R_PHP_FPM]         = true;
                     $this->modified_tables[self::R_REST_API_WORKER] = true;
+                    $this->modified_tables[self::R_SYSLOG]        = true;
                 }
                 if ($pbxSettings->itHasNTPSettings()) {
-                    $this->modified_tables[self::R_NTP]    = true;
+                    $this->modified_tables[self::R_NTP] = true;
                 }
                 if ($pbxSettings->itHasCallRecordSettings()) {
-                    $this->modified_tables[self::R_CALL_EVENTS_WORKER]  = true;
-                    $this->modified_tables[self::R_DIALPLAN]  = true;
+                    $this->modified_tables[self::R_CALL_EVENTS_WORKER] = true;
+                    $this->modified_tables[self::R_DIALPLAN]           = true;
                 }
                 break;
             case PbxExtensionModules::class:
-                $this->modified_tables[self::R_CONF_MODULES] = true;
-                $this->modified_tables[self::R_CRON] = true;
+                $moduleSettings                                                   = PbxExtensionModules::findFirstById(
+                    $data['recordId']
+                );
+                $this->modified_tables[self::R_PBX_EXTENSION_STATE]               = true;
+                $this->modified_tables['parameters'][self::R_PBX_EXTENSION_STATE] = $moduleSettings;
+                $this->modified_tables[self::R_CRON]                              = true;
                 break;
             default:
         }
@@ -317,7 +340,6 @@ class WorkerModelsEvents extends WorkerBase
             // Начинаем отсчет времени при получении первой задачи.
             $this->last_change = time();
         }
-
     }
 
     /**
@@ -336,12 +358,18 @@ class WorkerModelsEvents extends WorkerBase
         }
 
         foreach ($this->PRIORITY_R as $method_name) {
-            $action = $this->modified_tables[$method_name] ?? null;
+            $action     = $this->modified_tables[$method_name] ?? null;
+            $parameters = $this->modified_tables['parameters'][$method_name] ?? null;
             if ($action === null) {
                 continue;
             }
             if (method_exists($this, $method_name)) {
-                $this->$method_name();
+                Util::sysLogMsg(__METHOD__, "Process changes by {$method_name}", LOG_DEBUG);
+                if ($parameters === null) {
+                    $this->$method_name();
+                } else {
+                    $this->$method_name($parameters);
+                }
             }
         }
 
@@ -355,7 +383,7 @@ class WorkerModelsEvents extends WorkerBase
     /**
      * Restarts gnats queue server daemon
      */
-    public function reloadNats():void
+    public function reloadNats(): void
     {
         $natsConf = new NatsConf();
         $natsConf->reStart();
@@ -464,7 +492,7 @@ class WorkerModelsEvents extends WorkerBase
      */
     public function reloadNginx(): void
     {
-        $nginxConf  = new NginxConf();
+        $nginxConf = new NginxConf();
         $nginxConf->generateConf();
         $nginxConf->reStart();
     }
@@ -495,6 +523,16 @@ class WorkerModelsEvents extends WorkerBase
     }
 
     /**
+     * Перезапуск rsyslog.
+     */
+    public function restartSyslogD(): void
+    {
+        // Рестарт демона Syslog.
+        $syslogConf = new SyslogConf();
+        $syslogConf->reStart();
+    }
+
+    /**
      *  Reloads Asterisk voicemail module
      */
     public function reloadVoicemail(): void
@@ -519,23 +557,35 @@ class WorkerModelsEvents extends WorkerBase
         Processes::processPHPWorker(WorkerCallEvents::class);
     }
 
-    /**
-     *  Reloads modules property
-     */
-    public function reloadPbxConfModules():void
-    {
-        $this->arrObject = $this->di->getShared('pbxConfModules');
-    }
 
     /**
      * Timeout handles
      */
-    public function timeoutHandler():void
+    public function timeoutHandler(): void
     {
         $this->last_change = time() - $this->timeout;
         $this->startReload();
     }
 
+
+    /**
+     *  Process after PBXExtension state changes
+     *
+     * @param \MikoPBX\Common\Models\PbxExtensionModules $record
+     */
+    public function afterModuleStateChanged(PbxExtensionModules $record): void
+    {
+        $className       = str_replace('Module', '', $record->uniqid);
+        $configClassName = "\\Modules\\{$record->uniqid}\\Lib\\{$className}Conf";
+        if (class_exists($configClassName)) {
+            $configClassName = new $configClassName();
+            if ($record->disabled === '1' && method_exists($configClassName, 'onAfterModuleDisable')) {
+                $configClassName->onAfterModuleDisable();
+            } elseif ($record->disabled === '0' && method_exists($configClassName, 'onAfterModuleEnable')) {
+                $configClassName->onAfterModuleEnable();
+            }
+        }
+    }
 }
 
 /**

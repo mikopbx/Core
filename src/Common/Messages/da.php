@@ -1,10 +1,21 @@
 <?php
 return [
-    /**
- * Copyright © MIKO LLC - All Rights Reserved
- * Unauthorized copying of this file, via any medium is strictly prohibited
- * Proprietary and confidential
- * Written by Alexey Portnov, 7 2020
+    /*
+ * MikoPBX - free phone system for small business
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
     'Oct' => 'oktober',
     'Nov' => 'november',
@@ -1044,4 +1055,12 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'gs_RestoreAllSettingsMessage' => 'Alle indstillinger, opkaldshistorik, opkaldsoptagelsesfiler og installerede plugins slettes.',
     'msg_ErrorHeader' => 'Fejl',
     'mo_NewElementOutgoingRoutingTable' => 'Ny regel for behandling af udgående opkald',
+    'sd_CollectingLogsInfo' => 'Få en liste over logfiler',
+    'gs_SevenDigthts' => '7 cifre',
+    'gs_SIPPortSettings' => 'Portindstillinger for SIP-signalering og RTP-rækkevidde',
+    'gs_KeepAliveHeader' => 'Indstillinger for registreringsvarighed',
+    'gs_PBXFeaturePickupExten' => 'Kombination til afhentning af indgående opkald',
+    'gs_CallRecordTab' => 'Optagelse af opkald',
+    'adv_ProblemWithInternetConnection' => 'Der er ingen internetforbindelse. Der kan være problemer i betjeningen af betalte moduler.',
+    'lic_GetTrialErrorCheckInternet' => 'Registrering mislykkedes, tjek for internet på MikoPBX',
 ];

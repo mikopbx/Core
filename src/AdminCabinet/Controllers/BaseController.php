@@ -1,16 +1,27 @@
 <?php
-/**
- * Copyright (C) MIKO LLC - All Rights Reserved
- * Unauthorized copying of this file, via any medium is strictly prohibited
- * Proprietary and confidential
- * Written by Nikolay Beketov, 6 2018
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings};
 use Phalcon\Mvc\{Controller, View};
+use Phalcon\Logger;
 use Phalcon\Tag;
 use Phalcon\Text;
 use Sentry\SentrySdk;
@@ -26,6 +37,7 @@ use Sentry\SentrySdk;
  * @property \Phalcon\Flash\Session                        flash
  * @property \Phalcon\Tag                                  tag
  * @property \Phalcon\Config\Adapter\Json                  config
+ * @property \Phalcon\Logger                                loggerAuth
  */
 class BaseController extends Controller
 {
@@ -254,4 +266,32 @@ class BaseController extends Controller
         return preg_replace('/[^a-zA-Zа-яА-Я0-9 ]/ui', '', $callerId);
     }
 
+    /**
+     * Sorts array by priority field
+     *
+     * @param $a
+     * @param $b
+     *
+     * @return int|null
+     */
+    protected function sortArrayByPriority($a, $b): ?int
+    {
+        if (is_array($a)){
+            $a = (int)$a['priority'];
+        } else {
+            $a = (int)$a->priority;
+        }
+
+        if (is_array($b)){
+            $b = (int)$b['priority'];
+        } else {
+            $b = (int)$b->priority;
+        }
+
+        if ($a === $b) {
+            return 0;
+        } else {
+            return ($a < $b) ? -1 : 1;
+        }
+    }
 }

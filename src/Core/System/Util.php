@@ -1,9 +1,20 @@
 <?php
 /*
- * Copyright © MIKO LLC - All Rights Reserved
- * Unauthorized copying of this file, via any medium is strictly prohibited
- * Proprietary and confidential
- * Written by Alexey Portnov, 9 2020
+ * MikoPBX - free phone system for small business
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace MikoPBX\Core\System;
@@ -11,6 +22,7 @@ namespace MikoPBX\Core\System;
 use DateTime;
 use Exception;
 use MikoPBX\Common\Models\{CallEventsLogs, CustomFiles};
+use MikoPBX\Common\Providers\LoggerProvider;
 use MikoPBX\Core\Asterisk\AsteriskManager;
 use Phalcon\Di;
 use ReflectionClass;
@@ -272,25 +284,27 @@ class Util
                 $data->writeAttribute('linkedid', $data_obj['linkedid']);
             }
             $data->save();
-        } catch (Exception $e) {
-            self::sysLogMsg('logMsgDb', $e->getMessage());
+        } catch (Throwable $e) {
+            self::sysLogMsg(__METHOD__, $e->getMessage(), LOG_ERR);
         }
     }
 
     /**
-     * Add message to Syslog.
+     * Adds messages to Syslog.
      *
-     * @param      $log_name
-     * @param      $text
-     * @param ?int $level
-     * @param ?int $facility
+     * @param string $ident category, class, method
+     * @param string $message log message
+     * @param int $level log level https://docs.phalcon.io/4.0/en/logger#constants
+     *
      */
-    public static function sysLogMsg($log_name, $text, $level = null, $facility = LOG_AUTH): void
+    public static function sysLogMsg(string $ident, string $message, $level = LOG_WARNING): void
     {
-        $level = ($level === null) ? LOG_WARNING : $level;
-        openlog("$log_name", LOG_PID | LOG_PERROR, $facility);
-        syslog($level, "$text");
-        closelog();
+        /** @var \Phalcon\Logger $logger */
+        $logger = Di::getDefault()->getShared(LoggerProvider::SERVICE_NAME);
+        $logger->log($level, "{$message} on {$ident}" );
+        // openlog("$ident", LOG_PID | LOG_PERROR, $facility);
+        // syslog($level, "$text");
+        // closelog();
     }
 
     /**
@@ -418,7 +432,7 @@ class Util
      */
     public static function mwExec($command, &$outArr = null, &$retVal = null): int
     {
-        self::sysLogMsg('Util', 'Deprecated call ' . __METHOD__ . ' from ' . static::class);
+        self::sysLogMsg('Util', 'Deprecated call ' . __METHOD__ . ' from ' . static::class, LOG_DEBUG);
 
         return Processes::mwExec($command, $outArr, $retVal);
     }
@@ -598,7 +612,7 @@ class Util
                         && ! mkdir($path, 0755, true)
                         && ! is_dir($path)) {
                         $result = false;
-                        self::sysLogMsg('Util', 'Error on create folder ' . $path);
+                        self::sysLogMsg('Util', 'Error on create folder ' . $path, LOG_ERR);
                     }
                     if ($addWWWRights) {
                         self::addRegularWWWRights($path);
@@ -744,7 +758,7 @@ class Util
             $reflection = new ReflectionClass($className);
             $filename   = $reflection->getFileName();
         } catch (ReflectionException $exception) {
-            self::sysLogMsg('Util', 'Error ' . $exception->getMessage());
+            self::sysLogMsg(__METHOD__, 'ReflectionException ' . $exception->getMessage(), LOG_ERR);
         }
 
         return $filename;
@@ -761,7 +775,7 @@ class Util
      */
     public static function getPidOfProcess($name, $exclude = ''): string
     {
-        self::sysLogMsg('Util', 'Deprecated call ' . __METHOD__ . ' from ' . static::class);
+        self::sysLogMsg('Util', 'Deprecated call ' . __METHOD__ . ' from ' . static::class, LOG_DEBUG);
 
         return Processes::getPidOfProcess($name, $exclude);
     }
@@ -781,7 +795,7 @@ class Util
      */
     public static function processWorker($cmd, $param, $proc_name, $action, $out_file = '/dev/null')
     {
-        self::sysLogMsg('Util', 'Deprecated call ' . __METHOD__ . ' from ' . static::class);
+        self::sysLogMsg('Util', 'Deprecated call ' . __METHOD__ . ' from ' . static::class, LOG_DEBUG);
 
         return Processes::processWorker($cmd, $param, $proc_name, $action, $out_file);
     }
@@ -799,7 +813,7 @@ class Util
         string $param = 'start',
         string $action = 'restart'
     ): void {
-        self::sysLogMsg('Util', 'Deprecated call ' . __METHOD__ . ' from ' . static::class);
+        self::sysLogMsg('Util', 'Deprecated call ' . __METHOD__ . ' from ' . static::class, LOG_DEBUG);
         Processes::processPHPWorker($className, $param, $action);
     }
 
@@ -813,7 +827,7 @@ class Util
      */
     public static function killByName($procName): ?int
     {
-        self::sysLogMsg('Util', 'Deprecated call ' . __METHOD__ . ' from ' . static::class);
+        self::sysLogMsg('Util', 'Deprecated call ' . __METHOD__ . ' from ' . static::class, LOG_DEBUG);
 
         return Processes::killByName($procName);
     }
@@ -828,7 +842,7 @@ class Util
      */
     public static function mwExecBg($command, $out_file = '/dev/null', $sleep_time = 0): void
     {
-        self::sysLogMsg('Util', 'Deprecated call ' . __METHOD__ . ' from ' . static::class);
+        self::sysLogMsg('Util', 'Deprecated call ' . __METHOD__ . ' from ' . static::class, LOG_DEBUG);
         Processes::mwExecBg($command, $out_file, $sleep_time);
     }
 
@@ -842,7 +856,7 @@ class Util
      */
     public static function mwExecBgWithTimeout($command, $timeout = 4, $logname = '/dev/null'): void
     {
-        self::sysLogMsg('Util', 'Deprecated call ' . __METHOD__ . ' from ' . static::class);
+        self::sysLogMsg('Util', 'Deprecated call ' . __METHOD__ . ' from ' . static::class, LOG_DEBUG);
         Processes::mwExecBgWithTimeout($command, $timeout, $logname);
     }
 
@@ -856,7 +870,7 @@ class Util
      */
     public static function mwExecCommands($arr_cmds, &$out = [], $logname = ''): void
     {
-        self::sysLogMsg('Util', 'Deprecated call ' . __METHOD__ . ' from ' . static::class);
+        self::sysLogMsg('Util', 'Deprecated call ' . __METHOD__ . ' from ' . static::class, LOG_DEBUG);
         Processes::mwExecCommands($arr_cmds, $out, $logname);
     }
 

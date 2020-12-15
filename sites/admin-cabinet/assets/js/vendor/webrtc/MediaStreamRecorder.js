@@ -1,11 +1,3 @@
-/*
- * Copyright (C) MIKO LLC - All Rights Reserved
- * Unauthorized copying of this file, via any medium is strictly prohibited
- * Proprietary and confidential
- * Written by Nikolay Beketov, 5 2018
- *
- */
-
 'use strict';
 
 // Last time updated: 2017-08-31 4:03:22 AM UTC

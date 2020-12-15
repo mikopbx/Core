@@ -1,22 +1,52 @@
 #!/bin/sh
 
-if [ "${1}x" == "x" ];then
+#
+# MikoPBX - free phone system for small business
+# Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with this program.
+# If not, see <https://www.gnu.org/licenses/>.
+#
+
+if [ "${1}x" = "x" ];then
     # Это установка системы. Меню необходимо отключить.
     echo "Error eth not set.";
     /bin/busybox logger -t 'Set.MTU' "Error eth not set.";
     exit;
 fi
 
-eth=$1;
-/bin/busybox ifconfig "$eth" 2>&1 > /dev/null;
-if [ "$?" != "0" ];then
+eth="$1";
+/bin/busybox ifconfig "$eth" > /dev/null 2> /dev/null;
+resultIfConfig="$?";
+if [ "$resultIfConfig" != "0" ];then
     # Это установка системы. Меню необходимо отключить.
     /bin/busybox logger -t 'Set.MTU' "Error eth $eth not exists. (ifconfig)";
     exit;
 fi
 
+if [ -f /sbin/shell_functions.sh ]; then
+. /sbin/shell_functions.sh;
+fi
 # Получаем адрес маршрутизатора сети.
 host_main=$(/bin/busybox route -n | /bin/busybox grep "$eth" | /bin/busybox awk '{print $2}' | /bin/busybox grep -v '0.0.0.0' | /bin/busybox head -n 1);
+
+setMtu()
+{
+  localEth="$1";
+  mtuValue="$2";
+  /bin/busybox ip link set "$localEth" mtu "$mtuValue"
+  echo "result $? $localEth mtu $mtuValue";
+}
 
 find_set_mtu()
 {
@@ -24,32 +54,31 @@ find_set_mtu()
     # $2 - eth name
     # Получаем текущее значение mtu;
     mtu_main=$(/bin/busybox ip link show | grep mtu | grep "$2" | awk '{print $5}');
-    PKT_SIZE=`expr $mtu_main - 28`;
+    PKT_SIZE=$((mtu_main - 28));
 
     n=0;
     while [ $n -lt 100 ]; do
-        n=`expr $n + 1`;
+        n=$((n + 1));
         res=$(/bin/busybox ping "$1" -s "$PKT_SIZE" -w 1 -I "$2" | /bin/busybox grep loss | /bin/busybox awk '{print $7}');
-        if [ "$?" == "1" ];then
-            /bin/busybox logger -t 'Set.MTU' "Error eth $eth not exists. (ping)";
+        echo ping "$1" -s "$PKT_SIZE" -w 1 -I "$2";
+        if [ "$?" = "1" ];then
+            /bin/busybox logger -t 'Set.MTU' "Error eth $2 not exists. (ping)";
             return;
         fi
-
-        if [ "$res" == "0%" ];then
+        if [ "$res" = "0%" ];then
             mtu_main=$((PKT_SIZE + 28));
-            /bin/busybox ip link set "$eth" mtu "$mtu_main"
-
-            echo "result $? $eth mtu $mtu_main";
+            setMtu "$2" "$mtu_main";
             return;
         fi
-        PKT_SIZE=`expr $PKT_SIZE - 1`;
+        PKT_SIZE=$((PKT_SIZE - 1));
     done
 }
 
+killprocesses "networking.set.mtu $eth" '-TERM' 0;
+setMtu "$eth" "1500";
+
 echo "get from $host_main";
-find_set_mtu $host_main $eth
-echo "get from 8.8.8.8";
-find_set_mtu '8.8.8.8' $eth
+find_set_mtu "$host_main" "$eth"
 
 if [ "${mtu_main}x" != "x" ] && [ "${mtu_main}" != "1500" ];then
     /bin/busybox logger -t 'Set.MTU' "For $eth $mtu_main"

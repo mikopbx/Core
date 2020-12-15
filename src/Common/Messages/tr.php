@@ -1,10 +1,21 @@
 <?php
 return [
-    /**
- * Copyright © MIKO LLC - All Rights Reserved
- * Unauthorized copying of this file, via any medium is strictly prohibited
- * Proprietary and confidential
- * Written by Alexey Portnov, 7 2020
+    /*
+ * MikoPBX - free phone system for small business
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
     'ex_ValidateForwardingToBeFilled' => 'Yönlendirme ayarlarında, zaman aşımı yönlendirme numarası doldurulmaz',
     'ex_ValidateRingingBeforeForwardOutOfRange' => 'Yönlendirme ayarlarında, aktarımdan önceki süre yanlış belirtilir. {RuleValue} arasında bir değer seçin.',
@@ -1044,4 +1055,12 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
     'msg_WarningHeader' => 'Dikkat',
     'msg_ErrorHeader' => 'Hata',
     'mo_NewElementOutWorkTimes' => 'Yeni mesai dışı çalışma kuralı',
+    'sd_CollectingLogsInfo' => 'Günlük dosyalarının bir listesini alma',
+    'gs_SevenDigthts' => '7 basamak',
+    'gs_SIPPortSettings' => 'SIP sinyali ve RTP aralığı için bağlantı noktası ayarları',
+    'gs_KeepAliveHeader' => 'Kayıt süresi ayarları',
+    'gs_PBXFeaturePickupExten' => 'Gelen çağrıları cevaplamak için kombinasyon',
+    'gs_CallRecordTab' => 'Arama kaydı',
+    'adv_ProblemWithInternetConnection' => 'İnternet bağlantısı yok. Ücretli modüllerin çalışmasında sorunlar yaşanabilir.',
+    'lic_GetTrialErrorCheckInternet' => 'Kayıt başarısız oldu, MikoPBX\'te interneti kontrol edin',
 ];

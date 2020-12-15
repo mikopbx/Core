@@ -1,10 +1,20 @@
 <?php
-/**
- * Copyright (C) MIKO LLC - All Rights Reserved
- * Unauthorized copying of this file, via any medium is strictly prohibited
- * Proprietary and confidential
- * Written by Nikolay Beketov, 5 2018
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace MikoPBX\AdminCabinet\Controllers;
@@ -23,7 +33,6 @@ class IncomingRoutesController extends BaseController
     {
         $parameters = [
             'conditions' => 'id>1',
-            'order'      => 'priority',
         ];
 
         $rules        = IncomingRoutingTable::find($parameters);
@@ -53,6 +62,7 @@ class IncomingRoutesController extends BaseController
 
             $routingTable[] = $values;
         }
+        usort($routingTable, [__CLASS__, 'sortArrayByPriority']);
         //Маршрут по умолчанию
         $defaultRule = IncomingRoutingTable::findFirstById(1);
         if ($defaultRule === null) {
@@ -64,7 +74,7 @@ class IncomingRoutesController extends BaseController
         }
 
         // Список всех используемых эктеншенов
-        $forwardingExtensions = [];
+        $forwardingExtensions     = [];
         $forwardingExtensions[''] = $this->translation->_('ex_SelectNumber');
         $parameters               = [
             'conditions' => 'number IN ({ids:array})',
@@ -91,7 +101,7 @@ class IncomingRoutesController extends BaseController
      *
      * @param string $ruleId Идентификатор правила маршрутизации
      */
-    public function modifyAction(string $ruleId = '') :void
+    public function modifyAction(string $ruleId = ''): void
     {
         if ((int)$ruleId === 1) {
             $this->forward('incoming-routes/index');
@@ -99,7 +109,12 @@ class IncomingRoutesController extends BaseController
 
         $rule = IncomingRoutingTable::findFirstByid($ruleId);
         if ($rule === null) {
+            $parameters = [
+                'column' => 'priority',
+                'conditions'=>'id!=1'
+            ];
             $rule = new IncomingRoutingTable();
+            $rule->priority = (int)IncomingRoutingTable::maximum($parameters)+1;
         }
 
         // Список провайдеров
@@ -113,7 +128,7 @@ class IncomingRoutesController extends BaseController
         }
 
         // Список всех используемых эктеншенов
-        $forwardingExtensions = [];
+        $forwardingExtensions     = [];
         $forwardingExtensions[''] = $this->translation->_('ex_SelectNumber');
         $parameters               = [
             'conditions' => 'number IN ({ids:array})',
@@ -220,27 +235,24 @@ class IncomingRoutesController extends BaseController
     }
 
     /**
-     * Изменение приоритета маршрута
+     * Changes rules priority
      *
-     * @param string $ruleId
      */
-    public function changePriorityAction(string $ruleId = '')
+    public function changePriorityAction(): void
     {
-        if ((int)$ruleId === 1 || $ruleId==='') {
-            return;
-        } // Первая строка маршрут по умолчанию, ее не трогаем.
-
         $this->view->disable();
-        $result = false;
+        $result = true;
 
         if ( ! $this->request->isPost()) {
             return;
         }
-        $data = $this->request->getPost();
-        $rule = IncomingRoutingTable::findFirstById($ruleId);
-        if ($rule !== null) {
-            $rule->priority = (int)$data['newPriority'];
-            $result         = $rule->update();
+        $priorityTable = $this->request->getPost();
+        $rules = IncomingRoutingTable::find();
+        foreach ($rules as $rule){
+            if (array_key_exists ( $rule->id, $priorityTable)){
+                $rule->priority = $priorityTable[$rule->id];
+                $result         .= $rule->update();
+            }
         }
         echo json_encode($result);
     }

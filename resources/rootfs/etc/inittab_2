@@ -1,4 +1,2 @@
-::sysinit:/sbin/syslogd -S -C512
 ::sysinit:/sbin/mikopbx_boot_init 2> /dev/null
-::sysinit:/etc/rc/bootup 2> /dev/null
 tty1::respawn:/sbin/mikopbx_init 2> /dev/null

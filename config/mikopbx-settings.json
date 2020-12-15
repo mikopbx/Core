@@ -47,6 +47,7 @@
   },
   "core": {
     "debugMode": false,
+    "logsLevel": 7,
     "cfDir": "/cf",
     "varEtcDir": "/var/etc",
     "modulesDir": "/mountpoint/mikopbx/custom_modules",

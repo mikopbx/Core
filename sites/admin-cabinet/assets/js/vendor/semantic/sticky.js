@@ -1,11 +1,3 @@
-/*
- * Copyright (C) MIKO LLC - All Rights Reserved
- * Unauthorized copying of this file, via any medium is strictly prohibited
- * Proprietary and confidential
- * Written by Nikolay Beketov, 12 2018
- *
- */
-
 /*!
  * # Semantic UI 2.4.1 - Sticky
  * http://github.com/semantic-org/semantic-ui/

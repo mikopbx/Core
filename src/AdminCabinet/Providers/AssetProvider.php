@@ -1,69 +1,24 @@
 <?php
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/** @noinspection PhpUnusedPrivateMethodInspection */
-
-/**
- * Copyright © MIKO LLC - All Rights Reserved
- * Unauthorized copying of this file, via any medium is strictly prohibited
- * Proprietary and confidential
- * Written by Alexey Portnov, 8 2020
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 declare(strict_types=1);
-/**
- * Copyright (C) MIKO LLC - All Rights Reserved
- * Unauthorized copying of this file, via any medium is strictly prohibited
- * Proprietary and confidential
- * Written by Nikolay Beketov, 4 2020
- *
- */
+
 namespace MikoPBX\AdminCabinet\Providers;
 
 use Phalcon\Assets\Collection;
@@ -177,13 +132,8 @@ class AssetProvider implements ServiceProviderInterface
     {
         if (file_exists('/tmp/sendmetrics')) {
             $this->headerCollectionSentryJS->addjs(
-                '//browser.sentry-cdn.com/5.27.0/bundle.min.js',
-                false,
-                false,
-                [
-                    'crossorigin' => 'anonymous',
-                    'integrity'   => 'sha384-odt6g+qg66eR/WbXcAHMweT2Ab+eHnyzmeJOodbqYhP2rQdeJbPgDM/xbi5jj2tx',
-                ]
+                'assets/js/vendor/sentry/bundle.min.js',
+                true
             );
             $this->headerCollectionSentryJS->addJs(
                 "assets/js/pbx/main/sentry-error-logger.js?v={$version}",

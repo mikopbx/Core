@@ -1,6 +1,6 @@
 {{ link_to("call-queues/modify", '<i class="add circle icon"></i> '~t._('cq_AddNewQueue'), "class": "ui blue button", 'id':'add-new-button') }}
 
-    {% for queue in queues %}
+    {% for queue in callQueuesList %}
         {% if loop.first %}
             <table class="ui selectable compact table" id="queues-table">
             <thead>
@@ -16,19 +16,19 @@
         {% endif %}
 
 
-        <tr class="queue-row" id="{{ queue.uniqid }}">
-            <td>{{ queue.name }}</td>
-            <td class="center aligned">{{ queue.extension }}</td>
+        <tr class="queue-row" id="{{ queue['uniqid'] }}">
+            <td>{{ queue['name'] }}</td>
+            <td class="center aligned">{{ queue['extension'] }}</td>
             <td>
                 <small>
-                    {% for member in queue.CallQueueMembers %}
-                        {{ member.Extensions.getRepresent() }}<br>
+                    {% for member in queue['members'] %}
+                        {{ member['represent'] }}<br>
                     {% endfor %}
                 </small>
             </td>
             <td>
-                {% if not (queue.description is empty) %}
-                    <div class="ui basic icon button" data-content="{{ queue.description }}" data-position="top right"
+                {% if not (queue['description'] is empty) %}
+                    <div class="ui basic icon button" data-content="{{ queue['description'] }}" data-position="top right"
                          data-variation="wide">
                         <i class="file text  icon"></i>
                     </div>
@@ -36,7 +36,7 @@
             </td>
             {{ partial("partials/tablesbuttons",
                 [
-                    'id': queue.uniqid,
+                    'id': queue['uniqid'],
                     'edit' : 'call-queues/modify/',
                     'delete': 'call-queues/delete/'
                 ]) }}

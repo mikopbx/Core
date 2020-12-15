@@ -1,10 +1,20 @@
 <?php
-/**
- * Copyright (C) MIKO LLC - All Rights Reserved
- * Unauthorized copying of this file, via any medium is strictly prohibited
- * Proprietary and confidential
- * Written by Nikolay Beketov, 5 2020
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace MikoPBX\Modules;
@@ -18,6 +28,7 @@ use MikoPBX\Core\System\Configs\NginxConf;
 use MikoPBX\Core\System\Configs\IptablesConf;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
+use MikoPBX\Modules\Config\ConfigClass;
 use PDOException;
 use Phalcon\Di\Injectable;
 use ReflectionClass;
@@ -33,7 +44,7 @@ class PbxExtensionState extends Injectable
     private array $messages;
     private $lic_feature_id;
     private string $moduleUniqueID;
-    private $configClass;
+    private ?ConfigClass $configClass;
     private $modulesRoot;
 
 
@@ -114,11 +125,6 @@ class PbxExtensionState extends Injectable
         if ($module !== null) {
             $module->disabled = '0';
             $module->save();
-        }
-
-        if ($this->configClass !== null
-            && method_exists($this->configClass, 'onAfterModuleEnable')) {
-            $this->configClass->onAfterModuleEnable();
         }
 
         if ($this->configClass !== null
@@ -256,11 +262,6 @@ class PbxExtensionState extends Injectable
         if ($module !== null) {
             $module->disabled = '1';
             $module->save();
-        }
-
-        if ($this->configClass !== null
-            && method_exists($this->configClass, 'onAfterModuleDisable')) {
-            $this->configClass->onAfterModuleDisable();
         }
 
         if ($this->configClass !== null

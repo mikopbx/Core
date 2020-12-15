@@ -1,9 +1,19 @@
 /*
- * Copyright (C) MIKO LLC - All Rights Reserved
- * Unauthorized copying of this file, via any medium is strictly prohibited
- * Proprietary and confidential
- * Written by Nikolay Beketov, 12 2019
+ * MikoPBX - free phone system for small business
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 /* global globalRootUrl,globalTranslate, Extensions, Form */
@@ -34,29 +44,13 @@ const incomingRoutes = {
 	},
 	initialize() {
 		$('#routingTable').tableDnD({
-			onDrop() {
-				$('.rule-row').each((index, obj) => {
-					const ruleId = $(obj).attr('id');
-					const oldPriority = parseInt($(obj).attr('data-value'), 10);
-					const newPriority = obj.rowIndex;
-					if (oldPriority !== newPriority) {
-						$.api({
-							on: 'now',
-							url: `${globalRootUrl}incoming-routes/changePriority/${ruleId}`,
-							method: 'POST',
-							data: { newPriority },
-						});
-					}
-				});
-			},
+			onDrop: incomingRoutes.cbOnDrop,
 			onDragClass: 'hoveringRow',
 			dragHandle: '.dragHandle',
 		});
 
 		incomingRoutes.$actionDropdown.dropdown({
-			onChange() {
-				incomingRoutes.toggleDisabledFieldClass();
-			},
+			onChange: incomingRoutes.toggleDisabledFieldClass
 		});
 
 		incomingRoutes.toggleDisabledFieldClass();
@@ -68,6 +62,27 @@ const incomingRoutes = {
 			const id = $(e.target).closest('tr').attr('id');
 			window.location = `${globalRootUrl}incoming-routes/modify/${id}`;
 		});
+	},
+	cbOnDrop() {
+		let priorityWasChanged = false;
+		const priorityData = {};
+		$('.rule-row').each((index, obj) => {
+			const ruleId = $(obj).attr('id');
+			const oldPriority = parseInt($(obj).attr('data-value'), 10);
+			const newPriority = obj.rowIndex;
+			if (oldPriority !== newPriority) {
+				priorityWasChanged = true;
+				priorityData[ruleId] = newPriority;
+			}
+		});
+		if (priorityWasChanged) {
+			$.api({
+				on: 'now',
+				url: `${globalRootUrl}incoming-routes/changePriority`,
+				method: 'POST',
+				data: priorityData,
+			});
+		}
 	},
 	toggleDisabledFieldClass() {
 		if (incomingRoutes.$formObj.form('get value', 'action') === 'extension') {

@@ -1,10 +1,20 @@
 <?php
 /*
- * Copyright (C) MIKO LLC - All Rights Reserved
- * Unauthorized copying of this file, via any medium is strictly prohibited
- * Proprietary and confidential
- * Written by Nikolay Beketov, 11 2020
+ * MikoPBX - free phone system for small business
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace MikoPBX\Core\System;
@@ -50,7 +60,6 @@ class Processes
         } else {
             exec("$command 2>&1", $outArr, $retVal);
         }
-
         return $retVal;
     }
 
@@ -72,7 +81,7 @@ class Processes
         }
         $nohupPath   = Util::which('nohup');
         $timeoutPath = Util::which('timeout');
-        exec("{$nohupPath} {$timeoutPath} -t {$timeout} {$command} > {$logname} 2>&1 &");
+        exec("{$nohupPath} {$timeoutPath} {$timeout} {$command} > {$logname} 2>&1 &");
     }
 
     /**
@@ -122,6 +131,7 @@ class Processes
         string $paramForPHPWorker = 'start',
         string $action = 'restart'
     ): void {
+        Util::sysLogMsg(__METHOD__, "processPHPWorker ". $className." action-".$action, LOG_DEBUG);
         $workerPath = Util::getFilePathByClassName($className);
         if (empty($workerPath)) {
             return;
@@ -145,8 +155,8 @@ class Processes
             case 'restart':
                 // Stop all old workers
                 if ($activeProcesses !== '') {
-                    self::mwExec("{$path_kill} SIGUSR1 {$activeProcesses}  > /dev/null 2>&1 &");
-                    self::mwExecBgWithTimeout("{$path_kill} SIGTERM {$activeProcesses}", 10);
+                    self::mwExec("{$path_kill} -SIGUSR1 {$activeProcesses}  > /dev/null 2>&1 &");
+                    self::mwExecBgWithTimeout("{$path_kill} -SIGTERM {$activeProcesses}", 10);
                     $currentProcCount = 0;
                 }
 
@@ -159,8 +169,8 @@ class Processes
                 break;
             case 'stop':
                 if ($activeProcesses !== '') {
-                    self::mwExec("{$path_kill} SIGUSR1 {$activeProcesses}  > /dev/null 2>&1 &");
-                    self::mwExecBgWithTimeout("{$path_kill} SIGTERM {$activeProcesses}", 10);
+                    self::mwExec("{$path_kill} -SIGUSR2 {$activeProcesses}  > /dev/null 2>&1 &");
+                    self::mwExecBgWithTimeout("{$path_kill} -SIGTERM {$activeProcesses}", 10);
                 }
                 break;
             case 'start':
@@ -181,8 +191,8 @@ class Processes
                             break;
                         }
                         // Kill old processes with timeout, maybe it is soft restart and worker die without any help
-                        self::mwExec("{$path_kill} SIGUSR1 {$processes[$countProc4Kill]}  > /dev/null 2>&1 &");
-                        self::mwExecBgWithTimeout("{$path_kill} SIGTERM {$processes[$countProc4Kill]}", 10);
+                        self::mwExec("{$path_kill} -SIGUSR1 {$processes[$countProc4Kill]}  > /dev/null 2>&1 &");
+                        self::mwExecBgWithTimeout("{$path_kill} -SIGTERM {$processes[$countProc4Kill]}", 10);
                         $countProc4Kill--;
                     }
                 }
