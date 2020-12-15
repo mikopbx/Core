@@ -109,8 +109,7 @@ class BeanstalkClient extends Injectable
         $job_data,
         int $timeout = 10,
         int $priority = PheanstalkInterface::DEFAULT_PRIORITY
-    ): bool|string
-    {
+    ) {
         $this->message = false;
         $inbox_tube    = uniqid(self::INBOX_PREFIX, true);
         $this->queue->watch($inbox_tube);
