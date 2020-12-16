@@ -599,18 +599,6 @@ class WorkerModelsEvents extends WorkerBase
         }
     }
 
-    /**
-     * Process async system signal
-     *
-     * @param int $signal
-     */
-    public function signalHandler(int $signal): void
-    {
-        Util::sysLogMsg(static::class, "Receive signal to restart  ".$signal, LOG_DEBUG);
-        $this->needRestart = true;
-        $this->timeoutHandler();
-    }
-
     public static function invokeAction(string $action):void{
         $di = Di::getDefault();
         $queue = $di->getShared(BeanstalkConnectionModelsProvider::SERVICE_NAME);
