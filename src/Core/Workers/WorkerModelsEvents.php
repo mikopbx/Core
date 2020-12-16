@@ -62,6 +62,8 @@ use MikoPBX\Core\System\{BeanstalkClient,
     System,
     Util};
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
+use Phalcon\Di;
+use Pheanstalk\Contract\PheanstalkInterface;
 use Throwable;
 
 ini_set('error_reporting', E_ALL);
@@ -89,7 +91,7 @@ class WorkerModelsEvents extends WorkerBase
 
     private const R_CRON = 'reloadCron';
 
-    private const R_NGINX = 'reloadNginx';
+    public const  R_NGINX = 'reloadNginx';
 
     private const R_PHP_FPM = 'reloadPHPFPM';
 
@@ -175,13 +177,23 @@ class WorkerModelsEvents extends WorkerBase
      * Parses for received Beanstalk message
      *
      * @param BeanstalkClient $message
+     * @throws \JsonException
      */
     public function processModelChanges(BeanstalkClient $message): void
     {
-        $receivedMessage = json_decode($message->getBody(), true);
-        $this->fillModifiedTables($receivedMessage);
-        $this->startReload();
+        $data = $message->getBody();
+        $receivedMessage = null;
+        if(in_array($data, $this->PRIORITY_R, true)){
+            $this->modified_tables[$data] = true;
+        }else{
+            $receivedMessage = json_decode($message->getBody(), true, 512, JSON_THROW_ON_ERROR);
+            $this->fillModifiedTables($receivedMessage);
 
+        }
+        $this->startReload();
+        if(!$receivedMessage){
+            return;
+        }
         // Send information about models changes to additional modules
         foreach ($this->arrObject as $appClass) {
             $appClass->modelsEventChangeData($receivedMessage);
@@ -585,6 +597,18 @@ class WorkerModelsEvents extends WorkerBase
                 $configClassName->onAfterModuleEnable();
             }
         }
+    }
+
+    public static function invokeAction(string $action):void{
+        $di = Di::getDefault();
+        $queue = $di->getShared(BeanstalkConnectionModelsProvider::SERVICE_NAME);
+        $queue->publish(
+            $action,
+            self::class,
+            0,
+            PheanstalkInterface::DEFAULT_DELAY,
+            3600
+        );
     }
 }
 

@@ -19,20 +19,16 @@
 
 namespace MikoPBX\Modules;
 
-
 use MikoPBX\Common\Models\FirewallRules;
 use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Core\System\Configs\NginxConf;
 use MikoPBX\Core\System\Configs\IptablesConf;
 use MikoPBX\Core\System\Processes;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Core\Workers\WorkerModelsEvents;
 use MikoPBX\Modules\Config\ConfigClass;
-use PDOException;
 use Phalcon\Di\Injectable;
 use ReflectionClass;
-use ReflectionException;
 use Throwable;
 
 /**
@@ -216,9 +212,8 @@ class PbxExtensionState extends Injectable
         if ($this->configClass !== null
             && method_exists($this->configClass, 'createNginxLocations')
             && ! empty($this->configClass->createNginxLocations())) {
-            $nginxConf = new NginxConf();
-            $nginxConf->generateModulesConf();
-            $nginxConf->reStart();
+            // Отправка запроса на рестарт сервиса NGINX.
+            WorkerModelsEvents::invokeAction(WorkerModelsEvents::R_NGINX);
         }
     }
 
