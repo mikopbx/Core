@@ -166,7 +166,7 @@ class NginxConf extends Injectable
         if (!is_dir($locationsPath)){
             Util::mwMkdir($locationsPath,true);
         }
-        $additionalModules = $this->di->get('pbxConfModules');
+        $additionalModules = $this->di->getShared('pbxConfModules');
         $rmPath            = Util::which('rm');
         Processes::mwExec("{$rmPath} -rf {$locationsPath}/*.conf");
         foreach ($additionalModules as $appClass) {

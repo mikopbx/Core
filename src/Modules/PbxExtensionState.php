@@ -121,7 +121,6 @@ class PbxExtensionState extends Injectable
             $module->disabled = '0';
             $module->save();
         }
-
         if ($this->configClass !== null
             && method_exists($this->configClass, 'getMessages')) {
             $this->messages = array_merge($this->messages, $this->configClass->getMessages());
