@@ -52,8 +52,8 @@ services)
 service)
   pids=$(ps | grep "$2" | grep -v grep | grep -v "$0" | cut -d ' ' -f1);
   if [ "${pids}x" != "x" ];then
-    echo "Killing PBX service ${2}. PID ${pids}.";
-    kill "${pids}";
+    echo "Killing PBX service ${2}.";
+    echo "${pids}" | xargs kill
   else
     echo "PBX service ${2} not started.";
   fi
