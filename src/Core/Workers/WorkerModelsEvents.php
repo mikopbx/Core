@@ -93,9 +93,12 @@ class WorkerModelsEvents extends WorkerBase
 
     public const  R_NGINX = 'reloadNginx';
 
+    public const  R_NGINX_CONF = 'reloadNginxConf';
+
     private const R_PHP_FPM = 'reloadPHPFPM';
 
     private const R_TIMEZONE = 'updateTomeZone';
+
     private const R_SYSLOG   = 'restartSyslogD';
 
     private const R_SSH = 'reloadSSH';
@@ -145,6 +148,7 @@ class WorkerModelsEvents extends WorkerBase
             self::R_NTP,
             self::R_PHP_FPM,
             self::R_NGINX,
+            self::R_NGINX_CONF,
             self::R_CRON,
             self::R_FEATURES,
             self::R_SIP,
@@ -161,6 +165,7 @@ class WorkerModelsEvents extends WorkerBase
 
         $this->modified_tables = [];
 
+        /** @var BeanstalkClient $client */
         $client = $this->di->getShared(BeanstalkConnectionModelsProvider::SERVICE_NAME);
         $client->subscribe(self::class, [$this, 'processModelChanges']);
         $client->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
@@ -506,6 +511,15 @@ class WorkerModelsEvents extends WorkerBase
     {
         $nginxConf = new NginxConf();
         $nginxConf->generateConf();
+        $nginxConf->reStart();
+    }
+
+    /**
+     * Restarts Nginx daemon
+     */
+    public function reloadNginxConf(): void
+    {
+        $nginxConf = new NginxConf();
         $nginxConf->reStart();
     }
 

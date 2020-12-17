@@ -24,6 +24,7 @@ use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Configs\IptablesConf;
+use MikoPBX\Core\System\Configs\NginxConf;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\Workers\WorkerModelsEvents;
 use MikoPBX\Modules\Config\ConfigClass;
@@ -97,7 +98,6 @@ class PbxExtensionState extends Injectable
             $result = $this->license->featureAvailable($this->lic_feature_id);
             if ($result['success'] === false) {
                 $this->messages[] = $this->license->translateLicenseErrorMessage($result['error']);
-
                 return false;
             }
         }
@@ -110,7 +110,6 @@ class PbxExtensionState extends Injectable
         // Если ошибок нет, включаем Firewall и модуль
         if ( ! $this->enableFirewallSettings()) {
             $this->messages[] = 'Error on enable firewall settings';
-
             return false;
         }
         if ($this->configClass !== null
@@ -127,14 +126,10 @@ class PbxExtensionState extends Injectable
             && method_exists($this->configClass, 'getMessages')) {
             $this->messages = array_merge($this->messages, $this->configClass->getMessages());
         }
-
         // Restart Nginx if module has locations
         $this->refreshNginxLocations();
-
         // Reconfigure fail2ban and restart iptables
         $this->refreshFail2BanRules();
-
-
         return true;
     }
 
@@ -212,8 +207,14 @@ class PbxExtensionState extends Injectable
         if ($this->configClass !== null
             && method_exists($this->configClass, 'createNginxLocations')
             && ! empty($this->configClass->createNginxLocations())) {
-            // Отправка запроса на рестарт сервиса NGINX.
-            WorkerModelsEvents::invokeAction(WorkerModelsEvents::R_NGINX);
+
+            // Обновляем конфигурацию Nginx.
+            $nginxConf = new NginxConf();
+            $nginxConf->generateModulesConf();
+
+            // Отправка запроса на рестарт сервиса NGINX (reload конфигурации).
+            // Процесс не должен перезапускаться.
+            WorkerModelsEvents::invokeAction(WorkerModelsEvents::R_NGINX_CONF);
         }
     }
 

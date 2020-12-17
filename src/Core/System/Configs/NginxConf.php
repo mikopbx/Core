@@ -29,8 +29,9 @@ use Phalcon\Di\Injectable;
 
 class NginxConf extends Injectable
 {
-    public const LOCATIONS_PATH = '/etc/nginx/mikopbx/locations';
-    public const MODULES_LOCATIONS_PATH = '/etc/nginx/mikopbx/modules_locations';
+    public const  LOCATIONS_PATH = '/etc/nginx/mikopbx/locations';
+    public const  MODULES_LOCATIONS_PATH = '/etc/nginx/mikopbx/modules_locations';
+    private const PID_FILE = '/var/run/nginx.pid';
 
     private MikoPBXConfig $mikoPBXConfig;
 
@@ -48,19 +49,29 @@ class NginxConf extends Injectable
      **/
     public function reStart(): void
     {
-        $nginxPath = Util::which('nginx');
-        $killPath = Util::which('kill');
-        $pid       = Processes::getPidOfProcess('master process nginx');
+        $pid = self::getPid();
         if (!empty($pid)) {
+            $killPath = Util::which('kill');
             // reload Nginx workers gracefully
             Processes::mwExec("{$killPath} -SIGHUP {$pid} ");
         } elseif (Util::isSystemctl()) {
             $systemCtrlPath = Util::which('systemctl');
             Processes::mwExec("{$systemCtrlPath} restart nginx.service");
         } else {
+            $nginxPath = Util::which('nginx');
             Processes::killByName('nginx');
             Processes::mwExec($nginxPath);
         }
+    }
+
+    private static function getPid():string{
+        if(file_exists(self::PID_FILE)) {
+            $pid = file_get_contents(self::PID_FILE);
+        }else{
+            $nginxPath = Util::which('nginx');
+            $pid       = Processes::getPidOfProcess($nginxPath);
+        }
+        return $pid;
     }
 
     /**
@@ -155,21 +166,27 @@ class NginxConf extends Injectable
         if (!is_dir($locationsPath)){
             Util::mwMkdir($locationsPath,true);
         }
-        $additionalModules = $this->di->getShared('pbxConfModules');
+        $additionalModules = $this->di->get('pbxConfModules');
         $rmPath            = Util::which('rm');
         Processes::mwExec("{$rmPath} -rf {$locationsPath}/*.conf");
         foreach ($additionalModules as $appClass) {
-            if (method_exists($appClass, 'createNginxLocations')) {
-                $locationContent = $appClass->createNginxLocations();
-                if ( ! empty($locationContent)) {
-                    $confFileName = "{$locationsPath}/{$appClass->moduleUniqueId}.conf";
-                    file_put_contents($confFileName, $locationContent);
-                    if ( ! $this->testCurrentNginxConfig()) {
-                        Processes::mwExec("{$rmPath} {$confFileName}");
-                        Util::sysLogMsg('nginx', 'Failed test config file for module' . $appClass->moduleUniqueId, LOG_ERR);
-                    }
-                }
+            if (!method_exists($appClass, 'createNginxLocations')) {
+                continue;
             }
+            $locationContent = $appClass->createNginxLocations();
+            if (empty($locationContent)) {
+                // Текст конфига не определен.
+                continue;
+            }
+            $confFileName = "{$locationsPath}/{$appClass->moduleUniqueId}.conf";
+            file_put_contents($confFileName, $locationContent);
+            if ( $this->testCurrentNginxConfig()) {
+                // Тест прошел успешно.
+                continue;
+            }
+            // Откат конфига.
+            Processes::mwExec("{$rmPath} {$confFileName}");
+            Util::sysLogMsg('nginx', 'Failed test config file for module' . $appClass->moduleUniqueId, LOG_ERR);
         }
     }
 }
