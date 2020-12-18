@@ -112,7 +112,6 @@ class Fail2BanConf extends Injectable
         }
         $fail2ban = new self();
         if($fail2ban->fail2ban_enable && !empty($pid)){
-            $countAdditionalModules = count($fail2ban->di->getShared('pbxConfModules'));
             $fail2ban->generateModulesFilters();
             $fail2ban->generateModulesJailsLocal();
             // Перезагрузка конфигов без рестарта конфига.
