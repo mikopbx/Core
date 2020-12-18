@@ -50,6 +50,7 @@ use MikoPBX\Common\Providers\BeanstalkConnectionModelsProvider;
 use MikoPBX\Core\Asterisk\Configs\QueueConf;
 use MikoPBX\Core\System\{BeanstalkClient,
     Configs\CronConf,
+    Configs\Fail2BanConf,
     Configs\IptablesConf,
     Configs\NatsConf,
     Configs\NginxConf,
@@ -71,7 +72,9 @@ ini_set('display_startup_errors', 1);
 
 class WorkerModelsEvents extends WorkerBase
 {
-    private const R_MANAGERS = 'reloadManager';
+    private const R_MANAGERS     = 'reloadManager';
+
+    public const R_NEED_RESTART  = 'needRestart';
 
     private const R_QUEUES = 'reloadQueues';
 
@@ -93,7 +96,9 @@ class WorkerModelsEvents extends WorkerBase
 
     public const  R_NGINX = 'reloadNginx';
 
-    public const  R_NGINX_CONF = 'reloadNginxConf';
+    public const  R_NGINX_CONF    = 'reloadNginxConf';
+
+    public const  R_FAIL2BAN_CONF = 'reloadFail2BanConf';
 
     private const R_PHP_FPM = 'reloadPHPFPM';
 
@@ -134,6 +139,7 @@ class WorkerModelsEvents extends WorkerBase
      */
     public function start($argv): void
     {
+        $this->last_change = time() - 2;
         $this->arrObject = $this->di->getShared('pbxConfModules');
 
         $this->PRIORITY_R = [
@@ -142,6 +148,7 @@ class WorkerModelsEvents extends WorkerBase
             self::R_REST_API_WORKER,
             self::R_NETWORK,
             self::R_FIREWALL,
+            self::R_FAIL2BAN_CONF,
             self::R_SSH,
             self::R_LICENSE,
             self::R_NATS,
@@ -172,7 +179,7 @@ class WorkerModelsEvents extends WorkerBase
         $client->setTimeoutHandler([$this, 'timeoutHandler']);
 
         while ($this->needRestart === false) {
-            $client->wait();
+            $client->wait(1);
         }
         // Execute all collected changes before exit
         $this->timeoutHandler();
@@ -188,6 +195,9 @@ class WorkerModelsEvents extends WorkerBase
     {
         $data = $message->getBody();
         $receivedMessage = null;
+        if($data === self::R_NEED_RESTART){
+            $this->needRestart();
+        }
         if(in_array($data, $this->PRIORITY_R, true)){
             $this->modified_tables[$data] = true;
         }else{
@@ -519,8 +529,24 @@ class WorkerModelsEvents extends WorkerBase
      */
     public function reloadNginxConf(): void
     {
+        // Обновляем конфигурацию Nginx.
         $nginxConf = new NginxConf();
+        $nginxConf->generateModulesConf();
         $nginxConf->reStart();
+    }
+
+    /**
+     * Restarts Nginx daemon
+     */
+    public function reloadFail2BanConf(): void{
+        Fail2BanConf::reloadFail2ban();
+    }
+
+    /**
+     * Restarts Nginx daemon
+     */
+    public function needRestart(): void{
+        $this->needRestart = true;
     }
 
     /**
@@ -613,13 +639,14 @@ class WorkerModelsEvents extends WorkerBase
         }
     }
 
-    public static function invokeAction(string $action):void{
+    public static function invokeAction(string $action, $priority=0):void{
         $di = Di::getDefault();
+        /** @var BeanstalkClient $queue */
         $queue = $di->getShared(BeanstalkConnectionModelsProvider::SERVICE_NAME);
         $queue->publish(
             $action,
             self::class,
-            0,
+            $priority,
             PheanstalkInterface::DEFAULT_DELAY,
             3600
         );
