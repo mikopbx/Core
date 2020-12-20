@@ -343,7 +343,7 @@ class WorkerModelsEvents extends WorkerBase
     }
 
     /**
-     * Apply changes
+     * Applies changes
      *
      * @return void
      */
@@ -423,7 +423,7 @@ class WorkerModelsEvents extends WorkerBase
     }
 
     /**
-     * Apply iptable settings and restart firewall
+     * Applies iptables settings and restart firewall
      */
     public function reloadFirewall(): void
     {
@@ -431,7 +431,7 @@ class WorkerModelsEvents extends WorkerBase
     }
 
     /**
-     *  Refresh networks configs and restarts network daemon
+     *  Refreshes networks configs and restarts network daemon
      */
     public function networkReload(): void
     {
@@ -439,7 +439,7 @@ class WorkerModelsEvents extends WorkerBase
     }
 
     /**
-     * Refresh IAX configs and reload iax2 module
+     * Refreshes IAX configs and reload iax2 module
      */
     public function reloadIax(): void
     {
@@ -447,7 +447,7 @@ class WorkerModelsEvents extends WorkerBase
     }
 
     /**
-     * Reload MOH file list in Asterisk.
+     * Reloads MOH file list in Asterisk.
      */
     public function reloadMoh(): void
     {
@@ -455,7 +455,7 @@ class WorkerModelsEvents extends WorkerBase
     }
 
     /**
-     * Refresh SIP configs and reload PJSIP module
+     * Refreshes SIP configs and reload PJSIP module
      */
     public function reloadSip(): void
     {
@@ -463,7 +463,7 @@ class WorkerModelsEvents extends WorkerBase
     }
 
     /**
-     *  Refresh features configs and reload features module
+     *  Refreshes features configs and reload features module
      */
     public function reloadFeatures(): void
     {
@@ -523,7 +523,7 @@ class WorkerModelsEvents extends WorkerBase
     }
 
     /**
-     * Перезапуск rsyslog.
+     * Restarts rsyslog.
      */
     public function restartSyslogD(): void
     {

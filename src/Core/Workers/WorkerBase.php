@@ -31,6 +31,7 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
     protected AsteriskManager $am;
     public int $maxProc = 1;
     protected bool $needRestart = false;
+    protected float $workerStartTime;
 
     /**
      * Workers shared constructor
@@ -46,6 +47,7 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
         );
         register_shutdown_function( [$this, 'shutdownHandler']);
         $this->savePidFile();
+        $this->workerStartTime=microtime(true);
     }
 
     /**
@@ -98,8 +100,10 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
      */
     public function shutdownHandler(): void
     {
+        $timeElapsedSecs = microtime(true) - $this->workerStartTime;
+
         $e = error_get_last();
-        Util::sysLogMsg(static::class, "shutdownHandler ". print_r($e,true), LOG_DEBUG);
+        Util::sysLogMsg(static::class, "shutdownHandler after {$timeElapsedSecs} seconds with message:". print_r($e,true), LOG_DEBUG);
     }
 
 
