@@ -32,11 +32,13 @@ use SQLite3;
 
 class Fail2BanConf extends Injectable
 {
-    public const FILTER_PATH = '/etc/fail2ban/filter.d';
-
+    private const FILTER_PATH = '/etc/fail2ban/filter.d';
+    private const JAILS_DIR   = '/etc/fail2ban/jail.d';
+    private const PID_FILE    = '/var/run/fail2ban/fail2ban.pid';
     public const FAIL2BAN_DB_PATH = '/var/lib/fail2ban/fail2ban.sqlite3';
 
     public bool $fail2ban_enable;
+
 
     /**
      * Fail2Ban constructor.
@@ -95,6 +97,26 @@ class Fail2BanConf extends Injectable
         $cmd_start    = "{$fail2banPath} -x start";
         $command      = "($cmd_start;) > /dev/null 2>&1 &";
         Processes::mwExec($command);
+    }
+
+    /**
+     * Applies iptables settings and restart firewall
+     */
+    public static function reloadFail2ban(): void
+    {
+        $fail2banPath = Util::which('fail2ban-client');
+        if(file_exists(self::PID_FILE)){
+            $pid = file_get_contents(self::PID_FILE);
+        }else{
+            $pid = Processes::getPidOfProcess('fail2ban-server');
+        }
+        $fail2ban = new self();
+        if($fail2ban->fail2ban_enable && !empty($pid)){
+            $fail2ban->generateModulesFilters();
+            $fail2ban->generateModulesJailsLocal();
+            // Перезагрузка конфигов без рестарта конфига.
+            Processes::mwExecBg("{$fail2banPath} reload");
+        }
     }
 
     /**
@@ -175,39 +197,16 @@ class Fail2BanConf extends Injectable
      */
     public function writeConfig(): void
     {
-        $user_whitelist = '';
-        /** @var \MikoPBX\Common\Models\Fail2BanRules $res */
-        $res = Fail2BanRules::findFirst("id = '1'");
-        if ($res !== null) {
-            $max_retry     = $res->maxretry;
-            $find_time     = $res->findtime;
-            $ban_time      = $res->bantime;
-            $whitelist     = $res->whitelist;
-            $arr_whitelist = explode(' ', $whitelist);
-            foreach ($arr_whitelist as $ip_string) {
-                if (Verify::isIpAddress($ip_string)) {
-                    $user_whitelist .= "$ip_string ";
-                }
-            }
-            $net_filters = NetworkFilters::find("newer_block_ip = '1'");
-            foreach ($net_filters as $filter) {
-                $user_whitelist .= "{$filter->permit} ";
-            }
-
-            $user_whitelist = trim($user_whitelist);
-        } else {
-            $max_retry = '10';
-            $find_time = '1800';
-            $ban_time  = '43200';
-        }
+        [$max_retry, $find_time, $ban_time, $user_whitelist] = $this->initProperty();
         $this->generateJails();
 
         $jails        = [
             'dropbear'    => 'iptables-allports[name=SSH, protocol=all]',
             'mikopbx-www' => 'iptables-allports[name=HTTP, protocol=all]',
         ];
-        $modulesJails = $this->generateModulesJailsLocal();
-        $jails        = array_merge($jails, $modulesJails);
+
+        $this->generateModulesJailsLocal($max_retry, $find_time, $ban_time);
+
         $config       = "[DEFAULT]\n" .
             "ignoreip = 127.0.0.1 {$user_whitelist}\n\n";
 
@@ -293,45 +292,100 @@ class Fail2BanConf extends Injectable
     /**
      * Generate additional modules filter files
      */
-    protected function generateModulesFilters(): void
+    public function generateModulesFilters(): void
     {
         $filterPath        = self::FILTER_PATH;
         $additionalModules = $this->di->getShared('pbxConfModules');
         $rmPath            = Util::which('rm');
         Processes::mwExec("{$rmPath} -rf {$filterPath}/module_*.conf");
         foreach ($additionalModules as $appClass) {
-            if (method_exists($appClass, 'generateFail2BanJails')) {
-                $content = $appClass->generateFail2BanJails();
-                if ( ! empty($content)) {
-                    $moduleUniqueId = $appClass->moduleUniqueId;
-                    $fileName = Text::uncamelize($moduleUniqueId,'_').'.conf';
-                    file_put_contents("{$filterPath}/{$fileName}", $content);
-                }
+            if (!method_exists($appClass, 'generateFail2BanJails')) {
+                continue;
             }
+            $content = $appClass->generateFail2BanJails();
+            if (empty($content)) {
+                continue;
+            }
+            $moduleUniqueId = $appClass->moduleUniqueId;
+            $fileName = Text::uncamelize($moduleUniqueId,'_').'.conf';
+            file_put_contents("{$filterPath}/{$fileName}", $content);
         }
     }
 
     /**
-     * Generate additional modules include to /etc/fail2ban/jail.local
-     *
-     * @return array
+     * @param $max_retry
+     * @param $find_time
+     * @param $ban_time
      */
-    protected function generateModulesJailsLocal(): array
+    public function generateModulesJailsLocal($max_retry = 0, $find_time = 0, $ban_time = 0): void
     {
-        $jails             = [];
+        if($max_retry === 0){
+            [$max_retry, $find_time, $ban_time] = $this->initProperty();
+        }
+        if(!is_dir(self::JAILS_DIR)){
+            Util::mwMkdir(self::JAILS_DIR);
+        }
+        $prefix = 'pbx_';
+        $extension = 'conf';
+        Processes::mwExec("rm -rf ".self::JAILS_DIR."/{$prefix}*.{$extension}");
+        $syslog_file = SyslogConf::getSyslogFile();
+
         $additionalModules = $this->di->getShared('pbxConfModules');
         foreach ($additionalModules as $appClass) {
-            if (method_exists($appClass, 'generateFail2BanJails')) {
-                $content = $appClass->generateFail2BanJails();
-                if ( ! empty($content)) {
-                    $moduleUniqueId                    = $appClass->moduleUniqueId;
-                    $fileName = Text::uncamelize($moduleUniqueId,'_');
-                    $jails[$fileName] = "iptables-allports[name={$moduleUniqueId}, protocol=all]";
-                }
+            if (!method_exists($appClass, 'generateFail2BanJails')) {
+                continue;
             }
+            if ( empty($appClass->generateFail2BanJails())) {
+                continue;
+            }
+            $moduleUniqueId                    = $appClass->moduleUniqueId;
+            $fileName = Text::uncamelize($moduleUniqueId,'_');
+
+            $config = "[{$fileName}]\n" .
+                "enabled = true\n" .
+                "backend = process\n" .
+                "logpath = {$syslog_file}\n" .
+                "maxretry = {$max_retry}\n" .
+                "findtime = {$find_time}\n" .
+                "bantime = {$ban_time}\n" .
+                "logencoding = utf-8\n" .
+                "action = iptables-allports[name={$moduleUniqueId}, protocol=all]\n\n";
+
+            file_put_contents(self::JAILS_DIR."/{$prefix}{$fileName}.{$extension}", $config);
         }
 
-        return $jails;
+    }
+
+    /**
+     * @return array
+     */
+    private function initProperty(): array{
+        $user_whitelist = '';
+        /** @var Fail2BanRules $res */
+        $res = Fail2BanRules::findFirst("id = '1'");
+        if ($res !== null) {
+            $max_retry = $res->maxretry;
+            $find_time = $res->findtime;
+            $ban_time = $res->bantime;
+            $whitelist = $res->whitelist;
+            $arr_whitelist = explode(' ', $whitelist);
+            foreach ($arr_whitelist as $ip_string) {
+                if (Verify::isIpAddress($ip_string)) {
+                    $user_whitelist .= "$ip_string ";
+                }
+            }
+            $net_filters = NetworkFilters::find("newer_block_ip = '1'");
+            foreach ($net_filters as $filter) {
+                $user_whitelist .= "{$filter->permit} ";
+            }
+
+            $user_whitelist = trim($user_whitelist);
+        } else {
+            $max_retry = '10';
+            $find_time = '1800';
+            $ban_time = '43200';
+        }
+        return array($max_retry, $find_time, $ban_time, $user_whitelist);
     }
 
 }

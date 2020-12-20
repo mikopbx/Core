@@ -50,6 +50,7 @@ use MikoPBX\Common\Providers\BeanstalkConnectionModelsProvider;
 use MikoPBX\Core\Asterisk\Configs\QueueConf;
 use MikoPBX\Core\System\{BeanstalkClient,
     Configs\CronConf,
+    Configs\Fail2BanConf,
     Configs\IptablesConf,
     Configs\NatsConf,
     Configs\NginxConf,
@@ -62,6 +63,8 @@ use MikoPBX\Core\System\{BeanstalkClient,
     System,
     Util};
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
+use Phalcon\Di;
+use Pheanstalk\Contract\PheanstalkInterface;
 use Throwable;
 
 ini_set('error_reporting', E_ALL);
@@ -69,7 +72,9 @@ ini_set('display_startup_errors', 1);
 
 class WorkerModelsEvents extends WorkerBase
 {
-    private const R_MANAGERS = 'reloadManager';
+    private const R_MANAGERS     = 'reloadManager';
+
+    public const R_NEED_RESTART  = 'needRestart';
 
     private const R_QUEUES = 'reloadQueues';
 
@@ -89,11 +94,16 @@ class WorkerModelsEvents extends WorkerBase
 
     private const R_CRON = 'reloadCron';
 
-    private const R_NGINX = 'reloadNginx';
+    public const  R_NGINX = 'reloadNginx';
+
+    public const  R_NGINX_CONF    = 'reloadNginxConf';
+
+    public const  R_FAIL2BAN_CONF = 'reloadFail2BanConf';
 
     private const R_PHP_FPM = 'reloadPHPFPM';
 
     private const R_TIMEZONE = 'updateTomeZone';
+
     private const R_SYSLOG   = 'restartSyslogD';
 
     private const R_SSH = 'reloadSSH';
@@ -129,6 +139,7 @@ class WorkerModelsEvents extends WorkerBase
      */
     public function start($argv): void
     {
+        $this->last_change = time() - 2;
         $this->arrObject = $this->di->getShared('pbxConfModules');
 
         $this->PRIORITY_R = [
@@ -137,12 +148,14 @@ class WorkerModelsEvents extends WorkerBase
             self::R_REST_API_WORKER,
             self::R_NETWORK,
             self::R_FIREWALL,
+            self::R_FAIL2BAN_CONF,
             self::R_SSH,
             self::R_LICENSE,
             self::R_NATS,
             self::R_NTP,
             self::R_PHP_FPM,
             self::R_NGINX,
+            self::R_NGINX_CONF,
             self::R_CRON,
             self::R_FEATURES,
             self::R_SIP,
@@ -159,13 +172,14 @@ class WorkerModelsEvents extends WorkerBase
 
         $this->modified_tables = [];
 
+        /** @var BeanstalkClient $client */
         $client = $this->di->getShared(BeanstalkConnectionModelsProvider::SERVICE_NAME);
         $client->subscribe(self::class, [$this, 'processModelChanges']);
         $client->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
         $client->setTimeoutHandler([$this, 'timeoutHandler']);
 
         while ($this->needRestart === false) {
-            $client->wait();
+            $client->wait(1);
         }
         // Execute all collected changes before exit
         $this->timeoutHandler();
@@ -175,13 +189,26 @@ class WorkerModelsEvents extends WorkerBase
      * Parses for received Beanstalk message
      *
      * @param BeanstalkClient $message
+     * @throws \JsonException
      */
     public function processModelChanges(BeanstalkClient $message): void
     {
-        $receivedMessage = json_decode($message->getBody(), true);
-        $this->fillModifiedTables($receivedMessage);
-        $this->startReload();
+        $data = $message->getBody();
+        $receivedMessage = null;
+        if($data === self::R_NEED_RESTART){
+            $this->needRestart();
+        }
+        if(in_array($data, $this->PRIORITY_R, true)){
+            $this->modified_tables[$data] = true;
+        }else{
+            $receivedMessage = json_decode($message->getBody(), true, 512, JSON_THROW_ON_ERROR);
+            $this->fillModifiedTables($receivedMessage);
 
+        }
+        $this->startReload();
+        if(!$receivedMessage){
+            return;
+        }
         // Send information about models changes to additional modules
         foreach ($this->arrObject as $appClass) {
             $appClass->modelsEventChangeData($receivedMessage);
@@ -498,6 +525,31 @@ class WorkerModelsEvents extends WorkerBase
     }
 
     /**
+     * Restarts Nginx daemon
+     */
+    public function reloadNginxConf(): void
+    {
+        // Обновляем конфигурацию Nginx.
+        $nginxConf = new NginxConf();
+        $nginxConf->generateModulesConf();
+        $nginxConf->reStart();
+    }
+
+    /**
+     * Restarts Nginx daemon
+     */
+    public function reloadFail2BanConf(): void{
+        Fail2BanConf::reloadFail2ban();
+    }
+
+    /**
+     * Restarts Nginx daemon
+     */
+    public function needRestart(): void{
+        $this->needRestart = true;
+    }
+
+    /**
      * Restarts PHP-FPM daemon
      */
     public function reloadPHPFPM(): void
@@ -585,6 +637,19 @@ class WorkerModelsEvents extends WorkerBase
                 $configClassName->onAfterModuleEnable();
             }
         }
+    }
+
+    public static function invokeAction(string $action, $priority=0):void{
+        $di = Di::getDefault();
+        /** @var BeanstalkClient $queue */
+        $queue = $di->getShared(BeanstalkConnectionModelsProvider::SERVICE_NAME);
+        $queue->publish(
+            $action,
+            self::class,
+            $priority,
+            PheanstalkInterface::DEFAULT_DELAY,
+            3600
+        );
     }
 }
 

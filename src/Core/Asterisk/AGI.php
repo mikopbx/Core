@@ -72,11 +72,6 @@ class AGI
     public array $request;
 
     /**
-     * @var bool
-     */
-    private bool $conLogBusy;
-
-    /**
      * Input Stream
      *
      * @access private
@@ -102,7 +97,6 @@ class AGI
      */
     public function __construct()
     {
-        $this->conLogBusy = false;
         ob_implicit_flush(1);
         // Open stdin & stdout.
         $this->in  = defined('STDIN') ? STDIN  : fopen('php://stdin',  'r');
