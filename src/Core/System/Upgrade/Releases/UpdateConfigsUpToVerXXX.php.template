@@ -45,6 +45,8 @@ class UpdateConfigsUpToVerXXX extends Injectable implements UpgradeSystemConfigI
      */
     public function processUpdate():void
     {
-
+  		if ($this->isLiveCD) {
+            return;
+        }
     }
 }
