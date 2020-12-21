@@ -543,7 +543,11 @@ abstract class ModelsBase extends Model
                     ],
                 ];
                 $needExtension = Extensions::findFirst($parameters);
-                $link          = $url->get('extensions/modify/' . $needExtension->id, null, null, $baseUri);
+                if ($needExtension===null){
+                    $link          = $url->get('extensions/index/', null, null, $baseUri);
+                } else {
+                    $link          = $url->get('extensions/modify/' . $needExtension->id, null, null, $baseUri);
+                }
                 break;
             case SoundFiles::class:
                 $link = $url->get('sound-files/modify/' . $this->id, null, null, $baseUri);
