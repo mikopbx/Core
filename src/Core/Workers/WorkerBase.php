@@ -28,8 +28,8 @@ use Phalcon\Text;
 
 abstract class WorkerBase extends Di\Injectable implements WorkerInterface
 {
-    protected AsteriskManager $am;
     public int $maxProc = 1;
+    protected AsteriskManager $am;
     protected bool $needRestart = false;
     protected float $workerStartTime;
 
@@ -43,11 +43,11 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
         pcntl_signal(
             SIGUSR1,
             [$this, 'signalHandler'],
-            false
+            true
         );
-        register_shutdown_function( [$this, 'shutdownHandler']);
+        register_shutdown_function([$this, 'shutdownHandler']);
         $this->savePidFile();
-        $this->workerStartTime=microtime(true);
+        $this->workerStartTime = microtime(true);
     }
 
     /**
@@ -90,7 +90,7 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
      */
     public function signalHandler(int $signal): void
     {
-        Util::sysLogMsg(static::class, "Receive signal to restart  ".$signal, LOG_DEBUG);
+        Util::sysLogMsg(static::class, "Receive signal to restart  " . $signal, LOG_DEBUG);
         $this->needRestart = true;
     }
 
@@ -100,10 +100,18 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
      */
     public function shutdownHandler(): void
     {
-        $timeElapsedSecs = microtime(true) - $this->workerStartTime;
+        $timeElapsedSecs = round(microtime(true) - $this->workerStartTime,2);
 
         $e = error_get_last();
-        Util::sysLogMsg(static::class, "shutdownHandler after {$timeElapsedSecs} seconds with message:". print_r($e,true), LOG_DEBUG);
+        if ($e === null) {
+            Util::sysLogMsg(static::class, "shutdownHandler after {$timeElapsedSecs} seconds", LOG_DEBUG);
+        } else {
+            Util::sysLogMsg(
+                static::class,
+                "shutdownHandler after {$timeElapsedSecs} seconds with error:" . print_r($e, true),
+                LOG_DEBUG
+            );
+        }
     }
 
 

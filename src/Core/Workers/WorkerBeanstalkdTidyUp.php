@@ -55,6 +55,7 @@ if (isset($argv) && count($argv) > 1) {
     try {
         $worker = new $workerClassname();
         $worker->start($argv);
+        Util::sysLogMsg($workerClassname, "Normal exit after start ended", LOG_DEBUG);
     } catch (Throwable $e) {
         global $errorLogger;
         $errorLogger->captureException($e);

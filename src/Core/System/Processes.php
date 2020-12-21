@@ -117,6 +117,7 @@ class Processes
         $phpPath               = Util::which('php');
         $WorkerSafeScripts     = "{$phpPath} -f {$workerSafeScriptsPath} restart > /dev/null 2> /dev/null";
         self::mwExec($WorkerSafeScripts);
+        Util::sysLogMsg(static::class, "Service asked for WorkerSafeScriptsCore restart", LOG_DEBUG);
     }
 
     /**

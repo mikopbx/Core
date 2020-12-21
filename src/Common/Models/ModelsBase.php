@@ -589,108 +589,6 @@ abstract class ModelsBase extends Model
      */
     private function checkRelationsSatisfaction($theFirstDeleteRecord, $currentDeleteRecord): bool
     {
-        //     /**
-        //      * Get the models manager
-        //      */
-        //     $manager = $currentDeleteRecord->modelsManager;
-        //
-        //     /**
-        //      * We check if some of the hasOne/hasMany relations is a foreign key
-        //      */
-        //     $relations = $manager->getHasOneAndHasMany($currentDeleteRecord);
-        //
-        //     $error = false;
-        //
-        //     foreach ($relations as $relation) {
-        //         /**
-        //          * Check if the relation has a virtual foreign key
-        //          */
-        //         $foreignKey = $relation->getForeignKey();
-        //
-        //         if ($foreignKey === false) {
-        //             continue;
-        //         }
-        //
-        //         /**
-        //          * By default action is restrict
-        //          */
-        //         $action = Relation::ACTION_RESTRICT;
-        //
-        //         /**
-        //          * Try to find a different action in the foreign key's options
-        //          */
-        //         if (is_array($foreignKey) && isset($foreignKey['action'])) {
-        //             $action = (int)$foreignKey['action'];
-        //         }
-        //
-        //         /**
-        //          * Check only if the operation is restrict
-        //          */
-        //         if ($action !== Relation::ACTION_RESTRICT) {
-        //             continue;
-        //         }
-        //
-        //         $relationClass = $relation->getReferencedModel();
-        //
-        //         /**
-        //          * Load a plain instance from the models manager
-        //          */
-        //         $referencedModel = $manager->load($relationClass);
-        //
-        //         $fields           = $relation->getFields();
-        //         $referencedFields = $relation->getReferencedFields();
-        //
-        //         /**
-        //          * Create the checking conditions. A relation can has many fields or
-        //          * a single one
-        //          */
-        //         $conditions = [];
-        //         $bindParams = [];
-        //
-        //         if (is_array($fields)) {
-        //             foreach ($fields as $position => $field) {
-        //                 $value        = $currentDeleteRecord->readAttribute($field);
-        //                 $conditions[] = "[" . $referencedFields[$position] . "] = ?" . $position;
-        //                 $bindParams[] = $value;
-        //             }
-        //         } else {
-        //             $value        = $currentDeleteRecord->readAttribute($fields);
-        //             $conditions[] = "[" . $referencedFields . "] = ?0";
-        //             $bindParams[] = $value;
-        //         }
-        //
-        //         /**
-        //          * We don't trust the actual values in the object and then we're
-        //          * passing the values using bound parameters
-        //          * Let's make the checking
-        //          */
-        //         if ($referencedModel->count([join(" AND ", $conditions), "bind" => $bindParams])) {
-        //             /**
-        //              * Create a message
-        //              */
-        //             $this->appendMessage(
-        //                 new Message(
-        //                     $theFirstDeleteRecord->t(
-        //                         'mo_BeforeDeleteFirst',
-        //                         [
-        //                             'represent' => $relationClass->getRepresent(true),
-        //                         ]
-        //                     ),
-        //                     $fields,
-        //                     "ConstraintViolationBeforeDelete"
-        //                 )
-        //             );
-        //
-        //             $error = true;
-        //
-        //             break;
-        //         }
-        //     }
-        //
-        //     return ! $error;
-        // }
-        //
-
         $result = true;
         $relations
                 = $currentDeleteRecord->_modelsManager->getRelations(get_class($currentDeleteRecord));
@@ -895,7 +793,7 @@ abstract class ModelsBase extends Model
      */
     public function getIdentityFieldName(): string
     {
-        $metaData = $this->di->get('modelsMetadata');
+        $metaData = $this->di->get(ModelsMetadataProvider::SERVICE_NAME);
 
         return $metaData->getIdentityField($this);
     }

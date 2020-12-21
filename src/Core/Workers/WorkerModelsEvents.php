@@ -47,6 +47,7 @@ use MikoPBX\Common\Models\{AsteriskManagerUsers,
     SoundFiles
 };
 use MikoPBX\Common\Providers\BeanstalkConnectionModelsProvider;
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Asterisk\Configs\QueueConf;
 use MikoPBX\Core\System\{BeanstalkClient,
     Configs\CronConf,
@@ -61,7 +62,8 @@ use MikoPBX\Core\System\{BeanstalkClient,
     PBX,
     Processes,
     System,
-    Util};
+    Util
+};
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use Phalcon\Di;
 use Pheanstalk\Contract\PheanstalkInterface;
@@ -72,9 +74,9 @@ ini_set('display_startup_errors', 1);
 
 class WorkerModelsEvents extends WorkerBase
 {
-    private const R_MANAGERS     = 'reloadManager';
+    private const R_MANAGERS = 'reloadManager';
 
-    public const R_NEED_RESTART  = 'needRestart';
+    public const R_NEED_RESTART = 'needRestart';
 
     private const R_QUEUES = 'reloadQueues';
 
@@ -96,7 +98,7 @@ class WorkerModelsEvents extends WorkerBase
 
     public const  R_NGINX = 'reloadNginx';
 
-    public const  R_NGINX_CONF    = 'reloadNginxConf';
+    public const  R_NGINX_CONF = 'reloadNginxConf';
 
     public const  R_FAIL2BAN_CONF = 'reloadFail2BanConf';
 
@@ -104,7 +106,7 @@ class WorkerModelsEvents extends WorkerBase
 
     private const R_TIMEZONE = 'updateTomeZone';
 
-    private const R_SYSLOG   = 'restartSyslogD';
+    private const R_SYSLOG = 'restartSyslogD';
 
     private const R_SSH = 'reloadSSH';
 
@@ -131,16 +133,35 @@ class WorkerModelsEvents extends WorkerBase
     private array $arrObject;
     private array $PRIORITY_R;
 
+    /**
+     * Adds action to queue for postpone apply
+     *
+     * @param string $action
+     * @param int    $priority
+     */
+    public static function invokeAction(string $action, $priority = 0): void
+    {
+        $di = Di::getDefault();
+        /** @var BeanstalkClient $queue */
+        $queue = $di->getShared(BeanstalkConnectionModelsProvider::SERVICE_NAME);
+        $queue->publish(
+            $action,
+            self::class,
+            $priority,
+            PheanstalkInterface::DEFAULT_DELAY,
+            3600
+        );
+    }
 
     /**
-     * Entry point
+     * The entry point
      *
      * @param $argv
      */
     public function start($argv): void
     {
         $this->last_change = time() - 2;
-        $this->arrObject = $this->di->getShared('pbxConfModules');
+        $this->arrObject   = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
 
         $this->PRIORITY_R = [
             self::R_TIMEZONE,
@@ -179,34 +200,80 @@ class WorkerModelsEvents extends WorkerBase
         $client->setTimeoutHandler([$this, 'timeoutHandler']);
 
         while ($this->needRestart === false) {
-            $client->wait(1);
+            $client->wait(5);
         }
         // Execute all collected changes before exit
         $this->timeoutHandler();
     }
 
     /**
+     * Timeout handles
+     */
+    public function timeoutHandler(): void
+    {
+        $this->last_change = time() - $this->timeout;
+        $this->startReload();
+    }
+
+    /**
+     * Applies changes
+     *
+     * @return void
+     */
+    private function startReload(): void
+    {
+        if (count($this->modified_tables) === 0) {
+            return;
+        }
+        $delta = time() - $this->last_change;
+        if ($delta < $this->timeout) {
+            return;
+        }
+
+        foreach ($this->PRIORITY_R as $method_name) {
+            $action     = $this->modified_tables[$method_name] ?? null;
+            $parameters = $this->modified_tables['parameters'][$method_name] ?? null;
+            if ($action === null) {
+                continue;
+            }
+            if (method_exists($this, $method_name)) {
+                Util::sysLogMsg(__METHOD__, "Process changes by {$method_name}", LOG_DEBUG);
+                if ($parameters === null) {
+                    $this->$method_name();
+                } else {
+                    $this->$method_name($parameters);
+                }
+            }
+        }
+
+        foreach ($this->arrObject as $appClass) {
+            $appClass->modelsEventNeedReload($this->modified_tables);
+        }
+        $this->modified_tables = [];
+    }
+
+    /**
      * Parses for received Beanstalk message
      *
      * @param BeanstalkClient $message
+     *
      * @throws \JsonException
      */
     public function processModelChanges(BeanstalkClient $message): void
     {
-        $data = $message->getBody();
+        $data            = $message->getBody();
         $receivedMessage = null;
-        if($data === self::R_NEED_RESTART){
+        if ($data === self::R_NEED_RESTART) {
             $this->needRestart();
         }
-        if(in_array($data, $this->PRIORITY_R, true)){
+        if (in_array($data, $this->PRIORITY_R, true)) {
             $this->modified_tables[$data] = true;
-        }else{
+        } else {
             $receivedMessage = json_decode($message->getBody(), true, 512, JSON_THROW_ON_ERROR);
             $this->fillModifiedTables($receivedMessage);
-
         }
         $this->startReload();
-        if(!$receivedMessage){
+        if ( ! $receivedMessage) {
             return;
         }
         // Send information about models changes to additional modules
@@ -216,16 +283,23 @@ class WorkerModelsEvents extends WorkerBase
     }
 
     /**
+     * Restarts Nginx daemon
+     */
+    public function needRestart(): void
+    {
+        $this->needRestart = true;
+    }
+
+    /**
      * Collects changes to determine which modules must be reloaded or reconfigured
      *
      * @param array $data
      */
     private function fillModifiedTables(array $data): void
     {
-
         $count_changes = count($this->modified_tables);
         $called_class  = $data['model'] ?? '';
-        Util::sysLogMsg(__METHOD__, "New changes ".$called_class, LOG_DEBUG);
+        Util::sysLogMsg(__METHOD__, "New changes " . $called_class, LOG_DEBUG);
 
         // Clear all caches on any changed models on backend
         PbxSettings::clearCache($called_class, false);
@@ -237,7 +311,6 @@ class WorkerModelsEvents extends WorkerBase
                 $appClass->getSettings();
             }
         }
-
         switch ($called_class) {
             case AsteriskManagerUsers::class:
                 $this->modified_tables[self::R_MANAGERS] = true;
@@ -342,7 +415,7 @@ class WorkerModelsEvents extends WorkerBase
                     $this->modified_tables[self::R_NGINX]           = true;
                     $this->modified_tables[self::R_PHP_FPM]         = true;
                     $this->modified_tables[self::R_REST_API_WORKER] = true;
-                    $this->modified_tables[self::R_SYSLOG]        = true;
+                    $this->modified_tables[self::R_SYSLOG]          = true;
                 }
                 if ($pbxSettings->itHasNTPSettings()) {
                     $this->modified_tables[self::R_NTP] = true;
@@ -370,44 +443,6 @@ class WorkerModelsEvents extends WorkerBase
     }
 
     /**
-     * Applies changes
-     *
-     * @return void
-     */
-    private function startReload(): void
-    {
-        if (count($this->modified_tables) === 0) {
-            return;
-        }
-        $delta = time() - $this->last_change;
-        if ($delta < $this->timeout) {
-            return;
-        }
-
-        foreach ($this->PRIORITY_R as $method_name) {
-            $action     = $this->modified_tables[$method_name] ?? null;
-            $parameters = $this->modified_tables['parameters'][$method_name] ?? null;
-            if ($action === null) {
-                continue;
-            }
-            if (method_exists($this, $method_name)) {
-                Util::sysLogMsg(__METHOD__, "Process changes by {$method_name}", LOG_DEBUG);
-                if ($parameters === null) {
-                    $this->$method_name();
-                } else {
-                    $this->$method_name($parameters);
-                }
-            }
-        }
-
-        foreach ($this->arrObject as $appClass) {
-            $appClass->modelsEventNeedReload($this->modified_tables);
-        }
-        $this->modified_tables = [];
-    }
-
-
-    /**
      * Restarts gnats queue server daemon
      */
     public function reloadNats(): void
@@ -415,7 +450,6 @@ class WorkerModelsEvents extends WorkerBase
         $natsConf = new NatsConf();
         $natsConf->reStart();
     }
-
 
     /**
      * Reloads Asterisk dialplan
@@ -525,28 +559,21 @@ class WorkerModelsEvents extends WorkerBase
     }
 
     /**
-     * Restarts Nginx daemon
+     * Applies modules locations changes and restarts Nginx daemon
      */
     public function reloadNginxConf(): void
     {
-        // Обновляем конфигурацию Nginx.
         $nginxConf = new NginxConf();
         $nginxConf->generateModulesConf();
         $nginxConf->reStart();
     }
 
     /**
-     * Restarts Nginx daemon
+     * Restarts Fail2Ban daemon
      */
-    public function reloadFail2BanConf(): void{
+    public function reloadFail2BanConf(): void
+    {
         Fail2BanConf::reloadFail2ban();
-    }
-
-    /**
-     * Restarts Nginx daemon
-     */
-    public function needRestart(): void{
-        $this->needRestart = true;
     }
 
     /**
@@ -558,7 +585,7 @@ class WorkerModelsEvents extends WorkerBase
     }
 
     /**
-     * Configure SSH settings
+     * Configures SSH settings
      */
     public function reloadSSH(): void
     {
@@ -567,7 +594,7 @@ class WorkerModelsEvents extends WorkerBase
     }
 
     /**
-     * Reconfigure TomeZone settings
+     * Reconfigures TomeZone settings
      */
     public function updateTomeZone(): void
     {
@@ -600,7 +627,6 @@ class WorkerModelsEvents extends WorkerBase
         Processes::processPHPWorker(WorkerApiCommands::class);
     }
 
-
     /**
      *  Reloads WorkerCallEvents worker
      */
@@ -609,17 +635,6 @@ class WorkerModelsEvents extends WorkerBase
         Processes::processPHPWorker(WorkerCallEvents::class);
     }
 
-
-    /**
-     * Timeout handles
-     */
-    public function timeoutHandler(): void
-    {
-        $this->last_change = time() - $this->timeout;
-        $this->startReload();
-    }
-
-
     /**
      *  Process after PBXExtension state changes
      *
@@ -627,34 +642,47 @@ class WorkerModelsEvents extends WorkerBase
      */
     public function afterModuleStateChanged(PbxExtensionModules $record): void
     {
+        // Recreate modules array
+        PBXConfModulesProvider::recreateModulesProvider();
+        $this->arrObject = $this->di->get(PBXConfModulesProvider::SERVICE_NAME);
+
         $className       = str_replace('Module', '', $record->uniqid);
         $configClassName = "\\Modules\\{$record->uniqid}\\Lib\\{$className}Conf";
         if (class_exists($configClassName)) {
-            $configClassName = new $configClassName();
-            if ($record->disabled === '1' && method_exists($configClassName, 'onAfterModuleDisable')) {
-                $configClassName->onAfterModuleDisable();
-            } elseif ($record->disabled === '0' && method_exists($configClassName, 'onAfterModuleEnable')) {
-                $configClassName->onAfterModuleEnable();
+            $configClassObj = new $configClassName();
+
+            // Reconfigure fail2ban and restart iptables
+            if (method_exists($configClassObj, 'generateFail2BanJails')
+                && ! empty($configClassObj->generateFail2BanJails())) {
+                $this->modified_tables[self::R_FAIL2BAN_CONF] = true;
+            }
+
+            // Refresh Nginx conf if module has any locations
+            if (method_exists($configClassObj, 'createNginxLocations')
+                && ! empty($configClassObj->createNginxLocations())) {
+                $this->modified_tables[self::R_NGINX_CONF] = true;
+            }
+
+            // Refresh crontab rules if module has any for it
+            if (method_exists($configClassObj, 'createCronTasks')) {
+                $tasks = '';
+                $configClassObj->createCronTasks($tasks);
+                if ($tasks !== '') {
+                    $this->modified_tables[self::R_CRON] = true;
+                }
+            }
+
+            if ($record->disabled === '1' && method_exists($configClassObj, 'onAfterModuleDisable')) {
+                $configClassObj->onAfterModuleDisable();
+            } elseif ($record->disabled === '0' && method_exists($configClassObj, 'onAfterModuleEnable')) {
+                $configClassObj->onAfterModuleEnable();
             }
         }
-    }
-
-    public static function invokeAction(string $action, $priority=0):void{
-        $di = Di::getDefault();
-        /** @var BeanstalkClient $queue */
-        $queue = $di->getShared(BeanstalkConnectionModelsProvider::SERVICE_NAME);
-        $queue->publish(
-            $action,
-            self::class,
-            $priority,
-            PheanstalkInterface::DEFAULT_DELAY,
-            3600
-        );
     }
 }
 
 /**
- * Start point
+ * The start point
  */
 $workerClassname = WorkerModelsEvents::class;
 if (isset($argv) && count($argv) > 1 && $argv[1] === 'start') {
@@ -662,6 +690,7 @@ if (isset($argv) && count($argv) > 1 && $argv[1] === 'start') {
     try {
         $worker = new $workerClassname();
         $worker->start($argv);
+        Util::sysLogMsg($workerClassname, "Normal exit after start ended", LOG_DEBUG);
     } catch (Throwable $e) {
         global $errorLogger;
         $errorLogger->captureException($e);

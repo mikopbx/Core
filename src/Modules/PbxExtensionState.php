@@ -106,11 +106,8 @@ class PbxExtensionState extends Injectable
             return false;
         }
 
-        $this->reloadConfigClass();
-        WorkerModelsEvents::invokeAction(WorkerModelsEvents::R_NEED_RESTART);
         // Если ошибок нет, включаем Firewall и модуль
         if ( ! $this->enableFirewallSettings()) {
-            Processes::processPHPWorker(WorkerModelsEvents::class);
             $this->messages[] = 'Error on enable firewall settings';
             return false;
         }
@@ -127,10 +124,7 @@ class PbxExtensionState extends Injectable
             && method_exists($this->configClass, 'getMessages')) {
             $this->messages = array_merge($this->messages, $this->configClass->getMessages());
         }
-        // Reconfigure fail2ban and restart iptables
-        $this->refreshFail2BanRules();
-        // Restart Nginx if module has locations
-        $this->refreshNginxLocations();
+
         return true;
     }
 
@@ -198,43 +192,7 @@ class PbxExtensionState extends Injectable
     }
 
     /**
-     * If module has additional locations we will generate it until next reboot
-     *
-     *
-     * @return void
-     */
-    private function refreshNginxLocations(): void
-    {
-        if ($this->configClass !== null
-            && method_exists($this->configClass, 'createNginxLocations')
-            && ! empty($this->configClass->createNginxLocations())) {
-
-            // Отправка запроса на рестарт сервиса NGINX (reload конфигурации).
-            // Процесс не должен перезапускаться.
-            WorkerModelsEvents::invokeAction(WorkerModelsEvents::R_NGINX_CONF);
-        }
-    }
-
-    /**
-     * If module has additional fail2ban rules we will generate it until next reboot
-     *
-     *
-     * @return void
-     */
-    private function refreshFail2BanRules(): void
-    {
-        if ($this->configClass !== null
-            && method_exists($this->configClass, 'generateFail2BanJails')
-            && ! empty($this->configClass->generateFail2BanJails())) {
-
-            // Отправка запроса на рестарт сервиса Fail2ban (reload конфигурации).
-            // Процесс не должен перезапускаться.
-            WorkerModelsEvents::invokeAction(WorkerModelsEvents::R_FAIL2BAN_CONF);
-        }
-    }
-
-    /**
-     * Disable extension module with checking relations
+     * Disables extension module with checking relations
      *
      */
     public function disableModule(): bool
@@ -243,11 +201,8 @@ class PbxExtensionState extends Injectable
         if ( ! $success) {
             return false;
         }
-        $this->reloadConfigClass();
-        WorkerModelsEvents::invokeAction(WorkerModelsEvents::R_NEED_RESTART);
         // Если ошибок нет, выключаем Firewall и модуль
         if ( ! $this->disableFirewallSettings()) {
-            Processes::processPHPWorker(WorkerModelsEvents::class);
             $this->messages[] = 'Error on disable firewall settings';
             return false;
         }
@@ -265,11 +220,6 @@ class PbxExtensionState extends Injectable
             && method_exists($this->configClass, 'getMessages')) {
             $this->messages = array_merge($this->messages, $this->configClass->getMessages());
         }
-
-        // Reconfigure fail2ban and restart iptables
-        $this->refreshFail2BanRules();
-        // Refresh Nginx conf if module has any locations
-        $this->refreshNginxLocations();
 
         // Kill module workers
         if ($this->configClass !== null

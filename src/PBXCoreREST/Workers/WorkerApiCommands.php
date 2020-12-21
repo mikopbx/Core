@@ -68,9 +68,6 @@ class WorkerApiCommands extends WorkerBase
         while ($this->needRestart === false) {
             $beanstalk->wait();
         }
-        if ($this->needRestart){
-            Processes::restartAllWorkers();
-        }
     }
 
     /**
@@ -139,6 +136,7 @@ class WorkerApiCommands extends WorkerBase
                 if ($processor === $request['processor']
                     && $action === $request['action']) {
                     $this->needRestart = true;
+                    Processes::restartAllWorkers();
                     return;
                 }
             }
