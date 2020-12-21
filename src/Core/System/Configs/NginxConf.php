@@ -20,6 +20,7 @@
 namespace MikoPBX\Core\System\Configs;
 
 
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Network;
 use MikoPBX\Core\System\Processes;
@@ -166,7 +167,7 @@ class NginxConf extends Injectable
         if (!is_dir($locationsPath)){
             Util::mwMkdir($locationsPath,true);
         }
-        $additionalModules = $this->di->getShared('pbxConfModules');
+        $additionalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
         $rmPath            = Util::which('rm');
         Processes::mwExec("{$rmPath} -rf {$locationsPath}/*.conf");
         foreach ($additionalModules as $appClass) {

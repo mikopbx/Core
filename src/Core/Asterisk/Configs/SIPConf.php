@@ -27,6 +27,7 @@ use MikoPBX\Common\Models\{Codecs,
     PbxSettings,
     Sip,
     Users};
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Asterisk\AstDB;
 use MikoPBX\Modules\Config\ConfigClass;
 use MikoPBX\Core\System\{MikoPBXConfig, Network, Util};
@@ -246,7 +247,7 @@ class SIPConf extends ConfigClass
         if ($this->data_providers===null){
             $this->getSettings();
         }
-        $additionalModules = $this->di->getShared('pbxConfModules');
+        $additionalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
         foreach ($this->data_providers as $provider) {
             $manual_attributes = Util::parseIniSettings(base64_decode($provider['manualattributes'] ?? ''));
             $provider['port']  = (trim($provider['port']) === '') ? '5060' : $provider['port'];
@@ -498,7 +499,7 @@ class SIPConf extends ConfigClass
             $this->getSettings();
         }
         $lang              = $this->generalSettings['PBXLanguage'];
-        $additionalModules = $this->di->getShared('pbxConfModules');
+        $additionalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
         $conf              = '';
 
         foreach ($this->data_peers as $peer) {

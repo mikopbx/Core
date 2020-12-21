@@ -21,6 +21,7 @@ namespace MikoPBX\Core\System\Configs;
 
 use MikoPBX\Common\Models\Fail2BanRules;
 use MikoPBX\Common\Models\NetworkFilters;
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\System;
@@ -295,7 +296,7 @@ class Fail2BanConf extends Injectable
     public function generateModulesFilters(): void
     {
         $filterPath        = self::FILTER_PATH;
-        $additionalModules = $this->di->getShared('pbxConfModules');
+        $additionalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
         $rmPath            = Util::which('rm');
         Processes::mwExec("{$rmPath} -rf {$filterPath}/module_*.conf");
         foreach ($additionalModules as $appClass) {
@@ -330,7 +331,7 @@ class Fail2BanConf extends Injectable
         Processes::mwExec("rm -rf ".self::JAILS_DIR."/{$prefix}*.{$extension}");
         $syslog_file = SyslogConf::getSyslogFile();
 
-        $additionalModules = $this->di->getShared('pbxConfModules');
+        $additionalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
         foreach ($additionalModules as $appClass) {
             if (!method_exists($appClass, 'generateFail2BanJails')) {
                 continue;

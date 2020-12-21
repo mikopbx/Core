@@ -107,8 +107,7 @@ class PbxExtensionModules extends ModelsBase
     public function afterSave(): void
     {
         parent::afterSave();
-        $this->di->remove('pbxConfModules');
-        $this->di->register(new PBXConfModulesProvider());
+        PBXConfModulesProvider::recreateModulesProvider();
     }
 
     /**
@@ -117,8 +116,7 @@ class PbxExtensionModules extends ModelsBase
     public function afterDelete(): void
     {
         parent::afterDelete();
-        $this->di->remove('pbxConfModules');
-        $this->di->register(new PBXConfModulesProvider());
+        PBXConfModulesProvider::recreateModulesProvider();
     }
 
     /**

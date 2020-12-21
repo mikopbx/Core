@@ -23,6 +23,7 @@ require_once 'Globals.php';
 
 use Generator;
 use MikoPBX\Core\System\{BeanstalkClient, PBX, Processes, Util};
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Workers\WorkerAmiListener;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\Workers\WorkerBeanstalkdTidyUp;
@@ -98,7 +99,7 @@ class WorkerSafeScriptsCore extends WorkerBase
                 ],
         ];
         $arrModulesWorkers = [];
-        $pbxConfModules    = $this->di->getShared('pbxConfModules');
+        $pbxConfModules    = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
         foreach ($pbxConfModules as $pbxConfModule) {
             $arrModulesWorkers[] = $pbxConfModule->getModuleWorkers();
         }

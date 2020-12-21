@@ -20,6 +20,7 @@
 namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Models\Codecs;
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\Asterisk\Configs\{AclConf,
     ExtensionsConf,
@@ -322,7 +323,8 @@ class PBX extends Injectable
         /**
          * Создание конфигурационных файлов.
          */
-        foreach ($this->di->getShared('pbxConfModules') as $appClass) {
+        $appClasses = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
+        foreach ($appClasses as $appClass) {
             $appClass->generateConfig();
         }
         self::dialplanReload();

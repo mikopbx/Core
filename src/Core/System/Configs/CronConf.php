@@ -20,6 +20,7 @@
 namespace MikoPBX\Core\System\Configs;
 
 
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
@@ -69,7 +70,7 @@ class CronConf extends Injectable
      */
     private function generateConfig($boot = true): void
     {
-        $additionalModules = $this->di->getShared('pbxConfModules');
+        $additionalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
         $mast_have         = [];
 
         if (Util::isSystemctl()) {

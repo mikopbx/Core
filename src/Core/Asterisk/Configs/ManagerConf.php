@@ -22,6 +22,7 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\AsteriskManagerUsers;
 use MikoPBX\Common\Models\NetworkFilters;
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Modules\Config\ConfigClass;
 
@@ -135,7 +136,7 @@ class ManagerConf extends ConfigClass
         $conf .= "eventfilter=!Event: Newexten\n";
         $conf .= "\n";
 
-        $additionalModules = $this->di->getShared('pbxConfModules');
+        $additionalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
         foreach ($additionalModules as $appClass) {
             $conf .= $appClass->generateManagerConf();
         }
