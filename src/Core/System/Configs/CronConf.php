@@ -30,6 +30,8 @@ use function MikoPBX\Common\Config\appPath;
 
 class CronConf extends Injectable
 {
+    public const PROC_NAME = 'crond';
+
     private MikoPBXConfig $mikoPBXConfig;
 
     /**
@@ -38,6 +40,26 @@ class CronConf extends Injectable
     public function __construct()
     {
         $this->mikoPBXConfig = new MikoPBXConfig();
+    }
+
+    /**
+     * Setups crond and restart it
+     *
+     * @return int
+     */
+    public function reStart(): int
+    {
+        $this->generateConfig($this->di->getShared('registry')->booting);
+        if (Util::isSystemctl()) {
+            $systemctlPath = Util::which('systemctl');
+            Processes::mwExec("{$systemctlPath} restart ".self::PROC_NAME);
+        } else {
+            $crondPath = Util::which(self::PROC_NAME);
+            Processes::killByName(self::PROC_NAME);
+            Processes::mwExec("{$crondPath} -L /dev/null -l 8");
+        }
+
+        return 0;
     }
 
     /**
@@ -96,26 +118,6 @@ class CronConf extends Injectable
         }
 
         Util::fileWriteContent($cron_filename, $conf);
-    }
-
-    /**
-     * Setups crond and restart it
-     *
-     * @return int
-     */
-    public function reStart(): int
-    {
-        $this->generateConfig($this->di->getShared('registry')->booting);
-        if (Util::isSystemctl()) {
-            $systemctlPath = Util::which('systemctl');
-            Processes::mwExec("{$systemctlPath} restart cron");
-        } else {
-            $crondPath = Util::which('crond');
-            Processes::killByName($crondPath);
-            Processes::mwExec("{$crondPath} -L /dev/null -l 8");
-        }
-
-        return 0;
     }
 
 
