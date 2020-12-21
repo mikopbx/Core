@@ -34,6 +34,7 @@ class UpdateConfigsUpToVer2020362 extends Injectable implements UpgradeSystemCon
 
 	private ConfigAlias $config;
     private MikoPBXConfig $mikoPBXConfig;
+    private bool $isLiveCD;
 
 	/**
      * Class constructor.
@@ -42,6 +43,7 @@ class UpdateConfigsUpToVer2020362 extends Injectable implements UpgradeSystemCon
     {
         $this->config = $this->getDI()->getShared('config');
         $this->mikoPBXConfig = new MikoPBXConfig();
+        $this->isLiveCD      = file_exists('/offload/livecd');
     }
 
 	/**
