@@ -429,9 +429,10 @@ class WorkerModelsEvents extends WorkerBase
                 $moduleSettings                                                   = PbxExtensionModules::findFirstById(
                     $data['recordId']
                 );
-                $this->modified_tables[self::R_PBX_EXTENSION_STATE]               = true;
-                $this->modified_tables['parameters'][self::R_PBX_EXTENSION_STATE] = $moduleSettings;
-                $this->modified_tables[self::R_CRON]                              = true;
+                if ($moduleSettings!==null){
+                    $this->modified_tables[self::R_PBX_EXTENSION_STATE]               = true;
+                    $this->modified_tables['parameters'][self::R_PBX_EXTENSION_STATE] = $moduleSettings;
+                }
                 break;
             default:
         }
@@ -638,10 +639,13 @@ class WorkerModelsEvents extends WorkerBase
     /**
      *  Process after PBXExtension state changes
      *
-     * @param \MikoPBX\Common\Models\PbxExtensionModules $record
+     * @param ?\MikoPBX\Common\Models\PbxExtensionModules $record
      */
-    public function afterModuleStateChanged(PbxExtensionModules $record): void
+    public function afterModuleStateChanged(PbxExtensionModules $record=null): void
     {
+        if ($record===null){
+            return;
+        }
         // Recreate modules array
         PBXConfModulesProvider::recreateModulesProvider();
         $this->arrObject = $this->di->get(PBXConfModulesProvider::SERVICE_NAME);
