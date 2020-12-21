@@ -21,9 +21,12 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Middleware;
 
-use MikoPBX\Core\System\Util;
+use MikoPBX\Common\Providers\LoggerAuthProvider;
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\PBXCoreREST\Http\Request;
 use MikoPBX\PBXCoreREST\Http\Response;
+use MikoPBX\PBXCoreREST\Providers\RequestProvider;
+use MikoPBX\PBXCoreREST\Providers\ResponseProvider;
 use MikoPBX\PBXCoreREST\Traits\ResponseTrait;
 use Phalcon\Mvc\Micro;
 use Phalcon\Mvc\Micro\MiddlewareInterface;
@@ -31,7 +34,7 @@ use Phalcon\Mvc\Micro\MiddlewareInterface;
 
 /**
  * Class AuthenticationMiddleware
- * @property \Phalcon\Logger    loggerAuth
+ *
  */
 class AuthenticationMiddleware implements MiddlewareInterface
 {
@@ -47,9 +50,9 @@ class AuthenticationMiddleware implements MiddlewareInterface
     public function call(Micro $api)
     {
         /** @var Request $request */
-        $request = $api->getService('request');
+        $request = $api->getService(RequestProvider::SERVICE_NAME);
         /** @var Response $response */
-        $response = $api->getService('response');
+        $response = $api->getService(ResponseProvider::SERVICE_NAME);
 
         if (
             true !== $request->isLocalHostRequest()
@@ -57,7 +60,8 @@ class AuthenticationMiddleware implements MiddlewareInterface
             && true !== $request->isDebugModeEnabled()
             && true !== $this->thisIsModuleNoAuthRequest($api)
         ) {
-            $this->loggerAuth->warning("From: {$request->getClientAddress(true)} UserAgent:{$request->getUserAgent()} Cause: Wrong password");
+            $loggerAuth = $api->getService(LoggerAuthProvider::SERVICE_NAME);
+            $loggerAuth->warning("From: {$request->getClientAddress(true)} UserAgent:{$request->getUserAgent()} Cause: Wrong password");
             $this->halt(
                 $api,
                 $response::OK,
@@ -78,7 +82,7 @@ class AuthenticationMiddleware implements MiddlewareInterface
     public function thisIsModuleNoAuthRequest(Micro $api): bool
     {
         $pattern  = $api->request->getURI(true);
-        $additionalModules = $api->getService('pbxConfModules');
+        $additionalModules = $api->getService(PBXConfModulesProvider::SERVICE_NAME);
         foreach ($additionalModules as $appClass) {
             /** @var \MikoPBX\Modules\Config\ConfigClass; $appClass */
             $additionalRoutes = $appClass->getPBXCoreRESTAdditionalRoutes();

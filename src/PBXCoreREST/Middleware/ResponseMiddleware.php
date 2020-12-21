@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace MikoPBX\PBXCoreREST\Middleware;
 
 use MikoPBX\PBXCoreREST\Http\Response;
+use MikoPBX\PBXCoreREST\Providers\ResponseProvider;
 use MikoPBX\PBXCoreREST\Traits\ResponseTrait;
 use Phalcon\Mvc\Micro;
 use Phalcon\Mvc\Micro\MiddlewareInterface;
@@ -45,7 +46,7 @@ class ResponseMiddleware implements MiddlewareInterface
     public function call(Micro $api):bool
     {
         /** @var Response $response */
-        $response = $api->getService('response');
+        $response = $api->getService(ResponseProvider::SERVICE_NAME);
         if ( ! $response->isSent()) {
             $response->send();
         }
