@@ -164,6 +164,7 @@ class WorkerModelsEvents extends WorkerBase
         $this->arrObject   = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
 
         $this->PRIORITY_R = [
+            self::R_PBX_EXTENSION_STATE,
             self::R_TIMEZONE,
             self::R_SYSLOG,
             self::R_REST_API_WORKER,
@@ -188,7 +189,6 @@ class WorkerModelsEvents extends WorkerBase
             self::R_VOICEMAIL,
             self::R_MOH,
             self::R_CALL_EVENTS_WORKER,
-            self::R_PBX_EXTENSION_STATE,
         ];
 
         $this->modified_tables = [];
