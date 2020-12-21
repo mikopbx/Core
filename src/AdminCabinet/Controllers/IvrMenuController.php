@@ -88,13 +88,14 @@ class IvrMenuController extends BaseController
             ];
             $actions    = IvrMenuActions::find($parameters);
             foreach ($actions as $action) {
+                $represent = $action->Extensions===null?"ERROR":$action->Extensions->getRepresent();
                 $ivrActionsList[]         = [
                     'id'                 => $action->id,
                     'extension'          => $action->extension,
                     'extensionRepresent' => str_replace(
                         '"',
                         '\\"',
-                        $action->Extensions->getRepresent()
+                        $represent
                     ),
                     'digits'             => $action->digits,
                 ];
