@@ -73,7 +73,7 @@ class ProvidersController extends BaseController
             $provider->Sip->qualifyfreq = 60;
             $provider->Sip->qualify     = '1';
         }
-
+        $this->view->hostsTable = [];
         $this->view->form      = new SipProviderEditForm($provider->Sip);
         $this->view->represent = $provider->getRepresent();
     }
@@ -166,9 +166,9 @@ class ProvidersController extends BaseController
     }
 
     /**
-     * Сохранение провайдера AJAX запросом из формы
+     * Saves provider over ajax request from a web form
      *
-     * @param string $type - sip или iax
+     * @param string $type - sip or iax
      *
      */
     public function saveAction(string $type): void
@@ -179,8 +179,16 @@ class ProvidersController extends BaseController
         $this->db->begin();
         $data = $this->request->getPost();
 
-        // Заполним параметры провайдера и его SIP IAX записей
+        // Updates SIP and IAX tables
         if ( ! $this->saveProvider($data, $type)) {
+            $this->view->success = false;
+            $this->db->rollback();
+
+            return;
+        }
+
+        // Update additional hosts table
+        if ( ! $this->updateAdditionalHosts($data)) {
             $this->view->success = false;
             $this->db->rollback();
 
@@ -276,6 +284,21 @@ class ProvidersController extends BaseController
 
             return false;
         }
+
+        return true;
+    }
+
+    /**
+     * Update additional hosts table
+     *
+     * @param array $data массив полей из POST запроса
+     *
+     * @return bool update result
+     */
+    private function updateAdditionalHosts(array $data): bool
+    {
+
+        $additionalHosts = json_decode($data['additionalHosts']);
 
         return true;
     }

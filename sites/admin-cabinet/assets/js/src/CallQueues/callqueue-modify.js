@@ -182,7 +182,7 @@ const callQueue = {
 		let result = settings;
 		result.data = callQueue.$formObj.form('get values');
 		const arrMembers = [];
-		$('#queue-form .member-row').each((index, obj) => {
+		$(callQueue.memberRow).each((index, obj) => {
 			if ($(obj).attr('id')) {
 				arrMembers.push({
 					number: $(obj).attr('id'),
