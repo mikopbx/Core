@@ -26,6 +26,7 @@ use MikoPBX\Common\Models\{Codecs,
     OutgoingRoutingTable,
     PbxSettings,
     Sip,
+    SipHosts,
     Users};
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Asterisk\AstDB;
@@ -41,6 +42,8 @@ class SIPConf extends ConfigClass
     protected $data_peers;
     protected $data_providers;
     protected $data_rout;
+    protected array $dataSipHosts;
+
     protected string $technology;
     protected array  $contexts_data;
 
@@ -52,7 +55,7 @@ class SIPConf extends ConfigClass
      */
     public function dependenceModels(): array
     {
-        return [Sip::class, Users::class];
+        return [Sip::class, Users::class, SipHosts::class];
     }
 
     /**
@@ -451,10 +454,14 @@ class SIPConf extends ConfigClass
      */
     private function generateProviderIdentify(array $provider, array $additionalModules, array $manual_attributes): string{
         $conf = '';
+        $providerHosts = $this->dataSipHosts[$provider['uniqid']] ?? [];
+        if(!in_array($provider['host'], $providerHosts, true)){
+            $providerHosts[] = $provider['host'];
+        }
         $options     = [
             'type'     => 'identify',
             'endpoint' => $provider['uniqid'],
-            'match'    => $provider['host'],
+            'match'    => implode(',',$providerHosts),
         ];
         foreach ($additionalModules as $Object) {
             $options = $Object->overridePJSIPOptions($provider['uniqid'], $options);
@@ -645,6 +652,26 @@ class SIPConf extends ConfigClass
         $this->data_providers = $this->getProviders();
         $this->data_rout      = $this->getOutRoutes();
         $this->technology     = self::getTechnology();
+        $this->dataSipHosts   = self::getSipHosts();
+    }
+
+    /**
+     * Возвращает массив хостов.
+     * @return array
+     */
+    public static function getSipHosts():array
+    {
+        $dataSipHosts = [];
+        /** @var SipHosts $sipHosts */
+        /** @var SipHosts $hostData */
+        $sipHosts = SipHosts::find();
+        foreach ($sipHosts as $hostData){
+            if(!isset($dataSipHosts[$hostData->provider_id])){
+                $dataSipHosts[$hostData->provider_id] = [];
+            }
+            $dataSipHosts[$hostData->provider_id][] = str_replace(PHP_EOL, '', $hostData->address);
+        }
+        return $dataSipHosts;
     }
 
     /**
