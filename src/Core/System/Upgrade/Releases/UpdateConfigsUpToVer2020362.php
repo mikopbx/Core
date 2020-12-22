@@ -23,7 +23,10 @@ use MikoPBX\Common\Models\CallQueueMembers;
 use MikoPBX\Common\Models\Iax;
 use MikoPBX\Common\Models\IvrMenuActions;
 use MikoPBX\Common\Models\Sip;
+use MikoPBX\Common\Models\SipHosts;
+use MikoPBX\Core\Asterisk\Configs\SIPConf;
 use MikoPBX\Core\System\Upgrade\UpgradeSystemConfigInterface;
+use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
 use MikoPBX\Core\System\MikoPBXConfig;
 use Phalcon\Config as ConfigAlias;
@@ -57,6 +60,31 @@ class UpdateConfigsUpToVer2020362 extends Injectable implements UpgradeSystemCon
         $this->deleteOrphanedProviders();
         $this->deleteOrphanedQueueMembers();
         $this->deleteOrphanedIVRMenuActions();
+        $this->updateSipHosts();
+    }
+
+    private function updateSipHosts():void{
+        /** @var Sip $data */
+        $db_data    = Sip::find("type = 'friend' AND ( disabled <> '1')");
+        foreach ($db_data as $data){
+            $parameters    = [
+                'conditions' => 'provider_id=:provider: AND address=:address:',
+                'bind'       => [
+                    'provider' => $data->uniqid,
+                    'address'  => $data->host,
+                ],
+            ];
+            $hostData = SipHosts::findFirst($parameters);
+            if($hostData){
+                continue;
+            }
+            $hostData = new SipHosts();
+            $hostData->provider_id = $data->uniqid;
+            $hostData->address = $data->host;
+            if(!$hostData->save()){
+                Util::sysLogMsg(self::class, 'Error save SipHosts', LOG_ERR);
+            }
+        }
     }
 
     /**
