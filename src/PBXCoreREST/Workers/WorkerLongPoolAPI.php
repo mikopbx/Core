@@ -226,15 +226,4 @@ class WorkerLongPoolAPI extends WorkerBase
 }
 
 // Start worker process
-$workerClassname = WorkerLongPoolAPI::class;
-if (isset($argv) && count($argv) > 1) {
-    cli_set_process_title($workerClassname);
-    try {
-        $worker = new $workerClassname();
-        $worker->start($argv);
-    } catch (Throwable $e) {
-        global $errorLogger;
-        $errorLogger->captureException($e);
-        Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage(), LOG_ERR);
-    }
-}
+WorkerLongPoolAPI::startWorker($argv??null);

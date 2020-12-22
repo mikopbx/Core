@@ -93,16 +93,4 @@ class WorkerLogRotate extends WorkerBase
 }
 
 // Start worker process
-$workerClassname = WorkerLogRotate::class;
-if (isset($argv) && count($argv) > 1) {
-    cli_set_process_title($workerClassname);
-    try {
-        $worker = new $workerClassname();
-        $worker->start($argv);
-        Util::sysLogMsg($workerClassname, "Normal exit after start ended", LOG_DEBUG);
-    } catch (\Throwable $e) {
-        global $errorLogger;
-        $errorLogger->captureException($e);
-        Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage(), LOG_ERR);
-    }
-}
+WorkerLogRotate::startWorker($argv??null);

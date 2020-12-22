@@ -170,7 +170,8 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
      * @param $argv
      */
     public static function startWorker($argv):void{
-        if (isset($argv) && count($argv) > 1) {
+        $action = $argv[1]??'';
+        if ($action === 'start') {
             $workerClassname = static::class;
             cli_set_process_title($workerClassname);
             try {
@@ -181,6 +182,7 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
                 global $errorLogger;
                 $errorLogger->captureException($e);
                 Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage(), LOG_ERR);
+                sleep(1);
             }
         }
     }

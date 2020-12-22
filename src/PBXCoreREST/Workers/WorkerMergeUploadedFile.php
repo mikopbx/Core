@@ -85,7 +85,7 @@ class WorkerMergeUploadedFile extends WorkerBase
     ): void {
         file_put_contents($progress_file, '0');
         // Restore original file from chunks
-        if (($fp = fopen($result_file, 'w')) !== false) {
+        if (($fp = fopen($result_file, 'wb')) !== false) {
             for ($i = 1; $i <= $total_files; $i++) {
                 $tmp_file = $tempDir . '/' . $fileName . '.part' . $i;
                 fwrite($fp, file_get_contents($tmp_file));
@@ -105,15 +105,4 @@ class WorkerMergeUploadedFile extends WorkerBase
 }
 
 // Start worker process
-$workerClassname = WorkerMergeUploadedFile::class;
-if (isset($argv) && count($argv) > 1) {
-    cli_set_process_title($workerClassname);
-    try {
-        $worker = new $workerClassname();
-        $worker->start($argv);
-    } catch (Throwable $e) {
-        global $errorLogger;
-        $errorLogger->captureException($e);
-        Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage(), LOG_ERR);
-    }
-}
+WorkerMergeUploadedFile::startWorker($argv??null);

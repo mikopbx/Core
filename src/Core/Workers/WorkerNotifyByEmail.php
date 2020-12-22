@@ -117,19 +117,4 @@ class WorkerNotifyByEmail extends WorkerBase
 }
 
 // Start worker process
-$workerClassname = WorkerNotifyByEmail::class;
-$action = $argv[1]??'';
-if ($action === 'start') {
-    cli_set_process_title($workerClassname);
-    while (true) {
-        try {
-            $worker = new $workerClassname();
-            $worker->start($argv);
-            Util::sysLogMsg($workerClassname, "Normal exit after start ended", LOG_DEBUG);
-        } catch (Throwable $e) {
-            global $errorLogger;
-            $errorLogger->captureException($e);
-            Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage(), LOG_ERR);
-        }
-    }
-}
+WorkerNotifyByEmail::startWorker($argv??null);
