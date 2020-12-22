@@ -265,6 +265,7 @@ class PbxSettings extends ModelsBase
             case 'RTPPortTo':
             case 'SIPDefaultExpiry':
             case 'SIPMinExpiry':
+            case 'PBXAllowGuestCalls':
             case 'SIPMaxExpiry':
             case 'PBXLanguage':
                 return true;
