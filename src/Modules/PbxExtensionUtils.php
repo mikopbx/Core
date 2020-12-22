@@ -43,7 +43,7 @@ class PbxExtensionUtils
     {
         $result = PbxExtensionModules::findFirstByUniqid($moduleUniqueID);
 
-        return ($result !== false && $result->disabled !== '1');
+        return ($result !== null && $result->disabled !== '1');
     }
 
     /**
