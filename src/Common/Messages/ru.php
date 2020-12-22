@@ -578,6 +578,7 @@ return [
     'gs_PBXFeaturePickupExten'                                            => 'Комбинация для перехвата входящих вызовов',
     'gs_PBXFeatureAtxferNoAnswerTimeout'                                  => 'Время возврата вызова, если нет ответа после безусловного перевода',
     'gs_PBXSplitAudioThread'                                              => 'Сохранять записи в стерео режиме',
+    'gs_PBXAllowGuestCalls'                                               => 'Разрешить входящие звонки с любых серверов',
     'gs_SIPPort'                                                          => 'Порт SIP для регистрации телефонов на этой станции',
     'gs_KeepAliveHeader'                                                  => 'Настройки продолжительности действия регистрации',
     'gs_SIPDefaultExpiry'                                                 => 'Стандартное время в секундах для отправки Keep-alive',
