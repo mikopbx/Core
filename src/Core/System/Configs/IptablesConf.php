@@ -198,9 +198,15 @@ class IptablesConf extends Injectable
         $db_data    = Sip::find("type = 'friend' AND ( disabled <> '1')");
         $sipHosts   = SIPConf::getSipHosts();
 
+        $hashArray = [];
         foreach ($db_data as $data){
             $data = $sipHosts[$data->uniqid]??[];
             foreach ($data as $host){
+                if(in_array($host, $hashArray, true)){
+                    // Не допускаем повторения хост.
+                    continue;
+                }
+                $hashArray[] = $host;
                 $arr_command[] = $this->getIptablesInputRule($this->sipPort, '-p tcp -s '.$host.' ');
                 $arr_command[] = $this->getIptablesInputRule($this->sipPort, '-p udp -s '.$host.' ');
                 $arr_command[] = $this->getIptablesInputRule($this->rtpPorts, '-p udp -s '.$host.' ');
@@ -209,7 +215,7 @@ class IptablesConf extends Injectable
         }
         // Allow all local connections
         $arr_command[] = $this->getIptablesInputRule('', '-s 127.0.0.1 ');
-        unset($db_data, $sipHosts, $result);
+        unset($db_data, $sipHosts, $result, $hashArray);
     }
 
     /**
