@@ -35,6 +35,7 @@ use MikoPBX\Core\Workers\WorkerLogRotate;
 use MikoPBX\Core\Workers\WorkerModelsEvents;
 use MikoPBX\Core\Workers\WorkerNotifyByEmail;
 use MikoPBX\Core\Workers\WorkerNotifyError;
+use MikoPBX\Core\Workers\WorkerRemoveOldRecords;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use Recoil\React\ReactKernel;
 use Throwable;
@@ -96,6 +97,7 @@ class WorkerSafeScriptsCore extends WorkerBase
                     WorkerBeanstalkdTidyUp::class,
                     WorkerCheckFail2BanAlive::class,
                     WorkerLogRotate::class,
+                    WorkerRemoveOldRecords::class,
                 ],
         ];
         $arrModulesWorkers = [];

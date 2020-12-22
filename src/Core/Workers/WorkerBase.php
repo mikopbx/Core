@@ -25,6 +25,7 @@ use MikoPBX\Core\System\Util;
 use MikoPBX\Core\System\Processes;
 use Phalcon\Di;
 use Phalcon\Text;
+use Throwable;
 
 abstract class WorkerBase extends Di\Injectable implements WorkerInterface
 {
@@ -162,5 +163,25 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
     public function __destruct()
     {
         $this->savePidFile();
+    }
+
+    /**
+     * Начало работы worker.
+     * @param $argv
+     */
+    public static function startWorker($argv):void{
+        if (isset($argv) && count($argv) > 1) {
+            $workerClassname = static::class;
+            cli_set_process_title($workerClassname);
+            try {
+                $worker = new $workerClassname();
+                $worker->start(self::class);
+                Util::sysLogMsg($workerClassname, "Normal exit after start ended", LOG_DEBUG);
+            } catch (Throwable $e) {
+                global $errorLogger;
+                $errorLogger->captureException($e);
+                Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage(), LOG_ERR);
+            }
+        }
     }
 }

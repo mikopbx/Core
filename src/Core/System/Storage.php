@@ -452,55 +452,6 @@ class Storage extends Di\Injectable
     }
 
     /**
-     * Проверка свободного места на дисках. Уведомление в случае проблем.
-     */
-    public function checkFreeSpace(): void
-    {
-        $util = new Util();
-        $hdd  = $this->getAllHdd(true);
-        // Создание больщого файла для тестов.
-        // head -c 1500MB /dev/urandom > /storage/usbdisk1/big_file.mp3
-        foreach ($hdd as $disk) {
-            if ($disk['sys_disk'] === true && ! self::isStorageDiskMounted("{$disk['id']}4")) {
-                // Это системный диск (4ый раздел). Он не смонтирован.
-                continue;
-            }
-
-            $free       = ($disk['free_space'] / $disk['size'] * 100);
-            $need_alert = false;
-            $test_alert = '';
-            if ($free < 5) {
-                $need_alert = true;
-                $test_alert = "The {$disk['id']} has less than 5% of free space available.";
-            }
-
-            if ($disk['free_space'] < 500) {
-                $need_alert = true;
-                $test_alert = "The {$disk['id']} has less than 500MB of free space available.";
-            }
-
-            if ($disk['free_space'] < 100) {
-                $need_alert = true;
-                $test_alert = "The {$disk['id']} has less than 100MB of free space available. Old call records will be deleted.";
-                Processes::processPHPWorker(WorkerRemoveOldRecords::class);
-            }
-
-            if ( ! $need_alert) {
-                continue;
-            }
-
-            Util::sysLogMsg("STORAGE", $test_alert);
-            $data = [
-                'Device     - ' => "/dev/{$disk['id']}",
-                'Directoire - ' => "{$disk['mounted']}",
-                'Desciption - ' => $test_alert,
-            ];
-            // Добавляем задачу на уведомление.
-            $util->addJobToBeanstalk('WorkerNotifyError_storage', $data);
-        }
-    }
-
-    /**
      * Возвращает все подключенные HDD.
      *
      * @param bool $mounted_only
