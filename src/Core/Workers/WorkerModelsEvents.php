@@ -44,8 +44,8 @@ use MikoPBX\Common\Models\{AsteriskManagerUsers,
     PbxExtensionModules,
     PbxSettings,
     Sip,
-    SoundFiles
-};
+    SipHosts,
+    SoundFiles};
 use MikoPBX\Common\Providers\BeanstalkConnectionModelsProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Asterisk\Configs\QueueConf;
@@ -337,6 +337,10 @@ class WorkerModelsEvents extends WorkerBase
                 $this->modified_tables[self::R_CUSTOM_F] = true;
                 break;
             case Sip::class:
+                $this->modified_tables[self::R_SIP]      = true;
+                $this->modified_tables[self::R_DIALPLAN] = true;
+                $this->modified_tables[self::R_FIREWALL] = true;
+                break;
             case ExtensionForwardingRights::class:
                 $this->modified_tables[self::R_SIP]      = true;
                 $this->modified_tables[self::R_DIALPLAN] = true;
@@ -361,6 +365,10 @@ class WorkerModelsEvents extends WorkerBase
                 $this->modified_tables[self::R_NETWORK] = true;
                 $this->modified_tables[self::R_IAX]     = true;
                 $this->modified_tables[self::R_SIP]     = true;
+                break;
+            case SipHosts::class:
+                $this->modified_tables[self::R_FIREWALL] = true;
+                $this->modified_tables[self::R_SIP]      = true;
                 break;
             case NetworkFilters::class:
                 $this->modified_tables[self::R_FIREWALL] = true;

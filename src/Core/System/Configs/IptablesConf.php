@@ -19,7 +19,8 @@
 
 namespace MikoPBX\Core\System\Configs;
 
-use MikoPBX\Common\Models\{FirewallRules, NetworkFilters};
+use MikoPBX\Common\Models\{FirewallRules, NetworkFilters, PbxSettings, Sip};
+use MikoPBX\Core\Asterisk\Configs\SIPConf;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\System\Processes;
@@ -29,16 +30,20 @@ class IptablesConf extends Injectable
 {
     private bool $firewall_enable;
     private Fail2BanConf $fail2ban;
-
+    private string $sipPort;
+    private string $rtpPorts;
     /**
      * Firewall constructor.
      */
     public function __construct()
     {
-        $mikoPBXConfig = new MikoPBXConfig();
-
-        $firewall_enable       = $mikoPBXConfig->getGeneralSettings('PBXFirewallEnabled');
+        $firewall_enable       = PbxSettings::getValueByKey('PBXFirewallEnabled');
         $this->firewall_enable = ($firewall_enable === '1');
+
+        $this->sipPort         = PbxSettings::getValueByKey('SIPPort');
+        $defaultRTPFrom        = PbxSettings::getValueByKey('RTPPortFrom');
+        $defaultRTPTo          = PbxSettings::getValueByKey('RTPPortTo');
+        $this->rtpPorts        = "{$defaultRTPFrom}:{$defaultRTPTo}";
 
         $this->fail2ban = new Fail2BanConf();
     }
@@ -161,8 +166,8 @@ class IptablesConf extends Injectable
      */
     private function addFirewallRules(&$arr_command): void
     {
-        /** @var \MikoPBX\Common\Models\FirewallRules $result */
-        /** @var \MikoPBX\Common\Models\FirewallRules $rule */
+        /** @var FirewallRules $result */
+        /** @var FirewallRules $rule */
         $result = FirewallRules::find('action="allow"');
         foreach ($result as $rule) {
             if ($rule->portfrom !== $rule->portto && trim($rule->portto) !== '') {
@@ -170,7 +175,7 @@ class IptablesConf extends Injectable
             } else {
                 $port = $rule->portfrom;
             }
-            /** @var \MikoPBX\Common\Models\NetworkFilters $network_filter */
+            /** @var NetworkFilters $network_filter */
             $network_filter = NetworkFilters::findFirst($rule->networkfilterid);
             if ($network_filter === null) {
                 Util::sysLogMsg('Firewall', "network_filter_id not found {$rule->networkfilterid}", LOG_WARNING);
@@ -179,18 +184,32 @@ class IptablesConf extends Injectable
             if ('0.0.0.0/0' === $network_filter->permit && $rule->action !== 'allow') {
                 continue;
             }
-            $other_data = "-p {$rule->protocol}";
-            $other_data .= ($network_filter === null) ? '' : ' -s ' . $network_filter->permit;
+            $other_data  = "-p {$rule->protocol}";
+            $other_data .= ' -s ' . $network_filter->permit;
             if ($rule->protocol === 'icmp') {
                 $port       = '';
                 $other_data .= ' --icmp-type echo-request';
             }
-
             $action        = ($rule->action === 'allow') ? 'ACCEPT' : 'DROP';
             $arr_command[] = $this->getIptablesInputRule($port, $other_data, $action);
         }
+
+        /** @var Sip $data */
+        $db_data    = Sip::find("type = 'friend' AND ( disabled <> '1')");
+        $sipHosts   = SIPConf::getSipHosts();
+
+        foreach ($db_data as $data){
+            $data = $sipHosts[$data->uniqid]??[];
+            foreach ($data as $host){
+                $arr_command[] = $this->getIptablesInputRule($this->sipPort, '-p tcp -s '.$host.' ');
+                $arr_command[] = $this->getIptablesInputRule($this->sipPort, '-p udp -s '.$host.' ');
+                $arr_command[] = $this->getIptablesInputRule($this->rtpPorts, '-p udp -s '.$host.' ');
+                $arr_command[] = $this->getIptablesInputRule($this->rtpPorts, '-p tcp -s '.$host.' ');
+            }
+        }
         // Allow all local connections
-        $arr_command[] = $this->getIptablesInputRule('', '-s 127.0.0.1 ', 'ACCEPT');
+        $arr_command[] = $this->getIptablesInputRule('', '-s 127.0.0.1 ');
+        unset($db_data, $sipHosts, $result);
     }
 
     /**
