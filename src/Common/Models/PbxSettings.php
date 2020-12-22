@@ -141,6 +141,7 @@ class PbxSettings extends ModelsBase
             'PBXFail2BanEnabled'              => '0',
             'PBXTimezone'                     => 'Europe/Moscow',
             'PBXVersion'                      => '2020.1.1',
+            'PBXAllowGuestCalls'              => '0',
             'WebAdminLogin'                   => 'admin',
             'WebAdminPassword'                => 'admin',
             'WebAdminLanguage'                => 'en',
@@ -264,6 +265,7 @@ class PbxSettings extends ModelsBase
             case 'RTPPortTo':
             case 'SIPDefaultExpiry':
             case 'SIPMinExpiry':
+            case 'PBXAllowGuestCalls':
             case 'SIPMaxExpiry':
             case 'PBXLanguage':
                 return true;
