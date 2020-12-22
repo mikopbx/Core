@@ -133,13 +133,6 @@ class SIPConf extends ConfigClass
             "endpoint_identifier_order=username,ip,anonymous\n" .
             "user_agent = mikopbx-{$pbxVersion}\n\n" .
 
-            "[anonymous]\n" .
-            "type = endpoint\n" .
-            $codecConf.
-            "language={$lang}\n".
-            "timers = no\n" .
-            "context = public-direct-dial\n\n".
-
             "[transport-udp]\n" .
             "type = transport\n" .
             "protocol = udp\n" .
@@ -152,6 +145,16 @@ class SIPConf extends ConfigClass
             "bind=0.0.0.0:{$this->generalSettings['SIPPort']}\n".
             "{$natConf}\n\n".
             '';
+
+        $allowGuestCalls = PbxSettings::getValueByKey('PBXAllowGuestCalls');
+        if($allowGuestCalls === '1'){
+            $conf.= "[anonymous]\n" .
+                "type = endpoint\n" .
+                $codecConf.
+                "language={$lang}\n".
+                "timers = no\n" .
+                "context = public-direct-dial\n\n";
+        }
 
         $varEtcDir = $this->config->path('core.varEtcDir');
         file_put_contents($varEtcDir . '/topology_hash', md5($topology . $exthostname . $extipaddr. $this->generalSettings['SIPPort']));
