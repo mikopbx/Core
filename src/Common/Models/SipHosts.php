@@ -69,18 +69,4 @@ class SipHosts extends ModelsBase
         );
     }
 
-    public function validation(): bool
-    {
-        $validation = new Validation();
-        $validation->add(
-            ['provider_id', 'address'],
-            new UniquenessValidator(
-                [
-                    'message' => $this->t('mo_ThisQueueAndMemberMustBeUniqueForCallQueuesModels'),
-                ]
-            )
-        );
-
-        return $this->validate($validation);
-    }
 }

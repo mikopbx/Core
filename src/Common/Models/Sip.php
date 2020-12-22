@@ -193,6 +193,19 @@ class Sip extends ModelsBase
                 ],
             ]
         );
+
+        $this->hasMany(
+            'uniqid',
+            SipHosts::class,
+            'provider_id',
+            [
+                'alias'      => 'SipHosts',
+                'foreignKey' => [
+                    'allowNulls' => false,
+                    'action'     => Relation::ACTION_CASCADE //Удалить подчиненные SipHosts
+                ],
+            ]
+        );
     }
 
     public function getManualAttributes(): string
