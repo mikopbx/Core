@@ -24,7 +24,6 @@ use MikoPBX\Common\Models\Iax;
 use MikoPBX\Common\Models\IvrMenuActions;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\SipHosts;
-use MikoPBX\Core\Asterisk\Configs\SIPConf;
 use MikoPBX\Core\System\Upgrade\UpgradeSystemConfigInterface;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
