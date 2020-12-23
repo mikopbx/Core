@@ -210,7 +210,6 @@ class IptablesConf extends Injectable
                 $arr_command[] = $this->getIptablesInputRule($this->sipPort, '-p tcp -s '.$host.' ');
                 $arr_command[] = $this->getIptablesInputRule($this->sipPort, '-p udp -s '.$host.' ');
                 $arr_command[] = $this->getIptablesInputRule($this->rtpPorts, '-p udp -s '.$host.' ');
-                $arr_command[] = $this->getIptablesInputRule($this->rtpPorts, '-p tcp -s '.$host.' ');
             }
         }
         // Allow all local connections
