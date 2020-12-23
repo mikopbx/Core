@@ -579,6 +579,7 @@ $menu = (new CliMenuBuilder())
     ->build();
 
 if ($menu->getTerminal()->isInteractive()) {
+    echo(str_repeat(PHP_EOL, $menu->getTerminal()->getHeight()));
     try {
         $menu->open();
     } catch (InvalidTerminalException $e) {
