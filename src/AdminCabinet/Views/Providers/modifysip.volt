@@ -7,7 +7,7 @@
 {{ form.render('type') }}
 {{ form.render('disabled') }}
 {{ form.render('providerType') }}
-
+<input type="hidden" name="dirrty" id="dirrty"/>
 
 <div class="ten wide required field">
     <label>{{ t._('pr_ProviderName') }}</label>
@@ -46,7 +46,7 @@
         <div class="six wide field">
             <label>{{ t._('pr_EnterHostOrIp') }}</label>
             <div class="ui input" id="additional-host">
-                <input type="text" placeholder="{{ t._('pr_EnterHostOrIpPlaceholder') }}" />
+                <input type="text" name="additional-host" placeholder="{{ t._('pr_EnterHostOrIpPlaceholder') }}" />
             </div>
         </div>
         <div class="ui basic compact segment">
@@ -60,7 +60,7 @@
                         </td>
                     </tr>
                 {% endfor %}
-                <tr class="member-row-tpl" style="display: none">
+                <tr class="host-row-tpl" style="display: none">
                     <td class="address"></td>
                     <td class="right aligned collapsing">
                         <div class="ui icon small button delete-row-button"><i class="icon trash red"></i></div>

@@ -307,7 +307,7 @@ class ProvidersController extends BaseController
     {
         $providerHost = $data['host'];
         $additionalHosts = json_decode($data['additionalHosts']);
-        $hosts = array_merge([], $additionalHosts, [$providerHost]);
+        $hosts = array_merge([], array_column($additionalHosts, 'address'), [$providerHost]);
         $parameters=[
             'conditions'=>'provider_id = :providerId:',
             'bind'=>[

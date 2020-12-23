@@ -34,6 +34,7 @@ const provider = {
 	$qualifyToggle: $('#qualify'),
 	$qualifyFreqToggle: $('#qualify-freq'),
 	$additionalHostInput: $('#additional-host input'),
+	hostInputValidation: /^((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(\d|[1-2]\d|3[0-2]))?|[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9](?:\.[a-zA-Z]{2,})+)$/gm,
 	hostRow: '#save-provider-form .host-row',
 	validateRules: {
 		description: {
@@ -87,9 +88,36 @@ const provider = {
 			},
 		});
 		// Add new string to additional-hosts-table table
-		provider.$additionalHostInput.on('input', ()=>{
-			const value = $(this).val()
-			if (value) {
+		provider.$additionalHostInput.keypress((e)=>{
+			if (e.which === 13) {
+				provider.cbOnCompleteHostAddress();
+			}
+		});
+		// Delete host from additional-hosts-table
+		provider.$deleteRowButton.on('click', (e) => {
+			$(e.target).closest('tr').remove();
+			provider.updateHostsTableView();
+			provider.$dirrtyField.val(Math.random());
+			provider.$dirrtyField.trigger('change');
+			e.preventDefault();
+			return false;
+		});
+		provider.initializeForm();
+	},
+	/**
+	 * Adds record to hosts table
+	 */
+	cbOnCompleteHostAddress(){
+		const value = provider.$formObj.form('get value', 'additional-host');
+		if (value) {
+			const validation = value.match(provider.hostInputValidation);
+			if (validation===null
+				|| validation.length===0){
+				provider.$additionalHostInput.transition('shake');
+				return;
+			}
+
+			if ($(`.host-row[data-value="${value}"]`).length===0){
 				const $tr = $('.host-row-tpl').last();
 				const $clone = $tr.clone(true);
 				$clone
@@ -107,17 +135,8 @@ const provider = {
 				provider.$dirrtyField.val(Math.random());
 				provider.$dirrtyField.trigger('change');
 			}
-		});
-		// Delete host from additional-hosts-table
-		provider.$deleteRowButton.on('click', (e) => {
-			$(e.target).closest('tr').remove();
-			provider.updateHostsTableView();
-			provider.$dirrtyField.val(Math.random());
-			provider.$dirrtyField.trigger('change');
-			e.preventDefault();
-			return false;
-		});
-		provider.initializeForm();
+			provider.$additionalHostInput.val('');
+		}
 	},
 	/**
 	 * Shows dummy if we have zero rows
@@ -125,7 +144,7 @@ const provider = {
 	updateHostsTableView() {
 		const dummy = `<tr class="dummy"><td colspan="4" class="center aligned">${globalTranslate.pr_NoAnyAdditionalHosts}</td></tr>`;
 
-		if ($(callQueue.memberRow).length === 0) {
+		if ($(provider.hostRow).length === 0) {
 			$('#additional-hosts-table tbody').append(dummy);
 		} else {
 			$('#additional-hosts-table tbody .dummy').remove();
