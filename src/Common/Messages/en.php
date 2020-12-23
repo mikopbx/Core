@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     'January' => 'January',
     'February' => 'February',
     'March' => 'March',
@@ -554,7 +553,7 @@ return [
     'gs_RTPPortTo' => 'Last RTP port',
     'gs_AMIEnabled' => 'Use the AMI interface',
     'gs_AMIPort' => 'AMI port',
-    'gs_AJAMEnabled' => 'Use the  AJAM interface',
+    'gs_AJAMEnabled' => 'Use the AJAM interface',
     'gs_AJAMPort' => 'AJAM port',
     'gs_AJAMPortTLS' => 'Secure AJAM port',
     'gs_SSHPort' => 'SSH port',
@@ -757,7 +756,7 @@ It can be activated once, after which the coupon becomes redeemed.
     'lic_LicenseWarningHeader' => 'This copy of the program is not registered',
     'lic_LicenseWarningText' => 'Go to <a href=\'/admin-cabinet/licensing/modify/\'>licensing</a> and follow the steps to registered your system',
     'lic_FailedToGetTrialKey2051' => 'Failed to register: (2051) You have already got trial key on this host for another email/company',
-    'lic_FailedToGetTrialKey2022' => 'Failed to register: (2022) This email has already used for another company name',
+    'lic_FailedToGetTrialKey2022' => 'Failed to register: (2022) This email has already used for another company name. Try to find previous key, we sent it from lic@miko.ru address.',
     'lic_FailedActivateCoupon2057' => '(2057) This coupon is disabled',
     'lic_FailedActivateCoupon2041' => '(2041) Your coupon has already activated',
     'lic_FailedActivateCoupon2040' => '(2040) Unknown coupon code',
@@ -861,11 +860,11 @@ It can be activated once, after which the coupon becomes redeemed.
     'ext_CreateNewExtension' => 'Create new one',
     'ext_UploadError' => 'Upload error',
     'ext_UploadInProgress' => 'Uploading …',
-    'ext_InstallationInProgress' => 'Installation …',
+    'ext_InstallationInProgress' => 'Installation',
     'ext_ModuleChangeStatusError' => 'Problem with module status',
     'ext_InstallationError' => 'Error installing module',
     'DimmerWaitForPBXIsOnline' => 'Connection lost to PBX core …',
-    'DimmerWaitForPBXOnlineDescription' => 'It\'s normal if the computer has been restarted. <br>This page will be reloaded when the connection established.',
+    'DimmerWaitForPBXOnlineDescription' => 'It\'s normal if the computer has been restarted. <br>This page will be reloaded automaticaly when the connection established.',
     'loc_NoResult' => 'Nothing found',
     'mo_CallQueueShort4Dropdown' => 'Queue',
     'mo_ConferenceRoomsShort4Dropdown' => 'Conference',
