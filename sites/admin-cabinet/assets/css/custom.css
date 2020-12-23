@@ -381,6 +381,7 @@ Log file content
 /**
 Delete button on little extensions table
  */
-#extensionsTable  .button.delete-row-button{
+#extensionsTable  .button.delete-row-button,
+#additional-hosts-table  .button.delete-row-button{
     font-size: 0.8rem;
 }
