@@ -32,26 +32,26 @@ use Phalcon\Config as ConfigAlias;
 
 class UpdateConfigsUpToVer2020362 extends Injectable implements UpgradeSystemConfigInterface
 {
-  	public const PBX_VERSION = '2020.3.62';
+    public const PBX_VERSION = '2020.3.62';
 
-	private ConfigAlias $config;
+    private ConfigAlias $config;
     private MikoPBXConfig $mikoPBXConfig;
     private bool $isLiveCD;
 
-	/**
+    /**
      * Class constructor.
      */
     public function __construct()
     {
-        $this->config = $this->getDI()->getShared('config');
+        $this->config        = $this->getDI()->getShared('config');
         $this->mikoPBXConfig = new MikoPBXConfig();
         $this->isLiveCD      = file_exists('/offload/livecd');
     }
 
-	/**
+    /**
      * Main function
      */
-    public function processUpdate():void
+    public function processUpdate(): void
     {
         if ($this->isLiveCD) {
             return;
@@ -89,34 +89,33 @@ class UpdateConfigsUpToVer2020362 extends Injectable implements UpgradeSystemCon
     /**
      * Deletes m_Sip and m_Iax records without links to m_Providers and m_Extensions
      */
-    private function deleteOrphanedProviders():void
+    private function deleteOrphanedProviders(): void
     {
         $sipRecords = Sip::find();
-        foreach ($sipRecords as $sipRecord){
-            if ($sipRecord->Providers===null && $sipRecord->Extensions===null){
+        foreach ($sipRecords as $sipRecord) {
+            if ($sipRecord->Providers === null && $sipRecord->Extensions === null) {
                 $sipRecord->delete();
             }
         }
 
         $iaxRecords = Iax::find();
-        foreach ($iaxRecords as $iaxRecord){
-            if ($iaxRecord->Providers===null){
+        foreach ($iaxRecords as $iaxRecord) {
+            if ($iaxRecord->Providers === null) {
                 $iaxRecord->delete();
             }
         }
-
     }
 
     /**
      * Deletes m_CallQueueMembers records without links to m_CallQueue and m_Extensions
      */
-    private function deleteOrphanedQueueMembers():void
+    private function deleteOrphanedQueueMembers(): void
     {
         $records = CallQueueMembers::find();
-        foreach ($records as $record){
-            if ($record->Extensions===null
-                || $record->CallQueues===null
-             ){
+        foreach ($records as $record) {
+            if ($record->Extensions === null
+                || $record->CallQueues === null
+            ) {
                 $record->delete();
             }
         }
@@ -125,13 +124,13 @@ class UpdateConfigsUpToVer2020362 extends Injectable implements UpgradeSystemCon
     /**
      * Deletes m_IvrMenuActions records without links to m_IvrMenu and m_Extensions
      */
-    private function deleteOrphanedIVRMenuActions():void
+    private function deleteOrphanedIVRMenuActions(): void
     {
         $records = IvrMenuActions::find();
-        foreach ($records as $record){
-            if ($record->Extensions===null
-                || $record->IvrMenu===null
-            ){
+        foreach ($records as $record) {
+            if ($record->Extensions === null
+                || $record->IvrMenu === null
+            ) {
                 $record->delete();
             }
         }

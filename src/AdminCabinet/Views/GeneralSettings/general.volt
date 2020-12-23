@@ -18,7 +18,14 @@
     <label>{{ t._('gs_PBXFeatureDigitTimeout') }}</label>
     {{ form.render('PBXFeatureDigitTimeout') }}
 </div>
-
+<div class="field">
+    <div class="ui segment">
+        <div class="ui toggle checkbox">
+            <label>{{ t._('gs_PBXAllowGuestCalls') }}</label>
+            {{ form.render('PBXAllowGuestCalls') }}
+        </div>
+    </div>
+</div>
 <div class="field">
     <div class="ui segment">
         <div class="ui toggle checkbox">

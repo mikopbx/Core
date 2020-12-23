@@ -20,7 +20,7 @@
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\{IaxProviderEditForm, SipProviderEditForm};
-use MikoPBX\Common\Models\{Iax, Providers, Sip};
+use MikoPBX\Common\Models\{Iax, Providers, Sip, SipHosts};
 
 class ProvidersController extends BaseController
 {
@@ -74,8 +74,17 @@ class ProvidersController extends BaseController
             $provider->Sip->qualify     = '1';
         }
 
-        $this->view->form      = new SipProviderEditForm($provider->Sip);
-        $this->view->represent = $provider->getRepresent();
+        $providerHost = $provider->Sip->host;
+        $sipHosts   = $provider->Sip->SipHosts;
+        $hostsTable = [];
+        foreach ($sipHosts as $host) {
+            if ($providerHost !== $host->address){
+                $hostsTable[] = $host->address;
+            }
+        }
+        $this->view->hostsTable = $hostsTable;
+        $this->view->form       = new SipProviderEditForm($provider->Sip);
+        $this->view->represent  = $provider->getRepresent();
     }
 
     /**
@@ -166,9 +175,9 @@ class ProvidersController extends BaseController
     }
 
     /**
-     * Сохранение провайдера AJAX запросом из формы
+     * Saves provider over ajax request from a web form
      *
-     * @param string $type - sip или iax
+     * @param string $type - sip or iax
      *
      */
     public function saveAction(string $type): void
@@ -179,8 +188,16 @@ class ProvidersController extends BaseController
         $this->db->begin();
         $data = $this->request->getPost();
 
-        // Заполним параметры провайдера и его SIP IAX записей
+        // Updates SIP and IAX tables
         if ( ! $this->saveProvider($data, $type)) {
+            $this->view->success = false;
+            $this->db->rollback();
+
+            return;
+        }
+
+        // Update additional hosts table
+        if ( ! $this->updateAdditionalHosts($data)) {
             $this->view->success = false;
             $this->db->rollback();
 
@@ -198,12 +215,12 @@ class ProvidersController extends BaseController
     }
 
     /**
-     * Сохранение параметров в таблицу  Providers
+     * Save providers data table
      *
-     * @param array  $data - POST дата
-     * @param string $type - sip или iax
+     * @param array  $data - POST DATA
+     * @param string $type - sip or iax
      *
-     * @return bool результат сохранения
+     * @return bool save result
      */
     private function saveProvider(array $data, string $type): bool
     {
@@ -229,7 +246,6 @@ class ProvidersController extends BaseController
         if ($provider->save() === false) {
             $errors = $provider->getMessages();
             $this->flash->warning(implode('<br>', $errors));
-
             return false;
         }
 
@@ -281,9 +297,53 @@ class ProvidersController extends BaseController
     }
 
     /**
-     * Удаление провайдера
+     * Update additional hosts table
      *
-     * @param string $uniqid Уникальный идентификатор провайдера
+     * @param array $data массив полей из POST запроса
+     *
+     * @return bool update result
+     */
+    private function updateAdditionalHosts(array $data): bool
+    {
+        $providerHost = $data['host'];
+        $additionalHosts = json_decode($data['additionalHosts']);
+        $hosts = array_merge([], $additionalHosts, [$providerHost]);
+        $parameters=[
+            'conditions'=>'provider_id = :providerId:',
+            'bind'=>[
+                'providerId'=>$data['uniqid']
+            ]
+        ];
+        $currentRecords = SipHosts::find($parameters);
+        foreach ($currentRecords as $record){
+            if (!in_array($record->address, $hosts)){
+                if ($record->delete() === false) {
+                    $errors = $record->getMessages();
+                    $this->flash->warning(implode('<br>', $errors));
+                    return false;
+                }
+            } elseif (($key = array_search($record->address, $hosts)) !== false) {
+                unset($hosts[$key]);
+            }
+        }
+        foreach ($hosts as $record){
+            $currentRecord = new SipHosts();
+            $currentRecord->provider_id = $data['uniqid'];
+            $currentRecord->address = $record;
+            if ($currentRecord->save() === false) {
+                $errors = $currentRecord->getMessages();
+                $this->flash->warning(implode('<br>', $errors));
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Deletes provider record by unique id
+     *
+     * @param string $uniqid
      */
     public function deleteAction(string $uniqid = ''): void
     {
@@ -296,7 +356,6 @@ class ProvidersController extends BaseController
             return;
         }
 
-
         $this->db->begin();
         $errors = false;
         if ($provider->Iax) {
@@ -308,7 +367,13 @@ class ProvidersController extends BaseController
 
         if ($errors === false && $provider->Sip) {
             $sip = $provider->Sip;
-            if ( ! $sip->delete()) {
+            if ($sip->SipHosts) {
+                $sipHosts = $provider->SipHosts;
+                if ( ! $sipHosts->delete()) {
+                    $errors = $sipHosts->getMessages();
+                }
+            }
+            if ($errors === false && ! $sip->delete()) {
                 $errors = $sip->getMessages();
             }
         }
