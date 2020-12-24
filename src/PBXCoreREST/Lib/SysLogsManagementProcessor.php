@@ -190,7 +190,7 @@ class SysLogsManagementProcessor extends Injectable
         );
         $phpPath               = Util::which('php');
         $workerFilesMergerPath = Util::getFilePathByClassName(WorkerMakeLogFilesArchive::class);
-        Processes::mwExecBg("{$phpPath} -f {$workerFilesMergerPath} '{$settings_file}'");
+        Processes::mwExecBg("{$phpPath} -f {$workerFilesMergerPath} start '{$settings_file}'");
 
         return $res;
     }

@@ -166,17 +166,19 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
     }
 
     /**
-     * Начало работы worker.
-     * @param $argv
+     * @param      $argv
+     * @param bool $setProcName
      */
-    public static function startWorker($argv):void{
+    public static function startWorker($argv, bool $setProcName = true):void{
         $action = $argv[1]??'';
         if ($action === 'start') {
             $workerClassname = static::class;
-            cli_set_process_title($workerClassname);
+            if($setProcName){
+                cli_set_process_title($workerClassname);
+            }
             try {
                 $worker = new $workerClassname();
-                $worker->start(self::class);
+                $worker->start($argv);
                 Util::sysLogMsg($workerClassname, "Normal exit after start ended", LOG_DEBUG);
             } catch (Throwable $e) {
                 global $errorLogger;

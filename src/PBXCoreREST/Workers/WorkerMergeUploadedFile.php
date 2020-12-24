@@ -29,9 +29,12 @@ use Throwable;
 
 class WorkerMergeUploadedFile extends WorkerBase
 {
-    public function start($argv): void
+    /**
+     * @param mixed $params
+     */
+    public function start($params): void
     {
-        $settings_file = trim($argv[1]);
+        $settings_file = $params[2]??'';
         if ( ! file_exists($settings_file)) {
             Util::sysLogMsg(__CLASS__, 'File with settings not found', LOG_ERR);
 

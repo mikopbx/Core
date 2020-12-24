@@ -1087,9 +1087,9 @@ class WorkerCallEvents extends WorkerBase
 
     /**
      *
-     * @param $argv
+     * @param $params
      */
-    public function start($argv): void
+    public function start($params): void
     {
         $this->mixMonitorChannels       = [];
         $this->checkChanHangupTransfer  = [];
