@@ -120,12 +120,12 @@ class WorkerRemoveOldRecords extends WorkerBase
         $test_alert = '';
         if ($freePercent < self::MIN_PERCENT) {
             $need_alert = true;
-            $test_alert = "The {$disk} has less than ".self::MIN_PERCENT.'% of free space available.';
+            $test_alert = "The {$disk['id']} has less than ".self::MIN_PERCENT.'% of free space available.';
         }
 
         if ($disk['free_space'] < self::MIN_SPACE_MB) {
             $need_alert = true;
-            $test_alert = "The {$disk} has less than " . self::MIN_SPACE_MB . 'MB of free space available.';
+            $test_alert = "The {$disk['id']} has less than " . self::MIN_SPACE_MB . 'MB of free space available.';
             $need_clean = true;
         }
         return array($need_alert, $need_clean, $test_alert);
