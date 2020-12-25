@@ -1064,4 +1064,8 @@ It can be activated once, after which the coupon becomes redeemed.
     'gs_KeepAliveHeader' => 'Keep alive settings',
     'gs_PBXFeaturePickupExten' => 'Combination for picking up incoming calls',
     'gs_CallRecordTab' => 'Call recording',
+    'gs_PBXAllowGuestCalls' => 'Allow incoming calls from any servers',
+    'pr_NoAnyAdditionalHosts' => 'No additional addresses specified for this provider',
+    'pr_EnterHostOrIpPlaceholder' => 'Enter IP address or subnet',
+    'pr_EnterHostOrIp' => 'Additional provider hosts or ip',
 ];
