@@ -1064,4 +1064,8 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
     'gs_CallRecordTab' => 'Anrufaufzeichnung',
     'adv_ProblemWithInternetConnection' => 'Es besteht keine Internetverbindung. Beim Betrieb kostenpflichtiger Module können Probleme auftreten.',
     'lic_GetTrialErrorCheckInternet' => 'Registrierung fehlgeschlagen, auf MikoPBX nach Internet suchen',
+    'gs_PBXAllowGuestCalls' => 'Erlaube eingehende Anrufe von beliebigen Servern',
+    'pr_NoAnyAdditionalHosts' => 'Für diesen Anbieter wurden keine zusätzlichen Adressen angegeben',
+    'pr_EnterHostOrIpPlaceholder' => 'Geben Sie die IP-Adresse oder das Subnetz ein',
+    'pr_EnterHostOrIp' => 'Zusätzliche Anbieteradressen',
 ];
