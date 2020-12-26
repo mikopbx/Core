@@ -9,7 +9,7 @@ You can join them in supporting MikoPBX development by visiting our page on [Pat
     <tr>
       <td align="center" valign="bottom">
         <a href="https://www.gitbook.com">
-          <img height="50px" src="https://github.com/mikopbx/assets/raw/master/img/logos/GitBookLogo.png" style="max-width:100%; vertical-align: bottom; background-color: grey;" alt="gitbook">
+          <img height="50px" src="https://github.com/mikopbx/assets/raw/master/img/logos/GitBookLogo.svg" style="max-width:100%; vertical-align: bottom;" alt="gitbook">
         </a>
       </td>
        <td align="center" valign="bottom">
