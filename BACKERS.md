@@ -14,7 +14,7 @@ You can join them in supporting MikoPBX development by visiting our page on [Pat
       </td>
        <td align="center" valign="bottom">
         <a href="https://www.browserstack.com">
-          <img width="222px" height="32px" src="https://3fxtqy18kygf3on3bu39kh93-wpengine.netdna-ssl.com/wp-content/uploads/2019/11/browserstack.svg" style="max-width:100%; vertical-align: bottom;" alt="browserstack">
+          <img width="222px" height="32px" src="https://3fxtqy18kygf3on3bu39kh93-wpengine.netdna-ssl.com/wp-content/themes/browserstack/img/browserstack-logo.svg" style="max-width:100%; vertical-align: bottom;" alt="browserstack">
         </a>
       </td>
     </tr>
