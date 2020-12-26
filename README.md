@@ -38,7 +38,7 @@ The system has an easy and convenient web interface, call recording, conference 
 * The russian [website](https://www.mikopbx.ru)
 * The english [website](https://www.mikopbx.com)
 
-A big thank you to [our Backers](https://github.com/phalcon/cphalcon/blob/master/BACKERS.md); you rock!
+A big thank you to [our Backers](https://github.com/mikopbx/Core/blob/master/BACKERS.md); you rock!
 
 ## Getting Started
 1. Download [latest released](https://github.com/mikopbx/Core/releases/latest) ISO file in assets section
