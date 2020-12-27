@@ -19,6 +19,7 @@
 
 namespace MikoPBX\Common\Models;
 
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use Phalcon\Di;
 use Phalcon\Mvc\Model\Relation;
 
@@ -140,7 +141,7 @@ class FirewallRules extends ModelsBase
         //Add modules firewall rules
         $di = Di::getDefault();
         if ($di!==null) {
-            $pbxConfModules = $di->get('pbxConfModules');
+            $pbxConfModules = $di->get(PBXConfModulesProvider::SERVICE_NAME);
             foreach ($pbxConfModules as $pbxConfModule){
                 $additionalRules = $pbxConfModule->getDefaultFirewallRules();
                 if ($additionalRules!==[]){

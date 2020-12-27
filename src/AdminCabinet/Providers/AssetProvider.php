@@ -548,6 +548,7 @@ class AssetProvider implements ServiceProviderInterface
             $this->footerCollectionJS
                 ->addJs('js/pbx/main/form.js', true)
                 ->addJs('js/pbx/main/debugger-info.js', true)
+                ->addJs('js/pbx/Providers/provider-modify-status-worker.js', true)
                 ->addJs('js/pbx/Providers/provider-modify.js', true);
         }
     }

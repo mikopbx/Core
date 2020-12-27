@@ -16,20 +16,26 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl,globalTranslate, PbxApi, Form, DebuggerInfo */
+/* global globalRootUrl, globalTranslate, Form */
 
 // custom form validation rule
 $.fn.form.settings.rules.username = function (noregister, username) {
-	if (username.length === 0 && noregister !== 'on') return false;
-	return true;
+	return !(username.length === 0 && noregister !== 'on');
 };
 
 const provider = {
 	$formObj: $('#save-provider-form'),
+	$dirrtyField: $('#dirrty'),
 	providerType: $('#providerType').val(),
 	$checkBoxes: $('#save-provider-form .checkbox'),
 	$accordions: $('#save-provider-form .ui.accordion'),
 	$dropDowns: $('#save-provider-form .ui.dropdown'),
+	$deleteRowButton: $('#additional-hosts-table .delete-row-button'),
+	$qualifyToggle: $('#qualify'),
+	$qualifyFreqToggle: $('#qualify-freq'),
+	$additionalHostInput: $('#additional-host input'),
+	hostInputValidation: /^((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(\d|[1-2]\d|3[0-2]))?|[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9](?:\.[a-zA-Z]{2,})+)$/gm,
+	hostRow: '#save-provider-form .host-row',
 	validateRules: {
 		description: {
 			identifier: 'description',
@@ -72,20 +78,91 @@ const provider = {
 		provider.$checkBoxes.checkbox();
 		provider.$accordions.accordion();
 		provider.$dropDowns.dropdown();
-		$('#qualify').checkbox({
+		provider.$qualifyToggle.checkbox({
 			onChange() {
-				if ($('#qualify').checkbox('is checked')) {
-					$('#qualify-freq').removeClass('disabled');
+				if (provider.$qualifyToggle.checkbox('is checked')) {
+					provider.$qualifyFreqToggle.removeClass('disabled');
 				} else {
-					$('#qualify-freq').addClass('disabled');
+					provider.$qualifyFreqToggle.addClass('disabled');
 				}
 			},
 		});
+		// Add new string to additional-hosts-table table
+		provider.$additionalHostInput.keypress((e)=>{
+			if (e.which === 13) {
+				provider.cbOnCompleteHostAddress();
+			}
+		});
+		// Delete host from additional-hosts-table
+		provider.$deleteRowButton.on('click', (e) => {
+			$(e.target).closest('tr').remove();
+			provider.updateHostsTableView();
+			provider.$dirrtyField.val(Math.random());
+			provider.$dirrtyField.trigger('change');
+			e.preventDefault();
+			return false;
+		});
 		provider.initializeForm();
+	},
+	/**
+	 * Adds record to hosts table
+	 */
+	cbOnCompleteHostAddress(){
+		const value = provider.$formObj.form('get value', 'additional-host');
+		if (value) {
+			const validation = value.match(provider.hostInputValidation);
+			if (validation===null
+				|| validation.length===0){
+				provider.$additionalHostInput.transition('shake');
+				return;
+			}
+
+			if ($(`.host-row[data-value="${value}"]`).length===0){
+				const $tr = $('.host-row-tpl').last();
+				const $clone = $tr.clone(true);
+				$clone
+					.removeClass('host-row-tpl')
+					.addClass('host-row')
+					.show();
+				$clone.attr('data-value', value);
+				$clone.find('.address').html(value);
+				if ($(provider.hostRow).last().length === 0) {
+					$tr.after($clone);
+				} else {
+					$(provider.hostRow).last().after($clone);
+				}
+				provider.updateHostsTableView();
+				provider.$dirrtyField.val(Math.random());
+				provider.$dirrtyField.trigger('change');
+			}
+			provider.$additionalHostInput.val('');
+		}
+	},
+	/**
+	 * Shows dummy if we have zero rows
+	 */
+	updateHostsTableView() {
+		const dummy = `<tr class="dummy"><td colspan="4" class="center aligned">${globalTranslate.pr_NoAnyAdditionalHosts}</td></tr>`;
+
+		if ($(provider.hostRow).length === 0) {
+			$('#additional-hosts-table tbody').append(dummy);
+		} else {
+			$('#additional-hosts-table tbody .dummy').remove();
+		}
 	},
 	cbBeforeSendForm(settings) {
 		const result = settings;
 		result.data = provider.$formObj.form('get values');
+
+		const arrAdditionalHosts = [];
+		$(provider.hostRow).each((index, obj) => {
+			if ($(obj).attr('data-value')) {
+				arrAdditionalHosts.push({
+					address: $(obj).attr('data-value'),
+				});
+			}
+		});
+		result.data.additionalHosts = JSON.stringify(arrAdditionalHosts);
 		return result;
 	},
 	cbAfterSendForm() {
@@ -110,72 +187,8 @@ const provider = {
 	},
 };
 
-const providersStatusLoopWorker = {
-	timeOut: 3000,
-	timeOutHandle: '',
-	$status: $('#status'),
-	initialize() {
-		// Запустим обновление статуса провайдера
-		DebuggerInfo.initialize();
-		providersStatusLoopWorker.restartWorker();
-	},
-	restartWorker() {
-		window.clearTimeout(providersStatusLoopWorker.timeoutHandle);
-		providersStatusLoopWorker.worker();
-	},
-	worker() {
-		window.clearTimeout(providersStatusLoopWorker.timeoutHandle);
-		switch (provider.providerType) {
-			case 'SIP':
-				PbxApi.GetSipProvidersStatuses(providersStatusLoopWorker.cbRefreshProvidersStatus);
-				break;
-			case 'IAX':
-				PbxApi.GetIaxProvidersStatuses(providersStatusLoopWorker.cbRefreshProvidersStatus);
-				break;
-			default:
-		}
-	},
-	cbRefreshProvidersStatus(response) {
-		providersStatusLoopWorker.timeoutHandle =
-			window.setTimeout(providersStatusLoopWorker.worker, providersStatusLoopWorker.timeOut);
-		if (response.length === 0 || response === false) return;
-		let htmlTable = '<table class="ui very compact table">';
-		$.each(response, (key, value) => {
-			htmlTable += '<tr>';
-			htmlTable += `<td>${value.id}</td>`;
-			htmlTable += `<td>${value.state}</td>`;
-			htmlTable += '</tr>';
-		});
-		htmlTable += '</table>';
-		DebuggerInfo.UpdateContent(htmlTable);
-		const uniqid = provider.$formObj.form('get value', 'uniqid');
-		const result = $.grep(response, (e) => {
-			const respid = e.id;
-			return respid.toUpperCase() === uniqid.toUpperCase();
-		});
-		if (result.length === 0) {
-			// not found
-			providersStatusLoopWorker.$status.removeClass('green').removeClass('yellow').addClass('grey');
-		} else if (result[0] !== undefined && result[0].state.toUpperCase() === 'REGISTERED') {
-			providersStatusLoopWorker.$status.removeClass('grey').removeClass('yellow').addClass('green');
-		} else if (result[0] !== undefined && result[0].state.toUpperCase() === 'OK') {
-			providersStatusLoopWorker.$status.removeClass('grey').removeClass('green').addClass('yellow');
-		} else {
-			providersStatusLoopWorker.$status.removeClass('green').removeClass('yellow').addClass('grey');
-		}
-
-		if (providersStatusLoopWorker.$status.hasClass('green')) {
-			providersStatusLoopWorker.$status.html(globalTranslate.pr_Online);
-		} else if (providersStatusLoopWorker.$status.hasClass('yellow')) {
-			providersStatusLoopWorker.$status.html(globalTranslate.pr_WithoutRegistration);
-		} else {
-			providersStatusLoopWorker.$status.html(globalTranslate.pr_Offline);
-		}
-	},
-};
 
 
 $(document).ready(() => {
 	provider.initialize();
-	providersStatusLoopWorker.initialize();
 });

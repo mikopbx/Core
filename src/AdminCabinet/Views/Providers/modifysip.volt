@@ -7,7 +7,7 @@
 {{ form.render('type') }}
 {{ form.render('disabled') }}
 {{ form.render('providerType') }}
-
+<input type="hidden" name="dirrty" id="dirrty"/>
 
 <div class="ten wide required field">
     <label>{{ t._('pr_ProviderName') }}</label>
@@ -42,6 +42,33 @@
 
     <div class=" content field">
         <h3 class="ui dividing header ">{{ t._("ConnectionSettings") }}</h3>
+
+        <div class="six wide field">
+            <label>{{ t._('pr_EnterHostOrIp') }}</label>
+            <div class="ui input" id="additional-host">
+                <input type="text" name="additional-host" placeholder="{{ t._('pr_EnterHostOrIpPlaceholder') }}" />
+            </div>
+        </div>
+        <div class="ui basic compact segment">
+            <table class="ui small very compact table" id="additional-hosts-table">
+                <tbody>
+                {% for address in hostsTable %}
+                    <tr class="host-row" data-value="{{ address }}">
+                        <td class="address">{{ address }}</td>
+                        <td class="right aligned collapsing">
+                            <div class="ui icon small button delete-row-button"><i class="icon trash red"></i></div>
+                        </td>
+                    </tr>
+                {% endfor %}
+                <tr class="host-row-tpl" style="display: none">
+                    <td class="address"></td>
+                    <td class="right aligned collapsing">
+                        <div class="ui icon small button delete-row-button"><i class="icon trash red"></i></div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
 
         <div class="five wide field">
             <label for="port">{{ t._('pr_SIPPort') }}</label>

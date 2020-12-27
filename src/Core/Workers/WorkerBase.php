@@ -25,12 +25,14 @@ use MikoPBX\Core\System\Util;
 use MikoPBX\Core\System\Processes;
 use Phalcon\Di;
 use Phalcon\Text;
+use Throwable;
 
 abstract class WorkerBase extends Di\Injectable implements WorkerInterface
 {
-    protected AsteriskManager $am;
     public int $maxProc = 1;
+    protected AsteriskManager $am;
     protected bool $needRestart = false;
+    protected float $workerStartTime;
 
     /**
      * Workers shared constructor
@@ -42,10 +44,11 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
         pcntl_signal(
             SIGUSR1,
             [$this, 'signalHandler'],
-            false
+            true
         );
-        register_shutdown_function( [$this, 'shutdownHandler']);
+        register_shutdown_function([$this, 'shutdownHandler']);
         $this->savePidFile();
+        $this->workerStartTime = microtime(true);
     }
 
     /**
@@ -88,7 +91,7 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
      */
     public function signalHandler(int $signal): void
     {
-        Util::sysLogMsg(static::class, "Receive signal to restart  ".$signal, LOG_DEBUG);
+        Util::sysLogMsg(static::class, "Receive signal to restart  " . $signal, LOG_DEBUG);
         $this->needRestart = true;
     }
 
@@ -98,8 +101,18 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
      */
     public function shutdownHandler(): void
     {
+        $timeElapsedSecs = round(microtime(true) - $this->workerStartTime,2);
+
         $e = error_get_last();
-        Util::sysLogMsg(static::class, "shutdownHandler ". print_r($e,true), LOG_DEBUG);
+        if ($e === null) {
+            Util::sysLogMsg(static::class, "shutdownHandler after {$timeElapsedSecs} seconds", LOG_DEBUG);
+        } else {
+            Util::sysLogMsg(
+                static::class,
+                "shutdownHandler after {$timeElapsedSecs} seconds with error:" . print_r($e, true),
+                LOG_DEBUG
+            );
+        }
     }
 
 
@@ -150,5 +163,29 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
     public function __destruct()
     {
         $this->savePidFile();
+    }
+
+    /**
+     * @param      $argv
+     * @param bool $setProcName
+     */
+    public static function startWorker($argv, bool $setProcName = true):void{
+        $action = $argv[1]??'';
+        if ($action === 'start') {
+            $workerClassname = static::class;
+            if($setProcName){
+                cli_set_process_title($workerClassname);
+            }
+            try {
+                $worker = new $workerClassname();
+                $worker->start($argv);
+                Util::sysLogMsg($workerClassname, "Normal exit after start ended", LOG_DEBUG);
+            } catch (Throwable $e) {
+                global $errorLogger;
+                $errorLogger->captureException($e);
+                Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage(), LOG_ERR);
+                sleep(1);
+            }
+        }
     }
 }

@@ -1063,4 +1063,8 @@ return [
     'gs_CallRecordTab' => 'запис разговров',
     'adv_ProblemWithInternetConnection' => 'Відсутнє підключення до Internet. Можливі проблеми в роботі платних модулів.',
     'lic_GetTrialErrorCheckInternet' => 'Неможливо пройти реєстрацію, перевірте наявність Internet на MikoPBX',
+    'gs_PBXAllowGuestCalls' => 'Дозволити вхідні дзвінки з будь-яких серверів',
+    'pr_NoAnyAdditionalHosts' => 'Не вказано додаткових адрес для цього провайдера',
+    'pr_EnterHostOrIpPlaceholder' => 'Введіть IP адреса або підмережа',
+    'pr_EnterHostOrIp' => 'Додаткові адреси провайдера',
 ];

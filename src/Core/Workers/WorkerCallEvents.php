@@ -1087,9 +1087,9 @@ class WorkerCallEvents extends WorkerBase
 
     /**
      *
-     * @param $argv
+     * @param $params
      */
-    public function start($argv): void
+    public function start($params): void
     {
         $this->mixMonitorChannels       = [];
         $this->checkChanHangupTransfer  = [];
@@ -1379,22 +1379,4 @@ class WorkerCallEvents extends WorkerBase
 
 
 // Start worker process
-$workerClassname = WorkerCallEvents::class;
-$action = $argv[1] ?? '';
-if ($action === 'start') {
-    cli_set_process_title($workerClassname);
-    try {
-        /** @var WorkerCallEvents $worker */
-        $worker = new $workerClassname();
-        $worker->start($argv);
-    } catch (Throwable $e) {
-        global $errorLogger;
-        $errorLogger->captureException($e);
-        Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage(), LOG_ERR);
-    }
-}
-
-
-
-
-
+WorkerCallEvents::startWorker($argv??null);

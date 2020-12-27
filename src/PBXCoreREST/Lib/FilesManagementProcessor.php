@@ -210,7 +210,7 @@ class FilesManagementProcessor extends Injectable
             // We will start the background process to merge parts into one file
             $phpPath               = Util::which('php');
             $workerFilesMergerPath = Util::getFilePathByClassName(WorkerMergeUploadedFile::class);
-            Processes::mwExecBg("{$phpPath} -f {$workerFilesMergerPath} '{$settings_file}'");
+            Processes::mwExecBg("{$phpPath} -f {$workerFilesMergerPath} start '{$settings_file}'");
 
             return true;
         }

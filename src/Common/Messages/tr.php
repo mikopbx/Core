@@ -1063,4 +1063,8 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
     'gs_CallRecordTab' => 'Arama kaydı',
     'adv_ProblemWithInternetConnection' => 'İnternet bağlantısı yok. Ücretli modüllerin çalışmasında sorunlar yaşanabilir.',
     'lic_GetTrialErrorCheckInternet' => 'Kayıt başarısız oldu, MikoPBX\'te interneti kontrol edin',
+    'gs_PBXAllowGuestCalls' => 'Herhangi bir sunucudan gelen aramalara izin verin',
+    'pr_NoAnyAdditionalHosts' => 'Bu sağlayıcı için ek adres belirtilmedi',
+    'pr_EnterHostOrIpPlaceholder' => 'IP adresini veya alt ağı girin',
+    'pr_EnterHostOrIp' => 'Ek sağlayıcı adresleri',
 ];

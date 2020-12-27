@@ -97,7 +97,7 @@ class Response extends PhResponse
      */
     public function send(): ResponseInterface
     {
-        $content   = $this->getContent();
+        $content   = $this->getContent()??'';
         $timestamp = date('c');
         $hash      = sha1($timestamp . $content);
         $eTag      = sha1($content);

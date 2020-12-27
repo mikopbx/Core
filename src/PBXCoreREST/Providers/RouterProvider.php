@@ -41,6 +41,7 @@ use MikoPBX\PBXCoreREST\Controllers\{Cdr\GetController as CdrGetController,
     License\GetController as LicenseGetController,
     License\PostController as LicensePostController
 };
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\PBXCoreREST\Middleware\AuthenticationMiddleware;
 use MikoPBX\PBXCoreREST\Middleware\NotFoundMiddleware;
 use MikoPBX\PBXCoreREST\Middleware\ResponseMiddleware;
@@ -89,7 +90,7 @@ class RouterProvider implements ServiceProviderInterface
 
         // Add additional modules routes
         $additionalRoutes  = [];
-        $additionalModules = $di->getShared('pbxConfModules');
+        $additionalModules = $di->getShared(PBXConfModulesProvider::SERVICE_NAME);
         foreach ($additionalModules as $appClass) {
             /** @var \MikoPBX\Modules\Config\ConfigClass; $appClass */
             $additionalRoutes[] = $appClass->getPBXCoreRESTAdditionalRoutes();

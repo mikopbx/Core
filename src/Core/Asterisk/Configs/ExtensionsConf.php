@@ -20,6 +20,7 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\{Iax, IncomingRoutingTable, OutgoingRoutingTable, OutWorkTimes, Providers, Sip, SoundFiles};
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Modules\Config\ConfigClass;
 use MikoPBX\Core\System\{MikoPBXConfig, Storage, Util};
 use Phalcon\Di;
@@ -53,7 +54,7 @@ class ExtensionsConf extends ConfigClass
     protected function generateConfigProtected(): void
     {
         /** @scrutinizer ignore-call */
-        $additionalModules = $this->di->getShared('pbxConfModules');
+        $additionalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
         $conf              = "[globals] \n" .
             "TRANSFER_CONTEXT=internal-transfer; \n";
         if ($this->generalSettings['PBXRecordCalls'] === '1') {
@@ -172,7 +173,7 @@ class ExtensionsConf extends ConfigClass
         $extension  = 'X!';
         $technology = SIPConf::getTechnology();
 
-        $additionalModules = $this->di->getShared('pbxConfModules');
+        $additionalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
         foreach ($additionalModules as $appClass) {
             $addition = $appClass->extensionGenContexts();
             if ( ! empty($addition)) {
@@ -314,7 +315,7 @@ class ExtensionsConf extends ConfigClass
      */
     private function generateInternalTransfer(&$conf): void
     {
-        $additionalModules = $this->di->getShared('pbxConfModules');
+        $additionalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
         $conf              .= "[internal-transfer] \n";
 
         foreach ($additionalModules as $appClass) {
@@ -340,7 +341,7 @@ class ExtensionsConf extends ConfigClass
      */
     private function generateSipHints(&$conf): void
     {
-        $additionalModules = $this->di->getShared('pbxConfModules');
+        $additionalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
         $conf              .= "[internal-hints] \n";
         foreach ($additionalModules as $appClass) {
             $addition = $appClass->extensionGenHints();
@@ -358,7 +359,7 @@ class ExtensionsConf extends ConfigClass
      */
     private function generateOutContextPeers(&$conf): void
     {
-        $additionalModules = $this->di->getShared('pbxConfModules');
+        $additionalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
         $conf              .= "[outgoing] \n";
 
         $conf .= 'exten => _+.!,1,NoOp(Strip + sign from number and convert it to +)' . " \n\t";
@@ -499,7 +500,7 @@ class ExtensionsConf extends ConfigClass
      */
     public function generatePublicContext(&$conf): void
     {
-        $additionalModules = $this->di->getShared('pbxConfModules');
+        $additionalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
         $conf              .= "\n";
         $conf              .= self::generateIncomingContextPeers('none', '', '');
         $conf              .= "[public-direct-dial] \n";
@@ -537,7 +538,7 @@ class ExtensionsConf extends ConfigClass
         if ($di === null) {
             return '';
         }
-        $additionalModules = $di->getShared('pbxConfModules');
+        $additionalModules = $di->getShared(PBXConfModulesProvider::SERVICE_NAME);
         $confExtensions    = ConferenceConf::getConferenceExtensions();
 
         if ('none' === $provider) {

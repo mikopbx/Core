@@ -26,7 +26,9 @@ use MikoPBX\Common\Models\{Codecs,
     OutgoingRoutingTable,
     PbxSettings,
     Sip,
+    SipHosts,
     Users};
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Asterisk\AstDB;
 use MikoPBX\Modules\Config\ConfigClass;
 use MikoPBX\Core\System\{MikoPBXConfig, Network, Util};
@@ -40,6 +42,8 @@ class SIPConf extends ConfigClass
     protected $data_peers;
     protected $data_providers;
     protected $data_rout;
+    protected array $dataSipHosts;
+
     protected string $technology;
     protected array  $contexts_data;
 
@@ -51,7 +55,7 @@ class SIPConf extends ConfigClass
      */
     public function dependenceModels(): array
     {
-        return [Sip::class, Users::class];
+        return [Sip::class, Users::class, SipHosts::class];
     }
 
     /**
@@ -132,13 +136,6 @@ class SIPConf extends ConfigClass
             "endpoint_identifier_order=username,ip,anonymous\n" .
             "user_agent = mikopbx-{$pbxVersion}\n\n" .
 
-            "[anonymous]\n" .
-            "type = endpoint\n" .
-            $codecConf.
-            "language={$lang}\n".
-            "timers = no\n" .
-            "context = public-direct-dial\n\n".
-
             "[transport-udp]\n" .
             "type = transport\n" .
             "protocol = udp\n" .
@@ -151,6 +148,16 @@ class SIPConf extends ConfigClass
             "bind=0.0.0.0:{$this->generalSettings['SIPPort']}\n".
             "{$natConf}\n\n".
             '';
+
+        $allowGuestCalls = PbxSettings::getValueByKey('PBXAllowGuestCalls');
+        if($allowGuestCalls === '1'){
+            $conf.= "[anonymous]\n" .
+                "type = endpoint\n" .
+                $codecConf.
+                "language={$lang}\n".
+                "timers = no\n" .
+                "context = public-direct-dial\n\n";
+        }
 
         $varEtcDir = $this->config->path('core.varEtcDir');
         file_put_contents($varEtcDir . '/topology_hash', md5($topology . $exthostname . $extipaddr. $this->generalSettings['SIPPort']));
@@ -246,7 +253,7 @@ class SIPConf extends ConfigClass
         if ($this->data_providers===null){
             $this->getSettings();
         }
-        $additionalModules = $this->di->getShared('pbxConfModules');
+        $additionalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
         foreach ($this->data_providers as $provider) {
             $manual_attributes = Util::parseIniSettings(base64_decode($provider['manualattributes'] ?? ''));
             $provider['port']  = (trim($provider['port']) === '') ? '5060' : $provider['port'];
@@ -447,10 +454,14 @@ class SIPConf extends ConfigClass
      */
     private function generateProviderIdentify(array $provider, array $additionalModules, array $manual_attributes): string{
         $conf = '';
+        $providerHosts = $this->dataSipHosts[$provider['uniqid']] ?? [];
+        if(!in_array($provider['host'], $providerHosts, true)){
+            $providerHosts[] = $provider['host'];
+        }
         $options     = [
             'type'     => 'identify',
             'endpoint' => $provider['uniqid'],
-            'match'    => $provider['host'],
+            'match'    => implode(',',$providerHosts),
         ];
         foreach ($additionalModules as $Object) {
             $options = $Object->overridePJSIPOptions($provider['uniqid'], $options);
@@ -498,7 +509,7 @@ class SIPConf extends ConfigClass
             $this->getSettings();
         }
         $lang              = $this->generalSettings['PBXLanguage'];
-        $additionalModules = $this->di->getShared('pbxConfModules');
+        $additionalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
         $conf              = '';
 
         foreach ($this->data_peers as $peer) {
@@ -641,6 +652,26 @@ class SIPConf extends ConfigClass
         $this->data_providers = $this->getProviders();
         $this->data_rout      = $this->getOutRoutes();
         $this->technology     = self::getTechnology();
+        $this->dataSipHosts   = self::getSipHosts();
+    }
+
+    /**
+     * Возвращает массив хостов.
+     * @return array
+     */
+    public static function getSipHosts():array
+    {
+        $dataSipHosts = [];
+        /** @var SipHosts $sipHosts */
+        /** @var SipHosts $hostData */
+        $sipHosts = SipHosts::find();
+        foreach ($sipHosts as $hostData){
+            if(!isset($dataSipHosts[$hostData->provider_id])){
+                $dataSipHosts[$hostData->provider_id] = [];
+            }
+            $dataSipHosts[$hostData->provider_id][] = str_replace(PHP_EOL, '', $hostData->address);
+        }
+        return $dataSipHosts;
     }
 
     /**

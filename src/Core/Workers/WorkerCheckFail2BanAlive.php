@@ -45,18 +45,7 @@ class WorkerCheckFail2BanAlive extends WorkerBase
 }
 
 // Start worker process
-$workerClassname = WorkerCheckFail2BanAlive::class;
-if (isset($argv) && count($argv) > 1) {
-    cli_set_process_title($workerClassname);
-    try {
-        $worker = new $workerClassname();
-        $worker->start($argv);
-    } catch (Throwable $e) {
-        global $errorLogger;
-        $errorLogger->captureException($e);
-        Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage(),LOG_ERR);
-    }
-}
+WorkerCheckFail2BanAlive::startWorker($argv??null);
 
 
 

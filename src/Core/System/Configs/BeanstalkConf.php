@@ -20,11 +20,8 @@
 namespace MikoPBX\Core\System\Configs;
 
 
-use MikoPBX\Core\System\MikoPBXConfig;
-use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\System\Processes;
-use Phalcon\Di;
 use Phalcon\Di\Injectable;
 
 class BeanstalkConf extends Injectable

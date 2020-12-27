@@ -31,8 +31,8 @@ class WorkerMakeLogFilesArchive extends WorkerBase
 {
     public function start($argv): void
     {
-        $settings_file = trim($argv[1]);
-        if ( ! file_exists($settings_file)) {
+        $settings_file = $argv[1]??'';
+        if (!file_exists($settings_file)) {
             Util::sysLogMsg("WorkerMakeLogFilesArchive", 'File with settings not found', LOG_ERR);
             return;
         }
@@ -63,15 +63,4 @@ class WorkerMakeLogFilesArchive extends WorkerBase
 }
 
 // Start worker process
-$workerClassname = WorkerMakeLogFilesArchive::class;
-if (isset($argv) && count($argv) > 1) {
-    cli_set_process_title($workerClassname);
-    try {
-        $worker = new $workerClassname();
-        $worker->start($argv);
-    } catch (Throwable $e) {
-        global $errorLogger;
-        $errorLogger->captureException($e);
-        Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage(), LOG_ERR);
-    }
-}
+WorkerMakeLogFilesArchive::startWorker($argv??null);

@@ -19,6 +19,7 @@
 
 namespace MikoPBX\PBXCoreREST\Lib;
 
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use Phalcon\Di\Injectable;
 
 
@@ -44,7 +45,7 @@ class PbxExtensionsProcessor extends Injectable
 
     public function __construct()
     {
-        $additionalModules          = $this->getDI()->getShared('pbxConfModules');
+        $additionalModules          = $this->getDI()->getShared(PBXConfModulesProvider::SERVICE_NAME);
         $this->additionalProcessors = [];
         foreach ($additionalModules as $moduleConfigObject) {
             if ($moduleConfigObject->moduleUniqueId !== 'InternalConfigModule'

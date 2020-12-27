@@ -61,7 +61,7 @@ const pbxExtensionMenuAddition = {
 						const $groupForAddition = pbxExtensionMenuAddition.$sidebarMenu.find(`[data-group='${value.group}']`);
 						if ($groupForAddition !== undefined) {
 							let itemHtml = `<a class="item additional-modules" href="${value.href}"><i class="${value.iconClass} icon"></i>`;
-							if (value.caption in globalTranslate) {
+							if (globalTranslate[value.caption] !== undefined) {
 								itemHtml += `${globalTranslate[value.caption]}</a>`;
 							} else {
 								itemHtml += `${value.caption}</a>`;

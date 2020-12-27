@@ -193,14 +193,4 @@ class WorkerDownloader extends WorkerBase
 }
 
 // Start worker process
-$workerClassname = WorkerDownloader::class;
-if (isset($argv) && count($argv) > 1) {
-    try {
-        $worker = new $workerClassname();
-        $worker->start($argv);
-    } catch (Throwable $e) {
-        global $errorLogger;
-        $errorLogger->captureException($e);
-        Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage(), LOG_ERR);
-    }
-}
+WorkerDownloader::startWorker($argv??null, false);

@@ -377,3 +377,11 @@ Log file content
 #log-content-readonly{
     min-height: 480px;
 }
+
+/**
+Delete button on little extensions table
+ */
+#extensionsTable  .button.delete-row-button,
+#additional-hosts-table  .button.delete-row-button{
+    font-size: 0.8rem;
+}

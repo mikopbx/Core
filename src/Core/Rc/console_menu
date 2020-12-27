@@ -61,7 +61,7 @@ function getBannerText()
 
     $version        = trim(file_get_contents($version_file));
     $buildtime      = trim(file_get_contents('/etc/version.buildtime'));
-    $copyright_info = 'MikoPBX is Copyright (C) 2006-2020. All rights reserved.' . PHP_EOL .
+    $copyright_info = 'MikoPBX is Copyright (C) 2017-2020. All rights reserved.' . PHP_EOL .
         "    \033[01;31m" . $livecd_text . "\033[39m";
 
     $networks = $network->getEnabledLanInterfaces();
@@ -579,6 +579,7 @@ $menu = (new CliMenuBuilder())
     ->build();
 
 if ($menu->getTerminal()->isInteractive()) {
+    echo(str_repeat(PHP_EOL, $menu->getTerminal()->getHeight()));
     try {
         $menu->open();
     } catch (InvalidTerminalException $e) {

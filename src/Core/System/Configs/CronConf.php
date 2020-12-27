@@ -20,6 +20,7 @@
 namespace MikoPBX\Core\System\Configs;
 
 
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
@@ -30,6 +31,8 @@ use function MikoPBX\Common\Config\appPath;
 
 class CronConf extends Injectable
 {
+    public const PROC_NAME = 'crond';
+
     private MikoPBXConfig $mikoPBXConfig;
 
     /**
@@ -41,13 +44,33 @@ class CronConf extends Injectable
     }
 
     /**
+     * Setups crond and restart it
+     *
+     * @return int
+     */
+    public function reStart(): int
+    {
+        $this->generateConfig($this->di->getShared('registry')->booting);
+        if (Util::isSystemctl()) {
+            $systemctlPath = Util::which('systemctl');
+            Processes::mwExec("{$systemctlPath} restart ".self::PROC_NAME);
+        } else {
+            $crondPath = Util::which(self::PROC_NAME);
+            Processes::killByName(self::PROC_NAME);
+            Processes::mwExec("{$crondPath} -L /dev/null -l 8");
+        }
+
+        return 0;
+    }
+
+    /**
      * Generates crontab config
      *
      * @param bool $boot
      */
     private function generateConfig($boot = true): void
     {
-        $additionalModules = $this->di->getShared('pbxConfModules');
+        $additionalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
         $mast_have         = [];
 
         if (Util::isSystemctl()) {
@@ -96,26 +119,6 @@ class CronConf extends Injectable
         }
 
         Util::fileWriteContent($cron_filename, $conf);
-    }
-
-    /**
-     * Setups crond and restart it
-     *
-     * @return int
-     */
-    public function reStart(): int
-    {
-        $this->generateConfig($this->di->getShared('registry')->booting);
-        if (Util::isSystemctl()) {
-            $systemctlPath = Util::which('systemctl');
-            Processes::mwExec("{$systemctlPath} restart cron");
-        } else {
-            $crondPath = Util::which('crond');
-            Processes::killByName($crondPath);
-            Processes::mwExec("{$crondPath} -L /dev/null -l 8");
-        }
-
-        return 0;
     }
 
 

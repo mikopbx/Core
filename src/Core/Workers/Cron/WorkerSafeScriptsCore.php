@@ -23,6 +23,7 @@ require_once 'Globals.php';
 
 use Generator;
 use MikoPBX\Core\System\{BeanstalkClient, PBX, Processes, Util};
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Workers\WorkerAmiListener;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\Workers\WorkerBeanstalkdTidyUp;
@@ -34,6 +35,7 @@ use MikoPBX\Core\Workers\WorkerLogRotate;
 use MikoPBX\Core\Workers\WorkerModelsEvents;
 use MikoPBX\Core\Workers\WorkerNotifyByEmail;
 use MikoPBX\Core\Workers\WorkerNotifyError;
+use MikoPBX\Core\Workers\WorkerRemoveOldRecords;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use Recoil\React\ReactKernel;
 use Throwable;
@@ -95,10 +97,11 @@ class WorkerSafeScriptsCore extends WorkerBase
                     WorkerBeanstalkdTidyUp::class,
                     WorkerCheckFail2BanAlive::class,
                     WorkerLogRotate::class,
+                    WorkerRemoveOldRecords::class,
                 ],
         ];
         $arrModulesWorkers = [];
-        $pbxConfModules    = $this->di->getShared('pbxConfModules');
+        $pbxConfModules    = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
         foreach ($pbxConfModules as $pbxConfModule) {
             $arrModulesWorkers[] = $pbxConfModule->getModuleWorkers();
         }
@@ -178,11 +181,11 @@ class WorkerSafeScriptsCore extends WorkerBase
                 Processes::processPHPWorker($workerClassName);
                 Util::sysLogMsg(__METHOD__, "Service {$workerClassName} started.", LOG_NOTICE);
             }
-            $time_elapsed_secs = microtime(true) - $start;
-            if ($time_elapsed_secs > 10) {
+            $timeElapsedSecs = round(microtime(true) - $start,2);
+            if ($timeElapsedSecs > 10) {
                 Util::sysLogMsg(
                     __METHOD__,
-                    "WARNING: Service {$workerClassName} processed more than {$time_elapsed_secs} seconds",
+                    "WARNING: Service {$workerClassName} processed more than {$timeElapsedSecs} seconds",
                     LOG_WARNING
                 );
             }
@@ -209,11 +212,11 @@ class WorkerSafeScriptsCore extends WorkerBase
         if (false === $result) {
             Processes::processPHPWorker($workerClassName);
         }
-        $time_elapsed_secs = microtime(true) - $start;
-        if ($time_elapsed_secs > 10) {
+        $timeElapsedSecs = round(microtime(true) - $start,2);
+        if ($timeElapsedSecs > 10) {
             Util::sysLogMsg(
                 __CLASS__,
-                "WARNING: Service {$workerClassName} processed more than {$time_elapsed_secs} seconds",
+                "WARNING: Service {$workerClassName} processed more than {$timeElapsedSecs} seconds",
                 LOG_WARNING
             );
         }
@@ -253,11 +256,11 @@ class WorkerSafeScriptsCore extends WorkerBase
                 // Check service again
                 $this->checkWorkerAMI($workerClassName, $level + 1);
             }
-            $time_elapsed_secs = microtime(true) - $start;
-            if ($time_elapsed_secs > 10) {
+            $timeElapsedSecs = round(microtime(true) - $start,2);
+            if ($timeElapsedSecs > 10) {
                 Util::sysLogMsg(
                     __METHOD__,
-                    "WARNING: Service {$workerClassName} processed more than {$time_elapsed_secs} seconds",
+                    "WARNING: Service {$workerClassName} processed more than {$timeElapsedSecs} seconds",
                     LOG_WARNING
                 );
             }
@@ -277,14 +280,16 @@ try {
         cli_set_process_title("{$workerClassname} {$argv[1]}");
         $activeProcesses = Processes::getPidOfProcess("{$workerClassname} {$argv[1]}", posix_getpid());
         if (!empty($activeProcesses)){
-            Util::sysLogMsg($workerClassname, "WARNING: Other started process {$activeProcesses} is working now...", LOG_DEBUG);
+            Util::sysLogMsg($workerClassname, "WARNING: Other started process {$activeProcesses} with parameter: {$argv[1]} is working now...", LOG_DEBUG);
             return;
         }
         $worker = new $workerClassname();
         if (($argv[1] === 'start')) {
             $worker->start($argv);
+            Util::sysLogMsg($workerClassname, "Normal exit after start ended", LOG_DEBUG);
         } elseif ($argv[1] === 'restart' || $argv[1] === 'reload') {
             $worker->restart();
+            Util::sysLogMsg($workerClassname, "Normal exit after restart ended", LOG_DEBUG);
         }
     }
 } catch (Throwable $e) {
