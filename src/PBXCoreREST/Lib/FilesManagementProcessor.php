@@ -384,7 +384,7 @@ class FilesManagementProcessor extends Injectable
             json_encode($download_settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
         );
         $phpPath = Util::which('php');
-        Processes::mwExecBg("{$phpPath} -f {$workerDownloaderPath} {$firmwareDirTmp}/download_settings.json");
+        Processes::mwExecBg("{$phpPath} -f {$workerDownloaderPath} start {$firmwareDirTmp}/download_settings.json");
 
         $res                   = new PBXApiResult();
         $res->processor        = __METHOD__;
@@ -499,7 +499,7 @@ class FilesManagementProcessor extends Injectable
         );
         $workerDownloaderPath = Util::getFilePathByClassName(WorkerDownloader::class);
         $phpPath              = Util::which('php');
-        Processes::mwExecBg("{$phpPath} -f {$workerDownloaderPath} $moduleDirTmp/download_settings.json");
+        Processes::mwExecBg("{$phpPath} -f {$workerDownloaderPath} start {$moduleDirTmp}/download_settings.json");
 
         $res->data['uniqid']   = $module;
         $res->data['d_status'] = 'DOWNLOAD_IN_PROGRESS';

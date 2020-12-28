@@ -38,15 +38,15 @@ class WorkerDownloader extends WorkerBase
     /**
      * WorkerDownloader entry point.
      *
-     * @param $argv
+     * @param $params
      */
-    public function start($argv): void
+    public function start($params): void
     {
-        if (file_exists($argv[1])) {
-            $this->settings = json_decode(file_get_contents($argv[1]), true);
+        $filename = $params[2]??'';
+        if (file_exists($filename)) {
+            $this->settings = json_decode(file_get_contents($filename), true);
         } else {
             Util::sysLogMsg(__CLASS__, 'Wrong download settings', LOG_ERR);
-
             return;
         }
         $this->old_memory_limit = ini_get('memory_limit');
@@ -82,7 +82,7 @@ class WorkerDownloader extends WorkerBase
 
         file_put_contents($this->progress_file, 0);
 
-        $fp = fopen($this->settings['res_file'], 'w');
+        $fp = fopen($this->settings['res_file'], 'wb');
         $ch = curl_init();
         if ( ! is_resource($ch)) {
             return false;
