@@ -216,9 +216,7 @@ class Fail2BanConf extends Injectable
         foreach ($jails as $jail => $action) {
             $config .= "[{$jail}]\n" .
                 "enabled = true\n" .
-                "backend = process\n" .
                 "logpath = {$syslog_file}\n" .
-                // "logprocess = logread -f\n".
                 "maxretry = {$max_retry}\n" .
                 "findtime = {$find_time}\n" .
                 "bantime = {$ban_time}\n" .
@@ -344,7 +342,6 @@ class Fail2BanConf extends Injectable
 
             $config = "[{$fileName}]\n" .
                 "enabled = true\n" .
-                "backend = process\n" .
                 "logpath = {$syslog_file}\n" .
                 "maxretry = {$max_retry}\n" .
                 "findtime = {$find_time}\n" .
