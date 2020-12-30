@@ -19,8 +19,6 @@
  */
 
 namespace MikoPBX\Core\Rc;
-
-
 use Phalcon\Di;
 use MikoPBX\Core\System\{Processes, Util, Storage};
 
@@ -37,8 +35,8 @@ $NoCfDevice = <<<EOD
 EOD;
 
 $phalconConfig  = Di::getDefault()->get('config');
-$cfDir         = $phalconConfig->path('core.cfDir');
-$varEtcDir     = $phalconConfig->path('core.varEtcDir');
+$cfDir          = $phalconConfig->path('core.cfDir');
+$varEtcDir      = $phalconConfig->path('core.varEtcDir');
 $dbFile         = $phalconConfig->path('database.dbfile');
 $mountPath      = Util::which('mount');
 $unmountPath    = Util::which('umount');
@@ -50,7 +48,6 @@ $sqlite3Path    = Util::which('sqlite3');
 $rmPath         = Util::which('rm');
 $mvPath         = Util::which('mv');
 $haltPath       = Util::which('halt');
-
 
 $cfgdevice = '';
 /* check if there's already an fstab (NFS booting?) */
@@ -67,31 +64,38 @@ if (file_exists('/offload/livecd')) {
     return; // Обработка не требуется.
 }
 
-
 $storage = new Storage();
 /* iterate through the disks fdisk finds until one contains a mikopbx.db */
 $attempts = 2;
 while ($attempts--) {
-    Processes::mwExec("{$fdiskPath} -l | {$grepPath} \"^/dev/\" | {$cutPath} -c 6-8 | {$uniqPath}", $disks);
-    // " - Mount storage... "
-    echo "\n - Found disks: " . implode(', ', $disks) . "\n";
-    foreach ($disks as $disk) {
+    $disks = $storage->diskGetDevices(true);
+    foreach ($disks as $disk => $diskInfo) {
+        if(count($diskInfo['children'])<3){
+            // Диск интересен только если содержит 3 и более раздела.
+            continue;
+        }
+        echo "\n - Found disk: {$disk}\n";
         echo " - Looking for configuration on: $disk\n";
-        $part = (strpos($disk, 'mmcblk') !== false) ? 'p3' : '3';
-
-        $uuid   = $storage->getUuid("/dev/{$disk}{$part}");
-        $format = $storage->getFsType("{$disk}{$part}");
+        $partName   = $diskInfo['children'][2]['name']??'';
+        $fsType     = $diskInfo['children'][2]['fstype']??'';
+        $uuid       = $diskInfo['children'][2]['uuid']??'';
+        if(empty($uuid) || empty($fsType)){
+            continue;
+        }
         // Запустим проверку раздела диска
-        $fsckPath = Util::which("fsck.{$format}");
-        Processes::mwExec("if [ -b /dev/{$disk}{$part} ]; then {$fsckPath} -f -p /dev/{$disk}{$part}; fi;");
-        if (Processes::mwExec("{$mountPath} -t {$format} -rw UUID=\"{$uuid}\" {$cfDir}") !== 0) {
+        $fsckPath = Util::which("fsck.{$fsType}");
+        // Проверка диска на ошлибки.
+        Processes::mwExec("if [ -b /dev/{$partName} ]; then {$fsckPath} -f -p /dev/{$partName}; fi;");
+        // Монртируем диск.
+        $resultMount = Processes::mwExec("{$mountPath} -t {$fsType} -rw UUID=\"{$uuid}\" {$cfDir}");
+        if ($resultMount !== 0) {
+            // Ошибка монтирования.
             continue;
         }
 
         if (file_exists($dbFile) && filesize($dbFile) > 0) {
             $cfgdevice    = $disk;
-            $cfgpartition = $cfgdevice . $part;
-            echo " - Found configuration on $cfgpartition.\n";
+            echo " - Found configuration on $partName.\n";
             $old_db_name = '/cf/conf/mikozia.db';
             if (file_exists($old_db_name)) {
                 @unlink($dbFile);
@@ -103,11 +107,12 @@ while ($attempts--) {
                 Processes::mwExec("{$rmPath} {$dbFile}*");
                 Processes::mwExec("{$mvPath} {$tmp_name} {$dbFile}");
             }
+            // Диск найден и смонтирован, выходим из цикла.
             break;
         }
-
-        Processes::mwExec("{$unmountPath} -f {$cfDir}");
+        Processes::mwExec("{$unmountPath} -f /dev/{$partName}");
     }
+
     if ($cfgdevice) {
         break;
     }
@@ -121,6 +126,7 @@ while ($attempts--) {
 if ( ! $cfgdevice) {
     /* no device found, print an error and die */
     echo $NoCfDevice;
+    sleep(5);
     Processes::mwExec($haltPath);
 } else {
     // Запишем в файл имя подключенного устройства.

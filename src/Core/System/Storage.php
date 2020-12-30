@@ -131,17 +131,11 @@ class Storage extends Di\Injectable
         if (empty($device)) {
             return '';
         }
-        $blkidPath   = Util::which('blkid');
+        $lsBlkPath   = Util::which('lsblk');
         $busyboxPath = Util::which('busybox');
-        $sedPath     = Util::which('sed');
-        $grepPath    = Util::which('grep');
-        $awkPath     = Util::which('awk');
-        $headPath    = Util::which('head');
 
-        $res = Processes::mwExec(
-            "{$blkidPath} -ofull {$device} | {$busyboxPath} {$sedPath} -r 's/[[:alnum:]]+=/\\n&/g' | {$busyboxPath} {$grepPath} \"^UUID\" | {$busyboxPath} {$awkPath} -F \"\\\"\" '{print $2}' | {$headPath} -n 1",
-            $output
-        );
+        $cmd = "{$lsBlkPath} -r -o NAME,UUID | {$busyboxPath} grep ".basename($device)." | {$busyboxPath} cut -d ' ' -f 2";
+        $res = Processes::mwExec($cmd, $output);
         if ($res === 0 && count($output) > 0) {
             $result = $output[0];
         } else {
@@ -173,7 +167,7 @@ class Storage extends Di\Injectable
             $out
         );
         $format = implode('', $out);
-        if ($format == 'msdosvfat') {
+        if ($format === 'msdosvfat') {
             $format = 'msdos';
         }
 
@@ -391,7 +385,7 @@ class Storage extends Di\Injectable
      *
      * @return mixed
      */
-    private function formatDiskLocalPart2($device, $bg = false)
+    private function formatDiskLocalPart2($device, $bg = false):bool
     {
         if (is_numeric(substr($device, -1))) {
             $device_id = "";
@@ -437,7 +431,7 @@ class Storage extends Di\Injectable
     /**
      * Clear cache folders from PHP sessions files
      */
-    public static function clearSessionsFiles()
+    public static function clearSessionsFiles():void
     {
         $di = Di::getDefault();
         if ($di === null) {
@@ -489,31 +483,26 @@ class Storage extends Di\Injectable
             return $res_disks;
         }
 
-        $cd_disks = $this->cdromGetDevices();
-        $cd_disks = array_unique($cd_disks);
+        $cd_disks   = $this->cdromGetDevices();
+        $disks      = $this->diskGetDevices();
+        $cf_disk    = '';
+        $varEtcDir  = $this->config->path('core.varEtcDir');
 
-        // TODO Получение данных о дисках в формате JSON:
-        // lsblk -J -b -o VENDOR,MODEL,SERIAL,LABEL,TYPE,FSTYPE,MOUNTPOINT,SUBSYSTEMS,NAME,UUID
-        $disks = $this->diskGetDevices();
-        $disks = array_unique($disks);
-
-        $cf_disk   = '';
-        $varEtcDir = $this->config->path('core.varEtcDir');
         if (file_exists($varEtcDir . '/cfdevice')) {
             $cf_disk = trim(file_get_contents($varEtcDir . '/cfdevice'));
         }
 
-        foreach ($disks as $disk) {
-            if (in_array($disk, $cd_disks)) {
+        foreach ($disks as $disk => $diskInfo) {
+            if (in_array($disk, $cd_disks, true)) {
                 // Это CD-ROM.
                 continue;
             }
             unset($temp_vendor, $temp_size, $original_size);
-            $mounted = self::diskIsMounted("{$disk}");
+            $mounted = self::diskIsMounted($disk);
             if ($mounted_only === true && $mounted === false) {
                 continue;
             }
-            $sys_disk = ($cf_disk == $disk);
+            $sys_disk = ($cf_disk === $disk);
 
             $mb_size = 0;
             if (is_file("/sys/block/" . $disk . "/size")) {
@@ -523,10 +512,10 @@ class Storage extends Di\Injectable
             }
             if ($mb_size > 100) {
                 $temp_size   = sprintf("%.0f MB", $mb_size);
-                $temp_vendor = $this->getVendorDisk($disk);
+                $temp_vendor = $this->getVendorDisk($diskInfo);
                 $free_space  = $this->getFreeSpace($disk);
 
-                $arr_disk_info = $this->determineFormatFs($disk);
+                $arr_disk_info = $this->determineFormatFs($diskInfo);
                 if (count($arr_disk_info) > 0) {
                     $used = 0;
                     foreach ($arr_disk_info as $disk_info) {
@@ -560,34 +549,65 @@ class Storage extends Di\Injectable
      */
     private function cdromGetDevices(): array
     {
-        $grepPath    = Util::which('grep');
-        $sysctlPath  = Util::which('sysctl');
-        $busyboxPath = Util::which('busybox');
-        $cutPath     = Util::which('cut');
-
-        return explode(
-            " ",
-            trim(
-                exec(
-                    "{$sysctlPath} -n dev.cdrom.info | {$busyboxPath} {$grepPath} 'drive name' | {$busyboxPath} {$cutPath} -f 3"
-                )
-            )
-        );
+        $disks = [];
+        $blockDevices = $this->getLsBlkDiskInfo();
+        foreach ($blockDevices as $diskData){
+            $type = $diskData['type']??'';
+            $name = $diskData['name']??'';
+            if($type !== 'rom' || $name === ''){
+                continue;
+            }
+            $disks[]    = $name;
+        }
+        return $disks;
     }
 
     /**
      * Получение массива подключенныйх HDD.
-     *
+     * @param false $diskOnly
      * @return array
      */
-    private function diskGetDevices(): array
+    public function diskGetDevices($diskOnly=false): array
     {
-        //  TODO // Переписать через использование lsblk.
-        $grepPath = Util::which('grep');
-        $lsPath   = Util::which('ls');
-        $trPath   = Util::which('tr');
+        $disks = [];
+        $blockDevices = $this->getLsBlkDiskInfo();
+        foreach ($blockDevices as $diskData){
+            $type = $diskData['type']??'';
+            $name = $diskData['name']??'';
+            if($type !== 'disk' || $name === ''){
+                continue;
+            }
+            $disks[$name]    = $diskData;
+            if($diskOnly === true){
+                continue;
+            }
+            $children   = $diskData['children']??[];
+            foreach ($children as $child){
+                $childName = $child['name']??'';
+                if($childName === ''){
+                    continue;
+                }
+                $disks[$childName]    = $child;
+            }
 
-        return explode(" ", trim(exec("{$lsPath} /dev | {$grepPath} '^[a-z]d[a-z]' | {$trPath} \"\n\" \" \"")));
+        }
+        return $disks;
+    }
+
+    /**
+     * Возвращает информацию о дисках.
+     * @return array
+     */
+    private function getLsBlkDiskInfo():array{
+        $lsBlkPath = Util::which('lsblk');
+        Processes::mwExec("{$lsBlkPath} -J -b -o VENDOR,MODEL,SERIAL,LABEL,TYPE,FSTYPE,MOUNTPOINT,SUBSYSTEMS,NAME,UUID", $out);
+        try {
+            $data = json_decode(implode(PHP_EOL, $out), true, 512, JSON_THROW_ON_ERROR);
+            $data = $data['blockdevices']??[];
+        } catch (JsonException $e) {
+            $data = [];
+        }
+        return $data;
     }
 
     /**
@@ -617,35 +637,23 @@ class Storage extends Di\Injectable
     /**
      * Получение сведений по диску.
      *
-     * @param $disk
+     * @param $diskInfo
      *
      * @return string
      */
-    private function getVendorDisk($disk): string
+    private function getVendorDisk($diskInfo): string
     {
         $temp_vendor = [];
-        if (is_file("/sys/block/" . $disk . "/device/vendor")) {
-            $data = trim(file_get_contents("/sys/block/" . $disk . "/device/vendor"));
-            if ($data != '') {
-                $temp_vendor[] = trim(str_replace(',', ' ', $data));
+        $keys = ['vendor', 'model', 'type'];
+        foreach ($keys as $key){
+            $data = $diskInfo[$key]??'';
+            if ($data !== '') {
+                $temp_vendor[] = trim(str_replace(',', '', $data));
             }
         }
-        if (is_file("/sys/block/" . $disk . "/device/model")) {
-            $data = trim(file_get_contents("/sys/block/" . $disk . "/device/model"));
-            if ($data != '') {
-                $temp_vendor[] = trim(str_replace(',', ' ', $data));
-            }
+        if (count($temp_vendor) === 0) {
+            $temp_vendor[] = $diskInfo['name']??'ERROR: NoName';
         }
-        if (count($temp_vendor) == 0) {
-            $temp_vendor[] = $disk;
-        }
-        if (is_file("/sys/block/" . $disk . "/device/type")) {
-            $data = trim(file_get_contents("/sys/block/" . $disk . "/device/type"));
-            if ($data != '') {
-                $temp_vendor[] = trim(str_replace(',', ' ', $data));
-            }
-        }
-
         return implode(', ', $temp_vendor);
     }
 
@@ -678,22 +686,22 @@ class Storage extends Di\Injectable
     /**
      * Определить формат файловой системы и размер дисков.
      *
-     * @param $device
+     * @param $deviceInfo
      *
      * @return array|bool
      */
-    public function determineFormatFs($device)
+    public function determineFormatFs($deviceInfo)
     {
         $grepPath      = Util::which('grep');
         $lsPath        = Util::which('ls');
         $trPath        = Util::which('tr');
         $allow_formats = ['ext2', 'ext4', 'fat', 'ntfs', 'msdos'];
-        $device        = str_replace('/dev/', '', $device);
+        $device        = str_replace('/dev/', '', $deviceInfo['name']??'');
         $devices       = explode(" ", trim(exec("{$lsPath} /dev | {$grepPath} '{$device}' | {$trPath} \"\n\" \" \"")));
 
         $result_data = [];
         foreach ($devices as $dev) {
-            if (empty($dev) || (count($devices) > 1 && $device == $dev) || is_dir("/sys/block/{$dev}")) {
+            if (empty($dev) || (count($devices) > 1 && $device === $dev) || is_dir("/sys/block/{$dev}")) {
                 continue;
             }
             $mb_size        = 0;
@@ -727,7 +735,7 @@ class Storage extends Di\Injectable
                 $mountPath = Util::which('mount');
                 Processes::mwExec("{$mountPath} | {$grepPath} '/dev/{$dev}' | {$awkPath} '{print $5}'", $out);
                 $fs         = trim(implode("", $out));
-                $fs         = ($fs == 'fuseblk') ? 'ntfs' : $fs;
+                $fs         = ($fs === 'fuseblk') ? 'ntfs' : $fs;
                 $free_space = $this->getFreeSpace("/dev/{$dev} ");
                 $used_space = $mb_size - $free_space;
             } else {
@@ -738,7 +746,7 @@ class Storage extends Di\Injectable
                 self::mountDisk($dev, $format, $tmp_dir);
 
                 $need_unmount = true;
-                $used_space   = Util::getSizeOfFile("$tmp_dir");
+                $used_space   = Util::getSizeOfFile($tmp_dir);
             }
             $result_data[] = [
                 "dev"        => $dev,
@@ -778,11 +786,11 @@ class Storage extends Di\Injectable
             return false;
         }
         $dev = str_replace('/dev/', '', $dev);
-        if ('ntfs' == $format) {
+        if ('ntfs' === $format) {
             $mountNtfs3gPath = Util::which('mount.ntfs-3g');
             Processes::mwExec("{$mountNtfs3gPath} /dev/{$dev} {$dir}", $out);
         } else {
-            $storage   = new Storage();
+            $storage   = new self();
             $uid_part  = 'UUID=' . $storage->getUuid("/dev/{$dev}") . '';
             $mountPath = Util::which('mount');
             Processes::mwExec("{$mountPath} -t {$format} {$uid_part} {$dir}", $out);
@@ -813,11 +821,12 @@ class Storage extends Di\Injectable
             clearstatcache();
             if ($disk['device'] !== "/dev/{$cf_disk}") {
                 // Если это обычный диск, то раздел 1.
-                $dev = "{$disk['device']}1";
+                $part = "1";
             } else {
                 // Если это системный диск, то пытаемся подключить раздел 4.
-                $dev = "{$disk['device']}4";
+                $part = "4";
             }
+            $dev = self::getDevPartName($disk['device'], $part);
             if ( ! $this->hddExists($dev)) {
                 // Диск не существует.
                 continue;
@@ -871,11 +880,10 @@ class Storage extends Di\Injectable
     private function hddExists($disk): bool
     {
         $result = false;
-        $uid    = $this->getUuid("{$disk}");
-        if (file_exists("{$disk}") && $uid !== false) {
+        $uid    = $this->getUuid($disk);
+        if ($uid !== false && file_exists($disk)) {
             $result = true;
         }
-
         return $result;
     }
 
@@ -947,20 +955,17 @@ class Storage extends Di\Injectable
         $fstab     = '';
         $file_data = file_get_contents($varEtcDir . '/cfdevice');
         $cf_disk   = trim($file_data);
-        if ('' == $cf_disk) {
+        if ('' === $cf_disk) {
             return;
         }
-        // $part1 	 = (strpos($cf_disk, "mmcblk") !== false)?"{$cf_disk}p1":"{$cf_disk}1"; // Boot
-        $part2 = (strpos($cf_disk, 'mmcblk') !== false) ? "{$cf_disk}p2" : "{$cf_disk}2"; // Offload
-        $part3 = (strpos($cf_disk, 'mmcblk') !== false) ? "{$cf_disk}p3" : "{$cf_disk}3"; // Conf
-
+        $part2 = self::getDevPartName($cf_disk, '2');
+        $part3 = self::getDevPartName($cf_disk, '3');
 
         $uid_part2 = 'UUID=' . $this->getUuid("/dev/{$part2}") . '';
         $format_p2 = $this->getFsType($part2);
         $uid_part3 = 'UUID=' . $this->getUuid("/dev/{$part3}") . '';
         $format_p3 = $this->getFsType($part3);
 
-        // $fstab .= "/dev/{$part1} /cf msdos ro 1 1\n"; // НЕ МОНТИРУЕМ!
         $fstab .= "{$uid_part2} /offload {$format_p2} ro 0 0\n";
         $fstab .= "{$uid_part3} /cf {$format_p3} rw 1 1\n";
         $fstab .= $conf;
@@ -971,6 +976,23 @@ class Storage extends Di\Injectable
         $mountPath = Util::which('mount');
         Processes::mwExec("{$mountPath} -a 2> /dev/null");
         Util::addRegularWWWRights('/cf');
+    }
+
+    /**
+     * Возвращает имя раздела диска по имени и номеру.
+     * @param string $dev
+     * @param string $part
+     * @return string
+     */
+    public static function getDevPartName(string $dev, string $part):string{
+        $lsBlkPath  = Util::which('lsblk');
+        $cutPath    = Util::which('cut');
+        $grepPath   = Util::which('grep');
+
+        $command = "{$lsBlkPath} -r | {$cutPath} -d ' ' -f 1 | {$grepPath} \"".basename($dev)."\" | {$grepPath} \"{$part}\$\"";
+        Processes::mwExec($command, $out);
+        $devName = trim(implode('', $out));
+        return trim($devName);
     }
 
     /**

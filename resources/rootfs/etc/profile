@@ -36,7 +36,7 @@ shopt -s cmdhist
 
 alias ls='ls --color=auto'
 alias myip="curl http://ipecho.net/plain; echo"
-alias remount-offload="mount -o remount,rw /offload/"
+alias remount-offload="mount -o remount,rw $(mount | grep /offload | cut -d ' ' -f 1)"
 alias xdebug-enable="mv /etc/php.d/15-xdebug.ini.disabled /etc/php.d/15-xdebug.ini"
 alias xdebug-enable-www="mv /etc/php.d/15-xdebug.ini.disabled /etc/php.d/15-xdebug.ini; killall php-fpm; sleep 3; php-fpm -c /etc/php.ini"
 
