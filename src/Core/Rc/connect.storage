@@ -117,9 +117,10 @@ if($part === '1' && !Storage::isStorageDisk($part_disk)){
 }
 $uniqid = $storage->getUuid($part_disk);
 $data=[
-    'device' => $dev_disk,
-    'uniqid' => $uniqid,
-    'name'   => 'Storage №1'
+    'device'         => $dev_disk,
+    'uniqid'         => $uniqid,
+    'filesystemtype' => 'ext4',
+    'name'           => 'Storage №1'
 ];
 $storage->saveDiskSettings($data);
 if(file_exists('/offload/livecd')) {
