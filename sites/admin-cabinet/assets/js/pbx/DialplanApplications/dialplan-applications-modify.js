@@ -43,7 +43,8 @@ var dialplanApplication = {
     extension: {
       identifier: 'extension',
       rules: [{
-        type: 'number',
+        type: 'regExp',
+        value: '/^(|[0-9#+\\*|X]{1,64})$/',
         prompt: globalTranslate.da_ValidateExtensionNumber
       }, {
         type: 'empty',

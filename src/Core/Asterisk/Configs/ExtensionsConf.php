@@ -225,8 +225,9 @@ class ExtensionsConf extends ConfigClass
 
         // Описываем возможность прыжка в пользовательский sub контекст.
         $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1)' . "\n\t";
-
-        $conf .= 'same => n,Goto(peer_${FROM_PEER},${EXTEN},1)' . "\n\n";
+        $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(internal,${EXTEN},1)}" == "1"]?internal,${EXTEN},1)'." \n\t";
+        $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(outgoing,${EXTEN},1)}" == "1"]?outgoing,${EXTEN},1)'." \n\t";
+        $conf .= 'same => n,Hangup()'." \n";
 
         $pickupexten = $this->generalSettings['PBXFeaturePickupExten'];
         $conf        .= 'exten => _' . $pickupexten . $extension . ',1,Set(PICKUPEER=' . $technology . '/${FILTER(0-9,${EXTEN:2})})' . "\n\t";

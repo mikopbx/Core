@@ -837,12 +837,6 @@ class SIPConf extends ConfigClass
         // Генерация внутреннего номерного плана.
         $conf = '';
 
-        foreach ($this->data_peers as $peer) {
-            $conf .= "[peer_{$peer['extension']}] \n";
-            $conf .= "include => internal \n";
-            $conf .= "include => outgoing \n";
-        }
-
         $contexts = [];
         // Входящие контексты.
         foreach ($this->data_providers as $provider) {
