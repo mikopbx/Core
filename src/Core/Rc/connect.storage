@@ -18,7 +18,6 @@
  */
 
 namespace MikoPBX\Core\Rc;
-
 use MikoPBX\Core\Config\RegisterDIServices;
 use MikoPBX\Core\Workers\WorkerAmiListener;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
@@ -41,12 +40,15 @@ $system_disk   = '';
 
 $selected_disk = ['size' => 0, 'id' => ''];
 foreach ($all_hdd as $disk) {
-    $additional = '';
-    $devName = Storage::getDevPartName($disk['id'], '4');
-    if(!empty($disk['mounted']) && $disk['sys_disk'] && file_exists("/dev/{$devName}")){
+    $additional       = '';
+    $devName          = Storage::getDevPartName($disk['id'], '4');
+    $isLiveCd         = ( $disk['sys_disk'] && file_exists('/offload/livecd') );
+    $isMountedSysDisk = (!empty($disk['mounted']) && $disk['sys_disk'] && file_exists("/dev/{$devName}"));
+
+    if($isMountedSysDisk){
         $system_disk = $disk['id'];
 	    $additional.= "\033[31;1m [SYSTEM]\033[0m";
-	}elseif ($disk['sys_disk'] && file_exists('/offload/livecd')){
+	}elseif($isLiveCd){
         $system_disk = $disk['id'];
         $additional.= "\033[31;1m [SYSTEM]\033[0m";
 	}elseif ($disk['mounted']){
@@ -108,12 +110,11 @@ if(!empty($system_disk) && $system_disk === $target_disk_storage){
 }else{
     $part = "1";
 }
-$part_disk = Storage::getDevPartName($target_disk_storage, $part);
-
+$partName = Storage::getDevPartName($target_disk_storage, $part);
+$part_disk = "/dev/{$partName}";
 if($part === '1' && !Storage::isStorageDisk($part_disk)){
     $storage->formatDiskLocal($dev_disk);
 }
-
 $uniqid = $storage->getUuid($part_disk);
 $data=[
     'device' => $dev_disk,

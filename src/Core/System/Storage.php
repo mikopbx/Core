@@ -84,7 +84,7 @@ class Storage extends Di\Injectable
     public static function isStorageDisk($device): bool
     {
         $result = false;
-        if ( ! file_exists("{$device}")) {
+        if ( ! file_exists($device)) {
             return $result;
         }
 
@@ -92,7 +92,7 @@ class Storage extends Di\Injectable
         Util::mwMkdir($tmp_dir);
         $out = [];
 
-        $storage  = new Storage();
+        $storage  = new self();
         $uid_part = 'UUID=' . $storage->getUuid($device) . '';
         $format   = $storage->getFsType($device);
         if ($format === '') {
@@ -826,7 +826,8 @@ class Storage extends Di\Injectable
                 // Если это системный диск, то пытаемся подключить раздел 4.
                 $part = "4";
             }
-            $dev = self::getDevPartName($disk['device'], $part);
+            $devName = self::getDevPartName($disk['device'], $part);
+            $dev     = '/dev/'.$devName;
             if ( ! $this->hddExists($dev)) {
                 // Диск не существует.
                 continue;
@@ -961,9 +962,9 @@ class Storage extends Di\Injectable
         $part2 = self::getDevPartName($cf_disk, '2');
         $part3 = self::getDevPartName($cf_disk, '3');
 
-        $uid_part2 = 'UUID=' . $this->getUuid("/dev/{$part2}") . '';
+        $uid_part2 = 'UUID=' . $this->getUuid("/dev/{$part2}");
         $format_p2 = $this->getFsType($part2);
-        $uid_part3 = 'UUID=' . $this->getUuid("/dev/{$part3}") . '';
+        $uid_part3 = 'UUID=' . $this->getUuid("/dev/{$part3}");
         $format_p3 = $this->getFsType($part3);
 
         $fstab .= "{$uid_part2} /offload {$format_p2} ro 0 0\n";
