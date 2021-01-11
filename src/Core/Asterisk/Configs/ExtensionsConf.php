@@ -208,7 +208,7 @@ class ExtensionsConf extends ConfigClass
 
         $conf .= 'exten => _.!,1,ExecIf($[ "${EXTEN}" == "h" ]?Hangup())' . "\n\t";
         // Фильтр спецсимволов. Разершаем только цифры.
-        $conf .= 'same => n,Set(cleanNumber=${FILTER(\*\#1234567890,${EXTEN})})' . "\n\t";
+        $conf .= 'same => n,Set(cleanNumber=${FILTER(\*\#\+1234567890,${EXTEN})})' . "\n\t";
         $conf .= 'same => n,ExecIf($["${EXTEN}" != "${cleanNumber}"]?Goto(${CONTEXT},${cleanNumber},$[${PRIORITY} + 1]))' . "\n\t";
 
         $conf .= 'same => n,Set(__FROM_CHAN=${CHANNEL})' . "\n\t";
@@ -365,7 +365,7 @@ class ExtensionsConf extends ConfigClass
         $conf .= 'exten => _+.!,1,NoOp(Strip + sign from number and convert it to +)' . " \n\t";
         $conf .= 'same => n,Set(ADDPLUS=+);' . " \n\t";
         $conf .= 'same => n,Goto(${CONTEXT},${EXTEN:1},1);' . " \n\n";
-        $conf .= 'exten => _X!,1,NoOp(Start outgoing calling...)' . " \n\t";
+        $conf .= 'exten => _.!,1,ExecIf($[ "${EXTEN}" == "h" ]?Hangup())' . " \n\t";
         $conf .= 'same => n,Ringing()' . " \n\t";
 
         // Описываем возможность прыжка в пользовательский sub контекст.
@@ -401,14 +401,16 @@ class ExtensionsConf extends ConfigClass
 
         foreach ($provider_contexts as $id_dialplan => $rout) {
             $conf .= "\n[{$id_dialplan}]\n";
-            if (isset($rout['trimfrombegin']) && $rout['trimfrombegin'] > 0) {
-                $exten_var    = '${EXTEN:' . $rout['trimfrombegin'] . '}';
+            $trimFromBegin = (int) ($rout['trimfrombegin']??0);
+            if ($trimFromBegin > 0) {
+                $exten_var    = '${ADDPLUS}${EXTEN:' . $rout['trimfrombegin'] . '}';
                 $change_exten = 'same => n,ExecIf($["${EXTEN}" != "${number}"]?Goto(${CONTEXT},${number},$[${PRIORITY} + 1]))' . "\n\t";
             } else {
                 $exten_var    = '${ADDPLUS}${EXTEN}';
                 $change_exten = '';
             }
-            $conf .= 'exten => _X!,1,Set(number=' . $rout['prepend'] . $exten_var . ')' . "\n\t";
+            $conf .= 'exten => _.!,1,Set(number=' . $rout['prepend'] . $exten_var . ')' . "\n\t";
+            $conf .= 'same => n,Set(number=${FILTER(\*\#\+1234567890,${number})})' . "\n\t";
             $conf .= $change_exten;
             foreach ($additionalModules as $appClass) {
                 $addition = $appClass->generateOutRoutContext($rout);
