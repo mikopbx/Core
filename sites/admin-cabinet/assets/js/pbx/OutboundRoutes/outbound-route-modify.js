@@ -41,7 +41,7 @@ var outboundRoute = {
       identifier: 'numberbeginswith',
       rules: [{
         type: 'regExp',
-        value: '/^(|[0-9#+()\\[\\-\\]\\{\\}|]{1,64})$/',
+        value: '/^(|[0-9#+\\*()\\[\\-\\]\\{\\}|]{1,64})$/',
         prompt: globalTranslate.or_ValidateBeginPattern
       }]
     },

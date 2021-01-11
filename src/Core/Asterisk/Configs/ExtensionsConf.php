@@ -480,17 +480,20 @@ class ExtensionsConf extends ConfigClass
      */
     private function generateOutgoingRegexPattern($rout): string
     {
-        $conf        = '';
-        $restnumbers = '';
-        if (isset($rout['restnumbers']) && $rout['restnumbers'] > 0) {
-            $restnumbers = "[0-9]{" . $rout['restnumbers'] . "}$";
-        } elseif ($rout['restnumbers'] == 0) {
-            $restnumbers = "$";
-        } elseif ($rout['restnumbers'] == -1) {
-            $restnumbers = "";
+        $conf         = '';
+        $regexPattern = '';
+        
+        $restNumbers = (int) ($rout['restnumbers']??0);
+        if ($restNumbers > 0) {
+            $regexPattern = "[0-9]{" . $rout['restnumbers'] . "}$";
+        } elseif ($restNumbers === 0) {
+            $regexPattern = "$";
+        } elseif ($restNumbers === -1) {
+            $regexPattern = "";
         }
-        $numberbeginswith = $rout['numberbeginswith'];
-        $conf             .= 'same => n,ExecIf($["${REGEX("^' . $numberbeginswith . $restnumbers . '" ${EXTEN})}" == "1"]?Gosub(' . $rout['providerid'] . '-' . $rout['id'] . '-outgoing,${EXTEN},1))' . " \n\t";
+        $numberBeginsWith = $rout['numberbeginswith']??'';
+        $numberBeginsWith = str_replace(array('*', '+'), array('\\\\*', '\\\\+'), $numberBeginsWith);
+        $conf            .= 'same => n,ExecIf($["${REGEX("^' . $numberBeginsWith . $regexPattern . '" ${EXTEN})}" == "1"]?Gosub(' . $rout['providerid'] . '-' . $rout['id'] . '-outgoing,${EXTEN},1))' . " \n\t";
 
         return $conf;
     }
@@ -504,7 +507,7 @@ class ExtensionsConf extends ConfigClass
     {
         $additionalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
         $conf              .= "\n";
-        $conf              .= self::generateIncomingContextPeers('none', '', '');
+        $conf              .= self::generateIncomingContextPeers('none');
         $conf              .= "[public-direct-dial] \n";
         foreach ($additionalModules as $appClass) {
             if ($appClass instanceof $this) {
@@ -653,7 +656,7 @@ class ExtensionsConf extends ConfigClass
                 if ( ! $add_login_pattern) {
                     break;
                 } // Логин не заполнен, обработка не требуется.
-                $is_num = preg_match_all('/^\d+$/m', $login, $matches, PREG_SET_ORDER, 0);
+                $is_num = preg_match_all('/^\d+$/m', $login, $matches, PREG_SET_ORDER);
                 if ($is_num === 1) {
                     // Это числовой номер, потому, не требуется дополнительно описывать exten.
                     $add_login_pattern = false;
@@ -745,9 +748,9 @@ class ExtensionsConf extends ConfigClass
 
         $conf_out_set_var = '';
 
-        $now_year = 1 * date('Y', time());
+        $now_year = 1 * date('Y');
         foreach ($data as $out_data) {
-            /** @var \MikoPBX\Common\Models\OutWorkTimes $out_data */
+            /** @var OutWorkTimes $out_data */
             if ( ! empty($out_data->date_from) && ! empty($out_data->date_to)) {
                 $year_from = 1 * date('Y', (int)$out_data->date_from);
                 $year_to   = 1 * date('Y', (int)$out_data->date_to);
@@ -800,7 +803,7 @@ class ExtensionsConf extends ConfigClass
                 $appname = 'GotoIfTime';
                 $appdata = "internal,{$out_data->extension},1";
             } else {
-                /** @var \MikoPBX\Common\Models\SoundFiles $res */
+                /** @var SoundFiles $res */
                 $res           = SoundFiles::findFirst($out_data->audio_message_id);
                 $audio_message = ($res === null) ? '' : Util::trimExtensionForFile($res->path);
 
