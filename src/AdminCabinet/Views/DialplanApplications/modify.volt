@@ -21,10 +21,6 @@
         <label>{{ t._('da_Description') }}</label>
         {{ form.render('description') }}
     </div>
-    <div class="field">
-        <label>{{ t._('da_Hint') }}</label>
-        {{ form.render('hint') }}
-    </div>
     <div class="four wide field">
         <label>{{ t._('da_Extensions') }}</label>
         <div class="ui icon input extension">

@@ -112,6 +112,9 @@ class DialplanApplicationConf extends ConfigClass
         $conf = '';
         $arrDialplanApplications = DialplanApplications::find()->toArray();
         foreach ($arrDialplanApplications as $app) {
+            if(!is_numeric($app['extension'])){
+                continue;
+            }
             $conf .= "exten => {$app['extension']},hint,Custom:{$app['extension']} \n";
         }
 
