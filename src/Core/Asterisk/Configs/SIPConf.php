@@ -842,7 +842,7 @@ class SIPConf extends ConfigClass
         foreach ($this->data_providers as $provider) {
             $contexts_data = $this->contexts_data[$provider['context_id']];
             if (count($contexts_data) === 1) {
-                $conf .= ExtensionsConf::generateIncomingContextPeers($provider['uniqid'], $provider['username'], '');
+                $conf .= ExtensionsConf::generateIncomingContextPeers($provider['uniqid'], $provider['username']);
             } elseif ( ! in_array($provider['context_id'], $contexts, true)) {
                 $conf       .= ExtensionsConf::generateIncomingContextPeers(
                     $contexts_data,
