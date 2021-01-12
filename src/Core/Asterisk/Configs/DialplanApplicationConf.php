@@ -47,9 +47,9 @@ class DialplanApplicationConf extends ConfigClass
         $app_ext_conf = "\n[applications]\n";
         $arrDialplanApplications = DialplanApplications::find()->toArray();
         foreach ($arrDialplanApplications as $app) {
-            if ('plaintext' == $app['type']) {
+            if ('plaintext' === $app['type']) {
                 $app_ext_conf .= $this->generatePlaneTextApp($app);
-            } elseif ('php' == $app['type']) {
+            } elseif ('php' === $app['type']) {
                 $app_ext_conf .= $this->generatePhpApp($app);
             } else {
                 continue;
@@ -66,7 +66,6 @@ class DialplanApplicationConf extends ConfigClass
      */
     private function generatePlaneTextApp($app): string
     {
-        // 	same => n,Macro(dial_answer)
         $text_app     = base64_decode($app['applicationlogic']);
         $arr_data_app = explode("\n", trim($text_app));
 
@@ -120,5 +119,4 @@ class DialplanApplicationConf extends ConfigClass
 
         return $conf;
     }
-
 }
