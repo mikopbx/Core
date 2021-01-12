@@ -86,6 +86,16 @@ class CreateIAXProviders extends MikoPBXTestsBaseAlias
             'noregister'=>true,
             'manualattributes'=>'',
         ]];
+        $params[] = [[
+            'type'=>'iax',
+            'description' => 'VoxlinkIAX for delete',
+            'host' => 'vox.link2.ru',
+            'username'        => 'line1',
+            'password'        => 'voxvoxSecret',
+            'qualify'         => true,
+            'noregister'=>true,
+            'manualattributes'=>'',
+        ]];
 
         return $params;
     }
