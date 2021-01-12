@@ -33,9 +33,9 @@ use SQLite3;
 
 class Fail2BanConf extends Injectable
 {
-    private const FILTER_PATH = '/etc/fail2ban/filter.d';
-    private const JAILS_DIR   = '/etc/fail2ban/jail.d';
-    private const PID_FILE    = '/var/run/fail2ban/fail2ban.pid';
+    private const FILTER_PATH     = '/etc/fail2ban/filter.d';
+    private const JAILS_DIR       = '/etc/fail2ban/jail.d';
+    private const PID_FILE        = '/var/run/fail2ban/fail2ban.pid';
     public const FAIL2BAN_DB_PATH = '/var/lib/fail2ban/fail2ban.sqlite3';
 
     public bool $fail2ban_enable;
@@ -185,7 +185,12 @@ class Fail2BanConf extends Injectable
                     Processes::mwExec("{$mvPath} '$old_dir_db/$filename' '$dir_db/$filename'");
                 }
             }
+        }else{
+            $sqlite3Path = Util::which('sqlite3');
+            Processes::mwExec("{$sqlite3Path} {$dir_db}/{$filename} 'vacuum'");
+            $create_link = true;
         }
+
         if ($create_link === true) {
             Util::createUpdateSymlink("$dir_db/$filename", $res_file);
         }
