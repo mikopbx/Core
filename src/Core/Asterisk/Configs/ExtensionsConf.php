@@ -223,19 +223,20 @@ class ExtensionsConf extends ConfigClass
         $conf .= 'same => n,Set(CHANNEL(hangup_handler_wipe)=hangup_handler,s,1)' . "\n\t";
         $conf .= 'same => n,Gosub(${ISTRANSFER}dial,${EXTEN},1)' . "\n\t";
 
-        // Описываем возможность прыжка в пользовательский sub контекст.
         $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1)' . "\n\t";
-        $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(internal,${EXTEN},1)}" == "1"]?internal,${EXTEN},1)'." \n\t";
-        $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(outgoing,${EXTEN},1)}" == "1"]?outgoing,${EXTEN},1)'." \n\t";
+        $dialplanNames = ['applications', 'internal', 'outgoing'];
+        foreach ($dialplanNames as $name){
+            $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS('.$name.',${EXTEN},1)}" == "1"]?'.$name.',${EXTEN},1)'." \n\t";
+        }
         $conf .= 'same => n,Hangup()'." \n";
 
-        $pickupexten = $this->generalSettings['PBXFeaturePickupExten'];
+        $pickupexten  = $this->generalSettings['PBXFeaturePickupExten'];
         $conf        .= 'exten => _' . $pickupexten . $extension . ',1,Set(PICKUPEER=' . $technology . '/${FILTER(0-9,${EXTEN:2})})' . "\n\t";
         $conf        .= 'same => n,Set(pt1c_dnid=${EXTEN})' . "\n\t";
         $conf        .= 'same => n,PickupChan(${PICKUPEER})' . "\n\t";
         $conf        .= 'same => n,Hangup()' . "\n\n";
 
-        $voicemail_exten = $this->generalSettings['VoicemailExten'];
+        $voicemail_exten  = $this->generalSettings['VoicemailExten'];
         $conf            .= 'exten => ' . $voicemail_exten . ',1,NoOp(NOTICE, Dialing out from ${CALLERID(all)} to VoiceMail)' . "\n\t";
         $conf            .= 'same => n,VoiceMailMain(admin@voicemailcontext,s)' . "\n\t";
         $conf            .= 'same => n,Hangup()' . "\n\n";
