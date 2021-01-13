@@ -134,6 +134,26 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
             'manualattributes'=>'',
         ]];
 
+        $params[] = [[
+            'type'=>'sip',
+            'description' => 'Mango office for delete',
+            'host' => 'mango1.office.ru',
+            'username'        => 'mango1',
+            'password'        => 'office2',
+            'dtmfmode'        => 'inband',
+            'port'            => 5061,
+            'nat'             => 'force_rport',
+            'qualify'         => true,
+            'qualifyfreq'     =>61,
+            'defaultuser'=>'',
+            'fromuser'=>'',
+            'fromdomain'=>'',
+            'disablefromuser'=>true,
+            'noregister'=>true,
+            'receive_calls_without_auth'=>true,
+            'manualattributes'=>'',
+        ]];
+
         return $params;
     }
 
