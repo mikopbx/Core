@@ -19,7 +19,7 @@
 
 namespace MikoPBX\Tests\Core\Asterisk\Configs;
 
-use MikoPBX\Core\Asterisk\Configs\ExtensionsConf;
+use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\IncomingContexts;
 use MikoPBX\Tests\Unit\AbstractUnitTest;
 
 class ExtensionsConfTest extends AbstractUnitTest
@@ -29,7 +29,7 @@ class ExtensionsConfTest extends AbstractUnitTest
      */
     public function testGenerateIncomingContextPeers()
     {
-        $conf = ExtensionsConf::generateIncomingContextPeers('none', '', '');
+        $conf = IncomingContexts::generate('none');
         $this->assertStringContainsStringIgnoringCase('add-trim-prefix-clid', $conf);
     }
 }
