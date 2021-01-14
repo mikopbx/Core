@@ -71,6 +71,9 @@ class DialplanApplicationConf extends ConfigClass
 
         $app_data = '';
         foreach ($arr_data_app as $row) {
+            if(trim($row) === ''){
+                continue;
+            }
             if ('' === $app_data) {
                 $app_data .= "exten => _{$app['extension']},$row" . "\n\t";
             } else {
