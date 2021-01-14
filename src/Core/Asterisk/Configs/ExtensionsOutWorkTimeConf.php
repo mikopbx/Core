@@ -44,8 +44,7 @@ class ExtensionsOutWorkTimeConf extends ConfigClass
     private function generateOutWorkTimes(): string
     {
         $conf = "\n\n[playback-exit]\n";
-        $conf .= 'exten => _.!,1,NoOp(check time)' . "\n\t";
-        $conf .= 'same => n,Gosub(dial_outworktimes,${EXTEN},1)' . "\n\t";
+        $conf .= 'exten => _.!,1,Gosub(dial_outworktimes,${EXTEN},1)' . "\n\t";
         $conf .= 'same => n,Playback(${filename})' . "\n\t";
         $conf .= 'same => n,Hangup()' . "\n\n";
 
@@ -75,7 +74,7 @@ class ExtensionsOutWorkTimeConf extends ConfigClass
             $conf .= "[".$checkContext."-{$year}]\n";
             $conf .= "exten => _.!,1,NoOp(check time {$year} year)\n\t";
             $conf .= implode("", $rule);
-            $conf .= "same => n,return\n";
+            $conf .= "same => n,return\n\n";
         }
 
         return $conf;
@@ -204,14 +203,13 @@ class ExtensionsOutWorkTimeConf extends ConfigClass
             $res = SoundFiles::findFirst($ruleData['audio_message_id']);
             $audio_message = ($res === null) ? '' : Util::trimExtensionForFile($res->path);
 
-            $dialplanName = "work-time-set-var-{$ruleData}";
+            $dialplanName = "work-time-set-var-{$ruleData['id']}";
 
             if (strpos($conf_out_set_var, $dialplanName) === false) {
                 $conf_out_set_var .= "[{$dialplanName}]\n" . 'exten => _.!,1,Set(filename=' . $audio_message . ')' . "\n\t" . 'same => n,Goto(playback-exit,${EXTEN},1)' . "\n\n";
             }
-
             $appName = 'ExecIfTime';
-            $appdata = 'Goto(work-time-set-var-' . $ruleData . ',${EXTEN},1)';
+            $appdata = 'Goto(' . $dialplanName . ',${EXTEN},1)';
         }
         return array($appName, $appdata);
     }
