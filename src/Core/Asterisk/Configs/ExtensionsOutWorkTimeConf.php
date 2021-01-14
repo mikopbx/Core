@@ -147,12 +147,8 @@ class ExtensionsOutWorkTimeConf extends ConfigClass
         if (empty($time_from) && empty($time_to)) {
             $intervals = ['*'];
         } else {
-            $time_to = (empty($time_to)) ? '23:59' : $time_to;
-            $time_to = (strlen($time_to) === 4) ? "0{$time_to}" : $time_to;
-
-            $time_from = (empty($time_from)) ? '00:00' : $time_from;
-            $time_from = (strlen($time_from) === 4) ? "0{$time_from}" : $time_from;
-
+            $time_from  = $this->normaliseTime($time_from);
+            $time_to    = $this->normaliseTime($time_to, '23:59');
             if(strtotime($time_from) > strtotime($time_to)){
                 $intervals=[
                     "{$time_from}-23:59",
@@ -165,6 +161,17 @@ class ExtensionsOutWorkTimeConf extends ConfigClass
             }
         }
         return $intervals;
+    }
+
+    /**
+     * Нормализация времени в приемлемый формат.
+     * @param        $srcTime
+     * @param string $defVal
+     * @return string
+     */
+    private function normaliseTime($srcTime, $defVal = '00:00'):string{
+        $time = (empty($srcTime)) ? $defVal : $srcTime;
+        return (strlen($time) === 4) ? "0{$time}" : $time;
     }
 
     /**
