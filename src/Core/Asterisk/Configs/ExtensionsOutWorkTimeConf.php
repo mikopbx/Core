@@ -12,6 +12,8 @@ use MikoPBX\Modules\Config\ConfigClass;
 
 class ExtensionsOutWorkTimeConf extends ConfigClass
 {
+    public const OUT_WORK_TIME_CONTEXT = 'check-out-work-time';
+
     /**
      * Генератор extensions, дополнительные контексты.
      * @return string
@@ -19,6 +21,19 @@ class ExtensionsOutWorkTimeConf extends ConfigClass
     public function extensionGenContexts(): string
     {
         return $this->generateOutWorkTimes();
+    }
+
+    /**
+     * Кастомизация входящего контекста для конкретного маршрута.
+     *
+     * @param $rout_number
+     *
+     * @return string
+     */
+    public function generateIncomingRoutBeforeDial($rout_number): string
+    {
+        // Проверим распискние для входящих внешних звонков.
+        return 'same => n,Gosub('.self::OUT_WORK_TIME_CONTEXT.',${EXTEN},1)';
     }
 
     /**
@@ -34,7 +49,7 @@ class ExtensionsOutWorkTimeConf extends ConfigClass
         $conf .= 'same => n,Playback(${filename})' . "\n\t";
         $conf .= 'same => n,Hangup()' . "\n\n";
 
-        $checkContext = 'check-out-work-time';
+        $checkContext = self::OUT_WORK_TIME_CONTEXT;
         $conf .= "[".$checkContext."]\n";
         $conf .= "exten => _.!,1,NoOp(check time)\n\t";
         $conf .= 'same => n,Set(currentYear=${STRFTIME(,,%Y)})'."\n\t";

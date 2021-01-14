@@ -601,14 +601,11 @@ class ExtensionsConf extends ConfigClass
                 $rout_data  .= 'same => n,Set(CHANNEL(hangup_handler_wipe)=hangup_handler,s,1)' . "\n\t";
                 $rout_data  .= 'same => n,Set(__FROM_DID=${EXTEN})' . "\n\t";
                 $rout_data  .= 'same => n,Set(__FROM_CHAN=${CHANNEL})' . "\n\t";
-
                 // Установка имени пира.
                 $rout_data .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" != "Local"]?Gosub(set_from_peer,s,1))' . "\n\t";
                 $rout_data .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" == "Local"]?Set(__FROM_PEER=${CALLERID(num)}))' . "\n\t";
-
                 $rout_data .= 'same => n,Gosub(add-trim-prefix-clid,${EXTEN},1)'."\n\t";
-                // Проверим распискние для входящих внешних звонков.
-                $rout_data .= 'same => n,Gosub(check-out-work-time,${EXTEN},1)'."\n\t";
+
                 foreach ($additionalModules as $appClass) {
                     $addition = $appClass->generateIncomingRoutBeforeDial($rout_number);
                     if ( ! empty($addition)) {
