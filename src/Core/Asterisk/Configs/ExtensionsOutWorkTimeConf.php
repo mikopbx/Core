@@ -78,7 +78,7 @@ class ExtensionsOutWorkTimeConf extends ConfigClass
 
         $intervals = [];
         $Year = $year_from;
-        if($Year === $year_to && $Year === $year_from){
+        if($year_to === $year_from){
             $intervals[] = [
                 'date_from' => $date_from,
                 'date_to'   => $date_to
@@ -99,7 +99,7 @@ class ExtensionsOutWorkTimeConf extends ConfigClass
             }else{
                 $intervals[] = [
                     'date_from' => (string)strtotime('01-01-'.$Year),
-                    'date_to' => (string)strtotime('31-12-'.$Year)
+                    'date_to'   => (string)strtotime('31-12-'.$Year)
                 ];
             }
             $Year++ ;
