@@ -51,14 +51,14 @@ class IncomingContexts extends ConfigClass{
             $timeout     = trim($rout['timeout']);
             $rout_number = ($number === '') ? 'X!' : $number;
             $rout_data   = &$dialplan[$rout_number];
-            self::generateRouteDialplan($rout_data, $provider, $rout, $lang, $additionalModules);
+            if (empty($rout_data)) {
+                self::generateRouteDialplan($rout_data, $provider, $rout, $lang, $additionalModules);
+            }
             self::generateDialActions($rout_data_dial, $rout, $rout_number, $confExtensions, $timeout, $provider, $number);
         }
 
         self::multiplyExtensionsInDialplan($dialplan, $rout_data_dial, $login, $data, $need_def_rout, $provider);
-
         self::trimDialplans($dialplan, $rout_data_dial);
-
         self::createSummaryDialplan($conf, $provider, $uniqid, $dialplan, $default_action, $confExtensions, $additionalModules);
 
         return $conf;
@@ -110,9 +110,7 @@ class IncomingContexts extends ConfigClass{
      * @param        $additionalModules
      */
     private static function generateRouteDialplan(?string &$rout_data, $provider, array $rout, string $lang, $additionalModules): void{
-        if (!empty($rout_data)) {
-            return;
-        }
+
         $number      = trim($rout['number']);
         $rout_number = ($number === '') ? 'X!' : $number;
 
@@ -211,18 +209,30 @@ class IncomingContexts extends ConfigClass{
      */
     private static function multiplyExtensionsInDialplan(array &$dialplan, array &$rout_data_dial, $login, array $data, bool $need_def_rout, $provider): void{
         if (is_string($login)) {
-            $add_login_pattern = self::needAddLoginExtension($login, $data);
-            if ($add_login_pattern && array_key_exists('X!', $rout_data_dial) && isset($dialplan['X!'])) {
-                $dialplan[$login] = str_replace('_X!,1', "{$login},1", $dialplan['X!']);
-                $rout_data_dial[$login] = $rout_data_dial['X!'];
-            } elseif ($add_login_pattern === true && $need_def_rout === true && count($data) === 1) {
-                // Только маршрут "По умолчанию".
-                $dialplan[$login] = str_replace('_X!,1', "{$login},1", $dialplan['X!']);
-            }
-        } elseif (is_array($provider)) {
+            self::multiplyExtensionsInDialplanStringLogin($login, $data, $rout_data_dial, $dialplan, $need_def_rout);
+        }
+        if (is_array($provider)) {
             foreach (array_values($provider) as $_login) {
                 $dialplan[$_login] = str_replace('_X!,1', "{$_login},1", $dialplan['X!']);
             }
+        }
+    }
+
+    /**
+     * @param string $login
+     * @param array  $data
+     * @param array  $rout_data_dial
+     * @param array  $dialplan
+     * @param bool   $need_def_rout
+     */
+    private static function multiplyExtensionsInDialplanStringLogin(string $login, array $data, array &$rout_data_dial, array &$dialplan, bool $need_def_rout): void{
+        $add_login_pattern = self::needAddLoginExtension($login, $data);
+        if ($add_login_pattern && array_key_exists('X!', $rout_data_dial) && isset($dialplan['X!'])) {
+            $dialplan[$login] = str_replace('_X!,1', "{$login},1", $dialplan['X!']);
+            $rout_data_dial[$login] = $rout_data_dial['X!'];
+        } elseif ($add_login_pattern === true && $need_def_rout === true && count($data) === 1) {
+            // Только маршрут "По умолчанию".
+            $dialplan[$login] = str_replace('_X!,1', "{$login},1", $dialplan['X!']);
         }
     }
 
@@ -256,6 +266,7 @@ class IncomingContexts extends ConfigClass{
     }
 
     /**
+     * Формирование итогового dialplan.
      * @param string               $conf
      * @param                      $provider
      * @param string               $uniqId
@@ -274,27 +285,40 @@ class IncomingContexts extends ConfigClass{
                 continue;
             }
             if ('extension' === $default_action->action) {
-                // Обязательно проверяем "DIALSTATUS", в случае с парковой через AMI вызова это необходимо.
-                // При ответе может отработать следующий приоритет.
-                $conf .= "\t" . 'same => n,Set(M_TIMEOUT=0)' . "\n";
-                if (in_array($default_action->extension, $confExtensions, true)) {
-                    // Это конференция. Тут не требуется обработка таймаута ответа.
-                    // Вызов будет отвечен сразу конференцией.
-                    $conf .= "\t" . "same => n," . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?' . "Goto(internal,{$default_action->extension},1)); default action" . "\n";
-                } else {
-                    $conf .= "\t" . "same => n," . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?' . "Dial(Local/{$default_action->extension}@internal/n,,TKg)); default action" . "\n";
-                }
-                foreach ($additionalModules as $appClass) {
-                    $addition = $appClass->generateIncomingRoutAfterDialContext($uniqId);
-                    if (!empty($addition)) {
-                        $conf .= $appClass->confBlockWithComments($addition);
-                    }
-                }
+                $conf = self::createSummaryDialplanGoto($conf, $default_action, $confExtensions, $additionalModules, $uniqId);
                 $conf .= " \t" . 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-after-dial-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-after-dial-custom,${EXTEN},1)' . "\n";
             } elseif ('busy' === $default_action->action) {
                 $conf .= "\t" . "same => n,Busy()" . "\n";
             }
             $conf .= "\t" . "same => n,Hangup()" . "\n";
+        }
+        return $conf;
+    }
+
+    /**
+     * @param string               $conf
+     * @param IncomingRoutingTable $default_action
+     * @param array                $confExtensions
+     * @param                      $additionalModules
+     * @param string               $uniqId
+     * @return string
+     */
+    private static function createSummaryDialplanGoto(string $conf, IncomingRoutingTable $default_action, array $confExtensions, $additionalModules, string $uniqId): string{
+        // Обязательно проверяем "DIALSTATUS", в случае с парковой через AMI вызова это необходимо.
+        // При ответе может отработать следующий приоритет.
+        $conf .= "\t" . 'same => n,Set(M_TIMEOUT=0)' . "\n";
+        if (in_array($default_action->extension, $confExtensions, true)) {
+            // Это конференция. Тут не требуется обработка таймаута ответа.
+            // Вызов будет отвечен сразу конференцией.
+            $conf .= "\t" . "same => n," . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?' . "Goto(internal,{$default_action->extension},1)); default action" . "\n";
+        } else {
+            $conf .= "\t" . "same => n," . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?' . "Dial(Local/{$default_action->extension}@internal/n,,TKg)); default action" . "\n";
+        }
+        foreach ($additionalModules as $appClass) {
+            $addition = $appClass->generateIncomingRoutAfterDialContext($uniqId);
+            if (!empty($addition)) {
+                $conf .= $appClass->confBlockWithComments($addition);
+            }
         }
         return $conf;
     }
