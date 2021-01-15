@@ -55,20 +55,20 @@
     "logsDir": "/mountpoint/mikopbx/log",
     "mediaMountPoint": "/mountpoint",
     "fail2banDbDir": "/mountpoint/mikopbx/fail2ban",
-    "managedCacheDir": "/mountpoint/mikopbx/tmp/managed_cache",
-    "modelsCacheDir": "/mountpoint/mikopbx/tmp/models_cache"
+    "managedCacheDir": "/var/tmp/managed_cache",
+    "modelsCacheDir": "/var/tmp/models_cache"
   },
   "www": {
     "uploadDir": "/mountpoint/mikopbx/tmp/www_cache/upload_cache",
     "phpSessionDir": "/mountpoint/mikopbx/tmp/www_cache/php_session",
     "downloadCacheDir": "/mountpoint/mikopbx/tmp/www_cache/files_cache",
-    "managedCacheDir": "/mountpoint/mikopbx/tmp/www_cache/managed_cache",
-    "modelsCacheDir": "/mountpoint/mikopbx/tmp/www_cache/models_cache"
+    "managedCacheDir": "/var/tmp/www_cache/managed_cache",
+    "modelsCacheDir": "/var/tmp/www_cache/models_cache"
   },
   "adminApplication": {
     "debugMode": false,
     "baseUri": "/admin-cabinet/",
-    "assetsCacheDir": "/mountpoint/mikopbx/tmp/www_cache",
-    "voltCacheDir": "/mountpoint/mikopbx/tmp/www_cache/volt"
+    "assetsCacheDir": "/var/tmp/www_cache",
+    "voltCacheDir": "/var/tmp/www_cache/volt"
   }
 }
