@@ -21,6 +21,7 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\Codecs;
 use MikoPBX\Common\Models\Iax;
+use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\IncomingContexts;
 use MikoPBX\Modules\Config\ConfigClass;
 use MikoPBX\Core\System\Util;
 
@@ -87,7 +88,7 @@ class IAXConf extends ConfigClass
         $conf = '';
         $providers = $this->getProviders();
         foreach ($providers as $provider) {
-            $conf .= ExtensionsConf::generateIncomingContextPeers($provider['uniqid']);
+            $conf .= IncomingContexts::generate($provider['uniqid']);
         }
 
         return $conf;

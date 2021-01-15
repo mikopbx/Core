@@ -23,6 +23,7 @@ use MikoPBX\Core\System\Configs\BeanstalkConf;
 use MikoPBX\Core\System\Configs\CronConf;
 use MikoPBX\Core\System\Configs\NatsConf;
 use MikoPBX\Core\System\Configs\NginxConf;
+use MikoPBX\Core\System\Configs\NTPConf;
 use MikoPBX\Core\System\Configs\PHPConf;
 use MikoPBX\Core\System\Configs\SSHConf;
 use MikoPBX\Core\System\Configs\SyslogConf;
@@ -98,6 +99,10 @@ class SystemLoader extends Di\Injectable
 
         Util::echoWithSyslog(' - Configuring LAN interface ... ');
         $network->lanConfigure();
+        Util::echoGreenDone();
+
+        Util::echoWithSyslog(' - Configuring ntpd ... ');
+        NTPConf::configure();
         Util::echoGreenDone();
 
         Util::echoWithSyslog(' - Configuring SSH console ... ');
