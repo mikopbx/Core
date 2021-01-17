@@ -19,6 +19,7 @@
 
 namespace MikoPBX\AdminCabinet\Plugins;
 
+use MikoPBX\Common\Models\AuthTokens;
 use Phalcon\Di\Injectable;
 use Phalcon\Events\Event;
 use Phalcon\Mvc\Dispatcher;
@@ -39,7 +40,7 @@ class SecurityPlugin extends Injectable
      *
      * @return bool
      */
-    public function beforeDispatch(/** @scrutinizer ignore-unused */ Event $event, Dispatcher $dispatcher):bool
+    public function beforeDispatch(/** @scrutinizer ignore-unused */ Event $event, Dispatcher $dispatcher): bool
     {
         if ($_SERVER['REMOTE_ADDR'] === '127.0.0.1') {
             return true;
@@ -59,9 +60,9 @@ class SecurityPlugin extends Injectable
                     return false;
                 }
             }
-        } else { // не AJAX запрос
-            $auth = $this->session->get('auth');
-            if ( ! $auth && $controller !== 'SESSION') {
+        } else { // it is not AJAX request
+            $isLoggedIn = $this->checkUserAuth();
+            if ( ! $isLoggedIn && $controller !== 'SESSION') {
                 $dispatcher->forward(
                     [
                         'controller' => 'session',
@@ -69,7 +70,6 @@ class SecurityPlugin extends Injectable
                     ]
                 );
             } elseif ($controller == 'INDEX') {
-                // TODO: когда будет главная страница сделаем переадресацию на нее
                 $dispatcher->forward(
                     [
                         'controller' => 'extensions',
@@ -78,7 +78,36 @@ class SecurityPlugin extends Injectable
                 );
             }
         }
+
         return true;
+    }
+
+    /**
+     * Checks if user already logged in or not
+     *
+     * @return bool
+     */
+    private function checkUserAuth(): bool
+    {
+        // Check if loggedin session and redirect if session exists
+        if ($this->session->has('auth')) {
+            return true;
+        } // Check if loggedin session exists
+        elseif ($this->cookies->has('random_token')) {
+            $token       = $this->cookies->get('random_token');
+            $currentDate = date("Y-m-d H:i:s", time());
+            $userTokens  = AuthTokens::find();
+            foreach ($userTokens as $userToken) {
+                if ($userToken->expiryDate < $currentDate) {
+                    $userToken->delete();
+                } elseif ($this->security->checkHash($token, $userToken->passwordHash)) {
+                    $sessionParams = json_decode($userToken->sessionParams);
+                    $this->session->set('auth', $sessionParams);
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
 }

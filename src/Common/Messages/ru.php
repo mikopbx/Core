@@ -861,6 +861,7 @@ return [
     'auth_ValidateLoginNotEmpty'                                          => 'Введите логин',
     'auth_SubmitButton'                                                   => 'Авторизоваться',
     'auth_WrongLoginPassword'                                             => 'Ошибка авторизации',
+    'auth_RememberMe'                                                     => 'Запомнить меня',
     'log_CaptureMessage'                                                  => '<div class=\'ui message \'>Запустите сбор логов и выполните звонок или другое действие, приводящее к сбою. 
 <br>Система сформирует слепок состояния системы в виде архива.</div>',
     'log_StartLogsCapture'                                                => 'Начать сбор логов',

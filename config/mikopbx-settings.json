@@ -60,7 +60,7 @@
   },
   "www": {
     "uploadDir": "/mountpoint/mikopbx/tmp/www_cache/upload_cache",
-    "phpSessionDir": "/mountpoint/mikopbx/tmp/www_cache/php_session",
+    "phpSessionDir": "/var/tmp/php/session",
     "downloadCacheDir": "/mountpoint/mikopbx/tmp/www_cache/files_cache",
     "managedCacheDir": "/var/tmp/www_cache/managed_cache",
     "modelsCacheDir": "/var/tmp/www_cache/models_cache"
