@@ -92,6 +92,8 @@ class SessionController extends BaseController
 
     /**
      * Setups random password and selector to browser cookie storage to remember me facility
+     *
+     * @param array $sessionParams
      */
     private function updateRememberMeCookies(array $sessionParams): void
     {
@@ -100,7 +102,7 @@ class SessionController extends BaseController
         $randomPassword = $this->security->getToken();
         $this->cookies->set("random_token", $randomPassword, $cookieExpirationTime);
 
-        $randomPasswordHash = $this->security->hash($randomPassword, PASSWORD_DEFAULT);
+        $randomPasswordHash = $this->security->hash($randomPassword);
 
         $expiryDate = date("Y-m-d H:i:s", $cookieExpirationTime);
 
@@ -116,9 +118,9 @@ class SessionController extends BaseController
             $userToken = new AuthTokens();
         }
         // Insert new token
-        $userToken->passwordHash = $randomPasswordHash;
-        $userToken->expiryDate   = $expiryDate;
-        $userToken->role         = json_encode($sessionParams);
+        $userToken->tokenHash     = $randomPasswordHash;
+        $userToken->expiryDate    = $expiryDate;
+        $userToken->sessionParams = json_encode($sessionParams);
         $userToken->save();
     }
 

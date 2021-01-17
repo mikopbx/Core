@@ -94,7 +94,7 @@ class SecurityPlugin extends Injectable
             return true;
         } // Check if loggedin session exists
         elseif ($this->cookies->has('random_token')) {
-            $token       = $this->cookies->get('random_token');
+            $token       = $this->cookies->get('random_token')->getValue();
             $currentDate = date("Y-m-d H:i:s", time());
             $userTokens  = AuthTokens::find();
             foreach ($userTokens as $userToken) {
