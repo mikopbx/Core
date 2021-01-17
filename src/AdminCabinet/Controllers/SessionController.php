@@ -99,7 +99,7 @@ class SessionController extends BaseController
     {
         $cookieExpirationTime = time() + (30 * 24 * 60 * 60);  // for 1 month
 
-        $randomPassword = $this->security->getToken();
+        $randomPassword = $this->security->getSaltBytes(32);
         $this->cookies->set("random_token", $randomPassword, $cookieExpirationTime);
 
         $randomPasswordHash = $this->security->hash($randomPassword);

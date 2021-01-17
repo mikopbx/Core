@@ -63,7 +63,8 @@
     "phpSessionDir": "/var/tmp/php/session",
     "downloadCacheDir": "/mountpoint/mikopbx/tmp/www_cache/files_cache",
     "managedCacheDir": "/var/tmp/www_cache/managed_cache",
-    "modelsCacheDir": "/var/tmp/www_cache/models_cache"
+    "modelsCacheDir": "/var/tmp/www_cache/models_cache",
+    "encryptionKey": "auVy8?^%5XLTJQc-%&k?TcB-_E2jNT35K?%knZ&TMqmc8U@k+=AaZ^3vv7xA+mA5"
   },
   "adminApplication": {
     "debugMode": false,

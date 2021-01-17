@@ -58,20 +58,6 @@ class AuthTokens extends ModelsBase
     {
         $this->setSource('m_AuthTokens');
         parent::initialize();
-        $this->addBehavior(
-            new Timestampable(
-                [
-                    'beforeValidationOnCreate' => [
-                        'field'  => 'expiryDate',
-                        'format' => 'Y-m-d H:i:s',
-                    ],
-                    'beforeValidationOnUpdate' => [
-                        'field'  => 'expiryDate',
-                        'format' => 'Y-m-d H:i:s',
-                    ],
-                ]
-            )
-        );
     }
 
 }

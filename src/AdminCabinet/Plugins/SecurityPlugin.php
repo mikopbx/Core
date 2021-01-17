@@ -23,6 +23,7 @@ use MikoPBX\Common\Models\AuthTokens;
 use Phalcon\Di\Injectable;
 use Phalcon\Events\Event;
 use Phalcon\Mvc\Dispatcher;
+use phpDocumentor\Reflection\Element;
 
 /**
  * SecurityPlugin
@@ -42,41 +43,37 @@ class SecurityPlugin extends Injectable
      */
     public function beforeDispatch(/** @scrutinizer ignore-unused */ Event $event, Dispatcher $dispatcher): bool
     {
-        if ($_SERVER['REMOTE_ADDR'] === '127.0.0.1') {
+        $isLoggedIn = $this->checkUserAuth();
+        // AJAX REQUESTS
+        if ($this->request->isAjax()) {
+            if ( ! $isLoggedIn) {
+                $this->response->setStatusCode(403, 'Forbidden')->sendHeaders();
+                $this->response->setContent('This user not authorised');
+                $this->response->send();
+
+                return false;
+            }
+
             return true;
         }
-        $controller = strtoupper($dispatcher->getControllerName());
-        if ($this->request->isAjax()) {
-            if ($controller !== 'SESSION') {
-                $sessionRo = $this->di->getShared('sessionRO');
-                if ( ! is_array($sessionRo)
-                    || ! array_key_exists('auth', $sessionRo)
-                ) {
-                    $this->response->setStatusCode(403, 'Forbidden')
-                        ->sendHeaders();
-                    $this->response->setContent('The user isn\'t authenticated');
-                    $this->response->send();
 
-                    return false;
-                }
-            }
-        } else { // it is not AJAX request
-            $isLoggedIn = $this->checkUserAuth();
-            if ( ! $isLoggedIn && $controller !== 'SESSION') {
-                $dispatcher->forward(
-                    [
-                        'controller' => 'session',
-                        'action'     => 'index',
-                    ]
-                );
-            } elseif ($controller == 'INDEX') {
-                $dispatcher->forward(
-                    [
-                        'controller' => 'extensions',
-                        'action'     => 'index',
-                    ]
-                );
-            }
+        // Usual requests
+        $controller = strtoupper($dispatcher->getControllerName());
+        if ( ! $isLoggedIn && $controller !== 'SESSION') {
+            $dispatcher->forward(
+                [
+                    'controller' => 'session',
+                    'action'     => 'index',
+                ]
+            );
+        } elseif (($isLoggedIn
+            && ($controller === 'INDEX' || $controller === 'SESSION'))) {
+            $dispatcher->forward(
+                [
+                    'controller' => 'extensions',
+                    'action'     => 'index',
+                ]
+            );
         }
 
         return true;
@@ -89,10 +86,13 @@ class SecurityPlugin extends Injectable
      */
     private function checkUserAuth(): bool
     {
-        // Check if loggedin session and redirect if session exists
-        if ($this->session->has('auth')) {
+        // Check if it localhost request
+        if ($_SERVER['REMOTE_ADDR'] === '127.0.0.1') {
             return true;
-        } // Check if loggedin session exists
+        } // Check if user already registered
+        elseif ($this->session->has('auth')) {
+            return true;
+        } // Check if remember me cookie exists
         elseif ($this->cookies->has('random_token')) {
             $token       = $this->cookies->get('random_token')->getValue();
             $currentDate = date("Y-m-d H:i:s", time());
@@ -100,13 +100,15 @@ class SecurityPlugin extends Injectable
             foreach ($userTokens as $userToken) {
                 if ($userToken->expiryDate < $currentDate) {
                     $userToken->delete();
-                } elseif ($this->security->checkHash($token, $userToken->passwordHash)) {
+                } elseif ($this->security->checkHash($token, $userToken->tokenHash)) {
                     $sessionParams = json_decode($userToken->sessionParams);
                     $this->session->set('auth', $sessionParams);
+
                     return true;
                 }
             }
         }
+
         return false;
     }
 

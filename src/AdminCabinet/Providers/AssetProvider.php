@@ -166,7 +166,8 @@ class AssetProvider implements ServiceProviderInterface
             ->addCss('css/vendor/semantic/site.min.css', true)
             ->addCss('css/vendor/semantic/reset.min.css', true)
             ->addCss('css/vendor/semantic/transition.min.css', true)
-            ->addCss('css/vendor/semantic/dropdown.min.css', true);
+            ->addCss('css/vendor/semantic/dropdown.min.css', true)
+            ->addCss('css/vendor/semantic/checkbox.min.css', true);
 
         $this->headerCollectionJS
             ->addJs('js/pbx/main/header.js', true)
@@ -181,7 +182,8 @@ class AssetProvider implements ServiceProviderInterface
             ->addJs('js/vendor/semantic/site.min.js', true)
             ->addJs('js/vendor/semantic/popup.min.js', true)
             ->addJs('js/vendor/semantic/dropdown.min.js', true)
-            ->addJs('js/vendor/semantic/transition.min.js', true);
+            ->addJs('js/vendor/semantic/transition.min.js', true)
+            ->addJs('js/vendor/semantic/checkbox.min.js', true);
 
         // Если пользователь залогинился, сформируем необходимые CSS кеши
         if ($session && $session->has('auth')) {
@@ -196,7 +198,6 @@ class AssetProvider implements ServiceProviderInterface
                 ->addCss('css/vendor/semantic/placeholder.min.css', true)
                 ->addCss('css/vendor/semantic/item.min.css', true)
                 ->addCss('css/vendor/semantic/tab.min.css', true)
-                ->addCss('css/vendor/semantic/checkbox.min.css', true)
                 ->addCss('css/vendor/semantic/popup.min.css', true)
                 ->addCss('css/vendor/semantic/toast.min.css', true);
 
@@ -204,7 +205,6 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/vendor/semantic/accordion.min.js', true)
                 ->addJs('js/vendor/semantic/dimmer.min.js', true)
                 ->addJs('js/vendor/semantic/sidebar.min.js', true)
-                ->addJs('js/vendor/semantic/checkbox.min.js', true)
                 ->addJs('js/vendor/semantic/toast.min.js', true)
                 ->addJs('js/vendor/semantic/tab.min.js', true);
 
