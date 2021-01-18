@@ -39,7 +39,8 @@ use MikoPBX\Common\Providers\{AmiConnectionCommand,
     RegistryProvider,
     TranslationProvider,
     MessagesProvider,
-    UrlProvider};
+    UrlProvider,
+    LanguageProvider};
 use MikoPBX\Core\Providers\EventsLogDatabaseProvider;
 use Phalcon\Di;
 
@@ -73,6 +74,7 @@ class RegisterDIServices
             // Inject Translations
             MessagesProvider::class,
             TranslationProvider::class,
+            LanguageProvider::class,
 
             // Inject Queue connection
             NatsConnectionProvider::class,

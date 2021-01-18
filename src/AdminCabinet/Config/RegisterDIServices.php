@@ -26,7 +26,6 @@ use MikoPBX\AdminCabinet\Providers\{AssetProvider,
     DispatcherProvider,
     ElementsProvider,
     FlashProvider,
-    LanguageSelectorProvider,
     RouterProvider,
     SessionProvider,
     ViewProvider,
@@ -45,9 +44,11 @@ use MikoPBX\Common\Providers\{BeanstalkConnectionCacheProvider,
     RegistryProvider,
     SessionReadOnlyProvider,
     MessagesProvider,
+    LanguageProvider,
     TranslationProvider,
     LicenseProvider,
-    UrlProvider};
+    UrlProvider
+};
 use Phalcon\Di\DiInterface;
 
 class RegisterDIServices
@@ -91,7 +92,7 @@ class RegisterDIServices
             // Inject translation
             MessagesProvider::class,
             TranslationProvider::class,
-            LanguageSelectorProvider::class,
+            LanguageProvider::class,
 
             // Inject license
             LicenseProvider::class,
