@@ -45,7 +45,8 @@ use MikoPBX\Common\Models\{AsteriskManagerUsers,
     PbxSettings,
     Sip,
     SipHosts,
-    SoundFiles};
+    SoundFiles,
+    Users};
 use MikoPBX\Common\Providers\BeanstalkConnectionModelsProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Asterisk\Configs\QueueConf;
@@ -67,7 +68,6 @@ use MikoPBX\Core\System\{BeanstalkClient,
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use Phalcon\Di;
 use Pheanstalk\Contract\PheanstalkInterface;
-use Throwable;
 
 ini_set('error_reporting', E_ALL);
 ini_set('display_startup_errors', 1);
@@ -126,12 +126,14 @@ class WorkerModelsEvents extends WorkerBase
 
     private const R_NTP = 'reloadNtp';
 
-    private int $last_change;
+    private int   $last_change;
     private array $modified_tables;
 
-    private int $timeout = 2;
+    private int   $timeout = 2;
     private array $arrObject;
     private array $PRIORITY_R;
+    private array $pbxSettingsDependencyTable = [];
+    private array $modelsDependencyTable = [];
 
     /**
      * Adds action to queue for postpone apply
@@ -156,12 +158,15 @@ class WorkerModelsEvents extends WorkerBase
     /**
      * The entry point
      *
-     * @param $argv
+     * @param $params
      */
-    public function start($argv): void
+    public function start($params): void
     {
         $this->last_change = time() - 2;
         $this->arrObject   = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
+
+        $this->initPbxSettingsDependencyTable();
+        $this->initModelsDependencyTable();
 
         $this->PRIORITY_R = [
             self::R_PBX_EXTENSION_STATE,
@@ -300,7 +305,6 @@ class WorkerModelsEvents extends WorkerBase
         $count_changes = count($this->modified_tables);
         $called_class  = $data['model'] ?? '';
         Util::sysLogMsg(__METHOD__, "New changes " . $called_class, LOG_DEBUG);
-
         // Clear all caches on any changed models on backend
         PbxSettings::clearCache($called_class, false);
 
@@ -311,144 +315,442 @@ class WorkerModelsEvents extends WorkerBase
                 $appClass->getSettings();
             }
         }
-        switch ($called_class) {
-            case AsteriskManagerUsers::class:
-                $this->modified_tables[self::R_MANAGERS] = true;
-                break;
-            case CallQueueMembers::class:
-                $this->modified_tables[self::R_QUEUES] = true;
-                break;
-            case CallQueues::class:
-                $this->modified_tables[self::R_QUEUES]   = true;
-                $this->modified_tables[self::R_DIALPLAN] = true;
-                break;
-            case ExternalPhones::class:
-            case Extensions::class:
-            case DialplanApplications::class:
-            case IncomingRoutingTable::class:
-            case IvrMenu::class:
-            case IvrMenuActions::class:
-            case OutgoingRoutingTable::class:
-            case OutWorkTimes::class:
-            case ConferenceRooms::class:
-                $this->modified_tables[self::R_DIALPLAN] = true;
-                break;
-            case CustomFiles::class:
-                $this->modified_tables[self::R_CUSTOM_F] = true;
-                break;
-            case Sip::class:
-                $this->modified_tables[self::R_SIP]      = true;
-                $this->modified_tables[self::R_DIALPLAN] = true;
-                $this->modified_tables[self::R_FIREWALL] = true;
-                break;
-            case ExtensionForwardingRights::class:
-                $this->modified_tables[self::R_SIP]      = true;
-                $this->modified_tables[self::R_DIALPLAN] = true;
-                break;
-            case FirewallRules::class:
-            case Fail2BanRules::class:
-                $this->modified_tables[self::R_FIREWALL] = true;
-                break;
-            case Iax::class:
-                $this->modified_tables[self::R_IAX]      = true;
-                $this->modified_tables[self::R_DIALPLAN] = true;
-                break;
-            case Codecs::class:
-                $this->modified_tables[self::R_IAX] = true;
-                $this->modified_tables[self::R_SIP] = true;
-                break;
-            case SoundFiles::class:
-                $this->modified_tables[self::R_MOH]      = true;
-                $this->modified_tables[self::R_DIALPLAN] = true;
-                break;
-            case LanInterfaces::class:
-                $this->modified_tables[self::R_NETWORK] = true;
-                $this->modified_tables[self::R_IAX]     = true;
-                $this->modified_tables[self::R_SIP]     = true;
-                break;
-            case SipHosts::class:
-                $this->modified_tables[self::R_FIREWALL] = true;
-                $this->modified_tables[self::R_SIP]      = true;
-                break;
-            case NetworkFilters::class:
-                $this->modified_tables[self::R_FIREWALL] = true;
-                $this->modified_tables[self::R_SIP]      = true;
-                $this->modified_tables[self::R_MANAGERS] = true;
-                break;
-            case PbxSettings::class:
-                $pbxSettings = PbxSettings::findFirstByKey($data['recordId']);
-                if ($pbxSettings === null) {
-                    return;
-                }
-                if ($pbxSettings->itHasFeaturesSettingsChanges()) {
-                    $this->modified_tables[self::R_FEATURES] = true;
-                    $this->modified_tables[self::R_DIALPLAN] = true;
-                }
-                if ($pbxSettings->itHasAMIParametersChanges()) {
-                    $this->modified_tables[self::R_MANAGERS] = true;
-                }
-                if ($pbxSettings->itHasIaxParametersChanges()) {
-                    $this->modified_tables[self::R_IAX] = true;
-                }
-                if ($pbxSettings->itHasSipParametersChanges()) {
-                    $this->modified_tables[self::R_SIP] = true;
-                }
-                if ($pbxSettings->itHasSSHParametersChanges()) {
-                    $this->modified_tables[self::R_SSH] = true;
-                }
-                if ($pbxSettings->itHasFirewallParametersChanges()) {
-                    $this->modified_tables[self::R_FIREWALL] = true;
-                }
-                if ($pbxSettings->itHasWebParametersChanges()) {
-                    $this->modified_tables[self::R_NGINX] = true;
-                }
-                if ($pbxSettings->itHasCronParametersChanges()) {
-                    $this->modified_tables[self::R_CRON] = true;
-                }
-                if ($pbxSettings->itHasDialplanParametersChanges()) {
-                    $this->modified_tables[self::R_DIALPLAN] = true;
-                }
-                if ($pbxSettings->itHasVoiceMailParametersChanges()) {
-                    $this->modified_tables[self::R_VOICEMAIL] = true;
-                }
-                if ($pbxSettings->itHasVisualLanguageSettings()) {
-                    $this->modified_tables[self::R_REST_API_WORKER] = true;
-                }
-                if ($pbxSettings->itHasLicenseSettings()) {
-                    $this->modified_tables[self::R_LICENSE] = true;
-                    $this->modified_tables[self::R_NATS]    = true;
-                }
-                if ($pbxSettings->itHasTimeZoneSettings()) {
-                    $this->modified_tables[self::R_TIMEZONE]        = true;
-                    $this->modified_tables[self::R_NGINX]           = true;
-                    $this->modified_tables[self::R_PHP_FPM]         = true;
-                    $this->modified_tables[self::R_REST_API_WORKER] = true;
-                    $this->modified_tables[self::R_SYSLOG]          = true;
-                }
-                if ($pbxSettings->itHasNTPSettings()) {
-                    $this->modified_tables[self::R_NTP] = true;
-                }
-                if ($pbxSettings->itHasCallRecordSettings()) {
-                    $this->modified_tables[self::R_CALL_EVENTS_WORKER] = true;
-                    $this->modified_tables[self::R_DIALPLAN]           = true;
-                }
-                break;
-            case PbxExtensionModules::class:
-                $moduleSettings                                                   = PbxExtensionModules::findFirstById(
-                    $data['recordId']
-                );
-                if ($moduleSettings!==null){
-                    $this->modified_tables[self::R_PBX_EXTENSION_STATE]               = true;
-                    $this->modified_tables['parameters'][self::R_PBX_EXTENSION_STATE] = $moduleSettings;
-                }
-                break;
-            default:
-        }
+        $this->fillModifiedTablesFromModels($called_class);
+        $this->fillModifiedTablesFromPbxSettingsData($called_class, $data['recordId']);
+        $this->fillModifiedTablesFromPbxExtensionModules($called_class, $data['recordId']);
 
         if ($count_changes === 0 && count($this->modified_tables) > 0) {
             // Начинаем отсчет времени при получении первой задачи.
             $this->last_change = time();
         }
+    }
+
+    /**
+     * Инициализация таблицы зависимостей настроек m_PbxSettings и сервисов АТС.
+     */
+    private function initPbxSettingsDependencyTable():void
+    {
+        // FeaturesSettings
+        $tables[] = [
+            'settingName'   => [
+                'PBXLanguage',
+                'PBXInternalExtensionLength',
+                'PBXRecordCalls',
+                'PBXCallParkingExt',
+                'PBXCallParkingStartSlot',
+                'PBXCallParkingEndSlot',
+                'PBXFeatureAttendedTransfer',
+                'PBXFeatureBlindTransfer',
+                'PBXFeatureDigitTimeout',
+                'PBXFeatureAtxferNoAnswerTimeout',
+                'PBXFeatureTransferDigitTimeout',
+                'PBXFeaturePickupExten'
+            ],
+            'functions' => [
+                self::R_FEATURES,
+                self::R_DIALPLAN
+            ]
+        ];
+        // AMIParameters
+        $tables[] = [
+            'settingName'   => [
+                'AMIPort',
+                'AJAMPort',
+                'AJAMPortTLS'
+            ],
+            'functions' => [
+                self::R_MANAGERS
+            ]
+        ];
+
+        // IaxParameters
+        $tables[] = [
+            'settingName'   => [
+                'IAXPort'
+            ],
+            'functions' => [
+                self::R_IAX
+            ]
+        ];
+        // SipParameters
+        $tables[] = [
+            'settingName'   => [
+                'SIPPort',
+                'RTPPortFrom',
+                'RTPPortTo',
+                'SIPDefaultExpiry',
+                'SIPMinExpiry',
+                'PBXAllowGuestCalls',
+                'SIPMaxExpiry',
+                'PBXLanguage'
+            ],
+            'functions' => [
+                self::R_SIP
+            ]
+        ];
+
+        // SSHParameters
+        $tables[] = [
+            'settingName'   => [
+                'SSHPort',
+                'SSHPassword',
+                'SSHAuthorizedKeys',
+                'SSHRsaKey',
+                'SSHDssKey',
+                'SSHecdsaKey'
+            ],
+            'functions' => [
+                self::R_SSH
+            ]
+        ];
+
+        // FirewallParameters
+        $tables[] = [
+            'settingName'   => [
+                'SIPPort',
+                'RTPPortFrom',
+                'RTPPortTo',
+                'IAXPort',
+                'AMIPort',
+                'AJAMPort',
+                'AJAMPortTLS',
+                'WEBPort',
+                'WEBHTTPSPort',
+                'SSHPort',
+                'PBXFirewallEnabled',
+                'PBXFail2BanEnabled'
+            ],
+            'functions' => [
+                self::R_FIREWALL
+            ],
+            'strPosKey' => 'FirewallSettings'
+        ];
+
+        // FirewallParameters
+        $tables[] = [
+            'settingName'   => [
+                'WEBPort',
+                'WEBHTTPSPort',
+                'WEBHTTPSPublicKey',
+                'WEBHTTPSPrivateKey',
+                'RedirectToHttps'
+            ],
+            'functions' => [
+                self::R_NGINX
+            ],
+        ];
+
+        // CronParameters
+        $tables[] = [
+            'settingName'   => [
+                'RestartEveryNight',
+            ],
+            'functions' => [
+                self::R_CRON
+            ],
+        ];
+
+        // DialplanParameters
+        $tables[] = [
+            'settingName'   => [
+                'PBXLanguage',
+            ],
+            'functions' => [
+                self::R_DIALPLAN
+            ],
+        ];
+
+        // VoiceMailParameters
+        $tables[] = [
+            'settingName'   => [
+                'MailTplVoicemailSubject',
+                'MailTplVoicemailBody',
+                'MailSMTPSenderAddress',
+                'MailSMTPUsername',
+                'PBXTimezone',
+                'VoicemailNotificationsEmail',
+                'SystemNotificationsEmail'
+            ],
+            'functions' => [
+                self::R_VOICEMAIL
+            ],
+        ];
+
+        // VisualLanguageSettings
+        $tables[] = [
+            'settingName'   => [
+                'SSHLanguage',
+                'WebAdminLanguage',
+            ],
+            'functions' => [
+                self::R_REST_API_WORKER
+            ],
+        ];
+
+        // LicenseSettings
+        $tables[] = [
+            'settingName'   => [
+                'PBXLicense',
+            ],
+            'functions' => [
+                self::R_LICENSE,
+                self::R_NATS,
+            ],
+        ];
+
+        // TimeZoneSettings
+        $tables[] = [
+            'settingName'   => [
+                'PBXTimezone',
+            ],
+            'functions' => [
+                self::R_TIMEZONE,
+                self::R_NGINX,
+                self::R_PHP_FPM,
+                self::R_REST_API_WORKER,
+                self::R_SYSLOG,
+            ],
+        ];
+
+        // NTPSettings
+        $tables[] = [
+            'settingName'   => [
+                'PBXManualTimeSettings',
+                'NTPServer',
+            ],
+            'functions' => [
+                self::R_NTP,
+            ],
+        ];
+
+        // CallRecordSettings
+        $tables[] = [
+            'settingName'   => [
+                'PBXRecordCalls',
+                'PBXSplitAudioThread',
+            ],
+            'functions' => [
+                self::R_CALL_EVENTS_WORKER,
+                self::R_DIALPLAN,
+            ],
+        ];
+
+        $this->pbxSettingsDependencyTable = $tables;
+    }
+
+    /**
+     * Инициализация таблицы зависимостей моделей и сервисов АТС.
+     */
+    private function initModelsDependencyTable():void
+    {
+        $tables = [];
+        $tables[] = [
+            'settingName' => [
+                AsteriskManagerUsers::class
+            ],
+            'functions'   => [
+                self::R_MANAGERS
+            ]
+        ];
+
+        $tables[] = [
+            'settingName' => [
+                CallQueueMembers::class
+            ],
+            'functions'   => [
+                self::R_QUEUES
+            ]
+        ];
+
+        $tables[] = [
+            'settingName' => [
+                CallQueues::class
+            ],
+            'functions'   => [
+                self::R_QUEUES,
+                self::R_DIALPLAN
+            ]
+        ];
+        $tables[] = [
+            'settingName' => [
+                ExternalPhones::class,
+                Extensions::class,
+                DialplanApplications::class,
+                IncomingRoutingTable::class,
+                IvrMenu::class,
+                IvrMenuActions::class,
+                OutgoingRoutingTable::class,
+                OutWorkTimes::class,
+                ConferenceRooms::class,
+            ],
+            'functions'   => [
+                self::R_DIALPLAN
+            ]
+        ];
+
+        $tables[] = [
+            'settingName' => [
+                CustomFiles::class,
+            ],
+            'functions'   => [
+                self::R_CUSTOM_F
+            ]
+        ];
+
+        $tables[] = [
+            'settingName' => [
+                Sip::class,
+            ],
+            'functions'   => [
+                self::R_SIP,
+                self::R_DIALPLAN,
+                self::R_FIREWALL,
+            ]
+        ];
+
+        $tables[] = [
+            'settingName' => [
+                Users::class,
+                ExtensionForwardingRights::class,
+            ],
+            'functions'   => [
+                self::R_SIP,
+                self::R_DIALPLAN,
+            ]
+        ];
+
+        $tables[] = [
+            'settingName' => [
+                FirewallRules::class,
+                Fail2BanRules::class,
+            ],
+            'functions'   => [
+                self::R_FIREWALL,
+            ]
+        ];
+
+        $tables[] = [
+            'settingName' => [
+                Iax::class,
+            ],
+            'functions'   => [
+                self::R_IAX,
+                self::R_DIALPLAN,
+            ]
+        ];
+
+        $tables[] = [
+            'settingName' => [
+                Codecs::class,
+            ],
+            'functions'   => [
+                self::R_IAX,
+                self::R_SIP,
+            ]
+        ];
+
+        $tables[] = [
+            'settingName' => [
+                SoundFiles::class,
+            ],
+            'functions'   => [
+                self::R_MOH,
+                self::R_DIALPLAN,
+            ]
+        ];
+
+        $tables[] = [
+            'settingName' => [
+                LanInterfaces::class,
+            ],
+            'functions'   => [
+                self::R_NETWORK,
+                self::R_IAX,
+                self::R_SIP,
+            ]
+        ];
+
+        $tables[] = [
+            'settingName' => [
+                SipHosts::class,
+            ],
+            'functions'   => [
+                self::R_FIREWALL,
+                self::R_SIP,
+            ]
+        ];
+
+        $tables[] = [
+            'settingName' => [
+                NetworkFilters::class,
+            ],
+            'functions'   => [
+                self::R_FIREWALL,
+                self::R_SIP,
+                self::R_MANAGERS,
+            ]
+        ];
+
+        $this->modelsDependencyTable = $tables;
+
+    }
+
+    /**
+     * Анализ изменения данных моделей ядра.
+     * @param $called_class
+     */
+    private function fillModifiedTablesFromModels($called_class):void{
+        foreach ($this->modelsDependencyTable as $dependencydata){
+            if (!in_array($called_class, $dependencydata['settingName'], true)) {
+                continue;
+            }
+            foreach ($dependencydata['functions'] as $function){
+                $this->modified_tables[$function] = true;
+            }
+        }
+    }
+
+    /**
+     * Анализ изменения параметров в m_PbxSettings
+     * @param $called_class
+     * @param $recordId
+     */
+    private function fillModifiedTablesFromPbxSettingsData($called_class, $recordId):void{
+        if(PbxSettings::class !== $called_class){
+            return;
+        }
+        /** @var PbxSettings $pbxSettings */
+        $pbxSettings = PbxSettings::findFirstByKey($recordId);
+        if ($pbxSettings === null) {
+            return;
+        }
+        $settingName = $pbxSettings->key;
+        foreach ($this->pbxSettingsDependencyTable as $data){
+            $additionalConditions = (isset($data['strPosKey']) && strpos($settingName, $data['strPosKey']) !== false);
+            if (!$additionalConditions && !in_array($settingName, $data['settingName'], true)) {
+                continue;
+            }
+            foreach ($data['functions'] as $function){
+                $this->modified_tables[$function] = true;
+            }
+        }
+    }
+
+    /**
+     * Анализ изменения параметров дополнительный модулей.
+     * @param $called_class
+     * @param $recordId
+     */
+    private function fillModifiedTablesFromPbxExtensionModules($called_class, $recordId):void{
+        if(PbxExtensionModules::class !== $called_class){
+            return;
+        }
+        $moduleSettings = PbxExtensionModules::findFirstById($recordId);
+        if ($moduleSettings!==null){
+            $this->modified_tables[self::R_PBX_EXTENSION_STATE]               = true;
+            $this->modified_tables['parameters'][self::R_PBX_EXTENSION_STATE] = $moduleSettings;
+        }
+
     }
 
     /**
