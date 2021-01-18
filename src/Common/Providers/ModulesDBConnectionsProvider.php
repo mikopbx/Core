@@ -24,9 +24,11 @@ namespace MikoPBX\Common\Providers;
 
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
+use Phalcon\Di;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 use Phalcon\Events\Manager;
+use phpDocumentor\Reflection\DocBlock\Tags\See;
 use ReflectionClass;
 use ReflectionException;
 
@@ -176,6 +178,14 @@ class ModulesDBConnectionsProvider extends DatabaseProviderBase implements Servi
         $mainConnection->setEventsManager($eventsManager);
     }
 
+    /**
+     * Recreate DB connections after table structure changes for additional modules
+     */
+    public static function recreateModulesDBConnections(): void
+    {
+        $di = Di::getDefault();
+        $di->register(new self());
+    }
 }
 
 

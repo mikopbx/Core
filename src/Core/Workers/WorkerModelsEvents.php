@@ -48,6 +48,7 @@ use MikoPBX\Common\Models\{AsteriskManagerUsers,
     SoundFiles,
     Users};
 use MikoPBX\Common\Providers\BeanstalkConnectionModelsProvider;
+use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Asterisk\Configs\QueueConf;
 use MikoPBX\Core\System\{BeanstalkClient,
@@ -959,6 +960,10 @@ class WorkerModelsEvents extends WorkerBase
         }
         // Recreate modules array
         PBXConfModulesProvider::recreateModulesProvider();
+
+        // Recreate database connections
+        ModulesDBConnectionsProvider::recreateModulesDBConnections();
+
         $this->arrObject = $this->di->get(PBXConfModulesProvider::SERVICE_NAME);
 
         $className       = str_replace('Module', '', $record->uniqid);

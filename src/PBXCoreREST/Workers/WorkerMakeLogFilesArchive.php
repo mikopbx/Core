@@ -31,7 +31,7 @@ class WorkerMakeLogFilesArchive extends WorkerBase
 {
     public function start($argv): void
     {
-        $settings_file = $argv[1]??'';
+        $settings_file = $argv[2]??'';
         if (!file_exists($settings_file)) {
             Util::sysLogMsg("WorkerMakeLogFilesArchive", 'File with settings not found', LOG_ERR);
             return;
