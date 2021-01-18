@@ -25,9 +25,8 @@ use Phalcon\Text;
 
 class PbxExtensionModulesController extends BaseController
 {
-
     /**
-     * Построение списка модулей
+     * Builds installed modules list
      */
     public function indexAction(): void
     {
@@ -36,8 +35,6 @@ class PbxExtensionModulesController extends BaseController
             || ! Text::startsWith($licKey, 'MIKO-')) {
             $this->forward('licensing/modify/pbx-extension-modules');
         }
-        // Очистим кеш хранилища для получения актульной информации о свободном месте
-        $this->session->remove('checkStorage');
 
         $modules     = PbxExtensionModules::getModulesArray();
         $modulesList = [];
@@ -61,9 +58,9 @@ class PbxExtensionModulesController extends BaseController
     }
 
     /**
-     * Страница с настройкой параметров модуля
-     * @param $uniqid string идентификатор модуля
+     * Builds page for modify how to show the module in sidebar
      *
+     * @param $uniqid string of module
      */
     public function modifyAction(string $uniqid): void
     {
@@ -94,8 +91,7 @@ class PbxExtensionModulesController extends BaseController
     }
 
     /**
-     * Сохранение настроек отображения модуля в боковом меню
-     * сохраняет настройку отображения в PbxSettings
+     * Saves how to show the module in sidebar settings into PbxSettings
      */
     public function saveModuleSettingsAction(): void
     {
@@ -147,7 +143,5 @@ class PbxExtensionModulesController extends BaseController
         $this->view->message = $result;
         $this->view->success = true;
     }
-
-
 
 }
