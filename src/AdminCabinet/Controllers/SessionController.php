@@ -130,7 +130,15 @@ class SessionController extends BaseController
     private function clearAuthCookies(): void
     {
         if ($this->cookies->has('random_token')) {
-            $this->cookies->delete('random_token');
+            $cookie     = $this->cookies->get('random_token');
+            $value      = $cookie->getValue();
+            $userTokens = AuthTokens::find();
+            foreach ($userTokens as $userToken) {
+                if ($this->security->checkHash($value, $userToken->tokenHash)) {
+                    $userToken->delete();
+                }
+            }
+            $cookie->delete();
         }
     }
 
@@ -179,8 +187,8 @@ class SessionController extends BaseController
      */
     public function endAction(): void
     {
-        $this->clearAuthCookies();
         $this->session->remove('auth');
         $this->session->destroy();
+        $this->clearAuthCookies();
     }
 }

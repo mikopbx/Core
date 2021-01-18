@@ -23,7 +23,6 @@ use MikoPBX\Common\Models\AuthTokens;
 use Phalcon\Di\Injectable;
 use Phalcon\Events\Event;
 use Phalcon\Mvc\Dispatcher;
-use phpDocumentor\Reflection\Element;
 
 /**
  * SecurityPlugin
@@ -44,30 +43,29 @@ class SecurityPlugin extends Injectable
     public function beforeDispatch(/** @scrutinizer ignore-unused */ Event $event, Dispatcher $dispatcher): bool
     {
         $isLoggedIn = $this->checkUserAuth();
-        // AJAX REQUESTS
-        if ($this->request->isAjax()) {
-            if ( ! $isLoggedIn) {
+        $controller = strtoupper($dispatcher->getControllerName());
+
+        if ( ! $isLoggedIn && $controller !== 'SESSION') {
+            // AJAX REQUESTS
+            if ($this->request->isAjax()) {
                 $this->response->setStatusCode(403, 'Forbidden')->sendHeaders();
                 $this->response->setContent('This user not authorised');
                 $this->response->send();
 
                 return false;
+            } else { // Usual requests
+                $dispatcher->forward(
+                    [
+                        'controller' => 'session',
+                        'action'     => 'index',
+                    ]
+                );
             }
 
             return true;
         }
 
-        // Usual requests
-        $controller = strtoupper($dispatcher->getControllerName());
-        if ( ! $isLoggedIn && $controller !== 'SESSION') {
-            $dispatcher->forward(
-                [
-                    'controller' => 'session',
-                    'action'     => 'index',
-                ]
-            );
-        } elseif (($isLoggedIn
-            && ($controller === 'INDEX' || $controller === 'SESSION'))) {
+        if ($isLoggedIn && $controller === 'INDEX') {
             $dispatcher->forward(
                 [
                     'controller' => 'extensions',
@@ -103,7 +101,6 @@ class SecurityPlugin extends Injectable
                 } elseif ($this->security->checkHash($token, $userToken->tokenHash)) {
                     $sessionParams = json_decode($userToken->sessionParams);
                     $this->session->set('auth', $sessionParams);
-
                     return true;
                 }
             }
