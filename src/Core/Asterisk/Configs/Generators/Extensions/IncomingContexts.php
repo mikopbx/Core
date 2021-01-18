@@ -163,7 +163,8 @@ class IncomingContexts extends ConfigClass{
      * Формирование итогового dialplan.
      * @return string
      */
-    private function createSummaryDialplan(): string{
+    private function createSummaryDialplan(): string
+    {
         /** @var IncomingRoutingTable $default_action */
         $default_action = IncomingRoutingTable::findFirst('priority = 9999');
 
@@ -174,14 +175,27 @@ class IncomingContexts extends ConfigClass{
             if (null === $default_action && 'none' !== $this->provider) {
                 continue;
             }
-            if ('extension' === $default_action->action) {
-                $conf = $this->createSummaryDialplanGoto($conf, $default_action, $uniqId);
-                $conf .= " \t" . 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-after-dial-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-after-dial-custom,${EXTEN},1)' . "\n";
-            } elseif ('busy' === $default_action->action) {
-                $conf .= "\t" . "same => n,Busy()" . "\n";
-            }
-            $conf .= "\t" . "same => n,Hangup()" . "\n";
+            $conf .= $this->createSummaryDialplanDefAction($default_action, $uniqId);
         }
+        return $conf;
+    }
+
+    /**
+     * Формирование действия по умолчанию в dialplan.
+     * @param $default_action
+     * @param $uniqId
+     * @return string
+     */
+    private function createSummaryDialplanDefAction($default_action, $uniqId):string
+    {
+        $conf = '';
+        if ('extension' === $default_action->action) {
+            $conf = $this->createSummaryDialplanGoto($conf, $default_action, $uniqId);
+            $conf .= " \t" . 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-after-dial-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-after-dial-custom,${EXTEN},1)' . "\n";
+        } elseif ('busy' === $default_action->action) {
+            $conf .= "\t" . "same => n,Busy()" . "\n";
+        }
+        $conf .= "\t" . "same => n,Hangup()" . "\n";
         return $conf;
     }
 
@@ -235,9 +249,23 @@ class IncomingContexts extends ConfigClass{
 
     /**
      * Проверка нужен ли дефолтный маршрут для провайдера.
+     * Наполнение таблицы маршрутизаци значением по умолчанию.
      * @return bool
      */
     private function checkNeedDefRout(): bool{
+        $need_def_rout = $this->needDefRout();
+        if ($need_def_rout === true && 'none' !== $this->provider) {
+            $this->routes[] = ['number' => '', 'extension' => '', 'timeout' => ''];
+        }
+        return $need_def_rout;
+    }
+
+    /**
+     * Проверка нужен ли дефолтный маршрут для провайдера.
+     * @return bool
+     */
+    private function needDefRout():bool
+    {
         $need_def_rout = true;
         foreach ($this->routes as $rout) {
             $number = trim($rout['number']);
@@ -245,9 +273,6 @@ class IncomingContexts extends ConfigClass{
                 $need_def_rout = false;
                 break;
             }
-        }
-        if ($need_def_rout === true && 'none' !== $this->provider) {
-            $this->routes[] = ['number' => '', 'extension' => '', 'timeout' => ''];
         }
         return $need_def_rout;
     }
