@@ -19,7 +19,7 @@
 
 namespace MikoPBX\Modules\Setup;
 
-use MikoPBX\Core\Config\RegisterDIServices;
+use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Upgrade\UpdateDatabase;
 use MikoPBX\Modules\PbxExtensionUtils;
@@ -455,7 +455,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
     {
 
         // Add new connection for this module after add new Models folder
-        RegisterDIServices::recreateModulesDBConnections();
+        ModulesDBConnectionsProvider::recreateModulesDBConnections();
 
         $results = glob($this->moduleDir . '/Models/*.php', GLOB_NOSORT);
         $dbUpgrade = new UpdateDatabase();
@@ -469,7 +469,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
 
         }
         // Update database connections after upgrade their structure
-        RegisterDIServices::recreateModulesDBConnections();
+        ModulesDBConnectionsProvider::recreateModulesDBConnections();
 
         return true;
     }
