@@ -21,10 +21,9 @@ declare(strict_types=1);
 
 namespace MikoPBX\Common\Providers;
 
-use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
+use MikoPBX\AdminCabinet\Providers\SessionProvider;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
-use MikoPBX\Common\Models\PbxSettings;
 
 use function MikoPBX\Common\Config\appPath;
 
@@ -45,15 +44,10 @@ class MessagesProvider implements ServiceProviderInterface
             self::SERVICE_NAME,
             function () use ($di, $coreConfig) {
                 $cacheKey = false;
-                if (php_sapi_name() === 'cli'){
-                    if (cli_get_process_title()=== WorkerApiCommands::class){
-                        $language = PbxSettings::getValueByKey('WebAdminLanguage');
-                    } else {
-                        $language = PbxSettings::getValueByKey('SSHLanguage');
-                    }
-                } else {
-                    $language = $di->get('language');
-                    $session  = $di->get('session');
+                $language = $di->get(LanguageProvider::SERVICE_NAME);
+                if (php_sapi_name() !== 'cli'){
+                    $language = $di->get(LanguageProvider::SERVICE_NAME);
+                    $session  = $di->get(SessionProvider::SERVICE_NAME);
                     if ($session !== null && $session->has('versionHash')) {
                         $cacheKey = 'LocalisationArray' . $session->get('versionHash') . $language . '.php';
                     }

@@ -32,7 +32,8 @@ use MikoPBX\Common\Providers\{BeanstalkConnectionCacheProvider,
     PBXConfModulesProvider,
     RegistryProvider,
     ManagedCacheProvider,
-    SessionReadOnlyProvider};
+    SessionReadOnlyProvider,
+    LanguageProvider};
 use MikoPBX\PBXCoreREST\Providers\{
     DispatcherProvider,
     RequestProvider,
@@ -62,7 +63,6 @@ class RegisterDIServices
             ManagedCacheProvider::class,
             ModelsCacheProvider::class,
 
-
             // Inject Queue connection
             BeanstalkConnectionWorkerApiProvider::class,
             BeanstalkConnectionCacheProvider::class,
@@ -79,7 +79,10 @@ class RegisterDIServices
 
             // Inject Logger
             LoggerAuthProvider::class,
-            LoggerProvider::class
+            LoggerProvider::class,
+
+            //Translates
+            LanguageProvider::class,
 
         ];
 

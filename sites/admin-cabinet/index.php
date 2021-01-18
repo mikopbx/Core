@@ -44,9 +44,6 @@ RegisterDIServices::init($di);
 $errorLogger = new SentryErrorLogger('admin-cabinet');
 $errorLogger->init();
 
-// register_shutdown_function([PhpError::class,'runtimeShutdown']);
-// set_error_handler([PhpError::class,'errorHandler']);
-
 if (class_exists(PrettyPageHandler::class)){
     $whoops = new Run();
     $whoops->pushHandler(new PrettyPageHandler());
@@ -59,5 +56,9 @@ try {
 } catch (Throwable $e) {
 	$errorLogger->captureException($e);
 	PhpError::exceptionHandler($e);
-	echo $e->getMessage();
+    if (class_exists(PrettyPageHandler::class)){
+        $whoops->handleException($e);
+    } else {
+        echo $e->getMessage();
+    }
 }
