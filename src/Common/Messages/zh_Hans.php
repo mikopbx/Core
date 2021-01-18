@@ -195,8 +195,8 @@ return [
     'pr_DTMFMode' => 'DTMF模式',
     'pr_RegistrationSettings' => '注册设置',
     'pr_DefaultUser' => '使用其他字段覆盖授权名称（默认用户）',
-    'pr_FromUser' => '覆盖SIP数据包中“发件人：”字段中的用户名（发件人）',
-    'pr_FromDomain' => '覆盖SIP数据包中“发件人：”字段中的域名（fromdomain）',
+    'pr_FromUser' => '某些提供程序要求您另外指定一个与登录名不同的字段（来自用户）',
+    'pr_FromDomain' => '某些提供程序需要附加值（fromdomain）',
     'pr_ValidationProviderNameIsEmpty' => '输入提供商名称',
     'pr_ValidationProviderHostIsEmpty' => '输入提供商的主机或IP地址',
     'pr_ValidationProviderLoginIsEmpty' => '输入登录名以获取提供者的授权',
@@ -1063,4 +1063,5 @@ return [
     'gs_CallRecordTab' => '通话录音',
     'adv_ProblemWithInternetConnection' => '没有互联网连接。付费模块的操作可能存在问题。',
     'lic_GetTrialErrorCheckInternet' => '注册失败，请检查MikoPBX上的Internet',
+    'pr_EnterHostOrIp' => '附加提供者地址',
 ];
