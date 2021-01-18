@@ -20,8 +20,11 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\{Iax, IncomingRoutingTable, OutgoingRoutingTable, OutWorkTimes, Providers, Sip, SoundFiles};
+use MikoPBX\AdminCabinet\Forms\OutgoingRouteEditForm;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\IncomingContexts;
+use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\InternalContexts;
+use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\OutgoingContext;
 use MikoPBX\Modules\Config\ConfigClass;
 use MikoPBX\Core\System\{MikoPBXConfig, Storage, Util};
 use Phalcon\Di;
@@ -71,18 +74,18 @@ class ExtensionsConf extends ConfigClass
         $conf .= "\n";
         $conf .= "\n";
         $conf .= "[general] \n";
-        $conf .= "\n";
 
+        // Контекст для внутренних вызовов.
+        $conf .= InternalContexts::generate();
         // Создаем диалплан внутренних учеток.
         $this->generateOtherExten($conf);
-        // Контекст для внутренних вызовов.
-        $this->generateInternal($conf);
         // Контекст для внутренних переадресаций.
         $this->generateInternalTransfer($conf);
         // Создаем контекст хинтов.
         $this->generateSipHints($conf);
         // Создаем контекст (исходящие звонки).
-        $this->generateOutContextPeers($conf);
+        $conf .= OutgoingContext::generate();
+
         // Описываем контекст для публичных входящих.
         $this->generatePublicContext($conf);
 
@@ -163,153 +166,6 @@ class ExtensionsConf extends ConfigClass
     }
 
     /**
-     * Генератор контекста для внутренних вызовов.
-     *
-     * @param $conf
-     */
-    private function generateInternal(&$conf): void
-    {
-        $extension  = 'X!';
-        $technology = SIPConf::getTechnology();
-
-        $additionalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
-        foreach ($additionalModules as $appClass) {
-            $addition = $appClass->extensionGenContexts();
-            if ( ! empty($addition)) {
-                $conf .= $appClass->confBlockWithComments($addition);
-            }
-        }
-        $conf .= "\n";
-        $conf .= "[internal-num-undefined] \n";
-        $conf .= 'exten => _' . $extension . ',1,ExecIf($["${ISTRANSFER}x" != "x"]?Gosub(${ISTRANSFER}dial_hangup,${EXTEN},1))' . "\n\t";
-        $conf .= 'same => n,ExecIf($["${BLINDTRANSFER}x" != "x"]?AGI(check_redirect.php,${BLINDTRANSFER}))' . "\n\t";
-        $conf .= "same => n,Playback(pbx-invalid,noanswer) \n\n";
-
-        $conf .= "[internal-fw]\n";
-        $conf .= 'exten => _' . $extension . ',1,NoOp(DIALSTATUS - ${DIALSTATUS})' . "\n\t";
-        // CANCEL - вызов был отменен, к примеру *0, не нужно дальше искать адресат.
-        $conf .= 'same => n,ExecIf($["${DIALSTATUS}" == "CANCEL"]?Hangup())' . "\n\t";
-        // BUSY - занято. К примру абонент завершил вызов или DND.
-        $conf .= 'same => n,ExecIf($["${DIALSTATUS}" == "BUSY"]?Set(dstatus=FW_BUSY))' . "\n\t";
-        // CHANUNAVAIL - канал не доступен. К примеру телефон не зарегистрирован или не отвечает.
-        $conf .= 'same => n,ExecIf($["${DIALSTATUS}" == "CHANUNAVAIL"]?Set(dstatus=FW_UNAV))' . "\n\t";
-        // NOANSWER - не ответили по таймауту.
-        $conf .= 'same => n,ExecIf($["${dstatus}x" == "x"]?Set(dstatus=FW))' . "\n\t";
-        $conf .= 'same => n,Set(fw=${DB(${dstatus}/${EXTEN})})' . "\n\t";
-        $conf .= 'same => n,ExecIf($["${fw}x" != "x"]?Set(__pt1c_UNIQUEID=${UNDEFINED})' . "\n\t";
-        $conf .= 'same => n,ExecIf($["${fw}x" != "x"]?Goto(internal,${fw},1))' . "\n\t";
-        $conf .= 'same => n,ExecIf($["${BLINDTRANSFER}x" != "x"]?AGI(check_redirect.php,${BLINDTRANSFER}))' . "\n\t";
-        $conf .= 'same => n,Hangup() ' . "\n\n";
-
-        $conf .= "[all_peers]\n";
-        $conf .= 'include => internal-hints' . "\n";
-        $conf .= 'exten => failed,1,Hangup()' . "\n";
-
-        $conf .= 'exten => _.!,1,ExecIf($[ "${EXTEN}" == "h" ]?Hangup())' . "\n\t";
-        // Фильтр спецсимволов. Разершаем только цифры.
-        $conf .= 'same => n,Set(cleanNumber=${FILTER(\*\#\+1234567890,${EXTEN})})' . "\n\t";
-        $conf .= 'same => n,ExecIf($["${EXTEN}" != "${cleanNumber}"]?Goto(${CONTEXT},${cleanNumber},$[${PRIORITY} + 1]))' . "\n\t";
-
-        $conf .= 'same => n,Set(__FROM_CHAN=${CHANNEL})' . "\n\t";
-        $conf .= 'same => n,ExecIf($["${OLD_LINKEDID}x" == "x"]?Set(__OLD_LINKEDID=${CHANNEL(linkedid)}))' . "\n\t";
-        $conf .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" != "Local"]?Gosub(set_from_peer,s,1))' . "\n\t";
-        $conf .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" == "Local"]?Gosub(set_orign_chan,s,1))' . "\n\t";
-
-        $conf .= 'same => n,ExecIf($["${CALLERID(num)}x" == "x"]?Set(CALLERID(num)=${FROM_PEER}))' . "\n\t";
-        $conf .= 'same => n,ExecIf($["${CALLERID(num)}x" == "x"]?Set(CALLERID(name)=${FROM_PEER}))' . "\n\t";
-
-        $conf .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" == "Local" && "${FROM_PEER}x" == "x"]?Set(__FROM_PEER=${CALLERID(num)}))' . "\n\t";
-        $conf .= 'same => n,Set(CHANNEL(hangup_handler_wipe)=hangup_handler,s,1)' . "\n\t";
-        $conf .= 'same => n,Gosub(${ISTRANSFER}dial,${EXTEN},1)' . "\n\t";
-
-        $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1)' . "\n\t";
-        $dialplanNames = ['applications', 'internal', 'outgoing'];
-        foreach ($dialplanNames as $name){
-            $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS('.$name.',${EXTEN},1)}" == "1"]?'.$name.',${EXTEN},1)'." \n\t";
-        }
-        $conf .= 'same => n,Hangup()'." \n";
-
-        $pickupexten  = $this->generalSettings['PBXFeaturePickupExten'];
-        $conf        .= 'exten => _' . $pickupexten . $extension . ',1,Set(PICKUPEER=' . $technology . '/${FILTER(0-9,${EXTEN:2})})' . "\n\t";
-        $conf        .= 'same => n,Set(pt1c_dnid=${EXTEN})' . "\n\t";
-        $conf        .= 'same => n,PickupChan(${PICKUPEER})' . "\n\t";
-        $conf        .= 'same => n,Hangup()' . "\n\n";
-
-        $voicemail_exten  = $this->generalSettings['VoicemailExten'];
-        $conf            .= 'exten => ' . $voicemail_exten . ',1,NoOp(NOTICE, Dialing out from ${CALLERID(all)} to VoiceMail)' . "\n\t";
-        $conf            .= 'same => n,VoiceMailMain(admin@voicemailcontext,s)' . "\n\t";
-        $conf            .= 'same => n,Hangup()' . "\n\n";
-
-        $conf .= "[voice_mail_peer] \n";
-        $conf .= 'exten => voicemail,1,Answer()' . "\n\t";
-        $conf .= 'same => n,VoiceMail(admin@voicemailcontext)' . "\n\t";
-        $conf .= 'same => n,Hangup()' . "\n\n";
-
-        // Контекст для внутренних вызовов.
-        $conf .= "[internal] \n";
-
-        foreach ($additionalModules as $appClass) {
-            $addition = $appClass->getIncludeInternal();
-            if ( ! empty($addition)) {
-                $conf .= $appClass->confBlockWithComments($addition);
-            }
-        }
-
-        foreach ($additionalModules as $appClass) {
-            $addition = $appClass->extensionGenInternal();
-            if ( ! empty($addition)) {
-                $conf .= $appClass->confBlockWithComments($addition);
-            }
-        }
-
-        $conf .= 'exten => i,1,NoOp(-- INVALID NUMBER --)' . "\n\t";
-        $conf .= 'same => n,Set(DIALSTATUS=INVALID_NUMBER)' . "\n\t";
-        $conf .= 'same => n,Playback(privacy-incorrect,noanswer)' . "\n\t";
-        $conf .= 'same => n,Hangup()' . "\n";
-
-        $conf .= 'exten => h,1,ExecIf($["${ISTRANSFER}x" != "x"]?Gosub(${ISTRANSFER}dial_hangup,${EXTEN},1))' . "\n\n";
-
-        $conf .= "[internal-incoming]\n";
-        $conf .= 'exten => _.!,1,ExecIf($["${MASTER_CHANNEL(M_TIMEOUT)}x" != "x"]?Set(TIMEOUT(absolute)=${MASTER_CHANNEL(M_TIMEOUT)}))' . " \n\t";
-        $conf .= 'same => n,Set(MASTER_CHANNEL(M_TIMEOUT_CHANNEL)=${CHANNEL})' . " \n\t";
-        $conf .= 'same => n,Set(MASTER_CHANNEL(M_TIMEOUT)=${EMPTY_VAR})' . " \n\t";
-        $conf .= 'same => n,Goto(internal,${EXTEN},1)' . " \n\n";
-
-        $conf .= "[internal-users] \n";
-        $conf .= 'exten => _' . $extension . ',1,Set(CHANNEL(hangup_handler_wipe)=hangup_handler,s,1)' . " \n\t";
-        $conf .= 'same => n,ExecIf($["${ISTRANSFER}x" != "x"]?Set(SIPADDHEADER01=${EMPTY_VAR})' . " \n\t";
-        $conf .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" == "Local"]?Gosub(set_orign_chan,s,1))' . " \n\t";
-
-        $conf .= 'same => n,Gosub(${ISTRANSFER}dial,${EXTEN},1)' . "\n\t";
-        // Проверим, существует ли такой пир.
-
-        $conf .= 'same => n,ExecIf($["${PJSIP_ENDPOINT(${EXTEN},auth)}x" == "x"]?Goto(internal-num-undefined,${EXTEN},1))' . " \n\t";
-        $conf .= 'same => n,ExecIf($["${DEVICE_STATE(' . $technology . '/${EXTEN})}" == "BUSY"]?Set(DIALSTATUS=BUSY))' . " \n\t";
-        $conf .= 'same => n,GotoIf($["${DEVICE_STATE(' . $technology . '/${EXTEN})}" == "BUSY"]?fw_start)' . " \n\t";
-
-        // Как долго звонить пиру.
-        $conf .= 'same => n,Set(ringlength=${DB(FW_TIME/${EXTEN})})' . " \n\t";
-        $conf .= 'same => n,ExecIf($["${ringlength}x" == "x"]?Set(ringlength=600))' . " \n\t";
-        $conf .= 'same => n,ExecIf($["${QUEUE_SRC_CHAN}x" != "x" && "${ISTRANSFER}x" == "x"]?Set(ringlength=600))' . " \n\t";
-
-        $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1) ' . " \n\t";
-        // Совершаем вызов пира.
-        $conf .= 'same => n,Set(DST_CONTACT=${PJSIP_DIAL_CONTACTS(${EXTEN})})' . " \n\t";
-        $conf .= 'same => n,ExecIf($["${FIELDQTY(DST_CONTACT,&)}" != "1"]?Set(__PT1C_SIP_HEADER=${EMPTY_VAR}))' . " \n\t";
-        $conf .= 'same => n,ExecIf($["${DST_CONTACT}x" != "x"]?Dial(${DST_CONTACT},${ringlength},TtekKHhU(${ISTRANSFER}dial_answer)b(dial_create_chan,s,1)):Set(DIALSTATUS=CHANUNAVAIL))' . " \n\t";
-        $conf .= 'same => n(fw_start),NoOp(dial_hangup)' . " \n\t";
-
-        // QUEUE_SRC_CHAN - установлена, если вызов сервершен агенту очереди.
-        // Проверяем нужна ли переадресация
-        $conf .= 'same => n,ExecIf($["${DIALSTATUS}" != "ANSWER" && "${ISTRANSFER}x" != "x"]?Goto(internal-fw,${EXTEN},1))' . " \n\t";
-        $conf .= 'same => n,ExecIf($["${DIALSTATUS}" != "ANSWER" && "${QUEUE_SRC_CHAN}x" == "x"]?Goto(internal-fw,${EXTEN},1))' . " \n\t";
-        $conf .= 'same => n,ExecIf($["${BLINDTRANSFER}x" != "x"]?AGI(check_redirect.php,${BLINDTRANSFER}))' . " \n\t";
-        $conf .= 'same => n,Hangup()' . "\n\n";
-
-        $conf .= 'exten => h,1,ExecIf($["${ISTRANSFER}x" != "x"]?Gosub(${ISTRANSFER}dial_hangup,${EXTEN},1))' . "\n\n";
-    }
-
-    /**
      * Генератор контекста для переадресаций.
      *
      * @param $conf
@@ -351,152 +207,6 @@ class ExtensionsConf extends ConfigClass
             }
         }
         $conf .= "\n\n";
-    }
-
-    /**
-     * Генератор исходящих контекстов.
-     *
-     * @param $conf
-     */
-    private function generateOutContextPeers(&$conf): void
-    {
-        $additionalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
-        $conf              .= "[outgoing] \n";
-
-        $conf .= 'exten => _+.!,1,NoOp(Strip + sign from number and convert it to +)' . " \n\t";
-        $conf .= 'same => n,Set(ADDPLUS=+);' . " \n\t";
-        $conf .= 'same => n,Goto(${CONTEXT},${EXTEN:1},1);' . " \n\n";
-        $conf .= 'exten => _.!,1,ExecIf($[ "${EXTEN}" == "h" ]?Hangup())' . " \n\t";
-        $conf .= 'same => n,Ringing()' . " \n\t";
-
-        // Описываем возможность прыжка в пользовательский sub контекст.
-        $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1)' . "\n\t";
-
-        /** @var OutgoingRoutingTable $routs */
-        /** @var OutgoingRoutingTable $rout */
-        $routs = OutgoingRoutingTable::find(['order' => 'priority'])->toArray();
-        uasort($routs, __CLASS__ . '::sortArrayByPriority');
-
-        $provider_contexts = [];
-
-        foreach ($routs as $rout) {
-            $technology = $this->getTechByID($rout['providerid']);
-            if ($technology !== '') {
-                $rout_data                       = $rout;
-                $rout_data['technology']         = $technology;
-                $id_dialplan                     = $rout_data['providerid'] . '-' . $rout_data['id'] . '-outgoing';
-                $provider_contexts[$id_dialplan] = $rout_data;
-                $conf                            .= $this->generateOutgoingRegexPattern($rout_data);
-                continue;
-            }
-        }
-        $conf .= 'same => n,ExecIf($["${peer_mobile}x" != "x"]?Hangup())' . " \n\t";
-        $conf .= 'same => n,ExecIf($["${DIALSTATUS}" != "ANSWER" && "${BLINDTRANSFER}x" != "x" && "${ISTRANSFER}x" != "x"]?Gosub(${ISTRANSFER}dial_hangup,${EXTEN},1))' . "\n\t";
-        $conf .= 'same => n,ExecIf($["${BLINDTRANSFER}x" != "x"]?AGI(check_redirect.php,${BLINDTRANSFER}))' . " \n\t";
-        $conf .= 'same => n,ExecIf($["${ROUTFOUND}x" == "x"]?Gosub(dial,${EXTEN},1))' . "\n\t";
-
-        $conf .= 'same => n,Playback(silence/2,noanswer)' . " \n\t";
-        $conf .= 'same => n,ExecIf($["${ROUTFOUND}x" != "x"]?Playback(followme/sorry,noanswer):Playback(cannot-complete-as-dialed,noanswer))' . " \n\t";
-        $conf .= 'same => n,Hangup()' . " \n\n";
-        $conf .= 'exten => h,1,ExecIf($["${ISTRANSFER}x" != "x"]?Gosub(${ISTRANSFER}dial_hangup,${EXTEN},1))' . "\n\t";
-
-        foreach ($provider_contexts as $id_dialplan => $rout) {
-            $conf .= "\n[{$id_dialplan}]\n";
-            $trimFromBegin = (int) ($rout['trimfrombegin']??0);
-            if ($trimFromBegin > 0) {
-                $exten_var    = '${ADDPLUS}${EXTEN:' . $rout['trimfrombegin'] . '}';
-                $change_exten = 'same => n,ExecIf($["${EXTEN}" != "${number}"]?Goto(${CONTEXT},${number},$[${PRIORITY} + 1]))' . "\n\t";
-            } else {
-                $exten_var    = '${ADDPLUS}${EXTEN}';
-                $change_exten = '';
-            }
-            $conf .= 'exten => _.!,1,Set(number=' . $rout['prepend'] . $exten_var . ')' . "\n\t";
-            $conf .= 'same => n,Set(number=${FILTER(\*\#\+1234567890,${number})})' . "\n\t";
-            $conf .= $change_exten;
-            foreach ($additionalModules as $appClass) {
-                $addition = $appClass->generateOutRoutContext($rout);
-                if ( ! empty($addition)) {
-                    $conf .= $appClass->confBlockWithComments($addition);
-                }
-            }
-            $conf .= 'same => n,ExecIf($["${number}x" == "x"]?Hangup())' . "\n\t";
-            $conf .= 'same => n,Set(ROUTFOUND=1)' . "\n\t";
-            $conf .= 'same => n,Gosub(${ISTRANSFER}dial,${EXTEN},1)' . "\n\t";
-
-            $conf .= 'same => n,ExecIf($["${EXTERNALPHONE}" == "${EXTEN}"]?Set(DOPTIONS=tk))' . "\n\t";
-
-            // Описываем возможность прыжка в пользовательский sub контекст.
-            $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(' . $rout['providerid'] . '-outgoing-custom,${EXTEN},1)}" == "1"]?' . $rout['providerid'] . '-outgoing-custom,${EXTEN},1)' . "\n\t";
-
-            if ($rout['technology'] === IAXConf::TYPE_IAX2) {
-                $conf .= 'same => n,Dial(' . $rout['technology'] . '/' . $rout['providerid'] . '/${number},600,${DOPTIONS}TKU(${ISTRANSFER}dial_answer)b(dial_create_chan,s,1))' . "\n\t";
-            } else {
-                $conf .= 'same => n,Dial(' . $rout['technology'] . '/${number}@' . $rout['providerid'] . ',600,${DOPTIONS}TKU(${ISTRANSFER}dial_answer)b(dial_create_chan,s,1))' . "\n\t";
-            }
-            foreach ($additionalModules as $appClass) {
-                $addition = $appClass->generateOutRoutAfterDialContext($rout);
-                if ( ! empty($addition)) {
-                    $conf .= $appClass->confBlockWithComments($addition);
-                }
-            }
-            $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(' . $rout['providerid'] . '-outgoing-after-dial-custom,${EXTEN}),1}" == "1"]?' . $rout['providerid'] . '-outgoing-after-dial-custom,${EXTEN},1)' . "\n\t";
-
-            $conf .= 'same => n,ExecIf($["${ISTRANSFER}x" != "x"]?Gosub(${ISTRANSFER}dial_hangup,${EXTEN},1))' . "\n\t";
-            $conf .= 'same => n,ExecIf($["${DIALSTATUS}" = "ANSWER"]?Hangup())' . "\n\t";
-            $conf .= 'same => n,Set(pt1c_UNIQUEID=${EMPTY_VALUE})' . "\n\t";
-            $conf .= 'same => n,return' . "\n";
-        }
-    }
-
-    /**
-     * Генератор extension для контекста outgoing.
-     *
-     * @param string $uniqueID
-     *
-     * @return null|string
-     */
-    public function getTechByID(string $uniqueID): string
-    {
-        $technology = '';
-        $provider   = Providers::findFirstByUniqid($uniqueID);
-        if ($provider !== null) {
-            if ($provider->type === 'SIP') {
-                $account    = Sip::findFirst('disabled="0" AND uniqid = "' . $uniqueID . '"');
-                $technology = ($account === null) ? '' : SIPConf::getTechnology();
-            } elseif ($provider->type === 'IAX') {
-                $account    = Iax::findFirst('disabled="0" AND uniqid = "' . $uniqueID . '"');
-                $technology = ($account === null) ? '' : 'IAX2';
-            }
-        }
-
-        return $technology;
-    }
-
-    /**
-     * Генератор исходящего маршрута.
-     *
-     * @param $rout
-     *
-     * @return string
-     */
-    private function generateOutgoingRegexPattern($rout): string
-    {
-        $conf         = '';
-        $regexPattern = '';
-        
-        $restNumbers = (int) ($rout['restnumbers']??0);
-        if ($restNumbers > 0) {
-            $regexPattern = "[0-9]{" . $rout['restnumbers'] . "}$";
-        } elseif ($restNumbers === 0) {
-            $regexPattern = "$";
-        } elseif ($restNumbers === -1) {
-            $regexPattern = "";
-        }
-        $numberBeginsWith = $rout['numberbeginswith']??'';
-        $numberBeginsWith = str_replace(array('*', '+'), array('\\\\*', '\\\\+'), $numberBeginsWith);
-        $conf            .= 'same => n,ExecIf($["${REGEX("^' . $numberBeginsWith . $regexPattern . '" ${EXTEN})}" == "1"]?Gosub(' . $rout['providerid'] . '-' . $rout['id'] . '-outgoing,${EXTEN},1))' . " \n\t";
-
-        return $conf;
     }
 
     /**
