@@ -123,7 +123,7 @@ class SysLogsManagementProcessor extends Injectable
     }
 
     /**
-     * Стартует запись логов.
+     * Starts logs record
      *
      * @param int $timeout
      *
@@ -196,7 +196,7 @@ class SysLogsManagementProcessor extends Injectable
     }
 
     /**
-     * Check if archive ready then create download link
+     * Checks if archive ready then create download link
      *
      * @param string $resultFile
      *
@@ -305,7 +305,6 @@ class SysLogsManagementProcessor extends Injectable
     }
 
     /**
-     *
      * Scans a directory just like scandir(), only recursively
      * returns a hierarchical array representing the directory structure
      *
