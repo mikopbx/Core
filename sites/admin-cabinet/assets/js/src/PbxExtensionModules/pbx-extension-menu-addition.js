@@ -42,7 +42,7 @@ const pbxExtensionMenuAddition = {
 	 */
 	showPreviousMenuVersion() {
 		const previousMenu = sessionStorage.getItem(`previousMenu${globalWebAdminLanguage}`);
-		if (previousMenu !== null) {
+		if (previousMenu !== null && previousMenu !== undefined) {
 			pbxExtensionMenuAddition.$sidebarMenu.html(previousMenu);
 			pbxExtensionMenuAddition.makeMenuActiveElement();
 		}

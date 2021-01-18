@@ -21,8 +21,8 @@ declare(strict_types=1);
 
 namespace MikoPBX\AdminCabinet\Config;
 
-use MikoPBX\AdminCabinet\Providers\{
-    AssetProvider,
+use MikoPBX\AdminCabinet\Providers\{AssetProvider,
+    CryptProvider,
     DispatcherProvider,
     ElementsProvider,
     FlashProvider,
@@ -104,7 +104,10 @@ class RegisterDIServices
 
              // Inject Logger
             LoggerAuthProvider::class,
-            LoggerProvider::class
+            LoggerProvider::class,
+
+            // Inject crypto provider
+            CryptProvider::class,
 
         ];
 

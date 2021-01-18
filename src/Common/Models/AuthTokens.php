@@ -17,32 +17,47 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-namespace MikoPBX\AdminCabinet\Forms;
+namespace MikoPBX\Common\Models;
 
-use Phalcon\Forms\Element\Check;
-use Phalcon\Forms\Element\Password;
-use Phalcon\Forms\Element\Text;
-use Phalcon\Forms\Form;
+use Phalcon\Mvc\Model\Behavior\Timestampable;
 
 /**
- * Class LoginForm
+ * Class AuthTokens
  *
- * @package MikoPBX\AdminCabinet\Forms
- * @property \MikoPBX\Common\Providers\TranslationProvider translation
+ * @package MikoPBX\Common\Models
  */
-class LoginForm extends Form
+class AuthTokens extends ModelsBase
 {
+    /**
+     * @Primary
+     * @Identity
+     * @Column(type="integer", nullable=false)
+     */
+    public $id;
+
+    /**
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $tokenHash = '';
+
+    /**
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $sessionParams = '';
+
+    /**
+     * @Column(type="string", nullable=false)
+     */
+    public ?string $expiryDate = '';
+
+
+    /**
+     * Class initialization
+     */
     public function initialize(): void
     {
-        // Login
-        $login = new Text('login');
-        $this->add($login);
-
-        // Password
-        $password = new Password('password');
-        $this->add($password);
-
-        // RememberMe
-        $this->add(new Check('rememberMeCheckBox', ['value' => null]));
+        $this->setSource('m_AuthTokens');
+        parent::initialize();
     }
+
 }

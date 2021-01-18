@@ -21,6 +21,7 @@
 const loginForm = {
 	$formObj: $('#login-form'),
 	$submitButton: $('#submitbutton'),
+	$checkBoxes: $('.checkbox'),
 	validateRules: {
 		login: {
 			identifier: 'login',
@@ -52,6 +53,7 @@ const loginForm = {
 			.on('input', () => {
 			$('.message.ajax').remove();
 		});
+		loginForm.$checkBoxes.checkbox();
 	},
 	cbBeforeSendForm(settings) {
 		const result = settings;

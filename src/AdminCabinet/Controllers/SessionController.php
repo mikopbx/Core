@@ -20,6 +20,7 @@
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\LoginForm;
+use MikoPBX\Common\Models\AuthTokens;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Common\Providers\ModelsCacheProvider;
@@ -34,25 +35,11 @@ class SessionController extends BaseController
 {
     public function indexAction(): void
     {
-        $this->flushCache();
         $this->view->NameFromSettings
                           = PbxSettings::getValueByKey('Name');
         $this->view->DescriptionFromSettings
                           = PbxSettings::getValueByKey('Description');
         $this->view->form = new LoginForm();
-    }
-
-    /**
-     * Flush all cache folders
-     */
-    private function flushCache(): void
-    {
-        if ($this->di->has(ModelsCacheProvider::SERVICE_NAME)) {
-            $this->di->getShared(ModelsCacheProvider::SERVICE_NAME)->clear();
-        }
-        if ($this->di->has(ManagedCacheProvider::SERVICE_NAME)) {
-            $this->di->getShared(ManagedCacheProvider::SERVICE_NAME)->clear();
-        }
     }
 
     /**
@@ -80,6 +67,7 @@ class SessionController extends BaseController
             $remoteAddress = $this->request->getClientAddress(true);
             $userAgent     = $this->request->getUserAgent();
             $this->loggerAuth->warning("From: {$remoteAddress} UserAgent:{$userAgent} Cause: Wrong password");
+            $this->clearAuthCookies();
         }
     }
 
@@ -94,6 +82,64 @@ class SessionController extends BaseController
             'role' => $role,
         ];
         $this->session->set('auth', $sessionParams);
+
+        if ($this->request->getPost('rememberMeCheckBox') === 'on') {
+            $this->updateRememberMeCookies($sessionParams);
+        } else {
+            $this->clearAuthCookies();
+        }
+    }
+
+    /**
+     * Setups random password and selector to browser cookie storage to remember me facility
+     *
+     * @param array $sessionParams
+     */
+    private function updateRememberMeCookies(array $sessionParams): void
+    {
+        $cookieExpirationTime = time() + (30 * 24 * 60 * 60);  // for 1 month
+
+        $randomPassword = $this->security->getSaltBytes(32);
+        $this->cookies->set("random_token", $randomPassword, $cookieExpirationTime);
+
+        $randomPasswordHash = $this->security->hash($randomPassword);
+
+        $expiryDate = date("Y-m-d H:i:s", $cookieExpirationTime);
+
+        // Get token for username
+        $parameters = [
+            'conditions' => 'tokenHash = :tokenHash:',
+            'binds'      => [
+                'tokenHash' => $randomPasswordHash,
+            ],
+        ];
+        $userToken  = AuthTokens::findFirst($parameters);
+        if ($userToken === null) {
+            $userToken = new AuthTokens();
+        }
+        // Insert new token
+        $userToken->tokenHash     = $randomPasswordHash;
+        $userToken->expiryDate    = $expiryDate;
+        $userToken->sessionParams = json_encode($sessionParams);
+        $userToken->save();
+    }
+
+    /**
+     * Clears remember me cookies
+     */
+    private function clearAuthCookies(): void
+    {
+        if ($this->cookies->has('random_token')) {
+            $cookie     = $this->cookies->get('random_token');
+            $value      = $cookie->getValue();
+            $userTokens = AuthTokens::find();
+            foreach ($userTokens as $userToken) {
+                if ($this->security->checkHash($value, $userToken->tokenHash)) {
+                    $userToken->delete();
+                }
+            }
+            $cookie->delete();
+        }
     }
 
     /**
@@ -108,8 +154,8 @@ class SessionController extends BaseController
         }
         $languageSettings = PbxSettings::findFirstByKey('WebAdminLanguage');
         if ($languageSettings === null) {
-            $languageSettings      = new PbxSettings();
-            $languageSettings->key = 'WebAdminLanguage';
+            $languageSettings        = new PbxSettings();
+            $languageSettings->key   = 'WebAdminLanguage';
             $languageSettings->value = PbxSettings::getDefaultArrayValues()['WebAdminLanguage'];
         }
         if ($newLanguage !== $languageSettings->value) {
@@ -141,8 +187,8 @@ class SessionController extends BaseController
      */
     public function endAction(): void
     {
-        $this->flushCache();
         $this->session->remove('auth');
         $this->session->destroy();
+        $this->clearAuthCookies();
     }
 }

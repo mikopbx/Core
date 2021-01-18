@@ -36,14 +36,17 @@ class NotFoundPlugin extends Injectable
     /**
      * This action is executed before perform any action in the application
      *
-     * @param Event         $event
+     * @param Event $event
      * @param MvcDispatcher $dispatcher
-     * @param Exception     $exception
+     * @param Exception $exception
      *
      * @return bool
      */
-    public function beforeException(/** @scrutinizer ignore-unused */ Event $event, MvcDispatcher $dispatcher, Exception $exception): bool
-    {
+    public function beforeException(
+        /** @scrutinizer ignore-unused */ Event $event,
+        MvcDispatcher $dispatcher,
+        Exception $exception
+    ): bool {
         if ($exception instanceof DispatcherException) {
             switch ($exception->getCode()) {
                 case DispatcherException::EXCEPTION_HANDLER_NOT_FOUND:
@@ -61,12 +64,10 @@ class NotFoundPlugin extends Injectable
 
         $dispatcher->forward(
             [
-                    'controller' => 'errors',
-                    'action'     => 'show500',
+                'controller' => 'errors',
+                'action'     => 'show500',
             ]
         );
-
-
 
         return false;
     }

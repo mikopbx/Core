@@ -19,6 +19,7 @@
 
 namespace MikoPBX\AdminCabinet\Plugins;
 
+use MikoPBX\Common\Models\AuthTokens;
 use Phalcon\Di\Injectable;
 use Phalcon\Events\Event;
 use Phalcon\Mvc\Dispatcher;
@@ -39,46 +40,73 @@ class SecurityPlugin extends Injectable
      *
      * @return bool
      */
-    public function beforeDispatch(/** @scrutinizer ignore-unused */ Event $event, Dispatcher $dispatcher):bool
+    public function beforeDispatch(/** @scrutinizer ignore-unused */ Event $event, Dispatcher $dispatcher): bool
     {
-        if ($_SERVER['REMOTE_ADDR'] === '127.0.0.1') {
-            return true;
-        }
+        $isLoggedIn = $this->checkUserAuth();
         $controller = strtoupper($dispatcher->getControllerName());
-        if ($this->request->isAjax()) {
-            if ($controller !== 'SESSION') {
-                $sessionRo = $this->di->getShared('sessionRO');
-                if ( ! is_array($sessionRo)
-                    || ! array_key_exists('auth', $sessionRo)
-                ) {
-                    $this->response->setStatusCode(403, 'Forbidden')
-                        ->sendHeaders();
-                    $this->response->setContent('The user isn\'t authenticated');
-                    $this->response->send();
 
-                    return false;
-                }
-            }
-        } else { // не AJAX запрос
-            $auth = $this->session->get('auth');
-            if ( ! $auth && $controller !== 'SESSION') {
+        if ( ! $isLoggedIn && $controller !== 'SESSION') {
+            // AJAX REQUESTS
+            if ($this->request->isAjax()) {
+                $this->response->setStatusCode(403, 'Forbidden')->sendHeaders();
+                $this->response->setContent('This user not authorised');
+                $this->response->send();
+
+                return false;
+            } else { // Usual requests
                 $dispatcher->forward(
                     [
                         'controller' => 'session',
                         'action'     => 'index',
                     ]
                 );
-            } elseif ($controller == 'INDEX') {
-                // TODO: когда будет главная страница сделаем переадресацию на нее
-                $dispatcher->forward(
-                    [
-                        'controller' => 'extensions',
-                        'action'     => 'index',
-                    ]
-                );
+            }
+
+            return true;
+        }
+
+        if ($isLoggedIn && $controller === 'INDEX') {
+            $dispatcher->forward(
+                [
+                    'controller' => 'extensions',
+                    'action'     => 'index',
+                ]
+            );
+        }
+
+        return true;
+    }
+
+    /**
+     * Checks if user already logged in or not
+     *
+     * @return bool
+     */
+    private function checkUserAuth(): bool
+    {
+        // Check if it localhost request
+        if ($_SERVER['REMOTE_ADDR'] === '127.0.0.1') {
+            return true;
+        } // Check if user already registered
+        elseif ($this->session->has('auth')) {
+            return true;
+        } // Check if remember me cookie exists
+        elseif ($this->cookies->has('random_token')) {
+            $token       = $this->cookies->get('random_token')->getValue();
+            $currentDate = date("Y-m-d H:i:s", time());
+            $userTokens  = AuthTokens::find();
+            foreach ($userTokens as $userToken) {
+                if ($userToken->expiryDate < $currentDate) {
+                    $userToken->delete();
+                } elseif ($this->security->checkHash($token, $userToken->tokenHash)) {
+                    $sessionParams = json_decode($userToken->sessionParams);
+                    $this->session->set('auth', $sessionParams);
+                    return true;
+                }
             }
         }
-        return true;
+
+        return false;
     }
 
 }
