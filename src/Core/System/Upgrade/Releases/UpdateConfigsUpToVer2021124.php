@@ -62,7 +62,12 @@ class UpdateConfigsUpToVer2021124 extends Injectable implements UpgradeSystemCon
         $oldCacheFolders = [
             '/storage/usbdisk1/mikopbx/tmp/models_cache',
             '/storage/usbdisk1/mikopbx/tmp/managed_cache',
-            '/storage/usbdisk1/mikopbx/tmp/www_cache',
+            '/storage/usbdisk1/mikopbx/tmp/www_cache/managed_cache',
+            '/storage/usbdisk1/mikopbx/tmp/www_cache/models_cache',
+            '/storage/usbdisk1/mikopbx/tmp/www_cache/js',
+            '/storage/usbdisk1/mikopbx/tmp/www_cache/css',
+            '/storage/usbdisk1/mikopbx/tmp/www_cache/img',
+            '/storage/usbdisk1/mikopbx/tmp/www_cache/php_session',
         ];
         foreach ($oldCacheFolders as $cacheDir){
             if (is_dir($cacheDir)){
