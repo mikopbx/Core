@@ -79,10 +79,8 @@ class IncomingContexts extends ConfigClass{
         if (!empty($rout_data)) {
             return;
         }
-        $number      = trim($rout['number']);
-        $rout_number = ($number === '') ? 'X!' : $number;
-
         $ext_prefix = ('none' === $this->provider) ? '' : '_';
+
         $rout_data .= "exten => {$ext_prefix}{$rout_number},1,NoOp(--- Incoming call ---)\n\t";
         $rout_data .= 'same => n,Set(CHANNEL(language)=' . $this->lang . ')' . "\n\t";
         $rout_data .= 'same => n,Set(CHANNEL(hangup_handler_wipe)=hangup_handler,s,1)' . "\n\t";
@@ -93,18 +91,30 @@ class IncomingContexts extends ConfigClass{
         $rout_data .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" == "Local"]?Set(__FROM_PEER=${CALLERID(num)}))' . "\n\t";
         $rout_data .= 'same => n,Gosub(add-trim-prefix-clid,${EXTEN},1)' . "\n\t";
 
-        foreach ($this->additionalModules as $appClass) {
-            $addition = $appClass->generateIncomingRoutBeforeDial($rout_number);
-            if (!empty($addition)) {
-                $rout_data .= $appClass->confBlockWithComments($addition);
-            }
-        }
+        $rout_data .= $this->generateRouteDialplanBeforeDialModules($rout_number);
         // Описываем возможность прыжка в пользовательский sub контекст.
         $rout_data .= " \n\t" . 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1)';
 
         if (!empty($rout['extension'])) {
             $rout_data = rtrim($rout_data);
         }
+    }
+
+    /**
+     * Генерация включений dialplan из дополонительных модулей перед Dial.
+     * @param $rout_number
+     * @return string
+     */
+    private function generateRouteDialplanBeforeDialModules($rout_number):string
+    {
+        $rout_data = '';
+        foreach ($this->additionalModules as $appClass) {
+            $addition = $appClass->generateIncomingRoutBeforeDial($rout_number);
+            if (!empty($addition)) {
+                $rout_data .= $appClass->confBlockWithComments($addition);
+            }
+        }
+        return $rout_data;
     }
 
     /**
@@ -116,9 +126,14 @@ class IncomingContexts extends ConfigClass{
         if (empty($rout['extension'])) {
             return;
         }
-        $timeout     = trim($rout['timeout']);
         $number      = trim($rout['number']);
         $rout_number = ($number === '') ? 'X!' : $number;
+        $this->generateDialActionsRoutNumber($rout, $rout_number);
+        $this->duplicateDialActionsRoutNumber($rout, $rout_number, $number);
+    }
+    private function generateDialActionsRoutNumber($rout, $rout_number):void
+    {
+        $timeout     = trim($rout['timeout']);
         // Обязательно проверяем "DIALSTATUS", в случае с парковой через AMI вызова это необходимо.
         // При ответе может отработать следующий приоритет.
         if (!isset($this->rout_data_dial[$rout_number])) {
@@ -134,6 +149,9 @@ class IncomingContexts extends ConfigClass{
             $this->rout_data_dial[$rout_number] .= " \n\t" . "same => n,Set(M_TIMEOUT={$timeout})";
         }
         $this->rout_data_dial[$rout_number] .= $dial_command;
+    }
+    private function duplicateDialActionsRoutNumber($rout, $rout_number, $number):void
+    {
         if (!is_array($this->provider)) {
             return;
         }
@@ -163,7 +181,8 @@ class IncomingContexts extends ConfigClass{
      * Формирование итогового dialplan.
      * @return string
      */
-    private function createSummaryDialplan(): string{
+    private function createSummaryDialplan(): string
+    {
         /** @var IncomingRoutingTable $default_action */
         $default_action = IncomingRoutingTable::findFirst('priority = 9999');
 
@@ -174,14 +193,27 @@ class IncomingContexts extends ConfigClass{
             if (null === $default_action && 'none' !== $this->provider) {
                 continue;
             }
-            if ('extension' === $default_action->action) {
-                $conf = $this->createSummaryDialplanGoto($conf, $default_action, $uniqId);
-                $conf .= " \t" . 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-after-dial-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-after-dial-custom,${EXTEN},1)' . "\n";
-            } elseif ('busy' === $default_action->action) {
-                $conf .= "\t" . "same => n,Busy()" . "\n";
-            }
-            $conf .= "\t" . "same => n,Hangup()" . "\n";
+            $conf .= $this->createSummaryDialplanDefAction($default_action, $uniqId);
         }
+        return $conf;
+    }
+
+    /**
+     * Формирование действия по умолчанию в dialplan.
+     * @param $default_action
+     * @param $uniqId
+     * @return string
+     */
+    private function createSummaryDialplanDefAction($default_action, $uniqId):string
+    {
+        $conf = '';
+        if ('extension' === $default_action->action) {
+            $conf = $this->createSummaryDialplanGoto($conf, $default_action, $uniqId);
+            $conf .= " \t" . 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-after-dial-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-after-dial-custom,${EXTEN},1)' . "\n";
+        } elseif ('busy' === $default_action->action) {
+            $conf .= "\t" . "same => n,Busy()" . "\n";
+        }
+        $conf .= "\t" . "same => n,Hangup()" . "\n";
         return $conf;
     }
 
@@ -235,9 +267,23 @@ class IncomingContexts extends ConfigClass{
 
     /**
      * Проверка нужен ли дефолтный маршрут для провайдера.
+     * Наполнение таблицы маршрутизаци значением по умолчанию.
      * @return bool
      */
     private function checkNeedDefRout(): bool{
+        $need_def_rout = $this->needDefRout();
+        if ($need_def_rout === true && 'none' !== $this->provider) {
+            $this->routes[] = ['number' => '', 'extension' => '', 'timeout' => ''];
+        }
+        return $need_def_rout;
+    }
+
+    /**
+     * Проверка нужен ли дефолтный маршрут для провайдера.
+     * @return bool
+     */
+    private function needDefRout():bool
+    {
         $need_def_rout = true;
         foreach ($this->routes as $rout) {
             $number = trim($rout['number']);
@@ -245,9 +291,6 @@ class IncomingContexts extends ConfigClass{
                 $need_def_rout = false;
                 break;
             }
-        }
-        if ($need_def_rout === true && 'none' !== $this->provider) {
-            $this->routes[] = ['number' => '', 'extension' => '', 'timeout' => ''];
         }
         return $need_def_rout;
     }
@@ -272,13 +315,31 @@ class IncomingContexts extends ConfigClass{
     private function multiplyExtensionsInDialplanStringLogin(): void
     {
         $add_login_pattern = $this->needAddLoginExtension();
-        if ($add_login_pattern && array_key_exists('X!', $this->rout_data_dial) && isset($this->dialplan['X!'])) {
+        if ($this->isMultipleRoutes($add_login_pattern)) {
             $this->dialplan[$this->login] = str_replace('_X!,1', "{$this->login},1", $this->dialplan['X!']);
             $this->rout_data_dial[$this->login] = $this->rout_data_dial['X!'];
-        } elseif ($add_login_pattern === true && $this->need_def_rout === true && count($this->routes) === 1) {
+        } elseif ($this->defaultRouteOnly($add_login_pattern)) {
             // Только маршрут "По умолчанию".
             $this->dialplan[$this->login] = str_replace('_X!,1', "{$this->login},1", $this->dialplan['X!']);
         }
+    }
+
+    /**
+     * Несколько возможных входящих маршрутов "Каскад".
+     * @param bool $add_login_pattern
+     * @return bool
+     */
+    private function isMultipleRoutes(bool $add_login_pattern): bool{
+        return $add_login_pattern && array_key_exists('X!', $this->rout_data_dial) && isset($this->dialplan['X!']);
+    }
+
+    /**
+     * Проверка. Нужен только маршрут по умолчанию.
+     * @param bool $add_login_pattern
+     * @return bool
+     */
+    private function defaultRouteOnly(bool $add_login_pattern): bool{
+        return $add_login_pattern === true && $this->need_def_rout === true && count($this->routes) === 1;
     }
 
     /**
