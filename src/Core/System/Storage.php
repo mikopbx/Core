@@ -1139,7 +1139,7 @@ class Storage extends Di\Injectable
 
         $arrConfig = $this->config->toArray();
         foreach ($arrConfig as $key => $entry) {
-            if (array_key_exists($key, ['www','adminApplication'])){
+            if (in_array($key, ['www','adminApplication'])){
                 foreach ($entry as $subKey => $subEntry) {
                     if (stripos($subKey, 'path') === false
                         && stripos($subKey, 'dir') === false
