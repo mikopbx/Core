@@ -30,6 +30,7 @@ use MikoPBX\Common\Models\{Codecs,
     Users};
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Asterisk\AstDB;
+use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\IncomingContexts;
 use MikoPBX\Modules\Config\ConfigClass;
 use MikoPBX\Core\System\{MikoPBXConfig, Network, Util};
 use MikoPBX\Core\Utilities\SubnetCalculator;
@@ -837,20 +838,14 @@ class SIPConf extends ConfigClass
         // Генерация внутреннего номерного плана.
         $conf = '';
 
-        foreach ($this->data_peers as $peer) {
-            $conf .= "[peer_{$peer['extension']}] \n";
-            $conf .= "include => internal \n";
-            $conf .= "include => outgoing \n";
-        }
-
         $contexts = [];
         // Входящие контексты.
         foreach ($this->data_providers as $provider) {
             $contexts_data = $this->contexts_data[$provider['context_id']];
             if (count($contexts_data) === 1) {
-                $conf .= ExtensionsConf::generateIncomingContextPeers($provider['uniqid'], $provider['username'], '');
+                $conf .= IncomingContexts::generate($provider['uniqid'], $provider['username']);
             } elseif ( ! in_array($provider['context_id'], $contexts, true)) {
-                $conf       .= ExtensionsConf::generateIncomingContextPeers(
+                $conf       .= IncomingContexts::generate(
                     $contexts_data,
                     null,
                     $provider['context_id']

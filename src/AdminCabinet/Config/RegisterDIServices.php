@@ -21,12 +21,11 @@ declare(strict_types=1);
 
 namespace MikoPBX\AdminCabinet\Config;
 
-use MikoPBX\AdminCabinet\Providers\{
-    AssetProvider,
+use MikoPBX\AdminCabinet\Providers\{AssetProvider,
+    CryptProvider,
     DispatcherProvider,
     ElementsProvider,
     FlashProvider,
-    LanguageSelectorProvider,
     RouterProvider,
     SessionProvider,
     ViewProvider,
@@ -45,9 +44,11 @@ use MikoPBX\Common\Providers\{BeanstalkConnectionCacheProvider,
     RegistryProvider,
     SessionReadOnlyProvider,
     MessagesProvider,
+    LanguageProvider,
     TranslationProvider,
     LicenseProvider,
-    UrlProvider};
+    UrlProvider
+};
 use Phalcon\Di\DiInterface;
 
 class RegisterDIServices
@@ -91,7 +92,7 @@ class RegisterDIServices
             // Inject translation
             MessagesProvider::class,
             TranslationProvider::class,
-            LanguageSelectorProvider::class,
+            LanguageProvider::class,
 
             // Inject license
             LicenseProvider::class,
@@ -104,7 +105,10 @@ class RegisterDIServices
 
              // Inject Logger
             LoggerAuthProvider::class,
-            LoggerProvider::class
+            LoggerProvider::class,
+
+            // Inject crypto provider
+            CryptProvider::class,
 
         ];
 

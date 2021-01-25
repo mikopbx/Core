@@ -19,6 +19,7 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
+use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Password;
 use Phalcon\Forms\Element\Text;
 use Phalcon\Forms\Form;
@@ -33,11 +34,15 @@ class LoginForm extends Form
 {
     public function initialize(): void
     {
+        // Login
         $login = new Text('login');
         $this->add($login);
 
         // Password
         $password = new Password('password');
         $this->add($password);
+
+        // RememberMe
+        $this->add(new Check('rememberMeCheckBox', ['value' => null]));
     }
 }

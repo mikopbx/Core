@@ -19,16 +19,17 @@
 
 declare(strict_types=1);
 
-namespace MikoPBX\AdminCabinet\Providers;
+namespace MikoPBX\Common\Providers;
 
-use MikoPBX\AdminCabinet\Library\LanguageSelector;
+use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 
 /**
  * The URL component is used to generate all kind of urls in the application
  */
-class LanguageSelectorProvider implements ServiceProviderInterface
+class LanguageProvider implements ServiceProviderInterface
 {
     public const SERVICE_NAME = 'language';
 
@@ -42,19 +43,23 @@ class LanguageSelectorProvider implements ServiceProviderInterface
         $di->setShared(
             self::SERVICE_NAME,
             function () use ($di){
-                $roSession = $di->getShared('sessionRO');
-                if ($roSession !== null && array_key_exists(
-                        'WebAdminLanguage',
-                        $roSession
-                    ) && ! empty($roSession['WebAdminLanguage'])) {
-                    $language = $roSession['WebAdminLanguage'];
-                } elseif (array_key_exists('HTTP_ACCEPT_LANGUAGE', $_SERVER)) {
-                    $ls       = new LanguageSelector();
-                    $language = $ls->getBestMatch();
+                if (php_sapi_name() === 'cli') {
+                    if (cli_get_process_title() === WorkerApiCommands::class) {
+                        $language = PbxSettings::getValueByKey('WebAdminLanguage');
+                    } else {
+                        $language = PbxSettings::getValueByKey('SSHLanguage');
+                    }
                 } else {
-                    $language = 'en';
+                    $roSession = $di->getShared(SessionReadOnlyProvider::SERVICE_NAME);
+                    if ($roSession !== null && array_key_exists(
+                            'WebAdminLanguage',
+                            $roSession
+                        ) && ! empty($roSession['WebAdminLanguage'])) {
+                        $language = $roSession['WebAdminLanguage'];
+                    } else {
+                        $language = PbxSettings::getValueByKey('WebAdminLanguage');
+                    }
                 }
-
                 return $language;
             }
         );

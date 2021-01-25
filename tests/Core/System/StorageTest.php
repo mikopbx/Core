@@ -127,8 +127,11 @@ class StorageTest extends AbstractUnitTest
     {
     }
 
-    public function testSaveFstab()
+    public function testApplyFolderRights()
     {
+        $this->storage = new Storage();
+        $this->invokeMethod($this->storage, 'applyFolderRights');
+        $this->assertTrue(true);
     }
 
 

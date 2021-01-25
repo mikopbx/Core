@@ -18,7 +18,6 @@
  */
 
 namespace MikoPBX\Core\Rc;
-
 use MikoPBX\Core\Config\RegisterDIServices;
 use MikoPBX\Core\Workers\WorkerAmiListener;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
@@ -35,17 +34,21 @@ if(Storage::isStorageDiskMounted()){
     return 0;
 }
 
-$valid_disks = [];
+$validDisks = [];
 $all_hdd = $storage->getAllHdd();
 $system_disk   = '';
 
 $selected_disk = ['size' => 0, 'id' => ''];
 foreach ($all_hdd as $disk) {
-    $additional = '';
-	if($disk['mounted'] && $disk['sys_disk'] && file_exists("/dev/{$disk['id']}4")){
+    $additional       = '';
+    $devName          = Storage::getDevPartName($disk['id'], '4');
+    $isLiveCd         = ( $disk['sys_disk'] && file_exists('/offload/livecd') );
+    $isMountedSysDisk = (!empty($disk['mounted']) && $disk['sys_disk'] && file_exists("/dev/{$devName}"));
+
+    if($isMountedSysDisk){
         $system_disk = $disk['id'];
 	    $additional.= "\033[31;1m [SYSTEM]\033[0m";
-	}elseif ($disk['sys_disk'] && file_exists('/offload/livecd')){
+	}elseif($isLiveCd){
         $system_disk = $disk['id'];
         $additional.= "\033[31;1m [SYSTEM]\033[0m";
 	}elseif ($disk['mounted']){
@@ -57,14 +60,16 @@ foreach ($all_hdd as $disk) {
     }
 
     $part = $disk['sys_disk']?'4':'1';
-	if(Storage::isStorageDisk("/dev/{$disk['id']}{$part}")){
+    $devName = Storage::getDevPartName($disk['id'], $part);
+    $devFour = '/dev/'.$devName;
+	if(Storage::isStorageDisk($devFour)){
         $additional.= "\033[33;1m [STORAGE] \033[0m";
     }
 
     if($disk['sys_disk']){
         $part4_found = false;
         foreach ($disk['partitions'] as $partition){
-            if($partition['dev'] === "{$disk['id']}4" && $partition['size'] > 1000){
+            if($partition['dev'] === $devName && $partition['size'] > 1000){
                 $part4_found = true;
             }
         }
@@ -74,10 +79,10 @@ foreach ($all_hdd as $disk) {
     }elseif($disk['size'] < 1024){
         continue;
     }
-    $valid_disks[$disk['id']] = "  - {$disk['id']}, {$disk['size_text']}, {$disk['vendor']}{$additional}\n";
+    $validDisks[$disk['id']] = "  - {$disk['id']}, {$disk['size_text']}, {$disk['vendor']}{$additional}\n";
 }
 
-if(count($valid_disks) === 0) {
+if(count($validDisks) === 0) {
     echo "\n " . Util::translate('Valid disks not found...') . " \n";
     sleep(3);
     return 0;
@@ -86,7 +91,7 @@ if(count($valid_disks) === 0) {
 echo "\n ".Util::translate('Select the drive to store the data.');
 echo "\n ".Util::translate('Selected disk:')."\033[33;1m [{$selected_disk['id']}] \033[0m \n\n";
 echo "\n ".Util::translate('Valid disks are:')." \n\n";
-foreach ($valid_disks as $disk) {
+foreach ($validDisks as $disk) {
     echo $disk;
 }
 echo "\n";
@@ -97,24 +102,25 @@ do {
 	if ($target_disk_storage === '') {
         $target_disk_storage = $selected_disk['id'];
 	}
-} while (!array_key_exists($target_disk_storage, $valid_disks));
+} while (!array_key_exists($target_disk_storage, $validDisks));
 
+$dev_disk  = "/dev/{$target_disk_storage}";
 if(!empty($system_disk) && $system_disk === $target_disk_storage){
-    // Выбран системный диск.
-    $dev_disk  = "/dev/{$target_disk_storage}";
-    $part_disk = "{$dev_disk}4";
+    $part = "4";
 }else{
-    $dev_disk = "/dev/$target_disk_storage";
-    $part_disk = "{$dev_disk}1";
-    if(!Storage::isStorageDisk("{$part_disk}")){
-        $storage->formatDiskLocal($dev_disk);
-    }
+    $part = "1";
 }
-
+$partName = Storage::getDevPartName($target_disk_storage, $part);
+$part_disk = "/dev/{$partName}";
+if($part === '1' && !Storage::isStorageDisk($part_disk)){
+    $storage->formatDiskLocal($dev_disk);
+}
+$uniqid = $storage->getUuid($part_disk);
 $data=[
-    'device' => $dev_disk,
-    'uniqid' => $storage->getUuid($part_disk),
-    'name'   => 'Storage №1'
+    'device'         => $dev_disk,
+    'uniqid'         => $uniqid,
+    'filesystemtype' => 'ext4',
+    'name'           => 'Storage №1'
 ];
 $storage->saveDiskSettings($data);
 if(file_exists('/offload/livecd')) {
@@ -131,7 +137,7 @@ Util::echoWithSyslog(' - Update database ... '. PHP_EOL);
 $dbUpdater = new UpdateDatabase();
 $dbUpdater->updateDatabaseStructure();
 
-$STDERR = fopen('php://stderr', 'w');
+$STDERR = fopen('php://stderr', 'wb');
 CdrDb::checkDb();
 
 $sysLog = new SyslogConf();

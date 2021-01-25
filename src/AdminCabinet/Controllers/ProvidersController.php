@@ -368,7 +368,7 @@ class ProvidersController extends BaseController
         if ($errors === false && $provider->Sip) {
             $sip = $provider->Sip;
             if ($sip->SipHosts) {
-                $sipHosts = $provider->SipHosts;
+                $sipHosts = $sip->SipHosts;
                 if ( ! $sipHosts->delete()) {
                     $errors = $sipHosts->getMessages();
                 }

@@ -47,9 +47,9 @@ class DialplanApplicationConf extends ConfigClass
         $app_ext_conf = "\n[applications]\n";
         $arrDialplanApplications = DialplanApplications::find()->toArray();
         foreach ($arrDialplanApplications as $app) {
-            if ('plaintext' == $app['type']) {
+            if ('plaintext' === $app['type']) {
                 $app_ext_conf .= $this->generatePlaneTextApp($app);
-            } elseif ('php' == $app['type']) {
+            } elseif ('php' === $app['type']) {
                 $app_ext_conf .= $this->generatePhpApp($app);
             } else {
                 continue;
@@ -66,12 +66,14 @@ class DialplanApplicationConf extends ConfigClass
      */
     private function generatePlaneTextApp($app): string
     {
-        // 	same => n,Macro(dial_answer)
         $text_app     = base64_decode($app['applicationlogic']);
         $arr_data_app = explode("\n", trim($text_app));
 
         $app_data = '';
         foreach ($arr_data_app as $row) {
+            if(trim($row) === ''){
+                continue;
+            }
             if ('' === $app_data) {
                 $app_data .= "exten => _{$app['extension']},$row" . "\n\t";
             } else {
@@ -112,10 +114,12 @@ class DialplanApplicationConf extends ConfigClass
         $conf = '';
         $arrDialplanApplications = DialplanApplications::find()->toArray();
         foreach ($arrDialplanApplications as $app) {
+            if(!is_numeric($app['extension'])){
+                continue;
+            }
             $conf .= "exten => {$app['extension']},hint,Custom:{$app['extension']} \n";
         }
 
         return $conf;
     }
-
 }

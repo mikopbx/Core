@@ -30,14 +30,14 @@ $valid_disks = [];
 $selected_disk = ['size' => 0, 'id' => ''];
 $all_hdd = $storage->getAllHdd();
 foreach ($all_hdd as $disk) {
-	$other_info = '';
-	if(true === $disk['sys_disk']){
+    $other_info = '';
+    if(true === $disk['sys_disk']){
         $other_info.=' System Disk ';
     }
-	if(true === $disk['mounted']){
+    if(true === $disk['mounted']){
         $other_info.=' Mounted ';
     }
-	if($other_info !== ''){
+    if($other_info !== ''){
         $other_info = "[ \033[31;1m{$other_info}\033[0m ]";
     }
     if($selected_disk['size'] === 0 || $selected_disk['size'] > $disk['size'] ){
@@ -51,9 +51,9 @@ foreach ($all_hdd as $disk) {
 }
 
 if(count($valid_disks) === 0){
-	echo "\n ".Util::translate('Valid disks not found...')." \n";
-	sleep(3);
-	return 0;
+    echo "\n ".Util::translate('Valid disks not found...')." \n";
+    sleep(3);
+    return 0;
 }
 
 echo "\n ".Util::translate('Select the drive to install the system.').' ';
@@ -65,10 +65,10 @@ foreach ($valid_disks as $disk) {
 echo "\n";
 do {
     echo "\n".Util::translate('Enter the device name:').Util::translate('(default value = ').$selected_disk['id'].') :';
-	$target_disk = trim(fgets($fp));
-	if ($target_disk === '') {
+    $target_disk = trim(fgets($fp));
+    if ($target_disk === '') {
         $target_disk = $selected_disk['id'];
-	}
+    }
 } while (!array_key_exists($target_disk, $valid_disks));
 
 echo '
@@ -84,75 +84,81 @@ echo '
 
 '.Util::translate('Do you want to proceed? (y/n): ');
 
-if (strtolower(trim(fgets($fp)) ) === 'y') {
+if (strtolower(trim(fgets($fp)) ) !== 'y') {
     // Сохраним информацию о системном диске во временный файл.
-    $config = Di::getDefault()->getConfig();
-    $varEtcDir = $config->path('core.varEtcDir');
-    file_put_contents($varEtcDir.'/cfdevice', $target_disk);
 
-    echo "Installing PBX...\n";
-    $mountPath = Util::which('mount');
-    $grepPath = Util::which('grep');
-    $busyboxPath = Util::which('busybox');
-    $awkPath = Util::which('awk');
-    $umountPath = Util::which('umount');
-
-    // Получим все смонтированные разделы:
-    $mnt_dirs = [];
-    Processes::mwExec("{$mountPath} | {$grepPath} '^/dev/{$target_disk}' | {$busyboxPath} {$awkPath} '{print $3}'",$mnt_dirs);
-    foreach ($mnt_dirs as $mnt){
-        // Завершаем все связанные процессы.
-        Processes::mwExec("/sbin/shell_functions.sh killprocesses '$mnt' -TERM 0;");
-        // Отмонтируем.
-        Processes::mwExec("{$umountPath} {$mnt}");
-    }
-    echo " - Unpacking img...\n";
-    $pvPath = Util::which('pv');
-    $ddPath = Util::which('dd');
-    $gunzipPath = Util::which('gunzip');
-
-    $install_cmd =  'exec < /dev/console > /dev/console 2>/dev/console;'.
-                    "{$pvPath} -p /offload/firmware.img.gz | {$gunzipPath} | {$ddPath} of=/dev/{$target_disk} bs=512 2> /dev/null";
-    passthru($install_cmd);
-    echo " - Create storage partition...\n";
-    passthru("exec </dev/console >/dev/console 2>/dev/console; /sbin/initial.storage.part.four create /dev/{$target_disk}");
-    // Подключение диска для хранения данных.
-    include '/etc/rc/connect.storage';
-
-    // Бекапим таблицу с информацией по дискам.
-	echo 'Copying configuration...';
-	Util::mwMkdir('/mnttmp');
-    /** Монтируем диск с настройками */
-    Processes::mwExec("{$mountPath} -w -o noatime /dev/{$target_disk}3 /mnttmp");
-
-    $mikoPBXconfig = new MikoPBXConfig();
-    $lang = $mikoPBXconfig->getGeneralSettings('SSHLanguage');
-    
-    $filename       = $config->path('database.dbfile');
-    $filename_lang  = "/offload/conf/mikopbx-{$lang}.db";
-    if($lang !== 'en' && file_exists($filename_lang)){
-        $filename = $filename_lang;
-    }
-
-    $result_db_file = '/mnttmp/conf/mikopbx.db';
-    /** Копируем файл базы данных настроек. */
-    $cpPath = Util::which('cp');
-    Processes::mwExec("{$cpPath} {$filename} {$result_db_file}");
-    $sqlite3Path = Util::which('sqlite3');
-
-    system("{$sqlite3Path} {$filename}".'  .dump | grep \'^INSERT INTO "m_Storage"\' > /tmp/dmp_storage.sql');
-    system("{$sqlite3Path} {$filename}".'  .dump | grep \'^INSERT INTO "m_LanInterfaces"\' >> /tmp/dmp_storage.sql');
-    system("{$sqlite3Path} {$result_db_file} 'DELETE FROM m_Storage'");
-    system("{$sqlite3Path} {$result_db_file} 'DELETE FROM m_LanInterfaces'");
-    system("{$sqlite3Path} {$result_db_file} < /tmp/dmp_storage.sql");
-
-    // Фиксируем флаг необходимости очистки кэш web.
-    Processes::mwExec("{$umountPath} /mnttmp");
-	echo "done\n";
-
-    // Фиксируем флаг необходимости вынуить CD диск.
-    file_put_contents('/tmp/ejectcd','');
-    System::rebootSync();
-}else{
     sleep(3);
+    exit(0);
 }
+
+$config = Di::getDefault()->getConfig();
+$varEtcDir = $config->path('core.varEtcDir');
+file_put_contents($varEtcDir.'/cfdevice', $target_disk);
+
+echo "Installing PBX...\n";
+$mountPath = Util::which('mount');
+$grepPath = Util::which('grep');
+$busyboxPath = Util::which('busybox');
+$awkPath = Util::which('awk');
+$umountPath = Util::which('umount');
+
+// Получим все смонтированные разделы:
+$mnt_dirs = [];
+Processes::mwExec("{$mountPath} | {$grepPath} '^/dev/{$target_disk}' | {$busyboxPath} {$awkPath} '{print $3}'",$mnt_dirs);
+foreach ($mnt_dirs as $mnt){
+    // Завершаем все связанные процессы.
+    Processes::mwExec("/sbin/shell_functions.sh killprocesses '$mnt' -TERM 0;");
+    // Отмонтируем.
+    Processes::mwExec("{$umountPath} {$mnt}");
+}
+echo " - Unpacking img...\n";
+$pvPath = Util::which('pv');
+$ddPath = Util::which('dd');
+$gunzipPath = Util::which('gunzip');
+
+$install_cmd =  'exec < /dev/console > /dev/console 2>/dev/console;'.
+    "{$pvPath} -p /offload/firmware.img.gz | {$gunzipPath} | {$ddPath} of=/dev/{$target_disk} bs=512 2> /dev/null";
+passthru($install_cmd);
+echo " - Create storage partition...\n";
+passthru("exec </dev/console >/dev/console 2>/dev/console; /sbin/initial.storage.part.four create /dev/{$target_disk}");
+// Подключение диска для хранения данных.
+include '/etc/rc/connect.storage';
+
+// Бекапим таблицу с информацией по дискам.
+echo 'Copying configuration...';
+Util::mwMkdir('/mnttmp');
+
+$partName = Storage::getDevPartName("/dev/{$target_disk}", '3');
+/** Монтируем диск с настройками */
+Processes::mwExec("{$mountPath} -w -o noatime /dev/{$partName} /mnttmp");
+
+$mikoPBXconfig = new MikoPBXConfig();
+$lang = $mikoPBXconfig->getGeneralSettings('SSHLanguage');
+
+$filename       = $config->path('database.dbfile');
+$result_db_file = '/mnttmp/conf/mikopbx.db';
+/** Копируем файл базы данных настроек. */
+$cpPath      = Util::which('cp');
+$sqlite3Path = Util::which('sqlite3');
+$dmpDbFile   = tempnam('/tmp', 'storage');
+// Сохраняем дамп настроек.
+system("{$sqlite3Path} {$filename}".'  .dump | grep \'^INSERT INTO "m_Storage"\' > '. $dmpDbFile);
+system("{$sqlite3Path} {$filename}".'  .dump | grep \'^INSERT INTO "m_LanInterfaces"\' >> '.$dmpDbFile);
+// Если выбран другой язык - используем другой файл настроек.
+$filename_lang  = "/offload/conf/mikopbx-{$lang}.db";
+if($lang !== 'en' && file_exists($filename_lang)){
+    $filename = $filename_lang;
+}
+// Заменяем файл настроек.
+Processes::mwExec("{$cpPath} {$filename} {$result_db_file}");
+system("{$sqlite3Path} {$result_db_file} 'DELETE FROM m_Storage'");
+system("{$sqlite3Path} {$result_db_file} 'DELETE FROM m_LanInterfaces'");
+// Восстанавливаем настройки из файла бекапа.
+system("{$sqlite3Path} {$result_db_file} < {$dmpDbFile}");
+unlink($dmpDbFile);
+// Фиксируем флаг необходимости очистки кэш web.
+Processes::mwExec("{$umountPath} /mnttmp");
+echo "done\n";
+// Фиксируем флаг необходимости вынуить CD диск.
+file_put_contents('/tmp/ejectcd','');
+System::rebootSync();

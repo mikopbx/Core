@@ -21,7 +21,7 @@ if [ "$1" != "create" ];then
 	exit 6;
 fi;
 
-if [ "${2}x" == "x" ];then
+if [ "${2}x" = "x" ];then
     cf_file='/var/etc/cfdevice';
     if [ ! -f "$cf_file" ];then
         exit 5;
@@ -62,69 +62,75 @@ fi;
 resultParted=$?;
 echo " - parted return ${resultParted}...";
 
+partitionName=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$dev")" |  /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "4$");
+partitionFour="/dev/${partitionName}";
+
 tryCount=1;
-while [ ! -b "${dev}4" ]; do
+while [ ! -b "${partitionFour}" ]; do
   /sbin/blockdev --rereadpt "${dev}" > /dev/null 2>&1;
-  if [ -b "${dev}4" ]; then
+  if [ -b "${partitionFour}" ]; then
     break;
   fi
-
-  tryCount=`expr $tryCount + 1`;
+  tryCount=$((tryCount + 1));
   if [ $tryCount = "25" ]; then
-    echo " - partition ${dev}4 waiting fail...";
+    echo " - partition 4 on ${dev} waiting fail...";
     break;
   fi
   sleep 1;
 done
 
 if [ "$resultParted" = "0" ];then
-    # e2fsck -f -p "${dev}4" 2> /dev/null > /dev/null;
+    # e2fsck -f -p "${partitionFour}" 2> /dev/null > /dev/null;
     # echo " - e2fsck... exit code $?";
     tmp_dir='/tmp/test_mnt';
     # Создаем файловую систему.
     mkdir -p "$tmp_dir";
 
-    type=$(/sbin/blkid -o full "${dev}4" | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^TYPE" | /bin/busybox awk -F "\"" '{print $2}' | /bin/busybox head -n 1);
-    mount -t "$type" "${dev}4" "$tmp_dir" 2> /dev/null > /dev/null;
+    type=$(/sbin/blkid -o full "${partitionFour}" | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^TYPE" | /bin/busybox cut -d '"' -f 2 | /bin/busybox head -n 1);
+    mount -t "$type" "${partitionFour}" "$tmp_dir" 2> /dev/null > /dev/null;
     mountResult=$?;
     if [ "$mountResult" != "0" ]; then
-        echo " - mount ${dev}4 exit code $mountResult";
+        echo " - mount ${partitionFour} exit code $mountResult";
         type='ext4';
         # Создаем файловую систему ext2.
-        "mkfs.${type}" "${dev}4" 2> /dev/null > /dev/null;
+        "mkfs.${type}" "${partitionFour}" 2> /dev/null > /dev/null;
         mkfsResult=$?;
         if [ "$mkfsResult" != "0" ]; then
-            echo " - ERROR: mkfs on '${dev}4' type '${type}' exit code '$mkfsResult'"
+            echo " - ERROR: mkfs on '${partitionFour}' type '${type}' exit code '$mkfsResult'"
         fi;
 
-	      uuid=$(/sbin/blkid -ofull "${dev}4" | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^UUID" | /bin/busybox awk -F "\"" '{print $2}' | /bin/busybox head -n 1);
+	      uuid=$(/sbin/blkid -ofull "${partitionFour}" | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^UUID" | /bin/busybox cut -d '"' -f 2 | /bin/busybox head -n 1);
 		    mount -t "${type}" -rw UUID="$uuid" "$tmp_dir"
-        if [ "$?" != "0" ]; then
-            echo " - ERROR: can not mount '${dev}4' type: '${type}' uuid: '${uuid}' exit code '$?'"
+		    mountResult="$?";
+        if [ "$mountResult" != "0" ]; then
+            echo " - ERROR: can not mount '${partitionFour}' type: '${type}' uuid: '${uuid}' exit code '$?'"
             sleep 30;
         else
             sleep 3;
             umount "$tmp_dir";
+		        mountResult="$?";
         fi;
     else
         /sbin/shell_functions.sh killprocesses "$tmp_dir" -TERM 0;
         umount "$tmp_dir";
+		    mountResult="$?";
     fi;
 
-    if [ "$?" == "0" ]; then
+    if [ "$mountResult" = "0" ]; then
         # Удаляем временную директорию.
         rm -rf /tmp/test_mnt;
-        echo " - сheck filesystem on ${dev}4";
-        "/sbin/fsck.${type}" -a "${dev}4" > /dev/null 2>&1;
-        if [ "$?" != "0" ]; then
-            echo " - ERROR: сheck fs on '${dev}4' type: '${type}' exit code '$?'"
+        echo " - сheck filesystem on ${partitionFour}";
+        "/sbin/fsck.${type}" -a "${partitionFour}" > /dev/null 2>&1;
+        fsckResult="$?";
+        if [ "$fsckResult" != "0" ]; then
+            echo " - ERROR: сheck fs on '${partitionFour}' type: '${type}' exit code '$?'"
         else
             echo " - сheck completed..."
         fi;
     else
-        echo " - ERROR: umount ${dev}4 exit code $?"
+        echo " - ERROR: umount ${partitionFour} exit code $?"
     fi;
 else
-    echo " - partition ${dev}4 not found...";
+    echo " - partition №4 on ${dev} not found...";
     echo " - ${dev} - the disk size is probably less than 600Mb.";
 fi;

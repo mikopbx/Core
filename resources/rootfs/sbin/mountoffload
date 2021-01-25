@@ -17,7 +17,7 @@
 # If not, see <https://www.gnu.org/licenses/>.
 #
 
-MD5_BUILD_INFO=$(/bin/busybox md5sum /etc/version.buildtime 2>/dev/null | /bin/busybox awk '{print $1}' 2>/dev/null);
+MD5_BUILD_INFO=$(/bin/busybox md5sum /etc/version.buildtime 2>/dev/null | /bin/busybox cut -d ' ' -f 1 2>/dev/null);
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 
 export PATH
@@ -31,7 +31,6 @@ createBootConfFiles()
         echo " - Create symlink for /etc/rc ..."
         rm -rf /etc/rc;
         ln -s "${rcDir}" /etc/rc;
-        # chmod +x -R "${rcDir}"
   fi
   sleep 5;
 
@@ -51,7 +50,7 @@ checkOffloadDisk()
     echo " - File ${pathToFile} not found";
     CHECK_RESULT=1; # Файл не существует.
 	else
-    md5OffloadBI=$(/bin/busybox md5sum $pathToFile 2>/dev/null | /bin/busybox awk '{print $1}' 2>/dev/null);
+    md5OffloadBI=$(/bin/busybox md5sum $pathToFile 2>/dev/null | /bin/busybox cut -d ' ' -f 1 2>/dev/null);
     if [ ! "${md5OffloadBI}" = "${MD5_BUILD_INFO}" ] ; then
       CHECK_RESULT=2; # Хэш сумма не сходится.
       echo " - Hash file ${pathToFile} verification failed";
@@ -61,9 +60,9 @@ checkOffloadDisk()
 
 mountoffload()
 {
-	disk=$1;
-	uuid=$(/sbin/blkid -ofull $1 | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^UUID" | /bin/busybox awk -F "\"" '{print $2}' | /bin/busybox head -n 1);
-  type=$(/sbin/blkid -ofull $1 | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^TYPE="| /bin/busybox awk -F "\"" '{print $2}' | /bin/busybox head -n 1);
+	disk="$1";
+	uuid=$(/sbin/blkid -ofull "$disk" | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^UUID" | /bin/busybox cut -d '"' -f 2 | /bin/busybox head -n 1);
+  type=$(/sbin/blkid -ofull "$disk" | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^TYPE="| /bin/busybox cut -d '"' -f 2 | /bin/busybox head -n 1);
 	umount -f /offload 2> /dev/null
 	mount -t "${type}" -r UUID="$uuid" /offload 2> /dev/null;
 
@@ -79,7 +78,7 @@ mountoffload()
 
 mountConfRecover()
 {
-	offloaddisk=$1;
+	offloaddisk="$1";
 	echo " - Attempting to mount existing configuration..."
 	
 	# Создаем каталог для монтирования (старая конфигурация). 
@@ -87,31 +86,32 @@ mountConfRecover()
 	mkdir -p "${rec_dir}";
 	
 	# Получаем список дисков. 
-	diskrs=$(fdisk -l | grep "^/dev/" | busybox cut -c 6-8 | busybox uniq)
+	diskrs=$(/bin/lsblk -b -d -r -o NAME,TYPE  -n | grep "disk$" | /bin/busybox cut -d ' ' -f 1 |/bin/busybox uniq)
 	for diskr in $diskrs
 	do
+	  disk3=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$diskr")" |  /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "3$");
 		if [ "${diskr}" = "${offloaddisk}" ]; then
 			# Проверка на уже смонтированный диск.
 			echo " - Skip ${diskr}, already mount..."
 			continue
 		fi
 
-		if [ ! -b "/dev/${diskr}3" ]; then
+		if [ ! -b "/dev/${disk3}" ]; then
 			echo " - Skip ${diskr}, part 3 not found..."
 			continue
 		fi;
 
-	    type=$(/sbin/blkid -o full "/dev/${diskr}3" | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^TYPE" | /bin/busybox awk -F "\"" '{print $2}' | /bin/busybox head -n 1);
+	  type=$(/sbin/blkid -o full "/dev/${disk3}" | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^TYPE" | /bin/busybox cut -d '"' -f 2 | /bin/busybox head -n 1);
 		if [ -f "/sbin/fsck.${type}" ]; then
-		    "/sbin/fsck.${type}" -f -p "/dev/${diskr}3" > /dev/null 2> /dev/null;
-		    echo " - Trying fsck /dev/${diskr}3 ... returned: $?"
+		    "/sbin/fsck.${type}" -f -p "/dev/${disk3}" > /dev/null 2> /dev/null;
+		    echo " - Trying fsck /dev/${disk3} ... returned: $?"
 		fi
 
-        uuid=$(/sbin/blkid -o full "/dev/${diskr}3" | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^UUID" | /bin/busybox awk -F "\"" '{print $2}' | /bin/busybox head -n 1);
+    uuid=$(/sbin/blkid -o full "/dev/${disk3}" | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^UUID" | /bin/busybox cut -d '"' -f 2 | /bin/busybox head -n 1);
 		mount -t "${type}" -r UUID="${uuid}" "${rec_dir}"
 		echo " - Trying mount ${diskr} fs ${type} ... returned: $?"
 		if [ -d "${rec_dir}conf" ] && [ ! -f "${rec_dir}livecd"  ] ; then
-			echo " - Found existing configuration on ${diskr}3!"
+			echo " - Found existing configuration on ${disk3}!"
 			exit 0
 		else
 			umount -f "${rec_dir}" > /dev/null 2> /dev/null;
@@ -129,30 +129,32 @@ rm -rf /tmp/freeoffload;
 echo " - Waiting for connect device....."
 busybox sleep 4;
 
-cddev=$(/sbin/sysctl -n dev.cdrom.info | /bin/busybox grep "drive name" | /bin/busybox cut -f 3)
+cddev=$(/bin/lsblk -b -d -r -o NAME,TYPE  -n | grep "rom$" | /bin/busybox cut -d ' ' -f 1 |/bin/busybox uniq)
 length=0
-/sbin/blkid /dev/${cddev} > /dev/null 2>&1
-if [ "$?" -eq 0 ]; then
+/sbin/blkid "/dev/${cddev}" > /dev/null 2>&1
+blkResult="$?";
+if [ "$blkResult" -eq 0 ]; then
 	length=${#cddev}
 fi
 echo " - Attempting to mount /boot partition..."
 if [ "$length" -gt 2 ]; then
 	disks=${cddev}
 else
-	disks=$(fdisk -l | grep "^/dev/" | /bin/busybox cut -c 6-8 | /bin/busybox uniq)
+	disks=$(/bin/lsblk -b -d -r -o NAME,TYPE  -n | grep "disk$" | /bin/busybox cut -d ' ' -f 1 |/bin/busybox uniq)
 fi
 for disk in $disks
 do
 	if [ "$length" -gt 2 ]; then
-		mountoffload /dev/${disk};
+		mountoffload "/dev/${disk}";
 	else
-		mountoffload /dev/${disk}1;
+	  partitionName=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$disk")" |  /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "1$");
+		mountoffload "/dev/${partitionName}";
 	fi
 	echo " - Trying ${disk} mount returned: $MOUNT_RESULT"
 	if [ -f /offload/livecd ]; then
 		echo " - Found LIVECD flag file...";
 		createBootConfFiles
-		mountConfRecover $disk;
+		mountConfRecover "$disk";
 		# Все, что необходимо было смонтировано. 
 		exit 0
 	fi
@@ -165,10 +167,11 @@ done
 
 echo
 echo " - Attempting to mount /offload partition..."
-disks=$(fdisk -l | /bin/busybox grep "^/dev/" | /bin/busybox cut -c 6-8 | /bin/busybox uniq)
+disks=$(/bin/lsblk -b -d -r -o NAME,TYPE  -n | grep "disk$" | /bin/busybox cut -d ' ' -f 1 |/bin/busybox uniq)
 for disk in $disks
 do
-	mountoffload /dev/${disk}2;
+	partitionName=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$disk")" |  /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "2$");
+	mountoffload "/dev/${partitionName}";
 	echo " - Trying ${disk} mount returned: $MOUNT_RESULT"
 	if [ -d /offload/rootfs ]; then
 		echo " - Found rootfs!"
@@ -177,20 +180,6 @@ do
 	umount -f /offload > /dev/null
 	echo " - Failed to find rootfs!"
 done
-
-################################################################################
-# SD CARD
-################################################################################
-
-echo
-mountoffload /dev/mmcblk0p2;
-echo " - Trying mmcblk0 mount returned: $MOUNT_RESULT"
-if [ -d /offload/rootfs ]; then
-    echo " - found rootfs on SD CARD!"
-    exit 0
-fi
-umount -f /offload
-echo " - Failed to find rootfs!"
 
 ################################################################################
 # USB 
@@ -202,24 +191,25 @@ echo " - Waiting for disks to settle and trying again..."
 
 echo " - checking for liveusb..."
 echo " - attempting to mount /boot partition..."
-disks=$(fdisk -l | /bin/busybox grep "^/dev/" | /bin/busybox cut -c 6-8 | /bin/busybox uniq)
+disks=$(/bin/lsblk -b -d -r -o NAME,TYPE  -n | grep "disk$" | /bin/busybox cut -d ' ' -f 1 |/bin/busybox uniq)
 for disk in $disks
 do
-	mountoffload /dev/${disk}1;
+	partitionName=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$disk")" |  /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "1$");
+	mountoffload "/dev/${partitionName}";
 	echo " - trying ${disk} mount returned: $MOUNT_RESULT"
 	if [ -f /offload/livecd ]; then
 		echo " - found LIVE USB flag file...";
-		mountConfRecover $disk;
+		mountConfRecover "$disk";
 		exit 0
 	fi
 	umount -f /offload
 done
 
 echo
-disks=$(fdisk -l | /bin/busybox grep "^/dev/" | /bin/busybox cut -c 6-8 | /bin/busybox uniq)
 for disk in $disks
 do
-	mountoffload /dev/${disk}2;
+	partitionName=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$disk")" |  /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "2$");
+	mountoffload "/dev/${partitionName}";
 	echo " - trying ${disk} mount returned: $MOUNT_RESULT"
 	if [ -d /offload/rootfs ]; then
 		echo " - found rootfs!"

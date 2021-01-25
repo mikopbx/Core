@@ -29,6 +29,12 @@
             {{ form.render('password') }}
         </div>
     </div>
+    <div class="field">
+            <div class="ui checkbox">
+                {{ form.render('rememberMeCheckBox') }}
+                <label for="rememberMeCheckBox">{{ t._('auth_RememberMe') }}</label>
+            </div>
+    </div>
 
     <div class="ui error message"></div>
     <div class="ui fluid large black button" id="submitbutton">
