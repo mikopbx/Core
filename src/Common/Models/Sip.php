@@ -210,7 +210,7 @@ class Sip extends ModelsBase
 
     public function getManualAttributes(): string
     {
-        return base64_decode($this->manualattributes);
+        return base64_decode((string)$this->manualattributes);
     }
 
     public function setManualAttributes($text): void

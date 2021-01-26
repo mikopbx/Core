@@ -89,7 +89,7 @@ class CustomFiles extends ModelsBase
 
     public function getContent(): string
     {
-        return base64_decode($this->content);
+        return base64_decode((string)$this->content);
     }
 
     public function setContent($text): void

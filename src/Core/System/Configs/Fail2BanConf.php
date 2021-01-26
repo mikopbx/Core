@@ -370,7 +370,7 @@ class Fail2BanConf extends Injectable
             $max_retry = $res->maxretry;
             $find_time = $res->findtime;
             $ban_time = $res->bantime;
-            $whitelist = $res->whitelist;
+            $whitelist = (string) $res->whitelist;
             $arr_whitelist = explode(' ', $whitelist);
             foreach ($arr_whitelist as $ip_string) {
                 if (Verify::isIpAddress($ip_string)) {

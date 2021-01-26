@@ -97,16 +97,23 @@ class WorkerLongPoolAPI extends WorkerBase
      */
     private function getData(string $url):array
     {
+        $result = [];
         $ch = curl_init($url);
         if (!is_resource($ch)) {
-            return [];
+            return $result;
         }
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_TIMEOUT, 1);
-        $resultrequest = curl_exec($ch);
+        $resultRequest = curl_exec($ch);
         curl_close($ch);
 
-        return json_decode($resultrequest, true);
+        if(is_string($result)){
+            $resultTmp = json_decode($resultRequest, true);
+            if(is_array($resultTmp)){
+                $result = $resultTmp;
+            }
+        }
+        return $result;
     }
 
     /**

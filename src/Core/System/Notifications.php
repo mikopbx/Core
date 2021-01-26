@@ -32,13 +32,13 @@ class Notifications
      * Отправка сообщения с использованием PHPMailer
      *
      * @param      $to
-     * @param      $subject
-     * @param      $message
-     * @param bool $filename
+     * @param        $subject
+     * @param        $message
+     * @param string $filename
      *
      * @return bool
      */
-    public static function sendMail($to, $subject, $message, $filename = false):bool
+    public static function sendMail($to, $subject, $message, string $filename = ''):bool
     {
         $mikoPBXConfig        = new MikoPBXConfig();
         $settings             = $mikoPBXConfig->getGeneralSettings();

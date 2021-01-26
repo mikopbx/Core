@@ -258,10 +258,10 @@ class Util
         } elseif ($res->mode === 'append') {
             // Добавить к файлу.
             $data .= "\n\n";
-            $data .= base64_decode($res->content);
+            $data .= base64_decode((string)$res->content);
         } elseif ($res->mode === 'override') {
             // Переопределить файл.
-            $data = base64_decode($res->content);
+            $data = base64_decode((string)$res->content);
         }
         file_put_contents($filename, $data);
     }
