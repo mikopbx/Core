@@ -316,6 +316,7 @@ class WorkerModelsEvents extends WorkerBase
                 $appClass->getSettings();
             }
         }
+
         $this->fillModifiedTablesFromModels($called_class);
         $this->fillModifiedTablesFromPbxSettingsData($called_class, $data['recordId']);
         $this->fillModifiedTablesFromPbxExtensionModules($called_class, $data['recordId']);
@@ -974,21 +975,19 @@ class WorkerModelsEvents extends WorkerBase
             // Reconfigure fail2ban and restart iptables
             if (method_exists($configClassObj, 'generateFail2BanJails')
                 && ! empty($configClassObj->generateFail2BanJails())) {
-                $this->modified_tables[self::R_FAIL2BAN_CONF] = true;
+                self::invokeAction(self::R_FAIL2BAN_CONF);
             }
-
             // Refresh Nginx conf if module has any locations
             if (method_exists($configClassObj, 'createNginxLocations')
                 && ! empty($configClassObj->createNginxLocations())) {
-                $this->modified_tables[self::R_NGINX_CONF] = true;
+                self::invokeAction(self::R_NGINX_CONF);
             }
-
             // Refresh crontab rules if module has any for it
             if (method_exists($configClassObj, 'createCronTasks')) {
-                $tasks = '';
+                $tasks = [];
                 $configClassObj->createCronTasks($tasks);
-                if ($tasks !== '') {
-                    $this->modified_tables[self::R_CRON] = true;
+                if (!empty($tasks)) {
+                    self::invokeAction(self::R_CRON);
                 }
             }
 
