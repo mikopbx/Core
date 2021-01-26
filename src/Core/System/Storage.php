@@ -1136,28 +1136,38 @@ class Storage extends Di\Injectable
         // Add Rights to the WWW dirs plus some core dirs
         $www_dirs  = [];
         $exec_dirs = [];
-        $arrConfig = $this->config->adminApplication->toArray();
-        foreach ($arrConfig as $key => $entry) {
-            if (stripos($key, 'path') === false
-                && stripos($key, 'dir') === false
-            ) {
-                continue;
-            }
-            $www_dirs[] = $entry;
-        }
 
-        $arrConfig = $this->config->www->toArray();
+        $arrConfig = $this->config->toArray();
         foreach ($arrConfig as $key => $entry) {
-            if (stripos($key, 'path') === false
-                && stripos($key, 'dir') === false
-            ) {
-                continue;
+            if (in_array($key, ['www','adminApplication'])){
+                foreach ($entry as $subKey => $subEntry) {
+                    if (stripos($subKey, 'path') === false
+                        && stripos($subKey, 'dir') === false
+                    ) {
+                        continue;
+                    }
+                    $www_dirs[] = $subEntry;
+                }
             }
-            $www_dirs[] = $entry;
         }
 
         $www_dirs[] = $this->config->path('core.tempDir');
         $www_dirs[] = $this->config->path('core.logsDir');
+
+        // Create empty log files with www rights
+        $logFiles = [
+            $this->config->path('database.debugLogFile'),
+            $this->config->path('cdrDatabase.debugLogFile'),
+            $this->config->path('eventsLogDatabase.debugLogFile')
+        ];
+
+        foreach ($logFiles as $logFile){
+           if (!file_exists($logFile)){
+               file_put_contents($logFile, ' ');
+           }
+            $www_dirs[] = $logFile;
+        }
+
         $www_dirs[] = '/etc/version';
         $www_dirs[] = appPath('/');
 

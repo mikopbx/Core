@@ -952,11 +952,11 @@ class WorkerModelsEvents extends WorkerBase
     /**
      *  Process after PBXExtension state changes
      *
-     * @param ?\MikoPBX\Common\Models\PbxExtensionModules $record
+     * @param ?\MikoPBX\Common\Models\PbxExtensionModules $previousStageOfModuleRecord
      */
-    public function afterModuleStateChanged(PbxExtensionModules $record=null): void
+    public function afterModuleStateChanged(PbxExtensionModules $previousStageOfModuleRecord=null): void
     {
-        if ($record===null){
+        if ($previousStageOfModuleRecord===null){
             return;
         }
         // Recreate modules array
@@ -967,8 +967,8 @@ class WorkerModelsEvents extends WorkerBase
 
         $this->arrObject = $this->di->get(PBXConfModulesProvider::SERVICE_NAME);
 
-        $className       = str_replace('Module', '', $record->uniqid);
-        $configClassName = "\\Modules\\{$record->uniqid}\\Lib\\{$className}Conf";
+        $className       = str_replace('Module', '', $previousStageOfModuleRecord->uniqid);
+        $configClassName = "\\Modules\\{$previousStageOfModuleRecord->uniqid}\\Lib\\{$className}Conf";
         if (class_exists($configClassName)) {
             $configClassObj = new $configClassName();
 
@@ -990,10 +990,9 @@ class WorkerModelsEvents extends WorkerBase
                     self::invokeAction(self::R_CRON);
                 }
             }
-
-            if ($record->disabled === '1' && method_exists($configClassObj, 'onAfterModuleDisable')) {
+            if ($previousStageOfModuleRecord->disabled === '1' && method_exists($configClassObj, 'onAfterModuleDisable')) {
                 $configClassObj->onAfterModuleDisable();
-            } elseif ($record->disabled === '0' && method_exists($configClassObj, 'onAfterModuleEnable')) {
+            } elseif ($previousStageOfModuleRecord->disabled === '0' && method_exists($configClassObj, 'onAfterModuleEnable')) {
                 $configClassObj->onAfterModuleEnable();
             }
         }

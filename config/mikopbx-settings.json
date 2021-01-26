@@ -36,7 +36,7 @@
     "debugMode": false,
     "adapter": "Sqlite",
     "dbfile": "/mountpoint/mikopbx/astlogs/asterisk/events_log.db",
-    "debugLogFile": "/mountpoint/mikopbx/debug-events_log-queries.log"
+    "debugLogFile": "/mountpoint/mikopbx/log/debug-events_log-queries.log"
   },
   "astDatabase": {
     "adapter": "Sqlite",
