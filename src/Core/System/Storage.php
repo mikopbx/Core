@@ -396,7 +396,7 @@ class Storage extends Di\Injectable
         $mkfsPath = Util::which("mkfs.{$format}");
         $cmd      = "{$mkfsPath} {$device}{$device_id}";
         if ($bg === false) {
-            $retVal = Processes::mwExec("{$cmd} 2>&1");
+            $retVal = (Processes::mwExec("{$cmd} 2>&1") === 0);
             Util::sysLogMsg(__CLASS__, "{$mkfsPath} returned {$retVal}");
         } else {
             usleep(200000);
@@ -1162,10 +1162,11 @@ class Storage extends Di\Injectable
         ];
 
         foreach ($logFiles as $logFile){
-           if (!file_exists($logFile)){
-               file_put_contents($logFile, ' ');
-           }
-            $www_dirs[] = $logFile;
+            $filename = (string)$logFile;
+            if (!file_exists($filename)){
+                file_put_contents($filename, '');
+            }
+            $www_dirs[] = $filename;
         }
 
         $www_dirs[] = '/etc/version';

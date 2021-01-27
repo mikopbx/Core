@@ -57,22 +57,33 @@ class Logger
     public function write($data): void
     {
         if ($this->debug) {
-            $this->logger->info(urldecode(print_r($data, true)));
+            $this->logger->info($this->getDecodedString($data));
         }
     }
 
     public function writeError($data): void
     {
         if ($this->debug) {
-            $this->logger->error(urldecode(print_r($data, true)));
+            $this->logger->error($this->getDecodedString($data));
         }
     }
 
     public function writeInfo($data): void
     {
         if ($this->debug) {
-            $this->logger->info(urldecode(print_r($data, true)));
+            $this->logger->info($this->getDecodedString($data));
         }
+    }
+
+    private function getDecodedString($data):string
+    {
+        $printedData = print_r($data, true);
+        if(is_bool($printedData)){
+            $result = '';
+        }else{
+            $result = urldecode($printedData);
+        }
+        return $result;
     }
 
 

@@ -49,7 +49,7 @@ class IVRConf extends ConfigClass
         foreach ($db_data as $ivr) {
             /** @var \MikoPBX\Common\Models\SoundFiles $res */
             $res           = SoundFiles::findFirst($ivr['audio_message_id']);
-            $audio_message = $res === null ? '' : $res->path;
+            $audio_message = $res === null ? '' : (string)$res->path;
 
             $timeout_wait_exten = max($ivr['timeout'], 0);
             if (file_exists($audio_message)) {

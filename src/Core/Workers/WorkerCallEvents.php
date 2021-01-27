@@ -72,7 +72,7 @@ class WorkerCallEvents extends WorkerBase
      * @return array
      */
     public function setMonitorFilenameOptions(?string $full_name, ?string $sub_dir, ?string $file_name): array{
-        if (!file_exists($full_name)) {
+        if (!file_exists((string)$full_name)) {
             $monitor_dir = Storage::getMonitorDir();
             if ($sub_dir === null) {
                 $sub_dir = date('Y/m/d/H/');

@@ -256,7 +256,7 @@ class WorkerCdr extends WorkerBase
             // Запускаем процесс конвертации в mp3
             $wav2mp3Path = Util::which('wav2mp3.sh');
             $nicePath = Util::which('nice');
-            Processes::mwExecBg("{$nicePath} -n 19 {$wav2mp3Path} '{$p_info['dirname']}/{$p_info['filename']}'");
+            Processes::mwExecBg("{$nicePath} -n -19 {$wav2mp3Path} '{$p_info['dirname']}/{$p_info['filename']}'");
             // В последствии конвертации (успешной) исходные файлы будут удалены.
         }
         return array($row, $billsec);
