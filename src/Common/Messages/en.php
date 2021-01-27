@@ -1068,4 +1068,5 @@ It can be activated once, after which the coupon becomes redeemed.
     'pr_NoAnyAdditionalHosts' => 'No additional addresses specified for this provider',
     'pr_EnterHostOrIpPlaceholder' => 'Enter IP address or subnet',
     'pr_EnterHostOrIp' => 'Additional provider hosts or ip',
+    'auth_RememberMe' => 'Remember me',
 ];
