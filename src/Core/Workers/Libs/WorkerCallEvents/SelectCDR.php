@@ -24,6 +24,7 @@ use MikoPBX\Common\Models\CallDetailRecords;
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di;
+use phpDocumentor\Reflection\Utils;
 use Throwable;
 
 class SelectCDR
@@ -67,14 +68,18 @@ class SelectCDR
         }
 
         if (isset($filter['miko_result_in_file'])) {
-            $di         = Di::getDefault();
-            if($di){
-                $dirsConfig = $di->getShared('config');
-                $filename   = $dirsConfig->path('core.tempDir') . '/' . md5(microtime(true));
-            }else{
-                $filename = '/tmp/' . md5(microtime(true));
-            }
+            [$tmpDir, $downloadCacheDir] = self::getTmpDir();
+            $fileBaseName = md5(microtime(true));
+            // temp- в названии файла необходямо, чтобы файл был автоматом удален через 5 минут.
+            $filename     = $tmpDir.'/temp-'.$fileBaseName;
             file_put_contents($filename, $res_data);
+
+            if(!empty($downloadCacheDir)){
+                $linkName     = $downloadCacheDir.'/'.$fileBaseName;
+                // Для автоматического удаления файла.
+                // Файл с такой ссылкой будет удален через 5 минут по cron.
+                Util::createUpdateSymlink($filename, $linkName,true);
+            }
             Util::addRegularWWWRights($filename);
             $res_data = json_encode($filename);
         }
@@ -105,5 +110,28 @@ class SelectCDR
             }
         }
         return $haveErrors;
+    }
+
+    private static function getTmpDir():array
+    {
+        $downloadCacheDir = '';
+        $dirName    = '/tmp/';
+        $di         = Di::getDefault();
+        if($di){
+            $dirsConfig = $di->getShared('config');
+            $tmoDirName   = $dirsConfig->path('core.tempDir').'/SelectCdrService';
+            Util::mwMkdir($tmoDirName, true);
+            if(file_exists($tmoDirName)){
+                $dirName = $tmoDirName;
+            }
+
+            $downloadCacheDir = $dirsConfig->path('www.downloadCacheDir');
+            if(!file_exists($downloadCacheDir)){
+                $downloadCacheDir = '';
+            }
+        }
+
+
+        return [$dirName,$downloadCacheDir];
     }
 }
