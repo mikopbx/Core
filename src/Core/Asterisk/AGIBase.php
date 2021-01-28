@@ -177,7 +177,7 @@ class AGIBase {
      *
      * @return array ('code'=>$code, 'result'=>$result, 'data'=>$data)
      */
-    protected function evaluate($command)
+    public function evaluate($command)
     {
         $broken = ['code' => 500, 'result' => -1, 'data' => ''];
 
