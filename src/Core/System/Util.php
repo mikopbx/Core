@@ -557,10 +557,11 @@ class Util
      *
      * @param $target
      * @param $link
+     * @param bool $isFile
      *
      * @return bool
      */
-    public static function createUpdateSymlink($target, $link): bool
+    public static function createUpdateSymlink($target, $link, $isFile=false): bool
     {
         $need_create_link = true;
         if (is_link($link)) {
@@ -579,7 +580,9 @@ class Util
             // Это должна быть именно ссылка. Файл удаляем.
             unlink($link);
         }
-        self::mwMkdir($target);
+        if($isFile === false){
+            self::mwMkdir($target);
+        }
         if ($need_create_link) {
             $lnPath = self::which('ln');
             Processes::mwExec("{$lnPath} -s {$target}  {$link}");

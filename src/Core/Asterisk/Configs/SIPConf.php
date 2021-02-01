@@ -462,7 +462,7 @@ class SIPConf extends ConfigClass
         $options     = [
             'type'     => 'identify',
             'endpoint' => $provider['uniqid'],
-            'match'    => implode(',',$providerHosts),
+            'match'    => implode(',',array_unique($providerHosts)),
         ];
         foreach ($additionalModules as $Object) {
             $options = $Object->overridePJSIPOptions($provider['uniqid'], $options);
