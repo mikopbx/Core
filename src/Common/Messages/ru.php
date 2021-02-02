@@ -578,7 +578,7 @@ return [
     'gs_PBXFeatureBlindTransfer' => 'Комбинация для безусловного перевода',
     'gs_PBXFeatureDigitTimeout' => 'Максимальный таймаут между цифрами при вводе добавочного номера (в миллисекундах)',
     'gs_PBXFeaturePickupExten' => 'Комбинация для перехвата входящих вызовов',
-    'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Время возврата вызова, если нет ответа после безусловного перевода',
+    'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Время возврата вызова, если нет ответа после консультативного перевода',
     'gs_PBXSplitAudioThread' => 'Сохранять записи в стерео режиме',
     'gs_PBXAllowGuestCalls' => 'Разрешить входящие звонки с любых серверов',
     'gs_SIPPort' => 'Порт SIP для регистрации телефонов на этой станции',
