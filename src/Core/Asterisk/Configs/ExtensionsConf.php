@@ -156,7 +156,8 @@ class ExtensionsConf extends ConfigClass
 
         // TODO / Добавление / удаление префиксов на входящий callerid.
         $conf .= '[add-trim-prefix-clid]' . "\n";
-        $conf .= 'exten => _.!,1,NoOp(--- Incoming call from ${CALLERID(num)} ---)' . "\n\t";
+        $conf .= 'exten => _.!,1,ExecIf($[ "${EXTEN}" == "h" ]?Hangup())' . "\n\t";
+        $conf .= 'same => n,NoOp(--- Incoming call from ${CALLERID(num)} ---)' . "\n\t";
         $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1)' . "\n\t";
         // Отсекаем "+".
         // $conf.= 'same => n,ExecIf( $["${CALLERID(num):0:1}" == "+"]?Set(CALLERID(num)=${CALLERID(num):1}))'."\n\t";

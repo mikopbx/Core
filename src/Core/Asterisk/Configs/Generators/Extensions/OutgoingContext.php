@@ -151,7 +151,8 @@ class OutgoingContext extends ConfigClass {
         $conf .= "\n[{$id_dialplan}]\n";
         [$extensionVar, $changeExtension] = $this->initTrimVariables($rout);
 
-        $conf .= 'exten => _.!,1,Set(number=' . $rout['prepend'] . $extensionVar . ')' . "\n\t";
+        $conf .= 'exten => _.!,1,ExecIf($[ "${EXTEN}" == "h" ]?Hangup())' . " \n\t";
+        $conf .= 'same => n,Set(number=' . $rout['prepend'] . $extensionVar . ')' . "\n\t";
         $conf .= 'same => n,Set(number=${FILTER(\*\#\+1234567890,${number})})' . "\n\t";
         $conf .= $changeExtension;
 
