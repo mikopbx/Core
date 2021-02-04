@@ -39,8 +39,7 @@ class OutgoingContext extends ConfigClass {
 
     public function makeDialplan(): string{
         $conf = "[outgoing] \n";
-        $conf .= 'exten => _+.!,1,NoOp(Strip + sign from number and convert it to +)' . " \n\t";
-        $conf .= 'same => n,Set(ADDPLUS=+);' . " \n\t";
+        $conf .= 'exten => _+.!,1,NoOp(Strip + sign from number)' . " \n\t";
         $conf .= 'same => n,Goto(${CONTEXT},${EXTEN:1},1);' . " \n\n";
         $conf .= 'exten => _.!,1,ExecIf($[ "${EXTEN}" == "h" ]?Hangup())' . " \n\t";
         $conf .= 'same => n,Ringing()' . " \n\t";
@@ -156,7 +155,11 @@ class OutgoingContext extends ConfigClass {
         $conf .= 'same => n,Set(number=${FILTER(\*\#\+1234567890,${number})})' . "\n\t";
         $conf .= $changeExtension;
 
-        $conf .= $this->generateProviderContextOutRoutModules($rout);
+        $confModules = $this->generateProviderContextOutRoutModules($rout);
+        $conf .= $confModules;
+        if(!empty($confModules)){
+            $conf .= "\t";
+        }
         $conf .= 'same => n,ExecIf($["${number}x" == "x"]?Hangup())' . "\n\t";
         $conf .= 'same => n,Set(ROUTFOUND=1)' . "\n\t";
         $conf .= 'same => n,Gosub(${ISTRANSFER}dial,${EXTEN},1)' . "\n\t";
@@ -168,8 +171,11 @@ class OutgoingContext extends ConfigClass {
         $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(' . $rout['providerid'] . '-outgoing-custom,${EXTEN},1)}" == "1"]?' . $rout['providerid'] . '-outgoing-custom,${EXTEN},1)' . "\n\t";
 
         $conf .= $this->getDialCommand($rout);
-        $conf .= $this->generateProviderContextAfterDialModules($rout);
-
+        $confModules = $this->generateProviderContextAfterDialModules($rout);
+        $conf .= $confModules;
+        if(!empty($confModules)){
+            $conf .= "\t";
+        }
         $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(' . $rout['providerid'] . '-outgoing-after-dial-custom,${EXTEN}),1}" == "1"]?' . $rout['providerid'] . '-outgoing-after-dial-custom,${EXTEN},1)' . "\n\t";
 
         $conf .= 'same => n,ExecIf($["${ISTRANSFER}x" != "x"]?Gosub(${ISTRANSFER}dial_hangup,${EXTEN},1))' . "\n\t";
@@ -234,10 +240,10 @@ class OutgoingContext extends ConfigClass {
     private function initTrimVariables($rout): array{
         $trimFromBegin = (int)($rout['trimfrombegin'] ?? 0);
         if ($trimFromBegin > 0) {
-            $extensionVar = '${ADDPLUS}${EXTEN:' . $rout['trimfrombegin'] . '}';
+            $extensionVar = '${EXTEN:' . $rout['trimfrombegin'] . '}';
             $changeExtension = 'same => n,ExecIf($["${EXTEN}" != "${number}"]?Goto(${CONTEXT},${number},$[${PRIORITY} + 1]))' . "\n\t";
         } else {
-            $extensionVar = '${ADDPLUS}${EXTEN}';
+            $extensionVar = '${EXTEN}';
             $changeExtension = '';
         }
         return array($extensionVar, $changeExtension);
