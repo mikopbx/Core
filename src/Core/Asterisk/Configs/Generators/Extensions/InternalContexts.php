@@ -5,6 +5,7 @@ namespace MikoPBX\Core\Asterisk\Configs\Generators\Extensions;
 
 
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
+use MikoPBX\Core\Asterisk\Configs\ExtensionsConf;
 use MikoPBX\Core\Asterisk\Configs\SIPConf;
 use MikoPBX\Modules\Config\ConfigClass;
 use Phalcon\Di;
@@ -81,8 +82,7 @@ class InternalContexts extends ConfigClass {
         $conf .= 'exten => h,1,ExecIf($["${ISTRANSFER}x" != "x"]?Gosub(${ISTRANSFER}dial_hangup,${EXTEN},1))' . "\n\n";
 
         $conf .= "[internal-incoming]\n";
-        $conf .= 'exten => _.!,1,ExecIf($[ "${EXTEN}" == "h" ]?Hangup())' . " \n\t";
-        $conf .= 'same => n,ExecIf($["${MASTER_CHANNEL(M_TIMEOUT)}x" != "x"]?Set(TIMEOUT(absolute)=${MASTER_CHANNEL(M_TIMEOUT)}))' . " \n\t";
+        $conf .= 'exten => '.ExtensionsConf::ALL_NUMBER_EXTENSION.',1,ExecIf($["${MASTER_CHANNEL(M_TIMEOUT)}x" != "x"]?Set(TIMEOUT(absolute)=${MASTER_CHANNEL(M_TIMEOUT)}))' . " \n\t";
         $conf .= 'same => n,Set(MASTER_CHANNEL(M_TIMEOUT_CHANNEL)=${CHANNEL})' . " \n\t";
         $conf .= 'same => n,Set(MASTER_CHANNEL(M_TIMEOUT)=${EMPTY_VAR})' . " \n\t";
         $conf .= 'same => n,Goto(internal,${EXTEN},1)' . " \n\n";
@@ -142,8 +142,7 @@ class InternalContexts extends ConfigClass {
         $conf .= 'include => internal-hints' . "\n";
         $conf .= 'exten => failed,1,Hangup()' . "\n";
 
-        $conf .= 'exten => _.!,1,ExecIf($[ "${EXTEN}" == "h" ]?Hangup())'.PHP_EOL."\t";
-        $conf .= 'same => n,ExecIf($[ "${ORIGINATE_SRC_CHANNEL}x" != "x" ]?ChannelRedirect(${ORIGINATE_SRC_CHANNEL},${CONTEXT},${ORIGINATE_DST_EXTEN},1))'.PHP_EOL."\t";
+        $conf .= 'exten => '.ExtensionsConf::ALL_NUMBER_EXTENSION.',1,ExecIf($[ "${ORIGINATE_SRC_CHANNEL}x" != "x" ]?ChannelRedirect(${ORIGINATE_SRC_CHANNEL},${CONTEXT},${ORIGINATE_DST_EXTEN},1))'.PHP_EOL."\t";
         $conf .= 'same => n,ExecIf($[ "${ORIGINATE_SRC_CHANNEL}x" != "x" ]?Hangup())'.PHP_EOL."\t";
         // Фильтр спецсимволов. Разершаем только цифры.
         $conf .= 'same => n,Set(cleanNumber=${FILTER(\*\#\+1234567890,${EXTEN})})' . "\n\t";

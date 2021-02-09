@@ -44,15 +44,13 @@ class ExtensionsOutWorkTimeConf extends ConfigClass
     private function generateOutWorkTimes(): string
     {
         $conf = "\n\n[playback-exit]\n";
-        $conf .= 'exten => _.!,1,ExecIf($[ "${EXTEN}" == "h" ]?Hangup())' . "\n\t";
-        $conf .= 'same => n,Gosub(dial_outworktimes,${EXTEN},1)' . "\n\t";
+        $conf .= 'exten => '.ExtensionsConf::ALL_NUMBER_EXTENSION.',1,Gosub(dial_outworktimes,${EXTEN},1)' . "\n\t";
         $conf .= 'same => n,Playback(${filename})' . "\n\t";
         $conf .= 'same => n,Hangup()' . "\n\n";
 
         $checkContext = self::OUT_WORK_TIME_CONTEXT;
         $conf .= "[".$checkContext."]\n";
-        $conf .= 'exten => _.!,1,ExecIf($[ "${EXTEN}" == "h" ]?Hangup())' . "\n\t";
-        $conf .= 'same => n,Set(currentYear=${STRFTIME(,,%Y)})'."\n\t";
+        $conf .= 'exten => '.ExtensionsConf::ALL_NUMBER_EXTENSION.',1,Set(currentYear=${STRFTIME(,,%Y)})'."\n\t";
         $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS('.$checkContext.'-${currentYear},${EXTEN},1)}" == "1"]?'.$checkContext.'-${currentYear},${EXTEN},1)'."\n\t";
 
         $data = OutWorkTimes::find(['order' => 'date_from']);
@@ -73,8 +71,7 @@ class ExtensionsOutWorkTimeConf extends ConfigClass
 
         foreach ($checkContextsYear as $year => $rule){
             $conf .= "[".$checkContext."-{$year}]\n";
-            $conf .= 'exten => _.!,1,ExecIf($[ "${EXTEN}" == "h" ]?Hangup())' . "\n\t";
-            $conf .= "same => n,NoOp(check time {$year} year)\n\t";
+            $conf .= 'exten => '.ExtensionsConf::ALL_NUMBER_EXTENSION.",1,NoOp(check time {$year} year)\n\t";
             $conf .= implode("", $rule);
             $conf .= "same => n,return\n\n";
         }
@@ -209,8 +206,7 @@ class ExtensionsOutWorkTimeConf extends ConfigClass
 
             if (strpos($conf_out_set_var, $dialplanName) === false) {
                 $conf_out_set_var .= "[{$dialplanName}]\n" .
-                    'exten => _.!,1,ExecIf($[ "${EXTEN}" == "h" ]?Hangup())'."\n\t" .
-                        'same => n,Set(filename=' . $audio_message . ')'."\n\t" .
+                    'exten => '.ExtensionsConf::ALL_NUMBER_EXTENSION.',1,Set(filename=' . $audio_message . ')'."\n\t" .
                         'same => n,Goto(playback-exit,${EXTEN},1)'."\n\n";
             }
             $appName = 'ExecIfTime';

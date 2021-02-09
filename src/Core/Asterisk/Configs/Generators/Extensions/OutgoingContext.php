@@ -41,7 +41,7 @@ class OutgoingContext extends ConfigClass {
         $conf = "[outgoing] \n";
         $conf .= 'exten => _+.!,1,NoOp(Strip + sign from number)' . " \n\t";
         $conf .= 'same => n,Goto(${CONTEXT},${EXTEN:1},1);' . " \n\n";
-        $conf .= 'exten => _.!,1,ExecIf($[ "${EXTEN}" == "h" ]?Hangup())' . " \n\t";
+        $conf .= 'exten => '.ExtensionsConf::ALL_NUMBER_EXTENSION.',1,ExecIf($[ "${EXTEN}" == "h" ]?Hangup())' . " \n\t";
         $conf .= 'same => n,Ringing()' . " \n\t";
 
         // Описываем возможность прыжка в пользовательский sub контекст.
@@ -150,8 +150,7 @@ class OutgoingContext extends ConfigClass {
         $conf .= "\n[{$id_dialplan}]\n";
         [$extensionVar, $changeExtension] = $this->initTrimVariables($rout);
 
-        $conf .= 'exten => _.!,1,ExecIf($[ "${EXTEN}" == "h" ]?Hangup())' . " \n\t";
-        $conf .= 'same => n,Set(number=' . $rout['prepend'] . $extensionVar . ')' . "\n\t";
+        $conf .= 'exten => '.ExtensionsConf::ALL_NUMBER_EXTENSION.',1,Set(number=' . $rout['prepend'] . $extensionVar . ')' . "\n\t";
         $conf .= 'same => n,Set(number=${FILTER(\*\#\+1234567890,${number})})' . "\n\t";
         $conf .= $changeExtension;
 

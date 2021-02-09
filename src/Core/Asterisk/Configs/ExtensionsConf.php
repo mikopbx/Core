@@ -31,7 +31,8 @@ use Phalcon\Di;
 
 class ExtensionsConf extends ConfigClass
 {
-    protected string $description = 'extensions.conf';
+    protected string $description     = 'extensions.conf';
+    public const ALL_NUMBER_EXTENSION = '_[0-9*#+]';
 
     /**
      * Sorts array by priority field
@@ -107,7 +108,10 @@ class ExtensionsConf extends ConfigClass
                  'exten => _' . $extension . ',1,MessageSend(sip:${EXTEN},"${CALLERID(name)}"${MESSAGE(from)})' . "\n\n";
 
         $conf.= '[internal-originate]'.PHP_EOL.
-                'exten => _X!,1,Set(MASTER_CHANNEL(ORIGINATE_DST_EXTEN)=${pt1c_cid})'.PHP_EOL."\t".
+                'exten => _.!,1,Set(pt1c_cid=${FILTER(\*\#\+1234567890,${pt1c_cid})})'.PHP_EOL."\t".
+                    'same => n,Set(MASTER_CHANNEL(ORIGINATE_DST_EXTEN)=${pt1c_cid})'.PHP_EOL."\t".
+                    'same => n,Set(number=${FILTER(\*\#\+1234567890,${EXTEN})})'.PHP_EOL."\t".
+                    'same => n,ExecIf($["${EXTEN}" != "${number}"]?Goto(${CONTEXT},${number},$[${PRIORITY} + 1]))'.PHP_EOL."\t".
                     'same => n,Set(__IS_ORGNT=${EMPTY})'.PHP_EOL."\t".
                     'same => n,ExecIf($["${pt1c_cid}x" != "x"]?Set(CALLERID(num)=${pt1c_cid}))'.PHP_EOL."\t".
                     'same => n,ExecIf($["${SRC_QUEUE}x" != "x"]?Goto(internal-originate-queue,${EXTEN},1))'.PHP_EOL."\t".
@@ -124,7 +128,7 @@ class ExtensionsConf extends ConfigClass
                     'same => n,ExecIf($["${SRC_QUEUE}x" != "x"]?Queue(${SRC_QUEUE},kT,,,300,,,originate-answer-channel))'.PHP_EOL.PHP_EOL.
 
                 '[originate-create-channel] '.PHP_EOL.
-                'exten => _.!,1,ExecIf($["${PT1C_SIP_HEADER}x" != "x"]?Set(PJSIP_HEADER(add,${CUT(PT1C_SIP_HEADER,:,1)})=${CUT(PT1C_SIP_HEADER,:,2)})) '.PHP_EOL."\t".
+                'exten => s,1,ExecIf($["${PT1C_SIP_HEADER}x" != "x"]?Set(PJSIP_HEADER(add,${CUT(PT1C_SIP_HEADER,:,1)})=${CUT(PT1C_SIP_HEADER,:,2)})) '.PHP_EOL."\t".
                     'same => n,Set(__PT1C_SIP_HEADER=${UNDEFINED}) '.PHP_EOL."\t".
                     'same => n,return'.PHP_EOL.PHP_EOL.
 
@@ -170,8 +174,7 @@ class ExtensionsConf extends ConfigClass
 
         // TODO / Добавление / удаление префиксов на входящий callerid.
         $conf .= '[add-trim-prefix-clid]' . "\n";
-        $conf .= 'exten => _.!,1,ExecIf($[ "${EXTEN}" == "h" ]?Hangup())' . "\n\t";
-        $conf .= 'same => n,NoOp(--- Incoming call from ${CALLERID(num)} ---)' . "\n\t";
+        $conf .= 'exten => '.self::ALL_NUMBER_EXTENSION.',1,NoOp(--- Incoming call from ${CALLERID(num)} ---)' . "\n\t";
         $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1)' . "\n\t";
         // Отсекаем "+".
         // $conf.= 'same => n,ExecIf( $["${CALLERID(num):0:1}" == "+"]?Set(CALLERID(num)=${CALLERID(num):1}))'."\n\t";
