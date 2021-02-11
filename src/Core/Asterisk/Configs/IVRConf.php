@@ -63,7 +63,7 @@ class IVRConf extends ConfigClass
             $conf          .= "same => n,Set(APPEXTEN={$ivr['extension']})\n\t";
             $conf          .= 'same => n,Gosub(dial_app,${EXTEN},1)' . "\n\t";
             $conf          .= 'same => n,Answer()' . "\n\t";
-            $conf          .= 'same => n,Set(try_count=0); №6' . "\n\t";
+            $conf          .= 'same => n,Set(try_count=0);' . "\n\t";
             $conf          .= 'same => n,Set(try_count=$[${try_count} + 1])' . "\n\t";
             $conf          .= 'same => n,GotoIf($[${try_count} > ' . $try_count_ivr . ']?internal,' . $ivr['timeout_extension'] . ',1)' . "\n\t";
             $conf          .= "same => n,Set(TIMEOUT(digit)=2) \n\t";
