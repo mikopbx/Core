@@ -462,7 +462,7 @@ class SIPConf extends ConfigClass
         $options     = [
             'type'     => 'identify',
             'endpoint' => $provider['uniqid'],
-            'match'    => implode(',',$providerHosts),
+            'match'    => implode(',',array_unique($providerHosts)),
         ];
         foreach ($additionalModules as $Object) {
             $options = $Object->overridePJSIPOptions($provider['uniqid'], $options);
@@ -869,7 +869,7 @@ class SIPConf extends ConfigClass
         }
         $conf = '';
         foreach ($this->data_peers as $peer) {
-            $conf .= "exten => {$peer['extension']},hint,{$this->technology}/{$peer['extension']} \n";
+            $conf .= "exten => {$peer['extension']},hint,{$this->technology}/{$peer['extension']}&Custom:{$peer['extension']} \n";
         }
 
         return $conf;

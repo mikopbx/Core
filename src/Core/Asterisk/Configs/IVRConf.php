@@ -49,7 +49,7 @@ class IVRConf extends ConfigClass
         foreach ($db_data as $ivr) {
             /** @var \MikoPBX\Common\Models\SoundFiles $res */
             $res           = SoundFiles::findFirst($ivr['audio_message_id']);
-            $audio_message = $res === null ? '' : $res->path;
+            $audio_message = $res === null ? '' : (string)$res->path;
 
             $timeout_wait_exten = max($ivr['timeout'], 0);
             if (file_exists($audio_message)) {
@@ -63,7 +63,7 @@ class IVRConf extends ConfigClass
             $conf          .= "same => n,Set(APPEXTEN={$ivr['extension']})\n\t";
             $conf          .= 'same => n,Gosub(dial_app,${EXTEN},1)' . "\n\t";
             $conf          .= 'same => n,Answer()' . "\n\t";
-            $conf          .= 'same => n,Set(try_count=0); №6' . "\n\t";
+            $conf          .= 'same => n,Set(try_count=0);' . "\n\t";
             $conf          .= 'same => n,Set(try_count=$[${try_count} + 1])' . "\n\t";
             $conf          .= 'same => n,GotoIf($[${try_count} > ' . $try_count_ivr . ']?internal,' . $ivr['timeout_extension'] . ',1)' . "\n\t";
             $conf          .= "same => n,Set(TIMEOUT(digit)=2) \n\t";

@@ -544,7 +544,7 @@ return [
     'gs_PBXFeatureAttendedTransfer' => 'This key combination activates an attended transfer',
     'gs_PBXFeatureBlindTransfer' => 'This key combination activates a blind transfer',
     'gs_PBXFeatureDigitTimeout' => 'Maximum timeout between digits when entering an extension number (in milliseconds)',
-    'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Call return time if there is no answer after blind transfer',
+    'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Seconds to wait for attended transfer destination to answer',
     'gs_SIPPort' => 'SIP port for phone registration at this station',
     'gs_SIPDefaultExpiry' => 'Default expiration time in seconds for contacts that are dynamically bound to an AoR',
     'gs_SIPMinExpiry' => 'Minimum keep alive time for an AoR',
@@ -1068,4 +1068,5 @@ It can be activated once, after which the coupon becomes redeemed.
     'pr_NoAnyAdditionalHosts' => 'No additional addresses specified for this provider',
     'pr_EnterHostOrIpPlaceholder' => 'Enter IP address or subnet',
     'pr_EnterHostOrIp' => 'Additional provider hosts or ip',
+    'auth_RememberMe' => 'Remember me',
 ];

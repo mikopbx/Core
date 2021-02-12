@@ -1067,4 +1067,5 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'pr_NoAnyAdditionalHosts' => 'Nie określono dodatkowych adresów dla tego dostawcy',
     'pr_EnterHostOrIpPlaceholder' => 'Wprowadź adres IP lub podsieć',
     'pr_EnterHostOrIp' => 'Dodatkowe adresy dostawców',
+    'auth_RememberMe' => 'Zapamiętaj mnie',
 ];

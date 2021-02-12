@@ -131,6 +131,7 @@ class ModulesConf extends ConfigClass
             // 'chan_bridge_media.so',
             'app_mp3.so',
             'app_stack.so',
+            'app_channelredirect.so',
             'func_dialplan.so',
             'app_queue.so',
             'res_crypto.so',

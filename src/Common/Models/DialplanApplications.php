@@ -95,7 +95,7 @@ class DialplanApplications extends ModelsBase
 
     public function getApplicationlogic(): string
     {
-        return base64_decode($this->applicationlogic);
+        return base64_decode((string)$this->applicationlogic);
     }
 
     public function setApplicationlogic($text): void
