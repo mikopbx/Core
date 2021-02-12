@@ -122,14 +122,6 @@ interface PbxExtensionSetupInterface
      */
     public function registerNewModule(): bool;
 
-    /**
-     * Возвращает перевод идентификатора на язык установленный в настройках PBX
-     *
-     * @param $stringId string идентификатор фразы
-     *
-     * @return string - перевод
-     */
-    public function locString(string $stringId): string;
 
     /**
      * Обходит файлы с описанием моделей и создает таблицы в базе данных
