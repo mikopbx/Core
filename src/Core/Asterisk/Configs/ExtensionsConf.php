@@ -32,7 +32,7 @@ use Phalcon\Di;
 class ExtensionsConf extends ConfigClass
 {
     protected string $description     = 'extensions.conf';
-    public const ALL_NUMBER_EXTENSION = '_[0-9*#+]';
+    public const ALL_NUMBER_EXTENSION = '_[0-9*#+]!';
 
     /**
      * Sorts array by priority field
