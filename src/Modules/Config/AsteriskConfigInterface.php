@@ -35,12 +35,14 @@ interface AsteriskConfigInterface
 
     /**
      * Получаем строки include для секции internal
+     *
      * @return string
      */
     public function getIncludeInternal(): string;
 
     /**
      * Получаем строки include для секции internal-transfer.
+     *
      * @return string
      */
     public function getIncludeInternalTransfer(): string;
@@ -48,6 +50,7 @@ interface AsteriskConfigInterface
 
     /**
      * Генератор extension для контекста internal
+     *
      * @return string
      */
     public function extensionGenInternal(): string;
@@ -85,6 +88,7 @@ interface AsteriskConfigInterface
 
     /**
      * Секция global для extensions.conf
+     *
      * @return mixed
      */
     public function extensionGlobals();
@@ -112,21 +116,21 @@ interface AsteriskConfigInterface
      *
      * @return string
      */
-    public function generatePeersPj():string;
+    public function generatePeersPj(): string;
 
     /**
      * Генератор сеции пиров для manager.conf
      *
      * @return string
      */
-    public function generateManagerConf():string;
+    public function generateManagerConf(): string;
 
     /**
      * Генератор modules.conf
      *
      * @return string
      */
-    public function generateModulesConf():string;
+    public function generateModulesConf(): string;
 
     /**
      * Дополнительные параметры для

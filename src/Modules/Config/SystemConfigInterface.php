@@ -51,55 +51,57 @@ interface SystemConfigInterface
     /**
      * Обработчик события изменения данных в базе настроек mikopbx.db.
      *
-     * @param $modified_tables
+     * @param array $modified_tables
      */
-    public function modelsEventNeedReload($modified_tables): void;
-
+    public function modelsEventNeedReload(array $modified_tables): void;
 
     /**
      * Returns array of workers classes for WorkerSafeScripts from module
+     *
      * @return array
      */
     public function getModuleWorkers(): array;
 
     /**
      * Returns array of additional firewall rules for module
+     *
      * @return array
      */
     public function getDefaultFirewallRules(): array;
 
-
     /**
      * Process before enable action in web interface
+     *
      * @return bool
      */
     public function onBeforeModuleEnable(): bool;
 
     /**
      * Process after enable action in web interface
+     *
      * @return void
      */
     public function onAfterModuleEnable(): void;
 
-
     /**
      * Process before disable action in web interface
+     *
      * @return bool
      */
     public function onBeforeModuleDisable(): bool;
 
     /**
      * Process after disable action in web interface
+     *
      * @return void
      */
     public function onAfterModuleDisable(): void;
-
 
     /**
      * Generates additional fail2ban jail conf rules
      *
      * @return string
      */
-    public function generateFail2BanJails():string;
+    public function generateFail2BanJails(): string;
 
 }
