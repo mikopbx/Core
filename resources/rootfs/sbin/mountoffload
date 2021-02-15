@@ -145,11 +145,17 @@ fi
 for disk in $disks
 do
 	if [ "$length" -gt 2 ]; then
-		mountoffload "/dev/${disk}";
+	  diskPath="/dev/${disk}";
 	else
 	  partitionName=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$disk")" |  /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "1$");
-		mountoffload "/dev/${partitionName}";
+		diskPath="/dev/${partitionName}";
 	fi
+
+	if [ ! -b "$diskPath" ]; then
+	    continue;
+	fi
+	mountoffload "$diskPath";
+
 	echo " - Trying ${disk} mount returned: $MOUNT_RESULT"
 	if [ -f /offload/livecd ]; then
 		echo " - Found LIVECD flag file...";
@@ -171,7 +177,11 @@ disks=$(/bin/lsblk -b -d -r -o NAME,TYPE  -n | grep "disk$" | /bin/busybox cut -
 for disk in $disks
 do
 	partitionName=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$disk")" |  /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "2$");
-	mountoffload "/dev/${partitionName}";
+	diskPath="/dev/${partitionName}";
+	if [ ! -b "$diskPath" ]; then
+	    continue;
+	fi
+	mountoffload "$diskPath";
 	echo " - Trying ${disk} mount returned: $MOUNT_RESULT"
 	if [ -d /offload/rootfs ]; then
 		echo " - Found rootfs!"
@@ -195,7 +205,12 @@ disks=$(/bin/lsblk -b -d -r -o NAME,TYPE  -n | grep "disk$" | /bin/busybox cut -
 for disk in $disks
 do
 	partitionName=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$disk")" |  /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "1$");
-	mountoffload "/dev/${partitionName}";
+	diskPath="/dev/${partitionName}";
+	if [ ! -b "$diskPath" ]; then
+	    continue;
+	fi
+	mountoffload "$diskPath";
+
 	echo " - trying ${disk} mount returned: $MOUNT_RESULT"
 	if [ -f /offload/livecd ]; then
 		echo " - found LIVE USB flag file...";
@@ -209,7 +224,12 @@ echo
 for disk in $disks
 do
 	partitionName=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$disk")" |  /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "2$");
-	mountoffload "/dev/${partitionName}";
+  diskPath="/dev/${partitionName}";
+	if [ ! -b "$diskPath" ]; then
+	    continue;
+	fi
+	mountoffload "$diskPath";
+
 	echo " - trying ${disk} mount returned: $MOUNT_RESULT"
 	if [ -d /offload/rootfs ]; then
 		echo " - found rootfs!"
