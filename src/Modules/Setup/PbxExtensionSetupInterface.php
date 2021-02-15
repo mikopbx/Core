@@ -32,81 +32,80 @@ interface PbxExtensionSetupInterface
     public function __construct(string $moduleUniqueID);
 
     /**
-     * Последовательный вызов процедур установки модуля расширения
-     * с текстового результата установки
+     * The main module installation function called by PBXCoreRest after unzip module files
+     * It calls some private functions and setup error messages on the message variable
      *
-     * @return bool результат установки
+     * @return bool - result of installation
      */
     public function installModule(): bool;
 
     /**
-     * Выполняет активацию триалов, проверку лицензионного клчюча
+     * Executes license activation only for commercial modules
      *
-     * @return bool результат активации лицензии
+     * @return bool result of license activation
      */
     public function activateLicense(): bool;
 
     /**
-     * Выполняет копирование необходимых файлов, в папки системы
+     * Copies files, creates folders and symlinks for module and restores previous backup settings
      *
-     * @return bool результат установки
+     * @return bool installation result
      */
     public function installFiles(): bool;
 
     /**
-     * Setup ownerships and folder rights
+     * Setups ownerships and folder rights
      *
-     * @return bool
+     * @return bool fixing result
      */
     public function fixFilesRights(): bool;
 
     /**
-     * Создает структуру для хранения настроек модуля в своей модели
-     * и заполняет настройки по-умолчанию если таблицы не было в системе
-     * см (unInstallDB)
+     * Creates database structure according to models annotations
      *
-     * Регистрирует модуль в PbxExtensionModules
+     * If it necessary, it fills some default settings, and change sidebar menu item representation for this module
      *
-     * @return bool результат установки
+     * After installation it registers module on PbxExtensionModules model
+     *
+     * @return bool result of installation
      */
     public function installDB(): bool;
 
     /**
-     * Последовательный вызов процедур установки модуля расширения
-     * с результата удаления
+     * The main function called by MikoPBX REST API for delete any module
      *
-     * @param $keepSettings bool сохранять настройки модуля при удалении
+     * @param $keepSettings bool if it set to true, the function saves module database
      *
-     * @return bool результат удаления
+     * @return bool uninstall result
      */
     public function uninstallModule(bool $keepSettings = false): bool;
 
     /**
-     * Удаляет запись о модуле из PbxExtensionModules
-     * Удаляет свою модель
+     * Deletes some settings from database and links to the module
+     * If keepSettings set to true it copies database file to Backup folder
      *
-     * @param  $keepSettings bool оставляет таблицу с данными своей модели
+     * @param  $keepSettings bool
      *
-     * @return bool результат очистки
+     * @return bool the uninstall result
      */
     public function unInstallDB(bool $keepSettings = false): bool;
 
     /**
-     * Удаляет запись о модуле из PbxExtensionModules
+     * Deletes records from PbxExtensionModules
      *
-     * @return bool результат очистки
+     * @return bool  unregistration result
      */
     public function unregisterModule(): bool;
 
     /**
-     * Выполняет удаление своих файлов с остановной процессов
-     * при необходимости
+     * Deletes the module files, folders, symlinks
+     * If keepSettings set to true it copies database file to Backup folder
      *
-     * @param $keepSettings bool сохранять настройки
+     * @param $keepSettings bool
      *
-     * @return bool результат удаления
+     * @return bool delete result
      */
-    public function unInstallFiles(bool $keepSettings = false);//: bool Пока мешает удалять и обновлять старые модули, раскоменитровать после релиза 2020.5;
+    public function unInstallFiles(bool $keepSettings = false): bool;
 
     /**
      * Returns error messages
@@ -116,7 +115,7 @@ interface PbxExtensionSetupInterface
     public function getMessages(): array;
 
     /**
-     * Выполняет регистрацию модуля в таблице PbxExtensionModules
+     * Registers module in the PbxExtensionModules table
      *
      * @return bool
      */
@@ -124,15 +123,15 @@ interface PbxExtensionSetupInterface
 
 
     /**
-     * Обходит файлы с описанием моделей и создает таблицы в базе данных
+     * Traverses files with model descriptions and creates / modifies tables in the system database
      *
-     * @return bool
+     * @return bool the table modification result
      */
     public function createSettingsTableByModelsAnnotations(): bool;
 
 
     /**
-     * Добавляет модуль в боковое меню
+     * Adds module to sidebar menu
      *
      * @return bool
      */
