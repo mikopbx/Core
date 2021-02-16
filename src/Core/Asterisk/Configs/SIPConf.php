@@ -31,12 +31,11 @@ use MikoPBX\Common\Models\{Codecs,
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Asterisk\AstDB;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\IncomingContexts;
-use MikoPBX\Modules\Config\ConfigClass;
 use MikoPBX\Core\System\{MikoPBXConfig, Network, Util};
 use MikoPBX\Core\Utilities\SubnetCalculator;
 use Phalcon\Di;
 
-class SIPConf extends ConfigClass
+class SIPConf extends CoreConfigClass
 {
     public const TYPE_PJSIP = 'PJSIP';
 

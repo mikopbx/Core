@@ -21,9 +21,8 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 
 use MikoPBX\Core\System\Util;
-use MikoPBX\Modules\Config\ConfigClass;
 
-class CelConf extends ConfigClass
+class CelConf extends CoreConfigClass
 {
     protected string $description = 'cel.conf';
 

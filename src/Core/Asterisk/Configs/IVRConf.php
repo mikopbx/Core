@@ -20,10 +20,9 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\{IvrMenu, IvrMenuActions, Sip, SoundFiles};
-use MikoPBX\Modules\Config\ConfigClass;
 use MikoPBX\Core\System\{Processes, Util};
 
-class IVRConf extends ConfigClass
+class IVRConf extends CoreConfigClass
 {
 
     /**

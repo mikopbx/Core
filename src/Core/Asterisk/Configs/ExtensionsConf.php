@@ -19,17 +19,12 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
-use MikoPBX\Common\Models\{Iax, IncomingRoutingTable, OutgoingRoutingTable, OutWorkTimes, Providers, Sip, SoundFiles};
-use MikoPBX\AdminCabinet\Forms\OutgoingRouteEditForm;
+use MikoPBX\Common\Models\IncomingRoutingTable;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
-use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\IncomingContexts;
-use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\InternalContexts;
-use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\OutgoingContext;
-use MikoPBX\Modules\Config\ConfigClass;
-use MikoPBX\Core\System\{MikoPBXConfig, Storage, Util};
-use Phalcon\Di;
+use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\{IncomingContexts, InternalContexts,  OutgoingContext};
+use MikoPBX\Core\System\{Storage, Util};
 
-class ExtensionsConf extends ConfigClass
+class ExtensionsConf extends CoreConfigClass
 {
     protected string $description     = 'extensions.conf';
     public const ALL_NUMBER_EXTENSION = '_[0-9*#+]!';

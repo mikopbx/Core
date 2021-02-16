@@ -22,9 +22,8 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
-use MikoPBX\Modules\Config\ConfigClass;
 
-class LoggerConf extends ConfigClass
+class LoggerConf extends CoreConfigClass
 {
     protected string $description = 'logger.conf';
 

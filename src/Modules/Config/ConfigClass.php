@@ -20,15 +20,204 @@
 namespace MikoPBX\Modules\Config;
 
 use MikoPBX\Core\Asterisk\Configs\CoreConfigClass;
-use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Config;
+use Phalcon\Exception;
 use ReflectionClass as ReflectionClassAlias;
 
 abstract class ConfigClass extends CoreConfigClass implements SystemConfigInterface, AsteriskConfigInterface,
                                                          RestAPIConfigInterface
 {
+    /**
+     * External module UniqueID
+     */
+    public string $moduleUniqueId;
 
+    /**
+     * Additional module directory
+     */
+    protected string $moduleDir;
 
+    /**
+     * ConfigClass constructor.
+     *
+     */
+    public function __construct()
+    {
+        parent::__construct();
+        // Get child class parameters and define module Dir and UniqueID
+        $reflector        = new ReflectionClassAlias(static::class);
+        $partsOfNameSpace = explode('\\', $reflector->getNamespaceName());
+        if (count($partsOfNameSpace) === 3 && $partsOfNameSpace[0] === 'Modules') {
+            $modulesDir           = $this->config->path('core.modulesDir');
+            $this->moduleUniqueId = $partsOfNameSpace[1];
+            $this->moduleDir      = $modulesDir . '/' . $this->moduleUniqueId;
+        } else {
+            throw new Exception('Unknown module extension on class '.$reflector->getNamespaceName());
+        }
+
+        $this->messages = [];
+    }
+
+    /**
+     * Makes pretty module text block into config file
+     *
+     * @param string $addition
+     *
+     * @return string
+     */
+    protected function confBlockWithComments(string $addition): string
+    {
+        $result = '';
+        if (empty($addition)) {
+            return $result;
+        }
+        $result = PHP_EOL . '; ***** BEGIN BY ' . $this->moduleUniqueId . PHP_EOL;
+        $result .= $addition;
+        if (substr($addition, -1) !== "\t") {
+             $result .= "\t";
+        }
+        $result .= PHP_EOL . '; ***** END BY ' . $this->moduleUniqueId . PHP_EOL;
+        return $result;
+    }
+
+    /**
+     * Returns array of additional routes for the PBXCoreREST interface from module
+     *
+     * @return array
+     */
+    public function getPBXCoreRESTAdditionalRoutes(): array
+    {
+        return [];
+    }
+
+    /**
+     * Process PBXCoreREST requests under root rights
+     *
+     * @param array $request
+     *
+     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     */
+    public function moduleRestAPICallback(array $request): PBXApiResult
+    {
+        $res            = new PBXApiResult();
+        $res->processor = __METHOD__;
+        $action         = strtoupper($request['action']);
+        switch ($action) {
+            case 'CHECK':
+                $res->success = true;
+                break;
+            default:
+                $res->success    = false;
+                $res->messages[] = 'API action not found in moduleRestAPICallback';
+        }
+
+        return $res;
+    }
+
+    /**
+     * This method calls after
+     *
+     * @param $data
+     */
+    public function modelsEventChangeData($data): void
+    {
+    }
+
+    /**
+     * This method calls in the WorkerModelsEvents worker after process models changing
+     *
+     * @param array $modified_tables list of modified models
+     */
+    public function modelsEventNeedReload(array $modified_tables): void
+    {
+    }
+
+    /**
+     * Returns array of workers classes for WorkerSafeScripts
+     *
+     * @return array
+     */
+    public function getModuleWorkers(): array
+    {
+        return [];
+    }
+
+    /**
+     * Returns array of additional firewall rules for module
+     *
+     * @return array
+     */
+    public function getDefaultFirewallRules(): array
+    {
+        return [];
+    }
+
+    /**
+     * Process module enable request
+     *
+     * @return bool
+     */
+    public function onBeforeModuleEnable(): bool
+    {
+        return true;
+    }
+
+    /**
+     * Process some actions after module enable
+     *
+     * @return void
+     */
+    public function onAfterModuleEnable(): void
+    {
+    }
+
+    /**
+     * Process module disable request
+     *
+     * @return bool
+     */
+    public function onBeforeModuleDisable(): bool
+    {
+        return true;
+    }
+
+    /**
+     * Process some actions after module disable
+     *
+     * @return void
+     */
+    public function onAfterModuleDisable(): void
+    {
+    }
+
+    /**
+     * Create additional Nginx locations from modules
+     *
+     * @return string
+     */
+    public function createNginxLocations(): string
+    {
+        return '';
+    }
+
+    /**
+     * Generates additional fail2ban jail conf rules from modules
+     *
+     * @return string
+     */
+    public function generateFail2BanJails(): string
+    {
+        return '';
+    }
+
+    /**
+     * Generates the modules.conf file
+     *
+     * @return string
+     */
+    public function generateModulesConf(): string
+    {
+        return '';
+    }
 
 }

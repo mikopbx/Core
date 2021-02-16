@@ -7,10 +7,10 @@ namespace MikoPBX\Core\Asterisk\Configs\Generators\Extensions;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Asterisk\Configs\ExtensionsConf;
 use MikoPBX\Core\Asterisk\Configs\SIPConf;
-use MikoPBX\Modules\Config\ConfigClass;
+use MikoPBX\Core\Asterisk\Configs\CoreConfigClass;
 use Phalcon\Di;
 
-class InternalContexts extends ConfigClass {
+class InternalContexts extends CoreConfigClass {
 
 
     private array  $additionalModules = [];

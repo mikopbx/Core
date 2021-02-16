@@ -12,10 +12,10 @@ use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Asterisk\Configs\ExtensionsConf;
 use MikoPBX\Core\Asterisk\Configs\IAXConf;
 use MikoPBX\Core\Asterisk\Configs\SIPConf;
-use MikoPBX\Modules\Config\ConfigClass;
+use MikoPBX\Core\Asterisk\Configs\CoreConfigClass;
 use Phalcon\Di;
 
-class OutgoingContext extends ConfigClass {
+class OutgoingContext extends CoreConfigClass {
 
 
     private array $additionalModules = [];

@@ -21,18 +21,11 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 
 use MikoPBX\Core\System\MikoPBXConfig;
-use MikoPBX\Modules\Config\ConfigClass;
-use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Config;
 use Phalcon\Di\Injectable;
 
 abstract class CoreConfigClass extends Injectable
 {
-
-    /**
-     * ID Config class
-     */
-    public const ID_CONFIG_CLASS = 'InternalConfigModule';
 
     /**
      * Config file name i.e. extensions.conf
@@ -71,19 +64,7 @@ abstract class CoreConfigClass extends Injectable
 
 
     /**
-     * External module UniqueID
-     */
-    public string $moduleUniqueId;
-
-    /**
-     * Additional module directory
-     */
-    protected string $moduleDir;
-
-
-    /**
      * ConfigClass constructor.
-     *
      */
     public function __construct()
     {
@@ -91,64 +72,30 @@ abstract class CoreConfigClass extends Injectable
         $this->booting         = $this->getDI()->getShared('registry')->booting === true;
         $this->mikoPBXConfig   = new MikoPBXConfig();
         $this->generalSettings = $this->mikoPBXConfig->getGeneralSettings();
-        $this->moduleUniqueId  = ConfigClass::ID_CONFIG_CLASS;
-        // Get child class parameters and define module Dir and UniqueID
-        $reflector        = new ReflectionClassAlias(static::class);
-        $partsOfNameSpace = explode('\\', $reflector->getNamespaceName());
-        if (count($partsOfNameSpace) === 3 && $partsOfNameSpace[0] === 'Modules') {
-            $modulesDir           = $this->config->path('core.modulesDir');
-            $this->moduleUniqueId = $partsOfNameSpace[1];
-            $this->moduleDir      = $modulesDir . '/' . $this->moduleUniqueId;
-        }
-
         $this->messages = [];
     }
 
+    /**
+     * Prepares settings dataset for a PBX module
+     */
     public function getSettings(): void
     {
     }
 
 
+    /**
+     * Generates core modules config files with cli messages before and after generation
+     */
     public function generateConfig(): void
     {
-        // Генерация конфигурационных файлов.
         $this->echoGenerateConfig();
         $this->getSettings();
         $this->generateConfigProtected();
         $this->echoDone();
     }
 
-
     /**
-     * Makes pretty module text block into config file
-     *
-     * @param string $addition
-     *
-     * @return string
-     */
-    protected function confBlockWithComments(string $addition): string
-    {
-        $result = '';
-        if (empty($addition)) {
-            return $result;
-        }
-        if ( ! empty($this->moduleUniqueId) && ConfigClass::ID_CONFIG_CLASS !== $this->moduleUniqueId) {
-            $result = PHP_EOL . '; ***** BEGIN BY ' . $this->moduleUniqueId . PHP_EOL;
-            $result .= $addition;
-            if (substr($addition, -1) !== "\t") {
-                $result .= "\t";
-            }
-            $result .= PHP_EOL . '; ***** END BY ' . $this->moduleUniqueId . PHP_EOL;
-        } else {
-            $result .= $addition;
-        }
-
-        return $result;
-    }
-
-    /**
-     * Вывод сообщения о генерации конфига.
-     *
+     * Shows boot message which module was started
      */
     protected function echoGenerateConfig(): void
     {
@@ -158,14 +105,14 @@ abstract class CoreConfigClass extends Injectable
     }
 
     /**
-     * Генерация конфигурационного файла asterisk.
+     * Generates core modules config files
      */
     protected function generateConfigProtected(): void
     {
     }
 
     /**
-     * Вывод сообщения об окончании генерации.
+     * Shows boot message which module generator was finished
      */
     protected function echoDone(): void
     {
@@ -174,29 +121,42 @@ abstract class CoreConfigClass extends Injectable
         }
     }
 
-    // Получаем строки include для секции internal.
-
+    /**
+     * Prepares additional rules for [internal] context section in the extensions.conf file
+     * @return string
+     */
     public function getIncludeInternal(): string
     {
-        // Генерация внутреннего номерного плана.
-        return '';
-    }
-
-    // Получаем строки include для секции internal-transfer.
-    public function getIncludeInternalTransfer(): string
-    {
-        // Генерация внутреннего номерного плана.
         return '';
     }
 
     // Генератор extension для контекста internal.
+    /**
+     * TODO::Спросить не дубль ли это getIncludeInternal, может оставить одну?
+     * Prepares additional rules for [internal] context section in the extensions.conf file
+     * @return string
+     */
     public function extensionGenInternal(): string
     {
         // Генерация внутреннего номерного плана.
         return '';
     }
 
+    /**
+     * Prepares additional rules for [internal-transfer] context section in the extensions.conf file
+     * @return string
+     */
+    public function getIncludeInternalTransfer(): string
+    {
+        return '';
+    }
+
     // Генератор extension для контекста internal.
+    /**
+     * TODO::Спросить не дубль ли это getIncludeInternalTransfer, может оставить одну?
+     * Prepares additional rules for [internal-transfer] context section in the extensions.conf file
+     * @return string
+     */
     public function extensionGenInternalTransfer(): string
     {
         // Генерация внутреннего номерного плана.
@@ -359,43 +319,6 @@ abstract class CoreConfigClass extends Injectable
         return '';
     }
 
-    /**
-     * This method calls after
-     *
-     * @param $data
-     */
-    public function modelsEventChangeData($data): void
-    {
-    }
-
-    /**
-     * This method calls in the WorkerModelsEvents worker after process models changing
-     *
-     * @param array $modified_tables list of modified models
-     */
-    public function modelsEventNeedReload(array $modified_tables): void
-    {
-    }
-
-    /**
-     * Returns array of workers classes for WorkerSafeScripts
-     *
-     * @return array
-     */
-    public function getModuleWorkers(): array
-    {
-        return [];
-    }
-
-    /**
-     * Returns array of additional firewall rules for module
-     *
-     * @return array
-     */
-    public function getDefaultFirewallRules(): array
-    {
-        return [];
-    }
 
     /**
      * Returns the messages variable
@@ -408,108 +331,6 @@ abstract class CoreConfigClass extends Injectable
     }
 
     /**
-     * Process module enable request
-     *
-     * @return bool
-     */
-    public function onBeforeModuleEnable(): bool
-    {
-        return true;
-    }
-
-    /**
-     * Process some actions after module enable
-     *
-     * @return void
-     */
-    public function onAfterModuleEnable(): void
-    {
-    }
-
-    /**
-     * Process module disable request
-     *
-     * @return bool
-     */
-    public function onBeforeModuleDisable(): bool
-    {
-        return true;
-    }
-
-    /**
-     * Process some actions after module disable
-     *
-     * @return void
-     */
-    public function onAfterModuleDisable(): void
-    {
-    }
-
-    /**
-     * Generates the modules.conf file
-     *
-     * @return string
-     */
-    public function generateModulesConf(): string
-    {
-        return '';
-    }
-
-    /**
-     * Process PBXCoreREST requests under root rights
-     *
-     * @param array $request
-     *
-     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
-     */
-    public function moduleRestAPICallback(array $request): PBXApiResult
-    {
-        $res            = new PBXApiResult();
-        $res->processor = __METHOD__;
-        $action         = strtoupper($request['action']);
-        switch ($action) {
-            case 'CHECK':
-                $res->success = true;
-                break;
-            default:
-                $res->success    = false;
-                $res->messages[] = 'API action not found in moduleRestAPICallback';
-        }
-
-        return $res;
-    }
-
-    /**
-     * Returns array of additional routes for the PBXCoreREST interface from module
-     *
-     * @return array
-     */
-    public function getPBXCoreRESTAdditionalRoutes(): array
-    {
-        return [];
-    }
-
-    /**
-     * Create additional Nginx locations from modules
-     *
-     * @return string
-     */
-    public function createNginxLocations(): string
-    {
-        return '';
-    }
-
-    /**
-     * Generates additional fail2ban jail conf rules from modules
-     *
-     * @return string
-     */
-    public function generateFail2BanJails(): string
-    {
-        return '';
-    }
-
-    /**
      * Returns models list of models which affect the current module settings
      *
      * @return array
@@ -517,6 +338,18 @@ abstract class CoreConfigClass extends Injectable
     public function dependenceModels(): array
     {
         return [];
+    }
+
+    /**
+     * Makes pretty module text block into config file
+     *
+     * @param string $addition
+     *
+     * @return string
+     */
+    protected function confBlockWithComments(string $addition): string
+    {
+        return $addition;
     }
 
 }

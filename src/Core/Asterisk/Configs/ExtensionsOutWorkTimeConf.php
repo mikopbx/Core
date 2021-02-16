@@ -4,13 +4,11 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
-
 use MikoPBX\Common\Models\OutWorkTimes;
 use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Core\System\Util;
-use MikoPBX\Modules\Config\ConfigClass;
 
-class ExtensionsOutWorkTimeConf extends ConfigClass
+class ExtensionsOutWorkTimeConf extends CoreConfigClass
 {
     public const OUT_WORK_TIME_CONTEXT = 'check-out-work-time';
 

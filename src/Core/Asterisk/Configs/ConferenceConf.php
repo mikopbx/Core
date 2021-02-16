@@ -20,10 +20,9 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\ConferenceRooms;
-use MikoPBX\Modules\Config\ConfigClass;
 
 
-class ConferenceConf extends ConfigClass
+class ConferenceConf extends CoreConfigClass
 {
 
     protected string $description = 'confbridge.conf';

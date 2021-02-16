@@ -21,9 +21,8 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\Util;
-use MikoPBX\Modules\Config\ConfigClass;
 
-class ModulesConf extends ConfigClass
+class ModulesConf extends CoreConfigClass
 {
     protected string $description = 'modules.conf';
 
@@ -193,7 +192,9 @@ class ModulesConf extends ConfigClass
 
         $additionalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
         foreach ($additionalModules as $appClass) {
-            $conf .= $appClass->generateModulesConf();
+            if (method_exists($appClass, 'generateModulesConf')){
+                $conf .= $appClass->generateModulesConf();
+            }
         }
 
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/modules.conf', $conf);

@@ -602,9 +602,11 @@ class WorkerModelsEvents extends WorkerBase
                 }
             }
         }
-
-        foreach ($this->arrObject as $appClass) {
-            $appClass->modelsEventNeedReload($this->modified_tables);
+        // Send information about models changes to additional modules bulky without any details
+        foreach ($this->arrObject as $configClassObj) {
+            if (method_exists($configClassObj, 'modelsEventNeedReload')){
+                $configClassObj->modelsEventNeedReload($this->modified_tables);
+            }
         }
         $this->modified_tables = [];
     }
@@ -633,9 +635,11 @@ class WorkerModelsEvents extends WorkerBase
         if ( ! $receivedMessage) {
             return;
         }
-        // Send information about models changes to additional modules
-        foreach ($this->arrObject as $appClass) {
-            $appClass->modelsEventChangeData($receivedMessage);
+        // Send information about models changes to additional modules with changed data details
+        foreach ($this->arrObject as $configClassObj) {
+            if (method_exists($configClassObj, 'modelsEventChangeData')){
+                $configClassObj->modelsEventChangeData($receivedMessage);
+            }
         }
     }
 

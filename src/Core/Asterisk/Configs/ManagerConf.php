@@ -24,9 +24,8 @@ use MikoPBX\Common\Models\AsteriskManagerUsers;
 use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\Util;
-use MikoPBX\Modules\Config\ConfigClass;
 
-class ManagerConf extends ConfigClass
+class ManagerConf extends CoreConfigClass
 {
     protected string $description = 'manager.conf';
 

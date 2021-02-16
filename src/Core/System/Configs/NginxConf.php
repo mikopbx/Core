@@ -140,7 +140,7 @@ class NginxConf extends Injectable
             $this->generateConf(true, $level);
         }
         // Add additional rules from modules
-        $this->generateModulesConf();
+        $this->generateModulesConfigs();
     }
 
     /**
@@ -161,7 +161,7 @@ class NginxConf extends Injectable
     /**
      * Generate modules locations conf files
      */
-    public function generateModulesConf(): void
+    public function generateModulesConfigs(): void
     {
         $locationsPath     = self::MODULES_LOCATIONS_PATH;
         if (!is_dir($locationsPath)){

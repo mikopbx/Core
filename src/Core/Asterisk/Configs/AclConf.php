@@ -23,9 +23,8 @@ namespace MikoPBX\Core\Asterisk\Configs;
 use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Core\System\Util;
-use MikoPBX\Modules\Config\ConfigClass;
 
-class AclConf extends ConfigClass
+class AclConf extends CoreConfigClass
 {
     protected string $description = 'acl.conf';
     protected array $data_peers;
