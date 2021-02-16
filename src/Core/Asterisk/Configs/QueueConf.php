@@ -36,7 +36,6 @@ class QueueConf extends CoreConfigClass
      */
     protected function generateConfigProtected() :void
     {
-        $this->extensionGenInternal();
         // Генерация конфигурационных файлов.
         $q_conf = '';
         $db_data = $this->getQueueData();
