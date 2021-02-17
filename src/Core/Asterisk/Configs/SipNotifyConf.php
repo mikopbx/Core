@@ -34,7 +34,7 @@ class SipNotifyConf extends CoreConfigClass
         $conf = '';
         $conf .= "[yealink-reboot]\n" .
             "Event=>check-sync\;reboot=true\n" .
-            "Content-Length=>0\n".
+            "Content-Length=>0\n" .
             "Content=>\n\n";
 
         $conf .= "[snom-reboot]\n" .
@@ -46,7 +46,7 @@ class SipNotifyConf extends CoreConfigClass
         $conf .= "[yealink-action-ok]\n" .
             "Content-Type=>message/sipfrag\n" .
             "Event=>ACTION-URI\n" .
-            "Content=>key=SPEAKER\n".
+            "Content=>key=SPEAKER\n" .
             "Content=>\n\n";
 
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/pjsip_notify.conf', $conf);

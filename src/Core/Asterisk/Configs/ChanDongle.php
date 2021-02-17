@@ -28,8 +28,8 @@ class ChanDongle extends CoreConfigClass
 
     protected function generateConfigProtected(): void
     {
-        $conf = '[general]'.PHP_EOL.
-                'interval=15'.PHP_EOL;
+        $conf = '[general]' . PHP_EOL .
+            'interval=15' . PHP_EOL;
 
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/dongle.conf', $conf);
     }

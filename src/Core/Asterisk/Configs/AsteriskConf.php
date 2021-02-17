@@ -28,7 +28,6 @@ class AsteriskConf extends CoreConfigClass
 
     protected function generateConfigProtected(): void
     {
-
         $lang = $this->generalSettings['PBXLanguage'];
 
         $conf = "[directories]\n" .

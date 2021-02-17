@@ -26,6 +26,7 @@ use MikoPBX\Common\Providers\ModelsCacheProvider;
 use MikoPBX\Common\Providers\ModelsMetadataProvider;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\System\BeanstalkClient;
+use MikoPBX\Core\System\Util;
 use MikoPBX\Modules\PbxExtensionUtils;
 use Phalcon\Db\Adapter\AdapterInterface;
 use Phalcon\Di;
@@ -749,23 +750,29 @@ abstract class ModelsBase extends Model
         if ($di === null) {
             return;
         }
-        if ($di->has(ManagedCacheProvider::SERVICE_NAME)) {
-            $managedCache = $di->get(ManagedCacheProvider::SERVICE_NAME);
-            $category     = explode('\\', $calledClass)[3];
-            $keys         = $managedCache->getAdapter()->getKeys($category);
-            // Delete all items from the cache
-            if (count($keys) > 0) {
-                $managedCache->deleteMultiple($keys);
+        try {
+            if ($di->has(ManagedCacheProvider::SERVICE_NAME)) {
+                $managedCache = $di->get(ManagedCacheProvider::SERVICE_NAME);
+                $category     = explode('\\', $calledClass)[3];
+                $keys         = $managedCache->getAdapter()->getKeys($category);
+                // Delete all items from the cache
+                if (count($keys) > 0) {
+                    $managedCache->deleteMultiple($keys);
+                }
             }
-        }
-        if ($di->has(ModelsCacheProvider::SERVICE_NAME)) {
-            $modelsCache = $di->getShared(ModelsCacheProvider::SERVICE_NAME);
-            $category    = explode('\\', $calledClass)[3];
-            $keys        = $modelsCache->getAdapter()->getKeys($category);
-            // Delete all items from the cache
-            if (count($keys) > 0) {
-                $modelsCache->deleteMultiple($keys);
+            if ($di->has(ModelsCacheProvider::SERVICE_NAME)) {
+                $modelsCache = $di->getShared(ModelsCacheProvider::SERVICE_NAME);
+                $category    = explode('\\', $calledClass)[3];
+                $keys        = $modelsCache->getAdapter()->getKeys($category);
+                // Delete all items from the cache
+                if (count($keys) > 0) {
+                    $modelsCache->deleteMultiple($keys);
+                }
             }
+        } catch (\Throwable $e) {
+            global $errorLogger;
+            $errorLogger->captureException($e);
+            Util::sysLogMsg(__METHOD__, $e->getMessage(), LOG_ERR);
         }
         if ($needClearFrontedCache
             && php_sapi_name() === 'cli'

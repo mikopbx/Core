@@ -174,11 +174,11 @@ class SIPConf extends CoreConfigClass
     {
         $this->contexts_data = [];
         // Настройки для текущего класса.
-        $this->data_peers     = $this->getPeers();
-        $this->data_providers = $this->getProviders();
-        $this->data_rout      = $this->getOutRoutes();
-        $this->technology     = self::getTechnology();
-        $this->dataSipHosts   = self::getSipHosts();
+        $this->data_peers        = $this->getPeers();
+        $this->data_providers    = $this->getProviders();
+        $this->data_rout         = $this->getOutRoutes();
+        $this->technology        = self::getTechnology();
+        $this->dataSipHosts      = self::getSipHosts();
         $this->additionalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
     }
 
@@ -570,17 +570,50 @@ class SIPConf extends CoreConfigClass
         if ($provider['noregister'] === '1') {
             return $conf;
         }
-        $options = [
+        $options         = [
             'type'     => 'registration-auth',
             'username' => $provider['username'],
             'password' => $provider['secret'],
         ];
-        $options = $this->overridePJSIPOptionsFromModules($provider['uniqid'], $options, CoreConfigClass::OVERRIDE_PROVIDER_PJSIP_OPTIONS);
+        $options         = $this->overridePJSIPOptionsFromModules(
+            $provider['uniqid'],
+            $options,
+            CoreConfigClass::OVERRIDE_PROVIDER_PJSIP_OPTIONS
+        );
         $options['type'] = 'auth';
         $conf            .= "[REG-AUTH-{$provider['uniqid']}]\n";
         $conf            .= Util::overrideConfigurationArray($options, $manual_attributes, 'registration-auth');
 
         return $conf;
+    }
+
+    /**
+     * Calls an overridePJSIPOptions function from additional modules
+     *
+     * @param $extension
+     * @param $options
+     * @param $method
+     *
+     * @return array
+     */
+    private function overridePJSIPOptionsFromModules($extension, $options, $method): array
+    {
+        foreach ($this->additionalModules as $configClassObj) {
+            if ( ! method_exists($configClassObj, $method)) {
+                continue;
+            }
+            try {
+                $newOptionsSet = call_user_func_array([$configClassObj, $method], [$extension, $options]);
+            } catch (Throwable $e) {
+                global $errorLogger;
+                $errorLogger->captureException($e);
+                Util::sysLogMsg(__METHOD__, $e->getMessage(), LOG_ERR);
+                continue;
+            }
+            $options = $newOptionsSet;
+        }
+
+        return $options;
     }
 
     /**
@@ -611,9 +644,13 @@ class SIPConf extends CoreConfigClass
             'server_uri'               => "sip:{$provider['host']}:{$provider['port']}",
             'client_uri'               => "sip:{$provider['username']}@{$provider['host']}:{$provider['port']}",
         ];
-        $options = $this->overridePJSIPOptionsFromModules($provider['uniqid'], $options, CoreConfigClass::OVERRIDE_PROVIDER_PJSIP_OPTIONS);
-        $conf .= "[REG-{$provider['uniqid']}] \n";
-        $conf .= Util::overrideConfigurationArray($options, $manual_attributes, 'registration');
+        $options = $this->overridePJSIPOptionsFromModules(
+            $provider['uniqid'],
+            $options,
+            CoreConfigClass::OVERRIDE_PROVIDER_PJSIP_OPTIONS
+        );
+        $conf    .= "[REG-{$provider['uniqid']}] \n";
+        $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'registration');
 
         return $conf;
     }
@@ -634,12 +671,16 @@ class SIPConf extends CoreConfigClass
         if ('1' === $provider['receive_calls_without_auth']) {
             return $conf;
         }
-        $options = [
+        $options         = [
             'type'     => 'endpoint-auth',
             'username' => $provider['username'],
             'password' => $provider['secret'],
         ];
-        $options = $this->overridePJSIPOptionsFromModules($provider['uniqid'], $options, CoreConfigClass::OVERRIDE_PROVIDER_PJSIP_OPTIONS);
+        $options         = $this->overridePJSIPOptionsFromModules(
+            $provider['uniqid'],
+            $options,
+            CoreConfigClass::OVERRIDE_PROVIDER_PJSIP_OPTIONS
+        );
         $options['type'] = 'auth';
         $conf            .= "[{$provider['uniqid']}-OUT]\n";
         $conf            .= Util::overrideConfigurationArray($options, $manual_attributes, 'endpoint-auth');
@@ -676,9 +717,13 @@ class SIPConf extends CoreConfigClass
             $options['qualify_frequency'] = $provider['qualifyfreq'];
             $options['qualify_timeout']   = '3.0';
         }
-        $options = $this->overridePJSIPOptionsFromModules($provider['uniqid'], $options, CoreConfigClass::OVERRIDE_PROVIDER_PJSIP_OPTIONS);
-        $conf .= "[{$provider['uniqid']}]\n";
-        $conf .= Util::overrideConfigurationArray($options, $manual_attributes, 'aor');
+        $options = $this->overridePJSIPOptionsFromModules(
+            $provider['uniqid'],
+            $options,
+            CoreConfigClass::OVERRIDE_PROVIDER_PJSIP_OPTIONS
+        );
+        $conf    .= "[{$provider['uniqid']}]\n";
+        $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'aor');
 
         return $conf;
     }
@@ -705,9 +750,13 @@ class SIPConf extends CoreConfigClass
             'endpoint' => $provider['uniqid'],
             'match'    => implode(',', array_unique($providerHosts)),
         ];
-        $options = $this->overridePJSIPOptionsFromModules($provider['uniqid'], $options, CoreConfigClass::OVERRIDE_PROVIDER_PJSIP_OPTIONS);
-        $conf .= "[{$provider['uniqid']}]\n";
-        $conf .= Util::overrideConfigurationArray($options, $manual_attributes, 'identify');
+        $options = $this->overridePJSIPOptionsFromModules(
+            $provider['uniqid'],
+            $options,
+            CoreConfigClass::OVERRIDE_PROVIDER_PJSIP_OPTIONS
+        );
+        $conf    .= "[{$provider['uniqid']}]\n";
+        $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'identify');
 
         return $conf;
     }
@@ -761,9 +810,13 @@ class SIPConf extends CoreConfigClass
             $options['outbound_auth'] = "{$provider['uniqid']}-OUT";
         }
         self::getToneZone($options, $language);
-        $options = $this->overridePJSIPOptionsFromModules($provider['uniqid'], $options, CoreConfigClass::OVERRIDE_PROVIDER_PJSIP_OPTIONS);
-        $conf .= "[{$provider['uniqid']}]\n";
-        $conf .= Util::overrideConfigurationArray($options, $manual_attributes, 'endpoint');
+        $options = $this->overridePJSIPOptionsFromModules(
+            $provider['uniqid'],
+            $options,
+            CoreConfigClass::OVERRIDE_PROVIDER_PJSIP_OPTIONS
+        );
+        $conf    .= "[{$provider['uniqid']}]\n";
+        $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'endpoint');
 
         return $conf;
     }
@@ -805,8 +858,8 @@ class SIPConf extends CoreConfigClass
         if ($this->data_peers === null) {
             $this->getSettings();
         }
-        $lang              = $this->generalSettings['PBXLanguage'];
-        $conf              = '';
+        $lang = $this->generalSettings['PBXLanguage'];
+        $conf = '';
 
         foreach ($this->data_peers as $peer) {
             $manual_attributes = Util::parseIniSettings($peer['manualattributes'] ?? '');
@@ -816,6 +869,7 @@ class SIPConf extends CoreConfigClass
         }
 
         $conf .= $this->hookModulesMethod(CoreConfigClass::GENERATE_PEERS_PJ);
+
         return $conf;
     }
 
@@ -835,9 +889,13 @@ class SIPConf extends CoreConfigClass
             'username' => $peer['extension'],
             'password' => $peer['secret'],
         ];
-        $options = $this->overridePJSIPOptionsFromModules($peer['extension'], $options, CoreConfigClass::OVERRIDE_PJSIP_OPTIONS);
-        $conf .= "[{$peer['extension']}] \n";
-        $conf .= Util::overrideConfigurationArray($options, $manual_attributes, 'auth');
+        $options = $this->overridePJSIPOptionsFromModules(
+            $peer['extension'],
+            $options,
+            CoreConfigClass::OVERRIDE_PJSIP_OPTIONS
+        );
+        $conf    .= "[{$peer['extension']}] \n";
+        $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'auth');
 
         return $conf;
     }
@@ -850,7 +908,7 @@ class SIPConf extends CoreConfigClass
      *
      * @return string
      */
-    private function generatePeerAor(array $peer,  array $manual_attributes): string
+    private function generatePeerAor(array $peer, array $manual_attributes): string
     {
         $conf    = '';
         $options = [
@@ -859,9 +917,13 @@ class SIPConf extends CoreConfigClass
             'qualify_timeout'   => '5',
             'max_contacts'      => '5',
         ];
-        $options = $this->overridePJSIPOptionsFromModules($peer['extension'], $options, CoreConfigClass::OVERRIDE_PJSIP_OPTIONS);
-        $conf .= "[{$peer['extension']}] \n";
-        $conf .= Util::overrideConfigurationArray($options, $manual_attributes, 'aor');
+        $options = $this->overridePJSIPOptionsFromModules(
+            $peer['extension'],
+            $options,
+            CoreConfigClass::OVERRIDE_PJSIP_OPTIONS
+        );
+        $conf    .= "[{$peer['extension']}] \n";
+        $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'aor');
 
         return $conf;
     }
@@ -914,39 +976,16 @@ class SIPConf extends CoreConfigClass
             'timers'               => ' no',
         ];
         self::getToneZone($options, $language);
-        $options = $this->overridePJSIPOptionsFromModules($peer['extension'], $options, CoreConfigClass::OVERRIDE_PJSIP_OPTIONS);
-        $conf .= "[{$peer['extension']}] \n";
-        $conf .= Util::overrideConfigurationArray($options, $manual_attributes, 'endpoint');
-        $conf .= $this->hookModulesMethod(CoreConfigClass::GENERATE_PEER_PJ_ADDITIONAL_OPTIONS, [$peer]);
-        return $conf;
-    }
+        $options = $this->overridePJSIPOptionsFromModules(
+            $peer['extension'],
+            $options,
+            CoreConfigClass::OVERRIDE_PJSIP_OPTIONS
+        );
+        $conf    .= "[{$peer['extension']}] \n";
+        $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'endpoint');
+        $conf    .= $this->hookModulesMethod(CoreConfigClass::GENERATE_PEER_PJ_ADDITIONAL_OPTIONS, [$peer]);
 
-    /**
-     * Calls an overridePJSIPOptions function from additional modules
-     *
-     * @param $extension
-     * @param $options
-     * @param $method
-     *
-     * @return array
-     */
-    private function overridePJSIPOptionsFromModules($extension, $options, $method): array
-    {
-        foreach ($this->additionalModules as $configClassObj) {
-            if (!method_exists($configClassObj, $method)) {
-                continue;
-            }
-            try {
-                $newOptionsSet = call_user_func_array([$configClassObj, $method], [$extension, $options]);
-            } catch (Throwable $e){
-                global $errorLogger;
-                $errorLogger->captureException($e);
-                Util::sysLogMsg(__METHOD__, $e->getMessage(), LOG_ERR);
-                continue;
-            }
-            $options = $newOptionsSet;
-        }
-        return $options;
+        return $conf;
     }
 
 }

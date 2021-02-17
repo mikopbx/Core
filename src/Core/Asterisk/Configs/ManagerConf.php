@@ -135,6 +135,6 @@ class ManagerConf extends CoreConfigClass
         $conf .= "\n";
 
         $conf .= $this->hookModulesMethod(CoreConfigClass::GENERATE_MANAGER_CONF);
-        Util::fileWriteContent($this->config->path('asterisk.astetcdir') .'/manager.conf', $conf);
+        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/manager.conf', $conf);
     }
 }

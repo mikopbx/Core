@@ -36,6 +36,7 @@ use MikoPBX\Core\Workers\WorkerModelsEvents;
 use MikoPBX\Core\Workers\WorkerNotifyByEmail;
 use MikoPBX\Core\Workers\WorkerNotifyError;
 use MikoPBX\Core\Workers\WorkerRemoveOldRecords;
+use MikoPBX\Modules\Config\ConfigClass;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use Recoil\React\ReactKernel;
 use Throwable;
@@ -100,19 +101,44 @@ class WorkerSafeScriptsCore extends WorkerBase
                     WorkerRemoveOldRecords::class,
                 ],
         ];
-        $arrModulesWorkers = [];
-        $pbxConfModules    = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
-        foreach ($pbxConfModules as $pbxConfModule) {
-            $arrModulesWorkers[] = $pbxConfModule->getModuleWorkers();
-        }
-        $arrModulesWorkers = array_merge(...$arrModulesWorkers);
-        if (count($arrModulesWorkers) > 0) {
+        $arrModulesWorkers = $this->hookModulesMethodGetModuleWorkers();
+        if (!empty($arrModulesWorkers)) {
             foreach ($arrModulesWorkers as $moduleWorker) {
                 $arrWorkers[$moduleWorker['type']][] = $moduleWorker['worker'];
             }
         }
 
         return $arrWorkers;
+    }
+
+     /**
+     * Calls extensions modules workers list
+     *
+     * @return array
+     */
+    private function hookModulesMethodGetModuleWorkers(): array
+    {
+        $arrModulesWorkers = [];
+        $additionalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
+        $method = ConfigClass::GET_MODULE_WORKERS;
+        foreach ($additionalModules as $configClassObj) {
+            if ( ! method_exists($configClassObj, $method)) {
+                continue;
+            }
+            try {
+                $moduleWorkers = call_user_func_array([$configClassObj, $method], []);
+            } catch (Throwable $e) {
+                global $errorLogger;
+                $errorLogger->captureException($e);
+                Util::sysLogMsg(__METHOD__, $e->getMessage(), LOG_ERR);
+                continue;
+            }
+            if ( ! empty($moduleWorkers)) {
+                $arrModulesWorkers[] = $moduleWorkers;
+            }
+        }
+        $arrModulesWorkers = array_merge(...$arrModulesWorkers);
+        return $arrModulesWorkers;
     }
 
     /**

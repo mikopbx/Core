@@ -42,6 +42,8 @@ use MikoPBX\PBXCoreREST\Controllers\{Cdr\GetController as CdrGetController,
     License\PostController as LicensePostController
 };
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
+use MikoPBX\Core\System\Util;
+use MikoPBX\Modules\Config\ConfigClass;
 use MikoPBX\PBXCoreREST\Middleware\AuthenticationMiddleware;
 use MikoPBX\PBXCoreREST\Middleware\NotFoundMiddleware;
 use MikoPBX\PBXCoreREST\Middleware\ResponseMiddleware;
@@ -50,6 +52,7 @@ use Phalcon\Di\ServiceProviderInterface;
 use Phalcon\Events\Manager;
 use Phalcon\Mvc\Micro;
 use Phalcon\Mvc\Micro\Collection;
+use Throwable;
 
 
 /**
@@ -89,13 +92,7 @@ class RouterProvider implements ServiceProviderInterface
         $routes = $this->getRoutes();
 
         // Add additional modules routes
-        $additionalRoutes  = [];
-        $additionalModules = $di->getShared(PBXConfModulesProvider::SERVICE_NAME);
-        foreach ($additionalModules as $appClass) {
-            /** @var \MikoPBX\Modules\Config\ConfigClass; $appClass */
-            $additionalRoutes[] = $appClass->getPBXCoreRESTAdditionalRoutes();
-        }
-
+        $additionalRoutes  = $this->hookModulesMethodGetPBXCoreRESTAdditionalRoutes($di);
         $routes = array_merge($routes, ...$additionalRoutes);
 
         // Class, Method, Route, Handler, ParamsRegex
@@ -111,6 +108,37 @@ class RouterProvider implements ServiceProviderInterface
 
             $application->mount($collection);
         }
+    }
+
+    /**
+     * Calls extensions modules for additional routes list
+     *
+     * @param \Phalcon\Di\DiInterface $di
+     *
+     * @return array
+     */
+    private function hookModulesMethodGetPBXCoreRESTAdditionalRoutes(DiInterface $di): array
+    {
+        $arrAdditionalRoutes = [];
+        $additionalModules = $di->getShared(PBXConfModulesProvider::SERVICE_NAME);
+        $method = ConfigClass::GET_PBXCORE_REST_ADDITIONAL_ROUTES;
+        foreach ($additionalModules as $configClassObj) {
+            if ( ! method_exists($configClassObj, $method)) {
+                continue;
+            }
+            try {
+                $additionalRoutes = call_user_func_array([$configClassObj, $method], []);
+            } catch (Throwable $e) {
+                global $errorLogger;
+                $errorLogger->captureException($e);
+                Util::sysLogMsg(__METHOD__, $e->getMessage(), LOG_ERR);
+                continue;
+            }
+            if ( ! empty($additionalRoutes)) {
+                $arrAdditionalRoutes[] = $additionalRoutes;
+            }
+        }
+        return $arrAdditionalRoutes;
     }
 
     /**

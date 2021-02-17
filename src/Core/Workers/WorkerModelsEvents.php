@@ -635,7 +635,7 @@ class WorkerModelsEvents extends WorkerBase
             return;
         }
         // Send information about models changes to additional modules with changed data details
-        $this->modulesConfigObj->hookModulesMethod(ConfigClass::MODELS_EVENT_CHANGE_DATA, [$this->$receivedMessage]);
+        $this->modulesConfigObj->hookModulesMethod(ConfigClass::MODELS_EVENT_CHANGE_DATA, [$receivedMessage]);
     }
 
     /**

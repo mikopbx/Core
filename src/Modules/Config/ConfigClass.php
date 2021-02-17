@@ -33,6 +33,9 @@ class ConfigClass extends CoreConfigClass implements SystemConfigInterface, Aste
     public const GENERATE_FAIL2BAN_JAILS = 'generateFail2BanJails';
     public const ON_AFTER_MODULE_DISABLE = 'onAfterModuleDisable';
     public const ON_AFTER_MODULE_ENABLE = 'onAfterModuleEnable';
+    public const GET_MODULE_WORKERS = 'getModuleWorkers';
+    public const GET_PBXCORE_REST_ADDITIONAL_ROUTES = 'getPBXCoreRESTAdditionalRoutes';
+
 
     /**
      * External module UniqueID

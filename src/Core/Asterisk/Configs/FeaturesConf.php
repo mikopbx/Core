@@ -25,9 +25,17 @@ class FeaturesConf extends CoreConfigClass
 {
     protected string $description = 'features.conf';
 
+    public function extensionGlobals(): string
+    {
+        // Генерация хинтов.
+        return "PICKUP_EXTEN={$this->generalSettings['PBXFeaturePickupExten']}\n";
+    }
+
+    // Секция global для extensions.conf.
+
     protected function generateConfigProtected(): void
     {
-        $conf             = "[general]\n" .
+        $conf = "[general]\n" .
             "featuredigittimeout = {$this->generalSettings['PBXFeatureDigitTimeout']}\n" .
             "atxfernoanswertimeout = {$this->generalSettings['PBXFeatureAtxferNoAnswerTimeout']}\n" .
             "transferdigittimeout = {$this->generalSettings['PBXFeatureTransferDigitTimeout']}\n" .
@@ -42,12 +50,5 @@ class FeaturesConf extends CoreConfigClass
         $conf .= $this->hookModulesMethod(CoreConfigClass::GET_FEATURE_MAP);
 
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/features.conf', $conf);
-    }
-
-    // Секция global для extensions.conf.
-    public function extensionGlobals(): string
-    {
-        // Генерация хинтов.
-        return "PICKUP_EXTEN={$this->generalSettings['PBXFeaturePickupExten']}\n";
     }
 }

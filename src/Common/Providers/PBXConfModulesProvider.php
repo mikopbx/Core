@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace MikoPBX\Common\Providers;
 
 use MikoPBX\Common\Models\PbxExtensionModules;
+use MikoPBX\Core\Asterisk\Configs\CoreConfigClass;
 use MikoPBX\Modules\Config\ConfigClass;
 use Phalcon\Di;
 use Phalcon\Di\DiInterface;
@@ -65,10 +66,13 @@ class PBXConfModulesProvider implements ServiceProviderInterface
         $modulesFiles = glob("{$configsDir}/*.php", GLOB_NOSORT);
         foreach ($modulesFiles as $file) {
             $className        = pathinfo($file)['filename'];
-            $full_class_name = "\\MikoPBX\\Core\\Asterisk\\Configs\\{$className}";
-            if (class_exists($full_class_name)) {
-                $object = new $full_class_name();
-                if ($object instanceof ConfigClass){
+            if ($className === 'CoreConfigClass'){
+                continue;
+            }
+            $fullClassName = "\\MikoPBX\\Core\\Asterisk\\Configs\\{$className}";
+            if (class_exists($fullClassName)) {
+                $object = new $fullClassName();
+                if ($object instanceof CoreConfigClass){
                     $arrObjects[] = $object;
                 }
             }
@@ -85,10 +89,10 @@ class PBXConfModulesProvider implements ServiceProviderInterface
         $arrObjects = [];
         $modules = PbxExtensionModules::getEnabledModulesArray();
         foreach ($modules as $value) {
-            $class_name      = str_replace('Module', '', $value['uniqid']);
-            $full_class_name = "\\Modules\\{$value['uniqid']}\\Lib\\{$class_name}Conf";
-            if (class_exists($full_class_name)) {
-                $object = new $full_class_name();
+            $className      = str_replace('Module', '', $value['uniqid']);
+            $fullClassName = "\\Modules\\{$value['uniqid']}\\Lib\\{$className}Conf";
+            if (class_exists($fullClassName)) {
+                $object = new $fullClassName();
                 if ($object instanceof ConfigClass){
                     $arrObjects[] = $object;
                 }

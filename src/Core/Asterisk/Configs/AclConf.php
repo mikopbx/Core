@@ -44,7 +44,7 @@ class AclConf extends CoreConfigClass
     public function getSettings(): void
     {
         // Настройки для текущего класса.
-        $this->data_peers     = $this->getPeers();
+        $this->data_peers = $this->getPeers();
     }
 
     /**
@@ -77,8 +77,8 @@ class AclConf extends CoreConfigClass
         foreach ($this->data_peers as $peer) {
             $manual_attributes = Util::parseIniSettings($peer['manualattributes'] ?? '');
 
-            $deny         = (trim($peer['deny']) === '') ? '0.0.0.0/0.0.0.0' : $peer['deny'];
-            $permit       = (trim($peer['permit']) === '') ? '0.0.0.0/0.0.0.0' : $peer['permit'];
+            $deny   = (trim($peer['deny']) === '') ? '0.0.0.0/0.0.0.0' : $peer['deny'];
+            $permit = (trim($peer['permit']) === '') ? '0.0.0.0/0.0.0.0' : $peer['permit'];
 
             $options  = [
                 'deny'   => $deny,
@@ -86,7 +86,6 @@ class AclConf extends CoreConfigClass
             ];
             $conf_acl .= "[acl_{$peer['extension']}] \n";
             $conf_acl .= Util::overrideConfigurationArray($options, $manual_attributes, 'acl');
-
         }
 
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/acl.conf', $conf_acl);
