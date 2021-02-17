@@ -35,6 +35,7 @@ use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\IncomingContexts;
 use MikoPBX\Core\System\{MikoPBXConfig, Network, Util};
 use MikoPBX\Core\Utilities\SubnetCalculator;
 use Phalcon\Di;
+use Throwable;
 
 class SIPConf extends CoreConfigClass
 {
@@ -104,7 +105,7 @@ class SIPConf extends CoreConfigClass
             }
             try {
                 $sub = new SubnetCalculator($lan_config['ipaddr'], $lan_config['subnet']);
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 Util::sysLogMsg(self::class, $e->getMessage(), LOG_ERR);
                 continue;
             }
@@ -926,6 +927,8 @@ class SIPConf extends CoreConfigClass
      * @param $extension
      * @param $options
      * @param $method
+     *
+     * @return array
      */
     private function overridePJSIPOptionsFromModules($extension, $options, $method): array
     {
@@ -935,7 +938,7 @@ class SIPConf extends CoreConfigClass
             }
             try {
                 $newOptionsSet = call_user_func_array([$configClassObj, $method], [$extension, $options]);
-            } catch (\Throwable $e){
+            } catch (Throwable $e){
                 global $errorLogger;
                 $errorLogger->captureException($e);
                 Util::sysLogMsg(__METHOD__, $e->getMessage(), LOG_ERR);

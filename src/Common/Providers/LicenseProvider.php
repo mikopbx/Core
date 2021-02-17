@@ -63,8 +63,8 @@ class LicenseProvider implements ServiceProviderInterface
             function () {
                 try {
                     return new License('http://127.0.0.1:8223');
-                } catch (Throwable $exception){
-                    Util::sysLogMsg(__CLASS__, $exception);
+                } catch (Throwable $e){
+                    Util::sysLogMsg(__CLASS__, $e->getMessage());
                 }
                 return null;
             }
