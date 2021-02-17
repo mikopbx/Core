@@ -19,7 +19,6 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
-use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\Util;
 
 class ModulesConf extends CoreConfigClass
@@ -189,13 +188,7 @@ class ModulesConf extends CoreConfigClass
         foreach ($modules as $value) {
             $conf .= "load => $value\n";
         }
-
-        $additionalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
-        foreach ($additionalModules as $appClass) {
-            if (method_exists($appClass, 'generateModulesConf')){
-                $conf .= $appClass->generateModulesConf();
-            }
-        }
+        $conf .= $this->hookModulesMethod(CoreConfigClass::GENERATE_MODULES_CONF);
 
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/modules.conf', $conf);
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/codecs.conf', '');

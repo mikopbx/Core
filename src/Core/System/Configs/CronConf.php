@@ -103,9 +103,10 @@ class CronConf extends Injectable
         $tasks = [];
 
         // Add additional modules includes
-        foreach ($additionalModules as $appClass) {
-            /** @var \MikoPBX\Modules\Config\ConfigClass $appClass */
-            $appClass->createCronTasks($tasks);
+        foreach ($additionalModules as $configClassObj) {
+            if (method_exists($configClassObj, 'createCronTasks')) {
+                $configClassObj->createCronTasks($tasks);
+            }
         }
         $conf = implode('', array_merge($mast_have, $tasks));
 

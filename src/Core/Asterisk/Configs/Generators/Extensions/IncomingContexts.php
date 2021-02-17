@@ -5,11 +5,9 @@ namespace MikoPBX\Core\Asterisk\Configs\Generators\Extensions;
 
 
 use MikoPBX\Common\Models\IncomingRoutingTable;
-use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Asterisk\Configs\ConferenceConf;
 use MikoPBX\Core\Asterisk\Configs\CoreConfigClass;
 use MikoPBX\Core\Asterisk\Configs\ExtensionsConf;
-use Phalcon\Di;
 
 class IncomingContexts extends CoreConfigClass
 {
@@ -19,7 +17,6 @@ class IncomingContexts extends CoreConfigClass
 
     private array $dialplan = [];
     private array $rout_data_dial = [];
-    private array $additionalModules = [];
     private array $confExtensions = [];
     private array $routes = [];
     private string $lang;
@@ -47,10 +44,6 @@ class IncomingContexts extends CoreConfigClass
 
     public function getSettings(): void
     {
-        $di = Di::getDefault();
-        if ($di !== null) {
-            $this->additionalModules = $di->getShared(PBXConfModulesProvider::SERVICE_NAME);
-        }
         $this->confExtensions = ConferenceConf::getConferenceExtensions();
         $this->routes         = $this->getRoutes();
         $this->lang           = str_replace('_', '-', $this->generalSettings['PBXLanguage']);
@@ -157,33 +150,13 @@ class IncomingContexts extends CoreConfigClass
         $rout_data .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" == "Local"]?Set(__FROM_PEER=${CALLERID(num)}))' . "\n\t";
         $rout_data .= 'same => n,Gosub(add-trim-prefix-clid,${EXTEN},1)' . "\n\t";
 
-        $rout_data .= $this->generateRouteDialplanBeforeDialModules($rout_number);
+        $rout_data .= $this->hookModulesMethod(CoreConfigClass::GENERATE_INCOMING_ROUT_BEFORE_DIAL, [$rout_number]);
         // Описываем возможность прыжка в пользовательский sub контекст.
         $rout_data .= " \n\t" . 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1)';
 
         if ( ! empty($rout['extension'])) {
             $rout_data = rtrim($rout_data);
         }
-    }
-
-    /**
-     * Генерация включений dialplan из дополонительных модулей перед Dial.
-     *
-     * @param $rout_number
-     *
-     * @return string
-     */
-    private function generateRouteDialplanBeforeDialModules($rout_number): string
-    {
-        $rout_data = '';
-        foreach ($this->additionalModules as $appClass) {
-            $addition = $appClass->generateIncomingRoutBeforeDial($rout_number);
-            if ( ! empty($addition)) {
-                $rout_data .= $appClass->confBlockWithComments($addition);
-            }
-        }
-
-        return $rout_data;
     }
 
     /**
@@ -362,12 +335,12 @@ class IncomingContexts extends CoreConfigClass
     /**
      * Формирование действия по умолчанию в dialplan.
      *
-     * @param $default_action
-     * @param $uniqId
+     * @param IncomingRoutingTable $default_action
+     * @param string               $uniqId
      *
      * @return string
      */
-    private function createSummaryDialplanDefAction($default_action, $uniqId): string
+    private function createSummaryDialplanDefAction(IncomingRoutingTable $default_action, string $uniqId): string
     {
         $conf = '';
         if ('extension' === $default_action->action) {
@@ -405,12 +378,7 @@ class IncomingContexts extends CoreConfigClass
         } else {
             $conf .= "\t" . "same => n," . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?' . "Dial(Local/{$default_action->extension}@internal/n,,TKg)); default action" . "\n";
         }
-        foreach ($this->additionalModules as $appClass) {
-            $addition = $appClass->generateIncomingRoutAfterDialContext($uniqId);
-            if ( ! empty($addition)) {
-                $conf .= $appClass->confBlockWithComments($addition);
-            }
-        }
+        $conf .= $this->hookModulesMethod(CoreConfigClass::GENERATE_INCOMING_ROUT_AFTER_DIAL_CONTEXT, [$uniqId]);
 
         return $conf;
     }

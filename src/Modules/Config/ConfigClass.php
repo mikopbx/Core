@@ -21,12 +21,19 @@ namespace MikoPBX\Modules\Config;
 
 use MikoPBX\Core\Asterisk\Configs\CoreConfigClass;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Exception;
 use ReflectionClass as ReflectionClassAlias;
 
-abstract class ConfigClass extends CoreConfigClass implements SystemConfigInterface, AsteriskConfigInterface,
+class ConfigClass extends CoreConfigClass implements SystemConfigInterface, AsteriskConfigInterface,
                                                          RestAPIConfigInterface
 {
+    public const MODELS_EVENT_NEED_RELOAD = 'modelsEventNeedReload';
+    public const MODELS_EVENT_CHANGE_DATA = 'modelsEventChangeData';
+    public const CREATE_CRON_TASKS = 'createCronTasks';
+    public const CREATE_NGINX_LOCATIONS = 'createNginxLocations';
+    public const GENERATE_FAIL2BAN_JAILS = 'generateFail2BanJails';
+    public const ON_AFTER_MODULE_DISABLE = 'onAfterModuleDisable';
+    public const ON_AFTER_MODULE_ENABLE = 'onAfterModuleEnable';
+
     /**
      * External module UniqueID
      */
@@ -51,8 +58,6 @@ abstract class ConfigClass extends CoreConfigClass implements SystemConfigInterf
             $modulesDir           = $this->config->path('core.modulesDir');
             $this->moduleUniqueId = $partsOfNameSpace[1];
             $this->moduleDir      = $modulesDir . '/' . $this->moduleUniqueId;
-        } else {
-            throw new Exception('Unknown module extension on class '.$reflector->getNamespaceName());
         }
 
         $this->messages = [];
@@ -115,7 +120,7 @@ abstract class ConfigClass extends CoreConfigClass implements SystemConfigInterf
     }
 
     /**
-     * This method calls after
+     * This method calls in the WorkerModelsEvents after receive each models change
      *
      * @param $data
      */
@@ -124,7 +129,7 @@ abstract class ConfigClass extends CoreConfigClass implements SystemConfigInterf
     }
 
     /**
-     * This method calls in the WorkerModelsEvents worker after process models changing
+     * This method calls in the WorkerModelsEvents after finished process models changing
      *
      * @param array $modified_tables list of modified models
      */
@@ -220,4 +225,21 @@ abstract class ConfigClass extends CoreConfigClass implements SystemConfigInterf
         return '';
     }
 
+    /**
+     * Prepares crontab rules strings
+     *
+     * @param array $tasks
+     */
+    public function createCronTasks(&$tasks): void
+    {
+    }
+
+
+    /**
+     * This module's method calls after the asterisk service started
+     */
+    public function onAfterPbxStarted(): void
+    {
+
+    }
 }

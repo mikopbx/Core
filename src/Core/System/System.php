@@ -279,13 +279,11 @@ class System extends Di\Injectable
     public function onAfterPbxStarted(): void
     {
         $additionalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
-        foreach ($additionalModules as $appClass) {
-            try {
-                /** @var \MikoPBX\Modules\Config\ConfigClass $appClass */
-                $appClass->onAfterPbxStarted();
-            }catch (Throwable $e){
-                Util::sysLogMsg('onAfterPbxStarted', $e->getMessage());
+        foreach ($additionalModules as $configClassObj) {
+            if ( ! method_exists($configClassObj, 'onAfterPbxStarted')) {
+                continue;
             }
+            $configClassObj->onAfterPbxStarted();
         }
     }
 }

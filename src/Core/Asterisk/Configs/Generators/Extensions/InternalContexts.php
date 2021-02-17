@@ -1,49 +1,61 @@
 <?php
-
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright (C) 2017-2021 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
 
 namespace MikoPBX\Core\Asterisk\Configs\Generators\Extensions;
 
 
-use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Asterisk\Configs\ExtensionsConf;
 use MikoPBX\Core\Asterisk\Configs\SIPConf;
 use MikoPBX\Core\Asterisk\Configs\CoreConfigClass;
-use Phalcon\Di;
 
-class InternalContexts extends CoreConfigClass {
+class InternalContexts extends CoreConfigClass
+{
 
-
-    private array  $additionalModules = [];
     private string $technology;
     private string $extensionPattern = 'X!';
 
-    public function getSettings(): void
-    {
-        $di = Di::getDefault();
-        if ($di !== null) {
-            $this->additionalModules = $di->getShared(PBXConfModulesProvider::SERVICE_NAME);
-        }
-        $this->technology = SIPConf::getTechnology();
-    }
-
     /**
      * Генератор входящих контекстов. Точка входа.
+     *
      * @return string
      */
     public static function generate(): string
     {
         $generator = new self();
         $generator->getSettings();
+
         return $generator->makeDialplan();
+    }
+
+    public function getSettings(): void
+    {
+        $this->technology = SIPConf::getTechnology();
     }
 
     /**
      * Генерация dialplan.
+     *
      * @return string
      */
-    public function makeDialplan():string
+    public function makeDialplan(): string
     {
-        $conf  = $this->generateAdditionalModulesContext();
+        $conf = $this->generateAdditionalModulesContext();
 
         $conf .= "[internal-num-undefined] \n";
         $conf .= 'exten => _' . $this->extensionPattern . ',1,ExecIf($["${ISTRANSFER}x" != "x"]?Gosub(${ISTRANSFER}dial_hangup,${EXTEN},1))' . "\n\t";
@@ -65,10 +77,101 @@ class InternalContexts extends CoreConfigClass {
     }
 
     /**
-     * Генератор [internal] dialplan.
+     * Генератор dialplan дополнительных модулей.
+     *
      * @return string
      */
-    private function generateInternal():string
+    private function generateAdditionalModulesContext(): string
+    {
+        $conf = '';
+        $conf .= $this->hookModulesMethod(CoreConfigClass::EXTENSION_GEN_CONTEXTS);
+        $conf .= "\n";
+
+        return $conf;
+    }
+
+    /**
+     * Генератор [internal-fw] dialplan.
+     *
+     * @return string
+     */
+    private function generateInternalFW(): string
+    {
+        $conf = "[internal-fw]\n";
+        $conf .= 'exten => _' . $this->extensionPattern . ',1,NoOp(DIALSTATUS - ${DIALSTATUS})' . "\n\t";
+        // CANCEL - вызов был отменен, к примеру *0, не нужно дальше искать адресат.
+        $conf .= 'same => n,ExecIf($["${DIALSTATUS}" == "CANCEL"]?Hangup())' . "\n\t";
+        // BUSY - занято. К примру абонент завершил вызов или DND.
+        $conf .= 'same => n,ExecIf($["${DIALSTATUS}" == "BUSY"]?Set(dstatus=FW_BUSY))' . "\n\t";
+        // CHANUNAVAIL - канал не доступен. К примеру телефон не зарегистрирован или не отвечает.
+        $conf .= 'same => n,ExecIf($["${DIALSTATUS}" == "CHANUNAVAIL"]?Set(dstatus=FW_UNAV))' . "\n\t";
+        // NOANSWER - не ответили по таймауту.
+        $conf .= 'same => n,ExecIf($["${dstatus}x" == "x"]?Set(dstatus=FW))' . "\n\t";
+        $conf .= 'same => n,Set(fw=${DB(${dstatus}/${EXTEN})})' . "\n\t";
+        $conf .= 'same => n,ExecIf($["${fw}x" != "x"]?Set(__pt1c_UNIQUEID=${UNDEFINED})' . "\n\t";
+        $conf .= 'same => n,ExecIf($["${fw}x" != "x"]?Goto(internal,${fw},1))' . "\n\t";
+        $conf .= 'same => n,ExecIf($["${BLINDTRANSFER}x" != "x"]?AGI(check_redirect.php,${BLINDTRANSFER}))' . "\n\t";
+        $conf .= 'same => n,Hangup() ' . "\n\n";
+
+        return $conf;
+    }
+
+    /**
+     * Генератор [all_peers] dialplan.
+     *
+     * @return string
+     */
+    private function generateAllPeers(): string
+    {
+        $conf = "[all_peers]\n";
+        $conf .= 'include => internal-hints' . "\n";
+        $conf .= 'exten => failed,1,Hangup()' . "\n";
+
+        $conf .= 'exten => ' . ExtensionsConf::ALL_NUMBER_EXTENSION . ',1,ExecIf($[ "${ORIGINATE_SRC_CHANNEL}x" != "x" ]?ChannelRedirect(${ORIGINATE_SRC_CHANNEL},${CONTEXT},${ORIGINATE_DST_EXTEN},1))' . PHP_EOL . "\t";
+        $conf .= 'same => n,ExecIf($[ "${ORIGINATE_SRC_CHANNEL}x" != "x" ]?Hangup())' . PHP_EOL . "\t";
+        // Фильтр спецсимволов. Разершаем только цифры.
+        $conf .= 'same => n,Set(cleanNumber=${FILTER(\*\#\+1234567890,${EXTEN})})' . "\n\t";
+        $conf .= 'same => n,ExecIf($["${EXTEN}" != "${cleanNumber}"]?Goto(${CONTEXT},${cleanNumber},$[${PRIORITY} + 1]))' . "\n\t";
+
+        $conf .= 'same => n,Set(__FROM_CHAN=${CHANNEL})' . "\n\t";
+        $conf .= 'same => n,ExecIf($["${OLD_LINKEDID}x" == "x"]?Set(__OLD_LINKEDID=${CHANNEL(linkedid)}))' . "\n\t";
+        $conf .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" != "Local"]?Gosub(set_from_peer,s,1))' . "\n\t";
+        $conf .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" == "Local"]?Gosub(set_orign_chan,s,1))' . "\n\t";
+
+        $conf .= 'same => n,ExecIf($["${CALLERID(num)}x" == "x"]?Set(CALLERID(num)=${FROM_PEER}))' . "\n\t";
+        $conf .= 'same => n,ExecIf($["${CALLERID(num)}x" == "x"]?Set(CALLERID(name)=${FROM_PEER}))' . "\n\t";
+
+        $conf .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" == "Local" && "${FROM_PEER}x" == "x"]?Set(__FROM_PEER=${CALLERID(num)}))' . "\n\t";
+        $conf .= 'same => n,Set(CHANNEL(hangup_handler_wipe)=hangup_handler,s,1)' . "\n\t";
+        $conf .= 'same => n,Gosub(${ISTRANSFER}dial,${EXTEN},1)' . "\n\t";
+
+        $conf          .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1)' . "\n\t";
+        $dialplanNames = ['applications', 'internal', 'outgoing'];
+        foreach ($dialplanNames as $name) {
+            $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(' . $name . ',${EXTEN},1)}" == "1"]?' . $name . ',${EXTEN},1)' . " \n\t";
+        }
+        $conf .= 'same => n,Hangup()' . " \n";
+
+        $pickupExtension = $this->generalSettings['PBXFeaturePickupExten'];
+        $conf            .= 'exten => _' . $pickupExtension . $this->extensionPattern . ',1,Set(PICKUPEER=' . $this->technology . '/${FILTER(0-9,${EXTEN:2})})' . "\n\t";
+        $conf            .= 'same => n,Set(pt1c_dnid=${EXTEN})' . "\n\t";
+        $conf            .= 'same => n,PickupChan(${PICKUPEER})' . "\n\t";
+        $conf            .= 'same => n,Hangup()' . "\n\n";
+
+        $voicemailExtension = $this->generalSettings['VoicemailExten'];
+        $conf               .= 'exten => ' . $voicemailExtension . ',1,NoOp(NOTICE, Dialing out from ${CALLERID(all)} to VoiceMail)' . "\n\t";
+        $conf               .= 'same => n,VoiceMailMain(admin@voicemailcontext,s)' . "\n\t";
+        $conf               .= 'same => n,Hangup()' . "\n\n";
+
+        return $conf;
+    }
+
+    /**
+     * Генератор [internal] dialplan.
+     *
+     * @return string
+     */
+    private function generateInternal(): string
     {
         // Контекст для внутренних вызовов.
         $conf = "[internal] \n";
@@ -82,7 +185,7 @@ class InternalContexts extends CoreConfigClass {
         $conf .= 'exten => h,1,ExecIf($["${ISTRANSFER}x" != "x"]?Gosub(${ISTRANSFER}dial_hangup,${EXTEN},1))' . "\n\n";
 
         $conf .= "[internal-incoming]\n";
-        $conf .= 'exten => '.ExtensionsConf::ALL_NUMBER_EXTENSION.',1,ExecIf($["${MASTER_CHANNEL(M_TIMEOUT)}x" != "x"]?Set(TIMEOUT(absolute)=${MASTER_CHANNEL(M_TIMEOUT)}))' . " \n\t";
+        $conf .= 'exten => ' . ExtensionsConf::ALL_NUMBER_EXTENSION . ',1,ExecIf($["${MASTER_CHANNEL(M_TIMEOUT)}x" != "x"]?Set(TIMEOUT(absolute)=${MASTER_CHANNEL(M_TIMEOUT)}))' . " \n\t";
         $conf .= 'same => n,Set(MASTER_CHANNEL(M_TIMEOUT_CHANNEL)=${CHANNEL})' . " \n\t";
         $conf .= 'same => n,Set(MASTER_CHANNEL(M_TIMEOUT)=${EMPTY_VAR})' . " \n\t";
         $conf .= 'same => n,Goto(internal,${EXTEN},1)' . " \n\n";
@@ -91,12 +194,27 @@ class InternalContexts extends CoreConfigClass {
     }
 
     /**
-     * Генератор [internal-users] dialplan.
+     * Переопределение dialplan [internal] из дополнительных модулей.
+     *
      * @return string
      */
-    private function generateInternalUsers():string
+    private function generateAdditionalModulesInternalContext(): string
     {
-        $conf  = "[internal-users] \n";
+        $conf = '';
+        $conf .= $this->hookModulesMethod(CoreConfigClass::GET_INCLUDE_INTERNAL);
+        $conf .= $this->hookModulesMethod(CoreConfigClass::EXTENSION_GEN_INTERNAL);
+
+        return $conf;
+    }
+
+    /**
+     * Генератор [internal-users] dialplan.
+     *
+     * @return string
+     */
+    private function generateInternalUsers(): string
+    {
+        $conf = "[internal-users] \n";
         $conf .= 'exten => _' . $this->extensionPattern . ',1,Set(CHANNEL(hangup_handler_wipe)=hangup_handler,s,1)' . " \n\t";
         $conf .= 'same => n,ExecIf($["${ISTRANSFER}x" != "x"]?Set(SIPADDHEADER01=${EMPTY_VAR})' . " \n\t";
         $conf .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" == "Local"]?Gosub(set_orign_chan,s,1))' . " \n\t";
@@ -129,119 +247,6 @@ class InternalContexts extends CoreConfigClass {
 
         $conf .= 'exten => h,1,ExecIf($["${ISTRANSFER}x" != "x"]?Gosub(${ISTRANSFER}dial_hangup,${EXTEN},1))' . "\n\n";
 
-        return $conf;
-    }
-
-    /**
-     * Генератор [all_peers] dialplan.
-     * @return string
-     */
-    private function generateAllPeers():string
-    {
-        $conf = "[all_peers]\n";
-        $conf .= 'include => internal-hints' . "\n";
-        $conf .= 'exten => failed,1,Hangup()' . "\n";
-
-        $conf .= 'exten => '.ExtensionsConf::ALL_NUMBER_EXTENSION.',1,ExecIf($[ "${ORIGINATE_SRC_CHANNEL}x" != "x" ]?ChannelRedirect(${ORIGINATE_SRC_CHANNEL},${CONTEXT},${ORIGINATE_DST_EXTEN},1))'.PHP_EOL."\t";
-        $conf .= 'same => n,ExecIf($[ "${ORIGINATE_SRC_CHANNEL}x" != "x" ]?Hangup())'.PHP_EOL."\t";
-        // Фильтр спецсимволов. Разершаем только цифры.
-        $conf .= 'same => n,Set(cleanNumber=${FILTER(\*\#\+1234567890,${EXTEN})})' . "\n\t";
-        $conf .= 'same => n,ExecIf($["${EXTEN}" != "${cleanNumber}"]?Goto(${CONTEXT},${cleanNumber},$[${PRIORITY} + 1]))' . "\n\t";
-
-        $conf .= 'same => n,Set(__FROM_CHAN=${CHANNEL})' . "\n\t";
-        $conf .= 'same => n,ExecIf($["${OLD_LINKEDID}x" == "x"]?Set(__OLD_LINKEDID=${CHANNEL(linkedid)}))' . "\n\t";
-        $conf .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" != "Local"]?Gosub(set_from_peer,s,1))' . "\n\t";
-        $conf .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" == "Local"]?Gosub(set_orign_chan,s,1))' . "\n\t";
-
-        $conf .= 'same => n,ExecIf($["${CALLERID(num)}x" == "x"]?Set(CALLERID(num)=${FROM_PEER}))' . "\n\t";
-        $conf .= 'same => n,ExecIf($["${CALLERID(num)}x" == "x"]?Set(CALLERID(name)=${FROM_PEER}))' . "\n\t";
-
-        $conf .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" == "Local" && "${FROM_PEER}x" == "x"]?Set(__FROM_PEER=${CALLERID(num)}))' . "\n\t";
-        $conf .= 'same => n,Set(CHANNEL(hangup_handler_wipe)=hangup_handler,s,1)' . "\n\t";
-        $conf .= 'same => n,Gosub(${ISTRANSFER}dial,${EXTEN},1)' . "\n\t";
-
-        $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1)' . "\n\t";
-        $dialplanNames = ['applications', 'internal', 'outgoing'];
-        foreach ($dialplanNames as $name){
-            $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS('.$name.',${EXTEN},1)}" == "1"]?'.$name.',${EXTEN},1)'." \n\t";
-        }
-        $conf .= 'same => n,Hangup()'." \n";
-
-        $pickupExtension  = $this->generalSettings['PBXFeaturePickupExten'];
-        $conf        .= 'exten => _' . $pickupExtension . $this->extensionPattern . ',1,Set(PICKUPEER=' . $this->technology . '/${FILTER(0-9,${EXTEN:2})})' . "\n\t";
-        $conf        .= 'same => n,Set(pt1c_dnid=${EXTEN})' . "\n\t";
-        $conf        .= 'same => n,PickupChan(${PICKUPEER})' . "\n\t";
-        $conf        .= 'same => n,Hangup()' . "\n\n";
-
-        $voicemailExtension  = $this->generalSettings['VoicemailExten'];
-        $conf            .= 'exten => ' . $voicemailExtension . ',1,NoOp(NOTICE, Dialing out from ${CALLERID(all)} to VoiceMail)' . "\n\t";
-        $conf            .= 'same => n,VoiceMailMain(admin@voicemailcontext,s)' . "\n\t";
-        $conf            .= 'same => n,Hangup()' . "\n\n";
-
-        return $conf;
-    }
-
-    /**
-     * Генератор [internal-fw] dialplan.
-     * @return string
-     */
-    private function generateInternalFW():string
-    {
-        $conf  = "[internal-fw]\n";
-        $conf .= 'exten => _' . $this->extensionPattern . ',1,NoOp(DIALSTATUS - ${DIALSTATUS})' . "\n\t";
-        // CANCEL - вызов был отменен, к примеру *0, не нужно дальше искать адресат.
-        $conf .= 'same => n,ExecIf($["${DIALSTATUS}" == "CANCEL"]?Hangup())' . "\n\t";
-        // BUSY - занято. К примру абонент завершил вызов или DND.
-        $conf .= 'same => n,ExecIf($["${DIALSTATUS}" == "BUSY"]?Set(dstatus=FW_BUSY))' . "\n\t";
-        // CHANUNAVAIL - канал не доступен. К примеру телефон не зарегистрирован или не отвечает.
-        $conf .= 'same => n,ExecIf($["${DIALSTATUS}" == "CHANUNAVAIL"]?Set(dstatus=FW_UNAV))' . "\n\t";
-        // NOANSWER - не ответили по таймауту.
-        $conf .= 'same => n,ExecIf($["${dstatus}x" == "x"]?Set(dstatus=FW))' . "\n\t";
-        $conf .= 'same => n,Set(fw=${DB(${dstatus}/${EXTEN})})' . "\n\t";
-        $conf .= 'same => n,ExecIf($["${fw}x" != "x"]?Set(__pt1c_UNIQUEID=${UNDEFINED})' . "\n\t";
-        $conf .= 'same => n,ExecIf($["${fw}x" != "x"]?Goto(internal,${fw},1))' . "\n\t";
-        $conf .= 'same => n,ExecIf($["${BLINDTRANSFER}x" != "x"]?AGI(check_redirect.php,${BLINDTRANSFER}))' . "\n\t";
-        $conf .= 'same => n,Hangup() ' . "\n\n";
-        return $conf;
-    }
-
-    /**
-     * Генератор dialplan дополнительных модулей.
-     * @return string
-     */
-    private function generateAdditionalModulesContext():string
-    {
-        $conf = '';
-        foreach ($this->additionalModules as $appClass) {
-            $addition = $appClass->extensionGenContexts();
-            if ( ! empty($addition)) {
-                $conf .= $appClass->confBlockWithComments($addition);
-            }
-        }
-        $conf .= "\n";
-        return $conf;
-    }
-
-    /**
-     * Переопределение dialplan [internal] из дополнительных модулей.
-     * @return string
-     */
-    private function generateAdditionalModulesInternalContext():string
-    {
-        $conf = '';
-        foreach ($this->additionalModules as $appClass) {
-            $addition = $appClass->getIncludeInternal();
-            if ( ! empty($addition)) {
-                $conf .= $appClass->confBlockWithComments($addition);
-            }
-        }
-
-        foreach ($this->additionalModules as $appClass) {
-            $addition = $appClass->extensionGenInternal();
-            if ( ! empty($addition)) {
-                $conf .= $appClass->confBlockWithComments($addition);
-            }
-        }
         return $conf;
     }
 

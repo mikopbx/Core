@@ -20,12 +20,53 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\MikoPBXConfig;
+use MikoPBX\Core\System\Util;
 use Phalcon\Config;
 use Phalcon\Di\Injectable;
 
 abstract class CoreConfigClass extends Injectable
 {
+    //$conf .= $this->hookModulesMethod(CoreConfigClass::);MODELS_EVENT_NEED_RELOAD
+    public const EXTENSION_GEN_HINTS = 'extensionGenHints';
+
+    public const GENERATE_PUBLIC_CONTEXT = 'generatePublicContext';
+
+    public const EXTENSION_GEN_INTERNAL_TRANSFER = 'extensionGenInternalTransfer';
+
+    public const GET_INCLUDE_INTERNAL_TRANSFER = 'getIncludeInternalTransfer';
+
+    public const EXTENSION_GLOBALS = 'extensionGlobals';
+
+    public const EXTENSION_GEN_CONTEXTS = 'extensionGenContexts';
+
+    public const GET_INCLUDE_INTERNAL = 'getIncludeInternal';
+
+    public const EXTENSION_GEN_INTERNAL = 'extensionGenInternal';
+
+    public const GENERATE_INCOMING_ROUT_BEFORE_DIAL = 'generateIncomingRoutBeforeDial';
+
+    public const GENERATE_INCOMING_ROUT_AFTER_DIAL_CONTEXT = 'generateIncomingRoutAfterDialContext';
+
+    public const GET_FEATURE_MAP = 'getFeatureMap';
+
+    public const GENERATE_MODULES_CONF = 'generateModulesConf';
+
+    public const GENERATE_MANAGER_CONF = 'generateManagerConf';
+
+    public const GENERATE_PEERS_PJ = 'generatePeersPj';
+
+    public const GENERATE_PEER_PJ_ADDITIONAL_OPTIONS = 'generatePeerPjAdditionalOptions';
+
+    public const GENERATE_OUT_ROUT_CONTEXT = 'generateOutRoutContext';
+
+    public const GENERATE_OUT_ROUT_AFTER_DIAL_CONTEXT = 'generateOutRoutAfterDialContext';
+
+    public const OVERRIDE_PJSIP_OPTIONS = 'overridePJSIPOptions';
+    public const OVERRIDE_PROVIDER_PJSIP_OPTIONS = 'overrideProviderPJSIPOptions';
+
+
 
     /**
      * Config file name i.e. extensions.conf
@@ -34,18 +75,21 @@ abstract class CoreConfigClass extends Injectable
 
     /**
      * Easy way to get or set the PbxSettings values
+     *
      * @var \MikoPBX\Core\System\MikoPBXConfig
      */
     protected MikoPBXConfig $mikoPBXConfig;
 
     /**
      * Access to the /etc/inc/mikopbx-settings.json values
+     *
      * @var \Phalcon\Config
      */
     protected Config $config;
 
     /**
      * Shows if it is boot process now or usual work
+     *
      * @var bool
      */
     protected bool $booting;
@@ -62,7 +106,6 @@ abstract class CoreConfigClass extends Injectable
      */
     protected array $generalSettings;
 
-
     /**
      * ConfigClass constructor.
      */
@@ -72,16 +115,55 @@ abstract class CoreConfigClass extends Injectable
         $this->booting         = $this->getDI()->getShared('registry')->booting === true;
         $this->mikoPBXConfig   = new MikoPBXConfig();
         $this->generalSettings = $this->mikoPBXConfig->getGeneralSettings();
-        $this->messages = [];
+        $this->messages        = [];
     }
 
     /**
-     * Prepares settings dataset for a PBX module
+     * Calls extensions module method by name
+     *
+     * @param string $name
+     * @param array  $arguments
+     *
+     * @return string
      */
-    public function getSettings(): void
+    public function hookModulesMethod(string $name, $arguments = []): string
     {
+        $stringResult      = '';
+        $additionalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
+        foreach ($additionalModules as $configClassObj) {
+            if ( ! method_exists($configClassObj, $name)) {
+                continue;
+            }
+            if ($configClassObj instanceof $this) {
+                continue;
+            }
+            try {
+                $includeString = call_user_func_array([$configClassObj, $name], $arguments);
+            } catch (\Throwable $e) {
+                global $errorLogger;
+                $errorLogger->captureException($e);
+                Util::sysLogMsg(__METHOD__, $e->getMessage(), LOG_ERR);
+                continue;
+            }
+            if ( ! empty($includeString)) {
+                $stringResult .= $this->confBlockWithComments($includeString);
+            }
+        }
+
+        return $stringResult;
     }
 
+    /**
+     * Makes pretty module text block into config file
+     *
+     * @param string $addition
+     *
+     * @return string
+     */
+    protected function confBlockWithComments(string $addition): string
+    {
+        return $addition;
+    }
 
     /**
      * Generates core modules config files with cli messages before and after generation
@@ -105,6 +187,13 @@ abstract class CoreConfigClass extends Injectable
     }
 
     /**
+     * Prepares settings dataset for a PBX module
+     */
+    public function getSettings(): void
+    {
+    }
+
+    /**
      * Generates core modules config files
      */
     protected function generateConfigProtected(): void
@@ -122,7 +211,8 @@ abstract class CoreConfigClass extends Injectable
     }
 
     /**
-     * Prepares additional rules for [internal] context section in the extensions.conf file
+     * Prepares additional includes for [internal] context section in the extensions.conf file
+     *
      * @return string
      */
     public function getIncludeInternal(): string
@@ -130,20 +220,19 @@ abstract class CoreConfigClass extends Injectable
         return '';
     }
 
-    // Генератор extension для контекста internal.
     /**
-     * TODO::Спросить не дубль ли это getIncludeInternal, может оставить одну?
      * Prepares additional rules for [internal] context section in the extensions.conf file
+     *
      * @return string
      */
     public function extensionGenInternal(): string
     {
-        // Генерация внутреннего номерного плана.
         return '';
     }
 
     /**
-     * Prepares additional rules for [internal-transfer] context section in the extensions.conf file
+     * Prepares additional includes for [internal-transfer] context section in the extensions.conf file
+     *
      * @return string
      */
     public function getIncludeInternalTransfer(): string
@@ -151,174 +240,78 @@ abstract class CoreConfigClass extends Injectable
         return '';
     }
 
-    // Генератор extension для контекста internal.
     /**
-     * TODO::Спросить не дубль ли это getIncludeInternalTransfer, может оставить одну?
      * Prepares additional rules for [internal-transfer] context section in the extensions.conf file
+     *
      * @return string
      */
     public function extensionGenInternalTransfer(): string
     {
-        // Генерация внутреннего номерного плана.
         return '';
     }
 
-
-    // Генератор extension для контекста peers.
-    public function extensionGenPeerContexts()
-    {
-        // Генерация внутреннего номерного плана.
-        return '';
-    }
-
-    // Генератор extensions, дополнительные контексты.
+    /**
+     * Prepares additional contexts sections in the extensions.conf file
+     *
+     * @return string
+     */
     public function extensionGenContexts(): string
     {
         return '';
     }
 
-    // Генератор хинтов для контекста internal-hints
+    /**
+     * Prepares additional hints for [internal-hints] context section in the extensions.conf file
+     *
+     * @return string
+     */
     public function extensionGenHints(): string
     {
-        // Генерация хинтов.
         return '';
     }
 
-    // Секция global для extensions.conf.
+    /**
+     * Prepares additional parameters for [globals] section in the extensions.conf file
+     *
+     * @return string
+     */
     public function extensionGlobals(): string
     {
-        // Генерация хинтов.
         return '';
     }
 
-    // Секция featuremap для features.conf
+    /**
+     * Prepares additional parameters for [featuremap] section in the features.conf file
+     *
+     * @return string returns additional Star codes
+     */
     public function getFeatureMap(): string
     {
-        // Возвращает старкоды.
         return '';
     }
 
     /**
-     * Генерация контекста для публичных звонков.
-     *
-     * @param $conf
-     *
-     * @return void
-     */
-    public function generatePublicContext(&$conf): void
-    {
-    }
-
-
-    /**
-     * Будет вызван после старта asterisk.
-     */
-    public function onAfterPbxStarted(): void
-    {
-    }
-
-    /**
-     * Добавление задач в crond.
-     *
-     * @param $tasks
-     */
-    public function createCronTasks(&$tasks): void
-    {
-    }
-
-
-    /**
-     * Генератор сеции пиров для sip.conf
+     * Prepares additional parameters for [public-direct-dial] section in the extensions.conf file
      *
      * @return string
      */
-    public function generatePeersPj(): string
+    public function generatePublicContext(): string
     {
         return '';
     }
 
     /**
-     * Генератор сеции пиров для manager.conf
+     * Prepares additional parameters for each incoming context for each incoming route before dial in the
+     * extensions.conf file
      *
-     */
-    public function generateManagerConf(): string
-    {
-        return '';
-    }
-
-    /**
-     * Дополнительные параметры для
-     *
-     * @param $peer
+     * @param string $rout_number
      *
      * @return string
      */
-    public function generatePeerPjAdditionalOptions($peer): string
+    public function generateIncomingRoutBeforeDial(string $rout_number): string
     {
         return '';
     }
-
-    /**
-     * Переопределение опций Endpoint в pjsip.conf
-     *
-     * @param string $id
-     * @param array  $options
-     *
-     * @return array
-     */
-    public function overridePJSIPOptions(/** @scrutinizer ignore-unused */ string $id, array $options): array
-    {
-        return $options;
-    }
-
-    /**
-     * Кастомизация исходящего контекста для конкретного маршрута.
-     *
-     * @param $rout
-     *
-     * @return string
-     */
-    public function generateOutRoutContext($rout): string
-    {
-        return '';
-    }
-
-    /**
-     * Кастомизация исходящего контекста для конкретного маршрута.
-     *
-     * @param $rout
-     *
-     * @return string
-     */
-    public function generateOutRoutAfterDialContext($rout): string
-    {
-        return '';
-    }
-
-    /**
-     * Кастомизация входящего контекста для конкретного маршрута.
-     *
-     * @param $id
-     *
-     * @return string
-     */
-    public function generateIncomingRoutAfterDialContext($id): string
-    {
-        return '';
-    }
-
-    /**
-     * Кастомизация входящего контекста для конкретного маршрута.
-     *
-     * @param $rout_number
-     *
-     * @return string
-     */
-    public function generateIncomingRoutBeforeDial($rout_number): string
-    {
-        return '';
-    }
-
 
     /**
      * Returns the messages variable
@@ -341,15 +334,100 @@ abstract class CoreConfigClass extends Injectable
     }
 
     /**
-     * Makes pretty module text block into config file
+     * Prepares additional parameters for each outgoing route context
+     * before dial call in the extensions.conf file
      *
-     * @param string $addition
+     * @param array $rout
      *
      * @return string
      */
-    protected function confBlockWithComments(string $addition): string
+    public function generateOutRoutContext(array $rout): string
     {
-        return $addition;
+        return '';
+    }
+
+    /**
+     * Override pjsip options for provider in the pjsip.conf file
+     *
+     * @param string $uniqid  the provider unique identifier
+     * @param array  $options list of pjsip options
+     *
+     * @return array
+     */
+    public function overrideProviderPJSIPOptions(string $uniqid, array $options): array
+    {
+        return $options;
+    }
+
+    /**
+     * Override pjsip options for peer in the pjsip.conf file
+     *
+     * @param string $extension the endpoint extension
+     * @param array  $options   list of pjsip options
+     *
+     * @return array
+     */
+    public function overridePJSIPOptions(string $extension, array $options): array
+    {
+        return $options;
+    }
+
+    /**
+     * Prepares additional parameters for each outgoing route context
+     * after dial call in the extensions.conf file
+     *
+     * @param array $rout
+     *
+     * @return string
+     */
+    public function generateOutRoutAfterDialContext(array $rout): string
+    {
+        return '';
+    }
+
+    /**
+     * Prepares additional pjsip options on endpoint section in the pjsip.conf file for peer
+     *
+     * @param array $peer information about peer
+     *
+     * @return string
+     */
+    public function generatePeerPjAdditionalOptions(array $peer): string
+    {
+        return '';
+    }
+
+    /**
+     * Prepares additional AMI users data in the manager.conf file
+     *
+     * @return string
+     */
+    public function generateManagerConf(): string
+    {
+        return '';
+    }
+
+    /**
+     * Prepares additional parameters for each incoming context
+     * and incoming route after dial command in an extensions.conf file
+     *
+     * @param string $uniqId
+     *
+     * @return string
+     */
+    public function generateIncomingRoutAfterDialContext(string $uniqId): string
+    {
+        return '';
+    }
+
+    /**
+     * Prepares additional peers data in the pjsip.conf file
+     *
+     * @return string
+     */
+    public function generatePeersPj(): string
+    {
+        return '';
     }
 
 }

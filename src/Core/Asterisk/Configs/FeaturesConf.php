@@ -19,8 +19,6 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
-
-use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\Util;
 
 class FeaturesConf extends CoreConfigClass
@@ -41,10 +39,7 @@ class FeaturesConf extends CoreConfigClass
             "disconnect = *0\n" .
             "blindxfer => {$this->generalSettings['PBXFeatureBlindTransfer']}\n";
 
-        $additionalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
-        foreach ($additionalModules as $appClass) {
-            $conf .= $appClass->getFeatureMap();
-        }
+        $conf .= $this->hookModulesMethod(CoreConfigClass::GET_FEATURE_MAP);
 
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/features.conf', $conf);
     }

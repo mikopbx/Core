@@ -67,6 +67,7 @@ use MikoPBX\Core\System\{BeanstalkClient,
     System,
     Util
 };
+use MikoPBX\Modules\Config\ConfigClass;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use Phalcon\Di;
 use Pheanstalk\Contract\PheanstalkInterface;
@@ -136,6 +137,7 @@ class WorkerModelsEvents extends WorkerBase
     private array $PRIORITY_R;
     private array $pbxSettingsDependencyTable = [];
     private array $modelsDependencyTable = [];
+    private ConfigClass $modulesConfigObj;
 
     /**
      * The entry point
@@ -146,6 +148,7 @@ class WorkerModelsEvents extends WorkerBase
     {
         $this->last_change = time() - 2;
         $this->arrObject   = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
+        $this->modulesConfigObj  = new ConfigClass();
 
         $this->initPbxSettingsDependencyTable();
         $this->initModelsDependencyTable();
@@ -603,11 +606,7 @@ class WorkerModelsEvents extends WorkerBase
             }
         }
         // Send information about models changes to additional modules bulky without any details
-        foreach ($this->arrObject as $configClassObj) {
-            if (method_exists($configClassObj, 'modelsEventNeedReload')){
-                $configClassObj->modelsEventNeedReload($this->modified_tables);
-            }
-        }
+        $this->modulesConfigObj->hookModulesMethod(ConfigClass::MODELS_EVENT_NEED_RELOAD, [$this->modified_tables]);
         $this->modified_tables = [];
     }
 
@@ -636,11 +635,7 @@ class WorkerModelsEvents extends WorkerBase
             return;
         }
         // Send information about models changes to additional modules with changed data details
-        foreach ($this->arrObject as $configClassObj) {
-            if (method_exists($configClassObj, 'modelsEventChangeData')){
-                $configClassObj->modelsEventChangeData($receivedMessage);
-            }
-        }
+        $this->modulesConfigObj->hookModulesMethod(ConfigClass::MODELS_EVENT_CHANGE_DATA, [$this->$receivedMessage]);
     }
 
     /**
@@ -867,7 +862,7 @@ class WorkerModelsEvents extends WorkerBase
     public function reloadNginxConf(): void
     {
         $nginxConf = new NginxConf();
-        $nginxConf->generateModulesConf();
+        $nginxConf->generateModulesConfigs();
         $nginxConf->reStart();
     }
 
@@ -962,17 +957,17 @@ class WorkerModelsEvents extends WorkerBase
             $configClassObj = new $configClassName();
 
             // Reconfigure fail2ban and restart iptables
-            if (method_exists($configClassObj, 'generateFail2BanJails')
+            if (method_exists($configClassObj, ConfigClass::GENERATE_FAIL2BAN_JAILS)
                 && ! empty($configClassObj->generateFail2BanJails())) {
                 self::invokeAction(self::R_FAIL2BAN_CONF);
             }
             // Refresh Nginx conf if module has any locations
-            if (method_exists($configClassObj, 'createNginxLocations')
+            if (method_exists($configClassObj, ConfigClass::CREATE_NGINX_LOCATIONS)
                 && ! empty($configClassObj->createNginxLocations())) {
                 self::invokeAction(self::R_NGINX_CONF);
             }
             // Refresh crontab rules if module has any for it
-            if (method_exists($configClassObj, 'createCronTasks')) {
+            if (method_exists($configClassObj, ConfigClass::CREATE_CRON_TASKS)) {
                 $tasks = [];
                 $configClassObj->createCronTasks($tasks);
                 if ( ! empty($tasks)) {
@@ -981,12 +976,12 @@ class WorkerModelsEvents extends WorkerBase
             }
             if ($previousStageOfModuleRecord->disabled === '1' && method_exists(
                     $configClassObj,
-                    'onAfterModuleDisable'
+                    ConfigClass::ON_AFTER_MODULE_DISABLE
                 )) {
                 $configClassObj->onAfterModuleDisable();
             } elseif ($previousStageOfModuleRecord->disabled === '0' && method_exists(
                     $configClassObj,
-                    'onAfterModuleEnable'
+                    ConfigClass::ON_AFTER_MODULE_ENABLE
                 )) {
                 $configClassObj->onAfterModuleEnable();
             }

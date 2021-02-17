@@ -64,14 +64,6 @@ interface AsteriskConfigInterface
 
 
     /**
-     * Генератор extension для контекста peers
-     *
-     * @return mixed
-     */
-    public function extensionGenPeerContexts();
-
-
-    /**
      * Генератор extensions, дополнительные контексты.
      *
      * @return string
@@ -103,11 +95,9 @@ interface AsteriskConfigInterface
     /**
      * Генерация контекста для публичных звонков.
      *
-     * @param $conf
-     *
-     * @return void
+     * @return string
      */
-    public function generatePublicContext(&$conf): void;
+    public function generatePublicContext(): string;
 
 
     /**
@@ -135,38 +125,38 @@ interface AsteriskConfigInterface
     /**
      * Дополнительные параметры для
      *
-     * @param $peer
+     * @param array $peer
      *
      * @return string
      */
-    public function generatePeerPjAdditionalOptions($peer): string;
+    public function generatePeerPjAdditionalOptions(array $peer): string;
 
     /**
      * Кастомизация исходящего контекста для конкретного маршрута.
      *
-     * @param $rout
+     * @param array $rout
      *
      * @return string
      */
-    public function generateOutRoutContext($rout): string;
+    public function generateOutRoutContext(array $rout): string;
 
     /**
      * Кастомизация исходящего контекста для конкретного маршрута.
      *
-     * @param $rout
+     * @param array $rout
      *
      * @return string
      */
-    public function generateOutRoutAfterDialContext($rout): string;
+    public function generateOutRoutAfterDialContext(array $rout): string;
 
     /**
      * Кастомизация входящего контекста для конкретного маршрута.
      *
-     * @param $id
+     * @param string $id
      *
      * @return string
      */
-    public function generateIncomingRoutAfterDialContext($id): string;
+    public function generateIncomingRoutAfterDialContext(string $id): string;
 
     /**
      * Кастомизация входящего контекста для конкретного маршрута.
@@ -175,6 +165,6 @@ interface AsteriskConfigInterface
      *
      * @return string
      */
-    public function generateIncomingRoutBeforeDial($rout_number): string;
+    public function generateIncomingRoutBeforeDial(string $rout_number): string;
 
 }
