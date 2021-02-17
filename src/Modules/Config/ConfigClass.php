@@ -24,16 +24,24 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use ReflectionClass as ReflectionClassAlias;
 
 class ConfigClass extends CoreConfigClass implements SystemConfigInterface, AsteriskConfigInterface,
-                                                         RestAPIConfigInterface
+                                                     RestAPIConfigInterface
 {
     public const MODELS_EVENT_NEED_RELOAD = 'modelsEventNeedReload';
+
     public const MODELS_EVENT_CHANGE_DATA = 'modelsEventChangeData';
+
     public const CREATE_CRON_TASKS = 'createCronTasks';
+
     public const CREATE_NGINX_LOCATIONS = 'createNginxLocations';
+
     public const GENERATE_FAIL2BAN_JAILS = 'generateFail2BanJails';
+
     public const ON_AFTER_MODULE_DISABLE = 'onAfterModuleDisable';
+
     public const ON_AFTER_MODULE_ENABLE = 'onAfterModuleEnable';
+
     public const GET_MODULE_WORKERS = 'getModuleWorkers';
+
     public const GET_PBXCORE_REST_ADDITIONAL_ROUTES = 'getPBXCoreRESTAdditionalRoutes';
 
 
@@ -64,28 +72,6 @@ class ConfigClass extends CoreConfigClass implements SystemConfigInterface, Aste
         }
 
         $this->messages = [];
-    }
-
-    /**
-     * Makes pretty module text block into config file
-     *
-     * @param string $addition
-     *
-     * @return string
-     */
-    protected function confBlockWithComments(string $addition): string
-    {
-        $result = '';
-        if (empty($addition)) {
-            return $result;
-        }
-        $result = PHP_EOL . '; ***** BEGIN BY ' . $this->moduleUniqueId . PHP_EOL;
-        $result .= $addition;
-        if (substr($addition, -1) !== "\t") {
-             $result .= "\t";
-        }
-        $result .= PHP_EOL . '; ***** END BY ' . $this->moduleUniqueId . PHP_EOL;
-        return $result;
     }
 
     /**
@@ -237,12 +223,33 @@ class ConfigClass extends CoreConfigClass implements SystemConfigInterface, Aste
     {
     }
 
-
     /**
      * This module's method calls after the asterisk service started
      */
     public function onAfterPbxStarted(): void
     {
+    }
 
+    /**
+     * Makes pretty module text block into config file
+     *
+     * @param string $addition
+     *
+     * @return string
+     */
+    protected function confBlockWithComments(string $addition): string
+    {
+        $result = '';
+        if (empty($addition)) {
+            return $result;
+        }
+        $result = PHP_EOL . '; ***** BEGIN BY ' . $this->moduleUniqueId . PHP_EOL;
+        $result .= $addition;
+        if (substr($addition, -1) !== "\t") {
+            $result .= "\t";
+        }
+        $result .= PHP_EOL . '; ***** END BY ' . $this->moduleUniqueId . PHP_EOL;
+
+        return $result;
     }
 }
