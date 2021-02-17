@@ -28,7 +28,6 @@ use Phalcon\Di\Injectable;
 
 abstract class CoreConfigClass extends Injectable
 {
-    //$conf .= $this->hookModulesMethod(CoreConfigClass::);MODELS_EVENT_NEED_RELOAD
     public const EXTENSION_GEN_HINTS = 'extensionGenHints';
 
     public const GENERATE_PUBLIC_CONTEXT = 'generatePublicContext';
@@ -64,8 +63,8 @@ abstract class CoreConfigClass extends Injectable
     public const GENERATE_OUT_ROUT_AFTER_DIAL_CONTEXT = 'generateOutRoutAfterDialContext';
 
     public const OVERRIDE_PJSIP_OPTIONS = 'overridePJSIPOptions';
-    public const OVERRIDE_PROVIDER_PJSIP_OPTIONS = 'overrideProviderPJSIPOptions';
 
+    public const OVERRIDE_PROVIDER_PJSIP_OPTIONS = 'overrideProviderPJSIPOptions';
 
 
     /**
