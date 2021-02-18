@@ -661,10 +661,18 @@ class WorkerModelsEvents extends WorkerBase
 
         // Get new settings for dependence modules tables
         foreach ($this->arrObject as $appClass) {
-            $dependencies = $appClass->dependenceModels();
-            if (in_array($called_class, $dependencies, true)) {
-                $appClass->getSettings();
+            try {
+                $dependencies = $appClass->getDependenceModels();
+                if (in_array($called_class, $dependencies, true)) {
+                    $appClass->getSettings();
+                }
+            } catch (\Throwable $e) {
+                global $errorLogger;
+                $errorLogger->captureException($e);
+                Util::sysLogMsg(__METHOD__, $e->getMessage(), LOG_ERR);
+                continue;
             }
+
         }
 
         $this->fillModifiedTablesFromModels($called_class);
