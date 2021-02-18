@@ -296,7 +296,7 @@ class Fail2BanConf extends Injectable
     /**
      * Generate additional modules filter files
      */
-    public function generateModulesFilters(): void
+    private function generateModulesFilters(): void
     {
         $filterPath        = self::FILTER_PATH;
         $rmPath            = Util::which('rm');
@@ -317,7 +317,7 @@ class Fail2BanConf extends Injectable
      * @param $find_time
      * @param $ban_time
      */
-    public function generateModulesJailsLocal($max_retry = 0, $find_time = 0, $ban_time = 0): void
+    private function generateModulesJailsLocal($max_retry = 0, $find_time = 0, $ban_time = 0): void
     {
         if($max_retry === 0){
             [$max_retry, $find_time, $ban_time] = $this->initProperty();
