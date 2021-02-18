@@ -659,7 +659,7 @@ class WorkerModelsEvents extends WorkerBase
         // Clear all caches on any changed models on backend
         PbxSettings::clearCache($called_class, false);
 
-        // Get new settings gor dependence modulestables
+        // Get new settings for dependence modules tables
         foreach ($this->arrObject as $appClass) {
             $dependencies = $appClass->dependenceModels();
             if (in_array($called_class, $dependencies, true)) {

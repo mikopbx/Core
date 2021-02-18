@@ -21,7 +21,7 @@ namespace MikoPBX\PbxCore;
 use MikoPBX\PBXCoreREST\Config\{RegisterDIServices};
 use Phalcon\Di\FactoryDefault;
 use Throwable;
-use MikoPBX\Core\System\{SentryErrorLogger, Util};
+use MikoPBX\Core\System\{SentryErrorLogger};
 use Phalcon\Mvc\Micro;
 
 
@@ -46,7 +46,6 @@ try {
 } catch (Throwable $e) {
     $errorLogger->captureException($e);
     echo $e->getMessage();
-    Util::sysLogMsg('PBXCoreREST index.php', $e->getMessage() , LOG_ERR);
 }
 
 

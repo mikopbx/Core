@@ -23,7 +23,6 @@ require_once 'Globals.php';
 
 use Generator;
 use MikoPBX\Core\System\{BeanstalkClient, PBX, Processes, Util};
-use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Workers\WorkerAmiListener;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\Workers\WorkerBeanstalkdTidyUp;
@@ -101,7 +100,10 @@ class WorkerSafeScriptsCore extends WorkerBase
                     WorkerRemoveOldRecords::class,
                 ],
         ];
-        $arrModulesWorkers = $this->hookModulesMethodGetModuleWorkers();
+        $configClassObj = new ConfigClass();
+        $arrModulesWorkers = $configClassObj->hookModulesMethodWithArrayResult(ConfigClass::GET_MODULE_WORKERS);
+        $arrModulesWorkers = array_values($arrModulesWorkers);
+        $arrModulesWorkers = array_merge(...$arrModulesWorkers);
         if (!empty($arrModulesWorkers)) {
             foreach ($arrModulesWorkers as $moduleWorker) {
                 $arrWorkers[$moduleWorker['type']][] = $moduleWorker['worker'];
@@ -109,36 +111,6 @@ class WorkerSafeScriptsCore extends WorkerBase
         }
 
         return $arrWorkers;
-    }
-
-     /**
-     * Calls extensions modules workers list
-     *
-     * @return array
-     */
-    private function hookModulesMethodGetModuleWorkers(): array
-    {
-        $arrModulesWorkers = [];
-        $additionalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
-        $method = ConfigClass::GET_MODULE_WORKERS;
-        foreach ($additionalModules as $configClassObj) {
-            if ( ! method_exists($configClassObj, $method)) {
-                continue;
-            }
-            try {
-                $moduleWorkers = call_user_func_array([$configClassObj, $method], []);
-            } catch (Throwable $e) {
-                global $errorLogger;
-                $errorLogger->captureException($e);
-                Util::sysLogMsg(__METHOD__, $e->getMessage(), LOG_ERR);
-                continue;
-            }
-            if ( ! empty($moduleWorkers)) {
-                $arrModulesWorkers[] = $moduleWorkers;
-            }
-        }
-        $arrModulesWorkers = array_merge(...$arrModulesWorkers);
-        return $arrModulesWorkers;
     }
 
     /**

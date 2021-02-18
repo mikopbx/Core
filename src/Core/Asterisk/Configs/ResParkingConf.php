@@ -35,7 +35,7 @@ class ResParkingConf extends CoreConfigClass
      *
      * @return array
      */
-    public function dependenceModels(): array
+    public function getDependenceModels(): array
     {
         return [PbxSettings::class];
     }

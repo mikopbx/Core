@@ -23,8 +23,10 @@ namespace MikoPBX\Core\Asterisk\Configs;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Util;
+use MikoPBX\Modules\Config\ConfigClass;
 use Phalcon\Config;
 use Phalcon\Di\Injectable;
+use Throwable;
 
 abstract class CoreConfigClass extends Injectable
 {
@@ -65,6 +67,10 @@ abstract class CoreConfigClass extends Injectable
     public const OVERRIDE_PJSIP_OPTIONS = 'overridePJSIPOptions';
 
     public const OVERRIDE_PROVIDER_PJSIP_OPTIONS = 'overrideProviderPJSIPOptions';
+
+    public const GENERATE_CONFIG = 'generateConfig';
+
+    public const GET_DEPENDENCE_MODELS ='getDependenceModels';
 
 
     /**
@@ -118,26 +124,26 @@ abstract class CoreConfigClass extends Injectable
     }
 
     /**
-     * Calls extensions module method by name
+     * Calls additional module method by name and returns plain text result
      *
-     * @param string $name
+     * @param string $methodName
      * @param array  $arguments
      *
      * @return string
      */
-    public function hookModulesMethod(string $name, $arguments = []): string
+    public function hookModulesMethod(string $methodName, $arguments = []): string
     {
         $stringResult      = '';
         $additionalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
         foreach ($additionalModules as $configClassObj) {
-            if ( ! method_exists($configClassObj, $name)) {
+            if ( ! method_exists($configClassObj, $methodName)) {
                 continue;
             }
             if ($configClassObj instanceof $this) {
                 continue;
             }
             try {
-                $includeString = call_user_func_array([$configClassObj, $name], $arguments);
+                $includeString = call_user_func_array([$configClassObj, $methodName], $arguments);
             } catch (\Throwable $e) {
                 global $errorLogger;
                 $errorLogger->captureException($e);
@@ -150,6 +156,43 @@ abstract class CoreConfigClass extends Injectable
         }
 
         return $stringResult;
+    }
+
+
+    /**
+     * Calls additional module method by name and returns array of results
+     *
+     * @param string $methodName
+     * @param array  $arguments
+     *
+     * @return array
+     */
+    public function hookModulesMethodWithArrayResult(string $methodName, array $arguments = []): array
+    {
+        $result = [];
+        $additionalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
+        foreach ($additionalModules as $configClassObj) {
+            if ( ! method_exists($configClassObj, $methodName)) {
+                continue;
+            }
+            try {
+                $moduleMethodResponse = call_user_func_array([$configClassObj, $methodName], $arguments);
+            } catch (Throwable $e) {
+                global $errorLogger;
+                $errorLogger->captureException($e);
+                Util::sysLogMsg(__METHOD__, $e->getMessage(), LOG_ERR);
+                continue;
+            }
+            if ( ! empty($moduleMethodResponse)) {
+                if (is_a($configClassObj, ConfigClass::class)){
+                    $result[$configClassObj->moduleUniqueId] = $moduleMethodResponse;
+                } else {
+                    $result[] = $moduleMethodResponse;
+                }
+
+            }
+        }
+        return $result;
     }
 
     /**
@@ -327,7 +370,7 @@ abstract class CoreConfigClass extends Injectable
      *
      * @return array
      */
-    public function dependenceModels(): array
+    public function getDependenceModels(): array
     {
         return [];
     }

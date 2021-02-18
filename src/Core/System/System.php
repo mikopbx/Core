@@ -23,14 +23,12 @@ use DateTime;
 use DateTimeZone;
 use MikoPBX\Common\Models\CustomFiles;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\Configs\CronConf;
 use MikoPBX\Core\System\Configs\IptablesConf;
 use MikoPBX\Core\System\Configs\PHPConf;
 use MikoPBX\Core\System\Configs\NTPConf;
-use MikoPBX\Core\Asterisk\Configs\{QueueConf};
+use MikoPBX\Core\Asterisk\Configs\QueueConf;
 use Phalcon\Di;
-use Throwable;
 
 class System extends Di\Injectable
 {
@@ -273,17 +271,4 @@ class System extends Di\Injectable
         Processes::mwExec("{$ulimitPath} -p 4096");
     }
 
-    /**
-     * Restart asterisk processor
-     */
-    public function onAfterPbxStarted(): void
-    {
-        $additionalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
-        foreach ($additionalModules as $configClassObj) {
-            if ( ! method_exists($configClassObj, 'onAfterPbxStarted')) {
-                continue;
-            }
-            $configClassObj->onAfterPbxStarted();
-        }
-    }
 }

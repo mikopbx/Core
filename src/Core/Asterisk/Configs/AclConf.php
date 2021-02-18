@@ -33,7 +33,7 @@ class AclConf extends CoreConfigClass
      *
      * @return array
      */
-    public function dependenceModels(): array
+    public function getDependenceModels(): array
     {
         return [Sip::class, NetworkFilters::class];
     }

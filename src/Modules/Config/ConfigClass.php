@@ -44,6 +44,11 @@ class ConfigClass extends CoreConfigClass implements SystemConfigInterface, Aste
 
     public const GET_PBXCORE_REST_ADDITIONAL_ROUTES = 'getPBXCoreRESTAdditionalRoutes';
 
+    public const GET_DEFAULT_FIREWALL_RULES = 'getDefaultFirewallRules';
+
+    public const ON_AFTER_PBX_STARTED = 'onAfterPbxStarted';
+
+    public const MODULE_RESTAPI_CALLBACK = 'moduleRestAPICallback';
 
     /**
      * External module UniqueID
@@ -252,4 +257,6 @@ class ConfigClass extends CoreConfigClass implements SystemConfigInterface, Aste
 
         return $result;
     }
+
+
 }

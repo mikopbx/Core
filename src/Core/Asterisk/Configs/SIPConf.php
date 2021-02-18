@@ -29,9 +29,9 @@ use MikoPBX\Common\Models\{Codecs,
     SipHosts,
     Users
 };
-use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Asterisk\AstDB;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\IncomingContexts;
+use MikoPBX\Modules\Config\ConfigClass;
 use MikoPBX\Core\System\{MikoPBXConfig, Network, Util};
 use MikoPBX\Core\Utilities\SubnetCalculator;
 use Phalcon\Di;
@@ -55,7 +55,7 @@ class SIPConf extends CoreConfigClass
      *
      * @return array
      */
-    public function dependenceModels(): array
+    public function getDependenceModels(): array
     {
         return [Sip::class, Users::class, SipHosts::class];
     }
@@ -179,7 +179,6 @@ class SIPConf extends CoreConfigClass
         $this->data_rout         = $this->getOutRoutes();
         $this->technology        = self::getTechnology();
         $this->dataSipHosts      = self::getSipHosts();
-        $this->additionalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
     }
 
     /**
@@ -590,29 +589,20 @@ class SIPConf extends CoreConfigClass
     /**
      * Calls an overridePJSIPOptions function from additional modules
      *
-     * @param $extension
+     * @param $extensionOrId
      * @param $options
      * @param $method
      *
      * @return array
      */
-    private function overridePJSIPOptionsFromModules($extension, $options, $method): array
+    private function overridePJSIPOptionsFromModules($extensionOrId, $options, $method): array
     {
-        foreach ($this->additionalModules as $configClassObj) {
-            if ( ! method_exists($configClassObj, $method)) {
-                continue;
-            }
-            try {
-                $newOptionsSet = call_user_func_array([$configClassObj, $method], [$extension, $options]);
-            } catch (Throwable $e) {
-                global $errorLogger;
-                $errorLogger->captureException($e);
-                Util::sysLogMsg(__METHOD__, $e->getMessage(), LOG_ERR);
-                continue;
-            }
+        $configClassObj = new ConfigClass();
+        $modulesOverridingArrays = $configClassObj->hookModulesMethodWithArrayResult($method, [$extensionOrId, $options]);
+        foreach ($modulesOverridingArrays as $newOptionsSet) {
+            // How to make some order of overrides?
             $options = $newOptionsSet;
         }
-
         return $options;
     }
 

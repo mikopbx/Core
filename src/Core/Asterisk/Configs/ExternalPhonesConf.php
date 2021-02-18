@@ -86,7 +86,7 @@ class ExternalPhonesConf extends CoreConfigClass
      *
      * @return array
      */
-    public function dependenceModels(): array
+    public function getDependenceModels(): array
     {
         return [ExternalPhones::class];
     }

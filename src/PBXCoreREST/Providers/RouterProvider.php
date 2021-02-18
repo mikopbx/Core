@@ -41,8 +41,6 @@ use MikoPBX\PBXCoreREST\Controllers\{Cdr\GetController as CdrGetController,
     License\GetController as LicenseGetController,
     License\PostController as LicensePostController
 };
-use MikoPBX\Common\Providers\PBXConfModulesProvider;
-use MikoPBX\Core\System\Util;
 use MikoPBX\Modules\Config\ConfigClass;
 use MikoPBX\PBXCoreREST\Middleware\AuthenticationMiddleware;
 use MikoPBX\PBXCoreREST\Middleware\NotFoundMiddleware;
@@ -52,7 +50,6 @@ use Phalcon\Di\ServiceProviderInterface;
 use Phalcon\Events\Manager;
 use Phalcon\Mvc\Micro;
 use Phalcon\Mvc\Micro\Collection;
-use Throwable;
 
 
 /**
@@ -74,7 +71,7 @@ class RouterProvider implements ServiceProviderInterface
         /** @var Manager $eventsManager */
         $eventsManager = $di->getShared('eventsManager');
 
-        $this->attachRoutes($application, $di);
+        $this->attachRoutes($application);
         $this->attachMiddleware($application, $eventsManager);
 
         $application->setEventsManager($eventsManager);
@@ -84,15 +81,16 @@ class RouterProvider implements ServiceProviderInterface
      * Attaches the routes to the application; lazy loaded
      *
      * @param Micro                   $application
-     * @param \Phalcon\Di\DiInterface $di
      */
-    private function attachRoutes(Micro $application, DiInterface $di): void
+    private function attachRoutes(Micro $application): void
     {
         // Add hard coded routes
         $routes = $this->getRoutes();
 
         // Add additional modules routes
-        $additionalRoutes  = $this->hookModulesMethodGetPBXCoreRESTAdditionalRoutes($di);
+        $configClassObj = new ConfigClass();
+        $additionalRoutes = $configClassObj->hookModulesMethodWithArrayResult(ConfigClass::GET_PBXCORE_REST_ADDITIONAL_ROUTES);
+        $additionalRoutes = array_values($additionalRoutes);
         $routes = array_merge($routes, ...$additionalRoutes);
 
         // Class, Method, Route, Handler, ParamsRegex
@@ -108,37 +106,6 @@ class RouterProvider implements ServiceProviderInterface
 
             $application->mount($collection);
         }
-    }
-
-    /**
-     * Calls extensions modules for additional routes list
-     *
-     * @param \Phalcon\Di\DiInterface $di
-     *
-     * @return array
-     */
-    private function hookModulesMethodGetPBXCoreRESTAdditionalRoutes(DiInterface $di): array
-    {
-        $arrAdditionalRoutes = [];
-        $additionalModules = $di->getShared(PBXConfModulesProvider::SERVICE_NAME);
-        $method = ConfigClass::GET_PBXCORE_REST_ADDITIONAL_ROUTES;
-        foreach ($additionalModules as $configClassObj) {
-            if ( ! method_exists($configClassObj, $method)) {
-                continue;
-            }
-            try {
-                $additionalRoutes = call_user_func_array([$configClassObj, $method], []);
-            } catch (Throwable $e) {
-                global $errorLogger;
-                $errorLogger->captureException($e);
-                Util::sysLogMsg(__METHOD__, $e->getMessage(), LOG_ERR);
-                continue;
-            }
-            if ( ! empty($additionalRoutes)) {
-                $arrAdditionalRoutes[] = $additionalRoutes;
-            }
-        }
-        return $arrAdditionalRoutes;
     }
 
     /**

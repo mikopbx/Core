@@ -29,7 +29,6 @@ use MikoPBX\Common\Models\OutWorkTimes;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\Providers;
 use MikoPBX\Common\Models\SoundFiles;
-use MikoPBX\Common\Providers\BeanstalkConnectionWorkerApiProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\Notifications;
 use MikoPBX\Core\System\Processes;

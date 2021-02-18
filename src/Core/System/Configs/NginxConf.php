@@ -19,18 +19,16 @@
 
 namespace MikoPBX\Core\System\Configs;
 
-
-use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Network;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\System\Verify;
+use MikoPBX\Modules\Config\ConfigClass;
 use Phalcon\Di\Injectable;
 
 class NginxConf extends Injectable
 {
-    public const  LOCATIONS_PATH = '/etc/nginx/mikopbx/locations';
     public const  MODULES_LOCATIONS_PATH = '/etc/nginx/mikopbx/modules_locations';
     private const PID_FILE = '/var/run/nginx.pid';
 
@@ -167,19 +165,14 @@ class NginxConf extends Injectable
         if (!is_dir($locationsPath)){
             Util::mwMkdir($locationsPath,true);
         }
-        $additionalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
         $rmPath            = Util::which('rm');
         Processes::mwExec("{$rmPath} -rf {$locationsPath}/*.conf");
-        foreach ($additionalModules as $appClass) {
-            if (!method_exists($appClass, 'createNginxLocations')) {
-                continue;
-            }
-            $locationContent = $appClass->createNginxLocations();
-            if (empty($locationContent)) {
-                // Текст конфига не определен.
-                continue;
-            }
-            $confFileName = "{$locationsPath}/{$appClass->moduleUniqueId}.conf";
+
+        // Add additional modules routes
+        $configClassObj = new ConfigClass();
+        $additionalLocations = $configClassObj->hookModulesMethodWithArrayResult(ConfigClass::CREATE_NGINX_LOCATIONS);
+        foreach ($additionalLocations as $moduleUniqueId=>$locationContent) {
+            $confFileName = "{$locationsPath}/{$moduleUniqueId}.conf";
             file_put_contents($confFileName, $locationContent);
             if ( $this->testCurrentNginxConfig()) {
                 // Тест прошел успешно.
@@ -187,7 +180,7 @@ class NginxConf extends Injectable
             }
             // Откат конфига.
             Processes::mwExec("{$rmPath} {$confFileName}");
-            Util::sysLogMsg('nginx', 'Failed test config file for module' . $appClass->moduleUniqueId, LOG_ERR);
+            Util::sysLogMsg('nginx', 'Failed test config file for module' . $moduleUniqueId, LOG_ERR);
         }
     }
 }
