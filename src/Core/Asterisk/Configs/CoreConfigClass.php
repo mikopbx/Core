@@ -28,50 +28,8 @@ use Phalcon\Config;
 use Phalcon\Di\Injectable;
 use Throwable;
 
-abstract class CoreConfigClass extends Injectable
+abstract class CoreConfigClass extends Injectable implements AsteriskConfigInterface
 {
-    public const EXTENSION_GEN_HINTS = 'extensionGenHints';
-
-    public const GENERATE_PUBLIC_CONTEXT = 'generatePublicContext';
-
-    public const EXTENSION_GEN_INTERNAL_TRANSFER = 'extensionGenInternalTransfer';
-
-    public const GET_INCLUDE_INTERNAL_TRANSFER = 'getIncludeInternalTransfer';
-
-    public const EXTENSION_GLOBALS = 'extensionGlobals';
-
-    public const EXTENSION_GEN_CONTEXTS = 'extensionGenContexts';
-
-    public const GET_INCLUDE_INTERNAL = 'getIncludeInternal';
-
-    public const EXTENSION_GEN_INTERNAL = 'extensionGenInternal';
-
-    public const GENERATE_INCOMING_ROUT_BEFORE_DIAL = 'generateIncomingRoutBeforeDial';
-
-    public const GENERATE_INCOMING_ROUT_AFTER_DIAL_CONTEXT = 'generateIncomingRoutAfterDialContext';
-
-    public const GET_FEATURE_MAP = 'getFeatureMap';
-
-    public const GENERATE_MODULES_CONF = 'generateModulesConf';
-
-    public const GENERATE_MANAGER_CONF = 'generateManagerConf';
-
-    public const GENERATE_PEERS_PJ = 'generatePeersPj';
-
-    public const GENERATE_PEER_PJ_ADDITIONAL_OPTIONS = 'generatePeerPjAdditionalOptions';
-
-    public const GENERATE_OUT_ROUT_CONTEXT = 'generateOutRoutContext';
-
-    public const GENERATE_OUT_ROUT_AFTER_DIAL_CONTEXT = 'generateOutRoutAfterDialContext';
-
-    public const OVERRIDE_PJSIP_OPTIONS = 'overridePJSIPOptions';
-
-    public const OVERRIDE_PROVIDER_PJSIP_OPTIONS = 'overrideProviderPJSIPOptions';
-
-    public const GENERATE_CONFIG = 'generateConfig';
-
-    public const GET_DEPENDENCE_MODELS ='getDependenceModels';
-
 
     /**
      * Config file name i.e. extensions.conf
@@ -139,8 +97,8 @@ abstract class CoreConfigClass extends Injectable
             if ( ! method_exists($configClassObj, $methodName)) {
                 continue;
             }
-            if ($configClassObj instanceof $this) {
-                continue;
+            if (get_class($configClassObj) === get_class ($this)) {
+                continue; //prevent recursion
             }
             try {
                 $includeString = call_user_func_array([$configClassObj, $methodName], $arguments);

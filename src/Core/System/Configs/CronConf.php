@@ -102,7 +102,7 @@ class CronConf extends Injectable
 
         // Add additional modules includes
         $configClassObj = new ConfigClass();
-        $configClassObj->hookModulesMethod(ConfigClass::CREATE_CRON_TASKS, [$tasks]);
+        $configClassObj->hookModulesMethod(ConfigClass::CREATE_CRON_TASKS, [&$tasks]);
         $conf = implode('', array_merge($mast_have, $tasks));
 
         if (Util::isSystemctl()) {

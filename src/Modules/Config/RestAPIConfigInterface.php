@@ -24,6 +24,10 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 
 interface RestAPIConfigInterface
 {
+    public const MODULE_RESTAPI_CALLBACK = 'moduleRestAPICallback';
+
+    public const GET_PBXCORE_REST_ADDITIONAL_ROUTES = 'getPBXCoreRESTAdditionalRoutes';
+
     /**
      * Returns array of additional routes for PBXCoreREST interface from module
      * [ControllerClass, ActionMethod, RequestTemplate, HttpMethod, RootUrl, NoAuth ]
@@ -36,11 +40,11 @@ interface RestAPIConfigInterface
     public function getPBXCoreRESTAdditionalRoutes(): array;
 
     /**
-     * Process CoreAPI requests under root rights
+     * Process PBXCoreREST requests under root rights
      *
      * @param array $request GET/POST parameters
      *
-     * @return PBXApiResult
+     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
      */
     public function moduleRestAPICallback(array $request): PBXApiResult;
 }

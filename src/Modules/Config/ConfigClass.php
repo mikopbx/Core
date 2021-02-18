@@ -23,33 +23,9 @@ use MikoPBX\Core\Asterisk\Configs\CoreConfigClass;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use ReflectionClass as ReflectionClassAlias;
 
-class ConfigClass extends CoreConfigClass implements SystemConfigInterface, AsteriskConfigInterface,
+class ConfigClass extends CoreConfigClass implements SystemConfigInterface,
                                                      RestAPIConfigInterface
 {
-    public const MODELS_EVENT_NEED_RELOAD = 'modelsEventNeedReload';
-
-    public const MODELS_EVENT_CHANGE_DATA = 'modelsEventChangeData';
-
-    public const CREATE_CRON_TASKS = 'createCronTasks';
-
-    public const CREATE_NGINX_LOCATIONS = 'createNginxLocations';
-
-    public const GENERATE_FAIL2BAN_JAILS = 'generateFail2BanJails';
-
-    public const ON_AFTER_MODULE_DISABLE = 'onAfterModuleDisable';
-
-    public const ON_AFTER_MODULE_ENABLE = 'onAfterModuleEnable';
-
-    public const GET_MODULE_WORKERS = 'getModuleWorkers';
-
-    public const GET_PBXCORE_REST_ADDITIONAL_ROUTES = 'getPBXCoreRESTAdditionalRoutes';
-
-    public const GET_DEFAULT_FIREWALL_RULES = 'getDefaultFirewallRules';
-
-    public const ON_AFTER_PBX_STARTED = 'onAfterPbxStarted';
-
-    public const MODULE_RESTAPI_CALLBACK = 'moduleRestAPICallback';
-
     /**
      * External module UniqueID
      */
@@ -92,7 +68,7 @@ class ConfigClass extends CoreConfigClass implements SystemConfigInterface, Aste
     /**
      * Process PBXCoreREST requests under root rights
      *
-     * @param array $request
+     * @param array $request GET/POST parameters
      *
      * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
      */
