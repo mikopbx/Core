@@ -21,9 +21,8 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 
 use MikoPBX\Core\System\Util;
-use MikoPBX\Modules\Config\ConfigClass;
 
-class RtpConf extends ConfigClass
+class RtpConf extends CoreConfigClass
 {
     protected string $description = 'rtp.conf';
 

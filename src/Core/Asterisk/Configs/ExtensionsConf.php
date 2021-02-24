@@ -19,20 +19,14 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
-use MikoPBX\Common\Models\{Iax, IncomingRoutingTable, OutgoingRoutingTable, OutWorkTimes, Providers, Sip, SoundFiles};
-use MikoPBX\AdminCabinet\Forms\OutgoingRouteEditForm;
-use MikoPBX\Common\Providers\PBXConfModulesProvider;
-use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\IncomingContexts;
-use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\InternalContexts;
-use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\OutgoingContext;
-use MikoPBX\Modules\Config\ConfigClass;
-use MikoPBX\Core\System\{MikoPBXConfig, Storage, Util};
-use Phalcon\Di;
+use MikoPBX\Common\Models\IncomingRoutingTable;
+use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\{IncomingContexts, InternalContexts, OutgoingContext};
+use MikoPBX\Core\System\{Storage, Util};
 
-class ExtensionsConf extends ConfigClass
+class ExtensionsConf extends CoreConfigClass
 {
-    protected string $description     = 'extensions.conf';
     public const ALL_NUMBER_EXTENSION = '_[0-9*#+]!';
+    protected string $description = 'extensions.conf';
 
     /**
      * Sorts array by priority field
@@ -59,19 +53,13 @@ class ExtensionsConf extends ConfigClass
     protected function generateConfigProtected(): void
     {
         /** @scrutinizer ignore-call */
-        $additionalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
         $conf              = "[globals] \n" .
             "TRANSFER_CONTEXT=internal-transfer; \n";
         if ($this->generalSettings['PBXRecordCalls'] === '1') {
             $conf .= "MONITOR_DIR=" . Storage::getMonitorDir() . " \n";
             $conf .= "MONITOR_STEREO=" . $this->generalSettings['PBXSplitAudioThread'] . " \n";
         }
-        foreach ($additionalModules as $appClass) {
-            $addition = $appClass->extensionGlobals();
-            if ( ! empty($addition)) {
-                $conf .= $appClass->confBlockWithComments($addition);
-            }
-        }
+        $conf .= $this->hookModulesMethod(CoreConfigClass::EXTENSION_GLOBALS);
         $conf .= "\n";
         $conf .= "\n";
         $conf .= "[general] \n";
@@ -88,7 +76,7 @@ class ExtensionsConf extends ConfigClass
         $conf .= OutgoingContext::generate();
 
         // Описываем контекст для публичных входящих.
-        $this->generatePublicContext($conf);
+        $conf .= $this->generatePublicContext();
 
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/extensions.conf', $conf);
     }
@@ -105,40 +93,40 @@ class ExtensionsConf extends ConfigClass
         $conf .= '[sipregistrations]' . "\n\n";
 
         $conf .= '[messages]' . "\n" .
-                 'exten => _' . $extension . ',1,MessageSend(sip:${EXTEN},"${CALLERID(name)}"${MESSAGE(from)})' . "\n\n";
+            'exten => _' . $extension . ',1,MessageSend(sip:${EXTEN},"${CALLERID(name)}"${MESSAGE(from)})' . "\n\n";
 
-        $conf.= '[internal-originate]'.PHP_EOL.
-                'exten => _.!,1,Set(pt1c_cid=${FILTER(\*\#\+1234567890,${pt1c_cid})})'.PHP_EOL."\t".
-                    'same => n,Set(MASTER_CHANNEL(ORIGINATE_DST_EXTEN)=${pt1c_cid})'.PHP_EOL."\t".
-                    'same => n,Set(number=${FILTER(\*\#\+1234567890,${EXTEN})})'.PHP_EOL."\t".
-                    'same => n,ExecIf($["${EXTEN}" != "${number}"]?Goto(${CONTEXT},${number},$[${PRIORITY} + 1]))'.PHP_EOL."\t".
-                    'same => n,Set(__IS_ORGNT=${EMPTY})'.PHP_EOL."\t".
-                    'same => n,ExecIf($["${pt1c_cid}x" != "x"]?Set(CALLERID(num)=${pt1c_cid}))'.PHP_EOL."\t".
-                    'same => n,ExecIf($["${SRC_QUEUE}x" != "x"]?Goto(internal-originate-queue,${EXTEN},1))'.PHP_EOL."\t".
-                    'same => n,ExecIf($["${CUT(CHANNEL,\;,2)}" == "2"]?Set(__PT1C_SIP_HEADER=${SIPADDHEADER})) '.PHP_EOL."\t".
-                    'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1)'.PHP_EOL."\t".
-                    'same => n,ExecIf($["${PJSIP_ENDPOINT(${EXTEN},auth)}x" == "x"]?Goto(internal-num-undefined,${EXTEN},1))'.PHP_EOL."\t".
-                    'same => n,Set(DST_CONTACT=${PJSIP_DIAL_CONTACTS(${EXTEN})})'.PHP_EOL."\t".
-                    'same => n,ExecIf($["${FIELDQTY(DST_CONTACT,&)}" != "1"]?Set(__PT1C_SIP_HEADER=${EMPTY_VAR}))'.PHP_EOL."\t".
-                    'same => n,ExecIf($["${DST_CONTACT}x" != "x"]?Dial(${DST_CONTACT},${ringlength},TtekKHhb(originate-create-channel,${EXTEN},1)U(originate-answer-channel),s,1)))'.PHP_EOL.PHP_EOL.
+        $conf .= '[internal-originate]' . PHP_EOL .
+            'exten => _.!,1,Set(pt1c_cid=${FILTER(\*\#\+1234567890,${pt1c_cid})})' . PHP_EOL . "\t" .
+            'same => n,Set(MASTER_CHANNEL(ORIGINATE_DST_EXTEN)=${pt1c_cid})' . PHP_EOL . "\t" .
+            'same => n,Set(number=${FILTER(\*\#\+1234567890,${EXTEN})})' . PHP_EOL . "\t" .
+            'same => n,ExecIf($["${EXTEN}" != "${number}"]?Goto(${CONTEXT},${number},$[${PRIORITY} + 1]))' . PHP_EOL . "\t" .
+            'same => n,Set(__IS_ORGNT=${EMPTY})' . PHP_EOL . "\t" .
+            'same => n,ExecIf($["${pt1c_cid}x" != "x"]?Set(CALLERID(num)=${pt1c_cid}))' . PHP_EOL . "\t" .
+            'same => n,ExecIf($["${SRC_QUEUE}x" != "x"]?Goto(internal-originate-queue,${EXTEN},1))' . PHP_EOL . "\t" .
+            'same => n,ExecIf($["${CUT(CHANNEL,\;,2)}" == "2"]?Set(__PT1C_SIP_HEADER=${SIPADDHEADER})) ' . PHP_EOL . "\t" .
+            'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1)' . PHP_EOL . "\t" .
+            'same => n,ExecIf($["${PJSIP_ENDPOINT(${EXTEN},auth)}x" == "x"]?Goto(internal-num-undefined,${EXTEN},1))' . PHP_EOL . "\t" .
+            'same => n,Set(DST_CONTACT=${PJSIP_DIAL_CONTACTS(${EXTEN})})' . PHP_EOL . "\t" .
+            'same => n,ExecIf($["${FIELDQTY(DST_CONTACT,&)}" != "1"]?Set(__PT1C_SIP_HEADER=${EMPTY_VAR}))' . PHP_EOL . "\t" .
+            'same => n,ExecIf($["${DST_CONTACT}x" != "x"]?Dial(${DST_CONTACT},${ringlength},TtekKHhb(originate-create-channel,${EXTEN},1)U(originate-answer-channel),s,1)))' . PHP_EOL . PHP_EOL .
 
-                '[internal-originate-queue]'.PHP_EOL.
-                'exten => _X!,1,Set(_NOCDR=1)'.PHP_EOL."\t".
-                    'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1)'.PHP_EOL."\t".
-                    'same => n,ExecIf($["${SRC_QUEUE}x" != "x"]?Queue(${SRC_QUEUE},kT,,,300,,,originate-answer-channel))'.PHP_EOL.PHP_EOL.
+            '[internal-originate-queue]' . PHP_EOL .
+            'exten => _X!,1,Set(_NOCDR=1)' . PHP_EOL . "\t" .
+            'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1)' . PHP_EOL . "\t" .
+            'same => n,ExecIf($["${SRC_QUEUE}x" != "x"]?Queue(${SRC_QUEUE},kT,,,300,,,originate-answer-channel))' . PHP_EOL . PHP_EOL .
 
-                '[originate-create-channel] '.PHP_EOL.
-                'exten => s,1,ExecIf($["${PT1C_SIP_HEADER}x" != "x"]?Set(PJSIP_HEADER(add,${CUT(PT1C_SIP_HEADER,:,1)})=${CUT(PT1C_SIP_HEADER,:,2)})) '.PHP_EOL."\t".
-                    'same => n,Set(__PT1C_SIP_HEADER=${UNDEFINED}) '.PHP_EOL."\t".
-                    'same => n,return'.PHP_EOL.PHP_EOL.
+            '[originate-create-channel] ' . PHP_EOL .
+            'exten => s,1,ExecIf($["${PT1C_SIP_HEADER}x" != "x"]?Set(PJSIP_HEADER(add,${CUT(PT1C_SIP_HEADER,:,1)})=${CUT(PT1C_SIP_HEADER,:,2)})) ' . PHP_EOL . "\t" .
+            'same => n,Set(__PT1C_SIP_HEADER=${UNDEFINED}) ' . PHP_EOL . "\t" .
+            'same => n,return' . PHP_EOL . PHP_EOL .
 
-                '[originate-answer-channel]'.PHP_EOL.
-                'exten => s,1,Set(IS_ORGNT=${EMPTY})'.PHP_EOL."\t".
-                    'same => n,Set(orign_chan=${CHANNEL})'.PHP_EOL."\t".
-                    'same => n,ExecIf($[ "${CHANNEL:0:5}" == "Local" ]?Set(pl=${IF($["${CHANNEL:-1}" == "1"]?2:1)}))'.PHP_EOL."\t".
-                    'same => n,ExecIf($[ "${CHANNEL:0:5}" == "Local" ]?Set(orign_chan=${IMPORT(${CUT(CHANNEL,\;,1)}\;${pl},DIALEDPEERNAME)}))'.PHP_EOL."\t".
-                    'same => n,Set(MASTER_CHANNEL(ORIGINATE_SRC_CHANNEL)=${orign_chan})'.PHP_EOL."\t".
-                    'same => n,return'.PHP_EOL.PHP_EOL;
+            '[originate-answer-channel]' . PHP_EOL .
+            'exten => s,1,Set(IS_ORGNT=${EMPTY})' . PHP_EOL . "\t" .
+            'same => n,Set(orign_chan=${CHANNEL})' . PHP_EOL . "\t" .
+            'same => n,ExecIf($[ "${CHANNEL:0:5}" == "Local" ]?Set(pl=${IF($["${CHANNEL:-1}" == "1"]?2:1)}))' . PHP_EOL . "\t" .
+            'same => n,ExecIf($[ "${CHANNEL:0:5}" == "Local" ]?Set(orign_chan=${IMPORT(${CUT(CHANNEL,\;,1)}\;${pl},DIALEDPEERNAME)}))' . PHP_EOL . "\t" .
+            'same => n,Set(MASTER_CHANNEL(ORIGINATE_SRC_CHANNEL)=${orign_chan})' . PHP_EOL . "\t" .
+            'same => n,return' . PHP_EOL . PHP_EOL;
 
         $conf .= '[dial_create_chan]' . " \n";
         $conf .= 'exten => s,1,Gosub(lua_${ISTRANSFER}dial_create_chan,${EXTEN},1)' . "\n\t";
@@ -174,7 +162,7 @@ class ExtensionsConf extends ConfigClass
 
         // TODO / Добавление / удаление префиксов на входящий callerid.
         $conf .= '[add-trim-prefix-clid]' . "\n";
-        $conf .= 'exten => '.self::ALL_NUMBER_EXTENSION.',1,NoOp(--- Incoming call from ${CALLERID(num)} ---)' . "\n\t";
+        $conf .= 'exten => ' . self::ALL_NUMBER_EXTENSION . ',1,NoOp(--- Incoming call from ${CALLERID(num)} ---)' . "\n\t";
         $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1)' . "\n\t";
         // Отсекаем "+".
         // $conf.= 'same => n,ExecIf( $["${CALLERID(num):0:1}" == "+"]?Set(CALLERID(num)=${CALLERID(num):1}))'."\n\t";
@@ -190,22 +178,9 @@ class ExtensionsConf extends ConfigClass
      */
     private function generateInternalTransfer(&$conf): void
     {
-        $additionalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
         $conf              .= "[internal-transfer] \n";
-
-        foreach ($additionalModules as $appClass) {
-            $addition = $appClass->getIncludeInternalTransfer();
-            if ( ! empty($addition)) {
-                $conf .= $appClass->confBlockWithComments($addition);
-            }
-        }
-
-        foreach ($additionalModules as $appClass) {
-            $addition = $appClass->extensionGenInternalTransfer();
-            if ( ! empty($addition)) {
-                $conf .= $appClass->confBlockWithComments($addition);
-            }
-        }
+        $conf .= $this->hookModulesMethod(CoreConfigClass::GET_INCLUDE_INTERNAL_TRANSFER);
+        $conf .= $this->hookModulesMethod(CoreConfigClass::EXTENSION_GEN_INTERNAL_TRANSFER);
         $conf .= 'exten => h,1,Gosub(transfer_dial_hangup,${EXTEN},1)' . "\n\n";
     }
 
@@ -216,34 +191,21 @@ class ExtensionsConf extends ConfigClass
      */
     private function generateSipHints(&$conf): void
     {
-        $additionalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
-        $conf              .= "[internal-hints] \n";
-        foreach ($additionalModules as $appClass) {
-            $addition = $appClass->extensionGenHints();
-            if ( ! empty($addition)) {
-                $conf .= $appClass->confBlockWithComments($addition);
-            }
-        }
+        $conf .= "[internal-hints] \n";
+        $conf .= $this->hookModulesMethod(CoreConfigClass::EXTENSION_GEN_HINTS);
         $conf .= "\n\n";
     }
 
     /**
      * Контекст для входящих внешних звонков без авторизации.
      *
-     * @param $conf
      */
-    public function generatePublicContext(&$conf): void
+    public function generatePublicContext(): string
     {
-        $additionalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
-        $conf              .= "\n";
+        $conf              = "\n";
         $conf              .= IncomingContexts::generate('none');
         $conf              .= "[public-direct-dial] \n";
-        foreach ($additionalModules as $appClass) {
-            if ($appClass instanceof $this) {
-                continue;
-            }
-            $appClass->generatePublicContext($conf);
-        }
+        $conf .= $this->hookModulesMethod(CoreConfigClass::GENERATE_PUBLIC_CONTEXT);
         $filter = ["provider IS NULL AND priority<>9999"];
 
         /**
@@ -253,6 +215,8 @@ class ExtensionsConf extends ConfigClass
         if (count($m_data->toArray()) > 0) {
             $conf .= 'include => none-incoming';
         }
+
+        return $conf;
     }
 
 }

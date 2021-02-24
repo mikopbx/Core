@@ -41,7 +41,7 @@ use MikoPBX\PBXCoreREST\Controllers\{Cdr\GetController as CdrGetController,
     License\GetController as LicenseGetController,
     License\PostController as LicensePostController
 };
-use MikoPBX\Common\Providers\PBXConfModulesProvider;
+use MikoPBX\Modules\Config\ConfigClass;
 use MikoPBX\PBXCoreREST\Middleware\AuthenticationMiddleware;
 use MikoPBX\PBXCoreREST\Middleware\NotFoundMiddleware;
 use MikoPBX\PBXCoreREST\Middleware\ResponseMiddleware;
@@ -71,7 +71,7 @@ class RouterProvider implements ServiceProviderInterface
         /** @var Manager $eventsManager */
         $eventsManager = $di->getShared('eventsManager');
 
-        $this->attachRoutes($application, $di);
+        $this->attachRoutes($application);
         $this->attachMiddleware($application, $eventsManager);
 
         $application->setEventsManager($eventsManager);
@@ -81,21 +81,16 @@ class RouterProvider implements ServiceProviderInterface
      * Attaches the routes to the application; lazy loaded
      *
      * @param Micro                   $application
-     * @param \Phalcon\Di\DiInterface $di
      */
-    private function attachRoutes(Micro $application, DiInterface $di): void
+    private function attachRoutes(Micro $application): void
     {
         // Add hard coded routes
         $routes = $this->getRoutes();
 
         // Add additional modules routes
-        $additionalRoutes  = [];
-        $additionalModules = $di->getShared(PBXConfModulesProvider::SERVICE_NAME);
-        foreach ($additionalModules as $appClass) {
-            /** @var \MikoPBX\Modules\Config\ConfigClass; $appClass */
-            $additionalRoutes[] = $appClass->getPBXCoreRESTAdditionalRoutes();
-        }
-
+        $configClassObj = new ConfigClass();
+        $additionalRoutes = $configClassObj->hookModulesMethodWithArrayResult(ConfigClass::GET_PBXCORE_REST_ADDITIONAL_ROUTES);
+        $additionalRoutes = array_values($additionalRoutes);
         $routes = array_merge($routes, ...$additionalRoutes);
 
         // Class, Method, Route, Handler, ParamsRegex

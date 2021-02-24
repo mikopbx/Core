@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2021 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,24 +17,17 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-namespace MikoPBX\Core\Asterisk\Configs;
+namespace MikoPBX\Tests\Core\System\Configs;
 
+use MikoPBX\Core\System\Configs\CronConf;
+use PHPUnit\Framework\TestCase;
 
-use MikoPBX\Core\System\Util;
-
-class CdrManagerConf extends CoreConfigClass
+class CronConfTest extends TestCase
 {
-    protected string $description = 'cdr_manager.conf';
 
-    protected function generateConfigProtected(): void
+    public function testReStart()
     {
-        $conf = "[general]\n" .
-            "enabled=yes\n" .
-            "\n" .
-            "[mappings]\n" .
-            "linkedid => linkedid\n" .
-            "recordingfile => recordingfile\n\n";
-
-        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . "/cdr_manager.conf", $conf);
+        $cron = new CronConf();
+        $cron->reStart();
     }
 }

@@ -21,16 +21,15 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 
 use MikoPBX\Core\System\Util;
-use MikoPBX\Modules\Config\ConfigClass;
 
-class ChanDongle extends ConfigClass
+class ChanDongle extends CoreConfigClass
 {
     protected string $description = 'dongle.conf';
 
     protected function generateConfigProtected(): void
     {
-        $conf = '[general]'.PHP_EOL.
-                'interval=15'.PHP_EOL;
+        $conf = '[general]' . PHP_EOL .
+            'interval=15' . PHP_EOL;
 
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/dongle.conf', $conf);
     }

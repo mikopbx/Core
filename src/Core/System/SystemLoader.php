@@ -144,8 +144,6 @@ class SystemLoader extends Di\Injectable
 
         Util::echoWithSyslog(' - Start Asterisk... ');
         $pbx->start();
-        $system                           = new System();
-        $system->onAfterPbxStarted();
         Util::echoGreenDone();
 
         Util::echoWithSyslog(' - Wait asterisk fully booted... ');

@@ -21,15 +21,13 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 
 use MikoPBX\Core\System\Util;
-use MikoPBX\Modules\Config\ConfigClass;
 
-class AsteriskConf extends ConfigClass
+class AsteriskConf extends CoreConfigClass
 {
     protected string $description = 'asterisk.conf';
 
     protected function generateConfigProtected(): void
     {
-
         $lang = $this->generalSettings['PBXLanguage'];
 
         $conf = "[directories]\n" .

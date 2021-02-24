@@ -20,10 +20,9 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Modules\Config\ConfigClass;
 use MikoPBX\Core\System\Util;
 
-class ResParkingConf extends ConfigClass
+class ResParkingConf extends CoreConfigClass
 {
     protected $ParkingExt;
     protected $ParkingStartSlot;
@@ -36,7 +35,7 @@ class ResParkingConf extends ConfigClass
      *
      * @return array
      */
-    public function dependenceModels(): array
+    public function getDependenceModels(): array
     {
         return [PbxSettings::class];
     }

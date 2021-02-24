@@ -19,18 +19,23 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
-
-use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\Util;
-use MikoPBX\Modules\Config\ConfigClass;
 
-class FeaturesConf extends ConfigClass
+class FeaturesConf extends CoreConfigClass
 {
     protected string $description = 'features.conf';
 
+    public function extensionGlobals(): string
+    {
+        // Генерация хинтов.
+        return "PICKUP_EXTEN={$this->generalSettings['PBXFeaturePickupExten']}\n";
+    }
+
+    // Секция global для extensions.conf.
+
     protected function generateConfigProtected(): void
     {
-        $conf             = "[general]\n" .
+        $conf = "[general]\n" .
             "featuredigittimeout = {$this->generalSettings['PBXFeatureDigitTimeout']}\n" .
             "atxfernoanswertimeout = {$this->generalSettings['PBXFeatureAtxferNoAnswerTimeout']}\n" .
             "transferdigittimeout = {$this->generalSettings['PBXFeatureTransferDigitTimeout']}\n" .
@@ -42,18 +47,8 @@ class FeaturesConf extends ConfigClass
             "disconnect = *0\n" .
             "blindxfer => {$this->generalSettings['PBXFeatureBlindTransfer']}\n";
 
-        $additionalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
-        foreach ($additionalModules as $appClass) {
-            $conf .= $appClass->getFeatureMap();
-        }
+        $conf .= $this->hookModulesMethod(CoreConfigClass::GET_FEATURE_MAP);
 
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/features.conf', $conf);
-    }
-
-    // Секция global для extensions.conf.
-    public function extensionGlobals(): string
-    {
-        // Генерация хинтов.
-        return "PICKUP_EXTEN={$this->generalSettings['PBXFeaturePickupExten']}\n";
     }
 }

@@ -33,88 +33,84 @@ use function MikoPBX\Common\Config\appPath;
 
 /**
  * Class PbxExtensionSetupBase
- * Общие для всех модулей методы
- * Подключается при установке, удалении модуля
+ * Common procedures for module installation and removing
+ *
+ * @property \MikoPBX\Common\Providers\LicenseProvider license
+ * @property \MikoPBX\Common\Providers\TranslationProvider translation
  */
 abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionSetupInterface
 {
     /**
-     * Trial product version identify number from module.json
-     *
-     * @var int
-     */
-    public $lic_product_id;
-    /**
-     * License feature identify number from module.json
-     *
-     * @var int
-     */
-    public $lic_feature_id;
-    /**
-     * Module unique identify  from module.json
-     *
+     * Module unique identify from the module.json
      * @var string
      */
     protected string $moduleUniqueID;
+
     /**
-     * Module version from module.json
-     *
+     * Module version from the module.json
      * @var string
      */
     protected $version;
+
     /**
-     * Minimal require version PBX
-     *
+     * Minimal required version PBX from the module.json
      * @var string
      */
     protected $min_pbx_version;
+
     /**
-     * Module developer name
-     *
+     * Module developer name  from the module.json
      * @var string
      */
     protected $developer;
+
     /**
      * Module developer's email from module.json
-     *
      * @var string
      */
     protected $support_email;
+
     /**
-     * PBX general database
-     *
+     * PBX core general database
      * @var \Phalcon\Db\Adapter\Pdo\Sqlite
      */
     protected $db;
 
-
     /**
      * Folder with module files
-     *
      * @var string
      */
     protected string $moduleDir;
 
     /**
      * Phalcon config service
-     *
      * @var \Phalcon\Config
      */
     protected $config;
 
     /**
+     * Error and verbose messages
+     * @var array
+     */
+    protected array $messages;
+
+    /**
      * License worker
-     *
      * @var \MikoPBX\Service\License
      */
     protected $license;
 
     /**
-     * Error and verbose messages
-     *
-     * @var array
+     * Trial product version identify number from the module.json
+     * @var int
      */
-    protected array $messages;
+    public $lic_product_id;
+
+    /**
+     * License feature identify number from the module.json
+     * @var int
+     */
+    public $lic_feature_id;
 
     /**
      * PbxExtensionBase constructor.
@@ -154,14 +150,13 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
 
         $this->messages  = [];
 
-
     }
 
     /**
-     * Последовательный вызов процедур установки модуля расширения
-     * с текстового результата установки
+     * The main module installation function called by PBXCoreRest after unzip module files
+     * It calls some private functions and setup error messages on the message variable
      *
-     * @return bool - результат установки
+     * @return bool - result of installation
      */
     public function installModule(): bool
     {
@@ -179,7 +174,10 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
                 $this->messages[] = ' installDB error';
                 $result           = false;
             }
-            $this->fixFilesRights();
+            if ( ! $this->fixFilesRights()) {
+                $this->messages[] = ' Apply files rights error';
+                $result           = false;
+            }
         } catch (Throwable $exception) {
             $result         = false;
             $this->messages[] = $exception->getMessage();
@@ -189,9 +187,9 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
     }
 
     /**
-     * Выполняет активацию триалов, проверку лицензионного клчюча
+     * Executes license activation only for commercial modules
      *
-     * @return bool результат активации лицензии
+     * @return bool result of license activation
      */
     public function activateLicense(): bool
     {
@@ -199,9 +197,9 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
     }
 
     /**
-     * Copies files, creates folders and symlinks for module
+     * Copies files, creates folders and symlinks for module and restores previous backup settings
      *
-     * @return bool setup result
+     * @return bool installation result
      */
     public function installFiles(): bool
     {
@@ -222,9 +220,9 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
     }
 
     /**
-     * Setup ownerships and folder rights
+     * Setups ownerships and folder rights
      *
-     * @return bool
+     * @return bool fixing result
      */
     public function fixFilesRights(): bool
     {
@@ -245,26 +243,35 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
     }
 
     /**
-     * Создает структуру для хранения настроек модуля в своей модели
-     * и заполняет настройки по-умолчанию если таблицы не было в системе
-     * см (unInstallDB)
+     * Creates database structure according to models annotations
      *
-     * Регистрирует модуль в PbxExtensionModules
+     * If it necessary, it fills some default settings, and change sidebar menu item representation for this module
      *
-     * @return bool результат установки
+     * After installation it registers module on PbxExtensionModules model
+     *
+     * @return bool result of installation
      */
     public function installDB(): bool
     {
-        return true;
+        $result = $this->createSettingsTableByModelsAnnotations();
+
+        if ($result) {
+            $result = $this->registerNewModule();
+        }
+
+        if ($result) {
+            $result = $this->addToSidebar();
+        }
+        return $result;
     }
 
+
     /**
-     * Последовательный вызов процедур установки модуля расширения
-     * с результата удаления
+     * The main function called by MikoPBX REST API for delete any module
      *
-     * @param $keepSettings bool сохранять настройки модуля при удалении
+     * @param $keepSettings bool if it set to true, the function saves module database
      *
-     * @return bool результат удаления
+     * @return bool uninstall result
      */
     public function uninstallModule(bool $keepSettings = false): bool
     {
@@ -287,12 +294,12 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
     }
 
     /**
-     * Удаляет запись о модуле из PbxExtensionModules
-     * Удаляет свою модель
+     * Deletes some settings from database and links to the module
+     * If keepSettings set to true it copies database file to Backup folder
      *
-     * @param  $keepSettings bool оставляет таблицу с данными своей модели
+     * @param  $keepSettings bool
      *
-     * @return bool результат очистки
+     * @return bool the uninstall result
      */
     public function unInstallDB(bool $keepSettings = false): bool
     {
@@ -300,9 +307,9 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
     }
 
     /**
-     * Удаляет запись о модуле из PbxExtensionModules
+     * Deletes records from PbxExtensionModules
      *
-     * @return bool результат очистки
+     * @return bool  unregistration result
      */
     public function unregisterModule(): bool
     {
@@ -316,12 +323,12 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
     }
 
     /**
-     * Выполняет удаление своих файлов с остановной процессов
-     * при необходимости
+     * Deletes the module files, folders, symlinks
+     * If keepSettings set to true it copies database file to Backup folder
      *
-     * @param $keepSettings bool сохранять настройки
+     * @param $keepSettings bool
      *
-     * @return bool результат удаления
+     * @return bool delete result
      */
     public function unInstallFiles(bool $keepSettings = false):bool
     {
@@ -372,7 +379,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
     }
 
     /**
-     * Выполняет регистрацию модуля в таблице PbxExtensionModules
+     * Registers module in the PbxExtensionModules table
      *
      * @return bool
      */
@@ -390,66 +397,36 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
         $module = PbxExtensionModules::findFirstByUniqid($this->moduleUniqueID);
         if ( ! $module) {
             $module           = new PbxExtensionModules();
-            $module->name     = $this->locString("Breadcrumb{$this->moduleUniqueID}");
+            $module->name     = $this->translation->_("Breadcrumb{$this->moduleUniqueID}");
             $module->disabled = '1';
         }
         $module->uniqid        = $this->moduleUniqueID;
         $module->developer     = $this->developer;
         $module->version       = $this->version;
-        $module->description   = $this->locString("SubHeader{$this->moduleUniqueID}");
+        $module->description   = $this->translation->_("SubHeader{$this->moduleUniqueID}");
         $module->support_email = $this->support_email;
 
         return $module->save();
     }
 
     /**
-     * Возвращает перевод идентификатора на язык установленный в настройках PBX
+     * DEPRECATED
+     * Returns translated phrase
      *
-     * @param $stringId string  идентификатор фразы
+     * @param $stringId string  Phrase identifier
      *
      * @return string  перевод
      */
     public function locString(string $stringId): string
     {
-        $language             = substr(PbxSettings::getValueByKey('WebAdminLanguage'), 0, 2);
-        $translates           = [];
-        $extensionsTranslates = [[]];
-        $results              = glob($this->moduleDir . '/{Messages}/en.php', GLOB_BRACE);
-        foreach ($results as $path) {
-            $langArr = require $path;
-            if (is_array($langArr)) {
-                $extensionsTranslates[] = $langArr;
-            }
-        }
-        if ($extensionsTranslates !== [[]]) {
-            $translates = array_merge($translates, ...$extensionsTranslates);
-        }
-        if ($language !== 'en') {
-            $additionalTranslates = [[]];
-            $results              = glob($this->moduleDir . "/{Messages}/{$language}.php", GLOB_BRACE);
-            foreach ($results as $path) {
-                $langArr = require $path;
-                if (is_array($langArr)) {
-                    $additionalTranslates[] = $langArr;
-                }
-            }
-            if ($additionalTranslates !== [[]]) {
-                $translates = array_merge($translates, ...$additionalTranslates);
-            }
-        }
-
-        // Return a translation object
-        if (array_key_exists($stringId, $translates)) {
-            return $translates[$stringId];
-        }
-
-        return $stringId;
+        Util::sysLogMsg('Util', 'Deprecated call ' . __METHOD__ . ' from ' . static::class, LOG_DEBUG);
+        return $this->translation->_($stringId);
     }
 
     /**
-     * Обходит файлы с описанием моделей и создает таблицы в базе данных
+     * Traverses files with model descriptions and creates / modifies tables in the system database
      *
-     * @return bool
+     * @return bool the table modification result
      */
     public function createSettingsTableByModelsAnnotations(): bool
     {
@@ -476,7 +453,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
 
 
     /**
-     * Добавляет модуль в боковое меню
+     * Adds module to sidebar menu
      *
      * @return bool
      */

@@ -21,12 +21,12 @@ namespace MikoPBX\Core\System\Configs;
 
 use MikoPBX\Common\Models\Fail2BanRules;
 use MikoPBX\Common\Models\NetworkFilters;
-use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\System\Verify;
+use MikoPBX\Modules\Config\ConfigClass;
 use Phalcon\Di\Injectable;
 use Phalcon\Text;
 use SQLite3;
@@ -296,23 +296,19 @@ class Fail2BanConf extends Injectable
     /**
      * Generate additional modules filter files
      */
-    public function generateModulesFilters(): void
+    private function generateModulesFilters(): void
     {
         $filterPath        = self::FILTER_PATH;
-        $additionalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
         $rmPath            = Util::which('rm');
         Processes::mwExec("{$rmPath} -rf {$filterPath}/module_*.conf");
-        foreach ($additionalModules as $appClass) {
-            if (!method_exists($appClass, 'generateFail2BanJails')) {
-                continue;
-            }
-            $content = $appClass->generateFail2BanJails();
-            if (empty($content)) {
-                continue;
-            }
-            $moduleUniqueId = $appClass->moduleUniqueId;
+
+
+        // Add additional modules routes
+        $configClassObj = new ConfigClass();
+        $additionalModulesJails = $configClassObj->hookModulesMethodWithArrayResult(ConfigClass::GENERATE_FAIL2BAN_JAILS);
+        foreach ($additionalModulesJails as $moduleUniqueId=>$moduleJailText) {
             $fileName = Text::uncamelize($moduleUniqueId,'_').'.conf';
-            file_put_contents("{$filterPath}/{$fileName}", $content);
+            file_put_contents("{$filterPath}/{$fileName}", $moduleJailText);
         }
     }
 
@@ -321,7 +317,7 @@ class Fail2BanConf extends Injectable
      * @param $find_time
      * @param $ban_time
      */
-    public function generateModulesJailsLocal($max_retry = 0, $find_time = 0, $ban_time = 0): void
+    private function generateModulesJailsLocal($max_retry = 0, $find_time = 0, $ban_time = 0): void
     {
         if($max_retry === 0){
             [$max_retry, $find_time, $ban_time] = $this->initProperty();
@@ -334,15 +330,9 @@ class Fail2BanConf extends Injectable
         Processes::mwExec("rm -rf ".self::JAILS_DIR."/{$prefix}*.{$extension}");
         $syslog_file = SyslogConf::getSyslogFile();
 
-        $additionalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
-        foreach ($additionalModules as $appClass) {
-            if (!method_exists($appClass, 'generateFail2BanJails')) {
-                continue;
-            }
-            if ( empty($appClass->generateFail2BanJails())) {
-                continue;
-            }
-            $moduleUniqueId                    = $appClass->moduleUniqueId;
+        $configClassObj = new ConfigClass();
+        $additionalModulesJails = $configClassObj->hookModulesMethodWithArrayResult(ConfigClass::GENERATE_FAIL2BAN_JAILS);
+        foreach ($additionalModulesJails as $moduleUniqueId=>$moduleJailText) {
             $fileName = Text::uncamelize($moduleUniqueId,'_');
 
             $config = "[{$fileName}]\n" .
@@ -356,7 +346,6 @@ class Fail2BanConf extends Injectable
 
             file_put_contents(self::JAILS_DIR."/{$prefix}{$fileName}.{$extension}", $config);
         }
-
     }
 
     /**

@@ -22,7 +22,7 @@ declare(strict_types=1);
 namespace MikoPBX\PBXCoreREST\Middleware;
 
 use MikoPBX\Common\Providers\LoggerAuthProvider;
-use MikoPBX\Common\Providers\PBXConfModulesProvider;
+use MikoPBX\Modules\Config\ConfigClass;
 use MikoPBX\PBXCoreREST\Http\Request;
 use MikoPBX\PBXCoreREST\Http\Response;
 use MikoPBX\PBXCoreREST\Providers\RequestProvider;
@@ -82,17 +82,13 @@ class AuthenticationMiddleware implements MiddlewareInterface
     public function thisIsModuleNoAuthRequest(Micro $api): bool
     {
         $pattern  = $api->request->getURI(true);
-        $additionalModules = $api->getService(PBXConfModulesProvider::SERVICE_NAME);
-        foreach ($additionalModules as $appClass) {
-            /** @var \MikoPBX\Modules\Config\ConfigClass; $appClass */
-            $additionalRoutes = $appClass->getPBXCoreRESTAdditionalRoutes();
-            if(!is_array($additionalRoutes)){
-                continue;
-            }
-            foreach ($additionalRoutes as $additionalRoute){
-                $noAuth = $additionalRoute[5]??false;
-                if ($noAuth===true
-                    && stripos($pattern, $additionalRoute[2])!==0){
+        $configClassObj = new ConfigClass();
+        $additionalRoutes = $configClassObj->hookModulesMethodWithArrayResult(ConfigClass::GET_PBXCORE_REST_ADDITIONAL_ROUTES);
+        foreach ($additionalRoutes as $additionalRoutesFromModule){
+            foreach ($additionalRoutesFromModule as $additionalRoute) {
+                $noAuth = $additionalRoute[5] ?? false;
+                if ($noAuth === true
+                    && stripos($pattern, $additionalRoute[2]) !== 0) {
                     return true; // Allow request without authentication
                 }
             }

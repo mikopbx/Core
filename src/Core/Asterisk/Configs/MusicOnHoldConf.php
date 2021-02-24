@@ -21,9 +21,8 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 
 use MikoPBX\Core\System\Util;
-use MikoPBX\Modules\Config\ConfigClass;
 
-class MusicOnHoldConf extends ConfigClass
+class MusicOnHoldConf extends CoreConfigClass
 {
     protected string $description = 'musiconhold.conf';
 

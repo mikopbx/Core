@@ -19,12 +19,11 @@
 
 namespace MikoPBX\Core\System\Configs;
 
-
-use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Workers\Cron\WorkerSafeScriptsCore;
+use MikoPBX\Modules\Config\ConfigClass;
 use Phalcon\Di\Injectable;
 
 use function MikoPBX\Common\Config\appPath;
@@ -70,7 +69,6 @@ class CronConf extends Injectable
      */
     private function generateConfig($boot = true): void
     {
-        $additionalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
         $mast_have         = [];
 
         if (Util::isSystemctl()) {
@@ -103,10 +101,8 @@ class CronConf extends Injectable
         $tasks = [];
 
         // Add additional modules includes
-        foreach ($additionalModules as $appClass) {
-            /** @var \MikoPBX\Modules\Config\ConfigClass $appClass */
-            $appClass->createCronTasks($tasks);
-        }
+        $configClassObj = new ConfigClass();
+        $configClassObj->hookModulesMethod(ConfigClass::CREATE_CRON_TASKS, [&$tasks]);
         $conf = implode('', array_merge($mast_have, $tasks));
 
         if (Util::isSystemctl()) {

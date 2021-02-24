@@ -27,6 +27,7 @@ use MikoPBX\Common\Providers\{BeanstalkConnectionCacheProvider,
     LoggerAuthProvider,
     LoggerProvider,
     MainDatabaseProvider,
+    MessagesProvider,
     ModelsCacheProvider,
     ModelsMetadataProvider,
     PBXConfModulesProvider,
@@ -82,6 +83,7 @@ class RegisterDIServices
             LoggerProvider::class,
 
             //Translates
+            MessagesProvider::class,
             LanguageProvider::class,
 
         ];

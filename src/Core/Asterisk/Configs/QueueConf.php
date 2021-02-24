@@ -21,13 +21,120 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\CallQueues;
 use MikoPBX\Common\Models\Extensions;
-use MikoPBX\Modules\Config\ConfigClass;
 use MikoPBX\Core\System\{Processes, Util};
 
-class QueueConf extends ConfigClass
+class QueueConf extends CoreConfigClass
 {
     protected string $description = 'queues.conf';
 
+    /**
+     * Generates queue.conf and restart asterisk queue module
+     */
+    public static function queueReload(): void
+    {
+        $queue = new self();
+        $queue->generateConfig();
+        $out          = [];
+        $asteriskPath = Util::which('asterisk');
+        Processes::mwExec("{$asteriskPath} -rx 'queue reload all '", $out);
+    }
+
+    /**
+     * Возвращает дополнительные контексты для Очереди.
+     *
+     * @return string
+     */
+    public function extensionGenContexts(): string
+    {
+        // Генерация внутреннего номерного плана.
+        $conf = "[queue_agent_answer]\n";
+        $conf .= "exten => s,1,NoOp(--- Answer Queue ---)\n\t";
+        $conf .= 'same => n,Gosub(queue_answer,${EXTEN},1)' . "\n\t";
+        $conf .= "same => n,Return()\n\n";
+
+        return $conf;
+    }
+
+    /**
+     * Генерация хинтов.
+     *
+     * @return string
+     */
+    public function extensionGenHints(): string
+    {
+        $conf    = '';
+        $db_data = $this->getQueueData();
+        foreach ($db_data as $queue) {
+            $conf .= "exten => {$queue['extension']},hint,Custom:{$queue['extension']} \n";
+        }
+
+        return $conf;
+    }
+
+    /**
+     * @return string
+     */
+    public function extensionGenInternalTransfer(): string
+    {
+        $conf    = '';
+        $db_data = $this->getQueueData();
+        foreach ($db_data as $queue) {
+            $conf .= 'exten => _' . $queue['extension'] . ',1,Set(__ISTRANSFER=transfer_)' . " \n\t";
+            $conf .= 'same => n,Goto(internal,${EXTEN},1)' . " \n";
+        }
+        $conf .= "\n";
+
+        return $conf;
+    }
+
+    /**
+     * Возвращает номерной план для internal контекста.
+     *
+     * @return string
+     */
+    public function extensionGenInternal(): string
+    {
+        $queue_ext_conf = '';
+        $db_data        = $this->getQueueData();
+        foreach ($db_data as $queue) {
+            $calleridPrefix = preg_replace('/[^a-zA-Zа-яА-Я0-9 ]/ui', '', $queue['callerid_prefix'] ?? '');
+
+            $queue_ext_conf .= "exten => {$queue['extension']},1,NoOp(--- Start Queue ---) \n\t";
+            $queue_ext_conf .= "same => n,Answer() \n\t";
+            $queue_ext_conf .= 'same => n,Set(__QUEUE_SRC_CHAN=${CHANNEL})' . "\n\t";
+            $queue_ext_conf .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" == "Local"]?Gosub(set_orign_chan,s,1))' . "\n\t";
+            $queue_ext_conf .= 'same => n,Set(CHANNEL(hangup_handler_wipe)=hangup_handler,s,1)' . "\n\t";
+            $queue_ext_conf .= 'same => n,Gosub(queue_start,${EXTEN},1)' . "\n\t";
+
+            $options = '';
+            if (isset($queue['caller_hear']) && $queue['caller_hear'] === 'ringing') {
+                $options .= 'r'; // Установить КПВ (гудки) вместо Музыки на Удержании для ожидающих в очереди
+            }
+            $ringlength = (trim(
+                    $queue['timeout_to_redirect_to_extension']
+                ) == '') ? 300 : $queue['timeout_to_redirect_to_extension'];
+            if ( ! empty($calleridPrefix)) {
+                $queue_ext_conf .= "same => n,Set(CALLERID(name)={$calleridPrefix}:" . '${CALLERID(name)}' . ") \n\t";
+            }
+
+            $queue_ext_conf .= "same => n,Queue({$queue['uniqid']},kT{$options},,,{$ringlength},,,queue_agent_answer) \n\t";
+            // Оповестим о завершении работы очереди.
+            $queue_ext_conf .= 'same => n,Gosub(queue_end,${EXTEN},1)' . "\n\t";
+
+            if (trim($queue['timeout_extension']) !== '') {
+                // Если по таймауту не ответили, то выполним переадресацию.
+                $queue_ext_conf .= 'same => n,ExecIf($["${QUEUESTATUS}" == "TIMEOUT"]?Goto(internal,' . $queue['timeout_extension'] . ',1))' . " \n\t";
+            }
+            if (trim($queue['redirect_to_extension_if_empty']) !== '') {
+                // Если пустая очередь, то выполним переадресацию.
+                $exp            = '$["${QUEUESTATUS}" == "JOINEMPTY" || "${QUEUESTATUS}" == "LEAVEEMPTY" ]';
+                $queue_ext_conf .= 'same => n,ExecIf(' . $exp . '?Goto(internal,' . $queue['redirect_to_extension_if_empty'] . ',1))' . " \n\t";
+            }
+            $queue_ext_conf .= "\n";
+        }
+
+        return $queue_ext_conf;
+    }
 
     /**
      * Создание конфига для очередей.
@@ -35,10 +142,10 @@ class QueueConf extends ConfigClass
      *
      * @return void
      */
-    protected function generateConfigProtected() :void
+    protected function generateConfigProtected(): void
     {
         // Генерация конфигурационных файлов.
-        $q_conf = '';
+        $q_conf  = '';
         $db_data = $this->getQueueData();
         foreach ($db_data as $queue_data) {
             $joinempty        = (isset($queue_data['joinempty']) && $queue_data['joinempty'] == 1) ? 'yes' : 'no';
@@ -98,7 +205,6 @@ class QueueConf extends ConfigClass
         }
 
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/queues.conf', $q_conf);
-
     }
 
     /**
@@ -139,114 +245,5 @@ class QueueConf extends ConfigClass
         }
 
         return $arrResult; // JSON_PRETTY_PRINT
-    }
-
-    /**
-     * Возвращает дополнительные контексты для Очереди.
-     *
-     * @return string
-     */
-    public function extensionGenContexts(): string
-    {
-        // Генерация внутреннего номерного плана.
-        $conf = "[queue_agent_answer]\n";
-        $conf .= "exten => s,1,NoOp(--- Answer Queue ---)\n\t";
-        $conf .= 'same => n,Gosub(queue_answer,${EXTEN},1)' . "\n\t";
-        $conf .= "same => n,Return()\n\n";
-
-        return $conf;
-    }
-
-    /**
-     * Генерация хинтов.
-     *
-     * @return string
-     */
-    public function extensionGenHints(): string
-    {
-        $conf = '';
-        $db_data = $this->getQueueData();
-        foreach ($db_data as $queue) {
-            $conf .= "exten => {$queue['extension']},hint,Custom:{$queue['extension']} \n";
-        }
-
-        return $conf;
-    }
-
-    /**
-     * @return string
-     */
-    public function extensionGenInternalTransfer(): string
-    {
-        $conf = '';
-        $db_data = $this->getQueueData();
-        foreach ($db_data as $queue) {
-            $conf .= 'exten => _' . $queue['extension'] . ',1,Set(__ISTRANSFER=transfer_)' . " \n\t";
-            $conf .= 'same => n,Goto(internal,${EXTEN},1)' . " \n";
-        }
-        $conf .= "\n";
-
-        return $conf;
-    }
-
-
-
-    /**
-     * Возвращает номерной план для internal контекста.
-     *
-     * @return string
-     */
-    public function extensionGenInternal(): string
-    {
-        $queue_ext_conf = '';
-        $db_data = $this->getQueueData();
-        foreach ($db_data as $queue) {
-            $calleridPrefix = preg_replace('/[^a-zA-Zа-яА-Я0-9 ]/ui', '', $queue['callerid_prefix']??'');
-
-            $queue_ext_conf .= "exten => {$queue['extension']},1,NoOp(--- Start Queue ---) \n\t";
-            $queue_ext_conf .= "same => n,Answer() \n\t";
-            $queue_ext_conf .= 'same => n,Set(__QUEUE_SRC_CHAN=${CHANNEL})' . "\n\t";
-            $queue_ext_conf .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" == "Local"]?Gosub(set_orign_chan,s,1))' . "\n\t";
-            $queue_ext_conf .= 'same => n,Set(CHANNEL(hangup_handler_wipe)=hangup_handler,s,1)' . "\n\t";
-            $queue_ext_conf .= 'same => n,Gosub(queue_start,${EXTEN},1)' . "\n\t";
-
-            $options = '';
-            if (isset($queue['caller_hear']) && $queue['caller_hear'] === 'ringing') {
-                $options .= 'r'; // Установить КПВ (гудки) вместо Музыки на Удержании для ожидающих в очереди
-            }
-            $ringlength     = (trim($queue['timeout_to_redirect_to_extension']) == '') ? 300 : $queue['timeout_to_redirect_to_extension'];
-            if(!empty($calleridPrefix)){
-                $queue_ext_conf .= "same => n,Set(CALLERID(name)={$calleridPrefix}:".'${CALLERID(name)}'.") \n\t";
-            }
-
-            $queue_ext_conf .= "same => n,Queue({$queue['uniqid']},kT{$options},,,{$ringlength},,,queue_agent_answer) \n\t";
-            // Оповестим о завершении работы очереди.
-            $queue_ext_conf .= 'same => n,Gosub(queue_end,${EXTEN},1)' . "\n\t";
-
-            if (trim($queue['timeout_extension']) !== '') {
-                // Если по таймауту не ответили, то выполним переадресацию.
-                $queue_ext_conf .= 'same => n,ExecIf($["${QUEUESTATUS}" == "TIMEOUT"]?Goto(internal,' . $queue['timeout_extension'] . ',1))' . " \n\t";
-            }
-            if (trim($queue['redirect_to_extension_if_empty']) !== '') {
-                // Если пустая очередь, то выполним переадресацию.
-                $exp            = '$["${QUEUESTATUS}" == "JOINEMPTY" || "${QUEUESTATUS}" == "LEAVEEMPTY" ]';
-                $queue_ext_conf .= 'same => n,ExecIf(' . $exp . '?Goto(internal,' . $queue['redirect_to_extension_if_empty'] . ',1))' . " \n\t";
-            }
-            $queue_ext_conf .= "\n";
-        }
-
-        return $queue_ext_conf;
-    }
-
-    /**
-     * Generates queue.conf and restart asterisk queue module
-     */
-    public static function queueReload(): void
-    {
-        $queue            = new self();
-        $queue->generateConfig();
-        $out = [];
-        $asteriskPath = Util::which('asterisk');
-        Processes::mwExec("{$asteriskPath} -rx 'queue reload all '", $out);
     }
 }
