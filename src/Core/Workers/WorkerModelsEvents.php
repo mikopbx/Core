@@ -375,6 +375,16 @@ class WorkerModelsEvents extends WorkerBase
                 self::R_IAX
             ]
         ];
+        // Гостевые звонки без авторизацим.
+        $tables[] = [
+            'settingName'   => [
+                'PBXAllowGuestCalls'
+            ],
+            'functions' => [
+                self::R_SIP,
+                self::R_DIALPLAN
+            ]
+        ];
         // SipParameters
         $tables[] = [
             'settingName'   => [
@@ -383,7 +393,6 @@ class WorkerModelsEvents extends WorkerBase
                 'RTPPortTo',
                 'SIPDefaultExpiry',
                 'SIPMinExpiry',
-                'PBXAllowGuestCalls',
                 'SIPMaxExpiry',
                 'PBXLanguage'
             ],
