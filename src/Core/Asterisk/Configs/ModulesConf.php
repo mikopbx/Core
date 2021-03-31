@@ -31,7 +31,6 @@ class ModulesConf extends CoreConfigClass
             "autoload=no\n";
 
         $modules = [
-            'app_mixmonitor.so',
             'app_cdr.so',
             'app_exec.so',
             'app_dial.so',
@@ -89,13 +88,11 @@ class ModulesConf extends CoreConfigClass
             'func_speex.so',
             'func_channel.so',
             'func_config.so',
-            'func_cut.so',
             'func_cdr.so',
             'func_devstate.so',
             'func_db.so',
             'func_logic.so',
             'func_strings.so',
-            'func_periodic_hook.so',
             'func_pjsip_contact.so',
             'func_pjsip_aor.so',
             'pbx_config.so',
@@ -118,6 +115,13 @@ class ModulesConf extends CoreConfigClass
             'app_senddtmf.so',
             'app_userevent.so',
             'app_chanspy.so',
+
+            'func_cut.so',
+            'func_periodic_hook.so',
+            'func_uri.so',
+            'func_groupcount.so',
+            'app_mixmonitor.so',
+
             // Необходимое для работы переадресаций.
             'bridge_simple.so',
             // Прочие bridge модули. Один из них необходим для работы парковки.

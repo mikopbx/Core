@@ -41,11 +41,13 @@ class FeaturesConf extends CoreConfigClass
             "transferdigittimeout = {$this->generalSettings['PBXFeatureTransferDigitTimeout']}\n" .
             "pickupexten = {$this->generalSettings['PBXFeaturePickupExten']}\n" .
             "atxferabort = *0\n" .
-            "\n" .
+            "\n"            .
+            "[applicationmap]\n\n" .
             "[featuremap]\n" .
             "atxfer => {$this->generalSettings['PBXFeatureAttendedTransfer']}\n" .
             "disconnect = *0\n" .
-            "blindxfer => {$this->generalSettings['PBXFeatureBlindTransfer']}\n";
+            "blindxfer => {$this->generalSettings['PBXFeatureBlindTransfer']}\n".
+            "\n";
 
         $conf .= $this->hookModulesMethod(CoreConfigClass::GET_FEATURE_MAP);
 

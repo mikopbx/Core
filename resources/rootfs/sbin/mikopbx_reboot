@@ -24,7 +24,11 @@ if [ -f /tmp/ejectcd ]; then
     # Попробуем изъять диск.
     cddev=$(/sbin/sysctl -n dev.cdrom.info | /bin/busybox grep "drive name" | /bin/busybox cut -f 3)
     echo "Eject CD from drive ${cddev}...";
-    /bin/busybox eject "/dev/${cddev}" 2>&1 > /dev/null;
+    /bin/busybox eject "/dev/${cddev}" 2>&1 > /dev/null
+    result="$?";
+    if [ ! "$result" = '0' ]; then
+      /bin/busybox eject -s "/dev/${cddev}" 2>&1 > /dev/null;
+    fi;
 else
     sleep 3;
 fi

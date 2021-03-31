@@ -23,9 +23,15 @@ export HOME PATH;
 
 ln -s /bin/busybox /sbin/init;
 # Монтирование.
+uname -a | /bin/busybox grep ' 4\.10'; resultUname=$?
+if [ '1' = "$resultUname" ]; then
+	fsType='devtmpfs';
+else
+	fsType='tmpfs';
+fi;
+mount -t "$fsType" -o mode=755 none /dev
 mount -t proc   none /proc;
 mount -t sysfs  none /sys;
-mount -t tmpfs  none /dev -o mode=755;
 
 # switch_root
 mount -t tmpfs -o size=90% tmpfs /mnt;

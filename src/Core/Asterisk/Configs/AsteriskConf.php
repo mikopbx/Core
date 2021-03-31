@@ -40,6 +40,7 @@ class AsteriskConf extends CoreConfigClass
             "astdbdir => {$this->config->path('asterisk.astdbdir')}\n" .
             "astlogdir => {$this->config->path('asterisk.astlogdir')}\n" .
             "astspooldir => {$this->config->path('asterisk.astspooldir')}\n" .
+            "astdatadir => {$this->config->path('asterisk.astvarlibdir')}\n" .
             "\n" .
             "\n" .
             "[options]\n" .
