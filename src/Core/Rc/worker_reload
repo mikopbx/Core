@@ -23,7 +23,7 @@ PRIORITY=0
 # Путь и базовые параметры для запускаемого приложения.
 PATHTOBIN=$1;
 # Имя сервиса.
-NAME=$(basename `echo $PATHTOBIN | tr ' ' '-'`);
+NAME=$(basename "$(echo "$PATHTOBIN" | tr ' ' '-')");
 
 # Длительно ожидание перед новым запуском.
 SLEEPSECS=4
@@ -40,8 +40,9 @@ run_bin()
 {
 	while :; do
 
-	    nice -n $PRIORITY ${PATHTOBIN} ${CLIARGS}
-		EXITSTATUS=$?
+    echo "$PRIORITY" "${PATHTOBIN}" "${CLIARGS}";
+	  nice -n "$PRIORITY" "${PATHTOBIN}" "${CLIARGS}"
+		EXITSTATUS="$?"
 
 		message "$NAME ended with exit status $EXITSTATUS"
 		if test "x$EXITSTATUS" = "x0" ; then
