@@ -34,9 +34,8 @@ class OutgoingContext extends CoreConfigClass
         $conf = "[outgoing] \n";
         $conf .= 'exten => _+.!,1,NoOp(Strip + sign from number)' . " \n\t";
         $conf .= 'same => n,Goto(${CONTEXT},${EXTEN:1},1);' . " \n\n";
-        $conf .= 'exten => ' . ExtensionsConf::ALL_NUMBER_EXTENSION . ',1,ExecIf($[ "${EXTEN}" == "h" ]?Hangup())' . " \n\t";
-        $conf .= 'same => n,Ringing()' . " \n\t";
-
+        $conf .= 'exten => ' . ExtensionsConf::ALL_NUMBER_EXTENSION . ',1,Ringing()' . " \n\t";
+        $conf .= 'same => n,Set(src_number=${EXTEN})' . "\n\t";
         // Описываем возможность прыжка в пользовательский sub контекст.
         $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1)' . "\n\t";
 
@@ -164,7 +163,7 @@ class OutgoingContext extends CoreConfigClass
         $conf .= 'same => n,Set(ROUTFOUND=1)' . "\n\t";
         $conf .= 'same => n,Gosub(${ISTRANSFER}dial,${EXTEN},1)' . "\n\t";
 
-        $conf .= 'same => n,ExecIf($["${EXTERNALPHONE}" == "${EXTEN}"]?Set(DOPTIONS=tk))' . "\n\t";
+        $conf .= 'same => n,ExecIf($["${EXTERNALPHONE}" == "${src_number}"]?Set(DOPTIONS=tk))' . "\n\t";
         $conf .= 'same => n,ExecIf($["${OUTGOING_CID}x" != "x"]?Set(DOPTIONS=${DOPTIONS}f(${OUTGOING_CID})))' . "\n\t";
 
         // Описываем возможность прыжка в пользовательский sub контекст.

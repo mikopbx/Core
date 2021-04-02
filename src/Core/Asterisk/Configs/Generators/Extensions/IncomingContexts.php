@@ -149,6 +149,8 @@ class IncomingContexts extends CoreConfigClass
         $rout_data .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" != "Local"]?Gosub(set_from_peer,s,1))' . "\n\t";
         $rout_data .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" == "Local"]?Set(__FROM_PEER=${CALLERID(num)}))' . "\n\t";
         $rout_data .= 'same => n,Gosub(add-trim-prefix-clid,${EXTEN},1)' . "\n\t";
+        // Запрещаем звонящему переадресацию.
+        $rout_data .= 'same => n,Set(__TRANSFER_OPTIONS=t)' . "\n\t";
 
         $rout_data .= $this->hookModulesMethod(CoreConfigClass::GENERATE_INCOMING_ROUT_BEFORE_DIAL, [$rout_number]);
         // Описываем возможность прыжка в пользовательский sub контекст.
@@ -191,7 +193,7 @@ class IncomingContexts extends CoreConfigClass
             $dial_command                       = " \n\t" . 'same => n,' . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?' . "Goto(internal,{$rout['extension']},1));";
             $this->rout_data_dial[$rout_number] .= "";
         } else {
-            $dial_command                       = " \n\t" . 'same => n,' . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?' . "Dial(Local/{$rout['extension']}@internal-incoming/n,{$timeout},TKg));";
+            $dial_command                       = " \n\t" . 'same => n,' . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?' . "Dial(Local/{$rout['extension']}@internal-incoming/n,{$timeout},".'${TRANSFER_OPTIONS}'."Kg));";
             $this->rout_data_dial[$rout_number] .= " \n\t" . "same => n,Set(M_TIMEOUT={$timeout})";
         }
         $this->rout_data_dial[$rout_number] .= $dial_command;
@@ -376,7 +378,7 @@ class IncomingContexts extends CoreConfigClass
             // Вызов будет отвечен сразу конференцией.
             $conf .= "\t" . "same => n," . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?' . "Goto(internal,{$default_action->extension},1)); default action" . "\n";
         } else {
-            $conf .= "\t" . "same => n," . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?' . "Dial(Local/{$default_action->extension}@internal/n,,TKg)); default action" . "\n";
+            $conf .= "\t" . "same => n," . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?' . "Dial(Local/{$default_action->extension}@internal/n,,".'${TRANSFER_OPTIONS}'."Kg)); default action" . "\n";
         }
         $conf .= $this->hookModulesMethod(CoreConfigClass::GENERATE_INCOMING_ROUT_AFTER_DIAL_CONTEXT, [$uniqId]);
 
