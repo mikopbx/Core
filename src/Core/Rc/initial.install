@@ -140,10 +140,16 @@ $result_db_file = '/mnttmp/conf/mikopbx.db';
 /** Копируем файл базы данных настроек. */
 $cpPath      = Util::which('cp');
 $sqlite3Path = Util::which('sqlite3');
+$grepPath = Util::which('grep');
 $dmpDbFile   = tempnam('/tmp', 'storage');
 // Сохраняем дамп настроек.
-system("{$sqlite3Path} {$filename}".'  .dump | grep \'^INSERT INTO "m_Storage"\' > '. $dmpDbFile);
-system("{$sqlite3Path} {$filename}".'  .dump | grep \'^INSERT INTO "m_LanInterfaces"\' >> '.$dmpDbFile);
+$tables = ['m_Storage', 'm_LanInterfaces'];
+$grepOptions = '';
+foreach ($tables as $table){
+    $grepOptions.=" -e '^INSERT INTO {$table}'";
+    $grepOptions.=" -e '^INSERT INTO \"{$table}'";
+}
+system("{$sqlite3Path} {$filename} .dump | {$grepPath} {$grepOptions} > ". $dmpDbFile);
 // Если выбран другой язык - используем другой файл настроек.
 $filename_lang  = "/offload/conf/mikopbx-{$lang}.db";
 if($lang !== 'en' && file_exists($filename_lang)){
