@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License along with this program.
 # If not, see <https://www.gnu.org/licenses/>.
 #
-
 /sbin/syslogd -S -C512
 
 HOME=/;
@@ -38,6 +37,7 @@ mkdir -p /dev/pts \
 
 chmod 777 /tmp				 
 ln -s /offload/rootfs/usr /usr;
+ln -s /sys/bus/usb /dev/bus/usb
 
 rm -rf /dev/null;
 mknod /dev/null c 1 3;
@@ -49,17 +49,12 @@ mknod /dev/initctl p;
 /sbin/udevadm settle;
 
 sleep 5;
-mount -t devpts none /dev/pts;
-
-ln -s /sys/bus/usb /dev/bus/usb
-
+mount -t devpts -o gid=5,mode=620 devpts /dev/pts;
 # Опции ядра linux
 /sbin/sysctl -w kernel.printk="3 4 1 6" > /dev/null 2> /dev/null;
-
 /bin/busybox ifconfig lo 127.0.0.1
 /sbin/sysctl -w net.ipv6.conf.all.disable_ipv6=1 > /dev/null 2> /dev/null;
 
-clear;
 echo;
 echo " - Start /sbin/mountoffload...";
 /sbin/mountoffload;
