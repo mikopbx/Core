@@ -50,10 +50,13 @@ mknod /dev/initctl p;
 
 sleep 5;
 mount -t devpts -o gid=5,mode=620 devpts /dev/pts;
+
+/bin/busybox ifconfig lo 127.0.0.1
 # Опции ядра linux
 /sbin/sysctl -w kernel.printk="3 4 1 6" > /dev/null 2> /dev/null;
-/bin/busybox ifconfig lo 127.0.0.1
 /sbin/sysctl -w net.ipv6.conf.all.disable_ipv6=1 > /dev/null 2> /dev/null;
+/sbin/sysctl vm.overcommit_memory=1
+/sbin/sysctl net.core.somaxconn=65535
 
 echo;
 echo " - Start /sbin/mountoffload...";
