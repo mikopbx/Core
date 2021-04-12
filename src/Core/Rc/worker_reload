@@ -21,15 +21,27 @@
 # Приоритет запуска процесса.
 PRIORITY=0
 # Путь и базовые параметры для запускаемого приложения.
-PATHTOBIN=$1;
 # Имя сервиса.
+NAMESAFE=$(basename "$0");
+PATHTOBIN=$(which "$(echo "$NAMESAFE" | sed 's/safe-//g')");
 NAME=$(basename "$(echo "$PATHTOBIN" | tr ' ' '-')");
-
+MYPID="$$";
+ARGS=$@;
 # Длительно ожидание перед новым запуском.
-SLEEPSECS=4
+SLEEPSECS=1
 
-# Транслируем переменные из командной строки.
-CLIARGS="$2 $3 $4 $5 $6"
+/bin/busybox ps | /bin/busybox grep "$NAMESAFE" | /bin/busybox grep -v "$MYPID"  | /bin/busybox grep -v grep > /dev/null;
+resultGrep="$?";
+if [ "${resultGrep}" = '0' ]; then
+  echo "Another process is already running" ;
+  exit 0;
+fi;
+echo "Starting $NAMESAFE..." ;
+
+pidOld=$(/bin/busybox ps | /bin/busybox grep "$(basename "$PATHTOBIN")" | /bin/busybox grep -v "$NAMESAFE" | /bin/busybox grep -v grep | /bin/busybox awk '{ print $1}');
+if [ -n "$pidOld" ]; then
+  /bin/busybox kill "$pidOld";
+fi;
 
 message() {
 	echo "$1" >&2
@@ -39,11 +51,8 @@ message() {
 run_bin()
 {
 	while :; do
-
-    echo "$PRIORITY" "${PATHTOBIN}" "${CLIARGS}";
-	  nice -n "$PRIORITY" "${PATHTOBIN}" "${CLIARGS}"
+	  nice -n "$PRIORITY" $PATHTOBIN $ARGS;
 		EXITSTATUS="$?"
-
 		message "$NAME ended with exit status $EXITSTATUS"
 		if test "x$EXITSTATUS" = "x0" ; then
 			message "Bin $NAME shutdown normally."
