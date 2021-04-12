@@ -104,10 +104,13 @@ class NginxConf extends Injectable
 
         $RedirectToHttps = $this->mikoPBXConfig->getGeneralSettings('RedirectToHttps');
         if ($RedirectToHttps === '1' && $not_ssl === false) {
+            $includeRow = 'include mikopbx/locations/*.conf;';
+
             $conf_data = 'if ( $remote_addr != "127.0.0.1" ) {' . PHP_EOL
                 . '        ' . 'return 301 https://$host:' . $WEBHTTPSPort . '$request_uri;' . PHP_EOL
-                . '       }' . PHP_EOL;
-            $config    = str_replace('include mikopbx/locations/*.conf;', $conf_data, $config);
+                . '       }' . PHP_EOL
+                . $includeRow. PHP_EOL;
+            $config    = str_replace($includeRow, $conf_data, $config);
         }
         file_put_contents($httpConfigFile, $config);
 
