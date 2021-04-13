@@ -47,10 +47,10 @@ class SystemLoader extends Di\Injectable
         $beanstalkConf->reStart();
         Util::echoGreenDone();
 
-        Util::echoWithSyslog(' - Start redis daemon...');
-        $redisConf = new RedisConf();
-        $redisConf->reStart();
-        Util::echoGreenDone();
+        // Util::echoWithSyslog(' - Start redis daemon...');
+        // $redisConf = new RedisConf();
+        // $redisConf->reStart();
+        // Util::echoGreenDone();
 
         $system = new System();
         Util::echoWithSyslog(' - Configuring timezone ... ');

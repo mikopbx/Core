@@ -34,15 +34,15 @@ class RedisConf extends Injectable
     public function reStart(): void
     {
         $this->configure();
-        $safeLink = "/sbin/safe-" . self::PROC_NAME;
+        $safeLink = "/sbin/safe-" . $this::PROC_NAME;
         Util::createUpdateSymlink('/etc/rc/worker_reload', $safeLink);
-        Processes::killByName("safe-" . self::PROC_NAME);
-        Processes::killByName(self::PROC_NAME);
-        Processes::mwExecBg("{$safeLink} ".self::CONF_FILE);
+        Processes::killByName("safe-" . $this::PROC_NAME);
+        Processes::killByName($this::PROC_NAME);
+        Processes::mwExecBg("{$safeLink} ".$this::CONF_FILE);
         while (true) {
-            $pid = Processes::getPidOfProcess(self::PROC_NAME);
+            $pid = Processes::getPidOfProcess($this::PROC_NAME);
             if (empty($pid)) {
-                Util::echoWithSyslog(' - Wait for start ' . self::PROC_NAME . ' deamon ...' . PHP_EOL);
+                Util::echoWithSyslog(' - Wait for start ' . $this::PROC_NAME . ' deamon ...' . PHP_EOL);
                 sleep(2);
             } else {
                 break;
@@ -58,6 +58,6 @@ class RedisConf extends Injectable
         $config = $this->getDI()->get('config')->redis;
         $conf = "bind {$config->host}".PHP_EOL;
         $conf.= "port {$config->port}".PHP_EOL;
-        Util::fileWriteContent(self::CONF_FILE, $conf);
+        Util::fileWriteContent($this::CONF_FILE, $conf);
     }
 }
