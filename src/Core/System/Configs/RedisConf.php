@@ -34,7 +34,7 @@ class RedisConf extends Injectable
     public function reStart(): void
     {
         $this->configure();
-        $safeLink = "/usr/sbin/safe-" . self::PROC_NAME;
+        $safeLink = "/sbin/safe-" . self::PROC_NAME;
         Util::createUpdateSymlink('/etc/rc/worker_reload', $safeLink);
         Processes::killByName("safe-" . self::PROC_NAME);
         Processes::killByName(self::PROC_NAME);
