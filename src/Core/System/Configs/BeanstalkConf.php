@@ -27,38 +27,19 @@ use Phalcon\Di\Injectable;
 class BeanstalkConf extends Injectable
 {
     public const PROC_NAME='beanstalkd';
+
     /**
      * Restarts Beanstalk server
      */
     public function reStart(): void
     {
-        $config = $this->getDI()->get('config')->beanstalk;
-        $conf = "-l {$config->host} -p {$config->port} -z 524280";
-        $baseName = "safe-" . $this::PROC_NAME;
         if (Util::isSystemctl()) {
             $systemCtrlPath = Util::which('systemctl');
             Processes::mwExec("{$systemCtrlPath} restart beanstalkd.service");
         } else {
-            $safeLink = "/sbin/{$baseName}";
-            Util::createUpdateSymlink('/etc/rc/worker_reload', $safeLink);
-            Processes::killByName($baseName);
-            Processes::killByName($this::PROC_NAME);
-            Processes::mwExecBg("{$safeLink} {$conf}");
-        }
-
-        $ch = 1;
-        while ($ch < 10) {
-            $pid = Processes::getPidOfProcess($this::PROC_NAME, $baseName);
-            if (empty($pid)) {
-                sleep(2);
-            } else {
-                break;
-            }
-            $ch ++ ;
-        }
-
-        if(empty($pid)){
-            Util::echoWithSyslog(' - Wait for start '.$this::PROC_NAME.' fail' . PHP_EOL);
+            $config = $this->getDI()->get('config')->beanstalk;
+            $conf = "-l {$config->host} -p {$config->port} -z 524280";
+            Processes::safeStartDaemon($this::PROC_NAME, $conf);
         }
     }
 }

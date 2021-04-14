@@ -34,26 +34,7 @@ class RedisConf extends Injectable
     public function reStart(): void
     {
         $this->configure();
-        $baseName = "safe-" . $this::PROC_NAME;
-        $safeLink = "/sbin/{$baseName}";
-        Util::createUpdateSymlink('/etc/rc/worker_reload', $safeLink);
-        Processes::killByName($baseName);
-        Processes::killByName($this::PROC_NAME);
-        Processes::mwExecBg("{$safeLink} ".$this::CONF_FILE);
-
-        $ch = 1;
-        while ($ch < 10) {
-            $pid = Processes::getPidOfProcess($this::PROC_NAME, $baseName);
-            if (empty($pid)) {
-                sleep(2);
-            } else {
-                break;
-            }
-            $ch ++ ;
-        }
-        if(empty($pid)){
-            Util::echoWithSyslog(' - Wait for start '.$this::PROC_NAME.' fail' . PHP_EOL);
-        }
+        Processes::safeStartDaemon($this::PROC_NAME, $this::CONF_FILE);
     }
 
     /**
