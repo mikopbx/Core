@@ -990,7 +990,7 @@ class Storage extends Di\Injectable
         $cutPath    = Util::which('cut');
         $grepPath   = Util::which('grep');
 
-        $command = "{$lsBlkPath} -r | {$cutPath} -d ' ' -f 1 | {$grepPath} \"".basename($dev)."\" | {$grepPath} \"{$part}\$\"";
+        $command = "{$lsBlkPath} -r | {$cutPath} -d ' ' -f 1 | {$grepPath} ' part ' | {$grepPath} \"".basename($dev)."\" | {$grepPath} \"{$part}\$\"";
         Processes::mwExec($command, $out);
         $devName = trim(implode('', $out));
         return trim($devName);
