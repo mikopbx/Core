@@ -34,27 +34,31 @@ class BeanstalkConf extends Injectable
     {
         $config = $this->getDI()->get('config')->beanstalk;
         $conf = "-l {$config->host} -p {$config->port} -z 524280";
+        $baseName = "safe-" . $this::PROC_NAME;
         if (Util::isSystemctl()) {
             $systemCtrlPath = Util::which('systemctl');
             Processes::mwExec("{$systemCtrlPath} restart beanstalkd.service");
         } else {
-            $safeLink="/sbin/safe-".$this::PROC_NAME;
+            $safeLink = "/sbin/{$baseName}";
             Util::createUpdateSymlink('/etc/rc/worker_reload', $safeLink);
-            Processes::killByName("safe-".$this::PROC_NAME);
+            Processes::killByName($baseName);
             Processes::killByName($this::PROC_NAME);
             Processes::mwExecBg("{$safeLink} {$conf}");
         }
 
         $ch = 1;
         while ($ch < 10) {
-            $pid = Processes::getPidOfProcess($this::PROC_NAME);
+            $pid = Processes::getPidOfProcess($this::PROC_NAME, $baseName);
             if (empty($pid)) {
-                Util::echoWithSyslog(' - Wait for start beanstalkd deamon ...' . PHP_EOL);
                 sleep(2);
             } else {
                 break;
             }
             $ch ++ ;
+        }
+
+        if(empty($pid)){
+            Util::echoWithSyslog(' - Wait for start '.$this::PROC_NAME.' fail' . PHP_EOL);
         }
     }
 }
