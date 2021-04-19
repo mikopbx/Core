@@ -20,6 +20,13 @@
 /sbin/freestorage;
 /sbin/freeupoffload;
 
+# RAID
+mdadmPath=$(/sbin/which mdadm);
+if [ -n "$mdadmPath" ]; then
+  "$mdadmPath" --detail   --scan | /bin/busybox cut -d ' ' -f 2 | /bin/xargs "$mdadmPath" --stop > /dev/null 2> /dev/null;
+fi;
+# RAID END
+
 if [ -f /tmp/ejectcd ]; then
     # Попробуем изъять диск.
     cddev=$(/sbin/sysctl -n dev.cdrom.info | /bin/busybox grep "drive name" | /bin/busybox cut -f 3)

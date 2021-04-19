@@ -20,6 +20,13 @@
 /sbin/freeupoffload
 /sbin/freestorage
 
+# RAID
+mdadmPath=$(/sbin/which mdadm);
+if [ -n "$mdadmPath" ]; then
+  "$mdadmPath" --detail   --scan | /bin/busybox cut -d ' ' -f 2 | /bin/xargs "$mdadmPath" --stop > /dev/null 2> /dev/null;
+fi;
+# RAID END
+
 if [ "$1" = "-r" ]
 then
     /sbin/mikopbx_reboot;

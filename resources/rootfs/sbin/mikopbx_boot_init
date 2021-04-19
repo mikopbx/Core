@@ -58,6 +58,14 @@ mount -t devpts -o gid=5,mode=620 devpts /dev/pts;
 /sbin/sysctl vm.overcommit_memory=1 > /dev/null 2> /dev/null;
 /sbin/sysctl net.core.somaxconn=65535 > /dev/null 2> /dev/null;
 
+# RAID
+mdadmPath=$(/sbin/which mdadm);
+if [ -n "$mdadmPath" ]; then
+  "$mdadmPath" --detail   --scan | /bin/busybox cut -d ' ' -f 2 | /bin/xargs "$mdadmPath" --stop > /dev/null 2> /dev/null;
+  "$mdadmPath" --assemble --scan;
+fi;
+# RAID END
+
 echo;
 echo " - Start /sbin/mountoffload...";
 /sbin/mountoffload;

@@ -86,10 +86,10 @@ mountConfRecover()
 	mkdir -p "${rec_dir}";
 	
 	# Получаем список дисков. 
-	diskrs=$(/bin/lsblk -b -d -r -o NAME,TYPE  -n | /bin/busybox grep "disk$" | /bin/busybox cut -d ' ' -f 1 |/bin/busybox uniq)
+	diskrs=$(/bin/lsblk -b -r -o NAME,TYPE  -n | /bin/busybox grep -e "disk$" -e 'raid'  | /bin/busybox cut -d ' ' -f 1 | /bin/busybox sort -u);
 	for diskr in $diskrs
 	do
-	  disk3=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$diskr")" |  /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "3$");
+	  disk3=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$diskr")" |  /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "3$" | /bin/busybox sort -u);
 		if [ "${diskr}" = "${offloaddisk}" ]; then
 			# Проверка на уже смонтированный диск.
 			echo " - Skip ${diskr}, already mount..."
@@ -177,6 +177,30 @@ disks=$(/bin/lsblk -b -d -r -o NAME,TYPE  -n | /bin/busybox grep "disk$" | /bin/
 for disk in $disks
 do
 	partitionName=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$disk")" |  /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "2$");
+	diskPath="/dev/${partitionName}";
+	if [ ! -b "$diskPath" ]; then
+	    continue;
+	fi
+	mountoffload "$diskPath";
+	echo " - Trying ${disk} mount returned: $MOUNT_RESULT"
+	if [ -d /offload/rootfs ]; then
+		echo " - Found rootfs!"
+		exit 0
+	fi
+	umount -f /offload > /dev/null
+	echo " - Failed to find rootfs!"
+done
+
+################################################################################
+# RAID
+################################################################################
+
+echo
+echo " - Attempting to mount /offload partition..."
+disks=$(/bin/lsblk -b -d -r -o NAME,TYPE  -n | /bin/busybox grep "raid" | /bin/busybox cut -d ' ' -f 1 |/bin/busybox uniq)
+for disk in $disks
+do
+	partitionName=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$disk")" |  /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "2$" |/bin/busybox uniq);
 	diskPath="/dev/${partitionName}";
 	if [ ! -b "$diskPath" ]; then
 	    continue;
