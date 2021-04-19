@@ -62,7 +62,7 @@ fi;
 resultParted=$?;
 echo " - parted return ${resultParted}...";
 
-partitionName=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$dev")" |  /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "4$");
+partitionName=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$dev")" |  /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "4$" | /bin/sort -u);
 partitionFour="/dev/${partitionName}";
 
 tryCount=1;
