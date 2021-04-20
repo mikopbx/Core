@@ -316,15 +316,8 @@ class Processes
         $baseName = "safe-{$procName}";
         $safeLink = "/sbin/{$baseName}";
         Util::createUpdateSymlink('/etc/rc/worker_reload', $safeLink);
-
         self::killByName($baseName);
         self::killByName($procName);
-        // Ожидаем завершения процесса
-        $ch = 1;
-        while (! empty(self::getPidOfProcess($procName, $baseName)) && $ch < $attemptsCount) {
-            usleep($timout);
-            $ch ++ ;
-        }
         // Запускаем процесс в фоне.
         self::mwExecBg("{$safeLink} {$args}");
 
@@ -332,9 +325,7 @@ class Processes
         $ch = 1;
         while ($ch < $attemptsCount) {
             $pid = self::getPidOfProcess($procName, $baseName);
-            if (empty($pid)) {
-                usleep($timout);
-            } else {
+            if (!empty($pid)) {
                 break;
             }
             $ch ++ ;
