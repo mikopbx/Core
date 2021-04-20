@@ -61,7 +61,23 @@ mount -t devpts -o gid=5,mode=620 devpts /dev/pts;
 # RAID
 mdadmPath=$(/sbin/which mdadm);
 if [ -n "$mdadmPath" ]; then
+  # Первичное подключение массива.
   "$mdadmPath" --detail   --scan | /bin/busybox cut -d ' ' -f 2 | /bin/xargs "$mdadmPath" --stop > /dev/null 2> /dev/null;
+  "$mdadmPath" --assemble --scan;
+  mkdir -p /etc/mdadm;
+  # Генерация конфига.
+  echo "DEVICE partitions" > /etc/mdadm/mdadm.conf
+  arrList=$("$mdadmPath" --detail --scan | /bin/busybox cut -d ' ' -f 2);
+  for mdName in $arrList; do
+    # Получаем индекс массива.
+    mdIndex=$("$mdadmPath" --detail --scan --verbose | /bin/busybox grep "$mdName" | /bin/busybox awk '/ARRAY/ {print}'  | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep name | /bin/busybox awk -F'[=]|[:]' ' { print $3} ');
+    dstDev="md${mdIndex}";
+    srcDev=$(/bin/busybox basename "$mdName");
+    "$mdadmPath" --detail --scan --verbose | /bin/busybox grep 'ARRAY' | /bin/busybox grep "$srcDev" | /bin/busybox sed "s/\/${srcDev}/\/${dstDev}/g" >> /etc/mdadm/mdadm.conf;
+  done
+  # Останавливаем все массивы.
+  "$mdadmPath" --detail   --scan | /bin/busybox cut -d ' ' -f 2 | /bin/xargs "$mdadmPath" --stop > /dev/null 2> /dev/null;
+  # Подключаем массивы с корректным конфигом.
   "$mdadmPath" --assemble --scan;
 fi;
 # RAID END

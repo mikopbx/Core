@@ -167,16 +167,17 @@ do
 	umount -f /offload 2> /dev/null
 done
 
+
 ################################################################################
-# HDD
+# RAID
 ################################################################################
 
 echo
 echo " - Attempting to mount /offload partition..."
-disks=$(/bin/lsblk -b -d -r -o NAME,TYPE  -n | /bin/busybox grep "disk$" | /bin/busybox cut -d ' ' -f 1 |/bin/busybox uniq)
+disks=$(/bin/lsblk -b -r -o NAME,TYPE  -n | /bin/busybox grep "raid" | /bin/busybox cut -d ' ' -f 1 | /bin/busybox sort -u)
 for disk in $disks
 do
-	partitionName=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$disk")" |  /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "2$");
+	partitionName=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$disk")" |  /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "2$" | /bin/busybox sort -u);
 	diskPath="/dev/${partitionName}";
 	if [ ! -b "$diskPath" ]; then
 	    continue;
@@ -192,15 +193,15 @@ do
 done
 
 ################################################################################
-# RAID
+# HDD
 ################################################################################
 
 echo
 echo " - Attempting to mount /offload partition..."
-disks=$(/bin/lsblk -b -d -r -o NAME,TYPE  -n | /bin/busybox grep "raid" | /bin/busybox cut -d ' ' -f 1 |/bin/busybox uniq)
+disks=$(/bin/lsblk -b -d -r -o NAME,TYPE  -n | /bin/busybox grep "disk$" | /bin/busybox cut -d ' ' -f 1 |/bin/busybox uniq)
 for disk in $disks
 do
-	partitionName=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$disk")" |  /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "2$" |/bin/busybox uniq);
+	partitionName=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$disk")" |  /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "2$");
 	diskPath="/dev/${partitionName}";
 	if [ ! -b "$diskPath" ]; then
 	    continue;
