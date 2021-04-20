@@ -328,6 +328,7 @@ class Processes
             if (!empty($pid)) {
                 break;
             }
+            usleep($timout);
             $ch ++ ;
         }
         if(empty($pid)){

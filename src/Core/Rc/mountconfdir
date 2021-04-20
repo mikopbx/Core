@@ -68,6 +68,8 @@ while ($attempts--) {
         // RAID содержит вложенный массив "children"
         if(isset($diskInfo['children'][0]['children'])){
             $diskInfo = $diskInfo['children'][0];
+            // Корректируем имя диска. это RAID.
+            $disk     = $diskInfo['name'];
         }
         $children = $diskInfo['children'];
         if(count($children)<3){
