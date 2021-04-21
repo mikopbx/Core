@@ -34,15 +34,15 @@ recover_upgrade)
 	mkdir -p /tmp/configbak;
   img_file="$2";
   if [ -f /offload/livecd ]; then
-    cp -p /conf.recover/conf/* /tmp/configbak;
+    /bin/busybox cp -p /conf.recover/conf/* /tmp/configbak;
     echo " - unmounting /conf.recover...";
     /bin/umount -f /conf.recover;
   else
-    cp -R /cf/conf/* /tmp/configbak;
+    /bin/busybox cp -R /cf/conf/* /tmp/configbak;
 
     mounted_storage=$(mount | /bin/busybox grep storage | /bin/busybox awk  '{ print $1}');
     # Получаем имя 4ого раздела (если он есть)
-	  partition4Name=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$(cat /var/etc/cfdevice)")" |  /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "4$");
+	  partition4Name=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$(cat /var/etc/cfdevice)")" |  /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "4$" | /bin/busybox sort -u);
     if [ "/dev/${partition4Name}" != "${mounted_storage}" ]; then
         # Storage на отдельном диске.
         img_file="$2";
@@ -82,11 +82,11 @@ recover_upgrade)
       /bin/mount -w -o noatime "/dev/${partition3Name}" /conf.recover;
       rm -f /conf.recover/conf/*;
       echo " - restoring configuration";
-      cp -p /tmp/configbak/* /conf.recover/conf/;
+      /bin/busybox cp -p /tmp/configbak/* /conf.recover/conf/;
       touch /tmp/ejectcd;
   else
       /bin/mount -w -o noatime "/dev/${partition3Name}" /cf/;
-      cp /tmp/configbak/* /cf/conf/;
+      /bin/busybox cp /tmp/configbak/* /cf/conf/;
       rm -rf "${img_file}";
   fi
 
