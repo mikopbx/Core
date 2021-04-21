@@ -1293,4 +1293,25 @@ class Storage extends Di\Injectable
             $storage_settings->save();
         }
     }
+
+
+    public function getRecoverDiskName():string{
+        $disks   = $this->diskGetDevices(true);
+        foreach ($disks as $disk => $diskInfo) {
+            // RAID содержит вложенный массив "children"
+            if (isset($diskInfo['children'][0]['children'])) {
+                $diskInfo = $diskInfo['children'][0];
+                // Корректируем имя диска. Это RAID или иной виртуальный device.
+                $disk = $diskInfo['name'];
+            }
+            foreach ($diskInfo['children'] as $child){
+                $mountpoint = $child['mountpoint']??'';
+                $diskPath   = "/dev/{$disk}";
+                if($mountpoint === '/conf.recover' && file_exists($diskPath)){
+                    return "/dev/{$disk}";
+                }
+            }
+        }
+        return '';
+    }
 }
