@@ -21,7 +21,7 @@ namespace MikoPBX\Core\Workers;
 
 require_once 'Globals.php';
 
-use MikoPBX\Common\Models\{CallDetailRecordsTmp, Extensions, Users};
+use MikoPBX\Common\Models\{CallDetailRecordsTmp, Extensions, ModelsBase, Users};
 use MikoPBX\Core\System\{BeanstalkClient, Processes, Util};
 use Throwable;
 
@@ -91,8 +91,8 @@ class WorkerCdr extends WorkerBase
                 ],
             ],
             'cache' => [
-                'key'=>'Users-WorkerCdr',
-                'lifetime' => 3600,
+                'key'=> ModelsBase::makeCacheKey(Users::class, 'Workers-WorkerCdr-initSettings'),
+                'lifetime' => 300,
             ]
         ];
 

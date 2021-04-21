@@ -21,8 +21,6 @@ namespace MikoPBX\Core\Workers;
 
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Core\System\Configs\Fail2BanConf;
-use MikoPBX\Core\System\Util;
-use Throwable;
 
 require_once 'Globals.php';
 
@@ -35,11 +33,12 @@ class WorkerCheckFail2BanAlive extends WorkerBase
 {
     public function start($params): void
     {
+        $cacheKey =  'Workers:WorkerCheckFail2BanAlive:lastFail2BanCheck';
         $managedCache = $this->di->get(ManagedCacheProvider::SERVICE_NAME);
-        $lastFail2BanCheck = $managedCache->get('lastFail2BanCheck');
+        $lastFail2BanCheck = $managedCache->get($cacheKey);
         if ($lastFail2BanCheck === null) {
             Fail2BanConf::checkFail2ban();
-            $managedCache->set('lastFail2BanCheck', time(), 300); // Check every 5 minute
+            $managedCache->set($cacheKey, time(), 300); // Check every 5 minute
         }
     }
 }

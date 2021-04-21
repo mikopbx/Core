@@ -44,11 +44,11 @@ class PbxExtensionUtils
         $parameters = [
             'conditions'=>'uniqid = :uniqid:',
             'bind'=>[
-                'uniqid'=>$moduleUniqueID,
+                'uniqid' => $moduleUniqueID,
             ],
             'cache' => [
-                'key'=>'PbxExtensionUtils-isEnabled',
-                'lifetime' => 0,
+                'key'=>ModelsBase::makeCacheKey(PbxExtensionModules::class, 'isEnabled'),
+                'lifetime' => 3600,
             ]
         ];
 

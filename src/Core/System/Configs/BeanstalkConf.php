@@ -19,14 +19,13 @@
 
 namespace MikoPBX\Core\System\Configs;
 
-
-use MikoPBX\Core\System\Util;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
 
 class BeanstalkConf extends Injectable
 {
-    public const PROC_NAME='beanstalkd';
+    public const PROC_NAME = 'beanstalkd';
 
     /**
      * Restarts Beanstalk server
@@ -38,8 +37,8 @@ class BeanstalkConf extends Injectable
             Processes::mwExec("{$systemCtrlPath} restart beanstalkd.service");
         } else {
             $config = $this->getDI()->get('config')->beanstalk;
-            $conf = "-l {$config->host} -p {$config->port} -z 524280";
-            Processes::safeStartDaemon($this::PROC_NAME, $conf);
+            $conf   = "-l {$config->host} -p {$config->port} -z 524280";
+            Processes::safeStartDaemon(self::PROC_NAME, $conf);
         }
     }
 }

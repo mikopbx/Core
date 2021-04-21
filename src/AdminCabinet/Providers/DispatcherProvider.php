@@ -22,7 +22,7 @@ declare(strict_types=1);
 namespace MikoPBX\AdminCabinet\Providers;
 
 
-use MikoPBX\AdminCabinet\{Plugins\CacheCleanerPlugin,
+use MikoPBX\AdminCabinet\{
     Plugins\NormalizeControllerNamePlugin,
     Plugins\NotFoundPlugin,
     Plugins\SecurityPlugin};
@@ -50,12 +50,6 @@ class DispatcherProvider implements ServiceProviderInterface
             self::SERVICE_NAME,
             function () {
                 $eventsManager = new EventsManager();
-
-
-                /**
-                 * FrontEnd cache cleaner plugin
-                 */
-                $eventsManager->attach('dispatch:beforeDispatch', new CacheCleanerPlugin());
 
                 /**
                  * Camelize Controller name

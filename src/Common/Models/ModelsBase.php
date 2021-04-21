@@ -19,14 +19,13 @@
 
 namespace MikoPBX\Common\Models;
 
-use MikoPBX\AdminCabinet\Plugins\CacheCleanerPlugin;
 use MikoPBX\Common\Providers\BeanstalkConnectionModelsProvider;
+use MikoPBX\Common\Providers\CDRDatabaseProvider;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Common\Providers\ModelsCacheProvider;
 use MikoPBX\Common\Providers\ModelsMetadataProvider;
 use MikoPBX\Common\Providers\TranslationProvider;
-use MikoPBX\Core\System\BeanstalkClient;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Core\Providers\EventsLogDatabaseProvider;
 use MikoPBX\Modules\PbxExtensionUtils;
 use Phalcon\Db\Adapter\AdapterInterface;
 use Phalcon\Di;
@@ -39,7 +38,6 @@ use Phalcon\Mvc\Model\Resultset\Simple;
 use Phalcon\Mvc\Model\ResultsetInterface;
 use Phalcon\Text;
 use Phalcon\Url;
-use Pheanstalk\Contract\PheanstalkInterface;
 
 /**
  * Class ModelsBase
@@ -63,7 +61,7 @@ use Pheanstalk\Contract\PheanstalkInterface;
  *
  * @package MikoPBX\Common\Models
  */
-abstract class ModelsBase extends Model
+class ModelsBase extends Model
 {
     /**
      * All models with lover than this version in module.json won't be attached as children
@@ -544,10 +542,10 @@ abstract class ModelsBase extends Model
                     ],
                 ];
                 $needExtension = Extensions::findFirst($parameters);
-                if ($needExtension===null){
-                    $link          = $url->get('extensions/index/', null, null, $baseUri);
+                if ($needExtension === null) {
+                    $link = $url->get('extensions/index/', null, null, $baseUri);
                 } else {
-                    $link          = $url->get('extensions/modify/' . $needExtension->id, null, null, $baseUri);
+                    $link = $url->get('extensions/modify/' . $needExtension->id, null, null, $baseUri);
                 }
                 break;
             case SoundFiles::class:
@@ -691,11 +689,14 @@ abstract class ModelsBase extends Model
      */
     private function processSettingsChanges(string $action): void
     {
-       $doNotTrackThisDB = ['dbCDR','dbEventsLog'];
+        $doNotTrackThisDB = [
+            CDRDatabaseProvider::SERVICE_NAME,
+            EventsLogDatabaseProvider::SERVICE_NAME
+        ];
 
-       if (in_array($this->getReadConnectionService(), $doNotTrackThisDB) ){
-           return;
-       }
+        if (in_array($this->getReadConnectionService(), $doNotTrackThisDB)) {
+            return;
+        }
 
         if ( ! $this->hasSnapshotData()) {
             return;
@@ -718,7 +719,7 @@ abstract class ModelsBase extends Model
     {
         // Add changed fields set to Beanstalkd queue
         $queue = $this->di->getShared(BeanstalkConnectionModelsProvider::SERVICE_NAME);
-        if ($queue===null){
+        if ($queue === null) {
             return;
         }
         if ($this instanceof PbxSettings) {
@@ -742,50 +743,40 @@ abstract class ModelsBase extends Model
      * Invalidates cached records contains model name in cache key value
      *
      * @param      $calledClass string full model class name
-     * @param bool $needClearFrontedCache
+     *
      */
-    public static function clearCache(string $calledClass, bool $needClearFrontedCache = true): void
+    public static function clearCache(string $calledClass): void
     {
         $di = Di::getDefault();
         if ($di === null) {
             return;
         }
-        try {
-            if ($di->has(ManagedCacheProvider::SERVICE_NAME)) {
-                $managedCache = $di->get(ManagedCacheProvider::SERVICE_NAME);
-                $category     = explode('\\', $calledClass)[3];
-                $keys         = $managedCache->getAdapter()->getKeys($category);
-                // Delete all items from the cache
-                if (count($keys) > 0) {
-                    $managedCache->deleteMultiple($keys);
-                }
+
+        if ($di->has(ManagedCacheProvider::SERVICE_NAME)) {
+            $managedCache = $di->get(ManagedCacheProvider::SERVICE_NAME);
+            $category     = explode('\\', $calledClass)[3];
+            $keys         = $managedCache->getKeys($category);
+            $prefix      = $managedCache->getPrefix();
+            // Delete all items from the managed cache
+            foreach ($keys as $key)
+            {
+                $cacheKey = str_ireplace($prefix, '', $key);
+                $managedCache->delete($cacheKey);
             }
-            if ($di->has(ModelsCacheProvider::SERVICE_NAME)) {
-                $modelsCache = $di->getShared(ModelsCacheProvider::SERVICE_NAME);
-                $category    = explode('\\', $calledClass)[3];
-                $keys        = $modelsCache->getAdapter()->getKeys($category);
-                // Delete all items from the cache
-                if (count($keys) > 0) {
-                    $modelsCache->deleteMultiple($keys);
-                }
+        }
+        if ($di->has(ModelsCacheProvider::SERVICE_NAME)) {
+            $modelsCache = $di->getShared(ModelsCacheProvider::SERVICE_NAME);
+            $category    = explode('\\', $calledClass)[3];
+            $keys        = $modelsCache->getKeys($category);
+            $prefix      = $modelsCache->getPrefix();
+            // Delete all items from the models cache
+            foreach ($keys as $key)
+            {
+                $cacheKey = str_ireplace($prefix, '', $key);
+                $modelsCache->delete($cacheKey);
             }
-        } catch (\Throwable $e) {
-            global $errorLogger;
-            $errorLogger->captureException($e);
-            Util::sysLogMsg(__METHOD__, $e->getMessage(), LOG_ERR);
         }
-        if ($needClearFrontedCache
-            && php_sapi_name() === 'cli'
-        ) {
-            $queue = $di->getShared(BeanstalkConnectionModelsProvider::SERVICE_NAME);
-            $queue->publish(
-                    $calledClass,
-                    CacheCleanerPlugin::class,
-                    0,
-                    PheanstalkInterface::DEFAULT_DELAY,
-                    3600
-                );
-        }
+
     }
 
     /**
@@ -807,5 +798,19 @@ abstract class ModelsBase extends Model
         $metaData = $this->di->get(ModelsMetadataProvider::SERVICE_NAME);
 
         return $metaData->getIdentityField($this);
+    }
+
+    /**
+     * Returns Cache key for the models cache service
+     *
+     * @param string $modelClass
+     * @param string $keyName
+     *
+     * @return string
+     */
+    public static function makeCacheKey(string $modelClass, string $keyName):string
+    {
+        $category    = explode('\\', $modelClass)[3];
+        return "{$category}:{$keyName}";
     }
 }

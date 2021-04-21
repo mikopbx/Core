@@ -19,6 +19,7 @@
 
 namespace MikoPBX\Core\System\Upgrade;
 
+use MikoPBX\Common\Models\ModelsBase;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Configs\IptablesConf;
@@ -50,7 +51,7 @@ class UpdateSystemConfig extends Di\Injectable
     {
         $this->deleteLostModules();
         // Clear all caches on any changed models
-        PbxSettings::clearCache(PbxSettings::class, true);
+        ModelsBase::clearCache(PbxSettings::class);
         $previous_version = str_ireplace('-dev', '', $this->mikoPBXConfig->getGeneralSettings('PBXVersion'));
         $current_version  = str_ireplace('-dev', '', trim(file_get_contents('/etc/version')));
         if ($previous_version !== $current_version) {

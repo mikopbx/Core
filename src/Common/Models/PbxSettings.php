@@ -51,12 +51,10 @@ class PbxSettings extends ModelsBase
     public static function getAllPbxSettings(): array
     {
         $arrayOfSettings = self::getDefaultArrayValues();
-
-        $cacheKey        = explode('\\', static::class)[3];
         $parameters      = [
             'cache' => [
-                'key'      => $cacheKey . '-getAllPbxSettings',
-                'lifetime' => 300,
+                'key'      => ModelsBase::makeCacheKey(PbxSettings::class, 'getAllPbxSettings'),
+                'lifetime' => 3600,
             ],
         ];
         $currentSettings = parent::find($parameters);
@@ -160,11 +158,10 @@ class PbxSettings extends ModelsBase
      */
     public static function getValueByKey(string $key): string
     {
-        $cacheKey        = explode('\\', static::class)[3];
         $parameters      = [
             'cache' => [
-                'key'      => $cacheKey . '-getValueByKey',
-                'lifetime' => 300,
+                'key'      => ModelsBase::makeCacheKey(PbxSettings::class, 'getValueByKey'),
+                'lifetime' => 3600,
             ],
         ];
         $currentSettings = parent::find($parameters);

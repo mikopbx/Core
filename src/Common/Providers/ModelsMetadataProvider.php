@@ -22,10 +22,12 @@ declare(strict_types=1);
 namespace MikoPBX\Common\Providers;
 
 
+use Phalcon\Cache\AdapterFactory;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
-use Phalcon\Mvc\Model\MetaData\Memory;
+use Phalcon\Mvc\Model\MetaData\Redis;
 use Phalcon\Mvc\Model\MetaData\Strategy\Annotations as StrategyAnnotations;
+use Phalcon\Storage\SerializerFactory;
 
 /**
  * Main database connection is created based in the parameters defined in the configuration file
@@ -41,15 +43,21 @@ class ModelsMetadataProvider implements ServiceProviderInterface
      */
     public function register(DiInterface $di): void
     {
+        $config = $di->getShared('config');
         $di->setShared(
             self::SERVICE_NAME,
-            function () {
-                $metaData = new Memory(
-                    [
-                        'lifetime' => 600,
-                        'prefix'   => 'metacache_key',
-                    ]
-                );
+            function () use ($config){
+                $serializerFactory = new SerializerFactory();
+                $adapterFactory    = new AdapterFactory($serializerFactory);
+                $options = [
+                    'host'       => $config->path('redis.host'),
+                    'port'       => $config->path('redis.port'),
+                    'statsKey'   => '_PHCR',
+                    'lifetime'   => 600,
+                    'index'      => 2,
+                ];
+                $metaData = new Redis($adapterFactory, $options);
+
                 $metaData->setStrategy(
                     new StrategyAnnotations()
                 );

@@ -19,32 +19,33 @@
 
 namespace MikoPBX\Core\System\Configs;
 
-use MikoPBX\Core\System\Util;
 use MikoPBX\Core\System\Processes;
 use Phalcon\Di\Injectable;
 
 class RedisConf extends Injectable
 {
     public const PROC_NAME = 'redis-server';
+
     public const CONF_FILE = '/etc/redis.conf';
 
     /**
-     * Restarts Beanstalk server
+     * Restarts Redis server
      */
     public function reStart(): void
     {
         $this->configure();
-        Processes::safeStartDaemon($this::PROC_NAME, $this::CONF_FILE);
+        Processes::safeStartDaemon(self::PROC_NAME, self::CONF_FILE);
+
     }
 
     /**
-     * Setup ntp daemon conf file
+     * Setup redis daemon conf file
      */
     private function configure(): void
     {
         $config = $this->getDI()->get('config')->redis;
-        $conf = "bind {$config->host}".PHP_EOL;
-        $conf.= "port {$config->port}".PHP_EOL;
-        Util::fileWriteContent($this::CONF_FILE, $conf);
+        $conf   = "bind {$config->host}" . PHP_EOL;
+        $conf   .= "port {$config->port}" . PHP_EOL;
+        file_put_contents(self::CONF_FILE, $conf);
     }
 }
