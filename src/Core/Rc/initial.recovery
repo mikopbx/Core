@@ -18,31 +18,22 @@
  */
 
 namespace MikoPBX\Core\Rc;
-use MikoPBX\Core\System\{Processes, Util};
+use MikoPBX\Core\System\{Processes, Storage, Util};
 require_once('Globals.php');
-$fp = fopen('php://stdin', 'r');
 
-$out = [];
-$dfPath = Util::which('df');
-$grepPath = Util::which('grep');
-$cutPath = Util::which('cut');
-$revPath = Util::which('rev');
-Processes::mwExec("{$dfPath} | {$grepPath} conf.recover | {$cutPath} -d \" \" -f 1 | {$revPath} | {$cutPath} -c 2- | {$revPath}", $out);
-$DEVICE=implode('', $out);
+$REDON      = "\033[31;1m";
+$REDOFF     = "\033[0m";
+$GREENON    = "\033[32;1m";
+$GREENOFF   = "\033[0m";
+$fp         = fopen('php://stdin', 'r');
 
-// $PBXVERSION = trim(file_get_contents('/etc/version'));
+$storage    = new Storage();
+$DEVICE     = $storage->getRecoverDiskName();
 $VERSION    = trim(file_get_contents('/offload/version'));
-
-$REDON   ="\033[31;1m";
-$REDOFF  ="\033[0m";
-$GREENON ="\033[32;1m";
-$GREENOFF="\033[0m";
-
 system('clear');
 echo "\n";
 echo Util::translate("Install or recovery")."\n";
 echo "*******************************\n";
-// echo Util::translate('Firmware version on this system:')." ${PBXVERSION}\n\n";
 echo "1) ".Util::translate('Install').".   ${REDON}".Util::translate('All settings will be lost!')."${REDOFF}\n";
 echo "2) ".Util::translate('Reinstall to')." ${VERSION}. ${GREENON}".Util::translate('All settings will be kept!')."${GREENOFF}\n";
 echo "3) ".Util::translate('Cancel')."\n\n";
@@ -65,4 +56,3 @@ switch ($input) {
         sleep(2);
         break;
 }
-	
