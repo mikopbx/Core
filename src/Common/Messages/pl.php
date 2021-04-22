@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
 * MikoPBX - free phone system for small business
 * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
 *
@@ -16,8 +17,6 @@
 * You should have received a copy of the GNU General Public License along with this program.
 * If not, see <https://www.gnu.org/licenses/>.
 */
-
-return [
     'tf_ActionPlayMessage' => 'Odtwórz plik <b>%message%</b>',
     'tf_ActionTransferToExtension' => 'Przekaż połączenie na <b>%message%</b>',
     'tf_TableColumnDatePeriod' => 'Okres',
@@ -721,8 +720,8 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'or_TableColumnProvider' => 'Dostawca',
     'or_TableColumnNote' => 'Uwaga',
     'or_RuleDescription' => '<b>%numberbeginswith%</b> na początku, a następnie <b>%restnumbers%</b> cyfr',
-    'or_RuleDescriptionFullMatch' => 'Tylko dla liczby <b>% numberbeginswith%</b>',
-    'or_RuleDescriptionBeginMatch' => 'Dla liczb o dowolnej długości zaczynających się od <b>% numberbeginswith%</b>',
+    'or_RuleDescriptionFullMatch' => 'Tylko dla numeru <b> %numberbeginswith% </b>',
+    'or_RuleDescriptionBeginMatch' => 'W przypadku numerów o dowolnej długości zaczynających się od <b> %numberbeginswith% </b>',
     'or_ValidationPleaseSelectProvider' => 'Wybierz dostawcę, którego dotyczy ta reguła.',
     'ir_Provider' => 'Dostawca',
     'ir_RuleName' => 'Nazwa reguły',
