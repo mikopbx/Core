@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
 * MikoPBX - free phone system for small business
 * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
 *
@@ -16,8 +17,6 @@
 * You should have received a copy of the GNU General Public License along with this program.
 * If not, see <https://www.gnu.org/licenses/>.
 */
-
-return [
     'March' => 'Březen',
     'April' => 'Duben',
     'May' => 'Květen',
@@ -230,7 +229,7 @@ return [
     'pr_DeleteTitle' => 'Smazat poskytovatele',
     'iv_ValidateRepeatNumberOutOfRange' => 'Počet opakování nabídky je nesprávný',
     'iv_Name' => 'Název menu',
-    'pr_DeleteDescription' => 'Společně s poskytovatelem budou všechna přidružená pravidla pro směrování odstraněna a v pravidlech pro směrování budou všechna spojení nahrazena textem „Jakýkoli poskytovatel“.',
+    'pr_DeleteDescription' => 'Společně s poskytovatelem budou všechna přidružená pravidla pro směrování odstraněna a v pravidlech pro směrování budou všechna spojení nahrazena textem „Jakýkoli poskytovatel“',
     'pr_Cancel' => 'Zrušit',
     'pr_Delete' => 'Odstranit',
     'or_RuleName' => 'Název pravidla',
@@ -264,7 +263,7 @@ return [
     'ir_TableColumnName' => 'Název',
     'ir_TableColumnDetails' => 'Pravidlo',
     'ir_RuleDescriptionWithNumberAndWithProvider' => 'Volání na <b>% number% </b> prostřednictvím & nbsp & nbsp & nbsp <b>% provider% </b> bude přesměrováno na & nbsp & nbsp & nbsp <b>% callerid% </b>',
-    'ir_RuleDescriptionWithoutNumber' => 'Hovor prostřednictvím & nbsp & nbsp & nbsp <b>% poskytovatele% </b> bude přesměrován na & nbsp & nbsp & nbsp <b>% callerid% </b>',
+    'ir_RuleDescriptionWithoutNumber' => 'Hovor přes & nbsp & nbsp & nbsp <b> %provider% </b> bude přesměrován na & nbsp & nbsp & nbsp <b> %callerid% </b>',
     'ir_RuleDescriptionWithoutProvider' => 'Hovor na <b>% number% </b> bude přesměrován na & nbsp & nbsp & nbsp <b>% callerid% </b>',
     'ir_RuleDescriptionWithoutNumberAndWithoutProvider' => 'Hovor přes libovolného poskytovatele bude přesměrován na & nbsp & nbsp & nbsp <b>% callerid% </b>',
     'ir_DefaultRoute' => 'Příchozí výchozí trasa',
@@ -435,7 +434,7 @@ return [
     'am_ValidationAMINameIsEmpty' => 'Název účtu není zadán',
     'am_ValidationAMISecretIsEmpty' => 'Heslo není vyplněno',
     'tf_ActionPlayMessage' => 'Přehrajte soubor <b>%message% </b>',
-    'tf_ActionTransferToExtension' => 'Přepojte hovor na  <b>%message%</b>',
+    'tf_ActionTransferToExtension' => 'Přepojit hovor na <b> %extension% </b>',
     'tf_TableColumnDatePeriod' => 'Období',
     'tf_TableColumnTimePeriod' => 'Čas',
     'tf_TableColumnWeekDaysPeriod' => 'Dny v týdnu',
