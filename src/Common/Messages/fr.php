@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
 * MikoPBX - free phone system for small business
 * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
 *
@@ -16,8 +17,6 @@
 * You should have received a copy of the GNU General Public License along with this program.
 * If not, see <https://www.gnu.org/licenses/>.
 */
-
-return [
     'January' => 'Janvier',
     'sntry_SuccessMessage' => 'Merci pour votre aide!',
     'sntry_ErrorFormEntry' => 'Les champs ne sont pas remplis, corrigez et réessayez!',
@@ -651,8 +650,8 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'ir_Provider' => 'Fournisseur',
     'or_ValidationPleaseSelectProvider' => 'Sélectionnez le fournisseur auquel cette règle s\'appliquera.',
     'or_RuleDescriptionBeginMatch' => 'Pour les nombres de n\'importe quelle longueur commençant par <b>%numberbeginswith%</b>',
-    'or_RuleDescriptionFullMatch' => 'Uniquement pour le nombre <b>% numberbeginswith%</b>',
-    'or_RuleDescription' => '<b>% numberbeginswith%</b> au début, puis <b>% restnumbers%</b> chiffres',
+    'or_RuleDescriptionFullMatch' => 'Uniquement pour le nombre <b>%numberbeginswith%</b>',
+    'or_RuleDescription' => '<b> %numberbeginswith% </b> au début suivi de <b> %restnumbers% </b> chiffres',
     'or_TableColumnNote' => 'Une note',
     'or_TableColumnProvider' => 'Fournisseur',
     'or_TableColumnRule' => 'La règle',
