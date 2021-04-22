@@ -229,10 +229,9 @@ class AdvicesProcessor extends Injectable
         $client = new GuzzleHttp\Client();
         $res    = $client->request(
             'POST',
-            'https://update.askozia.ru/',
+            'https://releases.mikopbx.com/releases/v1/mikopbx/ifNewReleaseAvailable',
             [
                 'form_params' => [
-                    'TYPE'   => 'FIRMWAREGETNEWS',
                     'PBXVER' => $PBXVersion,
                 ],
             ]
