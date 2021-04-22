@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
 * MikoPBX - free phone system for small business
 * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
 *
@@ -16,8 +17,6 @@
 * You should have received a copy of the GNU General Public License along with this program.
 * If not, see <https://www.gnu.org/licenses/>.
 */
-
-return [
     'January' => 'Januar',
     'February' => 'Februar',
     'March' => 'März',
@@ -54,7 +53,7 @@ return [
     'Loading' => 'Lade',
     'qf_NatMode' => 'NAT Modus',
     'qf_Qualify' => 'NAT Session',
-    'qf_Frequency' => 'Intervall zum Auffrischen der NAT Session. Beachten Sie ggf. Mindestwerte Ihres Providers!',
+    'qf_Frequency' => 'Intervall zum Auffrischen der NAT Session. Beachten Sie ggf. Mindestwerte Ihres Providers.',
     'qf_NatModeInstructions' => '<div class=\'ui message \'>
             <div class=\'ui bulleted list\'>
                 <div class=\'item\'><b>nein</b> keine spezielle Berücksichtigung des NAT, nur nach RFC 3581
@@ -124,17 +123,17 @@ return [
     'BreadcrumbCustomFiles' => 'Systemdateien',
     'SubHeaderCustomFiles' => 'Individuelle Anpassung der Systemkonfiguration von Asterisk und Linux (CONF-Dateien).',
     'BreadcrumbSoundFiles' => 'Audio-Files',
-    'SubHeaderSoundFiles' => 'Zur Nutzung in verschiedenen Applikationen und Anruf-Szenarien.',
+    'SubHeaderSoundFiles' => 'Zur Nutzung in verschiedenen Applikationen und Anruf-Szenarien',
     'BreadcrumbLicensing' => 'Lizenzierung',
     'SubHeaderLicensing' => 'Registrieren Sie Ihre PBX, um Updates zu erhalten und den Markplatz zu nutzen.',
     'BreadcrumbErrors' => 'Fehlermeldung',
-    'SubHeaderErrors' => 'Erscheint dieser Fehler erneut, informieren Sie bitte den Entwickler/MIKO.',
+    'SubHeaderErrors' => 'Erscheint dieser Fehler erneut, informieren Sie bitte den Entwickler/MIKO',
     'BreadcrumbRestart' => 'System Neustart',
     'SubHeaderRestart' => 'Module neustarten, vollständiger Neustart oder abmelden',
     'BreadcrumbSession' => 'Autorisierung',
     'BreadcrumbSessionend' => 'Autorisierung',
     'BreadcrumbSystemDiagnostic' => 'System Diagnose',
-    'SubHeaderSystemDiagnostic' => 'System LOG-Dateien sammeln, um Fehler in der Anlage zu finden.',
+    'SubHeaderSystemDiagnostic' => 'System LOG-Dateien sammeln, um Fehler in der Anlage zu finden',
     'BreadcrumbFail2Ban' => 'Fail2Ban',
     'SubHeaderFail2Ban' => 'Fail2ban blockiert/sperrt IP-Adressen, von denen innerhalb einer bestimmten Zeit - zu oft versucht wurde, das System zu nutzen (Anmeldung PBX, SIP, SSH,...).',
     'BreadcrumbUpdate' => 'System Upgrade',
