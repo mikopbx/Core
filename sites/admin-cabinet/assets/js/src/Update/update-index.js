@@ -175,7 +175,7 @@ const updatePBX = {
 				const currentVerison = updatePBX.currentVersion.replace(/\D/g, '');
 				response.firmware.forEach((obj) => {
 					const version = obj.version.replace(/\D/g, '');
-					if (parseInt(version, 10) > parseInt(currentVerison, 10)) {
+					if (versionCompare(version, currentVerison) > 0) {
 						updatePBX.addNewVersionInformation(obj);
 					}
 				});

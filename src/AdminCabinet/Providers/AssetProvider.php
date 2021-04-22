@@ -485,6 +485,7 @@ class AssetProvider implements ServiceProviderInterface
     {
         if ($action === 'index') {
             $this->footerCollectionJS
+                ->addJs('js/pbx/main/version-compare.js', true)
                 ->addJs('js/pbx/main/form.js', true)
                 ->addJs('js/vendor/resumable.js', true)
                 ->addJs('js/vendor/showdown/showdown.min.js', true)
