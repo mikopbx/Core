@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
 * MikoPBX - free phone system for small business
 * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
 *
@@ -16,8 +17,6 @@
 * You should have received a copy of the GNU General Public License along with this program.
 * If not, see <https://www.gnu.org/licenses/>.
 */
-
-return [
     'qf_NatMode' => 'NAT რეჟიმი',
     'qf_Qualify' => 'შეინარჩუნეთ NAT სესია',
     'qf_Frequency' => 'წამში სიხშირის გაგზავნა.',
@@ -262,9 +261,9 @@ return [
     'or_TableColumnRule' => 'Წესი',
     'or_TableColumnProvider' => 'ინტერნეტ პროვაიდერი',
     'or_TableColumnNote' => 'შენიშვნა',
-    'or_RuleDescription' => '<b>%numberbeginsw% </b> დასაწყისში, რომელსაც მოჰყვება <b>% restnumbers% </b> ციფრები',
-    'or_RuleDescriptionFullMatch' => 'მხოლოდ რიცხვისთვის <b>% ნომერი იწყება% </b>',
-    'or_RuleDescriptionBeginMatch' => 'ნებისმიერი სიგრძის ციფრებისთვის, რომელიც იწყება <b>% numberbeginswith% </b>',
+    'or_RuleDescription' => '<b> %numberbeginswith% </b> დასაწყისში მოჰყვება <b> %restnumbers% </b> ციფრები',
+    'or_RuleDescriptionFullMatch' => 'მხოლოდ ნომრისთვის <b> %numberbeginswith% </b>',
+    'or_RuleDescriptionBeginMatch' => 'ნებისმიერი სიგრძის ციფრებისთვის, რომელიც იწყება <b> %numberbeginswith% </b> - ით',
     'or_ValidationPleaseSelectProvider' => 'აირჩიეთ პროვაიდერი, რომლისთვისაც ეს წესი გავრცელდება.',
     'ir_Provider' => 'ინტერნეტ პროვაიდერი',
     'ir_RuleName' => 'წესის სახელი',
@@ -445,7 +444,7 @@ return [
     'am_ValidationAMINameIsEmpty' => 'ანგარიშის სახელი მითითებული არ არის',
     'am_ValidationAMISecretIsEmpty' => 'პაროლი არ არის შევსებული',
     'am_ErrorThisUsernameInNotAvailable' => 'ჩანაწერი იგივე სახელით უკვე არსებობს.',
-    'tf_ActionPlayMessage' => 'ფაილის დაკვრა <b>%შეტყობინება% </b>',
+    'tf_ActionPlayMessage' => 'ფაილის დაკვრა <b> %message% </b>',
     'tf_ActionTransferToExtension' => 'ზარის თარგმნა <b>%გაფართოებაზე% </b>',
     'tf_TableColumnDatePeriod' => 'პერიოდი',
     'tf_TableColumnTimePeriod' => 'დრო',
