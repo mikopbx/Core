@@ -1,4 +1,22 @@
 <?php
+/*
+* MikoPBX - free phone system for small business
+* Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 3 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License along with this program.
+* If not, see <https://www.gnu.org/licenses/>.
+*/
+
 return [
     'qf_NatMode' => 'NAT რეჟიმი',
     'qf_Qualify' => 'შეინარჩუნეთ NAT სესია',
@@ -34,23 +52,6 @@ return [
     'qf_QualifyInstructions' => '<div class=\'ui message \'>
             როდესაც ეს პარამეტრი ჩართულია, Asterisk გამოგიგზავნით SIP პარამეტრები პაკეტებს მითითებულ სიხშირეზე. ეს საჭიროა თქვენს როუტერზე NAT გვირაბის გასაზრდელად.
         </div>',
-    /*
- * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
     'January' => 'იანვარი',
     'February' => 'თებერვალი',
     'March' => 'მარტი',
@@ -261,7 +262,7 @@ return [
     'or_TableColumnRule' => 'Წესი',
     'or_TableColumnProvider' => 'ინტერნეტ პროვაიდერი',
     'or_TableColumnNote' => 'შენიშვნა',
-    'or_RuleDescription' => '<b>% numberbeginsw% </b> დასაწყისში, რომელსაც მოჰყვება <b>% restnumbers% </b> ციფრები',
+    'or_RuleDescription' => '<b>%numberbeginsw% </b> დასაწყისში, რომელსაც მოჰყვება <b>% restnumbers% </b> ციფრები',
     'or_RuleDescriptionFullMatch' => 'მხოლოდ რიცხვისთვის <b>% ნომერი იწყება% </b>',
     'or_RuleDescriptionBeginMatch' => 'ნებისმიერი სიგრძის ციფრებისთვის, რომელიც იწყება <b>% numberbeginswith% </b>',
     'or_ValidationPleaseSelectProvider' => 'აირჩიეთ პროვაიდერი, რომლისთვისაც ეს წესი გავრცელდება.',
@@ -399,24 +400,6 @@ return [
     'ex_Extension' => 'გაფართოების ნომერი',
     'ex_Mobile' => 'მობილური',
     'ex_Email' => 'ელ.წერილი',
-    'ex_Russian' => 'რუსული',
-    'ex_English' => 'ინგლისური (აშშ)',
-    'ex_EnglishUK' => 'ინგლისური (დიდი ბრიტანეთი)',
-    'ex_Japanese' => '日本語',
-    'ex_Deutsch' => 'დოიჩი',
-    'ex_Danish' => 'დანიკი',
-    'ex_Spanish' => 'ესპანოლი',
-    'ex_French' => 'Le français',
-    'ex_Italian' => 'იტალიალო',
-    'ex_Portuguese' => 'პორტუგალური',
-    'ex_Ukrainian' => 'უკრაინელი',
-    'ex_Vietnamese' => 'Tiếng việt',
-    'ex_Chinese' => '人',
-    'ex_Polish' => 'პოლსკი',
-    'ex_Dutch' => 'Nederlands',
-    'ex_Swedish' => 'სვენსკა',
-    'ex_Czech' => 'ჩეშტინა',
-    'ex_Turkish' => 'თურქ',
     'ex_Status' => 'სტატუსი',
     'ex_RegeneratePassword' => 'შექმენით ახალი პაროლი',
     'ex_ValidateForwardingToBeFilled' => 'შეყოვნების გადამისამართების ნომერი არ არის შევსებული მარშრუტიზაციის პარამეტრებში',
@@ -462,8 +445,8 @@ return [
     'am_ValidationAMINameIsEmpty' => 'ანგარიშის სახელი მითითებული არ არის',
     'am_ValidationAMISecretIsEmpty' => 'პაროლი არ არის შევსებული',
     'am_ErrorThisUsernameInNotAvailable' => 'ჩანაწერი იგივე სახელით უკვე არსებობს.',
-    'tf_ActionPlayMessage' => 'ფაილის დაკვრა <b>% შეტყობინება% </b>',
-    'tf_ActionTransferToExtension' => 'ზარის თარგმნა <b>% გაფართოებაზე% </b>',
+    'tf_ActionPlayMessage' => 'ფაილის დაკვრა <b>%შეტყობინება% </b>',
+    'tf_ActionTransferToExtension' => 'ზარის თარგმნა <b>%გაფართოებაზე% </b>',
     'tf_TableColumnDatePeriod' => 'პერიოდი',
     'tf_TableColumnTimePeriod' => 'დრო',
     'tf_TableColumnWeekDaysPeriod' => 'Კვირის დღეები',
@@ -943,7 +926,7 @@ return [
     'mo_IVRMenuShort4Dropdown' => 'IVR მენიუ',
     'mo_ModuleShort4Dropdown' => 'მოდული',
     'GoToWikiDocumentation' => 'გადადით ონლაინ დოკუმენტაციაზე',
-    'mo_ModuleSettingsError' => 'შეცდომები მოდულის პარამეტრებში -% modulename%',
+    'mo_ModuleSettingsError' => 'შეცდომები მოდულის პარამეტრებში -%modulename%',
     'adv_MessagesHeader' => 'შენიშვნა',
     'adv_MessagesHeaderError' => 'სერიოზული შეცდომა',
     'adv_YouUseDefaultWebPassword' => 'თქვენ იყენებთ სტანდარტულ პაროლს ადმინისტრაციული ინტერფეისის შესასვლელად - <a href=\'%url%\'> შეცვალეთ </a>',

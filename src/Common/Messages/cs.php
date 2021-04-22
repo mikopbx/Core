@@ -1,22 +1,23 @@
 <?php
+/*
+* MikoPBX - free phone system for small business
+* Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 3 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License along with this program.
+* If not, see <https://www.gnu.org/licenses/>.
+*/
+
 return [
-    /*
- * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
     'March' => 'Březen',
     'April' => 'Duben',
     'May' => 'Květen',
@@ -390,24 +391,6 @@ return [
     'ex_Extension' => 'Číslo rozšíření',
     'ex_Mobile' => 'Mobilní',
     'ex_Email' => 'E-mail',
-    'ex_Russian' => 'Русский',
-    'ex_English' => 'English(US)',
-    'ex_EnglishUK' => 'English(UK)',
-    'ex_Japanese' => '日本語',
-    'ex_Deutsch' => 'Deutsch',
-    'ex_Danish' => 'Dansk',
-    'ex_Spanish' => 'Espanol',
-    'ex_French' => 'Le français',
-    'ex_Italian' => 'Italiano',
-    'ex_Portuguese' => 'Português',
-    'ex_Ukrainian' => 'Український',
-    'ex_Vietnamese' => 'Tiếng việt',
-    'ex_Chinese' => '中国人',
-    'ex_Polish' => 'Polskie',
-    'ex_Dutch' => 'Nederlands',
-    'ex_Swedish' => 'Svenska',
-    'ex_Czech' => 'Čeština',
-    'ex_Turkish' => 'Türk',
     'nw_NetworkInterfaces' => 'Síťová rozhraní',
     'gs_PBXFeatureBlindTransfer' => 'Kombinace pro bezpodmínečný přenos',
     'gs_PBXFeatureDigitTimeout' => 'Maximální časový limit mezi číslicemi při zadávání čísla pobočky (v milisekundách)',
@@ -451,7 +434,7 @@ return [
     'am_Description' => 'Komentář',
     'am_ValidationAMINameIsEmpty' => 'Název účtu není zadán',
     'am_ValidationAMISecretIsEmpty' => 'Heslo není vyplněno',
-    'tf_ActionPlayMessage' => 'Přehrajte soubor <b>% message% </b>',
+    'tf_ActionPlayMessage' => 'Přehrajte soubor <b>%message% </b>',
     'tf_ActionTransferToExtension' => 'Přepojte hovor na  <b>%message%</b>',
     'tf_TableColumnDatePeriod' => 'Období',
     'tf_TableColumnTimePeriod' => 'Čas',
@@ -827,7 +810,7 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'mo_IVRMenuShort4Dropdown' => 'IVR menu',
     'mo_ModuleShort4Dropdown' => 'Modul',
     'GoToWikiDocumentation' => 'Přejděte do online dokumentace',
-    'mo_ModuleSettingsError' => 'Chyby v nastavení modulu -% modulename%',
+    'mo_ModuleSettingsError' => 'Chyby v nastavení modulu -%modulename%',
     'adv_MessagesHeader' => 'Věnujte pozornost',
     'adv_MessagesHeaderError' => 'Vážná chyba',
     'adv_YouUseDefaultWebPassword' => 'Pomocí výchozího hesla vstoupíte do administrativního rozhraní - <a href=\'%url%\'> změna </a>',
