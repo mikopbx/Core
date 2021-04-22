@@ -128,7 +128,7 @@ class PbxExtensionModules extends ModelsBase
         $parameters = [
             'conditions' => 'disabled="0"',
             'cache' => [
-                'key'=>'PbxExtensionModules-Enabled',
+                'key'=> ModelsBase::makeCacheKey(PbxExtensionModules::class, 'getEnabledModulesArray'),
                 'lifetime' => 3600,
             ]
         ];
@@ -143,7 +143,7 @@ class PbxExtensionModules extends ModelsBase
     {
         $parameters = [
             'cache' => [
-                'key'=>'PbxExtensionModules-All',
+                'key'=> ModelsBase::makeCacheKey(PbxExtensionModules::class, 'getModulesArray'),
                 'lifetime' => 3600,
             ]
         ];

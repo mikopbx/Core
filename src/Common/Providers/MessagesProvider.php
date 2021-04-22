@@ -49,7 +49,7 @@ class MessagesProvider implements ServiceProviderInterface
                     $language = $di->get(LanguageProvider::SERVICE_NAME);
                     $session  = $di->get(SessionProvider::SERVICE_NAME);
                     if ($session !== null && $session->has('versionHash')) {
-                        $cacheKey = 'LocalisationArray' . $session->get('versionHash') . $language . '.php';
+                        $cacheKey = 'LocalisationArray:' . $session->get('versionHash') .':'. $language;
                     }
                 }
 

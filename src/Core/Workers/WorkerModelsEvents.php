@@ -38,6 +38,7 @@ use MikoPBX\Common\Models\{AsteriskManagerUsers,
     IvrMenu,
     IvrMenuActions,
     LanInterfaces,
+    ModelsBase,
     NetworkFilters,
     OutgoingRoutingTable,
     OutWorkTimes,
@@ -46,8 +47,7 @@ use MikoPBX\Common\Models\{AsteriskManagerUsers,
     Sip,
     SipHosts,
     SoundFiles,
-    Users
-};
+    Users};
 use MikoPBX\Common\Providers\BeanstalkConnectionModelsProvider;
 use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
@@ -665,8 +665,6 @@ class WorkerModelsEvents extends WorkerBase
         $count_changes = count($this->modified_tables);
         $called_class  = $data['model'] ?? '';
         Util::sysLogMsg(__METHOD__, "New changes " . $called_class, LOG_DEBUG);
-        // Clear all caches on any changed models on backend
-        PbxSettings::clearCache($called_class, false);
 
         // Get new settings for dependence modules tables
         foreach ($this->arrObject as $appClass) {

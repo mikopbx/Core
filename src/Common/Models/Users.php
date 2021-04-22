@@ -101,8 +101,8 @@ class Users extends ModelsBase
 
     public function afterSave(): void
     {
-        // Обновим кеш для списков выбора если поменяли имя, фамилию сотрудрника
-        self::clearCache(Extensions::class);
+        // Обновим кеш для списков выбора если поменяли имя, фамилию сотрудника
+        ModelsBase::clearCache(Extensions::class);
         parent::afterSave();
     }
 

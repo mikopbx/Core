@@ -30,7 +30,7 @@ use MikoPBX\AdminCabinet\Providers\{AssetProvider,
     SessionProvider,
     ViewProvider,
     VoltProvider};
-use MikoPBX\Common\Providers\{BeanstalkConnectionCacheProvider,
+use MikoPBX\Common\Providers\{
     BeanstalkConnectionModelsProvider,
     CDRDatabaseProvider,
     LoggerAuthProvider,
@@ -87,7 +87,6 @@ class RegisterDIServices
 
             // Inject Queue connection
             BeanstalkConnectionModelsProvider::class,
-            BeanstalkConnectionCacheProvider::class,
 
             // Inject translation
             MessagesProvider::class,
