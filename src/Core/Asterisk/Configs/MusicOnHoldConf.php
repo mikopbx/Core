@@ -19,8 +19,10 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
-
+use MikoPBX\Common\Models\SoundFiles;
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
+use MikoPBX\PBXCoreREST\Lib\SystemManagementProcessor;
 
 class MusicOnHoldConf extends CoreConfigClass
 {
@@ -35,5 +37,32 @@ class MusicOnHoldConf extends CoreConfigClass
             "directory=$mohpath\n\n";
 
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/musiconhold.conf', $conf);
+        $this->checkMohFiles();
+    }
+
+    /**
+     * Проверка существования MOH файлов.
+     */
+    protected function checkMohFiles():void{
+        $path    = $this->config->path('asterisk.mohdir');
+        if( count(glob("{$path}/*")) !== 0 ){
+            return;
+        }
+        $filesList    = glob("/offload/asterisk/sounds/moh/*.mp3");
+        $cpPath       = Util::which('cp');
+        foreach ($filesList as $srcFile){
+            $resultMp3 = "{$path}/".basename($srcFile);
+            Processes::mwExec("{$cpPath} $srcFile {$resultMp3}");
+            SystemManagementProcessor::convertAudioFile($resultMp3);
+            /** @var SoundFiles $sf */
+            $sf = SoundFiles::findFirst("path='{$resultMp3}'");
+            if(!$sf){
+                $sf = new SoundFiles();
+                $sf->category = SoundFiles::CATEGORY_MOH;
+                $sf->name     = basename($resultMp3);
+                $sf->path     = $resultMp3;
+                $sf->save();
+            }
+        }
     }
 }
