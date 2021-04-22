@@ -37,34 +37,34 @@ shopt -s cmdhist
 alias ls='ls --color=auto'
 alias myip="curl http://ipecho.net/plain; echo"
 alias remount-offload="mount -o remount,rw $(mount | grep /offload | cut -d ' ' -f 1)"
-alias xdebug-enable-www="mv /etc/php.d/15-xdebug.ini.disabled /etc/php.d/15-xdebug.ini; killall php-fpm; sleep 3; php-fpm -c /etc/php.ini"
 
 PS1='\w\$ '
 PS2='>'
 
 export LANG=en_US.utf8
 
-xdebug-enable()
+_xdebugEnable()
 {
-  echo "Rename 15-xdebug.ini.disabled to 15-xdebug.ini"
-  echo "Change xdebug.remote_host to address $1"
-  sed "s/172.16.162.1$/$1/g" /etc/php.d/15-xdebug.ini.disabled >> /etc/php.d/15-xdebug.ini
+  echo "Renaming 15-xdebug.ini.disabled to 15-xdebug.ini ..."
+  echo "Changing xdebug.remote_host to address $1 ..."
+  sed "s/172.16.162.1$/$1/g" /etc/php.d/15-xdebug.ini.disabled > /etc/php.d/15-xdebug.ini
   echo "Done"
 }
 
-xdebug-enable-www()
+complete -F _xdebugEnable xdebug-enable
+
+_xdebugEnableWww()
 {
-  echo "Rename 15-xdebug.ini.disabled to 15-xdebug.ini"
-  echo "Change xdebug.remote_host to address $1"
-  sed "s/172.16.162.1$/$1/g" /etc/php.d/15-xdebug.ini.disabled >> /etc/php.d/15-xdebug.ini
-  echo "Kill php-fpm"
+  _xdebugEnable $1
+  echo "killing the php-fpm processes ..."
   killall php-fpm;
-  sleep 3;
-  echo "Restart php-fpm"
+  sleep 5;
+  echo "Restarting the php-fpm daemon ..."
   php-fpm -c /etc/php.ini
   echo "Done"
 }
 
+complete -F _xdebugEnableWww xdebug-enable-www
 
 _pbxConsoleCommands()
 {
