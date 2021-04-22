@@ -17,27 +17,24 @@
 # If not, see <https://www.gnu.org/licenses/>.
 #
 
-/sbin/freestorage;
-/sbin/freeupoffload;
+/sbin/freestorage
+/sbin/freeupoffload
 
 # RAID
-mdadmPath=$(/sbin/which mdadm);
+mdadmPath=$(/sbin/which mdadm)
 if [ -n "$mdadmPath" ]; then
-  "$mdadmPath" --detail   --scan | /bin/busybox cut -d ' ' -f 2 | /bin/xargs "$mdadmPath" --stop > /dev/null 2> /dev/null;
-fi;
+  "$mdadmPath" --detail --scan | /bin/busybox cut -d ' ' -f 2 | /bin/xargs "$mdadmPath" --stop >/dev/null 2>/dev/null
+fi
 # RAID END
 
 if [ -f /tmp/ejectcd ]; then
-    # Попробуем изъять диск.
-    cddev=$(/sbin/sysctl -n dev.cdrom.info | /bin/busybox grep "drive name" | /bin/busybox cut -f 3)
-    echo "Eject CD from drive ${cddev}...";
-    /bin/busybox eject "/dev/${cddev}" 2>&1 > /dev/null
-    result="$?";
-    if [ ! "$result" = '0' ]; then
-      /bin/busybox eject -s "/dev/${cddev}" 2>&1 > /dev/null;
-    fi;
+  # Попробуем изъять диск.
+  cddev=$(/sbin/sysctl -n dev.cdrom.info | /bin/busybox grep "drive name" | /bin/busybox cut -f 3)
+  echo "Eject CD from drive ${cddev}..."
+  /bin/busybox eject "/dev/${cddev}" >/dev/null 2>/dev/null
+  /bin/busybox eject -s "/dev/${cddev}" >/dev/null 2>/dev/null
 else
-    sleep 3;
+  sleep 3
 fi
 
 /sbin/reboot
