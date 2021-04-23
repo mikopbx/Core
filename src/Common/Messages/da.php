@@ -1,22 +1,22 @@
 <?php
 return [
     /*
- * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
+* MikoPBX - free phone system for small business
+* Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 3 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License along with this program.
+* If not, see <https://www.gnu.org/licenses/>.
+*/
     'Oct' => 'oktober',
     'Nov' => 'november',
     'Dec' => 'december',
@@ -34,23 +34,23 @@ return [
     'qf_NatMode' => 'NAT-tilstand',
     'qf_Qualify' => 'Support NAT-session',
     'qf_Frequency' => 'Sendefrekvens i sek.',
-    'qf_NatModeInstructions' => '<div class = \'ui message\'>
-            <div class = \'ui punktliste\'>
-                <div class = \'item\'> <b>nej</b> udfører ingen speciel NAT-behandling undtagen den der er specificeret i RFC 3581
-                </Div>
-                <div class = \'item\'> <b>force_rport</b> selvom der ikke blev angivet nogen rport-parameter, skal du handle som om det var
-                </Div>
-                <div class = \'item\'> <b>comedia</b> send RTP-pakker tilbage til den port, hvorfra de blev modtaget, idet man ignorerer den krævede port i SDP-overskriften
-                </Div>
-                <div class = \'item\'> <b>auto_comedia</b> hvis Asterisk kan bestemme, at enheden er bag NAT, skal du indstille comedia-indstillingen
-                </Div>
-                <div class = \'item\'> <b>force_rport, comedia</b> mulighed, der erstatter nat = ja
-                </Div>
-            </Div>
-        </Div>',
-    'qf_QualifyInstructions' => '<div class = \'ui message\'>
-            Når denne indstilling er aktiveret, sender Asterisk SIP Options-pakker med den angivne frekvens. Dette er nødvendigt for at understøtte NAT-tunneling på din router.
-        </Div>',
+    'qf_NatModeInstructions' => '<div class=\'ui message \'>
+            <div class=\'ui bulleted list\'>
+                <div class=\'item\'> <b> nej </b> Udfør ingen særlig NAT-håndtering bortset fra RFC 3581
+                </div>
+                <div class=\'item\'> <b> force_rport </b> selvom der ikke var angivet noget portparameter, skal du handle som om det var
+                </div>
+                <div class=\'item\'> <b> comedia </b> sender RTP-pakker tilbage til den port, hvorfra de blev modtaget, idet den nødvendige port i SDP-headeren ignoreres
+                </div>
+                <div class=\'item\'> <b> auto_comedia </b> Hvis stjerne kan bestemme, at enheden er bag NAT, skal du indstille comedia-indstillingen
+                </div>
+                <div class=\'item\'> <b> force_rport, comedia </b> mulighed for at erstatte nat = ja
+                </div>
+            </div>
+        </div>',
+    'qf_QualifyInstructions' => '<div class=\'ui message \'>
+            Når denne indstilling er aktiveret, sender Asterisk SIP-optionspakker med den angivne frekvens. Dette er nødvendigt for at understøtte NAT-tunneling på din router.
+        </div>',
     'AdvancedOptions' => 'Avancerede indstillinger',
     'ConnectionSettings' => 'Forbindelsesindstillinger',
     'BreadcrumbHome' => 'Til begyndelsen',
@@ -223,19 +223,19 @@ return [
     'or_TableColumnRule' => 'Reglen',
     'or_TableColumnProvider' => 'udbyder',
     'or_TableColumnNote' => 'En note',
-    'or_RuleDescription' => '<b>% antal begynder med%</b> i begyndelsen og derefter <b>% restnumbers%</b> cifre',
+    'or_RuleDescription' => '<b> %numberbeginswith% </b> i begyndelsen efterfulgt af <b> %restnumbers% </b> cifre',
     'or_RuleDescriptionFullMatch' => 'Kun for nummer <b>%numberbeginswith%</b>',
-    'or_RuleDescriptionBeginMatch' => 'For tal af enhver længde, der starter med <b>% antalbegynder med%</b>',
+    'or_RuleDescriptionBeginMatch' => 'For numre af enhver længde, der starter med <b> %numberbeginswith% </b>',
     'or_ValidationPleaseSelectProvider' => 'Vælg den udbyder, som denne regel gælder for.',
     'ir_RuleName' => 'Reglenavn',
     'ir_Note' => 'En note',
     'ir_TableColumnNote' => 'En note',
     'ir_TableColumnName' => 'navn',
     'ir_TableColumnDetails' => 'Reglen',
-    'ir_RuleDescriptionWithNumberAndWithProvider' => 'Et opkald til <b>% antal%</b> gennem & nbsp & nbsp & nbsp <b>% udbyder%</b> vil blive videresendt til & nbsp & nbsp & nbsp & nbsp <b>% callerid%</b>',
+    'ir_RuleDescriptionWithNumberAndWithProvider' => 'Et opkald til <b> %number% </b> via & nbsp & nbsp & nbsp <b> %provider% </b> videresendes til & nbsp & nbsp & nbsp <b> %callerid% </b>',
     'ir_RuleDescriptionWithoutNumber' => 'Et opkald gennem & nbsp & nbsp & nbsp <b>% udbyder%</b> vil blive videresendt til & nbsp & nbsp & nbsp <b>% callerid%</b>',
-    'ir_RuleDescriptionWithoutProvider' => 'Et opkald til <b>% nummer%</b> videresendes til & nbsp & nbsp & nbsp <b>% callerid%</b>',
-    'ir_RuleDescriptionWithoutNumberAndWithoutProvider' => 'Et opkald gennem en hvilken som helst udbyder videresendes til & nbsp & nbsp & nbsp <b>% opkalder%</b>',
+    'ir_RuleDescriptionWithoutProvider' => 'Et opkald til nummeret <b> %number% </b> videresendes til & nbsp & nbsp & nbsp <b> %callerid% </b>',
+    'ir_RuleDescriptionWithoutNumberAndWithoutProvider' => 'Opkald via en hvilken som helst udbyder videresendes til & nbsp & nbsp & nbsp <b> %callerid% </b>',
     'ir_DefaultRoute' => 'Indgående standardrute',
     'ir_ActionSelect' => 'Hvis ingen af reglerne passer',
     'ir_busy_signal' => 'Afspil optaget signal',
@@ -390,24 +390,6 @@ return [
     'ex_Extension' => 'Udvidelsesnummer',
     'ex_Mobile' => 'mobil',
     'ex_Email' => 'E-mail',
-    'ex_Russian' => 'Русский',
-    'ex_English' => 'English(US)',
-    'ex_EnglishUK' => 'English(UK)',
-    'ex_Japanese' => '日本語',
-    'ex_Deutsch' => 'Deutsch',
-    'ex_Danish' => 'Dansk',
-    'ex_Spanish' => 'Espanol',
-    'ex_French' => 'Le français',
-    'ex_Italian' => 'Italiano',
-    'ex_Portuguese' => 'Português',
-    'ex_Ukrainian' => 'Український',
-    'ex_Vietnamese' => 'Tiếng việt',
-    'ex_Chinese' => '中国人',
-    'ex_Polish' => 'Polskie',
-    'ex_Dutch' => 'Nederlands',
-    'ex_Swedish' => 'Svenska',
-    'ex_Czech' => 'Čeština',
-    'ex_Turkish' => 'Türk',
     'ex_Status' => 'status',
     'ex_RegeneratePassword' => 'Opret nyt kodeord',
     'ex_ValidateForwardingToBeFilled' => 'I routingindstillingerne udfyldes ikke timeout-videresendelsesnummer',
@@ -873,7 +855,7 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'mo_IVRMenuShort4Dropdown' => 'IVR-menu',
     'mo_ModuleShort4Dropdown' => 'modul',
     'GoToWikiDocumentation' => 'Gå til online dokumentation',
-    'mo_ModuleSettingsError' => 'Fejl i modulindstillinger -% modulename%',
+    'mo_ModuleSettingsError' => 'Fejl i modulindstillinger -%modulename%',
     'adv_MessagesHeader' => 'Vær opmærksom',
     'adv_MessagesHeaderError' => 'Alvorlig fejl',
     'adv_YouUseDefaultWebPassword' => 'Du bruger standardadgangskoden til at åbne den administrative grænseflade - <a href=\'%url%\'> ændring </a>',

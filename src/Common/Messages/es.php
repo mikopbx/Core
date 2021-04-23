@@ -1,22 +1,22 @@
 <?php
 return [
     /*
- * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
+* MikoPBX - free phone system for small business
+* Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 3 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License along with this program.
+* If not, see <https://www.gnu.org/licenses/>.
+*/
     'mm_SSHConsole' => 'Consola SSH',
     'ex_Email' => 'Correo electrónico',
     'bt_ToolTipEdit' => 'Editar',
@@ -125,7 +125,7 @@ return [
     'BreadcrumbCustomFiles' => 'Archivos del sistema',
     'SubHeaderCustomFiles' => 'Casotización de archivos de configuración del sistema y Asterisk',
     'BreadcrumbSoundFiles' => 'Archivos de sonido',
-    'SubHeaderSoundFiles' => 'Se utiliza en varios escenarios de llamadas y menús de voz interactivos.',
+    'SubHeaderSoundFiles' => 'Se utiliza en varios escenarios de llamadas y menús de voz interactivos',
     'BreadcrumbLicensing' => 'Licencia',
     'SubHeaderLicensing' => 'Regístrese en Marketplace para acceder a nuevas extensiones y módulos',
     'BreadcrumbErrors' => 'Mensaje de error',
@@ -135,7 +135,7 @@ return [
     'BreadcrumbSession' => 'Iniciar sesión',
     'BreadcrumbSessionend' => 'Iniciar sesión',
     'BreadcrumbSystemDiagnostic' => 'Diagnóstico del sistema',
-    'SubHeaderSystemDiagnostic' => 'Colección de registros del sistema para un análisis detallado de errores en el funcionamiento de la central.',
+    'SubHeaderSystemDiagnostic' => 'Colección de registros del sistema para un análisis detallado de errores en el funcionamiento de la central',
     'BreadcrumbFail2Ban' => 'Protección contra piratería',
     'SubHeaderFail2Ban' => 'Bloquea automáticamente las contraseñas',
     'mm_CallDetailRecords' => 'Historial de llamadas',
@@ -502,24 +502,6 @@ return [
     'gs_PBXLanguage' => 'El idioma de la interfaz administrativa y los mensajes de sonido del sistema.',
     'gs_PBXInternalExtensionLength' => 'Longitud máxima de números internos',
     'gs_PBXRecordCalls' => 'Grabación de llamadas',
-    'ex_Russian' => 'Русский',
-    'ex_English' => 'English(US)',
-    'ex_EnglishUK' => 'English(UK)',
-    'ex_Japanese' => '日本語',
-    'ex_Deutsch' => 'Deutsch',
-    'ex_Danish' => 'Dansk',
-    'ex_Spanish' => 'Espanol',
-    'ex_French' => 'Le français',
-    'ex_Italian' => 'Italiano',
-    'ex_Portuguese' => 'Português',
-    'ex_Ukrainian' => 'Український',
-    'ex_Vietnamese' => 'Tiếng việt',
-    'ex_Chinese' => '中国人',
-    'ex_Polish' => 'Polskie',
-    'ex_Dutch' => 'Nederlands',
-    'ex_Swedish' => 'Svenska',
-    'ex_Czech' => 'Čeština',
-    'ex_Turkish' => 'Türk',
     'gs_RestartEveryNight' => 'Reinicie PBX todas las noches',
     'gs_PBXCallParkingExt' => 'Número de estacionamiento',
     'gs_PBXCallParkingStartSlot' => 'Ranura de estacionamiento inicial',
@@ -863,7 +845,7 @@ Se puede activar una vez, después de lo cual el cupón se canjea.
     'mo_IVRMenuShort4Dropdown' => 'Menú IVR',
     'mo_ModuleShort4Dropdown' => 'Modulo',
     'GoToWikiDocumentation' => 'Ir a la documentación en línea',
-    'mo_ModuleSettingsError' => 'Errores en la configuración del módulo -% modulename%',
+    'mo_ModuleSettingsError' => 'Errores en la configuración del módulo -%modulename%',
     'adv_MessagesHeader' => 'Presta atencion',
     'adv_MessagesHeaderError' => 'Grave error',
     'adv_YouUseDefaultWebPassword' => 'Utiliza la contraseña predeterminada para ingresar a la interfaz administrativa: <a href=\'%url%\'> change </a>',

@@ -1,22 +1,22 @@
 <?php
 return [
     /*
- * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
+* MikoPBX - free phone system for small business
+* Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 3 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License along with this program.
+* If not, see <https://www.gnu.org/licenses/>.
+*/
     'сal_Last30Days' => 'Últimos 30 dias',
     'сal_LastWeek' => 'Últimos 7 dias',
     'сal_Yesterday' => 'Ontem',
@@ -32,7 +32,7 @@ return [
     'adv_YouUseDefaultWebPassword' => 'Você usa a senha padrão para entrar na interface administrativa - <a href=\'%url%\'> change </a>',
     'adv_MessagesHeaderError' => 'Erro grave',
     'adv_MessagesHeader' => 'Preste atenção',
-    'mo_ModuleSettingsError' => 'Erros nas configurações do módulo -% modulename%',
+    'mo_ModuleSettingsError' => 'Erros nas configurações do módulo -%modulename%',
     'GoToWikiDocumentation' => 'Acesse a documentação online',
     'mo_ModuleShort4Dropdown' => 'Módulo',
     'mo_IVRMenuShort4Dropdown' => 'Menu IVR',
@@ -361,7 +361,7 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'tf_TableColumnTimePeriod' => 'Tempo',
     'tf_TableColumnDatePeriod' => 'Período',
     'tf_ActionTransferToExtension' => 'Transfira a chamada para <b>% extension%</b>',
-    'tf_ActionPlayMessage' => 'Reproduzir arquivo <b>% message%</b>',
+    'tf_ActionPlayMessage' => 'Reproduzir arquivo <b>%message%</b>',
     'am_ValidationAMISecretIsEmpty' => 'Senha não preenchida',
     'am_ValidationAMINameIsEmpty' => 'Nome da conta não especificado',
     'am_Description' => 'Comentário',
@@ -395,24 +395,6 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'ex_ValidateForwardingToBeFilled' => 'Nas configurações de roteamento, o número de encaminhamento de tempo limite não é preenchido',
     'ex_RegeneratePassword' => 'Crie uma nova senha',
     'ex_Status' => 'Status',
-    'ex_Russian' => 'Русский',
-    'ex_English' => 'English(US)',
-    'ex_EnglishUK' => 'English(UK)',
-    'ex_Japanese' => '日本語',
-    'ex_Deutsch' => 'Deutsch',
-    'ex_Danish' => 'Dansk',
-    'ex_Spanish' => 'Espanol',
-    'ex_French' => 'Le français',
-    'ex_Italian' => 'Italiano',
-    'ex_Portuguese' => 'Português',
-    'ex_Ukrainian' => 'Український',
-    'ex_Vietnamese' => 'Tiếng việt',
-    'ex_Chinese' => '中国人',
-    'ex_Polish' => 'Polskie',
-    'ex_Dutch' => 'Nederlands',
-    'ex_Swedish' => 'Svenska',
-    'ex_Czech' => 'Čeština',
-    'ex_Turkish' => 'Türk',
     'ex_Email' => 'E-mail',
     'ex_Mobile' => 'Celular',
     'ex_Extension' => 'Número do ramal',
@@ -651,7 +633,7 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'or_ValidationPleaseSelectProvider' => 'Selecione o provedor ao qual esta regra se aplicará.',
     'or_RuleDescriptionBeginMatch' => 'Para números de qualquer tamanho, começando com <b>%numberbeginswith%</b>',
     'or_RuleDescriptionFullMatch' => 'Apenas para o número <b>%numberbeginswith%</b>',
-    'or_RuleDescription' => '<b>% numberbeginswith%</b> no início e depois <b>% restnumbers%</b> dígitos',
+    'or_RuleDescription' => '<b> %numberbeginswith% </b> no início seguido por <b> %restnumbers% </b> dígitos',
     'or_TableColumnNote' => 'Uma nota',
     'or_TableColumnProvider' => 'Fornecedor',
     'or_TableColumnRule' => 'A regra',

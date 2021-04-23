@@ -1,22 +1,23 @@
 <?php
+/*
+* MikoPBX - free phone system for small business
+* Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 3 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License along with this program.
+* If not, see <https://www.gnu.org/licenses/>.
+*/
+
 return [
-    /*
- * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
     'ex_Online' => 'ansluten',
     'am_TableColumnDescription' => 'Anmärkningar',
     'am_Read' => 'läsning',
@@ -62,7 +63,7 @@ return [
     'mo_IVRMenuShort4Dropdown' => 'IVR-meny',
     'mo_ModuleShort4Dropdown' => 'modul',
     'GoToWikiDocumentation' => 'Gå till online-dokumentation',
-    'mo_ModuleSettingsError' => 'Fel i modulinställningar -% modulename%',
+    'mo_ModuleSettingsError' => 'Fel i modulinställningar -%modulename%',
     'adv_MessagesHeader' => 'Var uppmärksam',
     'adv_MessagesHeaderError' => 'Allvarligt misstag',
     'adv_YouUseDefaultWebPassword' => 'Du använder standardlösenordet för att öppna det administrativa gränssnittet - <a href=\'%url%\'> ändring </a>',
@@ -849,24 +850,6 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'ex_Extension' => 'Förlängningsnummer',
     'ex_Mobile' => 'mobil',
     'ex_Email' => 'E-post',
-    'ex_Russian' => 'Русский',
-    'ex_English' => 'English(US)',
-    'ex_EnglishUK' => 'English(UK)',
-    'ex_Japanese' => '日本語',
-    'ex_Deutsch' => 'Deutsch',
-    'ex_Danish' => 'Dansk',
-    'ex_Spanish' => 'Espanol',
-    'ex_French' => 'Le français',
-    'ex_Italian' => 'Italiano',
-    'ex_Portuguese' => 'Português',
-    'ex_Ukrainian' => 'Український',
-    'ex_Vietnamese' => 'Tiếng việt',
-    'ex_Chinese' => '中国人',
-    'ex_Polish' => 'Polskie',
-    'ex_Dutch' => 'Nederlands',
-    'ex_Swedish' => 'Svenska',
-    'ex_Czech' => 'Čeština',
-    'ex_Turkish' => 'Türk',
     'ex_RegeneratePassword' => 'Skapa nytt lösenord',
     'ex_ValidateNumberIsEmpty' => 'Medarbetarförlängningen är inte fylld',
     'ex_ValidateForwardingToBeDifferent' => 'Du kan inte ställa in vidarekoppling till ditt eget nummer',

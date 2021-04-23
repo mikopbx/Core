@@ -1,22 +1,22 @@
 <?php
 return [
     /*
- * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
+* MikoPBX - free phone system for small business
+* Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 3 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License along with this program.
+* If not, see <https://www.gnu.org/licenses/>.
+*/
     'January' => 'January',
     'February' => 'February',
     'March' => 'March',
@@ -388,24 +388,6 @@ return [
     'ex_Extension' => 'Extension',
     'ex_Mobile' => 'Mobile',
     'ex_Email' => 'Email',
-    'ex_Russian' => 'Русский',
-    'ex_English' => 'English(US)',
-    'ex_EnglishUK' => 'English(UK)',
-    'ex_Japanese' => '日本語',
-    'ex_Deutsch' => 'Deutsch',
-    'ex_Danish' => 'Dansk',
-    'ex_Spanish' => 'Espanol',
-    'ex_French' => 'Le français',
-    'ex_Italian' => 'Italiano',
-    'ex_Portuguese' => 'Português',
-    'ex_Ukrainian' => 'Український',
-    'ex_Vietnamese' => 'Tiếng việt',
-    'ex_Chinese' => '中国人',
-    'ex_Polish' => 'Polskie',
-    'ex_Dutch' => 'Nederlands',
-    'ex_Swedish' => 'Svenska',
-    'ex_Czech' => 'Čeština',
-    'ex_Turkish' => 'Türk',
     'ex_Status' => 'Status',
     'ex_RegeneratePassword' => 'Create a new password',
     'ex_ValidateForwardingToBeFilled' => 'In the routing settings, the timeout forwarding number is not filled',
@@ -756,7 +738,7 @@ It can be activated once, after which the coupon becomes redeemed.
     'lic_LicenseWarningHeader' => 'This copy of the program is not registered',
     'lic_LicenseWarningText' => 'Go to <a href=\'/admin-cabinet/licensing/modify/\'>licensing</a> and follow the steps to registered your system',
     'lic_FailedToGetTrialKey2051' => 'Failed to register: (2051) You have already got trial key on this host for another email/company',
-    'lic_FailedToGetTrialKey2022' => 'Failed to register: (2022) This email has already used for another company name. Try to find previous key, we sent it from lic@miko.ru address.',
+    'lic_FailedToGetTrialKey2022' => 'Failed to register: (2022) This email has already used for another company name. Try to find the previous key, we sent it from lic@miko.ru address.',
     'lic_FailedActivateCoupon2057' => '(2057) This coupon is disabled',
     'lic_FailedActivateCoupon2041' => '(2041) Your coupon has already activated',
     'lic_FailedActivateCoupon2040' => '(2040) Unknown coupon code',
@@ -859,7 +841,7 @@ It can be activated once, after which the coupon becomes redeemed.
     'ext_AddNewExtension' => 'Upload new module',
     'ext_CreateNewExtension' => 'Create new one',
     'ext_UploadError' => 'Upload error',
-    'ext_UploadInProgress' => 'Uploading …',
+    'ext_UploadInProgress' => 'Uploading…',
     'ext_InstallationInProgress' => 'Installation',
     'ext_ModuleChangeStatusError' => 'Problem with module status',
     'ext_InstallationError' => 'Error installing module',

@@ -1,5 +1,22 @@
 <?php
 return [
+    /*
+* MikoPBX - free phone system for small business
+* Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 3 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License along with this program.
+* If not, see <https://www.gnu.org/licenses/>.
+*/
     'qf_NatMode' => 'NAT რეჟიმი',
     'qf_Qualify' => 'შეინარჩუნეთ NAT სესია',
     'qf_Frequency' => 'წამში სიხშირის გაგზავნა.',
@@ -34,23 +51,6 @@ return [
     'qf_QualifyInstructions' => '<div class=\'ui message \'>
             როდესაც ეს პარამეტრი ჩართულია, Asterisk გამოგიგზავნით SIP პარამეტრები პაკეტებს მითითებულ სიხშირეზე. ეს საჭიროა თქვენს როუტერზე NAT გვირაბის გასაზრდელად.
         </div>',
-    /*
- * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
     'January' => 'იანვარი',
     'February' => 'თებერვალი',
     'March' => 'მარტი',
@@ -261,9 +261,9 @@ return [
     'or_TableColumnRule' => 'Წესი',
     'or_TableColumnProvider' => 'ინტერნეტ პროვაიდერი',
     'or_TableColumnNote' => 'შენიშვნა',
-    'or_RuleDescription' => '<b>% numberbeginsw% </b> დასაწყისში, რომელსაც მოჰყვება <b>% restnumbers% </b> ციფრები',
-    'or_RuleDescriptionFullMatch' => 'მხოლოდ რიცხვისთვის <b>% ნომერი იწყება% </b>',
-    'or_RuleDescriptionBeginMatch' => 'ნებისმიერი სიგრძის ციფრებისთვის, რომელიც იწყება <b>% numberbeginswith% </b>',
+    'or_RuleDescription' => '<b> %numberbeginswith% </b> დასაწყისში მოჰყვება <b> %restnumbers% </b> ციფრები',
+    'or_RuleDescriptionFullMatch' => 'მხოლოდ ნომრისთვის <b> %numberbeginswith% </b>',
+    'or_RuleDescriptionBeginMatch' => 'ნებისმიერი სიგრძის ციფრებისთვის, რომელიც იწყება <b> %numberbeginswith% </b> - ით',
     'or_ValidationPleaseSelectProvider' => 'აირჩიეთ პროვაიდერი, რომლისთვისაც ეს წესი გავრცელდება.',
     'ir_Provider' => 'ინტერნეტ პროვაიდერი',
     'ir_RuleName' => 'წესის სახელი',
@@ -271,10 +271,10 @@ return [
     'ir_TableColumnNote' => 'შენიშვნა',
     'ir_TableColumnName' => 'სახელი',
     'ir_TableColumnDetails' => 'Წესი',
-    'ir_RuleDescriptionWithNumberAndWithProvider' => 'ზარი <b>% number% </b> - ზე & nbsp & nbsp & nbsp <b>% პროვაიდერის% </b> მეშვეობით გადაეგზავნება & nbsp & nbsp & nbsp <b>% აბონენტის% </b> - ს',
-    'ir_RuleDescriptionWithoutNumber' => 'ზარი & nbsp & nbsp & nbsp <b>% პროვაიდერის% </b> მეშვეობით გადაეგზავნება & nbsp & nbsp & nbsp <b>% აბონენტის% </b> - ს',
-    'ir_RuleDescriptionWithoutProvider' => 'ზარი <b>% number% </b> - ზე გადაეგზავნება & nbsp & nbsp & nbsp <b>% callerid% </b> - ს',
-    'ir_RuleDescriptionWithoutNumberAndWithoutProvider' => 'ზარები ნებისმიერი პროვაიდერის საშუალებით გადაეგზავნება & nbsp & nbsp & nbsp <b>% აბონენტის% </b> - ს',
+    'ir_RuleDescriptionWithNumberAndWithProvider' => 'ზარი <b> %number% </b> - ზე & nbsp & nbsp & nbsp <b> %provider% </b> - ით გადაეგზავნება & nbsp & nbsp & nbsp <b> %callerid% </b>',
+    'ir_RuleDescriptionWithoutNumber' => 'ზარი & nbsp & nbsp & nbsp <b> %provider% </b> - ით გადაეგზავნება & nbsp & nbsp & nbsp <b> %callerid% </b>',
+    'ir_RuleDescriptionWithoutProvider' => 'ზარი ნომერზე <b> %number% </b> გადაგზავნილი იქნება & nbsp & nbsp & nbsp <b> %callerid% </b> - ზე',
+    'ir_RuleDescriptionWithoutNumberAndWithoutProvider' => 'ზარები ნებისმიერი პროვაიდერის საშუალებით გადაეგზავნება & nbsp & nbsp & nbsp <b> %callerid% </b> - ს',
     'ir_DefaultRoute' => 'ნაგულისხმევი შემომავალი მარშრუტი',
     'ir_ActionSelect' => 'თუ არცერთი წესი არ შეესაბამება',
     'ir_busy_signal' => 'დაკავებული ტონის თამაში',
@@ -358,7 +358,7 @@ return [
     'er_Unauthorized' => 'ავტორიზაციის შეცდომა',
     'er_UnauthorizedDescription' => 'თქვენ არ გაქვთ ამ გვერდზე წვდომა.',
     'er_PageNotFound' => 'Გვერდი არ მოიძებნა',
-    'er_PageNotFoundDescription' => 'ეს გვერდი არ არსებობს',
+    'er_PageNotFoundDescription' => 'ეს გვერდი არ არსებობს.',
     'er_InternalServerError' => 'შიდა სერვერის შეცდომა',
     'er_InternalServerErrorDescription' => 'Რაღაც არასწორად წავიდა. ასეთი შეცდომები არ უნდა იყოს.',
     'ex_ThisUserIdNotExistInUsersModel' => 'ეს მომხმარებელი არ არსებობს',
@@ -399,24 +399,6 @@ return [
     'ex_Extension' => 'გაფართოების ნომერი',
     'ex_Mobile' => 'მობილური',
     'ex_Email' => 'ელ.წერილი',
-    'ex_Russian' => 'რუსული',
-    'ex_English' => 'ინგლისური (აშშ)',
-    'ex_EnglishUK' => 'ინგლისური (დიდი ბრიტანეთი)',
-    'ex_Japanese' => '日本語',
-    'ex_Deutsch' => 'დოიჩი',
-    'ex_Danish' => 'დანიკი',
-    'ex_Spanish' => 'ესპანოლი',
-    'ex_French' => 'Le français',
-    'ex_Italian' => 'იტალიალო',
-    'ex_Portuguese' => 'პორტუგალური',
-    'ex_Ukrainian' => 'უკრაინელი',
-    'ex_Vietnamese' => 'Tiếng việt',
-    'ex_Chinese' => '人',
-    'ex_Polish' => 'პოლსკი',
-    'ex_Dutch' => 'Nederlands',
-    'ex_Swedish' => 'სვენსკა',
-    'ex_Czech' => 'ჩეშტინა',
-    'ex_Turkish' => 'თურქ',
     'ex_Status' => 'სტატუსი',
     'ex_RegeneratePassword' => 'შექმენით ახალი პაროლი',
     'ex_ValidateForwardingToBeFilled' => 'შეყოვნების გადამისამართების ნომერი არ არის შევსებული მარშრუტიზაციის პარამეტრებში',
@@ -461,9 +443,9 @@ return [
     'am_Description' => 'კომენტარი',
     'am_ValidationAMINameIsEmpty' => 'ანგარიშის სახელი მითითებული არ არის',
     'am_ValidationAMISecretIsEmpty' => 'პაროლი არ არის შევსებული',
-    'am_ErrorThisUsernameInNotAvailable' => 'ჩანაწერი იგივე სახელით უკვე არსებობს.',
-    'tf_ActionPlayMessage' => 'ფაილის დაკვრა <b>% შეტყობინება% </b>',
-    'tf_ActionTransferToExtension' => 'ზარის თარგმნა <b>% გაფართოებაზე% </b>',
+    'am_ErrorThisUsernameInNotAvailable' => 'ჩანაწერი იგივე სახელით უკვე არსებობს',
+    'tf_ActionPlayMessage' => 'ფაილის დაკვრა <b> %message% </b>',
+    'tf_ActionTransferToExtension' => 'გადარიცხეთ ზარი <b> %extension% </b>',
     'tf_TableColumnDatePeriod' => 'პერიოდი',
     'tf_TableColumnTimePeriod' => 'დრო',
     'tf_TableColumnWeekDaysPeriod' => 'Კვირის დღეები',
@@ -517,11 +499,11 @@ return [
     'fw_StatusEnabled' => 'ჩართულია Firewall და ანტი-თაღლითობა',
     'fw_StatusDisabled' => 'Firewall და ჰაკერების დაცვა გამორთულია',
     'fw_NeedConfigureRule' => 'საჭიროა კონფიგურაცია',
-    'mo_BeforeDeleteNetworkFilterDeleteAsteriskManagerUsersFirst' => 'ამ წესის ბმული იპოვნეს ვარსკვლავების მენეჯერების სიაში მომხმარებლის% მომხმარებლის სახელი%',
-    'mo_BeforeDeleteNetworkFilterDeleteSipFirst' => 'ამ წესის ბმული მოიძებნა თანამშრომელთა სიაში% extension%',
+    'mo_BeforeDeleteNetworkFilterDeleteAsteriskManagerUsersFirst' => 'ამ წესის ბმული იპოვნეს მომხმარებლის ვარსკვლავების მენეჯერების სიაში %username%',
+    'mo_BeforeDeleteNetworkFilterDeleteSipFirst' => 'ამ წესის ბმული იპოვნეს თანამშრომელთა სიაში %extension%',
     'mo_ThisVlanIdNotUniqueForLanInterfacesModels' => 'სისტემას უკვე აქვს იგივე VLAN– ის ინტერფეისი',
     'mo_Disabled' => 'გამორთულია',
-    'mo_RightNumber' => 'წესი #% id%',
+    'mo_RightNumber' => 'წესი No %id%',
     'mo_NewElement' => 'ახლის შექმნა',
     'mo_NewElementNetworkFilters' => 'ქსელის / მისამართის ახალი firewall წესი',
     'mo_NewElementExtensions' => 'Ახალი თანამშრომელი',
@@ -744,32 +726,32 @@ return [
     'cf_Path' => 'ფაილი ფაილისკენ',
     'cf_Description' => 'კომენტარი, თუ რატომ შეიტანეს ცვლილებები',
     'cf_Mode' => 'რეჟიმი',
-    'mo_BeforeDeleteFirst' => 'არსებობს მითითება ობიექტზე -% წარმოადგენს%',
+    'mo_BeforeDeleteFirst' => 'არსებობს ობიექტის ბმულები - %represent%',
     'ConstraintViolation' => '<div class=\'header\'> ლოგიკური მთლიანობის დარღვევა </div>',
-    'repAsteriskManagerUsers' => 'AMI ჩანაწერი -% წარმოადგენს%',
-    'repCallQueues' => 'ზარის რიგი -% წარმოადგენს%',
-    'repCallQueueMembers' => 'ზარის რიგის წევრი -% წარმოადგენს%',
-    'repConferenceRooms' => 'კონფერენცია -% წარმოადგენს%',
-    'repCustomFiles' => 'სისტემის ფაილი -% წარმოადგენს%',
-    'repDialplanApplications' => 'Dialplan პროგრამა -% წარმოადგენს%',
-    'repExtensionForwardingRights' => 'თანამშრომლების მარშრუტიზაციის პარამეტრები -% წარმოადგენს%',
-    'repExtensions' => 'გაფართოების ნომერი -% წარმოადგენს%',
-    'repExternalPhones' => 'გარე ნომერი -% წარმოადგენს%',
-    'repFail2BanRules' => 'Fail2Ban წესი -% წარმოადგენს%',
-    'repFirewallRules' => 'Firewall– ის წესი -% წარმოადგენს%',
-    'repIax' => 'IAX ანგარიში -% წარმოადგენს%',
-    'repIncomingRoutingTable' => 'შემომავალი დამუშავების წესი -% წარმოადგენს%',
-    'repIncomingRoutingTableNumber' => 'შემომავალი დამუშავების წესი - N% წარმოადგენს%',
-    'repLanInterfaces' => 'სისტემის ფაილი -% წარმოადგენს%',
-    'repNetworkFilters' => 'დენის დამცავი -% წარმოადგენს%',
-    'repOutgoingRoutingTable' => 'გამავალი დამუშავების წესი -% წარმოადგენს%',
-    'repOutgoingRoutingTableNumber' => 'გამავალი დამუშავების წესი - N% წარმოადგენს%',
-    'repOutWorkTimes' => 'არასამუშაო საათები -% წარმოადგენს%',
-    'repPbxSettings' => 'სადგურის პარამეტრები -% წარმოადგენს%',
-    'repSip' => 'SIP ანგარიში -% წარმოადგენს%',
-    'repSoundFiles' => 'ხმოვანი ფაილი -% წარმოადგენს%',
-    'repIvrMenu' => 'IVR მენიუ -% წარმოადგენს%',
-    'repIvrMenuActions' => 'IVR მენიუს მონაწილე -% წარმოადგენს%',
+    'repAsteriskManagerUsers' => 'AMI ჩანაწერი - %represent%',
+    'repCallQueues' => 'ზარის რიგი - %represent%',
+    'repCallQueueMembers' => 'ზარის რიგის წევრი - %represent%',
+    'repConferenceRooms' => 'კონფერენცია - %represent%',
+    'repCustomFiles' => 'სისტემის ფაილი - %represent%',
+    'repDialplanApplications' => 'Dialplan განაცხადი - %represent%',
+    'repExtensionForwardingRights' => 'თანამშრომლების მარშრუტიზაციის პარამეტრები - %represent%',
+    'repExtensions' => 'გაფართოების ნომერი - %represent%',
+    'repExternalPhones' => 'გარე ნომერი - %represent%',
+    'repFail2BanRules' => 'Fail2Ban წესი - %represent%',
+    'repFirewallRules' => 'Firewall- ის წესი - %represent%',
+    'repIax' => 'IAX ანგარიში - %represent%',
+    'repIncomingRoutingTable' => 'შემომავალი დამუშავების წესი - %represent%',
+    'repIncomingRoutingTableNumber' => 'შემომავალი დამუშავების წესი - N %represent%',
+    'repLanInterfaces' => 'სისტემის ფაილი - %represent%',
+    'repNetworkFilters' => 'დენის დამცავი - %represent%',
+    'repOutgoingRoutingTable' => 'გამავალი დამუშავების წესი - %represent%',
+    'repOutgoingRoutingTableNumber' => 'გამავალი დამუშავების წესი - N %represent%',
+    'repOutWorkTimes' => 'საათების შემდეგ - %represent%',
+    'repPbxSettings' => 'სადგურის პარამეტრები - %represent%',
+    'repSip' => 'SIP ანგარიში - %represent%',
+    'repSoundFiles' => 'ხმოვანი ფაილი - %represent%',
+    'repIvrMenu' => 'IVR მენიუ - %represent%',
+    'repIvrMenuActions' => 'მონაწილის IVR მენიუ - %represent%',
     'repLink' => 'ბმული',
     'sf_ValidationFileNameIsEmpty' => 'ფაილის სახელი მითითებული არ არის',
     'sf_Filename' => 'ფაილის სახელის ჩაწერა',
@@ -813,9 +795,9 @@ return [
 </div>',
     'lic_CurrentLicenseInfo' => 'დეტალური ინფორმაცია პროდუქტის შესახებ ლიცენზიის გასაღებაში',
     'lic_Expired' => 'პროდუქტს ვადა გაუვიდა',
-    'lic_ExpiredAfter' => 'ლიცენზია იწურება%% -ის ამოწურვის შემდეგ',
+    'lic_ExpiredAfter' => 'ლიცენზიის მოქმედების ვადა იწურება %expired%',
     'lic_Product' => 'პროდუქტი',
-    'lic_FeatureInfo' => '%% ითვლის% ლიცენზიებს% name% –ისთვის, საიდანაც% აღებულია%',
+    'lic_FeatureInfo' => 'სულ %count% ლიცენზია %name% –ზე, რომელთაგან %captured%',
     'lic_LicenseKeyProducts' => 'გააქტიურებული პროდუქტები',
     'lic_LicenseKeyOwner' => 'ლიცენზიის მფლობელი',
     'lic_ResetLicenseSettings' => 'გახსენით გასაღები',
@@ -943,7 +925,7 @@ return [
     'mo_IVRMenuShort4Dropdown' => 'IVR მენიუ',
     'mo_ModuleShort4Dropdown' => 'მოდული',
     'GoToWikiDocumentation' => 'გადადით ონლაინ დოკუმენტაციაზე',
-    'mo_ModuleSettingsError' => 'შეცდომები მოდულის პარამეტრებში -% modulename%',
+    'mo_ModuleSettingsError' => 'შეცდომები მოდულის პარამეტრებში -%modulename%',
     'adv_MessagesHeader' => 'შენიშვნა',
     'adv_MessagesHeaderError' => 'სერიოზული შეცდომა',
     'adv_YouUseDefaultWebPassword' => 'თქვენ იყენებთ სტანდარტულ პაროლს ადმინისტრაციული ინტერფეისის შესასვლელად - <a href=\'%url%\'> შეცვალეთ </a>',
@@ -951,10 +933,10 @@ return [
     'adv_FirewallDisabled' => 'Firewall სისტემაში გამორთულია - <a href=\'%url%\'> შეცვლა </a>',
     'adv_StorageDiskUnMounted' => 'დისკი არ არის დაკავშირებული პარამეტრებისა და მონაცემების შესანახად!',
     'adv_NetworksNotConfigured' => 'ქვე ქსელის დაშვებული პარამეტრების კონფიგურაცია არ არის - <a href=\'%url%\'> შეცვლა </a>',
-    'adv_AvailableNewVersionPBX' => 'PBX- ის ახალი ვერსია არის ხელმისაწვდომი - <a href=\'%url%\'>% ver% </a>',
+    'adv_AvailableNewVersionPBX' => 'PBX– ის ახალი ვერსია არის ხელმისაწვდომი - <a href=\'%url%\'> %ver% </a>',
     'adv_ThisCopyIsNotRegistered' => 'პროგრამის ეს ასლი არ არის ლიცენზირებული - <a href=\'%url%\'> უფასო გააქტიურება </a>',
-    'adv_StorageDiskRunningOutOfFreeSpace' => 'მეხსიერების დისკი იწურება თავისუფალი ადგილი (% უფასო% Mb) </a>',
-    'adv_ThisCopyHasLicensingTroubles' => 'PBX– ის ლიცენზიის პრობლემა:% შეცდომა% - <a target="_blank" href=\'%url%\'> როგორ გამოვასწოროთ </a>',
+    'adv_StorageDiskRunningOutOfFreeSpace' => 'შენახვის დისკს თავისუფალი ადგილი ეწურება (%free% მბ) </a>',
+    'adv_ThisCopyHasLicensingTroubles' => 'PBX– ის ლიცენზიის პრობლემა: %error% - <a target="_blank" href=\'%url%\'> როგორ გამოვასწოროთ </a>',
     'adv_ProblemWithInternetConnection' => 'ინტერნეტი არ არის. შეიძლება პრობლემები იყოს ფასიანი მოდულების მუშაობაში.',
     'сal_Today' => 'დღეს',
     'сal_Yesterday' => 'Გუშინ',
@@ -1028,7 +1010,7 @@ return [
     'Install or recovery' => "ინსტალაცია / აღდგენა",
     'All settings will be lost!' => 'დაუბრუნდით ქარხნის პარამეტრებს!',
     'All settings will be kept!' => 'მიმდინარე პარამეტრები შეინახება!',
-    'Cancel' => 'გაუქმება / გაუქმება',
+    'Cancel' => 'გაუქმება',
     'Install' => 'Დაინსტალირება',
     'Reinstall to' => 'განახლება ვერსიაზე',
     'Firmware version on this system:' => 'ამჟამინდელი სისტემის firmware ვერსია:',
