@@ -1,22 +1,12 @@
 <?php
 return [
-    'ex_English' => 'English(US)',
     'ex_Japanese' => '日本語',
-    'ex_Danish' => 'Dansk',
     'ex_French' => 'Le français',
-    'ex_Portuguese' => 'Português',
     'ex_Vietnamese' => 'Tiếng việt',
-    'ex_Polish' => 'Polskie',
     'ex_Swedish' => 'Svenska',
-    'ex_Turkish' => 'Türk',
     '%message%' => '%message%',
-    '%username%' => '%username%',
     '%represent%' => '%represent%',
-    '%count%' => '%count%',
     '%captured%' => '%captured%',
-    '%url%' => '%url%',
     '%free%' => '%free%',
-    '%numberbeginswith%' => '%numberbeginswith%',
     '%number%' => '%number%',
-    '%callerid%' => '%callerid%',
 ];
