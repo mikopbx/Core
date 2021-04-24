@@ -68,14 +68,6 @@ class MessagesProvider implements ServiceProviderInterface
                     $translates = require $enFilePath;
                 }
 
-                // Common phrases
-                $enFilePath = appPath('/src/Common/Messages/glossary.php');
-                if (file_exists($enFilePath)) {
-                    $glossary = require $enFilePath;
-                    $translates = array_merge($translates, $glossary);
-                }
-
-
                 if ($language !== 'en') {
                     $additionalTranslates = [];
                     // Check if we have a translation file for that lang
