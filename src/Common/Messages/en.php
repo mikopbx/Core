@@ -844,7 +844,7 @@ It can be activated once, after which the coupon becomes redeemed.
     'ext_CreateNewExtension' => 'Create new one',
     'ext_UploadError' => 'Upload error',
     'ext_UploadInProgress' => 'Uploading…',
-    'ext_InstallationInProgress' => 'Installation',
+    'ext_InstallationInProgress' => 'Installation …',
     'ext_ModuleChangeStatusError' => 'Problem with module status',
     'ext_InstallationError' => 'Error installing module',
     'DimmerWaitForPBXIsOnline' => 'Connection lost to PBX core …',
