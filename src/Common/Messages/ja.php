@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
 * MikoPBX - free phone system for small business
 * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
 *
@@ -16,8 +17,6 @@
 * You should have received a copy of the GNU General Public License along with this program.
 * If not, see <https://www.gnu.org/licenses/>.
 */
-
-return [
     'November' => '11月',
     'December' => '12月',
     'Jan' => 'Jan',
@@ -666,11 +665,11 @@ return [
     'cf_Path' => 'ファイルパス',
     'cf_Description' => '変更が行われた理由に関する解説',
     'cf_Mode' => 'モード',
-    'mo_BeforeDeleteFirst' => 'mo_BeforeDeleteFirst%は%を表します',
+    'mo_BeforeDeleteFirst' => 'オブジェクトへのリンクがあります-%represent%',
     'ConstraintViolation' => '<div class = \'header\'>論理的整合性の違反</div>',
-    'repAsteriskManagerUsers' => 'AMIレコード-%は%を表します',
-    'repCallQueues' => 'コールキュー-%は%を表します',
-    'repCallQueueMembers' => 'コールキューメンバー-%は%を表します',
+    'repAsteriskManagerUsers' => 'AMIレコード-%represent%',
+    'repCallQueues' => 'コールキュー-%represent%',
+    'repCallQueueMembers' => 'コールキューメンバー-%represent%',
     'repConferenceRooms' => '会議-%は%を表す',
     'repCustomFiles' => 'システムファイル-%は%を表します',
     'repDialplanApplications' => 'Dialplanアプリケーション-%は%を表します',
