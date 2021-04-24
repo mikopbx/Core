@@ -75,23 +75,23 @@ return [
     'qf_NatMode' => 'Modalità NAT',
     'qf_Qualify' => 'Sostieni la sessione NAT',
     'qf_Frequency' => 'Frequenza di invio in sec.',
-    'qf_NatModeInstructions' => '<div class = \'ui message\'>
-            <div class = \'ui bulleted list\'>
-                <div class = \'item\'> <b>no</b> non esegue alcuna elaborazione NAT speciale tranne quella specificata in RFC 3581
-                </Div>
-                <div class = \'item\'> <b>force_rport</b> anche se non è stato specificato alcun parametro rport, agire come se fosse
-                </Div>
-                <div class = \'item\'> <b>comedia</b> rimanda i pacchetti RTP alla porta da cui sono stati ricevuti, ignorando la porta richiesta nell\'intestazione SDP
-                </Div>
-                <div class = \'item\'> <b>auto_comedia</b> se Asterisk è in grado di determinare se il dispositivo è protetto da NAT, imposta l\'opzione comedia
-                </Div>
-                <div class = \'item\'> <b>force_rport, comedia</b> opzione che sostituisce nat = yes
-                </Div>
-            </Div>
-        </Div>',
-    'qf_QualifyInstructions' => '<div class = \'ui message\'>
-            Quando questa opzione è abilitata, Asterisk invierà pacchetti di opzioni SIP con la frequenza specificata. Ciò è necessario per supportare il tunneling NAT sul router.
-        </Div>',
+    'qf_NatModeInstructions' => '<div class=\'ui message \'>
+            <div class=\'ui bulleted list\'>
+                <div class=\'item\'> <b> no </b> Non eseguire alcun trattamento NAT speciale diverso da RFC 3581
+                </div>
+                <div class=\'item\'> <b> force_rport </b> anche se non è stato specificato alcun parametro rport, agire come se fosse
+                </div>
+                <div class=\'item\'> <b> comedia </b> invia i pacchetti RTP alla porta da cui sono stati ricevuti, ignorando la porta richiesta nell\'intestazione SDP
+                </div>
+                <div class=\'item\'> <b> auto_comedia </b> se Asterisk può determinare che il dispositivo è dietro NAT, imposta l\'opzione comedia
+                </div>
+                <div class=\'item\'> <b> force_rport, comedia </b> opzione per sostituire nat = yes
+                </div>
+            </div>
+        </div>',
+    'qf_QualifyInstructions' => '<div class=\'ui message \'>
+            Quando questa opzione è abilitata, Asterisk invierà pacchetti di opzioni SIP alla frequenza specificata. Ciò è necessario per supportare il tunneling NAT sul router.
+        </div>',
     'AdvancedOptions' => 'Impostazioni avanzate',
     'ConnectionSettings' => 'Impostazioni di connessione',
     'BreadcrumbHome' => 'All\'inizio',
@@ -931,7 +931,7 @@ Può essere attivato una volta, dopo di che il coupon viene riscattato.
     'Firmware version on this system:' => 'Versione corrente del firmware di sistema:',
     'Reinstall to' => 'Aggiorna alla versione',
     'Install' => 'Smettere',
-    'Cancel' => 'Annulla',
+    'Cancel' => 'Annulla / Cancel',
     'All settings will be kept!' => 'Le impostazioni correnti verranno salvate!',
     'All settings will be lost!' => 'Torna alle impostazioni di fabbrica!',
     'Install or recovery' => 'Installazione / ripristino',

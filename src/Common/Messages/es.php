@@ -933,7 +933,7 @@ Se puede activar una vez, después de lo cual el cupón se canjea.
     'Firmware version on this system:' => 'Versión actual del firmware del sistema:',
     'Reinstall to' => 'Actualizar a la versión',
     'Install' => 'Para parar',
-    'Cancel' => 'Cancelar',
+    'Cancel' => 'Cancelar / Cancel',
     'All settings will be kept!' => '¡Se guardarán los ajustes actuales!',
     'All settings will be lost!' => '¡Vuelva a la configuración de fábrica!',
     'Install or recovery' => 'Instalación / recuperación',

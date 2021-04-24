@@ -940,7 +940,7 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'Firmware version on this system:' => 'Aktuell version av systemets firmware:',
     'Reinstall to' => 'Uppgradera till version',
     'Install' => 'Att stoppa',
-    'Cancel' => 'Avbryt',
+    'Cancel' => 'Avbryt / Cancel',
     'All settings will be kept!' => 'De aktuella inställningarna sparas!',
     'All settings will be lost!' => 'Återgå till fabriksinställningar!',
     'Install or recovery' => 'Installation / återställning',

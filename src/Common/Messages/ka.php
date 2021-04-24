@@ -1012,7 +1012,7 @@ return [
     'Install or recovery' => "ინსტალაცია / აღდგენა",
     'All settings will be lost!' => 'დაუბრუნდით ქარხნის პარამეტრებს!',
     'All settings will be kept!' => 'მიმდინარე პარამეტრები შეინახება!',
-    'Cancel' => 'გაუქმება',
+    'Cancel' => 'გაუქმება / Cancel',
     'Install' => 'Დაინსტალირება',
     'Reinstall to' => 'განახლება ვერსიაზე',
     'Firmware version on this system:' => 'ამჟამინდელი სისტემის firmware ვერსია:',
