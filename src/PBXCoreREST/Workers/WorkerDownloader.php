@@ -42,6 +42,7 @@ class WorkerDownloader extends WorkerBase
      */
     public function start($params): void
     {
+        $this->old_memory_limit = ini_get('memory_limit');
         $filename = $params[2]??'';
         if (file_exists($filename)) {
             $this->settings = json_decode(file_get_contents($filename), true);
@@ -49,7 +50,6 @@ class WorkerDownloader extends WorkerBase
             Util::sysLogMsg(__CLASS__, 'Wrong download settings', LOG_ERR);
             return;
         }
-        $this->old_memory_limit = ini_get('memory_limit');
         ini_set('memory_limit', '300M');
 
         $temp_dir            = dirname($this->settings['res_file']);
@@ -97,7 +97,7 @@ class WorkerDownloader extends WorkerBase
         curl_exec($ch);
         $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         if ($http_code !== 200) {
-            file_put_contents($this->error_file, "Curl return code $http_code", FILE_APPEND);
+            file_put_contents($this->error_file, "Curl return code $http_code. ".curl_error($ch), FILE_APPEND);
         }
         curl_close($ch);
 
@@ -162,7 +162,6 @@ class WorkerDownloader extends WorkerBase
     public function __destruct()
     {
         ini_set('memory_limit', $this->old_memory_limit);
-
     }
 
     /**

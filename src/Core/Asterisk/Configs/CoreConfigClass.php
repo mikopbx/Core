@@ -162,7 +162,7 @@ abstract class CoreConfigClass extends Injectable implements AsteriskConfigInter
      */
     protected function confBlockWithComments(string $addition): string
     {
-        return $addition;
+        return rtrim($addition).PHP_EOL;
     }
 
     /**

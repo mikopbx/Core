@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
 * MikoPBX - free phone system for small business
 * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
 *
@@ -16,8 +17,6 @@
 * You should have received a copy of the GNU General Public License along with this program.
 * If not, see <https://www.gnu.org/licenses/>.
 */
-
-return [
     'January' => 'January',
     'February' => 'February',
     'March' => 'March',
@@ -739,7 +738,7 @@ It can be activated once, after which the coupon becomes redeemed.
     'lic_LicenseWarningHeader' => 'This copy of the program is not registered',
     'lic_LicenseWarningText' => 'Go to <a href=\'/admin-cabinet/licensing/modify/\'>licensing</a> and follow the steps to registered your system',
     'lic_FailedToGetTrialKey2051' => 'Failed to register: (2051) You have already got trial key on this host for another email/company',
-    'lic_FailedToGetTrialKey2022' => 'Failed to register: (2022) This email has already used for another company name. Try to find previous key, we sent it from lic@miko.ru address.',
+    'lic_FailedToGetTrialKey2022' => 'Failed to register: (2022) This email has already used for another company name. Try to find the previous key, we sent it from lic@miko.ru address.',
     'lic_FailedActivateCoupon2057' => '(2057) This coupon is disabled',
     'lic_FailedActivateCoupon2041' => '(2041) Your coupon has already activated',
     'lic_FailedActivateCoupon2040' => '(2040) Unknown coupon code',
@@ -842,7 +841,7 @@ It can be activated once, after which the coupon becomes redeemed.
     'ext_AddNewExtension' => 'Upload new module',
     'ext_CreateNewExtension' => 'Create new one',
     'ext_UploadError' => 'Upload error',
-    'ext_UploadInProgress' => 'Uploading …',
+    'ext_UploadInProgress' => 'Uploading…',
     'ext_InstallationInProgress' => 'Installation',
     'ext_ModuleChangeStatusError' => 'Problem with module status',
     'ext_InstallationError' => 'Error installing module',

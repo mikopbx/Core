@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
 * MikoPBX - free phone system for small business
 * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
 *
@@ -16,8 +17,6 @@
 * You should have received a copy of the GNU General Public License along with this program.
 * If not, see <https://www.gnu.org/licenses/>.
 */
-
-return [
     'mm_SSHConsole' => 'Consola SSH',
     'ex_Email' => 'Correo electrónico',
     'bt_ToolTipEdit' => 'Editar',
@@ -126,7 +125,7 @@ return [
     'BreadcrumbCustomFiles' => 'Archivos del sistema',
     'SubHeaderCustomFiles' => 'Casotización de archivos de configuración del sistema y Asterisk',
     'BreadcrumbSoundFiles' => 'Archivos de sonido',
-    'SubHeaderSoundFiles' => 'Se utiliza en varios escenarios de llamadas y menús de voz interactivos.',
+    'SubHeaderSoundFiles' => 'Se utiliza en varios escenarios de llamadas y menús de voz interactivos',
     'BreadcrumbLicensing' => 'Licencia',
     'SubHeaderLicensing' => 'Regístrese en Marketplace para acceder a nuevas extensiones y módulos',
     'BreadcrumbErrors' => 'Mensaje de error',
@@ -136,7 +135,7 @@ return [
     'BreadcrumbSession' => 'Iniciar sesión',
     'BreadcrumbSessionend' => 'Iniciar sesión',
     'BreadcrumbSystemDiagnostic' => 'Diagnóstico del sistema',
-    'SubHeaderSystemDiagnostic' => 'Colección de registros del sistema para un análisis detallado de errores en el funcionamiento de la central.',
+    'SubHeaderSystemDiagnostic' => 'Colección de registros del sistema para un análisis detallado de errores en el funcionamiento de la central',
     'BreadcrumbFail2Ban' => 'Protección contra piratería',
     'SubHeaderFail2Ban' => 'Bloquea automáticamente las contraseñas',
     'mm_CallDetailRecords' => 'Historial de llamadas',

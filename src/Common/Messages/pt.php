@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
 * MikoPBX - free phone system for small business
 * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
 *
@@ -16,8 +17,6 @@
 * You should have received a copy of the GNU General Public License along with this program.
 * If not, see <https://www.gnu.org/licenses/>.
 */
-
-return [
     'сal_Last30Days' => 'Últimos 30 dias',
     'сal_LastWeek' => 'Últimos 7 dias',
     'сal_Yesterday' => 'Ontem',
@@ -634,7 +633,7 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'or_ValidationPleaseSelectProvider' => 'Selecione o provedor ao qual esta regra se aplicará.',
     'or_RuleDescriptionBeginMatch' => 'Para números de qualquer tamanho, começando com <b>%numberbeginswith%</b>',
     'or_RuleDescriptionFullMatch' => 'Apenas para o número <b>%numberbeginswith%</b>',
-    'or_RuleDescription' => '<b>% numberbeginswith%</b> no início e depois <b>% restnumbers%</b> dígitos',
+    'or_RuleDescription' => '<b> %numberbeginswith% </b> no início seguido por <b> %restnumbers% </b> dígitos',
     'or_TableColumnNote' => 'Uma nota',
     'or_TableColumnProvider' => 'Fornecedor',
     'or_TableColumnRule' => 'A regra',

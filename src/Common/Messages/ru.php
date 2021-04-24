@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
 * MikoPBX - free phone system for small business
 * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
 *
@@ -16,27 +17,6 @@
 * You should have received a copy of the GNU General Public License along with this program.
 * If not, see <https://www.gnu.org/licenses/>.
 */
-
-return [
-    'ex_Russian' => 'Русский',
-    'ex_English' => 'English(US)',
-    'ex_EnglishUK' => 'English(UK)',
-    'ex_Japanese' => '日本語',
-    'ex_Deutsch' => 'Deutsch',
-    'ex_Danish' => 'Dansk',
-    'ex_Spanish' => 'Espanol',
-    'ex_French' => 'Le français',
-    'ex_Italian' => 'Italiano',
-    'ex_Portuguese' => 'Português',
-    'ex_Ukrainian' => 'Український',
-    'ex_Vietnamese' => 'Tiếng việt',
-    'ex_Chinese' => '中国人',
-    'ex_Polish' => 'Polskie',
-    'ex_Dutch' => 'Nederlands',
-    'ex_Swedish' => 'Svenska',
-    'ex_Czech' => 'Čeština',
-    'ex_Turkish' => 'Türk',
-    'ex_Georgian' => 'ქართველი',
     'January' => 'Январь',
     'February' => 'Февраль',
     'March' => 'Март',
@@ -933,8 +913,8 @@ return [
     'ext_AddNewExtension' => 'Загрузить новый модуль',
     'ext_CreateNewExtension' => 'Создать свой модуль',
     'ext_UploadError' => 'Ошибка закачки модуля',
-    'ext_UploadInProgress' => 'Загрузка модуля',
-    'ext_InstallationInProgress' => 'Установка модуля',
+    'ext_UploadInProgress' => 'Загрузка модуля …',
+    'ext_InstallationInProgress' => 'Установка модуля …',
     'ext_ModuleChangeStatusError' => 'Проблемы при изменении статуса модуля',
     'ext_InstallationError' => 'Ошибка при установке модуля',
     'DimmerWaitForPBXIsOnline' => 'Разрыв связи с ядром PBX …',
