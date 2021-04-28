@@ -153,12 +153,6 @@ class OutgoingContext extends CoreConfigClass
         $conf .= 'same => n,Set(number=${FILTER(\*\#\+1234567890,${number})})' . "\n\t";
         $conf .= $changeExtension;
 
-        // Формирование исходящего dialplan доп. модулей;. Переопределение dialplan маршрута.
-        $confModules = $this->hookModulesMethod(CoreConfigClass::GENERATE_OUT_ROUT_CONTEXT, [$rout]);
-        $conf        .= $confModules;
-        if ( ! empty($confModules)) {
-            $conf .= "\t";
-        }
         $conf .= 'same => n,ExecIf($["${number}x" == "x"]?Hangup())' . "\n\t";
         $conf .= 'same => n,Set(ROUTFOUND=1)' . "\n\t";
         $conf .= 'same => n,Gosub(${ISTRANSFER}dial,${EXTEN},1)' . "\n\t";
@@ -166,10 +160,18 @@ class OutgoingContext extends CoreConfigClass
         $conf .= 'same => n,ExecIf($["${EXTERNALPHONE}" == "${src_number}"]?Set(DOPTIONS=tk))' . "\n\t";
         $conf .= 'same => n,ExecIf($["${OUTGOING_CID}x" != "x"]?Set(DOPTIONS=${DOPTIONS}f(${OUTGOING_CID})))' . "\n\t";
 
+        $dialCommand = $this->getDialCommand($rout);
+        $conf .= 'same => n,Set(DIAL_COMMAND='.$dialCommand.')' . "\n\t";
         // Описываем возможность прыжка в пользовательский sub контекст.
         $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(' . $rout['providerid'] . '-outgoing-custom,${EXTEN},1)}" == "1"]?' . $rout['providerid'] . '-outgoing-custom,${EXTEN},1)' . "\n\t";
 
-        $conf .= $this->getDialCommand($rout);
+        // Формирование исходящего dialplan доп. модулей;. Переопределение dialplan маршрута.
+        $confModules = $this->hookModulesMethod(CoreConfigClass::GENERATE_OUT_ROUT_CONTEXT, [$rout]);
+        $conf       .= $confModules;
+        if ( ! empty($confModules)) {
+            $conf .= "\t";
+        }
+        $conf .= 'same => n,Dial(${DIAL_COMMAND},600,${DOPTIONS}TKU(${ISTRANSFER}dial_answer)b(dial_create_chan,s,1))' . "\n\t";
         // Формирование dialplan доп. модулей после команды Dial.
         $confModules = $this->hookModulesMethod(CoreConfigClass::GENERATE_OUT_ROUT_AFTER_DIAL_CONTEXT, [$rout]);
         $conf        .= $confModules;
@@ -177,7 +179,6 @@ class OutgoingContext extends CoreConfigClass
             $conf .= "\t";
         }
         $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(' . $rout['providerid'] . '-outgoing-after-dial-custom,${EXTEN}),1}" == "1"]?' . $rout['providerid'] . '-outgoing-after-dial-custom,${EXTEN},1)' . "\n\t";
-
         $conf .= 'same => n,ExecIf($["${ISTRANSFER}x" != "x"]?Gosub(${ISTRANSFER}dial_hangup,${EXTEN},1))' . "\n\t";
         $conf .= 'same => n,ExecIf($["${DIALSTATUS}" = "ANSWER"]?Hangup())' . "\n\t";
         $conf .= 'same => n,Set(pt1c_UNIQUEID=${EMPTY_VALUE})' . "\n\t";
@@ -214,13 +215,11 @@ class OutgoingContext extends CoreConfigClass
      */
     private function getDialCommand(array $rout): string
     {
-        $conf = '';
         if ($rout['technology'] === IAXConf::TYPE_IAX2) {
-            $conf .= 'same => n,Dial(' . $rout['technology'] . '/' . $rout['providerid'] . '/${number},600,${DOPTIONS}TKU(${ISTRANSFER}dial_answer)b(dial_create_chan,s,1))' . "\n\t";
+            $command = $rout['technology'] . '/' . $rout['providerid'] . '/${number}';
         } else {
-            $conf .= 'same => n,Dial(' . $rout['technology'] . '/${number}@' . $rout['providerid'] . ',600,${DOPTIONS}TKU(${ISTRANSFER}dial_answer)b(dial_create_chan,s,1))' . "\n\t";
+            $command = $rout['technology'] . '/${number}@' . $rout['providerid'];
         }
-
-        return $conf;
+        return $command;
     }
 }
