@@ -209,7 +209,7 @@ class SysLogsManagementProcessor extends Injectable
         $res->processor = __METHOD__;
 
         $progress_file = "{$resultFile}.progress";
-        if ( ! file_exists($progress_file)) {
+        if ( !file_exists($progress_file)) {
             $res->messages[] = 'Archive does not exist. Try again!';
         } elseif (file_exists($progress_file) && file_get_contents($progress_file) === '100') {
             $uid          = Util::generateRandomString(36);
@@ -224,8 +224,9 @@ class SysLogsManagementProcessor extends Injectable
             $res->data['status']   = "READY";
             $res->data['filename'] = "{$uid}/{$link_name}";
         } else {
-            $res->success        = true;
-            $res->data['status'] = "preparing";
+            $res->success           = true;
+            $res->data['status']    = "preparing";
+            $res->data['progress']  = file_get_contents($progress_file);
         }
 
         return $res;

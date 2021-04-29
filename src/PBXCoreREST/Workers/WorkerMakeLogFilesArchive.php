@@ -47,18 +47,30 @@ class WorkerMakeLogFilesArchive extends WorkerBase
 
         $rmPath      = Util::which('rm');
         $za7Path     = Util::which('7za');
+        $findPath    = Util::which('find');
 
         if (file_exists($resultFile)) {
             Processes::mwExec("{$rmPath} -rf {$resultFile}");
         }
 
-        $logDir = System::getLogDir();
-        Processes::mwExec("{$za7Path} a -tzip -mx5 -spf '{$resultFile}' '{$logDir}'");
-        $tcpDumpDir = "{$logDir}/tcpDump";
+        $logDir      = System::getLogDir();
+        Processes::mwExec("{$findPath} {$logDir} -type f ", $out);
+        $countFiles = count($out);
+        foreach ($out as $index => $filename) {
+            if(!file_exists($filename)){
+                continue;
+            }
+            Processes::mwExec("{$za7Path} a -tzip -spf '{$resultFile}' '{$filename}'", $out);
+            $progress = round(100*($index + 1)/$countFiles);
+            if ($progress % 5 === 0) {
+                file_put_contents($progress_file, $progress);
+                echo "$progress \n";
+            }
+        }
         file_put_contents($progress_file, '100');
 
         // Delete TCP dump
-        Processes::mwExec("{$rmPath} -rf $tcpDumpDir");
+        Processes::mwExec("{$rmPath} -rf {$logDir}/tcpDump");
     }
 }
 
