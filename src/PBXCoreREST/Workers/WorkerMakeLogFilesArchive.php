@@ -25,6 +25,7 @@ use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\System\Util;
+use MikoPBX\PBXCoreREST\Lib\SysinfoManagementProcessor;
 use Throwable;
 
 class WorkerMakeLogFilesArchive extends WorkerBase
@@ -41,8 +42,9 @@ class WorkerMakeLogFilesArchive extends WorkerBase
             Util::sysLogMsg("WorkerMakeLogFilesArchive", 'Wrong settings', LOG_ERR);
             return;
         }
-        $resultFile = $file_data['result_file'];
-        $progress_file = "{$resultFile}.progress";
+        $tcpdump_only  = $file_data['tcpdump_only']??true;
+        $resultFile         = $file_data['result_file'];
+        $progress_file      = "{$resultFile}.progress";
         file_put_contents($progress_file, '0');
 
         $rmPath      = Util::which('rm');
@@ -52,9 +54,17 @@ class WorkerMakeLogFilesArchive extends WorkerBase
         if (file_exists($resultFile)) {
             Processes::mwExec("{$rmPath} -rf {$resultFile}");
         }
+        $logDir         = System::getLogDir();
+        if($tcpdump_only){
+            $command = "{$findPath} {$logDir}/tcpDump -type f ";
+        }else{
+            // Collect system info
+            $systemInfoFile = "{$logDir}/system-information.log";
+            file_put_contents($systemInfoFile, SysinfoManagementProcessor::prepareSysyinfoContent());
+            $command = "{$findPath} {$logDir} -type f ";
+        }
+        Processes::mwExec($command, $out);
 
-        $logDir      = System::getLogDir();
-        Processes::mwExec("{$findPath} {$logDir} -type f ", $out);
         $countFiles = count($out);
         foreach ($out as $index => $filename) {
             if(!file_exists($filename)){
@@ -68,9 +78,11 @@ class WorkerMakeLogFilesArchive extends WorkerBase
             }
         }
         file_put_contents($progress_file, '100');
-
-        // Delete TCP dump
-        Processes::mwExec("{$rmPath} -rf {$logDir}/tcpDump");
+        if($tcpdump_only === true){
+            // Delete TCP dump
+            Processes::mwExec("{$rmPath} -rf {$logDir}/tcpDump");
+        }
+        Processes::mwExec("{$rmPath} -rf $systemInfoFile $settings_file");
     }
 }
 
