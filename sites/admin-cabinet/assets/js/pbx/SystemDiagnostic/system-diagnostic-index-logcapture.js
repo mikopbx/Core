@@ -64,6 +64,7 @@ var archivePackingCheckWorker = {
 
       if (response.status === 'READY') {
         systemDiagnosticCapture.$stopBtn.removeClass('disabled loading').addClass('disabled');
+        systemDiagnosticCapture.$downloadBtn.removeClass('disabled loading');
         systemDiagnosticCapture.$startBtn.removeClass('disabled loading');
         window.location = response.filename;
         window.clearTimeout(archivePackingCheckWorker.timeoutHandle);
@@ -80,6 +81,7 @@ var archivePackingCheckWorker = {
 };
 var systemDiagnosticCapture = {
   $startBtn: $('#start-capture-button'),
+  $downloadBtn: $('#download-logs-button'),
   $stopBtn: $('#stop-capture-button'),
   $showBtn: $('#show-last-log'),
   $dimmer: $('#capture-log-dimmer'),
@@ -101,6 +103,7 @@ var systemDiagnosticCapture = {
       systemDiagnosticCapture.$startBtn.on('click', function (e) {
         e.preventDefault();
         systemDiagnosticCapture.$startBtn.addClass('disabled loading');
+        systemDiagnosticCapture.$downloadBtn.addClass('disabled loading');
         systemDiagnosticCapture.$stopBtn.removeClass('disabled');
         PbxApi.SyslogStartLogsCapture(systemDiagnosticCapture.cbAfterStartCapture);
       });
@@ -110,6 +113,13 @@ var systemDiagnosticCapture = {
         systemDiagnosticCapture.$stopBtn.addClass('loading');
         systemDiagnosticCapture.$dimmer.addClass('active');
         PbxApi.SyslogStopLogsCapture(systemDiagnosticCapture.cbAfterStopCapture);
+      });
+
+      systemDiagnosticCapture.$downloadBtn.on('click', (e) => {
+        e.preventDefault();
+        systemDiagnosticCapture.$downloadBtn.addClass('disabled loading');
+        systemDiagnosticCapture.$startBtn.addClass('disabled loading');
+        PbxApi.SyslogPrepareLog(systemDiagnosticCapture.cbAfterDownloadCapture);
       });
     }
 
@@ -131,6 +141,20 @@ var systemDiagnosticCapture = {
     }
 
     return cbAfterStartCapture;
+  }(),
+
+  /**
+   * Callback after push stop logs collect button
+   * @param response
+   */
+  cbAfterDownloadCapture: function () {
+    function cbAfterStopCapture(response) {
+      if (response !== false) {
+        archivePackingCheckWorker.initialize(response.filename);
+      }
+    }
+
+    return cbAfterStopCapture;
   }(),
 
   /**

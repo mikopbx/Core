@@ -1054,4 +1054,5 @@ It can be activated once, after which the coupon becomes redeemed.
     'pr_EnterHostOrIpPlaceholder' => 'Enter IP address or subnet',
     'pr_EnterHostOrIp' => 'Additional provider hosts or ip',
     'auth_RememberMe' => 'Remember me',
+    'log_DownloadLogs' => 'Download logs',
 ];

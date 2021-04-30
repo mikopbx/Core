@@ -1055,4 +1055,5 @@ return [
     'msg_ErrorHeader' => 'Ошибка',
     'msg_WarningHeader' => 'Внимание',
     'msg_infoHeader' => 'Информация',
+    'log_DownloadLogs' => 'Скачать все логи',
 ];

@@ -26,6 +26,7 @@ const PbxApi = {
 	pbxGetPeerStatus: `${Config.pbxUrl}/pbxcore/api/sip/getSipPeer`,
 	pbxGetActiveCalls: `${Config.pbxUrl}/pbxcore/api/cdr/getActiveCalls`, // Получить активные звонки,
 	pbxGetActiveChannels: `${Config.pbxUrl}/pbxcore/api/cdr/getActiveChannels`, // Получить активные звонки,
+	syslogPrepareLog: `${Config.pbxUrl}/pbxcore/api/syslog/prepareLog`,
 	syslogStartLogsCapture: `${Config.pbxUrl}/pbxcore/api/syslog/startLog`,
 	syslogStopLogsCapture: `${Config.pbxUrl}/pbxcore/api/syslog/stopLog`,
 	syslogGetLogsList: `${Config.pbxUrl}/pbxcore/api/syslog/getLogsList`, //curl http://127.0.0.1/pbxcore/api/system/getLogsList
@@ -423,6 +424,26 @@ const PbxApi = {
 	SyslogStartLogsCapture(callback) {
 		$.api({
 			url: PbxApi.syslogStartLogsCapture,
+			on: 'now',
+			successTest: PbxApi.successTest,
+			onSuccess(response) {
+				callback(response.data);
+			},
+			onFailure() {
+				callback(false);
+			},
+			onError() {
+				callback(false);
+			},
+		});
+	},
+	/**
+	 * Start logs collection
+	 * @param callback function
+	 */
+	SyslogPrepareLog(callback) {
+		$.api({
+			url: PbxApi.syslogPrepareLog,
 			on: 'now',
 			successTest: PbxApi.successTest,
 			onSuccess(response) {
