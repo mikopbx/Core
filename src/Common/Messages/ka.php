@@ -1052,4 +1052,5 @@ return [
     'sd_CollectingLogsInfo' => 'ჟურნალების ფაილების ჩამონათვალის მიღება',
     'sd_PackingLogFiles' => 'შეგროვებული მონაცემების შეფუთვა',
     'msg_ErrorHeader' => 'შეცდომა',
+    'log_DownloadLogs' => 'ჩამოტვირთეთ ყველა ჟურნალი',
 ];

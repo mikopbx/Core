@@ -1052,4 +1052,5 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá đ
     'gs_PBXAllowGuestCalls' => 'Cho phép các cuộc gọi đến từ bất kỳ máy chủ nào',
     'pr_EnterHostOrIp' => 'Địa chỉ nhà cung cấp bổ sung',
     'auth_RememberMe' => 'Nhớ tôi',
+    'log_DownloadLogs' => 'Tải xuống tất cả nhật ký',
 ];

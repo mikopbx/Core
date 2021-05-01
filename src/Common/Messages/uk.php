@@ -1052,4 +1052,5 @@ return [
     'pr_EnterHostOrIpPlaceholder' => 'Введіть IP адреса або підмережа',
     'pr_EnterHostOrIp' => 'Додаткові адреси провайдера',
     'auth_RememberMe' => 'Запам\'ятати мене',
+    'log_DownloadLogs' => 'Завантажити все логи',
 ];

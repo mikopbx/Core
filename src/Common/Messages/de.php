@@ -1055,4 +1055,5 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
     'pr_EnterHostOrIpPlaceholder' => 'Geben Sie die IP-Adresse oder das Subnetz ein',
     'pr_EnterHostOrIp' => 'Zusätzliche Anbieteradressen',
     'auth_RememberMe' => 'Behalte mich in Erinnerung',
+    'log_DownloadLogs' => 'Laden Sie alle Protokolle herunter',
 ];

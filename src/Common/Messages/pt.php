@@ -1052,4 +1052,5 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'gs_PBXAllowGuestCalls' => 'Permitir chamadas de qualquer servidor',
     'pr_EnterHostOrIp' => 'Endereços de provedores adicionais',
     'auth_RememberMe' => 'Lembre de mim',
+    'log_DownloadLogs' => 'Baixar todos os logs',
 ];

@@ -1052,4 +1052,5 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'pr_EnterHostOrIpPlaceholder' => 'Wprowadź adres IP lub podsieć',
     'pr_EnterHostOrIp' => 'Dodatkowe adresy dostawców',
     'auth_RememberMe' => 'Zapamiętaj mnie',
+    'log_DownloadLogs' => 'Pobierz wszystkie dzienniki',
 ];

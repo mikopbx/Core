@@ -1052,4 +1052,5 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
     'pr_EnterHostOrIpPlaceholder' => 'IP adresini veya alt ağı girin',
     'pr_EnterHostOrIp' => 'Ek sağlayıcı adresleri',
     'auth_RememberMe' => 'Beni Hatırla',
+    'log_DownloadLogs' => 'Tüm günlükleri indirin',
 ];

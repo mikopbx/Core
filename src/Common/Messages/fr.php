@@ -1052,4 +1052,5 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'gs_PBXAllowGuestCalls' => 'Autoriser les appels entrants de tous les serveurs',
     'pr_EnterHostOrIp' => 'Adresses de fournisseurs supplémentaires',
     'auth_RememberMe' => 'Souviens-toi de moi',
+    'log_DownloadLogs' => 'Téléchargez tous les journaux',
 ];

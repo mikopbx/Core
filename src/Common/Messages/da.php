@@ -1052,4 +1052,5 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'pr_NoAnyAdditionalHosts' => 'Ingen yderligere adresser er angivet for denne udbyder',
     'pr_EnterHostOrIp' => 'Yderligere udbyderadresser',
     'auth_RememberMe' => 'Husk mig',
+    'log_DownloadLogs' => 'Download alle logfiler',
 ];

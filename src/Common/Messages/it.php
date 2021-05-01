@@ -1052,4 +1052,5 @@ Può essere attivato una volta, dopo di che il coupon viene riscattato.
     'gs_PBXAllowGuestCalls' => 'Consenti chiamate in arrivo da qualsiasi server',
     'pr_EnterHostOrIp' => 'Indirizzi di provider aggiuntivi',
     'auth_RememberMe' => 'Ricordati di me',
+    'log_DownloadLogs' => 'Scarica tutti i log',
 ];

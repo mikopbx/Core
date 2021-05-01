@@ -1052,4 +1052,5 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'pr_EnterHostOrIpPlaceholder' => 'Zadejte IP adresu nebo podsíť',
     'gs_PBXAllowGuestCalls' => 'Povolit příchozí hovory ze všech serverů',
     'pr_EnterHostOrIp' => 'Další adresy poskytovatelů',
+    'log_DownloadLogs' => 'Stáhněte si všechny protokoly',
 ];

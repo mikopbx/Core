@@ -1052,4 +1052,5 @@ return [
     'pr_NoAnyAdditionalHosts' => '没有为此提供商指定其他地址',
     'pr_EnterHostOrIpPlaceholder' => '输入IP地址或子网',
     'auth_RememberMe' => '记得我',
+    'log_DownloadLogs' => '下载所有日志',
 ];

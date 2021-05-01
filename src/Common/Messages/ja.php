@@ -1052,4 +1052,5 @@ return [
     'gs_PBXAllowGuestCalls' => '任意のサーバーからの着信を許可する',
     'pr_EnterHostOrIp' => '追加のプロバイダーアドレス',
     'auth_RememberMe' => '私を覚えてますか',
+    'log_DownloadLogs' => 'すべてのログをダウンロードする',
 ];

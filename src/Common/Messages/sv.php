@@ -1052,4 +1052,5 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'gs_PBXAllowGuestCalls' => 'Tillåt inkommande samtal från alla servrar',
     'pr_EnterHostOrIp' => 'Ytterligare leverantörsadresser',
     'auth_RememberMe' => 'Kom ihåg mig',
+    'log_DownloadLogs' => 'Ladda ner alla loggar',
 ];

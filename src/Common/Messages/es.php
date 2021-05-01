@@ -1052,4 +1052,5 @@ Se puede activar una vez, después de lo cual el cupón se canjea.
     'pr_EnterHostOrIpPlaceholder' => 'Ingrese la dirección IP o la subred',
     'pr_EnterHostOrIp' => 'Direcciones de proveedores adicionales',
     'auth_RememberMe' => 'Recuérdame',
+    'log_DownloadLogs' => 'Descargar todos los registros',
 ];
