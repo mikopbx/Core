@@ -26,9 +26,12 @@ use MikoPBX\Common\Providers\ModelsCacheProvider;
 use MikoPBX\Common\Providers\ModelsMetadataProvider;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\Providers\EventsLogDatabaseProvider;
+use MikoPBX\Core\System\Util;
 use MikoPBX\Modules\PbxExtensionUtils;
 use Phalcon\Db\Adapter\AdapterInterface;
 use Phalcon\Di;
+use Phalcon\Events\Event;
+use Phalcon\Events\Manager;
 use Phalcon\Messages\Message;
 use Phalcon\Messages\MessageInterface;
 use Phalcon\Mvc\Model;
@@ -73,6 +76,29 @@ class ModelsBase extends Model
         self::setup(['orm.events' => true]);
         $this->keepSnapshots(true);
         $this->addExtensionModulesRelations();
+
+        $eventsManager = new Manager();
+
+        $eventsManager->attach(
+            'model:afterSave',
+            function (Event $event, $record){
+                $record->processSettingsChanges($event->getType());
+                self::clearCache(get_class($record));
+                return true;
+            }
+        );
+
+        $eventsManager->attach(
+            'model:afterDelete',
+            function (Event $event, $record){
+                $record->processSettingsChanges($event->getType());
+                self::clearCache(get_class($record));
+                return true;
+            }
+        );
+
+        $this->setEventsManager($eventsManager);
+
     }
 
     /**
@@ -673,19 +699,12 @@ class ModelsBase extends Model
         return $result;
     }
 
-    /**
-     * After save processor
-     */
-    public function afterSave(): void
-    {
-        $this->processSettingsChanges('afterSave');
-        self::clearCache(static::class);
-    }
+
 
     /**
      * Sends changed fields and settings to backend worker WorkerModelsEvents
      *
-     * @param $action string may be afterSave or afterDelete
+     * @param $action string may be model:afterSave or model:afterDelete
      */
     private function processSettingsChanges(string $action): void
     {
@@ -703,7 +722,7 @@ class ModelsBase extends Model
         } // nothing changed
 
         $changedFields = $this->getUpdatedFields();
-        if (empty($changedFields) && $action === 'afterSave') {
+        if (empty($changedFields) && $action === 'model:afterSave') {
             return;
         }
         $this->sendChangesToBackend($action, $changedFields);
@@ -730,6 +749,7 @@ class ModelsBase extends Model
         $id      = $this->$idProperty;
         $jobData = json_encode(
             [
+                'source'        => BeanstalkConnectionModelsProvider::SOURCE_MODELS_CHANGED,
                 'model'         => get_class($this),
                 'recordId'      => $id,
                 'action'        => $action,
@@ -747,6 +767,8 @@ class ModelsBase extends Model
      */
     public static function clearCache(string $calledClass): void
     {
+        Util::sysLogMsg(__METHOD__, "Clear acahe for ".$calledClass, LOG_DEBUG);
+
         $di = Di::getDefault();
         if ($di === null) {
             return;
@@ -777,15 +799,6 @@ class ModelsBase extends Model
             }
         }
 
-    }
-
-    /**
-     * После удаления данных любой модели
-     */
-    public function afterDelete(): void
-    {
-        $this->processSettingsChanges('afterDelete');
-        self::clearCache(static::class);
     }
 
     /**

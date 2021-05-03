@@ -103,7 +103,6 @@ class Users extends ModelsBase
     {
         // Обновим кеш для списков выбора если поменяли имя, фамилию сотрудника
         ModelsBase::clearCache(Extensions::class);
-        parent::afterSave();
     }
 
 }

@@ -60,6 +60,5 @@ class CallDetailRecordsTmp extends CallDetailRecordsBase
             }
             $newCdr->save();
         }
-        parent::afterSave();
     }
 }

@@ -213,7 +213,6 @@ class PbxSettings extends ModelsBase
      */
     public function afterSave(): void
     {
-        parent::afterSave();
         if ($this->itHasFirewallParametersChanges()) {
             FirewallRules::updatePorts($this);
         }

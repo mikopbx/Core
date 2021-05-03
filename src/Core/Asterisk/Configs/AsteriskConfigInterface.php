@@ -64,6 +64,8 @@ interface AsteriskConfigInterface
 
     public const GET_DEPENDENCE_MODELS = 'getDependenceModels';
 
+    public const GET_SETTINGS = 'getSettings';
+
     /**
      * Generates core modules config files with cli messages before and after generation
      */

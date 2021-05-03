@@ -89,7 +89,7 @@ abstract class CoreConfigClass extends Injectable implements AsteriskConfigInter
      *
      * @return string
      */
-    public function hookModulesMethod(string $methodName, $arguments = []): string
+    public function hookModulesMethod(string $methodName, array $arguments = []): string
     {
         $stringResult      = '';
         $additionalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
