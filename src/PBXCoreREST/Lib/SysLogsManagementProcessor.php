@@ -49,11 +49,16 @@ class SysLogsManagementProcessor extends Injectable
             case 'getLogFromFile':
                 $res = self::getLogFromFile($data['filename'], $data['filter'], $data['lines'], $data['offset']);
                 break;
+            case 'prepareLog':
+                $res = self::prepareLog(false);
+                $res->processor = $action;
+                break;
             case 'startLog':
                 $res = self::startLog();
                 break;
             case 'stopLog':
-                $res = self::stopLog();
+                $res = self::prepareLog(true);
+                $res->processor = $action;
                 break;
             case 'downloadLogsArchive':
                 $res = self::downloadLogsArchive($data['filename']);
@@ -157,10 +162,10 @@ class SysLogsManagementProcessor extends Injectable
     /**
      * Prepare log archive file
      *
+     * @param bool $tcpdumpOnly
      * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
-     * @throws \Exception
      */
-    private static function stopLog(): PBXApiResult
+    private static function prepareLog(bool $tcpdumpOnly): PBXApiResult
     {
         $res            = new PBXApiResult();
         $res->processor = __METHOD__;
@@ -168,26 +173,21 @@ class SysLogsManagementProcessor extends Injectable
         $dirsConfig     = $di->getShared('config');
         $temp_dir       = $dirsConfig->path('core.tempDir');
 
-        // Collect system info
-        $logDir         = System::getLogDir();
-        $systemInfoFile = "{$logDir}/system-information.log";
-        file_put_contents($systemInfoFile, SysinfoManagementProcessor::prepareSysyinfoContent());
-
-        $futureFileName        = $temp_dir . '/temp-all-log-' . time() . '.zip';
+        $prefix = $tcpdumpOnly?'tcpdump':'sys';
+        $futureFileName        = $temp_dir . '/log-'.$prefix.'-' . time() . '.zip';
         $res->data['filename'] = $futureFileName;
         $res->success          = true;
-
-        Processes::killByName('timeout');
-        Processes::killByName('tcpdump');
-
         // Create background task
-        $merge_settings                = [];
-        $merge_settings['result_file'] = $futureFileName;
-        $settings_file                 = "{$temp_dir}/logs_archive_settings.json";
-        file_put_contents(
-            $settings_file,
-            json_encode($merge_settings, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT)
-        );
+        $merge_settings                     = [];
+        $merge_settings['result_file']      = $futureFileName;
+        $merge_settings['tcpdump_only']     = $tcpdumpOnly;
+
+        if($tcpdumpOnly){
+            Processes::killByName('timeout');
+            Processes::killByName('tcpdump');
+        }
+        $settings_file                      = "{$temp_dir}/log-settings-".$prefix.".json";
+        file_put_contents($settings_file, json_encode($merge_settings, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
         $phpPath               = Util::which('php');
         $workerFilesMergerPath = Util::getFilePathByClassName(WorkerMakeLogFilesArchive::class);
         Processes::mwExecBg("{$phpPath} -f {$workerFilesMergerPath} start '{$settings_file}'");
@@ -209,7 +209,7 @@ class SysLogsManagementProcessor extends Injectable
         $res->processor = __METHOD__;
 
         $progress_file = "{$resultFile}.progress";
-        if ( ! file_exists($progress_file)) {
+        if ( !file_exists($progress_file)) {
             $res->messages[] = 'Archive does not exist. Try again!';
         } elseif (file_exists($progress_file) && file_get_contents($progress_file) === '100') {
             $uid          = Util::generateRandomString(36);
@@ -224,8 +224,9 @@ class SysLogsManagementProcessor extends Injectable
             $res->data['status']   = "READY";
             $res->data['filename'] = "{$uid}/{$link_name}";
         } else {
-            $res->success        = true;
-            $res->data['status'] = "preparing";
+            $res->success           = true;
+            $res->data['status']    = "preparing";
+            $res->data['progress']  = file_get_contents($progress_file);
         }
 
         return $res;

@@ -68,6 +68,7 @@ const archivePackingCheckWorker = {
 
 const systemDiagnosticCapture = {
 	$startBtn: $('#start-capture-button'),
+	$downloadBtn: $('#download-logs-button'),
 	$stopBtn: $('#stop-capture-button'),
 	$showBtn: $('#show-last-log'),
 	$dimmer:  $('#capture-log-dimmer'),
@@ -97,6 +98,11 @@ const systemDiagnosticCapture = {
 			PbxApi.SyslogStopLogsCapture(systemDiagnosticCapture.cbAfterStopCapture);
 
 		});
+		systemDiagnosticCapture.$downloadBtn.on('click', (e) => {
+			e.preventDefault();
+			systemDiagnosticCapture.$downloadBtn.addClass('disabled loading');
+			PbxApi.SyslogPrepareLog(systemDiagnosticCapture.cbAfterDownloadCapture);
+		});
 	},
 	/**
 	 *  Callback after push start logs collect button
@@ -108,6 +114,15 @@ const systemDiagnosticCapture = {
 			setTimeout(() => {
 				sessionStorage.setItem('LogsCaptureStatus', 'stopped');
 			}, 300000);
+		}
+	},
+	/**
+	 *  Callback after push start logs collect button
+	 * @param response
+	 */
+	cbAfterDownloadCapture(response){
+		if (response!==false){
+			archivePackingCheckWorker.initialize(response.filename);
 		}
 	},
 	/**

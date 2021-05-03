@@ -34,6 +34,7 @@ var PbxApi = {
   pbxGetActiveChannels: "".concat(Config.pbxUrl, "/pbxcore/api/cdr/getActiveChannels"),
   // Получить активные звонки,
   syslogStartLogsCapture: "".concat(Config.pbxUrl, "/pbxcore/api/syslog/startLog"),
+  syslogPrepareLog: "".concat(Config.pbxUrl, "/pbxcore/api/syslog/prepareLog"),
   syslogStopLogsCapture: "".concat(Config.pbxUrl, "/pbxcore/api/syslog/stopLog"),
   syslogGetLogsList: "".concat(Config.pbxUrl, "/pbxcore/api/syslog/getLogsList"),
   //curl http://127.0.0.1/pbxcore/api/system/getLogsList
@@ -729,6 +730,44 @@ var PbxApi = {
     }
 
     return SyslogStopLogsCapture;
+  }(),
+
+  /**
+   * Stop tcp dump and start making file for download
+   * @param callback function
+   */
+  SyslogPrepareLog: function () {
+    function SyslogPrepareLog(callback) {
+      sessionStorage.setItem('LogsCaptureStatus', 'stopped');
+      $.api({
+        url: PbxApi.syslogPrepareLog,
+        on: 'now',
+        successTest: PbxApi.successTest,
+        onSuccess: function () {
+          function onSuccess(response) {
+            callback(response.data);
+          }
+
+          return onSuccess;
+        }(),
+        onFailure: function () {
+          function onFailure() {
+            callback(false);
+          }
+
+          return onFailure;
+        }(),
+        onError: function () {
+          function onError() {
+            callback(false);
+          }
+
+          return onError;
+        }()
+      });
+    }
+
+    return SyslogPrepareLog;
   }(),
 
   /**

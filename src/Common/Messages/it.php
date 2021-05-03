@@ -75,23 +75,23 @@ return [
     'qf_NatMode' => 'Modalità NAT',
     'qf_Qualify' => 'Sostieni la sessione NAT',
     'qf_Frequency' => 'Frequenza di invio in sec.',
-    'qf_NatModeInstructions' => '<div class = \'ui message\'>
-            <div class = \'ui bulleted list\'>
-                <div class = \'item\'> <b>no</b> non esegue alcuna elaborazione NAT speciale tranne quella specificata in RFC 3581
-                </Div>
-                <div class = \'item\'> <b>force_rport</b> anche se non è stato specificato alcun parametro rport, agire come se fosse
-                </Div>
-                <div class = \'item\'> <b>comedia</b> rimanda i pacchetti RTP alla porta da cui sono stati ricevuti, ignorando la porta richiesta nell\'intestazione SDP
-                </Div>
-                <div class = \'item\'> <b>auto_comedia</b> se Asterisk è in grado di determinare se il dispositivo è protetto da NAT, imposta l\'opzione comedia
-                </Div>
-                <div class = \'item\'> <b>force_rport, comedia</b> opzione che sostituisce nat = yes
-                </Div>
-            </Div>
-        </Div>',
-    'qf_QualifyInstructions' => '<div class = \'ui message\'>
-            Quando questa opzione è abilitata, Asterisk invierà pacchetti di opzioni SIP con la frequenza specificata. Ciò è necessario per supportare il tunneling NAT sul router.
-        </Div>',
+    'qf_NatModeInstructions' => '<div class=\'ui message \'>
+            <div class=\'ui bulleted list\'>
+                <div class=\'item\'> <b> no </b> Non eseguire alcun trattamento NAT speciale diverso da RFC 3581
+                </div>
+                <div class=\'item\'> <b> force_rport </b> anche se non è stato specificato alcun parametro rport, agire come se fosse
+                </div>
+                <div class=\'item\'> <b> comedia </b> invia i pacchetti RTP alla porta da cui sono stati ricevuti, ignorando la porta richiesta nell\'intestazione SDP
+                </div>
+                <div class=\'item\'> <b> auto_comedia </b> se Asterisk può determinare che il dispositivo è dietro NAT, imposta l\'opzione comedia
+                </div>
+                <div class=\'item\'> <b> force_rport, comedia </b> opzione per sostituire nat = yes
+                </div>
+            </div>
+        </div>',
+    'qf_QualifyInstructions' => '<div class=\'ui message \'>
+            Quando questa opzione è abilitata, Asterisk invierà pacchetti di opzioni SIP alla frequenza specificata. Ciò è necessario per supportare il tunneling NAT sul router.
+        </div>',
     'AdvancedOptions' => 'Impostazioni avanzate',
     'ConnectionSettings' => 'Impostazioni di connessione',
     'BreadcrumbHome' => 'All\'inizio',
@@ -257,7 +257,7 @@ return [
     'or_digitsFromTheFrontAndThenPrependTheDigits' => 'cifre all\'inizio del numero, quindi aggiungere all\'inizio',
     'or_Provider' => 'tramite il fornitore',
     'or_ValidationPleaseEnterRuleName' => 'Inserisci un nome per la regola',
-    'or_ValidateBeginPattern' => 'Errore nel campo del filtro numerico. Può contenere numeri e segni: (|) * # + []. La lunghezza massima di un valore è di 64 caratteri.',
+    'or_ValidateBeginPattern' => 'Errore nel campo del filtro numerico. Può contenere numeri e segni: ( |) * # + []. La lunghezza massima di un valore è di 64 caratteri.',
     'or_ValidateRestNumbers' => 'La lunghezza minima del numero deve essere superiore a 2',
     'or_ValidateTrimFromBegin' => 'Il valore per i caratteri di ritaglio all\'inizio del numero non è corretto',
     'or_ValidatePrepend' => 'Errore durante l\'aggiunta all\'inizio del numero. Il campo può contenere numeri e segni: * # +. La lunghezza massima di un valore è di 20 caratteri.',
@@ -532,7 +532,7 @@ return [
     'gs_PBXFeatureAttendedTransfer' => 'Combinazione per la traduzione di consulenza',
     'gs_PBXFeatureBlindTransfer' => 'Combinazione per trasferimento incondizionato',
     'gs_PBXFeatureDigitTimeout' => 'Timeout massimo tra le cifre durante l\'immissione di un numero di interno (in millisecondi)',
-    'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Chiama il tempo di ritorno se non c\'è risposta dopo il trasferimento incondizionato',
+    'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Tempo di ritorno della chiamata in caso di mancata risposta dopo il trasferimento con avviso',
     'gs_SIPPort' => 'Porta SIP per la registrazione dei telefoni in questa stazione',
     'gs_SIPDefaultExpiry' => 'Tempo standard in secondi per inviare Keep-Alive',
     'gs_SIPMinExpiry' => 'Tempo minimo in secondi',
@@ -844,8 +844,8 @@ Può essere attivato una volta, dopo di che il coupon viene riscattato.
     'ext_AddNewExtension' => 'Scarica il nuovo modulo',
     'ext_CreateNewExtension' => 'Crea il tuo modulo',
     'ext_UploadError' => 'Errore di caricamento del modulo',
-    'ext_UploadInProgress' => 'Caricamento del modulo',
-    'ext_InstallationInProgress' => 'Installazione del modulo',
+    'ext_UploadInProgress' => 'Caricamento del modulo …',
+    'ext_InstallationInProgress' => 'Installazione del modulo …',
     'ext_ModuleChangeStatusError' => 'Problemi durante la modifica dello stato del modulo',
     'ext_InstallationError' => 'Errore durante l\'installazione del modulo',
     'DimmerWaitForPBXIsOnline' => 'Disconnessione dal nucleo del PBX …',
@@ -931,7 +931,7 @@ Può essere attivato una volta, dopo di che il coupon viene riscattato.
     'Firmware version on this system:' => 'Versione corrente del firmware di sistema:',
     'Reinstall to' => 'Aggiorna alla versione',
     'Install' => 'Smettere',
-    'Cancel' => 'Annulla',
+    'Cancel' => 'Annulla / Cancel',
     'All settings will be kept!' => 'Le impostazioni correnti verranno salvate!',
     'All settings will be lost!' => 'Torna alle impostazioni di fabbrica!',
     'Install or recovery' => 'Installazione / ripristino',
@@ -1052,4 +1052,5 @@ Può essere attivato una volta, dopo di che il coupon viene riscattato.
     'gs_PBXAllowGuestCalls' => 'Consenti chiamate in arrivo da qualsiasi server',
     'pr_EnterHostOrIp' => 'Indirizzi di provider aggiuntivi',
     'auth_RememberMe' => 'Ricordati di me',
+    'log_DownloadLogs' => 'Scarica tutti i log',
 ];
