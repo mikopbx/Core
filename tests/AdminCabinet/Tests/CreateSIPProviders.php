@@ -162,7 +162,7 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
             'password'        => '',
             'dtmfmode'        => 'auto',
             'port'            => 5062,
-            'nat'             => 'force_rport, comedia',
+            'nat'             => 'force_rport,comedia',
             'qualify'         => true,
             'qualifyfreq'     =>61,
             'defaultuser'=>'',
