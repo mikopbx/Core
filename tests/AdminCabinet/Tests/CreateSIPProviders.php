@@ -154,6 +154,28 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
             'manualattributes'=>'',
         ]];
 
+        $params[] = [[
+            'type'=>'sip',
+            'description' => 'Provider for CTI tests',
+            'host' => '127.0.0.1',
+            'username'        => 'test',
+            'password'        => '',
+            'dtmfmode'        => 'auto',
+            'port'            => 5062,
+            'nat'             => 'force_rport, comedia',
+            'qualify'         => true,
+            'qualifyfreq'     =>61,
+            'defaultuser'=>'',
+            'fromuser'=>'',
+            'fromdomain'=>'',
+            'disablefromuser'=>true,
+            'noregister'=>true,
+            'receive_calls_without_auth'=>true,
+            'manualattributes'=>'[endpoint]'.PHP_EOL.'callerid=Mark Spenser <79261234567>',
+
+        ]];
+
+
         return $params;
     }
 
