@@ -146,4 +146,24 @@ class SoundFilesController extends BaseController
         }
     }
 
+    /**
+     * Returns array of sound files for dropdown lists
+     *
+     * @param string $category
+     */
+    public function getSoundFilesAction(string $category='custom'):void
+    {
+        $soundFiles = SoundFiles::find("category='{$category}'");
+        $soundFilesList = [];
+        foreach ($soundFiles as $soundFile) {
+            $soundFilesList[] =
+                [
+                    'name'=>$soundFile->getRepresent(),
+                    'value'=>$soundFile->id
+                ];
+        }
+        $this->view->results = $soundFilesList;
+        $this->view->success = true;
+    }
+
 }

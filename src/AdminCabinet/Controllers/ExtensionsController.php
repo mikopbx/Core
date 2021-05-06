@@ -624,7 +624,7 @@ class ExtensionsController extends BaseController
      *
      * @param string $id - записи внутренненго номера
      */
-    public function deleteAction($id = '')
+    public function deleteAction(string $id = '')
     {
         $this->db->begin();
         $extension = Extensions::findFirstById($id);
@@ -662,7 +662,7 @@ class ExtensionsController extends BaseController
      *
      * @return void параметры помещаются в view и обрабатваются через ControllerBase::afterExecuteRoute()
      */
-    public function availableAction($number = ''): void
+    public function availableAction(string $number = ''): void
     {
         $result = true;
         // Проверим пересечение с внутренним номерным планом
@@ -692,7 +692,7 @@ class ExtensionsController extends BaseController
      *
      * @return void
      */
-    public function disableAction($number = ''): void
+    public function disableAction(string $number = ''): void
     {
         $extension = Extensions::findFirstByNumber($number);
         if ($extension !== null) {
@@ -726,7 +726,7 @@ class ExtensionsController extends BaseController
      *
      * @return void
      */
-    public function enableAction($number = ''): void
+    public function enableAction(string $number = ''): void
     {
         $extension = Extensions::findFirstByNumber($number);
         if ($extension !== null) {
@@ -817,7 +817,7 @@ class ExtensionsController extends BaseController
      *
      * @return void параметры помещаются в view и обрабатваются через ControllerBase::afterExecuteRoute()
      */
-    public function getForSelectAction($type = 'all'): void
+    public function getForSelectAction(string $type = 'all'): void
     {
         $results = [];
 

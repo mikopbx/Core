@@ -144,6 +144,9 @@ const soundFileModify = {
 		soundFileModify.trashBin.forEach((filepath) => {
 			if (filepath) PbxApi.FilesRemoveAudioFile(filepath);
 		});
+		const event = document.createEvent('Event');
+		event.initEvent('ConfigDataChanged', false, true);
+		window.dispatchEvent(event);
 	},
 	initializeForm() {
 		const category = soundFileModify.$formObj.form('get value', 'category');

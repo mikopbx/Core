@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, Extensions,Form  */
+/* global globalRootUrl, globalTranslate, Extensions,Form, SoundFilesSelector */
 
 // Проверка нет ли ошибки занятого другой учеткой номера
 $.fn.form.settings.rules.existRule = (value, parameter) => $(`#${parameter}`).hasClass('hidden');
@@ -98,6 +98,7 @@ const callQueue = {
 			return false;
 		});
 
+		$('#queue-form .audio-message-select').dropdown(SoundFilesSelector.getDropdownSettingsWithEmpty());
 		callQueue.initializeForm();
 	},
 	setAvailableQueueMembers(arrResult) {

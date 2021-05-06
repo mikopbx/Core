@@ -119,7 +119,7 @@
                 {{ form.render('extipaddr') }}
             </div>
             <div class="ten wide field">
-                <button class="ui black small button" id="getmyip"><i
+                <button class="ui icon black button" id="getmyip"><i
                             class="ui icon globe"></i>{{ t._('nw_LookUpExternalIp') }}
                 </button>
             </div>

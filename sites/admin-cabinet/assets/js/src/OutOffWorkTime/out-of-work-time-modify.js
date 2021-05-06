@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl,globalTranslate, Extensions, Form, SemanticLocalization */
+/* global globalRootUrl,globalTranslate, Extensions, Form, SemanticLocalization, SoundFilesSelector */
 
 
 $.fn.form.settings.rules.customNotEmptyIfActionRule = (value, action) => {
@@ -184,6 +184,9 @@ const outOfWorkTimeRecord = {
 			outOfWorkTimeRecord.$time_to.trigger('change');
 			e.preventDefault();
 		});
+
+		$('#save-outoffwork-form .audio-message-select').dropdown(SoundFilesSelector.getDropdownSettingsWithEmpty());
+
 		outOfWorkTimeRecord.initializeForm();
 		outOfWorkTimeRecord.$forwardingSelectDropdown.dropdown(Extensions.getDropdownSettingsWithoutEmpty());
 		outOfWorkTimeRecord.toggleDisabledFieldClass();
