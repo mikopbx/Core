@@ -14,3 +14,4 @@
         </div>
     </div>
 </div>
+{{ partial("partials/playAddNewSound", ['label': t._('gs_PBXRecordAnnouncement'), 'id':'PBXRecordAnnouncement', 'fieldClass':'field', 'fieldId':'']) }}

@@ -623,6 +623,7 @@ return [
     'gs_EnterDeleteAllPhrasePreText' => 'Для очистки системы введите в поле ввода следующую фразу:',
     'gs_EnterDeleteAllPhrase' => 'удалить всё',
     'gs_AllSettingsDeleted' => 'Все настройки удалены',
+    'gs_PBXRecordAnnouncement'=> 'Выберите предупреждение о записи разговоров',
     'ts_CurrentSettings' => 'Текущие настройки',
     'ts_SystemTime' => 'Системное время',
     'ts_TimeZone' => 'Таймзона',
