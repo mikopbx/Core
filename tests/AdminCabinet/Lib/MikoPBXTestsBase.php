@@ -102,6 +102,64 @@ class MikoPBXTestsBase extends BrowserStackTest
         }
     }
 
+
+    /**
+     * Select dropdown menu item
+     *
+     * @param $name  string menu name identifier
+     * @param $value string menu text for select
+     *
+     * @return string
+     */
+    protected function selectDropdownItemByName(string $name, string $value): string
+    {
+        // Check selected value
+        $xpath             = '//select[@name="' . $name . '"]/option[@selected="selected"]';
+        $selectedExtensions = self::$driver->findElements(WebDriverBy::xpath($xpath));
+        foreach ($selectedExtensions as $element) {
+            $currentValue = $element->getText();
+            if ($currentValue === $value){
+                return $element->getAttribute('value');
+            }
+        }
+
+        $xpath = '//select[@name="' . $name . '"]/ancestor::div[contains(@class, "ui") and contains(@class ,"dropdown")]';
+        $xpath .='| //div[@id="' . $name . '" and contains(@class, "ui") and contains(@class ,"dropdown") ]';
+        try {
+            $selectItem = self::$driver->findElement(WebDriverBy::xpath($xpath));
+            $selectItem->click();
+            $this->waitForAjax();
+
+            // If search field exists input them before select
+            $xpath = '//select[@name="' . $name . '"]/ancestor::div[contains(@class, "ui") and contains(@class ,"dropdown")]/input[contains(@class,"search")]';
+            $xpath .='| //div[@id="' . $name . '" and contains(@class, "ui") and contains(@class ,"dropdown") ]/input[contains(@class,"search")]';
+            $inputItems = self::$driver->findElements(WebDriverBy::xpath($xpath));
+            $actions = new WebDriverActions(self::$driver);
+            foreach ($inputItems as $inputItem) {
+                $actions->moveToElement($inputItem);
+                $actions->perform();
+                $inputItem->click();
+                $inputItem->clear();
+                $inputItem->sendKeys($value);
+            }
+
+            // Находим строчку с нужной опцией по значению
+
+            $xpath    = '//div[contains(@class, "menu") and contains(@class ,"visible")]/div[contains(text(),"'.$value.'")]';
+            $menuItem = self::$driver->wait()->until(
+                WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::xpath($xpath))
+            );
+            $menuItem->click();
+            return $menuItem->getAttribute('data-value');
+        } catch (NoSuchElementException $e) {
+            $this->fail('Not found select with name ' . $name . 'on selectDropdownItem'. PHP_EOL);
+        } catch (TimeoutException $e) {
+            $this->fail('Not found menuitem ' . $value . PHP_EOL);
+        } catch (Exception $e) {
+            $this->fail('Unknown error ' . $e->getMessage() . PHP_EOL);
+        }
+    }
+
     /**
      * Wait until jquery will be ready
      */
