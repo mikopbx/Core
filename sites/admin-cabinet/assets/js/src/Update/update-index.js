@@ -171,9 +171,9 @@ const updatePBX = {
 					&& response.result === 'SUCCESS';
 			},
 			onSuccess(response) {
-				const currentVerison = updatePBX.currentVersion.replace(/\D/g, '');
+				const currentVerison = updatePBX.currentVersion.replace('-dev', '');
 				response.firmware.forEach((obj) => {
-					const version = obj.version.replace(/\D/g, '');
+					const version = obj.version.replace('-dev', '');
 					if (versionCompare(version, currentVerison) > 0) {
 						updatePBX.addNewVersionInformation(obj);
 					}
