@@ -778,7 +778,6 @@ return [
     'auth_WrongLoginPassword' => '認可エラー',
     'log_CaptureMessage' => '<div class = \'ui message\'>ログの収集を開始し、失敗につながる呼び出しまたはその他のアクションを実行します。
 <br>システムは、アーカイブの形でシステムステータスの型を形成します',
-    'log_StartLogsCapture' => 'ログの収集を開始します',
     'log_StopLogsCapture' => '完全なログ収集',
     'dbg_NoDebugInformation' => '情報なし',
     'dbg_Header' => 'デバッグ情報',

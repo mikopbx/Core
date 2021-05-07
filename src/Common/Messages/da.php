@@ -778,7 +778,6 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'auth_WrongLoginPassword' => 'Autoriseringsfejl',
     'log_CaptureMessage' => '<div class = \'ui message\'> Begynd at indsamle logfiler og udfør et opkald eller anden handling, der fører til en fiasko.
 <br> Systemet danner et indtryk af systemstatus i form af et arkiv. </div>',
-    'log_StartLogsCapture' => 'Begynd at indsamle logfiler',
     'log_StopLogsCapture' => 'Komplet logindsamling',
     'dbg_NoDebugInformation' => 'Ingen information',
     'dbg_Header' => 'Fejlfinding af oplysninger',

@@ -112,7 +112,6 @@ return [
     'f2b_Reason' => 'Razão',
     'dbg_Header' => 'Informações de depuração',
     'dbg_NoDebugInformation' => 'Nenhuma informação',
-    'log_StopLogsCapture' => 'Coleção de logs completa',
     'log_StartLogsCapture' => 'Comece a coletar logs',
     'log_CaptureMessage' => '<div class = \'ui message\'> Comece a coletar logs e execute uma chamada ou outra ação que leve a uma falha.
 <br> O sistema formará uma impressão do estado do sistema na forma de um arquivo. </div>',

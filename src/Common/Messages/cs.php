@@ -747,7 +747,6 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'auth_WrongLoginPassword' => 'Chyba autorizace',
     'log_CaptureMessage' => '<div class = \'ui message\'> Začněte sbírat protokoly a provádět volání nebo jinou akci, která vede k selhání.
 <br> Systém vytvoří dojem o stavu systému ve formě archivu. </div>',
-    'log_StartLogsCapture' => 'Začněte sbírat protokoly',
     'log_StopLogsCapture' => 'Kompletní kolekce protokolů',
     'f2b_Reason' => 'Důvod',
     'f2b_IpAddres' => 'IP adresa',

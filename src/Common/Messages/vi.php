@@ -852,7 +852,6 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá đ
     'auth_WrongLoginPassword' => 'Lỗi ủy quyền',
     'log_CaptureMessage' => '<div class = \'ui message\'> Bắt đầu thu thập nhật ký và thực hiện cuộc gọi hoặc hành động khác dẫn đến thất bại.
 <br> Hệ thống sẽ tạo ấn tượng về trạng thái hệ thống dưới dạng lưu trữ. </div>',
-    'log_StartLogsCapture' => 'Bắt đầu thu thập nhật ký',
     'log_StopLogsCapture' => 'Hoàn thành bộ sưu tập nhật ký',
     'dbg_NoDebugInformation' => 'Không có thông tin',
     'dbg_Header' => 'Thông tin gỡ lỗi',

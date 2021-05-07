@@ -457,7 +457,6 @@ return [
     'f2b_Reason' => 'Raison',
     'dbg_Header' => 'Informations de débogage',
     'dbg_NoDebugInformation' => 'Aucune information',
-    'log_StopLogsCapture' => 'Collecte complète des journaux',
     'log_StartLogsCapture' => 'Commencez à collecter les journaux',
     'log_CaptureMessage' => '<div class = \'ui message\'> Commencez à collecter les journaux et effectuez un appel ou une autre action qui mène à un échec.
 <br> Le système formera une impression de l\'état du système sous la forme d\'une archive. </div>',

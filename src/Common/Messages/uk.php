@@ -788,7 +788,6 @@ return [
     'auth_WrongLoginPassword' => 'Помилка авторизації',
     'log_CaptureMessage' => '<div class=\'ui message \'>Запустіть збір логів і виконайте дзвінок або іншу дію, що приводить до збою. 
 <br>Система сформує зліпок стану системи у вигляді архіву.</div>',
-    'log_StartLogsCapture' => 'Почати збір логів',
     'log_StopLogsCapture' => 'Завершити збір логів',
     'dbg_NoDebugInformation' => 'Немає інформації',
     'dbg_Header' => 'Налагоджувальна інформація',

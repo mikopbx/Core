@@ -435,7 +435,6 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'auth_WrongLoginPassword' => 'Autoriseringsfel',
     'log_CaptureMessage' => '<div class = \'ui message\'> Börja samla loggar och utför ett samtal eller annan åtgärd som leder till ett fel.
 <br> Systemet kommer att bilda ett intryck av systemets tillstånd i form av ett arkiv. </div>',
-    'log_StartLogsCapture' => 'Börja samla loggar',
     'log_StopLogsCapture' => 'Komplett loggsamling',
     'dbg_NoDebugInformation' => 'Ingen information',
     'dbg_Header' => 'Felsökningsinformation',
