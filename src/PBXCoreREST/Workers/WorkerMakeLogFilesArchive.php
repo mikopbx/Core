@@ -45,7 +45,7 @@ class WorkerMakeLogFilesArchive extends WorkerBase
         $tcpdump_only  = $file_data['tcpdump_only']??true;
         $resultFile         = $file_data['result_file'];
         $progress_file      = "{$resultFile}.progress";
-        file_put_contents($progress_file, '0');
+        file_put_contents($progress_file, '1');
 
         $rmPath      = Util::which('rm');
         $za7Path     = Util::which('7za');
