@@ -1053,4 +1053,5 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'pr_EnterHostOrIp' => 'Adresses de fournisseurs supplémentaires',
     'auth_RememberMe' => 'Souviens-toi de moi',
     'log_DownloadLogs' => 'Téléchargez tous les journaux',
+    'gs_PBXRecordAnnouncement' => 'Sélectionnez une alerte d\'enregistrement d\'appel',
 ];

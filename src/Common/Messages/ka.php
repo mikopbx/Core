@@ -1053,4 +1053,5 @@ return [
     'sd_PackingLogFiles' => 'შეგროვებული მონაცემების შეფუთვა',
     'msg_ErrorHeader' => 'შეცდომა',
     'log_DownloadLogs' => 'ჩამოტვირთეთ ყველა ჟურნალი',
+    'gs_PBXRecordAnnouncement' => 'აირჩიეთ ზარის ჩაწერის სიგნალი',
 ];

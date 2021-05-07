@@ -1053,4 +1053,5 @@ Può essere attivato una volta, dopo di che il coupon viene riscattato.
     'pr_EnterHostOrIp' => 'Indirizzi di provider aggiuntivi',
     'auth_RememberMe' => 'Ricordati di me',
     'log_DownloadLogs' => 'Scarica tutti i log',
+    'gs_PBXRecordAnnouncement' => 'Seleziona un avviso di registrazione delle chiamate',
 ];

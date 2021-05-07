@@ -1053,4 +1053,5 @@ Se puede activar una vez, después de lo cual el cupón se canjea.
     'pr_EnterHostOrIp' => 'Direcciones de proveedores adicionales',
     'auth_RememberMe' => 'Recuérdame',
     'log_DownloadLogs' => 'Descargar todos los registros',
+    'gs_PBXRecordAnnouncement' => 'Seleccionar una alerta de grabación de llamadas',
 ];

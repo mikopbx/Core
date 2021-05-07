@@ -1053,4 +1053,5 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá đ
     'pr_EnterHostOrIp' => 'Địa chỉ nhà cung cấp bổ sung',
     'auth_RememberMe' => 'Nhớ tôi',
     'log_DownloadLogs' => 'Tải xuống tất cả nhật ký',
+    'gs_PBXRecordAnnouncement' => 'Chọn cảnh báo ghi âm cuộc gọi',
 ];
