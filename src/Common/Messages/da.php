@@ -1053,4 +1053,5 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'pr_EnterHostOrIp' => 'Yderligere udbyderadresser',
     'auth_RememberMe' => 'Husk mig',
     'log_DownloadLogs' => 'Download alle logfiler',
+    'gs_PBXRecordAnnouncement' => 'Vælg en alarm for opkaldsoptagelse',
 ];
