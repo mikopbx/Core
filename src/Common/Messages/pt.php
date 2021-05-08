@@ -112,7 +112,6 @@ return [
     'f2b_Reason' => 'Razão',
     'dbg_Header' => 'Informações de depuração',
     'dbg_NoDebugInformation' => 'Nenhuma informação',
-    'log_StartLogsCapture' => 'Comece a coletar logs',
     'log_CaptureMessage' => '<div class = \'ui message\'> Comece a coletar logs e execute uma chamada ou outra ação que leve a uma falha.
 <br> O sistema formará uma impressão do estado do sistema na forma de um arquivo. </div>',
     'auth_WrongLoginPassword' => 'Erro de autorização',
@@ -1053,4 +1052,6 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'auth_RememberMe' => 'Lembre de mim',
     'log_DownloadLogs' => 'Baixar todos os logs',
     'gs_PBXRecordAnnouncement' => 'Selecione um alerta de gravação de chamada',
+    'log_StopCapturePCAP' => 'Pare e baixe',
+    'log_StartCapturePCAP' => 'Começar',
 ];

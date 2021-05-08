@@ -778,7 +778,6 @@ It can be activated once, after which the coupon becomes redeemed.
     'auth_WrongLoginPassword' => 'Authorization error',
     'log_CaptureMessage' => '<div class=\'ui message \'>Start collecting logs and make a call or other action that causes a failure. 
 <br>The system will form a snapshot of the system state in the form of an archive.</div>',
-    'log_StopLogsCapture' => 'Stop collection log',
     'dbg_NoDebugInformation' => 'No information',
     'dbg_Header' => 'Debugging information',
     'f2b_Reason' => 'Reason',
@@ -1055,4 +1054,6 @@ It can be activated once, after which the coupon becomes redeemed.
     'auth_RememberMe' => 'Remember me',
     'log_DownloadLogs' => 'Download logs',
     'gs_PBXRecordAnnouncement' => 'Select a call recording alert',
+    'log_StopCapturePCAP' => 'Stop and download',
+    'log_StartCapturePCAP' => 'Start',
 ];
