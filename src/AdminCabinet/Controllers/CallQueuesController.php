@@ -42,7 +42,9 @@ class CallQueuesController extends BaseController
         $records = CallQueues::find();
         $callQueuesList=[];
         foreach ($records as $record) {
-            usort($callQueueMembers[$record->uniqid], [__CLASS__, 'sortArrayByPriority']);
+            if (is_array($callQueueMembers[$record->uniqid])){
+                usort($callQueueMembers[$record->uniqid], [__CLASS__, 'sortArrayByPriority']);
+            }
             $callQueuesList[]=[
                 'uniqid'=>$record->uniqid,
                 'name'=>$record->name,
