@@ -185,7 +185,7 @@ class CallDetailRecordsController extends BaseController
     {
         $parameters['conditions'] = '';
 
-        // Поищем линкдиды, и если они там есть, то игнориуем все предыдущие параметры запроса
+        // Search the linkedid, if we found it on the search string we will ignore all other parameters
         if (preg_match_all("/mikopbx-\d+.\d+/", $searchPhrase, $matches) && count($matches[0]) === 1) {
             $parameters['conditions']           = 'linkedid = :SearchPhrase:';
             $parameters['bind']['SearchPhrase'] = $matches[0][0];
@@ -193,7 +193,7 @@ class CallDetailRecordsController extends BaseController
             return;
         }
 
-        // Поищем даты
+        // Search date ranges
         if (preg_match_all("/\d{2}\/\d{2}\/\d{4}/", $searchPhrase, $matches)) {
             if (count($matches[0]) === 1) {
                 $date                                  = DateTime::createFromFormat('d/m/Y', $matches[0][0]);
@@ -219,7 +219,7 @@ class CallDetailRecordsController extends BaseController
             }
         }
 
-        // Поищем номера телефонов
+        // Search phone numbers
         $searchPhrase = str_replace(['(', ')', '-', '+'], '', $searchPhrase);
 
         if (preg_match_all("/\d+/", $searchPhrase, $matches)) {
@@ -306,6 +306,11 @@ class CallDetailRecordsController extends BaseController
                     $parameters['bind']['SearchPhrase8'] = "%{$seekNumber0}%";
                 }
                 $searchPhrase = str_replace([$matches[0][0], $matches[0][1]], '', $searchPhrase);
+            } elseif (count($matches[0]) > 2) {
+                $searchPhrase = str_replace([' ','  '], '', $searchPhrase);
+                $parameters['conditions']            .= 'src_num = :SearchPhrase1: OR dst_num = :SearchPhrase2:';
+                $parameters['bind']['SearchPhrase1'] = $searchPhrase;
+                $parameters['bind']['SearchPhrase2'] = $searchPhrase;
             }
             if ($needCloseAnd) {
                 $parameters['conditions'] .= ')';

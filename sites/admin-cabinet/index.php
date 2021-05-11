@@ -18,12 +18,14 @@
  */
 
 namespace MikoPBX\AdminCabinet;
+
 use MikoPBX\AdminCabinet\Config\RegisterDIServices;
 use Phalcon\Di\FactoryDefault;
 use Phalcon\Mvc\Application;
 use MikoPBX\Core\System\SentryErrorLogger;
 use MikoPBX\AdminCabinet\Utilities\Debug\PhpError;
 use Throwable;
+use Whoops\Handler\JsonResponseHandler;
 use Whoops\Handler\PrettyPageHandler;
 use Whoops\Run;
 
@@ -40,23 +42,32 @@ require_once __DIR__ . '/../../src/Common/Config/ClassLoader.php';
  */
 RegisterDIServices::init($di);
 
-// Подключим регистрацию ошибок в облако
+// Attach Sentry error logger
 $errorLogger = new SentryErrorLogger('admin-cabinet');
 $errorLogger->init();
 
-if (class_exists(PrettyPageHandler::class)){
+// Enable Whoops error pretty print
+$is_ajax = 'xmlhttprequest' == strtolower($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '');
+if ($is_ajax) {
+    $whoopsClass = JsonResponseHandler::class;
+} else {
+    $whoopsClass = PrettyPageHandler::class;
+}
+
+if (class_exists($whoopsClass)) {
     $whoops = new Run();
-    $whoops->pushHandler(new PrettyPageHandler());
+    $whoops->pushHandler(new $whoopsClass());
     $whoops->register();
 }
 
 try {
     $application = new Application($di);
-	echo $application->handle($_SERVER['REQUEST_URI'])->getContent();
+    echo $application->handle($_SERVER['REQUEST_URI'])->getContent();
 } catch (Throwable $e) {
-	$errorLogger->captureException($e);
-	PhpError::exceptionHandler($e);
-    if (class_exists(PrettyPageHandler::class)){
+    $errorLogger->captureException($e);
+    PhpError::exceptionHandler($e);
+
+    if (class_exists($whoopsClass)) {
         $whoops->handleException($e);
     } else {
         echo $e->getMessage();
