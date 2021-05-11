@@ -737,8 +737,6 @@ Bir kez etkinleştirilebilir, bundan sonra kupon kullanılır.
     'rs_RestartPhoneSystem' => 'PBX\'i yeniden yükle',
     'rs_ShutDownPhoneSystem' => 'PBX\'i kapatın',
     'rs_Src' => 'kim',
-    'log_StartLogsCapture' => 'Günlükleri toplamaya başla',
-    'log_StopLogsCapture' => 'Tam günlük toplama',
     'dbg_NoDebugInformation' => 'Bilgi yok',
     'f2b_Jail_asterisk_public' => 'SIP veya AMI yetkilendirme hataları (genel)',
     'f2b_Jail_dropbear' => 'SSH Oturum Yetkilendirme Hataları',
@@ -1054,4 +1052,6 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
     'auth_RememberMe' => 'Beni Hatırla',
     'log_DownloadLogs' => 'Tüm günlükleri indirin',
     'gs_PBXRecordAnnouncement' => 'Bir arama kaydı uyarısı seçin',
+    'log_StopCapturePCAP' => 'Durdur ve indir',
+    'log_StartCapturePCAP' => 'Başlat',
 ];

@@ -779,8 +779,6 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
     'auth_WrongLoginPassword' => 'Autorisierungsfehler',
     'log_CaptureMessage' => '<div class=\'ui message \'>LOG-Aufzeichnung starten, dann Anruf oder andere Aktion tätigen, LOG-Aufzeichnung beenden und LOG-Datei auswerten. 
 <br>Es wird ein Auszug der System-Log-Dateien erstellt und als Archiv zum Download bereitgestellt.</div>',
-    'log_StartLogsCapture' => 'Starte LOG-Aufzeichnung',
-    'log_StopLogsCapture' => 'Beende LOG-Aufzeichnung',
     'dbg_NoDebugInformation' => 'Keine Information',
     'dbg_Header' => 'Informationen zur Fehlersuche/Debugging',
     'f2b_Reason' => 'Grund',
@@ -1057,4 +1055,6 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
     'auth_RememberMe' => 'Behalte mich in Erinnerung',
     'log_DownloadLogs' => 'Laden Sie alle Protokolle herunter',
     'gs_PBXRecordAnnouncement' => 'Wählen Sie eine Anrufaufzeichnungswarnung aus',
+    'log_StopCapturePCAP' => 'Stoppen und herunterladen',
+    'log_StartCapturePCAP' => 'Start',
 ];

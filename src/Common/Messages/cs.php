@@ -747,8 +747,6 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'auth_WrongLoginPassword' => 'Chyba autorizace',
     'log_CaptureMessage' => '<div class = \'ui message\'> Začněte sbírat protokoly a provádět volání nebo jinou akci, která vede k selhání.
 <br> Systém vytvoří dojem o stavu systému ve formě archivu. </div>',
-    'log_StartLogsCapture' => 'Začněte sbírat protokoly',
-    'log_StopLogsCapture' => 'Kompletní kolekce protokolů',
     'f2b_Reason' => 'Důvod',
     'f2b_IpAddres' => 'IP adresa',
     'f2b_BanedTime' => 'Datum',
@@ -1054,4 +1052,6 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'pr_EnterHostOrIp' => 'Další adresy poskytovatelů',
     'log_DownloadLogs' => 'Stáhněte si všechny protokoly',
     'gs_PBXRecordAnnouncement' => 'Vyberte upozornění na záznam hovoru',
+    'log_StopCapturePCAP' => 'Zastavit a stáhnout',
+    'log_StartCapturePCAP' => 'Start',
 ];
