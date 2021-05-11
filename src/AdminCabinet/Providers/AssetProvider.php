@@ -472,6 +472,8 @@ class AssetProvider implements ServiceProviderInterface
         if ($action === 'modify') {
             $this->footerCollectionJS
                 ->addJs('js/pbx/main/form.js', true)
+                ->addJs('js/vendor/moment/moment-with-locales.min.js',true)
+                ->addJs('js/vendor/moment/moment-timezone-with-data.js', true)
                 ->addJs('js/pbx/TimeSettings/time-settings-worker.js', true)
                 ->addJs('js/pbx/TimeSettings/time-settings-modify.js', true);
         }
