@@ -1054,7 +1054,6 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
     'pr_EnterHostOrIp' => 'Zusätzliche Anbieteradressen',
     'auth_RememberMe' => 'Behalte mich in Erinnerung',
     'log_DownloadLogs' => 'Laden Sie alle Protokolle herunter',
-    'gs_PBXRecordAnnouncement' => 'Wählen Sie eine Anrufaufzeichnungswarnung aus',
     'log_StopCapturePCAP' => 'Stoppen und herunterladen',
     'log_StartCapturePCAP' => 'Start',
 ];

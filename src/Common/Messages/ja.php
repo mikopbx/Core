@@ -1051,7 +1051,6 @@ return [
     'pr_EnterHostOrIp' => '追加のプロバイダーアドレス',
     'auth_RememberMe' => '私を覚えてますか',
     'log_DownloadLogs' => 'すべてのログをダウンロードする',
-    'gs_PBXRecordAnnouncement' => '通話録音アラートを選択します',
     'log_StopCapturePCAP' => '停止してダウンロード',
     'log_StartCapturePCAP' => '開始',
 ];

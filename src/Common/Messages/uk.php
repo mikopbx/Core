@@ -1051,7 +1051,6 @@ return [
     'pr_EnterHostOrIp' => 'Додаткові адреси провайдера',
     'auth_RememberMe' => 'Запам\'ятати мене',
     'log_DownloadLogs' => 'Завантажити все логи',
-    'gs_PBXRecordAnnouncement' => 'Виберіть попередження про записи розмов',
     'log_StopCapturePCAP' => 'Зупинити і завантажити',
     'log_StartCapturePCAP' => 'старт',
 ];

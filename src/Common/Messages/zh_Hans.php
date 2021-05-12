@@ -1051,7 +1051,6 @@ return [
     'pr_EnterHostOrIpPlaceholder' => '输入IP地址或子网',
     'auth_RememberMe' => '记得我',
     'log_DownloadLogs' => '下载所有日志',
-    'gs_PBXRecordAnnouncement' => '选择通话记录提醒',
     'log_StopCapturePCAP' => '停止并下载',
     'log_StartCapturePCAP' => '开始',
 ];

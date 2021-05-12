@@ -1053,7 +1053,6 @@ It can be activated once, after which the coupon becomes redeemed.
     'pr_EnterHostOrIp' => 'Additional provider hosts or ip',
     'auth_RememberMe' => 'Remember me',
     'log_DownloadLogs' => 'Download logs',
-    'gs_PBXRecordAnnouncement' => 'Select a call recording alert',
     'log_StopCapturePCAP' => 'Stop and download',
     'log_StartCapturePCAP' => 'Start',
 ];

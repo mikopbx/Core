@@ -1051,7 +1051,6 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'gs_PBXAllowGuestCalls' => 'Povolit příchozí hovory ze všech serverů',
     'pr_EnterHostOrIp' => 'Další adresy poskytovatelů',
     'log_DownloadLogs' => 'Stáhněte si všechny protokoly',
-    'gs_PBXRecordAnnouncement' => 'Vyberte upozornění na záznam hovoru',
     'log_StopCapturePCAP' => 'Zastavit a stáhnout',
     'log_StartCapturePCAP' => 'Start',
 ];

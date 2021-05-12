@@ -1051,7 +1051,6 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'pr_EnterHostOrIp' => 'Endereços de provedores adicionais',
     'auth_RememberMe' => 'Lembre de mim',
     'log_DownloadLogs' => 'Baixar todos os logs',
-    'gs_PBXRecordAnnouncement' => 'Selecione um alerta de gravação de chamada',
     'log_StopCapturePCAP' => 'Pare e baixe',
     'log_StartCapturePCAP' => 'Começar',
 ];

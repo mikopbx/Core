@@ -1051,7 +1051,6 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'pr_EnterHostOrIp' => 'Dodatkowe adresy dostawców',
     'auth_RememberMe' => 'Zapamiętaj mnie',
     'log_DownloadLogs' => 'Pobierz wszystkie dzienniki',
-    'gs_PBXRecordAnnouncement' => 'Wybierz alert dotyczący nagrywania rozmów',
     'log_StopCapturePCAP' => 'Zatrzymaj się i pobierz',
     'log_StartCapturePCAP' => 'Początek',
 ];

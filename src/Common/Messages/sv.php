@@ -1051,7 +1051,6 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'pr_EnterHostOrIp' => 'Ytterligare leverantörsadresser',
     'auth_RememberMe' => 'Kom ihåg mig',
     'log_DownloadLogs' => 'Ladda ner alla loggar',
-    'gs_PBXRecordAnnouncement' => 'Välj en varning för samtalsinspelning',
     'log_StopCapturePCAP' => 'Stoppa och ladda ner',
     'log_StartCapturePCAP' => 'Start',
 ];

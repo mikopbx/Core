@@ -1051,7 +1051,6 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
     'pr_EnterHostOrIp' => 'Ek sağlayıcı adresleri',
     'auth_RememberMe' => 'Beni Hatırla',
     'log_DownloadLogs' => 'Tüm günlükleri indirin',
-    'gs_PBXRecordAnnouncement' => 'Bir arama kaydı uyarısı seçin',
     'log_StopCapturePCAP' => 'Durdur ve indir',
     'log_StartCapturePCAP' => 'Başlat',
 ];
