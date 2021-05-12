@@ -152,7 +152,8 @@ class GeneralSettingsEditForm extends Form
                     );
                     $this->add($extLength);
                     break;
-                case 'PBXRecordAnnouncement':
+                case 'PBXRecordAnnouncementIn':
+                case 'PBXRecordAnnouncementOut':
 
                     $currentSoundFile = SoundFiles::findFirstById($value);
                     $selectArray=[];

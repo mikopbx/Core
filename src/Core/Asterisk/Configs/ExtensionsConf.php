@@ -59,7 +59,7 @@ class ExtensionsConf extends CoreConfigClass
             $conf .= "MONITOR_DIR=" . Storage::getMonitorDir() . " \n";
             $conf .= "MONITOR_STEREO=" . $this->generalSettings['PBXSplitAudioThread'] . " \n";
         }
-        $conf .= "PBX_REC_ANNONCE=".ExtensionsAnnonceRecording::getPathAnnonceFile($this->generalSettings['PBXRecordAnnouncement'])."\n";
+        $conf .= "PBX_REC_ANNONCE=".ExtensionsAnnounceRecording::getPathAnnonceFile($this->generalSettings['PBXRecordAnnouncementIn'])."\n";
         $conf .= $this->hookModulesMethod(CoreConfigClass::EXTENSION_GLOBALS);
         $conf .= "\n";
         $conf .= "\n";

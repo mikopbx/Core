@@ -14,4 +14,5 @@
         </div>
     </div>
 </div>
-{{ partial("partials/playAddNewSound", ['label': t._('gs_PBXRecordAnnouncement'), 'id':'PBXRecordAnnouncement', 'fieldClass':'field', 'fieldId':'']) }}
+{{ partial("partials/playAddNewSound", ['label': t._('gs_PBXRecordAnnouncementIn'), 'id':'PBXRecordAnnouncementIn', 'fieldClass':'field', 'fieldId':'']) }}
+{{ partial("partials/playAddNewSound", ['label': t._('gs_PBXRecordAnnouncementOut'), 'id':'PBXRecordAnnouncementOut', 'fieldClass':'field', 'fieldId':'']) }}
