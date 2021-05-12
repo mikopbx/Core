@@ -5,7 +5,6 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\SoundFiles;
-use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Util;
 
 class ExtensionsAnnonceRecording extends CoreConfigClass
@@ -32,11 +31,9 @@ class ExtensionsAnnonceRecording extends CoreConfigClass
      *
      * @return string
      */
-    public function extensionGlobals(): string
+    public static function getPathAnnonceFile($id): string
     {
         $filename        = '';
-        $generalSettings = new MikoPBXConfig();
-        $id = $generalSettings->getGeneralSettings('PBXRecordAnnouncement');
         if(!empty($id)){
             /** @var SoundFiles $fileData */
             $fileData = SoundFiles::findFirst($id);
@@ -44,8 +41,7 @@ class ExtensionsAnnonceRecording extends CoreConfigClass
                 $filename = Util::trimExtensionForFile($fileData->path);
             }
         }
-
-        return "PBX_REC_ANNONCE={$filename}".PHP_EOL;
+        return $filename;
     }
 
     /**
