@@ -55,7 +55,13 @@ class CreateOutgoingCallRules extends MikoPBXTestsBase
         $this->changeInputField('restnumbers', $params['restnumbers']);
         $this->changeInputField('trimfrombegin', $params['trimfrombegin']);
         $this->changeInputField('prepend', $params['prepend']);
-        $this->selectDropdownItem('providerid', $params['providerid']);
+
+        if ( ! empty($params['providerName'])) {
+            $params['providerid'] = $this->selectDropdownItemByName('providerid', $params['providerName']);
+        } else {
+            $this->selectDropdownItem('providerid', $params['providerid']);
+        }
+
 
         $this->submitForm('outbound-route-form');
         $id = $this->getCurrentRecordID();
@@ -87,7 +93,8 @@ class CreateOutgoingCallRules extends MikoPBXTestsBase
             'restnumbers'        => '10',
             'trimfrombegin'        => '1',
             'prepend'         => '8',
-            'providerid'=>'SIP-PROVIDER-34F7CCFE873B9DABD91CC8D75342CB43'
+            'providerid'=>'SIP-PROVIDER-34F7CCFE873B9DABD91CC8D75342CB43',
+            'providerName'=>''
         ]];
         $params[] = [[
             'rulename'=>'International outgoing calls',
@@ -96,7 +103,30 @@ class CreateOutgoingCallRules extends MikoPBXTestsBase
             'restnumbers'        => '10',
             'trimfrombegin'        => '2',
             'prepend'         => '777',
-            'providerid'=>'SIP-PROVIDER-34F7CCFE873B9DABD91CC8D75342CB43'
+            'providerid'=>'SIP-PROVIDER-34F7CCFE873B9DABD91CC8D75342CB43',
+            'providerName'=>''
+        ]];
+
+        $params[] = [[
+            'rulename'=>'Outgoing calls for CTI tests 1',
+            'note' => '',
+            'numberbeginswith' => '',
+            'restnumbers'        => '10',
+            'trimfrombegin'        => '0',
+            'prepend'         => '7',
+            'providerid'=>'',
+            'providerName' => 'Provider for CTI tests',
+        ]];
+
+        $params[] = [[
+            'rulename'=>'Outgoing calls for CTI tests 2',
+            'note' => '',
+            'numberbeginswith' => '(7|8)',
+            'restnumbers'        => '10',
+            'trimfrombegin'        => '0',
+            'prepend'         => '',
+            'providerid'=>'',
+            'providerName' => 'Provider for CTI tests',
         ]];
 
         return $params;

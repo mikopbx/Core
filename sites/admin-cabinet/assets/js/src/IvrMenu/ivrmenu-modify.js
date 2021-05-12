@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, ivrActions, globalTranslate, Form, Extensions */
+/* global globalRootUrl, ivrActions, globalTranslate, Form, Extensions, SoundFilesSelector */
 
 $.fn.form.settings.rules.existRule = () => $('#extension-error').hasClass('hidden');
 
@@ -106,6 +106,8 @@ const ivrMenu = {
 			ivrMenu.$dirrtyField.trigger('change');
 			el.preventDefault();
 		});
+		$('#ivr-menu-form .audio-message-select').dropdown(SoundFilesSelector.getDropdownSettingsWithEmpty());
+
 		ivrMenu.initializeForm();
 
 		ivrMenu.buildIvrMenuActions();

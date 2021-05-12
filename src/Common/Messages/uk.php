@@ -788,8 +788,6 @@ return [
     'auth_WrongLoginPassword' => 'Помилка авторизації',
     'log_CaptureMessage' => '<div class=\'ui message \'>Запустіть збір логів і виконайте дзвінок або іншу дію, що приводить до збою. 
 <br>Система сформує зліпок стану системи у вигляді архіву.</div>',
-    'log_StartLogsCapture' => 'Почати збір логів',
-    'log_StopLogsCapture' => 'Завершити збір логів',
     'dbg_NoDebugInformation' => 'Немає інформації',
     'dbg_Header' => 'Налагоджувальна інформація',
     'f2b_Reason' => 'Причина',
@@ -1053,4 +1051,7 @@ return [
     'pr_EnterHostOrIp' => 'Додаткові адреси провайдера',
     'auth_RememberMe' => 'Запам\'ятати мене',
     'log_DownloadLogs' => 'Завантажити все логи',
+    'gs_PBXRecordAnnouncement' => 'Виберіть попередження про записи розмов',
+    'log_StopCapturePCAP' => 'Зупинити і завантажити',
+    'log_StartCapturePCAP' => 'старт',
 ];

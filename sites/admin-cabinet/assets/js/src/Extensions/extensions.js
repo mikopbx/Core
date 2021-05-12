@@ -287,7 +287,7 @@ const Extensions = {
 		});
 		if (numbers.length === 0) return;
 		$.api({
-			url: `${globalRootUrl}extensions/GetPhonesRepresent/`,
+			url: `${globalRootUrl}extensions/GetPhonesRepresent`,
 			data: { numbers },
 			method: 'POST',
 			on: 'now',
@@ -312,7 +312,7 @@ const Extensions = {
 		const numbers = [];
 		numbers.push(number);
 		$.api({
-			url: `${globalRootUrl}extensions/GetPhonesRepresent/`,
+			url: `${globalRootUrl}extensions/GetPhonesRepresent`,
 			data: { numbers },
 			method: 'POST',
 			on: 'now',

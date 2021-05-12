@@ -73,19 +73,8 @@
         <label>{{ t._('tf_SelectExtension') }}</label>
         {{ form.render('extension') }}
     </div>
-    <div class="field" id="audio-file-group">
-        <label>{{ t._('tf_SelectAudioMessage') }}</label>
-        <div class="fields">
-            <div class="fourteen wide field">
-                {{ form.render('audio_message_id') }}
-            </div>
-            <div class="one wide field">
-                <div class="ui basic icon button large action-playback-button" data-value="audio_message_id"><i
-                            class="play icon"></i></div>
-            </div>
-        </div>
-    </div>
 
+   {{ partial("partials/playAddNewSound", ['label': t._('tf_SelectAudioMessage'), 'id':'audio_message_id', 'fieldClass':'field', 'fieldID':'audio-file-group']) }}
 
 </div>
 <div class="field">

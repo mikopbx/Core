@@ -15,18 +15,7 @@
     <label>{{ t._('iv_Description') }}</label>
     {{ form.render('description') }}
 </div>
-<div class="field">
-    <label>{{ t._('iv_PlaySound') }}</label>
-    <div class="fields">
-        <div class="eight wide field">
-            {{ form.render('audio_message_id') }}
-        </div>
-        <div class="one wide field">
-            <div class="ui basic icon button large action-playback-button" data-value="audio_message_id"><i
-                        class="play icon"></i></div>
-        </div>
-    </div>
-</div>
+{{ partial("partials/playAddNewSound", ['label': t._('iv_PlaySound'), 'id':'audio_message_id', 'fieldClass':'eleven wide field', 'fieldId':'']) }}
 <div class="ui compact segment">
     <div class="ui top attached label">{{ t._('iv_Actions') }}</div>
     <div id="actions-place">
@@ -59,11 +48,11 @@
     <label>{{ t._('iv_NumberOfRepeat') }}</label>
     {{ form.render('number_of_repeat') }}
 </div>
-<div class="six wide field">
+<div class="ten wide field">
     <label>{{ t._('iv_TimeoutToRedirect') }}</label>
     {{ form.render('timeout') }}
 </div>
-<div class="six wide field">
+<div class="ten wide field">
     <label>{{ t._('iv_TimeoutExtension') }}</label>
     {{ form.render('timeout_extension') }}
 </div>

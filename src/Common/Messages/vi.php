@@ -852,8 +852,6 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá đ
     'auth_WrongLoginPassword' => 'Lỗi ủy quyền',
     'log_CaptureMessage' => '<div class = \'ui message\'> Bắt đầu thu thập nhật ký và thực hiện cuộc gọi hoặc hành động khác dẫn đến thất bại.
 <br> Hệ thống sẽ tạo ấn tượng về trạng thái hệ thống dưới dạng lưu trữ. </div>',
-    'log_StartLogsCapture' => 'Bắt đầu thu thập nhật ký',
-    'log_StopLogsCapture' => 'Hoàn thành bộ sưu tập nhật ký',
     'dbg_NoDebugInformation' => 'Không có thông tin',
     'dbg_Header' => 'Thông tin gỡ lỗi',
     'f2b_IpAddres' => 'Địa chỉ IP',
@@ -1053,4 +1051,7 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá đ
     'pr_EnterHostOrIp' => 'Địa chỉ nhà cung cấp bổ sung',
     'auth_RememberMe' => 'Nhớ tôi',
     'log_DownloadLogs' => 'Tải xuống tất cả nhật ký',
+    'gs_PBXRecordAnnouncement' => 'Chọn cảnh báo ghi âm cuộc gọi',
+    'log_StopCapturePCAP' => 'Dừng lại và tải xuống',
+    'log_StartCapturePCAP' => 'Khởi đầu',
 ];

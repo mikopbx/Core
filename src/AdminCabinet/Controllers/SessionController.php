@@ -57,7 +57,13 @@ class SessionController extends BaseController
             $this->_registerSession('admins');
             $this->updateSystemLanguage();
             $this->view->success = true;
-            $this->view->reload  = 'index/index';
+            $backUri = $this->request->getPost('backUri');
+            if (!empty($backUri)){
+                $this->view->reload  = $backUri;
+            } else {
+                $this->view->reload  = 'index/index';
+            }
+
         } else {
             $this->view->success = false;
             $this->flash->error($this->translation->_('auth_WrongLoginPassword'));

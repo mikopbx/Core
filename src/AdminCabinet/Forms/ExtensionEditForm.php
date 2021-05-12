@@ -19,6 +19,10 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
+use MikoPBX\Common\Models\ExtensionForwardingRights;
+use MikoPBX\Common\Models\ExternalPhones;
+use MikoPBX\Common\Models\Sip;
+use MikoPBX\Common\Models\Users;
 use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Numeric;
@@ -26,6 +30,7 @@ use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
 use Phalcon\Forms\Element\TextArea;
 use Phalcon\Forms\Form;
+use Phalcon\Mvc\Model;
 
 /**
  * Class ExtensionEditForm
@@ -74,20 +79,21 @@ class ExtensionEditForm extends Form
         $this->add(new Check('public_access', $cheskarr));
 
         // USER
+        $user = $entity->Users??new Users();
         // ID
-        $this->add(new Hidden('user_id', ["value" => $entity->Users->id]));
+        $this->add(new Hidden('user_id', ["value" => $user->id]));
 
         // User role
-        $this->add(new Hidden('user_role', ["value" => $entity->Users->role]));
+        $this->add(new Hidden('user_role', ["value" => $user->role]));
 
         // Username
-        $this->add(new Text('user_username', ["value" => $entity->Users->username]));
+        $this->add(new Text('user_username', ["value" => $user->username]));
 
         // Email
         $this->add(
             new Text(
                 'user_email', [
-                "value" => $entity->Users->email,
+                "value" => $user->email,
             ]
             )
         );
@@ -126,38 +132,39 @@ class ExtensionEditForm extends Form
 
 
         // Picture
-        $this->add(new Hidden('user_avatar', ["value" => $entity->Users->avatar]));
+        $this->add(new Hidden('user_avatar', ["value" => $user->avatar]));
 
 
         // SIP
-        $this->add(new Hidden('sip_id', ["value" => $entity->Sip->id]));
+        $sip = $entity->Sip??new Sip();
+        $this->add(new Hidden('sip_id', ["value" => $sip->id]));
 
         // Disabled
-        $this->add(new Hidden('sip_disabled', ["value" => $entity->Sip->disabled]));
+        $this->add(new Hidden('sip_disabled', ["value" => $sip->disabled]));
 
         // Extension
-        $this->add(new Hidden('sip_extension', ["value" => $entity->Sip->extension]));
+        $this->add(new Hidden('sip_extension', ["value" => $sip->extension]));
 
         // ID
-        $this->add(new Hidden('sip_id', ["value" => $entity->Sip->id]));
+        $this->add(new Hidden('sip_id', ["value" => $sip->id]));
 
         // Uniqid
-        $this->add(new Hidden('sip_uniqid', ["value" => $entity->Sip->uniqid]));
+        $this->add(new Hidden('sip_uniqid', ["value" => $sip->uniqid]));
 
         // Type
-        $this->add(new Hidden('sip_type', ["value" => $entity->Sip->type]));
+        $this->add(new Hidden('sip_type', ["value" => $sip->type]));
 
         // Secret
         $this->add(
             new Text(
                 'sip_secret', [
-                "value" => $entity->Sip->secret,
+                "value" => $sip->secret,
             ]
             )
         );
 
         // Busylevel
-        $this->add(new Numeric('sip_busylevel', ["value" => $entity->Sip->busylevel]));
+        $this->add(new Numeric('sip_busylevel', ["value" => $sip->busylevel]));
 
         // Dtmfmode
         $arrDTMFType = [
@@ -175,7 +182,7 @@ class ExtensionEditForm extends Form
                 'name',
             ],
             'useEmpty' => false,
-            'value'    => $entity->Sip->dtmfmode,
+            'value'    => $sip->dtmfmode,
             'class'    => 'ui selection dropdown dtmf-mode-select',
         ]
         );
@@ -189,7 +196,7 @@ class ExtensionEditForm extends Form
                 'name',
             ],
             'useEmpty' => false,
-            'value'    => $entity->Sip->networkfilterid,
+            'value'    => $sip->networkfilterid,
             'class'    => 'ui selection dropdown network-filter-select',
         ]
         );
@@ -212,7 +219,7 @@ class ExtensionEditForm extends Form
                 'name',
             ],
             'useEmpty' => false,
-            'value'    => $entity->Sip->nat,
+            'value'    => $sip->nat,
             'class'    => 'ui selection dropdown protocol-select',
         ]
         );
@@ -220,52 +227,54 @@ class ExtensionEditForm extends Form
 
         // Qualify
         $cheskarr = ['value' => null];
-        if ($entity->Sip->qualify) {
+        if ($sip->qualify) {
             $cheskarr = ['checked' => 'checked', 'value' => null];
         }
 
         $this->add(new Check('qualify', $cheskarr));
 
         // Qualifyfreq
-        $this->add(new Numeric('qualifyfreq', ["value" => $entity->Sip->qualifyfreq]));
+        $this->add(new Numeric('qualifyfreq', ["value" => $sip->qualifyfreq]));
 
         // Manualattributes
         $rows = max(
-            round(strlen($entity->Sip->getManualAttributes()) / 95),
+            round(strlen($sip->getManualAttributes()) / 95),
             2
         );
         $this->add(
             new TextArea(
                 'sip_manualattributes',
-                ["value" => $entity->Sip->getManualAttributes(), "rows" => $rows]
+                ["value" => $sip->getManualAttributes(), "rows" => $rows]
             )
         );
 
         // Description
-        $this->add(new Text('sip_description', ["value" => $entity->Sip->description]));
+        $this->add(new Text('sip_description', ["value" => $sip->description]));
 
         // EXTERNAL Extension
         $this->add(new Text('mobile_number', ["value" => $options['external_extension']->number]));
         // Uniqid
-        $this->add(new Hidden('mobile_uniqid', ["value" => $options['external_extension']->ExternalPhones->uniqid]));
+        $externalPhones = $options['external_extension']->ExternalPhones??new ExternalPhones();
+        $this->add(new Hidden('mobile_uniqid', ["value" => $externalPhones->uniqid]));
         // Disabled
         $this->add(
             new Hidden(
                 'mobile_disabled',
-                ["value" => $options['external_extension']->ExternalPhones->disabled]
+                ["value" => $externalPhones->disabled]
             )
         );
         // Dialstring
         $this->add(
             new Text(
                 'mobile_dialstring',
-                ["value" => $options['external_extension']->ExternalPhones->dialstring]
+                ["value" => $externalPhones->dialstring]
             )
         );
 
 
         // Routing
         // Forwarding
+        $extensionForwardingRights = $entity->ExtensionForwardingRights??new ExtensionForwardingRights();
         $this->add(
             new Select(
                 'fwd_forwarding', $options['forwarding_extensions'], [
@@ -274,7 +283,7 @@ class ExtensionEditForm extends Form
                     'name',
                 ],
                 'useEmpty' => true,
-                'value'    => $entity->ExtensionForwardingRights->forwarding,
+                'value'    => $extensionForwardingRights->forwarding,
                 'class'    => 'ui selection dropdown search forwarding-select',
             ]
             )
@@ -289,7 +298,7 @@ class ExtensionEditForm extends Form
                     'name',
                 ],
                 'useEmpty' => true,
-                'value'    => $entity->ExtensionForwardingRights->forwardingonbusy,
+                'value'    => $extensionForwardingRights->forwardingonbusy,
                 'class'    => 'ui selection dropdown search forwarding-select',
             ]
             )
@@ -303,20 +312,20 @@ class ExtensionEditForm extends Form
                     'name',
                 ],
                 'useEmpty' => true,
-                'value'    => $entity->ExtensionForwardingRights->forwardingonunavailable,
+                'value'    => $extensionForwardingRights->forwardingonunavailable,
                 'class'    => 'ui selection dropdown search forwarding-select',
             ]
             )
         );
-        // Ringlength
-        $ringlength = $entity->ExtensionForwardingRights->ringlength;
+        // RingLength
+        $ringDuration = $extensionForwardingRights->ringlength;
         $this->add(
             new Numeric(
                 'fwd_ringlength', [
                 "maxlength"    => 2,
                 "style"        => "width: 80px;",
                 "defaultValue" => 120,
-                "value"        => ($ringlength > 0) ? $ringlength : '',
+                "value"        => ($ringDuration > 0) ? $ringDuration : '',
             ]
             )
         );

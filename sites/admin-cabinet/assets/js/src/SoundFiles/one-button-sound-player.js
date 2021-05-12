@@ -46,7 +46,7 @@ const sndPlayerOneBtn = {
 	},
 	updateAudioSource() {
 		const audioFileId = $('form').form('get value', sndPlayerOneBtn.soundSelectorClass);
-		if (audioFileId !== '') {
+		if (audioFileId !== '' && audioFileId !== "-1") {
 			$.api({
 				url: `${globalRootUrl}sound-files/getpathbyid/${audioFileId}`,
 				on: 'now',

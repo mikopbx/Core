@@ -126,6 +126,7 @@ class PbxSettings extends ModelsBase
             'PBXInternalExtensionLength'      => '3',// Длина внутреннего номера
             'PBXRecordCalls'                  => '1',
             'PBXSplitAudioThread'             => '0',
+            'PBXRecordAnnouncement'           => '',
             'PBXCallParkingExt'               => '800',
             'PBXCallParkingStartSlot'         => '801',
             'PBXCallParkingEndSlot'           => '820',

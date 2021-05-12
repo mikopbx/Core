@@ -623,6 +623,7 @@ return [
     'gs_EnterDeleteAllPhrasePreText' => 'Для очистки системы введите в поле ввода следующую фразу:',
     'gs_EnterDeleteAllPhrase' => 'удалить всё',
     'gs_AllSettingsDeleted' => 'Все настройки удалены',
+    'gs_PBXRecordAnnouncement'=> 'Выберите предупреждение о записи разговоров',
     'ts_CurrentSettings' => 'Текущие настройки',
     'ts_SystemTime' => 'Системное время',
     'ts_TimeZone' => 'Таймзона',
@@ -845,10 +846,11 @@ return [
     'auth_SubmitButton' => 'Авторизоваться',
     'auth_WrongLoginPassword' => 'Ошибка авторизации',
     'auth_RememberMe' => 'Запомнить меня',
-    'log_CaptureMessage' => '<div class=\'ui message \'>Запустите сбор логов и выполните звонок или другое действие, приводящее к сбою. 
-<br>Система сформирует слепок состояния системы в виде архива.</div>',
-    'log_StartLogsCapture' => 'Начать сбор логов',
-    'log_StopLogsCapture' => 'Завершить сбор логов',
+    'log_CaptureMessage' => '<div class=\'ui message \'>Запустите сбор сетевых пакетов и выполните звонок или другое действие, приводящее к сбою. 
+<br>Система сохранит все пакеты проходящие в этот момент через сетевую карту для дальнейшего анализа.</div>',
+    'log_StartCapturePCAP' => 'Старт',
+    'log_StopCapturePCAP' => 'Остановить и скачать',
+    'log_DownloadLogs' => 'Скачать все системные логи',
     'dbg_NoDebugInformation' => 'Нет информации',
     'dbg_Header' => 'Отладочная информация',
     'f2b_Reason' => 'Причина',
@@ -1046,7 +1048,7 @@ return [
     'sd_offset' => 'Офсет',
     'sd_lines' => 'Лимит',
     'sd_ShowLog' => 'Просмотр логов',
-    'sd_CapturePcap' => 'Захват логов',
+    'sd_CapturePcap' => 'Захват сетевых пакетов',
     'sd_DownloadPcapFileError' => 'Ошибка при формировании архива логов',
     'sd_SystemInformation' => 'Информация о системе',
     'sd_CollectingInfo' => 'Сбор служебной информации',
@@ -1055,5 +1057,5 @@ return [
     'msg_ErrorHeader' => 'Ошибка',
     'msg_WarningHeader' => 'Внимание',
     'msg_infoHeader' => 'Информация',
-    'log_DownloadLogs' => 'Скачать все логи',
+
 ];

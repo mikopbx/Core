@@ -58,16 +58,12 @@
     "tempDir": "/mountpoint/mikopbx/tmp",
     "logsDir": "/mountpoint/mikopbx/log",
     "mediaMountPoint": "/mountpoint",
-    "fail2banDbDir": "/mountpoint/mikopbx/fail2ban",
-    "managedCacheDir": "/var/tmp/managed_cache",
-    "modelsCacheDir": "/var/tmp/models_cache"
+    "fail2banDbDir": "/mountpoint/mikopbx/fail2ban"
   },
   "www": {
     "uploadDir": "/mountpoint/mikopbx/tmp/www_cache/upload_cache",
     "phpSessionDir": "/var/tmp/php/session",
     "downloadCacheDir": "/mountpoint/mikopbx/tmp/www_cache/files_cache",
-    "managedCacheDir": "/var/tmp/www_cache/managed_cache",
-    "modelsCacheDir": "/var/tmp/www_cache/models_cache",
     "encryptionKey": "auVy8?^%5XLTJQc-%&k?TcB-_E2jNT35K?%knZ&TMqmc8U@k+=AaZ^3vv7xA+mA5"
   },
   "adminApplication": {

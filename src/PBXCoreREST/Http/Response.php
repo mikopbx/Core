@@ -102,8 +102,7 @@ class Response extends PhResponse
         $hash      = sha1($timestamp . $content);
         $eTag      = sha1($content);
 
-        /** @var array $content */
-        $content = json_decode($this->getContent(), true);
+        $content = json_decode($content, true);
         $jsonapi = [
             'jsonapi' => [
                 'version' => '1.0',

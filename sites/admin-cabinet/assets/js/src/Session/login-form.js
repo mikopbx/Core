@@ -58,6 +58,8 @@ const loginForm = {
 	cbBeforeSendForm(settings) {
 		const result = settings;
 		result.data = loginForm.$formObj.form('get values');
+		let backUri  = `${location.pathname}${location.search}`;
+		result.data.backUri = backUri.replace(globalRootUrl,'');
 		return result;
 	},
 	cbAfterSendForm() {
