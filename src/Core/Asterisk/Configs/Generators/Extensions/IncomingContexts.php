@@ -175,11 +175,16 @@ class IncomingContexts extends CoreConfigClass
         }
         $number      = trim($rout['number']);
         $rout_number = ($number === '') ? 'X!' : $number;
-        $this->generateDialActionsRoutNumber($rout, $rout_number);
-        $this->duplicateDialActionsRoutNumber($rout, $rout_number, $number);
+        $this->generateDialActionsRoutNumber($rout, $rout_number, $number);
     }
 
-    private function generateDialActionsRoutNumber($rout, $rout_number): void
+    /**
+     * Генерация dialplan. Набор команд Dial()
+     * @param $rout
+     * @param $rout_number
+     * @param $number
+     */
+    private function generateDialActionsRoutNumber($rout, $rout_number, $number): void
     {
         $timeout = trim($rout['timeout']);
         // Обязательно проверяем "DIALSTATUS", в случае с парковой через AMI вызова это необходимо.
@@ -190,16 +195,22 @@ class IncomingContexts extends CoreConfigClass
         if (in_array($rout['extension'], $this->confExtensions, true)) {
             // Это конференция. Тут не требуется обработка таймаута ответа.
             // Вызов будет отвечен сразу конференцией.
-            $dial_command                       = " \n\t" . 'same => n,' . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?' . "Goto(internal,{$rout['extension']},1));";
-            $this->rout_data_dial[$rout_number] .= "";
+            $dialplanCommands = " \n\t".'same => n,ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?'."Goto(internal,{$rout['extension']},1));";
         } else {
-            $dial_command                       = " \n\t" . 'same => n,' . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?' . "Dial(Local/{$rout['extension']}@internal-incoming/n,{$timeout},".'${TRANSFER_OPTIONS}'."Kg));";
-            $this->rout_data_dial[$rout_number] .= " \n\t" . "same => n,Set(M_TIMEOUT={$timeout})";
+            $dialplanCommands = " \n\t"."same => n,Set(M_TIMEOUT={$timeout})".
+                                " \n\t".'same => n,ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?'."Dial(Local/{$rout['extension']}@internal-incoming/n,{$timeout},".'${TRANSFER_OPTIONS}'."Kg));";
         }
-        $this->rout_data_dial[$rout_number] .= $dial_command;
+        $this->rout_data_dial[$rout_number] .= $dialplanCommands;
+        $this->duplicateDialActionsRoutNumber($rout, $dialplanCommands, $number);
     }
 
-    private function duplicateDialActionsRoutNumber($rout, $rout_number, $number): void
+    /**
+     * Правило добавляется для exten = login.
+     * @param $rout
+     * @param $dial_command
+     * @param $number
+     */
+    private function duplicateDialActionsRoutNumber($rout, $dial_command, $number): void
     {
         if ( ! is_array($this->provider)) {
             return;
@@ -209,7 +220,7 @@ class IncomingContexts extends CoreConfigClass
             $this->rout_data_dial[$key] = '';
         }
         if (empty($number)) {
-            $this->rout_data_dial[$key] .= $this->rout_data_dial[$rout_number];
+            $this->rout_data_dial[$key] .= $dial_command;
         }
     }
 
