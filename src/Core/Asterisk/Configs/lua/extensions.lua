@@ -334,6 +334,18 @@ function event_dial_answer()
         set_variable("MASTER_CHANNEL(M_DIALSTATUS)", 'ANSWER');
         app["AGI"]('/usr/www/src/Core/Asterisk/agi-bin/clean_timeout.php');
         set_variable("MASTER_CHANNEL(M_TIMEOUT_CHANNEL)", '');
+
+        local needAnnonceIn  = get_variable('MASTER_CHANNEL(IN_NEED_ANNONCE)');
+        local needAnnonceOut = get_variable('OUT_NEED_ANNONCE');
+        local fileAnnonce = get_variable('PBX_REC_ANNONCE');
+        app["NoOp"]('needAnnonce: '.. needAnnonceIn .. '. fileAnnonce: ' .. fileAnnonce);
+        if( (needAnnonceIn == '1' or needAnnonceOut == '1') and fileAnnonce ~= '' )then
+            local posSlash = masterChannel:find('/') + 1;
+            local dst_chan = masterChannel:sub(posSlash);
+            app["Originate"]('Local/'..dst_chan..'@annonce-spy,exten,annonce-playback,annonce,1,2,a');
+            set_variable("MASTER_CHANNEL(IN_NEED_ANNONCE)", '0');
+            set_variable("OUT_NEED_ANNONCE", '0');
+        end
     end
 
     userevent_return(data)

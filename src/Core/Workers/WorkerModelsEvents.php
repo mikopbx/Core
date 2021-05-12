@@ -334,6 +334,7 @@ class WorkerModelsEvents extends WorkerBase
         $tables[] = [
             'settingName' => [
                 'PBXLanguage',
+                'PBXRecordAnnouncement',
             ],
             'functions'   => [
                 self::R_DIALPLAN,
