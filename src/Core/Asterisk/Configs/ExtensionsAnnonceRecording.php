@@ -4,8 +4,8 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
-use MikoPBX\Common\Models\OutWorkTimes;
 use MikoPBX\Common\Models\SoundFiles;
+use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Util;
 
 class ExtensionsAnnonceRecording extends CoreConfigClass
@@ -34,8 +34,9 @@ class ExtensionsAnnonceRecording extends CoreConfigClass
      */
     public function extensionGlobals(): string
     {
-        $filename = '';
-        $id = $this->generalSettings['PBXRecordAnnouncement'];
+        $filename        = '';
+        $generalSettings = new MikoPBXConfig();
+        $id = $generalSettings->getGeneralSettings('PBXRecordAnnouncement');
         if(!empty($id)){
             /** @var SoundFiles $fileData */
             $fileData = SoundFiles::findFirst($id);
