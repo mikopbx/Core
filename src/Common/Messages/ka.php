@@ -1053,4 +1053,5 @@ return [
     'log_DownloadLogs' => 'ჩამოტვირთეთ ყველა ჟურნალი',
     'log_StopCapturePCAP' => 'შეჩერება და ჩამოტვირთვა',
     'log_StartCapturePCAP' => 'დაწყება',
+    'gs_PBXRecordAnnouncementIn' => 'შემომავალი ზარებისათვის აირჩიეთ ზარის ჩაწერის სიგნალი',
 ];

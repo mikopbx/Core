@@ -1053,4 +1053,5 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
     'log_DownloadLogs' => 'Tüm günlükleri indirin',
     'log_StopCapturePCAP' => 'Durdur ve indir',
     'log_StartCapturePCAP' => 'Başlat',
+    'gs_PBXRecordAnnouncementIn' => 'Gelen aramalar için arama kaydı uyarısını seçin',
 ];

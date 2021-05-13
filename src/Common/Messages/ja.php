@@ -1053,4 +1053,5 @@ return [
     'log_DownloadLogs' => 'すべてのログをダウンロードする',
     'log_StopCapturePCAP' => '停止してダウンロード',
     'log_StartCapturePCAP' => '開始',
+    'gs_PBXRecordAnnouncementIn' => '着信の通話録音アラートを選択します',
 ];

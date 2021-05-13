@@ -1053,4 +1053,5 @@ Se puede activar una vez, después de lo cual el cupón se canjea.
     'log_DownloadLogs' => 'Descargar todos los registros',
     'log_StopCapturePCAP' => 'Detener y descargar',
     'log_StartCapturePCAP' => 'Comienzo',
+    'gs_PBXRecordAnnouncementIn' => 'Seleccionar alerta de grabación de llamadas para llamadas entrantes',
 ];
