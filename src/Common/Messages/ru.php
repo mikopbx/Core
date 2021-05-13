@@ -624,7 +624,7 @@ return [
     'gs_EnterDeleteAllPhrase' => 'удалить всё',
     'gs_AllSettingsDeleted' => 'Все настройки удалены',
     'gs_PBXRecordAnnouncementIn'=> 'Выберите предупреждение о записи разговоров для входящих вызовов',
-    'gs_PBXRecordAnnouncementIn'=> 'Выберите предупреждение о записи разговоров для исходящих вызовов',
+    'gs_PBXRecordAnnouncementOut'=> 'Выберите предупреждение о записи разговоров для исходящих вызовов',
     'ts_CurrentSettings' => 'Текущие настройки',
     'ts_SystemTime' => 'Системное время',
     'ts_TimeZone' => 'Таймзона',

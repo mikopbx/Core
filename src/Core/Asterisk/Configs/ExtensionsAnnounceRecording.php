@@ -15,23 +15,30 @@ class ExtensionsAnnounceRecording extends CoreConfigClass
      */
     public function extensionGenContexts(): string
     {
+        //
         return  '[annonce-spy]'. PHP_EOL.
                 'exten => _.!,1,ExecIf($[ "${EXTEN}" == "h" ]?Hangup()'. PHP_EOL."\t".
-	            'same => n,ExecIf($["${CHANNELS(PJSIP/${EXTEN})}x" != "x" && "${PBX_REC_ANNONCE}x" != "x"]?Chanspy(PJSIP/${EXTEN},uBq))'. PHP_EOL."\t".
+	            'same => n,ExecIf($["${CHANNELS(PJSIP/${EXTEN})}x" != "x"]?Chanspy(PJSIP/${EXTEN},uBq))'. PHP_EOL."\t".
                 'same => n,Hangup()'.PHP_EOL
                 .PHP_EOL.
-                '[annonce-playback]'.PHP_EOL.
+                '[annonce-playback-in]'.PHP_EOL.
                 'exten => annonce,1,Answer()'.PHP_EOL."\t".
-	            'same => n,ExecIf("${PBX_REC_ANNONCE}x" != "x"]?Playback(${PBX_REC_ANNONCE}))'.PHP_EOL."\t".
+	            'same => n,ExecIf("${PBX_REC_ANNONCE_IN}x" != "x"]?Playback(${PBX_REC_ANNONCE_IN}))'.PHP_EOL."\t".
+                'same => n,Hangup()'.PHP_EOL
+                .PHP_EOL.
+                '[annonce-playback-out]'.PHP_EOL.
+                'exten => annonce,1,Answer()'.PHP_EOL."\t".
+	            'same => n,ExecIf("${PBX_REC_ANNONCE_OUT}x" != "x"]?Playback(${PBX_REC_ANNONCE_OUT}))'.PHP_EOL."\t".
                 'same => n,Hangup()'.PHP_EOL;
     }
 
     /**
      * Prepares additional parameters for [globals] section in the extensions.conf file
-     *
+
+     * @param string $id
      * @return string
      */
-    public static function getPathAnnonceFile($id): string
+    public static function getPathAnnonceFile(string $id): string
     {
         $filename        = '';
         if(!empty($id)){
