@@ -1053,4 +1053,5 @@ return [
     'log_DownloadLogs' => 'Завантажити все логи',
     'log_StopCapturePCAP' => 'Зупинити і завантажити',
     'log_StartCapturePCAP' => 'старт',
+    'gs_PBXRecordAnnouncementIn' => 'Виберіть попередження про записи розмов для вхідних викликів',
 ];

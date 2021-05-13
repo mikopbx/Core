@@ -1053,4 +1053,5 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'log_DownloadLogs' => 'Stáhněte si všechny protokoly',
     'log_StopCapturePCAP' => 'Zastavit a stáhnout',
     'log_StartCapturePCAP' => 'Start',
+    'gs_PBXRecordAnnouncementIn' => 'Vyberte upozornění na nahrávání hovorů pro příchozí hovory',
 ];

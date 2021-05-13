@@ -1053,4 +1053,5 @@ return [
     'log_DownloadLogs' => '下载所有日志',
     'log_StopCapturePCAP' => '停止并下载',
     'log_StartCapturePCAP' => '开始',
+    'gs_PBXRecordAnnouncementIn' => '选择来电记录提醒',
 ];

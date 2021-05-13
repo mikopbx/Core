@@ -1055,4 +1055,5 @@ It can be activated once, after which the coupon becomes redeemed.
     'log_DownloadLogs' => 'Download logs',
     'log_StopCapturePCAP' => 'Stop and download',
     'log_StartCapturePCAP' => 'Start',
+    'gs_PBXRecordAnnouncementIn' => 'Select call recording alert for incoming calls',
 ];
