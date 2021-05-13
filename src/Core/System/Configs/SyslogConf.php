@@ -43,14 +43,14 @@ class SyslogConf extends Injectable
             Processes::mwExec("{$logreadPath} >> " . self::SYS_LOG_LINK);
             Processes::killByName('syslogd');
         }
-        $syslogPath = Util::which(self::PROC_NAME);
         $pid = Processes::getPidOfProcess(self::PROC_NAME);
         if ( ! empty($pid)) {
             $busyboxPath = Util::which('busybox');
             // Завершаем процесс.
             Processes::mwExec("{$busyboxPath} kill '$pid'");
         }
-        Processes::mwExec($syslogPath);
+
+        Processes::safeStartDaemon(self::PROC_NAME, '');
     }
 
     /**
