@@ -1054,4 +1054,5 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'log_StopCapturePCAP' => 'Pare e baixe',
     'log_StartCapturePCAP' => 'Começar',
     'gs_PBXRecordAnnouncementIn' => 'Selecione o alerta de gravação de chamadas para chamadas recebidas',
+    'gs_PBXRecordAnnouncementOut' => 'Selecione o alerta de gravação de chamadas para chamadas efetuadas',
 ];

@@ -1054,4 +1054,5 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
     'log_StopCapturePCAP' => 'Durdur ve indir',
     'log_StartCapturePCAP' => 'Başlat',
     'gs_PBXRecordAnnouncementIn' => 'Gelen aramalar için arama kaydı uyarısını seçin',
+    'gs_PBXRecordAnnouncementOut' => 'Giden aramalar için arama kaydı uyarısını seçin',
 ];

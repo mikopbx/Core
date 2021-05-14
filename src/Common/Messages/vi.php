@@ -1054,4 +1054,5 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá đ
     'log_StopCapturePCAP' => 'Dừng lại và tải xuống',
     'log_StartCapturePCAP' => 'Khởi đầu',
     'gs_PBXRecordAnnouncementIn' => 'Chọn cảnh báo ghi âm cuộc gọi cho các cuộc gọi đến',
+    'gs_PBXRecordAnnouncementOut' => 'Chọn cảnh báo ghi âm cuộc gọi cho các cuộc gọi đi',
 ];

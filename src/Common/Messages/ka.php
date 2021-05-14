@@ -1054,4 +1054,5 @@ return [
     'log_StopCapturePCAP' => 'შეჩერება და ჩამოტვირთვა',
     'log_StartCapturePCAP' => 'დაწყება',
     'gs_PBXRecordAnnouncementIn' => 'შემომავალი ზარებისათვის აირჩიეთ ზარის ჩაწერის სიგნალი',
+    'gs_PBXRecordAnnouncementOut' => 'გამავალი ზარების ასარჩევად აირჩიეთ ზარის ჩაწერის სიგნალი',
 ];
