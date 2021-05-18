@@ -158,7 +158,6 @@ class OutgoingContext extends CoreConfigClass
         $conf .= 'same => n,Gosub(${ISTRANSFER}dial,${EXTEN},1)' . "\n\t";
 
         $conf .= 'same => n,ExecIf($["${EXTERNALPHONE}" == "${src_number}"]?Set(DOPTIONS=tk))' . "\n\t";
-        $conf .= 'same => n,ExecIf($["${OUTGOING_CID}x" != "x"]?Set(DOPTIONS=${DOPTIONS}f(${OUTGOING_CID})))' . "\n\t";
 
         $dialCommand = $this->getDialCommand($rout);
         $conf .= 'same => n,Set(DIAL_COMMAND='.$dialCommand.')' . "\n\t";
