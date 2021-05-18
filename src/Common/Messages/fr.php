@@ -1054,4 +1054,5 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'log_StopCapturePCAP' => 'Arrêtez et téléchargez',
     'log_StartCapturePCAP' => 'Démarrer',
     'gs_PBXRecordAnnouncementIn' => 'Sélectionnez l\'alerte d\'enregistrement des appels pour les appels entrants',
+    'gs_PBXRecordAnnouncementOut' => 'Sélectionnez l\'alerte d\'enregistrement des appels pour les appels sortants',
 ];

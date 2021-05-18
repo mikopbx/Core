@@ -1054,4 +1054,5 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'log_StopCapturePCAP' => 'Zatrzymaj się i pobierz',
     'log_StartCapturePCAP' => 'Początek',
     'gs_PBXRecordAnnouncementIn' => 'Wybierz alert nagrywania rozmów dla połączeń przychodzących',
+    'gs_PBXRecordAnnouncementOut' => 'Wybierz alert nagrywania rozmów dla połączeń wychodzących',
 ];

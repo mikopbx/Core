@@ -1054,4 +1054,5 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'log_StopCapturePCAP' => 'Stop og download',
     'log_StartCapturePCAP' => 'Start',
     'gs_PBXRecordAnnouncementIn' => 'Vælg alarm for opkaldsoptagelse for indgående opkald',
+    'gs_PBXRecordAnnouncementOut' => 'Vælg alarm for opkaldsoptagelse for udgående opkald',
 ];

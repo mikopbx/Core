@@ -1057,4 +1057,5 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
     'log_StopCapturePCAP' => 'Stoppen und herunterladen',
     'log_StartCapturePCAP' => 'Start',
     'gs_PBXRecordAnnouncementIn' => 'Wählen Sie Anrufaufzeichnungsalarm für eingehende Anrufe',
+    'gs_PBXRecordAnnouncementOut' => 'Wählen Sie Anrufaufzeichnungsalarm für ausgehende Anrufe',
 ];

@@ -1054,4 +1054,5 @@ Può essere attivato una volta, dopo di che il coupon viene riscattato.
     'log_StopCapturePCAP' => 'Fermati e scarica',
     'log_StartCapturePCAP' => 'Inizio',
     'gs_PBXRecordAnnouncementIn' => 'Seleziona avviso di registrazione delle chiamate per le chiamate in arrivo',
+    'gs_PBXRecordAnnouncementOut' => 'Seleziona avviso di registrazione delle chiamate per le chiamate in uscita',
 ];

@@ -1054,4 +1054,5 @@ return [
     'log_StopCapturePCAP' => '停止并下载',
     'log_StartCapturePCAP' => '开始',
     'gs_PBXRecordAnnouncementIn' => '选择来电记录提醒',
+    'gs_PBXRecordAnnouncementOut' => '选择拨出电话的通话记录警报',
 ];

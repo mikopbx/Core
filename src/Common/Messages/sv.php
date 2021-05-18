@@ -1054,4 +1054,5 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'log_StopCapturePCAP' => 'Stoppa och ladda ner',
     'log_StartCapturePCAP' => 'Start',
     'gs_PBXRecordAnnouncementIn' => 'Välj varning för samtalsinspelning för inkommande samtal',
+    'gs_PBXRecordAnnouncementOut' => 'Välj varning för samtalsinspelning för utgående samtal',
 ];
