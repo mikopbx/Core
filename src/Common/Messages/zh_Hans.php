@@ -776,8 +776,6 @@ return [
     'auth_WrongLoginPassword' => '授权错误',
     'log_CaptureMessage' => '<div class =\'ui message\'>开始收集日志并执行导致失败的呼叫或其他操作。
 <br>系统将以存档的形式显示系统状态。</div>',
-    'log_StartLogsCapture' => '开始收集日志',
-    'log_StopLogsCapture' => '完整的日志收集',
     'dbg_NoDebugInformation' => '暂无信息',
     'dbg_Header' => '调试信息',
     'f2b_Reason' => '原因',
@@ -1053,4 +1051,8 @@ return [
     'pr_EnterHostOrIpPlaceholder' => '输入IP地址或子网',
     'auth_RememberMe' => '记得我',
     'log_DownloadLogs' => '下载所有日志',
+    'log_StopCapturePCAP' => '停止并下载',
+    'log_StartCapturePCAP' => '开始',
+    'gs_PBXRecordAnnouncementIn' => '选择来电记录提醒',
+    'gs_PBXRecordAnnouncementOut' => '选择拨出电话的通话记录警报',
 ];

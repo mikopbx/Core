@@ -378,6 +378,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/vendor/jquery.tablednd.js', true)
                 ->addJs('js/pbx/main/form.js', true)
                 ->addJs('js/pbx/CallQueues/callqueue-modify.js', true)
+                ->addJs('js/pbx/SoundFiles/sound-files-selector.js', true)
                 ->addJs('js/pbx/SoundFiles/one-button-sound-player.js', true);
         }
     }
@@ -471,6 +472,8 @@ class AssetProvider implements ServiceProviderInterface
         if ($action === 'modify') {
             $this->footerCollectionJS
                 ->addJs('js/pbx/main/form.js', true)
+                ->addJs('js/vendor/moment/moment-with-locales.min.js',true)
+                ->addJs('js/vendor/moment/moment-timezone-with-data.js', true)
                 ->addJs('js/pbx/TimeSettings/time-settings-worker.js', true)
                 ->addJs('js/pbx/TimeSettings/time-settings-modify.js', true);
         }
@@ -602,6 +605,7 @@ class AssetProvider implements ServiceProviderInterface
             $this->footerCollectionJS
                 ->addJs('js/pbx/main/form.js', true)
                 ->addJs('js/pbx/OutOffWorkTime/out-of-work-time-modify.js', true)
+                ->addJs('js/pbx/SoundFiles/sound-files-selector.js', true)
                 ->addJs('js/pbx/SoundFiles/one-button-sound-player.js', true);
         }
     }
@@ -688,6 +692,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/IvrMenu/ivrmenu-index.js', true);
         } elseif ($action === 'modify') {
             $this->footerCollectionJS->addJs('js/pbx/main/form.js', true)
+                ->addJs('js/pbx/SoundFiles/sound-files-selector.js', true)
                 ->addJs('js/pbx/SoundFiles/one-button-sound-player.js', true)
                 ->addJs('js/pbx/IvrMenu/ivrmenu-modify.js', true);
         }
@@ -723,6 +728,8 @@ class AssetProvider implements ServiceProviderInterface
             $this->footerCollectionJS
                 ->addJs('js/vendor/jquery.address.min.js', true)
                 ->addJs('js/vendor/jquery.tablednd.js', true)
+                ->addJs('js/pbx/SoundFiles/sound-files-selector.js', true)
+                ->addJs('js/pbx/SoundFiles/one-button-sound-player.js', true)
                 ->addJs('js/pbx/main/form.js', true)
                 ->addJs('js/pbx/main/password-score.js', true)
                 ->addJs(

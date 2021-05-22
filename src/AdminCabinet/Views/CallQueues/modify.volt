@@ -120,16 +120,9 @@
 
             </div>
         </div>
-        <div class="fields">
-            <div class="inline  field">
-                <label>{{ t._('cq_PereodicAnonceSoundFile') }}</label>
-                {{ form.render('periodic_announce_sound_id') }}
-            </div>
-            <div class="one wide field">
-                <div class="ui basic icon button large action-playback-button" data-value="periodic_announce_sound_id">
-                    <i class="play icon"></i></div>
-            </div>
-        </div>
+
+        {{ partial("partials/playAddNewSound", ['label': t._('cq_PereodicAnonceSoundFile'), 'id':'periodic_announce_sound_id', 'fieldClass':'eleven wide field', 'fieldId':'']) }}
+
         <div class="inline field">
             <label>{{ t._('cq_PereodicAnonceFrequency') }}</label>
             {{ form.render('periodic_announce_frequency') }}

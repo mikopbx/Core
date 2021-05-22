@@ -847,8 +847,6 @@ return [
     'auth_RememberMe' => 'Დამიმახსოვრე',
     'log_CaptureMessage' => '<div class = \'ui message\'> დაიწყეთ ჟურნალების შეგროვება და შეასრულეთ ზარი ან სხვა ავარიული მოქმედება.
 <br> სისტემა შექმნის სისტემის მდგომარეობას არქივის სახით. </ div>',
-    'log_StartLogsCapture' => 'დაიწყეთ ჟურნალების შეგროვება',
-    'log_StopLogsCapture' => 'დასრულება ჟურნალების შეგროვება',
     'dbg_NoDebugInformation' => 'არანაირი ინფორმაცია',
     'dbg_Header' => 'ინფორმაცია გამართვის შესახებ',
     'f2b_Reason' => 'მიზეზი',
@@ -1053,4 +1051,8 @@ return [
     'sd_PackingLogFiles' => 'შეგროვებული მონაცემების შეფუთვა',
     'msg_ErrorHeader' => 'შეცდომა',
     'log_DownloadLogs' => 'ჩამოტვირთეთ ყველა ჟურნალი',
+    'log_StopCapturePCAP' => 'შეჩერება და ჩამოტვირთვა',
+    'log_StartCapturePCAP' => 'დაწყება',
+    'gs_PBXRecordAnnouncementIn' => 'შემომავალი ზარებისათვის აირჩიეთ ზარის ჩაწერის სიგნალი',
+    'gs_PBXRecordAnnouncementOut' => 'გამავალი ზარების ასარჩევად აირჩიეთ ზარის ჩაწერის სიგნალი',
 ];

@@ -457,8 +457,6 @@ return [
     'f2b_Reason' => 'Raison',
     'dbg_Header' => 'Informations de débogage',
     'dbg_NoDebugInformation' => 'Aucune information',
-    'log_StopLogsCapture' => 'Collecte complète des journaux',
-    'log_StartLogsCapture' => 'Commencez à collecter les journaux',
     'log_CaptureMessage' => '<div class = \'ui message\'> Commencez à collecter les journaux et effectuez un appel ou une autre action qui mène à un échec.
 <br> Le système formera une impression de l\'état du système sous la forme d\'une archive. </div>',
     'auth_WrongLoginPassword' => 'Erreur d\'autorisation',
@@ -1053,4 +1051,8 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'pr_EnterHostOrIp' => 'Adresses de fournisseurs supplémentaires',
     'auth_RememberMe' => 'Souviens-toi de moi',
     'log_DownloadLogs' => 'Téléchargez tous les journaux',
+    'log_StopCapturePCAP' => 'Arrêtez et téléchargez',
+    'log_StartCapturePCAP' => 'Démarrer',
+    'gs_PBXRecordAnnouncementIn' => 'Sélectionnez l\'alerte d\'enregistrement des appels pour les appels entrants',
+    'gs_PBXRecordAnnouncementOut' => 'Sélectionnez l\'alerte d\'enregistrement des appels pour les appels sortants',
 ];

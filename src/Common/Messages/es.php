@@ -762,8 +762,6 @@ Se puede activar una vez, después de lo cual el cupón se canjea.
     'auth_WrongLoginPassword' => 'Error de autorización',
     'log_CaptureMessage' => '<div class = \'ui message\'> Comience a recopilar registros y realice una llamada u otra acción que conduzca a un error.
 <br> El sistema formará una impresión del estado del sistema en forma de archivo. </div>',
-    'log_StartLogsCapture' => 'Comience a recolectar registros',
-    'log_StopLogsCapture' => 'Colección completa de registros',
     'dbg_NoDebugInformation' => 'Sin información',
     'dbg_Header' => 'Información de depuración',
     'f2b_Reason' => 'Razón',
@@ -1053,4 +1051,8 @@ Se puede activar una vez, después de lo cual el cupón se canjea.
     'pr_EnterHostOrIp' => 'Direcciones de proveedores adicionales',
     'auth_RememberMe' => 'Recuérdame',
     'log_DownloadLogs' => 'Descargar todos los registros',
+    'log_StopCapturePCAP' => 'Detener y descargar',
+    'log_StartCapturePCAP' => 'Comienzo',
+    'gs_PBXRecordAnnouncementIn' => 'Seleccionar alerta de grabación de llamadas para llamadas entrantes',
+    'gs_PBXRecordAnnouncementOut' => 'Seleccionar alerta de grabación de llamadas para llamadas salientes',
 ];

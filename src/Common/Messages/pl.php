@@ -387,8 +387,6 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'auth_WrongLoginPassword' => 'Błąd autoryzacji',
     'log_CaptureMessage' => '<div class = \'ui message\'> Rozpocznij zbieranie dzienników i wykonaj połączenie lub inne działanie, które doprowadzi do awarii.
 <br> System utworzy wrażenie stanu systemu w formie archiwum. </div>',
-    'log_StartLogsCapture' => 'Zacznij zbierać dzienniki',
-    'log_StopLogsCapture' => 'Kompletny zbiór dzienników',
     'dbg_NoDebugInformation' => 'Brak informacji',
     'f2b_Reason' => 'Powód',
     'f2b_IpAddres' => 'Adres IP',
@@ -1053,4 +1051,8 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'pr_EnterHostOrIp' => 'Dodatkowe adresy dostawców',
     'auth_RememberMe' => 'Zapamiętaj mnie',
     'log_DownloadLogs' => 'Pobierz wszystkie dzienniki',
+    'log_StopCapturePCAP' => 'Zatrzymaj się i pobierz',
+    'log_StartCapturePCAP' => 'Początek',
+    'gs_PBXRecordAnnouncementIn' => 'Wybierz alert nagrywania rozmów dla połączeń przychodzących',
+    'gs_PBXRecordAnnouncementOut' => 'Wybierz alert nagrywania rozmów dla połączeń wychodzących',
 ];

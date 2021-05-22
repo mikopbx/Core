@@ -778,8 +778,6 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'auth_WrongLoginPassword' => 'Autoriseringsfejl',
     'log_CaptureMessage' => '<div class = \'ui message\'> Begynd at indsamle logfiler og udfør et opkald eller anden handling, der fører til en fiasko.
 <br> Systemet danner et indtryk af systemstatus i form af et arkiv. </div>',
-    'log_StartLogsCapture' => 'Begynd at indsamle logfiler',
-    'log_StopLogsCapture' => 'Komplet logindsamling',
     'dbg_NoDebugInformation' => 'Ingen information',
     'dbg_Header' => 'Fejlfinding af oplysninger',
     'f2b_Reason' => 'årsag',
@@ -1053,4 +1051,8 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'pr_EnterHostOrIp' => 'Yderligere udbyderadresser',
     'auth_RememberMe' => 'Husk mig',
     'log_DownloadLogs' => 'Download alle logfiler',
+    'log_StopCapturePCAP' => 'Stop og download',
+    'log_StartCapturePCAP' => 'Start',
+    'gs_PBXRecordAnnouncementIn' => 'Vælg alarm for opkaldsoptagelse for indgående opkald',
+    'gs_PBXRecordAnnouncementOut' => 'Vælg alarm for opkaldsoptagelse for udgående opkald',
 ];

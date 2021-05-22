@@ -19,6 +19,7 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
+use MikoPBX\Common\Models\SoundFiles;
 use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Numeric;
 use Phalcon\Forms\Element\Password;
@@ -150,6 +151,29 @@ class GeneralSettingsEditForm extends Form
                         ]
                     );
                     $this->add($extLength);
+                    break;
+                case 'PBXRecordAnnouncementIn':
+                case 'PBXRecordAnnouncementOut':
+
+                    $currentSoundFile = SoundFiles::findFirstById($value);
+                    $selectArray=[];
+                    if ($currentSoundFile!==null){
+                        $selectArray = [$value=>$currentSoundFile->getRepresent()];
+                    }
+
+                    // Audio_message_id
+                    $audioMessage = new Select(
+                        $key, $selectArray, [
+                                              'using'    => [
+                                                  'id',
+                                                  'name',
+                                              ],
+                                              'useEmpty' => true,
+                                              'value'    => $value,
+                                              'class'    => 'ui selection dropdown search fluid audio-message-select',
+                            ]
+                    );
+                    $this->add($audioMessage);
                     break;
                 case 'PBXRecordCalls':
                 case 'AJAMEnabled':

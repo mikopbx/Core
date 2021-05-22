@@ -435,8 +435,6 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'auth_WrongLoginPassword' => 'Autoriseringsfel',
     'log_CaptureMessage' => '<div class = \'ui message\'> Börja samla loggar och utför ett samtal eller annan åtgärd som leder till ett fel.
 <br> Systemet kommer att bilda ett intryck av systemets tillstånd i form av ett arkiv. </div>',
-    'log_StartLogsCapture' => 'Börja samla loggar',
-    'log_StopLogsCapture' => 'Komplett loggsamling',
     'dbg_NoDebugInformation' => 'Ingen information',
     'dbg_Header' => 'Felsökningsinformation',
     'f2b_Reason' => 'anledning',
@@ -1053,4 +1051,8 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'pr_EnterHostOrIp' => 'Ytterligare leverantörsadresser',
     'auth_RememberMe' => 'Kom ihåg mig',
     'log_DownloadLogs' => 'Ladda ner alla loggar',
+    'log_StopCapturePCAP' => 'Stoppa och ladda ner',
+    'log_StartCapturePCAP' => 'Start',
+    'gs_PBXRecordAnnouncementIn' => 'Välj varning för samtalsinspelning för inkommande samtal',
+    'gs_PBXRecordAnnouncementOut' => 'Välj varning för samtalsinspelning för utgående samtal',
 ];

@@ -13,7 +13,7 @@
     </div>
 
 </div>
-<div class="three fields" id="SetDateTimeBlock">
+<div class="two fields" id="SetDateTimeBlock">
     <div class="field" id="CalendarBlock">
         <label>{{ t._('ts_CurrentSystemTime') }}</label>
         <div class="ui input left icon calendar">
@@ -22,7 +22,7 @@
         </div>
     </div>
 </div>
-<div class="three fields" id="SetNtpServerBlock">
+<div class="two fields" id="SetNtpServerBlock">
     <div class="field">
         <label>{{ t._('ts_NTPServer') }}</label>
 

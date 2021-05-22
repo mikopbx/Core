@@ -778,8 +778,6 @@ return [
     'auth_WrongLoginPassword' => '認可エラー',
     'log_CaptureMessage' => '<div class = \'ui message\'>ログの収集を開始し、失敗につながる呼び出しまたはその他のアクションを実行します。
 <br>システムは、アーカイブの形でシステムステータスの型を形成します',
-    'log_StartLogsCapture' => 'ログの収集を開始します',
-    'log_StopLogsCapture' => '完全なログ収集',
     'dbg_NoDebugInformation' => '情報なし',
     'dbg_Header' => 'デバッグ情報',
     'f2b_Reason' => '理由',
@@ -1053,4 +1051,8 @@ return [
     'pr_EnterHostOrIp' => '追加のプロバイダーアドレス',
     'auth_RememberMe' => '私を覚えてますか',
     'log_DownloadLogs' => 'すべてのログをダウンロードする',
+    'log_StopCapturePCAP' => '停止してダウンロード',
+    'log_StartCapturePCAP' => '開始',
+    'gs_PBXRecordAnnouncementIn' => '着信の通話録音アラートを選択します',
+    'gs_PBXRecordAnnouncementOut' => '発信通話の通話録音アラートを選択します',
 ];

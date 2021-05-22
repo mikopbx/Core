@@ -225,7 +225,7 @@ class SysLogsManagementProcessor extends Injectable
             $res->data['filename'] = "{$uid}/{$link_name}";
         } else {
             $res->success           = true;
-            $res->data['status']    = "preparing";
+            $res->data['status']    = "PREPARING";
             $res->data['progress']  = file_get_contents($progress_file);
         }
 

@@ -704,7 +704,7 @@ class ModelsBase extends Model
     /**
      * Sends changed fields and settings to backend worker WorkerModelsEvents
      *
-     * @param $action string may be model:afterSave or model:afterDelete
+     * @param $action string may be afterSave or afterDelete
      */
     private function processSettingsChanges(string $action): void
     {
@@ -722,7 +722,7 @@ class ModelsBase extends Model
         } // nothing changed
 
         $changedFields = $this->getUpdatedFields();
-        if (empty($changedFields) && $action === 'model:afterSave') {
+        if (empty($changedFields) && $action === 'afterSave') {
             return;
         }
         $this->sendChangesToBackend($action, $changedFields);
@@ -767,8 +767,6 @@ class ModelsBase extends Model
      */
     public static function clearCache(string $calledClass): void
     {
-        Util::sysLogMsg(__METHOD__, "Clear acahe for ".$calledClass, LOG_DEBUG);
-
         $di = Di::getDefault();
         if ($di === null) {
             return;

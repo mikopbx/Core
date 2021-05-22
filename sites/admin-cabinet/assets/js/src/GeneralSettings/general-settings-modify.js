@@ -17,7 +17,7 @@
  */
 
 
-/* global globalRootUrl,globalTranslate, Form, PasswordScore, PbxApi, UserMessage */
+/* global globalRootUrl,globalTranslate, Form, PasswordScore, PbxApi, UserMessage, SoundFilesSelector */
 
 const generalSettingsModify = {
 	$dirrtyField: $('#dirrty'),
@@ -131,6 +131,9 @@ const generalSettingsModify = {
 			onDragClass: 'hoveringRow',
 			dragHandle: '.dragHandle',
 		});
+
+		$('#general-settings-form .audio-message-select').dropdown(SoundFilesSelector.getDropdownSettingsWithEmpty());
+
 		generalSettingsModify.initializeForm();
 	},
 	checkDeleteAllConditions(){

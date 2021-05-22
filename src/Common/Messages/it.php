@@ -778,8 +778,6 @@ Può essere attivato una volta, dopo di che il coupon viene riscattato.
     'auth_WrongLoginPassword' => 'Errore di autorizzazione',
     'log_CaptureMessage' => '<div class = \'ui message\'> Inizia a raccogliere i registri ed esegui una chiamata o un\'altra azione che porta a un errore.
 <br> Il sistema formerà un\'impressione dello stato del sistema sotto forma di un archivio. </div>',
-    'log_StartLogsCapture' => 'Inizia a raccogliere i log',
-    'log_StopLogsCapture' => 'Raccolta completa dei registri',
     'dbg_NoDebugInformation' => 'Nessuna informazione',
     'dbg_Header' => 'Informazioni di debug',
     'f2b_Reason' => 'ragione',
@@ -1053,4 +1051,8 @@ Può essere attivato una volta, dopo di che il coupon viene riscattato.
     'pr_EnterHostOrIp' => 'Indirizzi di provider aggiuntivi',
     'auth_RememberMe' => 'Ricordati di me',
     'log_DownloadLogs' => 'Scarica tutti i log',
+    'log_StopCapturePCAP' => 'Fermati e scarica',
+    'log_StartCapturePCAP' => 'Inizio',
+    'gs_PBXRecordAnnouncementIn' => 'Seleziona avviso di registrazione delle chiamate per le chiamate in arrivo',
+    'gs_PBXRecordAnnouncementOut' => 'Seleziona avviso di registrazione delle chiamate per le chiamate in uscita',
 ];
