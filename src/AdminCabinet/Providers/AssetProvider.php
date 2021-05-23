@@ -26,6 +26,7 @@ use Phalcon\Assets\Manager;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 use MatthiasMullie\Minify;
+use Phalcon\Text;
 
 use function MikoPBX\Common\Config\appPath;
 
@@ -133,11 +134,17 @@ class AssetProvider implements ServiceProviderInterface
         if (file_exists('/tmp/sendmetrics')) {
             $this->headerCollectionSentryJS->addjs(
                 'assets/js/vendor/sentry/bundle.min.js',
-                true
+                true,
+                false,
+                [],
+                $version
             );
             $this->headerCollectionSentryJS->addJs(
-                "assets/js/pbx/main/sentry-error-logger.js?v={$version}",
-                true
+                "assets/js/pbx/main/sentry-error-logger.js",
+                true,
+                false,
+                [],
+                $version
             );
         }
     }
@@ -319,50 +326,68 @@ class AssetProvider implements ServiceProviderInterface
      */
     private function generateFilesAndLinks($controller, string $action, string $version): void
     {
-        //$resultCombinedName = Text::uncamelize(ucfirst($controller) . ucfirst($action), '-');
-        //$resultCombinedName = strlen($resultCombinedName) !== '' ? $resultCombinedName . '-' : '';
+        $resultCombinedName = Text::uncamelize(ucfirst($controller) . ucfirst($action), '-');
+        $resultCombinedName = strlen($resultCombinedName) > 0 ? $resultCombinedName . '-' : '';
+
+        $this->headerCollectionCSS->join(true);
+        $this->headerCollectionCSS->setTargetPath("{$this->cssCacheDir}/{$resultCombinedName}header.min.css");
+        $this->headerCollectionCSS->setTargetUri("css/cache/{$resultCombinedName}header.min.css?v={$version}");
+
+        $this->headerCollectionJSForExtensions->join(true);
+        $this->headerCollectionJSForExtensions->setTargetPath("{$this->jsCacheDir}/{$resultCombinedName}header.min.js");
+        $this->headerCollectionJSForExtensions->setTargetUri(
+            "js/cache/{$resultCombinedName}header.min.js?v={$version}"
+        );
+
+        $this->footerCollectionJSForExtensions->join(true);
+        $this->footerCollectionJSForExtensions->setTargetPath("{$this->jsCacheDir}/{$resultCombinedName}footer.min.js");
+        $this->footerCollectionJSForExtensions->setTargetUri(
+            "js/cache/{$resultCombinedName}footer.min.js?v={$version}"
+        );
 
 
-        foreach ($this->headerCollectionJS as $resource) {
-            $resource->setPath($resource->getPath() . '?v=' . $version);
-        }
-        foreach ($this->footerCollectionJS as $resource) {
-            $resource->setPath($resource->getPath() . '?v=' . $version);
-        }
-        foreach ($this->semanticCollectionJS as $resource) {
-            $resource->setPath($resource->getPath() . '?v=' . $version);
-        }
-        foreach ($this->semanticCollectionCSS as $resource) {
-            $resource->setPath($resource->getPath() . '?v=' . $version);
-        }
-        foreach ($this->footerCollectionACE as $resource) {
-            $resource->setPath($resource->getPath() . '?v=' . $version);
-        }
-        foreach ($this->headerCollectionCSS as $resource) {
-            $resource->setPath($resource->getPath() . '?v=' . $version);
-        }
-        foreach ($this->headerCollectionJSForExtensions as $resource) {
-            $resource->setPath($resource->getPath() . '?v=' . $version);
-        }
-        foreach ($this->footerCollectionJSForExtensions as $resource) {
-            $resource->setPath($resource->getPath() . '?v=' . $version);
+
+        foreach ($this->manager->getCollections() as $collection){
+            foreach ($collection as $resource) {
+                //$resource->setPath($resource->getPath() . '?v=' . $version);
+                $resource->setVersion($version);
+            }
         }
 
-        // $this->headerCollectionCSS->join(true);
-        // $this->headerCollectionCSS->setTargetPath("{$this->cssCacheDir}/{$resultCombinedName}header.min.css");
-        // $this->headerCollectionCSS->setTargetUri("css/cache/{$resultCombinedName}header.min.css?v={$version}");
+        // foreach ($this->headerCollectionJS as $resource) {
+        //     //$resource->setPath($resource->getPath() . '?v=' . $version);
+        //     $resource->setVersion($version);
+        // }
+        // foreach ($this->footerCollectionJS as $resource) {
+        //     //$resource->setPath($resource->getPath() . '?v=' . $version);
+        //     $resource->setVersion($version);
+        // }
+        // foreach ($this->semanticCollectionJS as $resource) {
+        //     //$resource->setPath($resource->getPath() . '?v=' . $version);
+        //     $resource->setVersion($version);
+        // }
+        // foreach ($this->semanticCollectionCSS as $resource) {
+        //     //$resource->setPath($resource->getPath() . '?v=' . $version);
+        //     $resource->setVersion($version);
+        // }
+        // foreach ($this->footerCollectionACE as $resource) {
+        //     //$resource->setPath($resource->getPath() . '?v=' . $version);
+        //     $resource->setVersion($version);
+        // }
+        // foreach ($this->headerCollectionCSS as $resource) {
+        //     //$resource->setPath($resource->getPath() . '?v=' . $version);
+        //     $resource->setVersion($version);
+        // }
+        // foreach ($this->headerCollectionJSForExtensions as $resource) {
+        //     //$resource->setPath($resource->getPath() . '?v=' . $version);
+        //     $resource->setVersion($version);
+        // }
+        // foreach ($this->footerCollectionJSForExtensions as $resource) {
+        //     //$resource->setPath($resource->getPath() . '?v=' . $version);
+        //     $resource->setVersion($version);
+        // }
 
-        // $this->headerCollectionJSForExtensions->join(true);
-        // $this->headerCollectionJSForExtensions->setTargetPath("{$this->jsCacheDir}/{$resultCombinedName}header.min.js");
-        // $this->headerCollectionJSForExtensions->setTargetUri(
-        //     "js/cache/{$resultCombinedName}header.min.js?v={$version}"
-        // );
 
-        // $this->footerCollectionJSForExtensions->join(true);
-        // $this->footerCollectionJSForExtensions->setTargetPath("{$this->jsCacheDir}/{$resultCombinedName}footer.min.js");
-        // $this->footerCollectionJSForExtensions->setTargetUri(
-        //     "js/cache/{$resultCombinedName}footer.min.js?v={$version}"
-        // );
 
 
         // $minifier = new Minify\JS();
