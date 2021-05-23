@@ -26,7 +26,6 @@ use MikoPBX\Common\Providers\ModelsCacheProvider;
 use MikoPBX\Common\Providers\ModelsMetadataProvider;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\Providers\EventsLogDatabaseProvider;
-use MikoPBX\Core\System\Util;
 use MikoPBX\Modules\PbxExtensionUtils;
 use Phalcon\Db\Adapter\AdapterInterface;
 use Phalcon\Di;
@@ -80,20 +79,18 @@ class ModelsBase extends Model
         $eventsManager = new Manager();
 
         $eventsManager->attach(
-            'model:afterSave',
+            'model',
             function (Event $event, $record){
-                $record->processSettingsChanges($event->getType());
-                self::clearCache(get_class($record));
-                return true;
-            }
-        );
+                $type = $event->getType();
+                switch ($type) {
+                    case 'afterSave':
+                    case 'afterDelete':
+                        $record->processSettingsChanges($type);
+                        self::clearCache(get_class($record));
+                        break;
+                    default:
 
-        $eventsManager->attach(
-            'model:afterDelete',
-            function (Event $event, $record){
-                $record->processSettingsChanges($event->getType());
-                self::clearCache(get_class($record));
-                return true;
+                }
             }
         );
 

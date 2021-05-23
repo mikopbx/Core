@@ -59,7 +59,7 @@ _xdebugEnableWww()
 {
   _xdebugEnable $1
   echo "killing the php-fpm processes ..."
-  killall php-fpm;
+  killall php-fpm
   sleep 5;
   echo "Restarting the php-fpm daemon ..."
   php-fpm -c /etc/php.ini

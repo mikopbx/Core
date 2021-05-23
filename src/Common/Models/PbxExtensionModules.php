@@ -116,7 +116,7 @@ class PbxExtensionModules extends ModelsBase
      */
     public function afterDelete(): void
     {
-        parent::afterDelete();
+        Util::sysLogMsg(__METHOD__, "After delete ", LOG_DEBUG);
         PBXConfModulesProvider::recreateModulesProvider();
     }
 

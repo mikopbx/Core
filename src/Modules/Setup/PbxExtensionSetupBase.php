@@ -309,14 +309,14 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
     /**
      * Deletes records from PbxExtensionModules
      *
-     * @return bool  unregistration result
+     * @return bool unregistration result
      */
     public function unregisterModule(): bool
     {
         $result = true;
         $module = PbxExtensionModules::findFirstByUniqid($this->moduleUniqueID);
-        if ($module) {
-            $result = $result && $module->delete();
+        if ($module !== null) {
+            $result = $module->delete();
         }
 
         return $result;
