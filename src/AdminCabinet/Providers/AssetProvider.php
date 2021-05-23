@@ -25,6 +25,8 @@ use Phalcon\Assets\Collection;
 use Phalcon\Assets\Manager;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
+use MatthiasMullie\Minify;
+
 use Phalcon\Text;
 
 use function MikoPBX\Common\Config\appPath;
@@ -320,7 +322,7 @@ class AssetProvider implements ServiceProviderInterface
     private function generateFilesAndLinks($controller, string $action, string $version): void
     {
         $resultCombinedName = Text::uncamelize(ucfirst($controller) . ucfirst($action), '-');
-        $resultCombinedName = strlen($resultCombinedName) !== '' ? $resultCombinedName . '-' : '';
+        $resultCombinedName = strlen($resultCombinedName) !== 0 ? $resultCombinedName . '-' : '';
 
 
         foreach ($this->headerCollectionJS as $resource) {
@@ -338,25 +340,39 @@ class AssetProvider implements ServiceProviderInterface
         foreach ($this->footerCollectionACE as $resource) {
             $resource->setPath($resource->getPath() . '?v=' . $version);
         }
+        // foreach ($this->headerCollectionCSS as $resource) {
+        //     $resource->setPath($resource->getPath() . '?v=' . $version);
+        // }
+        // foreach ($this->headerCollectionJSForExtensions as $resource) {
+        //     $resource->setPath($resource->getPath() . '?v=' . $version);
+        // }
+        $minifier = new Minify\JS();
+        foreach ($this->footerCollectionJSForExtensions as $resource) {
+            try {
+                $minifier->addFile($resource->getPath());
+            } catch (Minify\Exceptions\IOException $e) {
 
+            }
 
-        $this->headerCollectionCSS->join(true);
-        $this->headerCollectionCSS->setTargetPath("{$this->cssCacheDir}/{$resultCombinedName}header.min.css");
-        $this->headerCollectionCSS->setTargetUri("css/cache/{$resultCombinedName}header.min.css?v={$version}");
+            $resource->setPath($resource->getPath() . '?v=' . $version);
+        }
+        $minifier->minify("{$this->jsCacheDir}/{$resultCombinedName}footer.min.js");
 
+        // $this->headerCollectionCSS->join(true);
+        // $this->headerCollectionCSS->setTargetPath("{$this->cssCacheDir}/{$resultCombinedName}header.min.css");
+        // $this->headerCollectionCSS->setTargetUri("css/cache/{$resultCombinedName}header.min.css?v={$version}");
 
-        $this->headerCollectionJSForExtensions->join(true);
-        $this->headerCollectionJSForExtensions->setTargetPath("{$this->jsCacheDir}/{$resultCombinedName}header.min.js");
-        $this->headerCollectionJSForExtensions->setTargetUri(
-            "js/cache/{$resultCombinedName}header.min.js?v={$version}"
-        );
+        // $this->headerCollectionJSForExtensions->join(true);
+        // $this->headerCollectionJSForExtensions->setTargetPath("{$this->jsCacheDir}/{$resultCombinedName}header.min.js");
+        // $this->headerCollectionJSForExtensions->setTargetUri(
+        //     "js/cache/{$resultCombinedName}header.min.js?v={$version}"
+        // );
 
-
-        $this->footerCollectionJSForExtensions->join(true);
+        // $this->footerCollectionJSForExtensions->join(true);
         $this->footerCollectionJSForExtensions->setTargetPath("{$this->jsCacheDir}/{$resultCombinedName}footer.min.js");
         $this->footerCollectionJSForExtensions->setTargetUri(
             "js/cache/{$resultCombinedName}footer.min.js?v={$version}"
-        );
+         );
     }
 
     /**
