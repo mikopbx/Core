@@ -27,8 +27,6 @@ use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 use MatthiasMullie\Minify;
 
-use Phalcon\Text;
-
 use function MikoPBX\Common\Config\appPath;
 
 class AssetProvider implements ServiceProviderInterface
@@ -321,8 +319,8 @@ class AssetProvider implements ServiceProviderInterface
      */
     private function generateFilesAndLinks($controller, string $action, string $version): void
     {
-        $resultCombinedName = Text::uncamelize(ucfirst($controller) . ucfirst($action), '-');
-        $resultCombinedName = strlen($resultCombinedName) !== 0 ? $resultCombinedName . '-' : '';
+        //$resultCombinedName = Text::uncamelize(ucfirst($controller) . ucfirst($action), '-');
+        //$resultCombinedName = strlen($resultCombinedName) !== '' ? $resultCombinedName . '-' : '';
 
 
         foreach ($this->headerCollectionJS as $resource) {
@@ -340,23 +338,15 @@ class AssetProvider implements ServiceProviderInterface
         foreach ($this->footerCollectionACE as $resource) {
             $resource->setPath($resource->getPath() . '?v=' . $version);
         }
-        // foreach ($this->headerCollectionCSS as $resource) {
-        //     $resource->setPath($resource->getPath() . '?v=' . $version);
-        // }
-        // foreach ($this->headerCollectionJSForExtensions as $resource) {
-        //     $resource->setPath($resource->getPath() . '?v=' . $version);
-        // }
-        $minifier = new Minify\JS();
-        foreach ($this->footerCollectionJSForExtensions as $resource) {
-            try {
-                $minifier->addFile($resource->getPath());
-            } catch (Minify\Exceptions\IOException $e) {
-
-            }
-
+        foreach ($this->headerCollectionCSS as $resource) {
             $resource->setPath($resource->getPath() . '?v=' . $version);
         }
-        $minifier->minify("{$this->jsCacheDir}/{$resultCombinedName}footer.min.js");
+        foreach ($this->headerCollectionJSForExtensions as $resource) {
+            $resource->setPath($resource->getPath() . '?v=' . $version);
+        }
+        foreach ($this->footerCollectionJSForExtensions as $resource) {
+            $resource->setPath($resource->getPath() . '?v=' . $version);
+        }
 
         // $this->headerCollectionCSS->join(true);
         // $this->headerCollectionCSS->setTargetPath("{$this->cssCacheDir}/{$resultCombinedName}header.min.css");
@@ -369,10 +359,23 @@ class AssetProvider implements ServiceProviderInterface
         // );
 
         // $this->footerCollectionJSForExtensions->join(true);
-        $this->footerCollectionJSForExtensions->setTargetPath("{$this->jsCacheDir}/{$resultCombinedName}footer.min.js");
-        $this->footerCollectionJSForExtensions->setTargetUri(
-            "js/cache/{$resultCombinedName}footer.min.js?v={$version}"
-         );
+        // $this->footerCollectionJSForExtensions->setTargetPath("{$this->jsCacheDir}/{$resultCombinedName}footer.min.js");
+        // $this->footerCollectionJSForExtensions->setTargetUri(
+        //     "js/cache/{$resultCombinedName}footer.min.js?v={$version}"
+        // );
+
+
+        // $minifier = new Minify\JS();
+        // foreach ($this->footerCollectionJSForExtensions as $resource) {
+        //     try {
+        //         $minifier->addFile($resource->getPath());
+        //     } catch (Minify\Exceptions\IOException $e) {
+        //
+        //     }
+        //
+        //     $resource->setPath($resource->getPath() . '?v=' . $version);
+        // }
+        // $minifier->minify("{$this->jsCacheDir}/{$resultCombinedName}footer.min.js");
     }
 
     /**
