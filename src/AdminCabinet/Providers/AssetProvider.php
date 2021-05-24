@@ -84,7 +84,7 @@ class AssetProvider implements ServiceProviderInterface
                 }
 
                 $assets->makeFooterAssets();
-                $assets->makeLocalizationAssets($di);
+                $assets->makeLocalizationAssets($di, $version);
 
                 return $assets->manager;
             }
@@ -284,12 +284,12 @@ class AssetProvider implements ServiceProviderInterface
      * Makes Language cache for browser JS scripts
      *
      * @param \Phalcon\Di\DiInterface $di
-     *
+     * @param string                  $version
      */
-    private function makeLocalizationAssets(DiInterface $di): void
+    private function makeLocalizationAssets(DiInterface $di, string $version): void
     {
         $language   = $di->getShared('language');
-        $langJSFile = "js/cache/localization-{$language}.min.js";
+        $langJSFile = "js/cache/localization-{$language}-{$version}.min.js";
         if ( ! file_exists($langJSFile)) {
             $arrStr = [];
             foreach ($di->getShared('messages') as $key => $value) {
@@ -300,7 +300,7 @@ class AssetProvider implements ServiceProviderInterface
                 );
             }
 
-            $fileName    = "{$this->jsCacheDir}/localization-{$language}.min.js";
+            $fileName    = "{$this->jsCacheDir}/localization-{$language}-{$version}.min.js";
             $scriptArray = json_encode($arrStr);
             file_put_contents($fileName, "globalTranslate = {$scriptArray}");
         }
