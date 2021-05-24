@@ -24,8 +24,7 @@
         "repejota/nats": "0.8.4",
         "sentry/sdk": "^2.2.0",
         "guzzlehttp/guzzle":"^7.0",
-        "filp/whoops": "^2.12.1",
-        "matthiasmullie/minify": "^1.3.66"
+        "filp/whoops": "^2.12.1"
     },
     "require-dev": {
         "roave/security-advisories": "dev-master",

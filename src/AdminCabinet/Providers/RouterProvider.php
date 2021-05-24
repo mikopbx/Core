@@ -45,17 +45,6 @@ class RouterProvider implements ServiceProviderInterface
             function () {
                 $router = new Router();
 
-                $router->addGet(
-                    '/assets/(css|js)/([\w.-]+)\.(css|js)',
-                    [
-                        'controller' => 'assets',
-                        'action'     => 'serve',
-                        'type'       => 1, //(css|js)
-                        'collection' => 2, //(controller)
-                        'extension'  => 3, //(css|js)
-                    ]
-                );
-
                 $router->add(
                     '/admin-cabinet/:controller/:action/:params',
                     [
