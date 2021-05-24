@@ -255,11 +255,6 @@ class SystemManagementProcessor extends Injectable
                 $res->success    = false;
                 $res->messages[] = 'Install error: '.$e->getMessage();
             }
-            finally
-            {
-                $storage = new Storage();
-                $storage->clearCacheFiles();
-            }
         } else {
             $res->success    = false;
             $res->messages[] = "Install error: the class {$pbxExtensionSetupClass} not exists";
@@ -317,8 +312,6 @@ class SystemManagementProcessor extends Injectable
                 $setup       = new $moduleClass($moduleUniqueID);
                 $setup->unregisterModule();
             }
-            $storage = new Storage();
-            $storage->clearCacheFiles();
         }
         $res->success = true;
 

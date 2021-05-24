@@ -216,6 +216,10 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
             $cpPath = Util::which('cp');
             Processes::mwExec("{$cpPath} -r {$backupPath}/db/* {$this->moduleDir}/db/");
         }
+
+        // Volt
+        $this->cleanupCache();
+
         return true;
     }
 
@@ -365,6 +369,9 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
             unlink($moduleJSCacheDir);
         }
 
+        // Volt
+        $this->cleanupCache();
+
         return true;
     }
 
@@ -477,5 +484,20 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
         $menuSettings->value = json_encode($value);
 
         return $menuSettings->save();
+    }
+
+    /**
+     * Deletes old cache files
+     */
+    private function cleanupCache()
+    {
+        $cacheDirs = [];
+        $cacheDirs[] = $this->config->path('adminApplication.voltCacheDir');
+        $rmPath = Util::which('rm');
+        foreach ($cacheDirs as $cacheDir) {
+            if (!empty($cacheDir)) {
+                Processes::mwExec("{$rmPath} -rf {$cacheDir}/*");
+            }
+        }
     }
 }
