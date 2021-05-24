@@ -289,8 +289,8 @@ class AssetProvider implements ServiceProviderInterface
     private function makeLocalizationAssets(DiInterface $di, string $version): void
     {
         $language   = $di->getShared('language');
-        $langJSFile = "js/cache/localization-{$language}-{$version}.min.js";
-        if ( ! file_exists($langJSFile)) {
+        $fileName    = "{$this->jsCacheDir}/localization-{$language}-{$version}.min.js";
+        if ( ! file_exists($fileName)) {
             $arrStr = [];
             foreach ($di->getShared('messages') as $key => $value) {
                 $arrStr[$key] = str_replace(
@@ -299,13 +299,11 @@ class AssetProvider implements ServiceProviderInterface
                     str_replace(["\n", '  '], '', $value)
                 );
             }
-
-            $fileName    = "{$this->jsCacheDir}/localization-{$language}-{$version}.min.js";
             $scriptArray = json_encode($arrStr);
             file_put_contents($fileName, "globalTranslate = {$scriptArray}");
         }
 
-
+        $langJSFile = "js/cache/localization-{$language}-{$version}.min.js";
         $this->footerCollectionLoc->addJs($langJSFile, true);
     }
 
