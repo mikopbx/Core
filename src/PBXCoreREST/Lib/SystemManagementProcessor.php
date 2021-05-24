@@ -32,6 +32,7 @@ use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\Notifications;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\Storage;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Modules\PbxExtensionState;
@@ -244,15 +245,26 @@ class SystemManagementProcessor extends Injectable
         $pbxExtensionSetupClass = "\\Modules\\{$moduleUniqueID}\\Setup\\PbxExtensionSetup";
         if (class_exists($pbxExtensionSetupClass)
             && method_exists($pbxExtensionSetupClass, 'installModule')) {
-            $setup = new $pbxExtensionSetupClass($moduleUniqueID);
-            if ( ! $setup->installModule()) {
+            try {
+                $setup = new $pbxExtensionSetupClass($moduleUniqueID);
+                if ( ! $setup->installModule()) {
+                    $res->success    = false;
+                    $res->messages[] = $setup->getMessages();
+                }
+            } catch (\Throwable $e){
                 $res->success    = false;
-                $res->messages[] = $setup->getMessages();
+                $res->messages[] = 'Install error: '.$e->getMessage();
+            }
+            finally
+            {
+                $storage = new Storage();
+                $storage->clearCacheFiles();
             }
         } else {
             $res->success    = false;
             $res->messages[] = "Install error: the class {$pbxExtensionSetupClass} not exists";
         }
+
         return $res;
     }
 
@@ -305,8 +317,11 @@ class SystemManagementProcessor extends Injectable
                 $setup       = new $moduleClass($moduleUniqueID);
                 $setup->unregisterModule();
             }
+            $storage = new Storage();
+            $storage->clearCacheFiles();
         }
-        $res->success                    = true;
+        $res->success = true;
+
         return $res;
     }
 
@@ -327,8 +342,8 @@ class SystemManagementProcessor extends Injectable
             $res->messages = $moduleStateProcessor->getMessages();
         } else {
             PBXConfModulesProvider::recreateModulesProvider();
-            $res->data                       = $moduleStateProcessor->getMessages();
-            $res->success                    = true;
+            $res->data    = $moduleStateProcessor->getMessages();
+            $res->success = true;
         }
 
         return $res;
@@ -351,9 +366,8 @@ class SystemManagementProcessor extends Injectable
             $res->messages = $moduleStateProcessor->getMessages();
         } else {
             PBXConfModulesProvider::recreateModulesProvider();
-            $res->data                       = $moduleStateProcessor->getMessages();
-            $res->success                    = true;
-
+            $res->data    = $moduleStateProcessor->getMessages();
+            $res->success = true;
         }
 
         return $res;
@@ -373,8 +387,8 @@ class SystemManagementProcessor extends Injectable
             return $res;
         }
 
-        $res->success                    = true;
-        $rm                              = Util::which('rm');
+        $res->success = true;
+        $rm           = Util::which('rm');
 
         // Pre delete some types
         $clearThisModels = [
