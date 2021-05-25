@@ -108,12 +108,13 @@ class FilesManagementProcessor extends Injectable
             return $res;
         }
 
-        $fileName                           = pathinfo($parameters['resumableFilename'], PATHINFO_FILENAME);
-        $fileName                           = preg_replace( '/[\W]/', '', $fileName);
-        if (strlen($fileName)<10){
-            $fileName = ''.md5(time()).'-'.$fileName;
+        $fileName = (string)pathinfo($parameters['resumableFilename'], PATHINFO_FILENAME);
+        $fileName = preg_replace('/[\W]/', '', $fileName);
+        if (strlen($fileName) < 10) {
+            $fileName = '' . md5(time()) . '-' . $fileName;
         }
-        $fileName                           .= '.'.pathinfo($parameters['resumableFilename'], PATHINFO_EXTENSION);
+        $extension                          = (string)pathinfo($parameters['resumableFilename'], PATHINFO_EXTENSION);
+        $fileName                           .= '.' . $extension;
         $parameters['resumableFilename']    = $fileName;
         $parameters['fullUploadedFileName'] = "{$parameters['tempDir']}/{$fileName}";
 

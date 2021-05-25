@@ -52,8 +52,8 @@ class UpdateSystemConfig extends Di\Injectable
         $this->deleteLostModules();
         // Clear all caches on any changed models
         ModelsBase::clearCache(PbxSettings::class);
-        $previous_version = str_ireplace('-dev', '', $this->mikoPBXConfig->getGeneralSettings('PBXVersion'));
-        $current_version  = str_ireplace('-dev', '', trim(file_get_contents('/etc/version')));
+        $previous_version = (string)str_ireplace('-dev', '', $this->mikoPBXConfig->getGeneralSettings('PBXVersion'));
+        $current_version  = (string)str_ireplace('-dev', '', trim(file_get_contents('/etc/version')));
         if ($previous_version !== $current_version) {
             $upgradeClasses      = [];
             $upgradeClassesDir   = appPath('src/Core/System/Upgrade/Releases');

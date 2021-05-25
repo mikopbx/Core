@@ -45,8 +45,10 @@ class AssetManager extends Manager
      */
     public function outputCss(string $collectionName = null): string
     {
-        foreach ($this->collection($collectionName) as $resource) {
-            $resource->setVersion($this->version);
+        if ($collectionName !== null) {
+            foreach ($this->collection($collectionName) as $resource) {
+                $resource->setVersion($this->version);
+            }
         }
 
         return parent::outputCss($collectionName);
@@ -61,8 +63,10 @@ class AssetManager extends Manager
      */
     public function outputJs(string $collectionName = null): string
     {
-        foreach ($this->collection($collectionName) as $resource) {
-            $resource->setVersion($this->version);
+        if ($collectionName !== null) {
+            foreach ($this->collection($collectionName) as $resource) {
+                $resource->setVersion($this->version);
+            }
         }
 
         return parent::outputJs($collectionName);

@@ -27,6 +27,8 @@ use Phalcon\Di;
 use Phalcon\Text;
 use Throwable;
 
+use function GuzzleHttp\Psr7\str;
+
 abstract class WorkerBase extends Di\Injectable implements WorkerInterface
 {
     public int $maxProc = 1;
@@ -62,7 +64,8 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
             file_put_contents($this->getPidFile(), $activeProcesses);
         } else {
             $pidFilesDir = dirname($this->getPidFile());
-            $pidFile     = $pidFilesDir . '/' . pathinfo($this->getPidFile(), PATHINFO_BASENAME);
+            $baseName    = (string)pathinfo($this->getPidFile(), PATHINFO_BASENAME);
+            $pidFile     = $pidFilesDir . '/' . $baseName;
             // Delete old PID files
             $rm = Util::which('rm');
             Processes::mwExec("{$rm} -rf {$pidFile}*");
@@ -107,9 +110,10 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
         if ($e === null) {
             Util::sysLogMsg(static::class, "shutdownHandler after {$timeElapsedSecs} seconds", LOG_DEBUG);
         } else {
+            $details = (string)print_r($e, true);
             Util::sysLogMsg(
                 static::class,
-                "shutdownHandler after {$timeElapsedSecs} seconds with error:" . print_r($e, true),
+                "shutdownHandler after {$timeElapsedSecs} seconds with error: {$details}",
                 LOG_DEBUG
             );
         }

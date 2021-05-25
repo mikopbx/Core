@@ -81,7 +81,10 @@ class PbxExtensionModulesController extends BaseController
             ];
             $previousMenuSettings->value = json_encode($value);
         }
-        $options                = json_decode($previousMenuSettings->value, true);
+        $options = [];
+        if ($previousMenuSettings->value!==null){
+            $options                = json_decode($previousMenuSettings->value, true);
+        }
         $this->view->form       = new PbxExtensionModuleSettingsForm($previousMenuSettings, $options);
         $this->view->title      = $this->translation->_('ext_SettingsForModule') . ' ' . $this->translation->_(
                 "Breadcrumb$uniqid"

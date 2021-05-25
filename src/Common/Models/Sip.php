@@ -27,6 +27,10 @@ use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
  * Class Sip
  *
  * @method static mixed findFirstByUniqid(array|string|int $parameters = null)
+ * @property \MikoPBX\Common\Models\SipHosts SipHosts
+ * @property \MikoPBX\Common\Models\Providers Providers
+ * @property \MikoPBX\Common\Models\Extensions Extensions
+ * @property \MikoPBX\Common\Models\NetworkFilters NetworkFilters
  *
  * @package MikoPBX\Common\Models
  */

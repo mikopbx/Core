@@ -152,8 +152,9 @@ class LicenseManagementProcessor extends Injectable
             }
         } else { // Only add trial for license key
             $newLicenseKey = $this->license->getTrialLicense($data);
-            if (strlen($newLicenseKey) === 28
-                && Text::startsWith((string)$newLicenseKey, 'MIKO-')) {
+            if (is_string($newLicenseKey)
+                && strlen($newLicenseKey) === 28
+                && Text::startsWith($newLicenseKey, 'MIKO-')) {
                 $mikoPBXConfig->setGeneralSettings('PBXLicense', $newLicenseKey);
                 $this->license->changeLicenseKey($newLicenseKey);
                 $res->success    = true;

@@ -437,19 +437,20 @@ class SysinfoManagementProcessor extends Injectable
         curl_setopt($curl, CURLOPT_TIMEOUT, 2);
 
         try {
-            $resultrequest = curl_exec($curl);
+            $resultRequest = curl_exec($curl);
         } catch (Exception $e) {
             $res->messages[] = $e->getMessage();
 
             return $res;
         }
         curl_close($curl);
-        if (Util::isJson($resultrequest)) {
+        if (is_string($resultRequest)
+            && Util::isJson($resultRequest)) {
             $res->success    = true;
-            $response        = json_decode($resultrequest, true);
+            $response        = json_decode($resultRequest, true);
             $res->data['ip'] = $response['ip'];
         } else {
-            $res->messages[] = 'Error format data ' . $resultrequest;
+            $res->messages[] = 'Error format data ' . $resultRequest;
         }
 
         return $res;

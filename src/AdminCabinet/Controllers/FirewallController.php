@@ -26,16 +26,15 @@ use MikoPBX\Common\Models\{FirewallRules, LanInterfaces, NetworkFilters, PbxSett
 class FirewallController extends BaseController
 {
 
-
     /**
-     * Построение таблицы доступа к ресурсам системы
+     * Prepares index page
      */
     public function indexAction(): void
     {
         $calculator        = new Cidr();
         $localAddresses    = [];
         $localAddresses[]  = '0.0.0.0/0';
-        $conditions        = 'disabled=0 AND internet=0'; // Нам нужны только локальные включенные сети
+        $conditions        = 'disabled=0 AND internet=0'; // We need only local networks here
         $networkInterfaces = LanInterfaces::find($conditions);
         foreach ($networkInterfaces as $interface) {
             if (empty($interface->ipaddr)) {
@@ -78,7 +77,7 @@ class FirewallController extends BaseController
             $networksTable[$filter->id]['permanent'] = false;
 
 
-            // Заполним значениями по умолчанию
+            // Fill the default walues
             foreach ($defaultRules as $key => $value) {
                 $networksTable[$filter->id]['category'][$key] = [
                     'name'   => empty($value['shortName']) ? $key : $value['shortName'],
@@ -86,7 +85,7 @@ class FirewallController extends BaseController
                 ];
             }
 
-            // Заполним сохраненными ранее значениями
+            // Fill previous saved values
             $firewallRules = $filter->FirewallRules;
             foreach ($firewallRules as $rule) {
                 $networksTable[$filter->id]['category'][$rule->category]['action'] = $rule->action;
@@ -96,7 +95,7 @@ class FirewallController extends BaseController
             }
         }
 
-        // Добавиим фильтры по умолчанию, если они еще не добавлены.
+        // Add default filters
         foreach ($localAddresses as $localAddress) {
             $existsPersistentRecord = false;
             foreach ($networksTable as $key => $value) {
@@ -133,7 +132,7 @@ class FirewallController extends BaseController
 
 
     /**
-     * Форма редактирования карточки сетевого фильтра
+     * Prepares forms to edit firewall rules
      *
      * @param string $networkId
      */
@@ -146,12 +145,12 @@ class FirewallController extends BaseController
             $networkFilter         = new NetworkFilters();
             $networkFilter->permit = empty($data['permit']) ? '0.0.0.0/0' : $data['permit'];
         } else {
-            // Заполним сохраненными ранее значениями
+            // Fill previous saved values
             foreach ($networkFilter->FirewallRules as $rule) {
                 $firewallRules[$rule->category]['action'] = $rule->action;
             }
         }
-        $permitParts = explode('/', $networkFilter->permit);
+        $permitParts = explode('/', $networkFilter->permit ?? '0.0.0.0/0');
 
         $this->view->form          = new FirewallEditForm(
             $networkFilter,
@@ -163,7 +162,7 @@ class FirewallController extends BaseController
 
 
     /**
-     * Проверка на доступность номера
+     * Save request from the form
      */
     public function saveAction(): void
     {
@@ -172,13 +171,14 @@ class FirewallController extends BaseController
         }
 
         $this->db->begin();
-        $data         = $this->request->getPost();
-        $networkId    = $this->request->getPost('id');
+        $data      = $this->request->getPost();
+        $networkId = $this->request->getPost('id');
         // Update network filters Network Filter
         $filterRecordId = $this->updateNetworkFilters($networkId, $data);
         if (empty($filterRecordId)) {
             $this->view->success = false;
             $this->db->rollback();
+
             return;
         }
 
@@ -189,7 +189,7 @@ class FirewallController extends BaseController
 
         // Update firewall rules Firewall
         $data['id'] = $filterRecordId;
-        if (!$this->updateFirewallRules($data)) {
+        if ( ! $this->updateFirewallRules($data)) {
             $this->view->success = false;
             $this->db->rollback();
 
@@ -202,10 +202,10 @@ class FirewallController extends BaseController
     }
 
     /**
-     * Заполним параметры записи Network Filter
+     * Fills Network Filter record
      *
      * @param string $networkId
-     * @param array                                 $data массив полей из POST запроса
+     * @param array  $data POST parameters array
      *
      * @return string update result
      */
@@ -217,7 +217,7 @@ class FirewallController extends BaseController
         }
 
         $calculator = new Cidr();
-        // Заполним параметры записи Network Filter
+        // Fills Network Filter record
         foreach ($filterRecord as $name => $value) {
             switch ($name) {
                 case 'permit':
@@ -289,16 +289,17 @@ class FirewallController extends BaseController
                 $errors = $firewallRules->getMessages();
                 $this->flash->error(implode('<br>', $errors));
                 $this->view->success = false;
+
                 return false;
             }
             $currentRulesCount--;
             $needUpdateFirewallRules = true;
         }
 
-        if($needUpdateFirewallRules){
+        if ($needUpdateFirewallRules) {
             $firewallRules = FirewallRules::find($parameters);
         }
-        $rowId         = 0;
+        $rowId = 0;
         foreach ($defaultRules as $key => $value) {
             foreach ($value['rules'] as $rule) {
                 if ($firewallRules->offsetExists($rowId)) {
@@ -334,7 +335,7 @@ class FirewallController extends BaseController
     }
 
     /**
-     * Удаление правил настройки firewall
+     * Deletes NetworkFilters record
      *
      * @param string $networkId
      */
@@ -359,7 +360,7 @@ class FirewallController extends BaseController
     }
 
     /**
-     * Включение firewall
+     * Enables Fail2Ban and Firewall
      */
     public function enableAction(): void
     {
@@ -394,7 +395,7 @@ class FirewallController extends BaseController
     }
 
     /**
-     * Выключение firewall
+     * Disables Fail2Ban and Firewall
      */
     public function disableAction(): void
     {
@@ -429,7 +430,7 @@ class FirewallController extends BaseController
     }
 
     /**
-     * Метод сортировки, локальная сеть и 0 сеть всегда сверху списка должны быть
+     * Sort array. The localnet and 0.0.0.0 should be at the first position on the list
      *
      * @param $a
      * @param $b
