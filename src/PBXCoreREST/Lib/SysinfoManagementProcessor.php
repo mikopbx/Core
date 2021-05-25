@@ -450,7 +450,7 @@ class SysinfoManagementProcessor extends Injectable
             $response        = json_decode($resultRequest, true);
             $res->data['ip'] = $response['ip'];
         } else {
-            $res->messages[] = 'Error format data ' . $resultRequest;
+            $res->messages[] = 'Error format data ';
         }
 
         return $res;
