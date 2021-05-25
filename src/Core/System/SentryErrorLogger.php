@@ -73,6 +73,7 @@ class SentryErrorLogger
                 'dsn'         => $this->dsn,
                 'release'     => $this->release,
                 'environment' => $this->environment,
+                'traces_sample_rate' => 1.0,
             ];
             $client = ClientBuilder::create($options)->getClient();
 
