@@ -73,8 +73,10 @@ class SentryErrorLogger
                 'dsn'         => $this->dsn,
                 'release'     => $this->release,
                 'environment' => $this->environment,
-                'traces_sample_rate' => 1.0,
             ];
+            if ($this->environment === 'development') {
+                $options['traces_sample_rate'] = '1.0';
+            }
             $client = ClientBuilder::create($options)->getClient();
 
             SentrySdk::init()->bindClient($client);
@@ -82,7 +84,7 @@ class SentryErrorLogger
             SentrySdk::getCurrentHub()->configureScope(
                 function (Scope $scope): void {
                     if (isset($this->email)) {
-                        $scope->setUser(['id' => $this->email], true);
+                        $scope->setUser(['id' => $this->email]);
                     }
                     if (isset($this->licKey)) {
                         $scope->setExtra('key', $this->licKey);
