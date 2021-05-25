@@ -30,8 +30,8 @@ class MusicOnHoldConf extends CoreConfigClass
 
     protected function generateConfigProtected(): void
     {
-        $mohpath    = $this->config->path('asterisk.mohdir');
-        $conf = "[default]\n" .
+        $mohpath = $this->config->path('asterisk.mohdir');
+        $conf    = "[default]\n" .
             "mode=files\n" .
             "directory=$mohpath\n\n";
 
@@ -42,25 +42,27 @@ class MusicOnHoldConf extends CoreConfigClass
     /**
      * Проверка существования MOH файлов.
      */
-    protected function checkMohFiles():void{
-        $path    = $this->config->path('asterisk.mohdir');
-        $mask    = '/*.mp3';
-        $fList   = glob("{$path}{$mask}");
-        if(count($fList) !== 0 ){
-            foreach ($fList as $resultMp3){
+    protected function checkMohFiles(): void
+    {
+        $path  = $this->config->path('asterisk.mohdir');
+        $mask  = '/*.mp3';
+        $fList = glob("{$path}{$mask}");
+        if (count($fList) !== 0) {
+            foreach ($fList as $resultMp3) {
                 $this->checkAddFileToDB($resultMp3);
             }
+
             return;
         }
         Util::sysLogMsg(static::class, 'Attempt to restore MOH from default...');
-        $filesList    = glob("/offload/asterisk/sounds/moh{$mask}");
-        $cpPath       = Util::which('cp');
-        foreach ($filesList as $srcFile){
-            $resultMp3 = "{$path}/".basename($srcFile);
-            $resultWav = Util::trimExtensionForFile($resultMp3).'.wav';
+        $filesList = glob("/offload/asterisk/sounds/moh{$mask}");
+        $cpPath    = Util::which('cp');
+        foreach ($filesList as $srcFile) {
+            $resultMp3 = "{$path}/" . basename($srcFile);
+            $resultWav = Util::trimExtensionForFile($resultMp3) . '.wav';
             Processes::mwExec("{$cpPath} $srcFile {$resultMp3}");
             SystemManagementProcessor::convertAudioFile($resultMp3);
-            if(!file_exists($resultWav)){
+            if ( ! file_exists($resultWav)) {
                 Util::sysLogMsg(static::class, "Failed to convert file {$resultWav}...");
             }
 
@@ -68,15 +70,16 @@ class MusicOnHoldConf extends CoreConfigClass
         }
     }
 
-    protected function checkAddFileToDB($resultMp3):void{
+    protected function checkAddFileToDB($resultMp3): void
+    {
         /** @var SoundFiles $sf */
         $sf = SoundFiles::findFirst("path='{$resultMp3}'");
-        if(!$sf) {
-            $sf = new SoundFiles();
+        if ($sf === null) {
+            $sf           = new SoundFiles();
             $sf->category = SoundFiles::CATEGORY_MOH;
             $sf->name     = basename($resultMp3);
             $sf->path     = $resultMp3;
-            if(!$sf->save()){
+            if ( ! $sf->save()) {
                 Util::sysLogMsg(static::class, "Error save SoundFiles record {$sf->name}...");
             }
         }

@@ -32,34 +32,36 @@ class WorkerMakeLogFilesArchive extends WorkerBase
 {
     public function start($argv): void
     {
-        $settings_file = $argv[2]??'';
-        if (!file_exists($settings_file)) {
+        $settings_file = $argv[2] ?? '';
+        if ( ! file_exists($settings_file)) {
             Util::sysLogMsg("WorkerMakeLogFilesArchive", 'File with settings not found', LOG_ERR);
+
             return;
         }
         $file_data = json_decode(file_get_contents($settings_file), true);
         if ( ! isset($file_data['result_file'])) {
             Util::sysLogMsg("WorkerMakeLogFilesArchive", 'Wrong settings', LOG_ERR);
+
             return;
         }
-        $tcpdump_only  = $file_data['tcpdump_only']??true;
-        $resultFile         = $file_data['result_file'];
-        $progress_file      = "{$resultFile}.progress";
+        $tcpdump_only  = $file_data['tcpdump_only'] ?? true;
+        $resultFile    = $file_data['result_file'];
+        $progress_file = "{$resultFile}.progress";
         file_put_contents($progress_file, '1');
 
-        $rmPath      = Util::which('rm');
-        $za7Path     = Util::which('7za');
-        $findPath    = Util::which('find');
+        $rmPath   = Util::which('rm');
+        $za7Path  = Util::which('7za');
+        $findPath = Util::which('find');
 
         if (file_exists($resultFile)) {
             Processes::mwExec("{$rmPath} -rf {$resultFile}");
         }
         $logDir         = System::getLogDir();
-        if($tcpdump_only){
+        $systemInfoFile = "{$logDir}/system-information.log";
+        if ($tcpdump_only) {
             $command = "{$findPath} {$logDir}/tcpDump -type f ";
-        }else{
+        } else {
             // Collect system info
-            $systemInfoFile = "{$logDir}/system-information.log";
             file_put_contents($systemInfoFile, SysinfoManagementProcessor::prepareSysyinfoContent());
             $command = "{$findPath} {$logDir} -type f ";
         }
@@ -67,18 +69,18 @@ class WorkerMakeLogFilesArchive extends WorkerBase
 
         $countFiles = count($out);
         foreach ($out as $index => $filename) {
-            if(!file_exists($filename)){
+            if ( ! file_exists($filename)) {
                 continue;
             }
             Processes::mwExec("{$za7Path} a -tzip -spf '{$resultFile}' '{$filename}'", $out);
-            $progress = round(100*($index + 1)/$countFiles);
+            $progress = round(100 * ($index + 1) / $countFiles);
             if ($progress % 5 === 0) {
                 file_put_contents($progress_file, $progress);
                 echo "$progress \n";
             }
         }
         file_put_contents($progress_file, '100');
-        if($tcpdump_only === true){
+        if ($tcpdump_only === true) {
             // Delete TCP dump
             Processes::mwExec("{$rmPath} -rf {$logDir}/tcpDump");
         }
@@ -87,4 +89,4 @@ class WorkerMakeLogFilesArchive extends WorkerBase
 }
 
 // Start worker process
-WorkerMakeLogFilesArchive::startWorker($argv??null);
+WorkerMakeLogFilesArchive::startWorker($argv ?? null);

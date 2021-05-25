@@ -75,7 +75,9 @@ class SentryErrorLogger
                 'environment' => $this->environment,
             ];
             if ($this->environment === 'development') {
-                $options['traces_sample_rate'] = '1.0';
+                $options['traces_sample_rate'] = 1.0;
+            } else {
+                $options['traces_sample_rate'] = 0.05;
             }
             $client = ClientBuilder::create($options)->getClient();
 

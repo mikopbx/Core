@@ -107,7 +107,7 @@ class WorkerLongPoolAPI extends WorkerBase
         $resultRequest = curl_exec($ch);
         curl_close($ch);
 
-        if(is_string($result)){
+        if($resultRequest !== false){
             $resultTmp = json_decode($resultRequest, true);
             if(is_array($resultTmp)){
                 $result = $resultTmp;

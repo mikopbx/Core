@@ -44,7 +44,7 @@ class CryptProvider implements ServiceProviderInterface
         $encryptionKey = $di->getShared('config')->path('www.encryptionKey');
         $di->setShared(
             self::SERVICE_NAME,
-            function () use ($di, $encryptionKey) {
+            function () use ($encryptionKey) {
                 $crypt = new Crypt();
                 // Set a global encryption key
                 $crypt->setKey(
