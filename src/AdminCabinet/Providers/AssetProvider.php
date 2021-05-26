@@ -584,8 +584,8 @@ class AssetProvider implements ServiceProviderInterface
     {
         if ($action === 'modify') {
             $this->footerCollectionJS
-                ->addJs('js/vendor/inputmask/inputmask.js', true)
-                ->addJs('js/vendor/inputmask/jquery.inputmask.js', true)
+                //->addJs('js/vendor/inputmask/inputmask.js', true)
+                ->addJs('js/vendor/inputmask/jquery.inputmask.min.js', true)
                 ->addJs('js/vendor/inputmask/bindings/inputmask.binding.js', true)
                 ->addJs('js/vendor/inputmask/init.js', true)
                 ->addJs('js/pbx/main/form.js', true)
@@ -616,8 +616,8 @@ class AssetProvider implements ServiceProviderInterface
     {
         if ($action === 'modify') {
             $this->footerCollectionJS
-                ->addJs('js/vendor/inputmask/inputmask.js', true)
-                ->addJs('js/vendor/inputmask/jquery.inputmask.js', true)
+                //->addJs('js/vendor/inputmask/inputmask.js', true)
+                ->addJs('js/vendor/inputmask/jquery.inputmask.min.js', true)
                 ->addJs('js/vendor/inputmask/bindings/inputmask.binding.js', true)
                 ->addJs('js/vendor/inputmask/init.js', true)
                 ->addJs('js/pbx/main/form.js', true)
@@ -730,8 +730,8 @@ class AssetProvider implements ServiceProviderInterface
 
             $this->footerCollectionJS
                 ->addJs('js/vendor/datatable/dataTables.semanticui.js', true)
-                ->addJs('js/vendor/inputmask/inputmask.js', true)
-                ->addJs('js/vendor/inputmask/jquery.inputmask.js', true)
+                //->addJs('js/vendor/inputmask/inputmask.js', true)
+                ->addJs('js/vendor/inputmask/jquery.inputmask.min.js', true)
                 ->addJs('js/vendor/inputmask/jquery.inputmask-multi.js', true)
                 ->addJs('js/vendor/inputmask/bindings/inputmask.binding.js', true)
                 ->addJs('js/vendor/inputmask/init.js', true)
@@ -742,8 +742,8 @@ class AssetProvider implements ServiceProviderInterface
         } elseif ($action === 'modify') {
             $this->semanticCollectionCSS->addCss('css/vendor/semantic/card.min.css', true);
             $this->footerCollectionJS
-                ->addJs('js/vendor/inputmask/inputmask.js', true)
-                ->addJs('js/vendor/inputmask/jquery.inputmask.js', true)
+                //->addJs('js/vendor/inputmask/inputmask.js', true)
+                ->addJs('js/vendor/inputmask/jquery.inputmask.min.js', true)
                 ->addJs('js/vendor/inputmask/jquery.inputmask-multi.js', true)
                 ->addJs('js/vendor/inputmask/bindings/inputmask.binding.js', true)
                 ->addJs('js/vendor/inputmask/init.js', true)
