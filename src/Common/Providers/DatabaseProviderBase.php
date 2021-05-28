@@ -22,7 +22,9 @@ declare(strict_types=1);
 namespace MikoPBX\Common\Providers;
 
 
+use MikoPBX\Core\Providers\EventsLogDatabaseProvider;
 use MikoPBX\Core\System\Util;
+use Phalcon\Di;
 use Phalcon\Di\DiInterface;
 use Phalcon\Events\Manager as EventsManager;
 use Phalcon\Logger;
@@ -98,5 +100,30 @@ abstract class DatabaseProviderBase
                 return $connection;
             }
         );
+    }
+
+    /**
+     * Recreate DB connections after table structure changes
+     */
+    public static function recreateDBConnections(): void
+    {
+        $dbProvidersList = [
+            ModelsCacheProvider::class, // Always recreate it before change DB providers
+
+            MainDatabaseProvider::class,
+            CDRDatabaseProvider::class,
+            EventsLogDatabaseProvider::class,
+
+            ModelsMetadataProvider::class,
+            ModelsAnnotationsProvider::class,
+        ];
+
+        $di = Di::getDefault();
+
+        foreach ($dbProvidersList as $provider) {
+            // Delete previous provider
+            $di->remove($provider::SERVICE_NAME);
+            $di->register(new $provider());
+        }
     }
 }

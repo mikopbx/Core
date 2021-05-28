@@ -19,7 +19,7 @@
 /* global globalRootUrl, Form, globalTranslate */
 
 /**
- * Мониторинг статуса обновления или установки модуля
+ * Process common module settings
  *
  */
 const pbxExtensionModuleModify = {

@@ -46,7 +46,7 @@ class LoggerProvider implements ServiceProviderInterface
         } else {
             $ident = 'php.frontend';
         }
-        $logLevel = $di->getShared('config')->path('core.logsLevel');
+        $logLevel = $di->getShared(ConfigProvider::SERVICE_NAME)->path('core.logsLevel');
         $di->setShared(
             self::SERVICE_NAME,
             function () use ($logLevel, $ident){

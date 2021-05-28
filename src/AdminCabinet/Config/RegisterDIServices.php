@@ -39,6 +39,7 @@ use MikoPBX\Common\Providers\{
     ManagedCacheProvider,
     ModelsCacheProvider,
     ModelsMetadataProvider,
+    ModelsAnnotationsProvider,
     ModulesDBConnectionsProvider,
     PBXConfModulesProvider,
     RegistryProvider,
@@ -66,6 +67,7 @@ class RegisterDIServices
             ModelsCacheProvider::class,
 
             // Inject Database connections
+            ModelsAnnotationsProvider::class,
             ModelsMetadataProvider::class,
             MainDatabaseProvider::class,
             ModulesDBConnectionsProvider::class,

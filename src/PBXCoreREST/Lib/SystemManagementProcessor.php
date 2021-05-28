@@ -38,6 +38,7 @@ use MikoPBX\Core\System\Util;
 use MikoPBX\Modules\PbxExtensionState;
 use MikoPBX\Modules\PbxExtensionUtils;
 use MikoPBX\Modules\Setup\PbxExtensionSetupFailure;
+use MikoPBX\PBXCoreREST\Workers\WorkerModuleInstaller;
 use Phalcon\Di;
 use Phalcon\Di\Injectable;
 
@@ -91,7 +92,11 @@ class SystemManagementProcessor extends Injectable
                 break;
             case 'installNewModule':
                 $filePath = $request['data']['filePath'];
-                $res      = self::installModuleFromFile($filePath);
+                $res      = self::installModule($filePath);
+                break;
+            case 'statusOfModuleInstallation':
+                $filePath = $request['data']['filePath'];
+                $res      = self::statusOfModuleInstallation($filePath);
                 break;
             case 'enableModule':
                 $moduleUniqueID = $request['data']['uniqid'];
@@ -188,8 +193,8 @@ class SystemManagementProcessor extends Injectable
 
         $link = '/tmp/firmware_update.img';
         Util::createUpdateSymlink($tempFilename, $link);
-        $mikopbx_firmwarePath = Util::which('mikopbx_firmware');
-        Processes::mwExecBg("{$mikopbx_firmwarePath} recover_upgrade {$link} /dev/{$dev}");
+        $mikoPBXFirmwarePath = Util::which('mikopbx_firmware');
+        Processes::mwExecBg("{$mikoPBXFirmwarePath} recover_upgrade {$link} /dev/{$dev}");
 
         return $res;
     }
@@ -202,66 +207,52 @@ class SystemManagementProcessor extends Injectable
      * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
      *
      */
-    public static function installModuleFromFile($filePath): PBXApiResult
+    public static function installModule($filePath): PBXApiResult
     {
         $res            = new PBXApiResult();
         $res->processor = __METHOD__;
-        $moduleMetadata = FilesManagementProcessor::getMetadataFromModuleFile($filePath);
-        if ( ! $moduleMetadata->success) {
-            return $moduleMetadata;
+        $resModuleMetadata = FilesManagementProcessor::getMetadataFromModuleFile($filePath);
+        if ( ! $resModuleMetadata->success) {
+            return $resModuleMetadata;
         } else {
-            $moduleUniqueID = $moduleMetadata->data['uniqid'];
-            $res            = self::installModule($filePath, $moduleUniqueID);
-        }
-
-        return $res;
-    }
-
-    /**
-     * Install module from file
-     *
-     * @param string $filePath
-     *
-     * @param string $moduleUniqueID
-     *
-     * @return PBXApiResult
-     */
-    public static function installModule(string $filePath, string $moduleUniqueID): PBXApiResult
-    {
-        $res              = new PBXApiResult();
-        $res->processor   = __METHOD__;
-        $res->success     = true;
-        $currentModuleDir = PbxExtensionUtils::getModuleDir($moduleUniqueID);
-        $needBackup       = is_dir($currentModuleDir);
-
-        if ($needBackup) {
-            self::uninstallModule($moduleUniqueID, true);
-        }
-
-        $semZaPath = Util::which('7za');
-        Processes::mwExec("{$semZaPath} e -spf -aoa -o{$currentModuleDir} {$filePath}");
-        Util::addRegularWWWRights($currentModuleDir);
-
-        $pbxExtensionSetupClass = "\\Modules\\{$moduleUniqueID}\\Setup\\PbxExtensionSetup";
-        if (class_exists($pbxExtensionSetupClass)
-            && method_exists($pbxExtensionSetupClass, 'installModule')) {
-            try {
-                $setup = new $pbxExtensionSetupClass($moduleUniqueID);
-                if ( ! $setup->installModule()) {
-                    $res->success    = false;
-                    $res->messages[] = $setup->getMessages();
+            $moduleUniqueID = $resModuleMetadata->data['uniqid'];
+            // If it enabled send disable action first
+            if (PbxExtensionUtils::isEnabled($moduleUniqueID)){
+                $res = self::disableModule($moduleUniqueID);
+                if (!$res->success){
+                    return $res;
                 }
-            } catch (\Throwable $e){
-                $res->success    = false;
-                $res->messages[] = 'Install error: '.$e->getMessage();
             }
-        } else {
-            $res->success    = false;
-            $res->messages[] = "Install error: the class {$pbxExtensionSetupClass} not exists";
+
+            $currentModuleDir = PbxExtensionUtils::getModuleDir($moduleUniqueID);
+            $needBackup       = is_dir($currentModuleDir);
+
+            if ($needBackup) {
+                self::uninstallModule($moduleUniqueID, true);
+            }
+
+            // We will start the background process to install module
+            $temp_dir            = dirname($filePath);
+            $install_settings = [
+                'filePath' => $filePath,
+                'currentModuleDir' => $currentModuleDir,
+                'uniqid' => $moduleUniqueID,
+            ];
+            $settings_file  = "{$temp_dir}/install_settings.json";
+            file_put_contents(
+                $settings_file,
+                json_encode($install_settings, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT)
+            );
+            $phpPath               = Util::which('php');
+            $workerFilesMergerPath = Util::getFilePathByClassName(WorkerModuleInstaller::class);
+            Processes::mwExecBg("{$phpPath} -f {$workerFilesMergerPath} start '{$settings_file}'");
+            $res->data['filePath']= $filePath;
+            $res->success = true;
         }
 
         return $res;
     }
+
 
     /**
      * Uninstall module
@@ -543,4 +534,47 @@ class SystemManagementProcessor extends Injectable
         return $res;
     }
 
+    /**
+     * Returns Status of module installation process
+     *
+     * @param string $filePath
+     *
+     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     */
+    public static function statusOfModuleInstallation(string $filePath): PBXApiResult
+    {
+        $res            = new PBXApiResult();
+        $res->processor = __METHOD__;
+        $di             = Di::getDefault();
+        if ($di === null) {
+            $res->messages[] = 'Dependency injector does not initialized';
+
+            return $res;
+        }
+        $temp_dir            = dirname($filePath);
+        $progress_file = $temp_dir . '/installation_progress';
+        $error_file = $temp_dir . '/installation_error';
+        if (!file_exists($error_file)|| !file_exists($progress_file)){
+            $res->success                   = false;
+            $res->data['i_status']          = 'PROGRESS_FILE_NOT_FOUND';
+            $res->data['i_status_progress'] = '0';
+        }
+        elseif (file_get_contents($error_file)!=='') {
+            $res->success                   = false;
+            $res->data['i_status']          = 'INSTALLATION_ERROR';
+            $res->data['i_status_progress'] = '0';
+            $res->messages[]                = file_get_contents($error_file);
+        } elseif ('100' === file_get_contents($progress_file)) {
+            $res->success                   = true;
+            $res->data['i_status_progress'] = '100';
+            $res->data['i_status']          = 'INSTALLATION_COMPLETE';
+        } else {
+            $res->success                   = true;
+            $res->data['i_status']          = 'INSTALLATION_IN_PROGRESS';
+            $res->data['i_status_progress'] = file_get_contents($progress_file);
+        }
+
+
+        return $res;
+    }
 }

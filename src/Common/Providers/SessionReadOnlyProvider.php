@@ -39,7 +39,7 @@ class SessionReadOnlyProvider implements ServiceProviderInterface
      */
     public function register(DiInterface $di): void
     {
-        $phpSessionDir = $di->getShared('config')->path('www.phpSessionDir');
+        $phpSessionDir = $di->getShared(ConfigProvider::SERVICE_NAME)->path('www.phpSessionDir');
         $di->setShared(
             self::SERVICE_NAME,
             function () use ($phpSessionDir) {

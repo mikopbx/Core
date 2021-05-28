@@ -20,8 +20,10 @@
 namespace MikoPBX\Core\System\Upgrade;
 
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Providers\MainDatabaseProvider;
+use MikoPBX\Common\Providers\ModelsAnnotationsProvider;
+use MikoPBX\Common\Providers\ModelsMetadataProvider;
 use MikoPBX\Core\System\Util;
-use MikoPBX\Core\Config\RegisterDIServices;
 use Phalcon\Db\Column;
 use Phalcon\Db\Index;
 use Phalcon\Di;
@@ -47,22 +49,22 @@ class UpdateDatabase extends Di\Injectable
     public function updateDatabaseStructure(): void
     {
         try {
-            RegisterDIServices::recreateDBConnections(); // after storage remount
+            MainDatabaseProvider::recreateDBConnections(); // after storage remount
             $this->updateDbStructureByModelsAnnotations();
-            RegisterDIServices::recreateDBConnections(); // if we change anything in structure
+            MainDatabaseProvider::recreateDBConnections(); // if we change anything in structure
         } catch (Throwable $e) {
             Util::echoWithSyslog('Errors within database upgrade process '.$e->getMessage());
         }
     }
 
     /**
-     * Обходит файлы с описанием моделей и создает таблицы в базе данных
      *
-     * @return bool
+     * Step by step goes by models annotations and apply structure changes
+     *
+     * @return void
      */
-    private function updateDbStructureByModelsAnnotations(): bool
+    private function updateDbStructureByModelsAnnotations(): void
     {
-        $result    = true;
         $modelsDir = appPath('src/Common/Models');
         $results   = glob("{$modelsDir}/*.php", GLOB_NOSORT);
         foreach ($results as $file) {
@@ -74,7 +76,6 @@ class UpdateDatabase extends Di\Injectable
                 Util::echoWithSyslog('Errors within update table '.$className.' '.$exception->getMessage());
             }
         }
-        return $result;
     }
 
     /**
@@ -109,10 +110,10 @@ class UpdateDatabase extends Di\Injectable
         }
 
         $connectionService = $this->di->getShared($connectionServiceName);
-        $metaData          = $this->di->get('modelsMetadata');
+        $metaData          = $this->di->get(ModelsMetadataProvider::SERVICE_NAME);
 
         //https://docs.phalcon.io/4.0/ru-ru/annotations
-        $modelAnnotation = $this->di->get('annotations')->get($model);
+        $modelAnnotation = $this->di->get(ModelsAnnotationsProvider::SERVICE_NAME)->get($model);
 
         $tableName       = $model->getSource();
         $table_structure = [];
@@ -282,11 +283,11 @@ DROP TABLE  {$tableName}";
 
 
         if ($result) {
-            $this->updateIndexes($tableName, $connectionService, $indexes);
+            $result = $this->updateIndexes($tableName, $connectionService, $indexes);
         }
 
         if ($result) {
-            $connectionService->commit();
+            $result = $connectionService->commit();
         } else {
             Util::sysLogMsg('createUpdateDbTableByAnnotations', "Error: Failed on create/update table {$tableName}", LOG_ERR);
             $connectionService->rollback();
@@ -305,6 +306,9 @@ DROP TABLE  {$tableName}";
      */
     private function isTableStructureNotEqual($currentTableStructure, $newTableStructure): bool
     {
+        Util::echoWithSyslog(" - isTableStructureNotEqual:  current: ".count($currentTableStructure).' new '.count($newTableStructure));
+
+
         //1. Check fields count
         if (count($currentTableStructure) !== count($newTableStructure)) {
             return true;
@@ -356,6 +360,8 @@ DROP TABLE  {$tableName}";
 
 
     /**
+     * Updates indexes on database
+     *
      * @param string $tableName
      * @param mixed  $connectionService DependencyInjection connection service used to read data
      * @param array  $indexes

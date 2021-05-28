@@ -271,11 +271,11 @@ class FilesManagementProcessor extends Injectable
     /**
      * Delete file from disk by filepath
      *
-     * @param $filePath
+     * @param string $filePath
      *
      * @return PBXApiResult
      */
-    public static function removeAudioFile($filePath): PBXApiResult
+    public static function removeAudioFile(string $filePath): PBXApiResult
     {
         $res            = new PBXApiResult();
         $res->processor = __METHOD__;
@@ -317,12 +317,12 @@ class FilesManagementProcessor extends Injectable
     /**
      * Returns file content
      *
-     * @param $filename
-     * @param $needOriginal
+     * @param string $filename
+     * @param bool   $needOriginal
      *
      * @return PBXApiResult
      */
-    public static function fileReadContent($filename, $needOriginal = true): PBXApiResult
+    public static function fileReadContent(string $filename, bool $needOriginal = true): PBXApiResult
     {
         $res            = new PBXApiResult();
         $res->processor = __METHOD__;
@@ -512,7 +512,7 @@ class FilesManagementProcessor extends Injectable
     /**
      * Returns module download status
      *
-     * @param $moduleUniqueID
+     * @param string $moduleUniqueID
      *
      * @return PBXApiResult
      */
@@ -578,7 +578,7 @@ class FilesManagementProcessor extends Injectable
     /**
      * Unpack ModuleFile and get metadata information
      *
-     * @param $filePath
+     * @param string $filePath
      *
      * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
      */

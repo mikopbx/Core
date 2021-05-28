@@ -40,7 +40,7 @@ class UrlProvider implements ServiceProviderInterface
      */
     public function register(DiInterface $di): void
     {
-        $baseUri = $di->getShared('config')->path('adminApplication.baseUri');
+        $baseUri = $di->getShared(ConfigProvider::SERVICE_NAME)->path('adminApplication.baseUri');
         $di->setShared(
             self::SERVICE_NAME,
             function () use ($baseUri) {

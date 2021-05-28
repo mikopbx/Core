@@ -18,7 +18,7 @@
  */
 
 namespace MikoPBX\Core\Rc;
-use MikoPBX\Core\Config\RegisterDIServices;
+use MikoPBX\Common\Providers\MainDatabaseProvider;
 use MikoPBX\Core\Workers\WorkerAmiListener;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use MikoPBX\Core\System\{Configs\SyslogConf, Processes, Upgrade\UpdateDatabase, Util, Storage, PBX};
@@ -128,9 +128,9 @@ if(file_exists('/offload/livecd')) {
     return true;
 }
 
-RegisterDIServices::recreateDBConnections(); //TODO:: может это сделать внутри стоража после монтирования нужной папки?
+MainDatabaseProvider::recreateDBConnections(); //TODO:: может это сделать внутри стоража после монтирования нужной папки?
 $storage->configure();
-RegisterDIServices::recreateDBConnections(); //TODO:: может это сделать внутри стоража после монтирования нужной папки?
+MainDatabaseProvider::recreateDBConnections(); //TODO:: может это сделать внутри стоража после монтирования нужной папки?
 
 fclose(STDERR);
 Util::echoWithSyslog(' - Update database ... '. PHP_EOL);

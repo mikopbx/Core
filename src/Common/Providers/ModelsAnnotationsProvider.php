@@ -21,24 +21,41 @@ declare(strict_types=1);
 
 namespace MikoPBX\Common\Providers;
 
+use Phalcon\Annotations\Adapter\Memory;
+
+use Phalcon\Di;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 
 /**
- * CDR database connection is created based in the parameters defined in the configuration file
+ * Main database connection is created based in the parameters defined in the configuration file
  */
-class CDRDatabaseProvider extends DatabaseProviderBase implements ServiceProviderInterface
+class ModelsAnnotationsProvider implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = 'dbCDR';
+    public const SERVICE_NAME = 'annotations';
 
     /**
-     * Register dbCDR service provider
+     * Register Models metadata service provider
      *
      * @param \Phalcon\Di\DiInterface $di
      */
     public function register(DiInterface $di): void
     {
-        $dbConfig = $di->getShared(ConfigProvider::SERVICE_NAME)->get('cdrDatabase')->toArray();
-        $this->registerDBService(self::SERVICE_NAME, $di, $dbConfig);
+        $di->setShared(
+            self::SERVICE_NAME,
+            function (){
+                return new Memory();
+            }
+        );
+    }
+
+    /**
+     * Recreates modules service after enable or disable them
+     */
+    public static function recreateAnnotationsProvider(): void
+    {
+        $di = Di::getDefault();
+        $di->remove(self::SERVICE_NAME);
+        $di->register(new self());
     }
 }

@@ -45,6 +45,7 @@ const PbxApi = {
 	updateMailSettings: `${Config.pbxUrl}/pbxcore/api/system/updateMailSettings`,
 	systemUpgrade: `${Config.pbxUrl}/pbxcore/api/system/upgrade`, // Обновление АТС файлом
 	systemInstallModule: `${Config.pbxUrl}/pbxcore/api/system/installNewModule`,
+	systemGetModuleInstallationStatus: `${Config.pbxUrl}/pbxcore/api/system/statusOfModuleInstallation`,
 	systemDeleteModule: `${Config.pbxUrl}/pbxcore/api/system/uninstallModule`,
 	systemDisableModule: `${Config.pbxUrl}/pbxcore/api/system/disableModule`,
 	systemEnableModule: `${Config.pbxUrl}/pbxcore/api/system/enableModule`,
@@ -659,8 +660,8 @@ const PbxApi = {
 				filePath
 			},
 			successTest: PbxApi.successTest,
-			onSuccess() {
-				callback(true);
+			onSuccess(response) {
+				callback(response);
 			},
 			onFailure(response) {
 				callback(response);
@@ -671,6 +672,27 @@ const PbxApi = {
 		});
 	},
 
+	/**
+	 * Gets installation status
+	 */
+	SystemGetModuleInstallationStatus(filePath, callback) {
+		$.api({
+			url: PbxApi.systemGetModuleInstallationStatus,
+			on: 'now',
+			method: 'POST',
+			data: {filePath:filePath},
+			successTest: PbxApi.successTest,
+			onSuccess(response) {
+				callback(response.data);
+			},
+			onFailure() {
+				callback(false);
+			},
+			onError() {
+				callback(false);
+			},
+		});
+	},
 	/**
 	 * Uploads module as json with link by POST request
 	 * @param params

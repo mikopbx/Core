@@ -39,7 +39,7 @@ class MessagesProvider implements ServiceProviderInterface
      */
     public function register(DiInterface $di): void
     {
-        $coreConfig = $di->getShared('config')->path('core');
+        $coreConfig = $di->getShared(ConfigProvider::SERVICE_NAME)->path('core');
         $di->setShared(
             self::SERVICE_NAME,
             function () use ($di, $coreConfig) {

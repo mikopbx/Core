@@ -41,7 +41,7 @@ class NatsConnectionProvider implements ServiceProviderInterface
      */
     public function register(DiInterface $di): void
     {
-        $gnatsConfig = $di->getShared('config')->get('gnats');
+        $gnatsConfig = $di->getShared(ConfigProvider::SERVICE_NAME)->get('gnats');
         $di->setShared(
             self::SERVICE_NAME,
             function () use ($gnatsConfig) {

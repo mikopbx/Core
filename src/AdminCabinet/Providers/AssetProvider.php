@@ -42,7 +42,6 @@ class AssetProvider implements ServiceProviderInterface
     private Collection $footerCollectionACE;
     private Collection $footerCollectionLoc;
     private Collection $headerCollectionSentryJS;
-    private string $cssCacheDir;
     private string $jsCacheDir;
     private Manager $manager;
 
@@ -56,7 +55,7 @@ class AssetProvider implements ServiceProviderInterface
         $di->set(
             self::SERVICE_NAME,
             function () use ($di) {
-                $session    = $di->get('session');
+                $session = $di->get('session');
                 if ($session !== null && $session->has('versionHash')) {
                     $version = (string)$session->get('versionHash');
                 } else {
@@ -99,8 +98,7 @@ class AssetProvider implements ServiceProviderInterface
         $this->manager = new Manager();
         $this->manager->setVersion($version);
 
-        $this->cssCacheDir = appPath('sites/admin-cabinet/assets/css/cache');
-        $this->jsCacheDir  = appPath('sites/admin-cabinet/assets/js/cache');
+        $this->jsCacheDir = appPath('sites/admin-cabinet/assets/js/cache');
 
         $this->headerCollectionJSForExtensions = $this->manager->collection('headerJS');
         $this->headerCollectionJSForExtensions->setPrefix('assets/');
@@ -288,8 +286,8 @@ class AssetProvider implements ServiceProviderInterface
      */
     private function makeLocalizationAssets(DiInterface $di, string $version): void
     {
-        $language   = $di->getShared('language');
-        $fileName    = "{$this->jsCacheDir}/localization-{$language}-{$version}.min.js";
+        $language = $di->getShared('language');
+        $fileName = "{$this->jsCacheDir}/localization-{$language}-{$version}.min.js";
         if ( ! file_exists($fileName)) {
             $arrStr = [];
             foreach ($di->getShared('messages') as $key => $value) {
@@ -420,7 +418,7 @@ class AssetProvider implements ServiceProviderInterface
         if ($action === 'modify') {
             $this->footerCollectionJS
                 ->addJs('js/pbx/main/form.js', true)
-                ->addJs('js/vendor/moment/moment-with-locales.min.js',true)
+                ->addJs('js/vendor/moment/moment-with-locales.min.js', true)
                 ->addJs('js/vendor/moment/moment-timezone-with-data.js', true)
                 ->addJs('js/pbx/TimeSettings/time-settings-worker.js', true)
                 ->addJs('js/pbx/TimeSettings/time-settings-modify.js', true);
@@ -518,10 +516,9 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/Update/update-api.js', true)
                 ->addJs('js/vendor/datatable/dataTables.semanticui.js', true)
                 ->addJs('js/vendor/resumable.js', true)
-                ->addJs(
-                    'js/pbx/PbxExtensionModules/pbx-extension-module-upgrade-status-worker.js',
-                    true
-                )
+                ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-upgrade-status-worker.js', true)
+                ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-install-status-worker.js', true)
+                ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-merging-status-worker.js', true)
                 ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-status.js', true)
                 ->addJs('js/pbx/PbxExtensionModules/pbx-extension-modules-index.js', true)
                 ->addJs('js/vendor/semantic/progress.min.js', true)

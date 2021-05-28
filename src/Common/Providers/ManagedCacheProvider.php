@@ -41,7 +41,7 @@ class ManagedCacheProvider implements ServiceProviderInterface
      */
     public function register(DiInterface $di): void
     {
-        $config = $di->getShared('config');
+        $config = $di->getShared(ConfigProvider::SERVICE_NAME);
         $di->setShared(
             self::SERVICE_NAME,
             function () use ($config){

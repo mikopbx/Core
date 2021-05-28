@@ -51,7 +51,7 @@ class ModulesDBConnectionsProvider extends DatabaseProviderBase implements Servi
     public function register(DiInterface $di): void
     {
         $registeredDBServices = [];
-        $config               = $di->getShared('config');
+        $config               = $di->getShared(ConfigProvider::SERVICE_NAME);
         $modulesDir           = $config->path('core.modulesDir');
 
         $results = glob($modulesDir . '/*/module.json', GLOB_NOSORT);
@@ -185,6 +185,12 @@ class ModulesDBConnectionsProvider extends DatabaseProviderBase implements Servi
     {
         $di = Di::getDefault();
         $di->register(new self());
+
+        ModelsAnnotationsProvider::recreateAnnotationsProvider();
+
+        if ($di->has(ModelsMetadataProvider::SERVICE_NAME)){
+            $di->get(ModelsMetadataProvider::SERVICE_NAME)->reset();
+        }
     }
 }
 

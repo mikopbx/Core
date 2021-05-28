@@ -20,6 +20,7 @@
 namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Models\Codecs;
+use MikoPBX\Common\Providers\CDRDatabaseProvider;
 use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\Asterisk\Configs\{AclConf,
     CoreConfigClass,
@@ -338,7 +339,7 @@ class PBX extends Injectable
         /** @var \Phalcon\Db\Adapter\Pdo\Sqlite $connection */
         $connection = $this->di->get('dbCDR');
         if ( ! $connection->tableExists('cdr')) {
-            RegisterDIServices::recreateDBConnections();
+            CDRDatabaseProvider::recreateDBConnections();
         } else {
             CdrDb::checkDb();
         }

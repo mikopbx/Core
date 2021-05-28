@@ -29,6 +29,7 @@ use MikoPBX\Common\Providers\{
     MainDatabaseProvider,
     MessagesProvider,
     ModelsCacheProvider,
+    ModelsAnnotationsProvider,
     ModelsMetadataProvider,
     PBXConfModulesProvider,
     RegistryProvider,
@@ -56,6 +57,7 @@ class RegisterDIServices
             RegistryProvider::class,
 
             // Inject Database connections
+            ModelsAnnotationsProvider::class,
             ModelsMetadataProvider::class,
             MainDatabaseProvider::class,
             CDRDatabaseProvider::class,
