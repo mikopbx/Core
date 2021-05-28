@@ -233,6 +233,8 @@ class SystemManagementProcessor extends Injectable
 
             // We will start the background process to install module
             $temp_dir            = dirname($filePath);
+            file_put_contents( $temp_dir . '/installation_progress', '0');
+            file_put_contents( $temp_dir . '/installation_error', '');
             $install_settings = [
                 'filePath' => $filePath,
                 'currentModuleDir' => $currentModuleDir,

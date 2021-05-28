@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global UserMessage, globalTranslate, PbxApi, upgradeStatusLoopWorker */
+/* global UserMessage, globalTranslate, PbxApi, upgradeStatusLoopWorker, mergingCheckWorker */
 
 /**
  * Process push to button install new module from ZIP file

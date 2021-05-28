@@ -102,6 +102,7 @@ abstract class CoreConfigClass extends Injectable implements AsteriskConfigInter
             }
             try {
                 $includeString = call_user_func_array([$configClassObj, $methodName], $arguments);
+                $includeString = $configClassObj->confBlockWithComments($includeString);
             } catch (\Throwable $e) {
                 global $errorLogger;
                 $errorLogger->captureException($e);
@@ -109,7 +110,7 @@ abstract class CoreConfigClass extends Injectable implements AsteriskConfigInter
                 continue;
             }
             if ( ! empty($includeString)) {
-                $stringResult .= $this->confBlockWithComments($includeString);
+                $stringResult .= $includeString;
             }
         }
 

@@ -40,11 +40,11 @@ class ExtensionsOutWorkTimeConf extends CoreConfigClass
     /**
      * Кастомизация входящего контекста для конкретного маршрута.
      *
-     * @param $rout_number
+     * @param string $rout_number
      *
      * @return string
      */
-    public function generateIncomingRoutBeforeDial($rout_number): string
+    public function generateIncomingRoutBeforeDial(string $rout_number): string
     {
         // Проверим распискние для входящих внешних звонков.
         return 'same => n,Gosub('.self::OUT_WORK_TIME_CONTEXT.',${EXTEN},1)';

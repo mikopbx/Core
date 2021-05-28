@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, PbxApi, globalTranslate, UserMessage */
+/* global globalRootUrl, PbxApi, globalTranslate, UserMessage, installStatusLoopWorker */
 
 /**
  * Processes download module form MikoPBX repository

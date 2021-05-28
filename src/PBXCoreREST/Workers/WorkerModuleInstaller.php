@@ -48,6 +48,8 @@ class WorkerModuleInstaller extends WorkerBase
         $temp_dir            = dirname($settings['filePath']);
         $this->progress_file = $temp_dir . '/installation_progress';
         $this->error_file    = $temp_dir . '/installation_error';
+        file_put_contents( $this->progress_file, '0');
+        file_put_contents( $this->error_file, '');
         $this->installNewModuleFromFile(
             $settings['currentModuleDir'],
             $settings['filePath'],
@@ -65,8 +67,6 @@ class WorkerModuleInstaller extends WorkerBase
         string $filePath,
         string $moduleUniqueID
     ): void {
-        file_put_contents( $this->progress_file, '0');
-        file_put_contents( $this->error_file, '');
 
         // Unzip module folder
         $semZaPath = Util::which('7za');

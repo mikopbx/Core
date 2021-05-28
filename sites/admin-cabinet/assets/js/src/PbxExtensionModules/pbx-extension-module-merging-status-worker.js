@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global PbxApi, globalTranslate, UserMessage */
+/* global PbxApi, globalTranslate, UserMessage, installStatusLoopWorker */
 
 /**
  * After upload we should wait until parts of file will merge to one file
