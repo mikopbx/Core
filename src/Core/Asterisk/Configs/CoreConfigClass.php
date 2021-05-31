@@ -104,24 +104,23 @@ abstract class CoreConfigClass extends Injectable implements AsteriskConfigInter
             }
             try {
                 $includeString = call_user_func_array([$configClassObj, $methodName], $arguments);
-                $includeString = $configClassObj->confBlockWithComments($includeString);
+                if ( ! empty($includeString)) {
+                    $includeString = $configClassObj->confBlockWithComments($includeString);
+                    if (
+                        substr($stringResult, -1) !== "\t"
+                        &&
+                        substr($includeString, 0, 4) === 'same'
+                    ) {
+                        $stringResult .= "\t" . $includeString;
+                    } else {
+                        $stringResult .= $includeString;
+                    }
+                }
             } catch (\Throwable $e) {
                 global $errorLogger;
                 $errorLogger->captureException($e);
                 Util::sysLogMsg(__METHOD__, $e->getMessage(), LOG_ERR);
                 continue;
-            }
-            if ( ! empty($includeString)) {
-                if (
-                    substr($stringResult, -1)!=="\t"
-                    &&
-                    substr($includeString, 0,4) === 'same'
-                ){
-                    $stringResult .= "\t".$includeString;
-                } else {
-                    $stringResult .= $includeString;
-                }
-
             }
         }
 
