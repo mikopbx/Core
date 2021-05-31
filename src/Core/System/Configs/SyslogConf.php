@@ -40,17 +40,10 @@ class SyslogConf extends Injectable
         $pidSyslogD = Processes::getPidOfProcess('syslogd', self::PROC_NAME);
         if(!empty($pidSyslogD)){
             $logreadPath = Util::which('logread');
-            Processes::mwExec("{$logreadPath} >> " . self::SYS_LOG_LINK);
+            Processes::mwExec("$logreadPath >> " . self::SYS_LOG_LINK);
             Processes::killByName('syslogd');
         }
-        $pid = Processes::getPidOfProcess(self::PROC_NAME);
-        if ( ! empty($pid)) {
-            $busyboxPath = Util::which('busybox');
-            // Завершаем процесс.
-            Processes::mwExec("{$busyboxPath} kill '$pid'");
-        }
-
-        Processes::safeStartDaemon(self::PROC_NAME, '');
+        Processes::safeStartDaemon(self::PROC_NAME, '-n');
     }
 
     /**
@@ -67,7 +60,7 @@ class SyslogConf extends Injectable
                 ')'."\n".
                 '$ActionFileDefaultTemplate mikopbx'."\n".
                 '$IncludeConfig /etc/rsyslog.d/*.conf'."\n".
-                '*.* '."{$log_file}\n";
+                '*.* '."$log_file\n";
         Util::fileWriteContent(self::CONF_FILE, $conf);
         Util::createUpdateSymlink($log_file, self::SYS_LOG_LINK);
         Util::mwMkdir('/etc/rsyslog.d');
@@ -80,9 +73,9 @@ class SyslogConf extends Injectable
      */
     public static function getSyslogFile(): string
     {
-        $logdir = System::getLogDir() . '/system';
-        Util::mwMkdir($logdir);
-        return "$logdir/messages";
+        $logDir = System::getLogDir() . '/system';
+        Util::mwMkdir($logDir);
+        return "$logDir/messages";
     }
 
 
@@ -96,7 +89,7 @@ class SyslogConf extends Injectable
         $di          = Di::getDefault();
         $max_size    = 3;
         $logFile     = self::getSyslogFile();
-        $text_config = "{$logFile} {
+        $text_config = "$logFile {
     nocreate
     nocopytruncate
     delaycompress
@@ -113,7 +106,11 @@ class SyslogConf extends Injectable
         {$syslogPath} > /dev/null 2> /dev/null
     endscript
 }";
-        $varEtcDir  = $di->getShared('config')->path('core.varEtcDir');
+        if($di){
+            $varEtcDir  = $di->getShared('config')->path('core.varEtcDir');
+        }else{
+            $varEtcDir = '/etc';
+        }
         $path_conf   = $varEtcDir . '/'.self::PROC_NAME.'_logrotate.conf';
         file_put_contents($path_conf, $text_config);
         $mb10 = $max_size * 1024 * 1024;
@@ -122,6 +119,6 @@ class SyslogConf extends Injectable
             $options = '-f';
         }
         $logrotatePath = Util::which('logrotate');
-        Processes::mwExecBg("{$logrotatePath} {$options} '{$path_conf}' > /dev/null 2> /dev/null");
+        Processes::mwExecBg("$logrotatePath $options '$path_conf' > /dev/null 2> /dev/null");
     }
 }
