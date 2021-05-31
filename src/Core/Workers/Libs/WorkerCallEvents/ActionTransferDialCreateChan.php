@@ -68,9 +68,7 @@ class ActionTransferDialCreateChan {
 
             // конец проверки
             ///
-
-            $row->writeAttribute('dst_chan', $data['dst_chan']);
-            $row->writeAttribute('recordingfile', $data['recordingfile']);
+            $row->writeAttribute('dst_chan',      $data['dst_chan']);
             if (isset($data['dst_call_id']) && ! empty($data['dst_call_id'])) {
                 $row->writeAttribute('dst_call_id', $data['dst_call_id']);
             }
