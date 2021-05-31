@@ -150,7 +150,7 @@ class IncomingContexts extends CoreConfigClass
         $rout_data .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" == "Local"]?Set(__FROM_PEER=${CALLERID(num)}))' . "\n\t";
         $rout_data .= 'same => n,Gosub(add-trim-prefix-clid,${EXTEN},1)' . "\n\t";
         // Запрещаем звонящему переадресацию.
-        $rout_data .= 'same => n,Set(__TRANSFER_OPTIONS=t)' . "\n\t";
+        $rout_data .= 'same => n,Set(__TRANSFER_OPTIONS=t)' . "\n";
 
         $rout_data .= $this->hookModulesMethod(CoreConfigClass::GENERATE_INCOMING_ROUT_BEFORE_DIAL, [$rout_number]);
         // Описываем возможность прыжка в пользовательский sub контекст.

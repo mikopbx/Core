@@ -47,7 +47,7 @@ class ExtensionsOutWorkTimeConf extends CoreConfigClass
     public function generateIncomingRoutBeforeDial(string $rout_number): string
     {
         // Проверим распискние для входящих внешних звонков.
-        return 'same => n,Gosub('.self::OUT_WORK_TIME_CONTEXT.',${EXTEN},1)';
+        return 'same => n,Gosub('.self::OUT_WORK_TIME_CONTEXT.',${EXTEN},1)'. "\n\t";
     }
 
     /**

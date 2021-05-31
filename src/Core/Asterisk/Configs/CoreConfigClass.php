@@ -20,7 +20,9 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 
+use MikoPBX\Common\Providers\ConfigProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
+use MikoPBX\Common\Providers\RegistryProvider;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Modules\Config\ConfigClass;
@@ -74,8 +76,8 @@ abstract class CoreConfigClass extends Injectable implements AsteriskConfigInter
      */
     public function __construct()
     {
-        $this->config          = $this->getDI()->getShared('config');
-        $this->booting         = $this->getDI()->getShared('registry')->booting === true;
+        $this->config          = $this->getDI()->getShared(ConfigProvider::SERVICE_NAME);
+        $this->booting         = $this->getDI()->getShared(RegistryProvider::SERVICE_NAME)->booting === true;
         $this->mikoPBXConfig   = new MikoPBXConfig();
         $this->generalSettings = $this->mikoPBXConfig->getGeneralSettings();
         $this->messages        = [];
@@ -97,7 +99,7 @@ abstract class CoreConfigClass extends Injectable implements AsteriskConfigInter
             if ( ! method_exists($configClassObj, $methodName)) {
                 continue;
             }
-            if (get_class($configClassObj) === get_class ($this)) {
+            if (get_class($configClassObj) === get_class($this)) {
                 continue; //prevent recursion
             }
             try {
@@ -110,13 +112,21 @@ abstract class CoreConfigClass extends Injectable implements AsteriskConfigInter
                 continue;
             }
             if ( ! empty($includeString)) {
-                $stringResult .= $includeString;
+                if (
+                    substr($stringResult, -1)!=="\t"
+                    &&
+                    substr($includeString, 0,4) === 'same'
+                ){
+                    $stringResult .= "\t".$includeString;
+                } else {
+                    $stringResult .= $includeString;
+                }
+
             }
         }
 
         return $stringResult;
     }
-
 
     /**
      * Calls additional module method by name and returns array of results
@@ -128,7 +138,7 @@ abstract class CoreConfigClass extends Injectable implements AsteriskConfigInter
      */
     public function hookModulesMethodWithArrayResult(string $methodName, array $arguments = []): array
     {
-        $result = [];
+        $result            = [];
         $additionalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
         foreach ($additionalModules as $configClassObj) {
             if ( ! method_exists($configClassObj, $methodName)) {
@@ -143,14 +153,14 @@ abstract class CoreConfigClass extends Injectable implements AsteriskConfigInter
                 continue;
             }
             if ( ! empty($moduleMethodResponse)) {
-                if (is_a($configClassObj, ConfigClass::class)){
+                if (is_a($configClassObj, ConfigClass::class)) {
                     $result[$configClassObj->moduleUniqueId] = $moduleMethodResponse;
                 } else {
                     $result[] = $moduleMethodResponse;
                 }
-
             }
         }
+
         return $result;
     }
 
@@ -163,7 +173,11 @@ abstract class CoreConfigClass extends Injectable implements AsteriskConfigInter
      */
     protected function confBlockWithComments(string $addition): string
     {
-        return rtrim($addition).PHP_EOL;
+        if (empty($addition)) {
+            return '';
+        }
+
+        return rtrim($addition) . PHP_EOL;
     }
 
     /**

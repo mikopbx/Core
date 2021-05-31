@@ -225,10 +225,7 @@ class ConfigClass extends CoreConfigClass implements SystemConfigInterface,
             return $result;
         }
         $result = PHP_EOL . '; ***** BEGIN BY ' . $this->moduleUniqueId . PHP_EOL;
-        $result .= $addition;
-        if (substr($addition, -1) !== "\t") {
-            $result .= "\t";
-        }
+        $result .= rtrim($addition);
         $result .= PHP_EOL . '; ***** END BY ' . $this->moduleUniqueId . PHP_EOL;
 
         return $result;
