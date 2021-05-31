@@ -18,80 +18,93 @@
 
 /* global globalRootUrl */
 
-const sndPlayerOneBtn = {
-	slider: undefined, // audio player
-	$pButton: $('.action-playback-button'), // play button
-	soundSelectorClass: $('.action-playback-button').attr('data-value'),
-	duration: 0,
+const oneButtonPlayer = {
 	initialize() {
-		const audioPlayer = '<audio id="audio-player" preload="auto"><source src="" type="audio/mp3"></audio>';
-		sndPlayerOneBtn.$pButton.after(audioPlayer);
-		sndPlayerOneBtn.slider = document.getElementById('audio-player');
-		$(`#${sndPlayerOneBtn.soundSelectorClass}`).on('change', () => {
-			sndPlayerOneBtn.updateAudioSource();
+		$('form .action-playback-button').each((index, button) => {
+			const id = $(button).attr('data-value');
+			return new sndPlayerOneBtn(id);
 		});
-		sndPlayerOneBtn.$pButton.on('click', (e) => {
+	}
+}
+
+$(document).ready(() => {
+	oneButtonPlayer.initialize();
+});
+
+class sndPlayerOneBtn {
+	constructor(id) {
+		this.$pButton = $(`.action-playback-button[data-value="${id}"]`); // play button
+		this.soundSelectorClass = id;
+		this.duration = 0;
+		this.id = id;
+		const audioPlayer = `<audio id="audio-player-${id}" preload="auto"><source src="" type="audio/mp3"></audio>`;
+		this.$pButton.after(audioPlayer);
+		this.html5Audio = document.getElementById(`audio-player-${id}`);
+		$(`#${this.soundSelectorClass}`).on('change', () => {
+			this.updateAudioSource();
+		});
+		this.$pButton.on('click', (e) => {
 			e.preventDefault();
-			if (sndPlayerOneBtn.slider.paused && sndPlayerOneBtn.slider.duration) {
-				sndPlayerOneBtn.slider.play();
+			if (this.html5Audio.paused && this.html5Audio.duration) {
+				this.html5Audio.play();
+				this.html5Audio.currentTime=0;
 				// remove play, add pause
-				sndPlayerOneBtn.$pButton.html('<i class="icon pause"></i>');
+				this.$pButton.html('<i class="icon pause"></i>');
 			} else { // pause music
-				sndPlayerOneBtn.slider.pause();
+				this.html5Audio.pause();
 				// remove pause, add play
-				sndPlayerOneBtn.$pButton.html('<i class="icon play"></i>');
+				this.$pButton.html('<i class="icon play"></i>');
 			}
 		});
-		sndPlayerOneBtn.updateAudioSource();
-	},
+		this.updateAudioSource();
+	}
+
 	updateAudioSource() {
-		const audioFileId = $('form').form('get value', sndPlayerOneBtn.soundSelectorClass);
+		const audioFileId = $('form').form('get value', this.soundSelectorClass);
 		if (audioFileId !== '' && audioFileId !== "-1") {
+			const _this = this;
 			$.api({
 				url: `${globalRootUrl}sound-files/getpathbyid/${audioFileId}`,
 				on: 'now',
 				onSuccess(response) {
-					sndPlayerOneBtn.cbAfterResponse(response);
+					if (response.message !== undefined) {
+						_this.html5Audio.getElementsByTagName('source')[0].src
+							= `/pbxcore/api/cdr/playback?view=${response.message}`;
+						_this.html5Audio.pause();
+						_this.html5Audio.load();
+						_this.html5Audio.oncanplaythrough = this.cbCanPlayThrough;
+					}
 				},
 				onError() {
 				},
 			});
 		}
 
-	},
-	cbAfterResponse(response) {
-		if (response.message !== undefined) {
-			sndPlayerOneBtn.slider.getElementsByTagName('source')[0].src
-				= `/pbxcore/api/cdr/playback?view=${response.message}`;
-			sndPlayerOneBtn.slider.pause();
-			sndPlayerOneBtn.slider.load();
-			sndPlayerOneBtn.slider.oncanplaythrough = sndPlayerOneBtn.cbCanPlayThrough;
-		}
-	},
+	}
+
 	cbCanPlayThrough() {
-		sndPlayerOneBtn.duration = sndPlayerOneBtn.slider.duration;
-		if (sndPlayerOneBtn.$pButton.html() === '<i class="icon pause"></i>') {
-			sndPlayerOneBtn.slider.play();
+		this.duration = this.html5Audio.duration;
+		if (this.$pButton.html() === '<i class="icon pause"></i>') {
+			this.html5Audio.play();
 		}
-	},
+	}
+
 	cbOnSliderChange(newVal, meta) {
-		if (meta.triggeredByUser && Number.isFinite(sndPlayerOneBtn.slider.duration)) {
-			sndPlayerOneBtn.slider.removeEventListener('timeupdate', sndPlayerOneBtn.cbTimeUpdate, false);
-			sndPlayerOneBtn.slider.currentTime = (sndPlayerOneBtn.slider.duration * newVal) / 100;
-			sndPlayerOneBtn.slider.addEventListener('timeupdate', sndPlayerOneBtn.cbTimeUpdate, false);
+		if (meta.triggeredByUser && Number.isFinite(this.html5Audio.duration)) {
+			this.html5Audio.removeEventListener('timeupdate', this.cbTimeUpdate, false);
+			this.html5Audio.currentTime = (this.html5Audio.duration * newVal) / 100;
+			this.html5Audio.addEventListener('timeupdate', this.cbTimeUpdate, false);
 		}
-	},
+	}
+
 	cbTimeUpdate() {
-		if (Number.isFinite(sndPlayerOneBtn.slider.duration)) {
-			const percent = sndPlayerOneBtn.slider.currentTime / sndPlayerOneBtn.slider.duration;
+		if (Number.isFinite(this.html5Audio.duration)) {
+			const percent = this.html5Audio.currentTime / this.html5Audio.duration;
 			const rangePosition = Math.round((percent) * 100);
-			sndPlayerOneBtn.$slider.range('set value', rangePosition);
-			if (sndPlayerOneBtn.slider.currentTime === sndPlayerOneBtn.duration) {
-				sndPlayerOneBtn.$pButton.html('<i class="icon play"></i>');
+			this.$slider.range('set value', rangePosition);
+			if (this.html5Audio.currentTime === this.duration) {
+				this.$pButton.html('<i class="icon play"></i>');
 			}
 		}
-	},
-};
-$(document).ready(() => {
-	sndPlayerOneBtn.initialize();
-});
+	}
+}
