@@ -18,20 +18,15 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\BeanstalkClient;
 use MikoPBX\Core\Asterisk\AGI;
+use MikoPBX\Core\Workers\WorkerCallEvents;
 require_once 'Globals.php';
 
-$agi        = new AGI();
-$channel    = $agi->get_variable('MASTER_CHANNEL(M_TIMEOUT_CHANNEL)', true);
-$srcChannel = $agi->get_variable('FROM_CHAN', true);
-
-$am = Util::getAstManager('off');
-$am->SetVar($channel, 'TIMEOUT(absolute)', '0');
-$am->SetVar($srcChannel, "MASTER_CHANNEL(M_DIALSTATUS)", 'ANSWER');
-
-// Перестрахова на случай с перехватом звонка через *8.
-$timeoutChannel = $am->GetVar($srcChannel, 'MASTER_CHANNEL(M_TIMEOUT_CHANNEL)', null, false);
-if(is_string($timeoutChannel) && !empty($timeoutChannel)){
-    $am->SetVar($timeoutChannel, "TIMEOUT(absolute)", '0');
-}
+$agi    = new AGI();
+$client = new BeanstalkClient(WorkerCallEvents::TIMOUT_CHANNEL_TUBE);
+$data   = [
+    'channel'    => $agi->get_variable('MASTER_CHANNEL(M_TIMEOUT_CHANNEL)', true),
+    'srcChannel' => $agi->get_variable('FROM_CHAN', true),
+];
+$client->publish(json_encode($data));
