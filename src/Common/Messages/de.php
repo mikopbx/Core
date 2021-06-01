@@ -301,7 +301,7 @@ return [
     'cq_linear' => 'Der Aufruf handelt auf jeden Teilnehmer der Reihe nach-Ordnung',
     'cq_QueueSetup' => 'Grundlegende Einstellungen',
     'cd_Extensions' => 'Nebenstellennummer/Extension für diese Warteschlange',
-    'cq_QueueStrategy' => 'Strategie der Anrufweiterleitung and die Mitarbeiter',
+    'cq_QueueStrategy' => 'Strategie der Anrufweiterleitung für die Mitarbeiter',
     'cd_Description' => 'Bemerkungen',
     'cq_QueueMembers' => 'Warteschlangen Mitarbeiter',
     'cq_SelectAgentForAddToQueue' => 'Mitarbeiter auswählen und zur Warteschlange hinzufügen',
