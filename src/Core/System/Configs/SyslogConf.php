@@ -50,21 +50,23 @@ class SyslogConf extends Injectable
      * Генерация конфигурационного файла.
      */
     private function generateConfigFile():void{
+        $pathScript = $this->createRotateScript();
         $log_file    = self::getSyslogFile();
         file_put_contents($log_file, '', FILE_APPEND);
-        $conf = ''."\n".
-                '$ModLoad imuxsock'."\n".
-                // '$ModLoad imklog'."\n".
-                'template(name="mikopbx" type="string"'."\n".
+        $conf = ''.PHP_EOL.
+                '$ModLoad imuxsock'.PHP_EOL.
+                'template(name="mikopbx" type="string"'.PHP_EOL.
                 '  string="%TIMESTAMP:::date-rfc3164% %syslogfacility-text%.%syslogseverity-text% %syslogtag% %msg%\n"'."\n".
-                ')'."\n".
-                '$ActionFileDefaultTemplate mikopbx'."\n".
-                '$IncludeConfig /etc/rsyslog.d/*.conf'."\n".
-                '*.* '."$log_file\n";
+                ')'.PHP_EOL.
+                '$ActionFileDefaultTemplate mikopbx'.PHP_EOL.
+                '$IncludeConfig /etc/rsyslog.d/*.conf'.PHP_EOL.
+                '*.* '.$log_file.PHP_EOL.
+                PHP_EOL.
+                '$outchannel log_rotation,'.$log_file.',2621440,'.$pathScript.PHP_EOL
+                .'*.* :omfile:$log_rotation'.PHP_EOL;
         Util::fileWriteContent(self::CONF_FILE, $conf);
         Util::createUpdateSymlink($log_file, self::SYS_LOG_LINK);
         Util::mwMkdir('/etc/rsyslog.d');
-
     }
 
     /**
@@ -78,47 +80,40 @@ class SyslogConf extends Injectable
         return "$logDir/messages";
     }
 
-
-    public static function rotatePbxLog(): void
+    /**
+     * Скрипт ротации логов.
+     * @return string
+     */
+    public function createRotateScript(): string
     {
-        $syslogPath  = Util::which(self::PROC_NAME);
-        $killAllPath = Util::which('killall');
-        $chownPath   = Util::which('chown');
-        $touchPath   = Util::which('touch');
-
+        $mvPath   = Util::which('mv');
+        $chmodPath   = Util::which('chmod');
         $di          = Di::getDefault();
-        $max_size    = 3;
         $logFile     = self::getSyslogFile();
-        $text_config = "$logFile {
-    nocreate
-    nocopytruncate
-    delaycompress
-    nomissingok
-    start 0
-    rotate 9
-    size {$max_size}M
-    missingok
-    noolddir
-    postrotate
-        {$killAllPath} ".self::PROC_NAME." > /dev/null 2> /dev/null
-        {$touchPath} {$logFile}
-        {$chownPath} www:www {$logFile}> /dev/null 2> /dev/null
-        {$syslogPath} > /dev/null 2> /dev/null
-    endscript
-}";
+        $textScript  =  '#!/bin/sh'.PHP_EOL.
+                        "logName='{$logFile}';".PHP_EOL.
+                        'if [ ! -f "$logName" ]; then exit; fi'.PHP_EOL.
+                        'for srcId in 5 4 3 2 1 ""; do'.PHP_EOL.
+                        '  dstId=$((srcId + 1));'.PHP_EOL.
+                        '  if [ "x" != "${srcId}x" ]; then'.PHP_EOL.
+                        '    srcId=".${srcId}"'.PHP_EOL.
+                        '  fi'.PHP_EOL.
+                        '  srcFilename="${logName}${srcId}"'.PHP_EOL.
+                        '  if [ -f "$srcFilename" ];then'.PHP_EOL.
+                        '    dstFilename="${logName}.${dstId}"'.PHP_EOL.
+                        '    '.$mvPath.' -f "$srcFilename" "$dstFilename"'.PHP_EOL.
+                        '  fi'.PHP_EOL.
+                        'done'.PHP_EOL.
+                        PHP_EOL;
         if($di){
             $varEtcDir  = $di->getShared('config')->path('core.varEtcDir');
         }else{
             $varEtcDir = '/etc';
         }
-        $path_conf   = $varEtcDir . '/'.self::PROC_NAME.'_logrotate.conf';
-        file_put_contents($path_conf, $text_config);
-        $mb10 = $max_size * 1024 * 1024;
-        $options = '';
-        if (Util::mFileSize($logFile) > $mb10) {
-            $options = '-f';
-        }
-        $logrotatePath = Util::which('logrotate');
-        Processes::mwExecBg("$logrotatePath $options '$path_conf' > /dev/null 2> /dev/null");
+        $pathScript   = $varEtcDir . '/'.self::PROC_NAME.'_logrotate.sh';
+        file_put_contents($pathScript, $textScript);
+        Processes::mwExec("$chmodPath +x $pathScript");
+
+        return $pathScript;
     }
 }

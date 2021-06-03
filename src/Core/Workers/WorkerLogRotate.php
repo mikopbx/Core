@@ -42,13 +42,12 @@ class WorkerLogRotate extends WorkerBase
         $managedCache = $this->di->get(ManagedCacheProvider::SERVICE_NAME);
         $lastLogRotate = $managedCache->get($cacheKey);
         if ($lastLogRotate===null){
-            //System Logs
+            // System Logs
             NatsConf::logRotate();
             PHPConf::rotateLog();
             PBX::logRotate();
-            SyslogConf::rotatePbxLog();
 
-            //Modules Logs
+            // Modules Logs
             $plugins = PbxExtensionModules::getEnabledModulesArray();
             foreach ($plugins as $plugin) {
                 $this->logRotate($plugin['uniqid']);
