@@ -40,14 +40,9 @@ $varEtcDir      = $phalconConfig->path('core.varEtcDir');
 $dbFile         = $phalconConfig->path('database.dbfile');
 $mountPath      = Util::which('mount');
 $unmountPath    = Util::which('umount');
-$fdiskPath      = Util::which('fdisk');
-$grepPath       = Util::which('grep');
-$cutPath        = Util::which('cut');
-$uniqPath       = Util::which('uniq');
 $sqlite3Path    = Util::which('sqlite3');
 $rmPath         = Util::which('rm');
 $mvPath         = Util::which('mv');
-$haltPath       = Util::which('halt');
 
 $cfgdevice = '';
 /* check if there's already an fstab (NFS booting?) */
@@ -70,15 +65,22 @@ $attempts = 2;
 while ($attempts--) {
     $disks = $storage->diskGetDevices(true);
     foreach ($disks as $disk => $diskInfo) {
-        if(count($diskInfo['children'])<3){
+        // RAID содержит вложенный массив "children"
+        if(isset($diskInfo['children'][0]['children'])){
+            $diskInfo = $diskInfo['children'][0];
+            // Корректируем имя диска. это RAID.
+            $disk     = $diskInfo['name'];
+        }
+        $children = $diskInfo['children'];
+        if(count($children)<3){
             // Диск интересен только если содержит 3 и более раздела.
             continue;
         }
         echo "\n - Found disk: {$disk}\n";
         echo " - Looking for configuration on: $disk\n";
-        $partName   = $diskInfo['children'][2]['name']??'';
-        $fsType     = $diskInfo['children'][2]['fstype']??'';
-        $uuid       = $diskInfo['children'][2]['uuid']??'';
+        $partName   = $children[2]['name']??'';
+        $fsType     = $children[2]['fstype']??'';
+        $uuid       = $children[2]['uuid']??'';
         if(empty($uuid) || empty($fsType)){
             continue;
         }
@@ -127,6 +129,7 @@ if ( ! $cfgdevice) {
     /* no device found, print an error and die */
     echo $NoCfDevice;
     sleep(5);
+    $haltPath = Util::which('halt');
     Processes::mwExec($haltPath);
 } else {
     // Запишем в файл имя подключенного устройства.

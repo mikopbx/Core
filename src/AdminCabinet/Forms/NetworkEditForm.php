@@ -42,7 +42,7 @@ class NetworkEditForm extends Form
         $this->add(new Text('gateway', ['class' => 'ipaddress']));
         $this->add(new Text('primarydns', ['class' => 'ipaddress']));
         $this->add(new Text('secondarydns', ['class' => 'ipaddress']));
-        $this->add(new Text('extipaddr', ['class' => 'ipaddress']));
+        $this->add(new Text('extipaddr'));
         $this->add(new Text('exthostname'));
 
         $cheskArr = ['value' => null];

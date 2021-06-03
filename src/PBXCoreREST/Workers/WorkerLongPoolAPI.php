@@ -107,7 +107,7 @@ class WorkerLongPoolAPI extends WorkerBase
         $resultRequest = curl_exec($ch);
         curl_close($ch);
 
-        if(is_string($result)){
+        if($resultRequest !== false){
             $resultTmp = json_decode($resultRequest, true);
             if(is_array($resultTmp)){
                 $result = $resultTmp;
@@ -212,13 +212,13 @@ class WorkerLongPoolAPI extends WorkerBase
      * @param string $url
      * @param string $data
      *
-     * @return ?string
+     * @return array
      */
-    private function postData(string $url, string $data)
+    private function postData(string $url, string $data): array
     {
         $ch = curl_init($url);
         if (!is_resource($ch)) {
-            return null;
+            return [];
         }
         curl_setopt($ch, CURLOPT_POST, 1);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
@@ -226,8 +226,12 @@ class WorkerLongPoolAPI extends WorkerBase
         curl_setopt($ch, CURLOPT_TIMEOUT, 1);
         $resultRequest = curl_exec($ch);
         curl_close($ch);
-
-        return json_decode($resultRequest, true);
+        if (is_string($resultRequest)){
+            $result = json_decode($resultRequest, true);
+        } else {
+            $result = [];
+        }
+        return $result;
     }
 
 }

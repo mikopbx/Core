@@ -21,13 +21,15 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Config;
 
-use MikoPBX\Common\Providers\{BeanstalkConnectionCacheProvider,
+use MikoPBX\Common\Providers\{
     BeanstalkConnectionWorkerApiProvider,
     CDRDatabaseProvider,
     LoggerAuthProvider,
     LoggerProvider,
     MainDatabaseProvider,
+    MessagesProvider,
     ModelsCacheProvider,
+    ModelsAnnotationsProvider,
     ModelsMetadataProvider,
     PBXConfModulesProvider,
     RegistryProvider,
@@ -55,6 +57,7 @@ class RegisterDIServices
             RegistryProvider::class,
 
             // Inject Database connections
+            ModelsAnnotationsProvider::class,
             ModelsMetadataProvider::class,
             MainDatabaseProvider::class,
             CDRDatabaseProvider::class,
@@ -65,7 +68,6 @@ class RegisterDIServices
 
             // Inject Queue connection
             BeanstalkConnectionWorkerApiProvider::class,
-            BeanstalkConnectionCacheProvider::class,
 
             // Inject PBX modules
             PBXConfModulesProvider::class,
@@ -82,6 +84,7 @@ class RegisterDIServices
             LoggerProvider::class,
 
             //Translates
+            MessagesProvider::class,
             LanguageProvider::class,
 
         ];

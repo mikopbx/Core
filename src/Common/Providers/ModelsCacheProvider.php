@@ -22,10 +22,9 @@ declare(strict_types=1);
 namespace MikoPBX\Common\Providers;
 
 
-use Phalcon\Cache;
-use Phalcon\Cache\Adapter\Stream;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
+use Phalcon\Cache\Adapter\Redis;
 use Phalcon\Storage\SerializerFactory;
 
 /**
@@ -42,24 +41,21 @@ class ModelsCacheProvider implements ServiceProviderInterface
      */
     public function register(DiInterface $di): void
     {
-        if (posix_getuid() === 0) {
-            $tempDir = $di->getShared('config')->path('core.modelsCacheDir');
-        } else {
-            $tempDir = $di->getShared('config')->path('www.modelsCacheDir');
-        }
-
+        $config = $di->getShared(ConfigProvider::SERVICE_NAME);
         $di->setShared(
             self::SERVICE_NAME,
-            function () use ($tempDir){
+            function () use ($config) {
                 $serializerFactory = new SerializerFactory();
                 $options = [
-                    'defaultSerializer' => 'php',
-                    'lifetime'          => 7200,
-                    'storageDir' => $tempDir
+                    'defaultSerializer' => 'Php',
+                    'lifetime'          => 3600,
+                    'host'              => $config->path('redis.host'),
+                    'port'              => $config->path('redis.port'),
+                    'index'             => 3,
+                    'prefix'            => 'models-cache'
                 ];
 
-                $adapter = new Stream ($serializerFactory, $options);
-                return new Cache($adapter);
+                return new Redis($serializerFactory, $options);
             }
         );
     }

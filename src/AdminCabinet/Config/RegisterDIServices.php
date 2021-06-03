@@ -30,7 +30,7 @@ use MikoPBX\AdminCabinet\Providers\{AssetProvider,
     SessionProvider,
     ViewProvider,
     VoltProvider};
-use MikoPBX\Common\Providers\{BeanstalkConnectionCacheProvider,
+use MikoPBX\Common\Providers\{
     BeanstalkConnectionModelsProvider,
     CDRDatabaseProvider,
     LoggerAuthProvider,
@@ -39,6 +39,7 @@ use MikoPBX\Common\Providers\{BeanstalkConnectionCacheProvider,
     ManagedCacheProvider,
     ModelsCacheProvider,
     ModelsMetadataProvider,
+    ModelsAnnotationsProvider,
     ModulesDBConnectionsProvider,
     PBXConfModulesProvider,
     RegistryProvider,
@@ -66,6 +67,7 @@ class RegisterDIServices
             ModelsCacheProvider::class,
 
             // Inject Database connections
+            ModelsAnnotationsProvider::class,
             ModelsMetadataProvider::class,
             MainDatabaseProvider::class,
             ModulesDBConnectionsProvider::class,
@@ -87,7 +89,6 @@ class RegisterDIServices
 
             // Inject Queue connection
             BeanstalkConnectionModelsProvider::class,
-            BeanstalkConnectionCacheProvider::class,
 
             // Inject translation
             MessagesProvider::class,

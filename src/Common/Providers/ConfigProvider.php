@@ -21,11 +21,13 @@ declare(strict_types=1);
 
 namespace MikoPBX\Common\Providers;
 
+use Phalcon\Config;
 use Phalcon\Config\Adapter\Json;
 use Phalcon\Di;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 use Phalcon\Exception;
+use Throwable;
 
 /**
  * Read the configuration
@@ -54,7 +56,13 @@ class ConfigProvider implements ServiceProviderInterface
         $di->setShared(
             self::SERVICE_NAME,
             function () use ($configPath) {
-                return new Json($configPath);
+                try {
+                    return new Json($configPath);
+                } catch (Throwable $exception){
+                    $jsonText = file_get_contents($configPath);
+                    $jsonObj = json_decode($jsonText,true);
+                    return new Config($jsonObj);
+                }
             }
         );
     }

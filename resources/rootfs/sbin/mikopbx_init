@@ -30,9 +30,9 @@ while : ; do
         exit 1;
     fi
 
-    if [ "$delta" == "0" ]; then
+    if [ "$delta" = "0" ]; then
         # Это установка системы. Меню необходимо отключить.
-        i=`expr $i + 1`;
+        i=$((i + 1));
     else
         i=0;
     fi
@@ -85,5 +85,5 @@ while : ; do
     fi
 
     end_time=$(date +%s);
-    delta=`expr $end_time - $start_time`;
+    delta=$((end_time - start_time));
 done

@@ -22,10 +22,9 @@ declare(strict_types=1);
 namespace MikoPBX\AdminCabinet\Providers;
 
 use Phalcon\Assets\Collection;
-use Phalcon\Assets\Manager;
+use MikoPBX\AdminCabinet\Plugins\AssetManager as Manager;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
-use Phalcon\Text;
 
 use function MikoPBX\Common\Config\appPath;
 
@@ -43,7 +42,6 @@ class AssetProvider implements ServiceProviderInterface
     private Collection $footerCollectionACE;
     private Collection $footerCollectionLoc;
     private Collection $headerCollectionSentryJS;
-    private string $cssCacheDir;
     private string $jsCacheDir;
     private Manager $manager;
 
@@ -57,10 +55,16 @@ class AssetProvider implements ServiceProviderInterface
         $di->set(
             self::SERVICE_NAME,
             function () use ($di) {
+                $session = $di->get('session');
+                if ($session !== null && $session->has('versionHash')) {
+                    $version = (string)$session->get('versionHash');
+                } else {
+                    $version = str_replace(PHP_EOL, '', file_get_contents('/etc/version'));
+                }
+
                 $assets = new AssetProvider();
-                $assets->initializeClassVariables();
+                $assets->initializeClassVariables($version);
                 $dispatcher = $di->get('dispatcher');
-                $session    = $di->get('session');
                 $controller = $dispatcher->getControllerName();
                 $action     = $dispatcher->getActionName();
                 $moduleName = $dispatcher->getModuleName();
@@ -68,13 +72,8 @@ class AssetProvider implements ServiceProviderInterface
                 if ($action === null) {
                     $action = 'index';
                 }
-                if ($session !== null && $session->has('versionHash')) {
-                    $version = (string)$session->get('versionHash');
-                } else {
-                    $version = str_replace(PHP_EOL, '', file_get_contents('/etc/version'));
-                }
 
-                $assets->makeSentryAssets($version);
+                $assets->makeSentryAssets();
                 $assets->makeHeaderAssets($session, $moduleName);
 
                 // Generates Controllers assets
@@ -85,7 +84,6 @@ class AssetProvider implements ServiceProviderInterface
 
                 $assets->makeFooterAssets();
                 $assets->makeLocalizationAssets($di, $version);
-                $assets->generateFilesAndLinks($controller, $action, $version);
 
                 return $assets->manager;
             }
@@ -95,12 +93,12 @@ class AssetProvider implements ServiceProviderInterface
     /**
      * Initialize class variables
      */
-    public function initializeClassVariables()
+    public function initializeClassVariables(string $version)
     {
         $this->manager = new Manager();
+        $this->manager->setVersion($version);
 
-        $this->cssCacheDir = appPath('sites/admin-cabinet/assets/css/cache');
-        $this->jsCacheDir  = appPath('sites/admin-cabinet/assets/js/cache');
+        $this->jsCacheDir = appPath('sites/admin-cabinet/assets/js/cache');
 
         $this->headerCollectionJSForExtensions = $this->manager->collection('headerJS');
         $this->headerCollectionJSForExtensions->setPrefix('assets/');
@@ -126,9 +124,8 @@ class AssetProvider implements ServiceProviderInterface
     /**
      * Makes assets for the Sentry error logger
      *
-     * @param string $version
      */
-    private function makeSentryAssets(string $version): void
+    private function makeSentryAssets(): void
     {
         if (file_exists('/tmp/sendmetrics')) {
             $this->headerCollectionSentryJS->addjs(
@@ -136,7 +133,7 @@ class AssetProvider implements ServiceProviderInterface
                 true
             );
             $this->headerCollectionSentryJS->addJs(
-                "assets/js/pbx/main/sentry-error-logger.js?v={$version}",
+                "assets/js/pbx/main/sentry-error-logger.js",
                 true
             );
         }
@@ -289,9 +286,9 @@ class AssetProvider implements ServiceProviderInterface
      */
     private function makeLocalizationAssets(DiInterface $di, string $version): void
     {
-        $language   = $di->getShared('language');
-        $langJSFile = "js/cache/localization-{$language}-{$version}.min.js";
-        if ( ! file_exists($langJSFile)) {
+        $language = $di->getShared('language');
+        $fileName = "{$this->jsCacheDir}/localization-{$language}-{$version}.min.js";
+        if ( ! file_exists($fileName)) {
             $arrStr = [];
             foreach ($di->getShared('messages') as $key => $value) {
                 $arrStr[$key] = str_replace(
@@ -300,63 +297,12 @@ class AssetProvider implements ServiceProviderInterface
                     str_replace(["\n", '  '], '', $value)
                 );
             }
-
-            $fileName    = "{$this->jsCacheDir}/localization-{$language}-{$version}.min.js";
             $scriptArray = json_encode($arrStr);
             file_put_contents($fileName, "globalTranslate = {$scriptArray}");
         }
 
-
+        $langJSFile = "js/cache/localization-{$language}-{$version}.min.js";
         $this->footerCollectionLoc->addJs($langJSFile, true);
-    }
-
-    /**
-     * Makes caches and versioned links for scripts and styles
-     *
-     * @param        $controller
-     * @param string $action
-     * @param string $version
-     */
-    private function generateFilesAndLinks($controller, string $action, string $version): void
-    {
-        $resultCombinedName = Text::uncamelize(ucfirst($controller) . ucfirst($action), '-');
-        $resultCombinedName = strlen($resultCombinedName) !== '' ? $resultCombinedName . '-' : '';
-
-
-        foreach ($this->headerCollectionJS as $resource) {
-            $resource->setPath($resource->getPath() . '?v=' . $version);
-        }
-        foreach ($this->footerCollectionJS as $resource) {
-            $resource->setPath($resource->getPath() . '?v=' . $version);
-        }
-        foreach ($this->semanticCollectionJS as $resource) {
-            $resource->setPath($resource->getPath() . '?v=' . $version);
-        }
-        foreach ($this->semanticCollectionCSS as $resource) {
-            $resource->setPath($resource->getPath() . '?v=' . $version);
-        }
-        foreach ($this->footerCollectionACE as $resource) {
-            $resource->setPath($resource->getPath() . '?v=' . $version);
-        }
-
-
-        $this->headerCollectionCSS->join(true);
-        $this->headerCollectionCSS->setTargetPath("{$this->cssCacheDir}/{$resultCombinedName}header.min.css");
-        $this->headerCollectionCSS->setTargetUri("css/cache/{$resultCombinedName}header.min.css?v={$version}");
-
-
-        $this->headerCollectionJSForExtensions->join(true);
-        $this->headerCollectionJSForExtensions->setTargetPath("{$this->jsCacheDir}/{$resultCombinedName}header.min.js");
-        $this->headerCollectionJSForExtensions->setTargetUri(
-            "js/cache/{$resultCombinedName}header.min.js?v={$version}"
-        );
-
-
-        $this->footerCollectionJSForExtensions->join(true);
-        $this->footerCollectionJSForExtensions->setTargetPath("{$this->jsCacheDir}/{$resultCombinedName}footer.min.js");
-        $this->footerCollectionJSForExtensions->setTargetUri(
-            "js/cache/{$resultCombinedName}footer.min.js?v={$version}"
-        );
     }
 
     /**
@@ -378,6 +324,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/vendor/jquery.tablednd.js', true)
                 ->addJs('js/pbx/main/form.js', true)
                 ->addJs('js/pbx/CallQueues/callqueue-modify.js', true)
+                ->addJs('js/pbx/SoundFiles/sound-files-selector.js', true)
                 ->addJs('js/pbx/SoundFiles/one-button-sound-player.js', true);
         }
     }
@@ -471,6 +418,8 @@ class AssetProvider implements ServiceProviderInterface
         if ($action === 'modify') {
             $this->footerCollectionJS
                 ->addJs('js/pbx/main/form.js', true)
+                ->addJs('js/vendor/moment/moment-with-locales.min.js', true)
+                ->addJs('js/vendor/moment/moment-timezone-with-data.js', true)
                 ->addJs('js/pbx/TimeSettings/time-settings-worker.js', true)
                 ->addJs('js/pbx/TimeSettings/time-settings-modify.js', true);
         }
@@ -485,6 +434,7 @@ class AssetProvider implements ServiceProviderInterface
     {
         if ($action === 'index') {
             $this->footerCollectionJS
+                ->addJs('js/pbx/main/version-compare.js', true)
                 ->addJs('js/pbx/main/form.js', true)
                 ->addJs('js/vendor/resumable.js', true)
                 ->addJs('js/vendor/showdown/showdown.min.js', true)
@@ -566,10 +516,9 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/Update/update-api.js', true)
                 ->addJs('js/vendor/datatable/dataTables.semanticui.js', true)
                 ->addJs('js/vendor/resumable.js', true)
-                ->addJs(
-                    'js/pbx/PbxExtensionModules/pbx-extension-module-upgrade-status-worker.js',
-                    true
-                )
+                ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-upgrade-status-worker.js', true)
+                ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-install-status-worker.js', true)
+                ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-merging-status-worker.js', true)
                 ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-status.js', true)
                 ->addJs('js/pbx/PbxExtensionModules/pbx-extension-modules-index.js', true)
                 ->addJs('js/vendor/semantic/progress.min.js', true)
@@ -601,6 +550,7 @@ class AssetProvider implements ServiceProviderInterface
             $this->footerCollectionJS
                 ->addJs('js/pbx/main/form.js', true)
                 ->addJs('js/pbx/OutOffWorkTime/out-of-work-time-modify.js', true)
+                ->addJs('js/pbx/SoundFiles/sound-files-selector.js', true)
                 ->addJs('js/pbx/SoundFiles/one-button-sound-player.js', true);
         }
     }
@@ -631,8 +581,8 @@ class AssetProvider implements ServiceProviderInterface
     {
         if ($action === 'modify') {
             $this->footerCollectionJS
-                ->addJs('js/vendor/inputmask/inputmask.js', true)
-                ->addJs('js/vendor/inputmask/jquery.inputmask.js', true)
+                //->addJs('js/vendor/inputmask/inputmask.js', true)
+                ->addJs('js/vendor/inputmask/jquery.inputmask.min.js', true)
                 ->addJs('js/vendor/inputmask/bindings/inputmask.binding.js', true)
                 ->addJs('js/vendor/inputmask/init.js', true)
                 ->addJs('js/pbx/main/form.js', true)
@@ -663,8 +613,8 @@ class AssetProvider implements ServiceProviderInterface
     {
         if ($action === 'modify') {
             $this->footerCollectionJS
-                ->addJs('js/vendor/inputmask/inputmask.js', true)
-                ->addJs('js/vendor/inputmask/jquery.inputmask.js', true)
+                //->addJs('js/vendor/inputmask/inputmask.js', true)
+                ->addJs('js/vendor/inputmask/jquery.inputmask.min.js', true)
                 ->addJs('js/vendor/inputmask/bindings/inputmask.binding.js', true)
                 ->addJs('js/vendor/inputmask/init.js', true)
                 ->addJs('js/pbx/main/form.js', true)
@@ -687,6 +637,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/IvrMenu/ivrmenu-index.js', true);
         } elseif ($action === 'modify') {
             $this->footerCollectionJS->addJs('js/pbx/main/form.js', true)
+                ->addJs('js/pbx/SoundFiles/sound-files-selector.js', true)
                 ->addJs('js/pbx/SoundFiles/one-button-sound-player.js', true)
                 ->addJs('js/pbx/IvrMenu/ivrmenu-modify.js', true);
         }
@@ -722,6 +673,8 @@ class AssetProvider implements ServiceProviderInterface
             $this->footerCollectionJS
                 ->addJs('js/vendor/jquery.address.min.js', true)
                 ->addJs('js/vendor/jquery.tablednd.js', true)
+                ->addJs('js/pbx/SoundFiles/sound-files-selector.js', true)
+                ->addJs('js/pbx/SoundFiles/one-button-sound-player.js', true)
                 ->addJs('js/pbx/main/form.js', true)
                 ->addJs('js/pbx/main/password-score.js', true)
                 ->addJs(
@@ -774,8 +727,8 @@ class AssetProvider implements ServiceProviderInterface
 
             $this->footerCollectionJS
                 ->addJs('js/vendor/datatable/dataTables.semanticui.js', true)
-                ->addJs('js/vendor/inputmask/inputmask.js', true)
-                ->addJs('js/vendor/inputmask/jquery.inputmask.js', true)
+                //->addJs('js/vendor/inputmask/inputmask.js', true)
+                ->addJs('js/vendor/inputmask/jquery.inputmask.min.js', true)
                 ->addJs('js/vendor/inputmask/jquery.inputmask-multi.js', true)
                 ->addJs('js/vendor/inputmask/bindings/inputmask.binding.js', true)
                 ->addJs('js/vendor/inputmask/init.js', true)
@@ -786,8 +739,8 @@ class AssetProvider implements ServiceProviderInterface
         } elseif ($action === 'modify') {
             $this->semanticCollectionCSS->addCss('css/vendor/semantic/card.min.css', true);
             $this->footerCollectionJS
-                ->addJs('js/vendor/inputmask/inputmask.js', true)
-                ->addJs('js/vendor/inputmask/jquery.inputmask.js', true)
+                //->addJs('js/vendor/inputmask/inputmask.js', true)
+                ->addJs('js/vendor/inputmask/jquery.inputmask.min.js', true)
                 ->addJs('js/vendor/inputmask/jquery.inputmask-multi.js', true)
                 ->addJs('js/vendor/inputmask/bindings/inputmask.binding.js', true)
                 ->addJs('js/vendor/inputmask/init.js', true)

@@ -1,22 +1,24 @@
 <?php
 return [
-    /*
- * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
+    'ex_Russian' => 'Русский',
+    'ex_English' => 'English(US)',
+    'ex_EnglishUK' => 'English(UK)',
+    'ex_Japanese' => '日本語',
+    'ex_Deutsch' => 'Deutsch',
+    'ex_Danish' => 'Dansk',
+    'ex_Spanish' => 'Espanol',
+    'ex_French' => 'Le français',
+    'ex_Italian' => 'Italiano',
+    'ex_Portuguese' => 'Português',
+    'ex_Ukrainian' => 'Український',
+    'ex_Vietnamese' => 'Tiếng việt',
+    'ex_Chinese' => '中国人',
+    'ex_Polish' => 'Polskie',
+    'ex_Dutch' => 'Nederlands',
+    'ex_Swedish' => 'Svenska',
+    'ex_Czech' => 'Čeština',
+    'ex_Turkish' => 'Türk',
+    'ex_Georgian' => 'ქართველი',
     'January' => 'January',
     'February' => 'February',
     'March' => 'March',
@@ -242,7 +244,7 @@ return [
     'or_CallThrough' => 'Send a call',
     'or_Provider' => 'through the provider',
     'or_ValidationPleaseEnterRuleName' => 'Enter a name for the rule',
-    'or_ValidateBeginPattern' => 'Error in a field of the call filter. It can contain numbers and characters: ( | ) * # + [ ]. The maximum length of the value is 64 characters.',
+    'or_ValidateBeginPattern' => 'Error in a field of the call filter. It can contain numbers and characters: (|) * # + [ ]. The maximum length of the value is 64 characters.',
     'or_ValidateRestNumbers' => 'The minimum length of the phone number must be greater than two',
     'or_ValidateTrimFromBegin' => 'Incorrect value for clipping characters at the beginning of the phone number',
     'or_ValidatePrepend' => 'An error occurred while adding a character to the beginning of the phone number. The field can contain numbers and characters: * # +. The maximum length of the value is 20 characters.',
@@ -388,24 +390,6 @@ return [
     'ex_Extension' => 'Extension',
     'ex_Mobile' => 'Mobile',
     'ex_Email' => 'Email',
-    'ex_Russian' => 'Русский',
-    'ex_English' => 'English(US)',
-    'ex_EnglishUK' => 'English(UK)',
-    'ex_Japanese' => '日本語',
-    'ex_Deutsch' => 'Deutsch',
-    'ex_Danish' => 'Dansk',
-    'ex_Spanish' => 'Espanol',
-    'ex_French' => 'Le français',
-    'ex_Italian' => 'Italiano',
-    'ex_Portuguese' => 'Português',
-    'ex_Ukrainian' => 'Український',
-    'ex_Vietnamese' => 'Tiếng việt',
-    'ex_Chinese' => '中国人',
-    'ex_Polish' => 'Polskie',
-    'ex_Dutch' => 'Nederlands',
-    'ex_Swedish' => 'Svenska',
-    'ex_Czech' => 'Čeština',
-    'ex_Turkish' => 'Türk',
     'ex_Status' => 'Status',
     'ex_RegeneratePassword' => 'Create a new password',
     'ex_ValidateForwardingToBeFilled' => 'In the routing settings, the timeout forwarding number is not filled',
@@ -544,7 +528,7 @@ return [
     'gs_PBXFeatureAttendedTransfer' => 'This key combination activates an attended transfer',
     'gs_PBXFeatureBlindTransfer' => 'This key combination activates a blind transfer',
     'gs_PBXFeatureDigitTimeout' => 'Maximum timeout between digits when entering an extension number (in milliseconds)',
-    'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Call return time if there is no answer after blind transfer',
+    'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Call return time if no answer after advisory transfer',
     'gs_SIPPort' => 'SIP port for phone registration at this station',
     'gs_SIPDefaultExpiry' => 'Default expiration time in seconds for contacts that are dynamically bound to an AoR',
     'gs_SIPMinExpiry' => 'Minimum keep alive time for an AoR',
@@ -756,7 +740,8 @@ It can be activated once, after which the coupon becomes redeemed.
     'lic_LicenseWarningHeader' => 'This copy of the program is not registered',
     'lic_LicenseWarningText' => 'Go to <a href=\'/admin-cabinet/licensing/modify/\'>licensing</a> and follow the steps to registered your system',
     'lic_FailedToGetTrialKey2051' => 'Failed to register: (2051) You have already got trial key on this host for another email/company',
-    'lic_FailedToGetTrialKey2022' => 'Failed to register: (2022) This email has already used for another company name. Try to find previous key, we sent it from lic@miko.ru address.',
+    'lic_FailedToGetTrialKey2022' => '(2022) Failed to register this copy. A registration number for another company has already been generated to the specified email address. <br>
+ Use the key sent to you earlier from the address lic@miko.ru or enter the correct company name.',
     'lic_FailedActivateCoupon2057' => '(2057) This coupon is disabled',
     'lic_FailedActivateCoupon2041' => '(2041) Your coupon has already activated',
     'lic_FailedActivateCoupon2040' => '(2040) Unknown coupon code',
@@ -793,8 +778,6 @@ It can be activated once, after which the coupon becomes redeemed.
     'auth_WrongLoginPassword' => 'Authorization error',
     'log_CaptureMessage' => '<div class=\'ui message \'>Start collecting logs and make a call or other action that causes a failure. 
 <br>The system will form a snapshot of the system state in the form of an archive.</div>',
-    'log_StartLogsCapture' => 'Start collecting logs',
-    'log_StopLogsCapture' => 'Stop collection log',
     'dbg_NoDebugInformation' => 'No information',
     'dbg_Header' => 'Debugging information',
     'f2b_Reason' => 'Reason',
@@ -859,12 +842,12 @@ It can be activated once, after which the coupon becomes redeemed.
     'ext_AddNewExtension' => 'Upload new module',
     'ext_CreateNewExtension' => 'Create new one',
     'ext_UploadError' => 'Upload error',
-    'ext_UploadInProgress' => 'Uploading …',
-    'ext_InstallationInProgress' => 'Installation',
+    'ext_UploadInProgress' => 'Uploading…',
+    'ext_InstallationInProgress' => 'Installation …',
     'ext_ModuleChangeStatusError' => 'Problem with module status',
     'ext_InstallationError' => 'Error installing module',
     'DimmerWaitForPBXIsOnline' => 'Connection lost to PBX core …',
-    'DimmerWaitForPBXOnlineDescription' => 'It\'s normal if the computer has been restarted. <br>This page will be reloaded automaticaly when the connection established.',
+    'DimmerWaitForPBXOnlineDescription' => 'It\'s normal if the computer has been restarted. <br>This page will be reloaded automatically when the connection established!',
     'loc_NoResult' => 'Nothing found',
     'mo_CallQueueShort4Dropdown' => 'Queue',
     'mo_ConferenceRoomsShort4Dropdown' => 'Conference',
@@ -901,7 +884,7 @@ It can be activated once, after which the coupon becomes redeemed.
     'sntry_LabelComments' => 'What happened?',
     'sntry_LabelClose' => 'Close',
     'sntry_LabelSubmit' => 'Submit',
-    'sntry_ErrorGeneric' => 'An unknown error occurred while submitting your report. Please try again.',
+    'sntry_ErrorGeneric' => 'An unknown error occurred while submitting your report. Please try again!',
     'sntry_ErrorFormEntry' => 'Some fields were invalid. Please correct the errors and try again!',
     'sntry_SuccessMessage' => 'Your feedback has been sent. Thank you!',
     'gs_WebAdminLanguage' => 'Web interface language',
@@ -1069,4 +1052,9 @@ It can be activated once, after which the coupon becomes redeemed.
     'pr_EnterHostOrIpPlaceholder' => 'Enter IP address or subnet',
     'pr_EnterHostOrIp' => 'Additional provider hosts or ip',
     'auth_RememberMe' => 'Remember me',
+    'log_DownloadLogs' => 'Download logs',
+    'log_StopCapturePCAP' => 'Stop and download',
+    'log_StartCapturePCAP' => 'Start',
+    'gs_PBXRecordAnnouncementIn' => 'Select call recording alert for incoming calls',
+    'gs_PBXRecordAnnouncementOut' => 'Select call recording alert for outgoing calls',
 ];

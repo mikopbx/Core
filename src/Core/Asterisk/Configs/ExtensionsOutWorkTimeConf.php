@@ -1,16 +1,30 @@
 <?php
-//
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright (C) 2017-2021 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
 
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
-
 use MikoPBX\Common\Models\OutWorkTimes;
 use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Core\System\Util;
-use MikoPBX\Modules\Config\ConfigClass;
 
-class ExtensionsOutWorkTimeConf extends ConfigClass
+class ExtensionsOutWorkTimeConf extends CoreConfigClass
 {
     public const OUT_WORK_TIME_CONTEXT = 'check-out-work-time';
 
@@ -26,14 +40,14 @@ class ExtensionsOutWorkTimeConf extends ConfigClass
     /**
      * Кастомизация входящего контекста для конкретного маршрута.
      *
-     * @param $rout_number
+     * @param string $rout_number
      *
      * @return string
      */
-    public function generateIncomingRoutBeforeDial($rout_number): string
+    public function generateIncomingRoutBeforeDial(string $rout_number): string
     {
         // Проверим распискние для входящих внешних звонков.
-        return 'same => n,Gosub('.self::OUT_WORK_TIME_CONTEXT.',${EXTEN},1)';
+        return 'same => n,Gosub('.self::OUT_WORK_TIME_CONTEXT.',${EXTEN},1)'. "\n\t";
     }
 
     /**
@@ -44,14 +58,13 @@ class ExtensionsOutWorkTimeConf extends ConfigClass
     private function generateOutWorkTimes(): string
     {
         $conf = "\n\n[playback-exit]\n";
-        $conf .= 'exten => _.!,1,Gosub(dial_outworktimes,${EXTEN},1)' . "\n\t";
+        $conf .= 'exten => '.ExtensionsConf::ALL_NUMBER_EXTENSION.',1,Gosub(dial_outworktimes,${EXTEN},1)' . "\n\t";
         $conf .= 'same => n,Playback(${filename})' . "\n\t";
         $conf .= 'same => n,Hangup()' . "\n\n";
 
         $checkContext = self::OUT_WORK_TIME_CONTEXT;
         $conf .= "[".$checkContext."]\n";
-        $conf .= "exten => _.!,1,NoOp(check time)\n\t";
-        $conf .= 'same => n,Set(currentYear=${STRFTIME(,,%Y)})'."\n\t";
+        $conf .= 'exten => '.ExtensionsConf::ALL_NUMBER_EXTENSION.',1,Set(currentYear=${STRFTIME(,,%Y)})'."\n\t";
         $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS('.$checkContext.'-${currentYear},${EXTEN},1)}" == "1"]?'.$checkContext.'-${currentYear},${EXTEN},1)'."\n\t";
 
         $data = OutWorkTimes::find(['order' => 'date_from']);
@@ -72,7 +85,7 @@ class ExtensionsOutWorkTimeConf extends ConfigClass
 
         foreach ($checkContextsYear as $year => $rule){
             $conf .= "[".$checkContext."-{$year}]\n";
-            $conf .= "exten => _.!,1,NoOp(check time {$year} year)\n\t";
+            $conf .= 'exten => '.ExtensionsConf::ALL_NUMBER_EXTENSION.",1,NoOp(check time {$year} year)\n\t";
             $conf .= implode("", $rule);
             $conf .= "same => n,return\n\n";
         }
@@ -206,7 +219,9 @@ class ExtensionsOutWorkTimeConf extends ConfigClass
             $dialplanName = "work-time-set-var-{$ruleData['id']}";
 
             if (strpos($conf_out_set_var, $dialplanName) === false) {
-                $conf_out_set_var .= "[{$dialplanName}]\n" . 'exten => _.!,1,Set(filename=' . $audio_message . ')' . "\n\t" . 'same => n,Goto(playback-exit,${EXTEN},1)' . "\n\n";
+                $conf_out_set_var .= "[{$dialplanName}]\n" .
+                    'exten => '.ExtensionsConf::ALL_NUMBER_EXTENSION.',1,Set(filename=' . $audio_message . ')'."\n\t" .
+                        'same => n,Goto(playback-exit,${EXTEN},1)'."\n\n";
             }
             $appName = 'ExecIfTime';
             $appdata = 'Goto(' . $dialplanName . ',${EXTEN},1)';

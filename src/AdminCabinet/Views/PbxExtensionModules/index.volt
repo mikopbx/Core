@@ -21,7 +21,7 @@
 </div>
 <button class="ui blue button add-new" id="add-new-button"><i class="upload icon"></i> {{ t._('ext_AddNewExtension') }}
 </button>
-<a href="https://github.com/mikopbx/ModuleTemplate" target="_blank" class="ui basic button add-new"><i
+<a href="https://docs.mikopbx.com/mikopbx-development/" target="_blank" class="ui basic button add-new"><i
             class="plus icon"></i> {{ t._('ext_CreateNewExtension') }}</a>
 
 <div>

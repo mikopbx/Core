@@ -86,10 +86,10 @@ mountConfRecover()
 	mkdir -p "${rec_dir}";
 	
 	# Получаем список дисков. 
-	diskrs=$(/bin/lsblk -b -d -r -o NAME,TYPE  -n | grep "disk$" | /bin/busybox cut -d ' ' -f 1 |/bin/busybox uniq)
+	diskrs=$(/bin/lsblk -b -r -o NAME,TYPE  -n | /bin/busybox grep -e "disk$" -e 'raid'  | /bin/busybox cut -d ' ' -f 1 | /bin/busybox sort -u);
 	for diskr in $diskrs
 	do
-	  disk3=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$diskr")" |  /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "3$");
+	  disk3=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$diskr")" |  /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "3$" | /bin/busybox sort -u);
 		if [ "${diskr}" = "${offloaddisk}" ]; then
 			# Проверка на уже смонтированный диск.
 			echo " - Skip ${diskr}, already mount..."
@@ -129,7 +129,7 @@ rm -rf /tmp/freeoffload;
 echo " - Waiting for connect device....."
 busybox sleep 4;
 
-cddev=$(/bin/lsblk -b -d -r -o NAME,TYPE  -n | grep "rom$" | /bin/busybox cut -d ' ' -f 1 |/bin/busybox uniq)
+cddev=$(/bin/lsblk -b -d -r -o NAME,TYPE  -n | /bin/busybox grep "rom$" | /bin/busybox cut -d ' ' -f 1 |/bin/busybox uniq)
 length=0
 /sbin/blkid "/dev/${cddev}" > /dev/null 2>&1
 blkResult="$?";
@@ -140,16 +140,22 @@ echo " - Attempting to mount /boot partition..."
 if [ "$length" -gt 2 ]; then
 	disks=${cddev}
 else
-	disks=$(/bin/lsblk -b -d -r -o NAME,TYPE  -n | grep "disk$" | /bin/busybox cut -d ' ' -f 1 |/bin/busybox uniq)
+	disks=$(/bin/lsblk -b -d -r -o NAME,TYPE  -n | /bin/busybox grep "disk$" | /bin/busybox cut -d ' ' -f 1 |/bin/busybox uniq)
 fi
 for disk in $disks
 do
 	if [ "$length" -gt 2 ]; then
-		mountoffload "/dev/${disk}";
+	  diskPath="/dev/${disk}";
 	else
 	  partitionName=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$disk")" |  /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "1$");
-		mountoffload "/dev/${partitionName}";
+		diskPath="/dev/${partitionName}";
 	fi
+
+	if [ ! -b "$diskPath" ]; then
+	    continue;
+	fi
+	mountoffload "$diskPath";
+
 	echo " - Trying ${disk} mount returned: $MOUNT_RESULT"
 	if [ -f /offload/livecd ]; then
 		echo " - Found LIVECD flag file...";
@@ -161,17 +167,46 @@ do
 	umount -f /offload 2> /dev/null
 done
 
+
+################################################################################
+# RAID
+################################################################################
+
+echo
+echo " - Attempting to mount /offload partition..."
+disks=$(/bin/lsblk -b -r -o NAME,TYPE  -n | /bin/busybox grep "raid" | /bin/busybox cut -d ' ' -f 1 | /bin/busybox sort -u)
+for disk in $disks
+do
+	partitionName=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$disk")" |  /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "2$" | /bin/busybox sort -u);
+	diskPath="/dev/${partitionName}";
+	if [ ! -b "$diskPath" ]; then
+	    continue;
+	fi
+	mountoffload "$diskPath";
+	echo " - Trying ${disk} mount returned: $MOUNT_RESULT"
+	if [ -d /offload/rootfs ]; then
+		echo " - Found rootfs!"
+		exit 0
+	fi
+	umount -f /offload > /dev/null
+	echo " - Failed to find rootfs!"
+done
+
 ################################################################################
 # HDD
 ################################################################################
 
 echo
 echo " - Attempting to mount /offload partition..."
-disks=$(/bin/lsblk -b -d -r -o NAME,TYPE  -n | grep "disk$" | /bin/busybox cut -d ' ' -f 1 |/bin/busybox uniq)
+disks=$(/bin/lsblk -b -d -r -o NAME,TYPE  -n | /bin/busybox grep "disk$" | /bin/busybox cut -d ' ' -f 1 |/bin/busybox uniq)
 for disk in $disks
 do
 	partitionName=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$disk")" |  /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "2$");
-	mountoffload "/dev/${partitionName}";
+	diskPath="/dev/${partitionName}";
+	if [ ! -b "$diskPath" ]; then
+	    continue;
+	fi
+	mountoffload "$diskPath";
 	echo " - Trying ${disk} mount returned: $MOUNT_RESULT"
 	if [ -d /offload/rootfs ]; then
 		echo " - Found rootfs!"
@@ -191,11 +226,16 @@ echo " - Waiting for disks to settle and trying again..."
 
 echo " - checking for liveusb..."
 echo " - attempting to mount /boot partition..."
-disks=$(/bin/lsblk -b -d -r -o NAME,TYPE  -n | grep "disk$" | /bin/busybox cut -d ' ' -f 1 |/bin/busybox uniq)
+disks=$(/bin/lsblk -b -d -r -o NAME,TYPE  -n | /bin/busybox grep "disk$" | /bin/busybox cut -d ' ' -f 1 |/bin/busybox uniq)
 for disk in $disks
 do
 	partitionName=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$disk")" |  /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "1$");
-	mountoffload "/dev/${partitionName}";
+	diskPath="/dev/${partitionName}";
+	if [ ! -b "$diskPath" ]; then
+	    continue;
+	fi
+	mountoffload "$diskPath";
+
 	echo " - trying ${disk} mount returned: $MOUNT_RESULT"
 	if [ -f /offload/livecd ]; then
 		echo " - found LIVE USB flag file...";
@@ -209,7 +249,12 @@ echo
 for disk in $disks
 do
 	partitionName=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$disk")" |  /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "2$");
-	mountoffload "/dev/${partitionName}";
+  diskPath="/dev/${partitionName}";
+	if [ ! -b "$diskPath" ]; then
+	    continue;
+	fi
+	mountoffload "$diskPath";
+
 	echo " - trying ${disk} mount returned: $MOUNT_RESULT"
 	if [ -d /offload/rootfs ]; then
 		echo " - found rootfs!"

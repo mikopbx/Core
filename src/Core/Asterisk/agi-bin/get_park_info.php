@@ -33,6 +33,7 @@ function getActiveIdChannels($EXTEN)
         return $ParkeeChannel;
     }
     $res = $am->ParkedCalls('default');
+    $am->disconnect();
     if (count($res['data']) == 0) {
         return $ParkeeChannel;
     }

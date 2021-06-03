@@ -26,6 +26,7 @@ const PbxApi = {
 	pbxGetPeerStatus: `${Config.pbxUrl}/pbxcore/api/sip/getSipPeer`,
 	pbxGetActiveCalls: `${Config.pbxUrl}/pbxcore/api/cdr/getActiveCalls`, // Получить активные звонки,
 	pbxGetActiveChannels: `${Config.pbxUrl}/pbxcore/api/cdr/getActiveChannels`, // Получить активные звонки,
+	syslogPrepareLog: `${Config.pbxUrl}/pbxcore/api/syslog/prepareLog`,
 	syslogStartLogsCapture: `${Config.pbxUrl}/pbxcore/api/syslog/startLog`,
 	syslogStopLogsCapture: `${Config.pbxUrl}/pbxcore/api/syslog/stopLog`,
 	syslogGetLogsList: `${Config.pbxUrl}/pbxcore/api/syslog/getLogsList`, //curl http://127.0.0.1/pbxcore/api/system/getLogsList
@@ -44,6 +45,7 @@ const PbxApi = {
 	updateMailSettings: `${Config.pbxUrl}/pbxcore/api/system/updateMailSettings`,
 	systemUpgrade: `${Config.pbxUrl}/pbxcore/api/system/upgrade`, // Обновление АТС файлом
 	systemInstallModule: `${Config.pbxUrl}/pbxcore/api/system/installNewModule`,
+	systemGetModuleInstallationStatus: `${Config.pbxUrl}/pbxcore/api/system/statusOfModuleInstallation`,
 	systemDeleteModule: `${Config.pbxUrl}/pbxcore/api/system/uninstallModule`,
 	systemDisableModule: `${Config.pbxUrl}/pbxcore/api/system/disableModule`,
 	systemEnableModule: `${Config.pbxUrl}/pbxcore/api/system/enableModule`,
@@ -437,6 +439,26 @@ const PbxApi = {
 		});
 	},
 	/**
+	 * Start logs collection
+	 * @param callback function
+	 */
+	SyslogPrepareLog(callback) {
+		$.api({
+			url: PbxApi.syslogPrepareLog,
+			on: 'now',
+			successTest: PbxApi.successTest,
+			onSuccess(response) {
+				callback(response.data);
+			},
+			onFailure() {
+				callback(false);
+			},
+			onError() {
+				callback(false);
+			},
+		});
+	},
+	/**
 	 * Stop tcp dump and start making file for download
 	 * @param callback function
 	 */
@@ -638,8 +660,8 @@ const PbxApi = {
 				filePath
 			},
 			successTest: PbxApi.successTest,
-			onSuccess() {
-				callback(true);
+			onSuccess(response) {
+				callback(response);
 			},
 			onFailure(response) {
 				callback(response);
@@ -650,6 +672,27 @@ const PbxApi = {
 		});
 	},
 
+	/**
+	 * Gets installation status
+	 */
+	SystemGetModuleInstallationStatus(filePath, callback) {
+		$.api({
+			url: PbxApi.systemGetModuleInstallationStatus,
+			on: 'now',
+			method: 'POST',
+			data: {filePath:filePath},
+			successTest: PbxApi.successTest,
+			onSuccess(response) {
+				callback(response.data);
+			},
+			onFailure() {
+				callback(false);
+			},
+			onError() {
+				callback(false);
+			},
+		});
+	},
 	/**
 	 * Uploads module as json with link by POST request
 	 * @param params

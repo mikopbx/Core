@@ -1,5 +1,4 @@
 #!/bin/sh
-
 #
 # MikoPBX - free phone system for small business
 # Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
@@ -18,18 +17,15 @@
 # If not, see <https://www.gnu.org/licenses/>.
 #
 
-# Приоритет запуска процесса.
-PRIORITY=0
 # Путь и базовые параметры для запускаемого приложения.
-PATHTOBIN=$1;
 # Имя сервиса.
-NAME=$(basename `echo $PATHTOBIN | tr ' ' '-'`);
-
+NAMESAFE=$(/bin/busybox basename "$0");
+PATHTOBIN=$(/bin/busybox which "$(echo "$NAMESAFE" | /bin/busybox sed 's/safe-//g')");
+NAME=$(/bin/busybox basename "$PATHTOBIN");
+ARGS=$@;
 # Длительно ожидание перед новым запуском.
-SLEEPSECS=4
-
-# Транслируем переменные из командной строки.
-CLIARGS="$2 $3 $4 $5 $6"
+SLEEPSECS=1
+PIDFILE="/var/run/${NAMESAFE}.pid";
 
 message() {
 	echo "$1" >&2
@@ -39,9 +35,9 @@ message() {
 run_bin()
 {
 	while :; do
-
-	    nice -n $PRIORITY ${PATHTOBIN} ${CLIARGS}
-		EXITSTATUS=$?
+    message "Starting $NAME...";
+	  $PATHTOBIN $ARGS;
+		EXITSTATUS="$?"
 
 		message "$NAME ended with exit status $EXITSTATUS"
 		if test "x$EXITSTATUS" = "x0" ; then
@@ -52,8 +48,25 @@ run_bin()
 		fi
 		message "Automatically restarting $NAME."
 		sleep $SLEEPSECS
-
-	done
+	done;
 }
 
+if [ -f "$PIDFILE" ]; then
+  message "Found another pid file.";
+  resultGrep=$(/bin/busybox ps | /bin/busybox grep "$NAMESAFE" | grep "$(/bin/busybox cat "$PIDFILE")" | /bin/busybox grep -v grep);
+  if [ ! "${resultGrep}x" = 'x' ]; then
+    message "Another process is already running";
+    exit 1;
+  fi;
+fi;
+echo $$ > "$PIDFILE";
+message "Starting $NAMESAFE...";
+pidOld=$(/bin/busybox ps | /bin/busybox grep "$(basename "$PATHTOBIN")" | /bin/busybox grep -v "$NAMESAFE" | /bin/busybox grep -v grep | /bin/busybox awk '{ print $1}');
+if [ -n "$pidOld" ]; then
+  message "Completing another process ${PATHTOBIN}"
+  /bin/busybox kill "$pidOld";
+fi;
+
 run_bin &
+# Обновляем PID фонового процесса.
+echo $! > "$PIDFILE";

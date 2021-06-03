@@ -21,7 +21,7 @@ namespace MikoPBX\Core\Workers;
 
 require_once 'Globals.php';
 
-use MikoPBX\Common\Models\{CallDetailRecordsTmp, Extensions, Users};
+use MikoPBX\Common\Models\{CallDetailRecordsTmp, Extensions, ModelsBase, Users};
 use MikoPBX\Core\System\{BeanstalkClient, Processes, Util};
 use Throwable;
 
@@ -50,8 +50,9 @@ class WorkerCdr extends WorkerBase
     {
         $filter = [
             'work_completed<>1 AND endtime<>""',
-            'columns'=> 'start,answer,src_num,dst_num,dst_chan,endtime,linkedid,recordingfile,dialstatus,UNIQUEID'
-        ];
+            'columns'=> 'start,answer,src_num,dst_num,dst_chan,endtime,linkedid,recordingfile,dialstatus,UNIQUEID',
+            'order' => 'answer'
+       ];
 
         $this->client_queue = new BeanstalkClient(self::SELECT_CDR_TUBE);
         $this->client_queue->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
@@ -91,8 +92,8 @@ class WorkerCdr extends WorkerBase
                 ],
             ],
             'cache' => [
-                'key'=>'Users-WorkerCdr',
-                'lifetime' => 3600,
+                'key'=> ModelsBase::makeCacheKey(Users::class, 'Workers-WorkerCdr-initSettings'),
+                'lifetime' => 300,
             ]
         ];
 
@@ -196,6 +197,7 @@ class WorkerCdr extends WorkerBase
             'language'    => $this->internal_numbers[$row['dst_num']]['language'],
             'is_internal' => $is_internal,
             'duration'    => $row['duration'],
+            'NOANSWER'    => true
         ];
     }
 
@@ -215,16 +217,25 @@ class WorkerCdr extends WorkerBase
      * @param array $arr_update_cdr
      */
     private function setStatusAndPublish(array $arr_update_cdr): void{
+        $idForDelete = [];
+
         foreach ($arr_update_cdr as $data) {
-            $linkedid = $data['tmp_linked_id'];
+            $linkedId = $data['tmp_linked_id'];
             $data['GLOBAL_STATUS'] = $data['disposition'];
-            if (isset($this->no_answered_calls[$linkedid]['NOANSWER']) && $this->no_answered_calls[$linkedid]['NOANSWER'] === false) {
+
+            $isNOANSWER = $this->no_answered_calls[$linkedId]['NOANSWER']??false;
+            if ($isNOANSWER === false) {
                 $data['GLOBAL_STATUS'] = 'ANSWERED';
                 // Это отвеченный вызов (на очередь). Удаляем из списка.
-                unset($this->no_answered_calls[$linkedid]);
+                $idForDelete[$linkedId]=true;
             }
             unset($data['tmp_linked_id']);
             $this->client_queue->publish(json_encode($data), self::UPDATE_CDR_TUBE);
+        }
+
+        // Чистим память.
+        foreach ($idForDelete as $linkedId => $data){
+            unset($this->no_answered_calls[$linkedId]);
         }
     }
 

@@ -19,11 +19,9 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
-use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\Util;
-use MikoPBX\Modules\Config\ConfigClass;
 
-class ModulesConf extends ConfigClass
+class ModulesConf extends CoreConfigClass
 {
     protected string $description = 'modules.conf';
 
@@ -33,7 +31,6 @@ class ModulesConf extends ConfigClass
             "autoload=no\n";
 
         $modules = [
-            'app_mixmonitor.so',
             'app_cdr.so',
             'app_exec.so',
             'app_dial.so',
@@ -91,13 +88,11 @@ class ModulesConf extends ConfigClass
             'func_speex.so',
             'func_channel.so',
             'func_config.so',
-            'func_cut.so',
             'func_cdr.so',
             'func_devstate.so',
             'func_db.so',
             'func_logic.so',
             'func_strings.so',
-            'func_periodic_hook.so',
             'func_pjsip_contact.so',
             'func_pjsip_aor.so',
             'pbx_config.so',
@@ -120,6 +115,13 @@ class ModulesConf extends ConfigClass
             'app_senddtmf.so',
             'app_userevent.so',
             'app_chanspy.so',
+
+            'func_cut.so',
+            'func_periodic_hook.so',
+            'func_uri.so',
+            'func_groupcount.so',
+            'app_mixmonitor.so',
+
             // Необходимое для работы переадресаций.
             'bridge_simple.so',
             // Прочие bridge модули. Один из них необходим для работы парковки.
@@ -190,11 +192,7 @@ class ModulesConf extends ConfigClass
         foreach ($modules as $value) {
             $conf .= "load => $value\n";
         }
-
-        $additionalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
-        foreach ($additionalModules as $appClass) {
-            $conf .= $appClass->generateModulesConf();
-        }
+        $conf .= $this->hookModulesMethod(CoreConfigClass::GENERATE_MODULES_CONF);
 
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/modules.conf', $conf);
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/codecs.conf', '');

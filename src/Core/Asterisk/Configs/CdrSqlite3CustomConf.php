@@ -20,9 +20,7 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 
-use MikoPBX\Modules\Config\ConfigClass;
-
-class CdrSqlite3CustomConf extends ConfigClass
+class CdrSqlite3CustomConf extends CoreConfigClass
 {
     protected string $description = 'cdr_sqlite3_custom.conf';
 

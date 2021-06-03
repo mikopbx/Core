@@ -20,6 +20,7 @@
 namespace MikoPBX\Common\Models;
 
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
+use MikoPBX\Core\System\Util;
 use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
@@ -106,7 +107,7 @@ class PbxExtensionModules extends ModelsBase
      */
     public function afterSave(): void
     {
-        parent::afterSave();
+        Util::sysLogMsg(__METHOD__, "After save ", LOG_DEBUG);
         PBXConfModulesProvider::recreateModulesProvider();
     }
 
@@ -115,7 +116,7 @@ class PbxExtensionModules extends ModelsBase
      */
     public function afterDelete(): void
     {
-        parent::afterDelete();
+        Util::sysLogMsg(__METHOD__, "After delete ", LOG_DEBUG);
         PBXConfModulesProvider::recreateModulesProvider();
     }
 
@@ -128,7 +129,7 @@ class PbxExtensionModules extends ModelsBase
         $parameters = [
             'conditions' => 'disabled="0"',
             'cache' => [
-                'key'=>'PbxExtensionModules-Enabled',
+                'key'=> ModelsBase::makeCacheKey(PbxExtensionModules::class, 'getEnabledModulesArray'),
                 'lifetime' => 3600,
             ]
         ];
@@ -143,7 +144,7 @@ class PbxExtensionModules extends ModelsBase
     {
         $parameters = [
             'cache' => [
-                'key'=>'PbxExtensionModules-All',
+                'key'=> ModelsBase::makeCacheKey(PbxExtensionModules::class, 'getModulesArray'),
                 'lifetime' => 3600,
             ]
         ];

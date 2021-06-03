@@ -156,12 +156,11 @@ const updatePBX = {
 			updatePBX.$formObj.form('validate form');
 		});
 		const requestData = {
-			TYPE: 'FIRMWARE',
 			PBXVER: globalPBXVersion,
 			LANGUAGE: globalWebAdminLanguage,
 		};
 		$.api({
-			url: 'https://update.askozia.ru',
+			url: 'https://releases.mikopbx.com/releases/v1/mikopbx/checkNewFirmware',
 			on: 'now',
 			method: 'POST',
 			data: requestData,
@@ -172,10 +171,10 @@ const updatePBX = {
 					&& response.result === 'SUCCESS';
 			},
 			onSuccess(response) {
-				const currentVerison = updatePBX.currentVersion.replace(/\D/g, '');
+				const currentVerison = updatePBX.currentVersion.replace('-dev', '');
 				response.firmware.forEach((obj) => {
-					const version = obj.version.replace(/\D/g, '');
-					if (parseInt(version, 10) > parseInt(currentVerison, 10)) {
+					const version = obj.version.replace('-dev', '');
+					if (versionCompare(version, currentVerison) > 0) {
 						updatePBX.addNewVersionInformation(obj);
 					}
 				});

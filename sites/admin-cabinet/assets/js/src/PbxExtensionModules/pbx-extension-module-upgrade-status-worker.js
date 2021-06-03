@@ -16,10 +16,10 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, PbxApi, globalTranslate, UserMessage, extensionModules */
+/* global globalRootUrl, PbxApi, globalTranslate, UserMessage, installStatusLoopWorker */
 
 /**
- * Мониторинг статуса обновления или установки модуля
+ * Processes download module form MikoPBX repository
  *
  */
 const upgradeStatusLoopWorker = {
@@ -29,7 +29,7 @@ const upgradeStatusLoopWorker = {
 	iterations: 0,
 	oldPercent: '0',
 	needEnableAfterInstall: false,
-	initialize(uniqid, needEnable) {
+	initialize(uniqid, needEnable=false) {
 		upgradeStatusLoopWorker.moduleUniqid = uniqid;
 		upgradeStatusLoopWorker.iterations = 0;
 		upgradeStatusLoopWorker.needEnableAfterInstall = needEnable;
@@ -56,7 +56,7 @@ const upgradeStatusLoopWorker = {
 			&& upgradeStatusLoopWorker.iterations < 50) {
 			window.clearTimeout(upgradeStatusLoopWorker.timeoutHandle);
 		} else if (upgradeStatusLoopWorker.iterations > 50
-			|| response.d_status === 'DOWNLOAD_ERROR'
+			|| response.d_status === 'PROGRESS_FILE_NOT_FOUND'
 			|| response.d_status === 'NOT_FOUND'
 		) {
 			window.clearTimeout(upgradeStatusLoopWorker.timeoutHandle);
@@ -79,20 +79,10 @@ const upgradeStatusLoopWorker = {
 		}
 	},
 	cbAfterModuleInstall(response) {
-		if (response.length === 0 || response === false) {
-			UserMessage.showMultiString(response,globalTranslate.ext_InstallationError);
+		if (response.result === true) {
+			installStatusLoopWorker.initialize(response.data.filePath, upgradeStatusLoopWorker.needEnableAfterInstall);
 		} else {
-			// Check installation status
-			if (upgradeStatusLoopWorker.needEnableAfterInstall) {
-				PbxApi.SystemEnableModule(
-					upgradeStatusLoopWorker.moduleUniqid,
-					() => {
-						window.location = `${globalRootUrl}pbx-extension-modules/index/`;
-					},
-				);
-			} else {
-				window.location = `${globalRootUrl}pbx-extension-modules/index/`;
-			}
+			UserMessage.showMultiString(response, globalTranslate.ext_InstallationError);
 		}
 
 	},

@@ -23,14 +23,19 @@ export HOME PATH;
 
 ln -s /bin/busybox /sbin/init;
 # Монтирование.
-mount -t proc   none /proc;
-mount -t sysfs  none /sys;
-mount -t tmpfs  none /dev -o mode=755;
+uname -a | /bin/busybox grep ' 4\.10'; resultUname=$?
+if [ '1' = "$resultUname" ]; then
+	fsType='devtmpfs';
+else
+	fsType='tmpfs';
+fi;
+mount -t "$fsType" -o mode=0755,nosuid devtmpfs /dev
+mount -t proc      -o nosuid,noexec,nodev proc  /proc;
+mount -t sysfs     -o nosuid,noexec,nodev sysfs /sys;
+mount -t tmpfs     -o size=90% tmpfs            /mnt;
 
-# switch_root
-mount -t tmpfs -o size=90% tmpfs /mnt;
+# Переключение root.
 if tar -C / --exclude=mnt --exclude="./proc/*" --exclude="./sys/*" -cf - . | tar -C /mnt/ -xf - ; then
-	mkdir -p /mnt;
 	mv /mnt/etc/inittab_2 /mnt/etc/inittab
 	exec /sbin/switch_root /mnt /sbin/init "$@";
 fi

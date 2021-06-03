@@ -19,22 +19,69 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
-
+use MikoPBX\Common\Models\SoundFiles;
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
-use MikoPBX\Modules\Config\ConfigClass;
+use MikoPBX\PBXCoreREST\Lib\SystemManagementProcessor;
 
-class MusicOnHoldConf extends ConfigClass
+class MusicOnHoldConf extends CoreConfigClass
 {
     protected string $description = 'musiconhold.conf';
 
     protected function generateConfigProtected(): void
     {
-        $mohpath    = $this->config->path('asterisk.mohdir');
-
-        $conf = "[default]\n" .
+        $mohpath = $this->config->path('asterisk.mohdir');
+        $conf    = "[default]\n" .
             "mode=files\n" .
             "directory=$mohpath\n\n";
 
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/musiconhold.conf', $conf);
+        $this->checkMohFiles();
+    }
+
+    /**
+     * Проверка существования MOH файлов.
+     */
+    protected function checkMohFiles(): void
+    {
+        $path  = $this->config->path('asterisk.mohdir');
+        $mask  = '/*.mp3';
+        $fList = glob("{$path}{$mask}");
+        if (count($fList) !== 0) {
+            foreach ($fList as $resultMp3) {
+                $this->checkAddFileToDB($resultMp3);
+            }
+
+            return;
+        }
+        Util::sysLogMsg(static::class, 'Attempt to restore MOH from default...');
+        $filesList = glob("/offload/asterisk/sounds/moh{$mask}");
+        $cpPath    = Util::which('cp');
+        foreach ($filesList as $srcFile) {
+            $resultMp3 = "{$path}/" . basename($srcFile);
+            $resultWav = Util::trimExtensionForFile($resultMp3) . '.wav';
+            Processes::mwExec("{$cpPath} $srcFile {$resultMp3}");
+            SystemManagementProcessor::convertAudioFile($resultMp3);
+            if ( ! file_exists($resultWav)) {
+                Util::sysLogMsg(static::class, "Failed to convert file {$resultWav}...");
+            }
+
+            $this->checkAddFileToDB($resultMp3);
+        }
+    }
+
+    protected function checkAddFileToDB($resultMp3): void
+    {
+        /** @var SoundFiles $sf */
+        $sf = SoundFiles::findFirst("path='{$resultMp3}'");
+        if ($sf === null) {
+            $sf           = new SoundFiles();
+            $sf->category = SoundFiles::CATEGORY_MOH;
+            $sf->name     = basename($resultMp3);
+            $sf->path     = $resultMp3;
+            if ( ! $sf->save()) {
+                Util::sysLogMsg(static::class, "Error save SoundFiles record {$sf->name}...");
+            }
+        }
     }
 }

@@ -94,8 +94,9 @@ class AdvicesProcessor extends Injectable
         foreach ($arrAdvicesTypes as $adviceType) {
             $currentAdvice = $adviceType['type'];
             $cacheTime     = $adviceType['cacheTime'];
-            if ($managedCache->has($currentAdvice)) {
-                $oldResult = json_decode($managedCache->get($currentAdvice), true);
+            $cacheKey      = 'AdvicesProcessor:getAdvicesAction:'.$currentAdvice;
+            if ($managedCache->has($cacheKey)) {
+                $oldResult = json_decode($managedCache->get($cacheKey), true);
                 if ($language === $oldResult['LastLanguage']) {
                     $arrMessages[] = $oldResult['LastMessage'];
                     continue;
@@ -106,7 +107,7 @@ class AdvicesProcessor extends Injectable
                 $arrMessages[] = $newResult;
             }
             $managedCache->set(
-                $currentAdvice,
+                $cacheKey,
                 json_encode(
                     [
                         'LastLanguage' => $language,
@@ -228,10 +229,9 @@ class AdvicesProcessor extends Injectable
         $client = new GuzzleHttp\Client();
         $res    = $client->request(
             'POST',
-            'https://update.askozia.ru/',
+            'https://releases.mikopbx.com/releases/v1/mikopbx/ifNewReleaseAvailable',
             [
                 'form_params' => [
-                    'TYPE'   => 'FIRMWAREGETNEWS',
                     'PBXVER' => $PBXVersion,
                 ],
             ]

@@ -130,7 +130,10 @@ class ActionTransferDialHangup
         $res = CallDetailRecordsTmp::findFirst($filter);
         if ($res !== null) {
             $info      = pathinfo((string)$res->recordingfile);
-            $data_time = (string) (empty($res->answer)) ? $res->start : $res->answer;
+            $data_time = (empty($res->answer)) ? $res->start : $res->answer;
+            if ($data_time===null){
+                $data_time = 'now';
+            }
             $subdir    = date('Y/m/d/H/', strtotime($data_time));
             $worker->MixMonitor($res->dst_chan, $info['filename'], $subdir);
         }

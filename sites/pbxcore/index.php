@@ -21,8 +21,10 @@ namespace MikoPBX\PbxCore;
 use MikoPBX\PBXCoreREST\Config\{RegisterDIServices};
 use Phalcon\Di\FactoryDefault;
 use Throwable;
-use MikoPBX\Core\System\{SentryErrorLogger, Util};
+use MikoPBX\Core\System\{SentryErrorLogger};
 use Phalcon\Mvc\Micro;
+use Whoops\Handler\JsonResponseHandler;
+use Whoops\Run;
 
 
 // Create Dependency injector
@@ -35,6 +37,13 @@ require_once __DIR__ . '/../../src/Common/Config/ClassLoader.php';
 $errorLogger = new SentryErrorLogger('pbx-core-rest');
 $errorLogger->init();
 
+// Enable Whoops error pretty print
+if (class_exists(JsonResponseHandler::class)){
+    $whoops = new Run();
+    $whoops->pushHandler(new JsonResponseHandler());
+    $whoops->register();
+}
+
 // Start application
 try {
     $application = new Micro();
@@ -45,8 +54,11 @@ try {
     $application->handle($_SERVER['REQUEST_URI']);
 } catch (Throwable $e) {
     $errorLogger->captureException($e);
-    echo $e->getMessage();
-    Util::sysLogMsg('PBXCoreREST index.php', $e->getMessage() , LOG_ERR);
+    if (class_exists(JsonResponseHandler::class)){
+        $whoops->handleException($e);
+    } else {
+        echo $e->getMessage();
+    }
 }
 
 

@@ -22,6 +22,7 @@ const archivePackingCheckWorker = {
 	timeOutHandle: '',
 	errorCounts: 0,
 	filename: '',
+	$progress: $('#capture-log-dimmer span.progress'),
 	initialize(filename) {
 		archivePackingCheckWorker.filename = filename;
 		archivePackingCheckWorker.restartWorker(filename);
@@ -55,11 +56,13 @@ const archivePackingCheckWorker = {
 				.removeClass('disabled loading')
 				.addClass('disabled');
 			systemDiagnosticCapture.$startBtn.removeClass('disabled loading');
+			systemDiagnosticCapture.$downloadBtn.removeClass('disabled loading');
 			window.location = response.filename;
 			window.clearTimeout(archivePackingCheckWorker.timeoutHandle);
 			systemDiagnosticCapture.$dimmer.removeClass('active');
-		} else if (response.status !== undefined) {
+		} else if (response.status === 'PREPARING') {
 			archivePackingCheckWorker.errorCounts = 0;
+			archivePackingCheckWorker.$progress.text(`${response.progress}%`);
 		} else {
 			archivePackingCheckWorker.errorCounts += 1;
 		}
@@ -68,6 +71,7 @@ const archivePackingCheckWorker = {
 
 const systemDiagnosticCapture = {
 	$startBtn: $('#start-capture-button'),
+	$downloadBtn: $('#download-logs-button'),
 	$stopBtn: $('#stop-capture-button'),
 	$showBtn: $('#show-last-log'),
 	$dimmer:  $('#capture-log-dimmer'),
@@ -76,7 +80,7 @@ const systemDiagnosticCapture = {
 		$(window).load(function() {
 			systemDiagnosticCapture.$dimmer.closest('div').css('min-height', `${segmentHeight}px`);
 		});
-		if (sessionStorage.getItem('LogsCaptureStatus') === 'started') {
+		if (sessionStorage.getItem('PCAPCaptureStatus') === 'started') {
 			systemDiagnosticCapture.$startBtn.addClass('disabled loading');
 			systemDiagnosticCapture.$stopBtn.removeClass('disabled');
 		} else {
@@ -97,6 +101,12 @@ const systemDiagnosticCapture = {
 			PbxApi.SyslogStopLogsCapture(systemDiagnosticCapture.cbAfterStopCapture);
 
 		});
+		systemDiagnosticCapture.$downloadBtn.on('click', (e) => {
+			e.preventDefault();
+			systemDiagnosticCapture.$downloadBtn.addClass('disabled loading');
+			systemDiagnosticCapture.$dimmer.addClass('active');
+			PbxApi.SyslogPrepareLog(systemDiagnosticCapture.cbAfterDownloadCapture);
+		});
 	},
 	/**
 	 *  Callback after push start logs collect button
@@ -104,10 +114,19 @@ const systemDiagnosticCapture = {
 	 */
 	cbAfterStartCapture(response){
 		if (response!==false) {
-			sessionStorage.setItem('LogsCaptureStatus', 'started');
+			sessionStorage.setItem('PCAPCaptureStatus', 'started');
 			setTimeout(() => {
-				sessionStorage.setItem('LogsCaptureStatus', 'stopped');
+				sessionStorage.setItem('PCAPCaptureStatus', 'stopped');
 			}, 300000);
+		}
+	},
+	/**
+	 *  Callback after push start logs collect button
+	 * @param response
+	 */
+	cbAfterDownloadCapture(response){
+		if (response!==false){
+			archivePackingCheckWorker.initialize(response.filename);
 		}
 	},
 	/**

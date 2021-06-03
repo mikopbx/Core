@@ -332,10 +332,10 @@
         var number =  e.originalEvent.clipboardData.getData('text').replace(/\D+/g, '');
         var input = this;
         setTimeout(function() {
-            $(this).val(number);
+            $(input).val(number);
             maskInit.call(input);
             //runOriginal.call(input, e);
-            $(this).trigger("complete");
+            $(input).trigger("complete");
         }, 0);
         return true;
     }

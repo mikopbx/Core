@@ -21,11 +21,9 @@ declare(strict_types=1);
 
 namespace MikoPBX\Common\Providers;
 
-
-use Phalcon\Cache;
-use Phalcon\Cache\Adapter\Stream;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
+use Phalcon\Cache\Adapter\Redis;
 use Phalcon\Storage\SerializerFactory;
 
 
@@ -43,25 +41,23 @@ class ManagedCacheProvider implements ServiceProviderInterface
      */
     public function register(DiInterface $di): void
     {
-        if (posix_getuid() === 0) {
-            $tempDir = $di->getShared('config')->path('core.managedCacheDir');
-        } else {
-            $tempDir = $di->getShared('config')->path('www.managedCacheDir');
-        }
+        $config = $di->getShared(ConfigProvider::SERVICE_NAME);
         $di->setShared(
             self::SERVICE_NAME,
-            function () use ($tempDir){
+            function () use ($config){
                 $serializerFactory = new SerializerFactory();
 
                 $options = [
                     'defaultSerializer' => 'Php',
-                    'lifetime'          => 7200,
-                    'storageDir'        => $tempDir,
+                    'lifetime'          => 3600,
+                    'host'              => $config->path('redis.host'),
+                    'port'              => $config->path('redis.port'),
+                    'index'             => 4,
+                    'prefix'            => 'managed-cache'
                 ];
 
-                $adapter = new Stream ($serializerFactory, $options);
+                return new Redis($serializerFactory, $options);
 
-                return new Cache($adapter);
             }
         );
     }

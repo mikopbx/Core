@@ -52,7 +52,6 @@ class WorkerApiCommands extends WorkerBase
      */
     private array $processors;
 
-
     /**
      * @param $argv
      *
@@ -155,7 +154,6 @@ class WorkerApiCommands extends WorkerBase
                  'enableModule',
                  'disableModule',
                  'uninstallModule',
-                 'installNewModule',
                  'restoreDefaultSettings',
             ],
         ];

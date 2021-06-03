@@ -301,4 +301,42 @@ class Processes
         return true;
     }
 
+    /**
+     * Запуск демона с контролем аварийного завершения
+     * worker_reload - в случае падения пишет ошибку в syslog и рестартует сдемона.
+     * @param  string    $procName
+     * @param  string    $args
+     * @param  int       $attemptsCount
+     * @param  int       $timout
+     * @return bool
+     */
+    public static function safeStartDaemon(string $procName, string $args, int $attemptsCount = 20, int $timout = 100000):bool
+    {
+        $result   = true;
+        $baseName = "safe-{$procName}";
+        $safeLink = "/sbin/{$baseName}";
+        Util::createUpdateSymlink('/etc/rc/worker_reload', $safeLink);
+        self::killByName($baseName);
+        self::killByName($procName);
+        // Запускаем процесс в фоне.
+        self::mwExecBg("{$safeLink} {$args}");
+
+        // Ожидаем запуска процесса.
+        $ch = 1;
+        while ($ch < $attemptsCount) {
+            $pid = self::getPidOfProcess($procName, $baseName);
+            if (!empty($pid)) {
+                break;
+            }
+            usleep($timout);
+            $ch ++ ;
+        }
+        if(empty($pid)){
+            Util::echoWithSyslog(" - Wait for start '{$procName}' fail" . PHP_EOL);
+            $result = false;
+        }
+
+        return $result;
+    }
+
 }

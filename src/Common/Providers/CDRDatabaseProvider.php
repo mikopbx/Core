@@ -38,7 +38,7 @@ class CDRDatabaseProvider extends DatabaseProviderBase implements ServiceProvide
      */
     public function register(DiInterface $di): void
     {
-        $dbConfig = $di->getShared('config')->get('cdrDatabase')->toArray();
+        $dbConfig = $di->getShared(ConfigProvider::SERVICE_NAME)->get('cdrDatabase')->toArray();
         $this->registerDBService(self::SERVICE_NAME, $di, $dbConfig);
     }
 }

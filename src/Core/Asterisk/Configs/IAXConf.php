@@ -22,61 +22,13 @@ namespace MikoPBX\Core\Asterisk\Configs;
 use MikoPBX\Common\Models\Codecs;
 use MikoPBX\Common\Models\Iax;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\IncomingContexts;
-use MikoPBX\Modules\Config\ConfigClass;
 use MikoPBX\Core\System\Util;
 
-class IAXConf extends ConfigClass
+class IAXConf extends CoreConfigClass
 {
     public const TYPE_IAX2 = 'IAX2';
+
     protected string $description = 'iax.conf';
-
-    /**
-     * Генератор iax.conf
-     *
-     *
-     * @return void
-     */
-    protected function generateConfigProtected():void
-    {
-        $conf = '';
-        $conf .= $this->generateGeneral();
-        $conf .= $this->generateProviders();
-
-        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/iax.conf', $conf);
-        file_put_contents($this->config->path('asterisk.astetcdir') . '/iaxprov.conf', "[default]\ncodec=alaw\n");
-    }
-
-
-    /**
-     * Получение данных по IAX2 провайдерам.
-     */
-    private function getProviders(): array
-    {
-        $data_providers =[];
-        // Получим настройки всех аккаунтов.
-        $arrIaxProviders              = Iax::find("disabled IS NULL OR disabled = '0'");
-        foreach ($arrIaxProviders as $peer) {
-            /** @var \MikoPBX\Common\Models\Iax $peer */
-            $arr_data = $peer->toArray();
-
-            // $network_filter = NetworkFilters::findFirst($peer->networkfilterid);
-            // $arr_data['permit'] = ($network_filter==null)?'':$network_filter->permit;
-            // $arr_data['deny']   = ($network_filter==null)?'':$network_filter->deny;
-
-            $arr_data['codecs'] = [];
-            $filter             = [
-                'conditions'=>'disabled="0"',
-                'order' => 'type, priority',
-            ];
-            $codecs             = Codecs::find($filter);
-            foreach ($codecs as $ob_codec) {
-                $arr_data['codecs'][] = $ob_codec->name;
-            }
-            $data_providers[] = $arr_data;
-
-        }
-        return $data_providers;
-    }
 
     /**
      * Описываем контексты.
@@ -85,7 +37,7 @@ class IAXConf extends ConfigClass
      */
     public function extensionGenContexts(): string
     {
-        $conf = '';
+        $conf      = '';
         $providers = $this->getProviders();
         foreach ($providers as $provider) {
             $conf .= IncomingContexts::generate($provider['uniqid']);
@@ -94,6 +46,21 @@ class IAXConf extends ConfigClass
         return $conf;
     }
 
+    /**
+     * Генератор iax.conf
+     *
+     *
+     * @return void
+     */
+    protected function generateConfigProtected(): void
+    {
+        $conf = '';
+        $conf .= $this->generateGeneral();
+        $conf .= $this->generateProviders();
+
+        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/iax.conf', $conf);
+        file_put_contents($this->config->path('asterisk.astetcdir') . '/iaxprov.conf', "[default]\ncodec=alaw\n");
+    }
 
     /**
      * Генератора секции general iax.conf
@@ -128,7 +95,7 @@ class IAXConf extends ConfigClass
         $reg_strings = '';
         $prov_config = '';
 
-        $lang = str_replace('_', '-', strtolower($this->generalSettings['PBXLanguage']));
+        $lang      = str_replace('_', '-', strtolower($this->generalSettings['PBXLanguage']));
         $providers = $this->getProviders();
         foreach ($providers as $provider) {
             $prov_config .= "[{$provider['uniqid']}];\n";
@@ -170,6 +137,37 @@ class IAXConf extends ConfigClass
         }
 
         return $reg_strings . "\n" . $prov_config;
+    }
+
+    /**
+     * Получение данных по IAX2 провайдерам.
+     */
+    private function getProviders(): array
+    {
+        $data_providers = [];
+        // Получим настройки всех аккаунтов.
+        $arrIaxProviders = Iax::find("disabled IS NULL OR disabled = '0'");
+        foreach ($arrIaxProviders as $peer) {
+            /** @var \MikoPBX\Common\Models\Iax $peer */
+            $arr_data = $peer->toArray();
+
+            // $network_filter = NetworkFilters::findFirst($peer->networkfilterid);
+            // $arr_data['permit'] = ($network_filter==null)?'':$network_filter->permit;
+            // $arr_data['deny']   = ($network_filter==null)?'':$network_filter->deny;
+
+            $arr_data['codecs'] = [];
+            $filter             = [
+                'conditions' => 'disabled="0"',
+                'order'      => 'type, priority',
+            ];
+            $codecs             = Codecs::find($filter);
+            foreach ($codecs as $ob_codec) {
+                $arr_data['codecs'][] = $ob_codec->name;
+            }
+            $data_providers[] = $arr_data;
+        }
+
+        return $data_providers;
     }
 
 }

@@ -182,6 +182,7 @@ const extension = {
 				},
 				oncleared: extension.cbOnClearedMobileNumber,
 				oncomplete: extension.cbOnCompleteMobileNumber,
+				onBeforePaste: extension.cbOnMobileNumberBeforePaste,
 				showMaskOnHover: false,
 			},
 			match: /[0-9]/,
@@ -196,7 +197,12 @@ const extension = {
 
 		extension.initializeForm();
 	},
-
+	/**
+	 * Callback after paste license coupon
+	 */
+	cbOnMobileNumberBeforePaste(pastedValue) {
+		return pastedValue;
+	},
 	/**
 	 * Вызывается после воода номера телефона для проверки нет ли пересечений с
 	 * существующими номерами
@@ -245,6 +251,7 @@ const extension = {
 	 * Вызывается при вводе мобильного телефона в карточке сотрудника
 	 */
 	cbOnCompleteMobileNumber() {
+		console.log('cbOnCompleteMobileNumber');
 		const newMobileNumber = extension.$mobile_number.inputmask('unmaskedvalue');
 		const userId = extension.$formObj.form('get value', 'user_id');
 		// Динамическая прововерка свободен ли выбранный мобильный номер

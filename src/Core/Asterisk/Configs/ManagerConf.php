@@ -22,11 +22,9 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\AsteriskManagerUsers;
 use MikoPBX\Common\Models\NetworkFilters;
-use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\Util;
-use MikoPBX\Modules\Config\ConfigClass;
 
-class ManagerConf extends ConfigClass
+class ManagerConf extends CoreConfigClass
 {
     protected string $description = 'manager.conf';
 
@@ -136,10 +134,7 @@ class ManagerConf extends ConfigClass
         $conf .= "eventfilter=!Event: Newexten\n";
         $conf .= "\n";
 
-        $additionalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
-        foreach ($additionalModules as $appClass) {
-            $conf .= $appClass->generateManagerConf();
-        }
-        Util::fileWriteContent($this->config->path('asterisk.astetcdir') .'/manager.conf', $conf);
+        $conf .= $this->hookModulesMethod(CoreConfigClass::GENERATE_MANAGER_CONF);
+        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/manager.conf', $conf);
     }
 }

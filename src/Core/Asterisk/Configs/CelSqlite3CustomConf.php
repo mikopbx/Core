@@ -20,9 +20,7 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 
-use MikoPBX\Modules\Config\ConfigClass;
-
-class CelSqlite3CustomConf extends ConfigClass
+class CelSqlite3CustomConf extends CoreConfigClass
 {
     protected string $description = 'cel_sqlite3_custom.conf';
 

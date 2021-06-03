@@ -97,9 +97,13 @@ const systemDiagnosticLogs = {
 		});
 	},
 	initializeAce() {
-		const IniMode = ace.require('ace/mode/julia').Mode;
 		systemDiagnosticLogs.viewer = ace.edit('log-content-readonly');
-		systemDiagnosticLogs.viewer.session.setMode(new IniMode());
+
+		const julia = ace.require('ace/mode/julia');
+		if (julia!==undefined){
+			const IniMode = julia.Mode;
+			systemDiagnosticLogs.viewer.session.setMode(new IniMode());
+		}
 		systemDiagnosticLogs.viewer.setTheme('ace/theme/monokai');
 		systemDiagnosticLogs.viewer.renderer.setShowGutter(false);
 		systemDiagnosticLogs.viewer.setOptions({

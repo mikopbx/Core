@@ -25,6 +25,7 @@ use MikoPBX\Core\System\Configs\NatsConf;
 use MikoPBX\Core\System\Configs\NginxConf;
 use MikoPBX\Core\System\Configs\NTPConf;
 use MikoPBX\Core\System\Configs\PHPConf;
+use MikoPBX\Core\System\Configs\RedisConf;
 use MikoPBX\Core\System\Configs\SSHConf;
 use MikoPBX\Core\System\Configs\SyslogConf;
 use MikoPBX\Core\System\Configs\VMWareToolsConf;
@@ -44,6 +45,11 @@ class SystemLoader extends Di\Injectable
         Util::echoWithSyslog(' - Start beanstalkd daemon...');
         $beanstalkConf = new BeanstalkConf();
         $beanstalkConf->reStart();
+        Util::echoGreenDone();
+
+        Util::echoWithSyslog(' - Start redis daemon...');
+        $redisConf = new RedisConf();
+        $redisConf->reStart();
         Util::echoGreenDone();
 
         $system = new System();
@@ -144,8 +150,6 @@ class SystemLoader extends Di\Injectable
 
         Util::echoWithSyslog(' - Start Asterisk... ');
         $pbx->start();
-        $system                           = new System();
-        $system->onAfterPbxStarted();
         Util::echoGreenDone();
 
         Util::echoWithSyslog(' - Wait asterisk fully booted... ');

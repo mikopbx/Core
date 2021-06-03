@@ -19,11 +19,9 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
-
 use MikoPBX\Core\System\Util;
-use MikoPBX\Modules\Config\ConfigClass;
 
-class HttpConf extends ConfigClass
+class HttpConf extends CoreConfigClass
 {
     protected string $description = 'http.conf';
 

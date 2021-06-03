@@ -23,6 +23,27 @@ namespace MikoPBX\Modules\Config;
 interface SystemConfigInterface
 {
 
+    public const MODELS_EVENT_NEED_RELOAD = 'modelsEventNeedReload';
+
+    public const MODELS_EVENT_CHANGE_DATA = 'modelsEventChangeData';
+
+    public const CREATE_CRON_TASKS = 'createCronTasks';
+
+    public const CREATE_NGINX_LOCATIONS = 'createNginxLocations';
+
+    public const GENERATE_FAIL2BAN_JAILS = 'generateFail2BanJails';
+
+    public const ON_AFTER_MODULE_DISABLE = 'onAfterModuleDisable';
+
+    public const ON_AFTER_MODULE_ENABLE = 'onAfterModuleEnable';
+
+    public const GET_MODULE_WORKERS = 'getModuleWorkers';
+
+    public const GET_DEFAULT_FIREWALL_RULES = 'getDefaultFirewallRules';
+
+    public const ON_AFTER_PBX_STARTED = 'onAfterPbxStarted';
+
+
     /**
      * The callback function will execute after PBX started.
      */
@@ -42,64 +63,66 @@ interface SystemConfigInterface
     public function createNginxLocations(): string;
 
     /**
-     * Обработчик события изменения данных в базе настроек mikopbx.db.
+     * This method calls in the WorkerModelsEvents after receive each models change
      *
      * @param $data
      */
     public function modelsEventChangeData($data): void;
 
     /**
-     * Обработчик события изменения данных в базе настроек mikopbx.db.
+     * This method calls in the WorkerModelsEvents after finished process models changing
      *
-     * @param $modified_tables
+     * @param array $modified_tables list of modified models
      */
-    public function modelsEventNeedReload($modified_tables): void;
-
+    public function modelsEventNeedReload(array $modified_tables): void;
 
     /**
-     * Returns array of workers classes for WorkerSafeScripts from module
+     * Returns array of workers classes for WorkerSafeScripts
+     *
      * @return array
      */
     public function getModuleWorkers(): array;
 
     /**
      * Returns array of additional firewall rules for module
+     *
      * @return array
      */
     public function getDefaultFirewallRules(): array;
 
-
     /**
      * Process before enable action in web interface
+     *
      * @return bool
      */
     public function onBeforeModuleEnable(): bool;
 
     /**
      * Process after enable action in web interface
+     *
      * @return void
      */
     public function onAfterModuleEnable(): void;
 
-
     /**
      * Process before disable action in web interface
+     *
      * @return bool
      */
     public function onBeforeModuleDisable(): bool;
 
     /**
      * Process after disable action in web interface
+     *
      * @return void
      */
     public function onAfterModuleDisable(): void;
-
 
     /**
      * Generates additional fail2ban jail conf rules
      *
      * @return string
      */
-    public function generateFail2BanJails():string;
+    public function generateFail2BanJails(): string;
 
 }

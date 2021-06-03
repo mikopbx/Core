@@ -21,9 +21,8 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 
 use MikoPBX\Core\System\Util;
-use MikoPBX\Modules\Config\ConfigClass;
 
-class VoiceMailConf extends ConfigClass
+class VoiceMailConf extends CoreConfigClass
 {
     protected string $description = 'voicemail.conf';
 

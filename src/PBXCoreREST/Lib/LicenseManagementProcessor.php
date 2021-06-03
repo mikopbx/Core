@@ -20,6 +20,7 @@
 namespace MikoPBX\PBXCoreREST\Lib;
 
 use MikoPBX\Common\Models\Extensions;
+use MikoPBX\Common\Models\ModelsBase;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\MikoPBXConfig;
 use Phalcon\Di\Injectable;
@@ -119,7 +120,7 @@ class LicenseManagementProcessor extends Injectable
         if (strlen($data['licKey']) === 28
             && Text::startsWith($data['licKey'], 'MIKO-')
         ) {
-            PbxSettings::clearCache(PbxSettings::class, false);
+            ModelsBase::clearCache(PbxSettings::class);
             $oldLicKey = $mikoPBXConfig->getGeneralSettings('PBXLicense');
             if ($oldLicKey !== $data['licKey']) {
                 $licenseInfo = $this->license->getLicenseInfo($data['licKey']);
@@ -150,9 +151,9 @@ class LicenseManagementProcessor extends Injectable
                 }
             }
         } else { // Only add trial for license key
-            $newLicenseKey = $this->license->getTrialLicense($data);
+            $newLicenseKey = (string)$this->license->getTrialLicense($data);
             if (strlen($newLicenseKey) === 28
-                && Text::startsWith((string)$newLicenseKey, 'MIKO-')) {
+                && Text::startsWith($newLicenseKey, 'MIKO-')) {
                 $mikoPBXConfig->setGeneralSettings('PBXLicense', $newLicenseKey);
                 $this->license->changeLicenseKey($newLicenseKey);
                 $res->success    = true;

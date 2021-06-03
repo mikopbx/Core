@@ -21,9 +21,8 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 
 use MikoPBX\Core\System\Util;
-use MikoPBX\Modules\Config\ConfigClass;
 
-class SipNotifyConf extends ConfigClass
+class SipNotifyConf extends CoreConfigClass
 {
     protected string $description = 'sip_notify.conf';
 
@@ -35,7 +34,7 @@ class SipNotifyConf extends ConfigClass
         $conf = '';
         $conf .= "[yealink-reboot]\n" .
             "Event=>check-sync\;reboot=true\n" .
-            "Content-Length=>0\n".
+            "Content-Length=>0\n" .
             "Content=>\n\n";
 
         $conf .= "[snom-reboot]\n" .
@@ -47,7 +46,7 @@ class SipNotifyConf extends ConfigClass
         $conf .= "[yealink-action-ok]\n" .
             "Content-Type=>message/sipfrag\n" .
             "Event=>ACTION-URI\n" .
-            "Content=>key=SPEAKER\n".
+            "Content=>key=SPEAKER\n" .
             "Content=>\n\n";
 
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/pjsip_notify.conf', $conf);

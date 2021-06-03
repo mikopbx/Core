@@ -23,7 +23,6 @@ namespace MikoPBX\Core\Config;
 
 use MikoPBX\Common\Providers\{AmiConnectionCommand,
     AmiConnectionListener,
-    BeanstalkConnectionCacheProvider,
     BeanstalkConnectionModelsProvider,
     BeanstalkConnectionWorkerApiProvider,
     CDRDatabaseProvider,
@@ -33,6 +32,7 @@ use MikoPBX\Common\Providers\{AmiConnectionCommand,
     ModelsCacheProvider,
     ManagedCacheProvider,
     ModelsMetadataProvider,
+    ModelsAnnotationsProvider,
     ModulesDBConnectionsProvider,
     NatsConnectionProvider,
     PBXConfModulesProvider,
@@ -62,6 +62,7 @@ class RegisterDIServices
             RegistryProvider::class,
 
             // Inject Database connections
+            ModelsAnnotationsProvider::class,
             ModelsMetadataProvider::class,
             MainDatabaseProvider::class,
             CDRDatabaseProvider::class,
@@ -78,7 +79,6 @@ class RegisterDIServices
 
             // Inject Queue connection
             NatsConnectionProvider::class,
-            BeanstalkConnectionCacheProvider::class,
             BeanstalkConnectionModelsProvider::class,
             BeanstalkConnectionWorkerApiProvider::class,
 
@@ -100,28 +100,6 @@ class RegisterDIServices
         ];
 
         foreach ($providersList as $provider) {
-            // Delete previous provider
-            $di->remove($provider::SERVICE_NAME);
-            $di->register(new $provider());
-        }
-    }
-
-    /**
-     * Recreate DB connections after table structure changes
-     */
-    public static function recreateDBConnections(): void
-    {
-        $dbProvidersList = [
-            ModelsCacheProvider::class, // Always recreate it before change DB providers
-
-            MainDatabaseProvider::class,
-            CDRDatabaseProvider::class,
-            EventsLogDatabaseProvider::class
-        ];
-
-        $di = Di::getDefault();
-
-        foreach ($dbProvidersList as $provider) {
             // Delete previous provider
             $di->remove($provider::SERVICE_NAME);
             $di->register(new $provider());

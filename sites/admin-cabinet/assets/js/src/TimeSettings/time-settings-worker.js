@@ -16,6 +16,8 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
+/* global moment */
+
 const clockWorker = {
 	timeoutHandle: null,
 	options: null,
@@ -41,8 +43,12 @@ const clockWorker = {
 			options.timeZoneName = undefined;
 		}
 		if (response!==false){
+
 			const dateTime =  new Date(response.timestamp*1000);
-			timeSettings.$formObj.form('set value', 'ManualDateTime', dateTime.toLocaleString(globalWebAdminLanguage, options));
+			moment.locale(globalWebAdminLanguage);
+			const m = moment(dateTime,);
+			//timeSettings.$formObj.form('set value', 'ManualDateTime', dateTime.toLocaleString(globalWebAdminLanguage, options));
+			timeSettings.$formObj.form('set value', 'ManualDateTime',m.tz(options.timeZone).format());
 		}
 	}
 };

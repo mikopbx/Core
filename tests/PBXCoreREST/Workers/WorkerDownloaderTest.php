@@ -38,7 +38,7 @@ class WorkerDownloaderTest extends AbstractUnitTest
             $settingsFilePath,
             json_encode($download_settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
         );
-        $argv = ['start', $settingsFilePath];
+        $argv = ['', 'start', $settingsFilePath];
         $worker = new WorkerDownloader();
         $worker->start($argv);
         $this->assertTrue(true);

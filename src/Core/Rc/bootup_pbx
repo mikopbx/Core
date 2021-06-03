@@ -20,20 +20,10 @@
 
 namespace MikoPBX\Core\Rc;
 
-use MikoPBX\Core\System\{Util, SystemLoader, Processes};
+use MikoPBX\Core\System\{Util, SystemLoader};
 require_once('Globals.php');
-
 Util::echoWithSyslog(' - Start /etc/rc/bootup_pbx ...'.PHP_EOL);
-while (true){
-     $pid = Processes::getPidOfProcess('beanstalkd');
-     if(empty($pid)){
-         Util::echoWithSyslog(' - Wait for start beanstalkd deamon ...'.PHP_EOL);
-         sleep(2);
-     }else{
-         Util::echoWithSyslog(' - Start SystemLoader ...'.PHP_EOL);
-         $mikoPBX = new SystemLoader();
-         $mikoPBX->startMikoPBX();
-         break;
-     }
-}
+Util::echoWithSyslog(' - Start SystemLoader ...'.PHP_EOL);
+$mikoPBX = new SystemLoader();
+$mikoPBX->startMikoPBX();
 

@@ -1,22 +1,24 @@
 <?php
 return [
-    /*
- * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
+    'ex_Russian' => 'Русский',
+    'ex_English' => 'English(US)',
+    'ex_EnglishUK' => 'English(UK)',
+    'ex_Japanese' => '日本語',
+    'ex_Deutsch' => 'Deutsch',
+    'ex_Danish' => 'Dansk',
+    'ex_Spanish' => 'Espanol',
+    'ex_French' => 'Le français',
+    'ex_Italian' => 'Italiano',
+    'ex_Portuguese' => 'Português',
+    'ex_Ukrainian' => 'Український',
+    'ex_Vietnamese' => 'Tiếng việt',
+    'ex_Chinese' => '中国人',
+    'ex_Polish' => 'Polskie',
+    'ex_Dutch' => 'Nederlands',
+    'ex_Swedish' => 'Svenska',
+    'ex_Czech' => 'Čeština',
+    'ex_Turkish' => 'Türk',
+    'ex_Georgian' => 'ქართველი',
     'January' => 'Январь',
     'February' => 'Февраль',
     'March' => 'Март',
@@ -245,7 +247,7 @@ return [
     'or_CallThrough' => 'Направить звонок',
     'or_Provider' => 'через провайдера',
     'or_ValidationPleaseEnterRuleName' => 'Введите название правила',
-    'or_ValidateBeginPattern' => 'Ошибка в поле фильтрации номера. Оно может содержать цифры и знаки: ( | ) * # + [ ]. Максимальная длина значения 64 символа.',
+    'or_ValidateBeginPattern' => 'Ошибка в поле фильтрации номера. Оно может содержать цифры и знаки: (|) * # + [ ]. Максимальная длина значения 64 символа.|',
     'or_ValidateRestNumbers' => 'Минимальная длина номера должна быть больше 2-х',
     'or_ValidateTrimFromBegin' => 'Неверно указано значение для отсечения знаков в начале номера',
     'or_ValidatePrepend' => 'Ошибка при добавлении в начало номера. Поле может содержать цифры и знаки: * # +. Максимальная длина значения 20 символа.',
@@ -394,24 +396,6 @@ return [
     'ex_Extension' => 'Внутренний номер',
     'ex_Mobile' => 'Мобильный',
     'ex_Email' => 'Email',
-    'ex_Russian' => 'Русский',
-    'ex_English' => 'English(US)',
-    'ex_EnglishUK' => 'English(UK)',
-    'ex_Japanese' => '日本語',
-    'ex_Deutsch' => 'Deutsch',
-    'ex_Danish' => 'Dansk',
-    'ex_Spanish' => 'Espanol',
-    'ex_French' => 'Le français',
-    'ex_Italian' => 'Italiano',
-    'ex_Portuguese' => 'Português',
-    'ex_Ukrainian' => 'Український',
-    'ex_Vietnamese' => 'Tiếng việt',
-    'ex_Chinese' => '中国人',
-    'ex_Polish' => 'Polskie',
-    'ex_Dutch' => 'Nederlands',
-    'ex_Swedish' => 'Svenska',
-    'ex_Czech' => 'Čeština',
-    'ex_Turkish' => 'Türk',
     'ex_Status' => 'Статус',
     'ex_RegeneratePassword' => 'Создать новый пароль',
     'ex_ValidateForwardingToBeFilled' => 'В настройках маршрутизации не заполнен номер переадресации по таймауту',
@@ -578,7 +562,7 @@ return [
     'gs_PBXFeatureBlindTransfer' => 'Комбинация для безусловного перевода',
     'gs_PBXFeatureDigitTimeout' => 'Максимальный таймаут между цифрами при вводе добавочного номера (в миллисекундах)',
     'gs_PBXFeaturePickupExten' => 'Комбинация для перехвата входящих вызовов',
-    'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Время возврата вызова, если нет ответа после безусловного перевода',
+    'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Время возврата вызова, если нет ответа после консультативного перевода',
     'gs_PBXSplitAudioThread' => 'Сохранять записи в стерео режиме',
     'gs_PBXAllowGuestCalls' => 'Разрешить входящие звонки с любых серверов',
     'gs_SIPPort' => 'Порт SIP для регистрации телефонов на этой станции',
@@ -599,7 +583,7 @@ return [
     'gs_SSHAuthorizedKeys' => 'SSH Authorized Keys',
     'gs_SSHecdsaKey' => 'SSH ECDSA Key',
     'gs_SSHRsaKey' => 'SSH RSA Key',
-    'gs_SSHDssKey' => 'SSH DSS Key',
+    'gs_SSHDssKey' => 'Ключ SSH DSS',
     'gs_WebPort' => 'HTTP порт',
     'gs_WebHTTPSPort' => 'HTTPs порт',
     'gs_WEBHTTPSPrivateKey' => 'Приватный ключ HTTPs',
@@ -639,6 +623,8 @@ return [
     'gs_EnterDeleteAllPhrasePreText' => 'Для очистки системы введите в поле ввода следующую фразу:',
     'gs_EnterDeleteAllPhrase' => 'удалить всё',
     'gs_AllSettingsDeleted' => 'Все настройки удалены',
+    'gs_PBXRecordAnnouncementIn'=> 'Выберите предупреждение о записи разговоров для входящих вызовов',
+    'gs_PBXRecordAnnouncementOut'=> 'Выберите предупреждение о записи разговоров для исходящих вызовов',
     'ts_CurrentSettings' => 'Текущие настройки',
     'ts_SystemTime' => 'Системное время',
     'ts_TimeZone' => 'Таймзона',
@@ -861,10 +847,11 @@ return [
     'auth_SubmitButton' => 'Авторизоваться',
     'auth_WrongLoginPassword' => 'Ошибка авторизации',
     'auth_RememberMe' => 'Запомнить меня',
-    'log_CaptureMessage' => '<div class=\'ui message \'>Запустите сбор логов и выполните звонок или другое действие, приводящее к сбою. 
-<br>Система сформирует слепок состояния системы в виде архива.</div>',
-    'log_StartLogsCapture' => 'Начать сбор логов',
-    'log_StopLogsCapture' => 'Завершить сбор логов',
+    'log_CaptureMessage' => '<div class=\'ui message \'>Запустите сбор сетевых пакетов и выполните звонок или другое действие, приводящее к сбою. 
+<br>Система сохранит все пакеты проходящие в этот момент через сетевую карту для дальнейшего анализа.</div>',
+    'log_StartCapturePCAP' => 'Старт',
+    'log_StopCapturePCAP' => 'Остановить и скачать',
+    'log_DownloadLogs' => 'Скачать все системные логи',
     'dbg_NoDebugInformation' => 'Нет информации',
     'dbg_Header' => 'Отладочная информация',
     'f2b_Reason' => 'Причина',
@@ -931,8 +918,8 @@ return [
     'ext_AddNewExtension' => 'Загрузить новый модуль',
     'ext_CreateNewExtension' => 'Создать свой модуль',
     'ext_UploadError' => 'Ошибка закачки модуля',
-    'ext_UploadInProgress' => 'Загрузка модуля',
-    'ext_InstallationInProgress' => 'Установка модуля',
+    'ext_UploadInProgress' => 'Загрузка модуля …',
+    'ext_InstallationInProgress' => 'Установка модуля …',
     'ext_ModuleChangeStatusError' => 'Проблемы при изменении статуса модуля',
     'ext_InstallationError' => 'Ошибка при установке модуля',
     'DimmerWaitForPBXIsOnline' => 'Разрыв связи с ядром PBX …',
@@ -1062,7 +1049,7 @@ return [
     'sd_offset' => 'Офсет',
     'sd_lines' => 'Лимит',
     'sd_ShowLog' => 'Просмотр логов',
-    'sd_CapturePcap' => 'Захват логов',
+    'sd_CapturePcap' => 'Захват сетевых пакетов',
     'sd_DownloadPcapFileError' => 'Ошибка при формировании архива логов',
     'sd_SystemInformation' => 'Информация о системе',
     'sd_CollectingInfo' => 'Сбор служебной информации',
@@ -1071,4 +1058,5 @@ return [
     'msg_ErrorHeader' => 'Ошибка',
     'msg_WarningHeader' => 'Внимание',
     'msg_infoHeader' => 'Информация',
+
 ];

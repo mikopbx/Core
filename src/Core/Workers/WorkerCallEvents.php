@@ -31,6 +31,8 @@ class WorkerCallEvents extends WorkerBase
     protected bool  $record_calls       = true;
     protected bool  $split_audio_thread = false;
     public    array $checkChanHangupTransfer = [];
+    public const TIMOUT_CHANNEL_TUBE = 'CleanChannelTimout';
+
 
     /**
      * Инициирует запись разговора на канале.
@@ -123,6 +125,7 @@ class WorkerCallEvents extends WorkerBase
         $client->subscribe(self::class, [$this, 'callEventsWorker']);
         $client->subscribe(WorkerCdr::SELECT_CDR_TUBE, [$this, 'selectCDRWorker']);
         $client->subscribe(WorkerCdr::UPDATE_CDR_TUBE, [$this, 'updateCDRWorker']);
+        $client->subscribe(self::TIMOUT_CHANNEL_TUBE,  [$this, 'cleanTimeOutChannel']);
         $client->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
         $client->setErrorHandler([$this, 'errorHandler']);
 
@@ -158,12 +161,32 @@ class WorkerCallEvents extends WorkerBase
      */
     public function updateCDRWorker($tube): void
     {
-        $q    = $tube->getBody();
-        $data = json_decode($q, true);
+        $task    = $tube->getBody();
+        $data = json_decode($task, true);
         UpdateDataInDB::execute($data);
         $tube->reply(json_encode(true));
     }
 
+    /**
+     * Получения CDR к обработке.
+     *
+     * @param array | BeanstalkClient $tube
+     */
+    public function cleanTimeOutChannel($tube): void
+    {
+        $task        = $tube->getBody();
+        $taskData    = json_decode($task, true);
+        $channel     = $taskData['channel']??'';
+        $srcChannel  = $taskData['srcChannel']??'';
+        $this->am->SetVar($channel, 'TIMEOUT(absolute)', '0');
+        $this->am->SetVar($srcChannel, "MASTER_CHANNEL(M_DIALSTATUS)", 'ANSWER');
+        // Перестрахова на случай с перехватом звонка через *8.
+        $timeoutChannel = $this->am->GetVar($srcChannel, 'MASTER_CHANNEL(M_TIMEOUT_CHANNEL)', null, false);
+        if(is_string($timeoutChannel) && !empty($timeoutChannel)){
+            $this->am->SetVar($timeoutChannel, "TIMEOUT(absolute)", '0');
+        }
+        $tube->reply(json_encode(true));
+    }
     /**
      * @param array | BeanstalkClient $tube
      */

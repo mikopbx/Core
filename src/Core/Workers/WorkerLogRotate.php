@@ -29,7 +29,6 @@ use MikoPBX\Core\System\PBX;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
-use Throwable;
 
 class WorkerLogRotate extends WorkerBase
 {
@@ -39,21 +38,21 @@ class WorkerLogRotate extends WorkerBase
      */
     public function start($params): void
     {
+        $cacheKey =  'Workers:WorkerLogRotate:lastProcessing';
         $managedCache = $this->di->get(ManagedCacheProvider::SERVICE_NAME);
-        $lastLogRotate = $managedCache->get('lastCoreWorkerLogRotateProcessing');
+        $lastLogRotate = $managedCache->get($cacheKey);
         if ($lastLogRotate===null){
-            //System Logs
+            // System Logs
             NatsConf::logRotate();
             PHPConf::rotateLog();
             PBX::logRotate();
-            SyslogConf::rotatePbxLog();
 
-            //Modules Logs
+            // Modules Logs
             $plugins = PbxExtensionModules::getEnabledModulesArray();
             foreach ($plugins as $plugin) {
                 $this->logRotate($plugin['uniqid']);
             }
-            $managedCache->set('lastCoreWorkerLogRotateProcessing', time(), 3600);
+            $managedCache->set($cacheKey, time(), 3600);
         }
     }
 

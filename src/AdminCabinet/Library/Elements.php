@@ -425,6 +425,7 @@ class Elements extends Injectable
             'fr'      => $this->translation->_('ex_French'),
             'pt'      => $this->translation->_('ex_Portuguese'),
             'uk'      => $this->translation->_('ex_Ukrainian'),
+            'ka'      => $this->translation->_('ex_Georgian'),
             'it'      => $this->translation->_('ex_Italian'),
             'da'      => $this->translation->_('ex_Danish'),
             'pl'      => $this->translation->_('ex_Polish'),

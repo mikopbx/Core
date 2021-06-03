@@ -17,35 +17,35 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-declare(strict_types=1);
+namespace MikoPBX\Core\System\Configs;
 
-namespace MikoPBX\Common\Providers;
+use MikoPBX\Core\System\Processes;
+use Phalcon\Di\Injectable;
 
-
-use MikoPBX\AdminCabinet\Plugins\CacheCleanerPlugin;
-use MikoPBX\Core\System\BeanstalkClient;
-use Phalcon\Di\DiInterface;
-use Phalcon\Di\ServiceProviderInterface;
-
-/**
- *  We register the beansTalk connection for send cache clean events from backend to frontend
- */
-class BeanstalkConnectionCacheProvider implements ServiceProviderInterface
+class RedisConf extends Injectable
 {
-    public const SERVICE_NAME = 'beanstalkConnectionCache';
+    public const PROC_NAME = 'redis-server';
+
+    public const CONF_FILE = '/etc/redis.conf';
 
     /**
-     * Register beanstalkConnectionCache service provider
-     *
-     * @param \Phalcon\Di\DiInterface $di
+     * Restarts Redis server
      */
-    public function register(DiInterface $di): void
+    public function reStart(): void
     {
-        $di->setShared(
-            self::SERVICE_NAME,
-            function () {
-                return new BeanstalkClient(CacheCleanerPlugin::class);
-            }
-        );
+        $this->configure();
+        Processes::safeStartDaemon(self::PROC_NAME, self::CONF_FILE);
+
+    }
+
+    /**
+     * Setup redis daemon conf file
+     */
+    private function configure(): void
+    {
+        $config = $this->getDI()->get('config')->redis;
+        $conf   = "bind {$config->host}" . PHP_EOL;
+        $conf   .= "port {$config->port}" . PHP_EOL;
+        file_put_contents(self::CONF_FILE, $conf);
     }
 }

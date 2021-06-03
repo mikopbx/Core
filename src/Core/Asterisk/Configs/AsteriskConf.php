@@ -21,15 +21,13 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 
 use MikoPBX\Core\System\Util;
-use MikoPBX\Modules\Config\ConfigClass;
 
-class AsteriskConf extends ConfigClass
+class AsteriskConf extends CoreConfigClass
 {
     protected string $description = 'asterisk.conf';
 
     protected function generateConfigProtected(): void
     {
-
         $lang = $this->generalSettings['PBXLanguage'];
 
         $conf = "[directories]\n" .
@@ -42,6 +40,7 @@ class AsteriskConf extends ConfigClass
             "astdbdir => {$this->config->path('asterisk.astdbdir')}\n" .
             "astlogdir => {$this->config->path('asterisk.astlogdir')}\n" .
             "astspooldir => {$this->config->path('asterisk.astspooldir')}\n" .
+            "astdatadir => {$this->config->path('asterisk.astvarlibdir')}\n" .
             "\n" .
             "\n" .
             "[options]\n" .
