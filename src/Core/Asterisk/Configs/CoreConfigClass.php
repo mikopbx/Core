@@ -245,6 +245,16 @@ abstract class CoreConfigClass extends Injectable implements AsteriskConfigInter
     }
 
     /**
+     * Prepares additional rules for [internal-users] context section in the extensions.conf file
+     *
+     * @return string
+     */
+    public function extensionGenInternalUsersPreDial(): string
+    {
+        return '';
+    }
+
+    /**
      * Prepares additional includes for [internal-transfer] context section in the extensions.conf file
      *
      * @return string

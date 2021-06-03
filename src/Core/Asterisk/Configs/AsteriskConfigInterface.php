@@ -37,6 +37,7 @@ interface AsteriskConfigInterface
     public const GET_INCLUDE_INTERNAL = 'getIncludeInternal';
 
     public const EXTENSION_GEN_INTERNAL = 'extensionGenInternal';
+    public const EXTENSION_GEN_INTERNAL_USERS_PRE_DIAL = 'extensionGenInternalUsersPreDial';
 
     public const GENERATE_INCOMING_ROUT_BEFORE_DIAL = 'generateIncomingRoutBeforeDial';
 
@@ -91,6 +92,13 @@ interface AsteriskConfigInterface
      * @return string
      */
     public function extensionGenInternal(): string;
+
+    /**
+     * Prepares additional rules for [internal-users] context section in the extensions.conf file
+     *
+     * @return string
+     */
+    public function extensionGenInternalUsersPreDial(): string;
 
     /**
      * Prepares additional includes for [internal-transfer] context section in the extensions.conf file

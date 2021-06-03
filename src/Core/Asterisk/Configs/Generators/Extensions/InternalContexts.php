@@ -201,11 +201,15 @@ class InternalContexts extends CoreConfigClass
      */
     private function generateAdditionalModulesInternalContext(): string
     {
-        $conf = '';
-        $conf .= $this->hookModulesMethod(CoreConfigClass::GET_INCLUDE_INTERNAL);
+        $conf = $this->hookModulesMethod(CoreConfigClass::GET_INCLUDE_INTERNAL);
         $conf .= $this->hookModulesMethod(CoreConfigClass::EXTENSION_GEN_INTERNAL);
 
         return $conf;
+    }
+
+    private function generateAdditionalModulesInternalUsersContext():string
+    {
+        return $this->hookModulesMethod(CoreConfigClass::EXTENSION_GEN_INTERNAL_USERS_PRE_DIAL);
     }
 
     /**
@@ -222,8 +226,10 @@ class InternalContexts extends CoreConfigClass
 
         $conf .= 'same => n,Gosub(${ISTRANSFER}dial,${EXTEN},1)' . "\n\t";
         // Проверим, существует ли такой пир.
-
         $conf .= 'same => n,ExecIf($["${PJSIP_ENDPOINT(${EXTEN},auth)}x" == "x"]?Goto(internal-num-undefined,${EXTEN},1))' . " \n\t";
+
+        $conf .= $this->generateAdditionalModulesInternalUsersContext();
+
         $conf .= 'same => n,ExecIf($["${DEVICE_STATE(' . $this->technology . '/${EXTEN})}" == "BUSY"]?Set(DIALSTATUS=BUSY))' . " \n\t";
         $conf .= 'same => n,GotoIf($["${DEVICE_STATE(' . $this->technology . '/${EXTEN})}" == "BUSY"]?fw_start)' . " \n\t";
 
