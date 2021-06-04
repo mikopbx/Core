@@ -306,10 +306,7 @@ DROP TABLE  {$tableName}";
      */
     private function isTableStructureNotEqual($currentTableStructure, $newTableStructure): bool
     {
-        Util::echoWithSyslog(" - isTableStructureNotEqual:  current: ".count($currentTableStructure).' new '.count($newTableStructure));
-
-
-        //1. Check fields count
+        // 1. Check fields count
         if (count($currentTableStructure) !== count($newTableStructure)) {
             return true;
         }
@@ -333,7 +330,7 @@ DROP TABLE  {$tableName}";
             'hasDefault',
         ];
 
-        //2. Check fields types
+        // 2. Check fields types
         foreach ($newTableStructure as $index => $newField) {
             $oldField = $currentTableStructure[$index];
             foreach ($comparedSettings as $compared_setting) {
