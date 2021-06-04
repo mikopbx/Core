@@ -47,6 +47,7 @@ class PbxExtensionState extends Injectable
 
     public function __construct(string $moduleUniqueID)
     {
+        $this->configClass    = null;
         $this->messages       = [];
         $this->moduleUniqueID = $moduleUniqueID;
         $this->modulesRoot    = $this->getDI()->getShared('config')->path('core.modulesDir');

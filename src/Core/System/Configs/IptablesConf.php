@@ -32,11 +32,16 @@ class IptablesConf extends Injectable
     private Fail2BanConf $fail2ban;
     private string $sipPort;
     private string $rtpPorts;
+    private string $redisPort;
+    private string $beanstalkPort;
     /**
      * Firewall constructor.
      */
     public function __construct()
     {
+        $this->redisPort       = $this->getDI()->get('config')->redis->port;
+        $this->beanstalkPort   = $this->getDI()->get('config')->beanstalk->port;
+
         $firewall_enable       = PbxSettings::getValueByKey('PBXFirewallEnabled');
         $this->firewall_enable = ($firewall_enable === '1');
 
@@ -213,6 +218,8 @@ class IptablesConf extends Injectable
             }
         }
         // Allow all local connections
+        $arr_command[] = $this->getIptablesInputRule($this->redisPort, '-p tcp -s 127.0.0.1 ');
+        $arr_command[] = $this->getIptablesInputRule($this->beanstalkPort, '-p tcp -s 127.0.0.1 ');
         $arr_command[] = $this->getIptablesInputRule('', '-s 127.0.0.1 ');
         unset($db_data, $sipHosts, $result, $hashArray);
     }
