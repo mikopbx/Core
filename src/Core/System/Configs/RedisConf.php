@@ -20,6 +20,7 @@
 namespace MikoPBX\Core\System\Configs;
 
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
 
 class RedisConf extends Injectable
@@ -36,6 +37,13 @@ class RedisConf extends Injectable
         $this->configure();
         Processes::safeStartDaemon(self::PROC_NAME, self::CONF_FILE);
 
+        $redisCli = Util::which('redis-cli');
+        for ($i=1; $i <= 60; $i++){
+            if(Processes::mwExec("$redisCli info") === 0){
+                break;
+            }
+            sleep(1);
+        }
     }
 
     /**
