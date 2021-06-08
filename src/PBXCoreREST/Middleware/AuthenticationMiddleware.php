@@ -88,7 +88,7 @@ class AuthenticationMiddleware implements MiddlewareInterface
             foreach ($additionalRoutesFromModule as $additionalRoute) {
                 $noAuth = $additionalRoute[5] ?? false;
                 if ($noAuth === true
-                    && stripos($pattern, $additionalRoute[2]) !== 0) {
+                    && stripos($pattern, $additionalRoute[2]) === 0) {
                     return true; // Allow request without authentication
                 }
             }
