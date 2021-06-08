@@ -62,7 +62,7 @@ class FirewallRules extends ModelsBase
      * @Column(type="string", nullable=true){'allow','block'}
      */
     public ?string $action = 'allow';
-
+    
     /**
      * @Column(type="string", nullable=true){'SIP','WEB','SSH','AMI','CTI','ICMP'}
      */
@@ -71,7 +71,18 @@ class FirewallRules extends ModelsBase
     /**
      * @Column(type="string", nullable=true)
      */
+    public ?string $portFromKey = '';
+
+    /**
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $portToKey = '';
+    
+    /**
+     * @Column(type="string", nullable=true)
+     */
     public ?string $description = '';
+    
 
     public static function getDefaultRules(): array
     {
@@ -89,17 +100,47 @@ class FirewallRules extends ModelsBase
         $template = [
             'SIP'  => [
                 'rules'     => [
-                    ['portfrom' => $defaultSIP, 'portto' => $defaultSIP, 'protocol' => 'udp'],
-                    ['portfrom' => $defaultSIP, 'portto' => $defaultSIP, 'protocol' => 'tcp'],
-                    ['portfrom' => $defaultRTPFrom, 'portto' => $defaultRTPTo, 'protocol' => 'udp'],
+                    [
+                        'portfrom'    => $defaultSIP,
+                        'portto'      => $defaultSIP,
+                        'protocol'    => 'udp',
+                        'portFromKey' => 'SIPPort',
+                        'portToKey'   => 'SIPPort',
+                    ],
+                    [
+                        'portfrom'    => $defaultSIP,
+                        'portto'      => $defaultSIP,
+                        'protocol'    => 'tcp',
+                        'portFromKey' => 'SIPPort',
+                        'portToKey'   => 'SIPPort',
+                    ],
+                    [
+                        'portfrom'    => $defaultRTPFrom,
+                        'portto'      => $defaultRTPTo,
+                        'protocol'    => 'udp',
+                        'portFromKey' => 'RTPPortFrom',
+                        'portToKey'   => 'RTPPortTo',
+                    ],
                 ],
                 'action'    => 'allow',
                 'shortName' => 'SIP & RTP',
             ],
             'WEB'  => [
                 'rules'     => [
-                    ['portfrom' => $defaultWeb, 'portto' => $defaultWeb, 'protocol' => 'tcp'],
-                    ['portfrom' => $defaultWebHttps, 'portto' => $defaultWebHttps, 'protocol' => 'tcp'],
+                    [
+                        'portfrom'    => $defaultWeb,
+                        'portto'      => $defaultWeb,
+                        'protocol'    => 'tcp',
+                        'portFromKey' => 'WEBPort',
+                        'portToKey'   => 'WEBPort',
+                    ],
+                    [
+                        'portfrom'    => $defaultWebHttps,
+                        'portto'      => $defaultWebHttps,
+                        'protocol'    => 'tcp',
+                        'portFromKey' => 'WEBHTTPSPort',
+                        'portToKey'   => 'WEBHTTPSPort',
+                    ],
                 ],
                 'action'    => 'allow',
                 'shortName' => 'WEB',
@@ -107,22 +148,46 @@ class FirewallRules extends ModelsBase
             ],
             'SSH'  => [
                 'rules'     => [
-                    ['portfrom' => $defaultSSH, 'portto' => $defaultSSH, 'protocol' => 'tcp'],
+                    [
+                        'portfrom'    => $defaultSSH,
+                        'portto'      => $defaultSSH,
+                        'protocol'    => 'tcp',
+                        'portFromKey' => 'SSHPort',
+                        'portToKey'   => 'SSHPort',
+                    ],
                 ],
                 'action'    => 'allow',
                 'shortName' => 'SSH',
             ],
             'AMI'  => [
                 'rules'     => [
-                    ['portfrom' => $defaultAMI, 'portto' => $defaultAMI, 'protocol' => 'tcp'],
+                    [
+                        'portfrom'    => $defaultAMI,
+                        'portto'      => $defaultAMI,
+                        'protocol'    => 'tcp',
+                        'portFromKey' => 'AMIPort',
+                        'portToKey'   => 'AMIPort',
+                    ],
                 ],
                 'action'    => 'allow',
                 'shortName' => 'AMI',
             ],
             'AJAM' => [
                 'rules'     => [
-                    ['portfrom' => $defaultAJAM, 'portto' => $defaultAJAM, 'protocol' => 'tcp'],
-                    ['portfrom' => $defaultAJAMTLS, 'portto' => $defaultAJAMTLS, 'protocol' => 'tcp'],
+                    [
+                        'portfrom'    => $defaultAJAM,
+                        'portto'      => $defaultAJAM,
+                        'protocol'    => 'tcp',
+                        'portFromKey' => 'AJAMPort',
+                        'portToKey'   => 'AJAMPort',
+                    ],
+                    [
+                        'portfrom'    => $defaultAJAMTLS,
+                        'portto'      => $defaultAJAMTLS,
+                        'protocol'    => 'tcp',
+                        'portFromKey' => 'AJAMPortTLS',
+                        'portToKey'   => 'AJAMPortTLS',
+                    ],
                 ],
                 'action'    => 'allow',
                 'shortName' => 'AJAM',
@@ -138,102 +203,42 @@ class FirewallRules extends ModelsBase
 
 
         //Add modules firewall rules
-        $configClassObj = new ConfigClass();
+        $configClassObj  = new ConfigClass();
         $additionalRules = $configClassObj->hookModulesMethodWithArrayResult(ConfigClass::GET_DEFAULT_FIREWALL_RULES);
-        foreach ($additionalRules as $additionalRuleFromModule){
-            if ($additionalRuleFromModule!==[]){
+        foreach ($additionalRules as $additionalRuleFromModule) {
+            if ($additionalRuleFromModule !== []) {
                 $additionalRuleFromModule = array_change_key_case($additionalRuleFromModule, CASE_UPPER);
-                foreach ($additionalRuleFromModule as $key=>$rule){
-                    $template[$key]=$rule;
+                foreach ($additionalRuleFromModule as $key => $rule) {
+                    $template[$key] = $rule;
                 }
             }
         }
+
         return $template;
     }
 
     /**
-     * Обновляет порты в записях, эта функция вызывается при записи PBXSettings
+     * Updates firewall rules after change PBXSettings records
      *
-     * @param \MikoPBX\Common\Models\PbxSettings $enity
+     * @param \MikoPBX\Common\Models\PbxSettings $entity
      */
-    public static function updatePorts(PbxSettings $enity): void
+    public static function updatePorts(PbxSettings $entity): void
     {
-        switch ($enity->key) {
-            case 'RTPPortFrom':
-                $defaultSIP = PbxSettings::getValueByKey('SIPPort');
-                $rules      = self::findByCategory('SIP');
-                foreach ($rules as $rule) {
-                    if ($rule->portfrom === $defaultSIP) {
-                        continue;
-                    }
-                    $rule->portfrom = $enity->value;
-                    $rule->update();
-                }
-                break;
-            case 'RTPPortTo':
-                $defaultSIP = PbxSettings::getValueByKey('SIPPort');
-                $rules      = self::findByCategory('SIP');
-                foreach ($rules as $rule) {
-                    if ($rule->portfrom === $defaultSIP) {
-                        continue;
-                    }
-                    $rule->portto = $enity->value;
-                    $rule->update();
-                }
-                break;
-            case 'SIPPort':
-                $defaultRTP = PbxSettings::getValueByKey('RTPPortFrom');
-                $rules      = self::findByCategory('SIP');
-                foreach ($rules as $rule) {
-                    if ($rule->portfrom === $defaultRTP) {
-                        continue;
-                    }
-                    $rule->portfrom = $enity->value;
-                    $rule->portto   = $enity->value;
-                    $rule->update();
-                }
-                break;
-            case 'AMIPort':
-            case 'AJAMPort':
-                $rules = self::findByCategory('AMI');
-                foreach ($rules as $rule) {
-                    $rule->portfrom = $enity->value;
-                    $rule->portto   = $enity->value;
-                    $rule->update();
-                }
-                break;
-            case 'WEBPort':
-                $defaultWEBHTTPSPort = PbxSettings::getValueByKey('WEBHTTPSPort');
-                $rules               = self::findByCategory('WEB');
-                foreach ($rules as $rule) {
-                    if ($rule->portfrom === $defaultWEBHTTPSPort) {
-                        continue;
-                    }
-                    $rule->portfrom = $enity->value;
-                    $rule->portto   = $enity->value;
-                    $rule->update();
-                }
-                break;
-            case 'WEBHTTPSPort':
-                $defaultWEBPort = PbxSettings::getValueByKey('WEBPort');
-                $rules          = self::findByCategory('WEB');
-                foreach ($rules as $rule) {
-                    if ($rule->portfrom === $defaultWEBPort) {
-                        continue;
-                    }
-                    $rule->portfrom = $enity->value;
-                    $rule->portto   = $enity->value;
-                    $rule->update();
-                }
-                break;
-            case 'SSHPort':
-                $rules = self::findByCategory('SSH');
-                foreach ($rules as $rule) {
-                    $rule->portfrom = $enity->value;
-                    $rule->portto   = $enity->value;
-                    $rule->update();
-                }
-                break;
+        $conditions = [
+            'conditions'=>'portFromKey = :key: OR portToKey = :key:',
+            'bind'=>[
+                'key'=>$entity->key
+            ]
+        ];
+        $rules   = self::find($conditions);
+        foreach ($rules as $rule){
+            if ($rule->portFromKey === $entity->key){
+                $rule->portfrom = $entity->value;
+            }
+            if ($rule->portToKey === $entity->key){
+                $rule->portto = $entity->value;
+            }
+            $rule->update();
         }
     }
 

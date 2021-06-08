@@ -85,6 +85,18 @@ const generalSettingsModify = {
 					type: 'integer[1..65535]',
 					prompt: globalTranslate.gs_ValidateWEBPortOutOfRange,
 				},
+				{
+					type: 'different[WEBHTTPSPort]',
+					prompt: globalTranslate.gs_ValidateWEBHTTPSPortNotEqualToWEBPort,
+				},
+				{
+					type: 'different[AJAMPortTLS]',
+					prompt: globalTranslate.gs_ValidateWEBPortNotEqualToAjamPort,
+				},
+				{
+					type: 'different[AJAMPort]',
+					prompt: globalTranslate.gs_ValidateWEBPortNotEqualToAjamTLSPort,
+				},
 			],
 		},
 		WEBHTTPSPort: {
@@ -97,6 +109,27 @@ const generalSettingsModify = {
 				{
 					type: 'different[WEBPort]',
 					prompt: globalTranslate.gs_ValidateWEBHTTPSPortNotEqualToWEBPort,
+				},
+				{
+					type: 'different[AJAMPortTLS]',
+					prompt: globalTranslate.gs_ValidateWEBHTTPSPortNotEqualToAjamPort,
+				},
+				{
+					type: 'different[AJAMPort]',
+					prompt: globalTranslate.gs_ValidateWEBHTTPSPortNotEqualToAjamTLSPort,
+				},
+			],
+		},
+		AJAMPort: {
+			identifier: 'AJAMPort',
+			rules: [
+				{
+					type: 'integer[1..65535]',
+					prompt: globalTranslate.gs_ValidateAJAMPortOutOfRange,
+				},
+				{
+					type: 'different[AJAMPortTLS]',
+					prompt: globalTranslate.gs_ValidateAJAMPortOutOfRange,
 				},
 			],
 		},
