@@ -19,9 +19,11 @@
 
 const systemDiagnostic = {
 	$tabMenuItems: $('#system-diagnostic-menu .item'),
+	$mainContainer: $('#main-content-container'),
 	initialize() {
 		systemDiagnostic.$tabMenuItems.tab();
 		systemDiagnostic.$tabMenuItems.tab('change tab', 'show-log');
+		systemDiagnostic.$mainContainer.removeClass('container');
 	},
 };
 
