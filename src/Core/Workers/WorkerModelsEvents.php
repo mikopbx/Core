@@ -828,6 +828,7 @@ class WorkerModelsEvents extends WorkerBase
      */
     public function reloadFirewall(): void
     {
+        IptablesConf::updateFirewallRules();
         IptablesConf::reloadFirewall();
     }
 
