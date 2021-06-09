@@ -1055,4 +1055,8 @@ Può essere attivato una volta, dopo di che il coupon viene riscattato.
     'log_StartCapturePCAP' => 'Inizio',
     'gs_PBXRecordAnnouncementIn' => 'Seleziona avviso di registrazione delle chiamate per le chiamate in arrivo',
     'gs_PBXRecordAnnouncementOut' => 'Seleziona avviso di registrazione delle chiamate per le chiamate in uscita',
+    'gs_ValidateWEBHTTPSPortNotEqualToAjamTLSPort' => 'Le porte HTTPS e AJAM devono essere diverse',
+    'gs_ValidateWEBHTTPSPortNotEqualToAjamPort' => 'Le porte HTTPS e AJAM devono essere diverse',
+    'gs_ValidateWEBPortNotEqualToAjamTLSPort' => 'Le porte HTTP e AJAM devono essere diverse',
+    'gs_ValidateWEBPortNotEqualToAjamPort' => 'Le porte HTTP e AJAM devono essere diverse',
 ];

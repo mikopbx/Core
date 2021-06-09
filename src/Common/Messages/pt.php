@@ -1055,4 +1055,8 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'log_StartCapturePCAP' => 'Começar',
     'gs_PBXRecordAnnouncementIn' => 'Selecione o alerta de gravação de chamadas para chamadas recebidas',
     'gs_PBXRecordAnnouncementOut' => 'Selecione o alerta de gravação de chamadas para chamadas efetuadas',
+    'gs_ValidateWEBHTTPSPortNotEqualToAjamTLSPort' => 'As portas HTTPS e AJAM devem ser diferentes',
+    'gs_ValidateWEBHTTPSPortNotEqualToAjamPort' => 'As portas HTTPS e AJAM devem ser diferentes',
+    'gs_ValidateWEBPortNotEqualToAjamTLSPort' => 'As portas HTTP e AJAM devem ser diferentes',
+    'gs_ValidateWEBPortNotEqualToAjamPort' => 'As portas HTTP e AJAM devem ser diferentes',
 ];

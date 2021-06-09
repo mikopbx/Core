@@ -1058,4 +1058,8 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
     'log_StartCapturePCAP' => 'Start',
     'gs_PBXRecordAnnouncementIn' => 'Wählen Sie Anrufaufzeichnungsalarm für eingehende Anrufe',
     'gs_PBXRecordAnnouncementOut' => 'Wählen Sie Anrufaufzeichnungsalarm für ausgehende Anrufe',
+    'gs_ValidateWEBHTTPSPortNotEqualToAjamTLSPort' => 'HTTPS- und AJAM-Ports müssen unterschiedlich sein',
+    'gs_ValidateWEBHTTPSPortNotEqualToAjamPort' => 'HTTPS- und AJAM-Ports müssen unterschiedlich sein',
+    'gs_ValidateWEBPortNotEqualToAjamTLSPort' => 'HTTP- und AJAM-Ports müssen unterschiedlich sein',
+    'gs_ValidateWEBPortNotEqualToAjamPort' => 'HTTP- und AJAM-Ports müssen unterschiedlich sein',
 ];
