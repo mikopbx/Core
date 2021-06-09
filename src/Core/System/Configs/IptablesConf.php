@@ -234,7 +234,7 @@ class IptablesConf extends Injectable
         $portNames = array_keys($portSet);
 
         $conditions = [
-            'conditions' => 'portFromKey = IN ({ids:array}) OR portToKey = IN ({ids:array})',
+            'conditions' => 'portFromKey IN ({ids:array}) OR portToKey IN ({ids:array})',
             'bind'       => [
                 'ids' => $portNames,
             ],

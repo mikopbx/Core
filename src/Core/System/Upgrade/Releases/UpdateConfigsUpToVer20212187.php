@@ -30,7 +30,7 @@ use Phalcon\Config as ConfigAlias;
 
 class UpdateConfigsUpToVer20212187 extends Injectable implements UpgradeSystemConfigInterface
 {
-    public const PBX_VERSION = '20212187';
+    public const PBX_VERSION = '2021.2.187';
 
     private ConfigAlias $config;
     private MikoPBXConfig $mikoPBXConfig;
