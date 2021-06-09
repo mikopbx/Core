@@ -22,6 +22,7 @@ namespace MikoPBX\AdminCabinet\Controllers;
 use MikoPBX\AdminCabinet\Forms\GeneralSettingsEditForm;
 use MikoPBX\Common\Models\Codecs;
 use MikoPBX\Common\Models\PbxSettings;
+use Phalcon\Mvc\Model;
 
 class GeneralSettingsController extends BaseController
 {
@@ -56,12 +57,6 @@ class GeneralSettingsController extends BaseController
         $pbxSettings = PbxSettings::getDefaultArrayValues();
         $this->db->begin();
         foreach ($pbxSettings as $key => $value) {
-            $record = PbxSettings::findFirstByKey($key);
-            if ($record === null) {
-                $record        = new PbxSettings();
-                $record->key   = $key;
-                $record->value = $value;
-            }
 
             switch ($key) {
                 case 'PBXRecordCalls':
@@ -72,35 +67,47 @@ class GeneralSettingsController extends BaseController
                 case 'PBXSplitAudioThread':
                 case 'PBXAllowGuestCalls':
                 case '***ALL CHECK BOXES ABOVE***':
-                    $record->value = ($data[$key] === 'on') ? '1' : '0';
+                    $newValue = ($data[$key] === 'on') ? '1' : '0';
                     break;
                 case 'SSHPassword':
                     //Если отправили пароль по-умолчанию, то сделаем его равным паролю WEB
                     if ($data[$key] === $pbxSettings[$key]) {
-                        $record->value = $data['WebAdminPassword'];
+                        $newValue = $data['WebAdminPassword'];
                     } else {
-                        $record->value = $data[$key];
+                        $newValue = $data[$key];
                     }
                     break;
                 case 'SendMetrics':
-                    $record->value = ($data[$key] === 'on') ? '1' : '0';
-                    $this->session->set('SendMetrics', $record->value);
+                    $newValue = ($data[$key] === 'on') ? '1' : '0';
+                    $this->session->set('SendMetrics', $newValue);
                     break;
                 case 'PBXFeatureTransferDigitTimeout':
-                    $record->value = ceil((int)$data['PBXFeatureDigitTimeout']/1000);
+                    $newValue = ceil((int)$data['PBXFeatureDigitTimeout']/1000);
                     break;
                 default:
-                    if (array_key_exists($key, $data)) {
-                        $record->value = $data[$key];
-                    }
+                    $newValue = $data[$key];
             }
-            if ($record->save() === false) {
-                $errors = $record->getMessages();
-                $this->flash->warning(implode('<br>', $errors));
-                $this->view->success = false;
-                $this->db->rollback();
 
-                return;
+            if (array_key_exists($key, $data)) {
+                $record = PbxSettings::findFirstByKey($key);
+                if ($record === null) {
+                    $record        = new PbxSettings();
+                    $record->key   = $key;
+                    $record->value = $newValue;
+                } elseif ($record->key === $key
+                    && $record->value === $newValue) {
+                    continue;
+                }
+                $record->value = $newValue;
+
+                if ($record->save() === false) {
+                    $errors = $record->getMessages();
+                    $this->flash->warning(implode('<br>', $errors));
+                    $this->view->success = false;
+                    $this->db->rollback();
+
+                    return;
+                }
             }
         }
 

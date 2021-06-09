@@ -1055,4 +1055,8 @@ return [
     'log_StartCapturePCAP' => '开始',
     'gs_PBXRecordAnnouncementIn' => '选择来电记录提醒',
     'gs_PBXRecordAnnouncementOut' => '选择拨出电话的通话记录警报',
+    'gs_ValidateWEBHTTPSPortNotEqualToAjamTLSPort' => 'HTTPS 和 AJAM 端口必须不同',
+    'gs_ValidateWEBHTTPSPortNotEqualToAjamPort' => 'HTTPS 和 AJAM 端口必须不同',
+    'gs_ValidateWEBPortNotEqualToAjamTLSPort' => 'HTTP 和 AJAM 端口必须不同',
+    'gs_ValidateWEBPortNotEqualToAjamPort' => 'HTTP 和 AJAM 端口必须不同',
 ];

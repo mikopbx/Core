@@ -1057,4 +1057,8 @@ It can be activated once, after which the coupon becomes redeemed.
     'log_StartCapturePCAP' => 'Start',
     'gs_PBXRecordAnnouncementIn' => 'Select call recording alert for incoming calls',
     'gs_PBXRecordAnnouncementOut' => 'Select call recording alert for outgoing calls',
+    'gs_ValidateWEBHTTPSPortNotEqualToAjamTLSPort' => 'HTTPS and AJAM ports must be different',
+    'gs_ValidateWEBHTTPSPortNotEqualToAjamPort' => 'HTTPS and AJAM ports must be different',
+    'gs_ValidateWEBPortNotEqualToAjamTLSPort' => 'HTTP and AJAM ports must be different',
+    'gs_ValidateWEBPortNotEqualToAjamPort' => 'HTTP and AJAM ports must be different',
 ];

@@ -1055,4 +1055,8 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'log_StartCapturePCAP' => 'Start',
     'gs_PBXRecordAnnouncementIn' => 'Välj varning för samtalsinspelning för inkommande samtal',
     'gs_PBXRecordAnnouncementOut' => 'Välj varning för samtalsinspelning för utgående samtal',
+    'gs_ValidateWEBHTTPSPortNotEqualToAjamTLSPort' => 'HTTPS- och AJAM-portar måste vara olika',
+    'gs_ValidateWEBHTTPSPortNotEqualToAjamPort' => 'HTTPS- och AJAM-portar måste vara olika',
+    'gs_ValidateWEBPortNotEqualToAjamTLSPort' => 'HTTP- och AJAM-portar måste vara olika',
+    'gs_ValidateWEBPortNotEqualToAjamPort' => 'HTTP- och AJAM-portar måste vara olika',
 ];

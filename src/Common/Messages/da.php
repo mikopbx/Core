@@ -1055,4 +1055,8 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'log_StartCapturePCAP' => 'Start',
     'gs_PBXRecordAnnouncementIn' => 'Vælg alarm for opkaldsoptagelse for indgående opkald',
     'gs_PBXRecordAnnouncementOut' => 'Vælg alarm for opkaldsoptagelse for udgående opkald',
+    'gs_ValidateWEBHTTPSPortNotEqualToAjamTLSPort' => 'HTTPS- og AJAM-porte skal være forskellige',
+    'gs_ValidateWEBHTTPSPortNotEqualToAjamPort' => 'HTTPS- og AJAM-porte skal være forskellige',
+    'gs_ValidateWEBPortNotEqualToAjamTLSPort' => 'HTTP- og AJAM-porte skal være forskellige',
+    'gs_ValidateWEBPortNotEqualToAjamPort' => 'HTTP- og AJAM-porte skal være forskellige',
 ];

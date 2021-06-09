@@ -34,21 +34,22 @@ class IptablesConf extends Injectable
     private string $rtpPorts;
     private string $redisPort;
     private string $beanstalkPort;
+
     /**
      * Firewall constructor.
      */
     public function __construct()
     {
-        $this->redisPort       = $this->getDI()->get('config')->redis->port;
-        $this->beanstalkPort   = $this->getDI()->get('config')->beanstalk->port;
+        $this->redisPort     = $this->getDI()->get('config')->redis->port;
+        $this->beanstalkPort = $this->getDI()->get('config')->beanstalk->port;
 
         $firewall_enable       = PbxSettings::getValueByKey('PBXFirewallEnabled');
         $this->firewall_enable = ($firewall_enable === '1');
 
-        $this->sipPort         = PbxSettings::getValueByKey('SIPPort');
-        $defaultRTPFrom        = PbxSettings::getValueByKey('RTPPortFrom');
-        $defaultRTPTo          = PbxSettings::getValueByKey('RTPPortTo');
-        $this->rtpPorts        = "{$defaultRTPFrom}:{$defaultRTPTo}";
+        $this->sipPort  = PbxSettings::getValueByKey('SIPPort');
+        $defaultRTPFrom = PbxSettings::getValueByKey('RTPPortFrom');
+        $defaultRTPTo   = PbxSettings::getValueByKey('RTPPortTo');
+        $this->rtpPorts = "{$defaultRTPFrom}:{$defaultRTPTo}";
 
         $this->fail2ban = new Fail2BanConf();
     }
@@ -189,7 +190,7 @@ class IptablesConf extends Injectable
             if ('0.0.0.0/0' === $network_filter->permit && $rule->action !== 'allow') {
                 continue;
             }
-            $other_data  = "-p {$rule->protocol}";
+            $other_data = "-p {$rule->protocol}";
             $other_data .= ' -s ' . $network_filter->permit;
             if ($rule->protocol === 'icmp') {
                 $port       = '';
@@ -200,21 +201,21 @@ class IptablesConf extends Injectable
         }
 
         /** @var Sip $data */
-        $db_data    = Sip::find("type = 'friend' AND ( disabled <> '1')");
-        $sipHosts   = SIPConf::getSipHosts();
+        $db_data  = Sip::find("type = 'friend' AND ( disabled <> '1')");
+        $sipHosts = SIPConf::getSipHosts();
 
         $hashArray = [];
-        foreach ($db_data as $data){
-            $data = $sipHosts[$data->uniqid]??[];
-            foreach ($data as $host){
-                if(in_array($host, $hashArray, true)){
+        foreach ($db_data as $data) {
+            $data = $sipHosts[$data->uniqid] ?? [];
+            foreach ($data as $host) {
+                if (in_array($host, $hashArray, true)) {
                     // Не допускаем повторения хост.
                     continue;
                 }
-                $hashArray[] = $host;
-                $arr_command[] = $this->getIptablesInputRule($this->sipPort, '-p tcp -s '.$host.' ');
-                $arr_command[] = $this->getIptablesInputRule($this->sipPort, '-p udp -s '.$host.' ');
-                $arr_command[] = $this->getIptablesInputRule($this->rtpPorts, '-p udp -s '.$host.' ');
+                $hashArray[]   = $host;
+                $arr_command[] = $this->getIptablesInputRule($this->sipPort, '-p tcp -s ' . $host . ' ');
+                $arr_command[] = $this->getIptablesInputRule($this->sipPort, '-p udp -s ' . $host . ' ');
+                $arr_command[] = $this->getIptablesInputRule($this->rtpPorts, '-p udp -s ' . $host . ' ');
             }
         }
         // Allow all local connections
@@ -229,43 +230,21 @@ class IptablesConf extends Injectable
      */
     public static function updateFirewallRules(): void
     {
-        // Store current conditions
-        $currentRules  = [];
-        $firewallRules = FirewallRules::find();
-        foreach ($firewallRules as $firewallRule) {
-            $currentRules[$firewallRule->networkfilterid][$firewallRule->category] =
-                        [
-                            'action'      => $firewallRule->action,
-                            'description' => $firewallRule->description
-                        ];
-        }
-        // Delete outdated records
-        $firewallRules->delete();
+        $portSet   = FirewallRules::getProtectedPortSet();
+        $portNames = array_keys($portSet);
 
-        $defaultRules   = FirewallRules::getDefaultRules();
-        $networkFilters = NetworkFilters::find();
-
-        foreach ($networkFilters as $networkFilter) {
-            foreach ($defaultRules as $key => $value) {
-                foreach ($value['rules'] as $rule) {
-                    $newRule                  = new FirewallRules();
-                    $newRule->networkfilterid = $networkFilter->id;
-                    $newRule->protocol        = $rule['protocol'];
-                    $newRule->portfrom        = $rule['portfrom'];
-                    $newRule->portto          = $rule['portto'];
-                    $newRule->category        = $key;
-
-                    if (array_key_exists($key, $currentRules[$networkFilter->id])) {
-                        $newRule->action = $currentRules[$networkFilter->id][$key]['action'];
-                    } else {
-                        $newRule->action = 'block';
-                    }
-                    if (key_exists($key, $currentRules[$networkFilter->id])){
-                        $newRule->description = $currentRules[$networkFilter->id][$key]['description'];
-                    }
-                    $newRule->save();
-                }
-            }
+        $conditions = [
+            'conditions' => 'portFromKey IN ({ids:array}) OR portToKey IN ({ids:array})',
+            'bind'       => [
+                'ids' => $portNames,
+            ],
+        ];
+        $rules      = FirewallRules::find($conditions);
+        foreach ($rules as $rule) {
+            $rule->portfrom = $portSet[$rule->portFromKey]??'0';
+            $rule->portto = $portSet[$rule->portToKey]??'0';
+            $rule->update();
         }
     }
+
 }

@@ -1055,4 +1055,8 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá đ
     'log_StartCapturePCAP' => 'Khởi đầu',
     'gs_PBXRecordAnnouncementIn' => 'Chọn cảnh báo ghi âm cuộc gọi cho các cuộc gọi đến',
     'gs_PBXRecordAnnouncementOut' => 'Chọn cảnh báo ghi âm cuộc gọi cho các cuộc gọi đi',
+    'gs_ValidateWEBHTTPSPortNotEqualToAjamTLSPort' => 'Cổng HTTPS và AJAM phải khác nhau',
+    'gs_ValidateWEBHTTPSPortNotEqualToAjamPort' => 'Cổng HTTPS và AJAM phải khác nhau',
+    'gs_ValidateWEBPortNotEqualToAjamTLSPort' => 'Cổng HTTP và AJAM phải khác nhau',
+    'gs_ValidateWEBPortNotEqualToAjamPort' => 'Cổng HTTP và AJAM phải khác nhau',
 ];

@@ -1055,4 +1055,8 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'log_StartCapturePCAP' => 'Démarrer',
     'gs_PBXRecordAnnouncementIn' => 'Sélectionnez l\'alerte d\'enregistrement des appels pour les appels entrants',
     'gs_PBXRecordAnnouncementOut' => 'Sélectionnez l\'alerte d\'enregistrement des appels pour les appels sortants',
+    'gs_ValidateWEBHTTPSPortNotEqualToAjamTLSPort' => 'Les ports HTTPS et AJAM doivent être différents',
+    'gs_ValidateWEBHTTPSPortNotEqualToAjamPort' => 'Les ports HTTPS et AJAM doivent être différents',
+    'gs_ValidateWEBPortNotEqualToAjamTLSPort' => 'Les ports HTTP et AJAM doivent être différents',
+    'gs_ValidateWEBPortNotEqualToAjamPort' => 'Les ports HTTP et AJAM doivent être différents',
 ];

@@ -210,44 +210,4 @@ class PbxSettings extends ModelsBase
         return $this->validate($validation);
     }
 
-    /**
-     * After PbxSettings entity save callback
-     */
-    public function afterSave(): void
-    {
-        if ($this->itHasFirewallParametersChanges()) {
-            FirewallRules::updatePorts($this);
-        }
-    }
-
-    /**
-     *  Check if this changes influence to the iptables daemon
-     *
-     * @return bool
-     */
-    public function itHasFirewallParametersChanges(): bool
-    {
-        switch ($this->key) {
-            case 'SIPPort':
-            case 'RTPPortFrom':
-            case 'RTPPortTo':
-            case 'IAXPort':
-            case 'AMIPort':
-            case 'AJAMPort':
-            case 'AJAMPortTLS':
-            case 'WEBPort':
-            case 'WEBHTTPSPort':
-            case 'SSHPort':
-            case 'PBXFirewallEnabled':
-            case 'PBXFail2BanEnabled':
-                return true;
-            default:
-                if (strpos($this->key, 'FirewallSettings') !== false) {
-                    return true;
-                }
-        }
-
-        return false;
-    }
-
 }

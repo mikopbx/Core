@@ -43,6 +43,10 @@ interface SystemConfigInterface
 
     public const ON_AFTER_PBX_STARTED = 'onAfterPbxStarted';
 
+    public const ON_BEFORE_MODULE_DISABLE = 'onBeforeModuleDisable';
+
+    public const ON_BEFORE_MODULE_ENABLE = 'onBeforeModuleEnable';
+
 
     /**
      * The callback function will execute after PBX started.

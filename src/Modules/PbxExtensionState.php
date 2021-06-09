@@ -23,10 +23,8 @@ use MikoPBX\Common\Models\FirewallRules;
 use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Core\System\Configs\IptablesConf;
-use MikoPBX\Core\System\Configs\NginxConf;
+use MikoPBX\Common\Providers\ConfigProvider;
 use MikoPBX\Core\System\Processes;
-use MikoPBX\Core\Workers\WorkerModelsEvents;
 use MikoPBX\Modules\Config\ConfigClass;
 use Phalcon\Di\Injectable;
 use ReflectionClass;
@@ -50,7 +48,7 @@ class PbxExtensionState extends Injectable
         $this->configClass    = null;
         $this->messages       = [];
         $this->moduleUniqueID = $moduleUniqueID;
-        $this->modulesRoot    = $this->getDI()->getShared('config')->path('core.modulesDir');
+        $this->modulesRoot    = $this->getDI()->getShared(ConfigProvider::SERVICE_NAME)->path('core.modulesDir');
         $moduleJson           = "{$this->modulesRoot}/{$this->moduleUniqueID}/module.json";
         if ( ! file_exists($moduleJson)) {
             $this->messages[] = 'module.json not found for module ' . $this->moduleUniqueID;
@@ -89,7 +87,7 @@ class PbxExtensionState extends Injectable
     }
 
     /**
-     * Enable extension module with checking relations
+     * Enables extension module with checking relations
      *
      */
     public function enableModule(): bool
@@ -99,6 +97,7 @@ class PbxExtensionState extends Injectable
             $result = $this->license->featureAvailable($this->lic_feature_id);
             if ($result['success'] === false) {
                 $this->messages[] = $this->license->translateLicenseErrorMessage($result['error']);
+
                 return false;
             }
         }
@@ -110,11 +109,12 @@ class PbxExtensionState extends Injectable
         // Если ошибок нет, включаем Firewall и модуль
         if ( ! $this->enableFirewallSettings()) {
             $this->messages[] = 'Error on enable firewall settings';
+
             return false;
         }
         if ($this->configClass !== null
-            && method_exists($this->configClass, 'onBeforeModuleEnable')) {
-            $this->configClass->onBeforeModuleEnable();
+            && method_exists($this->configClass, ConfigClass::ON_BEFORE_MODULE_ENABLE)) {
+            call_user_func([$this->configClass, ConfigClass::ON_BEFORE_MODULE_ENABLE]);
         }
         $module = PbxExtensionModules::findFirstByUniqid($this->moduleUniqueID);
         if ($module !== null) {
@@ -130,22 +130,21 @@ class PbxExtensionState extends Injectable
     }
 
     /**
-     * При включении модуля устанавливает настройки Firewall по-умолчаниию
-     * или по состоянию на момент выключения
+     * On enable module this method restores previous firewall settings or sets default state.
      *
      * @return bool
      */
     protected function enableFirewallSettings(): bool
     {
         if ($this->configClass === null
-            || method_exists($this->configClass, 'getDefaultFirewallRules') === false
-            || $this->configClass->getDefaultFirewallRules() === []
+            || method_exists($this->configClass, ConfigClass::GET_DEFAULT_FIREWALL_RULES) === false
+            || call_user_func([$this->configClass, ConfigClass::GET_DEFAULT_FIREWALL_RULES]) === []
         ) {
             return true;
         }
 
         $this->db->begin(true);
-        $defaultRules         = $this->configClass->getDefaultFirewallRules();
+        $defaultRules         = call_user_func([$this->configClass, ConfigClass::GET_DEFAULT_FIREWALL_RULES]);
         $previousRuleSettings = PbxSettings::findFirstByKey("{$this->moduleUniqueID}FirewallSettings");
         $previousRules        = [];
         if ($previousRuleSettings !== null) {
@@ -171,12 +170,15 @@ class PbxExtensionState extends Injectable
                 $newRule->portto          = $detailRule['portto'];
                 $newRule->category        = $key;
                 $newRule->action          = $record['action'];
+                $newRule->portFromKey     = $detailRule['portFromKey'];
+                $newRule->portToKey       = $detailRule['portToKey'];
                 $newRule->description     = $detailRule['name'];
+
                 if (array_key_exists($network->id, $previousRules)) {
                     $newRule->action = $previousRules[$network->id];
                 }
                 if ( ! $newRule->save()) {
-                    $this->messages[] = $newRule->getMessages();
+                    $errors[] = $newRule->getMessages();
                 }
             }
         }
@@ -205,11 +207,12 @@ class PbxExtensionState extends Injectable
         // Если ошибок нет, выключаем Firewall и модуль
         if ( ! $this->disableFirewallSettings()) {
             $this->messages[] = 'Error on disable firewall settings';
+
             return false;
         }
         if ($this->configClass !== null
-            && method_exists($this->configClass, 'onBeforeModuleDisable')) {
-            $this->configClass->onBeforeModuleDisable();
+            && method_exists($this->configClass, ConfigClass::ON_BEFORE_MODULE_DISABLE)) {
+            call_user_func([$this->configClass, ConfigClass::ON_BEFORE_MODULE_DISABLE]);
         }
         $module = PbxExtensionModules::findFirstByUniqid($this->moduleUniqueID);
         if ($module !== null) {
@@ -224,10 +227,12 @@ class PbxExtensionState extends Injectable
 
         // Kill module workers
         if ($this->configClass !== null
-            && method_exists($this->configClass, 'getModuleWorkers')) {
-            $workersToKill = $this->configClass->getModuleWorkers();
-            foreach ($workersToKill as $moduleWorker) {
-                Processes::killByName($moduleWorker['worker']);
+            && method_exists($this->configClass, ConfigClass::GET_MODULE_WORKERS)) {
+            $workersToKill = call_user_func([$this->configClass, ConfigClass::GET_MODULE_WORKERS]);
+            if (is_array($workersToKill)) {
+                foreach ($workersToKill as $moduleWorker) {
+                    Processes::killByName($moduleWorker['worker']);
+                }
             }
         }
 
@@ -247,8 +252,8 @@ class PbxExtensionState extends Injectable
         $success = true;
 
         if ($this->configClass !== null
-            && method_exists($this->configClass, 'onBeforeModuleDisable')
-            && $this->configClass->onBeforeModuleDisable() === false) {
+            && method_exists($this->configClass, ConfigClass::ON_BEFORE_MODULE_DISABLE)
+            && call_user_func([$this->configClass, ConfigClass::ON_BEFORE_MODULE_DISABLE]) === false) {
             $messages = $this->configClass->getMessages();
             if ( ! empty($messages)) {
                 $this->messages = $messages;
@@ -303,23 +308,21 @@ class PbxExtensionState extends Injectable
     }
 
     /**
-     * При выключении модуля сбрасывает настройки Firewall
-     * и сохраняет параметры для будущего включения
-     *
+     * Saves firewall state before disable module
      *
      * @return bool
      */
     protected function disableFirewallSettings(): bool
     {
         if ($this->configClass === null
-            || method_exists($this->configClass, 'getDefaultFirewallRules') === false
-            || $this->configClass->getDefaultFirewallRules() === []
+            || method_exists($this->configClass, ConfigClass::GET_DEFAULT_FIREWALL_RULES) === false
+            || call_user_func([$this->configClass, ConfigClass::GET_DEFAULT_FIREWALL_RULES]) === []
         ) {
             return true;
         }
         $errors       = [];
         $savedState   = [];
-        $defaultRules = $this->configClass->getDefaultFirewallRules();
+        $defaultRules = call_user_func([$this->configClass, ConfigClass::GET_DEFAULT_FIREWALL_RULES]);
         $key          = strtoupper(key($defaultRules));
         $currentRules = FirewallRules::findByCategory($key);
         foreach ($currentRules as $detailRule) {
@@ -339,7 +342,7 @@ class PbxExtensionState extends Injectable
         }
         $previousRuleSettings->value = json_encode($savedState);
         if ( ! $previousRuleSettings->save()) {
-            $this->messages[] = $previousRuleSettings->getMessages();
+            $errors[] = $previousRuleSettings->getMessages();
         }
         if (count($errors) > 0) {
             $this->messages[] = array_merge($this->messages, $errors);
@@ -354,7 +357,7 @@ class PbxExtensionState extends Injectable
     }
 
     /**
-     * Return messages after function or methods execution
+     * Returns messages after function or methods execution
      *
      * @return array
      */
@@ -388,8 +391,8 @@ class PbxExtensionState extends Injectable
         // If module config has special function before enable, we will execute it
 
         if ($this->configClass !== null
-            && method_exists($this->configClass, 'onBeforeModuleEnable')
-            && $this->configClass->onBeforeModuleEnable() === false) {
+            && method_exists($this->configClass, ConfigClass::ON_BEFORE_MODULE_ENABLE)
+            && call_user_func([$this->configClass, ConfigClass::ON_BEFORE_MODULE_ENABLE]) === false) {
             $messages = $this->configClass->getMessages();
             if ( ! empty($messages)) {
                 $this->messages = $messages;

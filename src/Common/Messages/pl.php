@@ -1055,4 +1055,8 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'log_StartCapturePCAP' => 'Początek',
     'gs_PBXRecordAnnouncementIn' => 'Wybierz alert nagrywania rozmów dla połączeń przychodzących',
     'gs_PBXRecordAnnouncementOut' => 'Wybierz alert nagrywania rozmów dla połączeń wychodzących',
+    'gs_ValidateWEBHTTPSPortNotEqualToAjamTLSPort' => 'Porty HTTPS i AJAM muszą być różne',
+    'gs_ValidateWEBHTTPSPortNotEqualToAjamPort' => 'Porty HTTPS i AJAM muszą być różne',
+    'gs_ValidateWEBPortNotEqualToAjamTLSPort' => 'Porty HTTP i AJAM muszą być różne',
+    'gs_ValidateWEBPortNotEqualToAjamPort' => 'Porty HTTP i AJAM muszą być różne',
 ];

@@ -17,7 +17,7 @@
  */
 
 /* global globalRootUrl, globalTranslate, Extensions, Form,
- PbxApi, DebuggerInfo, InputMaskPatterns */
+ InputMaskPatterns, avatar, extensionStatusLoopWorker */
 
 
 const extension = {
@@ -357,139 +357,8 @@ const extension = {
 	},
 };
 
-const avatar = {
-	$picture: $('#avatar'),
-	initialize() {
-		if (avatar.$picture.attr('src') === '') {
-			avatar.$picture.attr('src', `${globalRootUrl}assets/img/unknownPerson.jpg`);
-		}
-		$('#upload-new-avatar').on('click', () => {
-			$('#file-select').click();
-		});
-
-		$('#clear-avatar').on('click', () => {
-			avatar.$picture.attr('src', `${globalRootUrl}assets/img/unknownPerson.jpg`);
-			extension.$formObj.form('set value', 'user_avatar', null);
-			extension.$sip_secret.trigger('change');
-		});
-
-		$('#file-select').on('change', (e) => {
-			let image;
-			e.preventDefault();
-			const dataTransfer = 'dataTransfer' in e ? e.dataTransfer.files : [];
-			const images = 'files' in e.target ? e.target.files : dataTransfer;
-			if (images && images.length) {
-				Array.from(images).forEach((curImage) => {
-					if (typeof curImage !== 'object') return;
-					image = new Image();
-					image.src = avatar.createObjectURL(curImage);
-					image.onload = (event) => {
-						const args = {
-							src: event.target,
-							width: 200,
-							height: 200,
-							type: 'image/png',
-							compress: 90,
-						};
-						const mybase64resized = avatar.resizeCrop(args);
-						avatar.$picture.attr('src', mybase64resized);
-						extension.$formObj.form('set value', 'user_avatar', mybase64resized);
-						extension.$sip_secret.trigger('change');
-					};
-				});
-			}
-		});
-	},
-	resizeCrop({
-		src, width, height, type, compress,
-	}) {
-		let newWidth = width;
-		let newHeight = height;
-		const crop = newWidth === 0 || newHeight === 0;
-		// not resize
-		if (src.width <= newWidth && newHeight === 0) {
-			newWidth = src.width;
-			newHeight = src.height;
-		}
-		// resize
-		if (src.width > newWidth && newHeight === 0) {
-			newHeight = src.height * (newWidth / src.width);
-		}
-		// check scale
-		const xscale = newWidth / src.width;
-		const yscale = newHeight / src.height;
-		const scale = crop ? Math.min(xscale, yscale) : Math.max(xscale, yscale);
-		// create empty canvas
-		const canvas = document.createElement('canvas');
-		canvas.width = newWidth || Math.round(src.width * scale);
-		canvas.height = newHeight || Math.round(src.height * scale);
-		canvas.getContext('2d').scale(scale, scale);
-		// crop it top center
-		canvas.getContext('2d').drawImage(src, ((src.width * scale) - canvas.width) * -0.5, ((src.height * scale) - canvas.height) * -0.5);
-		return canvas.toDataURL(type, compress);
-	},
-	createObjectURL(i) {
-		const URL = window.URL || window.webkitURL || window.mozURL || window.msURL;
-		return URL.createObjectURL(i);
-	},
-
-};
 
 
-const extensionStatusLoopWorker = {
-	timeOut: 3000,
-	timeOutHandle: '',
-	$statusLabel: $('#status'),
-	/**
-	 * initialize() создание объектов и запуск их
-	 */
-	initialize() {
-		DebuggerInfo.initialize();
-		if (extension.$formObj.form('get value','id')!==''){
-			extensionStatusLoopWorker.restartWorker();
-		}
-	},
-	restartWorker() {
-		window.clearTimeout(extensionStatusLoopWorker.timeoutHandle);
-		extensionStatusLoopWorker.worker();
-	},
-	worker() {
-		if (extension.defaultNumber.length === 0) return;
-		const param = { peer: extension.defaultNumber };
-		window.clearTimeout(extensionStatusLoopWorker.timeoutHandle);
-		PbxApi.GetPeerStatus(param, extensionStatusLoopWorker.cbRefreshExtensionStatus);
-	},
-	/**
-	 * cbRefreshExtensionStatus() Обновление статусов пира
-	 */
-	cbRefreshExtensionStatus(response) {
-		extensionStatusLoopWorker.timeoutHandle =
-			window.setTimeout(extensionStatusLoopWorker.worker, extensionStatusLoopWorker.timeOut);
-		if (response.length === 0 || response === false) return;
-		const $status = extensionStatusLoopWorker.$statusLabel;
-
-		let htmlTable = '<table class="ui very compact table">';
-		$.each(response, (key, value) => {
-			htmlTable += '<tr>';
-			htmlTable += `<td>${key}</td>`;
-			htmlTable += `<td>${value}</td>`;
-			htmlTable += '</tr>';
-		});
-		htmlTable += '</table>';
-		DebuggerInfo.UpdateContent(htmlTable);
-
-		if ('Status' in response && response.Status.toUpperCase().indexOf('REACHABLE') >= 0) {
-			$status.removeClass('grey').addClass('green');
-		} else {
-			$status.removeClass('green').addClass('grey');
-		}
-		if ($status.hasClass('green')) {
-			$status.html(globalTranslate.ex_Online);
-		} else {
-			$status.html(globalTranslate.ex_Offline);
-		}
-	},
-};
 
 // Если выбран вариант переадресации на номер, а сам номер не выбран
 $.fn.form.settings.rules.extensionRule = () => {

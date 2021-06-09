@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-div.pusher{
+div.pusher {
     padding-top: 55px
 }
 
@@ -28,17 +28,17 @@ body {
     background: #f1f4f5;
 }
 
-#sidebar-menu{
+#sidebar-menu {
     top: 40px;
     padding-bottom: 50px;
 }
+
 .ui.sidebar.visible ~ .pusher {
     width: calc(100% - 260px);
 }
 
-/*Табличка с перетаскиванием начало*/
-.dragHandle
-{
+/* Drag and prop tables point view BEGIN*/
+.dragHandle {
     cursor: move;
 }
 
@@ -47,16 +47,19 @@ body {
     -webkit-box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.8);
     box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.8);
 }
+
 .hoveringRow td:first-child {
     -moz-box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.8);
     -webkit-box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.8);
     box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.8);
 }
+
 .hoveringRow td:last-child {
     -moz-box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.8);
     -webkit-box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.8);
     box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.8);
 }
+
 .hoveringRow td:after {
     content: "";
     width: 3px;
@@ -67,42 +70,41 @@ body {
     top: 0;
     z-index: 1;
 }
-/*Табличка с перетаскиванием конец*/
 
-/*Аватары пользователей*/
+/* Drag and prop tables point view END*/
 
-td.disabled img{
+/* Users avatars */
+td.disabled img {
     filter: opacity(50%);
 }
-/*Аватары пользователей конец*/
 
-/*Кнопка сохранения конфигурации */
-#apply-configuration-button{
+/* Save configuration button */
+#apply-configuration-button {
     display: none;
 }
 
-/*Таблица с вертикальным текстом в заголовке */
+/* Table with vertical text on header line */
 .verticalTableHeader {
-    text-align:center;
-    white-space:nowrap;
-    transform-origin:50% 50%;
+    text-align: center;
+    white-space: nowrap;
+    transform-origin: 50% 50%;
     transform: rotate(90deg);
 
 }
 
-/* Редактор кода */
+/* Code editor */
 .application-code {
     position: relative;
     width: 100%;
     height: 600px;
 }
 
-/* Прячем на время загрузки искажения интерфейса */
-#content-frame{
+/* Hide interface until it not full loaded */
+#content-frame {
     display: none;
 }
 
-/* Иконки сортировки в таблицах */
+/* Sort icons on tables */
 th.sorting_asc:after {
     display: inline-block;
     opacity: 1;
@@ -142,6 +144,7 @@ th.sorting_desc:after {
     backface-visibility: hidden;
     content: '\f0d7';
 }
+
 th.sorting:after {
     display: inline-block;
     opacity: 1;
@@ -164,10 +167,10 @@ th.sorting:after {
 
 
 tr {
- cursor: pointer;
+    cursor: pointer;
 }
 
-/* Секция аудио плеера */
+/* Audio player section */
 #audio-player-segment {
     display: none;
 }
@@ -176,46 +179,38 @@ tr {
     margin: 0;
 }
 
-/* Фичи в информации о лицензиях */
+/* License information */
 span.features {
     color: grey;
     font-size: x-small
 }
 
-/* Бар качества пароля */
+/* Password weakens progress bar */
 .password-score-section, .ssh-password-score-section {
     display: none;
 }
 
-/* Сидебар с отладочной информацией */
+/* Sidebar with debug info */
 #debug-info {
     background: #fff;
 }
 
-/* Логотип на главной */
+/* Main logo on the sidebar */
 .item.logo {
     padding: 7px 10px 7px 50px !important;
 }
+
 .item.logo img {
-    margin-right: 50px;!important;
+    margin-right: 50px;
+!important;
 }
 
-/* Логотип на главной при авторизации */
+/* Main logo on the auth page */
 #login-logo {
     width: 10em;;
 }
 
-/* Тестовая строка шаблон для восстановления архива */
-#backup-template-row {
-    display: none;
-}
-
-/* Плашка с информацией о необходимости лицензирования */
-#license-warning {
-    display: none;
-}
-
-/* Поле выбора номера для переадресации */
+/* User forwarding dropdown field */
 .ui.form .inline.field > .selection.dropdown.forwarding-select,
 .ui.form .inline.fields .field > .selection.dropdown.forwarding-select,
 .ui.form .fields .field > .selection.dropdown.forwarding-select,
@@ -224,11 +219,11 @@ span.features {
 }
 
 /* Search field */
-#top-menu-search{
+#top-menu-search {
     min-width: 500px;
 }
 
-/* Версия АТС */
+/* PBX Version */
 div#pbx-version {
     position: fixed;
     right: 4px;
@@ -238,42 +233,44 @@ div#pbx-version {
     color: grey;
 }
 
-/* Увеличим высоту выпадающих списков */
+/* Extend dropdown length */
 @media only screen and (min-width: 992px) {
     .ui.search.dropdown .menu {
         max-height: 30rem;
     }
 }
 
-/* Таблица CDR */
-#cdr-table{
+/* Table CDR */
+#cdr-table {
     font-size: 12px;
 }
 
 
-
-/* Проигрыватель для CDR */
-.cdr-player .ui.range{
+/* CDR player */
+.cdr-player .ui.range {
     height: 15px;
 }
-.cdr-player .ui.range .inner{
+
+.cdr-player .ui.range .inner {
     margin: 2px 0px 0px 0px;
     height: 11px;
 }
-.cdr-player .ui.range .inner .thumb{
+
+.cdr-player .ui.range .inner .thumb {
     height: 14px;
     width: 14px;
 }
+
 .cdr-player .ui.range .inner .track-fill,
-.cdr-player .ui.range .inner .track{
+.cdr-player .ui.range .inner .track {
     top: 5px;
 }
 
-.ui.very.basic.cdr-player tr td{
+.ui.very.basic.cdr-player tr td {
     border-top: none;
 }
 
-.ui.very.basic.cdr-player tr.cdr-label{
+.ui.very.basic.cdr-player tr.cdr-label {
     color: grey;
     font-size: 0.65rem;
     position: absolute;
@@ -281,48 +278,45 @@ div#pbx-version {
     margin-left: 27px;
 }
 
-.ui.very.basic.cdr-player tr.cdr-label i.icons .top.right.corner.icon{
+.ui.very.basic.cdr-player tr.cdr-label i.icons .top.right.corner.icon {
     font-size: 5px;
 }
 
-/* Исправление косяков размеров */
+/* Fix size bugs */
 .ui.large.form .field .dropdown,
 .ui.large.form .field input,
-.ui.large.form .inline.fields .field input{
+.ui.large.form .inline.fields .field input {
     font-size: 1.12rem;
 }
 
-.ui.large.form .field .ui.selection.dropdown>.delete.icon,
-.ui.large.form .field .ui.selection.dropdown>.dropdown.icon,
-.ui.large.form .field .ui.selection.dropdown>.search.icon {
+.ui.large.form .field .ui.selection.dropdown > .delete.icon,
+.ui.large.form .field .ui.selection.dropdown > .dropdown.icon,
+.ui.large.form .field .ui.selection.dropdown > .search.icon {
     top: .68571429em;
 }
 
 .ui.large.form .ui.icon.button,
 .ui.large.form .ui.buttons .button,
-.ui.large.form .ui.buttons{
+.ui.large.form .ui.buttons {
     font-size: 1.2rem;
 }
 
-/* ширина колонки статуса пользователя */
-td.extension-status{
+/* Staff extension status width */
+td.extension-status {
     min-width: 21px;
 }
 
-/* Наклонные заголовки в настройках Firewall */
-th.firewall-category{
+/* Angled headers on Firewall page */
+th.firewall-category {
     height: 140px;
     white-space: nowrap;
 }
 
 th.firewall-category > div {
-    transform:
-        /* Magic Numbers */
-            translate(16px, 59px)
-                /* 45 is really 360 - 45 */
-            rotate(315deg);
+    transform: /* Magic Numbers */ translate(16px, 59px) /* 45 is really 360 - 45 */ rotate(315deg);
     width: 20px;
 }
+
 th.firewall-category > div > span {
     border-bottom: 1px solid #ccc;
     padding: 5px 1px;
@@ -335,30 +329,30 @@ th.firewall-category > div > span {
     background: white;
 }
 
-#firewall-table tbody > tr >td {
+#firewall-table tbody > tr > td {
     padding: 0.5em 0.5em;
 }
 
-#firewall-table tbody > tr >td.marks {
-    border-right: 1px solid rgba(34,36,38,.15);
+#firewall-table tbody > tr > td.marks {
+    border-right: 1px solid rgba(34, 36, 38, .15);
 }
 
-#firewall-table tbody > tr >td:first-child {
-    border-right: 1px solid rgba(34,36,38,.15);
-    border-left: 1px solid rgba(34,36,38,.15);
+#firewall-table tbody > tr > td:first-child {
+    border-right: 1px solid rgba(34, 36, 38, .15);
+    border-left: 1px solid rgba(34, 36, 38, .15);
 }
 
-#firewall-table tbody > tr >td:last-child {
-    border-right: 1px solid rgba(34,36,38,.15);
+#firewall-table tbody > tr > td:last-child {
+    border-right: 1px solid rgba(34, 36, 38, .15);
 }
 
-#firewall-table tbody > tr:last-child >td {
-    border-bottom: 1px solid rgba(34,36,38,.15);
+#firewall-table tbody > tr:last-child > td {
+    border-bottom: 1px solid rgba(34, 36, 38, .15);
 }
 
 
 /**
-Модули расширений
+Plugins extensions
  */
 a.ui.button.pbx-extensions-settings {
     margin-top: -7px;
@@ -367,22 +361,31 @@ a.ui.button.pbx-extensions-settings {
 /**
 Sound player slider
  */
-#play-slider{
+#play-slider {
     margin-top: 10px;
 }
 
 /**
 Log file content
  */
-#log-content-readonly{
+#log-content-readonly {
     min-height: 480px;
 }
 
 /**
 Delete button on little extensions table
  */
-#extensionsTable  .button.delete-row-button,
-#additional-hosts-table  .button.delete-row-button{
+#extensionsTable .button.delete-row-button,
+#additional-hosts-table .button.delete-row-button {
     font-size: 0.8rem;
 }
 
+/**
+Add gap on middle screen size
+ */
+@media only screen and (min-width: 600px) and (max-width: 1400px) {
+    #main {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+}

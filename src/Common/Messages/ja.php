@@ -1055,4 +1055,8 @@ return [
     'log_StartCapturePCAP' => '開始',
     'gs_PBXRecordAnnouncementIn' => '着信の通話録音アラートを選択します',
     'gs_PBXRecordAnnouncementOut' => '発信通話の通話録音アラートを選択します',
+    'gs_ValidateWEBHTTPSPortNotEqualToAjamTLSPort' => 'HTTPS ポートと AJAM ポートは異なる必要があります',
+    'gs_ValidateWEBHTTPSPortNotEqualToAjamPort' => 'HTTPS ポートと AJAM ポートは異なる必要があります',
+    'gs_ValidateWEBPortNotEqualToAjamTLSPort' => 'HTTP ポートと AJAM ポートは異なる必要があります',
+    'gs_ValidateWEBPortNotEqualToAjamPort' => 'HTTP ポートと AJAM ポートは異なる必要があります',
 ];

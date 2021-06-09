@@ -312,6 +312,8 @@ class FirewallController extends BaseController
                 $newRule->portfrom        = $rule['portfrom'];
                 $newRule->portto          = $rule['portto'];
                 $newRule->category        = $key;
+                $newRule->portFromKey     = $rule['portFromKey'];
+                $newRule->portToKey       = $rule['portToKey'];
 
                 if (array_key_exists('rule_' . $key, $data) && $data['rule_' . $key]) {
                     $newRule->action = $data['rule_' . $key] === 'on' ? 'allow' : 'block';
