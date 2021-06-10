@@ -28,9 +28,9 @@ use Phalcon\Di\Injectable;
 use MikoPBX\Core\System\MikoPBXConfig;
 use Phalcon\Config as ConfigAlias;
 
-class UpdateConfigsUpToVer20212183 extends Injectable implements UpgradeSystemConfigInterface
+class UpdateConfigsUpToVer20212187 extends Injectable implements UpgradeSystemConfigInterface
 {
-    public const PBX_VERSION = '20212183';
+    public const PBX_VERSION = '2021.2.187';
 
     private ConfigAlias $config;
     private MikoPBXConfig $mikoPBXConfig;
@@ -134,16 +134,16 @@ class UpdateConfigsUpToVer20212183 extends Injectable implements UpgradeSystemCo
                 if ($defCategory!==$category){
                     continue;
                 }
-                foreach ($defaultRuleSet as $defaultRule){
+                foreach ($defaultRuleSet['rules'] as $defaultRule){
                     if ($defaultRule['portfrom']===$rule->portfrom){
                         $rule->portFromKey = $defaultRule['portFromKey'];
                     }
                     if ($defaultRule['portto']===$rule->portto){
                         $rule->portToKey = $defaultRule['portToKey'];
                     }
+                    $rule->update();
                 }
             }
-            $rule->update();
         }
     }
 }

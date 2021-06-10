@@ -1055,4 +1055,8 @@ return [
     'log_StartCapturePCAP' => 'старт',
     'gs_PBXRecordAnnouncementIn' => 'Виберіть попередження про записи розмов для вхідних викликів',
     'gs_PBXRecordAnnouncementOut' => 'Виберіть попередження про записи розмов для вихідних дзвінків',
+    'gs_ValidateWEBHTTPSPortNotEqualToAjamTLSPort' => 'Порти HTTPS і AJAM повинні відрізнятися',
+    'gs_ValidateWEBHTTPSPortNotEqualToAjamPort' => 'Порти HTTPS і AJAM повинні відрізнятися',
+    'gs_ValidateWEBPortNotEqualToAjamTLSPort' => 'Порти HTTP і AJAM повинні відрізнятися',
+    'gs_ValidateWEBPortNotEqualToAjamPort' => 'Порти HTTP і AJAM повинні відрізнятися',
 ];

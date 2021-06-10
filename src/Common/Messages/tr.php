@@ -1055,4 +1055,8 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
     'log_StartCapturePCAP' => 'Başlat',
     'gs_PBXRecordAnnouncementIn' => 'Gelen aramalar için arama kaydı uyarısını seçin',
     'gs_PBXRecordAnnouncementOut' => 'Giden aramalar için arama kaydı uyarısını seçin',
+    'gs_ValidateWEBHTTPSPortNotEqualToAjamTLSPort' => 'HTTPS ve AJAM bağlantı noktaları farklı olmalıdır',
+    'gs_ValidateWEBHTTPSPortNotEqualToAjamPort' => 'HTTPS ve AJAM bağlantı noktaları farklı olmalıdır',
+    'gs_ValidateWEBPortNotEqualToAjamTLSPort' => 'HTTP ve AJAM bağlantı noktaları farklı olmalıdır',
+    'gs_ValidateWEBPortNotEqualToAjamPort' => 'HTTP ve AJAM bağlantı noktaları farklı olmalıdır',
 ];

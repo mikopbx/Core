@@ -1055,4 +1055,8 @@ Se puede activar una vez, después de lo cual el cupón se canjea.
     'log_StartCapturePCAP' => 'Comienzo',
     'gs_PBXRecordAnnouncementIn' => 'Seleccionar alerta de grabación de llamadas para llamadas entrantes',
     'gs_PBXRecordAnnouncementOut' => 'Seleccionar alerta de grabación de llamadas para llamadas salientes',
+    'gs_ValidateWEBHTTPSPortNotEqualToAjamTLSPort' => 'Los puertos HTTPS y AJAM deben ser diferentes',
+    'gs_ValidateWEBHTTPSPortNotEqualToAjamPort' => 'Los puertos HTTPS y AJAM deben ser diferentes',
+    'gs_ValidateWEBPortNotEqualToAjamTLSPort' => 'Los puertos HTTP y AJAM deben ser diferentes',
+    'gs_ValidateWEBPortNotEqualToAjamPort' => 'Los puertos HTTP y AJAM deben ser diferentes',
 ];

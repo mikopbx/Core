@@ -1055,4 +1055,8 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'log_StartCapturePCAP' => 'Start',
     'gs_PBXRecordAnnouncementIn' => 'Vyberte upozornění na nahrávání hovorů pro příchozí hovory',
     'gs_PBXRecordAnnouncementOut' => 'Vyberte upozornění na nahrávání hovorů pro odchozí hovory',
+    'gs_ValidateWEBHTTPSPortNotEqualToAjamTLSPort' => 'Porty HTTPS a AJAM se musí lišit',
+    'gs_ValidateWEBHTTPSPortNotEqualToAjamPort' => 'Porty HTTPS a AJAM se musí lišit',
+    'gs_ValidateWEBPortNotEqualToAjamTLSPort' => 'Porty HTTP a AJAM se musí lišit',
+    'gs_ValidateWEBPortNotEqualToAjamPort' => 'Porty HTTP a AJAM se musí lišit',
 ];

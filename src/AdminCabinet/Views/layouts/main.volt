@@ -7,7 +7,7 @@
     {{ partial("partials/leftsidebar") }}
     <div id="main" class="ui main-content-wrapper pusher">
         <div id="debug-info"></div>
-        <div class="ui container">
+        <div class="ui container" id="main-content-container">
 
             <!--ADVICES-->
             <div class="ui flowing popup bottom left transition hidden" id="advices"></div>

@@ -1055,4 +1055,8 @@ return [
     'log_StartCapturePCAP' => 'დაწყება',
     'gs_PBXRecordAnnouncementIn' => 'შემომავალი ზარებისათვის აირჩიეთ ზარის ჩაწერის სიგნალი',
     'gs_PBXRecordAnnouncementOut' => 'გამავალი ზარების ასარჩევად აირჩიეთ ზარის ჩაწერის სიგნალი',
+    'gs_ValidateWEBHTTPSPortNotEqualToAjamTLSPort' => 'HTTPS და AJAM პორტები განსხვავებული უნდა იყოს',
+    'gs_ValidateWEBHTTPSPortNotEqualToAjamPort' => 'HTTPS და AJAM პორტები განსხვავებული უნდა იყოს',
+    'gs_ValidateWEBPortNotEqualToAjamTLSPort' => 'HTTP და AJAM პორტები განსხვავებული უნდა იყოს',
+    'gs_ValidateWEBPortNotEqualToAjamPort' => 'HTTP და AJAM პორტები განსხვავებული უნდა იყოს',
 ];

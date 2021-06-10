@@ -747,6 +747,8 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/Extensions/input-mask-patterns.js', true)
                 ->addJs('js/pbx/main/form.js', true)
                 ->addJs('js/pbx/main/debugger-info.js', true)
+                ->addJs('js/pbx/Extensions/extension-modify-avatar.js', true)
+                ->addJs('js/pbx/Extensions/extension-modify-status-worker.js', true)
                 ->addJs('js/pbx/Extensions/extension-modify.js', true);
         }
     }

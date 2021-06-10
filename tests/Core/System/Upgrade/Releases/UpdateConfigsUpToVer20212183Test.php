@@ -1,6 +1,7 @@
+<?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2021 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,19 +16,19 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-/* global sessionStorage, ace, PbxApi */
 
-const systemDiagnostic = {
-	$tabMenuItems: $('#system-diagnostic-menu .item'),
-	$mainContainer: $('#main-content-container'),
-	initialize() {
-		systemDiagnostic.$tabMenuItems.tab();
-		systemDiagnostic.$tabMenuItems.tab('change tab', 'show-log');
-		systemDiagnostic.$mainContainer.removeClass('container');
-	},
-};
+namespace MikoPBX\Tests\Core\System\Upgrade\Releases;
 
-$(document).ready(() => {
-	systemDiagnostic.initialize();
-});
+use MikoPBX\Core\System\Upgrade\Releases\UpdateConfigsUpToVer20212183;
+use MikoPBX\Tests\Unit\AbstractUnitTest;
 
+class UpdateConfigsUpToVer20212183Test extends AbstractUnitTest
+{
+
+    public function testProcessUpdate()
+    {
+        $func = new UpdateConfigsUpToVer20212183();
+        $func->processUpdate();
+        $this->assertTrue(true);
+    }
+}

@@ -62,7 +62,7 @@ class FirewallRules extends ModelsBase
      * @Column(type="string", nullable=true){'allow','block'}
      */
     public ?string $action = 'allow';
-    
+
     /**
      * @Column(type="string", nullable=true){'SIP','WEB','SSH','AMI','CTI','ICMP'}
      */
@@ -77,46 +77,69 @@ class FirewallRules extends ModelsBase
      * @Column(type="string", nullable=true)
      */
     public ?string $portToKey = '';
-    
+
     /**
      * @Column(type="string", nullable=true)
      */
     public ?string $description = '';
-    
 
+
+    /**
+     * Returns array of protected network ports from PbxSettings
+     *
+     * @return array
+     */
+    public static function getProtectedPortSet(): array
+    {
+        $portSet = [
+            'RTPPortFrom',
+            'RTPPortTo',
+            'SIPPort',
+            'AMIPort',
+            'AJAMPort',
+            'AJAMPortTLS',
+            'WEBPort',
+            'WEBHTTPSPort',
+            'SSHPort',
+        ];
+        $result  = [];
+        foreach ($portSet as $portName) {
+            $result[$portName] = PbxSettings::getValueByKey($portName);
+        }
+
+        return $result;
+    }
+
+
+    /**
+     * Prepares template with firewall settings
+     *
+     * @return array[]
+     */
     public static function getDefaultRules(): array
     {
-        $defaultRTPFrom  = PbxSettings::getValueByKey('RTPPortFrom');
-        $defaultRTPTo    = PbxSettings::getValueByKey('RTPPortTo');
-        $defaultSIP      = PbxSettings::getValueByKey('SIPPort');
-        $defaultAMI      = PbxSettings::getValueByKey('AMIPort');
-        $defaultAJAM     = PbxSettings::getValueByKey('AJAMPort');
-        $defaultAJAMTLS  = PbxSettings::getValueByKey('AJAMPortTLS');
-        $defaultWeb      = PbxSettings::getValueByKey('WEBPort');
-        $defaultWebHttps = PbxSettings::getValueByKey('WEBHTTPSPort');
-        $defaultSSH      = PbxSettings::getValueByKey('SSHPort');
-
+        $protectedPortSet = self::getProtectedPortSet();
 
         $template = [
             'SIP'  => [
                 'rules'     => [
                     [
-                        'portfrom'    => $defaultSIP,
-                        'portto'      => $defaultSIP,
+                        'portfrom'    => $protectedPortSet['SIPPort'],
+                        'portto'      => $protectedPortSet['SIPPort'],
                         'protocol'    => 'udp',
                         'portFromKey' => 'SIPPort',
                         'portToKey'   => 'SIPPort',
                     ],
                     [
-                        'portfrom'    => $defaultSIP,
-                        'portto'      => $defaultSIP,
+                        'portfrom'    => $protectedPortSet['SIPPort'],
+                        'portto'      => $protectedPortSet['SIPPort'],
                         'protocol'    => 'tcp',
                         'portFromKey' => 'SIPPort',
                         'portToKey'   => 'SIPPort',
                     ],
                     [
-                        'portfrom'    => $defaultRTPFrom,
-                        'portto'      => $defaultRTPTo,
+                        'portfrom'    => $protectedPortSet['RTPPortFrom'],
+                        'portto'      => $protectedPortSet['RTPPortTo'],
                         'protocol'    => 'udp',
                         'portFromKey' => 'RTPPortFrom',
                         'portToKey'   => 'RTPPortTo',
@@ -128,15 +151,15 @@ class FirewallRules extends ModelsBase
             'WEB'  => [
                 'rules'     => [
                     [
-                        'portfrom'    => $defaultWeb,
-                        'portto'      => $defaultWeb,
+                        'portfrom'    => $protectedPortSet['WEBPort'],
+                        'portto'      => $protectedPortSet['WEBPort'],
                         'protocol'    => 'tcp',
                         'portFromKey' => 'WEBPort',
                         'portToKey'   => 'WEBPort',
                     ],
                     [
-                        'portfrom'    => $defaultWebHttps,
-                        'portto'      => $defaultWebHttps,
+                        'portfrom'    => $protectedPortSet['WEBHTTPSPort'],
+                        'portto'      => $protectedPortSet['WEBHTTPSPort'],
                         'protocol'    => 'tcp',
                         'portFromKey' => 'WEBHTTPSPort',
                         'portToKey'   => 'WEBHTTPSPort',
@@ -149,8 +172,8 @@ class FirewallRules extends ModelsBase
             'SSH'  => [
                 'rules'     => [
                     [
-                        'portfrom'    => $defaultSSH,
-                        'portto'      => $defaultSSH,
+                        'portfrom'    => $protectedPortSet['SSHPort'],
+                        'portto'      => $protectedPortSet['SSHPort'],
                         'protocol'    => 'tcp',
                         'portFromKey' => 'SSHPort',
                         'portToKey'   => 'SSHPort',
@@ -162,8 +185,8 @@ class FirewallRules extends ModelsBase
             'AMI'  => [
                 'rules'     => [
                     [
-                        'portfrom'    => $defaultAMI,
-                        'portto'      => $defaultAMI,
+                        'portfrom'    => $protectedPortSet['AMIPort'],
+                        'portto'      => $protectedPortSet['AMIPort'],
                         'protocol'    => 'tcp',
                         'portFromKey' => 'AMIPort',
                         'portToKey'   => 'AMIPort',
@@ -175,15 +198,15 @@ class FirewallRules extends ModelsBase
             'AJAM' => [
                 'rules'     => [
                     [
-                        'portfrom'    => $defaultAJAM,
-                        'portto'      => $defaultAJAM,
+                        'portfrom'    => $protectedPortSet['AJAMPort'],
+                        'portto'      => $protectedPortSet['AJAMPort'],
                         'protocol'    => 'tcp',
                         'portFromKey' => 'AJAMPort',
                         'portToKey'   => 'AJAMPort',
                     ],
                     [
-                        'portfrom'    => $defaultAJAMTLS,
-                        'portto'      => $defaultAJAMTLS,
+                        'portfrom'    => $protectedPortSet['AJAMPortTLS'],
+                        'portto'      => $protectedPortSet['AJAMPortTLS'],
                         'protocol'    => 'tcp',
                         'portFromKey' => 'AJAMPortTLS',
                         'portToKey'   => 'AJAMPortTLS',
@@ -217,30 +240,6 @@ class FirewallRules extends ModelsBase
         return $template;
     }
 
-    /**
-     * Updates firewall rules after change PBXSettings records
-     *
-     * @param \MikoPBX\Common\Models\PbxSettings $entity
-     */
-    public static function updatePorts(PbxSettings $entity): void
-    {
-        $conditions = [
-            'conditions'=>'portFromKey = :key: OR portToKey = :key:',
-            'bind'=>[
-                'key'=>$entity->key
-            ]
-        ];
-        $rules   = self::find($conditions);
-        foreach ($rules as $rule){
-            if ($rule->portFromKey === $entity->key){
-                $rule->portfrom = $entity->value;
-            }
-            if ($rule->portToKey === $entity->key){
-                $rule->portto = $entity->value;
-            }
-            $rule->update();
-        }
-    }
 
     public function initialize(): void
     {
