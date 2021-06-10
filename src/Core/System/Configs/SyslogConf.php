@@ -60,7 +60,7 @@ class SyslogConf extends Injectable
                 ')'.PHP_EOL.
                 '$ActionFileDefaultTemplate mikopbx'.PHP_EOL.
                 '$IncludeConfig /etc/rsyslog.d/*.conf'.PHP_EOL.
-                '*.* '.$log_file.PHP_EOL.
+                // '*.* '.$log_file.PHP_EOL.
                 PHP_EOL.
                 '$outchannel log_rotation,'.$log_file.',2621440,'.$pathScript.PHP_EOL
                 .'*.* :omfile:$log_rotation'.PHP_EOL;
