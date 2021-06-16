@@ -31,4 +31,5 @@ if ($action === 'deconfig') {
     $network->udhcpcConfigureDeconfig();
 } elseif ('bound' === $action || 'renew' === $action) {
     $network->udhcpcConfigureRenewBound();
+    Network::azureProvisioning();
 }

@@ -19,7 +19,7 @@
 
 namespace MikoPBX\Core\System;
 
-use MikoPBX\Common\Models\{LanInterfaces};
+use MikoPBX\Common\Models\{LanInterfaces, PbxSettings};
 use MikoPBX\Core\System\Configs\IptablesConf;
 use MikoPBX\Core\Utilities\SubnetCalculator;
 use Phalcon\Di\Injectable;
@@ -1058,4 +1058,76 @@ class Network extends Injectable
         return $interface;
     }
 
+    public static function azureProvisioning():void
+    {
+        $keyName = 'AzureProvisioning';
+        if(PbxSettings::findFirst('key="'.$keyName.'"')){
+            // Уже отработали ранее.
+            return;
+        }
+        $baseUrl = 'http://168.63.129.16/machine';
+        $timeout = 4;
+
+        $curl = curl_init();
+        $url  = "{$baseUrl}?comp=goalstate";
+        curl_setopt($curl, CURLOPT_URL, $url);
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($curl, CURLOPT_TIMEOUT, $timeout);
+        curl_setopt($curl, CURLOPT_HTTPHEADER, ['x-ms-version: 2012-11-30']);
+        $resultRequest = curl_exec($curl);
+        $http_code     = (int)curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        curl_close($curl);
+
+        if($http_code === 0){
+            $setting = new PbxSettings();
+            $setting->key = $keyName;
+            $setting->save();
+            unset($setting);
+            // It is not azure;
+            return;
+        }
+
+        $xml = simplexml_load_string($resultRequest);
+        $xmlDocument = '<Health>
+  <GoalStateIncarnation>1</GoalStateIncarnation>
+  <Container>
+    <ContainerId>'.$xml->Container->ContainerId.'</ContainerId>
+    <RoleInstanceList>
+      <Role>
+        <InstanceId>'.$xml->Container->RoleInstanceList->RoleInstance->InstanceId.'</InstanceId>
+        <Health>
+          <State>Ready</State>
+        </Health>
+      </Role>
+    </RoleInstanceList>
+  </Container>
+</Health>';
+        $url="{$baseUrl}?comp=health";
+        $headers = [
+            'x-ms-version: 2012-11-30',
+            'x-ms-agent-name: WALinuxAgent',
+            'Content-Type: text/xml;charset=utf-8',
+        ];
+
+        $curl = curl_init();
+        curl_setopt($curl, CURLOPT_URL, $url);
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($curl, CURLOPT_TIMEOUT, $timeout);
+        curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($curl, CURLOPT_POST, true);
+        curl_setopt($curl, CURLOPT_POSTFIELDS, $xmlDocument);
+
+        curl_exec($curl);
+        $http_code     = (int)curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        if($http_code === 200){
+            $setting = PbxSettings::findFirst('key="'.$keyName.'"');
+            if(!$setting){
+                $setting = new PbxSettings();
+                $setting->key = $keyName;
+            }
+            $setting->value = '1';
+            $setting->save();
+            unset($setting);
+        }
+    }
 }
