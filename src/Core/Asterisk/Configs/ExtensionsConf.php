@@ -25,7 +25,7 @@ use MikoPBX\Core\System\{Storage, Util};
 
 class ExtensionsConf extends CoreConfigClass
 {
-    public const ALL_NUMBER_EXTENSION = '_[0-9*#+]!';
+    public const ALL_NUMBER_EXTENSION = '_[0-9*#+a-zA-Z][0-9*#+a-zA-Z]!';
     protected string $description = 'extensions.conf';
 
     /**
