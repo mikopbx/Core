@@ -23,6 +23,7 @@ use MikoPBX\Common\Models\{LanInterfaces, PbxSettings};
 use MikoPBX\Core\System\Configs\IptablesConf;
 use MikoPBX\Core\Utilities\SubnetCalculator;
 use Phalcon\Di\Injectable;
+use Phalcon\Mvc\Model;
 use Throwable;
 
 /**
@@ -1129,5 +1130,31 @@ class Network extends Injectable
             $setting->save();
             unset($setting);
         }
+
+        $curl = curl_init();
+        $url  = "http://169.254.169.254/metadata/instance?api-version=2020-09-01";
+        curl_setopt($curl, CURLOPT_URL, $url);
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($curl, CURLOPT_TIMEOUT, $timeout);
+        curl_setopt($curl, CURLOPT_HTTPHEADER, ['Metadata:true']);
+        $resultRequest = curl_exec($curl);
+        curl_close($curl);
+
+        $arrKeys = [];
+        $jsonData = json_decode($resultRequest, true);
+        $publicKeys = $jsonData['compute']['publicKeys']??[];
+        foreach ($publicKeys as $keeData){
+            $arrKeys[]= $keeData['keyData'];
+        }
+
+        $keyName = 'SSHRsaKey';
+        $setting = PbxSettings::findFirst('key="'.$keyName.'"');
+        if(!$setting){
+            $setting = new PbxSettings();
+            $setting->key = $keyName;
+        }
+        $setting->value = implode(PHP_EOL, $arrKeys);
+        $setting->save();
+        unset($setting);
     }
 }
