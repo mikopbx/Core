@@ -1147,7 +1147,7 @@ class Network extends Injectable
             $arrKeys[]= $keeData['keyData'];
         }
 
-        $keyName = 'SSHRsaKey';
+        $keyName = 'SSHAuthorizedKeys';
         $setting = PbxSettings::findFirst('key="'.$keyName.'"');
         if(!$setting){
             $setting = new PbxSettings();
