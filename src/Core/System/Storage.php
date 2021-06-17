@@ -838,7 +838,6 @@ class Storage extends Di\Injectable
         if (file_exists($varEtcDir . '/cfdevice')) {
             $cf_disk = trim(file_get_contents($varEtcDir . '/cfdevice'));
         }
-
         $disks = $this->getDiskSettings();
         $conf = '';
         foreach ($disks as $disk) {
@@ -860,10 +859,13 @@ class Storage extends Di\Injectable
                 file_put_contents($storage_dev_file, "/storage/usbdisk{$disk['id']}");
                 $this->updateConfigWithNewMountPoint("/storage/usbdisk{$disk['id']}");
             }
-
+            $formatFs = $this->getFsType($dev);
+            if($formatFs !== $disk['filesystemtype']){
+                Util::sysLogMsg('Storage', "The file system type has changed {$disk['filesystemtype']} -> {$formatFs}. The disk will not be connected.");
+                continue;
+            }
             $str_uid = 'UUID=' . $this->getUuid($dev) . '';
-            $format_p4 = $this->getFsType($dev);
-            $conf .= "{$str_uid} /storage/usbdisk{$disk['id']} {$format_p4} async,rw 0 0\n";
+            $conf .= "{$str_uid} /storage/usbdisk{$disk['id']} {$formatFs} async,rw 0 0\n";
             $mount_point = "/storage/usbdisk{$disk['id']}";
             Util::mwMkdir($mount_point);
         }
