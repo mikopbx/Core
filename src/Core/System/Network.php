@@ -682,7 +682,6 @@ class Network extends Injectable
     {
         if (Util::isSystemctl()) {
             $this->udhcpcConfigureRenewBoundSystemCtl();
-
             return;
         }
         // Инициализация массива переменных.
@@ -703,14 +702,18 @@ class Network extends Injectable
         ];
 
         $debugMode = $this->di->getShared('config')->path('core.debugMode');
-
         // Получаем значения переменных окружения.
         foreach ($env_vars as $key => $value) {
             $env_vars[$key] = trim(getenv($key));
         }
         $BROADCAST = ($env_vars['broadcast'] === '') ? "" : "broadcast {$env_vars['broadcast']}";
-        $NET_MASK  = ($env_vars['subnet'] === '') ? "" : "netmask {$env_vars['subnet']}";
-
+        if($env_vars['subnet'] === '255.255.255.255' || $env_vars['subnet'] === ''){
+            // support /32 address assignment
+            // https://forummikrotik.ru/viewtopic.php?f=3&t=6246&start=40
+            $NET_MASK = '';
+        }else{
+            $NET_MASK = "netmask {$env_vars['subnet']}";
+        }
         // Настраиваем интерфейс.
         $busyboxPath = Util::which('busybox');
         Processes::mwExec("{$busyboxPath} ifconfig {$env_vars['interface']} {$env_vars['ip']} $BROADCAST $NET_MASK");
