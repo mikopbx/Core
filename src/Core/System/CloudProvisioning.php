@@ -120,10 +120,10 @@ class CloudProvisioning
     public function googleProvisioning():bool
     {
         $curl    = curl_init();
-        $url     = 'http://metadata.google.internal/computeMetadata/v1/instance/?recursive=true';
+        $url     = 'http://169.254.169.254/computeMetadata/v1/instance/?recursive=true';
         curl_setopt($curl, CURLOPT_URL, $url);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($curl, CURLOPT_TIMEOUT, 1);
+        curl_setopt($curl, CURLOPT_TIMEOUT, 5);
         curl_setopt($curl, CURLOPT_HTTPHEADER, ['Metadata-Flavor:Google']);
         $resultRequest = curl_exec($curl);
         $http_code     = (int)curl_getinfo($curl, CURLINFO_HTTP_CODE);
