@@ -26,6 +26,7 @@ use MikoPBX\Core\System\Configs\SSHConf;
 class CloudProvisioning
 {
     public const PBX_SETTING_KEY = 'CloudProvisioning';
+    public const HTTP_TIMEOUT = 10;
     public static function start():void
     {
         if(PbxSettings::findFirst('key="'.self::PBX_SETTING_KEY.'"')){
@@ -86,6 +87,10 @@ class CloudProvisioning
         if(empty($data)){
             return;
         }
+        $arrData = explode(':', $data);
+        if(count($arrData) === 2){
+            $data = $arrData[1];
+        }
         $this->updatePbxSettings('SSHAuthorizedKeys', $data);
     }
 
@@ -123,7 +128,7 @@ class CloudProvisioning
         $url     = 'http://169.254.169.254/computeMetadata/v1/instance/?recursive=true';
         curl_setopt($curl, CURLOPT_URL, $url);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($curl, CURLOPT_TIMEOUT, 5);
+        curl_setopt($curl, CURLOPT_TIMEOUT, self::HTTP_TIMEOUT);
         curl_setopt($curl, CURLOPT_HTTPHEADER, ['Metadata-Flavor:Google']);
         $resultRequest = curl_exec($curl);
         $http_code     = (int)curl_getinfo($curl, CURLINFO_HTTP_CODE);
@@ -133,10 +138,9 @@ class CloudProvisioning
         }
         $data = json_decode($resultRequest, true);
         $this->updateSSHKeys($data['attributes']['ssh-keys']??'');
-
         $hostname = $data['name']??'';
-        $extipaddr= $data['networkInterfaces'][0]['accessConfigs'][0]['externalIp']??'';
-        $this->updateLanSettings($hostname, $extipaddr);
+        $extIp= $data['networkInterfaces'][0]['accessConfigs'][0]['externalIp']??'';
+        $this->updateLanSettings($hostname, $extIp);
         $this->updateSshPassword();
         return true;
     }
@@ -147,13 +151,11 @@ class CloudProvisioning
     public function azureProvisioning():bool
     {
         $baseUrl = 'http://168.63.129.16/machine';
-        $timeout = 4;
-
         $curl = curl_init();
         $url  = "{$baseUrl}?comp=goalstate";
         curl_setopt($curl, CURLOPT_URL, $url);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($curl, CURLOPT_TIMEOUT, $timeout);
+        curl_setopt($curl, CURLOPT_TIMEOUT, self::HTTP_TIMEOUT);
         curl_setopt($curl, CURLOPT_HTTPHEADER, ['x-ms-version: 2012-11-30']);
         $resultRequest = curl_exec($curl);
         $http_code     = (int)curl_getinfo($curl, CURLINFO_HTTP_CODE);
@@ -181,7 +183,7 @@ class CloudProvisioning
         $curl = curl_init();
         curl_setopt($curl, CURLOPT_URL, $url);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($curl, CURLOPT_TIMEOUT, $timeout);
+        curl_setopt($curl, CURLOPT_TIMEOUT, self::HTTP_TIMEOUT);
         curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
         curl_setopt($curl, CURLOPT_POST, true);
         curl_setopt($curl, CURLOPT_POSTFIELDS, $xmlDocument);
@@ -196,7 +198,7 @@ class CloudProvisioning
         $url  = "http://169.254.169.254/metadata/instance?api-version=2020-09-01";
         curl_setopt($curl, CURLOPT_URL, $url);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($curl, CURLOPT_TIMEOUT, $timeout);
+        curl_setopt($curl, CURLOPT_TIMEOUT, self::HTTP_TIMEOUT);
         curl_setopt($curl, CURLOPT_HTTPHEADER, ['Metadata:true']);
         $resultRequest = curl_exec($curl);
         curl_close($curl);
