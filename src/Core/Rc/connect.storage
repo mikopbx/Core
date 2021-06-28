@@ -28,6 +28,7 @@ require_once('Globals.php');
 
 // Параметр определяет следует ли выбрать диск автоматически.
 $automatic = $argv[1]??'0';
+const MODE_AUTO = 'auto';
 
 $fp = fopen('php://stdin', 'rb');
 $storage = new Storage();
@@ -100,7 +101,7 @@ foreach ($validDisks as $disk) {
 }
 echo "\n";
 
-if($automatic === 'auto'){
+if($automatic === MODE_AUTO){
     $target_disk_storage = $selected_disk['id'];
 }else{
     do {
@@ -141,7 +142,7 @@ $storage->configure();
 MainDatabaseProvider::recreateDBConnections(); //TODO:: может это сделать внутри стоража после монтирования нужной папки?
 
 $success = Storage::isStorageDiskMounted();
-if($success === true){
+if($success === true && $automatic === MODE_AUTO){
     System::rebootSync();
     return true;
 }
