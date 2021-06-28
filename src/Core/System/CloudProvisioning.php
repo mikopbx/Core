@@ -48,7 +48,7 @@ class CloudProvisioning
         $resultSave = $setting->save();
         unset($setting);
 
-        if($resultSave){
+        if($resultSave && $resultProvisioning){
             $cp->checkConnectStorage();
         }
     }
