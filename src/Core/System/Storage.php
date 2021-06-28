@@ -860,7 +860,7 @@ class Storage extends Di\Injectable
                 $this->updateConfigWithNewMountPoint("/storage/usbdisk{$disk['id']}");
             }
             $formatFs = $this->getFsType($dev);
-            if($formatFs !== $disk['filesystemtype']){
+            if($formatFs !== $disk['filesystemtype'] && !($formatFs === 'ext4' && $disk['filesystemtype'] === 'ext2')){
                 Util::sysLogMsg('Storage', "The file system type has changed {$disk['filesystemtype']} -> {$formatFs}. The disk will not be connected.");
                 continue;
             }

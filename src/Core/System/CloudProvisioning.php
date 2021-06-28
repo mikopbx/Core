@@ -45,14 +45,21 @@ class CloudProvisioning
             $setting->key = self::PBX_SETTING_KEY;
         }
         $setting->value = $resultProvisioning ? '1' : '0';
-        $setting->save();
+        $resultSave = $setting->save();
         unset($setting);
+
+        if($resultSave){
+            $cp->checkConnectStorage();
+        }
     }
 
-    private function updateSshPassword(string $data=''):void{
-        if(empty($data)){
-            $data = md5(time());
-        }
+    private function checkConnectStorage():void{
+        $phpPath = Util::which('php');
+        Processes::mwExec($phpPath.' -f /etc/rc/connect.storage auto');
+    }
+
+    private function updateSshPassword():void{
+        $data = md5(time());
         $this->updatePbxSettings('SSHPassword', $data);
         $confSsh = new SSHConf();
         $confSsh->updateShellPassword();

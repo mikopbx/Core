@@ -1011,6 +1011,7 @@ return [
     'Do you want disable firewall now? (y/n): ' => 'Отключить? (y/n):',
     'Do you want enable firewall now? (y/n): ' => 'Включить? (y/n):',
     'Storage disk is already mounted...' => 'Диск для хранения данных уже смонтирован',
+    'Storage disk was mounted successfully...' => 'Диск для хранения данных успешно смонтирован',
     'Valid disks not found...' => 'Не найдено подходящих дисков',
     'Valid disks are:' => 'Список подходящих дисков:',
     'Enter the device name:' => 'Введите имя устройства:',
