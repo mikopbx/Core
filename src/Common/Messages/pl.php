@@ -1059,4 +1059,5 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'gs_ValidateWEBHTTPSPortNotEqualToAjamPort' => 'Porty HTTPS i AJAM muszą być różne',
     'gs_ValidateWEBPortNotEqualToAjamTLSPort' => 'Porty HTTP i AJAM muszą być różne',
     'gs_ValidateWEBPortNotEqualToAjamPort' => 'Porty HTTP i AJAM muszą być różne',
+    'Storage disk was mounted successfully...' => 'Dysk pamięci został pomyślnie zamontowany',
 ];

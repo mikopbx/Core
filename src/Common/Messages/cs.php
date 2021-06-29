@@ -1059,4 +1059,5 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'gs_ValidateWEBHTTPSPortNotEqualToAjamPort' => 'Porty HTTPS a AJAM se musí lišit',
     'gs_ValidateWEBPortNotEqualToAjamTLSPort' => 'Porty HTTP a AJAM se musí lišit',
     'gs_ValidateWEBPortNotEqualToAjamPort' => 'Porty HTTP a AJAM se musí lišit',
+    'Storage disk was mounted successfully...' => 'Úložný disk byl úspěšně připojen',
 ];

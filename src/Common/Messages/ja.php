@@ -1059,4 +1059,5 @@ return [
     'gs_ValidateWEBHTTPSPortNotEqualToAjamPort' => 'HTTPS ポートと AJAM ポートは異なる必要があります',
     'gs_ValidateWEBPortNotEqualToAjamTLSPort' => 'HTTP ポートと AJAM ポートは異なる必要があります',
     'gs_ValidateWEBPortNotEqualToAjamPort' => 'HTTP ポートと AJAM ポートは異なる必要があります',
+    'Storage disk was mounted successfully...' => 'ストレージディスクが正常にマウントされました',
 ];

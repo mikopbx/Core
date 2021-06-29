@@ -1059,4 +1059,5 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
     'gs_ValidateWEBHTTPSPortNotEqualToAjamPort' => 'HTTPS ve AJAM bağlantı noktaları farklı olmalıdır',
     'gs_ValidateWEBPortNotEqualToAjamTLSPort' => 'HTTP ve AJAM bağlantı noktaları farklı olmalıdır',
     'gs_ValidateWEBPortNotEqualToAjamPort' => 'HTTP ve AJAM bağlantı noktaları farklı olmalıdır',
+    'Storage disk was mounted successfully...' => 'Depolama diski başarıyla monte edildi',
 ];

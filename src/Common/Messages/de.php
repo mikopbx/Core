@@ -1062,4 +1062,5 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
     'gs_ValidateWEBHTTPSPortNotEqualToAjamPort' => 'HTTPS- und AJAM-Ports müssen unterschiedlich sein',
     'gs_ValidateWEBPortNotEqualToAjamTLSPort' => 'HTTP- und AJAM-Ports müssen unterschiedlich sein',
     'gs_ValidateWEBPortNotEqualToAjamPort' => 'HTTP- und AJAM-Ports müssen unterschiedlich sein',
+    'Storage disk was mounted successfully...' => 'Speicherlaufwerk erfolgreich gemountet',
 ];

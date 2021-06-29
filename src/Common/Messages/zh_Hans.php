@@ -1059,4 +1059,5 @@ return [
     'gs_ValidateWEBHTTPSPortNotEqualToAjamPort' => 'HTTPS 和 AJAM 端口必须不同',
     'gs_ValidateWEBPortNotEqualToAjamTLSPort' => 'HTTP 和 AJAM 端口必须不同',
     'gs_ValidateWEBPortNotEqualToAjamPort' => 'HTTP 和 AJAM 端口必须不同',
+    'Storage disk was mounted successfully...' => '存储盘成功挂载',
 ];

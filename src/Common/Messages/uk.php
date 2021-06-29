@@ -1059,4 +1059,5 @@ return [
     'gs_ValidateWEBHTTPSPortNotEqualToAjamPort' => 'Порти HTTPS і AJAM повинні відрізнятися',
     'gs_ValidateWEBPortNotEqualToAjamTLSPort' => 'Порти HTTP і AJAM повинні відрізнятися',
     'gs_ValidateWEBPortNotEqualToAjamPort' => 'Порти HTTP і AJAM повинні відрізнятися',
+    'Storage disk was mounted successfully...' => 'Диск для зберігання даних успішно змонтований',
 ];

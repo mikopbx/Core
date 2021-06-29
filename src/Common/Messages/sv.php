@@ -1059,4 +1059,5 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'gs_ValidateWEBHTTPSPortNotEqualToAjamPort' => 'HTTPS- och AJAM-portar måste vara olika',
     'gs_ValidateWEBPortNotEqualToAjamTLSPort' => 'HTTP- och AJAM-portar måste vara olika',
     'gs_ValidateWEBPortNotEqualToAjamPort' => 'HTTP- och AJAM-portar måste vara olika',
+    'Storage disk was mounted successfully...' => 'Lagringsdisk monterad',
 ];

@@ -1059,4 +1059,5 @@ Se puede activar una vez, después de lo cual el cupón se canjea.
     'gs_ValidateWEBHTTPSPortNotEqualToAjamPort' => 'Los puertos HTTPS y AJAM deben ser diferentes',
     'gs_ValidateWEBPortNotEqualToAjamTLSPort' => 'Los puertos HTTP y AJAM deben ser diferentes',
     'gs_ValidateWEBPortNotEqualToAjamPort' => 'Los puertos HTTP y AJAM deben ser diferentes',
+    'Storage disk was mounted successfully...' => 'Disco de almacenamiento montado correctamente',
 ];

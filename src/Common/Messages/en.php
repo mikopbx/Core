@@ -1061,4 +1061,5 @@ It can be activated once, after which the coupon becomes redeemed.
     'gs_ValidateWEBHTTPSPortNotEqualToAjamPort' => 'HTTPS and AJAM ports must be different',
     'gs_ValidateWEBPortNotEqualToAjamTLSPort' => 'HTTP and AJAM ports must be different',
     'gs_ValidateWEBPortNotEqualToAjamPort' => 'HTTP and AJAM ports must be different',
+    'Storage disk was mounted successfully...' => 'Storage disk successfully mounted',
 ];
