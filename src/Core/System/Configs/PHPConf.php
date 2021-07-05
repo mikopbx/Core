@@ -119,17 +119,12 @@ class PHPConf extends Injectable
      **/
     public static function reStart(): void
     {
-        if (Util::isSystemctl()) {
-            $systemCtrlPath = Util::which('systemctl');
-            Processes::mwExec("{$systemCtrlPath} restart php7.4-fpm");
-        } else {
-            $phpFPMPath = Util::which('php-fpm');
-            // Отправляем запрос на graceful shutdown;
-            Processes::mwExec('kill -SIGQUIT "$(cat /var/run/php-fpm.pid)"');
-            usleep(100000);
-            // Принудительно завершаем.
-            Processes::killByName('php-fpm');
-            Processes::mwExec("{$phpFPMPath} -c /etc/php.ini");
-        }
+        $phpFPMPath = Util::which('php-fpm');
+        // Отправляем запрос на graceful shutdown;
+        Processes::mwExec('kill -SIGQUIT "$(cat /var/run/php-fpm.pid)"');
+        usleep(100000);
+        // Принудительно завершаем.
+        Processes::killByName('php-fpm');
+        Processes::mwExec("{$phpFPMPath} -c /etc/php.ini");
     }
 }

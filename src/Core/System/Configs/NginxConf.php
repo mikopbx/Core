@@ -53,9 +53,6 @@ class NginxConf extends Injectable
             $killPath = Util::which('kill');
             // reload Nginx workers gracefully
             Processes::mwExec("{$killPath} -SIGHUP {$pid} ");
-        } elseif (Util::isSystemctl()) {
-            $systemCtrlPath = Util::which('systemctl');
-            Processes::mwExec("{$systemCtrlPath} restart nginx.service");
         } else {
             $nginxPath = Util::which('nginx');
             Processes::killByName('nginx');

@@ -398,6 +398,9 @@ class Network extends Injectable
         Processes::mwExec("{$systemctlPath} stop networking");
         Processes::mwExec("{$modprobePath} 8021q");
         foreach ($networks as $if_data) {
+            if($if_data['disabled'] === 1){
+                continue;
+            }
             $if_name = trim($if_data['interface']);
             if ('' === $if_name) {
                 continue;
