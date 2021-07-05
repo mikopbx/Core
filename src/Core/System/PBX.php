@@ -287,11 +287,8 @@ class PBX extends Injectable
         $time_start = microtime(true);
         $result     = false;
         $out        = [];
-        if (Util::isSystemctl()) {
-            $options = '-t';
-        } else {
-            $options = '';
-        }
+        $options = '';
+
         $timeoutPath  = Util::which('timeout');
         $asteriskPath = Util::which('asterisk');
         while (true) {

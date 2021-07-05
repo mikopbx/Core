@@ -42,6 +42,10 @@ class SSHConf extends Injectable
      **/
     public function configure()
     {
+        if(Util::isSystemctl()){
+            // Не настраиваем.
+            return;
+        }
         $lofFile = '/var/log/lastlog';
         if(!file_exists($lofFile)){
             file_put_contents($lofFile, '');

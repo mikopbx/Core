@@ -29,7 +29,7 @@
 ### END INIT INFO
 
 NAME='mikopbx'
-APP="/etc/rc/mikopbx/mikopbx_boot.php"
+APP="/etc/rc/bootup"
 ARGS=""
 
 case "$1" in

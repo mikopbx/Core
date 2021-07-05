@@ -223,19 +223,13 @@ class Network extends Injectable
             }
             // Выполним reload сервера DNS.
         }
-
         if (!empty($pid)) {
             // Завершаем процесс.
             $busyboxPath = Util::which('busybox');
             $killPath = Util::which('kill');
             Processes::mwExec("{$busyboxPath} {$killPath} '$pid'");
         }
-        if (Util::isSystemctl()) {
-            $systemctlPath = Util::which('systemctl');
-            Processes::mwExec("{$systemctlPath} restart pdnsd");
-        } else {
-            Processes::mwExec("{$pdnsdPath} -c /etc/pdnsd.conf -4");
-        }
+        Processes::mwExec("{$pdnsdPath} -c /etc/pdnsd.conf -4");
     }
 
     /**

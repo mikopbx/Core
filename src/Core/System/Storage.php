@@ -184,7 +184,6 @@ class Storage extends Di\Injectable
     {
         if (Util::isSystemctl() && file_exists('/storage/usbdisk1/')) {
             $mount_dir = '/storage/usbdisk1/';
-
             return true;
         }
         if ('' === $filter) {
@@ -828,6 +827,13 @@ class Storage extends Di\Injectable
      */
     public function configure(): void
     {
+        if(Util::isSystemctl()){
+            $this->updateConfigWithNewMountPoint("/storage/usbdisk1");
+            $this->createWorkDirs();
+            PHPConf::setupLog();
+            return;
+        }
+
         $cf_disk = '';
         $varEtcDir = $this->config->path('core.varEtcDir');
         $storage_dev_file = "{$varEtcDir}/storage_device";
@@ -970,6 +976,11 @@ class Storage extends Di\Injectable
      */
     public function saveFstab($conf = ''): void
     {
+        if(Util::isSystemctl()){
+            // Не настраиваем.
+            return;
+        }
+
         $varEtcDir = $this->config->path('core.varEtcDir');
         // Точка монтирования доп. дисков.
         Util::mwMkdir('/storage');
@@ -1214,6 +1225,10 @@ class Storage extends Di\Injectable
      */
     public function mountSwap(): void
     {
+        if(Util::isSystemctl()){
+            // Не настраиваем.
+            return;
+        }
         $tempDir = $this->config->path('core.tempDir');
         $swapFile = "{$tempDir}/swapfile";
 
