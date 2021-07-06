@@ -99,6 +99,7 @@ class SysinfoManagementProcessor extends Injectable
         $content .= self::getMemInfo();
         $content .= self::getStorageInfo();
         $content .= self::getIfconfigInfo();
+        $content .= self::getUNameInfo();
         $content .= self::getArpInfo();
         $content .= self::getRouteInfo();
         $content .= self::getIptablesInfo();
@@ -245,11 +246,11 @@ class SysinfoManagementProcessor extends Injectable
     private static function getIfconfigInfo(): string
     {
         $content      = '─────────────────────────────────────── ifconfig ──────────────────────────────────────';
-        $content      .= PHP_EOL . PHP_EOL;
-        $ifconfigPath = Util::which('ifconfig');
+        $content     .= PHP_EOL . PHP_EOL;
+        $busyboxPath  = Util::which('busybox');
         $out          = [];
-        Processes::mwExec($ifconfigPath, $out);
-        $ifconfigOut = implode(PHP_EOL, $out);
+        Processes::mwExec("$busyboxPath ifconfig", $out);
+        $ifconfigOut  = implode(PHP_EOL, $out);
         $content     .= $ifconfigOut . PHP_EOL;
         $content .= PHP_EOL . PHP_EOL;
         return $content;
@@ -264,10 +265,28 @@ class SysinfoManagementProcessor extends Injectable
     {
         $content = '─────────────────────────────────────────── arp ──────────────────────────────────────────';
         $content .= PHP_EOL . PHP_EOL;
-        $arpPath = Util::which('arp');
-        $out     = [];
-        Processes::mwExec($arpPath, $out);
-        $arpOut  = implode(PHP_EOL, $out);
+        $busyboxPath = Util::which('busybox');
+        $out      = [];
+        Processes::mwExec("$busyboxPath arp", $out);
+        $arpOut   = implode(PHP_EOL, $out);
+        $content .= $arpOut . PHP_EOL;
+        $content .= PHP_EOL . PHP_EOL;
+        return $content;
+    }
+
+    /**
+     * Returns uname information
+     *
+     * @return string
+     */
+    private static function getUNameInfo(): string
+    {
+        $content = '─────────────────────────────────────────── OS Name ──────────────────────────────────────────';
+        $content .= PHP_EOL . PHP_EOL;
+        $busyboxPath = Util::which('busybox');
+        $out      = [];
+        Processes::mwExec("$busyboxPath uname -a", $out);
+        $arpOut   = implode(PHP_EOL, $out);
         $content .= $arpOut . PHP_EOL;
         $content .= PHP_EOL . PHP_EOL;
         return $content;
@@ -282,9 +301,9 @@ class SysinfoManagementProcessor extends Injectable
     {
         $content   = '────────────────────────────────────────── route ─────────────────────────────────────────';
         $content   .= PHP_EOL . PHP_EOL;
-        $routePath = Util::which('route');
+        $busyboxPath = Util::which('busybox');
         $out       = [];
-        Processes::mwExec($routePath, $out);
+        Processes::mwExec("$busyboxPath route", $out);
         $routeOut = implode(PHP_EOL, $out);
         $content  .= $routeOut . PHP_EOL;
         $content .= PHP_EOL . PHP_EOL;
@@ -320,9 +339,9 @@ class SysinfoManagementProcessor extends Injectable
         $content  .= PHP_EOL . PHP_EOL;
         $pingPath = Util::which('ping');
         $out      = [];
-        Processes::mwExec("{$pingPath} 8.8.8.8 -w 2", $out);
+        Processes::mwExec("{$pingPath} 8.8.8.8 -w 1", $out);
         $pingOut = implode(PHP_EOL, $out);
-        Processes::mwExec("{$pingPath} ya.ru -w 2", $out);
+        Processes::mwExec("{$pingPath} ya.ru -w 1", $out);
         $ping2Out = implode(PHP_EOL, $out);
         $content  .= $pingOut . PHP_EOL;
         $content  .= PHP_EOL . PHP_EOL;
@@ -339,11 +358,12 @@ class SysinfoManagementProcessor extends Injectable
     private static function getOpenSSLInfo(): string
     {
         $opensslPath = Util::which('openssl');
+        $timeoutPath = Util::which('timeout');
 
         $content = '─────────────────────────────────────── openssl ─────────────────────────────────────────';
         $content .= PHP_EOL . PHP_EOL;
         $out     = [];
-        Processes::mwExec("{$opensslPath} s_client -connect lic.miko.ru:443", $out);
+        Processes::mwExec("{$timeoutPath} 1 {$opensslPath} s_client -connect lic.miko.ru:443", $out);
         $opensslOut = implode(PHP_EOL, $out);
         $content    .= $opensslOut . PHP_EOL;
         $content .= PHP_EOL . PHP_EOL;
