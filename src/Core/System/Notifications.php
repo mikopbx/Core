@@ -19,7 +19,7 @@
 
 namespace MikoPBX\Core\System;
 
-use PHPMailer;
+use PHPMailer\PHPMailer\PHPMailer;
 use Throwable;
 
 /**
@@ -55,13 +55,15 @@ class Notifications
         }
         $messages = [];
         try {
-            $mail = new PHPMailer\PHPMailer\PHPMailer();
+            $mail = new PHPMailer();
             $mail->isSMTP();
             $mail->SMTPDebug = 0;
+            $mail->Timeout   = 2;
 
             $mail->Host = $settings['MailSMTPHost'];
             if ($settings["MailSMTPUseTLS"] === "1") {
-                $mail->SMTPSecure = 'tls';
+                $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+                // TODO $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
             } else {
                 $mail->SMTPSecure = '';
             }
