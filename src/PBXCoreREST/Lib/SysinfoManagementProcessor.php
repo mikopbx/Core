@@ -71,7 +71,6 @@ class SysinfoManagementProcessor extends Injectable
         $res->processor = __METHOD__;
         $res->success   = true;
 
-        $res->success = true;
         $di           = Di::getDefault();
         $dirsConfig   = $di->getShared('config');
         $filenameTmp  = $dirsConfig->path('www.downloadCacheDir') . '/' . __FUNCTION__ . '_' . time() . '.txt';
