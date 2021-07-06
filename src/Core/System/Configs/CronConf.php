@@ -107,7 +107,7 @@ class CronConf extends Injectable
 
         if (Util::isSystemctl()) {
             // Convert rules to debian style
-            $conf = str_replace(' * * * * /', ' * * * * root /', $conf);
+            $conf = str_replace(' * * * * /', " * * * * $cron_user/", $conf);
         }
 
         if ($boot === true) {
