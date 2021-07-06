@@ -10,7 +10,7 @@ return [
     'ex_French' => 'Le français',
     'ex_Italian' => 'Italiano',
     'ex_Portuguese' => 'Português',
-    'ex_Ukrainian' => 'Український',
+    'ex_Ukrainian' => 'Українська',
     'ex_Vietnamese' => 'Tiếng việt',
     'ex_Chinese' => '中国人',
     'ex_Polish' => 'Polskie',
@@ -627,8 +627,8 @@ return [
     'gs_EnterDeleteAllPhrasePreText' => 'Для очистки системы введите в поле ввода следующую фразу:',
     'gs_EnterDeleteAllPhrase' => 'удалить всё',
     'gs_AllSettingsDeleted' => 'Все настройки удалены',
-    'gs_PBXRecordAnnouncementIn'=> 'Выберите предупреждение о записи разговоров для входящих вызовов',
-    'gs_PBXRecordAnnouncementOut'=> 'Выберите предупреждение о записи разговоров для исходящих вызовов',
+    'gs_PBXRecordAnnouncementIn' => 'Выберите предупреждение о записи разговоров для входящих вызовов',
+    'gs_PBXRecordAnnouncementOut' => 'Выберите предупреждение о записи разговоров для исходящих вызовов',
     'ts_CurrentSettings' => 'Текущие настройки',
     'ts_SystemTime' => 'Системное время',
     'ts_TimeZone' => 'Таймзона',
@@ -1063,5 +1063,4 @@ return [
     'msg_ErrorHeader' => 'Ошибка',
     'msg_WarningHeader' => 'Внимание',
     'msg_infoHeader' => 'Информация',
-
 ];
