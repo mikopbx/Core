@@ -90,7 +90,8 @@ class WorkerNotifyError extends WorkerBase
             }
         }
 
-        Notifications::sendMail($to, 'Askozia Errors', $test_email);
+        $notifier = new Notifications();
+        $notifier->sendMail($to, 'Askozia Errors', $test_email);
     }
 
     /**

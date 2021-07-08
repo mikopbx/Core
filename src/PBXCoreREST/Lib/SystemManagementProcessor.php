@@ -76,7 +76,8 @@ class SystemManagementProcessor extends Injectable
                 $res->success = System::setDate($data['timestamp'], $data['userTimeZone']);
                 break;
             case 'updateMailSettings':
-                $res->success = Notifications::sendTestMail();
+                $notifier     = new Notifications();
+                $res->success = $notifier->sendTestMail();
                 break;
             case 'sendMail':
                 $res = self::sendMail($data);
@@ -146,7 +147,8 @@ class SystemManagementProcessor extends Injectable
                 $data['subject'] = base64_decode($data['subject']);
                 $data['body']    = base64_decode($data['body']);
             }
-            $result = Notifications::sendMail($data['email'], $data['subject'], $data['body']);
+            $notifier = new Notifications();
+            $result   = $notifier->sendMail($data['email'], $data['subject'], $data['body']);
             if ($result === true) {
                 $res->success = true;
             } else {

@@ -110,7 +110,8 @@ class WorkerNotifyByEmail extends WorkerBase
             }
 
             $body = "{$text}<br>{$template_Footer}";
-            Notifications::sendMail($to, "$subject", $body);
+            $notifier = new Notifications();
+            $notifier->sendMail($to, $subject, $body);
         }
         sleep(1);
     }
