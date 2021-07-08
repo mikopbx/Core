@@ -202,6 +202,54 @@ function event_dial(without_event)
     return data;
 end
 
+-- Начало телефонного звонка
+function event_dial_interception()
+    local data = {}
+    local OLD_LINKEDID = get_variable("OLD_LINKEDID");
+    if(OLD_LINKEDID == '')then
+        return;
+    end
+    data['start']  = os.date("%Y-%m-%d %H:%M:%S.")..tostring(OLD_LINKEDID:sub(9)):sub(3,5);
+
+    local id = get_variable('UNIQUEID')..'_'..generateRandomString(6);
+
+    local channel       = get_variable("CHANNEL")
+    local agi_channel   = channel;
+
+    local interceptionChannel  = get_variable("INTECEPTION_CNANNEL")
+    local from_account = getAccountName(interceptionChannel);
+
+    local dst_num, src_num;
+    data['action'] = "dial";
+    dst_num  	        = get_variable("CALLERID(num)")
+    src_num  	        = get_variable("EXTEN")
+    from_account = '';
+
+    id = get_variable('UNIQUEID');
+    data['dst_chan']     = agi_channel;
+    data['linkedid']  	 = OLD_LINKEDID;
+    data['src_chan'] 	 = interceptionChannel;
+    data['src_num']  	 = src_num;
+    data['dst_num']  	 = dst_num;
+    data['UNIQUEID']  	 = id;
+    data['transfer']  	 = '0';
+    data['agi_channel']  = agi_channel;
+    data['did']		     = get_variable("FROM_DID");
+    data['verbose_call_id']	= get_variable("CHANNEL(callid)");
+
+    local is_pjsip = string.lower(get_variable("CHANNEL")):find("pjsip/") ~= nil
+    if(is_pjsip) then
+        data['src_call_id']  = get_variable("CHANNEL(pjsip,call-id)");
+    end
+    data['from_account'] = from_account;
+    set_variable("__pt1c_UNIQUEID", id);
+    userevent_return(data)
+
+    return data;
+end
+
+
+
 -- Обработка события создания канала - пары, при начале телефонного звонка.
 function event_dial_create_chan()
     local NOCDR = get_variable("NOCDR");
@@ -277,7 +325,13 @@ function event_dial_answer()
 
     data['action']      = 'dial_answer';
     data['id'] 		    = id;
-    data['linkedid']  	= get_variable("CHANNEL(linkedid)");
+
+    local OLD_LINKEDID = get_variable("OLD_LINKEDID");
+    if(OLD_LINKEDID ~= '')then
+        data['linkedid']  	= OLD_LINKEDID;
+    else
+        data['linkedid']  	= get_variable("CHANNEL(linkedid)");
+    end
 
     data['ENDCALLONANSWER']= get_variable("ENDCALLONANSWER");
     data['BRIDGEPEER']     = get_variable("FROM_CHAN");
@@ -627,6 +681,7 @@ end
 
 extensions = {
     dial = {},
+    dial_interception = {},
     transfer_dial={},
     lua_dial_create_chan={},
     dial_answer={},
@@ -642,6 +697,7 @@ extensions = {
     set_from_peer={},
 }
 extensions.dial["_.!"]                      = function() event_dial() end
+extensions.dial_interception["_.!"]         = function() event_dial_interception() end
 extensions.transfer_dial["_.!"]             = function() event_transfer_dial() end
 extensions.lua_dial_create_chan["_.!"]      = function() event_dial_create_chan() end
 extensions.dial_answer["_.!"]               = function() event_dial_answer() end
