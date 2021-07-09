@@ -711,3 +711,27 @@ extensions.queue_end["_.!"]                 = function() event_queue_end() end
 extensions.dial_app["_.!"]                  = function() event_dial_app() end
 extensions.dial_outworktimes["_.!"]         = function() event_dial_outworktimes() end
 extensions.set_from_peer["_.!"]             = function() set_from_peer() end
+
+----
+-- Безопасное подключение дополнительных dialplan, описанных в /etc/asterisk/extensions-lua
+----
+function file_exists(name)
+    local f=io.open(name,"r");
+    if f~=nil then io.close(f) return true else return false end
+end
+
+local scriptLocation='/etc/asterisk/extensions-lua';
+if( file_exists(scriptLocation) )then
+    for line in io.popen("ls "..scriptLocation.."/*.lua", "r"):lines() do
+        if( debug.getinfo(1).short_src ~= line)then
+            local f = loadfile(line);
+            if(f)then
+                local newExtension = f();
+                for key, value in pairs(newExtension) do
+                    extensions[key] = value;
+                end
+            end
+        end
+    end
+end
+----

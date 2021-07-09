@@ -81,6 +81,11 @@ class ExtensionsConf extends CoreConfigClass
         $conf .= $this->generatePublicContext();
 
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/extensions.conf', $conf);
+
+        $confLua = 'extensions = {}'.PHP_EOL.
+                '--  Forbidden to describe contexts defined in extensions.conf. This will cause a crash asterisk.'.
+                'return extensions;';
+        Util::fileWriteContent($this->config->path('asterisk.luaDialplanDir') . '/extensions-override.lua', $confLua);
     }
 
     /**

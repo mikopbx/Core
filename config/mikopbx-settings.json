@@ -22,7 +22,8 @@
     "mediadir": "/mountpoint/mikopbx/media",
     "monitordir" : "/mountpoint/mikopbx/astspool/monitor",
     "mohdir": "/mountpoint/mikopbx/media/moh",
-    "customSoundDir": "/mountpoint/mikopbx/media/custom"
+    "customSoundDir": "/mountpoint/mikopbx/media/custom",
+    "luaDialplanDir": "/etc/asterisk/extensions-lua"
   },
   "database": {
     "debugMode": false,
