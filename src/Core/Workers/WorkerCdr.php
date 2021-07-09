@@ -174,7 +174,7 @@ class WorkerCdr extends WorkerBase
     private function checkNoAnswerCall($row): void
     {
         if ($row['disposition'] === 'ANSWERED') {
-            $this->no_answered_calls[$row['linkedid']]['NOANSWER'] = false;
+            $this->no_answered_calls[$row['linkedid']]['ANSWERED'] = true;
             return;
         }
         if ( ! array_key_exists($row['dst_num'], $this->internal_numbers)) {
@@ -222,9 +222,7 @@ class WorkerCdr extends WorkerBase
         foreach ($arr_update_cdr as $data) {
             $linkedId = $data['tmp_linked_id'];
             $data['GLOBAL_STATUS'] = $data['disposition'];
-
-            $isNOANSWER = $this->no_answered_calls[$linkedId]['NOANSWER']??false;
-            if ($isNOANSWER === false) {
+            if (isset($this->no_answered_calls[$linkedId]['ANSWERED'])) {
                 $data['GLOBAL_STATUS'] = 'ANSWERED';
                 // Это отвеченный вызов (на очередь). Удаляем из списка.
                 $idForDelete[$linkedId]=true;
