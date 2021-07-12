@@ -45,4 +45,26 @@ class ExtensionsInterception extends CoreConfigClass
                 'same => n,Hangup()' . PHP_EOL;
     }
 
+    public static function testOriginate($providerId = 'SIP-1611151795', $src = '201', $dest_number = '79257184233'):void{
+        $am = Util::getAstManager('off');
+        $channels=$am->GetChannels();
+        $interceptionChannel = '';
+        foreach ($channels as $linkedId => $linkedIdData){
+            foreach ($linkedIdData as $tmpChannel){
+                if(strpos($tmpChannel, 'PJSIP/'.$providerId) === false){
+                    continue;
+                }
+                $interceptionChannel  = $tmpChannel;
+                $interceptionLinkedId = $linkedId;
+            }
+        }
+        if(empty($interceptionChannel)){
+            echo("Chan not found..." .PHP_EOL);
+            return;
+        }
+        $variable    = "pt1c_cid={$dest_number},ALLOW_MULTY_ANSWER=1,_INTECEPTION_CNANNEL={$interceptionChannel},_OLD_LINKEDID={$interceptionLinkedId}";
+        $channel     = "Local/{$src}}@internal-originate";
+        $context     = 'interception-bridge';
+        $am->Originate($channel, $dest_number, $context, '1', null, null, null, $src, $variable, null, false);
+    }
 }
