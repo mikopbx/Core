@@ -518,6 +518,7 @@ return [
     'gs_WebTab' => 'Web-interface',
     'gs_PBXName' => 'The name of the PBX',
     'gs_PBXDescription' => 'Additional description',
+    'gs_NeedRestartPBX' => 'If the parameter is changed, asterisk will be restarted',
     'gs_PBXLanguage' => 'PBX sound messages language',
     'gs_PBXInternalExtensionLength' => 'Maximum length of extension',
     'gs_PBXRecordCalls' => 'Call recording',

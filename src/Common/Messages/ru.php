@@ -551,6 +551,7 @@ return [
     'gs_CallRecordTab' => 'Запись разговров',
     'gs_PBXName' => 'Название PBX системы',
     'gs_PBXDescription' => 'Дополнительное описание',
+    'gs_NeedRestartPBX' => 'При изменении произойдет перезапуск АТС (служба asterisk)',
     'gs_PBXLanguage' => 'Язык звуковых сообщений системы',
     'gs_PBXInternalExtensionLength' => 'Максимальная длина внутренних номеров',
     'gs_PBXRecordCalls' => 'Запись разговоров',
