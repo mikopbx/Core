@@ -23,6 +23,7 @@ use MikoPBX\Common\Models\Codecs;
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
 use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\Asterisk\Configs\{AclConf,
+    AsteriskConf,
     CoreConfigClass,
     ExtensionsConf,
     FeaturesConf,
@@ -156,9 +157,23 @@ class PBX extends Injectable
     {
         $featuresConf = new FeaturesConf();
         $featuresConf->generateConfig();
+
+        $asteriskConf = new AsteriskConf();
+        $asteriskConf->generateConfig();
+
         $arr_out      = [];
         $asteriskPath = Util::which('asterisk');
         Processes::mwExec("{$asteriskPath} -rx 'core reload'", $arr_out);
+    }
+    /**
+     * Restarts asterisk core
+     */
+    public static function coreRestart(): void
+    {
+        $asteriskConf = new AsteriskConf();
+        $asteriskConf->generateConfig();
+        $asteriskPath = Util::which('asterisk');
+        Processes::mwExec("{$asteriskPath} -rx 'core restart now'");
     }
 
     /**
