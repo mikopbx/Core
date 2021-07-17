@@ -1060,4 +1060,5 @@ return [
     'gs_ValidateWEBPortNotEqualToAjamTLSPort' => 'HTTP ポートと AJAM ポートは異なる必要があります',
     'gs_ValidateWEBPortNotEqualToAjamPort' => 'HTTP ポートと AJAM ポートは異なる必要があります',
     'Storage disk was mounted successfully...' => 'ストレージディスクが正常にマウントされました',
+    'gs_NeedRestartPBX' => '変更すると、PBXが再起動します（アスタリスクサービス）',
 ];

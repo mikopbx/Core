@@ -1060,4 +1060,5 @@ return [
     'gs_ValidateWEBPortNotEqualToAjamTLSPort' => 'Порти HTTP і AJAM повинні відрізнятися',
     'gs_ValidateWEBPortNotEqualToAjamPort' => 'Порти HTTP і AJAM повинні відрізнятися',
     'Storage disk was mounted successfully...' => 'Диск для зберігання даних успішно змонтований',
+    'gs_NeedRestartPBX' => 'При зміні відбудеться перезапуск АТС (служба asterisk)',
 ];

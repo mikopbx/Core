@@ -1060,4 +1060,5 @@ Può essere attivato una volta, dopo di che il coupon viene riscattato.
     'gs_ValidateWEBPortNotEqualToAjamTLSPort' => 'Le porte HTTP e AJAM devono essere diverse',
     'gs_ValidateWEBPortNotEqualToAjamPort' => 'Le porte HTTP e AJAM devono essere diverse',
     'Storage disk was mounted successfully...' => 'Disco di archiviazione montato con successo',
+    'gs_NeedRestartPBX' => 'In caso di modifica, il PBX si riavvierà (servizio asterisco)',
 ];

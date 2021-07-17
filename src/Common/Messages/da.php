@@ -1060,4 +1060,5 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'gs_ValidateWEBPortNotEqualToAjamTLSPort' => 'HTTP- og AJAM-porte skal være forskellige',
     'gs_ValidateWEBPortNotEqualToAjamPort' => 'HTTP- og AJAM-porte skal være forskellige',
     'Storage disk was mounted successfully...' => 'Lagerdisk monteret',
+    'gs_NeedRestartPBX' => 'Når der skiftes, genstarter PBX\'en (stjernetjeneste)',
 ];
