@@ -248,15 +248,21 @@ class WorkerCdr extends WorkerBase
             $billsec = 0;
 
             if (!empty($row['recordingfile'])) {
-                // Удаляем файлы
-                $p_info = pathinfo($row['recordingfile']);
-                $fileName = $p_info['dirname'] . '/' . $p_info['filename'];
-                $file_list = [$fileName . '.mp3', $fileName . '.wav', $fileName . '_in.wav', $fileName . '_out.wav',];
-                foreach ($file_list as $file) {
-                    if (!file_exists($file) || is_dir($file)) {
-                        continue;
+                if($row['dst_chan'] === "App:{$row['dst_num']}"){
+                    // Для приложения не может быть записи разговора.
+                    // Запись должна относится к конечному устройству.
+                    $row['recordingfile'] = '';
+                }else{
+                    // Удаляем файлы
+                    $p_info = pathinfo($row['recordingfile']);
+                    $fileName = $p_info['dirname'] . '/' . $p_info['filename'];
+                    $file_list = [$fileName . '.mp3', $fileName . '.wav', $fileName . '_in.wav', $fileName . '_out.wav',];
+                    foreach ($file_list as $file) {
+                        if (!file_exists($file) || is_dir($file)) {
+                            continue;
+                        }
+                        Processes::mwExec("rm -rf '{$file}'");
                     }
-                    Processes::mwExec("rm -rf '{$file}'");
                 }
             }
         } elseif (trim($row['recordingfile']) !== '') {

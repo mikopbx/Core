@@ -687,12 +687,6 @@ function Event_hangup_chan_meetme($agi, $action): array
     $recordingfile         = $agi->get_variable('MEETME_RECORDINGFILE', true);
     $data['recordingfile'] = "{$recordingfile}.mp3";
 
-    $lamePath = Util::which('lame');
-    $nicePath = Util::which('nice');
-    $chmodPath = Util::which('chmod');
-    $command               = "{$nicePath} -n 19 {$lamePath} -b 32 --silent \"{$recordingfile}.wav\" \"{$recordingfile}.mp3\" && {$chmodPath} o+r \"{$recordingfile}.mp3\"";
-    Processes::mwExecBg($command);
-
     return $data;
 }
 
