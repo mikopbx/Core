@@ -38,7 +38,7 @@ class ActionHangupChanMeetme
         $dest_chan     = "MeetMe:{$data['conference']}";
         // Отбираем все строки по текущей конференции. Не завершенные вызовы.
         $filter = [
-            'dst_chan=:dst_chan: OR linkedid=:linkedid:',
+            'dst_chan=:dst_chan: AND linkedid=:linkedid:',
             'bind' => [
                 'linkedid' => $data['linkedid'],
                 'dst_chan' => $dest_chan,
