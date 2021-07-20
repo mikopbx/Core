@@ -1060,4 +1060,5 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá đ
     'gs_ValidateWEBPortNotEqualToAjamTLSPort' => 'Cổng HTTP và AJAM phải khác nhau',
     'gs_ValidateWEBPortNotEqualToAjamPort' => 'Cổng HTTP và AJAM phải khác nhau',
     'Storage disk was mounted successfully...' => 'Đĩa lưu trữ đã được gắn kết thành công',
+    'gs_NeedRestartPBX' => 'Khi thay đổi, tổng đài sẽ khởi động lại (dịch vụ dấu sao)',
 ];

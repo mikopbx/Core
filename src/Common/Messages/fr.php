@@ -1060,4 +1060,5 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'gs_ValidateWEBPortNotEqualToAjamTLSPort' => 'Les ports HTTP et AJAM doivent être différents',
     'gs_ValidateWEBPortNotEqualToAjamPort' => 'Les ports HTTP et AJAM doivent être différents',
     'Storage disk was mounted successfully...' => 'Disque de stockage monté avec succès',
+    'gs_NeedRestartPBX' => 'Lors du changement, le PBX redémarrera (service astérisque)',
 ];
