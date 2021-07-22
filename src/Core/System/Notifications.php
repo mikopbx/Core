@@ -66,7 +66,7 @@ class Notifications
         $mail = new PHPMailer();
         $mail->isSMTP();
         $mail->SMTPDebug = 0;
-        $mail->Timeout   = 2;
+        $mail->Timeout   = 5;
         $mail->Host = $this->settings['MailSMTPHost'];
         if ($this->settings["MailSMTPUseTLS"] === "1") {
             $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
@@ -100,7 +100,7 @@ class Notifications
     {
         $timeoutPath = Util::which('timeout');
         $phpPath = Util::which('php');
-        $result  = Processes::mwExec("$timeoutPath 1 $phpPath -f /etc/rc/emailTestConnection.php ".$type);
+        $result  = Processes::mwExec("$timeoutPath 5 $phpPath -f /etc/rc/emailTestConnection.php ".$type);
         if($result !== 0 ){
             Util::sysLogMsg('PHPMailer', 'Error connect to SMTP server... ('. $type.')', LOG_ERR);
         }
@@ -144,9 +144,8 @@ class Notifications
         } catch (Throwable $e) {
             $messages[] = $e->getMessage();
         }
-        if (count($messages)>0) {
+        if (!empty($messages)) {
             Util::sysLogMsg('PHPMailer', implode(' ', $messages), LOG_ERR);
-            return false;
         }
         return true;
     }
