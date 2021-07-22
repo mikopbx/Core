@@ -105,13 +105,14 @@ class ExtensionsConf extends CoreConfigClass
             'exten => _' . $extension . ',1,MessageSend(sip:${EXTEN},"${CALLERID(name)}"${MESSAGE(from)})' . "\n\n";
 
         $conf .= '[internal-originate]' . PHP_EOL .
-            'exten => _.!,1,ExecIf($[ "${EXTEN}" == "h" ]?Hangup()' . PHP_EOL . "\t" .
+            'exten => _.!,1,ExecIf($[ "${EXTEN}" == "h" ]?Hangup())' . PHP_EOL . "\t" .
             'same => n,Set(pt1c_cid=${FILTER(\*\#\+1234567890,${pt1c_cid})})' . PHP_EOL . "\t" .
             'same => n,Set(MASTER_CHANNEL(ORIGINATE_DST_EXTEN)=${pt1c_cid})' . PHP_EOL . "\t" .
             'same => n,Set(number=${FILTER(\*\#\+1234567890,${EXTEN})})' . PHP_EOL . "\t" .
             'same => n,ExecIf($["${EXTEN}" != "${number}"]?Goto(${CONTEXT},${number},$[${PRIORITY} + 1]))' . PHP_EOL . "\t" .
             'same => n,Set(__IS_ORGNT=${EMPTY})' . PHP_EOL . "\t" .
             'same => n,ExecIf($["${pt1c_cid}x" != "x"]?Set(CALLERID(num)=${pt1c_cid}))' . PHP_EOL . "\t" .
+            'same => n,ExecIf($["${origCidName}x" != "x"]?Set(CALLERID(name)=${origCidName}))' . PHP_EOL . "\t" .
             'same => n,ExecIf($["${SRC_QUEUE}x" != "x"]?Goto(internal-originate-queue,${EXTEN},1))' . PHP_EOL . "\t" .
             'same => n,ExecIf($["${CUT(CHANNEL,\;,2)}" == "2"]?Set(__PT1C_SIP_HEADER=${SIPADDHEADER})) ' . PHP_EOL . "\t" .
             'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1)' . PHP_EOL . "\t" .
