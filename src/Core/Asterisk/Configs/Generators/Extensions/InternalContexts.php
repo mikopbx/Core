@@ -67,7 +67,15 @@ class InternalContexts extends CoreConfigClass
 
         $conf .= "[voice_mail_peer] \n";
         $conf .= 'exten => voicemail,1,Answer()' . "\n\t";
+        $conf .= 'same => n,ExecIf($["${CHANNEL:0:5}" == "Local"]?Set(pl=${IF($["${CHANNEL:-1}" == "1"]?2:1)}))' . "\n\t";
+        $conf .= 'same => n,ExecIf($["${CHANNEL:0:5}" == "Local"]?Set(bridgePeer=${IMPORT(${CUT(CHANNEL,\;,1)}\;${pl},BRIDGEPEER)}))' . "\n\t";
+        $conf .= 'same => n,ExecIf($[ "${FROM_CHAN}" == "${bridgePeer}" ]?ChannelRedirect(${bridgePeer},${CONTEXT},${EXTEN},2))' . "\n\t";
+        $conf .= 'same => n,AGI(/usr/www/src/Core/Asterisk/agi-bin/clean_timeout.php)' . "\n\t";
+        $conf .= 'same => n,Gosub(voicemail_start,${EXTEN},1)' . "\n\t";
         $conf .= 'same => n,VoiceMail(admin@voicemailcontext)' . "\n\t";
+        $conf .= 'same => n,Hangup()' . "\n\n";
+
+        $conf .= 'exten => h,1,Gosub(voicemail_end,${EXTEN},1)'. "\n\t";
         $conf .= 'same => n,Hangup()' . "\n\n";
 
         $conf .= $this->generateInternal();

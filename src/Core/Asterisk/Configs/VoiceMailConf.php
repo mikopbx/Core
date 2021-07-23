@@ -48,7 +48,7 @@ class VoiceMailConf extends CoreConfigClass
         $msmtpPath = Util::which('msmtp');
 
         $conf     = "[general]\n" .
-            "format=wav49|gsm|wav\n" .
+            "format=wav\n" .
             "attach=yes\n" .
             "maxmsg=100\n" .
             "maxsecs=120\n" .
@@ -61,7 +61,7 @@ class VoiceMailConf extends CoreConfigClass
             "pbxskip=yes\n" .
             "fromstring=VoiceMail\n" .
             "emailsubject={$emailsubject}\n" .
-            "emailbody={$emailbody}\n\n{$emailfooter}\n" .
+            "emailbody={$emailbody}".'\n\n'."{$emailfooter}\n" .
             "emaildateformat=%A, %d %B %Y в %H:%M:%S\n" .
             "pagerdateformat=%T %D\n" .
             "mailcmd={$msmtpPath} --file=/etc/msmtp.conf -t\n" .
@@ -75,7 +75,7 @@ class VoiceMailConf extends CoreConfigClass
         if (empty($mail_box)) {
             $mail_box = $this->generalSettings['SystemNotificationsEmail'];
         }
-        $conf .= "admin => admin," . Util::translate("user") . ",{$mail_box},,attach=yes|tz=local\n";
+        $conf .= "admin => admin," . Util::translate("user") . ",{$mail_box},,attach=yes|tz=local|delete=yes\n";
         /*
         $peers = Sip::find('type="peer"');
         foreach ($peers as $peer){

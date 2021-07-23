@@ -202,6 +202,56 @@ function event_dial(without_event)
     return data;
 end
 
+function event_voicemail_start()
+    local data = {}
+    data['start']       = getNowDate()
+    data['answer']  	= getNowDate();
+    local id            = get_variable('UNIQUEID')..'_'..generateRandomString(6);
+    local from_account  = get_variable("FROM_PEER")
+    if ( from_account=='' and string.lower(agi_channel):find("local/") == nil )then
+        from_account = getAccountName(agi_channel);
+    end
+    data['action']          = "voicemail_start";
+    data['src_chan'] 	    = get_variable("CHANNEL");
+    data['src_num']  	    = get_variable("CALLERID(num)");
+    data['dst_num']  	    = get_variable("EXTEN");
+    data['dst_chan']        = 'VOICEMAIL';
+
+    data['linkedid']  	    = get_variable("CHANNEL(linkedid)");
+    data['UNIQUEID']  	    = id;
+    data['transfer']  	    = '0';
+    data['agi_channel']     = agi_channel;
+    data['did']		        = get_variable("FROM_DID");
+    data['verbose_call_id']	= get_variable("CHANNEL(callid)");
+    local is_pjsip = string.lower(get_variable("CHANNEL")):find("pjsip/") ~= nil
+    if(is_pjsip) then
+        data['src_call_id']  = get_variable("CHANNEL(pjsip,call-id)");
+    end
+    data['from_account'] = from_account;
+    data['IS_ORGNT']     = false;
+
+    set_variable("__pt1c_UNIQUEID", id);
+    userevent_return(data)
+
+    return data;
+end
+
+function event_voicemail_end()
+    local data = {}
+    data['action']  	= "voicemail_end";
+    data['end']  		= getNowDate();
+    data['linkedid']  	= get_variable("CHANNEL(linkedid)");
+    data['dialstatus']  = get_variable("VMSTATUS");
+    data['agi_channel'] = get_variable("CHANNEL");
+    data['UNIQUEID']  	= get_variable("pt1c_UNIQUEID");
+    if('SUCCESS' == data['dialstatus'])then
+        data['dialstatus'] = "ANSWERED";
+    end
+    data['vm-recordingfile']  	= get_variable("VM_MESSAGEFILE") .. ".mp3";
+    userevent_return(data)
+    return data;
+end
+
 -- Начало телефонного звонка
 function event_dial_interception()
     local data = {}
@@ -695,6 +745,8 @@ extensions = {
     dial_app={},
     dial_outworktimes={},
     set_from_peer={},
+    voicemail_start={},
+    voicemail_end={},
 }
 extensions.dial["_.!"]                      = function() event_dial() end
 extensions.dial_interception["_.!"]         = function() event_dial_interception() end
@@ -711,6 +763,8 @@ extensions.queue_end["_.!"]                 = function() event_queue_end() end
 extensions.dial_app["_.!"]                  = function() event_dial_app() end
 extensions.dial_outworktimes["_.!"]         = function() event_dial_outworktimes() end
 extensions.set_from_peer["_.!"]             = function() set_from_peer() end
+extensions.voicemail_start["_.!"]           = function() event_voicemail_start() end
+extensions.voicemail_end["_.!"]             = function() event_voicemail_end() end
 --
 ------
 ---- Безопасное подключение дополнительных dialplan, описанных в /etc/asterisk/extensions-lua
