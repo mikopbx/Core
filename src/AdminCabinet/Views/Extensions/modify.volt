@@ -111,7 +111,10 @@
             </div>
             <h3 class="ui dividing header ">{{ t._("ex_SipSettings") }}</h3>
             <div class="field">
-                <label>{{ t._('ex_BusyLevel') }}</label>
+                <label>
+                    {{ t._('ex_BusyLevel') }}
+                    <i class="circular info icon link teal infoIcon" data-content="{{ t._('ex_BusyLevelInfo') }}" data-position="right center" data-variation="tiny"></i>
+                </label>
                 {{ form.render('sip_busylevel') }}
             </div>
             <div class="field">

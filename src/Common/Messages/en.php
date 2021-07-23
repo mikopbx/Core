@@ -373,6 +373,7 @@ return [
     'ex_MobileDialstring' => 'Redefining the set string',
     'ex_SipSettings' => 'SIP settings',
     'ex_BusyLevel' => 'Maximum number of parallel calls',
+    'ex_BusyLevelInfo' => "When the specified number is reached, the employee's phone will be considered busy. If the phone is 'busy', then the call can be sent to another number, see the 'Routing Settings' tab",
     'ex_DTMFMode' => 'DTMF Mode',
     'ex_NetworkFilter' => 'Network filter',
     'ex_NatMode' => 'NAT Mode',
