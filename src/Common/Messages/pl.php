@@ -1061,4 +1061,5 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'gs_ValidateWEBPortNotEqualToAjamPort' => 'Porty HTTP i AJAM muszą być różne',
     'Storage disk was mounted successfully...' => 'Dysk pamięci został pomyślnie zamontowany',
     'gs_NeedRestartPBX' => 'Po zmianie, PBX uruchomi się ponownie (usługa gwiazdki)',
+    'ex_BusyLevelInfo' => 'Po osiągnięciu określonej liczby rozmów telefon pracownika zostanie uznany za zajęty.',
 ];

@@ -1064,4 +1064,5 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
     'gs_ValidateWEBPortNotEqualToAjamPort' => 'HTTP- und AJAM-Ports müssen unterschiedlich sein',
     'Storage disk was mounted successfully...' => 'Speicherlaufwerk erfolgreich gemountet',
     'gs_NeedRestartPBX' => 'Beim Wechsel startet die PBX neu (Asterisk-Dienst)',
+    'ex_BusyLevelInfo' => 'Wenn die angegebene Anzahl von Gesprächen erreicht ist, gilt das Telefon des Mitarbeiters als besetzt.',
 ];

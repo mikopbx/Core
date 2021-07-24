@@ -1061,4 +1061,5 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'gs_ValidateWEBPortNotEqualToAjamPort' => 'Porty HTTP a AJAM se musí lišit',
     'Storage disk was mounted successfully...' => 'Úložný disk byl úspěšně připojen',
     'gs_NeedRestartPBX' => 'Při změně se ústředna restartuje (služba s hvězdičkou)',
+    'ex_BusyLevelInfo' => 'Po dosažení zadaného počtu konverzací bude telefon zaměstnance považován za obsazený.',
 ];

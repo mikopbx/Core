@@ -1061,4 +1061,5 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'gs_ValidateWEBPortNotEqualToAjamPort' => 'As portas HTTP e AJAM devem ser diferentes',
     'Storage disk was mounted successfully...' => 'Disco de armazenamento montado com sucesso',
     'gs_NeedRestartPBX' => 'Ao mudar, o PBX irá reiniciar (serviço de asterisco)',
+    'ex_BusyLevelInfo' => 'Ao atingir o número especificado de conversas, o telefone do funcionário será considerado ocupado.',
 ];
