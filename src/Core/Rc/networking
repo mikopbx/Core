@@ -23,12 +23,14 @@ namespace MikoPBX\Core\Rc;
 use MikoPBX\Core\System\{Processes, Util, Network};
 
 require_once('Globals.php');
-if (count($argv) === 2 && 'start' == $argv[1]) {
+
+$action = $argv[1]??'';
+if ('start' === $action) {
     $network = new Network();
     $network->resolvConfGenerate();
     $network->loConfigure();
     $network->lanConfigure();
-} elseif (count($argv) === 2 && 'stop' == $argv[1]) {
+} elseif ('stop' === $action) {
     if (Util::isSystemctl()) {
         $systemctlPath = Util::which('systemctl');
         Processes::mwExec("{$systemctlPath} stop networking");
