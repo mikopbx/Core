@@ -42,7 +42,7 @@ class SSHConf extends Injectable
      **/
     public function configure()
     {
-        if(Util::isSystemctl()){
+        if(Util::isSystemctl() && ! Util::isDocker()){
             // Не настраиваем.
             return;
         }

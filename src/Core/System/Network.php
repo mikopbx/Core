@@ -87,6 +87,9 @@ class Network extends Injectable
      **/
     public function resolvConfGenerate(): void
     {
+        if(Util::isDocker()){
+            return;
+        }
         $resolv_conf   = '';
         $data_hostname = self::getHostName();
         if (trim($data_hostname['domain']) !== '') {
@@ -239,10 +242,12 @@ class Network extends Injectable
      */
     public function lanConfigure(): int
     {
+        if(Util::isDocker()){
+            return 0;
+        }
         if (Util::isSystemctl()) {
             $this->lanConfigureSystemCtl();
             $this->openVpnConfigure();
-
             return 0;
         }
         $busyboxPath = Util::which('busybox');
@@ -677,6 +682,9 @@ class Network extends Injectable
      */
     public function udhcpcConfigureRenewBound(): void
     {
+        if(Util::isDocker()){
+            return;
+        }
         if (Util::isSystemctl()) {
             $this->udhcpcConfigureRenewBoundSystemCtl();
             return;
@@ -943,14 +951,14 @@ class Network extends Injectable
     public function udhcpcConfigureDeconfig(): void
     {
         // Настройка по умолчанию.
-        $interface = trim(getenv('interface'));
-        if ( ! Util::isSystemctl()) {
-            // Для MIKO LFS Edition.
-            $busyboxPath = Util::which('busybox');
-            Processes::mwExec("{$busyboxPath} ifconfig {$interface} up");
-            Processes::mwExec("{$busyboxPath} ifconfig {$interface} 192.168.2.1 netmask 255.255.255.0");
+        if ( Util::isSystemctl()) {
+            return;
         }
-
+        $interface = trim(getenv('interface'));
+        // Для MIKO LFS Edition.
+        $busyboxPath = Util::which('busybox');
+        Processes::mwExec("{$busyboxPath} ifconfig {$interface} up");
+        Processes::mwExec("{$busyboxPath} ifconfig {$interface} 192.168.2.1 netmask 255.255.255.0");
     }
     /**
      * Сохранение настроек сетевого интерфейса.

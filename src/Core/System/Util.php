@@ -544,6 +544,12 @@ class Util
         return (stripos(php_uname('v'), 'debian') !== false);
     }
 
+    public static function isDocker(): bool
+    {
+        return file_exists('/etc/docker');
+    }
+
+
     /**
      * Выводить текстовое сообщение "done" подсвечивает зеленым цветом.
      */

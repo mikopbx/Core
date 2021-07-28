@@ -97,8 +97,10 @@ function getBannerText()
             if (count($files) !== 0) {
                 return "    \033[01;31m" . Util::translate('The integrity of the system is broken') . "\033[39m";
             }
+        } elseif(Util::isDocker()) {
+            return '    Is Debian (Docker)';
         } else {
-            return 'debian';
+            return '    Is Debian';
         }
     };
 

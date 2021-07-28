@@ -24,6 +24,9 @@ use MikoPBX\Core\System\{Processes, Util, Network};
 
 require_once('Globals.php');
 
+if (Util::isDocker()) {
+    exit(0);
+}
 $action = $argv[1]??'';
 if ('start' === $action) {
     $network = new Network();

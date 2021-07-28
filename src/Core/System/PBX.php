@@ -79,7 +79,7 @@ class PBX extends Injectable
     public function start(): void
     {
         Network::startSipDump();
-        if (Util::isSystemctl()) {
+        if (Util::isSystemctl() && ! Util::isDocker()) {
             $systemctlPath = Util::which('systemctl');
             Processes::mwExecBg("{$systemctlPath} restart asterisk");
         } else {

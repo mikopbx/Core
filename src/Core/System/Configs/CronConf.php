@@ -50,7 +50,7 @@ class CronConf extends Injectable
     public function reStart(): int
     {
         $this->generateConfig($this->di->getShared('registry')->booting);
-        if (Util::isSystemctl()) {
+        if (Util::isSystemctl() && ! Util::isDocker()) {
             $systemctlPath = Util::which('systemctl');
             Processes::mwExec("{$systemctlPath} restart ".self::PROC_NAME);
         } else {
