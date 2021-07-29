@@ -23,4 +23,4 @@ PATH=/sbin:/bin:/usr/sbin:/usr/bin;
 export HOME PATH;
 
 /etc/rc/bootup;
-/usr/bin/tail -f /dev/null;
+/bin/tail -f /dev/null;
