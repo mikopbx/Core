@@ -93,13 +93,13 @@ EOF
 
     need_reboot=1;
 else
+    start="$(/bin/busybox fdisk -l "$disk" | /bin/busybox grep -v sectors | /bin/busybox grep "$disk" | /bin/busybox awk  '{ print $4 }')"
     fdisk "$disk" > /dev/null 2> /dev/null << EOF
 d
-${part}
 n
 p
 ${part}
-
+${start}
 
 w
 EOF
