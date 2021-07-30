@@ -22,7 +22,6 @@
 astSBinDir=$(dirname "$(command -v asterisk)");
 EXEC=$(command -v crash_asterisk);
 astVarRunDir='/var/asterisk/run';
-astVarLogDir=$(grep -rn 'logsDir' /etc/inc/mikopbx-settings.json | cut -d'"' -f4);
 
 cliArgs="$*"					    # Grab any args passed to safe_asterisk
 TTY=9
