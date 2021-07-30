@@ -22,15 +22,17 @@
 astSBinDir=$(dirname "$(command -v asterisk)");
 EXEC=$(command -v crash_asterisk);
 astVarRunDir='/var/asterisk/run';
-
 cliArgs="$*"					    # Grab any args passed to safe_asterisk
-TTY=9
-
 SYSLOG=local0					    # Which syslog facility to use (disabled if blank)
 DUMPDROP=/tmp
 SLEEPSECS=4
 ASTPIDFILE="${astVarRunDir}/asterisk.pid"
 
+if [ -f '/.dockerenv' ]; then
+  TTY='';
+else
+  TTY=9;
+fi;
 # comment this line out to have this script _not_ kill all mpg123 processes when
 # asterisk exits
 KILLALLMPG123=1
