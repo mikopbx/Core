@@ -546,7 +546,7 @@ class Util
 
     public static function isDocker(): bool
     {
-        return file_exists('/etc/docker');
+        return file_exists('/.dockerenv');
     }
 
 

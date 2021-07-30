@@ -32,5 +32,6 @@ if [ ! -f /cf/conf/mikopbx.db ]; then
   cp /conf.default/mikopbx.db /cf/conf/mikopbx.db;
 fi;
 
-/etc/rc/bootup;
+/etc/rc/bootup 2>/dev/null;
+/etc/rc/bootup_pbx 2>/dev/null;
 /bin/tail -f /dev/null;
