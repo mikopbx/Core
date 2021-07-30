@@ -22,5 +22,15 @@ HOME=/;
 PATH=/sbin:/bin:/usr/sbin:/usr/bin;
 export HOME PATH;
 
+if [ ! '5' = "$(uname -r | cut -d '.' -f 1)" ]; then
+  echo 'Only the kernel version 5 is supported';
+  exit 5;
+fi;
+
+if [ ! -f /cf/conf/mikopbx.db ]; then
+  mkdir -p /cf/conf;
+  cp /conf.default/mikopbx.db /cf/conf/mikopbx.db;
+fi;
+
 /etc/rc/bootup;
 /bin/tail -f /dev/null;
