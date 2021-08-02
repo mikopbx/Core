@@ -72,8 +72,6 @@ class ConferenceConf extends CoreConfigClass
     public function extensionGenContexts(): string
     {
         $PBXRecordCalls = $this->generalSettings['PBXRecordCalls'];
-        $rec_options    = ($PBXRecordCalls === '1') ? 'r' : '';
-
         // Генерация внутреннего номерного плана.
         $conf  = "[hangup_handler_meetme]\n\n";
         $conf .= "exten => s,1,AGI(cdr_connector.php,hangup_chan_meetme)\n\t";
@@ -93,9 +91,12 @@ class ConferenceConf extends CoreConfigClass
             $conf .= 'same => n,AGI(cdr_connector.php,meetme_dial)' . "\n\t";
             $conf .= 'same => n,Answer()' . "\n\t";
             $conf .= 'same => n,Set(CHANNEL(hangup_handler_wipe)=hangup_handler_meetme,s,1)' . "\n\t";
-            $conf .= 'same => n,Set(CONFBRIDGE(bridge,record_file)=${MEETME_RECORDINGFILE}.wav)' . "\n\t";
-            $conf .= 'same => n,Set(CONFBRIDGE(bridge,record_file_timestamp)=false)' . "\n\t";
-            $conf .= 'same => n,Set(CONFBRIDGE(bridge,record_conference)=yes)' . "\n\t";
+            if($PBXRecordCalls === '1'){
+                // Запускаем запись разговоров.
+                $conf .= 'same => n,Set(CONFBRIDGE(bridge,record_file)=${MEETME_RECORDINGFILE}.wav)' . "\n\t";
+                $conf .= 'same => n,Set(CONFBRIDGE(bridge,record_file_timestamp)=false)' . "\n\t";
+                $conf .= 'same => n,Set(CONFBRIDGE(bridge,record_conference)=yes)' . "\n\t";
+            }
             $conf .= 'same => n,Set(CONFBRIDGE(bridge,internal_sample_rate)=auto)' . "\n\t";
             $conf .= 'same => n,Set(CONFBRIDGE(bridge,video_mode)=follow_talker)' . "\n\t";
             $conf .= 'same => n,Set(CONFBRIDGE(user,talk_detection_events)=yes)' . "\n\t";
