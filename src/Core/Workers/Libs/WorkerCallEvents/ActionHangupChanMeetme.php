@@ -38,9 +38,10 @@ class ActionHangupChanMeetme
         $dest_chan     = "MeetMe:{$data['conference']}";
         // Отбираем все строки по текущей конференции. Не завершенные вызовы.
         $filter = [
-            'dst_chan=:dst_chan: AND linkedid=:linkedid:',
+            'dst_chan=:dst_chan: AND (linkedid=:linkedid: OR linkedid=:meetmeid:)',
             'bind' => [
                 'linkedid' => $data['linkedid'],
+                'meetmeid' => $data['meetme_id'],
                 'dst_chan' => $dest_chan,
             ],
         ];
@@ -54,7 +55,7 @@ class ActionHangupChanMeetme
                     $data['src_chan'] = $row->src_chan;
                 }
                 if (file_exists($row->recordingfile) || file_exists(
-                        Util::trimExtensionForFile($row->recordingfile) . '.wav'
+                    Util::trimExtensionForFile($row->recordingfile) . '.wav'
                     )) {
                     // Переопределим путь к файлу записи разговора. Для конферецнии файл один.
                     $recordingfile = $row->recordingfile;

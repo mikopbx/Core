@@ -36,11 +36,8 @@ class ModulesConf extends CoreConfigClass
             'app_dial.so',
             'app_directed_pickup.so',
             'app_echo.so',
-
-            'app_meetme.so',
-            // 'app_confbridge.so',
-            // 'app_page.so',
-
+            'app_confbridge.so',
+            'app_page.so',
             'app_milliwatt.so',
             'app_originate.so',
             'app_playback.so',
@@ -49,7 +46,6 @@ class ModulesConf extends CoreConfigClass
             'app_stack.so',
             'app_verbose.so',
             'app_voicemail.so',
-            'chan_dahdi.so',
             'chan_iax2.so',
 
             'codec_alaw.so',
@@ -106,7 +102,6 @@ class ModulesConf extends CoreConfigClass
             'res_convert.so',
             'res_timing_timerfd.so',
             'res_timing_pthread.so',
-            'res_timing_dahdi.so',
             'res_mutestream.so',
 
             'func_timeout.so',
@@ -188,6 +183,12 @@ class ModulesConf extends CoreConfigClass
             'res_pjsip_dlg_options.so',
             'res_security_log.so',
         ];
+
+        if(file_exists('/dev/dahdi/transcode')){
+          $modules[] = 'app_meetme.so';
+          $modules[] = 'chan_dahdi.so';
+          $modules[] = 'res_timing_dahdi.so';
+        }
 
         foreach ($modules as $value) {
             $conf .= "load => $value\n";
