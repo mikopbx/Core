@@ -21,6 +21,7 @@ namespace MikoPBX\Core\System;
 
 use MikoPBX\Core\System\Configs\BeanstalkConf;
 use MikoPBX\Core\System\Configs\CronConf;
+use MikoPBX\Core\System\Configs\IptablesConf;
 use MikoPBX\Core\System\Configs\NatsConf;
 use MikoPBX\Core\System\Configs\NginxConf;
 use MikoPBX\Core\System\Configs\NTPConf;
@@ -45,81 +46,86 @@ class SystemLoader extends Di\Injectable
         Util::echoWithSyslog(' - Start beanstalkd daemon...');
         $beanstalkConf = new BeanstalkConf();
         $beanstalkConf->reStart();
-        Util::echoGreenDone();
+        Util::echoDone();
 
         Util::echoWithSyslog(' - Start redis daemon...');
         $redisConf = new RedisConf();
         $redisConf->reStart();
-        Util::echoGreenDone();
+        Util::echoDone();
 
         $system = new System();
         Util::echoWithSyslog(' - Configuring timezone ... ');
         $system::timezoneConfigure();
-        Util::echoGreenDone();
+        Util::echoDone();
 
         $storage       = new Storage();
         Util::echoWithSyslog(' - Mount storage disk... ');
         $storage->saveFstab();
         $storage->configure();
-        Util::echoGreenDone();
+        Util::echoDone();
 
         Util::echoWithSyslog(' - Connect swap... ');
         $storage->mountSwap();
-        Util::echoGreenDone();
+        Util::echoDone();
 
         Util::echoWithSyslog(' - Start syslogd daemon...');
         $syslogConf = new SyslogConf();
         $syslogConf->reStart();
-        Util::echoGreenDone();
+        Util::echoDone();
         
         $dbUpdater = new UpdateDatabase();
         $dbUpdater->updateDatabaseStructure();
 
         Util::echoWithSyslog(' - Create modules links and folders ... ');
         $storage->createWorkDirsAfterDBUpgrade();
-        Util::echoGreenDone();
+        Util::echoDone();
 
         Util::echoWithSyslog(' - Update configs and applications ... '."\n");
         $confUpdate = new UpdateSystemConfig();
         $confUpdate->updateConfigs();
         Util::echoWithSyslog(' - Update configs ... ');
-        Util::echoGreenDone();
+        Util::echoDone();
 
         Util::echoWithSyslog(' - Load kernel modules ... ');
-        $system->loadKernelModules();
-        Util::echoGreenDone();
+        $resKernelModules = $system->loadKernelModules();
+        Util::echoDone($resKernelModules);
 
         Util::echoWithSyslog(' - Configuring VM tools ... ');
-        $vmwareTools = new VMWareToolsConf();
-        $vmwareTools->configure();
-        Util::echoGreenDone();
+        $vmwareTools    = new VMWareToolsConf();
+        $resultVMTools  = $vmwareTools->configure();
+        Util::echoDone($resultVMTools);
 
         Util::echoWithSyslog(' - Configuring hostname ... ');
         $network = new Network();
         $network->hostnameConfigure();
-        Util::echoGreenDone();
+        Util::echoDone();
 
         Util::echoWithSyslog(' - Configuring resolv.conf ... ');
         $network->resolvConfGenerate();
-        Util::echoGreenDone();
+        Util::echoDone();
 
         Util::echoWithSyslog(' - Configuring LAN interface ... ');
         $network->lanConfigure();
-        Util::echoGreenDone();
+        Util::echoDone();
+
+        Util::echoWithSyslog(' - Configuring Firewall ... ');
+        $firewall = new IptablesConf();
+        $firewall->applyConfig();
+        Util::echoDone();
 
         Util::echoWithSyslog(' - Configuring ntpd ... ');
         NTPConf::configure();
-        Util::echoGreenDone();
+        Util::echoDone();
 
         Util::echoWithSyslog(' - Configuring SSH console ... ');
         $sshConf = new SSHConf();
-        $sshConf->configure();
-        Util::echoGreenDone();
+        $resSsh  = $sshConf->configure();
+        Util::echoDone($resSsh);
 
         Util::echoWithSyslog(' - Configuring msmtp services... ');
         $notifications = new Notifications();
         $notifications->configure();
-        Util::echoGreenDone();
+        Util::echoDone();
 
         $this->di->getShared('registry')->booting = false;
 
@@ -138,11 +144,11 @@ class SystemLoader extends Di\Injectable
         Util::echoWithSyslog(' - Start nats queue daemon...');
         $natsConf = new NatsConf();
         $natsConf->reStart();
-        Util::echoGreenDone();
+        Util::echoDone();
 
         Util::echoWithSyslog(' - Start php-fpm daemon...');
         PHPConf::reStart();
-        Util::echoGreenDone();
+        Util::echoDone();
 
         Util::echoWithSyslog(' - Configuring Asterisk...'.PHP_EOL);
         $pbx                              = new PBX();
@@ -150,22 +156,22 @@ class SystemLoader extends Di\Injectable
 
         Util::echoWithSyslog(' - Start Asterisk... ');
         $pbx->start();
-        Util::echoGreenDone();
+        Util::echoDone();
 
         Util::echoWithSyslog(' - Wait asterisk fully booted... ');
         PBX::waitFullyBooted();
-        Util::echoGreenDone();
+        Util::echoDone();
 
         Util::echoWithSyslog(' - Configuring Cron tasks... ');
         $cron = new CronConf();
         $cron->reStart();
-        Util::echoGreenDone();
+        Util::echoDone();
 
         Util::echoWithSyslog(' - Start Nginx daemon...');
         $nginx = new NginxConf();
         $nginx->generateConf();
         $nginx->reStart();
-        Util::echoGreenDone();
+        Util::echoDone();
 
         $this->di->getShared('registry')->booting = false;
 

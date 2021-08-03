@@ -367,9 +367,6 @@ class Network extends Injectable
             Processes::mwExecBg("/etc/rc/networking.set.mtu '{$eth}'");
         }
 
-        $firewall = new IptablesConf();
-        $firewall->applyConfig();
-
         // Дополнительные "ручные" маршруты.
         Util::fileWriteContent('/etc/static-routes', '');
         $arr_commands = [];

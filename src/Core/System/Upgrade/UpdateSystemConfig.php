@@ -72,7 +72,7 @@ class UpdateSystemConfig extends Di\Injectable
                     $processor = new $upgradeClass();
                     $processor->processUpdate();
                     Util::echoWithSyslog(' - UpdateConfigs: Upgrade system up to ' . $releaseNumber . ' ');
-                    Util::echoGreenDone();
+                    Util::echoDone();
                 }
             }
 

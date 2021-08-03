@@ -549,13 +549,16 @@ class Util
         return file_exists('/.dockerenv');
     }
 
-
     /**
      * Выводить текстовое сообщение "done" подсвечивает зеленым цветом.
      */
-    public static function echoGreenDone(): void
+    public static function echoDone(bool $result=true): void
     {
-        echo "\033[32;1mdone\033[0m \n";
+        if($result === false){
+            echo "\033[31;1mFAIL\033[0m \n";
+        }else{
+            echo "\033[32;1mDONE\033[0m \n";
+        }
     }
 
     /**

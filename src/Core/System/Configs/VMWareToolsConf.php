@@ -23,6 +23,7 @@ namespace MikoPBX\Core\System\Configs;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
+use phpDocumentor\Reflection\Types\True_;
 
 class VMWareToolsConf
 {
@@ -40,10 +41,14 @@ class VMWareToolsConf
     /**
      * Configure and starts VMWareTools
      */
-    public function configure(): void
+    public function configure(): bool
     {
+        if(Util::isDocker()){
+            return true;
+        }
         Processes::killByName("vmtoolsd");
         $virtualHW = $this->mikoPBXConfig->getGeneralSettings('VirtualHardwareType');
+        $result = 0;
         if ('VMWARE' === $virtualHW) {
             $conf = "[logging]\n"
                 . "log = false\n"
@@ -58,7 +63,9 @@ class VMWareToolsConf
 
             file_put_contents("{$dirVM}/tools.conf", $conf);
             $vmtoolsdPath = Util::which('vmtoolsd');
-            Processes::mwExec("{$vmtoolsdPath} --background=/var/run/vmtoolsd.pid > /dev/null 2> /dev/null");
+            $result = Processes::mwExec("{$vmtoolsdPath} --background=/var/run/vmtoolsd.pid > /dev/null 2> /dev/null");
         }
+
+        return $result===0;
     }
 }

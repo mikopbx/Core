@@ -260,15 +260,21 @@ class System extends Di\Injectable
     /**
      * Loads additional kernel modules
      */
-    public function loadKernelModules(): void
+    public function loadKernelModules(): bool
     {
+        if(Util::isDocker()){
+            return true;
+        }
+
         $modprobePath = Util::which('modprobe');
         $ulimitPath   = Util::which('ulimit');
 
-        Processes::mwExec("{$modprobePath} -q dahdi");
-        Processes::mwExec("{$modprobePath} -q dahdi_transcode");
+        $res1 = Processes::mwExec("{$modprobePath} -q dahdi");
+        $res2 = Processes::mwExec("{$modprobePath} -q dahdi_transcode");
         Processes::mwExec("{$ulimitPath} -n 4096");
         Processes::mwExec("{$ulimitPath} -p 4096");
+
+        return ($res1 === 0 && $res2 === 0);
     }
 
 }
