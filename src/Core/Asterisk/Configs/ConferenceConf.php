@@ -97,7 +97,6 @@ class ConferenceConf extends CoreConfigClass
                 $conf .= 'same => n,Set(CONFBRIDGE(bridge,record_file_timestamp)=false)' . "\n\t";
                 $conf .= 'same => n,Set(CONFBRIDGE(bridge,record_conference)=yes)' . "\n\t";
             }
-            $conf .= 'same => n,Set(CONFBRIDGE(bridge,internal_sample_rate)=auto)' . "\n\t";
             $conf .= 'same => n,Set(CONFBRIDGE(bridge,video_mode)=follow_talker)' . "\n\t";
             $conf .= 'same => n,Set(CONFBRIDGE(user,talk_detection_events)=yes)' . "\n\t";
             $conf .= 'same => n,Set(CONFBRIDGE(user,quiet)=yes)' . "\n\t";
