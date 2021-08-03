@@ -170,7 +170,7 @@ class ExtensionsConf extends CoreConfigClass
         $conf .= 'same => n,Wait(0.3)' . "\n\t";
         $conf .= 'same => n,Bridge(${SRC_BRIDGE_CHAN},kKTthH)' . "\n\n";
 
-        $conf .= 'exten => h,1,ExecIf($["${ISTRANSFER}x" != "x"]?Gosub(${ISTRANSFER}dial_hangup,${EXTEN},1))' . "\n\n";
+        $conf .= 'exten => h,1,ExecIf($["${ISTRANSFER}x" != "x"]?Goto(transfer_dial_hangup,${EXTEN},1))' . "\n\n";
 
         // TODO / Добавление / удаление префиксов на входящий callerid.
         $conf .= '[add-trim-prefix-clid]' . "\n";
@@ -193,7 +193,7 @@ class ExtensionsConf extends CoreConfigClass
         $conf              .= "[internal-transfer] \n";
         $conf .= $this->hookModulesMethod(CoreConfigClass::GET_INCLUDE_INTERNAL_TRANSFER);
         $conf .= $this->hookModulesMethod(CoreConfigClass::EXTENSION_GEN_INTERNAL_TRANSFER);
-        $conf .= 'exten => h,1,Gosub(transfer_dial_hangup,${EXTEN},1)' . "\n\n";
+        $conf .= 'exten => h,1,Goto(transfer_dial_hangup,${EXTEN},1)' . "\n\n";
     }
 
     /**

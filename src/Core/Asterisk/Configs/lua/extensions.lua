@@ -116,6 +116,16 @@ function userevent_return(data)
     app["return"]();
 end
 
+-- Выполняет UserEvent и return
+function userevent_hangup(data)
+    if(is_test ~= nil) then
+        return
+    end
+    app["UserEvent"]("CdrConnector,AgiData:"..base64_encode( JSON:encode(data) ));
+    app["NoOp"]('Hangup channel ');
+    app["Hangup"]();
+end
+
 
 -- Начало телефонного звонка
 function event_dial(without_event)
@@ -566,6 +576,7 @@ end
 -- Завершение канала при прееадресации.
 function event_transfer_dial_hangup()
     local data = {}
+
     data['action']  	= "transfer_dial_hangup";
     data['end']         = getNowDate()
     data['linkedid']  	= get_variable("CHANNEL(linkedid)");
@@ -580,7 +591,13 @@ function event_transfer_dial_hangup()
         data['dst_chan'] 	   = get_variable("CDR(dstchannel)");
     end
 
-    userevent_return(data)
+    local EXTEN = get_variable("EXTEN");
+    if('h' == EXTEN)then
+        userevent_hangup(data);
+    else
+        userevent_return(data);
+    end
+
     return data;
 end
 
