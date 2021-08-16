@@ -73,9 +73,12 @@ class Entrypoint
         // Запуск системного лога.
         Processes::mwExecBg($sysLogdPath.' -S -C512');
         $settingsDb = '/cf/conf/mikopbx.db';
-        if(!file_exists($settingsDb)){
+
+        $out = [];
+        Processes::mwExec('sqlite3 /cf/conf/mikopbx.db .tables', $out);
+        if(trim(implode('',$out)) === ''){
             Util::mwMkdir(dirname($settingsDb));
-            copy('/conf.default/mikopbx.db', '/cf/conf/mikopbx.db');
+            Processes::mwExec("rm -rf $settingsDb; cp /conf.default/mikopbx.db $settingsDb");
         }
         $commands = 'exec </dev/console >/dev/console 2>/dev/console;'.
             '/etc/rc/bootup 2>/dev/null &&'.
