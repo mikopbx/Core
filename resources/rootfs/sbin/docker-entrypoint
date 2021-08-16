@@ -1,37 +1,92 @@
-#!/bin/sh
-#
-# MikoPBX - free phone system for small business
-# Copyright © 2017-2021 Alexey Portnov and Nikolay Beketov
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License along with this program.
-# If not, see <https://www.gnu.org/licenses/>.
-#
+#!/usr/bin/php -f
+<?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2021 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
 
-/sbin/syslogd -S -C512
-HOME=/;
-PATH=/sbin:/bin:/usr/sbin:/usr/bin;
-export HOME PATH;
+require_once('Globals.php');
+use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\Util;
 
-if [ ! '5' = "$(uname -r | cut -d '.' -f 1)" ]; then
-  echo 'Only the kernel version 5 is supported';
-  exit 5;
-fi;
+class Entrypoint
+{
+    public float $workerStartTime;
+    public function __construct()
+    {
+        pcntl_async_signals(true);
+        pcntl_signal(SIGTERM, [$this, 'signalHandler']);
+        register_shutdown_function([$this, 'shutdownHandler']);
+    }
 
-if [ ! -f /cf/conf/mikopbx.db ]; then
-  mkdir -p /cf/conf;
-  cp /conf.default/mikopbx.db /cf/conf/mikopbx.db;
-fi;
+    /**
+     * Process async system signal
+     *
+     * @param int $signal
+     */
+    public function signalHandler(int $signal): void
+    {
+        Util::sysLogMsg(static::class, "Receive signal to restart  " . $signal, LOG_DEBUG);
+        $freeStorage = Util::which('freestorage');
+        $freeOffload = Util::which('freeupoffload');
 
-/etc/rc/bootup 2>/dev/null;
-/etc/rc/bootup_pbx 2>/dev/null;
-/bin/tail -f /dev/null;
+        $commands = 'exec </dev/console >/dev/console 2>/dev/console; '.
+                    "$freeStorage; ".
+                    "$freeOffload;";
+        Processes::mwExec($commands);
+    }
+
+    /**
+     * Process shutdown event
+     *
+     */
+    public function shutdownHandler(): void
+    {
+        $e = error_get_last();
+        $delta = round(microtime(true) - $this->workerStartTime,2);
+        if ($e === null) {
+            Util::sysLogMsg(static::class, "shutdownHandler after $delta seconds", LOG_DEBUG);
+        } else {
+            $details = (string) print_r($e, true);
+            Util::sysLogMsg(static::class, "shutdownHandler after $delta seconds with error: $details", LOG_DEBUG);
+        }
+    }
+
+    public function start():void
+    {
+        $this->workerStartTime = microtime(true);
+
+        $sysLogdPath = Util::which('syslogd');
+        // Запуск системного лога.
+        Processes::mwExecBg($sysLogdPath.' -S -C512');
+        $settingsDb = '/cf/conf/mikopbx.db';
+        if(!file_exists($settingsDb)){
+            Util::mwMkdir(dirname($settingsDb));
+            copy('/conf.default/mikopbx.db', '/cf/conf/mikopbx.db');
+        }
+        $commands = 'exec </dev/console >/dev/console 2>/dev/console;'.
+            '/etc/rc/bootup 2>/dev/null &&'.
+            '/etc/rc/bootup_pbx 2>/dev/null';
+        passthru($commands);
+        while (true){
+            sleep(2);
+        }
+    }
+}
+
+$main = new Entrypoint();
+$main->start();
+
