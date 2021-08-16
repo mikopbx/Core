@@ -17,8 +17,8 @@
 # If not, see <https://www.gnu.org/licenses/>.
 #
 
-/sbin/freeupoffload
 /sbin/freestorage
+/sbin/freeupoffload
 
 # RAID
 mdadmPath=$(/sbin/which mdadm);

@@ -75,6 +75,10 @@ freeSwapByName(){
 
 f_umount()
 {
+    if [ -f '/.dockerenv' ]; then
+      return;
+    fi;
+
     if [ -b "$1" ]; then
       filter="^$1";
     else
