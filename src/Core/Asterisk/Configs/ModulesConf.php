@@ -49,7 +49,6 @@ class ModulesConf extends CoreConfigClass
             'chan_iax2.so',
 
             'codec_alaw.so',
-            'codec_dahdi.so',
             'codec_g722.so',
             'codec_g726.so',
             'codec_gsm.so',
@@ -188,6 +187,7 @@ class ModulesConf extends CoreConfigClass
           $modules[] = 'app_meetme.so';
           $modules[] = 'chan_dahdi.so';
           $modules[] = 'res_timing_dahdi.so';
+          $modules[] = 'codec_dahdi.so';
         }
 
         foreach ($modules as $value) {
