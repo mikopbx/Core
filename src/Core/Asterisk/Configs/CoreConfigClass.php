@@ -220,7 +220,7 @@ abstract class CoreConfigClass extends Injectable implements AsteriskConfigInter
     protected function echoDone(): void
     {
         if ($this->booting === true && ! empty($this->description)) {
-            echo "\033[32;1mdone\033[0m \n";
+            Util::echoDone();
         }
     }
 

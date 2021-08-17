@@ -554,11 +554,36 @@ class Util
      */
     public static function echoDone(bool $result=true): void
     {
+        $pos    = self::getCursorPosition();
+        $cols   = self::getCountCols();
+        echo(str_repeat(' ', $cols - $pos - 6));
         if($result === false){
             echo "\033[31;1mFAIL\033[0m \n";
         }else{
             echo "\033[32;1mDONE\033[0m \n";
         }
+    }
+
+    public static function getCursorPosition():string
+    {
+        // Example response string.
+        $ttyprops = trim(shell_exec('stty -g'));
+        system('stty -icanon -echo');
+        $term = fopen('/dev/tty', 'w');
+        fwrite($term, "\033[6n");
+        fclose($term);
+
+        $buf = fread(STDIN, 16);
+
+        $matches = [];
+        preg_match('/^\033\[(\d+);(\d+)R$/', $buf, $matches);
+        system("stty '$ttyprops'");
+        return $matches[2]??'0';
+    }
+
+    public static function getCountCols():string
+    {
+        return shell_exec('tput cols');
     }
 
     /**
