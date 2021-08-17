@@ -556,11 +556,11 @@ class Util
     {
         $pos    = self::getCursorPosition();
         $cols   = self::getCountCols();
-        echo(str_repeat(' ', $cols - $pos - 6));
+        $spaces = str_repeat(' ', $cols - $pos - 6);
         if($result === false){
-            echo "\033[31;1mFAIL\033[0m \n";
+            echo $spaces."\033[31;1mFAIL\033[0m \n";
         }else{
-            echo "\033[32;1mDONE\033[0m \n";
+            echo $spaces."\033[32;1mDONE\033[0m \n";
         }
     }
 
