@@ -554,9 +554,10 @@ class Util
      */
     public static function echoDone(bool $result=true): void
     {
-        $pos    = self::getCursorPosition();
-        $cols   = self::getCountCols();
-        $spaces = str_repeat(' ', $cols - $pos - 6);
+        $spaces = '';
+        // $pos    = self::getCursorPosition();
+        // $cols   = self::getCountCols();
+        // $spaces = str_repeat(' ', $cols - $pos - 6);
         if($result === false){
             echo $spaces."\033[31;1mFAIL\033[0m \n";
         }else{
