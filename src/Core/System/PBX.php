@@ -345,7 +345,7 @@ class PBX extends Injectable
         $configClassObj->hookModulesMethod(CoreConfigClass::GENERATE_CONFIG);
         self::dialplanReload();
         if ($this->di->getShared('registry')->booting) {
-            echo "   |- dialplan reload \033[32;1mdone\033[0m \n";
+            Util::echoResult('   |- dialplan reload');
         }
         // Создание базы данных истории звонков.
         /** @var \Phalcon\Db\Adapter\Pdo\Sqlite $connection */

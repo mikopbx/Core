@@ -554,37 +554,24 @@ class Util
      */
     public static function echoDone(bool $result=true): void
     {
-        $spaces = '';
-        // $pos    = self::getCursorPosition();
-        // $cols   = self::getCountCols();
-        // $spaces = str_repeat(' ', $cols - $pos - 6);
         if($result === false){
-            echo $spaces."\033[31;1mFAIL\033[0m \n";
+            echo "\033[31;1mFAIL\033[0m \n";
         }else{
-            echo $spaces."\033[32;1mDONE\033[0m \n";
+            echo "\033[32;1mDONE\033[0m \n";
         }
     }
 
-    public static function getCursorPosition():string
+    public static function echoResult(string $message, bool $result = true):void
     {
-        // Example response string.
-        $ttyprops = trim(shell_exec('stty -g'));
-        system('stty -icanon -echo');
-        $term = fopen('/dev/tty', 'w');
-        fwrite($term, "\033[6n");
-        fclose($term);
-
-        $buf = fread(STDIN, 16);
-
-        $matches = [];
-        preg_match('/^\033\[(\d+);(\d+)R$/', $buf, $matches);
-        system("stty '$ttyprops'");
-        return $matches[2]??'0';
+        $cols   = self::getCountCols();
+        $spaces = str_repeat('.', $cols - strlen($message) - 8);
+        echo "\r".$message.$spaces;
+        self::echoDone($result);
     }
 
     public static function getCountCols():string
     {
-        return shell_exec('tput cols');
+        return min(shell_exec('tput cols'), 80);
     }
 
     /**

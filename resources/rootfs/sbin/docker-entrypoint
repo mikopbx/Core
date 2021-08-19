@@ -171,7 +171,8 @@ class Entrypoint
 
     private function updateSetting($dataPath, $newValue, $isInc):void
     {
-        echo " - Update $dataPath (port) to '$newValue' ...";
+        $msg = " - Update $dataPath (port) to '$newValue' ...";
+        Util::echoWithSyslog($msg);
         if($isInc === true){
             $this->incSettings[$dataPath]['port'] = $newValue;
             $res = file_put_contents($this->pathInc, json_encode($this->incSettings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
@@ -180,7 +181,7 @@ class Entrypoint
             $res = Processes::mwExec("sqlite3 ".self::PATH_DB." 'UPDATE m_PbxSettings SET value=\"$newValue\" WHERE key=\"$dataPath\"'");
             $result = ($res === 0);
         }
-        Util::echoDone($result);
+        Util::echoResult($msg, $result);
     }
 }
 
