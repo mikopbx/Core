@@ -549,7 +549,7 @@ return [
     'gs_AMITab' => 'AMI&AJAM',
     'gs_SSHTab' => 'SSH',
     'gs_WebTab' => 'Web-интерфейс',
-    'gs_CallRecordTab' => 'Запись разговров',
+    'gs_CallRecordTab' => 'Запись разговоров',
     'gs_PBXName' => 'Название PBX системы',
     'gs_PBXDescription' => 'Дополнительное описание',
     'gs_NeedRestartPBX' => 'При изменении произойдет перезапуск АТС (служба asterisk)',
