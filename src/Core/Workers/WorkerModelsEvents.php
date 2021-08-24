@@ -775,6 +775,9 @@ class WorkerModelsEvents extends WorkerBase
     public static function invokeAction(string $action, array $parameters = [], int $priority = 0): void
     {
         $di = Di::getDefault();
+        if(!$di){
+            return;
+        }
         /** @var BeanstalkClient $queue */
         $queue   = $di->getShared(BeanstalkConnectionModelsProvider::SERVICE_NAME);
         $jobData = json_encode(

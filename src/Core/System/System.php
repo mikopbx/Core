@@ -72,10 +72,10 @@ class System extends Di\Injectable
     /**
      * Updates custom changes in config files
      */
-    public static function updateCustomFiles()
+    public static function updateCustomFiles():void
     {
         $actions = [];
-        /** @var \MikoPBX\Common\Models\CustomFiles $res_data */
+        /** @var CustomFiles $res_data */
         $res_data = CustomFiles::find("changed = '1'");
         foreach ($res_data as $file_data) {
             // Always restart asterisk after any custom file change
@@ -106,16 +106,21 @@ class System extends Di\Injectable
                 case 'ntp.conf':
                     $actions['ntp'] = 100;
                     break;
+                case 'static-routes':
+                case 'openvpn.ovpn':
+                    $actions['network'] = 100;
+                    break;
                 case 'jail.local': // fail2ban
                     $actions['firewall'] = 100;
                     break;
+                default:
+                    break;
             }
         }
-
         asort($actions);
         self::invokeActions($actions);
         foreach ($res_data as $file_data) {
-            /** @var \MikoPBX\Common\Models\CustomFiles $file_data */
+            /** @var CustomFiles $file_data */
             $file_data->writeAttribute("changed", '0');
             $file_data->save();
         }
@@ -155,6 +160,9 @@ class System extends Di\Injectable
                     break;
                 case 'firewall':
                     IptablesConf::reloadFirewall();
+                    break;
+                case 'network':
+                    self::networkReload();
                     break;
                 case 'asterisk_core_reload':
                     PBX::sipReload();
