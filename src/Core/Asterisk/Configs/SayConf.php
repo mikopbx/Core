@@ -26,7 +26,10 @@ class SayConf extends CoreConfigClass
 
     protected function generateConfigProtected(): void
     {
-        $conf = '_mi[n]uta:0 => num:${SAY}, digits/minutes'.PHP_EOL.
+        $conf = '[general]'.PHP_EOL.
+                'mode=old'.PHP_EOL.PHP_EOL.
+                '[ru]'.PHP_EOL.
+                '_mi[n]uta:0 => num:${SAY}, digits/minutes'.PHP_EOL.
                 '_mi[n]uta:1 => digits/1f, digits/minute'.PHP_EOL.
                 '_mi[n]uta:2 => digits/2f, digits/minutes-i'.PHP_EOL.
                 '_mi[n]uta:[3-4] => num:${SAY}, digits/minutes-i'.PHP_EOL.
