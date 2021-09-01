@@ -765,10 +765,16 @@ class SIPConf extends CoreConfigClass
     ): string {
         $conf       = '';
         $fromdomain = (trim($provider['fromdomain']) === '') ? $provider['host'] : $provider['fromdomain'];
-        $from       = (trim(
-                $provider['fromuser']
-            ) === '') ? "{$provider['username']}; username" : "{$provider['fromuser']}; fromuser";
-        $from_user  = ($provider['disablefromuser'] === '1') ? null : $from;
+        $from       = (trim($provider['fromuser']) === '') ? "{$provider['username']}; username" : "{$provider['fromuser']}; fromuser";
+
+        if($provider['disablefromuser'] === '1'){
+            $from_user   = null;
+            $contactUser = trim($provider['username']??'');
+        }else{
+            $from_user   = $from;
+            $contactUser = $from;
+        }
+
         $language   = $this->generalSettings['PBXLanguage'];
 
         if (count($this->contexts_data[$provider['context_id']]) === 1) {
@@ -791,6 +797,7 @@ class SIPConf extends CoreConfigClass
             'direct_media'    => 'no',
             'from_user'       => $from_user,
             'from_domain'     => $fromdomain,
+            'contact_user'    => $contactUser,
             'sdp_session'     => 'mikopbx',
             'language'        => $language,
             'aors'            => $provider['uniqid'],
