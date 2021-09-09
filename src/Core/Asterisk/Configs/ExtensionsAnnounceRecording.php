@@ -33,7 +33,7 @@ class ExtensionsAnnounceRecording extends CoreConfigClass
     {
         //
         return '[annonce-spy]' . PHP_EOL .
-            'exten => _.!,1,ExecIf($[ "${EXTEN}" == "h" ]?Hangup()' . PHP_EOL . "\t" .
+            'exten => _.!,1,ExecIf($[ "${EXTEN}" == "h" ]?Hangup())' . PHP_EOL . "\t" .
             'same => n,ExecIf($["${CHANNELS(PJSIP/${EXTEN})}x" != "x"]?Chanspy(PJSIP/${EXTEN},uBq))' . PHP_EOL . "\t" .
             'same => n,Hangup()' . PHP_EOL
             . PHP_EOL .
