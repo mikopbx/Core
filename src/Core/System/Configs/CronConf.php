@@ -50,7 +50,7 @@ class CronConf extends Injectable
     public function reStart(): int
     {
         $this->generateConfig($this->di->getShared('registry')->booting);
-        if (Util::isSystemctl()) {
+        if (Util::isSystemctl() && ! Util::isDocker()) {
             $systemctlPath = Util::which('systemctl');
             Processes::mwExec("{$systemctlPath} restart ".self::PROC_NAME);
         } else {
@@ -71,7 +71,7 @@ class CronConf extends Injectable
     {
         $mast_have         = [];
 
-        if (Util::isSystemctl()) {
+        if (Util::isSystemctl() && ! Util::isDocker()) {
             $mast_have[]   = "SHELL=/bin/sh\n";
             $mast_have[]   = "PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin\n\n";
             $cron_filename = '/etc/cron.d/mikopbx';
@@ -105,9 +105,9 @@ class CronConf extends Injectable
         $configClassObj->hookModulesMethod(ConfigClass::CREATE_CRON_TASKS, [&$tasks]);
         $conf = implode('', array_merge($mast_have, $tasks));
 
-        if (Util::isSystemctl()) {
+        if (Util::isSystemctl() && ! Util::isDocker()) {
             // Convert rules to debian style
-            $conf = str_replace(' * * * * /', ' * * * * root /', $conf);
+            $conf = str_replace(' * * * * /', " * * * * $cron_user/", $conf);
         }
 
         if ($boot === true) {

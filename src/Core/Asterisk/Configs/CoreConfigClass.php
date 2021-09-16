@@ -37,6 +37,7 @@ abstract class CoreConfigClass extends Injectable implements AsteriskConfigInter
      * Config file name i.e. extensions.conf
      */
     protected string $description;
+    private   string $stageMessage = '';
 
     /**
      * Easy way to get or set the PbxSettings values
@@ -196,7 +197,8 @@ abstract class CoreConfigClass extends Injectable implements AsteriskConfigInter
     protected function echoGenerateConfig(): void
     {
         if ($this->booting === true && ! empty($this->description)) {
-            echo "   |- generate config {$this->description}... ";
+            $this->stageMessage = "   |- generate config {$this->description}...";
+            Util::echoWithSyslog($this->stageMessage);
         }
     }
 
@@ -220,7 +222,8 @@ abstract class CoreConfigClass extends Injectable implements AsteriskConfigInter
     protected function echoDone(): void
     {
         if ($this->booting === true && ! empty($this->description)) {
-            echo "\033[32;1mdone\033[0m \n";
+            Util::echoResult($this->stageMessage);
+            $this->stageMessage = '';
         }
     }
 

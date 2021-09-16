@@ -1059,4 +1059,7 @@ return [
     'gs_ValidateWEBHTTPSPortNotEqualToAjamPort' => 'HTTPS ポートと AJAM ポートは異なる必要があります',
     'gs_ValidateWEBPortNotEqualToAjamTLSPort' => 'HTTP ポートと AJAM ポートは異なる必要があります',
     'gs_ValidateWEBPortNotEqualToAjamPort' => 'HTTP ポートと AJAM ポートは異なる必要があります',
+    'Storage disk was mounted successfully...' => 'ストレージディスクが正常にマウントされました',
+    'gs_NeedRestartPBX' => '変更すると、PBXが再起動します（アスタリスクサービス）',
+    'ex_BusyLevelInfo' => '指定された会話数に達すると、従業員の電話はビジーと見なされます。',
 ];

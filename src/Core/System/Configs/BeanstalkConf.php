@@ -32,13 +32,8 @@ class BeanstalkConf extends Injectable
      */
     public function reStart(): void
     {
-        if (Util::isSystemctl()) {
-            $systemCtrlPath = Util::which('systemctl');
-            Processes::mwExec("{$systemCtrlPath} restart beanstalkd.service");
-        } else {
-            $config = $this->getDI()->get('config')->beanstalk;
-            $conf   = "-l {$config->host} -p {$config->port} -z 524280";
-            Processes::safeStartDaemon(self::PROC_NAME, $conf);
-        }
+        $config = $this->getDI()->get('config')->beanstalk;
+        $conf   = "-l {$config->host} -p {$config->port} -z 524280";
+        Processes::safeStartDaemon(self::PROC_NAME, $conf);
     }
 }

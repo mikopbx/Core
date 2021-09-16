@@ -234,6 +234,9 @@ class IncomingContexts extends CoreConfigClass
         }
         if (is_array($this->provider)) {
             foreach (array_values($this->provider) as $_login) {
+                if(empty($_login)){
+                    continue;
+                }
                 $this->dialplan[$_login] = str_replace('_X!,1', "{$_login},1", $this->dialplan['X!']);
             }
         }

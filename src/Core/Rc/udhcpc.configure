@@ -20,6 +20,7 @@
 
 use MikoPBX\Core\System\Network;
 use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\CloudProvisioning;
 
 require_once 'Globals.php';
 
@@ -31,4 +32,5 @@ if ($action === 'deconfig') {
     $network->udhcpcConfigureDeconfig();
 } elseif ('bound' === $action || 'renew' === $action) {
     $network->udhcpcConfigureRenewBound();
+    CloudProvisioning::start();
 }

@@ -67,11 +67,12 @@ class ModulesControllerBase extends BaseController
         $response   = $this->di->getShared(BeanstalkConnectionWorkerApiProvider::SERVICE_NAME)->request($request, 30, 0);
         if ($response !== false) {
             $response = json_decode($response, true);
-            if (isset($response['fpassthru'])) {
-                $fp = fopen($response['filename'], "rb");
+            if (isset($response['data']['fpassthru'])) {
+                $filename = $response['data']['filename']??'';
+                $fp = fopen($filename, "rb");
                 if ($fp!==false) {
-                    $size = filesize($response['filename']);
-                    $name = basename($response['filename']);
+                    $size = filesize($filename);
+                    $name = basename($filename);
                     $this->response->setHeader('Content-Description', "config file");
                     $this->response->setHeader('Content-Disposition', "attachment; filename={$name}");
                     $this->response->setHeader('Content-type', "text/plain");
@@ -81,8 +82,8 @@ class ModulesControllerBase extends BaseController
                     fpassthru($fp);
                     fclose($fp);
                 }
-                if (isset($response['need_delete']) && $response['need_delete'] == true) {
-                    unlink($response['filename']);
+                if (isset($response['data']['need_delete']) && $response['data']['need_delete'] == true) {
+                    unlink($filename);
                 }
             } elseif (isset($response['redirect'])) {
                 $this->response->redirect($response['redirect'], true, 302);

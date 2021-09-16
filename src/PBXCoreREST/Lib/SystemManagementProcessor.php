@@ -21,7 +21,7 @@ namespace MikoPBX\PBXCoreREST\Lib;
 
 
 use MikoPBX\Common\Models\AsteriskManagerUsers;
-use MikoPBX\Common\Models\CallDetailRecords;
+use MikoPBX\Common\Models\CustomFiles;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\IncomingRoutingTable;
 use MikoPBX\Common\Models\OutgoingRoutingTable;
@@ -30,10 +30,11 @@ use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\Providers;
 use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
+use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\System\Notifications;
 use MikoPBX\Core\System\Processes;
-use MikoPBX\Core\System\Storage;
 use MikoPBX\Core\System\System;
+use MikoPBX\Core\System\Upgrade\UpdateDatabase;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Modules\PbxExtensionState;
 use MikoPBX\Modules\PbxExtensionUtils;
@@ -76,7 +77,8 @@ class SystemManagementProcessor extends Injectable
                 $res->success = System::setDate($data['timestamp'], $data['userTimeZone']);
                 break;
             case 'updateMailSettings':
-                $res->success = Notifications::sendTestMail();
+                $notifier     = new Notifications();
+                $res->success = $notifier->sendTestMail();
                 break;
             case 'sendMail':
                 $res = self::sendMail($data);
@@ -146,7 +148,8 @@ class SystemManagementProcessor extends Injectable
                 $data['subject'] = base64_decode($data['subject']);
                 $data['body']    = base64_decode($data['body']);
             }
-            $result = Notifications::sendMail($data['email'], $data['subject'], $data['body']);
+            $notifier = new Notifications();
+            $result   = $notifier->sendMail($data['email'], $data['subject'], $data['body']);
             if ($result === true) {
                 $res->success = true;
             } else {
@@ -362,19 +365,17 @@ class SystemManagementProcessor extends Injectable
     /**
      * Deletes all settings and uploaded files
      */
-    private static function restoreDefaultSettings(): PBXApiResult
+    public static function restoreDefaultSettings(): PBXApiResult
     {
         $res            = new PBXApiResult();
         $res->processor = __METHOD__;
         $di             = DI::getDefault();
         if ($di === null) {
             $res->messages[] = 'Error on DI initialize';
-
             return $res;
         }
-
+        $rm     = Util::which('rm');
         $res->success = true;
-        $rm           = Util::which('rm');
 
         // Pre delete some types
         $clearThisModels = [
@@ -386,6 +387,7 @@ class SystemManagementProcessor extends Injectable
             [Extensions::class => 'type="' . Extensions::TYPE_IVR_MENU . '"'],  // IVR Menu
             [Extensions::class => 'type="' . Extensions::TYPE_CONFERENCE . '"'],  // CONFERENCE
             [Extensions::class => 'type="' . Extensions::TYPE_QUEUE . '"'],  // QUEUE
+            [CustomFiles::class => ''],
         ];
 
         foreach ($clearThisModels as $modelParams) {
@@ -459,11 +461,10 @@ class SystemManagementProcessor extends Injectable
         }
 
         // Delete CallRecords
-        $records = CallDetailRecords::find();
-        if ( ! $records->delete()) {
-            $res->messages[] = $records->getMessages();
-            $res->success    = false;
-        }
+        $cdr = CdrDb::getPathToDB();
+        Processes::mwExec("{$rm} -rf {$cdr}*");
+        $dbUpdater = new UpdateDatabase();
+        $dbUpdater->updateDatabaseStructure();
 
         // Delete CallRecords sound files
         $callRecordsPath = $di->getShared('config')->path('asterisk.monitordir');

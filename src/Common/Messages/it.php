@@ -1059,4 +1059,7 @@ Può essere attivato una volta, dopo di che il coupon viene riscattato.
     'gs_ValidateWEBHTTPSPortNotEqualToAjamPort' => 'Le porte HTTPS e AJAM devono essere diverse',
     'gs_ValidateWEBPortNotEqualToAjamTLSPort' => 'Le porte HTTP e AJAM devono essere diverse',
     'gs_ValidateWEBPortNotEqualToAjamPort' => 'Le porte HTTP e AJAM devono essere diverse',
+    'Storage disk was mounted successfully...' => 'Disco di archiviazione montato con successo',
+    'gs_NeedRestartPBX' => 'In caso di modifica, il PBX si riavvierà (servizio asterisco)',
+    'ex_BusyLevelInfo' => 'Al raggiungimento del numero di conversazioni specificato, il telefono del dipendente verrà considerato occupato.',
 ];

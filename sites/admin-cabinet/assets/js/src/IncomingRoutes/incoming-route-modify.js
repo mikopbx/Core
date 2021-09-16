@@ -36,7 +36,7 @@ const incomingRouteModify = {
 			identifier: 'timeout',
 			rules: [
 				{
-					type: 'integer[3..300]',
+					type: 'integer[3..600]',
 					prompt: globalTranslate.ir_ValidateTimeoutOutOfRange,
 				},
 			],

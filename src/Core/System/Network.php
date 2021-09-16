@@ -19,10 +19,11 @@
 
 namespace MikoPBX\Core\System;
 
-use MikoPBX\Common\Models\{LanInterfaces};
+use MikoPBX\Common\Models\{LanInterfaces, PbxSettings};
 use MikoPBX\Core\System\Configs\IptablesConf;
 use MikoPBX\Core\Utilities\SubnetCalculator;
 use Phalcon\Di\Injectable;
+use Phalcon\Mvc\Model;
 use Throwable;
 
 /**
@@ -86,6 +87,9 @@ class Network extends Injectable
      **/
     public function resolvConfGenerate(): void
     {
+        if(Util::isDocker()){
+            return;
+        }
         $resolv_conf   = '';
         $data_hostname = self::getHostName();
         if (trim($data_hostname['domain']) !== '') {
@@ -222,19 +226,13 @@ class Network extends Injectable
             }
             // Выполним reload сервера DNS.
         }
-
         if (!empty($pid)) {
             // Завершаем процесс.
             $busyboxPath = Util::which('busybox');
             $killPath = Util::which('kill');
             Processes::mwExec("{$busyboxPath} {$killPath} '$pid'");
         }
-        if (Util::isSystemctl()) {
-            $systemctlPath = Util::which('systemctl');
-            Processes::mwExec("{$systemctlPath} restart pdnsd");
-        } else {
-            Processes::mwExec("{$pdnsdPath} -c /etc/pdnsd.conf -4");
-        }
+        Processes::mwExec("{$pdnsdPath} -c /etc/pdnsd.conf -4");
     }
 
     /**
@@ -244,10 +242,12 @@ class Network extends Injectable
      */
     public function lanConfigure(): int
     {
+        if(Util::isDocker()){
+            return 0;
+        }
         if (Util::isSystemctl()) {
             $this->lanConfigureSystemCtl();
             $this->openVpnConfigure();
-
             return 0;
         }
         $busyboxPath = Util::which('busybox');
@@ -367,9 +367,6 @@ class Network extends Injectable
             Processes::mwExecBg("/etc/rc/networking.set.mtu '{$eth}'");
         }
 
-        $firewall = new IptablesConf();
-        $firewall->applyConfig();
-
         // Дополнительные "ручные" маршруты.
         Util::fileWriteContent('/etc/static-routes', '');
         $arr_commands = [];
@@ -403,6 +400,9 @@ class Network extends Injectable
         Processes::mwExec("{$systemctlPath} stop networking");
         Processes::mwExec("{$modprobePath} 8021q");
         foreach ($networks as $if_data) {
+            if($if_data['disabled'] === 1){
+                continue;
+            }
             $if_name = trim($if_data['interface']);
             if ('' === $if_name) {
                 continue;
@@ -679,9 +679,11 @@ class Network extends Injectable
      */
     public function udhcpcConfigureRenewBound(): void
     {
+        if(Util::isDocker()){
+            return;
+        }
         if (Util::isSystemctl()) {
             $this->udhcpcConfigureRenewBoundSystemCtl();
-
             return;
         }
         // Инициализация массива переменных.
@@ -702,14 +704,18 @@ class Network extends Injectable
         ];
 
         $debugMode = $this->di->getShared('config')->path('core.debugMode');
-
         // Получаем значения переменных окружения.
         foreach ($env_vars as $key => $value) {
             $env_vars[$key] = trim(getenv($key));
         }
         $BROADCAST = ($env_vars['broadcast'] === '') ? "" : "broadcast {$env_vars['broadcast']}";
-        $NET_MASK  = ($env_vars['subnet'] === '') ? "" : "netmask {$env_vars['subnet']}";
-
+        if($env_vars['subnet'] === '255.255.255.255' || $env_vars['subnet'] === ''){
+            // support /32 address assignment
+            // https://forummikrotik.ru/viewtopic.php?f=3&t=6246&start=40
+            $NET_MASK = '';
+        }else{
+            $NET_MASK = "netmask {$env_vars['subnet']}";
+        }
         // Настраиваем интерфейс.
         $busyboxPath = Util::which('busybox');
         Processes::mwExec("{$busyboxPath} ifconfig {$env_vars['interface']} {$env_vars['ip']} $BROADCAST $NET_MASK");
@@ -942,16 +948,15 @@ class Network extends Injectable
     public function udhcpcConfigureDeconfig(): void
     {
         // Настройка по умолчанию.
-        $interface = trim(getenv('interface'));
-        if ( ! Util::isSystemctl()) {
-            // Для MIKO LFS Edition.
-            $busyboxPath = Util::which('busybox');
-            Processes::mwExec("{$busyboxPath} ifconfig {$interface} up");
-            Processes::mwExec("{$busyboxPath} ifconfig {$interface} 192.168.2.1 netmask 255.255.255.0");
+        if ( Util::isSystemctl()) {
+            return;
         }
-
+        $interface = trim(getenv('interface'));
+        // Для MIKO LFS Edition.
+        $busyboxPath = Util::which('busybox');
+        Processes::mwExec("{$busyboxPath} ifconfig {$interface} up");
+        Processes::mwExec("{$busyboxPath} ifconfig {$interface} 192.168.2.1 netmask 255.255.255.0");
     }
-
     /**
      * Сохранение настроек сетевого интерфейса.
      *
@@ -1057,5 +1062,4 @@ class Network extends Injectable
 
         return $interface;
     }
-
 }

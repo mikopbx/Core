@@ -544,12 +544,34 @@ class Util
         return (stripos(php_uname('v'), 'debian') !== false);
     }
 
+    public static function isDocker(): bool
+    {
+        return file_exists('/.dockerenv');
+    }
+
     /**
      * Выводить текстовое сообщение "done" подсвечивает зеленым цветом.
      */
-    public static function echoGreenDone(): void
+    public static function echoDone(bool $result=true): void
     {
-        echo "\033[32;1mdone\033[0m \n";
+        if($result === false){
+            echo "\033[31;1mFAIL\033[0m \n";
+        }else{
+            echo "\033[32;1mDONE\033[0m \n";
+        }
+    }
+
+    public static function echoResult(string $message, bool $result = true):void
+    {
+        $cols   = self::getCountCols();
+        $spaces = str_repeat('.', $cols - strlen($message) - 8);
+        echo "\r".$message.$spaces;
+        self::echoDone($result);
+    }
+
+    public static function getCountCols():string
+    {
+        return min(shell_exec('tput cols'), 80);
     }
 
     /**

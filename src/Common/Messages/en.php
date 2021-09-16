@@ -373,6 +373,7 @@ return [
     'ex_MobileDialstring' => 'Redefining the set string',
     'ex_SipSettings' => 'SIP settings',
     'ex_BusyLevel' => 'Maximum number of parallel calls',
+    'ex_BusyLevelInfo' => "When the specified number is reached, the employee's phone will be considered busy. If the phone is 'busy', then the call can be sent to another number, see the 'Routing Settings' tab",
     'ex_DTMFMode' => 'DTMF Mode',
     'ex_NetworkFilter' => 'Network filter',
     'ex_NatMode' => 'NAT Mode',
@@ -518,6 +519,7 @@ return [
     'gs_WebTab' => 'Web-interface',
     'gs_PBXName' => 'The name of the PBX',
     'gs_PBXDescription' => 'Additional description',
+    'gs_NeedRestartPBX' => 'If the parameter is changed, asterisk will be restarted',
     'gs_PBXLanguage' => 'PBX sound messages language',
     'gs_PBXInternalExtensionLength' => 'Maximum length of extension',
     'gs_PBXRecordCalls' => 'Call recording',
@@ -1061,4 +1063,5 @@ It can be activated once, after which the coupon becomes redeemed.
     'gs_ValidateWEBHTTPSPortNotEqualToAjamPort' => 'HTTPS and AJAM ports must be different',
     'gs_ValidateWEBPortNotEqualToAjamTLSPort' => 'HTTP and AJAM ports must be different',
     'gs_ValidateWEBPortNotEqualToAjamPort' => 'HTTP and AJAM ports must be different',
+    'Storage disk was mounted successfully...' => 'Storage disk successfully mounted',
 ];

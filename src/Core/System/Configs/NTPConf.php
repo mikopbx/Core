@@ -46,7 +46,7 @@ server 2.pool.ntp.org';
         Util::fileWriteContent('/etc/ntp.conf', $ntp_conf);
         if (Util::isSystemctl()) {
             $systemctlPath = Util::which('systemctl');
-            Processes::mwExec("{$systemctlPath} restart ntpd.service");
+            Processes::mwExec("{$systemctlPath} restart ntp");
         } else {
             Processes::killByName("ntpd");
             usleep(500000);

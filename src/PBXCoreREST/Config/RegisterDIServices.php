@@ -21,8 +21,7 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Config;
 
-use MikoPBX\Common\Providers\{
-    BeanstalkConnectionWorkerApiProvider,
+use MikoPBX\Common\Providers\{BeanstalkConnectionWorkerApiProvider,
     CDRDatabaseProvider,
     LoggerAuthProvider,
     LoggerProvider,
@@ -31,6 +30,7 @@ use MikoPBX\Common\Providers\{
     ModelsCacheProvider,
     ModelsAnnotationsProvider,
     ModelsMetadataProvider,
+    ModulesDBConnectionsProvider,
     PBXConfModulesProvider,
     RegistryProvider,
     ManagedCacheProvider,
@@ -83,10 +83,11 @@ class RegisterDIServices
             LoggerAuthProvider::class,
             LoggerProvider::class,
 
-            //Translates
+            // Translates
             MessagesProvider::class,
             LanguageProvider::class,
 
+            ModulesDBConnectionsProvider::class,
         ];
 
         foreach ($pbxRestAPIProviders as $provider) {

@@ -680,18 +680,18 @@ function Event_hangup_chan_meetme($agi, $action): array
     $data['src_chan']    = $agi->request['agi_channel'];
     $data['agi_channel'] = $agi->request['agi_channel'];
     $data['end']         = $now;
-    $data['meetme_id']   = $agi->get_variable('MEETMEUNIQUEID', true);
+
+    $confId = $agi->get_variable('MEETMEUNIQUEID', true);
+    if(empty($confId)){
+        $confId = $agi->get_variable('CONFBRIDGEUNIQUEID', true);
+    }
+    $data['meetme_id']   = $confId;
+
     $data['conference']  = $agi->get_variable('mikoidconf', true);
     $data['UNIQUEID']    = $agi->get_variable('pt1c_q_UNIQUEID', true);
 
     $recordingfile         = $agi->get_variable('MEETME_RECORDINGFILE', true);
     $data['recordingfile'] = "{$recordingfile}.mp3";
-
-    $lamePath = Util::which('lame');
-    $nicePath = Util::which('nice');
-    $chmodPath = Util::which('chmod');
-    $command               = "{$nicePath} -n 19 {$lamePath} -b 32 --silent \"{$recordingfile}.wav\" \"{$recordingfile}.mp3\" && {$chmodPath} o+r \"{$recordingfile}.mp3\"";
-    Processes::mwExecBg($command);
 
     return $data;
 }

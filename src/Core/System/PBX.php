@@ -23,6 +23,7 @@ use MikoPBX\Common\Models\Codecs;
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
 use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\Asterisk\Configs\{AclConf,
+    AsteriskConf,
     CoreConfigClass,
     ExtensionsConf,
     FeaturesConf,
@@ -78,7 +79,7 @@ class PBX extends Injectable
     public function start(): void
     {
         Network::startSipDump();
-        if (Util::isSystemctl()) {
+        if (Util::isSystemctl() && ! Util::isDocker()) {
             $systemctlPath = Util::which('systemctl');
             Processes::mwExecBg("{$systemctlPath} restart asterisk");
         } else {
@@ -156,9 +157,23 @@ class PBX extends Injectable
     {
         $featuresConf = new FeaturesConf();
         $featuresConf->generateConfig();
+
+        $asteriskConf = new AsteriskConf();
+        $asteriskConf->generateConfig();
+
         $arr_out      = [];
         $asteriskPath = Util::which('asterisk');
         Processes::mwExec("{$asteriskPath} -rx 'core reload'", $arr_out);
+    }
+    /**
+     * Restarts asterisk core
+     */
+    public static function coreRestart(): void
+    {
+        $asteriskConf = new AsteriskConf();
+        $asteriskConf->generateConfig();
+        $asteriskPath = Util::which('asterisk');
+        Processes::mwExec("{$asteriskPath} -rx 'core restart now'");
     }
 
     /**
@@ -287,11 +302,8 @@ class PBX extends Injectable
         $time_start = microtime(true);
         $result     = false;
         $out        = [];
-        if (Util::isSystemctl()) {
-            $options = '-t';
-        } else {
-            $options = '';
-        }
+        $options = '';
+
         $timeoutPath  = Util::which('timeout');
         $asteriskPath = Util::which('asterisk');
         while (true) {
@@ -333,7 +345,7 @@ class PBX extends Injectable
         $configClassObj->hookModulesMethod(CoreConfigClass::GENERATE_CONFIG);
         self::dialplanReload();
         if ($this->di->getShared('registry')->booting) {
-            echo "   |- dialplan reload \033[32;1mdone\033[0m \n";
+            Util::echoResult('   |- dialplan reload');
         }
         // Создание базы данных истории звонков.
         /** @var \Phalcon\Db\Adapter\Pdo\Sqlite $connection */

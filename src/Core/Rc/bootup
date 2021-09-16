@@ -31,6 +31,6 @@ $mikoPBX = new SystemLoader();
 Util::echoWithSyslog(' - Start SystemLoader\startSystem...'.PHP_EOL);
 $result = $mikoPBX->startSystem();
 
-if((true === $result) && ! file_exists('/offload/livecd')) {
+if((true === $result) && ! file_exists('/offload/livecd') && ! Util::isDocker()) {
     Processes::mwExecBg('/etc/rc/bootup_pbx');
 }

@@ -94,6 +94,8 @@ class WorkerModelsEvents extends WorkerBase
 
     private const R_SIP = 'reloadSip';
 
+    private const R_PBX_CORE = 'pbxCoreReload';
+
     private const R_FEATURES = 'reloadFeatures';
 
     private const R_CRON = 'reloadCron';
@@ -168,6 +170,7 @@ class WorkerModelsEvents extends WorkerBase
             self::R_NGINX,
             self::R_NGINX_CONF,
             self::R_CRON,
+            self::R_PBX_CORE,
             self::R_FEATURES,
             self::R_SIP,
             self::R_IAX,
@@ -339,6 +342,15 @@ class WorkerModelsEvents extends WorkerBase
             ],
             'functions'   => [
                 self::R_DIALPLAN,
+            ],
+        ];
+        // DialplanParameters
+        $tables[] = [
+            'settingName' => [
+                'PBXLanguage',
+            ],
+            'functions'   => [
+                self::R_PBX_CORE,
             ],
         ];
 
@@ -763,6 +775,9 @@ class WorkerModelsEvents extends WorkerBase
     public static function invokeAction(string $action, array $parameters = [], int $priority = 0): void
     {
         $di = Di::getDefault();
+        if(!$di){
+            return;
+        }
         /** @var BeanstalkClient $queue */
         $queue   = $di->getShared(BeanstalkConnectionModelsProvider::SERVICE_NAME);
         $jobData = json_encode(
@@ -830,6 +845,11 @@ class WorkerModelsEvents extends WorkerBase
     {
         IptablesConf::updateFirewallRules();
         IptablesConf::reloadFirewall();
+    }
+
+    public function pbxCoreReload(): void
+    {
+        PBX::coreRestart();
     }
 
     /**

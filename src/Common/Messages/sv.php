@@ -1059,4 +1059,7 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'gs_ValidateWEBHTTPSPortNotEqualToAjamPort' => 'HTTPS- och AJAM-portar måste vara olika',
     'gs_ValidateWEBPortNotEqualToAjamTLSPort' => 'HTTP- och AJAM-portar måste vara olika',
     'gs_ValidateWEBPortNotEqualToAjamPort' => 'HTTP- och AJAM-portar måste vara olika',
+    'Storage disk was mounted successfully...' => 'Lagringsdisk monterad',
+    'gs_NeedRestartPBX' => 'När du byter startar PBX om (asterisk-tjänst)',
+    'ex_BusyLevelInfo' => 'När det angivna antalet konversationer har uppnåtts kommer anställdens telefon att betraktas som upptagen.',
 ];

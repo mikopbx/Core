@@ -122,6 +122,7 @@ class BeanstalkClient extends Injectable
         $this->publish($requestMessage, null, $priority, 0, $timeout);
 
         // We wait until a worker process request.
+        $job = null;
         try {
             $job = $this->queue->reserveWithTimeout($timeout);
             if ($job !== null) {
@@ -130,9 +131,7 @@ class BeanstalkClient extends Injectable
             }
         } catch (Throwable $exception) {
             Util::sysLogMsg(__METHOD__, 'Exception: ' . $exception->getMessage(), LOG_ERR);
-            if (isset($job)) {
-                $this->queue->bury($job);
-            }
+            $this->buryJob($job);
         }
         $this->queue->ignore($inbox_tube);
 
@@ -279,7 +278,7 @@ class BeanstalkClient extends Injectable
 
         if ($func === null) {
             // Action not found
-            $this->queue->bury($job);
+            $this->buryJob($job);
         } else {
             try {
                 if (is_array($func)) {
@@ -291,9 +290,24 @@ class BeanstalkClient extends Injectable
                 $this->queue->delete($job);
             } catch (Throwable $e) {
                 // Marks the job as terminally failed and no workers will restart it.
-                $this->queue->bury($job);
+                $this->buryJob($job);
                 Util::sysLogMsg(__METHOD__ . '_EXCEPTION', $e->getMessage(), LOG_ERR);
             }
+        }
+    }
+
+    /**
+     * @param $job
+     */
+    private function buryJob($job):void
+    {
+        if(!isset($job)){
+            return;
+        }
+        try {
+            $this->queue->bury($job);
+        } catch (Throwable $e) {
+            Util::sysLogMsg(__METHOD__ . '_EXCEPTION', $e->getMessage(), LOG_ERR);
         }
     }
 

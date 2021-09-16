@@ -75,6 +75,8 @@ class FirewallEditForm extends Form
             "31" => "31 - 255.255.255.254",
             "32" => "32 - 255.255.255.255",
         ];
+        krsort($arrMasks, SORT_NUMERIC);
+
         $mask     = new Select(
             'subnet', $arrMasks, [
             'using'    => [

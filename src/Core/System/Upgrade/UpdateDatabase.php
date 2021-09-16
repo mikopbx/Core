@@ -239,15 +239,17 @@ class UpdateDatabase extends Di\Injectable
         $connectionService->begin();
 
         if ( ! $connectionService->tableExists($tableName)) {
-            Util::echoWithSyslog(' - UpdateDatabase: Create new table: ' . $tableName . ' ');
+            $msg = ' - UpdateDatabase: Create new table: ' . $tableName . ' ';
+            Util::echoWithSyslog($msg);
             $result = $connectionService->createTable($tableName, '', $columnsNew);
-            Util::echoGreenDone();
+            Util::echoResult($msg);
         } else {
             // Table exists, we have to check/upgrade its structure
             $currentColumnsArr = $connectionService->describeColumns($tableName, '');
 
             if ($this->isTableStructureNotEqual($currentColumnsArr, $columns)) {
-                Util::echoWithSyslog(' - UpdateDatabase: Upgrade table: ' . $tableName . ' ');
+                $msg = ' - UpdateDatabase: Upgrade table: ' . $tableName . ' ';
+                Util::echoWithSyslog($msg);
                 // Create new table and copy all data
                 $currentStateColumnList = [];
                 $oldColNames            = []; // Старые названия колонок
@@ -277,7 +279,7 @@ DROP TABLE  {$tableName}";
 
                 // Drop temporary table
                 $result = $result && $connectionService->execute("DROP TABLE {$tableName}_backup;");
-                Util::echoGreenDone();
+                Util::echoResult($msg);
             }
         }
 
@@ -375,9 +377,10 @@ DROP TABLE  {$tableName}";
             if (stripos($indexName, 'sqlite_autoindex') === false
                 && ! array_key_exists($indexName, $indexes)
             ) {
-                Util::echoWithSyslog(" - UpdateDatabase: Delete index: {$indexName} ");
-                $result = $result + $connectionService->dropIndex($tableName, '', $indexName);
-                Util::echoGreenDone();
+                $msg = " - UpdateDatabase: Delete index: {$indexName} ";
+                Util::echoWithSyslog($msg);
+                $result += $connectionService->dropIndex($tableName, '', $indexName);
+                Util::echoResult($msg);
             }
         }
 
@@ -386,15 +389,17 @@ DROP TABLE  {$tableName}";
             if (array_key_exists($indexName, $currentIndexes)) {
                 $currentIndex = $currentIndexes[$indexName];
                 if ($describedIndex->getColumns() !== $currentIndex->getColumns()) {
-                    Util::echoWithSyslog(" - UpdateDatabase: Update index: {$indexName} ");
-                    $result = $result + $connectionService->dropIndex($tableName, '', $indexName);
-                    $result = $result + $connectionService->addIndex($tableName, '', $describedIndex);
-                    Util::echoGreenDone();
+                    $msg = " - UpdateDatabase: Update index: {$indexName} ";
+                    Util::echoWithSyslog($msg);
+                    $result += $connectionService->dropIndex($tableName, '', $indexName);
+                    $result += $connectionService->addIndex($tableName, '', $describedIndex);
+                    Util::echoResult($msg);
                 }
             } else {
-                Util::echoWithSyslog(" - UpdateDatabase: Add new index: {$indexName} ");
-                $result = $result + $connectionService->addIndex($tableName, '', $describedIndex);
-                Util::echoGreenDone();
+                $msg = " - UpdateDatabase: Add new index: {$indexName} ";
+                Util::echoWithSyslog($msg);
+                $result += $connectionService->addIndex($tableName, '', $describedIndex);
+                Util::echoResult($msg);
             }
         }
 

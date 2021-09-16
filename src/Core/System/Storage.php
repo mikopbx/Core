@@ -184,7 +184,6 @@ class Storage extends Di\Injectable
     {
         if (Util::isSystemctl() && file_exists('/storage/usbdisk1/')) {
             $mount_dir = '/storage/usbdisk1/';
-
             return true;
         }
         if ('' === $filter) {
@@ -828,6 +827,13 @@ class Storage extends Di\Injectable
      */
     public function configure(): void
     {
+        if(Util::isSystemctl()){
+            $this->updateConfigWithNewMountPoint("/storage/usbdisk1");
+            $this->createWorkDirs();
+            PHPConf::setupLog();
+            return;
+        }
+
         $cf_disk = '';
         $varEtcDir = $this->config->path('core.varEtcDir');
         $storage_dev_file = "{$varEtcDir}/storage_device";
@@ -838,7 +844,6 @@ class Storage extends Di\Injectable
         if (file_exists($varEtcDir . '/cfdevice')) {
             $cf_disk = trim(file_get_contents($varEtcDir . '/cfdevice'));
         }
-
         $disks = $this->getDiskSettings();
         $conf = '';
         foreach ($disks as $disk) {
@@ -860,10 +865,13 @@ class Storage extends Di\Injectable
                 file_put_contents($storage_dev_file, "/storage/usbdisk{$disk['id']}");
                 $this->updateConfigWithNewMountPoint("/storage/usbdisk{$disk['id']}");
             }
-
+            $formatFs = $this->getFsType($dev);
+            if($formatFs !== $disk['filesystemtype'] && !($formatFs === 'ext4' && $disk['filesystemtype'] === 'ext2')){
+                Util::sysLogMsg('Storage', "The file system type has changed {$disk['filesystemtype']} -> {$formatFs}. The disk will not be connected.");
+                continue;
+            }
             $str_uid = 'UUID=' . $this->getUuid($dev) . '';
-            $format_p4 = $this->getFsType($dev);
-            $conf .= "{$str_uid} /storage/usbdisk{$disk['id']} {$format_p4} async,rw 0 0\n";
+            $conf .= "{$str_uid} /storage/usbdisk{$disk['id']} {$formatFs} async,rw 0 0\n";
             $mount_point = "/storage/usbdisk{$disk['id']}";
             Util::mwMkdir($mount_point);
         }
@@ -968,6 +976,11 @@ class Storage extends Di\Injectable
      */
     public function saveFstab($conf = ''): void
     {
+        if(Util::isSystemctl()){
+            // Не настраиваем.
+            return;
+        }
+
         $varEtcDir = $this->config->path('core.varEtcDir');
         // Точка монтирования доп. дисков.
         Util::mwMkdir('/storage');
@@ -1212,6 +1225,10 @@ class Storage extends Di\Injectable
      */
     public function mountSwap(): void
     {
+        if(Util::isSystemctl()){
+            // Не настраиваем.
+            return;
+        }
         $tempDir = $this->config->path('core.tempDir');
         $swapFile = "{$tempDir}/swapfile";
 

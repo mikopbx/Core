@@ -1059,4 +1059,7 @@ return [
     'gs_ValidateWEBHTTPSPortNotEqualToAjamPort' => 'HTTPS და AJAM პორტები განსხვავებული უნდა იყოს',
     'gs_ValidateWEBPortNotEqualToAjamTLSPort' => 'HTTP და AJAM პორტები განსხვავებული უნდა იყოს',
     'gs_ValidateWEBPortNotEqualToAjamPort' => 'HTTP და AJAM პორტები განსხვავებული უნდა იყოს',
+    'Storage disk was mounted successfully...' => 'მეხსიერების დისკი წარმატებით დამონტაჟდა',
+    'gs_NeedRestartPBX' => 'შეცვლისას, PBX განახლდება (ვარსკვლავით მომსახურება)',
+    'ex_BusyLevelInfo' => 'საუბრების მითითებული რაოდენობის მიღწევისთანავე, თანამშრომლის ტელეფონი ჩაირთვება.',
 ];

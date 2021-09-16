@@ -188,6 +188,7 @@ class QueueConf extends CoreConfigClass
             $q_conf .= "leavewhenempty={$leavewhenempty} \n";
             $q_conf .= "announce-position={$announceposition} \n";
             $q_conf .= "announce-holdtime={$announceholdtime} \n";
+            $q_conf .= "relative-periodic-announce=yes \n";
             $q_conf .= "$announce_frequency";
 
             $penalty = 0;

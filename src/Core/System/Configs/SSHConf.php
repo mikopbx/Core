@@ -40,25 +40,29 @@ class SSHConf extends Injectable
     /**
      * Configure SSH settings
      **/
-    public function configure()
+    public function configure(): bool
     {
+        if(Util::isSystemctl() && ! Util::isDocker()){
+            // Не настраиваем.
+            return true;
+        }
         $lofFile = '/var/log/lastlog';
         if(!file_exists($lofFile)){
             file_put_contents($lofFile, '');
         }
-        $dropbear_dir = '/etc/dropbear';
-        Util::mwMkdir($dropbear_dir);
+        $dropBearDir = '/etc/dropbear';
+        Util::mwMkdir($dropBearDir);
 
         $keytypes = [
             "rsa"   => "SSHRsaKey",
             "dss"   => "SSHDssKey",
-            "ecdsa" => "SSHecdsaKey" // SSHecdsaKey // SSHEcdsaKey
+            "ecdsa" => "SSHecdsaKey"
         ];
         // Get keys from DB
         $dropbearkeyPath = Util::which('dropbearkey');
         $dropbearPath = Util::which('dropbear');
         foreach ($keytypes as $keytype => $db_key) {
-            $res_keyfilepath = "{$dropbear_dir}/dropbear_" . $keytype . "_host_key";
+            $res_keyfilepath = "{$dropBearDir}/dropbear_" . $keytype . "_host_key";
             $key             = $this->mikoPBXConfig->getGeneralSettings($db_key);
             $key             = (isset($key) && is_string($key)) ? trim($key) : "";
             if (strlen($key) > 100) {
@@ -71,16 +75,18 @@ class SSHConf extends Injectable
                 Processes::mwExec("{$dropbearkeyPath} -t $keytype -f $res_keyfilepath");
                 // Storing
                 $new_key = base64_encode(file_get_contents($res_keyfilepath));
-                $this->mikoPBXConfig->setGeneralSettings("$db_key", "$new_key");
+                $this->mikoPBXConfig->setGeneralSettings($db_key, $new_key);
             }
         }
         $ssh_port = escapeshellcmd($this->mikoPBXConfig->getGeneralSettings('SSHPort'));
         // Restart dropbear
         Processes::killByName('dropbear');
         usleep(500000);
-        Processes::mwExec("{$dropbearPath} -p '{$ssh_port}' -c /etc/rc/hello > /var/log/dropbear_start.log");
+        $result = Processes::mwExec("{$dropbearPath} -p '{$ssh_port}' -c /etc/rc/hello > /var/log/dropbear_start.log");
         $this->generateAuthorizedKeys();
         $this->updateShellPassword();
+
+        return ($result === 0);
     }
 
     /**

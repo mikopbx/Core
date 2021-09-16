@@ -25,7 +25,7 @@ use MikoPBX\Core\System\{Storage, Util};
 
 class ExtensionsConf extends CoreConfigClass
 {
-    public const ALL_NUMBER_EXTENSION = '_[0-9*#+]!';
+    public const ALL_NUMBER_EXTENSION = '_[0-9*#+a-zA-Z][0-9*#+a-zA-Z]!';
     protected string $description = 'extensions.conf';
 
     /**
@@ -81,6 +81,13 @@ class ExtensionsConf extends CoreConfigClass
         $conf .= $this->generatePublicContext();
 
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/extensions.conf', $conf);
+        $confLua =  '-- extensions["test-default"] = {'.PHP_EOL.
+                    '--    ["100"] = function(context, extension);'.PHP_EOL.
+                    '--        app.playback("please-hold");'.PHP_EOL.
+                    '--    end;'.PHP_EOL.
+                    '-- -- Forbidden to describe contexts defined in extensions.conf. This will cause a crash asterisk.'.PHP_EOL.
+                    '-- };';
+        Util::fileWriteContent($this->config->path('asterisk.luaDialplanDir') . '/99-extensions-override.lua', $confLua);
     }
 
     /**
@@ -98,13 +105,14 @@ class ExtensionsConf extends CoreConfigClass
             'exten => _' . $extension . ',1,MessageSend(sip:${EXTEN},"${CALLERID(name)}"${MESSAGE(from)})' . "\n\n";
 
         $conf .= '[internal-originate]' . PHP_EOL .
-            'exten => _.!,1,ExecIf($[ "${EXTEN}" == "h" ]?Hangup()' . PHP_EOL . "\t" .
+            'exten => _.!,1,ExecIf($[ "${EXTEN}" == "h" ]?Hangup())' . PHP_EOL . "\t" .
             'same => n,Set(pt1c_cid=${FILTER(\*\#\+1234567890,${pt1c_cid})})' . PHP_EOL . "\t" .
             'same => n,Set(MASTER_CHANNEL(ORIGINATE_DST_EXTEN)=${pt1c_cid})' . PHP_EOL . "\t" .
             'same => n,Set(number=${FILTER(\*\#\+1234567890,${EXTEN})})' . PHP_EOL . "\t" .
             'same => n,ExecIf($["${EXTEN}" != "${number}"]?Goto(${CONTEXT},${number},$[${PRIORITY} + 1]))' . PHP_EOL . "\t" .
             'same => n,Set(__IS_ORGNT=${EMPTY})' . PHP_EOL . "\t" .
             'same => n,ExecIf($["${pt1c_cid}x" != "x"]?Set(CALLERID(num)=${pt1c_cid}))' . PHP_EOL . "\t" .
+            'same => n,ExecIf($["${origCidName}x" != "x"]?Set(CALLERID(name)=${origCidName}))' . PHP_EOL . "\t" .
             'same => n,ExecIf($["${SRC_QUEUE}x" != "x"]?Goto(internal-originate-queue,${EXTEN},1))' . PHP_EOL . "\t" .
             'same => n,ExecIf($["${CUT(CHANNEL,\;,2)}" == "2"]?Set(__PT1C_SIP_HEADER=${SIPADDHEADER})) ' . PHP_EOL . "\t" .
             'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1)' . PHP_EOL . "\t" .
@@ -162,7 +170,7 @@ class ExtensionsConf extends CoreConfigClass
         $conf .= 'same => n,Wait(0.3)' . "\n\t";
         $conf .= 'same => n,Bridge(${SRC_BRIDGE_CHAN},kKTthH)' . "\n\n";
 
-        $conf .= 'exten => h,1,ExecIf($["${ISTRANSFER}x" != "x"]?Gosub(${ISTRANSFER}dial_hangup,${EXTEN},1))' . "\n\n";
+        $conf .= 'exten => h,1,ExecIf($["${ISTRANSFER}x" != "x"]?Goto(transfer_dial_hangup,${EXTEN},1))' . "\n\n";
 
         // TODO / Добавление / удаление префиксов на входящий callerid.
         $conf .= '[add-trim-prefix-clid]' . "\n";
@@ -185,7 +193,7 @@ class ExtensionsConf extends CoreConfigClass
         $conf              .= "[internal-transfer] \n";
         $conf .= $this->hookModulesMethod(CoreConfigClass::GET_INCLUDE_INTERNAL_TRANSFER);
         $conf .= $this->hookModulesMethod(CoreConfigClass::EXTENSION_GEN_INTERNAL_TRANSFER);
-        $conf .= 'exten => h,1,Gosub(transfer_dial_hangup,${EXTEN},1)' . "\n\n";
+        $conf .= 'exten => h,1,Goto(transfer_dial_hangup,${EXTEN},1)' . "\n\n";
     }
 
     /**

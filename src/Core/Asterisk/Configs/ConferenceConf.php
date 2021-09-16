@@ -72,22 +72,36 @@ class ConferenceConf extends CoreConfigClass
     public function extensionGenContexts(): string
     {
         $PBXRecordCalls = $this->generalSettings['PBXRecordCalls'];
-        $rec_options    = ($PBXRecordCalls === '1') ? 'r' : '';
-
         // Генерация внутреннего номерного плана.
-        $conf = '';
-        $conf .= "[hangup_handler_meetme]\n\n";
+        $conf  = "[hangup_handler_meetme]\n\n";
         $conf .= "exten => s,1,AGI(cdr_connector.php,hangup_chan_meetme)\n\t";
         $conf .= "same => n,return\n\n";
         $conf .= "[conference-rooms] \n";
         $data = self::getConferenceExtensions();
         foreach ($data as $conference) {
             $conf .= 'exten => ' . $conference . ',1,NoOp(---)' . "\n\t";
+            // Если это Local канал, к примеру вызов через IVR, то попробуем корректно перенаправить вызов.
+            $conf .= 'same => n,ExecIf($[ "${CHANNEL:0:5}" == "Local" ]?Set(pl=${IF($["${CHANNEL:-1}" == "1"]?2:1)}))' . "\n\t";
+            $conf .= 'same => n,ExecIf($[ "${CHANNEL:0:5}" == "Local" ]?Set(bridgePeer=${IMPORT(${CUT(CHANNEL,\;,1)}\;${pl},BRIDGEPEER)}))' . "\n\t";
+            $conf .= 'same => n,AGI(/usr/www/src/Core/Asterisk/agi-bin/clean_timeout.php)' . "\n\t";
+            $conf .= 'same => n,ExecIf($[ "${FROM_CHAN}" == "${bridgePeer}" ]?ChannelRedirect(${bridgePeer},${CONTEXT},${EXTEN},${PRIORITY}))' . "\n\t";
+            // Если всеже это Local и не вышло определить оригинальный канал, то завершаем вызов.
             $conf .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" == "Local"]?Hangup())' . "\n\t";
+            // В конференцию попадет лишь реальный канал PJSIP
             $conf .= 'same => n,AGI(cdr_connector.php,meetme_dial)' . "\n\t";
             $conf .= 'same => n,Answer()' . "\n\t";
             $conf .= 'same => n,Set(CHANNEL(hangup_handler_wipe)=hangup_handler_meetme,s,1)' . "\n\t";
-            $conf .= 'same => n,Meetme(${EXTEN},qdMT' . $rec_options . ')' . "\n\t";
+            if($PBXRecordCalls === '1'){
+                // Запускаем запись разговоров.
+                $conf .= 'same => n,Set(CONFBRIDGE(bridge,record_file)=${MEETME_RECORDINGFILE}.wav)' . "\n\t";
+                $conf .= 'same => n,Set(CONFBRIDGE(bridge,record_file_timestamp)=false)' . "\n\t";
+                $conf .= 'same => n,Set(CONFBRIDGE(bridge,record_conference)=yes)' . "\n\t";
+            }
+            $conf .= 'same => n,Set(CONFBRIDGE(bridge,video_mode)=follow_talker)' . "\n\t";
+            $conf .= 'same => n,Set(CONFBRIDGE(user,talk_detection_events)=yes)' . "\n\t";
+            $conf .= 'same => n,Set(CONFBRIDGE(user,quiet)=yes)' . "\n\t";
+            $conf .= 'same => n,Set(CONFBRIDGE(user,music_on_hold_when_empty)=yes)' . "\n\t";
+            $conf .= 'same => n,ConfBridge(${EXTEN})' . "\n\t";
             $conf .= 'same => n,Hangup()' . "\n\n";
         }
 

@@ -47,7 +47,7 @@ class PbxExtensionUtils
                 'uniqid' => $moduleUniqueID,
             ],
             'cache' => [
-                'key'=>ModelsBase::makeCacheKey(PbxExtensionModules::class, 'isEnabled'),
+                'key'=>ModelsBase::makeCacheKey(PbxExtensionModules::class, 'isEnabled'.$moduleUniqueID),
                 'lifetime' => 3600,
             ]
         ];

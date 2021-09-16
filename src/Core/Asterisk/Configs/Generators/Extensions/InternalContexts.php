@@ -58,7 +58,7 @@ class InternalContexts extends CoreConfigClass
         $conf = $this->generateAdditionalModulesContext();
 
         $conf .= "[internal-num-undefined] \n";
-        $conf .= 'exten => _' . $this->extensionPattern . ',1,ExecIf($["${ISTRANSFER}x" != "x"]?Gosub(${ISTRANSFER}dial_hangup,${EXTEN},1))' . "\n\t";
+        $conf .= 'exten => _' . $this->extensionPattern . ',1,ExecIf($["${ISTRANSFER}x" != "x"]?Goto(transfer_dial_hangup,${EXTEN},1))' . "\n\t";
         $conf .= 'same => n,ExecIf($["${BLINDTRANSFER}x" != "x"]?AGI(check_redirect.php,${BLINDTRANSFER}))' . "\n\t";
         $conf .= "same => n,Playback(pbx-invalid,noanswer) \n\n";
 
@@ -67,7 +67,15 @@ class InternalContexts extends CoreConfigClass
 
         $conf .= "[voice_mail_peer] \n";
         $conf .= 'exten => voicemail,1,Answer()' . "\n\t";
+        $conf .= 'same => n,ExecIf($["${CHANNEL:0:5}" == "Local"]?Set(pl=${IF($["${CHANNEL:-1}" == "1"]?2:1)}))' . "\n\t";
+        $conf .= 'same => n,ExecIf($["${CHANNEL:0:5}" == "Local"]?Set(bridgePeer=${IMPORT(${CUT(CHANNEL,\;,1)}\;${pl},BRIDGEPEER)}))' . "\n\t";
+        $conf .= 'same => n,ExecIf($[ "${FROM_CHAN}" == "${bridgePeer}" ]?ChannelRedirect(${bridgePeer},${CONTEXT},${EXTEN},2))' . "\n\t";
+        $conf .= 'same => n,AGI(/usr/www/src/Core/Asterisk/agi-bin/clean_timeout.php)' . "\n\t";
+        $conf .= 'same => n,Gosub(voicemail_start,${EXTEN},1)' . "\n\t";
         $conf .= 'same => n,VoiceMail(admin@voicemailcontext)' . "\n\t";
+        $conf .= 'same => n,Hangup()' . "\n\n";
+
+        $conf .= 'exten => h,1,Gosub(voicemail_end,${EXTEN},1)'. "\n\t";
         $conf .= 'same => n,Hangup()' . "\n\n";
 
         $conf .= $this->generateInternal();
@@ -183,7 +191,7 @@ class InternalContexts extends CoreConfigClass
         $conf .= 'same => n,Playback(privacy-incorrect,noanswer)' . "\n\t";
         $conf .= 'same => n,Hangup()' . "\n";
 
-        $conf .= 'exten => h,1,ExecIf($["${ISTRANSFER}x" != "x"]?Gosub(${ISTRANSFER}dial_hangup,${EXTEN},1))' . "\n\n";
+        $conf .= 'exten => h,1,ExecIf($["${ISTRANSFER}x" != "x"]?Goto(transfer_dial_hangup,${EXTEN},1))' . "\n\n";
 
         $conf .= "[internal-incoming]\n";
         $conf .= 'exten => ' . ExtensionsConf::ALL_NUMBER_EXTENSION . ',1,ExecIf($["${MASTER_CHANNEL(M_TIMEOUT)}x" != "x"]?Set(TIMEOUT(absolute)=${MASTER_CHANNEL(M_TIMEOUT)}))' . " \n\t";
@@ -244,7 +252,7 @@ class InternalContexts extends CoreConfigClass
         $conf .= 'same => n,ExecIf($["${FIELDQTY(DST_CONTACT,&)}" != "1"]?Set(__PT1C_SIP_HEADER=${EMPTY_VAR}))' . " \n\t";
         $conf .= 'same => n,ExecIf($["${TRANSFER_OPTIONS}x" == "x" || "${ISTRANSFER}x" != "x"]?Set(TRANSFER_OPTIONS=Tt))' . " \n\t";
         $conf .= 'same => n,ExecIf($["${DST_CONTACT}x" != "x"]?Dial(${DST_CONTACT},${ringlength},${TRANSFER_OPTIONS}ekKHhU(${ISTRANSFER}dial_answer)b(dial_create_chan,s,1)):Set(DIALSTATUS=CHANUNAVAIL))' . " \n\t";
-        $conf .= 'same => n(fw_start),NoOp(dial_hangup)' . " \n\t";
+        $conf .= 'same => n(fw_start),NoOp(start dial hangup)' . " \n\t";
 
         // QUEUE_SRC_CHAN - установлена, если вызов сервершен агенту очереди.
         // Проверяем нужна ли переадресация
@@ -253,7 +261,7 @@ class InternalContexts extends CoreConfigClass
         $conf .= 'same => n,ExecIf($["${BLINDTRANSFER}x" != "x"]?AGI(check_redirect.php,${BLINDTRANSFER}))' . " \n\t";
         $conf .= 'same => n,Hangup()' . "\n\n";
 
-        $conf .= 'exten => h,1,ExecIf($["${ISTRANSFER}x" != "x"]?Gosub(${ISTRANSFER}dial_hangup,${EXTEN},1))' . "\n\n";
+        $conf .= 'exten => h,1,ExecIf($["${ISTRANSFER}x" != "x"]?Goto(transfer_dial_hangup,${EXTEN},1))' . "\n\n";
 
         return $conf;
     }

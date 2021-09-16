@@ -116,6 +116,16 @@ function userevent_return(data)
     app["return"]();
 end
 
+-- Выполняет UserEvent и return
+function userevent_hangup(data)
+    if(is_test ~= nil) then
+        return
+    end
+    app["UserEvent"]("CdrConnector,AgiData:"..base64_encode( JSON:encode(data) ));
+    app["NoOp"]('Hangup channel ');
+    app["Hangup"]();
+end
+
 
 -- Начало телефонного звонка
 function event_dial(without_event)
@@ -202,6 +212,104 @@ function event_dial(without_event)
     return data;
 end
 
+function event_voicemail_start()
+    local data = {}
+    data['start']       = getNowDate()
+    data['answer']  	= getNowDate();
+    local id            = get_variable('UNIQUEID')..'_'..generateRandomString(6);
+    local from_account  = get_variable("FROM_PEER")
+    if ( from_account=='' and string.lower(agi_channel):find("local/") == nil )then
+        from_account = getAccountName(agi_channel);
+    end
+    data['action']          = "voicemail_start";
+    data['src_chan'] 	    = get_variable("CHANNEL");
+    data['src_num']  	    = get_variable("CALLERID(num)");
+    data['dst_num']  	    = get_variable("EXTEN");
+    data['dst_chan']        = 'VOICEMAIL';
+
+    data['linkedid']  	    = get_variable("CHANNEL(linkedid)");
+    data['UNIQUEID']  	    = id;
+    data['transfer']  	    = '0';
+    data['agi_channel']     = agi_channel;
+    data['did']		        = get_variable("FROM_DID");
+    data['verbose_call_id']	= get_variable("CHANNEL(callid)");
+    local is_pjsip = string.lower(get_variable("CHANNEL")):find("pjsip/") ~= nil
+    if(is_pjsip) then
+        data['src_call_id']  = get_variable("CHANNEL(pjsip,call-id)");
+    end
+    data['from_account'] = from_account;
+    data['IS_ORGNT']     = false;
+
+    set_variable("__pt1c_UNIQUEID", id);
+    userevent_return(data)
+
+    return data;
+end
+
+function event_voicemail_end()
+    local data = {}
+    data['action']  	= "voicemail_end";
+    data['end']  		= getNowDate();
+    data['linkedid']  	= get_variable("CHANNEL(linkedid)");
+    data['dialstatus']  = get_variable("VMSTATUS");
+    data['agi_channel'] = get_variable("CHANNEL");
+    data['UNIQUEID']  	= get_variable("pt1c_UNIQUEID");
+    if('SUCCESS' == data['dialstatus'])then
+        data['dialstatus'] = "ANSWERED";
+    end
+    data['vm-recordingfile']  	= get_variable("VM_MESSAGEFILE") .. ".mp3";
+    userevent_return(data)
+    return data;
+end
+
+-- Начало телефонного звонка
+function event_dial_interception()
+    local data = {}
+    local OLD_LINKEDID = get_variable("OLD_LINKEDID");
+    if(OLD_LINKEDID == '')then
+        return;
+    end
+    data['start']  = os.date("%Y-%m-%d %H:%M:%S.")..tostring(OLD_LINKEDID:sub(9)):sub(3,5);
+
+    local id = get_variable('UNIQUEID')..'_'..generateRandomString(6);
+
+    local channel       = get_variable("CHANNEL")
+    local agi_channel   = channel;
+
+    local interceptionChannel  = get_variable("INTECEPTION_CNANNEL")
+    local from_account = getAccountName(interceptionChannel);
+
+    local dst_num, src_num;
+    data['action'] = "dial";
+    dst_num  	        = get_variable("CALLERID(num)")
+    src_num  	        = get_variable("EXTEN")
+    from_account = '';
+
+    id = get_variable('UNIQUEID');
+    data['dst_chan']     = agi_channel;
+    data['linkedid']  	 = OLD_LINKEDID;
+    data['src_chan'] 	 = interceptionChannel;
+    data['src_num']  	 = src_num;
+    data['dst_num']  	 = dst_num;
+    data['UNIQUEID']  	 = id;
+    data['transfer']  	 = '0';
+    data['agi_channel']  = agi_channel;
+    data['did']		     = get_variable("FROM_DID");
+    data['verbose_call_id']	= get_variable("CHANNEL(callid)");
+
+    local is_pjsip = string.lower(get_variable("CHANNEL")):find("pjsip/") ~= nil
+    if(is_pjsip) then
+        data['src_call_id']  = get_variable("CHANNEL(pjsip,call-id)");
+    end
+    data['from_account'] = from_account;
+    set_variable("__pt1c_UNIQUEID", id);
+    userevent_return(data)
+
+    return data;
+end
+
+
+
 -- Обработка события создания канала - пары, при начале телефонного звонка.
 function event_dial_create_chan()
     local NOCDR = get_variable("NOCDR");
@@ -277,7 +385,13 @@ function event_dial_answer()
 
     data['action']      = 'dial_answer';
     data['id'] 		    = id;
-    data['linkedid']  	= get_variable("CHANNEL(linkedid)");
+
+    local OLD_LINKEDID = get_variable("OLD_LINKEDID");
+    if(OLD_LINKEDID ~= '')then
+        data['linkedid']  	= OLD_LINKEDID;
+    else
+        data['linkedid']  	= get_variable("CHANNEL(linkedid)");
+    end
 
     data['ENDCALLONANSWER']= get_variable("ENDCALLONANSWER");
     data['BRIDGEPEER']     = get_variable("FROM_CHAN");
@@ -462,6 +576,7 @@ end
 -- Завершение канала при прееадресации.
 function event_transfer_dial_hangup()
     local data = {}
+
     data['action']  	= "transfer_dial_hangup";
     data['end']         = getNowDate()
     data['linkedid']  	= get_variable("CHANNEL(linkedid)");
@@ -476,7 +591,13 @@ function event_transfer_dial_hangup()
         data['dst_chan'] 	   = get_variable("CDR(dstchannel)");
     end
 
-    userevent_return(data)
+    local EXTEN = get_variable("EXTEN");
+    if('h' == EXTEN)then
+        userevent_hangup(data);
+    else
+        userevent_return(data);
+    end
+
     return data;
 end
 
@@ -627,6 +748,7 @@ end
 
 extensions = {
     dial = {},
+    dial_interception = {},
     transfer_dial={},
     lua_dial_create_chan={},
     dial_answer={},
@@ -640,8 +762,11 @@ extensions = {
     dial_app={},
     dial_outworktimes={},
     set_from_peer={},
+    voicemail_start={},
+    voicemail_end={},
 }
 extensions.dial["_.!"]                      = function() event_dial() end
+extensions.dial_interception["_.!"]         = function() event_dial_interception() end
 extensions.transfer_dial["_.!"]             = function() event_transfer_dial() end
 extensions.lua_dial_create_chan["_.!"]      = function() event_dial_create_chan() end
 extensions.dial_answer["_.!"]               = function() event_dial_answer() end
@@ -655,70 +780,26 @@ extensions.queue_end["_.!"]                 = function() event_queue_end() end
 extensions.dial_app["_.!"]                  = function() event_dial_app() end
 extensions.dial_outworktimes["_.!"]         = function() event_dial_outworktimes() end
 extensions.set_from_peer["_.!"]             = function() set_from_peer() end
-
------------------------------------------------------
--- блок тестирования модуля...
-is_test = nil
-if(channel == nil) then
-    ask_var = {};
-    function ask_var:new(value)
-        local object = {}
-        object.value = value or ""
-        setmetatable(object, self)
-        self.__index = self
-        return object
-    end
-    function ask_var:get()
-        return self.value
-    end
-
-    app = {};
-    app["return"] = function()
-        -- ничего не делаем.
-    end
-    app["Verbose"] = function()
-        -- ничего не делаем.
-    end
-    app['UserEvent'] = function(p_event, p_data)
-        print(p_event.."("..p_data..")");
-    end
-
-    if(arg~=nil and arg[1] == 'test' )then
-        is_test = true;
-        local TESTS = (loadfile '/usr/www/src/Core/Asterisk/Configs/lua/cdr_connector_tests.lua')();
-        TESTS:make_tests();
-    end
-
-    channel = {
-        QUEUE_SRC_CHAN  = ask_var:new("SIP/104-00001"),
-        orign_chan      = ask_var:new('SIP/104-00001'),
-        pt1c_UNIQUEID   = ask_var:new(''),
-        IS_ORGNT        = ask_var:new(''),
-        UNIQUEID        = ask_var:new('1557224457.0022'),
-        CHANNEL         = ask_var:new('SIP/104-00001'),
-        FROM_PEER       = ask_var:new('SIP/104-00001'),
-        EXTEN           = ask_var:new('000063'),
-        FROM_DID        = ask_var:new(''),
-        TRANSFERERNAME  = ask_var:new(''),
-        peer_mobile     = ask_var:new(''),
-        ANSWEREDTIME    = ask_var:new(''),
-        ENDCALLONANSWER = ask_var:new(''),
-        FROM_CHAN       = ask_var:new(''),
-        PICKUPEER       = ask_var:new(''),
-        DNID            = ask_var:new(''),
-        DIALSTATUS      = ask_var:new(''),
-        ISTRANSFER      = ask_var:new(''),
-        pt1c_q_UNIQUEID = ask_var:new(''),
-        QUEUESTATUS     = ask_var:new(''),
-        APPEXTEN        = ask_var:new(''),
-        pt1c_dnid       = ask_var:new(''),
-        DIALEDPEERNUMBER= ask_var:new(''),
-        from_1C         = ask_var:new(''),
-        CTICHANNEL      = ask_var:new(''),
-    }
-    channel['CALLERID(num)']    = ask_var:new('74952293042')
-    channel['CHANNEL(peername)']= ask_var:new('104')
-    channel['CHANNEL(linkedid)']    = ask_var:new('1557224457.0022')
-    channel['CDR(dstchannel)']  = ask_var:new('')
-    channel['CDR(dnid)']        = ask_var:new('')
+extensions.voicemail_start["_.!"]           = function() event_voicemail_start() end
+extensions.voicemail_end["_.!"]             = function() event_voicemail_end() end
+--
+------
+---- Безопасное подключение дополнительных dialplan, описанных в /etc/asterisk/extensions-lua
+------
+function file_exists(name)
+    local f=io.open(name,"r");
+    if f~=nil then io.close(f) return true else return false end
 end
+
+local scriptLocation='/etc/asterisk/extensions-lua';
+if( file_exists(scriptLocation) )then
+    for line in io.popen("ls "..scriptLocation.."/*.lua", "r"):lines() do
+        if( debug.getinfo(1).short_src ~= line)then
+            local newExtensions = loadfile(line);
+            if(newExtensions)then
+                newExtensions();
+            end
+        end
+    end
+end
+------

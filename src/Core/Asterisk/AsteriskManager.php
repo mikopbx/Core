@@ -371,7 +371,7 @@ class AsteriskManager
             'Following are Events for each Outbound registration'               => 'OutboundRegistrationDetailComplete',
             'A listing of Endpoints follows, presented as EndpointList events'  => 'EndpointListComplete'
         ];
-        $eventsAsNotArray = [ 'EndpointDetailComplete' ];
+        $eventsAsNotArray = [];//[ 'EndpointDetailComplete' ];
 
         $endString = $settings[$event_text]??false;
         if($endString !== false){
@@ -451,7 +451,7 @@ class AsteriskManager
             $buff  = $this->getStringDataFromSocket().$value;
             $a_pos = strpos($buff, ':');
             if ( ! $a_pos) {
-                if (count($m) > 0) {
+                if (!empty($m)) {
                     if ($event_as_array) {
                         $parameters['data'][$m['Event']][] = $m;
                     } else {
@@ -1426,15 +1426,22 @@ class AsteriskManager
         $result     = [];
         $parameters = ['Endpoint' => trim($peer)];
         $res        = $this->sendRequestTimeout('PJSIPShowEndpoint', $parameters);
-
         if (isset($res['data']['ContactStatusDetail'])) {
-            $result = $res['data']['ContactStatusDetail'];
+            $generalRecordFound = false;
+            foreach ($res['data']['ContactStatusDetail'] as $index => $data){
+                $prefix = "-$index";
+                if(!empty($data['URI']) && !$generalRecordFound){
+                    $generalRecordFound = true;
+                    $prefix = '';
+                }
+                foreach ($data as $key => $value){
+                    $result["$key$prefix"] = $value;
+                }
+            }
         }
         $result['state'] = isset($result['URI']) && ! empty($result['URI']) ? 'OK' : 'UNKNOWN';
-
         return $result;
     }
-
 
     /*
     * MIKO End.

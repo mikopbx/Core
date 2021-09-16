@@ -9,6 +9,9 @@
 <div class="field">
     <label>{{ t._('gs_PBXLanguage') }}</label>
     {{ form.render('PBXLanguage') }}
+    <div class="ui pointing teal basic label">
+        {{ t._('gs_NeedRestartPBX') }}
+    </div>
 </div>
 <div class="field">
     <label>{{ t._('gs_PBXInternalExtensionLength') }}</label>

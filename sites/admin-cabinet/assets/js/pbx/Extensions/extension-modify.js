@@ -120,6 +120,10 @@ var extension = {
     extension.defaultMobileNumber = extension.$mobile_number.inputmask('unmaskedvalue');
     extension.defaultNumber = extension.$number.inputmask('unmaskedvalue');
     extension.$tabMenuItems.tab();
+    $('.infoIcon').popup({
+          on: 'hover'
+    });
+
     $('#extensions-form .ui.accordion').accordion();
     $('#extensions-form .dropdown').dropdown();
     $('#qualify').checkbox({

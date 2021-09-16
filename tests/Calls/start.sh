@@ -24,6 +24,7 @@ sed "s/PATH/$escapeDirName/" < "${dirName}/asterisk/asterisk-pattern.conf" > "${
 
 # start asterisk.
 astConf="${dirName}/asterisk/asterisk.conf";
+echo -e "\e[01;32m-> \e[0mNew config file $astConf...";
 /usr/sbin/asterisk -C "$astConf";
 echo -e "\e[01;32m-> \e[0mWaiting start asterisk...";
 sleep 1;
