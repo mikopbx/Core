@@ -26,6 +26,7 @@ use MikoPBX\Core\System\{Configs\SyslogConf,
     Processes,
     System,
     Upgrade\UpdateDatabase,
+    Upgrade\UpdateSystemConfig,
     Util,
     Storage,
     PBX};
@@ -149,10 +150,9 @@ $storage->configure();
 MainDatabaseProvider::recreateDBConnections(); //TODO:: может это сделать внутри стоража после монтирования нужной папки?
 
 $success = Storage::isStorageDiskMounted();
+Storage::moveReadOnlySoundsToStorage();
+
 if($success === true && $automatic === MODE_AUTO){
-    $mikoPBXConfig = new MikoPBXConfig();
-    // Указываем, что необходимо выполнить обновление данных.
-    $mikoPBXConfig->setGeneralSettings('PBXVersion', trim(file_get_contents('/etc/version')).'-need-update');
     System::rebootSync();
     return true;
 }

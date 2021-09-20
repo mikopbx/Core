@@ -23,11 +23,13 @@ use Error;
 use JsonException;
 use MikoPBX\Common\Config\ClassLoader;
 use MikoPBX\Common\Models\PbxExtensionModules;
+use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Core\Config\RegisterDIServices;
 use MikoPBX\Core\System\Configs\PHPConf;
 use MikoPBX\Common\Models\Storage as StorageModel;
 use MikoPBX\Common\Providers\ConfigProvider;
 use MikoPBX\Modules\PbxExtensionUtils;
+use MikoPBX\PBXCoreREST\Lib\SystemManagementProcessor;
 use Phalcon\Di;
 
 use function MikoPBX\Common\Config\appPath;
@@ -170,6 +172,34 @@ class Storage extends Di\Injectable
         }
 
         return $format;
+    }
+
+    /**
+     * Moves predefined sound files to storage disk
+     * Changes SoundFiles records
+     */
+    public static function moveReadOnlySoundsToStorage(): void
+    {
+        $di = Di::getDefault();
+        if ($di === null) {
+            return;
+        }
+        $currentMediaDir = $di->getConfig()->path('asterisk.customSoundDir') . '/';
+        if ( !file_exists($currentMediaDir)) {
+            Util::mwMkdir($currentMediaDir);
+        }
+        $soundFiles = SoundFiles::find();
+        foreach ($soundFiles as $soundFile) {
+            if (stripos($soundFile->path, '/offload/asterisk/sounds/other/') === 0) {
+                $newPath = $currentMediaDir.pathinfo($soundFile->path)['basename'];
+                if (copy($soundFile->path, $newPath)) {
+                    SystemManagementProcessor::convertAudioFile($newPath);
+                    $soundFile->path = Util::trimExtensionForFile($newPath) . ".mp3";
+                    $soundFile->update();
+                }
+            }
+        }
+        unset($soundFiles);
     }
 
     /**
