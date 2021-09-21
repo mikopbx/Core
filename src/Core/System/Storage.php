@@ -180,6 +180,9 @@ class Storage extends Di\Injectable
      */
     public static function moveReadOnlySoundsToStorage(): void
     {
+        if(!self::isStorageDiskMounted()) {
+            return;
+        }
         $di = Di::getDefault();
         if ($di === null) {
             return;
@@ -910,10 +913,6 @@ class Storage extends Di\Injectable
         $this->saveFstab($conf);
         $this->createWorkDirs();
         PHPConf::setupLog();
-
-        if(self::isStorageDiskMounted()){
-            self::moveReadOnlySoundsToStorage();
-        }
     }
 
     /**
