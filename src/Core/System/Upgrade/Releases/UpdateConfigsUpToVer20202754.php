@@ -327,25 +327,6 @@ class UpdateConfigsUpToVer20202754 extends Injectable implements UpgradeSystemCo
      */
     private function moveReadOnlySoundsToStorage(): void
     {
-        if(!Storage::isStorageDiskMounted()) {
-            // Нет смысла в операции.
-            return;
-        }
-        $currentMediaDir = $this->config->path('asterisk.customSoundDir') . '/';
-        if ( ! is_dir($currentMediaDir)) {
-            Util::mwMkdir($currentMediaDir);
-        }
-        $soundFiles = SoundFiles::find();
-        foreach ($soundFiles as $soundFile) {
-            if (stripos($soundFile->path, '/offload/asterisk/sounds/other/') === 0) {
-                $newPath = $currentMediaDir . pathinfo($soundFile->path)['basename'];
-                if (copy($soundFile->path, $newPath)) {
-                    $soundFile->path = $newPath;
-                    $soundFile->update();
-                }
-            }
-        }
+        Storage::moveReadOnlySoundsToStorage();
     }
-
-
 }
