@@ -82,7 +82,7 @@ class ExtensionsConf extends CoreConfigClass
 
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/extensions.conf', $conf);
         $confLua =  '-- extensions["test-default"] = {'.PHP_EOL.
-                    '--    ["100"] = function(context, extension);'.PHP_EOL.
+                    '--    ["100"] = function(context, extension)'.PHP_EOL.
                     '--        app.playback("please-hold");'.PHP_EOL.
                     '--    end;'.PHP_EOL.
                     '-- -- Forbidden to describe contexts defined in extensions.conf. This will cause a crash asterisk.'.PHP_EOL.
