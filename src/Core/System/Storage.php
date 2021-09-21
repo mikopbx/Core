@@ -195,7 +195,9 @@ class Storage extends Di\Injectable
                 if (copy($soundFile->path, $newPath)) {
                     SystemManagementProcessor::convertAudioFile($newPath);
                     $soundFile->path = Util::trimExtensionForFile($newPath) . ".mp3";
-                    $soundFile->update();
+                    if(file_exists($soundFile->path)){
+                        $soundFile->update();
+                    }
                 }
             }
         }
@@ -908,6 +910,10 @@ class Storage extends Di\Injectable
         $this->saveFstab($conf);
         $this->createWorkDirs();
         PHPConf::setupLog();
+
+        if(self::isStorageDiskMounted()){
+            self::moveReadOnlySoundsToStorage();
+        }
     }
 
     /**
