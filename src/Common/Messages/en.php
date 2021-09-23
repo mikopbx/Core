@@ -778,8 +778,8 @@ It can be activated once, after which the coupon becomes redeemed.
     'auth_ValidateLoginNotEmpty' => 'Enter the login',
     'auth_SubmitButton' => 'Authorize',
     'auth_WrongLoginPassword' => 'Authorization error',
-    'log_CaptureMessage' => '<div class=\'ui message \'>Start collecting logs and make a call or other action that causes a failure. 
-<br>The system will form a snapshot of the system state in the form of an archive.</div>',
+    'log_CaptureMessage' => '<div class = \'ui message\'> Start collecting network packets and initiate a call or other failure action.
+<br> The system will save all packets passing through the network card at this moment for further analysis. </div>',
     'dbg_NoDebugInformation' => 'No information',
     'dbg_Header' => 'Debugging information',
     'f2b_Reason' => 'Reason',
@@ -986,7 +986,7 @@ It can be activated once, after which the coupon becomes redeemed.
     'sd_filter' => 'Filter',
     'sd_lines' => 'Lines',
     'sd_ShowLog' => 'Show log',
-    'sd_CapturePcap' => 'Capture pcap',
+    'sd_CapturePcap' => 'Capturing network packets',
     'sd_DownloadPcapFileError' => 'An error occurred while creating a log archive',
     'upd_UpgradeError' => 'Error while updating MikoPBX',
     'cr_ValidateExtensionNumber' => 'Extension number must only consist of numbers',
@@ -1054,7 +1054,7 @@ It can be activated once, after which the coupon becomes redeemed.
     'pr_EnterHostOrIpPlaceholder' => 'Enter IP address or subnet',
     'pr_EnterHostOrIp' => 'Additional provider hosts or ip',
     'auth_RememberMe' => 'Remember me',
-    'log_DownloadLogs' => 'Download logs',
+    'log_DownloadLogs' => 'Download all system logs',
     'log_StopCapturePCAP' => 'Stop and download',
     'log_StartCapturePCAP' => 'Start',
     'gs_PBXRecordAnnouncementIn' => 'Select call recording alert for incoming calls',
