@@ -36,6 +36,13 @@ mount -t tmpfs     -o size=90% tmpfs            /mnt;
 
 # Переключение root.
 if tar -C / --exclude=mnt --exclude="./proc/*" --exclude="./sys/*" -cf - . | tar -C /mnt/ -xf - ; then
-	mv /mnt/etc/inittab_2 /mnt/etc/inittab
+	/bin/busybox busybox setserial -g /dev/ttyS0 2> /dev/null | /bin/grep unknown > /dev/null 2> /dev/null;
+	if [ "$?" = '0' ]; then
+	  # Device ttys0 not found
+	  mv /mnt/etc/inittab_base /mnt/etc/inittab
+	else
+	  mv /mnt/etc/inittab_ttyS0 /mnt/etc/inittab
+	fi;
+
 	exec /sbin/switch_root /mnt /sbin/init "$@";
 fi
