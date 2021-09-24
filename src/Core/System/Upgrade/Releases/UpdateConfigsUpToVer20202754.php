@@ -24,6 +24,7 @@ use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\Storage;
 use MikoPBX\Core\System\Upgrade\UpgradeSystemConfigInterface;
 use MikoPBX\Core\System\Util;
 use Phalcon\Config as ConfigAlias;
@@ -326,21 +327,6 @@ class UpdateConfigsUpToVer20202754 extends Injectable implements UpgradeSystemCo
      */
     private function moveReadOnlySoundsToStorage(): void
     {
-        $currentMediaDir = $this->config->path('asterisk.customSoundDir') . '/';
-        if ( ! is_dir($currentMediaDir)) {
-            Util::mwMkdir($currentMediaDir);
-        }
-        $soundFiles = SoundFiles::find();
-        foreach ($soundFiles as $soundFile) {
-            if (stripos($soundFile->path, '/offload/asterisk/sounds/other/') === 0) {
-                $newPath = $currentMediaDir . pathinfo($soundFile->path)['basename'];
-                if (copy($soundFile->path, $newPath)) {
-                    $soundFile->path = $newPath;
-                    $soundFile->update();
-                }
-            }
-        }
+        Storage::moveReadOnlySoundsToStorage();
     }
-
-
 }
