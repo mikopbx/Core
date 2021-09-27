@@ -1,0 +1,45 @@
+#!/usr/bin/php
+<?php
+
+use MikoPBX\Core\Asterisk\Configs\VoiceMailConf;
+use MikoPBX\Core\System\BeanstalkClient;
+use MikoPBX\Core\System\Notifications;
+use MikoPBX\Core\System\Util;
+use MikoPBX\Core\Workers\WorkerCallEvents;
+
+require_once('Globals.php');
+
+$linkedId = $argv[1]??'';
+if(empty($linkedId)){
+    exit(1);
+}
+try {
+    $parser = new PhpMimeMailParser\Parser();
+    $parser->setStream(fopen("php://stdin", "r"));
+
+    $d      = DateTime::createFromFormat('D, d M Y H:i:s O', $parser->getHeader('date'));
+    $file   = implode('', $parser->saveAttachments('/tmp/'));
+    $recordingFile = VoiceMailConf::getCopyFilename($file, $linkedId, $d->getTimestamp(), true);
+    $recordingFile = Util::trimExtensionForFile($recordingFile) . '.wav';
+    unlink($file);
+
+    $addresses      = mailparse_rfc822_parse_addresses($parser->getHeader('to'));
+    $rawHeaderTo    = $addresses[0]['address']??'';
+    $subject        = $parser->getHeader('subject');
+    $message        = str_replace(PHP_EOL, '<br>', $parser->getMessageBody());
+
+    $notify = new Notifications();
+    $result = $notify->sendMail($rawHeaderTo, $subject, $message, $recordingFile);
+}catch (Exception $e){
+    Util::sysLogMsg('Voicemail-Sender', $e->getMessage());
+}
+
+$data = [
+    'action'         => 'voicemail_end',
+    'linkedid'         => $linkedId,
+    'vm-recordingfile' => $recordingFile,
+    'endtime'          => Util::getNowDate()
+];
+
+$client = new BeanstalkClient(WorkerCallEvents::class);
+$result_send = $client->publish(json_encode($data));

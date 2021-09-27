@@ -20,6 +20,8 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 
+use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\Storage;
 use MikoPBX\Core\System\Util;
 
 class VoiceMailConf extends CoreConfigClass
@@ -45,7 +47,7 @@ class VoiceMailConf extends CoreConfigClass
         }
 
         $timezone = $this->generalSettings['PBXTimezone'];
-        $msmtpPath = Util::which('msmtp');
+        $msmtpPath = Util::which('voicemail-sender');
 
         $conf     = "[general]\n" .
             "format=wav\n" .
@@ -64,7 +66,8 @@ class VoiceMailConf extends CoreConfigClass
             "emailbody={$emailbody}".'\n\n'."{$emailfooter}\n" .
             "emaildateformat=%A, %d %B %Y в %H:%M:%S\n" .
             "pagerdateformat=%T %D\n" .
-            "mailcmd={$msmtpPath} --file=/etc/msmtp.conf -t\n" .
+            // "mailcmd={$msmtpPath} --file=/etc/msmtp.conf -t\n" .
+            "mailcmd={$msmtpPath}\n" .
             "serveremail={$from}\n\n" .
             "[zonemessages]\n" .
             "local={$timezone}|'vm-received' q 'digits/at' H 'hours' M 'minutes'\n\n";
@@ -97,4 +100,33 @@ class VoiceMailConf extends CoreConfigClass
 
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/voicemail.conf', $conf);
     }
+
+    /**
+     * @param      $srcFileName
+     * @param      $time
+     * @param bool $copy
+     * @return string
+     */
+    public static function getCopyFilename($srcFileName, $linkedId, $time, bool $copy = true):string{
+        $filename = Util::trimExtensionForFile($srcFileName) . '.wav';
+        $recordingFile = '';
+        // Переопределим путь к файлу записи разговора. Для конферецнии файл один.
+        $monitor_dir = Storage::getMonitorDir();
+        $sub_dir     = date('Y/m/d', $time);
+        $dirName = "$monitor_dir/$sub_dir/INBOX/";
+        if(Util::mwMkdir($dirName)){
+            $recordingFile = $dirName.$linkedId.'.wav';
+            $cpPath = Util::which('cp');
+            if($copy === true){
+                Processes::mwExec("{$cpPath} {$filename} {$recordingFile}");
+            }
+            if($copy === true && !file_exists($recordingFile)){
+                $recordingFile = '';
+            }else{
+                $recordingFile = Util::trimExtensionForFile($recordingFile) . '.mp3';
+            }
+        }
+        return $recordingFile;
+    }
+
 }
