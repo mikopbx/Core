@@ -724,6 +724,7 @@ class Util
                 unset($data_rows[0]);
                 $manual_data[$section_name] = [];
                 foreach ($data_rows as $row) {
+                    $value = '';
                     if (strpos($row, '=') === false) {
                         continue;
                     }
