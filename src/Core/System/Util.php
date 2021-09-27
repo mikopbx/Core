@@ -734,7 +734,7 @@ class Util
                         unset($arr_value[0]);
                         $value = trim(implode('=', $arr_value));
                     }
-                    if (empty($value) || empty($key)) {
+                    if ( ($value !== '0' && empty($value)) || empty($key)) {
                         continue;
                     }
                     $manual_data[$section_name][$key] = $value;
