@@ -20,6 +20,8 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 
+use MikoPBX\Core\System\Util;
+
 class SayConf extends CoreConfigClass
 {
     protected string $description = 'say.conf';
@@ -63,6 +65,6 @@ class SayConf extends CoreConfigClass
                 '_[n]um:[2-9][3-9] => digits/${SAY:0:1}0, num:${SAY:1}'.PHP_EOL.
                 '_[n]um:[2-9][3-9]f => digits/${SAY:0:1}0, num:${SAY:1}'.PHP_EOL.
                 '';
-        file_put_contents($this->config->path('asterisk.astetcdir') . '/say.conf', $conf);
+        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/say.conf', $conf);
     }
 }
