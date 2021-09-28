@@ -43,9 +43,6 @@ class VMWareToolsConf
      */
     public function configure(): bool
     {
-        if(Util::isDocker()){
-            return true;
-        }
         Processes::killByName("vmtoolsd");
         $virtualHW = $this->mikoPBXConfig->getGeneralSettings('VirtualHardwareType');
         $result = 0;
