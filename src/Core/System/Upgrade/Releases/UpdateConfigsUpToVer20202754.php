@@ -57,11 +57,11 @@ class UpdateConfigsUpToVer20202754 extends Injectable implements UpgradeSystemCo
      */
     public function processUpdate(): void
     {
+        $this->deleteOrphanCodecs();
         if ($this->isLiveCD) {
             return;
         }
 
-        $this->deleteOrphanCodecs();
         $this->addCustomCategoryToSoundFiles();
         $this->cleanAstDB();
         $this->copyMohFilesToStorage();
