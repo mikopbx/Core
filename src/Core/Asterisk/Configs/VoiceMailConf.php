@@ -28,6 +28,26 @@ class VoiceMailConf extends CoreConfigClass
 {
     protected string $description = 'voicemail.conf';
 
+    /**
+     * Prepares additional contexts sections in the extensions.conf file
+     *
+     * @return string
+     */
+    public function extensionGenContexts(): string
+    {
+        $conf  = "[voice_mail_peer] \n";
+        $conf .= 'exten => voicemail,1,Answer()' . "\n\t";
+        $conf .= 'same => n,ExecIf($["${CHANNEL:0:5}" == "Local"]?Set(pl=${IF($["${CHANNEL:-1}" == "1"]?2:1)}))' . "\n\t";
+        $conf .= 'same => n,ExecIf($["${CHANNEL:0:5}" == "Local"]?Set(bridgePeer=${IMPORT(${CUT(CHANNEL,\;,1)}\;${pl},BRIDGEPEER)}))' . "\n\t";
+        $conf .= 'same => n,ExecIf($[ "${FROM_CHAN}" == "${bridgePeer}" ]?ChannelRedirect(${bridgePeer},${CONTEXT},${EXTEN},2))' . "\n\t";
+        $conf .= 'same => n,AGI(/usr/www/src/Core/Asterisk/agi-bin/clean_timeout.php)' . "\n\t";
+        $conf .= 'same => n,Gosub(voicemail_start,${EXTEN},1)' . "\n\t";
+        $conf .= 'same => n,VoiceMail(admin@voicemailcontext)' . "\n\t";
+        $conf .= 'same => n,Hangup()' . "\n\n";
+
+        return  $conf;
+    }
+
     protected function generateConfigProtected(): void
     {
         // Уважаемый ${VM_NAME}:\n\n\tВам пришло новое голосовое сообщение длиной ${VM_DUR}

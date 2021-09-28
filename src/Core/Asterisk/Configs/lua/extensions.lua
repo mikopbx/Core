@@ -246,22 +246,6 @@ function event_voicemail_start()
     return data;
 end
 
-function event_voicemail_end()
-    local data = {}
-    data['action']  	= "voicemail_end";
-    data['end']  		= getNowDate();
-    data['linkedid']  	= get_variable("CHANNEL(linkedid)");
-    data['dialstatus']  = get_variable("VMSTATUS");
-    data['agi_channel'] = get_variable("CHANNEL");
-    data['UNIQUEID']  	= get_variable("pt1c_UNIQUEID");
-    if('SUCCESS' == data['dialstatus'])then
-        data['dialstatus'] = "ANSWERED";
-    end
-    data['vm-recordingfile']  	= get_variable("VM_MESSAGEFILE") .. ".mp3";
-    userevent_return(data)
-    return data;
-end
-
 -- Начало телефонного звонка
 function event_dial_interception()
     local data = {}
@@ -781,7 +765,6 @@ extensions.dial_app["_.!"]                  = function() event_dial_app() end
 extensions.dial_outworktimes["_.!"]         = function() event_dial_outworktimes() end
 extensions.set_from_peer["_.!"]             = function() set_from_peer() end
 extensions.voicemail_start["_.!"]           = function() event_voicemail_start() end
-extensions.voicemail_end["_.!"]             = function() event_voicemail_end() end
 --
 ------
 ---- Безопасное подключение дополнительных dialplan, описанных в /etc/asterisk/extensions-lua
