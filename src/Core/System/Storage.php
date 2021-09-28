@@ -208,6 +208,39 @@ class Storage extends Di\Injectable
     }
 
     /**
+     * Copies MOH sound files to storage and creates record on SoundFiles table
+     */
+    public static function copyMohFilesToStorage(): void
+    {
+        if(!self::isStorageDiskMounted()) {
+            return;
+        }
+        $di = Di::getDefault();
+        if ($di === null) {
+            return;
+        }
+        $config        = $di->getConfig();
+        $oldMohDir     = $config->path('asterisk.astvarlibdir') . '/sounds/moh';
+        $currentMohDir = $config->path('asterisk.mohdir');
+        if ( ! file_exists($oldMohDir)||Util::mwMkdir($currentMohDir)) {
+            return;
+        }
+        $files = scandir($oldMohDir);
+        foreach ($files as $file) {
+            if (in_array($file, ['.', '..'])) {
+                continue;
+            }
+            if (copy($oldMohDir.'/'.$file, $currentMohDir.'/'.$file)) {
+                $sound_file           = new SoundFiles();
+                $sound_file->path     = $currentMohDir . '/' . $file;
+                $sound_file->category = SoundFiles::CATEGORY_MOH;
+                $sound_file->name     = $file;
+                $sound_file->save();
+            }
+        }
+    }
+
+    /**
      * Проверка, смонтирован ли диск - хранилище.
      *
      * @param string $filter

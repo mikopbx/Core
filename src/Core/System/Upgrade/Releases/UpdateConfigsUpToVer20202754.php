@@ -58,16 +58,16 @@ class UpdateConfigsUpToVer20202754 extends Injectable implements UpgradeSystemCo
     public function processUpdate(): void
     {
         $this->deleteOrphanCodecs();
+        $this->updateExtensionsTable();
+        $this->addCustomCategoryToSoundFiles();
         if ($this->isLiveCD) {
             return;
         }
 
-        $this->addCustomCategoryToSoundFiles();
         $this->cleanAstDB();
         $this->copyMohFilesToStorage();
         $this->removeOldCacheFolders();
         $this->removeOldSessionsFiles();
-        $this->updateExtensionsTable();
         $this->moveReadOnlySoundsToStorage();
     }
 
@@ -225,28 +225,7 @@ class UpdateConfigsUpToVer20202754 extends Injectable implements UpgradeSystemCo
      */
     private function copyMohFilesToStorage(): void
     {
-        $oldMohDir = $this->config->path('asterisk.astvarlibdir') . '/sounds/moh';
-        if ( ! file_exists($oldMohDir)) {
-            return;
-        }
-        $currentMohDir = $this->config->path('asterisk.mohdir');
-        if ( ! Util::mwMkdir($currentMohDir)) {
-            return;
-        }
-
-        $files = scandir($oldMohDir);
-        foreach ($files as $file) {
-            if (in_array($file, ['.', '..'])) {
-                continue;
-            }
-            if (copy($oldMohDir . '/' . $file, $currentMohDir . '/' . $file)) {
-                $sound_file           = new SoundFiles();
-                $sound_file->path     = $currentMohDir . '/' . $file;
-                $sound_file->category = SoundFiles::CATEGORY_MOH;
-                $sound_file->name     = $file;
-                $sound_file->save();
-            }
-        }
+        Storage::copyMohFilesToStorage();
     }
 
     /**
