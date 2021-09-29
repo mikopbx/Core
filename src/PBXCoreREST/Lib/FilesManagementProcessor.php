@@ -36,7 +36,7 @@ class FilesManagementProcessor extends Injectable
      *
      * @param array $request
      *
-     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     * @return PBXApiResult
      */
     public static function callBack(array $request): PBXApiResult
     {
@@ -44,32 +44,32 @@ class FilesManagementProcessor extends Injectable
         $postData = $request['data'];
         switch ($action) {
             case 'uploadResumable':
-                $res = FilesManagementProcessor::uploadResumable($postData);
+                $res = self::uploadResumable($postData);
                 break;
             case 'statusUploadFile':
-                $res = FilesManagementProcessor::statusUploadFile($request['data']);
+                $res = self::statusUploadFile($request['data']);
                 break;
             case 'removeAudioFile':
-                $res = FilesManagementProcessor::removeAudioFile($postData['filename']);
+                $res = self::removeAudioFile($postData['filename']);
                 break;
             case 'fileReadContent':
-                $res = FilesManagementProcessor::fileReadContent($postData['filename'], $postData['needOriginal']);
+                $res = self::fileReadContent($postData['filename'], $postData['needOriginal']);
                 break;
             case 'downloadNewFirmware':
-                $res = FilesManagementProcessor::downloadNewFirmware($request['data']);
+                $res = self::downloadNewFirmware($request['data']);
                 break;
             case 'firmwareDownloadStatus':
-                $res = FilesManagementProcessor::firmwareDownloadStatus($postData['filename']);
+                $res = self::firmwareDownloadStatus($postData['filename']);
                 break;
             case 'downloadNewModule':
                 $module = $request['data']['uniqid'];
                 $url    = $request['data']['url'];
                 $md5    = $request['data']['md5'];
-                $res    = FilesManagementProcessor::moduleStartDownload($module, $url, $md5);
+                $res    = self::moduleStartDownload($module, $url, $md5);
                 break;
             case 'moduleDownloadStatus':
                 $module = $request['data']['uniqid'];
-                $res    = FilesManagementProcessor::moduleDownloadStatus($module);
+                $res    = self::moduleDownloadStatus($module);
                 break;
             default:
                 $res             = new PBXApiResult();
@@ -87,7 +87,7 @@ class FilesManagementProcessor extends Injectable
      *
      * @param array $parameters
      *
-     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     * @return PBXApiResult
      */
     public static function uploadResumable(array $parameters): PBXApiResult
     {
@@ -130,8 +130,7 @@ class FilesManagementProcessor extends Injectable
         foreach ($parameters['files'] as $file_data) {
             if ( ! self::moveUploadedPartToSeparateDir($parameters, $file_data)) {
                 $res->messages[] = 'Does not found any uploaded chunks on with path ' . $file_data['file_path'];
-
-                return $res;
+                break;
             }
             $res->success           = true;
             $res->data['upload_id'] = $parameters['resumableIdentifier'];
