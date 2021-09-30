@@ -48,8 +48,7 @@ class QueueConf extends CoreConfigClass
     {
         // Генерация внутреннего номерного плана.
         $conf = "[queue_agent_answer]\n";
-        $conf .= "exten => s,1,NoOp(--- Answer Queue ---)\n\t";
-        $conf .= 'same => n,Gosub(queue_answer,${EXTEN},1)' . "\n\t";
+        $conf .= 'exten => s,1,Gosub(queue_answer,${EXTEN},1)' . "\n\t";
         $conf .= "same => n,Return()\n\n";
 
         return $conf;
@@ -100,6 +99,11 @@ class QueueConf extends CoreConfigClass
             $calleridPrefix = preg_replace('/[^a-zA-Zа-яА-Я0-9 ]/ui', '', $queue['callerid_prefix'] ?? '');
 
             $queue_ext_conf .= "exten => {$queue['extension']},1,NoOp(--- Start Queue ---) \n\t";
+            // Проверим, пустая ли очередь.
+            $queue_ext_conf .= 'same => n,Set(mLogged=${QUEUE_MEMBER('.$queue['uniqid'].',logged)})'." \n\t";
+            $queue_ext_conf .= 'same => n,ExecIf($["${mLogged}" == "0"]?Set(pt1c_UNIQUEID=${UNDEFINED}))'." \n\t";
+            $queue_ext_conf .= 'same => n,GotoIf($["${mLogged}" == "0"]?internal,'.$queue['redirect_to_extension_if_empty'].',1)'." \n\t";
+            // Направим вызов на очередь.
             $queue_ext_conf .= "same => n,Answer() \n\t";
             $queue_ext_conf .= 'same => n,Set(__QUEUE_SRC_CHAN=${CHANNEL})' . "\n\t";
             $queue_ext_conf .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" == "Local"]?Gosub(set_orign_chan,s,1))' . "\n\t";
@@ -108,11 +112,9 @@ class QueueConf extends CoreConfigClass
 
             $options = '';
             if (isset($queue['caller_hear']) && $queue['caller_hear'] === 'ringing') {
-                $options .= 'r'; // Установить КПВ (гудки) вместо Музыки на Удержании для ожидающих в очереди
+                $options .= 'r';
             }
-            $ringlength = (trim(
-                    $queue['timeout_to_redirect_to_extension']
-                ) == '') ? 300 : $queue['timeout_to_redirect_to_extension'];
+            $ringlength = (trim($queue['timeout_to_redirect_to_extension']) === '') ? 300 : $queue['timeout_to_redirect_to_extension'];
             if ( ! empty($calleridPrefix)) {
                 $queue_ext_conf .= "same => n,Set(CALLERID(name)={$calleridPrefix}:" . '${CALLERID(name)}' . ") \n\t";
             }
