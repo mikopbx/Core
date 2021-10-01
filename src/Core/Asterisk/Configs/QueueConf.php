@@ -99,10 +99,13 @@ class QueueConf extends CoreConfigClass
             $calleridPrefix = preg_replace('/[^a-zA-Zа-яА-Я0-9 ]/ui', '', $queue['callerid_prefix'] ?? '');
 
             $queue_ext_conf .= "exten => {$queue['extension']},1,NoOp(--- Start Queue ---) \n\t";
-            // Проверим, пустая ли очередь.
-            $queue_ext_conf .= 'same => n,Set(mLogged=${QUEUE_MEMBER('.$queue['uniqid'].',logged)})'." \n\t";
-            $queue_ext_conf .= 'same => n,ExecIf($["${mLogged}" == "0"]?Set(pt1c_UNIQUEID=${UNDEFINED}))'." \n\t";
-            $queue_ext_conf .= 'same => n,GotoIf($["${mLogged}" == "0"]?internal,'.$queue['redirect_to_extension_if_empty'].',1)'." \n\t";
+            $reservExtension = $queue['redirect_to_extension_if_empty']??'';
+            if(!empty($reservExtension)){
+                // Проверим, пустая ли очередь.
+                $queue_ext_conf .= 'same => n,Set(mLogged=${QUEUE_MEMBER('.$queue['uniqid'].',logged)})'." \n\t";
+                $queue_ext_conf .= 'same => n,ExecIf($["${mLogged}" == "0"]?Set(pt1c_UNIQUEID=${UNDEFINED}))'." \n\t";
+                $queue_ext_conf .= 'same => n,GotoIf($["${mLogged}" == "0"]?internal,'.$reservExtension.',1)'." \n\t";
+            }
             // Направим вызов на очередь.
             $queue_ext_conf .= "same => n,Answer() \n\t";
             $queue_ext_conf .= 'same => n,Set(__QUEUE_SRC_CHAN=${CHANNEL})' . "\n\t";
@@ -127,10 +130,10 @@ class QueueConf extends CoreConfigClass
                 // Если по таймауту не ответили, то выполним переадресацию.
                 $queue_ext_conf .= 'same => n,ExecIf($["${QUEUESTATUS}" == "TIMEOUT"]?Goto(internal,' . $queue['timeout_extension'] . ',1))' . " \n\t";
             }
-            if (trim($queue['redirect_to_extension_if_empty']) !== '') {
+            if (!empty($reservExtension)) {
                 // Если пустая очередь, то выполним переадресацию.
                 $exp            = '$["${QUEUESTATUS}" == "JOINEMPTY" || "${QUEUESTATUS}" == "LEAVEEMPTY" ]';
-                $queue_ext_conf .= 'same => n,ExecIf(' . $exp . '?Goto(internal,' . $queue['redirect_to_extension_if_empty'] . ',1))' . " \n\t";
+                $queue_ext_conf .= 'same => n,ExecIf('.$exp.'?Goto(internal,'.$reservExtension.',1))' . " \n\t";
             }
             $queue_ext_conf .= "\n";
         }
