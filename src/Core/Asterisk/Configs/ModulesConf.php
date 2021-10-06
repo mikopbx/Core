@@ -136,6 +136,7 @@ class ModulesConf extends CoreConfigClass
             'res_sorcery_astdb.so',
             'res_sorcery_config.so',
             'res_sorcery_memory.so',
+            'app_while.so',
 
             'chan_pjsip.so',
             'func_pjsip_endpoint.so',
