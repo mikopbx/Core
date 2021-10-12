@@ -64,6 +64,7 @@ _xdebugEnable()
   echo "Renaming 15-xdebug.ini.disabled to 15-xdebug.ini ..."
   echo "Changing xdebug.remote_host to address $1 ..."
   sed "s/172.16.162.1$/$1/g" /etc/php.d/15-xdebug.ini.disabled > /etc/php.d/15-xdebug.ini
+  export XDEBUG_CONFIG="remote_enable=1 remote_mode=req remote_autostart=0 remote_port=9000 remote_host=$1 remote_connect_back=0";
   echo "Done"
 }
 
