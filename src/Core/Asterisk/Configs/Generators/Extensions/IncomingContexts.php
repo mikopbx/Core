@@ -198,7 +198,7 @@ class IncomingContexts extends CoreConfigClass
             $dialplanCommands = " \n\t".'same => n,ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?'."Goto(internal,{$rout['extension']},1));";
         } else {
             $dialplanCommands = " \n\t"."same => n,Set(M_TIMEOUT={$timeout})".
-                                " \n\t".'same => n,ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?'."Dial(Local/{$rout['extension']}@internal-incoming/n,{$timeout},".'${TRANSFER_OPTIONS}'."Kg));";
+                                " \n\t".'same => n,ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?'."Dial(Local/{$rout['extension']}@internal-incoming,{$timeout},".'${TRANSFER_OPTIONS}'."Kg));";
         }
         $this->rout_data_dial[$rout_number] .= $dialplanCommands;
         $this->duplicateDialActionsRoutNumber($rout, $dialplanCommands, $number);
@@ -392,7 +392,7 @@ class IncomingContexts extends CoreConfigClass
             // Вызов будет отвечен сразу конференцией.
             $conf .= "\t" . "same => n," . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?' . "Goto(internal,{$default_action->extension},1)); default action" . "\n";
         } else {
-            $conf .= "\t" . "same => n," . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?' . "Dial(Local/{$default_action->extension}@internal/n,,".'${TRANSFER_OPTIONS}'."Kg)); default action" . "\n";
+            $conf .= "\t" . "same => n," . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?' . "Dial(Local/{$default_action->extension}@internal,,".'${TRANSFER_OPTIONS}'."Kg)); default action" . "\n";
         }
         $conf .= $this->hookModulesMethod(CoreConfigClass::GENERATE_INCOMING_ROUT_AFTER_DIAL_CONTEXT, [$uniqId]);
 
