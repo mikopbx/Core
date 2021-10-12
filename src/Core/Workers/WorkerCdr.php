@@ -48,24 +48,50 @@ class WorkerCdr extends WorkerBase
      */
     public function start($argv): void
     {
-        $filter = [
-            'work_completed<>1 AND endtime<>""',
-            'columns'=> 'start,answer,src_num,dst_num,dst_chan,endtime,linkedid,recordingfile,dialstatus,UNIQUEID',
-            'order' => 'answer'
-       ];
-
         $this->client_queue = new BeanstalkClient(self::SELECT_CDR_TUBE);
         $this->client_queue->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
 
         $this->initSettings();
 
         while ($this->needRestart === false) {
-            $result = CallDetailRecordsTmp::find($filter)->toArray();
+            $result = $this->getTempCdr();
             if (!empty($result)) {
                 $this->updateCdr($result);
             }
-            $this->client_queue->wait(5); // instead of sleep
+            $this->client_queue->wait();
         }
+    }
+
+    /**
+     * Возвращает все завершенные временные CDR.
+     * @return array
+     */
+    private function getTempCdr():array
+    {
+        $filter = [
+            'work_completed<>1 AND endtime<>""',
+            'columns'=> 'start,answer,src_num,dst_num,dst_chan,endtime,linkedid,recordingfile,dialstatus,UNIQUEID',
+            'order' => 'answer',
+            'miko_result_in_file' => true,
+            'miko_tmp_db' => true,
+        ];
+        $client = new BeanstalkClient(WorkerCdr::SELECT_CDR_TUBE);
+        try {
+            $result   = $client->request(json_encode($filter), 2);
+            $filename = json_decode($result, true, 512, JSON_THROW_ON_ERROR);
+        }catch (Throwable $e){
+            $filename = '';
+        }
+        $result_data = [];
+        if (file_exists($filename)) {
+            try {
+                $result_data = json_decode(file_get_contents($filename), true, 512, JSON_THROW_ON_ERROR);
+            }catch (Throwable $e){
+                Util::sysLogMsg('SELECT_CDR_TUBE', 'Error parse response.');
+            }
+        }
+
+        return $result_data;
     }
 
     /**
