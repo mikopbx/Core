@@ -36,7 +36,7 @@ shopt -s cmdhist
 
 alias ls='ls --color=auto'
 alias myip="curl http://ipecho.net/plain; echo"
-alias remount-offload="mount -o remount,rw $(mount | grep /offload | cut -d ' ' -f 1)"
+alias remount-offload="_remountOffload"
 alias xdebug-enable="_xdebugEnable"
 alias xdebug-enable-www="_xdebugEnableWww"
 
@@ -44,6 +44,20 @@ PS1='\w\$ '
 PS2='>'
 
 export LANG=en_US.utf8
+
+_remountOffload()
+{
+  nowMode="$(mount | grep /offload | cut -d '(' -f 2 | cut -d ',' -f 1)";
+  mountPoint="$(mount | grep /offload | cut -d ' ' -f 1)";
+  if [ "${nowMode}" == 'rw' ]; then
+    newMode='ro';
+    mount -o remount,ro "$mountPoint";
+  else
+    newMode='rw';
+    mount -o remount,rw "$mountPoint";
+  fi;
+  echo "Mode for /offload ${newMode} disk:${mountPoint}";
+}
 
 _xdebugEnable()
 {
