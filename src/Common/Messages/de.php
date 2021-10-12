@@ -378,7 +378,7 @@ return [
     'ex_NatMode' => 'NAT Modus',
     'ex_ManualAdditionalAttributes' => 'Zusätzliche Attribute/Werte für SIP',
     'ex_RingMainExtension' => 'Für',
-    'ex_SecondsAndThenRedirectCallTo' => 'Sekunden versuchen die Nummer zu ereichen, dann weiterleiten zu',
+    'ex_SecondsAndThenRedirectCallTo' => 'Sekunden versuchen die Nummer zu erreichen, dann weiterleiten zu',
     'ex_IfMainExtensionIsBusyRedirectCallTo' => 'Falls die Nummer besetzt ist, dann weiterleiten zu',
     'ex_IfMainExtensionIsUnavailableRedirectCallTo' => 'Sollte die Nummer nicht erreichbar sein, dann weiterleiten zu',
     'ex_ValidateMobileIsNotCorrect' => 'Bitte die angegeben Mobilfunknummer überprüfen',
