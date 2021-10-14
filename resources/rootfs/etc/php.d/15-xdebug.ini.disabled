@@ -10,3 +10,6 @@ xdebug.remote_log="/tmp/xdebug.log"
 xdebug.cli_color = 1
 xdebug.idekey = "PHPSTORM"
 xdebug.extended_info=1
+
+;xdebug.profiler_enable=1
+;xdebug.profiler_output_dir=/tmp/profiling
