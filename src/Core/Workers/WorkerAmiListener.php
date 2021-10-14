@@ -22,6 +22,7 @@ require_once 'Globals.php';
 
 use MikoPBX\Core\System\{BeanstalkClient, Util};
 use MikoPBX\Core\Asterisk\AsteriskManager;
+use Pheanstalk\Contract\PheanstalkInterface;
 use Throwable;
 
 class WorkerAmiListener extends WorkerBase
@@ -97,7 +98,7 @@ class WorkerAmiListener extends WorkerBase
         $error           = '';
         for ($i = 1; $i <= 10; $i++) {
             try {
-                $result_send = $this->client->publish($result);
+                $result_send = $this->client->publish($result, null, PheanstalkInterface::DEFAULT_PRIORITY, 0, 600);
                 if ($result_send === false) {
                     $this->client->reconnect();
                 }
