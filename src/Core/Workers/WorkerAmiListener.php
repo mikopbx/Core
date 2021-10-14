@@ -27,7 +27,7 @@ use Throwable;
 class WorkerAmiListener extends WorkerBase
 {
     protected BeanstalkClient $client;
-
+    protected bool $saveDebugEvents = false;
     protected AsteriskManager $am;
 
     /**
@@ -49,6 +49,8 @@ class WorkerAmiListener extends WorkerBase
      */
     public function start($argv): void
     {
+        $this->saveDebugEvents = $this->di->getShared('config')->path('eventsLogDatabase.debugMode');
+
         $this->client = new BeanstalkClient(WorkerCallEvents::class);
         $this->am     = Util::getAstManager();
         $this->setFilter();
@@ -113,8 +115,10 @@ class WorkerAmiListener extends WorkerBase
         if ($message_is_sent === false) {
             Util::sysLogMsg(__METHOD__, "Error send data to queue. " . $error, LOG_ERR);
         }
-        // Логируем оповещение.
-        Util::logMsgDb('WorkerCallEvents::class', json_decode($result, true));
+        if($this->saveDebugEvents){
+            // Логируем оповещение.
+            Util::logMsgDb('WorkerCallEvents::class', json_decode($result, true));
+        }
     }
 
 }

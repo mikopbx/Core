@@ -19,7 +19,6 @@
 
 namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 
-
 use MikoPBX\Common\Models\CallDetailRecords;
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
 use MikoPBX\Core\System\Util;
@@ -80,7 +79,7 @@ class SelectCDR
                 // Файл с такой ссылкой будет удален через 5 минут по cron.
                 Util::createUpdateSymlink($filename, $linkName,true);
             }
-            Util::addRegularWWWRights($filename);
+            chown($filename, 'www');
             $res_data = json_encode($filename);
         }
 
@@ -120,7 +119,8 @@ class SelectCDR
         if($di){
             $dirsConfig = $di->getShared('config');
             $tmoDirName   = $dirsConfig->path('core.tempDir').'/SelectCdrService';
-            Util::mwMkdir($tmoDirName, true);
+            Util::mwMkdir($tmoDirName);
+            chown($tmoDirName, 'www');
             if(file_exists($tmoDirName)){
                 $dirName = $tmoDirName;
             }

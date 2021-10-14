@@ -89,6 +89,7 @@ class WorkerCdr extends WorkerBase
             }catch (Throwable $e){
                 Util::sysLogMsg('SELECT_CDR_TUBE', 'Error parse response.');
             }
+            unlink($filename);
         }
 
         return $result_data;
