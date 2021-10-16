@@ -20,4 +20,6 @@ return [
     'ex_EnglishUK' => 'English(UK)',
     'ex_English' => 'English(US)',
     'Jun' => 'Junho',
+    'December' => 'dezembro',
+    'November' => 'novembro',
 ];
