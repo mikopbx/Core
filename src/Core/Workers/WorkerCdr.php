@@ -21,7 +21,7 @@ namespace MikoPBX\Core\Workers;
 
 require_once 'Globals.php';
 
-use MikoPBX\Common\Models\{CallDetailRecordsTmp, Extensions, ModelsBase, Users};
+use MikoPBX\Common\Models\{Extensions, ModelsBase, Users};
 use MikoPBX\Core\System\{BeanstalkClient, Processes, Util};
 use Throwable;
 
@@ -64,17 +64,21 @@ class WorkerCdr extends WorkerBase
 
     /**
      * Возвращает все завершенные временные CDR.
+     * @param array $filter
      * @return array
      */
-    private function getTempCdr():array
+    private function getTempCdr(array $filter = []):array
     {
-        $filter = [
-            'work_completed<>1 AND endtime<>""',
-            'columns'=> 'start,answer,src_num,dst_num,dst_chan,endtime,linkedid,recordingfile,dialstatus,UNIQUEID',
-            'order' => 'answer',
-            'miko_result_in_file' => true,
-            'miko_tmp_db' => true,
-        ];
+        if(empty($filter)){
+            $filter = [
+                'work_completed<>1 AND endtime<>""'
+            ];
+        }
+        $filter['miko_result_in_file'] = true;
+        $filter['miko_tmp_db'] = true;
+        $filter['order'] = 'answer';
+        $filter['columns'] = 'start,answer,src_num,dst_num,dst_chan,endtime,linkedid,recordingfile,dialstatus,UNIQUEID';
+
         $client = new BeanstalkClient(WorkerCdr::SELECT_CDR_TUBE);
         try {
             $result   = $client->request(json_encode($filter), 2);
@@ -323,12 +327,16 @@ class WorkerCdr extends WorkerBase
                 Processes::mwExec("rm -rf {$row['recordingfile']}");
             }
         } elseif (!empty($row['recordingfile']) &&
-            !file_exists(Util::trimExtensionForFile($row['recordingfile']) . '.wav') &&
-            !file_exists($row['recordingfile'])) {
-            /** @var CallDetailRecordsTmp $rec_data */
-            $rec_data = CallDetailRecordsTmp::findFirst("linkedid='{$row['linkedid']}' AND dst_chan='{$row['dst_chan']}'");
-            if ($rec_data !== null) {
-                $row['recordingfile'] = $rec_data->recordingfile;
+            !file_exists($row['recordingfile']) &&
+            !file_exists(Util::trimExtensionForFile($row['recordingfile']) . '.wav') ) {
+            $filter = [
+                "linkedid='{$row['linkedid']}' AND dst_chan='{$row['dst_chan']}'",
+                'limit' => 1,
+            ];
+            $data = $this->getTempCdr($filter);
+            $recordingfile = $data[0]['recordingfile']??'';
+            if (!empty($recordingfile)) {
+                $row['recordingfile'] = $recordingfile;
             }
         }
         return array($disposition, $row);
