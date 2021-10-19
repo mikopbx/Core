@@ -22,11 +22,14 @@ namespace MikoPBX\Core\System;
 use MikoPBX\Common\Models\LanInterfaces;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Configs\SSHConf;
+use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp;
 
 class CloudProvisioning
 {
     public const PBX_SETTING_KEY = 'CloudProvisioning';
     public const HTTP_TIMEOUT = 10;
+
     public static function start():void
     {
         if(PbxSettings::findFirst('key="'.self::PBX_SETTING_KEY.'"')){
@@ -34,22 +37,33 @@ class CloudProvisioning
             return;
         }
         $cp = new self();
-        $resultProvisioning = $cp->googleProvisioning();
-        if(!$resultProvisioning){
-            $resultProvisioning = $cp->azureProvisioning();
-        }
 
+        $solutions = ['google', 'mcs', 'azure'];
+        $resultProvisioning = '0';
+        foreach ($solutions as $solution){
+            $methodName = "{$solution}Provisioning";
+            if(!method_exists($cp, $methodName)){
+                continue;
+            }
+            Util::sysLogMsg(__CLASS__, "Try $solution provisioning... ");
+            if($cp->$methodName()){
+                $resultProvisioning = '1';
+                Util::sysLogMsg(__CLASS__, "$solution provisioning OK... ");
+                break;
+            }
+        }
+        exit(0);
         $setting = PbxSettings::findFirst('key="'.self::PBX_SETTING_KEY.'"');
         if(!$setting){
             $setting = new PbxSettings();
             $setting->key = self::PBX_SETTING_KEY;
         }
-        $setting->value = $resultProvisioning ? '1' : '0';
+        $setting->value = $resultProvisioning;
         $resultSave = $setting->save();
         unset($setting);
 
         if($resultSave && $resultProvisioning){
-            $cp->checkConnectStorage();
+            // $cp->checkConnectStorage();
         }
     }
 
@@ -127,7 +141,7 @@ class CloudProvisioning
     }
 
     /**
-     * Настройка машины для Google Claod.
+     * Настройка машины для Google Claud.
      */
     public function googleProvisioning():bool
     {
@@ -138,15 +152,70 @@ class CloudProvisioning
         curl_setopt($curl, CURLOPT_TIMEOUT, self::HTTP_TIMEOUT);
         curl_setopt($curl, CURLOPT_HTTPHEADER, ['Metadata-Flavor:Google']);
         $resultRequest = curl_exec($curl);
+
         $http_code     = (int)curl_getinfo($curl, CURLINFO_HTTP_CODE);
         curl_close($curl);
-        if($http_code === 0){
+        if($http_code !== 200 ){
             return false;
         }
         $data = json_decode($resultRequest, true);
         $this->updateSSHKeys($data['attributes']['ssh-keys']??'');
         $hostname = $data['name']??'';
         $extIp= $data['networkInterfaces'][0]['accessConfigs'][0]['externalIp']??'';
+        $this->updateLanSettings($hostname, $extIp);
+        $this->updateSshPassword();
+        return true;
+    }
+
+    private function getMetaDataMCS($url):string
+    {
+        $baseUrl = 'http://169.254.169.254/latest/meta-data/';
+        $client  = new GuzzleHttp\Client();
+        $headers = [];
+        $params  = [];
+        $options = [
+            'timeout' => 10,
+            'http_errors' => false,
+            'headers' => $headers
+        ];
+
+        $url = "$baseUrl/$url?".http_build_query($params);
+        try {
+            $res    = $client->request('GET', $url, $options);
+            $code   = $res->getStatusCode();
+        }catch (GuzzleHttp\Exception\ConnectException $e ){
+            $code = 0;
+        } catch (GuzzleException $e) {
+            $code = 0;
+        }
+        $body = '';
+        if($code === 200 && isset($res)){
+            $body = $res->getBody()->getContents();
+        }
+        return $body;
+    }
+
+    /**
+     * Автонастройка для Mail (VK) Cloud Solutions
+     * @return bool
+     */
+    public function mcsProvisioning():bool
+    {
+        $result = false;
+        // Имя сервера.
+        $hostname = $this->getMetaDataMCS('hostname');
+        if(empty($hostname)){
+            return $result;
+        }
+        $extIp    = $this->getMetaDataMCS('public-ipv4');
+        // Получим ключи ssh.
+        $sshKey   = '';
+        $sshKeys  = $this->getMetaDataMCS('public-keys');
+        $sshId    = explode('=', $sshKeys)[0]??'';
+        if($sshId !== ''){
+            $sshKey = $this->getMetaDataMCS("public-keys/$sshId/openssh-key");
+        }
+        $this->updateSSHKeys($sshKey);
         $this->updateLanSettings($hostname, $extIp);
         $this->updateSshPassword();
         return true;
