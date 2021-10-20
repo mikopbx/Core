@@ -19,7 +19,7 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
-
+use MikoPBX\Common\Models\{Sip,Extensions,Users};
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Storage;
 use MikoPBX\Core\System\Util;
