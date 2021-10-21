@@ -82,13 +82,16 @@ class ModulesControllerBase extends BaseController
                     fpassthru($fp);
                     fclose($fp);
                 }
-                if (isset($response['data']['need_delete']) && $response['data']['need_delete'] == true) {
+                if (isset($response['data']['need_delete']) && $response['data']['need_delete'] === true) {
                     unlink($filename);
                 }
-            } elseif (isset($response['redirect'])) {
-                $this->response->redirect($response['redirect'], true, 302);
+            } elseif (isset($response['html'])) {
+                echo $response['html'];
                 $this->response->sendRaw();
-            } elseif (isset($response['headers']) && isset($response['echo'])) {
+            } elseif (isset($response['redirect'])) {
+                $this->response->redirect($response['redirect'], true);
+                $this->response->sendRaw();
+            } elseif ( isset($response['echo'], $response['headers']) ) {
                 foreach ($response['headers'] as $name => $value) {
                     $this->response->setHeader($name, $value);
                 }
