@@ -99,7 +99,6 @@ class VoiceMailConf extends CoreConfigClass
             $mail_box = $this->generalSettings['SystemNotificationsEmail'];
         }
         $conf .= "admin => admin," . Util::translate("user") . ",{$mail_box},,attach=yes|tz=local|delete=yes\n";
-        
         $peers = Sip::find('type="peer"');
         foreach ($peers as $peer){
             $username = $peer->extension;
@@ -113,7 +112,7 @@ class VoiceMailConf extends CoreConfigClass
                 }
             }
             if ($mail_box != '') {
-              $conf.= "{$peer->extension} => {$peer->extension},{$username},{$mail_box},,attach=yes|tz=local|delete=yes\n";
+               $conf.= "{$peer->extension} => {$peer->extension},{$username},{$mail_box},,attach=yes|tz=local|delete=yes\n";
             }
             //$conf.= "{$peer->extension} => {$peer->extension},{$username},{$mail_box},,attach=yes|tz=local\n";
         }
