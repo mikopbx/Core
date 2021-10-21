@@ -111,8 +111,8 @@ class VoiceMailConf extends CoreConfigClass
                     $mail_box = $user->email;
                 }
             }
-            if ($mail_box != '') {
-               $conf.= "{$peer->extension} => {$peer->extension},{$username},{$mail_box},,attach=yes|tz=local|delete=yes\n";
+            if($mail_box != '') {
+                $conf.= "{$peer->extension} => {$peer->extension},{$username},{$mail_box},,attach=yes|tz=local|delete=yes\n";
             }
             //$conf.= "{$peer->extension} => {$peer->extension},{$username},{$mail_box},,attach=yes|tz=local\n";
         }
