@@ -101,16 +101,16 @@ class IncomingContexts extends CoreConfigClass
      */
     private function needDefRout(): bool
     {
-        $need_def_rout = true;
+        $needDefRout = true;
         foreach ($this->routes as $rout) {
             $number = trim($rout['number']);
             if ($number === 'X!' || $number === '') {
-                $need_def_rout = false;
+                $needDefRout = false;
                 break;
             }
         }
 
-        return $need_def_rout;
+        return $needDefRout;
     }
 
     public function makeDialplan(): string
@@ -335,14 +335,14 @@ class IncomingContexts extends CoreConfigClass
         /** @var IncomingRoutingTable $default_action */
         $default_action = IncomingRoutingTable::findFirst('priority = 9999');
 
-        $uniqId = is_string($this->provider) ? $this->provider : $this->uniqId;
-        $conf   = "\n" . "[{$uniqId}-incoming]\n";
+        $id = is_string($this->provider) ? $this->provider : $this->uniqId;
+        $conf = "\n" . "[{$id}-incoming]\n";
         foreach ($this->dialplan as $dpln) {
             $conf .= $dpln . "\n";
-            if (null === $default_action && 'none' !== $this->provider) {
-                continue;
+            if (null !== $default_action) {
+                $conf .= $this->createSummaryDialplanDefAction($default_action, $id);
             }
-            $conf .= $this->createSummaryDialplanDefAction($default_action, $uniqId);
+            $conf .= "\t" . "same => n,Hangup()" . "\n";
         }
 
         return $conf;
@@ -365,8 +365,6 @@ class IncomingContexts extends CoreConfigClass
         } elseif ('busy' === $default_action->action) {
             $conf .= "\t" . "same => n,Busy()" . "\n";
         }
-        $conf .= "\t" . "same => n,Hangup()" . "\n";
-
         return $conf;
     }
 
