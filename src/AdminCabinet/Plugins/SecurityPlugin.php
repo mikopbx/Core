@@ -65,7 +65,8 @@ class SecurityPlugin extends Injectable
             return true;
         }
 
-        if ($isLoggedIn && $controller === 'INDEX') {
+        $className = $dispatcher->getNamespaceName().'\\'.$dispatcher->getControllerName().$dispatcher->getHandlerSuffix();
+        if ( $isLoggedIn && ($controller === 'INDEX' || !class_exists($className)) ) {
             $dispatcher->forward(
                 [
                     'controller' => 'extensions',
