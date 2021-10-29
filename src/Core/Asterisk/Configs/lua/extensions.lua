@@ -590,6 +590,7 @@ function event_hangup_chan()
     local data = {}
     data['action']  	= "hangup_chan";
     data['end']  		= getNowDate();
+    data['src_num']		= get_variable("CALLERID(num)");
     data['did']		    = get_variable("FROM_DID");
     data['agi_threadid']= get_variable('UNIQUEID')..'_'..generateRandomString(6);
     data['linkedid']  	= get_variable("CHANNEL(linkedid)");
