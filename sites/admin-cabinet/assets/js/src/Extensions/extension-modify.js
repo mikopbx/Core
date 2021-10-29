@@ -194,6 +194,12 @@ const extension = {
 			onUnMask: extension.cbOnUnmaskEmail,
 			oncomplete: extension.cbOnCompleteEmail,
 		});
+		extension.$mobile_number.focusout(function(e) {
+			let phone = $(e.target).val().replace(/[^0-9]/g,"");
+			if(phone === ''){
+				$(e.target).val('');
+			}
+		});
 
 		extension.initializeForm();
 	},
