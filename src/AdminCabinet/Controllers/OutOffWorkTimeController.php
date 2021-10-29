@@ -168,6 +168,10 @@ class OutOffWorkTimeController extends BaseController
             }
         }
 
+        if('playmessage' === $timeFrame->action){
+            $timeFrame->extension = '';
+        }
+
         if ($timeFrame->save() === false) {
             $errors = $timeFrame->getMessages();
             $this->flash->warning(implode('<br>', $errors));
