@@ -54,14 +54,15 @@ class SecurityPlugin extends Injectable
                 $this->response->send();
 
                 return false;
-            } else { // Usual requests
-                $dispatcher->forward(
-                    [
-                        'controller' => 'session',
-                        'action'     => 'index',
-                    ]
-                );
             }
+
+            // Usual requests
+            $dispatcher->forward(
+                [
+                    'controller' => 'session',
+                    'action'     => 'index',
+                ]
+            );
 
             return true;
         }
@@ -70,7 +71,7 @@ class SecurityPlugin extends Injectable
         if ( $isLoggedIn && ($controller === 'INDEX' || !$this->controllerExists($dispatcher)) ) {
             $dispatcher->forward(
                 [
-                    'controller' => 'extensions',
+                    'cotroller' => 'extensions',
                     'action'     => 'index',
                 ]
             );
@@ -87,7 +88,7 @@ class SecurityPlugin extends Injectable
     private function controllerExists($dispatcher):bool
     {
         $controller = Text::camelize($dispatcher->getControllerName());
-        return $dispatcher->getNamespaceName().'\\'.$controller.$dispatcher->getHandlerSuffix();
+        return class_exists($dispatcher->getNamespaceName().'\\'.$controller.$dispatcher->getHandlerSuffix());
     }
 
     /**
@@ -98,13 +99,11 @@ class SecurityPlugin extends Injectable
     private function checkUserAuth(): bool
     {
         // Check if it localhost request
-        if ($_SERVER['REMOTE_ADDR'] === '127.0.0.1') {
+        if ($_SERVER['REMOTE_ADDR'] === '127.0.0.1'
+            || $this->session->has('auth')) {
             return true;
-        } // Check if user already registered
-        elseif ($this->session->has('auth')) {
-            return true;
-        } // Check if remember me cookie exists
-        elseif ($this->cookies->has('random_token')) {
+        }
+        if ($this->cookies->has('random_token')) {
             $token       = $this->cookies->get('random_token')->getValue();
             $currentDate = date("Y-m-d H:i:s", time());
             $userTokens  = AuthTokens::find();
