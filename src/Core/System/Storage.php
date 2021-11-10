@@ -302,10 +302,9 @@ class Storage extends Di\Injectable
         $sshfsPath = Util::which('sshfs');
 
         $command = "{$timeoutPath} 3 {$sshfsPath} -p {$port} -o nonempty -o password_stdin -o 'StrictHostKeyChecking=no' " . "{$user}@{$host}:{$remout_dir} {$local_dir} << EOF\n" . "{$pass}\n" . "EOF\n";
-        // file_put_contents('/tmp/sshfs_'.$host, $command);
         Processes::mwExec($command, $out);
         $response = trim(implode('', $out));
-        if ('Terminated' == $response) {
+        if ('Terminated' === $response) {
             // Удаленный сервер не ответил / или не корректно указан пароль.
             unset($response);
         }
