@@ -23,12 +23,15 @@ namespace MikoPBX\PBXCoreREST\Lib;
 use MikoPBX\Common\Models\AsteriskManagerUsers;
 use MikoPBX\Common\Models\CustomFiles;
 use MikoPBX\Common\Models\Extensions;
+use MikoPBX\Common\Models\Iax;
 use MikoPBX\Common\Models\IncomingRoutingTable;
 use MikoPBX\Common\Models\OutgoingRoutingTable;
 use MikoPBX\Common\Models\OutWorkTimes;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\Providers;
+use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\SoundFiles;
+use MikoPBX\Common\Models\Users;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\System\Notifications;
@@ -379,7 +382,9 @@ class SystemManagementProcessor extends Injectable
 
         // Pre delete some types
         $clearThisModels = [
-            [Providers::class => ''],
+            [Users::class => 'id>"1"'], // All except root with their extensions
+            [Sip::class => ''], // All SIP providers
+            [Iax::class => ''], // All IAX providers
             [OutgoingRoutingTable::class => ''],
             [IncomingRoutingTable::class => ''],
             [OutWorkTimes::class => ''],
