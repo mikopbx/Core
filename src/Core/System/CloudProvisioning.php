@@ -52,7 +52,6 @@ class CloudProvisioning
                 break;
             }
         }
-        exit(0);
         $setting = PbxSettings::findFirst('key="'.self::PBX_SETTING_KEY.'"');
         if(!$setting){
             $setting = new PbxSettings();
@@ -63,7 +62,7 @@ class CloudProvisioning
         unset($setting);
 
         if($resultSave && $resultProvisioning){
-            // $cp->checkConnectStorage();
+            $cp->checkConnectStorage();
         }
     }
 

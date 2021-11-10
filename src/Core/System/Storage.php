@@ -769,7 +769,8 @@ class Storage extends Di\Injectable
 
         $type = $data['children'][0]['type'] ?? '';
         if (strpos($type, 'raid') === false) {
-            foreach ($data['children'] as $child) {
+            $children = $data['children']??[];
+            foreach ($children as $child) {
                 $result[] = $child['name'];
             }
         }
