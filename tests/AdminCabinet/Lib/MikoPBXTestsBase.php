@@ -167,7 +167,7 @@ class MikoPBXTestsBase extends BrowserStackTest
     {
         while (true) // Handle timeout somewhere
         {
-            $ajaxIsComplete = (bool)(self::$driver->executeScript("return jQuery.active == 0"));
+            $ajaxIsComplete = (bool)(self::$driver->executeScript("return window.jQuery&&jQuery.active == 0"));
             if ($ajaxIsComplete) {
                 break;
             }
