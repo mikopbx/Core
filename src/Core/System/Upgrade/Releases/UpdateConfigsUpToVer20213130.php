@@ -51,6 +51,7 @@ class UpdateConfigsUpToVer20213130 extends Injectable implements UpgradeSystemCo
         }
 
         $this->deleteOutdatedTables();
+        $this->deleteOrphanDBRecords();
 
     }
 
