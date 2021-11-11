@@ -27,6 +27,9 @@ use Phalcon\Mvc\Model\ResultsetInterface;
  * Class NetworkFilters
  *
  * @package MikoPBX\Common\Models
+ * @property \MikoPBX\Common\Models\Sip Sip
+ * @property \MikoPBX\Common\Models\FirewallRules FirewallRules
+ * @property \MikoPBX\Common\Models\AsteriskManagerUsers AsteriskManagerUsers
  */
 class NetworkFilters extends ModelsBase
 {
@@ -63,7 +66,7 @@ class NetworkFilters extends ModelsBase
     public ?string $description = '';
 
     /**
-     * Вернуть список подсетей с разрешенным типом трафика
+     * Returns allowed networks for provided list of traffic categories
      *
      * @param array $arrTrafficCategory
      *
