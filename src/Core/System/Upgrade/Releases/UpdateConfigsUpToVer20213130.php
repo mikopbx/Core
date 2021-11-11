@@ -88,6 +88,14 @@ class UpdateConfigsUpToVer20213130 extends Injectable implements UpgradeSystemCo
                 $iaxRecord->delete();
             }
         }
+
+        $sipHostsRecords      =  SipHosts::find();
+        /** @var SipHosts $sipHostsRecord */
+        foreach ($sipHostsRecords as $sipHostsRecord){
+            if ($sipHostsRecord->Sip === null){
+                $sipHostsRecord->delete();
+            }
+        }
     }
 
 }
