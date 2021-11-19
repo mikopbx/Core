@@ -101,7 +101,7 @@ class UpdateConfigsUpToVer20213130 extends Injectable implements UpgradeSystemCo
         $usersRecords      =  Users::find('id>"1"');
         /** @var Users $usersRecord */
         foreach ($usersRecords as $usersRecord){
-            if ($usersRecord->Extension === null){
+            if ($usersRecord->Extensions === null){
                 $usersRecord->delete();
             }
         }
