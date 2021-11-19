@@ -17,94 +17,7 @@
  */
 
 /* global PbxApi, globalPBXVersion, globalTranslate,
-globalWebAdminLanguage, globalPBXVersion, showdown, UserMessage */
-
-const mergingCheckWorker = {
-	timeOut: 3000,
-	timeOutHandle: '',
-	errorCounts: 0,
-	$progressBarLabel: $('#upload-progress-bar').find('.label'),
-	fileID: null,
-	filePath: '',
-	initialize(fileID, filePath) {
-		mergingCheckWorker.fileID = fileID;
-		mergingCheckWorker.filePath = filePath;
-		mergingCheckWorker.restartWorker(fileID);
-	},
-	restartWorker() {
-		window.clearTimeout(mergingCheckWorker.timeoutHandle);
-		mergingCheckWorker.worker();
-	},
-	worker() {
-		PbxApi.FilesGetStatusUploadFile(mergingCheckWorker.fileID, mergingCheckWorker.cbAfterResponse);
-		mergingCheckWorker.timeoutHandle = window.setTimeout(
-			mergingCheckWorker.worker,
-			mergingCheckWorker.timeOut,
-		);
-	},
-	cbAfterResponse(response) {
-		if (mergingCheckWorker.errorCounts > 10) {
-			mergingCheckWorker.$progressBarLabel.text(globalTranslate.upd_UploadError);
-			UserMessage.showMultiString(globalTranslate.upd_UploadError);
-			updatePBX.$submitButton.removeClass('loading');
-			window.clearTimeout(mergingCheckWorker.timeoutHandle);
-		}
-		if (response === undefined || Object.keys(response).length === 0) {
-			mergingCheckWorker.errorCounts += 1;
-			return;
-		}
-		if (response.d_status === 'UPLOAD_COMPLETE') {
-			mergingCheckWorker.$progressBarLabel.text(globalTranslate.upd_UpgradeInProgress);
-			PbxApi.SystemUpgrade(mergingCheckWorker.filePath, updatePBX.cbAfterStartUpdate);
-			window.clearTimeout(mergingCheckWorker.timeoutHandle);
-		} else if (response.d_status !== undefined) {
-			mergingCheckWorker.$progressBarLabel.text(globalTranslate.upd_UploadInProgress);
-			mergingCheckWorker.errorCounts = 0;
-		} else {
-			mergingCheckWorker.errorCounts += 1;
-		}
-	},
-};
-
-
-const upgradeStatusLoopWorker = {
-	timeOut: 1000,
-	timeOutHandle: '',
-	iterations: 0,
-	filename: '',
-	initialize(filename) {
-		upgradeStatusLoopWorker.filename = filename;
-		upgradeStatusLoopWorker.iterations = 0;
-		upgradeStatusLoopWorker.restartWorker();
-	},
-	restartWorker() {
-		window.clearTimeout(upgradeStatusLoopWorker.timeoutHandle);
-		upgradeStatusLoopWorker.worker();
-	},
-	worker() {
-		window.clearTimeout(upgradeStatusLoopWorker.timeoutHandle);
-		PbxApi.FilesFirmwareDownloadStatus(upgradeStatusLoopWorker.filename, upgradeStatusLoopWorker.cbRefreshUpgradeStatus);
-	},
-	cbRefreshUpgradeStatus(response) {
-		upgradeStatusLoopWorker.iterations += 1;
-		upgradeStatusLoopWorker.timeoutHandle =
-			window.setTimeout(upgradeStatusLoopWorker.worker, upgradeStatusLoopWorker.timeOut);
-		if (response.length === 0 || response === false) return;
-		if (response.d_status === 'DOWNLOAD_IN_PROGRESS') {
-			$('i.loading.redo').closest('a').find('.percent').text(`${response.d_status_progress}%`);
-		} else if (response.d_status === 'DOWNLOAD_COMPLETE') {
-			window.clearTimeout(upgradeStatusLoopWorker.timeoutHandle);
-			$('i.loading.redo').closest('a').find('.percent').text(`${response.d_status_progress}%`);
-			$('i.loading.redo').addClass('sync').removeClass('redo');
-			PbxApi.SystemUpgrade(response.filePath, updatePBX.cbAfterStartUpdate);
-		} else if (response.d_status === 'DOWNLOAD_ERROR') {
-			window.clearTimeout(upgradeStatusLoopWorker.timeoutHandle);
-			UserMessage.showMultiString(globalTranslate.upd_DownloadUpgradeError);
-			$('i.loading.redo').addClass('redo').removeClass('loading');
-		}
-	},
-};
-
+globalWebAdminLanguage, showdown, UserMessage, upgradeStatusLoopWorker */
 
 const updatePBX = {
 	$formObj: $('#upgrade-form'),
@@ -146,7 +59,7 @@ const updatePBX = {
 									updatePBX.$submitButton.addClass('loading');
 									updatePBX.upgradeInProgress = true;
 									const data = $('input:file')[0].files[0];
-									PbxApi.FilesUploadFile(data,updatePBX.cbResumableUploadFile);
+									PbxApi.FilesUploadFile(data, updatePBX.cbResumableUploadFile);
 									return true;
 								},
 							})
@@ -251,6 +164,7 @@ const updatePBX = {
 		}
 		const fileID = json.data.upload_id;
 		const filePath = json.data.filename;
+		// Wait until system glued all parts of file
 		mergingCheckWorker.initialize(fileID, filePath);
 	},
 
