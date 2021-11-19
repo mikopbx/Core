@@ -28,8 +28,7 @@
             </div>
             {{ t._('lic_LicenseKeyMessage') }}
         </div>
-        <div id="filled-license-key-info">
-        </div>
+        <div id="filled-license-key-info" class="confidential-field"></div>
         <div class="ui hidden divider"></div>
         <div class="ui accordion field" id="licenseDetailInfo">
             <div class=" title">

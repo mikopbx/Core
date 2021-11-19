@@ -42,7 +42,7 @@ class AsteriskManagerEditForm extends Form
         $this->add(new Text('username'));
 
         // Secret
-        $this->add(new Text('secret'));
+        $this->add(new Text('secret', [ "class"=>"confidential-field"]));
 
 
         foreach ($options['array_of_checkboxes'] as $checkBox) {
