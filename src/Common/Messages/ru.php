@@ -10,6 +10,7 @@ return [
     'ex_French' => 'Le français',
     'ex_Italian' => 'Italiano',
     'ex_Portuguese' => 'Português',
+    'ex_PortugueseBrazil' => 'Português (Brazil)',
     'ex_Ukrainian' => 'Українська',
     'ex_Vietnamese' => 'Tiếng việt',
     'ex_Chinese' => '中国人',
