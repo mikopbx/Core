@@ -197,7 +197,7 @@ class ProvidersController extends BaseController
         }
 
         // Update additional hosts table
-        if ( ! $this->updateAdditionalHosts($data)) {
+        if ( $type === 'sip' && ! $this->updateAdditionalHosts($data)) {
             $this->view->success = false;
             $this->db->rollback();
 

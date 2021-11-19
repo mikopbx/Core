@@ -22,6 +22,7 @@ namespace MikoPBX\Core\System\Upgrade\Releases;
 use MikoPBX\Common\Models\Iax;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\SipHosts;
+use MikoPBX\Common\Models\Users;
 use MikoPBX\Common\Providers\MainDatabaseProvider;
 use MikoPBX\Core\System\Upgrade\UpgradeSystemConfigInterface;
 use Phalcon\Di;
@@ -88,6 +89,23 @@ class UpdateConfigsUpToVer20213130 extends Injectable implements UpgradeSystemCo
                 $iaxRecord->delete();
             }
         }
+
+        $sipHostsRecords      =  SipHosts::find();
+        /** @var SipHosts $sipHostsRecord */
+        foreach ($sipHostsRecords as $sipHostsRecord){
+            if ($sipHostsRecord->Sip === null){
+                $sipHostsRecord->delete();
+            }
+        }
+
+        $usersRecords      =  Users::find('id>"1"');
+        /** @var Users $usersRecord */
+        foreach ($usersRecords as $usersRecord){
+            if ($usersRecord->Extension === null){
+                $usersRecord->delete();
+            }
+        }
+
     }
 
 }

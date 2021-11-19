@@ -147,7 +147,6 @@ class PbxSettings extends ModelsBase
             'WebAdminLanguage'                => 'en',
             'SystemNotificationsEmail'        => 'admin@mycompany.com',
             'SendMetrics'                     => '1',
-
         ];
     }
 

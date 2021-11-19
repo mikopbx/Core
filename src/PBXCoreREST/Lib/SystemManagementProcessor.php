@@ -23,11 +23,14 @@ namespace MikoPBX\PBXCoreREST\Lib;
 use MikoPBX\Common\Models\AsteriskManagerUsers;
 use MikoPBX\Common\Models\CustomFiles;
 use MikoPBX\Common\Models\Extensions;
+use MikoPBX\Common\Models\FirewallRules;
 use MikoPBX\Common\Models\Iax;
 use MikoPBX\Common\Models\IncomingRoutingTable;
+use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\OutgoingRoutingTable;
 use MikoPBX\Common\Models\OutWorkTimes;
 use MikoPBX\Common\Models\PbxExtensionModules;
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\Providers;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\SoundFiles;
@@ -397,6 +400,7 @@ class SystemManagementProcessor extends Injectable
             [Extensions::class => 'type="' . Extensions::TYPE_CONFERENCE . '"'],  // CONFERENCE
             [Extensions::class => 'type="' . Extensions::TYPE_QUEUE . '"'],  // QUEUE
             [CustomFiles::class => ''],
+            [NetworkFilters::class=>'permit!="0.0.0.0/0" AND deny!="0.0.0.0/0"'] //Delete all other rules
         ];
 
         foreach ($clearThisModels as $modelParams) {
@@ -407,6 +411,13 @@ class SystemManagementProcessor extends Injectable
                     $res->success    = false;
                 }
             }
+        }
+
+        // Allow all connections for 0.0.0.0/0
+        $firewallRules = FirewallRules::find();
+        foreach ($firewallRules as $firewallRule){
+            $firewallRule->action = 'allow';
+            $firewallRule->save();
         }
 
         // Other extensions
@@ -469,7 +480,39 @@ class SystemManagementProcessor extends Injectable
             }
         }
 
-        // Delete CallRecords
+        // Fill PBXSettingsByDefault
+        $defaultValues = PbxSettings::getDefaultArrayValues();
+        $fixedKeys = [
+            'Name',
+            'Description',
+            'SSHPassword',
+            'SSHRsaKey',
+            'SSHDssKey',
+            'SSHAuthorizedKeys',
+            'SSHecdsaKey',
+            'SSHLanguage',
+            'WEBHTTPSPublicKey',
+            'WEBHTTPSPrivateKey',
+            'RedirectToHttps',
+            'PBXLanguage',
+            'PBXVersion',
+            'WebAdminLogin',
+            'WebAdminPassword',
+            'WebAdminLanguage',
+        ];
+        foreach ($defaultValues as $key=>$defaultValue){
+            if (in_array($key, $fixedKeys)){
+                continue;
+            }
+            $record = PbxSettings::findFirstByKey($key);
+            if ($record===null){
+                $record = new PbxSettings();
+                $record->key = $key;
+            }
+            $record->value = $defaultValue;
+        }
+
+        // Delete CallRecords from database
         $cdr = CdrDb::getPathToDB();
         Processes::mwExec("{$rm} -rf {$cdr}*");
         $dbUpdater = new UpdateDatabase();
@@ -510,10 +553,10 @@ class SystemManagementProcessor extends Injectable
             return $res;
         }
 
-        // Принудительно устанавливаем расширение файла в wav.
+        // Change extension to wav
         $n_filename     = Util::trimExtensionForFile($filename) . ".wav";
         $n_filename_mp3 = Util::trimExtensionForFile($filename) . ".mp3";
-        // Конвертируем файл.
+        // Convert file
         $tmp_filename = escapeshellcmd($tmp_filename);
         $n_filename   = escapeshellcmd($n_filename);
         $soxPath      = Util::which('sox');
