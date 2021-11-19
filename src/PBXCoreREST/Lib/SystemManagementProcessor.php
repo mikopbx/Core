@@ -380,13 +380,17 @@ class SystemManagementProcessor extends Injectable
         $rm     = Util::which('rm');
         $res->success = true;
 
+        // Change incoming rule to default action
+        IncomingRoutingTable::resetDefaultRoute();
+
+
         // Pre delete some types
         $clearThisModels = [
+            [OutgoingRoutingTable::class => ''],
+            [IncomingRoutingTable::class => 'id>1'],
             [Users::class => 'id>"1"'], // All except root with their extensions
             [Sip::class => ''], // All SIP providers
             [Iax::class => ''], // All IAX providers
-            [OutgoingRoutingTable::class => ''],
-            [IncomingRoutingTable::class => ''],
             [OutWorkTimes::class => ''],
             [AsteriskManagerUsers::class => ''],
             [Extensions::class => 'type="' . Extensions::TYPE_IVR_MENU . '"'],  // IVR Menu
