@@ -1062,4 +1062,5 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
     'Storage disk was mounted successfully...' => 'Depolama diski başarıyla monte edildi',
     'gs_NeedRestartPBX' => 'Değiştirirken, PBX yeniden başlatılacaktır (yıldız servisi)',
     'ex_BusyLevelInfo' => 'Belirtilen görüşme sayısına ulaşıldığında, çalışanın telefonu meşgul kabul edilecektir.',
+    'ex_PortugueseBrazil' => 'Português (Brezilya)',
 ];

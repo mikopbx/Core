@@ -1062,4 +1062,5 @@ return [
     'Storage disk was mounted successfully...' => 'ストレージディスクが正常にマウントされました',
     'gs_NeedRestartPBX' => '変更すると、PBXが再起動します（アスタリスクサービス）',
     'ex_BusyLevelInfo' => '指定された会話数に達すると、従業員の電話はビジーと見なされます。',
+    'ex_PortugueseBrazil' => 'ポルトガル語（ブラジル）',
 ];

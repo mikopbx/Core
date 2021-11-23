@@ -1062,4 +1062,5 @@ return [
     'Storage disk was mounted successfully...' => '存储盘成功挂载',
     'gs_NeedRestartPBX' => '更改时，PBX 将重新启动（星号服务）',
     'ex_BusyLevelInfo' => '达到指定的通话次数后，员工的电话将被视为占线。',
+    'ex_PortugueseBrazil' => '葡萄牙语（巴西）',
 ];

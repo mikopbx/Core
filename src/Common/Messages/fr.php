@@ -1062,4 +1062,5 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'Storage disk was mounted successfully...' => 'Disque de stockage monté avec succès',
     'gs_NeedRestartPBX' => 'Lors du changement, le PBX redémarrera (service astérisque)',
     'ex_BusyLevelInfo' => 'Une fois le nombre spécifié de conversations atteint, le téléphone de l\'employé sera considéré comme occupé.',
+    'ex_PortugueseBrazil' => 'Português (Brésil)',
 ];
