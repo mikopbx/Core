@@ -1062,4 +1062,5 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'Storage disk was mounted successfully...' => 'Lagerdisk monteret',
     'gs_NeedRestartPBX' => 'Når der skiftes, genstarter PBX\'en (stjernetjeneste)',
     'ex_BusyLevelInfo' => 'Når det angivne antal samtaler er nået, betragtes medarbejderens telefon som optaget.',
+    'ex_PortugueseBrazil' => 'Português (Brasilien)',
 ];

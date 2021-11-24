@@ -106,5 +106,23 @@ class IncomingRoutingTable extends ModelsBase
             ]
         );
     }
+
+    /**
+     * Resets default rule to busy action
+     */
+    public static function resetDefaultRoute(): IncomingRoutingTable
+    {
+        $defaultRule = IncomingRoutingTable::findFirstById(1);
+        if ($defaultRule === null) {
+            $defaultRule     = new IncomingRoutingTable();
+            $defaultRule->id = 1;
+        }
+        $defaultRule->action   = 'busy';
+        $defaultRule->priority = 9999;
+        $defaultRule->rulename = 'default action';
+        $defaultRule->save();
+        return $defaultRule;
+    }
+
 }
 

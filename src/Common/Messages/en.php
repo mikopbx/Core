@@ -741,7 +741,8 @@ It can be activated once, after which the coupon becomes redeemed.
     'lic_LicenseKeyValid' => 'Registration number is OK',
     'lic_LicenseWarningHeader' => 'This copy of the program is not registered',
     'lic_LicenseWarningText' => 'Go to <a href=\'/admin-cabinet/licensing/modify/\'>licensing</a> and follow the steps to registered your system',
-    'lic_FailedToGetTrialKey2051' => 'Failed to register: (2051) You have already got trial key on this host for another email/company',
+    'lic_FailedToGetTrialKey2051' => '(2051) Failed to register this copy because you have already used a registration number with a different Email on this machine. <br>
+ Use the key sent to you earlier from the address lic@miko.ru',
     'lic_FailedToGetTrialKey2022' => '(2022) Failed to register this copy. A registration number for another company has already been generated to the specified email address. <br>
  Use the key sent to you earlier from the address lic@miko.ru or enter the correct company name.',
     'lic_FailedActivateCoupon2057' => '(2057) This coupon is disabled',
@@ -752,7 +753,7 @@ It can be activated once, after which the coupon becomes redeemed.
     'lic_FailedToCaptureFeature2008' => '(2008) License unavailable',
     'lic_InvalidLicenseKey2009' => '(2009) Invalid license key',
     'lic_FeatureExpired2011' => '(2011) License feature is expired',
-    'lic_FailedCheckLicense' => 'The license server is unreachable. Try to connect later.',
+    'lic_FailedCheckLicense' => 'The licensing server did not return a response, please check your Internet settings and try again later',
     'lic_UnknownLicenseMessage' => 'License subsystem returned nothing',
     'lic_IntroductionTabHeader' => 'Marketplace licensing',
     'lic_ManagementTabHeader' => 'License management',
@@ -834,7 +835,7 @@ It can be activated once, after which the coupon becomes redeemed.
     'ext_Cancel' => 'Cancel',
     'ext_Delete' => 'Delete',
     'ext_GetLinkError' => 'The update server returns a wrong answer, try to continue a bit later.',
-    'ext_NoLicenseAvailable' => 'No available license to install this module',
+    'ext_NoLicenseAvailable' => 'There is no license to install this module or update it.',
     'ext_Version' => 'Version',
     'ext_ValidateCaptionEmpty' => 'Menu item caption is empty',
     'ext_ShowModuleItemAtMainMenu' => 'Show item in sidebar menu',
@@ -1064,4 +1065,5 @@ It can be activated once, after which the coupon becomes redeemed.
     'gs_ValidateWEBPortNotEqualToAjamTLSPort' => 'HTTP and AJAM ports must be different',
     'gs_ValidateWEBPortNotEqualToAjamPort' => 'HTTP and AJAM ports must be different',
     'Storage disk was mounted successfully...' => 'Storage disk successfully mounted',
+    'ex_PortugueseBrazil' => 'Português (Brazil)',
 ];

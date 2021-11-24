@@ -760,8 +760,8 @@ Se puede activar una vez, después de lo cual el cupón se canjea.
     'auth_ValidateLoginNotEmpty' => 'Ingrese inicio de sesión',
     'auth_SubmitButton' => 'Iniciar sesión',
     'auth_WrongLoginPassword' => 'Error de autorización',
-    'log_CaptureMessage' => '<div class = \'ui message\'> Comience a recopilar registros y realice una llamada u otra acción que conduzca a un error.
-<br> El sistema formará una impresión del estado del sistema en forma de archivo. </div>',
+    'log_CaptureMessage' => '<div class = \'ui message\'> Empiece a recopilar paquetes de red y realice una llamada u otra acción que provoque una falla.
+<br> El sistema guardará todos los paquetes que pasan a través de la tarjeta de red en este momento para un análisis más detallado. </div>',
     'dbg_NoDebugInformation' => 'Sin información',
     'dbg_Header' => 'Información de depuración',
     'f2b_Reason' => 'Razón',
@@ -989,7 +989,7 @@ Se puede activar una vez, después de lo cual el cupón se canjea.
     'upd_UpgradeError' => 'Error al actualizar MikoPBX',
     'sf_UploadError' => 'Error al cargar el archivo de audio',
     'sd_DownloadPcapFileError' => 'Error al generar el archivo de registro',
-    'sd_CapturePcap' => 'Captura de registros',
+    'sd_CapturePcap' => 'Captura de paquetes de red',
     'sd_ShowLog' => 'Ver registros',
     'Storage unmounted' => 'Disco de almacenamiento no conectado',
     'sd_lines' => 'Límite',
@@ -1050,7 +1050,7 @@ Se puede activar una vez, después de lo cual el cupón se canjea.
     'pr_EnterHostOrIpPlaceholder' => 'Ingrese la dirección IP o la subred',
     'pr_EnterHostOrIp' => 'Direcciones de proveedores adicionales',
     'auth_RememberMe' => 'Recuérdame',
-    'log_DownloadLogs' => 'Descargar todos los registros',
+    'log_DownloadLogs' => 'Descargar todos los registros del sistema',
     'log_StopCapturePCAP' => 'Detener y descargar',
     'log_StartCapturePCAP' => 'Comienzo',
     'gs_PBXRecordAnnouncementIn' => 'Seleccionar alerta de grabación de llamadas para llamadas entrantes',
@@ -1062,4 +1062,5 @@ Se puede activar una vez, después de lo cual el cupón se canjea.
     'Storage disk was mounted successfully...' => 'Disco de almacenamiento montado correctamente',
     'gs_NeedRestartPBX' => 'Al cambiar, la central se reiniciará (servicio de asterisco)',
     'ex_BusyLevelInfo' => 'Al alcanzar el número especificado de conversaciones, el teléfono del empleado se considerará ocupado.',
+    'ex_PortugueseBrazil' => 'Português (Brasil)',
 ];

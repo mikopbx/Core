@@ -27,6 +27,7 @@ use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
  * Class Iax
  *
  * @method static mixed findFirstByUniqid(array|string|int $parameters = null)
+ * @property \MikoPBX\Common\Models\Providers Providers
  *
  * @package MikoPBX\Common\Models
  */

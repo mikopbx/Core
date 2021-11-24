@@ -207,7 +207,7 @@ span.features {
 
 /* Main logo on the auth page */
 #login-logo {
-    width: 10em;;
+    width: 10em;
 }
 
 /* User forwarding dropdown field */
@@ -388,4 +388,12 @@ Add gap on middle screen size
         padding-left: 10px;
         padding-right: 10px;
     }
+}
+
+/**
+Blur passwords, secrets
+ */
+.confidential-field:not(:focus):not(:hover) {
+    color: transparent !important;
+    text-shadow: 0 0 6px rgba(0,0,0,0.7);
 }

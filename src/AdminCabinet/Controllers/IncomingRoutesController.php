@@ -63,16 +63,12 @@ class IncomingRoutesController extends BaseController
             $routingTable[] = $values;
         }
         usort($routingTable, [__CLASS__, 'sortArrayByPriority']);
-        //Маршрут по умолчанию
+
+        // Create incoming rule with default action
         $defaultRule = IncomingRoutingTable::findFirstById(1);
         if ($defaultRule === null) {
-            $defaultRule           = new IncomingRoutingTable();
-            $defaultRule->id       = 1;
-            $defaultRule->action   = 'busy';
-            $defaultRule->priority = 9999;
-            $defaultRule->rulename = 'default action';
+            $defaultRule = IncomingRoutingTable::resetDefaultRoute();
         }
-
         // Список всех используемых эктеншенов
         $forwardingExtensions     = [];
         $forwardingExtensions[''] = $this->translation->_('ex_SelectNumber');

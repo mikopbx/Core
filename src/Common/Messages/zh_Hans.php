@@ -774,8 +774,8 @@ return [
     'auth_ValidateLoginNotEmpty' => '输入登录名',
     'auth_SubmitButton' => '登入',
     'auth_WrongLoginPassword' => '授权错误',
-    'log_CaptureMessage' => '<div class =\'ui message\'>开始收集日志并执行导致失败的呼叫或其他操作。
-<br>系统将以存档的形式显示系统状态。</div>',
+    'log_CaptureMessage' => '<div class = \'ui message\'> 开始收集网络数据包并执行导致失败的调用或其他操作。
+<br> 系统会保存此时通过网卡的所有数据包，以便进一步分析。</div>',
     'dbg_NoDebugInformation' => '暂无信息',
     'dbg_Header' => '调试信息',
     'f2b_Reason' => '原因',
@@ -979,7 +979,7 @@ return [
     'sf_CustomSounds' => '音频文件',
     'sf_MusicOnHold' => '保留音乐',
     'sd_DownloadPcapFileError' => '生成日志存档时出错',
-    'sd_CapturePcap' => '捕获日志',
+    'sd_CapturePcap' => '捕获网络数据包',
     'sd_ShowLog' => '查看日志',
     'sd_lines' => '限制',
     'sd_filter' => '过滤',
@@ -1042,7 +1042,7 @@ return [
     'gs_SIPPortSettings' => 'SIP信令和RTP范围的端口设置',
     'gs_KeepAliveHeader' => '注册时间设置',
     'gs_PBXFeaturePickupExten' => '接听来电的组合',
-    'gs_CallRecordTab' => '通话录音',
+    'gs_CallRecordTab' => '对话记录',
     'adv_ProblemWithInternetConnection' => '没有互联网连接。付费模块的操作可能存在问题。',
     'lic_GetTrialErrorCheckInternet' => '注册失败，请检查MikoPBX上的Internet',
     'pr_EnterHostOrIp' => '附加提供者地址',
@@ -1050,7 +1050,7 @@ return [
     'pr_NoAnyAdditionalHosts' => '没有为此提供商指定其他地址',
     'pr_EnterHostOrIpPlaceholder' => '输入IP地址或子网',
     'auth_RememberMe' => '记得我',
-    'log_DownloadLogs' => '下载所有日志',
+    'log_DownloadLogs' => '下载所有系统日志',
     'log_StopCapturePCAP' => '停止并下载',
     'log_StartCapturePCAP' => '开始',
     'gs_PBXRecordAnnouncementIn' => '选择来电记录提醒',
@@ -1062,4 +1062,5 @@ return [
     'Storage disk was mounted successfully...' => '存储盘成功挂载',
     'gs_NeedRestartPBX' => '更改时，PBX 将重新启动（星号服务）',
     'ex_BusyLevelInfo' => '达到指定的通话次数后，员工的电话将被视为占线。',
+    'ex_PortugueseBrazil' => '葡萄牙语（巴西）',
 ];

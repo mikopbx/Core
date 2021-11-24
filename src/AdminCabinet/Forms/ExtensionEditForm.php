@@ -159,6 +159,7 @@ class ExtensionEditForm extends Form
             new Text(
                 'sip_secret', [
                 "value" => $sip->secret,
+                "class"=>"confidential-field"
             ]
             )
         );

@@ -32,16 +32,16 @@ class IptablesConf extends Injectable
     private Fail2BanConf $fail2ban;
     private string $sipPort;
     private string $rtpPorts;
-    private string $redisPort;
-    private string $beanstalkPort;
+    // private string $redisPort;
+    // private string $beanstalkPort;
 
     /**
      * Firewall constructor.
      */
     public function __construct()
     {
-        $this->redisPort     = $this->getDI()->get('config')->redis->port;
-        $this->beanstalkPort = $this->getDI()->get('config')->beanstalk->port;
+        // $this->redisPort     = $this->getDI()->get('config')->redis->port;
+        // $this->beanstalkPort = $this->getDI()->get('config')->beanstalk->port;
 
         $firewall_enable       = PbxSettings::getValueByKey('PBXFirewallEnabled');
         $this->firewall_enable = ($firewall_enable === '1');
@@ -86,10 +86,12 @@ class IptablesConf extends Injectable
         if ($this->firewall_enable) {
             $arr_command   = [];
             $arr_command[] = $this->getIptablesInputRule('', '-m conntrack --ctstate ESTABLISHED,RELATED');
-            // Добавляем разрешения на сервисы.
+
+            // Add allowed services
             $this->addMainFirewallRules($arr_command);
             $this->addAdditionalFirewallRules($arr_command);
-            // Кастомизация правил firewall.
+
+            // Add firewall rules customisation
             $arr_commands_custom = [];
             $out                 = [];
             Util::fileWriteContent('/etc/firewall_additional', '');
@@ -122,7 +124,7 @@ class IptablesConf extends Injectable
             } else {
                 Processes::mwExecCommands($arr_command, $out, 'firewall');
                 Processes::mwExecCommands($arr_commands_custom, $out, 'firewall_additional');
-                // Все остальное запрещаем.
+                // Drop everything else
                 Processes::mwExec($dropCommand);
             }
         }
@@ -167,7 +169,7 @@ class IptablesConf extends Injectable
     }
 
     /**
-     * Makes iptables rules
+     * Makes additional iptables rules
      *
      * @param $arr_command
      */
@@ -182,7 +184,7 @@ class IptablesConf extends Injectable
             $data = $sipHosts[$data->uniqid] ?? [];
             foreach ($data as $host) {
                 if (in_array($host, $hashArray, true)) {
-                    // Не допускаем повторения хост.
+                    // For every unique host only one string.
                     continue;
                 }
                 $hashArray[]   = $host;
@@ -192,14 +194,14 @@ class IptablesConf extends Injectable
             }
         }
         // Allow all local connections
-        $arr_command[] = $this->getIptablesInputRule($this->redisPort, '-p tcp -s 127.0.0.1 ');
-        $arr_command[] = $this->getIptablesInputRule($this->beanstalkPort, '-p tcp -s 127.0.0.1 ');
         $arr_command[] = $this->getIptablesInputRule('', '-s 127.0.0.1 ');
+        // $arr_command[] = $this->getIptablesInputRule($this->redisPort, '-p tcp -s 127.0.0.1 ');
+        // $arr_command[] = $this->getIptablesInputRule($this->beanstalkPort, '-p tcp -s 127.0.0.1 ');
         unset($db_data, $sipHosts, $result, $hashArray);
     }
 
     /**
-     * Формирование основных правил для iptables.
+     * Makes rules for iptables.
      * @param $arr_command
      */
     private function addMainFirewallRules(&$arr_command):void{
