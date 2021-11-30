@@ -478,12 +478,9 @@ class SIPConf extends CoreConfigClass
             }
         }
 
-        $conf = "[general] \n" .
-            "disable_multi_domain=on\n" .
-            "transport = udp \n\n" .
-
-            "[global] \n" .
+        $conf = "[global] \n" .
             "type = global\n" .
+            "disable_multi_domain=yes\n" .
             "endpoint_identifier_order=username,ip,anonymous\n" .
             "user_agent = mikopbx-{$pbxVersion}\n\n" .
 
@@ -496,6 +493,12 @@ class SIPConf extends CoreConfigClass
             "[transport-tcp]\n" .
             "type = transport\n" .
             "protocol = tcp\n" .
+            "bind=0.0.0.0:{$this->generalSettings['SIPPort']}\n" .
+            "{$natConf}\n\n" .
+
+            "[transport-wss]\n" .
+            "type = transport\n" .
+            "protocol = wss\n" .
             "bind=0.0.0.0:{$this->generalSettings['SIPPort']}\n" .
             "{$natConf}\n\n" .
             '';
