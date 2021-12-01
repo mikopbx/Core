@@ -86,6 +86,7 @@ class PbxSettings extends ModelsBase
             'SIPMaxExpiry'                    => '3600',
             'RTPPortFrom'                     => '10000',
             'RTPPortTo'                       => '10200',
+            'RTPStunServer'                   => '',
             'IAXPort'                         => '4569',
             'AMIEnabled'                      => '1',
             'AMIPort'                         => '5038',

@@ -221,6 +221,7 @@ return [
     'pr_RTPPortRange' => 'The range of RTP ports',
     'pr_RTPPortFrom' => 'From',
     'pr_RTPPortTo' => 'to',
+    'gs_RTPStunServer' => 'STUN server (example: stun.test.net:10000)',
     'pr_AddSIPProvider' => 'Connect SIP',
     'pr_AddIAXProvider' => 'Connect IAX',
     'pr_QualifyInstructionsIAX' => 'If this option is enabled, Asterisk will send SIP Options packets. This is necessary to support NAT tunneling on your router.',

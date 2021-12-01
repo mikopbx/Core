@@ -222,6 +222,7 @@ return [
     'pr_RTPPortRange' => 'Диапазон RTP портов',
     'pr_RTPPortFrom' => 'С',
     'pr_RTPPortTo' => 'по',
+    'gs_RTPStunServer' => 'Адрес STUN сервера (пример: stun.test.net:10000)',
     'pr_AddSIPProvider' => 'Подключить SIP',
     'pr_AddIAXProvider' => 'Подключить IAX',
     'pr_QualifyInstructionsIAX' => 'При включение этой опции Asterisk будет отправлять SIP Options пакеты. Это необходимо для поддержки NAT туннелирования на вашем маршрутизаторе.',

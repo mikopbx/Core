@@ -32,6 +32,7 @@ use MikoPBX\Core\Asterisk\Configs\{AclConf,
     ManagerConf,
     ModulesConf,
     MusicOnHoldConf,
+    RtpConf,
     SIPConf,
     VoiceMailConf};
 use MikoPBX\Core\Config\RegisterDIServices;
@@ -274,6 +275,17 @@ class PBX extends Injectable
             usleep(500000);
             Processes::mwExec("{$asteriskPath} -rx 'core restart now'");
         }
+    }
+
+    /**
+     * Update RTP config file.
+     */
+    public static function rtpReload(): void
+    {
+        $rtp = new RtpConf();
+        $rtp->generateConfig();
+        $asteriskPath = Util::which('asterisk');
+        Processes::mwExec("{$asteriskPath} -rx 'module reload res_rtp_asterisk'");
     }
 
     /**

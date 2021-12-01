@@ -13,6 +13,12 @@
         {{ form.render('RTPPortTo') }}
     </div>
 </div>
+
+<div class="field">
+    <label>{{ t._('gs_RTPStunServer') }}</label>
+    {{ form.render('RTPStunServer') }}
+</div>
+
 <h4 class="ui header">{{ t._('gs_KeepAliveHeader') }}</h4>
 <div class="inline field">
     <label>{{ t._('gs_SIPDefaultExpiry') }}</label>
