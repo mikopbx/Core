@@ -106,6 +106,9 @@ class System extends Di\Injectable
                 case 'ntp.conf':
                     $actions['ntp'] = 100;
                     break;
+                case 'rtp.conf':
+                    $actions['rtp'] = 10;
+                    break;
                 case 'static-routes':
                 case 'openvpn.ovpn':
                     $actions['network'] = 100;
@@ -141,6 +144,9 @@ class System extends Di\Injectable
                     break;
                 case 'musiconhold':
                     PBX::musicOnHoldReload();
+                    break;
+                case 'rtp':
+                    PBX::rtpReload();
                     break;
                 case 'modules':
                     PBX::modulesReload();
