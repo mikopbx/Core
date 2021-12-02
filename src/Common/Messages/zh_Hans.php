@@ -1063,4 +1063,5 @@ return [
     'gs_NeedRestartPBX' => '更改时，PBX 将重新启动（星号服务）',
     'ex_BusyLevelInfo' => '达到指定的通话次数后，员工的电话将被视为占线。',
     'ex_PortugueseBrazil' => '葡萄牙语（巴西）',
+    'gs_RTPStunServer' => '服务器 STUN 地址（例如：stun.test.net:10000）',
 ];

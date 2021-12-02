@@ -1063,4 +1063,5 @@ return [
     'gs_NeedRestartPBX' => 'При зміні відбудеться перезапуск АТС (служба asterisk)',
     'ex_BusyLevelInfo' => 'При досягненні зазначеної кількості розмов телефон співробітника буде вважатися зайнятим.',
     'ex_PortugueseBrazil' => 'Português (Brazil)',
+    'gs_RTPStunServer' => 'Адреса сервера STUN (приклад: stun.test.net:10000)',
 ];

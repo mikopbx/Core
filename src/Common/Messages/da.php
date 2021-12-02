@@ -1063,4 +1063,5 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'gs_NeedRestartPBX' => 'Når der skiftes, genstarter PBX\'en (stjernetjeneste)',
     'ex_BusyLevelInfo' => 'Når det angivne antal samtaler er nået, betragtes medarbejderens telefon som optaget.',
     'ex_PortugueseBrazil' => 'Português (Brasilien)',
+    'gs_RTPStunServer' => 'Server STUN-adresse (eksempel: stun.test.net:10000)',
 ];

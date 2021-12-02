@@ -1063,4 +1063,5 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá đ
     'gs_NeedRestartPBX' => 'Khi thay đổi, tổng đài sẽ khởi động lại (dịch vụ dấu sao)',
     'ex_BusyLevelInfo' => 'Khi đạt đến số cuộc trò chuyện quy định, điện thoại của nhân viên sẽ được coi là bận.',
     'ex_PortugueseBrazil' => 'Português (Brazil)',
+    'gs_RTPStunServer' => 'Địa chỉ STUN của máy chủ (ví dụ: stun.test.net:10000)',
 ];

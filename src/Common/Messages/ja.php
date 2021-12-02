@@ -1063,4 +1063,5 @@ return [
     'gs_NeedRestartPBX' => '変更すると、PBXが再起動します（アスタリスクサービス）',
     'ex_BusyLevelInfo' => '指定された会話数に達すると、従業員の電話はビジーと見なされます。',
     'ex_PortugueseBrazil' => 'ポルトガル語（ブラジル）',
+    'gs_RTPStunServer' => 'サーバーのSTUNアドレス（例：stun.test.net：10000）',
 ];

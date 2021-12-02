@@ -1063,4 +1063,5 @@ Se puede activar una vez, después de lo cual el cupón se canjea.
     'gs_NeedRestartPBX' => 'Al cambiar, la central se reiniciará (servicio de asterisco)',
     'ex_BusyLevelInfo' => 'Al alcanzar el número especificado de conversaciones, el teléfono del empleado se considerará ocupado.',
     'ex_PortugueseBrazil' => 'Português (Brasil)',
+    'gs_RTPStunServer' => 'Dirección STUN del servidor (ejemplo: stun.test.net:10000)',
 ];

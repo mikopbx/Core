@@ -1048,4 +1048,5 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'ex_dropdownCategory_CONFERENCE' => 'Conferências',
     'ex_SelectNumber' => 'Escolha uma sala',
     'ex_PortugueseBrazil' => 'Português (Brasil)',
+    'gs_RTPStunServer' => 'Endereço STUN do servidor (exemplo: stun.test.net:10000)',
 ];
