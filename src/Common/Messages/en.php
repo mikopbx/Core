@@ -653,6 +653,7 @@ return [
     'cr_ValidateExtensionDouble' => 'The extension number specified for this conference is busy',
     'cr_ValidateExtensionEmpty' => 'Not specified extension number of the conference',
     'cr_ValidateNameEmpty' => 'Conference name not specified',
+    'cr_pinCode' => 'PIN',
     'cdr_ColumnDate' => 'Call date',
     'cdr_ColumnFrom' => 'From',
     'cdr_ColumnTo' => 'To',

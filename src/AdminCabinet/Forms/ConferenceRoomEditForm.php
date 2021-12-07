@@ -44,5 +44,6 @@ class ConferenceRoomEditForm extends Form
 
         // Extension
         $this->add(new Text('extension'));
+        $this->add(new Text('pinCode'));
     }
 }
