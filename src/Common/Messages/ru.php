@@ -720,6 +720,8 @@ return [
     'cr_ValidateExtensionEmpty' => 'Не указан внутренний номер конференции',
     'cr_ValidateNameEmpty' => 'Не указано название конференции',
     'cr_ValidateExtensionNumber' => 'Внутренний номер должен состоять только из чисел',
+    'cr_ValidateExtensionLen' => 'Внутренний номер должен состоять из двух и более цифр',
+    'cr_ValidatePinNumber'       => 'PIN должен состоять только из чисел',
     'cdr_ColumnDate' => 'Дата звонка',
     'cdr_ColumnFrom' => 'Кто',
     'cdr_ColumnTo' => 'Кому',
