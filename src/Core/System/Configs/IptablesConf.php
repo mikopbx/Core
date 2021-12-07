@@ -32,17 +32,12 @@ class IptablesConf extends Injectable
     private Fail2BanConf $fail2ban;
     private string $sipPort;
     private string $rtpPorts;
-    // private string $redisPort;
-    // private string $beanstalkPort;
 
     /**
      * Firewall constructor.
      */
     public function __construct()
     {
-        // $this->redisPort     = $this->getDI()->get('config')->redis->port;
-        // $this->beanstalkPort = $this->getDI()->get('config')->beanstalk->port;
-
         $firewall_enable       = PbxSettings::getValueByKey('PBXFirewallEnabled');
         $this->firewall_enable = ($firewall_enable === '1');
 
@@ -183,20 +178,20 @@ class IptablesConf extends Injectable
         foreach ($db_data as $data) {
             $data = $sipHosts[$data->uniqid] ?? [];
             foreach ($data as $host) {
+                if($host === '127.0.0.1'){
+                    continue;
+                }
                 if (in_array($host, $hashArray, true)) {
                     // For every unique host only one string.
                     continue;
                 }
                 $hashArray[]   = $host;
                 $arr_command[] = $this->getIptablesInputRule($this->sipPort, '-p tcp -s ' . $host . ' ');
-                $arr_command[] = $this->getIptablesInputRule($this->sipPort, '-p udp -s ' . $host . ' ');
-                $arr_command[] = $this->getIptablesInputRule($this->rtpPorts, '-p udp -s ' . $host . ' ');
+                $arr_command[] = "iptables -A INPUT -s $host -p udp -m multiport --dport $this->sipPort,$this->rtpPorts -j ACCEPT";
             }
         }
         // Allow all local connections
         $arr_command[] = $this->getIptablesInputRule('', '-s 127.0.0.1 ');
-        // $arr_command[] = $this->getIptablesInputRule($this->redisPort, '-p tcp -s 127.0.0.1 ');
-        // $arr_command[] = $this->getIptablesInputRule($this->beanstalkPort, '-p tcp -s 127.0.0.1 ');
         unset($db_data, $sipHosts, $result, $hashArray);
     }
 
@@ -204,8 +199,9 @@ class IptablesConf extends Injectable
      * Makes rules for iptables.
      * @param $arr_command
      */
-    private function addMainFirewallRules(&$arr_command):void{
-        /** @var FirewallRules $result */
+    public function addMainFirewallRules(&$arr_command):void
+    {
+        $options = [];
         /** @var FirewallRules $rule */
         $result = FirewallRules::find('action="allow"');
         foreach ($result as $rule) {
@@ -223,14 +219,24 @@ class IptablesConf extends Injectable
             if ('0.0.0.0/0' === $network_filter->permit && $rule->action !== 'allow') {
                 continue;
             }
-            $other_data = "-p $rule->protocol";
-            $other_data .= ' -s ' . $network_filter->permit;
-            if ($rule->protocol === 'icmp') {
-                $port       = '';
-                $other_data .= ' --icmp-type echo-request';
+            $options[$rule->protocol][$network_filter->permit][] = $port;
+        }
+
+        $this->makeCmdMultiport($options, $arr_command);
+    }
+
+    private function makeCmdMultiport($options, &$arr_command)
+    {
+        foreach ($options as $protocol => $data){
+            foreach ($data as $subnet => $ports){
+                if($protocol === 'icmp'){
+                    $other_data = '--icmp-type echo-reques';
+                }else{
+                    $portsString = implode(',', $ports);
+                    $other_data = "-m multiport --dport $portsString";
+                }
+                $arr_command[] = "iptables -A INPUT -s $subnet -p $protocol $other_data -j ACCEPT";
             }
-            $action        = ($rule->action === 'allow') ? 'ACCEPT' : 'DROP';
-            $arr_command[] = $this->getIptablesInputRule($port, $other_data, $action);
         }
     }
 
