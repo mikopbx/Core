@@ -1064,4 +1064,6 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'ex_BusyLevelInfo' => 'Ao atingir o número especificado de conversas, o telefone do funcionário será considerado ocupado.',
     'ex_PortugueseBrazil' => 'Português (Brasil)',
     'gs_RTPStunServer' => 'Endereço STUN do servidor (exemplo: stun.test.net:10000)',
+    'cr_ValidateExtensionLen' => 'O número do ramal deve ter dois ou mais dígitos',
+    'cr_ValidatePinNumber' => 'O PIN deve ser apenas números',
 ];

@@ -1064,4 +1064,6 @@ return [
     'ex_BusyLevelInfo' => 'При досягненні зазначеної кількості розмов телефон співробітника буде вважатися зайнятим.',
     'ex_PortugueseBrazil' => 'Português (Brazil)',
     'gs_RTPStunServer' => 'Адреса сервера STUN (приклад: stun.test.net:10000)',
+    'cr_ValidateExtensionLen' => 'Внутрішній номер повинен складатися з двох чи більше цифр',
+    'cr_ValidatePinNumber' => 'PIN повинен складатися лише з чисел',
 ];

@@ -1064,4 +1064,6 @@ return [
     'ex_BusyLevelInfo' => '达到指定的通话次数后，员工的电话将被视为占线。',
     'ex_PortugueseBrazil' => '葡萄牙语（巴西）',
     'gs_RTPStunServer' => '服务器 STUN 地址（例如：stun.test.net:10000）',
+    'cr_ValidateExtensionLen' => '分机号码必须是两位或更多位数字',
+    'cr_ValidatePinNumber' => 'PIN 只能是数字',
 ];

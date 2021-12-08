@@ -1064,4 +1064,6 @@ return [
     'ex_BusyLevelInfo' => 'საუბრების მითითებული რაოდენობის მიღწევისთანავე, თანამშრომლის ტელეფონი ჩაირთვება.',
     'ex_PortugueseBrazil' => 'პორტუგალიური (ბრაზილია)',
     'gs_RTPStunServer' => 'სერვერის STUN მისამართი (მაგალითი: stun.test.net:10000)',
+    'cr_ValidateExtensionLen' => 'გაფართოების ნომერი უნდა იყოს ორი ან მეტი ციფრი',
+    'cr_ValidatePinNumber' => 'PIN უნდა იყოს მხოლოდ ნომრები',
 ];

@@ -1064,4 +1064,6 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'ex_BusyLevelInfo' => 'Når det angivne antal samtaler er nået, betragtes medarbejderens telefon som optaget.',
     'ex_PortugueseBrazil' => 'Português (Brasilien)',
     'gs_RTPStunServer' => 'Server STUN-adresse (eksempel: stun.test.net:10000)',
+    'cr_ValidateExtensionLen' => 'Lokalnummeret skal være to eller flere cifre',
+    'cr_ValidatePinNumber' => 'PIN-koden må kun være tal',
 ];

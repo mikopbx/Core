@@ -1064,4 +1064,6 @@ Se puede activar una vez, después de lo cual el cupón se canjea.
     'ex_BusyLevelInfo' => 'Al alcanzar el número especificado de conversaciones, el teléfono del empleado se considerará ocupado.',
     'ex_PortugueseBrazil' => 'Português (Brasil)',
     'gs_RTPStunServer' => 'Dirección STUN del servidor (ejemplo: stun.test.net:10000)',
+    'cr_ValidateExtensionLen' => 'El número de extensión debe tener dos o más dígitos',
+    'cr_ValidatePinNumber' => 'El PIN solo debe ser números',
 ];

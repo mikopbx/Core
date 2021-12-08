@@ -1067,4 +1067,6 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
     'ex_BusyLevelInfo' => 'Wenn die angegebene Anzahl von Gesprächen erreicht ist, gilt das Telefon des Mitarbeiters als besetzt.',
     'ex_PortugueseBrazil' => 'Portugiesisch (Brasilien)',
     'gs_RTPStunServer' => 'Server-STUN-Adresse (Beispiel: stun.test.net:10000)',
+    'cr_ValidatePinNumber' => 'PIN darf nur aus Zahlen bestehen',
+    'cr_ValidateExtensionLen' => 'Die Nebenstellennummer muss aus zwei oder mehr Ziffern bestehen',
 ];

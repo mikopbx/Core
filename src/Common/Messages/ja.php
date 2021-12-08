@@ -1064,4 +1064,6 @@ return [
     'ex_BusyLevelInfo' => '指定された会話数に達すると、従業員の電話はビジーと見なされます。',
     'ex_PortugueseBrazil' => 'ポルトガル語（ブラジル）',
     'gs_RTPStunServer' => 'サーバーのSTUNアドレス（例：stun.test.net：10000）',
+    'cr_ValidateExtensionLen' => '内線番号は2桁以上である必要があります',
+    'cr_ValidatePinNumber' => 'PINは数字のみである必要があります',
 ];

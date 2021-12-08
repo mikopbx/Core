@@ -1049,4 +1049,6 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'ex_SelectNumber' => 'Escolha uma sala',
     'ex_PortugueseBrazil' => 'Português (Brasil)',
     'gs_RTPStunServer' => 'Endereço STUN do servidor (exemplo: stun.test.net:10000)',
+    'cr_ValidateExtensionLen' => 'O número do ramal deve ter dois ou mais dígitos',
+    'cr_ValidatePinNumber' => 'O PIN deve ser apenas números',
 ];
