@@ -361,6 +361,40 @@ class Storage extends Di\Injectable
     }
 
     /**
+     * Монитирование каталога с удаленного сервера FTP.
+     *
+     * @param        $host
+     * @param        $port
+     * @param        $user
+     * @param        $pass
+     * @param string $remout_dir
+     * @param        $local_dir
+     *
+     * @return bool
+     */
+    public static function mountWebDav($host, $port, $user, $pass, $remout_dir, $local_dir): bool
+    {
+        Util::mwMkdir($local_dir);
+        $out = [];
+
+        $conf = 'dav_user www'.PHP_EOL.
+                'dav_group www'.PHP_EOL;
+
+        file_put_contents('/etc/davfs2/secrets', "{$host}{$remout_dir} $user $pass");
+        file_put_contents('/etc/davfs2/davfs2.conf', $conf);
+        $timeoutPath = Util::which('timeout');
+        $mount = Util::which('mount.davfs');
+        $command = "$timeoutPath 3 yes | $mount {$host}{$remout_dir} {$local_dir}";
+        Processes::mwExec($command, $out);
+        $response = trim(implode('', $out));
+        if ('Terminated' === $response) {
+            // Удаленный сервер не ответил / или не корректно указан пароль.
+            unset($response);
+        }
+        return self::isStorageDiskMounted("$local_dir ");
+    }
+
+    /**
      * Запускает процесс форматирования диска.
      *
      * @param $dev
