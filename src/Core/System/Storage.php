@@ -364,27 +364,33 @@ class Storage extends Di\Injectable
      * Монитирование каталога с удаленного сервера FTP.
      *
      * @param        $host
-     * @param        $port
      * @param        $user
      * @param        $pass
-     * @param string $remout_dir
+     * @param        $dstDir
      * @param        $local_dir
      *
      * @return bool
      */
-    public static function mountWebDav($host, $port, $user, $pass, $remout_dir, $local_dir): bool
+    public static function mountWebDav($host, $user, $pass, $dstDir, $local_dir): bool
     {
+        $host = trim($host);
+        $dstDir = trim($dstDir);
+        if(substr($host, -1) === '/'){
+            $host = substr($host, 0, -1);
+        }
+        if($dstDir[0] === '/'){
+            $dstDir = substr($dstDir, 1);
+        }
         Util::mwMkdir($local_dir);
         $out = [];
-
         $conf = 'dav_user www'.PHP_EOL.
                 'dav_group www'.PHP_EOL;
 
-        file_put_contents('/etc/davfs2/secrets', "{$host}{$remout_dir} $user $pass");
+        file_put_contents('/etc/davfs2/secrets', "{$host}{$dstDir} $user $pass");
         file_put_contents('/etc/davfs2/davfs2.conf', $conf);
         $timeoutPath = Util::which('timeout');
         $mount = Util::which('mount.davfs');
-        $command = "$timeoutPath 3 yes | $mount {$host}{$remout_dir} {$local_dir}";
+        $command = "$timeoutPath 3 yes | $mount {$host}{$dstDir} {$local_dir}";
         Processes::mwExec($command, $out);
         $response = trim(implode('', $out));
         if ('Terminated' === $response) {
