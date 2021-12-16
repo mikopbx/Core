@@ -271,13 +271,11 @@ class Storage extends Di\Injectable
         }
         $filter = escapeshellarg($filter);
 
-        $out = [];
-        $grepPath = Util::which('grep');
-        $mountPath = Util::which('mount');
-        $awkPath = Util::which('awk');
-        Processes::mwExec("{$mountPath} | {$grepPath} {$filter} | {$awkPath} '{print $3}'", $out);
-        $mount_dir = trim(implode('', $out));
-
+        $grepPath   = Util::which('grep');
+        $lsBlkPath  = Util::which('lsblk');
+        $awkPath    = Util::which('awk');
+        $out        = shell_exec("$lsBlkPath -p -b -o NAME,MOUNTPOINT | $grepPath $filter | {$awkPath} '{print $2}'");
+        $mount_dir  = trim($out);
         return ($mount_dir !== '');
     }
 
