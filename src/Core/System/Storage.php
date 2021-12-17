@@ -269,12 +269,12 @@ class Storage extends Di\Injectable
                 $filter = 'usbdisk1';
             }
         }
-        $filter = escapeshellarg($filter);
-
         $grepPath   = Util::which('grep');
-        $lsBlkPath  = Util::which('lsblk');
+        $mountPath  = Util::which('mount');
         $awkPath    = Util::which('awk');
-        $out        = shell_exec("$lsBlkPath -p -b -o NAME,MOUNTPOINT | $grepPath $filter | {$awkPath} '{print $2}'");
+
+        $filter = escapeshellarg($filter);
+        $out        = shell_exec("$mountPath | $grepPath $filter | {$awkPath} '{print $3}'");
         $mount_dir  = trim($out);
         return ($mount_dir !== '');
     }
