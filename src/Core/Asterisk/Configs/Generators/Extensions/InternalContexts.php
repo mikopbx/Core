@@ -62,6 +62,18 @@ class InternalContexts extends CoreConfigClass
         $conf .= 'same => n,ExecIf($["${BLINDTRANSFER}x" != "x"]?AGI(check_redirect.php,${BLINDTRANSFER}))' . "\n\t";
         $conf .= "same => n,Playback(pbx-invalid,noanswer) \n\n";
 
+        $conf .= '[set-dial-contacts]'.PHP_EOL.
+                 'exten => _X!,1,NoOp()'.PHP_EOL."\t";
+
+        if($this->generalSettings['UseWebRTC'] === '1') {
+            $conf .= 'same => n,Set(SIP_CONTACT=${PJSIP_DIAL_CONTACTS(${EXTEN})})'.PHP_EOL."\t".
+                     'same => n,Set(WS_CONTACTS=${PJSIP_DIAL_CONTACTS(${EXTEN}-WS)})'.PHP_EOL."\t".
+                     'same => n,Set(DST_CONTACT=${SIP_CONTACT}${IF($["${SIP_CONTACT}x" != "x" && "${WS_CONTACTS}x" != "x"]?&)}${WS_CONTACTS})'.PHP_EOL."\t";
+        }else{
+            $conf .= 'same => n,Set(DST_CONTACT=${PJSIP_DIAL_CONTACTS(${EXTEN})})'.PHP_EOL."\t";
+        }
+        $conf .= 'same => n,return'.PHP_EOL.PHP_EOL;
+
         $conf .= $this->generateInternalFW();
         $conf .= $this->generateAllPeers();
         $conf .= $this->generateInternal();
@@ -77,8 +89,7 @@ class InternalContexts extends CoreConfigClass
      */
     private function generateAdditionalModulesContext(): string
     {
-        $conf = '';
-        $conf .= $this->hookModulesMethod(CoreConfigClass::EXTENSION_GEN_CONTEXTS);
+        $conf = $this->hookModulesMethod(CoreConfigClass::EXTENSION_GEN_CONTEXTS);
         $conf .= "\n";
 
         return $conf;
@@ -234,7 +245,7 @@ class InternalContexts extends CoreConfigClass
 
         $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1) ' . " \n\t";
         // Совершаем вызов пира.
-        $conf .= 'same => n,Set(DST_CONTACT=${PJSIP_DIAL_CONTACTS(${EXTEN})})' . " \n\t";
+        $conf .= 'same => n,Gosub(set-dial-contacts,${EXTEN},1)' . " \n\t";
         $conf .= 'same => n,ExecIf($["${FIELDQTY(DST_CONTACT,&)}" != "1"]?Set(__PT1C_SIP_HEADER=${EMPTY_VAR}))' . " \n\t";
         $conf .= 'same => n,ExecIf($["${TRANSFER_OPTIONS}x" == "x" || "${ISTRANSFER}x" != "x"]?Set(TRANSFER_OPTIONS=Tt))' . " \n\t";
         $conf .= 'same => n,ExecIf($["${DST_CONTACT}x" != "x"]?Dial(${DST_CONTACT},${ringlength},${TRANSFER_OPTIONS}ekKHhU(${ISTRANSFER}dial_answer)b(dial_create_chan,s,1)):Set(DIALSTATUS=CHANUNAVAIL))' . " \n\t";
