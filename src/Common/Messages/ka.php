@@ -1066,4 +1066,5 @@ return [
     'gs_RTPStunServer' => 'სერვერის STUN მისამართი (მაგალითი: stun.test.net:10000)',
     'cr_ValidateExtensionLen' => 'გაფართოების ნომერი უნდა იყოს ორი ან მეტი ციფრი',
     'cr_ValidatePinNumber' => 'PIN უნდა იყოს მხოლოდ ნომრები',
+    'gs_UseWebRTC' => 'გამოიყენეთ WebRTC',
 ];

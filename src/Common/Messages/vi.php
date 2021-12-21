@@ -1066,4 +1066,5 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá đ
     'gs_RTPStunServer' => 'Địa chỉ STUN của máy chủ (ví dụ: stun.test.net:10000)',
     'cr_ValidateExtensionLen' => 'Số máy lẻ phải có hai chữ số trở lên',
     'cr_ValidatePinNumber' => 'Mã PIN chỉ được là số',
+    'gs_UseWebRTC' => 'Sử dụng WebRTC',
 ];

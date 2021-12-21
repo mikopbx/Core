@@ -1066,4 +1066,5 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'gs_RTPStunServer' => 'Adres serwera STUN (przykład: stun.test.net:10000)',
     'cr_ValidateExtensionLen' => 'Numer wewnętrzny musi składać się z co najmniej dwóch cyfr',
     'cr_ValidatePinNumber' => 'PIN może być tylko cyframi',
+    'gs_UseWebRTC' => 'Użyj WebRTC',
 ];

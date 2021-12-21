@@ -1066,4 +1066,5 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'gs_RTPStunServer' => 'Adresa serveru STUN (příklad: stun.test.net:10000)',
     'cr_ValidateExtensionLen' => 'Číslo pobočky musí mít dvě nebo více číslic',
     'cr_ValidatePinNumber' => 'PIN musí být pouze čísla',
+    'gs_UseWebRTC' => 'Použijte WebRTC',
 ];

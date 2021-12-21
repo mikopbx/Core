@@ -1069,4 +1069,5 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
     'gs_RTPStunServer' => 'Server-STUN-Adresse (Beispiel: stun.test.net:10000)',
     'cr_ValidatePinNumber' => 'PIN darf nur aus Zahlen bestehen',
     'cr_ValidateExtensionLen' => 'Die Nebenstellennummer muss aus zwei oder mehr Ziffern bestehen',
+    'gs_UseWebRTC' => 'Verwenden Sie WebRTC',
 ];

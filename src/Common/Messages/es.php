@@ -1066,4 +1066,5 @@ Se puede activar una vez, después de lo cual el cupón se canjea.
     'gs_RTPStunServer' => 'Dirección STUN del servidor (ejemplo: stun.test.net:10000)',
     'cr_ValidateExtensionLen' => 'El número de extensión debe tener dos o más dígitos',
     'cr_ValidatePinNumber' => 'El PIN solo debe ser números',
+    'gs_UseWebRTC' => 'Utilice WebRTC',
 ];

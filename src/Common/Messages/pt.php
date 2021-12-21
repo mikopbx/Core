@@ -1066,4 +1066,5 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'gs_RTPStunServer' => 'Endereço STUN do servidor (exemplo: stun.test.net:10000)',
     'cr_ValidateExtensionLen' => 'O número do ramal deve ter dois ou mais dígitos',
     'cr_ValidatePinNumber' => 'O PIN deve ser apenas números',
+    'gs_UseWebRTC' => 'Use WebRTC',
 ];
