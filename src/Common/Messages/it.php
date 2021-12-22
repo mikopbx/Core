@@ -1066,4 +1066,5 @@ Può essere attivato una volta, dopo di che il coupon viene riscattato.
     'gs_RTPStunServer' => 'Indirizzo STUN del server (esempio: stun.test.net:1000)',
     'cr_ValidateExtensionLen' => 'Il numero di interno deve essere composto da due o più cifre',
     'cr_ValidatePinNumber' => 'Il PIN deve essere solo numerico',
+    'gs_UseWebRTC' => 'Usa WebRTC',
 ];

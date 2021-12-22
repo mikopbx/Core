@@ -1066,4 +1066,5 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
     'gs_RTPStunServer' => 'Sunucu STUN adresi (örnek: stun.test.net:10000)',
     'cr_ValidateExtensionLen' => 'Dahili numara iki veya daha fazla basamaklı olmalıdır',
     'cr_ValidatePinNumber' => 'PIN yalnızca rakamlardan oluşmalıdır',
+    'gs_UseWebRTC' => 'WebRTC\'yi kullan',
 ];

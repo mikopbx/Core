@@ -1066,4 +1066,5 @@ return [
     'gs_RTPStunServer' => '服务器 STUN 地址（例如：stun.test.net:10000）',
     'cr_ValidateExtensionLen' => '分机号码必须是两位或更多位数字',
     'cr_ValidatePinNumber' => 'PIN 只能是数字',
+    'gs_UseWebRTC' => '使用 WebRTC',
 ];

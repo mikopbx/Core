@@ -1066,4 +1066,5 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'gs_RTPStunServer' => 'Server STUN-adresse (eksempel: stun.test.net:10000)',
     'cr_ValidateExtensionLen' => 'Lokalnummeret skal være to eller flere cifre',
     'cr_ValidatePinNumber' => 'PIN-koden må kun være tal',
+    'gs_UseWebRTC' => 'Brug WebRTC',
 ];

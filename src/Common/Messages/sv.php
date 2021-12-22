@@ -1066,4 +1066,5 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'gs_RTPStunServer' => 'Server STUN-adress (exempel: stun.test.net:10000)',
     'cr_ValidateExtensionLen' => 'Anknytningsnumret måste vara två eller fler siffror',
     'cr_ValidatePinNumber' => 'PIN-koden får endast vara siffror',
+    'gs_UseWebRTC' => 'Använd WebRTC',
 ];
