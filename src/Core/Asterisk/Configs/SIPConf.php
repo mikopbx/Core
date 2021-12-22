@@ -981,7 +981,8 @@ class SIPConf extends CoreConfigClass
             'auth'                 => $peer['extension'],
             'outbound_auth'        => $peer['extension'],
             'acl'                  => "acl_{$peer['extension']}",
-            'timers'               => ' no',
+            'timers'               => 'no',
+            'message_context'      => 'messages',
         ];
         self::getToneZone($options, $language);
         $options = $this->overridePJSIPOptionsFromModules(

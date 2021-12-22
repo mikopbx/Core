@@ -97,12 +97,18 @@ class ExtensionsConf extends CoreConfigClass
      */
     private function generateOtherExten(&$conf): void
     {
-        $extension = 'X!';
         // Контекст для AMI originate. Без него отображается не корректный CallerID.
         $conf .= '[sipregistrations]' . "\n\n";
-
-        $conf .= '[messages]' . "\n" .
-            'exten => _' . $extension . ',1,MessageSend(sip:${EXTEN},"${CALLERID(name)}"${MESSAGE(from)})' . "\n\n";
+        // messages
+        // https://community.asterisk.org/t/messagesend-to-all-pjsip-contacts/75485/5
+        $conf .= '[messages]' . PHP_EOL .
+                 'exten => _X.,1,NoOp("Sending message, To ${MESSAGE(to)}, Hint ${ARG1}, From ${MESSAGE(from)}, CID ${CALLERID}, Body ${MESSAGE(body)}")' . PHP_EOL ."\t".
+                 'same => n,Gosub(set-dial-contacts,${EXTEN},1)' . PHP_EOL ."\t".
+                 'same => n,While($["${SET(contact=${SHIFT(DST_CONTACT,&):6})}" != ""])' . PHP_EOL ."\t".
+                 'same => n,MessageSend(pjsip:${contact},${REPLACE(MESSAGE(from),-WS)})' . PHP_EOL ."\t".
+                 'same => n,NoOp("Send status is ${MESSAGE_SEND_STATUS}")' . PHP_EOL ."\t".
+                 'same => n,EndWhile' . PHP_EOL ."\t".
+                 'same => n,HangUp()' . PHP_EOL .PHP_EOL;
 
         $conf .= '[internal-originate]' . PHP_EOL .
             'exten => _.!,1,ExecIf($[ "${EXTEN}" == "h" ]?Hangup())' . PHP_EOL . "\t" .
