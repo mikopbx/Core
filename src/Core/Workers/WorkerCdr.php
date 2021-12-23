@@ -301,8 +301,13 @@ class WorkerCdr extends WorkerBase
             $p_info = pathinfo($row['recordingfile']);
             // Запускаем процесс конвертации в mp3
             $wav2mp3Path = Util::which('wav2mp3.sh');
+            $lostWav2mp3Path = Util::which('convert-lost-wav2mp3.sh');
             $nicePath = Util::which('nice');
             Processes::mwExecBg("{$nicePath} -n -19 {$wav2mp3Path} '{$p_info['dirname']}/{$p_info['filename']}'");
+
+            // Получим каталог с записями за текущемий месяц.
+            $dir = dirname($p_info['dirname'], 2);
+            Processes::mwExecBg("{$nicePath} -n -19 {$lostWav2mp3Path} '$dir'");
             // В последствии конвертации (успешной) исходные файлы будут удалены.
         }
         return array($row, $billsec);
