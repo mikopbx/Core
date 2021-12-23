@@ -999,6 +999,12 @@ class SIPConf extends CoreConfigClass
             $options['webrtc'] = 'yes';
             $options['transport'] = 'transport-wss';
             $options['aors'] = $peer['extension'] . '-WS';
+
+            /*
+             * https://www.asterisk.org/rtcp-mux-webrtc/
+             */
+            $options['rtcp_mux'] = 'yes';
+
             $conf .= Util::overrideConfigurationArray($options, $manual_attributes, 'endpoint');
             $conf .= $this->hookModulesMethod(CoreConfigClass::GENERATE_PEER_PJ_ADDITIONAL_OPTIONS, [$peer]);
         }
