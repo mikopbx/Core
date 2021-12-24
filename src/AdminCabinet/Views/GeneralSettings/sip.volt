@@ -13,6 +13,20 @@
         {{ form.render('RTPPortTo') }}
     </div>
 </div>
+
+<div class="field">
+    <label>{{ t._('gs_RTPStunServer') }}</label>
+    {{ form.render('RTPStunServer') }}
+</div>
+<div class="field">
+    <div class="ui segment">
+        <div class="ui toggle checkbox">
+            <label>{{ t._('gs_UseWebRTC') }}</label>
+            {{ form.render('UseWebRTC') }}
+        </div>
+    </div>
+</div>
+
 <h4 class="ui header">{{ t._('gs_KeepAliveHeader') }}</h4>
 <div class="inline field">
     <label>{{ t._('gs_SIPDefaultExpiry') }}</label>

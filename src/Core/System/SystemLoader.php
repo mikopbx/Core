@@ -29,6 +29,7 @@ use MikoPBX\Core\System\Configs\PHPConf;
 use MikoPBX\Core\System\Configs\RedisConf;
 use MikoPBX\Core\System\Configs\SSHConf;
 use MikoPBX\Core\System\Configs\SyslogConf;
+use MikoPBX\Core\System\Configs\VmToolsConf;
 use MikoPBX\Core\System\Configs\VMWareToolsConf;
 use MikoPBX\Core\System\Upgrade\UpdateDatabase;
 use MikoPBX\Core\System\Upgrade\UpdateSystemConfig;
@@ -105,7 +106,7 @@ class SystemLoader extends Di\Injectable
         $this->echoResultMsg($resKernelModules);
 
         $this->echoStartMsg(' - Configuring VM tools...');
-        $vmwareTools    = new VMWareToolsConf();
+        $vmwareTools    = new VmToolsConf();
         $resultVMTools  = $vmwareTools->configure();
         $this->echoResultMsg($resultVMTools);
 

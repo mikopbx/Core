@@ -79,6 +79,7 @@ class UpdateSystemConfig extends Di\Injectable
             $this->mikoPBXConfig->setGeneralSettings('PBXVersion', trim(file_get_contents('/etc/version')));
         }
         Storage::moveReadOnlySoundsToStorage();
+        Storage::copyMohFilesToStorage();
         return true;
     }
 

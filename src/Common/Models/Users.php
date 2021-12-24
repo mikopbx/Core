@@ -25,6 +25,7 @@ use Phalcon\Mvc\Model\Relation;
  * Class Users
  *
  * @method static mixed findFirstByEmail(array|string|int $parameters = null)
+ * @property \MikoPBX\Common\Models\Extensions Extensions
  * @package MikoPBX\Common\Models
  */
 class Users extends ModelsBase

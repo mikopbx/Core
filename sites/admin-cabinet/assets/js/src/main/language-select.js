@@ -55,6 +55,7 @@ const LanguageSelect = {
 			de: '<i class="germany flag"></i>',
 			es: '<i class="spain  flag"></i>',
 			pt: '<i class="portugal flag"></i>',
+			pt_BR: '<i class="brazil flag"></i>',
 			fr: '<i class="france flag"></i>',
 			uk: '<i class="ukraine flag"></i>',
 			ka: '<i class="georgia flag"></i>',

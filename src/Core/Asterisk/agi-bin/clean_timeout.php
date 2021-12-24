@@ -26,7 +26,6 @@ require_once 'Globals.php';
 $agi    = new AGI();
 $client = new BeanstalkClient(WorkerCallEvents::TIMOUT_CHANNEL_TUBE);
 $data   = [
-    'channel'    => $agi->get_variable('MASTER_CHANNEL(M_TIMEOUT_CHANNEL)', true),
     'srcChannel' => $agi->get_variable('FROM_CHAN', true),
 ];
 $client->publish(json_encode($data));

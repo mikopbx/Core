@@ -564,7 +564,18 @@ class Util
     public static function echoResult(string $message, bool $result = true):void
     {
         $cols   = self::getCountCols();
-        $spaces = str_repeat('.', $cols - strlen($message) - 8);
+        if(!is_numeric($cols)){
+            // Не удалось получить ширину экрана.
+            return;
+        }
+
+        $len = $cols - strlen($message) - 8;
+        if($len < 2){
+            // Не корректная ширина экрана.
+            return;
+        }
+
+        $spaces = str_repeat('.', $len);
         echo "\r".$message.$spaces;
         self::echoDone($result);
     }
@@ -724,6 +735,7 @@ class Util
                 unset($data_rows[0]);
                 $manual_data[$section_name] = [];
                 foreach ($data_rows as $row) {
+                    $value = '';
                     if (strpos($row, '=') === false) {
                         continue;
                     }
@@ -734,7 +746,7 @@ class Util
                         unset($arr_value[0]);
                         $value = trim(implode('=', $arr_value));
                     }
-                    if (empty($value) || empty($key)) {
+                    if ( ($value !== '0' && empty($value)) || empty($key)) {
                         continue;
                     }
                     $manual_data[$section_name][$key] = $value;

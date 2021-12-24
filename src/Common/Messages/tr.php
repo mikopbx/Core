@@ -805,8 +805,8 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
     'auth_ValidateLoginNotEmpty' => 'Giriş girin',
     'auth_SubmitButton' => 'Giriş Yap',
     'auth_WrongLoginPassword' => 'Yetkilendirme Hatası',
-    'log_CaptureMessage' => '<div class = \'ui message\'> Günlük toplamaya başlayın ve hataya neden olan bir arama veya başka bir işlem yapın.
-<br> Sistem, bir arşiv şeklinde sistemin durumu hakkında bir izlenim bırakacaktır. </div>',
+    'log_CaptureMessage' => '<div class = \'ui mesajı\'> Ağ paketlerini toplamaya başlayın ve arızaya neden olan bir çağrı veya başka bir eylem gerçekleştirin.
+<br> Sistem, daha fazla analiz için bu anda ağ kartından geçen tüm paketleri kaydedecektir. </div>',
     'dbg_Header' => 'Hata ayıklama bilgileri',
     'f2b_IpAddres' => 'IP adresi',
     'f2b_BanedTime' => 'tarih',
@@ -978,7 +978,7 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
     'LAN IP address assigned via DHCP' => 'DHCP sunucusu aracılığıyla atanan LAN IP\'si',
     'PBX is running in Live or Recovery mode' => 'Sistem kurtarma modunda başlatıldı',
     'MIKO_PBX' => 'MIKO PBX',
-    'sd_CapturePcap' => 'Günlükleri yakalama',
+    'sd_CapturePcap' => 'Ağ paketlerini yakalama',
     'cr_ValidateExtensionNumber' => 'Dahili numara yalnızca rakamlardan oluşmalıdır',
     'gs_CodecsOrder' => 'Codec önceliği',
     'gs_VideoCodecs' => 'Video codec bileşenleri',
@@ -1050,7 +1050,7 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
     'pr_EnterHostOrIpPlaceholder' => 'IP adresini veya alt ağı girin',
     'pr_EnterHostOrIp' => 'Ek sağlayıcı adresleri',
     'auth_RememberMe' => 'Beni Hatırla',
-    'log_DownloadLogs' => 'Tüm günlükleri indirin',
+    'log_DownloadLogs' => 'Tüm sistem günlüklerini indirin',
     'log_StopCapturePCAP' => 'Durdur ve indir',
     'log_StartCapturePCAP' => 'Başlat',
     'gs_PBXRecordAnnouncementIn' => 'Gelen aramalar için arama kaydı uyarısını seçin',
@@ -1062,4 +1062,9 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
     'Storage disk was mounted successfully...' => 'Depolama diski başarıyla monte edildi',
     'gs_NeedRestartPBX' => 'Değiştirirken, PBX yeniden başlatılacaktır (yıldız servisi)',
     'ex_BusyLevelInfo' => 'Belirtilen görüşme sayısına ulaşıldığında, çalışanın telefonu meşgul kabul edilecektir.',
+    'ex_PortugueseBrazil' => 'Português (Brezilya)',
+    'gs_RTPStunServer' => 'Sunucu STUN adresi (örnek: stun.test.net:10000)',
+    'cr_ValidateExtensionLen' => 'Dahili numara iki veya daha fazla basamaklı olmalıdır',
+    'cr_ValidatePinNumber' => 'PIN yalnızca rakamlardan oluşmalıdır',
+    'gs_UseWebRTC' => 'WebRTC\'yi kullan',
 ];

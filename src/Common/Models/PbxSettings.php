@@ -86,6 +86,8 @@ class PbxSettings extends ModelsBase
             'SIPMaxExpiry'                    => '3600',
             'RTPPortFrom'                     => '10000',
             'RTPPortTo'                       => '10200',
+            'RTPStunServer'                   => '',
+            'UseWebRTC'                       => '0',
             'IAXPort'                         => '4569',
             'AMIEnabled'                      => '1',
             'AMIPort'                         => '5038',
@@ -147,7 +149,6 @@ class PbxSettings extends ModelsBase
             'WebAdminLanguage'                => 'en',
             'SystemNotificationsEmail'        => 'admin@mycompany.com',
             'SendMetrics'                     => '1',
-
         ];
     }
 

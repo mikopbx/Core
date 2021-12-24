@@ -372,9 +372,12 @@ class SIPConf extends CoreConfigClass
         }
         $conf = '';
         foreach ($this->data_peers as $peer) {
-            $conf .= "exten => {$peer['extension']},hint,{$this->technology}/{$peer['extension']}&Custom:{$peer['extension']} \n";
+            $hint = "{$this->technology}/{$peer['extension']}";
+            if($this->generalSettings['UseWebRTC'] === '1') {
+                $hint.="&{$this->technology}/{$peer['extension']}-WS";
+            }
+            $conf .= "exten => {$peer['extension']},hint,$hint&Custom:{$peer['extension']} \n";
         }
-
         return $conf;
     }
 
@@ -478,12 +481,9 @@ class SIPConf extends CoreConfigClass
             }
         }
 
-        $conf = "[general] \n" .
-            "disable_multi_domain=on\n" .
-            "transport = udp \n\n" .
-
-            "[global] \n" .
+        $conf = "[global] \n" .
             "type = global\n" .
+            "disable_multi_domain=yes\n" .
             "endpoint_identifier_order=username,ip,anonymous\n" .
             "user_agent = mikopbx-{$pbxVersion}\n\n" .
 
@@ -496,6 +496,12 @@ class SIPConf extends CoreConfigClass
             "[transport-tcp]\n" .
             "type = transport\n" .
             "protocol = tcp\n" .
+            "bind=0.0.0.0:{$this->generalSettings['SIPPort']}\n" .
+            "{$natConf}\n\n" .
+
+            "[transport-wss]\n" .
+            "type = transport\n" .
+            "protocol = wss\n" .
             "bind=0.0.0.0:{$this->generalSettings['SIPPort']}\n" .
             "{$natConf}\n\n" .
             '';
@@ -919,8 +925,13 @@ class SIPConf extends CoreConfigClass
             $options,
             CoreConfigClass::OVERRIDE_PJSIP_OPTIONS
         );
-        $conf    .= "[{$peer['extension']}] \n";
+        $conf    .= "[{$peer['extension']}]\n";
         $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'aor');
+
+        if($this->generalSettings['UseWebRTC'] === '1'){
+            $conf    .= "[{$peer['extension']}-WS]\n";
+            $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'aor');
+        }
 
         return $conf;
     }
@@ -970,7 +981,8 @@ class SIPConf extends CoreConfigClass
             'auth'                 => $peer['extension'],
             'outbound_auth'        => $peer['extension'],
             'acl'                  => "acl_{$peer['extension']}",
-            'timers'               => ' no',
+            'timers'               => 'no',
+            'message_context'      => 'messages',
         ];
         self::getToneZone($options, $language);
         $options = $this->overridePJSIPOptionsFromModules(
@@ -982,6 +994,20 @@ class SIPConf extends CoreConfigClass
         $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'endpoint');
         $conf    .= $this->hookModulesMethod(CoreConfigClass::GENERATE_PEER_PJ_ADDITIONAL_OPTIONS, [$peer]);
 
+        if($this->generalSettings['UseWebRTC'] === '1') {
+            $conf .= "[{$peer['extension']}-WS] \n";
+            $options['webrtc'] = 'yes';
+            $options['transport'] = 'transport-wss';
+            $options['aors'] = $peer['extension'] . '-WS';
+
+            /*
+             * https://www.asterisk.org/rtcp-mux-webrtc/
+             */
+            $options['rtcp_mux'] = 'yes';
+
+            $conf .= Util::overrideConfigurationArray($options, $manual_attributes, 'endpoint');
+            $conf .= $this->hookModulesMethod(CoreConfigClass::GENERATE_PEER_PJ_ADDITIONAL_OPTIONS, [$peer]);
+        }
         return $conf;
     }
 

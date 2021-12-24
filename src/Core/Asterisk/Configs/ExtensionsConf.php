@@ -97,12 +97,18 @@ class ExtensionsConf extends CoreConfigClass
      */
     private function generateOtherExten(&$conf): void
     {
-        $extension = 'X!';
         // Контекст для AMI originate. Без него отображается не корректный CallerID.
         $conf .= '[sipregistrations]' . "\n\n";
-
-        $conf .= '[messages]' . "\n" .
-            'exten => _' . $extension . ',1,MessageSend(sip:${EXTEN},"${CALLERID(name)}"${MESSAGE(from)})' . "\n\n";
+        // messages
+        // https://community.asterisk.org/t/messagesend-to-all-pjsip-contacts/75485/5
+        $conf .= '[messages]' . PHP_EOL .
+                 'exten => _X.,1,NoOp("Sending message, To ${MESSAGE(to)}, Hint ${ARG1}, From ${MESSAGE(from)}, CID ${CALLERID}, Body ${MESSAGE(body)}")' . PHP_EOL ."\t".
+                 'same => n,Gosub(set-dial-contacts,${EXTEN},1)' . PHP_EOL ."\t".
+                 'same => n,While($["${SET(contact=${SHIFT(DST_CONTACT,&):6})}" != ""])' . PHP_EOL ."\t".
+                 'same => n,MessageSend(pjsip:${contact},${REPLACE(MESSAGE(from),-WS)})' . PHP_EOL ."\t".
+                 'same => n,NoOp("Send status is ${MESSAGE_SEND_STATUS}")' . PHP_EOL ."\t".
+                 'same => n,EndWhile' . PHP_EOL ."\t".
+                 'same => n,HangUp()' . PHP_EOL .PHP_EOL;
 
         $conf .= '[internal-originate]' . PHP_EOL .
             'exten => _.!,1,ExecIf($[ "${EXTEN}" == "h" ]?Hangup())' . PHP_EOL . "\t" .
@@ -117,7 +123,7 @@ class ExtensionsConf extends CoreConfigClass
             'same => n,ExecIf($["${CUT(CHANNEL,\;,2)}" == "2"]?Set(__PT1C_SIP_HEADER=${SIPADDHEADER})) ' . PHP_EOL . "\t" .
             'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1)' . PHP_EOL . "\t" .
             'same => n,ExecIf($["${PJSIP_ENDPOINT(${EXTEN},auth)}x" == "x"]?Goto(internal-num-undefined,${EXTEN},1))' . PHP_EOL . "\t" .
-            'same => n,Set(DST_CONTACT=${PJSIP_DIAL_CONTACTS(${EXTEN})})' . PHP_EOL . "\t" .
+            'same => n,Gosub(set-dial-contacts,${EXTEN},1)' . PHP_EOL . "\t" .
             'same => n,ExecIf($["${FIELDQTY(DST_CONTACT,&)}" != "1" && "${ALLOW_MULTY_ANSWER}" != "1"]?Set(__PT1C_SIP_HEADER=${EMPTY_VAR}))' . PHP_EOL . "\t" .
             'same => n,ExecIf($["${DST_CONTACT}x" != "x"]?Dial(${DST_CONTACT},${ringlength},TtekKHhb(originate-create-channel,${EXTEN},1)U(originate-answer-channel),s,1)))' . PHP_EOL . PHP_EOL .
 

@@ -176,15 +176,8 @@ class WorkerCallEvents extends WorkerBase
     {
         $task        = $tube->getBody();
         $taskData    = json_decode($task, true);
-        $channel     = $taskData['channel']??'';
         $srcChannel  = $taskData['srcChannel']??'';
-        $this->am->SetVar($channel, 'TIMEOUT(absolute)', '0');
         $this->am->SetVar($srcChannel, "MASTER_CHANNEL(M_DIALSTATUS)", 'ANSWER');
-        // Перестрахова на случай с перехватом звонка через *8.
-        $timeoutChannel = $this->am->GetVar($srcChannel, 'MASTER_CHANNEL(M_TIMEOUT_CHANNEL)', null, false);
-        if(is_string($timeoutChannel) && !empty($timeoutChannel)){
-            $this->am->SetVar($timeoutChannel, "TIMEOUT(absolute)", '0');
-        }
         $tube->reply(json_encode(true));
     }
     /**

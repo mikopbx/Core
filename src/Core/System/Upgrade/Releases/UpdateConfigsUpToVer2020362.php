@@ -53,9 +53,6 @@ class UpdateConfigsUpToVer2020362 extends Injectable implements UpgradeSystemCon
      */
     public function processUpdate(): void
     {
-        if ($this->isLiveCD) {
-            return;
-        }
         $this->deleteOrphanedProviders();
         $this->deleteOrphanedQueueMembers();
         $this->deleteOrphanedIVRMenuActions();

@@ -19,7 +19,7 @@
 
 namespace MikoPBX\PBXCoreREST\Workers;
 
-use MikoPBX\Core\System\{BeanstalkClient, Util, Processes};
+use MikoPBX\Core\System\{BeanstalkClient, Processes};
 use MikoPBX\Common\Providers\BeanstalkConnectionWorkerApiProvider;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\PBXCoreREST\Lib\AdvicesProcessor;

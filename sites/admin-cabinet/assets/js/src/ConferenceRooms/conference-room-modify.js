@@ -43,12 +43,25 @@ const conference = {
 					prompt: globalTranslate.cr_ValidateExtensionNumber,
 				},
 				{
+					type: 'minLength[2]',
+					prompt: globalTranslate.cr_ValidateExtensionLen,
+				},
+				{
 					type: 'empty',
 					prompt: globalTranslate.cr_ValidateExtensionEmpty,
 				},
 				{
 					type: 'existRule[extension-error]',
 					prompt: globalTranslate.cr_ValidateExtensionDouble,
+				},
+			],
+		},
+		pinCode: {
+			identifier: 'pinCode',
+			rules: [
+				{
+					type: 'number',
+					prompt: globalTranslate.cr_ValidatePinNumber,
 				},
 			],
 		},

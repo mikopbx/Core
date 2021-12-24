@@ -67,11 +67,11 @@ class UpdateConfigsUpToVer20212187 extends Injectable implements UpgradeSystemCo
      */
     public function processUpdate(): void
     {
+        $this->updateFirewallRules();
         if ($this->isLiveCD) {
             return;
         }
         $this->moveOldRecords();
-        $this->updateFirewallRules();
     }
 
     /**

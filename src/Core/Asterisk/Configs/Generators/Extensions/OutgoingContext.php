@@ -166,20 +166,19 @@ class OutgoingContext extends CoreConfigClass
 
         // Формирование исходящего dialplan доп. модулей;. Переопределение dialplan маршрута.
         $confModules = $this->hookModulesMethod(CoreConfigClass::GENERATE_OUT_ROUT_CONTEXT, [$rout]);
-        $conf       .= $confModules;
-        if ( ! empty($confModules)) {
-            $conf .= "\t";
+        if ( !empty($confModules)) {
+            $conf .= trim($confModules)."\n\t";
         }
         $conf .= 'same => n,Dial(${DIAL_COMMAND},600,${DOPTIONS}TKU(${ISTRANSFER}dial_answer)b(dial_create_chan,s,1))' . "\n\t";
         // Формирование dialplan доп. модулей после команды Dial.
         $confModules = $this->hookModulesMethod(CoreConfigClass::GENERATE_OUT_ROUT_AFTER_DIAL_CONTEXT, [$rout]);
-        $conf        .= $confModules;
-        if ( ! empty($confModules)) {
-            $conf .= "\t";
+        if ( !empty($confModules)) {
+            $conf .= trim($confModules)."\n\t";
         }
         $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(' . $rout['providerid'] . '-outgoing-after-dial-custom,${EXTEN}),1}" == "1"]?' . $rout['providerid'] . '-outgoing-after-dial-custom,${EXTEN},1)' . "\n\t";
         $conf .= 'same => n,ExecIf($["${ISTRANSFER}x" != "x"]?Gosub(transfer_dial_hangup,${EXTEN},1))' . "\n\t";
         $conf .= 'same => n,ExecIf($["${DIALSTATUS}" = "ANSWER"]?Hangup())' . "\n\t";
+        $conf .= 'same => n,ExecIf($["${DIALSTATUS}" = "BUSY"]?Busy())' . "\n\t";
         $conf .= 'same => n,Set(pt1c_UNIQUEID=${EMPTY_VALUE})' . "\n\t";
         $conf .= 'same => n,return' . "\n";
     }

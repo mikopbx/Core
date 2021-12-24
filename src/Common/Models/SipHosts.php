@@ -27,6 +27,7 @@ use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
  * Class SipHosts
  *
  * @package MikoPBX\Common\Models
+ * @property \MikoPBX\Common\Models\Sip Sip
  */
 class SipHosts extends ModelsBase
 {

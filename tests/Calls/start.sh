@@ -50,5 +50,10 @@ for file in $tests; do
   /usr/bin/timeout 180 /usr/bin/php -f "${file}";
 done
 
+if [ ! "${2}x" == "x" ]; then
+  echo "Need sleep ${2}";
+  sleep "${2}";
+fi;
+
 /usr/sbin/asterisk -C "$astConf" -rx 'core stop now' > /dev/null;
 

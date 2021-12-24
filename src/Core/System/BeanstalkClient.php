@@ -47,7 +47,7 @@ class BeanstalkClient extends Injectable
      * @param string $tube
      * @param string $port
      */
-    public function __construct($tube = 'default', $port = '')
+    public function __construct(string $tube = 'default', string $port = '')
     {
         $this->tube = str_replace("\\", '-', $tube);
         $this->port = $port;
@@ -60,11 +60,11 @@ class BeanstalkClient extends Injectable
     public function reconnect(): void
     {
         $config = $this->di->get('config')->beanstalk;
-        $port   = $config->port;
+        $tmpPort   = $config->port;
         if ( ! empty($this->port) && is_numeric($this->port)) {
-            $port = $this->port;
+            $tmpPort = $this->port;
         }
-        $this->queue = Pheanstalk::create($config->host, $port);
+        $this->queue = Pheanstalk::create($config->host, $tmpPort);
         $this->queue->useTube($this->tube);
         foreach ($this->subscriptions as $tube => $callback) {
             $this->subscribe($tube, $callback);

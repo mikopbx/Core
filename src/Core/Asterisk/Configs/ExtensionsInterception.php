@@ -19,7 +19,6 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
-use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Core\System\Util;
 
 class ExtensionsInterception extends CoreConfigClass
@@ -59,7 +58,7 @@ class ExtensionsInterception extends CoreConfigClass
             }
         }
         if(empty($interceptionChannel)){
-            echo("Chan not found..." .PHP_EOL);
+            Util::sysLogMsg('Interception', "Chan for $providerId not found...");
             return;
         }
         $variable    = "pt1c_cid={$dest_number},ALLOW_MULTY_ANSWER=1,_INTECEPTION_CNANNEL={$interceptionChannel},_OLD_LINKEDID={$interceptionLinkedId}";

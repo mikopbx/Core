@@ -1062,4 +1062,9 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'Storage disk was mounted successfully...' => 'Lagerdisk monteret',
     'gs_NeedRestartPBX' => 'Når der skiftes, genstarter PBX\'en (stjernetjeneste)',
     'ex_BusyLevelInfo' => 'Når det angivne antal samtaler er nået, betragtes medarbejderens telefon som optaget.',
+    'ex_PortugueseBrazil' => 'Português (Brasilien)',
+    'gs_RTPStunServer' => 'Server STUN-adresse (eksempel: stun.test.net:10000)',
+    'cr_ValidateExtensionLen' => 'Lokalnummeret skal være to eller flere cifre',
+    'cr_ValidatePinNumber' => 'PIN-koden må kun være tal',
+    'gs_UseWebRTC' => 'Brug WebRTC',
 ];

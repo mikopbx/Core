@@ -77,19 +77,28 @@ class ConferenceConf extends CoreConfigClass
         $conf .= "exten => s,1,AGI(cdr_connector.php,hangup_chan_meetme)\n\t";
         $conf .= "same => n,return\n\n";
         $conf .= "[conference-rooms] \n";
-        $data = self::getConferenceExtensions();
-        foreach ($data as $conference) {
+        $data = $this->getConferences();
+        foreach ($data as $conference => $pin) {
             $conf .= 'exten => ' . $conference . ',1,NoOp(---)' . "\n\t";
             // Если это Local канал, к примеру вызов через IVR, то попробуем корректно перенаправить вызов.
-            $conf .= 'same => n,ExecIf($[ "${CHANNEL:0:5}" == "Local" ]?Set(pl=${IF($["${CHANNEL:-1}" == "1"]?2:1)}))' . "\n\t";
-            $conf .= 'same => n,ExecIf($[ "${CHANNEL:0:5}" == "Local" ]?Set(bridgePeer=${IMPORT(${CUT(CHANNEL,\;,1)}\;${pl},BRIDGEPEER)}))' . "\n\t";
-            $conf .= 'same => n,AGI(/usr/www/src/Core/Asterisk/agi-bin/clean_timeout.php)' . "\n\t";
-            $conf .= 'same => n,ExecIf($[ "${FROM_CHAN}" == "${bridgePeer}" ]?ChannelRedirect(${bridgePeer},${CONTEXT},${EXTEN},${PRIORITY}))' . "\n\t";
+            // Ищем реальный канал. Local будут отправлены в hangup
+            $conf .= 'same => n,Set(bridgePeer=${CHANNEL})' . "\n\t";
+            $conf .= 'same => n,Set(i=1)' . "\n\t";
+            $conf .= 'same => n,While($[${i} < 10])' . "\n\t";
+            $conf .= 'same => n,ExecIf($[ "${bridgePeer:0:5}" != "Local" ]?ExitWhile())' . "\n\t";
+            $conf .= 'same => n,ExecIf($[ "${bridgePeer:0:5}" == "Local" ]?Set(pl=${IF($["${CHANNEL:-1}" == "1"]?2:1)}))' . "\n\t";
+            $conf .= 'same => n,ExecIf($[ "${bridgePeer:0:5}" == "Local" ]?Set(bridgePeer=${IMPORT(${CUT(bridgePeer,\;,1)}\;${pl},BRIDGEPEER)}))' . "\n\t";
+            $conf .= 'same => n,ExecIf($[ "${bridgePeer}x" == "x" ]?ExitWhile())' . "\n\t";
+            $conf .= 'same => n,Set(i=$[${i} + 1])' . "\n\t";
+            $conf .= 'same => n,EndWhile' . "\n\t";
+            $conf .= 'same => n,ExecIf($[ "${bridgePeer}" != "${CHANNEL}" && "${bridgePeer:0:5}" != "Local" && "${bridgePeer}x" != "x" ]?ChannelRedirect(${bridgePeer},${CONTEXT},${EXTEN},${PRIORITY}))' . "\n\t";
+
             // Если всеже это Local и не вышло определить оригинальный канал, то завершаем вызов.
             $conf .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" == "Local"]?Hangup())' . "\n\t";
             // В конференцию попадет лишь реальный канал PJSIP
             $conf .= 'same => n,AGI(cdr_connector.php,meetme_dial)' . "\n\t";
             $conf .= 'same => n,Answer()' . "\n\t";
+            $conf .= 'same => n,AGI(/usr/www/src/Core/Asterisk/agi-bin/clean_timeout.php)' . "\n\t";
             $conf .= 'same => n,Set(CHANNEL(hangup_handler_wipe)=hangup_handler_meetme,s,1)' . "\n\t";
             if($PBXRecordCalls === '1'){
                 // Запускаем запись разговоров.
@@ -100,6 +109,9 @@ class ConferenceConf extends CoreConfigClass
             $conf .= 'same => n,Set(CONFBRIDGE(bridge,video_mode)=follow_talker)' . "\n\t";
             $conf .= 'same => n,Set(CONFBRIDGE(user,talk_detection_events)=yes)' . "\n\t";
             $conf .= 'same => n,Set(CONFBRIDGE(user,quiet)=yes)' . "\n\t";
+            if(!empty($pin)){
+                $conf .= "same => n,Set(CONFBRIDGE(user,pin)=$pin)" . "\n\t";
+            }
             $conf .= 'same => n,Set(CONFBRIDGE(user,music_on_hold_when_empty)=yes)' . "\n\t";
             $conf .= 'same => n,ConfBridge(${EXTEN})' . "\n\t";
             $conf .= 'same => n,Hangup()' . "\n\n";
@@ -128,11 +140,36 @@ class ConferenceConf extends CoreConfigClass
      * Возвращает массив номеров конференц комнат.
      * @return array
      */
-    public static function getConferenceExtensions():array{
+    public static function getConferenceExtensions():array
+    {
         $confExtensions = [];
-        $conferences = ConferenceRooms::find(['order' => 'extension', 'columns' => 'extension'])->toArray();
+        $filter = [
+            'order' => 'extension',
+            'columns' => 'extension'
+        ];
+
+        $conferences = ConferenceRooms::find($filter)->toArray();
         foreach ($conferences as $conference){
             $confExtensions[] = $conference['extension'];
+        }
+        return $confExtensions;
+    }
+
+    /**
+     * Возвращает массив номеров конференц комнат.
+     * @return array
+     */
+    private function getConferences():array
+    {
+        $confExtensions = [];
+        $filter = [
+            'order' => 'extension',
+            'columns' => 'extension,pinCode'
+        ];
+
+        $conferences = ConferenceRooms::find($filter)->toArray();
+        foreach ($conferences as $conference){
+            $confExtensions[$conference['extension']] = $conference['pinCode'];
         }
         return $confExtensions;
     }

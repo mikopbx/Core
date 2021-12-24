@@ -94,6 +94,8 @@ class WorkerModelsEvents extends WorkerBase
 
     private const R_SIP = 'reloadSip';
 
+    private const R_RTP = 'rtpReload';
+
     private const R_PBX_CORE = 'pbxCoreReload';
 
     private const R_FEATURES = 'reloadFeatures';
@@ -173,6 +175,7 @@ class WorkerModelsEvents extends WorkerBase
             self::R_PBX_CORE,
             self::R_FEATURES,
             self::R_SIP,
+            self::R_RTP,
             self::R_IAX,
             self::R_DIALPLAN,
             self::R_QUEUES,
@@ -250,6 +253,7 @@ class WorkerModelsEvents extends WorkerBase
         $tables[] = [
             'settingName' => [
                 'PBXAllowGuestCalls',
+                'UseWebRTC',
             ],
             'functions'   => [
                 self::R_SIP,
@@ -260,8 +264,6 @@ class WorkerModelsEvents extends WorkerBase
         $tables[] = [
             'settingName' => [
                 'SIPPort',
-                'RTPPortFrom',
-                'RTPPortTo',
                 'SIPDefaultExpiry',
                 'SIPMinExpiry',
                 'SIPMaxExpiry',
@@ -269,6 +271,17 @@ class WorkerModelsEvents extends WorkerBase
             ],
             'functions'   => [
                 self::R_SIP,
+            ],
+        ];
+
+        $tables[] = [
+            'settingName' => [
+                'RTPPortFrom',
+                'RTPPortTo',
+                'RTPStunServer',
+            ],
+            'functions'   => [
+                self::R_RTP,
             ],
         ];
 
@@ -882,6 +895,14 @@ class WorkerModelsEvents extends WorkerBase
     public function reloadSip(): void
     {
         PBX::sipReload();
+    }
+
+    /**
+     * Update RTP config file.
+     */
+    public function rtpReload(): void
+    {
+        PBX::rtpReload();
     }
 
     /**

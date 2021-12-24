@@ -36,7 +36,7 @@ shopt -s cmdhist
 
 alias ls='ls --color=auto'
 alias myip="curl http://ipecho.net/plain; echo"
-alias remount-offload="mount -o remount,rw $(mount | grep /offload | cut -d ' ' -f 1)"
+alias remount-offload="_remountOffload"
 alias xdebug-enable="_xdebugEnable"
 alias xdebug-enable-www="_xdebugEnableWww"
 
@@ -45,11 +45,26 @@ PS2='>'
 
 export LANG=en_US.utf8
 
+_remountOffload()
+{
+  nowMode="$(mount | grep /offload | cut -d '(' -f 2 | cut -d ',' -f 1)";
+  mountPoint="$(mount | grep /offload | cut -d ' ' -f 1)";
+  if [ "${nowMode}" == 'rw' ]; then
+    newMode='ro';
+    mount -o remount,ro "$mountPoint";
+  else
+    newMode='rw';
+    mount -o remount,rw "$mountPoint";
+  fi;
+  echo "Mode for /offload ${newMode} disk:${mountPoint}";
+}
+
 _xdebugEnable()
 {
   echo "Renaming 15-xdebug.ini.disabled to 15-xdebug.ini ..."
   echo "Changing xdebug.remote_host to address $1 ..."
   sed "s/172.16.162.1$/$1/g" /etc/php.d/15-xdebug.ini.disabled > /etc/php.d/15-xdebug.ini
+  export XDEBUG_CONFIG="remote_enable=1 remote_mode=req remote_autostart=0 remote_port=9000 remote_host=$1 remote_connect_back=0";
   echo "Done"
 }
 

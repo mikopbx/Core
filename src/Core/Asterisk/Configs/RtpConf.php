@@ -28,9 +28,16 @@ class RtpConf extends CoreConfigClass
 
     protected function generateConfigProtected(): void
     {
+        $stunConfig = '';
+        $stun = trim($this->generalSettings['RTPStunServer']??'');
+        if(!empty($stun)){
+            $stunConfig = "stunaddr=$stun".PHP_EOL;
+        }
         $conf = "[general]\n" .
-            "rtpstart={$this->generalSettings['RTPPortFrom']}\n" .
-            "rtpend={$this->generalSettings['RTPPortTo']}\n\n";
+            $stunConfig.
+            "rtpstart={$this->generalSettings['RTPPortFrom']}".PHP_EOL.
+            "rtpend={$this->generalSettings['RTPPortTo']}".PHP_EOL.
+            PHP_EOL;
 
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/rtp.conf', $conf);
     }

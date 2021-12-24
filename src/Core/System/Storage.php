@@ -208,6 +208,39 @@ class Storage extends Di\Injectable
     }
 
     /**
+     * Copies MOH sound files to storage and creates record on SoundFiles table
+     */
+    public static function copyMohFilesToStorage(): void
+    {
+        if(!self::isStorageDiskMounted()) {
+            return;
+        }
+        $di = Di::getDefault();
+        if ($di === null) {
+            return;
+        }
+        $config        = $di->getConfig();
+        $oldMohDir     = $config->path('asterisk.astvarlibdir') . '/sounds/moh';
+        $currentMohDir = $config->path('asterisk.mohdir');
+        if ( ! file_exists($oldMohDir)||Util::mwMkdir($currentMohDir)) {
+            return;
+        }
+        $files = scandir($oldMohDir);
+        foreach ($files as $file) {
+            if (in_array($file, ['.', '..'])) {
+                continue;
+            }
+            if (copy($oldMohDir.'/'.$file, $currentMohDir.'/'.$file)) {
+                $sound_file           = new SoundFiles();
+                $sound_file->path     = $currentMohDir . '/' . $file;
+                $sound_file->category = SoundFiles::CATEGORY_MOH;
+                $sound_file->name     = $file;
+                $sound_file->save();
+            }
+        }
+    }
+
+    /**
      * Проверка, смонтирован ли диск - хранилище.
      *
      * @param string $filter
@@ -236,15 +269,13 @@ class Storage extends Di\Injectable
                 $filter = 'usbdisk1';
             }
         }
+        $grepPath   = Util::which('grep');
+        $mountPath  = Util::which('mount');
+        $awkPath    = Util::which('awk');
+
         $filter = escapeshellarg($filter);
-
-        $out = [];
-        $grepPath = Util::which('grep');
-        $mountPath = Util::which('mount');
-        $awkPath = Util::which('awk');
-        Processes::mwExec("{$mountPath} | {$grepPath} {$filter} | {$awkPath} '{print $3}'", $out);
-        $mount_dir = trim(implode('', $out));
-
+        $out        = shell_exec("$mountPath | $grepPath $filter | {$awkPath} '{print $3}'");
+        $mount_dir  = trim($out);
         return ($mount_dir !== '');
     }
 
@@ -269,10 +300,9 @@ class Storage extends Di\Injectable
         $sshfsPath = Util::which('sshfs');
 
         $command = "{$timeoutPath} 3 {$sshfsPath} -p {$port} -o nonempty -o password_stdin -o 'StrictHostKeyChecking=no' " . "{$user}@{$host}:{$remout_dir} {$local_dir} << EOF\n" . "{$pass}\n" . "EOF\n";
-        // file_put_contents('/tmp/sshfs_'.$host, $command);
         Processes::mwExec($command, $out);
         $response = trim(implode('', $out));
-        if ('Terminated' == $response) {
+        if ('Terminated' === $response) {
             // Удаленный сервер не ответил / или не корректно указан пароль.
             unset($response);
         }
@@ -325,6 +355,46 @@ class Storage extends Di\Injectable
             unset($response);
         }
 
+        return self::isStorageDiskMounted("$local_dir ");
+    }
+
+    /**
+     * Монитирование каталога с удаленного сервера FTP.
+     *
+     * @param        $host
+     * @param        $user
+     * @param        $pass
+     * @param        $dstDir
+     * @param        $local_dir
+     *
+     * @return bool
+     */
+    public static function mountWebDav($host, $user, $pass, $dstDir, $local_dir): bool
+    {
+        $host = trim($host);
+        $dstDir = trim($dstDir);
+        if(substr($host, -1) === '/'){
+            $host = substr($host, 0, -1);
+        }
+        if($dstDir[0] === '/'){
+            $dstDir = substr($dstDir, 1);
+        }
+        Util::mwMkdir($local_dir);
+        $out = [];
+        $conf = 'dav_user www'.PHP_EOL.
+                'dav_group www'.PHP_EOL;
+
+        file_put_contents('/etc/davfs2/secrets', "{$host}{$dstDir} $user $pass");
+        file_put_contents('/etc/davfs2/davfs2.conf', $conf);
+        $timeoutPath = Util::which('timeout');
+        $mount = Util::which('mount.davfs');
+        $command = "$timeoutPath 3 yes | $mount {$host}{$dstDir} {$local_dir}";
+        Processes::mwExec($command, $out);
+        $response = trim(implode('', $out));
+        if ('Terminated' === $response) {
+            // Удаленный сервер не ответил / или не корректно указан пароль.
+            unset($response);
+        }
         return self::isStorageDiskMounted("$local_dir ");
     }
 
@@ -736,7 +806,8 @@ class Storage extends Di\Injectable
 
         $type = $data['children'][0]['type'] ?? '';
         if (strpos($type, 'raid') === false) {
-            foreach ($data['children'] as $child) {
+            $children = $data['children']??[];
+            foreach ($children as $child) {
                 $result[] = $child['name'];
             }
         }

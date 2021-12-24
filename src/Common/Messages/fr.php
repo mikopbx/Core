@@ -1062,4 +1062,9 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'Storage disk was mounted successfully...' => 'Disque de stockage monté avec succès',
     'gs_NeedRestartPBX' => 'Lors du changement, le PBX redémarrera (service astérisque)',
     'ex_BusyLevelInfo' => 'Une fois le nombre spécifié de conversations atteint, le téléphone de l\'employé sera considéré comme occupé.',
+    'ex_PortugueseBrazil' => 'Português (Brésil)',
+    'gs_RTPStunServer' => 'Adresse STUN du serveur (exemple : stun.test.net:10000)',
+    'cr_ValidateExtensionLen' => 'Le numéro de poste doit être composé de deux chiffres ou plus',
+    'cr_ValidatePinNumber' => 'Le code PIN ne doit être composé que de chiffres',
+    'gs_UseWebRTC' => 'Utiliser WebRTC',
 ];

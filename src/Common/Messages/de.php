@@ -378,7 +378,7 @@ return [
     'ex_NatMode' => 'NAT Modus',
     'ex_ManualAdditionalAttributes' => 'Zusätzliche Attribute/Werte für SIP',
     'ex_RingMainExtension' => 'Für',
-    'ex_SecondsAndThenRedirectCallTo' => 'Sekunden versuchen die Nummer zu ereichen, dann weiterleiten zu',
+    'ex_SecondsAndThenRedirectCallTo' => 'Sekunden versuchen die Nummer zu erreichen, dann weiterleiten zu',
     'ex_IfMainExtensionIsBusyRedirectCallTo' => 'Falls die Nummer besetzt ist, dann weiterleiten zu',
     'ex_IfMainExtensionIsUnavailableRedirectCallTo' => 'Sollte die Nummer nicht erreichbar sein, dann weiterleiten zu',
     'ex_ValidateMobileIsNotCorrect' => 'Bitte die angegeben Mobilfunknummer überprüfen',
@@ -1065,4 +1065,9 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
     'Storage disk was mounted successfully...' => 'Speicherlaufwerk erfolgreich gemountet',
     'gs_NeedRestartPBX' => 'Beim Wechsel startet die PBX neu (Asterisk-Dienst)',
     'ex_BusyLevelInfo' => 'Wenn die angegebene Anzahl von Gesprächen erreicht ist, gilt das Telefon des Mitarbeiters als besetzt.',
+    'ex_PortugueseBrazil' => 'Portugiesisch (Brasilien)',
+    'gs_RTPStunServer' => 'Server-STUN-Adresse (Beispiel: stun.test.net:10000)',
+    'cr_ValidatePinNumber' => 'PIN darf nur aus Zahlen bestehen',
+    'cr_ValidateExtensionLen' => 'Die Nebenstellennummer muss aus zwei oder mehr Ziffern bestehen',
+    'gs_UseWebRTC' => 'Verwenden Sie WebRTC',
 ];

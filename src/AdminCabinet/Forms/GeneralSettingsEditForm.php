@@ -20,6 +20,7 @@
 namespace MikoPBX\AdminCabinet\Forms;
 
 use MikoPBX\Common\Models\SoundFiles;
+use Phalcon\Forms\Element\AbstractElement;
 use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Numeric;
 use Phalcon\Forms\Element\Password;
@@ -81,6 +82,9 @@ class GeneralSettingsEditForm extends Form
                     break;
                 case 'Description':
                     $this->add(new TextArea($key, ['value' => $value, "rows" => 2]));
+                    break;
+                case 'RTPStunServer':
+                    $this->add(new Text($key, ['value' => $value, "rows" => 1]));
                     break;
                 case 'SSHAuthorizedKeys':
                 case 'SSHecdsaKey':
@@ -176,6 +180,7 @@ class GeneralSettingsEditForm extends Form
                     $this->add($audioMessage);
                     break;
                 case 'PBXRecordCalls':
+                case 'UseWebRTC':
                 case 'AJAMEnabled':
                 case 'AMIEnabled':
                 case 'RestartEveryNight':

@@ -20,11 +20,33 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 
+use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\Storage;
 use MikoPBX\Core\System\Util;
 
 class VoiceMailConf extends CoreConfigClass
 {
     protected string $description = 'voicemail.conf';
+
+    /**
+     * Prepares additional contexts sections in the extensions.conf file
+     *
+     * @return string
+     */
+    public function extensionGenContexts(): string
+    {
+        $conf  = "[voice_mail_peer] \n";
+        $conf .= 'exten => voicemail,1,Answer()' . "\n\t";
+        $conf .= 'same => n,ExecIf($["${CHANNEL:0:5}" == "Local"]?Set(pl=${IF($["${CHANNEL:-1}" == "1"]?2:1)}))' . "\n\t";
+        $conf .= 'same => n,ExecIf($["${CHANNEL:0:5}" == "Local"]?Set(bridgePeer=${IMPORT(${CUT(CHANNEL,\;,1)}\;${pl},BRIDGEPEER)}))' . "\n\t";
+        $conf .= 'same => n,ExecIf($[ "${FROM_CHAN}" == "${bridgePeer}" ]?ChannelRedirect(${bridgePeer},${CONTEXT},${EXTEN},2))' . "\n\t";
+        $conf .= 'same => n,AGI(/usr/www/src/Core/Asterisk/agi-bin/clean_timeout.php)' . "\n\t";
+        $conf .= 'same => n,Gosub(voicemail_start,${EXTEN},1)' . "\n\t";
+        $conf .= 'same => n,VoiceMail(admin@voicemailcontext)' . "\n\t";
+        $conf .= 'same => n,Hangup()' . "\n\n";
+
+        return  $conf;
+    }
 
     protected function generateConfigProtected(): void
     {
@@ -45,7 +67,7 @@ class VoiceMailConf extends CoreConfigClass
         }
 
         $timezone = $this->generalSettings['PBXTimezone'];
-        $msmtpPath = Util::which('msmtp');
+        $msmtpPath = Util::which('voicemail-sender');
 
         $conf     = "[general]\n" .
             "format=wav\n" .
@@ -64,7 +86,8 @@ class VoiceMailConf extends CoreConfigClass
             "emailbody={$emailbody}".'\n\n'."{$emailfooter}\n" .
             "emaildateformat=%A, %d %B %Y в %H:%M:%S\n" .
             "pagerdateformat=%T %D\n" .
-            "mailcmd={$msmtpPath} --file=/etc/msmtp.conf -t\n" .
+            // "mailcmd={$msmtpPath} --file=/etc/msmtp.conf -t\n" .
+            "mailcmd={$msmtpPath}\n" .
             "serveremail={$from}\n\n" .
             "[zonemessages]\n" .
             "local={$timezone}|'vm-received' q 'digits/at' H 'hours' M 'minutes'\n\n";
@@ -97,4 +120,33 @@ class VoiceMailConf extends CoreConfigClass
 
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/voicemail.conf', $conf);
     }
+
+    /**
+     * @param      $srcFileName
+     * @param      $time
+     * @param bool $copy
+     * @return string
+     */
+    public static function getCopyFilename($srcFileName, $linkedId, $time, bool $copy = true):string{
+        $filename = Util::trimExtensionForFile($srcFileName) . '.wav';
+        $recordingFile = '';
+        // Переопределим путь к файлу записи разговора. Для конферецнии файл один.
+        $monitor_dir = Storage::getMonitorDir();
+        $sub_dir     = date('Y/m/d', $time);
+        $dirName = "$monitor_dir/$sub_dir/INBOX/";
+        if(Util::mwMkdir($dirName)){
+            $recordingFile = $dirName.$linkedId.'.wav';
+            $cpPath = Util::which('cp');
+            if($copy === true){
+                Processes::mwExec("{$cpPath} {$filename} {$recordingFile}");
+            }
+            if($copy === true && !file_exists($recordingFile)){
+                $recordingFile = '';
+            }else{
+                $recordingFile = Util::trimExtensionForFile($recordingFile) . '.mp3';
+            }
+        }
+        return $recordingFile;
+    }
+
 }

@@ -21,7 +21,7 @@ namespace MikoPBX\Core\Workers;
 
 require_once 'Globals.php';
 
-use MikoPBX\Common\Models\{CallDetailRecordsTmp, Extensions, ModelsBase, Users};
+use MikoPBX\Common\Models\{Extensions, ModelsBase, Users};
 use MikoPBX\Core\System\{BeanstalkClient, Processes, Util};
 use Throwable;
 
@@ -48,24 +48,55 @@ class WorkerCdr extends WorkerBase
      */
     public function start($argv): void
     {
-        $filter = [
-            'work_completed<>1 AND endtime<>""',
-            'columns'=> 'start,answer,src_num,dst_num,dst_chan,endtime,linkedid,recordingfile,dialstatus,UNIQUEID',
-            'order' => 'answer'
-       ];
-
         $this->client_queue = new BeanstalkClient(self::SELECT_CDR_TUBE);
         $this->client_queue->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
 
         $this->initSettings();
 
         while ($this->needRestart === false) {
-            $result = CallDetailRecordsTmp::find($filter)->toArray();
+            $result = $this->getTempCdr();
             if (!empty($result)) {
                 $this->updateCdr($result);
             }
-            $this->client_queue->wait(5); // instead of sleep
+            $this->client_queue->wait();
         }
+    }
+
+    /**
+     * Возвращает все завершенные временные CDR.
+     * @param array $filter
+     * @return array
+     */
+    private function getTempCdr(array $filter = []):array
+    {
+        if(empty($filter)){
+            $filter = [
+                'work_completed<>1 AND endtime<>""'
+            ];
+        }
+        $filter['miko_result_in_file'] = true;
+        $filter['miko_tmp_db'] = true;
+        $filter['order'] = 'answer';
+        $filter['columns'] = 'start,answer,src_num,dst_num,dst_chan,endtime,linkedid,recordingfile,dialstatus,UNIQUEID';
+
+        $client = new BeanstalkClient(WorkerCdr::SELECT_CDR_TUBE);
+        try {
+            $result   = $client->request(json_encode($filter), 2);
+            $filename = json_decode($result, true, 512, JSON_THROW_ON_ERROR);
+        }catch (Throwable $e){
+            $filename = '';
+        }
+        $result_data = [];
+        if (file_exists($filename)) {
+            try {
+                $result_data = json_decode(file_get_contents($filename), true, 512, JSON_THROW_ON_ERROR);
+            }catch (Throwable $e){
+                Util::sysLogMsg('SELECT_CDR_TUBE', 'Error parse response.');
+            }
+            unlink($filename);
+        }
+
+        return $result_data;
     }
 
     /**
@@ -270,8 +301,13 @@ class WorkerCdr extends WorkerBase
             $p_info = pathinfo($row['recordingfile']);
             // Запускаем процесс конвертации в mp3
             $wav2mp3Path = Util::which('wav2mp3.sh');
+            $lostWav2mp3Path = Util::which('convert-lost-wav2mp3.sh');
             $nicePath = Util::which('nice');
             Processes::mwExecBg("{$nicePath} -n -19 {$wav2mp3Path} '{$p_info['dirname']}/{$p_info['filename']}'");
+
+            // Получим каталог с записями за текущемий месяц.
+            $dir = dirname($p_info['dirname'], 2);
+            Processes::mwExecBg("{$nicePath} -n -19 {$lostWav2mp3Path} '$dir'");
             // В последствии конвертации (успешной) исходные файлы будут удалены.
         }
         return array($row, $billsec);
@@ -296,12 +332,16 @@ class WorkerCdr extends WorkerBase
                 Processes::mwExec("rm -rf {$row['recordingfile']}");
             }
         } elseif (!empty($row['recordingfile']) &&
-            !file_exists(Util::trimExtensionForFile($row['recordingfile']) . '.wav') &&
-            !file_exists($row['recordingfile'])) {
-            /** @var CallDetailRecordsTmp $rec_data */
-            $rec_data = CallDetailRecordsTmp::findFirst("linkedid='{$row['linkedid']}' AND dst_chan='{$row['dst_chan']}'");
-            if ($rec_data !== null) {
-                $row['recordingfile'] = $rec_data->recordingfile;
+            !file_exists($row['recordingfile']) &&
+            !file_exists(Util::trimExtensionForFile($row['recordingfile']) . '.wav') ) {
+            $filter = [
+                "linkedid='{$row['linkedid']}' AND dst_chan='{$row['dst_chan']}'",
+                'limit' => 1,
+            ];
+            $data = $this->getTempCdr($filter);
+            $recordingfile = $data[0]['recordingfile']??'';
+            if (!empty($recordingfile)) {
+                $row['recordingfile'] = $recordingfile;
             }
         }
         return array($disposition, $row);

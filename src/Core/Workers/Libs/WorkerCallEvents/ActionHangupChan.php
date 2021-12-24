@@ -90,10 +90,34 @@ class ActionHangupChan {
                 ];
             }
         }
+
+        self::regMissedCall($data, count($m_data->toArray()));
+    }
+
+    /**
+     * Если hangup_chan единственный event.
+     * @param array $data
+     * @param int   $tmpCdrCount
+     */
+    private static function regMissedCall(array $data, int $tmpCdrCount):void
+    {
+        if($tmpCdrCount > 0 || $data['did'] === ''){
+            return;
+        }
+        if(empty($data['UNIQUEID'])){
+            $data['UNIQUEID'] = $data['agi_threadid'];
+        }
+        $time = (float)str_replace('mikopbx-', '', $data['linkedid']);
+
+        $data['start']   = date("Y-m-d H:i:s.v", $time);
+        $data['endtime'] = $data['end'];
+
+        InsertDataToDB::execute($data);
     }
 
     /**
      * Проверяем на SIP трансфер.
+     * @param $worker
      * @param $data
      * @param $channels
      */

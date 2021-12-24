@@ -433,8 +433,8 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'auth_ValidateLoginNotEmpty' => 'Ange inloggning',
     'auth_SubmitButton' => 'Logga in',
     'auth_WrongLoginPassword' => 'Autoriseringsfel',
-    'log_CaptureMessage' => '<div class = \'ui message\'> Börja samla loggar och utför ett samtal eller annan åtgärd som leder till ett fel.
-<br> Systemet kommer att bilda ett intryck av systemets tillstånd i form av ett arkiv. </div>',
+    'log_CaptureMessage' => '<div class = \'ui message\'> Börja samla nätverkspaket och utför ett samtal eller annan åtgärd som orsakar ett fel.
+<br> Systemet kommer att spara alla paket som passerar genom nätverkskortet för närvarande för vidare analys. </div>',
     'dbg_NoDebugInformation' => 'Ingen information',
     'dbg_Header' => 'Felsökningsinformation',
     'f2b_Reason' => 'anledning',
@@ -979,7 +979,7 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'Set up LAN IP address' => 'Konfigurera LAN IP-adress',
     'Install on Hard Drive' => 'Installera',
     'sd_DownloadPcapFileError' => 'Ett fel uppstod när ett loggarkiv skapades',
-    'sd_CapturePcap' => 'Fångar loggar',
+    'sd_CapturePcap' => 'Fånga nätverkspaket',
     'sd_ShowLog' => 'Visar loggar',
     'gs_CodecsOrder' => 'Codec-prioritet',
     'gs_VideoCodecs' => 'Videokodek',
@@ -1050,7 +1050,7 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'gs_PBXAllowGuestCalls' => 'Tillåt inkommande samtal från alla servrar',
     'pr_EnterHostOrIp' => 'Ytterligare leverantörsadresser',
     'auth_RememberMe' => 'Kom ihåg mig',
-    'log_DownloadLogs' => 'Ladda ner alla loggar',
+    'log_DownloadLogs' => 'Ladda ner alla systemloggar',
     'log_StopCapturePCAP' => 'Stoppa och ladda ner',
     'log_StartCapturePCAP' => 'Start',
     'gs_PBXRecordAnnouncementIn' => 'Välj varning för samtalsinspelning för inkommande samtal',
@@ -1062,4 +1062,9 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'Storage disk was mounted successfully...' => 'Lagringsdisk monterad',
     'gs_NeedRestartPBX' => 'När du byter startar PBX om (asterisk-tjänst)',
     'ex_BusyLevelInfo' => 'När det angivna antalet konversationer har uppnåtts kommer anställdens telefon att betraktas som upptagen.',
+    'ex_PortugueseBrazil' => 'Português (Brasilien)',
+    'gs_RTPStunServer' => 'Server STUN-adress (exempel: stun.test.net:10000)',
+    'cr_ValidateExtensionLen' => 'Anknytningsnumret måste vara två eller fler siffror',
+    'cr_ValidatePinNumber' => 'PIN-koden får endast vara siffror',
+    'gs_UseWebRTC' => 'Använd WebRTC',
 ];

@@ -3,6 +3,8 @@ server {
     server_name   default;
     resolver <DNS>;
 
+    add_header 'Access-Control-Allow-Origin' '*' always;
+
     # locations files
     include mikopbx/locations/*.conf;
 

@@ -23,6 +23,7 @@ use MikoPBX\Common\Models\AuthTokens;
 use Phalcon\Di\Injectable;
 use Phalcon\Events\Event;
 use Phalcon\Mvc\Dispatcher;
+use Phalcon\Text;
 
 /**
  * SecurityPlugin
@@ -65,7 +66,8 @@ class SecurityPlugin extends Injectable
             return true;
         }
 
-        if ($isLoggedIn && $controller === 'INDEX') {
+
+        if ( $isLoggedIn && ($controller === 'INDEX' || !$this->controllerExists($dispatcher)) ) {
             $dispatcher->forward(
                 [
                     'controller' => 'extensions',
@@ -75,6 +77,17 @@ class SecurityPlugin extends Injectable
         }
 
         return true;
+    }
+
+    /**
+     * Проверка существования класса контроллера.
+     * @param $dispatcher
+     * @return bool
+     */
+    private function controllerExists($dispatcher):bool
+    {
+        $controller = Text::camelize($dispatcher->getControllerName());
+        return class_exists($dispatcher->getNamespaceName().'\\'.$controller.$dispatcher->getHandlerSuffix());
     }
 
     /**
