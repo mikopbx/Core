@@ -140,7 +140,7 @@ class CloudProvisioning
     }
 
     /**
-     * Настройка машины для Google Claud.
+     * Настройка машины для Google Cloud.
      */
     public function googleProvisioning():bool
     {
@@ -221,7 +221,7 @@ class CloudProvisioning
     }
 
     /**
-     * Настройка машины для Azure Claod.
+     * Настройка машины для Azure Cloud
      */
     public function azureProvisioning():bool
     {
