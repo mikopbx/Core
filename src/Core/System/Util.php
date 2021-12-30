@@ -568,7 +568,6 @@ class Util
             // Не удалось получить ширину экрана.
             return;
         }
-
         $len = $cols - strlen($message) - 8;
         if($len < 2){
             // Не корректная ширина экрана.
@@ -582,7 +581,13 @@ class Util
 
     public static function getCountCols():string
     {
-        return min(shell_exec('tput cols'), 80);
+        $len = 1*trim(shell_exec('tput cols'));
+        if($len === 0){
+            $len = 80;
+        }else{
+            $len = min($len, 80);
+        }
+        return $len;
     }
 
     /**
