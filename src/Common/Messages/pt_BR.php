@@ -212,7 +212,7 @@ return [
     'gs_AMITab' => 'AMI e AJAM',
     'gs_SIPTab' => 'SIP',
     'gs_FeaturesTab' => 'Transferências de chamadas',
-    'gs_MainTab' => 'O principal',
+    'gs_MainTab' => 'Principal',
     'nw_NetworkAddressTranslations' => 'Topologia de rede',
     'nw_DeleteCurrentInterface' => 'Remova esta interface',
     'nw_LookUpExternalIp' => 'Descubra o IP externo',
