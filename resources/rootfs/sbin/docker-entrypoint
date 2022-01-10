@@ -30,7 +30,7 @@ class Entrypoint
     private array  $settings;
     public  float  $workerStartTime;
     public  const  PATH_DB = '/cf/conf/mikopbx.db';
-    private const  pathInc = '/usr/www/config/mikopbx-settings.json';
+    private const  pathInc = '/etc/inc/mikopbx-settings.json';
 
     public function __construct()
     {
@@ -154,7 +154,9 @@ class Entrypoint
                 file_put_contents($pidGrPath, $newGroupId);
             }
         }
-        passthru(implode('; ', $commands));
+        if(!empty($commands)){
+            passthru(implode('; ', $commands));
+        }
     }
 
     /**
@@ -206,7 +208,8 @@ class Entrypoint
             $isInc = false;
             $oldValue    = $this->settings[$dataPath]??'';
             if(empty($oldValue)){
-                $oldValue = $this->incSettings[$dataPath]['port']??'';
+                $oldValue = 1*$this->incSettings[$dataPath]['port']??0;
+                $newValue = 1*$newValue;
                 $isInc = true;
             }
 
