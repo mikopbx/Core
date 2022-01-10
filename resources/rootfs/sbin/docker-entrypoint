@@ -28,9 +28,9 @@ class Entrypoint
     private array  $env;
     private array  $incSettings;
     private array  $settings;
-    private string $pathInc;
     public  float  $workerStartTime;
     public  const  PATH_DB = '/cf/conf/mikopbx.db';
+    private const  pathInc = '/usr/www/config/mikopbx-settings.json';
 
     public function __construct()
     {
@@ -161,13 +161,12 @@ class Entrypoint
      * Инициализация настроек. Необходима для проверки и обновления настроек портов.
      */
     private function initSettings():void{
-        $this->pathInc  = appPath('config/mikopbx-settings.json');
-        $jsonString     = file_get_contents($this->pathInc);
+        $jsonString     = file_get_contents(self::pathInc);
         try {
             $this->incSettings = json_decode($jsonString, true, 512, JSON_THROW_ON_ERROR);
         } catch (JsonException $exception) {
             $this->incSettings = [];
-            throw new Error("$this->pathInc has broken format");
+            throw new Error(self::pathInc." has broken format");
         }
 
         $out = [];
@@ -226,7 +225,7 @@ class Entrypoint
         Util::echoWithSyslog($msg);
         if($isInc === true){
             $this->incSettings[$dataPath]['port'] = $newValue;
-            $res = file_put_contents($this->pathInc, json_encode($this->incSettings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+            $res = file_put_contents(self::pathInc, json_encode($this->incSettings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
             $result = (false !== $res);
         }else{
             $res = Processes::mwExec("sqlite3 ".self::PATH_DB." 'UPDATE m_PbxSettings SET value=\"$newValue\" WHERE key=\"$dataPath\"'");
