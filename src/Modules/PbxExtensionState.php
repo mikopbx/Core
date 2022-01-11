@@ -96,7 +96,8 @@ class PbxExtensionState extends Injectable
             // Try to capture feature if it set
             $result = $this->license->featureAvailable($this->lic_feature_id);
             if ($result['success'] === false) {
-                $this->messages[] = $this->license->translateLicenseErrorMessage($result['error']);
+                $textError = (string)($result['error']??'');
+                $this->messages[] = $this->license->translateLicenseErrorMessage($textError);
 
                 return false;
             }
