@@ -95,7 +95,7 @@ class TimeSettingsController extends BaseController
         $timezone_list = [];
         foreach ($timezone_offsets as $timezone => $offset) {
             $offset_prefix    = $offset < 0 ? '-' : '+';
-            $offset_formatted = gmdate('H:i', $offset);
+            $offset_formatted = gmdate('H:i', abs($offset));
 
             $pretty_offset = "UTC${offset_prefix}${offset_formatted}";
 
