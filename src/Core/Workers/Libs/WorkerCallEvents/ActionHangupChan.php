@@ -49,6 +49,7 @@ class ActionHangupChan {
         /** @var CallDetailRecordsTmp $m_data */
         /** @var CallDetailRecordsTmp $row */
         $m_data = CallDetailRecordsTmp::find($filter);
+        $countRows = count($m_data->toArray());
         foreach ($m_data as $row) {
             if ($row->transfer == 1) {
                 $transfer_calls[] = $row->toArray();
@@ -91,7 +92,7 @@ class ActionHangupChan {
             }
         }
 
-        self::regMissedCall($data, count($m_data->toArray()));
+        self::regMissedCall($data, $countRows);
     }
 
     /**
@@ -104,11 +105,26 @@ class ActionHangupChan {
         if($tmpCdrCount > 0 || $data['did'] === ''){
             return;
         }
+        if(stripos($data['agi_channel'], 'local/') !== false){
+            // Локальные каналы не логируем как пропущенные.
+            return;
+        }
+        $filter         = [
+            'linkedid=:linkedid: AND (src_chan=:src_chan: OR dst_chan=:dst_chan:)',
+            'bind' => [
+                'linkedid' => $data['linkedid'],
+                'src_chan' => $data['agi_channel'],
+                'dst_chan' => $data['agi_channel'],
+            ],
+        ];
+        $m_data = CallDetailRecordsTmp::findFirst($filter);
+        if($m_data !== null){
+            return;
+        }
         if(empty($data['UNIQUEID'])){
             $data['UNIQUEID'] = $data['agi_threadid'];
         }
         $time = (float)str_replace('mikopbx-', '', $data['linkedid']);
-
         $data['start']   = date("Y-m-d H:i:s.v", $time);
         $data['endtime'] = $data['end'];
 
