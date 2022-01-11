@@ -1000,11 +1000,17 @@ class SIPConf extends CoreConfigClass
             $options['transport'] = 'transport-wss';
             $options['aors'] = $peer['extension'] . '-WS';
 
+            /** Устанавливаем кодек Opus в приоритет. */
+            $opusIndex = array_search('opus', $options['allow']);
+            if($opusIndex !== false){
+                unset($options['allow'][$opusIndex]);
+                array_unshift($options['allow'], 'opus');
+            }
+
             /*
              * https://www.asterisk.org/rtcp-mux-webrtc/
              */
             $options['rtcp_mux'] = 'yes';
-
             $conf .= Util::overrideConfigurationArray($options, $manual_attributes, 'endpoint');
             $conf .= $this->hookModulesMethod(CoreConfigClass::GENERATE_PEER_PJ_ADDITIONAL_OPTIONS, [$peer]);
         }
