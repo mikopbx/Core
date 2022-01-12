@@ -46,8 +46,17 @@ class CallDetailRecordsTmp extends CallDetailRecordsBase
     }
 
     public function afterSave():void {
+
+        $moveToGeneral = true;
+        if( $this->disposition === 'ANSWERED' &&
+            ($this->appname === 'interception' || $this->appname === 'originate') ){
+            // Это успешный originate или перехват на ответственного.
+            // Принудительно логировать такой вызов не следует.
+            $moveToGeneral = false;
+        }
+
         $work_completed = (string)$this->work_completed;
-        if( $work_completed === '1'){
+        if( $work_completed === '1' && $moveToGeneral){
             $newCdr = new CallDetailRecords();
             $vars   = $this->toArray();
             foreach ($vars as $key => $value){

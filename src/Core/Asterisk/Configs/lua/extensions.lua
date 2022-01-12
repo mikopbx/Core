@@ -212,6 +212,71 @@ function event_dial(without_event)
     return data;
 end
 
+-- Начало телефонного звонка
+function event_interception_start()
+    local data = {}
+    data['start'] = getNowDate()
+    data['action']       = "dial";
+    data['action_extra'] = "originate_start";
+
+    data['UNIQUEID']     = get_variable('UNIQUEID')..'_'..generateRandomString(6)
+    set_variable("__int_UNIQUEID", data['UNIQUEID']);
+
+    data['linkedid']  	    = get_variable("CHANNEL(linkedid)");
+    data['int_channel']     = get_variable("INTECEPTION_CNANNEL");
+    data['verbose_call_id']	= get_variable("CHANNEL(callid)");
+
+    if(data['int_channel'] ~= '')then
+        data['linkedid']     = get_variable('OLD_LINKEDID');
+        set_variable("__int_ID", data['linkedid']);
+        local from_account  = get_variable("FROM_PEER")
+        if ( from_account=='' and string.lower(data['int_channel']):find("local/") == nil )then
+            from_account = getAccountName(data['int_channel']);
+        end
+        data['from_account'] = from_account;
+        data['src_chan']  	 = data['int_channel'];
+        data['src_num']  	 = get_variable("pt1c_cid");
+        data['dst_num']  	 = get_variable("number");
+        data['dialstatus']   = 'ORIGINATE_TRY_INTERCEPTION';
+        data['appname']  	 = 'interception';
+    else
+        data['appname']  	 = 'originate';
+        data['src_num']  	 = get_variable("number");
+        data['dst_num']  	 = get_variable("pt1c_cid");
+        data['dialstatus']  = 'ORIGINATE_TRY_DIAL';
+    end
+
+    userevent_return(data)
+    return data;
+end
+
+function event_interception_bridge_result()
+    local data = {}
+    data['endtime']          = getNowDate()
+    data['action']       = "dial";
+    data['action_extra'] = "originate_end";
+    data['dialstatus']   = get_variable("M_DIALSTATUS");
+
+    if(data['dialstatus'] == 'ANSWER') then
+        data['dialstatus']   = 'ANSWERED';
+        -- Ответим как отвеченный, такой вызов не попадет в итоговый CDR.
+        -- Он будет залогирован иначе. Только для Originate, для регистрации неудачных.
+        data['answer']   = os.date("%Y-%m-%d %H:%M:%S", os.time()+3)..'.0';
+        data['endtime']  = os.date("%Y-%m-%d %H:%M:%S", os.time()+5)..'.0';
+    end
+
+    data['UNIQUEID']     = get_variable("int_UNIQUEID");
+    data['linkedid']  	 = get_variable("CHANNEL(linkedid)");
+
+    local intId = get_variable('int_ID');
+    if(intId ~= '')then
+        data['linkedid'] = intId;
+    end
+
+    userevent_return(data)
+    return data;
+end
+
 function event_voicemail_start()
     local data = {}
     data['start']       = getNowDate()
@@ -250,7 +315,8 @@ end
 function event_dial_interception()
     local data = {}
     local OLD_LINKEDID = get_variable("OLD_LINKEDID");
-    if(OLD_LINKEDID == '')then
+    if(OLD_LINKEDID == '') then
+        app["return"]();
         return;
     end
     data['start']  = os.date("%Y-%m-%d %H:%M:%S.")..tostring(OLD_LINKEDID:sub(9)):sub(3,5);
@@ -749,7 +815,12 @@ extensions = {
     set_from_peer={},
     voicemail_start={},
     voicemail_end={},
+    interception_start={},
+    interception_bridge_result={}
+
 }
+
+-- event_interception_start event_interception_bridge_result
 extensions.dial["_.!"]                      = function() event_dial() end
 extensions.dial_interception["_.!"]         = function() event_dial_interception() end
 extensions.transfer_dial["_.!"]             = function() event_transfer_dial() end
@@ -766,6 +837,9 @@ extensions.dial_app["_.!"]                  = function() event_dial_app() end
 extensions.dial_outworktimes["_.!"]         = function() event_dial_outworktimes() end
 extensions.set_from_peer["_.!"]             = function() set_from_peer() end
 extensions.voicemail_start["_.!"]           = function() event_voicemail_start() end
+
+extensions.interception_start["_.!"]           = function() event_interception_start() end
+extensions.interception_bridge_result["_.!"]   = function() event_interception_bridge_result() end
 --
 ------
 ---- Безопасное подключение дополнительных dialplan, описанных в /etc/asterisk/extensions-lua
