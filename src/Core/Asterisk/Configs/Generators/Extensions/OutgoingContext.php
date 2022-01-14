@@ -178,7 +178,7 @@ class OutgoingContext extends CoreConfigClass
         $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(' . $rout['providerid'] . '-outgoing-after-dial-custom,${EXTEN}),1}" == "1"]?' . $rout['providerid'] . '-outgoing-after-dial-custom,${EXTEN},1)' . "\n\t";
         $conf .= 'same => n,ExecIf($["${ISTRANSFER}x" != "x"]?Gosub(transfer_dial_hangup,${EXTEN},1))' . "\n\t";
         $conf .= 'same => n,ExecIf($["${DIALSTATUS}" = "ANSWER"]?Hangup())' . "\n\t";
-        $conf .= 'same => n,ExecIf($["${DIALSTATUS}" = "BUSY"]?Busy())' . "\n\t";
+        $conf .= 'same => n,ExecIf($["${DIALSTATUS}" = "BUSY"]?Busy(2))' . "\n\t";
         $conf .= 'same => n,Set(pt1c_UNIQUEID=${EMPTY_VALUE})' . "\n\t";
         $conf .= 'same => n,return' . "\n";
     }
