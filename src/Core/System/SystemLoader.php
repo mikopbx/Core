@@ -59,7 +59,7 @@ class SystemLoader extends Di\Injectable
     {
         $this->di->getShared('registry')->booting = true;
 
-        $this->echoStartMsg(' - Start beanstalkd daemon...');
+        $this->echoStartMsg(' - Start acpid daemon...');
         $ACPIDConf = new ACPIDConf();
         $ACPIDConf->reStart();
         $this->echoResultMsg();
