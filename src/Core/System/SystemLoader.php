@@ -19,6 +19,7 @@
 
 namespace MikoPBX\Core\System;
 
+use MikoPBX\Core\System\Configs\ACPIDConf;
 use MikoPBX\Core\System\Configs\BeanstalkConf;
 use MikoPBX\Core\System\Configs\CronConf;
 use MikoPBX\Core\System\Configs\IptablesConf;
@@ -57,6 +58,11 @@ class SystemLoader extends Di\Injectable
     public function startSystem(): bool
     {
         $this->di->getShared('registry')->booting = true;
+
+        $this->echoStartMsg(' - Start beanstalkd daemon...');
+        $ACPIDConf = new ACPIDConf();
+        $ACPIDConf->reStart();
+        $this->echoResultMsg();
 
         $this->echoStartMsg(' - Start beanstalkd daemon...');
         $beanstalkConf = new BeanstalkConf();
