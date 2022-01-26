@@ -204,6 +204,7 @@ return [
     'pr_ValidationProviderNameIsEmpty' => 'Describe name for this provider',
     'pr_ValidationProviderHostIsEmpty' => 'Describe provider host URL or IP address',
     'pr_ValidationProviderLoginIsEmpty' => 'Enter the username for authorization at the provider',
+    'pr_ValidationProviderLoginNotSingleSimbol' => 'The login must be longer than one character',
     'pr_SIPPort' => 'SIP connection port',
     'pr_DisableFromUser' => 'To disable the use of fromuser field',
     'pr_NoRegister' => 'Disable registration',

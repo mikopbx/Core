@@ -205,6 +205,7 @@ return [
     'pr_ValidationProviderNameIsEmpty' => 'Введите название провайдера',
     'pr_ValidationProviderHostIsEmpty' => 'Введите хост или IP адрес провайдера',
     'pr_ValidationProviderLoginIsEmpty' => 'Введите логин для авторизации у провайдера',
+    'pr_ValidationProviderLoginNotSingleSimbol' => 'Логин должен быть длиннее одного символа',
     'pr_SIPPort' => 'Порт соединения SIP',
     'pr_DisableFromUser' => 'Отключить использование поля fromuser',
     'pr_NoRegister' => 'Отключить регистрацию',

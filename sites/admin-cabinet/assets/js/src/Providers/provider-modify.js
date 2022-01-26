@@ -57,10 +57,11 @@ const provider = {
 		},
 		username: {
 			identifier: 'username',
+			optional   : true,
 			rules: [
 				{
-					type: 'username[noregister, username]',
-					prompt: globalTranslate.pr_ValidationProviderLoginIsEmpty,
+					type: 'minLength[2]',
+					prompt: globalTranslate.pr_ValidationProviderLoginNotSingleSimbol,
 				},
 			],
 		},
