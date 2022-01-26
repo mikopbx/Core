@@ -26,6 +26,7 @@ use MikoPBX\Core\System\{Storage, Util};
 class ExtensionsConf extends CoreConfigClass
 {
     public const ALL_NUMBER_EXTENSION = '_[0-9*#+a-zA-Z][0-9*#+a-zA-Z]!';
+    public const DIGIT_NUMBER_EXTENSION = '_X!';
     protected string $description = 'extensions.conf';
 
     /**
@@ -181,14 +182,12 @@ class ExtensionsConf extends CoreConfigClass
 
         $conf .= 'exten => h,1,ExecIf($["${ISTRANSFER}x" != "x"]?Goto(transfer_dial_hangup,${EXTEN},1))' . "\n\n";
 
-        // TODO / Добавление / удаление префиксов на входящий callerid.
         $conf .= '[add-trim-prefix-clid]' . "\n";
         $conf .= 'exten => ' . self::ALL_NUMBER_EXTENSION . ',1,NoOp(--- Incoming call from ${CALLERID(num)} ---)' . "\n\t";
         $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1)' . "\n\t";
-        // Отсекаем "+".
-        // $conf.= 'same => n,ExecIf( $["${CALLERID(num):0:1}" == "+"]?Set(CALLERID(num)=${CALLERID(num):1}))'."\n\t";
-        // Отсекаем "7" и добавляем "8".
-        // $conf.= 'same => n,ExecIf( $["${REGEX("^7[0-9]+" ${CALLERID(num)})}" == "1"]?Set(CALLERID(num)=8${CALLERID(num):1}))'."\n\t";
+        $conf .= 'same => n,return' . "\n\n";
+        $conf .= 'exten => ' . self::DIGIT_NUMBER_EXTENSION . ',1,NoOp(--- Incoming call from ${CALLERID(num)} ---)' . "\n\t";
+        $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1)' . "\n\t";
         $conf .= 'same => n,return' . "\n\n";
     }
 

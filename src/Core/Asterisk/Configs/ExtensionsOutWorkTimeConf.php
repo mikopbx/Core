@@ -62,17 +62,44 @@ class ExtensionsOutWorkTimeConf extends CoreConfigClass
         $conf .= 'same => n,Playback(${filename})' . "\n\t";
         $conf .= 'same => n,Hangup()' . "\n\n";
 
-        $checkContext = self::OUT_WORK_TIME_CONTEXT;
-        $conf .= "[".$checkContext."]\n";
-        $conf .= 'exten => '.ExtensionsConf::ALL_NUMBER_EXTENSION.',1,Set(currentYear=${STRFTIME(,,%Y)})'."\n\t";
-        $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS('.$checkContext.'-${currentYear},${EXTEN},1)}" == "1"]?'.$checkContext.'-${currentYear},${EXTEN},1)'."\n\t";
+        $conf .= 'exten => '.ExtensionsConf::DIGIT_NUMBER_EXTENSION.',1,Gosub(dial_outworktimes,${EXTEN},1)' . "\n\t";
+        $conf .= 'same => n,Playback(${filename})' . "\n\t";
+        $conf .= 'same => n,Hangup()' . "\n\n";
 
-        $data = OutWorkTimes::find(['order' => 'date_from']);
-        $conf_out_set_var = '';
-
+        $conf_out_set_var  = '';
         $checkContextsYear = [];
+        $conf .= "[".self::OUT_WORK_TIME_CONTEXT."]\n";
+        $conf .= $this->getWorkTimeDialplan(ExtensionsConf::ALL_NUMBER_EXTENSION,   $conf_out_set_var, $checkContextsYear);
+        $conf .= $this->getWorkTimeDialplan(ExtensionsConf::DIGIT_NUMBER_EXTENSION, $conf_out_set_var, $checkContextsYear);
+        $conf .= $conf_out_set_var;
+
+        foreach ($checkContextsYear as $year => $rule){
+            $conf .= "[".self::OUT_WORK_TIME_CONTEXT."-{$year}]\n";
+            $conf .= 'exten => '.ExtensionsConf::ALL_NUMBER_EXTENSION.",1,NoOp(check time {$year} year)\n\t";
+            $conf .= implode("", $rule);
+            $conf .= "same => n,return\n\n";
+
+            $conf .= 'exten => '.ExtensionsConf::DIGIT_NUMBER_EXTENSION.",1,NoOp(check time {$year} year)\n\t";
+            $conf .= implode("", $rule);
+            $conf .= "same => n,return\n\n";
+        }
+
+        return $conf;
+    }
+
+    /**
+     * @param $extension
+     * @param $conf_out_set_var
+     * @param $checkContextsYear
+     * @return string
+     */
+    private function getWorkTimeDialplan($extension, &$conf_out_set_var, &$checkContextsYear):string
+    {
+        $conf = 'exten => '.$extension.',1,Set(currentYear=${STRFTIME(,,%Y)})'."\n\t";
+        $conf.= 'same => n,GosubIf($["${DIALPLAN_EXISTS('.self::OUT_WORK_TIME_CONTEXT.'-${currentYear},${EXTEN},1)}" == "1"]?'.self::OUT_WORK_TIME_CONTEXT.'-${currentYear},${EXTEN},1)'."\n\t";
+        $data = OutWorkTimes::find(['order' => 'date_from']);
         foreach ($data as $out_data) {
-            $intervals = $this->getOutWorkIntervals($out_data->date_from,$out_data->date_to);
+            $intervals = $this->getOutWorkIntervals($out_data->date_from, $out_data->date_to);
             foreach ($intervals as $interval){
                 $ruleData = $out_data->toArray();
                 $ruleData['date_to']    = $interval['date_to'];
@@ -81,14 +108,6 @@ class ExtensionsOutWorkTimeConf extends CoreConfigClass
             }
         }
         $conf .= "same => n,return\n\n";
-        $conf .= $conf_out_set_var;
-
-        foreach ($checkContextsYear as $year => $rule){
-            $conf .= "[".$checkContext."-{$year}]\n";
-            $conf .= 'exten => '.ExtensionsConf::ALL_NUMBER_EXTENSION.",1,NoOp(check time {$year} year)\n\t";
-            $conf .= implode("", $rule);
-            $conf .= "same => n,return\n\n";
-        }
 
         return $conf;
     }
