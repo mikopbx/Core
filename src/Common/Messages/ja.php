@@ -1067,4 +1067,5 @@ return [
     'cr_ValidateExtensionLen' => '内線番号は2桁以上である必要があります',
     'cr_ValidatePinNumber' => 'PINは数字のみである必要があります',
     'gs_UseWebRTC' => 'WebRTCを使用する',
+    'pr_ValidationProviderLoginNotSingleSimbol' => 'ログインは1文字より長くする必要があります',
 ];

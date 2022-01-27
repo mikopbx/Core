@@ -1067,4 +1067,5 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'cr_ValidateExtensionLen' => 'O número do ramal deve ter dois ou mais dígitos',
     'cr_ValidatePinNumber' => 'O PIN deve ser apenas números',
     'gs_UseWebRTC' => 'Use WebRTC',
+    'pr_ValidationProviderLoginNotSingleSimbol' => 'O login deve ter mais de um caractere',
 ];

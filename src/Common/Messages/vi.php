@@ -1067,4 +1067,5 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá đ
     'cr_ValidateExtensionLen' => 'Số máy lẻ phải có hai chữ số trở lên',
     'cr_ValidatePinNumber' => 'Mã PIN chỉ được là số',
     'gs_UseWebRTC' => 'Sử dụng WebRTC',
+    'pr_ValidationProviderLoginNotSingleSimbol' => 'Thông tin đăng nhập phải dài hơn một ký tự',
 ];

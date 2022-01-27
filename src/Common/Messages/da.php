@@ -1067,4 +1067,5 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'cr_ValidateExtensionLen' => 'Lokalnummeret skal være to eller flere cifre',
     'cr_ValidatePinNumber' => 'PIN-koden må kun være tal',
     'gs_UseWebRTC' => 'Brug WebRTC',
+    'pr_ValidationProviderLoginNotSingleSimbol' => 'Login skal være længere end ét tegn',
 ];

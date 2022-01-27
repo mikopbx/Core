@@ -1067,4 +1067,5 @@ return [
     'cr_ValidateExtensionLen' => 'გაფართოების ნომერი უნდა იყოს ორი ან მეტი ციფრი',
     'cr_ValidatePinNumber' => 'PIN უნდა იყოს მხოლოდ ნომრები',
     'gs_UseWebRTC' => 'გამოიყენეთ WebRTC',
+    'pr_ValidationProviderLoginNotSingleSimbol' => 'შესვლა ერთ სიმბოლოზე გრძელი უნდა იყოს',
 ];
