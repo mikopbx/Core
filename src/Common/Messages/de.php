@@ -1070,4 +1070,5 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
     'cr_ValidatePinNumber' => 'PIN darf nur aus Zahlen bestehen',
     'cr_ValidateExtensionLen' => 'Die Nebenstellennummer muss aus zwei oder mehr Ziffern bestehen',
     'gs_UseWebRTC' => 'Verwenden Sie WebRTC',
+    'pr_ValidationProviderLoginNotSingleSimbol' => 'Login muss länger als ein Zeichen sein',
 ];

@@ -1067,4 +1067,5 @@ return [
     'cr_ValidateExtensionLen' => '分机号码必须是两位或更多位数字',
     'cr_ValidatePinNumber' => 'PIN 只能是数字',
     'gs_UseWebRTC' => '使用 WebRTC',
+    'pr_ValidationProviderLoginNotSingleSimbol' => '登录名必须多于一个字符',
 ];

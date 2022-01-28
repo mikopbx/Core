@@ -1067,4 +1067,5 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
     'cr_ValidateExtensionLen' => 'Dahili numara iki veya daha fazla basamaklı olmalıdır',
     'cr_ValidatePinNumber' => 'PIN yalnızca rakamlardan oluşmalıdır',
     'gs_UseWebRTC' => 'WebRTC\'yi kullan',
+    'pr_ValidationProviderLoginNotSingleSimbol' => 'Giriş bir karakterden uzun olmalıdır',
 ];

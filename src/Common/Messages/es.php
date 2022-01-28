@@ -1067,4 +1067,5 @@ Se puede activar una vez, después de lo cual el cupón se canjea.
     'cr_ValidateExtensionLen' => 'El número de extensión debe tener dos o más dígitos',
     'cr_ValidatePinNumber' => 'El PIN solo debe ser números',
     'gs_UseWebRTC' => 'Utilice WebRTC',
+    'pr_ValidationProviderLoginNotSingleSimbol' => 'El inicio de sesión debe tener más de un carácter',
 ];

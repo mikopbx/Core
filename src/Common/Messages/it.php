@@ -1067,4 +1067,5 @@ Può essere attivato una volta, dopo di che il coupon viene riscattato.
     'cr_ValidateExtensionLen' => 'Il numero di interno deve essere composto da due o più cifre',
     'cr_ValidatePinNumber' => 'Il PIN deve essere solo numerico',
     'gs_UseWebRTC' => 'Usa WebRTC',
+    'pr_ValidationProviderLoginNotSingleSimbol' => 'L\'accesso deve essere più lungo di un carattere',
 ];

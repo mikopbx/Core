@@ -1067,4 +1067,5 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'cr_ValidateExtensionLen' => 'Číslo pobočky musí mít dvě nebo více číslic',
     'cr_ValidatePinNumber' => 'PIN musí být pouze čísla',
     'gs_UseWebRTC' => 'Použijte WebRTC',
+    'pr_ValidationProviderLoginNotSingleSimbol' => 'Přihlášení musí být delší než jeden znak',
 ];
