@@ -1343,7 +1343,7 @@ class AsteriskManager
     }
 
     /**
-     * Полученире текущих регистраций.
+     * Полученире статусов пиров.
      *
      * @return array
      */
@@ -1351,26 +1351,28 @@ class AsteriskManager
     {
         $peers  = [];
         $result = $this->sendRequestTimeout('PJSIPShowEndpoints');
-        if (isset($result['data']['EndpointList'])) {
-            foreach ($result['data']['EndpointList'] as $peer) {
-                if ($peer['ObjectName'] === 'anonymous') {
-                    continue;
-                }
-
-                $state_array = [
-                    'Not in use' => 'OK',
-                    'Busy'       => 'OK',
-                ];
-                $state       = $state_array[$peer['DeviceState']] ?? 'UNKNOWN';
-
-                $peers[] = [
-                    'id'    => $peer['ObjectName'],
-                    'state' => strtoupper($state),
-                ];
+        $endpoints = $result['data']['EndpointList']??[];
+        foreach ($endpoints as $peer) {
+            if ($peer['ObjectName'] === 'anonymous') {
+                continue;
             }
-        }
+            $state_array = [
+                'Not in use' => 'OK',
+                'Busy'       => 'OK',
+            ];
+            $state       = $state_array[$peer['DeviceState']] ?? 'UNKNOWN';
+            $oldAState   = $peers[$peer['Auths']]['state']??'';
 
-        return $peers;
+            if('OK' === $oldAState || empty($peer['Auths'])){
+                continue;
+            }
+
+            $peers[$peer['Auths']] = [
+                'id'        => $peer['Auths'],
+                'state'     => strtoupper($state)
+            ];
+        }
+        return array_values($peers);
     }
 
     /**
@@ -1378,7 +1380,7 @@ class AsteriskManager
      *
      * @return array
      */
-    public function getSipPeers()
+    public function getSipPeers():array
     {
         $peers = [];
         $res   = $this->sendRequestTimeout('SIPpeers');
@@ -1418,27 +1420,35 @@ class AsteriskManager
      * Получение статуса конкретного пира.
      *
      * @param $peer
+     * @param string $prefix
      *
      * @return array
      */
-    public function getPjSipPeer($peer)
+    public function getPjSipPeer($peer, string $prefix = ''):array
     {
         $result     = [];
-        $parameters = ['Endpoint' => trim($peer)];
+        if(empty($prefix)){
+            $result     = $this->getPjSipPeer($peer, "WS");
+            $parameters = ['Endpoint' => trim($peer)];
+        }else{
+            $parameters = ['Endpoint' => trim($peer)."-$prefix"];
+        }
+
         $res        = $this->sendRequestTimeout('PJSIPShowEndpoint', $parameters);
         if (isset($res['data']['ContactStatusDetail'])) {
-            $generalRecordFound = false;
+            $generalRecordFound = count($result)>0;
             foreach ($res['data']['ContactStatusDetail'] as $index => $data){
-                $prefix = "-$index";
+                $suffix = "-$prefix$index";
                 if(!empty($data['URI']) && !$generalRecordFound){
                     $generalRecordFound = true;
-                    $prefix = '';
+                    $suffix = '';
                 }
                 foreach ($data as $key => $value){
-                    $result["$key$prefix"] = $value;
+                    $result["$key$suffix"] = $value;
                 }
             }
         }
+
         $result['state'] = isset($result['URI']) && ! empty($result['URI']) ? 'OK' : 'UNKNOWN';
         return $result;
     }
