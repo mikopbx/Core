@@ -83,6 +83,8 @@ const soundFiles = {
 			onSuccess(response) {
 				if (response.success === true) {
 					soundFiles.$audioFilesList.find(`tr[id=${id}]`).remove();
+					sessionStorage.removeItem(`${globalRootUrl}sound-files/getSoundFiles/custom`);
+					sessionStorage.removeItem(`${globalRootUrl}sound-files/getSoundFiles/moh`);
 				} else {
 					soundFiles.$contentFrame.before(`<div class="ui error message ajax">${response.message.error}</div>`);
 				}
