@@ -84,9 +84,6 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
             'moduleId'=>'ModuleBitrix24Integration',
         ]];
         $params[] = [[
-            'moduleId'=>'ModuleBitrix24Notify',
-        ]];
-        $params[] = [[
             'moduleId'=>'ModuleCallTracking',
         ]];
         $params[] = [[

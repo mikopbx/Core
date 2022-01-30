@@ -75,14 +75,22 @@ class CreateAudioFilesTest extends MikoPBXTestsBase
         $params[] = [[
             'name' => 'The first audio record',
             'path'    => 'C:\Users\hello\Documents\audio\250Hz_44100Hz_16bit_05sec.wav',
+            'for_delete'=> false,
         ]];
         $params[] = [[
             'name' => 'The second audio record',
             'path'    => 'C:\Users\hello\Documents\audio\blind_willie.mp3',
+            'for_delete'=> false,
         ]];
         $params[] = [[
             'name' => 'The third audio record',
             'path'    => 'C:\Users\hello\Documents\audio\first_noel.mp3',
+            'for_delete'=> false,
+        ]];
+        $params[] = [[
+            'name' => 'The fourth audio record',
+            'path'    => 'C:\Users\hello\Documents\audio\first_noel.mp3',
+            'for_delete'=> true,
         ]];
         return $params;
     }
