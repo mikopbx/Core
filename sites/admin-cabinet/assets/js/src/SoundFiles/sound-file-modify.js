@@ -68,7 +68,15 @@ const soundFileModify = {
 			PbxApi.FilesUploadFile(file, soundFileModify.cbUploadResumable);
 
 		});
+		window.addEventListener('ConfigDataChanged', soundFileModify.cbOnDataChanged);
+	},
 
+	/**
+	 * We will drop all caches if data changes
+	 */
+	cbOnDataChanged() {
+		sessionStorage.removeItem(`${globalRootUrl}sound-files/getSoundFiles/custom`);
+		sessionStorage.removeItem(`${globalRootUrl}sound-files/getSoundFiles/moh`);
 	},
 
 	/**
