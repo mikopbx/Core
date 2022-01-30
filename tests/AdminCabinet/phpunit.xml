@@ -37,7 +37,7 @@
             <file>Tests/ChangeExtensionsSettingsTest.php</file>
             <file>Tests/ChangeCallQueueTest.php</file>
             <file>Tests/DeleteExtensionTest.php</file>
-            <file>DeleteExtensionFromDropDownTest.php</file>
+            <file>Tests/DeleteExtensionFromDropDownTest.php</file>
             <file>Tests/DeleteProviderTest.php</file>
             <file>Tests/ChangeLicenseKeyTest.php</file>
             <file>Tests/InstallModulesTest.php</file>
