@@ -57,6 +57,10 @@ class ConferenceRooms extends ModelsBase
      */
     public ?string $name = '';
 
+    /**
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $pinCode = '';
 
     public function initialize(): void
     {

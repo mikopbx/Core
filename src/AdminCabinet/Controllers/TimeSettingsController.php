@@ -95,7 +95,8 @@ class TimeSettingsController extends BaseController
         $timezone_list = [];
         foreach ($timezone_offsets as $timezone => $offset) {
             $offset_prefix    = $offset < 0 ? '-' : '+';
-            $offset_formatted = gmdate('H:i', $offset);
+            $absOffset = (int)abs($offset);
+            $offset_formatted = gmdate('H:i', $absOffset);
 
             $pretty_offset = "UTC${offset_prefix}${offset_formatted}";
 
@@ -154,7 +155,6 @@ class TimeSettingsController extends BaseController
 
         $this->flash->success($this->translation->_('ms_SuccessfulSaved'));
         $this->view->success = true;
-        // $this->view->reload  = 'time-settings/modify';
         $this->db->commit();
     }
 }

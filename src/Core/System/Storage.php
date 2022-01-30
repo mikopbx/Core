@@ -269,15 +269,13 @@ class Storage extends Di\Injectable
                 $filter = 'usbdisk1';
             }
         }
+        $grepPath   = Util::which('grep');
+        $mountPath  = Util::which('mount');
+        $awkPath    = Util::which('awk');
+
         $filter = escapeshellarg($filter);
-
-        $out = [];
-        $grepPath = Util::which('grep');
-        $mountPath = Util::which('mount');
-        $awkPath = Util::which('awk');
-        Processes::mwExec("{$mountPath} | {$grepPath} {$filter} | {$awkPath} '{print $3}'", $out);
-        $mount_dir = trim(implode('', $out));
-
+        $out        = shell_exec("$mountPath | $grepPath $filter | {$awkPath} '{print $3}'");
+        $mount_dir  = trim($out);
         return ($mount_dir !== '');
     }
 
@@ -357,6 +355,46 @@ class Storage extends Di\Injectable
             unset($response);
         }
 
+        return self::isStorageDiskMounted("$local_dir ");
+    }
+
+    /**
+     * Монитирование каталога с удаленного сервера FTP.
+     *
+     * @param        $host
+     * @param        $user
+     * @param        $pass
+     * @param        $dstDir
+     * @param        $local_dir
+     *
+     * @return bool
+     */
+    public static function mountWebDav($host, $user, $pass, $dstDir, $local_dir): bool
+    {
+        $host = trim($host);
+        $dstDir = trim($dstDir);
+        if(substr($host, -1) === '/'){
+            $host = substr($host, 0, -1);
+        }
+        if($dstDir[0] === '/'){
+            $dstDir = substr($dstDir, 1);
+        }
+        Util::mwMkdir($local_dir);
+        $out = [];
+        $conf = 'dav_user www'.PHP_EOL.
+                'dav_group www'.PHP_EOL;
+
+        file_put_contents('/etc/davfs2/secrets', "{$host}{$dstDir} $user $pass");
+        file_put_contents('/etc/davfs2/davfs2.conf', $conf);
+        $timeoutPath = Util::which('timeout');
+        $mount = Util::which('mount.davfs');
+        $command = "$timeoutPath 3 yes | $mount {$host}{$dstDir} {$local_dir}";
+        Processes::mwExec($command, $out);
+        $response = trim(implode('', $out));
+        if ('Terminated' === $response) {
+            // Удаленный сервер не ответил / или не корректно указан пароль.
+            unset($response);
+        }
         return self::isStorageDiskMounted("$local_dir ");
     }
 
@@ -916,15 +954,7 @@ class Storage extends Di\Injectable
         $conf = '';
         foreach ($disks as $disk) {
             clearstatcache();
-            if ($disk['device'] !== "/dev/{$cf_disk}") {
-                // Если это обычный диск, то раздел 1.
-                $part = "1";
-            } else {
-                // Если это системный диск, то пытаемся подключить раздел 4.
-                $part = "4";
-            }
-            $devName = self::getDevPartName($disk['device'], $part);
-            $dev = '/dev/' . $devName;
+            $dev = $this->getStorageDev($disk, $cf_disk);
             if (!$this->hddExists($dev)) {
                 // Диск не существует.
                 continue;
@@ -938,7 +968,7 @@ class Storage extends Di\Injectable
                 Util::sysLogMsg('Storage', "The file system type has changed {$disk['filesystemtype']} -> {$formatFs}. The disk will not be connected.");
                 continue;
             }
-            $str_uid = 'UUID=' . $this->getUuid($dev) . '';
+            $str_uid = 'UUID=' . $this->getUuid($dev);
             $conf .= "{$str_uid} /storage/usbdisk{$disk['id']} {$formatFs} async,rw 0 0\n";
             $mount_point = "/storage/usbdisk{$disk['id']}";
             Util::mwMkdir($mount_point);
@@ -946,6 +976,37 @@ class Storage extends Di\Injectable
         $this->saveFstab($conf);
         $this->createWorkDirs();
         PHPConf::setupLog();
+    }
+
+    /**
+     * Поиск Storage устройства.
+     * Возвращает полный путь к разделу.
+     * @param $disk
+     * @param $cf_disk
+     * @return string
+     */
+    private function getStorageDev($disk, $cf_disk):string{
+        if(!empty($disk['uniqid'])){
+            // Ищим имя раздела по UID.
+            $lsBlkPath   = Util::which('lsblk');
+            $busyboxPath = Util::which('busybox');
+            $cmd = "{$lsBlkPath} -r -o NAME,UUID | {$busyboxPath} grep {$disk['uniqid']} | {$busyboxPath} cut -d ' ' -f 1";
+            $dev = '/dev/'.trim(shell_exec($cmd));
+            if ($this->hddExists($dev)) {
+                // Диск существует.
+                return $dev;
+            }
+        }
+        // Определяем диск по его имени.
+        if ($disk['device'] !== "/dev/{$cf_disk}") {
+            // Если это обычный диск, то раздел 1.
+            $part = "1";
+        } else {
+            // Если это системный диск, то пытаемся подключить раздел 4.
+            $part = "4";
+        }
+        $devName = self::getDevPartName($disk['device'], $part);
+        return '/dev/' . $devName;
     }
 
     /**

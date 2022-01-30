@@ -1063,4 +1063,9 @@ Può essere attivato una volta, dopo di che il coupon viene riscattato.
     'gs_NeedRestartPBX' => 'In caso di modifica, il PBX si riavvierà (servizio asterisco)',
     'ex_BusyLevelInfo' => 'Al raggiungimento del numero di conversazioni specificato, il telefono del dipendente verrà considerato occupato.',
     'ex_PortugueseBrazil' => 'Portoghese (Brasile)',
+    'gs_RTPStunServer' => 'Indirizzo STUN del server (esempio: stun.test.net:1000)',
+    'cr_ValidateExtensionLen' => 'Il numero di interno deve essere composto da due o più cifre',
+    'cr_ValidatePinNumber' => 'Il PIN deve essere solo numerico',
+    'gs_UseWebRTC' => 'Usa WebRTC',
+    'pr_ValidationProviderLoginNotSingleSimbol' => 'L\'accesso deve essere più lungo di un carattere',
 ];

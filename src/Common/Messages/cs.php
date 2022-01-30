@@ -1063,4 +1063,9 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'gs_NeedRestartPBX' => 'Při změně se ústředna restartuje (služba s hvězdičkou)',
     'ex_BusyLevelInfo' => 'Po dosažení zadaného počtu konverzací bude telefon zaměstnance považován za obsazený.',
     'ex_PortugueseBrazil' => 'português (Brazílie)',
+    'gs_RTPStunServer' => 'Adresa serveru STUN (příklad: stun.test.net:10000)',
+    'cr_ValidateExtensionLen' => 'Číslo pobočky musí mít dvě nebo více číslic',
+    'cr_ValidatePinNumber' => 'PIN musí být pouze čísla',
+    'gs_UseWebRTC' => 'Použijte WebRTC',
+    'pr_ValidationProviderLoginNotSingleSimbol' => 'Přihlášení musí být delší než jeden znak',
 ];

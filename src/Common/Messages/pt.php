@@ -1063,4 +1063,9 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'gs_NeedRestartPBX' => 'Ao mudar, o PBX irá reiniciar (serviço de asterisco)',
     'ex_BusyLevelInfo' => 'Ao atingir o número especificado de conversas, o telefone do funcionário será considerado ocupado.',
     'ex_PortugueseBrazil' => 'Português (Brasil)',
+    'gs_RTPStunServer' => 'Endereço STUN do servidor (exemplo: stun.test.net:10000)',
+    'cr_ValidateExtensionLen' => 'O número do ramal deve ter dois ou mais dígitos',
+    'cr_ValidatePinNumber' => 'O PIN deve ser apenas números',
+    'gs_UseWebRTC' => 'Use WebRTC',
+    'pr_ValidationProviderLoginNotSingleSimbol' => 'O login deve ter mais de um caractere',
 ];

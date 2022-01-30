@@ -564,14 +564,30 @@ class Util
     public static function echoResult(string $message, bool $result = true):void
     {
         $cols   = self::getCountCols();
-        $spaces = str_repeat('.', $cols - strlen($message) - 8);
+        if(!is_numeric($cols)){
+            // Не удалось получить ширину экрана.
+            return;
+        }
+        $len = $cols - strlen($message) - 8;
+        if($len < 2){
+            // Не корректная ширина экрана.
+            return;
+        }
+
+        $spaces = str_repeat('.', $len);
         echo "\r".$message.$spaces;
         self::echoDone($result);
     }
 
     public static function getCountCols():string
     {
-        return min(shell_exec('tput cols'), 80);
+        $len = 1*trim(shell_exec('tput cols'));
+        if($len === 0){
+            $len = 80;
+        }else{
+            $len = min($len, 80);
+        }
+        return $len;
     }
 
     /**

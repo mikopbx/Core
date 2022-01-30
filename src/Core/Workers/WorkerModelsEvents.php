@@ -253,6 +253,7 @@ class WorkerModelsEvents extends WorkerBase
         $tables[] = [
             'settingName' => [
                 'PBXAllowGuestCalls',
+                'UseWebRTC',
             ],
             'functions'   => [
                 self::R_SIP,

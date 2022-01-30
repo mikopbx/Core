@@ -372,9 +372,12 @@ class SIPConf extends CoreConfigClass
         }
         $conf = '';
         foreach ($this->data_peers as $peer) {
-            $conf .= "exten => {$peer['extension']},hint,{$this->technology}/{$peer['extension']}&Custom:{$peer['extension']} \n";
+            $hint = "{$this->technology}/{$peer['extension']}";
+            if($this->generalSettings['UseWebRTC'] === '1') {
+                $hint.="&{$this->technology}/{$peer['extension']}-WS";
+            }
+            $conf .= "exten => {$peer['extension']},hint,$hint&Custom:{$peer['extension']} \n";
         }
-
         return $conf;
     }
 
@@ -922,8 +925,13 @@ class SIPConf extends CoreConfigClass
             $options,
             CoreConfigClass::OVERRIDE_PJSIP_OPTIONS
         );
-        $conf    .= "[{$peer['extension']}] \n";
+        $conf    .= "[{$peer['extension']}]\n";
         $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'aor');
+
+        if($this->generalSettings['UseWebRTC'] === '1'){
+            $conf    .= "[{$peer['extension']}-WS]\n";
+            $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'aor');
+        }
 
         return $conf;
     }
@@ -973,7 +981,8 @@ class SIPConf extends CoreConfigClass
             'auth'                 => $peer['extension'],
             'outbound_auth'        => $peer['extension'],
             'acl'                  => "acl_{$peer['extension']}",
-            'timers'               => ' no',
+            'timers'               => 'no',
+            'message_context'      => 'messages',
         ];
         self::getToneZone($options, $language);
         $options = $this->overridePJSIPOptionsFromModules(
@@ -985,6 +994,26 @@ class SIPConf extends CoreConfigClass
         $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'endpoint');
         $conf    .= $this->hookModulesMethod(CoreConfigClass::GENERATE_PEER_PJ_ADDITIONAL_OPTIONS, [$peer]);
 
+        if($this->generalSettings['UseWebRTC'] === '1') {
+            $conf .= "[{$peer['extension']}-WS] \n";
+            $options['webrtc'] = 'yes';
+            $options['transport'] = 'transport-wss';
+            $options['aors'] = $peer['extension'] . '-WS';
+
+            /** Устанавливаем кодек Opus в приоритет. */
+            $opusIndex = array_search('opus', $options['allow']);
+            if($opusIndex !== false){
+                unset($options['allow'][$opusIndex]);
+                array_unshift($options['allow'], 'opus');
+            }
+
+            /*
+             * https://www.asterisk.org/rtcp-mux-webrtc/
+             */
+            $options['rtcp_mux'] = 'yes';
+            $conf .= Util::overrideConfigurationArray($options, $manual_attributes, 'endpoint');
+            $conf .= $this->hookModulesMethod(CoreConfigClass::GENERATE_PEER_PJ_ADDITIONAL_OPTIONS, [$peer]);
+        }
         return $conf;
     }
 

@@ -363,7 +363,7 @@ class IncomingContexts extends CoreConfigClass
             $conf = $this->createSummaryDialplanGoto($conf, $default_action, $uniqId);
             $conf .= " \t" . 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-after-dial-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-after-dial-custom,${EXTEN},1)' . "\n";
         } elseif ('busy' === $default_action->action) {
-            $conf .= "\t" . "same => n,Busy()" . "\n";
+            $conf .= "\t" . "same => n,Busy(2)" . "\n";
         }
         return $conf;
     }

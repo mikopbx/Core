@@ -26,6 +26,7 @@ use MikoPBX\Core\System\{Storage, Util};
 class ExtensionsConf extends CoreConfigClass
 {
     public const ALL_NUMBER_EXTENSION = '_[0-9*#+a-zA-Z][0-9*#+a-zA-Z]!';
+    public const DIGIT_NUMBER_EXTENSION = '_X!';
     protected string $description = 'extensions.conf';
 
     /**
@@ -97,29 +98,38 @@ class ExtensionsConf extends CoreConfigClass
      */
     private function generateOtherExten(&$conf): void
     {
-        $extension = 'X!';
         // Контекст для AMI originate. Без него отображается не корректный CallerID.
         $conf .= '[sipregistrations]' . "\n\n";
-
-        $conf .= '[messages]' . "\n" .
-            'exten => _' . $extension . ',1,MessageSend(sip:${EXTEN},"${CALLERID(name)}"${MESSAGE(from)})' . "\n\n";
+        // messages
+        // https://community.asterisk.org/t/messagesend-to-all-pjsip-contacts/75485/5
+        $conf .= '[messages]' . PHP_EOL .
+                 'exten => _X.,1,NoOp("Sending message, To ${MESSAGE(to)}, Hint ${ARG1}, From ${MESSAGE(from)}, CID ${CALLERID}, Body ${MESSAGE(body)}")' . PHP_EOL ."\t".
+                 'same => n,Gosub(set-dial-contacts,${EXTEN},1)' . PHP_EOL ."\t".
+                 'same => n,While($["${SET(contact=${SHIFT(DST_CONTACT,&):6})}" != ""])' . PHP_EOL ."\t".
+                 'same => n,MessageSend(pjsip:${contact},${REPLACE(MESSAGE(from),-WS)})' . PHP_EOL ."\t".
+                 'same => n,NoOp("Send status is ${MESSAGE_SEND_STATUS}")' . PHP_EOL ."\t".
+                 'same => n,EndWhile' . PHP_EOL ."\t".
+                 'same => n,HangUp()' . PHP_EOL .PHP_EOL;
 
         $conf .= '[internal-originate]' . PHP_EOL .
-            'exten => _.!,1,ExecIf($[ "${EXTEN}" == "h" ]?Hangup())' . PHP_EOL . "\t" .
+            'exten => _.!,1,ExecIf($[ "${EXTEN}" == "h" ]?Gosub(interception_bridge_result,${EXTEN},1))' . PHP_EOL . "\t" .
+            'same => n,ExecIf($[ "${EXTEN}" == "h" ]?Hangup())' . PHP_EOL . "\t" .
             'same => n,Set(pt1c_cid=${FILTER(\*\#\+1234567890,${pt1c_cid})})' . PHP_EOL . "\t" .
             'same => n,Set(MASTER_CHANNEL(ORIGINATE_DST_EXTEN)=${pt1c_cid})' . PHP_EOL . "\t" .
             'same => n,Set(number=${FILTER(\*\#\+1234567890,${EXTEN})})' . PHP_EOL . "\t" .
             'same => n,ExecIf($["${EXTEN}" != "${number}"]?Goto(${CONTEXT},${number},$[${PRIORITY} + 1]))' . PHP_EOL . "\t" .
             'same => n,Set(__IS_ORGNT=${EMPTY})' . PHP_EOL . "\t" .
+
+            'same => n,Gosub(interception_start,${EXTEN},1)' . PHP_EOL . "\t" .
             'same => n,ExecIf($["${pt1c_cid}x" != "x"]?Set(CALLERID(num)=${pt1c_cid}))' . PHP_EOL . "\t" .
             'same => n,ExecIf($["${origCidName}x" != "x"]?Set(CALLERID(name)=${origCidName}))' . PHP_EOL . "\t" .
             'same => n,ExecIf($["${SRC_QUEUE}x" != "x"]?Goto(internal-originate-queue,${EXTEN},1))' . PHP_EOL . "\t" .
             'same => n,ExecIf($["${CUT(CHANNEL,\;,2)}" == "2"]?Set(__PT1C_SIP_HEADER=${SIPADDHEADER})) ' . PHP_EOL . "\t" .
             'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1)' . PHP_EOL . "\t" .
             'same => n,ExecIf($["${PJSIP_ENDPOINT(${EXTEN},auth)}x" == "x"]?Goto(internal-num-undefined,${EXTEN},1))' . PHP_EOL . "\t" .
-            'same => n,Set(DST_CONTACT=${PJSIP_DIAL_CONTACTS(${EXTEN})})' . PHP_EOL . "\t" .
+            'same => n,Gosub(set-dial-contacts,${EXTEN},1)' . PHP_EOL . "\t" .
             'same => n,ExecIf($["${FIELDQTY(DST_CONTACT,&)}" != "1" && "${ALLOW_MULTY_ANSWER}" != "1"]?Set(__PT1C_SIP_HEADER=${EMPTY_VAR}))' . PHP_EOL . "\t" .
-            'same => n,ExecIf($["${DST_CONTACT}x" != "x"]?Dial(${DST_CONTACT},${ringlength},TtekKHhb(originate-create-channel,${EXTEN},1)U(originate-answer-channel),s,1)))' . PHP_EOL . PHP_EOL .
+            'same => n,ExecIf($["${DST_CONTACT}x" != "x"]?Dial(${DST_CONTACT},${ringlength},TtekKHhb(originate-create-channel,${EXTEN},1)U(originate-answer-channel),s,1)))' . PHP_EOL. PHP_EOL.
 
             '[internal-originate-queue]' . PHP_EOL .
             'exten => _X!,1,Set(_NOCDR=1)' . PHP_EOL . "\t" .
@@ -172,14 +182,12 @@ class ExtensionsConf extends CoreConfigClass
 
         $conf .= 'exten => h,1,ExecIf($["${ISTRANSFER}x" != "x"]?Goto(transfer_dial_hangup,${EXTEN},1))' . "\n\n";
 
-        // TODO / Добавление / удаление префиксов на входящий callerid.
         $conf .= '[add-trim-prefix-clid]' . "\n";
         $conf .= 'exten => ' . self::ALL_NUMBER_EXTENSION . ',1,NoOp(--- Incoming call from ${CALLERID(num)} ---)' . "\n\t";
         $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1)' . "\n\t";
-        // Отсекаем "+".
-        // $conf.= 'same => n,ExecIf( $["${CALLERID(num):0:1}" == "+"]?Set(CALLERID(num)=${CALLERID(num):1}))'."\n\t";
-        // Отсекаем "7" и добавляем "8".
-        // $conf.= 'same => n,ExecIf( $["${REGEX("^7[0-9]+" ${CALLERID(num)})}" == "1"]?Set(CALLERID(num)=8${CALLERID(num):1}))'."\n\t";
+        $conf .= 'same => n,return' . "\n\n";
+        $conf .= 'exten => ' . self::DIGIT_NUMBER_EXTENSION . ',1,NoOp(--- Incoming call from ${CALLERID(num)} ---)' . "\n\t";
+        $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1)' . "\n\t";
         $conf .= 'same => n,return' . "\n\n";
     }
 

@@ -1063,4 +1063,9 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'gs_NeedRestartPBX' => 'När du byter startar PBX om (asterisk-tjänst)',
     'ex_BusyLevelInfo' => 'När det angivna antalet konversationer har uppnåtts kommer anställdens telefon att betraktas som upptagen.',
     'ex_PortugueseBrazil' => 'Português (Brasilien)',
+    'gs_RTPStunServer' => 'Server STUN-adress (exempel: stun.test.net:10000)',
+    'cr_ValidateExtensionLen' => 'Anknytningsnumret måste vara två eller fler siffror',
+    'cr_ValidatePinNumber' => 'PIN-koden får endast vara siffror',
+    'gs_UseWebRTC' => 'Använd WebRTC',
+    'pr_ValidationProviderLoginNotSingleSimbol' => 'Inloggningen måste vara längre än ett tecken',
 ];

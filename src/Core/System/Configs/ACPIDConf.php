@@ -23,39 +23,16 @@ use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
 
-class RedisConf extends Injectable
+class ACPIDConf extends Injectable
 {
-    public const PROC_NAME = 'redis-server';
+    public const PROC_NAME = 'acpid';
 
-    public const CONF_FILE = '/etc/redis.conf';
-
-    public string $port = '';
     /**
-     * Restarts Redis server
+     * Restarts Beanstalk server
      */
     public function reStart(): void
     {
-        $this->configure();
-        Processes::safeStartDaemon(self::PROC_NAME, self::CONF_FILE);
-
-        $redisCli = Util::which('redis-cli');
-        for ($i=1; $i <= 60; $i++){
-            if(Processes::mwExec("$redisCli -p $this->port info") === 0){
-                break;
-            }
-            sleep(1);
-        }
-    }
-
-    /**
-     * Setup redis daemon conf file
-     */
-    private function configure(): void
-    {
-        $config = $this->getDI()->get('config')->redis;
-        $this->port = $config->port;
-        $conf   = "bind {$config->host}" . PHP_EOL;
-        $conf   .= "port {$config->port}" . PHP_EOL;
-        file_put_contents(self::CONF_FILE, $conf);
+        $conf   = "-c '/etc/acpi/events' -n -f";
+        Processes::safeStartDaemon(self::PROC_NAME, $conf);
     }
 }

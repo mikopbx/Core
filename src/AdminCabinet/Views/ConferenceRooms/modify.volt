@@ -23,5 +23,13 @@
     </div>
 </div>
 
+<div class="six wide field">
+    <label>{{ t._('cr_pinCode') }}</label>
+    <div class="ui icon input pin">
+        <i class="key icon"></i>
+        {{ form.render('pinCode') }}
+    </div>
+</div>
+
 {{ partial("partials/submitbutton",['indexurl':'conference-rooms/index/']) }}
 </form>

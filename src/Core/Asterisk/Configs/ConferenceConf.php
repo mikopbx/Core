@@ -77,8 +77,8 @@ class ConferenceConf extends CoreConfigClass
         $conf .= "exten => s,1,AGI(cdr_connector.php,hangup_chan_meetme)\n\t";
         $conf .= "same => n,return\n\n";
         $conf .= "[conference-rooms] \n";
-        $data = self::getConferenceExtensions();
-        foreach ($data as $conference) {
+        $data = $this->getConferences();
+        foreach ($data as $conference => $pin) {
             $conf .= 'exten => ' . $conference . ',1,NoOp(---)' . "\n\t";
             // Если это Local канал, к примеру вызов через IVR, то попробуем корректно перенаправить вызов.
             // Ищем реальный канал. Local будут отправлены в hangup
@@ -109,6 +109,9 @@ class ConferenceConf extends CoreConfigClass
             $conf .= 'same => n,Set(CONFBRIDGE(bridge,video_mode)=follow_talker)' . "\n\t";
             $conf .= 'same => n,Set(CONFBRIDGE(user,talk_detection_events)=yes)' . "\n\t";
             $conf .= 'same => n,Set(CONFBRIDGE(user,quiet)=yes)' . "\n\t";
+            if(!empty($pin)){
+                $conf .= "same => n,Set(CONFBRIDGE(user,pin)=$pin)" . "\n\t";
+            }
             $conf .= 'same => n,Set(CONFBRIDGE(user,music_on_hold_when_empty)=yes)' . "\n\t";
             $conf .= 'same => n,ConfBridge(${EXTEN})' . "\n\t";
             $conf .= 'same => n,Hangup()' . "\n\n";
@@ -137,11 +140,36 @@ class ConferenceConf extends CoreConfigClass
      * Возвращает массив номеров конференц комнат.
      * @return array
      */
-    public static function getConferenceExtensions():array{
+    public static function getConferenceExtensions():array
+    {
         $confExtensions = [];
-        $conferences = ConferenceRooms::find(['order' => 'extension', 'columns' => 'extension'])->toArray();
+        $filter = [
+            'order' => 'extension',
+            'columns' => 'extension'
+        ];
+
+        $conferences = ConferenceRooms::find($filter)->toArray();
         foreach ($conferences as $conference){
             $confExtensions[] = $conference['extension'];
+        }
+        return $confExtensions;
+    }
+
+    /**
+     * Возвращает массив номеров конференц комнат.
+     * @return array
+     */
+    private function getConferences():array
+    {
+        $confExtensions = [];
+        $filter = [
+            'order' => 'extension',
+            'columns' => 'extension,pinCode'
+        ];
+
+        $conferences = ConferenceRooms::find($filter)->toArray();
+        foreach ($conferences as $conference){
+            $confExtensions[$conference['extension']] = $conference['pinCode'];
         }
         return $confExtensions;
     }

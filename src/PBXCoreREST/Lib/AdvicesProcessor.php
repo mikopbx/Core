@@ -273,12 +273,12 @@ class AdvicesProcessor extends Injectable
                 } else {
                     $url = "https://wiki.mikopbx.com/{$language}:licensing#faq_chavo";
                 }
-
+                $textError = (string)($checkBaseFeature['error']??'');
                 $messages['warning'] = $this->translation->_(
                     'adv_ThisCopyHasLicensingTroubles',
                     [
                         'url'   => $url,
-                        'error' => $this->license->translateLicenseErrorMessage($checkBaseFeature['error']),
+                        'error' => $this->license->translateLicenseErrorMessage($textError),
                     ]
                 );
             }
