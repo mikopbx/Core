@@ -647,12 +647,12 @@ class ExtensionsController extends BaseController
 
         if ($errors) {
             $this->flash->error(implode('<br>', $errors));
+            $this->view->success = false;
             $this->db->rollback();
         } else {
             $this->db->commit();
+            $this->view->success = true;
         }
-
-        $this->forward('extensions/index');
     }
 
     /**

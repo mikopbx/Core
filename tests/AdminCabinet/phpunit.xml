@@ -12,7 +12,11 @@
             <file>Tests/LoginTest.php</file>
             <file>Tests/FillPBXSettingsTest.php</file>
             <file>Tests/CustomFileChangeTest.php</file>
+            <file>Tests/CheckDropdownBeforeCreateAudioFileTest.php</file>
             <file>Tests/CreateAudioFilesTest.php</file>
+            <file>Tests/CheckDropdownAfterCreateAudioFileTest.php</file>
+            <file>Tests/DeleteAudioFileTest.php</file>
+            <file>Tests/CheckDropdownAfterDeleteAudioFileTest.php</file>
             <file>Tests/CreateSIPProviders.php</file>
             <file>Tests/CreateIAXProviders.php</file>
             <file>Tests/CreateIncomingCallRules.php</file>
@@ -33,9 +37,10 @@
             <file>Tests/ChangeExtensionsSettingsTest.php</file>
             <file>Tests/ChangeCallQueueTest.php</file>
             <file>Tests/DeleteExtensionTest.php</file>
+            <file>Tests/DeleteExtensionFromDropDownTest.php</file>
             <file>Tests/DeleteProviderTest.php</file>
             <file>Tests/ChangeLicenseKeyTest.php</file>
-            <file>Tests/InstallModulesTest</file>
+            <file>Tests/InstallModulesTest.php</file>
         </testsuite>
     </testsuites>
 </phpunit>

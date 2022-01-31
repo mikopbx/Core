@@ -42,7 +42,8 @@ const DebuggerInfo = {
 			.sidebar('toggle');
 	},
 	keyHandler(event) {
-		if (event.keyCode === 17) {
+		// Double press to ESC will show the debug information
+		if (event.keyCode === 27) {
 			let thisKeypressTime = new Date();
 			if (thisKeypressTime - DebuggerInfo.lastKeypressTime <= DebuggerInfo.delta) {
 				DebuggerInfo.showSidebar();

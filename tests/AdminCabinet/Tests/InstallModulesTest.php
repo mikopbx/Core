@@ -56,6 +56,7 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
         try {
             $tableButtonInstall = self::$driver->findElement(WebDriverBy::xpath($xpath));
             $tableButtonInstall->click();
+            $this->waitForAjax();
         } catch (NoSuchElementException $e) {
             echo('Not found row with module =' . $params['moduleId'] . ' to install' . PHP_EOL);
         } catch (Exception $e) {
@@ -82,9 +83,6 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
         ]];
         $params[] = [[
             'moduleId'=>'ModuleBitrix24Integration',
-        ]];
-        $params[] = [[
-            'moduleId'=>'ModuleBitrix24Notify',
         ]];
         $params[] = [[
             'moduleId'=>'ModuleCallTracking',
