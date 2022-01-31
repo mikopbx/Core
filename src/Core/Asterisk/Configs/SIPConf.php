@@ -40,6 +40,7 @@ use Throwable;
 class SIPConf extends CoreConfigClass
 {
     public const TYPE_PJSIP = 'PJSIP';
+    private const TOPOLOGY_HASH_FILE = '/topology_hash';
 
     protected $data_peers;
     protected $data_providers;
@@ -79,8 +80,8 @@ class SIPConf extends CoreConfigClass
         $now_hadh        = md5($topology . $exthostname . $extipaddr . $generalSettings['SIPPort']);
         $old_hash        = '';
         $varEtcDir       = $di->getShared('config')->path('core.varEtcDir');
-        if (file_exists($varEtcDir . '/topology_hash')) {
-            $old_hash = file_get_contents($varEtcDir . '/topology_hash');
+        if (file_exists($varEtcDir . self::TOPOLOGY_HASH_FILE)) {
+            $old_hash = file_get_contents($varEtcDir . self::TOPOLOGY_HASH_FILE);
         }
 
         return $old_hash !== $now_hadh;
@@ -151,12 +152,12 @@ class SIPConf extends CoreConfigClass
         $contexts = [];
         // Входящие контексты.
         foreach ($this->data_providers as $provider) {
-            $contexts_data = $this->contexts_data[$provider['context_id']];
-            if (count($contexts_data) === 1) {
+            $contextsData = $this->contexts_data[$provider['context_id']];
+            if (count($contextsData) === 1) {
                 $conf .= IncomingContexts::generate($provider['uniqid'], $provider['username']);
             } elseif ( ! in_array($provider['context_id'], $contexts, true)) {
                 $conf       .= IncomingContexts::generate(
-                    $contexts_data,
+                    $contextsData,
                     null,
                     $provider['context_id']
                 );
@@ -518,7 +519,7 @@ class SIPConf extends CoreConfigClass
 
         $varEtcDir = $this->config->path('core.varEtcDir');
         file_put_contents(
-            $varEtcDir . '/topology_hash',
+            $varEtcDir.self::TOPOLOGY_HASH_FILE,
             md5($topology . $exthostname . $extipaddr . $this->generalSettings['SIPPort'])
         );
         $conf .= "\n";
