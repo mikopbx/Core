@@ -74,17 +74,17 @@ class SIPConf extends CoreConfigClass
             return false;
         }
         $mikoPBXConfig = new MikoPBXConfig();
-        [$topology, $extipaddr, $exthostname] = $this->getTopologyData();
+        [$topology, $extIpAddress, $externalHostName, $subnets] = $this->getTopologyData();
 
         $generalSettings = $mikoPBXConfig->getGeneralSettings();
-        $now_hadh        = md5($topology . $exthostname . $extipaddr . $generalSettings['SIPPort']);
+        $now_hash        = md5($topology . $externalHostName . $extIpAddress . $generalSettings['SIPPort'] . implode('',$subnets));
         $old_hash        = '';
         $varEtcDir       = $di->getShared('config')->path('core.varEtcDir');
         if (file_exists($varEtcDir . self::TOPOLOGY_HASH_FILE)) {
             $old_hash = file_get_contents($varEtcDir . self::TOPOLOGY_HASH_FILE);
         }
 
-        return $old_hash !== $now_hadh;
+        return $old_hash !== $now_hash;
     }
 
     /**
@@ -455,27 +455,27 @@ class SIPConf extends CoreConfigClass
     private function generateGeneralPj(): string
     {
         $lang = $this->generalSettings['PBXLanguage'];
-        [$topology, $extipaddr, $exthostname, $subnets] = $this->getTopologyData();
+        [$topology, $extIpAddress, $externalHostName, $subnets] = $this->getTopologyData();
 
         $codecs    = $this->getCodecs();
         $codecConf = '';
         foreach ($codecs as $codec) {
-            $codecConf .= "allow = {$codec}\n";
+            $codecConf .= "allow = $codec\n";
         }
 
         $pbxVersion = PbxSettings::getValueByKey('PBXVersion');
         $natConf    = '';
         if ($topology === 'private') {
             foreach ($subnets as $net) {
-                $natConf .= "local_net={$net}\n";
+                $natConf .= "local_net=$net\n";
             }
-            if ( ! empty($exthostname)) {
-                $parts   = explode(':', $exthostname);
+            if ( ! empty($externalHostName)) {
+                $parts   = explode(':', $externalHostName);
                 $natConf .= 'external_media_address=' . $parts[0] . "\n";
                 $natConf .= 'external_signaling_address=' . $parts[0] . "\n";
                 $natConf .= 'external_signaling_port=' . ($parts[1] ?? '5060');
-            } elseif ( ! empty($extipaddr)) {
-                $parts   = explode(':', $extipaddr);
+            } elseif ( ! empty($extIpAddress)) {
+                $parts   = explode(':', $extIpAddress);
                 $natConf .= 'external_media_address=' . $parts[0] . "\n";
                 $natConf .= 'external_signaling_address=' . $parts[0] . "\n";
                 $natConf .= 'external_signaling_port=' . ($parts[1] ?? '5060');
@@ -487,43 +487,40 @@ class SIPConf extends CoreConfigClass
             "type = global\n" .
             "disable_multi_domain=yes\n" .
             "endpoint_identifier_order=username,ip,anonymous\n" .
-            "user_agent = mikopbx-{$pbxVersion}\n\n" .
+            "user_agent = mikopbx-$pbxVersion\n\n" .
 
             "[transport-udp]\n" .
             "$typeTransport\n" .
             "protocol = udp\n" .
             "bind=0.0.0.0:{$this->generalSettings['SIPPort']}\n" .
-            "{$natConf}\n\n" .
+            "$natConf\n\n" .
 
             "[transport-tcp]\n" .
             "$typeTransport\n" .
             "protocol = tcp\n" .
             "bind=0.0.0.0:{$this->generalSettings['SIPPort']}\n" .
-            "{$natConf}\n\n" .
+            "$natConf\n\n" .
 
             "[transport-wss]\n" .
             "$typeTransport\n" .
             "protocol = wss\n" .
             "bind=0.0.0.0:{$this->generalSettings['SIPPort']}\n" .
-            "{$natConf}\n\n";
+            "$natConf\n\n";
 
         $allowGuestCalls = PbxSettings::getValueByKey('PBXAllowGuestCalls');
         if ($allowGuestCalls === '1') {
             $conf .= "[anonymous]\n" .
                 "type = endpoint\n" .
                 $codecConf .
-                "language={$lang}\n" .
+                "language=$lang\n" .
                 "timers = no\n" .
                 "context = public-direct-dial\n\n";
         }
 
         $varEtcDir = $this->config->path('core.varEtcDir');
-        file_put_contents(
-            $varEtcDir.self::TOPOLOGY_HASH_FILE,
-            md5($topology . $exthostname . $extipaddr . $this->generalSettings['SIPPort'])
-        );
+        $hash = md5($topology . $externalHostName . $extIpAddress . $this->generalSettings['SIPPort'] . implode('',$subnets));
+        file_put_contents($varEtcDir.self::TOPOLOGY_HASH_FILE, $hash);
         $conf .= "\n";
-
         return $conf;
     }
 
