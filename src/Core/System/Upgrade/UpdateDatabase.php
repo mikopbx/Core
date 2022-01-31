@@ -111,6 +111,7 @@ class UpdateDatabase extends Di\Injectable
 
         $connectionService = $this->di->getShared($connectionServiceName);
         $metaData          = $this->di->get(ModelsMetadataProvider::SERVICE_NAME);
+        $metaData->reset();
 
         //https://docs.phalcon.io/4.0/ru-ru/annotations
         $modelAnnotation = $this->di->get(ModelsAnnotationsProvider::SERVICE_NAME)->get($model);
