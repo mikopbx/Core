@@ -415,24 +415,24 @@ class SIPConf extends CoreConfigClass
     /**
      * Генератор sip.conf
      *
-     * @return bool|void
+     * @return void
      */
     protected function generateConfigProtected(): void
     {
-        $conf = '';
-        $conf .= $this->generateGeneralPj();
+        $conf  = $this->generateGeneralPj();
         $conf .= $this->generateProvidersPj();
         $conf .= $this->generatePeersPj();
 
-        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/pjsip.conf', $conf);
+        $astEtcDir = $this->config->path('asterisk.astetcdir');
+
+        Util::fileWriteContent($astEtcDir . '/pjsip.conf', $conf);
         $pjConf = '[log_mappings]' . "\n" .
             'type=log_mappings' . "\n" .
             'asterisk_error = 0' . "\n" .
             'asterisk_warning = 2' . "\n" .
             'asterisk_debug = 1,3,4,5,6' . "\n\n";
-
-        file_put_contents($this->config->path('asterisk.astetcdir') . '/pjproject.conf', $pjConf);
-        file_put_contents($this->config->path('asterisk.astetcdir') . '/sorcery.conf', '');
+        file_put_contents($astEtcDir.'/pjproject.conf', $pjConf);
+        file_put_contents($astEtcDir.'/sorcery.conf', '');
 
         $db = new AstDB();
         foreach ($this->data_peers as $peer) {
@@ -481,6 +481,7 @@ class SIPConf extends CoreConfigClass
             }
         }
 
+        $typeTransport = 'type = transport';
         $conf = "[global] \n" .
             "type = global\n" .
             "disable_multi_domain=yes\n" .
@@ -488,23 +489,22 @@ class SIPConf extends CoreConfigClass
             "user_agent = mikopbx-{$pbxVersion}\n\n" .
 
             "[transport-udp]\n" .
-            "type = transport\n" .
+            "$typeTransport\n" .
             "protocol = udp\n" .
             "bind=0.0.0.0:{$this->generalSettings['SIPPort']}\n" .
             "{$natConf}\n\n" .
 
             "[transport-tcp]\n" .
-            "type = transport\n" .
+            "$typeTransport\n" .
             "protocol = tcp\n" .
             "bind=0.0.0.0:{$this->generalSettings['SIPPort']}\n" .
             "{$natConf}\n\n" .
 
             "[transport-wss]\n" .
-            "type = transport\n" .
+            "$typeTransport\n" .
             "protocol = wss\n" .
             "bind=0.0.0.0:{$this->generalSettings['SIPPort']}\n" .
-            "{$natConf}\n\n" .
-            '';
+            "{$natConf}\n\n";
 
         $allowGuestCalls = PbxSettings::getValueByKey('PBXAllowGuestCalls');
         if ($allowGuestCalls === '1') {
@@ -659,12 +659,9 @@ class SIPConf extends CoreConfigClass
      *
      * @return string
      */
-    private function generateProviderOutAuth(
-        array $provider,
-        array $manual_attributes
-    ): string {
+    private function generateProviderOutAuth(array $provider, array $manual_attributes): string {
         $conf = '';
-        if ('1' === $provider['receive_calls_without_auth']) {
+        if ('1' === $provider['receive_calls_without_auth'] || empty("{$provider['username']}{$provider['secret']}")) {
             return $conf;
         }
         $options         = [
@@ -809,7 +806,7 @@ class SIPConf extends CoreConfigClass
             'aors'            => $provider['uniqid'],
             'timers'          => ' no',
         ];
-        if ('1' !== $provider['receive_calls_without_auth']) {
+        if ('1' !== $provider['receive_calls_without_auth'] && !empty("{$provider['username']}{$provider['secret']}")) {
             $options['outbound_auth'] = "{$provider['uniqid']}-OUT";
         }
         self::getToneZone($options, $language);
