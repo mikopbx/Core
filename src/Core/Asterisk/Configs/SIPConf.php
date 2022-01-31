@@ -98,7 +98,7 @@ class SIPConf extends CoreConfigClass
         $extipaddr   = '';
         $exthostname = '';
         $networks    = $network->getEnabledLanInterfaces();
-        $subnets     = [];
+        $subnets     = ['127.0.0.1/32'];
         foreach ($networks as $if_data) {
             $lan_config = $network->getInterface($if_data['interface']);
             if (empty($lan_config['ipaddr']) || empty($lan_config['subnet'])) {
