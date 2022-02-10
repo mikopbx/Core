@@ -986,7 +986,7 @@ class Storage extends Di\Injectable
      * @return string
      */
     private function getStorageDev($disk, $cf_disk):string{
-        if(!empty($disk['uniqid'])){
+        if(!empty($disk['uniqid']) && strpos($disk['uniqid'], 'STORAGE-DISK') === false){
             // Ищим имя раздела по UID.
             $lsBlkPath   = Util::which('lsblk');
             $busyboxPath = Util::which('busybox');
@@ -1041,9 +1041,12 @@ class Storage extends Di\Injectable
      */
     private function hddExists($disk): bool
     {
+        if(is_dir($disk)){
+            return false;
+        }
         $result = false;
         $uid = $this->getUuid($disk);
-        if ($uid !== false && file_exists($disk)) {
+        if (!empty($uid) && file_exists($disk)) {
             $result = true;
         }
         return $result;
