@@ -83,6 +83,7 @@ while : ; do
         tput reset; tput civis;
         while [ -f "$freeOffloadFile" ]; do
             # Если запущен процесс перезагрузки, ждем завершения.
+            sleep 1;
         done;
         tput cnorm;
         echo;
