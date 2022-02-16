@@ -19,6 +19,8 @@
 
 echo "Start ${0}";
 delta=1; i=0;
+freeOffloadFile='/tmp/freeoffload';
+
 while : ; do
 
     if [ ! -t 0 ] || [ ! -t 1 ] ; then
@@ -71,11 +73,19 @@ while : ; do
         fi
     fi
     # Убедимся, что раздел смонтирован.
-    if [ ! -f /tmp/freeoffload ]; then
+    if [ ! -f "$freeOffloadFile" ]; then
         clear;
         # Консольное меню зависит от /offload раздела.
         /etc/rc/console_menu 2>/dev/null;
         resultMenu=$?;
+
+        # Проверка на перезагрузку.
+        tput reset; tput civis;
+        while [ -f "$freeOffloadFile" ]; do
+            # Если запущен процесс перезагрузки, ждем завершения.
+        done;
+        tput cnorm;
+        echo;
         if [ $resultMenu -gt 0 ]; then
             sleep 5;
             /bin/sh;
