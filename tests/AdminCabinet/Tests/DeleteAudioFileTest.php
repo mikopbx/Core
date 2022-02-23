@@ -31,12 +31,11 @@ class DeleteAudioFileTest extends MikoPBXTestsBase
      *
      * @param array $params
      *
-     * @throws \Facebook\WebDriver\Exception\NoSuchElementException
-     * @throws \Facebook\WebDriver\Exception\TimeoutException
      */
-    public function testDeleteAudioFile($params): void
+    public function testDeleteAudioFile(array $params): void
     {
         if ( ! $params['for_delete']) {
+            $this->assertTrue(true);
             return;
         }
 

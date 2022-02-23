@@ -636,8 +636,10 @@ class MikoPBXTestsBase extends BrowserStackTest
             );
             $menuItem->click();
             $elementFound = true;
-        } catch (Exception $e) {
+        } catch (NoSuchElementException $e) {
             //
+        } catch (Exception $e) {
+            ///
         }
         return $elementFound;
     }
