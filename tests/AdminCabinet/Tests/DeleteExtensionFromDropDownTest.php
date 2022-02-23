@@ -38,9 +38,9 @@ class DeleteExtensionFromDropDownTest extends MikoPBXTestsBase
 
         $elementFound = $this->checkIfElementExistOnDropdownMenu('extension', $params['username']);
         //Asserts
-        if (!$elementFound && $params['possibleToDelete']){
+        if (!$elementFound && !$params['possibleToDelete']){
             $this->fail('Not found menuitem ' . $params['username'] . PHP_EOL);
-        } elseif ($elementFound && !$params['possibleToDelete']){
+        } elseif ($elementFound && $params['possibleToDelete']){
             $this->fail('Found menuitem ' . $params['username'] . PHP_EOL);
         } else {
             // increment assertion counter

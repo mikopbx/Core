@@ -58,7 +58,7 @@ class DeleteExtensionTest extends MikoPBXTestsBase
                 $this->fail("Unexpectedly element was not found by " . $xpath . PHP_EOL);
             }
             // Check warning message on page top
-            $xpath                   = "//div[contains(@class,'message') and contains(@class,'negative')]";
+            $xpath                   = "//div[contains(@class,'message') and contains(@class,'error')]";
             $errorMessage = self::$driver->findElement(WebDriverBy::xpath($xpath));
             $this->assertTrue($errorMessage->isDisplayed());
         }
