@@ -431,6 +431,7 @@ return [
     'ex_dropdownCategory_ASTERISKMANAGERUSERS' => 'AMI пользователи',
     'ex_dropdownCategory_CUSTOMFILES' => 'Конфигурационные файлы',
     'ex_dropdownCategory_MENUITEMS' => 'Пункты меню',
+    'ex_ImpossibleToDeleteExtension'=> 'Невозможно удалить сотрудника, т.к. существуют следующие ссылки',
     'am_TableColumnName' => 'Имя',
     'am_TableColumnRead' => 'Доступ на чтение',
     'am_TableColumnWrite' => 'Доступ на запись',
