@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, ClipboardJS, SemanticLocalization, InputMaskPatterns */
+/* global globalRootUrl, ClipboardJS, SemanticLocalization, InputMaskPatterns, UserMessage, globalTranslate */
 
 const extensionsIndex = {
 	maskList: null,
@@ -122,7 +122,7 @@ const extensionsIndex = {
 					extensionsIndex.$extensionsList.find(`tr[id=${extensionId}]`).remove();
 					Extensions.cbOnDataChanged();
 				} else {
-					extensionsIndex.$contentFrame.before(`<div class="ui error message ajax">${response.message.error}</div>`);
+					UserMessage.showError(response.message.error, globalTranslate.ex_ImpossibleToDeleteExtension );
 				}
 			},
 		});

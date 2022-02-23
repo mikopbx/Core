@@ -40,7 +40,7 @@ const UserMessage = {
 		UserMessage.$ajaxMessagesDiv.after(html);
 		UserMessage.scrollToMessages();
 	},
-	showWraning(message, header = '') {
+	showWarning(message, header = '') {
 		const text = UserMessage.convertToText(message);
 		let html = '<div class="ui warning message ajax">';
 		if (header!==''){
@@ -102,7 +102,7 @@ const UserMessage = {
 				} else if (index === 'info') {
 					UserMessage.showInformation(newValue, header);
 				} else {
-					UserMessage.showWraning(newValue, header);
+					UserMessage.showWarning(newValue, header);
 				}
 				previousMessage = value;
 			});
@@ -118,7 +118,7 @@ const UserMessage = {
 				}
 				previousMessage = value;
 			});
-			UserMessage.showWraning(content, header);
+			UserMessage.showWarning(content, header);
 		}
 	},
 	scrollToMessages() {
