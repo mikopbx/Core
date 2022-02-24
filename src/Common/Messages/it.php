@@ -1068,4 +1068,5 @@ Può essere attivato una volta, dopo di che il coupon viene riscattato.
     'cr_ValidatePinNumber' => 'Il PIN deve essere solo numerico',
     'gs_UseWebRTC' => 'Usa WebRTC',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'L\'accesso deve essere più lungo di un carattere',
+    'ex_ImpossibleToDeleteExtension' => 'Non è possibile eliminare un dipendente perché ci sono i seguenti link',
 ];

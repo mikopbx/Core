@@ -1071,4 +1071,5 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
     'cr_ValidateExtensionLen' => 'Die Nebenstellennummer muss aus zwei oder mehr Ziffern bestehen',
     'gs_UseWebRTC' => 'Verwenden Sie WebRTC',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'Login muss länger als ein Zeichen sein',
+    'ex_ImpossibleToDeleteExtension' => 'Es ist nicht möglich, einen Mitarbeiter zu löschen, weil Es gibt folgende Links',
 ];

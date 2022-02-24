@@ -1068,4 +1068,5 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá đ
     'cr_ValidatePinNumber' => 'Mã PIN chỉ được là số',
     'gs_UseWebRTC' => 'Sử dụng WebRTC',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'Thông tin đăng nhập phải dài hơn một ký tự',
+    'ex_ImpossibleToDeleteExtension' => 'Không thể xóa nhân viên vì có những liên kết sau',
 ];

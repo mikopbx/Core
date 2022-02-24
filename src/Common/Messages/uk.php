@@ -1068,4 +1068,5 @@ return [
     'cr_ValidatePinNumber' => 'PIN повинен складатися лише з чисел',
     'gs_UseWebRTC' => 'Використати WebRTC',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'Логін повинен бути довшим за один символ',
+    'ex_ImpossibleToDeleteExtension' => 'Неможливо видалити працівника, т.к. існують наступні посилання',
 ];

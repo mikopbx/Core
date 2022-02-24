@@ -1068,4 +1068,5 @@ return [
     'cr_ValidatePinNumber' => 'PIN უნდა იყოს მხოლოდ ნომრები',
     'gs_UseWebRTC' => 'გამოიყენეთ WebRTC',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'შესვლა ერთ სიმბოლოზე გრძელი უნდა იყოს',
+    'ex_ImpossibleToDeleteExtension' => 'შეუძლებელია თანამშრომლის წაშლა იმიტომ არის შემდეგი ლინკები',
 ];

@@ -1068,4 +1068,5 @@ return [
     'cr_ValidatePinNumber' => 'PIN 只能是数字',
     'gs_UseWebRTC' => '使用 WebRTC',
     'pr_ValidationProviderLoginNotSingleSimbol' => '登录名必须多于一个字符',
+    'ex_ImpossibleToDeleteExtension' => '无法删除员工，因为有以下链接',
 ];
