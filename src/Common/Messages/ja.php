@@ -1068,4 +1068,5 @@ return [
     'cr_ValidatePinNumber' => 'PINは数字のみである必要があります',
     'gs_UseWebRTC' => 'WebRTCを使用する',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'ログインは1文字より長くする必要があります',
+    'ex_ImpossibleToDeleteExtension' => '従業員を削除することはできません。次のリンクがあります',
 ];

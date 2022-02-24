@@ -1053,4 +1053,5 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'cr_ValidatePinNumber' => 'O PIN deve ser apenas números',
     'gs_UseWebRTC' => 'Use WebRTC',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'O login deve ter mais de um caractere',
+    'ex_ImpossibleToDeleteExtension' => 'Não é possível eliminar um empregado porque existem os seguintes links',
 ];

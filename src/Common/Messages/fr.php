@@ -1068,4 +1068,5 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'cr_ValidatePinNumber' => 'Le code PIN ne doit être composé que de chiffres',
     'gs_UseWebRTC' => 'Utiliser WebRTC',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'La connexion doit comporter plus d\'un caractère',
+    'ex_ImpossibleToDeleteExtension' => 'Il n\'est pas possible de supprimer un employé car il y a les liens suivants',
 ];

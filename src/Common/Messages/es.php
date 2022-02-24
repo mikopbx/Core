@@ -1068,4 +1068,5 @@ Se puede activar una vez, después de lo cual el cupón se canjea.
     'cr_ValidatePinNumber' => 'El PIN solo debe ser números',
     'gs_UseWebRTC' => 'Utilice WebRTC',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'El inicio de sesión debe tener más de un carácter',
+    'ex_ImpossibleToDeleteExtension' => 'No es posible eliminar un empleado porque hay los siguientes enlaces',
 ];

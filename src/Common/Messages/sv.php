@@ -1068,4 +1068,5 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'cr_ValidatePinNumber' => 'PIN-koden får endast vara siffror',
     'gs_UseWebRTC' => 'Använd WebRTC',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'Inloggningen måste vara längre än ett tecken',
+    'ex_ImpossibleToDeleteExtension' => 'Det går inte att ta bort en anställd pga det finns följande länkar',
 ];

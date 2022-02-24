@@ -1068,4 +1068,5 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
     'cr_ValidatePinNumber' => 'PIN yalnızca rakamlardan oluşmalıdır',
     'gs_UseWebRTC' => 'WebRTC\'yi kullan',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'Giriş bir karakterden uzun olmalıdır',
+    'ex_ImpossibleToDeleteExtension' => 'Bir çalışanı silmek mümkün değildir çünkü aşağıdaki linkler var',
 ];

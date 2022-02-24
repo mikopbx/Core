@@ -1068,4 +1068,5 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'cr_ValidatePinNumber' => 'PIN-koden må kun være tal',
     'gs_UseWebRTC' => 'Brug WebRTC',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'Login skal være længere end ét tegn',
+    'ex_ImpossibleToDeleteExtension' => 'Det er ikke muligt at slette en medarbejder pga der er følgende links',
 ];
