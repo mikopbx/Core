@@ -20,7 +20,7 @@
 namespace MikoPBX\Tests\Modules\ModuleBitrix24Integration\Lib;
 
 use MikoPBX\Tests\Unit\AbstractUnitTest;
-use Modules\ModuleBitrix24Integration\Lib\WorkerBitrix24IntegrationAMI;
+use Modules\ModuleBitrix24Integration\bin\WorkerBitrix24IntegrationAMI;
 use PHPUnit\Framework\TestCase;
 
 class WorkerBitrix24IntegrationAMITest extends AbstractUnitTest
