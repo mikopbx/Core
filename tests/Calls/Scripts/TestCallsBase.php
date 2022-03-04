@@ -73,6 +73,13 @@ class TestCallsBase {
             if($peer['state']!== 'OK' || ! is_numeric($peer['id'])){
                 continue;
             }
+            $uAgent = $am->getPjSipPeer($peer['id'])['UserAgent']??'';
+            if(empty($uAgent)){
+                $uAgent = $am->getPjSipPeer($peer['id'])['UserAgent-0']??'';
+            }
+            if(getenv('USER_AGENT') !== $uAgent){
+                continue;
+            }
             $db_data[] = $peer['id'];
         }
         return $db_data;
@@ -158,19 +165,23 @@ class TestCallsBase {
      */
     private function actionOriginate(string $src, string $dst):bool{
         self::printInfo("Start originate... $src to $dst");
-        $result = $this->am->Originate(
-            'Local/'.$src.'@orgn-wait',
-            $dst,
-            'out-to-exten',
-            '1',
-            null,
-            null,
-            '1',
-            null,
-            "__A_NUM={$this->aNum},__B_NUM={$this->bNum},__C_NUM={$this->cNum},__OFF_NUM={$this->offNum}",
-            null,
-            '0');
-        self::printInfo('Result originate: '.$result['Response']??'none');
+        $i = 0;
+        do{
+            $result = $this->am->Originate(
+                'Local/'.$src.'@orgn-wait',
+                $dst,
+                'out-to-exten',
+                '1',
+                null,
+                null,
+                '1',
+                null,
+                "__A_NUM={$this->aNum},__B_NUM={$this->bNum},__C_NUM={$this->cNum},__OFF_NUM={$this->offNum}",
+                null,
+                '0');
+            self::printInfo('Result originate: '.$result['Response']??'none');
+            $i++;
+        }while($result['Response'] === 'Error' && $i < 5);
 
         return $result['Response'] !== 'Error';
     }
@@ -196,7 +207,6 @@ class TestCallsBase {
         }else{
             $this->invokeRules($rules);
         }
-
         $this->checkCdr();
         $this->sampleCDR            = [];
         $this->nonStrictComparison  = [];
@@ -299,7 +309,9 @@ class TestCallsBase {
             return;
         }
         self::printInfo('Create CDR successfully');
-        foreach ($rows as $index => $row){
+
+        $checkedIndexes = [];
+        foreach ($rows as $row){
             if(!file_exists($row['recordingfile'])){
                 if($row['billsec'] > 0){
                     self::printError("File not found '{$row['recordingfile']}'");
@@ -314,19 +326,36 @@ class TestCallsBase {
                 $row['fileDuration'] = (string)$seconds;
                 self::printInfo('Rec. file:'.basename($row['recordingfile']).", sox duration: ".implode($out).", duration: ".$row['fileDuration']);
             }
-            $cdrS = $this->sampleCDR[$index];
-            foreach ($cdrS as $key => $data){
-                if(in_array($key, $this->nonStrictComparison, true)){
-                    $valRow     = (int) $row[$key];
-                    $valSample  = (int) $data;
-                    $values = [$valSample, ($valSample-1), ($valSample+1)];
-                    if( !in_array($valRow, $values) ){
-                        self::printError("Index row '{$index}', key '{$key}' {$valRow} !== {$data}");
+            $ok = true;
+            foreach ($this->sampleCDR as $index => $cdrS){
+                $ok = true;
+                if(in_array($index, $checkedIndexes, true)){
+                    continue;
+                }
+                foreach ($cdrS as $key => $data){
+                    if(in_array($key, $this->nonStrictComparison, true)){
+                        $valRow     = (int) $row[$key];
+                        $valSample  = (int) $data;
+                        $values = [$valSample, ($valSample-1), ($valSample+1)];
+                        $ok = min($ok, in_array($valRow, $values));
+                    }elseif($row[$key] === $data){
+                        $ok = min($ok, true);
+                    }else{
+                        $ok = false;
                     }
-                }elseif($row[$key] !== $data){
-                    self::printError("Index row '{$index}', key '{$key}' {$row[$key]} !== {$data}");
+                    if(!$ok){
+                        break;
+                    }
+                }
+                if($ok){
+                    $checkedIndexes[] = $index;
+                    break;
                 }
             }
+            if(!$ok){
+                self::printError("Index row ".json_encode($cdrS));
+            }
+
         }
     }
 
