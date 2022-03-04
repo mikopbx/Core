@@ -183,6 +183,9 @@ class ModulesConf extends CoreConfigClass
             'res_pjsip_xpidf_body_generator.so',
             'res_pjsip_dlg_options.so',
             'res_security_log.so',
+
+            'cel_beanstalkd.so',
+            'app_celgenuserevent.so',
         ];
 
         if(file_exists('/dev/dahdi/transcode')){

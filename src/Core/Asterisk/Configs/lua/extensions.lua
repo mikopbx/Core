@@ -112,7 +112,9 @@ function userevent_return(data)
     if(is_test ~= nil) then
         return
     end
-    app["UserEvent"]("CdrConnector,AgiData:"..base64_encode( JSON:encode(data) ));
+    data = base64_encode( JSON:encode(data) );
+    app["CELGenUserEvent"](""..data);
+    app["UserEvent"]("CdrConnector,AgiData:"..data);
     app["return"]();
 end
 
@@ -121,7 +123,9 @@ function userevent_hangup(data)
     if(is_test ~= nil) then
         return
     end
-    app["UserEvent"]("CdrConnector,AgiData:"..base64_encode( JSON:encode(data) ));
+    data = base64_encode(JSON:encode(data));
+    app["CELGenUserEvent"](""..data);
+    app["UserEvent"]("CdrConnector,AgiData:"..data);
     app["NoOp"]('Hangup channel ');
     app["Hangup"]();
 end

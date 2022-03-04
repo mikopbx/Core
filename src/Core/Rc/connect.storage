@@ -19,14 +19,11 @@
 
 namespace MikoPBX\Core\Rc;
 use MikoPBX\Common\Providers\MainDatabaseProvider;
-use MikoPBX\Core\Workers\WorkerAmiListener;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use MikoPBX\Core\System\{Configs\SyslogConf,
-    MikoPBXConfig,
     Processes,
     System,
     Upgrade\UpdateDatabase,
-    Upgrade\UpdateSystemConfig,
     Util,
     Storage,
     PBX};
@@ -171,7 +168,6 @@ $pbx->configure();
 
 // Перезапускае связанные со storage процессы.
 Processes::processPHPWorker(WorkerApiCommands::class);
-Processes::processPHPWorker(WorkerAmiListener::class);
 
 if($success === true){
     echo "\n ".Util::translate('Storage disk was mounted successfully...')." \n\n";

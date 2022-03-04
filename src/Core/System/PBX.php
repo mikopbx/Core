@@ -35,8 +35,6 @@ use MikoPBX\Core\Asterisk\Configs\{AclConf,
     RtpConf,
     SIPConf,
     VoiceMailConf};
-use MikoPBX\Core\Config\RegisterDIServices;
-use MikoPBX\Core\Workers\WorkerAmiListener;
 use MikoPBX\Core\Workers\WorkerCallEvents;
 use MikoPBX\Modules\Config\ConfigClass;
 use Phalcon\Di;
@@ -69,7 +67,6 @@ class PBX extends Injectable
         $asteriskPath = Util::which('asterisk');
         Processes::mwExec("{$asteriskPath} -rx 'core stop now'");
         Processes::processWorker('', '', WorkerCallEvents::class, 'stop');
-        Processes::processWorker('', '', WorkerAmiListener::class, 'stop');
         Processes::killByName('asterisk');
     }
 

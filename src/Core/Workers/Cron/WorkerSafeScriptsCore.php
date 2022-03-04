@@ -23,7 +23,6 @@ require_once 'Globals.php';
 
 use Generator;
 use MikoPBX\Core\System\{BeanstalkClient, PBX, Processes, Util};
-use MikoPBX\Core\Workers\WorkerAmiListener;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\Workers\WorkerBeanstalkdTidyUp;
 use MikoPBX\Core\Workers\WorkerCallEvents;
@@ -79,7 +78,6 @@ class WorkerSafeScriptsCore extends WorkerBase
         $arrWorkers        = [
             self::CHECK_BY_AMI           =>
                 [
-                    WorkerAmiListener::class,
                 ],
             self::CHECK_BY_BEANSTALK     =>
                 [
