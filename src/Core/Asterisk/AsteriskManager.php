@@ -1428,27 +1428,28 @@ class AsteriskManager
     {
         $result     = [];
         if(empty($prefix)){
-            $result     = $this->getPjSipPeer($peer, "WS");
+            $wsResult     = $this->getPjSipPeer($peer, "WS");
+            if($wsResult['state'] !== 'UNKNOWN'){
+                $result = $wsResult;
+            }
             $parameters = ['Endpoint' => trim($peer)];
+            unset($wsResult);
         }else{
             $parameters = ['Endpoint' => trim($peer)."-$prefix"];
         }
 
         $res        = $this->sendRequestTimeout('PJSIPShowEndpoint', $parameters);
-        if (isset($res['data']['ContactStatusDetail'])) {
-            $generalRecordFound = count($result)>0;
-            foreach ($res['data']['ContactStatusDetail'] as $index => $data){
-                $suffix = "-$prefix$index";
-                if(!empty($data['URI']) && !$generalRecordFound){
-                    $generalRecordFound = true;
-                    $suffix = '';
-                }
-                foreach ($data as $key => $value){
-                    $result["$key$suffix"] = $value;
-                }
+        $generalRecordFound = !empty($result);
+        foreach ($res['data']['ContactStatusDetail']??[] as $index => $data){
+            $suffix = "-$prefix$index";
+            if(!empty($data['URI']) && !$generalRecordFound){
+                $generalRecordFound = true;
+                $suffix = '';
+            }
+            foreach ($data as $key => $value){
+                $result["$key$suffix"] = $value;
             }
         }
-
         $result['state'] = isset($result['URI']) && ! empty($result['URI']) ? 'OK' : 'UNKNOWN';
         return $result;
     }
