@@ -123,13 +123,24 @@ class Entrypoint
      */
     private function changeWwwUserID(string $newUserId, string $newGroupId):void
     {
+        Util::echoWithSyslog('Check user id... ');
         $pidIdPath = '/cf/conf/user.id';
         $pidGrPath = '/cf/conf/group.id';
+
+        if(empty($newUserId) && file_exists($pidIdPath)){
+            $newUserId = file_get_contents($pidIdPath);
+        }
+        if(empty($newGroupId) && file_exists($pidGrPath)){
+            $newGroupId = file_get_contents($pidGrPath);
+        }
 
         $commands   = [];
         $userID     = 'www';
         $currentUserId  = trim(shell_exec("grep '^$userID:' < /etc/passwd | cut -d ':' -f 3"));
         $currentGroupId = trim(shell_exec("grep '^$userID:' < /etc/passwd | cut -d ':' -f 4"));
+
+        Util::echoWithSyslog("Old user id: $currentUserId; New user id: $newUserId");
+        Util::echoWithSyslog("Old group id: $currentGroupId; New user id: $newGroupId");
         if( !empty($currentUserId) && !empty($newUserId) && $currentUserId !== $newUserId){
             $commands[] = "sed -i 's/$userID:x:$currentUserId:/$userID:x:$newUserId:/g' /etc/passwd*";
             $id = '';
@@ -193,6 +204,7 @@ class Entrypoint
      */
     public function checkUpdate():void
     {
+        Util::echoWithSyslog('Check update... ');
         $this->initSettings();
         foreach ($this->env as $key => $dataPath) {
             $newValue = getenv($key);
@@ -240,6 +252,7 @@ class Entrypoint
     }
 }
 
+Util::echoWithSyslog('Start docker entrypoint... ');
 $main = new Entrypoint();
 $main->start();
 
