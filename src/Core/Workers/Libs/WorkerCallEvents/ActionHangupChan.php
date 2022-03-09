@@ -5,6 +5,7 @@ namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 
 
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
+use MikoPBX\Core\Asterisk\Configs\VoiceMailConf;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Workers\WorkerCallEvents;
 
@@ -51,7 +52,11 @@ class ActionHangupChan {
         $m_data = CallDetailRecordsTmp::find($filter);
         $countRows = count($m_data->toArray());
         foreach ($m_data as $row) {
-            if ($row->transfer == 1) {
+            if($row->dst_num === VoiceMailConf::VOICE_MAIL_EXT){
+                // Этот вызов будет заверщен событием voicemail_end
+                continue;
+            }
+            if ($row->transfer === '1') {
                 $transfer_calls[] = $row->toArray();
             }
             if ($row->dialstatus === 'ORIGINATE') {

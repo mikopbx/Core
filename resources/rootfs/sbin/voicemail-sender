@@ -1,7 +1,5 @@
 #!/usr/bin/php
 <?php
-
-use MikoPBX\Core\Asterisk\Configs\CelConf;
 use MikoPBX\Core\Asterisk\Configs\VoiceMailConf;
 use MikoPBX\Core\System\BeanstalkClient;
 use MikoPBX\Core\System\Notifications;
@@ -14,9 +12,12 @@ $linkedId = $argv[1]??'';
 if(empty($linkedId)){
     exit(1);
 }
+
+$endTime =  Util::getNowDate();
+
 try {
     $parser = new PhpMimeMailParser\Parser();
-    $parser->setStream(fopen("php://stdin", "r"));
+    $parser->setStream(fopen("php://stdin", 'rb'));
 
     $d      = DateTime::createFromFormat('D, d M Y H:i:s O', $parser->getHeader('date'));
     $file   = implode('', $parser->saveAttachments('/tmp/'));
@@ -31,19 +32,17 @@ try {
 
     $notify = new Notifications();
     $result = $notify->sendMail($rawHeaderTo, $subject, $message, $recordingFile);
-}catch (Exception $e){
+}catch (Throwable $e){
+    $recordingFile = '';
     Util::sysLogMsg('Voicemail-Sender', $e->getMessage());
 }
 
-if (empty($recordingFile)){
-    exit(0);
-}
 $data = [
-    'action'         => 'voicemail_end',
+    'action'           => 'voicemail_end',
     'linkedid'         => $linkedId,
     'vm-recordingfile' => $recordingFile,
-    'endtime'          => Util::getNowDate()
+    'endtime'          => $endTime
 ];
 
 $client = new BeanstalkClient(WorkerCallEvents::class);
-$result_send = $client->publish(json_encode($data));
+$result_send = $client->publish(json_encode($data, JSON_THROW_ON_ERROR));
