@@ -124,6 +124,7 @@ class WorkerCallEvents extends WorkerBase
         // PID сохраняем при начале работы Worker.
         $client = new BeanstalkClient(self::class);
         $client->subscribe(CelConf::BEANSTALK_TUBE,    [$this, 'callEventsWorker']);
+        $client->subscribe(self::class,                [$this, 'otherEvents']);
         $client->subscribe(WorkerCdr::SELECT_CDR_TUBE, [$this, 'selectCDRWorker']);
         $client->subscribe(WorkerCdr::UPDATE_CDR_TUBE, [$this, 'updateCDRWorker']);
         $client->subscribe(self::TIMOUT_CHANNEL_TUBE,  [$this, 'cleanTimeOutChannel']);
@@ -132,6 +133,26 @@ class WorkerCallEvents extends WorkerBase
 
         while ($this->needRestart === false) {
             $client->wait();
+        }
+    }
+
+    /**
+     * @param $tube
+     * @param $data
+     * @return void
+     */
+    public function otherEvents($tube, array $data=[]): void
+    {
+        if(empty($data)){
+            $data = json_decode($tube->getBody(), true);
+        }
+        $funcName = "Action_".$data['action']??'';
+        if ( method_exists($this, $funcName) ) {
+            $this->$funcName($data);
+        }
+        $className = __NAMESPACE__.'\Libs\WorkerCallEvents\\'.Text::camelize($funcName, '_');
+        if( method_exists($className, 'execute') ){
+            $className::execute($this, $data);
         }
     }
 
@@ -156,14 +177,7 @@ class WorkerCallEvents extends WorkerBase
         }catch (\Throwable $e){
             $data = [];
         }
-        $funcName = "Action_".$data['action']??'';
-        if ( method_exists($this, $funcName) ) {
-            $this->$funcName($data);
-        }
-        $className = __NAMESPACE__.'\Libs\WorkerCallEvents\\'.Text::camelize($funcName, '_');
-        if( method_exists($className, 'execute') ){
-            $className::execute($this, $data);
-        }
+        $this->otherEvents($tube, $data);
     }
 
     /**

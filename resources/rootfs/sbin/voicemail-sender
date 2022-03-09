@@ -1,6 +1,7 @@
 #!/usr/bin/php
 <?php
 
+use MikoPBX\Core\Asterisk\Configs\CelConf;
 use MikoPBX\Core\Asterisk\Configs\VoiceMailConf;
 use MikoPBX\Core\System\BeanstalkClient;
 use MikoPBX\Core\System\Notifications;
@@ -34,6 +35,9 @@ try {
     Util::sysLogMsg('Voicemail-Sender', $e->getMessage());
 }
 
+if (empty($recordingFile)){
+    exit(0);
+}
 $data = [
     'action'         => 'voicemail_end',
     'linkedid'         => $linkedId,
