@@ -23,6 +23,7 @@ require_once 'Globals.php';
 
 use MikoPBX\Common\Models\{Extensions, ModelsBase, Users};
 use MikoPBX\Core\System\{BeanstalkClient, Processes, Util};
+use MikoPBX\Common\Providers\CDRDatabaseProvider;
 use Throwable;
 
 /**
@@ -54,49 +55,12 @@ class WorkerCdr extends WorkerBase
         $this->initSettings();
 
         while ($this->needRestart === false) {
-            $result = $this->getTempCdr();
+            $result = CDRDatabaseProvider::getTempCdr();
             if (!empty($result)) {
                 $this->updateCdr($result);
             }
             $this->client_queue->wait();
         }
-    }
-
-    /**
-     * Возвращает все завершенные временные CDR.
-     * @param array $filter
-     * @return array
-     */
-    private function getTempCdr(array $filter = []):array
-    {
-        if(empty($filter)){
-            $filter = [
-                'work_completed<>1 AND endtime<>""'
-            ];
-        }
-        $filter['miko_result_in_file'] = true;
-        $filter['miko_tmp_db'] = true;
-        $filter['order'] = 'answer';
-        $filter['columns'] = 'start,answer,src_num,dst_num,dst_chan,endtime,linkedid,recordingfile,dialstatus,UNIQUEID';
-
-        $client = new BeanstalkClient(WorkerCdr::SELECT_CDR_TUBE);
-        try {
-            $result   = $client->request(json_encode($filter), 2);
-            $filename = json_decode($result, true, 512, JSON_THROW_ON_ERROR);
-        }catch (Throwable $e){
-            $filename = '';
-        }
-        $result_data = [];
-        if (file_exists($filename)) {
-            try {
-                $result_data = json_decode(file_get_contents($filename), true, 512, JSON_THROW_ON_ERROR);
-            }catch (Throwable $e){
-                Util::sysLogMsg('SELECT_CDR_TUBE', 'Error parse response.');
-            }
-            unlink($filename);
-        }
-
-        return $result_data;
     }
 
     /**
@@ -338,7 +302,7 @@ class WorkerCdr extends WorkerBase
                 "linkedid='{$row['linkedid']}' AND dst_chan='{$row['dst_chan']}'",
                 'limit' => 1,
             ];
-            $data = $this->getTempCdr($filter);
+            $data = CDRDatabaseProvider::getTempCdr($filter);
             $recordingfile = $data[0]['recordingfile']??'';
             if (!empty($recordingfile)) {
                 $row['recordingfile'] = $recordingfile;

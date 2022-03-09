@@ -19,10 +19,16 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
-
+use MikoPBX\Common\Models\CallDetailRecordsTmp;
+use MikoPBX\Common\Providers\CDRDatabaseProvider;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Storage;
 use MikoPBX\Core\System\Util;
+use MikoPBX\Common\Models\Extensions;
+use MikoPBX\Common\Models\Sip;
+use MikoPBX\Common\Models\Users;
+use Phalcon\Di;
+use Phalcon\Mvc\Model\Manager;
 
 class VoiceMailConf extends CoreConfigClass
 {
@@ -129,6 +135,84 @@ class VoiceMailConf extends CoreConfigClass
             }
         }
         return $recordingFile;
+    }
+
+    /**
+     * Возвращает список пользователей VM.
+     * @return array
+     */
+    public static function getUsersVM():array
+    {
+        $di = Di::getDefault();
+        if(!$di){
+            return [];
+        }
+        /** @var Manager $manager */
+        $manager = $di->get('modelsManager');
+        $parameters = [
+            'models'     => [
+                'Sip' => Sip::class,
+            ],
+            'conditions' => 'Sip.type = :type: AND Users.email <> ""',
+            'bind'       => ['type' => 'peer'],
+            'columns'    => [
+                'extension'      => 'Sip.extension',
+                'email'          => 'Users.email',
+                'username'       => 'Users.username',
+            ],
+            'order'      => 'Sip.extension',
+            'joins'      => [
+                'Extensions' => [
+                    0 => Extensions::class,
+                    1 => 'Sip.extension = Extensions.number',
+                    2 => 'Extensions',
+                    3 => 'LEFT',
+                ],
+                'Users' => [
+                    0 => Users::class,
+                    1 => 'Users.id = Extensions.userid',
+                    2 => 'Users',
+                    3 => 'INNER',
+                ]
+            ],
+        ];
+        $query  = $manager->createBuilder($parameters)->getQuery();
+        $result = $query->execute()->toArray();
+        $mails = [];
+        foreach ($result as $data){
+            if(empty($data['email'])){
+                continue;
+            }
+            $mails[$data['extension']] = $data;
+        }
+        return $mails;
+    }
+
+    /**
+     * Возвращает все
+     * @param $linkedId
+     * @return array
+     */
+    public static function getToMail($linkedId):array
+    {
+        $toMails  = [];
+        $allMails = self::getUsersVM();
+        $filter         = [
+            'linkedid=:linkedid: AND disposition <> "ANSWERED"',
+            'bind' => [
+                'linkedid' => $linkedId,
+            ],
+            'columns' => 'dst_num'
+        ];
+        $m_data = CDRDatabaseProvider::getTempCdr($filter);
+        foreach ($m_data as $row){
+            $mailData = $allMails[$row['dst_num']]??false;
+            if($mailData){
+                $toMails[] = $mailData['email'];
+            }
+        }
+
+        return $toMails;
     }
 
 }

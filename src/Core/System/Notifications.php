@@ -127,7 +127,10 @@ class Notifications
         try {
             $mail = $this->getMailSender();
             $mail->setFrom($this->fromAddres, $this->fromName);
-            $mail->addAddress($to);
+            $to = explode(',', $to);
+            foreach ($to as $email){
+                $mail->addAddress($email);
+            }
             if (file_exists($filename)) {
                 $mail->addAttachment($filename);
             }

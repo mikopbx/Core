@@ -1,5 +1,6 @@
 #!/usr/bin/php
 <?php
+
 use MikoPBX\Core\Asterisk\Configs\VoiceMailConf;
 use MikoPBX\Core\System\BeanstalkClient;
 use MikoPBX\Core\System\Notifications;
@@ -12,8 +13,8 @@ $linkedId = $argv[1]??'';
 if(empty($linkedId)){
     exit(1);
 }
-
-$endTime =  Util::getNowDate();
+$endTime  = Util::getNowDate();
+$toMails  = VoiceMailConf::getToMail($linkedId);
 
 try {
     $parser = new PhpMimeMailParser\Parser();
@@ -27,11 +28,14 @@ try {
 
     $addresses      = mailparse_rfc822_parse_addresses($parser->getHeader('to'));
     $rawHeaderTo    = $addresses[0]['address']??'';
+    if(!empty($rawHeaderTo)){
+        $toMails[] = $rawHeaderTo;
+    }
     $subject        = $parser->getHeader('subject');
     $message        = str_replace(PHP_EOL, '<br>', $parser->getMessageBody());
 
     $notify = new Notifications();
-    $result = $notify->sendMail($rawHeaderTo, $subject, $message, $recordingFile);
+    $result = $notify->sendMail(implode(',', array_unique($toMails)), $subject, $message, $recordingFile);
 }catch (Throwable $e){
     $recordingFile = '';
     Util::sysLogMsg('Voicemail-Sender', $e->getMessage());
