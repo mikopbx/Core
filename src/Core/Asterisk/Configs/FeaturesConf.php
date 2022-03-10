@@ -35,9 +35,13 @@ class FeaturesConf extends CoreConfigClass
 
     protected function generateConfigProtected(): void
     {
+        $atxTimeout = $this->generalSettings['PBXFeatureAtxferNoAnswerTimeout'];
+        if(empty($atxTimeout)){
+            $atxTimeout = 45;
+        }
         $conf = "[general]\n" .
             "featuredigittimeout = {$this->generalSettings['PBXFeatureDigitTimeout']}\n" .
-            "atxfernoanswertimeout = {$this->generalSettings['PBXFeatureAtxferNoAnswerTimeout']}\n" .
+            "atxfernoanswertimeout = {$atxTimeout}\n" .
             "transferdigittimeout = {$this->generalSettings['PBXFeatureTransferDigitTimeout']}\n" .
             "pickupexten = {$this->generalSettings['PBXFeaturePickupExten']}\n" .
             "atxferabort = *0\n" .
