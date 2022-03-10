@@ -23,6 +23,7 @@ use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\MainDatabaseProvider;
 use MikoPBX\Common\Providers\ModelsAnnotationsProvider;
 use MikoPBX\Common\Providers\ModelsMetadataProvider;
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use Phalcon\Db\Column;
 use Phalcon\Db\Index;
@@ -76,7 +77,26 @@ class UpdateDatabase extends Di\Injectable
                 Util::echoWithSyslog('Errors within update table '.$className.' '.$exception->getMessage());
             }
         }
+        $this->updatePermitCustomModules();
     }
+
+    /**
+     * https://github.com/mikopbx/Core/issues/173
+     * @return void
+     */
+    private function updatePermitCustomModules():void
+    {
+        /**
+         * Добавим права на файлы в директории модулей.
+         */
+        $modulesDir = $this->config->path('core.modulesDir');
+        $findPath  = Util::which('find');
+        $chownPath = Util::which('chown');
+        $chmodPath = Util::which('chmod');
+        Processes::mwExec("$findPath $modulesDir/*/*bin/ -type f -exec {$chmodPath} +x {} \;");
+        Processes::mwExec("$chownPath -R www:www $modulesDir/*");
+    }
+
 
     /**
      * Create, update DB structure by code description
