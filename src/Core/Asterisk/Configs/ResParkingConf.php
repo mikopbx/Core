@@ -101,9 +101,9 @@ class ResParkingConf extends CoreConfigClass
      */
     public function getSettings(): void
     {
-        $this->ParkingExt       = $this->generalSettings['PBXCallParkingExt'];
-        $this->ParkingStartSlot = (int)$this->generalSettings['PBXCallParkingStartSlot'];
-        $this->ParkingEndSlot   = (int)$this->generalSettings['PBXCallParkingEndSlot'];
+        $this->ParkingExt       = PbxSettings::getValueByKey('PBXCallParkingExt');
+        $this->ParkingStartSlot = (int)PbxSettings::getValueByKey('PBXCallParkingStartSlot');
+        $this->ParkingEndSlot   = (int)PbxSettings::getValueByKey('PBXCallParkingEndSlot');
     }
 
     /**
@@ -123,8 +123,13 @@ class ResParkingConf extends CoreConfigClass
      */
     public function getIncludeInternalTransfer(): string
     {
+        if(empty($this->ParkingExt)){
+            $conf = '';
+        }else{
+            $conf = 'exten => ' . $this->ParkingExt . ',1,Goto(parked-calls,${EXTEN},1)' . PHP_EOL;
+        }
         // Генерация внутреннего номерного плана.
-        return 'exten => ' . $this->ParkingExt . ',1,Goto(parked-calls,${EXTEN},1)' . "\n";
+        return $conf;
     }
 
     /**
