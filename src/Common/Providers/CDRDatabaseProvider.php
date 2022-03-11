@@ -50,7 +50,7 @@ class CDRDatabaseProvider extends DatabaseProviderBase implements ServiceProvide
      * @param array $filter
      * @return array
      */
-    public static function getTempCdr(array $filter = []):array
+    public static function getCdr(array $filter = []):array
     {
         if(empty($filter)){
             $filter = [
@@ -58,7 +58,6 @@ class CDRDatabaseProvider extends DatabaseProviderBase implements ServiceProvide
             ];
         }
         $filter['miko_result_in_file'] = true;
-        $filter['miko_tmp_db'] = true;
         $filter['order'] = 'answer';
         $filter['columns'] = 'start,answer,src_num,dst_num,dst_chan,endtime,linkedid,recordingfile,dialstatus,UNIQUEID';
 

@@ -202,9 +202,10 @@ class VoiceMailConf extends CoreConfigClass
             'bind' => [
                 'linkedid' => $linkedId,
             ],
-            'columns' => 'dst_num'
+            'columns' => 'dst_num',
+            'miko_tmp_db' => true
         ];
-        $m_data = CDRDatabaseProvider::getTempCdr($filter);
+        $m_data = CDRDatabaseProvider::getCdr($filter);
         foreach ($m_data as $row){
             $mailData = $allMails[$row['dst_num']]??false;
             if($mailData){

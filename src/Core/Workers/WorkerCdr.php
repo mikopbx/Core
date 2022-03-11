@@ -55,7 +55,7 @@ class WorkerCdr extends WorkerBase
         $this->initSettings();
 
         while ($this->needRestart === false) {
-            $result = CDRDatabaseProvider::getTempCdr();
+            $result = CDRDatabaseProvider::getCdr();
             if (!empty($result)) {
                 $this->updateCdr($result);
             }
@@ -301,8 +301,9 @@ class WorkerCdr extends WorkerBase
             $filter = [
                 "linkedid='{$row['linkedid']}' AND dst_chan='{$row['dst_chan']}'",
                 'limit' => 1,
+                'miko_tmp_db' => true
             ];
-            $data = CDRDatabaseProvider::getTempCdr($filter);
+            $data = CDRDatabaseProvider::getCdr($filter);
             $recordingfile = $data[0]['recordingfile']??'';
             if (!empty($recordingfile)) {
                 $row['recordingfile'] = $recordingfile;
