@@ -35,6 +35,19 @@ class RedisConf extends Injectable
      */
     public function reStart(): void
     {
+        $mainRunner = 'safe-'.self::PROC_NAME;
+        Util::killByName($mainRunner);
+        Util::killByName(self::PROC_NAME);
+
+        $ch = 0;
+        do{
+            $ch++;
+            // Ожидаем завершения работы redis;
+            sleep(1);
+            $pid1 = Processes::getPidOfProcess($mainRunner);
+            $pid2 = Processes::getPidOfProcess(self::PROC_NAME);
+        }while(!empty($pid1.$pid2) && $ch < 30);
+
         $this->configure();
         Processes::safeStartDaemon(self::PROC_NAME, self::CONF_FILE);
 
