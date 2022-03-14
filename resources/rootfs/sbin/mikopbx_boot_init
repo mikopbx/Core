@@ -82,10 +82,11 @@ if [ -n "$mdadmPath" ]; then
 fi;
 # RAID END
 
-echo;
-echo " - Start /sbin/mountoffload...";
+. /sbin/shell_functions.sh;
+echoToTeletype;
+echoToTeletype " - Start /sbin/mountoffload...";
 /sbin/mountoffload;
-echo " - Start /etc/rc/mountconfdir...";
+echoToTeletype " - Start /etc/rc/mountconfdir...";
 /etc/rc/mountconfdir;
 
 /etc/rc/bootup 2> /dev/null

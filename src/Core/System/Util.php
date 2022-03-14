@@ -544,9 +544,49 @@ class Util
         return (stripos(php_uname('v'), 'debian') !== false);
     }
 
+    /**
+     * @return bool
+     */
     public static function isDocker(): bool
     {
         return file_exists('/.dockerenv');
+    }
+
+    /**
+     * Вывод в основной teletype.
+     * @param string $message
+     * @return void
+     */
+    public static function teletypeEcho(string $message):void
+    {
+        $pathBusyBox    = self::which('busybox');
+        $ttyPath        = '/dev/ttyS0';
+        $ttyTittle      = trim(shell_exec("$pathBusyBox setserial -g $ttyPath 2> /dev/null"));
+        if(strpos($ttyTittle, $ttyPath) !== false && strpos($ttyTittle, 'unknown') === false){
+            @file_put_contents($ttyPath, $message, FILE_APPEND);
+        }
+        $ttyPath        = '/dev/ttyS1';
+        $ttyTittle      = trim(shell_exec("$pathBusyBox setserial -g $ttyPath 2> /dev/null"));
+        if(strpos($ttyTittle, $ttyPath) !== false && strpos($ttyTittle, 'unknown') === false){
+            @file_put_contents($ttyPath, $message, FILE_APPEND);
+        }
+    }
+
+    /**
+     * Вывод DONE / FAIL основной teletype.
+     * @param $result
+     * @return void
+     */
+    public static function teletypeEchoDone(string $message, $result):void
+    {
+        $len    = max(0, 80 - strlen($message) - 9);
+        $spaces = str_repeat('.', $len);
+        if($result === false){
+            $message = " \033[31;1mFAIL\033[0m \n";
+        }else{
+            $message = " \033[32;1mDONE\033[0m \n";
+        }
+        self::teletypeEcho($spaces.$message);
     }
 
     /**

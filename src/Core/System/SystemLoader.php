@@ -43,12 +43,14 @@ class SystemLoader extends Di\Injectable
     private function echoStartMsg(string $message):void
     {
         $this->stageMessage = $message;
+        Util::teletypeEcho($message);
         Util::echoWithSyslog($this->stageMessage);
     }
 
     private function echoResultMsg(bool $result = true):void
     {
         Util::echoResult($this->stageMessage, $result);
+        Util::teletypeEchoDone($this->stageMessage, $result);
         $this->stageMessage = '';
     }
 
@@ -58,7 +60,7 @@ class SystemLoader extends Di\Injectable
     public function startSystem(): bool
     {
         $this->di->getShared('registry')->booting = true;
-
+        $this->echoStartMsg(PHP_EOL);
         $this->echoStartMsg(' - Start acpid daemon...');
         $ACPIDConf = new ACPIDConf();
         $ACPIDConf->reStart();
