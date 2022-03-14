@@ -555,17 +555,12 @@ class Util
     /**
      * Вывод в основной teletype.
      * @param string $message
+     * @param string $ttyPath
      * @return void
      */
-    public static function teletypeEcho(string $message):void
+    public static function teletypeEcho(string $message, string $ttyPath = '/dev/ttyS0'):void
     {
         $pathBusyBox    = self::which('busybox');
-        $ttyPath        = '/dev/ttyS0';
-        $ttyTittle      = trim(shell_exec("$pathBusyBox setserial -g $ttyPath 2> /dev/null"));
-        if(strpos($ttyTittle, $ttyPath) !== false && strpos($ttyTittle, 'unknown') === false){
-            @file_put_contents($ttyPath, $message, FILE_APPEND);
-        }
-        $ttyPath        = '/dev/ttyS1';
         $ttyTittle      = trim(shell_exec("$pathBusyBox setserial -g $ttyPath 2> /dev/null"));
         if(strpos($ttyTittle, $ttyPath) !== false && strpos($ttyTittle, 'unknown') === false){
             @file_put_contents($ttyPath, $message, FILE_APPEND);
