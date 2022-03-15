@@ -46,6 +46,18 @@ recover_upgrade)
     if [ "/dev/${partition4Name}" != "${mounted_storage}" ]; then
       # Storage на отдельном диске.
       img_file="$2"
+      echo " - free storage ...";
+      /sbin/freestorage "doNotUnMount";
+
+      backupDir="$(cat /var/etc/storage_device)/mikopbx/backup/last-update-firmware"
+      backupImg="$backupDir/system.img";
+      rm -rf "$backupDir"; mkdir -p "$backupDir";
+
+      echo " - copy conf to storage ...";
+      /bin/busybox cp -R /cf/conf/* "$backupDir";
+
+      echo " - backup system img to storage ...";
+      /bin/pv -p "/dev/$(/bin/busybox basename "$(cat /var/etc/cfdevice)")" | /bin/gzip | dd of="$backupImg" bs=512 >/dev/null 2>&1
     else
       # Storage на диске основном диске,
       # так как его нужно отмнонтировать, то перемещамем образ в RAM.
@@ -58,16 +70,26 @@ recover_upgrade)
         mv "${src_file}" "${img_file}"
       fi
 
-      echo " - free storage ..."
+      echo " - free storage ...";
       /sbin/freestorage
     fi
+
     # Отключаем основной диск.
     /sbin/freeupoffload
   fi
 
   echo " - installing image..."
   if [ -r "${img_file}" ]; then
-    /bin/pv -p "${img_file}" | /bin/gunzip | dd of="$3" bs=512 >/dev/null 2>&1
+    /bin/pv -p "${img_file}" | /bin/gunzip | dd of="$3" bs=512 >/dev/null 2>&1;
+    resultPv="$?";
+    if [ ! "$resultPv" = '0' ] || [ ! "$(/bin/lsblk "$3" -b -r -o NAME | /bin/busybox grep -v NAME | /bin/busybox wc -l)" = '4' ]; then
+      if [ -f "$backupImg" ]; then
+        echo " - System update error, trying rollback to the recovery point ..."
+        /bin/pv -p "$backupImg" | /bin/gunzip | dd of="$3" bs=512 >/dev/null 2>&1
+      fi;
+    fi;
+
+    rm -rf "$backupImg";
     echo " - dd end working..."
     # Обновляем таблицу разделов.
     /sbin/initial.storage.part.four create "$3"
@@ -91,6 +113,6 @@ recover_upgrade)
   fi
 
   echo " - rebooting system..."
-  /sbin/mikopbx_reboot
+  /sbin/mikopbx_reboot;
   ;;
 esac

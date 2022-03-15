@@ -42,4 +42,7 @@ killprocesses "$storage" -KILL 1;
 # umount  swap
 freeSwapByName "$storage";
 
-f_umount "$storage";
+if [ ! "doNotUnMount" = "$1" ]; then
+  f_umount "$storage";
+fi;
+
