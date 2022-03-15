@@ -123,9 +123,20 @@ class CallQueueEditForm extends Form
         $this->add(new Check('announce_hold_time', $cheskarr));
 
 
-        // Periodicannouncesoundid
         $periodicannouncesoundid = new Select(
             'periodic_announce_sound_id', $options['soundfiles'], [
+            'using'    => [
+                'id',
+                'name',
+            ],
+            'useEmpty' => true,
+            'class'    => 'ui selection dropdown search periodic-announce-sound-id-select',
+        ]
+        );
+        $this->add($periodicannouncesoundid);
+
+        $periodicannouncesoundid = new Select(
+            'moh_sound_id', $options['mohSoundFiles'], [
             'using'    => [
                 'id',
                 'name',

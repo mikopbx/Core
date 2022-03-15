@@ -122,15 +122,22 @@ class CallQueuesController extends BaseController
         // Список звуковых файлов для очередей
         $soundfilesList[""] = $this->translation->_("sf_SelectAudioFile");
         $soundfilesList[-1] = '-';
-        $soundFiles         = SoundFiles::find('category="custom"');
+        $mohSoundFilesList  = $soundfilesList;
+
+        $soundFiles         = SoundFiles::find(['columns' => 'id,name,category']);
         foreach ($soundFiles as $soundFile) {
-            $soundfilesList[$soundFile->id] = $soundFile->name;
+            if(SoundFiles::CATEGORY_CUSTOM === $soundFile->category){
+                $soundfilesList[$soundFile->id] = $soundFile->name;
+            }else{
+                $mohSoundFilesList[$soundFile->id] = $soundFile->name;
+            }
         }
 
         $form                        = new CallQueueEditForm(
             $queue, [
                       'extensions' => $extensionList,
                       'soundfiles' => $soundfilesList,
+                      'mohSoundFiles' => $mohSoundFilesList,
                   ]
         );
         $this->view->form            = $form;
@@ -248,6 +255,7 @@ class CallQueuesController extends BaseController
                     break;
 
                 case "periodic_announce_sound_id":
+                case "moh_sound_id":
                 case "redirect_to_extension_if_repeat_exceeded":
                 case "redirect_to_extension_if_empty":
                     if ( ! array_key_exists($name, $data) || empty($data[$name])) {

@@ -298,6 +298,9 @@ class PBX extends Injectable
 
     public static function mohReload(): void
     {
+        $m = new MusicOnHoldConf();
+        $m->generateConfig();
+
         $asteriskPath = Util::which('asterisk');
         Processes::mwExec("{$asteriskPath} -rx 'moh reload'");
     }
