@@ -75,11 +75,11 @@ class CallQueuesController extends BaseController
             $queue                              = new CallQueues();
             $queue->uniqid                      = Extensions::TYPE_QUEUE . strtoupper('-' . md5($queue->id . time()));
             $queue->caller_hear                 = 'moh';
-            $queue->seconds_to_ring_each_member = 20;
-            $queue->seconds_for_wrapup          = 15;
-            $queue->announce_position           = 1;
-            $queue->announce_hold_time          = 1;
-            $queue->periodic_announce_frequency = 45;
+            $queue->seconds_to_ring_each_member = 60;
+            $queue->seconds_for_wrapup          = 1;
+            $queue->announce_position           = 0;
+            $queue->announce_hold_time          = 0;
+            $queue->periodic_announce_frequency = 30;
             $queue->extension                   = Extensions::getNextFreeApplicationNumber();
         } else {
             // Списк экстеншенов очереди
