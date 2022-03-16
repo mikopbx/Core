@@ -1069,4 +1069,6 @@ return [
     'gs_UseWebRTC' => 'WebRTCを使用する',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'ログインは1文字より長くする必要があります',
     'ex_ImpossibleToDeleteExtension' => '従業員を削除することはできません。次のリンクがあります',
+    'cq_PereodicAnonceMohSoundFile' => '身元音楽（MOH）',
+    'gs_SSHDisablePasswordLogins' => 'パスワード認証を無効にする',
 ];

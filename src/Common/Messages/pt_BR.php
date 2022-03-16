@@ -1054,4 +1054,6 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'gs_UseWebRTC' => 'Use WebRTC',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'O login deve ter mais de um caractere',
     'ex_ImpossibleToDeleteExtension' => 'Não é possível eliminar um empregado porque existem os seguintes links',
+    'cq_PereodicAnonceMohSoundFile' => 'Música de fundo (MOH)',
+    'gs_SSHDisablePasswordLogins' => 'Desativar autorização de senha',
 ];

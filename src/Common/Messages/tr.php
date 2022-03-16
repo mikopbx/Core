@@ -1069,4 +1069,6 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
     'gs_UseWebRTC' => 'WebRTC\'yi kullan',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'Giriş bir karakterden uzun olmalıdır',
     'ex_ImpossibleToDeleteExtension' => 'Bir çalışanı silmek mümkün değildir çünkü aşağıdaki linkler var',
+    'cq_PereodicAnonceMohSoundFile' => 'Fon müziği (MOH)',
+    'gs_SSHDisablePasswordLogins' => 'Şifre kimlik doğrulamasını devre dışı bırak',
 ];

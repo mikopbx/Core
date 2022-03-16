@@ -1069,4 +1069,6 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'gs_UseWebRTC' => 'Použijte WebRTC',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'Přihlášení musí být delší než jeden znak',
     'ex_ImpossibleToDeleteExtension' => 'Není možné smazat zaměstnance, protože jsou zde následující odkazy',
+    'cq_PereodicAnonceMohSoundFile' => 'Hudba na pozadí (MOH)',
+    'gs_SSHDisablePasswordLogins' => 'Zakázat ověřování heslem',
 ];
