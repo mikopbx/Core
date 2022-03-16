@@ -588,6 +588,7 @@ return [
     'gs_AJAMPort' => 'Порт AJAM',
     'gs_AJAMPortTLS' => 'Порт AJAM с шифрованием',
     'gs_SSHPort' => 'SSH порт',
+    'gs_SSHPPasswordCorrupt' => 'Пароль ssh, установленный в web интерфейсе, не совпадает с действующим в системе.',
     'gs_SSHPassword' => 'SSH пароль',
     'gs_SSHAuthorizedKeys' => 'SSH Authorized Keys',
     'gs_SSHecdsaKey' => 'SSH ECDSA Key',

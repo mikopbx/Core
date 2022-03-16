@@ -145,8 +145,12 @@ class AdvicesProcessor extends Injectable
                 'adv_YouUseDefaultSSHPassword',
                 ['url' => $this->url->get('general-settings/modify/#/ssh')]
             );
+        }elseif(PbxSettings::getValueByKey('SSHPasswordHash') !== md5_file('/etc/passwd')){
+            $messages['warning'] = $this->translation->_(
+                'gs_SSHPPasswordCorrupt',
+                ['url' => $this->url->get('general-settings/modify/#/ssh')]
+            );
         }
-
         return $messages;
     }
 

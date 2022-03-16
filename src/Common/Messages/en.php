@@ -546,6 +546,7 @@ return [
     'gs_AJAMPort' => 'AJAM port',
     'gs_AJAMPortTLS' => 'Secure AJAM port',
     'gs_SSHPort' => 'SSH port',
+    'gs_SSHPPasswordCorrupt' => 'The ssh password set in the web interface does not match the one set in the system. Security is at risk.',
     'gs_SSHPassword' => 'SSH password',
     'gs_SSHAuthorizedKeys' => 'SSH Authorized Keys',
     'gs_SSHDisablePasswordLogins' => 'Disable password logins',
