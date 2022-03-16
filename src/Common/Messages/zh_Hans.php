@@ -1069,4 +1069,6 @@ return [
     'gs_UseWebRTC' => '使用 WebRTC',
     'pr_ValidationProviderLoginNotSingleSimbol' => '登录名必须多于一个字符',
     'ex_ImpossibleToDeleteExtension' => '无法删除员工，因为有以下链接',
+    'cq_PereodicAnonceMohSoundFile' => '背景音乐 (MOH)',
+    'gs_SSHDisablePasswordLogins' => '禁用密码验证',
 ];

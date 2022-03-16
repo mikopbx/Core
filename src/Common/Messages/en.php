@@ -1074,4 +1074,5 @@ It can be activated once, after which the coupon becomes redeemed.
     'Storage disk was mounted successfully...' => 'Storage disk successfully mounted',
     'ex_PortugueseBrazil' => 'Português (Brazil)',
     'ex_ImpossibleToDeleteExtension' => 'It is not possible to delete an employee because there are following links',
+    'cq_PereodicAnonceMohSoundFile' => 'Background music (MOH)',
 ];

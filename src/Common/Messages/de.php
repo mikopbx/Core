@@ -1072,4 +1072,6 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
     'gs_UseWebRTC' => 'Verwenden Sie WebRTC',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'Login muss länger als ein Zeichen sein',
     'ex_ImpossibleToDeleteExtension' => 'Es ist nicht möglich, einen Mitarbeiter zu löschen, weil Es gibt folgende Links',
+    'cq_PereodicAnonceMohSoundFile' => 'Hintergrundmusik (MOH)',
+    'gs_SSHDisablePasswordLogins' => 'Deaktivieren Sie die Kennwortautorisierung',
 ];

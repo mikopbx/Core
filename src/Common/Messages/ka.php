@@ -1069,4 +1069,6 @@ return [
     'gs_UseWebRTC' => 'გამოიყენეთ WebRTC',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'შესვლა ერთ სიმბოლოზე გრძელი უნდა იყოს',
     'ex_ImpossibleToDeleteExtension' => 'შეუძლებელია თანამშრომლის წაშლა იმიტომ არის შემდეგი ლინკები',
+    'cq_PereodicAnonceMohSoundFile' => 'ფონური მუსიკა (MOH)',
+    'gs_SSHDisablePasswordLogins' => 'პაროლის ავტორიზაციის გამორთვა',
 ];

@@ -1069,4 +1069,6 @@ return [
     'gs_UseWebRTC' => 'Використати WebRTC',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'Логін повинен бути довшим за один символ',
     'ex_ImpossibleToDeleteExtension' => 'Неможливо видалити працівника, т.к. існують наступні посилання',
+    'cq_PereodicAnonceMohSoundFile' => 'Фонова музика (MOH)',
+    'gs_SSHDisablePasswordLogins' => 'Вимкнути авторизацію за паролем',
 ];

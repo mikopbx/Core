@@ -1069,4 +1069,6 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'gs_UseWebRTC' => 'Użyj WebRTC',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'Login musi być dłuższy niż jeden znak',
     'ex_ImpossibleToDeleteExtension' => 'Nie można usunąć pracownika, ponieważ są następujące linki',
+    'cq_PereodicAnonceMohSoundFile' => 'Muzyka w tle (MOH)',
+    'gs_SSHDisablePasswordLogins' => 'Wyłącz uwierzytelnianie hasłem',
 ];

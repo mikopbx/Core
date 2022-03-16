@@ -1069,4 +1069,6 @@ Può essere attivato una volta, dopo di che il coupon viene riscattato.
     'gs_UseWebRTC' => 'Usa WebRTC',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'L\'accesso deve essere più lungo di un carattere',
     'ex_ImpossibleToDeleteExtension' => 'Non è possibile eliminare un dipendente perché ci sono i seguenti link',
+    'cq_PereodicAnonceMohSoundFile' => 'Musica di sottofondo (MOH)',
+    'gs_SSHDisablePasswordLogins' => 'Disabilita l\'autenticazione della password',
 ];
