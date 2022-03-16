@@ -25,6 +25,8 @@ export LSCOLORS=gxfxcxdxbxegedabagacad
 export HISTCONTROL=ignoredups
 export HISTFILESIZE=100000
 export HISTSIZE=5000
+export PROMPT_COMMAND='history -a'
+export HISTTIMEFORMAT="%F %T: "
 
 shopt -s histappend
 shopt -s histreedit
@@ -33,6 +35,15 @@ shopt -s autocd
 shopt -s cdspell
 shopt -s dirspell
 shopt -s cmdhist
+
+storageDevice="$(cat /var/etc/storage_device)";
+/bin/busybox mount | /bin/busybox grep " $storageDevice " > /dev/null 2> /dev/null;
+storageNotExists="$?";
+if [ "$storageNotExists" = '0' ]; then
+  histDir="$storageDevice/mikopbx/log/bash";
+  mkdir -p "$histDir";
+  export HISTFILE="$histDir/.bash_history";
+fi
 
 alias ls='ls --color=auto'
 alias myip="curl http://ipecho.net/plain; echo"
