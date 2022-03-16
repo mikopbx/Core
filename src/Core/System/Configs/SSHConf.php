@@ -85,9 +85,9 @@ class SSHConf extends Injectable
         // Restart dropbear
         Processes::killByName('dropbear');
         usleep(500000);
+        $this->updateShellPassword();
         $result = Processes::mwExec("{$dropbearPath} -p '{$ssh_port}' $options -c /etc/rc/hello > /var/log/dropbear_start.log");
         $this->generateAuthorizedKeys();
-        $this->updateShellPassword();
 
         return ($result === 0);
     }
