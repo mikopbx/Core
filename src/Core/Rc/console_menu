@@ -37,7 +37,6 @@ use MikoPBX\Core\System\{Configs\IptablesConf,
     Util,
     Network,
     Verify,
-    System,
     MikoPBXConfig,
     Storage};
 use MikoPBX\Service\Main;

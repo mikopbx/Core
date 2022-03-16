@@ -984,6 +984,7 @@ It can be activated once, after which the coupon becomes redeemed.
     'Install or recover' => 'Install / Repair',
     'PBX console setup' => 'PBX console',
     'The integrity of the system is broken' => 'System integrity is broken',
+    'systemBrokenComment' => 'Critical system files have been modified. It is necessary to perform a system restore/update.',
     'VLAN IP address assigned via' => 'VLAN IP: works through',
     'LAN IP address' => 'LAN IP set manually',
     'LAN IP address assigned via DHCP' => 'LAN IP assigned through DHCP server',

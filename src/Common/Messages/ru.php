@@ -988,6 +988,7 @@ return [
     'LAN IP address' => 'LAN IP установлен вручную',
     'VLAN IP address assigned via' => 'VLAN IP: работает через',
     'The integrity of the system is broken' => 'Нарушена целостность системы',
+    'systemBrokenComment' => 'Критически важные системные файлы были модифицированы. Необходимо выполнить восстановление / обновление системы.',
     'PBX console setup' => 'Консоль АТС',
     'Install or recover' => 'Выполнить установку / восстановить',
     'Install on Hard Drive' => 'Выполнить установку',
