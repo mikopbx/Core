@@ -20,6 +20,7 @@
 namespace MikoPBX\Core\System\Configs;
 
 
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
@@ -58,9 +59,11 @@ class SSHConf extends Injectable
             "dss"   => "SSHDssKey",
             "ecdsa" => "SSHecdsaKey"
         ];
+
+        $options = ($this->mikoPBXConfig->getGeneralSettings('SSHDisablePasswordLogins') === 'on')?'-s':'';
         // Get keys from DB
         $dropbearkeyPath = Util::which('dropbearkey');
-        $dropbearPath = Util::which('dropbear');
+        $dropbearPath    = Util::which('dropbear');
         foreach ($keytypes as $keytype => $db_key) {
             $res_keyfilepath = "{$dropBearDir}/dropbear_" . $keytype . "_host_key";
             $key             = $this->mikoPBXConfig->getGeneralSettings($db_key);
@@ -82,7 +85,7 @@ class SSHConf extends Injectable
         // Restart dropbear
         Processes::killByName('dropbear');
         usleep(500000);
-        $result = Processes::mwExec("{$dropbearPath} -p '{$ssh_port}' -c /etc/rc/hello > /var/log/dropbear_start.log");
+        $result = Processes::mwExec("{$dropbearPath} -p '{$ssh_port}' $options -c /etc/rc/hello > /var/log/dropbear_start.log");
         $this->generateAuthorizedKeys();
         $this->updateShellPassword();
 

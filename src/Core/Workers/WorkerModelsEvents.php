@@ -289,11 +289,12 @@ class WorkerModelsEvents extends WorkerBase
         $tables[] = [
             'settingName' => [
                 'SSHPort',
-                'SSHPassword',
-                'SSHAuthorizedKeys',
                 'SSHRsaKey',
                 'SSHDssKey',
+                'SSHPassword',
                 'SSHecdsaKey',
+                'SSHAuthorizedKeys',
+                'SSHDisablePasswordLogins',
             ],
             'functions'   => [
                 self::R_SSH,

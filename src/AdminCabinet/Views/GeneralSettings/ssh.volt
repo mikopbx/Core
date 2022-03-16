@@ -12,6 +12,14 @@
         {{ form.render('SSHPasswordRepeat') }}
     </div>
 </div>
+<div class="field disability">
+    <div class="ui segment">
+        <div class="ui toggle checkbox">
+            <label>{{ t._('gs_SSHDisablePasswordLogins') }}</label>
+            {{ form.render('SSHDisablePasswordLogins') }}
+        </div>
+    </div>
+</div>
 <div class="ssh-password-score-section">
     <div class="two fields">
         <div class="field">

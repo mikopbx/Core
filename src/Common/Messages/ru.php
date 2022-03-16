@@ -325,6 +325,7 @@ return [
     'cq_AnnonceHoldTime' => 'Оповещать о расчетном времени ожидания',
     'cq_PereodicAnonceSoundFile' => 'Рекламная фраза или дополнительное оповещение',
     'cq_PereodicAnonceMohSoundFile' => 'Фоновая музыка (MOH)',
+    'gs_SSHDisablePasswordLogins' => 'Отключить авторизацию по паролю',
     'cq_PereodicAnonceFrequency' => 'Время в секундах для периодического повтора всех оповещений',
     'cq_CallRouting' => 'Маршрутизация звонков при сбоях',
     'cq_ScenaryOne' => 'Сценарий №1',

@@ -548,6 +548,7 @@ return [
     'gs_SSHPort' => 'SSH port',
     'gs_SSHPassword' => 'SSH password',
     'gs_SSHAuthorizedKeys' => 'SSH Authorized Keys',
+    'gs_SSHDisablePasswordLogins' => 'Disable password logins',
     'gs_SSHecdsaKey' => 'SSH ECDSA Key',
     'gs_SSHRsaKey' => 'SSH RSA Key',
     'gs_SSHDssKey' => 'SSH DSS Key',
