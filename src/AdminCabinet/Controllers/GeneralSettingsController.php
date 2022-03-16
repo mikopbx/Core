@@ -66,6 +66,7 @@ class GeneralSettingsController extends BaseController
                 case 'RedirectToHttps':
                 case 'PBXSplitAudioThread':
                 case 'UseWebRTC':
+                case 'SSHDisablePasswordLogins':
                 case 'PBXAllowGuestCalls':
                 case '***ALL CHECK BOXES ABOVE***':
                     $newValue = ($data[$key] === 'on') ? '1' : '0';

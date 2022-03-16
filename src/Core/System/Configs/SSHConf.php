@@ -60,7 +60,7 @@ class SSHConf extends Injectable
             "ecdsa" => "SSHecdsaKey"
         ];
 
-        $options = ($this->mikoPBXConfig->getGeneralSettings('SSHDisablePasswordLogins') === 'on')?'-s':'';
+        $options = ($this->mikoPBXConfig->getGeneralSettings('SSHDisablePasswordLogins') === '1')?'-s':'';
         // Get keys from DB
         $dropbearkeyPath = Util::which('dropbearkey');
         $dropbearPath    = Util::which('dropbear');
