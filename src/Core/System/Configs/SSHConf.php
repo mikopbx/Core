@@ -152,7 +152,7 @@ class SSHConf extends Injectable
     {
         $enableNotify = true;
         $data = stat(self::CHECK_PASSWORD_FILE);
-        if($data){
+        if(is_array($data)){
             $enableNotify = (time() - stat('/etc/asterisk/asterisk.conf')['mtime']??0) > 60*60*4;
         }
         $messages   = [];
