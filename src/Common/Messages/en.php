@@ -1076,4 +1076,8 @@ It can be activated once, after which the coupon becomes redeemed.
     'ex_PortugueseBrazil' => 'Português (Brazil)',
     'ex_ImpossibleToDeleteExtension' => 'It is not possible to delete an employee because there are following links',
     'cq_PereodicAnonceMohSoundFile' => 'Background music (MOH)',
+    'Attention! SSH password changed!' => "Attention! The SSH password has been changed!",
+    'The password for SSH access to the PBX has been changed' => "The SSH password for accessing MikoPBX has been changed!",
+    'The SSH password was not changed from the web interface.' => 'The SSH password was changed outside the MikoPBX web interface',
+    'The system password does not match what is set in the configuration file.' => 'The SSH MikoPBX password is different from the one set in the configuration file. Perhaps it was changed manually from the PBX console.',
 ];

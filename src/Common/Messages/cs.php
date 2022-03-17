@@ -1071,4 +1071,10 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'ex_ImpossibleToDeleteExtension' => 'Není možné smazat zaměstnance, protože jsou zde následující odkazy',
     'cq_PereodicAnonceMohSoundFile' => 'Hudba na pozadí (MOH)',
     'gs_SSHDisablePasswordLogins' => 'Zakázat ověřování heslem',
+    'systemBrokenComment' => 'Kritické systémové soubory byly upraveny. Musíte provést obnovu/aktualizaci systému.',
+    'gs_SSHPPasswordCorrupt' => 'Ssh heslo nastavené ve webovém rozhraní neodpovídá aktuálnímu v systému.',
+    'Attention! SSH password changed!' => "Pozornost! Heslo SSH bylo změněno!",
+    'The system password does not match what is set in the configuration file.' => 'Heslo SSH MikoPBX se liší od hesla nastaveného v konfiguračním souboru. Možná to bylo změněno ručně z konzole PBX.',
+    'The password for SSH access to the PBX has been changed' => "Heslo SSH pro přístup k MikoPBX bylo změněno!",
+    'The SSH password was not changed from the web interface.' => 'SSH heslo bylo změněno mimo webové rozhraní MikoPBX',
 ];

@@ -1071,4 +1071,10 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá đ
     'ex_ImpossibleToDeleteExtension' => 'Không thể xóa nhân viên vì có những liên kết sau',
     'cq_PereodicAnonceMohSoundFile' => 'Nhạc nền (MOH)',
     'gs_SSHDisablePasswordLogins' => 'Tắt xác thực mật khẩu',
+    'systemBrokenComment' => 'Các tệp hệ thống quan trọng đã được sửa đổi. Bạn cần thực hiện khôi phục / cập nhật hệ thống.',
+    'gs_SSHPPasswordCorrupt' => 'Mật khẩu ssh được đặt trong giao diện web không khớp với mật khẩu hiện tại trong hệ thống.',
+    'Attention! SSH password changed!' => "Chú ý! Mật khẩu SSH đã được thay đổi!",
+    'The password for SSH access to the PBX has been changed' => "Mật khẩu SSH để truy cập MikoPBX đã được thay đổi!",
+    'The SSH password was not changed from the web interface.' => 'Mật khẩu SSH đã được thay đổi bên ngoài giao diện web MikoPBX',
+    'The system password does not match what is set in the configuration file.' => 'Mật khẩu SSH MikoPBX khác với mật khẩu được đặt trong tệp cấu hình. Có lẽ nó đã được thay đổi thủ công từ bảng điều khiển PBX.',
 ];

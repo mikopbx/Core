@@ -1071,4 +1071,10 @@ return [
     'ex_ImpossibleToDeleteExtension' => '无法删除员工，因为有以下链接',
     'cq_PereodicAnonceMohSoundFile' => '背景音乐 (MOH)',
     'gs_SSHDisablePasswordLogins' => '禁用密码验证',
+    'systemBrokenComment' => '关键系统文件已被修改。您需要执行系统还原/更新。',
+    'gs_SSHPPasswordCorrupt' => '网页界面设置的 ssh 密码与系统当前设置的不匹配。',
+    'Attention! SSH password changed!' => "注意力！ SSH密码已更改！",
+    'The password for SSH access to the PBX has been changed' => "访问 MikoPBX 的 SSH 密码已更改！",
+    'The SSH password was not changed from the web interface.' => 'SSH 密码在 MikoPBX Web 界面外更改',
+    'The system password does not match what is set in the configuration file.' => 'SSH MikoPBX 密码与配置文件中设置的密码不同。也许它是从 PBX 控制台手动更改的。',
 ];

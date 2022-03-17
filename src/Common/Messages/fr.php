@@ -1071,4 +1071,10 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'ex_ImpossibleToDeleteExtension' => 'Il n\'est pas possible de supprimer un employé car il y a les liens suivants',
     'cq_PereodicAnonceMohSoundFile' => 'Musique de fond (MOH)',
     'gs_SSHDisablePasswordLogins' => 'Désactiver l\'authentification par mot de passe',
+    'systemBrokenComment' => 'Les fichiers système critiques ont été modifiés. Vous devez effectuer une restauration/mise à jour du système.',
+    'gs_SSHPPasswordCorrupt' => 'Le mot de passe ssh défini dans l\'interface Web ne correspond pas à celui actuel dans le système.',
+    'Attention! SSH password changed!' => "Attention! Le mot de passe SSH a été changé !",
+    'The password for SSH access to the PBX has been changed' => "Le mot de passe SSH pour accéder à MikoPBX a été changé !",
+    'The SSH password was not changed from the web interface.' => 'Le mot de passe SSH a été modifié en dehors de l\'interface Web MikoPBX',
+    'The system password does not match what is set in the configuration file.' => 'Le mot de passe SSH MikoPBX est différent de celui défini dans le fichier de configuration. Il a peut-être été modifié manuellement à partir de la console PBX.',
 ];

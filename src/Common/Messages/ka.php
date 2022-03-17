@@ -1071,4 +1071,10 @@ return [
     'ex_ImpossibleToDeleteExtension' => 'შეუძლებელია თანამშრომლის წაშლა იმიტომ არის შემდეგი ლინკები',
     'cq_PereodicAnonceMohSoundFile' => 'ფონური მუსიკა (MOH)',
     'gs_SSHDisablePasswordLogins' => 'პაროლის ავტორიზაციის გამორთვა',
+    'systemBrokenComment' => 'კრიტიკული სისტემის ფაილები შეიცვალა. თქვენ უნდა შეასრულოთ სისტემის აღდგენა/განახლება.',
+    'gs_SSHPPasswordCorrupt' => 'ვებ ინტერფეისში მითითებული ssh პაროლი არ ემთხვევა სისტემაში არსებულს.',
+    'Attention! SSH password changed!' => "ყურადღება! SSH პაროლი შეიცვალა!",
+    'The SSH password was not changed from the web interface.' => 'SSH პაროლი შეიცვალა MikoPBX ვებ ინტერფეისის გარეთ',
+    'The password for SSH access to the PBX has been changed' => "SSH პაროლი MikoPBX-ზე წვდომისთვის შეიცვალა!",
+    'The system password does not match what is set in the configuration file.' => 'SSH MikoPBX პაროლი განსხვავდება კონფიგურაციის ფაილში მითითებული პაროლისგან. შესაძლოა ის ხელით შეიცვალა PBX კონსოლიდან.',
 ];
