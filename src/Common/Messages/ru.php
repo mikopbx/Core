@@ -1076,4 +1076,8 @@ return [
     'msg_ErrorHeader' => 'Ошибка',
     'msg_WarningHeader' => 'Внимание',
     'msg_infoHeader' => 'Информация',
+    'Attention! SSH password changed!' => "Внимание! Пароль SSH был изменен!",
+    'The password for SSH access to the PBX has been changed' => "Пароль SSH для доступа к MikoPBX был изменен!",
+    'The SSH password was not changed from the web interface.' => 'Пароль SSH был изменен вне web интерфейса MikoPBX',
+    'The system password does not match what is set in the configuration file.' => 'Пароль SSH MikoPBX отличается от установленного в конфигурационном файле. Возможно он был изменен вручную из консоли АТС.',
 ];

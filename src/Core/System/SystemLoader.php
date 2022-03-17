@@ -31,7 +31,6 @@ use MikoPBX\Core\System\Configs\RedisConf;
 use MikoPBX\Core\System\Configs\SSHConf;
 use MikoPBX\Core\System\Configs\SyslogConf;
 use MikoPBX\Core\System\Configs\VmToolsConf;
-use MikoPBX\Core\System\Configs\VMWareToolsConf;
 use MikoPBX\Core\System\Upgrade\UpdateDatabase;
 use MikoPBX\Core\System\Upgrade\UpdateSystemConfig;
 use Phalcon\Di;
@@ -144,11 +143,6 @@ class SystemLoader extends Di\Injectable
         $sshConf = new SSHConf();
         $resSsh  = $sshConf->configure();
         $this->echoResultMsg($resSsh);
-
-        $this->echoStartMsg(' - Configuring msmtp services...');
-        $notifications = new Notifications();
-        $notifications->configure();
-        $this->echoResultMsg();
 
         $this->di->getShared('registry')->booting = false;
 

@@ -23,6 +23,8 @@ use DateTime;
 use Exception;
 use MikoPBX\Common\Models\{CallEventsLogs, CustomFiles};
 use MikoPBX\Common\Providers\LoggerProvider;
+use MikoPBX\Common\Providers\MessagesProvider;
+use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\Asterisk\AsteriskManager;
 use Phalcon\Di;
 use ReflectionClass;
@@ -445,19 +447,23 @@ class Util
 
     /**
      * Получить перевод строки текста.
-     *
-     * @param $text
-     *
-     * @return mixed
+     * @param string $text
+     * @param bool   $cliLang
+     * @return string
      */
-    public static function translate($text)
+    public static function translate(string $text, bool $cliLang = true):string
     {
         $di = Di::getDefault();
         if ($di !== null) {
-            return $di->getShared('translation')->_($text);
-        } else {
-            return $text;
+            if(!$cliLang){
+                $di->setShared('PREFERRED_LANG_WEB', true);
+            }
+            $text = $di->getShared(TranslationProvider::SERVICE_NAME)->_($text);
+            if(!$cliLang){
+                $di->remove('PREFERRED_LANG_WEB');
+            }
         }
+        return $text;
     }
 
     /**
