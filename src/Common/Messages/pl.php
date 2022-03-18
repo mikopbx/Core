@@ -1071,4 +1071,10 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'ex_ImpossibleToDeleteExtension' => 'Nie można usunąć pracownika, ponieważ są następujące linki',
     'cq_PereodicAnonceMohSoundFile' => 'Muzyka w tle (MOH)',
     'gs_SSHDisablePasswordLogins' => 'Wyłącz uwierzytelnianie hasłem',
+    'systemBrokenComment' => 'Zmodyfikowano krytyczne pliki systemowe. Musisz wykonać przywracanie/aktualizację systemu.',
+    'gs_SSHPPasswordCorrupt' => 'Hasło ssh ustawione w interfejsie WWW nie zgadza się z hasłem w systemie.',
+    'Attention! SSH password changed!' => "Uwaga! Hasło SSH zostało zmienione!",
+    'The password for SSH access to the PBX has been changed' => "Hasło SSH umożliwiające dostęp do MikoPBX zostało zmienione!",
+    'The SSH password was not changed from the web interface.' => 'Hasło SSH zostało zmienione poza interfejsem sieciowym MikoPBX',
+    'The system password does not match what is set in the configuration file.' => 'Hasło SSH MikoPBX różni się od hasła ustawionego w pliku konfiguracyjnym. Być może zmieniono to ręcznie z konsoli PBX.',
 ];

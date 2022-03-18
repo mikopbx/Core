@@ -1074,4 +1074,10 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
     'ex_ImpossibleToDeleteExtension' => 'Es ist nicht möglich, einen Mitarbeiter zu löschen, weil Es gibt folgende Links',
     'cq_PereodicAnonceMohSoundFile' => 'Hintergrundmusik (MOH)',
     'gs_SSHDisablePasswordLogins' => 'Deaktivieren Sie die Kennwortautorisierung',
+    'systemBrokenComment' => 'Kritische Systemdateien wurden geändert. Sie müssen eine Systemwiederherstellung/-aktualisierung durchführen.',
+    'gs_SSHPPasswordCorrupt' => 'Das im Webinterface eingestellte ssh-Passwort stimmt nicht mit dem aktuellen im System überein.',
+    'Attention! SSH password changed!' => "Aufmerksamkeit! Das SSH-Passwort wurde geändert!",
+    'The password for SSH access to the PBX has been changed' => "Das SSH-Passwort für den Zugriff auf MikoPBX wurde geändert!",
+    'The SSH password was not changed from the web interface.' => 'Das SSH-Passwort wurde außerhalb der MikoPBX-Weboberfläche geändert',
+    'The system password does not match what is set in the configuration file.' => 'Das SSH-MikoPBX-Passwort unterscheidet sich von dem in der Konfigurationsdatei festgelegten. Möglicherweise wurde es manuell von der PBX-Konsole aus geändert.',
 ];

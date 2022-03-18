@@ -1071,4 +1071,10 @@ return [
     'ex_ImpossibleToDeleteExtension' => '従業員を削除することはできません。次のリンクがあります',
     'cq_PereodicAnonceMohSoundFile' => '身元音楽（MOH）',
     'gs_SSHDisablePasswordLogins' => 'パスワード認証を無効にする',
+    'systemBrokenComment' => '重要なシステムファイルが変更されました。システムの復元/更新を実行する必要があります。',
+    'gs_SSHPPasswordCorrupt' => 'Webインターフェイスで設定されたsshパスワードが、システムの現在のパスワードと一致しません。',
+    'Attention! SSH password changed!' => "注意！ SSHパスワードが変更されました！",
+    'The password for SSH access to the PBX has been changed' => "MikoPBXにアクセスするためのSSHパスワードが変更されました！",
+    'The SSH password was not changed from the web interface.' => 'SSHパスワードがMikoPBXWebインターフェイスの外部で変更されました',
+    'The system password does not match what is set in the configuration file.' => 'SSH MikoPBXパスワードは、構成ファイルで設定されているものとは異なります。おそらく、PBXコンソールから手動で変更された可能性があります。',
 ];

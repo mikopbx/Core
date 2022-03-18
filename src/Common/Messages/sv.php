@@ -1071,4 +1071,10 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'ex_ImpossibleToDeleteExtension' => 'Det går inte att ta bort en anställd pga det finns följande länkar',
     'cq_PereodicAnonceMohSoundFile' => 'Bakgrundsmusik (MOH)',
     'gs_SSHDisablePasswordLogins' => 'Inaktivera lösenordsautentisering',
+    'systemBrokenComment' => 'Kritiska systemfiler har ändrats. Du måste utföra en systemåterställning/uppgradering.',
+    'gs_SSHPPasswordCorrupt' => 'Det ssh-lösenord som ställts in i webbgränssnittet matchar inte det nuvarande i systemet.',
+    'Attention! SSH password changed!' => "Uppmärksamhet! SSH-lösenordet har ändrats!",
+    'The password for SSH access to the PBX has been changed' => "SSH-lösenordet för åtkomst till MikoPBX har ändrats!",
+    'The SSH password was not changed from the web interface.' => 'SSH-lösenordet ändrades utanför MikoPBX webbgränssnitt',
+    'The system password does not match what is set in the configuration file.' => 'SSH MikoPBX-lösenordet skiljer sig från det som anges i konfigurationsfilen. Kanske ändrades det manuellt från PBX-konsolen.',
 ];

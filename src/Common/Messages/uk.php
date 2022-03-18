@@ -1071,4 +1071,10 @@ return [
     'ex_ImpossibleToDeleteExtension' => 'Неможливо видалити працівника, т.к. існують наступні посилання',
     'cq_PereodicAnonceMohSoundFile' => 'Фонова музика (MOH)',
     'gs_SSHDisablePasswordLogins' => 'Вимкнути авторизацію за паролем',
+    'systemBrokenComment' => 'Критично важливі системні файли були модифіковані. Необхідно виконати відновлення/оновлення системи.',
+    'gs_SSHPPasswordCorrupt' => 'Пароль ssh, встановлений у web інтерфейсі, не збігається з чинним у системі.',
+    'Attention! SSH password changed!' => "Увага! Пароль SSH змінено!",
+    'The password for SSH access to the PBX has been changed' => "Пароль SSH для доступу до MikoPBX було змінено!",
+    'The SSH password was not changed from the web interface.' => 'Пароль SSH був змінений поза веб-інтерфейсом MikoPBX',
+    'The system password does not match what is set in the configuration file.' => 'Пароль SSH MikoPBX відрізняється від встановленого у конфігураційному файлі. Можливо, він був змінений вручну з консолі АТС.',
 ];

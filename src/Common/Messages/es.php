@@ -1071,4 +1071,10 @@ Se puede activar una vez, después de lo cual el cupón se canjea.
     'ex_ImpossibleToDeleteExtension' => 'No es posible eliminar un empleado porque hay los siguientes enlaces',
     'cq_PereodicAnonceMohSoundFile' => 'Música de fondo (MOH)',
     'gs_SSHDisablePasswordLogins' => 'Deshabilitar la autenticación de contraseña',
+    'systemBrokenComment' => 'Los archivos críticos del sistema han sido modificados. Debe realizar una restauración/actualización del sistema.',
+    'gs_SSHPPasswordCorrupt' => 'La contraseña ssh configurada en la interfaz web no coincide con la actual en el sistema.',
+    'Attention! SSH password changed!' => "¡Atención! ¡La contraseña SSH ha sido cambiada!",
+    'The password for SSH access to the PBX has been changed' => "¡La contraseña SSH para acceder a MikoPBX ha sido cambiada!",
+    'The SSH password was not changed from the web interface.' => 'La contraseña de SSH se cambió fuera de la interfaz web de MikoPBX',
+    'The system password does not match what is set in the configuration file.' => 'La contraseña de SSH MikoPBX es diferente a la configurada en el archivo de configuración. Quizás se cambió manualmente desde la consola PBX.',
 ];
