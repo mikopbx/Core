@@ -155,6 +155,9 @@ class SSHConf extends Injectable
         if(is_array($data)){
             $enableNotify = (time() - stat('/etc/asterisk/asterisk.conf')['mtime']??0) > 60*60*4;
         }
+        if(!$enableNotify){
+            return;
+        }
         $messages   = [];
         $password   = PbxSettings::getValueByKey('SSHPassword');
         $hashString = PbxSettings::getValueByKey('SSHPasswordHashString');

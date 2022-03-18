@@ -22,7 +22,7 @@ namespace MikoPBX\Core\Workers\Cron;
 require_once 'Globals.php';
 
 use Generator;
-use MikoPBX\Core\System\{BeanstalkClient, PBX, Processes, Util};
+use MikoPBX\Core\System\{BeanstalkClient, Configs\SSHConf, PBX, Processes, Util};
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\Workers\WorkerBeanstalkdTidyUp;
 use MikoPBX\Core\Workers\WorkerCallEvents;
@@ -151,6 +151,8 @@ class WorkerSafeScriptsCore extends WorkerBase
                 }
             }
         );
+
+        SSHConf::checkPassword();
     }
 
     /**
