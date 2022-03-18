@@ -254,8 +254,10 @@ class AsteriskManager
             $type       = null;
             $parameters = [];
             $response   = [];
-
             if(!$this->waitResponseGetInitialData($response)) {
+                return $parameters;
+            }
+            if(isset($response['data']) && empty($response['data']) && !$this->waitResponseGetInitialData($response)){
                 return $parameters;
             }
             $buffer = $response['data']??'';
