@@ -481,7 +481,7 @@ class MikoPBXTestsBase extends BrowserStackTest
             $deleteButtons = self::$driver->findElements(WebDriverBy::xpath($xpath));
             foreach ($deleteButtons as $deleteButton){
                 $deleteButton->click();
-                sleep(3);
+                sleep(1);
                 $deleteButton->click();
             }
             $this->waitForAjax();
