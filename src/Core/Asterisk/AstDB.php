@@ -28,11 +28,11 @@ class AstDB extends Di\Injectable
 {
     /**
      * Ссылка на базу данных
-     * @var SQLite3
+     * @var ?SQLite3
      */
-    private SQLite3 $db;
+    private ?SQLite3 $db = null;
     private AsteriskManager $am;
-    private bool $booting;
+    private bool $booting = false;
 
     /**
      * AstDB constructor.
@@ -40,15 +40,22 @@ class AstDB extends Di\Injectable
     public function __construct()
     {
         $di = Di::getDefault();
+        if($di === null){
+            $this->am = Util::getAstManager('off');
+            return;
+        }
         $this->booting = ($di->getShared('registry')->booting === true);
-
         if(!$this->booting){
             Util::echoWithSyslog(' - Start Util::getAstManager'.PHP_EOL);
             $this->am = Util::getAstManager('off');
             Util::echoWithSyslog(' - End call Util::getAstManager...'.PHP_EOL);
         }
 
-        $this->db = new SQLite3($this->getDI()->getShared('config')->path('astDatabase.dbfile'));
+        $dbFile = $this->getDI()->getShared('config')->path('astDatabase.dbfile');
+        if(!file_exists(dirname($dbFile))){
+            return;
+        }
+        $this->db = new SQLite3($dbFile);
         $this->db->busyTimeout(1000);
         $this->db->enableExceptions(true);
         $this->createDb();
