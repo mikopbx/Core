@@ -147,6 +147,11 @@ function event_dial(without_event)
     local id             = get_variable("pt1c_UNIQUEID")
     local IS_ORGNT       = get_variable("IS_ORGNT")
 
+    if(id~='' and IS_ORGNT=='') then
+        app["return"]();
+        return;
+    end
+
     if(id=='' or IS_ORGNT~='') then
         id = get_variable('UNIQUEID')..'_'..generateRandomString(6);
     end
