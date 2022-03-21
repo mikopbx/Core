@@ -54,8 +54,10 @@ class CDRDatabaseProvider extends DatabaseProviderBase implements ServiceProvide
     {
         if(empty($filter)){
             $filter = [
-                'work_completed<>1 AND endtime<>""'
+                'work_completed<>1 AND endtime<>""',
+                'miko_tmp_db' => true
             ];
+
         }
         $filter['miko_result_in_file'] = true;
         $filter['order'] = 'answer';
