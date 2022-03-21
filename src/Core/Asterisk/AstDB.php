@@ -66,6 +66,9 @@ class AstDB extends Di\Injectable
      */
     private function createDb(): void
     {
+        if(!$this->db){
+            return;
+        }
         $sql = <<<EOF
 			CREATE TABLE IF NOT EXISTS astdb (
 			    [key] VARCHAR (256),
