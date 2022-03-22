@@ -57,11 +57,10 @@ class CDRDatabaseProvider extends DatabaseProviderBase implements ServiceProvide
                 'work_completed<>1 AND endtime<>""',
                 'miko_tmp_db' => true
             ];
-
         }
         $filter['miko_result_in_file'] = true;
         $filter['order'] = 'answer';
-        $filter['columns'] = 'start,answer,src_num,dst_num,dst_chan,endtime,linkedid,recordingfile,dialstatus,UNIQUEID';
+        $filter['columns'] = 'id,start,answer,src_num,dst_num,dst_chan,endtime,linkedid,recordingfile,dialstatus,UNIQUEID';
 
         $client = new BeanstalkClient(WorkerCdr::SELECT_CDR_TUBE);
         try {
