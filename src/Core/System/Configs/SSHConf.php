@@ -151,10 +151,14 @@ class SSHConf extends Injectable
     public static function checkPassword():void
     {
         $enableNotify = true;
-        $data = stat(self::CHECK_PASSWORD_FILE);
-        if(is_array($data)){
-            $enableNotify = (time() - stat('/etc/asterisk/asterisk.conf')['mtime']??0) > 60*60*4;
+
+        if(file_exists(self::CHECK_PASSWORD_FILE)){
+            $data = stat(self::CHECK_PASSWORD_FILE);
+            if(is_array($data)){
+                $enableNotify = (time() - stat('/etc/asterisk/asterisk.conf')['mtime']??0) > 60*60*4;
+            }
         }
+
         if(!$enableNotify){
             return;
         }
