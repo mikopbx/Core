@@ -434,16 +434,30 @@ class SIPConf extends CoreConfigClass
             'asterisk_debug = 1,3,4,5,6' . "\n\n";
         file_put_contents($astEtcDir.'/pjproject.conf', $pjConf);
         file_put_contents($astEtcDir.'/sorcery.conf', '');
+        $this->updateAsteriskDatabase();
+    }
 
+    /**
+     * Обновление маршрутизации в AstDB
+     * @return bool
+     */
+    public function updateAsteriskDatabase():bool
+    {
+        if ($this->data_peers === null) {
+            $this->getSettings();
+        }
+        $warError = false;
         $db = new AstDB();
         foreach ($this->data_peers as $peer) {
             // Помещаем в AstDB сведения по маршуртизации.
-            $ringlength = ($peer['ringlength'] === '0') ? '' : trim($peer['ringlength']);
-            $db->databasePut('FW_TIME', $peer['extension'], $ringlength);
-            $db->databasePut('FW', $peer['extension'], trim($peer['forwarding']));
-            $db->databasePut('FW_BUSY', $peer['extension'], trim($peer['forwardingonbusy']));
-            $db->databasePut('FW_UNAV', $peer['extension'], trim($peer['forwardingonunavailable']));
+            $ringLength = ($peer['ringlength'] === '0') ? '' : trim($peer['ringlength']);
+            $warError |= !$db->databasePut('FW_TIME', $peer['extension'], $ringLength);
+            $warError |= !$db->databasePut('FW', $peer['extension'], trim($peer['forwarding']));
+            $warError |= !$db->databasePut('FW_BUSY', $peer['extension'], trim($peer['forwardingonbusy']));
+            $warError |= !$db->databasePut('FW_UNAV', $peer['extension'], trim($peer['forwardingonunavailable']));
         }
+
+        return !$warError;
     }
 
     /**

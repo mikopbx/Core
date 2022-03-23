@@ -26,13 +26,7 @@ use SQLite3;
 
 class AstDB extends Di\Injectable
 {
-    /**
-     * Ссылка на базу данных
-     * @var ?SQLite3
-     */
-    private ?SQLite3 $db = null;
     private AsteriskManager $am;
-    private bool $booting = false;
 
     /**
      * AstDB constructor.
@@ -44,58 +38,7 @@ class AstDB extends Di\Injectable
             $this->am = Util::getAstManager('off');
             return;
         }
-        $this->booting = ($di->getShared('registry')->booting === true);
-        if(!$this->booting){
-            Util::echoWithSyslog(' - Start Util::getAstManager'.PHP_EOL);
-            $this->am = Util::getAstManager('off');
-            Util::echoWithSyslog(' - End call Util::getAstManager...'.PHP_EOL);
-        }
-
-        $dbFile = $this->getDI()->getShared('config')->path('astDatabase.dbfile');
-        if(!file_exists(dirname($dbFile))){
-            return;
-        }
-        $this->db = new SQLite3($dbFile);
-        $this->db->busyTimeout(1000);
-        $this->db->enableExceptions(true);
-        $this->createDb();
-    }
-
-    /**
-     * Создать базу данных.
-     */
-    private function createDb(): void
-    {
-        if(!$this->db){
-            return;
-        }
-        $sql = <<<EOF
-			CREATE TABLE IF NOT EXISTS astdb (
-			    [key] VARCHAR (256),
-			    value VARCHAR (256),
-			    PRIMARY KEY (
-			        [key]
-			    )
-			)
-EOF;
-        try {
-            $this->db->exec('PRAGMA journal_mode=WAL;');
-            $this->db->exec($sql);
-        } catch (Throwable $e) {
-            $this->closeDb();
-        }
-    }
-
-    /**
-     * Закрыть соединение с базой данных.
-     */
-    public function closeDb(): void
-    {
-        if ($this->db === null) {
-            return;
-        }
-
-        $this->db->close();
+        $this->am = Util::getAstManager('off');
     }
 
     /**
@@ -110,20 +53,9 @@ EOF;
     public function databasePut($family, $key, $value): bool
     {
         $result = false;
-        if (!$this->booting && ($this->db === null || $this->am->loggedIn()) ) {
+        if ($this->am->loggedIn() ) {
             $result = $this->databasePutAmi($family, $key, $value);
         }
-        if ($result === true || $this->db === null) {
-            return $result;
-        }
-        $sql = "INSERT" . " OR REPLACE INTO astdb (key, value) VALUES ('/{$family}/{$key}', '{$value}')";
-        try {
-            $result = $this->db->exec($sql);
-        } catch (Throwable $e) {
-            $this->closeDb();
-            $this->databasePut($family, $key, $value);
-        }
-
         return $result;
     }
 

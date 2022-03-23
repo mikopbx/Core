@@ -19,6 +19,7 @@
 
 namespace MikoPBX\Core\System;
 
+use MikoPBX\Core\Asterisk\Configs\SIPConf;
 use MikoPBX\Core\System\Configs\ACPIDConf;
 use MikoPBX\Core\System\Configs\BeanstalkConf;
 use MikoPBX\Core\System\Configs\CronConf;
@@ -176,8 +177,14 @@ class SystemLoader extends Di\Injectable
         $this->echoResultMsg();
 
         $this->echoStartMsg(' - Wait asterisk fully booted...');
-        PBX::waitFullyBooted();
-        $this->echoResultMsg();
+        $result = PBX::waitFullyBooted();
+        $this->echoResultMsg($result);
+        if($result){
+            $this->echoStartMsg(' - Reload SIP settings in AstDB...');
+            $sip = new SIPConf();
+            $result = $sip->updateAsteriskDatabase();
+            $this->echoResultMsg($result);
+        }
 
         $this->echoStartMsg(' - Configuring Cron tasks...');
         $cron = new CronConf();
