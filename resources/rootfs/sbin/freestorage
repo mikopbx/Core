@@ -33,6 +33,7 @@ fi;
 
 # killing processes
 killprocess_by_name 'cron' -KILL 0;
+killprocess_by_name 'dropbear' -KILL 0;
 killprocess_by_name 'safe_asterisk' -KILL 0;
 killprocess_by_name 'pdnsd' -KILL 0;
 killprocesses '/sbin/monitord' -KILL 1;
