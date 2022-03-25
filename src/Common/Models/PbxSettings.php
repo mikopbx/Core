@@ -126,7 +126,8 @@ class PbxSettings extends ModelsBase
             'VoicemailNotificationsEmail'     => 'admin@mycompany.com',
             'VoicemailExten'                  => '*001',
             'PBXLanguage'                     => 'en-en',
-            'PBXInternalExtensionLength'      => '3',// Длина внутреннего номера
+            'PBXInternalExtensionLength'      => '3',
+            'PBXFeaturePickupExten'           => '',
             'PBXRecordCalls'                  => '1',
             'PBXSplitAudioThread'             => '0',
             'PBXRecordAnnouncementIn'         => '',

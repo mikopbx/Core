@@ -159,16 +159,12 @@ class InternalContexts extends CoreConfigClass
         $conf .= 'same => n,Hangup()' . " \n";
 
         $pickupExtension = $this->generalSettings['PBXFeaturePickupExten'];
-        $conf            .= 'exten => _' . $pickupExtension . $this->extensionPattern . ',1,Set(PICKUPEER=' . $this->technology . '/${FILTER(0-9,${EXTEN:2})})' . "\n\t";
-        $conf            .= 'same => n,Set(pt1c_dnid=${EXTEN})' . "\n\t";
-        $conf            .= 'same => n,PickupChan(${PICKUPEER})' . "\n\t";
-        $conf            .= 'same => n,Hangup()' . "\n\n";
-
-        $voicemailExtension = $this->generalSettings['VoicemailExten'];
-        $conf               .= 'exten => ' . $voicemailExtension . ',1,NoOp(NOTICE, Dialing out from ${CALLERID(all)} to VoiceMail)' . "\n\t";
-        $conf               .= 'same => n,VoiceMailMain(admin@voicemailcontext,s)' . "\n\t";
-        $conf               .= 'same => n,Hangup()' . "\n\n";
-
+        if(!empty($pickupExtension)){
+            $conf            .= 'exten => _' . $pickupExtension . $this->extensionPattern . ',1,Set(PICKUPEER=' . $this->technology . '/${FILTER(0-9,${EXTEN:2})})' . "\n\t";
+            $conf            .= 'same => n,Set(pt1c_dnid=${EXTEN})' . "\n\t";
+            $conf            .= 'same => n,PickupChan(${PICKUPEER})' . "\n\t";
+            $conf            .= 'same => n,Hangup()' . "\n\n";
+        }
         return $conf;
     }
 
