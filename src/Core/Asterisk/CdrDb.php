@@ -48,6 +48,9 @@ class CdrDb
     public static function checkDb(): void
     {
         $di = Di::getDefault();
+        if(!$di){
+            return;
+        }
         $booting = ($di->getShared('registry')->booting === true);
         $channels_id = [];
         // Если booting, то asterisk не запущен.
@@ -55,7 +58,6 @@ class CdrDb
             $am          = Util::getAstManager('off');
             $channels_id = $am->GetChannels();
         }
-
         /** @var CallDetailRecordsTmp $data_cdr */
         /** @var CallDetailRecordsTmp $row_cdr */
         $data_cdr = CallDetailRecordsTmp::find();
@@ -63,13 +65,8 @@ class CdrDb
             if (array_key_exists($row_cdr->linkedid, $channels_id)) {
                 continue;
             }
-            $date = CallEventsLogs::maximum(
-                ['linkedid = "'.$row_cdr->linkedid.'"', 'column' => 'eventtime']
-            );
             if ( ! $row_cdr->endtime) {
-                if ($date) {
-                    $row_cdr->endtime = $date;
-                } elseif ($row_cdr->answer) {
+                if ($row_cdr->answer) {
                     $row_cdr->endtime = $row_cdr->answer;
                 } else {
                     $row_cdr->endtime = $row_cdr->start;
