@@ -21,7 +21,6 @@ namespace MikoPBX\Core\Asterisk;
 
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
 use MikoPBX\Core\System\{Storage, Util};
-use MikoPBX\Common\Models\CallEventsLogs;
 use Phalcon\Di;
 
 /**

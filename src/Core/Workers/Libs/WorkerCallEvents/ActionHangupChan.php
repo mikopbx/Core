@@ -180,7 +180,6 @@ class ActionHangupChan {
             $n_data['recordingfile'] = $worker->MixMonitor($n_data['dst_chan'], $n_data['UNIQUEID']);
             $n_data['did']           = $data_chan['did'];
 
-            Util::logMsgDb('call_events', json_encode($n_data));
             InsertDataToDB::execute($n_data);
             $filter = [
                 'linkedid=:linkedid:',

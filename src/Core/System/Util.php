@@ -21,9 +21,8 @@ namespace MikoPBX\Core\System;
 
 use DateTime;
 use Exception;
-use MikoPBX\Common\Models\{CallEventsLogs, CustomFiles};
+use MikoPBX\Common\Models\{CustomFiles};
 use MikoPBX\Common\Providers\LoggerProvider;
-use MikoPBX\Common\Providers\MessagesProvider;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\Asterisk\AsteriskManager;
 use Phalcon\Di;
@@ -266,29 +265,6 @@ class Util
             $data = base64_decode((string)$res->content);
         }
         file_put_contents($filename, $data);
-    }
-
-    /**
-     * Пишем лог в базу данных.
-     *
-     * @param $app
-     * @param $data_obj
-     */
-    public static function logMsgDb($app, $data_obj): void
-    {
-        try {
-            $data = new CallEventsLogs();
-            $data->writeAttribute('eventtime', date("Y-m-d H:i:s"));
-            $data->writeAttribute('app', $app);
-            $data->writeAttribute('datajson', json_encode($data_obj, JSON_UNESCAPED_SLASHES));
-
-            if (is_array($data_obj) && isset($data_obj['linkedid'])) {
-                $data->writeAttribute('linkedid', $data_obj['linkedid']);
-            }
-            $data->save();
-        } catch (Throwable $e) {
-            self::sysLogMsg(__METHOD__, $e->getMessage(), LOG_ERR);
-        }
     }
 
     /**

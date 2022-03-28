@@ -1326,7 +1326,6 @@ class Storage extends Di\Injectable
         $logFiles = [
             $this->config->path('database.debugLogFile'),
             $this->config->path('cdrDatabase.debugLogFile'),
-            $this->config->path('eventsLogDatabase.debugLogFile')
         ];
 
         foreach ($logFiles as $logFile) {

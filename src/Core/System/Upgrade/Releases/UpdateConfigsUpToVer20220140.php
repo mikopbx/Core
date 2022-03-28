@@ -48,9 +48,6 @@ class UpdateConfigsUpToVer20220140 extends Injectable implements UpgradeSystemCo
         if ($this->isLiveCD) {
             return;
         }
-        $dbFilename = $this->config->path('eventsLogDatabase.dbfile');
-        if(file_exists($dbFilename)) {
-            shell_exec(Util::which('rm')." -rf '$dbFilename'");
-        }
+        shell_exec(Util::which('rm')." -rf /storage/usbdisk*/mikopbx/astlogs/asterisk/events_log.db");
     }
 }

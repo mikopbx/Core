@@ -41,7 +41,6 @@ use MikoPBX\Common\Providers\{AmiConnectionCommand,
     MessagesProvider,
     UrlProvider,
     LanguageProvider};
-use MikoPBX\Core\Providers\EventsLogDatabaseProvider;
 use Phalcon\Di;
 
 
@@ -66,7 +65,6 @@ class RegisterDIServices
             ModelsMetadataProvider::class,
             MainDatabaseProvider::class,
             CDRDatabaseProvider::class,
-            EventsLogDatabaseProvider::class,
 
             // Inject caches
             ManagedCacheProvider::class,
