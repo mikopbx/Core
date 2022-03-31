@@ -19,6 +19,9 @@
 
 namespace MikoPBX\Common\Models;
 
+use MikoPBX\Common\Providers\ManagedCacheProvider;
+use MikoPBX\Core\System\Util;
+
 /**
  * Class CallDetailRecordsTmp
  *
@@ -36,6 +39,7 @@ namespace MikoPBX\Common\Models;
  */
 class CallDetailRecordsTmp extends CallDetailRecordsBase
 {
+    public const CACHE_KEY = 'Workers:Cdr';
 
     public function initialize(): void
     {
@@ -69,5 +73,37 @@ class CallDetailRecordsTmp extends CallDetailRecordsBase
             }
             $newCdr->save();
         }
+        $this->saveCdrCache();
     }
+
+    public function afterDelete():void
+    {
+        $this->saveCdrCache(false);
+    }
+
+    /**
+     * Храним в Redis текущие звонки.
+     * @param bool $isSave
+     * @return void
+     */
+    private function saveCdrCache(bool $isSave = true):void
+    {
+        try {
+            $managedCache = $this->di->get(ManagedCacheProvider::SERVICE_NAME);
+
+            $rowData = $this->toArray();
+            $newKey  = self::CACHE_KEY.':'.$rowData['UNIQUEID'];
+            $idsList = $managedCache->getKeys(self::CACHE_KEY);
+            if($isSave && !in_array($newKey, $idsList, true)){
+                $idsList[$rowData['UNIQUEID']] = true;
+                $managedCache->set('Workers:Cdr:'.$rowData['UNIQUEID'], $rowData, 19200);
+            }else{
+                $managedCache->delete('Workers:Cdr:'.$rowData['UNIQUEID']);
+            }
+        }catch (\Throwable $e){
+            Util::sysLogMsg(self::class, $e->getMessage());
+            return;
+        }
+    }
+
 }

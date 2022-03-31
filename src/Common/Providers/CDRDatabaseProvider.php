@@ -21,9 +21,11 @@ declare(strict_types=1);
 
 namespace MikoPBX\Common\Providers;
 
+use MikoPBX\Common\Models\CallDetailRecordsTmp;
 use MikoPBX\Core\System\BeanstalkClient;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Workers\WorkerCdr;
+use Phalcon\Di;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 
@@ -50,9 +52,9 @@ class CDRDatabaseProvider extends DatabaseProviderBase implements ServiceProvide
      * @param array $filter
      * @return array
      */
-    public static function getCdr(array $filter = []):array
+    public static function getCdr(array $filter = []): array
     {
-        if(empty($filter)){
+        if (empty($filter)) {
             $filter = [
                 'work_completed<>1 AND endtime<>""',
                 'miko_tmp_db' => true
@@ -60,22 +62,22 @@ class CDRDatabaseProvider extends DatabaseProviderBase implements ServiceProvide
         }
         $filter['miko_result_in_file'] = true;
         $filter['order'] = 'answer';
-        if(!isset( $filter['columns'])){
+        if (!isset($filter['columns'])) {
             $filter['columns'] = 'id,start,answer,src_num,dst_num,dst_chan,endtime,linkedid,recordingfile,dialstatus,UNIQUEID';
         }
 
         $client = new BeanstalkClient(WorkerCdr::SELECT_CDR_TUBE);
         try {
-            $result   = $client->request(json_encode($filter), 2);
+            $result = $client->request(json_encode($filter), 2);
             $filename = json_decode($result, true, 512, JSON_THROW_ON_ERROR);
-        }catch (\Throwable $e){
+        } catch (\Throwable $e) {
             $filename = '';
         }
         $result_data = [];
         if (file_exists($filename)) {
             try {
                 $result_data = json_decode(file_get_contents($filename), true, 512, JSON_THROW_ON_ERROR);
-            }catch (\Throwable $e){
+            } catch (\Throwable $e) {
                 Util::sysLogMsg('SELECT_CDR_TUBE', 'Error parse response.');
             }
             unlink($filename);
@@ -83,4 +85,27 @@ class CDRDatabaseProvider extends DatabaseProviderBase implements ServiceProvide
 
         return $result_data;
     }
+
+    /**
+     * Возвращает все не завершенные CDR.
+     * @return array
+     */
+    public static function getCacheCdr(): array
+    {
+        $result = [];
+        $di = Di::getDefault();
+        if(!$di){
+            return $result;
+        }
+        $managedCache   = $di->get(ManagedCacheProvider::SERVICE_NAME);
+        $idsList        = $managedCache->getKeys(CallDetailRecordsTmp::CACHE_KEY);
+        foreach ($idsList as $key){
+            $cdr = $managedCache->get(str_replace(ManagedCacheProvider::CACHE_PREFIX, '', $key));
+            if($cdr){
+                $result[] = $cdr;
+            }
+        }
+        return $result;
+    }
+
 }
