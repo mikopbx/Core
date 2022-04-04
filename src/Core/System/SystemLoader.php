@@ -182,8 +182,8 @@ class SystemLoader extends Di\Injectable
         if($result){
             $this->echoStartMsg(' - Reload SIP settings in AstDB...');
             $sip = new SIPConf();
-            $result = $sip->updateAsteriskDatabase();
-            $this->echoResultMsg($result);
+            $sip->updateAsteriskDatabase();
+            $this->echoResultMsg();
         }
 
         $this->echoStartMsg(' - Configuring Cron tasks...');

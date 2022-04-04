@@ -33,11 +33,6 @@ class AstDB extends Di\Injectable
      */
     public function __construct()
     {
-        $di = Di::getDefault();
-        if($di === null){
-            $this->am = Util::getAstManager('off');
-            return;
-        }
         $this->am = Util::getAstManager('off');
     }
 

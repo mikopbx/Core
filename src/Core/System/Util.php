@@ -22,6 +22,8 @@ namespace MikoPBX\Core\System;
 use DateTime;
 use Exception;
 use MikoPBX\Common\Models\{CustomFiles};
+use MikoPBX\Common\Providers\AmiConnectionCommand;
+use MikoPBX\Common\Providers\AmiConnectionListener;
 use MikoPBX\Common\Providers\LoggerProvider;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\Asterisk\AsteriskManager;
@@ -104,20 +106,21 @@ class Util
 
     /**
      * Получаем объект менеджер asterisk.
-     *
      * @param string $events
-     *
      * @return AsteriskManager
+     * @throws \Phalcon\Exception
      */
-    public static function getAstManager($events = 'on'): AsteriskManager
+    public static function getAstManager(string $events = 'on'): AsteriskManager
     {
         if ($events === 'on') {
-            $nameService = 'amiListner';
+            $nameService = AmiConnectionListener::SERVICE_NAME;
         } else {
-            $nameService = 'amiCommander';
+            $nameService = AmiConnectionCommand::SERVICE_NAME;
         }
-
         $di = Di::getDefault();
+        if($di === null) {
+            throw new \Phalcon\Exception("di not found");
+        }
         $am = $di->getShared($nameService);
         if (is_resource($am->socket)) {
             return $am;
@@ -786,7 +789,7 @@ class Util
      *
      * @return array
      */
-    public static function flattenArray(array $array)
+    public static function flattenArray(array $array):array
     {
         $result = [];
         foreach ($array as $value) {

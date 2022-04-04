@@ -239,7 +239,7 @@ class WorkerSafeScriptsCore extends WorkerBase
             if ($WorkerPID !== '') {
                 // We had service PID, so we will ping it
                 $am       = Util::getAstManager();
-                $res_ping = $am->pingAMIListner($this->makePingTubeName($workerClassName));
+                $res_ping = $am->pingAMIListener($this->makePingTubeName($workerClassName));
                 if (false === $res_ping) {
                     Util::sysLogMsg(__METHOD__, 'Restart...', LOG_ERR);
                 }

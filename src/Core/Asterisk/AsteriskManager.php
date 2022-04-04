@@ -131,7 +131,7 @@ class AsteriskManager
      *
      * @return array|bool
      */
-    public function pingAMIListner($pingTube = 'CdrConnector')
+    public function pingAMIListener($pingTube = 'CdrConnector')
     {
         // Установим фильтр на события.
         $params = ['Operation' => 'Add', 'Filter' => 'Event: UserEvent'];
