@@ -36,7 +36,7 @@ if [ ! -d "${root_dir}" ]; then
 fi
 
 # Получим все символические ссылки.
-links=$(/bin/find "${root_dir}" -mmin +5 -type l 2> /dev/null| head -n 1000);
+links=$(/bin/find "${root_dir}" -mmin +2 -type l 2> /dev/null| head -n 1000);
 
 if [ ! "${links}x" = "x" ]; then
   filesForRemove=$(readlink "$links" | grep '/temp-');
