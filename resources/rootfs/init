@@ -35,7 +35,6 @@ if tar -C / --exclude=mnt --exclude="./proc/*" --exclude="./sys/*" -cf - . | tar
 
   devises="$(/bin/ls /dev/ttyS* 2> /dev/null)";
   for dev in $devises; do
-    echo " - Check $dev ...";
     serialInfo="$(/bin/busybox setserial -g "$dev" 2> /dev/null)";
     if [ "${serialInfo}x" = 'x' ]; then
       continue;
@@ -43,7 +42,6 @@ if tar -C / --exclude=mnt --exclude="./proc/*" --exclude="./sys/*" -cf - . | tar
     echo "$serialInfo" | /bin/busybox grep unknown > /dev/null 2> /dev/null;
     resultSetSerial="$?";
 
-    echo " - Check $dev result - $resultSetSerial";
     if [ ! "$resultSetSerial" = '0' ]; then
        # Device ttyS found
        devName="$(/bin/busybox basename "$dev")";
