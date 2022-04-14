@@ -885,8 +885,9 @@ const PbxApi = {
 		const r = new Resumable({
 			target: PbxApi.filesUploadFile,
 			testChunks: false,
-			chunkSize: 30 * 1024 * 1024,
+			chunkSize: 3 * 1024 * 1024,
 			maxFiles: 1,
+			simultaneousUploads: 1,
 			fileType: fileTypes,
 		});
 
@@ -934,7 +935,8 @@ const PbxApi = {
 		const r = new Resumable({
 			target: PbxApi.filesUploadFile,
 			testChunks: false,
-			chunkSize: 30 * 1024 * 1024,
+			chunkSize: 3 * 1024 * 1024,
+			simultaneousUploads: 1,
 			maxFiles: 1,
 		});
 
