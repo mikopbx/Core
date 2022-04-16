@@ -40,18 +40,18 @@
         <tr class="provider-row" id="{{ provider['uniqid'] }}" data-value="{{ provider['type']|lower }}"
             data-links="{{ provider['existLinks']|lower }}">
 
-            <td class="collapsing no-modify-columns">
+            <td class="no-modify-columns">
                 <div class="ui  toggle checkbox">
                     <input type="checkbox" {% if provider['status']!='disabled' %} checked {% endif %}> <label></label>
                 </div>
             </td>
             <td class="{{ provider['status'] }} disability center aligned provider-status"><i
                         class="spinner loading icon"></i></td>
-            <td class="{{ provider['status'] }} disability">{{ provider['name'] }} <br><span
+            <td class="{{ provider['status'] }} disability collapsing">{{ provider['name'] }} <br><span
                         class="features failure"></span></td>
-            <td class="{{ provider['status'] }} disability">{{ provider['type'] }}</td>
-            <td class="{{ provider['status'] }} disability">{{ provider['hostname'] }}</td>
-            <td class="{{ provider['status'] }} disability">{{ provider['username'] }}</td>
+            <td class="{{ provider['status'] }} disability collapsing">{{ provider['type'] }}</td>
+            <td class="{{ provider['status'] }} disability collapsing">{{ provider['hostname'] }}</td>
+            <td class="{{ provider['status'] }} disability collapsing">{{ provider['username'] }}</td>
             {{ partial("partials/tablesbuttons",
                 [
                     'id': provider['uniqid'],

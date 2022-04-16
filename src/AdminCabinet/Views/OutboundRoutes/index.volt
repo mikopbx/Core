@@ -19,8 +19,8 @@
         <tr class="rule-row {% if rule['provider'] is NULL %}ui negative{% endif %}" id="{{ rule['id'] }}"
             data-value="{{ rule['priority'] }}">
             <td class="dragHandle"><i class="sort grey icon"></i></td>
-            <td class="{% if rule['disabled']==1 %}disabled{% endif %}">{{ rule['rulename'] }}</td>
-            <td class="{% if rule['disabled']==1 %}disabled{% endif %}">
+            <td class="{% if rule['disabled']==1 %}disabled{% endif %} collapsing">{{ rule['rulename'] }}</td>
+            <td class="{% if rule['disabled']==1 %}disabled{% endif %} collapsing">
                 {% if (rule['restnumbers']>0) %}
                     {{ t._('or_RuleDescription',['numberbeginswith':rule['numberbeginswith'],'restnumbers':rule['restnumbers']]) }}
                 {% elseif (rule['restnumbers']==0) %}
@@ -29,7 +29,7 @@
                     {{ t._('or_RuleDescriptionBeginMatch',['numberbeginswith':rule['numberbeginswith']]) }}
                 {% endif %}
             </td>
-            <td class="{% if rule['disabled']==1 %}disabled{% endif %}">{{ rule['provider'] }}</td>
+            <td class="{% if rule['disabled']==1 %}disabled{% endif %} collapsing">{{ rule['provider'] }}</td>
             <td class="{% if rule['disabled']==1 %}disabled{% endif %}">
                 {% if not (rule['note'] is empty) %}
                     <div class="ui basic icon button" data-content="{{ rule['note'] }}" data-variation="wide"

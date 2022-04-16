@@ -24,7 +24,7 @@
             {# </td> #}
             <td class="center aligned {{ extension['status'] }} disability center aligned extension-status"><i
                         class="spinner loading icon"></i></td>
-            <td class="{{ extension['status'] }} disability"><img src="{{ extension['avatar'] }}"
+            <td class="{{ extension['status'] }} disability collapsing"><img src="{{ extension['avatar'] }}"
                                                                   class="ui avatar image"
                                                                   data-value="{{ extension['userid'] }}"> {{ extension['username'] }}
             </td>

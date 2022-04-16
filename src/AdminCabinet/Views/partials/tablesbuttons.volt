@@ -1,4 +1,4 @@
-<td class="right aligned collapsing">
+<td class="right aligned">
     <div class="ui small basic icon buttons action-buttons">
         {% if clipboard is not empty %}
             <a class="ui button clipboard" data-clipboard-text="{{ clipboard }}" data-variation="basic"
