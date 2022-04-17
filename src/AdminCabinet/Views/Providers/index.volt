@@ -49,9 +49,9 @@
                         class="spinner loading icon"></i></td>
             <td class="{{ provider['status'] }} disability collapsing">{{ provider['name'] }} <br><span
                         class="features failure"></span></td>
-            <td class="{{ provider['status'] }} disability collapsing">{{ provider['type'] }}</td>
-            <td class="{{ provider['status'] }} disability collapsing">{{ provider['hostname'] }}</td>
-            <td class="{{ provider['status'] }} disability collapsing">{{ provider['username'] }}</td>
+            <td class="{{ provider['status'] }} disability">{{ provider['type'] }}</td>
+            <td class="{{ provider['status'] }} disability">{{ provider['hostname'] }}</td>
+            <td class="{{ provider['status'] }} disability">{{ provider['username'] }}</td>
             {{ partial("partials/tablesbuttons",
                 [
                     'id': provider['uniqid'],
