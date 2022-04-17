@@ -46,7 +46,6 @@ class MessagesProvider implements ServiceProviderInterface
                 $cacheKey = false;
                 $language = $di->get(LanguageProvider::SERVICE_NAME);
                 if (php_sapi_name() !== 'cli'){
-                    $language = $di->get(LanguageProvider::SERVICE_NAME);
                     $session  = $di->get(SessionProvider::SERVICE_NAME);
                     if ($session !== null && $session->has('versionHash')) {
                         $cacheKey = 'LocalisationArray:' . $session->get('versionHash') .':'. $language;

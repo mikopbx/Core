@@ -21,14 +21,8 @@ use MikoPBX\Core\System\Notifications;
 require_once('Globals.php');
 
 $exitCode = 10;
-$typeClient = $argv[1]??'';
-$result = false;
-if($typeClient === Notifications::TYPE_MSMTP){
-    $result = Notifications::testConnectionMSMTP();
-}elseif($typeClient === Notifications::TYPE_PHP_MAILER){
-    $sender = new Notifications();
-    $result = $sender->testConnectionPHPMailer();
-}
+$sender = new Notifications();
+$result = $sender->testConnectionPHPMailer();
 if($result === true){
     $exitCode = 0;
 }

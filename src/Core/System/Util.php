@@ -21,8 +21,11 @@ namespace MikoPBX\Core\System;
 
 use DateTime;
 use Exception;
-use MikoPBX\Common\Models\{CallEventsLogs, CustomFiles};
+use MikoPBX\Common\Models\{CustomFiles};
+use MikoPBX\Common\Providers\AmiConnectionCommand;
+use MikoPBX\Common\Providers\AmiConnectionListener;
 use MikoPBX\Common\Providers\LoggerProvider;
+use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\Asterisk\AsteriskManager;
 use Phalcon\Di;
 use ReflectionClass;
@@ -103,20 +106,21 @@ class Util
 
     /**
      * Получаем объект менеджер asterisk.
-     *
      * @param string $events
-     *
      * @return AsteriskManager
+     * @throws \Phalcon\Exception
      */
-    public static function getAstManager($events = 'on'): AsteriskManager
+    public static function getAstManager(string $events = 'on'): AsteriskManager
     {
         if ($events === 'on') {
-            $nameService = 'amiListner';
+            $nameService = AmiConnectionListener::SERVICE_NAME;
         } else {
-            $nameService = 'amiCommander';
+            $nameService = AmiConnectionCommand::SERVICE_NAME;
         }
-
         $di = Di::getDefault();
+        if($di === null) {
+            throw new \Phalcon\Exception("di not found");
+        }
         $am = $di->getShared($nameService);
         if (is_resource($am->socket)) {
             return $am;
@@ -264,29 +268,6 @@ class Util
             $data = base64_decode((string)$res->content);
         }
         file_put_contents($filename, $data);
-    }
-
-    /**
-     * Пишем лог в базу данных.
-     *
-     * @param $app
-     * @param $data_obj
-     */
-    public static function logMsgDb($app, $data_obj): void
-    {
-        try {
-            $data = new CallEventsLogs();
-            $data->writeAttribute('eventtime', date("Y-m-d H:i:s"));
-            $data->writeAttribute('app', $app);
-            $data->writeAttribute('datajson', json_encode($data_obj, JSON_UNESCAPED_SLASHES));
-
-            if (is_array($data_obj) && isset($data_obj['linkedid'])) {
-                $data->writeAttribute('linkedid', $data_obj['linkedid']);
-            }
-            $data->save();
-        } catch (Throwable $e) {
-            self::sysLogMsg(__METHOD__, $e->getMessage(), LOG_ERR);
-        }
     }
 
     /**
@@ -445,19 +426,23 @@ class Util
 
     /**
      * Получить перевод строки текста.
-     *
-     * @param $text
-     *
-     * @return mixed
+     * @param string $text
+     * @param bool   $cliLang
+     * @return string
      */
-    public static function translate($text)
+    public static function translate(string $text, bool $cliLang = true):string
     {
         $di = Di::getDefault();
         if ($di !== null) {
-            return $di->getShared('translation')->_($text);
-        } else {
-            return $text;
+            if(!$cliLang){
+                $di->setShared('PREFERRED_LANG_WEB', true);
+            }
+            $text = $di->getShared(TranslationProvider::SERVICE_NAME)->_($text);
+            if(!$cliLang){
+                $di->remove('PREFERRED_LANG_WEB');
+            }
         }
+        return $text;
     }
 
     /**
@@ -544,9 +529,44 @@ class Util
         return (stripos(php_uname('v'), 'debian') !== false);
     }
 
+    /**
+     * @return bool
+     */
     public static function isDocker(): bool
     {
         return file_exists('/.dockerenv');
+    }
+
+    /**
+     * Вывод в основной teletype.
+     * @param string $message
+     * @param string $ttyPath
+     * @return void
+     */
+    public static function teletypeEcho(string $message, string $ttyPath = '/dev/ttyS0'):void
+    {
+        $pathBusyBox    = self::which('busybox');
+        $ttyTittle      = trim(shell_exec("$pathBusyBox setserial -g $ttyPath 2> /dev/null"));
+        if(strpos($ttyTittle, $ttyPath) !== false && strpos($ttyTittle, 'unknown') === false){
+            @file_put_contents($ttyPath, $message, FILE_APPEND);
+        }
+    }
+
+    /**
+     * Вывод DONE / FAIL основной teletype.
+     * @param $result
+     * @return void
+     */
+    public static function teletypeEchoDone(string $message, $result):void
+    {
+        $len    = max(0, 80 - strlen($message) - 9);
+        $spaces = str_repeat('.', $len);
+        if($result === false){
+            $message = " \033[31;1mFAIL\033[0m \n";
+        }else{
+            $message = " \033[32;1mDONE\033[0m \n";
+        }
+        self::teletypeEcho($spaces.$message);
     }
 
     /**
@@ -769,7 +789,7 @@ class Util
      *
      * @return array
      */
-    public static function flattenArray(array $array)
+    public static function flattenArray(array $array):array
     {
         $result = [];
         foreach ($array as $value) {

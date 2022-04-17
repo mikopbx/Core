@@ -19,6 +19,8 @@
 
 namespace MikoPBX\Core\System;
 
+use MikoPBX\Core\Asterisk\Configs\SIPConf;
+use MikoPBX\Core\System\Configs\ACPIDConf;
 use MikoPBX\Core\System\Configs\BeanstalkConf;
 use MikoPBX\Core\System\Configs\CronConf;
 use MikoPBX\Core\System\Configs\IptablesConf;
@@ -30,7 +32,6 @@ use MikoPBX\Core\System\Configs\RedisConf;
 use MikoPBX\Core\System\Configs\SSHConf;
 use MikoPBX\Core\System\Configs\SyslogConf;
 use MikoPBX\Core\System\Configs\VmToolsConf;
-use MikoPBX\Core\System\Configs\VMWareToolsConf;
 use MikoPBX\Core\System\Upgrade\UpdateDatabase;
 use MikoPBX\Core\System\Upgrade\UpdateSystemConfig;
 use Phalcon\Di;
@@ -42,12 +43,14 @@ class SystemLoader extends Di\Injectable
     private function echoStartMsg(string $message):void
     {
         $this->stageMessage = $message;
+        Util::teletypeEcho($message);
         Util::echoWithSyslog($this->stageMessage);
     }
 
     private function echoResultMsg(bool $result = true):void
     {
         Util::echoResult($this->stageMessage, $result);
+        Util::teletypeEchoDone($this->stageMessage, $result);
         $this->stageMessage = '';
     }
 
@@ -57,6 +60,11 @@ class SystemLoader extends Di\Injectable
     public function startSystem(): bool
     {
         $this->di->getShared('registry')->booting = true;
+        $this->echoStartMsg(PHP_EOL);
+        $this->echoStartMsg(' - Start acpid daemon...');
+        $ACPIDConf = new ACPIDConf();
+        $ACPIDConf->reStart();
+        $this->echoResultMsg();
 
         $this->echoStartMsg(' - Start beanstalkd daemon...');
         $beanstalkConf = new BeanstalkConf();
@@ -137,11 +145,6 @@ class SystemLoader extends Di\Injectable
         $resSsh  = $sshConf->configure();
         $this->echoResultMsg($resSsh);
 
-        $this->echoStartMsg(' - Configuring msmtp services...');
-        $notifications = new Notifications();
-        $notifications->configure();
-        $this->echoResultMsg();
-
         $this->di->getShared('registry')->booting = false;
 
         return true;
@@ -174,8 +177,14 @@ class SystemLoader extends Di\Injectable
         $this->echoResultMsg();
 
         $this->echoStartMsg(' - Wait asterisk fully booted...');
-        PBX::waitFullyBooted();
-        $this->echoResultMsg();
+        $result = PBX::waitFullyBooted();
+        $this->echoResultMsg($result);
+        if($result){
+            $this->echoStartMsg(' - Reload SIP settings in AstDB...');
+            $sip = new SIPConf();
+            $sip->updateAsteriskDatabase();
+            $this->echoResultMsg();
+        }
 
         $this->echoStartMsg(' - Configuring Cron tasks...');
         $cron = new CronConf();

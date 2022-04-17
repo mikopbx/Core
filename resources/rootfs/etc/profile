@@ -25,6 +25,8 @@ export LSCOLORS=gxfxcxdxbxegedabagacad
 export HISTCONTROL=ignoredups
 export HISTFILESIZE=100000
 export HISTSIZE=5000
+export PROMPT_COMMAND='history -a'
+export HISTTIMEFORMAT="%F %T: "
 
 shopt -s histappend
 shopt -s histreedit
@@ -34,11 +36,21 @@ shopt -s cdspell
 shopt -s dirspell
 shopt -s cmdhist
 
+storageDevice="$(cat /var/etc/storage_device)";
+/bin/busybox mount | /bin/busybox grep " $storageDevice " > /dev/null 2> /dev/null;
+storageNotExists="$?";
+if [ "$storageNotExists" = '0' ]; then
+  histDir="$storageDevice/mikopbx/log/bash";
+  mkdir -p "$histDir";
+  export HISTFILE="$histDir/.bash_history";
+fi
+
 alias ls='ls --color=auto'
 alias myip="curl http://ipecho.net/plain; echo"
 alias remount-offload="_remountOffload"
 alias xdebug-enable="_xdebugEnable"
 alias xdebug-enable-www="_xdebugEnableWww"
+alias xdebug-enable-agi="_xdebugEnableAgi"
 
 PS1='\w\$ '
 PS2='>'
@@ -69,6 +81,17 @@ _xdebugEnable()
 }
 
 complete -F _xdebugEnable xdebug-enable
+
+_xdebugEnableAgi()
+{
+  killall safe_asterisk
+  killall asterisk
+  xdebug-enable $1
+  nohup safe_asterisk -f > /dev/null 2>&1 &
+  echo "Done"
+}
+
+complete -F _xdebugEnableAgi xdebug-enable-agi
 
 _xdebugEnableWww()
 {

@@ -34,6 +34,7 @@ echo -e "\e[01;32m-> \e[0mWaiting fully boot asterisk...";
 echo -e "\e[01;32m-> \e[0mEnd init";
 echo;
 
+export USER_AGENT="mikopbx-test-$(date +'%s')";
 export astConf dirName;
 initTests=$(/bin/find "${dirName}/Scripts" -type f -name "start.php" | /bin/sort | grep '/00-');
 
@@ -47,7 +48,7 @@ fi
 
 tests="$initTests $tests"
 for file in $tests; do
-  /usr/bin/timeout 180 /usr/bin/php -f "${file}";
+  /usr/bin/timeout 300 /usr/bin/php -f "${file}";
 done
 
 if [ ! "${2}x" == "x" ]; then

@@ -30,10 +30,21 @@ class MusicOnHoldConf extends CoreConfigClass
 
     protected function generateConfigProtected(): void
     {
-        $mohpath = $this->config->path('asterisk.mohdir');
+        $mohPath = $this->config->path('asterisk.mohdir');
         $conf    = "[default]\n" .
             "mode=files\n" .
-            "directory=$mohpath\n\n";
+            "directory=$mohPath\n\n";
+
+        $mohSounds = SoundFiles::find(["category='".SoundFiles::CATEGORY_MOH."'", 'columns' => 'id,name,path']);
+        foreach ($mohSounds as $moh){
+            $filename = Util::trimExtensionForFile($moh->path);
+            if(!file_exists("$filename.wav")){
+                continue;
+            }
+            $conf.= "[moh-$moh->id]; " . str_replace([PHP_EOL, ';'], '', $moh->name). PHP_EOL.
+                "mode=playlist" .PHP_EOL.
+                "entry=$filename".PHP_EOL.PHP_EOL;
+        }
 
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/musiconhold.conf', $conf);
         $this->checkMohFiles();

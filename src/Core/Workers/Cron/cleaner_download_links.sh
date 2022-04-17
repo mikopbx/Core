@@ -36,15 +36,15 @@ if [ ! -d "${root_dir}" ]; then
 fi
 
 # Получим все символические ссылки.
-links=$(/bin/find "${root_dir}" -mmin +5 -type l);
+links=$(/bin/find "${root_dir}" -mmin +2 -type l 2> /dev/null| head -n 1000);
 
 if [ ! "${links}x" = "x" ]; then
-  filesForRemove=$(readlink $links | grep '/temp-');
+  filesForRemove=$(readlink "$links" | grep '/temp-');
   # Получим все временные файлы.
   for file in $filesForRemove
   do
     # Проверим, свободен ли файл.
-    /usr/bin/lsof $file  > /dev/null 2> /dev/null;
+    /usr/bin/lsof "$file"  > /dev/null 2> /dev/null;
     # Файл должен существовать.
     # Должен быть освобожден всеми процессами.
     # Не являться корневой директорией $root_dir.
@@ -58,7 +58,7 @@ fi
 for file in $links
 do
   # Проверим, свободен ли файл.
-  /usr/bin/lsof $file  > /dev/null 2> /dev/null;
+  /usr/bin/lsof "$file"  > /dev/null 2> /dev/null;
   if  [ $? -eq 1 ]; then
       dir=$(/usr/bin/dirname "$file");
       # Если Файл не является корневой директорией - удаляем.

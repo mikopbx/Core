@@ -19,19 +19,22 @@
 
 namespace MikoPBX\PBXCoreREST\Lib;
 
-
 use MikoPBX\Common\Models\AsteriskManagerUsers;
+use MikoPBX\Common\Models\CallQueueMembers;
+use MikoPBX\Common\Models\CallQueues;
 use MikoPBX\Common\Models\CustomFiles;
+use MikoPBX\Common\Models\ExtensionForwardingRights;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\FirewallRules;
 use MikoPBX\Common\Models\Iax;
 use MikoPBX\Common\Models\IncomingRoutingTable;
+use MikoPBX\Common\Models\IvrMenu;
+use MikoPBX\Common\Models\IvrMenuActions;
 use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\OutgoingRoutingTable;
 use MikoPBX\Common\Models\OutWorkTimes;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\Providers;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Common\Models\Users;
@@ -120,7 +123,12 @@ class SystemManagementProcessor extends Injectable
                 $res            = self::uninstallModule($moduleUniqueID, $keepSettings);
                 break;
             case 'restoreDefault':
-                $res = self::restoreDefaultSettings();
+                $ch = 0;
+                do{
+                    $ch++;
+                    $res = self::restoreDefaultSettings();
+                    sleep(1);
+                }while($ch <= 10 && !$res->success);
                 break;
             case 'convertAudioFile':
                 $mvPath = Util::which('mv');
@@ -223,43 +231,43 @@ class SystemManagementProcessor extends Injectable
         $resModuleMetadata = FilesManagementProcessor::getMetadataFromModuleFile($filePath);
         if ( ! $resModuleMetadata->success) {
             return $resModuleMetadata;
-        } else {
-            $moduleUniqueID = $resModuleMetadata->data['uniqid'];
-            // If it enabled send disable action first
-            if (PbxExtensionUtils::isEnabled($moduleUniqueID)){
-                $res = self::disableModule($moduleUniqueID);
-                if (!$res->success){
-                    return $res;
-                }
-            }
-
-            $currentModuleDir = PbxExtensionUtils::getModuleDir($moduleUniqueID);
-            $needBackup       = is_dir($currentModuleDir);
-
-            if ($needBackup) {
-                self::uninstallModule($moduleUniqueID, true);
-            }
-
-            // We will start the background process to install module
-            $temp_dir            = dirname($filePath);
-            file_put_contents( $temp_dir . '/installation_progress', '0');
-            file_put_contents( $temp_dir . '/installation_error', '');
-            $install_settings = [
-                'filePath' => $filePath,
-                'currentModuleDir' => $currentModuleDir,
-                'uniqid' => $moduleUniqueID,
-            ];
-            $settings_file  = "{$temp_dir}/install_settings.json";
-            file_put_contents(
-                $settings_file,
-                json_encode($install_settings, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT)
-            );
-            $phpPath               = Util::which('php');
-            $workerFilesMergerPath = Util::getFilePathByClassName(WorkerModuleInstaller::class);
-            Processes::mwExecBg("{$phpPath} -f {$workerFilesMergerPath} start '{$settings_file}'");
-            $res->data['filePath']= $filePath;
-            $res->success = true;
         }
+
+        $moduleUniqueID = $resModuleMetadata->data['uniqid'];
+        // If it enabled send disable action first
+        if (PbxExtensionUtils::isEnabled($moduleUniqueID)){
+            $res = self::disableModule($moduleUniqueID);
+            if (!$res->success){
+                return $res;
+            }
+        }
+
+        $currentModuleDir = PbxExtensionUtils::getModuleDir($moduleUniqueID);
+        $needBackup       = is_dir($currentModuleDir);
+
+        if ($needBackup) {
+            self::uninstallModule($moduleUniqueID, true);
+        }
+
+        // We will start the background process to install module
+        $temp_dir            = dirname($filePath);
+        file_put_contents( $temp_dir . '/installation_progress', '0');
+        file_put_contents( $temp_dir . '/installation_error', '');
+        $install_settings = [
+            'filePath' => $filePath,
+            'currentModuleDir' => $currentModuleDir,
+            'uniqid' => $moduleUniqueID,
+        ];
+        $settings_file  = "{$temp_dir}/install_settings.json";
+        file_put_contents(
+            $settings_file,
+            json_encode($install_settings, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT)
+        );
+        $phpPath               = Util::which('php');
+        $workerFilesMergerPath = Util::getFilePathByClassName(WorkerModuleInstaller::class);
+        Processes::mwExecBg("{$phpPath} -f {$workerFilesMergerPath} start '{$settings_file}'");
+        $res->data['filePath']= $filePath;
+        $res->success = true;
 
         return $res;
     }
@@ -368,58 +376,71 @@ class SystemManagementProcessor extends Injectable
         return $res;
     }
 
-    /**
-     * Deletes all settings and uploaded files
-     */
-    public static function restoreDefaultSettings(): PBXApiResult
+    public static function preCleaning(&$res):void
     {
-        $res            = new PBXApiResult();
-        $res->processor = __METHOD__;
-        $di             = DI::getDefault();
-        if ($di === null) {
-            $res->messages[] = 'Error on DI initialize';
-            return $res;
+        $preCleaning = [
+            CallQueues::class => [
+                'redirect_to_extension_if_empty',
+                'redirect_to_extension_if_unanswered',
+                'redirect_to_extension_if_repeat_exceeded'
+            ],
+            IvrMenu::class => [
+                'timeout_extension'
+            ]
+        ];
+        foreach ($preCleaning as $class => $columns) {
+            $records = call_user_func([$class, 'find']);
+            foreach ($records as $record){
+                foreach ($columns as $column){
+                    $record->$column = '';
+                }
+                if ( ! $record->save()) {
+                    $res->messages[] = $record->getMessages();
+                    $res->success    = false;
+                }
+            }
         }
-        $rm     = Util::which('rm');
-        $res->success = true;
+    }
 
-        // Change incoming rule to default action
-        IncomingRoutingTable::resetDefaultRoute();
-
-
+    public static function cleaningMainTables(&$res):void
+    {
         // Pre delete some types
         $clearThisModels = [
+            [ExtensionForwardingRights::class => ''],
+            [OutWorkTimes::class => ''],
+            [IvrMenuActions::class => ''],
+            [CallQueueMembers::class => ''],
             [OutgoingRoutingTable::class => ''],
             [IncomingRoutingTable::class => 'id>1'],
-            [Users::class => 'id>"1"'], // All except root with their extensions
             [Sip::class => ''], // All SIP providers
             [Iax::class => ''], // All IAX providers
-            [OutWorkTimes::class => ''],
             [AsteriskManagerUsers::class => ''],
             [Extensions::class => 'type="' . Extensions::TYPE_IVR_MENU . '"'],  // IVR Menu
             [Extensions::class => 'type="' . Extensions::TYPE_CONFERENCE . '"'],  // CONFERENCE
             [Extensions::class => 'type="' . Extensions::TYPE_QUEUE . '"'],  // QUEUE
+            [Users::class => 'id>"1"'], // All except root with their extensions
             [CustomFiles::class => ''],
             [NetworkFilters::class=>'permit!="0.0.0.0/0" AND deny!="0.0.0.0/0"'] //Delete all other rules
         ];
-
         foreach ($clearThisModels as $modelParams) {
             foreach ($modelParams as $key => $value) {
                 $records = call_user_func([$key, 'find'], $value);
-                if ( ! $records->delete()) {
+                if (!$records->delete()) {
                     $res->messages[] = $records->getMessages();
                     $res->success    = false;
                 }
             }
         }
-
         // Allow all connections for 0.0.0.0/0
         $firewallRules = FirewallRules::find();
         foreach ($firewallRules as $firewallRule){
             $firewallRule->action = 'allow';
             $firewallRule->save();
         }
+    }
 
+    public static function cleaningOtherExtensions(&$res):void
+    {
         // Other extensions
         $parameters     = [
             'conditions' => 'not number IN ({ids:array})',
@@ -449,8 +470,11 @@ class SystemManagementProcessor extends Injectable
                 $res->messages[] = $record->getMessages();
             }
         }
+    }
 
-        // SoundFiles
+    public static function cleanSoundFiles(&$res):void
+    {
+        $rm     = Util::which('rm');
         $parameters = [
             'conditions' => 'category = :custom:',
             'bind'       => [
@@ -458,7 +482,6 @@ class SystemManagementProcessor extends Injectable
             ],
         ];
         $records    = SoundFiles::find($parameters);
-
         foreach ($records as $record) {
             if (stripos($record->path, '/storage/usbdisk1/mikopbx') !== false) {
                 Processes::mwExec("{$rm} -rf {$record->path}");
@@ -468,6 +491,30 @@ class SystemManagementProcessor extends Injectable
                 }
             }
         }
+    }
+
+    /**
+     * Deletes all settings and uploaded files
+     */
+    public static function restoreDefaultSettings(): PBXApiResult
+    {
+        $res            = new PBXApiResult();
+        $res->processor = __METHOD__;
+        $di             = DI::getDefault();
+        if ($di === null) {
+            $res->messages[] = 'Error on DI initialize';
+            return $res;
+        }
+        $rm     = Util::which('rm');
+        $res->success = true;
+
+        // Change incoming rule to default action
+        IncomingRoutingTable::resetDefaultRoute();
+        self::preCleaning($res);
+
+        self::cleaningMainTables($res);
+        self::cleaningOtherExtensions($res);
+        self::cleanSoundFiles($res);
 
         // PbxExtensions
         $records = PbxExtensionModules::find();
@@ -501,7 +548,7 @@ class SystemManagementProcessor extends Injectable
             'WebAdminLanguage',
         ];
         foreach ($defaultValues as $key=>$defaultValue){
-            if (in_array($key, $fixedKeys)){
+            if (in_array($key, $fixedKeys, true)){
                 continue;
             }
             $record = PbxSettings::findFirstByKey($key);
@@ -523,7 +570,6 @@ class SystemManagementProcessor extends Injectable
         if (stripos($callRecordsPath, '/storage/usbdisk1/mikopbx') !== false) {
             Processes::mwExec("{$rm} -rf {$callRecordsPath}/*");
         }
-
         return $res;
     }
 

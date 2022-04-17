@@ -26,10 +26,10 @@ use Phalcon\Di\ServiceProviderInterface;
 
 class AmiConnectionListener  implements ServiceProviderInterface{
 
-    public const SERVICE_NAME = 'amiListner';
+    public const SERVICE_NAME = 'amiListener';
 
     /**
-     * Register amiListner service provider
+     * Register amiListener service provider
      *
      * @param \Phalcon\Di\DiInterface $di
      */

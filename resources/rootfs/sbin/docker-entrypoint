@@ -28,9 +28,9 @@ class Entrypoint
     private array  $env;
     private array  $incSettings;
     private array  $settings;
-    private string $pathInc;
     public  float  $workerStartTime;
     public  const  PATH_DB = '/cf/conf/mikopbx.db';
+    private const  pathInc = '/etc/inc/mikopbx-settings.json';
 
     public function __construct()
     {
@@ -39,6 +39,10 @@ class Entrypoint
         register_shutdown_function([$this, 'shutdownHandler']);
 
         $this->env = [
+            // Идентификация WWW пользователя.
+            'ID_WWW_USER'     => '',
+            'ID_WWW_GROUP'    => '',
+            //
             'BEANSTALK_PORT'  => 'beanstalk',
             'REDIS_PORT'      => 'redis',
             'GNATS_PORT'      => 'gnats',
@@ -92,18 +96,16 @@ class Entrypoint
     public function start():void
     {
         $this->workerStartTime = microtime(true);
-
         $sysLogdPath = Util::which('syslogd');
         // Запуск системного лога.
         Processes::mwExecBg($sysLogdPath.' -S -C512');
-
         $out = [];
-        Processes::mwExec('sqlite3 /cf/conf/mikopbx.db .tables', $out);
+        Processes::mwExec('sqlite3 '.self::PATH_DB.' .tables', $out);
         if(trim(implode('',$out)) === ''){
             Util::mwMkdir(dirname(self::PATH_DB));
             Processes::mwExec("rm -rf ".self::PATH_DB."; cp /conf.default/mikopbx.db ".self::PATH_DB);
+            Util::addRegularWWWRights(self::PATH_DB);
         }
-
         $this->checkUpdate();
         $commands = 'exec </dev/console >/dev/console 2>/dev/console;'.
             '/etc/rc/bootup 2>/dev/null &&'.
@@ -115,16 +117,69 @@ class Entrypoint
     }
 
     /**
+     * Изменение ID пользователя www.
+     * @param string $newUserId
+     * @param string $newGroupId
+     */
+    private function changeWwwUserID(string $newUserId, string $newGroupId):void
+    {
+        Util::echoWithSyslog(' - Check user id... '. PHP_EOL);
+        $pidIdPath = '/cf/conf/user.id';
+        $pidGrPath = '/cf/conf/group.id';
+
+        if(empty($newUserId) && file_exists($pidIdPath)){
+            $newUserId = file_get_contents($pidIdPath);
+        }
+        if(empty($newGroupId) && file_exists($pidGrPath)){
+            $newGroupId = file_get_contents($pidGrPath);
+        }
+
+        $commands   = [];
+        $userID     = 'www';
+        $currentUserId  = trim(shell_exec("grep '^$userID:' < /etc/passwd | cut -d ':' -f 3"));
+        $currentGroupId = trim(shell_exec("grep '^$userID:' < /etc/passwd | cut -d ':' -f 4"));
+
+        Util::echoWithSyslog(" - Old user id: $currentUserId; New user id: $newUserId". PHP_EOL);
+        Util::echoWithSyslog(" - Old group id: $currentGroupId; New user id: $newGroupId". PHP_EOL);
+        if( !empty($currentUserId) && !empty($newUserId) && $currentUserId !== $newUserId){
+            $commands[] = "sed -i 's/$userID:x:$currentUserId:/$userID:x:$newUserId:/g' /etc/passwd*";
+            $id = '';
+            if(file_exists($pidIdPath)){
+                $id = file_get_contents($pidIdPath);
+            }
+            if($id !== $newUserId){
+                $commands[] = "find / -not -path '/proc/*' -user $currentUserId -exec chown -h $userID {} \;";
+                file_put_contents($pidIdPath, $newUserId);
+            }
+        }
+        if( !empty($currentGroupId) && !empty($newGroupId) && $currentGroupId !== $newGroupId) {
+            $commands[] = "sed -i 's/$userID:x:$currentGroupId:/$userID:x:$newGroupId:/g' /etc/group";
+            $commands[] = "sed -i 's/:$currentGroupId:Web/:$newGroupId:Web/g' /etc/passwd";
+
+            $id = '';
+            if(file_exists($pidGrPath)){
+                $id = file_get_contents($pidGrPath);
+            }
+            if($id !== $newGroupId){
+                $commands[] = "find / -not -path '/proc/*' -group $currentGroupId -exec chgrp -h $newGroupId {} \;";
+                file_put_contents($pidGrPath, $newGroupId);
+            }
+        }
+        if(!empty($commands)){
+            passthru(implode('; ', $commands));
+        }
+    }
+
+    /**
      * Инициализация настроек. Необходима для проверки и обновления настроек портов.
      */
     private function initSettings():void{
-        $this->pathInc  = appPath('config/mikopbx-settings.json');
-        $jsonString     = file_get_contents($this->pathInc);
+        $jsonString     = file_get_contents(self::pathInc);
         try {
             $this->incSettings = json_decode($jsonString, true, 512, JSON_THROW_ON_ERROR);
         } catch (JsonException $exception) {
             $this->incSettings = [];
-            throw new Error("$this->pathInc has broken format");
+            throw new Error(self::pathInc." has broken format");
         }
 
         $out = [];
@@ -149,16 +204,24 @@ class Entrypoint
      */
     public function checkUpdate():void
     {
+        Util::echoWithSyslog(' - Check update... '. PHP_EOL);
         $this->initSettings();
         foreach ($this->env as $key => $dataPath) {
             $newValue = getenv($key);
             if(!is_numeric($newValue)){
                 continue;
             }
+
+            if(empty($dataPath)){
+                $this->env[$key] = $newValue;
+                continue;
+            }
+
             $isInc = false;
             $oldValue    = $this->settings[$dataPath]??'';
             if(empty($oldValue)){
-                $oldValue = $this->incSettings[$dataPath]['port']??'';
+                $oldValue = 1*$this->incSettings[$dataPath]['port']??0;
+                $newValue = 1*$newValue;
                 $isInc = true;
             }
 
@@ -167,15 +230,19 @@ class Entrypoint
             }
             $this->updateSetting($dataPath, $newValue, $isInc);
         }
+
+        $this->changeWwwUserID($this->env['ID_WWW_USER'], $this->env['ID_WWW_GROUP']);
     }
 
     private function updateSetting($dataPath, $newValue, $isInc):void
     {
-        $msg = " - Update $dataPath (port) to '$newValue' ...";
+        $msg = " - Update $dataPath (port) to '$newValue' ...". PHP_EOL;
         Util::echoWithSyslog($msg);
         if($isInc === true){
             $this->incSettings[$dataPath]['port'] = $newValue;
-            $res = file_put_contents($this->pathInc, json_encode($this->incSettings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+            $newData = json_encode($this->incSettings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+            $res = file_put_contents(self::pathInc, $newData);
+            file_put_contents(appPath('config/mikopbx-settings.json'), $newData);
             $result = (false !== $res);
         }else{
             $res = Processes::mwExec("sqlite3 ".self::PATH_DB." 'UPDATE m_PbxSettings SET value=\"$newValue\" WHERE key=\"$dataPath\"'");
@@ -185,6 +252,7 @@ class Entrypoint
     }
 }
 
+Util::echoWithSyslog(' - Start docker entrypoint... '. PHP_EOL);
 $main = new Entrypoint();
 $main->start();
 

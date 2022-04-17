@@ -61,8 +61,9 @@ class NginxConf extends Injectable
     }
 
     private static function getPid():string{
-        if(file_exists(self::PID_FILE)) {
-            $pid = file_get_contents(self::PID_FILE);
+        $filePid = trim(file_get_contents(self::PID_FILE));
+        if(!empty($filePid)) {
+            $pid = Processes::getPidOfProcess("^$filePid ");
         }else{
             $nginxPath = Util::which('nginx');
             $pid       = Processes::getPidOfProcess($nginxPath);

@@ -1,3 +1,0 @@
-::sysinit:/sbin/mikopbx_boot_init 2> /dev/null
-tty1::respawn:/sbin/mikopbx_init 2> /dev/null
-::respawn:/sbin/agetty -a root -h -t 60 ttyS0 9600 vt102

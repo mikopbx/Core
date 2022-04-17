@@ -20,7 +20,7 @@
 namespace MikoPBX\Tests\Modules\ModuleBitrix24Integration\Lib;
 
 use MikoPBX\Tests\Unit\AbstractUnitTest;
-use Modules\ModuleBitrix24Integration\Lib\WorkerBitrix24IntegrationHTTP;
+use Modules\ModuleBitrix24Integration\bin\WorkerBitrix24IntegrationHTTP;
 
 class WorkerBitrix24IntegrationHTTPTest extends AbstractUnitTest
 {

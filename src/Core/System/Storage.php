@@ -954,15 +954,7 @@ class Storage extends Di\Injectable
         $conf = '';
         foreach ($disks as $disk) {
             clearstatcache();
-            if ($disk['device'] !== "/dev/{$cf_disk}") {
-                // Если это обычный диск, то раздел 1.
-                $part = "1";
-            } else {
-                // Если это системный диск, то пытаемся подключить раздел 4.
-                $part = "4";
-            }
-            $devName = self::getDevPartName($disk['device'], $part);
-            $dev = '/dev/' . $devName;
+            $dev = $this->getStorageDev($disk, $cf_disk);
             if (!$this->hddExists($dev)) {
                 // Диск не существует.
                 continue;
@@ -976,7 +968,7 @@ class Storage extends Di\Injectable
                 Util::sysLogMsg('Storage', "The file system type has changed {$disk['filesystemtype']} -> {$formatFs}. The disk will not be connected.");
                 continue;
             }
-            $str_uid = 'UUID=' . $this->getUuid($dev) . '';
+            $str_uid = 'UUID=' . $this->getUuid($dev);
             $conf .= "{$str_uid} /storage/usbdisk{$disk['id']} {$formatFs} async,rw 0 0\n";
             $mount_point = "/storage/usbdisk{$disk['id']}";
             Util::mwMkdir($mount_point);
@@ -984,6 +976,37 @@ class Storage extends Di\Injectable
         $this->saveFstab($conf);
         $this->createWorkDirs();
         PHPConf::setupLog();
+    }
+
+    /**
+     * Поиск Storage устройства.
+     * Возвращает полный путь к разделу.
+     * @param $disk
+     * @param $cf_disk
+     * @return string
+     */
+    private function getStorageDev($disk, $cf_disk):string{
+        if(!empty($disk['uniqid']) && strpos($disk['uniqid'], 'STORAGE-DISK') === false){
+            // Ищим имя раздела по UID.
+            $lsBlkPath   = Util::which('lsblk');
+            $busyboxPath = Util::which('busybox');
+            $cmd = "{$lsBlkPath} -r -o NAME,UUID | {$busyboxPath} grep {$disk['uniqid']} | {$busyboxPath} cut -d ' ' -f 1";
+            $dev = '/dev/'.trim(shell_exec($cmd));
+            if ($this->hddExists($dev)) {
+                // Диск существует.
+                return $dev;
+            }
+        }
+        // Определяем диск по его имени.
+        if ($disk['device'] !== "/dev/{$cf_disk}") {
+            // Если это обычный диск, то раздел 1.
+            $part = "1";
+        } else {
+            // Если это системный диск, то пытаемся подключить раздел 4.
+            $part = "4";
+        }
+        $devName = self::getDevPartName($disk['device'], $part);
+        return '/dev/' . $devName;
     }
 
     /**
@@ -1018,9 +1041,12 @@ class Storage extends Di\Injectable
      */
     private function hddExists($disk): bool
     {
+        if(is_dir($disk)){
+            return false;
+        }
         $result = false;
         $uid = $this->getUuid($disk);
-        if ($uid !== false && file_exists($disk)) {
+        if (!empty($uid) && file_exists($disk)) {
             $result = true;
         }
         return $result;
@@ -1300,7 +1326,6 @@ class Storage extends Di\Injectable
         $logFiles = [
             $this->config->path('database.debugLogFile'),
             $this->config->path('cdrDatabase.debugLogFile'),
-            $this->config->path('eventsLogDatabase.debugLogFile')
         ];
 
         foreach ($logFiles as $logFile) {

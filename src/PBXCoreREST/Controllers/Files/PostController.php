@@ -150,6 +150,7 @@ class PostController extends BaseController
                     return;
                 }
             }
+            usleep(100000);
         }
 
         $this->sendRequestToBackendWorker('files', 'uploadResumable', $data);

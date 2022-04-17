@@ -13,9 +13,12 @@ $linkedId = $argv[1]??'';
 if(empty($linkedId)){
     exit(1);
 }
+$endTime  = Util::getNowDate();
+$toMails  = VoiceMailConf::getToMail($linkedId);
+
 try {
     $parser = new PhpMimeMailParser\Parser();
-    $parser->setStream(fopen("php://stdin", "r"));
+    $parser->setStream(fopen("php://stdin", 'rb'));
 
     $d      = DateTime::createFromFormat('D, d M Y H:i:s O', $parser->getHeader('date'));
     $file   = implode('', $parser->saveAttachments('/tmp/'));
@@ -25,21 +28,25 @@ try {
 
     $addresses      = mailparse_rfc822_parse_addresses($parser->getHeader('to'));
     $rawHeaderTo    = $addresses[0]['address']??'';
+    if(!empty($rawHeaderTo)){
+        $toMails[] = $rawHeaderTo;
+    }
     $subject        = $parser->getHeader('subject');
     $message        = str_replace(PHP_EOL, '<br>', $parser->getMessageBody());
 
     $notify = new Notifications();
-    $result = $notify->sendMail($rawHeaderTo, $subject, $message, $recordingFile);
-}catch (Exception $e){
+    $result = $notify->sendMail(implode(',', array_unique($toMails)), $subject, $message, $recordingFile);
+}catch (Throwable $e){
+    $recordingFile = '';
     Util::sysLogMsg('Voicemail-Sender', $e->getMessage());
 }
 
 $data = [
-    'action'         => 'voicemail_end',
+    'action'           => 'voicemail_end',
     'linkedid'         => $linkedId,
     'vm-recordingfile' => $recordingFile,
-    'endtime'          => Util::getNowDate()
+    'endtime'          => $endTime
 ];
 
 $client = new BeanstalkClient(WorkerCallEvents::class);
-$result_send = $client->publish(json_encode($data));
+$result_send = $client->publish(json_encode($data, JSON_THROW_ON_ERROR));

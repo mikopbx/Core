@@ -97,6 +97,11 @@ class CallQueues extends ModelsBase
     /**
      * @Column(type="integer", nullable=true)
      */
+    public ?string $moh_sound_id = '';
+
+    /**
+     * @Column(type="integer", nullable=true)
+     */
     public ?string $periodic_announce_frequency = '';
 
     /**
@@ -238,6 +243,21 @@ class CallQueues extends ModelsBase
             ]
 
         );
+
+        $this->belongsTo(
+            'moh_sound_id',
+            SoundFiles::class,
+            'id',
+            [
+                'alias'      => 'MohSoundFiles',
+                'foreignKey' => [
+                    'allowNulls' => false,
+                    'action'     => Relation::NO_ACTION,
+                ],
+            ]
+
+        );
+
         $this->hasMany(
             'uniqid',
             CallQueueMembers::class,

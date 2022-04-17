@@ -158,8 +158,13 @@ const Form = {
 						window.location = Form.afterSubmitModifyUrl;
 					} else {
 						const emptyUrl = window.location.href.split('modify');
+						let action = 'modify';
+						let prefixData = emptyUrl[1].split('/');
+						if(prefixData.length > 0){
+							action = action + prefixData[0];
+						}
 						if (emptyUrl.length > 1) {
-							window.location = `${emptyUrl[0]}modify/`;
+							window.location = `${emptyUrl[0]}${action}/`;
 						}
 					}
 				} else if (response.success && Form.$submitModeInput.val() === 'SaveSettingsAndExit') {

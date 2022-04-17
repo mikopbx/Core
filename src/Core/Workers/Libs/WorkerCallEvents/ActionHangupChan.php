@@ -5,6 +5,7 @@ namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 
 
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
+use MikoPBX\Core\Asterisk\Configs\VoiceMailConf;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Workers\WorkerCallEvents;
 
@@ -49,8 +50,13 @@ class ActionHangupChan {
         /** @var CallDetailRecordsTmp $m_data */
         /** @var CallDetailRecordsTmp $row */
         $m_data = CallDetailRecordsTmp::find($filter);
+        $countRows = count($m_data->toArray());
         foreach ($m_data as $row) {
-            if ($row->transfer == 1) {
+            if($row->dst_num === VoiceMailConf::VOICE_MAIL_EXT){
+                // Этот вызов будет заверщен событием voicemail_end
+                continue;
+            }
+            if ($row->transfer === '1') {
                 $transfer_calls[] = $row->toArray();
             }
             if ($row->dialstatus === 'ORIGINATE') {
@@ -91,7 +97,7 @@ class ActionHangupChan {
             }
         }
 
-        self::regMissedCall($data, count($m_data->toArray()));
+        self::regMissedCall($data, $countRows);
     }
 
     /**
@@ -104,11 +110,26 @@ class ActionHangupChan {
         if($tmpCdrCount > 0 || $data['did'] === ''){
             return;
         }
+        if(stripos($data['agi_channel'], 'local/') !== false){
+            // Локальные каналы не логируем как пропущенные.
+            return;
+        }
+        $filter         = [
+            'linkedid=:linkedid: AND (src_chan=:src_chan: OR dst_chan=:dst_chan:)',
+            'bind' => [
+                'linkedid' => $data['linkedid'],
+                'src_chan' => $data['agi_channel'],
+                'dst_chan' => $data['agi_channel'],
+            ],
+        ];
+        $m_data = CallDetailRecordsTmp::findFirst($filter);
+        if($m_data !== null){
+            return;
+        }
         if(empty($data['UNIQUEID'])){
             $data['UNIQUEID'] = $data['agi_threadid'];
         }
         $time = (float)str_replace('mikopbx-', '', $data['linkedid']);
-
         $data['start']   = date("Y-m-d H:i:s.v", $time);
         $data['endtime'] = $data['end'];
 
@@ -159,7 +180,6 @@ class ActionHangupChan {
             $n_data['recordingfile'] = $worker->MixMonitor($n_data['dst_chan'], $n_data['UNIQUEID']);
             $n_data['did']           = $data_chan['did'];
 
-            Util::logMsgDb('call_events', json_encode($n_data));
             InsertDataToDB::execute($n_data);
             $filter = [
                 'linkedid=:linkedid:',

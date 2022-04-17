@@ -55,9 +55,16 @@ class GeneralSettingsController extends BaseController
         }
         $data        = $this->request->getPost();
         $pbxSettings = PbxSettings::getDefaultArrayValues();
+        if(isset($data['SSHPassword'])){
+            // Если отправили пароль по-умолчанию, то сделаем его хэш равным хэш пароля WEB
+            if($data['SSHPassword'] === $pbxSettings['SSHPassword']){
+                $data['SSHPasswordHash'] = md5($data['WebAdminPassword']);
+            }else{
+                $data['SSHPasswordHash'] = md5($data['SSHPassword']);
+            }
+        }
         $this->db->begin();
         foreach ($pbxSettings as $key => $value) {
-
             switch ($key) {
                 case 'PBXRecordCalls':
                 case 'AJAMEnabled':
@@ -66,13 +73,14 @@ class GeneralSettingsController extends BaseController
                 case 'RedirectToHttps':
                 case 'PBXSplitAudioThread':
                 case 'UseWebRTC':
+                case 'SSHDisablePasswordLogins':
                 case 'PBXAllowGuestCalls':
                 case '***ALL CHECK BOXES ABOVE***':
                     $newValue = ($data[$key] === 'on') ? '1' : '0';
                     break;
                 case 'SSHPassword':
-                    //Если отправили пароль по-умолчанию, то сделаем его равным паролю WEB
-                    if ($data[$key] === $pbxSettings[$key]) {
+                    // Если отправили пароль по-умолчанию, то сделаем его равным паролю WEB
+                    if ($data[$key] === $value) {
                         $newValue = $data['WebAdminPassword'];
                     } else {
                         $newValue = $data[$key];

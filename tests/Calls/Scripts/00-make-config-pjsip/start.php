@@ -46,7 +46,8 @@ $peers = array_merge(... [$peers, $providers]);
 
 TestCallsBase::printInfo("Make pjsip.conf...");
 $enpointPattern = file_get_contents(__DIR__.'/configs/pjsip-pattern-endpoint.conf');
-$config         = file_get_contents(__DIR__.'/configs/pjsip-pattern.conf');
+
+$config         = str_replace('<USER-AGENT>', getenv('USER_AGENT'), file_get_contents(__DIR__.'/configs/pjsip-pattern.conf'));
 foreach ($peers as $peer){
     $columnName = ($peer["type"] === 'friend')?'uniqid':'extension';
     $conf = str_replace(array('<ENDPOINT>', '<PASSWORD>'), array($peer[$columnName], $peer['secret']), $enpointPattern);
@@ -76,7 +77,7 @@ do{
 }while(count($idlePeers) < $limitPeers);
 
 TestCallsBase::printInfo('Time waiting '.(time() - $start).'s...');
-if(count($idlePeers) !== $limitPeers){
+if(count($idlePeers) < $limitPeers){
     TestCallsBase::printError('Not all endpoint are registered:');
 }else{
     TestCallsBase::printInfo('Endpoints connected successfully');

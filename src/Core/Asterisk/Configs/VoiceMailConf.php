@@ -19,13 +19,20 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
-
+use MikoPBX\Common\Models\CallDetailRecordsTmp;
+use MikoPBX\Common\Providers\CDRDatabaseProvider;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Storage;
 use MikoPBX\Core\System\Util;
+use MikoPBX\Common\Models\Extensions;
+use MikoPBX\Common\Models\Sip;
+use MikoPBX\Common\Models\Users;
+use Phalcon\Di;
+use Phalcon\Mvc\Model\Manager;
 
 class VoiceMailConf extends CoreConfigClass
 {
+    public const VOICE_MAIL_EXT = 'voicemail';
     protected string $description = 'voicemail.conf';
 
     /**
@@ -36,7 +43,7 @@ class VoiceMailConf extends CoreConfigClass
     public function extensionGenContexts(): string
     {
         $conf  = "[voice_mail_peer] \n";
-        $conf .= 'exten => voicemail,1,Answer()' . "\n\t";
+        $conf .= 'exten => '.self::VOICE_MAIL_EXT.',1,Answer()' . "\n\t";
         $conf .= 'same => n,ExecIf($["${CHANNEL:0:5}" == "Local"]?Set(pl=${IF($["${CHANNEL:-1}" == "1"]?2:1)}))' . "\n\t";
         $conf .= 'same => n,ExecIf($["${CHANNEL:0:5}" == "Local"]?Set(bridgePeer=${IMPORT(${CUT(CHANNEL,\;,1)}\;${pl},BRIDGEPEER)}))' . "\n\t";
         $conf .= 'same => n,ExecIf($[ "${FROM_CHAN}" == "${bridgePeer}" ]?ChannelRedirect(${bridgePeer},${CONTEXT},${EXTEN},2))' . "\n\t";
@@ -86,7 +93,6 @@ class VoiceMailConf extends CoreConfigClass
             "emailbody={$emailbody}".'\n\n'."{$emailfooter}\n" .
             "emaildateformat=%A, %d %B %Y в %H:%M:%S\n" .
             "pagerdateformat=%T %D\n" .
-            // "mailcmd={$msmtpPath} --file=/etc/msmtp.conf -t\n" .
             "mailcmd={$msmtpPath}\n" .
             "serveremail={$from}\n\n" .
             "[zonemessages]\n" .
@@ -99,30 +105,12 @@ class VoiceMailConf extends CoreConfigClass
             $mail_box = $this->generalSettings['SystemNotificationsEmail'];
         }
         $conf .= "admin => admin," . Util::translate("user") . ",{$mail_box},,attach=yes|tz=local|delete=yes\n";
-        /*
-        $peers = Sip::find('type="peer"');
-        foreach ($peers as $peer){
-            $username = $peer->extension;
-            $mail_box = '';
-            $exten = Extensions::findFirst("number='{$username}'");
-            if($exten !== null){
-                $user = Users::findFirst("id='{$exten->userid}'");
-                if($user !== null){
-                    $username = $user->username;
-                    $mail_box = $user->email;
-                }
-            }
-
-            // $conf.= "{$peer->extension} => {$peer->extension},{$username},{$mail_box},,attach=yes|tz=local|delete=yes\n";
-            $conf.= "{$peer->extension} => {$peer->extension},{$username},{$mail_box},,attach=yes|tz=local\n";
-        }
-        //*/
-
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/voicemail.conf', $conf);
     }
 
     /**
      * @param      $srcFileName
+     * @param      $linkedId
      * @param      $time
      * @param bool $copy
      * @return string
@@ -130,7 +118,7 @@ class VoiceMailConf extends CoreConfigClass
     public static function getCopyFilename($srcFileName, $linkedId, $time, bool $copy = true):string{
         $filename = Util::trimExtensionForFile($srcFileName) . '.wav';
         $recordingFile = '';
-        // Переопределим путь к файлу записи разговора. Для конферецнии файл один.
+        // Переопределим путь к файлу записи разговора. Для конференции файл один.
         $monitor_dir = Storage::getMonitorDir();
         $sub_dir     = date('Y/m/d', $time);
         $dirName = "$monitor_dir/$sub_dir/INBOX/";
@@ -147,6 +135,85 @@ class VoiceMailConf extends CoreConfigClass
             }
         }
         return $recordingFile;
+    }
+
+    /**
+     * Возвращает список пользователей VM.
+     * @return array
+     */
+    public static function getUsersVM():array
+    {
+        $di = Di::getDefault();
+        if(!$di){
+            return [];
+        }
+        /** @var Manager $manager */
+        $manager = $di->get('modelsManager');
+        $parameters = [
+            'models'     => [
+                'Sip' => Sip::class,
+            ],
+            'conditions' => 'Sip.type = :type: AND Users.email <> ""',
+            'bind'       => ['type' => 'peer'],
+            'columns'    => [
+                'extension'      => 'Sip.extension',
+                'email'          => 'Users.email',
+                'username'       => 'Users.username',
+            ],
+            'order'      => 'Sip.extension',
+            'joins'      => [
+                'Extensions' => [
+                    0 => Extensions::class,
+                    1 => 'Sip.extension = Extensions.number',
+                    2 => 'Extensions',
+                    3 => 'LEFT',
+                ],
+                'Users' => [
+                    0 => Users::class,
+                    1 => 'Users.id = Extensions.userid',
+                    2 => 'Users',
+                    3 => 'INNER',
+                ]
+            ],
+        ];
+        $query  = $manager->createBuilder($parameters)->getQuery();
+        $result = $query->execute()->toArray();
+        $mails = [];
+        foreach ($result as $data){
+            if(empty($data['email'])){
+                continue;
+            }
+            $mails[$data['extension']] = $data;
+        }
+        return $mails;
+    }
+
+    /**
+     * Возвращает все
+     * @param $linkedId
+     * @return array
+     */
+    public static function getToMail($linkedId):array
+    {
+        $toMails  = [];
+        $allMails = self::getUsersVM();
+        $filter         = [
+            'linkedid=:linkedid: AND disposition <> "ANSWERED"',
+            'bind' => [
+                'linkedid' => $linkedId,
+            ],
+            'columns' => 'dst_num',
+            'miko_tmp_db' => true
+        ];
+        $m_data = CDRDatabaseProvider::getCdr($filter);
+        foreach ($m_data as $row){
+            $mailData = $allMails[$row['dst_num']]??false;
+            if($mailData){
+                $toMails[] = $mailData['email'];
+            }
+        }
+
+        return $toMails;
     }
 
 }

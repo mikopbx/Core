@@ -27,7 +27,6 @@ use Throwable;
  */
 class Notifications
 {
-    public const TYPE_MSMTP = 'MSMTP';
     public const TYPE_PHP_MAILER = 'PHP_MAILER';
     private array $settings;
     private bool  $enableNotifications;
@@ -127,7 +126,10 @@ class Notifications
         try {
             $mail = $this->getMailSender();
             $mail->setFrom($this->fromAddres, $this->fromName);
-            $mail->addAddress($to);
+            $to = explode(',', $to);
+            foreach ($to as $email){
+                $mail->addAddress($email);
+            }
             if (file_exists($filename)) {
                 $mail->addAttachment($filename);
             }
@@ -158,9 +160,6 @@ class Notifications
         if(!self::checkConnection(self::TYPE_PHP_MAILER)){
             return false;
         }
-        if(!self::checkConnection(self::TYPE_MSMTP)){
-            return false;
-        }
         $systemNotificationsEmail = $this->settings['SystemNotificationsEmail'];
         $result = $this->sendMail($systemNotificationsEmail, 'Test mail from MIKO PBX', '<b>Test message</b><hr>');
         return ($result===true);
@@ -182,48 +181,5 @@ class Notifications
             $result = false;
         }
         return $result;
-    }
-
-
-
-    /**
-     * Настройка msmtp.
-     *
-     */
-    public function configure(): void
-    {
-        $conf = "defaults\n" .
-            "auth       on\n" .
-            "timeout    2\n" .
-            "syslog     on\n\n";
-        $MailSMTPUseTLS=$this->settings["MailSMTPUseTLS"]??'0';
-        if ($MailSMTPUseTLS === "1") {
-            $conf .= "tls on\n";
-            $conf .= "tls_starttls on\n";
-            $MailSMTPCertCheck = $this->settings["MailSMTPCertCheck"]??'0';
-            if ($MailSMTPCertCheck === '1') {
-                $conf .= "tls_certcheck on\n";
-                $conf .= "tls_trust_file /etc/ssl/certs/ca-certificates.crt\n";
-            } else {
-                $conf .= "tls_certcheck off\n";
-            }
-            $conf .= "\n";
-        }
-
-        $conf .= "account     general\n";
-        $conf .= "host        {$this->settings['MailSMTPHost']}\n";
-        $conf .= "port        {$this->settings['MailSMTPPort']}\n";
-        $conf .= "from        {$this->fromAddres}\n";
-        if (empty($this->settings['MailSMTPUsername']) && empty($this->settings['MailSMTPPassword'])) {
-            $conf .= "auth        off\n";
-        } else {
-            $conf .= "user        {$this->settings['MailSMTPUsername']}\n";
-            $conf .= "password    {$this->settings['MailSMTPPassword']}\n\n";
-        }
-
-        $conf .= "account default : general\n";
-
-        Util::fileWriteContent("/etc/msmtp.conf", $conf);
-        chmod("/etc/msmtp.conf", 384);
     }
 }

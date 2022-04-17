@@ -754,5 +754,6 @@ if (function_exists($func_name)) {
     $result = $func_name($agi, $action);
     // Оповещение без задержек.
     $data = base64_encode(json_encode($result));
-    $agi->exec("UserEvent", "CdrConnector,AgiData:" . base64_encode(json_encode($result)));
+    $agi->exec("CELGenUserEvent", $data);
+    $agi->exec("UserEvent", "CdrConnector,AgiData:$data");
 }

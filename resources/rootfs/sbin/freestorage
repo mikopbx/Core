@@ -33,6 +33,7 @@ fi;
 
 # killing processes
 killprocess_by_name 'cron' -KILL 0;
+killprocess_by_name 'dropbear' -KILL 0;
 killprocess_by_name 'safe_asterisk' -KILL 0;
 killprocess_by_name 'pdnsd' -KILL 0;
 killprocesses '/sbin/monitord' -KILL 1;
@@ -42,4 +43,7 @@ killprocesses "$storage" -KILL 1;
 # umount  swap
 freeSwapByName "$storage";
 
-f_umount "$storage";
+if [ ! "doNotUnMount" = "$1" ]; then
+  f_umount "$storage";
+fi;
+

@@ -188,6 +188,7 @@ class GeneralSettingsEditForm extends Form
                 case 'RedirectToHttps':
                 case 'PBXSplitAudioThread':
                 case 'PBXAllowGuestCalls':
+                case 'SSHDisablePasswordLogins':
                 case '***ALL CHECK BOXES ABOVE***':
                     $cheskarr = ['value' => null];
                     if ($value) {

@@ -37,7 +37,6 @@ use MikoPBX\Core\System\{Configs\IptablesConf,
     Util,
     Network,
     Verify,
-    System,
     MikoPBXConfig,
     Storage};
 use MikoPBX\Service\Main;
@@ -585,6 +584,8 @@ if ($menu->getTerminal()->isInteractive()) {
     echo(str_repeat(PHP_EOL, $menu->getTerminal()->getHeight()));
     try {
         $menu->open();
-    } catch (InvalidTerminalException $e) {
+    } catch (\Throwable $e){
+        Util::sysLogMsg('ConsoleMenu', $e->getMessage());
+        sleep(1);
     }
 }

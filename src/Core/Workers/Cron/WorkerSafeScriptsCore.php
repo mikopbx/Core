@@ -22,8 +22,7 @@ namespace MikoPBX\Core\Workers\Cron;
 require_once 'Globals.php';
 
 use Generator;
-use MikoPBX\Core\System\{BeanstalkClient, PBX, Processes, Util};
-use MikoPBX\Core\Workers\WorkerAmiListener;
+use MikoPBX\Core\System\{BeanstalkClient, Configs\SSHConf, PBX, Processes, Util};
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\Workers\WorkerBeanstalkdTidyUp;
 use MikoPBX\Core\Workers\WorkerCallEvents;
@@ -79,7 +78,6 @@ class WorkerSafeScriptsCore extends WorkerBase
         $arrWorkers        = [
             self::CHECK_BY_AMI           =>
                 [
-                    WorkerAmiListener::class,
                 ],
             self::CHECK_BY_BEANSTALK     =>
                 [
@@ -153,6 +151,8 @@ class WorkerSafeScriptsCore extends WorkerBase
                 }
             }
         );
+
+        SSHConf::checkPassword();
     }
 
     /**
@@ -239,7 +239,7 @@ class WorkerSafeScriptsCore extends WorkerBase
             if ($WorkerPID !== '') {
                 // We had service PID, so we will ping it
                 $am       = Util::getAstManager();
-                $res_ping = $am->pingAMIListner($this->makePingTubeName($workerClassName));
+                $res_ping = $am->pingAMIListener($this->makePingTubeName($workerClassName));
                 if (false === $res_ping) {
                     Util::sysLogMsg(__METHOD__, 'Restart...', LOG_ERR);
                 }

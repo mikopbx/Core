@@ -16,18 +16,20 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, ClipboardJS, PbxApi, SemanticLocalization, DebuggerInfo, InputMaskPatterns */
+/* global globalRootUrl, ClipboardJS, SemanticLocalization, InputMaskPatterns, UserMessage, globalTranslate */
 
-const extensionsTable = {
+const extensionsIndex = {
 	maskList: null,
+	$extensionsList: $('#extensions-table'),
+	$contentFrame: $('#content-frame'),
 	initialize() {
 		$('.avatar').each(function () {
 			if ($(this).attr('src') === '') {
 				$(this).attr('src', `${globalRootUrl}assets/img/unknownPerson.jpg`);
 			}
 		});
-		extensionsTable.initializeInputmask($('input.mobile-number-input'));
-		$('#extensions-table').DataTable({
+		extensionsIndex.initializeInputmask($('input.mobile-number-input'));
+		extensionsIndex.$extensionsList.DataTable({
 			lengthChange: false,
 			paging: false,
 			columns: [
@@ -93,14 +95,45 @@ const extensionsTable = {
 					});
 				},
 			});
+
+		$('body').on('click', 'a.delete', (e) => {
+			e.preventDefault();
+			const extensionId = $(e.target).closest('tr').attr('id');
+			extensionsIndex.deleteExtension(extensionId);
+		});
 	},
 	/**
-	 * Инициализирует красивое представление номеров
+	 * Deletes extension with id
+	 * @param extensionId
+	 */
+	deleteExtension(extensionId)
+	{
+		$('.message.ajax').remove();
+		$.api({
+			url: `${globalRootUrl}extensions/delete/${extensionId}`,
+			on: 'now',
+			successTest(response) {
+				// test whether a JSON response is valid
+				return response !== undefined
+					&& Object.keys(response).length > 0;
+			},
+			onSuccess(response) {
+				if (response.success === true) {
+					extensionsIndex.$extensionsList.find(`tr[id=${extensionId}]`).remove();
+					Extensions.cbOnDataChanged();
+				} else {
+					UserMessage.showError(response.message.error, globalTranslate.ex_ImpossibleToDeleteExtension );
+				}
+			},
+		});
+	},
+	/**
+	 * Makes formatted numbers visualisation
 	 */
 	initializeInputmask($el) {
-		if (extensionsTable.maskList === null) {
-			// Подготовим таблицу для сортировки
-			extensionsTable.maskList = $.masksSort(InputMaskPatterns, ['#'], /[0-9]|#/, 'mask');
+		if (extensionsIndex.maskList === null) {
+			// Prepares the table for sort
+ 			extensionsIndex.maskList = $.masksSort(InputMaskPatterns, ['#'], /[0-9]|#/, 'mask');
 		}
 		$el.inputmasks({
 			inputmask: {
@@ -113,62 +146,13 @@ const extensionsTable = {
 			},
 			match: /[0-9]/,
 			replace: '9',
-			list: extensionsTable.maskList,
+			list: extensionsIndex.maskList,
 			listKey: 'mask',
 		});
 	},
 };
 
-
-const extensionsStatusLoopWorker = {
-	timeOut: 3000,
-	timeOutHandle: '',
-	green: '<div class="ui green empty circular label" style="width: 1px;height: 1px;"></div>',
-	grey: '<div class="ui grey empty circular label" style="width: 1px;height: 1px;"></div>',
-	initialize() {
-		// Запустим обновление статуса провайдера
-		DebuggerInfo.initialize();
-		extensionsStatusLoopWorker.restartWorker();
-	},
-	restartWorker() {
-		window.clearTimeout(extensionsStatusLoopWorker.timeoutHandle);
-		extensionsStatusLoopWorker.worker();
-	},
-	worker() {
-		window.clearTimeout(extensionsStatusLoopWorker.timeoutHandle);
-		PbxApi.GetPeersStatus(extensionsStatusLoopWorker.cbRefreshExtensionsStatus);
-	},
-	cbRefreshExtensionsStatus(response) {
-		extensionsStatusLoopWorker.timeoutHandle =
-			window.setTimeout(extensionsStatusLoopWorker.worker, extensionsStatusLoopWorker.timeOut);
-		if (response.length === 0 || response === false) return;
-		let htmlTable = '<table class="ui very compact table">';
-		$.each(response, (key, value) => {
-			htmlTable += '<tr>';
-			htmlTable += `<td>${value.id}</td>`;
-			htmlTable += `<td>${value.state}</td>`;
-			htmlTable += '</tr>';
-		});
-		htmlTable += '</table>';
-		DebuggerInfo.UpdateContent(htmlTable);
-		$('.extension-row').each((index, obj) => {
-			const number = $(obj).attr('data-value');
-			const result = $.grep(response, e => e.id === number);
-			if (result.length === 0) {
-				// not found
-				$(obj).find('.extension-status').html(extensionsStatusLoopWorker.grey);
-			} else if (result[0].state.toUpperCase() === 'OK') {
-				$(obj).find('.extension-status').html(extensionsStatusLoopWorker.green);
-			} else {
-				$(obj).find('.extension-status').html(extensionsStatusLoopWorker.grey);
-			}
-		});
-	},
-};
-
-
 $(document).ready(() => {
-	extensionsTable.initialize();
-	extensionsStatusLoopWorker.initialize();
+	extensionsIndex.initialize();
 });
 

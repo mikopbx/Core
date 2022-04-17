@@ -22,6 +22,22 @@
 # $1 - имя метода
 # $2 ... $4 - параметры метода
 
+echoToTeletype()
+{
+  echo "$1";
+  dev='/dev/ttyS0';
+  serialInfo="$(/bin/busybox setserial -g "$dev" 2> /dev/null)";
+  if [ "${serialInfo}x" = 'x' ]; then
+    return;
+  fi;
+  echo "$serialInfo" | /bin/grep unknown > /dev/null 2> /dev/null;
+  resultSetSerial="$?";
+  if [ ! "$resultSetSerial" = '0' ]; then
+     # Device ttys found
+     echo "$1" >> "$dev"
+  fi;
+}
+
 kill_by_pids()
 {
     handles=$1;

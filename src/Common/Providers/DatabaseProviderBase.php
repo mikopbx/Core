@@ -22,7 +22,6 @@ declare(strict_types=1);
 namespace MikoPBX\Common\Providers;
 
 
-use MikoPBX\Core\Providers\EventsLogDatabaseProvider;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di;
 use Phalcon\Di\DiInterface;
@@ -112,7 +111,6 @@ abstract class DatabaseProviderBase
 
             MainDatabaseProvider::class,
             CDRDatabaseProvider::class,
-            EventsLogDatabaseProvider::class,
 
             ModelsMetadataProvider::class,
             ModelsAnnotationsProvider::class,

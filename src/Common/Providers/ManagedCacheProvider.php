@@ -33,6 +33,7 @@ use Phalcon\Storage\SerializerFactory;
 class ManagedCacheProvider implements ServiceProviderInterface
 {
     public const SERVICE_NAME = 'managedCache';
+    public const CACHE_PREFIX = 'managed-cache';
 
     /**
      * Register managedCache service provider
@@ -53,7 +54,7 @@ class ManagedCacheProvider implements ServiceProviderInterface
                     'host'              => $config->path('redis.host'),
                     'port'              => $config->path('redis.port'),
                     'index'             => 4,
-                    'prefix'            => 'managed-cache'
+                    'prefix'            => self::CACHE_PREFIX
                 ];
 
                 return new Redis($serializerFactory, $options);

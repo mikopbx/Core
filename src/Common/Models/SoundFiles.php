@@ -65,6 +65,18 @@ class SoundFiles extends ModelsBase
                 ],
             ]
         );
+        $this->hasMany(
+            'id',
+            CallQueues::class,
+            'moh_sound_id',
+            [
+                "alias"      => "CallQueues",
+                "foreignKey" => [
+                    "allowNulls" => true,
+                    "action"     => Relation::ACTION_RESTRICT,
+                ],
+            ]
+        );
 
         $this->hasMany(
             'id',

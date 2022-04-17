@@ -13,7 +13,7 @@ class ActionVoicemailEnd {
     {
         $recordingFile = VoiceMailConf::getCopyFilename($data['vm-recordingfile'], $data['linkedid'],time(), false);
         $filter         = [
-            'linkedid=:linkedid: AND dst_num = "voicemail"',
+            'linkedid=:linkedid: AND dst_num = "'.VoiceMailConf::VOICE_MAIL_EXT.'"',
             'bind' => [
                 'linkedid' => $data['linkedid'],
             ],

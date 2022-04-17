@@ -193,6 +193,15 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
      */
     public function activateLicense(): bool
     {
+        if($this->lic_product_id>0) {
+            $lic = PbxSettings::getValueByKey('PBXLicense');
+            if (empty($lic)) {
+                $this->messages[] = 'License key not found...';
+                return false;
+            }
+            // Получение пробной лицензии.
+            $this->license->addtrial($this->lic_product_id);
+        }
         return true;
     }
 

@@ -40,7 +40,7 @@ class SyslogConf extends Injectable
         $pidSyslogD = Processes::getPidOfProcess('syslogd', self::PROC_NAME);
         if(!empty($pidSyslogD)){
             $logreadPath = Util::which('logread');
-            Processes::mwExec("$logreadPath >> " . self::SYS_LOG_LINK);
+            Processes::mwExec("$logreadPath  2>/dev/null >> " . self::SYS_LOG_LINK);
             Processes::killByName('syslogd');
         }
         Processes::safeStartDaemon(self::PROC_NAME, '-n');

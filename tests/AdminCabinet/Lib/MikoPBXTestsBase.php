@@ -87,7 +87,7 @@ class MikoPBXTestsBase extends BrowserStackTest
                 $inputItem->sendKeys($value);
             }
 
-            // Находим строчку с нужной опцией по значению
+            //Try to find need string with value
             $xpath    = '//div[contains(@class, "menu") and contains(@class ,"visible")]/div[@data-value="' . $value . '"]';
             $menuItem = self::$driver->wait()->until(
                 WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::xpath($xpath))
@@ -143,8 +143,7 @@ class MikoPBXTestsBase extends BrowserStackTest
                 $inputItem->sendKeys($value);
             }
 
-            // Находим строчку с нужной опцией по значению
-
+            //Try to find need string with value
             $xpath    = '//div[contains(@class, "menu") and contains(@class ,"visible")]/div[contains(text(),"'.$value.'")]';
             $menuItem = self::$driver->wait()->until(
                 WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::xpath($xpath))
@@ -482,7 +481,7 @@ class MikoPBXTestsBase extends BrowserStackTest
             $deleteButtons = self::$driver->findElements(WebDriverBy::xpath($xpath));
             foreach ($deleteButtons as $deleteButton){
                 $deleteButton->click();
-                sleep(2);
+                sleep(1);
                 $deleteButton->click();
             }
             $this->waitForAjax();
@@ -597,6 +596,52 @@ class MikoPBXTestsBase extends BrowserStackTest
                 break;
             }
         }
+    }
+
+    /**
+     * Tests element existence on dropdown menu
+     *
+     * @param string $name element name
+     * @param string $value value for search
+     *
+     * @return bool
+     */
+    protected function checkIfElementExistOnDropdownMenu(string $name, string $value):bool
+    {
+        $xpath = '//select[@name="'.$name.'"]/ancestor::div[contains(@class, "ui") and contains(@class ,"dropdown")]';
+        $xpath .='| //div[@id="'.$name.'" and contains(@class, "ui") and contains(@class ,"dropdown") ]';
+        $elementFound = false;
+        try {
+            $selectItem = self::$driver->findElement(WebDriverBy::xpath($xpath));
+            $selectItem->click();
+            $this->waitForAjax();
+
+            // If search field exists input them before select
+            $xpath = '//select[@name="'.$name.'"]/ancestor::div[contains(@class, "ui") and contains(@class ,"dropdown")]/input[contains(@class,"search")]';
+            $xpath .='| //div[@id="'.$name.'" and contains(@class, "ui") and contains(@class ,"dropdown") ]/input[contains(@class,"search")]';
+            $inputItems = self::$driver->findElements(WebDriverBy::xpath($xpath));
+            $actions = new WebDriverActions(self::$driver);
+            foreach ($inputItems as $inputItem) {
+                $actions->moveToElement($inputItem);
+                $actions->perform();
+                $inputItem->click();
+                $inputItem->clear();
+                $inputItem->sendKeys($value);
+            }
+
+            //Try to find need string with value
+            $xpath    = '//div[contains(@class, "menu") and contains(@class ,"visible")]/div[contains(text(),"'.$value.'")]';
+            $menuItem = self::$driver->wait()->until(
+                WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::xpath($xpath))
+            );
+            $menuItem->click();
+            $elementFound = true;
+        } catch (NoSuchElementException $e) {
+            //
+        } catch (Exception $e) {
+            ///
+        }
+        return $elementFound;
     }
 
 

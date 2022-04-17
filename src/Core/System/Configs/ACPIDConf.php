@@ -17,30 +17,22 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-declare(strict_types=1);
+namespace MikoPBX\Core\System\Configs;
 
-namespace MikoPBX\Core\Providers;
+use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\Util;
+use Phalcon\Di\Injectable;
 
-
-use MikoPBX\Common\Providers\DatabaseProviderBase;
-use Phalcon\Di\DiInterface;
-use Phalcon\Di\ServiceProviderInterface;
-
-/**
- * Events log database connection is created based in the parameters defined in the configuration file
- */
-class EventsLogDatabaseProvider extends DatabaseProviderBase implements ServiceProviderInterface
+class ACPIDConf extends Injectable
 {
-    public const SERVICE_NAME = 'dbEventsLog';
+    public const PROC_NAME = 'acpid';
 
     /**
-     * Register dbEventsLog service provider
-     *
-     * @param \Phalcon\Di\DiInterface $di
+     * Restarts Beanstalk server
      */
-    public function register(DiInterface $di): void
+    public function reStart(): void
     {
-        $dbConfig = $di->getShared('config')->get('eventsLogDatabase')->toArray();
-        $this->registerDBService(self::SERVICE_NAME, $di, $dbConfig);
+        $conf   = "-c '/etc/acpi/events' -n -f";
+        Processes::safeStartDaemon(self::PROC_NAME, $conf);
     }
 }

@@ -24,16 +24,28 @@ use MikoPBX\Core\System\Util;
 
 class CelConf extends CoreConfigClass
 {
+    public const BEANSTALK_TUBE = 'asterisk-cel';
     protected string $description = 'cel.conf';
 
     protected function generateConfigProtected(): void
     {
+        $config = $this->getDI()->get('config')->beanstalk;
+
         $conf = "[general]\n" .
             "enable=yes\n" .
-            "events=CHAN_START,CHAN_END,ANSWER\n" .
+            "events=USER_DEFINED\n" .
             "dateformat = %F %T\n\n" .
             "[manager]\n" .
             "enabled = yes\n\n";
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/cel.conf', $conf);
+
+        $conf = "[general]" .PHP_EOL.
+                "enabled = yes" .PHP_EOL.
+                "host = 127.0.0.1" .PHP_EOL.
+                "port = ".$config->port .PHP_EOL.
+                "priority = 1" .PHP_EOL.
+                "tube = asterisk-cel".PHP_EOL;
+        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/cel_beanstalkd.conf', $conf);
+
     }
 }

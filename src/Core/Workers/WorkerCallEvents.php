@@ -21,6 +21,7 @@ namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
 
 use MikoPBX\Core\System\{BeanstalkClient, MikoPBXConfig, Storage, Util};
+use MikoPBX\Core\Asterisk\Configs\CelConf;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\SelectCDR;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\UpdateDataInDB;
 use Phalcon\Text;
@@ -122,7 +123,8 @@ class WorkerCallEvents extends WorkerBase
 
         // PID сохраняем при начале работы Worker.
         $client = new BeanstalkClient(self::class);
-        $client->subscribe(self::class, [$this, 'callEventsWorker']);
+        $client->subscribe(CelConf::BEANSTALK_TUBE,    [$this, 'callEventsWorker']);
+        $client->subscribe(self::class,                [$this, 'otherEvents']);
         $client->subscribe(WorkerCdr::SELECT_CDR_TUBE, [$this, 'selectCDRWorker']);
         $client->subscribe(WorkerCdr::UPDATE_CDR_TUBE, [$this, 'updateCDRWorker']);
         $client->subscribe(self::TIMOUT_CHANNEL_TUBE,  [$this, 'cleanTimeOutChannel']);
@@ -135,13 +137,15 @@ class WorkerCallEvents extends WorkerBase
     }
 
     /**
-     * Обработчик событий изменения состояния звонка.
-     *
-     * @param array | BeanstalkClient $tube
+     * @param $tube
+     * @param $data
+     * @return void
      */
-    public function callEventsWorker($tube): void
+    public function otherEvents($tube, array $data=[]): void
     {
-        $data      = json_decode($tube->getBody(), true);
+        if(empty($data)){
+            $data = json_decode($tube->getBody(), true);
+        }
         $funcName = "Action_".$data['action']??'';
         if ( method_exists($this, $funcName) ) {
             $this->$funcName($data);
@@ -150,8 +154,30 @@ class WorkerCallEvents extends WorkerBase
         if( method_exists($className, 'execute') ){
             $className::execute($this, $data);
         }
+    }
 
-        $tube->reply(json_encode(true));
+    /**
+     * Обработчик событий изменения состояния звонка.
+     *
+     * @param array | BeanstalkClient $tube
+     */
+    public function callEventsWorker($tube): void
+    {
+        $data      = json_decode($tube->getBody(), true);
+        if('USER_DEFINED' !== ($data['EventName']??'')){
+            return;
+        }
+        try {
+            $data = json_decode(
+                base64_decode($data['AppData']??''),
+                true,
+                512,
+                JSON_THROW_ON_ERROR
+            );
+        }catch (\Throwable $e){
+            $data = [];
+        }
+        $this->otherEvents($tube, $data);
     }
 
     /**

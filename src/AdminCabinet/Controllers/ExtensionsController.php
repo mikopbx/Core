@@ -222,7 +222,7 @@ class ExtensionsController extends BaseController
 
         // Ограничим длинну внутреннего номера согласно настройкам
         $extensionsLength      = PbxSettings::getValueByKey('PBXInternalExtensionLength');
-        $internalExtensionMask = "9{3,{$extensionsLength}}";
+        $internalExtensionMask = "9{2,{$extensionsLength}}";
 
         $form = new ExtensionEditForm(
             $extension, [
@@ -647,12 +647,12 @@ class ExtensionsController extends BaseController
 
         if ($errors) {
             $this->flash->error(implode('<br>', $errors));
+            $this->view->success = false;
             $this->db->rollback();
         } else {
             $this->db->commit();
+            $this->view->success = true;
         }
-
-        $this->forward('extensions/index');
     }
 
     /**

@@ -66,7 +66,9 @@ class IptablesConf extends Injectable
 
         $firewall = new self();
         $firewall->applyConfig();
-        unlink($pid_file);
+        if(file_exists($pid_file)){
+            unlink($pid_file);
+        }
     }
 
     /**

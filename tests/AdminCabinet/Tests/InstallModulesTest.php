@@ -50,23 +50,38 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
         } catch (Exception $e) {
             echo('Unknown error ' . $e->getMessage() . PHP_EOL);
         }
-        // Install new
+        // Install new one
 
         $xpath = '//a[contains(@data-uniqid,"'.$params['moduleId'].'")]';
         try {
             $tableButtonInstall = self::$driver->findElement(WebDriverBy::xpath($xpath));
             $tableButtonInstall->click();
+            $this->waitForAjax();
         } catch (NoSuchElementException $e) {
             echo('Not found row with module =' . $params['moduleId'] . ' to install' . PHP_EOL);
         } catch (Exception $e) {
             echo('Unknown error ' . $e->getMessage() . PHP_EOL);
         }
 
-        // assets
+        // Wait the installation and test it
+        $maximumWaitTime = 120;
+        $waitTime = 0;
         $xpath = '//tr[@id="'.$params['moduleId'].'"]//a[contains(@href,"delete")]';
-        $els = self::$driver->findElements((WebDriverBy::xpath($xpath)));
-        if (count($els)===0) {
+        $found = false;
+        while ($waitTime<$maximumWaitTime){
+            $els = self::$driver->findElements((WebDriverBy::xpath($xpath)));
+            if (count($els)>0) {
+                $found = true;
+                break;
+            }
+            sleep(5);
+            $waitTime+=5;
+        }
+        if (!$found){
             $this->fail("Not found element by " .$xpath. PHP_EOL);
+        } else {
+            // increment assertion counter
+            $this->assertTrue(true);
         }
 
     }
@@ -80,12 +95,9 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
         $params[] = [[
             'moduleId'=>'ModuleBackup',
         ]];
-        $params[] = [[
-            'moduleId'=>'ModuleBitrix24Integration',
-        ]];
-        $params[] = [[
-            'moduleId'=>'ModuleBitrix24Notify',
-        ]];
+        // $params[] = [[
+        //     'moduleId'=>'ModuleBitrix24Integration',
+        // ]];
         $params[] = [[
             'moduleId'=>'ModuleCallTracking',
         ]];

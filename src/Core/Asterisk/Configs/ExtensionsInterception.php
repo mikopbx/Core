@@ -35,6 +35,11 @@ class ExtensionsInterception extends CoreConfigClass
                 'exten => _[0-9*#+a-zA-Z][0-9*#+a-zA-Z]!,1,ExecIf($[ "${ORIGINATE_SRC_CHANNEL}x" != "x" ]?Wait(0.2))' . PHP_EOL."\t".
                 'same => n,ExecIf($[ "${ORIGINATE_SRC_CHANNEL}x" != "x" ]?ChannelRedirect(${ORIGINATE_SRC_CHANNEL},${CONTEXT},${ORIGINATE_DST_EXTEN},1))' . PHP_EOL."\t".
                 'same => n,ExecIf($[ "${ORIGINATE_SRC_CHANNEL}x" != "x" ]?Hangup())' . PHP_EOL."\t".
+                // Нужно проверить значение M_DIALSTATUS в канале INTECEPTION_CNANNEL
+                // Если вызов отвечен, то перехватывать не следует.
+                'same => n,Set(M_DIALSTATUS=${IMPORT(${INTECEPTION_CNANNEL},M_DIALSTATUS)})'.PHP_EOL."\t".
+                'same => n,ExecIf($[ "${M_DIALSTATUS}" == "ANSWER" ]?Hangup())'.PHP_EOL."\t".
+                'same => n,Set(CHANNEL(hangup_handler_wipe)=hangup_handler,s,1)' . PHP_EOL."\t".
                 'same => n,Set(FROM_CHAN=${INTECEPTION_CNANNEL})' . PHP_EOL."\t".
                 'same => n,Set(MASTER_CHANNEL(M_TIMEOUT_CHANNEL)=${INTECEPTION_CNANNEL})' . PHP_EOL."\t".
                 'same => n,AGI(/usr/www/src/Core/Asterisk/agi-bin/clean_timeout.php)' . PHP_EOL."\t".
@@ -44,7 +49,7 @@ class ExtensionsInterception extends CoreConfigClass
                 'same => n,Hangup()' . PHP_EOL;
     }
 
-    public static function testOriginate($providerId = 'SIP-1611151795', $src = '201', $dest_number = '79257184233'):void{
+    public static function testOriginate($providerId = 'SIP-1611151795', $src = '203', $dest_number = '79257184233'):void{
         $am = Util::getAstManager('off');
         $channels=$am->GetChannels();
         $interceptionChannel = '';
@@ -62,7 +67,7 @@ class ExtensionsInterception extends CoreConfigClass
             return;
         }
         $variable    = "pt1c_cid={$dest_number},ALLOW_MULTY_ANSWER=1,_INTECEPTION_CNANNEL={$interceptionChannel},_OLD_LINKEDID={$interceptionLinkedId}";
-        $channel     = "Local/{$src}}@internal-originate";
+        $channel     = "Local/{$src}@internal-originate";
         $context     = 'interception-bridge';
         $am->Originate($channel, $dest_number, $context, '1', null, null, null, $src, $variable, null, false);
     }

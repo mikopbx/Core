@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License along with this program.
 # If not, see <https://www.gnu.org/licenses/>.
 #
+. /sbin/shell_functions.sh;
 
 case $1 in
 enable)
@@ -28,14 +29,14 @@ recover_upgrade)
   cd /
   sleep 5
   exec </dev/console >/dev/console 2>/dev/console
-  echo
-  echo " - Firmware upgrade in progress..."
-  echo " - backing up configuration..."
+  echoToTeletype
+  echoToTeletype " - Firmware upgrade in progress..."
+  echoToTeletype " - backing up configuration..."
   mkdir -p /tmp/configbak
   img_file="$2"
   if [ -f /offload/livecd ]; then
     /bin/busybox cp -p /conf.recover/conf/* /tmp/configbak
-    echo " - unmounting /conf.recover..."
+    echoToTeletype " - unmounting /conf.recover..."
     /bin/umount -f /conf.recover
   else
     /bin/busybox cp -R /cf/conf/* /tmp/configbak
@@ -46,10 +47,22 @@ recover_upgrade)
     if [ "/dev/${partition4Name}" != "${mounted_storage}" ]; then
       # Storage на отдельном диске.
       img_file="$2"
+      echoToTeletype " - free storage ...";
+      /sbin/freestorage "doNotUnMount";
+
+      backupDir="$(cat /var/etc/storage_device)/mikopbx/backup/last-update-firmware"
+      backupImg="$backupDir/system.img";
+      rm -rf "$backupDir"; mkdir -p "$backupDir";
+
+      echoToTeletype " - copy conf to storage ...";
+      /bin/busybox cp -R /cf/conf/* "$backupDir";
+
+      echoToTeletype " - backup system img to storage ...";
+      /bin/pv -p "/dev/$(/bin/busybox basename "$(cat /var/etc/cfdevice)")" | /bin/gzip | dd of="$backupImg" bs=512 >/dev/null 2>&1
     else
       # Storage на диске основном диске,
       # так как его нужно отмнонтировать, то перемещамем образ в RAM.
-      echo " - move img to RAM ..."
+      echoToTeletype " - move img to RAM ..."
       tmp_img=$(basename "$2")
       img_file="/tmp/${tmp_img}"
       # Перемещаем img файл в /tmp. Storage будет отмонтирован.
@@ -58,30 +71,38 @@ recover_upgrade)
         mv "${src_file}" "${img_file}"
       fi
 
-      echo " - free storage ..."
+      echoToTeletype " - free storage ...";
       /sbin/freestorage
     fi
+
     # Отключаем основной диск.
     /sbin/freeupoffload
   fi
 
-  echo " - installing image..."
+  echoToTeletype " - installing image..."
   if [ -r "${img_file}" ]; then
-    /bin/pv -p "${img_file}" | /bin/gunzip | dd of="$3" bs=512 >/dev/null 2>&1
-    echo " - dd end working..."
+    /bin/pv -p "${img_file}" | /bin/gunzip | dd of="$3" bs=512 >/dev/null 2>&1;
+    resultPv="$?";
+    if [ ! "$resultPv" = '0' ] || [ ! "$(/sbin/parted --script --align optimal "${3}" "print" | grep primary | /bin/busybox wc -l)" = '3' ]; then
+      if [ -f "$backupImg" ]; then
+        /bin/pv -p "$backupImg" | /bin/gunzip | dd of="$3" bs=512 >/dev/null 2>&1
+      fi;
+    fi;
+    rm -rf "$backupImg";
+    echoToTeletype " - dd end working..."
     # Обновляем таблицу разделов.
     /sbin/initial.storage.part.four create "$3"
-    echo " - disk part four result ${?}..."
+    echoToTeletype " - disk part four result ${?}..."
   fi
   /sbin/blockdev --rereadpt "$3" >/dev/null 2>&1
   sleep 3
 
   partition3Name=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$3")" | /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "3$" | /bin/busybox sort -u)
   if [ -f /offload/livecd ]; then
-    echo " - re-mounting /conf.recover read/write..."
+    echoToTeletype " - re-mounting /conf.recover read/write..."
     /bin/mount -w -o noatime "/dev/${partition3Name}" /conf.recover
     rm -f /conf.recover/conf/*
-    echo " - restoring configuration"
+    echoToTeletype " - restoring configuration"
     /bin/busybox cp -p /tmp/configbak/* /conf.recover/conf/
     touch /tmp/ejectcd
   else
@@ -90,7 +111,7 @@ recover_upgrade)
     rm -rf "${img_file}"
   fi
 
-  echo " - rebooting system..."
-  /sbin/mikopbx_reboot
+  echoToTeletype " - rebooting system..."
+  /sbin/mikopbx_reboot;
   ;;
 esac

@@ -202,7 +202,8 @@ class LicenseManagementProcessor extends Injectable
         $checkBaseFeature = $this->license->featureAvailable(33);
         if ($checkBaseFeature['success'] === false) {
             $res->success = false;
-            $res->messages[] = $this->license->translateLicenseErrorMessage($checkBaseFeature['error']);
+            $textError = (string)($checkBaseFeature['error']??'');
+            $res->messages[] = $this->license->translateLicenseErrorMessage($textError);
         } else {
             $res->success = true;
         }
@@ -239,7 +240,8 @@ class LicenseManagementProcessor extends Injectable
                 // 2.Try to capture feature
                 $result = $this->license->captureFeature($licFeatureId);
                 if ($result['success'] === false) {
-                    $res->messages[] = $this->license->translateLicenseErrorMessage($result['error']);
+                    $textError = (string)($result['error']??'');
+                    $res->messages[] = $this->license->translateLicenseErrorMessage($textError);
                     $res->success = false;
                 }
             }

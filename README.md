@@ -67,7 +67,7 @@ Concurrent calls | Minimum recommended
 ------------ | -------------
 5 to 10 | 1 GHz x86-64, 512 MB RAM
 Up to 25 | 3 GHz x86-64, 1 GB RAM
-More than 25 | Dual CPUs 3 GHz x86-64, 2 MB RAM or more
+More than 25 | Dual CPUs 3 GHz x86-64, 2 GB RAM or more
 
 ## How to modify your system
 For some easy customisations, you can use a dialplan application point on a menu. The *dialplan applications* supports PHP-AGI or Asterisk Dialplan language.

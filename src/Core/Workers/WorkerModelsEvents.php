@@ -38,6 +38,7 @@ use MikoPBX\Common\Models\{AsteriskManagerUsers,
     IvrMenu,
     IvrMenuActions,
     LanInterfaces,
+    ModelsBase,
     NetworkFilters,
     OutgoingRoutingTable,
     OutWorkTimes,
@@ -46,8 +47,7 @@ use MikoPBX\Common\Models\{AsteriskManagerUsers,
     Sip,
     SipHosts,
     SoundFiles,
-    Users
-};
+    Users};
 use MikoPBX\Common\Providers\BeanstalkConnectionModelsProvider;
 use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
@@ -289,11 +289,12 @@ class WorkerModelsEvents extends WorkerBase
         $tables[] = [
             'settingName' => [
                 'SSHPort',
-                'SSHPassword',
-                'SSHAuthorizedKeys',
                 'SSHRsaKey',
                 'SSHDssKey',
+                'SSHPassword',
                 'SSHecdsaKey',
+                'SSHAuthorizedKeys',
+                'SSHDisablePasswordLogins',
             ],
             'functions'   => [
                 self::R_SSH,
@@ -682,6 +683,8 @@ class WorkerModelsEvents extends WorkerBase
         $called_class  = $data['model'] ?? '';
         Util::sysLogMsg(__METHOD__, "New changes " . $called_class, LOG_DEBUG);
 
+        ModelsBase::clearCache($called_class);
+
         $this->getNewSettingsForDependentModules($called_class);
         $this->fillModifiedTablesFromModels($called_class);
         $this->fillModifiedTablesFromPbxSettingsData($called_class, $data['recordId']);
@@ -744,6 +747,7 @@ class WorkerModelsEvents extends WorkerBase
         if (PbxSettings::class !== $called_class) {
             return;
         }
+
         /** @var PbxSettings $pbxSettings */
         $pbxSettings = PbxSettings::findFirstByKey($recordId);
         if ($pbxSettings === null) {

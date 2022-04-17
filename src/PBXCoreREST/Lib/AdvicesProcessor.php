@@ -25,6 +25,7 @@ use MikoPBX\Common\Models\{NetworkFilters, PbxSettings};
 use GuzzleHttp;
 use Phalcon\Di\Injectable;
 use SimpleXMLElement;
+use MikoPBX\Service\Main;
 
 /**
  * Class AdvicesProcessor
@@ -43,26 +44,20 @@ class AdvicesProcessor extends Injectable
      *
      * @param array $request
      *
-     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     * @return PBXApiResult
      */
     public static function callBack(array $request): PBXApiResult
     {
         $action = $request['action'];
-
-        switch ($action) {
-            case 'getList':
-                $proc = new AdvicesProcessor();
-                $res  = $proc->getAdvicesAction();
-                break;
-            default:
-                $res             = new PBXApiResult();
-                $res->processor  = __METHOD__;
-                $res->messages[] = "Unknown action - {$action} in advicesCallBack";
-                break;
+        if('getList' === $action){
+            $proc = new self();
+            $res  = $proc->getAdvicesAction();
+        }else{
+            $res             = new PBXApiResult();
+            $res->processor  = __METHOD__;
+            $res->messages[] = "Unknown action - {$action} in advicesCallBack";
         }
-
         $res->function = $action;
-
         return $res;
     }
 
@@ -70,7 +65,7 @@ class AdvicesProcessor extends Injectable
     /**
      * Makes list of notifications about system, firewall, passwords, wrong settings
      *
-     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     * @return PBXApiResult
      */
     private function getAdvicesAction(): PBXApiResult
     {
@@ -80,6 +75,7 @@ class AdvicesProcessor extends Injectable
         $arrMessages     = [];
         $arrAdvicesTypes = [
             ['type' => 'isConnected', 'cacheTime' => 15],
+            ['type' => 'checkCorruptedFiles', 'cacheTime' => 15],
             ['type' => 'checkPasswords', 'cacheTime' => 15],
             ['type' => 'checkFirewalls', 'cacheTime' => 15],
             ['type' => 'checkStorage', 'cacheTime' => 120],
@@ -88,7 +84,6 @@ class AdvicesProcessor extends Injectable
         ];
 
         $managedCache = $this->getDI()->getShared(ManagedCacheProvider::SERVICE_NAME);
-
         $language = PbxSettings::getValueByKey('WebAdminLanguage');
 
         foreach ($arrAdvicesTypes as $adviceType) {
@@ -96,7 +91,7 @@ class AdvicesProcessor extends Injectable
             $cacheTime     = $adviceType['cacheTime'];
             $cacheKey      = 'AdvicesProcessor:getAdvicesAction:'.$currentAdvice;
             if ($managedCache->has($cacheKey)) {
-                $oldResult = json_decode($managedCache->get($cacheKey), true);
+                $oldResult = json_decode($managedCache->get($cacheKey), true, 512, JSON_THROW_ON_ERROR);
                 if ($language === $oldResult['LastLanguage']) {
                     $arrMessages[] = $oldResult['LastMessage'];
                     continue;
@@ -108,12 +103,10 @@ class AdvicesProcessor extends Injectable
             }
             $managedCache->set(
                 $cacheKey,
-                json_encode(
-                    [
-                        'LastLanguage' => $language,
-                        'LastMessage'  => $newResult,
-                    ]
-                ),
+                json_encode([
+                                'LastLanguage' => $language,
+                                'LastMessage' => $newResult,
+                            ], JSON_THROW_ON_ERROR),
                 $cacheTime
             );
         }
@@ -152,6 +145,27 @@ class AdvicesProcessor extends Injectable
                 'adv_YouUseDefaultSSHPassword',
                 ['url' => $this->url->get('general-settings/modify/#/ssh')]
             );
+        }elseif(PbxSettings::getValueByKey('SSHPasswordHash') !== md5_file('/etc/passwd')){
+            $messages['warning'] = $this->translation->_(
+                'gs_SSHPPasswordCorrupt',
+                ['url' => $this->url->get('general-settings/modify/#/ssh')]
+            );
+        }
+        return $messages;
+    }
+
+    /**
+     * Check passwords quality
+     *
+     * @return array
+     * @noinspection PhpUnusedPrivateMethodInspection
+     */
+    private function checkCorruptedFiles(): array
+    {
+        $messages           = [];
+        $files = Main::checkForCorruptedFiles();
+        if (count($files) !== 0) {
+            $messages['warning'] = $this->translation->_('The integrity of the system is broken', ['url' => '']).'. '.$this->translation->_('systemBrokenComment', ['url' => '']);
         }
 
         return $messages;
@@ -273,12 +287,12 @@ class AdvicesProcessor extends Injectable
                 } else {
                     $url = "https://wiki.mikopbx.com/{$language}:licensing#faq_chavo";
                 }
-
+                $textError = (string)($checkBaseFeature['error']??'');
                 $messages['warning'] = $this->translation->_(
                     'adv_ThisCopyHasLicensingTroubles',
                     [
                         'url'   => $url,
-                        'error' => $this->license->translateLicenseErrorMessage($checkBaseFeature['error']),
+                        'error' => $this->license->translateLicenseErrorMessage($textError),
                     ]
                 );
             }

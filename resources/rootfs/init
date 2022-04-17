@@ -23,26 +23,34 @@ export HOME PATH;
 
 ln -s /bin/busybox /sbin/init;
 # Монтирование.
-uname -a | /bin/busybox grep ' 4\.10'; resultUname=$?
-if [ '1' = "$resultUname" ]; then
-	fsType='devtmpfs';
-else
-	fsType='tmpfs';
-fi;
-mount -t "$fsType" -o mode=0755,nosuid devtmpfs /dev
+mount -t devtmpfs  -o mode=0755,nosuid devtmpfs /dev
 mount -t proc      -o nosuid,noexec,nodev proc  /proc;
 mount -t sysfs     -o nosuid,noexec,nodev sysfs /sys;
 mount -t tmpfs     -o size=90% tmpfs            /mnt;
 
 # Переключение root.
 if tar -C / --exclude=mnt --exclude="./proc/*" --exclude="./sys/*" -cf - . | tar -C /mnt/ -xf - ; then
-	/bin/busybox busybox setserial -g /dev/ttyS0 2> /dev/null | /bin/grep unknown > /dev/null 2> /dev/null;
-	if [ "$?" = '0' ]; then
-	  # Device ttys0 not found
-	  mv /mnt/etc/inittab_base /mnt/etc/inittab
-	else
-	  mv /mnt/etc/inittab_ttyS0 /mnt/etc/inittab
-	fi;
+	resFileInitTab='/mnt/etc/inittab';
+	mv /mnt/etc/inittab_base "$resFileInitTab";
 
+  devises="$(/bin/ls /dev/ttyS* 2> /dev/null)";
+  for dev in $devises; do
+    serialInfo="$(/bin/busybox setserial -g "$dev" 2> /dev/null)";
+    if [ "${serialInfo}x" = 'x' ]; then
+      continue;
+    fi;
+    echo "$serialInfo" | /bin/busybox grep unknown > /dev/null 2> /dev/null;
+    resultSetSerial="$?";
+
+    if [ ! "$resultSetSerial" = '0' ]; then
+       # Device ttyS found
+       devName="$(/bin/busybox basename "$dev")";
+       echo " - Device $dev name - $devName";
+       echo >> "$resFileInitTab";
+       echo "::respawn:/sbin/agetty -a root -h -t 60 $devName 9600 vt102" >> "$resFileInitTab"
+    fi;
+  done
+
+  sleep 5;
 	exec /sbin/switch_root /mnt /sbin/init "$@";
 fi

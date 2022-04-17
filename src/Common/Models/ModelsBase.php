@@ -25,7 +25,6 @@ use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Common\Providers\ModelsCacheProvider;
 use MikoPBX\Common\Providers\ModelsMetadataProvider;
 use MikoPBX\Common\Providers\TranslationProvider;
-use MikoPBX\Core\Providers\EventsLogDatabaseProvider;
 use MikoPBX\Modules\PbxExtensionUtils;
 use Phalcon\Db\Adapter\AdapterInterface;
 use Phalcon\Di;
@@ -707,7 +706,6 @@ class ModelsBase extends Model
     {
         $doNotTrackThisDB = [
             CDRDatabaseProvider::SERVICE_NAME,
-            EventsLogDatabaseProvider::SERVICE_NAME
         ];
 
         if (in_array($this->getReadConnectionService(), $doNotTrackThisDB)) {

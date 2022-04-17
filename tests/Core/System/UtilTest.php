@@ -23,7 +23,7 @@ use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Workers\Cron\WorkerSafeScriptsCore;
 use MikoPBX\Tests\Unit\AbstractUnitTest;
-use Modules\ModuleBitrix24Integration\Lib\WorkerBitrix24IntegrationAMI;
+use Modules\ModuleBitrix24Integration\bin\WorkerBitrix24IntegrationAMI;
 
 class UtilTest extends AbstractUnitTest
 {

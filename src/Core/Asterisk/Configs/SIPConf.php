@@ -40,6 +40,7 @@ use Throwable;
 class SIPConf extends CoreConfigClass
 {
     public const TYPE_PJSIP = 'PJSIP';
+    private const TOPOLOGY_HASH_FILE = '/topology_hash';
 
     protected $data_peers;
     protected $data_providers;
@@ -73,17 +74,17 @@ class SIPConf extends CoreConfigClass
             return false;
         }
         $mikoPBXConfig = new MikoPBXConfig();
-        [$topology, $extipaddr, $exthostname] = $this->getTopologyData();
+        [$topology, $extIpAddress, $externalHostName, $subnets] = $this->getTopologyData();
 
         $generalSettings = $mikoPBXConfig->getGeneralSettings();
-        $now_hadh        = md5($topology . $exthostname . $extipaddr . $generalSettings['SIPPort']);
+        $now_hash        = md5($topology . $externalHostName . $extIpAddress . $generalSettings['SIPPort'] . implode('',$subnets));
         $old_hash        = '';
         $varEtcDir       = $di->getShared('config')->path('core.varEtcDir');
-        if (file_exists($varEtcDir . '/topology_hash')) {
-            $old_hash = file_get_contents($varEtcDir . '/topology_hash');
+        if (file_exists($varEtcDir . self::TOPOLOGY_HASH_FILE)) {
+            $old_hash = file_get_contents($varEtcDir . self::TOPOLOGY_HASH_FILE);
         }
 
-        return $old_hash !== $now_hadh;
+        return $old_hash !== $now_hash;
     }
 
     /**
@@ -97,7 +98,7 @@ class SIPConf extends CoreConfigClass
         $extipaddr   = '';
         $exthostname = '';
         $networks    = $network->getEnabledLanInterfaces();
-        $subnets     = [];
+        $subnets     = ['127.0.0.1/32'];
         foreach ($networks as $if_data) {
             $lan_config = $network->getInterface($if_data['interface']);
             if (empty($lan_config['ipaddr']) || empty($lan_config['subnet'])) {
@@ -151,12 +152,12 @@ class SIPConf extends CoreConfigClass
         $contexts = [];
         // Входящие контексты.
         foreach ($this->data_providers as $provider) {
-            $contexts_data = $this->contexts_data[$provider['context_id']];
-            if (count($contexts_data) === 1) {
+            $contextsData = $this->contexts_data[$provider['context_id']];
+            if (count($contextsData) === 1) {
                 $conf .= IncomingContexts::generate($provider['uniqid'], $provider['username']);
             } elseif ( ! in_array($provider['context_id'], $contexts, true)) {
                 $conf       .= IncomingContexts::generate(
-                    $contexts_data,
+                    $contextsData,
                     null,
                     $provider['context_id']
                 );
@@ -415,34 +416,48 @@ class SIPConf extends CoreConfigClass
     /**
      * Генератор sip.conf
      *
-     * @return bool|void
+     * @return void
      */
     protected function generateConfigProtected(): void
     {
-        $conf = '';
-        $conf .= $this->generateGeneralPj();
+        $conf  = $this->generateGeneralPj();
         $conf .= $this->generateProvidersPj();
         $conf .= $this->generatePeersPj();
 
-        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/pjsip.conf', $conf);
+        $astEtcDir = $this->config->path('asterisk.astetcdir');
+
+        Util::fileWriteContent($astEtcDir . '/pjsip.conf', $conf);
         $pjConf = '[log_mappings]' . "\n" .
             'type=log_mappings' . "\n" .
             'asterisk_error = 0' . "\n" .
             'asterisk_warning = 2' . "\n" .
             'asterisk_debug = 1,3,4,5,6' . "\n\n";
+        file_put_contents($astEtcDir.'/pjproject.conf', $pjConf);
+        file_put_contents($astEtcDir.'/sorcery.conf', '');
+        $this->updateAsteriskDatabase();
+    }
 
-        file_put_contents($this->config->path('asterisk.astetcdir') . '/pjproject.conf', $pjConf);
-        file_put_contents($this->config->path('asterisk.astetcdir') . '/sorcery.conf', '');
-
+    /**
+     * Обновление маршрутизации в AstDB
+     * @return bool
+     */
+    public function updateAsteriskDatabase():bool
+    {
+        if ($this->data_peers === null) {
+            $this->getSettings();
+        }
+        $warError = false;
         $db = new AstDB();
         foreach ($this->data_peers as $peer) {
             // Помещаем в AstDB сведения по маршуртизации.
-            $ringlength = ($peer['ringlength'] === '0') ? '' : trim($peer['ringlength']);
-            $db->databasePut('FW_TIME', $peer['extension'], $ringlength);
-            $db->databasePut('FW', $peer['extension'], trim($peer['forwarding']));
-            $db->databasePut('FW_BUSY', $peer['extension'], trim($peer['forwardingonbusy']));
-            $db->databasePut('FW_UNAV', $peer['extension'], trim($peer['forwardingonunavailable']));
+            $ringLength = ($peer['ringlength'] === '0') ? '' : trim($peer['ringlength']);
+            $warError |= !$db->databasePut('FW_TIME', $peer['extension'], $ringLength);
+            $warError |= !$db->databasePut('FW', $peer['extension'], trim($peer['forwarding']));
+            $warError |= !$db->databasePut('FW_BUSY', $peer['extension'], trim($peer['forwardingonbusy']));
+            $warError |= !$db->databasePut('FW_UNAV', $peer['extension'], trim($peer['forwardingonunavailable']));
         }
+
+        return !$warError;
     }
 
     /**
@@ -454,75 +469,72 @@ class SIPConf extends CoreConfigClass
     private function generateGeneralPj(): string
     {
         $lang = $this->generalSettings['PBXLanguage'];
-        [$topology, $extipaddr, $exthostname, $subnets] = $this->getTopologyData();
+        [$topology, $extIpAddress, $externalHostName, $subnets] = $this->getTopologyData();
 
         $codecs    = $this->getCodecs();
         $codecConf = '';
         foreach ($codecs as $codec) {
-            $codecConf .= "allow = {$codec}\n";
+            $codecConf .= "allow = $codec\n";
         }
 
         $pbxVersion = PbxSettings::getValueByKey('PBXVersion');
         $natConf    = '';
         if ($topology === 'private') {
             foreach ($subnets as $net) {
-                $natConf .= "local_net={$net}\n";
+                $natConf .= "local_net=$net\n";
             }
-            if ( ! empty($exthostname)) {
-                $parts   = explode(':', $exthostname);
+            if ( ! empty($externalHostName)) {
+                $parts   = explode(':', $externalHostName);
                 $natConf .= 'external_media_address=' . $parts[0] . "\n";
                 $natConf .= 'external_signaling_address=' . $parts[0] . "\n";
                 $natConf .= 'external_signaling_port=' . ($parts[1] ?? '5060');
-            } elseif ( ! empty($extipaddr)) {
-                $parts   = explode(':', $extipaddr);
+            } elseif ( ! empty($extIpAddress)) {
+                $parts   = explode(':', $extIpAddress);
                 $natConf .= 'external_media_address=' . $parts[0] . "\n";
                 $natConf .= 'external_signaling_address=' . $parts[0] . "\n";
                 $natConf .= 'external_signaling_port=' . ($parts[1] ?? '5060');
             }
         }
 
+        $typeTransport = 'type = transport';
         $conf = "[global] \n" .
             "type = global\n" .
             "disable_multi_domain=yes\n" .
             "endpoint_identifier_order=username,ip,anonymous\n" .
-            "user_agent = mikopbx-{$pbxVersion}\n\n" .
+            "user_agent = mikopbx-$pbxVersion\n\n" .
 
             "[transport-udp]\n" .
-            "type = transport\n" .
+            "$typeTransport\n" .
             "protocol = udp\n" .
             "bind=0.0.0.0:{$this->generalSettings['SIPPort']}\n" .
-            "{$natConf}\n\n" .
+            "$natConf\n\n" .
 
             "[transport-tcp]\n" .
-            "type = transport\n" .
+            "$typeTransport\n" .
             "protocol = tcp\n" .
             "bind=0.0.0.0:{$this->generalSettings['SIPPort']}\n" .
-            "{$natConf}\n\n" .
+            "$natConf\n\n" .
 
             "[transport-wss]\n" .
-            "type = transport\n" .
+            "$typeTransport\n" .
             "protocol = wss\n" .
             "bind=0.0.0.0:{$this->generalSettings['SIPPort']}\n" .
-            "{$natConf}\n\n" .
-            '';
+            "$natConf\n\n";
 
         $allowGuestCalls = PbxSettings::getValueByKey('PBXAllowGuestCalls');
         if ($allowGuestCalls === '1') {
             $conf .= "[anonymous]\n" .
                 "type = endpoint\n" .
                 $codecConf .
-                "language={$lang}\n" .
+                "language=$lang\n" .
                 "timers = no\n" .
                 "context = public-direct-dial\n\n";
         }
 
         $varEtcDir = $this->config->path('core.varEtcDir');
-        file_put_contents(
-            $varEtcDir . '/topology_hash',
-            md5($topology . $exthostname . $extipaddr . $this->generalSettings['SIPPort'])
-        );
+        $hash = md5($topology . $externalHostName . $extIpAddress . $this->generalSettings['SIPPort'] . implode('',$subnets));
+        file_put_contents($varEtcDir.self::TOPOLOGY_HASH_FILE, $hash);
         $conf .= "\n";
-
         return $conf;
     }
 
@@ -659,12 +671,9 @@ class SIPConf extends CoreConfigClass
      *
      * @return string
      */
-    private function generateProviderOutAuth(
-        array $provider,
-        array $manual_attributes
-    ): string {
+    private function generateProviderOutAuth(array $provider, array $manual_attributes): string {
         $conf = '';
-        if ('1' === $provider['receive_calls_without_auth']) {
+        if ('1' === $provider['receive_calls_without_auth'] || empty("{$provider['username']}{$provider['secret']}")) {
             return $conf;
         }
         $options         = [
@@ -809,7 +818,7 @@ class SIPConf extends CoreConfigClass
             'aors'            => $provider['uniqid'],
             'timers'          => ' no',
         ];
-        if ('1' !== $provider['receive_calls_without_auth']) {
+        if ('1' !== $provider['receive_calls_without_auth'] && !empty("{$provider['username']}{$provider['secret']}")) {
             $options['outbound_auth'] = "{$provider['uniqid']}-OUT";
         }
         self::getToneZone($options, $language);
@@ -1000,11 +1009,17 @@ class SIPConf extends CoreConfigClass
             $options['transport'] = 'transport-wss';
             $options['aors'] = $peer['extension'] . '-WS';
 
+            /** Устанавливаем кодек Opus в приоритет. */
+            $opusIndex = array_search('opus', $options['allow']);
+            if($opusIndex !== false){
+                unset($options['allow'][$opusIndex]);
+                array_unshift($options['allow'], 'opus');
+            }
+
             /*
              * https://www.asterisk.org/rtcp-mux-webrtc/
              */
             $options['rtcp_mux'] = 'yes';
-
             $conf .= Util::overrideConfigurationArray($options, $manual_attributes, 'endpoint');
             $conf .= $this->hookModulesMethod(CoreConfigClass::GENERATE_PEER_PJ_ADDITIONAL_OPTIONS, [$peer]);
         }

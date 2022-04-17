@@ -131,7 +131,7 @@ class AsteriskManager
      *
      * @return array|bool
      */
-    public function pingAMIListner($pingTube = 'CdrConnector')
+    public function pingAMIListener($pingTube = 'CdrConnector')
     {
         // Установим фильтр на события.
         $params = ['Operation' => 'Add', 'Filter' => 'Event: UserEvent'];
@@ -254,8 +254,10 @@ class AsteriskManager
             $type       = null;
             $parameters = [];
             $response   = [];
-
             if(!$this->waitResponseGetInitialData($response)) {
+                return $parameters;
+            }
+            if(isset($response['data']) && empty($response['data']) && !$this->waitResponseGetInitialData($response)){
                 return $parameters;
             }
             $buffer = $response['data']??'';
@@ -1343,7 +1345,7 @@ class AsteriskManager
     }
 
     /**
-     * Полученире текущих регистраций.
+     * Полученире статусов пиров.
      *
      * @return array
      */
@@ -1351,26 +1353,28 @@ class AsteriskManager
     {
         $peers  = [];
         $result = $this->sendRequestTimeout('PJSIPShowEndpoints');
-        if (isset($result['data']['EndpointList'])) {
-            foreach ($result['data']['EndpointList'] as $peer) {
-                if ($peer['ObjectName'] === 'anonymous') {
-                    continue;
-                }
-
-                $state_array = [
-                    'Not in use' => 'OK',
-                    'Busy'       => 'OK',
-                ];
-                $state       = $state_array[$peer['DeviceState']] ?? 'UNKNOWN';
-
-                $peers[] = [
-                    'id'    => $peer['ObjectName'],
-                    'state' => strtoupper($state),
-                ];
+        $endpoints = $result['data']['EndpointList']??[];
+        foreach ($endpoints as $peer) {
+            if ($peer['ObjectName'] === 'anonymous') {
+                continue;
             }
-        }
+            $state_array = [
+                'Not in use' => 'OK',
+                'Busy'       => 'OK',
+            ];
+            $state       = $state_array[$peer['DeviceState']] ?? 'UNKNOWN';
+            $oldAState   = $peers[$peer['Auths']]['state']??'';
 
-        return $peers;
+            if('OK' === $oldAState || empty($peer['Auths'])){
+                continue;
+            }
+
+            $peers[$peer['Auths']] = [
+                'id'        => $peer['Auths'],
+                'state'     => strtoupper($state)
+            ];
+        }
+        return array_values($peers);
     }
 
     /**
@@ -1378,7 +1382,7 @@ class AsteriskManager
      *
      * @return array
      */
-    public function getSipPeers()
+    public function getSipPeers():array
     {
         $peers = [];
         $res   = $this->sendRequestTimeout('SIPpeers');
@@ -1418,25 +1422,34 @@ class AsteriskManager
      * Получение статуса конкретного пира.
      *
      * @param $peer
+     * @param string $prefix
      *
      * @return array
      */
-    public function getPjSipPeer($peer)
+    public function getPjSipPeer($peer, string $prefix = ''):array
     {
         $result     = [];
-        $parameters = ['Endpoint' => trim($peer)];
+        if(empty($prefix)){
+            $wsResult     = $this->getPjSipPeer($peer, "WS");
+            if($wsResult['state'] !== 'UNKNOWN'){
+                $result = $wsResult;
+            }
+            $parameters = ['Endpoint' => trim($peer)];
+            unset($wsResult);
+        }else{
+            $parameters = ['Endpoint' => trim($peer)."-$prefix"];
+        }
+
         $res        = $this->sendRequestTimeout('PJSIPShowEndpoint', $parameters);
-        if (isset($res['data']['ContactStatusDetail'])) {
-            $generalRecordFound = false;
-            foreach ($res['data']['ContactStatusDetail'] as $index => $data){
-                $prefix = "-$index";
-                if(!empty($data['URI']) && !$generalRecordFound){
-                    $generalRecordFound = true;
-                    $prefix = '';
-                }
-                foreach ($data as $key => $value){
-                    $result["$key$prefix"] = $value;
-                }
+        $generalRecordFound = !empty($result);
+        foreach ($res['data']['ContactStatusDetail']??[] as $index => $data){
+            $suffix = "-$prefix$index";
+            if(!empty($data['URI']) && !$generalRecordFound){
+                $generalRecordFound = true;
+                $suffix = '';
+            }
+            foreach ($data as $key => $value){
+                $result["$key$suffix"] = $value;
             }
         }
         $result['state'] = isset($result['URI']) && ! empty($result['URI']) ? 'OK' : 'UNKNOWN';

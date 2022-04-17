@@ -47,7 +47,7 @@ $errorLogger = new SentryErrorLogger('admin-cabinet');
 $errorLogger->init();
 
 // Enable Whoops error pretty print
-$is_ajax = 'xmlhttprequest' == strtolower($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '');
+$is_ajax = 'xmlhttprequest' === strtolower($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '');
 if ($is_ajax) {
     $whoopsClass = JsonResponseHandler::class;
 } else {

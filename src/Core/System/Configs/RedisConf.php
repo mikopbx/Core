@@ -29,17 +29,31 @@ class RedisConf extends Injectable
 
     public const CONF_FILE = '/etc/redis.conf';
 
+    public string $port = '';
     /**
      * Restarts Redis server
      */
     public function reStart(): void
     {
+        $mainRunner = 'safe-'.self::PROC_NAME;
+        Util::killByName($mainRunner);
+        Util::killByName(self::PROC_NAME);
+
+        $ch = 0;
+        do{
+            $ch++;
+            // Ожидаем завершения работы redis;
+            sleep(1);
+            $pid1 = Processes::getPidOfProcess($mainRunner);
+            $pid2 = Processes::getPidOfProcess(self::PROC_NAME);
+        }while(!empty($pid1.$pid2) && $ch < 30);
+
         $this->configure();
         Processes::safeStartDaemon(self::PROC_NAME, self::CONF_FILE);
 
         $redisCli = Util::which('redis-cli');
         for ($i=1; $i <= 60; $i++){
-            if(Processes::mwExec("$redisCli info") === 0){
+            if(Processes::mwExec("$redisCli -p $this->port info") === 0){
                 break;
             }
             sleep(1);
@@ -52,6 +66,7 @@ class RedisConf extends Injectable
     private function configure(): void
     {
         $config = $this->getDI()->get('config')->redis;
+        $this->port = $config->port;
         $conf   = "bind {$config->host}" . PHP_EOL;
         $conf   .= "port {$config->port}" . PHP_EOL;
         file_put_contents(self::CONF_FILE, $conf);

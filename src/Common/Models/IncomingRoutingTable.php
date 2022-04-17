@@ -112,9 +112,13 @@ class IncomingRoutingTable extends ModelsBase
      */
     public static function resetDefaultRoute(): IncomingRoutingTable
     {
-        $defaultRule = IncomingRoutingTable::findFirstById(1);
+        $defaultRule = self::find('priority=9999');
+        foreach ($defaultRule as $rule){
+            $rule->delete();
+        }
+        $defaultRule = self::findFirstById(1);
         if ($defaultRule === null) {
-            $defaultRule     = new IncomingRoutingTable();
+            $defaultRule     = new self();
             $defaultRule->id = 1;
         }
         $defaultRule->action   = 'busy';

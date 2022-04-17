@@ -37,12 +37,6 @@
     "dbfile": "/mountpoint/mikopbx/astlogs/asterisk/cdr.db",
     "debugLogFile": "/mountpoint/mikopbx/log/debug-cdr-queries.log"
   },
-  "eventsLogDatabase": {
-    "debugMode": false,
-    "adapter": "Sqlite",
-    "dbfile": "/mountpoint/mikopbx/astlogs/asterisk/events_log.db",
-    "debugLogFile": "/mountpoint/mikopbx/log/debug-events_log-queries.log"
-  },
   "astDatabase": {
     "adapter": "Sqlite",
     "dbfile": "/mountpoint/mikopbx/persistence/astdb.sqlite3"

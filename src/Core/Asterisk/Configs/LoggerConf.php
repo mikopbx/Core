@@ -36,7 +36,7 @@ class LoggerConf extends CoreConfigClass
         $conf .= "dateformat = %F %T\n";
         $conf .= "\n";
         $conf .= "[logfiles]\n";
-        $conf .= "console => debug,error,verbose(10)\n\n";
+        $conf .= "console => debug(3),error,verbose(10)\n\n";
         $conf .= "{$logDir}security_log => security\n";
         $conf .= "{$logDir}messages => notice,warning\n";
         $conf .= "{$logDir}error => error\n";
