@@ -19,15 +19,15 @@
 
         <tr class="menu-row" id="{{ record['uniqid'] }}">
             <td class="centered">{{ record['extension'] }}</td>
-            <td>{{ record['name'] }}</td>
-            <td>
+            <td class="collapsing">{{ record['name'] }}</td>
+            <td class="collapsing">
                 <small>
                     {% for action in record['actions'] %}
                             {{ action['digits'] }} - {{ action['represent'] }}<br>
                     {% endfor %}
                 </small>
             </td>
-            <td>
+            <td class="collapsing">
                 <small>
                     {% if record['timeoutExtension'] %}
                         {{ record['timeoutExtension'] }}

@@ -17,9 +17,9 @@
 
 
         <tr class="queue-row" id="{{ queue['uniqid'] }}">
-            <td>{{ queue['name'] }}</td>
+            <td class="collapsing">{{ queue['name'] }}</td>
             <td class="center aligned">{{ queue['extension'] }}</td>
-            <td>
+            <td class="collapsing">
                 <small>
                     {% for member in queue['members'] %}
                         {{ member['represent'] }}<br>
