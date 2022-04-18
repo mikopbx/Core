@@ -86,8 +86,7 @@ class Util
         $am       = self::getAstManager('off');
         $channel  = 'Local/' . $peer_number . '@internal-originate';
         $context  = 'all_peers';
-        $IS_ORGNT = self::generateRandomString();
-        $variable = "_IS_ORGNT={$IS_ORGNT},pt1c_cid={$dest_number},_extenfrom1c={$peer_number},__peer_mobile={$peer_mobile},_FROM_PEER={$peer_number}";
+        $variable = "pt1c_cid={$dest_number},__peer_mobile={$peer_mobile}";
 
         return $am->Originate(
             $channel,
