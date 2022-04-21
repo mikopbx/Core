@@ -673,6 +673,7 @@ function event_hangup_chan()
     data['agi_channel'] = get_variable("CHANNEL");
     data['OLD_LINKEDID']= get_variable("OLD_LINKEDID");
     data['UNIQUEID']  	= get_variable("pt1c_UNIQUEID");
+    data['VMSTATUS']  	= get_variable("VMSTATUS");
     if('ANSWER' == data['dialstatus'])then
         data['dialstatus'] = "ANSWERED";
     end

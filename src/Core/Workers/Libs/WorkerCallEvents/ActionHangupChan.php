@@ -52,7 +52,8 @@ class ActionHangupChan {
         $m_data = CallDetailRecordsTmp::find($filter);
         $countRows = count($m_data->toArray());
         foreach ($m_data as $row) {
-            if($row->dst_num === VoiceMailConf::VOICE_MAIL_EXT){
+            $vmState = $data['VMSTATUS']??'';
+            if($row->dst_num === VoiceMailConf::VOICE_MAIL_EXT && $vmState !== 'FAILED'){
                 // Этот вызов будет заверщен событием voicemail_end
                 continue;
             }
