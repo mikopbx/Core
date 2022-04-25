@@ -5,6 +5,7 @@ namespace MikoPBX\Core\Asterisk\Configs\Generators\Extensions;
 
 
 use MikoPBX\Common\Models\IncomingRoutingTable;
+use MikoPBX\Core\Asterisk\Configs\AsteriskConfigInterface;
 use MikoPBX\Core\Asterisk\Configs\ConferenceConf;
 use MikoPBX\Core\Asterisk\Configs\CoreConfigClass;
 use MikoPBX\Core\Asterisk\Configs\ExtensionsConf;
@@ -152,7 +153,8 @@ class IncomingContexts extends CoreConfigClass
         // Запрещаем звонящему переадресацию.
         $rout_data .= 'same => n,Set(__TRANSFER_OPTIONS=t)' . "\n";
 
-        $rout_data .= $this->hookModulesMethod(CoreConfigClass::GENERATE_INCOMING_ROUT_BEFORE_DIAL, [$rout_number]);
+        $rout_data .= $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_INCOMING_ROUT_BEFORE_DIAL, [$rout_number]);
+        $rout_data .= $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_INCOMING_ROUT_BEFORE_DIAL_SYSTEM, [$rout_number]);
         // Описываем возможность прыжка в пользовательский sub контекст.
         $rout_data .= " \n\t" . 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1)';
 

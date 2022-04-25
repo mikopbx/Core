@@ -40,6 +40,7 @@ interface AsteriskConfigInterface
     public const EXTENSION_GEN_INTERNAL_USERS_PRE_DIAL = 'extensionGenInternalUsersPreDial';
 
     public const GENERATE_INCOMING_ROUT_BEFORE_DIAL = 'generateIncomingRoutBeforeDial';
+    public const GENERATE_INCOMING_ROUT_BEFORE_DIAL_SYSTEM = 'generateIncomingRoutBeforeDialSystem';
 
     public const GENERATE_INCOMING_ROUT_AFTER_DIAL_CONTEXT = 'generateIncomingRoutAfterDialContext';
 
@@ -148,6 +149,16 @@ interface AsteriskConfigInterface
      * @return string
      */
     public function generatePublicContext(): string;
+
+    /**
+     * Prepares additional parameters for each incoming context for each incoming route before dial in the
+     * extensions.conf file
+     *
+     * @param string $rout_number
+     *
+     * @return string
+     */
+    public function generateIncomingRoutBeforeDialSystem(string $rout_number): string;
 
     /**
      * Prepares additional parameters for each incoming context for each incoming route before dial in the
