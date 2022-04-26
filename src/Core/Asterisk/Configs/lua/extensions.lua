@@ -719,6 +719,7 @@ function event_queue_start()
 
     if(ISTRANSFER ~= '')then
         data['transfer']  	= '1';
+        set_variable("_TRANSFERERNAME", data['src_chan']);
     else
         data['transfer']  	= '0';
     end
