@@ -111,7 +111,6 @@ class SSHConf extends Injectable
      **/
     public function updateShellPassword(): void
     {
-
         $password       = $this->mikoPBXConfig->getGeneralSettings('SSHPassword');
         $hashString     = $this->mikoPBXConfig->getGeneralSettings('SSHPasswordHashString');
         $echoPath       = Util::which('echo');

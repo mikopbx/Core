@@ -747,7 +747,7 @@ class WorkerModelsEvents extends WorkerBase
         if (PbxSettings::class !== $called_class) {
             return;
         }
-
+        PbxSettings::clearCache(PbxSettings::class);
         /** @var PbxSettings $pbxSettings */
         $pbxSettings = PbxSettings::findFirstByKey($recordId);
         if ($pbxSettings === null) {
