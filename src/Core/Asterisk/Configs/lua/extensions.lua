@@ -409,6 +409,18 @@ function event_dial_create_chan()
     return data;
 end
 
+function event_dial_end()
+    local data = {}
+
+    data['endtime']  = getNowDate();
+    data['UNIQUEID']	= get_variable("pt1c_UNIQUEID");
+    data['src_chan']	= get_variable("CHANNEL");
+    data['linkedid']    = get_variable("CHANNEL(linkedid)");
+    data['action']      = 'dial_end';
+    userevent_return(data)
+    return data;
+end
+
 -- Обработка события ответа на звонок. Соединение абонентов.
 function event_dial_answer()
     local data = {}
@@ -827,8 +839,8 @@ extensions = {
     voicemail_start={},
     voicemail_end={},
     interception_start={},
-    interception_bridge_result={}
-
+    interception_bridge_result={},
+    dial_end={}
 }
 
 -- event_interception_start event_interception_bridge_result
@@ -851,6 +863,7 @@ extensions.voicemail_start["_.!"]           = function() event_voicemail_start()
 
 extensions.interception_start["_.!"]           = function() event_interception_start() end
 extensions.interception_bridge_result["_.!"]   = function() event_interception_bridge_result() end
+extensions.dial_end["_.!"]                     = function() event_dial_end() end
 --
 ------
 ---- Безопасное подключение дополнительных dialplan, описанных в /etc/asterisk/extensions-lua
