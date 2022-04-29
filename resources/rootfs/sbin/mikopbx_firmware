@@ -28,13 +28,13 @@ mkdir -p /tmp/configbak;
 
 md5Hash="$(/bin/gunzip -N -l < "${img_file}" | /bin/busybox grep -v uncompressed_name | /bin/busybox awk  '{ print $4}')";
 if [ "$md5Hash" != "$(/bin/gunzip -c "${img_file}" | md5sum | /bin/busybox cut -f 1 -d ' ')" ] ; then
-    echoToTeletype "The checksum of the system image does not match.";
-    echoToTeletype "Update aborted...";
+    echoToTeletype " - The checksum of the system image does not match.";
+    echoToTeletype " - Update aborted...";
     rm -rf "$img_file";
     sleep 3;
     /sbin/mikopbx_reboot;
 else
-    echoToTeletype "Successful checksum verification";
+    echoToTeletype " - Successful checksum verification";
 fi
 
 if [ -f /offload/livecd ]; then
@@ -85,7 +85,7 @@ echoToTeletype " - installing image..."
 if [ -r "${img_file}" ]; then
   /bin/pv -p "${img_file}" | /bin/gunzip | dd of="$device" bs=512 >/dev/null 2>&1;
   resultPv="$?";
-  if [ ! "$resultPv" = '0' ] || [ ! "$(/sbin/parted --script --align optimal "${3}" "print" | grep primary | /bin/busybox wc -l)" = '3' ]; then
+  if [ ! "$resultPv" = '0' ] || [ ! "$(/sbin/parted --script --align optimal "${device}" "print" | grep primary | /bin/busybox wc -l)" = '3' ]; then
     if [ -f "$backupImg" ]; then
       /bin/pv -p "$backupImg" | /bin/gunzip | dd of="$device" bs=512 >/dev/null 2>&1;
     fi;
@@ -96,7 +96,7 @@ if [ -r "${img_file}" ]; then
   /sbin/initial.storage.part.four create "$device";
   echoToTeletype " - disk part four result ${?}...";
 fi
-/sbin/blockdev --rereadpt "$device" >/dev/null 2>&1
+/sbin/blockdev --rereadpt "$device" > /dev/null 2>&1
 sleep 3
 
 partition3Name=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$device")" | /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "3$" | /bin/busybox sort -u)
