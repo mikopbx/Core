@@ -893,7 +893,7 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'bt_SaveSettingsAndAddNew' => 'Salvar e adicionar',
     'bt_SaveSettings' => 'Salvar',
     'bt_Delete' => 'Excluir',
-    'bt_Clear' => 'Claro',
+    'bt_Clear' => 'Limpar',
     'bt_Edit' => 'Mudar',
     'mm_SSHConsole' => 'Console SSH',
     'mm_ModuleManager' => 'Gerenciamento de Módulo',
