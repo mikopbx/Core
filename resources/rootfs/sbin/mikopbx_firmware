@@ -34,6 +34,23 @@ recover_upgrade)
   echoToTeletype " - backing up configuration..."
   mkdir -p /tmp/configbak
   img_file="$2"
+
+  md5Hash="$(/bin/gunzip -N -l < "${img_file}" | /bin/busybox grep -v uncompressed_name | /bin/busybox awk  '{ print $4}')";
+  imgDir="$(/bin/busybox dirname "${img_file}")";
+  imgFile="/tmp/$md5Hash";
+  (
+    echoToTeletype "Unpacking the image file...";
+    cd "$imgDir" || echo exit;
+    /bin/pv -p "${img_file}" | /bin/gunzip | dd of="$imgFile" bs=512 >/dev/null 2>&1;
+  );
+  if [ ! -f "$imgFile" ] || [ "$md5Hash" != "$(/bin/busybox md5sum "$imgFile" | /bin/busybox cut -f 1 -d ' ')" ] ; then
+      echoToTeletype "The checksum of the system image does not match.";
+      echoToTeletype "Update aborted.";
+      rm -rf "$backupImg" "$imgFile";
+      sleep 3;
+      /sbin/mikopbx_reboot;
+  fi
+
   if [ -f /offload/livecd ]; then
     /bin/busybox cp -p /conf.recover/conf/* /tmp/configbak
     echoToTeletype " - unmounting /conf.recover..."
@@ -81,14 +98,14 @@ recover_upgrade)
 
   echoToTeletype " - installing image..."
   if [ -r "${img_file}" ]; then
-    /bin/pv -p "${img_file}" | /bin/gunzip | dd of="$3" bs=512 >/dev/null 2>&1;
+    /bin/pv -p "$imgFile" | dd of="$3" bs=512 >/dev/null 2>&1;
     resultPv="$?";
     if [ ! "$resultPv" = '0' ] || [ ! "$(/sbin/parted --script --align optimal "${3}" "print" | grep primary | /bin/busybox wc -l)" = '3' ]; then
       if [ -f "$backupImg" ]; then
         /bin/pv -p "$backupImg" | /bin/gunzip | dd of="$3" bs=512 >/dev/null 2>&1
       fi;
     fi;
-    rm -rf "$backupImg";
+    rm -rf "$backupImg" "$imgFile";
     echoToTeletype " - dd end working..."
     # Обновляем таблицу разделов.
     /sbin/initial.storage.part.four create "$3"
