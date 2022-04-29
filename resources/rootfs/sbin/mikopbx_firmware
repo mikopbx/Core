@@ -17,118 +17,101 @@
 # If not, see <https://www.gnu.org/licenses/>.
 #
 . /sbin/shell_functions.sh;
+img_file="$1";
+device="$2"
 
-case $1 in
-enable)
-  #/sbin/mdmfs -s 20m md1 /ultmp > /dev/null 2>&1
-  ;;
+exec </dev/console >/dev/console 2>/dev/console;
+echoToTeletype;
+echoToTeletype " - Firmware upgrade in progress...";
+echoToTeletype " - backing up configuration...";
+mkdir -p /tmp/configbak;
 
-recover_upgrade)
-  # $2 firmware image
-  # $3 device
-  cd /
-  sleep 5
-  exec </dev/console >/dev/console 2>/dev/console
-  echoToTeletype
-  echoToTeletype " - Firmware upgrade in progress..."
-  echoToTeletype " - backing up configuration..."
-  mkdir -p /tmp/configbak
-  img_file="$2"
+md5Hash="$(/bin/gunzip -N -l < "${img_file}" | /bin/busybox grep -v uncompressed_name | /bin/busybox awk  '{ print $4}')";
+if [ "$md5Hash" != "$(/bin/gunzip -c "${img_file}" | md5sum | /bin/busybox cut -f 1 -d ' ')" ] ; then
+    echoToTeletype "The checksum of the system image does not match.";
+    echoToTeletype "Update aborted...";
+    rm -rf "$img_file";
+    sleep 3;
+    /sbin/mikopbx_reboot;
+else
+    echoToTeletype "Successful checksum verification";
+fi
 
-  md5Hash="$(/bin/gunzip -N -l < "${img_file}" | /bin/busybox grep -v uncompressed_name | /bin/busybox awk  '{ print $4}')";
-  imgDir="$(/bin/busybox dirname "${img_file}")";
-  imgFile="/tmp/$md5Hash";
-  (
-    echoToTeletype "Unpacking the image file...";
-    cd "$imgDir" || echo exit;
-    /bin/pv -p "${img_file}" | /bin/gunzip | dd of="$imgFile" bs=512 >/dev/null 2>&1;
-  );
-  if [ ! -f "$imgFile" ] || [ "$md5Hash" != "$(/bin/busybox md5sum "$imgFile" | /bin/busybox cut -f 1 -d ' ')" ] ; then
-      echoToTeletype "The checksum of the system image does not match.";
-      echoToTeletype "Update aborted.";
-      rm -rf "$backupImg" "$imgFile";
-      sleep 3;
-      /sbin/mikopbx_reboot;
-  fi
+if [ -f /offload/livecd ]; then
+  /bin/busybox cp -p /conf.recover/conf/* /tmp/configbak;
+  echoToTeletype " - unmounting /conf.recover...";
+  /bin/umount -f /conf.recover;
+else
+  /bin/busybox cp -R /cf/conf/* /tmp/configbak;
 
-  if [ -f /offload/livecd ]; then
-    /bin/busybox cp -p /conf.recover/conf/* /tmp/configbak
-    echoToTeletype " - unmounting /conf.recover..."
-    /bin/umount -f /conf.recover
+  mounted_storage=$(mount | /bin/busybox grep storage | /bin/busybox awk '{ print $1}');
+  # Получаем имя 4ого раздела (если он есть)
+  partition4Name=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$(cat /var/etc/cfdevice)")" | /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "4$" | /bin/busybox sort -u)
+  if [ "/dev/${partition4Name}" != "${mounted_storage}" ]; then
+    # Storage на отдельном диске.
+    echoToTeletype " - free storage ...";
+    /sbin/freestorage "doNotUnMount";
+
+    backupDir="$(cat /var/etc/storage_device)/mikopbx/backup/last-update-firmware"
+    backupImg="$backupDir/system.img";
+    rm -rf "$backupDir"; mkdir -p "$backupDir";
+
+    echoToTeletype " - copy conf to storage ...";
+    /bin/busybox cp -R /cf/conf/* "$backupDir";
+
+    echoToTeletype " - backup system img to storage ...";
+    /bin/pv -p "/dev/$(/bin/busybox basename "$(cat /var/etc/cfdevice)")" | /bin/gzip | dd of="$backupImg" bs=512 >/dev/null 2>&1;
   else
-    /bin/busybox cp -R /cf/conf/* /tmp/configbak
-
-    mounted_storage=$(mount | /bin/busybox grep storage | /bin/busybox awk '{ print $1}')
-    # Получаем имя 4ого раздела (если он есть)
-    partition4Name=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$(cat /var/etc/cfdevice)")" | /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "4$" | /bin/busybox sort -u)
-    if [ "/dev/${partition4Name}" != "${mounted_storage}" ]; then
-      # Storage на отдельном диске.
-      img_file="$2"
-      echoToTeletype " - free storage ...";
-      /sbin/freestorage "doNotUnMount";
-
-      backupDir="$(cat /var/etc/storage_device)/mikopbx/backup/last-update-firmware"
-      backupImg="$backupDir/system.img";
-      rm -rf "$backupDir"; mkdir -p "$backupDir";
-
-      echoToTeletype " - copy conf to storage ...";
-      /bin/busybox cp -R /cf/conf/* "$backupDir";
-
-      echoToTeletype " - backup system img to storage ...";
-      /bin/pv -p "/dev/$(/bin/busybox basename "$(cat /var/etc/cfdevice)")" | /bin/gzip | dd of="$backupImg" bs=512 >/dev/null 2>&1
-    else
-      # Storage на диске основном диске,
-      # так как его нужно отмнонтировать, то перемещамем образ в RAM.
-      echoToTeletype " - move img to RAM ..."
-      tmp_img=$(basename "$2")
-      img_file="/tmp/${tmp_img}"
-      # Перемещаем img файл в /tmp. Storage будет отмонтирован.
-      src_file=$(readlink -f "$2")
-      if [ "${src_file}" != "${img_file}" ]; then
-        mv "${src_file}" "${img_file}"
-      fi
-
-      echoToTeletype " - free storage ...";
-      /sbin/freestorage
+    # Storage на диске основном диске,
+    # так как его нужно отмнонтировать, то перемещамем образ в RAM.
+    echoToTeletype " - move img to RAM ..."
+    tmp_img=$(basename "$1");
+    img_file="/tmp/${tmp_img}";
+    # Перемещаем img файл в /tmp. Storage будет отмонтирован.
+    src_file=$(readlink -f "$1")
+    if [ "${src_file}" != "${img_file}" ]; then
+      mv "${src_file}" "${img_file}";
     fi
 
-    # Отключаем основной диск.
-    /sbin/freeupoffload
+    echoToTeletype " - free storage ...";
+    /sbin/freestorage;
   fi
 
-  echoToTeletype " - installing image..."
-  if [ -r "${img_file}" ]; then
-    /bin/pv -p "$imgFile" | dd of="$3" bs=512 >/dev/null 2>&1;
-    resultPv="$?";
-    if [ ! "$resultPv" = '0' ] || [ ! "$(/sbin/parted --script --align optimal "${3}" "print" | grep primary | /bin/busybox wc -l)" = '3' ]; then
-      if [ -f "$backupImg" ]; then
-        /bin/pv -p "$backupImg" | /bin/gunzip | dd of="$3" bs=512 >/dev/null 2>&1
-      fi;
+  # Отключаем основной диск.
+  /sbin/freeupoffload;
+fi
+
+echoToTeletype " - installing image..."
+if [ -r "${img_file}" ]; then
+  /bin/pv -p "${img_file}" | /bin/gunzip | dd of="$device" bs=512 >/dev/null 2>&1;
+  resultPv="$?";
+  if [ ! "$resultPv" = '0' ] || [ ! "$(/sbin/parted --script --align optimal "${3}" "print" | grep primary | /bin/busybox wc -l)" = '3' ]; then
+    if [ -f "$backupImg" ]; then
+      /bin/pv -p "$backupImg" | /bin/gunzip | dd of="$device" bs=512 >/dev/null 2>&1;
     fi;
-    rm -rf "$backupImg" "$imgFile";
-    echoToTeletype " - dd end working..."
-    # Обновляем таблицу разделов.
-    /sbin/initial.storage.part.four create "$3"
-    echoToTeletype " - disk part four result ${?}..."
-  fi
-  /sbin/blockdev --rereadpt "$3" >/dev/null 2>&1
-  sleep 3
+  fi;
+  rm -rf "$backupImg";
+  echoToTeletype " - dd end working...";
+  # Обновляем таблицу разделов.
+  /sbin/initial.storage.part.four create "$device";
+  echoToTeletype " - disk part four result ${?}...";
+fi
+/sbin/blockdev --rereadpt "$device" >/dev/null 2>&1
+sleep 3
 
-  partition3Name=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$3")" | /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "3$" | /bin/busybox sort -u)
-  if [ -f /offload/livecd ]; then
-    echoToTeletype " - re-mounting /conf.recover read/write..."
-    /bin/mount -w -o noatime "/dev/${partition3Name}" /conf.recover
-    rm -f /conf.recover/conf/*
-    echoToTeletype " - restoring configuration"
-    /bin/busybox cp -p /tmp/configbak/* /conf.recover/conf/
-    touch /tmp/ejectcd
-  else
-    /bin/mount -w -o noatime "/dev/${partition3Name}" /cf/
-    /bin/busybox cp /tmp/configbak/* /cf/conf/
-    rm -rf "${img_file}"
-  fi
+partition3Name=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$device")" | /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "3$" | /bin/busybox sort -u)
+if [ -f /offload/livecd ]; then
+  echoToTeletype " - re-mounting /conf.recover read/write..."
+  /bin/mount -w -o noatime "/dev/${partition3Name}" /conf.recover
+  rm -f /conf.recover/conf/*
+  echoToTeletype " - restoring configuration"
+  /bin/busybox cp -p /tmp/configbak/* /conf.recover/conf/
+  touch /tmp/ejectcd
+else
+  /bin/mount -w -o noatime "/dev/${partition3Name}" /cf/
+  /bin/busybox cp /tmp/configbak/* /cf/conf/
+  rm -rf "${img_file}"
+fi
 
-  echoToTeletype " - rebooting system..."
-  /sbin/mikopbx_reboot;
-  ;;
-esac
+echoToTeletype " - rebooting system..."
+/sbin/mikopbx_reboot;

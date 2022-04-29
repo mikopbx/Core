@@ -74,7 +74,6 @@ while : ; do
     fi
     # Убедимся, что раздел смонтирован.
     if [ ! -f "$freeOffloadFile" ]; then
-        clear;
         # Консольное меню зависит от /offload раздела.
         /etc/rc/console_menu 2>/dev/null;
         resultMenu=$?;

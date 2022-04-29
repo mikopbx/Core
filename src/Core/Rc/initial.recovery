@@ -49,7 +49,7 @@ switch ($input) {
     case 2:
         file_put_contents('/tmp/ejectcd', '');
         $mikopbx_firmwarePath = Util::which('mikopbx_firmware');
-        Processes::mwExecBg("{$mikopbx_firmwarePath} recover_upgrade /offload/firmware.img.gz ${DEVICE}");
+        Processes::mwExecBg("{$mikopbx_firmwarePath} /offload/firmware.img.gz ${DEVICE}");
         sleep(600);
         break;
     case 3:
