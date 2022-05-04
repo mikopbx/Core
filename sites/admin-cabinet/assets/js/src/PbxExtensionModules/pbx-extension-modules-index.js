@@ -51,7 +51,7 @@ const extensionModules = {
 				null,
 				{ orderable: false, searchable: false },
 			],
-			// order: [1, 'asc'],
+			autoWidth: false,
 			language: SemanticLocalization.dataTableLocalisation,
 		});
 		$('.add-new').appendTo($('div.eight.column:eq(0)'));
