@@ -274,7 +274,7 @@ class Fail2BanConf extends Injectable
             "before = common.conf\n" .
             "[Definition]\n" .
             "_daemon = [\S\W\s]+web_auth\n" .
-            'failregex = ^%(__prefix_line)sFrom:\s<HOST>\sUserAgent:(\S|\s)*Wrong password$' . "\n" .
+            'failregex = \sFrom:\s<HOST>\sUserAgent:(\S|\s)*Wrong password$' . "\n" .
             '            ^(\S|\s)*nginx:\s+\d+/\d+/\d+\s+(\S|\s)*status\s+403(\S|\s)*client:\s+<HOST>(\S|\s)*' . "\n" .
             '            \[error\] \d+#\d+: \*\d+ user "(?:[^"]+|.*?)":? (?:password mismatch|was not found in "[^\"]*"), client: <HOST>, server: \S*, request: "\S+ \S+ HTTP/\d+\.\d+", host: "\S+"(?:, referrer: "\S+")?\s*$' . "\n" .
             "ignoreregex =\n";
