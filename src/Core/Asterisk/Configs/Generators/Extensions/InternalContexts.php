@@ -116,7 +116,7 @@ class InternalContexts extends CoreConfigClass
         $conf .= 'same => n,ExecIf($["${fw}x" != "x"]?Set(__pt1c_UNIQUEID=${UNDEFINED})' . "\n\t";
         $conf .= 'same => n,ExecIf($["${fw}x" != "x"]?Goto(internal,${fw},1))' . "\n\t";
         $conf .= 'same => n,ExecIf($["${BLINDTRANSFER}x" != "x"]?AGI(check_redirect.php,${BLINDTRANSFER}))' . "\n\t";
-        $conf .= 'same => n,Hangup() ' . "\n\n";
+        $conf .= 'same => n,ExecIf($["${DIALSTATUS}" == "BUSY"]?Busy(2):Hangup())' . "\n\n";
 
         return $conf;
     }
