@@ -310,7 +310,7 @@ class Processes
      * @param  int       $timout
      * @return bool
      */
-    public static function safeStartDaemon(string $procName, string $args, int $attemptsCount = 20, int $timout = 100000):bool
+    public static function safeStartDaemon(string $procName, string $args, int $attemptsCount = 20, int $timout = 1000000):bool
     {
         $result   = true;
         $baseName = "safe-{$procName}";
