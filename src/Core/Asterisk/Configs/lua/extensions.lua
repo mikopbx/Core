@@ -555,6 +555,10 @@ function event_transfer_dial()
     local QUEUE_SRC_CHAN = get_variable("QUEUE_SRC_CHAN");
 
     local is_local = string.lower(TRANSFERERNAME):find("local/") ~= nil
+    local is_queue = '0';
+    if(QUEUE_SRC_CHAN~='') then
+        is_queue= '1';
+    end
 
     local channel;
     if(QUEUE_SRC_CHAN~='' and is_local) then
@@ -569,6 +573,7 @@ function event_transfer_dial()
 
     data['action']  	= "transfer_dial";
     data['agi_channel'] = channel;
+    data['is_queue']    = is_queue;
     data['linkedid']  	= get_variable("CHANNEL(linkedid)");
     data['src_chan'] 	= channel;
     data['did']		    = get_variable("FROM_DID");
