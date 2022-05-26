@@ -358,7 +358,7 @@ return [
     'ex_IfMainExtensionIsBusyRedirectCallTo' => 'Se o número principal estiver ocupado, transferimos a chamada para',
     'ex_SecondsAndThenRedirectCallTo' => 'segundos, tentamos ligar para o número principal e, em seguida, transferimos para',
     'ex_RingMainExtension' => 'Durante',
-    'ex_ManualAdditionalAttributes' => 'Parâmetros de contabilidade SIP adicionais',
+    'ex_ManualAdditionalAttributes' => 'Parâmetros SIP adicionais',
     'ex_NatMode' => 'Modo NAT',
     'ex_NetworkFilter' => 'Filtro de rede',
     'ex_DTMFMode' => 'Modo DTMF',
