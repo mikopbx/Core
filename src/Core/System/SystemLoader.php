@@ -88,7 +88,7 @@ class SystemLoader extends Di\Injectable
         $this->echoResultMsg();
 
         $this->echoStartMsg(' - Connect swap...');
-        $storage->mountSwap();
+        Processes::mwExecBg('/etc/rc/connect-swap');
         $this->echoResultMsg();
 
         $this->echoStartMsg(' - Start syslogd daemon...');
