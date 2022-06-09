@@ -21,7 +21,8 @@ namespace MikoPBX\PBXCoreREST\Lib;
 
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Core\System\Storage;
-use MikoPBX\Common\Models\{NetworkFilters, PbxSettings};
+use MikoPBX\Core\System\Util;
+use MikoPBX\Common\Models\{NetworkFilters, PbxSettings, Sip};
 use GuzzleHttp;
 use Phalcon\Di\Injectable;
 use SimpleXMLElement;
@@ -114,7 +115,9 @@ class AdvicesProcessor extends Injectable
         $result       = [];
         foreach ($arrMessages as $message) {
             foreach ($message as $key => $value) {
-                if ( ! empty($value)) {
+                if(is_array($value)){
+                    $result[$key] = array_merge($result[$key], $value);
+                }elseif ( ! empty($value)) {
                     $result[$key][] = $value;
                 }
             }
@@ -134,21 +137,59 @@ class AdvicesProcessor extends Injectable
     {
         $messages           = [];
         $arrOfDefaultValues = PbxSettings::getDefaultArrayValues();
+        $fields = [
+            'WebAdminPassword'  => [
+                'url'  => 'general-settings/modify/#/passwords',
+                'type' => 'gs_WebPasswordFieldName',
+                'value'=> $arrOfDefaultValues['WebAdminPassword']
+            ],
+            'SSHPassword'       => [
+                'url'  => 'general-settings/modify/#/ssh',
+                'type' => 'gs_SshPasswordFieldName',
+                'value'=> $arrOfDefaultValues['SSHPassword']
+            ],
+        ];
         if ($arrOfDefaultValues['WebAdminPassword'] === PbxSettings::getValueByKey('WebAdminPassword')) {
-            $messages['warning'] = $this->translation->_(
+            $messages['warning'][] = $this->translation->_(
                 'adv_YouUseDefaultWebPassword',
                 ['url' => $this->url->get('general-settings/modify/#/passwords')]
             );
+            unset($fields['WebAdminPassword']);
         }
         if ($arrOfDefaultValues['SSHPassword'] === PbxSettings::getValueByKey('SSHPassword')) {
-            $messages['warning'] = $this->translation->_(
+            $messages['warning'][] = $this->translation->_(
                 'adv_YouUseDefaultSSHPassword',
                 ['url' => $this->url->get('general-settings/modify/#/ssh')]
             );
+            unset($fields['SSHPassword']);
         }elseif(PbxSettings::getValueByKey('SSHPasswordHash') !== md5_file('/etc/passwd')){
-            $messages['warning'] = $this->translation->_(
+            $messages['warning'][] = $this->translation->_(
                 'gs_SSHPPasswordCorrupt',
                 ['url' => $this->url->get('general-settings/modify/#/ssh')]
+            );
+        }
+
+        $peersData = Sip::find([
+               "type = 'peer' AND ( disabled <> '1')",
+               'columns' => 'id,extension,secret']
+        );
+        foreach ($peersData as $peer){
+            $fields[$peer['extension']] = [
+                'url'  => '/admin-cabinet/extensions/modify/'.$peer['id'],
+                'type' => 'gs_UserPasswordFieldName',
+                'value'=> $peer['secret']
+            ];
+        }
+        foreach ($fields as $value){
+            if(!Util::isSimplePassword($value['value'])){
+                continue;
+            }
+            $messages['warning'][] = $this->translation->_(
+                'adv_isSimplePassword',
+                [
+                    'type' => $this->translation->_($value['type']),
+                    'url' => $this->url->get($value['url'])
+                ]
             );
         }
         return $messages;

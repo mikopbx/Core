@@ -415,6 +415,18 @@ class Util
     }
 
     /**
+     * Проверка сложности пароля по словарю.
+     * @param $value
+     * @return bool
+     */
+    public static function isSimplePassword($value): bool
+    {
+        $passwords = [];
+        Processes::mwExec('/bin/zcat /usr/share/wordlists/rockyou.txt.gz', $passwords);
+        return in_array($value, $passwords, true);
+    }
+
+    /**
      * Устанавливаем шрифт для консоли.
      */
     public static function setCyrillicFont(): void
