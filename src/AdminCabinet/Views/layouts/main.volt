@@ -77,6 +77,60 @@
             </div>
         </div>
         <!--/ CONNECTION DIMMER-->
+        <!--  PASSWORD SECTION -->
+        <div id='updatePasswordWindow' class="ui raised segment large modal">
+            <form method="post" onsubmit="return false" autoComplete="off">
+                <div class="ui form success">
+                    <div class="ui icon negative message">
+                      <i class="shield alternate icon"></i>
+                      <div class="content">
+                        <div class="header">
+                          {{ t._("gs_SetPassword") }}
+                        </div>
+                        <p>{{ t._("gs_SetPasswordInfo") }}</p>
+                      </div>
+                    </div>
+                    <input type="password" style="display: none">
+                    <input type="password" style="display: none">
+                    <input type="password" style="display: none">
+                    <div id='WebAdminPassword-container' class="ui miko-settings-container">
+                        <a class="ui teal ribbon label">{{ t._("gs_WebPasswordFieldName") }}</a>
+                        <div class="two fields">
+                            <div class="field">
+                                <label>{{ t._("gs_WebAdminPassword") }}</label>
+                                <input type="password" id="WebAdminPassword" name="WebAdminPassword" autocomplete="none">
+                            </div>
+                            <div class="field">
+                                <label>{{ t._("gs_WebAdminPasswordRepeat") }}</label>
+                                <input type="password" id="WebAdminPasswordRepeat" name="WebAdminPasswordRepeat" autocomplete="none">
+                            </div>
+                        </div>
+                    </div>
+                    <div id='SSHPassword-container' class="ui miko-settings-container">
+                        <a class="ui teal ribbon label">{{ t._("gs_SshPasswordFieldName") }}</a>
+                        <br>
+                        <div class="two fields">
+                            <div class="field">
+                                <label>{{ t._("gs_WebAdminPassword") }}</label>
+                                <input type="password" id="SSHPassword" name="SSHPassword" autocomplete="none">
+                            </div>
+                            <div class="field">
+                                <label>{{ t._("gs_SSHPasswordRepeat") }}</label>
+                                <input type="password" id="SSHPasswordRepeat" name="SSHPasswordRepeat" autocomplete="none">
+                            </div>
+                        </div>
+                    </div>
+                    <div id="updatePasswordWindowResult" class="ui warning message" style="display: none">
+                        <div class="header"></div>
+                        <p></p>
+                    </div>
+                    <button class="ui primary button" id='savePassword'>
+                      {{ t._("bt_SaveSettings") }}
+                    </button>
+                </div>
+            </form>
+        </div>
+        <!--/  PASSWORD SECTION -->
     </div>
 {% else %}
     <div class="ui middle aligned grid">

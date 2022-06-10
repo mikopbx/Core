@@ -200,9 +200,11 @@ const generalSettingsModify = {
 
 		return result;
 	},
-	cbAfterSendForm() {
+	cbAfterSendForm(response) {
+		if(!response.success){
+			Form.$submitButton.removeClass('disabled');
+		}
 		generalSettingsModify.checkDeleteAllConditions();
-
 	},
 	initializeForm() {
 		Form.$formObj = generalSettingsModify.$formObj;

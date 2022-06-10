@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalWebAdminLanguage, sessionStorage */
+/* global globalRootUrl, globalWebAdminLanguage, sessionStorage, $, globalTranslate */
 
 const advicesWorker = {
 	timeOut: 300000,
@@ -28,10 +28,72 @@ const advicesWorker = {
 		// Запустим получение новых советов
 		advicesWorker.restartWorker();
 		window.addEventListener('ConfigDataChanged', advicesWorker.cbOnDataChanged);
+		$('#updatePasswordWindow #savePassword').on('click', advicesWorker.cbOnClickSavePassword);
 	},
 	restartWorker() {
 		window.clearTimeout(advicesWorker.timeoutHandle);
 		advicesWorker.worker();
+	},
+	/**
+	 * Отправка формы обновления паролей SSH и Web.
+	 */
+	cbOnClickSavePassword(){
+		$('#updatePasswordWindowResult').hide();
+		let errors = '';
+		let params = {};
+		$.each(['WebAdminPassword', 'SSHPassword'], (key, value) => {
+			if(!$(`#updatePasswordWindow #${value}`).is(":visible")){
+				return;
+			}
+			let pass 	= $(`#${value}`).val();
+			let passRep 	= $(`#${value}Repeat`).val();
+			if( pass !== passRep){
+				errors+='<li>'+globalTranslate[`pass_Check${value}DontMatch`]+'</li>';
+			}else if(pass.trim() === ''){
+				errors+='<li>'+globalTranslate[`pass_Check${value}Empty`]+'</li>';
+				// }else if(advicesWorker.checkPasswordOk(webPass)){
+				// 	errors+=`<li>${globalTranslate['pass_Check${value}Simple']}</li>`;
+			}else{
+				params[value] = pass;
+			}
+		});
+		if(errors.trim() !== ''){
+			errors = `<ul class="ui list">${errors}</ul>`;
+			advicesWorker.showPasswordError(globalTranslate['pass_CheckWebPassErrorChange'], errors);
+		}else{
+			advicesWorker.savePasswords(params);
+		}
+	},
+	savePasswords(params){
+		$.post('/admin-cabinet/general-settings/save', params, function( data ) {
+			if(data.success === false){
+				let errors = '';
+				if(typeof data.passwordCheckFail !== 'undefined'){
+					$.each(data.passwordCheckFail, (key, value) => {
+						errors+='<li>'+globalTranslate[`pass_Check${value}Simple`]+'</li>';
+					});
+				}else{
+					errors+='<li>'+globalTranslate['er_InternalServerError']+'</li>';
+				}
+				if(errors.trim() !== ''){
+					advicesWorker.showPasswordError(globalTranslate['pass_CheckWebPassErrorChange'], errors);
+				}
+			}else{
+				$('#updatePasswordWindow').modal({ closable : false, }).modal('hide')
+				advicesWorker.restartWorker();
+			}
+		});
+	},
+	showPasswordError(header, body){
+		$('#updatePasswordWindowResult div').html(header);
+		$('#updatePasswordWindowResult p').html(body);
+		$('#updatePasswordWindowResult').show();
+	},
+	checkPasswordOk(password) {
+		let check1 = password.match(/[a-z]/) !== null;
+		let check2 = password.match(/\d/) !== null;
+		let check3 = password.match(/[A-Z]/) !== null;
+		return check1 && check2 && check3 && (password.length > 6);
 	},
 	/**
 	 * Обработка события смены языка или данных
@@ -67,6 +129,19 @@ const advicesWorker = {
 			let countMessages = 0;
 			let iconBellClass = '';
 			htmlMessages += '<div class="ui relaxed divided list">';
+
+			if (response.advices.needUpdate !== undefined
+				&& response.advices.needUpdate.length > 0) {
+				let needShow = false;
+				$("#updatePasswordWindow div.miko-settings-container").hide();
+				$.each(response.advices.needUpdate, (key, value) => {
+					$(`#updatePasswordWindow #${value}-container`).show();
+					needShow = true;
+				});
+				if(needShow){
+					$('#updatePasswordWindow').modal({ closable : false, }).modal('show')
+				}
+			}
 
 			if (response.advices.error !== undefined
 				&& response.advices.error.length > 0) {

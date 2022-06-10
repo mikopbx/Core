@@ -22,6 +22,7 @@ namespace MikoPBX\AdminCabinet\Controllers;
 use MikoPBX\AdminCabinet\Forms\GeneralSettingsEditForm;
 use MikoPBX\Common\Models\Codecs;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Core\System\Util;
 use Phalcon\Mvc\Model;
 
 class GeneralSettingsController extends BaseController
@@ -54,6 +55,21 @@ class GeneralSettingsController extends BaseController
             return;
         }
         $data        = $this->request->getPost();
+        $passwordCheckFail = [];
+        foreach (['SSHPassword', 'WebAdminPassword'] as $value){
+            if(isset($data[$value]) && Util::isSimplePassword($data[$value])){
+                $passwordCheckFail[] = $value;
+                $this->view->message = [
+                    'error' => $this->translation->_('gs_SetPasswordInfo')
+                ];
+            }
+        }
+        if(!empty($passwordCheckFail)){
+            $this->view->success = false;
+            $this->view->passwordCheckFail = $passwordCheckFail;
+            return;
+        }
+
         $pbxSettings = PbxSettings::getDefaultArrayValues();
         if(isset($data['SSHPassword'])){
             // Если отправили пароль по-умолчанию, то сделаем его хэш равным хэш пароля WEB

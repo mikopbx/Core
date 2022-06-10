@@ -77,13 +77,12 @@ class AdvicesProcessor extends Injectable
         $arrAdvicesTypes = [
             ['type' => 'isConnected', 'cacheTime' => 15],
             ['type' => 'checkCorruptedFiles', 'cacheTime' => 15],
-            ['type' => 'checkPasswords', 'cacheTime' => 15],
+            ['type' => 'checkPasswords', 'cacheTime' => 3],
             ['type' => 'checkFirewalls', 'cacheTime' => 15],
             ['type' => 'checkStorage', 'cacheTime' => 120],
             ['type' => 'checkUpdates', 'cacheTime' => 3600],
             ['type' => 'checkRegistration', 'cacheTime' => 86400],
         ];
-
         $managedCache = $this->getDI()->getShared(ManagedCacheProvider::SERVICE_NAME);
         $language = PbxSettings::getValueByKey('WebAdminLanguage');
 
@@ -116,6 +115,9 @@ class AdvicesProcessor extends Injectable
         foreach ($arrMessages as $message) {
             foreach ($message as $key => $value) {
                 if(is_array($value)){
+                    if(!isset($result[$key])){
+                        $result[$key] = [];
+                    }
                     $result[$key] = array_merge($result[$key], $value);
                 }elseif ( ! empty($value)) {
                     $result[$key][] = $value;
@@ -135,18 +137,21 @@ class AdvicesProcessor extends Injectable
      */
     private function checkPasswords(): array
     {
-        $messages           = [];
+        $messages           = [
+            'warning' => [],
+            'needUpdate' => []
+        ];
         $arrOfDefaultValues = PbxSettings::getDefaultArrayValues();
         $fields = [
             'WebAdminPassword'  => [
                 'url'  => 'general-settings/modify/#/passwords',
                 'type' => 'gs_WebPasswordFieldName',
-                'value'=> $arrOfDefaultValues['WebAdminPassword']
+                'value'=> PbxSettings::getValueByKey('WebAdminPassword')
             ],
             'SSHPassword'       => [
                 'url'  => 'general-settings/modify/#/ssh',
                 'type' => 'gs_SshPasswordFieldName',
-                'value'=> $arrOfDefaultValues['SSHPassword']
+                'value'=> PbxSettings::getValueByKey('SSHPassword')
             ],
         ];
         if ($arrOfDefaultValues['WebAdminPassword'] === PbxSettings::getValueByKey('WebAdminPassword')) {
@@ -155,6 +160,7 @@ class AdvicesProcessor extends Injectable
                 ['url' => $this->url->get('general-settings/modify/#/passwords')]
             );
             unset($fields['WebAdminPassword']);
+            $messages['needUpdate'][] = 'WebAdminPassword';
         }
         if ($arrOfDefaultValues['SSHPassword'] === PbxSettings::getValueByKey('SSHPassword')) {
             $messages['warning'][] = $this->translation->_(
@@ -162,6 +168,7 @@ class AdvicesProcessor extends Injectable
                 ['url' => $this->url->get('general-settings/modify/#/ssh')]
             );
             unset($fields['SSHPassword']);
+            $messages['needUpdate'][] = 'SSHPassword';
         }elseif(PbxSettings::getValueByKey('SSHPasswordHash') !== md5_file('/etc/passwd')){
             $messages['warning'][] = $this->translation->_(
                 'gs_SSHPPasswordCorrupt',
@@ -180,9 +187,13 @@ class AdvicesProcessor extends Injectable
                 'value'=> $peer['secret']
             ];
         }
-        foreach ($fields as $value){
+        foreach ($fields as $key => $value){
             if(!Util::isSimplePassword($value['value'])){
                 continue;
+            }
+
+            if(in_array($key, ['WebAdminPassword', 'SSHPassword'], true)){
+                $messages['needUpdate'][] = $key;
             }
             $messages['warning'][] = $this->translation->_(
                 'adv_isSimplePassword',

@@ -179,7 +179,7 @@ const Form = {
 				} else if (response.success
 						&& response.reload.length > 0) {
 					window.location = globalRootUrl + response.reload;
-				} else if (Form.enableDirrity) {
+				} else if (response.success && Form.enableDirrity) {
 					Form.initializeDirrity();
 				}
 				Form.$submitButton.removeClass('loading');
