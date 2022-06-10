@@ -79,7 +79,7 @@
         <!--/ CONNECTION DIMMER-->
         <!--  PASSWORD SECTION -->
         <div id='updatePasswordWindow' class="ui raised segment large modal">
-            <form method="post" onsubmit="return false" autoComplete="off">
+            <form method="post" onsubmit="return false">
                 <div class="ui form success">
                     <div class="ui icon negative message">
                       <i class="shield alternate icon"></i>
@@ -98,11 +98,16 @@
                         <div class="two fields">
                             <div class="field">
                                 <label>{{ t._("gs_WebAdminPassword") }}</label>
-                                <input type="password" id="WebAdminPassword" name="WebAdminPassword" autocomplete="none">
+                                <input type="password" id="WebAdminPassword" name="WebAdminPassword" >
+                                <div class="WebAdminPassword-score-section">
+                                    <div class="ui indicating tiny progress WebAdminPassword-score" data-percent="0">
+                                        <div class="bar" style="transition-duration: 300ms; width: 0%;"></div>
+                                    </div>
+                                </div>
                             </div>
                             <div class="field">
                                 <label>{{ t._("gs_WebAdminPasswordRepeat") }}</label>
-                                <input type="password" id="WebAdminPasswordRepeat" name="WebAdminPasswordRepeat" autocomplete="none">
+                                <input type="password" id="WebAdminPasswordRepeat" name="WebAdminPasswordRepeat">
                             </div>
                         </div>
                     </div>
@@ -112,11 +117,14 @@
                         <div class="two fields">
                             <div class="field">
                                 <label>{{ t._("gs_WebAdminPassword") }}</label>
-                                <input type="password" id="SSHPassword" name="SSHPassword" autocomplete="none">
+                                <input type="password" id="SSHPassword" name="SSHPassword">
                             </div>
                             <div class="field">
-                                <label>{{ t._("gs_SSHPasswordRepeat") }}</label>
-                                <input type="password" id="SSHPasswordRepeat" name="SSHPasswordRepeat" autocomplete="none">
+                                <div class="SSHPassword-score-section">
+                                    <div class="ui indicating tiny progress SSHPassword-score" data-percent="0">
+                                        <div class="bar" style="transition-duration: 300ms; width: 0%;"></div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

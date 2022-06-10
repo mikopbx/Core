@@ -229,6 +229,14 @@ class AssetProvider implements ServiceProviderInterface
                     true
                 )
                 ->addJs(
+                    'js/pbx/Security/check-passwords.js',
+                    true
+                )
+                ->addJs(
+                    'js/pbx/main/password-score.js',
+                    true
+                )
+                ->addJs(
                     'js/pbx/SendMetrics/send-metrics-index.js',
                     true
                 )
@@ -673,7 +681,6 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/SoundFiles/sound-files-selector.js', true)
                 ->addJs('js/pbx/SoundFiles/one-button-sound-player.js', true)
                 ->addJs('js/pbx/main/form.js', true)
-                ->addJs('js/pbx/main/password-score.js', true)
                 ->addJs(
                     'js/pbx/GeneralSettings/general-settings-modify.js',
                     true
