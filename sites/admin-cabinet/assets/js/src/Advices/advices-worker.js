@@ -51,8 +51,8 @@ const advicesWorker = {
 				errors+='<li>'+globalTranslate[`pass_Check${value}DontMatch`]+'</li>';
 			}else if(pass.trim() === ''){
 				errors+='<li>'+globalTranslate[`pass_Check${value}Empty`]+'</li>';
-				// }else if(advicesWorker.checkPasswordOk(webPass)){
-				// 	errors+=`<li>${globalTranslate['pass_Check${value}Simple']}</li>`;
+			}else if(advicesWorker.checkPasswordOk(pass)){
+				errors+=`<li>${globalTranslate['pass_Check${value}Simple']}</li>`;
 			}else{
 				params[value] = pass;
 			}
