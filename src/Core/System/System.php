@@ -297,8 +297,10 @@ class System extends Di\Injectable
      */
     public static function sslRehash(): void
     {
-        $certFile    = '/etc/ssl/certs/ca-certificates.crt';
-        $openSslPAth = Util::which('openssl');
+        $openSslPath = Util::which('openssl');
+        $cutPath     = Util::which('cut');
+        $openSslDir  = trim(shell_exec("$openSslPath version -d | $cutPath -d '\"' -f 2"));
+        $certFile    = "$openSslDir/certs/ca-certificates.crt";
         $tmpFile     = tempnam('/tmp', 'cert-');
         $rawData     = file_get_contents($certFile);
         $certs       = explode(PHP_EOL.PHP_EOL, $rawData);
@@ -307,8 +309,8 @@ class System extends Di\Injectable
                 continue;
             }
             file_put_contents($tmpFile, $cert);
-            $hash = trim(shell_exec("$openSslPAth x509 -subject_hash -noout -in '$tmpFile'"));
-            rename($tmpFile, "/etc/ssl/certs/$hash.0");
+            $hash = trim(shell_exec("$openSslPath x509 -subject_hash -noout -in '$tmpFile'"));
+            rename($tmpFile, "$openSslDir/certs/$hash.0");
         }
         if(file_exists($tmpFile)){
             unlink($tmpFile);
