@@ -164,7 +164,6 @@ class AssetProvider implements ServiceProviderInterface
             ->addCss('css/vendor/semantic/reset.min.css', true)
             ->addCss('css/vendor/semantic/transition.min.css', true)
             ->addCss('css/vendor/semantic/dropdown.min.css', true)
-            ->addCss('css/vendor/semantic/modal.min.css', true)
             ->addCss('css/vendor/semantic/checkbox.min.css', true);
 
         $this->headerCollectionJS
@@ -181,7 +180,6 @@ class AssetProvider implements ServiceProviderInterface
             ->addJs('js/vendor/semantic/popup.min.js', true)
             ->addJs('js/vendor/semantic/dropdown.min.js', true)
             ->addJs('js/vendor/semantic/transition.min.js', true)
-            ->addJs('js/vendor/semantic/modal.min.js', true)
             ->addJs('js/vendor/semantic/checkbox.min.js', true);
 
         // Если пользователь залогинился, сформируем необходимые CSS кеши
@@ -208,62 +206,19 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/vendor/semantic/tab.min.js', true);
 
             $this->footerCollectionJS
-                ->addJs(
-                    'js/pbx/main/config.js',
-                    true
-                )
-                ->addJs(
-                    'js/pbx/main/pbxapi.js',
-                    true
-                )
-                ->addJs(
-                    'js/pbx/main/connection-check-worker.js',
-                    true
-                )
-                ->addJs(
-                    'js/pbx/main/semantic-localization.js',
-                    true
-                )
-                ->addJs(
-                    'js/pbx/Advices/advices-worker.js',
-                    true
-                )
-                ->addJs(
-                    'js/pbx/Security/check-passwords.js',
-                    true
-                )
-                ->addJs(
-                    'js/pbx/main/password-score.js',
-                    true
-                )
-                ->addJs(
-                    'js/pbx/SendMetrics/send-metrics-index.js',
-                    true
-                )
-                ->addJs(
-                    'js/pbx/main/ssh-console.js',
-                    true
-                )
-                ->addJs(
-                    'js/pbx/main/delete-something.js',
-                    true
-                )
-                ->addJs(
-                    'js/pbx/main/user-message.js',
-                    true
-                )
-                ->addJs(
-                    'js/pbx/Extensions/extensions.js',
-                    true
-                )
-                ->addJs(
-                    'js/pbx/PbxExtensionModules/pbx-extension-menu-addition.js',
-                    true
-                )
-                ->addJs(
-                    'js/pbx/TopMenuSearch/top-menu-search.js',
-                    true
-                );
+                ->addJs('js/pbx/main/config.js', true)
+                ->addJs('js/pbx/main/pbxapi.js', true)
+                ->addJs('js/pbx/main/connection-check-worker.js', true)
+                ->addJs('js/pbx/main/semantic-localization.js', true)
+                ->addJs('js/pbx/Advices/advices-worker.js', true)
+                ->addJs('js/pbx/Security/check-passwords.js', true)
+                ->addJs('js/pbx/SendMetrics/send-metrics-index.js', true)
+                ->addJs('js/pbx/main/ssh-console.js', true)
+                ->addJs('js/pbx/main/delete-something.js', true)
+                ->addJs('js/pbx/main/user-message.js', true)
+                ->addJs('js/pbx/Extensions/extensions.js', true)
+                ->addJs('js/pbx/PbxExtensionModules/pbx-extension-menu-addition.js', true)
+                ->addJs('js/pbx/TopMenuSearch/top-menu-search.js', true);
 
             if ($moduleName === 'PBXExtension') {
                 $this->footerCollectionJS->addJs(
@@ -452,10 +407,12 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/Update/update-merging-worker.js', true)
                 ->addJs('js/pbx/Update/update-index.js', true);
             $this->semanticCollectionCSS
-                ->addCss('css/vendor/semantic/progress.min.css', true);
+                ->addCss('css/vendor/semantic/progress.min.css', true)
+                ->addCss('css/vendor/semantic/modal.min.css', true);
 
             $this->semanticCollectionJS
-                ->addJs('js/vendor/semantic/progress.min.js', true);
+                ->addJs('js/vendor/semantic/progress.min.js', true)
+                ->addJs('js/vendor/semantic/modal.min.js', true);
         }
     }
 
@@ -495,8 +452,11 @@ class AssetProvider implements ServiceProviderInterface
     {
         if ($action === 'index') {
             $this->semanticCollectionCSS
-                ->addCss('css/vendor/datatable/dataTables.semanticui.css', true);
+                ->addCss('css/vendor/datatable/dataTables.semanticui.css', true)
+                ->addCss('css/vendor/semantic/modal.min.css', true);
 
+            $this->semanticCollectionJS
+                ->addJs('js/vendor/semantic/modal.min.js', true);
             $this->footerCollectionJS
                 ->addJs('js/pbx/main/debugger-info.js', true)
                 ->addJs('js/vendor/datatable/dataTables.semanticui.js', true)
@@ -518,6 +478,7 @@ class AssetProvider implements ServiceProviderInterface
     private function makePbxExtensionModulesAssets(string $action): void
     {
         if ($action === 'index') {
+            $this->semanticCollectionJS->addJs('js/vendor/semantic/modal.min.js', true);
             $this->footerCollectionJS
                 ->addJs('js/pbx/Update/update-api.js', true)
                 ->addJs('js/vendor/datatable/dataTables.semanticui.js', true)
@@ -531,6 +492,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-add-new.js', true);
             $this->semanticCollectionCSS
                 ->addCss('css/vendor/datatable/dataTables.semanticui.min.css', true)
+                ->addCss('css/vendor/semantic/modal.min.css', true)
                 ->addCss('css/vendor/semantic/progress.min.css', true);
         } elseif ($action === 'modify') {
             $this->footerCollectionJS
@@ -681,6 +643,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/SoundFiles/sound-files-selector.js', true)
                 ->addJs('js/pbx/SoundFiles/one-button-sound-player.js', true)
                 ->addJs('js/pbx/main/form.js', true)
+                ->addJs('js/pbx/main/password-score.js', true)
                 ->addJs(
                     'js/pbx/GeneralSettings/general-settings-modify.js',
                     true

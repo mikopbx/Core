@@ -1,3 +1,14 @@
+{% for field in simplePasswords %}
+    {% if field === 'SSHPassword' %}
+       <div class="ui negative message">
+         <div class="header">
+           {{ t._('gs_SetPassword') }}
+         </div>
+         <p>{{ t._('gs_SetPasswordInfo') }}</p>
+       </div>
+    {% endif  %}
+{% endfor  %}
+
 <div class="field">
     <label>{{ t._('gs_SSHPort') }}</label>
     {{ form.render('SSHPort') }}
@@ -12,20 +23,20 @@
         {{ form.render('SSHPasswordRepeat') }}
     </div>
 </div>
-<div class="field disability">
-    <div class="ui segment">
-        <div class="ui toggle checkbox">
-            <label>{{ t._('gs_SSHDisablePasswordLogins') }}</label>
-            {{ form.render('SSHDisablePasswordLogins') }}
-        </div>
-    </div>
-</div>
 <div class="ssh-password-score-section">
     <div class="two fields">
         <div class="field">
             <div class="ui indicating tiny progress ssh-password-score">
                 <div class="bar"></div>
             </div>
+        </div>
+    </div>
+</div>
+<div class="field disability">
+    <div class="ui segment">
+        <div class="ui toggle checkbox">
+            <label>{{ t._('gs_SSHDisablePasswordLogins') }}</label>
+            {{ form.render('SSHDisablePasswordLogins') }}
         </div>
     </div>
 </div>

@@ -42,9 +42,20 @@ class GeneralSettingsController extends BaseController
         $pbxSettings            = PbxSettings::getAllPbxSettings();
         $this->view->form       = new GeneralSettingsEditForm(null, $pbxSettings);
         $this->view->submitMode = null;
+
+        $this->view->simplePasswords = $this->getSimplePasswords($pbxSettings);
     }
 
-
+    private function getSimplePasswords($data):array
+    {
+        $passwordCheckFail = [];
+        foreach (['SSHPassword', 'WebAdminPassword'] as $value){
+            if(isset($data[$value]) && Util::isSimplePassword($data[$value])){
+                $passwordCheckFail[] = $value;
+            }
+        }
+        return $passwordCheckFail;
+    }
 
     /**
      * Сохранение настроек системы
@@ -55,14 +66,11 @@ class GeneralSettingsController extends BaseController
             return;
         }
         $data        = $this->request->getPost();
-        $passwordCheckFail = [];
-        foreach (['SSHPassword', 'WebAdminPassword'] as $value){
-            if(isset($data[$value]) && Util::isSimplePassword($data[$value])){
-                $passwordCheckFail[] = $value;
-                $this->view->message = [
-                    'error' => $this->translation->_('gs_SetPasswordInfo')
-                ];
-            }
+        $passwordCheckFail = $this->getSimplePasswords($data);
+        if(!empty($passwordCheckFail)){
+            $this->view->message = [
+                'error' => $this->translation->_('gs_SetPasswordInfo')
+            ];
         }
         if(!empty($passwordCheckFail)){
             $this->view->success = false;

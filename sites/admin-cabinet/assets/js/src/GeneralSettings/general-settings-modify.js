@@ -17,7 +17,7 @@
  */
 
 
-/* global globalRootUrl,globalTranslate, Form, PasswordScore, PbxApi, UserMessage, SoundFilesSelector */
+/* global globalRootUrl,globalTranslate, Form, PasswordScore, PbxApi, UserMessage, SoundFilesSelector, $ */
 
 const generalSettingsModify = {
 	$dirrtyField: $('#dirrty'),
@@ -168,6 +168,9 @@ const generalSettingsModify = {
 		$('#general-settings-form .audio-message-select').dropdown(SoundFilesSelector.getDropdownSettingsWithEmpty());
 
 		generalSettingsModify.initializeForm();
+		$(window).on('GS-ActivateTab', (event, nameTab) => {
+			$('#general-settings-menu').find('.item').tab('change tab', nameTab);
+		});
 	},
 	checkDeleteAllConditions(){
 		const deleteAllInput = generalSettingsModify.$formObj.form('get value', 'deleteAllInput');

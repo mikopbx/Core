@@ -16,96 +16,31 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
+/* global $, globalTranslate, globalRootUrl */
 const checkPasswordWorker = {
+    generalSettingsUrl: `${globalRootUrl}general-settings/modify/`,
     initialize() {
         $(window).on('SecurityWarning', checkPasswordWorker.onWarning);
     },
     onWarning(event, data) {
-        let needShow = false;
-        $("#updatePasswordWindow div.miko-settings-container").hide();
+        let tab = '';
         $.each(data.needUpdate, (key, value) => {
-            $(`#updatePasswordWindow #${value}-container`).show();
-            needShow = true;
+            if('WebAdminPassword' === value){
+                tab = 'passwords';
+            }else if('SSHPassword' === value){
+                tab = 'ssh';
+            }
         });
-        if(needShow){
-            $('#updatePasswordWindow #savePassword').on('click', checkPasswordWorker.cbOnClickSavePassword);
-            let modalWindow = $('#updatePasswordWindow');
-            modalWindow.on('keyup', () => {
-                PasswordScore.checkPassStrength({
-                    pass: $(`#updatePasswordWindow #WebAdminPassword`).val(),
-                    bar: $('.WebAdminPassword-score'),
-                    section: modalWindow,
-                });
-                PasswordScore.checkPassStrength({
-                    pass: $(`#updatePasswordWindow #SSHPassword`).val(),
-                    bar: $('.SSHPassword'),
-                    section: modalWindow,
-                });
-            });
-            modalWindow.modal({ closable : false, }).modal('show')
+        if(tab === ''){
+            return;
         }
-    },
-
-    /**
-     * Отправка формы обновления паролей SSH и Web.
-     */
-    cbOnClickSavePassword(){
-        $('#updatePasswordWindowResult').hide();
-        let errors = '';
-        let params = {};
-        $.each(['WebAdminPassword', 'SSHPassword'], (key, value) => {
-            if(!$(`#updatePasswordWindow #${value}`).is(":visible")){
-                return;
-            }
-            let pass 	= $(`#updatePasswordWindow #${value}`).val();
-            let passRep 	= $(`#updatePasswordWindow #${value}Repeat`).val();
-            if( pass !== passRep){
-                errors+='<li>'+globalTranslate[`pass_Check${value}DontMatch`]+'</li>';
-            }else if(pass.trim() === ''){
-                errors+='<li>'+globalTranslate[`pass_Check${value}Empty`]+'</li>';
-            }else if(PasswordScore.scorePassword(pass) < 50){
-                errors+=`<li>${globalTranslate['pass_Check${value}Simple']}</li>`;
-            }else{
-                params[value] = pass;
-            }
-        });
-        if(errors.trim() !== ''){
-            errors = `<ul class="ui list">${errors}</ul>`;
-            checkPasswordWorker.showPasswordError(globalTranslate['pass_CheckWebPassErrorChange'], errors);
+        if(window.location.pathname !== checkPasswordWorker.generalSettingsUrl){
+            window.location.href = `${checkPasswordWorker.generalSettingsUrl}#/${tab}`;
         }else{
-            checkPasswordWorker.savePasswords(params);
+            $(window).trigger('GS-ActivateTab', [tab]);
         }
-    },
-    savePasswords(params){
-        $.post('/admin-cabinet/general-settings/save', params, function( data ) {
-            if(data.success === false){
-                let errors = '';
-                if(typeof data.passwordCheckFail !== 'undefined'){
-                    $.each(data.passwordCheckFail, (key, value) => {
-                        errors+='<li>'+globalTranslate[`pass_Check${value}Simple`]+'</li>';
-                    });
-                }else{
-                    errors+='<li>'+globalTranslate['er_InternalServerError']+'</li>';
-                }
-                if(errors.trim() !== ''){
-                    checkPasswordWorker.showPasswordError(globalTranslate['pass_CheckWebPassErrorChange'], errors);
-                }
-            }else{
-                $('#updatePasswordWindow').modal({ closable : false, }).modal('hide')
-                let event = document.createEvent('Event');
-                event.initEvent('ConfigDataChanged', false, true);
-                window.dispatchEvent(event);
-            }
-        });
-    },
-    showPasswordError(header, body){
-        $('#updatePasswordWindowResult div').html(header);
-        $('#updatePasswordWindowResult p').html(body);
-        $('#updatePasswordWindowResult').show();
     },
 };
-
-
 $(document).ready(() => {
     checkPasswordWorker.initialize();
 });
