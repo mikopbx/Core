@@ -131,6 +131,10 @@ class SystemLoader extends Di\Injectable
         $network->lanConfigure();
         $this->echoResultMsg();
 
+        $this->echoStartMsg(' - SSL rehash...');
+        System::sslRehash();
+        $this->echoResultMsg();
+
         $this->echoStartMsg(' - Configuring Firewall...');
         $firewall = new IptablesConf();
         $firewall->applyConfig();

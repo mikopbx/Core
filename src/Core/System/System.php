@@ -291,4 +291,27 @@ class System extends Di\Injectable
         return ($res1 === 0 && $res2 === 0);
     }
 
+    /**
+     * Вычисляет хэш сертификатов SSL и распаковывает их из ca-certificates.crt.
+     * @return void
+     */
+    public static function sslRehash(): void
+    {
+        $certFile    = '/etc/ssl/certs/ca-certificates.crt';
+        $openSslPAth = Util::which('openssl');
+        $tmpFile     = tempnam('/tmp', 'cert-');
+        $rawData     = file_get_contents($certFile);
+        $certs       = explode(PHP_EOL.PHP_EOL, $rawData);
+        foreach ($certs as $cert){
+            if(strpos($cert, '-----BEGIN CERTIFICATE-----') === false){
+                continue;
+            }
+            file_put_contents($tmpFile, $cert);
+            $hash = trim(shell_exec("$openSslPAth x509 -subject_hash -noout -in '$tmpFile'"));
+            rename($tmpFile, "/etc/ssl/certs/$hash.0");
+        }
+        if(file_exists($tmpFile)){
+            unlink($tmpFile);
+        }
+    }
 }
