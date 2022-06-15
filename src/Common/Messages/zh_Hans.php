@@ -1091,4 +1091,7 @@ return [
     'pass_CheckSSHPasswordDontMatch' => '输入的 SSH 密码不匹配',
     'pass_CheckSSHPasswordEmpty' => '字段为空：SSH',
     'pass_CheckSSHPasswordSimple' => 'SSH 的密码太简单了。',
+    'gs_PasswordNoNumbers' => '密码必须包含数字',
+    'gs_PasswordNoLowSimvol' => '密码必须包含小写字符',
+    'gs_PasswordNoUpperSimvol' => '密码必须包含大写字符',
 ];

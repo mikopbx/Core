@@ -1091,4 +1091,7 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'pass_CheckSSHPasswordDontMatch' => 'Zadaná hesla pro SSH se neshodují',
     'pass_CheckSSHPasswordEmpty' => 'Prázdné pole: SSH',
     'pass_CheckSSHPasswordSimple' => 'Heslo pro SSH je příliš jednoduché.',
+    'gs_PasswordNoNumbers' => 'Heslo musí obsahovat čísla',
+    'gs_PasswordNoLowSimvol' => 'Heslo musí obsahovat malá písmena',
+    'gs_PasswordNoUpperSimvol' => 'Heslo musí obsahovat velká písmena',
 ];

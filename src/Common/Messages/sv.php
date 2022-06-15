@@ -1091,4 +1091,7 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'pass_CheckSSHPasswordDontMatch' => 'De angivna lösenorden för SSH stämmer inte överens',
     'pass_CheckSSHPasswordEmpty' => 'Fält tomt: SSH',
     'pass_CheckSSHPasswordSimple' => 'Lösenordet för SSH är för enkelt.',
+    'gs_PasswordNoNumbers' => 'Lösenordet måste innehålla siffror',
+    'gs_PasswordNoLowSimvol' => 'Lösenordet måste innehålla gemener',
+    'gs_PasswordNoUpperSimvol' => 'Lösenordet måste innehålla versaler',
 ];

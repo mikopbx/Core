@@ -1091,4 +1091,7 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'pass_CheckSSHPasswordDontMatch' => 'Les mots de passe saisis pour SSH ne correspondent pas',
     'pass_CheckSSHPasswordEmpty' => 'Champ vide : SSH',
     'pass_CheckSSHPasswordSimple' => 'Le mot de passe pour SSH est trop simple.',
+    'gs_PasswordNoNumbers' => 'Le mot de passe doit contenir des chiffres',
+    'gs_PasswordNoLowSimvol' => 'Le mot de passe doit contenir des caractères minuscules',
+    'gs_PasswordNoUpperSimvol' => 'Le mot de passe doit contenir des caractères majuscules',
 ];

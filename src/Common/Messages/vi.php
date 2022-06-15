@@ -1091,4 +1091,7 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá đ
     'pass_CheckSSHPasswordDontMatch' => 'Mật khẩu đã nhập cho SSH không khớp',
     'pass_CheckSSHPasswordEmpty' => 'Trường trống: SSH',
     'pass_CheckSSHPasswordSimple' => 'Mật khẩu cho SSH quá đơn giản.',
+    'gs_PasswordNoNumbers' => 'Mật khẩu phải chứa số',
+    'gs_PasswordNoLowSimvol' => 'Mật khẩu phải chứa các ký tự viết thường',
+    'gs_PasswordNoUpperSimvol' => 'Mật khẩu phải chứa các ký tự viết hoa',
 ];

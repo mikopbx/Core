@@ -1091,4 +1091,7 @@ Se puede activar una vez, después de lo cual el cupón se canjea.
     'pass_CheckSSHPasswordDontMatch' => 'Las contraseñas ingresadas para SSH no coinciden',
     'pass_CheckSSHPasswordEmpty' => 'Campo vacío: SSH',
     'pass_CheckSSHPasswordSimple' => 'La contraseña para SSH es demasiado simple.',
+    'gs_PasswordNoNumbers' => 'La contraseña debe contener números',
+    'gs_PasswordNoLowSimvol' => 'La contraseña debe contener caracteres en minúscula',
+    'gs_PasswordNoUpperSimvol' => 'La contraseña debe contener caracteres en mayúscula',
 ];

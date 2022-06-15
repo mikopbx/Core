@@ -1091,4 +1091,7 @@ return [
     'pass_CheckSSHPasswordDontMatch' => '入力したSSHのパスワードが一致しません',
     'pass_CheckSSHPasswordEmpty' => '空のフィールド：SSH',
     'pass_CheckSSHPasswordSimple' => 'SSHのパスワードが単純すぎます。',
+    'gs_PasswordNoNumbers' => 'パスワードには数字が含まれている必要があります',
+    'gs_PasswordNoLowSimvol' => 'パスワードには小文字を含める必要があります',
+    'gs_PasswordNoUpperSimvol' => 'パスワードには大文字を含める必要があります',
 ];

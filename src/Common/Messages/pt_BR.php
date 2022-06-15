@@ -1076,4 +1076,7 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'pass_CheckSSHPasswordDontMatch' => 'As senhas inseridas para SSH não correspondem',
     'pass_CheckSSHPasswordEmpty' => 'Campo vazio: SSH',
     'pass_CheckSSHPasswordSimple' => 'A senha para SSH é muito simples.',
+    'gs_PasswordNoNumbers' => 'A senha deve conter números',
+    'gs_PasswordNoLowSimvol' => 'A senha deve conter caracteres minúsculos',
+    'gs_PasswordNoUpperSimvol' => 'A senha deve conter caracteres maiúsculos',
 ];
