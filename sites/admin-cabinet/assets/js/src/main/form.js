@@ -35,6 +35,7 @@ const Form = {
 	afterSubmitModifyUrl: '',
 	oldFormValues: [],
 	initialize() {
+		Form.$formObj.form.settings.rules.notRegExp = Form.notRegExpValidateRule;
 		if (Form.enableDirrity) Form.initializeDirrity();
 
 		Form.$submitButton.on('click', (e) => {
@@ -193,6 +194,16 @@ const Form = {
 
 		});
 	},
+
+	/**
+	 * Возвращщает ИСТИНА, если значение НЕ соответствует Regex.
+	 * @param value
+	 * @param regex
+	 * @returns {boolean}
+	 */
+	notRegExpValidateRule(value, regex){
+		return value.match(regex) !== null;
+	}
 };
 
 // export default Form;

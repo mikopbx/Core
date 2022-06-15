@@ -45,6 +45,21 @@ const generalSettingsModify = {
 					type: 'minLength[5]',
 					prompt: globalTranslate.gs_ValidateWeakWebPassword,
 				},
+				{
+					type   : 'notRegExp',
+					value  : /[a-z]/,
+					prompt : '<b>' + globalTranslate.gs_Passwords + '</b>: ' + globalTranslate.gs_PasswordNoLowSimvol
+				},
+				{
+					type   : 'notRegExp',
+					value  : /\d/,
+					prompt : '<b>' + globalTranslate.gs_Passwords + '</b>: ' + globalTranslate.gs_PasswordNoNumbers
+				},
+				{
+					type   : 'notRegExp',
+					value  : /[A-Z]/,
+					prompt : '<b>' + globalTranslate.gs_Passwords + '</b>: ' + globalTranslate.gs_PasswordNoUpperSimvol
+				}
 			],
 		},
 		WebAdminPasswordRepeat: {
@@ -67,6 +82,21 @@ const generalSettingsModify = {
 					type: 'minLength[5]',
 					prompt: globalTranslate.gs_ValidateWeakSSHPassword,
 				},
+				{
+					type   : 'notRegExp',
+					value  : /[a-z]/,
+					prompt : '<b>' + globalTranslate.gs_SSHPassword + '</b>: ' +globalTranslate.gs_PasswordNoLowSimvol
+				},
+				{
+					type   : 'notRegExp',
+					value  : /\d/,
+					prompt : '<b>' + globalTranslate.gs_SSHPassword + '</b>: ' + globalTranslate.gs_PasswordNoNumbers
+				},
+				{
+					type   : 'notRegExp',
+					value  : /[A-Z]/,
+					prompt :'<b>' +  globalTranslate.gs_SSHPassword + '</b>: ' +globalTranslate.gs_PasswordNoUpperSimvol
+				}
 			],
 		},
 		SSHPasswordRepeat: {
@@ -206,17 +236,19 @@ const generalSettingsModify = {
 	cbAfterSendForm(response) {
 		if(!response.success){
 			Form.$submitButton.removeClass('disabled');
+		}else{
+			$('.password-validate').remove();
 		}
 		generalSettingsModify.checkDeleteAllConditions();
 	},
 	initializeForm() {
-		Form.$formObj = generalSettingsModify.$formObj;
-		Form.url = `${globalRootUrl}general-settings/save`;
-		Form.validateRules = generalSettingsModify.validateRules;
-		Form.cbBeforeSendForm = generalSettingsModify.cbBeforeSendForm;
-		Form.cbAfterSendForm = generalSettingsModify.cbAfterSendForm;
+		Form.$formObj 			= generalSettingsModify.$formObj;
+		Form.url 				= `${globalRootUrl}general-settings/save`;
+		Form.validateRules 		= generalSettingsModify.validateRules;
+		Form.cbBeforeSendForm 	= generalSettingsModify.cbBeforeSendForm;
+		Form.cbAfterSendForm 	= generalSettingsModify.cbAfterSendForm;
 		Form.initialize();
-	},
+	}
 };
 
 $(document).ready(() => {

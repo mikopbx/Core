@@ -1,7 +1,7 @@
 
 {% for field in simplePasswords %}
     {% if field === 'WebAdminPassword' %}
-       <div class="ui negative message">
+       <div class="ui negative message password-validate">
          <div class="header">
            {{ t._('gs_SetPassword') }}
          </div>
