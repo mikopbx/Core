@@ -74,6 +74,7 @@ class CloudProvisioning
     private function updateSshPassword():void{
         $data = md5(time());
         $this->updatePbxSettings('SSHPassword', $data);
+        $this->updatePbxSettings('SSHDisablePasswordLogins', '1');
         $confSsh = new SSHConf();
         $confSsh->updateShellPassword();
     }
