@@ -35,7 +35,8 @@ const Form = {
 	afterSubmitModifyUrl: '',
 	oldFormValues: [],
 	initialize() {
-		Form.$formObj.form.settings.rules.notRegExp = Form.notRegExpValidateRule;
+		Form.$formObj.form.settings.rules.notRegExp 			 = Form.notRegExpValidateRule;
+		Form.$formObj.form.settings.rules.specialCharactersExist = Form.specialCharactersExistValidateRule;
 		if (Form.enableDirrity) Form.initializeDirrity();
 
 		Form.$submitButton.on('click', (e) => {
@@ -203,6 +204,15 @@ const Form = {
 	 */
 	notRegExpValidateRule(value, regex){
 		return value.match(regex) !== null;
+	},
+
+	/**
+	 * Возвращщает ИСТИНА, если значение содержит спецсимволы.
+	 * @param value
+	 * @returns {boolean}
+	 */
+	specialCharactersExistValidateRule(value){
+		return value.match(/[()$^;#"><,.%№@!+=_]/) === null;
 	}
 };
 

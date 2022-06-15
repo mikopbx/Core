@@ -83,6 +83,10 @@ const extension = {
 					type: 'empty',
 					prompt: globalTranslate.ex_ValidateUsernameEmpty,
 				},
+				{
+					type: 'specialCharactersExist',
+					prompt : globalTranslate.ex_ValidateUsernameSpecialCharacters
+				}
 			],
 		},
 		sip_secret: {
@@ -91,6 +95,20 @@ const extension = {
 				{
 					type: 'empty',
 					prompt: globalTranslate.ex_ValidateSecretEmpty,
+				},
+				{
+					type: 'minLength[5]',
+					prompt: globalTranslate.ex_ValidateSecretWeak,
+				},
+				{
+					type   : 'notRegExp',
+					value  : /[A-z]/,
+					prompt : globalTranslate.ex_PasswordNoLowSimvol
+				},
+				{
+					type   : 'notRegExp',
+					value  : /\d/,
+					prompt : globalTranslate.ex_PasswordNoNumbers
 				},
 			],
 		},
