@@ -51,7 +51,7 @@ class UpdateConfigsUpToVer100 extends Injectable implements UpgradeSystemConfigI
             $manager->save();
         }
         $generalConfig = new MikoPBXConfig();
-        $newPasswordSsh = md5(''.$now.'ssh'.$manager->id);
+        $newPasswordSsh = md5(''.$now.'ssh'.$now);
         $generalConfig->setGeneralSettings('SSHPassword', $newPasswordSsh);
         $generalConfig->setGeneralSettings('SSHPasswordHashString', md5($newPasswordSsh));
         $generalConfig->setGeneralSettings('SSHDisablePasswordLogins', '1');
