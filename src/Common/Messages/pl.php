@@ -1091,4 +1091,7 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'pass_CheckSSHPasswordDontMatch' => 'Wprowadzone hasła dla SSH nie pasują',
     'pass_CheckSSHPasswordEmpty' => 'Pole puste: SSH',
     'pass_CheckSSHPasswordSimple' => 'Hasło do SSH jest zbyt proste.',
+    'gs_PasswordNoNumbers' => 'Hasło musi zawierać cyfry',
+    'gs_PasswordNoLowSimvol' => 'Hasło musi zawierać małe litery',
+    'gs_PasswordNoUpperSimvol' => 'Hasło musi zawierać wielkie litery',
 ];

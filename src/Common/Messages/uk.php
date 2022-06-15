@@ -1091,4 +1091,7 @@ return [
     'pass_CheckWebPassErrorChange' => 'Не вдалося змінити пароль',
     'pass_CheckSSHPasswordDontMatch' => 'Введені паролі для SSH не співпадають',
     'pass_CheckSSHPasswordSimple' => 'Пароль для SSH дуже простий.',
+    'gs_PasswordNoNumbers' => 'Пароль повинен містити цифри',
+    'gs_PasswordNoLowSimvol' => 'Пароль повинен містити символи нижнього регістру',
+    'gs_PasswordNoUpperSimvol' => 'Пароль повинен містити символи верхнього регістру',
 ];

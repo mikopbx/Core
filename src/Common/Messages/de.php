@@ -1094,4 +1094,7 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
     'pass_CheckSSHPasswordSimple' => 'Das Passwort für SSH ist zu einfach.',
     'gs_SetPasswordInfo' => 'Das Passwort ist zu einfach. Das neue Passwort muss Zahlen, Klein- und Großbuchstaben enthalten.',
     'pass_CheckWebAdminPasswordSimple' => 'Das WEB-Passwort ist zu einfach.',
+    'gs_PasswordNoNumbers' => 'Das Passwort muss Zahlen enthalten',
+    'gs_PasswordNoLowSimvol' => 'Das Passwort muss Kleinbuchstaben enthalten',
+    'gs_PasswordNoUpperSimvol' => 'Das Passwort muss Großbuchstaben enthalten',
 ];

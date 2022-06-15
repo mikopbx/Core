@@ -1094,4 +1094,7 @@ It can be activated once, after which the coupon becomes redeemed.
     'pass_CheckSSHPasswordSimple' => 'The password for SSH is too simple.',
     'gs_PasswordSimple' => 'The password being set is too simple.',
     'gs_SetPasswordInfo' => 'The password is too simple. The new password must contain numbers, lower and upper case letters.',
+    'gs_PasswordNoNumbers' => 'Password must contain numbers',
+    'gs_PasswordNoLowSimvol' => 'Password must contain lowercase characters',
+    'gs_PasswordNoUpperSimvol' => 'Password must contain uppercase characters',
 ];

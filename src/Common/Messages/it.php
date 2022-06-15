@@ -1091,4 +1091,7 @@ Può essere attivato una volta, dopo di che il coupon viene riscattato.
     'gs_SetPasswordInfo' => 'La password è troppo semplice. La nuova password deve contenere numeri, lettere minuscole e maiuscole.',
     'pass_CheckSSHPasswordEmpty' => 'Campo vuoto: SSH',
     'pass_CheckSSHPasswordSimple' => 'La password per SSH è troppo semplice.',
+    'gs_PasswordNoNumbers' => 'La password deve contenere numeri',
+    'gs_PasswordNoLowSimvol' => 'La password deve contenere caratteri minuscoli',
+    'gs_PasswordNoUpperSimvol' => 'La password deve contenere caratteri maiuscoli',
 ];

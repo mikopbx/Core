@@ -1091,4 +1091,7 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
     'pass_CheckSSHPasswordDontMatch' => 'SSH için girilen şifreler eşleşmiyor',
     'pass_CheckSSHPasswordEmpty' => 'Alan boş: SSH',
     'pass_CheckSSHPasswordSimple' => 'SSH şifresi çok basit.',
+    'gs_PasswordNoNumbers' => 'Şifre sayılar içermelidir',
+    'gs_PasswordNoLowSimvol' => 'Şifre küçük harfli karakterler içermelidir',
+    'gs_PasswordNoUpperSimvol' => 'Şifre büyük harf içermelidir',
 ];

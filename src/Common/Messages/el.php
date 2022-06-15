@@ -1091,4 +1091,7 @@ return [
     'pass_CheckWebPassErrorChange' => 'Αποτυχία αλλαγής κωδικού πρόσβασης',
     'pass_CheckSSHPasswordDontMatch' => 'Οι εισαγόμενοι κωδικοί πρόσβασης για το SSH δεν ταιριάζουν',
     'pass_CheckSSHPasswordSimple' => 'Ο κωδικός πρόσβασης για το SSH είναι πολύ απλός.',
+    'gs_PasswordNoNumbers' => 'Ο κωδικός πρόσβασης πρέπει να περιέχει αριθμούς',
+    'gs_PasswordNoLowSimvol' => 'Ο κωδικός πρόσβασης πρέπει να περιέχει πεζούς χαρακτήρες',
+    'gs_PasswordNoUpperSimvol' => 'Ο κωδικός πρόσβασης πρέπει να περιέχει κεφαλαίους χαρακτήρες',
 ];

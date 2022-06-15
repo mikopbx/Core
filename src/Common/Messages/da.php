@@ -1091,4 +1091,7 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'pass_CheckWebPassErrorChange' => 'Kunne ikke ændre adgangskoden',
     'pass_CheckSSHPasswordDontMatch' => 'De indtastede adgangskoder til SSH stemmer ikke overens',
     'pass_CheckSSHPasswordSimple' => 'Adgangskoden til SSH er for enkel.',
+    'gs_PasswordNoNumbers' => 'Adgangskoden skal indeholde tal',
+    'gs_PasswordNoLowSimvol' => 'Adgangskoden skal indeholde små bogstaver',
+    'gs_PasswordNoUpperSimvol' => 'Adgangskoden skal indeholde store bogstaver',
 ];
