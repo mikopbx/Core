@@ -164,6 +164,7 @@ class CloudProvisioning
         $extIp= $data['networkInterfaces'][0]['accessConfigs'][0]['externalIp']??'';
         $this->updateLanSettings($hostname, $extIp);
         $this->updateSshPassword();
+        $this->updateWebPassword($data['id']??'');
         return true;
     }
 
