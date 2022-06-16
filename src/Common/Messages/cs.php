@@ -1094,4 +1094,8 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'gs_PasswordNoNumbers' => 'Heslo musí obsahovat čísla',
     'gs_PasswordNoLowSimvol' => 'Heslo musí obsahovat malá písmena',
     'gs_PasswordNoUpperSimvol' => 'Heslo musí obsahovat velká písmena',
+    'ex_ValidateUsernameSpecialCharacters' => 'Celé jméno nesmí obsahovat speciální znaky',
+    'ex_ValidateSecretWeak' => 'Heslo SIP musí být delší než 4 znaky',
+    'ex_PasswordNoLowSimvol' => 'Heslo musí obsahovat písmena',
+    'ex_PasswordNoNumbers' => 'Heslo musí obsahovat čísla',
 ];

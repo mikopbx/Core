@@ -1094,4 +1094,8 @@ return [
     'gs_PasswordNoNumbers' => '密码必须包含数字',
     'gs_PasswordNoLowSimvol' => '密码必须包含小写字符',
     'gs_PasswordNoUpperSimvol' => '密码必须包含大写字符',
+    'ex_ValidateUsernameSpecialCharacters' => '全名不得包含特殊字符',
+    'ex_ValidateSecretWeak' => 'SIP 密码必须超过 4 个字符',
+    'ex_PasswordNoLowSimvol' => '密码必须包含字母',
+    'ex_PasswordNoNumbers' => '密码必须包含数字',
 ];

@@ -1094,4 +1094,8 @@ Se puede activar una vez, después de lo cual el cupón se canjea.
     'gs_PasswordNoNumbers' => 'La contraseña debe contener números',
     'gs_PasswordNoLowSimvol' => 'La contraseña debe contener caracteres en minúscula',
     'gs_PasswordNoUpperSimvol' => 'La contraseña debe contener caracteres en mayúscula',
+    'ex_PasswordNoNumbers' => 'La contraseña debe contener números',
+    'ex_ValidateUsernameSpecialCharacters' => 'El nombre completo no debe contener caracteres especiales',
+    'ex_ValidateSecretWeak' => 'La contraseña SIP debe tener más de 4 caracteres',
+    'ex_PasswordNoLowSimvol' => 'La contraseña debe contener letras',
 ];

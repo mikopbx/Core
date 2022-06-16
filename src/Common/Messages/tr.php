@@ -1094,4 +1094,8 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
     'gs_PasswordNoNumbers' => 'Şifre sayılar içermelidir',
     'gs_PasswordNoLowSimvol' => 'Şifre küçük harfli karakterler içermelidir',
     'gs_PasswordNoUpperSimvol' => 'Şifre büyük harf içermelidir',
+    'ex_ValidateUsernameSpecialCharacters' => 'Tam ad özel karakterler içermemelidir',
+    'ex_ValidateSecretWeak' => 'SIP şifresi 4 karakterden uzun olmalıdır',
+    'ex_PasswordNoLowSimvol' => 'Şifre harf içermelidir',
+    'ex_PasswordNoNumbers' => 'Şifre sayılar içermelidir',
 ];

@@ -1094,4 +1094,8 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'gs_PasswordNoNumbers' => 'Le mot de passe doit contenir des chiffres',
     'gs_PasswordNoLowSimvol' => 'Le mot de passe doit contenir des caractères minuscules',
     'gs_PasswordNoUpperSimvol' => 'Le mot de passe doit contenir des caractères majuscules',
+    'ex_ValidateUsernameSpecialCharacters' => 'Le nom complet ne doit pas contenir de caractères spéciaux',
+    'ex_ValidateSecretWeak' => 'Le mot de passe SIP doit comporter plus de 4 caractères',
+    'ex_PasswordNoLowSimvol' => 'Le mot de passe doit contenir des lettres',
+    'ex_PasswordNoNumbers' => 'Le mot de passe doit contenir des chiffres',
 ];

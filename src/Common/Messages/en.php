@@ -1097,4 +1097,8 @@ It can be activated once, after which the coupon becomes redeemed.
     'gs_PasswordNoNumbers' => 'Password must contain numbers',
     'gs_PasswordNoLowSimvol' => 'Password must contain lowercase characters',
     'gs_PasswordNoUpperSimvol' => 'Password must contain uppercase characters',
+    'ex_ValidateSecretWeak' => 'SIP password must be longer than 4 characters',
+    'ex_PasswordNoLowSimvol' => 'Password must contain letters',
+    'ex_PasswordNoNumbers' => 'Password must contain numbers',
+    'ex_ValidateUsernameSpecialCharacters' => 'Full name must not contain special characters',
 ];

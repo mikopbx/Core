@@ -1097,4 +1097,8 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
     'gs_PasswordNoNumbers' => 'Das Passwort muss Zahlen enthalten',
     'gs_PasswordNoLowSimvol' => 'Das Passwort muss Kleinbuchstaben enthalten',
     'gs_PasswordNoUpperSimvol' => 'Das Passwort muss Großbuchstaben enthalten',
+    'ex_ValidateUsernameSpecialCharacters' => 'Vollständiger Name darf keine Sonderzeichen enthalten',
+    'ex_ValidateSecretWeak' => 'Das SIP-Passwort muss länger als 4 Zeichen sein',
+    'ex_PasswordNoLowSimvol' => 'Das Passwort muss Buchstaben enthalten',
+    'ex_PasswordNoNumbers' => 'Das Passwort muss Zahlen enthalten',
 ];

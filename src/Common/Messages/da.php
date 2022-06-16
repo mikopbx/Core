@@ -1094,4 +1094,8 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'gs_PasswordNoNumbers' => 'Adgangskoden skal indeholde tal',
     'gs_PasswordNoLowSimvol' => 'Adgangskoden skal indeholde små bogstaver',
     'gs_PasswordNoUpperSimvol' => 'Adgangskoden skal indeholde store bogstaver',
+    'ex_ValidateUsernameSpecialCharacters' => 'Fulde navn må ikke indeholde specialtegn',
+    'ex_ValidateSecretWeak' => 'SIP-adgangskode skal være længere end 4 tegn',
+    'ex_PasswordNoNumbers' => 'Adgangskoden skal indeholde tal',
+    'ex_PasswordNoLowSimvol' => 'Adgangskoden skal indeholde bogstaver',
 ];
