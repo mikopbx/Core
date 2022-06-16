@@ -218,25 +218,22 @@ class CloudProvisioning
         $this->updateLanSettings($hostname, $extIp);
         $this->updateSshPassword();
 
-        [$webLogin]  = explode('.', $hostname);
         $webPassword = $this->getMetaDataMCS('instance-id');
-        $this->updateWebPassword($webLogin, $webPassword);
+        $this->updateWebPassword($webPassword);
 
         return true;
     }
 
     /**
      * Устанавливает пароль к web интерфейсу исходя из имени инстанса и его идентификатора.
-     * @param $webLogin
      * @param $webPassword
      * @return void
      */
-    private function updateWebPassword($webLogin, $webPassword):void
+    private function updateWebPassword($webPassword):void
     {
-        if(empty($webLogin) || empty($webPassword)){
+        if(empty($webPassword)){
             return;
         }
-        $this->updatePbxSettings('WebAdminLogin',   $webLogin);
         $this->updatePbxSettings('WebAdminPassword',$webPassword);
     }
 
