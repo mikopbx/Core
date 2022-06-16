@@ -201,11 +201,10 @@ class CloudProvisioning
      */
     public function mcsProvisioning():bool
     {
-        $result = false;
         // Имя сервера.
         $hostname = $this->getMetaDataMCS('hostname');
         if(empty($hostname)){
-            return $result;
+            return false;
         }
         $extIp    = $this->getMetaDataMCS('public-ipv4');
         // Получим ключи ssh.
@@ -218,7 +217,27 @@ class CloudProvisioning
         $this->updateSSHKeys($sshKey);
         $this->updateLanSettings($hostname, $extIp);
         $this->updateSshPassword();
+
+        [$webLogin]  = explode('.', $hostname);
+        $webPassword = $this->getMetaDataMCS('instance-id');
+        $this->updateWebPassword($webLogin, $webPassword);
+
         return true;
+    }
+
+    /**
+     * Устанавливает пароль к web интерфейсу исходя из имени инстанса и его идентификатора.
+     * @param $webLogin
+     * @param $webPassword
+     * @return void
+     */
+    private function updateWebPassword($webLogin, $webPassword):void
+    {
+        if(empty($webLogin) || empty($webPassword)){
+            return;
+        }
+        $this->updatePbxSettings('WebAdminLogin',   $webLogin);
+        $this->updatePbxSettings('WebAdminPassword',$webPassword);
     }
 
     /**
