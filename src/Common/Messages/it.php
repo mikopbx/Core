@@ -1094,4 +1094,8 @@ Può essere attivato una volta, dopo di che il coupon viene riscattato.
     'gs_PasswordNoNumbers' => 'La password deve contenere numeri',
     'gs_PasswordNoLowSimvol' => 'La password deve contenere caratteri minuscoli',
     'gs_PasswordNoUpperSimvol' => 'La password deve contenere caratteri maiuscoli',
+    'ex_ValidateUsernameSpecialCharacters' => 'Il nome completo non deve contenere caratteri speciali',
+    'ex_ValidateSecretWeak' => 'La password SIP deve essere più lunga di 4 caratteri',
+    'ex_PasswordNoLowSimvol' => 'La password deve contenere lettere',
+    'ex_PasswordNoNumbers' => 'La password deve contenere numeri',
 ];

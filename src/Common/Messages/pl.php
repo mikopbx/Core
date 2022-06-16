@@ -1094,4 +1094,8 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'gs_PasswordNoNumbers' => 'Hasło musi zawierać cyfry',
     'gs_PasswordNoLowSimvol' => 'Hasło musi zawierać małe litery',
     'gs_PasswordNoUpperSimvol' => 'Hasło musi zawierać wielkie litery',
+    'ex_PasswordNoNumbers' => 'Hasło musi zawierać cyfry',
+    'ex_ValidateUsernameSpecialCharacters' => 'Imię i nazwisko nie mogą zawierać znaków specjalnych',
+    'ex_ValidateSecretWeak' => 'Hasło SIP musi być dłuższe niż 4 znaki',
+    'ex_PasswordNoLowSimvol' => 'Hasło musi zawierać litery',
 ];

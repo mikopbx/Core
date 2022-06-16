@@ -1094,4 +1094,8 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'gs_PasswordNoNumbers' => 'A senha deve conter números',
     'gs_PasswordNoLowSimvol' => 'A senha deve conter caracteres minúsculos',
     'gs_PasswordNoUpperSimvol' => 'A senha deve conter caracteres maiúsculos',
+    'ex_PasswordNoNumbers' => 'A senha deve conter números',
+    'ex_ValidateUsernameSpecialCharacters' => 'O nome completo não deve conter caracteres especiais',
+    'ex_ValidateSecretWeak' => 'A senha SIP deve ter mais de 4 caracteres',
+    'ex_PasswordNoLowSimvol' => 'A senha deve conter letras',
 ];

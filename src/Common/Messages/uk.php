@@ -1094,4 +1094,8 @@ return [
     'gs_PasswordNoNumbers' => 'Пароль повинен містити цифри',
     'gs_PasswordNoLowSimvol' => 'Пароль повинен містити символи нижнього регістру',
     'gs_PasswordNoUpperSimvol' => 'Пароль повинен містити символи верхнього регістру',
+    'ex_PasswordNoLowSimvol' => 'Пароль повинен містити літери',
+    'ex_PasswordNoNumbers' => 'Пароль повинен містити цифри',
+    'ex_ValidateUsernameSpecialCharacters' => 'ПІБ не повинно містити спецсимволи',
+    'ex_ValidateSecretWeak' => 'Пароль SIP повинен бути довшим за 4 символи',
 ];

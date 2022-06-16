@@ -1094,4 +1094,8 @@ return [
     'gs_PasswordNoNumbers' => 'パスワードには数字が含まれている必要があります',
     'gs_PasswordNoLowSimvol' => 'パスワードには小文字を含める必要があります',
     'gs_PasswordNoUpperSimvol' => 'パスワードには大文字を含める必要があります',
+    'ex_ValidateUsernameSpecialCharacters' => 'フルネームに特殊文字を含めることはできません',
+    'ex_ValidateSecretWeak' => 'SIPパスワードは4文字より長くする必要があります',
+    'ex_PasswordNoLowSimvol' => 'パスワードには文字が含まれている必要があります',
+    'ex_PasswordNoNumbers' => 'パスワードには数字が含まれている必要があります',
 ];

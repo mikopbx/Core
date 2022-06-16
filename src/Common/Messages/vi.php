@@ -1094,4 +1094,8 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá đ
     'gs_PasswordNoNumbers' => 'Mật khẩu phải chứa số',
     'gs_PasswordNoLowSimvol' => 'Mật khẩu phải chứa các ký tự viết thường',
     'gs_PasswordNoUpperSimvol' => 'Mật khẩu phải chứa các ký tự viết hoa',
+    'ex_ValidateUsernameSpecialCharacters' => 'Tên đầy đủ không được chứa các ký tự đặc biệt',
+    'ex_ValidateSecretWeak' => 'Mật khẩu SIP phải dài hơn 4 ký tự',
+    'ex_PasswordNoLowSimvol' => 'Mật khẩu phải chứa các chữ cái',
+    'ex_PasswordNoNumbers' => 'Mật khẩu phải chứa số',
 ];

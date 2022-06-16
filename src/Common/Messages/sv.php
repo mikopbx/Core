@@ -1094,4 +1094,8 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'gs_PasswordNoNumbers' => 'Lösenordet måste innehålla siffror',
     'gs_PasswordNoLowSimvol' => 'Lösenordet måste innehålla gemener',
     'gs_PasswordNoUpperSimvol' => 'Lösenordet måste innehålla versaler',
+    'ex_ValidateUsernameSpecialCharacters' => 'Fullständigt namn får inte innehålla specialtecken',
+    'ex_ValidateSecretWeak' => 'SIP-lösenordet måste vara längre än 4 tecken',
+    'ex_PasswordNoLowSimvol' => 'Lösenordet måste innehålla bokstäver',
+    'ex_PasswordNoNumbers' => 'Lösenordet måste innehålla siffror',
 ];

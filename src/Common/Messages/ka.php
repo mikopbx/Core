@@ -1094,4 +1094,8 @@ return [
     'gs_PasswordNoNumbers' => 'პაროლი უნდა შეიცავდეს ნომრებს',
     'gs_PasswordNoLowSimvol' => 'პაროლი უნდა შეიცავდეს მცირე ასოებს',
     'gs_PasswordNoUpperSimvol' => 'პაროლი უნდა შეიცავდეს დიდ ასოებს',
+    'ex_ValidateUsernameSpecialCharacters' => 'სრული სახელი არ უნდა შეიცავდეს სპეციალურ სიმბოლოებს',
+    'ex_ValidateSecretWeak' => 'SIP პაროლი უნდა იყოს 4 სიმბოლოზე მეტი',
+    'ex_PasswordNoNumbers' => 'პაროლი უნდა შეიცავდეს ნომრებს',
+    'ex_PasswordNoLowSimvol' => 'პაროლი უნდა შეიცავდეს ასოებს',
 ];
