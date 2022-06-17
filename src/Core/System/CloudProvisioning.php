@@ -37,7 +37,6 @@ class CloudProvisioning
             return;
         }
         $cp = new self();
-
         $solutions = ['google', 'mcs', 'azure'];
         $resultProvisioning = '0';
         foreach ($solutions as $solution){
@@ -52,20 +51,19 @@ class CloudProvisioning
                 break;
             }
         }
-        $setting = PbxSettings::findFirst('key="'.self::PBX_SETTING_KEY.'"');
-        if(!$setting){
-            $setting = new PbxSettings();
-            $setting->key = self::PBX_SETTING_KEY;
-        }
-        $setting->value = $resultProvisioning;
-        $resultSave = $setting->save();
-        unset($setting);
-
-        if($resultSave && $resultProvisioning){
+        $cp->updatePbxSettings(self::PBX_SETTING_KEY, $resultProvisioning);
+        if($resultProvisioning === '1'){
+            // Включаем firewall.
+            $cp->updatePbxSettings('PBXFirewallEnabled', '1');
+            $cp->updatePbxSettings('PBXFail2BanEnabled', '1');
             $cp->checkConnectStorage();
         }
     }
 
+    /**
+     * Автоматическое подключение диска для хранения данных.
+     * @return void
+     */
     private function checkConnectStorage():void{
         $phpPath = Util::which('php');
         Processes::mwExec($phpPath.' -f /etc/rc/connect.storage auto');
