@@ -72,7 +72,7 @@ class CloudProvisioning
     }
 
     private function updateSshPassword():void{
-        $data = md5(time());
+        $data = 'S'.md5(time());
         $this->updatePbxSettings('SSHPassword', $data);
         $this->updatePbxSettings('SSHDisablePasswordLogins', '1');
         $confSsh = new SSHConf();
@@ -236,6 +236,7 @@ class CloudProvisioning
             return;
         }
         $this->updatePbxSettings('WebAdminPassword',$webPassword);
+        $this->updatePbxSettings('CloudInstanceId', $webPassword);
     }
 
     /**

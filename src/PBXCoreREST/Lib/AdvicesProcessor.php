@@ -187,8 +187,10 @@ class AdvicesProcessor extends Injectable
                 'value'=> $peer['secret']
             ];
         }
+
+        $cloudInstanceId = PbxSettings::getValueByKey('CloudInstanceId');
         foreach ($fields as $key => $value){
-            if(!Util::isSimplePassword($value['value'])){
+            if($cloudInstanceId !== $value['value'] && !Util::isSimplePassword($value['value'])){
                 continue;
             }
 
