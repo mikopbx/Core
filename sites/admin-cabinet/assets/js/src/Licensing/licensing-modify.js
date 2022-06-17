@@ -92,6 +92,14 @@ const licensingModify = {
 		},
 	},
 	initialize() {
+		licensingModify.$licensingMenu.tab({
+			historyType: 'hash',
+		});
+		if($('#filled-license-key-info').length === 0){
+			licensingModify.$licensingMenu.tab('change tab', 'management');
+			// Нет интернет на станции. Форма не отрисована.
+			return;
+		}
 		licensingModify.$accordions.accordion();
 		licensingModify.$licenseDetailInfo.hide();
 		licensingModify.$coupon.inputmask('MIKOUPD-*****-*****-*****-*****', {
@@ -105,10 +113,6 @@ const licensingModify = {
 		});
 		licensingModify.$email.inputmask('email');
 		licensingModify.defaultLicenseKey = licensingModify.$licKey.val();
-
-		licensingModify.$licensingMenu.tab({
-			historyType: 'hash',
-		});
 
 		licensingModify.$resetButton.on('click',()=>{
 			licensingModify.$formObj.addClass('loading disabled');
