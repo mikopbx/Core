@@ -23,11 +23,9 @@ use MikoPBX\AdminCabinet\Forms\GeneralSettingsEditForm;
 use MikoPBX\Common\Models\Codecs;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Util;
-use Phalcon\Mvc\Model;
 
 class GeneralSettingsController extends BaseController
 {
-
     /**
      * Builds general settings form
      */
@@ -130,7 +128,6 @@ class GeneralSettingsController extends BaseController
                 if ($record === null) {
                     $record        = new PbxSettings();
                     $record->key   = $key;
-                    $record->value = $newValue;
                 } elseif ($record->key === $key
                     && $record->value === $newValue) {
                     continue;
