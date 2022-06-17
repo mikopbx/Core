@@ -49,8 +49,12 @@ class GeneralSettingsController extends BaseController
     private function getSimplePasswords($data):array
     {
         $passwordCheckFail = [];
+        $CloudInstanceId = $data['CloudInstanceId']??'';
         foreach (['SSHPassword', 'WebAdminPassword'] as $value){
-            if(isset($data[$value]) && Util::isSimplePassword($data[$value])){
+            if( !isset($data[$value]) ){
+                continue;
+            }
+            if($CloudInstanceId === $data[$value] || Util::isSimplePassword($data[$value])){
                 $passwordCheckFail[] = $value;
             }
         }
