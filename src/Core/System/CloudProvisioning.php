@@ -141,7 +141,7 @@ class CloudProvisioning
     }
 
     /**
-     * Настройка машины для Google Cloud.
+     * Настройка машины для Google Cloud / Yandex Cloud.
      */
     public function googleProvisioning():bool
     {
@@ -175,7 +175,7 @@ class CloudProvisioning
         $headers = [];
         $params  = [];
         $options = [
-            'timeout' => 10,
+            'timeout' => self::HTTP_TIMEOUT,
             'http_errors' => false,
             'headers' => $headers
         ];
