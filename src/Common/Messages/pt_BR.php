@@ -1083,4 +1083,8 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'ex_PasswordNoLowSimvol' => 'A senha deve conter letras',
     'ex_PasswordNoNumbers' => 'A senha deve conter números',
     'ex_ValidateUsernameSpecialCharacters' => 'O nome completo não deve conter caracteres especiais',
+    'lic_NoInetHeader' => 'Sem acesso ao servidor de licenças.',
+    'lic_NoInet' => 'Talvez não haja acesso à Internet do servidor MikoPBX',
+    'lic_NoInetLicMiko' => 'Talvez acesso restrito ao recurso <b>lic.miko.ru</b>',
+    'lic_NoInetNetSettings' => "Verifique as configurações de <b>DNS</b> e <b>Gateway</b> nas configurações de <a href='/admin-cabinet/network/modify/'>rede</a>",
 ];

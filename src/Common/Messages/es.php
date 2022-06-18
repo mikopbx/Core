@@ -1098,4 +1098,8 @@ Se puede activar una vez, después de lo cual el cupón se canjea.
     'ex_ValidateUsernameSpecialCharacters' => 'El nombre completo no debe contener caracteres especiales',
     'ex_ValidateSecretWeak' => 'La contraseña SIP debe tener más de 4 caracteres',
     'ex_PasswordNoLowSimvol' => 'La contraseña debe contener letras',
+    'lic_NoInetHeader' => 'Sin acceso al servidor de licencias.',
+    'lic_NoInet' => 'Quizás no haya acceso a Internet desde el servidor MikoPBX',
+    'lic_NoInetLicMiko' => 'Quizás acceso restringido al recurso <b>lic.miko.ru</b>',
+    'lic_NoInetNetSettings' => "Compruebe la configuración de <b>DNS</b> y <b>Puerta de enlace</b> en la configuración de <a href='/admin-cabinet/network/modify/'>red</a>",
 ];

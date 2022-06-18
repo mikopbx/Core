@@ -1098,4 +1098,8 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'ex_ValidateUsernameSpecialCharacters' => 'O nome completo não deve conter caracteres especiais',
     'ex_ValidateSecretWeak' => 'A senha SIP deve ter mais de 4 caracteres',
     'ex_PasswordNoLowSimvol' => 'A senha deve conter letras',
+    'lic_NoInetHeader' => 'Sem acesso ao servidor de licenças.',
+    'lic_NoInet' => 'Talvez não haja acesso à Internet do servidor MikoPBX',
+    'lic_NoInetLicMiko' => 'Talvez acesso restrito ao recurso <b>lic.miko.ru</b>',
+    'lic_NoInetNetSettings' => "Verifique as configurações de <b>DNS</b> e <b>Gateway</b> nas configurações de <a href='/admin-cabinet/network/modify/'>rede</a>",
 ];

@@ -1098,4 +1098,8 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'ex_ValidateSecretWeak' => 'Heslo SIP musí být delší než 4 znaky',
     'ex_PasswordNoLowSimvol' => 'Heslo musí obsahovat písmena',
     'ex_PasswordNoNumbers' => 'Heslo musí obsahovat čísla',
+    'lic_NoInetHeader' => 'Žádný přístup k licenčnímu serveru.',
+    'lic_NoInet' => 'Ze serveru MikoPBX možná není přístup k internetu',
+    'lic_NoInetLicMiko' => 'Možná omezený přístup ke zdroji <b>lic.miko.ru</b>',
+    'lic_NoInetNetSettings' => "Zkontrolujte nastavení <b>DNS</b> a <b>Brána</b> v nastavení <a href='/admin-cabinet/network/modify/'>síť</a>",
 ];

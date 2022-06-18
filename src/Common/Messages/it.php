@@ -1098,4 +1098,8 @@ Può essere attivato una volta, dopo di che il coupon viene riscattato.
     'ex_ValidateSecretWeak' => 'La password SIP deve essere più lunga di 4 caratteri',
     'ex_PasswordNoLowSimvol' => 'La password deve contenere lettere',
     'ex_PasswordNoNumbers' => 'La password deve contenere numeri',
+    'lic_NoInetNetSettings' => "Controllare le impostazioni <b>DNS</b> e <b>Gateway</b> nelle impostazioni <a href='/admin-cabinet/network/modify/'>rete</a>",
+    'lic_NoInetHeader' => 'Nessun accesso al server delle licenze.',
+    'lic_NoInet' => 'Forse non c\'è accesso a Internet dal server MikoPBX',
+    'lic_NoInetLicMiko' => 'Forse accesso limitato alla risorsa <b>lic.miko.ru</b>',
 ];

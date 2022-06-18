@@ -1098,4 +1098,8 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'ex_ValidateSecretWeak' => 'SIP-lösenordet måste vara längre än 4 tecken',
     'ex_PasswordNoLowSimvol' => 'Lösenordet måste innehålla bokstäver',
     'ex_PasswordNoNumbers' => 'Lösenordet måste innehålla siffror',
+    'lic_NoInetHeader' => 'Ingen åtkomst till licensservern.',
+    'lic_NoInet' => 'Kanske finns det ingen internetåtkomst från MikoPBX-servern',
+    'lic_NoInetLicMiko' => 'Kanske begränsad åtkomst till resursen <b>lic.miko.ru</b>',
+    'lic_NoInetNetSettings' => "Kontrollera inställningarna för <b>DNS</b> och <b>Gateway</b> i inställningarna för <a href='/admin-cabinet/network/modify/'>nätverk</a>",
 ];

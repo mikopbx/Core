@@ -1098,4 +1098,8 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'ex_ValidateUsernameSpecialCharacters' => 'Imię i nazwisko nie mogą zawierać znaków specjalnych',
     'ex_ValidateSecretWeak' => 'Hasło SIP musi być dłuższe niż 4 znaki',
     'ex_PasswordNoLowSimvol' => 'Hasło musi zawierać litery',
+    'lic_NoInetHeader' => 'Brak dostępu do serwera licencji.',
+    'lic_NoInet' => 'Być może nie ma dostępu do Internetu z serwera MikoPBX',
+    'lic_NoInetLicMiko' => 'Być może ograniczony dostęp do zasobu <b>lic.miko.ru</b>',
+    'lic_NoInetNetSettings' => "Sprawdź ustawienia <b>DNS</b> i <b>Gateway</b> w ustawieniach sieci <a href='/admin-cabinet/network/modify/'></a>",
 ];

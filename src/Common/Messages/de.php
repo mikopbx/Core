@@ -1101,4 +1101,8 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
     'ex_ValidateSecretWeak' => 'Das SIP-Passwort muss länger als 4 Zeichen sein',
     'ex_PasswordNoLowSimvol' => 'Das Passwort muss Buchstaben enthalten',
     'ex_PasswordNoNumbers' => 'Das Passwort muss Zahlen enthalten',
+    'lic_NoInetHeader' => 'Kein Zugriff auf den Lizenzserver.',
+    'lic_NoInet' => 'Möglicherweise besteht kein Internetzugang vom MikoPBX-Server',
+    'lic_NoInetLicMiko' => 'Möglicherweise eingeschränkter Zugriff auf die Ressource <b>lic.miko.ru</b>',
+    'lic_NoInetNetSettings' => "Überprüfen Sie die <b>DNS</b>- und <b>Gateway</b>-Einstellungen in den <a href='/admin-cabinet/network/modify/'>Netzwerkeinstellungen</a>.",
 ];

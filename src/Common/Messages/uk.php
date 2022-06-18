@@ -1098,4 +1098,8 @@ return [
     'ex_PasswordNoNumbers' => 'Пароль повинен містити цифри',
     'ex_ValidateUsernameSpecialCharacters' => 'ПІБ не повинно містити спецсимволи',
     'ex_ValidateSecretWeak' => 'Пароль SIP повинен бути довшим за 4 символи',
+    'lic_NoInetHeader' => 'Немає доступу до сервера ліцензування.',
+    'lic_NoInet' => 'Можливо, з сервера MikoPBX немає доступу в інтернет',
+    'lic_NoInetLicMiko' => 'Можливо обмежений доступ до ресурсів <b>lic.miko.ru</b>',
+    'lic_NoInetNetSettings' => "Перевірте параметри <b>DNS</b> та <b>Gateway</b> у налаштуваннях <a href='/admin-cabinet/network/modify/'>мережі</a>",
 ];

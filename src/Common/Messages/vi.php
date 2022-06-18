@@ -1098,4 +1098,8 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá đ
     'ex_ValidateSecretWeak' => 'Mật khẩu SIP phải dài hơn 4 ký tự',
     'ex_PasswordNoLowSimvol' => 'Mật khẩu phải chứa các chữ cái',
     'ex_PasswordNoNumbers' => 'Mật khẩu phải chứa số',
+    'lic_NoInetHeader' => 'Không có quyền truy cập vào máy chủ cấp phép.',
+    'lic_NoInet' => 'Có lẽ không có truy cập Internet từ máy chủ MikoPBX',
+    'lic_NoInetLicMiko' => 'Có lẽ quyền truy cập bị hạn chế vào tài nguyên <b> lic.miko.ru </b>',
+    'lic_NoInetNetSettings' => "Kiểm tra cài đặt <b> DNS </b> và <b> Gateway </b> trong cài đặt <a href='/admin-cabinet/network/modify/'> mạng </a>",
 ];

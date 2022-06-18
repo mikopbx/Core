@@ -1101,4 +1101,8 @@ It can be activated once, after which the coupon becomes redeemed.
     'ex_PasswordNoLowSimvol' => 'Password must contain letters',
     'ex_PasswordNoNumbers' => 'Password must contain numbers',
     'ex_ValidateUsernameSpecialCharacters' => 'Full name must not contain special characters',
+    'lic_NoInetHeader' => 'No access to the license server.',
+    'lic_NoInet' => 'Perhaps there is no Internet access from the MikoPBX server',
+    'lic_NoInetLicMiko' => 'Perhaps restricted access to the resource <b>lic.miko.ru</b>',
+    'lic_NoInetNetSettings' => "Check <b>DNS</b> and <b>Gateway</b> settings in <a href='/admin-cabinet/network/modify/'>network</a> settings",
 ];

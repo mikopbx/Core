@@ -1098,4 +1098,8 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'ex_ValidateSecretWeak' => 'Le mot de passe SIP doit comporter plus de 4 caractères',
     'ex_PasswordNoLowSimvol' => 'Le mot de passe doit contenir des lettres',
     'ex_PasswordNoNumbers' => 'Le mot de passe doit contenir des chiffres',
+    'lic_NoInetHeader' => 'Aucun accès au serveur de licences.',
+    'lic_NoInet' => 'Il n\'y a peut-être pas d\'accès Internet depuis le serveur MikoPBX',
+    'lic_NoInetLicMiko' => 'Peut-être un accès restreint à la ressource <b>lic.miko.ru</b>',
+    'lic_NoInetNetSettings' => "Vérifiez les paramètres <b>DNS</b> et <b>Gateway</b> dans les paramètres <a href='/admin-cabinet/network/modify/'>réseau</a>",
 ];

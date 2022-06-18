@@ -1098,4 +1098,8 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'ex_ValidateSecretWeak' => 'SIP-adgangskode skal være længere end 4 tegn',
     'ex_PasswordNoNumbers' => 'Adgangskoden skal indeholde tal',
     'ex_PasswordNoLowSimvol' => 'Adgangskoden skal indeholde bogstaver',
+    'lic_NoInetHeader' => 'Ingen adgang til licensserveren.',
+    'lic_NoInet' => 'Måske er der ingen internetadgang fra MikoPBX-serveren',
+    'lic_NoInetLicMiko' => 'Måske begrænset adgang til ressourcen <b>lic.miko.ru</b>',
+    'lic_NoInetNetSettings' => "Tjek indstillingerne for <b>DNS</b> og <b>Gateway</b> i <a href='/admin-cabinet/network/modify/'>netværksindstillingerne</a>",
 ];

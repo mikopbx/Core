@@ -1098,4 +1098,8 @@ return [
     'ex_ValidateSecretWeak' => 'SIPパスワードは4文字より長くする必要があります',
     'ex_PasswordNoLowSimvol' => 'パスワードには文字が含まれている必要があります',
     'ex_PasswordNoNumbers' => 'パスワードには数字が含まれている必要があります',
+    'lic_NoInetHeader' => 'ライセンスサーバーにアクセスできません。',
+    'lic_NoInet' => 'おそらく、MikoPBXサーバーからのインターネットアクセスはありません',
+    'lic_NoInetLicMiko' => 'おそらく、リソース<b>lic.miko.ru</b>へのアクセスが制限されています',
+    'lic_NoInetNetSettings' => "<a href='/admin-cabinet/network/modify/'>ネットワーク</a>設定で<b>DNS</b>と<b>ゲートウェイ</b>の設定を確認してください",
 ];

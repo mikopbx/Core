@@ -1098,4 +1098,8 @@ return [
     'ex_ValidateSecretWeak' => 'SIP პაროლი უნდა იყოს 4 სიმბოლოზე მეტი',
     'ex_PasswordNoNumbers' => 'პაროლი უნდა შეიცავდეს ნომრებს',
     'ex_PasswordNoLowSimvol' => 'პაროლი უნდა შეიცავდეს ასოებს',
+    'lic_NoInetHeader' => 'ლიცენზიის სერვერზე წვდომა არ არის.',
+    'lic_NoInet' => 'შესაძლოა, MikoPBX სერვერიდან არ არის ინტერნეტი',
+    'lic_NoInetLicMiko' => 'შესაძლოა შეზღუდული წვდომა რესურსზე <b>lic.miko.ru</b>',
+    'lic_NoInetNetSettings' => "შეამოწმეთ <b>DNS</b> და <b>Gateway</b> პარამეტრები <a href='/admin-cabinet/network/modify/'>ქსელის</a> პარამეტრებში",
 ];

@@ -1098,4 +1098,8 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
     'ex_ValidateSecretWeak' => 'SIP şifresi 4 karakterden uzun olmalıdır',
     'ex_PasswordNoLowSimvol' => 'Şifre harf içermelidir',
     'ex_PasswordNoNumbers' => 'Şifre sayılar içermelidir',
+    'lic_NoInetHeader' => 'Lisans sunucusuna erişim yok.',
+    'lic_NoInet' => 'Belki MikoPBX sunucusundan İnternet erişimi yoktur',
+    'lic_NoInetLicMiko' => 'Belki <b>lic.miko.ru</b> kaynağına kısıtlı erişim',
+    'lic_NoInetNetSettings' => "<a href='/admin-cabinet/network/modify/'>ağ</a> ayarlarında <b>DNS</b> ve <b>Gateway</b> ayarlarını kontrol edin",
 ];
