@@ -815,6 +815,7 @@ return [
     'lic_ActivateCouponButton' => 'Активировать купон',
     'lic_SaveLicenseKeyButton' => 'Сохранить ключ',
     'lic_GetTrialErrorCheckInternet' => 'Не удалось пройти регистрацию, проверьте наличие Internet на MikoPBX',
+    'lic_SuccessfulСuponActivation' => 'Купон успешно активирован',
     'lic_LicenseKeyMessage' => '<div class=\'ui message \'>Лицензионный ключ используется для хранения всех ваших лицензий от любых продуктов МИКО.<br>
 Если у вас уже есть ключ, вы можете просто вписать его в это поле.<br>
 Если ключ у вас был, но вы его забыли, поищите в почте входящие письма по адресу lic@miko.ru<br>

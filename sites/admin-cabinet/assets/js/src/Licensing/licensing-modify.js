@@ -286,7 +286,10 @@ const licensingModify = {
 	 */
 	cbAfterFormProcessing(response, success) {
 		if (success===true){
-			window.location.reload();
+			UserMessage.showInformation(globalTranslate.lic_SuccessfulСuponActivation);
+			$('#productDetails tbody').html('');
+			$('#coupon').val('');
+			PbxApi.LicenseGetLicenseInfo(licensingModify.cbAfterGetLicenseInfo);
 		} else if (response.messages !== undefined) {
 			UserMessage.showMultiString(response.messages);
 		}else {
