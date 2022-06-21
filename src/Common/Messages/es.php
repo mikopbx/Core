@@ -1102,4 +1102,8 @@ Se puede activar una vez, después de lo cual el cupón se canjea.
     'lic_NoInet' => 'Quizás no haya acceso a Internet desde el servidor MikoPBX',
     'lic_NoInetLicMiko' => 'Quizás acceso restringido al recurso <b>lic.miko.ru</b>',
     'lic_NoInetNetSettings' => "Compruebe la configuración de <b>DNS</b> y <b>Puerta de enlace</b> en la configuración de <a href='/admin-cabinet/network/modify/'>red</a>",
+    'lic_SuccessfulСuponActivation' => 'Cupón activado con éxito',
+    'or_RuleDescriptionBeginEmpty' => 'El número consta de <b>%restnumbers%</b> dígitos',
+    'or_RuleNotConfigured' => 'Regla no configurada',
+    'or_RuleAnyNumbers' => 'Cualquier número',
 ];

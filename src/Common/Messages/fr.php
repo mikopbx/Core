@@ -1102,4 +1102,8 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'lic_NoInet' => 'Il n\'y a peut-être pas d\'accès Internet depuis le serveur MikoPBX',
     'lic_NoInetLicMiko' => 'Peut-être un accès restreint à la ressource <b>lic.miko.ru</b>',
     'lic_NoInetNetSettings' => "Vérifiez les paramètres <b>DNS</b> et <b>Gateway</b> dans les paramètres <a href='/admin-cabinet/network/modify/'>réseau</a>",
+    'lic_SuccessfulСuponActivation' => 'Coupon activé avec succès',
+    'or_RuleDescriptionBeginEmpty' => 'Le numéro se compose de <b>%restnumbers%</b> chiffres',
+    'or_RuleNotConfigured' => 'Règle non configurée',
+    'or_RuleAnyNumbers' => 'N\'importe quel nombre',
 ];

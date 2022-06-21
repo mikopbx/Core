@@ -1102,4 +1102,8 @@ Può essere attivato una volta, dopo di che il coupon viene riscattato.
     'lic_NoInetHeader' => 'Nessun accesso al server delle licenze.',
     'lic_NoInet' => 'Forse non c\'è accesso a Internet dal server MikoPBX',
     'lic_NoInetLicMiko' => 'Forse accesso limitato alla risorsa <b>lic.miko.ru</b>',
+    'lic_SuccessfulСuponActivation' => 'Coupon attivato con successo',
+    'or_RuleAnyNumbers' => 'Qualsiasi numero',
+    'or_RuleDescriptionBeginEmpty' => 'Il numero è composto da <b>%restnumbers%</b> cifre',
+    'or_RuleNotConfigured' => 'Regola non configurata',
 ];

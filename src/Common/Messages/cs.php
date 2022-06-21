@@ -1102,4 +1102,8 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'lic_NoInet' => 'Ze serveru MikoPBX možná není přístup k internetu',
     'lic_NoInetLicMiko' => 'Možná omezený přístup ke zdroji <b>lic.miko.ru</b>',
     'lic_NoInetNetSettings' => "Zkontrolujte nastavení <b>DNS</b> a <b>Brána</b> v nastavení <a href='/admin-cabinet/network/modify/'>síť</a>",
+    'lic_SuccessfulСuponActivation' => 'Kupón byl úspěšně aktivován',
+    'or_RuleDescriptionBeginEmpty' => 'Číslo se skládá z <b>%restnumbers%</b> číslic',
+    'or_RuleNotConfigured' => 'Pravidlo není nakonfigurováno',
+    'or_RuleAnyNumbers' => 'Jakákoli čísla',
 ];

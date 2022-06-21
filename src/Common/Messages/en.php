@@ -1105,4 +1105,8 @@ It can be activated once, after which the coupon becomes redeemed.
     'lic_NoInet' => 'Perhaps there is no Internet access from the MikoPBX server',
     'lic_NoInetLicMiko' => 'Perhaps restricted access to the resource <b>lic.miko.ru</b>',
     'lic_NoInetNetSettings' => "Check <b>DNS</b> and <b>Gateway</b> settings in <a href='/admin-cabinet/network/modify/'>network</a> settings",
+    'lic_SuccessfulСuponActivation' => 'Coupon successfully activated',
+    'or_RuleNotConfigured' => 'Rule not configured',
+    'or_RuleAnyNumbers' => 'Any numbers',
+    'or_RuleDescriptionBeginEmpty' => 'The number consists of <b>%restnumbers%</b> digits',
 ];
