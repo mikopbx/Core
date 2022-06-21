@@ -1102,4 +1102,8 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá đ
     'lic_NoInet' => 'Có lẽ không có truy cập Internet từ máy chủ MikoPBX',
     'lic_NoInetLicMiko' => 'Có lẽ quyền truy cập bị hạn chế vào tài nguyên <b> lic.miko.ru </b>',
     'lic_NoInetNetSettings' => "Kiểm tra cài đặt <b> DNS </b> và <b> Gateway </b> trong cài đặt <a href='/admin-cabinet/network/modify/'> mạng </a>",
+    'lic_SuccessfulСuponActivation' => 'Phiếu thưởng được kích hoạt thành công',
+    'or_RuleDescriptionBeginEmpty' => 'Số bao gồm các chữ số <b> %restnumbers% </b>',
+    'or_RuleNotConfigured' => 'Quy tắc không được định cấu hình',
+    'or_RuleAnyNumbers' => 'Bất kỳ số nào',
 ];

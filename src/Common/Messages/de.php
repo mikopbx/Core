@@ -1105,4 +1105,8 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
     'lic_NoInet' => 'Möglicherweise besteht kein Internetzugang vom MikoPBX-Server',
     'lic_NoInetLicMiko' => 'Möglicherweise eingeschränkter Zugriff auf die Ressource <b>lic.miko.ru</b>',
     'lic_NoInetNetSettings' => "Überprüfen Sie die <b>DNS</b>- und <b>Gateway</b>-Einstellungen in den <a href='/admin-cabinet/network/modify/'>Netzwerkeinstellungen</a>.",
+    'lic_SuccessfulСuponActivation' => 'Gutschein erfolgreich aktiviert',
+    'or_RuleAnyNumbers' => 'Beliebige Zahlen',
+    'or_RuleDescriptionBeginEmpty' => 'Die Nummer besteht aus <b>%restnumbers%</b> Ziffern',
+    'or_RuleNotConfigured' => 'Regel nicht konfiguriert',
 ];

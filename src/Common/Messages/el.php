@@ -966,7 +966,7 @@ return [
     'BreadcrumbRestart' => 'Επανεκκίνηση συστήματος',
     'SubHeaderErrors' => 'Εάν αυτό το σφάλμα αναπαράγεται, ενημερώστε τον προγραμματιστή',
     'BreadcrumbErrors' => 'Μήνυμα λάθους',
-    'SubHeaderLicensing' => 'Εγγραφή στο Marketplace για πρόσβαση σε νέες επεκτάσεις και λειτουργικές μονάδες',
+    'SubHeaderLicensing' => 'Εγγραφή στο <b>Marketplace</b> για πρόσβαση σε νέες επεκτάσεις και λειτουργικές μονάδες',
     'BreadcrumbLicensing' => 'Αδειοδότηση',
     'SubHeaderSoundFiles' => 'Χρησιμοποιείται σε διάφορα σενάρια κλήσεων και διαδραστικά φωνητικά μενού',
     'BreadcrumbSoundFiles' => 'Αρχεία ήχου',
@@ -1102,4 +1102,8 @@ return [
     'lic_NoInet' => 'Ίσως δεν υπάρχει πρόσβαση στο Διαδίκτυο από τον διακομιστή MikoPBX',
     'lic_NoInetLicMiko' => 'Ίσως περιορισμένη πρόσβαση στον πόρο <b>lic.miko.ru</b>',
     'lic_NoInetNetSettings' => "Ελέγξτε τις ρυθμίσεις <b>DNS</b> και <b>Gateway</b> στις ρυθμίσεις <a href='/admin-cabinet/network/modify/'>δίκτυο</a>",
+    'lic_SuccessfulСuponActivation' => 'Το κουπόνι ενεργοποιήθηκε με επιτυχία',
+    'or_RuleDescriptionBeginEmpty' => 'Ο αριθμός αποτελείται από <b>%restnumbers%</b> ψηφία',
+    'or_RuleNotConfigured' => 'Ο κανόνας δεν έχει ρυθμιστεί',
+    'or_RuleAnyNumbers' => 'Οποιοιδήποτε αριθμοί',
 ];

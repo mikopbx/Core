@@ -1102,4 +1102,8 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'lic_NoInet' => 'Być może nie ma dostępu do Internetu z serwera MikoPBX',
     'lic_NoInetLicMiko' => 'Być może ograniczony dostęp do zasobu <b>lic.miko.ru</b>',
     'lic_NoInetNetSettings' => "Sprawdź ustawienia <b>DNS</b> i <b>Gateway</b> w ustawieniach sieci <a href='/admin-cabinet/network/modify/'></a>",
+    'lic_SuccessfulСuponActivation' => 'Kupon pomyślnie aktywowany',
+    'or_RuleDescriptionBeginEmpty' => 'Numer składa się z <b>%restnumbers%</b> cyfr',
+    'or_RuleNotConfigured' => 'Reguła nieskonfigurowana',
+    'or_RuleAnyNumbers' => 'Dowolne liczby',
 ];

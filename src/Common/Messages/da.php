@@ -1102,4 +1102,8 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'lic_NoInet' => 'Måske er der ingen internetadgang fra MikoPBX-serveren',
     'lic_NoInetLicMiko' => 'Måske begrænset adgang til ressourcen <b>lic.miko.ru</b>',
     'lic_NoInetNetSettings' => "Tjek indstillingerne for <b>DNS</b> og <b>Gateway</b> i <a href='/admin-cabinet/network/modify/'>netværksindstillingerne</a>",
+    'lic_SuccessfulСuponActivation' => 'Kuponen blev aktiveret',
+    'or_RuleDescriptionBeginEmpty' => 'Nummeret består af <b>%restnumbers%</b> cifre',
+    'or_RuleNotConfigured' => 'Regel ikke konfigureret',
+    'or_RuleAnyNumbers' => 'Eventuelle tal',
 ];
