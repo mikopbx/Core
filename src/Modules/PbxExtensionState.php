@@ -284,6 +284,10 @@ class PbxExtensionState extends Injectable
                 if (count($reflection->getProperties()) === 0) {
                     continue;
                 }
+                $relations = $this->di->get('modelsManager')->getRelations($moduleModelClass);
+                if(empty($relations)){
+                    continue;
+                }
                 $records = $moduleModelClass::find();
                 foreach ($records as $record) {
                     if ( ! $record->beforeDelete()) {
