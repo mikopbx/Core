@@ -7,10 +7,12 @@ return [
     'ex_Deutsch' => 'Deutsch',
     'ex_Danish' => 'Dansk',
     'ex_Spanish' => 'Espanol',
+    'ex_Greek'  => 'Ελληνική',
     'ex_French' => 'Le français',
     'ex_Italian' => 'Italiano',
     'ex_Portuguese' => 'Português',
-    'ex_Ukrainian' => 'Український',
+    'ex_PortugueseBrazil' => 'Português (Brazil)',
+    'ex_Ukrainian' => 'Українська',
     'ex_Vietnamese' => 'Tiếng việt',
     'ex_Chinese' => '中国人',
     'ex_Polish' => 'Polskie',
@@ -45,22 +47,22 @@ return [
     'qf_Qualify' => 'NATセッションをサポート',
     'qf_Frequency' => '秒単位の送信頻度。',
     'qf_NatModeInstructions' => '<div class = \'uiメッセージ\'>
-            <div class = \'ui箇条書き\'>
-                <div class = \'item\'><b>いいえ</b>は、RFC 3581で指定されているものを除き、特別なNAT処理を実行しません
-                </div>
-                <div class = \'item\'><b>force_rport</b>は、rportパラメータが指定されていなくても、あたかもそのように動作します
-                </div>
-                <div class = \'item\'><b>comedia</b>は、RTPパケットを受信元のポートに送り返し、SDPヘッダーの必要なポートは無視します
-                </div>
-                <div class = \'item\'><b>auto_comedia</b>デバイスがNATの背後にあるとアスタリスクが判断できる場合は、comediaオプションを設定します
-                </div>
-                <div class = \'item\'> nat = yesを<b>force_rport、comedia</b>オプションで置き換え
-                </div>
-            </div>
-        </div>',
+            <div class = \'ui箇条書き\'>
+                <div class = \'item\'><b>いいえ</b>は、RFC 3581で指定されているものを除き、特別なNAT処理を実行しません
+                </div>
+                <div class = \'item\'><b>force_rport</b>は、rportパラメータが指定されていなくても、あたかもそのように動作します
+                </div>
+                <div class = \'item\'><b>comedia</b>は、RTPパケットを受信元のポートに送り返し、SDPヘッダーの必要なポートは無視します
+                </div>
+                <div class = \'item\'><b>auto_comedia</b>デバイスがNATの背後にあるとアスタリスクが判断できる場合は、comediaオプションを設定します
+                </div>
+                <div class = \'item\'> nat = yesを<b>force_rport、comedia</b>オプションで置き換え
+                </div>
+            </div>
+        </div>',
     'qf_QualifyInstructions' => '<div class = \'uiメッセージ\'>
-            このオプションを有効にすると、アスタリスクは指定された頻度でSIPオプションパケットを送信します。これは、ルーターでNATトンネリングをサポートするために必要です。
-        </div>',
+            このオプションを有効にすると、アスタリスクは指定された頻度でSIPオプションパケットを送信します。これは、ルーターでNATトンネリングをサポートするために必要です。
+        </div>',
     'AdvancedOptions' => '詳細設定',
     'ConnectionSettings' => '接続設定',
     'BreadcrumbHome' => '最初に',
@@ -210,7 +212,7 @@ return [
     'pr_AddIAXProvider' => 'IAXを接続する',
     'pr_QualifyInstructionsIAX' => 'このオプションを有効にすると、アスタリスクはSIPオプションパケットを送信します。これは、ルーターでNATトンネリングをサポートするために必要です。',
     'pr_CustomFieldsDescriptions' => '<div class = \'ui message\'>ほとんどの場合、オーバーライドフィールドは空白のままにする必要があります。
-    コールが機能せず、プロバイダーが特別な設定を必要とする場合のみ、これらのフィールドはプロバイダーの推奨に従って入力する必要があります。</div>',
+    コールが機能せず、プロバイダーが特別な設定を必要とする場合のみ、これらのフィールドはプロバイダーの推奨に従って入力する必要があります。</div>',
     'pr_ReceiveCallsWithoutAuth' => 'このプロバイダーを信頼し、認証なしでプロバイダーからの呼び出しを受信します',
     'pr_ValidationProviderPortRange' => 'プロバイダーポートは{ruleValue}内にある必要があります',
     'pr_DeleteTitle' => 'プロバイダーを削除',
@@ -740,9 +742,9 @@ return [
     'lic_LicenseWarningHeader' => 'このプログラムのコピーは登録されていません',
     'lic_LicenseWarningText' => '<a href=\'/admin-cabinet/licensing/modify/\'>ライセンスセクション</a>にアクセスし、必要な手順に従ってシステムを登録します',
     'lic_FailedToGetTrialKey2051' => '（2051）次の理由により、このコピーの登録に失敗しましたこのマシンでは、すでに別のメールアドレスで登録番号を使用しています。<br>
- lic@miko.ruから先に送信されたキーを使用します',
+ lic@miko.ruから先に送信されたキーを使用します',
     'lic_FailedToGetTrialKey2022' => '（2022）このコピーの登録に失敗しました。指定された電子メールには、別の会社の登録番号が既に生成されています。<br>
- lic@miko.ruから以前に送信されたキーを使用するか、会社の正しい名前を指定します。',
+ lic@miko.ruから以前に送信されたキーを使用するか、会社の正しい名前を指定します。',
     'lic_FailedActivateCoupon2057' => '（2057）このクーポンはブロックされています。lic@ miko.ruまでご連絡ください',
     'lic_FailedActivateCoupon2040' => '（2040）このクーポンは存在しません。入力が正しいことを確認してください',
     'lic_FailedActivateCoupon2041' => '（2041）このクーポンは既に有効化されています',
@@ -1062,7 +1064,6 @@ return [
     'Storage disk was mounted successfully...' => 'ストレージディスクが正常にマウントされました',
     'gs_NeedRestartPBX' => '変更すると、PBXが再起動します（アスタリスクサービス）',
     'ex_BusyLevelInfo' => '指定された会話数に達すると、従業員の電話はビジーと見なされます。',
-    'ex_PortugueseBrazil' => 'ポルトガル語（ブラジル）',
     'gs_RTPStunServer' => 'サーバーのSTUNアドレス（例：stun.test.net：10000）',
     'cr_ValidateExtensionLen' => '内線番号は2桁以上である必要があります',
     'cr_ValidatePinNumber' => 'PINは数字のみである必要があります',

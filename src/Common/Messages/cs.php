@@ -7,10 +7,12 @@ return [
     'ex_Deutsch' => 'Deutsch',
     'ex_Danish' => 'Dansk',
     'ex_Spanish' => 'Espanol',
+    'ex_Greek'  => 'Ελληνική',
     'ex_French' => 'Le français',
     'ex_Italian' => 'Italiano',
     'ex_Portuguese' => 'Português',
-    'ex_Ukrainian' => 'Український',
+    'ex_PortugueseBrazil' => 'Português (Brazil)',
+    'ex_Ukrainian' => 'Українська',
     'ex_Vietnamese' => 'Tiếng việt',
     'ex_Chinese' => '中国人',
     'ex_Polish' => 'Polskie',
@@ -51,22 +53,22 @@ return [
     'qf_Qualify' => 'Podpora NAT Session',
     'qf_Frequency' => 'Frekvence odesílání v sec.',
     'qf_NatModeInstructions' => '<div class = \'ui message\'>
-            <div class = \'ui odrážkový seznam\'>
-                <div class = \'item\'> <b> no </b> neprovádějí žádné speciální zpracování NAT s výjimkou zpracování uvedeného v RFC 3581
-                </div>
-                <div class = \'item\'> <b> force_rport </b>, i když nebyl zadán žádný parametr rportu, chovejte se, jako by byl
-                </div>
-                <div class = \'item\'> <b> comedia </b> posílá RTP pakety zpět na port, ze kterého byly přijaty, ignoruje požadovaný port v hlavičce SDP
-                </div>
-                <div class = \'item\'> <b> auto_comedia </b> Pokud Asterisk dokáže určit, že zařízení je za NAT, nastavte volbu comedia
-                </div>
-                <div class = \'item\'> <b> force_rport, comedia </b> možnost nahrazující nat = yes
-                </div>
-            </div>
-        </div>',
+            <div class = \'ui odrážkový seznam\'>
+                <div class = \'item\'> <b> no </b> neprovádějí žádné speciální zpracování NAT s výjimkou zpracování uvedeného v RFC 3581
+                </div>
+                <div class = \'item\'> <b> force_rport </b>, i když nebyl zadán žádný parametr rportu, chovejte se, jako by byl
+                </div>
+                <div class = \'item\'> <b> comedia </b> posílá RTP pakety zpět na port, ze kterého byly přijaty, ignoruje požadovaný port v hlavičce SDP
+                </div>
+                <div class = \'item\'> <b> auto_comedia </b> Pokud Asterisk dokáže určit, že zařízení je za NAT, nastavte volbu comedia
+                </div>
+                <div class = \'item\'> <b> force_rport, comedia </b> možnost nahrazující nat = yes
+                </div>
+            </div>
+        </div>',
     'qf_QualifyInstructions' => '<div class = \'ui message\'>
-            Pokud je tato volba povolena, Asterisk odešle pakety SIP Options se specifikovanou frekvencí. To je nezbytné pro podporu tunelování NAT ve vašem routeru.
-        </div>',
+            Pokud je tato volba povolena, Asterisk odešle pakety SIP Options se specifikovanou frekvencí. To je nezbytné pro podporu tunelování NAT ve vašem routeru.
+        </div>',
     'AdvancedOptions' => 'Pokročilá nastavení',
     'ConnectionSettings' => 'Nastavení připojení',
     'BreadcrumbProviders' => 'Poskytovatelé telefonních služeb',
@@ -225,7 +227,7 @@ return [
     'pr_AddIAXProvider' => 'Připojte IAX',
     'pr_QualifyInstructionsIAX' => 'Pokud je tato možnost povolena, Asterisk odešle pakety SIP Options. To je nezbytné pro podporu tunelování NAT ve vašem routeru.',
     'pr_CustomFieldsDescriptions' => '<div class = \'ui message\'> Ve většině případů by měla být pole přepsání ponechána prázdná.
-    Pouze v případě, že vaše hovory nefungují a poskytovatel vyžaduje speciální nastavení, musí být tato pole vyplněna podle doporučení poskytovatele. </div>',
+    Pouze v případě, že vaše hovory nefungují a poskytovatel vyžaduje speciální nastavení, musí být tato pole vyplněna podle doporučení poskytovatele. </div>',
     'pr_ReceiveCallsWithoutAuth' => 'Důvěřujte tomuto poskytovateli a přijímejte od něj všechna volání bez ověření',
     'pr_ValidationProviderPortRange' => 'Port poskytovatele musí být v rámci {RuleValue}',
     'pr_DeleteTitle' => 'Smazat poskytovatele',
@@ -713,9 +715,9 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'lic_LicenseKeyValid' => 'Program je registrován',
     'lic_LicenseWarningText' => 'Přejděte do <a href=\'/admin-cabinet/licensing/modify/\'> licenční části </a> a postupujte podle pokynů k registraci systému',
     'lic_FailedToGetTrialKey2051' => '(2051) Nepodařilo se zaregistrovat tuto kopii, protože Na tomto stroji jste již použili registrační číslo s jiným e-mailem. <br>
- Použijte klíč, který vám byl zaslán dříve z lic@miko.ru',
+ Použijte klíč, který vám byl zaslán dříve z lic@miko.ru',
     'lic_FailedToGetTrialKey2022' => '(2022) Nepodařilo se zaregistrovat tuto kopii. Registrační číslo jiné společnosti již bylo na zadaný e-mail vygenerováno. <br>
- Použijte klíč, který vám byl zaslán dříve na lic@miko.ru nebo zadejte správný název společnosti.',
+ Použijte klíč, který vám byl zaslán dříve na lic@miko.ru nebo zadejte správný název společnosti.',
     'lic_FailedActivateCoupon2040' => '(2040) Tento kupón neexistuje, zkontrolujte, zda je vstup správný',
     'lic_FailedActivateCoupon2041' => '(2041) Tento kupón již byl aktivován dříve',
     'lic_FailedActivateCoupon2037' => '(2037) Chyba při určování registračního čísla',
@@ -1062,7 +1064,6 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'Storage disk was mounted successfully...' => 'Úložný disk byl úspěšně připojen',
     'gs_NeedRestartPBX' => 'Při změně se ústředna restartuje (služba s hvězdičkou)',
     'ex_BusyLevelInfo' => 'Po dosažení zadaného počtu konverzací bude telefon zaměstnance považován za obsazený.',
-    'ex_PortugueseBrazil' => 'português (Brazílie)',
     'gs_RTPStunServer' => 'Adresa serveru STUN (příklad: stun.test.net:10000)',
     'cr_ValidateExtensionLen' => 'Číslo pobočky musí mít dvě nebo více číslic',
     'cr_ValidatePinNumber' => 'PIN musí být pouze čísla',

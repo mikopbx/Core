@@ -7,10 +7,12 @@ return [
     'ex_Deutsch' => 'Deutsch',
     'ex_Danish' => 'Dansk',
     'ex_Spanish' => 'Espanol',
+    'ex_Greek'  => 'Ελληνική',
     'ex_French' => 'Le français',
     'ex_Italian' => 'Italiano',
     'ex_Portuguese' => 'Português',
-    'ex_Ukrainian' => 'Український',
+    'ex_PortugueseBrazil' => 'Português (Brazil)',
+    'ex_Ukrainian' => 'Українська',
     'ex_Vietnamese' => 'Tiếng việt',
     'ex_Chinese' => '中国人',
     'ex_Polish' => 'Polskie',
@@ -55,22 +57,22 @@ return [
     'qf_Qualify' => '支持NAT会话',
     'qf_Frequency' => '发送频率（以秒为单位）。',
     'qf_NatModeInstructions' => '<div class =\'ui消息\'>
-            <div class =\'ui项目符号列表\'>
-                <div class =\'item\'> <b>否</b>除了RFC 3581中指定的处理之外，不执行任何特殊的NAT处理。
-                </div>
-                <div class =\'item\'> <b> force_rport</b>即使未指定任何rport参数，其作用也与
-                </div>
-                <div class =\'item\'> <b> comedia</b>将RTP数据包发送回接收它们的端口，而忽略了SDP标头中的所需端口
-                </div>
-                <div class =\'item\'> <b> auto_comedia</b>如果Asterisk可以确定设备位于NAT之后，请设置comedia选项
-                </div>
-                <div class =\'item\'> <b> force_rport，comedia</b>选项替换为nat = yes
-                </div>
-            </div>
-        </div>',
+            <div class =\'ui项目符号列表\'>
+                <div class =\'item\'> <b>否</b>除了RFC 3581中指定的处理之外，不执行任何特殊的NAT处理。
+                </div>
+                <div class =\'item\'> <b> force_rport</b>即使未指定任何rport参数，其作用也与
+                </div>
+                <div class =\'item\'> <b> comedia</b>将RTP数据包发送回接收它们的端口，而忽略了SDP标头中的所需端口
+                </div>
+                <div class =\'item\'> <b> auto_comedia</b>如果Asterisk可以确定设备位于NAT之后，请设置comedia选项
+                </div>
+                <div class =\'item\'> <b> force_rport，comedia</b>选项替换为nat = yes
+                </div>
+            </div>
+        </div>',
     'qf_QualifyInstructions' => '<div class =\'ui消息\'>
-            启用此选项后，Asterisk将以指定的频率发送SIP选项数据包。这是支持路由器上NAT隧道所必需的。
-        </div>',
+            启用此选项后，Asterisk将以指定的频率发送SIP选项数据包。这是支持路由器上NAT隧道所必需的。
+        </div>',
     'AdvancedOptions' => '进阶设定',
     'ConnectionSettings' => '连接设定',
     'BreadcrumbHome' => '从头开始',
@@ -223,7 +225,7 @@ return [
     'pr_AddIAXProvider' => '连接IAX',
     'pr_QualifyInstructionsIAX' => '启用此选项后，Asterisk将发送SIP选项数据包。这是支持路由器上NAT隧道所必需的。',
     'pr_CustomFieldsDescriptions' => '<div class =\'ui message\'>在大多数情况下，替代字段应保留为空白。
-    仅当您的呼叫不起作用并且提供商需要特殊设置时，才必须根据提供商的建议填写这些字段。</div>',
+    仅当您的呼叫不起作用并且提供商需要特殊设置时，才必须根据提供商的建议填写这些字段。</div>',
     'pr_ReceiveCallsWithoutAuth' => '信任此提供程序并在不进行身份验证的情况下接收来自该提供程序的任何呼叫',
     'pr_ValidationProviderPortRange' => '提供者端口必须在{ruleValue}之内',
     'pr_DeleteTitle' => '删除提供者',
@@ -737,9 +739,9 @@ return [
     'lic_LicenseWarningHeader' => '该程序的副本未注册',
     'lic_LicenseWarningText' => '转到<a href=\'/admin-cabinet/licensing/modify/\'>许可部分</a>，并按照必要的步骤注册系统',
     'lic_FailedToGetTrialKey2051' => '（2051）无法注册该副本，因为您已经在此机器上将注册号与其他电子邮件一起使用。<br>
- 使用之前从lic@miko.ru发送给您的密钥',
+ 使用之前从lic@miko.ru发送给您的密钥',
     'lic_FailedToGetTrialKey2022' => '（2022）无法注册该副本。 已在指定的电子邮件中生成了另一家公司的注册号。
- 使用先前从lic@miko.ru发送给您的密钥，或指定公司的正确名称。',
+ 使用先前从lic@miko.ru发送给您的密钥，或指定公司的正确名称。',
     'lic_FailedActivateCoupon2057' => '（2057）此优惠券已被阻止，请联系lic@miko.ru',
     'lic_FailedActivateCoupon2040' => '（2040）此优惠券不存在，请检查输入是否正确',
     'lic_FailedActivateCoupon2041' => '（2041）此优惠券已被更早激活',
@@ -1062,7 +1064,6 @@ return [
     'Storage disk was mounted successfully...' => '存储盘成功挂载',
     'gs_NeedRestartPBX' => '更改时，PBX 将重新启动（星号服务）',
     'ex_BusyLevelInfo' => '达到指定的通话次数后，员工的电话将被视为占线。',
-    'ex_PortugueseBrazil' => '葡萄牙语（巴西）',
     'gs_RTPStunServer' => '服务器 STUN 地址（例如：stun.test.net:10000）',
     'cr_ValidateExtensionLen' => '分机号码必须是两位或更多位数字',
     'cr_ValidatePinNumber' => 'PIN 只能是数字',
