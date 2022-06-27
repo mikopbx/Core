@@ -89,14 +89,13 @@ class SipProviderEditForm extends Form
             ],
             'useEmpty' => false,
             'value'    => $entity->dtmfmode,
-            'class'    => 'ui selection dropdown dtmfmode-select',
+            'class'    => 'ui selection dropdown',
         ]
         );
         $this->add($dtmfmode);
 
         // Transport
         $arrTransport = [
-            ' ' => 'udp, tcp',
             Sip::TRANSPORT_UDP    => Sip::TRANSPORT_UDP,
             Sip::TRANSPORT_TCP    => Sip::TRANSPORT_TCP,
             Sip::TRANSPORT_TLS    => Sip::TRANSPORT_TLS,
@@ -107,9 +106,11 @@ class SipProviderEditForm extends Form
                        'id',
                        'name',
                    ],
+                   'emptyText'  => 'udp, tcp',
+                   'emptyValue' => ' ',
                    'useEmpty' => true,
-                   'value'    => empty($entity->transport)?' ':$entity->transport,
-                   'class'    => 'ui selection dropdown dtmf-mode-select',
+                   'value'    => empty($entity->transport)?' ': $entity->transport,
+                   'class'    => 'ui selection dropdown',
                ]
         );
         $this->add($transport);
