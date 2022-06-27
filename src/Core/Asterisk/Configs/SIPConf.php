@@ -670,7 +670,9 @@ class SIPConf extends CoreConfigClass
         if(!empty($provider['transport'])){
             $options['transport'] = "transport-{$provider['transport']}";
         }
-
+        if(!empty($provider['outbound_proxy'])){
+            $options['outbound_proxy'] = "sip:{$provider['outbound_proxy']}\;lr";
+        }
         $options = $this->overridePJSIPOptionsFromModules(
             $provider['uniqid'],
             $options,
@@ -741,6 +743,9 @@ class SIPConf extends CoreConfigClass
             $options['qualify_frequency'] = $provider['qualifyfreq'];
             $options['qualify_timeout']   = '3.0';
         }
+        if(!empty($provider['outbound_proxy'])){
+            $options['outbound_proxy'] = "sip:{$provider['outbound_proxy']}\;lr";
+        }
         $options = $this->overridePJSIPOptionsFromModules(
             $provider['uniqid'],
             $options,
@@ -769,11 +774,15 @@ class SIPConf extends CoreConfigClass
         if ( ! in_array($provider['host'], $providerHosts, true)) {
             $providerHosts[] = $provider['host'];
         }
+        if(!empty($provider['outbound_proxy'])){
+            $providerHosts[] = explode(':', $provider['outbound_proxy'])[0];
+        }
         $options = [
             'type'     => 'identify',
             'endpoint' => $provider['uniqid'],
             'match'    => implode(',', array_unique($providerHosts)),
         ];
+
         $options = $this->overridePJSIPOptionsFromModules(
             $provider['uniqid'],
             $options,
@@ -781,7 +790,6 @@ class SIPConf extends CoreConfigClass
         );
         $conf    .= "[{$provider['uniqid']}]\n";
         $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'identify');
-
         return $conf;
     }
 
@@ -844,7 +852,9 @@ class SIPConf extends CoreConfigClass
                 $options['media_encryption'] = 'sdes';
             }
         }
-
+        if(!empty($provider['outbound_proxy'])){
+            $options['outbound_proxy'] = "sip:{$provider['outbound_proxy']}\;lr";
+        }
         if ('1' !== $provider['receive_calls_without_auth'] && !empty("{$provider['username']}{$provider['secret']}")) {
             $options['outbound_auth'] = "{$provider['uniqid']}-OUT";
         }

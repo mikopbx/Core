@@ -95,6 +95,12 @@ class Sip extends ModelsBase
     public ?string $transport = '';
 
     /**
+     * outbound_proxy
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $outbound_proxy = '';
+
+    /**
      * @Column(type="string", nullable=true)
      */
     public ?string $defaultuser = '';

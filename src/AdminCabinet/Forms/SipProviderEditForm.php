@@ -117,6 +117,7 @@ class SipProviderEditForm extends Form
 
         // Port
         $this->add(new Numeric('port'));
+        $this->add(new Text('outbound_proxy'));
 
         // Nat
         $arrNatType = [
