@@ -33,7 +33,6 @@
     <label>{{ t._('pr_DTMFMode') }}</label>
     {{ form.render('dtmfmode') }}
 </div>
-
 <div class="ui accordion field">
     <div class=" title">
         <i class="icon dropdown"></i>
@@ -42,7 +41,6 @@
 
     <div class=" content field">
         <h3 class="ui dividing header ">{{ t._("ConnectionSettings") }}</h3>
-
         <div class="six wide field">
             <label>{{ t._('pr_EnterHostOrIp') }}</label>
             <div class="ui input" id="additional-host">
@@ -74,7 +72,10 @@
             <label for="port">{{ t._('pr_SIPPort') }}</label>
             {{ form.render('port') }}
         </div>
-
+        <div class="field">
+            <label>{{ t._('ex_Transport') }}</label>
+            {{ form.render('transport') }}
+        </div>
         {{ partial("partials/natqualify") }}
 
         <h3 class="ui dividing header ">{{ t._("pr_RegistrationSettings") }}</h3>

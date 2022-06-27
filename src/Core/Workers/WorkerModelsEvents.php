@@ -264,6 +264,7 @@ class WorkerModelsEvents extends WorkerBase
         $tables[] = [
             'settingName' => [
                 'SIPPort',
+                'TLS_PORT',
                 'SIPDefaultExpiry',
                 'SIPMinExpiry',
                 'SIPMaxExpiry',
@@ -305,6 +306,7 @@ class WorkerModelsEvents extends WorkerBase
         $tables[] = [
             'settingName' => [
                 'SIPPort',
+                'TLS_PORT',
                 'RTPPortFrom',
                 'RTPPortTo',
                 'IAXPort',

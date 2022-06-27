@@ -81,6 +81,7 @@ class PbxSettings extends ModelsBase
             'Description'                     => '',
             'RestartEveryNight'               => '0',
             'SIPPort'                         => '5060',
+            'TLS_PORT'                        => '5061',
             'SIPDefaultExpiry'                => '120',
             'SIPMinExpiry'                    => '60',
             'SIPMaxExpiry'                    => '3600',

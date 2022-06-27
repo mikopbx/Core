@@ -122,6 +122,10 @@
                 {{ form.render('sip_dtmfmode') }}
             </div>
             <div class="field">
+                <label>{{ t._('ex_Transport') }}</label>
+                {{ form.render('sip_transport') }}
+            </div>
+            <div class="field">
                 <label>{{ t._('ex_NetworkFilter') }}</label>
                 {{ form.render('sip_networkfilterid') }}
             </div>

@@ -42,6 +42,7 @@ class GeneralSettingsEditForm extends Form
         foreach ($options as $key => $value) {
             switch ($key) {
                 case 'SIPPort':
+                case 'TLS_PORT':
                 case 'SIPDefaultExpiry':
                 case 'SIPMinExpiry':
                 case 'SIPMaxExpiry':
