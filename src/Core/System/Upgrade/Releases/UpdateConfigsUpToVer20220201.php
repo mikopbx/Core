@@ -68,8 +68,8 @@ class UpdateConfigsUpToVer20220201 extends Injectable implements UpgradeSystemCo
             foreach ($rules->toArray() as $key => $value){
                 $ruleTls->$key = $value;
             }
-            $ruleTls->portfrom    = '5061';
-            $ruleTls->portto      = '5061';
+            $ruleTls->portfrom    = 5061;
+            $ruleTls->portto      = 5061;
             $ruleTls->protocol    = 'tcp';
             $ruleTls->portFromKey = $colName;
             $ruleTls->portToKey   = $colName;
