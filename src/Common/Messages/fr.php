@@ -7,7 +7,7 @@ return [
     'ex_Deutsch' => 'Deutsch',
     'ex_Danish' => 'Dansk',
     'ex_Spanish' => 'Espanol',
-    'ex_Greek'  => 'Ελληνική',
+    'ex_Greek' => 'Ελληνική',
     'ex_French' => 'Le français',
     'ex_Italian' => 'Italiano',
     'ex_Portuguese' => 'Português',
@@ -1107,4 +1107,7 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'or_RuleDescriptionBeginEmpty' => 'Le numéro se compose de <b>%restnumbers%</b> chiffres',
     'or_RuleNotConfigured' => 'Règle non configurée',
     'or_RuleAnyNumbers' => 'N\'importe quel nombre',
+    'ex_Transport' => 'Protocole de transport (UDP/TCP par défaut)',
+    'gs_TLS_PORT' => 'Port SIP TLS (appels cryptés)',
+    'ex_OutboundProxy' => 'Proxy sortant (exemple : pbx.yandex.net:5080)',
 ];

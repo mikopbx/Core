@@ -7,7 +7,7 @@ return [
     'ex_Deutsch' => 'Deutsch',
     'ex_Danish' => 'Dansk',
     'ex_Spanish' => 'Espanol',
-    'ex_Greek'  => 'Ελληνική',
+    'ex_Greek' => 'Ελληνική',
     'ex_French' => 'Le français',
     'ex_Italian' => 'Italiano',
     'ex_Portuguese' => 'Português',
@@ -1107,4 +1107,7 @@ return [
     'or_RuleDescriptionBeginEmpty' => 'Номер складається з <b>%restnumbers%</b> цифр',
     'or_RuleNotConfigured' => 'Правило не налаштоване',
     'or_RuleAnyNumbers' => 'Будь-які номери',
+    'ex_Transport' => 'Транспортний протокол (UDP/TCP за замовчуванням)',
+    'gs_TLS_PORT' => 'Порт SIP TLS (шифровані дзвінки)',
+    'ex_OutboundProxy' => 'Outbound proxy (приклад: pbx.yandex.net:5080)',
 ];

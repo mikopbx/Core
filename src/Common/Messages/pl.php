@@ -7,7 +7,7 @@ return [
     'ex_Deutsch' => 'Deutsch',
     'ex_Danish' => 'Dansk',
     'ex_Spanish' => 'Espanol',
-    'ex_Greek'  => 'Ελληνική',
+    'ex_Greek' => 'Ελληνική',
     'ex_French' => 'Le français',
     'ex_Italian' => 'Italiano',
     'ex_Portuguese' => 'Português',
@@ -1107,4 +1107,7 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'or_RuleDescriptionBeginEmpty' => 'Numer składa się z <b>%restnumbers%</b> cyfr',
     'or_RuleNotConfigured' => 'Reguła nieskonfigurowana',
     'or_RuleAnyNumbers' => 'Dowolne liczby',
+    'ex_Transport' => 'Protokół transportowy (domyślnie UDP/TCP)',
+    'gs_TLS_PORT' => 'Port SIP TLS (połączenia szyfrowane)',
+    'ex_OutboundProxy' => 'Wychodzący serwer proxy (przykład: pbx.yandex.net:5080)',
 ];

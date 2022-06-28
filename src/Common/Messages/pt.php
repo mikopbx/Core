@@ -7,7 +7,7 @@ return [
     'ex_Deutsch' => 'Deutsch',
     'ex_Danish' => 'Dansk',
     'ex_Spanish' => 'Espanol',
-    'ex_Greek'  => 'Ελληνική',
+    'ex_Greek' => 'Ελληνική',
     'ex_French' => 'Le français',
     'ex_Italian' => 'Italiano',
     'ex_Portuguese' => 'Português',
@@ -1107,4 +1107,7 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'or_RuleDescriptionBeginEmpty' => 'O número consiste em dígitos <b>%restnumbers%</b>',
     'or_RuleNotConfigured' => 'Regra não configurada',
     'or_RuleAnyNumbers' => 'Qualquer número',
+    'ex_Transport' => 'Protocolo de transporte (UDP/TCP por padrão)',
+    'gs_TLS_PORT' => 'Porta SIP TLS (chamadas criptografadas)',
+    'ex_OutboundProxy' => 'Proxy de saída (exemplo: pbx.yandex.net:5080)',
 ];

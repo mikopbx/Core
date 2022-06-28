@@ -7,7 +7,7 @@ return [
     'ex_Deutsch' => 'Deutsch',
     'ex_Danish' => 'Dansk',
     'ex_Spanish' => 'Espanol',
-    'ex_Greek'  => 'Ελληνική',
+    'ex_Greek' => 'Ελληνική',
     'ex_French' => 'Le français',
     'ex_Italian' => 'Italiano',
     'ex_Portuguese' => 'Português',
@@ -1107,4 +1107,7 @@ return [
     'or_RuleDescriptionBeginEmpty' => '编号由 <b>%restnumbers%</b> 位组成',
     'or_RuleNotConfigured' => '未配置规则',
     'or_RuleAnyNumbers' => '任何数字',
+    'ex_Transport' => '传输协议（默认为 UDP/TCP）',
+    'gs_TLS_PORT' => 'SIP TLS 端口（加密呼叫）',
+    'ex_OutboundProxy' => '出站代理（例如：pbx.yandex.net:5080）',
 ];

@@ -7,7 +7,7 @@ return [
     'ex_Deutsch' => 'Deutsch',
     'ex_Danish' => 'Dansk',
     'ex_Spanish' => 'Espanol',
-    'ex_Greek'  => 'Ελληνική',
+    'ex_Greek' => 'Ελληνική',
     'ex_French' => 'Le français',
     'ex_Italian' => 'Italiano',
     'ex_Portuguese' => 'Português',
@@ -1107,4 +1107,7 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'or_RuleDescriptionBeginEmpty' => 'Číslo se skládá z <b>%restnumbers%</b> číslic',
     'or_RuleNotConfigured' => 'Pravidlo není nakonfigurováno',
     'or_RuleAnyNumbers' => 'Jakákoli čísla',
+    'ex_Transport' => 'Transportní protokol (standardně UDP/TCP)',
+    'gs_TLS_PORT' => 'SIP TLS port (šifrované hovory)',
+    'ex_OutboundProxy' => 'Outbound proxy (příklad: pbx.yandex.net:5080)',
 ];
