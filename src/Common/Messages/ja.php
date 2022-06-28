@@ -7,7 +7,7 @@ return [
     'ex_Deutsch' => 'Deutsch',
     'ex_Danish' => 'Dansk',
     'ex_Spanish' => 'Espanol',
-    'ex_Greek'  => 'Ελληνική',
+    'ex_Greek' => 'Ελληνική',
     'ex_French' => 'Le français',
     'ex_Italian' => 'Italiano',
     'ex_Portuguese' => 'Português',
@@ -1107,4 +1107,7 @@ return [
     'or_RuleDescriptionBeginEmpty' => '番号は<b>%restnumbers%</b>桁で構成されます',
     'or_RuleNotConfigured' => 'ルールが構成されていません',
     'or_RuleAnyNumbers' => '任意の数字',
+    'ex_Transport' => 'トランスポートプロトコル（デフォルトではUDP / TCP）',
+    'gs_TLS_PORT' => 'SIP TLSポート（暗号化された通話）',
+    'ex_OutboundProxy' => 'アウトバウンドプロキシ（例：pbx.yandex.net：5080）',
 ];

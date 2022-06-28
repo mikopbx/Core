@@ -77,7 +77,7 @@ class SIPConf extends CoreConfigClass
         [$topology, $extIpAddress, $externalHostName, $subnets] = $this->getTopologyData();
 
         $generalSettings = $mikoPBXConfig->getGeneralSettings();
-        $now_hash        = md5($topology . $externalHostName . $extIpAddress . $generalSettings['SIPPort'] . implode('',$subnets));
+        $now_hash        = md5($topology . $externalHostName . $extIpAddress . $generalSettings['SIPPort']. $generalSettings['TLS_PORT'] . implode('',$subnets));
         $old_hash        = '';
         $varEtcDir       = $di->getShared('config')->path('core.varEtcDir');
         if (file_exists($varEtcDir . self::TOPOLOGY_HASH_FILE)) {
@@ -477,8 +477,11 @@ class SIPConf extends CoreConfigClass
             $codecConf .= "allow = $codec\n";
         }
 
-        $pbxVersion = PbxSettings::getValueByKey('PBXVersion');
+        $pbxVersion = $this->generalSettings['PBXVersion'];
+        $sipPort    = $this->generalSettings['SIPPort'];
+        $tlsPort    = $this->generalSettings['TLS_PORT'];
         $natConf    = '';
+        $tlsNatConf = '';
         if ($topology === 'private') {
             foreach ($subnets as $net) {
                 $natConf .= "local_net=$net\n";
@@ -487,12 +490,14 @@ class SIPConf extends CoreConfigClass
                 $parts   = explode(':', $externalHostName);
                 $natConf .= 'external_media_address=' . $parts[0] . "\n";
                 $natConf .= 'external_signaling_address=' . $parts[0] . "\n";
-                $natConf .= 'external_signaling_port=' . ($parts[1] ?? '5060');
+                $tlsNatConf = "{$natConf}external_signaling_port=$tlsPort";
+                $natConf .= 'external_signaling_port=' . ($parts[1] ?? $sipPort);
             } elseif ( ! empty($extIpAddress)) {
                 $parts   = explode(':', $extIpAddress);
                 $natConf .= 'external_media_address=' . $parts[0] . "\n";
                 $natConf .= 'external_signaling_address=' . $parts[0] . "\n";
-                $natConf .= 'external_signaling_port=' . ($parts[1] ?? '5060');
+                $tlsNatConf = "{$natConf}external_signaling_port=$tlsPort";
+                $natConf .= 'external_signaling_port=' . ($parts[1] ?? $sipPort);
             }
         }
 
@@ -515,6 +520,15 @@ class SIPConf extends CoreConfigClass
             "bind=0.0.0.0:{$this->generalSettings['SIPPort']}\n" .
             "$natConf\n\n" .
 
+            "[transport-tls]\n" .
+            "$typeTransport\n" .
+            "protocol = tls\n" .
+            "bind=0.0.0.0:{$tlsPort}\n" .
+            "cert_file=/etc/asterisk/keys/ajam.pem\n" .
+            "priv_key_file=/etc/asterisk/keys/ajam.pem\n" .
+            "method=sslv23\n" .
+            "$tlsNatConf\n\n" .
+
             "[transport-wss]\n" .
             "$typeTransport\n" .
             "protocol = wss\n" .
@@ -532,7 +546,7 @@ class SIPConf extends CoreConfigClass
         }
 
         $varEtcDir = $this->config->path('core.varEtcDir');
-        $hash = md5($topology . $externalHostName . $extIpAddress . $this->generalSettings['SIPPort'] . implode('',$subnets));
+        $hash = md5($topology . $externalHostName . $extIpAddress . $this->generalSettings['SIPPort']. $this->generalSettings['TLS_PORT'] . implode('',$subnets));
         file_put_contents($varEtcDir.self::TOPOLOGY_HASH_FILE, $hash);
         $conf .= "\n";
         return $conf;
@@ -652,6 +666,13 @@ class SIPConf extends CoreConfigClass
             'server_uri'               => "sip:{$provider['host']}:{$provider['port']}",
             'client_uri'               => "sip:{$provider['username']}@{$provider['host']}:{$provider['port']}",
         ];
+
+        if(!empty($provider['transport'])){
+            $options['transport'] = "transport-{$provider['transport']}";
+        }
+        if(!empty($provider['outbound_proxy'])){
+            $options['outbound_proxy'] = "sip:{$provider['outbound_proxy']}\;lr";
+        }
         $options = $this->overridePJSIPOptionsFromModules(
             $provider['uniqid'],
             $options,
@@ -722,6 +743,9 @@ class SIPConf extends CoreConfigClass
             $options['qualify_frequency'] = $provider['qualifyfreq'];
             $options['qualify_timeout']   = '3.0';
         }
+        if(!empty($provider['outbound_proxy'])){
+            $options['outbound_proxy'] = "sip:{$provider['outbound_proxy']}\;lr";
+        }
         $options = $this->overridePJSIPOptionsFromModules(
             $provider['uniqid'],
             $options,
@@ -750,11 +774,15 @@ class SIPConf extends CoreConfigClass
         if ( ! in_array($provider['host'], $providerHosts, true)) {
             $providerHosts[] = $provider['host'];
         }
+        if(!empty($provider['outbound_proxy'])){
+            $providerHosts[] = explode(':', $provider['outbound_proxy'])[0];
+        }
         $options = [
             'type'     => 'identify',
             'endpoint' => $provider['uniqid'],
             'match'    => implode(',', array_unique($providerHosts)),
         ];
+
         $options = $this->overridePJSIPOptionsFromModules(
             $provider['uniqid'],
             $options,
@@ -762,7 +790,6 @@ class SIPConf extends CoreConfigClass
         );
         $conf    .= "[{$provider['uniqid']}]\n";
         $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'identify');
-
         return $conf;
     }
 
@@ -818,6 +845,16 @@ class SIPConf extends CoreConfigClass
             'aors'            => $provider['uniqid'],
             'timers'          => ' no',
         ];
+
+        if(!empty($provider['transport'])){
+            $options['transport'] = "transport-{$provider['transport']}";
+            if($provider['transport'] === Sip::TRANSPORT_TLS){
+                $options['media_encryption'] = 'sdes';
+            }
+        }
+        if(!empty($provider['outbound_proxy'])){
+            $options['outbound_proxy'] = "sip:{$provider['outbound_proxy']}\;lr";
+        }
         if ('1' !== $provider['receive_calls_without_auth'] && !empty("{$provider['username']}{$provider['secret']}")) {
             $options['outbound_auth'] = "{$provider['uniqid']}-OUT";
         }
@@ -993,6 +1030,14 @@ class SIPConf extends CoreConfigClass
             'timers'               => 'no',
             'message_context'      => 'messages',
         ];
+
+        if(!empty($peer['transport'])){
+            $options['transport'] = "transport-{$peer['transport']}";
+            if($peer['transport'] === Sip::TRANSPORT_TLS){
+                $options['media_encryption'] = 'sdes';
+            }
+        }
+
         self::getToneZone($options, $language);
         $options = $this->overridePJSIPOptionsFromModules(
             $peer['extension'],
@@ -1001,9 +1046,11 @@ class SIPConf extends CoreConfigClass
         );
         $conf    .= "[{$peer['extension']}] \n";
         $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'endpoint');
-        $conf    .= $this->hookModulesMethod(CoreConfigClass::GENERATE_PEER_PJ_ADDITIONAL_OPTIONS, [$peer]);
+        $conf    .= $this->hookModulesMethod(self::GENERATE_PEER_PJ_ADDITIONAL_OPTIONS, [$peer]);
 
         if($this->generalSettings['UseWebRTC'] === '1') {
+            unset($options['media_encryption']);
+
             $conf .= "[{$peer['extension']}-WS] \n";
             $options['webrtc'] = 'yes';
             $options['transport'] = 'transport-wss';

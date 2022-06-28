@@ -7,7 +7,7 @@ return [
     'ex_Deutsch' => 'Deutsch',
     'ex_Danish' => 'Dansk',
     'ex_Spanish' => 'Espanol',
-    'ex_Greek'  => 'Ελληνική',
+    'ex_Greek' => 'Ελληνική',
     'ex_French' => 'Le français',
     'ex_Italian' => 'Italiano',
     'ex_Portuguese' => 'Português',
@@ -1107,4 +1107,7 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá đ
     'or_RuleDescriptionBeginEmpty' => 'Số bao gồm các chữ số <b> %restnumbers% </b>',
     'or_RuleNotConfigured' => 'Quy tắc không được định cấu hình',
     'or_RuleAnyNumbers' => 'Bất kỳ số nào',
+    'ex_Transport' => 'Giao thức truyền tải (UDP / TCP theo mặc định)',
+    'gs_TLS_PORT' => 'Cổng SIP TLS (cuộc gọi được mã hóa)',
+    'ex_OutboundProxy' => 'Proxy đi (ví dụ: pbx.yandex.net:5080)',
 ];

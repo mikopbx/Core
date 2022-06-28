@@ -1,7 +1,13 @@
 <h4 class="ui header">{{ t._('gs_SIPPortSettings') }}</h4>
-<div class="inline field">
-    <label>{{ t._('gs_SIPPort') }}</label>
-    {{ form.render('SIPPort') }}
+<div class="two fields">
+    <div class="field">
+        <label>{{ t._('gs_SIPPort') }}</label>
+        {{ form.render('SIPPort') }}
+    </div>
+    <div class="field">
+        <label>{{ t._('gs_TLS_PORT') }}</label>
+        {{ form.render('TLS_PORT') }}
+    </div>
 </div>
 <div class="two fields">
     <div class="field">

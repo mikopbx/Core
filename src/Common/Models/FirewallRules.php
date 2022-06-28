@@ -95,6 +95,7 @@ class FirewallRules extends ModelsBase
             'RTPPortFrom',
             'RTPPortTo',
             'SIPPort',
+            'TLS_PORT',
             'AMIPort',
             'AJAMPort',
             'AJAMPortTLS',
@@ -136,6 +137,13 @@ class FirewallRules extends ModelsBase
                         'protocol'    => 'tcp',
                         'portFromKey' => 'SIPPort',
                         'portToKey'   => 'SIPPort',
+                    ],
+                    [
+                        'portfrom'    => $protectedPortSet['TLS_PORT'],
+                        'portto'      => $protectedPortSet['TLS_PORT'],
+                        'protocol'    => 'tcp',
+                        'portFromKey' => 'TLS_PORT',
+                        'portToKey'   => 'TLS_PORT',
                     ],
                     [
                         'portfrom'    => $protectedPortSet['RTPPortFrom'],

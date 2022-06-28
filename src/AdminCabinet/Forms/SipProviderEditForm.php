@@ -19,6 +19,7 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
+use MikoPBX\Common\Models\Sip;
 use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Numeric;
@@ -88,14 +89,35 @@ class SipProviderEditForm extends Form
             ],
             'useEmpty' => false,
             'value'    => $entity->dtmfmode,
-            'class'    => 'ui selection dropdown dtmfmode-select',
+            'class'    => 'ui selection dropdown',
         ]
         );
         $this->add($dtmfmode);
 
+        // Transport
+        $arrTransport = [
+            Sip::TRANSPORT_UDP    => Sip::TRANSPORT_UDP,
+            Sip::TRANSPORT_TCP    => Sip::TRANSPORT_TCP,
+            Sip::TRANSPORT_TLS    => Sip::TRANSPORT_TLS,
+        ];
+        $transport = new Select(
+            'transport', $arrTransport, [
+                   'using'    => [
+                       'id',
+                       'name',
+                   ],
+                   'emptyText'  => 'udp, tcp',
+                   'emptyValue' => ' ',
+                   'useEmpty' => true,
+                   'value'    => empty($entity->transport)?' ': $entity->transport,
+                   'class'    => 'ui selection dropdown',
+               ]
+        );
+        $this->add($transport);
 
         // Port
         $this->add(new Numeric('port'));
+        $this->add(new Text('outbound_proxy'));
 
         // Nat
         $arrNatType = [

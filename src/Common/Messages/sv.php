@@ -7,7 +7,7 @@ return [
     'ex_Deutsch' => 'Deutsch',
     'ex_Danish' => 'Dansk',
     'ex_Spanish' => 'Espanol',
-    'ex_Greek'  => 'Ελληνική',
+    'ex_Greek' => 'Ελληνική',
     'ex_French' => 'Le français',
     'ex_Italian' => 'Italiano',
     'ex_Portuguese' => 'Português',
@@ -1107,4 +1107,7 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'or_RuleDescriptionBeginEmpty' => 'Numret består av <b>%restnumbers%</b> siffror',
     'or_RuleNotConfigured' => 'Regel inte konfigurerad',
     'or_RuleAnyNumbers' => 'Alla siffror',
+    'ex_Transport' => 'Transportprotokoll (UDP/TCP som standard)',
+    'gs_TLS_PORT' => 'SIP TLS-port (krypterade samtal)',
+    'ex_OutboundProxy' => 'Utgående proxy (exempel: pbx.yandex.net:5080)',
 ];
