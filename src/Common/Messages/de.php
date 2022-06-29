@@ -7,7 +7,7 @@ return [
     'ex_Deutsch' => 'Deutsch',
     'ex_Danish' => 'Dansk',
     'ex_Spanish' => 'Espanol',
-    'ex_Greek'  => 'Ελληνική',
+    'ex_Greek' => 'Ελληνική',
     'ex_French' => 'Le français',
     'ex_Italian' => 'Italiano',
     'ex_Portuguese' => 'Português',
@@ -1110,4 +1110,7 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
     'or_RuleAnyNumbers' => 'Beliebige Zahlen',
     'or_RuleDescriptionBeginEmpty' => 'Die Nummer besteht aus <b>%restnumbers%</b> Ziffern',
     'or_RuleNotConfigured' => 'Regel nicht konfiguriert',
+    'gs_TLS_PORT' => 'SIP-TLS-Port (verschlüsselte Anrufe)',
+    'ex_Transport' => 'Transportprotokoll (standardmäßig UDP/TCP)',
+    'ex_OutboundProxy' => 'Ausgehender Proxy (Beispiel: pbx.yandex.net:5080)',
 ];

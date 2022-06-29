@@ -7,7 +7,7 @@ return [
     'ex_Deutsch' => 'Deutsch',
     'ex_Danish' => 'Dansk',
     'ex_Spanish' => 'Espanol',
-    'ex_Greek'  => 'Ελληνική',
+    'ex_Greek' => 'Ελληνική',
     'ex_French' => 'Le français',
     'ex_Italian' => 'Italiano',
     'ex_Portuguese' => 'Português',
@@ -1107,4 +1107,7 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'or_RuleDescriptionBeginEmpty' => 'Nummeret består af <b>%restnumbers%</b> cifre',
     'or_RuleNotConfigured' => 'Regel ikke konfigureret',
     'or_RuleAnyNumbers' => 'Eventuelle tal',
+    'ex_Transport' => 'Transportprotokol (UDP/TCP som standard)',
+    'gs_TLS_PORT' => 'SIP TLS-port (krypterede opkald)',
+    'ex_OutboundProxy' => 'Udgående proxy (eksempel: pbx.yandex.net:5080)',
 ];

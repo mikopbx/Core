@@ -7,7 +7,7 @@ return [
     'ex_Deutsch' => 'Deutsch',
     'ex_Danish' => 'Dansk',
     'ex_Spanish' => 'Espanol',
-    'ex_Greek'  => 'Ελληνική',
+    'ex_Greek' => 'Ελληνική',
     'ex_French' => 'Le français',
     'ex_Italian' => 'Italiano',
     'ex_Portuguese' => 'Português',
@@ -1107,4 +1107,7 @@ return [
     'or_RuleDescriptionBeginEmpty' => 'Ο αριθμός αποτελείται από <b>%restnumbers%</b> ψηφία',
     'or_RuleNotConfigured' => 'Ο κανόνας δεν έχει ρυθμιστεί',
     'or_RuleAnyNumbers' => 'Οποιοιδήποτε αριθμοί',
+    'ex_Transport' => 'Πρωτόκολλο μεταφοράς (UDP/TCP από προεπιλογή)',
+    'gs_TLS_PORT' => 'Θύρα SIP TLS (κρυπτογραφημένες κλήσεις)',
+    'ex_OutboundProxy' => 'Εξερχόμενος διακομιστής μεσολάβησης (παράδειγμα: pbx.yandex.net:5080)',
 ];

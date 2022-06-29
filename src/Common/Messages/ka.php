@@ -7,7 +7,7 @@ return [
     'ex_Deutsch' => 'Deutsch',
     'ex_Danish' => 'Dansk',
     'ex_Spanish' => 'Espanol',
-    'ex_Greek'  => 'Ελληνική',
+    'ex_Greek' => 'Ελληνική',
     'ex_French' => 'Le français',
     'ex_Italian' => 'Italiano',
     'ex_Portuguese' => 'Português',
@@ -1107,4 +1107,7 @@ return [
     'or_RuleDescriptionBeginEmpty' => 'რიცხვი შედგება <b>%restnumbers%</b> ციფრისგან',
     'or_RuleNotConfigured' => 'წესი არ არის კონფიგურირებული',
     'or_RuleAnyNumbers' => 'ნებისმიერი რიცხვი',
+    'ex_Transport' => 'ტრანსპორტის პროტოკოლი (UDP/TCP ნაგულისხმევად)',
+    'gs_TLS_PORT' => 'SIP TLS პორტი (დაშიფრული ზარები)',
+    'ex_OutboundProxy' => 'გამავალი პროქსი (მაგალითი: pbx.yandex.net:5080)',
 ];

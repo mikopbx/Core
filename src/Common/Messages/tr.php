@@ -7,7 +7,7 @@ return [
     'ex_Deutsch' => 'Deutsch',
     'ex_Danish' => 'Dansk',
     'ex_Spanish' => 'Espanol',
-    'ex_Greek'  => 'Ελληνική',
+    'ex_Greek' => 'Ελληνική',
     'ex_French' => 'Le français',
     'ex_Italian' => 'Italiano',
     'ex_Portuguese' => 'Português',
@@ -1107,4 +1107,7 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
     'or_RuleDescriptionBeginEmpty' => 'Sayı, <b>%restnumbers%</b> basamaklarından oluşur',
     'or_RuleNotConfigured' => 'Kural yapılandırılmadı',
     'or_RuleAnyNumbers' => 'herhangi bir sayı',
+    'ex_Transport' => 'Aktarım protokolü (varsayılan olarak UDP/TCP)',
+    'gs_TLS_PORT' => 'SIP TLS bağlantı noktası (şifreli aramalar)',
+    'ex_OutboundProxy' => 'Giden proxy (örnek: pbx.yandex.net:5080)',
 ];

@@ -7,7 +7,7 @@ return [
     'ex_Deutsch' => 'Deutsch',
     'ex_Danish' => 'Dansk',
     'ex_Spanish' => 'Espanol',
-    'ex_Greek'  => 'Ελληνική',
+    'ex_Greek' => 'Ελληνική',
     'ex_French' => 'Le français',
     'ex_Italian' => 'Italiano',
     'ex_Portuguese' => 'Português',
@@ -1107,4 +1107,7 @@ Può essere attivato una volta, dopo di che il coupon viene riscattato.
     'or_RuleAnyNumbers' => 'Qualsiasi numero',
     'or_RuleDescriptionBeginEmpty' => 'Il numero è composto da <b>%restnumbers%</b> cifre',
     'or_RuleNotConfigured' => 'Regola non configurata',
+    'ex_Transport' => 'Protocollo di trasporto (UDP/TCP di default)',
+    'gs_TLS_PORT' => 'Porta SIP TLS (chiamate crittografate)',
+    'ex_OutboundProxy' => 'Proxy in uscita (esempio: pbx.yandex.net:5080)',
 ];
