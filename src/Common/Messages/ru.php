@@ -855,6 +855,7 @@ return [
     'lic_InvalidLicenseKey2009' => '(2009) Ошибка лицензионного ключа',
     'lic_FeatureExpired2011' => '(2011) Срок действия лицензии истек',
     'lic_FailedCheckLicense' => 'Сервер лицензирования не вернул ответ, проверьте настройки Internet и повторите попытку позже',
+    'lic_FailedCheckLicenseNotPbxResponse' => 'АТС не ответила на запрос информации по лицензии. Сервис не доступен.',
     'lic_UnknownLicenseMessage' => 'Нет ответа от системы лицензирования',
     'lic_IntroductionTabHeader' => 'О лицензировании маркетплейса',
     'lic_ManagementTabHeader' => 'Регистрация и управление лицензией',

@@ -1087,7 +1087,7 @@ const PbxApi = {
 			data: formData,
 			successTest: PbxApi.successTest,
 			onSuccess(response) {
-				callback(response.data, true);
+				callback(response, true);
 			},
 			onFailure(response) {
 				callback(response, false);

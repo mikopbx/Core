@@ -331,26 +331,8 @@ class AdvicesProcessor extends Injectable
     {
         $messages = [];
         $licKey   = PbxSettings::getValueByKey('PBXLicense');
-        $language   = PbxSettings::getValueByKey('WebAdminLanguage');
-
         if ( ! empty($licKey)) {
-            $checkBaseFeature = $this->license->featureAvailable(33);
-            if ($checkBaseFeature['success'] === false) {
-                if ($language === 'ru') {
-                    $url = 'https://wiki.mikopbx.com/licensing#faq_chavo';
-                } else {
-                    $url = "https://wiki.mikopbx.com/{$language}:licensing#faq_chavo";
-                }
-                $textError = (string)($checkBaseFeature['error']??'');
-                $messages['warning'] = $this->translation->_(
-                    'adv_ThisCopyHasLicensingTroubles',
-                    [
-                        'url'   => $url,
-                        'error' => $this->license->translateLicenseErrorMessage($textError),
-                    ]
-                );
-            }
-
+            $this->license->featureAvailable(33);
             $licenseInfo = $this->license->getLicenseInfo($licKey);
             if ($licenseInfo instanceof SimpleXMLElement) {
                 file_put_contents('/tmp/licenseInfo', json_encode($licenseInfo->attributes()));

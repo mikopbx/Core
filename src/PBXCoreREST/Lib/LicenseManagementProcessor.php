@@ -117,9 +117,7 @@ class LicenseManagementProcessor extends Injectable
         $mikoPBXConfig = new MikoPBXConfig();
         $res           = new PBXApiResult();
         $res->processor = __METHOD__;
-        if (strlen($data['licKey']) === 28
-            && Text::startsWith($data['licKey'], 'MIKO-')
-        ) {
+        if (strlen($data['licKey']) === 28 && Text::startsWith($data['licKey'], 'MIKO-')) {
             ModelsBase::clearCache(PbxSettings::class);
             $oldLicKey = $mikoPBXConfig->getGeneralSettings('PBXLicense');
             if ($oldLicKey !== $data['licKey']) {
@@ -143,7 +141,7 @@ class LicenseManagementProcessor extends Injectable
             if ( ! empty($data['coupon'])) {
                 $result = $this->license->activateCoupon($data['coupon']);
                 if ($result === true) {
-                    $res->messages[] = $this->translation->_('lic_SuccessfulCouponActivated');
+                    $res->messages[] = $this->translation->_('lic_SuccessfulСuponActivation');
                     $res->success    = true;
                 } else {
                     $res->messages[] = $this->license->translateLicenseErrorMessage((string)$result);
@@ -157,6 +155,7 @@ class LicenseManagementProcessor extends Injectable
                 $mikoPBXConfig->setGeneralSettings('PBXLicense', $newLicenseKey);
                 $this->license->changeLicenseKey($newLicenseKey);
                 $res->success    = true;
+                $res->data['PBXLicense'] = $newLicenseKey;
             } else {
                 // No internet connection, or wrong data sent to license server, or something else
                 $res->messages[] = $this->license->translateLicenseErrorMessage($newLicenseKey);
