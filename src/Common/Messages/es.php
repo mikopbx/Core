@@ -1110,4 +1110,5 @@ Se puede activar una vez, después de lo cual el cupón se canjea.
     'ex_Transport' => 'Protocolo de transporte (UDP/TCP por defecto)',
     'gs_TLS_PORT' => 'Puerto SIP TLS (llamadas encriptadas)',
     'ex_OutboundProxy' => 'Proxy saliente (ejemplo: pbx.yandex.net:5080)',
+    'lic_FailedCheckLicenseNotPbxResponse' => 'ATS no respondió a una solicitud de información sobre la licencia. El servicio no está disponible.',
 ];

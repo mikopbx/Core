@@ -1113,4 +1113,5 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
     'gs_TLS_PORT' => 'SIP-TLS-Port (verschlüsselte Anrufe)',
     'ex_Transport' => 'Transportprotokoll (standardmäßig UDP/TCP)',
     'ex_OutboundProxy' => 'Ausgehender Proxy (Beispiel: pbx.yandex.net:5080)',
+    'lic_FailedCheckLicenseNotPbxResponse' => 'ATS reagierte nicht auf eine Anfrage nach Informationen über die Lizenz. Dienst ist nicht verfügbar.',
 ];
