@@ -1110,4 +1110,5 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'ex_Transport' => 'Protokół transportowy (domyślnie UDP/TCP)',
     'gs_TLS_PORT' => 'Port SIP TLS (połączenia szyfrowane)',
     'ex_OutboundProxy' => 'Wychodzący serwer proxy (przykład: pbx.yandex.net:5080)',
+    'lic_FailedCheckLicenseNotPbxResponse' => 'ATS nie odpowiedział na prośbę o informacje dotyczące licencji. Usługa jest niedostępna.',
 ];

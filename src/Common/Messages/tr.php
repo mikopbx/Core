@@ -1110,4 +1110,5 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
     'ex_Transport' => 'Aktarım protokolü (varsayılan olarak UDP/TCP)',
     'gs_TLS_PORT' => 'SIP TLS bağlantı noktası (şifreli aramalar)',
     'ex_OutboundProxy' => 'Giden proxy (örnek: pbx.yandex.net:5080)',
+    'lic_FailedCheckLicenseNotPbxResponse' => 'ATS, lisansla ilgili bilgi talebine yanıt vermedi. Servis kullanılabilir değil.',
 ];
