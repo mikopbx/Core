@@ -73,24 +73,21 @@
     </div>
 </div>
 <div class="ui bottom attached tab segment" data-tab="missed">
+    <div class="five wide field">
+        <label>{{ t._('ms_SystemEmailForMissed') }}</label>
+        {{ form.render('SystemEmailForMissed') }}
+    </div>
     <div class="field">
         <label for="MailTplMissedCallSubject">{{ t._('ms_MissedCallSubject') }}</label>
-
         {{ form.render('MailTplMissedCallSubject') }}
-
     </div>
-
     <div class="field">
         <label for="MailTplMissedCallBody">{{ t._('ms_MissedCallBody') }}</label>
-
         {{ form.render('MailTplMissedCallBody') }}
-
     </div>
     <div class="field">
         <label for="MailTplMissedCallBody">{{ t._('ms_MissedCallFooter') }}</label>
-
         {{ form.render('MailTplMissedCallFooter') }}
-
     </div>
 </div>
 

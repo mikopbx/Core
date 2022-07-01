@@ -21,7 +21,7 @@ namespace MikoPBX\Core\Workers;
 
 require_once 'Globals.php';
 
-use MikoPBX\Common\Models\{Extensions, ModelsBase, Users};
+use MikoPBX\Common\Models\{Extensions, ModelsBase, PbxSettings, Users};
 use MikoPBX\Core\System\{BeanstalkClient, Processes, Util};
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
 use Throwable;
@@ -39,7 +39,7 @@ class WorkerCdr extends WorkerBase
     private BeanstalkClient $client_queue;
     private array $internal_numbers  = [];
     private array $no_answered_calls = [];
-
+    private string $emailForMissed   = '';
 
     /**
      * Entry point
@@ -68,8 +68,9 @@ class WorkerCdr extends WorkerBase
      */
     private function initSettings(): void
     {
-        $this->internal_numbers  = [];
-        $this->no_answered_calls = [];
+        $this->internal_numbers     = [];
+        $this->no_answered_calls    = [];
+        $this->emailForMissed       = PbxSettings::getValueByKey('SystemEmailForMissed');
 
         $usersClass = Users::class;
         $parameters = [
@@ -157,8 +158,7 @@ class WorkerCdr extends WorkerBase
      */
     private function getActiveIdChannels(): array
     {
-        $am           = Util::getAstManager('off');
-        return $am->GetChannels(true);
+        return Util::getAstManager('off')->GetChannels(true);
     }
 
     /**
@@ -172,14 +172,18 @@ class WorkerCdr extends WorkerBase
             $this->no_answered_calls[$row['linkedid']]['ANSWERED'] = true;
             return;
         }
-        if ( ! array_key_exists($row['dst_num'], $this->internal_numbers)) {
-            // dst_num - не является номером сотрудника. Это исходящий.
-            return;
-        }
-        $is_internal = false;
+        $isInternal = false;
         if ((array_key_exists($row['src_num'], $this->internal_numbers))) {
             // Это внутренний вызов.
-            $is_internal = true;
+            $isInternal = true;
+        }
+        $email = ( $this->internal_numbers[$row['dst_num']]??[] )['email']??'';
+        if(empty($email) && !$isInternal){
+            $email = $this->emailForMissed;
+        }
+        if(empty($email)){
+            // Нет почты, куда отправлять уведомление.
+            return;
         }
 
         $this->no_answered_calls[$row['linkedid']][] = [
@@ -188,9 +192,9 @@ class WorkerCdr extends WorkerBase
             'start'       => $row['start'],
             'answer'      => $row['answer'],
             'endtime'     => $row['endtime'],
-            'email'       => $this->internal_numbers[$row['dst_num']]['email'],
+            'email'       => $email,
             'language'    => $this->internal_numbers[$row['dst_num']]['language'],
-            'is_internal' => $is_internal,
+            'is_internal' => $isInternal,
             'duration'    => $row['duration'],
             'NOANSWER'    => true
         ];

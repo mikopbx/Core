@@ -684,6 +684,7 @@ return [
     'ms_VoicemailBody' => 'Голосовая почта - текст письма',
     'ms_VoicemailFooter' => 'Голосовая почта - подвал',
     'ms_MailSysadminEmail' => 'Email системного администратора',
+    'ms_SystemEmailForMissed' => 'Email для уведомлений о пропущенных',
     'ms_TestEmailSubject' => 'Тестирование отправки почты',
     'ms_TestEmailSentSuccessfully' => 'Письмо отправлено',
     'ms_TestEmailBody' => 'Если вы получили это письмо, значит настройки почты выполнены правильно.',
