@@ -1111,4 +1111,5 @@ return [
     'gs_TLS_PORT' => 'Θύρα SIP TLS (κρυπτογραφημένες κλήσεις)',
     'ex_OutboundProxy' => 'Εξερχόμενος διακομιστής μεσολάβησης (παράδειγμα: pbx.yandex.net:5080)',
     'lic_FailedCheckLicenseNotPbxResponse' => 'Η ATS δεν απάντησε σε αίτημα για πληροφορίες σχετικά με την άδεια. Η υπηρεσία δεν είναι διαθέσιμη.',
+    'ms_SystemEmailForMissed' => 'Email για αναπάντητες ειδοποιήσεις',
 ];

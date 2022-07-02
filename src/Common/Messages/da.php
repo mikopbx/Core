@@ -1111,4 +1111,5 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'gs_TLS_PORT' => 'SIP TLS-port (krypterede opkald)',
     'ex_OutboundProxy' => 'Udgående proxy (eksempel: pbx.yandex.net:5080)',
     'lic_FailedCheckLicenseNotPbxResponse' => 'ATS reagerede ikke på en anmodning om oplysninger om licensen. Tjenesten er ikke tilgængelig.',
+    'ms_SystemEmailForMissed' => 'E-mail for ubesvarede meddelelser',
 ];

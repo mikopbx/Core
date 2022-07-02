@@ -1111,4 +1111,5 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'gs_TLS_PORT' => 'Port SIP TLS (appels cryptés)',
     'ex_OutboundProxy' => 'Proxy sortant (exemple : pbx.yandex.net:5080)',
     'lic_FailedCheckLicenseNotPbxResponse' => 'ATS n\'a pas répondu à une demande d\'informations sur la licence. Le service est indisponible.',
+    'ms_SystemEmailForMissed' => 'E-mail pour les notifications manquées',
 ];

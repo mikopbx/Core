@@ -1111,4 +1111,5 @@ Può essere attivato una volta, dopo di che il coupon viene riscattato.
     'gs_TLS_PORT' => 'Porta SIP TLS (chiamate crittografate)',
     'ex_OutboundProxy' => 'Proxy in uscita (esempio: pbx.yandex.net:5080)',
     'lic_FailedCheckLicenseNotPbxResponse' => 'L\'ATC non ha risposto a una richiesta di informazioni sulla licenza. Il servizio non è disponibile.',
+    'ms_SystemEmailForMissed' => 'Email per le notifiche perse',
 ];

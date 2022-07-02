@@ -1111,4 +1111,5 @@ return [
     'gs_TLS_PORT' => 'Порт SIP TLS (шифровані дзвінки)',
     'ex_OutboundProxy' => 'Outbound proxy (приклад: pbx.yandex.net:5080)',
     'lic_FailedCheckLicenseNotPbxResponse' => 'АТС не відповіла на запит інформації щодо ліцензії. Сервіс недоступний.',
+    'ms_SystemEmailForMissed' => 'Email для повідомлень про пропущені',
 ];

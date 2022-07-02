@@ -1114,4 +1114,5 @@ It can be activated once, after which the coupon becomes redeemed.
     'gs_TLS_PORT' => 'SIP TLS port (encrypted calls)',
     'ex_OutboundProxy' => 'Outbound proxy (example: pbx.yandex.net:5080)',
     'lic_FailedCheckLicenseNotPbxResponse' => 'ATS did not respond to a request for information on the license. Service is unavailable.',
+    'ms_SystemEmailForMissed' => 'Email for missed notifications',
 ];

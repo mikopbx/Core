@@ -1111,4 +1111,5 @@ return [
     'gs_TLS_PORT' => 'SIP TLS პორტი (დაშიფრული ზარები)',
     'ex_OutboundProxy' => 'გამავალი პროქსი (მაგალითი: pbx.yandex.net:5080)',
     'lic_FailedCheckLicenseNotPbxResponse' => 'ATC არ უპასუხა ლიცენზიის შესახებ ინფორმაციის მოთხოვნას. სერვისი მიუწვდომელია.',
+    'ms_SystemEmailForMissed' => 'ელ.წერილი გამოტოვებული შეტყობინებებისთვის',
 ];

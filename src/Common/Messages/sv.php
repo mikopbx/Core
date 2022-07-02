@@ -1111,4 +1111,5 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'gs_TLS_PORT' => 'SIP TLS-port (krypterade samtal)',
     'ex_OutboundProxy' => 'Utgående proxy (exempel: pbx.yandex.net:5080)',
     'lic_FailedCheckLicenseNotPbxResponse' => 'ATC svarade inte på en begäran om information om licensen. Tjänsten är inte tillgänglig.',
+    'ms_SystemEmailForMissed' => 'E-post för missade aviseringar',
 ];

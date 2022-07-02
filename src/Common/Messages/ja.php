@@ -1111,4 +1111,5 @@ return [
     'gs_TLS_PORT' => 'SIP TLSポート（暗号化された通話）',
     'ex_OutboundProxy' => 'アウトバウンドプロキシ（例：pbx.yandex.net：5080）',
     'lic_FailedCheckLicenseNotPbxResponse' => 'ATSは、ライセンスに関する情報の要求に応答しませんでした。サービスは利用できません。',
+    'ms_SystemEmailForMissed' => '通知を逃した場合の電子メール',
 ];

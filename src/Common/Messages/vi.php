@@ -1111,4 +1111,5 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá đ
     'gs_TLS_PORT' => 'Cổng SIP TLS (cuộc gọi được mã hóa)',
     'ex_OutboundProxy' => 'Proxy đi (ví dụ: pbx.yandex.net:5080)',
     'lic_FailedCheckLicenseNotPbxResponse' => 'ATS đã không trả lời yêu cầu cung cấp thông tin về giấy phép. Dịch vụ không sẵn sàng.',
+    'ms_SystemEmailForMissed' => 'Email cho các thông báo bị nhỡ',
 ];

@@ -1111,4 +1111,5 @@ return [
     'gs_TLS_PORT' => 'SIP TLS 端口（加密呼叫）',
     'ex_OutboundProxy' => '出站代理（例如：pbx.yandex.net:5080）',
     'lic_FailedCheckLicenseNotPbxResponse' => 'ATS 没有回应有关许可证信息的请求。服务不可用。',
+    'ms_SystemEmailForMissed' => '错过通知的电子邮件',
 ];
