@@ -99,11 +99,7 @@ class VoiceMailConf extends CoreConfigClass
             "local={$timezone}|'vm-received' q 'digits/at' H 'hours' M 'minutes'\n\n";
 
         $conf .= "[voicemailcontext]\n";
-
         $mail_box = $this->generalSettings['VoicemailNotificationsEmail'];
-        if (empty($mail_box)) {
-            $mail_box = $this->generalSettings['SystemNotificationsEmail'];
-        }
         $conf .= "admin => admin," . Util::translate("user") . ",{$mail_box},,attach=yes|tz=local|delete=yes\n";
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/voicemail.conf', $conf);
     }

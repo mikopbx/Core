@@ -150,7 +150,8 @@ class PbxSettings extends ModelsBase
             'WebAdminLogin'                   => 'admin',
             'WebAdminPassword'                => 'admin',
             'WebAdminLanguage'                => 'en',
-            'SystemNotificationsEmail'        => 'admin@mycompany.com',
+            'SystemNotificationsEmail'        => '',
+            'SystemEmailForMissed'            => '',
             'SendMetrics'                     => '1',
         ];
     }

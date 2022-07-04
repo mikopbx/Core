@@ -380,6 +380,7 @@ class WorkerModelsEvents extends WorkerBase
                 'PBXTimezone',
                 'VoicemailNotificationsEmail',
                 'SystemNotificationsEmail',
+                'SystemEmailForMissed',
             ],
             'functions'   => [
                 self::R_VOICEMAIL,

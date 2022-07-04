@@ -1110,4 +1110,6 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'ex_Transport' => 'Transportní protokol (standardně UDP/TCP)',
     'gs_TLS_PORT' => 'SIP TLS port (šifrované hovory)',
     'ex_OutboundProxy' => 'Outbound proxy (příklad: pbx.yandex.net:5080)',
+    'lic_FailedCheckLicenseNotPbxResponse' => 'ATC nereagovala na žádost o informace o licenci. Služba je nedostupná.',
+    'ms_SystemEmailForMissed' => 'E-mail pro zmeškaná upozornění',
 ];

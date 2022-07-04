@@ -64,6 +64,7 @@ class MailSettingsController extends BaseController
             'MailTplVoicemailBody',
             'MailTplVoicemailFooter',
             'SystemNotificationsEmail',
+            'SystemEmailForMissed',
             'VoicemailNotificationsEmail',
         ];
     }
