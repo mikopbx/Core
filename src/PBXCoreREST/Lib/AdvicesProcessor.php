@@ -20,6 +20,7 @@
 namespace MikoPBX\PBXCoreREST\Lib;
 
 use MikoPBX\Common\Providers\ManagedCacheProvider;
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Storage;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Common\Models\{NetworkFilters, PbxSettings, Sip};
@@ -295,16 +296,24 @@ class AdvicesProcessor extends Injectable
         $PBXVersion = PbxSettings::getValueByKey('PBXVersion');
 
         $client = new GuzzleHttp\Client();
-        $res    = $client->request(
-            'POST',
-            'https://releases.mikopbx.com/releases/v1/mikopbx/ifNewReleaseAvailable',
-            [
-                'form_params' => [
-                    'PBXVER' => $PBXVersion,
-                ],
-            ]
-        );
-        if ($res->getStatusCode() !== 200) {
+        try {
+            $res    = $client->request(
+                'POST',
+                'https://releases.mikopbx.com/releases/v1/mikopbx/ifNewReleaseAvailable',
+                [
+                    'form_params' => [
+                        'PBXVER' => $PBXVersion,
+                    ],
+                    'timeout' => 1,
+                ]
+            );
+            $code = $res->getStatusCode();
+        }catch (\Throwable $e){
+            $code = 500;
+            Util::sysLogMsg(static::class, $e->getMessage());
+        }
+
+        if ( $code !== 200) {
             return [];
         }
 
@@ -351,10 +360,10 @@ class AdvicesProcessor extends Injectable
     private function isConnected(): array
     {
         $messages = [];
-        $connected = @fsockopen("www.google.com", 443);
-        if ($connected !== false) {
-            fclose($connected);
-        } else {
+        $pathTimeout = Util::which('timeout');
+        $pathCurl    = Util::which('curl');
+        $retCode     = Processes::mwExec("$pathTimeout 1 $pathCurl 'https://www.google.com/'");
+        if ($retCode !== 0) {
             $messages['warning'] = $this->translation->_('adv_ProblemWithInternetConnection');
         }
         return $messages;
