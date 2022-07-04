@@ -882,6 +882,7 @@ class SIPConf extends CoreConfigClass
             'de-de' => 'de',
             'da-dk' => 'dk',
             'es-es' => 'es',
+            'gr-gr' => 'gr',
             'fr-ca' => 'fr',
             'it-it' => 'it',
             'ja-jp' => 'jp',
