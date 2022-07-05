@@ -236,7 +236,7 @@ class IptablesConf extends Injectable
                 if($protocol === 'icmp'){
                     $other_data = '--icmp-type echo-reques';
                 }else{
-                    $portsString = implode(',', $ports);
+                    $portsString = implode(',', array_unique($ports));
                     $other_data = "-m multiport --dport $portsString";
                 }
                 $arr_command[] = "iptables -A INPUT -s $subnet -p $protocol $other_data -j ACCEPT";
