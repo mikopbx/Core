@@ -260,8 +260,13 @@ class IptablesConf extends Injectable
         ];
         $rules      = FirewallRules::find($conditions);
         foreach ($rules as $rule) {
-            $rule->portfrom = $portSet[$rule->portFromKey]??'0';
-            $rule->portto = $portSet[$rule->portToKey]??'0';
+            $from   = $portSet[$rule->portFromKey]??'0';
+            $to     = $portSet[$rule->portToKey]??'0';
+            if($from === $rule->portfrom && $to === $rule->portto){
+                continue;
+            }
+            $rule->portfrom = $from;
+            $rule->portto = $to;
             $rule->update();
         }
     }
