@@ -32,7 +32,7 @@ use MikoPBX\Common\Models\{Codecs,
 use MikoPBX\Core\Asterisk\AstDB;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\IncomingContexts;
 use MikoPBX\Modules\Config\ConfigClass;
-use MikoPBX\Core\System\{MikoPBXConfig, Network, Util};
+use MikoPBX\Core\System\{MikoPBXConfig, Network, Processes, Util};
 use MikoPBX\Core\Utilities\SubnetCalculator;
 use Phalcon\Di;
 use Throwable;
@@ -476,17 +476,21 @@ class SIPConf extends CoreConfigClass
         foreach ($codecs as $codec) {
             $codecConf .= "allow = $codec\n";
         }
-
         $pbxVersion = $this->generalSettings['PBXVersion'];
         $sipPort    = $this->generalSettings['SIPPort'];
         $tlsPort    = $this->generalSettings['TLS_PORT'];
         $natConf    = '';
         $tlsNatConf = '';
+
+        $resolveOk = Processes::mwExec("timeout 1 getent hosts '$externalHostName'") === 0;
+        if(!$resolveOk){
+            Util::sysLogMsg('DNS', "ERROR: DNS $externalHostName not resolved, It will not be used in SIP signaling.");
+        }
         if ($topology === 'private') {
             foreach ($subnets as $net) {
                 $natConf .= "local_net=$net\n";
             }
-            if ( ! empty($externalHostName)) {
+            if ( !empty($externalHostName) && $resolveOk ) {
                 $parts   = explode(':', $externalHostName);
                 $natConf .= 'external_media_address=' . $parts[0] . "\n";
                 $natConf .= 'external_signaling_address=' . $parts[0] . "\n";
@@ -526,6 +530,8 @@ class SIPConf extends CoreConfigClass
             "bind=0.0.0.0:{$tlsPort}\n" .
             "cert_file=/etc/asterisk/keys/ajam.pem\n" .
             "priv_key_file=/etc/asterisk/keys/ajam.pem\n" .
+            // "ca_list_file=/etc/ssl/certs/ca-certificates.crt\n".
+            // "verify_server=yes\n".
             "method=sslv23\n" .
             "$tlsNatConf\n\n" .
 
