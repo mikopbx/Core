@@ -107,6 +107,7 @@
                     </div>
                 </div>
             </div>
+            <label>{{ t._('pr_CustomFieldsDescriptions') }}</label>
         </div>
 
         <h3 class="ui dividing header ">{{ t._("pr_ManualAdditionalAtributes") }}</h3>
