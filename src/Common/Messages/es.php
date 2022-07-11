@@ -156,7 +156,6 @@ return [
     'pr_ProviderHostOrIPAddress' => 'Host o dirección IP',
     'pr_DTMFMode' => 'Modo DTMF',
     'pr_RegistrationSettings' => 'Configuraciones de registro',
-    'pr_DefaultUser' => 'Algunos proveedores requieren un nombre de autorización adicional (usuario predeterminado) que es diferente del inicio de sesión',
     'pr_FromUser' => 'Algunos proveedores requieren que especifique adicionalmente un campo (fromuser) que no sea iniciar sesión',
     'pr_FromDomain' => 'Algunos proveedores requieren un valor adicional (del dominio)',
     'pr_ValidationProviderNameIsEmpty' => 'Ingrese el nombre del proveedor',

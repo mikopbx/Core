@@ -201,7 +201,6 @@ return [
     'pr_ProviderHostOrIPAddress' => 'Hostitel nebo IP adresa',
     'pr_DTMFMode' => 'Režim DTMF',
     'pr_RegistrationSettings' => 'Nastavení registrace',
-    'pr_DefaultUser' => 'Někteří poskytovatelé vyžadují další autorizační jméno (výchozí uživatel), které se liší od přihlášení',
     'pr_FromUser' => 'Někteří poskytovatelé vyžadují, abyste kromě přihlašovacího jména určili i jiné pole (od uživatele)',
     'pr_FromDomain' => 'Někteří poskytovatelé vyžadují další hodnotu (z domény)',
     'pr_ValidationProviderNameIsEmpty' => 'Zadejte jméno poskytovatele',

@@ -524,7 +524,6 @@ Bir kez etkinleştirilebilir, bundan sonra kupon kullanılır.
     'pr_ProviderHostOrIPAddress' => 'Ana Bilgisayar veya IP Adresi',
     'pr_DTMFMode' => 'DTMF modu',
     'pr_RegistrationSettings' => 'Kayıt Ayarları',
-    'pr_DefaultUser' => 'Bazı sağlayıcılar, oturum açma işleminden farklı bir ek yetkilendirme adı (varsayılan kullanıcı) gerektirir',
     'pr_FromUser' => 'Bazı sağlayıcılar, oturum açma dışında ek olarak (kullanıcıdan) alanını belirtmenizi gerektirir',
     'pr_FromDomain' => 'Bazı sağlayıcılar ek bir değer gerektirir (etki alanından)',
     'pr_ValidationProviderNameIsEmpty' => 'Sağlayıcı adını girin',

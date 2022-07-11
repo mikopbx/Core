@@ -219,7 +219,6 @@ return [
     'pr_ProviderHostOrIPAddress' => 'Хост або IP адреса',
     'pr_DTMFMode' => 'Режим DTMF',
     'pr_RegistrationSettings' => 'Налаштування реєстрації',
-    'pr_DefaultUser' => 'Деякі провайдери вимагають додатково вказати ім\'я для авторизації (defaultuser), відмінне від логіна',
     'pr_FromUser' => 'Деякі провайдери вимагають додатково вказати поле (fromuser), відмінне від логіна',
     'pr_FromDomain' => 'Деякі провайдери вимагають додатково вказати значення (fromdomain)',
     'pr_ValidationProviderNameIsEmpty' => 'Введіть назву провайдера',

@@ -198,7 +198,6 @@ return [
     'pr_ProviderHostOrIPAddress' => '主机或IP地址',
     'pr_DTMFMode' => 'DTMF模式',
     'pr_RegistrationSettings' => '注册设置',
-    'pr_DefaultUser' => '使用其他字段覆盖授权名称（默认用户）',
     'pr_FromUser' => '某些提供程序要求您另外指定一个与登录名不同的字段（来自用户）',
     'pr_FromDomain' => '某些提供程序需要附加值（fromdomain）',
     'pr_ValidationProviderNameIsEmpty' => '输入提供商名称',

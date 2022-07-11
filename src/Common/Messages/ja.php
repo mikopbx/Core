@@ -187,7 +187,6 @@ return [
     'pr_ProviderHostOrIPAddress' => 'ホストまたはIPアドレス',
     'pr_DTMFMode' => 'DTMFモード',
     'pr_RegistrationSettings' => '登録設定',
-    'pr_DefaultUser' => '一部のプロバイダーでは、ログインとは異なる追加の認証名（defaultuser）が必要です',
     'pr_FromUser' => '一部のプロバイダーでは、ログイン以外のフィールド（fromuser）を追加で指定する必要があります',
     'pr_FromDomain' => '一部のプロバイダーは追加の値を必要とします（fromdomain）',
     'pr_ValidationProviderNameIsEmpty' => 'プロバイダー名を入力してください',

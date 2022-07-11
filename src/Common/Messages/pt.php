@@ -689,7 +689,6 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'pr_ValidationProviderNameIsEmpty' => 'Digite o nome do provedor',
     'pr_FromDomain' => 'Alguns provedores exigem um valor adicional (fromdomain)',
     'pr_FromUser' => 'Alguns provedores exigem que você especifique adicionalmente um campo (fromuser) diferente de login',
-    'pr_DefaultUser' => 'Alguns provedores exigem um nome de autorização adicional (usuário padrão) que é diferente do login',
     'pr_RegistrationSettings' => 'Configurações de registro',
     'pr_DTMFMode' => 'Modo DTMF',
     'pr_ProviderHostOrIPAddress' => 'Host ou endereço IP',

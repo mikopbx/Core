@@ -175,9 +175,6 @@ class SipProviderEditForm extends Form
         // Qualifyfreq
         $this->add(new Numeric('qualifyfreq'));
 
-        // Defaultuser
-        $this->add(new Text('defaultuser'));
-
         // Fromuser
         $this->add(new Text('fromuser'));
 

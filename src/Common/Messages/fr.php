@@ -707,7 +707,6 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'pr_ValidationProviderNameIsEmpty' => 'Entrez le nom du fournisseur',
     'pr_FromDomain' => 'Certains fournisseurs exigent une valeur supplémentaire (de domaine)',
     'pr_FromUser' => 'Certains fournisseurs vous demandent de spécifier en plus un champ (fromuser) autre que login',
-    'pr_DefaultUser' => 'Certains fournisseurs exigent un nom d\'autorisation supplémentaire (utilisateur par défaut) différent de la connexion',
     'pr_RegistrationSettings' => 'Paramètres d\'enregistrement',
     'pr_DTMFMode' => 'Mode DTMF',
     'pr_ProviderHostOrIPAddress' => 'Hôte ou adresse IP',

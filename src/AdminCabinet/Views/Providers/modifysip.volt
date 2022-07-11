@@ -87,28 +87,28 @@
         </div>
         {{ partial("partials/natqualify") }}
 
-        <h3 class="ui dividing header ">{{ t._("pr_RegistrationSettings") }}</h3>
-        {{ t._("pr_CustomFieldsDescriptions") }}
-        <div class=" field">
-            <label for="defaultuser">{{ t._('pr_DefaultUser') }}</label>
-            {{ form.render('defaultuser') }}
-        </div>
-        <div class=" field">
-            <label for="fromuser">{{ t._('pr_FromUser') }}</label>
-            {{ form.render('fromuser') }}
-        </div>
-        <div class="field">
-            <label for="fromdomain">{{ t._('pr_FromDomain') }}</label>
-            {{ form.render('fromdomain') }}
-        </div>
         <div class="ui segment">
             <div class="field">
+                <label>{{ t._('pr_RedefinitionFromUser') }}</label>
                 <div class="ui toggle checkbox" id="disablefromuser">
                     {{ form.render('disablefromuser') }}
                     <label>{{ t._('pr_DisableFromUser') }}</label>
                 </div>
             </div>
+            <div class="field">
+                <div class="two fields">
+                    <div id="divFromUser" class="four wide field">
+                        <label for="fromuser">{{ t._('pr_FromUser') }}:</label>
+                        {{ form.render('fromuser') }}
+                    </div>
+                    <div class="four wide field">
+                        <label for="fromdomain">{{ t._('pr_FromDomain') }}:</label>
+                        {{ form.render('fromdomain') }}
+                    </div>
+                </div>
+            </div>
         </div>
+
         <h3 class="ui dividing header ">{{ t._("pr_ManualAdditionalAtributes") }}</h3>
         <div class="field">
             {{ form.render('manualattributes') }}

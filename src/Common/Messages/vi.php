@@ -282,7 +282,6 @@ return [
     'pr_ProviderHostOrIPAddress' => 'Địa chỉ máy chủ hoặc IP',
     'pr_DTMFMode' => 'Chế độ DTMF',
     'pr_RegistrationSettings' => 'Cài đặt đăng ký',
-    'pr_DefaultUser' => 'Một số nhà cung cấp yêu cầu tên ủy quyền bổ sung (người dùng mặc định) khác với tên đăng nhập',
     'pr_FromUser' => 'Một số nhà cung cấp yêu cầu bạn chỉ định thêm một trường (từ người dùng) khác với đăng nhập',
     'pr_FromDomain' => 'Một số nhà cung cấp yêu cầu giá trị bổ sung (từ miền)',
     'pr_ValidationProviderNameIsEmpty' => 'Nhập tên nhà cung cấp',

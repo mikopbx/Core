@@ -666,7 +666,6 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'pr_ProviderHostOrIPAddress' => 'Värd eller IP-adress',
     'pr_DTMFMode' => 'DTMF-läge',
     'pr_RegistrationSettings' => 'Registreringsinställningar',
-    'pr_DefaultUser' => 'Vissa leverantörer kräver ett ytterligare auktoriseringsnamn (standardanvändare) som skiljer sig från inloggningen',
     'pr_FromUser' => 'Vissa leverantörer kräver att du dessutom anger fältet (fromuser), annat än inloggningen',
     'pr_FromDomain' => 'Vissa leverantörer kräver ett extra värde (fråndomän)',
     'pr_ValidationProviderNameIsEmpty' => 'Ange leverantörens namn',

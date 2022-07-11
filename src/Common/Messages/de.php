@@ -200,7 +200,6 @@ return [
     'pr_ProviderHostOrIPAddress' => 'Provider-Host URL oder IP-Adresse',
     'pr_DTMFMode' => 'DTMF Mode',
     'pr_RegistrationSettings' => 'Einstellungen zur Registrierung',
-    'pr_DefaultUser' => 'Einige Anbieter benötigen einen zusätzlichen Autorisierungsnamen (Standardbenutzer), der sich vom Login unterscheidet',
     'pr_FromUser' => 'Bei einigen Anbietern müssen Sie zusätzlich ein anderes Feld (vom Benutzer) als die Anmeldung angeben',
     'pr_FromDomain' => 'Einige Anbieter benötigen einen zusätzlichen Wert (fromdomain)',
     'pr_ValidationProviderNameIsEmpty' => 'Geben Sie einen Provider-Namen an',

@@ -218,7 +218,6 @@ return [
     'pr_ProviderHostOrIPAddress' => 'Host o indirizzo IP',
     'pr_DTMFMode' => 'Modalità DTMF',
     'pr_RegistrationSettings' => 'Impostazioni di registrazione',
-    'pr_DefaultUser' => 'Alcuni provider richiedono un nome di autorizzazione aggiuntivo (utente predefinito) diverso dal login',
     'pr_FromUser' => 'Alcuni provider richiedono di specificare anche un campo (fromuser) diverso da login',
     'pr_FromDomain' => 'Alcuni provider richiedono un valore aggiuntivo (fromdomain)',
     'pr_ValidationProviderNameIsEmpty' => 'Inserisci il nome del provider',

@@ -725,8 +725,7 @@ class SIPConf extends CoreConfigClass
         $conf        = '';
         $contact     = '';
         if($provider['registration_type'] === Sip::REG_TYPE_OUTBOUND){
-            $defaultUser = (trim($provider['defaultuser']) === '') ? $provider['username'] : $provider['defaultuser'];
-            $contact = "sip:$defaultUser@{$provider['host']}:{$provider['port']}";
+            $contact = "sip:{$provider['username']}@{$provider['host']}:{$provider['port']}";
         }elseif($provider['registration_type'] === Sip::REG_TYPE_NONE) {
             $contact = "sip:{$provider['host']}:{$provider['port']}";
         }

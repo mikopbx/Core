@@ -112,11 +112,6 @@ class Sip extends ModelsBase
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string $defaultuser = '';
-
-    /**
-     * @Column(type="string", nullable=true)
-     */
     public ?string $fromuser = '';
 
     /**

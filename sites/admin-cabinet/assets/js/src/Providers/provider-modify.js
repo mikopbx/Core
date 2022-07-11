@@ -107,6 +107,7 @@ const provider = {
 
 		provider.updateVisibilityElements();
 		$('#registration_type').on('change', provider.updateVisibilityElements);
+		$('#disablefromuser input').on('change', provider.updateVisibilityElements);
 	},
 	updateVisibilityElements(){
 		if(provider.providerType !== 'SIP'){
@@ -150,6 +151,17 @@ const provider = {
 			elUsername.hide();
 			elSecret.hide();
 			elAdditionalHost.show();
+		}
+
+		let el = $('#disablefromuser');
+		let fromUser = $('#divFromUser');
+		if(el.checkbox('is checked')){
+			fromUser.hide();
+			fromUser.removeClass('visible');
+		}else{
+			fromUser.show();
+			fromUser.addClass('visible');
+
 		}
 	},
 	/**

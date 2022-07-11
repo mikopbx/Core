@@ -174,7 +174,6 @@ return [
     'pr_ProviderHostOrIPAddress' => 'Vært eller IP-adresse',
     'pr_DTMFMode' => 'DTMF-tilstand',
     'pr_RegistrationSettings' => 'Registreringsindstillinger',
-    'pr_DefaultUser' => 'Nogle udbydere kræver et yderligere autorisationsnavn (standardbruger), der adskiller sig fra login',
     'pr_FromUser' => 'Nogle udbydere kræver, at du desuden angiver et andet felt (fra bruger) end login',
     'pr_FromDomain' => 'Nogle udbydere kræver en ekstra værdi (fradomæne)',
     'pr_ValidationProviderNameIsEmpty' => 'Indtast udbyderens navn',

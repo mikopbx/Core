@@ -669,7 +669,6 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'pr_ProviderPassword' => 'Hasło',
     'pr_DTMFMode' => 'Tryb DTMF',
     'pr_RegistrationSettings' => 'Ustawienia rejestracji',
-    'pr_DefaultUser' => 'Niektórzy dostawcy wymagają dodatkowej nazwy autoryzacji (defaultuser), która różni się od nazwy logowania',
     'pr_FromUser' => 'Niektórzy dostawcy wymagają dodatkowej nazwy autoryzacji (defaultuser), która różni się od nazwy logowania',
     'pr_FromDomain' => 'Niektórzy dostawcy wymagają dodatkowej wartości (fromdomain)',
     'pr_ValidationProviderNameIsEmpty' => 'Wpisz nazwę dostawcy',
