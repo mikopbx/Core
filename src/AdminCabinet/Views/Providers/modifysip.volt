@@ -39,12 +39,10 @@
 <div class="ui accordion field">
     <div class=" title">
         <i class="icon dropdown"></i>
-        {{ t._('AdvancedOptions') }}
+        <b>{{ t._('AdvancedOptions') }}</b>
     </div>
 
-    <div class=" content field">
-        <h3 class="ui dividing header ">{{ t._("ConnectionSettings") }}</h3>
-
+    <div class="content field">
         <div class="two fields">
             <div id="elAdditionalHosts" class="six wide field">
                 <label>{{ t._('pr_EnterHostOrIp') }}</label>
@@ -87,34 +85,35 @@
         </div>
         {{ partial("partials/natqualify") }}
 
-        <div class="ui segment">
-            <div class="field">
-                <label>{{ t._('pr_RedefinitionFromUser') }}</label>
-                <div class="ui toggle checkbox" id="disablefromuser">
-                    {{ form.render('disablefromuser') }}
-                    <label>{{ t._('pr_DisableFromUser') }}</label>
+        <label>{{ t._('pr_RedefinitionFromUser') }}</label>
+        <div class="field">
+            <div class="ui toggle checkbox" id="disablefromuser">
+                {{ form.render('disablefromuser') }}
+                <label>{{ t._('pr_DisableFromUser') }}</label>
+            </div>
+        </div>
+        <div class="field">
+            <div class="two fields">
+                <div id="divFromUser" class="four wide field">
+                    <h5><label for="fromuser">{{ t._('pr_FromUser') }}:</label>
+                    {{ form.render('fromuser') }}
+                    </h5>
+                </div>
+                <div class="four wide field">
+                    <h5><label for="fromdomain">{{ t._('pr_FromDomain') }}:</label>
+                    {{ form.render('fromdomain') }}
+                     </h5>
                 </div>
             </div>
-            <div class="field">
-                <div class="two fields">
-                    <div id="divFromUser" class="four wide field">
-                        <label for="fromuser">{{ t._('pr_FromUser') }}:</label>
-                        {{ form.render('fromuser') }}
-                    </div>
-                    <div class="four wide field">
-                        <label for="fromdomain">{{ t._('pr_FromDomain') }}:</label>
-                        {{ form.render('fromdomain') }}
-                    </div>
-                </div>
-            </div>
-            <label>{{ t._('pr_CustomFieldsDescriptions') }}</label>
+            <p>
+                <label>{{ t._('pr_CustomFieldsDescriptions') }}</label>
+            </p>
         </div>
 
         <h3 class="ui dividing header ">{{ t._("pr_ManualAdditionalAtributes") }}</h3>
         <div class="field">
             {{ form.render('manualattributes') }}
         </div>
-
     </div>
 </div>
 {{ partial("partials/submitbutton",['indexurl':'providers/index/']) }}
