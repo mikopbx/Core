@@ -41,6 +41,10 @@ class Sip extends ModelsBase
     public const TRANSPORT_TCP     = 'tcp';
     public const TRANSPORT_TLS     = 'tls';
 
+    public const REG_TYPE_OUTBOUND = 'outbound';
+    public const REG_TYPE_INBOUND  = 'inbound';
+    public const REG_TYPE_NONE     = 'none';
+
     /**
      * @Primary
      * @Identity
@@ -67,6 +71,11 @@ class Sip extends ModelsBase
      * @Column(type="string", nullable=true)
      */
     public ?string $type = '';
+
+    /**
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $registration_type = '';
 
     /**
      * @Column(type="string", nullable=true)

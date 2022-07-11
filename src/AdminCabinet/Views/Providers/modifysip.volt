@@ -8,23 +8,25 @@
 {{ form.render('disabled') }}
 {{ form.render('providerType') }}
 <input type="hidden" name="dirrty" id="dirrty"/>
-
 <div class="ten wide required field">
     <label>{{ t._('pr_ProviderName') }}</label>
     {{ form.render('description') }}
 </div>
-
-<div class="five wide field required">
+<div class="six wide field">
+    <label>{{ t._('sip_registration_type') }}</label>
+    {{ form.render('registration_type') }}
+</div>
+<div id='elHost' class="five wide field required">
     <label>{{ t._('pr_ProviderHostOrIPAddress') }}</label>
     {{ form.render('host') }}
 </div>
 
-<div class="ten wide field">
+<div id='elUsername' class="ten wide field">
     <label>{{ t._('pr_ProviderLogin') }}</label>
     {{ form.render('username') }}
 </div>
 
-<div class="ten wide field">
+<div id='elSecret' class="ten wide field">
     <label>{{ t._('pr_ProviderPassword') }}</label>
     {{ form.render('secret') }}
 </div>
@@ -33,6 +35,7 @@
     <label>{{ t._('pr_DTMFMode') }}</label>
     {{ form.render('dtmfmode') }}
 </div>
+
 <div class="ui accordion field">
     <div class=" title">
         <i class="icon dropdown"></i>
@@ -43,7 +46,7 @@
         <h3 class="ui dividing header ">{{ t._("ConnectionSettings") }}</h3>
 
         <div class="two fields">
-            <div class="six wide field">
+            <div id="elAdditionalHosts" class="six wide field">
                 <label>{{ t._('pr_EnterHostOrIp') }}</label>
                 <div class="ui input" id="additional-host">
                     <input type="text" name="additional-host" placeholder="{{ t._('pr_EnterHostOrIpPlaceholder') }}" />
@@ -106,24 +109,6 @@
                 </div>
             </div>
         </div>
-        <div class="ui segment">
-            <div class="field">
-                <div class="ui toggle checkbox" id="noregister">
-                    {{ form.render('noregister') }}
-                    <label>{{ t._('pr_NoRegister') }}</label>
-                </div>
-            </div>
-        </div>
-        <div class="ui segment">
-            <div class="field">
-                <div class="ui toggle checkbox" id="receive_calls_without_auth">
-                    {{ form.render('receive_calls_without_auth') }}
-                    <label>{{ t._('pr_ReceiveCallsWithoutAuth') }}</label>
-                </div>
-            </div>
-        </div>
-
-
         <h3 class="ui dividing header ">{{ t._("pr_ManualAdditionalAtributes") }}</h3>
         <div class="field">
             {{ form.render('manualattributes') }}

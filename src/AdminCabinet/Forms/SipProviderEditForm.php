@@ -90,9 +90,32 @@ class SipProviderEditForm extends Form
             'useEmpty' => false,
             'value'    => $entity->dtmfmode,
             'class'    => 'ui selection dropdown',
-        ]
+          ]
         );
         $this->add($dtmfmode);
+
+        $regTypeArray = [
+            Sip::REG_TYPE_OUTBOUND => $this->translation->_('sip_REG_TYPE_OUTBOUND'),
+            Sip::REG_TYPE_INBOUND  => $this->translation->_('sip_REG_TYPE_INBOUND'),
+            Sip::REG_TYPE_NONE     => $this->translation->_('sip_REG_TYPE_NONE'),
+        ];
+
+        $regTypeValue = $entity->registration_type;
+        if(empty($regTypeValue)){
+            $regTypeValue = (empty($entity->noregister === '0'))?Sip::REG_TYPE_OUTBOUND: Sip::REG_TYPE_NONE;
+        }
+        $regType = new Select(
+        'registration_type', $regTypeArray, [
+              'using'    => [
+                  'id',
+                  'name',
+              ],
+              'useEmpty' => false,
+              'value'    => $regTypeValue,
+              'class'    => 'ui selection dropdown',
+          ]
+        );
+        $this->add($regType);
 
         // Transport
         $arrTransport = [

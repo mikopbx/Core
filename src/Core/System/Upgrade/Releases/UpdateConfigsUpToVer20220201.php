@@ -21,6 +21,7 @@ namespace MikoPBX\Core\System\Upgrade\Releases;
 
 use MikoPBX\Common\Models\FirewallRules;
 use MikoPBX\Common\Models\NetworkFilters;
+use MikoPBX\Common\Models\Sip;
 use MikoPBX\Core\System\Upgrade\UpgradeSystemConfigInterface;
 use Phalcon\Di\Injectable;
 
@@ -74,6 +75,19 @@ class UpdateConfigsUpToVer20220201 extends Injectable implements UpgradeSystemCo
             $ruleTls->portFromKey = $colName;
             $ruleTls->portToKey   = $colName;
             $ruleTls->save();
+        }
+
+        $db_data = Sip::find("type = 'friend' AND ( disabled <> '1')");
+        foreach ($db_data as $sip_peer) {
+            if(!empty($sip_peer->registration_type)){
+                continue;
+            }
+            if($sip_peer->noregister === '0'){
+                $sip_peer->registration_type = Sip::REG_TYPE_OUTBOUND;
+            }else{
+                $sip_peer->registration_type = Sip::REG_TYPE_NONE;
+            }
+            $sip_peer->save();
         }
     }
 }
