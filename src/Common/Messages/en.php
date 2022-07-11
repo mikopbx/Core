@@ -1114,4 +1114,9 @@ It can be activated once, after which the coupon becomes redeemed.
     'ex_OutboundProxy' => 'Outbound proxy (example: pbx.yandex.net:5080)',
     'lic_FailedCheckLicenseNotPbxResponse' => 'ATS did not respond to a request for information on the license. Service is unavailable.',
     'ms_SystemEmailForMissed' => 'Email for missed notifications',
+    'sip_registration_type' => 'Account type',
+    'sip_REG_TYPE_OUTBOUND' => 'Outgoing Registration',
+    'sip_REG_TYPE_INBOUND' => 'Incoming Registration',
+    'sip_REG_TYPE_NONE' => 'Authentication by IP address, no password',
+    'pr_RedefinitionFromUser' => 'Redefining SIP header "From"',
 ];

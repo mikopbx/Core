@@ -1111,4 +1111,9 @@ return [
     'ex_OutboundProxy' => 'アウトバウンドプロキシ（例：pbx.yandex.net：5080）',
     'lic_FailedCheckLicenseNotPbxResponse' => 'ATSは、ライセンスに関する情報の要求に応答しませんでした。サービスは利用できません。',
     'ms_SystemEmailForMissed' => '通知を逃した場合の電子メール',
+    'sip_registration_type' => '口座の種類',
+    'sip_REG_TYPE_OUTBOUND' => '発信登録',
+    'sip_REG_TYPE_INBOUND' => '着信登録',
+    'sip_REG_TYPE_NONE' => 'IPアドレスによる認証、パスワードなし',
+    'pr_RedefinitionFromUser' => 'SIPヘッダー「From」の再定義',
 ];

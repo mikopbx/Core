@@ -1111,4 +1111,9 @@ Può essere attivato una volta, dopo di che il coupon viene riscattato.
     'ex_OutboundProxy' => 'Proxy in uscita (esempio: pbx.yandex.net:5080)',
     'lic_FailedCheckLicenseNotPbxResponse' => 'L\'ATC non ha risposto a una richiesta di informazioni sulla licenza. Il servizio non è disponibile.',
     'ms_SystemEmailForMissed' => 'Email per le notifiche perse',
+    'sip_registration_type' => 'Tipo di account',
+    'sip_REG_TYPE_OUTBOUND' => 'Registrazione in uscita',
+    'sip_REG_TYPE_INBOUND' => 'Registrazione in arrivo',
+    'sip_REG_TYPE_NONE' => 'Autenticazione tramite indirizzo IP, nessuna password',
+    'pr_RedefinitionFromUser' => 'Ridefinizione dell\'intestazione SIP "Da"',
 ];

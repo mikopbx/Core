@@ -1111,4 +1111,9 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'ex_OutboundProxy' => 'Proxy sortant (exemple : pbx.yandex.net:5080)',
     'lic_FailedCheckLicenseNotPbxResponse' => 'ATS n\'a pas répondu à une demande d\'informations sur la licence. Le service est indisponible.',
     'ms_SystemEmailForMissed' => 'E-mail pour les notifications manquées',
+    'sip_registration_type' => 'Type de compte',
+    'sip_REG_TYPE_OUTBOUND' => 'Inscription sortante',
+    'sip_REG_TYPE_INBOUND' => 'Inscription entrante',
+    'sip_REG_TYPE_NONE' => 'Authentification par adresse IP, pas de mot de passe',
+    'pr_RedefinitionFromUser' => 'Redéfinir l\'en-tête SIP "De"',
 ];

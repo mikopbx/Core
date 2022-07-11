@@ -1111,4 +1111,9 @@ Se puede activar una vez, después de lo cual el cupón se canjea.
     'ex_OutboundProxy' => 'Proxy saliente (ejemplo: pbx.yandex.net:5080)',
     'lic_FailedCheckLicenseNotPbxResponse' => 'ATS no respondió a una solicitud de información sobre la licencia. El servicio no está disponible.',
     'ms_SystemEmailForMissed' => 'Correo electrónico para notificaciones perdidas',
+    'sip_registration_type' => 'Tipo de cuenta',
+    'sip_REG_TYPE_OUTBOUND' => 'Registro saliente',
+    'sip_REG_TYPE_INBOUND' => 'Registro entrante',
+    'sip_REG_TYPE_NONE' => 'Autenticación por dirección IP, sin contraseña',
+    'pr_RedefinitionFromUser' => 'Redefiniendo el encabezado SIP "De"',
 ];

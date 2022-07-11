@@ -1111,4 +1111,9 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'ex_OutboundProxy' => 'Utgående proxy (exempel: pbx.yandex.net:5080)',
     'lic_FailedCheckLicenseNotPbxResponse' => 'ATC svarade inte på en begäran om information om licensen. Tjänsten är inte tillgänglig.',
     'ms_SystemEmailForMissed' => 'E-post för missade aviseringar',
+    'sip_registration_type' => 'Kontotyp',
+    'sip_REG_TYPE_OUTBOUND' => 'Utgående registrering',
+    'sip_REG_TYPE_INBOUND' => 'Inkommande registrering',
+    'sip_REG_TYPE_NONE' => 'Autentisering med IP-adress, inget lösenord',
+    'pr_RedefinitionFromUser' => 'Omdefinierar SIP-huvudet "Från"',
 ];

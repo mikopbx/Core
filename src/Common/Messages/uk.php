@@ -1111,4 +1111,9 @@ return [
     'ex_OutboundProxy' => 'Outbound proxy (приклад: pbx.yandex.net:5080)',
     'lic_FailedCheckLicenseNotPbxResponse' => 'АТС не відповіла на запит інформації щодо ліцензії. Сервіс недоступний.',
     'ms_SystemEmailForMissed' => 'Email для повідомлень про пропущені',
+    'sip_registration_type' => 'Тип облікового запису',
+    'sip_REG_TYPE_OUTBOUND' => 'Вихідна реєстрація',
+    'sip_REG_TYPE_INBOUND' => 'Вхідна реєстрація',
+    'sip_REG_TYPE_NONE' => 'Аутентифікація за IP-адресою, без пароля',
+    'pr_RedefinitionFromUser' => 'Перевизначення SIP заголовка "From"',
 ];

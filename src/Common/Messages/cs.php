@@ -1111,4 +1111,9 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'ex_OutboundProxy' => 'Outbound proxy (příklad: pbx.yandex.net:5080)',
     'lic_FailedCheckLicenseNotPbxResponse' => 'ATC nereagovala na žádost o informace o licenci. Služba je nedostupná.',
     'ms_SystemEmailForMissed' => 'E-mail pro zmeškaná upozornění',
+    'sip_registration_type' => 'Typ účtu',
+    'sip_REG_TYPE_OUTBOUND' => 'Odchozí registrace',
+    'sip_REG_TYPE_INBOUND' => 'Příchozí registrace',
+    'sip_REG_TYPE_NONE' => 'Autentizace pomocí IP adresy, žádné heslo',
+    'pr_RedefinitionFromUser' => 'Předefinování hlavičky SIP "Od"',
 ];

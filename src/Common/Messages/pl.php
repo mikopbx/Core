@@ -1111,4 +1111,9 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'ex_OutboundProxy' => 'Wychodzący serwer proxy (przykład: pbx.yandex.net:5080)',
     'lic_FailedCheckLicenseNotPbxResponse' => 'ATS nie odpowiedział na prośbę o informacje dotyczące licencji. Usługa jest niedostępna.',
     'ms_SystemEmailForMissed' => 'E-mail dla nieodebranych powiadomień',
+    'sip_registration_type' => 'Typ konta',
+    'sip_REG_TYPE_OUTBOUND' => 'Rejestracja wychodząca',
+    'sip_REG_TYPE_INBOUND' => 'Rejestracja przychodząca',
+    'sip_REG_TYPE_NONE' => 'Uwierzytelnianie przez adres IP, bez hasła',
+    'pr_RedefinitionFromUser' => 'Redefinicja nagłówka SIP „Od”',
 ];

@@ -1111,4 +1111,9 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá đ
     'ex_OutboundProxy' => 'Proxy đi (ví dụ: pbx.yandex.net:5080)',
     'lic_FailedCheckLicenseNotPbxResponse' => 'ATS đã không trả lời yêu cầu cung cấp thông tin về giấy phép. Dịch vụ không sẵn sàng.',
     'ms_SystemEmailForMissed' => 'Email cho các thông báo bị nhỡ',
+    'sip_registration_type' => 'Kiểu tài khoản',
+    'sip_REG_TYPE_OUTBOUND' => 'Đăng ký đi',
+    'sip_REG_TYPE_INBOUND' => 'Đăng ký đến',
+    'sip_REG_TYPE_NONE' => 'Xác thực bằng địa chỉ IP, không cần mật khẩu',
+    'pr_RedefinitionFromUser' => 'Định nghĩa lại tiêu đề SIP "Từ"',
 ];

@@ -1111,4 +1111,9 @@ return [
     'ex_OutboundProxy' => 'გამავალი პროქსი (მაგალითი: pbx.yandex.net:5080)',
     'lic_FailedCheckLicenseNotPbxResponse' => 'ATC არ უპასუხა ლიცენზიის შესახებ ინფორმაციის მოთხოვნას. სერვისი მიუწვდომელია.',
     'ms_SystemEmailForMissed' => 'ელ.წერილი გამოტოვებული შეტყობინებებისთვის',
+    'sip_registration_type' => 'Ანგარიშის ტიპი',
+    'sip_REG_TYPE_OUTBOUND' => 'გამავალი რეგისტრაცია',
+    'sip_REG_TYPE_INBOUND' => 'შემომავალი რეგისტრაცია',
+    'sip_REG_TYPE_NONE' => 'ავტორიზაცია IP მისამართით, პაროლის გარეშე',
+    'pr_RedefinitionFromUser' => 'SIP სათაურის "From"-ის ხელახალი განსაზღვრა',
 ];

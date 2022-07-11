@@ -1111,4 +1111,9 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'ex_OutboundProxy' => 'Udgående proxy (eksempel: pbx.yandex.net:5080)',
     'lic_FailedCheckLicenseNotPbxResponse' => 'ATS reagerede ikke på en anmodning om oplysninger om licensen. Tjenesten er ikke tilgængelig.',
     'ms_SystemEmailForMissed' => 'E-mail for ubesvarede meddelelser',
+    'sip_registration_type' => 'Kontotype',
+    'sip_REG_TYPE_INBOUND' => 'Indgående tilmelding',
+    'sip_REG_TYPE_NONE' => 'Godkendelse med IP-adresse, ingen adgangskode',
+    'sip_REG_TYPE_OUTBOUND' => 'Udgående registrering',
+    'pr_RedefinitionFromUser' => 'Omdefinerer SIP-header "Fra"',
 ];

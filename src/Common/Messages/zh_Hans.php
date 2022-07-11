@@ -1111,4 +1111,9 @@ return [
     'ex_OutboundProxy' => '出站代理（例如：pbx.yandex.net:5080）',
     'lic_FailedCheckLicenseNotPbxResponse' => 'ATS 没有回应有关许可证信息的请求。服务不可用。',
     'ms_SystemEmailForMissed' => '错过通知的电子邮件',
+    'sip_registration_type' => '帐户类型',
+    'sip_REG_TYPE_OUTBOUND' => '传出注册',
+    'sip_REG_TYPE_INBOUND' => '传入注册',
+    'sip_REG_TYPE_NONE' => '通过IP地址认证，无需密码',
+    'pr_RedefinitionFromUser' => '重新定义 SIP 标头“发件人”',
 ];

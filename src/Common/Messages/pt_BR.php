@@ -1110,4 +1110,9 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'ex_OutboundProxy' => 'Proxy de saída (exemplo: pbx.yandex.net:5080)',
     'lic_FailedCheckLicenseNotPbxResponse' => 'A ATC não respondeu a um pedido de informações sobre a licença. Serviço está indisponível.',
     'ms_SystemEmailForMissed' => 'E-mail para notificações perdidas',
+    'sip_registration_type' => 'tipo de conta',
+    'sip_REG_TYPE_OUTBOUND' => 'Registro de saída',
+    'sip_REG_TYPE_INBOUND' => 'Registro de entrada',
+    'sip_REG_TYPE_NONE' => 'Autenticação por endereço IP, sem senha',
+    'pr_RedefinitionFromUser' => 'Redefinindo o cabeçalho SIP "De"',
 ];
