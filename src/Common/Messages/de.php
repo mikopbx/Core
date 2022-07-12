@@ -1114,4 +1114,9 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
     'ex_OutboundProxy' => 'Ausgehender Proxy (Beispiel: pbx.yandex.net:5080)',
     'lic_FailedCheckLicenseNotPbxResponse' => 'ATS reagierte nicht auf eine Anfrage nach Informationen über die Lizenz. Dienst ist nicht verfügbar.',
     'ms_SystemEmailForMissed' => 'E-Mail für verpasste Benachrichtigungen',
+    'sip_registration_type' => 'Konto Typ',
+    'sip_REG_TYPE_OUTBOUND' => 'Ausgehende Registrierung',
+    'sip_REG_TYPE_INBOUND' => 'Eingehende Registrierung',
+    'sip_REG_TYPE_NONE' => 'Authentifizierung per IP-Adresse, kein Passwort',
+    'pr_RedefinitionFromUser' => 'SIP-Header "From" neu definieren',
 ];
