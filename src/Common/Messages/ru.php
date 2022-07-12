@@ -543,7 +543,7 @@ return [
     'nw_ValidateDHCPOnVlansDontSupport' => 'DHCP у VLAN подсетей не поддерживается',
     'nw_ValidateNameIsNotBeEmpty' => 'Не заполнено название интерфейса',
     'nw_ValidateVlanRange' => 'Неправильно заполнено значение VLAN. Выбирайте между {ruleValue}',
-    'nw_Hostname' => 'Имя хоста',
+    'nw_Hostname' => 'Локальное имя хоста',
     'nw_ValidateExtIppaddrNotRight' => 'Ошибка заполнения внешнего IP адреса маршрутизатора',
     'nw_ValidateExtIppaddrOrHostIsEmpty' => 'Небоходимо заполнить или внешний IP маршрутизатора, или его DNS имя',
     'nw_ValidateVlanCross' => 'Ошибки в настройках VLAN у интерфейсов, проверьте пересечение параметров',
