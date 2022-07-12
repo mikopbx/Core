@@ -560,6 +560,8 @@ return [
     'nw_VlanID' => 'VLAN ID',
     'nw_SelectInterface' => 'Выберите сетевой интерфейс',
     'nw_AllowNatPortForwarding' => 'Эта станция расположена за NAT маршрутизатором',
+    'nw_NATInfoMessage1' => 'АТС должна быть доступна на публичном адресе',
+    'nw_NATInfoMessage2' => 'На маршрутизаторе должно быть настроено перенаправление портов SIP / RTP',
     'nw_UseDHCP' => 'Использовать DHCP для получения настроек сети',
     'nw_LookUpExternalIp' => 'Узнать внешний IP',
     'nw_DeleteCurrentInterface' => 'Удалить этот интерфейс',

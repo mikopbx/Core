@@ -104,15 +104,23 @@
 <div class="ui segment">
     <div class="two fields">
         <div class="field">
-
             <div class="ui toggle checkbox" id="usenat-checkbox">
                 {{ form.render('usenat') }}
                 <label>{{ t._('nw_AllowNatPortForwarding') }}</label>
             </div>
-
         </div>
     </div>
     <div class="field nated-settings-group">
+        <div class="ui info message">
+            <div class="header">
+                {{ t._('adv_MessagesHeader') }}:
+            </div>
+            <br>
+            <div class="ui bulleted list">
+                <div class="item">{{ t._('nw_NATInfoMessage1') }} </div>
+                <div class="item">{{ t._('nw_NATInfoMessage2') }} </div>
+            </div>
+        </div>
         <label>{{ t._('nw_PublicAddress') }}</label>
         <div class="inline fields">
             <div class="six wide field">
