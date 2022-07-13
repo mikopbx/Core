@@ -206,54 +206,19 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/vendor/semantic/tab.min.js', true);
 
             $this->footerCollectionJS
-                ->addJs(
-                    'js/pbx/main/config.js',
-                    true
-                )
-                ->addJs(
-                    'js/pbx/main/pbxapi.js',
-                    true
-                )
-                ->addJs(
-                    'js/pbx/main/connection-check-worker.js',
-                    true
-                )
-                ->addJs(
-                    'js/pbx/main/semantic-localization.js',
-                    true
-                )
-                ->addJs(
-                    'js/pbx/Advices/advices-worker.js',
-                    true
-                )
-                ->addJs(
-                    'js/pbx/SendMetrics/send-metrics-index.js',
-                    true
-                )
-                ->addJs(
-                    'js/pbx/main/ssh-console.js',
-                    true
-                )
-                ->addJs(
-                    'js/pbx/main/delete-something.js',
-                    true
-                )
-                ->addJs(
-                    'js/pbx/main/user-message.js',
-                    true
-                )
-                ->addJs(
-                    'js/pbx/Extensions/extensions.js',
-                    true
-                )
-                ->addJs(
-                    'js/pbx/PbxExtensionModules/pbx-extension-menu-addition.js',
-                    true
-                )
-                ->addJs(
-                    'js/pbx/TopMenuSearch/top-menu-search.js',
-                    true
-                );
+                ->addJs('js/pbx/main/config.js', true)
+                ->addJs('js/pbx/main/pbxapi.js', true)
+                ->addJs('js/pbx/main/connection-check-worker.js', true)
+                ->addJs('js/pbx/main/semantic-localization.js', true)
+                ->addJs('js/pbx/Advices/advices-worker.js', true)
+                ->addJs('js/pbx/Security/check-passwords.js', true)
+                ->addJs('js/pbx/SendMetrics/send-metrics-index.js', true)
+                ->addJs('js/pbx/main/ssh-console.js', true)
+                ->addJs('js/pbx/main/delete-something.js', true)
+                ->addJs('js/pbx/main/user-message.js', true)
+                ->addJs('js/pbx/Extensions/extensions.js', true)
+                ->addJs('js/pbx/PbxExtensionModules/pbx-extension-menu-addition.js', true)
+                ->addJs('js/pbx/TopMenuSearch/top-menu-search.js', true);
 
             if ($moduleName === 'PBXExtension') {
                 $this->footerCollectionJS->addJs(

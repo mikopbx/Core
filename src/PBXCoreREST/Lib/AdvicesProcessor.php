@@ -20,8 +20,10 @@
 namespace MikoPBX\PBXCoreREST\Lib;
 
 use MikoPBX\Common\Providers\ManagedCacheProvider;
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Storage;
-use MikoPBX\Common\Models\{NetworkFilters, PbxSettings};
+use MikoPBX\Core\System\Util;
+use MikoPBX\Common\Models\{NetworkFilters, PbxSettings, Sip};
 use GuzzleHttp;
 use Phalcon\Di\Injectable;
 use SimpleXMLElement;
@@ -76,13 +78,12 @@ class AdvicesProcessor extends Injectable
         $arrAdvicesTypes = [
             ['type' => 'isConnected', 'cacheTime' => 15],
             ['type' => 'checkCorruptedFiles', 'cacheTime' => 15],
-            ['type' => 'checkPasswords', 'cacheTime' => 15],
+            ['type' => 'checkPasswords', 'cacheTime' => 3],
             ['type' => 'checkFirewalls', 'cacheTime' => 15],
             ['type' => 'checkStorage', 'cacheTime' => 120],
             ['type' => 'checkUpdates', 'cacheTime' => 3600],
             ['type' => 'checkRegistration', 'cacheTime' => 86400],
         ];
-
         $managedCache = $this->getDI()->getShared(ManagedCacheProvider::SERVICE_NAME);
         $language = PbxSettings::getValueByKey('WebAdminLanguage');
 
@@ -114,7 +115,12 @@ class AdvicesProcessor extends Injectable
         $result       = [];
         foreach ($arrMessages as $message) {
             foreach ($message as $key => $value) {
-                if ( ! empty($value)) {
+                if(is_array($value)){
+                    if(!isset($result[$key])){
+                        $result[$key] = [];
+                    }
+                    $result[$key] = array_merge($result[$key], $value);
+                }elseif ( ! empty($value)) {
                     $result[$key][] = $value;
                 }
             }
@@ -132,23 +138,72 @@ class AdvicesProcessor extends Injectable
      */
     private function checkPasswords(): array
     {
-        $messages           = [];
+        $messages           = [
+            'warning' => [],
+            'needUpdate' => []
+        ];
         $arrOfDefaultValues = PbxSettings::getDefaultArrayValues();
+        $fields = [
+            'WebAdminPassword'  => [
+                'url'  => 'general-settings/modify/#/passwords',
+                'type' => 'gs_WebPasswordFieldName',
+                'value'=> PbxSettings::getValueByKey('WebAdminPassword')
+            ],
+            'SSHPassword'       => [
+                'url'  => 'general-settings/modify/#/ssh',
+                'type' => 'gs_SshPasswordFieldName',
+                'value'=> PbxSettings::getValueByKey('SSHPassword')
+            ],
+        ];
         if ($arrOfDefaultValues['WebAdminPassword'] === PbxSettings::getValueByKey('WebAdminPassword')) {
-            $messages['warning'] = $this->translation->_(
+            $messages['warning'][] = $this->translation->_(
                 'adv_YouUseDefaultWebPassword',
                 ['url' => $this->url->get('general-settings/modify/#/passwords')]
             );
+            unset($fields['WebAdminPassword']);
+            $messages['needUpdate'][] = 'WebAdminPassword';
         }
         if ($arrOfDefaultValues['SSHPassword'] === PbxSettings::getValueByKey('SSHPassword')) {
-            $messages['warning'] = $this->translation->_(
+            $messages['warning'][] = $this->translation->_(
                 'adv_YouUseDefaultSSHPassword',
                 ['url' => $this->url->get('general-settings/modify/#/ssh')]
             );
+            unset($fields['SSHPassword']);
+            $messages['needUpdate'][] = 'SSHPassword';
         }elseif(PbxSettings::getValueByKey('SSHPasswordHash') !== md5_file('/etc/passwd')){
-            $messages['warning'] = $this->translation->_(
+            $messages['warning'][] = $this->translation->_(
                 'gs_SSHPPasswordCorrupt',
                 ['url' => $this->url->get('general-settings/modify/#/ssh')]
+            );
+        }
+
+        $peersData = Sip::find([
+               "type = 'peer' AND ( disabled <> '1')",
+               'columns' => 'id,extension,secret']
+        );
+        foreach ($peersData as $peer){
+            $fields[$peer['extension']] = [
+                'url'  => '/admin-cabinet/extensions/modify/'.$peer['id'],
+                'type' => 'gs_UserPasswordFieldName',
+                'value'=> $peer['secret']
+            ];
+        }
+
+        $cloudInstanceId = PbxSettings::getValueByKey('CloudInstanceId');
+        foreach ($fields as $key => $value){
+            if($cloudInstanceId !== $value['value'] && !Util::isSimplePassword($value['value'])){
+                continue;
+            }
+
+            if(in_array($key, ['WebAdminPassword', 'SSHPassword'], true)){
+                $messages['needUpdate'][] = $key;
+            }
+            $messages['warning'][] = $this->translation->_(
+                'adv_isSimplePassword',
+                [
+                    'type' => $this->translation->_($value['type']),
+                    'url' => $this->url->get($value['url'])
+                ]
             );
         }
         return $messages;
@@ -241,16 +296,24 @@ class AdvicesProcessor extends Injectable
         $PBXVersion = PbxSettings::getValueByKey('PBXVersion');
 
         $client = new GuzzleHttp\Client();
-        $res    = $client->request(
-            'POST',
-            'https://releases.mikopbx.com/releases/v1/mikopbx/ifNewReleaseAvailable',
-            [
-                'form_params' => [
-                    'PBXVER' => $PBXVersion,
-                ],
-            ]
-        );
-        if ($res->getStatusCode() !== 200) {
+        try {
+            $res    = $client->request(
+                'POST',
+                'https://releases.mikopbx.com/releases/v1/mikopbx/ifNewReleaseAvailable',
+                [
+                    'form_params' => [
+                        'PBXVER' => $PBXVersion,
+                    ],
+                    'timeout' => 1,
+                ]
+            );
+            $code = $res->getStatusCode();
+        }catch (\Throwable $e){
+            $code = 500;
+            Util::sysLogMsg(static::class, $e->getMessage());
+        }
+
+        if ( $code !== 200) {
             return [];
         }
 
@@ -277,26 +340,8 @@ class AdvicesProcessor extends Injectable
     {
         $messages = [];
         $licKey   = PbxSettings::getValueByKey('PBXLicense');
-        $language   = PbxSettings::getValueByKey('WebAdminLanguage');
-
         if ( ! empty($licKey)) {
-            $checkBaseFeature = $this->license->featureAvailable(33);
-            if ($checkBaseFeature['success'] === false) {
-                if ($language === 'ru') {
-                    $url = 'https://wiki.mikopbx.com/licensing#faq_chavo';
-                } else {
-                    $url = "https://wiki.mikopbx.com/{$language}:licensing#faq_chavo";
-                }
-                $textError = (string)($checkBaseFeature['error']??'');
-                $messages['warning'] = $this->translation->_(
-                    'adv_ThisCopyHasLicensingTroubles',
-                    [
-                        'url'   => $url,
-                        'error' => $this->license->translateLicenseErrorMessage($textError),
-                    ]
-                );
-            }
-
+            $this->license->featureAvailable(33);
             $licenseInfo = $this->license->getLicenseInfo($licKey);
             if ($licenseInfo instanceof SimpleXMLElement) {
                 file_put_contents('/tmp/licenseInfo', json_encode($licenseInfo->attributes()));
@@ -315,10 +360,10 @@ class AdvicesProcessor extends Injectable
     private function isConnected(): array
     {
         $messages = [];
-        $connected = @fsockopen("www.google.com", 443);
-        if ($connected !== false) {
-            fclose($connected);
-        } else {
+        $pathTimeout = Util::which('timeout');
+        $pathCurl    = Util::which('curl');
+        $retCode     = Processes::mwExec("$pathTimeout 1 $pathCurl 'https://www.google.com/'");
+        if ($retCode !== 0) {
             $messages['warning'] = $this->translation->_('adv_ProblemWithInternetConnection');
         }
         return $messages;

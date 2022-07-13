@@ -35,6 +35,8 @@ const Form = {
 	afterSubmitModifyUrl: '',
 	oldFormValues: [],
 	initialize() {
+		Form.$formObj.form.settings.rules.notRegExp 			 = Form.notRegExpValidateRule;
+		Form.$formObj.form.settings.rules.specialCharactersExist = Form.specialCharactersExistValidateRule;
 		if (Form.enableDirrity) Form.initializeDirrity();
 
 		Form.$submitButton.on('click', (e) => {
@@ -179,7 +181,7 @@ const Form = {
 				} else if (response.success
 						&& response.reload.length > 0) {
 					window.location = globalRootUrl + response.reload;
-				} else if (Form.enableDirrity) {
+				} else if (response.success && Form.enableDirrity) {
 					Form.initializeDirrity();
 				}
 				Form.$submitButton.removeClass('loading');
@@ -193,6 +195,25 @@ const Form = {
 
 		});
 	},
+
+	/**
+	 * Возвращщает ИСТИНА, если значение НЕ соответствует Regex.
+	 * @param value
+	 * @param regex
+	 * @returns {boolean}
+	 */
+	notRegExpValidateRule(value, regex){
+		return value.match(regex) !== null;
+	},
+
+	/**
+	 * Возвращщает ИСТИНА, если значение содержит спецсимволы.
+	 * @param value
+	 * @returns {boolean}
+	 */
+	specialCharactersExistValidateRule(value){
+		return value.match(/[()$^;#"><,.%№@!+=_]/) === null;
+	}
 };
 
 // export default Form;

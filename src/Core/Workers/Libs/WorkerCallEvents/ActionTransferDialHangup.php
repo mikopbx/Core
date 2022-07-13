@@ -49,7 +49,7 @@ class ActionTransferDialHangup
      */
     private static function fillNotAnsweredCdr($worker, $data):void{
         $filter = [
-            'linkedid=:linkedid: AND endtime = "" AND (src_chan=:src_chan: OR dst_chan=:dst_chan:)',
+            'linkedid=:linkedid: AND endtime = "" AND (src_chan=:src_chan: AND dst_chan=:dst_chan:)',
             'bind' => [
                 'linkedid' => $data['linkedid'],
                 'src_chan' => $data['TRANSFERERNAME'],
@@ -68,7 +68,7 @@ class ActionTransferDialHangup
             }
         }
 
-        // Попробуем возобновить запись разговора.
+
         $filter = [
             'linkedid=:linkedid: AND endtime = ""',
             'bind' => [
@@ -76,6 +76,11 @@ class ActionTransferDialHangup
             ],
         ];
         $m_data = CallDetailRecordsTmp::find($filter);
+        if($m_data->count() !== '1'){
+            // Переадресация не завершена или больше не существуют каналы.
+            return;
+        }
+        // Попробуем возобновить запись разговора.
         foreach ($m_data as $row) {
             $info      = pathinfo($row->recordingfile);
             $data_time = ($row->answer === '') ? $row->start : $row->answer;

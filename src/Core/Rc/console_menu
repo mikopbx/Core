@@ -235,6 +235,7 @@ $setupLanguage = function (CliMenuBuilder $b) {
 
 
         // not able to show in console without additional shell fonts, maybe later we add it
+        // 'el'      => Util::translate('ex_Greek'),
         // 'ka'      => Util::translate('ex_Georgian'),
         // 'cs'      => Util::translate('ex_Czech'),
         // 'tr'      => Util::translate('ex_Turkish'),

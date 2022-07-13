@@ -62,6 +62,7 @@ class ModulesConf extends CoreConfigClass
             'codec_ilbc.so',
             'codec_lpc10.so',
             'codec_silk.so',
+            'codec_g729.so',
 
             'format_ogg_speex.so',
             'format_gsm.so',

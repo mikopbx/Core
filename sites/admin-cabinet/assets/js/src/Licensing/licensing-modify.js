@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, Form, sessionStorage */
+/* global globalRootUrl, globalTranslate, Form, sessionStorage, globalPBXLicense*/
 
 $.fn.form.settings.rules.checkEmptyIfLicenseKeyEmpty = function (value) {
 	return ($('#licKey').val().length === 28 || value.length > 0);
@@ -92,6 +92,14 @@ const licensingModify = {
 		},
 	},
 	initialize() {
+		licensingModify.$licensingMenu.tab({
+			historyType: 'hash',
+		});
+		if($('#filled-license-key-info').length === 0){
+			licensingModify.$licensingMenu.tab('change tab', 'management');
+			// Нет интернет на станции. Форма не отрисована.
+			return;
+		}
 		licensingModify.$accordions.accordion();
 		licensingModify.$licenseDetailInfo.hide();
 		licensingModify.$coupon.inputmask('MIKOUPD-*****-*****-*****-*****', {
@@ -105,10 +113,6 @@ const licensingModify = {
 		});
 		licensingModify.$email.inputmask('email');
 		licensingModify.defaultLicenseKey = licensingModify.$licKey.val();
-
-		licensingModify.$licensingMenu.tab({
-			historyType: 'hash',
-		});
 
 		licensingModify.$resetButton.on('click',()=>{
 			licensingModify.$formObj.addClass('loading disabled');
@@ -161,7 +165,13 @@ const licensingModify = {
 			licensingModify.$filledLicenseKeyInfo.after(`<div class="ui success message ajax"><i class="check green icon"></i> ${globalTranslate.lic_LicenseKeyValid}</div>`);
 		} else {
 			licensingModify.$formObj.addClass('error').removeClass('success');
-			licensingModify.$filledLicenseKeyInfo.after(`<div class="ui error message ajax"><i class="exclamation triangle red icon"></i> ${response.messages}</div>`);
+			if(response === false || response.messages === undefined){
+				$('#licFailInfo').remove();
+				licensingModify.$filledLicenseKeyInfo.after(`<div id="licFailInfo" class="ui error message ajax"><i class="exclamation triangle red icon"></i> ${globalTranslate.lic_FailedCheckLicenseNotPbxResponse}</div>`);
+			}else{
+				$('#licFailInfoMsg').remove();
+				licensingModify.$filledLicenseKeyInfo.after(`<div id="licFailInfoMsg" class="ui error message ajax"><i class="exclamation triangle red icon"></i> ${response.messages}</div>`);
+			}
 		}
 	},
 
@@ -282,7 +292,16 @@ const licensingModify = {
 	 */
 	cbAfterFormProcessing(response, success) {
 		if (success===true){
-			window.location.reload();
+			if(typeof response.data.PBXLicense !== 'undefined'){
+				globalPBXLicense = response.data.PBXLicense;
+				$('#licKey').val(response.data.PBXLicense)
+			}
+			$('#productDetails tbody').html('');
+			$('#coupon').val('');
+			licensingModify.initialize();
+			if(response.messages.length !== 0){
+				UserMessage.showMultiString(response.messages);
+			}
 		} else if (response.messages !== undefined) {
 			UserMessage.showMultiString(response.messages);
 		}else {

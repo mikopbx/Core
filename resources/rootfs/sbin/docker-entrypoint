@@ -51,6 +51,7 @@ class Entrypoint
             'WEB_PORT'        => 'WEBPort',
             'WEB_HTTPS_PORT'  => 'WEBHTTPSPort',
             'SIP_PORT'        => 'SIPPort',
+            'TLS_PORT'        => 'TLS_PORT',
             'RTP_FROM'        => 'RTPPortFrom',
             'RTP_TO'          => 'RTPPortTo',
             'IAX_PORT'        => 'IAXPort',

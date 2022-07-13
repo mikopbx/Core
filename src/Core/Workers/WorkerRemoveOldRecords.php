@@ -24,8 +24,8 @@ use MikoPBX\Core\System\{Processes, Storage, Util};
 
 class WorkerRemoveOldRecords extends WorkerBase
 {
-    public const MIN_SPACE_MB = 500;
-    public const MIN_PERCENT  = 5;
+    private const MIN_SPACE_MB = 500;
+    private const MIN_SPACE_MB_ALERT = 200;
 
     /**
      * Проверка свободного места на дисках. Уведомление в случае проблем.
@@ -114,16 +114,10 @@ class WorkerRemoveOldRecords extends WorkerBase
      * @return array
      */
     private function check($disk): array{
-        $freePercent = ($disk['free_space'] / $disk['size'] * 100);
         $need_alert = false;
         $need_clean = false;
         $test_alert = '';
-        if ($freePercent < self::MIN_PERCENT) {
-            $need_alert = true;
-            $test_alert = "The {$disk['id']} has less than ".self::MIN_PERCENT.'% of free space available.';
-        }
-
-        if ($disk['free_space'] < self::MIN_SPACE_MB) {
+        if ($disk['free_space'] < self::MIN_SPACE_MB_ALERT) {
             $need_alert = true;
             $test_alert = "The {$disk['id']} has less than " . self::MIN_SPACE_MB . 'MB of free space available.';
             $need_clean = true;

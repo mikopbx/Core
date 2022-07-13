@@ -19,6 +19,7 @@
 
 </div>
 <div class="ui bottom attached tab segment" data-tab="management">
+   {% if internetExists === true %}
     <div id="licenseKeySection" class="disabled">
         <h2 class="ui header">{{ t._('lic_LicenseKey') }}</h2>
 
@@ -114,6 +115,21 @@
             <i class="recycle icon"></i>
             {{ t._('lic_ResetLicenseSettings') }}
         </button>
+
     </div>
+    {% else %}
+        <div class="ui message">
+          <div class="header">
+            {{ t._('lic_NoInetHeader') }}
+          </div>
+          <ul class="list">
+            <li>{{ t._('lic_NoInet') }}</li>
+            <li>{{ t._('lic_NoInetLicMiko') }}</li>
+            <li>{{ t._('lic_NoInetNetSettings') }}</li>
+          </ul>
+          <br>
+          <b><a href='#' onclick='window.location.reload()'>Обновить страницу...</a><b>
+        </div>
+    {% endif %}
 </div>
 </form>

@@ -17,7 +17,7 @@
  */
 
 /* global PbxApi, globalPBXVersion, globalTranslate,
-globalWebAdminLanguage, showdown, UserMessage, upgradeStatusLoopWorker */
+globalWebAdminLanguage, showdown, UserMessage, upgradeStatusLoopWorker, Config */
 
 const updatePBX = {
 	$formObj: $('#upgrade-form'),
@@ -73,7 +73,7 @@ const updatePBX = {
 			LANGUAGE: globalWebAdminLanguage,
 		};
 		$.api({
-			url: 'https://releases.mikopbx.com/releases/v1/mikopbx/checkNewFirmware',
+			url: `${Config.updateUrl}checkNewFirmware`,
 			on: 'now',
 			method: 'POST',
 			data: requestData,

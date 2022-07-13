@@ -25,13 +25,11 @@
 	 */
 	getModulesUpdates(cbSuccess) {
 		const requestData = {
-			TYPE: 'MODULES',
-			LICENSE: globalPBXLicense,
 			PBXVER: globalPBXVersion.replace(/-dev/i, ''),
 			LANGUAGE: globalWebAdminLanguage,
 		};
 		$.api({
-			url: Config.updateUrl,
+			url: `${Config.updateUrl}getAvailableModules`,
 			on: 'now',
 			method: 'POST',
 			data: requestData,
@@ -54,12 +52,11 @@
 	 */
 	GetModuleInstallLink(params, cbSuccess, cbFailure) {
 		const requestData = {
-			TYPE: 'MODULEGETLINK',
 			LICENSE: globalPBXLicense,
 			RELEASEID: params.releaseId,
 		};
 		$.api({
-			url: Config.updateUrl,
+			url: `${Config.updateUrl}getModuleLink`,
 			on: 'now',
 			method: 'POST',
 			data: requestData,

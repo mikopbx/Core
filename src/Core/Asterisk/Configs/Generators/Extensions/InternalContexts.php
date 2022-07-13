@@ -116,7 +116,7 @@ class InternalContexts extends CoreConfigClass
         $conf .= 'same => n,ExecIf($["${fw}x" != "x"]?Set(__pt1c_UNIQUEID=${UNDEFINED})' . "\n\t";
         $conf .= 'same => n,ExecIf($["${fw}x" != "x"]?Goto(internal,${fw},1))' . "\n\t";
         $conf .= 'same => n,ExecIf($["${BLINDTRANSFER}x" != "x"]?AGI(check_redirect.php,${BLINDTRANSFER}))' . "\n\t";
-        $conf .= 'same => n,Hangup() ' . "\n\n";
+        $conf .= 'same => n,ExecIf($["${DIALSTATUS}" == "BUSY"]?Busy(2):Hangup())' . "\n\n";
 
         return $conf;
     }
@@ -245,6 +245,7 @@ class InternalContexts extends CoreConfigClass
         $conf .= 'same => n,ExecIf($["${FIELDQTY(DST_CONTACT,&)}" != "1"]?Set(__PT1C_SIP_HEADER=${EMPTY_VAR}))' . " \n\t";
         $conf .= 'same => n,ExecIf($["${TRANSFER_OPTIONS}x" == "x" || "${ISTRANSFER}x" != "x"]?Set(TRANSFER_OPTIONS=Tt))' . " \n\t";
         $conf .= 'same => n,ExecIf($["${DST_CONTACT}x" != "x"]?Dial(${DST_CONTACT},${ringlength},${TRANSFER_OPTIONS}ekKHhU(${ISTRANSFER}dial_answer)b(dial_create_chan,s,1)):Set(DIALSTATUS=CHANUNAVAIL))' . " \n\t";
+        $conf .= 'same => n,ExecIf($["${DST_CONTACT}x" == "x"]?Gosub(dial_end,s,1))' . " \n\t";
         $conf .= 'same => n(fw_start),NoOp(start dial hangup)' . " \n\t";
 
         // QUEUE_SRC_CHAN - установлена, если вызов сервершен агенту очереди.

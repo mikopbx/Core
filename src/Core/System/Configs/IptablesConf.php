@@ -31,6 +31,7 @@ class IptablesConf extends Injectable
     private bool $firewall_enable;
     private Fail2BanConf $fail2ban;
     private string $sipPort;
+    private string $tlsPort;
     private string $rtpPorts;
 
     /**
@@ -42,6 +43,7 @@ class IptablesConf extends Injectable
         $this->firewall_enable = ($firewall_enable === '1');
 
         $this->sipPort  = PbxSettings::getValueByKey('SIPPort');
+        $this->tlsPort  = PbxSettings::getValueByKey('TLS_PORT');
         $defaultRTPFrom = PbxSettings::getValueByKey('RTPPortFrom');
         $defaultRTPTo   = PbxSettings::getValueByKey('RTPPortTo');
         $this->rtpPorts = "$defaultRTPFrom:$defaultRTPTo";
@@ -188,7 +190,7 @@ class IptablesConf extends Injectable
                     continue;
                 }
                 $hashArray[]   = $host;
-                $arr_command[] = $this->getIptablesInputRule($this->sipPort, '-p tcp -s ' . $host . ' ');
+                $arr_command[] = "iptables -A INPUT -s $host -p tcp -m multiport --dport $this->sipPort,$this->tlsPort -j ACCEPT";
                 $arr_command[] = "iptables -A INPUT -s $host -p udp -m multiport --dport $this->sipPort,$this->rtpPorts -j ACCEPT";
             }
         }
@@ -234,7 +236,7 @@ class IptablesConf extends Injectable
                 if($protocol === 'icmp'){
                     $other_data = '--icmp-type echo-reques';
                 }else{
-                    $portsString = implode(',', $ports);
+                    $portsString = implode(',', array_unique($ports));
                     $other_data = "-m multiport --dport $portsString";
                 }
                 $arr_command[] = "iptables -A INPUT -s $subnet -p $protocol $other_data -j ACCEPT";
@@ -258,8 +260,13 @@ class IptablesConf extends Injectable
         ];
         $rules      = FirewallRules::find($conditions);
         foreach ($rules as $rule) {
-            $rule->portfrom = $portSet[$rule->portFromKey]??'0';
-            $rule->portto = $portSet[$rule->portToKey]??'0';
+            $from   = $portSet[$rule->portFromKey]??'0';
+            $to     = $portSet[$rule->portToKey]??'0';
+            if($from === $rule->portfrom && $to === $rule->portto){
+                continue;
+            }
+            $rule->portfrom = $from;
+            $rule->portto = $to;
             $rule->update();
         }
     }

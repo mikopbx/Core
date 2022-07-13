@@ -42,6 +42,7 @@ class GeneralSettingsEditForm extends Form
         foreach ($options as $key => $value) {
             switch ($key) {
                 case 'SIPPort':
+                case 'TLS_PORT':
                 case 'SIPDefaultExpiry':
                 case 'SIPMinExpiry':
                 case 'SIPMaxExpiry':
@@ -111,6 +112,7 @@ class GeneralSettingsEditForm extends Form
                             'de-de' => $this->translation->_('ex_Deutsch'),
                             'da-dk' => $this->translation->_('ex_Danish'),
                             'es-es' => $this->translation->_('ex_Spanish'),
+                            'gr-gr' => $this->translation->_('ex_Greek'),
                             'fr-ca' => $this->translation->_('ex_French'),
                             'it-it' => $this->translation->_('ex_Italian'),
                             'ja-jp' => $this->translation->_('ex_Japanese'),
@@ -120,6 +122,7 @@ class GeneralSettingsEditForm extends Form
                             'sv-sv' => $this->translation->_('ex_Swedish'),
                             'cs-cs' => $this->translation->_('ex_Czech'),
                             'tr-tr' => $this->translation->_('ex_Turkish'),
+
                         ]
                         , [
                             'using'    => [

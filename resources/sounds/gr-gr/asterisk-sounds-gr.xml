@@ -1,0 +1,1973 @@
+﻿<language>
+  <gr>
+    <root>
+      <prompt pharse="Πατήστε το ένα για προ μεσημβρίας, ή το δύο για μετά μεσημβρίας." filename="1-for-am-2-for-pm.gsm" />
+      <prompt pharse="Πατήστε το ένα για το Ναι, ή το δύο για το Όχι." filename="1-yes-2-no.gsm" />
+      <prompt pharse="Η υπηρεσία αυτή χρεώνετε με" filename="a-charge-for-this-svc.gsm" />
+      <prompt pharse="Το κόστος είναι" filename="a-collect-charge-of.gsm" />
+      <prompt pharse="Το κόστος" filename="a-collect-charge.gsm" />
+      <prompt pharse="Για την σύνδεση χρεώνεστε με" filename="a-connect-charge-of.gsm" />
+      <prompt pharse="Κόστος σύνδεσης" filename="a-connect-charge.gsm" />
+      <prompt pharse="Εγκατάλειψη κάθε ελπίδας, Ζήτω όλοι όσοι καλούν εδώ." filename="abandon-all-hope.gsm" />
+      <prompt pharse="Εγκαταλείπω" filename="abandons.gsm" />
+      <prompt pharse="Ακαδημαϊκή υποστήριξη" filename="academic-support.gsm" />
+      <prompt pharse="Κωδικός πρόσβασης" filename="access-code.gsm" />
+      <prompt pharse="Η πρόσβαση αρνήθηκε" filename="access-denied.gsm" />
+      <prompt pharse="Η πρόσβαση εγκρίθηκε" filename="access-granted.gsm" />
+      <prompt pharse="Προσπελάσιμο μέσου αυτού του συστήματος" filename="accessible-through-system.gsm" />
+      <prompt pharse="Το υπόλοιπο του λογαριασμού σας είναι" filename="account-balance-is.gsm" />
+      <prompt pharse="Λογιστιριο" filename="accounting.gsm" />
+      <prompt pharse="Πληρωτέοι λογαριασμοί" filename="accounts-payable.gsm" />
+      <prompt pharse="Ληφθέντες λογαριασμοί" filename="accounts-receivable.gsm" />
+      <prompt pharse="Ο αριθμός λογαριασμού σας" filename="account_number.gsm" />
+      <prompt pharse="Ο λογαριασμός σας έχει ανανεωθεί" filename="account_refill.gsm" />
+      <prompt pharse="ενεργοποιήθηκε" filename="activated.gsm" />
+      <prompt pharse="προστέθηκε στον" filename="added-to.gsm" />
+      <prompt pharse="προστέθηκε." filename="added.gsm" />
+      <prompt pharse="διεύθυνση" filename="address.gsm" />
+      <prompt pharse="Διαχείριση" filename="administration.gsm" />
+      <prompt pharse="συμβουλεύονται να αναζητήσουν καταφύγιο άμεσα" filename="advised-to-seek-shelter.gsm" />
+      <prompt pharse="μετά τον ήχο" filename="after-the-tone.gsm" />
+      <prompt pharse="απόγευμα" filename="afternoon.gsm" />
+      <prompt pharse="Μετά τον χαρακτηριστικό ήχο" filename="after_tone.gsm" />
+      <prompt pharse="Εκείνος ο εκπρόσωπος έχει ήδη συνδεθεί. Παρακαλώ εισάγετε τον αριθμό εκπροσώπου σας και μετά πατήστε το πλήκτρο της δίεσης." filename="agent-alreadyon.gsm" />
+      <prompt pharse="Εσφαλμένη σύνδεση. Παρακαλώ εισάγετε τον αριθμό εκπροσώπου σας και μετά πατήστε το πλήκτρο της δίεσης." filename="agent-incorrect.gsm" />
+      <prompt pharse="Ο εκπρόσωπος αποσυνδέθηκε." filename="agent-loggedoff.gsm" />
+      <prompt pharse="Σύνδεση εκπροσώπου. Παρακαλώ εισάγετε τον αριθμό εκπροσώπου σας και μετά πατήστε το πλήκτρο της δίεσης." filename="agent-login.gsm" />
+      <prompt pharse="Ο εκπρόσωπος συνδέθηκε." filename="agent-loginok.gsm" />
+      <prompt pharse="Αποσύνδεση εκπροσώπου. Παρακαλώ εισάγετε τον αριθμό εκπροσώπου σας και μετά πατήστε το πλήκτρο της δίεσης." filename="agent-logoff.gsm" />
+      <prompt pharse="Παρακαλώ εισάγετε ένα νέο εσωτερικό, και μετά πατήστε το πλήκτρο της δίεσης." filename="agent-newlocation.gsm" />
+      <prompt pharse="Παρακαλώ εισάγετε τον κωδικό σας, και μετά πατήστε το πλήκτρο της δίεσης." filename="agent-pass.gsm" />
+      <prompt pharse="Σύνδεση εκπροσώπου. Παρακαλώ εισάγετε τον αριθμό εκπροσώπου σας, και μετά πατήστε το πλήκτρο της δίεσης." filename="agent-user.gsm" />
+      <prompt pharse="Συμφωνείτε με αυτό το ποσό" filename="agree_amount.gsm" />
+      <prompt pharse="Συμφωνείτε με αυτόν τον αριθμό πιστωτικής κάρτας" filename="agree_credit_card.gsm" />
+      <prompt pharse="Συμφωνείτε με αυτόν τον αριθμό" filename="agree_digits.gsm" />
+      <prompt pharse="Συμφωνείτε με αυτήν την ημερομηνία λήξης της πιστωτικής κάρτας" filename="agree_expiry_date.gsm" />
+      <prompt pharse="αεροδρόμιο" filename="airport.gsm" />
+      <prompt pharse="Αλαμπάμα" filename="alabama.gsm" />
+      <prompt pharse="Αλάσκα" filename="alaska.gsm" />
+      <prompt pharse="Albuquerque" filename="albuquerque.gsm" />
+      <prompt pharse="συναγερμός" filename="alert.gsm" />
+      <prompt pharse="Όλες οι γραμμές είναι κατειλημμένες" filename="all-circuits-busy-now.gsm" />
+      <prompt pharse="Αυτήν την στιγμή δεν υπάρχει διαθέσιμη εξερχόμενη γραμμή" filename="all-outgoing-lines-unavailable.gsm" />
+      <prompt pharse="Αυτή την στιγμή όλοι οι εκπρόσωποι μας είναι απασχολημένοι." filename="all-reps-busy.gsm" />
+      <prompt pharse="Όλη η βάση σας ανήκει σε μας." filename="all-your-base.gsm" />
+      <prompt pharse="υψόμετρο" filename="altitude.gsm" />
+      <prompt pharse="εμπορικό" filename="ampersand.gsm" />
+      <prompt pharse="Παρουσιάστηκε ένα σφάλμα." filename="an-error-has-occured.gsm" />
+      <prompt pharse="Παρουσιάστηκε ένα σφάλμα." filename="an-error-has-occurred.gsm" />
+      <prompt pharse="και ο κωδικός περιοχής..." filename="and-area-code.gsm" />
+      <prompt pharse="ή και" filename="and-or.gsm" />
+      <prompt pharse="και πατήστε το πλήκτρο της δίεσης όταν τελειώσετε" filename="and-prs-pound-whn-finished.gsm" />
+      <prompt pharse="και" filename="and.gsm" />
+      <prompt pharse="Παρακαλώ περιμένετε δέκα λεπτά από την ζωή σας που δεν θα ξαναπάρετε πίσω ποτέ" filename="andnowstandby.gsm" />
+      <prompt pharse="άλλη ώρα" filename="another-time.gsm" />
+      <prompt pharse="πλησιάζει" filename="approaching.gsm" />
+      <prompt pharse="περίπου" filename="approximately.gsm" />
+      <prompt pharse="Είστε ακόμα εκεί?" filename="are-you-still-there.gsm" />
+      <prompt pharse="Είστε ακόμα εκεί?" filename="are-you-still-there2.gsm" />
+      <prompt pharse="Αριζόνα" filename="arizona.gsm" />
+      <prompt pharse="Arkansas" filename="arkansas.gsm" />
+      <prompt pharse="Arlington" filename="arlington.gsm" />
+      <prompt pharse="Το υπόλοιπο του λογαριασμού σας είναι" filename="astcc-account-balance-is.gsm" />
+      <prompt pharse="Δεν είναι έγκυρος ο αριθμός του λογαριασμού σας" filename="astcc-account-number-invalid.gsm" />
+      <prompt pharse="Το υπόλοιπο του λογαριασμού σας είναι" filename="astcc-balance-of-account-is.gsm" />
+      <prompt pharse="Ο αριθμός της κάρτας που εισάγατε δεν είναι έγκυρος." filename="astcc-card-number-invalid.gsm" />
+      <prompt pharse="-ψήφος αριθμός λογαριασμού" filename="astcc-digit-account-number.gsm" />
+      <prompt pharse="ακολουθούμενο με το πλήκτρο της δίεσης." filename="astcc-followed-by-pound.gsm" />
+      <prompt pharse="ακολουθούμενο με το πλήκτρο της δίεσης." filename="astcc-followed-by-the-hash-key.gsm" />
+      <prompt pharse="ακολουθούμενο με το πλήκτρο της δίεσης." filename="astcc-followed-by-the-pound-key.gsm" />
+      <prompt pharse="Παρακαλώ εισάγετε τον δωδεκαψήφιο αριθμού του λογαριασμού σας, παραλείποντας τυχόν σημεία στίξης, ακολουθούμενο με το πλήκτρο της δίεσης." filename="astcc-login12pound.gsm" />
+      <prompt pharse="Παρακαλώ εισάγετε τον" filename="astcc-please-enter-your.gsm" />
+      <prompt pharse="παρελείποντας τυχών σημεία στίξης" filename="astcc-skipping-any-punctuation.gsm" />
+      <prompt pharse="Το αστερισκ είναι φίλος σας." filename="asterisk-friend.gsm" />
+      <prompt pharse="ανά πάσα στιγμή" filename="at-any-time.gsm" />
+      <prompt pharse="Με αίτημα του πελάτη" filename="at-customers-request.gsm" />
+      <prompt pharse="Στον ακολουθούμενο αριθμό" filename="at-following-number.gsm" />
+      <prompt pharse="στο σημείο" filename="at-sign.gsm" />
+      <prompt pharse="Στον επόμενο τόνο η ώρα θα είναι" filename="at-tone-time-exactly.gsm" />
+      <prompt pharse="στης" filename="at.gsm" />
+      <prompt pharse="Αθλητισμού" filename="athletics.gsm" />
+      <prompt pharse="Atlanta" filename="atlanta.gsm" />
+      <prompt pharse="ατλαντικός" filename="atlantic.gsm" />
+      <prompt pharse="Ζητείτε η προσοχή σας" filename="attention-required.gsm" />
+      <prompt pharse="Στον χαρακτηριστικό ήχο" filename="at_tone.gsm" />
+      <prompt pharse="Έλεγχος" filename="auditing.gsm" />
+      <prompt pharse="Austin" filename="austin.gsm" />
+      <prompt pharse="Λανθασμένος κωδικός. Παρακαλώ εισάγετε τον κωδικό σας και μετά πατήστε το πλήκτρο της δίεσης." filename="auth-incorrect.gsm" />
+      <prompt pharse="Ευχαριστώ." filename="auth-thankyou.gsm" />
+      <prompt pharse="διαθέσιμες επιλογές" filename="available-options.gsm" />
+      <prompt pharse="Διαθέσιμοι" filename="available.gsm" />
+      <prompt pharse="μέσος όρος απάντησης" filename="avg-speed-answer.gsm" />
+      <prompt pharse="Αυτή την στιγμή απουσιάζει από το τηλέφωνο του, ο ατακτούλης." filename="away-naughty-boy.gsm" />
+      <prompt pharse="Αυτή την στιγμή απουσιάζει από το τηλέφωνο της, η ατακτούλα." filename="away-naughty-girl.gsm" />
+      <prompt pharse="Περίεργο" filename="awkward.gsm" />
+      <prompt pharse="ανάποδη κάθετος" filename="backslash.gsm" />
+      <prompt pharse="κακό" filename="bad.gsm" />
+      <prompt pharse="Baltimore" filename="baltimore.gsm" />
+      <prompt pharse="bar" filename="bar.gsm" />
+      <prompt pharse="στάβλο" filename="barn.gsm" />
+      <prompt pharse="στάβλοι" filename="barns.gsm" />
+      <prompt pharse="βαρομετρική" filename="barometric.gsm" />
+      <prompt pharse="πορεία" filename="bearing.gsm" />
+      <prompt pharse="beaufort" filename="beaufort.gsm" />
+      <prompt pharse="γιατί είμαστε τρελοί" filename="because-paranoid.gsm" />
+      <prompt pharse="πριν από τον αριθμό." filename="before-the-number.gsm" />
+      <prompt pharse="Το πιστεύετε ότι αυτό το τηλεφωνικό σύστημα είναι δωρεάν." filename="believe-its-free.gsm" />
+      <prompt pharse="Λογιστήριο και εισπράξεις" filename="billing-and-collections.gsm" />
+      <prompt pharse="Λογιστήριο" filename="billing.gsm" />
+      <prompt pharse="δισεκατομμυριοστός" filename="billionth.gsm" />
+      <prompt pharse="Ευχαριστούμε που καλέσατε. Αυτήν την στιγμή δεν είμαστε διαθέσιμοι να δεχτούμε την κλήση σας. Για αυτόν τον λόγο σας έχουμε προωθήσει σε μια μηχανή διαφοράς Babbage για ανάλυση και μεταγραφή. Για την αποφυγή λαθών αφήστε ένα μήνυμα με μονοσύλλαβες λέξεις ή μικρότερες και αποφύγετε της συνεχόμενες προτάσεις. Μπορείτε να αφήσετε το μήνυμα σε δυαδική μορφή χρησιμοποιώντας τις λέξεις ένα και μηδέν ή το οο. Σας ευχαριστούμε." filename="binary.gsm" />
+      <prompt pharse="κομματάκια" filename="bits.gsm" />
+      <prompt pharse="Προσπαθήστε να περάσετε τον χρόνο σας σκεπτόμενοι μια γαλαζιομάτηνη πολική αρκούδα." filename="blue-eyed-polar-bear.gsm" />
+      <prompt pharse="Ευχαριστούμε που καλέσατε. Η ανώνυμη πληροφορία σας έχει καταγραφτεί και η ομάδα εξουδετέρωσης εκρηκτικών μηχανισμών έχει αποσταλεί στην τοποθεσία σας. Καμία άλλη ενέργεια δεν απαιτείτε εκτός αν χρειάζεστε ένα νέο εσώρουχο. Σε αυτήν την περίπτωση δεν μπορούμε να σας βοηθήσουμε." filename="bombsquad.gsm" />
+      <prompt pharse="Βιβλιοπωλείο" filename="bookstore.gsm" />
+      <prompt pharse="Boston" filename="boston.gsm" />
+      <prompt pharse="κουτί" filename="box.gsm" />
+      <prompt pharse="Εγκέφαλο" filename="brian.gsm" />
+      <prompt pharse="Επαγγελματικό τμήμα" filename="business-development.gsm" />
+      <prompt pharse="Είμαστε όλοι απασχολημένοι με τα μεθύσια μας." filename="busy-hangovers.gsm" />
+      <prompt pharse="Όλες οι γραμμές μας είναι απασχολημένες. Παρακαλώ περιμένετε και κάποιος θα σας απαντήσει σύντομα." filename="busy-pls-hold.gsm" />
+      <prompt pharse="και" filename="but.gsm" />
+      <prompt pharse="από" filename="by.gsm" />
+      <prompt pharse="Bytes" filename="bytes.gsm" />
+      <prompt pharse="Cafeteria" filename="cafeteria.gsm" />
+      <prompt pharse="California" filename="california.gsm" />
+      <prompt pharse="Προώθηση κλήσης" filename="call-forward.gsm" />
+      <prompt pharse="Προώθηση κλήσεων" filename="call-forwarding.gsm" />
+      <prompt pharse="η προώθηση κλήσεων ακυρώθηκε" filename="call-fwd-cancelled.gsm" />
+      <prompt pharse="Προώθηση κλήσεων όταν δεν απαντάτε" filename="call-fwd-no-ans.gsm" />
+      <prompt pharse="Προώθηση κλήσεων όταν είστε απασχολημένοι" filename="call-fwd-on-busy.gsm" />
+      <prompt pharse="Παράλληλη προώθηση κλήσεως" filename="call-fwd-parallel.gsm" />
+      <prompt pharse="Ανεξάρτητη προώθηση κλήσεων" filename="call-fwd-unconditional.gsm" />
+      <prompt pharse="Αυτή η κλήση εχει preempted" filename="call-preempted.gsm" />
+      <prompt pharse="Παρακαλώ εκτιμήστε την ποιότητα της κλήσης που μόλις κάνατε.  Χρησιμοποιήστε τα πλήκτρα ένα έως τέσσερα για να εκτιμήσετε την ποιότητα φωνής σε αυτήν την κλήση, με το ένα να αντιστοιχεί στην καλύτερη ποιότητα, και το τέσσερα να αντιστοιχεί στο ότι ήταν πολύ δύσκολο να καταλάβετε τον άλλον συνομιλητή. Πατήστε το πέντε αν η κλήση διακόπηκε βιαία. Πατήστε το έξι αν η κλήση δεν πραγματοποιήθηκε ποτέ. Πατήστε το επτά εάν η μια πλευρά την κλήσης δεν ακουγόταν. Πατήστε το οχτώ εάν υπήρξαν άλλες δυσκολίες." filename="call-quality-menu.gsm" />
+      <prompt pharse="Η κλήση που κάνατε απαιτεί" filename="call-requres.gsm" />
+      <prompt pharse="η κλήση τερματίστηκε" filename="call-terminated.gsm" />
+      <prompt pharse="Αναμονή κλήσης" filename="call-waiting.gsm" />
+      <prompt pharse="Κλήση" filename="call.gsm" />
+      <prompt pharse="καλώ" filename="calling.gsm" />
+      <prompt pharse="Οι κλήσεις απαντιόνται από" filename="calls-taken-by.gsm" />
+      <prompt pharse="κλήσεις που αναμένου για να μιλήσουν με ένα εκπρόσωπο" filename="calls-waiting-for-rep.gsm" />
+      <prompt pharse="κλήσεις" filename="calls.gsm" />
+      <prompt pharse="Γραφείο κατασκήνωσης" filename="campground-office.gsm" />
+      <prompt pharse="Ακυρώθηκε" filename="cancelled.gsm" />
+      <prompt pharse="Η κλήση σας δεν μπορεί να ολοκληρωθεί όπως την καλέσατε." filename="cannot-complete-as-dialed.gsm" />
+      <prompt pharse="Η κλήση σας δεν μπορεί να ολοκληρωθεί λόγου ενός σφάλματος δικτύου." filename="cannot-complete-network-error.gsm" />
+      <prompt pharse="Η κλήση σας δεν μπορεί να ολοκληρωθεί λόγου σφάλματος στην ληφθείσα τηλεφωνική εταιρία." filename="cannot-complete-otherend-error.gsm" />
+      <prompt pharse="Η κλήση σας δεν μπορεί να ολοκληρωθεί λόγου ενός προσωρινού σφάλματος" filename="cannot-complete-temp-error.gsm" />
+      <prompt pharse="το υπόλοιπο της κάρτας είναι" filename="card-balance-is.gsm" />
+      <prompt pharse="αυτή δεν είναι μια έγκυρη κάρτα" filename="card-is-invalid.gsm" />
+      <prompt pharse="αριθμός κάρτας" filename="card-number.gsm" />
+      <prompt pharse="Αυτή την στιγμή δεν είναι κανείς διαθέσιμος για να απαντήσει στην κλήση σας. Τους έχουν πάρει οι μαϊμούδες." filename="carried-away-by-monkeys.gsm" />
+      <prompt pharse="Κωδικός αιτίας" filename="cause-code.gsm" />
+      <prompt pharse="American Express" filename="cc-amex.gsm" />
+      <prompt pharse="Discover" filename="cc-discover.gsm" />
+      <prompt pharse="Mastercard" filename="cc-mastercard.gsm" />
+      <prompt pharse="Visa" filename="cc-visa.gsm" />
+      <prompt pharse="εγγραφές που ταιριάζουν. Παρακαλώ συνεχίστε να εισάγετε γράμματα για να μειώστε τις επιλογές." filename="cdir-matching-entries-continue.gsm" />
+      <prompt pharse="εγγραφές που ταιριάζουν. Παρακαλώ συνεχίστε να εισάγετε γράμματα, ή πατήστε το πλήκτρο της δίεσης για να επιλέξτε μία από τις εγγραφές" filename="cdir-matching-entries-or-pound.gsm" />
+      <prompt pharse="Παρακαλώ εισάγετε τα πρώτα τρία ή περισσότερα γράμματα του ονόματος ή του επιθέτου του ατόμου χρησιμοποιώντας τα πλήκτρα του τηλεφώνου. Χρησιμοποιήστε το 1 για σημεία στίξης, πατήστε το μηδέν για το κέντρο." filename="cdir-please-enter-first-three.gsm" />
+      <prompt pharse="Λυπάμαι, δεν βρέθηκαν εγγραφές που να ταιριάζουν." filename="cdir-sorry-no-entries.gsm" />
+      <prompt pharse="Υπάρχουν" filename="cdir-there-are.gsm" />
+      <prompt pharse="Σας μεταβιβάζουμε εκτός ευρετηρίου. Παρακαλώ περιμένετε για περισσότερη βοήθεια." filename="cdir-transferring-further-assistance.gsm" />
+      <prompt pharse="Καλωσορίσατε στο ευρετήριο." filename="cdir-welcome.gsm" />
+      <prompt pharse="κελσίου" filename="celsius.gsm" />
+      <prompt pharse="Λεπτό" filename="cent.gsm" />
+      <prompt pharse="κεντρικό" filename="central.gsm" />
+      <prompt pharse="Λεπτά ανά λεπτό" filename="cents-per-minute.gsm" />
+      <prompt pharse="Λεπτά" filename="cents.gsm" />
+      <prompt pharse="Γραφείο διευθυντή" filename="ceo-office.gsm" />
+      <prompt pharse="Αυτό είναι εντάξει. Μου αρέσουν οι προκλήσεις. Ας προσπαθήσουμε άλλη μια φορά." filename="challenge_try_again.gsm" />
+      <prompt pharse="τύχη του" filename="chance-of.gsm" />
+      <prompt pharse="αλλαγή" filename="changing.gsm" />
+      <prompt pharse="Αυτή η δίοδος φωνής είναι ανασφαλής – μην συζητήστε περί απόρρητες πληροφορίες ή χρησιμοποιήστε κώδικες λέξης σχεδίων." filename="channel-insecure-warn.gsm" />
+      <prompt pharse="Αυτή η δίοδος φωνής είναι ασφαλής." filename="channel-secure.gsm" />
+      <prompt pharse="Κανάλι" filename="channel.gsm" />
+      <prompt pharse="Charlotte" filename="charlotte.gsm" />
+      <prompt pharse="chat room" filename="chat-room.gsm" />
+      <prompt pharse="Παρακαλώ ελέγξετε τον αριθμό και ξανακαλέστε." filename="check-number-dial-again.gsm" />
+      <prompt pharse="Χημεία" filename="chemistry.gsm" />
+      <prompt pharse="Chicago" filename="chicago.gsm" />
+      <prompt pharse="Χιλιανό πέσο" filename="chilean_peso.gsm" />
+      <prompt pharse="Chris" filename="chris.gsm" />
+      <prompt pharse="Claims" filename="claims.gsm" />
+      <prompt pharse="καθαρο" filename="clear.gsm" />
+      <prompt pharse="καθαρισμος" filename="clearing.gsm" />
+      <prompt pharse="Cleveland" filename="cleveland.gsm" />
+      <prompt pharse="CLLI" filename="clli.gsm" />
+      <prompt pharse="κλείσιμο παρενθέσεως" filename="close-parenthesis.gsm" />
+      <prompt pharse="κλειστό" filename="closed.gsm" />
+      <prompt pharse="σύννεφα" filename="clouds.gsm" />
+      <prompt pharse="συννεφιασμένο" filename="cloudy.gsm" />
+      <prompt pharse="Συλλογές" filename="collections.gsm" />
+      <prompt pharse="Colorado Springs" filename="colorado-springs.gsm" />
+      <prompt pharse="Colorado" filename="colorado.gsm" />
+      <prompt pharse="Columbus" filename="columbus.gsm" />
+      <prompt pharse="Ευχαριστούμε που καλέσατε για να ρωτήσετε πληροφορίες σχετικά με την λέσχη κωμωδίας μας. Είναι διαθέσιμη για ενοικίαση για την αποθάρρυνση περεταίρω διάδοση κακών λογοπαίγνιων. Παρακαλούμε αφήστε τα στοιχεία σας μετά τον χαρακτηριστικό ήχο." filename="comedyclub.gsm" />
+      <prompt pharse="κόμμα" filename="comma.gsm" />
+      <prompt pharse="Επικοινωνίες" filename="communications.gsm" />
+      <prompt pharse="Καλέστε 411 για να προσπελάσετε το ευρετήριο της εταιρίας μας, ή πατήστε το μηδέν για να αφήσετε μήνυμα στην γενική θυρίδα μας." filename="company-dir-411.gsm" />
+      <prompt pharse="Διαμαρτυρία" filename="complaint.gsm" />
+      <prompt pharse="Σύμφωνα" filename="compliance.gsm" />
+      <prompt pharse="Ο υπολογιστής είναι φίλος σας." filename="computer-friend1.gsm" />
+      <prompt pharse="Ο υπολογιστής είναι φίλος σας." filename="computer-friend2.gsm" />
+      <prompt pharse="προϋποθέσεις" filename="conditions.gsm" />
+      <prompt pharse="Πατήστε το ένα για μια λίστα των συμμετεχόντων στην διάσκεψη." filename="conf-1-to-list-users.gsm" />
+      <prompt pharse="το δύο για να διώξετε όλους τους συμμετέχοντες που δεν είναι διαχειριστές." filename="conf-2-to-kick-nonadmin.gsm" />
+      <prompt pharse="το τρία για σιγάσετε ή να καταργήσετε την σίγαση σε όλους τους συμμετέχοντες που δεν είναι διαχειριστές." filename="conf-3-mute-or-unmute-nonadmin.gsm" />
+      <prompt pharse="το τέσσερα για να ηχογραφήσετε αυτήν την διάσκεψη." filename="conf-4-to-record-conf.gsm" />
+      <prompt pharse="ή το οχτώ για περισσότερες επιλογές." filename="conf-8-for-more-options.gsm" />
+      <prompt pharse="ή το οχτώ για έξοδο από το μενού και επιστροφή στην διάσκεψη." filename="conf-8-to-exit-return-to-conf.gsm" />
+      <prompt pharse="Παρακαλώ πατήστε το ένα για να σιγάσετε ή να ξε σιγάσετε τον εαυτό σας, το δυο για να κλειδώστε ή να ξεκλειδώστε την συνδιάσκεψη, το τρία για να αποβάλετε τον τελευταίο συμμετέχοντα, το τέσσερα ή το έξι για να αυξομειώσετε την ένταση της συνδιάσκεψης, το πέντε για να επεκτείνετε την συνδιάσκεψη, το εφτά ή το εννέα για να αυξομειώσετε την ένταση σας, ή το οχτώ για έξοδο." filename="conf-adminmenu-162.gsm" />
+      <prompt pharse="Παρακαλώ πατήστε το ένα για να σιγάσετε ή να καταργήσετε την σίγαση, το δύο για κλειδώστε ή να ξεκλειδώσετε την διάσκεψη, το τρία για να διώξετε τον τελευταίο συμμετέχοντα, το τέσσερα ή το έξι για να αυξομειώσετε την ένταση της διάσκεψης, το πέντε για να επεκτείνετε την διάσκεψη, το επτά ή το εννέα για να αυξομειώσετε την ένταση σας, ή το οχτώ για περισσότερες επιλογές." filename="conf-adminmenu-18.gsm" />
+      <prompt pharse="Πατήστε το ένα για μια λίστα των συμμετεχόντων στην διάσκεψη, το δύο για να διώξετε όλους τους συμμετέχοντες που δεν είναι διαχειριστές, το τρία για σιγάσετε ή να καταργήσετε την σίγασε σε όλους τους συμμετέχοντες που δεν είναι διαχειριστές, το τέσσερα για να ηχογραφήσετε αυτήν την διάσκεψη, ή το οχτώ για έξοδο από το μενού και επιστροφή στην διάσκεψη." filename="conf-adminmenu-menu8.gsm" />
+      <prompt pharse="Παρακαλώ πατήστε το ένα για να σιγάσετε ή να ξε σιγάσετε τον εαυτό σας, το δυο για να κλειδώστε ή να ξεκλειδώστε την συνδιάσκεψη, το τρία για να αποβάλετε τον τελευταίο συμμετέχοντα, το τέσσερα ή το έξι για να αυξομειώσετε την ένταση της συνδιάσκεψης, το εφτά ή το εννέα για να αυξομειώσετε την ένταση σας, ή το οχτώ για έξοδο." filename="conf-adminmenu.gsm" />
+      <prompt pharse="Σας έχουν αποπέμψει από αυτήν την συνδιάσκεψη" filename="conf-banned.gsm" />
+      <prompt pharse="Εισέρχεστε στην συνδιάσκεψη με αριθμό" filename="conf-enteringno.gsm" />
+      <prompt pharse="Εσφαλμένη επιλογή" filename="conf-errormenu.gsm" />
+      <prompt pharse="Η συνδιάσκεψη έχει επεκταθεί" filename="conf-extended.gsm" />
+      <prompt pharse="Αυτή η συνδιάσκεψη είναι γεμάτη" filename="conf-full.gsm" />
+      <prompt pharse="Παρακαλώ εισάγετε το αριθμό του καναλιού και μετά πατήστε το πλήκτρο της δίεσης" filename="conf-getchannel.gsm" />
+      <prompt pharse="Παρακαλώ εισάγετε τον αριθμό της συνδιάσκεψης και μετά πατήστε το πλήκτρο της δίεσης" filename="conf-getconfno.gsm" />
+      <prompt pharse="Παρακαλώ εισάγετε το PIN της συνδιάσκεψης" filename="conf-getpin.gsm" />
+      <prompt pharse="έχει εισαχτεί στην συνδιάσκεψη" filename="conf-hasentered.gsm" />
+      <prompt pharse="είναι στην συνδιάσκεψη." filename="conf-hasjoin.gsm" />
+      <prompt pharse="έχει αποχωρήσει από την συνδιάσκεψη." filename="conf-hasleft.gsm" />
+      <prompt pharse="Αυτός δεν είναι έγκυρος αριθμός συνδιάσκεψης. Παρακαλώ ξαναδοκιμάστε." filename="conf-invalid.gsm" />
+      <prompt pharse="Δεν είναι έγκυρο αυτό το PIN για αυτήν την συνδιάσκεψη" filename="conf-invalidpin.gsm" />
+      <prompt pharse="Έχετε διωχτεί από αυτήν την συνδιάσκεψη" filename="conf-kicked.gsm" />
+      <prompt pharse="Ο συντονιστής έχει αποχωρήσει από την συνδιάσκεψη." filename="conf-leaderhasleft.gsm" />
+      <prompt pharse="Αυτή η συνδιάσκεψη έχει κλειδωθεί" filename="conf-locked.gsm" />
+      <prompt pharse="Η συνδιάσκεψη είναι τώρα κλειδωμένη" filename="conf-lockednow.gsm" />
+      <prompt pharse="Τώρα είστε με σίγαση" filename="conf-muted.gsm" />
+      <prompt pharse="Δεν υπάρχουν άδειες συνδιασκέψεις αυτήν την στιγμή" filename="conf-noempty.gsm" />
+      <prompt pharse="Η συνδιάσκεψη δεν μπορεί να επεκταθεί" filename="conf-nonextended.gsm" />
+      <prompt pharse="Αυτή η συνδιάσκεψη έχει σίγαση" filename="conf-now-muted.gsm" />
+      <prompt pharse="Αυτή η συνδιάσκεψη ηχογραφείτε τώρα" filename="conf-now-recording.gsm" />
+      <prompt pharse="Αυτή η συνδιάσκεψη δεν έχει σίγαση" filename="conf-now-unmuted.gsm" />
+      <prompt pharse="Υπάρχει άλλος ένας συμμετέχοντας στην συνδιάσκεψη αυτήν την στιγμή" filename="conf-onlyone.gsm" />
+      <prompt pharse="Είστε ο μόνος συμμετέχοντας στην συνδιάσκεψη αυτήν την στιγμή" filename="conf-onlyperson.gsm" />
+      <prompt pharse="Είστε πια ο μόνος συμμετέχοντας στην συνδιάσκεψη" filename="conf-onlypersonleft.gsm" />
+      <prompt pharse="άλλοι συμμετέχοντες στην συνδιάσκεψη" filename="conf-otherinparty.gsm" />
+      <prompt pharse="άλλα άτομα στην συνδιάσκεψη" filename="conf-peopleinconf.gsm" />
+      <prompt pharse="Τώρα θα τοποθετηθείτε στην συνδιάσκεψη" filename="conf-placeintoconf.gsm" />
+      <prompt pharse="Ολοκληρώθηκε η ονομαστηκή κλήση" filename="conf-roll-callcomplete.gsm" />
+      <prompt pharse="Ο διαχειριστής" filename="conf-sysop.gsm" />
+      <prompt pharse="Αίτημα από τον διαχειριστή" filename="conf-sysopreq.gsm" />
+      <prompt pharse="Ακυρώθηκε το αίτημα από τον διαχειριστή" filename="conf-sysopreqcancelled.gsm" />
+      <prompt pharse="Υπάρχουν" filename="conf-thereare.gsm" />
+      <prompt pharse="Η συνδιάσκεψη τώρα είναι ξεκλειδωμένη" filename="conf-unlockednow.gsm" />
+      <prompt pharse="Τώρα δεν είστε με σίγαση" filename="conf-unmuted.gsm" />
+      <prompt pharse="Παρακαλώ πατήστε το ένα για να σιγάσετε ή να ξε σιγάσετε τον εαυτό σας, το τέσσερα ή το έξι για να αυξομειώσετε την ένταση της συνδιάσκεψης, το πέντε για να επεκτείνετε την συνδιάσκεψη, το εφτά ή το εννέα για να αυξομειώσετε την ένταση σας, ή το οχτώ για έξοδο." filename="conf-usermenu-162.gsm" />
+      <prompt pharse="Παρακαλώ πατήστε το ένα για να σιγάσετε ή να ξε σιγάσετε τον εαυτό σας, το τέσσερα ή το έξι για να αυξομειώσετε την ένταση της συνδιάσκεψης, το εφτά ή το εννέα για να αυξομειώσετε την ένταση σας, ή το οχτώ για έξοδο." filename="conf-usermenu.gsm" />
+      <prompt pharse="συμμετέχοντες θα εισέλθουν στην συνδιάσκεψη" filename="conf-userswilljoin.gsm" />
+      <prompt pharse="συμμετέχοντας θα εισέλθουν στην συνδιάσκεψη" filename="conf-userwilljoin.gsm" />
+      <prompt pharse="Η συνδιάσκεψη θα αρχίσει μόλις εισέρθει ο συντονιστής" filename="conf-waitforleader.gsm" />
+      <prompt pharse="Είστε στην συνδιάσκεψη με αριθμό" filename="conf-youareinconfnum.gsm" />
+      <prompt pharse="Η συνδιάσκεψη θα αρχίσει όταν ο ΘΑΥΜΑΣΤΟΣ μας αρχηγός φτάσει." filename="confbridge-begin-glorious-a.gsm" />
+      <prompt pharse="Η συνδιάσκεψη θα αρχίσει όταν ο ΘΑΥΜΑΣΤΟΣ μας αρχηγός φτάσει." filename="confbridge-begin-glorious-b.gsm" />
+      <prompt pharse="Η συνδιάσκεψη θα αρχίσει όταν ο ΘΑΥΜΑΣΤΟΣ μας αρχηγός φτάσει." filename="confbridge-begin-glorious-c.gsm" />
+      <prompt pharse="Η συνδιάσκεψη θα αρχίσει όταν ο συντονιστής εισέρθει." filename="confbridge-begin-leader.gsm" />
+      <prompt pharse="Η συνδιάσκεψη θα αρχίσει τώρα" filename="confbridge-conf-begin.gsm" />
+      <prompt pharse="Η συνδιάσκεψη έχει τελειώσει" filename="confbridge-conf-end.gsm" />
+      <prompt pharse="Για να μειώσετε την ένταση ήχου από τους άλλους συμμετέχοντες" filename="confbridge-dec-list-vol-in.gsm" />
+      <prompt pharse="για να μειώσετε την ένταση ήχου από τους άλλους συμμετέχοντες" filename="confbridge-dec-list-vol-out.gsm" />
+      <prompt pharse="Για να μειώσετε την ένταση ήχου ομιλίας σας προς τους άλλους συμμετέχοντες" filename="confbridge-dec-talk-vol-in.gsm" />
+      <prompt pharse="για να μειώσετε την ένταση ήχου ομιλίας σας προς τους άλλους συμμετέχοντες" filename="confbridge-dec-talk-vol-out.gsm" />
+      <prompt pharse="έχει εισαχτεί στην συνδιάσκεψη" filename="confbridge-has-joined.gsm" />
+      <prompt pharse="έχει αποχωρήσει από την συνδιάσκεψη." filename="confbridge-has-left.gsm" />
+      <prompt pharse="Για να αυξήσετε την ένταση ήχου από τους άλλους συμμετέχοντες" filename="confbridge-inc-list-vol-in.gsm" />
+      <prompt pharse="για να αυξήσετε την ένταση ήχου από τους άλλους συμμετέχοντες" filename="confbridge-inc-list-vol-out.gsm" />
+      <prompt pharse="Για να αυξήσετε την ένταση ήχου ομιλίας σας προς τους άλλους συμμετέχοντες" filename="confbridge-inc-talk-vol-in.gsm" />
+      <prompt pharse="για να αυξήσετε την ένταση ήχου ομιλίας σας προς τους άλλους συμμετέχοντες" filename="confbridge-inc-talk-vol-out.gsm" />
+      <prompt pharse="Έχετε εισάγει μια εσφαλμένη επιλογή." filename="confbridge-invalid.gsm" />
+      <prompt pharse="Για να αποχωρίσετε από την συνδιάσκεψη" filename="confbridge-leave-in.gsm" />
+      <prompt pharse="Για να αποχωρίσετε από την συνδιάσκεψη" filename="confbridge-leave-out.gsm" />
+      <prompt pharse="Για να κλειδώστε, ή να ξεκλειδώσετε την συνδιάσκεψη. Όταν μια συνδιάσκεψη είναι κλειδωμένη μόνο οι διαχειριστές του μπορούν να συμμετέχουν." filename="confbridge-lock-extended.gsm" />
+      <prompt pharse="Για να κλειδώστε, ή να ξεκλειδώσετε την συνδιάσκεψη" filename="confbridge-lock-in.gsm" />
+      <prompt pharse="Η συνδιάσκεψη είναι κλειδωμένη και δεν μπορείτε να συμμετέχετε" filename="confbridge-lock-no-join.gsm" />
+      <prompt pharse="Για να κλειδώστε, ή να ξεκλειδώσετε την συνδιάσκεψη" filename="confbridge-lock-out.gsm" />
+      <prompt pharse="Αυτή η συνδιάσκεψη έχει κλειδωθεί" filename="confbridge-locked.gsm" />
+      <prompt pharse="Για έξοδο από το μενού" filename="confbridge-menu-exit-in.gsm" />
+      <prompt pharse="Για έξοδο από το μενού" filename="confbridge-menu-exit-out.gsm" />
+      <prompt pharse="Για να σιγάσετε, ή να ξε-σιγάσετε τον εαυτό σας. Όταν είστε σε σίγαση δεν μπορείτε να στέλνετε ήχο στους άλλους συμμετέχοντες. Αλλά θα ακούτε τον ήχο από τους άλλους συμμετέχοντες που δεν είναι με σίγαση." filename="confbridge-mute-extended.gsm" />
+      <prompt pharse="Για να σιγάσετε, ή να ξε-σιγάσετε τον εαυτό σας." filename="confbridge-mute-in.gsm" />
+      <prompt pharse="Για να σιγάσετε, ή να ξε-σιγάσετε τον εαυτό σας." filename="confbridge-mute-out.gsm" />
+      <prompt pharse="Τώρα είστε με σίγαση" filename="confbridge-muted.gsm" />
+      <prompt pharse="Υπάρχει άλλος ένας συμμετέχοντας στην συνδιάσκεψη αυτήν την στιγμή" filename="confbridge-only-one.gsm" />
+      <prompt pharse="Είστε ο μόνος συμμετέχοντας στην συνδιάσκεψη αυτήν την στιγμή" filename="confbridge-only-participant.gsm" />
+      <prompt pharse="Άλλοι συμμετέχοντες στην συνδιάσκεψη." filename="confbridge-participants.gsm" />
+      <prompt pharse="Έχετε εισάγει πάρα πόλους λανθασμένους κωδικούς." filename="confbridge-pin-bad.gsm" />
+      <prompt pharse="Παρακαλώ εισάγετε τον κωδικό σας, ακολουθούμενο με το πλήκτρο της δίεσης." filename="confbridge-pin.gsm" />
+      <prompt pharse="Για να αφαιρέσετε τον ποιο πρόσφατο συμμετέχοντα της συνδιάσκεψης." filename="confbridge-remove-last-in.gsm" />
+      <prompt pharse="για να αφαιρέσετε τον ποιο πρόσφατο συμμετέχοντα της συνδιάσκεψης." filename="confbridge-remove-last-out.gsm" />
+      <prompt pharse="Έχετε αφαιρεθεί από την συνδιάσκεψη." filename="confbridge-removed.gsm" />
+      <prompt pharse="Για να επανακαθορίσετε την ένταση ήχου της συνδιάσκεψης στο προκαθορισμένο  επίπεδο." filename="confbridge-rest-list-vol-in.gsm" />
+      <prompt pharse="για να επανακαθορίσετε την ένταση ήχου της συνδιάσκεψης στο προκαθορισμένο  επίπεδο." filename="confbridge-rest-list-vol-out.gsm" />
+      <prompt pharse="Για να επανακαθορίσετε την ένταση ήχου της ομιλίας σας στο προκαθορισμένο  επίπεδο." filename="confbridge-rest-talk-vol-in.gsm" />
+      <prompt pharse="για να επανακαθορίσετε την ένταση ήχου της ομιλίας σας στο προκαθορισμένο  επίπεδο." filename="confbridge-rest-talk-vol-out.gsm" />
+      <prompt pharse="Υπάρχουν" filename="confbridge-there-are.gsm" />
+      <prompt pharse="Η συνδιάσκεψη τώρα είναι ξεκλειδωμένη" filename="confbridge-unlocked.gsm" />
+      <prompt pharse="Τώρα δεν είστε με σίγαση" filename="confbridge-unmuted.gsm" />
+      <prompt pharse="Κλήση συνδιάσκεψης" filename="conference-call.gsm" />
+      <prompt pharse="Κρατήσεις για την συνδιάσκεψη" filename="conference-reservations.gsm" />
+      <prompt pharse="Συνδιάσκεψη" filename="conference.gsm" />
+      <prompt pharse="Ο αριθμός επιβεβαίωσης είναι" filename="confirm-number-is.gsm" />
+      <prompt pharse="Συνδέθηκε" filename="connected.gsm" />
+      <prompt pharse="Connecticut" filename="connecticut.gsm" />
+      <prompt pharse="Σύνδεση" filename="connecting.gsm" />
+      <prompt pharse="Η σύνδεση απέτυχε." filename="connection-failed.gsm" />
+      <prompt pharse="Εξαντλήθηκε ο χρόνος της σύνδεσης." filename="connection-timed-out.gsm" />
+      <prompt pharse="Για να συνεχίσετε στα αγγλικά πατήστε το," filename="continue-english-press.gsm" />
+      <prompt pharse="Για να συνεχίσετε στα αγγλικά," filename="continue-in-english.gsm" />
+      <prompt pharse="Κέντρο αντιγράφων" filename="copy-center.gsm" />
+      <prompt pharse="δεν θα σου έλειπε αν έχανες μερικά κιλά" filename="could-lose-a-few-pounds.gsm" />
+      <prompt pharse="Υπηρεσίες Counseling" filename="counseling-services.gsm" />
+      <prompt pharse="μετράω" filename="count.gsm" />
+      <prompt pharse="Ευχαριστούμε που καλέσατε. Η διαδικασία αυτοκαταστροφής έχει ενεργοποιηθεί και θα πραγματοποιηθεί σε τριάντα δευτερόλεπτα. Παρακαλώ εισάγετε τον δωδεκαψήφιο κωδικό ακύρωσης τώρα εάν νομίζετε ότι φτάσατε σε αυτόν τον προορισμό κατά λάθος, διαφορετικά κλείστε την γραμμή και αναζητήστε άμεσα καταφύγιο." filename="countdown.gsm" />
+      <prompt pharse="κατάρρευση" filename="crash.gsm" />
+      <prompt pharse="Κάνετε εισβολή σε αυτήν την διάσκεψη?" filename="crashing_conf.gsm" />
+      <prompt pharse="πίστωση" filename="credit.gsm" />
+      <prompt pharse="Η τρέχουσα ώρα είναι" filename="current-time-is.gsm" />
+      <prompt pharse="είστε" filename="currently.gsm" />
+      <prompt pharse="Το τρέχον υπόλοιπο του λογαριασμού σας είναι" filename="current_account_balance.gsm" />
+      <prompt pharse="λογαριασμοί πελατών" filename="customer-accounts.gsm" />
+      <prompt pharse="πελατειακές σχέσης" filename="customer-relations.gsm" />
+      <prompt pharse="εξυπηρέτηση πελατών" filename="customer-service.gsm" />
+      <prompt pharse="τυφώνας" filename="cyclone.gsm" />
+      <prompt pharse="Dallas" filename="dallas.gsm" />
+      <prompt pharse="παύλα" filename="dash.gsm" />
+      <prompt pharse="ημερομηνία" filename="date.gsm" />
+      <prompt pharse="ημέρα" filename="day.gsm" />
+      <prompt pharse="φως ημέρας" filename="daylight.gsm" />
+      <prompt pharse="ημέρες" filename="days.gsm" />
+      <prompt pharse="απενεργοποιημένο" filename="de-activated.gsm" />
+      <prompt pharse="Μαλάκας!" filename="deadbeat.gsm" />
+      <prompt pharse="αποκρυπτογράφηση" filename="decode.gsm" />
+      <prompt pharse="προκαθορισμένος φροντιστής" filename="default-attendant.gsm" />
+      <prompt pharse="μοίρες" filename="degrees.gsm" />
+      <prompt pharse="Delaware" filename="delaware.gsm" />
+      <prompt pharse="Θα προσπαθήσω μια σύνδεση ενδο αστερισκική με έναν διακομιστή επίδειξης που βρίσκετε στην Ντίτζιουμ. Για να το πετύχω αυτό πρέπει είδη να είστε συνδεδεμένοι με το διαδίκτυο. Παρακαλώ περιμένετε καθώς προσπαθώ να πετύχω την σύνδεση." filename="demo-abouttotry.gsm" />
+      <prompt pharse="Συγχαρητήρια. Έχετε εγκαταστήσει και εκτελέσατε με επιτυχία το ανοιχτού κώδικα Πη, Μπη, Εξ, άστερισκ. Επίσης έχετε εγκαταστήσει μια ομάδα δοκιμαστικών ήχων και αρχείων ρυθμίσεων που θα σας βοηθήσουν στα πρώτα βήματα σας.  Σαν ένα κοινό Πη, Μπη, Εξ, θα πλοηγήσετε αυτό το ντέμο πληκτρολογώντας νούμερα.  Αν χρησιμοποιείτε έναν οδηγό καναλιού κονσόλας αντί κανονικού τηλεφώνου μπορείτε να χρησιμοποιήσετε τις εντολές ντάηαλ, άνσερ και χάνγκάπ για να προσομοιώσετε ένα κανονικό τηλέφωνο." filename="demo-congrats.gsm" />
+      <prompt pharse="Η δοκιμασία echo έχει ολοκληρωθεί." filename="demo-echodone.gsm" />
+      <prompt pharse="Πρόκειται να εκτελέστε μια δοκιμασία έκο. Σε αυτήν τη δοκιμασία όλα όσα λέτε θα σας επαναλαμβάνονται μόλις ληφθούν. Ο σκοπός αυτής της δοκιμασίας είναι να σας δώσει μια ηχητική αναφορά της καθυστέρησης που επικρατεί ανάμεσα σε σας, και το μηχάνημα που τρέχει την εφαρμογή δοκιμής έκο. Μπορείτε να τερματίσετε την δοκιμασία είτε κατεβάζοντας το ακουστικό είτε πατώντας το πλήκτρο της δίεσης." filename="demo-echotest.gsm" />
+      <prompt pharse="Παρακαλώ εισάγετε μία η περισσότερες λέξεις διαχωρισμένες με το αστεράκι και μετά πατήστε το πλήκτρο της δίεσης." filename="demo-enterkeywords.gsm" />
+      <prompt pharse="Αν θέλετε να μάθετε περισσότερες τεχνικές λεπτομέρειες για τον άστερισκ πατήστε το δύο τώρα. Αν θέλετε να δοκιμάστε τις δυνατότητες βόης όβερ άηπί του άστερισκ μπορείτε να καλέσετε το 500 για να προσπαθήστε μια σύνδεση ενδο αστερισκική με έναν διακομιστή επίδειξης που βρίσκετε στην Ντίτζιουμ. Για να το πετύχετε αυτό πρέπει ήδη να είστε συνδεδεμένοι με το διαδίκτυο και να έχετε τουλάχιστον ένα μόντεμ 28 κόμα 8 κίλομπίτ. Για να εκτελέσετε μια δοκιμασία έκο καλέστε το 600. Αυτή η δοκιμασία είναι χρήσιμη όταν έχετε συνδεθεί στον διακομιστή άστερισκ από μια απομακρυσμένη τοποθεσία. Η δοκιμαστική διαμόρφωση έχει επίσης και έναν χρήστη με εσωτερικό 12 34 και κωδικό 42 42. Αυτός ο χρήστης έχει ρυθμιστή να καλεί την κονσόλα όταν καλείτε αυτό το εσωτερικό. Αν καλέστε το 12 34 μπορείτε να δοκιμάστε να καλέσετε την κονσόλα. Αν η κονσόλα είναι απασχολημένη ή μη διαθέσιμη θα σας δοθεί η επιλογή για να αφήσετε ένα φωνητικό μήνυμα. Για να ελέγξετε τα μηνύματα για αυτόν τον χρήστη καλέστε το 85 00 για να μπείτε στο σύστημα φωνητικού ταχυδρομείου. Τελειώνοντας μπορείτε να πατήστε το πλήκτρο της δίεσης για να αποσυνδεθείτε από το Πη, Μπη, Εξ." filename="demo-instruct.gsm" />
+      <prompt pharse="Το άστερισκ είναι ένα πλήρως λειτουργικό Πι, Μπι, Εξ, και πλατφόρμας Αη, Βη, Αρ, ανοιχτού κώδικα που τρέχει στο λειτουργικό λινουξ.  Για περισσότερες πληροφορίες επισκεφτείτε την διεύθυνση www.asterisk.org" filename="demo-moreinfo.gsm" />
+      <prompt pharse="Λυπάμαι δεν μπόρεσα να δημιουργήσω μια σύνδεση στον διακομιστή επίδειξης άστερισκ της Ντίτζιουμ. Μπορείτε να βρείτε χρήσιμες πληροφορίες αποσφαλματοποίησης στην κονσόλα άστερισκ." filename="demo-nogo.gsm" />
+      <prompt pharse="Λυπάμαι δεν βρεθήκαν αντιστοιχίες για αυτές τις λέξεις" filename="demo-nomatch.gsm" />
+      <prompt pharse="Αντίο. Ευχαριστούμε που δοκιμάσατε το ανοιχτού κώδικα PBX Asterisk." filename="demo-thanks.gsm" />
+      <prompt pharse="Άρνηση υπηρεσίας" filename="denial-of-service.gsm" />
+      <prompt pharse="Denver" filename="denver.gsm" />
+      <prompt pharse="Διαχωριστής τμήματος" filename="department-administrator.gsm" />
+      <prompt pharse="τμήμα" filename="department.gsm" />
+      <prompt pharse="καταθέστε" filename="deposit.gsm" />
+      <prompt pharse="σχεδίαση" filename="design.gsm" />
+      <prompt pharse="Detroit" filename="detroit.gsm" />
+      <prompt pharse="ανάπτυξη" filename="development.gsm" />
+      <prompt pharse="Και λοιπών, καλείτε εδώ συχνά?" filename="dial-here-often.gsm" />
+      <prompt pharse="Η υπαγόρευση σας επεξεργάζεται και διαβιβάζετε μέσου email. Παρακαλώ περιμένετε." filename="dictation-being-processed.gsm" />
+      <prompt pharse="Η υπαγόρευση έχει σταλεί. Παρακαλώ θυμηθείτε να διαγράψετε την ηχογράφηση πριν ξαναχρησιμοποιήστε αυτόν τον αριθμό." filename="dictation-sent.gsm" />
+      <prompt pharse="ψηφίο" filename="digit.gsm" />
+      <prompt pharse="ψηφία" filename="digits.gsm" />
+      <prompt pharse="Γράμματα του ονόματος του ατόμου" filename="dir-first.gsm" />
+      <prompt pharse="Γράμματα από το όνομα και επώνυμου του ατόμου" filename="dir-firstlast.gsm" />
+      <prompt pharse="Αν είναι το άτομο που αναζητάτε, πατήστε το 1 τώρα. Διαφορετικά παρακαλώ πατήστε το αστεράκι τώρα." filename="dir-instr.gsm" />
+      <prompt pharse="Καλωσορίσατε στο ευρετήριο. Παρακαλώ εισάγετε τα πρώτα τρία γράμματα του ονόματος του ατόμου χρησιμοποιώντας τα πλήκτρα του τηλεφώνου. Χρησιμοποιήστε το 7 για το Q και το 9 για το zee, πατήστε το μηδέν για το κέντρο." filename="dir-intro-fn-oper.gsm" />
+      <prompt pharse="Καλωσορίσατε στο ευρετήριο. Παρακαλώ εισάγετε τα πρώτα τρία γράμματα του ονόματος του ατόμου χρησιμοποιώντας τα πλήκτρα του τηλεφώνου. Χρησιμοποιήστε το 7 για το Q και το 9 για το zee" filename="dir-intro-fn.gsm" />
+      <prompt pharse="Καλωσορίσατε στο ευρετήριο. Παρακαλώ εισάγετε τα πρώτα τρία γράμματα του ονόματος ή του επιθέτου του ατόμου χρησιμοποιώντας τα πλήκτρα του τηλεφώνου. Χρησιμοποιήστε το 7 για το Q και το 9 για το zee, πατήστε το μηδέν για το κέντρο." filename="dir-intro-fnln-oper.gsm" />
+      <prompt pharse="Καλωσορίσατε στο ευρετήριο. Παρακαλώ εισάγετε τα πρώτα τρία γράμματα του ονόματος ή του επιθέτου του ατόμου χρησιμοποιώντας τα πλήκτρα του τηλεφώνου. Χρησιμοποιήστε το 7 για το Q και το 9 για το zee" filename="dir-intro-fnln.gsm" />
+      <prompt pharse="Καλωσορίσατε στο ευρετήριο. Παρακαλώ εισάγετε τα πρώτα τρία γράμματα του επιθέτου του ατόμου χρησιμοποιώντας τα πλήκτρα του τηλεφώνου. Χρησιμοποιήστε το 7 για το Q και το 9 για το zee, πατήστε το μηδέν για το κέντρο." filename="dir-intro-oper.gsm" />
+      <prompt pharse="Καλωσορίσατε στο ευρετήριο. Παρακαλώ εισάγετε τα πρώτα τρία γράμματα του επιθέτου του ατόμου χρησιμοποιώντας τα πλήκτρα του τηλεφώνου. Χρησιμοποιήστε το 7 για το Q και το 9 για το zee" filename="dir-intro.gsm" />
+      <prompt pharse="Γράμματα από το επίθετο του ατόμου" filename="dir-last.gsm" />
+      <prompt pharse="Πατήστε" filename="dir-multi1.gsm" />
+      <prompt pharse="για" filename="dir-multi2.gsm" />
+      <prompt pharse="Εσωτερικό." filename="dir-multi3.gsm" />
+      <prompt pharse="Πατήστε το 9 για περισσότερες εγγραφές" filename="dir-multi9.gsm" />
+      <prompt pharse="Δεν βρέθηκαν εγγραφές που να ταιριάζουν" filename="dir-nomatch.gsm" />
+      <prompt pharse="Δεν υπάρχουν άλλες εγγραφές στο ευρετήριο που να ταιριάζουν." filename="dir-nomore.gsm" />
+      <prompt pharse="Παρακαλώ εισάγετε τα πρώτα" filename="dir-pls-enter.gsm" />
+      <prompt pharse="Χρησιμοποιώντας τα πλήκτρα του τηλεφώνου. Χρησιμοποιήστε το 7 για το Q και το 9 για το Z" filename="dir-usingkeypad.gsm" />
+      <prompt pharse="Καλωσορίσατε στο ευρετήριο." filename="dir-welcome.gsm" />
+      <prompt pharse="εξυπηρέτηση καταλόγου" filename="directory-assistance.gsm" />
+      <prompt pharse="ευρετήριο" filename="directory.gsm" />
+      <prompt pharse="απενεργοποίηση" filename="disabled.gsm" />
+      <prompt pharse="Ο αριθμός που καλέσατε δεν αντιστοιχεί σε συνδρομητή. Παρακαλώ ελέγξετε τον αριθμό σας και ξανακαλέστε." filename="discon-or-out-of-service.gsm" />
+      <prompt pharse="Αποσυνδεμένο" filename="disconnected.gsm" />
+      <prompt pharse="Δίσκος" filename="disk.gsm" />
+      <prompt pharse="Διανομή" filename="distribution.gsm" />
+      <prompt pharse="διαιρούμενο με" filename="divided-by.gsm" />
+      <prompt pharse="DNS" filename="dns.gsm" />
+      <prompt pharse="Μην ενοχλείτε" filename="do-not-disturb.gsm" />
+      <prompt pharse="Κατά την αναζήτηση ενός e-num" filename="doing-enum-lookup.gsm" />
+      <prompt pharse="δολάριο" filename="dollar.gsm" />
+      <prompt pharse="δολάρια" filename="dollars.gsm" />
+      <prompt pharse="Αυτό το νούμερο είναι καταχωρημένο στην λίστα Μην Καλέσετε. Ο αριθμός σας έχει καταχωρηθεί. Πατήστε το ένα για να αφήσετε ένα μήνυμα εάν νομίζετε ότι φτάσατε σε αυτό το νούμερο κατά λάθος. Μπορείτε να αφήσετε το τηλέφωνο οικίας σας για να σας καλέσουμε πίσω ότι ώρα θελήσουμε εμείς." filename="donotcall1.gsm" />
+      <prompt pharse="Παρακαλώ προσθέστε αυτόν τον αριθμό στην λίστα Μην Καλέσετε." filename="donotcall2.gsm" />
+      <prompt pharse="Φοβάμαι ότι δεν ξέρω ποιος έστειλε αυτό το μήνυμα" filename="dont-know-who-sent.gsm" />
+      <prompt pharse="doppler radar" filename="doppler-radar.gsm" />
+      <prompt pharse="τελεία" filename="dot.gsm" />
+      <prompt pharse="Κάτω" filename="down.gsm" />
+      <prompt pharse="για οδηγίες για να φτάσετε στην τοποθεσία μας, πατήστε" filename="driving-directions.gsm" />
+      <prompt pharse="δουπλεξ" filename="duplex.gsm" />
+      <prompt pharse="dupliction" filename="duplication.gsm" />
+      <prompt pharse="νωρίς" filename="early.gsm" />
+      <prompt pharse="ανατολή" filename="east.gsm" />
+      <prompt pharse="ανατολικές" filename="easterly.gsm" />
+      <prompt pharse="ανατολική" filename="eastern.gsm" />
+      <prompt pharse="Τώρα θα ακούσετε την φωνή σας σε μια δοκιμασία echo." filename="echo-test.gsm" />
+      <prompt pharse="Ed" filename="ed.gsm" />
+      <prompt pharse="δέκατη όγδοη" filename="eighteenth.gsm" />
+      <prompt pharse="ογδόη" filename="eighth.gsm" />
+      <prompt pharse="eightieth" filename="eightieth.gsm" />
+      <prompt pharse="El Paso" filename="el-paso.gsm" />
+      <prompt pharse="ενδέκατη" filename="eleventh.gsm" />
+      <prompt pharse="Email" filename="email.gsm" />
+      <prompt pharse="Έκτακτη" filename="emergency.gsm" />
+      <prompt pharse="ενεργοποιημένη" filename="enabled.gsm" />
+      <prompt pharse="Κωδικοποίηση" filename="encode.gsm" />
+      <prompt pharse="Μηχανολογικό" filename="engineering.gsm" />
+      <prompt pharse="παρακαλώ εισάγετε το εσωτερικό που θα χρησιμοποιηθεί για το κέντρο σας" filename="ent-target-attendant.gsm" />
+      <prompt pharse="Εισάγετε μια ώρα χρησιμοποιώντας τέσσερα ψηφία. Αρχίστε με μηδέν για τις ώρες που είναι μικρότερες του δέκα." filename="enter-a-time.gsm" />
+      <prompt pharse="Παρακαλώ εισάγετε τον αριθμό κλήσης της συνδιάσκεψης που θέλετε να συμμετάσχετε" filename="enter-conf-call-number.gsm" />
+      <prompt pharse="Παρακαλώ εισαγετε το PIN της συνδιάσκεψης" filename="enter-conf-pin-number.gsm" />
+      <prompt pharse="εισάγετε το εσωτερικό του ατόμου που προσπαθείτε να βρείτε" filename="enter-ext-of-person.gsm" />
+      <prompt pharse="Εισάγετε ένα αριθμητικό όνομα αρχείου υπαγόρευσης και μετά πατήστε την δίεση." filename="enter-filename-short.gsm" />
+      <prompt pharse="Παρακαλώ εισάγετε τον αριθμό που θα προστεθεί στην μαύρη λίστα." filename="enter-num-blacklist.gsm" />
+      <prompt pharse="Παρακαλώ εισάγετε τον κωδικό σας, ακολουθούμενο με το πλήκτρο της δίεσης." filename="enter-password.gsm" />
+      <prompt pharse="Παρακαλώ εισάγετε τον εξαψήφιο τηλεφωνικό σας αριθμό, με τον κωδικό περιοχής πρώτα." filename="enter-phone-number10.gsm" />
+      <prompt pharse="Εισέρχεστε στην συνδιάσκεψη με αριθμό" filename="entering-conf-number.gsm" />
+      <prompt pharse="Παρακαλώ εισάγετε τα τρία ψηφία που βρίσκονται στην πίσω όψη της κάρτας σας." filename="enter_3_digits.gsm" />
+      <prompt pharse="Παρακαλώ εισάγετε τον αριθμό λογαριασμού σας." filename="enter_account.gsm" />
+      <prompt pharse="Παρακαλώ εισάγετε ένα ελάχιστο ποσό πληρωμής μεταξύ" filename="enter_amount_part1.gsm" />
+      <prompt pharse="Και ανώτατο ποσό πληρωμής τα" filename="enter_amount_part2.gsm" />
+      <prompt pharse="Παρακαλώ, εισάγετε τον αριθμό της πιστωτικής σας κάρτας" filename="enter_credit_card.gsm" />
+      <prompt pharse="Παρακαλώ, εισάγετε την ημερομηνία λήξης της κάρτας σας με τέσσερα ψηφία" filename="enter_expiry_date.gsm" />
+      <prompt pharse="Παρακαλώ εισάγετε τον αριθμό που θα αφαιρεθεί από την μαύρη λίστα." filename="entr-num-rmv-blklist.gsm" />
+      <prompt pharse="Η αναζήτηση e-num απέτυχε" filename="enum-lookup-failed.gsm" />
+      <prompt pharse="Η αναζήτηση e-num πέτυχε" filename="enum-lookup-successful.gsm" />
+      <prompt pharse="ίσον" filename="equals.gsm" />
+      <prompt pharse="αριθμός σφάλματος" filename="error-number.gsm" />
+      <prompt pharse="Σφάλμα" filename="error.gsm" />
+      <prompt pharse="Παρουσιάστηκε ένα σφάλμα κατά την επεξεργασία" filename="error_process.gsm" />
+      <prompt pharse="αυτήν την στιγμή ο εκτιμώμενος χρόνος αναμονής είναι currently" filename="est-hold-time-is.gsm" />
+      <prompt pharse="ευρώ" filename="euro.gsm" />
+      <prompt pharse="ευρωπαϊκή" filename="european.gsm" />
+      <prompt pharse="ευρώ" filename="euros.gsm" />
+      <prompt pharse="βράδυ" filename="evening.gsm" />
+      <prompt pharse="θαυμαστικό" filename="exclaimation-point.gsm" />
+      <prompt pharse="Έχετε αποχωρίσει από το σύστημα φωνητικού ταχυδρομείου, και θα μεταφερθείτε στο προηγούμενο μενού, ή μπορείτε να κλίσετε για να τερματίστε την κλήση" filename="exited-vm-will-be-transfered.gsm" />
+      <prompt pharse="εξήγηση" filename="explanation.gsm" />
+      <prompt pharse="Παρακαλώ εισάγετε το εσωτερικό του ατόμου που προσπαθείτε να βρείτε, ή πατήστε το μηδέν για το κέντρο." filename="ext-or-zero.gsm" />
+      <prompt pharse="εσωτερικό" filename="extension.gsm" />
+      <prompt pharse="εσωτερικά" filename="extensions.gsm" />
+      <prompt pharse="Τουαλέτα" filename="facilities.gsm" />
+      <prompt pharse="fahrenheit" filename="fahrenheit.gsm" />
+      <prompt pharse="πτώση" filename="falling.gsm" />
+      <prompt pharse="γρήγορη" filename="fast.gsm" />
+      <prompt pharse="Αυτή η υπηρεσία δεν είναι διαθέσιμη σε αυτήν την γραμμή" filename="feature-not-avail-line.gsm" />
+      <prompt pharse="κωδικός υπηρεσίας" filename="featurecode.gsm" />
+      <prompt pharse="Πρέπει να ρωτήσεις τον εαυτό σου ένα ερώτημα" filename="feeling_lucky_punk.gsm" />
+      <prompt pharse="Πόδια" filename="feet.gsm" />
+      <prompt pharse="Θηλυκό" filename="female.gsm" />
+      <prompt pharse="δέκατη πέμπτη" filename="fifteenth.gsm" />
+      <prompt pharse="πέμπτη" filename="fifth.gsm" />
+      <prompt pharse="πεντηκοστή" filename="fiftieth.gsm" />
+      <prompt pharse="Τελικοί" filename="finals.gsm" />
+      <prompt pharse="Οικονομικά" filename="finance.gsm" />
+      <prompt pharse="η κλήση σας είναι τώρα πρώτη στην σειρά, και θα απαντηθεί από τον πρώτο διαθέσιμο εκπρόσωπο" filename="first-in-line.gsm" />
+      <prompt pharse="πρώτη" filename="first.gsm" />
+      <prompt pharse="έχει επισημανθεί για συλλογή από τις αστυνομικές αρχές" filename="flagged-for-lea.gsm" />
+      <prompt pharse="πλημμύρα" filename="flooding.gsm" />
+      <prompt pharse="Florida" filename="florida.gsm" />
+      <prompt pharse="βάτραχος" filename="fog.gsm" />
+      <prompt pharse="βατραχίνες" filename="foggy.gsm" />
+      <prompt pharse="ακολουθούμενο από" filename="followed-by.gsm" />
+      <prompt pharse=" ακολουθούμενο από το πλήκτρο της δίεσης." filename="followed_hash.gsm" />
+      <prompt pharse=" ακολουθούμενο από το πλήκτρο της δίεσης." filename="followed_pound.gsm" />
+      <prompt pharse="ακολούθα με" filename="followme.gsm" />
+      <prompt pharse="Υπηρεσία διατροφής" filename="food-service.gsm" />
+      <prompt pharse="Υπηρεσίες διατροφής" filename="food-services.gsm" />
+      <prompt pharse="Για μια καθημερινή κλήση αφύπνισης" filename="for-a-daily-wakeup-call.gsm" />
+      <prompt pharse="για μια λίστα από" filename="for-a-list-of.gsm" />
+      <prompt pharse="Για το λογιστήριο" filename="for-accounting.gsm" />
+      <prompt pharse="Για το λογιστήριο" filename="for-billing.gsm" />
+      <prompt pharse="Για αγγλικά, πατήστε το" filename="for-english-press.gsm" />
+      <prompt pharse="για σχέσεις επενδυτών, πατήστε το" filename="for-investor-relations.gsm" />
+      <prompt pharse="για τους στοίχους του louie, louie, πατήστε το" filename="for-louie-louie.gsm" />
+      <prompt pharse="για το όχι, πατήστε το" filename="for-no-press.gsm" />
+      <prompt pharse="Για τον έλεγχο ποιότητας και για εκπαιδευτικός σκοπούς" filename="for-qc-and-training-purposes.gsm" />
+      <prompt pharse="για λόγους εξασφάλισης ποιότητας" filename="for-quality-purposes.gsm" />
+      <prompt pharse="Για της πωλήσεις" filename="for-sales.gsm" />
+      <prompt pharse="Για υπηρεσίες" filename="for-service.gsm" />
+      <prompt pharse="Για τεχνική υποστήριξη" filename="for-tech-support.gsm" />
+      <prompt pharse="Για τον πρώτον" filename="for-the-first.gsm" />
+      <prompt pharse="Για τον καιρό" filename="for-the-weather.gsm" />
+      <prompt pharse="Για μια κλήση αφύπνισης" filename="for-wakeup-call.gsm" />
+      <prompt pharse="για το ναι, πατήστε" filename="for-yes-press.gsm" />
+      <prompt pharse="για" filename="for.gsm" />
+      <prompt pharse="Ξέχνα το!" filename="forget_about_it.gsm" />
+      <prompt pharse="Fort Worth" filename="fort-worth.gsm" />
+      <prompt pharse="σαρακοστή" filename="fortieth.gsm" />
+      <prompt pharse="δέκατη τέταρτη" filename="fourteenth.gsm" />
+      <prompt pharse="τέταρτη" filename="fourth.gsm" />
+      <prompt pharse="ψύξη" filename="freeze.gsm" />
+      <prompt pharse="ψύχω" filename="freezing.gsm" />
+      <prompt pharse="συχνότητα" filename="frequency.gsm" />
+      <prompt pharse="Fresno" filename="fresno.gsm" />
+      <prompt pharse="από έναν άγνωστο συνδρομητή" filename="from-unknown-caller.gsm" />
+      <prompt pharse="από" filename="from.gsm" />
+      <prompt pharse="FTP" filename="ftp.gsm" />
+      <prompt pharse="φουρτούνα" filename="gale.gsm" />
+      <prompt pharse="Πήγαμε να τζογάρουμε και να μεθύσουμε." filename="gambling-drunk.gsm" />
+      <prompt pharse="Georgia" filename="georgia.gsm" />
+      <prompt pharse="Ευχαριστούμε που καλέσατε. Απαντάμε στις κλήσεις μόνο με ραντεβού. Το πρώτο διαθέσιμο ραντεβού είναι περίπου σε ενενήντα μέρες από σήμερα. Για να κλείσετε ένα ραντεβού πατήστε το ένα και αφήστε την ημερομηνία και ώρα που επιθυμείτε για το ραντεβού σας καθώς και ένα τηλέφωνο οικίας. Θα επικοινωνήσουμε μαζί σας νωρίς το επόμενο σαββατοκύριακο για να επιβεβαιώσουμε την διαθεσιμότητα του. Για να επαναλάβετε αυτό το μήνυμα πατήστε το δύο." filename="get-in-line-sales-guy.gsm" />
+      <prompt pharse="Θαυμάσια! Τώρα άντε στα τσακίδια!" filename="get_bleep_outta.gsm" />
+      <prompt pharse="Χρειάζομαι μερικές πληροφορίες από εσάς." filename="get_information.gsm" />
+      <prompt pharse="Μπορώ να σας πάρω μερικές πληροφορίες πρώτα?" filename="get_information_first.gsm" />
+      <prompt pharse="Gigabits" filename="gigabits.gsm" />
+      <prompt pharse="Gigabyes" filename="gigabytes.gsm" />
+      <prompt pharse="Gigahertz" filename="gigahertz.gsm" />
+      <prompt pharse="γέλιο" filename="giggle1.gsm" />
+      <prompt pharse="greenwich mean time" filename="gmt.gsm" />
+      <prompt pharse="Φύγε μακριά!" filename="go-away1.gsm" />
+      <prompt pharse="Φύγε μακριά" filename="go-away2.gsm" />
+      <prompt pharse="Καλό απόγευμα" filename="good-afternoon.gsm" />
+      <prompt pharse="Καλό βράδυ" filename="good-evening.gsm" />
+      <prompt pharse="Καλή μέρα" filename="good-morning.gsm" />
+      <prompt pharse="καλό" filename="good.gsm" />
+      <prompt pharse="Αντίο!" filename="goodbye.gsm" />
+      <prompt pharse="Αντίο. Όχι, αλήθεια είναι για το καλό όλων μας. Αντίο." filename="goodbye_for_the_best.gsm" />
+      <prompt pharse="Αντίο. Ευχαριστούμε που δοκιμάσατε το PBX ανοιχτού κώδικα asterisk. Το αγαπάτε, σωστά?" filename="goodbye_love.gsm" />
+      <prompt pharse="Ο θεέ μου, Πρέπει να αστειεύεσαι." filename="got_kidding.gsm" />
+      <prompt pharse="Ευχαριστούμε που καλέσατε. Παρακαλώ αφήστε ένα μήνυμα μετά τον χαρακτηριστικό ήχο. Για να απαλείψουμε τα ανεπιθύμητα τηλεφωνήματα και το ψάρεμα, το μήνυμα σας θα εξεταστεί από έναν σπουδαστή ή μια σπουδάστρια της αγγλικής φιλολογίας. Εάν κριθεί ότι περιέχει γραμματικά και συντακτικά λάθη θα απορριφτεί. Παρακαλούμε να προφέρετε καθαρά για να αποφθεχτούν λάθη που σχετίζονται με τα ομώνυμα. Σας ευχαριστούμε και να έχετε μια καλή ημέρα." filename="grammar.gsm" />
+      <prompt pharse="μεγαλύτερο από" filename="greater-than.gsm" />
+      <prompt pharse="γουστάρω" filename="groovy.gsm" />
+      <prompt pharse="Χαλάζι" filename="hail.gsm" />
+      <prompt pharse="Μισό" filename="half.gsm" />
+      <prompt pharse="αυτό το τηλεφώνημα δεν αποδίδει πουθενά πλέον. Αντίο." filename="hal_goodbye.gsm" />
+      <prompt pharse="Είπα ΠΕΡΙΜΕΝΕΤΕ ΕΝΑ ΛΕΠΤΟ!" filename="hang-on-a-second-angry.gsm" />
+      <prompt pharse="Περιμένετε ένα λεπτό..." filename="hang-on-a-second.gsm" />
+      <prompt pharse="Παρακαλώ κλείστε το τηλέφωνο και ξαναπροσπαθήστε." filename="hangup-try-again.gsm" />
+      <prompt pharse="Είμαι στην ευχάριστη θέση να σας ανακοινώσω ότι, το μήνυμα σας έχει αποθηκευτεί." filename="happy_saved.gsm" />
+      <prompt pharse="έχει φτάσει στο" filename="has-arrived-at.gsm" />
+      <prompt pharse="έχει αλλαχτεί σε" filename="has-been-changed-to.gsm" />
+      <prompt pharse="έχει εκκαθαριστεί" filename="has-been-cleared.gsm" />
+      <prompt pharse="έχει αποσυνδεθεί" filename="has-been-disconnected.gsm" />
+      <prompt pharse="έχει αποσταλεί στο" filename="has-been-set-to.gsm" />
+      <prompt pharse="έχει να" filename="has-been.gsm" />
+      <prompt pharse="έχει λήξει" filename="has-expired.gsm" />
+      <prompt pharse="έχει εκδώσει" filename="has-issued-a.gsm" />
+      <prompt pharse="έχει να εμφανιστεί" filename="has-not-been-seen-for.gsm" />
+      <prompt pharse="έχει" filename="has.gsm" />
+      <prompt pharse="δίεση" filename="hash.gsm" />
+      <prompt pharse="δίεση" filename="hash2.gsm" />
+      <prompt pharse="Hawaii" filename="hawaii.gsm" />
+      <prompt pharse="Κατευθυνόμενος προς" filename="headed-towards.gsm" />
+      <prompt pharse="Πορεία" filename="heading.gsm" />
+      <prompt pharse="Κέντρο υγείας" filename="health-center.gsm" />
+      <prompt pharse="για να ακούσετε ένα περίεργο ήχο, πατήστε" filename="hear-odd-noise.gsm" />
+      <prompt pharse="για να ακούσετε ένα καζανάκι, πατήστε" filename="hear-toilet-flush.gsm" />
+      <prompt pharse="hecto-pascal" filename="hectopascal.gsm" />
+      <prompt pharse="Γειά σου κόσμε" filename="hello-world.gsm" />
+      <prompt pharse="Γεια σας" filename="hello.gsm" />
+      <prompt pharse="Γραφείο Εξυπηρέτησης πελατών" filename="helpdesk.gsm" />
+      <prompt pharse="Hertz" filename="hertz.gsm" />
+      <prompt pharse="ψηλά" filename="high.gsm" />
+      <prompt pharse="Αυτοκινητόδρομος" filename="highway.gsm" />
+      <prompt pharse="χτύπημα" filename="hit.gsm" />
+      <prompt pharse="Παρακαλώ συνεχίστε να αναμένετε, ή πατήστε το μηδέν για να αφήσετε μήνυμα στην γενική θυρίδα μας." filename="hold-or-dial-0.gsm" />
+      <prompt pharse="Οικία" filename="home.gsm" />
+      <prompt pharse="Honolulu" filename="honolulu.gsm" />
+      <prompt pharse="ώρες" filename="hours.gsm" />
+      <prompt pharse="Υπηρεσία δωματίου" filename="housekeeping.gsm" />
+      <prompt pharse="Houston" filename="houston.gsm" />
+      <prompt pharse="HTTP" filename="http.gsm" />
+      <prompt pharse="Ανθρώπινο δυναμικό" filename="human-resources.gsm" />
+      <prompt pharse="υγρασία" filename="humidity.gsm" />
+      <prompt pharse="εκατοστή" filename="hundredth.gsm" />
+      <prompt pharse="τυφώνας" filename="hurricane.gsm" />
+      <prompt pharse="Hertz" filename="hz.gsm" />
+      <prompt pharse="Δεν καταλαβαίνω" filename="i-dont-understand.gsm" />
+      <prompt pharse="Δεν... καταλαβαίνω" filename="i-dont-understand2.gsm" />
+      <prompt pharse="Δεν καταλαβαίνω." filename="i-dont-understand3.gsm" />
+      <prompt pharse="Δεν... σας... καταλαβαίνω" filename="i-dont-understand4.gsm" />
+      <prompt pharse="Χμ, Δεν σας καταλαβαίνω" filename="i-dont-understand5.gsm" />
+      <prompt pharse="Αρχίζω και βαριέμαι αυτήν την συζήτηση." filename="i-grow-bored.gsm" />
+      <prompt pharse="πάγος" filename="ice.gsm" />
+      <prompt pharse="I C M P" filename="icmp.gsm" />
+      <prompt pharse="παγωμένο" filename="icy.gsm" />
+      <prompt pharse="Idaho" filename="idaho.gsm" />
+      <prompt pharse="Αν αυτό είναι σωστό, πατήστε..." filename="if-correct-press.gsm" />
+      <prompt pharse="αν αυτός ο χαιρετισμός να αναπαράγετε επάπειρον" filename="if-grtg-played-indefinately.gsm" />
+      <prompt pharse="αν αυτός ο χαιρετισμός να λήξει στοις" filename="if-grtg-should-expire-at.gsm" />
+      <prompt pharse="Αν έχετε συμβόλαιο συντήρησης, ή χρειάζεστε επείγουσα βοήθεια." filename="if-maint-contract-or-emergency.gsm" />
+      <prompt pharse="Αν έχετε αναλογικό τηλέφωνο, παρακαλώ αναμείνετε στην γραμμή μετά το μενού." filename="if-rotary-phone.gsm" />
+      <prompt pharse="Αν αυτό είναι σωστό, πατήστε" filename="if-this-is-correct-press.gsm" />
+      <prompt pharse="Αν αυτό είναι σωστό..." filename="if-this-is-correct.gsm" />
+      <prompt pharse="Αν αυτό δεν είναι σωστό..." filename="if-this-is-not-correct.gsm" />
+      <prompt pharse="Αν ξέρετε το εσωτερικό του ατόμου που θέλετε, καλέσετε τώρα." filename="if-u-know-ext-dial.gsm" />
+      <prompt pharse="Σε περίπτωση που αποτύχω να μιλήσετε στον..." filename="if-unsuccessful-speak-to.gsm" />
+      <prompt pharse="αν ξέρετε το" filename="if-you-know-the.gsm" />
+      <prompt pharse="αν θέλετε βοήθεια" filename="if-you-need-help.gsm" />
+      <prompt pharse="Αν θέλετε να πραγματοποιήσετε μια κλήση..." filename="if-youd-like-to-make-a-call.gsm" />
+      <prompt pharse="Illinois" filename="illinois.gsm" />
+      <prompt pharse="Λυπαμαι, δεν μπορεσα να σας συνδεσω στον εφιμερευον μηχανικο μας." filename="im-sorry-unable-to-connect-to-eng.gsm" />
+      <prompt pharse="Λυπαμαι" filename="im-sorry.gsm" />
+      <prompt pharse="IMAP" filename="imap.gsm" />
+      <prompt pharse="Εν λειτουργια" filename="in-service.gsm" />
+      <prompt pharse="στη γραμμη" filename="in-the-line.gsm" />
+      <prompt pharse="στην ουρα" filename="in-the-queue.gsm" />
+      <prompt pharse="στην" filename="in-the.gsm" />
+      <prompt pharse="στην πολη σας" filename="in-your-city.gsm" />
+      <prompt pharse="στον ταχιδρομικο σας κωδικα" filename="in-your-zip-code.gsm" />
+      <prompt pharse="εισερχομενη" filename="inbound.gsm" />
+      <prompt pharse="Έχετε μια εισερχομένη κλήση. Πατήστε το ένα για να την δεχτείτε, ή πατήστε το δύο για να την απορρίψετε, ή πατήστε το τρία για να ακούσετε τον αριθμό του καλούντα και τυχόν πληροφορίες εφόσον είναι διαθέσιμες" filename="incoming-call-1-accept-2-decline.gsm" />
+      <prompt pharse="Λυπάμαι, η εισερχόμενη κλήση δεν είναι ποια διαθέσιμη ή απαντήθηκε από κάποιον άλλον" filename="incoming-call-no-longer-avail.gsm" />
+      <prompt pharse="Ινδιανος" filename="indiana.gsm" />
+      <prompt pharse="Indianapolis" filename="indianapolis.gsm" />
+      <prompt pharse="επισημάνθηκε" filename="indicated.gsm" />
+      <prompt pharse="πληροφορίες για την τελευταία σας κλήση" filename="info-about-last-call.gsm" />
+      <prompt pharse="Τεχνολογία της Πληροφορίας" filename="information-technology.gsm" />
+      <prompt pharse="Πληροφορίες" filename="information.gsm" />
+      <prompt pharse="για να εκνευρίσετε τους τεχνικούς μας με τις αυτονόητες ερωτήσεις σας, πατήστε το" filename="infuriate-tech-staff.gsm" />
+      <prompt pharse="Κίνησε" filename="initiated.gsm" />
+      <prompt pharse="Κίνηση" filename="initiating.gsm" />
+      <prompt pharse="Εσωτερικές πωλήσεις" filename="inside-sales.gsm" />
+      <prompt pharse="ενδοεπικοινωνία" filename="intercom.gsm" />
+      <prompt pharse="Εσωτερικός έλεγχος" filename="internal-audit.gsm" />
+      <prompt pharse="Διεθνή κλήση" filename="international-call.gsm" />
+      <prompt pharse="Αυτοκινητόδρομος" filename="interstate.gsm" />
+      <prompt pharse="εσφαλμένη ημερομηνία" filename="invalid-date.gsm" />
+      <prompt pharse="Λυπάμαι.  Αυτός ο κωδικός υπηρεσίας δεν υποστηρίζετε. Παρακαλώ ξαναδοκιμάστε." filename="invalid-featurecode.gsm" />
+      <prompt pharse="Λυπάμαι, αυτό δεν είναι έγκυρο εσωτερικό. Παρακαλώ ξαναπροσπαθήστε." filename="invalid.gsm" />
+      <prompt pharse="Αυτό το ποσό είναι εσφαλμένο" filename="invalid_amount.gsm" />
+      <prompt pharse="Σχέσεις επενδυτών" filename="investor-relations.gsm" />
+      <prompt pharse="Iowa" filename="iowa.gsm" />
+      <prompt pharse="είναι στο" filename="is-at.gsm" />
+      <prompt pharse="είναι απασχολημένοι αυτή την στιγμή" filename="is-curntly-busy.gsm" />
+      <prompt pharse="είναι μη διαθέσιμοι αυτή την στιγμή" filename="is-curntly-unavail.gsm" />
+      <prompt pharse="είναι" filename="is-currently.gsm" />
+      <prompt pharse="σε χρήση" filename="is-in-use.gsm" />
+      <prompt pharse="δεν είναι στο..." filename="is-not-in-the.gsm" />
+      <prompt pharse="δεν έχει οριστεί" filename="is-not-set.gsm" />
+      <prompt pharse="τώρα ηχογραφείτε" filename="is-now-being-recorded.gsm" />
+      <prompt pharse="έχει οριστεί σε" filename="is-set-to.gsm" />
+      <prompt pharse="είναι" filename="is.gsm" />
+      <prompt pharse="είναι τώρα" filename="it-now.gsm" />
+      <prompt pharse="Υπηρεσίες IT" filename="it-services.gsm" />
+      <prompt pharse="Jacksonville" filename="jacksonville.gsm" />
+      <prompt pharse="Επιστασίας" filename="janitorial.gsm" />
+      <prompt pharse="Jason" filename="jason.gsm" />
+      <prompt pharse="Αυτό δεν είναι το εσωτερικό που ψάχνετε." filename="jedi-extension-trick.gsm" />
+      <prompt pharse="John" filename="john.gsm" />
+      <prompt pharse="Πλάκα σου κάνω, δεν ήθελα να θυμώσεις." filename="just-kidding-not-upset.gsm" />
+      <prompt pharse="Πλάκα σου κάνω, δεν ήθελα να θυμώσεις." filename="just-kidding-not-upset2.gsm" />
+      <prompt pharse="Kansas City" filename="kansas-city.gsm" />
+      <prompt pharse="Kansas" filename="kansas.gsm" />
+      <prompt pharse="Kentucky" filename="kentucky.gsm" />
+      <prompt pharse="Παρακαλώ εισάγετε μία ή περισσότερες λέξεις κλειδιά διαχωρισμένα με αστεράκι, κάντε μια προσευχή και πατήστε το πλήκτρο της δίεσης." filename="keywords_cross_fingers.gsm" />
+      <prompt pharse="Kilobits" filename="kilobits.gsm" />
+      <prompt pharse="Kilobytes" filename="kilobytes.gsm" />
+      <prompt pharse="Kilohertz" filename="kilohertz.gsm" />
+      <prompt pharse="Χιλιόμετρα" filename="kilometer.gsm" />
+      <prompt pharse="Χιλιόμετρα ανά ώρα" filename="kilometers-per-hour.gsm" />
+      <prompt pharse="Χτυπώ χτυπώ είναι κανείς εκεί!" filename="knock-knock.gsm" />
+      <prompt pharse="κόμβοι" filename="knots.gsm" />
+      <prompt pharse="Γλώσσα" filename="language.gsm" />
+      <prompt pharse="Las Vagas" filename="las-vegas.gsm" />
+      <prompt pharse="Το τελευταίο σφάλμα στην γραμμή ήταν..." filename="last-error-was.gsm" />
+      <prompt pharse="Το τελευταίο νούμερο που κάλεσε την γραμμή σας ήταν..." filename="last-num-to-call.gsm" />
+      <prompt pharse="αργά" filename="late.gsm" />
+      <prompt pharse="αργότερα" filename="later.gsm" />
+      <prompt pharse="Οι αστυνομικές αρχές μπορεί να ζητήσουν περισσότερες πληροφορίες" filename="lea-may-request-info.gsm" />
+      <prompt pharse="Αριστερή αγκύλη" filename="left-bracket.gsm" />
+      <prompt pharse="Νομικό" filename="legal.gsm" />
+      <prompt pharse="Len" filename="len.gsm" />
+      <prompt pharse="μικρότερο από" filename="less-than.gsm" />
+      <prompt pharse="Βιβλιοθήκη" filename="library.gsm" />
+      <prompt pharse="κεραυνός" filename="lightning.gsm" />
+      <prompt pharse="Θα ήθελα να σας πω ότι αυτό είναι έγκυρο εσωτερικό, αλλά δεν μπορώ. Ξαναπροσπαθήστε." filename="like_to_tell_valid_ext.gsm" />
+      <prompt pharse="Για την προστασία του εύρος ζώνης ιντερνέτ και την διασφάλιση της ποιότητας των κλήσεων, αυτό το σύστημα έχει περιορισμό στον επιτρεπόμενο αριθμό ταυτόχρονων κλήσεων." filename="limit-simul-calls.gsm" />
+      <prompt pharse="Ο αριθμός που καλέσατε είναι απασχολημένος ή μη διαθέσιμος αυτήν την στιγμή. Μπορείτε να περιμένετε για να μεταφερθείτε στο προηγούμενο μενού, ή να κλείσετε για να τερματίσετε την κλήση" filename="line-busy-transfer-menu.gsm" />
+      <prompt pharse="Όλες οι γραμμές μας είναι κατελυμένες από γκρινιάρηδες πελάτες." filename="lines-complaining-customers.gsm" />
+      <prompt pharse="Linux" filename="linux.gsm" />
+      <prompt pharse="λίστα" filename="list.gsm" />
+      <prompt pharse="Μέσος όρος φορτίου" filename="load-average.gsm" />
+      <prompt pharse="τοπικές αρχές" filename="local-authorities.gsm" />
+      <prompt pharse="Τοποθεσία" filename="location.gsm" />
+      <prompt pharse="αποτυχία σύνδεσης" filename="login-fail.gsm" />
+      <prompt pharse="Long Beach" filename="long-beach.gsm" />
+      <prompt pharse="Los Angeles" filename="los-angeles.gsm" />
+      <prompt pharse="Πρόληψη απώλειας" filename="loss-prevention.gsm" />
+      <prompt pharse="Απώλεια" filename="loss.gsm" />
+      <prompt pharse="Louisiana" filename="louisiana.gsm" />
+      <prompt pharse="χαμηλό" filename="low.gsm" />
+      <prompt pharse="μεσημεριανό φαγητό" filename="lunch.gsm" />
+      <prompt pharse="Μηχάνημα" filename="machine.gsm" />
+      <prompt pharse="Επειδή το έβγαλα από το μυαλό μου δεν πάει να πει ότι δεν είναι αληθινό." filename="made-it-up.gsm" />
+      <prompt pharse="Ταχυδρομείο" filename="mail.gsm" />
+      <prompt pharse="δωμάτιο διαλογής" filename="mailroom.gsm" />
+      <prompt pharse="Κύριο μενού" filename="main-menu.gsm" />
+      <prompt pharse="Maine" filename="maine.gsm" />
+      <prompt pharse="Συντήρηση" filename="maintenance.gsm" />
+      <prompt pharse="Αρσενικός" filename="male.gsm" />
+      <prompt pharse="Διοίκηση" filename="management.gsm" />
+      <prompt pharse="Κατασκευές" filename="manufacturing.gsm" />
+      <prompt pharse="Πωλήσεις" filename="marketing.gsm" />
+      <prompt pharse="Θα με παντρευτείς? Πατήστε το ένα για ναι ή το δύο για όχι." filename="marryme.gsm" />
+      <prompt pharse="Φοβάμαι ότι δεν μπορώ να δημιουργήσω μια σύνδεση με τον δοκιμαστικό διακομιστή asterisk της digium. Πίστεψε με έχω εκνευριστεί και εγώ. Μπορεί να υπάρχουν χρήσιμες πληροφορίες αποσφαλματοποίησης στην κονσόλα του asterisk. Εγώ πάω για ένα martini." filename="martini.gsm" />
+      <prompt pharse="Maryland" filename="maryland.gsm" />
+      <prompt pharse="Massachusetts" filename="massachusetts.gsm" />
+      <prompt pharse="Μαθηματικά" filename="mathematics.gsm" />
+      <prompt pharse="μέγιστο" filename="maximum.gsm" />
+      <prompt pharse="megabits" filename="megabits.gsm" />
+      <prompt pharse="megabytes" filename="megabytes.gsm" />
+      <prompt pharse="megahertz" filename="megahertz.gsm" />
+      <prompt pharse="μνήμη" filename="memory.gsm" />
+      <prompt pharse="Memphis" filename="memphis.gsm" />
+      <prompt pharse="μενού" filename="menu.gsm" />
+      <prompt pharse="Mesa" filename="mesa.gsm" />
+      <prompt pharse="μήνυμα από" filename="message-from.gsm" />
+      <prompt pharse="Αριθμός μηνύματος" filename="message-number.gsm" />
+      <prompt pharse="Για να ακούσετε τα μηνύματα σας πατήστε το ένα τώρα. Έλα τώρα ξέρω ότι είσαι περίεργος. Αν έχεις βαρεθεί με αυτό μπορείτε να βγείτε από το φωνητικό ταχυδρομείο ανά πάσα στιγμή πατώντας το πλήκτρο της δίεσης." filename="messages_curious.gsm" />
+      <prompt pharse="μέτρο" filename="meter.gsm" />
+      <prompt pharse="μέτρα" filename="meters.gsm" />
+      <prompt pharse="Miami" filename="miami.gsm" />
+      <prompt pharse="Michigan" filename="michigan.gsm" />
+      <prompt pharse="μεσάνυχτα αύριο βράδυ" filename="midnight-tomorrow-night.gsm" />
+      <prompt pharse="μεσάνυχτα απόψε" filename="midnight-tonight.gsm" />
+      <prompt pharse="μεσάνυχτα" filename="midnight.gsm" />
+      <prompt pharse="Mike" filename="mike.gsm" />
+      <prompt pharse="μίλια ανά ώρα" filename="miles-per-hour.gsm" />
+      <prompt pharse="μίλια" filename="miles.gsm" />
+      <prompt pharse="εκατομμυριοστή" filename="millionth.gsm" />
+      <prompt pharse="Milwaukee" filename="milwaukee.gsm" />
+      <prompt pharse="Παρακαλώ μπορείτε να το επαναλάβετε αυτό?" filename="mind_repeating.gsm" />
+      <prompt pharse="ελάχιστο" filename="minimum.gsm" />
+      <prompt pharse="Λυπάμαι, οι δούλοι μου δεν μπόρεσαν να σας συνδέσουν, παρακαλώ αφήστε ένα μήνυμα." filename="minions-not-answering-leave-message.gsm" />
+      <prompt pharse="Minneapolis" filename="minneapolis.gsm" />
+      <prompt pharse="Minnesota" filename="minnesota.gsm" />
+      <prompt pharse="μείον" filename="minus.gsm" />
+      <prompt pharse="λεπτό" filename="minute.gsm" />
+      <prompt pharse="λεπτά" filename="minutes.gsm" />
+      <prompt pharse="λείψεις" filename="missed.gsm" />
+      <prompt pharse="Mississippi" filename="mississippi.gsm" />
+      <prompt pharse="Missouri" filename="missouri.gsm" />
+      <prompt pharse="ομιχλώδης" filename="misty.gsm" />
+      <prompt pharse="λειτουργία" filename="mode.gsm" />
+      <prompt pharse="παρακολούθηση" filename="monitored.gsm" />
+      <prompt pharse="Montana" filename="montana.gsm" />
+      <prompt pharse="μήνα" filename="month.gsm" />
+      <prompt pharse="μήνες" filename="months.gsm" />
+      <prompt pharse="Moo!" filename="moo1.gsm" />
+      <prompt pharse="mooooo!" filename="moo2.gsm" />
+      <prompt pharse="πρωί" filename="morning.gsm" />
+      <prompt pharse="ΒΛΑΚΑ!" filename="moron.gsm" />
+      <prompt pharse="κυρίως" filename="mostly.gsm" />
+      <prompt pharse="Σταθμός αυτοκινήτων" filename="motor-pool.gsm" />
+      <prompt pharse="βουνό" filename="mountain.gsm" />
+      <prompt pharse="μετακίνηση" filename="moving.gsm" />
+      <prompt pharse="milliseconds" filename="ms.gsm" />
+      <prompt pharse="Nashville" filename="nashville.gsm" />
+      <prompt pharse="Εθνική υπηρεσία καιρού" filename="national-weather-service.gsm" />
+      <prompt pharse="ναυτικά μίλια" filename="nautical-miles.gsm" />
+      <prompt pharse="Κανείς δεν είναι διαθέσιμος να δεχτεί την κλήση σας." filename="nbdy-avail-to-take-call.gsm" />
+      <prompt pharse="κοντά" filename="near.gsm" />
+      <prompt pharse="Nebraska" filename="nebraska.gsm" />
+      <prompt pharse="αρνητικό" filename="negative.gsm" />
+      <prompt pharse="Κέντρο διαχείρισης δικτύου" filename="network-operations-center.gsm" />
+      <prompt pharse="Διαχείρισης δικτύου" filename="network-operations.gsm" />
+      <prompt pharse="Nevada" filename="nevada.gsm" />
+      <prompt pharse="Νέοι λογαριασμοί" filename="new-accounts.gsm" />
+      <prompt pharse="New Hampshire" filename="new-hampshire.gsm" />
+      <prompt pharse="New Jersey" filename="new-jersey.gsm" />
+      <prompt pharse="New Mexico" filename="new-mexico.gsm" />
+      <prompt pharse="New Orleans" filename="new-orleans.gsm" />
+      <prompt pharse="New York" filename="new-york.gsm" />
+      <prompt pharse="νύχτα" filename="night.gsm" />
+      <prompt pharse="Ενενηκοστή" filename="nineteenth.gsm" />
+      <prompt pharse="Δέκατη ένατη" filename="ninetieth.gsm" />
+      <prompt pharse="ένατη" filename="ninth.gsm" />
+      <prompt pharse="Αυτή η γραμμή δεν υποστηρίζει υπηρεσίες έκτακτης ανάγκης" filename="no-112-1.gsm" />
+      <prompt pharse="Αυτή η γραμμή δεν υποστηρίζει υπηρεσίες έκτακτης ανάγκης" filename="no-112-2.gsm" />
+      <prompt pharse="Αυτή η γραμμή δεν υποστηρίζει υπηρεσίες έκτακτης ανάγκης" filename="no-911-1.gsm" />
+      <prompt pharse="Αυτή η γραμμή δεν υποστηρίζει υπηρεσίες έκτακτης ανάγκης" filename="no-911-2.gsm" />
+      <prompt pharse="Δεν υπάρχουν άδειες συνδιασκέψεις αυτήν την στιγμή" filename="no-empty-conferences.gsm" />
+      <prompt pharse="δεν υπάρχουν άλλες διαθέσιμες πληροφορίες για αυτόν τον αριθμό" filename="no-info-about-number.gsm" />
+      <prompt pharse="δεν είναι πλέον σε λειτουργία" filename="no-longer-in-service.gsm" />
+      <prompt pharse="Δεν μπορείτε να απαντήσετε σε αυτό το μήνυμα γιατί ο αποστολέας δεν έχει θυρίδα" filename="no-reply-no-mailbox.gsm" />
+      <prompt pharse="Δεν υπάρχει διαδρομή προς τον καλούμενο προορισμό." filename="no-route-exists-to-dest.gsm" />
+      <prompt pharse="Δεν είναι κανείς εδώ εκτός από εμάς τις κότες!" filename="nobody-but-chickens.gsm" />
+      <prompt pharse="node" filename="node.gsm" />
+      <prompt pharse=" δεν είναι διαθέσιμο. Δεν έχω καμία ιδέα τι κάνει. Δεν με αφορά κιόλας!" filename="none_of_my_business1.gsm" />
+      <prompt pharse="Δεν υπάρχει κάποιος διαθέσιμος αυτήν την στιγμή για να δεχτεί την κλήση σας. Δεν έχω καμία ιδέα τι κάνει. Δεν με αφορά κιόλας!" filename="none_of_my_business2.gsm" />
+      <prompt pharse="North Carolina" filename="north-carolina.gsm" />
+      <prompt pharse="North Dakota" filename="north-dakota.gsm" />
+      <prompt pharse="βόρια" filename="north.gsm" />
+      <prompt pharse="βόριο" filename="northerly.gsm" />
+      <prompt pharse="Δεν είστε εξουσιοδοτημένοι να καλείτε έξω χρησιμοποιώντας την γραμμή PSTN" filename="not-auth-pstn.gsm" />
+      <prompt pharse="Δεν έχετε αρκετές μονάδες για να καλέσετε αυτόν τον αριθμό." filename="not-enough-credit.gsm" />
+      <prompt pharse="Δεν χρειάζεται να καλείτε το ένα όταν καλείτε αυτόν τον αριθμό." filename="not-necessary-1.gsm" />
+      <prompt pharse="Δεν χρειάζεται να καλείτε τον κωδικό περιοχής όταν καλείτε αυτόν τον αριθμό." filename="not-necessary-ac.gsm" />
+      <prompt pharse="Δεν χρειάζεται να καλείτε το ένα αλλά και ούτε τον κωδικό περιοχής όταν καλείτε αυτόν τον αριθμό" filename="not-necessary-dial-1-or-ac.gsm" />
+      <prompt pharse="Δεν έχετε ζητήσει κλήση αφύπνισης." filename="not-rqsted-wakeup.gsm" />
+      <prompt pharse="Ο συνδρομητής που καλέσατε έχει αποφασίσει να μην δέχεται κλήσεις από τον αριθμό σας αυτήν την στιγμή." filename="not-taking-your-call.gsm" />
+      <prompt pharse="δεν έχει ακόμα οριστεί" filename="not-yet-assigned.gsm" />
+      <prompt pharse="δεν έχει ακόμα συνδεθεί." filename="not-yet-connected.gsm" />
+      <prompt pharse="τίποτα δεν έχει ηχογραφηθεί" filename="nothing-recorded.gsm" />
+      <prompt pharse="Δεν είμαι εγώ, είστε εσείς. Ας βρούμε έναν εκπρόσωπο." filename="not_me.gsm" />
+      <prompt pharse="Δεν θα περάσετε!" filename="not_pass.gsm" />
+      <prompt pharse="Πιστεύω ότι με έχετε μπερδέψει με τον Siri." filename="not_siri.gsm" />
+      <prompt pharse="Δεν είστε εσείς, είμαι εγώ. Ας βρούμε έναν εκπρόσωπο." filename="not_you.gsm" />
+      <prompt pharse="τώρα" filename="now.gsm" />
+      <prompt pharse="Αυτός ο κωδικός είναι εσφαλμένος για αυτήν την διάσκεψη. Μήπως δεν σας κάλεσαν?" filename="no_invite_to_conf.gsm" />
+      <prompt pharse=" δεν είναι πια στην διάσκεψη." filename="no_longer_conf.gsm" />
+      <prompt pharse="Κανένα πρόβλημα. Μπορώ να σας βοηθήσω με αυτό." filename="no_problem_help.gsm" />
+      <prompt pharse="Μην ανησυχείτε. Ας ξαναπροσπαθήσουμε." filename="no_worries_try_again.gsm" />
+      <prompt pharse="Ο αριθμός δεν βρέθηκε στην βάση." filename="num-not-in-db.gsm" />
+      <prompt pharse="Ο αριθμός που καλείτε είναι έξω από τα όρια των αστικών κλήσεων. Παρακαλώ καλέστε..." filename="num-outside-area.gsm" />
+      <prompt pharse="Ο αριθμός ήταν επιτυχής..." filename="num-was-successfully.gsm" />
+      <prompt pharse="Ο αριθμός δεν απαντά." filename="number-not-answering.gsm" />
+      <prompt pharse="αριθμός" filename="number.gsm" />
+      <prompt pharse="ένα" filename="num_gr_1.gsm" />
+      <prompt pharse="δύο" filename="num_gr_2.gsm" />
+      <prompt pharse="τρία" filename="num_gr_3.gsm" />
+      <prompt pharse="τέσσερα" filename="num_gr_4.gsm" />
+      <prompt pharse="πέντε" filename="num_gr_5.gsm" />
+      <prompt pharse="έξι" filename="num_gr_6.gsm" />
+      <prompt pharse="επτά" filename="num_gr_7.gsm" />
+      <prompt pharse="οχτώ" filename="num_gr_8.gsm" />
+      <prompt pharse="εννέα" filename="num_gr_9.gsm" />
+      <prompt pharse="Oakland" filename="oakland.gsm" />
+      <prompt pharse="octothorpe" filename="octothorpe.gsm" />
+      <prompt pharse="Εκτός υπηρεσίας" filename="off-duty.gsm" />
+      <prompt pharse="Απενεργοποιημένο" filename="off.gsm" />
+      <prompt pharse="κωδικός γραφείου" filename="office-code.gsm" />
+      <prompt pharse="Αυτό το γραφείο το έχουν καταλάβει σαύρες." filename="office-iguanas.gsm" />
+      <prompt pharse="γραφείο" filename="office.gsm" />
+      <prompt pharse="Γεια σας, ένα λεπτό." filename="OfficeSpace.gsm" />
+      <prompt pharse="Δεν υπάρχει κάποιος διαθέσιμος αυτήν την στιγμή για να δεχτεί την κλήση σας. Παρακαλώ αφήστε ένα μήνυμα και κάποιος θα επικοινωνήσει μαζί σας." filename="ogm_home.gsm" />
+      <prompt pharse="Ohio" filename="ohio.gsm" />
+      <prompt pharse="Oklahoma City" filename="oklahoma-city.gsm" />
+      <prompt pharse="Oaklahoma" filename="oklahoma.gsm" />
+      <prompt pharse="Omaha" filename="omaha.gsm" />
+      <prompt pharse="όταν είναι κατειλημμένο" filename="on-busy.gsm" />
+      <prompt pharse="στον μηνιαίο τηλεφωνικό λογαριασμό σας" filename="on-monthly-tel-stment.gsm" />
+      <prompt pharse="όταν δεν απαντά" filename="on-no-answer.gsm" />
+      <prompt pharse="Ενεργοποιημένο" filename="on.gsm" />
+      <prompt pharse="Παρακαλώ, περιμένετε ένα λεπτό." filename="one-moment-please.gsm" />
+      <prompt pharse="Ένα μικρό βήμα για το Asterisk, ένα μεγάλο άλμα για την ανθρωπότητα." filename="one-small-step.gsm" />
+      <prompt pharse="Αυτό είναι ένα  μικρό βήμα για το Asterisk, ένα μεγάλο άλμα για την ανθρωπότητα." filename="one-small-step2.gsm" />
+      <prompt pharse="Ούπς" filename="oops1.gsm" />
+      <prompt pharse="Ούπς" filename="oops2.gsm" />
+      <prompt pharse="Ούπς" filename="oops3.gsm" />
+      <prompt pharse="άνοιγμα παρένθεσης" filename="open-parenthesis.gsm" />
+      <prompt pharse="Ανοιχτό" filename="open.gsm" />
+      <prompt pharse="Επιχειρήσεις" filename="operations.gsm" />
+      <prompt pharse="Αυτή είναι μια λανθασμένη επιλογή. Παρακαλώ ξαναδοκιμάστε." filename="option-is-invalid.gsm" />
+      <prompt pharse="Αυτή η επιλογή δεν έχει υλοποιηθεί." filename="option-not-implemented.gsm" />
+      <prompt pharse="ή πατήστε" filename="or-press.gsm" />
+      <prompt pharse="ee" filename="or.gsm" />
+      <prompt pharse="Γραφείο παραγγελιών" filename="order-desk.gsm" />
+      <prompt pharse="Παραγγελίες" filename="orders.gsm" />
+      <prompt pharse="Oregon" filename="oregon.gsm" />
+      <prompt pharse="Όλες οι άλλες επιλογές έχουν αφεθεί σαν άσκηση στον καλούντα." filename="other-options-exercise.gsm" />
+      <prompt pharse="διαφορετικά πατήστε" filename="otherwise-press.gsm" />
+      <prompt pharse="Διαφορετικά" filename="otherwise.gsm" />
+      <prompt pharse="Οι ώρες που λειτουργούμε είναι" filename="our-business-hours-are.gsm" />
+      <prompt pharse="Εξερχόμενη" filename="outbound.gsm" />
+      <prompt pharse="Εξωτερικές πωλήσεις" filename="outside-sales.gsm" />
+      <prompt pharse="Εξωτερική μεταβίβαση" filename="outside-transfer.gsm" />
+      <prompt pharse="πι" filename="p.gsm" />
+      <prompt pharse="pacific" filename="pacific.gsm" />
+      <prompt pharse="πακέτο" filename="packet.gsm" />
+      <prompt pharse="πανικός" filename="panic.gsm" />
+      <prompt pharse="μέρει" filename="partially.gsm" />
+      <prompt pharse="εν μέρει" filename="partly.gsm" />
+      <prompt pharse="pascal" filename="pascal.gsm" />
+      <prompt pharse="pascal2" filename="pascal2.gsm" />
+      <prompt pharse="Οι κωδικοί που εισάγατε και επανεισάγατε δεν ταιριάζουν. Δεν ξέρω τι να σας πω. Παρακαλώ ξαναπροσπαθήστε?" filename="passwords_not_match.gsm" />
+      <prompt pharse="patchy" filename="patchy.gsm" />
+      <prompt pharse="Παρακαλώ εισάγετε τα πρώτα τρία γράμματα της καταχώρισης που ψάχνετε." filename="pbdirectory-first-three-letters-entry.gsm" />
+      <prompt pharse="Εάν είναι σωστό πατήστε" filename="pbdirectory-if-correct-press.gsm" />
+      <prompt pharse="Εάν είναι λανθασμένο πατήστε" filename="pbdirectory-if-incorrect-press.gsm" />
+      <prompt pharse="Καλωσορίσατε στο τηλεφωνικό κατάλογο." filename="pbdirectory-welcome-to-phonebook.gsm" />
+      <prompt pharse="Λυπάμαι, αυτό δεν είναι έγκυρο εσωτερικό. Παρακαλώ ξαναπροσπαθήστε." filename="pbx-invalid.gsm" />
+      <prompt pharse="Λυπάμαι, δεν υπάρχει κλήση παρκαρισμένη σε αυτό το εσωτερικό. Παρακαλώ ξαναπροσπαθήστε." filename="pbx-invalidpark.gsm" />
+      <prompt pharse="Η απόπειρα παρκαρίσματος απέτυχε" filename="pbx-parkingfailed.gsm" />
+      <prompt pharse="Μεταβίβαση." filename="pbx-transfer.gsm" />
+      <prompt pharse="Pence" filename="pence.gsm" />
+      <prompt pharse="Pennies" filename="pennies.gsm" />
+      <prompt pharse="Pennsylvania" filename="pennsylvania.gsm" />
+      <prompt pharse="Penny" filename="penny.gsm" />
+      <prompt pharse="ποσοστό" filename="percent.gsm" />
+      <prompt pharse="Μπορεί να είμαστε" filename="perhaps-we-are.gsm" />
+      <prompt pharse="Μπορεί να είμαστε" filename="perhaps-we-are2.gsm" />
+      <prompt pharse="τελεία" filename="period.gsm" />
+      <prompt pharse="Προσωπικού" filename="personnel.gsm" />
+      <prompt pharse="Άτομα στην άμεση διαδρομή του" filename="persons-in-path-of.gsm" />
+      <prompt pharse="πέσος" filename="pesos.gsm" />
+      <prompt pharse="Philadelphia" filename="philadelphia.gsm" />
+      <prompt pharse="Pheonix" filename="phoenix.gsm" />
+      <prompt pharse="Φυσική" filename="physics.gsm" />
+      <prompt pharse="Δεν είναι έγκυρο αυτό το PIN για αυτήν την συνδιάσκεψη" filename="pin-invalid.gsm" />
+      <prompt pharse="Αποδοχή του Pin" filename="pin-number-accepted.gsm" />
+      <prompt pharse="Ping" filename="ping.gsm" />
+      <prompt pharse="ο κωδικός σας." filename="pin_number.gsm" />
+      <prompt pharse="σωλήνας" filename="pipe.gsm" />
+      <prompt pharse="Σχεδιασμός" filename="planning.gsm" />
+      <prompt pharse="Παρακαλώ απαντήστε στα παρακάτω..." filename="please-answer-the-following.gsm" />
+      <prompt pharse="Παρακαλώ επικοινωνήστε με την τεχνική υποστήριξη" filename="please-contact-tech-supt.gsm" />
+      <prompt pharse="Παρακαλώ εισάγετε τα πρώτα τρία γράμματα του ονόματος του ατόμου" filename="please-enter-first-three-letters.gsm" />
+      <prompt pharse="Παρακαλώ εισάγετε" filename="please-enter-the.gsm" />
+      <prompt pharse="παρακαλώ εισάγετε το εσωτερικό σας, μετά πατήστε το πλήκτρο της δίεσης" filename="please-enter-your-extension-then-press-pound.gsm" />
+      <prompt pharse="Παρακαλώ εισάγετε το" filename="please-enter-your.gsm" />
+      <prompt pharse="Παρακαλώ κλείστε και καλέστε το κέντρο." filename="please-hang-up-and-dial-operator.gsm" />
+      <prompt pharse="Παρακαλώ κλείστε και ξαναδοκιμάστε." filename="please-hang-up-and-try-again.gsm" />
+      <prompt pharse="Παρακαλώ συνεχίστε να περιμένετε καθώς οι δούλοι μου προσπαθούν να σας συνδέσουν." filename="please-hold-minion-connect.gsm" />
+      <prompt pharse="Παρακαλώ περιμένετε έως ότου βρω κάποιον δούλο να σας απαντήσει." filename="please-hold-while-minion.gsm" />
+      <prompt pharse="Παρακαλώ δοκιμάστε αργότερα." filename="please-try-again-later.gsm" />
+      <prompt pharse="Παρακαλώ ξαναδοκιμάστε" filename="please-try-again.gsm" />
+      <prompt pharse="Παρακαλώ δοκιμάστε" filename="please-try.gsm" />
+      <prompt pharse="Παρακαλώ περιμένετε, καθώς προσπαθώ να σας συνδέσω με τον εφημερεύον μηχανικό μας." filename="please-wait-connect-oncall-eng.gsm" />
+      <prompt pharse="παρακαλώ εισάγετε τον αριθμό που θα χρησιμοποιηθεί στην μεταβίβαση κλήσης." filename="pls-ent-num-transfer.gsm" />
+      <prompt pharse="Παρακαλώ εισάγετε τον κωδικό πρόσβασης για αυτήν την συνδιάσκεψη" filename="pls-enter-conf-password.gsm" />
+      <prompt pharse="Παρακαλώ εισάγετε τον αριθμητικό σας μήνυμα μετά τον ήχο." filename="pls-enter-num-message-after-tone.gsm" />
+      <prompt pharse="Παρακαλώ εισάγετε τον κωδικό πρόσβασης για την θυρίδα" filename="pls-enter-vm-password.gsm" />
+      <prompt pharse="παρακαλώ εισάγετε τον αριθμού που επιθυμείτε να καλέσετε" filename="pls-entr-num-uwish2-call.gsm" />
+      <prompt pharse="Παρακαλώ περιμένετε όσο επεξεργαζόμαστε την συναλλαγή σας." filename="pls-hold-process-tx.gsm" />
+      <prompt pharse="Παρακαλώ αναμένεται" filename="pls-hold-silent30.gsm" />
+      <prompt pharse="Παρακαλώ περιμένετε όσο προσπαθούμε να σας συνδέσουμε." filename="pls-hold-while-try.gsm" />
+      <prompt pharse="Παρακαλώ ακούστε προσεκτικά γιατί οι επιλογές του μενού έχουν αλλάξει." filename="pls-listen-options-changed.gsm" />
+      <prompt pharse="Παρακαλώ αφήστε ένα μήνυμα μετά τον ήχο και σύντομα ένας εκπρόσωπος θα επικοινωνήσει μαζί σας." filename="pls-lv-msg-will-contact.gsm" />
+      <prompt pharse="παρακαλώ ηχογραφήστε το όνομα σας μετά τον ήχο." filename="pls-rcrd-name-at-tone.gsm" />
+      <prompt pharse="Παρακαλώ περιμένετε στην γραμμή και η κλήση σας θα απαντηθεί από τον πρώτο διαθέσιμο εκπρόσωπο." filename="pls-stay-on-line.gsm" />
+      <prompt pharse="Παρακαλώ ξαναδοκιμάστε" filename="pls-try-again.gsm" />
+      <prompt pharse="Παρακαλώ δοκιμάστε τον κωδικό περιοχής" filename="pls-try-area-code.gsm" />
+      <prompt pharse="παρακαλώ δοκιμάστε την κλήση σας αργότερα" filename="pls-try-call-later.gsm" />
+      <prompt pharse="Παρακαλώ δοκιμάστε χειροκίνητα." filename="pls-try-manually.gsm" />
+      <prompt pharse="Παρακαλώ περιμένετε για να σας συνδέσω." filename="pls-wait-connect-call.gsm" />
+      <prompt pharse="Plugh" filename="plugh.gsm" />
+      <prompt pharse="συν" filename="plus.gsm" />
+      <prompt pharse="Αριθμός ανακοίνωσης" filename="pm-announcement-number.gsm" />
+      <prompt pharse="Αυτή είναι μια λανθασμένη επιλογή. Παρακαλώ ξαναδοκιμάστε." filename="pm-invalid-option.gsm" />
+      <prompt pharse="Διαχείριση φράσεων" filename="pm-phrase-management.gsm" />
+      <prompt pharse="Αριθμός επιλογής" filename="pm-prompt-number.gsm" />
+      <prompt pharse="Για να ηχογραφήσετε μια φράση" filename="pm-to-record-phrase.gsm" />
+      <prompt pharse="Για να επαναλάβετε μια φράση" filename="pm-to-review-phrase.gsm" />
+      <prompt pharse="Σημείο" filename="point.gsm" />
+      <prompt pharse="POP" filename="pop.gsm" />
+      <prompt pharse="θύρα" filename="port.gsm" />
+      <prompt pharse="Portland" filename="portland.gsm" />
+      <prompt pharse="αριθμός θύρας" filename="portnumber.gsm" />
+      <prompt pharse="θέση" filename="position.gsm" />
+      <prompt pharse="-ψήφιο αριθμού του λογαριασμού σας, παραλείποντας τυχόν σημεία στίξης, ακολουθούμενο με το πλήκτρο της δίεσης." filename="post-entry-pound.gsm" />
+      <prompt pharse="λύρα" filename="pound.gsm" />
+      <prompt pharse="λίμπρες" filename="pounds.gsm" />
+      <prompt pharse="Ο λογαριασμός σας χρησιμοποιήθηκε για πρώτη φορά την" filename="prepaid-account-firstused.gsm" />
+      <prompt pharse="Ο λογαριασμός σας είναι κλειδωμένος" filename="prepaid-account-has-locked.gsm" />
+      <prompt pharse="Ο λογαριασμός σας δεν είναι κλειδωμένος" filename="prepaid-account-nolocked.gsm" />
+      <prompt pharse="ο λογαριασμός σας έχει πιστωθεί με" filename="prepaid-account_refill.gsm" />
+      <prompt pharse="Θα οριστεί στην θέση ταχείας κλήσης" filename="prepaid-assigned-speeddial.gsm" />
+      <prompt pharse="λυπάμαι, η ταυτοποίηση σας ήταν ανεπιτυχής" filename="prepaid-auth-fail.gsm" />
+      <prompt pharse="Η διάρκεια της κλήσης ήταν" filename="prepaid-call-duration.gsm" />
+      <prompt pharse="Παρακαλώ περιμένετε, η κλήση σας συνδέετε" filename="prepaid-callback_intro.gsm" />
+      <prompt pharse="Το άτομο που αναζητάτε δεν απάντησε. Παρακαλώ περιμένετε καθώς το άτομο που καλέσατε έχει ενεργοποιημένη την δυνατότητα ακολούθα με, και θα δρομολογήσουμε την κλήση σας σε αυτόν" filename="prepaid-callfollowme.gsm" />
+      <prompt pharse="Λυπάμαι, η κάρτα σας έχει λήξη" filename="prepaid-card-expired.gsm" />
+      <prompt pharse="αυτός ο αριθμός κάρτας ήδη χρησιμοποιείτε!" filename="prepaid-card-in-use.gsm" />
+      <prompt pharse="Λεπτό" filename="prepaid-cent.gsm" />
+      <prompt pharse="Λεπτά" filename="prepaid-cents.gsm" />
+      <prompt pharse="Το κόστος της κλήσης είναι" filename="prepaid-cost-call.gsm" />
+      <prompt pharse="Ο αριθμός που καλέσατε είναι προσωρινά μη διαθέσιμος..." filename="prepaid-dest-unreachable.gsm" />
+      <prompt pharse="δολάριο" filename="prepaid-dollar.gsm" />
+      <prompt pharse="δολάρια" filename="prepaid-dollars.gsm" />
+      <prompt pharse="Παρακαλώ εισάγετε τον δεκαψήφιο αριθμό της κάρτας σας, παραλείποντας τυχόν σημεία στίξης, ακολουθούμενο με το πλήκτρο της δίεσης." filename="prepaid-enter-card-num.gsm" />
+      <prompt pharse="Παρακαλώ, εισάγετε το αναγνωριστικό κλήσης σας" filename="prepaid-enter-cid.gsm" />
+      <prompt pharse="Παρακαλώ, εισάγετε τον κωδικό που θέλετε να χρησιμοποιήσετε για να κλειδώστε τον λογαριασμό σας" filename="prepaid-enter-code-lock-account.gsm" />
+      <prompt pharse="Παρακαλώ εισάγετε τον αριθμό που επιθυμείτε να καλέσετε βάζοντας μπροστά το μηδέν μηδέν και τον κωδικό της χώρας ακολουθούμενο από το πλήκτρο της δίεσης..." filename="prepaid-enter-dest.gsm" />
+      <prompt pharse="Παρακαλώ, εισάγετε τον κωδικό κλήσης σας" filename="prepaid-enter-dialcode.gsm" />
+      <prompt pharse="Παρακαλω εισάγετε τον αριθμό που επιθυμείτε να καλέσετε βάζοντας μπροστά το ένα για τοπικές κλήσεις ή το μηδέν ένα ένα για διεθνείς κλήσεις ακολουθούμενο από το πλήκτρο της δίεσης..." filename="prepaid-enter-number-u-calling-1-or-011.gsm" />
+      <prompt pharse="Παρακαλώ, εισάγετε τον κωδικό κλειδώματος" filename="prepaid-enter-pin-lock.gsm" />
+      <prompt pharse="παρακαλώ εισάγετε το πλήρες ΠΙΝ σας" filename="prepaid-enter-pin-number.gsm" />
+      <prompt pharse="Παρακαλώ εισάγετε τον αριθμό της ταχείας κλήσης" filename="prepaid-enter-speeddial.gsm" />
+      <prompt pharse="ευρώ" filename="prepaid-euro.gsm" />
+      <prompt pharse="ευρώ" filename="prepaid-euros.gsm" />
+      <prompt pharse="Αντίο!" filename="prepaid-final.gsm" />
+      <prompt pharse="εσφαλμένα ψηφία" filename="prepaid-invalid-digits.gsm" />
+      <prompt pharse="Χρησιμοποιείτε για" filename="prepaid-is-used-for.gsm" />
+      <prompt pharse="ο αριθμός είναι κατελυμένος" filename="prepaid-isbusy.gsm" />
+      <prompt pharse="Η τελευταία σας κλήση έγινε" filename="prepaid-lastcall.gsm" />
+      <prompt pharse="Εάν θέλετε να συνεχίσετε κλειδώνοντας τον λογαριασμό σας, τότε πατήστε το ένα" filename="prepaid-listen-press1-confirmation-lock.gsm" />
+      <prompt pharse="Έγινε αποδεκτός ο κωδικός κλειδώματος" filename="prepaid-locking-accepted.gsm" />
+      <prompt pharse="λεπτό" filename="prepaid-minute.gsm" />
+      <prompt pharse="λεπτά" filename="prepaid-minutes.gsm" />
+      <prompt pharse="Δεν έχουν πραγματοποιηθεί κλήσης" filename="prepaid-no-call.gsm" />
+      <prompt pharse="δεν έχετε εισάγει έναν αριθμό κάρτας" filename="prepaid-no-card-entered.gsm" />
+      <prompt pharse="Αυτός ο κωδικός κλήσης δεν υπάρχει" filename="prepaid-no-dialcode.gsm" />
+      <prompt pharse="λυπάμαι, δεν έχετε αρκετές μονάδες" filename="prepaid-no-enough-credit-stop.gsm" />
+      <prompt pharse="λυπάμαι, δεν έχετε αρκετές μονάδες για να καλέσετε αυτόν τον αριθμό" filename="prepaid-no-enough-credit.gsm" />
+      <prompt pharse="Ο κωδικός κλειδώματος σας είναι λανθασμένος" filename="prepaid-no-pin-lock.gsm" />
+      <prompt pharse="Ο αριθμός δεν απαντά" filename="prepaid-noanswer.gsm" />
+      <prompt pharse="Μη εξουσιοδοτημένος αριθμός" filename="prepaid-not-authorized-phonenumber.gsm" />
+      <prompt pharse="Πακέτου δωρεάν χρόνου ομιλίας" filename="prepaid-of-free-package-calls.gsm" />
+      <prompt pharse="πέννες" filename="prepaid-pence.gsm" />
+      <prompt pharse="Ανά λεπτό" filename="prepaid-per-minutes.gsm" />
+      <prompt pharse="Παρακαλώ εισάγετε τον αριθμό τηλεφώνου και μετά πατήστε το πλήκτρο της δίεσης." filename="prepaid-phonenumber-to-speeddial.gsm" />
+      <prompt pharse="Κόμμα" filename="prepaid-point.gsm" />
+      <prompt pharse="λύρα" filename="prepaid-pound.gsm" />
+      <prompt pharse="λύρες" filename="prepaid-pounds.gsm" />
+      <prompt pharse="Εάν θέλετε να συνεχίσετε παρακαλώ πατήστε το ένα ή οποιοδήποτε άλλο πλήκτρο για να ακυρώσετε" filename="prepaid-press1-add-speeddial.gsm" />
+      <prompt pharse="Εάν θέλετε να το αλλάξετε πατήστε το ένα ή οποιοδήποτε άλλο πλήκτρο για να εισάγετε κάποιο άλλο αριθμό ταχείας κλήσης." filename="prepaid-press1-change-speeddial.gsm" />
+      <prompt pharse="Πατήστε το ένα για να ακούσετε την ώρα και την διάρκεια της τελευταίας σας κλήσης" filename="prepaid-press1-listen-lastcall.gsm" />
+      <prompt pharse="Πατήστε το δυο για να ακούσετε την ώρα και την ημερομηνία της τελευταίας φοράς που κλειδώθηκε ο λογαριασμός σας" filename="prepaid-press2-listen-accountlocked.gsm" />
+      <prompt pharse="Πατήστε το τρία για να ακούσετε την ημερομηνία που πρώτο χρησιμοποιήθηκε ο λογαριασμός σας" filename="prepaid-press3-listen-firstuse.gsm" />
+      <prompt pharse="Πατήστε το τέσσερα για να ακούσετε πληροφορίες για τον λογαριασμός σας" filename="prepaid-press4-info.gsm" />
+      <prompt pharse="Πατήστε το πέντε για να κλειδώσετε τον λογαριασμός σας" filename="prepaid-press5-lock.gsm" />
+      <prompt pharse="Πατήστε το εννέα για να βγείτε από το μενού πληροφοριών" filename="prepaid-press9-listen-exit-infomenu.gsm" />
+      <prompt pharse="Πατήστε το εννέα για να βγείτε από το μενού κλειδώματος" filename="prepaid-press9-listen-exit-lockmenu.gsm" />
+      <prompt pharse="Πατήστε το εννέα για να προσθέστε μια νέα ταχεία κλήση" filename="prepaid-press9-new-speeddial.gsm" />
+      <prompt pharse="Πατήστε το αστεράκι για να αποσυνδεθείτε" filename="prepaid-pressdisconnect.gsm" />
+      <prompt pharse="Για να επανεισάγετε τον προορισμό πατήστε το ένα. Για επιβεβαίωση πατήστε το δύο." filename="prepaid-re-enter-press1-confirm.gsm" />
+      <prompt pharse="εάν επιθυμείτε να ανανεώστε την κάρτα σας με ένα κουπόνι, πατήστε το οχτώ τώρα" filename="prepaid-refill_card_with_voucher.gsm" />
+      <prompt pharse="υπόλοιπο" filename="prepaid-remaining.gsm" />
+      <prompt pharse="δευτερόλεπτο" filename="prepaid-second.gsm" />
+      <prompt pharse="δευτερόλεπτα" filename="prepaid-seconds.gsm" />
+      <prompt pharse="Παρακαλώ εισάγετε τον φιλικό αριθμό IAX, SIP  που επιθυμείτε να καλέσετε ακολουθούμενο από το πλήκτρο της δίεσης..." filename="prepaid-sipiax-enternumber.gsm" />
+      <prompt pharse="Λυπάμαι, δεν βρέθηκε φιλικό αριθμό IAX, SIP που να ταιριάζει με αυτόν τον αριθμό!" filename="prepaid-sipiax-num-nomatch.gsm" />
+      <prompt pharse="Αν θέλετε να καλέσετε έναν φιλικό αριθμό IAX ή SIP, πατήστε το εννέα τώρα..." filename="prepaid-sipiax-press9.gsm" />
+      <prompt pharse="Ο αριθμός της ταχείας κλήσης αποθηκεύτηκε με επιτυχία." filename="prepaid-speeddial-saved.gsm" />
+      <prompt pharse="Ο αριθμός που καλέσατε είναι" filename="prepaid-the-number-u-dialed-is.gsm" />
+      <prompt pharse="Ο αριθμός τηλεφώνου" filename="prepaid-the-phonenumber.gsm" />
+      <prompt pharse="λυπάμαι χρησιμοποιήθηκε άγνωστο νόμισμα" filename="prepaid-unknow_used_currencie.gsm" />
+      <prompt pharse="αυτό το κουπόνι δεν υπάρχει" filename="prepaid-voucher_does_not_exist.gsm" />
+      <prompt pharse="παρακαλώ εισάγετε τον αριθμού του κουπονιού ακολουθούμενο με το πλήκτρο της δίεσης." filename="prepaid-voucher_enter_number.gsm" />
+      <prompt pharse="Καλωσορίσατε στο σύστημα καρτών προπληρωμένου χρόνου ομιλίας..." filename="prepaid-welcome.gsm" />
+      <prompt pharse="Έχετε καλέσει" filename="prepaid-you-have-dialed.gsm" />
+      <prompt pharse="έχετε" filename="prepaid-you-have.gsm" />
+      <prompt pharse="Ο κωδικός κλειδώματος σας είναι" filename="prepaid-your-locking-is.gsm" />
+      <prompt pharse="λυπάμαι, έχετε μηδέν μονάδες" filename="prepaid-zero-balance.gsm" />
+      <prompt pharse="Υποστήριξη προπωλήσεων" filename="presales-support.gsm" />
+      <prompt pharse="Γραφείο προέδρου" filename="presidents-office.gsm" />
+      <prompt pharse="Πατήστε το μηδέν" filename="press-0.gsm" />
+      <prompt pharse="Πατήστε το ένα" filename="press-1.gsm" />
+      <prompt pharse="Πατήστε το δύο" filename="press-2.gsm" />
+      <prompt pharse="Πατήστε το τρία" filename="press-3.gsm" />
+      <prompt pharse="Πατήστε το τέσσερα" filename="press-4.gsm" />
+      <prompt pharse="Πατήστε το πέντε" filename="press-5.gsm" />
+      <prompt pharse="ή πατήστε το έξι για να αποβάλετε τον τελευταίο χρήστη." filename="press-6-to-eject.gsm" />
+      <prompt pharse="Πατήστε το έξι" filename="press-6.gsm" />
+      <prompt pharse="Πατήστε το επτά" filename="press-7.gsm" />
+      <prompt pharse="Πατήστε το οχτώ" filename="press-8.gsm" />
+      <prompt pharse="Πατήστε το εννέα" filename="press-9.gsm" />
+      <prompt pharse="Πατήστε ξανά αυτό το κουμπί" filename="press-button-again.gsm" />
+      <prompt pharse="Πατήστε το Enter" filename="press-enter.gsm" />
+      <prompt pharse="Πατήστε το Escape" filename="press-escape.gsm" />
+      <prompt pharse="Πατήστε την δίεση" filename="press-hash.gsm" />
+      <prompt pharse="Πατήστε ή πείτε το μηδέν." filename="press-or-say-0.gsm" />
+      <prompt pharse="Πατήστε ή πείτε το ένα." filename="press-or-say-1.gsm" />
+      <prompt pharse="Πατήστε ή πείτε το δύο." filename="press-or-say-2.gsm" />
+      <prompt pharse="Πατήστε ή πείτε το τρία." filename="press-or-say-3.gsm" />
+      <prompt pharse="Πατήστε ή πείτε το τέσσερα." filename="press-or-say-4.gsm" />
+      <prompt pharse="Πατήστε ή πείτε το πέντε." filename="press-or-say-5.gsm" />
+      <prompt pharse="Πατήστε ή πείτε το έξι." filename="press-or-say-6.gsm" />
+      <prompt pharse="Πατήστε ή πείτε το επτά." filename="press-or-say-7.gsm" />
+      <prompt pharse="Πατήστε ή πείτε το οχτώ." filename="press-or-say-8.gsm" />
+      <prompt pharse="Πατήστε ή πείτε το εννέα." filename="press-or-say-9.gsm" />
+      <prompt pharse="Πατήστε το πλήκτρο της δίεση για να αποθηκεύσετε τις αλλαγές σας" filename="press-pound-save-changes.gsm" />
+      <prompt pharse="Πατήστε το πλήκτρο της δίεσης για να συνδεθείτε με την θυρίδα σας, ή το αστεράκι για να κλείσετε." filename="press-pound-to-login-star-to-hangup.gsm" />
+      <prompt pharse="Πατήστε την δίεση" filename="press-pound.gsm" />
+      <prompt pharse="Πατήστε το return" filename="press-return.gsm" />
+      <prompt pharse="Πατήστε αστεράκι για να ακυρώστε." filename="press-star-cancel.gsm" />
+      <prompt pharse="Πατήστε αστεράκι" filename="press-star.gsm" />
+      <prompt pharse="Πατήστε την μπάρα του διαστήματος" filename="press-the-space-bar.gsm" />
+      <prompt pharse="Πατήστε το tilde" filename="press-tilde.gsm" />
+      <prompt pharse="Πατήστε" filename="press.gsm" />
+      <prompt pharse="πίεση" filename="pressure.gsm" />
+      <prompt pharse="Πατήστε την δίεση ή το κάγκελα.." filename="press_pound_hash.gsm" />
+      <prompt pharse="Πατήστε το πλήκτρο της δίεσης ή το κάγκελα.." filename="press_pound_hash_key.gsm" />
+      <prompt pharse="Πατήστε το ένα για το Ναι, ή το δύο για το Όχι." filename="press_yes_or_no.gsm" />
+      <prompt pharse="Για να συνεχίσετε, πληκτρολογήστε οποιονδήποτε επταψήφιο κύριο αριθμό ακολουθούμενο με το πλήκτρο της δίεσης." filename="prime_number.gsm" />
+      <prompt pharse="Εκτυπώνω" filename="printing.gsm" />
+      <prompt pharse="Πατήστε το ένα αν θέλετε ο καλούντος να επικοινωνεί κατευθείαν μαζί σας ουτοκαθεξής. Πατήστε το δύο αν θέλετε ο καλούντος να αποστέλνετε, στο εξής και για πάντα, στην θυρίδα σας. Πατήστε το τρία αν θέλετε να στείλετε τον καλούντα στα μενού βασανιστηρίων, στο εξής και για πάντα. Πατήστε το τέσσερα για να στείλετε τον καλούντα σε ένα ευγενικό μενού μην ξανά καλέσετε, στο εξής και για πάντα. Πατήστε το πέντε για να αφήσετε τον καλούντα να επικοινωνήσει κατευθείαν μαζί σας στο μέλλον, αλλά μόνο αυτήν την φορά, να σταλεί στην θυρίδα σας." filename="priv-callee-options.gsm" />
+      <prompt pharse="Έχω έναν καλούντα στην αναμονή, που συστήθηκε σαν" filename="priv-callpending.gsm" />
+      <prompt pharse="Ευχαριστώ. Παρακαλώ περιμένετε για να σας συνδέσω!" filename="priv-introsaved.gsm" />
+      <prompt pharse="Παρακαλώ, μετά τον ήχο πείτε το όνομα σας." filename="priv-recordintro.gsm" />
+      <prompt pharse="Έχει μπει στην μαύρη λίστα" filename="privacy-blacklisted.gsm" />
+      <prompt pharse="Μπλοκαρισμένο" filename="privacy-blocked.gsm" />
+      <prompt pharse="Αν νομίζετε ότι αυτό είναι λάθος ή άδικο παρακαλώ αφήστε ένα μήνυμα μετά τον ήχο. Διαφορετικά κλείστε τώρα." filename="privacy-if-error-leave-message-or-hangup.gsm" />
+      <prompt pharse="Αν νομίζετε ότι αυτό είναι λάθος..." filename="privacy-if-error.gsm" />
+      <prompt pharse="Αν αυτή είναι μια κλήση τηλε-πώλησης χωρίς προειδοποίηση, να είστε ενήμεροι ότι θέλουμε μόνο γραπτή επικοινωνία." filename="privacy-if-sales-call-contact-in-writing.gsm" />
+      <prompt pharse="Λυπάμαι, αυτός ο αριθμός δεν είναι έγκυρος." filename="privacy-incorrect.gsm" />
+      <prompt pharse="Η τελευταία κλήση ήταν..." filename="privacy-last-caller-was.gsm" />
+      <prompt pharse="ΔΕΝ" filename="privacy-not.gsm" />
+      <prompt pharse="Παρακαλώ καλέστε..." filename="privacy-please-dial.gsm" />
+      <prompt pharse="Παρακαλώ αναμείνετε στην γραμμή σας για να σας συνδέσω." filename="privacy-please-stay-on-line-to-be-connected.gsm" />
+      <prompt pharse="Παρακαλώ εισάγετε το νούμερο τηλεφώνου σας." filename="privacy-prompt.gsm" />
+      <prompt pharse="περιορισμένο μετά από αίτημα του πελάτη." filename="privacy-restricted-by-req.gsm" />
+      <prompt pharse="Λόγου του μεγάλου αριθμού ανωνύμων κλήσεων που δεχόμαστε, ελέγχουμε όλες τις εισερχόμενες κλήσεις που δεν υπάρχει αναγνώριση η παρακρατείτε ο αριθμός." filename="privacy-screening-unidentified-calls.gsm" />
+      <prompt pharse="Παρακαλώ σταματήστε να καλείτε εδώ. Δεν είστε πια επιθυμητοί εδώ." filename="privacy-stop-calling-not-welcome.gsm" />
+      <prompt pharse="Παρακαλώ σταματήστε να καλείτε εδώ. Δεν είστε πια επιθυμητοί εδώ." filename="privacy-stop-calling-not-welcome2.gsm" />
+      <prompt pharse="Ευχαριστώ." filename="privacy-thankyou.gsm" />
+      <prompt pharse="Ο αριθμός είναι..." filename="privacy-this-number-is.gsm" />
+      <prompt pharse="Η τελευταία κλήση ήταν..." filename="privacy-to-blacklist-last-caller.gsm" />
+      <prompt pharse="Για να θέσετε αυτόν τον αριθμό στην μαύρη λίστα..." filename="privacy-to-blacklist-this-number.gsm" />
+      <prompt pharse="για να ακούσετε τα στοιχεία επικοινωνίας" filename="privacy-to-hear-our-contact-details.gsm" />
+      <prompt pharse="Για να θέσετε στην άσπρη λίστα την τελευταία κλήση..." filename="privacy-to-whitelist-last-caller.gsm" />
+      <prompt pharse="Για να θέσετε στην άσπρη λίστα αυτόν τον αριθμό..." filename="privacy-to-whitelist-this-number.gsm" />
+      <prompt pharse="Ο συνδρομητής που καλείτε δεν δέχεται ανώνυμες κλήσεις." filename="privacy-unident.gsm" />
+      <prompt pharse="έχει μπει στην άσπρη λίστα" filename="privacy-whitelisted.gsm" />
+      <prompt pharse="Έχετε μπει στην μαύρη λίστα σε αυτό το σύστημα." filename="privacy-you-are-blacklisted.gsm" />
+      <prompt pharse="Καλείτε από..." filename="privacy-you-are-calling-from.gsm" />
+      <prompt pharse="Ο αριθμός κλήσης σας είναι..." filename="privacy-your-callerid-is.gsm" />
+      <prompt pharse="Προϊόν" filename="product.gsm" />
+      <prompt pharse="Παραγωγή" filename="production.gsm" />
+      <prompt pharse="Εργασίες" filename="projects.gsm" />
+      <prompt pharse="Το αρχείο προτροπών δεν βρέθηκε." filename="prompt-not-found.gsm" />
+      <prompt pharse="πρωτόκολλο" filename="protocol.gsm" />
+      <prompt pharse="Δημόσιες σχέσεις" filename="public-relations.gsm" />
+      <prompt pharse="Αγορές" filename="purchasing.gsm" />
+      <prompt pharse="σκοπός" filename="purposes.gsm" />
+      <prompt pharse="q.931" filename="q-dot-931.gsm" />
+      <prompt pharse="q.9-τριαντα ένα" filename="q-dot-9thirty1.gsm" />
+      <prompt pharse="Εξασφάλιση ποιότητας" filename="quality-assurance.gsm" />
+      <prompt pharse="Έλεγχος ποιότητας" filename="quality-control.gsm" />
+      <prompt pharse="Για λόγους ελέγχου ποιότ, για λόγους ελέγχου ποιότητας, αυτή η κλήση, μπορεί να" filename="quality_control.gsm" />
+      <prompt pharse="τέταρτο" filename="quarter.gsm" />
+      <prompt pharse="που αναμένουν να μιλήσουν με έναν εκπρόσωπο" filename="queue-callswaiting.gsm" />
+      <prompt pharse="Ο τρέχον χρόνος αναμονής είναι" filename="queue-holdtime.gsm" />
+      <prompt pharse="λιγότερο από" filename="queue-less-than.gsm" />
+      <prompt pharse="λεπτό" filename="queue-minute.gsm" />
+      <prompt pharse="Λεπτά" filename="queue-minutes.gsm" />
+      <prompt pharse="Όλοι οι εκπρόσωποι μας είναι απασχολημένοι αυτήν την στιγμή. Παρακαλώ περιμένετε στην γραμμή σας και η κλήση σας θα απαντηθεί από τον επόμενο διαθέσιμο εκπρόσωπο." filename="queue-periodic-announce.gsm" />
+      <prompt pharse="Αυτή την στιγμή υπάρχουν" filename="queue-quantity1.gsm" />
+      <prompt pharse="κλήσεις στην αναμονή, που περιμένουν να μιλήσουν με έναν εκπρόσωπο." filename="queue-quantity2.gsm" />
+      <prompt pharse="Χρόνος αναμονής" filename="queue-reporthold.gsm" />
+      <prompt pharse="Δευτερόλεπτο" filename="queue-seconds.gsm" />
+      <prompt pharse="Ευχαριστώ για την υπομονή σας" filename="queue-thankyou.gsm" />
+      <prompt pharse="Αυτή την στιγμή είστε ο καλούμενος με τον αριθμό" filename="queue-thereare.gsm" />
+      <prompt pharse="Η κλήση σας είναι τώρα πρώτη στην σειρά και θα απαντηθεί από τον πρώτο διαθέσιμο εκπρόσωπο." filename="queue-youarenext.gsm" />
+      <prompt pharse="γρήγορα" filename="quickly.gsm" />
+      <prompt pharse="παράθεση" filename="quote.gsm" />
+      <prompt pharse="Αγώνας" filename="race.gsm" />
+      <prompt pharse="βροχή" filename="rain.gsm" />
+      <prompt pharse="Βροχή" filename="rainfall.gsm" />
+      <prompt pharse="βροχερός" filename="rainy.gsm" />
+      <prompt pharse="Άλισον" filename="Randulo-allison.gsm" />
+      <prompt pharse="απόσταση" filename="range.gsm" />
+      <prompt pharse="έχει επαναοριστεί σε νέο κωδικό περιοχής" filename="reassigned-new-areacode.gsm" />
+      <prompt pharse="Εκπτώσεις" filename="rebates.gsm" />
+      <prompt pharse="λαμβάνω" filename="received.gsm" />
+      <prompt pharse="λήψη" filename="receiving.gsm" />
+      <prompt pharse="Υποδοχή" filename="reception.gsm" />
+      <prompt pharse="καταγράφετε" filename="recorded.gsm" />
+      <prompt pharse="εάν επιθυμείτε να ανανεώστε την κάρτα σας με ένα κουπόνι, πατήστε το οχτώ τώρα" filename="refill_card_with_voucher.gsm" />
+      <prompt pharse="καταχωριστής" filename="registrar.gsm" />
+      <prompt pharse="Είμαι στην δυσάρεστη θέση να σας ενημερώσω" filename="regret_not_saved.gsm" />
+      <prompt pharse="Ο απομακρυσμένος σταθμός είναι ήδη σε αυτή την κατάσταση." filename="remote-already-in-this-mode-2.gsm" />
+      <prompt pharse="Ο απομακρυσμένος σταθμός είναι ήδη σε αυτή την κατάσταση." filename="remote-already-in-this-mode.gsm" />
+      <prompt pharse="Απομακρυσμένη βάση" filename="remote-base.gsm" />
+      <prompt pharse="αφαιρέθηκε" filename="removed.gsm" />
+      <prompt pharse="επισκευή" filename="repair.gsm" />
+      <prompt pharse="Μόνο επανάληψη" filename="repeat-only.gsm" />
+      <prompt pharse="αναμεταδότης" filename="repeater.gsm" />
+      <prompt pharse="Θα σας επαναλάβω τον κωδικό σας. Πιστεύω ότι είπατε" filename="repeat_pin.gsm" />
+      <prompt pharse="Έρευνα και ανάπτυξη" filename="research-and-development.gsm" />
+      <prompt pharse="Έρευνα" filename="research.gsm" />
+      <prompt pharse="Κρατήσεις" filename="reservations.gsm" />
+      <prompt pharse="επανεκκίνηση" filename="restarting.gsm" />
+      <prompt pharse="Rhode Island" filename="rhode-island.gsm" />
+      <prompt pharse="δεξιά αγκύλη" filename="right-bracket.gsm" />
+      <prompt pharse="υψώνετε" filename="rising.gsm" />
+      <prompt pharse="Διαχείριση κινδύνων" filename="risk-management.gsm" />
+      <prompt pharse="Περιαγωγή" filename="roaming.gsm" />
+      <prompt pharse="Υπηρεσία δωματίου" filename="room-service.gsm" />
+      <prompt pharse="Η κλήση σας δρομολογείτε μέσου SIP." filename="route-sip.gsm" />
+      <prompt pharse="Έχετε ζητήση κλήση αφύπνισης για τις..." filename="rqsted-wakeup-for.gsm" />
+      <prompt pharse="Sacramento" filename="sacramento.gsm" />
+      <prompt pharse="Είπα περιμένετε!" filename="said_hold_on.gsm" />
+      <prompt pharse="St. Louis" filename="saint-louis.gsm" />
+      <prompt pharse="Πωλήσεις" filename="sales-floor.gsm" />
+      <prompt pharse="πωλήσεις" filename="sales.gsm" />
+      <prompt pharse="Παρακαλώ αφήστε ένα μήνυμα μετά τον χαρακτηριστικό ήχο. Εάν η κλήση είναι για πωλήσεις παρακαλώ πατήστε το πέντε τώρα." filename="saleshell.gsm" />
+      <prompt pharse="San Antonia" filename="san-antonio.gsm" />
+      <prompt pharse="San Diego" filename="san-diego.gsm" />
+      <prompt pharse="San Francisco" filename="san-francisco.gsm" />
+      <prompt pharse="San Jose" filename="san-jose.gsm" />
+      <prompt pharse="Για να αποθηκεύσετε αυτήν την ανακοίνωση πατήστε" filename="save-announce-press.gsm" />
+      <prompt pharse="Πείτε τον προσωρινό σας χαιρετισμό και μετά πατήστε το πλήκτρο της δίεσης" filename="say-temp-msg-prs-pound.gsm" />
+      <prompt pharse="λέει ότι αυτό είναι ένα πολύ χαζό πράγμα να κάνεις." filename="says-thats-stupid.gsm" />
+      <prompt pharse="διασκορπισμένο" filename="scattered.gsm" />
+      <prompt pharse="Επιστήμη" filename="sciences.gsm" />
+      <prompt pharse="Έχετε αυτές τις επιλογές." filename="screen-callee-options.gsm" />
+      <prompt pharse="Seattle" filename="seattle.gsm" />
+      <prompt pharse="δεύτερη" filename="second.gsm" />
+      <prompt pharse="δευτερόλεπτα" filename="seconds.gsm" />
+      <prompt pharse="Γραμματέας" filename="secretary.gsm" />
+      <prompt pharse="Ασφάλεια" filename="security.gsm" />
+      <prompt pharse="Αυτό το σύστημα θα αυτοκαταστραφεί σε..." filename="self-destruct-in.gsm" />
+      <prompt pharse="Αυτοκαταστροφή" filename="self-destruct.gsm" />
+      <prompt pharse="Ευχαριστούμε που καλέσατε. Η τοποθεσία σας έχει εντοπιστεί και μια ομάδα ΕΚΑΜ έχει αποσταλεί στην θέση σας. Καμία άλλη ενέργεια δεν απαιτείτε από εσάς. Θα σωθείτε σύντομα." filename="sendhelp.gsm" />
+      <prompt pharse="Διακομηστής" filename="server.gsm" />
+      <prompt pharse="Αυτή η υπηρεσία δεν έχει υλοποιηθεί." filename="service-not-implemented.gsm" />
+      <prompt pharse="Υπηρεσία" filename="service.gsm" />
+      <prompt pharse="δέκατη έβδομη" filename="seventeenth.gsm" />
+      <prompt pharse="έβδομη" filename="seventh.gsm" />
+      <prompt pharse="εβδομηκοστή" filename="seventieth.gsm" />
+      <prompt pharse="σοβαρό" filename="severe.gsm" />
+      <prompt pharse="Να ξαναδοκιμάσω?" filename="shall-i-try-again.gsm" />
+      <prompt pharse="Υπάρχει μια γυαλισμένη μπρούτζινη λάμπα εδώ γύρο." filename="shiny-brass-lamp.gsm" />
+      <prompt pharse="Αποστέλλετε" filename="shipping.gsm" />
+      <prompt pharse="Κατάστημα" filename="shop.gsm" />
+      <prompt pharse="Γραφείο προβολής" filename="show-office.gsm" />
+      <prompt pharse="όραση" filename="sighted.gsm" />
+      <prompt pharse="Simplex" filename="simplex.gsm" />
+      <prompt pharse="Το όριο των ταυτόχρονων ενεργών κλήσεων έχει επιτευχτεί" filename="simul-call-limit-reached.gsm" />
+      <prompt pharse="Κράτησε το γελοίε!" filename="SIP_Test_Failure.gsm" />
+      <prompt pharse="Η δοκιμή σας πέτυχε και η συσκευή SIP ή η κανονική συσκευή που προσπαθείτε να επισκευάσετε έχει λειτουργήσει. Παρακαλώ απολύσετε την εργασία σας έως ότου κάτι άλλο χαλάσει." filename="SIP_Test_Success.gsm" />
+      <prompt pharse="δέκατη έκτη" filename="sixteenth.gsm" />
+      <prompt pharse="έκτη" filename="sixth.gsm" />
+      <prompt pharse="εξηκοστή" filename="sixtieth.gsm" />
+      <prompt pharse="κάθετος" filename="slash.gsm" />
+      <prompt pharse="χιονόνερο" filename="sleet.gsm" />
+      <prompt pharse="χιονόνερο" filename="sleeting.gsm" />
+      <prompt pharse="αργό" filename="slow.gsm" />
+      <prompt pharse="αργά" filename="slowly.gsm" />
+      <prompt pharse="Χιόνη" filename="snow.gsm" />
+      <prompt pharse="χιονίζει" filename="snowing.gsm" />
+      <prompt pharse="χιονιάς" filename="snowy.gsm" />
+      <prompt pharse="λογισμικό" filename="software.gsm" />
+      <prompt pharse="Κάποιον που εμπιστεύεσαι είναι ένας από μας." filename="someone-you-trust1.gsm" />
+      <prompt pharse="Κάποιον που εμπιστεύεσαι είναι ένας από μας." filename="someone-you-trust2.gsm" />
+      <prompt pharse="Κάποιον που εμπιστεύεσαι είναι ένας από μας." filename="someone-you-trust3.gsm" />
+      <prompt pharse="Κάτι έχει πάει πολύ στραβά!" filename="something-terribly-wrong.gsm" />
+      <prompt pharse="Λυπάμαι, δεν μπορώ να σας αφήσω να το κάνετε αυτό." filename="sorry-cant-let-you-do-that.gsm" />
+      <prompt pharse="Λυπάμαι, δεν μπορώ να σας αφήσω να το κάνετε αυτό." filename="sorry-cant-let-you-do-that2.gsm" />
+      <prompt pharse="Λυπάμαι, δεν μπορώ να σας αφήσω να το κάνετε αυτό." filename="sorry-cant-let-you-do-that3.gsm" />
+      <prompt pharse="Λυπάμαι η θυρίδα του συνδρομητή δεν μπορεί να δεχτεί άλλα μηνύματα" filename="sorry-mailbox-full.gsm" />
+      <prompt pharse="Λυπούμαστε που έχετε προβλήματα" filename="sorry-youre-having-problems.gsm" />
+      <prompt pharse="Λυπούμαστε" filename="sorry.gsm" />
+      <prompt pharse="Λυπούμαστε, αλλά δεν είμαστε σε θέση να απαντήσουμε στην κλήση σας αυτήν την στιγμή." filename="sorry2.gsm" />
+      <prompt pharse="Λυπάμαι Ντάϊβ, δεν μπορώ να το κάνω αυτό." filename="sorrydave.gsm" />
+      <prompt pharse="Είμαι στην δυσάρεστη θέση να σας ενημερώσω ότι, είστε ο καλούμενος νούμερο" filename="sorry_caller_number.gsm" />
+      <prompt pharse="Λυπάμαι πολύ, Δεν το κατάλαβα αυτό." filename="sorry_didnt_get.gsm" />
+      <prompt pharse="Λυπάμαι, Δεν το κατάλαβα αυτό." filename="sorry_didnt_quite_get.gsm" />
+      <prompt pharse="Λυπάμαι, Εσφαλμένη είσοδος. Ξαναπροσπαθήστε." filename="sorry_login_incorrect.gsm" />
+      <prompt pharse="Λυπάμαι, δεν το έπιασα αυτό." filename="sorry_missed.gsm" />
+      <prompt pharse="Λυπάμαι, δεν υπάρχουν άλλα μηνύματα. Στις διαταγές σας, αποκλειστικά." filename="sorry_no_messages.gsm" />
+      <prompt pharse="South Carolina" filename="south-carolina.gsm" />
+      <prompt pharse="South Dakota" filename="south-dakota.gsm" />
+      <prompt pharse="νότιο" filename="south.gsm" />
+      <prompt pharse="νότια" filename="southerly.gsm" />
+      <prompt pharse="κενό" filename="space.gsm" />
+      <prompt pharse="Ευχαριστούμε που καλέσατε την Ειδική Ανάλυση Τιμών και Μάρκετινγκ. Για φτηνά χάπια Vallium, Xanex ή Viagra παρακαλώ πατήστε το ένα. Για απομιμήσεις Gucci και Rolex παρακαλώ πατήστε το δύο. Για να μεγαλώστε το πέος σας ή τα στήθια σας παρακαλώ πατήστε το τρία. Για να μιλήσετε με τον υπουργό οικονομικών της Νιγηρίας για ένα δάνειο πενήντα εκατομμύριων δολαρίων παρακαλώ πατήστε το τέσσερα." filename="spam.gsm" />
+      <prompt pharse="Spam" filename="spam2.gsm" />
+      <prompt pharse="παρακαλώ μιλήστε ποιο δυνατά, ή μιλήστε κατευθείαν στο τηλέφωνο για να εξασφαλίστε μια καλή ηχογράφηση." filename="speak-louder-into-phone.gsm" />
+      <prompt pharse="παρακαλώ μιλήστε ποιο δυνατά για να εξασφαλίστε μια καλή ηχογράφηση" filename="speak-louder.gsm" />
+      <prompt pharse="μιλήστε με το κέντρο" filename="speak-to-the-operator.gsm" />
+      <prompt pharse="Αυτή η καταχώριση ταχείας κλήσης είναι άδεια." filename="speed-dial-empty.gsm" />
+      <prompt pharse="Ταχεία κλήση" filename="speed-dial.gsm" />
+      <prompt pharse="Παρακαλώ εισάγετε την θέση της ταχείας κλήσης και μετά πατήστε το πλήκτρο της δίεσης." filename="speed-enterlocation.gsm" />
+      <prompt pharse="Παρακαλώ εισάγετε τον αριθμό τηλεφώνου και μετά πατήστε το πλήκτρο της δίεσης." filename="speed-enternumber.gsm" />
+      <prompt pharse="ταχύτητα" filename="speed.gsm" />
+      <prompt pharse="Splat" filename="splat.gsm" />
+      <prompt pharse="Αντιπρόσωπος" filename="spy-agent.gsm" />
+      <prompt pharse="Κονσόλα" filename="spy-console.gsm" />
+      <prompt pharse="DAHDI" filename="spy-dahdi.gsm" />
+      <prompt pharse="H.323" filename="spy-h323.gsm" />
+      <prompt pharse="IAX" filename="spy-iax.gsm" />
+      <prompt pharse="IAX" filename="spy-iax2.gsm" />
+      <prompt pharse="Τραγουδάκι" filename="spy-jingle.gsm" />
+      <prompt pharse="Τοπικό" filename="spy-local.gsm" />
+      <prompt pharse="MGCP" filename="spy-mgcp.gsm" />
+      <prompt pharse="M I S D N" filename="spy-misdn.gsm" />
+      <prompt pharse="Bluetooth Mobile" filename="spy-mobile.gsm" />
+      <prompt pharse="N B S" filename="spy-nbs.gsm" />
+      <prompt pharse="SIP" filename="spy-sip.gsm" />
+      <prompt pharse="Skinny" filename="spy-skinny.gsm" />
+      <prompt pharse="Unistim" filename="spy-unistim.gsm" />
+      <prompt pharse="USB Radio" filename="spy-usbradio.gsm" />
+      <prompt pharse="Zap" filename="spy-zap.gsm" />
+      <prompt pharse="Ο αριθμός που καλέσατε δεν αντιστοιχεί σε συνδρομητή. Παρακαλώ ελέγξτε τον αριθμό σας και ξαναπροσπαθήστε." filename="ss-noservice.gsm" />
+      <prompt pharse="SSH" filename="ssh.gsm" />
+      <prompt pharse="προσωπικό" filename="staff.gsm" />
+      <prompt pharse="προσωπικό" filename="staffing.gsm" />
+      <prompt pharse="πρότυπο" filename="standard.gsm" />
+      <prompt pharse="Πατήστε το αστεράκι για να ξανακούστε αυτό το μενού" filename="star-for-menu-again.gsm" />
+      <prompt pharse="αστεράκι" filename="star.gsm" />
+      <prompt pharse="αρχίζοντας με" filename="starting-with-either.gsm" />
+      <prompt pharse="σταθμός" filename="station.gsm" />
+      <prompt pharse="κατάσταση" filename="status.gsm" />
+      <prompt pharse="Έχετε πατήσει στο ρυάκι, αλλά το νερό έχει προχωρήσει." filename="step-in-stream.gsm" />
+      <prompt pharse="Λίρα" filename="sterling.gsm" />
+      <prompt pharse="είναι ακόμα στο τηλέφωνο. Χρηστέ μου πολυλογάς!" filename="still_on_phone.gsm" />
+      <prompt pharse="Λογιστήριο καταστήματος" filename="store-accounting.gsm" />
+      <prompt pharse="καταιγίδα" filename="storm.gsm" />
+      <prompt pharse="ήλιος" filename="sun.gsm" />
+      <prompt pharse="ηλιαστή" filename="sunny.gsm" />
+      <prompt pharse="Υποστήριξη" filename="support.gsm" />
+      <prompt pharse="Βεβαίως. Μπορώ να σας βοηθήσω με αυτό." filename="sure_help.gsm" />
+      <prompt pharse="Ανταλλαγή" filename="swap.gsm" />
+      <prompt pharse="Το σύστημα έχει καταρρεύσει" filename="system-crashed.gsm" />
+      <prompt pharse="Παρακαλώ ακούστε προσεκτικά το ακόλουθο μήνυμα κατάστασης συστήματος." filename="system-status-msg.gsm" />
+      <prompt pharse="Σύστημα" filename="system.gsm" />
+      <prompt pharse="Συστήμα" filename="systems.gsm" />
+      <prompt pharse="έχει αλλαχτεί σε" filename="T-changed-to.gsm" />
+      <prompt pharse="Δεν είναι διαθέσιμο" filename="T-is-not-available.gsm" />
+      <prompt pharse="Για να απενεργοποιήσετε αυτήν την ανακοίνωση" filename="T-to-disable-ancmnt.gsm" />
+      <prompt pharse="Για να ενεργοποιήσετε αυτήν την ανακοίνωση" filename="T-to-enable-ancmnt.gsm" />
+      <prompt pharse="Για να ακούσετε την τρέχουσα ανακοίνωση" filename="T-to-hear-cur-ancmnt.gsm" />
+      <prompt pharse="Για να αφήσετε ένα μήνυμα" filename="T-to-leave-msg.gsm" />
+      <prompt pharse="Για να επικοινωνήσετε με το κεντρικό γραφείο" filename="T-to-reach-main-office.gsm" />
+      <prompt pharse="Για να ξανά ηχογραφήσετε αυτήν την ανακοίνωση" filename="T-to-rec-ancmnt.gsm" />
+      <prompt pharse="Για να επιστρέψετε στο κυριο μενού" filename="T-to-rtrn-to-main-menu.gsm" />
+      <prompt pharse="Μιλάω στον εαυτό μου?" filename="talking-to-myself.gsm" />
+      <prompt pharse="Σε μένα μιλάς?" filename="talkin_me.gsm" />
+      <prompt pharse="συνοδός στόχος" filename="target-attendant.gsm" />
+      <prompt pharse="TCP" filename="tcp.gsm" />
+      <prompt pharse="Τεχνική υποστήριξη" filename="technical-support.gsm" />
+      <prompt pharse="Κλήσεις τηλεπωλήσεων έχουν αναφερθεί ότι προέρχονται από το νούμερο σας." filename="telemarketercalling.gsm" />
+      <prompt pharse="Oooo! Αυτό είναι τηλέφωνο στην τσέπη σου, ή απλά χάρηκες που με βλέπεις?" filename="telephone-in-your-pocket.gsm" />
+      <prompt pharse="Oooo! Αυτό είναι τηλέφωνο στην τσέπη σου, ή απλά χάρηκες που με βλέπεις?" filename="telephone-in-your-pocket2.gsm" />
+      <prompt pharse="αριθμός τηλεφώνου" filename="telephone-number.gsm" />
+      <prompt pharse="Τηλε-πωλήσεις" filename="telesales.gsm" />
+      <prompt pharse="έχει δολοφονηθεί βίαια και κατακερματίστηκε από τους Teletubbies." filename="teletubbie-murder.gsm" />
+      <prompt pharse="Telnet" filename="telnet.gsm" />
+      <prompt pharse="έχει αποσυνδεθεί προσωρινά" filename="temp-disconnected.gsm" />
+      <prompt pharse="θερμοκρασία" filename="temperature.gsm" />
+      <prompt pharse="Tennessee" filename="tennessee.gsm" />
+      <prompt pharse="δέκατη" filename="tenth.gsm" />
+      <prompt pharse="Terabits" filename="terabits.gsm" />
+      <prompt pharse="Terabytes" filename="terabytes.gsm" />
+      <prompt pharse="τερματίστηκε" filename="terminated.gsm" />
+      <prompt pharse="τερματίζετε" filename="terminating.gsm" />
+      <prompt pharse="Ακλουθούν δοκιμαστικοί ήχοι." filename="test-tones-follow.gsm" />
+      <prompt pharse="Texas" filename="texas.gsm" />
+      <prompt pharse="Ευχαριστούμε για την συνεργασία σας." filename="thank-you-cooperation.gsm" />
+      <prompt pharse="Ευχαριστούμε που καλέσατε." filename="thank-you-for-calling.gsm" />
+      <prompt pharse="Ευχαριστούμε που καλέσατε. Παρακαλώ περιμένετε έως ότου βρω κάποιον που να αντέχει τα συνεχόμενα παράπονα και την γκρίνια σας." filename="thanks-annoyance.gsm" />
+      <prompt pharse="Ευχαριστώ που καλέσατε σήμερα." filename="thanks-for-calling-today.gsm" />
+      <prompt pharse="Ευχαριστώ που χρησιμοποιείτε" filename="thanks-for-using.gsm" />
+      <prompt pharse="Η συναλλαγή σας επεξεργάζεται και ο λογαριασμός σας θα πιστωθεί σύντομα. Ευχαριστούμε." filename="thanks_credit_card_refill.gsm" />
+      <prompt pharse="Ευχαριστούμε που καλέσατε." filename="thank_you_calling.gsm" />
+      <prompt pharse="Αυτός δεν είναι έγκυρος αριθμός τηλεφώνου" filename="that-is-not-rec-phn-num.gsm" />
+      <prompt pharse="αυτός ο αριθμός" filename="that-number.gsm" />
+      <prompt pharse="Oooh, αυτό γαργαλάει!" filename="that-tickles.gsm" />
+      <prompt pharse="που απαιτείτε" filename="that-you-require.gsm" />
+      <prompt pharse="Η θυρίδα" filename="the-mailbox.gsm" />
+      <prompt pharse="Οι μαϊμούδες! Οι μαϊμούδες!" filename="the-monkeys-twice.gsm" />
+      <prompt pharse="Ο νέος αριθμός είναι" filename="the-new-number-is.gsm" />
+      <prompt pharse="το επόμενο" filename="the-next.gsm" />
+      <prompt pharse="ο αριθμός που έχω είναι" filename="the-num-i-have-is.gsm" />
+      <prompt pharse="Ο αριθμός που καλέσατε" filename="the-number-u-dialed.gsm" />
+      <prompt pharse="Ο συνδρομητής που καλείτε" filename="the-party-you-are-calling.gsm" />
+      <prompt pharse="ο καιρός στο" filename="the-weather-at.gsm" />
+      <prompt pharse="μετά πατήστε το πλήκτρο της δίεσης" filename="then-press-pound.gsm" />
+      <prompt pharse="Υπάρχουν" filename="there-are.gsm" />
+      <prompt pharse="Αυτό δεν είναι οι υποστήριξη πελατών." filename="there-is-no-customer-support.gsm" />
+      <prompt pharse="Τώρα υπάρχουν" filename="these-are-currently.gsm" />
+      <prompt pharse="τρίτη" filename="third.gsm" />
+      <prompt pharse="δέκατη τρίτη" filename="thirteenth.gsm" />
+      <prompt pharse="τριακοστή" filename="thirtieth.gsm" />
+      <prompt pharse="Αυτή η κλήση μπορεί να παρακολουθείτε ή να ηχογραφείτε" filename="this-call-may-be-monitored-or-recorded.gsm" />
+      <prompt pharse="Αυτή η κλήση μπορεί" filename="this-call-may-be.gsm" />
+      <prompt pharse="Αυτή η κλήση θα κοστίσει..." filename="this-call-will-cost.gsm" />
+      <prompt pharse="Αυτή η κλήση θα τελείωση σε" filename="this-call-will-end-in.gsm" />
+      <prompt pharse="Αυτό είναι το σύστημα φωνητικού ταχυδρομείου" filename="this-is-the-voice-mail-system.gsm" />
+      <prompt pharse="Αυτή είναι η κλήση αφύπνισης." filename="this-is-yr-wakeup-call.gsm" />
+      <prompt pharse="αυτή" filename="this.gsm" />
+      <prompt pharse="Ευχαριστούμε για την υπομονή σας" filename="thnk-u-for-patience.gsm" />
+      <prompt pharse="χιλιοστή" filename="thousandth.gsm" />
+      <prompt pharse="Διαμέσου" filename="through.gsm" />
+      <prompt pharse="καταιγίδα" filename="thunderstorm.gsm" />
+      <prompt pharse="παλίρροια" filename="tide.gsm" />
+      <prompt pharse="ώρα" filename="time.gsm" />
+      <prompt pharse="ώρες" filename="times.gsm" />
+      <prompt pharse="Λόγου της εμφάνισης μια χρόνο δίνης στην περιοχή μας δεν θα υπάρχει κάποιος εδώ για να απαντήσει στην κλήση σας για τουλάχιστον ένα αιώνα. Παρακαλούμε αφήστε ένα μήνυμα μετά τον χαρακτηριστικό ήχο και θα επικοινωνήσουμε μαζί σας τουλάχιστον ένα μήνα πριν την κλήση σας. Ευχαριστούμε και να έχετε μια καλή ημέρα." filename="timewarp.gsm" />
+      <prompt pharse="για να αποδεχτείτε αυτήν την ηχογράφηση" filename="to-accept-recording.gsm" />
+      <prompt pharse="Για να σας καλέσουν πίσω όταν ελευθερωθεί ένας εκπρόσωπος πατήστε" filename="to-be-called-back.gsm" />
+      <prompt pharse="Για να θέσετε τον τελευταίο καλούντα στην μαύρη λίστα, πατήστε" filename="to-blklist-last-caller.gsm" />
+      <prompt pharse="Για να θέσετε τον τελευταίο αριθμό στην μαύρη λίστα, πατήστε" filename="to-blklist-last-num.gsm" />
+      <prompt pharse="Για να καλέστε αυτόν τον αριθμό, πατήστε" filename="to-call-num-press.gsm" />
+      <prompt pharse="Για να καλέσετε το άτομο που άφησε αυτό το μήνυμα" filename="to-call-prson-w-sent-msg.gsm" />
+      <prompt pharse="Για να καλέσετε αυτόν τον αριθμό" filename="to-call-this-number.gsm" />
+      <prompt pharse="Για να ακυρώσετε αυτό το μήνυμα" filename="to-cancel-this-msg.gsm" />
+      <prompt pharse="Για να ακυρώσετε μια κλήση αφύπνισης" filename="to-cancel-wakeup.gsm" />
+      <prompt pharse="Για να αλλάξετε την ημερομηνία λήξης" filename="to-change-exp-date.gsm" />
+      <prompt pharse="Για να αλλάξετε το pin σας" filename="to-change-your-pin-number.gsm" />
+      <prompt pharse="για να αλλάξετε" filename="to-change.gsm" />
+      <prompt pharse="για να ακούσετε τα μηνύματα σας" filename="to-collect-voicemail.gsm" />
+      <prompt pharse="για να συντάξετε ένα μήνυμα" filename="to-compose-a-message.gsm" />
+      <prompt pharse="Για να επιβεβαιώστε μια κλήση αφύπνισης..." filename="to-confirm-wakeup.gsm" />
+      <prompt pharse="Για να καλέσετε με βάση το όνομα, πατήστε" filename="to-dial-by-name-press.gsm" />
+      <prompt pharse="Για να καλέσετε με βάση το όνομα" filename="to-dial-by-name.gsm" />
+      <prompt pharse="για να εισάγετε έναν διαφορετικό αριθμό" filename="to-enter-a-diff-number.gsm" />
+      <prompt pharse="για να εισάγετε μία διαφορετική" filename="to-enter-a-diff.gsm" />
+      <prompt pharse="για να εισάγετε έναν αριθμό" filename="to-enter-a-number.gsm" />
+      <prompt pharse="για να διαγράψετε τον προσωρινό σας χαιρετισμό" filename="to-erase-yr-temp-grtg.gsm" />
+      <prompt pharse="σε εσωτερικό" filename="to-extension.gsm" />
+      <prompt pharse="Για να κλείσετε" filename="to-hang-up-2.gsm" />
+      <prompt pharse="Για να κλείσετε" filename="to-hang-up.gsm" />
+      <prompt pharse="Για να ακούσετε τον αριθμό της τελευταίας κλήσης" filename="to-hear-callerid.gsm" />
+      <prompt pharse="για να ξανακούσετε το μενού" filename="to-hear-menu-again.gsm" />
+      <prompt pharse="για να ξανακούσετε αυτό το μήνυμα." filename="to-hear-msg-again.gsm" />
+      <prompt pharse="για να ακούσετε τα στοιχεία του μηνύματος" filename="to-hear-msg-envelope.gsm" />
+      <prompt pharse="για να ακούσετε την τρέχουσα κατάσταση του δικτύου" filename="to-hear-net-status.gsm" />
+      <prompt pharse="για να ακούσετε το δελτίο καιρού" filename="to-hear-weather-status.gsm" />
+      <prompt pharse="Για να ακούσετε το υπόλοιπο του λογαριασμού σας" filename="to-hear-your-account-balance.gsm" />
+      <prompt pharse="για να συμμετέχετε σε μια συνεδρίαση" filename="to-join-a-meeting.gsm" />
+      <prompt pharse="Για να αφήσετε ένα μήνυμα για" filename="to-leave-message-for.gsm" />
+      <prompt pharse="για να το ακούσετε" filename="to-listen-to-it.gsm" />
+      <prompt pharse="Για να συνδεθείτε με την θυρίδα σας" filename="to-log-in-to-voice-mail.gsm" />
+      <prompt pharse="Για να πραγματοποιήσετε μια εξερχόμενη κλήση" filename="to-place-outgoing-call.gsm" />
+      <prompt pharse="Για να επικοινωνήσετε με τον πρώτο διαθέσιμο εκπρόσωπο" filename="to-reach-first-rep.gsm" />
+      <prompt pharse="Για να επικοινωνήσετε με το κέντρο" filename="to-reach-operator.gsm" />
+      <prompt pharse="Για να ηχογραφήσετε τον προσωρινό σας χαιρετισμό" filename="to-rec-yr-temp-grtg.gsm" />
+      <prompt pharse="για να ηχογραφήσετε την κλήση" filename="to-record-call.gsm" />
+      <prompt pharse="Για να ξανακαλέσετε τον τελευταίο αριθμό που καλέσατε" filename="to-redial-the-last-number-you-called.gsm" />
+      <prompt pharse="Για να αναφέρετε κάτι έκτακτο" filename="to-report-emergency.gsm" />
+      <prompt pharse="Για να αναφέρετε μια βλάβη συστήματος ή δικτύου" filename="to-report-system-network-down.gsm" />
+      <prompt pharse="Για να ξαναηχογραφήσετε αυτήν την ανακοίνωση, πατήστε" filename="to-rerecord-announce.gsm" />
+      <prompt pharse="για να το ξαναηχογραφήσετε" filename="to-rerecord-it.gsm" />
+      <prompt pharse="για να ξαναηχογραφήσετε το μήνυμα σας" filename="to-rerecord-yr-message.gsm" />
+      <prompt pharse="Για να αφαιρέσετε ένα αριθμό από την μαύρη λίστα, πατήστε" filename="to-rmv-num-blklist.gsm" />
+      <prompt pharse="Για να ζητήσετε μια κλήση αφύπνισης" filename="to-rqst-wakeup-call.gsm" />
+      <prompt pharse="για να στείλετε μια απάντηση" filename="to-send-a-reply.gsm" />
+      <prompt pharse="Για να αναβάλετε την αφύπνιση για" filename="to-snooze-for.gsm" />
+      <prompt pharse="για να χρησιμοποιήστε τον προκαθορισμένο φροντιστή, απλά πατήστε το πλήκτρο της δίεσης" filename="to-use-def-attendant.gsm" />
+      <prompt pharse="σήμερα" filename="today.gsm" />
+      <prompt pharse="αύριο βράδυ" filename="tomorrow-night.gsm" />
+      <prompt pharse="αύριο" filename="tomorrow.gsm" />
+      <prompt pharse="Οι ήχοι που ακλουθούν είναι για τους κωφούς." filename="tones-that-follow-are-for-the-deaf.gsm" />
+      <prompt pharse="Στον επόμενο τόνο η ώρα θα είναι" filename="tone_time.gsm" />
+      <prompt pharse="απόψε" filename="tonight.gsm" />
+      <prompt pharse="πολύ χαμηλά" filename="too-low.gsm" />
+      <prompt pharse="τυφώνας" filename="tornado.gsm" />
+      <prompt pharse="Αν καλείτε από αναλογική τηλεφωνική συσκευή, κλείστε, πηγαίνετε σε ένα κατάστημα και αγοράστε μια από αυτές τις θαυμάσιες ψηφιακές συσκευές." filename="touchtone1.gsm" />
+      <prompt pharse="Και αν καλείτε από αναλογική συσκευή, Καλημέρα, υπάρχει κάτι που λέγετε ψηφιακή συσκευή γλυκιά μου που ίσως σας ενδιαφέρει." filename="touchtone2.gsm" />
+      <prompt pharse="Αν καλείτε από αναλογική τηλεφωνική συσκευή, κλείστε, πηγαίνετε σε ένα κατάστημα και αγοράστε μια από αυτές τις θαυμάσιες ψηφιακές συσκευές του εικοστού πρώτου αιώνα." filename="touchtone3.gsm" />
+      <prompt pharse="προς" filename="towards.gsm" />
+      <prompt pharse="Γραφείο συναλλαγών" filename="trading-desk.gsm" />
+      <prompt pharse="κίνηση" filename="traffic.gsm" />
+      <prompt pharse="Συναλλάσω" filename="training.gsm" />
+      <prompt pharse="Παρακαλώ περιμένετε για να δοκιμάσω αυτό το εσωτερικό." filename="transfer.gsm" />
+      <prompt pharse="Πιστεύω ότι πρέπει να σας συνδέσω με έναν εκπρόσωπο. Περιμένετε." filename="transfer_to_agent.gsm" />
+      <prompt pharse="Μέσο μετακίνησης" filename="transportation.gsm" />
+      <prompt pharse="Ταξίδι" filename="travel.gsm" />
+      <prompt pharse="Οικονομικών" filename="treasury.gsm" />
+      <prompt pharse="Όλοι οι εκπρόσωποι του σπιτιού είναι απασχολημένοι με άλλους Τήλε πωλητές. Παρακαλώ περιμένετε και η κλήση σας θα απαντηθεί με την σειρά που ήρθε." filename="tt-allbusy.gsm" />
+      <prompt pharse="Αυτός ο αυτοκινητόδρομος οδηγεί στην σκιερή άκρη της πραγματικότητας" filename="tt-codezone.gsm" />
+      <prompt pharse="Αυτός ο αυτοκινητόδρομος οδηγεί στην σκιερή άκρη της πραγματικότητας" filename="tt-codezone_MIXDOWN.gsm" />
+      <prompt pharse="Πατήστε το ένα για να τερματίσετε αυτήν την κλήση, ή οποιοδήποτε άλλο πλήκτρο για να κλείσετε." filename="tt-hangup.gsm" />
+      <prompt pharse="Έχουν παρασυρθεί από τις μαϊμούδες" filename="tt-monkeysintro.gsm" />
+      <prompt pharse="Τράβα και βράσε τα εσώρουχα σου γελίε άγγλε kniggggits. Κλάνω μπροστά σου.  Η μάνα σου ήταν ένα hamster και ο πατέρας σου μύριζε elderberries. Τώρα φύγε αλλιώς θα σε βρίσω για δεύτερη φορά." filename="tt-monty-knights.gsm" />
+      <prompt pharse="Κάτι έχει πάει πολύ στραβά" filename="tt-somethingwrong.gsm" />
+      <prompt pharse="Νυφίτσες έχουν φάει το τηλεφωνικό μας σύστημα." filename="tt-weasels.gsm" />
+      <prompt pharse="Tuscon" filename="tucson.gsm" />
+      <prompt pharse="Tulsa" filename="tulsa.gsm" />
+      <prompt pharse="Για να απενεργοποιήσετε την καταγραφή κλήσεων" filename="turn-off-recording.gsm" />
+      <prompt pharse="γυρίζοντας στο" filename="turning-to.gsm" />
+      <prompt pharse="δωδέκατη" filename="twelveth.gsm" />
+      <prompt pharse="εικοστή" filename="twentieth.gsm" />
+      <prompt pharse="Είστε σε ένα λαβύρινθο από μικρά στριμμένα μενού, που όλα μοιάζουν μεταξύ τους." filename="twisty-maze.gsm" />
+      <prompt pharse="Η συναλλαγή σας έχει εγκριθεί." filename="tx-has-been-approved.gsm" />
+      <prompt pharse="τυφώνας" filename="typhoon.gsm" />
+      <prompt pharse="UDP" filename="udp.gsm" />
+      <prompt pharse="Uh oh!" filename="uh-oh1.gsm" />
+      <prompt pharse="Uh oh!" filename="uh-oh2.gsm" />
+      <prompt pharse="UK" filename="uk.gsm" />
+      <prompt pharse="Μη διαθέσιμος" filename="unavailable.gsm" />
+      <prompt pharse="άνευ" filename="unconditional.gsm" />
+      <prompt pharse="Το αστερισκ είναι ένα πλήρες PBX ανοιχτού κώδικα και πλατφόρμας IVR που τρέχει στο λειτουργικό σύστημα λινουξ και με λίγο αίμα από μονοκέρατο. Για περισσότερες πληροφορίες επισκεφτείτε τον ισότοπο αστερισκ τελεία οργ." filename="unicorn_blood.gsm" />
+      <prompt pharse="Το αστερισκ είναι ένα πλήρες PBX ανοιχτού κώδικα και πλατφόρμας IVR που τρέχει στο λειτουργικό σύστημα λινουξ και με λίγο αίμα από μονοκέρατο. Για περισσότερες πληροφορίες επισκεφτείτε τον ισότοπο αστερισκ τελεία οργ." filename="unicorn_blood_MIXDOWN.gsm" />
+      <prompt pharse="μη αναγνωρισμένο ή παρακρατημένο και έτσι δεν μπορεί να καλέσετε πίσω." filename="unidentified-no-callback.gsm" />
+      <prompt pharse="μονάδες" filename="units.gsm" />
+      <prompt pharse="Unix" filename="unix.gsm" />
+      <prompt pharse="λυπάμαι χρησιμοποιήθηκε άγνωστο νόμισμα" filename="unknow_used_currencie.gsm" />
+      <prompt pharse="Δεν είναι επιθυμητή η κλήση σας." filename="unwelcomecall.gsm" />
+      <prompt pharse="επάνω" filename="up.gsm" />
+      <prompt pharse="χρόνος λειτουργίας" filename="uptime.gsm" />
+      <prompt pharse="χρήστης" filename="user.gsm" />
+      <prompt pharse="χρήστες" filename="users.gsm" />
+      <prompt pharse="Utah" filename="utah.gsm" />
+      <prompt pharse="μεταβλητή" filename="variable.gsm" />
+      <prompt pharse="Vermont" filename="vermont.gsm" />
+      <prompt pharse="Virginia Beach" filename="virginia-beach.gsm" />
+      <prompt pharse="Virgina" filename="virginia.gsm" />
+      <prompt pharse="Ορατότητα" filename="visibility.gsm" />
+      <prompt pharse="Επισκεφτείτε την ιστοσελίδα του αστερισκ στο w w w τελεία asterisk τελεία org" filename="visit-asterisk-website.gsm" />
+      <prompt pharse="Πατήστε το 3 για προχωρημένες επιλογές." filename="vm-advopts.gsm" />
+      <prompt pharse="και" filename="vm-and.gsm" />
+      <prompt pharse="Πατήστε το 2 για να εισάγετε έναν άλλο αριθμό" filename="vm-calldiffnum.gsm" />
+      <prompt pharse="Μετάβαση σε ποιο φάκελο." filename="vm-changeto.gsm" />
+      <prompt pharse="φάκελος 5" filename="vm-Cust1.gsm" />
+      <prompt pharse="φάκελος 6" filename="vm-Cust2.gsm" />
+      <prompt pharse="φάκελος 7" filename="vm-Cust3.gsm" />
+      <prompt pharse="φάκελος 8" filename="vm-Cust4.gsm" />
+      <prompt pharse="φάκελος 9" filename="vm-Cust5.gsm" />
+      <prompt pharse="Πατήστε το 7 για να διαγράψετε αυτό το μήνυμα." filename="vm-delete.gsm" />
+      <prompt pharse="Το μήνυμα έχει διαγραφτεί." filename="vm-deleted.gsm" />
+      <prompt pharse="Δεν έχετε καθόλου μηνύματα στην θυρίδα σας" filename="vm-denExeteMynhmata.gsm" />
+      <prompt pharse="παρακαλώ περιμένετε για να σας συνδέσω" filename="vm-dialout.gsm" />
+      <prompt pharse="Αυτό το μήνυμα διαρκεί" filename="vm-duration.gsm" />
+      <prompt pharse="παρακαλώ εισάγετε τον αριθμό που επιθυμείτε να καλέσετε" filename="vm-enter-num-to-call.gsm" />
+      <prompt pharse="εσωτερικό" filename="vm-extension.gsm" />
+      <prompt pharse="οικογένεια" filename="vm-Family.gsm" />
+      <prompt pharse="πρώτο" filename="vm-first.gsm" />
+      <prompt pharse="για" filename="vm-for.gsm" />
+      <prompt pharse="Πατήστε το ένα για να στείλετε αυτό το μήνυμα, ή το δύο για να προσθέστε και άλλον παραλήπτη" filename="vm-forward-multiple.gsm" />
+      <prompt pharse="Πατήστε το 1 για να εισάγετε ένα εσωτερικό, πατήστε το 2 για να χρησιμοποιήσετε το ευρετήριο" filename="vm-forward.gsm" />
+      <prompt pharse="Πατήστε το 1 για να θέσετε το μήνυμα στην προαναμονή, ή το 2 για να προωθήσετε το μήνυμα χωρίς προαναμονή" filename="vm-forwardoptions.gsm" />
+      <prompt pharse="φίλοι" filename="vm-Friends.gsm" />
+      <prompt pharse="μήνυμα από το εσωτερικό" filename="vm-from-extension.gsm" />
+      <prompt pharse="μήνυμα από τον συνδρομητή" filename="vm-from-phonenumber.gsm" />
+      <prompt pharse="από" filename="vm-from.gsm" />
+      <prompt pharse="Αντίο" filename="vm-goodbye.gsm" />
+      <prompt pharse="Πατήστε το αστεράκι για βοήθεια ή την δίεση για έξοδο." filename="vm-helpexit.gsm" />
+      <prompt pharse="νέο" filename="vm-INBOX.gsm" />
+      <prompt pharse="νέα" filename="vm-INBOXs.gsm" />
+      <prompt pharse="Εσφαλμένη σύνδεση. Θυρίδα?" filename="vm-incorrect-mailbox.gsm" />
+      <prompt pharse="Εσφαλμένη σύνδεση." filename="vm-incorrect.gsm" />
+      <prompt pharse="Για να ακούσετε τα μηνύματα σας πατήστε το 1. Μπορείτε ανά πάσα στιγμή να βγείτε από την θυρίδα σας πατώντας το πλήκτρο τις δίεσης." filename="vm-instructions.gsm" />
+      <prompt pharse="Παρακαλώ αφήστε το μήνυμα σας μετά τον ήχο. Όταν τελειώσετε κλείστε το ακουστικό η πατήστε το πλήκτρο της δίεσης." filename="vm-intro.gsm" />
+      <prompt pharse="Αυτός ο κωδικός δεν πληροί τα ελάχιστα κριτήρια για αυτήν την θυρίδα. Παρακαλώ δοκιμάστε ξανά." filename="vm-invalid-password.gsm" />
+      <prompt pharse="Αυτός δεν είναι έγκυρος κωδικός. Παρακαλώ δοκιμάστε ξανά." filename="vm-invalidpassword.gsm" />
+      <prompt pharse="είναι στο τηλέφωνο" filename="vm-isonphone.gsm" />
+      <prompt pharse="δεν είναι διαθέσιμος" filename="vm-isunavail.gsm" />
+      <prompt pharse="Τελευταίο" filename="vm-last.gsm" />
+      <prompt pharse="Πατήστε το 5 για να αφήσετε μήνυμα" filename="vm-leavemsg.gsm" />
+      <prompt pharse="Θυρίδα Comedian Mail?" filename="vm-login.gsm" />
+      <prompt pharse="Λυπάμαι η θυρίδα του συνδρομητή δεν μπορεί να δεχτεί άλλα μηνύματα" filename="vm-mailboxfull.gsm" />
+      <prompt pharse="Η επείγουσα σήμανση έχει αφαιρεθεί." filename="vm-marked-nonurgent.gsm" />
+      <prompt pharse="Το μήνυμα έχει επείγουσα σήμανση." filename="vm-marked-urgent.gsm" />
+      <prompt pharse="μήνυμα" filename="vm-message.gsm" />
+      <prompt pharse="μηνύματα" filename="vm-messages.gsm" />
+      <prompt pharse="λεπτά" filename="vm-minutes.gsm" />
+      <prompt pharse="Οι κωδικοί που εισάγατε δεν ταιριάζουν. Παρακαλώ προσπαθήστε ξανά." filename="vm-mismatch.gsm" />
+      <prompt pharse="Για να ακούσετε το επόμενο μήνυμα πατήστε το 6, για να επαναλάβετε αυτό το μήνυμα πατήστε το 5, για να ακούσετε το προηγούμενο μήνυμα πατήστε το 4, για να διαγράψετε ή να επαναφέρετε αυτό το μήνυμα πατήστε το μηδέν, για να βγείτε από την θυρίδα σας πατήστε το πλήκτρο της δίεσης." filename="vm-msginstruct.gsm" />
+      <prompt pharse="Το μήνυμα σας έχει αποθηκευτεί." filename="vm-msgsaved.gsm" />
+      <prompt pharse="Παρακαλώ εισάγετε τον νέο σας κωδικό και μετά πατήστε το πλήκτρο της δίεσης." filename="vm-newpassword.gsm" />
+      <prompt pharse="Καλωσορίσατε στο Comedian Mail. Πρώτα θα σας καθοδηγήσω σε μια συντομη διαδικασία εγκατάστασης." filename="vm-newuser.gsm" />
+      <prompt pharse="Πατήστε το 6 για να ακούσετε το επόμενο μήνυμα." filename="vm-next.gsm" />
+      <prompt pharse="κανένα" filename="vm-no.gsm" />
+      <prompt pharse="Αυτή την στιγμή δεν είναι κανένας διαθέσιμος για να δεχτεί την κλήση σας" filename="vm-nobodyavail.gsm" />
+      <prompt pharse="Δεν μπορείτε να απαντήσετε σε αυτό το μήνυμα γιατί ο αποστολέας δεν έχει θυρίδα" filename="vm-nobox.gsm" />
+      <prompt pharse="Δεν υπάρχουν άλλα μηνύματα." filename="vm-nomore.gsm" />
+      <prompt pharse="Φοβάμαι ότι δεν ξέρω ποιος έχει στείλει αυτό το μήνυμα" filename="vm-nonumber.gsm" />
+      <prompt pharse="ο αριθμός που έχω είναι" filename="vm-num-i-have.gsm" />
+      <prompt pharse="παλιό" filename="vm-Old.gsm" />
+      <prompt pharse="παλιά" filename="vm-Olds.gsm" />
+      <prompt pharse="Πατήστε το ένα για να ακούσετε" filename="vm-onefor-full.gsm" />
+      <prompt pharse="Πατήστε το 1 για" filename="vm-onefor.gsm" />
+      <prompt pharse="Πατήστε το 1 για να ηχογραφήσετε το μήνυμα που θα ακούγετε όταν δεν θα είστε διαθέσιμοι, πατήστε το 2 για να ηχογραφήσετε το μήνυμα που θα ακούγετε όταν θα είστε απασχολημένοι, πατήστε το 3 για να ηχογραφήσετε το όνομα σας, πατήστε το 4 για να ηχογραφήσετε τον προσωρινό σας χαιρετισμό, πατήστε 5 για να αλλάξτε τον κωδικό σας, πατήστε το αστεράκι για να επιστρέψετε στο κύριο μενού." filename="vm-options.gsm" />
+      <prompt pharse="Πατήστε το 2 για να προσπελάσετε μηνύματα που έχουν αποθηκευτεί σε άλλους φακέλους. Πατήστε το 3 για να ηχογραφήσετε ένα μήνυμα για μια άλλη θυρίδα. Πατήστε το μηδέν για διαχείριση χαιρετισμών και κωδικών." filename="vm-opts-full.gsm" />
+      <prompt pharse="Πατήστε το 2 για να αλλάξτε φακέλους, πατήστε το 3 για προχωρημένες επιλογές, πατήστε το 0 για επιλογές της θυρίδας σας." filename="vm-opts.gsm" />
+      <prompt pharse="Οι κωδικοί σας έχουν αλλάξει." filename="vm-passchanged.gsm" />
+      <prompt pharse="Κωδικός" filename="vm-password.gsm" />
+      <prompt pharse="παρακαλώ ξαναπροσπαθήστε" filename="vm-pls-try-again.gsm" />
+      <prompt pharse="Πατήστε" filename="vm-press.gsm" />
+      <prompt pharse="Πατήστε το 4 για το προηγούμενο μήνυμα" filename="vm-prev.gsm" />
+      <prompt pharse="Πατήστε το 0 για να επικοινωνήστε με το κέντρο" filename="vm-reachoper.gsm" />
+      <prompt pharse="Μετά τον ήχο πείτε το μήνυμα που θα ακούγετε όταν θα είστε απασχολημένοι και μετά πατήστε το πλήκτρο της δίεσης." filename="vm-rec-busy.gsm" />
+      <prompt pharse="Μετά τον ήχο πείτε το ονομά σας και μετά πατήστε το πλήκτρο της δίεσης." filename="vm-rec-name.gsm" />
+      <prompt pharse="Μέτα τον ήχο πείτε τον προσωρινό σας χαιρετισμό και μετά πατήστε το πλήκτρο της δίεσης." filename="vm-rec-temp.gsm" />
+      <prompt pharse="Μετά τον ήχο πείτε το μήνυμα που θα ακούγετε όταν δεν θα είστε διαθέσιμοι και μετά πατήστε το πλήκτρο της δίεσης." filename="vm-rec-unv.gsm" />
+      <prompt pharse="έχει ληφθεί" filename="vm-received.gsm" />
+      <prompt pharse="Μετά τον ήχο παρακαλώ ηχογραφήστε ένα εισαγωγικό μήνυμα για το προωθούμενο μήνυμα. Όταν τελειώσετε πατήστε το πλήκτρο της δίεσης" filename="vm-record-prepend.gsm" />
+      <prompt pharse="Παρακαλώ εισάγετε τον κωδικό σας και μετά πατήστε το πλήκτρο της δίεσης." filename="vm-reenterpassword.gsm" />
+      <prompt pharse="Πατήστε το 5 για να επαναλάβετε το τρέχον μήνυμα." filename="vm-repeat.gsm" />
+      <prompt pharse="Πατήστε το 4 για να αφαιρέσετε την επείγουσα σήμανση από αυτό το μήνυμα." filename="vm-review-nonurgent.gsm" />
+      <prompt pharse="Πατήστε το 4 για να προσθέσετε την επείγουσα σήμανση σε αυτό το μήνυμα." filename="vm-review-urgent.gsm" />
+      <prompt pharse="Πατήστε το 1 για να αποδεχτείτε αυτήν την ηχογράφηση, πατήστε το 2 για να  το ακούσετε, πατήστε το 3 για να ηχογραφήσετε το μήνυμα σας" filename="vm-review.gsm" />
+      <prompt pharse="αποθηκεύτηκε" filename="vm-saved.gsm" />
+      <prompt pharse="Αποθηκεύτηκε στον" filename="vm-savedto.gsm" />
+      <prompt pharse="Σε ποιον φάκελο να αποθηκεύσω το μήνυμα." filename="vm-savefolder.gsm" />
+      <prompt pharse="ή 9 για να αποθηκεύσετε αυτό το μήνυμα" filename="vm-savemessage.gsm" />
+      <prompt pharse="Πατήστε το 1 για να αποδεχτείτε αυτήν την ηχογράφηση, διαφορετικά  παρακαλώ συνεχίσετε να αναμένετε" filename="vm-saveoper.gsm" />
+      <prompt pharse="Λυπάμαι, δεν κατάλαβα την απάντηση σας." filename="vm-sorry.gsm" />
+      <prompt pharse="Πατήστε αστεράκι για να ακυρώστε" filename="vm-star-cancel.gsm" />
+      <prompt pharse="Πατήστε το αστεράκι για να επιστρέψετε στο κύριο μενού" filename="vm-starmain.gsm" />
+      <prompt pharse="Εχει ενεργοποιηθεί ο προσωρινός σας χαιρετισμός" filename="vm-tempgreetactive.gsm" />
+      <prompt pharse="Πατήστε το 1 για να ηχογραφήσετε τον προσωρινό σας χαιρετισμό" filename="vm-tempgreeting.gsm" />
+      <prompt pharse="Πατήστε το 1 για να ηχογραφήσετε τον προσωρινό σας χαιρετισμό, ή πατήστε το 2 για να διαγράψετε τον προσωρινό σας χαιρετισμό" filename="vm-tempgreeting2.gsm" />
+      <prompt pharse="Ο προσωρινός σας χαιρετισμός έχει αφαιρεθεί" filename="vm-tempremoved.gsm" />
+      <prompt pharse="Μετά πατήστε το πλήκτρο της δίεσης" filename="vm-then-pound.gsm" />
+      <prompt pharse="Ο συνδρομητής στο εσωτερικό," filename="vm-theperson.gsm" />
+      <prompt pharse="Υπάρχει ενεργός προσωρινός χαιρετισμός που παρακάμπτει, τους προκαθορισμένους χαιρετισμούς σας." filename="vm-tmpexists.gsm" />
+      <prompt pharse="Πατήστε το 2 για να καλέσετε τον συνδρομητή που άφησε αυτό το μήνυμα" filename="vm-tocallback.gsm" />
+      <prompt pharse="Πατήστε το 1 για να καλέσετε αυτόν τον αριθμό" filename="vm-tocallnum.gsm" />
+      <prompt pharse="ή το πλήκτρο της δίεσης για ακύρωση." filename="vm-tocancel.gsm" />
+      <prompt pharse="Πατήστε το αστεράκι για να ακυρώστε αυτό το μήνυμα" filename="vm-tocancelmsg.gsm" />
+      <prompt pharse="Πατήστε το 1 για να εισάγετε έναν αριθμό" filename="vm-toenternumber.gsm" />
+      <prompt pharse="Πατήστε το οχτώ για να προωθήσετε το μήνυμα σε άλλον συνδρομητή" filename="vm-toforward.gsm" />
+      <prompt pharse="να ακούσετε τα" filename="vm-tohear.gsm" />
+      <prompt pharse="Πατήστε το 3 για να ακούσετε τα στοιχεία του μηνύματος" filename="vm-tohearenv.gsm" />
+      <prompt pharse="Πατήστε το 4 για να πραγματοποιήσετε μια εξερχόμενη κλήση" filename="vm-tomakecall.gsm" />
+      <prompt pharse="Το μήνυμα σας είναι πολύ κοντό" filename="vm-tooshort.gsm" />
+      <prompt pharse="Πατήστε το 1 για να απαντήσετε" filename="vm-toreply.gsm" />
+      <prompt pharse="Πατήστε το 3 για να ξαναηχογραφήσετε το μήνυμα σας" filename="vm-torerecord.gsm" />
+      <prompt pharse="Πατήστε το 7 για να επαναφέρετε αυτό το μήνυμα" filename="vm-undelete.gsm" />
+      <prompt pharse="Το μήνυμα επαναφέρθηκε." filename="vm-undeleted.gsm" />
+      <prompt pharse="από έναν άγνωστο συνδρομητή" filename="vm-unknown-caller.gsm" />
+      <prompt pharse="Επείγον." filename="vm-Urgent.gsm" />
+      <prompt pharse="Παρακαλώ εισάγετε έναν αριθμό θυρίδας για να αφήσετε μήνυμα." filename="vm-whichbox.gsm" />
+      <prompt pharse="εργασία" filename="vm-Work.gsm" />
+      <prompt pharse="έχετε" filename="vm-youhave.gsm" />
+      <prompt pharse="δεν έχετε άλλα μηνύματα στη θυρίδα" filename="vm-youhaveno.gsm" />
+      <prompt pharse="Σύστημα φωνητικού ταχυδρομείου" filename="voice-mail-system.gsm" />
+      <prompt pharse="αυτό το κουπόνι δεν υπάρχει" filename="voucher_does_not_exist.gsm" />
+      <prompt pharse="παρακαλώ εισάγετε τον αριθμού του κουπονιού ακολουθούμενο με το πλήκτρο της δίεσης." filename="voucher_enter_number.gsm" />
+      <prompt pharse="Παρακαλώ περιμένετε ένα λεπτό." filename="wait-moment.gsm" />
+      <prompt pharse="Παρακαλώ περιμένετε ένα λεπτό καθώς προσπελάζω την μεγάλη μας βιβλιοθήκη με προσβλητικούς ήχους!" filename="wait-offensive-sounds.gsm" />
+      <prompt pharse="Η κλήση αφύπνισης έχει ακυρωθεί." filename="wakeup-call-cancelled.gsm" />
+      <prompt pharse="Κλήση αφύπνισης" filename="wakeup-call.gsm" />
+      <prompt pharse="Καθημερινή κλήση αφύπνισης" filename="wakeup-daily.gsm" />
+      <prompt pharse="Για καθημερινές κλήσεις αφυπνίσεως" filename="wakeup-for-daily.gsm" />
+      <prompt pharse="Για κλήση αφύπνισης μόνο μια φορά" filename="wakeup-for-one-time.gsm" />
+      <prompt pharse="Κλήση αφύπνισης μόνο μια φορά" filename="wakeup-onetime.gsm" />
+      <prompt pharse="Ένας άνθρωπος μπαίνει σε ένα μπαρ, κάθετε και ... καλωσορίσατε στο Comedian Mail!" filename="walks-into-bar-mail.gsm" />
+      <prompt pharse="Προσοχή" filename="warning.gsm" />
+      <prompt pharse="τον ειδαν τελευταια" filename="was-last-seen.gsm" />
+      <prompt pharse="ηταν" filename="was.gsm" />
+      <prompt pharse="Washington, DC" filename="washington-dc.gsm" />
+      <prompt pharse="Washington" filename="washington.gsm" />
+      <prompt pharse="ρολοι" filename="watch.gsm" />
+      <prompt pharse="Λυπάμαι, το άτομο που συνδεθήκατε δεν ονομάζετε Ουότσον. Θα χαρούμε πολύ να σας βοηθήσουμε αλλά πρέπει να πάρω τα παιδιά από την προπόνηση ποδοσφαίρου πρώτα. Θα επικοινωνήσουμε μαζί σας το συντομότερο δυνατόν." filename="watson.gsm" />
+      <prompt pharse="ζηταμε συγνωμη" filename="we-apologize.gsm" />
+      <prompt pharse="Δεν εχουν τεχνικη υποστηριξη." filename="we-dont-have-tech-support.gsm" />
+      <prompt pharse="Νυφιτσες εχουν φαει το τηλεφωνικο μας συστημα." filename="weasels-eaten-phonesys.gsm" />
+      <prompt pharse="σταθμος καιρου" filename="weather-station.gsm" />
+      <prompt pharse="καιρος" filename="weather.gsm" />
+      <prompt pharse="web" filename="web.gsm" />
+      <prompt pharse="εβδομαδες" filename="weeks.gsm" />
+      <prompt pharse="καλωσορισατε" filename="welcome.gsm" />
+      <prompt pharse="Λυπουμαστε" filename="were-sorry.gsm" />
+      <prompt pharse="West Virgina" filename="west-virginia.gsm" />
+      <prompt pharse="δυση" filename="west.gsm" />
+      <prompt pharse="δυτικα" filename="westerly.gsm" />
+      <prompt pharse="Τι φορας?" filename="what-are-you-wearing.gsm" />
+      <prompt pharse="Εχετε καμια ιδεα τι ωρα ειναι?" filename="what-time-it-is.gsm" />
+      <prompt pharse="Εχετε καμια ιδεα τι ωρα ειναι?" filename="what-time-it-is2.gsm" />
+      <prompt pharse="Όταν καλητε αυτόν τον αριθμο" filename="when-dialing-this-number.gsm" />
+      <prompt pharse="Ποιον θελετε να καλεσετε" filename="who-would-you-like-to-call.gsm" />
+      <prompt pharse="Μπορώ να ρωτήσω ποιος καλεί?" filename="whoareyou.gsm" />
+      <prompt pharse="Η κλήση σας είναι σημαντική για μας, αλλά το γιατί δεν σας έχουμε απαντήσει είναι μυστήριο και για μας." filename="why-no-answer-mystery.gsm" />
+      <prompt pharse="Wichita" filename="wichita.gsm" />
+      <prompt pharse="θα εφαρμοστεί" filename="will-apply.gsm" />
+      <prompt pharse="θα λήξη" filename="will-expire.gsm" />
+      <prompt pharse="δεν θα λήξη" filename="will-not-expire.gsm" />
+      <prompt pharse="θα ανταποκριθούν σε χρέος τον" filename="will-reflect-charge-of.gsm" />
+      <prompt pharse="άνεμος" filename="wind.gsm" />
+      <prompt pharse="παράθυρα" filename="windows.gsm" />
+      <prompt pharse="ανεμώδης" filename="windy.gsm" />
+      <prompt pharse="Wisconsin" filename="wisconsin.gsm" />
+      <prompt pharse="επιθυμείτε να συνεχίσετε?" filename="wish-to-continue.gsm" />
+      <prompt pharse="Χμμ. Θα σας πειράζει να σας δείξω πως το κάνουμε αυτό στον Καναδά?" filename="wish_command_totally.gsm" />
+      <prompt pharse="με" filename="with.gsm" />
+      <prompt pharse="μέσα στο" filename="within.gsm" />
+      <prompt pharse="Τελεία! Η κλήση σας είναι πρώτη στην ουρά και θα απαντηθεί από τον πρώτο διαθέσιμο εκπρόσωπο." filename="woo_hoo_call_first.gsm" />
+      <prompt pharse="δουλεία" filename="work.gsm" />
+      <prompt pharse="Λάθος, λάθος, λάθος.  Ξαναδοκίμασε, εξυπνάκια." filename="wrong-try-again-smarty.gsm" />
+      <prompt pharse="αναμένουν να μιλήσουν με έναν εκπρόσωπο" filename="wtng-to-spk-w-rep.gsm" />
+      <prompt pharse="www.switchboard.com" filename="www-switchboard-com.gsm" />
+      <prompt pharse="Wyoming" filename="wyoming.gsm" />
+      <prompt pharse="Yeah!" filename="yeah.gsm" />
+      <prompt pharse="έτος" filename="year.gsm" />
+      <prompt pharse="έτη" filename="years.gsm" />
+      <prompt pharse="Ναι, αγάπη μου" filename="yes-dear.gsm" />
+      <prompt pharse="Ναι, αγάπη μου" filename="yes-dear2.gsm" />
+      <prompt pharse="χτες" filename="yesterday.gsm" />
+      <prompt pharse="Είστε ο καλούμενος με τον αριθμό" filename="you-are-caller-num.gsm" />
+      <prompt pharse="Αυτή την στιγμή είστε ο καλούμενος με τον αριθμό" filename="you-are-curr-call-num.gsm" />
+      <prompt pharse="Μπορείτε να πατήστε" filename="you-can-press.gsm" />
+      <prompt pharse="Έχετε καλέσει λάθος αριθμό." filename="you-dialed-wrong-number.gsm" />
+      <prompt pharse="Έχετε εισάγει" filename="you-entered.gsm" />
+      <prompt pharse="Έχετε καλέσει" filename="you-have-dialed.gsm" />
+      <prompt pharse="Έχετε καλέσει έναν δοκιμαστικό αριθμό." filename="you-have-reached-a-test-number.gsm" />
+      <prompt pharse="Έχετε αυτές τις επιλογές." filename="you-have-these-options.gsm" />
+      <prompt pharse="Πρέπει πρώτα να καλέσετε" filename="you-must-first-dial.gsm" />
+      <prompt pharse="Φαίνεστε ανυπόμονοι" filename="you-seem-impatient.gsm" />
+      <prompt pharse="Λοιπόν, ακούγεστε ελκυστικοί." filename="you-sound-cute.gsm" />
+      <prompt pharse="τώρα θα μεταφερθείτε στο προηγούμενο μενού, ή να κλείσετε για να τερματίσετε την κλήση" filename="you-will-be-transfered-menu.gsm" />
+      <prompt pharse="επιθυμείτε να συμμετάσχετε" filename="you-wish-to-join.gsm" />
+      <prompt pharse="Ο λογαριασμός σας" filename="your-account.gsm" />
+      <prompt pharse="Το μήνυμα σας έχει αποθηκευτεί" filename="your-msg-has-been-saved.gsm" />
+      <prompt pharse="Το μήνυμα σας είναι πολύ κοντό" filename="your-msg-is-too-short.gsm" />
+      <prompt pharse="οι ειδοποιήσεις σας." filename="your-notifications.gsm" />
+      <prompt pharse="η ζητούμενη ειδοποίηση σας." filename="your-req-notification.gsm" />
+      <prompt pharse="Ο προσωρινός σας χαιρετισμός" filename="your-temp-greeting.gsm" />
+      <prompt pharse="Δικό σας" filename="your.gsm" />
+      <prompt pharse="Η κλήση σας είναι σημαντική για μας. Για αυτό θα ακούτε το ίδιο μήνυμα διάρκειας δέκα δευτερολέπτων για την επόμενη μισή ώρα με χρέωση δώδεκα λεπτά ανά λεπτό." filename="yourcallisimportant.gsm" />
+      <prompt pharse="Η κλήση σας είναι σημαντική για μας." filename="yourcallisimpotent.gsm" />
+      <prompt pharse="Έχετε εισάγει" filename="you_entered.gsm" />
+      <prompt pharse="Ραΐ, όταν κάποιος σε ρωτάει αν είσαι θεός, λες ΝΑΙ!" filename="you_say_yes.gsm" />
+      <prompt pharse="ταχυδρομικός κώδικας" filename="zip-code.gsm" />
+      <prompt pharse="Λόγου παρουσίας ζόμπι στο χώρο που καλέσατε το γραφείο έχει εκκενωθεί. Παρακαλούμε αφήστε ένα μήνυμα και θα επικοινωνήσουμε μαζί σας το συντομότερο δυνατόν, εκτός βέβαια αν έρθει η αποκάλυψη πρώτα. Σε αυτήν την περίπτωση πιθανότερα θα έχουμε άλλες προτεραιότητες." filename="zombies.gsm" />
+    </root>
+    <dictate>
+      <prompt pharse="Πατήστε το αστεράκι για να εναλλάζετε την παύση, πατήστε την δίεση για να εισάγετε το νέο όνομα αρχείου της υπαγόρευσης" filename="both_help.gsm" />
+      <prompt pharse="Εισάγετε έναν αριθμητικό όνομα αρχείου υπαγόρευσης και μετά πατήστε την δίεση, ή απλά πατήστε την δίεση για έξοδο" filename="enter_filename.gsm" />
+      <prompt pharse="Πατήστε το μηδέν για βοήθεια" filename="forhelp.gsm" />
+      <prompt pharse="παύση" filename="pause.gsm" />
+      <prompt pharse="παυτεί" filename="paused.gsm" />
+      <prompt pharse="αναπαραγωγή" filename="playback.gsm" />
+      <prompt pharse="λειτουργία αναπαραγωγής" filename="playback_mode.gsm" />
+      <prompt pharse="Πατήστε το ένα για να αλλάξετε στην λειτουργία εγγραφής, πατήστε το δύο για να εναλλάξετε την γρήγορη αναπαραγωγή, πατήστε το επτά για να πηδήσετε πίσω, πατήστε το οχτώ για να πηδήσετε μπροστά" filename="play_help.gsm" />
+      <prompt pharse="εγγραφή" filename="record.gsm" />
+      <prompt pharse="πατήστε το ένα για να αλλάξετε στην λειτουργία αναπαραγωγής, πατήστε το οχτώ για να αδειάσετε το αρχείο και να ξεκινήστε ξανά" filename="record_help.gsm" />
+      <prompt pharse="λειτουργία εγγραφής" filename="record_mode.gsm" />
+      <prompt pharse="άδειασμα ήχου" filename="truncating_audio.gsm" />
+    </dictate>
+    <digits>
+      <prompt pharse="μηδέν" filename="0.gsm" />
+      <prompt pharse="ένα" filename="1.gsm" />
+      <prompt pharse="δέκα" filename="10.gsm" />
+      <prompt pharse="Εκατό" filename="100.gsm" />
+      <prompt pharse="ένδεκα" filename="11.gsm" />
+      <prompt pharse="δώδεκα" filename="12.gsm" />
+      <prompt pharse="δεκατρία" filename="13.gsm" />
+      <prompt pharse="δεκατέσσερα" filename="14.gsm" />
+      <prompt pharse="δεκαπέντε" filename="15.gsm" />
+      <prompt pharse="δεκαέξι" filename="16.gsm" />
+      <prompt pharse="δεκαεπτά" filename="17.gsm" />
+      <prompt pharse="δεκαοκτώ" filename="18.gsm" />
+      <prompt pharse="δεκαεννέα" filename="19.gsm" />
+      <prompt pharse="δύο" filename="2.gsm" />
+      <prompt pharse="είκοσι" filename="20.gsm" />
+      <prompt pharse="τρία" filename="3.gsm" />
+      <prompt pharse="τριάντα" filename="30.gsm" />
+      <prompt pharse="τέσσερα" filename="4.gsm" />
+      <prompt pharse="σαράντα" filename="40.gsm" />
+      <prompt pharse="πέντε" filename="5.gsm" />
+      <prompt pharse="πενήντα" filename="50.gsm" />
+      <prompt pharse="έξι" filename="6.gsm" />
+      <prompt pharse="εξήντα" filename="60.gsm" />
+      <prompt pharse="επτά" filename="7.gsm" />
+      <prompt pharse="εβδομήντα" filename="70.gsm" />
+      <prompt pharse="οχτώ" filename="8.gsm" />
+      <prompt pharse="ογδόντα" filename="80.gsm" />
+      <prompt pharse="εννέα" filename="9.gsm" />
+      <prompt pharse="ενενήντα" filename="90.gsm" />
+      <prompt pharse="Προ μεσημβρίας" filename="a-m.gsm" />
+      <prompt pharse="στης" filename="at.gsm" />
+      <prompt pharse="δισεκατομμύριο" filename="billion.gsm" />
+      <prompt pharse="Κυριακή" filename="day-0.gsm" />
+      <prompt pharse="Δευτέρα" filename="day-1.gsm" />
+      <prompt pharse="Τρίτη" filename="day-2.gsm" />
+      <prompt pharse="Τετάρτη" filename="day-3.gsm" />
+      <prompt pharse="Πέμπτη" filename="day-4.gsm" />
+      <prompt pharse="Παρασκευή" filename="day-5.gsm" />
+      <prompt pharse="Σάββατο" filename="day-6.gsm" />
+      <prompt pharse="δολάρια" filename="dollars.gsm" />
+      <prompt pharse="εκατομμύρια" filename="ekatomyria.gsm" />
+      <prompt pharse="μία" filename="female-1.gsm" />
+      <prompt pharse="δύο" filename="female-2.gsm" />
+      <prompt pharse="τρις" filename="female-3.gsm" />
+      <prompt pharse="τέσσερις" filename="female-4.gsm" />
+      <prompt pharse="Πρώτη" filename="h-1.gsm" />
+      <prompt pharse="Δέκατη" filename="h-10.gsm" />
+      <prompt pharse="Ενδέκατη" filename="h-11.gsm" />
+      <prompt pharse="Δωδέκατη" filename="h-12.gsm" />
+      <prompt pharse="Δέκατη τρίτη" filename="h-13.gsm" />
+      <prompt pharse="Δέκατη τέταρτη" filename="h-14.gsm" />
+      <prompt pharse="Δέκατη πέμπτη" filename="h-15.gsm" />
+      <prompt pharse="Δέκατη έκτη" filename="h-16.gsm" />
+      <prompt pharse="Δέκατη έβδομη" filename="h-17.gsm" />
+      <prompt pharse="Δέκατη όγδοη" filename="h-18.gsm" />
+      <prompt pharse="Δέκατη ένατη" filename="h-19.gsm" />
+      <prompt pharse="Δεύτερη" filename="h-2.gsm" />
+      <prompt pharse="Εικοστή" filename="h-20.gsm" />
+      <prompt pharse="Τρίτη" filename="h-3.gsm" />
+      <prompt pharse="Τριακοστή" filename="h-30.gsm" />
+      <prompt pharse="Τέταρτη" filename="h-4.gsm" />
+      <prompt pharse="τεσσαρακοστή" filename="h-40.gsm" />
+      <prompt pharse="Πεμπτη" filename="h-5.gsm" />
+      <prompt pharse="πεντηκοστή" filename="h-50.gsm" />
+      <prompt pharse="Έκτη" filename="h-6.gsm" />
+      <prompt pharse="εξηκοστή" filename="h-60.gsm" />
+      <prompt pharse="Έβδομη" filename="h-7.gsm" />
+      <prompt pharse="εβδομηκοστή" filename="h-70.gsm" />
+      <prompt pharse="Όγδοη" filename="h-8.gsm" />
+      <prompt pharse="ογδοηκοστή" filename="h-80.gsm" />
+      <prompt pharse="Ένατη" filename="h-9.gsm" />
+      <prompt pharse="ενενηκοστή" filename="h-90.gsm" />
+      <prompt pharse="δισεκατομμυριοστή" filename="h-billion.gsm" />
+      <prompt pharse="εκατοστή" filename="h-hundred.gsm" />
+      <prompt pharse="εκατομμυριοστή" filename="h-million.gsm" />
+      <prompt pharse="χιλιοστή" filename="h-thousand.gsm" />
+      <prompt pharse="εκατόν" filename="hundred-100.gsm" />
+      <prompt pharse="διακόσια" filename="hundred-200.gsm" />
+      <prompt pharse="τριακόσια" filename="hundred-300.gsm" />
+      <prompt pharse="τετρακόσια" filename="hundred-400.gsm" />
+      <prompt pharse="πεντακόσια" filename="hundred-500.gsm" />
+      <prompt pharse="εξακόσια" filename="hundred-600.gsm" />
+      <prompt pharse="εφτακόσια" filename="hundred-700.gsm" />
+      <prompt pharse="οχτακόσια" filename="hundred-800.gsm" />
+      <prompt pharse="εννιακόσια" filename="hundred-900.gsm" />
+      <prompt pharse="Εκατό" filename="hundred.gsm" />
+      <prompt pharse="η ώρα" filename="hwra.gsm" />
+      <prompt pharse="και" filename="kai.gsm" />
+      <prompt pharse="Εκατομμύριο" filename="million.gsm" />
+      <prompt pharse="μείον" filename="minus.gsm" />
+      <prompt pharse="Ιανουαρίου" filename="mon-0.gsm" />
+      <prompt pharse="Φεβρουαρίου" filename="mon-1.gsm" />
+      <prompt pharse="Νοεμβρίου" filename="mon-10.gsm" />
+      <prompt pharse="Δεκεμβρίου" filename="mon-11.gsm" />
+      <prompt pharse="Μαρτίου" filename="mon-2.gsm" />
+      <prompt pharse="Απριλίου" filename="mon-3.gsm" />
+      <prompt pharse="Μαΐου" filename="mon-4.gsm" />
+      <prompt pharse="Ιουνίου" filename="mon-5.gsm" />
+      <prompt pharse="Ιουλίου" filename="mon-6.gsm" />
+      <prompt pharse="Αυγούστου" filename="mon-7.gsm" />
+      <prompt pharse="Σεπτεμβρίου" filename="mon-8.gsm" />
+      <prompt pharse="Οκτωβρίου" filename="mon-9.gsm" />
+      <prompt pharse="εκατομμύριο" filename="myrio.gsm" />
+      <prompt pharse="η ώρα" filename="oclock.gsm" />
+      <prompt pharse="μηδέν" filename="oh.gsm" />
+      <prompt pharse="μετά μεσημβρίας" filename="p-m.gsm" />
+      <prompt pharse="δίεση" filename="pound.gsm" />
+      <prompt pharse="δευτερόλεπτα" filename="seconds.gsm" />
+      <prompt pharse="αστεράκι" filename="star.gsm" />
+      <prompt pharse="χίλια" filename="thousand.gsm" />
+      <prompt pharse="χιλιάδες" filename="thousands.gsm" />
+      <prompt pharse="σήμερα" filename="today.gsm" />
+      <prompt pharse="αύριο" filename="tomorrow.gsm" />
+      <prompt pharse="χίλια" filename="xilia.gsm" />
+      <prompt pharse="χτές" filename="yesterday.gsm" />
+    </digits>
+    <followme>
+      <prompt pharse="Εισερχόμενη κλήση από" filename="call-from.gsm" />
+      <prompt pharse="Εχετε μια εισερχόμενη κλήση από" filename="no-recording.gsm" />
+      <prompt pharse="Πατήστε το ένα για να αποδεχτείτε αυτήν την κλήση, ή το δυο για να την απορρίψετε" filename="options.gsm" />
+      <prompt pharse="Παρακαλώ περιμένετε ως που να εντοπίσω το άτομο που καλείτε" filename="pls-hold-while-try.gsm" />
+      <prompt pharse="Λυπάμαι, αλλά δεν μπόρεσα να εντοπίσω το άτομο που καλείτε" filename="sorry.gsm" />
+      <prompt pharse="Το άτομο που καλείτε απουσιάζει; Θα προσπαθήσω να σας τον βρω για σας" filename="status.gsm" />
+    </followme>
+    <letters>
+      <prompt pharse="a" filename="a.gsm" />
+      <prompt pharse="Αριστερό άγκιστρο" filename="ascii123.gsm" />
+      <prompt pharse="Κάθετη γραμμή" filename="ascii124.gsm" />
+      <prompt pharse="Δεξιό άγκιστρο" filename="ascii125.gsm" />
+      <prompt pharse="Περισπωμένη" filename="ascii126.gsm" />
+      <prompt pharse="Εισαγωγικά" filename="ascii34.gsm" />
+      <prompt pharse="Δολάριο" filename="ascii36.gsm" />
+      <prompt pharse="Τοις εκατό" filename="ascii37.gsm" />
+      <prompt pharse="Εμπορικό" filename="ascii38.gsm" />
+      <prompt pharse="Τόνος" filename="ascii39.gsm" />
+      <prompt pharse="Άνοιγμα παρένθεσης" filename="ascii40.gsm" />
+      <prompt pharse="Κλείσιμο παρένθεσης" filename="ascii41.gsm" />
+      <prompt pharse="Αστεράκι" filename="ascii42.gsm" />
+      <prompt pharse="Κόμμα" filename="ascii44.gsm" />
+      <prompt pharse="Άνω κάτω τελεία" filename="ascii58.gsm" />
+      <prompt pharse="Άνω τελεία" filename="ascii59.gsm" />
+      <prompt pharse="Μικρότερο του" filename="ascii60.gsm" />
+      <prompt pharse="Μεγαλύτερο από" filename="ascii62.gsm" />
+      <prompt pharse="Ερωτηματικό" filename="ascii63.gsm" />
+      <prompt pharse="Αριστερή αγκύλη" filename="ascii91.gsm" />
+      <prompt pharse="Αναποδη κάθετος" filename="ascii92.gsm" />
+      <prompt pharse="Δεξιά αγκύλη" filename="ascii93.gsm" />
+      <prompt pharse="καρότο" filename="ascii94.gsm" />
+      <prompt pharse="Κάτω παύλα" filename="ascii95.gsm" />
+      <prompt pharse="Ανάποδος τόνος" filename="ascii96.gsm" />
+      <prompt pharse="αστερίσκος" filename="asterisk.gsm" />
+      <prompt pharse="παπάκι" filename="at.gsm" />
+      <prompt pharse="b" filename="b.gsm" />
+      <prompt pharse="c" filename="c.gsm" />
+      <prompt pharse="d" filename="d.gsm" />
+      <prompt pharse="Παύλα" filename="dash.gsm" />
+      <prompt pharse="Δολάριο" filename="dollar.gsm" />
+      <prompt pharse="Τελεία" filename="dot.gsm" />
+      <prompt pharse="e" filename="e.gsm" />
+      <prompt pharse="Ίσον" filename="equals.gsm" />
+      <prompt pharse="Θαυμαστικό" filename="exclaimation-point.gsm" />
+      <prompt pharse="f" filename="f.gsm" />
+      <prompt pharse="g" filename="g.gsm" />
+      <prompt pharse="h" filename="h.gsm" />
+      <prompt pharse="i" filename="i.gsm" />
+      <prompt pharse="j" filename="j.gsm" />
+      <prompt pharse="k" filename="k.gsm" />
+      <prompt pharse="l" filename="l.gsm" />
+      <prompt pharse="m" filename="m.gsm" />
+      <prompt pharse="n" filename="n.gsm" />
+      <prompt pharse="o" filename="o.gsm" />
+      <prompt pharse="p" filename="p.gsm" />
+      <prompt pharse="Συν" filename="plus.gsm" />
+      <prompt pharse="q" filename="q.gsm" />
+      <prompt pharse="αρ" filename="r.gsm" />
+      <prompt pharse="s" filename="s.gsm" />
+      <prompt pharse="Κάθετος" filename="slash.gsm" />
+      <prompt pharse="Διάστημα" filename="space.gsm" />
+      <prompt pharse="t" filename="t.gsm" />
+      <prompt pharse="u" filename="u.gsm" />
+      <prompt pharse="v" filename="v.gsm" />
+      <prompt pharse="w" filename="w.gsm" />
+      <prompt pharse="x" filename="x.gsm" />
+      <prompt pharse="y" filename="y.gsm" />
+      <prompt pharse="zee" filename="z.gsm" />
+      <prompt pharse="zed" filename="zed.gsm" />
+    </letters>
+    <pbdirectory>
+      <prompt pharse="Παρακαλώ εισάγετε τα πρώτα τρία γράμματα της καταχώρισης που ψάχνετε." filename="first-three-letters-entry.gsm" />
+      <prompt pharse="Εάν είναι σωστό πατήστε" filename="if-correct-press.gsm" />
+      <prompt pharse="Εάν είναι λανθασμένο πατήστε" filename="if-incorrect-press.gsm" />
+      <prompt pharse="Καλωσορίσατε στο τηλεφωνικό κατάλογο." filename="welcome-to-phonebook.gsm" />
+    </pbdirectory>
+    <phonetic>
+      <prompt pharse="ναήνερ" filename="9_p.gsm" />
+      <prompt pharse="άλφα" filename="alpha.gsm" />
+      <prompt pharse="άλφα" filename="a_p.gsm" />
+      <prompt pharse="μπράβο" filename="bravo.gsm" />
+      <prompt pharse="μπράβο" filename="b_p.gsm" />
+      <prompt pharse="charlie" filename="charlie.gsm" />
+      <prompt pharse="charlie" filename="c_p.gsm" />
+      <prompt pharse="delta" filename="delta.gsm" />
+      <prompt pharse="delta" filename="d_p.gsm" />
+      <prompt pharse="έκο" filename="echo.gsm" />
+      <prompt pharse="έκο" filename="e_p.gsm" />
+      <prompt pharse="φόξτρότ" filename="foxtrot.gsm" />
+      <prompt pharse="φόξτρότ" filename="f_p.gsm" />
+      <prompt pharse="golf" filename="golf.gsm" />
+      <prompt pharse="golf" filename="g_p.gsm" />
+      <prompt pharse="χότελ" filename="hotel.gsm" />
+      <prompt pharse="χότελ" filename="h_p.gsm" />
+      <prompt pharse="india" filename="india.gsm" />
+      <prompt pharse="india" filename="i_p.gsm" />
+      <prompt pharse="τζουλιετ" filename="juliet.gsm" />
+      <prompt pharse="τζουλιετ" filename="j_p.gsm" />
+      <prompt pharse="κίλο" filename="kilo.gsm" />
+      <prompt pharse="κίλο" filename="k_p.gsm" />
+      <prompt pharse="λίμα" filename="lima.gsm" />
+      <prompt pharse="λίμα" filename="l_p.gsm" />
+      <prompt pharse="mike" filename="mike.gsm" />
+      <prompt pharse="mike" filename="m_p.gsm" />
+      <prompt pharse="ναήνερ" filename="niner.gsm" />
+      <prompt pharse="νοβέμπερ" filename="november.gsm" />
+      <prompt pharse="νοβέμπερ" filename="n_p.gsm" />
+      <prompt pharse="όσκερ" filename="oscar.gsm" />
+      <prompt pharse="όσκερ" filename="o_p.gsm" />
+      <prompt pharse="πάππα" filename="papa.gsm" />
+      <prompt pharse="πάππα" filename="p_p.gsm" />
+      <prompt pharse="κιουμπεκ" filename="quebec.gsm" />
+      <prompt pharse="κιουμπεκ" filename="q_p.gsm" />
+      <prompt pharse="romeo" filename="romeo.gsm" />
+      <prompt pharse="romeo" filename="r_p.gsm" />
+      <prompt pharse="σιέρα" filename="sierra.gsm" />
+      <prompt pharse="σιέρα" filename="s_p.gsm" />
+      <prompt pharse="tango" filename="tango.gsm" />
+      <prompt pharse="tango" filename="t_p.gsm" />
+      <prompt pharse="γιουνιφορμ" filename="uniform.gsm" />
+      <prompt pharse="γιουνιφορμ" filename="u_p.gsm" />
+      <prompt pharse="victor" filename="victor.gsm" />
+      <prompt pharse="victor" filename="v_p.gsm" />
+      <prompt pharse="whiskey" filename="whiskey.gsm" />
+      <prompt pharse="whiskey" filename="w_p.gsm" />
+      <prompt pharse="εξray" filename="xray.gsm" />
+      <prompt pharse="εξray" filename="x_p.gsm" />
+      <prompt pharse="yankee" filename="yankee.gsm" />
+      <prompt pharse="yankee" filename="y_p.gsm" />
+      <prompt pharse="zulu" filename="zulu.gsm" />
+      <prompt pharse="zulu" filename="z_p.gsm" />
+    </phonetic>
+  </gr>
+</language>

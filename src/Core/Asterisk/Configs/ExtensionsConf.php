@@ -129,12 +129,14 @@ class ExtensionsConf extends CoreConfigClass
             'same => n,ExecIf($["${PJSIP_ENDPOINT(${EXTEN},auth)}x" == "x"]?Goto(internal-num-undefined,${EXTEN},1))' . PHP_EOL . "\t" .
             'same => n,Gosub(set-dial-contacts,${EXTEN},1)' . PHP_EOL . "\t" .
             'same => n,ExecIf($["${FIELDQTY(DST_CONTACT,&)}" != "1" && "${ALLOW_MULTY_ANSWER}" != "1"]?Set(__PT1C_SIP_HEADER=${EMPTY_VAR}))' . PHP_EOL . "\t" .
-            'same => n,ExecIf($["${DST_CONTACT}x" != "x"]?Dial(${DST_CONTACT},${ringlength},TtekKHhb(originate-create-channel,${EXTEN},1)U(originate-answer-channel),s,1)))' . PHP_EOL. PHP_EOL.
+            'same => n,ExecIf($["${DST_CONTACT}x" != "x"]?Dial(${DST_CONTACT},${ringlength},TtekKHhb(originate-create-channel,${EXTEN},1)U(originate-answer-channel),s,1)))' . PHP_EOL.
+            'exten => h,1,Hangup' . "\n\n".
 
             '[internal-originate-queue]' . PHP_EOL .
             'exten => _X!,1,Set(_NOCDR=1)' . PHP_EOL . "\t" .
             'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1)' . PHP_EOL . "\t" .
             'same => n,ExecIf($["${SRC_QUEUE}x" != "x"]?Queue(${SRC_QUEUE},kT,,,300,,,originate-answer-channel))' . PHP_EOL . PHP_EOL .
+            'exten => h,1,Hangup' . "\n\n".
 
             '[originate-create-channel] ' . PHP_EOL .
             'exten => _.!,1,ExecIf($[ "${EXTEN}" == "h" ]?Hangup()'. PHP_EOL . "\t" .
@@ -168,6 +170,7 @@ class ExtensionsConf extends CoreConfigClass
         $conf .= 'exten => s,1,Wait(0.2)' . "\n\t";
         $conf .= 'same => n,Set(pl=${IF($["${CHANNEL:-1}" == "1"]?2:1)})' . "\n\t";
         $conf .= 'same => n,Set(orign_chan=${IMPORT(${CUT(CHANNEL,\;,1)}\;${pl},BRIDGEPEER)})' . "\n\t";
+        $conf .= 'same => n,ExecIf($[ "${orign_chan}x" == "x" ]?Set(orign_chan=${IMPORT(${CUT(CHANNEL,\;,1)}\;${pl},TRANSFERERNAME)}))' . "\n\t";
         $conf .= 'same => n,ExecIf($[ "${orign_chan}x" == "x" ]?Set(orign_chan=${IMPORT(${CUT(CHANNEL,\;,1)}\;${pl},FROM_CHAN)}))' . "\n\t";
         $conf .= 'same => n,ExecIf($[ "${QUEUE_SRC_CHAN}x" != "x" ]?Set(__QUEUE_SRC_CHAN=${orign_chan}))' . "\n\t";
         $conf .= 'same => n,ExecIf($[ "${QUEUE_SRC_CHAN:0:5}" == "Local" ]?Set(__QUEUE_SRC_CHAN=${FROM_CHAN}))' . "\n\t";

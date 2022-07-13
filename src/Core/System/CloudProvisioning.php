@@ -37,7 +37,6 @@ class CloudProvisioning
             return;
         }
         $cp = new self();
-
         $solutions = ['google', 'mcs', 'azure'];
         $resultProvisioning = '0';
         foreach ($solutions as $solution){
@@ -52,28 +51,28 @@ class CloudProvisioning
                 break;
             }
         }
-        $setting = PbxSettings::findFirst('key="'.self::PBX_SETTING_KEY.'"');
-        if(!$setting){
-            $setting = new PbxSettings();
-            $setting->key = self::PBX_SETTING_KEY;
-        }
-        $setting->value = $resultProvisioning;
-        $resultSave = $setting->save();
-        unset($setting);
-
-        if($resultSave && $resultProvisioning){
+        $cp->updatePbxSettings(self::PBX_SETTING_KEY, $resultProvisioning);
+        if($resultProvisioning === '1'){
+            // Включаем firewall.
+            $cp->updatePbxSettings('PBXFirewallEnabled', '1');
+            $cp->updatePbxSettings('PBXFail2BanEnabled', '1');
             $cp->checkConnectStorage();
         }
     }
 
+    /**
+     * Автоматическое подключение диска для хранения данных.
+     * @return void
+     */
     private function checkConnectStorage():void{
         $phpPath = Util::which('php');
         Processes::mwExec($phpPath.' -f /etc/rc/connect.storage auto');
     }
 
     private function updateSshPassword():void{
-        $data = md5(time());
+        $data = 'S'.md5(time());
         $this->updatePbxSettings('SSHPassword', $data);
+        $this->updatePbxSettings('SSHDisablePasswordLogins', '1');
         $confSsh = new SSHConf();
         $confSsh->updateShellPassword();
     }
@@ -140,7 +139,7 @@ class CloudProvisioning
     }
 
     /**
-     * Настройка машины для Google Cloud.
+     * Настройка машины для Google Cloud / Yandex Cloud.
      */
     public function googleProvisioning():bool
     {
@@ -163,6 +162,7 @@ class CloudProvisioning
         $extIp= $data['networkInterfaces'][0]['accessConfigs'][0]['externalIp']??'';
         $this->updateLanSettings($hostname, $extIp);
         $this->updateSshPassword();
+        $this->updateWebPassword($data['id']??'');
         return true;
     }
 
@@ -173,7 +173,7 @@ class CloudProvisioning
         $headers = [];
         $params  = [];
         $options = [
-            'timeout' => 10,
+            'timeout' => self::HTTP_TIMEOUT,
             'http_errors' => false,
             'headers' => $headers
         ];
@@ -200,11 +200,10 @@ class CloudProvisioning
      */
     public function mcsProvisioning():bool
     {
-        $result = false;
         // Имя сервера.
         $hostname = $this->getMetaDataMCS('hostname');
         if(empty($hostname)){
-            return $result;
+            return false;
         }
         $extIp    = $this->getMetaDataMCS('public-ipv4');
         // Получим ключи ssh.
@@ -217,7 +216,25 @@ class CloudProvisioning
         $this->updateSSHKeys($sshKey);
         $this->updateLanSettings($hostname, $extIp);
         $this->updateSshPassword();
+
+        $webPassword = $this->getMetaDataMCS('instance-id');
+        $this->updateWebPassword($webPassword);
+
         return true;
+    }
+
+    /**
+     * Устанавливает пароль к web интерфейсу исходя из имени инстанса и его идентификатора.
+     * @param $webPassword
+     * @return void
+     */
+    private function updateWebPassword($webPassword):void
+    {
+        if(empty($webPassword)){
+            return;
+        }
+        $this->updatePbxSettings('WebAdminPassword',$webPassword);
+        $this->updatePbxSettings('CloudInstanceId', $webPassword);
     }
 
     /**

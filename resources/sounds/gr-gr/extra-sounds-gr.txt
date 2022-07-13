@@ -1,0 +1,1648 @@
+; Extra Asterisk Sounds in Greek
+1-for-am-2-for-pm : Πατήστε το ένα για προ μεσημβρίας, ή το δύο για μετά μεσημβρίας.
+1-yes-2-no : Πατήστε το ένα για το Ναι, ή το δύο για το Όχι.
+a-charge-for-this-svc : Η υπηρεσία αυτή χρεώνετε με
+a-collect-charge-of : Το κόστος είναι
+a-collect-charge : Το κόστος
+a-connect-charge-of : Για την σύνδεση χρεώνεστε με
+a-connect-charge : Κόστος σύνδεσης
+abandon-all-hope : Εγκατάλειψη κάθε ελπίδας, Ζήτω όλοι όσοι καλούν εδώ.
+abandons : Εγκαταλείπω
+academic-support : Ακαδημαϊκή υποστήριξη
+access-code : Κωδικός πρόσβασης
+access-denied : Η πρόσβαση αρνήθηκε
+access-granted : Η πρόσβαση εγκρίθηκε
+accessible-through-system : Προσπελάσιμο μέσου αυτού του συστήματος
+account-balance-is : Το υπόλοιπο του λογαριασμού σας είναι
+accounting : Λογιστιριο
+accounts-payable : Πληρωτέοι λογαριασμοί
+accounts-receivable : Ληφθέντες λογαριασμοί
+account_number : Ο αριθμός λογαριασμού σας
+account_refill : Ο λογαριασμός σας έχει ανανεωθεί
+activated : ενεργοποιήθηκε
+added-to : προστέθηκε στον
+added : προστέθηκε.
+address : διεύθυνση
+administration : Διαχείριση
+advised-to-seek-shelter : συμβουλεύονται να αναζητήσουν καταφύγιο άμεσα
+after-the-tone : μετά τον ήχο
+afternoon : απόγευμα
+after_tone : Μετά τον χαρακτηριστικό ήχο
+agent-login : Σύνδεση εκπροσώπου. Παρακαλώ εισάγετε τον αριθμό εκπροσώπου σας και μετά πατήστε το πλήκτρο της δίεσης.
+agent-logoff : Αποσύνδεση εκπροσώπου. Παρακαλώ εισάγετε τον αριθμό εκπροσώπου σας και μετά πατήστε το πλήκτρο της δίεσης.
+agree_amount : Συμφωνείτε με αυτό το ποσό
+agree_credit_card : Συμφωνείτε με αυτόν τον αριθμό πιστωτικής κάρτας
+agree_digits : Συμφωνείτε με αυτόν τον αριθμό
+agree_expiry_date : Συμφωνείτε με αυτήν την ημερομηνία λήξης της πιστωτικής κάρτας
+airport : αεροδρόμιο
+alabama : Αλαμπάμα
+alaska : Αλάσκα
+albuquerque : Albuquerque
+alert : συναγερμός
+all-circuits-busy-now : Όλες οι γραμμές είναι κατειλημμένες
+all-outgoing-lines-unavailable : Αυτήν την στιγμή δεν υπάρχει διαθέσιμη εξερχόμενη γραμμή
+all-reps-busy : Αυτή την στιγμή όλοι οι εκπρόσωποι μας είναι απασχολημένοι.
+all-your-base : Όλη η βάση σας ανήκει σε μας.
+altitude : υψόμετρο
+ampersand : εμπορικό
+an-error-has-occured : Παρουσιάστηκε ένα σφάλμα.
+an-error-has-occurred : Παρουσιάστηκε ένα σφάλμα.
+and-area-code : και ο κωδικός περιοχής...
+and-or : ή και
+and-prs-pound-whn-finished : και πατήστε το πλήκτρο της δίεσης όταν τελειώσετε
+and : και
+andnowstandby : Παρακαλώ περιμένετε δέκα λεπτά από την ζωή σας που δεν θα ξαναπάρετε πίσω ποτέ
+another-time : άλλη ώρα
+approaching : πλησιάζει
+approximately : περίπου
+are-you-still-there : Είστε ακόμα εκεί?
+are-you-still-there2 : Είστε ακόμα εκεί?
+arizona : Αριζόνα
+arkansas : Arkansas
+arlington : Arlington
+astcc-account-balance-is : Το υπόλοιπο του λογαριασμού σας είναι
+astcc-account-number-invalid : Δεν είναι έγκυρος ο αριθμός του λογαριασμού σας
+astcc-balance-of-account-is : Το υπόλοιπο του λογαριασμού σας είναι
+astcc-card-number-invalid : Ο αριθμός της κάρτας που εισάγατε δεν είναι έγκυρος.
+astcc-digit-account-number : -ψήφος αριθμός λογαριασμού
+astcc-followed-by-pound : ακολουθούμενο με το πλήκτρο της δίεσης.
+astcc-followed-by-the-hash-key : ακολουθούμενο με το πλήκτρο της δίεσης.
+astcc-followed-by-the-pound-key : ακολουθούμενο με το πλήκτρο της δίεσης.
+astcc-login12pound : Παρακαλώ εισάγετε τον δωδεκαψήφιο αριθμού του λογαριασμού σας, παραλείποντας τυχόν σημεία στίξης, ακολουθούμενο με το πλήκτρο της δίεσης.
+astcc-please-enter-your : Παρακαλώ εισάγετε τον
+astcc-skipping-any-punctuation : παρελείποντας τυχών σημεία στίξης
+asterisk-friend : Το αστερισκ είναι φίλος σας.
+at-any-time : ανά πάσα στιγμή
+at-customers-request : Με αίτημα του πελάτη
+at-following-number : Στον ακολουθούμενο αριθμό
+at-sign : στο σημείο
+at-tone-time-exactly : Στον επόμενο τόνο η ώρα θα είναι
+at : στης
+athletics : Αθλητισμού
+atlanta : Atlanta
+atlantic : ατλαντικός
+attention-required : Ζητείτε η προσοχή σας
+at_tone : Στον χαρακτηριστικό ήχο
+auditing : Έλεγχος
+austin : Austin
+available-options : διαθέσιμες επιλογές
+available : Διαθέσιμοι
+avg-speed-answer : μέσος όρος απάντησης
+away-naughty-boy : Αυτή την στιγμή απουσιάζει από το τηλέφωνο του, ο ατακτούλης.
+away-naughty-girl : Αυτή την στιγμή απουσιάζει από το τηλέφωνο της, η ατακτούλα.
+awkward : Περίεργο
+backslash : ανάποδη κάθετος
+bad : κακό
+baltimore : Baltimore
+bar : bar
+barn : στάβλο
+barns : στάβλοι
+barometric : βαρομετρική
+bearing : πορεία
+beaufort : beaufort
+because-paranoid : γιατί είμαστε τρελοί
+before-the-number : πριν από τον αριθμό.
+believe-its-free : Το πιστεύετε ότι αυτό το τηλεφωνικό σύστημα είναι δωρεάν.
+billing-and-collections : Λογιστήριο και εισπράξεις
+billing : Λογιστήριο
+billionth : δισεκατομμυριοστός
+binary : Ευχαριστούμε που καλέσατε. Αυτήν την στιγμή δεν είμαστε διαθέσιμοι να δεχτούμε την κλήση σας. Για αυτόν τον λόγο σας έχουμε προωθήσει σε μια μηχανή διαφοράς Babbage για ανάλυση και μεταγραφή. Για την αποφυγή λαθών αφήστε ένα μήνυμα με μονοσύλλαβες λέξεις ή μικρότερες και αποφύγετε της συνεχόμενες προτάσεις. Μπορείτε να αφήσετε το μήνυμα σε δυαδική μορφή χρησιμοποιώντας τις λέξεις ένα και μηδέν ή το οο. Σας ευχαριστούμε.
+bits : κομματάκια
+blue-eyed-polar-bear : Προσπαθήστε να περάσετε τον χρόνο σας σκεπτόμενοι μια γαλαζιομάτηνη πολική αρκούδα.
+bombsquad : Ευχαριστούμε που καλέσατε. Η ανώνυμη πληροφορία σας έχει καταγραφτεί και η ομάδα εξουδετέρωσης εκρηκτικών μηχανισμών έχει αποσταλεί στην τοποθεσία σας. Καμία άλλη ενέργεια δεν απαιτείτε εκτός αν χρειάζεστε ένα νέο εσώρουχο. Σε αυτήν την περίπτωση δεν μπορούμε να σας βοηθήσουμε.
+bookstore : Βιβλιοπωλείο
+boston : Boston
+box : κουτί
+brian : Εγκέφαλο
+business-development : Επαγγελματικό τμήμα
+busy-hangovers : Είμαστε όλοι απασχολημένοι με τα μεθύσια μας.
+busy-pls-hold : Όλες οι γραμμές μας είναι απασχολημένες. Παρακαλώ περιμένετε και κάποιος θα σας απαντήσει σύντομα.
+but : και
+by : από
+bytes : Bytes
+cafeteria : Cafeteria
+california : California
+call-forward : Προώθηση κλήσης
+call-forwarding : Προώθηση κλήσεων
+call-fwd-cancelled : η προώθηση κλήσεων ακυρώθηκε
+call-fwd-no-ans : Προώθηση κλήσεων όταν δεν απαντάτε
+call-fwd-on-busy : Προώθηση κλήσεων όταν είστε απασχολημένοι
+call-fwd-parallel : Παράλληλη προώθηση κλήσεως
+call-fwd-unconditional : Ανεξάρτητη προώθηση κλήσεων
+call-preempted : Αυτή η κλήση εχει preempted
+call-quality-menu : Παρακαλώ εκτιμήστε την ποιότητα της κλήσης που μόλις κάνατε.  Χρησιμοποιήστε τα πλήκτρα ένα έως τέσσερα για να εκτιμήσετε την ποιότητα φωνής σε αυτήν την κλήση, με το ένα να αντιστοιχεί στην καλύτερη ποιότητα, και το τέσσερα να αντιστοιχεί στο ότι ήταν πολύ δύσκολο να καταλάβετε τον άλλον συνομιλητή. Πατήστε το πέντε αν η κλήση διακόπηκε βιαία. Πατήστε το έξι αν η κλήση δεν πραγματοποιήθηκε ποτέ. Πατήστε το επτά εάν η μια πλευρά την κλήσης δεν ακουγόταν. Πατήστε το οχτώ εάν υπήρξαν άλλες δυσκολίες.
+call-requres : Η κλήση που κάνατε απαιτεί
+call-terminated : η κλήση τερματίστηκε
+call-waiting : Αναμονή κλήσης
+call : Κλήση
+calling : καλώ
+calls-taken-by : Οι κλήσεις απαντιόνται από
+calls-waiting-for-rep : κλήσεις που αναμένου για να μιλήσουν με ένα εκπρόσωπο
+calls : κλήσεις
+campground-office : Γραφείο κατασκήνωσης
+cancelled : Ακυρώθηκε
+cannot-complete-as-dialed : Η κλήση σας δεν μπορεί να ολοκληρωθεί όπως την καλέσατε.
+cannot-complete-network-error : Η κλήση σας δεν μπορεί να ολοκληρωθεί λόγου ενός σφάλματος δικτύου.
+cannot-complete-otherend-error : Η κλήση σας δεν μπορεί να ολοκληρωθεί λόγου σφάλματος στην ληφθείσα τηλεφωνική εταιρία.
+cannot-complete-temp-error : Η κλήση σας δεν μπορεί να ολοκληρωθεί λόγου ενός προσωρινού σφάλματος
+card-balance-is : το υπόλοιπο της κάρτας είναι
+card-is-invalid : αυτή δεν είναι μια έγκυρη κάρτα
+card-number : αριθμός κάρτας
+carried-away-by-monkeys : Αυτή την στιγμή δεν είναι κανείς διαθέσιμος για να απαντήσει στην κλήση σας. Τους έχουν πάρει οι μαϊμούδες.
+cause-code : Κωδικός αιτίας
+cc-amex : American Express
+cc-discover : Discover
+cc-mastercard : Mastercard
+cc-visa : Visa
+cdir-matching-entries-continue : εγγραφές που ταιριάζουν. Παρακαλώ συνεχίστε να εισάγετε γράμματα για να μειώστε τις επιλογές.
+cdir-matching-entries-or-pound : εγγραφές που ταιριάζουν. Παρακαλώ συνεχίστε να εισάγετε γράμματα, ή πατήστε το πλήκτρο της δίεσης για να επιλέξτε μία από τις εγγραφές
+cdir-please-enter-first-three : Παρακαλώ εισάγετε τα πρώτα τρία ή περισσότερα γράμματα του ονόματος ή του επιθέτου του ατόμου χρησιμοποιώντας τα πλήκτρα του τηλεφώνου. Χρησιμοποιήστε το 1 για σημεία στίξης, πατήστε το μηδέν για το κέντρο.
+cdir-sorry-no-entries : Λυπάμαι, δεν βρέθηκαν εγγραφές που να ταιριάζουν.
+cdir-there-are : Υπάρχουν
+cdir-transferring-further-assistance : Σας μεταβιβάζουμε εκτός ευρετηρίου. Παρακαλώ περιμένετε για περισσότερη βοήθεια.
+cdir-welcome : Καλωσορίσατε στο ευρετήριο.
+celsius : κελσίου
+cent : Λεπτό
+central : κεντρικό
+cents-per-minute : Λεπτά ανά λεπτό
+cents : Λεπτά
+ceo-office : Γραφείο διευθυντή
+challenge_try_again : Αυτό είναι εντάξει. Μου αρέσουν οι προκλήσεις. Ας προσπαθήσουμε άλλη μια φορά.
+chance-of : τύχη του
+changing : αλλαγή
+channel-insecure-warn : Αυτή η δίοδος φωνής είναι ανασφαλής  μην συζητήστε περί απόρρητες πληροφορίες ή χρησιμοποιήστε κώδικες λέξης σχεδίων.
+channel-secure : Αυτή η δίοδος φωνής είναι ασφαλής.
+channel : Κανάλι
+charlotte : Charlotte
+chat-room : chat room
+check-number-dial-again : Παρακαλώ ελέγξετε τον αριθμό και ξανακαλέστε.
+chemistry : Χημεία
+chicago : Chicago
+chilean_peso : Χιλιανό πέσο
+chris : Chris
+claims : Claims
+clear : καθαρο
+clearing : καθαρισμος
+cleveland : Cleveland
+clli : CLLI
+close-parenthesis : κλείσιμο παρενθέσεως
+closed : κλειστό
+clouds : σύννεφα
+cloudy : συννεφιασμένο
+collections : Συλλογές
+colorado-springs : Colorado Springs
+colorado : Colorado
+columbus : Columbus
+comedyclub : Ευχαριστούμε που καλέσατε για να ρωτήσετε πληροφορίες σχετικά με την λέσχη κωμωδίας μας. Είναι διαθέσιμη για ενοικίαση για την αποθάρρυνση περεταίρω διάδοση κακών λογοπαίγνιων. Παρακαλούμε αφήστε τα στοιχεία σας μετά τον χαρακτηριστικό ήχο.
+comma : κόμμα
+communications : Επικοινωνίες
+company-dir-411 : Καλέστε 411 για να προσπελάσετε το ευρετήριο της εταιρίας μας, ή πατήστε το μηδέν για να αφήσετε μήνυμα στην γενική θυρίδα μας.
+complaint : Διαμαρτυρία
+compliance : Σύμφωνα
+computer-friend1 : Ο υπολογιστής είναι φίλος σας.
+computer-friend2 : Ο υπολογιστής είναι φίλος σας.
+conditions : προϋποθέσεις
+conf-1-to-list-users : Πατήστε το ένα για μια λίστα των συμμετεχόντων στην διάσκεψη.
+conf-2-to-kick-nonadmin : το δύο για να διώξετε όλους τους συμμετέχοντες που δεν είναι διαχειριστές.
+conf-3-mute-or-unmute-nonadmin : το τρία για σιγάσετε ή να καταργήσετε την σίγαση σε όλους τους συμμετέχοντες που δεν είναι διαχειριστές.
+conf-4-to-record-conf : το τέσσερα για να ηχογραφήσετε αυτήν την διάσκεψη.
+conf-8-for-more-options : ή το οχτώ για περισσότερες επιλογές.
+conf-8-to-exit-return-to-conf : ή το οχτώ για έξοδο από το μενού και επιστροφή στην διάσκεψη.
+conf-banned : Σας έχουν αποπέμψει από αυτήν την συνδιάσκεψη
+conf-full : Αυτή η συνδιάσκεψη είναι γεμάτη
+conf-hasentered : έχει εισαχτεί στην συνδιάσκεψη
+conf-onlypersonleft : Είστε πια ο μόνος συμμετέχοντας στην συνδιάσκεψη
+conf-peopleinconf : άλλα άτομα στην συνδιάσκεψη
+conf-sysop : Ο διαχειριστής
+conf-sysopreq : Αίτημα από τον διαχειριστή
+conf-sysopreqcancelled : Ακυρώθηκε το αίτημα από τον διαχειριστή
+conf-youareinconfnum : Είστε στην συνδιάσκεψη με αριθμό
+conference-call : Κλήση συνδιάσκεψης
+conference-reservations : Κρατήσεις για την συνδιάσκεψη
+conference : Συνδιάσκεψη
+confirm-number-is : Ο αριθμός επιβεβαίωσης είναι
+connected : Συνδέθηκε
+connecticut : Connecticut
+connecting : Σύνδεση
+connection-failed : Η σύνδεση απέτυχε.
+connection-timed-out : Εξαντλήθηκε ο χρόνος της σύνδεσης.
+continue-english-press : Για να συνεχίσετε στα αγγλικά πατήστε το,
+continue-in-english : Για να συνεχίσετε στα αγγλικά,
+copy-center : Κέντρο αντιγράφων
+could-lose-a-few-pounds : δεν θα σου έλειπε αν έχανες μερικά κιλά
+counseling-services : Υπηρεσίες Counseling
+count : μετράω
+countdown : Ευχαριστούμε που καλέσατε. Η διαδικασία αυτοκαταστροφής έχει ενεργοποιηθεί και θα πραγματοποιηθεί σε τριάντα δευτερόλεπτα. Παρακαλώ εισάγετε τον δωδεκαψήφιο κωδικό ακύρωσης τώρα εάν νομίζετε ότι φτάσατε σε αυτόν τον προορισμό κατά λάθος, διαφορετικά κλείστε την γραμμή και αναζητήστε άμεσα καταφύγιο.
+crash : κατάρρευση
+crashing_conf : Κάνετε εισβολή σε αυτήν την διάσκεψη?
+credit : πίστωση
+current-time-is : Η τρέχουσα ώρα είναι
+currently : είστε
+current_account_balance : Το τρέχον υπόλοιπο του λογαριασμού σας είναι
+customer-accounts : λογαριασμοί πελατών
+customer-relations : πελατειακές σχέσης
+customer-service : εξυπηρέτηση πελατών
+cyclone : τυφώνας
+dallas : Dallas
+dash : παύλα
+date : ημερομηνία
+day : ημέρα
+daylight : φως ημέρας
+days : ημέρες
+de-activated : απενεργοποιημένο
+deadbeat : Μαλάκας!
+decode : αποκρυπτογράφηση
+default-attendant : προκαθορισμένος φροντιστής
+degrees : μοίρες
+delaware : Delaware
+denial-of-service : ’ρνηση υπηρεσίας
+denver : Denver
+department-administrator : Διαχωριστής τμήματος
+department : τμήμα
+deposit : καταθέστε
+design : σχεδίαση
+detroit : Detroit
+development : ανάπτυξη
+dial-here-often : Και λοιπών, καλείτε εδώ συχνά?
+dictation-being-processed : Η υπαγόρευση σας επεξεργάζεται και διαβιβάζετε μέσου email. Παρακαλώ περιμένετε.
+dictation-sent : Η υπαγόρευση έχει σταλεί. Παρακαλώ θυμηθείτε να διαγράψετε την ηχογράφηση πριν ξαναχρησιμοποιήστε αυτόν τον αριθμό.
+digit : ψηφίο
+digits : ψηφία
+dir-intro-fn-oper : Καλωσορίσατε στο ευρετήριο. Παρακαλώ εισάγετε τα πρώτα τρία γράμματα του ονόματος του ατόμου χρησιμοποιώντας τα πλήκτρα του τηλεφώνου. Χρησιμοποιήστε το 7 για το Q και το 9 για το zee, πατήστε το μηδέν για το κέντρο.
+dir-intro-fnln-oper : Καλωσορίσατε στο ευρετήριο. Παρακαλώ εισάγετε τα πρώτα τρία γράμματα του ονόματος ή του επιθέτου του ατόμου χρησιμοποιώντας τα πλήκτρα του τηλεφώνου. Χρησιμοποιήστε το 7 για το Q και το 9 για το zee, πατήστε το μηδέν για το κέντρο.
+dir-intro-fnln : Καλωσορίσατε στο ευρετήριο. Παρακαλώ εισάγετε τα πρώτα τρία γράμματα του ονόματος ή του επιθέτου του ατόμου χρησιμοποιώντας τα πλήκτρα του τηλεφώνου. Χρησιμοποιήστε το 7 για το Q και το 9 για το zee
+dir-intro-oper : Καλωσορίσατε στο ευρετήριο. Παρακαλώ εισάγετε τα πρώτα τρία γράμματα του επιθέτου του ατόμου χρησιμοποιώντας τα πλήκτρα του τηλεφώνου. Χρησιμοποιήστε το 7 για το Q και το 9 για το zee, πατήστε το μηδέν για το κέντρο.
+directory-assistance : εξυπηρέτηση καταλόγου
+directory : ευρετήριο
+disabled : απενεργοποίηση
+discon-or-out-of-service : Ο αριθμός που καλέσατε δεν αντιστοιχεί σε συνδρομητή. Παρακαλώ ελέγξετε τον αριθμό σας και ξανακαλέστε.
+disconnected : Αποσυνδεμένο
+disk : Δίσκος
+distribution : Διανομή
+divided-by : διαιρούμενο με
+dns : DNS
+do-not-disturb : Μην ενοχλείτε
+doing-enum-lookup : Κατά την αναζήτηση ενός e-num
+dollar : δολάριο
+donotcall1 : Αυτό το νούμερο είναι καταχωρημένο στην λίστα Μην Καλέσετε. Ο αριθμός σας έχει καταχωρηθεί. Πατήστε το ένα για να αφήσετε ένα μήνυμα εάν νομίζετε ότι φτάσατε σε αυτό το νούμερο κατά λάθος. Μπορείτε να αφήσετε το τηλέφωνο οικίας σας για να σας καλέσουμε πίσω ότι ώρα θελήσουμε εμείς.
+donotcall2 : Παρακαλώ προσθέστε αυτόν τον αριθμό στην λίστα Μην Καλέσετε.
+dont-know-who-sent : Φοβάμαι ότι δεν ξέρω ποιος έστειλε αυτό το μήνυμα
+doppler-radar : doppler radar
+dot : τελεία
+down : Κάτω
+driving-directions : για οδηγίες για να φτάσετε στην τοποθεσία μας, πατήστε
+duplex : δουπλεξ
+duplication : dupliction
+early : νωρίς
+east : ανατολή
+easterly : ανατολικές
+eastern : ανατολική
+echo-test : Τώρα θα ακούσετε την φωνή σας σε μια δοκιμασία echo.
+ed : Ed
+eighteenth : δέκατη όγδοη
+eighth : ογδόη
+eightieth : eightieth
+el-paso : El Paso
+eleventh : ενδέκατη
+email : Email
+emergency : Έκτακτη
+enabled : ενεργοποιημένη
+encode : Κωδικοποίηση
+engineering : Μηχανολογικό
+ent-target-attendant : παρακαλώ εισάγετε το εσωτερικό που θα χρησιμοποιηθεί για το κέντρο σας
+enter-a-time : Εισάγετε μια ώρα χρησιμοποιώντας τέσσερα ψηφία. Αρχίστε με μηδέν για τις ώρες που είναι μικρότερες του δέκα.
+enter-conf-call-number : Παρακαλώ εισάγετε τον αριθμό κλήσης της συνδιάσκεψης που θέλετε να συμμετάσχετε
+enter-conf-pin-number : Παρακαλώ εισαγετε το PIN της συνδιάσκεψης
+enter-ext-of-person : εισάγετε το εσωτερικό του ατόμου που προσπαθείτε να βρείτε
+enter-filename-short : Εισάγετε ένα αριθμητικό όνομα αρχείου υπαγόρευσης και μετά πατήστε την δίεση.
+enter-num-blacklist : Παρακαλώ εισάγετε τον αριθμό που θα προστεθεί στην μαύρη λίστα.
+enter-password : Παρακαλώ εισάγετε τον κωδικό σας, ακολουθούμενο με το πλήκτρο της δίεσης.
+enter-phone-number10 : Παρακαλώ εισάγετε τον εξαψήφιο τηλεφωνικό σας αριθμό, με τον κωδικό περιοχής πρώτα.
+entering-conf-number : Εισέρχεστε στην συνδιάσκεψη με αριθμό
+enter_3_digits : Παρακαλώ εισάγετε τα τρία ψηφία που βρίσκονται στην πίσω όψη της κάρτας σας.
+enter_account : Παρακαλώ εισάγετε τον αριθμό λογαριασμού σας.
+enter_amount_part1 : Παρακαλώ εισάγετε ένα ελάχιστο ποσό πληρωμής μεταξύ
+enter_amount_part2 : Και ανώτατο ποσό πληρωμής τα
+enter_credit_card : Παρακαλώ, εισάγετε τον αριθμό της πιστωτικής σας κάρτας
+enter_expiry_date : Παρακαλώ, εισάγετε την ημερομηνία λήξης της κάρτας σας με τέσσερα ψηφία
+entr-num-rmv-blklist : Παρακαλώ εισάγετε τον αριθμό που θα αφαιρεθεί από την μαύρη λίστα.
+enum-lookup-failed : Η αναζήτηση e-num απέτυχε
+enum-lookup-successful : Η αναζήτηση e-num πέτυχε
+equals : ίσον
+error-number : αριθμός σφάλματος
+error : Σφάλμα
+error_process : Παρουσιάστηκε ένα σφάλμα κατά την επεξεργασία
+est-hold-time-is : αυτήν την στιγμή ο εκτιμώμενος χρόνος αναμονής είναι currently
+euro : ευρώ
+european : ευρωπαϊκή
+euros : ευρώ
+evening : βράδυ
+exclaimation-point : θαυμαστικό
+exited-vm-will-be-transfered : Έχετε αποχωρίσει από το σύστημα φωνητικού ταχυδρομείου, και θα μεταφερθείτε στο προηγούμενο μενού, ή μπορείτε να κλίσετε για να τερματίστε την κλήση
+explanation : εξήγηση
+ext-or-zero : Παρακαλώ εισάγετε το εσωτερικό του ατόμου που προσπαθείτε να βρείτε, ή πατήστε το μηδέν για το κέντρο.
+extension : εσωτερικό
+extensions : εσωτερικά
+facilities : Τουαλέτα
+fahrenheit : fahrenheit
+falling : πτώση
+fast : γρήγορη
+feature-not-avail-line : Αυτή η υπηρεσία δεν είναι διαθέσιμη σε αυτήν την γραμμή
+featurecode : κωδικός υπηρεσίας
+feeling_lucky_punk : Πρέπει να ρωτήσεις τον εαυτό σου ένα ερώτημα
+feet : Πόδια
+female : Θηλυκό
+fifteenth : δέκατη πέμπτη
+fifth : πέμπτη
+fiftieth : πεντηκοστή
+finals : Τελικοί
+finance : Οικονομικά
+first-in-line : η κλήση σας είναι τώρα πρώτη στην σειρά, και θα απαντηθεί από τον πρώτο διαθέσιμο εκπρόσωπο
+first : πρώτη
+flagged-for-lea : έχει επισημανθεί για συλλογή από τις αστυνομικές αρχές
+flooding : πλημμύρα
+florida : Florida
+fog : βάτραχος
+foggy : βατραχίνες
+followed-by : ακολουθούμενο από
+followed_hash :  ακολουθούμενο από το πλήκτρο της δίεσης.
+followed_pound :  ακολουθούμενο από το πλήκτρο της δίεσης.
+followme : ακολούθα με
+food-service : Υπηρεσία διατροφής
+food-services : Υπηρεσίες διατροφής
+for-a-daily-wakeup-call : Για μια καθημερινή κλήση αφύπνισης
+for-a-list-of : για μια λίστα από
+for-accounting : Για το λογιστήριο
+for-billing : Για το λογιστήριο
+for-english-press : Για αγγλικά, πατήστε το
+for-investor-relations : για σχέσεις επενδυτών, πατήστε το
+for-louie-louie : για τους στοίχους του louie, louie, πατήστε το
+for-no-press : για το όχι, πατήστε το
+for-qc-and-training-purposes : Για τον έλεγχο ποιότητας και για εκπαιδευτικός σκοπούς
+for-quality-purposes : για λόγους εξασφάλισης ποιότητας
+for-sales : Για της πωλήσεις
+for-service : Για υπηρεσίες
+for-tech-support : Για τεχνική υποστήριξη
+for-the-first : Για τον πρώτον
+for-the-weather : Για τον καιρό
+for-wakeup-call : Για μια κλήση αφύπνισης
+for-yes-press : για το ναι, πατήστε
+for : για
+forget_about_it : Ξέχνα το!
+fort-worth : Fort Worth
+fortieth : σαρακοστή
+fourteenth : δέκατη τέταρτη
+fourth : τέταρτη
+freeze : ψύξη
+freezing : ψύχω
+frequency : συχνότητα
+fresno : Fresno
+from-unknown-caller : από έναν άγνωστο συνδρομητή
+from : από
+ftp : FTP
+gale : φουρτούνα
+gambling-drunk : Πήγαμε να τζογάρουμε και να μεθύσουμε.
+georgia : Georgia
+get-in-line-sales-guy : Ευχαριστούμε που καλέσατε. Απαντάμε στις κλήσεις μόνο με ραντεβού. Το πρώτο διαθέσιμο ραντεβού είναι περίπου σε ενενήντα μέρες από σήμερα. Για να κλείσετε ένα ραντεβού πατήστε το ένα και αφήστε την ημερομηνία και ώρα που επιθυμείτε για το ραντεβού σας καθώς και ένα τηλέφωνο οικίας. Θα επικοινωνήσουμε μαζί σας νωρίς το επόμενο σαββατοκύριακο για να επιβεβαιώσουμε την διαθεσιμότητα του. Για να επαναλάβετε αυτό το μήνυμα πατήστε το δύο.
+get_bleep_outta : Θαυμάσια! Τώρα άντε στα τσακίδια!
+get_information : Χρειάζομαι μερικές πληροφορίες από εσάς.
+get_information_first : Μπορώ να σας πάρω μερικές πληροφορίες πρώτα?
+gigabits : Gigabits
+gigabytes : Gigabyes
+gigahertz : Gigahertz
+giggle1 : γέλιο
+gmt : greenwich mean time
+go-away1 : Φύγε μακριά!
+go-away2 : Φύγε μακριά
+good-afternoon : Καλό απόγευμα
+good-evening : Καλό βράδυ
+good-morning : Καλή μέρα
+good : καλό
+goodbye : Αντίο!
+goodbye_for_the_best : Αντίο. Όχι, αλήθεια είναι για το καλό όλων μας. Αντίο.
+goodbye_love : Αντίο. Ευχαριστούμε που δοκιμάσατε το PBX ανοιχτού κώδικα asterisk. Το αγαπάτε, σωστά?
+got_kidding : Ο θεέ μου, Πρέπει να αστειεύεσαι.
+grammar : Ευχαριστούμε που καλέσατε. Παρακαλώ αφήστε ένα μήνυμα μετά τον χαρακτηριστικό ήχο. Για να απαλείψουμε τα ανεπιθύμητα τηλεφωνήματα και το ψάρεμα, το μήνυμα σας θα εξεταστεί από έναν σπουδαστή ή μια σπουδάστρια της αγγλικής φιλολογίας. Εάν κριθεί ότι περιέχει γραμματικά και συντακτικά λάθη θα απορριφτεί. Παρακαλούμε να προφέρετε καθαρά για να αποφθεχτούν λάθη που σχετίζονται με τα ομώνυμα. Σας ευχαριστούμε και να έχετε μια καλή ημέρα.
+greater-than : μεγαλύτερο από
+groovy : γουστάρω
+hail : Χαλάζι
+half : Μισό
+hal_goodbye : αυτό το τηλεφώνημα δεν αποδίδει πουθενά πλέον. Αντίο.
+hang-on-a-second-angry : Είπα ΠΕΡΙΜΕΝΕΤΕ ΕΝΑ ΛΕΠΤΟ!
+hang-on-a-second : Περιμένετε ένα λεπτό...
+hangup-try-again : Παρακαλώ κλείστε το τηλέφωνο και ξαναπροσπαθήστε.
+happy_saved : Είμαι στην ευχάριστη θέση να σας ανακοινώσω ότι, το μήνυμα σας έχει αποθηκευτεί.
+has-arrived-at : έχει φτάσει στο
+has-been-changed-to : έχει αλλαχτεί σε
+has-been-cleared : έχει εκκαθαριστεί
+has-been-disconnected : έχει αποσυνδεθεί
+has-been-set-to : έχει αποσταλεί στο
+has-been : έχει να
+has-expired : έχει λήξει
+has-issued-a : έχει εκδώσει
+has-not-been-seen-for : έχει να εμφανιστεί
+has : έχει
+hash : δίεση
+hash2 : δίεση
+hawaii : Hawaii
+headed-towards : Κατευθυνόμενος προς
+heading : Πορεία
+health-center : Κέντρο υγείας
+hear-odd-noise : για να ακούσετε ένα περίεργο ήχο, πατήστε
+hear-toilet-flush : για να ακούσετε ένα καζανάκι, πατήστε
+hectopascal : hecto-pascal
+hello : Γεια σας
+helpdesk : Γραφείο Εξυπηρέτησης πελατών
+hertz : Hertz
+high : ψηλά
+highway : Αυτοκινητόδρομος
+hit : χτύπημα
+hold-or-dial-0 : Παρακαλώ συνεχίστε να αναμένετε, ή πατήστε το μηδέν για να αφήσετε μήνυμα στην γενική θυρίδα μας.
+home : Οικία
+honolulu : Honolulu
+housekeeping : Υπηρεσία δωματίου
+houston : Houston
+http : HTTP
+human-resources : Ανθρώπινο δυναμικό
+humidity : υγρασία
+hundredth : εκατοστή
+hurricane : τυφώνας
+hz : Hertz
+i-dont-understand : Δεν καταλαβαίνω
+i-dont-understand2 : Δεν... καταλαβαίνω
+i-dont-understand3 : Δεν καταλαβαίνω.
+i-dont-understand4 : Δεν... σας... καταλαβαίνω
+i-dont-understand5 : Χμ, Δεν σας καταλαβαίνω
+i-grow-bored : Αρχίζω και βαριέμαι αυτήν την συζήτηση.
+ice : πάγος
+icmp : I C M P
+icy : παγωμένο
+idaho : Idaho
+if-correct-press : Αν αυτό είναι σωστό, πατήστε...
+if-grtg-played-indefinately : αν αυτός ο χαιρετισμός να αναπαράγετε επάπειρον
+if-grtg-should-expire-at : αν αυτός ο χαιρετισμός να λήξει στοις
+if-maint-contract-or-emergency : Αν έχετε συμβόλαιο συντήρησης, ή χρειάζεστε επείγουσα βοήθεια.
+if-rotary-phone : Αν έχετε αναλογικό τηλέφωνο, παρακαλώ αναμείνετε στην γραμμή μετά το μενού.
+if-this-is-correct-press : Αν αυτό είναι σωστό, πατήστε
+if-this-is-correct : Αν αυτό είναι σωστό...
+if-this-is-not-correct : Αν αυτό δεν είναι σωστό...
+if-u-know-ext-dial : Αν ξέρετε το εσωτερικό του ατόμου που θέλετε, καλέσετε τώρα.
+if-unsuccessful-speak-to : Σε περίπτωση που αποτύχω να μιλήσετε στον...
+if-you-know-the : αν ξέρετε το
+if-you-need-help : αν θέλετε βοήθεια
+if-youd-like-to-make-a-call : Αν θέλετε να πραγματοποιήσετε μια κλήση...
+illinois : Illinois
+im-sorry-unable-to-connect-to-eng : Λυπαμαι, δεν μπορεσα να σας συνδεσω στον εφιμερευον μηχανικο μας.
+im-sorry : Λυπαμαι
+imap : IMAP
+in-service : Εν λειτουργια
+in-the-line : στη γραμμη
+in-the-queue : στην ουρα
+in-the : στην
+in-your-city : στην πολη σας
+in-your-zip-code : στον ταχιδρομικο σας κωδικα
+inbound : εισερχομενη
+incoming-call-1-accept-2-decline : Έχετε μια εισερχομένη κλήση. Πατήστε το ένα για να την δεχτείτε, ή πατήστε το δύο για να την απορρίψετε, ή πατήστε το τρία για να ακούσετε τον αριθμό του καλούντα και τυχόν πληροφορίες εφόσον είναι διαθέσιμες
+incoming-call-no-longer-avail : Λυπάμαι, η εισερχόμενη κλήση δεν είναι ποια διαθέσιμη ή απαντήθηκε από κάποιον άλλον
+indiana : Ινδιανος
+indianapolis : Indianapolis
+indicated : επισημάνθηκε
+info-about-last-call : πληροφορίες για την τελευταία σας κλήση
+information-technology : Τεχνολογία της Πληροφορίας
+information : Πληροφορίες
+infuriate-tech-staff : για να εκνευρίσετε τους τεχνικούς μας με τις αυτονόητες ερωτήσεις σας, πατήστε το
+initiated : Κίνησε
+initiating : Κίνηση
+inside-sales : Εσωτερικές πωλήσεις
+intercom : ενδοεπικοινωνία
+internal-audit : Εσωτερικός έλεγχος
+international-call : Διεθνή κλήση
+interstate : Αυτοκινητόδρομος
+invalid-date : εσφαλμένη ημερομηνία
+invalid-featurecode : Λυπάμαι.  Αυτός ο κωδικός υπηρεσίας δεν υποστηρίζετε. Παρακαλώ ξαναδοκιμάστε.
+invalid_amount : Αυτό το ποσό είναι εσφαλμένο
+investor-relations : Σχέσεις επενδυτών
+iowa : Iowa
+is-at : είναι στο
+is-curntly-busy : είναι απασχολημένοι αυτή την στιγμή
+is-curntly-unavail : είναι μη διαθέσιμοι αυτή την στιγμή
+is-currently : είναι
+is-in-use : σε χρήση
+is-not-in-the : δεν είναι στο...
+is-not-set : δεν έχει οριστεί
+is-now-being-recorded : τώρα ηχογραφείτε
+is-set-to : έχει οριστεί σε
+is : είναι
+it-now : είναι τώρα
+it-services : Υπηρεσίες IT
+jacksonville : Jacksonville
+janitorial : Επιστασίας
+jason : Jason
+jedi-extension-trick : Αυτό δεν είναι το εσωτερικό που ψάχνετε.
+john : John
+just-kidding-not-upset : Πλάκα σου κάνω, δεν ήθελα να θυμώσεις.
+just-kidding-not-upset2 : Πλάκα σου κάνω, δεν ήθελα να θυμώσεις.
+kansas-city : Kansas City
+kansas : Kansas
+kentucky : Kentucky
+keywords_cross_fingers : Παρακαλώ εισάγετε μία ή περισσότερες λέξεις κλειδιά διαχωρισμένα με αστεράκι, κάντε μια προσευχή και πατήστε το πλήκτρο της δίεσης.
+kilobits : Kilobits
+kilobytes : Kilobytes
+kilohertz : Kilohertz
+kilometer : Χιλιόμετρα
+kilometers-per-hour : Χιλιόμετρα ανά ώρα
+knock-knock : Χτυπώ χτυπώ είναι κανείς εκεί!
+knots : κόμβοι
+language : Γλώσσα
+las-vegas : Las Vagas
+last-error-was : Το τελευταίο σφάλμα στην γραμμή ήταν...
+last-num-to-call : Το τελευταίο νούμερο που κάλεσε την γραμμή σας ήταν...
+late : αργά
+later : αργότερα
+lea-may-request-info : Οι αστυνομικές αρχές μπορεί να ζητήσουν περισσότερες πληροφορίες
+left-bracket : Αριστερή αγκύλη
+legal : Νομικό
+len : Len
+less-than : μικρότερο από
+library : Βιβλιοθήκη
+lightning : κεραυνός
+like_to_tell_valid_ext : Θα ήθελα να σας πω ότι αυτό είναι έγκυρο εσωτερικό, αλλά δεν μπορώ. Ξαναπροσπαθήστε.
+limit-simul-calls : Για την προστασία του εύρος ζώνης ιντερνέτ και την διασφάλιση της ποιότητας των κλήσεων, αυτό το σύστημα έχει περιορισμό στον επιτρεπόμενο αριθμό ταυτόχρονων κλήσεων.
+line-busy-transfer-menu : Ο αριθμός που καλέσατε είναι απασχολημένος ή μη διαθέσιμος αυτήν την στιγμή. Μπορείτε να περιμένετε για να μεταφερθείτε στο προηγούμενο μενού, ή να κλείσετε για να τερματίσετε την κλήση
+lines-complaining-customers : Όλες οι γραμμές μας είναι κατελυμένες από γκρινιάρηδες πελάτες.
+linux : Linux
+list : λίστα
+load-average : Μέσος όρος φορτίου
+local-authorities : τοπικές αρχές
+location : Τοποθεσία
+login-fail : αποτυχία σύνδεσης
+long-beach : Long Beach
+los-angeles : Los Angeles
+loss-prevention : Πρόληψη απώλειας
+loss : Απώλεια
+louisiana : Louisiana
+low : χαμηλό
+lunch : μεσημεριανό φαγητό
+machine : Μηχάνημα
+made-it-up : Επειδή το έβγαλα από το μυαλό μου δεν πάει να πει ότι δεν είναι αληθινό.
+mail : Ταχυδρομείο
+mailroom : δωμάτιο διαλογής
+main-menu : Κύριο μενού
+maine : Maine
+maintenance : Συντήρηση
+male : Αρσενικός
+management : Διοίκηση
+manufacturing : Κατασκευές
+marketing : Πωλήσεις
+marryme : Θα με παντρευτείς? Πατήστε το ένα για ναι ή το δύο για όχι.
+martini : Φοβάμαι ότι δεν μπορώ να δημιουργήσω μια σύνδεση με τον δοκιμαστικό διακομιστή asterisk της digium. Πίστεψε με έχω εκνευριστεί και εγώ. Μπορεί να υπάρχουν χρήσιμες πληροφορίες αποσφαλματοποίησης στην κονσόλα του asterisk. Εγώ πάω για ένα martini.
+maryland : Maryland
+massachusetts : Massachusetts
+mathematics : Μαθηματικά
+maximum : μέγιστο
+megabits : megabits
+megabytes : megabytes
+megahertz : megahertz
+memory : μνήμη
+memphis : Memphis
+menu : μενού
+mesa : Mesa
+message-from : μήνυμα από
+message-number : Αριθμός μηνύματος
+messages_curious : Για να ακούσετε τα μηνύματα σας πατήστε το ένα τώρα. Έλα τώρα ξέρω ότι είσαι περίεργος. Αν έχεις βαρεθεί με αυτό μπορείτε να βγείτε από το φωνητικό ταχυδρομείο ανά πάσα στιγμή πατώντας το πλήκτρο της δίεσης.
+meter : μέτρο
+meters : μέτρα
+miami : Miami
+michigan : Michigan
+midnight-tomorrow-night : μεσάνυχτα αύριο βράδυ
+midnight-tonight : μεσάνυχτα απόψε
+midnight : μεσάνυχτα
+mike : Mike
+miles-per-hour : μίλια ανά ώρα
+miles : μίλια
+millionth : εκατομμυριοστή
+milwaukee : Milwaukee
+mind_repeating : Παρακαλώ μπορείτε να το επαναλάβετε αυτό?
+minimum : ελάχιστο
+minions-not-answering-leave-message : Λυπάμαι, οι δούλοι μου δεν μπόρεσαν να σας συνδέσουν, παρακαλώ αφήστε ένα μήνυμα.
+minneapolis : Minneapolis
+minnesota : Minnesota
+minus : μείον
+minute : λεπτό
+missed : λείψεις
+mississippi : Mississippi
+missouri : Missouri
+misty : ομιχλώδης
+mode : λειτουργία
+monitored : παρακολούθηση
+montana : Montana
+month : μήνα
+months : μήνες
+moo1 : Moo!
+moo2 : mooooo!
+morning : πρωί
+moron : ΒΛΑΚΑ!
+mostly : κυρίως
+motor-pool : Σταθμός αυτοκινήτων
+mountain : βουνό
+moving : μετακίνηση
+ms : milliseconds
+nashville : Nashville
+national-weather-service : Εθνική υπηρεσία καιρού
+nautical-miles : ναυτικά μίλια
+nbdy-avail-to-take-call : Κανείς δεν είναι διαθέσιμος να δεχτεί την κλήση σας.
+near : κοντά
+nebraska : Nebraska
+negative : αρνητικό
+network-operations-center : Κέντρο διαχείρισης δικτύου
+network-operations : Διαχείρισης δικτύου
+nevada : Nevada
+new-accounts : Νέοι λογαριασμοί
+new-hampshire : New Hampshire
+new-jersey : New Jersey
+new-mexico : New Mexico
+new-orleans : New Orleans
+new-york : New York
+night : νύχτα
+nineteenth : Ενενηκοστή
+ninetieth : Δέκατη ένατη
+ninth : ένατη
+no-112-1 : Αυτή η γραμμή δεν υποστηρίζει υπηρεσίες έκτακτης ανάγκης
+no-112-2 : Αυτή η γραμμή δεν υποστηρίζει υπηρεσίες έκτακτης ανάγκης
+no-911-1 : Αυτή η γραμμή δεν υποστηρίζει υπηρεσίες έκτακτης ανάγκης
+no-911-2 : Αυτή η γραμμή δεν υποστηρίζει υπηρεσίες έκτακτης ανάγκης
+no-empty-conferences : Δεν υπάρχουν άδειες συνδιασκέψεις αυτήν την στιγμή
+no-info-about-number : δεν υπάρχουν άλλες διαθέσιμες πληροφορίες για αυτόν τον αριθμό
+no-longer-in-service : δεν είναι πλέον σε λειτουργία
+no-reply-no-mailbox : Δεν μπορείτε να απαντήσετε σε αυτό το μήνυμα γιατί ο αποστολέας δεν έχει θυρίδα
+no-route-exists-to-dest : Δεν υπάρχει διαδρομή προς τον καλούμενο προορισμό.
+nobody-but-chickens : Δεν είναι κανείς εδώ εκτός από εμάς τις κότες!
+node : node
+none_of_my_business1 :  δεν είναι διαθέσιμο. Δεν έχω καμία ιδέα τι κάνει. Δεν με αφορά κιόλας!
+none_of_my_business2 : Δεν υπάρχει κάποιος διαθέσιμος αυτήν την στιγμή για να δεχτεί την κλήση σας. Δεν έχω καμία ιδέα τι κάνει. Δεν με αφορά κιόλας!
+north-carolina : North Carolina
+north-dakota : North Dakota
+north : βόρια
+northerly : βόριο
+not-auth-pstn : Δεν είστε εξουσιοδοτημένοι να καλείτε έξω χρησιμοποιώντας την γραμμή PSTN
+not-enough-credit : Δεν έχετε αρκετές μονάδες για να καλέσετε αυτόν τον αριθμό.
+not-necessary-1 : Δεν χρειάζεται να καλείτε το ένα όταν καλείτε αυτόν τον αριθμό.
+not-necessary-ac : Δεν χρειάζεται να καλείτε τον κωδικό περιοχής όταν καλείτε αυτόν τον αριθμό.
+not-necessary-dial-1-or-ac : Δεν χρειάζεται να καλείτε το ένα αλλά και ούτε τον κωδικό περιοχής όταν καλείτε αυτόν τον αριθμό
+not-rqsted-wakeup : Δεν έχετε ζητήσει κλήση αφύπνισης.
+not-taking-your-call : Ο συνδρομητής που καλέσατε έχει αποφασίσει να μην δέχεται κλήσεις από τον αριθμό σας αυτήν την στιγμή.
+not-yet-assigned : δεν έχει ακόμα οριστεί
+not-yet-connected : δεν έχει ακόμα συνδεθεί.
+nothing-recorded : τίποτα δεν έχει ηχογραφηθεί
+not_me : Δεν είμαι εγώ, είστε εσείς. Ας βρούμε έναν εκπρόσωπο.
+not_pass : Δεν θα περάσετε!
+not_siri : Πιστεύω ότι με έχετε μπερδέψει με τον Siri.
+not_you : Δεν είστε εσείς, είμαι εγώ. Ας βρούμε έναν εκπρόσωπο.
+now : τώρα
+no_invite_to_conf : Αυτός ο κωδικός είναι εσφαλμένος για αυτήν την διάσκεψη. Μήπως δεν σας κάλεσαν?
+no_longer_conf :  δεν είναι πια στην διάσκεψη.
+no_problem_help : Κανένα πρόβλημα. Μπορώ να σας βοηθήσω με αυτό.
+no_worries_try_again : Μην ανησυχείτε. Ας ξαναπροσπαθήσουμε.
+num-not-in-db : Ο αριθμός δεν βρέθηκε στην βάση.
+num-outside-area : Ο αριθμός που καλείτε είναι έξω από τα όρια των αστικών κλήσεων. Παρακαλώ καλέστε...
+num-was-successfully : Ο αριθμός ήταν επιτυχής...
+number-not-answering : Ο αριθμός δεν απαντά.
+number : αριθμός
+num_gr_1 : ένα
+num_gr_2 : δύο
+num_gr_3 : τρία
+num_gr_4 : τέσσερα
+num_gr_5 : πέντε
+num_gr_6 : έξι
+num_gr_7 : επτά
+num_gr_8 : οχτώ
+num_gr_9 : εννέα
+oakland : Oakland
+octothorpe : octothorpe
+off-duty : Εκτός υπηρεσίας
+off : Απενεργοποιημένο
+office-code : κωδικός γραφείου
+office-iguanas : Αυτό το γραφείο το έχουν καταλάβει σαύρες.
+office : γραφείο
+OfficeSpace : Γεια σας, ένα λεπτό.
+ogm_home : Δεν υπάρχει κάποιος διαθέσιμος αυτήν την στιγμή για να δεχτεί την κλήση σας. Παρακαλώ αφήστε ένα μήνυμα και κάποιος θα επικοινωνήσει μαζί σας.
+ohio : Ohio
+oklahoma-city : Oklahoma City
+oklahoma : Oaklahoma
+omaha : Omaha
+on-busy : όταν είναι κατειλημμένο
+on-monthly-tel-stment : στον μηνιαίο τηλεφωνικό λογαριασμό σας
+on-no-answer : όταν δεν απαντά
+on : Ενεργοποιημένο
+one-moment-please : Παρακαλώ, περιμένετε ένα λεπτό.
+one-small-step : Ένα μικρό βήμα για το Asterisk, ένα μεγάλο άλμα για την ανθρωπότητα.
+one-small-step2 : Αυτό είναι ένα  μικρό βήμα για το Asterisk, ένα μεγάλο άλμα για την ανθρωπότητα.
+oops1 : Ούπς
+oops2 : Ούπς
+oops3 : Ούπς
+open-parenthesis : άνοιγμα παρένθεσης
+open : Ανοιχτό
+operations : Επιχειρήσεις
+option-is-invalid : Αυτή είναι μια λανθασμένη επιλογή. Παρακαλώ ξαναδοκιμάστε.
+option-not-implemented : Αυτή η επιλογή δεν έχει υλοποιηθεί.
+or-press : ή πατήστε
+or : ee
+order-desk : Γραφείο παραγγελιών
+orders : Παραγγελίες
+oregon : Oregon
+other-options-exercise : Όλες οι άλλες επιλογές έχουν αφεθεί σαν άσκηση στον καλούντα.
+otherwise-press : διαφορετικά πατήστε
+otherwise : Διαφορετικά
+our-business-hours-are : Οι ώρες που λειτουργούμε είναι
+outbound : Εξερχόμενη
+outside-sales : Εξωτερικές πωλήσεις
+outside-transfer : Εξωτερική μεταβίβαση
+p : πι
+pacific : pacific
+packet : πακέτο
+panic : πανικός
+partially : μέρει
+partly : εν μέρει
+pascal : pascal
+pascal2 : pascal2
+passwords_not_match : Οι κωδικοί που εισάγατε και επανεισάγατε δεν ταιριάζουν. Δεν ξέρω τι να σας πω. Παρακαλώ ξαναπροσπαθήστε?
+patchy : patchy
+pbdirectory-first-three-letters-entry : Παρακαλώ εισάγετε τα πρώτα τρία γράμματα της καταχώρισης που ψάχνετε.
+pbdirectory-if-correct-press : Εάν είναι σωστό πατήστε
+pbdirectory-if-incorrect-press : Εάν είναι λανθασμένο πατήστε
+pbdirectory-welcome-to-phonebook : Καλωσορίσατε στο τηλεφωνικό κατάλογο.
+pence : Pence
+pennies : Pennies
+pennsylvania : Pennsylvania
+penny : Penny
+percent : ποσοστό
+perhaps-we-are : Μπορεί να είμαστε
+perhaps-we-are2 : Μπορεί να είμαστε
+period : τελεία
+personnel : Προσωπικού
+persons-in-path-of : ’τομα στην άμεση διαδρομή του
+pesos : πέσος
+philadelphia : Philadelphia
+phoenix : Pheonix
+physics : Φυσική
+pin-invalid : Δεν είναι έγκυρο αυτό το PIN για αυτήν την συνδιάσκεψη
+pin-number-accepted : Αποδοχή του Pin
+ping : Ping
+pin_number : ο κωδικός σας.
+pipe : σωλήνας
+planning : Σχεδιασμός
+please-answer-the-following : Παρακαλώ απαντήστε στα παρακάτω...
+please-contact-tech-supt : Παρακαλώ επικοινωνήστε με την τεχνική υποστήριξη
+please-enter-first-three-letters : Παρακαλώ εισάγετε τα πρώτα τρία γράμματα του ονόματος του ατόμου
+please-enter-the : Παρακαλώ εισάγετε
+please-enter-your-extension-then-press-pound : παρακαλώ εισάγετε το εσωτερικό σας, μετά πατήστε το πλήκτρο της δίεσης
+please-enter-your : Παρακαλώ εισάγετε το
+please-hang-up-and-dial-operator : Παρακαλώ κλείστε και καλέστε το κέντρο.
+please-hang-up-and-try-again : Παρακαλώ κλείστε και ξαναδοκιμάστε.
+please-hold-minion-connect : Παρακαλώ συνεχίστε να περιμένετε καθώς οι δούλοι μου προσπαθούν να σας συνδέσουν.
+please-hold-while-minion : Παρακαλώ περιμένετε έως ότου βρω κάποιον δούλο να σας απαντήσει.
+please-try-again-later : Παρακαλώ δοκιμάστε αργότερα.
+please-try-again : Παρακαλώ ξαναδοκιμάστε
+please-try : Παρακαλώ δοκιμάστε
+please-wait-connect-oncall-eng : Παρακαλώ περιμένετε, καθώς προσπαθώ να σας συνδέσω με τον εφημερεύον μηχανικό μας.
+pls-ent-num-transfer : παρακαλώ εισάγετε τον αριθμό που θα χρησιμοποιηθεί στην μεταβίβαση κλήσης.
+pls-enter-conf-password : Παρακαλώ εισάγετε τον κωδικό πρόσβασης για αυτήν την συνδιάσκεψη
+pls-enter-num-message-after-tone : Παρακαλώ εισάγετε τον αριθμητικό σας μήνυμα μετά τον ήχο.
+pls-enter-vm-password : Παρακαλώ εισάγετε τον κωδικό πρόσβασης για την θυρίδα
+pls-entr-num-uwish2-call : παρακαλώ εισάγετε τον αριθμού που επιθυμείτε να καλέσετε
+pls-hold-process-tx : Παρακαλώ περιμένετε όσο επεξεργαζόμαστε την συναλλαγή σας.
+pls-hold-silent30 : Παρακαλώ αναμένεται
+pls-hold-while-try : Παρακαλώ περιμένετε όσο προσπαθούμε να σας συνδέσουμε.
+pls-listen-options-changed : Παρακαλώ ακούστε προσεκτικά γιατί οι επιλογές του μενού έχουν αλλάξει.
+pls-lv-msg-will-contact : Παρακαλώ αφήστε ένα μήνυμα μετά τον ήχο και σύντομα ένας εκπρόσωπος θα επικοινωνήσει μαζί σας.
+pls-rcrd-name-at-tone : παρακαλώ ηχογραφήστε το όνομα σας μετά τον ήχο.
+pls-stay-on-line : Παρακαλώ περιμένετε στην γραμμή και η κλήση σας θα απαντηθεί από τον πρώτο διαθέσιμο εκπρόσωπο.
+pls-try-again : Παρακαλώ ξαναδοκιμάστε
+pls-try-area-code : Παρακαλώ δοκιμάστε τον κωδικό περιοχής
+pls-try-call-later : παρακαλώ δοκιμάστε την κλήση σας αργότερα
+pls-try-manually : Παρακαλώ δοκιμάστε χειροκίνητα.
+pls-wait-connect-call : Παρακαλώ περιμένετε για να σας συνδέσω.
+plugh : Plugh
+plus : συν
+pm-announcement-number : Αριθμός ανακοίνωσης
+pm-invalid-option : Αυτή είναι μια λανθασμένη επιλογή. Παρακαλώ ξαναδοκιμάστε.
+pm-phrase-management : Διαχείριση φράσεων
+pm-prompt-number : Αριθμός επιλογής
+pm-to-record-phrase : Για να ηχογραφήσετε μια φράση
+pm-to-review-phrase : Για να επαναλάβετε μια φράση
+point : Σημείο
+pop : POP
+port : θύρα
+portland : Portland
+portnumber : αριθμός θύρας
+position : θέση
+post-entry-pound : -ψήφιο αριθμού του λογαριασμού σας, παραλείποντας τυχόν σημεία στίξης, ακολουθούμενο με το πλήκτρο της δίεσης.
+pound : λύρα
+pounds : λίμπρες
+prepaid-account-firstused : Ο λογαριασμός σας χρησιμοποιήθηκε για πρώτη φορά την
+prepaid-account-has-locked : Ο λογαριασμός σας είναι κλειδωμένος
+prepaid-account-nolocked : Ο λογαριασμός σας δεν είναι κλειδωμένος
+prepaid-account_refill : ο λογαριασμός σας έχει πιστωθεί με
+prepaid-assigned-speeddial : Θα οριστεί στην θέση ταχείας κλήσης
+prepaid-auth-fail : λυπάμαι, η ταυτοποίηση σας ήταν ανεπιτυχής
+prepaid-call-duration : Η διάρκεια της κλήσης ήταν
+prepaid-callback_intro : Παρακαλώ περιμένετε, η κλήση σας συνδέετε
+prepaid-callfollowme : Το άτομο που αναζητάτε δεν απάντησε. Παρακαλώ περιμένετε καθώς το άτομο που καλέσατε έχει ενεργοποιημένη την δυνατότητα ακολούθα με, και θα δρομολογήσουμε την κλήση σας σε αυτόν
+prepaid-card-expired : Λυπάμαι, η κάρτα σας έχει λήξη
+prepaid-card-in-use : αυτός ο αριθμός κάρτας ήδη χρησιμοποιείτε!
+prepaid-cent : Λεπτό
+prepaid-cents : Λεπτά
+prepaid-cost-call : Το κόστος της κλήσης είναι
+prepaid-dest-unreachable : Ο αριθμός που καλέσατε είναι προσωρινά μη διαθέσιμος...
+prepaid-dollar : δολάριο
+prepaid-dollars : δολάρια
+prepaid-enter-card-num : Παρακαλώ εισάγετε τον δεκαψήφιο αριθμό της κάρτας σας, παραλείποντας τυχόν σημεία στίξης, ακολουθούμενο με το πλήκτρο της δίεσης.
+prepaid-enter-cid : Παρακαλώ, εισάγετε το αναγνωριστικό κλήσης σας
+prepaid-enter-code-lock-account : Παρακαλώ, εισάγετε τον κωδικό που θέλετε να χρησιμοποιήσετε για να κλειδώστε τον λογαριασμό σας
+prepaid-enter-dest : Παρακαλώ εισάγετε τον αριθμό που επιθυμείτε να καλέσετε βάζοντας μπροστά το μηδέν μηδέν και τον κωδικό της χώρας ακολουθούμενο από το πλήκτρο της δίεσης...
+prepaid-enter-dialcode : Παρακαλώ, εισάγετε τον κωδικό κλήσης σας
+prepaid-enter-number-u-calling-1-or-011 : Παρακαλω εισάγετε τον αριθμό που επιθυμείτε να καλέσετε βάζοντας μπροστά το ένα για τοπικές κλήσεις ή το μηδέν ένα ένα για διεθνείς κλήσεις ακολουθούμενο από το πλήκτρο της δίεσης...
+prepaid-enter-pin-lock : Παρακαλώ, εισάγετε τον κωδικό κλειδώματος
+prepaid-enter-pin-number : παρακαλώ εισάγετε το πλήρες ΠΙΝ σας
+prepaid-enter-speeddial : Παρακαλώ εισάγετε τον αριθμό της ταχείας κλήσης
+prepaid-euro : ευρώ
+prepaid-euros : ευρώ
+prepaid-final : Αντίο!
+prepaid-invalid-digits : εσφαλμένα ψηφία
+prepaid-is-used-for : Χρησιμοποιείτε για
+prepaid-isbusy : ο αριθμός είναι κατελυμένος
+prepaid-lastcall : Η τελευταία σας κλήση έγινε
+prepaid-listen-press1-confirmation-lock : Εάν θέλετε να συνεχίσετε κλειδώνοντας τον λογαριασμό σας, τότε πατήστε το ένα
+prepaid-locking-accepted : Έγινε αποδεκτός ο κωδικός κλειδώματος
+prepaid-minute : λεπτό
+prepaid-minutes : λεπτά
+prepaid-no-call : Δεν έχουν πραγματοποιηθεί κλήσης
+prepaid-no-card-entered : δεν έχετε εισάγει έναν αριθμό κάρτας
+prepaid-no-dialcode : Αυτός ο κωδικός κλήσης δεν υπάρχει
+prepaid-no-enough-credit-stop : λυπάμαι, δεν έχετε αρκετές μονάδες
+prepaid-no-enough-credit : λυπάμαι, δεν έχετε αρκετές μονάδες για να καλέσετε αυτόν τον αριθμό
+prepaid-no-pin-lock : Ο κωδικός κλειδώματος σας είναι λανθασμένος
+prepaid-noanswer : Ο αριθμός δεν απαντά
+prepaid-not-authorized-phonenumber : Μη εξουσιοδοτημένος αριθμός
+prepaid-of-free-package-calls : Πακέτου δωρεάν χρόνου ομιλίας
+prepaid-pence : πέννες
+prepaid-per-minutes : Ανά λεπτό
+prepaid-phonenumber-to-speeddial : Παρακαλώ εισάγετε τον αριθμό τηλεφώνου και μετά πατήστε το πλήκτρο της δίεσης.
+prepaid-point : Κόμμα
+prepaid-pound : λύρα
+prepaid-pounds : λύρες
+prepaid-press1-add-speeddial : Εάν θέλετε να συνεχίσετε παρακαλώ πατήστε το ένα ή οποιοδήποτε άλλο πλήκτρο για να ακυρώσετε
+prepaid-press1-change-speeddial : Εάν θέλετε να το αλλάξετε πατήστε το ένα ή οποιοδήποτε άλλο πλήκτρο για να εισάγετε κάποιο άλλο αριθμό ταχείας κλήσης.
+prepaid-press1-listen-lastcall : Πατήστε το ένα για να ακούσετε την ώρα και την διάρκεια της τελευταίας σας κλήσης
+prepaid-press2-listen-accountlocked : Πατήστε το δυο για να ακούσετε την ώρα και την ημερομηνία της τελευταίας φοράς που κλειδώθηκε ο λογαριασμός σας
+prepaid-press3-listen-firstuse : Πατήστε το τρία για να ακούσετε την ημερομηνία που πρώτο χρησιμοποιήθηκε ο λογαριασμός σας
+prepaid-press4-info : Πατήστε το τέσσερα για να ακούσετε πληροφορίες για τον λογαριασμός σας
+prepaid-press5-lock : Πατήστε το πέντε για να κλειδώσετε τον λογαριασμός σας
+prepaid-press9-listen-exit-infomenu : Πατήστε το εννέα για να βγείτε από το μενού πληροφοριών
+prepaid-press9-listen-exit-lockmenu : Πατήστε το εννέα για να βγείτε από το μενού κλειδώματος
+prepaid-press9-new-speeddial : Πατήστε το εννέα για να προσθέστε μια νέα ταχεία κλήση
+prepaid-pressdisconnect : Πατήστε το αστεράκι για να αποσυνδεθείτε
+prepaid-re-enter-press1-confirm : Για να επανεισάγετε τον προορισμό πατήστε το ένα. Για επιβεβαίωση πατήστε το δύο.
+prepaid-refill_card_with_voucher : εάν επιθυμείτε να ανανεώστε την κάρτα σας με ένα κουπόνι, πατήστε το οχτώ τώρα
+prepaid-remaining : υπόλοιπο
+prepaid-second : δευτερόλεπτο
+prepaid-seconds : δευτερόλεπτα
+prepaid-sipiax-enternumber : Παρακαλώ εισάγετε τον φιλικό αριθμό IAX, SIP  που επιθυμείτε να καλέσετε ακολουθούμενο από το πλήκτρο της δίεσης...
+prepaid-sipiax-num-nomatch : Λυπάμαι, δεν βρέθηκε φιλικό αριθμό IAX, SIP που να ταιριάζει με αυτόν τον αριθμό!
+prepaid-sipiax-press9 : Αν θέλετε να καλέσετε έναν φιλικό αριθμό IAX ή SIP, πατήστε το εννέα τώρα...
+prepaid-speeddial-saved : Ο αριθμός της ταχείας κλήσης αποθηκεύτηκε με επιτυχία.
+prepaid-the-number-u-dialed-is : Ο αριθμός που καλέσατε είναι
+prepaid-the-phonenumber : Ο αριθμός τηλεφώνου
+prepaid-unknow_used_currencie : λυπάμαι χρησιμοποιήθηκε άγνωστο νόμισμα
+prepaid-voucher_does_not_exist : αυτό το κουπόνι δεν υπάρχει
+prepaid-voucher_enter_number : παρακαλώ εισάγετε τον αριθμού του κουπονιού ακολουθούμενο με το πλήκτρο της δίεσης.
+prepaid-welcome : Καλωσορίσατε στο σύστημα καρτών προπληρωμένου χρόνου ομιλίας...
+prepaid-you-have-dialed : Έχετε καλέσει
+prepaid-you-have : έχετε
+prepaid-your-locking-is : Ο κωδικός κλειδώματος σας είναι
+prepaid-zero-balance : λυπάμαι, έχετε μηδέν μονάδες
+presales-support : Υποστήριξη προπωλήσεων
+presidents-office : Γραφείο προέδρου
+press-0 : Πατήστε το μηδέν
+press-1 : Πατήστε το ένα
+press-2 : Πατήστε το δύο
+press-3 : Πατήστε το τρία
+press-4 : Πατήστε το τέσσερα
+press-5 : Πατήστε το πέντε
+press-6-to-eject : ή πατήστε το έξι για να αποβάλετε τον τελευταίο χρήστη.
+press-6 : Πατήστε το έξι
+press-7 : Πατήστε το επτά
+press-8 : Πατήστε το οχτώ
+press-9 : Πατήστε το εννέα
+press-button-again : Πατήστε ξανά αυτό το κουμπί
+press-enter : Πατήστε το Enter
+press-escape : Πατήστε το Escape
+press-hash : Πατήστε την δίεση
+press-or-say-0 : Πατήστε ή πείτε το μηδέν.
+press-or-say-1 : Πατήστε ή πείτε το ένα.
+press-or-say-2 : Πατήστε ή πείτε το δύο.
+press-or-say-3 : Πατήστε ή πείτε το τρία.
+press-or-say-4 : Πατήστε ή πείτε το τέσσερα.
+press-or-say-5 : Πατήστε ή πείτε το πέντε.
+press-or-say-6 : Πατήστε ή πείτε το έξι.
+press-or-say-7 : Πατήστε ή πείτε το επτά.
+press-or-say-8 : Πατήστε ή πείτε το οχτώ.
+press-or-say-9 : Πατήστε ή πείτε το εννέα.
+press-pound-save-changes : Πατήστε το πλήκτρο της δίεση για να αποθηκεύσετε τις αλλαγές σας
+press-pound-to-login-star-to-hangup : Πατήστε το πλήκτρο της δίεσης για να συνδεθείτε με την θυρίδα σας, ή το αστεράκι για να κλείσετε.
+press-pound : Πατήστε την δίεση
+press-return : Πατήστε το return
+press-star-cancel : Πατήστε αστεράκι για να ακυρώστε.
+press-star : Πατήστε αστεράκι
+press-the-space-bar : Πατήστε την μπάρα του διαστήματος
+press-tilde : Πατήστε το tilde
+press : Πατήστε
+pressure : πίεση
+press_pound_hash : Πατήστε την δίεση ή το κάγκελα..
+press_pound_hash_key : Πατήστε το πλήκτρο της δίεσης ή το κάγκελα..
+press_yes_or_no : Πατήστε το ένα για το Ναι, ή το δύο για το Όχι.
+prime_number : Για να συνεχίσετε, πληκτρολογήστε οποιονδήποτε επταψήφιο κύριο αριθμό ακολουθούμενο με το πλήκτρο της δίεσης.
+printing : Εκτυπώνω
+privacy-blacklisted : Έχει μπει στην μαύρη λίστα
+privacy-blocked : Μπλοκαρισμένο
+privacy-if-error-leave-message-or-hangup : Αν νομίζετε ότι αυτό είναι λάθος ή άδικο παρακαλώ αφήστε ένα μήνυμα μετά τον ήχο. Διαφορετικά κλείστε τώρα.
+privacy-if-error : Αν νομίζετε ότι αυτό είναι λάθος...
+privacy-if-sales-call-contact-in-writing : Αν αυτή είναι μια κλήση τηλε-πώλησης χωρίς προειδοποίηση, να είστε ενήμεροι ότι θέλουμε μόνο γραπτή επικοινωνία.
+privacy-last-caller-was : Η τελευταία κλήση ήταν...
+privacy-not : ΔΕΝ
+privacy-please-dial : Παρακαλώ καλέστε...
+privacy-please-stay-on-line-to-be-connected : Παρακαλώ αναμείνετε στην γραμμή σας για να σας συνδέσω.
+privacy-restricted-by-req : περιορισμένο μετά από αίτημα του πελάτη.
+privacy-screening-unidentified-calls : Λόγου του μεγάλου αριθμού ανωνύμων κλήσεων που δεχόμαστε, ελέγχουμε όλες τις εισερχόμενες κλήσεις που δεν υπάρχει αναγνώριση η παρακρατείτε ο αριθμός.
+privacy-stop-calling-not-welcome : Παρακαλώ σταματήστε να καλείτε εδώ. Δεν είστε πια επιθυμητοί εδώ.
+privacy-stop-calling-not-welcome2 : Παρακαλώ σταματήστε να καλείτε εδώ. Δεν είστε πια επιθυμητοί εδώ.
+privacy-this-number-is : Ο αριθμός είναι...
+privacy-to-blacklist-last-caller : Η τελευταία κλήση ήταν...
+privacy-to-blacklist-this-number : Για να θέσετε αυτόν τον αριθμό στην μαύρη λίστα...
+privacy-to-hear-our-contact-details : για να ακούσετε τα στοιχεία επικοινωνίας
+privacy-to-whitelist-last-caller : Για να θέσετε στην άσπρη λίστα την τελευταία κλήση...
+privacy-to-whitelist-this-number : Για να θέσετε στην άσπρη λίστα αυτόν τον αριθμό...
+privacy-whitelisted : έχει μπει στην άσπρη λίστα
+privacy-you-are-blacklisted : Έχετε μπει στην μαύρη λίστα σε αυτό το σύστημα.
+privacy-you-are-calling-from : Καλείτε από...
+privacy-your-callerid-is : Ο αριθμός κλήσης σας είναι...
+product : Προϊόν
+production : Παραγωγή
+projects : Εργασίες
+prompt-not-found : Το αρχείο προτροπών δεν βρέθηκε.
+protocol : πρωτόκολλο
+public-relations : Δημόσιες σχέσεις
+purchasing : Αγορές
+purposes : σκοπός
+q-dot-931 : q.931
+q-dot-9thirty1 : q.9-τριαντα ένα
+quality-assurance : Εξασφάλιση ποιότητας
+quality-control : Έλεγχος ποιότητας
+quality_control : Για λόγους ελέγχου ποιότ, για λόγους ελέγχου ποιότητας, αυτή η κλήση, μπορεί να
+quarter : τέταρτο
+quickly : γρήγορα
+quote : παράθεση
+race : Αγώνας
+rain : βροχή
+rainfall : Βροχή
+rainy : βροχερός
+Randulo-allison : ’λισον
+range : απόσταση
+reassigned-new-areacode : έχει επαναοριστεί σε νέο κωδικό περιοχής
+rebates : Εκπτώσεις
+received : λαμβάνω
+receiving : λήψη
+reception : Υποδοχή
+recorded : καταγράφετε
+refill_card_with_voucher : εάν επιθυμείτε να ανανεώστε την κάρτα σας με ένα κουπόνι, πατήστε το οχτώ τώρα
+registrar : καταχωριστής
+regret_not_saved : Είμαι στην δυσάρεστη θέση να σας ενημερώσω
+remote-already-in-this-mode-2 : Ο απομακρυσμένος σταθμός είναι ήδη σε αυτή την κατάσταση.
+remote-already-in-this-mode : Ο απομακρυσμένος σταθμός είναι ήδη σε αυτή την κατάσταση.
+remote-base : Απομακρυσμένη βάση
+removed : αφαιρέθηκε
+repair : επισκευή
+repeat-only : Μόνο επανάληψη
+repeater : αναμεταδότης
+repeat_pin : Θα σας επαναλάβω τον κωδικό σας. Πιστεύω ότι είπατε
+research-and-development : Έρευνα και ανάπτυξη
+research : Έρευνα
+reservations : Κρατήσεις
+restarting : επανεκκίνηση
+rhode-island : Rhode Island
+right-bracket : δεξιά αγκύλη
+rising : υψώνετε
+risk-management : Διαχείριση κινδύνων
+roaming : Περιαγωγή
+room-service : Υπηρεσία δωματίου
+route-sip : Η κλήση σας δρομολογείτε μέσου SIP.
+rqsted-wakeup-for : Έχετε ζητήση κλήση αφύπνισης για τις...
+sacramento : Sacramento
+said_hold_on : Είπα περιμένετε!
+saint-louis : St. Louis
+sales-floor : Πωλήσεις
+sales : πωλήσεις
+saleshell : Παρακαλώ αφήστε ένα μήνυμα μετά τον χαρακτηριστικό ήχο. Εάν η κλήση είναι για πωλήσεις παρακαλώ πατήστε το πέντε τώρα.
+san-antonio : San Antonia
+san-diego : San Diego
+san-francisco : San Francisco
+san-jose : San Jose
+save-announce-press : Για να αποθηκεύσετε αυτήν την ανακοίνωση πατήστε
+say-temp-msg-prs-pound : Πείτε τον προσωρινό σας χαιρετισμό και μετά πατήστε το πλήκτρο της δίεσης
+says-thats-stupid : λέει ότι αυτό είναι ένα πολύ χαζό πράγμα να κάνεις.
+scattered : διασκορπισμένο
+sciences : Επιστήμη
+seattle : Seattle
+second : δεύτερη
+secretary : Γραμματέας
+security : Ασφάλεια
+self-destruct-in : Αυτό το σύστημα θα αυτοκαταστραφεί σε...
+self-destruct : Αυτοκαταστροφή
+sendhelp : Ευχαριστούμε που καλέσατε. Η τοποθεσία σας έχει εντοπιστεί και μια ομάδα ΕΚΑΜ έχει αποσταλεί στην θέση σας. Καμία άλλη ενέργεια δεν απαιτείτε από εσάς. Θα σωθείτε σύντομα.
+server : Διακομηστής
+service-not-implemented : Αυτή η υπηρεσία δεν έχει υλοποιηθεί.
+service : Υπηρεσία
+seventeenth : δέκατη έβδομη
+seventh : έβδομη
+seventieth : εβδομηκοστή
+severe : σοβαρό
+shall-i-try-again : Να ξαναδοκιμάσω?
+shiny-brass-lamp : Υπάρχει μια γυαλισμένη μπρούτζινη λάμπα εδώ γύρο.
+shipping : Αποστέλλετε
+shop : Κατάστημα
+show-office : Γραφείο προβολής
+sighted : όραση
+simplex : Simplex
+simul-call-limit-reached : Το όριο των ταυτόχρονων ενεργών κλήσεων έχει επιτευχτεί
+SIP_Test_Failure : Κράτησε το γελοίε!
+SIP_Test_Success : Η δοκιμή σας πέτυχε και η συσκευή SIP ή η κανονική συσκευή που προσπαθείτε να επισκευάσετε έχει λειτουργήσει. Παρακαλώ απολύσετε την εργασία σας έως ότου κάτι άλλο χαλάσει.
+sixteenth : δέκατη έκτη
+sixth : έκτη
+sixtieth : εξηκοστή
+slash : κάθετος
+sleet : χιονόνερο
+sleeting : χιονόνερο
+slow : αργό
+slowly : αργά
+snow : Χιόνη
+snowing : χιονίζει
+snowy : χιονιάς
+software : λογισμικό
+someone-you-trust1 : Κάποιον που εμπιστεύεσαι είναι ένας από μας.
+someone-you-trust2 : Κάποιον που εμπιστεύεσαι είναι ένας από μας.
+someone-you-trust3 : Κάποιον που εμπιστεύεσαι είναι ένας από μας.
+something-terribly-wrong : Κάτι έχει πάει πολύ στραβά!
+sorry-cant-let-you-do-that : Λυπάμαι, δεν μπορώ να σας αφήσω να το κάνετε αυτό.
+sorry-cant-let-you-do-that2 : Λυπάμαι, δεν μπορώ να σας αφήσω να το κάνετε αυτό.
+sorry-cant-let-you-do-that3 : Λυπάμαι, δεν μπορώ να σας αφήσω να το κάνετε αυτό.
+sorry-mailbox-full : Λυπάμαι η θυρίδα του συνδρομητή δεν μπορεί να δεχτεί άλλα μηνύματα
+sorry-youre-having-problems : Λυπούμαστε που έχετε προβλήματα
+sorry : Λυπούμαστε
+sorry2 : Λυπούμαστε, αλλά δεν είμαστε σε θέση να απαντήσουμε στην κλήση σας αυτήν την στιγμή.
+sorrydave : Λυπάμαι Ντάϊβ, δεν μπορώ να το κάνω αυτό.
+sorry_caller_number : Είμαι στην δυσάρεστη θέση να σας ενημερώσω ότι, είστε ο καλούμενος νούμερο
+sorry_didnt_get : Λυπάμαι πολύ, Δεν το κατάλαβα αυτό.
+sorry_didnt_quite_get : Λυπάμαι, Δεν το κατάλαβα αυτό.
+sorry_login_incorrect : Λυπάμαι, Εσφαλμένη είσοδος. Ξαναπροσπαθήστε.
+sorry_missed : Λυπάμαι, δεν το έπιασα αυτό.
+sorry_no_messages : Λυπάμαι, δεν υπάρχουν άλλα μηνύματα. Στις διαταγές σας, αποκλειστικά.
+south-carolina : South Carolina
+south-dakota : South Dakota
+south : νότιο
+southerly : νότια
+space : κενό
+spam : Ευχαριστούμε που καλέσατε την Ειδική Ανάλυση Τιμών και Μάρκετινγκ. Για φτηνά χάπια Vallium, Xanex ή Viagra παρακαλώ πατήστε το ένα. Για απομιμήσεις Gucci και Rolex παρακαλώ πατήστε το δύο. Για να μεγαλώστε το πέος σας ή τα στήθια σας παρακαλώ πατήστε το τρία. Για να μιλήσετε με τον υπουργό οικονομικών της Νιγηρίας για ένα δάνειο πενήντα εκατομμύριων δολαρίων παρακαλώ πατήστε το τέσσερα.
+spam2 : Spam
+speak-louder-into-phone : παρακαλώ μιλήστε ποιο δυνατά, ή μιλήστε κατευθείαν στο τηλέφωνο για να εξασφαλίστε μια καλή ηχογράφηση.
+speak-louder : παρακαλώ μιλήστε ποιο δυνατά για να εξασφαλίστε μια καλή ηχογράφηση
+speak-to-the-operator : μιλήστε με το κέντρο
+speed-dial-empty : Αυτή η καταχώριση ταχείας κλήσης είναι άδεια.
+speed-dial : Ταχεία κλήση
+speed-enterlocation : Παρακαλώ εισάγετε την θέση της ταχείας κλήσης και μετά πατήστε το πλήκτρο της δίεσης.
+speed-enternumber : Παρακαλώ εισάγετε τον αριθμό τηλεφώνου και μετά πατήστε το πλήκτρο της δίεσης.
+speed : ταχύτητα
+splat : Splat
+ssh : SSH
+staff : προσωπικό
+staffing : προσωπικό
+standard : πρότυπο
+star-for-menu-again : Πατήστε το αστεράκι για να ξανακούστε αυτό το μενού
+star : αστεράκι
+starting-with-either : αρχίζοντας με
+station : σταθμός
+status : κατάσταση
+step-in-stream : Έχετε πατήσει στο ρυάκι, αλλά το νερό έχει προχωρήσει.
+sterling : Λίρα
+still_on_phone : είναι ακόμα στο τηλέφωνο. Χρηστέ μου πολυλογάς!
+store-accounting : Λογιστήριο καταστήματος
+storm : καταιγίδα
+sun : ήλιος
+sunny : ηλιαστή
+support : Υποστήριξη
+sure_help : Βεβαίως. Μπορώ να σας βοηθήσω με αυτό.
+swap : Ανταλλαγή
+system-crashed : Το σύστημα έχει καταρρεύσει
+system-status-msg : Παρακαλώ ακούστε προσεκτικά το ακόλουθο μήνυμα κατάστασης συστήματος.
+system : Σύστημα
+systems : Συστήμα
+T-changed-to : έχει αλλαχτεί σε
+T-is-not-available : Δεν είναι διαθέσιμο
+T-to-disable-ancmnt : Για να απενεργοποιήσετε αυτήν την ανακοίνωση
+T-to-enable-ancmnt : Για να ενεργοποιήσετε αυτήν την ανακοίνωση
+T-to-hear-cur-ancmnt : Για να ακούσετε την τρέχουσα ανακοίνωση
+T-to-leave-msg : Για να αφήσετε ένα μήνυμα
+T-to-reach-main-office : Για να επικοινωνήσετε με το κεντρικό γραφείο
+T-to-rec-ancmnt : Για να ξανά ηχογραφήσετε αυτήν την ανακοίνωση
+T-to-rtrn-to-main-menu : Για να επιστρέψετε στο κυριο μενού
+talking-to-myself : Μιλάω στον εαυτό μου?
+talkin_me : Σε μένα μιλάς?
+target-attendant : συνοδός στόχος
+tcp : TCP
+technical-support : Τεχνική υποστήριξη
+telemarketercalling : Κλήσεις τηλεπωλήσεων έχουν αναφερθεί ότι προέρχονται από το νούμερο σας.
+telephone-in-your-pocket : Oooo! Αυτό είναι τηλέφωνο στην τσέπη σου, ή απλά χάρηκες που με βλέπεις?
+telephone-in-your-pocket2 : Oooo! Αυτό είναι τηλέφωνο στην τσέπη σου, ή απλά χάρηκες που με βλέπεις?
+telephone-number : αριθμός τηλεφώνου
+telesales : Τηλε-πωλήσεις
+teletubbie-murder : έχει δολοφονηθεί βίαια και κατακερματίστηκε από τους Teletubbies.
+telnet : Telnet
+temp-disconnected : έχει αποσυνδεθεί προσωρινά
+temperature : θερμοκρασία
+tennessee : Tennessee
+tenth : δέκατη
+terabits : Terabits
+terabytes : Terabytes
+terminated : τερματίστηκε
+terminating : τερματίζετε
+test-tones-follow : Ακλουθούν δοκιμαστικοί ήχοι.
+texas : Texas
+thank-you-cooperation : Ευχαριστούμε για την συνεργασία σας.
+thank-you-for-calling : Ευχαριστούμε που καλέσατε.
+thanks-annoyance : Ευχαριστούμε που καλέσατε. Παρακαλώ περιμένετε έως ότου βρω κάποιον που να αντέχει τα συνεχόμενα παράπονα και την γκρίνια σας.
+thanks-for-calling-today : Ευχαριστώ που καλέσατε σήμερα.
+thanks-for-using : Ευχαριστώ που χρησιμοποιείτε
+thanks_credit_card_refill : Η συναλλαγή σας επεξεργάζεται και ο λογαριασμός σας θα πιστωθεί σύντομα. Ευχαριστούμε.
+thank_you_calling : Ευχαριστούμε που καλέσατε.
+that-is-not-rec-phn-num : Αυτός δεν είναι έγκυρος αριθμός τηλεφώνου
+that-number : αυτός ο αριθμός
+that-tickles : Oooh, αυτό γαργαλάει!
+that-you-require : που απαιτείτε
+the-mailbox : Η θυρίδα
+the-monkeys-twice : Οι μαϊμούδες! Οι μαϊμούδες!
+the-new-number-is : Ο νέος αριθμός είναι
+the-next : το επόμενο
+the-num-i-have-is : ο αριθμός που έχω είναι
+the-number-u-dialed : Ο αριθμός που καλέσατε
+the-party-you-are-calling : Ο συνδρομητής που καλείτε
+the-weather-at : ο καιρός στο
+then-press-pound : μετά πατήστε το πλήκτρο της δίεσης
+there-are : Υπάρχουν
+there-is-no-customer-support : Αυτό δεν είναι οι υποστήριξη πελατών.
+these-are-currently : Τώρα υπάρχουν
+third : τρίτη
+thirteenth : δέκατη τρίτη
+thirtieth : τριακοστή
+this-call-may-be-monitored-or-recorded : Αυτή η κλήση μπορεί να παρακολουθείτε ή να ηχογραφείτε
+this-call-may-be : Αυτή η κλήση μπορεί
+this-call-will-cost : Αυτή η κλήση θα κοστίσει...
+this-call-will-end-in : Αυτή η κλήση θα τελείωση σε
+this-is-the-voice-mail-system : Αυτό είναι το σύστημα φωνητικού ταχυδρομείου
+this-is-yr-wakeup-call : Αυτή είναι η κλήση αφύπνισης.
+this : αυτή
+thnk-u-for-patience : Ευχαριστούμε για την υπομονή σας
+thousandth : χιλιοστή
+through : Διαμέσου
+thunderstorm : καταιγίδα
+tide : παλίρροια
+time : ώρα
+times : ώρες
+timewarp : Λόγου της εμφάνισης μια χρόνο δίνης στην περιοχή μας δεν θα υπάρχει κάποιος εδώ για να απαντήσει στην κλήση σας για τουλάχιστον ένα αιώνα. Παρακαλούμε αφήστε ένα μήνυμα μετά τον χαρακτηριστικό ήχο και θα επικοινωνήσουμε μαζί σας τουλάχιστον ένα μήνα πριν την κλήση σας. Ευχαριστούμε και να έχετε μια καλή ημέρα.
+to-accept-recording : για να αποδεχτείτε αυτήν την ηχογράφηση
+to-be-called-back : Για να σας καλέσουν πίσω όταν ελευθερωθεί ένας εκπρόσωπος πατήστε
+to-blklist-last-caller : Για να θέσετε τον τελευταίο καλούντα στην μαύρη λίστα, πατήστε
+to-blklist-last-num : Για να θέσετε τον τελευταίο αριθμό στην μαύρη λίστα, πατήστε
+to-call-num-press : Για να καλέστε αυτόν τον αριθμό, πατήστε
+to-call-prson-w-sent-msg : Για να καλέσετε το άτομο που άφησε αυτό το μήνυμα
+to-call-this-number : Για να καλέσετε αυτόν τον αριθμό
+to-cancel-this-msg : Για να ακυρώσετε αυτό το μήνυμα
+to-cancel-wakeup : Για να ακυρώσετε μια κλήση αφύπνισης
+to-change-exp-date : Για να αλλάξετε την ημερομηνία λήξης
+to-change-your-pin-number : Για να αλλάξετε το pin σας
+to-change : για να αλλάξετε
+to-collect-voicemail : για να ακούσετε τα μηνύματα σας
+to-compose-a-message : για να συντάξετε ένα μήνυμα
+to-confirm-wakeup : Για να επιβεβαιώστε μια κλήση αφύπνισης...
+to-dial-by-name-press : Για να καλέσετε με βάση το όνομα, πατήστε
+to-dial-by-name : Για να καλέσετε με βάση το όνομα
+to-enter-a-diff-number : για να εισάγετε έναν διαφορετικό αριθμό
+to-enter-a-diff : για να εισάγετε μία διαφορετική
+to-enter-a-number : για να εισάγετε έναν αριθμό
+to-erase-yr-temp-grtg : για να διαγράψετε τον προσωρινό σας χαιρετισμό
+to-extension : σε εσωτερικό
+to-hang-up-2 : Για να κλείσετε
+to-hang-up : Για να κλείσετε
+to-hear-callerid : Για να ακούσετε τον αριθμό της τελευταίας κλήσης
+to-hear-menu-again : για να ξανακούσετε το μενού
+to-hear-msg-again : για να ξανακούσετε αυτό το μήνυμα.
+to-hear-msg-envelope : για να ακούσετε τα στοιχεία του μηνύματος
+to-hear-net-status : για να ακούσετε την τρέχουσα κατάσταση του δικτύου
+to-hear-weather-status : για να ακούσετε το δελτίο καιρού
+to-hear-your-account-balance : Για να ακούσετε το υπόλοιπο του λογαριασμού σας
+to-join-a-meeting : για να συμμετέχετε σε μια συνεδρίαση
+to-leave-message-for : Για να αφήσετε ένα μήνυμα για
+to-listen-to-it : για να το ακούσετε
+to-log-in-to-voice-mail : Για να συνδεθείτε με την θυρίδα σας
+to-place-outgoing-call : Για να πραγματοποιήσετε μια εξερχόμενη κλήση
+to-reach-first-rep : Για να επικοινωνήσετε με τον πρώτο διαθέσιμο εκπρόσωπο
+to-reach-operator : Για να επικοινωνήσετε με το κέντρο
+to-rec-yr-temp-grtg : Για να ηχογραφήσετε τον προσωρινό σας χαιρετισμό
+to-record-call : για να ηχογραφήσετε την κλήση
+to-redial-the-last-number-you-called : Για να ξανακαλέσετε τον τελευταίο αριθμό που καλέσατε
+to-report-emergency : Για να αναφέρετε κάτι έκτακτο
+to-report-system-network-down : Για να αναφέρετε μια βλάβη συστήματος ή δικτύου
+to-rerecord-announce : Για να ξαναηχογραφήσετε αυτήν την ανακοίνωση, πατήστε
+to-rerecord-it : για να το ξαναηχογραφήσετε
+to-rerecord-yr-message : για να ξαναηχογραφήσετε το μήνυμα σας
+to-rmv-num-blklist : Για να αφαιρέσετε ένα αριθμό από την μαύρη λίστα, πατήστε
+to-rqst-wakeup-call : Για να ζητήσετε μια κλήση αφύπνισης
+to-send-a-reply : για να στείλετε μια απάντηση
+to-snooze-for : Για να αναβάλετε την αφύπνιση για
+to-use-def-attendant : για να χρησιμοποιήστε τον προκαθορισμένο φροντιστή, απλά πατήστε το πλήκτρο της δίεσης
+today : σήμερα
+tomorrow-night : αύριο βράδυ
+tomorrow : αύριο
+tones-that-follow-are-for-the-deaf : Οι ήχοι που ακλουθούν είναι για τους κωφούς.
+tone_time : Στον επόμενο τόνο η ώρα θα είναι
+tonight : απόψε
+too-low : πολύ χαμηλά
+tornado : τυφώνας
+touchtone1 : Αν καλείτε από αναλογική τηλεφωνική συσκευή, κλείστε, πηγαίνετε σε ένα κατάστημα και αγοράστε μια από αυτές τις θαυμάσιες ψηφιακές συσκευές.
+touchtone2 : Και αν καλείτε από αναλογική συσκευή, Καλημέρα, υπάρχει κάτι που λέγετε ψηφιακή συσκευή γλυκιά μου που ίσως σας ενδιαφέρει.
+touchtone3 : Αν καλείτε από αναλογική τηλεφωνική συσκευή, κλείστε, πηγαίνετε σε ένα κατάστημα και αγοράστε μια από αυτές τις θαυμάσιες ψηφιακές συσκευές του εικοστού πρώτου αιώνα.
+towards : προς
+trading-desk : Γραφείο συναλλαγών
+traffic : κίνηση
+training : Συναλλάσω
+transfer_to_agent : Πιστεύω ότι πρέπει να σας συνδέσω με έναν εκπρόσωπο. Περιμένετε.
+transportation : Μέσο μετακίνησης
+travel : Ταξίδι
+treasury : Οικονομικών
+tt-codezone : Αυτός ο αυτοκινητόδρομος οδηγεί στην σκιερή άκρη της πραγματικότητας
+tt-codezone_MIXDOWN : Αυτός ο αυτοκινητόδρομος οδηγεί στην σκιερή άκρη της πραγματικότητας
+tt-hangup : Πατήστε το ένα για να τερματίσετε αυτήν την κλήση, ή οποιοδήποτε άλλο πλήκτρο για να κλείσετε.
+tt-monty-knights : Τράβα και βράσε τα εσώρουχα σου γελίε άγγλε kniggggits. Κλάνω μπροστά σου.  Η μάνα σου ήταν ένα hamster και ο πατέρας σου μύριζε elderberries. Τώρα φύγε αλλιώς θα σε βρίσω για δεύτερη φορά.
+tucson : Tuscon
+tulsa : Tulsa
+turn-off-recording : Για να απενεργοποιήσετε την καταγραφή κλήσεων
+turning-to : γυρίζοντας στο
+twelveth : δωδέκατη
+twentieth : εικοστή
+twisty-maze : Είστε σε ένα λαβύρινθο από μικρά στριμμένα μενού, που όλα μοιάζουν μεταξύ τους.
+tx-has-been-approved : Η συναλλαγή σας έχει εγκριθεί.
+typhoon : τυφώνας
+udp : UDP
+uh-oh1 : Uh oh!
+uh-oh2 : Uh oh!
+uk : UK
+unavailable : Μη διαθέσιμος
+unconditional : άνευ
+unicorn_blood : Το αστερισκ είναι ένα πλήρες PBX ανοιχτού κώδικα και πλατφόρμας IVR που τρέχει στο λειτουργικό σύστημα λινουξ και με λίγο αίμα από μονοκέρατο. Για περισσότερες πληροφορίες επισκεφτείτε τον ισότοπο αστερισκ τελεία οργ.
+unicorn_blood_MIXDOWN : Το αστερισκ είναι ένα πλήρες PBX ανοιχτού κώδικα και πλατφόρμας IVR που τρέχει στο λειτουργικό σύστημα λινουξ και με λίγο αίμα από μονοκέρατο. Για περισσότερες πληροφορίες επισκεφτείτε τον ισότοπο αστερισκ τελεία οργ.
+unidentified-no-callback : μη αναγνωρισμένο ή παρακρατημένο και έτσι δεν μπορεί να καλέσετε πίσω.
+units : μονάδες
+unix : Unix
+unknow_used_currencie : λυπάμαι χρησιμοποιήθηκε άγνωστο νόμισμα
+unwelcomecall : Δεν είναι επιθυμητή η κλήση σας.
+up : επάνω
+uptime : χρόνος λειτουργίας
+user : χρήστης
+users : χρήστες
+utah : Utah
+variable : μεταβλητή
+vermont : Vermont
+virginia-beach : Virginia Beach
+virginia : Virgina
+visibility : Ορατότητα
+visit-asterisk-website : Επισκεφτείτε την ιστοσελίδα του αστερισκ στο w w w τελεία asterisk τελεία org
+vm-denExeteMynhmata : Δεν έχετε καθόλου μηνύματα στην θυρίδα σας
+vm-INBOXs : νέα
+vm-Olds : παλιά
+vm-tohear : να ακούσετε τα
+vm-youhaveno : δεν έχετε άλλα μηνύματα στη θυρίδα
+voice-mail-system : Σύστημα φωνητικού ταχυδρομείου
+voucher_does_not_exist : αυτό το κουπόνι δεν υπάρχει
+voucher_enter_number : παρακαλώ εισάγετε τον αριθμού του κουπονιού ακολουθούμενο με το πλήκτρο της δίεσης.
+wait-moment : Παρακαλώ περιμένετε ένα λεπτό.
+wait-offensive-sounds : Παρακαλώ περιμένετε ένα λεπτό καθώς προσπελάζω την μεγάλη μας βιβλιοθήκη με προσβλητικούς ήχους!
+wakeup-call-cancelled : Η κλήση αφύπνισης έχει ακυρωθεί.
+wakeup-call : Κλήση αφύπνισης
+wakeup-daily : Καθημερινή κλήση αφύπνισης
+wakeup-for-daily : Για καθημερινές κλήσεις αφυπνίσεως
+wakeup-for-one-time : Για κλήση αφύπνισης μόνο μια φορά
+wakeup-onetime : Κλήση αφύπνισης μόνο μια φορά
+walks-into-bar-mail : Ένας άνθρωπος μπαίνει σε ένα μπαρ, κάθετε και ... καλωσορίσατε στο Comedian Mail!
+warning : Προσοχή
+was-last-seen : τον ειδαν τελευταια
+was : ηταν
+washington-dc : Washington, DC
+washington : Washington
+watch : ρολοι
+watson : Λυπάμαι, το άτομο που συνδεθήκατε δεν ονομάζετε Ουότσον. Θα χαρούμε πολύ να σας βοηθήσουμε αλλά πρέπει να πάρω τα παιδιά από την προπόνηση ποδοσφαίρου πρώτα. Θα επικοινωνήσουμε μαζί σας το συντομότερο δυνατόν.
+we-apologize : ζηταμε συγνωμη
+we-dont-have-tech-support : Δεν εχουν τεχνικη υποστηριξη.
+weasels-eaten-phonesys : Νυφιτσες εχουν φαει το τηλεφωνικο μας συστημα.
+weather-station : σταθμος καιρου
+weather : καιρος
+web : web
+weeks : εβδομαδες
+welcome : καλωσορισατε
+were-sorry : Λυπουμαστε
+west-virginia : West Virgina
+west : δυση
+westerly : δυτικα
+what-are-you-wearing : Τι φορας?
+what-time-it-is : Εχετε καμια ιδεα τι ωρα ειναι?
+what-time-it-is2 : Εχετε καμια ιδεα τι ωρα ειναι?
+when-dialing-this-number : Όταν καλητε αυτόν τον αριθμο
+who-would-you-like-to-call : Ποιον θελετε να καλεσετε
+whoareyou : Μπορώ να ρωτήσω ποιος καλεί?
+why-no-answer-mystery : Η κλήση σας είναι σημαντική για μας, αλλά το γιατί δεν σας έχουμε απαντήσει είναι μυστήριο και για μας.
+wichita : Wichita
+will-apply : θα εφαρμοστεί
+will-expire : θα λήξη
+will-not-expire : δεν θα λήξη
+will-reflect-charge-of : θα ανταποκριθούν σε χρέος τον
+wind : άνεμος
+windows : παράθυρα
+windy : ανεμώδης
+wisconsin : Wisconsin
+wish-to-continue : επιθυμείτε να συνεχίσετε?
+wish_command_totally : Χμμ. Θα σας πειράζει να σας δείξω πως το κάνουμε αυτό στον Καναδά?
+with : με
+within : μέσα στο
+woo_hoo_call_first : Τελεία! Η κλήση σας είναι πρώτη στην ουρά και θα απαντηθεί από τον πρώτο διαθέσιμο εκπρόσωπο.
+work : δουλεία
+wrong-try-again-smarty : Λάθος, λάθος, λάθος.  Ξαναδοκίμασε, εξυπνάκια.
+wtng-to-spk-w-rep : αναμένουν να μιλήσουν με έναν εκπρόσωπο
+www-switchboard-com : www.switchboard.com
+wyoming : Wyoming
+yeah : Yeah!
+year : έτος
+years : έτη
+yes-dear : Ναι, αγάπη μου
+yes-dear2 : Ναι, αγάπη μου
+yesterday : χτες
+you-are-caller-num : Είστε ο καλούμενος με τον αριθμό
+you-are-curr-call-num : Αυτή την στιγμή είστε ο καλούμενος με τον αριθμό
+you-can-press : Μπορείτε να πατήστε
+you-dialed-wrong-number : Έχετε καλέσει λάθος αριθμό.
+you-entered : Έχετε εισάγει
+you-have-dialed : Έχετε καλέσει
+you-have-reached-a-test-number : Έχετε καλέσει έναν δοκιμαστικό αριθμό.
+you-have-these-options : Έχετε αυτές τις επιλογές.
+you-must-first-dial : Πρέπει πρώτα να καλέσετε
+you-seem-impatient : Φαίνεστε ανυπόμονοι
+you-sound-cute : Λοιπόν, ακούγεστε ελκυστικοί.
+you-will-be-transfered-menu : τώρα θα μεταφερθείτε στο προηγούμενο μενού, ή να κλείσετε για να τερματίσετε την κλήση
+you-wish-to-join : επιθυμείτε να συμμετάσχετε
+your-account : Ο λογαριασμός σας
+your-msg-has-been-saved : Το μήνυμα σας έχει αποθηκευτεί
+your-msg-is-too-short : Το μήνυμα σας είναι πολύ κοντό
+your-notifications : οι ειδοποιήσεις σας.
+your-req-notification : η ζητούμενη ειδοποίηση σας.
+your-temp-greeting : Ο προσωρινός σας χαιρετισμός
+your : Δικό σας
+yourcallisimportant : Η κλήση σας είναι σημαντική για μας. Για αυτό θα ακούτε το ίδιο μήνυμα διάρκειας δέκα δευτερολέπτων για την επόμενη μισή ώρα με χρέωση δώδεκα λεπτά ανά λεπτό.
+yourcallisimpotent : Η κλήση σας είναι σημαντική για μας.
+you_entered : Έχετε εισάγει
+you_say_yes : Ραΐ, όταν κάποιος σε ρωτάει αν είσαι θεός, λες ΝΑΙ!
+zip-code : ταχυδρομικός κώδικας
+zombies : Λόγου παρουσίας ζόμπι στο χώρο που καλέσατε το γραφείο έχει εκκενωθεί. Παρακαλούμε αφήστε ένα μήνυμα και θα επικοινωνήσουμε μαζί σας το συντομότερο δυνατόν, εκτός βέβαια αν έρθει η αποκάλυψη πρώτα. Σε αυτήν την περίπτωση πιθανότερα θα έχουμε άλλες προτεραιότητες.
+100 : Εκατό
+billion : δισεκατομμύριο
+ekatomyria : εκατομμύρια
+female-1 : μία
+female-2 : δύο
+female-3 : τρις
+female-4 : τέσσερις
+hundred-100 : εκατόν
+hundred-200 : διακόσια
+hundred-300 : τριακόσια
+hundred-400 : τετρακόσια
+hundred-500 : πεντακόσια
+hundred-600 : εξακόσια
+hundred-700 : εφτακόσια
+hundred-800 : οχτακόσια
+hundred-900 : εννιακόσια
+hwra : η ώρα
+kai : και
+myrio : εκατομμύριο
+seconds : δευτερόλεπτα
+thousands : χιλιάδες
+xilia : χίλια
+call-from : Εισερχόμενη κλήση από
+no-recording : Εχετε μια εισερχόμενη κλήση από
+options : Πατήστε το ένα για να αποδεχτείτε αυτήν την κλήση, ή το δυο για να την απορρίψετε
+pls-hold-while-try : Παρακαλώ περιμένετε ως που να εντοπίσω το άτομο που καλείτε
+sorry : Λυπάμαι, αλλά δεν μπόρεσα να εντοπίσω το άτομο που καλείτε
+status : Το άτομο που καλείτε απουσιάζει; Θα προσπαθήσω να σας τον βρω για σας
+ac : a cee
+air-conditioner : κλιματιστικό
+alarm : συναγερμός
+amp : amp
+amps : amps
+attic : σοφίτα
+baby-sleeping-mode : λειτουργία ύπνου
+back : πίσω
+basement : υπόγειο
+bathroom : τουαλέτα
+bedroom : κρεβατοκάμαρα
+bright : φωτεινό
+call : Κλήση
+callerid : αναγνώριση κλήσης
+carport : παρκινγκ
+closet : ντουλάπα
+coffee-pot : κανάτα καφέ
+cool : κρύο
+cooling : κρυώνω
+dc : Dee Cee
+decibel : decibel
+decibels : decibels
+deck : κατάστρωμα
+degree : μοίρα
+degrees : μοίρες
+den : φωλιά
+dim : χαμήλωσε
+dining-room : τραπεζαρία
+door : πόρτα
+doors : πόρτες
+down : Κάτω
+driveway : δρομάκι
+dryer : στεγνωτήριο
+fan : ανεμιστήρας
+farad : απάτη
+farads : απάτες
+first-floor : πρώτος όροφος
+first : πρώτη
+floor : πάτωμα
+floors : πατώματα
+for-extended-status-report : Για μια εκτεταμένη αναφορά κατάστασης
+for-quick-status-report : Για μια γρήγορη αναφορά κατάστασης
+for-wx-report : Για τον καιρό
+for : για
+fountain : σιντριβάνι
+foyer : φουαγιέ
+front : μπροστά
+furnace : καυστήρας
+game-room : δωμάτιο παιχνιδιών
+garage : γκαράζ
+great-room : μεγάλο δωμάτιο
+guest-room : δωμάτιο φιλοξενουμένων
+hall : Σάλα
+has-been-left : έχει αφεθεί
+has-been : έχει να
+has : έχει
+heat-pump : αντλία θερμότητας
+heat : ζέστη
+heating : θέρμανση
+hot-tub : Τζακούζι
+house : Σπίτι
+intruder : εισβολέας
+is : είναι
+kelvin : kelvin
+kitchen : κουζίνα
+lamp : λάμπα
+lamps : λάμπες
+landscape : τοπίο
+laundry : άπλυτα
+library : Βιβλιοθήκη
+light : φως
+lights : φώτα
+living-room : σαλόνι
+locked : κλειδωμένο
+locking : κλειδώνω
+mail : Ταχυδρομείο
+mailbox : γραμματοκιβώτιο
+master : κύριος
+off : εκτός
+office : Γραφείο
+ohm : Ohm
+ohms : Ohms
+on : Ενεργό
+open : ανοιχτό
+patio : βεράντα
+phone : τηλέφωνο
+play-room : δωμάτιο παιχνιδιών
+play : παίξε
+pool : Πισίνα
+porch : βεράντα
+power-failure : πτώση τάσης
+press : Πατήστε
+pressure : πίεση
+psi : πι εσ αη
+quiet-mode : αθόρυβη λειτουργία
+reset : επαναφορά
+roof : στέγη
+room : δωμάτιο
+rooms : δωμάτια
+second-floor : Δεύτερος όροφος
+second : δεύτερη
+secure : ασφαλισμένη
+security-system : σύστημα ασφαλείας
+security : Ασφάλεια
+set : ορισμός
+side : άκρη
+solar : ηλιακό
+sprinklers : ψεκαστήρες
+still : ακόμα
+stove : κουζίνα
+sump-pump : υποβρύχια αντλία
+sun-room : δωμάτιο ήλιου
+sun : ήλιος
+system : Σύστημα
+systems : Συστήματα
+thermostat : Θερμοστάτης
+to-control-environ-sys : Για να ελέγχετε τα συστήματα κλιματισμού
+to-control-lights-appl : Για να ελέγχετε τα φώτα και τις οικιακές συσκευές
+tower : πύργος
+unlocked : ξεκλειδωμένο
+unlocking : ξεκλειδώνω
+up : επάνω
+volt : Volt
+volts : Volts
+was : ηταν
+washing-machine : πληντιριο ρουχων
+water-heater : θερμοσυμφονας
+watt : βάτ
+watts : βάτς
+well-pump : αντλία πηγαδιού
+wind : άνεμος
+window : παράθυρο
+windows : παράθυρα
+xmas-lights : Χριστουγεννιάτικα φώτα
+xmas-tree : Χριστουγεννιάτικο δέντρο
+yard : αυλή
+first-three-letters-entry : Παρακαλώ εισάγετε τα πρώτα τρία γράμματα της καταχώρισης που ψάχνετε.
+if-correct-press : Εάν είναι σωστό πατήστε
+if-incorrect-press : Εάν είναι λανθασμένο πατήστε
+welcome-to-phonebook : Καλωσορίσατε στο τηλεφωνικό κατάλογο.
+alpha : άλφα
+bravo : μπράβο
+charlie : charlie
+delta : delta
+echo : έκο
+foxtrot : φόξτρότ
+golf : golf
+hotel : χότελ
+india : india
+juliet : τζουλιετ
+kilo : κίλο
+lima : λίμα
+mike : mike
+niner : ναήνερ
+november : νοβέμπερ
+oscar : όσκερ
+papa : πάππα
+quebec : κιουμπεκ
+romeo : romeo
+sierra : σιέρα
+tango : tango
+uniform : γιουνιφορμ
+victor : victor
+whiskey : whiskey
+xray : εξray
+yankee : yankee
+zulu : zulu
+around : γύρο
+bar : bar
+barometer : βαρόμετρο
+ceiling : ταβάνι
+dew-point : σημείο dew
+falling : πτώση
+feet : Πόδια
+foot : πόδι
+gust : ριπή
+gusting-to : ριπές έως
+gusts : ριπές
+gusty : ριπές
+heat-index : δείκτης θερμότητας
+humidity : υγρασία
+inch : inch
+inches : inches
+kilometer : Χιλιόμετρα
+large : μεγάλο
+meter : μέτρο
+mist : ομίχλη
+north : βόρια
+northeast : βορειοανατολικά
+northwest : βορειοδυτικά
+percent : τοις εκατό
+point : Σημείο
+rising : υψώνετε
+south : νότιο
+southeast : νοτιοανατολικά
+southwest : νοτιοδυτικά
+steady : σταθερά
+temperature : θερμοκρασία
+wind-chill : ψύξη ανέμου
+winds : ανέμους

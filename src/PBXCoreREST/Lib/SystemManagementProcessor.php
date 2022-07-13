@@ -211,7 +211,7 @@ class SystemManagementProcessor extends Injectable
         $link = '/tmp/firmware_update.img';
         Util::createUpdateSymlink($tempFilename, $link);
         $mikoPBXFirmwarePath = Util::which('mikopbx_firmware');
-        Processes::mwExecBg("{$mikoPBXFirmwarePath} recover_upgrade {$link} /dev/{$dev}");
+        Processes::mwExecBg("{$mikoPBXFirmwarePath} {$link} /dev/{$dev}");
 
         return $res;
     }

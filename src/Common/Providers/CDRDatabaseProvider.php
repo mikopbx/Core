@@ -101,7 +101,7 @@ class CDRDatabaseProvider extends DatabaseProviderBase implements ServiceProvide
         $idsList        = $managedCache->getKeys(CallDetailRecordsTmp::CACHE_KEY);
         foreach ($idsList as $key){
             $cdr = $managedCache->get(str_replace(ManagedCacheProvider::CACHE_PREFIX, '', $key));
-            if($cdr){
+            if($cdr && $cdr['appname'] !== 'originate'){
                 $result[] = $cdr;
             }
         }

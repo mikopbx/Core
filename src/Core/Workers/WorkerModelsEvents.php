@@ -264,6 +264,7 @@ class WorkerModelsEvents extends WorkerBase
         $tables[] = [
             'settingName' => [
                 'SIPPort',
+                'TLS_PORT',
                 'SIPDefaultExpiry',
                 'SIPMinExpiry',
                 'SIPMaxExpiry',
@@ -305,6 +306,7 @@ class WorkerModelsEvents extends WorkerBase
         $tables[] = [
             'settingName' => [
                 'SIPPort',
+                'TLS_PORT',
                 'RTPPortFrom',
                 'RTPPortTo',
                 'IAXPort',
@@ -378,6 +380,7 @@ class WorkerModelsEvents extends WorkerBase
                 'PBXTimezone',
                 'VoicemailNotificationsEmail',
                 'SystemNotificationsEmail',
+                'SystemEmailForMissed',
             ],
             'functions'   => [
                 self::R_VOICEMAIL,
@@ -747,7 +750,7 @@ class WorkerModelsEvents extends WorkerBase
         if (PbxSettings::class !== $called_class) {
             return;
         }
-
+        PbxSettings::clearCache(PbxSettings::class);
         /** @var PbxSettings $pbxSettings */
         $pbxSettings = PbxSettings::findFirstByKey($recordId);
         if ($pbxSettings === null) {

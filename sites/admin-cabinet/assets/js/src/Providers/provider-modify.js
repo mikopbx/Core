@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, Form */
+/* global globalRootUrl, globalTranslate, Form, $ */
 
 // custom form validation rule
 $.fn.form.settings.rules.username = function (noregister, username) {
@@ -50,7 +50,7 @@ const provider = {
 			identifier: 'host',
 			rules: [
 				{
-					type: 'empty',
+					type: 'checkHostProvider',
 					prompt: globalTranslate.pr_ValidationProviderHostIsEmpty,
 				},
 			],
@@ -104,6 +104,65 @@ const provider = {
 			return false;
 		});
 		provider.initializeForm();
+
+		provider.updateVisibilityElements();
+		$('#registration_type').on('change', provider.updateVisibilityElements);
+		$('#disablefromuser input').on('change', provider.updateVisibilityElements);
+	},
+	updateVisibilityElements(){
+		if(provider.providerType !== 'SIP'){
+			return;
+		}
+		let elHost 	    	= $('#elHost');
+		let elUsername  	= $('#elUsername');
+		let elSecret    	= $('#elSecret');
+		let elAdditionalHost= $('#elAdditionalHosts');
+		let regType 		= $('#registration_type').val();
+		let elUniqId		= $('#uniqid');
+
+		let valUserName  	= $('#username');
+		let valSecret   	= $('#secret');
+
+		if(valUserName.val() === elUniqId.val()){
+			valUserName.val('');
+		}
+		valUserName.removeAttr('readonly');
+
+		if(regType === 'outbound'){
+			valSecret.attr('type', 'password')
+			elHost.show();
+			elUsername.show();
+			elSecret.show();
+			elAdditionalHost.show();
+		}else if(regType === 'inbound'){
+			valUserName.val(elUniqId.val());
+			valUserName.attr('readonly', '');
+			if(valSecret.val().trim() === ''){
+				valSecret.val('id='+$('#id').val()+'-'+elUniqId.val())
+			}
+			valSecret.attr('type', 'text')
+
+			elHost.hide();
+			elUsername.show();
+			elSecret.show();
+			elAdditionalHost.hide();
+		}else if(regType === 'none'){
+			elHost.show();
+			elUsername.hide();
+			elSecret.hide();
+			elAdditionalHost.show();
+		}
+
+		let el = $('#disablefromuser');
+		let fromUser = $('#divFromUser');
+		if(el.checkbox('is checked')){
+			fromUser.hide();
+			fromUser.removeClass('visible');
+		}else{
+			fromUser.show();
+			fromUser.addClass('visible');
+
+		}
 	},
 	/**
 	 * Adds record to hosts table
@@ -171,6 +230,15 @@ const provider = {
 	},
 	initializeForm() {
 		Form.$formObj = provider.$formObj;
+		Form.$formObj.form.settings.rules.checkHostProvider = (value) => {
+			let enable;
+			if($('#registration_type').val() === 'inbound'){
+				enable = true;
+			}else{
+				enable = value.trim() !== '';
+			}
+			return enable;
+		};
 		switch (provider.providerType) {
 			case 'SIP':
 				Form.url = `${globalRootUrl}providers/save/sip`;

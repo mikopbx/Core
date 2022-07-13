@@ -19,6 +19,7 @@
 
 namespace MikoPBX\AdminCabinet\Controllers;
 
+use GuzzleHttp\Client as GuzzleHttpClient;
 use MikoPBX\AdminCabinet\Forms\LicensingActivateCouponForm;
 use MikoPBX\AdminCabinet\Forms\LicensingChangeLicenseKeyForm;
 use MikoPBX\AdminCabinet\Forms\LicensingGetKeyForm;
@@ -54,7 +55,7 @@ class LicensingController extends BaseController
         $getKeyForm             = new LicensingGetKeyForm();
         $this->view->getKeyForm = $getKeyForm;
         $this->view->submitMode = null;
-
+        $this->view->internetExists = $this->checkInternetConnection();
     }
 
     /**
@@ -63,6 +64,26 @@ class LicensingController extends BaseController
     public function saveAction()
     {
         $this->session->remove('PBXLicense');
+    }
+
+    /**
+     * Проверка доступа к серверу лицензирования.
+     * @return bool
+     */
+    private function checkInternetConnection():bool
+    {
+        $client  = new GuzzleHttpClient();
+        try {
+            $res    = $client->request('GET', 'https://lic.miko.ru/protect/v1/ping', ['timeout'     => 2, 'http_errors' => false,]);
+            $code   = $res->getStatusCode();
+        }catch (\Throwable $e ){
+            $code = 0;
+        }
+        $body = '';
+        if($code === 200 && isset($res)){
+            $body = $res->getBody()->getContents();
+        }
+        return strpos($body, "message='pong'") !== false;
     }
 
 }

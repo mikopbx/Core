@@ -409,6 +409,18 @@ function event_dial_create_chan()
     return data;
 end
 
+function event_dial_end()
+    local data = {}
+
+    data['endtime']  = getNowDate();
+    data['UNIQUEID']	= get_variable("pt1c_UNIQUEID");
+    data['src_chan']	= get_variable("CHANNEL");
+    data['linkedid']    = get_variable("CHANNEL(linkedid)");
+    data['action']      = 'dial_end';
+    userevent_return(data)
+    return data;
+end
+
 -- Обработка события ответа на звонок. Соединение абонентов.
 function event_dial_answer()
     local data = {}
@@ -543,6 +555,10 @@ function event_transfer_dial()
     local QUEUE_SRC_CHAN = get_variable("QUEUE_SRC_CHAN");
 
     local is_local = string.lower(TRANSFERERNAME):find("local/") ~= nil
+    local is_queue = '0';
+    if(QUEUE_SRC_CHAN~='') then
+        is_queue= '1';
+    end
 
     local channel;
     if(QUEUE_SRC_CHAN~='' and is_local) then
@@ -557,6 +573,7 @@ function event_transfer_dial()
 
     data['action']  	= "transfer_dial";
     data['agi_channel'] = channel;
+    data['is_queue']    = is_queue;
     data['linkedid']  	= get_variable("CHANNEL(linkedid)");
     data['src_chan'] 	= channel;
     data['did']		    = get_variable("FROM_DID");
@@ -673,6 +690,7 @@ function event_hangup_chan()
     data['agi_channel'] = get_variable("CHANNEL");
     data['OLD_LINKEDID']= get_variable("OLD_LINKEDID");
     data['UNIQUEID']  	= get_variable("pt1c_UNIQUEID");
+    data['VMSTATUS']  	= get_variable("VMSTATUS");
     if('ANSWER' == data['dialstatus'])then
         data['dialstatus'] = "ANSWERED";
     end
@@ -718,6 +736,7 @@ function event_queue_start()
 
     if(ISTRANSFER ~= '')then
         data['transfer']  	= '1';
+        set_variable("_TRANSFERERNAME", data['src_chan']);
     else
         data['transfer']  	= '0';
     end
@@ -825,8 +844,8 @@ extensions = {
     voicemail_start={},
     voicemail_end={},
     interception_start={},
-    interception_bridge_result={}
-
+    interception_bridge_result={},
+    dial_end={}
 }
 
 -- event_interception_start event_interception_bridge_result
@@ -849,6 +868,7 @@ extensions.voicemail_start["_.!"]           = function() event_voicemail_start()
 
 extensions.interception_start["_.!"]           = function() event_interception_start() end
 extensions.interception_bridge_result["_.!"]   = function() event_interception_bridge_result() end
+extensions.dial_end["_.!"]                     = function() event_dial_end() end
 --
 ------
 ---- Безопасное подключение дополнительных dialplan, описанных в /etc/asterisk/extensions-lua

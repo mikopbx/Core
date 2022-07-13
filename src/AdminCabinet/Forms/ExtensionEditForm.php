@@ -184,10 +184,32 @@ class ExtensionEditForm extends Form
             ],
             'useEmpty' => false,
             'value'    => $sip->dtmfmode,
-            'class'    => 'ui selection dropdown dtmf-mode-select',
+            'class'    => 'ui selection dropdown',
         ]
         );
         $this->add($dtmfmode);
+
+        // Transport
+        $arrTransport = [
+            Sip::TRANSPORT_UDP    => Sip::TRANSPORT_UDP,
+            Sip::TRANSPORT_TCP    => Sip::TRANSPORT_TCP,
+            Sip::TRANSPORT_TLS    => Sip::TRANSPORT_TLS,
+        ];
+
+        $transport = new Select(
+            'sip_transport', $arrTransport, [
+            'using'    => [
+                'id',
+                'name',
+            ],
+           'emptyText'  => 'udp, tcp',
+           'emptyValue' => ' ',
+            'useEmpty' => true,
+            'value'    => empty($sip->transport)?' ':$sip->transport,
+            'class'    => 'ui selection dropdown',
+        ]
+        );
+        $this->add($transport);
 
         // Networkfilterid
         $networkfilterid = new Select(

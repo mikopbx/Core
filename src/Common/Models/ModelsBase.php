@@ -615,8 +615,7 @@ class ModelsBase extends Model
     private function checkRelationsSatisfaction($theFirstDeleteRecord, $currentDeleteRecord): bool
     {
         $result = true;
-        $relations
-                = $currentDeleteRecord->_modelsManager->getRelations(get_class($currentDeleteRecord));
+        $relations = $currentDeleteRecord->_modelsManager->getRelations(get_class($currentDeleteRecord));
         foreach ($relations as $relation) {
             $foreignKey = $relation->getOption('foreignKey');
             if ( ! array_key_exists('action', $foreignKey)) {

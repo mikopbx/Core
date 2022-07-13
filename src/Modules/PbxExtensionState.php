@@ -286,6 +286,12 @@ class PbxExtensionState extends Injectable
                 }
                 $records = $moduleModelClass::find();
                 foreach ($records as $record) {
+                    $relations = $record->_modelsManager->getRelations(get_class($record));
+                    if(empty($relations)){
+                        // Если в модели не описаны $relations, то не обрабатываем.
+                        // Для больших таблиц потенциальная проблема.
+                        break;
+                    }
                     if ( ! $record->beforeDelete()) {
                         foreach ($record->getMessages() as $message) {
                             $this->messages[] = $message->getMessage();
@@ -428,6 +434,11 @@ class PbxExtensionState extends Injectable
                 $records = $moduleModelClass::find();
                 foreach ($records as $record) {
                     $relations = $record->_modelsManager->getRelations(get_class($record));
+                    if(empty($relations)){
+                        // Если в модели не описаны $relations, то не обрабатываем.
+                        // Для больших таблиц потенциальная проблема.
+                        break;
+                    }
                     foreach ($relations as $relation) {
                         $alias        = $relation->getOption('alias');
                         $checkedValue = $record->$alias;

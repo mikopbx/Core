@@ -114,13 +114,18 @@ class SSHConf extends Injectable
         $password       = $this->mikoPBXConfig->getGeneralSettings('SSHPassword');
         $hashString     = $this->mikoPBXConfig->getGeneralSettings('SSHPasswordHashString');
         $echoPath       = Util::which('echo');
-        $chpasswdPath   = Util::which('chpasswd');
-        Processes::mwExec("{$echoPath} \"root:$password\" | {$chpasswdPath}");
+        $chPasswdPath   = Util::which('chpasswd');
+        $passwdPath   = Util::which('passwd');
+        Processes::mwExec("{$echoPath} 'root:$password' | {$chPasswdPath}");
+
+        Processes::mwExec("{$passwdPath} -l www");
         $this->mikoPBXConfig->setGeneralSettings('SSHPasswordHash',       md5_file('/etc/passwd'));
         if($hashString !== md5($password)){
             $this->mikoPBXConfig->setGeneralSettings('SSHPasswordHashString', md5($password));
             $this->sendNotify('Attention! SSH password changed!', ['The password for SSH access to the PBX has been changed']);
-            unlink(self::CHECK_PASSWORD_FILE);
+            if(file_exists(self::CHECK_PASSWORD_FILE)){
+                unlink(self::CHECK_PASSWORD_FILE);
+            }
         }
     }
 
@@ -155,10 +160,9 @@ class SSHConf extends Injectable
         if(file_exists(self::CHECK_PASSWORD_FILE)){
             $data = stat(self::CHECK_PASSWORD_FILE);
             if(is_array($data)){
-                $enableNotify = (time() - stat('/etc/asterisk/asterisk.conf')['mtime']??0) > 60*60*4;
+                $enableNotify = (time() - stat(self::CHECK_PASSWORD_FILE)['mtime']??0) > 60*60*4;
             }
         }
-
         if(!$enableNotify){
             return;
         }
@@ -174,7 +178,7 @@ class SSHConf extends Injectable
             // Системный пароль не соответствует тому, что установлен в конфигурационном файле.
             $messages[] = 'The system password does not match what is set in the configuration file.';
         }
-        if(!empty($messages) && $enableNotify){
+        if(!empty($messages)){
             file_put_contents(self::CHECK_PASSWORD_FILE, time());
             $SSHConf = new SSHConf();
             $SSHConf->sendNotify('Attention! SSH password compromised', $messages);

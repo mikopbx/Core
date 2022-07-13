@@ -7,10 +7,12 @@ return [
     'ex_Deutsch' => 'Deutsch',
     'ex_Danish' => 'Dansk',
     'ex_Spanish' => 'Espanol',
+    'ex_Greek' => 'Ελληνική',
     'ex_French' => 'Le français',
     'ex_Italian' => 'Italiano',
     'ex_Portuguese' => 'Português',
-    'ex_Ukrainian' => 'Український',
+    'ex_PortugueseBrazil' => 'Português (Brazil)',
+    'ex_Ukrainian' => 'Українська',
     'ex_Vietnamese' => 'Tiếng việt',
     'ex_Chinese' => '中国人',
     'ex_Polish' => 'Polskie',
@@ -55,22 +57,22 @@ return [
     'qf_Qualify' => '支持NAT会话',
     'qf_Frequency' => '发送频率（以秒为单位）。',
     'qf_NatModeInstructions' => '<div class =\'ui消息\'>
-            <div class =\'ui项目符号列表\'>
-                <div class =\'item\'> <b>否</b>除了RFC 3581中指定的处理之外，不执行任何特殊的NAT处理。
-                </div>
-                <div class =\'item\'> <b> force_rport</b>即使未指定任何rport参数，其作用也与
-                </div>
-                <div class =\'item\'> <b> comedia</b>将RTP数据包发送回接收它们的端口，而忽略了SDP标头中的所需端口
-                </div>
-                <div class =\'item\'> <b> auto_comedia</b>如果Asterisk可以确定设备位于NAT之后，请设置comedia选项
-                </div>
-                <div class =\'item\'> <b> force_rport，comedia</b>选项替换为nat = yes
-                </div>
-            </div>
-        </div>',
+            <div class =\'ui项目符号列表\'>
+                <div class =\'item\'> <b>否</b>除了RFC 3581中指定的处理之外，不执行任何特殊的NAT处理。
+                </div>
+                <div class =\'item\'> <b> force_rport</b>即使未指定任何rport参数，其作用也与
+                </div>
+                <div class =\'item\'> <b> comedia</b>将RTP数据包发送回接收它们的端口，而忽略了SDP标头中的所需端口
+                </div>
+                <div class =\'item\'> <b> auto_comedia</b>如果Asterisk可以确定设备位于NAT之后，请设置comedia选项
+                </div>
+                <div class =\'item\'> <b> force_rport，comedia</b>选项替换为nat = yes
+                </div>
+            </div>
+        </div>',
     'qf_QualifyInstructions' => '<div class =\'ui消息\'>
-            启用此选项后，Asterisk将以指定的频率发送SIP选项数据包。这是支持路由器上NAT隧道所必需的。
-        </div>',
+            启用此选项后，Asterisk将以指定的频率发送SIP选项数据包。这是支持路由器上NAT隧道所必需的。
+        </div>',
     'AdvancedOptions' => '进阶设定',
     'ConnectionSettings' => '连接设定',
     'BreadcrumbHome' => '从头开始',
@@ -196,7 +198,6 @@ return [
     'pr_ProviderHostOrIPAddress' => '主机或IP地址',
     'pr_DTMFMode' => 'DTMF模式',
     'pr_RegistrationSettings' => '注册设置',
-    'pr_DefaultUser' => '使用其他字段覆盖授权名称（默认用户）',
     'pr_FromUser' => '某些提供程序要求您另外指定一个与登录名不同的字段（来自用户）',
     'pr_FromDomain' => '某些提供程序需要附加值（fromdomain）',
     'pr_ValidationProviderNameIsEmpty' => '输入提供商名称',
@@ -223,7 +224,7 @@ return [
     'pr_AddIAXProvider' => '连接IAX',
     'pr_QualifyInstructionsIAX' => '启用此选项后，Asterisk将发送SIP选项数据包。这是支持路由器上NAT隧道所必需的。',
     'pr_CustomFieldsDescriptions' => '<div class =\'ui message\'>在大多数情况下，替代字段应保留为空白。
-    仅当您的呼叫不起作用并且提供商需要特殊设置时，才必须根据提供商的建议填写这些字段。</div>',
+    仅当您的呼叫不起作用并且提供商需要特殊设置时，才必须根据提供商的建议填写这些字段。</div>',
     'pr_ReceiveCallsWithoutAuth' => '信任此提供程序并在不进行身份验证的情况下接收来自该提供程序的任何呼叫',
     'pr_ValidationProviderPortRange' => '提供者端口必须在{ruleValue}之内',
     'pr_DeleteTitle' => '删除提供者',
@@ -737,9 +738,9 @@ return [
     'lic_LicenseWarningHeader' => '该程序的副本未注册',
     'lic_LicenseWarningText' => '转到<a href=\'/admin-cabinet/licensing/modify/\'>许可部分</a>，并按照必要的步骤注册系统',
     'lic_FailedToGetTrialKey2051' => '（2051）无法注册该副本，因为您已经在此机器上将注册号与其他电子邮件一起使用。<br>
- 使用之前从lic@miko.ru发送给您的密钥',
+ 使用之前从lic@miko.ru发送给您的密钥',
     'lic_FailedToGetTrialKey2022' => '（2022）无法注册该副本。 已在指定的电子邮件中生成了另一家公司的注册号。
- 使用先前从lic@miko.ru发送给您的密钥，或指定公司的正确名称。',
+ 使用先前从lic@miko.ru发送给您的密钥，或指定公司的正确名称。',
     'lic_FailedActivateCoupon2057' => '（2057）此优惠券已被阻止，请联系lic@miko.ru',
     'lic_FailedActivateCoupon2040' => '（2040）此优惠券不存在，请检查输入是否正确',
     'lic_FailedActivateCoupon2041' => '（2041）此优惠券已被更早激活',
@@ -1062,7 +1063,6 @@ return [
     'Storage disk was mounted successfully...' => '存储盘成功挂载',
     'gs_NeedRestartPBX' => '更改时，PBX 将重新启动（星号服务）',
     'ex_BusyLevelInfo' => '达到指定的通话次数后，员工的电话将被视为占线。',
-    'ex_PortugueseBrazil' => '葡萄牙语（巴西）',
     'gs_RTPStunServer' => '服务器 STUN 地址（例如：stun.test.net:10000）',
     'cr_ValidateExtensionLen' => '分机号码必须是两位或更多位数字',
     'cr_ValidatePinNumber' => 'PIN 只能是数字',
@@ -1077,4 +1077,45 @@ return [
     'The password for SSH access to the PBX has been changed' => "访问 MikoPBX 的 SSH 密码已更改！",
     'The SSH password was not changed from the web interface.' => 'SSH 密码在 MikoPBX Web 界面外更改',
     'The system password does not match what is set in the configuration file.' => 'SSH MikoPBX 密码与配置文件中设置的密码不同。也许它是从 PBX 控制台手动更改的。',
+    'adv_isSimplePassword' => '用于“%type%”的不安全密码 - <a href=\'%url%\'>change</a>',
+    'gs_WebPasswordFieldName' => '网页界面',
+    'gs_SshPasswordFieldName' => 'SSH',
+    'gs_UserPasswordFieldName' => '扩展名<%extension%>',
+    'gs_PasswordSimple' => '设置的密码太简单了。',
+    'gs_SetPassword' => '设置新密码',
+    'gs_SetPasswordInfo' => '密码太简单了。新密码必须包含数字、大小写字母。',
+    'pass_CheckWebAdminPasswordSimple' => 'WEB密码太简单了。',
+    'pass_CheckWebAdminPasswordDontMatch' => '输入的 WEB 密码不匹配',
+    'pass_CheckWebAdminPasswordEmpty' => '该字段为空：WEB 密码',
+    'pass_CheckWebPassErrorChange' => '更改密码失败',
+    'pass_CheckSSHPasswordDontMatch' => '输入的 SSH 密码不匹配',
+    'pass_CheckSSHPasswordEmpty' => '字段为空：SSH',
+    'pass_CheckSSHPasswordSimple' => 'SSH 的密码太简单了。',
+    'gs_PasswordNoNumbers' => '密码必须包含数字',
+    'gs_PasswordNoLowSimvol' => '密码必须包含小写字符',
+    'gs_PasswordNoUpperSimvol' => '密码必须包含大写字符',
+    'ex_ValidateUsernameSpecialCharacters' => '全名不得包含特殊字符',
+    'ex_ValidateSecretWeak' => 'SIP 密码必须超过 4 个字符',
+    'ex_PasswordNoLowSimvol' => '密码必须包含字母',
+    'ex_PasswordNoNumbers' => '密码必须包含数字',
+    'lic_NoInetHeader' => '无权访问许可证服务器。',
+    'lic_NoInet' => '可能没有从 MikoPBX 服务器访问 Internet',
+    'lic_NoInetLicMiko' => '可能限制访问资源 <b>lic.miko.ru</b>',
+    'lic_NoInetNetSettings' => "检查 <a href='/admin-cabinet/network/modify/'>network</a> 设置中的 <b>DNS</b> 和 <b>Gateway</b> 设置",
+    'lic_SuccessfulСuponActivation' => '优惠券成功激活',
+    'or_RuleDescriptionBeginEmpty' => '编号由 <b>%restnumbers%</b> 位组成',
+    'or_RuleNotConfigured' => '未配置规则',
+    'or_RuleAnyNumbers' => '任何数字',
+    'ex_Transport' => '传输协议（默认为 UDP/TCP）',
+    'gs_TLS_PORT' => 'SIP TLS 端口（加密呼叫）',
+    'ex_OutboundProxy' => '出站代理（例如：pbx.yandex.net:5080）',
+    'lic_FailedCheckLicenseNotPbxResponse' => 'ATS 没有回应有关许可证信息的请求。服务不可用。',
+    'ms_SystemEmailForMissed' => '错过通知的电子邮件',
+    'sip_registration_type' => '帐户类型',
+    'sip_REG_TYPE_OUTBOUND' => '传出注册',
+    'sip_REG_TYPE_INBOUND' => '传入注册',
+    'sip_REG_TYPE_NONE' => '通过IP地址认证，无需密码',
+    'pr_RedefinitionFromUser' => '重新定义 SIP 标头“发件人”',
+    'nw_NATInfoMessage1' => 'PBX 必须在公共地址可用',
+    'nw_NATInfoMessage2' => '必须在路由器上配置 SIP/RTP 端口转发',
 ];

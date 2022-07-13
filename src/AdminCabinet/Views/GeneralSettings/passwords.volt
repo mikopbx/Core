@@ -1,3 +1,15 @@
+
+{% for field in simplePasswords %}
+    {% if field === 'WebAdminPassword' %}
+       <div class="ui negative message password-validate">
+         <div class="header">
+           {{ t._('gs_SetPassword') }}
+         </div>
+         <p>{{ t._('gs_SetPasswordInfo') }}</p>
+       </div>
+    {% endif  %}
+{% endfor  %}
+
 <div class="field">
     <label>{{ t._('gs_WebAdminLogin') }}</label>
     {{ form.render('WebAdminLogin') }}

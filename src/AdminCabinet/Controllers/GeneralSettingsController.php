@@ -22,11 +22,10 @@ namespace MikoPBX\AdminCabinet\Controllers;
 use MikoPBX\AdminCabinet\Forms\GeneralSettingsEditForm;
 use MikoPBX\Common\Models\Codecs;
 use MikoPBX\Common\Models\PbxSettings;
-use Phalcon\Mvc\Model;
+use MikoPBX\Core\System\Util;
 
 class GeneralSettingsController extends BaseController
 {
-
     /**
      * Builds general settings form
      */
@@ -41,9 +40,24 @@ class GeneralSettingsController extends BaseController
         $pbxSettings            = PbxSettings::getAllPbxSettings();
         $this->view->form       = new GeneralSettingsEditForm(null, $pbxSettings);
         $this->view->submitMode = null;
+
+        $this->view->simplePasswords = $this->getSimplePasswords($pbxSettings);
     }
 
-
+    private function getSimplePasswords($data):array
+    {
+        $passwordCheckFail = [];
+        $CloudInstanceId = $data['CloudInstanceId']??'';
+        foreach (['SSHPassword', 'WebAdminPassword'] as $value){
+            if( !isset($data[$value]) ){
+                continue;
+            }
+            if($CloudInstanceId === $data[$value] || Util::isSimplePassword($data[$value])){
+                $passwordCheckFail[] = $value;
+            }
+        }
+        return $passwordCheckFail;
+    }
 
     /**
      * Сохранение настроек системы
@@ -54,6 +68,18 @@ class GeneralSettingsController extends BaseController
             return;
         }
         $data        = $this->request->getPost();
+        $passwordCheckFail = $this->getSimplePasswords($data);
+        if(!empty($passwordCheckFail)){
+            $this->view->message = [
+                'error' => $this->translation->_('gs_SetPasswordInfo')
+            ];
+        }
+        if(!empty($passwordCheckFail)){
+            $this->view->success = false;
+            $this->view->passwordCheckFail = $passwordCheckFail;
+            return;
+        }
+
         $pbxSettings = PbxSettings::getDefaultArrayValues();
         if(isset($data['SSHPassword'])){
             // Если отправили пароль по-умолчанию, то сделаем его хэш равным хэш пароля WEB
@@ -102,7 +128,6 @@ class GeneralSettingsController extends BaseController
                 if ($record === null) {
                     $record        = new PbxSettings();
                     $record->key   = $key;
-                    $record->value = $newValue;
                 } elseif ($record->key === $key
                     && $record->value === $newValue) {
                     continue;

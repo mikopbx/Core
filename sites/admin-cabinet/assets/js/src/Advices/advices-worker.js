@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalWebAdminLanguage, sessionStorage */
+/* global globalRootUrl, globalWebAdminLanguage, sessionStorage, $, globalTranslate */
 
 const advicesWorker = {
 	timeOut: 300000,
@@ -67,6 +67,11 @@ const advicesWorker = {
 			let countMessages = 0;
 			let iconBellClass = '';
 			htmlMessages += '<div class="ui relaxed divided list">';
+
+			if (response.advices.needUpdate !== undefined
+				&& response.advices.needUpdate.length > 0) {
+				$(window).trigger('SecurityWarning', [response.advices]);
+			}
 
 			if (response.advices.error !== undefined
 				&& response.advices.error.length > 0) {

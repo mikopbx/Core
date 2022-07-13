@@ -21,12 +21,20 @@
             <td class="dragHandle"><i class="sort grey icon"></i></td>
             <td class="{% if rule['disabled']==1 %}disabled{% endif %}">{{ rule['rulename'] }}</td>
             <td class="{% if rule['disabled']==1 %}disabled{% endif %}">
-                {% if (rule['restnumbers']>0) %}
-                    {{ t._('or_RuleDescription',['numberbeginswith':rule['numberbeginswith'],'restnumbers':rule['restnumbers']]) }}
-                {% elseif (rule['restnumbers']==0) %}
-                    {{ t._('or_RuleDescriptionFullMatch',['numberbeginswith':rule['numberbeginswith']]) }}
-                {% elseif (rule['restnumbers']==-1) %}
-                    {{ t._('or_RuleDescriptionBeginMatch',['numberbeginswith':rule['numberbeginswith']]) }}
+                {% if (rule['numberbeginswith'] is empty and rule['restnumbers'] is empty) %}
+                     {{ t._('or_RuleNotConfigured') }}
+                {% elseif (rule['numberbeginswith'] is empty and rule['restnumbers'] < 0) %}
+                     {{ t._('or_RuleAnyNumbers') }}
+                {% elseif (rule['numberbeginswith'] is empty and rule['restnumbers'] > 0) %}
+                     {{ t._('or_RuleDescriptionBeginEmpty',['restnumbers':rule['restnumbers']]) }}
+                {% else %}
+                     {% if (rule['restnumbers']>0) %}
+                         {{ t._('or_RuleDescription',['numberbeginswith':rule['numberbeginswith'],'restnumbers':rule['restnumbers']]) }}
+                     {% elseif (rule['restnumbers']==0) %}
+                         {{ t._('or_RuleDescriptionFullMatch',['numberbeginswith':rule['numberbeginswith']]) }}
+                     {% elseif (rule['restnumbers']==-1) %}
+                         {{ t._('or_RuleDescriptionBeginMatch',['numberbeginswith':rule['numberbeginswith']]) }}
+                     {% endif %}
                 {% endif %}
             </td>
             <td class="{% if rule['disabled']==1 %}disabled{% endif %}">{{ rule['provider'] }}</td>

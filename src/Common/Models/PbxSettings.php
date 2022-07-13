@@ -81,6 +81,7 @@ class PbxSettings extends ModelsBase
             'Description'                     => '',
             'RestartEveryNight'               => '0',
             'SIPPort'                         => '5060',
+            'TLS_PORT'                        => '5061',
             'SIPDefaultExpiry'                => '120',
             'SIPMinExpiry'                    => '60',
             'SIPMaxExpiry'                    => '3600',
@@ -149,7 +150,8 @@ class PbxSettings extends ModelsBase
             'WebAdminLogin'                   => 'admin',
             'WebAdminPassword'                => 'admin',
             'WebAdminLanguage'                => 'en',
-            'SystemNotificationsEmail'        => 'admin@mycompany.com',
+            'SystemNotificationsEmail'        => '',
+            'SystemEmailForMissed'            => '',
             'SendMetrics'                     => '1',
         ];
     }

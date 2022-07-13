@@ -36,6 +36,15 @@ use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
  */
 class Sip extends ModelsBase
 {
+    public const TRANSPORT_UDP_TCP = '';
+    public const TRANSPORT_UDP     = 'udp';
+    public const TRANSPORT_TCP     = 'tcp';
+    public const TRANSPORT_TLS     = 'tls';
+
+    public const REG_TYPE_OUTBOUND = 'outbound';
+    public const REG_TYPE_INBOUND  = 'inbound';
+    public const REG_TYPE_NONE     = 'none';
+
     /**
      * @Primary
      * @Identity
@@ -66,6 +75,11 @@ class Sip extends ModelsBase
     /**
      * @Column(type="string", nullable=true)
      */
+    public ?string $registration_type = '';
+
+    /**
+     * @Column(type="string", nullable=true)
+     */
     public ?string $host = '';
 
     /**
@@ -84,9 +98,16 @@ class Sip extends ModelsBase
     public ?string $secret = '';
 
     /**
+     * TLS / UDP / TCP
      * @Column(type="string", nullable=true)
      */
-    public ?string $defaultuser = '';
+    public ?string $transport = '';
+
+    /**
+     * outbound_proxy
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $outbound_proxy = '';
 
     /**
      * @Column(type="string", nullable=true)

@@ -31,7 +31,10 @@ fi;
 files="$(find "$dir" -name "*.wav" -not -path "*_in.wav" -not -path "*_out.wav" | rev | cut -f 2- -d '.' | rev)";
 for filename in $files ; do
   lsof "$filename.wav" > /dev/null;
-  if [ "$?" = "1" ]; then
+  lsofResult="$?";
+  /bin/busybox ps | /bin/busybox grep wav2mp3 | /bin/busybox grep "$filename";
+  processNotExists="$?";
+  if [ "$lsofResult" = "1" ] && [ "$processNotExists" = '1' ]; then
       # Файл не используется.
       /usr/bin/nice -n 19 /sbin/wav2mp3.sh "$filename";
       sleep 0.1;
