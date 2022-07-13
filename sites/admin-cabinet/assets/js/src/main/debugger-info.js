@@ -35,7 +35,6 @@ const DebuggerInfo = {
 		if (DebuggerInfo.$debugInfoDiv.html().length === 0) return;
 		DebuggerInfo.$debugInfoDiv
 			.sidebar({
-				context: $('#main'),
 				transition: 'overlay',
 				dimPage: false,
 			})
