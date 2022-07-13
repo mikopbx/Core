@@ -1116,4 +1116,6 @@ return [
     'sip_REG_TYPE_INBOUND' => '着信登録',
     'sip_REG_TYPE_NONE' => 'IPアドレスによる認証、パスワードなし',
     'pr_RedefinitionFromUser' => 'SIPヘッダー「From」の再定義',
+    'nw_NATInfoMessage1' => 'PBXはパブリックアドレスで利用可能である必要があります',
+    'nw_NATInfoMessage2' => 'SIP/RTPポートフォワーディングをルーターで構成する必要があります',
 ];

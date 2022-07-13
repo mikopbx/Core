@@ -1119,4 +1119,6 @@ It can be activated once, after which the coupon becomes redeemed.
     'sip_REG_TYPE_INBOUND' => 'Incoming Registration',
     'sip_REG_TYPE_NONE' => 'Authentication by IP address, no password',
     'pr_RedefinitionFromUser' => 'Redefining SIP header "From"',
+    'nw_NATInfoMessage1' => 'PBX must be available at a public address',
+    'nw_NATInfoMessage2' => 'SIP/RTP port forwarding must be configured on the router',
 ];

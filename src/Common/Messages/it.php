@@ -1116,4 +1116,6 @@ Può essere attivato una volta, dopo di che il coupon viene riscattato.
     'sip_REG_TYPE_INBOUND' => 'Registrazione in arrivo',
     'sip_REG_TYPE_NONE' => 'Autenticazione tramite indirizzo IP, nessuna password',
     'pr_RedefinitionFromUser' => 'Ridefinizione dell\'intestazione SIP "Da"',
+    'nw_NATInfoMessage1' => 'Il PBX deve essere disponibile a un indirizzo pubblico',
+    'nw_NATInfoMessage2' => 'Il port forwarding SIP/RTP deve essere configurato sul router',
 ];

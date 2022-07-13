@@ -1116,4 +1116,6 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá đ
     'sip_REG_TYPE_INBOUND' => 'Đăng ký đến',
     'sip_REG_TYPE_NONE' => 'Xác thực bằng địa chỉ IP, không cần mật khẩu',
     'pr_RedefinitionFromUser' => 'Định nghĩa lại tiêu đề SIP "Từ"',
+    'nw_NATInfoMessage1' => 'PBX phải khả dụng trên một địa chỉ công cộng',
+    'nw_NATInfoMessage2' => 'Chuyển tiếp cổng SIP / RTP phải được định cấu hình trên bộ định tuyến',
 ];

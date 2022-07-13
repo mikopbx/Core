@@ -1116,4 +1116,6 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'sip_REG_TYPE_INBOUND' => 'Inscription entrante',
     'sip_REG_TYPE_NONE' => 'Authentification par adresse IP, pas de mot de passe',
     'pr_RedefinitionFromUser' => 'Redéfinir l\'en-tête SIP "De"',
+    'nw_NATInfoMessage1' => 'Le PBX doit être disponible sur une adresse publique',
+    'nw_NATInfoMessage2' => 'Le transfert de port SIP/RTP doit être configuré sur le routeur',
 ];

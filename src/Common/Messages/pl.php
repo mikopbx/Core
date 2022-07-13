@@ -1116,4 +1116,6 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'sip_REG_TYPE_INBOUND' => 'Rejestracja przychodząca',
     'sip_REG_TYPE_NONE' => 'Uwierzytelnianie przez adres IP, bez hasła',
     'pr_RedefinitionFromUser' => 'Redefinicja nagłówka SIP „Od”',
+    'nw_NATInfoMessage1' => 'PBX musi być dostępny pod adresem publicznym',
+    'nw_NATInfoMessage2' => 'Na routerze musi być skonfigurowane przekierowanie portów SIP/RTP',
 ];

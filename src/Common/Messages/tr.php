@@ -1116,4 +1116,6 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
     'sip_REG_TYPE_INBOUND' => 'Gelen Kayıt',
     'sip_REG_TYPE_NONE' => 'IP adresi ile kimlik doğrulama, şifre yok',
     'pr_RedefinitionFromUser' => '"Kimden" SIP başlığını yeniden tanımlama',
+    'nw_NATInfoMessage1' => 'PBX genel bir adreste mevcut olmalıdır',
+    'nw_NATInfoMessage2' => 'SIP/RTP bağlantı noktası yönlendirme yönlendiricide yapılandırılmalıdır',
 ];
