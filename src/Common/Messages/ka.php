@@ -1116,4 +1116,6 @@ return [
     'sip_REG_TYPE_INBOUND' => 'შემომავალი რეგისტრაცია',
     'sip_REG_TYPE_NONE' => 'ავტორიზაცია IP მისამართით, პაროლის გარეშე',
     'pr_RedefinitionFromUser' => 'SIP სათაურის "From"-ის ხელახალი განსაზღვრა',
+    'nw_NATInfoMessage1' => 'PBX ხელმისაწვდომი უნდა იყოს საჯარო მისამართზე',
+    'nw_NATInfoMessage2' => 'SIP/RTP პორტის გადამისამართება უნდა იყოს კონფიგურირებული როუტერზე',
 ];

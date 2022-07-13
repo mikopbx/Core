@@ -1119,4 +1119,6 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
     'sip_REG_TYPE_INBOUND' => 'Eingehende Registrierung',
     'sip_REG_TYPE_NONE' => 'Authentifizierung per IP-Adresse, kein Passwort',
     'pr_RedefinitionFromUser' => 'SIP-Header "From" neu definieren',
+    'nw_NATInfoMessage1' => 'PBX muss unter einer öffentlichen Adresse erreichbar sein',
+    'nw_NATInfoMessage2' => 'Auf dem Router muss eine SIP/RTP-Portweiterleitung konfiguriert werden',
 ];

@@ -1116,4 +1116,6 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'sip_REG_TYPE_NONE' => 'Godkendelse med IP-adresse, ingen adgangskode',
     'sip_REG_TYPE_OUTBOUND' => 'Udgående registrering',
     'pr_RedefinitionFromUser' => 'Omdefinerer SIP-header "Fra"',
+    'nw_NATInfoMessage1' => 'PBX skal være tilgængelig på en offentlig adresse',
+    'nw_NATInfoMessage2' => 'SIP/RTP-portvideresendelse skal konfigureres på routeren',
 ];

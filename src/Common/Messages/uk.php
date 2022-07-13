@@ -1116,4 +1116,6 @@ return [
     'sip_REG_TYPE_INBOUND' => 'Вхідна реєстрація',
     'sip_REG_TYPE_NONE' => 'Аутентифікація за IP-адресою, без пароля',
     'pr_RedefinitionFromUser' => 'Перевизначення SIP заголовка "From"',
+    'nw_NATInfoMessage1' => 'АТС має бути доступна на публічній адресі',
+    'nw_NATInfoMessage2' => 'На маршрутизаторі має бути налаштовано перенаправлення портів SIP/RTP',
 ];

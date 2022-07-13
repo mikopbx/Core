@@ -1116,4 +1116,6 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'sip_REG_TYPE_INBOUND' => 'Inkommande registrering',
     'sip_REG_TYPE_NONE' => 'Autentisering med IP-adress, inget lösenord',
     'pr_RedefinitionFromUser' => 'Omdefinierar SIP-huvudet "Från"',
+    'nw_NATInfoMessage2' => 'SIP/RTP-portvidarebefordran måste konfigureras på routern',
+    'nw_NATInfoMessage1' => 'Växeln måste vara tillgänglig på en allmän adress',
 ];

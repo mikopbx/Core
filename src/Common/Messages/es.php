@@ -1116,4 +1116,6 @@ Se puede activar una vez, después de lo cual el cupón se canjea.
     'sip_REG_TYPE_INBOUND' => 'Registro entrante',
     'sip_REG_TYPE_NONE' => 'Autenticación por dirección IP, sin contraseña',
     'pr_RedefinitionFromUser' => 'Redefiniendo el encabezado SIP "De"',
+    'nw_NATInfoMessage1' => 'PBX debe estar disponible en una dirección pública',
+    'nw_NATInfoMessage2' => 'El reenvío de puertos SIP/RTP debe configurarse en el enrutador',
 ];

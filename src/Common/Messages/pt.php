@@ -1116,4 +1116,6 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'sip_REG_TYPE_NONE' => 'Autenticação por endereço IP, sem senha',
     'sip_registration_type' => 'tipo de conta',
     'pr_RedefinitionFromUser' => 'Redefinindo o cabeçalho SIP "De"',
+    'nw_NATInfoMessage1' => 'O PBX deve estar disponível em um endereço público',
+    'nw_NATInfoMessage2' => 'O encaminhamento de porta SIP/RTP deve ser configurado no roteador',
 ];

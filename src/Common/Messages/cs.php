@@ -1116,4 +1116,6 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'sip_REG_TYPE_INBOUND' => 'Příchozí registrace',
     'sip_REG_TYPE_NONE' => 'Autentizace pomocí IP adresy, žádné heslo',
     'pr_RedefinitionFromUser' => 'Předefinování hlavičky SIP "Od"',
+    'nw_NATInfoMessage1' => 'PBX musí být dostupná na veřejné adrese',
+    'nw_NATInfoMessage2' => 'Na routeru musí být nakonfigurováno přesměrování portů SIP/RTP',
 ];

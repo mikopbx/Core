@@ -1116,4 +1116,6 @@ return [
     'sip_REG_TYPE_INBOUND' => '传入注册',
     'sip_REG_TYPE_NONE' => '通过IP地址认证，无需密码',
     'pr_RedefinitionFromUser' => '重新定义 SIP 标头“发件人”',
+    'nw_NATInfoMessage1' => 'PBX 必须在公共地址可用',
+    'nw_NATInfoMessage2' => '必须在路由器上配置 SIP/RTP 端口转发',
 ];
