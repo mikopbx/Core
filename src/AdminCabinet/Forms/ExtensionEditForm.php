@@ -341,7 +341,7 @@ class ExtensionEditForm extends Form
             )
         );
         // RingLength
-        $ringDuration = $extensionForwardingRights->ringlength;
+        $ringDuration = (int)$extensionForwardingRights->ringlength;
         $this->add(
             new Numeric(
                 'fwd_ringlength', [
