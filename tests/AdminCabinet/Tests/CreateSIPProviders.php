@@ -24,12 +24,12 @@ use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase as MikoPBXTestsBaseAlias;
 class CreateSIPProviders extends MikoPBXTestsBaseAlias
 {
     /**
-     * @depends testLogin
+     * @depends      testLogin
      * @dataProvider additionProvider
      *
      * @param array $params
      */
-    public function testCreateSIPProvider($params):void
+    public function testCreateSIPProvider($params): void
     {
         $this->clickSidebarMenuItemByHref('/admin-cabinet/providers/index/');
         $this->clickDeleteButtonOnRowWithText($params['description']);
@@ -45,7 +45,7 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
         $this->changeInputField('port', $params['port']);
         $this->selectDropdownItem('nat', $params['nat']);
         $this->changeCheckBoxState('qualify', $params['qualify']);
-        if ($params['qualify']){
+        if ($params['qualify']) {
             $this->changeInputField('qualifyfreq', $params['qualifyfreq']);
         }
 
@@ -73,7 +73,7 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
         $this->assertInputFieldValueEqual('port', $params['port']);
         $this->assertMenuItemSelected('nat', $params['nat']);
         $this->assertCheckBoxStageIsEqual('qualify', $params['qualify']);
-        if ($params['qualify']){
+        if ($params['qualify']) {
             $this->assertInputFieldValueEqual('qualifyfreq', $params['qualifyfreq']);
         }
         $this->assertInputFieldValueEqual('defaultuser', $params['defaultuser']);
@@ -83,97 +83,97 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
         $this->assertCheckBoxStageIsEqual('noregister', $params['noregister']);
         $this->assertCheckBoxStageIsEqual('receive_calls_without_auth', $params['receive_calls_without_auth']);
         $this->assertTextAreaValueIsEqual('manualattributes', $params['manualattributes']);
-
     }
 
 
     /**
      * Dataset provider
+     *
      * @return array
      */
-    public function additionProvider():array
+    public function additionProvider(): array
     {
-        $params = [];
-        $params[] = [[
-            'type'=>'sip',
-            'description' => 'PCTEL',
-            'host' => 'pctel.ru',
-            'username'        => 'pctel',
-            'password'        => 'asdfasdfas',
-            'dtmfmode'        => 'auto',
-            'port'            => 5062,
-            'nat'             => 'auto_force_rport',
-            'qualify'         => false,
-            'qualifyfreq'     =>62,
-            'defaultuser'=>'',
-            'fromuser'=>'',
-            'fromdomain'=>'',
-            'disablefromuser'=>false,
-            'noregister'=>true,
-            'receive_calls_without_auth'=>false,
-            'manualattributes'=>'',
-            ]];
+        $params   = [];
+        $params[] = [
+            [
+                'type'              => 'sip',
+                'description'       => 'PCTEL',
+                'host'              => 'pctel.ru',
+                'username'          => 'pctel',
+                'password'          => 'asdfasdfas',
+                'dtmfmode'          => 'auto',
+                'port'              => 5062,
+                'nat'               => 'auto_force_rport',
+                'qualify'           => false,
+                'qualifyfreq'       => 62,
+                'outbound_proxy'    => 'proxy.miko.ru',
+                'fromuser'          => 'testFromUser',
+                'fromdomain'        => 'TestFromDomain',
+                'disablefromuser'   => false,
+                'registration_type' => 'outbound',
+                'manualattributes'  => '',
+            ],
+        ];
 
-        $params[] = [[
-            'type'=>'sip',
-            'description' => 'Mango office',
-            'host' => 'mango.office.ru',
-            'username'        => 'mango',
-            'password'        => 'office',
-            'dtmfmode'        => 'inband',
-            'port'            => 5061,
-            'nat'             => 'force_rport',
-            'qualify'         => true,
-            'qualifyfreq'     =>61,
-            'defaultuser'=>'',
-            'fromuser'=>'',
-            'fromdomain'=>'',
-            'disablefromuser'=>true,
-            'noregister'=>true,
-            'receive_calls_without_auth'=>true,
-            'manualattributes'=>'',
-        ]];
+        $params[] = [
+            [
+                'type'              => 'sip',
+                'description'       => 'Mango office',
+                'host'              => 'mango.office.ru',
+                'username'          => 'mango',
+                'password'          => 'office',
+                'dtmfmode'          => 'inband',
+                'port'              => 5061,
+                'nat'               => 'force_rport',
+                'qualify'           => true,
+                'qualifyfreq'       => 61,
+                'outbound_proxy'    => 'proxy2.miko.ru',
+                'fromuser'          => '',
+                'fromdomain'        => '',
+                'disablefromuser'   => true,
+                'registration_type' => 'inbound',
+                'manualattributes'  => '',
+            ],
+        ];
 
-        $params[] = [[
-            'type'=>'sip',
-            'description' => 'Mango office for delete',
-            'host' => 'mango1.office.ru',
-            'username'        => 'mango1',
-            'password'        => 'office2',
-            'dtmfmode'        => 'inband',
-            'port'            => 5061,
-            'nat'             => 'force_rport',
-            'qualify'         => true,
-            'qualifyfreq'     =>61,
-            'defaultuser'=>'',
-            'fromuser'=>'',
-            'fromdomain'=>'',
-            'disablefromuser'=>true,
-            'noregister'=>true,
-            'receive_calls_without_auth'=>true,
-            'manualattributes'=>'',
-        ]];
+        $params[] = [
+            [
+                'type'              => 'sip',
+                'description'       => 'Mango office for delete',
+                'host'              => 'mango1.office.ru',
+                'username'          => 'mango1',
+                'password'          => 'office2',
+                'dtmfmode'          => 'inband',
+                'port'              => 5063,
+                'nat'               => 'force_rport',
+                'qualify'           => true,
+                'qualifyfreq'       => 63,
+                'fromuser'          => '',
+                'fromdomain'        => '',
+                'disablefromuser'   => true,
+                'registration_type' => 'none',
+                'manualattributes'  => '',
+            ],
+        ];
 
-        $params[] = [[
-            'type'=>'sip',
-            'description' => 'Provider for CTI tests',
-            'host' => '127.0.0.1',
-            'username'        => 'test',
-            'password'        => '',
-            'dtmfmode'        => 'auto',
-            'port'            => 5062,
-            'nat'             => 'force_rport,comedia',
-            'qualify'         => true,
-            'qualifyfreq'     =>61,
-            'defaultuser'=>'',
-            'fromuser'=>'',
-            'fromdomain'=>'',
-            'disablefromuser'=>true,
-            'noregister'=>true,
-            'receive_calls_without_auth'=>true,
-            'manualattributes'=>'[endpoint]'.PHP_EOL.'callerid=Mark Spenser <79261234567>',
+        $params[] = [
+            [
+                'type'             => 'sip',
+                'description'      => 'Provider for CTI tests',
+                'host'             => '127.0.0.1',
+                'username'         => 'test',
+                'password'         => '',
+                'dtmfmode'         => 'auto',
+                'port'             => 5062,
+                'nat'              => 'force_rport,comedia',
+                'qualify'          => false,
+                'fromuser'         => '',
+                'fromdomain'       => '',
+                'disablefromuser'  => true,
+                'manualattributes' => '[endpoint]' . PHP_EOL . 'callerid=Mark Spenser <79261234567>',
 
-        ]];
+            ],
+        ];
 
 
         return $params;
