@@ -105,11 +105,7 @@ class BeanstalkClient extends Injectable
      *
      * @return bool|string
      */
-    public function request(
-        $job_data,
-        int $timeout = 10,
-        int $priority = PheanstalkInterface::DEFAULT_PRIORITY
-    ) {
+    public function request($job_data, int $timeout = 10, int $priority = PheanstalkInterface::DEFAULT_PRIORITY) {
         $this->message = false;
         $inbox_tube    = uniqid(self::INBOX_PREFIX, true);
         $this->queue->watch($inbox_tube);
@@ -122,7 +118,6 @@ class BeanstalkClient extends Injectable
         $this->publish($requestMessage, null, $priority, 0, $timeout);
 
         // We wait until a worker process request.
-        $job = null;
         try {
             $job = $this->queue->reserveWithTimeout($timeout);
             if ($job !== null) {
@@ -130,8 +125,10 @@ class BeanstalkClient extends Injectable
                 $this->queue->delete($job);
             }
         } catch (Throwable $exception) {
-            Util::sysLogMsg(__METHOD__, 'Exception: ' . $exception->getMessage(), LOG_ERR);
-            $this->buryJob($job);
+            Util::sysLogMsg(__METHOD__, $exception->getMessage(), LOG_ERR);
+            if(isset($job)){
+                $this->buryJob($job);
+            }
         }
         $this->queue->ignore($inbox_tube);
 
