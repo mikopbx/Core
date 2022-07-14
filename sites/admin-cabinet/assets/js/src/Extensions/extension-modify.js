@@ -219,6 +219,7 @@ const extension = {
 			}
 		});
 
+		$("i.question").popup();
 		extension.initializeForm();
 	},
 	/**

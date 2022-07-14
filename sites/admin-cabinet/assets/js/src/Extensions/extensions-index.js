@@ -33,13 +33,14 @@ const extensionsIndex = {
 			lengthChange: false,
 			paging: false,
 			columns: [
-				{orderable: false, searchable: false},
+				{orderable: false, searchable: false, "width": "0"},
 				null,
 				null,
 				null,
 				null,
 				{ orderable: false, searchable: false },
 			],
+			autoWidth: false,
 			order: [1, 'asc'],
 			language: SemanticLocalization.dataTableLocalisation,
 			drawCallback() {

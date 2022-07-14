@@ -236,7 +236,7 @@ class IptablesConf extends Injectable
                 if($protocol === 'icmp'){
                     $other_data = '--icmp-type echo-reques';
                 }else{
-                    $portsString = implode(',', $ports);
+                    $portsString = implode(',', array_unique($ports));
                     $other_data = "-m multiport --dport $portsString";
                 }
                 $arr_command[] = "iptables -A INPUT -s $subnet -p $protocol $other_data -j ACCEPT";
@@ -260,8 +260,13 @@ class IptablesConf extends Injectable
         ];
         $rules      = FirewallRules::find($conditions);
         foreach ($rules as $rule) {
-            $rule->portfrom = $portSet[$rule->portFromKey]??'0';
-            $rule->portto = $portSet[$rule->portToKey]??'0';
+            $from   = $portSet[$rule->portFromKey]??'0';
+            $to     = $portSet[$rule->portToKey]??'0';
+            if($from === $rule->portfrom && $to === $rule->portto){
+                continue;
+            }
+            $rule->portfrom = $from;
+            $rule->portto = $to;
             $rule->update();
         }
     }

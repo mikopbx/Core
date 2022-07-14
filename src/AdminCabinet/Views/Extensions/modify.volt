@@ -113,7 +113,7 @@
             <div class="field">
                 <label>
                     {{ t._('ex_BusyLevel') }}
-                    <i class="circular info icon link teal infoIcon" data-content="{{ t._('ex_BusyLevelInfo') }}" data-position="right center" data-variation="tiny"></i>
+                    <i class="circular question icon link blue infoIcon" data-content="{{ t._('ex_BusyLevelInfo') }}" data-position="right center" data-variation="tiny"></i>
                 </label>
                 {{ form.render('sip_busylevel') }}
             </div>

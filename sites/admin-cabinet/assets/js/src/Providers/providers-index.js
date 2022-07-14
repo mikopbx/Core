@@ -95,14 +95,15 @@ const providers = {
 			lengthChange: false,
 			paging: false,
 			columns: [
+				{ "width": "0"},
+				{ "width": "0"},
 				null,
-				null,
-				null,
-				null,
+				{ "width": "0"},
 				null,
 				null,
 				{orderable: false, searchable: false},
 			],
+			autoWidth: false,
 			order: [1, 'asc'],
 			language: SemanticLocalization.dataTableLocalisation,
 		});

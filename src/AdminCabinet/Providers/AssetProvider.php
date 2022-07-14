@@ -384,7 +384,7 @@ class AssetProvider implements ServiceProviderInterface
             $this->footerCollectionJS
                 ->addJs('js/pbx/main/form.js', true)
                 ->addJs('js/vendor/moment/moment-with-locales.min.js', true)
-                ->addJs('js/vendor/moment/moment-timezone-with-data.js', true)
+                ->addJs('js/vendor/moment-timezone/moment-timezone-with-data.min.js', true)
                 ->addJs('js/pbx/TimeSettings/time-settings-worker.js', true)
                 ->addJs('js/pbx/TimeSettings/time-settings-modify.js', true);
         }
@@ -790,7 +790,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/vendor/datatable/scroller.semanticui.js', true)
                 //->addJs('js/vendor/datatable/dataTables.pageResize.min.js', TRUE)
                 ->addJs('js/vendor/range/range.min.js', true)
-                ->addJS('js/vendor/datepicker/moment.min.js', true)
+                ->addJS('js/vendor/moment/moment.min.js', true)
                 ->addJS('js/vendor/datepicker/daterangepicker.js', true);
 
             $this->footerCollectionJS

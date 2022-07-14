@@ -98,8 +98,8 @@ class SIPStackProcessor extends Injectable
 
     /**
      * Ger SIP Registry status
-     *
      * @return PBXApiResult
+     * @throws \Phalcon\Exception
      */
     public static function getRegistry(): PBXApiResult
     {
@@ -118,10 +118,10 @@ class SIPStackProcessor extends Injectable
                 ];
                 continue;
             }
-            if ($provider->noregister === '1') {
+            if ($provider->registration_type === Sip::REG_TYPE_INBOUND || $provider->registration_type === Sip::REG_TYPE_NONE) {
                 $peers_status = $am->getPjSipPeer($provider->uniqid);
                 $peers[] = [
-                    'state'    => $peers_status['state'],
+                    'state'    => ($peers_status['state']==='OK' && $provider->registration_type === Sip::REG_TYPE_INBOUND)?'REGISTERED':$peers_status['state'],
                     'id'       => $provider->uniqid,
                     'username' => $provider->username,
                     'host'     => $provider->host,

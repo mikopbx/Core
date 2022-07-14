@@ -40,6 +40,8 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
         $this->changeInputField('username', $params['username']);
         $this->changeInputField('secret', $params['password']);
         $this->selectDropdownItem('dtmfmode', $params['dtmfmode']);
+        $this->selectDropdownItem('registration_type', $params['registration_type']);
+
         // Раскрываем расширенные опции
         $this->openAccordionOnThePage();
         $this->changeInputField('port', $params['port']);
@@ -48,13 +50,12 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
         if ($params['qualify']) {
             $this->changeInputField('qualifyfreq', $params['qualifyfreq']);
         }
-
+        $this->changeInputField('outbound_proxy', $params['outbound_proxy']);
         $this->changeInputField('defaultuser', $params['defaultuser']);
         $this->changeInputField('fromuser', $params['fromuser']);
         $this->changeInputField('fromdomain', $params['fromdomain']);
         $this->changeCheckBoxState('disablefromuser', $params['disablefromuser']);
-        $this->changeCheckBoxState('noregister', $params['noregister']);
-        $this->changeCheckBoxState('receive_calls_without_auth', $params['receive_calls_without_auth']);
+
         $this->changeTextAreaValue('manualattributes', $params['manualattributes']);
 
         $this->submitForm('save-provider-form');
@@ -67,6 +68,7 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
         $this->assertInputFieldValueEqual('username', $params['username']);
         $this->assertInputFieldValueEqual('secret', $params['password']);
         $this->assertMenuItemSelected('dtmfmode', $params['dtmfmode']);
+        $this->assertMenuItemSelected('registration_type', $params['registration_type']);
         // Раскрываем расширенные опции
         $this->openAccordionOnThePage();
 
@@ -76,12 +78,12 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
         if ($params['qualify']) {
             $this->assertInputFieldValueEqual('qualifyfreq', $params['qualifyfreq']);
         }
+        $this->assertInputFieldValueEqual('outbound_proxy', $params['outbound_proxy']);
         $this->assertInputFieldValueEqual('defaultuser', $params['defaultuser']);
         $this->assertInputFieldValueEqual('fromuser', $params['fromuser']);
         $this->assertInputFieldValueEqual('fromdomain', $params['fromdomain']);
         $this->assertCheckBoxStageIsEqual('disablefromuser', $params['disablefromuser']);
-        $this->assertCheckBoxStageIsEqual('noregister', $params['noregister']);
-        $this->assertCheckBoxStageIsEqual('receive_calls_without_auth', $params['receive_calls_without_auth']);
+
         $this->assertTextAreaValueIsEqual('manualattributes', $params['manualattributes']);
     }
 
@@ -174,7 +176,6 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
 
             ],
         ];
-
 
         return $params;
     }

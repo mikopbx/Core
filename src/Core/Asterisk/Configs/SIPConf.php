@@ -32,7 +32,7 @@ use MikoPBX\Common\Models\{Codecs,
 use MikoPBX\Core\Asterisk\AstDB;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\IncomingContexts;
 use MikoPBX\Modules\Config\ConfigClass;
-use MikoPBX\Core\System\{MikoPBXConfig, Network, Util};
+use MikoPBX\Core\System\{MikoPBXConfig, Network, Processes, Util};
 use MikoPBX\Core\Utilities\SubnetCalculator;
 use Phalcon\Di;
 use Throwable;
@@ -276,21 +276,25 @@ class SIPConf extends CoreConfigClass
         $db_data = Sip::find("type = 'friend' AND ( disabled <> '1')");
         foreach ($db_data as $sip_peer) {
             $arr_data                               = $sip_peer->toArray();
-            $arr_data['receive_calls_without_auth'] = $sip_peer->receive_calls_without_auth;
             $network_filter                         = NetworkFilters::findFirst($sip_peer->networkfilterid);
             $arr_data['permit']                     = ($network_filter === null) ? '' : $network_filter->permit;
             $arr_data['deny']                       = ($network_filter === null) ? '' : $network_filter->deny;
-
             // Получим используемые кодеки.
             $arr_data['codecs'] = $this->getCodecs();
-
             $context_id = preg_replace("/[^a-z\d]/iu", '', $sip_peer->host . $sip_peer->port);
             if ( ! isset($this->contexts_data[$context_id])) {
                 $this->contexts_data[$context_id] = [];
             }
             $this->contexts_data[$context_id][$sip_peer->uniqid] = $sip_peer->username;
-
             $arr_data['context_id'] = $context_id;
+            if(empty($arr_data['registration_type'])){
+                if($sip_peer->noregister === '0'){
+                    $arr_data['registration_type'] = Sip::REG_TYPE_OUTBOUND;
+                }else{
+                    $arr_data['registration_type'] = Sip::REG_TYPE_NONE;
+                }
+            }
+            $arr_data['port']  = (trim($arr_data['port']) === '') ? '5060' : $arr_data['port'];
             $data[]                 = $arr_data;
         }
 
@@ -476,17 +480,21 @@ class SIPConf extends CoreConfigClass
         foreach ($codecs as $codec) {
             $codecConf .= "allow = $codec\n";
         }
-
         $pbxVersion = $this->generalSettings['PBXVersion'];
         $sipPort    = $this->generalSettings['SIPPort'];
         $tlsPort    = $this->generalSettings['TLS_PORT'];
         $natConf    = '';
         $tlsNatConf = '';
+
+        $resolveOk = Processes::mwExec("timeout 1 getent hosts '$externalHostName'") === 0;
+        if(!$resolveOk){
+            Util::sysLogMsg('DNS', "ERROR: DNS $externalHostName not resolved, It will not be used in SIP signaling.");
+        }
         if ($topology === 'private') {
             foreach ($subnets as $net) {
                 $natConf .= "local_net=$net\n";
             }
-            if ( ! empty($externalHostName)) {
+            if ( !empty($externalHostName) && $resolveOk ) {
                 $parts   = explode(':', $externalHostName);
                 $natConf .= 'external_media_address=' . $parts[0] . "\n";
                 $natConf .= 'external_signaling_address=' . $parts[0] . "\n";
@@ -526,6 +534,8 @@ class SIPConf extends CoreConfigClass
             "bind=0.0.0.0:{$tlsPort}\n" .
             "cert_file=/etc/asterisk/keys/ajam.pem\n" .
             "priv_key_file=/etc/asterisk/keys/ajam.pem\n" .
+            // "ca_list_file=/etc/ssl/certs/ca-certificates.crt\n".
+            // "verify_server=yes\n".
             "method=sslv23\n" .
             "$tlsNatConf\n\n" .
 
@@ -568,14 +578,18 @@ class SIPConf extends CoreConfigClass
         }
         foreach ($this->data_providers as $provider) {
             $manual_attributes = Util::parseIniSettings(base64_decode($provider['manualattributes'] ?? ''));
-            $provider['port']  = (trim($provider['port']) === '') ? '5060' : $provider['port'];
 
-            $reg_strings .= $this->generateProviderRegistrationAuth($provider, $manual_attributes);
-            $reg_strings .= $this->generateProviderRegistration($provider, $manual_attributes);
-            $prov_config .= $this->generateProviderOutAuth($provider, $manual_attributes);
-
+            if($provider['registration_type'] === Sip::REG_TYPE_OUTBOUND){
+                $reg_strings .= $this->generateProviderRegistrationAuth($provider, $manual_attributes);
+                $reg_strings .= $this->generateProviderRegistration($provider, $manual_attributes);
+            }
+            if($provider['registration_type'] !== Sip::REG_TYPE_NONE){
+                $prov_config .= $this->generateProviderAuth($provider, $manual_attributes);
+            }
+            if($provider['registration_type'] !== Sip::REG_TYPE_INBOUND) {
+                $prov_config .= $this->generateProviderIdentify($provider, $manual_attributes);
+            }
             $prov_config .= $this->generateProviderAor($provider, $manual_attributes);
-            $prov_config .= $this->generateProviderIdentify($provider, $manual_attributes);
             $prov_config .= $this->generateProviderEndpoint($provider, $manual_attributes);
         }
 
@@ -593,14 +607,8 @@ class SIPConf extends CoreConfigClass
      *
      * @return string
      */
-    private function generateProviderRegistrationAuth(
-        array $provider,
-        array $manual_attributes
-    ): string {
+    private function generateProviderRegistrationAuth(array $provider, array $manual_attributes): string {
         $conf = '';
-        if ($provider['noregister'] === '1') {
-            return $conf;
-        }
         $options         = [
             'type'     => 'registration-auth',
             'username' => $provider['username'],
@@ -614,7 +622,6 @@ class SIPConf extends CoreConfigClass
         $options['type'] = 'auth';
         $conf            .= "[REG-AUTH-{$provider['uniqid']}]\n";
         $conf            .= Util::overrideConfigurationArray($options, $manual_attributes, 'registration-auth');
-
         return $conf;
     }
 
@@ -646,14 +653,8 @@ class SIPConf extends CoreConfigClass
      *
      * @return string
      */
-    private function generateProviderRegistration(
-        array $provider,
-        array $manual_attributes
-    ): string {
+    private function generateProviderRegistration(array $provider, array $manual_attributes): string {
         $conf = '';
-        if ($provider['noregister'] === '1') {
-            return $conf;
-        }
         $options = [
             'type'                     => 'registration',
             'outbound_auth'            => "REG-AUTH-{$provider['uniqid']}",
@@ -692,11 +693,8 @@ class SIPConf extends CoreConfigClass
      *
      * @return string
      */
-    private function generateProviderOutAuth(array $provider, array $manual_attributes): string {
+    private function generateProviderAuth(array $provider, array $manual_attributes): string {
         $conf = '';
-        if ('1' === $provider['receive_calls_without_auth'] || empty("{$provider['username']}{$provider['secret']}")) {
-            return $conf;
-        }
         $options         = [
             'type'     => 'endpoint-auth',
             'username' => $provider['username'],
@@ -708,7 +706,7 @@ class SIPConf extends CoreConfigClass
             CoreConfigClass::OVERRIDE_PROVIDER_PJSIP_OPTIONS
         );
         $options['type'] = 'auth';
-        $conf            .= "[{$provider['uniqid']}-OUT]\n";
+        $conf            .= "[{$provider['uniqid']}-AUTH]\n";
         $conf            .= Util::overrideConfigurationArray($options, $manual_attributes, 'endpoint-auth');
 
         return $conf;
@@ -725,20 +723,23 @@ class SIPConf extends CoreConfigClass
     private function generateProviderAor(array $provider, array $manual_attributes): string
     {
         $conf        = '';
-        $defaultuser = (trim($provider['defaultuser']) === '') ? $provider['username'] : $provider['defaultuser'];
-        if ( ! empty($defaultuser) && '1' !== $provider['receive_calls_without_auth']) {
-            $contact = "sip:$defaultuser@{$provider['host']}:{$provider['port']}";
-        } else {
+        $contact     = '';
+        if($provider['registration_type'] === Sip::REG_TYPE_OUTBOUND){
+            $contact = "sip:{$provider['username']}@{$provider['host']}:{$provider['port']}";
+        }elseif($provider['registration_type'] === Sip::REG_TYPE_NONE) {
             $contact = "sip:{$provider['host']}:{$provider['port']}";
         }
         $options = [
             'type'               => 'aor',
             'max_contacts'       => '1',
-            'contact'            => $contact,
             'maximum_expiration' => $this->generalSettings['SIPMaxExpiry'],
             'minimum_expiration' => $this->generalSettings['SIPMinExpiry'],
             'default_expiration' => $this->generalSettings['SIPDefaultExpiry'],
         ];
+        if(!empty($contact)){
+            $options['contact'] = $contact;
+        }
+
         if ($provider['qualify'] === '1') {
             $options['qualify_frequency'] = $provider['qualifyfreq'];
             $options['qualify_timeout']   = '3.0';
@@ -765,10 +766,7 @@ class SIPConf extends CoreConfigClass
      *
      * @return string
      */
-    private function generateProviderIdentify(
-        array $provider,
-        array $manual_attributes
-    ): string {
+    private function generateProviderIdentify(array $provider, array $manual_attributes): string {
         $conf          = '';
         $providerHosts = $this->dataSipHosts[$provider['uniqid']] ?? [];
         if ( ! in_array($provider['host'], $providerHosts, true)) {
@@ -801,10 +799,7 @@ class SIPConf extends CoreConfigClass
      *
      * @return string
      */
-    private function generateProviderEndpoint(
-        array $provider,
-        array $manual_attributes
-    ): string {
+    private function generateProviderEndpoint(array $provider, array $manual_attributes): string {
         $conf       = '';
         $fromdomain = (trim($provider['fromdomain']) === '') ? $provider['host'] : $provider['fromdomain'];
         $from       = (trim($provider['fromuser']) === '') ? "{$provider['username']}; username" : "{$provider['fromuser']}; fromuser";
@@ -855,8 +850,10 @@ class SIPConf extends CoreConfigClass
         if(!empty($provider['outbound_proxy'])){
             $options['outbound_proxy'] = "sip:{$provider['outbound_proxy']}\;lr";
         }
-        if ('1' !== $provider['receive_calls_without_auth'] && !empty("{$provider['username']}{$provider['secret']}")) {
-            $options['outbound_auth'] = "{$provider['uniqid']}-OUT";
+        if ($provider['registration_type'] === Sip::REG_TYPE_OUTBOUND) {
+            $options['outbound_auth'] = "{$provider['uniqid']}-AUTH";
+        }elseif ($provider['registration_type'] === Sip::REG_TYPE_INBOUND){
+            $options['auth'] = "{$provider['uniqid']}-AUTH";
         }
         self::getToneZone($options, $language);
         $options = $this->overridePJSIPOptionsFromModules(
