@@ -95,12 +95,12 @@
         <div class="field">
             <div class="two fields">
                 <div id="divFromUser" class="four wide field">
-                    <h5><label for="fromuser">{{ t._('pr_FromUser') }}:</label>
+                    <h5><label for="fromuser">{{ t._('pr_FromUser_v2') }}:</label>
                     {{ form.render('fromuser') }}
                     </h5>
                 </div>
                 <div class="four wide field">
-                    <h5><label for="fromdomain">{{ t._('pr_FromDomain') }}:</label>
+                    <h5><label for="fromdomain">{{ t._('pr_FromDomain_v2') }}:</label>
                     {{ form.render('fromdomain') }}
                      </h5>
                 </div>
