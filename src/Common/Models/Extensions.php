@@ -52,6 +52,7 @@ class Extensions extends ModelsBase
     public const  TYPE_IVR_MENU = 'IVR MENU';
     public const  TYPE_CONFERENCE = 'CONFERENCE';
     public const  TYPE_MODULES = 'MODULES';
+    public const  TYPE_SYSTEM = 'SYSTEM';
 
     /**
      * @Primary

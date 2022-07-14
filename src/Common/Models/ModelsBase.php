@@ -273,6 +273,10 @@ class ModelsBase extends Model
                                 . ': '
                                 . $this->callerid;
                             break;
+                        case Extensions::TYPE_SYSTEM:
+                            $name = '<i class="cogs icon"></i> '
+                                . $this->t('mo_SystemExten_'.$this->number);
+                            break;
                         case Extensions::TYPE_EXTERNAL:
                         case Extensions::TYPE_SIP:
                         default:

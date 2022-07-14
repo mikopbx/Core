@@ -186,6 +186,14 @@ class InternalContexts extends CoreConfigClass
 
         $conf .= 'exten => h,1,ExecIf($["${ISTRANSFER}x" != "x"]?Goto(transfer_dial_hangup,${EXTEN},1))' . "\n\n";
 
+        $conf .= 'exten => hangup,1,Set(MASTER_CHANNEL(M_DIALSTATUS)=ANSWER)'.PHP_EOL."\t";
+        $conf .= 'same => n,Hangup()'.PHP_EOL;
+        $conf .= 'exten => busy,1,Set(MASTER_CHANNEL(M_DIALSTATUS)=BUSY)'.PHP_EOL."\t";
+        $conf .= 'same => n,Busy(2)'.PHP_EOL;
+        $conf .= 'exten => did2user,1,ExecIf($["${FROM_DID}x" != "x" && ${DIALPLAN_EXISTS(internal,${FROM_DID},1)} ]?Goto(internal,${FROM_DID},1))'.PHP_EOL."\t";
+        $conf .= 'same => n,Hangup()'.PHP_EOL.PHP_EOL;
+
+
         $conf .= "[internal-incoming]\n";
         $conf .= 'exten => ' . ExtensionsConf::ALL_NUMBER_EXTENSION . ',1,ExecIf($["${MASTER_CHANNEL(M_TIMEOUT)}x" != "x"]?Set(TIMEOUT(absolute)=${MASTER_CHANNEL(M_TIMEOUT)}))' . " \n\t";
         $conf .= 'same => n,Set(MASTER_CHANNEL(M_TIMEOUT_CHANNEL)=${CHANNEL})' . " \n\t";

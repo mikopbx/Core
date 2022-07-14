@@ -197,10 +197,10 @@ class IncomingContexts extends CoreConfigClass
         if (in_array($rout['extension'], $this->confExtensions, true)) {
             // Это конференция. Тут не требуется обработка таймаута ответа.
             // Вызов будет отвечен сразу конференцией.
-            $dialplanCommands = " \n\t".'same => n,ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?'."Goto(internal,{$rout['extension']},1));";
+            $dialplanCommands = " \n\t".'same => n,ExecIf($["${M_DIALSTATUS}" != "ANSWER" && "${M_DIALSTATUS}" != "BUSY"]?'."Goto(internal,{$rout['extension']},1));";
         } else {
             $dialplanCommands = " \n\t"."same => n,Set(M_TIMEOUT={$timeout})".
-                                " \n\t".'same => n,ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?'."Dial(Local/{$rout['extension']}@internal-incoming,{$timeout},".'${TRANSFER_OPTIONS}'."Kg));";
+                                " \n\t".'same => n,ExecIf($["${M_DIALSTATUS}" != "ANSWER" && "${M_DIALSTATUS}" != "BUSY"]?'."Dial(Local/{$rout['extension']}@internal-incoming,{$timeout},".'${TRANSFER_OPTIONS}'."Kg));";
         }
         $this->rout_data_dial[$rout_number] .= $dialplanCommands;
         $this->duplicateDialActionsRoutNumber($rout, $dialplanCommands, $number);
@@ -364,6 +364,7 @@ class IncomingContexts extends CoreConfigClass
         if ('extension' === $default_action->action) {
             $conf = $this->createSummaryDialplanGoto($conf, $default_action, $uniqId);
             $conf .= " \t" . 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-after-dial-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-after-dial-custom,${EXTEN},1)' . "\n";
+            $conf .= " \t" . 'same => n,ExecIf($["${M_DIALSTATUS}" == "BUSY"]?Busy(2));' . "\n";
         } elseif ('busy' === $default_action->action) {
             $conf .= "\t" . "same => n,Busy(2)" . "\n";
         }
@@ -390,9 +391,9 @@ class IncomingContexts extends CoreConfigClass
         if (in_array($default_action->extension, $this->confExtensions, true)) {
             // Это конференция. Тут не требуется обработка таймаута ответа.
             // Вызов будет отвечен сразу конференцией.
-            $conf .= "\t" . "same => n," . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?' . "Goto(internal,{$default_action->extension},1)); default action" . "\n";
+            $conf .= "\t" . "same => n," . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER" && "${M_DIALSTATUS}" != "BUSY"]?' . "Goto(internal,{$default_action->extension},1)); default action" . "\n";
         } else {
-            $conf .= "\t" . "same => n," . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?' . "Dial(Local/{$default_action->extension}@internal,,".'${TRANSFER_OPTIONS}'."Kg)); default action" . "\n";
+            $conf .= "\t" . "same => n," . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER" && "${M_DIALSTATUS}" != "BUSY"]?' . "Dial(Local/{$default_action->extension}@internal,,".'${TRANSFER_OPTIONS}'."Kg)); default action" . "\n";
         }
         $conf .= $this->hookModulesMethod(CoreConfigClass::GENERATE_INCOMING_ROUT_AFTER_DIAL_CONTEXT, [$uniqId]);
 
