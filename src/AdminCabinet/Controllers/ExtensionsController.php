@@ -820,9 +820,18 @@ class ExtensionsController extends BaseController
     public function getForSelectAction(string $type = 'all'): void
     {
         $results = [];
-
         switch ($type) {
             case 'all':
+            {
+                $parameters = [
+                    'conditions' => 'show_in_phonebook="1" AND number NOT IN ({exclude:array})',
+                    'bind' => [
+                        'exclude' => ['did2user']
+                    ]
+                ];
+                break;
+            }
+            case 'routing':
             {
                 $parameters = [
                     'conditions' => 'show_in_phonebook="1"',
