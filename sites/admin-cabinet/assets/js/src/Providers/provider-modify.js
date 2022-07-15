@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, Form, $ */
+/* global globalRootUrl, globalTranslate, Form, $, ClipboardJS */
 
 // custom form validation rule
 $.fn.form.settings.rules.username = function (noregister, username) {
