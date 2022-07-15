@@ -102,7 +102,7 @@ class SipProviderEditForm extends Form
 
         $regTypeValue = $entity->registration_type;
         if(empty($regTypeValue)){
-            $regTypeValue = (empty($entity->noregister === '0'))?Sip::REG_TYPE_OUTBOUND: Sip::REG_TYPE_NONE;
+            $regTypeValue = ($entity->noregister === '0')?Sip::REG_TYPE_OUTBOUND: Sip::REG_TYPE_NONE;
         }
         $regType = new Select(
         'registration_type', $regTypeArray, [
