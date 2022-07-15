@@ -25,6 +25,7 @@ $.fn.form.settings.rules.username = function (noregister, username) {
 
 const provider = {
 	$formObj: $('#save-provider-form'),
+	$secret: $('#secret'),
 	$dirrtyField: $('#dirrty'),
 	providerType: $('#providerType').val(),
 	$checkBoxes: $('#save-provider-form .checkbox'),
@@ -108,6 +109,37 @@ const provider = {
 		provider.updateVisibilityElements();
 		$('#registration_type').on('change', provider.updateVisibilityElements);
 		$('#disablefromuser input').on('change', provider.updateVisibilityElements);
+
+		$('#generate-new-password').on('click', (e) => {
+			e.preventDefault();
+			const chars = 'abcdef1234567890';
+			let pass = '';
+			for (let x = 0; x < 32; x += 1) {
+				const i = Math.floor(Math.random() * chars.length);
+				pass += chars.charAt(i);
+			}
+			provider.$secret.val(pass);
+			provider.$secret.trigger('change');
+		});
+		provider.$secret.on('change', () => {
+			$('#elSecret a.ui.button.clipboard').attr('data-clipboard-text', provider.$secret.val())
+		});
+		const clipboard = new ClipboardJS('.clipboard');
+		$('.clipboard').popup({
+			on: 'manual',
+		});
+		clipboard.on('success', (e) => {
+			$(e.trigger).popup('show');
+			setTimeout(() => {
+				$(e.trigger).popup('hide');
+			}, 1500);
+			e.clearSelection();
+		});
+
+		clipboard.on('error', (e) => {
+			console.error('Action:', e.action);
+			console.error('Trigger:', e.trigger);
+		});
 	},
 	updateVisibilityElements(){
 		if(provider.providerType !== 'SIP'){
@@ -119,33 +151,32 @@ const provider = {
 		let elAdditionalHost= $('#elAdditionalHosts');
 		let regType 		= $('#registration_type').val();
 		let elUniqId		= $('#uniqid');
+		let genPassword		= $('#generate-new-password');
 
 		let valUserName  	= $('#username');
-		let valSecret   	= $('#secret');
+		let valSecret   	= provider.$secret;
 
 		if(valUserName.val() === elUniqId.val()){
 			valUserName.val('');
 		}
 		valUserName.removeAttr('readonly');
-
 		if(regType === 'outbound'){
-			valSecret.attr('type', 'password')
 			elHost.show();
 			elUsername.show();
 			elSecret.show();
 			elAdditionalHost.show();
+			genPassword.hide();
 		}else if(regType === 'inbound'){
 			valUserName.val(elUniqId.val());
 			valUserName.attr('readonly', '');
 			if(valSecret.val().trim() === ''){
 				valSecret.val('id='+$('#id').val()+'-'+elUniqId.val())
 			}
-			valSecret.attr('type', 'text')
-
 			elHost.hide();
 			elUsername.show();
 			elSecret.show();
 			elAdditionalHost.hide();
+			genPassword.show();
 		}else if(regType === 'none'){
 			elHost.show();
 			elUsername.hide();

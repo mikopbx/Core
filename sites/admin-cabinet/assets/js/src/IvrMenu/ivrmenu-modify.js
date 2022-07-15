@@ -194,7 +194,7 @@ const ivrMenu = {
 		ivrMenu.addNewFormRules(ivrMenu.actionsRowsCount);
 	},
 	rebuildActionExtensionsDropdown() {
-		$('#ivr-menu-form .forwarding-select').dropdown(Extensions.getDropdownSettingsWithoutEmpty(ivrMenu.cbOnExtensionSelect));
+		$('#ivr-menu-form .forwarding-select').dropdown(Extensions.getDropdownSettingsForRouting(ivrMenu.cbOnExtensionSelect));
 		$('.delete-action-row').on('click', function (e) {
 			e.preventDefault();
 			const id = $(this).attr('data-value');

@@ -72,6 +72,7 @@ class ProvidersController extends BaseController
             $provider->Sip->disabled    = '0';
             $provider->Sip->qualifyfreq = 60;
             $provider->Sip->qualify     = '1';
+            $provider->Sip->secret      = md5($uniqid.microtime());
         }
 
         $providerHost = $provider->Sip->host;
@@ -82,6 +83,7 @@ class ProvidersController extends BaseController
                 $hostsTable[] = $host->address;
             }
         }
+        $this->view->secret     = $provider->Sip->secret;
         $this->view->hostsTable = $hostsTable;
         $this->view->form       = new SipProviderEditForm($provider->Sip);
         $this->view->represent  = $provider->getRepresent();

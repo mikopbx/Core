@@ -45,7 +45,7 @@ const incomingRouteModify = {
 	initialize() {
 		incomingRouteModify.$providerDropDown.dropdown();
 		incomingRouteModify.initializeForm();
-		incomingRouteModify.$forwardingSelectDropdown.dropdown(Extensions.getDropdownSettingsWithoutEmpty());
+		incomingRouteModify.$forwardingSelectDropdown.dropdown(Extensions.getDropdownSettingsForRouting());
 	},
 	cbBeforeSendForm(settings) {
 		const result = settings;

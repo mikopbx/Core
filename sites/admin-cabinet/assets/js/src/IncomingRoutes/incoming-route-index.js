@@ -56,7 +56,7 @@ const incomingRoutes = {
 		incomingRoutes.toggleDisabledFieldClass();
 
 		incomingRoutes.initializeForm();
-		$('.forwarding-select').dropdown(Extensions.getDropdownSettingsWithoutEmpty());
+		$('.forwarding-select').dropdown(Extensions.getDropdownSettingsForRouting());
 
 		$('.rule-row td').on('dblclick', (e) => {
 			const id = $(e.target).closest('tr').attr('id');

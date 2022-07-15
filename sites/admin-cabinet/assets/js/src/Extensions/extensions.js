@@ -66,7 +66,7 @@ const Extensions = {
 	 * @returns  dropdown settings
 	 */
 	getDropdownSettingsWithEmpty(cbOnChange = null) {
-		const result = {
+		return {
 			apiSettings: {
 				url: `${globalRootUrl}extensions/getForSelect/all`,
 				// cache: false,
@@ -91,7 +91,6 @@ const Extensions = {
 			},
 
 		};
-		return result;
 	},
 	/**
 	 * Makes dropdown menu for extensions without empty field
@@ -102,6 +101,33 @@ const Extensions = {
 		return {
 			apiSettings: {
 				url: `${globalRootUrl}extensions/getForSelect/all`,
+				onResponse(response) {
+					return Extensions.formatDropdownResults(response, false);
+				},
+			},
+			ignoreCase: true,
+			fullTextSearch: true,
+			filterRemoteData: true,
+			saveRemoteData: true,
+			forceSelection: false,
+			hideDividers: 'empty',
+			onChange(value) {
+				if (cbOnChange !== null) cbOnChange(value);
+			},
+			templates: {
+				menu: Extensions.customDropdownMenu,
+			},
+		};
+	},
+	/**
+	 * Makes dropdown menu for extensions without empty field
+	 * @param cbOnChange - on change calback function
+	 * @returns  dropdown settings
+	 */
+	getDropdownSettingsForRouting(cbOnChange = null) {
+		return {
+			apiSettings: {
+				url: `${globalRootUrl}extensions/getForSelect/routing`,
 				// cache: false,
 				// throttle: 400,
 				onResponse(response) {

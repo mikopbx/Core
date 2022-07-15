@@ -26,9 +26,19 @@
     {{ form.render('username') }}
 </div>
 
-<div id='elSecret' class="ten wide field">
+<div id='elSecret' class="seven wide field">
     <label>{{ t._('pr_ProviderPassword') }}</label>
-    {{ form.render('secret') }}
+    <div class="ui action input">
+        {{ form.render('secret') }}
+        <div class="ui icon button" id="generate-new-password">
+            <i class="refresh icon "></i>
+        </div>
+        <a class="ui button clipboard" data-clipboard-text="{{ secret }}" data-variation="basic" data-content="{{ t._('bt_ToolTipCopyPassword') }}">
+            <i class="icons">
+                <i class="icon copy "></i>
+            </i>
+        </a>
+    </div>
 </div>
 
 <div class="five wide field">
