@@ -155,14 +155,18 @@ class OutgoingContext extends CoreConfigClass
 
         $conf .= 'same => n,ExecIf($["${number}x" == "x"]?Hangup())' . "\n\t";
         $conf .= 'same => n,Set(ROUTFOUND=1)' . "\n\t";
+        $conf .= "same => n,Set(PROVIDER_ID={$rout['providerid']})" . "\n\t";
         $conf .= 'same => n,Gosub(${ISTRANSFER}dial,${EXTEN},1)' . "\n\t";
 
         $conf .= 'same => n,ExecIf($["${EXTERNALPHONE}" == "${src_number}"]?Set(DOPTIONS=tk))' . "\n\t";
 
         $dialCommand = $this->getDialCommand($rout);
         $conf .= 'same => n,Set(DIAL_COMMAND='.$dialCommand.')' . "\n\t";
-        // Описываем возможность прыжка в пользовательский sub контекст.
+        // Добавляем возможность отменить обработку этого контекста через кастомизацию.
+        $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(all-outgoing-custom,${EXTEN},1)}" == "1"]?all-outgoing-custom,${EXTEN},1)' . "\n\t";
+        // Описываем возможность перехода в пользовательский sub контекст.
         $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(' . $rout['providerid'] . '-outgoing-custom,${EXTEN},1)}" == "1"]?' . $rout['providerid'] . '-outgoing-custom,${EXTEN},1)' . "\n\t";
+        $conf .= 'same => n,ExecIf($["${NEED_RETURN}" == "1"]?return)' . "\n\t";
 
         // Формирование исходящего dialplan доп. модулей;. Переопределение dialplan маршрута.
         $confModules = $this->hookModulesMethod(CoreConfigClass::GENERATE_OUT_ROUT_CONTEXT, [$rout]);
