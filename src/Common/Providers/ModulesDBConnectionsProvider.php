@@ -87,8 +87,8 @@ class ModulesDBConnectionsProvider extends DatabaseProviderBase implements Servi
                     continue;
                 }
 
-                if (
-                    ! class_exists($moduleModelClass)
+                if (!class_exists($moduleModelClass)
+                    || 'docker-entrypoint' === cli_get_process_title()
                     || count(get_class_vars($moduleModelClass)) === 0) {
                     continue;
                 }
