@@ -18,6 +18,8 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
+cli_set_process_title(basename($argv[0]));
+
 require_once('Globals.php');
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
