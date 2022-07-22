@@ -1436,33 +1436,21 @@ class Storage extends Di\Injectable
     /**
      * Сохраняем новые данные диска.
      *
-     * @param        $data
-     * @param string $id
+     * @param  array  $data
+     * @param  string $id
      */
-    public function saveDiskSettings($data, $id = '1'): void
+    public function saveDiskSettings(array $data, string $id = '1'): void
     {
-        if (!is_array($data)) {
-            return;
-        }
         $disk_data = $this->getDiskSettings($id);
         if (count($disk_data) === 0) {
-            $uniqid = strtoupper('STORAGE-DISK-' . md5(time()));
             $storage_settings = new StorageModel();
-            foreach ($data as $key => $val) {
-                $storage_settings->writeAttribute($key, $val);
-            }
-            $storage_settings->writeAttribute('uniqid', $uniqid);
-            $storage_settings->save();
         } else {
             $storage_settings = StorageModel::findFirst("id = '$id'");
-            if ($storage_settings === null) {
-                return;
-            }
-            foreach ($data as $key => $value) {
-                $storage_settings->writeAttribute($key, $value);
-            }
-            $storage_settings->save();
         }
+        foreach ($data as $key => $value) {
+            $storage_settings->writeAttribute($key, $value);
+        }
+        $storage_settings->save();
     }
 
     /**

@@ -39,8 +39,8 @@ $fp = fopen('php://stdin', 'rb');
 $storage = new Storage();
 
 if(Storage::isStorageDiskMounted()){
-	echo "\n ".Util::translate('Storage disk is already mounted...')." \n\n";
-	sleep(2);
+    echo "\n ".Util::translate('Storage disk is already mounted...')." \n\n";
+    sleep(2);
     return 0;
 }
 
@@ -57,12 +57,12 @@ foreach ($all_hdd as $disk) {
 
     if($isMountedSysDisk){
         $system_disk = $disk['id'];
-	    $additional.= "\033[31;1m [SYSTEM]\033[0m";
-	}elseif($isLiveCd){
+        $additional.= "\033[31;1m [SYSTEM]\033[0m";
+    }elseif($isLiveCd){
         $system_disk = $disk['id'];
         $additional.= "\033[31;1m [SYSTEM]\033[0m";
-	}elseif ($disk['mounted']){
-	    continue;
+    }elseif ($disk['mounted']){
+        continue;
     }
 
     if($selected_disk['size'] === 0 || $disk['size'] > $selected_disk['size'] ){
@@ -72,7 +72,7 @@ foreach ($all_hdd as $disk) {
     $part = $disk['sys_disk']?'4':'1';
     $devName = Storage::getDevPartName($disk['id'], $part);
     $devFour = '/dev/'.$devName;
-	if(Storage::isStorageDisk($devFour)){
+    if(Storage::isStorageDisk($devFour)){
         $additional.= "\033[33;1m [STORAGE] \033[0m";
     }
 
@@ -128,14 +128,17 @@ $partName = Storage::getDevPartName($target_disk_storage, $part);
 $part_disk = "/dev/$partName";
 if($part === '1' && !Storage::isStorageDisk($part_disk)){
     $storage->formatDiskLocal($dev_disk);
+    $partName = Storage::getDevPartName($target_disk_storage, $part);
+    $part_disk = "/dev/$partName";
 }
-$uniqId = $storage->getUuid($part_disk);
+
 $data=[
     'device'         => $dev_disk,
-    'uniqid'         => $uniqId,
+    'uniqid'         => $storage->getUuid($part_disk),
     'filesystemtype' => 'ext4',
     'name'           => 'Storage №1'
 ];
+
 $storage->saveDiskSettings($data);
 if(file_exists('/offload/livecd')) {
     // Запуск АТС не требуется, это установка станции в режиме LiveCD.
