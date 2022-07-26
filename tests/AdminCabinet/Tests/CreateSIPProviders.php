@@ -37,9 +37,13 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
         $this->clickButtonByHref('/admin-cabinet/providers/modifysip');
         $this->selectDropdownItem('registration_type', $params['registration_type']);
         $this->changeInputField('description', $params['description']);
-        $this->changeInputField('host', $params['host']);
+        if ($params['registration_type']==='outbound') {
+            $this->changeInputField('host', $params['host']);
+        }
         $this->changeInputField('username', $params['username']);
-        $this->changeInputField('secret', $params['password']);
+        if ($params['registration_type']!=='none') {
+            $this->changeInputField('secret', $params['password']);
+        }
         $this->selectDropdownItem('dtmfmode', $params['dtmfmode']);
 
         // Раскрываем расширенные опции
@@ -65,9 +69,13 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
         // Asserts
         $this->assertMenuItemSelected('registration_type', $params['registration_type']);
         $this->assertInputFieldValueEqual('description', $params['description']);
-        $this->assertInputFieldValueEqual('host', $params['host']);
+        if ($params['registration_type']==='outbound') {
+            $this->assertInputFieldValueEqual('host', $params['host']);
+        }
         $this->assertInputFieldValueEqual('username', $params['username']);
-        $this->assertInputFieldValueEqual('secret', $params['password']);
+        if ($params['registration_type']!=='none') {
+            $this->assertInputFieldValueEqual('secret', $params['password']);
+        }
         $this->assertMenuItemSelected('dtmfmode', $params['dtmfmode']);
         // Раскрываем расширенные опции
         $this->openAccordionOnThePage();
@@ -159,6 +167,7 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
 
         $params[] = [
             [
+                'registration_type'=> 'outbound',
                 'type'             => 'sip',
                 'description'      => 'Provider for CTI tests',
                 'host'             => '127.0.0.1',
