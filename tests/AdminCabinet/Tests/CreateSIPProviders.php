@@ -39,8 +39,8 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
         $this->changeInputField('description', $params['description']);
         if ($params['registration_type']==='outbound') {
             $this->changeInputField('host', $params['host']);
+            $this->changeInputField('username', $params['username']);
         }
-        $this->changeInputField('username', $params['username']);
         if ($params['registration_type']!=='none') {
             $this->changeInputField('secret', $params['password']);
         }
@@ -69,10 +69,11 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
         // Asserts
         $this->assertMenuItemSelected('registration_type', $params['registration_type']);
         $this->assertInputFieldValueEqual('description', $params['description']);
+
         if ($params['registration_type']==='outbound') {
             $this->assertInputFieldValueEqual('host', $params['host']);
+            $this->assertInputFieldValueEqual('username', $params['username']);
         }
-        $this->assertInputFieldValueEqual('username', $params['username']);
         if ($params['registration_type']!=='none') {
             $this->assertInputFieldValueEqual('secret', $params['password']);
         }
@@ -127,6 +128,7 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
         $params[] = [
             [
                 'type'              => 'sip',
+                'registration_type' => 'inbound',
                 'description'       => 'Mango office',
                 'host'              => 'mango.office.ru',
                 'username'          => 'mango',
@@ -140,7 +142,6 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
                 'fromuser'          => '',
                 'fromdomain'        => '',
                 'disablefromuser'   => true,
-                'registration_type' => 'inbound',
                 'manualattributes'  => '',
             ],
         ];
