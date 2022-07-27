@@ -154,6 +154,29 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
             ],
         ];
 
+
+        $params[] = [
+            [
+                'registration_type'=> 'outbound',
+                'type'             => 'sip',
+                'description'      => 'Provider for CTI tests',
+                'host'             => '127.0.0.1',
+                'username'         => 'test',
+                'password'         => 'test567',
+                'dtmfmode'         => 'auto',
+                'port'             => 5062,
+                'nat'              => 'force_rport,comedia',
+                'qualify'          => false,
+                'qualifyfreq'       => '',
+                'outbound_proxy'    => '',
+                'disablefromuser'  => true,
+                'fromuser'         => '',
+                'fromdomain'       => 'miko.ru',
+                'manualattributes' => '[endpoint]' . PHP_EOL . 'callerid=Mark Spenser <79261234567>',
+
+            ],
+        ];
+
         $params[] = [
             [
                 'type'              => 'sip',
@@ -172,28 +195,6 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
                 'fromuser'          => '',
                 'fromdomain'        => '',
                 'manualattributes'  => '',
-            ],
-        ];
-
-        $params[] = [
-            [
-                'registration_type'=> 'outbound',
-                'type'             => 'sip',
-                'description'      => 'Provider for CTI tests',
-                'host'             => '127.0.0.1',
-                'username'         => 'test',
-                'password'         => '',
-                'dtmfmode'         => 'auto',
-                'port'             => 5062,
-                'nat'              => 'force_rport,comedia',
-                'qualify'          => false,
-                'qualifyfreq'       => '',
-                'outbound_proxy'    => '',
-                'disablefromuser'  => true,
-                'fromuser'         => '',
-                'fromdomain'       => 'miko.ru',
-                'manualattributes' => '[endpoint]' . PHP_EOL . 'callerid=Mark Spenser <79261234567>',
-
             ],
         ];
 
