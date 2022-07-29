@@ -19,16 +19,18 @@
 
 namespace MikoPBX\Core\System\Upgrade\Releases;
 
+use MikoPBX\Common\Models\Codecs;
 use MikoPBX\Common\Models\FirewallRules;
 use MikoPBX\Common\Models\NetworkFilters;
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Core\System\Upgrade\UpgradeSystemConfigInterface;
+use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
 
-class UpdateConfigsUpToVer20220201 extends Injectable implements UpgradeSystemConfigInterface
+class UpdateConfigsUpToVer2022020103 extends Injectable implements UpgradeSystemConfigInterface
 {
-  	public const PBX_VERSION = '2022.2.1';
-
+  	public const PBX_VERSION = '2022.2.103';
     private bool $isLiveCD;
 
 	/**
@@ -47,30 +49,46 @@ class UpdateConfigsUpToVer20220201 extends Injectable implements UpgradeSystemCo
         if ($this->isLiveCD) {
             return;
         }
+        $this->updateFirewallRules();
+        $this->updateCodecs();
+    }
+
+    /**
+     * Обновление TLS порта для сетевого экрана.
+     * @return void
+     */
+    private function updateFirewallRules():void{
         $colName = 'TLS_PORT';
+        $portTls = PbxSettings::getValueByKey('TLS_PORT');
+
         /** @var NetworkFilters $net */
         $nets = NetworkFilters::find(['columns' => 'id']);
         foreach ($nets as $net){
             $ruleTls = FirewallRules::findFirst([
-                "portFromKey='$colName' AND networkfilterid='$net->id'",
-                'columns' => 'id']
+                                                    "portFromKey='$colName' AND networkfilterid='$net->id'",
+                                                    'columns' => 'id']
             );
             if($ruleTls){
                 continue;
             }
             $rules   = FirewallRules::findFirst([
-                "portFromKey='SIPPort' AND networkfilterid='$net->id'",
-                'columns' => 'action,networkfilterid,category,description']
+                                                    "portFromKey='SIPPort' AND networkfilterid='$net->id'",
+                                                    'columns' => 'action,networkfilterid,category,description']
             );
             if(!$rules){
+                continue;
+            }
+
+            $ruleTls = FirewallRules::findFirst(["portFromKey='$colName' AND networkfilterid='$net->id'"]);
+            if($ruleTls){
                 continue;
             }
             $ruleTls = new FirewallRules();
             foreach ($rules->toArray() as $key => $value){
                 $ruleTls->$key = $value;
             }
-            $ruleTls->portfrom    = 5061;
-            $ruleTls->portto      = 5061;
+            $ruleTls->portfrom    = $portTls;
+            $ruleTls->portto      = $portTls;
             $ruleTls->protocol    = 'tcp';
             $ruleTls->portFromKey = $colName;
             $ruleTls->portToKey   = $colName;
@@ -88,6 +106,52 @@ class UpdateConfigsUpToVer20220201 extends Injectable implements UpgradeSystemCo
                 $sip_peer->registration_type = Sip::REG_TYPE_NONE;
             }
             $sip_peer->save();
+        }
+    }
+
+    /**
+     * Update codecs.
+     */
+    private function updateCodecs():void
+    {
+        $availCodecs = [
+            'g729'  => 'G.729',
+        ];
+        $this->addNewCodecs($availCodecs);
+
+        /** @var Codecs $codecForRemove */
+        $codecForRemove = Codecs::findFirst("name='g719'");
+        if($codecForRemove){
+            $codecForRemove->delete();
+        }
+    }
+
+    /**
+     * Adds new codecs from $availCodecs array if it doesn't exist
+     *
+     * @param array $availCodecs
+     */
+    private function addNewCodecs(array $availCodecs): void
+    {
+        foreach ($availCodecs as $availCodec => $desc) {
+            $codecData = Codecs::findFirst('name="' . $availCodec . '"');
+            if ($codecData === null) {
+                $codecData = new Codecs();
+            } elseif ($codecData->description === $desc) {
+                unset($codecData);
+                continue;
+            }
+            $codecData->name = $availCodec;
+            $codecData->type        = 'audio';
+            $codecData->disabled    = '1';
+            $codecData->description = $desc;
+            if ( ! $codecData->save()) {
+                Util::sysLogMsg(
+                    __CLASS__,
+                    'Can not update codec info ' . $codecData->name . ' from \MikoPBX\Common\Models\Codecs',
+                    LOG_ERR
+                );
+            }
         }
     }
 }
