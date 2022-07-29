@@ -184,7 +184,7 @@ class MikoPBXTestsBase extends BrowserStackTest
     protected function assertMenuItemSelected(string $name, string $checkedValue, $skipIfNotExist=false): void
     {
         $xpath             = '//select[@name="' . $name . '"]/option[@selected="selected"]';
-        if ($checkedValue==='none'){
+        if ($checkedValue==='none' and $name!=='registration_type'){
             $this->assertElementNotFound(WebDriverBy::xpath($xpath));
         } else {
             $selectedExtensions = self::$driver->findElements(WebDriverBy::xpath($xpath));

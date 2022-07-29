@@ -35,12 +35,18 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
         $this->clickDeleteButtonOnRowWithText($params['description']);
 
         $this->clickButtonByHref('/admin-cabinet/providers/modifysip');
-        $this->changeInputField('description', $params['description']);
-        $this->changeInputField('host', $params['host']);
-        $this->changeInputField('username', $params['username']);
-        $this->changeInputField('secret', $params['password']);
-        $this->selectDropdownItem('dtmfmode', $params['dtmfmode']);
         $this->selectDropdownItem('registration_type', $params['registration_type']);
+        $this->changeInputField('description', $params['description']);
+        if ($params['registration_type']==='outbound') {
+            $this->changeInputField('host', $params['host']);
+            $this->changeInputField('username', $params['username']);
+        }
+        if ($params['registration_type']==='none') {
+            $this->changeInputField('host', $params['host']);
+        } else {
+            $this->changeInputField('secret', $params['password']);
+        }
+        $this->selectDropdownItem('dtmfmode', $params['dtmfmode']);
 
         // Раскрываем расширенные опции
         $this->openAccordionOnThePage();
@@ -51,24 +57,33 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
             $this->changeInputField('qualifyfreq', $params['qualifyfreq']);
         }
         $this->changeInputField('outbound_proxy', $params['outbound_proxy']);
-        $this->changeInputField('defaultuser', $params['defaultuser']);
-        $this->changeInputField('fromuser', $params['fromuser']);
+        if ($params['disablefromuser']!==false) {
+            $this->changeInputField('fromuser', $params['fromuser']);
+        }
         $this->changeInputField('fromdomain', $params['fromdomain']);
         $this->changeCheckBoxState('disablefromuser', $params['disablefromuser']);
 
         $this->changeTextAreaValue('manualattributes', $params['manualattributes']);
 
         $this->submitForm('save-provider-form');
+
         $this->clickSidebarMenuItemByHref('/admin-cabinet/providers/index/');
         $this->clickModifyButtonOnRowWithText($params['description']);
 
         // Asserts
-        $this->assertInputFieldValueEqual('description', $params['description']);
-        $this->assertInputFieldValueEqual('host', $params['host']);
-        $this->assertInputFieldValueEqual('username', $params['username']);
-        $this->assertInputFieldValueEqual('secret', $params['password']);
-        $this->assertMenuItemSelected('dtmfmode', $params['dtmfmode']);
         $this->assertMenuItemSelected('registration_type', $params['registration_type']);
+        $this->assertInputFieldValueEqual('description', $params['description']);
+
+        if ($params['registration_type']==='outbound') {
+            $this->assertInputFieldValueEqual('host', $params['host']);
+            $this->assertInputFieldValueEqual('username', $params['username']);
+        }
+        if ($params['registration_type']==='none') {
+            $this->assertInputFieldValueEqual('host', $params['host']);
+        }  else {
+            $this->assertInputFieldValueEqual('secret', $params['password']);
+        }
+        $this->assertMenuItemSelected('dtmfmode', $params['dtmfmode']);
         // Раскрываем расширенные опции
         $this->openAccordionOnThePage();
 
@@ -79,8 +94,9 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
             $this->assertInputFieldValueEqual('qualifyfreq', $params['qualifyfreq']);
         }
         $this->assertInputFieldValueEqual('outbound_proxy', $params['outbound_proxy']);
-        $this->assertInputFieldValueEqual('defaultuser', $params['defaultuser']);
-        $this->assertInputFieldValueEqual('fromuser', $params['fromuser']);
+        if ($params['disablefromuser']!==false) {
+            $this->assertInputFieldValueEqual('fromuser', $params['fromuser']);
+        }
         $this->assertInputFieldValueEqual('fromdomain', $params['fromdomain']);
         $this->assertCheckBoxStageIsEqual('disablefromuser', $params['disablefromuser']);
 
@@ -99,6 +115,7 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
         $params[] = [
             [
                 'type'              => 'sip',
+                'registration_type' => 'outbound',
                 'description'       => 'PCTEL',
                 'host'              => 'pctel.ru',
                 'username'          => 'pctel',
@@ -108,11 +125,10 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
                 'nat'               => 'auto_force_rport',
                 'qualify'           => false,
                 'qualifyfreq'       => 62,
-                'outbound_proxy'    => 'proxy.miko.ru',
+                'outbound_proxy'    => 'proxy.miko.ru:5080',
                 'fromuser'          => 'testFromUser',
                 'fromdomain'        => 'TestFromDomain',
                 'disablefromuser'   => false,
-                'registration_type' => 'outbound',
                 'manualattributes'  => '',
             ],
         ];
@@ -120,6 +136,7 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
         $params[] = [
             [
                 'type'              => 'sip',
+                'registration_type' => 'inbound',
                 'description'       => 'Mango office',
                 'host'              => 'mango.office.ru',
                 'username'          => 'mango',
@@ -130,17 +147,40 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
                 'qualify'           => true,
                 'qualifyfreq'       => 61,
                 'outbound_proxy'    => 'proxy2.miko.ru',
+                'disablefromuser'   => true,
                 'fromuser'          => '',
                 'fromdomain'        => '',
-                'disablefromuser'   => true,
-                'registration_type' => 'inbound',
                 'manualattributes'  => '',
+            ],
+        ];
+
+
+        $params[] = [
+            [
+                'registration_type'=> 'outbound',
+                'type'             => 'sip',
+                'description'      => 'Provider for CTI tests',
+                'host'             => '127.0.0.1',
+                'username'         => 'test',
+                'password'         => 'test567',
+                'dtmfmode'         => 'auto',
+                'port'             => 5062,
+                'nat'              => 'force_rport,comedia',
+                'qualify'          => false,
+                'qualifyfreq'       => '',
+                'outbound_proxy'    => '',
+                'disablefromuser'  => true,
+                'fromuser'         => '',
+                'fromdomain'       => 'miko.ru',
+                'manualattributes' => '[endpoint]' . PHP_EOL . 'callerid=Mark Spenser <79261234567>',
+
             ],
         ];
 
         $params[] = [
             [
                 'type'              => 'sip',
+                'registration_type' => 'none',
                 'description'       => 'Mango office for delete',
                 'host'              => 'mango1.office.ru',
                 'username'          => 'mango1',
@@ -150,30 +190,11 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
                 'nat'               => 'force_rport',
                 'qualify'           => true,
                 'qualifyfreq'       => 63,
+                'outbound_proxy'    => '',
+                'disablefromuser'   => true,
                 'fromuser'          => '',
                 'fromdomain'        => '',
-                'disablefromuser'   => true,
-                'registration_type' => 'none',
                 'manualattributes'  => '',
-            ],
-        ];
-
-        $params[] = [
-            [
-                'type'             => 'sip',
-                'description'      => 'Provider for CTI tests',
-                'host'             => '127.0.0.1',
-                'username'         => 'test',
-                'password'         => '',
-                'dtmfmode'         => 'auto',
-                'port'             => 5062,
-                'nat'              => 'force_rport,comedia',
-                'qualify'          => false,
-                'fromuser'         => '',
-                'fromdomain'       => '',
-                'disablefromuser'  => true,
-                'manualattributes' => '[endpoint]' . PHP_EOL . 'callerid=Mark Spenser <79261234567>',
-
             ],
         ];
 
