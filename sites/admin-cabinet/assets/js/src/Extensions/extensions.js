@@ -28,6 +28,7 @@ const Extensions = {
 	cbOnDataChanged() {
 		sessionStorage.removeItem(`${globalRootUrl}extensions/getForSelect/internal`);
 		sessionStorage.removeItem(`${globalRootUrl}extensions/getForSelect/all`);
+		sessionStorage.removeItem(`${globalRootUrl}extensions/getForSelect/routing`);
 	},
 	/**
 	 * Makes formatted menu structure
