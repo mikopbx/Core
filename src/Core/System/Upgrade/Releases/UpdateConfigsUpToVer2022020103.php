@@ -20,6 +20,7 @@
 namespace MikoPBX\Core\System\Upgrade\Releases;
 
 use MikoPBX\Common\Models\Codecs;
+use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\FirewallRules;
 use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\PbxSettings;
@@ -51,6 +52,7 @@ class UpdateConfigsUpToVer2022020103 extends Injectable implements UpgradeSystem
         }
         $this->updateFirewallRules();
         $this->updateCodecs();
+        $this->updateExtensions();
     }
 
     /**
@@ -152,6 +154,28 @@ class UpdateConfigsUpToVer2022020103 extends Injectable implements UpgradeSystem
                     LOG_ERR
                 );
             }
+        }
+    }
+
+    private function updateExtensions():void
+    {
+        if ($this->isLiveCD) {
+            return;
+        }
+        $extensions = [
+            'voicemail',
+        ];
+        foreach ($extensions as $extension){
+            $data                = Extensions::findFirst('number="' . $extension . '"');
+            if ($data===null) {
+                $data                    = new Extensions();
+                $data->number            = $extension;
+            }
+            $data->type              = Extensions::TYPE_SYSTEM;
+            $data->callerid          = 'System Extension';
+            $data->public_access     = 0;
+            $data->show_in_phonebook = 1;
+            $data->save();
         }
     }
 }

@@ -35,6 +35,17 @@ class VoiceMailConf extends CoreConfigClass
     public const VOICE_MAIL_EXT = 'voicemail';
     protected string $description = 'voicemail.conf';
 
+
+    /**
+     * Возвращает включения в контекст internal
+     *
+     * @return string
+     */
+    public function getIncludeInternal(): string
+    {
+        return "include => voice_mail_peer\n";
+    }
+
     /**
      * Prepares additional contexts sections in the extensions.conf file
      *

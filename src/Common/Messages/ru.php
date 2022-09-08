@@ -980,6 +980,7 @@ return [
     'mo_SystemExten_hangup'   => 'Завершить вызов',
     'mo_SystemExten_busy'     => 'Проиграть сигнал "Занято"',
     'mo_SystemExten_did2user' => 'Направить на сотрудника (сопоставить по DID)',
+    'mo_SystemExten_voicemail' => 'Голосовая почта',
     'GoToWikiDocumentation' => 'Перейти к онлайн документации',
     'mo_ModuleSettingsError' => 'Ошибки в настройках модуля - %modulename%',
     'adv_MessagesHeader' => 'Обратите внимание',
