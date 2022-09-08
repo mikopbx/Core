@@ -246,7 +246,7 @@ return [
     'or_CallThrough' => 'Send a call',
     'or_Provider' => 'through the provider',
     'or_ValidationPleaseEnterRuleName' => 'Enter a name for the rule',
-    'or_ValidateBeginPattern' => 'Error in a field of the call filter. It can contain numbers and characters: (|) * # + [ ]. The maximum length of the value is 64 characters.',
+    'or_ValidateBeginPattern' => 'Error in a field of the call filter. It can contain numbers and characters: )|(- * # + [ ]. The maximum length of the value is 64 characters.',
     'or_ValidateRestNumbers' => 'The minimum length of the phone number must be greater than two',
     'or_ValidateTrimFromBegin' => 'Incorrect value for clipping characters at the beginning of the phone number',
     'or_ValidatePrepend' => 'An error occurred while adding a character to the beginning of the phone number. The field can contain numbers and characters: * # +. The maximum length of the value is 20 characters.',

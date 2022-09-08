@@ -840,7 +840,7 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'or_ValidatePrepend' => 'Erro ao adicionar ao início do número. O campo pode conter números e sinais: * # +. O comprimento máximo de um valor é de 20 caracteres.',
     'or_ValidateTrimFromBegin' => 'Valor inválido para cortar caracteres no início do número',
     'or_ValidateRestNumbers' => 'O comprimento mínimo do número deve ser superior a 2',
-    'or_ValidateBeginPattern' => 'Erro no campo de filtragem de número. Pode conter números e sinais: (|',
+    'or_ValidateBeginPattern' => 'Erro no campo de filtragem de número. Pode conter números e sinais: )|(- * # + [ ]',
     'or_ValidationPleaseEnterRuleName' => 'Insira um nome para a regra',
     'or_Provider' => 'através do provedor',
     'or_CallThrough' => 'Direcione a chamada',

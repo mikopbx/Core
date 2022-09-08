@@ -256,7 +256,7 @@ return [
     'or_digitsFromTheFrontAndThenPrependTheDigits' => 'cifre all\'inizio del numero, quindi aggiungere all\'inizio',
     'or_Provider' => 'tramite il fornitore',
     'or_ValidationPleaseEnterRuleName' => 'Inserisci un nome per la regola',
-    'or_ValidateBeginPattern' => 'Errore nel campo del filtro numerico. Può contenere numeri e segni: ( |) * # + []. La lunghezza massima di un valore è di 64 caratteri.',
+    'or_ValidateBeginPattern' => 'Errore nel campo del filtro numerico. Può contenere numeri e segni: )|(- * # + [ ]. La lunghezza massima di un valore è di 64 caratteri.',
     'or_ValidateRestNumbers' => 'La lunghezza minima del numero deve essere superiore a 2',
     'or_ValidateTrimFromBegin' => 'Il valore per i caratteri di ritaglio all\'inizio del numero non è corretto',
     'or_ValidatePrepend' => 'Errore durante l\'aggiunta all\'inizio del numero. Il campo può contenere numeri e segni: * # +. La lunghezza massima di un valore è di 20 caratteri.',
