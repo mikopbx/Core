@@ -1023,7 +1023,6 @@ class SIPConf extends CoreConfigClass
             'pickup_group'         => '1',
             'sdp_session'          => 'mikopbx',
             'language'             => $language,
-            'mailboxes'            => 'admin@voicemailcontext',
             'device_state_busy_at' => $busylevel,
             'aors'                 => $peer['extension'],
             'auth'                 => $peer['extension'],

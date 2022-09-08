@@ -50,3 +50,7 @@ $data = [
 
 $client = new BeanstalkClient(WorkerCallEvents::class);
 $result_send = $client->publish(json_encode($data, JSON_THROW_ON_ERROR));
+
+$manager = Util::getAstManager();
+unset($data['action']);
+$manager->UserEvent('voicemail_end', $data);
