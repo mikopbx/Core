@@ -1122,4 +1122,5 @@ return [
     'mo_SystemExten_did2user' => '従業員に直接（DIDによる一致）',
     'pr_FromUser_v2' => 'ユーザー',
     'pr_FromDomain_v2' => 'ドメイン',
+    'mo_SystemExten_voicemail' => 'ボイスメール',
 ];

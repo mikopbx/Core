@@ -1122,4 +1122,5 @@ return [
     'mo_SystemExten_did2user' => 'Απευθείας στον υπάλληλο (αντίστοιχη από DID)',
     'pr_FromUser_v2' => 'χρήστης',
     'pr_FromDomain_v2' => 'τομέα',
+    'mo_SystemExten_voicemail' => 'Φωνητικό ταχυδρομείο',
 ];

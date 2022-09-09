@@ -1125,4 +1125,5 @@ It can be activated once, after which the coupon becomes redeemed.
     'mo_SystemExten_did2user' => 'Direct to employee (match by DID)',
     'pr_FromUser_v2' => 'user',
     'pr_FromDomain_v2' => 'domain',
+    'mo_SystemExten_voicemail' => 'Voice mail',
 ];

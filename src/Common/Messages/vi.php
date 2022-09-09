@@ -1122,4 +1122,5 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá đ
     'mo_SystemExten_did2user' => 'Trực tiếp đến nhân viên (khớp theo DID)',
     'pr_FromUser_v2' => 'người sử dụng',
     'pr_FromDomain_v2' => 'miền',
+    'mo_SystemExten_voicemail' => 'Hộp thư thoại',
 ];

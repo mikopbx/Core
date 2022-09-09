@@ -1122,4 +1122,5 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
     'mo_SystemExten_did2user' => 'Çalışana doğrudan (DID ile eşleştirme)',
     'pr_FromUser_v2' => 'kullanıcı',
     'pr_FromDomain_v2' => 'alan adı',
+    'mo_SystemExten_voicemail' => 'sesli posta',
 ];

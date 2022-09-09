@@ -1122,4 +1122,5 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'mo_SystemExten_did2user' => 'Directement à l\'employé (appariement par DID)',
     'pr_FromUser_v2' => 'utilisateur',
     'pr_FromDomain_v2' => 'domaine',
+    'mo_SystemExten_voicemail' => 'Messagerie vocale',
 ];

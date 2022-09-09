@@ -1122,4 +1122,5 @@ return [
     'mo_SystemExten_did2user' => 'Направити на співробітника (порівняти за DID)',
     'pr_FromUser_v2' => 'User',
     'pr_FromDomain_v2' => 'Domain',
+    'mo_SystemExten_voicemail' => 'Голосова пошта',
 ];
