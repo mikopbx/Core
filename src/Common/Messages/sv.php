@@ -1122,4 +1122,5 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'mo_SystemExten_did2user' => 'Direkt till anställd (matcha av DID)',
     'pr_FromDomain_v2' => 'domän',
     'pr_FromUser_v2' => 'användare',
+    'mo_SystemExten_voicemail' => 'Röstbrevlåda',
 ];

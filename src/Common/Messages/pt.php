@@ -1122,4 +1122,5 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'mo_SystemExten_did2user' => 'Direto ao funcionário (correspondência por DID)',
     'pr_FromUser_v2' => 'do utilizador',
     'pr_FromDomain_v2' => 'domínio',
+    'mo_SystemExten_voicemail' => 'Correio de voz',
 ];

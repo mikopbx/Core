@@ -1122,4 +1122,5 @@ Se puede activar una vez, después de lo cual el cupón se canjea.
     'mo_SystemExten_did2user' => 'Directo al empleado (coincidencia por DID)',
     'pr_FromUser_v2' => 'usuario',
     'pr_FromDomain_v2' => 'dominio',
+    'mo_SystemExten_voicemail' => 'Mensaje de voz',
 ];

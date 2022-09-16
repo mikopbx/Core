@@ -1122,4 +1122,5 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'mo_SystemExten_did2user' => 'Bezpośrednio do pracownika (dopasowanie według DID)',
     'pr_FromUser_v2' => 'użytkownik',
     'pr_FromDomain_v2' => 'Domena',
+    'mo_SystemExten_voicemail' => 'Poczta głosowa',
 ];

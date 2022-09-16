@@ -1122,4 +1122,5 @@ return [
     'mo_SystemExten_did2user' => '直接发给员工（按 DID 匹配）',
     'pr_FromUser_v2' => '用户',
     'pr_FromDomain_v2' => '领域',
+    'mo_SystemExten_voicemail' => '语音信箱',
 ];

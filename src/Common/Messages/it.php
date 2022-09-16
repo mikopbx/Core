@@ -1122,4 +1122,5 @@ Può essere attivato una volta, dopo di che il coupon viene riscattato.
     'mo_SystemExten_did2user' => 'Diretto al dipendente (corrispondenza di DID)',
     'pr_FromUser_v2' => 'utente',
     'pr_FromDomain_v2' => 'Dominio',
+    'mo_SystemExten_voicemail' => 'Segreteria telefonica',
 ];

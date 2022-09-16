@@ -1125,4 +1125,5 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
     'mo_SystemExten_did2user' => 'Direkt zum Mitarbeiter (Match by DID)',
     'pr_FromUser_v2' => 'Benutzer',
     'pr_FromDomain_v2' => 'Domain',
+    'mo_SystemExten_voicemail' => 'Voicemail',
 ];

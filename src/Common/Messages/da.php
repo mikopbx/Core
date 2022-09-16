@@ -1122,4 +1122,5 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'mo_SystemExten_did2user' => 'Direkte til medarbejder (match af DID)',
     'pr_FromUser_v2' => 'bruger',
     'pr_FromDomain_v2' => 'domæne',
+    'mo_SystemExten_voicemail' => 'Voice mail',
 ];

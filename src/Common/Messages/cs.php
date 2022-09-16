@@ -1122,4 +1122,5 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'mo_SystemExten_did2user' => 'Přímo na zaměstnance (shoda podle DID)',
     'pr_FromUser_v2' => 'uživatel',
     'pr_FromDomain_v2' => 'Doména',
+    'mo_SystemExten_voicemail' => 'Hlasová pošta',
 ];
