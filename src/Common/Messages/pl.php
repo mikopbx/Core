@@ -709,7 +709,7 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'or_CallThrough' => 'Wyślij połączenie',
     'or_Provider' => 'za pośrednictwem dostawcy',
     'or_ValidationPleaseEnterRuleName' => 'Wpisz nazwę reguły',
-    'or_ValidateBeginPattern' => 'Błąd w polu filtrowania liczb. Może zawierać cyfry i znaki: ( |) * # + []. Maksymalna długość wartości wynosi 64 znaki.|',
+    'or_ValidateBeginPattern' => 'Błąd w polu filtrowania liczb. Może zawierać cyfry i znaki: )|(- * # + [ ]. Maksymalna długość wartości wynosi 64 znaki.|',
     'or_ValidateRestNumbers' => 'Minimalna długość numeru musi być większa niż 2',
     'or_ValidateTrimFromBegin' => 'Wartość wycinania znaków na początku numeru jest niepoprawna',
     'or_ValidatePrepend' => 'Błąd dodawania na początku numeru. Pole może zawierać cyfry i znaki: * # +. Maksymalna długość wartości wynosi 20 znaków.',
@@ -1122,4 +1122,5 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'mo_SystemExten_did2user' => 'Bezpośrednio do pracownika (dopasowanie według DID)',
     'pr_FromUser_v2' => 'użytkownik',
     'pr_FromDomain_v2' => 'Domena',
+    'mo_SystemExten_voicemail' => 'Poczta głosowa',
 ];

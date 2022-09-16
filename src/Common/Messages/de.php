@@ -243,7 +243,7 @@ return [
     'or_CallThrough' => 'Anruf tätigen',
     'or_Provider' => 'durch den Provider',
     'or_ValidationPleaseEnterRuleName' => 'Geben Sie der Regel einen Namen',
-    'or_ValidateBeginPattern' => 'Fehler Nummernfeld (beginnt mit). Es kann Zahlen und folgende Zeichent entahlten: (|) * # + [ ]. Die maximale Länge beträgt 64 Zeichen.',
+    'or_ValidateBeginPattern' => 'Fehler Nummernfeld (beginnt mit). Es kann Zahlen und folgende Zeichent entahlten: )|(- * # + [ ]. Die maximale Länge beträgt 64 Zeichen.',
     'or_ValidateRestNumbers' => 'Die minimale Länge der Telefonnummer muss größer als 2 sein',
     'or_ValidateTrimFromBegin' => 'Die Anzahl zuersetzender Zeichen zu Beginn ist falsch',
     'or_ValidatePrepend' => 'Das Feld, welches den Anfang der Nummer ersetzt enthält Fehler. Es kann Zahlen und folgende Zeichent entahlten: * # + . Die maximale Länge beträgt 20 Zeichen.',
@@ -1125,4 +1125,5 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
     'mo_SystemExten_did2user' => 'Direkt zum Mitarbeiter (Match by DID)',
     'pr_FromUser_v2' => 'Benutzer',
     'pr_FromDomain_v2' => 'Domain',
+    'mo_SystemExten_voicemail' => 'Voicemail',
 ];

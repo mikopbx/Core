@@ -449,7 +449,6 @@ class SystemManagementProcessor extends Injectable
                     '000063', // Reads back the extension
                     '000064', // 0000MILLI
                     '10003246',// Echo test
-                    '10000100' // Voicemail
                 ],
             ],
         ];

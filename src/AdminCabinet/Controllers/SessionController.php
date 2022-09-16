@@ -54,8 +54,8 @@ class SessionController extends BaseController
         $login    = PbxSettings::getValueByKey('WebAdminLogin');
         $password = PbxSettings::getValueByKey('WebAdminPassword');
         if ($password === $passFromUser && $login === $loginFromUser) {
-            $this->_registerSession('admins');
             $this->updateSystemLanguage();
+            $this->_registerSession('admins');
             $this->view->success = true;
             $backUri = $this->request->getPost('backUri');
             if (!empty($backUri)){

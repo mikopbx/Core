@@ -241,7 +241,7 @@ return [
     'or_CallThrough' => '发送电话',
     'or_Provider' => '通过提供商',
     'or_ValidationPleaseEnterRuleName' => '输入规则名称',
-    'or_ValidateBeginPattern' => '数字过滤字段错误。它可能包含数字和符号：（',
+    'or_ValidateBeginPattern' => '数字过滤字段错误。它可能包含数字和符号：)|(- * # + [ ]',
     'or_ValidateRestNumbers' => '最小号码长度必须大于2',
     'or_ValidateTrimFromBegin' => '数字开头的剪切字符值不正确',
     'or_ValidatePrepend' => '添加到数字开头时出错。该字段可能包含数字和符号：*＃+。值的最大长度为20个字符。',
@@ -1122,4 +1122,5 @@ return [
     'mo_SystemExten_did2user' => '直接发给员工（按 DID 匹配）',
     'pr_FromUser_v2' => '用户',
     'pr_FromDomain_v2' => '领域',
+    'mo_SystemExten_voicemail' => '语音信箱',
 ];

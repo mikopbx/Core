@@ -662,7 +662,7 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'or_ValidatePrepend' => 'Erreur lors de l\'ajout au début du numéro. Le champ peut contenir des chiffres et des signes : * # +. La longueur maximale d\'une valeur est de 20 caractères.',
     'or_ValidateTrimFromBegin' => 'La valeur de découpage des caractères au début du nombre est incorrecte',
     'or_ValidateRestNumbers' => 'La longueur minimale du numéro doit être supérieure à 2',
-    'or_ValidateBeginPattern' => 'Erreur dans le champ de filtrage des nombres. Il peut contenir des chiffres et des signes : (|) * # + []. La longueur maximale d\'une valeur est de 64 caractères.',
+    'or_ValidateBeginPattern' => 'Erreur dans le champ de filtrage des nombres. Il peut contenir des chiffres et des signes : )|(- * # + [ ]. La longueur maximale d\'une valeur est de 64 caractères.',
     'or_ValidationPleaseEnterRuleName' => 'Entrez un nom de règle',
     'or_Provider' => 'par le fournisseur',
     'or_CallThrough' => 'Envoyez un appel',
@@ -1122,4 +1122,5 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'mo_SystemExten_did2user' => 'Directement à l\'employé (appariement par DID)',
     'pr_FromUser_v2' => 'utilisateur',
     'pr_FromDomain_v2' => 'domaine',
+    'mo_SystemExten_voicemail' => 'Messagerie vocale',
 ];

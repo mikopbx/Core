@@ -999,6 +999,10 @@ class SIPConf extends CoreConfigClass
         $language = (trim($language) === '') ? 'en-en' : $language;
 
         $calleridname = (trim($peer['calleridname']) === '') ? $peer['extension'] : $peer['calleridname'];
+        if(mb_strlen($calleridname) !== strlen($calleridname)){
+            // Ограничим длину calleridname. Это Unicode символы. Ограничиваем длину.
+            $calleridname = mb_substr($calleridname,0, 40);
+        }
         $busylevel    = (trim($peer['busylevel']) === '') ? '1' : '' . $peer['busylevel'];
 
         $dtmfmode = ($peer['dtmfmode'] === 'rfc2833') ? 'rfc4733' : $peer['dtmfmode'];
@@ -1019,7 +1023,6 @@ class SIPConf extends CoreConfigClass
             'pickup_group'         => '1',
             'sdp_session'          => 'mikopbx',
             'language'             => $language,
-            'mailboxes'            => 'admin@voicemailcontext',
             'device_state_busy_at' => $busylevel,
             'aors'                 => $peer['extension'],
             'auth'                 => $peer['extension'],

@@ -566,7 +566,7 @@ Bir kez etkinleştirilebilir, bundan sonra kupon kullanılır.
     'or_CallThrough' => 'Çağrı gönderin',
     'or_Provider' => 'sağlayıcı aracılığıyla',
     'or_ValidationPleaseEnterRuleName' => 'Bir kural adı girin',
-    'or_ValidateBeginPattern' => 'Sayı filtreleme alanında hata. Sayılar ve işaretler içerebilir: (|) * # + []. Bir değerin maksimum uzunluğu 64 karakterdir.',
+    'or_ValidateBeginPattern' => 'Sayı filtreleme alanında hata. Sayılar ve işaretler içerebilir: )|(- * # + [ ]. Bir değerin maksimum uzunluğu 64 karakterdir.',
     'or_ValidateRestNumbers' => 'Minimum sayı uzunluğu 2\'den fazla olmalıdır',
     'or_ValidateTrimFromBegin' => 'Sayının başındaki kırpma karakterlerinin değeri yanlış',
     'or_ValidatePrepend' => 'Numaranın başına ekleme hatası. Alan sayı ve işaret içerebilir: * # +. Bir değerin maksimum uzunluğu 20 karakterdir.',
@@ -1122,4 +1122,5 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
     'mo_SystemExten_did2user' => 'Çalışana doğrudan (DID ile eşleştirme)',
     'pr_FromUser_v2' => 'kullanıcı',
     'pr_FromDomain_v2' => 'alan adı',
+    'mo_SystemExten_voicemail' => 'sesli posta',
 ];

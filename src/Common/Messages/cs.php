@@ -244,7 +244,7 @@ return [
     'or_CallThrough' => 'Pošlete hovor',
     'or_Provider' => 'prostřednictvím poskytovatele',
     'or_ValidationPleaseEnterRuleName' => 'Zadejte název pravidla',
-    'or_ValidateBeginPattern' => 'Chyba v poli pro filtrování čísel. Může obsahovat čísla a znaky: ( |) * # + []. Maximální délka hodnoty je 64 znaků.|',
+    'or_ValidateBeginPattern' => 'Chyba v poli pro filtrování čísel. Může obsahovat čísla a znaky: )|(- * # + [ ]. Maximální délka hodnoty je 64 znaků.|',
     'or_ValidateRestNumbers' => 'Minimální délka čísla musí být větší než 2',
     'or_ValidateTrimFromBegin' => 'Hodnota pro ořezové znaky na začátku čísla je nesprávná',
     'or_ValidatePrepend' => 'Chyba při přidávání na začátek čísla. Pole může obsahovat čísla a znaky: * # +. Maximální délka hodnoty je 20 znaků.',
@@ -1122,4 +1122,5 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'mo_SystemExten_did2user' => 'Přímo na zaměstnance (shoda podle DID)',
     'pr_FromUser_v2' => 'uživatel',
     'pr_FromDomain_v2' => 'Doména',
+    'mo_SystemExten_voicemail' => 'Hlasová pošta',
 ];

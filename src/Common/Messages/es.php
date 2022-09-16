@@ -199,7 +199,7 @@ return [
     'or_CallThrough' => 'Enviar una llamada',
     'or_Provider' => 'a través del proveedor',
     'or_ValidationPleaseEnterRuleName' => 'Ingrese un nombre de regla',
-    'or_ValidateBeginPattern' => 'Error en el campo de filtrado de números. Puede contener números y signos: ( |) * # + []. La longitud máxima de un valor es de 64 caracteres.',
+    'or_ValidateBeginPattern' => 'Error en el campo de filtrado de números. Puede contener números y signos: )|(- * # + [ ]. La longitud máxima de un valor es de 64 caracteres.',
     'or_ValidateRestNumbers' => 'La longitud mínima del número debe ser superior a 2',
     'or_ValidateTrimFromBegin' => 'El valor para recortar caracteres al comienzo del número es incorrecto',
     'mm_Maintenance' => 'Servicio',
@@ -1122,4 +1122,5 @@ Se puede activar una vez, después de lo cual el cupón se canjea.
     'mo_SystemExten_did2user' => 'Directo al empleado (coincidencia por DID)',
     'pr_FromUser_v2' => 'usuario',
     'pr_FromDomain_v2' => 'dominio',
+    'mo_SystemExten_voicemail' => 'Mensaje de voz',
 ];

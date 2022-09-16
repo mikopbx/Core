@@ -707,7 +707,7 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'or_CallThrough' => 'Skicka ett samtal',
     'or_Provider' => 'genom leverantör',
     'or_ValidationPleaseEnterRuleName' => 'Ange ett regelnamn',
-    'or_ValidateBeginPattern' => 'Fel i nummerfiltreringsfältet. Det kan innehålla siffror och tecken: ( |) * # + []. Maxvärdet för ett värde är 64 tecken.',
+    'or_ValidateBeginPattern' => 'Fel i nummerfiltreringsfältet. Det kan innehålla siffror och tecken: )|(- * # + [ ]. Maxvärdet för ett värde är 64 tecken.',
     'or_ValidateRestNumbers' => 'Minsta antal måste vara mer än 2',
     'or_ValidateTrimFromBegin' => 'Värdet för klippning av tecken i början av numret är felaktigt',
     'or_ValidatePrepend' => 'Fel vid tillägg till början av numret. Fältet kan innehålla siffror och tecken: * # +. Maxvärdet för ett värde är 20 tecken.',
@@ -1122,4 +1122,5 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'mo_SystemExten_did2user' => 'Direkt till anställd (matcha av DID)',
     'pr_FromDomain_v2' => 'domän',
     'pr_FromUser_v2' => 'användare',
+    'mo_SystemExten_voicemail' => 'Röstbrevlåda',
 ];

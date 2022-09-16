@@ -324,7 +324,7 @@ return [
     'or_CallThrough' => 'Gửi một cuộc gọi',
     'or_Provider' => 'thông qua nhà cung cấp',
     'or_ValidationPleaseEnterRuleName' => 'Nhập tên quy tắc',
-    'or_ValidateBeginPattern' => 'Lỗi trong trường lọc số. Nó có thể chứa số và dấu hiệu: (',
+    'or_ValidateBeginPattern' => 'Lỗi trong trường lọc số. Nó có thể chứa số và dấu hiệu: )|(- * # + [ ]',
     'or_ValidateRestNumbers' => 'Độ dài số tối thiểu phải nhiều hơn 2',
     'or_ValidateTrimFromBegin' => 'Giá trị để cắt các ký tự ở đầu số là không chính xác',
     'or_ValidatePrepend' => 'Lỗi thêm vào đầu số. Trường có thể chứa số và dấu hiệu: * # +. Độ dài tối đa của một giá trị là 20 ký tự.',
@@ -1122,4 +1122,5 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá đ
     'mo_SystemExten_did2user' => 'Trực tiếp đến nhân viên (khớp theo DID)',
     'pr_FromUser_v2' => 'người sử dụng',
     'pr_FromDomain_v2' => 'miền',
+    'mo_SystemExten_voicemail' => 'Hộp thư thoại',
 ];

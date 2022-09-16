@@ -253,7 +253,7 @@ return [
     'or_CallThrough' => '電話をかける',
     'or_Provider' => 'プロバイダー経由',
     'or_ValidationPleaseEnterRuleName' => 'ルール名を入力してください',
-    'or_ValidateBeginPattern' => '数値フィルタリングフィールドにエラーがあります。数字と記号を含めることができます：（',
+    'or_ValidateBeginPattern' => '数値フィルタリングフィールドにエラーがあります。数字と記号を含めることができます：)|(- * # + [ ]',
     'or_ValidateRestNumbers' => '数値の長さの最小値は2より大きい必要があります',
     'or_ValidateTrimFromBegin' => '番号の先頭の文字をクリッピングするための値が正しくありません',
     'or_ValidatePrepend' => '番号の先頭に追加中にエラーが発生しました。フィールドには数字と記号を含めることができます：*＃+。値の最大長は20文字です。',
@@ -1122,4 +1122,5 @@ return [
     'mo_SystemExten_did2user' => '従業員に直接（DIDによる一致）',
     'pr_FromUser_v2' => 'ユーザー',
     'pr_FromDomain_v2' => 'ドメイン',
+    'mo_SystemExten_voicemail' => 'ボイスメール',
 ];

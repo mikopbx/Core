@@ -215,7 +215,7 @@ return [
     'or_CallThrough' => 'Send et opkald',
     'or_Provider' => 'gennem udbyder',
     'or_ValidationPleaseEnterRuleName' => 'Indtast et regelnavn',
-    'or_ValidateBeginPattern' => 'Fejl i nummerfiltreringsfeltet. Det kan indeholde tal og tegn: ( |) * # + []. Den maksimale længde på en værdi er 64 tegn.',
+    'or_ValidateBeginPattern' => 'Fejl i nummerfiltreringsfeltet. Det kan indeholde tal og tegn: )|(- * # + [ ]. Den maksimale længde på en værdi er 64 tegn.',
     'or_ValidateRestNumbers' => 'Minimum antal længder skal være mere end 2',
     'or_ValidateTrimFromBegin' => 'Værdien for klipning af tegn i begyndelsen af nummeret er forkert',
     'or_ValidatePrepend' => 'Fejl ved tilføjelse til begyndelsen af nummeret. Feltet kan indeholde tal og tegn: * # +. Den maksimale længde på en værdi er 20 tegn.',
@@ -1122,4 +1122,5 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'mo_SystemExten_did2user' => 'Direkte til medarbejder (match af DID)',
     'pr_FromUser_v2' => 'bruger',
     'pr_FromDomain_v2' => 'domæne',
+    'mo_SystemExten_voicemail' => 'Voice mail',
 ];
