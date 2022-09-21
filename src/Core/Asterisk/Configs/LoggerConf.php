@@ -40,7 +40,7 @@ class LoggerConf extends CoreConfigClass
         $conf .= "{$logDir}security_log => security\n";
         $conf .= "{$logDir}messages => notice,warning\n";
         $conf .= "{$logDir}error => error\n";
-        $conf .= "{$logDir}verbose => verbose(3),dtmf,fax\n";
+        $conf .= "{$logDir}verbose => verbose(3),dtmf,fax,warning\n";
         $conf .= "\n";
 
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/logger.conf', $conf);
