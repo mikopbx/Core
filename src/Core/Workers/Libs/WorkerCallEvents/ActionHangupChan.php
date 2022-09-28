@@ -57,7 +57,9 @@ class ActionHangupChan {
                 // Этот вызов будет заверщен событием voicemail_end
                 continue;
             }
-            if ($row->transfer === '1') {
+            if ($row->transfer === '1' && !empty($row->dst_chan)) {
+                // Обязательно канал назначения не должен быть пустым.
+                // Иначе это не переадресация.
                 $transfer_calls[] = $row->toArray();
             }
             if ($row->dialstatus === 'ORIGINATE') {
