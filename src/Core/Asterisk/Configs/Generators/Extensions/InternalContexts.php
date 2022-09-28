@@ -238,9 +238,9 @@ class InternalContexts extends CoreConfigClass
         $conf .= 'same => n,ExecIf($["${PJSIP_ENDPOINT(${EXTEN},auth)}x" == "x"]?Goto(internal-num-undefined,${EXTEN},1))' . " \n\t";
 
         $conf .= $this->generateAdditionalModulesInternalUsersContext();
-
-        $conf .= 'same => n,ExecIf($["${DEVICE_STATE(' . $this->technology . '/${EXTEN})}" == "BUSY"]?Set(DIALSTATUS=BUSY))' . " \n\t";
-        $conf .= 'same => n,GotoIf($["${DEVICE_STATE(' . $this->technology . '/${EXTEN})}" == "BUSY"]?fw_start)' . " \n\t";
+        $conf .= 'same => n,ExecIf($["${DEVICE_STATE(' . $this->technology . '/${EXTEN})}" == "BUSY" || "${DEVICE_STATE(' . $this->technology . '/${EXTEN}-WS)}" == "BUSY"]?Set(IS_BUSY=1))' . " \n\t";
+        $conf .= 'same => n,ExecIf($["${IS_BUSY}" == "1"]?Set(DIALSTATUS=BUSY))' . " \n\t";
+        $conf .= 'same => n,GotoIf($["${IS_BUSY}" == "1" && "${QUEUE_SRC_CHAN}x" == "x"]?fw_start)' . " \n\t";
 
         // Как долго звонить пиру.
         $conf .= 'same => n,Set(ringlength=${DB(FW_TIME/${EXTEN})})' . " \n\t";
