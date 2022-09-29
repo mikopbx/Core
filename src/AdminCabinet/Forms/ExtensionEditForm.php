@@ -235,19 +235,6 @@ class ExtensionEditForm extends Form
             'no'                  => 'no',
         ];
 
-        $nat = new Select(
-            'nat', $arrNatType, [
-            'using'    => [
-                'id',
-                'name',
-            ],
-            'useEmpty' => false,
-            'value'    => $sip->nat,
-            'class'    => 'ui selection dropdown protocol-select',
-        ]
-        );
-        $this->add($nat);
-
         // Qualify
         $cheskarr = ['value' => null];
         if ($sip->qualify) {
