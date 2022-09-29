@@ -570,7 +570,7 @@ class Network extends Injectable
         }
         unset($interfaces);
         $port = PbxSettings::getValueByKey('WEBHTTPSPort');
-        $info = "   The web interface is available at the addresses:".PHP_EOL.PHP_EOL;
+        $info = PHP_EOL."   The web interface is available at the addresses:".PHP_EOL.PHP_EOL;
         foreach ($addresses['local'] as $address){
             if(empty($address)){
                 continue;
