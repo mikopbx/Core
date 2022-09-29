@@ -61,7 +61,7 @@ function getBannerText()
     $version        = trim(file_get_contents($version_file));
     $buildtime      = trim(file_get_contents('/etc/version.buildtime'));
     $copyright_info = 'MikoPBX is Copyright (C) 2017-2022. All rights reserved.' . PHP_EOL .
-        "    \033[01;31m" . $livecd_text . "\033[39m";
+        "   \033[01;31m" . $livecd_text . "\033[39m";
 
     $networks = $network->getEnabledLanInterfaces();
     $id_text  = 0;
@@ -107,7 +107,7 @@ function getBannerText()
         if ( ! Util::isSystemctl()) {
             $files = Main::checkForCorruptedFiles();
             if (count($files) !== 0) {
-                return "    \033[01;31m" . Util::translate('The integrity of the system is broken') . "\033[39m";
+                return "   \033[01;31m" . Util::translate('The integrity of the system is broken') . "\033[39m";
             }
         } elseif(Util::isDocker()) {
             return '    Is Debian (Docker)';
