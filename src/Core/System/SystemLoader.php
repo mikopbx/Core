@@ -181,9 +181,9 @@ class SystemLoader extends Di\Injectable
         $this->echoResultMsg();
 
         $this->echoStartMsg(' - Wait asterisk fully booted...');
-        $result = PBX::waitFullyBooted();
-        $this->echoResultMsg($result);
-        if($result){
+        $asteriskResult = PBX::waitFullyBooted();
+        $this->echoResultMsg($asteriskResult);
+        if($asteriskResult){
             $this->echoStartMsg(' - Reload SIP settings in AstDB...');
             $sip = new SIPConf();
             $sip->updateAsteriskDatabase();
@@ -200,7 +200,10 @@ class SystemLoader extends Di\Injectable
         $nginx->generateConf();
         $nginx->reStart();
         $this->echoResultMsg();
-
+        if($asteriskResult){
+            $this->echoStartMsg(' - All services are fully loaded');
+        }
+        $this->echoStartMsg(Network::getInfoMessage());
         $this->di->getShared('registry')->booting = false;
 
         return true;

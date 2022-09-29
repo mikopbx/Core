@@ -546,6 +546,52 @@ class Network extends Injectable
     }
 
     /**
+     * Сбор информации о доступных адресах web интерфейса.
+     * @return string
+     */
+    public static function getInfoMessage():string
+    {
+        $addresses = [
+            'local' => [],
+            'external' => []
+        ];
+        /** @var LanInterfaces $interface */
+        $interfaces = LanInterfaces::find("disabled='0'");
+        foreach ($interfaces as $interface){
+            if(!empty($interface->ipaddr)){
+                $addresses['local'][] = $interface->ipaddr;
+            }
+            if(!empty($interface->exthostname) && !in_array($interface->exthostname, $addresses['local'], true)){
+                $addresses['external'][] = explode(':', $interface->exthostname)[0]??'';
+            }
+            if(!empty($interface->extipaddr) && !in_array($interface->extipaddr, $addresses['local'], true) ){
+                $addresses['external'][] = explode(':', $interface->extipaddr)[0]??'';
+            }
+        }
+        unset($interfaces);
+        $port = PbxSettings::getValueByKey('WEBHTTPSPort');
+        $info = "   The web interface is available at the addresses:".PHP_EOL.PHP_EOL;
+        foreach ($addresses['local'] as $address){
+            if(empty($address)){
+                continue;
+            }
+            $info.= "    - https://$address:$port".PHP_EOL;
+        }
+        $info.=PHP_EOL;
+        $info.= "   The web interface is available at the external addresses:".PHP_EOL.PHP_EOL;
+        foreach ($addresses['external'] as $address){
+            if(empty($address)){
+                continue;
+            }
+            $info.= "    - https://$address:$port".PHP_EOL;
+        }
+        $info.=PHP_EOL;
+
+        return $info;
+    }
+
+
+    /**
      * Преобразует сетевую маску в CIDR представление.
      *
      * @param $net_mask

@@ -21,6 +21,7 @@
         "php-mime-mail-parser/php-mime-mail-parser": "^7.0",
         "php-school/cli-menu": "^4.0",
         "php-school/terminal": "^0.2.1",
+        "phplucidframe/console-table": "^1.2",
         "phpmailer/phpmailer": "^6.1",
         "recoil/react": "^1.0",
         "recoil/recoil": "^1.0",

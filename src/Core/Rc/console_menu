@@ -23,7 +23,7 @@ use MikoPBX\Common\Models\PbxSettings;
 use PhpSchool\CliMenu\CliMenu;
 use PhpSchool\CliMenu\Builder\CliMenuBuilder;
 use PhpSchool\CliMenu\Action\GoBackAction;
-use PhpSchool\CliMenu\Exception\InvalidTerminalException;
+use LucidFrame\Console\ConsoleTable;
 use PhpSchool\CliMenu\MenuStyle;
 use PhpSchool\CliMenu\Input\Text;
 use PhpSchool\CliMenu\Input\InputIO;
@@ -60,23 +60,27 @@ function getBannerText()
 
     $version        = trim(file_get_contents($version_file));
     $buildtime      = trim(file_get_contents('/etc/version.buildtime'));
-    $copyright_info = 'MikoPBX is Copyright (C) 2017-2021. All rights reserved.' . PHP_EOL .
+    $copyright_info = 'MikoPBX is Copyright (C) 2017-2022. All rights reserved.' . PHP_EOL .
         "    \033[01;31m" . $livecd_text . "\033[39m";
 
     $networks = $network->getEnabledLanInterfaces();
-    $ip_text  = ['', '', '', '', ''];
     $id_text  = 0;
+
+    $countSpaceIP = 1;
+    $ipTable = [];
+    $externAddress = '';
     foreach ($networks as $if_data) {
         $if_data['interface_orign'] = $if_data['interface'];
         $if_data['interface']       = ($if_data['vlanid'] > 0) ? "vlan{$if_data['vlanid']}" : $if_data['interface'];
         $interface                  = $network->getInterface($if_data['interface']);
 
         if ($if_data['dhcp'] === '1') {
-            $ip_line = Util::translate('LAN IP address assigned via DHCP');
+            $ip_line = 'IP via DHCP';
         } elseif ($if_data['vlanid'] > 0) {
-            $ip_line = Util::translate('VLAN IP address assigned via') . " {$if_data['interface_orign']}";
+            $ip_line = "VLAN via {$if_data['interface_orign']}";
+            $countSpaceIP = Max($countSpaceIP -11, strlen($ip_line));
         } else {
-            $ip_line = Util::translate('LAN IP address');
+            $ip_line = 'Static IP  ';
         }
 
         $ip_info = 'unassigned';
@@ -84,10 +88,19 @@ function getBannerText()
             $ip_info = "\033[01;33m{$interface['ipaddr']}\033[39m";
         }
 
-        if ( ! empty($interface['mac'])) {
-            $ip_text[$id_text] = "{$if_data['interface']}: {$ip_line} {$ip_info}";
+        if ( ! empty($interface['mac']) && $id_text < 4) {
+            $ipTable[] = ["{$if_data['interface']}:", $ip_line, $ip_info];
             $id_text++;
         }
+
+        if($if_data['internet'] === '1'){
+            if(!empty($if_data['exthostname'])){
+                $externAddress = $if_data['exthostname'];
+            }elseif(!empty($if_data['extipaddr'])){
+                $externAddress = $if_data['extipaddr'];
+            }
+        }
+
     }
 
     $broken = function () {
@@ -102,20 +115,26 @@ function getBannerText()
             return '    Is Debian';
         }
     };
+    $result =   "*** ".Util::translate('this_is')."\033[01;32mMikoPBX v.{$version}\033[39m".PHP_EOL.
+                "   built on {$buildtime} for Generic (x64)".PHP_EOL.
+                "   ".$copyright_info. PHP_EOL;
 
-    $this_is = Util::translate('this_is');
+    $table = new ConsoleTable();
+    foreach ($ipTable as $row){
+        $table->addRow($row);
+    }
+    if(!empty($externAddress)){
+        $table->addRow(['external:', '', $externAddress]);
+        $id_text++;
+    }
+    while ($id_text < 4){
+        $table->addRow([' ', ' ']);
+        $id_text++;
+    }
 
-    return <<<EOD
-
-*** {$this_is}\033[01;32mMikoPBX v.{$version}\033[39m
-    built on {$buildtime} for Generic (x64)
-    {$copyright_info}
-{$ip_text[0]}
-{$ip_text[1]}
-{$ip_text[2]}
-{$broken()}
-
-EOD;
+    $result.= $table->hideBorder()->getTable().PHP_EOL;
+    $result.= $broken();
+    return $result;
 }
 
 $firewallWarning = function () {
