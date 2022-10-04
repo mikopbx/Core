@@ -84,6 +84,9 @@ fi;
 
 . /sbin/shell_functions.sh;
 echoToTeletype;
+echoToTeletype " - Start /sbin/check-update-pbx...";
+/sbin/check-update-pbx
+echoToTeletype;
 echoToTeletype " - Start /sbin/mountoffload...";
 /sbin/mountoffload;
 echoToTeletype " - Start /etc/rc/mountconfdir...";

@@ -99,18 +99,21 @@ fi
 /sbin/blockdev --rereadpt "$device" > /dev/null 2>&1
 sleep 3
 
-partition3Name=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$device")" | /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "3$" | /bin/busybox sort -u)
+partition3Name=$(/bin/lsblk -r -p | /bin/busybox grep "$(/bin/busybox basename "$device")" | /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "3$" | /bin/busybox sort -u)
 if [ -f /offload/livecd ]; then
   echoToTeletype " - re-mounting /conf.recover read/write..."
-  /bin/mount -w -o noatime "/dev/${partition3Name}" /conf.recover
+  /bin/mount -w -o noatime "${partition3Name}" /conf.recover
   rm -f /conf.recover/conf/*
   echoToTeletype " - restoring configuration"
   /bin/busybox cp -p /tmp/configbak/* /conf.recover/conf/
   touch /tmp/ejectcd
 else
-  /bin/mount -w -o noatime "/dev/${partition3Name}" /cf/
-  /bin/busybox cp /tmp/configbak/* /cf/conf/
-  rm -rf "${img_file}"
+  echo " - partition3Name: ${partition3Name}";
+  /bin/busybox yes | /sbin/mkfs.ext4 "${partition3Name}";
+  /bin/mount -w -o noatime "${partition3Name}" /cf/
+  mkdir -p /cf/conf/;
+  /bin/busybox cp /tmp/configbak/* /cf/conf/;
+  rm -rf "${img_file}";
 fi
 
 echoToTeletype " - rebooting system..."

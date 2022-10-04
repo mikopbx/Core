@@ -66,6 +66,15 @@ mountoffload()
 	uuid=$(/sbin/blkid -ofull "$disk" | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^UUID" | /bin/busybox cut -d '"' -f 2 | /bin/busybox head -n 1);
   type=$(/sbin/blkid -ofull "$disk" | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^TYPE="| /bin/busybox cut -d '"' -f 2 | /bin/busybox head -n 1);
 	umount -f /offload 2> /dev/null
+  # Проверка размера диска.
+	size="$(/bin/lsblk "$disk" -P -o SIZE | cut -f 2 -d '"' | cut -f 1 -d 'M')";
+  if [ "$size" -le 600 ]; then
+    echo " - Start check: $disk";
+    "/sbin/fsck.${type}" -f -p "$disk" > /dev/null 2> /dev/null;
+  else
+    MOUNT_RESULT='cannot be offload, large size';
+    return;
+  fi
 	mount -t "${type}" -r UUID="$uuid" /offload 2> /dev/null;
 
   MOUNT_RESULT=$?;
@@ -73,7 +82,7 @@ mountoffload()
   if [ ! "${CHECK_RESULT}" = "0" ] ; then
 	  umount -f /offload 2> /dev/null
 	  MOUNT_RESULT="${CHECK_RESULT}";
-    sleep 3;
+    sleep 1;
   fi
 	createBootConfFiles
 }
