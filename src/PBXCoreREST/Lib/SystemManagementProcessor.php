@@ -213,6 +213,7 @@ class SystemManagementProcessor extends Injectable
         $storage_uuid = trim(shell_exec($cmd));
         $cf_uuid      = $storage->getUuid("{$dev}3");
         $data = "#!/bin/sh".PHP_EOL.
+                'rm -rf "$0";'.PHP_EOL.
                 "export storage_uuid='$storage_uuid';".PHP_EOL.
                 "export cf_uuid='$cf_uuid';".PHP_EOL.
                 "export updateFile='$tempFilename';".PHP_EOL;

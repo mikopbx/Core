@@ -52,7 +52,6 @@ do
         echoToTeletype ' - System disk not found...'
       fi
     );
-    rm -rf "$updateScript";
     touch /tmp/rebooting;
     sleep 3;
   fi;
