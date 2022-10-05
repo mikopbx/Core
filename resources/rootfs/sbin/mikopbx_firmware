@@ -65,10 +65,10 @@ else
     # Storage на диске основном диске,
     # так как его нужно отмнонтировать, то перемещамем образ в RAM.
     echoToTeletype " - move img to RAM ..."
-    tmp_img=$(basename "$1");
+    tmp_img=$(/bin/busybox basename "$1");
     img_file="/tmp/${tmp_img}";
     # Перемещаем img файл в /tmp. Storage будет отмонтирован.
-    src_file=$(readlink -f "$1")
+    src_file=$(/bin/readlink -f "$1")
     if [ "${src_file}" != "${img_file}" ]; then
       mv "${src_file}" "${img_file}";
     fi
