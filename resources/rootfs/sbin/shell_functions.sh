@@ -122,6 +122,51 @@ f_umount()
     fi
 }
 
+mountDiskPart()
+{
+  uuid="$1";
+  mountpoint="$2";
+  if [ '1' = "$(/sbin/blkid | /bin/busybox grep "$uuid" > /dev/null)" ]; then
+    echoToTeletype ' - Storage disk not found...'
+    exit 1;
+  fi
+
+  mkdir -p "$mountpoint";
+  mount -rw UUID="$uuid" "$mountpoint" 2> /dev/null;
+  MOUNT_RESULT=$?;
+  if [ ! "${MOUNT_RESULT}" = "0" ] ; then
+    echoToTeletype ' - Fail mount storage...'
+    exit 1;
+  fi
+}
+
+mountImg() (
+  img="$1"
+  dev="$( losetup --show -f -P "$img")"
+  echo "$dev"
+  for part in "$dev"?*; do
+    if [ "$part" = "${dev}p*" ]; then
+      part="${dev}"
+    fi
+    dst="/mnt/$(basename "$part")"
+    echo "$dst"
+    mkdir -p "$dst"
+    mount "$part" "$dst"
+  done
+)
+
+umountImg() (
+  dev="/dev/loop$1"
+  for part in "$dev"?*; do
+    if [ "$part" = "${dev}p*" ]; then
+      part="${dev}"
+    fi
+    dst="/mnt/$(basename "$part")"
+    umount "$dst"
+  done
+  losetup -d "$dev"
+)
+
 if [ "${1}x" != "x" ]; then
     "$1" "$2" "$3" "$4" 2>/dev/null;
 fi

@@ -85,7 +85,12 @@ fi;
 . /sbin/shell_functions.sh;
 echoToTeletype;
 echoToTeletype " - Start /sbin/check-update-pbx...";
-/sbin/check-update-pbx
+/sbin/check-update-pbx;
+
+if [ -f /tmp/rebooting ]; then
+  exit 0;
+fi;
+
 echoToTeletype;
 echoToTeletype " - Start /sbin/mountoffload...";
 /sbin/mountoffload;

@@ -42,6 +42,7 @@ use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\System\Notifications;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\Storage;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Upgrade\UpdateDatabase;
 use MikoPBX\Core\System\Util;
@@ -192,7 +193,6 @@ class SystemManagementProcessor extends Injectable
         $res->success         = true;
         $res->data['message'] = 'In progress...';
 
-
         if ( ! file_exists($tempFilename)) {
             $res->success    = false;
             $res->messages[] = "Update file '{$tempFilename}' not found.";
@@ -206,12 +206,31 @@ class SystemManagementProcessor extends Injectable
 
             return $res;
         }
-        $dev = trim(file_get_contents('/var/etc/cfdevice'));
+        $dev     = trim(file_get_contents('/var/etc/cfdevice'));
+        $storage = new Storage();
+        // Генерим скрипт update
+        $cmd = '/bin/busybox grep "$(/bin/busybox  cat /var/etc/storage_device) " < /etc/fstab | /bin/busybox awk -F"[= ]" "{ print \$2}"';
+        $storage_uuid = trim(shell_exec($cmd));
+        $cf_uuid      = $storage->getUuid("{$dev}3");
+        $data = "#!/bin/sh".PHP_EOL.
+                "export storage_uuid='$storage_uuid';".PHP_EOL.
+                "export cf_uuid='$cf_uuid';".PHP_EOL.
+                "export updateFile='$tempFilename';".PHP_EOL;
+        // Монтируем boot раздел
+        $cmd = '/bin/lsblk -o UUID,PKNAME -p | /bin/busybox grep "'.$cf_uuid.'" | /bin/busybox cut -f 2 -d " "';
+        $bootDisc = trim(shell_exec($cmd));
 
-        $link = '/tmp/firmware_update.img';
-        Util::createUpdateSymlink($tempFilename, $link);
-        $mikoPBXFirmwarePath = Util::which('mikopbx_firmware');
-        Processes::mwExecBg("{$mikoPBXFirmwarePath} {$link} /dev/{$dev}");
+        $systemDir = '/system';
+        Util::mwMkdir($systemDir);
+        $result = Util::mwExec("mount {$bootDisc}1 $systemDir");
+        if($result === 0){
+            file_put_contents("$systemDir/update.sh", $data);
+            // Перезагрузка АТС
+            System::rebootSyncBg();
+        }else{
+            $res->success    = false;
+            $res->messages[] = "Fail mount boot device...";
+        }
 
         return $res;
     }

@@ -35,10 +35,26 @@ do
   updateScript="$systemDir/update.sh";
   if [ -f "$updateScript" ];then
     echoToTeletype " - Start update script $updateScript...";
-    (sh "$updateScript");
+    (
+      storage_uuid=''; cf_uuid=''; updateFile='';
+      # shellcheck source=/system/update.sh
+      source "$updateScript";
+      umount "$disk";
+      mountDiskPart "$storage_uuid" '/storage/usbdisk1';
+      mountDiskPart "$cf_uuid" '/cf'
+      systemDevice="$(/bin/lsblk -o UUID,PKNAME -p | /bin/busybox grep "$cf_uuid" | /bin/busybox cut -f 2 -d ' ')";
+      if [ -b "$systemDevice" ]; then
+        mkdir -p /var/etc;
+        echo '/storage/usbdisk1' > /var/etc/storage_device;
+        echo "$systemDevice" > /var/etc/cfdevice;
+        /sbin/mikopbx_firmware "$updateFile" "$systemDevice"
+      else
+        echoToTeletype ' - System disk not found...'
+      fi
+    );
     rm -rf "$updateScript";
+    touch /tmp/rebooting;
     sleep 3;
-    reboot;
   fi;
   umount -f "$disk";
   exit 0;
