@@ -119,13 +119,13 @@ if [ "$resultParted" = "0" ];then
     if [ "$mountResult" = "0" ]; then
         # Удаляем временную директорию.
         rm -rf /tmp/test_mnt;
-        echo " - сheck filesystem on ${partitionFour}";
+        echo " - check filesystem on ${partitionFour}";
         "/sbin/fsck.${type}" -a "${partitionFour}" > /dev/null 2>&1;
         fsckResult="$?";
         if [ "$fsckResult" != "0" ]; then
-            echo " - ERROR: сheck fs on '${partitionFour}' type: '${type}' exit code '$?'"
+            echo " - ERROR: check fs on '${partitionFour}' type: '${type}' exit code '$?'"
         else
-            echo " - сheck completed..."
+            echo " - check completed..."
         fi;
     else
         echo " - ERROR: umount ${partitionFour} exit code $?"
