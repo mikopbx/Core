@@ -10,6 +10,7 @@
     <testsuites>
         <testsuite name="TestMikoPBX">
             <file>Tests/LoginTest.php</file>
+            <file>Tests/ChangeWeakPasswordTest.php</file>
             <file>Tests/FillPBXSettingsTest.php</file>
             <file>Tests/CustomFileChangeTest.php</file>
             <file>Tests/CheckDropdownBeforeCreateAudioFileTest.php</file>
