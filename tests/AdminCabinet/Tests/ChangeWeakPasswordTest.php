@@ -41,26 +41,25 @@ class ChangeWeakPasswordTest extends MikoPBXTestsBase
         self::$driver->wait()->until(
             WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::xpath($xpath))
         );
-
         self::$driver->get("{$GLOBALS['SERVER_PBX']}/admin-cabinet/general-settings/modify/#/ssh");
-        $this->changeInputField('SSHPassword', $params['SSHPassword']);
-        $this->changeInputField('SSHPasswordRepeat', $params['SSHPassword']);
+        $this->changeInputField('SSHPassword', $params['Password']);
+        $this->changeInputField('SSHPasswordRepeat', $params['Password']);
 
-        self::$driver->get("{$GLOBALS['SERVER_PBX']}/admin-cabinet/general-settings/modify/#/password");
-        $this->changeInputField('WebAdminPassword', $params['WebAdminPassword']);
-        $this->changeInputField('WebAdminPasswordRepeat', $params['WebAdminPassword']);
+        self::$driver->get("{$GLOBALS['SERVER_PBX']}/admin-cabinet/general-settings/modify/#/passwords");
+        $this->changeInputField('WebAdminPassword', $params['Password']);
+        $this->changeInputField('WebAdminPasswordRepeat', $params['Password']);
 
         $this->submitForm('general-settings-form');
 
         $this->clickSidebarMenuItemByHref("/admin-cabinet/general-settings/modify/");
 
         self::$driver->get("{$GLOBALS['SERVER_PBX']}/admin-cabinet/general-settings/modify/#/ssh");
-        $this->assertInputFieldValueEqual('SSHPassword', $params['SSHPassword'], true);
-        $this->assertInputFieldValueEqual('SSHPasswordRepeat', $params['SSHPassword'], true);
+        $this->assertInputFieldValueEqual('SSHPassword', $params['Password'], true);
+        $this->assertInputFieldValueEqual('SSHPasswordRepeat', $params['Password'], true);
 
-        self::$driver->get("{$GLOBALS['SERVER_PBX']}/admin-cabinet/general-settings/modify/#/password");
-        $this->assertInputFieldValueEqual('WebAdminPassword', $params['WebAdminPassword'], true);
-        $this->assertInputFieldValueEqual('WebAdminPasswordRepeat', $params['WebAdminPassword'], true);
+        self::$driver->get("{$GLOBALS['SERVER_PBX']}/admin-cabinet/general-settings/modify/#/passwords");
+        $this->assertInputFieldValueEqual('WebAdminPassword', $params['Password'], true);
+        $this->assertInputFieldValueEqual('WebAdminPasswordRepeat', $params['Password'], true);
 
     }
 
@@ -75,8 +74,7 @@ class ChangeWeakPasswordTest extends MikoPBXTestsBase
 
         $params[] = [
             [
-                'SSHPassword'            => '123456789MikoPBX#2',
-                'WebAdminPassword'       => '123456789MikoPBX#2',
+                'Password'            => '123456789MikoPBX#2',
             ],
         ];
 
