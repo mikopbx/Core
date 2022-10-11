@@ -70,8 +70,8 @@ trait LoginTrait
         $params = [];
         $params[] = [[
             'login'=>'admin',
-            'password'   => '123456789MikoPBX#1',
-            'password2' => 'admin'
+            'password'  => '123456789MikoPBX#1',
+            'password2' => 'admin',
         ]];
 
         return $params;

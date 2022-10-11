@@ -56,7 +56,8 @@ class FillPBXSettingsTest extends MikoPBXTestsBase
 
         foreach ($inputItemPages as $inputItemPage) {
             $elementPage = $inputItemPage->getAttribute('data-tab');
-            self::$driver->get("{$GLOBALS['SERVER_PBX']}/admin-cabinet/general-settings/modify/#/{$elementPage}");
+            //self::$driver->get("{$GLOBALS['SERVER_PBX']}/admin-cabinet/general-settings/modify/#/{$elementPage}");
+            $this->clickOnLeftTabByDataTab($elementPage);
             $this->changeInputField($key, $value, true);
             $this->changeCheckBoxState($key, $value, true);
         }
@@ -66,7 +67,8 @@ class FillPBXSettingsTest extends MikoPBXTestsBase
 
         foreach ($textAreaItemPages as $textAreaItemPage) {
             $elementPage = $textAreaItemPage->getAttribute('data-tab');
-            self::$driver->get("{$GLOBALS['SERVER_PBX']}/admin-cabinet/general-settings/modify/#/{$elementPage}");
+            //self::$driver->get("{$GLOBALS['SERVER_PBX']}/admin-cabinet/general-settings/modify/#/{$elementPage}");
+            $this->clickOnLeftTabByDataTab($elementPage);
             $this->changeTextAreaValue($key, $value, true);
         }
 
@@ -74,7 +76,8 @@ class FillPBXSettingsTest extends MikoPBXTestsBase
         $selectItemPages = self::$driver->findElements(WebDriverBy::xpath($xpath));
         foreach ($selectItemPages as $selectItemPage) {
             $elementPage = $selectItemPage->getAttribute('data-tab');
-            self::$driver->get("{$GLOBALS['SERVER_PBX']}/admin-cabinet/general-settings/modify/#/{$elementPage}");
+            //self::$driver->get("{$GLOBALS['SERVER_PBX']}/admin-cabinet/general-settings/modify/#/{$elementPage}");
+            $this->clickOnLeftTabByDataTab($elementPage);
             $this->selectDropdownItem($key, $value);
         }
     }
@@ -85,9 +88,9 @@ class FillPBXSettingsTest extends MikoPBXTestsBase
         $inputItemPages = self::$driver->findElements(WebDriverBy::xpath($xpath));
         foreach ($inputItemPages as $inputItemPage) {
             $elementPage = $inputItemPage->getAttribute('data-tab');
-            self::$driver->get("{$GLOBALS['SERVER_PBX']}/admin-cabinet/general-settings/modify/#/{$elementPage}");
+            //self::$driver->get("{$GLOBALS['SERVER_PBX']}/admin-cabinet/general-settings/modify/#/{$elementPage}");
+            $this->clickOnLeftTabByDataTab($elementPage);
             $this->assertInputFieldValueEqual($key, $value, true);
-
             $this->assertCheckBoxStageIsEqual($key, $value, true);
         }
 
@@ -95,7 +98,8 @@ class FillPBXSettingsTest extends MikoPBXTestsBase
         $textAreaItemPages = self::$driver->findElements(WebDriverBy::xpath($xpath));
         foreach ($textAreaItemPages as $textAreaItemPage) {
             $elementPage = $textAreaItemPage->getAttribute('data-tab');
-            self::$driver->get("{$GLOBALS['SERVER_PBX']}/admin-cabinet/general-settings/modify/#/{$elementPage}");
+            //self::$driver->get("{$GLOBALS['SERVER_PBX']}/admin-cabinet/general-settings/modify/#/{$elementPage}");
+            $this->clickOnLeftTabByDataTab($elementPage);
             $this->assertTextAreaValueIsEqual($key, $value);
         }
 
@@ -103,9 +107,23 @@ class FillPBXSettingsTest extends MikoPBXTestsBase
         $selectItemPages = self::$driver->findElements(WebDriverBy::xpath($xpath));
         foreach ($selectItemPages as $selectItemPage) {
             $elementPage = $selectItemPage->getAttribute('data-tab');
-            self::$driver->get("{$GLOBALS['SERVER_PBX']}/admin-cabinet/general-settings/modify/#/{$elementPage}");
+            //self::$driver->get("{$GLOBALS['SERVER_PBX']}/admin-cabinet/general-settings/modify/#/{$elementPage}");
+            $this->clickOnLeftTabByDataTab($elementPage);
             $this->assertMenuItemSelected($key, $value);
         }
+    }
+
+    /**
+     * Change page
+     * @param string $identifier
+     *
+     * @return void
+     */
+    private function clickOnLeftTabByDataTab(string $identifier):void
+    {
+        $xpath = "//div[@id='general-settings-menu']//ancestor::a[@data-tab='{$identifier}']";
+        $tab = self::$driver->findElement(WebDriverBy::xpath($xpath));
+        $tab->click();
     }
 
     /**
@@ -126,11 +144,7 @@ ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQDZ3hd6/gqPxMMCqFytFdVznYD3Debp2LKTRiJEaS2S
                 'PBXLanguage'            => 'en-en',
                 'PBXRecordCalls'         => true,
                 'SendMetrics'            => false,
-                'SSHPassword'            => '123456789MikoPBX#1',
-                'SSHPasswordRepeat'      => '123456789MikoPBX#1',
                 'SSHAuthorizedKeys'      => $SSHAuthorizedKeys,
-                'WebAdminPassword'       => '123456789MikoPBX#1',
-                'WebAdminPasswordRepeat' => '123456789MikoPBX#1',
                 'codec_alaw'             => true,
                 'codec_ulaw'             => false,
                 'codec_g726'             => true,
