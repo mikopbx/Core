@@ -419,6 +419,7 @@ class WorkerModelsEvents extends WorkerBase
                 self::R_NGINX,
                 self::R_PHP_FPM,
                 self::R_REST_API_WORKER,
+                self::R_CALL_EVENTS_WORKER,
                 self::R_SYSLOG,
             ],
         ];
