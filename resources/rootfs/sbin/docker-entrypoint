@@ -18,7 +18,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-putenv('START-DOCKER=1');
+define('START_DOCKER',1);
 require_once('Globals.php');
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
@@ -111,7 +111,7 @@ class Entrypoint
         $this->checkUpdate();
         shell_exec("rm -rf /tmp/*");
         $commands = 'exec </dev/console >/dev/console 2>/dev/console;'.
-            '/etc/rc/bootup 2>/dev/null && '.
+            '/etc/rc/bootup docker 2>/dev/null && '.
             '/etc/rc/bootup_pbx 2>/dev/null';
         passthru($commands);
         while (true){

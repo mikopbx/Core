@@ -22,6 +22,7 @@ namespace MikoPBX\PBXCoreREST\Workers;
 
 require_once 'Globals.php';
 
+use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\System\Util;
@@ -71,6 +72,9 @@ class WorkerModuleInstaller extends WorkerBase
         // Unzip module folder
         $semZaPath = Util::which('7za');
         Processes::mwExec("{$semZaPath} e -spf -aoa -o{$currentModuleDir} {$filePath}");
+
+        ModulesDBConnectionsProvider::recreateModulesDBConnections();
+
         Util::addRegularWWWRights($currentModuleDir);
         file_put_contents( $this->progress_file, '50');
         $pbxExtensionSetupClass = "\\Modules\\{$moduleUniqueID}\\Setup\\PbxExtensionSetup";
@@ -79,12 +83,12 @@ class WorkerModuleInstaller extends WorkerBase
             try {
                 $setup = new $pbxExtensionSetupClass($moduleUniqueID);
                 if ( ! $setup->installModule()) {
-                    file_put_contents($this->error_file, implode(" ", $setup->getMessages()), FILE_APPEND);
+                    file_put_contents($this->error_file, '++'.defined('START_DOCKER').'++ '.implode(" ", $setup->getMessages()), FILE_APPEND);
                 } else {
                     Processes::restartAllWorkers();
                 }
             } catch (Throwable $e){
-                file_put_contents($this->error_file, $e->getMessage(), FILE_APPEND);
+                file_put_contents($this->error_file, '--- '.$e->getMessage(), FILE_APPEND);
             }
         } else {
             file_put_contents($this->error_file,"Install error: the class {$pbxExtensionSetupClass} not exists", FILE_APPEND);

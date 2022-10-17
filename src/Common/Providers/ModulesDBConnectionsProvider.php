@@ -88,7 +88,7 @@ class ModulesDBConnectionsProvider extends DatabaseProviderBase implements Servi
                 }
 
                 if (!class_exists($moduleModelClass)
-                    || '1' === getenv('START-DOCKER')
+                    || defined('START_DOCKER')
                     || count(get_class_vars($moduleModelClass)) === 0) {
                     continue;
                 }
