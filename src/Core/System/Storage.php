@@ -933,7 +933,10 @@ class Storage extends Di\Injectable
      */
     public function configure(): void
     {
+        $varEtcDir = $this->config->path('core.varEtcDir');
+        $storage_dev_file = "{$varEtcDir}/storage_device";
         if(Util::isSystemctl()){
+            file_put_contents($storage_dev_file, "/storage/usbdisk1");
             $this->updateConfigWithNewMountPoint("/storage/usbdisk1");
             $this->createWorkDirs();
             PHPConf::setupLog();
@@ -941,8 +944,7 @@ class Storage extends Di\Injectable
         }
 
         $cf_disk = '';
-        $varEtcDir = $this->config->path('core.varEtcDir');
-        $storage_dev_file = "{$varEtcDir}/storage_device";
+
         if (file_exists($storage_dev_file)) {
             unlink($storage_dev_file);
         }
