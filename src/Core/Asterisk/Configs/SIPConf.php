@@ -487,7 +487,7 @@ class SIPConf extends CoreConfigClass
         $tlsNatConf = '';
 
         $resolveOk = Processes::mwExec("timeout 1 getent hosts '$externalHostName'") === 0;
-        if(!$resolveOk){
+        if(!empty($externalHostName) && !$resolveOk){
             Util::sysLogMsg('DNS', "ERROR: DNS $externalHostName not resolved, It will not be used in SIP signaling.");
         }
         if ($topology === 'private') {

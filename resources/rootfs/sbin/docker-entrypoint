@@ -1,5 +1,12 @@
 #!/bin/sh
 
+kernelVersion="$(/bin/uname -r | /bin/cut -f 1 -d '.')";
+
+if [ ! "$kernelVersion" = '5' ]; then
+  echo 'ERROR: Only linux 5 is supported...';
+  exit 4;
+fi
+
 cleanup()
 {
   echoToTeletype "Receive signal to restart "...;
