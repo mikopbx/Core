@@ -555,13 +555,13 @@ class Storage extends Di\Injectable
     {
         $res_disks = [];
 
-        if (Util::isSystemctl()) {
+        if (Util::isDocker()) {
             $out = [];
             $grepPath = Util::which('grep');
             $dfPath = Util::which('df');
             $awkPath = Util::which('awk');
             Processes::mwExec(
-                "{$dfPath} -k /storage/usbdisk1 | {$awkPath}  '{ print $1 \"|\" $3 \"|\" $4} ' | {$grepPath} -v 'Available'",
+                "{$dfPath} -k /storage | {$awkPath}  '{ print \$1 \"|\" $3 \"|\" \$4} ' | {$grepPath} -v 'Available'",
                 $out
             );
             $disk_data = explode('|', implode(" ", $out));
@@ -572,7 +572,7 @@ class Storage extends Di\Injectable
                     'size' => "" . $m_size,
                     'size_text' => "" . $m_size . " Mb",
                     'vendor' => 'Debian',
-                    'mounted' => '/storage/usbdisk1',
+                    'mounted' => '/storage',
                     'free_space' => round($disk_data[2] / 1024, 1),
                     'partitions' => [],
                     'sys_disk' => true,
