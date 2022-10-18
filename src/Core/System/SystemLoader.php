@@ -203,7 +203,9 @@ class SystemLoader extends Di\Injectable
         if($asteriskResult){
             $this->echoStartMsg(' - All services are fully loaded');
         }
-        $this->echoStartMsg(Network::getInfoMessage());
+        if(!Util::isDocker()){
+            $this->echoStartMsg(Network::getInfoMessage());
+        }
         $this->di->getShared('registry')->booting = false;
 
         return true;
