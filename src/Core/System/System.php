@@ -113,7 +113,8 @@ class System extends Di\Injectable
                 case 'openvpn.ovpn':
                     $actions['network'] = 100;
                     break;
-                case 'jail.local': // fail2ban
+                case 'firewall_additional':
+                case 'jail.local':
                     $actions['firewall'] = 100;
                     break;
                 default:
