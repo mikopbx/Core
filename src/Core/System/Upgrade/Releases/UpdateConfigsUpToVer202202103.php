@@ -29,17 +29,15 @@ use MikoPBX\Core\System\Upgrade\UpgradeSystemConfigInterface;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
 
-class UpdateConfigsUpToVer2022020103 extends Injectable implements UpgradeSystemConfigInterface
+class UpdateConfigsUpToVer202202103 extends Injectable implements UpgradeSystemConfigInterface
 {
   	public const PBX_VERSION = '2022.2.103';
-    private bool $isLiveCD;
 
 	/**
      * Class constructor.
      */
     public function __construct()
     {
-        $this->isLiveCD      = file_exists('/offload/livecd');
     }
 
     /**
@@ -47,9 +45,6 @@ class UpdateConfigsUpToVer2022020103 extends Injectable implements UpgradeSystem
      */
     public function processUpdate():void
     {
-        if ($this->isLiveCD) {
-            return;
-        }
         $this->updateFirewallRules();
         $this->updateCodecs();
         $this->updateExtensions();
@@ -159,9 +154,6 @@ class UpdateConfigsUpToVer2022020103 extends Injectable implements UpgradeSystem
 
     private function updateExtensions():void
     {
-        if ($this->isLiveCD) {
-            return;
-        }
         $extensions = [
             'voicemail',
         ];
