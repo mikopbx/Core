@@ -27,12 +27,12 @@ class ActionUnparkCall
 {
     /**
      * Снятие вызова с парковки.
-     * @param $worker
+     * @param WorkerCallEvents $worker
      * @param $data
      */
     public static function execute(WorkerCallEvents $worker, $data):void
     {
-        $data['recordingfile'] = $worker->MixMonitor($data['dst_chan'], $data['UNIQUEID']);
+        $data['recordingfile'] = $worker->MixMonitor($data['dst_chan'], $data['UNIQUEID'], null, null, 'ActionUnparkCall');
         InsertDataToDB::execute($data);
         if (is_array($data['data_parking'])) {
             InsertDataToDB::execute($data['data_parking']);

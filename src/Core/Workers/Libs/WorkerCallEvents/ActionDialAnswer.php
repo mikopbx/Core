@@ -104,7 +104,7 @@ class ActionDialAnswer {
 
     /**
      * Обработка PickUp звонка.
-     * @param $worker
+     * @param WorkerCallEvents $worker
      * @param $data
      */
     private static function fillPickUpCdr($worker, $data):void
@@ -127,7 +127,7 @@ class ActionDialAnswer {
             $new_data['dst_chan']       = $data['agi_channel'];
             $new_data['dst_num']        = $data['dst_num'];
             $new_data['UNIQUEID']       = $data['id'];
-            $new_data['recordingfile']  = $worker->MixMonitor($new_data['dst_chan'],  'pickup_'.$new_data['UNIQUEID']);
+            $new_data['recordingfile']  = $worker->MixMonitor($new_data['dst_chan'],  'pickup_'.$new_data['UNIQUEID'], null, null, 'fillPickUpCdr');
 
             unset($new_data['id'], $new_data['end']);
             InsertDataToDB::execute($new_data);

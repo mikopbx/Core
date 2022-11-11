@@ -23,8 +23,8 @@ class ActionTransferCheck {
         $m_data = CallDetailRecordsTmp::find($filter);
         foreach ($m_data as $row) {
             // Пробуем остановить записть разговора.
-            $worker->StopMixMonitor($row->dst_chan);
-            $worker->StopMixMonitor($row->src_chan);
+            $worker->StopMixMonitor($row->dst_chan, 'ActionTransferCheck_'.$row->verbose_call_id);
+            $worker->StopMixMonitor($row->src_chan, 'ActionTransferCheck_'.$row->verbose_call_id);
             // Установим признак переадресации.
             $row->writeAttribute('transfer', 1);
             $row->save();

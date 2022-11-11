@@ -38,11 +38,11 @@ class CreateRowTransfer {
 
     /**
      * Обработка обрыва переадресации.
-     * @param $worker
+     * @param WorkerCallEvents $worker
      * @param $data
      * @param $calls_data
      */
-    private static function fillFailRedirectCdrData($worker, $data, $calls_data):void
+    private static function fillFailRedirectCdrData(WorkerCallEvents $worker, $data, $calls_data):void
     {
         // Возобновление записи разговора при срыве переадресации.
         $row_data = $calls_data[0];
@@ -70,14 +70,14 @@ class CreateRowTransfer {
         }
 
         if ($not_ended_cdr !== null && !$transferNotComplete) {
-            $worker->StopMixMonitor($not_ended_cdr->src_chan);
-            $worker->MixMonitor($not_ended_cdr->dst_chan, '', '', $not_ended_cdr->recordingfile);
+            $worker->StopMixMonitor($not_ended_cdr->src_chan, 'fillFailRedirectCdrData');
+            $worker->MixMonitor($not_ended_cdr->dst_chan, '', '', $not_ended_cdr->recordingfile, 'fillFailRedirectCdrData');
         }
     }
 
     /**
      * Обработка нормальной переадресации.
-     * @param $worker
+     * @param WorkerCallEvents $worker
      * @param $action
      * @param $data
      * @param $calls_data
@@ -101,11 +101,14 @@ class CreateRowTransfer {
             }
         }
         // Запись разговора.
-        $worker->StopMixMonitor($insert_data['src_chan']);
-        $worker->StopMixMonitor($insert_data['dst_chan']);
+        $worker->StopMixMonitor($insert_data['src_chan'], 'fillRedirectCdrData');
+        $worker->StopMixMonitor($insert_data['dst_chan'], 'fillRedirectCdrData');
         $recordingfile = $worker->MixMonitor(
             $insert_data['dst_chan'],
-            'transfer_' . $insert_data['src_num'] . '_' . $insert_data['dst_num'] . '_' . $data['linkedid']
+            'transfer_' . $insert_data['src_num'] . '_' . $insert_data['dst_num'] . '_' . $data['linkedid'],
+            null,
+            null,
+            'fillLocalChannelCdr'
         );
         //
         $insert_data['action']        = "{$action}_end_trasfer";

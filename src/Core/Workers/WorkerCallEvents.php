@@ -45,7 +45,7 @@ class WorkerCallEvents extends WorkerBase
      *
      * @return string
      */
-    public function MixMonitor($channel, $file_name = null, $sub_dir = null, $full_name = null): string
+    public function MixMonitor($channel, $file_name = null, $sub_dir = null, $full_name = null, string $actionID=''): string
     {
         $resFile = $this->mixMonitorChannels[$channel]??'';
         if($resFile !== ''){
@@ -61,7 +61,7 @@ class WorkerCallEvents extends WorkerBase
             }
             $srcFile = "{$f}.wav";
             $resFile = "{$f}.mp3";
-            $this->am->MixMonitor($channel, $srcFile, $options);
+            $this->am->MixMonitor($channel, $srcFile, $options, '', $actionID);
             $this->mixMonitorChannels[$channel] = $resFile;
             $this->am->UserEvent('StartRecording', ['recordingfile' => $resFile, 'recchan' => $channel]);
         }
@@ -95,8 +95,9 @@ class WorkerCallEvents extends WorkerBase
     /**
      * Останавливает запись разговора на канале.
      * @param string $channel
+     * @param string $actionID
      */
-    public function StopMixMonitor($channel): void
+    public function StopMixMonitor($channel, string $actionID=''): void
     {
         if(isset($this->mixMonitorChannels[$channel])){
             unset($this->mixMonitorChannels[$channel]);
@@ -104,7 +105,7 @@ class WorkerCallEvents extends WorkerBase
             return;
         }
         if ($this->record_calls) {
-            $this->am->StopMixMonitor($channel);
+            $this->am->StopMixMonitor($channel, $actionID);
         }
     }
 

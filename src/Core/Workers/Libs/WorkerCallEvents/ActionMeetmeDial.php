@@ -32,7 +32,7 @@ class ActionMeetmeDial
      */
     public static function execute(WorkerCallEvents $worker, $data):void
     {
-        $worker->StopMixMonitor($data['src_chan']);
+        $worker->StopMixMonitor($data['src_chan'], 'ActionMeetMeDial_execute');
 
         if (strpos($data['src_chan'], 'internal-originate') !== false) {
             // Уточним канал и ID записи;

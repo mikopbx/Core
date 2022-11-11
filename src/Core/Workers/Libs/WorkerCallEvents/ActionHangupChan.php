@@ -90,7 +90,7 @@ class ActionHangupChan {
                     'out'  => true,
                 ];
             } else {
-                $worker->StopMixMonitor($row->dst_chan);
+                $worker->StopMixMonitor($row->dst_chan, 'hangupChanEndCalls');
                 $channels[] = [
                     'chan' => $row->dst_chan,
                     'did'  => $row->did,
@@ -141,7 +141,7 @@ class ActionHangupChan {
 
     /**
      * Проверяем на SIP трансфер.
-     * @param $worker
+     * @param WorkerCallEvents $worker
      * @param $data
      * @param $channels
      */
@@ -180,7 +180,7 @@ class ActionHangupChan {
             $n_data['linkedid']      = $linkedid;
             $n_data['UNIQUEID']      = $data['linkedid'] . Util::generateRandomString();
             $n_data['transfer']      = '0';
-            $n_data['recordingfile'] = $worker->MixMonitor($n_data['dst_chan'], $n_data['UNIQUEID']);
+            $n_data['recordingfile'] = $worker->MixMonitor($n_data['dst_chan'], $n_data['UNIQUEID'], null, null, 'hangupChanCheckSipTrtansfer');
             $n_data['did']           = $data_chan['did'];
 
             InsertDataToDB::execute($n_data);

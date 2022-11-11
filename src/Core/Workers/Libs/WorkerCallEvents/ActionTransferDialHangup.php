@@ -44,7 +44,7 @@ class ActionTransferDialHangup
 
     /**
      * Заполнение не отвеченного звонка.
-     * @param $worker
+     * @param WorkerCallEvents $worker
      * @param $data
      */
     private static function fillNotAnsweredCdr($worker, $data):void{
@@ -85,7 +85,7 @@ class ActionTransferDialHangup
             $info      = pathinfo($row->recordingfile);
             $data_time = ($row->answer === '') ? $row->start : $row->answer;
             $subdir    = date('Y/m/d/H/', strtotime($data_time));
-            $worker->MixMonitor($row->dst_chan, $info['filename'], $subdir);
+            $worker->MixMonitor($row->dst_chan, $info['filename'], $subdir, null, 'fillNotAnsweredCdr');
             // Снимем со строк признак переадресации.
             $row->writeAttribute('transfer', 0);
             if ( ! $row->save()) {
@@ -96,7 +96,7 @@ class ActionTransferDialHangup
 
     /**
      * Обработка Local канала.
-     * @param $worker
+     * @param WorkerCallEvents $worker
      * @param $data
      */
     private static function fillLocalChannelCdr($worker, $data):void{
@@ -140,7 +140,7 @@ class ActionTransferDialHangup
                 $data_time = 'now';
             }
             $subdir    = date('Y/m/d/H/', strtotime($data_time));
-            $worker->MixMonitor($res->dst_chan, $info['filename'], $subdir);
+            $worker->MixMonitor($res->dst_chan, $info['filename'], $subdir, null, 'fillLocalChannelCdr');
         }
     }
 
