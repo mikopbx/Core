@@ -140,6 +140,7 @@ class InternalContexts extends CoreConfigClass
         $conf .= 'same => n,ExecIf($["${EXTEN}" != "${cleanNumber}"]?Goto(${CONTEXT},${cleanNumber},$[${PRIORITY} + 1]))' . "\n\t";
 
         $conf .= 'same => n,Set(__FROM_CHAN=${CHANNEL})' . "\n\t";
+        $conf .= 'same => n,Set(__M_CALLID=${CHANNEL(callid)})' . "\n\t";
         $conf .= 'same => n,ExecIf($["${OLD_LINKEDID}x" == "x"]?Set(__OLD_LINKEDID=${CHANNEL(linkedid)}))' . "\n\t";
         $conf .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" != "Local"]?Gosub(set_from_peer,s,1))' . "\n\t";
         $conf .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" == "Local"]?Gosub(set_orign_chan,s,1))' . "\n\t";

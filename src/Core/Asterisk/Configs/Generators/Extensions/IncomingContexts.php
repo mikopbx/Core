@@ -146,6 +146,7 @@ class IncomingContexts extends CoreConfigClass
         $rout_data .= 'same => n,Set(CHANNEL(hangup_handler_wipe)=hangup_handler,s,1)' . "\n\t";
         $rout_data .= 'same => n,Set(__FROM_DID=${EXTEN})' . "\n\t";
         $rout_data .= 'same => n,Set(__FROM_CHAN=${CHANNEL})' . "\n\t";
+        $rout_data .= 'same => n,Set(__M_CALLID=${CHANNEL(callid)})' . "\n\t";
         // Установка имени пира.
         $rout_data .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" != "Local"]?Gosub(set_from_peer,s,1))' . "\n\t";
         $rout_data .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" == "Local"]?Set(__FROM_PEER=${CALLERID(num)}))' . "\n\t";
