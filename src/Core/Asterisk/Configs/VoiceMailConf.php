@@ -68,16 +68,21 @@ class VoiceMailConf extends CoreConfigClass
 
     protected function generateConfigProtected(): void
     {
-        // Уважаемый ${VM_NAME}:\n\n\tВам пришло новое голосовое сообщение длиной ${VM_DUR}
-        // под номером (number ${VM_MSGNUM})\nв ящик ${VM_MAILBOX} от ${VM_CALLERID}, в ${VM_DATE}. \n\t
-        $emailsubject = $this->generalSettings['MailTplVoicemailSubject'];
-        $emailsubject = str_replace(["\n", "\t"], '', $emailsubject);
+        $params = [
+            'VM_NAME' => '${VM_NAME}',
+            'VM_DUR'  => '${VM_DUR}',
+            'VM_MSGNUM'  => '${VM_MSGNUM}',
+            'VM_MAILBOX'  => '${VM_MAILBOX}',
+            'VM_CALLERID'  => '${VM_CALLERID}',
+            'VM_DATE'  => '${VM_DATE}'
+        ];
+        try {
+            $emailBody = json_encode($params, JSON_THROW_ON_ERROR);
+            $emailBody = str_replace('"', '%|%', $emailBody);
+        }catch (\Exception $e){
+            $emailBody = '';
+        }
 
-        $emailbody = $this->generalSettings['MailTplVoicemailBody'];
-        $emailbody = str_replace(["\n", "\t"], ['\n', ''], $emailbody);
-
-        $emailfooter = $this->generalSettings['MailTplVoicemailFooter'];
-        $emailfooter = str_replace(["\n", "\t"], ['\n', ''], $emailfooter);
 
         $from = $this->generalSettings['MailSMTPSenderAddress'];
         if (empty($from)) {
@@ -100,8 +105,8 @@ class VoiceMailConf extends CoreConfigClass
             "charset=UTF-8\n" .
             "pbxskip=yes\n" .
             "fromstring=VoiceMail\n" .
-            "emailsubject={$emailsubject}\n" .
-            "emailbody={$emailbody}".'\n\n'."{$emailfooter}\n" .
+            "emailsubject=\n" .
+            "emailbody={$emailBody}\n" .
             "emaildateformat=%A, %d %B %Y в %H:%M:%S\n" .
             "pagerdateformat=%T %D\n" .
             "mailcmd={$msmtpPath}\n" .

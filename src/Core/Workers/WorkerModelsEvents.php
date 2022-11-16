@@ -375,6 +375,7 @@ class WorkerModelsEvents extends WorkerBase
             'settingName' => [
                 'MailTplVoicemailSubject',
                 'MailTplVoicemailBody',
+                'MailTplVoicemailFooter',
                 'MailSMTPSenderAddress',
                 'MailSMTPUsername',
                 'PBXTimezone',
