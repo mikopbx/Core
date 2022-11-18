@@ -93,11 +93,8 @@ class IndexSoundPlayer {
 			this.html5Audio.addEventListener('timeupdate', this.cbTimeUpdate, false);
 		}
 		if (Number.isFinite(this.html5Audio.duration)) {
-			const date = new Date(null);
-			date.setSeconds(this.html5Audio.currentTime); // specify value for SECONDS here
-			const currentTime = date.toISOString().substr(14, 5);
-			date.setSeconds(this.html5Audio.duration); // specify value for SECONDS here
-			const duration = date.toISOString().substr(14, 5);
+			const currentTime = new Date(this.html5Audio.currentTime * 1000).toISOString().substr(14, 5);
+			const duration    = new Date(this.html5Audio.duration * 1000).toISOString().substr(14, 5);
 			this.spanDuration.text(`${currentTime}/${duration}`);
 		}
 	}
@@ -111,7 +108,7 @@ class IndexSoundPlayer {
 			const rangePosition = Math.round((percent) * 100);
 			const $row = $(this).closest('tr');
 			$row.find('div.cdr-player').range('set value', rangePosition);
-			if (this.currentTime === this.duration) {
+			if (rangePosition === 100) {
 				$row.find('i.pause').removeClass('pause').addClass('play');
 			}
 		}

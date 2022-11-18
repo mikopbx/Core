@@ -72,7 +72,7 @@ const sndPlayer = {
 			const percent = sndPlayer.slider.currentTime / sndPlayer.slider.duration;
 			const rangePosition = Math.round((percent) * 100);
 			sndPlayer.$slider.range('set value', rangePosition);
-			if (sndPlayer.slider.currentTime === sndPlayer.duration) {
+			if (rangePosition === 100) {
 				sndPlayer.$pButton.html('<i class="icon play"></i>');
 			}
 		}
