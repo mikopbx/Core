@@ -24,7 +24,7 @@ const generalSettingsModify = {
 	$formObj: $('#general-settings-form'),
 	$webAdminPassword: $('#WebAdminPassword'),
 	$sshPassword: $('#SSHPassword'),
-	validateRules: {
+	validateRules: { // generalSettingsModify.validateRules.SSHPassword.rules
 		pbxname: {
 			identifier: 'PBXName',
 			rules: [
@@ -73,31 +73,7 @@ const generalSettingsModify = {
 		},
 		SSHPassword: {
 			identifier: 'SSHPassword',
-			rules: [
-				{
-					type: 'empty',
-					prompt: globalTranslate.gs_ValidateEmptySSHPassword,
-				},
-				{
-					type: 'minLength[5]',
-					prompt: globalTranslate.gs_ValidateWeakSSHPassword,
-				},
-				{
-					type   : 'notRegExp',
-					value  : /[a-z]/,
-					prompt : '<b>' + globalTranslate.gs_SSHPassword + '</b>: ' +globalTranslate.gs_PasswordNoLowSimvol
-				},
-				{
-					type   : 'notRegExp',
-					value  : /\d/,
-					prompt : '<b>' + globalTranslate.gs_SSHPassword + '</b>: ' + globalTranslate.gs_PasswordNoNumbers
-				},
-				{
-					type   : 'notRegExp',
-					value  : /[A-Z]/,
-					prompt :'<b>' +  globalTranslate.gs_SSHPassword + '</b>: ' +globalTranslate.gs_PasswordNoUpperSimvol
-				}
-			],
+			rules: [],
 		},
 		SSHPasswordRepeat: {
 			identifier: 'SSHPasswordRepeat',
@@ -164,6 +140,41 @@ const generalSettingsModify = {
 			],
 		},
 	},
+	additionalSshValidRulesPass: [
+		{
+			type: 'empty',
+			prompt: globalTranslate.gs_ValidateEmptySSHPassword,
+		},
+		{
+			type: 'minLength[5]',
+			prompt: globalTranslate.gs_ValidateWeakSSHPassword,
+		},
+		{
+			type   : 'notRegExp',
+			value  : /[a-z]/,
+			prompt : '<b>' + globalTranslate.gs_SSHPassword + '</b>: ' +globalTranslate.gs_PasswordNoLowSimvol
+		},
+		{
+			type   : 'notRegExp',
+			value  : /\d/,
+			prompt : '<b>' + globalTranslate.gs_SSHPassword + '</b>: ' + globalTranslate.gs_PasswordNoNumbers
+		},
+		{
+			type   : 'notRegExp',
+			value  : /[A-Z]/,
+			prompt :'<b>' +  globalTranslate.gs_SSHPassword + '</b>: ' +globalTranslate.gs_PasswordNoUpperSimvol
+		}
+	],
+	additionalSshValidRulesNoPass: [
+		{
+			type: 'empty',
+			prompt: globalTranslate.gs_ValidateEmptySSHPassword,
+		},
+		{
+			type: 'minLength[5]',
+			prompt: globalTranslate.gs_ValidateWeakSSHPassword,
+		}
+	],
 	initialize() {
 		generalSettingsModify.$webAdminPassword.on('keyup', () => {
 			PasswordScore.checkPassStrength({
@@ -183,7 +194,11 @@ const generalSettingsModify = {
 			history: true,
 			historyType: 'hash',
 		});
-		$('#general-settings-form .checkbox').checkbox();
+		$('#general-settings-form .checkbox').checkbox(
+			{
+				'onChange': generalSettingsModify.initRules
+			}
+		);
 		$('#general-settings-form .dropdown').dropdown();
 
 		$('#audio-codecs-table, #video-codecs-table').tableDnD({
@@ -241,7 +256,15 @@ const generalSettingsModify = {
 		}
 		generalSettingsModify.checkDeleteAllConditions();
 	},
+	initRules() {
+		if($('#SSHDisablePasswordLogins').parent().checkbox('is checked')){
+			generalSettingsModify.validateRules.SSHPassword.rules = generalSettingsModify.additionalSshValidRulesNoPass;
+		}else{
+			generalSettingsModify.validateRules.SSHPassword.rules = generalSettingsModify.additionalSshValidRulesPass;
+		}
+	},
 	initializeForm() {
+		generalSettingsModify.initRules();
 		Form.$formObj 			= generalSettingsModify.$formObj;
 		Form.url 				= `${globalRootUrl}general-settings/save`;
 		Form.validateRules 		= generalSettingsModify.validateRules;
