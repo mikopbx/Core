@@ -69,21 +69,12 @@ class CronConf extends Injectable
      */
     private function generateConfig($boot = true): void
     {
-        $mast_have         = [];
-
-        if (Util::isSystemctl() && ! Util::isDocker()) {
-            $mast_have[]   = "SHELL=/bin/sh\n";
-            $mast_have[]   = "PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin\n\n";
-            $cron_filename = '/etc/cron.d/mikopbx';
-            $cron_user     = 'root ';
-        } else {
-            $cron_filename = '/var/spool/cron/crontabs/root';
-            $cron_user     = '';
-        }
+        $mast_have     = [];
+        $cron_filename = '/var/spool/cron/crontabs/root';
 
         $workerSafeScriptsPath = Util::getFilePathByClassName(WorkerSafeScriptsCore::class);
         $phpPath               = Util::which('php');
-        $WorkerSafeScripts     = "{$phpPath} -f {$workerSafeScriptsPath} start > /dev/null 2> /dev/null";
+        $WorkerSafeScripts     = "$phpPath -f {$workerSafeScriptsPath} start > /dev/null 2> /dev/null";
 
         $workersPath = appPath('src/Core/Workers');
 
@@ -91,31 +82,24 @@ class CronConf extends Injectable
         $asteriskPath  = Util::which('asterisk');
         $ntpdPath      = Util::which('ntpd');
         $shPath        = Util::which('sh');
+        $dumpPath        = Util::which('dump-conf-db');
         if ($restart_night === '1') {
-            $mast_have[] = '0 1 * * * ' . $cron_user . $asteriskPath . ' -rx"core restart now" > /dev/null 2> /dev/null' . "\n";
+            $mast_have[] = '0 1 * * * ' . $asteriskPath . ' -rx"core restart now" > /dev/null 2> /dev/null' . "\n";
         }
-        $mast_have[] = '*/5 * * * * ' . $cron_user . $ntpdPath . ' -q > /dev/null 2> /dev/null' . "\n";
-        $mast_have[] = '*/6 * * * * ' . $cron_user . "{$shPath} {$workersPath}/Cron/cleaner_download_links.sh > /dev/null 2> /dev/null\n";
-        $mast_have[] = '*/1 * * * * ' . $cron_user . "{$WorkerSafeScripts}\n";
+        $mast_have[] = '*/5 * * * * ' . $ntpdPath . ' -q > /dev/null 2> /dev/null' . "\n";
+        $mast_have[] = '*/5 * * * * ' . "$shPath $dumpPath" . '  > /dev/null 2> /dev/null' . "\n";
+        $mast_have[] = '*/6 * * * * ' . "{$shPath} {$workersPath}/Cron/cleaner_download_links.sh > /dev/null 2> /dev/null\n";
+        $mast_have[] = '*/1 * * * * ' . "{$WorkerSafeScripts}\n";
 
         $tasks = [];
-
         // Add additional modules includes
         $configClassObj = new ConfigClass();
         $configClassObj->hookModulesMethod(ConfigClass::CREATE_CRON_TASKS, [&$tasks]);
         $conf = implode('', array_merge($mast_have, $tasks));
 
-        if (Util::isSystemctl() && ! Util::isDocker()) {
-            // Convert rules to debian style
-            $conf = str_replace(' * * * * /', " * * * * $cron_user/", $conf);
-        }
-
         if ($boot === true) {
             Processes::mwExecBg($WorkerSafeScripts);
         }
-
         Util::fileWriteContent($cron_filename, $conf);
     }
-
-
 }
