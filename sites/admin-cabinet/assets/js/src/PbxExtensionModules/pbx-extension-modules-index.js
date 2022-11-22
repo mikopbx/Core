@@ -273,6 +273,9 @@ const extensionModules = {
 		PbxApi.FilesDownloadNewModule(params, (response) => {
 			if (response === true) {
 				upgradeStatusLoopWorker.initialize(params.uniqid, needEnable);
+				if(window.pbxExtensionMenuAddition !== undefined){
+					pbxExtensionMenuAddition.updateSidebarMenu();
+				}
 			} else {
 				if (response.messages !== undefined) {
 					UserMessage.showMultiString(response.messages);
