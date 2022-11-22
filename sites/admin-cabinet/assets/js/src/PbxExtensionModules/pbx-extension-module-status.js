@@ -72,7 +72,7 @@ class PbxExtensionStatus {
 				UserMessage.showMultiString(response.data.changedObjects, globalTranslate.ext_ModuleChangedObjects);
 			}
 			if(window.pbxExtensionMenuAddition !== undefined){
-				pbxExtensionMenuAddition.updateSidebarMenu();
+				window.pbxExtensionMenuAddition.updateSidebarMenu();
 			}
 		} else {
 			this.$toggle.checkbox('set checked');
@@ -100,7 +100,7 @@ class PbxExtensionStatus {
 				UserMessage.showMultiString(response.data.changedObjects, globalTranslate.ext_ModuleChangedObjects);
 			}
 			if(window.pbxExtensionMenuAddition !== undefined){
-				pbxExtensionMenuAddition.updateSidebarMenu();
+				window.pbxExtensionMenuAddition.updateSidebarMenu();
 			}
 		} else {
 			this.$toggle.checkbox('set unchecked');
