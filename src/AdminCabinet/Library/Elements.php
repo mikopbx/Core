@@ -136,7 +136,7 @@ class Elements extends Injectable
                         'style'     => '',
                     ],
                     'licensing'             => [
-                        'caption'   => 'mm_Licensing',
+                        'caption'   => 'mm_PaidModulesAccessNew',
                         'iconclass' => 'key',
                         'action'    => 'modify',
                         'param'     => '',

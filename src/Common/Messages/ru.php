@@ -167,6 +167,7 @@ return [
     'mm_CustomFiles' => 'Кастомизация системных файлов',
     'mm_SoundFiles' => 'Звуковые файлы',
     'mm_Licensing' => 'Лицензирование',
+    'mm_PaidModulesAccessNew' => 'Доступ к платным модулям',
     'mm_Restart' => 'Перезагрузка',
     'mm_Modules' => 'Модули',
     'mm_Maintenance' => 'Обслуживание',

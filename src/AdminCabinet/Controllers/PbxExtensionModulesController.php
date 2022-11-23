@@ -33,7 +33,7 @@ class PbxExtensionModulesController extends BaseController
         $licKey = PbxSettings::getValueByKey('PBXLicense');
         if (strlen($licKey) !== 28
             || ! Text::startsWith($licKey, 'MIKO-')) {
-            $this->forward('licensing/modify/pbx-extension-modules');
+            $licKey = '';
         }
 
         $modules     = PbxExtensionModules::getModulesArray();
@@ -52,8 +52,6 @@ class PbxExtensionModulesController extends BaseController
             ];
         }
         $this->view->modulelist = $modulesList;
-
-        $licKey                 = PbxSettings::getValueByKey('PBXLicense');
         $this->view->licenseKey = $licKey;
     }
 
