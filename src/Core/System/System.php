@@ -23,6 +23,7 @@ use DateTime;
 use DateTimeZone;
 use MikoPBX\Common\Models\CustomFiles;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Core\Asterisk\Configs\HepConf;
 use MikoPBX\Core\System\Configs\CronConf;
 use MikoPBX\Core\System\Configs\IptablesConf;
 use MikoPBX\Core\System\Configs\PHPConf;
@@ -93,6 +94,9 @@ class System extends Di\Injectable
                     break;
                 case 'http.conf':
                     $actions['manager'] = 10; //
+                    break;
+                case 'hep.conf':
+                    $actions['hep'] = 10; //
                     break;
                 case 'root': // crontabs
                     $actions['cron'] = 10;
@@ -167,6 +171,9 @@ class System extends Di\Injectable
                     break;
                 case 'firewall':
                     IptablesConf::reloadFirewall();
+                    break;
+                case 'hep':
+                    HepConf::reload();
                     break;
                 case 'network':
                     self::networkReload();
