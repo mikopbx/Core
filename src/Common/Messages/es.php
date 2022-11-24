@@ -1123,4 +1123,5 @@ Se puede activar una vez, después de lo cual el cupón se canjea.
     'pr_FromUser_v2' => 'usuario',
     'pr_FromDomain_v2' => 'dominio',
     'mo_SystemExten_voicemail' => 'Mensaje de voz',
+    'mm_PaidModulesAccessNew' => 'Acceso a módulos de pago',
 ];

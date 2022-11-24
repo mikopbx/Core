@@ -1126,4 +1126,5 @@ It can be activated once, after which the coupon becomes redeemed.
     'pr_FromUser_v2' => 'user',
     'pr_FromDomain_v2' => 'domain',
     'mo_SystemExten_voicemail' => 'Voice mail',
+    'mm_PaidModulesAccessNew' => 'Access to paid modules',
 ];

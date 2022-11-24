@@ -1123,4 +1123,5 @@ return [
     'pr_FromUser_v2' => 'User',
     'pr_FromDomain_v2' => 'Domain',
     'mo_SystemExten_voicemail' => 'Голосова пошта',
+    'mm_PaidModulesAccessNew' => 'Доступ до платних модулів',
 ];

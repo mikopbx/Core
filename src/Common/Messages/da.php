@@ -1123,4 +1123,5 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'pr_FromUser_v2' => 'bruger',
     'pr_FromDomain_v2' => 'domæne',
     'mo_SystemExten_voicemail' => 'Voice mail',
+    'mm_PaidModulesAccessNew' => 'Adgang til betalte moduler',
 ];

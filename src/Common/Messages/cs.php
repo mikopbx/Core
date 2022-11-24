@@ -1123,4 +1123,5 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'pr_FromUser_v2' => 'uživatel',
     'pr_FromDomain_v2' => 'Doména',
     'mo_SystemExten_voicemail' => 'Hlasová pošta',
+    'mm_PaidModulesAccessNew' => 'Přístup k placeným modulům',
 ];

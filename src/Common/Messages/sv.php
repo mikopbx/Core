@@ -1123,4 +1123,5 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'pr_FromDomain_v2' => 'domän',
     'pr_FromUser_v2' => 'användare',
     'mo_SystemExten_voicemail' => 'Röstbrevlåda',
+    'mm_PaidModulesAccessNew' => 'Tillgång till betalda moduler',
 ];

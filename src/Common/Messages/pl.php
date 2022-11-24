@@ -1123,4 +1123,5 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'pr_FromUser_v2' => 'użytkownik',
     'pr_FromDomain_v2' => 'Domena',
     'mo_SystemExten_voicemail' => 'Poczta głosowa',
+    'mm_PaidModulesAccessNew' => 'Dostęp do płatnych modułów',
 ];

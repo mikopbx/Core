@@ -1123,4 +1123,5 @@ return [
     'pr_FromUser_v2' => 'χρήστης',
     'pr_FromDomain_v2' => 'τομέα',
     'mo_SystemExten_voicemail' => 'Φωνητικό ταχυδρομείο',
+    'mm_PaidModulesAccessNew' => 'Πρόσβαση σε μονάδες επί πληρωμή',
 ];
