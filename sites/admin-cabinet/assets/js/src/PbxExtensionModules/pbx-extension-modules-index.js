@@ -148,7 +148,7 @@ const extensionModules = {
 		}
 
 		let additionalIcon = '';
-		if(obj.lic_feature_id !== 0){
+		if(obj.commercial !== '0'){
 			additionalIcon = '<i class="icon red cart arrow down"></i>';
 		}
 		const dymanicRow = `
