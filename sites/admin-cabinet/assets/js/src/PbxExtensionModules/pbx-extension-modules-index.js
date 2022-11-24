@@ -104,7 +104,7 @@ const extensionModules = {
 			params.licFeatureId = $aLink.attr('data-featureid');
 			params.action = 'install';
 			params.aLink = $aLink;
-			if($('#license-key').val().trim() === '' && params.licProductId !== '0'){
+			if($('#license-key').val().trim() === '' && params.commercial !== '0'){
 				window.location = `${globalRootUrl}licensing/modify/pbx-extension-modules`;
 			}else{
 				PbxApi.LicenseCaptureFeatureForProductId(params, extensionModules.cbAfterLicenseCheck);
@@ -123,7 +123,11 @@ const extensionModules = {
 			params.uniqid = $aLink.attr('data-uniqid');
 			params.size = $aLink.attr('data-size');
 			params.aLink = $aLink;
-			PbxApi.LicenseCaptureFeatureForProductId(params, extensionModules.cbAfterLicenseCheck);
+			if($('#license-key').val().trim() === '' && params.commercial !== '0'){
+				window.location = `${globalRootUrl}licensing/modify/pbx-extension-modules`;
+			}else{
+				PbxApi.LicenseCaptureFeatureForProductId(params, extensionModules.cbAfterLicenseCheck);
+			}
 		});
 		$('a.delete').on('click', (e) => {
 			e.preventDefault();
