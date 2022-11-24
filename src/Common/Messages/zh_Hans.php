@@ -1123,4 +1123,5 @@ return [
     'pr_FromUser_v2' => '用户',
     'pr_FromDomain_v2' => '领域',
     'mo_SystemExten_voicemail' => '语音信箱',
+    'mm_PaidModulesAccessNew' => '访问付费模块',
 ];

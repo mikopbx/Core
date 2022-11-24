@@ -1123,4 +1123,5 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá đ
     'pr_FromUser_v2' => 'người sử dụng',
     'pr_FromDomain_v2' => 'miền',
     'mo_SystemExten_voicemail' => 'Hộp thư thoại',
+    'mm_PaidModulesAccessNew' => 'Truy cập vào các mô-đun trả phí',
 ];

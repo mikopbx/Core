@@ -1123,4 +1123,5 @@ return [
     'pr_FromUser_v2' => 'მომხმარებელი',
     'pr_FromDomain_v2' => 'დომენი',
     'mo_SystemExten_voicemail' => 'Ხმოვანი შეტყობინება',
+    'mm_PaidModulesAccessNew' => 'ფასიან მოდულებზე წვდომა',
 ];

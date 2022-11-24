@@ -1123,4 +1123,5 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'pr_FromUser_v2' => 'do utilizador',
     'pr_FromDomain_v2' => 'domínio',
     'mo_SystemExten_voicemail' => 'Correio de voz',
+    'mm_PaidModulesAccessNew' => 'Acesso a módulos pagos',
 ];

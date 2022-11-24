@@ -1123,4 +1123,5 @@ return [
     'pr_FromUser_v2' => 'ユーザー',
     'pr_FromDomain_v2' => 'ドメイン',
     'mo_SystemExten_voicemail' => 'ボイスメール',
+    'mm_PaidModulesAccessNew' => '有料モジュールへのアクセス',
 ];

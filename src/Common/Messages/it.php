@@ -1123,4 +1123,5 @@ Può essere attivato una volta, dopo di che il coupon viene riscattato.
     'pr_FromUser_v2' => 'utente',
     'pr_FromDomain_v2' => 'Dominio',
     'mo_SystemExten_voicemail' => 'Segreteria telefonica',
+    'mm_PaidModulesAccessNew' => 'Accesso ai moduli a pagamento',
 ];

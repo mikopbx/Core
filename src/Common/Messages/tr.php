@@ -1123,4 +1123,5 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
     'pr_FromUser_v2' => 'kullanıcı',
     'pr_FromDomain_v2' => 'alan adı',
     'mo_SystemExten_voicemail' => 'sesli posta',
+    'mm_PaidModulesAccessNew' => 'Ücretli modüllere erişim',
 ];

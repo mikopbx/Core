@@ -1123,4 +1123,5 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'pr_FromUser_v2' => 'utilisateur',
     'pr_FromDomain_v2' => 'domaine',
     'mo_SystemExten_voicemail' => 'Messagerie vocale',
+    'mm_PaidModulesAccessNew' => 'Accès aux modules payants',
 ];

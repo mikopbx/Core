@@ -1126,4 +1126,5 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
     'pr_FromUser_v2' => 'Benutzer',
     'pr_FromDomain_v2' => 'Domain',
     'mo_SystemExten_voicemail' => 'Voicemail',
+    'mm_PaidModulesAccessNew' => 'Zugriff auf kostenpflichtige Module',
 ];
