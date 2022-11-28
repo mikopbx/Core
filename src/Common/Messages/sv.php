@@ -443,7 +443,6 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'f2b_BanedTime' => 'datum',
     'f2b_TableBannedHeader' => 'Blockerade adresser',
     'f2b_Unban' => 'frisättning',
-    'f2b_Jail_asterisk_security_log' => 'SIP- eller AMI-godkännandefel (säkerhet_logg)',
     'f2b_Jail_asterisk_public' => 'SIP- eller AMI-godkännandefel (offentligt)',
     'f2b_Jail_dropbear' => 'SSH-sessionstillståndstillstånd',
     'f2b_Jail_mikopbx-www' => 'Autoriseringsfel i PBX-administrativa gränssnitt',

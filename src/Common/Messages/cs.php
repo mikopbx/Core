@@ -751,7 +751,6 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'f2b_BanedTime' => 'Datum',
     'f2b_TableBannedHeader' => 'Blokované adresy',
     'f2b_Unban' => 'Odemkněte',
-    'f2b_Jail_asterisk_security_log' => 'Chyby autorizace SIP nebo AMI (security_log)',
     'f2b_Jail_asterisk_public' => 'Chyby autorizace SIP nebo AMI (veřejné)',
     'f2b_Jail_dropbear' => 'Chyby autorizace relace SSH',
     'f2b_Jail_mikopbx-www' => 'Chyby autorizace v administrativním rozhraní PBX',

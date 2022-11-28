@@ -448,7 +448,6 @@ return [
     'f2b_WhiteList' => 'Liste d\'adresses qui ne sont jamais bloquées',
     'f2b_Jail_mikopbx-www' => 'Erreurs d\'autorisation dans l\'interface d\'administration PBX',
     'f2b_Jail_dropbear' => 'Erreurs d\'autorisation de session SSH',
-    'f2b_Jail_asterisk_error' => 'Erreurs d\'autorisation SIP ou AMI (erreur)',
     'f2b_Jail_asterisk' => 'Erreurs d\'autorisation SIP ou AMI',
     'f2b_Unban' => 'Débloquer',
     'f2b_TableBannedHeader' => 'Adresses bloquées',

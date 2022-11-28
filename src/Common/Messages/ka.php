@@ -853,7 +853,6 @@ return [
     'f2b_BanedTime' => 'თარიღი',
     'f2b_TableBannedHeader' => 'დაბლოკილი მისამართები',
     'f2b_Unban' => 'ბლოკირება',
-    'f2b_Jail_asterisk_security_log' => 'SIP ან AMI– ს ავტორიზაციის შეცდომები (security_log)',
     'f2b_Jail_asterisk_public' => 'SIP ან AMI– ს ავტორიზაციის შეცდომები (საჯარო)',
     'f2b_Jail_dropbear' => 'SSH სესიის ავტორიზაციის შეცდომები',
     'f2b_Jail_mikopbx-www' => 'ავტორიზაციის შეცდომები PBX ადმინისტრაციულ ინტერფეისში',

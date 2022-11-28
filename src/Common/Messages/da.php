@@ -784,7 +784,6 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'f2b_BanedTime' => 'dato',
     'f2b_TableBannedHeader' => 'Blokerede adresser',
     'f2b_Unban' => 'frigivelse',
-    'f2b_Jail_asterisk_security_log' => 'SIP- eller AMI-godkendelsesfejl (sikkerhed_log)',
     'f2b_Jail_asterisk_public' => 'SIP- eller AMI-godkendelsesfejl (offentlig)',
     'f2b_Jail_dropbear' => 'SSH session godkendelsesfejl',
     'f2b_Jail_mikopbx-www' => 'Autoriseringsfejl i PBX-administrationsgrænsefladen',

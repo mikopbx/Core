@@ -810,7 +810,6 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
     'f2b_BanedTime' => 'tarih',
     'f2b_TableBannedHeader' => 'Engellenen Adresler',
     'f2b_Unban' => 'salıverme',
-    'f2b_Jail_asterisk_security_log' => 'SIP veya AMI yetkilendirme hataları (security_log)',
     'f2b_Jail_mikopbx-www' => 'PBX Yönetim Arayüzündeki Yetkilendirme Hataları',
     'f2b_WhiteList' => 'Asla engellenmeyen adreslerin listesi',
     'f2b_BanTime' => 'Kilitleme (saniye)',

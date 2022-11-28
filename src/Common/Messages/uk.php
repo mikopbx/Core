@@ -880,7 +880,6 @@ return [
     'сal_ApplyBtn' => 'Застосувати',
     'сal_CancelBtn' => 'Скасувати',
     'gs_RedirectToHttps' => 'Редирект на HTTPS',
-    'f2b_Jail_asterisk_error' => 'Помилки авторизації SIP або AMI (error)',
     'gs_WebAdminLanguage' => 'Мова веб інтерфейсу',
     'lang_HelpWithTranslateIt' => 'Допомогти з перекладом MikoPBX',
     'topMenu_Support' => 'Підтримка',

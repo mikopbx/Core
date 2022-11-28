@@ -792,7 +792,6 @@ It can be activated once, after which the coupon becomes redeemed.
     'f2b_BanedTime' => 'Date',
     'f2b_TableBannedHeader' => 'Blocked addresses',
     'f2b_Unban' => 'Unlock',
-    'f2b_Jail_asterisk_security_log' => 'SIP or AMI authorization errors (security_log)',
     'f2b_Jail_asterisk_public' => 'SIP or AMI authorization errors (public)',
     'f2b_Jail_dropbear' => 'The error of SSH login sessions',
     'f2b_Jail_mikopbx-www' => 'Authorization errors in the PBX administrative interface',

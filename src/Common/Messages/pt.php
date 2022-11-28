@@ -103,7 +103,6 @@ return [
     'f2b_WhiteList' => 'Lista de endereços que nunca são bloqueados',
     'f2b_Jail_mikopbx-www' => 'Erros de autorização na interface administrativa do PBX',
     'f2b_Jail_dropbear' => 'Erros de autorização de sessão SSH',
-    'f2b_Jail_asterisk_error' => 'Erros de autorização SIP ou AMI (erro)',
     'f2b_Jail_asterisk' => 'Erros de autorização SIP ou AMI',
     'f2b_Unban' => 'Desbloquear',
     'f2b_TableBannedHeader' => 'Endereços bloqueados',

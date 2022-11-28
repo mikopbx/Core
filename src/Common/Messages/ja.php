@@ -784,7 +784,6 @@ return [
     'f2b_BanedTime' => '日付',
     'f2b_TableBannedHeader' => 'ブロックされたアドレス',
     'f2b_Unban' => 'ロックを解除',
-    'f2b_Jail_asterisk_security_log' => 'SIPまたはAMI許可エラー（security_log）',
     'f2b_Jail_asterisk_public' => 'SIPまたはAMI承認エラー（公開）',
     'f2b_Jail_dropbear' => 'SSHセッション認証エラー',
     'f2b_Jail_mikopbx-www' => 'PBX管理インターフェイスの承認エラー',
