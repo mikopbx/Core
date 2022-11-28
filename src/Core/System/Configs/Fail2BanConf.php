@@ -21,7 +21,7 @@ namespace MikoPBX\Core\System\Configs;
 
 use MikoPBX\Common\Models\Fail2BanRules;
 use MikoPBX\Common\Models\NetworkFilters;
-use MikoPBX\Core\System\MikoPBXConfig;
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
@@ -34,20 +34,21 @@ use SQLite3;
 class Fail2BanConf extends Injectable
 {
     private const FILTER_PATH     = '/etc/fail2ban/filter.d';
+    private const ACTION_PATH     = '/etc/fail2ban/action.d';
     private const JAILS_DIR       = '/etc/fail2ban/jail.d';
     private const PID_FILE        = '/var/run/fail2ban/fail2ban.pid';
     public const FAIL2BAN_DB_PATH = '/var/lib/fail2ban/fail2ban.sqlite3';
 
     public bool $fail2ban_enable;
-
+    private array $allPbxSettings;
 
     /**
      * Fail2Ban constructor.
      */
     public function __construct()
     {
-        $mikoPBXConfig         = new MikoPBXConfig();
-        $fail2ban_enable       = $mikoPBXConfig->getGeneralSettings('PBXFail2BanEnabled');
+        $this->allPbxSettings  = PbxSettings::getAllPbxSettings();
+        $fail2ban_enable       = $this->allPbxSettings['PBXFail2BanEnabled'];
         $this->fail2ban_enable = ($fail2ban_enable === '1');
     }
 
@@ -204,11 +205,31 @@ class Fail2BanConf extends Injectable
     public function writeConfig(): void
     {
         [$max_retry, $find_time, $ban_time, $user_whitelist] = $this->initProperty();
+        $this->generateActions();
         $this->generateJails();
 
+        $httpPorts = [
+            $this->allPbxSettings['WEBPort'],
+            $this->allPbxSettings['WEBHTTPSPort']
+        ];
+        $sshPort = [
+            $this->allPbxSettings['SSHPort'],
+        ];
+        $asteriskPorts = [
+            $this->allPbxSettings['SIPPort'],
+            $this->allPbxSettings['TLS_PORT'],
+            $this->allPbxSettings['IAXPort'],
+            $this->allPbxSettings['RTPPortFrom'].':'.$this->allPbxSettings['RTPPortTo'],
+            $this->allPbxSettings['AJAMPortTLS']
+        ];
+        $asteriskAMI = [
+            $this->allPbxSettings['AMIPort'],
+            $this->allPbxSettings['AJAMPort'],
+        ];
+
         $jails        = [
-            'dropbear'    => 'iptables-allports[name=SSH, protocol=all]',
-            'mikopbx-www' => 'iptables-allports[name=HTTP, protocol=all]',
+            'dropbear'    => 'miko-iptables-multiport-all[name=SSH, port="'.implode(',', $sshPort).'"]',
+            'mikopbx-www' => 'miko-iptables-multiport-all[name=HTTP, port="'.implode(',', $httpPorts).'"]',
         ];
 
         $this->generateModulesJailsLocal($max_retry, $find_time, $ban_time);
@@ -232,8 +253,8 @@ class Fail2BanConf extends Injectable
         $log_dir = System::getLogDir() . '/asterisk/';
         $config  .= "[asterisk_security_log]\n" .
             "enabled = true\n" .
-            "filter = asterisk\n" .
-            "action = iptables-allports[name=ASTERISK, protocol=all]\n" .
+            "filter = asterisk-main\n" .
+            'action = miko-iptables-multiport-all[name=ASTERISK, port="'.implode(',', $asteriskPorts).'"]'. PHP_EOL.
             "logencoding = utf-8\n" .
             "maxretry = {$max_retry}\n" .
             "findtime = {$find_time}\n" .
@@ -242,8 +263,8 @@ class Fail2BanConf extends Injectable
 
         $config .= "[asterisk_error]\n" .
             "enabled = true\n" .
-            "filter = asterisk\n" .
-            "action = iptables-allports[name=ASTERISK_ERROR, protocol=all]\n" .
+            "filter = asterisk-main\n" .
+            'action = miko-iptables-multiport-all[name=ASTERISK_ERROR, port="'.implode(',', $asteriskPorts).'"]'. PHP_EOL.
             "maxretry = {$max_retry}\n" .
             "findtime = {$find_time}\n" .
             "bantime = {$ban_time}\n" .
@@ -252,8 +273,18 @@ class Fail2BanConf extends Injectable
 
         $config .= "[asterisk_public]\n" .
             "enabled = true\n" .
-            "filter = asterisk\n" .
-            "action = iptables-allports[name=ASTERISK_PUBLIC, protocol=all]\n" .
+            "filter = asterisk-main\n" .
+            'action = miko-iptables-multiport-all[name=ASTERISK_PUBLIC, port="'.implode(',', $asteriskPorts).'"]'. PHP_EOL.
+            "maxretry = {$max_retry}\n" .
+            "findtime = {$find_time}\n" .
+            "bantime = {$ban_time}\n" .
+            "logencoding = utf-8\n" .
+            "logpath = {$log_dir}messages\n\n";
+
+        $config .= "[asterisk_ami]\n" .
+            "enabled = true\n" .
+            "filter = asterisk-ami\n" .
+            'action = miko-iptables-multiport-all[name=ASTERISK_AMI, port="'.implode(',', $asteriskAMI).'"]'. PHP_EOL.
             "maxretry = {$max_retry}\n" .
             "findtime = {$find_time}\n" .
             "bantime = {$ban_time}\n" .
@@ -262,6 +293,30 @@ class Fail2BanConf extends Injectable
 
         Util::fileWriteContent('/etc/fail2ban/jail.local', $config);
     }
+
+    private function generateActions(): void
+    {
+        $path = self::ACTION_PATH;
+        $conf = "[INCLUDES]".PHP_EOL.
+                "before = iptables-common.conf".PHP_EOL.
+                "[Definition]".PHP_EOL.
+                "actionstart = <iptables> -N f2b-<name>".PHP_EOL.
+                "              <iptables> -A f2b-<name> -j <returntype>".PHP_EOL.
+                "              <iptables> -I <chain> -p tcp -m multiport --dports <port> -j f2b-<name>".PHP_EOL.
+                "              <iptables> -I <chain> -p udp -m multiport --dports <port> -j f2b-<name>".PHP_EOL.
+                "actionstop = <iptables> -D <chain> -p tcp -m multiport --dports <port> -j f2b-<name>".PHP_EOL.
+                "             <iptables> -D <chain> -p udp -m multiport --dports <port> -j f2b-<name>".PHP_EOL.
+                "             <actionflush>".PHP_EOL.
+                "             <iptables> -X f2b-<name>".PHP_EOL.
+                "actioncheck = <iptables> -n -L <chain> | grep -q 'f2b-<name>[ \\t]'".PHP_EOL.
+                "actionban = <iptables> -I f2b-<name> 1 -s <ip> -p tcp -m multiport --dports <port> -j <blocktype>".PHP_EOL.
+                "            <iptables> -I f2b-<name> 1 -s <ip> -p udp -m multiport --dports <port> -j <blocktype>".PHP_EOL.
+                "actionunban = <iptables> -D f2b-<name> -s <ip> -p tcp -m multiport --dports <port> -j <blocktype>".PHP_EOL.
+                "              <iptables> -D f2b-<name> -s <ip> -p udp -m multiport --dports <port> -j <blocktype>".PHP_EOL.
+                "[Init]".PHP_EOL.PHP_EOL;
+        file_put_contents("{$path}/miko-iptables-multiport-all.conf", $conf);
+    }
+
 
     /**
      * Creates additional rules
@@ -290,6 +345,39 @@ class Fail2BanConf extends Injectable
             '            ^[Ee]xit before auth \(user \'.+\', \d+ fails\): Max auth tries reached - user \'.+\' from <HOST>:\d+\s*$' . "\n" .
             "ignoreregex =\n";
         file_put_contents("{$filterPath}/dropbear.conf", $conf);
+
+        $conf = "[INCLUDES]".PHP_EOL.
+                "before = common.conf".PHP_EOL.PHP_EOL.
+                "[Definition]".PHP_EOL.PHP_EOL.
+                "_daemon = asterisk".PHP_EOL.PHP_EOL.
+                "__pid_re = (?:\[\d+\])".PHP_EOL.
+                "_c_ooooo = (\[C-\d+[a-z]*\]?)".PHP_EOL.PHP_EOL.
+                "log_prefix= (?:NOTICE|SECURITY)%(__pid_re)s:?%(_c_ooooo)s?:? \S+:\d*( in \w+:)?".PHP_EOL.PHP_EOL.
+                "failregex = ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s Host <HOST> failed to authenticate as '[^']*'\$".PHP_EOL.
+                "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s(?:\sHost)? <HOST> failed to authenticate as '[^']*'\$".PHP_EOL.PHP_EOL.
+                "ignoreregex =".PHP_EOL.PHP_EOL;
+        file_put_contents("{$filterPath}/asterisk-ami.conf", $conf);
+
+        $conf = "[INCLUDES]".PHP_EOL.
+                "before = common.conf".PHP_EOL.PHP_EOL.
+                "[Definition]".PHP_EOL.PHP_EOL.
+                "_daemon = asterisk".PHP_EOL.PHP_EOL.
+                "__pid_re = (?:\[\d+\])".PHP_EOL.
+                "_c_ooooo = (\[C-\d+[a-z]*\]?)".PHP_EOL.PHP_EOL.
+                "log_prefix= (?:NOTICE|SECURITY)%(__pid_re)s:?%(_c_ooooo)s?:? \S+:\d*( in \w+:)?".PHP_EOL.PHP_EOL.
+                "failregex = ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s Registration from '[^']*' failed for '<HOST>(:\d+)?' - (Wrong password|Username/auth name mismatch|No matching peer found|Not a local domain|Device does not match ACL|Peer is not supposed to register|ACL error \(permit/deny\)|Not a local domain)\$".PHP_EOL.
+                "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s No registration for peer '[^']*' \(from <HOST>\)\$".PHP_EOL.
+                "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s Host <HOST> failed MD5 authentication for '[^']*' \([^)]+\)\$".PHP_EOL.
+                "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s Failed to authenticate (user|device) [^@]+@<HOST>\S*\$".PHP_EOL.
+                "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s (?:handle_request_subscribe: )?Sending fake auth rejection for (device|user) \d*<sip:[^@]+@<HOST>>;tag=\w+\S*\$".PHP_EOL.
+                '            ^(%(__prefix_line)s|\[\]\s*WARNING%(__pid_re)s:?(?:\[C-[\da-f]*\])? )Ext\. s: "Rejecting unknown SIP connection from <HOST>"$'.PHP_EOL.
+                "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s <HOST> tried to authenticate with nonexistent user".PHP_EOL.
+                "			^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s Request (?:'[^']*' )?from '(?:[^']*|.*?)' failed for '<HOST>(?::\d+)?'\s\(callid: [^\)]*\) - (?:No matching endpoint found|Not match Endpoint(?: Contact)? ACL|(?:Failed|Error) to authenticate)\s*\$".PHP_EOL.
+                "			^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s\s*(anonymous:\s)?Call\s(from)*\s*\((\w*:)?<HOST>:\d+\) to extension '\S*' rejected because extension not found in context 'public-direct-dial'\.\$".PHP_EOL.
+                '            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s SecurityEvent="(?:FailedACL|InvalidAccountID|ChallengeResponseFailed|InvalidPassword)"(?:(?:,(?!RemoteAddress=)\w+="[^"]*")*|.*?),RemoteAddress="IPV[46]/[^/"]+/<HOST>/\d+"(?:,(?!RemoteAddress=)\w+="[^"]*")*$'.PHP_EOL.
+                "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s ^hacking attempt detected '<HOST>'\$".PHP_EOL.PHP_EOL.
+                "ignoreregex =".PHP_EOL.PHP_EOL;
+        file_put_contents("{$filterPath}/asterisk-main.conf", $conf);
 
         $this->generateModulesFilters();
     }

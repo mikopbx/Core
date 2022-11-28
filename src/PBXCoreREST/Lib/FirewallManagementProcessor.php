@@ -84,6 +84,7 @@ class FirewallManagementProcessor extends Injectable
         $result  = [];
         if (false !== $results && $results->numColumns() > 0) {
             while ($banRule = $results->fetchArray(SQLITE3_ASSOC)) {
+                $banRule['jail'] = $banRule['jail'] . '_v2';
                 $result[] = $banRule;
             }
         }
