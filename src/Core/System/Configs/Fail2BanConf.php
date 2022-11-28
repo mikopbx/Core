@@ -376,7 +376,7 @@ class Fail2BanConf extends Injectable
                 "			^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s\s*(anonymous:\s)?Call\s(from)*\s*\((\w*:)?<HOST>:\d+\) to extension '\S*' rejected because extension not found in context 'public-direct-dial'\.\$".PHP_EOL.
                 '            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s SecurityEvent="(?:FailedACL|InvalidAccountID|ChallengeResponseFailed|InvalidPassword)"(?:(?:,(?!RemoteAddress=)\w+="[^"]*")*|.*?),RemoteAddress="IPV[46]/[^/"]+/<HOST>/\d+"(?:,(?!RemoteAddress=)\w+="[^"]*")*$'.PHP_EOL.
                 "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s ^hacking attempt detected '<HOST>'\$".PHP_EOL.PHP_EOL.
-                "ignoreregex =".PHP_EOL.PHP_EOL;
+                'ignoreregex = Service="AMI"'.PHP_EOL.PHP_EOL;
         file_put_contents("{$filterPath}/asterisk-main.conf", $conf);
 
         $this->generateModulesFilters();
