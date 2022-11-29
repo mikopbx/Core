@@ -784,7 +784,6 @@ Può essere attivato una volta, dopo di che il coupon viene riscattato.
     'f2b_BanedTime' => 'data',
     'f2b_TableBannedHeader' => 'Indirizzi bloccati',
     'f2b_Unban' => 'rilascio',
-    'f2b_Jail_asterisk_public' => 'Errori di autorizzazione SIP o AMI (pubblici)',
     'f2b_Jail_dropbear' => 'Errori di autorizzazione della sessione SSH',
     'f2b_Jail_mikopbx-www' => 'Errori di autorizzazione nell\'interfaccia amministrativa del PBX',
     'f2b_WhiteList' => 'Elenco di indirizzi che non sono mai bloccati',
@@ -1121,4 +1120,9 @@ Può essere attivato una volta, dopo di che il coupon viene riscattato.
     'pr_FromDomain_v2' => 'Dominio',
     'mo_SystemExten_voicemail' => 'Segreteria telefonica',
     'mm_PaidModulesAccessNew' => 'Accesso ai moduli a pagamento',
+    'f2b_Jail_asterisk_ami_v2' => 'Errori di autorizzazione AMI o AJAM',
+    'f2b_Jail_asterisk_security_log_v2' => 'Errori di autorizzazione SIP (security_log)',
+    'f2b_Jail_asterisk_error_v2' => 'Errori di autorizzazione SIP (errore)',
+    'f2b_Jail_asterisk_v2' => 'Errori di autorizzazione SIP',
+    'f2b_Jail_asterisk_public_v2' => 'Errori di autorizzazione SIP (pubblici)',
 ];

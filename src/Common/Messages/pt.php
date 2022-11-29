@@ -103,7 +103,6 @@ return [
     'f2b_WhiteList' => 'Lista de endereços que nunca são bloqueados',
     'f2b_Jail_mikopbx-www' => 'Erros de autorização na interface administrativa do PBX',
     'f2b_Jail_dropbear' => 'Erros de autorização de sessão SSH',
-    'f2b_Jail_asterisk' => 'Erros de autorização SIP ou AMI',
     'f2b_Unban' => 'Desbloquear',
     'f2b_TableBannedHeader' => 'Endereços bloqueados',
     'f2b_BanedTime' => 'Data',
@@ -1121,4 +1120,9 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'pr_FromDomain_v2' => 'domínio',
     'mo_SystemExten_voicemail' => 'Correio de voz',
     'mm_PaidModulesAccessNew' => 'Acesso a módulos pagos',
+    'f2b_Jail_asterisk_v2' => 'Erros de autorização SIP',
+    'f2b_Jail_asterisk_ami_v2' => 'Erros de autorização AMI ou AJAM',
+    'f2b_Jail_asterisk_security_log_v2' => 'Erros de autorização SIP (security_log)',
+    'f2b_Jail_asterisk_error_v2' => 'Erros de autorização SIP (erro)',
+    'f2b_Jail_asterisk_public_v2' => 'Erros de autorização SIP (público)',
 ];

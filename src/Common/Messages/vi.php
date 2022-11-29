@@ -857,7 +857,6 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá đ
     'f2b_BanedTime' => 'Ngày',
     'f2b_TableBannedHeader' => 'Địa chỉ bị chặn',
     'f2b_Unban' => 'Mở khóa',
-    'f2b_Jail_asterisk_public' => 'Lỗi ủy quyền SIP hoặc AMI (công khai)',
     'f2b_Jail_dropbear' => 'Lỗi ủy quyền phiên SSH',
     'f2b_Jail_mikopbx-www' => 'Lỗi ủy quyền trong giao diện quản trị tổng đài',
     'f2b_WhiteList' => 'Danh sách các địa chỉ không bao giờ bị chặn',
@@ -1121,4 +1120,9 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá đ
     'pr_FromDomain_v2' => 'miền',
     'mo_SystemExten_voicemail' => 'Hộp thư thoại',
     'mm_PaidModulesAccessNew' => 'Truy cập vào các mô-đun trả phí',
+    'f2b_Jail_asterisk_ami_v2' => 'Lỗi ủy quyền AMI hoặc AJAM',
+    'f2b_Jail_asterisk_v2' => 'Lỗi ủy quyền SIP',
+    'f2b_Jail_asterisk_error_v2' => 'Lỗi ủy quyền SIP (lỗi)',
+    'f2b_Jail_asterisk_public_v2' => 'Lỗi ủy quyền SIP (công khai)',
+    'f2b_Jail_asterisk_security_log_v2' => 'Lỗi ủy quyền SIP (security_log)',
 ];

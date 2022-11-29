@@ -1120,4 +1120,9 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
     'pr_FromDomain_v2' => 'alan adı',
     'mo_SystemExten_voicemail' => 'sesli posta',
     'mm_PaidModulesAccessNew' => 'Ücretli modüllere erişim',
+    'f2b_Jail_asterisk_public_v2' => 'SIP yetkilendirme hataları (genel)',
+    'f2b_Jail_asterisk_ami_v2' => 'AMI veya AJAM yetkilendirme hataları',
+    'f2b_Jail_asterisk_v2' => 'SIP yetkilendirme hataları',
+    'f2b_Jail_asterisk_security_log_v2' => 'SIP yetkilendirme hataları (security_log)',
+    'f2b_Jail_asterisk_error_v2' => 'SIP yetkilendirme hataları (hata)',
 ];

@@ -784,7 +784,6 @@ return [
     'f2b_BanedTime' => '日付',
     'f2b_TableBannedHeader' => 'ブロックされたアドレス',
     'f2b_Unban' => 'ロックを解除',
-    'f2b_Jail_asterisk_public' => 'SIPまたはAMI承認エラー（公開）',
     'f2b_Jail_dropbear' => 'SSHセッション認証エラー',
     'f2b_Jail_mikopbx-www' => 'PBX管理インターフェイスの承認エラー',
     'f2b_WhiteList' => 'ブロックされないアドレスのリスト',
@@ -1121,4 +1120,9 @@ return [
     'pr_FromDomain_v2' => 'ドメイン',
     'mo_SystemExten_voicemail' => 'ボイスメール',
     'mm_PaidModulesAccessNew' => '有料モジュールへのアクセス',
+    'f2b_Jail_asterisk_ami_v2' => 'AMI または AJAM 認証エラー',
+    'f2b_Jail_asterisk_v2' => 'SIP 認証エラー',
+    'f2b_Jail_asterisk_security_log_v2' => 'SIP 認証エラー (security_log)',
+    'f2b_Jail_asterisk_error_v2' => 'SIP 認証エラー (エラー)',
+    'f2b_Jail_asterisk_public_v2' => 'SIP 認証エラー (公開)',
 ];

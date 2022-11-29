@@ -785,7 +785,6 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
     'f2b_BanedTime' => 'Datum',
     'f2b_TableBannedHeader' => 'Gesperrte IP-Adressen',
     'f2b_Unban' => 'Freigeben',
-    'f2b_Jail_asterisk_public' => 'SIP oder AMI Autorisierungsfehler (public)',
     'f2b_Jail_dropbear' => 'SSH Autorisierungsfehler',
     'f2b_Jail_mikopbx-www' => 'Autorisierungsfehler in der PBX-Verwaltungsoberfläche',
     'f2b_WhiteList' => 'Liste der IP-Adressen, welche niemals gesperrt werden (Whitelist)',
@@ -1124,4 +1123,9 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
     'pr_FromDomain_v2' => 'Domain',
     'mo_SystemExten_voicemail' => 'Voicemail',
     'mm_PaidModulesAccessNew' => 'Zugriff auf kostenpflichtige Module',
+    'f2b_Jail_asterisk_ami_v2' => 'AMI- oder AJAM-Autorisierungsfehler',
+    'f2b_Jail_asterisk_v2' => 'SIP-Autorisierungsfehler',
+    'f2b_Jail_asterisk_security_log_v2' => 'SIP-Autorisierungsfehler (security_log)',
+    'f2b_Jail_asterisk_error_v2' => 'SIP-Autorisierungsfehler (Fehler)',
+    'f2b_Jail_asterisk_public_v2' => 'SIP-Autorisierungsfehler (öffentlich)',
 ];

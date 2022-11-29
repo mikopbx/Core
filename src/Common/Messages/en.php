@@ -792,7 +792,6 @@ It can be activated once, after which the coupon becomes redeemed.
     'f2b_BanedTime' => 'Date',
     'f2b_TableBannedHeader' => 'Blocked addresses',
     'f2b_Unban' => 'Unlock',
-    'f2b_Jail_asterisk_public' => 'SIP or AMI authorization errors (public)',
     'f2b_Jail_dropbear' => 'The error of SSH login sessions',
     'f2b_Jail_mikopbx-www' => 'Authorization errors in the PBX administrative interface',
     'f2b_WhiteList' => 'List of addresses that are never blocked',
@@ -1124,4 +1123,9 @@ It can be activated once, after which the coupon becomes redeemed.
     'pr_FromDomain_v2' => 'domain',
     'mo_SystemExten_voicemail' => 'Voice mail',
     'mm_PaidModulesAccessNew' => 'Access to paid modules',
+    'f2b_Jail_asterisk_security_log_v2' => 'SIP authorization errors (security_log)',
+    'f2b_Jail_asterisk_ami_v2' => 'AMI or AJAM authorization errors',
+    'f2b_Jail_asterisk_v2' => 'SIP authorization errors',
+    'f2b_Jail_asterisk_error_v2' => 'SIP authorization errors (error)',
+    'f2b_Jail_asterisk_public_v2' => 'SIP authorization errors (public)',
 ];

@@ -443,7 +443,6 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'f2b_BanedTime' => 'datum',
     'f2b_TableBannedHeader' => 'Blockerade adresser',
     'f2b_Unban' => 'frisättning',
-    'f2b_Jail_asterisk_public' => 'SIP- eller AMI-godkännandefel (offentligt)',
     'f2b_Jail_dropbear' => 'SSH-sessionstillståndstillstånd',
     'f2b_Jail_mikopbx-www' => 'Autoriseringsfel i PBX-administrativa gränssnitt',
     'f2b_WhiteList' => 'Lista över adresser som aldrig är blockerade',
@@ -1121,4 +1120,9 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'pr_FromUser_v2' => 'användare',
     'mo_SystemExten_voicemail' => 'Röstbrevlåda',
     'mm_PaidModulesAccessNew' => 'Tillgång till betalda moduler',
+    'f2b_Jail_asterisk_ami_v2' => 'AMI- eller AJAM-auktoriseringsfel',
+    'f2b_Jail_asterisk_v2' => 'SIP-auktoriseringsfel',
+    'f2b_Jail_asterisk_security_log_v2' => 'SIP-auktoriseringsfel (security_log)',
+    'f2b_Jail_asterisk_error_v2' => 'SIP-auktoriseringsfel (fel)',
+    'f2b_Jail_asterisk_public_v2' => 'SIP-auktoriseringsfel (offentliga)',
 ];

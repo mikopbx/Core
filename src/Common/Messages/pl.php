@@ -395,7 +395,6 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'f2b_BanedTime' => 'Data',
     'f2b_TableBannedHeader' => 'Zablokowane adresy',
     'f2b_Unban' => 'Odblokuj',
-    'f2b_Jail_asterisk_public' => 'Błędy autoryzacji SIP lub AMI (publiczne)',
     'f2b_Jail_dropbear' => 'Błędy autoryzacji sesji SSH',
     'f2b_Jail_mikopbx-www' => 'Błędy autoryzacji w interfejsie administracyjnym PBX',
     'f2b_WhiteList' => 'Lista adresów, które nigdy nie są blokowane',
@@ -1121,4 +1120,9 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'pr_FromDomain_v2' => 'Domena',
     'mo_SystemExten_voicemail' => 'Poczta głosowa',
     'mm_PaidModulesAccessNew' => 'Dostęp do płatnych modułów',
+    'f2b_Jail_asterisk_v2' => 'Błędy autoryzacji SIP',
+    'f2b_Jail_asterisk_error_v2' => 'Błędy autoryzacji SIP (błąd)',
+    'f2b_Jail_asterisk_public_v2' => 'Błędy autoryzacji SIP (publiczne)',
+    'f2b_Jail_asterisk_ami_v2' => 'Błędy autoryzacji AMI lub AJAM',
+    'f2b_Jail_asterisk_security_log_v2' => 'Błędy autoryzacji SIP (security_log)',
 ];

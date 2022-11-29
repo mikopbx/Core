@@ -751,7 +751,6 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'f2b_BanedTime' => 'Datum',
     'f2b_TableBannedHeader' => 'Blokované adresy',
     'f2b_Unban' => 'Odemkněte',
-    'f2b_Jail_asterisk_public' => 'Chyby autorizace SIP nebo AMI (veřejné)',
     'f2b_Jail_dropbear' => 'Chyby autorizace relace SSH',
     'f2b_Jail_mikopbx-www' => 'Chyby autorizace v administrativním rozhraní PBX',
     'f2b_WhiteList' => 'Seznam adres, které nejsou nikdy blokovány',
@@ -1121,4 +1120,9 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'pr_FromDomain_v2' => 'Doména',
     'mo_SystemExten_voicemail' => 'Hlasová pošta',
     'mm_PaidModulesAccessNew' => 'Přístup k placeným modulům',
+    'f2b_Jail_asterisk_public_v2' => 'Chyby autorizace SIP (veřejné)',
+    'f2b_Jail_asterisk_ami_v2' => 'Chyby autorizace AMI nebo AJAM',
+    'f2b_Jail_asterisk_v2' => 'Chyby autorizace SIP',
+    'f2b_Jail_asterisk_security_log_v2' => 'Chyby autorizace SIP (security_log)',
+    'f2b_Jail_asterisk_error_v2' => 'Chyby autorizace SIP (chyba)',
 ];
