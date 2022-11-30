@@ -362,7 +362,7 @@ class AdvicesProcessor extends Injectable
         $messages = [];
         $pathTimeout = Util::which('timeout');
         $pathCurl    = Util::which('curl');
-        $retCode     = Processes::mwExec("$pathTimeout 1 $pathCurl 'https://www.google.com/'");
+        $retCode     = Processes::mwExec("$pathTimeout 2 $pathCurl 'https://www.google.com/'");
         if ($retCode !== 0) {
             $messages['warning'] = $this->translation->_('adv_ProblemWithInternetConnection');
         }
