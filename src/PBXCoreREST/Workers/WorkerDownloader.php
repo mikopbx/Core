@@ -50,7 +50,7 @@ class WorkerDownloader extends WorkerBase
             Util::sysLogMsg(__CLASS__, 'Wrong download settings', LOG_ERR);
             return;
         }
-        ini_set('memory_limit', '300M');
+        ini_set('memory_limit', '400M');
 
         $temp_dir            = dirname($this->settings['res_file']);
         $this->progress_file = $temp_dir . '/progress';
