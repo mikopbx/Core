@@ -143,8 +143,8 @@ class IptablesConf extends Injectable
     private function dropAllRules(): void
     {
         $iptablesPath = Util::which('iptables');
-        Processes::mwExec("$iptablesPath -F");
-        Processes::mwExec("$iptablesPath -X");
+        Processes::mwExec("$iptablesPath -F INPUT");
+        Processes::mwExec("$iptablesPath -X INPUT");
     }
 
     /**
