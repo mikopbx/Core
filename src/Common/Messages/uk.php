@@ -880,7 +880,6 @@ return [
     'сal_ApplyBtn' => 'Застосувати',
     'сal_CancelBtn' => 'Скасувати',
     'gs_RedirectToHttps' => 'Редирект на HTTPS',
-    'f2b_Jail_asterisk_error' => 'Помилки авторизації SIP або AMI (error)',
     'gs_WebAdminLanguage' => 'Мова веб інтерфейсу',
     'lang_HelpWithTranslateIt' => 'Допомогти з перекладом MikoPBX',
     'topMenu_Support' => 'Підтримка',
@@ -1121,4 +1120,9 @@ return [
     'pr_FromDomain_v2' => 'Domain',
     'mo_SystemExten_voicemail' => 'Голосова пошта',
     'mm_PaidModulesAccessNew' => 'Доступ до платних модулів',
+    'f2b_Jail_asterisk_ami_v2' => 'Помилки авторизації AMI чи AJAM',
+    'f2b_Jail_asterisk_v2' => 'Помилки авторизації SIP',
+    'f2b_Jail_asterisk_security_log_v2' => 'Помилки авторизації SIP (security_log)',
+    'f2b_Jail_asterisk_public_v2' => 'Помилки авторизації SIP (public)',
+    'f2b_Jail_asterisk_error_v2' => 'Помилки авторизації SIP (error)',
 ];

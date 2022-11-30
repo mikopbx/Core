@@ -782,8 +782,6 @@ return [
     'f2b_BanedTime' => '日期',
     'f2b_TableBannedHeader' => '封锁的地址',
     'f2b_Unban' => '解锁',
-    'f2b_Jail_asterisk_security_log' => 'SIP或AMI授权错误（security_log）',
-    'f2b_Jail_asterisk_public' => 'SIP或AMI授权错误（公开）',
     'f2b_Jail_dropbear' => 'SSH会话授权错误',
     'f2b_Jail_mikopbx-www' => 'PBX管理界面中的授权错误',
     'f2b_WhiteList' => '永不阻止的地址列表',
@@ -1122,4 +1120,9 @@ return [
     'pr_FromDomain_v2' => '领域',
     'mo_SystemExten_voicemail' => '语音信箱',
     'mm_PaidModulesAccessNew' => '访问付费模块',
+    'f2b_Jail_asterisk_ami_v2' => 'AMI 或 AJAM 授权错误',
+    'f2b_Jail_asterisk_v2' => 'SIP 授权错误',
+    'f2b_Jail_asterisk_public_v2' => 'SIP 授权错误（公共）',
+    'f2b_Jail_asterisk_security_log_v2' => 'SIP 授权错误 (security_log)',
+    'f2b_Jail_asterisk_error_v2' => 'SIP 授权错误（错误）',
 ];

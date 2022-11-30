@@ -191,8 +191,6 @@ return [
     'f2b_WhiteList' => 'Λίστα διευθύνσεων που δεν αποκλείονται ποτέ',
     'f2b_Jail_mikopbx-www' => 'Σφάλματα εξουσιοδότησης στη διαχειριστική διεπαφή PBX',
     'f2b_Jail_dropbear' => 'Σφάλματα εξουσιοδότησης περιόδου λειτουργίας SSH',
-    'f2b_Jail_asterisk_error' => 'Σφάλματα εξουσιοδότησης SIP ή AMI (σφάλμα)',
-    'f2b_Jail_asterisk' => 'Σφάλματα εξουσιοδότησης SIP ή AMI',
     'f2b_Unban' => 'Ξεκλείδωμα',
     'f2b_TableBannedHeader' => 'Αποκλεισμένες διευθύνσεις',
     'f2b_BanedTime' => 'η ημερομηνία',
@@ -1122,4 +1120,9 @@ return [
     'pr_FromDomain_v2' => 'τομέα',
     'mo_SystemExten_voicemail' => 'Φωνητικό ταχυδρομείο',
     'mm_PaidModulesAccessNew' => 'Πρόσβαση σε μονάδες επί πληρωμή',
+    'f2b_Jail_asterisk_ami_v2' => 'Σφάλματα εξουσιοδότησης AMI ή AJAM',
+    'f2b_Jail_asterisk_v2' => 'Σφάλματα εξουσιοδότησης SIP',
+    'f2b_Jail_asterisk_security_log_v2' => 'Σφάλματα εξουσιοδότησης SIP (security_log)',
+    'f2b_Jail_asterisk_error_v2' => 'Σφάλματα εξουσιοδότησης SIP (σφάλμα)',
+    'f2b_Jail_asterisk_public_v2' => 'Σφάλματα εξουσιοδότησης SIP (δημόσια)',
 ];

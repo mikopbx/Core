@@ -784,8 +784,6 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'f2b_BanedTime' => 'dato',
     'f2b_TableBannedHeader' => 'Blokerede adresser',
     'f2b_Unban' => 'frigivelse',
-    'f2b_Jail_asterisk_security_log' => 'SIP- eller AMI-godkendelsesfejl (sikkerhed_log)',
-    'f2b_Jail_asterisk_public' => 'SIP- eller AMI-godkendelsesfejl (offentlig)',
     'f2b_Jail_dropbear' => 'SSH session godkendelsesfejl',
     'f2b_Jail_mikopbx-www' => 'Autoriseringsfejl i PBX-administrationsgrænsefladen',
     'f2b_WhiteList' => 'Liste over adresser, der aldrig er blokeret',
@@ -1122,4 +1120,9 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'pr_FromDomain_v2' => 'domæne',
     'mo_SystemExten_voicemail' => 'Voice mail',
     'mm_PaidModulesAccessNew' => 'Adgang til betalte moduler',
+    'f2b_Jail_asterisk_ami_v2' => 'AMI- eller AJAM-autorisationsfejl',
+    'f2b_Jail_asterisk_v2' => 'SIP-godkendelsesfejl',
+    'f2b_Jail_asterisk_security_log_v2' => 'SIP-godkendelsesfejl (security_log)',
+    'f2b_Jail_asterisk_error_v2' => 'SIP-godkendelsesfejl (fejl)',
+    'f2b_Jail_asterisk_public_v2' => 'SIP-godkendelsesfejl (offentlige)',
 ];

@@ -853,8 +853,6 @@ return [
     'f2b_BanedTime' => 'თარიღი',
     'f2b_TableBannedHeader' => 'დაბლოკილი მისამართები',
     'f2b_Unban' => 'ბლოკირება',
-    'f2b_Jail_asterisk_security_log' => 'SIP ან AMI– ს ავტორიზაციის შეცდომები (security_log)',
-    'f2b_Jail_asterisk_public' => 'SIP ან AMI– ს ავტორიზაციის შეცდომები (საჯარო)',
     'f2b_Jail_dropbear' => 'SSH სესიის ავტორიზაციის შეცდომები',
     'f2b_Jail_mikopbx-www' => 'ავტორიზაციის შეცდომები PBX ადმინისტრაციულ ინტერფეისში',
     'f2b_WhiteList' => 'მისამართების სია, რომლებიც არასოდეს იბლოკება',
@@ -1122,4 +1120,9 @@ return [
     'pr_FromDomain_v2' => 'დომენი',
     'mo_SystemExten_voicemail' => 'Ხმოვანი შეტყობინება',
     'mm_PaidModulesAccessNew' => 'ფასიან მოდულებზე წვდომა',
+    'f2b_Jail_asterisk_ami_v2' => 'AMI ან AJAM ავტორიზაციის შეცდომები',
+    'f2b_Jail_asterisk_v2' => 'SIP ავტორიზაციის შეცდომები',
+    'f2b_Jail_asterisk_security_log_v2' => 'SIP ავტორიზაციის შეცდომები (security_log)',
+    'f2b_Jail_asterisk_error_v2' => 'SIP ავტორიზაციის შეცდომები (შეცდომა)',
+    'f2b_Jail_asterisk_public_v2' => 'SIP ავტორიზაციის შეცდომები (საჯარო)',
 ];
