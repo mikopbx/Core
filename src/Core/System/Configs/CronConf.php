@@ -77,19 +77,21 @@ class CronConf extends Injectable
         $WorkerSafeScripts     = "$phpPath -f {$workerSafeScriptsPath} start > /dev/null 2> /dev/null";
 
         $workersPath = appPath('src/Core/Workers');
-
         $restart_night = $this->mikoPBXConfig->getGeneralSettings('RestartEveryNight');
         $asteriskPath  = Util::which('asterisk');
         $ntpdPath      = Util::which('ntpd');
         $shPath        = Util::which('sh');
-        $dumpPath        = Util::which('dump-conf-db');
+        $dumpPath      = Util::which('dump-conf-db');
+        $checkIpPath   = Util::which('check-out-ip');
+
         if ($restart_night === '1') {
-            $mast_have[] = '0 1 * * * ' . $asteriskPath . ' -rx"core restart now" > /dev/null 2> /dev/null' . "\n";
+            $mast_have[] = '0 1 * * * ' . $asteriskPath . ' -rx"core restart now" > /dev/null 2> /dev/null'.PHP_EOL;
         }
-        $mast_have[] = '*/5 * * * * ' . $ntpdPath . ' -q > /dev/null 2> /dev/null' . "\n";
-        $mast_have[] = '*/5 * * * * ' . "$shPath $dumpPath" . '  > /dev/null 2> /dev/null' . "\n";
-        $mast_have[] = '*/6 * * * * ' . "{$shPath} {$workersPath}/Cron/cleaner_download_links.sh > /dev/null 2> /dev/null\n";
-        $mast_have[] = '*/1 * * * * ' . "{$WorkerSafeScripts}\n";
+        $mast_have[] = '*/5 * * * * ' . $ntpdPath . ' -q > /dev/null 2> /dev/null'.PHP_EOL;
+        $mast_have[] = '*/5 * * * * ' . "$dumpPath > /dev/null 2> /dev/null".PHP_EOL;
+        $mast_have[] = '*/1 * * * * ' . "$checkIpPath > /dev/null 2> /dev/null".PHP_EOL;
+        $mast_have[] = '*/6 * * * * ' . "{$shPath} {$workersPath}/Cron/cleaner_download_links.sh > /dev/null 2> /dev/null".PHP_EOL;
+        $mast_have[] = '*/1 * * * * ' . $WorkerSafeScripts.PHP_EOL;
 
         $tasks = [];
         // Add additional modules includes
