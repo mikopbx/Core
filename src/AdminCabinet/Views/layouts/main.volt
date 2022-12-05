@@ -23,7 +23,7 @@
                             {% if not urlToWiki is empty %}
                                 <a href="{{ urlToWiki }}" target="_blank"
                                    data-content="{{ t._("GoToWikiDocumentation") }}"
-                                   data-variation="wide"> <i class="small blue question icon"></i></a>
+                                   data-variation="wide"> <i class="blue question circle outline icon"></i></a>
                             {% endif %}
                         </div>
                     </div>
