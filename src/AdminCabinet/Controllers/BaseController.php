@@ -45,6 +45,8 @@ class BaseController extends Controller
     protected string $controllerName;
     protected string $controllerNameUnCamelized;
 
+    public const WIKI_LINKS = '/var/etc/wiki-links-LANG.json';
+
     /**
      * Initializes base class
      */
@@ -59,6 +61,25 @@ class BaseController extends Controller
         if ($this->request->isAjax() === false) {
             $this->prepareView();
         }
+    }
+
+    /**
+     * Кастомизация ссылок на wiki документацию.
+     * @return void
+     */
+    private function customWikiLinks(): void
+    {
+        $filename = str_replace('LANG', $this->language, self::WIKI_LINKS);
+        if(!file_exists($filename)){
+            return;
+        }
+        try {
+            $links = json_decode(file_get_contents($filename), true, 512, JSON_THROW_ON_ERROR);
+        }catch (\Exception $e){
+            return;
+        }
+        $this->view->urlToWiki    = $links[$this->view->urlToWiki]??$this->view->urlToWiki;
+        $this->view->urlToSupport = $links[$this->view->urlToSupport]??$this->view->urlToSupport;
     }
 
     /**
@@ -138,6 +159,8 @@ class BaseController extends Controller
             $this->view->urlToSupport
                 = 'https://www.mikopbx.com/support/?fromPBX=true';
         }
+
+        $this->customWikiLinks();
 
         $this->view->urlToController = $this->url->get($this->controllerNameUnCamelized);
         $this->view->represent       = '';
