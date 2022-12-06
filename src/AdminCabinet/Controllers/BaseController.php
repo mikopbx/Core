@@ -19,13 +19,16 @@
 
 namespace MikoPBX\AdminCabinet\Controllers;
 
+use MikoPBX\Common\Providers\ModelsCacheProvider;
+use MikoPBX\Core\System\Util;
 use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings};
 use Phalcon\Mvc\{Controller, View};
-use Phalcon\Logger;
+use Phalcon\Cache\Adapter\Redis;
 use Phalcon\Tag;
 use Phalcon\Text;
 use Sentry\SentrySdk;
-
+use GuzzleHttp;
+use Exception;
 
 /**
  * @property array                                         sessionRO
@@ -69,17 +72,48 @@ class BaseController extends Controller
      */
     private function customWikiLinks(): void
     {
-        $filename = str_replace('LANG', $this->language, self::WIKI_LINKS);
-        if(!file_exists($filename)){
-            return;
+        /** @var Redis $cache */
+        $cache  = $this->di->getShared(ModelsCacheProvider::SERVICE_NAME);
+        $links  = $cache->get('WIKI_LINKS');
+        if($links === null){
+            $ttl = 86400;
+            $client = new GuzzleHttp\Client();
+            $url = 'https://raw.githubusercontent.com/mikopbx/Core/master/src/Common/WikiLinks/'.$this->language.'.json';
+            try {
+                $res = $client->request('GET', $url, ['timeout', 1]);
+            }catch (Exception $e){
+                $res = null;
+                $ttl = 3600;
+                if($e->getCode() !== 404){
+                    Util::sysLogMsg('BaseController', 'Error access to raw.04githubusercontent.com');
+                }
+            }
+            $links = null;
+            if($res && $res->getStatusCode() === 200){
+                try {
+                    $links = json_decode($res->getBody(), true, 512, JSON_THROW_ON_ERROR);
+                }catch (Exception $e){
+                    $ttl = 3600;
+                }
+            }
+            if(!is_array($links)){
+                $links = [];
+            }
+            $cache->set('WIKI_LINKS', $links, $ttl);
         }
-        try {
-            $links = json_decode(file_get_contents($filename), true, 512, JSON_THROW_ON_ERROR);
-        }catch (\Exception $e){
-            return;
+
+        $filename = str_replace('LANG', $this->language, self::WIKI_LINKS);
+        if(file_exists($filename)){
+            try {
+                $local_links = json_decode(file_get_contents($filename), true, 512, JSON_THROW_ON_ERROR);
+                $links = $local_links;
+            }catch (\Exception $e){
+                Util::sysLogMsg('BaseController', $e->getMessage());
+            }
         }
         $this->view->urlToWiki    = $links[$this->view->urlToWiki]??$this->view->urlToWiki;
         $this->view->urlToSupport = $links[$this->view->urlToSupport]??$this->view->urlToSupport;
+        $this->view->urlToWiki = "-1-";
     }
 
     /**
