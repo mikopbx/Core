@@ -117,7 +117,6 @@ class BaseController extends Controller
         }
         $this->view->urlToWiki    = $links[$this->view->urlToWiki]??$this->view->urlToWiki;
         $this->view->urlToSupport = $links[$this->view->urlToSupport]??$this->view->urlToSupport;
-        $this->view->urlToWiki = "-1-";
     }
 
     /**
