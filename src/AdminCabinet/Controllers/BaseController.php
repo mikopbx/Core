@@ -72,9 +72,13 @@ class BaseController extends Controller
      */
     private function customWikiLinks(): void
     {
+        if(!$this->session->get('auth')){
+            return;
+        }
         /** @var Redis $cache */
         $cache  = $this->di->getShared(ModelsCacheProvider::SERVICE_NAME);
         $links  = $cache->get('WIKI_LINKS');
+
         if($links === null){
             $ttl = 86400;
             $client = new GuzzleHttp\Client();
