@@ -67,6 +67,17 @@ class BaseController extends Controller
     }
 
     /**
+     * Кастомизация ссылок на wiki документацию для модулей.
+     * @param array $links
+     * @return void
+     */
+    private function customModuleWikiLinks(array $links): void
+    {
+        $this->view->urlToWiki    = $links[$this->language][$this->view->urlToWiki]??$this->view->urlToWiki;
+        $this->view->urlToSupport = $links[$this->language][$this->view->urlToSupport]??$this->view->urlToSupport;
+    }
+
+    /**
      * Кастомизация ссылок на wiki документацию.
      * @return void
      */
@@ -149,12 +160,23 @@ class BaseController extends Controller
         }
 
         // Добавим версию модуля, если это модуль
+        $moduleLinks = [];
         if ($this->moduleName === 'PBXExtension') {
+            /** @var PbxExtensionModules $module */
             $module = PbxExtensionModules::findFirstByUniqid($this->controllerName);
             if ($module === null) {
                 $module           = new PbxExtensionModules();
                 $module->disabled = '1';
                 $module->name     = 'Unknown module';
+            }else{
+                try {
+                    $links = json_decode($module->wiki_links, true, 512, JSON_THROW_ON_ERROR);
+                    if(is_array($links)){
+                        $moduleLinks = $links;
+                    }
+                }catch (\JsonException $e){
+                    Util::sysLogMsg(__CLASS__, $e->getMessage());
+                }
             }
             $this->view->module = $module;
         }
@@ -186,30 +208,24 @@ class BaseController extends Controller
         $this->view->debugMode = $this->config->path('adminApplication.debugMode');
         $this->view->urlToLogo = $this->url->get('assets/img/logo-mikopbx.svg');
         if ($this->language === 'ru') {
-            $this->view->urlToWiki
-                = "https://wiki.mikopbx.com/{$this->controllerNameUnCamelized}";
-            $this->view->urlToSupport
-                = 'https://www.mikopbx.ru/support/?fromPBX=true';
+            $this->view->urlToWiki    = "https://wiki.mikopbx.com/{$this->controllerNameUnCamelized}";
+            $this->view->urlToSupport = 'https://www.mikopbx.ru/support/?fromPBX=true';
         } else {
-            $this->view->urlToWiki
-                = "https://wiki.mikopbx.com/{$this->language}:{$this->controllerNameUnCamelized}";
-            $this->view->urlToSupport
-                = 'https://www.mikopbx.com/support/?fromPBX=true';
+            $this->view->urlToWiki    = "https://wiki.mikopbx.com/{$this->language}:{$this->controllerNameUnCamelized}";
+            $this->view->urlToSupport = 'https://www.mikopbx.com/support/?fromPBX=true';
         }
-
-        $this->customWikiLinks();
-
         $this->view->urlToController = $this->url->get($this->controllerNameUnCamelized);
         $this->view->represent       = '';
         $this->view->cacheName       = "{$this->controllerName}{$this->actionName}{$this->language}{$versionHash}";
 
         // If it is module we have to use another template
         if ($this->moduleName === 'PBXExtension') {
+            $this->customModuleWikiLinks($moduleLinks);
             $this->view->setTemplateAfter('modules');
         } else {
+            $this->customWikiLinks();
             $this->view->setTemplateAfter('main');
         }
-
     }
 
     /**

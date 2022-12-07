@@ -76,10 +76,14 @@ class PbxExtensionModules extends ModelsBase
     public ?string $description = '';
 
     /**
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $wiki_links = '';
+
+    /**
      * @Column(type="string", length=1, nullable=false)
      */
     public ?string $disabled = '1';
-
 
     public function initialize(): void
     {
@@ -128,6 +132,7 @@ class PbxExtensionModules extends ModelsBase
     {
         $parameters = [
             'conditions' => 'disabled="0"',
+            'columns' => 'uniqid',
             'cache' => [
                 'key'=> ModelsBase::makeCacheKey(PbxExtensionModules::class, 'getEnabledModulesArray'),
                 'lifetime' => 3600,

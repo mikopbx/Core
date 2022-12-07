@@ -112,6 +112,13 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
      */
     public $lic_feature_id;
 
+
+    /**
+     * Массив ссылок на документацию
+     * @var array
+     */
+    public array $wiki_links = [];
+
     /**
      * PbxExtensionBase constructor.
      *
@@ -143,13 +150,15 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
                 } else {
                     $this->lic_feature_id = 0;
                 }
+                $wiki_links = $module_settings['wiki_links']??[];
+                if(is_array($wiki_links)){
+                    $this->wiki_links = $wiki_links;
+                }
             } else {
                 $this->messages[] = 'Error on decode module.json';
             }
         }
-
         $this->messages  = [];
-
     }
 
     /**
@@ -421,6 +430,12 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
         $module->version       = $this->version;
         $module->description   = $this->translation->_("SubHeader{$this->moduleUniqueID}");
         $module->support_email = $this->support_email;
+
+        try {
+            $module->wiki_links = json_encode($this->wiki_links, JSON_THROW_ON_ERROR);
+        }catch (\JsonException $e){
+            Util::sysLogMsg(__CLASS__, $e->getMessage());
+        }
 
         return $module->save();
     }
