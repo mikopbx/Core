@@ -30,7 +30,7 @@ class HepConf extends CoreConfigClass
     protected function generateConfigProtected(): void
     {
         $conf = "[general]\n" .
-            "enabled=yes\n" .
+            "enabled=no\n" .
             "capture_address = 172.16.156.197:9060\n" .
             ";capture_password = foo\n" .
             "capture_id = 1234 \n";
