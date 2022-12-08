@@ -619,8 +619,9 @@ class SystemManagementProcessor extends Injectable
         }
 
         // Change extension to wav
-        $n_filename     = Util::trimExtensionForFile($filename) . ".wav";
-        $n_filename_mp3 = Util::trimExtensionForFile($filename) . ".mp3";
+        $trimmedFileName = Util::trimExtensionForFile($filename);
+        $n_filename     = $trimmedFileName . ".wav";
+        $n_filename_mp3 = $trimmedFileName . ".mp3";
         // Convert file
         $tmp_filename = escapeshellcmd($tmp_filename);
         $n_filename   = escapeshellcmd($n_filename);
@@ -632,6 +633,15 @@ class SystemManagementProcessor extends Injectable
         Processes::mwExec("{$lamePath} -b 32 --silent '{$n_filename}' '{$n_filename_mp3}'", $out);
         $result_mp3 = implode('', $out);
 
+        $codecs = ['alaw', 'ulaw', 'gsm', 'g722', 'wav'];
+        $rmPath       = Util::which('rm');
+        $asteriskPath = Util::which('asterisk');
+        foreach ($codecs as $codec){
+            $result = shell_exec("$asteriskPath -rx 'file convert $tmp_filename $trimmedFileName.$codec'");
+            if(strpos($result, 'Converted') !== 0){
+                shell_exec("$rmPath -rf /root/test.{$codec}");
+            }
+        }
         // Чистим мусор.
         unlink($tmp_filename);
         if ($result_str !== '' && $result_mp3 !== '') {
