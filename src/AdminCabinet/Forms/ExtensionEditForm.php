@@ -98,42 +98,8 @@ class ExtensionEditForm extends Form
             )
         );
 
-        // // Language
-        // $language = new Select(
-        //     'user_language',
-        //     [
-        //         'en-en' => $this->translation->_('ex_English'),
-        //         'en-gb' => $this->translation->_('ex_EnglishUK'),
-        //         'ru-ru' => $this->translation->_('ex_Russian'),
-        //         'de-de' => $this->translation->_('ex_Deutsch'),
-        //         'da-dk' => $this->translation->_('ex_Danish'),
-        //         'es-es' => $this->translation->_('ex_Spanish'),
-        //         'fr-ca' => $this->translation->_('ex_French'),
-        //         'it-it' => $this->translation->_('ex_Italian'),
-        //         'ja-jp' => $this->translation->_('ex_Japanese'),
-        //         'nl-nl' => $this->translation->_('ex_Dutch'),
-        //         'pl-pl' => $this->translation->_('ex_Polish'),
-        //         'pt-br' => $this->translation->_('ex_Portuguese'),
-        //         'sv-sv' => $this->translation->_('ex_Swedish'),
-        //         'cs-cs' => $this->translation->_('ex_Czech'),
-        //         'tr-tr' => $this->translation->_('ex_Turkish'),
-        //     ]
-        //     , [
-        //         'using'    => [
-        //             'id',
-        //             'name',
-        //         ],
-        //         'value'    => $entity->Users->language,
-        //         'useEmpty' => false,
-        //         'class'    => 'ui selection dropdown language-select',
-        //     ]
-        // );
-        // $this->add($language);
-
-
         // Picture
         $this->add(new Hidden('user_avatar', ["value" => $user->avatar]));
-
 
         // SIP
         $sip = $entity->Sip??new Sip();

@@ -21,6 +21,7 @@ return [
     'ex_Czech' => 'Čeština',
     'ex_Turkish' => 'Türk',
     'ex_Georgian' => 'ქართველი',
+    'ex_Azərbaycan' => 'Azərbaycan',
     'January' => 'Январь',
     'February' => 'Февраль',
     'March' => 'Март',

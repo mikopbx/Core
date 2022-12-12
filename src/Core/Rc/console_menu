@@ -251,7 +251,7 @@ $setupLanguage = function (CliMenuBuilder $b) {
         'da' => Util::translate('ex_Danish'),
         'pl' => Util::translate('ex_Polish'),
         'sv' => Util::translate('ex_Swedish'),
-
+        'az' => Util::translate('ex_Azərbaycan'),
 
         // not able to show in console without additional shell fonts, maybe later we add it
         // 'el'      => Util::translate('ex_Greek'),

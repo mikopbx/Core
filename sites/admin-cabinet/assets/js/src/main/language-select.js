@@ -69,6 +69,7 @@ const LanguageSelect = {
 			ja: '<i class="japan flag"></i>',
 			vi: '<i class="vietnam flag"></i>',
 			zh_Hans: '<i class="china flag"></i>',
+			az: '<i class="azerbaijan flag"></i>',
 		};
 		if (langKey in arFlags) {
 			return arFlags[langKey];

@@ -436,6 +436,7 @@ class Elements extends Injectable
             'tr'      => $this->translation->_('ex_Turkish'),
             'ja'      => $this->translation->_('ex_Japanese'),
             'vi'      => $this->translation->_('ex_Vietnamese'),
+            'az'      => $this->translation->_('ex_Azərbaycan'),
             'zh_Hans' => $this->translation->_('ex_Chinese'),
         ];
     }
