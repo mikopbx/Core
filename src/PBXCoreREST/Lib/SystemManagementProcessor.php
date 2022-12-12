@@ -589,6 +589,9 @@ class SystemManagementProcessor extends Injectable
         if (stripos($callRecordsPath, '/storage/usbdisk1/mikopbx') !== false) {
             Processes::mwExec("{$rm} -rf {$callRecordsPath}/*");
         }
+
+        $pbxConsole = Util::which('pbx-console');
+        shell_exec("$pbxConsole services restart-all");
         return $res;
     }
 
