@@ -1125,4 +1125,5 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá đ
     'f2b_Jail_asterisk_error_v2' => 'Lỗi ủy quyền SIP (lỗi)',
     'f2b_Jail_asterisk_public_v2' => 'Lỗi ủy quyền SIP (công khai)',
     'f2b_Jail_asterisk_security_log_v2' => 'Lỗi ủy quyền SIP (security_log)',
+    'ex_Azərbaycan' => 'A-déc-bai-gian',
 ];

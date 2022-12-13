@@ -1125,4 +1125,5 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'f2b_Jail_asterisk_security_log_v2' => 'SIP-auktoriseringsfel (security_log)',
     'f2b_Jail_asterisk_error_v2' => 'SIP-auktoriseringsfel (fel)',
     'f2b_Jail_asterisk_public_v2' => 'SIP-auktoriseringsfel (offentliga)',
+    'ex_Azərbaycan' => 'Azerbajdzjan',
 ];
