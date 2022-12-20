@@ -1125,4 +1125,5 @@ Se puede activar una vez, después de lo cual el cupón se canjea.
     'f2b_Jail_asterisk_security_log_v2' => 'Errores de autorización SIP (security_log)',
     'f2b_Jail_asterisk_error_v2' => 'Errores de autorización SIP (error)',
     'f2b_Jail_asterisk_v2' => 'Errores de autorización SIP',
+    'ex_Azərbaycan' => 'Azerbaiyán',
 ];

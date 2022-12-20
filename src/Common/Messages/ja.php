@@ -1125,4 +1125,5 @@ return [
     'f2b_Jail_asterisk_security_log_v2' => 'SIP 認証エラー (security_log)',
     'f2b_Jail_asterisk_error_v2' => 'SIP 認証エラー (エラー)',
     'f2b_Jail_asterisk_public_v2' => 'SIP 認証エラー (公開)',
+    'ex_Azərbaycan' => 'アゼルバイジャン',
 ];

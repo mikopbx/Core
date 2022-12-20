@@ -1125,4 +1125,5 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'f2b_Jail_asterisk_public_v2' => 'Błędy autoryzacji SIP (publiczne)',
     'f2b_Jail_asterisk_ami_v2' => 'Błędy autoryzacji AMI lub AJAM',
     'f2b_Jail_asterisk_security_log_v2' => 'Błędy autoryzacji SIP (security_log)',
+    'ex_Azərbaycan' => 'Azerbejdżan',
 ];

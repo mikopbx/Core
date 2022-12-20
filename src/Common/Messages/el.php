@@ -1125,4 +1125,5 @@ return [
     'f2b_Jail_asterisk_security_log_v2' => 'Σφάλματα εξουσιοδότησης SIP (security_log)',
     'f2b_Jail_asterisk_error_v2' => 'Σφάλματα εξουσιοδότησης SIP (σφάλμα)',
     'f2b_Jail_asterisk_public_v2' => 'Σφάλματα εξουσιοδότησης SIP (δημόσια)',
+    'ex_Azərbaycan' => 'Αζερμπαϊτζάν',
 ];

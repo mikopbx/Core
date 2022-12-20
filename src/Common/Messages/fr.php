@@ -1125,4 +1125,5 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'f2b_Jail_asterisk_ami_v2' => 'Erreurs d\'autorisation AMI ou AJAM',
     'f2b_Jail_asterisk_v2' => 'Erreurs d\'autorisation SIP',
     'f2b_Jail_asterisk_security_log_v2' => 'Erreurs d\'autorisation SIP (security_log)',
+    'ex_Azərbaycan' => 'Azerbaïdjan',
 ];

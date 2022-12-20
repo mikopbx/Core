@@ -1128,4 +1128,5 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
     'f2b_Jail_asterisk_security_log_v2' => 'SIP-Autorisierungsfehler (security_log)',
     'f2b_Jail_asterisk_error_v2' => 'SIP-Autorisierungsfehler (Fehler)',
     'f2b_Jail_asterisk_public_v2' => 'SIP-Autorisierungsfehler (öffentlich)',
+    'ex_Azərbaycan' => 'Aserbaidschan',
 ];
