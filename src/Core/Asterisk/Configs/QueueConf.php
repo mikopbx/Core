@@ -107,12 +107,11 @@ class QueueConf extends CoreConfigClass
                 $queue_ext_conf .= 'same => n,GotoIf($["${mLogged}" == "0"]?internal,'.$reservExtension.',1)'.PHP_EOL."\t";
             }
             // Направим вызов на очередь.
-            $queue_ext_conf .= "same => n,Answer() \n\t";
             $queue_ext_conf .= 'same => n,Set(__QUEUE_SRC_CHAN=${CHANNEL})' . "\n\t";
             $queue_ext_conf .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" == "Local"]?Gosub(set_orign_chan,s,1))' . "\n\t";
             $queue_ext_conf .= 'same => n,Set(CHANNEL(hangup_handler_wipe)=hangup_handler,s,1)' . "\n\t";
             $queue_ext_conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(queue-pre-dial-custom,${EXTEN},1)}" == "1"]?queue-pre-dial-custom,${EXTEN},1)'."\n\t";
-
+            $queue_ext_conf .= "same => n,Answer() \n\t";
             $queue_ext_conf .= 'same => n,Gosub(queue_start,${EXTEN},1)' . "\n\t";
             $options = '';
             if (isset($queue['caller_hear']) && $queue['caller_hear'] === 'ringing') {

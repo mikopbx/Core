@@ -139,6 +139,7 @@ class InternalContexts extends CoreConfigClass
         $conf .= 'same => n,Set(cleanNumber=${FILTER(\*\#\+1234567890,${EXTEN})})' . "\n\t";
         $conf .= 'same => n,ExecIf($["${EXTEN}" != "${cleanNumber}"]?Goto(${CONTEXT},${cleanNumber},$[${PRIORITY} + 1]))' . "\n\t";
 
+        $conf .= $this->generateAdditionalModulesAllPeersContext();
         $conf .= 'same => n,Set(__FROM_CHAN=${CHANNEL})' . "\n\t";
         $conf .= 'same => n,Set(__M_CALLID=${CHANNEL(callid)})' . "\n\t";
         $conf .= 'same => n,ExecIf($["${OLD_LINKEDID}x" == "x"]?Set(__OLD_LINKEDID=${CHANNEL(linkedid)}))' . "\n\t";
@@ -221,6 +222,12 @@ class InternalContexts extends CoreConfigClass
     {
         return $this->hookModulesMethod(CoreConfigClass::EXTENSION_GEN_INTERNAL_USERS_PRE_DIAL);
     }
+
+    private function generateAdditionalModulesAllPeersContext():string
+    {
+        return $this->hookModulesMethod(CoreConfigClass::EXTENSION_GEN_ALL_PEERS_CONTEXT);
+    }
+
 
     /**
      * Генератор [internal-users] dialplan.

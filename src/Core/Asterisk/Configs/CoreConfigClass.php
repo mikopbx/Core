@@ -258,6 +258,16 @@ abstract class CoreConfigClass extends Injectable implements AsteriskConfigInter
     }
 
     /**
+     * Prepares additional rules for [all_peers] context section in the extensions.conf file
+     *
+     * @return string
+     */
+    public function extensionGenAllPeersContext(): string
+    {
+        return '';
+    }
+
+    /**
      * Prepares additional includes for [internal-transfer] context section in the extensions.conf file
      *
      * @return string
