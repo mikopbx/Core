@@ -47,7 +47,7 @@ do
         mkdir -p /var/etc;
         echo '/storage/usbdisk1' > /var/etc/storage_device;
         echo "$systemDevice" > /var/etc/cfdevice;
-        /sbin/mikopbx_firmware "$updateFile" "$systemDevice"
+        /sbin/pbx_firmware "$updateFile" "$systemDevice"
       else
         echoToTeletype ' - System disk not found...'
       fi

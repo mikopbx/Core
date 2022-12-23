@@ -508,7 +508,7 @@ $menu = (new CliMenuBuilder())
                         passthru('e2fsck -f -p ' . escapeshellarg($dev_name), $return_var);
                         echo "check return $return_var";
                         sleep(2);
-                        system('/sbin/mikopbx_reboot');
+                        system('/sbin/pbx_reboot');
                     }
                 )
                 ->addItem(
@@ -547,8 +547,8 @@ $menu = (new CliMenuBuilder())
                         echo "resize storage return $return_var";
                         sleep(2);
                         if ($return_var === 0) {
-                            $mikopbx_rebootPath = Util::which('mikopbx_reboot');
-                            Processes::mwExecBg($mikopbx_rebootPath);
+                            $pbx_rebootPath = Util::which('pbx_reboot');
+                            Processes::mwExecBg($pbx_rebootPath);
                         }
                     }
                 )

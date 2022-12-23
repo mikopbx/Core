@@ -32,7 +32,7 @@ if [ "$md5Hash" != "$(/bin/gunzip -c "${img_file}" |/bin/busybox md5sum | /bin/b
     echoToTeletype " - Update aborted...";
     rm -rf "$img_file";
     sleep 3;
-    /sbin/mikopbx_reboot;
+    /sbin/pbx_reboot;
 else
     echoToTeletype " - Successful checksum verification";
 fi
@@ -109,7 +109,7 @@ if [ -f /offload/livecd ]; then
   touch /tmp/ejectcd
 
   echoToTeletype " - rebooting system..."
-  /sbin/mikopbx_reboot;
+  /sbin/pbx_reboot;
 else
   echo " - conf partition: ${partition3Name}";
   /bin/busybox yes | /sbin/mkfs.ext4 "${partition3Name}" > /dev/null 2> /dev/null;

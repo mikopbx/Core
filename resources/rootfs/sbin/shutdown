@@ -29,7 +29,7 @@ fi;
 
 if [ "$1" = "-r" ]
 then
-    /sbin/mikopbx_reboot;
+    /sbin/pbx_reboot;
 else
 	/sbin/poweroff;
 fi

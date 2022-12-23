@@ -19,4 +19,4 @@
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin;
 export PATH;
-/sbin/mikopbx_init;
+/sbin/pbx_init;

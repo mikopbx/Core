@@ -235,8 +235,8 @@ class System extends Di\Injectable
      */
     public static function rebootSync(): void
     {
-        $mikopbx_rebootPath = Util::which('mikopbx_reboot');
-        Processes::mwExec("{$mikopbx_rebootPath} > /dev/null 2>&1");
+        $pbx_rebootPath = Util::which('pbx_reboot');
+        Processes::mwExec("{$pbx_rebootPath} > /dev/null 2>&1");
     }
 
     /**
@@ -244,8 +244,8 @@ class System extends Di\Injectable
      */
     public static function rebootSyncBg(): void
     {
-        $mikopbx_rebootPath = Util::which('mikopbx_reboot');
-        Processes::mwExecBg("{$mikopbx_rebootPath} > /dev/null 2>&1");
+        $pbx_rebootPath = Util::which('pbx_reboot');
+        Processes::mwExecBg("{$pbx_rebootPath} > /dev/null 2>&1");
     }
 
     /**
