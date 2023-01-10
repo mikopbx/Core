@@ -124,9 +124,20 @@ const systemDiagnosticLogs = {
 		if (response ===false){
 			return ;
 		}
+
+		let defVal = '';
+		if(systemDiagnosticLogs.logsItems.length === 0 && $("#filename").val() !== ''){
+			defVal = $("#filename").val().trim();
+		}
+
 		systemDiagnosticLogs.logsItems = [];
 		const files = response.files;
 		$.each(files, (index, item) => {
+
+			if(defVal !== ''){
+				item.default = (defVal === item.path);
+			}
+
 			systemDiagnosticLogs.logsItems.push({
 				name: `${index} (${item.size})`,
 				value: item.path,

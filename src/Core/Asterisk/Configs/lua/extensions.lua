@@ -691,6 +691,9 @@ function event_hangup_chan()
     data['OLD_LINKEDID']= get_variable("OLD_LINKEDID");
     data['UNIQUEID']  	= get_variable("pt1c_UNIQUEID");
     data['VMSTATUS']  	= get_variable("VMSTATUS");
+
+    data['verbose_call_id']	= get_variable("CHANNEL(callid)");
+
     if('ANSWER' == data['dialstatus'])then
         data['dialstatus'] = "ANSWERED";
     end

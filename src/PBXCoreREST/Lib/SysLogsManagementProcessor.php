@@ -112,7 +112,7 @@ class SysLogsManagementProcessor extends Injectable
             if (empty($filter)){
                 $cmd         = "{$tail} -n {$linesPlusOffset} {$filename}";
             } else {
-                $cmd         = "{$grep} -F {$filter} {$filename} | $tail -n {$linesPlusOffset}";
+                $cmd         = "{$grep} -h -e ".str_replace('&',"' -e '", $filter)." -F {$filename} | $tail -n {$linesPlusOffset}";
             }
             if ($offset>0){
                 $cmd .= " | {$head} -n {$lines}";

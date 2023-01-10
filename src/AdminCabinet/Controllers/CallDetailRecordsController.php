@@ -92,7 +92,7 @@ class CallDetailRecordsController extends BaseController
         if (count($arrIDS) === 1) {
             $parameters = [
                 'conditions' => 'linkedid = :ids:',
-                'columns'    => 'id, disposition, start, src_num, dst_num, billsec, recordingfile, did, dst_chan, linkedid, is_app',
+                'columns'    => 'id, disposition, start, src_num, dst_num, billsec, recordingfile, did, dst_chan, linkedid, is_app, verbose_call_id',
                 'bind'       => [
                     'ids' => $arrIDS[0],
                 ],
@@ -101,7 +101,7 @@ class CallDetailRecordsController extends BaseController
         } else {
             $parameters = [
                 'conditions' => 'linkedid IN ({ids:array})',
-                'columns'    => 'id, disposition, start, src_num, dst_num, billsec, recordingfile, did, dst_chan, linkedid, is_app',
+                'columns'    => 'id, disposition, start, src_num, dst_num, billsec, recordingfile, did, dst_chan, linkedid, is_app, verbose_call_id',
                 'bind'       => [
                     'ids' => $arrIDS,
                 ],
@@ -122,6 +122,7 @@ class CallDetailRecordsController extends BaseController
             'billsec'     => 0,
             'answered'    => [],
             'detail'      => [],
+            'ids'         => [],
         ];
 
         foreach ($selectedRecords as $record) {
@@ -155,6 +156,9 @@ class CallDetailRecordsController extends BaseController
                 ];
             }
             $linkedRecord->detail[] = $record;
+            if(!empty($record->verbose_call_id)){
+                $linkedRecord->ids[] = $record->verbose_call_id;
+            }
         }
         $output = [];
         foreach ($arrCdr as $cdr) {
@@ -168,6 +172,7 @@ class CallDetailRecordsController extends BaseController
                 $cdr->disposition,
                 'DT_RowId'    => $cdr->linkedid,
                 'DT_RowClass' => 'NOANSWER' === $cdr->disposition ? 'ui negative' : 'detailed',
+                'ids'         => implode('&', array_unique($cdr->ids)),
             ];
         }
 
