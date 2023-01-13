@@ -18,6 +18,9 @@
 
 /** @scrutinizer ignore-unused */ const InputMaskPatterns  = [
 	{
+		mask: '+8#(###)####-####', cc: 'AC', name_en: 'Ascension', desc_en: '', name_ru: 'Южная Корея', desc_ru: '',
+	},
+	{
 		mask: '+247-####', cc: 'AC', name_en: 'Ascension', desc_en: '', name_ru: 'Остров Вознесения', desc_ru: '',
 	},
 	{
