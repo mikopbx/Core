@@ -631,6 +631,7 @@ return [
     'gs_FiveDigthts' => '5 цифр',
     'gs_SixDigthts' => '6 цифр',
     'gs_SevenDigthts' => '7 цифр',
+    'gs_ElevenDigthts' => '11 цифр',
     'gs_WebAdminLogin' => 'Логин',
     'gs_WebAdminPassword' => 'Пароль',
     'gs_WebAdminPasswordRepeat' => 'Повторите ввод пароля',

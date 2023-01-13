@@ -146,6 +146,7 @@ class GeneralSettingsEditForm extends Form
                             5 => $this->translation->_('gs_FiveDigthts'),
                             6 => $this->translation->_('gs_SixDigthts'),
                             7 => $this->translation->_('gs_SevenDigthts'),
+                            11 => $this->translation->_('gs_ElevenDigthts'),
                         ]
                         , [
                             'using'    => [
