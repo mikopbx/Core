@@ -1126,4 +1126,5 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'f2b_Jail_asterisk_error_v2' => 'SIP-godkendelsesfejl (fejl)',
     'f2b_Jail_asterisk_public_v2' => 'SIP-godkendelsesfejl (offentlige)',
     'ex_Azərbaycan' => 'Aserbajdsjan',
+    'gs_ElevenDigthts' => '11 cifre',
 ];

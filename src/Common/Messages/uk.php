@@ -1126,4 +1126,5 @@ return [
     'f2b_Jail_asterisk_public_v2' => 'Помилки авторизації SIP (public)',
     'f2b_Jail_asterisk_error_v2' => 'Помилки авторизації SIP (error)',
     'ex_Azərbaycan' => 'Azərbaycan',
+    'gs_ElevenDigthts' => '11 цифр',
 ];

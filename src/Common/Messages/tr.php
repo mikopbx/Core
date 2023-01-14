@@ -1126,4 +1126,5 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
     'f2b_Jail_asterisk_security_log_v2' => 'SIP yetkilendirme hataları (security_log)',
     'f2b_Jail_asterisk_error_v2' => 'SIP yetkilendirme hataları (hata)',
     'ex_Azərbaycan' => 'Azerbaycan',
+    'gs_ElevenDigthts' => '11 basamak',
 ];

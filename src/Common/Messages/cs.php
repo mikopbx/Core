@@ -1126,4 +1126,5 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'f2b_Jail_asterisk_security_log_v2' => 'Chyby autorizace SIP (security_log)',
     'f2b_Jail_asterisk_error_v2' => 'Chyby autorizace SIP (chyba)',
     'ex_Azərbaycan' => 'Ázerbajdžán',
+    'gs_ElevenDigthts' => '11 číslic',
 ];
