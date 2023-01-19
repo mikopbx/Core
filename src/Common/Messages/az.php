@@ -1126,4 +1126,5 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'ex_Turkish' => '',
     'ex_Georgian' => '',
     'ex_Azərbaycan' => 'Azərbaycan',
+    'gs_ElevenDigthts' => '11 rəqəm',
 ];

@@ -1126,4 +1126,5 @@ return [
     'f2b_Jail_asterisk_error_v2' => 'SIP ავტორიზაციის შეცდომები (შეცდომა)',
     'f2b_Jail_asterisk_public_v2' => 'SIP ავტორიზაციის შეცდომები (საჯარო)',
     'ex_Azərbaycan' => 'აზერბაიჯანი',
+    'gs_ElevenDigthts' => '11 ციფრი',
 ];

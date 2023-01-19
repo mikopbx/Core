@@ -1129,4 +1129,5 @@ It can be activated once, after which the coupon becomes redeemed.
     'f2b_Jail_asterisk_error_v2' => 'SIP authorization errors (error)',
     'f2b_Jail_asterisk_public_v2' => 'SIP authorization errors (public)',
     'ex_Azərbaycan' => 'Azerbaijan',
+    'gs_ElevenDigthts' => '11 digits',
 ];

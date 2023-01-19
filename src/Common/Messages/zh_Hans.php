@@ -1126,4 +1126,5 @@ return [
     'f2b_Jail_asterisk_security_log_v2' => 'SIP 授权错误 (security_log)',
     'f2b_Jail_asterisk_error_v2' => 'SIP 授权错误（错误）',
     'ex_Azərbaycan' => '阿塞拜疆',
+    'gs_ElevenDigthts' => '11位',
 ];
