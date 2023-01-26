@@ -748,6 +748,7 @@ return [
     'cr_ColumnExtension' => 'Номер',
     'cr_ColumnName' => 'Название',
     'cr_Name' => 'Название конференц комнаты',
+    'cr_pinCode' => 'PIN код конференции',
     'cr_Extensions' => 'Номер',
     'cr_ThisNumberIsNotFree' => 'Этот номер занят',
     'cr_ValidateExtensionDouble' => 'Внутренний номер, указанный для этой конференции, занят',
