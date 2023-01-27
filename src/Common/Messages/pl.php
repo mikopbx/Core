@@ -1127,4 +1127,5 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'f2b_Jail_asterisk_security_log_v2' => 'Błędy autoryzacji SIP (security_log)',
     'ex_Azərbaycan' => 'Azerbejdżan',
     'gs_ElevenDigthts' => '11 cyfr',
+    'cr_pinCode' => 'PIN konferencji',
 ];

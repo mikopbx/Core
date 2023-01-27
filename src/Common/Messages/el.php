@@ -1127,4 +1127,5 @@ return [
     'f2b_Jail_asterisk_public_v2' => 'Σφάλματα εξουσιοδότησης SIP (δημόσια)',
     'ex_Azərbaycan' => 'Αζερμπαϊτζάν',
     'gs_ElevenDigthts' => '11 ψηφία',
+    'cr_pinCode' => 'PIN συνδιάσκεψης',
 ];

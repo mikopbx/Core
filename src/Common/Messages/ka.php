@@ -1127,4 +1127,5 @@ return [
     'f2b_Jail_asterisk_public_v2' => 'SIP ავტორიზაციის შეცდომები (საჯარო)',
     'ex_Azərbaycan' => 'აზერბაიჯანი',
     'gs_ElevenDigthts' => '11 ციფრი',
+    'cr_pinCode' => 'კონფერენციის PIN',
 ];

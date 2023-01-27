@@ -1127,4 +1127,5 @@ Se puede activar una vez, después de lo cual el cupón se canjea.
     'f2b_Jail_asterisk_v2' => 'Errores de autorización SIP',
     'ex_Azərbaycan' => 'Azerbaiyán',
     'gs_ElevenDigthts' => '11 dígitos',
+    'cr_pinCode' => 'PIN de conferencia',
 ];
