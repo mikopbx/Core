@@ -201,8 +201,8 @@ class AdvicesProcessor extends Injectable
             $messages['warning'][] = $this->translation->_(
                 'adv_isSimplePassword',
                 [
-                    'type' => $this->translation->_($value['type']),
-                    'url' => $this->url->get($value['url'])
+                    'type'      => $this->translation->_($value['type'], ['extension' => $key]),
+                    'url'       => $this->url->get($value['url']),
                 ]
             );
         }
