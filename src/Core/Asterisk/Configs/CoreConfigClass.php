@@ -358,6 +358,19 @@ abstract class CoreConfigClass extends Injectable implements AsteriskConfigInter
      *
      * @return string
      */
+    public function generateIncomingRoutBeforeDialPreSystem(string $rout_number): string
+    {
+        return '';
+    }
+
+    /**
+     * Prepares additional parameters for each incoming context for each incoming route before dial in the
+     * extensions.conf file
+     *
+     * @param string $rout_number
+     *
+     * @return string
+     */
     public function generateIncomingRoutBeforeDial(string $rout_number): string
     {
         return '';
