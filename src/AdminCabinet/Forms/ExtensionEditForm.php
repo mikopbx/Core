@@ -87,14 +87,12 @@ class ExtensionEditForm extends Form
         $this->add(new Hidden('user_role', ["value" => $user->role]));
 
         // Username
-        $this->add(new Text('user_username', ["value" => $user->username]));
+        $this->add(new Text('user_username', ["value" => $user->username, 'autocomplete' => 'off']));
 
         // Email
         $this->add(
             new Text(
-                'user_email', [
-                "value" => $user->email,
-            ]
+                'user_email', [ "value" => $user->email, 'autocomplete' => 'off']
             )
         );
 
@@ -125,13 +123,14 @@ class ExtensionEditForm extends Form
             new Text(
                 'sip_secret', [
                 "value" => $sip->secret,
-                "class"=>"confidential-field"
+                "class"=>"confidential-field",
+                'autocomplete' => 'off'
             ]
             )
         );
 
         // Busylevel
-        $this->add(new Numeric('sip_busylevel', ["value" => $sip->busylevel]));
+        $this->add(new Numeric('sip_busylevel', ["value" => $sip->busylevel, 'autocomplete' => 'off']));
 
         // Dtmfmode
         $arrDTMFType = [
@@ -191,16 +190,6 @@ class ExtensionEditForm extends Form
         );
         $this->add($networkfilterid);
 
-
-        // Nat
-        $arrNatType = [
-            'force_rport,comedia' => 'force_rport, comedia',
-            'force_rport'         => 'force_rport',
-            'comedia'             => 'comedia',
-            'auto_force_rport'    => 'auto_force_rport',
-            'no'                  => 'no',
-        ];
-
         // Qualify
         $cheskarr = ['value' => null];
         if ($sip->qualify) {
@@ -210,7 +199,7 @@ class ExtensionEditForm extends Form
         $this->add(new Check('qualify', $cheskarr));
 
         // Qualifyfreq
-        $this->add(new Numeric('qualifyfreq', ["value" => $sip->qualifyfreq]));
+        $this->add(new Numeric('qualifyfreq', ["value" => $sip->qualifyfreq, 'autocomplete' => 'off']));
 
         // Manualattributes
         $rows = max(
@@ -225,10 +214,10 @@ class ExtensionEditForm extends Form
         );
 
         // Description
-        $this->add(new Text('sip_description', ["value" => $sip->description]));
+        $this->add(new Text('sip_description', ["value" => $sip->description, 'autocomplete' => 'off']));
 
         // EXTERNAL Extension
-        $this->add(new Text('mobile_number', ["value" => $options['external_extension']->number]));
+        $this->add(new Text('mobile_number', ["value" => $options['external_extension']->number, 'autocomplete' => 'off']));
         // Uniqid
         $externalPhones = $options['external_extension']->ExternalPhones??new ExternalPhones();
         $this->add(new Hidden('mobile_uniqid', ["value" => $externalPhones->uniqid]));
@@ -243,7 +232,7 @@ class ExtensionEditForm extends Form
         $this->add(
             new Text(
                 'mobile_dialstring',
-                ["value" => $externalPhones->dialstring]
+                ["value" => $externalPhones->dialstring, 'autocomplete' => 'off']
             )
         );
 
@@ -302,6 +291,7 @@ class ExtensionEditForm extends Form
                 "style"        => "width: 80px;",
                 "defaultValue" => 120,
                 "value"        => ($ringDuration > 0) ? $ringDuration : '',
+                'autocomplete' => 'off'
             ]
             )
         );

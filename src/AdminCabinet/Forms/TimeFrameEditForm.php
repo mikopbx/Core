@@ -100,7 +100,7 @@ class TimeFrameEditForm extends Form
                     break;
 
                 default :
-                    $this->add(new Text($key));
+                    $this->add(new Text($key, ['autocomplete' => 'off']));
             }
         }
     }
