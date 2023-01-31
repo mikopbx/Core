@@ -1130,4 +1130,5 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
     'f2b_Jail_asterisk_public_v2' => 'SIP-Autorisierungsfehler (öffentlich)',
     'ex_Azərbaycan' => 'Aserbaidschan',
     'gs_ElevenDigthts' => '11 Ziffern',
+    'cr_pinCode' => 'Konferenz-PIN',
 ];

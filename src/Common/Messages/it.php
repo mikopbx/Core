@@ -1127,4 +1127,5 @@ Può essere attivato una volta, dopo di che il coupon viene riscattato.
     'f2b_Jail_asterisk_public_v2' => 'Errori di autorizzazione SIP (pubblici)',
     'ex_Azərbaycan' => 'Azerbaigian',
     'gs_ElevenDigthts' => '11 cifre',
+    'cr_pinCode' => 'PIN conferenza',
 ];

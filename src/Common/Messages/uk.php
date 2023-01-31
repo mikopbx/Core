@@ -1127,4 +1127,5 @@ return [
     'f2b_Jail_asterisk_error_v2' => 'Помилки авторизації SIP (error)',
     'ex_Azərbaycan' => 'Azərbaycan',
     'gs_ElevenDigthts' => '11 цифр',
+    'cr_pinCode' => 'PIN код конференції',
 ];

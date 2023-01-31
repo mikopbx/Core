@@ -1127,4 +1127,5 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá đ
     'f2b_Jail_asterisk_security_log_v2' => 'Lỗi ủy quyền SIP (security_log)',
     'ex_Azərbaycan' => 'A-déc-bai-gian',
     'gs_ElevenDigthts' => '11 chữ số',
+    'cr_pinCode' => 'mã PIN hội nghị',
 ];

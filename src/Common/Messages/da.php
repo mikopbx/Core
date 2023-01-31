@@ -1127,4 +1127,5 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'f2b_Jail_asterisk_public_v2' => 'SIP-godkendelsesfejl (offentlige)',
     'ex_Azərbaycan' => 'Aserbajdsjan',
     'gs_ElevenDigthts' => '11 cifre',
+    'cr_pinCode' => 'Konference PIN',
 ];

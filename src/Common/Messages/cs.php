@@ -1127,4 +1127,5 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'f2b_Jail_asterisk_error_v2' => 'Chyby autorizace SIP (chyba)',
     'ex_Azərbaycan' => 'Ázerbajdžán',
     'gs_ElevenDigthts' => '11 číslic',
+    'cr_pinCode' => 'Konferenční PIN',
 ];

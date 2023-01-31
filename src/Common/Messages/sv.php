@@ -1127,4 +1127,5 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'f2b_Jail_asterisk_public_v2' => 'SIP-auktoriseringsfel (offentliga)',
     'ex_Azərbaycan' => 'Azerbajdzjan',
     'gs_ElevenDigthts' => '11 siffror',
+    'cr_pinCode' => 'Konferens-PIN',
 ];
