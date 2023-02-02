@@ -23,7 +23,8 @@ require_once 'Globals.php';
 
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\System\Util;
-use Throwable;
+use GuzzleHttp;
+use GuzzleHttp\Exception\GuzzleException;
 
 
 class WorkerDownloader extends WorkerBase
@@ -81,27 +82,41 @@ class WorkerDownloader extends WorkerBase
         }
 
         file_put_contents($this->progress_file, 0);
-
-        $fp = fopen($this->settings['res_file'], 'wb');
-        $ch = curl_init();
-        if ( ! is_resource($ch)) {
-            return false;
+        $client = new GuzzleHttp\Client();
+        try {
+            $res = $client->request('GET', $this->settings['url'], [
+                'sink'     => $this->settings['res_file'],
+                'progress' => [$this, 'progressGuzzle']
+            ]);
+            $http_code = $res->getStatusCode();
+        }catch ( GuzzleException  $e){
+            file_put_contents($this->error_file, $e->getMessage(), FILE_APPEND);
+            $http_code = -1;
         }
-        curl_setopt($ch, CURLOPT_FILE, $fp);
-        curl_setopt($ch, CURLOPT_URL, $this->settings['url']);
-        curl_setopt($ch, CURLOPT_PROGRESSFUNCTION, [$this, 'progress']);
-        curl_setopt($ch, CURLOPT_NOPROGRESS, false); // needed to make progress function work
-        curl_setopt($ch, CURLOPT_HEADER, 0);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
 
-        curl_exec($ch);
-        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         if ($http_code !== 200) {
-            file_put_contents($this->error_file, "Curl return code $http_code. ".curl_error($ch), FILE_APPEND);
+            file_put_contents($this->error_file, "Curl return code $http_code. ", FILE_APPEND);
         }
-        curl_close($ch);
 
         return $http_code === 200;
+    }
+
+    public function progressGuzzle( $downloadTotal, $downloadedBytes, $uploadTotal, $uploadedBytes) :void
+    {
+        if ($downloadedBytes === 0) {
+            return;
+        }
+        if ($this->file_size < 0) {
+            $new_progress = $downloadedBytes / $downloadTotal * 100;
+        } else {
+            $new_progress = $downloadedBytes / $this->file_size * 100;
+        }
+        $delta = $new_progress - $this->progress;
+        if ($delta > 1) {
+            $this->progress = round($new_progress);
+            $this->progress = min($this->progress, 99);
+            file_put_contents($this->progress_file, $this->progress);
+        }
     }
 
     /**
@@ -113,19 +128,14 @@ class WorkerDownloader extends WorkerBase
      */
     private function remoteFileSize(string $url): int
     {
-        $ch       = curl_init($url);
-        $fileSize = 0;
-        if ($ch !== false) {
-            curl_setopt($ch, CURLOPT_NOBODY, 1);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 0);
-            curl_setopt($ch, CURLOPT_HEADER, 0);
-            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
-            curl_setopt($ch, CURLOPT_MAXREDIRS, 3);
-            curl_exec($ch);
-            $fileSize = curl_getinfo($ch, CURLINFO_CONTENT_LENGTH_DOWNLOAD);
-            curl_close($ch);
+        $fileSize = -1;
+        try{
+            $client    = new GuzzleHttp\Client();
+            $response  = $client->head($url);
+            $fileSize  = $response->getHeader('Content-Length')[0];
+        }catch ( GuzzleException  $e){
+            file_put_contents($this->error_file, $e->getMessage(), FILE_APPEND);
         }
-
         return $fileSize;
     }
 
@@ -134,26 +144,23 @@ class WorkerDownloader extends WorkerBase
      */
     public function checkFile(): bool
     {
+        $result = true;
         if ( ! file_exists($this->settings['res_file'])) {
             file_put_contents($this->error_file, 'File did not upload', FILE_APPEND);
-
             return false;
         }
         if (md5_file($this->settings['res_file']) !== $this->settings['md5']) {
             unlink($this->settings['res_file']);
             file_put_contents($this->error_file, 'Error on comparing MD5 sum', FILE_APPEND);
 
-            return false;
-        }
-        if ($this->file_size !== filesize($this->settings['res_file'])) {
+            $result = false;
+        }elseif($this->file_size !== filesize($this->settings['res_file'])) {
             unlink($this->settings['res_file']);
             file_put_contents($this->error_file, 'Error on comparing file size', FILE_APPEND);
-
-            return false;
+            $result = false;
         }
         file_put_contents($this->progress_file, 100);
-
-        return true;
+        return $result;
     }
 
     /**
@@ -161,32 +168,8 @@ class WorkerDownloader extends WorkerBase
      */
     public function __destruct()
     {
+        parent::__destruct();
         ini_set('memory_limit', $this->old_memory_limit);
-    }
-
-    /**
-     * Calculates download progress and writes it on progress_file.
-     *
-     * @param $resource
-     * @param $download_size
-     * @param $downloaded
-     */
-    public function progress($resource, $download_size, $downloaded): void
-    {
-        if ($download_size === 0) {
-            return;
-        }
-        if ($this->file_size < 0) {
-            $new_progress = $downloaded / $download_size * 100;
-        } else {
-            $new_progress = $downloaded / $this->file_size * 100;
-        }
-        $delta = $new_progress - $this->progress;
-        if ($delta > 1) {
-            $this->progress = round($new_progress, 0);
-            $this->progress = $this->progress < 99 ? $this->progress : 99;
-            file_put_contents($this->progress_file, $this->progress);
-        }
     }
 
 }
