@@ -35,6 +35,9 @@ class SoundFilesEditForm extends Form
     {
         foreach ($entity as $key => $value) {
             switch ($key) {
+                case "path":
+                    $this->add(new Text($key));
+                    break;
                 case "id":
                 case "category":
                 case "***ALL HIDDEN ABOVE***":
