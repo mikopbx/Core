@@ -56,7 +56,6 @@ class WorkerDownloader extends WorkerBase
             return;
         }
         ini_set('memory_limit', '300M');
-
         $temp_dir            = dirname($this->settings['res_file']);
         $this->progress_file = $temp_dir . '/progress';
         $this->error_file    = $temp_dir . '/error';
@@ -79,11 +78,6 @@ class WorkerDownloader extends WorkerBase
         if (file_exists($this->settings['res_file'])) {
             unlink($this->settings['res_file']);
         }
-        if (isset($this->settings['size'])){
-            $this->file_size = $this->settings['size'];
-        } else {
-            $this->file_size = $this->remoteFileSize($this->settings['url']);
-        }
 
         file_put_contents($this->progress_file, 0);
         $curl = new GuzzleHttp\Handler\CurlMultiHandler();
@@ -93,7 +87,8 @@ class WorkerDownloader extends WorkerBase
             'handler' => $handler,
             'sink'     => $this->settings['res_file'],
             'progress' =>  [$this, 'progress'],
-            'connect_timeout' => 5
+            'connect_timeout' => 5,
+            'on_headers' => [$this, 'getHeaders']
         ]);
         $promise->then(
             function (ResponseInterface $res) {
@@ -108,15 +103,20 @@ class WorkerDownloader extends WorkerBase
             $curl->tick();
             if(time() - $this->lastUpdate > 30){
                 $this->httpCode = -1;
-                file_put_contents($this->error_file, 'Fail download file... No progress for more than 30 seconds.', FILE_APPEND);
+                $error = 'Fail download file... No progress for more than 30 seconds.';
+                Util::sysLogMsg(__CLASS__, $error, LOG_ERR);
+                file_put_contents($this->error_file, $error, FILE_APPEND);
                 break;
             }
         }
         if ($this->httpCode !== 200) {
             file_put_contents($this->error_file, "Curl return code $this->httpCode. ", FILE_APPEND);
         }
-
         return $this->httpCode === 200;
+    }
+
+    public function getHeaders(ResponseInterface $response):void {
+        $this->file_size = $response->getHeaderLine('Content-Length');
     }
 
     public function progress( $downloadTotal, $downloadedBytes, $uploadTotal, $uploadedBytes) :void
@@ -125,39 +125,16 @@ class WorkerDownloader extends WorkerBase
             return;
         }
         $this->lastUpdate = time();
-        if ($this->file_size < 0) {
-            $new_progress = $downloadedBytes / $downloadTotal * 100;
-        } else {
-            $new_progress = $downloadedBytes / $this->file_size * 100;
-        }
+        $new_progress = $downloadedBytes / $downloadTotal * 100;
         $delta = $new_progress - $this->progress;
         if ($delta > 1) {
+            echo("Progress: $this->progress".PHP_EOL);
             // Лимит на работу скрипта. Чтобы исключить "Зависание".
             // Если нет прогресса, то завершать работу.
             $this->progress = round($new_progress);
             $this->progress = min($this->progress, 99);
             file_put_contents($this->progress_file, $this->progress);
         }
-    }
-
-    /**
-     * Remote File Size Using cURL
-     *
-     * @param string $url
-     *
-     * @return int
-     */
-    private function remoteFileSize(string $url): int
-    {
-        $fileSize = -1;
-        try{
-            $client    = new GuzzleHttp\Client();
-            $response  = $client->head($url, ['connect_timeout' => 5]);
-            $fileSize  = $response->getHeader('Content-Length')[0];
-        }catch ( GuzzleException  $e){
-            file_put_contents($this->error_file, $e->getMessage(), FILE_APPEND);
-        }
-        return $fileSize;
     }
 
     /**
