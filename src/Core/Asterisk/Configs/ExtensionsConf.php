@@ -240,4 +240,16 @@ class ExtensionsConf extends CoreConfigClass
         return $conf;
     }
 
+    public static function getExtenByDid($did):string
+    {
+        if(mb_strpos($did, '_') === 0){
+            $ext_prefix = '';
+        }elseif(preg_match_all('/^[.|!|N|X|Z|0-9|\[|\]|\-]+$/m', $did, $matches, PREG_SET_ORDER) === 1){
+            // Это скорее всего шаблон EXTEN.
+            $ext_prefix = '_';
+        }else{
+            $ext_prefix = '';
+        }
+        return $ext_prefix.$did;
+    }
 }

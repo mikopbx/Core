@@ -479,6 +479,8 @@ return [
     'tf_WeekDaysFrom' => 'Дни недели',
     'tf_TimePeriodFrom' => 'Период времени',
     'tf_PeriodAction' => 'Действие с входящим вызовом',
+    'tf_AllowRestriction' => 'Применять только к определенным входящим маршрутам',
+    'tf_RoutsRestriction' => 'Ограничения по маршрутам',
     'tf_Description' => 'Комментарий',
     'tf_SelectActionPlayMessage' => 'Проиграть звуковой файл',
     'tf_SelectActionRedirectToExtension' => 'Перевести вызов',

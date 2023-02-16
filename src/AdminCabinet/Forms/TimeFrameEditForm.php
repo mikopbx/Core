@@ -19,6 +19,7 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
+use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
@@ -39,6 +40,13 @@ class TimeFrameEditForm extends Form
             switch ($key) {
                 case 'id' :
                     $this->add(new Hidden($key));
+                    break;
+                case 'allowRestriction' :
+                    $cheskarr = ['value' => null];
+                    if ($value) {
+                        $cheskarr = ['checked' => 'checked', 'value' => null];
+                    }
+                    $this->add(new Check('allowRestriction', $cheskarr));
                     break;
                 case 'extension' :
                     $extension = new Select(

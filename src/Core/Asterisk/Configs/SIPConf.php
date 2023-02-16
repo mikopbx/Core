@@ -281,7 +281,7 @@ class SIPConf extends CoreConfigClass
             $arr_data['deny']                       = ($network_filter === null) ? '' : $network_filter->deny;
             // Получим используемые кодеки.
             $arr_data['codecs'] = $this->getCodecs();
-            $context_id = preg_replace("/[^a-z\d]/iu", '', $sip_peer->host . $sip_peer->port);
+            $context_id = self::getContextId($sip_peer->host.$sip_peer->port);
             if ( ! isset($this->contexts_data[$context_id])) {
                 $this->contexts_data[$context_id] = [];
             }
@@ -861,10 +861,21 @@ class SIPConf extends CoreConfigClass
             $options,
             CoreConfigClass::OVERRIDE_PROVIDER_PJSIP_OPTIONS
         );
-        $conf    .= "[{$provider['uniqid']}]\n";
+        $conf    .= "[{$provider['uniqid']}]".PHP_EOL;
+        $conf    .= 'set_var=contextID='.$provider['context_id'].PHP_EOL;
         $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'endpoint');
 
         return $conf;
+    }
+
+    /**
+     * Возвращает имя контекста без спецсимволовю
+     * @param $name
+     * @return string
+     */
+    public static function getContextId(string $name = ''):string
+    {
+        return preg_replace("/[^a-z\d]/iu", '', $name).'-incoming';
     }
 
     /**

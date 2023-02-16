@@ -76,6 +76,7 @@ const outOfWorkTimeRecord = {
 		},
 	},
 	initialize() {
+		$('#out-time-modify-menu .item').tab();
 		outOfWorkTimeRecord.$defaultDropdown.dropdown();
 		outOfWorkTimeRecord.$rangeDaysStart.calendar({
 			firstDayOfWeek: SemanticLocalization.calendarFirstDayOfWeek,
@@ -116,7 +117,6 @@ const outOfWorkTimeRecord = {
 		outOfWorkTimeRecord.$rangeTimeEnd.calendar({
 			firstDayOfWeek: SemanticLocalization.calendarFirstDayOfWeek,
 			text: SemanticLocalization.calendarText,
-			startCalendar: outOfWorkTimeRecord.$rangeTimeStart,
 			type: 'time',
 			inline: false,
 			disableMinute: true,
@@ -191,6 +191,27 @@ const outOfWorkTimeRecord = {
 		outOfWorkTimeRecord.$forwardingSelectDropdown.dropdown(Extensions.getDropdownSettingsWithoutEmpty());
 		outOfWorkTimeRecord.toggleDisabledFieldClass();
 		outOfWorkTimeRecord.changeDateFormat();
+
+		$('#inbound-rules-table .ui.checkbox').checkbox({
+			onChange: function() {
+				if($(this).parent().checkbox('is checked')){
+					$('#allowRestriction .ui.checkbox[data-did='+$(this).parent().attr('data-did')+']').checkbox('set checked')
+				}else{
+					$('#inbound-rules-table .ui.checkbox[data-did='+$(this).parent().attr('data-did')+']').checkbox('set unchecked')
+				}
+			}
+		});
+		$('#allowRestriction').parent().checkbox({
+			onChange: outOfWorkTimeRecord.changeRestriction
+		});
+		outOfWorkTimeRecord.changeRestriction();
+	},
+	changeRestriction(){
+		if($('#allowRestriction').parent().checkbox('is checked')){
+			$("a[data-tab='rules']").show();
+		}else{
+			$("a[data-tab='rules']").hide();
+		}
 	},
 	/**
 	 * Меняет представление даты начала и даты окончания из linuxtime в локальное представление

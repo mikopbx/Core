@@ -20,7 +20,12 @@
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\TimeFrameEditForm;
-use MikoPBX\Common\Models\{Extensions, OutWorkTimes, SoundFiles};
+use MikoPBX\Common\Models\{Extensions,
+    IncomingRoutingTable,
+    OutWorkTimes,
+    OutWorkTimesRouts,
+    Sip,
+    SoundFiles};
 
 class OutOffWorkTimeController extends BaseController
 {
@@ -37,15 +42,20 @@ class OutOffWorkTimeController extends BaseController
         $timeframesTable = [];
         $timeFrames      = OutWorkTimes::find($paremeters);
         foreach ($timeFrames as $timeFrame) {
+            if(mb_strlen($timeFrame->description) < 50){
+                $shot_description = $timeFrame->description;
+            }else{
+                $shot_description = trim(mb_substr($timeFrame->description, 0 , 50)).'...';
+            }
             $timeframesTable[] = [
                 'id'               => $timeFrame->id,
                 'date_from'        => ( ! empty($timeFrame->date_from))
                 > 0 ? date(
-                    "d/m/Y",
+                    "d.m.Y",
                     $timeFrame->date_from
                 ) : '',
                 'date_to'          => ( ! empty($timeFrame->date_to)) > 0
-                    ? date("d/m/Y", $timeFrame->date_to) : '',
+                    ? date("d.m.Y", $timeFrame->date_to) : '',
                 'weekday_from'     => ( ! empty($timeFrame->weekday_from)) ? $this->translation->_(
                     date(
                         'D',
@@ -64,6 +74,8 @@ class OutOffWorkTimeController extends BaseController
                 'audio_message_id' => ($timeFrame->SoundFiles) ? $timeFrame->SoundFiles->name : '',
                 'extension'        => ($timeFrame->Extensions) ? $timeFrame->Extensions->getRepresent() : '',
                 'description'      => $timeFrame->description,
+                'allowRestriction' => $timeFrame->allowRestriction,
+                'shot_description' => $shot_description,
             ];
         }
 
@@ -120,6 +132,48 @@ class OutOffWorkTimeController extends BaseController
         );
         $this->view->form      = $form;
         $this->view->represent = $timeFrame->getRepresent();
+
+        // Получим список ссылок на разрещенные правила маршутизации в этой группе
+        $parameters      = [
+            'columns'    => 'routId AS rule_id',
+            'conditions' => 'timeConditionId=:timeConditionId:',
+            'bind'       => [
+                'timeConditionId' => $id,
+            ],
+        ];
+        $allowedRules    = OutWorkTimesRouts::find($parameters)->toArray();
+        $allowedRulesIds = array_column($allowedRules, 'rule_id');
+
+        // Получим список правил маршрутизации
+        $rules        = IncomingRoutingTable::find(['order' => 'priority', 'conditions' => 'id>1']);
+        $routingTable = [];
+        foreach ($rules as $rule) {
+            $provider = $rule->Providers;
+            if ($provider) {
+                $modelType  = ucfirst($provider->type);
+                $provByType = $provider->$modelType;
+            } else {
+                $provByType = new SIP();
+            }
+            $extension = $rule->Extensions;
+            $values = [
+                'id'        => $rule->id,
+                'rulename'  => $rule->rulename,
+                'priority'  => $rule->priority,
+                'number'    => $rule->number,
+                'timeout'   => $rule->timeout,
+                'provider'  => $rule->Providers ? $rule->Providers->getRepresent() : '',
+                'provider-uniqid'  => $rule->Providers ? $rule->Providers->uniqid : 'none',
+                'disabled'  => $provByType->disabled,
+                'extension' => $rule->extension,
+                'callerid'  => $extension ? $extension->getRepresent() : '',
+                'note'      => $rule->note,
+                'status'    => in_array($rule->id, $allowedRulesIds, true) ? '' : 'disabled',
+            ];
+
+            $routingTable[] = $values;
+        }
+        $this->view->rules = $routingTable;
     }
 
     /**
@@ -150,6 +204,13 @@ class OutOffWorkTimeController extends BaseController
                     }
 
                     break;
+                case 'allowRestriction':
+                    if(isset($data[$name])){
+                        $timeFrame->$name = ($data[$name] === 'on') ? "1" : "0";
+                    }else{
+                        $timeFrame->$name = '0';
+                    }
+                    break;
                 case 'date_from':
                 case 'date_to':
                 case 'time_from':
@@ -171,24 +232,78 @@ class OutOffWorkTimeController extends BaseController
         if('playmessage' === $timeFrame->action){
             $timeFrame->extension = '';
         }
-
+        $error = false;
         if ($timeFrame->save() === false) {
             $errors = $timeFrame->getMessages();
             $this->flash->warning(implode('<br>', $errors));
             $this->view->success = false;
             $this->db->rollback();
-
             return;
         }
+        if ( ! $error) {
+            $data['id'] = $timeFrame->id;
+            $error = ! $this->saveAllowedOutboundRules($data);
+        }
 
-        $this->flash->success($this->translation->_('ms_SuccessfulSaved'));
-        $this->view->success = true;
-        $this->db->commit();
+        if($error){
+            $this->view->success = false;
+            $this->db->rollback();
+        }else{
+            $this->flash->success($this->translation->_('ms_SuccessfulSaved'));
+            $this->view->success = true;
+            $this->db->commit();
+        }
+
 
         // Если это было создание карточки то надо перегрузить страницу с указанием ID
         if (empty($data['id'])) {
             $this->view->reload = "out-off-work-time/modify/{$timeFrame->id}";
         }
+    }
+
+    /**
+     * Сохраняет параметры маршрутов
+     *
+     * @param $data
+     *
+     * @return bool
+     */
+    private function saveAllowedOutboundRules($data): bool
+    {
+        // 1. Удалим все старые ссылки на правила относящиеся к этой группе
+        $parameters = [
+            'conditions' => 'timeConditionId=:timeConditionId:',
+            'bind'       => [
+                'timeConditionId' => $data['id'],
+            ],
+        ];
+        $oldRules   = OutWorkTimesRouts::find($parameters);
+        if ($oldRules->delete() === false) {
+            $errors = $oldRules->getMessages();
+            $this->flash->error(implode('<br>', $errors));
+
+            return false;
+        }
+
+        // 2. Запишем разрешенные направления
+        foreach ($data as $key => $value) {
+            if (substr_count($key, 'rule-') > 0) {
+                $rule_id = explode('rule-', $key)[1];
+                if ($data[$key] === 'on') {
+                    $newRule = new OutWorkTimesRouts();
+                    $newRule->id = $rule_id;
+                    $newRule->timeConditionId = $data['id'];
+                    $newRule->routId          = $rule_id;
+                    if ($newRule->save() === false) {
+                        $errors = $newRule->getMessages();
+                        $this->flash->error(implode('<br>', $errors));
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
     }
 
     /**
