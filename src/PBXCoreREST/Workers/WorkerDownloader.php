@@ -18,15 +18,11 @@
  */
 
 namespace MikoPBX\PBXCoreREST\Workers;
-
 require_once 'Globals.php';
-
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\System\Util;
 use GuzzleHttp;
-use GuzzleHttp\Exception\GuzzleException;
 use Psr\Http\Message\ResponseInterface;
-
 
 class WorkerDownloader extends WorkerBase
 {
@@ -115,10 +111,23 @@ class WorkerDownloader extends WorkerBase
         return $this->httpCode === 200;
     }
 
+    /**
+     * Получение заголовков ответа сервера.
+     * @param ResponseInterface $response
+     * @return void
+     */
     public function getHeaders(ResponseInterface $response):void {
         $this->file_size = $response->getHeaderLine('Content-Length');
     }
 
+    /**
+     * Обработка сведений о прогрессе.
+     * @param $downloadTotal
+     * @param $downloadedBytes
+     * @param $uploadTotal
+     * @param $uploadedBytes
+     * @return void
+     */
     public function progress( $downloadTotal, $downloadedBytes, $uploadTotal, $uploadedBytes) :void
     {
         if ($downloadedBytes === 0) {
@@ -128,7 +137,6 @@ class WorkerDownloader extends WorkerBase
         $new_progress = $downloadedBytes / $downloadTotal * 100;
         $delta = $new_progress - $this->progress;
         if ($delta > 1) {
-            echo("Progress: $this->progress".PHP_EOL);
             // Лимит на работу скрипта. Чтобы исключить "Зависание".
             // Если нет прогресса, то завершать работу.
             $this->progress = round($new_progress);
@@ -169,7 +177,6 @@ class WorkerDownloader extends WorkerBase
         parent::__destruct();
         ini_set('memory_limit', $this->old_memory_limit);
     }
-
 }
 
 // Start worker process
