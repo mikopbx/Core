@@ -1131,4 +1131,6 @@ It can be activated once, after which the coupon becomes redeemed.
     'ex_Azərbaycan' => 'Azerbaijan',
     'gs_ElevenDigthts' => '11 digits',
     'cr_pinCode' => 'Conference PIN',
+    'tf_AllowRestriction' => 'Apply only to certain incoming routes',
+    'tf_RoutsRestriction' => 'Route restrictions',
 ];

@@ -1128,4 +1128,6 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'ex_Azərbaycan' => 'Azerbajdzjan',
     'gs_ElevenDigthts' => '11 siffror',
     'cr_pinCode' => 'Konferens-PIN',
+    'tf_AllowRestriction' => 'Gäller endast vissa inkommande rutter',
+    'tf_RoutsRestriction' => 'Ruttbegränsningar',
 ];

@@ -1128,4 +1128,6 @@ return [
     'ex_Azərbaycan' => '阿塞拜疆',
     'gs_ElevenDigthts' => '11位',
     'cr_pinCode' => '会议密码',
+    'tf_AllowRestriction' => '仅适用于某些传入路由',
+    'tf_RoutsRestriction' => '路线限制',
 ];

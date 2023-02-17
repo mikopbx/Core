@@ -1128,4 +1128,6 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'ex_Azərbaycan' => 'Azerbejdżan',
     'gs_ElevenDigthts' => '11 cyfr',
     'cr_pinCode' => 'PIN konferencji',
+    'tf_AllowRestriction' => 'Zastosuj tylko do niektórych tras przychodzących',
+    'tf_RoutsRestriction' => 'Ograniczenia trasy',
 ];

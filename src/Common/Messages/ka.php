@@ -1128,4 +1128,6 @@ return [
     'ex_Azərbaycan' => 'აზერბაიჯანი',
     'gs_ElevenDigthts' => '11 ციფრი',
     'cr_pinCode' => 'კონფერენციის PIN',
+    'tf_AllowRestriction' => 'ვრცელდება მხოლოდ გარკვეულ შემომავალ მარშრუტებზე',
+    'tf_RoutsRestriction' => 'მარშრუტის შეზღუდვები',
 ];

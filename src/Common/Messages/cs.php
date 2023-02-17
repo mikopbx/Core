@@ -1128,4 +1128,6 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'ex_Azərbaycan' => 'Ázerbajdžán',
     'gs_ElevenDigthts' => '11 číslic',
     'cr_pinCode' => 'Konferenční PIN',
+    'tf_AllowRestriction' => 'Použít pouze na určité příchozí trasy',
+    'tf_RoutsRestriction' => 'Omezení trasy',
 ];

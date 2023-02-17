@@ -1128,4 +1128,6 @@ return [
     'ex_Azərbaycan' => 'Αζερμπαϊτζάν',
     'gs_ElevenDigthts' => '11 ψηφία',
     'cr_pinCode' => 'PIN συνδιάσκεψης',
+    'tf_AllowRestriction' => 'Ισχύει μόνο για ορισμένες εισερχόμενες διαδρομές',
+    'tf_RoutsRestriction' => 'Περιορισμοί διαδρομής',
 ];

@@ -1128,4 +1128,6 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
     'ex_Azərbaycan' => 'Azerbaycan',
     'gs_ElevenDigthts' => '11 basamak',
     'cr_pinCode' => 'Konferans PIN\'i',
+    'tf_AllowRestriction' => 'Yalnızca belirli gelen rotalara uygula',
+    'tf_RoutsRestriction' => 'Rota kısıtlamaları',
 ];

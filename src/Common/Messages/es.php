@@ -1128,4 +1128,6 @@ Se puede activar una vez, después de lo cual el cupón se canjea.
     'ex_Azərbaycan' => 'Azerbaiyán',
     'gs_ElevenDigthts' => '11 dígitos',
     'cr_pinCode' => 'PIN de conferencia',
+    'tf_AllowRestriction' => 'Aplicar solo a ciertas rutas entrantes',
+    'tf_RoutsRestriction' => 'Restricciones de ruta',
 ];

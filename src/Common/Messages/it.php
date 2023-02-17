@@ -1128,4 +1128,6 @@ Può essere attivato una volta, dopo di che il coupon viene riscattato.
     'ex_Azərbaycan' => 'Azerbaigian',
     'gs_ElevenDigthts' => '11 cifre',
     'cr_pinCode' => 'PIN conferenza',
+    'tf_AllowRestriction' => 'Si applica solo a determinate rotte in entrata',
+    'tf_RoutsRestriction' => 'Restrizioni di percorso',
 ];

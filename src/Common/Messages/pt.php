@@ -1128,4 +1128,6 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'ex_Azərbaycan' => 'Azerbaijão',
     'gs_ElevenDigthts' => '11 dígitos',
     'cr_pinCode' => 'PIN de conferência',
+    'tf_AllowRestriction' => 'Aplicar apenas a determinadas rotas de entrada',
+    'tf_RoutsRestriction' => 'Restrições de rota',
 ];

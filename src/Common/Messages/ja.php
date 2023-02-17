@@ -1128,4 +1128,6 @@ return [
     'ex_Azərbaycan' => 'アゼルバイジャン',
     'gs_ElevenDigthts' => '11桁',
     'cr_pinCode' => '会議暗証番号',
+    'tf_AllowRestriction' => '特定の着信ルートにのみ適用',
+    'tf_RoutsRestriction' => 'ルート制限',
 ];

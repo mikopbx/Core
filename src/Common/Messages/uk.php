@@ -1128,4 +1128,6 @@ return [
     'ex_Azərbaycan' => 'Azərbaycan',
     'gs_ElevenDigthts' => '11 цифр',
     'cr_pinCode' => 'PIN код конференції',
+    'tf_AllowRestriction' => 'Застосовувати лише до певних вхідних маршрутів',
+    'tf_RoutsRestriction' => 'Обмеження маршрутів',
 ];

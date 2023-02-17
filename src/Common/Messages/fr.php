@@ -1128,4 +1128,6 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'ex_Azərbaycan' => 'Azerbaïdjan',
     'gs_ElevenDigthts' => '11 chiffres',
     'cr_pinCode' => 'NIP de la conférence',
+    'tf_AllowRestriction' => 'Appliquer uniquement à certaines routes entrantes',
+    'tf_RoutsRestriction' => 'Restrictions d\'itinéraire',
 ];

@@ -1128,4 +1128,6 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá đ
     'ex_Azərbaycan' => 'A-déc-bai-gian',
     'gs_ElevenDigthts' => '11 chữ số',
     'cr_pinCode' => 'mã PIN hội nghị',
+    'tf_AllowRestriction' => 'Chỉ áp dụng cho một số tuyến đến nhất định',
+    'tf_RoutsRestriction' => 'Hạn chế tuyến đường',
 ];
