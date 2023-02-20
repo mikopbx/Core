@@ -21,7 +21,7 @@ namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\DefaultIncomingRouteForm;
 use MikoPBX\AdminCabinet\Forms\IncomingRouteEditForm;
-use MikoPBX\Common\Models\{Extensions, IncomingRoutingTable, Providers, Sip};
+use MikoPBX\Common\Models\{Extensions, IncomingRoutingTable, OutWorkTimesRouts, Providers, Sip};
 
 
 class IncomingRoutesController extends BaseController
@@ -199,6 +199,48 @@ class IncomingRoutesController extends BaseController
             $this->db->rollback();
 
             return;
+        }
+
+        $manager = $this->di->get('modelsManager');
+        $providerCondition = empty($rule->provider)? 'provider IS NULL':'provider = "'.$rule->provider.'"';
+        $options     = [
+            'models'     => [
+                'IncomingRoutingTable' => IncomingRoutingTable::class,
+            ],
+            'columns' => [
+                'timeConditionId' => 'OutWorkTimesRouts.timeConditionId',
+            ],
+            'conditions' => 'number = :did: AND '.$providerCondition,
+            'bind'       => [
+                'did' => $rule->number,
+            ],
+            'joins'      => [
+                'OutWorkTimesRouts' => [
+                    0 => OutWorkTimesRouts::class,
+                    1 => 'IncomingRoutingTable.id = OutWorkTimesRouts.routId',
+                    2 => 'OutWorkTimesRouts',
+                    3 => 'INNER',
+                ],
+            ],
+            'group' => ['timeConditionId']
+        ];
+        $query  = $manager->createBuilder($options)->getQuery();
+        $result = array_merge(...$query->execute()->toArray());
+        foreach ($result as $conditionId){
+            $filter = [
+                'conditions' => 'timeConditionId=:timeConditionId: AND routId=:routId:',
+                'bind'       => [
+                    'timeConditionId' => $conditionId,
+                    'routId' => $rule->id,
+                ],
+            ];
+            $outTime = OutWorkTimesRouts::findFirst($filter);
+            if(!$outTime){
+                $outTime = new OutWorkTimesRouts();
+                $outTime->routId = $rule->id;
+                $outTime->timeConditionId = $conditionId;
+                $outTime->save();
+            }
         }
 
         $this->flash->success($this->translation->_('ms_SuccessfulSaved'));
