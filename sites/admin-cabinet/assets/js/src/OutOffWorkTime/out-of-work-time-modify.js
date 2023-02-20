@@ -195,7 +195,7 @@ const outOfWorkTimeRecord = {
 		$('#inbound-rules-table .ui.checkbox').checkbox({
 			onChange: function() {
 				if($(this).parent().checkbox('is checked')){
-					$('#allowRestriction .ui.checkbox[data-did='+$(this).parent().attr('data-did')+']').checkbox('set checked')
+					$('#inbound-rules-table .ui.checkbox[data-did='+$(this).parent().attr('data-did')+']').checkbox('set checked')
 				}else{
 					$('#inbound-rules-table .ui.checkbox[data-did='+$(this).parent().attr('data-did')+']').checkbox('set unchecked')
 				}
