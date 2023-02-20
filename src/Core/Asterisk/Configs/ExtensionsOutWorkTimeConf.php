@@ -80,10 +80,7 @@ class ExtensionsOutWorkTimeConf extends CoreConfigClass
         $allowedRulesIds = array_column($allowedRouts->toArray(), 'routId');
         $filter = [
             'order' => 'priority',
-            'conditions' => 'id IN ({ids:array})',
-            'bind'       => [
-                'ids' => $allowedRulesIds
-            ]
+            'conditions' => 'id>1'
         ];
         $rules        = IncomingRoutingTable::find($filter);
         $routesData   = [];
@@ -99,13 +96,30 @@ class ExtensionsOutWorkTimeConf extends CoreConfigClass
             $routesData[$rule->id] = [
                 'context' => $context_id,
                 'did'     => empty($rule->number)?self::DIGIT_ANY_EXTENSION:$rule->number,
-            ];
+                'enable'  => in_array($rule->id, $allowedRulesIds, true)
+             ];
         }
+
+        $trueContext = [];
+        $confByContext = [];
+        foreach ($routesData as $didData){
+            $confByContext[$didData['context']][$didData['did']] = ($didData['enable'])?'':false;
+            if($didData['enable']){
+                $trueContext[$didData['context']] = true;
+            }
+        }
+        foreach ($confByContext as $key => $val){
+            if(!isset($trueContext[$key])){
+                unset($confByContext[$key]);
+            }
+        }
+        unset($trueContext);
+
         $tcData = [];
         foreach ($allowedRouts as $tcRoute){
             $tcData["".$tcRoute->timeConditionId][] = $routesData[$tcRoute->routId];
         }
-        return $tcData;
+        return [$tcData,$confByContext];
     }
 
     /**
@@ -115,7 +129,7 @@ class ExtensionsOutWorkTimeConf extends CoreConfigClass
      */
     private function getWorkTimeDialplan($extension):string
     {
-        $routesData = $this->getRoutesData();
+        [$routesData, $confByContext] = $this->getRoutesData();
         $checkContextsYear = [];
         $conf_out_set_var  = '';
         $data = OutWorkTimes::find(['order' => 'date_from'])->toArray();
@@ -150,14 +164,6 @@ class ExtensionsOutWorkTimeConf extends CoreConfigClass
             $conf .= 'exten => _[hit],1,NoOp()'.PHP_EOL;
         }
 
-
-        $confByContext = [];
-        foreach ($routesData as $routData){
-            foreach ($routData as $didData) {
-                $confByContext[$didData['context']][$didData['did']] = '';
-            }
-        }
-
         $checkContextsYear = [];
         foreach ($confByContext as $contextKey => &$confContext){
             $conf_out_set_var  = '';
@@ -185,12 +191,16 @@ class ExtensionsOutWorkTimeConf extends CoreConfigClass
                 $tmpConf = [];
                 foreach ($data as $ruleData) {
                     $didArray =  array_column($routesData[$ruleData['id']], 'did');
-                    if(!isset($routesData[$ruleData['id']]) || ! in_array((string)$did, $didArray, true)){
+                    if($confDid === false){
+                        $dialplan = '';
+                    }elseif(!isset($routesData[$ruleData['id']]) || ! in_array((string)$did, $didArray, true)){
                         continue;
+                    }else{
+                        $dialplan = 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-${currentYear},${EXTEN},1)}" == "1"]?${CONTEXT}-${currentYear},${EXTEN},1)'."\n\t";
+                        $dialplan.= $dialplanDid[$did];
                     }
                     $tmpConf[$did]= 'exten => '.ExtensionsConf::getExtenByDid($did).',1,NoOp()'."\n\t";
-                    $tmpConf[$did].= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-${currentYear},${EXTEN},1)}" == "1"]?${CONTEXT}-${currentYear},${EXTEN},1)'."\n\t";
-                    $tmpConf[$did].= $dialplanDid[$did];
+                    $tmpConf[$did].= $dialplan;
                     $tmpConf[$did].= "same => n,return\n\n";
                 }
                 $conf.= implode('', $tmpConf);
