@@ -134,6 +134,8 @@ class PbxSettings extends ModelsBase
             'PBXRecordAnnouncementIn'         => '',
             'PBXRecordAnnouncementOut'        => '',
             'PBXCallParkingExt'               => '800',
+            'PBXCallParkingFeature'           => '*2',
+            'PBXCallParkingDuration'          => '50',
             'PBXCallParkingStartSlot'         => '801',
             'PBXCallParkingEndSlot'           => '820',
             'PBXFeatureAttendedTransfer'      => '##',

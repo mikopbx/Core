@@ -390,7 +390,7 @@ function Event_unpark_call($agi, $action)
     $now = Util::getNowDate();
     // Обработка данных парковки.
     $exten    = $agi->get_variable("EXTEN", true);
-    $park_row = ResParkingConf::getParkslotData($exten);
+    $park_row = ResParkingConf::getParkSlotData($exten);
 
     $agi->set_variable("__pt1c_IS_PARK", "1");
     $agi->set_variable("pt1c_PARK_CHAN", $park_row['ParkeeChannel']);
