@@ -116,7 +116,7 @@ class ResParkingConf extends CoreConfigClass
     {
         // Генерация внутреннего номерного плана.
         $conf  = "[parked-calls]\n";
-        $conf .= "exten => _X!,1,NoOp()\n\t";
+        $conf .= "exten => _X!,2,NoOp()\n\t";
         $conf .= 'same => n,AGI(cdr_connector.php,unpark_call)' . "\n\t";
         $conf .= 'same => n,ExecIf($["${pt1c_PARK_CHAN}x" != "x"]?Bridge(${pt1c_PARK_CHAN},kKTt))' . "\n\t";
         $conf .= 'same => n,ExecIf($["${pt1c_PARK_CHAN}x" == "x"]?ParkedCall(default,${EXTEN}))' . "\n\t";
