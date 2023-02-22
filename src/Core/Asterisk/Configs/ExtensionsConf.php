@@ -54,18 +54,22 @@ class ExtensionsConf extends CoreConfigClass
     protected function generateConfigProtected(): void
     {
         /** @scrutinizer ignore-call */
-        $conf              = "[globals] \n" .
-            "TRANSFER_CONTEXT=internal-transfer; \n";
+        $conf              = "[globals]" .PHP_EOL.
+            "TRANSFER_CONTEXT=internal-transfer;".PHP_EOL;
         if ($this->generalSettings['PBXRecordCalls'] === '1') {
-            $conf .= "MONITOR_DIR=" . Storage::getMonitorDir() . " \n";
-            $conf .= "MONITOR_STEREO=" . $this->generalSettings['PBXSplitAudioThread'] . " \n";
+            $conf .= "MONITOR_DIR=" . Storage::getMonitorDir() .PHP_EOL;
+            $conf .= "MONITOR_STEREO=" . $this->generalSettings['PBXSplitAudioThread'] .PHP_EOL;
         }
-        $conf .= "PBX_REC_ANNONCE_IN=" .ExtensionsAnnounceRecording::getPathAnnounceFile($this->generalSettings['PBXRecordAnnouncementIn'])."\n";
-        $conf .= "PBX_REC_ANNONCE_OUT=".ExtensionsAnnounceRecording::getPathAnnounceFile($this->generalSettings['PBXRecordAnnouncementOut'])."\n";
+        if ($this->generalSettings['PBXRecordCallsInner'] === '0') {
+            $conf .= "MONITOR_INNER=0".PHP_EOL;
+        }else{
+            $conf .= "MONITOR_INNER=1".PHP_EOL;
+        }
+        $conf .= "PBX_REC_ANNONCE_IN=" .ExtensionsAnnounceRecording::getPathAnnounceFile($this->generalSettings['PBXRecordAnnouncementIn']).PHP_EOL;
+        $conf .= "PBX_REC_ANNONCE_OUT=".ExtensionsAnnounceRecording::getPathAnnounceFile($this->generalSettings['PBXRecordAnnouncementOut']).PHP_EOL;
         $conf .= $this->hookModulesMethod(CoreConfigClass::EXTENSION_GLOBALS);
-        $conf .= "\n";
-        $conf .= "\n";
-        $conf .= "[general] \n";
+        $conf .= PHP_EOL.PHP_EOL;
+        $conf .= "[general]".PHP_EOL;
 
         // Контекст для внутренних вызовов.
         $conf .= InternalContexts::generate();

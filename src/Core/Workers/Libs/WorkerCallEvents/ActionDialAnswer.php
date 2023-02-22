@@ -5,7 +5,7 @@ namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 
 
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
-use MikoPBX\Core\System\MikoPBXConfig;
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Workers\WorkerCallEvents;
 
@@ -16,9 +16,8 @@ class ActionDialAnswer {
 
     public static function execute(WorkerCallEvents $worker, $data):void
     {
-        $mikoPBXConfig = new MikoPBXConfig();
-        $pickupexten   = $mikoPBXConfig->getGeneralSettings('PBXFeaturePickupExten');
-        if (trim($data['dnid']) === $pickupexten) {
+        $pickupexten   = PbxSettings::getValueByKey('PBXFeaturePickupExten');
+        if ( trim($data['dnid']) === $pickupexten) {
             // Pickup / перехват вызова.
             // Событие возникает, когда мы пытаемся перехватить вызов на соседний телефон.
             self::fillPickUpCdr($worker, $data);
@@ -127,8 +126,9 @@ class ActionDialAnswer {
             $new_data['dst_chan']       = $data['agi_channel'];
             $new_data['dst_num']        = $data['dst_num'];
             $new_data['UNIQUEID']       = $data['id'];
-            $new_data['recordingfile']  = $worker->MixMonitor($new_data['dst_chan'],  'pickup_'.$new_data['UNIQUEID'], null, null, 'fillPickUpCdr');
-
+            if($worker->enableMonitor($new_data['src_num']??'', $new_data['dst_num']??'')){
+                $new_data['recordingfile']  = $worker->MixMonitor($new_data['dst_chan'],  'pickup_'.$new_data['UNIQUEID'], null, null, 'fillPickUpCdr');
+            }
             unset($new_data['id'], $new_data['end']);
             InsertDataToDB::execute($new_data);
             /**

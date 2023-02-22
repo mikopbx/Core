@@ -11,6 +11,8 @@ use MikoPBX\Core\Workers\WorkerCallEvents;
 class ActionDialCreateChan {
     public static function execute(WorkerCallEvents $worker, $data):void
     {
+        $worker->addActiveChan($data['dst_chan']);
+
         $filter = self::getFilter($data);
         $row_create = false;
         /** @var CallDetailRecordsTmp $m_data */

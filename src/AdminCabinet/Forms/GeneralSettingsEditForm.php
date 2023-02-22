@@ -184,6 +184,7 @@ class GeneralSettingsEditForm extends Form
                     $this->add($audioMessage);
                     break;
                 case 'PBXRecordCalls':
+                case 'PBXRecordCallsInner':
                 case 'UseWebRTC':
                 case 'AJAMEnabled':
                 case 'AMIEnabled':

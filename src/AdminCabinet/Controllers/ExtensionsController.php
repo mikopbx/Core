@@ -501,6 +501,7 @@ class ExtensionsController extends BaseController
                     }
                     break;
                 case 'disabled':
+                case 'enableRecording':
                 case 'disablefromuser':
                     if (array_key_exists('sip_' . $name, $data)) {
                         $sipEntity->$name = ($data['sip_' . $name] === 'on') ? '1' : '0';

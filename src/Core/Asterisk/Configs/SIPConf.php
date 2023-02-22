@@ -27,8 +27,7 @@ use MikoPBX\Common\Models\{Codecs,
     PbxSettings,
     Sip,
     SipHosts,
-    Users
-};
+    Users};
 use MikoPBX\Core\Asterisk\AstDB;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\IncomingContexts;
 use MikoPBX\Modules\Config\ConfigClass;
@@ -165,6 +164,27 @@ class SIPConf extends CoreConfigClass
             }
         }
 
+        $usersNumbers = [];
+        $extensionsData = Extensions::find([ 'conditions' => 'userid <> "" and userid>0 ', 'columns' => 'userid,number']);
+        /** @var Extensions $extension */
+        foreach ($extensionsData as $extension){
+            $usersNumbers[$extension->userid][] = $extension->number;
+        }
+
+        $conf.=PHP_EOL.'[monitor-internal]'.PHP_EOL;
+        $confExceptions = '';
+        foreach ($this->data_peers as $peer) {
+            $numbers = $usersNumbers[$peer['user_id']]??[];
+            foreach ($numbers as $num){
+                $num = substr($num,-9);
+                $conf  .= "exten => {$num},1,NoOp(-)".PHP_EOL;
+                if($peer['enableRecording'] !== true){
+                    $confExceptions .= "exten => {$num},1,NoOp(-)".PHP_EOL;
+                }
+            }
+        }
+        $conf.= PHP_EOL.'[monitor-exceptions]'.PHP_EOL.
+                $confExceptions.PHP_EOL;
         return $conf;
     }
 
@@ -194,7 +214,6 @@ class SIPConf extends CoreConfigClass
         /** @var Extensions $extension */
         /** @var Users $user */
         /** @var ExtensionForwardingRights $extensionForwarding */
-
         $data    = [];
         $db_data = Sip::find("type = 'peer' AND ( disabled <> '1')");
         foreach ($db_data as $sip_peer) {
@@ -208,6 +227,7 @@ class SIPConf extends CoreConfigClass
 
             // Получим используемые кодеки.
             $arr_data['codecs'] = $this->getCodecs();
+            $arr_data['enableRecording'] = $sip_peer->enableRecording !== '0';
 
             // Имя сотрудника.
             $extension = Extensions::findFirst("number = '{$sip_peer->extension}'");

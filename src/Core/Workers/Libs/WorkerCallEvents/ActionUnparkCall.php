@@ -32,7 +32,10 @@ class ActionUnparkCall
      */
     public static function execute(WorkerCallEvents $worker, $data):void
     {
-        $data['recordingfile'] = $worker->MixMonitor($data['dst_chan'], $data['UNIQUEID'], null, null, 'ActionUnparkCall');
+        $data['recordingfile'] = "";
+        if($worker->enableMonitor($data['src_num'], $data['dst_num'])){
+            $data['recordingfile'] = $worker->MixMonitor($data['dst_chan'], $data['UNIQUEID'], null, null, 'ActionUnparkCall');
+        }
         InsertDataToDB::execute($data);
         if (is_array($data['data_parking'])) {
             InsertDataToDB::execute($data['data_parking']);

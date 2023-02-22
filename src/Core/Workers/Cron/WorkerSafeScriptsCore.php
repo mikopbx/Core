@@ -87,7 +87,6 @@ class WorkerSafeScriptsCore extends WorkerBase
                     WorkerModelsEvents::class,
                     WorkerNotifyByEmail::class,
                     WorkerNotifyError::class,
-                    //WorkerLongPoolAPI::class,
                 ],
             self::CHECK_BY_PID_NOT_ALERT =>
                 [

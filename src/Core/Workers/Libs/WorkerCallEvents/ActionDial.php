@@ -14,6 +14,7 @@ class ActionDial {
      */
     public static function execute(WorkerCallEvents $worker, $data):void
     {
+        $worker->addActiveChan($data['src_chan']);
         InsertDataToDB::execute($data);
         ActionAppEnd::execute($worker, $data);
     }

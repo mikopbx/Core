@@ -67,8 +67,6 @@ class ActionTransferDialHangup
                 Util::sysLogMsg('Action_transfer_dial_answer', implode(' ', $row->getMessages()), LOG_DEBUG);
             }
         }
-
-
         $filter = [
             'linkedid=:linkedid: AND endtime = ""',
             'bind' => [
@@ -84,8 +82,10 @@ class ActionTransferDialHangup
         foreach ($m_data as $row) {
             $info      = pathinfo($row->recordingfile);
             $data_time = ($row->answer === '') ? $row->start : $row->answer;
-            $subdir    = date('Y/m/d/H/', strtotime($data_time));
-            $worker->MixMonitor($row->dst_chan, $info['filename'], $subdir, null, 'fillNotAnsweredCdr');
+            $subDir    = date('Y/m/d/H/', strtotime($data_time));
+            if($worker->enableMonitor($row->src_num, $row->dst_num)) {
+                $worker->MixMonitor($row->dst_chan, $info['filename'], $subDir, null, 'fillNotAnsweredCdr');
+            }
             // Снимем со строк признак переадресации.
             $row->writeAttribute('transfer', 0);
             if ( ! $row->save()) {
@@ -139,8 +139,10 @@ class ActionTransferDialHangup
             if ($data_time===null){
                 $data_time = 'now';
             }
-            $subdir    = date('Y/m/d/H/', strtotime($data_time));
-            $worker->MixMonitor($res->dst_chan, $info['filename'], $subdir, null, 'fillLocalChannelCdr');
+            $subDir    = date('Y/m/d/H/', strtotime($data_time));
+            if($worker->enableMonitor($res->src_num, $res->dst_num)) {
+                $worker->MixMonitor($res->dst_chan, $info['filename'], $subDir, null, 'fillLocalChannelCdr');
+            }
         }
     }
 

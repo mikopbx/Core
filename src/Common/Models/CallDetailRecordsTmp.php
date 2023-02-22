@@ -41,6 +41,11 @@ class CallDetailRecordsTmp extends CallDetailRecordsBase
 {
     public const CACHE_KEY = 'Workers:Cdr';
 
+    /**
+     * @Column(type="integer", nullable=true)
+     */
+    public ?string $a_transfer = '0';
+
     public function initialize(): void
     {
         $this->setSource('cdr');

@@ -195,7 +195,6 @@ class ExtensionEditForm extends Form
         if ($sip->qualify) {
             $cheskarr = ['checked' => 'checked', 'value' => null];
         }
-
         $this->add(new Check('qualify', $cheskarr));
 
         // Qualifyfreq
@@ -295,5 +294,11 @@ class ExtensionEditForm extends Form
             ]
             )
         );
+
+        $checkArr = ['value' => null];
+        if ($sip->enableRecording !== '0') {
+            $checkArr = ['checked' => 'checked', 'value' => null];
+        }
+        $this->add(new Check('sip_enableRecording', $checkArr));
     }
 }

@@ -13,6 +13,8 @@ class ActionHangupChan {
 
     public static function execute(WorkerCallEvents $worker, $data):void
     {
+        $worker->removeActiveChan($data['agi_channel']);
+
         $channels       = [];
         $transfer_calls = [];
 
@@ -28,7 +30,6 @@ class ActionHangupChan {
         if(isset($worker->mixMonitorChannels[$data['agi_channel']])){
             unset($worker->mixMonitorChannels[$data['agi_channel']]);
         }
-
     }
 
     /**
@@ -40,18 +41,21 @@ class ActionHangupChan {
      */
     private static function hangupChanEndCalls($worker, array $data, array &$transfer_calls, array &$channels):void{
         $filter         = [
-            'linkedid=:linkedid: AND endtime = "" AND (src_chan=:src_chan: OR dst_chan=:dst_chan:)',
+            'linkedid=:linkedid: AND endtime = ""',
             'bind' => [
                 'linkedid' => $data['linkedid'],
-                'src_chan' => $data['agi_channel'],
-                'dst_chan' => $data['agi_channel'],
             ],
         ];
         /** @var CallDetailRecordsTmp $m_data */
         /** @var CallDetailRecordsTmp $row */
-        $m_data = CallDetailRecordsTmp::find($filter);
-        $countRows = count($m_data->toArray());
+        $m_data    = CallDetailRecordsTmp::find($filter);
+        $countRows = 0;
+        $transferCdrAnswered = true;
         foreach ($m_data as $row) {
+            if($row->dst_chan !== $data['agi_channel'] && $data['agi_channel'] !== $row->src_chan){
+                continue;
+            }
+            $countRows++;
             $vmState = $data['VMSTATUS']??'';
             if($row->dst_num === VoiceMailConf::VOICE_MAIL_EXT && $vmState !== 'FAILED'){
                 // Этот вызов будет заверщен событием voicemail_end
@@ -61,6 +65,17 @@ class ActionHangupChan {
                 // Обязательно канал назначения не должен быть пустым.
                 // Иначе это не переадресация.
                 $transfer_calls[] = $row->toArray();
+                $transferCdrAnswered = min($transferCdrAnswered, empty($row->answer));
+            }
+        }
+        foreach ($m_data as $row) {
+            if($row->dst_chan !== $data['agi_channel'] && $data['agi_channel'] !== $row->src_chan){
+                continue;
+            }
+            $vmState = $data['VMSTATUS']??'';
+            if($row->dst_num === VoiceMailConf::VOICE_MAIL_EXT && $vmState !== 'FAILED'){
+                // Этот вызов будет заверщен событием voicemail_end
+                continue;
             }
             if ($row->dialstatus === 'ORIGINATE') {
                 $row->writeAttribute('dialstatus', '');
@@ -71,6 +86,10 @@ class ActionHangupChan {
             }
             $row->writeAttribute('endtime', $data['end']);
             $row->writeAttribute('transfer', 0);
+            if($transferCdrAnswered === false && count($transfer_calls) === 2){
+                // Завершение вызова при консультативной переадресации. Инициатор положил трубку до ответа dst.
+                $row->writeAttribute('a_transfer', 1);
+            }
             if ($data['dialstatus'] !== '') {
                 if ($data['dialstatus'] === 'ORIGINATE') {
                     $row->writeAttribute('dst_chan', '');
@@ -145,7 +164,7 @@ class ActionHangupChan {
      * @param $data
      * @param $channels
      */
-    private static function hangupChanCheckSipTrtansfer($worker, $data, $channels):void{
+    private static function hangupChanCheckSipTrtansfer(WorkerCallEvents $worker, $data, $channels):void{
         $not_local = (stripos($data['agi_channel'], 'local/') === false);
         if($not_local === false || $data['OLD_LINKEDID'] !== $data['linkedid']) {
             return;
@@ -180,7 +199,9 @@ class ActionHangupChan {
             $n_data['linkedid']      = $linkedid;
             $n_data['UNIQUEID']      = $data['linkedid'] . Util::generateRandomString();
             $n_data['transfer']      = '0';
-            $n_data['recordingfile'] = $worker->MixMonitor($n_data['dst_chan'], $n_data['UNIQUEID'], null, null, 'hangupChanCheckSipTrtansfer');
+            if($worker->enableMonitor($n_data['src_num']??'', $n_data['dst_num']??'')){
+                $n_data['recordingfile'] = $worker->MixMonitor($n_data['dst_chan'], $n_data['UNIQUEID'], null, null, 'hangupChanCheckSipTrtansfer');
+            }
             $n_data['did']           = $data_chan['did'];
 
             InsertDataToDB::execute($n_data);

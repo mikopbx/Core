@@ -93,6 +93,7 @@ class GeneralSettingsController extends BaseController
         foreach ($pbxSettings as $key => $value) {
             switch ($key) {
                 case 'PBXRecordCalls':
+                case 'PBXRecordCallsInner':
                 case 'AJAMEnabled':
                 case 'AMIEnabled':
                 case 'RestartEveryNight':

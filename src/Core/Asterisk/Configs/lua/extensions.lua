@@ -95,7 +95,28 @@ function get_variable(name)
     -- app.Verbose( 3, "Var '"..name.."'=" .. p_result)
     return p_result;
 end
+-- Разрещена ли запись разговоров для данного вызова.
+function monitorEnable(src, dst)
+    src = string.sub(src, -9);
+    dst = string.sub(dst, -9);
+    app["NoOp"]("Check (".. src.." -> "..dst..")");
 
+    local isInner     = get_variable("DIALPLAN_EXISTS(monitor-internal,"..src..")") == "1" and get_variable("DIALPLAN_EXISTS(monitor-internal,"..dst..")") == "1";
+    local notRecInner = get_variable("MONITOR_INNER") == "0";
+    if(isInner == true and notRecInner == true )then
+        app["NoOp"]("Is inner call. (".. src.." -> "..dst..") Conversation recording is disabled");
+        return false;
+    end
+    if(get_variable("DIALPLAN_EXISTS(monitor-exceptions,"..src..")") == "1")then
+        app["NoOp"]("Is exception numbers. ("..src..") Conversation recording is disabled");
+        return false;
+    end
+    if(get_variable("DIALPLAN_EXISTS(monitor-exceptions,"..dst..")") == "1")then
+        app["NoOp"]("Is exception numbers. ("..dst..") Conversation recording is disabled");
+        return false;
+    end
+    return true;
+end
 -- Устанавливает значение переменной канала
 function set_variable(p_name, p_value)
     if(is_test == nil) then
@@ -440,18 +461,22 @@ function event_dial_answer()
     if(monDir ~= '' and string.lower(data['agi_channel']):find("local/") == nil and isSrcChan) then
         -- Активируем запись разговора.
         -- Только для реальных каналов.
-        local mixFileName = ''..monDir..'/'.. os.date("%Y/%m/%d/%H")..'/'..id;
-        local stereoMode = get_variable("MONITOR_STEREO");
-        local mixOptions = '';
-        if('1' == stereoMode )then
+        if(monitorEnable(get_variable("CONNECTEDLINE(num)"), get_variable("CALLERID(num)"))) then
+            app["NoOp"]("Monitor ... "..get_variable("CONNECTEDLINE(num)").." -> "..get_variable("CALLERID(num)"));
+            local mixFileName = ''..monDir..'/'.. os.date("%Y/%m/%d/%H")..'/'..id;
+            local stereoMode = get_variable("MONITOR_STEREO");
+            local mixOptions = '';
+            if('1' == stereoMode )then
             mixOptions = "abSr("..mixFileName.."_in.wav)t("..mixFileName.."_out.wav)";
-        else
+            else
             mixOptions = 'ab';
+            end
+
+            app["MixMonitor"](mixFileName .. ".wav,"..mixOptions);
+            app["NoOp"]('Start MixMonitor on channel '.. get_variable("CHANNEL"));
+            data['recordingfile']  	= mixFileName .. ".mp3";
+            app["UserEvent"]("StartRecording,recordingfile:"..data['recordingfile']..',recchan:'..data['agi_channel']);
         end
-        app["MixMonitor"](mixFileName .. ".wav,"..mixOptions);
-        app["NoOp"]('Start MixMonitor on channel '.. get_variable("CHANNEL"));
-        data['recordingfile']  	= mixFileName .. ".mp3";
-        app["UserEvent"]("StartRecording,recordingfile:"..data['recordingfile']..',recchan:'..data['agi_channel']);
     end
 
     data['action']      = 'dial_answer';
@@ -631,18 +656,21 @@ function event_transfer_dial_answer()
     if(monDir ~= '' and string.lower(data['agi_channel']):find("local/") == nil )then
         -- Активируем запись разговора.
         -- Только для реальных каналов.
-        local mixFileName = ''..monDir..'/'.. os.date("%Y/%m/%d/%H")..'/'..id;
-        local stereoMode = get_variable("MONITOR_STEREO");
-        local mixOptions = '';
-        if('1' == stereoMode )then
-            mixOptions = "abSr("..mixFileName.."_in.wav)t("..mixFileName.."_out.wav)";
-        else
-            mixOptions = 'ab';
+        if(monitorEnable(get_variable("CONNECTEDLINE(num)"), get_variable("CALLERID(num)"))) then
+            app["NoOp"]("Monitor ... "..get_variable("CONNECTEDLINE(num)").." -> "..get_variable("CALLERID(num)"));
+            local mixFileName = ''..monDir..'/'.. os.date("%Y/%m/%d/%H")..'/'..id;
+            local stereoMode = get_variable("MONITOR_STEREO");
+            local mixOptions = '';
+            if('1' == stereoMode )then
+                mixOptions = "abSr("..mixFileName.."_in.wav)t("..mixFileName.."_out.wav)";
+            else
+                mixOptions = 'ab';
+            end
+            app["MixMonitor"](mixFileName .. ".wav,"..mixOptions);
+            app["NoOp"]('Start MixMonitor on channel '.. data['agi_channel']);
+            data['recordingfile']  	= mixFileName .. ".mp3";
+            app["UserEvent"]("StartRecording,recordingfile:"..data['recordingfile']..',recchan:'..data['agi_channel']);
         end
-        app["MixMonitor"](mixFileName .. ".wav,"..mixOptions);
-        app["NoOp"]('Start MixMonitor on channel '.. data['agi_channel']);
-        data['recordingfile']  	= mixFileName .. ".mp3";
-        app["UserEvent"]("StartRecording,recordingfile:"..data['recordingfile']..',recchan:'..data['agi_channel']);
     end
 
     userevent_return(data)

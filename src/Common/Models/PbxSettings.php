@@ -130,6 +130,7 @@ class PbxSettings extends ModelsBase
             'PBXInternalExtensionLength'      => '3',
             'PBXFeaturePickupExten'           => '',
             'PBXRecordCalls'                  => '1',
+            'PBXRecordCallsInner'             => '1',
             'PBXSplitAudioThread'             => '0',
             'PBXRecordAnnouncementIn'         => '',
             'PBXRecordAnnouncementOut'        => '',

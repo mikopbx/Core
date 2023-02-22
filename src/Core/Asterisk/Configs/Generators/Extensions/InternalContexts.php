@@ -103,6 +103,7 @@ class InternalContexts extends CoreConfigClass
     private function generateInternalFW(): string
     {
         $conf = "[internal-fw]\n";
+        $conf .= 'exten => h,1,ExecIf($["${ISTRANSFER}x" != "x"]?Goto(transfer_dial_hangup,${EXTEN},1))' . "\n";
         $conf .= 'exten => _' . $this->extensionPattern . ',1,NoOp(DIALSTATUS - ${DIALSTATUS})' . "\n\t";
         // CANCEL - вызов был отменен, к примеру *0, не нужно дальше искать адресат.
         $conf .= 'same => n,ExecIf($["${DIALSTATUS}" == "CANCEL"]?Hangup())' . "\n\t";

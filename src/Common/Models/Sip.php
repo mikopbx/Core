@@ -175,6 +175,10 @@ class Sip extends ModelsBase
      */
     public ?string $description = '';
 
+    /**
+     * @Column(type="integer", nullable=true, default="1")
+     */
+    public ?string $enableRecording = '1';
 
     public function initialize(): void
     {

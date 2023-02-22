@@ -20,8 +20,12 @@
 namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
 
-use MikoPBX\Core\System\{BeanstalkClient, MikoPBXConfig, Storage, Util};
+use MikoPBX\Core\System\{BeanstalkClient, Storage, Util};
+use MikoPBX\Common\Models\Extensions;
+use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\Sip;
 use MikoPBX\Core\Asterisk\Configs\CelConf;
+use MikoPBX\Core\Workers\Libs\WorkerCallEvents\ActionCelAnswer;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\SelectCDR;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\UpdateDataInDB;
 use Phalcon\Text;
@@ -32,8 +36,65 @@ class WorkerCallEvents extends WorkerBase
     protected bool  $record_calls       = true;
     protected bool  $split_audio_thread = false;
     public    array $checkChanHangupTransfer = [];
+    private   array $activeChannels = [];
     public const TIMOUT_CHANNEL_TUBE = 'CleanChannelTimout';
 
+    private array $innerNumbers       = [];
+    private array $exceptionsNumbers  = [];
+    private bool  $notRecInner        = false;
+    public const REC_DISABLE          = 'Conversation recording is disabled';
+
+    /**
+     * Наполняем кэш реальных каналов.
+     * @param string $channel
+     * @return void
+     */
+    public function addActiveChan(string $channel):void
+    {
+        if(stripos($channel, 'local') === 0){
+            return;
+        }
+        $this->activeChannels[$channel] = true;
+    }
+
+    /**
+     * Очищаем кэш реальных каналов.
+     * @param string $channel
+     * @return void
+     */
+    public function removeActiveChan(string $channel):void
+    {
+        unset($this->activeChannels[$channel]);
+    }
+
+    /**
+     * Проверяет существует ли канал в кэш.
+     * @param string $channel
+     * @return void
+     */
+    public function existsActiveChan(string $channel):bool
+    {
+        return isset($this->activeChannels[$channel]);
+    }
+
+    /**
+     * @param string $src
+     * @param string $dst
+     * @param string $error
+     * @return bool
+     */
+    public function enableMonitor(string $src, string $dst):bool
+    {
+        $src = substr($src,-9);
+        $dst = substr($dst,-9);
+        $enable = true;
+        $isInner = in_array($src, $this->innerNumbers,true) && in_array($dst, $this->innerNumbers,true);
+        if(($this->notRecInner && $isInner) ||
+            in_array($src, $this->exceptionsNumbers,true) || in_array($dst, $this->exceptionsNumbers,true)){
+            $enable = false;
+        }
+        return $enable;
+    }
 
     /**
      * Инициирует запись разговора на канале.
@@ -115,11 +176,9 @@ class WorkerCallEvents extends WorkerBase
      */
     public function start($params): void
     {
+        $this->updateRecordingOptions();
         $this->mixMonitorChannels       = [];
         $this->checkChanHangupTransfer  = [];
-        $mikoPBXConfig            = new MikoPBXConfig();
-        $this->record_calls       = $mikoPBXConfig->getGeneralSettings('PBXRecordCalls') === '1';
-        $this->split_audio_thread = $mikoPBXConfig->getGeneralSettings('PBXSplitAudioThread') === '1';
         $this->am                 = Util::getAstManager('off');
 
         // PID сохраняем при начале работы Worker.
@@ -135,6 +194,63 @@ class WorkerCallEvents extends WorkerBase
         while ($this->needRestart === false) {
             $client->wait();
         }
+    }
+
+    /**
+     * @return void
+     */
+    private function updateRecordingOptions():void
+    {
+        $usersNumbers = [];
+        $users = [];
+        $filter = [
+            'conditions' => 'userid <> "" and userid>0 ',
+            'columns' => 'userid,number,type',
+            'order' => 'type DESC'
+        ];
+        $extensionsData = Extensions::find($filter);
+        /** @var Extensions $extension */
+        foreach ($extensionsData as $extension){
+            if($extension->type === "SIP"){
+                $usersNumbers[$extension->number][] = $extension->number;
+                $users[$extension->userid] = $extension->number;
+            }else{
+                $internalNumber = $users[$extension->userid]??'';
+                if($internalNumber !==''){
+                    $usersNumbers[$internalNumber][] = $extension->number;
+                }
+            }
+        }
+        unset($users, $extensionsData);
+        $filter = [
+            'conditions' => 'type="peer"',
+            'columns'    => 'extension,enableRecording',
+        ];
+        $peers = Sip::find($filter);
+        foreach ($peers as $peer) {
+            $numbers = $usersNumbers[$peer->extension]??[];
+            foreach ($numbers as $num){
+                $num = substr($num,-9);
+                $this->innerNumbers[] = $num;
+                if($peer->enableRecording === '0'){
+                    $this->exceptionsNumbers[] = $num;
+                }
+            }
+        }
+        $this->notRecInner        = PbxSettings::getValueByKey('PBXRecordCallsInner') === '0';
+        $this->record_calls       = PbxSettings::getValueByKey('PBXRecordCalls') === '1';
+        $this->split_audio_thread = PbxSettings::getValueByKey('PBXSplitAudioThread') === '1';
+    }
+
+    /**
+     * Ping callback for keep alive check
+     *
+     * @param BeanstalkClient $message
+     */
+    public function pingCallBack(BeanstalkClient $message): void
+    {
+        parent::pingCallBack($message);
+        $this->updateRecordingOptions();
     }
 
     /**
@@ -164,8 +280,12 @@ class WorkerCallEvents extends WorkerBase
      */
     public function callEventsWorker($tube): void
     {
-        $data      = json_decode($tube->getBody(), true);
-        if('USER_DEFINED' !== ($data['EventName']??'')){
+        $data  = json_decode($tube->getBody(), true);
+        $event = $data['EventName']??'';
+        if('ANSWER' === $event){
+            ActionCelAnswer::execute($this, $data);
+            return;
+        }elseif('USER_DEFINED' !== $event){
             return;
         }
         try {
@@ -207,6 +327,7 @@ class WorkerCallEvents extends WorkerBase
         $this->am->SetVar($srcChannel, "MASTER_CHANNEL(M_DIALSTATUS)", 'ANSWER');
         $tube->reply(json_encode(true));
     }
+
     /**
      * @param array | BeanstalkClient $tube
      */

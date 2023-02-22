@@ -33,7 +33,7 @@ class CelConf extends CoreConfigClass
 
         $conf = "[general]\n" .
             "enable=yes\n" .
-            "events=USER_DEFINED\n" .
+            "events=USER_DEFINED,ANSWER\n" .
             "dateformat = %F %T\n\n" .
             "[manager]\n" .
             "enabled = yes\n\n";

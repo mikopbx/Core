@@ -68,10 +68,12 @@ class CreateRowTransfer {
                 $transferNotComplete = true;
             }
         }
-
         if ($not_ended_cdr !== null && !$transferNotComplete) {
             $worker->StopMixMonitor($not_ended_cdr->src_chan, 'fillFailRedirectCdrData');
-            $worker->MixMonitor($not_ended_cdr->dst_chan, '', '', $not_ended_cdr->recordingfile, 'fillFailRedirectCdrData');
+            // TODO need check
+            if(!empty($not_ended_cdr->recordingfile) && $worker->enableMonitor($not_ended_cdr->src_num, $not_ended_cdr->dst_num)){
+                $worker->MixMonitor($not_ended_cdr->dst_chan, '', '', $not_ended_cdr->recordingfile, 'fillFailRedirectCdrData');
+            }
         }
     }
 
@@ -103,14 +105,18 @@ class CreateRowTransfer {
         // Запись разговора.
         $worker->StopMixMonitor($insert_data['src_chan'], 'fillRedirectCdrData');
         $worker->StopMixMonitor($insert_data['dst_chan'], 'fillRedirectCdrData');
-        $recordingfile = $worker->MixMonitor(
-            $insert_data['dst_chan'],
-            'transfer_' . $insert_data['src_num'] . '_' . $insert_data['dst_num'] . '_' . $data['linkedid'],
-            null,
-            null,
-            'fillLocalChannelCdr'
-        );
-        //
+
+        $recordingfile = '-';
+        if($worker->enableMonitor($insert_data['src_num'], $insert_data['dst_num'])){
+            $recordingfile = $worker->MixMonitor(
+                $insert_data['dst_chan'],
+                'transfer_' . $insert_data['src_num'] . '_' . $insert_data['dst_num'] . '_' . $data['linkedid'],
+                null,
+                null,
+                'fillLocalChannelCdr'
+            );
+        }
+
         $insert_data['action']        = "{$action}_end_trasfer";
         $insert_data['recordingfile'] = $recordingfile;
         $insert_data['start']         = $data['end'];
