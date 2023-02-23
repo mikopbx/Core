@@ -1130,4 +1130,7 @@ return [
     'cr_pinCode' => 'PIN код конференції',
     'tf_AllowRestriction' => 'Застосовувати лише до певних вхідних маршрутів',
     'tf_RoutsRestriction' => 'Обмеження маршрутів',
+    'ex_CallRecording' => 'Запис розмов',
+    'ex_enableRecording' => 'Дозволити',
+    'gs_PBXRecordCallsInner' => 'Запис внутрішніх розмов',
 ];

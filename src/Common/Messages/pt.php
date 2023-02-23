@@ -1130,4 +1130,7 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'cr_pinCode' => 'PIN de conferência',
     'tf_AllowRestriction' => 'Aplicar apenas a determinadas rotas de entrada',
     'tf_RoutsRestriction' => 'Restrições de rota',
+    'ex_CallRecording' => 'Gravação de chamadas',
+    'ex_enableRecording' => 'Permitir',
+    'gs_PBXRecordCallsInner' => 'Gravando conversas internas',
 ];

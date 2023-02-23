@@ -1130,4 +1130,7 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá đ
     'cr_pinCode' => 'mã PIN hội nghị',
     'tf_AllowRestriction' => 'Chỉ áp dụng cho một số tuyến đến nhất định',
     'tf_RoutsRestriction' => 'Hạn chế tuyến đường',
+    'ex_CallRecording' => 'Thu âm cuộc gọi',
+    'ex_enableRecording' => 'Cho phép',
+    'gs_PBXRecordCallsInner' => 'Ghi âm các cuộc hội thoại nội bộ',
 ];
