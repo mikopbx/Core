@@ -19,7 +19,7 @@
 
 namespace MikoPBX\AdminCabinet\Controllers;
 
-use MikoPBX\Common\Providers\ModelsCacheProvider;
+use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings};
 use Phalcon\Mvc\{Controller, View};
@@ -87,7 +87,7 @@ class BaseController extends Controller
             return;
         }
         /** @var Redis $cache */
-        $cache  = $this->di->getShared(ModelsCacheProvider::SERVICE_NAME);
+        $cache  = $this->di->getShared(ManagedCacheProvider::SERVICE_NAME);
         $links  = $cache->get('WIKI_LINKS');
 
         if($links === null){
