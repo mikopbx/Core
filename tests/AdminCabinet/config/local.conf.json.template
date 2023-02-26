@@ -13,7 +13,7 @@
     "acceptSslCerts": true,
     "fixSessionCapabilities": true,
     "remoteFiles": true,
-    "browserstack.networkLogs": true,
+    "browserstack.networkLogs": true
   },
 	"MIKO_LICENSE_KEY": "",
   "environments": [{
