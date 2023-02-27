@@ -89,7 +89,7 @@ class OutWorkTimes extends ModelsBase
      * Разрешить ограничение действия правила для маршрутов.
      * @Column(type="string", nullable=true)
      */
-    public ?string $allowRestriction = '';
+    public ?string $allowRestriction = '0';
 
     public function initialize(): void
     {
