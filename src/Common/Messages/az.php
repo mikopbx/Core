@@ -1130,4 +1130,7 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'cr_pinCode' => 'Konfransın PIN kodu',
     'tf_AllowRestriction' => 'Yalnız müəyyən gələn marşrutlara müraciət edin',
     'tf_RoutsRestriction' => 'Marşrut məhdudiyyətləri',
+    'ex_CallRecording' => 'Zəng qeydi',
+    'ex_enableRecording' => 'İcazə verin',
+    'gs_PBXRecordCallsInner' => 'Daxili danışıqların qeydə alınması',
 ];

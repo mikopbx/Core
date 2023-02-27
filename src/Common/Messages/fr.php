@@ -1130,4 +1130,7 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'cr_pinCode' => 'NIP de la conférence',
     'tf_AllowRestriction' => 'Appliquer uniquement à certaines routes entrantes',
     'tf_RoutsRestriction' => 'Restrictions d\'itinéraire',
+    'ex_CallRecording' => 'Enregistrement d\'appel',
+    'gs_PBXRecordCallsInner' => 'Enregistrement des conversations internes',
+    'ex_enableRecording' => 'Permettre',
 ];

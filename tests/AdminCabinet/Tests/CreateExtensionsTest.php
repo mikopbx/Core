@@ -52,11 +52,11 @@ class CreateExtensionsTest extends MikoPBXTestsBase
             // Раскрываем расширенные опции
             $this->openAccordionOnThePage();
 
-            $this->changeInputField('sip_busylevel', $params['sip_busylevel']);
+            $this->changeCheckBoxState('disablefromuser', $params['disablefromuser']);
             $this->selectDropdownItem('sip_networkfilterid', $params['sip_networkfilterid']);
+            $this->selectDropdownItem('sip_transport', $params['sip_transport']);
 
-           $this->changeInputField('sip_busylevel', $params['sip_busylevel']);
-            $this->changeTextAreaValue('sip_manualattributes', $params['manualattributes']);
+            $this->changeTextAreaValue('sip_manualattributes', $params['sip_manualattributes']);
 
             //$filePath           =  __DIR__."/../assets/{$params['number']}.png";
             $filePath = 'C:\Users\hello\Documents\images\person.jpg';
@@ -97,10 +97,10 @@ class CreateExtensionsTest extends MikoPBXTestsBase
             // Раскрываем расширенные опции
             $this->openAccordionOnThePage();
             $this->assertInputFieldValueEqual('mobile_dialstring',  $params['mobile']);
-            $this->assertInputFieldValueEqual('sip_busylevel', $params['sip_busylevel']);
+            $this->assertCheckBoxStageIsEqual('qualify', $params['qualify']);
             $this->assertMenuItemSelected('sip_networkfilterid', $params['sip_networkfilterid']);
-
-            $this->assertTextAreaValueIsEqual('sip_manualattributes', $params['manualattributes']);
+            $this->assertMenuItemSelected('sip_transport', $params['sip_transport']);
+            $this->assertTextAreaValueIsEqual('sip_manualattributes', $params['sip_manualattributes']);
     }
 
     /**
@@ -117,10 +117,11 @@ class CreateExtensionsTest extends MikoPBXTestsBase
                 'username' => 'Eugeniy Makrchev',
                 'mobile'   => '79031454088',
                 'secret'   => '23542354wet',
-                'sip_busylevel'=>1,
+                'sip_enableRecording'=>false,
                 'sip_dtmfmode'=>'auto_info',
                 'sip_networkfilterid'=>'none',
-                'manualattributes'=>'[endpoint]
+                'sip_transport'=>'udp',
+                'sip_manualattributes'=>'[endpoint]
 callerid=2546456<240>',
 
             ]];
@@ -131,10 +132,11 @@ callerid=2546456<240>',
                 'username' => 'Nikolay Beketov',
                 'mobile'   => '79265244743',
                 'secret'   => 'GAb2o%2B_1Ys.25',
-                'sip_busylevel'=>1,
+                'sip_enableRecording'=>true,
                 'sip_dtmfmode'=>'inband',
                 'sip_networkfilterid'=>'none',
-                'manualattributes'=>'',
+                'sip_transport'=>'udp',
+                'sip_manualattributes'=>'',
                ]];
 
         $params[] = [
@@ -144,10 +146,11 @@ callerid=2546456<240>',
                 'username' => 'Svetlana Vlasova',
                 'mobile'   => '79269900372',
                 'secret'   => 'GAb2o%qwerqwer2354235.25',
-                'sip_busylevel'=>1,
+                'sip_enableRecording'=>false,
                 'sip_dtmfmode'=>'info',
                 'sip_networkfilterid'=>'4',
-                'manualattributes'=>'',
+                'sip_transport'=>'tcp',
+                'sip_manualattributes'=>'',
               ]];
         $params[] = [
             [
@@ -156,10 +159,11 @@ callerid=2546456<240>',
                 'username' => 'Natalia Beketova',
                 'mobile'   => '79265244843',
                 'secret'   => 'GAb2o%2B_1Ys.25',
-                'sip_busylevel'=>1,
+                'sip_enableRecording'=>false,
                 'sip_dtmfmode'=>'auto',
                 'sip_networkfilterid'=>'none',
-                'manualattributes'=>'',
+                'sip_transport'=>'tls',
+                'sip_manualattributes'=>'',
 
                 ]];
         $params[] = [
@@ -169,10 +173,11 @@ callerid=2546456<240>',
                 'username' => 'Julia Efimova',
                 'mobile'   => '79851417827',
                 'secret'   => '23542354wet',
-                'sip_busylevel'=>1,
+                'sip_enableRecording'=>false,
                 'sip_dtmfmode'=>'rfc4733',
                 'sip_networkfilterid'=>'none',
-                'manualattributes'=>'',
+                'sip_transport'=>'udp',
+                'sip_manualattributes'=>'',
             ]];
         $params[] = [
             [
@@ -181,10 +186,11 @@ callerid=2546456<240>',
                 'username' => 'Alisher Usmanov',
                 'mobile'   => '79265639989',
                 'secret'   => '23542354wet',
-                'sip_busylevel'=>1,
+                'sip_enableRecording'=>true,
                 'sip_dtmfmode'=>'auto_info',
                 'sip_networkfilterid'=>'none',
-                'manualattributes'=>'',
+                'sip_transport'=>'tls',
+                'sip_manualattributes'=>'',
             ]];
         $params[] = [
             [
@@ -193,10 +199,11 @@ callerid=2546456<240>',
                 'username' => 'Ivan Maltsev',
                 'mobile'   => '79265679989',
                 'secret'   => '23542354wet',
-                'sip_busylevel'=>1,
+                'sip_enableRecording'=>false,
                 'sip_dtmfmode'=>'auto_info',
                 'sip_networkfilterid'=>'none',
-                'manualattributes'=>'',
+                'sip_transport'=>'udp',
+                'sip_manualattributes'=>'',
             ]];
 
         $params[] = [
@@ -206,10 +213,11 @@ callerid=2546456<240>',
                 'username' => 'Alexandr Medvedev',
                 'mobile'   => '79853059396',
                 'secret'   => '235RTWETtre42354wet',
-                'sip_busylevel'=>1,
+                'sip_enableRecording'=>false,
                 'sip_dtmfmode'=>'auto_info',
                 'sip_networkfilterid'=>'none',
-                'manualattributes'=>'',
+                'sip_transport'=>'udp',
+                'sip_manualattributes'=>'',
             ]];
         $params[] = [
             [
@@ -218,10 +226,11 @@ callerid=2546456<240>',
                 'username' => 'Anna Mzhelskaya',
                 'mobile'   => '79852888742',
                 'secret'   => '235RTWETtre42354wet',
-                'sip_busylevel'=>1,
+                'sip_enableRecording'=>true,
                 'sip_dtmfmode'=>'auto_info',
                 'sip_networkfilterid'=>'none',
-                'manualattributes'=>'',
+                'sip_transport'=>'udp',
+                'sip_manualattributes'=>'',
             ]];
         $params[] = [
             [
@@ -230,10 +239,11 @@ callerid=2546456<240>',
                 'username' => 'Viktor Mitin',
                 'mobile'   => '79251323617',
                 'secret'   => '235RTWETtre42354wet',
-                'sip_busylevel'=>1,
+                'sip_enableRecording'=>false,
                 'sip_dtmfmode'=>'auto_info',
                 'sip_networkfilterid'=>'none',
-                'manualattributes'=>'',
+                'sip_transport'=>'udp',
+                'sip_manualattributes'=>'',
             ]];
         $params[] = [
             [
@@ -242,10 +252,11 @@ callerid=2546456<240>',
                 'username' => 'Anton Pasutin',
                 'mobile'   => '79262321957',
                 'secret'   => '235RTWETtre42354wet',
-                'sip_busylevel'=>1,
+                'sip_enableRecording'=>true,
                 'sip_dtmfmode'=>'auto_info',
                 'sip_networkfilterid'=>'none',
-                'manualattributes'=>'',
+                'sip_transport'=>'udp',
+                'sip_manualattributes'=>'',
             ]];
         $params[] = [
             [
@@ -254,10 +265,11 @@ callerid=2546456<240>',
                 'username' => 'Kristina Perfileva',
                 'mobile'   => '79256112214',
                 'secret'   => '235RTWETtre42354wet',
-                'sip_busylevel'=>1,
+                'sip_enableRecording'=>false,
                 'sip_dtmfmode'=>'auto_info',
                 'sip_networkfilterid'=>'none',
-                'manualattributes'=>'',
+                'sip_transport'=>'udp',
+                'sip_manualattributes'=>'',
             ]];
         $params[] = [
             [
@@ -266,10 +278,11 @@ callerid=2546456<240>',
                 'username' => 'Alexey Portnov',
                 'mobile'   => '79257184255',
                 'secret'   => '235RTWETtre42354wet',
-                'sip_busylevel'=>1,
+                'sip_enableRecording'=>true,
                 'sip_dtmfmode'=>'auto_info',
                 'sip_networkfilterid'=>'none',
-                'manualattributes'=>'',
+                'sip_transport'=>'udp',
+                'sip_manualattributes'=>'',
             ]];
         $params[] = [
             [
@@ -278,10 +291,11 @@ callerid=2546456<240>',
                 'username' => 'Tatiana Portnova',
                 'mobile'   => '79606567153',
                 'secret'   => '235RTWETt543re42354wet',
-                'sip_busylevel'=>1,
+                'sip_enableRecording'=>false,
                 'sip_dtmfmode'=>'auto_info',
                 'sip_networkfilterid'=>'none',
-                'manualattributes'=>'',
+                'sip_transport'=>'udp',
+                'sip_manualattributes'=>'',
 
             ]];
         $params[] = [
@@ -291,10 +305,11 @@ callerid=2546456<240>',
                 'username' => 'Alexandra Pushina',
                 'mobile'   => '74952293043',
                 'secret'   => '235RTWETtre5442354wet',
-                'sip_busylevel'=>1,
+                'sip_enableRecording'=>true,
                 'sip_dtmfmode'=>'auto_info',
                 'sip_networkfilterid'=>'none',
-                'manualattributes'=>'',
+                'sip_transport'=>'udp',
+                'sip_manualattributes'=>'',
             ]];
         $params[] = [
             [
@@ -303,10 +318,11 @@ callerid=2546456<240>',
                 'username' => 'Dmitri Fomichev',
                 'mobile'   => '79152824438',
                 'secret'   => '235RTWETerwtre42354wet',
-                'sip_busylevel'=>1,
+                'sip_enableRecording'=>false,
                 'sip_dtmfmode'=>'auto_info',
                 'sip_networkfilterid'=>'none',
-                'manualattributes'=>'',
+                'sip_transport'=>'udp',
+                'sip_manualattributes'=>'',
 
             ]];
         $params[] = [
@@ -316,10 +332,11 @@ callerid=2546456<240>',
                 'username' => 'Daria Holodova',
                 'mobile'   => '79161737472',
                 'secret'   => '235RTWETtre42354wet',
-                'sip_busylevel'=>1,
+                'sip_enableRecording'=>true,
                 'sip_dtmfmode'=>'auto_info',
                 'sip_networkfilterid'=>'none',
-                'manualattributes'=>'',
+                'sip_transport'=>'tls',
+                'sip_manualattributes'=>'',
             ]];
         $params[] = [
             [
@@ -328,10 +345,11 @@ callerid=2546456<240>',
                 'username' => 'Ilia Tsvetkov',
                 'mobile'   => '79998201098',
                 'secret'   => '235RT34WETtre42354wet',
-                'sip_busylevel'=>1,
+                'sip_enableRecording'=>false,
                 'sip_dtmfmode'=>'auto_info',
                 'sip_networkfilterid'=>'none',
-                'manualattributes'=>'[endpoint]
+                'sip_transport'=>'tls',
+                'sip_manualattributes'=>'[endpoint]
 callerid=2546456<240>',
             ]];
         $params[] = [
@@ -341,10 +359,11 @@ callerid=2546456<240>',
                 'username' => 'Maxim Tsvetkov',
                 'mobile'   => '79055651617',
                 'secret'   => '235RTWETttre42354wet',
-                'sip_busylevel'=>1,
+                'sip_enableRecording' => true,
                 'sip_dtmfmode'=>'auto_info',
                 'sip_networkfilterid'=>'none',
-                'manualattributes'=>'[endpoint]
+                'sip_transport'=>'tls',
+                'sip_manualattributes'=>'[endpoint]
 callerid=2546456<240>',
             ]];
         $params[] = [
@@ -354,10 +373,11 @@ callerid=2546456<240>',
                 'username' => 'Viktor Chentcov',
                 'mobile'   => '79265775288',
                 'secret'   => '235RTrWETtre42354wet',
-                'sip_busylevel'=>1,
+                'sip_enableRecording'=>false,
                 'sip_dtmfmode'=>'auto_info',
                 'sip_networkfilterid'=>'none',
-                'manualattributes'=>'[endpoint]
+                'sip_transport'=>'tls',
+                'sip_manualattributes'=>'[endpoint]
 callerid=2546456<251>',
 
             ]];
@@ -368,10 +388,11 @@ callerid=2546456<251>',
                 'username' => 'Evgenia Chulkova',
                 'mobile'   => '79161237145',
                 'secret'   => '235RTWETftre42354wet',
-                'sip_busylevel'=>1,
+                'sip_enableRecording'=>true,
                 'sip_dtmfmode'=>'auto_info',
                 'sip_networkfilterid'=>'none',
-                'manualattributes'=>'[endpoint]
+                'sip_transport'=>'tls',
+                'sip_manualattributes'=>'[endpoint]
 callerid=2546456<234>',
 
             ]

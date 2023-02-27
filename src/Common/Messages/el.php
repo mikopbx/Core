@@ -1130,4 +1130,7 @@ return [
     'cr_pinCode' => 'PIN συνδιάσκεψης',
     'tf_AllowRestriction' => 'Ισχύει μόνο για ορισμένες εισερχόμενες διαδρομές',
     'tf_RoutsRestriction' => 'Περιορισμοί διαδρομής',
+    'ex_CallRecording' => 'Καταγραφή κλήσεων',
+    'ex_enableRecording' => 'Επιτρέπω',
+    'gs_PBXRecordCallsInner' => 'Ηχογράφηση εσωτερικών συνομιλιών',
 ];

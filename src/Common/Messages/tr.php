@@ -1130,4 +1130,7 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
     'cr_pinCode' => 'Konferans PIN\'i',
     'tf_AllowRestriction' => 'Yalnızca belirli gelen rotalara uygula',
     'tf_RoutsRestriction' => 'Rota kısıtlamaları',
+    'ex_CallRecording' => 'Arama kaydı',
+    'ex_enableRecording' => 'İzin vermek',
+    'gs_PBXRecordCallsInner' => 'Dahili görüşmeleri kaydetme',
 ];

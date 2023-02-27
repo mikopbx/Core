@@ -1130,4 +1130,7 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'cr_pinCode' => 'PIN konferencji',
     'tf_AllowRestriction' => 'Zastosuj tylko do niektórych tras przychodzących',
     'tf_RoutsRestriction' => 'Ograniczenia trasy',
+    'ex_enableRecording' => 'Umożliwić',
+    'gs_PBXRecordCallsInner' => 'Nagrywanie rozmów wewnętrznych',
+    'ex_CallRecording' => 'Nagranie rozmowy',
 ];
