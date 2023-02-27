@@ -100,7 +100,7 @@ class BaseController extends Controller
                 $res = null;
                 $ttl = 3600;
                 if($e->getCode() !== 404){
-                    Util::sysLogMsg('BaseController', 'Error access to raw.04githubusercontent.com');
+                    Util::sysLogMsg('BaseController', 'Error access to raw.githubusercontent.com');
                 }
             }
             $links = null;
