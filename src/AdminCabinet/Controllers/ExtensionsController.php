@@ -164,7 +164,6 @@ class ExtensionsController extends BaseController
             $extension->Sip->disabled          = 0;
             $extension->Sip->type              = 'peer';
             $extension->Sip->uniqid            = Extensions::TYPE_SIP.strtoupper('-PHONE-' . md5(time()));
-            $extension->Sip->busylevel         = 1;
             $extension->Sip->qualify           = '1';
             $extension->Sip->qualifyfreq       = 60;
             $extension->number                 = $this->getNextInternalNumber();
