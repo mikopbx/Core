@@ -63,16 +63,16 @@ class BrowserStackTest extends TestCase
                     "os" => "Windows",
                     "browserstack.local" => "".getenv('BROWSERSTACK_LOCAL'),
                     "browserstack.localIdentifier" => "".getenv('BROWSERSTACK_LOCAL_IDENTIFIER'),
-                    "seleniumVersion" => "4.0.0",
-                    "build"=> "MikoPBXTest",
-                    "name"=> "local_test",
-                    "resolution" => "1280x1024",
-                    "acceptSslCerts"=> true,
-                    "fixSessionCapabilities"=> true,
-                    "remoteFiles"=> true,
-                    "browserstack.networkLogs"=> true
+                    "seleniumVersion" => "4.0.0"
                 ],
                 "browserName" => "Chrome",
+                "build"=> "MikoPBXTest",
+                "name"=> "local_test",
+                "resolution" => "1280x1024",
+                "acceptSslCerts"=> true,
+                "fixSessionCapabilities"=> true,
+                "remoteFiles"=> true,
+                "browserstack.networkLogs"=> true
             ];
         }
 
