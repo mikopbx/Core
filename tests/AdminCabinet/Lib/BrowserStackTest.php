@@ -59,12 +59,10 @@ class BrowserStackTest extends TestCase
             self::$bs_local->start($bs_local_args);
         } else {
             $caps = [
-                'bstack:options' => [
-                    "os" => "Windows",
-                    "browserstack.local" => "".getenv('BROWSERSTACK_LOCAL'),
-                    "browserstack.localIdentifier" => "".getenv('BROWSERSTACK_LOCAL_IDENTIFIER'),
-                    "seleniumVersion" => "4.0.0"
-                ],
+                "os" => "Windows",
+                "browserstack.local" => "".getenv('BROWSERSTACK_LOCAL'),
+                "browserstack.localIdentifier" => "".getenv('BROWSERSTACK_LOCAL_IDENTIFIER'),
+                "seleniumVersion" => "4.0.0",
                 "browserName" => "Chrome",
                 "build"=> "MikoPBXTest",
                 "name"=> "local_test",
