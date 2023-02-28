@@ -57,12 +57,30 @@ class BrowserStackTest extends TestCase
             ];
             self::$bs_local = new BrowserStackLocal();
             self::$bs_local->start($bs_local_args);
+        } else {
+            $caps = [
+                'bstack:options' => [
+                    "os" => "Windows",
+                    "browserstack.local" => "".getenv('BROWSERSTACK_LOCAL'),
+                    "browserstack.localIdentifier" => "".getenv('BROWSERSTACK_LOCAL_IDENTIFIER'),
+                    "seleniumVersion" => "4.0.0",
+                    "build"=> "MikoPBXTest",
+                    "name"=> "local_test",
+                    "resolution" => "1280x1024",
+                    "acceptSslCerts"=> true,
+                    "fixSessionCapabilities"=> true,
+                    "remoteFiles"=> true,
+                    "browserstack.networkLogs"=> true
+                ],
+                "browserName" => "Chrome",
+            ];
         }
 
         $url  = "https://" . $GLOBALS['BROWSERSTACK_USERNAME'] . ":" . $GLOBALS['BROWSERSTACK_ACCESS_KEY'] . "@" . $CONFIG['server'] . "/wd/hub";
 
         $caps['project'] = "MikoPBX";
         $caps['build'] = $GLOBALS['BUILD_NUMBER'];
+
         self::$driver = RemoteWebDriver::create($url, $caps);
         self::$testResult = true;
         self::$failureConditions = [];
