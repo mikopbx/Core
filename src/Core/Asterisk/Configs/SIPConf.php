@@ -1034,7 +1034,6 @@ class SIPConf extends CoreConfigClass
             // Ограничим длину calleridname. Это Unicode символы. Ограничиваем длину.
             $calleridname = mb_substr($calleridname,0, 40);
         }
-        $busylevel    = (trim($peer['busylevel']) === '') ? '1' : '' . $peer['busylevel'];
 
         $dtmfmode = ($peer['dtmfmode'] === 'rfc2833') ? 'rfc4733' : $peer['dtmfmode'];
         $options  = [
@@ -1054,7 +1053,7 @@ class SIPConf extends CoreConfigClass
             'pickup_group'         => '1',
             'sdp_session'          => 'mikopbx',
             'language'             => $language,
-            'device_state_busy_at' => $busylevel,
+            'device_state_busy_at' => "1",
             'aors'                 => $peer['extension'],
             'auth'                 => $peer['extension'],
             'outbound_auth'        => $peer['extension'],

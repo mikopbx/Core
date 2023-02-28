@@ -95,12 +95,12 @@ class BaseController extends Controller
             $client = new GuzzleHttp\Client();
             $url = 'https://raw.githubusercontent.com/mikopbx/Core/master/src/Common/WikiLinks/'.$this->language.'.json';
             try {
-                $res = $client->request('GET', $url, ['timeout', 1]);
+                $res = $client->request('GET', $url, ['timeout', 1, 'connect_timeout' => 1, 'read_timeout' => 1]);
             }catch (Exception $e){
                 $res = null;
                 $ttl = 3600;
                 if($e->getCode() !== 404){
-                    Util::sysLogMsg('BaseController', 'Error access to raw.04githubusercontent.com');
+                    Util::sysLogMsg('BaseController', 'Error access to raw.githubusercontent.com');
                 }
             }
             $links = null;

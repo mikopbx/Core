@@ -140,11 +140,6 @@ class Sip extends ModelsBase
     public ?string $qualify = '1';
 
     /**
-     * @Column(type="string", nullable=true)
-     */
-    public ?string $busylevel = '';
-
-    /**
      * @Column(type="integer", nullable=true)
      */
     public ?string $networkfilterid = '';

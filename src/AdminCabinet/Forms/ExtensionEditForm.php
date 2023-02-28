@@ -129,9 +129,6 @@ class ExtensionEditForm extends Form
             )
         );
 
-        // Busylevel
-        $this->add(new Numeric('sip_busylevel', ["value" => $sip->busylevel, 'autocomplete' => 'off']));
-
         // Dtmfmode
         $arrDTMFType = [
             'auto'      => $this->translation->_('auto'),

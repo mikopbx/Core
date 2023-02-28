@@ -249,11 +249,7 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
 
         // Раскрываем расширенные опции
         $this->openAccordionOnThePage();
-
-        $this->changeInputField('sip_busylevel', $params['sip_busylevel']);
         $this->selectDropdownItem('sip_networkfilterid', $params['sip_networkfilterid']);
-
-        $this->changeInputField('sip_busylevel', $params['sip_busylevel']);
 
         $this->changeTextAreaValue('sip_manualattributes', $params['manualattributes']);
 
@@ -287,7 +283,6 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
         // Раскрываем расширенные опции
         $this->openAccordionOnThePage();
         $this->assertInputFieldValueEqual('mobile_dialstring',  $params['mobile']);
-        $this->assertInputFieldValueEqual('sip_busylevel', $params['sip_busylevel']);
         $this->assertMenuItemSelected('sip_networkfilterid', $params['sip_networkfilterid']);
 
 
@@ -310,7 +305,6 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
                 'username' => 'Alexandra Pushina',
                 'mobile'   => '79123125410',
                 'secret'   => '23542354wet2',
-                'sip_busylevel'=>2,
                 'sip_dtmfmode'=>'inband',
                 'sip_networkfilterid'=>'4',
                 'fwd_ringlength'=>'30',
