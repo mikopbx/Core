@@ -52,7 +52,7 @@ class CreateExtensionsTest extends MikoPBXTestsBase
             // Раскрываем расширенные опции
             $this->openAccordionOnThePage();
 
-            $this->changeCheckBoxState('disablefromuser', $params['disablefromuser']);
+            $this->changeCheckBoxState('sip_enableRecording', $params['sip_enableRecording']);
             $this->selectDropdownItem('sip_networkfilterid', $params['sip_networkfilterid']);
             $this->selectDropdownItem('sip_transport', $params['sip_transport']);
 
@@ -97,7 +97,6 @@ class CreateExtensionsTest extends MikoPBXTestsBase
             // Раскрываем расширенные опции
             $this->openAccordionOnThePage();
             $this->assertInputFieldValueEqual('mobile_dialstring',  $params['mobile']);
-            $this->assertCheckBoxStageIsEqual('qualify', $params['qualify']);
             $this->assertMenuItemSelected('sip_networkfilterid', $params['sip_networkfilterid']);
             $this->assertMenuItemSelected('sip_transport', $params['sip_transport']);
             $this->assertTextAreaValueIsEqual('sip_manualattributes', $params['sip_manualattributes']);
