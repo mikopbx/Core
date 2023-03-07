@@ -64,7 +64,7 @@ class InternalContexts extends CoreConfigClass
 
         $conf .= "[set-answer-state]".PHP_EOL;
         $conf .= 'exten => _.!,1,Set(EXPORT(${FROM_CHAN},MASTER_CHANNEL(M_DIALSTATUS))=ANSWER)'.PHP_EOL."\t";
-        $conf .= 'same => n,,Set(EXPORT(${FROM_CHAN},M_DIALSTATUS)=ANSWER)'.PHP_EOL."\t";
+        $conf .= 'same => n,Set(EXPORT(${FROM_CHAN},M_DIALSTATUS)=ANSWER)'.PHP_EOL."\t";
         $conf .= 'same => n,return'.PHP_EOL;
         $conf .= 'exten => _[hit],1,NoOp()'.PHP_EOL.PHP_EOL;
 
