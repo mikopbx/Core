@@ -177,14 +177,16 @@ class SIPConf extends CoreConfigClass
             $numbers = $usersNumbers[$peer['user_id']]??[];
             foreach ($numbers as $num){
                 $num = substr($num,-9);
-                $conf  .= "exten => {$num},1,NoOp(-)".PHP_EOL;
-                if($peer['enableRecording'] !== true){
+                if(strpos($conf, " $num,") === false){
+                    $conf  .= "exten => {$num},1,NoOp(-)".PHP_EOL;
+                }
+                if($peer['enableRecording'] !== true && strpos($confExceptions, " $num,") === false){
                     $confExceptions .= "exten => {$num},1,NoOp(-)".PHP_EOL;
                 }
             }
         }
         $conf.= PHP_EOL.'[monitor-exceptions]'.PHP_EOL.
-                $confExceptions.PHP_EOL;
+                $confExceptions.PHP_EOL.PHP_EOL;
         return $conf;
     }
 
