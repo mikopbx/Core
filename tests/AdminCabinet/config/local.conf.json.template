@@ -1,7 +1,5 @@
 {
   "server": "hub-cloud.browserstack.com",
-  "user": "bsuser63039",
-  "key": "hqQXx7KMkEj3yMqoHArr",
   "capabilities": {
     "project": "MikoPBX",
     "build": "MikoPBXTest",
@@ -14,7 +12,7 @@
     "browserstack.networkLogs": true,
     "seleniumVersion": "4.0.0",
     "browserName": "Chrome",
-    "browserstack.local": false
+    "browserstack.local": true
   },
 	"MIKO_LICENSE_KEY": "",
   "environments": [{
