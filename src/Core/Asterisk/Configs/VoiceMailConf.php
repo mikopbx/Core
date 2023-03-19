@@ -58,7 +58,7 @@ class VoiceMailConf extends CoreConfigClass
         $conf .= 'same => n,ExecIf($["${CHANNEL:0:5}" == "Local"]?Set(pl=${IF($["${CHANNEL:-1}" == "1"]?2:1)}))' . "\n\t";
         $conf .= 'same => n,ExecIf($["${CHANNEL:0:5}" == "Local"]?Set(bridgePeer=${IMPORT(${CUT(CHANNEL,\;,1)}\;${pl},BRIDGEPEER)}))' . "\n\t";
         $conf .= 'same => n,ExecIf($[ "${FROM_CHAN}" == "${bridgePeer}" ]?ChannelRedirect(${bridgePeer},${CONTEXT},${EXTEN},2))' . "\n\t";
-        $conf .= 'same => n,AGI(/usr/www/src/Core/Asterisk/agi-bin/clean_timeout.php)' . "\n\t";
+        $conf .= 'same => n,Gosub(set-answer-state,${EXTEN},1)' . PHP_EOL."\t";
         $conf .= 'same => n,Gosub(voicemail_start,${EXTEN},1)' . "\n\t";
         $conf .= 'same => n,VoiceMail(admin@voicemailcontext)' . "\n\t";
         $conf .= 'same => n,Hangup()' . "\n\n";

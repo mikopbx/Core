@@ -37,7 +37,6 @@ class WorkerCallEvents extends WorkerBase
     protected bool  $split_audio_thread = false;
     public    array $checkChanHangupTransfer = [];
     private   array $activeChannels = [];
-    public const TIMOUT_CHANNEL_TUBE = 'CleanChannelTimout';
 
     private array $innerNumbers       = [];
     private array $exceptionsNumbers  = [];
@@ -187,7 +186,6 @@ class WorkerCallEvents extends WorkerBase
         $client->subscribe(self::class,                [$this, 'otherEvents']);
         $client->subscribe(WorkerCdr::SELECT_CDR_TUBE, [$this, 'selectCDRWorker']);
         $client->subscribe(WorkerCdr::UPDATE_CDR_TUBE, [$this, 'updateCDRWorker']);
-        $client->subscribe(self::TIMOUT_CHANNEL_TUBE,  [$this, 'cleanTimeOutChannel']);
         $client->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
         $client->setErrorHandler([$this, 'errorHandler']);
 
@@ -311,20 +309,6 @@ class WorkerCallEvents extends WorkerBase
         $task    = $tube->getBody();
         $data = json_decode($task, true);
         UpdateDataInDB::execute($data);
-        $tube->reply(json_encode(true));
-    }
-
-    /**
-     * Получения CDR к обработке.
-     *
-     * @param array | BeanstalkClient $tube
-     */
-    public function cleanTimeOutChannel($tube): void
-    {
-        $task        = $tube->getBody();
-        $taskData    = json_decode($task, true);
-        $srcChannel  = $taskData['srcChannel']??'';
-        $this->am->SetVar($srcChannel, "MASTER_CHANNEL(M_DIALSTATUS)", 'ANSWER');
         $tube->reply(json_encode(true));
     }
 

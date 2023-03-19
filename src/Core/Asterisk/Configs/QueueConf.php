@@ -47,7 +47,7 @@ class QueueConf extends CoreConfigClass
     public function extensionGenContexts(): string
     {
         // Генерация внутреннего номерного плана.
-        $conf = "[queue_agent_answer]".PHP_EOL;
+        $conf = PHP_EOL."[queue_agent_answer]".PHP_EOL;
         $conf .= 'exten => s,1,Gosub(queue_answer,${EXTEN},1)' . PHP_EOL."\t";
         $conf .= "same => n,Return()".PHP_EOL.PHP_EOL;
 

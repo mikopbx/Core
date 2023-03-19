@@ -174,7 +174,11 @@ class ExtensionsOutWorkTimeConf extends CoreConfigClass
                     $dialplanDid[$did] = '';
                 }
                 foreach ($data as $ruleData) {
-                    $didArray =  array_column($routesData[$ruleData['id']], 'did');
+                    $didPreArray = $routesData[$ruleData['id']]??[];
+                    if(empty($didPreArray)){
+                        continue;
+                    }
+                    $didArray =  array_column($didPreArray, 'did');
                     if(!isset($routesData[$ruleData['id']]) || ! in_array((string)$did, $didArray, true)){
                         continue;
                     }
@@ -190,7 +194,11 @@ class ExtensionsOutWorkTimeConf extends CoreConfigClass
 
                 $tmpConf = [];
                 foreach ($data as $ruleData) {
-                    $didArray =  array_column($routesData[$ruleData['id']], 'did');
+                    $didPreArray = $routesData[$ruleData['id']]??[];
+                    if(empty($didPreArray)){
+                        continue;
+                    }
+                    $didArray =  array_column($didPreArray, 'did');
                     if($confDid === false){
                         $dialplan = '';
                     }elseif(!isset($routesData[$ruleData['id']]) || ! in_array((string)$did, $didArray, true)){
@@ -210,6 +218,9 @@ class ExtensionsOutWorkTimeConf extends CoreConfigClass
             foreach ($checkContextsYear as $did => $tmpArr){
                 foreach ($tmpArr as $years){
                     foreach ($years as $year => $rule){
+                        if(!isset($confYear[$year])){
+                            $confYear[$year] = '';
+                        }
                         $confYear[$year] .= 'exten => '.ExtensionsConf::getExtenByDid($did).",1,NoOp(check time {$year} year)\n\t";
                         $confYear[$year] .= implode("", $rule);
                         $confYear[$year] .= "same => n,return\n";

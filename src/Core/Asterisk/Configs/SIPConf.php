@@ -177,14 +177,16 @@ class SIPConf extends CoreConfigClass
             $numbers = $usersNumbers[$peer['user_id']]??[];
             foreach ($numbers as $num){
                 $num = substr($num,-9);
-                $conf  .= "exten => {$num},1,NoOp(-)".PHP_EOL;
-                if($peer['enableRecording'] !== true){
+                if(strpos($conf, " $num,") === false){
+                    $conf  .= "exten => {$num},1,NoOp(-)".PHP_EOL;
+                }
+                if($peer['enableRecording'] !== true && strpos($confExceptions, " $num,") === false){
                     $confExceptions .= "exten => {$num},1,NoOp(-)".PHP_EOL;
                 }
             }
         }
         $conf.= PHP_EOL.'[monitor-exceptions]'.PHP_EOL.
-                $confExceptions.PHP_EOL;
+                $confExceptions.PHP_EOL.PHP_EOL;
         return $conf;
     }
 
@@ -606,9 +608,8 @@ class SIPConf extends CoreConfigClass
             if($provider['registration_type'] !== Sip::REG_TYPE_NONE){
                 $prov_config .= $this->generateProviderAuth($provider, $manual_attributes);
             }
-            if($provider['registration_type'] !== Sip::REG_TYPE_INBOUND) {
-                $prov_config .= $this->generateProviderIdentify($provider, $manual_attributes);
-            }
+
+            $prov_config .= $this->generateProviderIdentify($provider, $manual_attributes);
             $prov_config .= $this->generateProviderAor($provider, $manual_attributes);
             $prov_config .= $this->generateProviderEndpoint($provider, $manual_attributes);
         }
@@ -789,11 +790,11 @@ class SIPConf extends CoreConfigClass
     private function generateProviderIdentify(array $provider, array $manual_attributes): string {
         $conf          = '';
         $providerHosts = $this->dataSipHosts[$provider['uniqid']] ?? [];
-        if ( ! in_array($provider['host'], $providerHosts, true)) {
-            $providerHosts[] = $provider['host'];
-        }
         if(!empty($provider['outbound_proxy'])){
             $providerHosts[] = explode(':', $provider['outbound_proxy'])[0];
+        }
+        if(empty($providerHosts)){
+            return '';
         }
         $options = [
             'type'     => 'identify',

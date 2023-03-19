@@ -62,6 +62,12 @@ class InternalContexts extends CoreConfigClass
         $conf .= 'same => n,ExecIf($["${BLINDTRANSFER}x" != "x"]?AGI(check_redirect.php,${BLINDTRANSFER}))' . "\n\t";
         $conf .= "same => n,Playback(pbx-invalid,noanswer) \n\n";
 
+        $conf .= "[set-answer-state]".PHP_EOL;
+        $conf .= 'exten => _.!,1,Set(EXPORT(${FROM_CHAN},MASTER_CHANNEL(M_DIALSTATUS))=ANSWER)'.PHP_EOL."\t";
+        $conf .= 'same => n,Set(EXPORT(${FROM_CHAN},M_DIALSTATUS)=ANSWER)'.PHP_EOL."\t";
+        $conf .= 'same => n,return'.PHP_EOL;
+        $conf .= 'exten => _[hit],1,NoOp()'.PHP_EOL.PHP_EOL;
+
         $conf .= '[set-dial-contacts]'.PHP_EOL.
                  'exten => _X!,1,NoOp()'.PHP_EOL."\t";
 

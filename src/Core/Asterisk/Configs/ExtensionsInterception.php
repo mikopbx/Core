@@ -42,7 +42,7 @@ class ExtensionsInterception extends CoreConfigClass
                 'same => n,Set(CHANNEL(hangup_handler_wipe)=hangup_handler,s,1)' . PHP_EOL."\t".
                 'same => n,Set(FROM_CHAN=${INTECEPTION_CNANNEL})' . PHP_EOL."\t".
                 'same => n,Set(MASTER_CHANNEL(M_TIMEOUT_CHANNEL)=${INTECEPTION_CNANNEL})' . PHP_EOL."\t".
-                'same => n,AGI(/usr/www/src/Core/Asterisk/agi-bin/clean_timeout.php)' . PHP_EOL."\t".
+                'same => n,Gosub(set-answer-state,${EXTEN},1)' . PHP_EOL."\t".
                 'same => n,Gosub(dial_interception,${EXTEN},1)' . PHP_EOL."\t".
                 'same => n,Gosub(dial_answer,${EXTEN},1)' . PHP_EOL."\t".
                 'same => n,Bridge(${INTECEPTION_CNANNEL},Tk)' . PHP_EOL."\t".

@@ -115,6 +115,7 @@ class ModulesConf extends CoreConfigClass
             'func_periodic_hook.so',
             'func_uri.so',
             'func_groupcount.so',
+            'func_export.so',
             'app_mixmonitor.so',
 
             // Необходимое для работы переадресаций.

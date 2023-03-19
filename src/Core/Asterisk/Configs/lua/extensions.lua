@@ -542,7 +542,8 @@ function event_dial_answer()
         -- Если masterChannel локальный канал, то скорее всего идет Originate.
         set_variable("__pt1c_UNIQUEID", id);
         set_variable("MASTER_CHANNEL(M_DIALSTATUS)", 'ANSWER');
-        app["AGI"]('/usr/www/src/Core/Asterisk/agi-bin/clean_timeout.php');
+        set_variable('EXPORT('..get_variable("FROM_CHAN")..',MASTER_CHANNEL(M_DIALSTATUS))', 'ANSWER')
+        set_variable('EXPORT('..get_variable("FROM_CHAN")..',M_DIALSTATUS)', 'ANSWER')
         set_variable("MASTER_CHANNEL(M_TIMEOUT_CHANNEL)", '');
 
         local needAnnonceIn  = get_variable('MASTER_CHANNEL(IN_NEED_ANNONCE)');
