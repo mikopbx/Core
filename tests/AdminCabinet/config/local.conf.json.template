@@ -12,7 +12,7 @@
     "browserstack.networkLogs": true,
     "seleniumVersion": "4.0.0",
     "browserName": "Chrome",
-    "browserstack.local": true
+    "browserstack.local": false
   },
 	"MIKO_LICENSE_KEY": "",
   "environments": [{
