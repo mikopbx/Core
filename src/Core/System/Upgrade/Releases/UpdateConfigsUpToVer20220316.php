@@ -50,6 +50,10 @@ class UpdateConfigsUpToVer20220316 extends Injectable implements UpgradeSystemCo
 
         $u = new UpdateConfigsUpToVer202202103();
         $u->processUpdate();
+
+        // Чистим старый кэш pdnsd;
+        $rmPath = Util::which('rm');
+        shell_exec("$rmPath -rf /storage/usbdisk1/mikopbx/log/pdnsd");
     }
 
     /**
