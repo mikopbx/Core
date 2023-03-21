@@ -227,7 +227,7 @@ class OutOffWorkTimeController extends BaseController
                     break;
                 case 'allowRestriction':
                     if(isset($data[$name])){
-                        $timeFrame->$name = ($data[$name] === 'on') ? "1" : "0";
+                        $timeFrame->$name = ($data[$name] === 'on') ? '1' : '0';
                     }else{
                         $timeFrame->$name = '0';
                     }
@@ -256,7 +256,7 @@ class OutOffWorkTimeController extends BaseController
         }
 
         // Save the out-of-work time record to the database
-        $error = $timeFrame->save();
+        $error = !$timeFrame->save();
 
         // If there was an error saving the record, display the error message
         if ($error === false) {
