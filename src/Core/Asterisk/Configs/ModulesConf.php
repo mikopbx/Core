@@ -189,9 +189,9 @@ class ModulesConf extends CoreConfigClass
             'cel_beanstalkd.so',
             'app_celgenuserevent.so',
 
-            'res_hep.so',
-            'res_hep_pjsip.so',
-            'res_hep_rtcp.so',
+            // 'res_hep.so',
+            // 'res_hep_pjsip.so',
+            // 'res_hep_rtcp.so',
         ];
 
         if(file_exists('/dev/dahdi/transcode')){
