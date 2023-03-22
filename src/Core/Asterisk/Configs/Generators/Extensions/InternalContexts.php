@@ -138,7 +138,7 @@ class InternalContexts extends CoreConfigClass
         $conf = "[all_peers]\n";
         $conf .= 'include => internal-hints' . "\n";
         $conf .= 'exten => failed,1,Hangup()' . "\n";
-        $conf .= 'exten => ' . ExtensionsConf::ALL_NUMBER_EXTENSION . ',1,ExecIf($[ "${ORIGINATE_SRC_CHANNEL}x" != "x" ]?Wait(0.2))' . PHP_EOL . "\t";
+        $conf .= 'exten => ' . ExtensionsConf::ALL_EXTENSION . ',1,ExecIf($[ "${ORIGINATE_SRC_CHANNEL}x" != "x" ]?Wait(0.2))' . PHP_EOL . "\t";
         $conf .= 'same => n,ExecIf($[ "${ORIGINATE_SRC_CHANNEL}x" != "x" ]?ChannelRedirect(${ORIGINATE_SRC_CHANNEL},${CONTEXT},${ORIGINATE_DST_EXTEN},1))' . PHP_EOL . "\t";
         $conf .= 'same => n,ExecIf($[ "${ORIGINATE_SRC_CHANNEL}x" != "x" ]?Hangup())' . PHP_EOL . "\t";
 
@@ -166,6 +166,7 @@ class InternalContexts extends CoreConfigClass
             $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(' . $name . ',${EXTEN},1)}" == "1"]?' . $name . ',${EXTEN},1)' . " \n\t";
         }
         $conf .= 'same => n,Hangup()' . " \n";
+        $conf .= 'exten => _[hit],1,Hangup()' . " \n";
 
         $pickupExtension = $this->generalSettings['PBXFeaturePickupExten'];
         if(!empty($pickupExtension)){
