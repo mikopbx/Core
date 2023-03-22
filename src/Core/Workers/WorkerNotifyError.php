@@ -35,8 +35,12 @@ class WorkerNotifyError extends WorkerBase
      */
     public function start($argv): void
     {
-
         $client = new BeanstalkClient('WorkerNotifyError_license');
+        if($client->isConnected() === false){
+            Util::sysLogMsg(self::class, 'Fail connect to beanstalkd...');
+            sleep(2);
+            return;
+        }
         $client->subscribe('WorkerNotifyError_license', [$this, 'onLicenseError']);
         $client->subscribe('WorkerNotifyError_storage', [$this, 'onStorageError']);
         $client->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);

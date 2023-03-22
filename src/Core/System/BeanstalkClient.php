@@ -65,7 +65,12 @@ class BeanstalkClient extends Injectable
             $tmpPort = $this->port;
         }
         $this->queue = Pheanstalk::create($config->host, $tmpPort);
-        $this->queue->useTube($this->tube);
+        try {
+            $this->queue->useTube($this->tube);
+        }catch (Throwable $e){
+            $this->connected = false;
+            return;
+        }
         foreach ($this->subscriptions as $tube => $callback) {
             $this->subscribe($tube, $callback);
         }

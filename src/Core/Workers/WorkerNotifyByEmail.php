@@ -33,6 +33,11 @@ class WorkerNotifyByEmail extends WorkerBase
     public function start($argv): void
     {
         $client = new BeanstalkClient(__CLASS__);
+        if($client->isConnected() === false){
+            Util::sysLogMsg(self::class, 'Fail connect to beanstalkd...');
+            sleep(2);
+            return;
+        }
         $client->subscribe(__CLASS__, [$this, 'workerNotifyByEmail']);
         $client->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
 

@@ -182,6 +182,11 @@ class WorkerCallEvents extends WorkerBase
 
         // PID сохраняем при начале работы Worker.
         $client = new BeanstalkClient(self::class);
+        if($client->isConnected() === false){
+            Util::sysLogMsg(self::class, 'Fail connect to beanstalkd...');
+            sleep(2);
+            return;
+        }
         $client->subscribe(CelConf::BEANSTALK_TUBE,    [$this, 'callEventsWorker']);
         $client->subscribe(self::class,                [$this, 'otherEvents']);
         $client->subscribe(WorkerCdr::SELECT_CDR_TUBE, [$this, 'selectCDRWorker']);

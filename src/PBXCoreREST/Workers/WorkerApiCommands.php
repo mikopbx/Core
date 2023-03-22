@@ -19,7 +19,7 @@
 
 namespace MikoPBX\PBXCoreREST\Workers;
 
-use MikoPBX\Core\System\{BeanstalkClient, Processes};
+use MikoPBX\Core\System\{BeanstalkClient, Processes, Util};
 use MikoPBX\Common\Providers\BeanstalkConnectionWorkerApiProvider;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\PBXCoreREST\Lib\AdvicesProcessor;
@@ -59,9 +59,13 @@ class WorkerApiCommands extends WorkerBase
     public function start($argv): void
     {
         $beanstalk = $this->di->getShared(BeanstalkConnectionWorkerApiProvider::SERVICE_NAME);
+        if($beanstalk->isConnected() === false){
+            Util::sysLogMsg(self::class, 'Fail connect to beanstalkd...');
+            sleep(2);
+            return;
+        }
         $beanstalk->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
         $beanstalk->subscribe(__CLASS__, [$this, 'prepareAnswer']);
-
         $this->registerProcessors();
 
         while ($this->needRestart === false) {
