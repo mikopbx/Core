@@ -572,7 +572,7 @@ class Storage extends Di\Injectable
                     'size' => "" . $m_size,
                     'size_text' => "" . $m_size . " Mb",
                     'vendor' => 'Debian',
-                    'mounted' => '/storage',
+                    'mounted' => '/storage/usbdisk',
                     'free_space' => round($disk_data[2] / 1024, 1),
                     'partitions' => [],
                     'sys_disk' => true,
