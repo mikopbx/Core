@@ -304,7 +304,7 @@ class AdvicesProcessor extends Injectable
                     'form_params' => [
                         'PBXVER' => $PBXVersion,
                     ],
-                    'timeout' => 1,
+                    'timeout' => 3,
                 ]
             );
             $code = $res->getStatusCode();
