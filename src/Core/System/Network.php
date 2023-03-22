@@ -595,8 +595,12 @@ class Network extends Injectable
         if ( ! empty($data['domain'])) {
             $hosts_conf .= "127.0.0.1 {$data['hostname']}.{$data['domain']}\n";
         }
+        $hostnamePath = Util::which('hostname');
+        if(Util::isDocker()){
+            $realHostName = shell_exec($hostnamePath);
+            $hosts_conf .= "127.0.0.1 $realHostName\n";
+        }
         Util::fileWriteContent('/etc/hosts', $hosts_conf);
-
         $hostnamePath = Util::which('hostname');
         Processes::mwExec($hostnamePath . ' ' . escapeshellarg($data['hostname']));
     }

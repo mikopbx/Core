@@ -34,6 +34,10 @@ class BeanstalkConf extends Injectable
     {
         $config = $this->getDI()->get('config')->beanstalk;
         $conf   = "-l {$config->host} -p {$config->port} -z 524280";
-        Processes::safeStartDaemon(self::PROC_NAME, $conf);
+        $result = Processes::safeStartDaemon(self::PROC_NAME, $conf);
+        if(!$result){
+            sleep(10);
+            Processes::safeStartDaemon(self::PROC_NAME, $conf);
+        }
     }
 }
