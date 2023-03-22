@@ -155,4 +155,9 @@ abstract class CallDetailRecordsBase extends ModelsBase
      * @Column(type="string", nullable=true)
      */
     public ?string $verbose_call_id = '';
+
+    /**
+     * @Column(type="integer", nullable=true)
+     */
+    public ?string $a_transfer = '0';
 }
