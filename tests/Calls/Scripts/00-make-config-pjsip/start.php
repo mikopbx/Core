@@ -26,7 +26,6 @@ require_once 'Globals.php';
 
 $testName = basename(__DIR__);
 TestCallsBase::printHeader("Start test {$testName}");
-
 TestCallsBase::printInfo("Get data peers...");
 $limitPeers = 5;
 $peers = Sip::find([
@@ -37,7 +36,7 @@ $peers = Sip::find([
 $limitProviders = 2;
 // Подбираем учетки провайдеров.
 $providers = Sip::find([
-    "type='friend' AND disabled<>'1' and noregister='1'",
+    "type='friend' AND disabled<>'1' AND registration_type='none'",
     'limit' => $limitProviders
 ])->toArray();
 
