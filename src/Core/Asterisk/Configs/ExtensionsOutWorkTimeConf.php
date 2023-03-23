@@ -20,6 +20,7 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
+use MikoPBX\Common\Models\Iax;
 use MikoPBX\Common\Models\IncomingRoutingTable;
 use MikoPBX\Common\Models\OutWorkTimes;
 use MikoPBX\Common\Models\OutWorkTimesRouts;
@@ -89,7 +90,11 @@ class ExtensionsOutWorkTimeConf extends CoreConfigClass
             if ($provider) {
                 $modelType  = ucfirst($provider->type);
                 $provByType = $provider->$modelType;
-                $context_id = SIPConf::getContextId($provByType->host.$provByType->port);
+                if(get_class($provider->$modelType) === Iax::class){
+                    $context_id = "{$provider->uniqid}-incoming";
+                }else{
+                    $context_id = SIPConf::getContextId($provByType->host.$provByType->port);
+                }
             } else {
                 $context_id = 'none-incoming';
             }
