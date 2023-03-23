@@ -117,7 +117,7 @@ class ExtensionsConf extends CoreConfigClass
                  'same => n,HangUp()' . PHP_EOL .PHP_EOL;
 
         $conf .= '[internal-originate]' . PHP_EOL .
-            'exten => _.!,1,Set(pt1c_cid=${FILTER(\*\#\+1234567890,${pt1c_cid})})' . PHP_EOL . "\t" .
+            'exten => '.self::ALL_EXTENSION.',1,Set(pt1c_cid=${FILTER(\*\#\+1234567890,${pt1c_cid})})' . PHP_EOL . "\t" .
             'same => n,Set(MASTER_CHANNEL(ORIGINATE_DST_EXTEN)=${pt1c_cid})' . PHP_EOL . "\t" .
             'same => n,Set(number=${FILTER(\*\#\+1234567890,${EXTEN})})' . PHP_EOL . "\t" .
             'same => n,ExecIf($["${EXTEN}" != "${number}"]?Goto(${CONTEXT},${number},$[${PRIORITY} + 1]))' . PHP_EOL . "\t" .
@@ -133,13 +133,14 @@ class ExtensionsConf extends CoreConfigClass
             'same => n,Gosub(set-dial-contacts,${EXTEN},1)' . PHP_EOL . "\t" .
             'same => n,ExecIf($["${FIELDQTY(DST_CONTACT,&)}" != "1" && "${ALLOW_MULTY_ANSWER}" != "1"]?Set(__PT1C_SIP_HEADER=${EMPTY_VAR}))' . PHP_EOL . "\t" .
             'same => n,ExecIf($["${DST_CONTACT}x" != "x"]?Dial(${DST_CONTACT},${ringlength},TtekKHhb(originate-create-channel,${EXTEN},1)U(originate-answer-channel),s,1)))' . PHP_EOL.
-            'exten => h,1,Gosub(interception_bridge_result,${EXTEN},1)' . "\n\n".
+            'exten => _[hit],1,Gosub(interception_bridge_result,${EXTEN},1)' . "\n\t".
+            'same => n,Hangup' . "\n\n".
 
             '[internal-originate-queue]' . PHP_EOL .
-            'exten => _X!,1,Set(_NOCDR=1)' . PHP_EOL . "\t" .
+            'exten => '.self::ALL_EXTENSION.',1,Set(_NOCDR=1)' . PHP_EOL . "\t" .
             'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1)' . PHP_EOL . "\t" .
             'same => n,ExecIf($["${SRC_QUEUE}x" != "x"]?Queue(${SRC_QUEUE},kT,,,300,,,originate-answer-channel))' . PHP_EOL . PHP_EOL .
-            'exten => h,1,Hangup' . "\n\n".
+            'exten => _[hit],1,Hangup' . "\n\n".
 
             '[originate-create-channel] ' . PHP_EOL .
             'exten => _.!,1,ExecIf($[ "${EXTEN}" == "h" ]?Hangup()'. PHP_EOL . "\t" .
@@ -166,7 +167,6 @@ class ExtensionsConf extends CoreConfigClass
         $conf .= '[hangup_handler]' . "\n";
         $conf .= 'exten => s,1,NoOp(--- hangup - ${CHANNEL} ---)' . "\n\t";
         $conf .= 'same => n,Gosub(hangup_chan,${EXTEN},1)' . "\n\t";
-
         $conf .= 'same => n,return' . "\n\n";
 
         $conf .= '[set_orign_chan]' . "\n";

@@ -30,7 +30,6 @@ use MikoPBX\Core\System\Util;
 class ExtensionsOutWorkTimeConf extends CoreConfigClass
 {
     public const OUT_WORK_TIME_CONTEXT = 'check-out-work-time';
-    public const DIGIT_ANY_EXTENSION = '_[0-9*#+a-zA-Z]!';
 
     /**
      * Генератор extensions, дополнительные контексты.
@@ -63,12 +62,12 @@ class ExtensionsOutWorkTimeConf extends CoreConfigClass
     private function generateOutWorkTimes(): string
     {
         $conf = "\n\n[playback-exit]\n";
-        $conf .= 'exten => '.self::DIGIT_ANY_EXTENSION.',1,Gosub(dial_outworktimes,${EXTEN},1)' . "\n\t";
+        $conf .= 'exten => '.ExtensionsConf::ALL_EXTENSION.',1,Gosub(dial_outworktimes,${EXTEN},1)' . "\n\t";
         $conf .= 'same => n,Playback(${filename})' . "\n\t";
         $conf .= 'same => n,Hangup()' . "\n";
-        $conf .= 'exten => _[hit],1,NoOp()'.PHP_EOL.PHP_EOL;
+        $conf .= 'exten => _[hit],1,Hangup()'.PHP_EOL.PHP_EOL;
 
-        $conf .= $this->getWorkTimeDialplan(self::DIGIT_ANY_EXTENSION);
+        $conf .= $this->getWorkTimeDialplan(ExtensionsConf::ALL_EXTENSION);
         return $conf;
     }
 
@@ -100,7 +99,7 @@ class ExtensionsOutWorkTimeConf extends CoreConfigClass
             }
             $routesData[$rule->id] = [
                 'context' => $context_id,
-                'did'     => empty($rule->number)?self::DIGIT_ANY_EXTENSION:$rule->number,
+                'did'     => empty($rule->number)?ExtensionsConf::ALL_EXTENSION:$rule->number,
                 'enable'  => in_array($rule->id, $allowedRulesIds, true)
              ];
         }
@@ -158,15 +157,15 @@ class ExtensionsOutWorkTimeConf extends CoreConfigClass
             }
         }
         $conf .= "same => n,return\n\n";
-        $conf .= 'exten => _[hit],1,NoOp()'.PHP_EOL;
+        $conf .= 'exten => _[hit],1,Hangup()'.PHP_EOL;
         $conf .= $conf_out_set_var;
 
         foreach ($checkContextsYear as $year => $rule){
             $conf .= "[".self::OUT_WORK_TIME_CONTEXT."-{$year}]\n";
-            $conf .= 'exten => '.self::DIGIT_ANY_EXTENSION.",1,NoOp(check time {$year} year)\n\t";
+            $conf .= 'exten => '.ExtensionsConf::ALL_EXTENSION.",1,NoOp(check time {$year} year)\n\t";
             $conf .= implode("", $rule);
             $conf .= "same => n,return\n";
-            $conf .= 'exten => _[hit],1,NoOp()'.PHP_EOL;
+            $conf .= 'exten => _[hit],1,Hangup()'.PHP_EOL;
         }
 
         $checkContextsYear = [];
@@ -218,7 +217,7 @@ class ExtensionsOutWorkTimeConf extends CoreConfigClass
                 }
                 $conf.= implode('', $tmpConf);
             }
-            $conf .= 'exten => _[hit],1,NoOp()'.PHP_EOL.PHP_EOL;
+            $conf .= 'exten => _[hit],1,Hangup()'.PHP_EOL.PHP_EOL;
             $confYear = [];
             foreach ($checkContextsYear as $did => $tmpArr){
                 foreach ($tmpArr as $years){
@@ -235,7 +234,7 @@ class ExtensionsOutWorkTimeConf extends CoreConfigClass
             foreach ($confYear as $year => $rule){
                 $conf .= "[".self::OUT_WORK_TIME_CONTEXT."-$contextKey-{$year}]\n";
                 $conf .= $rule;
-                $conf .= 'exten => _[hit],1,NoOp()'.PHP_EOL.PHP_EOL;
+                $conf .= 'exten => _[hit],1,Hangup()'.PHP_EOL.PHP_EOL;
             }
             $conf .= $conf_out_set_var;
         }
@@ -369,9 +368,9 @@ class ExtensionsOutWorkTimeConf extends CoreConfigClass
 
             if (strpos($conf_out_set_var, $dialplanName) === false) {
                 $conf_out_set_var .= "[{$dialplanName}]\n" .
-                    'exten => '.self::DIGIT_ANY_EXTENSION.',1,Set(filename=' . $audio_message . ')'."\n\t" .
+                    'exten => '.ExtensionsConf::ALL_EXTENSION.',1,Set(filename=' . $audio_message . ')'."\n\t" .
                         'same => n,Goto(playback-exit,${EXTEN},1)'."\n".
-                    'exten => _[hit],1,NoOp()'.PHP_EOL.PHP_EOL;
+                    'exten => _[hit],1,Hangup()'.PHP_EOL.PHP_EOL;
             }
             $appName = 'ExecIfTime';
             $appdata = 'Goto(' . $dialplanName . ',${EXTEN},1)';
