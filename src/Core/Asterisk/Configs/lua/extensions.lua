@@ -541,9 +541,13 @@ function event_dial_answer()
         -- Таймату устанавливается только на реальный канал при входящем через провайдера.
         -- Если masterChannel локальный канал, то скорее всего идет Originate.
         set_variable("__pt1c_UNIQUEID", id);
+        local chanExists = get_variable('CHANNEL_EXISTS('..get_variable("FROM_CHAN")..')');
+        if(chanExists == "1")then
+            set_variable('EXPORT('..get_variable("FROM_CHAN")..',MASTER_CHANNEL(M_DIALSTATUS))', 'ANSWER')
+            set_variable('EXPORT('..get_variable("FROM_CHAN")..',M_DIALSTATUS)', 'ANSWER')
+            app["NoOp"]('EXPORT ANSWER state');
+        end
         set_variable("MASTER_CHANNEL(M_DIALSTATUS)", 'ANSWER');
-        set_variable('EXPORT('..get_variable("FROM_CHAN")..',MASTER_CHANNEL(M_DIALSTATUS))', 'ANSWER')
-        set_variable('EXPORT('..get_variable("FROM_CHAN")..',M_DIALSTATUS)', 'ANSWER')
         set_variable("MASTER_CHANNEL(M_TIMEOUT_CHANNEL)", '');
 
         local needAnnonceIn  = get_variable('MASTER_CHANNEL(IN_NEED_ANNONCE)');
