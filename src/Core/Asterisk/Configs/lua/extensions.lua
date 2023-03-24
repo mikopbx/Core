@@ -224,7 +224,10 @@ function event_dial(without_event)
     data['agi_channel']  = agi_channel;
     data['did']		     = get_variable("FROM_DID");
     data['verbose_call_id']	= get_variable("CHANNEL(callid)");
-
+    local origCallId = get_variable("ORIG_CALLID");
+    if(origCallId ~= '')then
+        data['verbose_call_id'] = data['verbose_call_id'] .. "&".. origCallId;
+    end
     local is_pjsip = string.lower(get_variable("CHANNEL")):find("pjsip/") ~= nil
     if(is_pjsip) then
         data['src_call_id']  = get_variable("CHANNEL(pjsip,call-id)");
@@ -255,6 +258,10 @@ function event_interception_start()
     data['linkedid']  	    = get_variable("CHANNEL(linkedid)");
     data['int_channel']     = get_variable("INTECEPTION_CNANNEL");
     data['verbose_call_id']	= get_variable("CHANNEL(callid)");
+    local origCallId = get_variable("ORIG_CALLID");
+    if(origCallId ~= '')then
+        data['verbose_call_id'] = data['verbose_call_id'] .. "&".. origCallId;
+    end
 
     if(data['int_channel'] ~= '')then
         data['linkedid']     = get_variable('OLD_LINKEDID');
@@ -328,6 +335,11 @@ function event_voicemail_start()
     data['agi_channel']     = agi_channel;
     data['did']		        = get_variable("FROM_DID");
     data['verbose_call_id']	= get_variable("CHANNEL(callid)");
+    local origCallId = get_variable("ORIG_CALLID");
+    if(origCallId ~= '')then
+        data['verbose_call_id'] = data['verbose_call_id'] .. "&".. origCallId;
+    end
+
     local is_pjsip = string.lower(get_variable("CHANNEL")):find("pjsip/") ~= nil
     if(is_pjsip) then
         data['src_call_id']  = get_variable("CHANNEL(pjsip,call-id)");
@@ -376,6 +388,10 @@ function event_dial_interception()
     data['agi_channel']  = agi_channel;
     data['did']		     = get_variable("FROM_DID");
     data['verbose_call_id']	= get_variable("CHANNEL(callid)");
+    local origCallId = get_variable("ORIG_CALLID");
+    if(origCallId ~= '')then
+        data['verbose_call_id'] = data['verbose_call_id'] .. "&".. origCallId;
+    end
 
     local is_pjsip = string.lower(get_variable("CHANNEL")):find("pjsip/") ~= nil
     if(is_pjsip) then
@@ -608,6 +624,7 @@ function event_transfer_dial()
     data['src_chan'] 	= channel;
     data['did']		    = get_variable("FROM_DID");
     data['verbose_call_id']	= get_variable("CHANNEL(callid)");
+
     data['UNIQUEID']  	= id;
     local is_pjsip = string.lower(get_variable("CHANNEL")):find("pjsip/") ~= nil
     if(is_pjsip) then
@@ -726,6 +743,10 @@ function event_hangup_chan()
     data['VMSTATUS']  	= get_variable("VMSTATUS");
 
     data['verbose_call_id']	= get_variable("CHANNEL(callid)");
+    local origCallId = get_variable("ORIG_CALLID");
+    if(origCallId ~= '')then
+        data['verbose_call_id'] = data['verbose_call_id'] .. "&".. origCallId;
+    end
 
     if('ANSWER' == data['dialstatus'])then
         data['dialstatus'] = "ANSWERED";

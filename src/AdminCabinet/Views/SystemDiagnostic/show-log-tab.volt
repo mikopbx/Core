@@ -6,7 +6,7 @@
     {{ form.render('filename') }}
     <input type="hidden" name="offset" id="offset" value=0/>
     <div class="inline fields">
-        <div class="seven wide field">
+        <div class="six wide field">
             <label>
                 {{ t._('sd_Filename') }}
             </label>
@@ -24,7 +24,7 @@
             </label>
             {{ form.render('lines') }}
         </div>
-        <div class="three wide field">
+        <div class="five wide field">
             <label>
                 {{ t._('sd_filter') }}
             </label>

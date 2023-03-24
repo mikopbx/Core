@@ -172,7 +172,7 @@ class CallDetailRecordsController extends BaseController
                 $cdr->disposition,
                 'DT_RowId'    => $cdr->linkedid,
                 'DT_RowClass' => 'NOANSWER' === $cdr->disposition ? 'ui negative' : 'detailed',
-                'ids'         => implode('&', array_unique($cdr->ids)),
+                'ids'         => rawurlencode(implode('&', array_unique($cdr->ids))),
             ];
         }
 

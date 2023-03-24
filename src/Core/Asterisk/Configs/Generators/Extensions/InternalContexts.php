@@ -141,8 +141,8 @@ class InternalContexts extends CoreConfigClass
         $conf .= 'exten => failed,1,Hangup()' . "\n";
         $conf .= 'exten => ' . ExtensionsConf::ALL_EXTENSION . ',1,ExecIf($[ "${ORIGINATE_SRC_CHANNEL}x" != "x" ]?Wait(0.2))' . PHP_EOL . "\t";
         $conf .= 'same => n,ExecIf($[ "${ORIGINATE_SRC_CHANNEL}x" != "x" ]?ChannelRedirect(${ORIGINATE_SRC_CHANNEL},${CONTEXT},${ORIGINATE_DST_EXTEN},1))' . PHP_EOL . "\t";
+        $conf .= 'same => n,Set(EXPORT(${ORIGINATE_SRC_CHANNEL},__ORIG_CALLID)=${CHANNEL(callid)})' . PHP_EOL . "\t";
         $conf .= 'same => n,ExecIf($[ "${ORIGINATE_SRC_CHANNEL}x" != "x" ]?Hangup())' . PHP_EOL . "\t";
-
         // Фильтр спецсимволов. Разершаем только цифры.
         $conf .= 'same => n,Set(cleanNumber=${FILTER(\*\#\+1234567890,${EXTEN})})' . "\n\t";
         $conf .= 'same => n,ExecIf($["${EXTEN}" != "${cleanNumber}"]?Goto(${CONTEXT},${cleanNumber},$[${PRIORITY} + 1]))' . "\n\t";
