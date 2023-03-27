@@ -86,7 +86,7 @@ const SemanticLocalization = {
 		searchPlaceholder: globalTranslate.dt_Search,
 		info: globalTranslate.dt_Info,
 		infoEmpty: globalTranslate.dt_InfoEmpty,
-		infoFiltered: globalTranslate.dt_InfoFiltered,
+		infoFiltered: '',
 		zeroRecords: globalTranslate.dt_TableIsEmpty,
 		paginate: {
 			first: globalTranslate.dt_First,
