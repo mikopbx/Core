@@ -70,13 +70,10 @@ class Network extends Injectable
     }
 
     /**
-     * Up loopback.
+     * Setups loopback network.
      **/
     public function loConfigure():void
     {
-        if (Util::isSystemctl()) {
-            return;
-        }
         $busyboxPath  = Util::which('busybox');
         $ifconfigPath = Util::which('ifconfig');
         Processes::mwExec("{$busyboxPath} {$ifconfigPath} lo 127.0.0.1");
@@ -632,13 +629,6 @@ class Network extends Injectable
      */
     public function udhcpcConfigureRenewBound(): void
     {
-        if(Util::isDocker()){
-            return;
-        }
-        if (Util::isSystemctl()) {
-            $this->udhcpcConfigureRenewBoundSystemCtl();
-            return;
-        }
         // Инициализация массива переменных.
         $env_vars = [
             'broadcast' => '',
@@ -900,15 +890,11 @@ class Network extends Injectable
      */
     public function udhcpcConfigureDeconfig(): void
     {
-        // Настройка по умолчанию.
-        if ( Util::isSystemctl()) {
-            return;
-        }
-        $interface = trim(getenv('interface'));
-        // Для MIKO LFS Edition.
-        $busyboxPath = Util::which('busybox');
-        Processes::mwExec("{$busyboxPath} ifconfig {$interface} up");
-        Processes::mwExec("{$busyboxPath} ifconfig {$interface} 192.168.2.1 netmask 255.255.255.0");
+            $interface = trim(getenv('interface'));
+            // Для MIKO LFS Edition.
+            $busyboxPath = Util::which('busybox');
+            Processes::mwExec("{$busyboxPath} ifconfig {$interface} up");
+            Processes::mwExec("{$busyboxPath} ifconfig {$interface} 192.168.2.1 netmask 255.255.255.0");
     }
     /**
      * Сохранение настроек сетевого интерфейса.

@@ -31,13 +31,16 @@ $action = $argv[1]??'';
 if ('start' === $action) {
     $network = new Network();
     $network->resolvConfGenerate();
-    $network->loConfigure();
+    if (Util::isT2SdeLinux()) {
+        $network->loConfigure();
+    }
     $network->lanConfigure();
 } elseif ('stop' === $action) {
     if (Util::isSystemctl()) {
         $systemctlPath = Util::which('systemctl');
         Processes::mwExec("{$systemctlPath} stop networking");
     } else {
+        // T2SDE
         $network      = new Network();
         $if_list      = $network->getInterfaces();
         $arr_commands = [];

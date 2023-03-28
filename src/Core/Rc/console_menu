@@ -104,13 +104,13 @@ function getBannerText()
     }
 
     $broken = function () {
-        if ( ! Util::isSystemctl()) {
+        if ( Util::isT2SdeLinux()) {
             $files = Main::checkForCorruptedFiles();
             if (count($files) !== 0) {
                 return "   \033[01;31m" . Util::translate('The integrity of the system is broken') . "\033[39m";
             }
         } elseif(Util::isDocker()) {
-            return '    Is Debian (Docker)';
+            return '    Is Docker';
         } else {
             return '    Is Debian';
         }

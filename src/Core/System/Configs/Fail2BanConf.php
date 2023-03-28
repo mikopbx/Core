@@ -88,12 +88,13 @@ class Fail2BanConf extends Injectable
      */
     public function fail2banStart(): void
     {
-        if (Util::isSystemctl() && ! Util::isDocker()) {
+        if (Util::isSystemctl()) {
             $systemctlPath = Util::which('systemctl');
             Processes::mwExec("{$systemctlPath} restart fail2ban");
 
             return;
         }
+        //T2SDE or Docker
         Processes::killByName('fail2ban-server');
         $fail2banPath = Util::which('fail2ban-client');
         $cmd_start    = "{$fail2banPath} -x start";
@@ -141,7 +142,7 @@ class Fail2BanConf extends Injectable
      */
     public function fail2banStop(): void
     {
-        if (Util::isSystemctl() && ! Util::isDocker()) {
+        if (Util::isSystemctl()) {
             $systemctlPath = Util::which('systemctl');
             Processes::mwExec("{$systemctlPath} stop fail2ban");
         } else {

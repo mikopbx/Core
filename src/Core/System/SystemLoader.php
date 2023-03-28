@@ -59,6 +59,8 @@ class SystemLoader extends Di\Injectable
      */
     public function startSystem(): bool
     {
+        $itIsT2SDELinux = Util::isT2SdeLinux();
+
         $this->di->getShared('registry')->booting = true;
         $this->echoStartMsg(PHP_EOL);
         $this->echoStartMsg(' - Start acpid daemon...');
@@ -83,13 +85,18 @@ class SystemLoader extends Di\Injectable
 
         $storage       = new Storage();
         $this->echoStartMsg(' - Mount storage disk...');
-        $storage->saveFstab();
+        if($itIsT2SDELinux){
+            // Do not need to set on Docker or Debian linux
+            $storage->saveFstab();
+        }
         $storage->configure();
         $this->echoResultMsg();
 
-        $this->echoStartMsg(' - Connect swap...');
-        Processes::mwExecBg('/etc/rc/connect-swap');
-        $this->echoResultMsg();
+        if($itIsT2SDELinux) {
+            $this->echoStartMsg(' - Connect swap...');
+            Processes::mwExecBg('/etc/rc/connect-swap');
+            $this->echoResultMsg();
+        }
 
         $this->echoStartMsg(' - Start syslogd daemon...');
         $syslogConf = new SyslogConf();
@@ -144,10 +151,13 @@ class SystemLoader extends Di\Injectable
         NTPConf::configure();
         $this->echoResultMsg();
 
-        $this->echoStartMsg(' - Configuring SSH console...');
-        $sshConf = new SSHConf();
-        $resSsh  = $sshConf->configure();
-        $this->echoResultMsg($resSsh);
+        if($itIsT2SDELinux){
+            // Do not need to set Docker or Debian SSH service
+            $this->echoStartMsg(' - Configuring SSH console...');
+            $sshConf = new SSHConf();
+            $resSsh  = $sshConf->configure();
+            $this->echoResultMsg($resSsh);
+        }
 
         $this->di->getShared('registry')->booting = false;
 
