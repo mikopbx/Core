@@ -71,65 +71,60 @@ class FirewallManagementProcessor extends Injectable
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
-
-        $db = self::getDbConnection();
-        if(!$db){
-            // Таблица не существует. Бана нет.
-            $res->success    = false;
-            $res->messages[] = 'DB '.Fail2BanConf::FAIL2BAN_DB_PATH.' not found';
-            return $res;
-        }
-        $query   = self::getQueryBanIp($ip);
-        $results = $db->query($query);
-        $result  = [];
-        if (false !== $results && $results->numColumns() > 0) {
-            while ($banRule = $results->fetchArray(SQLITE3_ASSOC)) {
-                $banRule['jail'] = $banRule['jail'] . '_v2';
-                $result[] = $banRule;
-            }
-        }
         $res->success = true;
-        $res->data = $result;
+        $res->data = self::getBanIpWithTime();
         return $res;
     }
 
-     public static function getDbConnection(){
-         if(!file_exists(Fail2BanConf::FAIL2BAN_DB_PATH)){
-             return null;
-         }
-         try {
-             $db      = new SQLite3(Fail2BanConf::FAIL2BAN_DB_PATH);
-         }catch (Throwable $e){
-             return null;
-         }
-         $db->busyTimeout(5000);
-         $fail2ban = new Fail2BanConf();
-         if (false === $fail2ban->tableBanExists($db)) {
-             return null;
-         }
-
-         return $db;
+    public static function getBanIpWithTime():array
+    {
+        $result = [];
+        $sep = '"|"';
+        $sepSpace = '" "';
+        $fail2banPath = Util::which('fail2ban-client');
+        $awkPath      = Util::which('awk');
+        try {
+            $shellData = str_replace("'", '"', shell_exec("$fail2banPath banned"));
+            $data = json_decode($shellData, true, 512, JSON_THROW_ON_ERROR);
+            $data = array_merge(... $data);
+        }catch (\Throwable $e){
+            $data = [];
+        }
+        $jails = array_keys($data);
+        foreach ($jails as $jail){
+            $data = [];
+            Processes::mwExec("$fail2banPath get $jail banip --with-time | $awkPath '{print $1 $sep $2 $sepSpace $3 $sep $7 $sepSpace $8 }'", $data);
+            foreach ($data as $ipData){
+                $ipData = explode('|', $ipData);
+                $ip = $ipData[0]??'';
+                if(empty($ip)){
+                    continue;
+                }
+                $result[] = [
+                    'ip' => $ip,
+                    'jail' => "{$jail}_v2",
+                    'timeofban' => self::time2stamp($ipData[1]),
+                    'timeunban' => self::time2stamp($ipData[2]),
+                    'v' => '2',
+                ];
+            }
+        }
+        return $result;
     }
 
     /**
-     * Возвращает запрос SQL для получения забаненных IP.
-     * @param $ip
-     * @return string
+     * Конвертация даты.
+     * @param $strTime
+     * @return int
      */
-    public static function getQueryBanIp($ip):string{
-        $banRule = Fail2BanRules::findFirst("id = '1'");
-        if ($banRule !== null) {
-            $ban_time = $banRule->bantime;
-        } else {
-            $ban_time = '43800';
+    public static function time2stamp($strTime):int
+    {
+        $result = 0;
+        $d = \DateTime::createFromFormat('Y-m-d H:i:s', $strTime);
+        if ($d !== false) {
+            $result = $d->getTimestamp();
         }
-        // Добавленн фильтр по времени бана. возвращаем только адреса, которые еще НЕ разбанены.
-        $q = 'SELECT' . ' DISTINCT jail,ip,MAX(timeofban) AS timeofban, MAX(timeofban+' . $ban_time . ') AS timeunban FROM bans where (timeofban+' . $ban_time . ')>' . time();
-        if ($ip !== null) {
-            $q .= " AND ip='{$ip}'";
-        }
-        $q .= ' GROUP BY jail,ip';
-        return $q;
+        return $result;
     }
 
     /**
