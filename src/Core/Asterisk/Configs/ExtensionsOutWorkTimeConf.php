@@ -174,6 +174,10 @@ class ExtensionsOutWorkTimeConf extends CoreConfigClass
             $conf .= "[".self::OUT_WORK_TIME_CONTEXT."-$contextKey]\n";
             $dialplanDid = [];
             foreach ($confContext as $did => $confDid){
+                if($confDid === false){
+                    // Этот DID не должен участвовать в "нерабочем времени".
+                    continue;
+                }
                 if(!isset($dialplanDid[$did])){
                     $dialplanDid[$did] = '';
                 }
