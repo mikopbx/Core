@@ -38,55 +38,6 @@ class NatsConf extends Injectable
     {
         $this->mikoPBXConfig = new MikoPBXConfig();
     }
-
-    /**
-     * Rotates gnats logs
-     */
-    public static function logRotate(): void
-    {
-        $log_dir = System::getLogDir() . '/nats';
-        $gnatsdPath = Util::which('gnatsd');
-        $pid     = Processes::getPidOfProcess($gnatsdPath, 'custom_modules');
-        $max_size = 1;
-        if (empty($pid)) {
-            $natsConf = new self();
-            $natsConf->reStart();
-            sleep(1);
-        }
-        $text_config = "{$log_dir}/gnatsd.log {
-    start 0
-    rotate 9
-    size {$max_size}M
-    maxsize 1M
-    daily
-    missingok
-    notifempty
-    sharedscripts
-    postrotate
-        {$gnatsdPath} -sl reopen=$pid > /dev/null 2> /dev/null
-    endscript
-}";
-
-        $mb10 = $max_size * 1024 * 1024;
-
-        $options = '';
-        if (Util::mFileSize("{$log_dir}/gnatsd.log") > $mb10) {
-            $options = '-f';
-        }
-        $di     = Di::getDefault();
-        if ($di !== null){
-            $varEtcDir = $di->getShared('config')->path('core.varEtcDir');
-        } else {
-            $varEtcDir = '/var/etc';
-        }
-        $path_conf  = $varEtcDir . '/gnatsd_logrotate.conf';
-        file_put_contents($path_conf, $text_config);
-        if (file_exists("{$log_dir}/gnatsd.log")) {
-            $logrotatePath = Util::which('logrotate');
-            Processes::mwExecBg("{$logrotatePath} $options '{$path_conf}' > /dev/null 2> /dev/null");
-        }
-    }
-
     /**
      * Restarts gnats server
      */
@@ -114,6 +65,7 @@ class NatsConf extends Injectable
             'max_payload'      => '1000000',
             'max_control_line' => '512',
             'sessions_path'    => $sessionsDir,
+            'log_size_limit'   => 10485760, //10Mb
             'log_file'         => "{$logdir}/gnatsd.log",
         ];
         $config   = '';
