@@ -100,7 +100,7 @@ class PBX extends Injectable
         if ($di === null) {
             return;
         }
-        $max_size    = 2;
+        $max_size    = 10;
         $log_dir     = System::getLogDir() . '/asterisk/';
         $text_config = "{$log_dir}{$f_name} {
     nocreate

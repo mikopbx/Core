@@ -65,7 +65,7 @@ class PHPConf extends Injectable
     {
         $logrotatePath = Util::which('logrotate');
 
-        $max_size    = 2;
+        $max_size    = 10;
         $f_name      = self::getLogFile();
         $text_config = $f_name . " {
     nocreate
