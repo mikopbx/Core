@@ -299,7 +299,7 @@ class Fail2BanConf extends Injectable
     {
         $path = self::ACTION_PATH;
         $conf = "[INCLUDES]".PHP_EOL.
-                "before = iptables-common.conf".PHP_EOL.
+                "before = iptables.conf".PHP_EOL.
                 "[Definition]".PHP_EOL.
                 "actionstart = <iptables> -N f2b-<name>".PHP_EOL.
                 "              <iptables> -A f2b-<name> -j <returntype>".PHP_EOL.
