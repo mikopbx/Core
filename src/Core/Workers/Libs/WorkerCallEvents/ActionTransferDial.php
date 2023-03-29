@@ -10,7 +10,10 @@ use MikoPBX\Core\Workers\WorkerCallEvents;
 class ActionTransferDial {
     public static function execute(WorkerCallEvents $worker, $data):void
     {
-        $worker->addActiveChan($data['src_chan']);
+        $chan = $data['src_chan']??'';
+        if(!empty($chan)){
+            $worker->addActiveChan($chan);
+        }
         if($data['is_queue'] !== '1'){
             // Завершаем предыдущий неудачный Dial.
             // Необходимо в том случае, если не был создан канал назначения.
