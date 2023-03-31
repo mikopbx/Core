@@ -61,7 +61,9 @@ class CDRDatabaseProvider extends DatabaseProviderBase implements ServiceProvide
             ];
         }
         $filter['miko_result_in_file'] = true;
-        $filter['order'] = 'answer';
+        if(!isset($filter['order'])){
+            $filter['order'] = 'answer';
+        }
         if (!isset($filter['columns'])) {
             $filter['columns'] = 'id,start,answer,src_num,dst_num,dst_chan,endtime,linkedid,recordingfile,dialstatus,UNIQUEID';
         }
