@@ -69,7 +69,7 @@ class sndPlayerOneBtn {
 				onSuccess(response) {
 					if (response.message !== undefined) {
 						_this.html5Audio.getElementsByTagName('source')[0].src
-							= `/pbxcore/api/cdr/playback?view=${response.message}`;
+							= `/pbxcore/api/cdr/v2/playback?view=${response.message}`;
 						_this.html5Audio.pause();
 						_this.html5Audio.load();
 						_this.html5Audio.oncanplaythrough = this.cbCanPlayThrough;

@@ -317,14 +317,14 @@ const callDetailRecords = {
    	<td class="one wide"></td>
    	<td class="one wide right aligned">
    		<i class="ui icon play"></i>
-	   	<audio preload="metadata" id="audio-player-${record.id}" src="/pbxcore/api/cdr/playback?view=${recordFileUri}"></audio>
+	   	<audio preload="metadata" id="audio-player-${record.id}" src="/pbxcore/api/cdr/v2/playback?view=${recordFileUri}"></audio>
 	</td>
     <td class="five wide">
     	<div class="ui range cdr-player" data-value="${record.id}"></div>
     </td>
     <td class="one wide"><span class="cdr-duration"></span></td>
     <td class="one wide">
-    	<i class="ui icon download" data-value="/pbxcore/api/cdr/playback?view=${recordFileUri}&download=1&filename=${recordFileName}.mp3"></i>
+    	<i class="ui icon download" data-value="/pbxcore/api/cdr/v2/playback?view=${recordFileUri}&download=1&filename=${recordFileName}.mp3"></i>
     </td>
     <td class="right aligned"><span class="need-update">${record.src_num}</span></td>
     <td class="one wide center aligned"><i class="icon exchange"></i></td>
