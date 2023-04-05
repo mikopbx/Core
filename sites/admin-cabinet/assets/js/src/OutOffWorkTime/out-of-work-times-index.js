@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl */
+/* global globalRootUrl,$ */
 
 const OutOfWorkTimesTable = {
 	initialize() {
@@ -24,6 +24,27 @@ const OutOfWorkTimesTable = {
 			const id = $(e.target).closest('tr').attr('id');
 			window.location = `${globalRootUrl}out-off-work-time/modify/${id}`;
 		});
+
+		$('#time-frames-table').DataTable({
+			lengthChange: false,
+			paging: false,
+			columns: [
+				null,
+				{orderable: false},
+				null,
+				null,
+				{orderable: false},
+			],
+			autoWidth: false,
+			order: [1, 'asc'],
+			language: SemanticLocalization.dataTableLocalisation,
+			"drawCallback": function( settings ) {
+				$("[data-content!=''][data-content]").popup();
+			}
+		});
+
+		$('#add-new-button').appendTo($('div.eight.column:eq(0)'));
+
 	},
 
 };

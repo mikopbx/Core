@@ -27,14 +27,11 @@ class UpdateConfigsUpToVer20220284 extends Injectable implements UpgradeSystemCo
 {
   	public const PBX_VERSION = '2022.2.84';
 
-    private bool $isLiveCD;
-
 	/**
      * Class constructor.
      */
     public function __construct()
     {
-        $this->isLiveCD      = file_exists('/offload/livecd');
     }
 
     /**
@@ -42,9 +39,6 @@ class UpdateConfigsUpToVer20220284 extends Injectable implements UpgradeSystemCo
      */
     public function processUpdate():void
     {
-        if ($this->isLiveCD) {
-            return;
-        }
         $extensions = [
             'hangup',
             'busy',

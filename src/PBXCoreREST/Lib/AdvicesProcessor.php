@@ -201,8 +201,8 @@ class AdvicesProcessor extends Injectable
             $messages['warning'][] = $this->translation->_(
                 'adv_isSimplePassword',
                 [
-                    'type' => $this->translation->_($value['type']),
-                    'url' => $this->url->get($value['url'])
+                    'type'      => $this->translation->_($value['type'], ['extension' => $key]),
+                    'url'       => $this->url->get($value['url']),
                 ]
             );
         }
@@ -304,7 +304,7 @@ class AdvicesProcessor extends Injectable
                     'form_params' => [
                         'PBXVER' => $PBXVersion,
                     ],
-                    'timeout' => 1,
+                    'timeout' => 3,
                 ]
             );
             $code = $res->getStatusCode();
@@ -362,7 +362,7 @@ class AdvicesProcessor extends Injectable
         $messages = [];
         $pathTimeout = Util::which('timeout');
         $pathCurl    = Util::which('curl');
-        $retCode     = Processes::mwExec("$pathTimeout 1 $pathCurl 'https://www.google.com/'");
+        $retCode     = Processes::mwExec("$pathTimeout 2 $pathCurl 'https://www.google.com/'");
         if ($retCode !== 0) {
             $messages['warning'] = $this->translation->_('adv_ProblemWithInternetConnection');
         }

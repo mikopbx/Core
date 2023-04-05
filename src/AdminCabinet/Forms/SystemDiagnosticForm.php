@@ -19,6 +19,7 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
+use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Numeric;
 use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
@@ -39,12 +40,10 @@ class SystemDiagnosticForm extends Form
         $filenames = new Select(
             'filenames', [], ['class'    => 'ui fluid selection search dropdown filenames-select']
         );
-
         $this->add($filenames);
-
-        $this->add(new Text('filter', ['value' => '']));
-        $this->add(new Numeric('lines',  ['value' => '500']));
-        $this->add(new Numeric('offset',  ['value' => '0']));
-
+        $this->add(new Hidden('filename',    ['value' => $_REQUEST['filename']??'']));
+        $this->add(new Text('filter',    ['value' => $_REQUEST['filter']??'']));
+        $this->add(new Numeric('lines',  ['value' => '1500']));
+        $this->add(new Numeric('offset', ['value' => '0']));
     }
 }

@@ -19,8 +19,10 @@
  */
 
 namespace MikoPBX\Core\Rc;
-
 use MikoPBX\Core\System\{Processes, Util, SystemLoader};
+if('docker' === ($argv[1]??'')){
+    define('START_DOCKER',1);
+}
 require_once('Globals.php');
 Util::echoWithSyslog(' - Start /etc/rc/bootup ...'.PHP_EOL);
 if(file_exists('/tmp/ejectcd')){
@@ -31,6 +33,9 @@ $mikoPBX = new SystemLoader();
 Util::echoWithSyslog(' - Start SystemLoader\startSystem...'.PHP_EOL);
 $result = $mikoPBX->startSystem();
 
-if((true === $result) && ! file_exists('/offload/livecd') && ! Util::isDocker()) {
+if((true === $result)
+    && ! file_exists('/offload/livecd')
+    && ! Util::isDocker()
+) {
     Processes::mwExecBg('/etc/rc/bootup_pbx');
 }

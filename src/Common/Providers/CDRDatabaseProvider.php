@@ -61,7 +61,9 @@ class CDRDatabaseProvider extends DatabaseProviderBase implements ServiceProvide
             ];
         }
         $filter['miko_result_in_file'] = true;
-        $filter['order'] = 'answer';
+        if(!isset($filter['order'])){
+            $filter['order'] = 'answer';
+        }
         if (!isset($filter['columns'])) {
             $filter['columns'] = 'id,start,answer,src_num,dst_num,dst_chan,endtime,linkedid,recordingfile,dialstatus,UNIQUEID';
         }
@@ -74,7 +76,7 @@ class CDRDatabaseProvider extends DatabaseProviderBase implements ServiceProvide
             $filename = '';
         }
         $result_data = [];
-        if (file_exists($filename)) {
+        if (is_string($filename) && file_exists($filename)) {
             try {
                 $result_data = json_decode(file_get_contents($filename), true, 512, JSON_THROW_ON_ERROR);
             } catch (\Throwable $e) {

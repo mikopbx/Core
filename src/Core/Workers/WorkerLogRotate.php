@@ -43,7 +43,6 @@ class WorkerLogRotate extends WorkerBase
         $lastLogRotate = $managedCache->get($cacheKey);
         if ($lastLogRotate===null){
             // System Logs
-            NatsConf::logRotate();
             PHPConf::rotateLog();
             PBX::logRotate();
 

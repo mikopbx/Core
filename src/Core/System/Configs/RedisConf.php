@@ -58,10 +58,6 @@ class RedisConf extends Injectable
             }
             sleep(1);
         }
-
-        if(Util::isDocker()){
-            putenv('START-DOCKER=0');
-        }
     }
 
     /**

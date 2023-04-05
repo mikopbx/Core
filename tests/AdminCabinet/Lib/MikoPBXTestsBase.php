@@ -564,13 +564,12 @@ class MikoPBXTestsBase extends BrowserStackTest
         try {
             $xpath = '//input[@name="id" and (@type="hidden")]';
             $input = self::$driver->findElement(WebDriverBy::xpath($xpath));
-            return $input->getAttribute('value')??'';
+            return $input->getAttribute('value')??'undefinedInGetCurrentRecordID';
         } catch (NoSuchElementException $e) {
             $this->fail('Not found input with name ID on this page getCurrentRecordID' . PHP_EOL);
         } catch (Exception $e) {
             $this->fail('Unknown error ' . $e->getMessage() . PHP_EOL);
         }
-        return '';
     }
 
     /**

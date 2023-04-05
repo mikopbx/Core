@@ -140,11 +140,6 @@ class Sip extends ModelsBase
     public ?string $qualify = '1';
 
     /**
-     * @Column(type="string", nullable=true)
-     */
-    public ?string $busylevel = '';
-
-    /**
      * @Column(type="integer", nullable=true)
      */
     public ?string $networkfilterid = '';
@@ -175,6 +170,10 @@ class Sip extends ModelsBase
      */
     public ?string $description = '';
 
+    /**
+     * @Column(type="integer", nullable=true, default="1")
+     */
+    public ?string $enableRecording = '1';
 
     public function initialize(): void
     {

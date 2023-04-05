@@ -1,0 +1,62 @@
+#
+# MikoPBX - free phone system for small business
+# Copyright © 2017-2022 Alexey Portnov and Nikolay Beketov
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with this program.
+# If not, see <https://www.gnu.org/licenses/>.
+#
+. /sbin/shell_functions.sh;
+
+systemDir='/system';
+mkdir "$systemDir";
+list="$(/bin/lsblk -r -p -o NAME,UUID | /bin/busybox grep '1 ' | /bin/busybox cut -f 1 -d ' ')";
+for disk in $list
+do
+  size="$(/bin/lsblk "$disk" -P -b -o SIZE | /bin/busybox cut -f 2 -d '"' | /bin/busybox cut -f 1 -d 'M')";
+  if [ "$(printf "%.0f\n" "$((size / 1024 / 1024))")" -gt 60 ]; then
+    continue;
+  fi
+  # Диск менее 60 Мб
+  mount "$disk" "$systemDir";
+  MOUNT_RESULT=$?;
+  if [ ! "${MOUNT_RESULT}" = "0" ] ; then
+    continue;
+  fi
+  updateScript="$systemDir/update.sh";
+  if [ -f "$updateScript" ];then
+    echoToTeletype " - Start update script $updateScript...";
+    (
+      storage_uuid=''; cf_uuid=''; updateFile='';
+      # shellcheck source=/system/update.sh
+      source "$updateScript";
+      umount "$disk";
+      mountDiskPart "$storage_uuid" '/storage/usbdisk1';
+      mountDiskPart "$cf_uuid" '/cf'
+      systemDevice="$(/bin/lsblk -o UUID,PKNAME -p | /bin/busybox grep "$cf_uuid" | /bin/busybox cut -f 2 -d ' ')";
+      if [ -b "$systemDevice" ]; then
+        mkdir -p /var/etc;
+        echo '/storage/usbdisk1' > /var/etc/storage_device;
+        echo "$systemDevice" > /var/etc/cfdevice;
+        /sbin/pbx_firmware "$updateFile" "$systemDevice"
+      else
+        echoToTeletype ' - System disk not found...'
+      fi
+    );
+    touch /tmp/rebooting;
+    sleep 3;
+  fi;
+  umount -f "$disk";
+  exit 0;
+done
+
+echoToTeletype " - No update script found";

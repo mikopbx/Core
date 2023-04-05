@@ -45,10 +45,6 @@ class SSHConf extends Injectable
      **/
     public function configure(): bool
     {
-        if(Util::isSystemctl() && ! Util::isDocker()){
-            // Не настраиваем.
-            return true;
-        }
         $lofFile = '/var/log/lastlog';
         if(!file_exists($lofFile)){
             file_put_contents($lofFile, '');

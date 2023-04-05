@@ -51,7 +51,6 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
         // Раскрываем расширенные опции
         $this->openAccordionOnThePage();
         $this->changeInputField('port', $params['port']);
-        $this->selectDropdownItem('nat', $params['nat']);
         $this->changeCheckBoxState('qualify', $params['qualify']);
         if ($params['qualify']) {
             $this->changeInputField('qualifyfreq', $params['qualifyfreq']);
@@ -88,7 +87,6 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
         $this->openAccordionOnThePage();
 
         $this->assertInputFieldValueEqual('port', $params['port']);
-        $this->assertMenuItemSelected('nat', $params['nat']);
         $this->assertCheckBoxStageIsEqual('qualify', $params['qualify']);
         if ($params['qualify']) {
             $this->assertInputFieldValueEqual('qualifyfreq', $params['qualifyfreq']);
@@ -122,7 +120,6 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
                 'password'          => 'asdfasdfas',
                 'dtmfmode'          => 'auto',
                 'port'              => 5062,
-                'nat'               => 'auto_force_rport',
                 'qualify'           => false,
                 'qualifyfreq'       => 62,
                 'outbound_proxy'    => 'proxy.miko.ru:5080',
@@ -143,7 +140,6 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
                 'password'          => 'office',
                 'dtmfmode'          => 'inband',
                 'port'              => 5061,
-                'nat'               => 'force_rport',
                 'qualify'           => true,
                 'qualifyfreq'       => 61,
                 'outbound_proxy'    => 'proxy2.miko.ru',
@@ -165,7 +161,6 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
                 'password'         => 'test567',
                 'dtmfmode'         => 'auto',
                 'port'             => 5062,
-                'nat'              => 'force_rport,comedia',
                 'qualify'          => false,
                 'qualifyfreq'       => '',
                 'outbound_proxy'    => '',
@@ -187,7 +182,6 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
                 'password'          => 'office2',
                 'dtmfmode'          => 'inband',
                 'port'              => 5063,
-                'nat'               => 'force_rport',
                 'qualify'           => true,
                 'qualifyfreq'       => 63,
                 'outbound_proxy'    => '',

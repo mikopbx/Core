@@ -26,11 +26,20 @@ require_once 'Globals.php';
 
 $action  = strtolower(trim($argv[1]));
 $network = new Network();
-Util::sysLogMsg(basename(__FILE__), "Starting action {$action}...", LOG_DEBUG);
+if(Util::isDocker()){
+    Util::sysLogMsg(basename(__FILE__), "Skipped action {$action}... because of docker", LOG_DEBUG);
+    exit(0);
+} else {
+    Util::sysLogMsg(basename(__FILE__), "Starting action {$action}...", LOG_DEBUG);
+}
 
-if ($action === 'deconfig') {
+if ($action === 'deconfig' && Util::isT2SdeLinux()) {
     $network->udhcpcConfigureDeconfig();
 } elseif ('bound' === $action || 'renew' === $action) {
-    $network->udhcpcConfigureRenewBound();
+    if (Util::isSystemctl()) {
+        $network->udhcpcConfigureRenewBoundSystemCtl();
+    } elseif (Util::isT2SdeLinux()) {
+        $network->udhcpcConfigureRenewBound();
+    }
     CloudProvisioning::start();
 }

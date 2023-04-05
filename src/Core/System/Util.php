@@ -533,16 +533,34 @@ class Util
     }
 
     /**
-     * @return bool
+     * Checks whether the current system is t2 SDE build
+     *
      */
-    public static function isSystemctl(): bool
+    public static function isT2SdeLinux(): bool
     {
-        return (stripos(php_uname('v'), 'debian') !== false);
+        return !self::isSystemctl();
     }
 
     /**
-     * @return bool
+     * Checks whether the current system has systemctl installed and executable.
+     * Returns true if systemctl is available, false otherwise.
      */
+    public static function isSystemctl(): bool
+    {
+        $pathSystemCtl = self::which('systemctl');
+        if (!empty($pathSystemCtl) && is_executable($pathSystemCtl)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+   /**
+    * Checks whether the current process is running inside a Docker container.
+    * Returns true if the process is inside a container, false otherwise.
+    *
+    * @return bool
+    */
     public static function isDocker(): bool
     {
         return file_exists('/.dockerenv');

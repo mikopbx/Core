@@ -85,6 +85,11 @@ class OutWorkTimes extends ModelsBase
      */
     public ?string $description = '';
 
+    /**
+     * Разрешить ограничение действия правила для маршрутов.
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $allowRestriction = '0';
 
     public function initialize(): void
     {
@@ -115,6 +120,19 @@ class OutWorkTimes extends ModelsBase
                 ],
             ]
 
+        );
+
+        $this->hasMany(
+            'id',
+            OutWorkTimesRouts::class,
+            'timeConditionId',
+            [
+                'alias'      => 'OutWorkTimesRouts',
+                'foreignKey' => [
+                    'allowNulls' => true,
+                    'action'     => Relation::ACTION_CASCADE //Удалить подчиненные все OutWorkTimesRouts
+                ],
+            ]
         );
     }
 }

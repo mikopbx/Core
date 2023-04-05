@@ -29,17 +29,15 @@ use MikoPBX\Core\System\Upgrade\UpgradeSystemConfigInterface;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
 
-class UpdateConfigsUpToVer2022020103 extends Injectable implements UpgradeSystemConfigInterface
+class UpdateConfigsUpToVer20220316 extends Injectable implements UpgradeSystemConfigInterface
 {
-  	public const PBX_VERSION = '2022.2.103';
-    private bool $isLiveCD;
+  	public const PBX_VERSION = '2022.3.16';
 
 	/**
      * Class constructor.
      */
     public function __construct()
     {
-        $this->isLiveCD      = file_exists('/offload/livecd');
     }
 
     /**
@@ -47,12 +45,15 @@ class UpdateConfigsUpToVer2022020103 extends Injectable implements UpgradeSystem
      */
     public function processUpdate():void
     {
-        if ($this->isLiveCD) {
-            return;
-        }
-        $this->updateFirewallRules();
-        $this->updateCodecs();
-        $this->updateExtensions();
+        $u = new UpdateConfigsUpToVer20220284();
+        $u->processUpdate();
+
+        $u = new UpdateConfigsUpToVer202202103();
+        $u->processUpdate();
+
+        // Чистим старый кэш pdnsd;
+        $rmPath = Util::which('rm');
+        shell_exec("$rmPath -rf /storage/usbdisk1/mikopbx/log/pdnsd");
     }
 
     /**

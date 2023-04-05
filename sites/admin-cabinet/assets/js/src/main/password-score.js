@@ -23,29 +23,19 @@ const PasswordScore = {
 		if (!pass) {
 			return score;
 		}
-
-		// award every unique letter until 5 repetitions
-		const letters = {};
-		for (let i = 0; i < pass.length; i++) {
-			letters[pass[i]] = (letters[pass[i]] || 0) + 1;
-			score += 5.0 / letters[pass[i]];
+		if(pass.length > 5){
+			score = 2;
 		}
-
-		// bonus points for mixing it up
 		const variations = {
 			digits: /\d/.test(pass),
 			lower: /[a-z]/.test(pass),
 			upper: /[A-Z]/.test(pass),
 			nonWords: /\W/.test(pass),
 		};
-
-		let variationCount = 0;
 		for (const check in variations) {
-			variationCount += (variations[check] === true) ? 1 : 0;
+			score += (variations[check] === true) ? 2 : 0;
 		}
-		score += (variationCount - 1) * 10;
-
-		return parseInt(score, 10);
+		return score * 10;
 	},
 	checkPassStrength(param) {
 		const score = PasswordScore.scorePassword(param.pass);
@@ -53,13 +43,9 @@ const PasswordScore = {
 			percent: Math.min(score, 100),
 			showActivity: false,
 		});
-		param.section.show();
-		// if (score > 80) { return 'strong'; }
-		// if (score > 60) { return 'good'; }
-		// if (score >= 30) { return 'weak'; }
+		param.section.show(); 
 		return '';
 	},
-
 };
 
 // export default PasswordScore;

@@ -102,21 +102,20 @@
             <i class="icon dropdown"></i>
             {{ t._('AdvancedOptions') }}
         </div>
-
         <div class=" content field">
             <h3 class="ui dividing header ">{{ t._("ex_MobileSettings") }}</h3>
             <div class="five wide field">
                 <label>{{ t._('ex_MobileDialstring') }}</label>
                 {{ form.render('mobile_dialstring') }}
             </div>
-            <h3 class="ui dividing header ">{{ t._("ex_SipSettings") }}</h3>
-            <div class="field">
-                <label>
-                    {{ t._('ex_BusyLevel') }}
-                    <i class="circular question icon link blue infoIcon" data-content="{{ t._('ex_BusyLevelInfo') }}" data-position="right center" data-variation="tiny"></i>
-                </label>
-                {{ form.render('sip_busylevel') }}
+            <h3 class="ui dividing header ">{{ t._("gs_PBXRecordCalls") }}</h3>
+            <div class="ten wide field">
+                <div class="ui toggle checkbox">
+                    {{ form.render('sip_enableRecording') }}
+                    <label>{{ t._('ex_enableRecording') }}</label>
+                </div>
             </div>
+            <h3 class="ui dividing header ">{{ t._("ex_SipSettings") }}</h3>
             <div class="field">
                 <label>{{ t._('ex_DTMFMode') }}</label>
                 {{ form.render('sip_dtmfmode') }}

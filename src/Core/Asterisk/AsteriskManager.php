@@ -963,15 +963,17 @@ class AsteriskManager
      *
      * @return array
      */
-    public function MixMonitor($channel, $file, $options, $command='')
+    public function MixMonitor($channel, $file, $options, $command='', string $ActionID = '')
     {
-        $parameters            = ['Channel' => $channel];
-        $parameters['File']    = $file;
-        $parameters['options'] = $options;
+        $parameters            = [
+            'Channel' => $channel,
+            'File'    => $file,
+            'options' => $options,
+            'ActionID'=> $ActionID
+        ];
         if(!empty($command)){
             $parameters['Command'] = $command;
         }
-
         return $this->sendRequestTimeout('MixMonitor', $parameters);
     }
 
@@ -981,13 +983,16 @@ class AsteriskManager
      * @link http://www.voip-info.org/wiki-Asterisk+Manager+API+Action+Monitor
      *
      * @param string $channel
+     * @param string $ActionID
      *
      * @return array
      */
-    public function StopMixMonitor($channel)
+    public function StopMixMonitor($channel, string $ActionID = '')
     {
-        $parameters = ['Channel' => $channel];
-
+        $parameters = [
+            'Channel' => $channel,
+            'ActionID'=> $ActionID
+        ];
         return $this->sendRequestTimeout('StopMixMonitor', $parameters);
     }
 
@@ -1003,9 +1008,7 @@ class AsteriskManager
     public function DBPut($Family, $Key, $Val = '')
     {
         $parameters = ['Family' => $Family, 'Key' => $Key, 'Val' => $Val];
-        $res_data   = $this->sendRequestTimeout('DBPut', $parameters);
-
-        return $res_data;
+        return $this->sendRequestTimeout('DBPut', $parameters);
     }
 
     /**

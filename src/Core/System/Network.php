@@ -70,13 +70,10 @@ class Network extends Injectable
     }
 
     /**
-     * Up loopback.
+     * Setups loopback network.
      **/
     public function loConfigure():void
     {
-        if (Util::isSystemctl()) {
-            return;
-        }
         $busyboxPath  = Util::which('busybox');
         $ifconfigPath = Util::which('ifconfig');
         Processes::mwExec("{$busyboxPath} {$ifconfigPath} lo 127.0.0.1");
@@ -243,13 +240,11 @@ class Network extends Injectable
     public function lanConfigure(): int
     {
         if(Util::isDocker()){
+            // Обновляем список интерфейсов.
+            $this->getGeneralNetSettings();
             return 0;
         }
-        if (Util::isSystemctl()) {
-            $this->lanConfigureSystemCtl();
-            $this->openVpnConfigure();
-            return 0;
-        }
+
         $busyboxPath = Util::which('busybox');
         $vconfigPath = Util::which('vconfig');
         $killallPath = Util::which('killall');
@@ -385,101 +380,6 @@ class Network extends Injectable
     }
 
     /**
-     * For OS systemctl (Debian).
-     * Configures LAN interface
-     */
-    public function lanConfigureSystemCtl(): void
-    {
-        $networks      = $this->getGeneralNetSettings();
-        $busyboxPath   = Util::which('busybox');
-        $grepPath      = Util::which('grep');
-        $awkPath       = Util::which('awk');
-        $catPath       = Util::which('cat');
-        $systemctlPath = Util::which('systemctl');
-        $modprobePath  = Util::which('modprobe');
-        Processes::mwExec("{$systemctlPath} stop networking");
-        Processes::mwExec("{$modprobePath} 8021q");
-        foreach ($networks as $if_data) {
-            if($if_data['disabled'] === 1){
-                continue;
-            }
-            $if_name = trim($if_data['interface']);
-            if ('' === $if_name) {
-                continue;
-            }
-            $conf_file = "/etc/network/interfaces.d/{$if_name}";
-            if ($if_data['disabled'] === '1') {
-                $ifdownPath = Util::which('ifdown');
-                Processes::mwExec("{$ifdownPath} eth0");
-                if (file_exists($if_name)) {
-                    unlink($conf_file);
-                }
-                continue;
-            }
-            $subnet  = trim($if_data['subnet']);
-            $ipaddr  = trim($if_data['ipaddr']);
-            $gateway = trim($if_data['gateway']);
-
-            $result = [''];
-            if (file_exists('/etc/static-routes')) {
-                $command = "{$catPath} /etc/static-routes " .
-                    "| {$grepPath} '^rout' " .
-                    "| {$busyboxPath} awk -F ';' '{print $1}' " .
-                    "| {$grepPath} '{$if_name}\$' " .
-                    "| {$awkPath} -F 'dev {$if_name}' '{ print $1 }'";
-                Processes::mwExec($command, $result);
-            }
-            $routs_add = ltrim(implode("\npost-up ", $result));
-            $routs_rem = ltrim(implode("\npre-down ", $result));
-
-
-            if ($if_data['vlanid'] > 0) {
-                // Пока только статика.
-                $lan_config = "auto {$if_data['interface_orign']}.{$if_data['vlanid']}\n" .
-                    "iface {$if_data['interface_orign']}.{$if_data['vlanid']} inet static \n" .
-                    "address {$ipaddr}\n" .
-                    "netmask {$subnet}\n" .
-                    "gateway {$gateway}\n" .
-                    "dns-nameservers 127.0.0.1\n" .
-                    "vlan_raw_device {$if_data['interface_orign']}\n" .
-                    "{$routs_add}\n" .
-                    "{$routs_rem}\n";
-            } elseif (trim($if_data['dhcp']) === '1') {
-                $lan_config = "auto {$if_name}\n" .
-                    "iface {$if_name} inet dhcp\n" .
-                    "{$routs_add}\n" .
-                    "{$routs_rem}\n";
-            } else {
-                if (empty($ipaddr)) {
-                    continue;
-                }
-                try {
-                    $calc_subnet = new SubnetCalculator($ipaddr, $subnet);
-                    $subnet      = $calc_subnet->getSubnetMask();
-                } catch (Throwable $e) {
-                    echo "Caught exception: $ipaddr $subnet", $e->getMessage(), "\n";
-                    continue;
-                }
-                $lan_config = "auto {$if_name}\n" .
-                    "iface {$if_name} inet static\n" .
-                    "address {$ipaddr}\n" .
-                    "netmask {$subnet}\n" .
-                    "gateway {$gateway}\n" .
-                    "dns-nameservers 127.0.0.1\n" .
-                    "{$routs_add}\n" .
-                    "{$routs_rem}\n";
-            }
-            file_put_contents("/etc/network/interfaces.d/{$if_name}", $lan_config);
-        }
-        $systemctlPath = Util::which('systemctl');
-        Processes::mwExec("{$systemctlPath} start networking");
-        $this->hostsGenerate();
-
-        $firewall = new IptablesConf();
-        $firewall->applyConfig();
-    }
-
-    /**
      * Получение настроек интерфейсов LAN.
      *
      * @return array
@@ -544,6 +444,52 @@ class Network extends Injectable
 
         return $networks;
     }
+
+    /**
+     * Сбор информации о доступных адресах web интерфейса.
+     * @return string
+     */
+    public static function getInfoMessage():string
+    {
+        $addresses = [
+            'local' => [],
+            'external' => []
+        ];
+        /** @var LanInterfaces $interface */
+        $interfaces = LanInterfaces::find("disabled='0'");
+        foreach ($interfaces as $interface){
+            if(!empty($interface->ipaddr)){
+                $addresses['local'][] = $interface->ipaddr;
+            }
+            if(!empty($interface->exthostname) && !in_array($interface->exthostname, $addresses['local'], true)){
+                $addresses['external'][] = explode(':', $interface->exthostname)[0]??'';
+            }
+            if(!empty($interface->extipaddr) && !in_array($interface->extipaddr, $addresses['local'], true) ){
+                $addresses['external'][] = explode(':', $interface->extipaddr)[0]??'';
+            }
+        }
+        unset($interfaces);
+        $port = PbxSettings::getValueByKey('WEBHTTPSPort');
+        $info = PHP_EOL."   The web interface is available at the addresses:".PHP_EOL.PHP_EOL;
+        foreach ($addresses['local'] as $address){
+            if(empty($address)){
+                continue;
+            }
+            $info.= "    - https://$address:$port".PHP_EOL;
+        }
+        $info.=PHP_EOL;
+        $info.= "   The web interface is available at the external addresses:".PHP_EOL.PHP_EOL;
+        foreach ($addresses['external'] as $address){
+            if(empty($address)){
+                continue;
+            }
+            $info.= "    - https://$address:$port".PHP_EOL;
+        }
+        $info.=PHP_EOL;
+
+        return $info;
+    }
+
 
     /**
      * Преобразует сетевую маску в CIDR представление.
@@ -646,8 +592,12 @@ class Network extends Injectable
         if ( ! empty($data['domain'])) {
             $hosts_conf .= "127.0.0.1 {$data['hostname']}.{$data['domain']}\n";
         }
+        $hostnamePath = Util::which('hostname');
+        if(Util::isDocker()){
+            $realHostName = shell_exec($hostnamePath);
+            $hosts_conf .= "127.0.0.1 $realHostName\n";
+        }
         Util::fileWriteContent('/etc/hosts', $hosts_conf);
-
         $hostnamePath = Util::which('hostname');
         Processes::mwExec($hostnamePath . ' ' . escapeshellarg($data['hostname']));
     }
@@ -679,13 +629,6 @@ class Network extends Injectable
      */
     public function udhcpcConfigureRenewBound(): void
     {
-        if(Util::isDocker()){
-            return;
-        }
-        if (Util::isSystemctl()) {
-            $this->udhcpcConfigureRenewBoundSystemCtl();
-            return;
-        }
         // Инициализация массива переменных.
         $env_vars = [
             'broadcast' => '',
@@ -947,15 +890,11 @@ class Network extends Injectable
      */
     public function udhcpcConfigureDeconfig(): void
     {
-        // Настройка по умолчанию.
-        if ( Util::isSystemctl()) {
-            return;
-        }
-        $interface = trim(getenv('interface'));
-        // Для MIKO LFS Edition.
-        $busyboxPath = Util::which('busybox');
-        Processes::mwExec("{$busyboxPath} ifconfig {$interface} up");
-        Processes::mwExec("{$busyboxPath} ifconfig {$interface} 192.168.2.1 netmask 255.255.255.0");
+            $interface = trim(getenv('interface'));
+            // Для MIKO LFS Edition.
+            $busyboxPath = Util::which('busybox');
+            Processes::mwExec("{$busyboxPath} ifconfig {$interface} up");
+            Processes::mwExec("{$busyboxPath} ifconfig {$interface} 192.168.2.1 netmask 255.255.255.0");
     }
     /**
      * Сохранение настроек сетевого интерфейса.

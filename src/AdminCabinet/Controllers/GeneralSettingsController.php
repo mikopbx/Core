@@ -68,16 +68,16 @@ class GeneralSettingsController extends BaseController
             return;
         }
         $data        = $this->request->getPost();
-        $passwordCheckFail = $this->getSimplePasswords($data);
-        if(!empty($passwordCheckFail)){
-            $this->view->message = [
-                'error' => $this->translation->_('gs_SetPasswordInfo')
-            ];
-        }
-        if(!empty($passwordCheckFail)){
-            $this->view->success = false;
-            $this->view->passwordCheckFail = $passwordCheckFail;
-            return;
+        if($data['SSHDisablePasswordLogins' ] !== 'on'){
+            $passwordCheckFail = $this->getSimplePasswords($data);
+            if(!empty($passwordCheckFail)){
+                $this->view->message = [
+                    'error' => $this->translation->_('gs_SetPasswordInfo')
+                ];
+                $this->view->success = false;
+                $this->view->passwordCheckFail = $passwordCheckFail;
+                return;
+            }
         }
 
         $pbxSettings = PbxSettings::getDefaultArrayValues();
@@ -93,6 +93,7 @@ class GeneralSettingsController extends BaseController
         foreach ($pbxSettings as $key => $value) {
             switch ($key) {
                 case 'PBXRecordCalls':
+                case 'PBXRecordCallsInner':
                 case 'AJAMEnabled':
                 case 'AMIEnabled':
                 case 'RestartEveryNight':

@@ -71,6 +71,9 @@ class PbxExtensionStatus {
 			if (response.data.changedObjects !== undefined){
 				UserMessage.showMultiString(response.data.changedObjects, globalTranslate.ext_ModuleChangedObjects);
 			}
+			if(window.pbxExtensionMenuAddition !== undefined){
+				window.pbxExtensionMenuAddition.updateSidebarMenu();
+			}
 		} else {
 			this.$toggle.checkbox('set checked');
 			this.changeLabelText(globalTranslate.ext_ModuleDisabledStatusEnabled);
@@ -95,6 +98,9 @@ class PbxExtensionStatus {
 			this.$disabilityFields.removeClass('disabled');
 			if (response.data.changedObjects !== undefined){
 				UserMessage.showMultiString(response.data.changedObjects, globalTranslate.ext_ModuleChangedObjects);
+			}
+			if(window.pbxExtensionMenuAddition !== undefined){
+				window.pbxExtensionMenuAddition.updateSidebarMenu();
 			}
 		} else {
 			this.$toggle.checkbox('set unchecked');

@@ -20,7 +20,10 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
+use MikoPBX\Common\Models\Iax;
+use MikoPBX\Common\Models\IncomingRoutingTable;
 use MikoPBX\Common\Models\OutWorkTimes;
+use MikoPBX\Common\Models\OutWorkTimesRouts;
 use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Core\System\Util;
 
@@ -47,7 +50,8 @@ class ExtensionsOutWorkTimeConf extends CoreConfigClass
     public function generateIncomingRoutBeforeDialSystem(string $rout_number): string
     {
         // Проверим распискние для входящих внешних звонков.
-        return 'same => n,GosubIf($["${IGNORE_TIME}" != "1"]?'.self::OUT_WORK_TIME_CONTEXT.',${EXTEN},1)'. "\n\t";
+        return  'same => n,ExecIf($["${contextID}x" == "x"]?Set(contextID=${CONTEXT}))'.PHP_EOL."\t".
+                'same => n,GosubIf($["${IGNORE_TIME}" != "1"]?'.self::OUT_WORK_TIME_CONTEXT.',${EXTEN},1)'. PHP_EOL."\t";
     }
 
     /**
@@ -58,57 +62,186 @@ class ExtensionsOutWorkTimeConf extends CoreConfigClass
     private function generateOutWorkTimes(): string
     {
         $conf = "\n\n[playback-exit]\n";
-        $conf .= 'exten => '.ExtensionsConf::ALL_NUMBER_EXTENSION.',1,Gosub(dial_outworktimes,${EXTEN},1)' . "\n\t";
+        $conf .= 'exten => '.ExtensionsConf::ALL_EXTENSION.',1,Gosub(dial_outworktimes,${EXTEN},1)' . "\n\t";
         $conf .= 'same => n,Playback(${filename})' . "\n\t";
-        $conf .= 'same => n,Hangup()' . "\n\n";
+        $conf .= 'same => n,Hangup()' . "\n";
+        $conf .= 'exten => _[hit],1,Hangup()'.PHP_EOL.PHP_EOL;
 
-        $conf .= 'exten => '.ExtensionsConf::DIGIT_NUMBER_EXTENSION.',1,Gosub(dial_outworktimes,${EXTEN},1)' . "\n\t";
-        $conf .= 'same => n,Playback(${filename})' . "\n\t";
-        $conf .= 'same => n,Hangup()' . "\n\n";
+        $conf .= $this->getWorkTimeDialplan(ExtensionsConf::ALL_EXTENSION);
+        return $conf;
+    }
 
-        $conf_out_set_var  = '';
-        $checkContextsYear = [];
-        $conf .= "[".self::OUT_WORK_TIME_CONTEXT."]\n";
-        $conf .= $this->getWorkTimeDialplan(ExtensionsConf::ALL_NUMBER_EXTENSION,   $conf_out_set_var, $checkContextsYear);
-        $conf .= $this->getWorkTimeDialplan(ExtensionsConf::DIGIT_NUMBER_EXTENSION, $conf_out_set_var, $checkContextsYear);
-        $conf .= $conf_out_set_var;
-
-        foreach ($checkContextsYear as $year => $rule){
-            $conf .= "[".self::OUT_WORK_TIME_CONTEXT."-{$year}]\n";
-            $conf .= 'exten => '.ExtensionsConf::ALL_NUMBER_EXTENSION.",1,NoOp(check time {$year} year)\n\t";
-            $conf .= implode("", $rule);
-            $conf .= "same => n,return\n\n";
-
-            $conf .= 'exten => '.ExtensionsConf::DIGIT_NUMBER_EXTENSION.",1,NoOp(check time {$year} year)\n\t";
-            $conf .= implode("", $rule);
-            $conf .= "same => n,return\n\n";
+    private function getRoutesData(): array
+    {
+        $parameters      = [
+            'columns'    => 'routId,timeConditionId',
+        ];
+        $allowedRouts    = OutWorkTimesRouts::find($parameters);
+        $allowedRulesIds = array_column($allowedRouts->toArray(), 'routId');
+        $filter = [
+            'order' => 'priority',
+            'conditions' => 'id>1'
+        ];
+        $rules        = IncomingRoutingTable::find($filter);
+        $routesData   = [];
+        foreach ($rules as $rule) {
+            $provider = $rule->Providers;
+            if ($provider) {
+                $modelType  = ucfirst($provider->type);
+                $provByType = $provider->$modelType;
+                if(get_class($provider->$modelType) === Iax::class){
+                    $context_id = "{$provider->uniqid}-incoming";
+                }else{
+                    $context_id = SIPConf::getContextId($provByType->host.$provByType->port);
+                }
+            } else {
+                $context_id = 'none-incoming';
+            }
+            $routesData[$rule->id] = [
+                'context' => $context_id,
+                'did'     => empty($rule->number)?ExtensionsConf::ALL_EXTENSION:$rule->number,
+                'enable'  => in_array($rule->id, $allowedRulesIds, true)
+             ];
         }
 
-        return $conf;
+        $trueContext = [];
+        $confByContext = [];
+        foreach ($routesData as $didData){
+            $confByContext[$didData['context']][$didData['did']] = ($didData['enable'])?'':false;
+            if($didData['enable']){
+                $trueContext[$didData['context']] = true;
+            }
+        }
+        foreach ($confByContext as $key => $val){
+            if(!isset($trueContext[$key])){
+                unset($confByContext[$key]);
+            }
+        }
+        unset($trueContext);
+
+        $tcData = [];
+        foreach ($allowedRouts as $tcRoute){
+            $tcData["".$tcRoute->timeConditionId][] = $routesData[$tcRoute->routId];
+        }
+        return [$tcData,$confByContext];
     }
 
     /**
      * @param $extension
-     * @param $conf_out_set_var
      * @param $checkContextsYear
      * @return string
      */
-    private function getWorkTimeDialplan($extension, &$conf_out_set_var, &$checkContextsYear):string
+    private function getWorkTimeDialplan($extension):string
     {
-        $conf = 'exten => '.$extension.',1,Set(currentYear=${STRFTIME(,,%Y)})'."\n\t";
-        $conf.= 'same => n,GosubIf($["${DIALPLAN_EXISTS('.self::OUT_WORK_TIME_CONTEXT.'-${currentYear},${EXTEN},1)}" == "1"]?'.self::OUT_WORK_TIME_CONTEXT.'-${currentYear},${EXTEN},1)'."\n\t";
-        $data = OutWorkTimes::find(['order' => 'date_from']);
-        foreach ($data as $out_data) {
-            $intervals = $this->getOutWorkIntervals($out_data->date_from, $out_data->date_to);
+        [$routesData, $confByContext] = $this->getRoutesData();
+        $checkContextsYear = [];
+        $conf_out_set_var  = '';
+        $data = OutWorkTimes::find(['order' => 'date_from'])->toArray();
+        $conf = "[".self::OUT_WORK_TIME_CONTEXT."]\n";
+        $conf.= 'exten => '.$extension.',1,Set(currentYear=${STRFTIME(,,%Y)})'."\n\t";
+        $conf.= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-${contextID},${EXTEN},1)}" == "1"]?${CONTEXT}-${contextID},${EXTEN},1)'."\n\t";
+        $conf.= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-${currentYear},${EXTEN},1)}" == "1"]?${CONTEXT}-${currentYear},${EXTEN},1)'."\n\t";
+        foreach ($data as $ruleData) {
+            if($ruleData['allowRestriction'] !== '1'){
+                // Для правила запрещены ограничения по маршрутам.
+                unset($routesData[$ruleData['id']]);
+            }
+            if(isset($routesData[$ruleData['id']])){
+                continue;
+            }
+            $intervals = $this->getOutWorkIntervals($ruleData['date_from'], $ruleData['date_to']);
             foreach ($intervals as $interval){
-                $ruleData = $out_data->toArray();
                 $ruleData['date_to']    = $interval['date_to'];
                 $ruleData['date_from']  = $interval['date_from'];
                 $this->generateOutWorkRule($ruleData, $conf_out_set_var, $conf, $checkContextsYear);
             }
         }
         $conf .= "same => n,return\n\n";
+        $conf .= 'exten => _[hit],1,Hangup()'.PHP_EOL;
+        $conf .= $conf_out_set_var;
 
+        foreach ($checkContextsYear as $year => $rule){
+            $conf .= "[".self::OUT_WORK_TIME_CONTEXT."-{$year}]\n";
+            $conf .= 'exten => '.ExtensionsConf::ALL_EXTENSION.",1,NoOp(check time {$year} year)\n\t";
+            $conf .= implode("", $rule);
+            $conf .= "same => n,return\n";
+            $conf .= 'exten => _[hit],1,Hangup()'.PHP_EOL;
+        }
+
+        $checkContextsYear = [];
+        foreach ($confByContext as $contextKey => &$confContext){
+            $conf_out_set_var  = '';
+            $conf .= "[".self::OUT_WORK_TIME_CONTEXT."-$contextKey]\n";
+            $dialplanDid = [];
+            foreach ($confContext as $did => $confDid){
+                if($confDid === false){
+                    // Этот DID не должен участвовать в "нерабочем времени".
+                    continue;
+                }
+                if(!isset($dialplanDid[$did])){
+                    $dialplanDid[$did] = '';
+                }
+                foreach ($data as $ruleData) {
+                    $didPreArray = $routesData[$ruleData['id']]??[];
+                    if(empty($didPreArray)){
+                        continue;
+                    }
+                    $didArray =  array_column($didPreArray, 'did');
+                    if(!isset($routesData[$ruleData['id']]) || ! in_array((string)$did, $didArray, true)){
+                        continue;
+                    }
+                    $intervals = $this->getOutWorkIntervals($ruleData['date_from'], $ruleData['date_to']);
+                    foreach ($intervals as $interval){
+                        $ruleData['date_to']    = $interval['date_to'];
+                        $ruleData['date_from']  = $interval['date_from'];
+                        $checkContextsYearDid = [];
+                        $this->generateOutWorkRule($ruleData, $conf_out_set_var, $dialplanDid[$did], $checkContextsYearDid);
+                        $checkContextsYear[$did][] = $checkContextsYearDid;
+                    }
+                }
+
+                $tmpConf = [];
+                foreach ($data as $ruleData) {
+                    $didPreArray = $routesData[$ruleData['id']]??[];
+                    if(empty($didPreArray)){
+                        continue;
+                    }
+                    $didArray =  array_column($didPreArray, 'did');
+                    if($confDid === false){
+                        $dialplan = '';
+                    }elseif(!isset($routesData[$ruleData['id']]) || ! in_array((string)$did, $didArray, true)){
+                        continue;
+                    }else{
+                        $dialplan = 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-${currentYear},${EXTEN},1)}" == "1"]?${CONTEXT}-${currentYear},${EXTEN},1)'."\n\t";
+                        $dialplan.= $dialplanDid[$did];
+                    }
+                    $tmpConf[$did]= 'exten => '.ExtensionsConf::getExtenByDid($did).',1,NoOp()'."\n\t";
+                    $tmpConf[$did].= $dialplan;
+                    $tmpConf[$did].= "same => n,return\n\n";
+                }
+                $conf.= implode('', $tmpConf);
+            }
+            $conf .= 'exten => _[hit],1,Hangup()'.PHP_EOL.PHP_EOL;
+            $confYear = [];
+            foreach ($checkContextsYear as $did => $tmpArr){
+                foreach ($tmpArr as $years){
+                    foreach ($years as $year => $rule){
+                        if(!isset($confYear[$year])){
+                            $confYear[$year] = '';
+                        }
+                        $confYear[$year] .= 'exten => '.ExtensionsConf::getExtenByDid($did).",1,NoOp(check time {$year} year)\n\t";
+                        $confYear[$year] .= implode("", $rule);
+                        $confYear[$year] .= "same => n,return\n";
+                    }
+                }
+            }
+            foreach ($confYear as $year => $rule){
+                $conf .= "[".self::OUT_WORK_TIME_CONTEXT."-$contextKey-{$year}]\n";
+                $conf .= $rule;
+                $conf .= 'exten => _[hit],1,Hangup()'.PHP_EOL.PHP_EOL;
+            }
+            $conf .= $conf_out_set_var;
+        }
         return $conf;
     }
 
@@ -239,8 +372,9 @@ class ExtensionsOutWorkTimeConf extends CoreConfigClass
 
             if (strpos($conf_out_set_var, $dialplanName) === false) {
                 $conf_out_set_var .= "[{$dialplanName}]\n" .
-                    'exten => '.ExtensionsConf::ALL_NUMBER_EXTENSION.',1,Set(filename=' . $audio_message . ')'."\n\t" .
-                        'same => n,Goto(playback-exit,${EXTEN},1)'."\n\n";
+                    'exten => '.ExtensionsConf::ALL_EXTENSION.',1,Set(filename=' . $audio_message . ')'."\n\t" .
+                        'same => n,Goto(playback-exit,${EXTEN},1)'."\n".
+                    'exten => _[hit],1,Hangup()'.PHP_EOL.PHP_EOL;
             }
             $appName = 'ExecIfTime';
             $appdata = 'Goto(' . $dialplanName . ',${EXTEN},1)';

@@ -139,22 +139,31 @@ class IncomingContexts extends CoreConfigClass
         if ( ! empty($rout_data)) {
             return;
         }
-        $ext_prefix = ('none' === $this->provider) ? '' : '_';
+
+        if(mb_strpos($rout_number, '_') === 0){
+            $ext_prefix = '';
+        }elseif(preg_match_all('/^[.|!|N|X|Z|0-9|\[|\]|\-]+$/m', $rout_number, $matches, PREG_SET_ORDER) === 1){
+            // Это скорее всего шаблон EXTEN.
+            $ext_prefix = '_';
+        }else{
+            $ext_prefix = '';
+        }
 
         $rout_data .= "exten => {$ext_prefix}{$rout_number},1,NoOp(--- Incoming call ---)\n\t";
         $rout_data .= 'same => n,Set(CHANNEL(language)=' . $this->lang . ')' . "\n\t";
         $rout_data .= 'same => n,Set(CHANNEL(hangup_handler_wipe)=hangup_handler,s,1)' . "\n\t";
         $rout_data .= 'same => n,Set(__FROM_DID=${EXTEN})' . "\n\t";
         $rout_data .= 'same => n,Set(__FROM_CHAN=${CHANNEL})' . "\n\t";
+        $rout_data .= 'same => n,Set(__M_CALLID=${CHANNEL(callid)})' . "\n\t";
         // Установка имени пира.
         $rout_data .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" != "Local"]?Gosub(set_from_peer,s,1))' . "\n\t";
         $rout_data .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" == "Local"]?Set(__FROM_PEER=${CALLERID(num)}))' . "\n\t";
         $rout_data .= 'same => n,Gosub(add-trim-prefix-clid,${EXTEN},1)' . "\n\t";
         // Запрещаем звонящему переадресацию.
         $rout_data .= 'same => n,Set(__TRANSFER_OPTIONS=t)' . "\n";
-
-        $rout_data .= $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_INCOMING_ROUT_BEFORE_DIAL, [$rout_number]);
+        $rout_data .= $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_INCOMING_ROUT_BEFORE_DIAL_PRE_SYSTEM, [$rout_number]);
         $rout_data .= $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_INCOMING_ROUT_BEFORE_DIAL_SYSTEM, [$rout_number]);
+        $rout_data .= $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_INCOMING_ROUT_BEFORE_DIAL, [$rout_number]);
         // Описываем возможность прыжка в пользовательский sub контекст.
         $rout_data .= " \n\t" . 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1)';
 

@@ -355,26 +355,9 @@ class ModelsBase extends Model
                 $name = '<i class="time icon"></i> ';
                 if (empty($this->id)) {
                     $name .= $this->t('mo_NewElementOutWorkTimes');
-                } elseif ( ! empty($this->description)) {
-                    $name .= $this->t('repOutWorkTimes', ['represent' => $this->description]);
                 } else {
-                    $represent = '';
-                    if (is_numeric($this->date_from)) {
-                        $represent .= date("d/m/Y", $this->date_from) . '-';
-                    }
-                    if (is_numeric($this->date_to)) {
-                        $represent .= date("d/m/Y", $this->date_to) . ' ';
-                    }
-                    if (isset($this->weekday_from)) {
-                        $represent .= $this->t(date('D', strtotime("Sunday +{$this->weekday_from} days"))) . '-';
-                    }
-                    if (isset($this->weekday_to)) {
-                        $represent .= $this->t(date('D', strtotime("Sunday +{$this->weekday_to} days"))) . ' ';
-                    }
-                    if (isset($this->time_from) || isset($this->time_to)) {
-                        $represent .= $this->time_from . ' - ' . $this->time_to . ' ';
-                    }
-                    $name .= $this->t('repOutWorkTimes', ['represent' => $represent]);
+                    // BreadcrumbCustomFilesmodify
+                    $name = $this->t('repOutWorkTimes', ['represent' => $this->t('BreadcrumbCustomFilesmodify')]);
                 }
                 break;
             case Providers::class:

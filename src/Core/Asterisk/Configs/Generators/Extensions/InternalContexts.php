@@ -62,6 +62,13 @@ class InternalContexts extends CoreConfigClass
         $conf .= 'same => n,ExecIf($["${BLINDTRANSFER}x" != "x"]?AGI(check_redirect.php,${BLINDTRANSFER}))' . "\n\t";
         $conf .= "same => n,Playback(pbx-invalid,noanswer) \n\n";
 
+        $conf .= "[set-answer-state]".PHP_EOL;
+        $conf .= 'exten => _.!,1,ExecIf($["${CHANNEL_EXISTS(${FROM_CHAN})}" == "0"]?return)'.PHP_EOL."\t";
+        $conf .= 'same => n,Set(EXPORT(${FROM_CHAN},MASTER_CHANNEL(M_DIALSTATUS))=ANSWER)'.PHP_EOL."\t";
+        $conf .= 'same => n,Set(EXPORT(${FROM_CHAN},M_DIALSTATUS)=ANSWER)'.PHP_EOL."\t";
+        $conf .= 'same => n,return'.PHP_EOL;
+        $conf .= 'exten => _[hit],1,Hangup()'.PHP_EOL.PHP_EOL;
+
         $conf .= '[set-dial-contacts]'.PHP_EOL.
                  'exten => _X!,1,NoOp()'.PHP_EOL."\t";
 
@@ -103,6 +110,7 @@ class InternalContexts extends CoreConfigClass
     private function generateInternalFW(): string
     {
         $conf = "[internal-fw]\n";
+        $conf .= 'exten => h,1,ExecIf($["${ISTRANSFER}x" != "x"]?Goto(transfer_dial_hangup,${EXTEN},1))' . "\n";
         $conf .= 'exten => _' . $this->extensionPattern . ',1,NoOp(DIALSTATUS - ${DIALSTATUS})' . "\n\t";
         // CANCEL - вызов был отменен, к примеру *0, не нужно дальше искать адресат.
         $conf .= 'same => n,ExecIf($["${DIALSTATUS}" == "CANCEL"]?Hangup())' . "\n\t";
@@ -131,15 +139,17 @@ class InternalContexts extends CoreConfigClass
         $conf = "[all_peers]\n";
         $conf .= 'include => internal-hints' . "\n";
         $conf .= 'exten => failed,1,Hangup()' . "\n";
-        $conf .= 'exten => ' . ExtensionsConf::ALL_NUMBER_EXTENSION . ',1,ExecIf($[ "${ORIGINATE_SRC_CHANNEL}x" != "x" ]?Wait(0.2))' . PHP_EOL . "\t";
+        $conf .= 'exten => ' . ExtensionsConf::ALL_EXTENSION . ',1,ExecIf($[ "${ORIGINATE_SRC_CHANNEL}x" != "x" ]?Wait(0.2))' . PHP_EOL . "\t";
         $conf .= 'same => n,ExecIf($[ "${ORIGINATE_SRC_CHANNEL}x" != "x" ]?ChannelRedirect(${ORIGINATE_SRC_CHANNEL},${CONTEXT},${ORIGINATE_DST_EXTEN},1))' . PHP_EOL . "\t";
+        $conf .= 'same => n,ExecIf($[ "${ORIGINATE_SRC_CHANNEL}x" != "x" ]?Set(EXPORT(${ORIGINATE_SRC_CHANNEL},__ORIG_CALLID)=${CHANNEL(callid)}))' . PHP_EOL . "\t";
         $conf .= 'same => n,ExecIf($[ "${ORIGINATE_SRC_CHANNEL}x" != "x" ]?Hangup())' . PHP_EOL . "\t";
-
         // Фильтр спецсимволов. Разершаем только цифры.
         $conf .= 'same => n,Set(cleanNumber=${FILTER(\*\#\+1234567890,${EXTEN})})' . "\n\t";
         $conf .= 'same => n,ExecIf($["${EXTEN}" != "${cleanNumber}"]?Goto(${CONTEXT},${cleanNumber},$[${PRIORITY} + 1]))' . "\n\t";
 
+        $conf .= $this->generateAdditionalModulesAllPeersContext();
         $conf .= 'same => n,Set(__FROM_CHAN=${CHANNEL})' . "\n\t";
+        $conf .= 'same => n,Set(__M_CALLID=${CHANNEL(callid)})' . "\n\t";
         $conf .= 'same => n,ExecIf($["${OLD_LINKEDID}x" == "x"]?Set(__OLD_LINKEDID=${CHANNEL(linkedid)}))' . "\n\t";
         $conf .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" != "Local"]?Gosub(set_from_peer,s,1))' . "\n\t";
         $conf .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" == "Local"]?Gosub(set_orign_chan,s,1))' . "\n\t";
@@ -157,6 +167,7 @@ class InternalContexts extends CoreConfigClass
             $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(' . $name . ',${EXTEN},1)}" == "1"]?' . $name . ',${EXTEN},1)' . " \n\t";
         }
         $conf .= 'same => n,Hangup()' . " \n";
+        $conf .= 'exten => _[hit],1,Hangup()' . " \n";
 
         $pickupExtension = $this->generalSettings['PBXFeaturePickupExten'];
         if(!empty($pickupExtension)){
@@ -221,6 +232,12 @@ class InternalContexts extends CoreConfigClass
         return $this->hookModulesMethod(CoreConfigClass::EXTENSION_GEN_INTERNAL_USERS_PRE_DIAL);
     }
 
+    private function generateAdditionalModulesAllPeersContext():string
+    {
+        return $this->hookModulesMethod(CoreConfigClass::EXTENSION_GEN_ALL_PEERS_CONTEXT);
+    }
+
+
     /**
      * Генератор [internal-users] dialplan.
      *
@@ -238,9 +255,9 @@ class InternalContexts extends CoreConfigClass
         $conf .= 'same => n,ExecIf($["${PJSIP_ENDPOINT(${EXTEN},auth)}x" == "x"]?Goto(internal-num-undefined,${EXTEN},1))' . " \n\t";
 
         $conf .= $this->generateAdditionalModulesInternalUsersContext();
-
-        $conf .= 'same => n,ExecIf($["${DEVICE_STATE(' . $this->technology . '/${EXTEN})}" == "BUSY"]?Set(DIALSTATUS=BUSY))' . " \n\t";
-        $conf .= 'same => n,GotoIf($["${DEVICE_STATE(' . $this->technology . '/${EXTEN})}" == "BUSY"]?fw_start)' . " \n\t";
+        $conf .= 'same => n,ExecIf($["${DEVICE_STATE(' . $this->technology . '/${EXTEN})}" == "BUSY" || "${DEVICE_STATE(' . $this->technology . '/${EXTEN}-WS)}" == "BUSY"]?Set(IS_BUSY=1))' . " \n\t";
+        $conf .= 'same => n,ExecIf($["${IS_BUSY}" == "1"]?Set(DIALSTATUS=BUSY))' . " \n\t";
+        $conf .= 'same => n,GotoIf($["${IS_BUSY}" == "1" && "${QUEUE_SRC_CHAN}x" == "x"]?fw_start)' . " \n\t";
 
         // Как долго звонить пиру.
         $conf .= 'same => n,Set(ringlength=${DB(FW_TIME/${EXTEN})})' . " \n\t";

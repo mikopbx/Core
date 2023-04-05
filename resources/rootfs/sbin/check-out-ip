@@ -1,0 +1,41 @@
+#!/bin/sh
+#
+# MikoPBX - free phone system for small business
+# Copyright © 2017-2022 Alexey Portnov and Nikolay Beketov
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with this program.
+# If not, see <https://www.gnu.org/licenses/>.
+#
+
+/bin/busybox cat /etc/asterisk/pjsip.conf |  /bin/busybox grep external_media_address  > /dev/null 2> /dev/null;
+needCheckOutAddress="$?";
+if [ "$needCheckOutAddress" != '1' ]; then
+    echo 'Verification is not required';
+    exit 0;
+fi;
+
+outIp="$(/usr/bin/curl https://ipecho.net/plain 2> /dev/null)";
+result="$?";
+if [ "$result" != '0' ]; then
+  echo 'Error getting an IP address';
+  exit 1;
+fi
+
+if [ "$(cat /var/etc/out-ip.hash)" = "$outIp" ]; then
+    echo 'The IP has not changed';
+    exit 0;
+fi;
+
+echo "$outIp" > /var/etc/out-ip.hash;
+echo 'We send the re-registration command';
+/usr/sbin/asterisk -rx 'pjsip send register *all';

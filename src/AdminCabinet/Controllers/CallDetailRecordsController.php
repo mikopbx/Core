@@ -20,7 +20,8 @@
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use DateTime;
-use MikoPBX\Common\Models\{CallDetailRecords, PbxSettings};
+use MikoPBX\Common\Models\{PbxSettings};
+use MikoPBX\Common\Providers\CDRDatabaseProvider;
 
 class CallDetailRecordsController extends BaseController
 {
@@ -44,20 +45,11 @@ class CallDetailRecordsController extends BaseController
         $recordsPerPage              = $this->request->getPost('length');
         $searchPhrase                = $this->request->getPost('search');
         $this->view->draw            = $currentPage;
-        $this->view->recordsTotal    = 0;
         $this->view->recordsFiltered = 0;
         $this->view->data            = [];
 
-        // Посчитаем количество уникальных звонков без учета фильтров
         $parameters = [];
         $parameters['columns'] = 'COUNT(DISTINCT(linkedid)) as rows';
-        $recordsTotalReq       = CallDetailRecords::findFirst($parameters);
-        if ($recordsTotalReq) {
-            $recordsTotal             = $recordsTotalReq->rows;
-            $this->view->recordsTotal = $recordsTotal;
-        } else {
-            return;
-        }
         // Посчитаем количество уникальных звонков с учетом фильтров
         if ( ! empty($searchPhrase['value'])) {
             $this->prepareConditionsForSearchPhrases($searchPhrase['value'], $parameters);
@@ -66,11 +58,8 @@ class CallDetailRecordsController extends BaseController
                 return;
             }
         }
-        $recordsFilteredReq = CallDetailRecords::findFirst($parameters);
-        if ($recordsFilteredReq) {
-            $recordsFiltered             = $recordsFilteredReq->rows;
-            $this->view->recordsFiltered = $recordsFiltered;
-        }
+        $recordsFilteredReq = CDRDatabaseProvider::getCdr($parameters);
+        $this->view->recordsFiltered = $recordsFilteredReq[0]['rows']??0;
 
         // Найдем все LinkedID подходящих под заданный фильтр
         $parameters['columns'] = 'DISTINCT(linkedid) as linkedid';
@@ -78,13 +67,12 @@ class CallDetailRecordsController extends BaseController
         $parameters['limit']   = $recordsPerPage;
         $parameters['offset']  = $position;
 
-        $selectedLinkedIds = CallDetailRecords::find($parameters);
+        $selectedLinkedIds = CDRDatabaseProvider::getCdr($parameters);
         $arrIDS            = [];
         foreach ($selectedLinkedIds as $item) {
-            $arrIDS[] = $item->linkedid;
+            $arrIDS[] = $item['linkedid'];
         }
-
-        if (count($arrIDS) === 0) {
+        if (empty($arrIDS)) {
             return;
         }
 
@@ -92,7 +80,7 @@ class CallDetailRecordsController extends BaseController
         if (count($arrIDS) === 1) {
             $parameters = [
                 'conditions' => 'linkedid = :ids:',
-                'columns'    => 'id, disposition, start, src_num, dst_num, billsec, recordingfile, did, dst_chan, linkedid, is_app',
+                'columns'    => 'id, disposition, start, src_num, dst_num, billsec, recordingfile, did, dst_chan, linkedid, is_app, verbose_call_id',
                 'bind'       => [
                     'ids' => $arrIDS[0],
                 ],
@@ -101,7 +89,7 @@ class CallDetailRecordsController extends BaseController
         } else {
             $parameters = [
                 'conditions' => 'linkedid IN ({ids:array})',
-                'columns'    => 'id, disposition, start, src_num, dst_num, billsec, recordingfile, did, dst_chan, linkedid, is_app',
+                'columns'    => 'id, disposition, start, src_num, dst_num, billsec, recordingfile, did, dst_chan, linkedid, is_app, verbose_call_id',
                 'bind'       => [
                     'ids' => $arrIDS,
                 ],
@@ -109,10 +97,8 @@ class CallDetailRecordsController extends BaseController
             ];
         }
 
-        $selectedRecords = CallDetailRecords::find($parameters);
-
+        $selectedRecords = CDRDatabaseProvider::getCdr($parameters);
         $arrCdr = [];
-
         $objectLinkedCallRecord = (object)[
             'linkedid'    => '',
             'disposition' => '',
@@ -122,9 +108,11 @@ class CallDetailRecordsController extends BaseController
             'billsec'     => 0,
             'answered'    => [],
             'detail'      => [],
+            'ids'         => [],
         ];
 
-        foreach ($selectedRecords as $record) {
+        foreach ($selectedRecords as $arrRecord) {
+            $record = (object) $arrRecord;
             if ( ! array_key_exists($record->linkedid, $arrCdr)) {
                 $arrCdr[$record->linkedid] = clone $objectLinkedCallRecord;
             }
@@ -155,6 +143,9 @@ class CallDetailRecordsController extends BaseController
                 ];
             }
             $linkedRecord->detail[] = $record;
+            if(!empty($record->verbose_call_id)){
+                $linkedRecord->ids[] = $record->verbose_call_id;
+            }
         }
         $output = [];
         foreach ($arrCdr as $cdr) {
@@ -168,6 +159,7 @@ class CallDetailRecordsController extends BaseController
                 $cdr->disposition,
                 'DT_RowId'    => $cdr->linkedid,
                 'DT_RowClass' => 'NOANSWER' === $cdr->disposition ? 'ui negative' : 'detailed',
+                'ids'         => rawurlencode(implode('&', array_unique($cdr->ids))),
             ];
         }
 

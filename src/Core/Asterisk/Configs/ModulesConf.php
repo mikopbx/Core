@@ -115,6 +115,7 @@ class ModulesConf extends CoreConfigClass
             'func_periodic_hook.so',
             'func_uri.so',
             'func_groupcount.so',
+            'func_export.so',
             'app_mixmonitor.so',
 
             // Необходимое для работы переадресаций.
@@ -187,6 +188,10 @@ class ModulesConf extends CoreConfigClass
 
             'cel_beanstalkd.so',
             'app_celgenuserevent.so',
+
+            // 'res_hep.so',
+            // 'res_hep_pjsip.so',
+            // 'res_hep_rtcp.so',
         ];
 
         if(file_exists('/dev/dahdi/transcode')){

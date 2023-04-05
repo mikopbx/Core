@@ -33,6 +33,11 @@ class WorkerNotifyByEmail extends WorkerBase
     public function start($argv): void
     {
         $client = new BeanstalkClient(__CLASS__);
+        if($client->isConnected() === false){
+            Util::sysLogMsg(self::class, 'Fail connect to beanstalkd...');
+            sleep(2);
+            return;
+        }
         $client->subscribe(__CLASS__, [$this, 'workerNotifyByEmail']);
         $client->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
 
@@ -41,21 +46,48 @@ class WorkerNotifyByEmail extends WorkerBase
         }
     }
 
+    private function replaceParams(string $src, array $params):string
+    {
+        return str_replace(
+            [
+                "\n",
+                "NOTIFICATION_MISSEDCAUSE",
+                "NOTIFICATION_CALLERID",
+                "NOTIFICATION_TO",
+                "NOTIFICATION_DURATION",
+                "NOTIFICATION_DATE"
+            ],
+            [
+                "<br>",
+                'NOANSWER',
+                $params['from_number'],
+                $params['to_number'],
+                $params['duration'],
+                explode('.', $params['start'])[0]
+            ],
+            $src);
+    }
+
     /**
      * Main worker
      * @param $message
      */
     public function workerNotifyByEmail($message): void
     {
+        $notifier = new Notifications();
         $config   = new MikoPBXConfig();
         $settings = $config->getGeneralSettings();
 
         /** @var BeanstalkClient $message */
         $data = json_decode($message->getBody(), true);
 
-        $template_body   = $settings['MailTplMissedCallBody'];
-        $template_Footer = $settings['MailTplMissedCallFooter'];
-        $emails          = [];
+        $template_body    = $settings['MailTplMissedCallBody'];
+        $template_subject = $settings['MailTplMissedCallSubject'];
+        if(empty($template_subject)){
+            $template_subject = Util::translate("You have missing call") . ' <-- NOTIFICATION_CALLERID';
+        }
+        $template_Footer  = $settings['MailTplMissedCallFooter'];
+        $emails           = [];
 
         $tmpArray = [];
         foreach ($data as $call) {
@@ -64,53 +96,22 @@ class WorkerNotifyByEmail extends WorkerBase
                 continue;
             }
             $tmpArray[] = $keyHash;
-            /**
-             * 'language'
-             * 'is_internal'
-             */
-            if ( ! isset($emails[$call['email']])) {
-                $emails[$call['email']] = '';
+            if (!isset($emails[$call['email']])) {
+                $emails[$call['email']] = [
+                    'subject' => $this->replaceParams($template_subject, $call),
+                    'body'    => '',
+                    'footer'  => $this->replaceParams($template_Footer, $call),
+                ];
             }
-
-            if (empty($template_body)) {
-                $email = Util::translate('You have missing call');
-            } else {
-                $email = str_replace(
-                    array(
-                        "\n",
-                        "NOTIFICATION_MISSEDCAUSE",
-                        "NOTIFICATION_CALLERID",
-                        "NOTIFICATION_TO",
-                        "NOTIFICATION_DURATION",
-                        "NOTIFICATION_DATE"
-                    ),
-                    array("<br>",
-                        'NOANSWER',
-                        $call['from_number'],
-                        $call['to_number'],
-                        $call['duration'],
-                        $call['start']
-                    ),
-                    $template_body
-                );
+            if (!empty($template_body)) {
+                $email = $this->replaceParams($template_body, $call);
+                $emails[$call['email']]['body'] .= "$email <br><hr><br>";
             }
-            $emails[$call['email']] .= "$email <br> <hr> <br>";
         }
 
-        if (isset($settings['MailSMTPSenderAddress']) && trim($settings['MailSMTPSenderAddress']) != '') {
-            $from_address = $settings['MailSMTPSenderAddress'];
-        } else {
-            $from_address = $settings['MailSMTPUsername'];
-        }
-
-        foreach ($emails as $to => $text) {
-            $subject = str_replace('MailSMTPSenderAddress', $from_address, $settings['MailTplMissedCallSubject']);
-            if (empty($subject)) {
-                $subject = Util::translate("You have missing call");
-            }
-
-            $body = "{$text}<br>{$template_Footer}";
-            $notifier = new Notifications();
+        foreach ($emails as $to => $email) {
+            $subject = $email['subject'];
+            $body = "{$email['body']}<br>{$email['footer']}";
             $notifier->sendMail($to, $subject, $body);
         }
         sleep(1);

@@ -87,53 +87,17 @@ class ExtensionEditForm extends Form
         $this->add(new Hidden('user_role', ["value" => $user->role]));
 
         // Username
-        $this->add(new Text('user_username', ["value" => $user->username]));
+        $this->add(new Text('user_username', ["value" => $user->username, 'autocomplete' => 'off']));
 
         // Email
         $this->add(
             new Text(
-                'user_email', [
-                "value" => $user->email,
-            ]
+                'user_email', [ "value" => $user->email, 'autocomplete' => 'off']
             )
         );
 
-        // // Language
-        // $language = new Select(
-        //     'user_language',
-        //     [
-        //         'en-en' => $this->translation->_('ex_English'),
-        //         'en-gb' => $this->translation->_('ex_EnglishUK'),
-        //         'ru-ru' => $this->translation->_('ex_Russian'),
-        //         'de-de' => $this->translation->_('ex_Deutsch'),
-        //         'da-dk' => $this->translation->_('ex_Danish'),
-        //         'es-es' => $this->translation->_('ex_Spanish'),
-        //         'fr-ca' => $this->translation->_('ex_French'),
-        //         'it-it' => $this->translation->_('ex_Italian'),
-        //         'ja-jp' => $this->translation->_('ex_Japanese'),
-        //         'nl-nl' => $this->translation->_('ex_Dutch'),
-        //         'pl-pl' => $this->translation->_('ex_Polish'),
-        //         'pt-br' => $this->translation->_('ex_Portuguese'),
-        //         'sv-sv' => $this->translation->_('ex_Swedish'),
-        //         'cs-cs' => $this->translation->_('ex_Czech'),
-        //         'tr-tr' => $this->translation->_('ex_Turkish'),
-        //     ]
-        //     , [
-        //         'using'    => [
-        //             'id',
-        //             'name',
-        //         ],
-        //         'value'    => $entity->Users->language,
-        //         'useEmpty' => false,
-        //         'class'    => 'ui selection dropdown language-select',
-        //     ]
-        // );
-        // $this->add($language);
-
-
         // Picture
         $this->add(new Hidden('user_avatar', ["value" => $user->avatar]));
-
 
         // SIP
         $sip = $entity->Sip??new Sip();
@@ -159,13 +123,11 @@ class ExtensionEditForm extends Form
             new Text(
                 'sip_secret', [
                 "value" => $sip->secret,
-                "class"=>"confidential-field"
+                "class"=>"confidential-field",
+                'autocomplete' => 'off'
             ]
             )
         );
-
-        // Busylevel
-        $this->add(new Numeric('sip_busylevel', ["value" => $sip->busylevel]));
 
         // Dtmfmode
         $arrDTMFType = [
@@ -225,39 +187,15 @@ class ExtensionEditForm extends Form
         );
         $this->add($networkfilterid);
 
-
-        // Nat
-        $arrNatType = [
-            'force_rport,comedia' => 'force_rport, comedia',
-            'force_rport'         => 'force_rport',
-            'comedia'             => 'comedia',
-            'auto_force_rport'    => 'auto_force_rport',
-            'no'                  => 'no',
-        ];
-
-        $nat = new Select(
-            'nat', $arrNatType, [
-            'using'    => [
-                'id',
-                'name',
-            ],
-            'useEmpty' => false,
-            'value'    => $sip->nat,
-            'class'    => 'ui selection dropdown protocol-select',
-        ]
-        );
-        $this->add($nat);
-
         // Qualify
         $cheskarr = ['value' => null];
         if ($sip->qualify) {
             $cheskarr = ['checked' => 'checked', 'value' => null];
         }
-
         $this->add(new Check('qualify', $cheskarr));
 
         // Qualifyfreq
-        $this->add(new Numeric('qualifyfreq', ["value" => $sip->qualifyfreq]));
+        $this->add(new Numeric('qualifyfreq', ["value" => $sip->qualifyfreq, 'autocomplete' => 'off']));
 
         // Manualattributes
         $rows = max(
@@ -272,10 +210,10 @@ class ExtensionEditForm extends Form
         );
 
         // Description
-        $this->add(new Text('sip_description', ["value" => $sip->description]));
+        $this->add(new Text('sip_description', ["value" => $sip->description, 'autocomplete' => 'off']));
 
         // EXTERNAL Extension
-        $this->add(new Text('mobile_number', ["value" => $options['external_extension']->number]));
+        $this->add(new Text('mobile_number', ["value" => $options['external_extension']->number, 'autocomplete' => 'off']));
         // Uniqid
         $externalPhones = $options['external_extension']->ExternalPhones??new ExternalPhones();
         $this->add(new Hidden('mobile_uniqid', ["value" => $externalPhones->uniqid]));
@@ -290,7 +228,7 @@ class ExtensionEditForm extends Form
         $this->add(
             new Text(
                 'mobile_dialstring',
-                ["value" => $externalPhones->dialstring]
+                ["value" => $externalPhones->dialstring, 'autocomplete' => 'off']
             )
         );
 
@@ -349,8 +287,15 @@ class ExtensionEditForm extends Form
                 "style"        => "width: 80px;",
                 "defaultValue" => 120,
                 "value"        => ($ringDuration > 0) ? $ringDuration : '',
+                'autocomplete' => 'off'
             ]
             )
         );
+
+        $checkArr = ['value' => null];
+        if ($sip->enableRecording !== '0') {
+            $checkArr = ['checked' => 'checked', 'value' => null];
+        }
+        $this->add(new Check('sip_enableRecording', $checkArr));
     }
 }

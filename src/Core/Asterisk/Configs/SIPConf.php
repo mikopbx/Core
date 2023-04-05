@@ -27,8 +27,7 @@ use MikoPBX\Common\Models\{Codecs,
     PbxSettings,
     Sip,
     SipHosts,
-    Users
-};
+    Users};
 use MikoPBX\Core\Asterisk\AstDB;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\IncomingContexts;
 use MikoPBX\Modules\Config\ConfigClass;
@@ -165,6 +164,29 @@ class SIPConf extends CoreConfigClass
             }
         }
 
+        $usersNumbers = [];
+        $extensionsData = Extensions::find([ 'conditions' => 'userid <> "" and userid>0 ', 'columns' => 'userid,number']);
+        /** @var Extensions $extension */
+        foreach ($extensionsData as $extension){
+            $usersNumbers[$extension->userid][] = $extension->number;
+        }
+
+        $conf.=PHP_EOL.'[monitor-internal]'.PHP_EOL;
+        $confExceptions = '';
+        foreach ($this->data_peers as $peer) {
+            $numbers = $usersNumbers[$peer['user_id']]??[];
+            foreach ($numbers as $num){
+                $num = substr($num,-9);
+                if(strpos($conf, " $num,") === false){
+                    $conf  .= "exten => {$num},1,NoOp(-)".PHP_EOL;
+                }
+                if($peer['enableRecording'] !== true && strpos($confExceptions, " $num,") === false){
+                    $confExceptions .= "exten => {$num},1,NoOp(-)".PHP_EOL;
+                }
+            }
+        }
+        $conf.= PHP_EOL.'[monitor-exceptions]'.PHP_EOL.
+                $confExceptions.PHP_EOL.PHP_EOL;
         return $conf;
     }
 
@@ -194,7 +216,6 @@ class SIPConf extends CoreConfigClass
         /** @var Extensions $extension */
         /** @var Users $user */
         /** @var ExtensionForwardingRights $extensionForwarding */
-
         $data    = [];
         $db_data = Sip::find("type = 'peer' AND ( disabled <> '1')");
         foreach ($db_data as $sip_peer) {
@@ -208,6 +229,7 @@ class SIPConf extends CoreConfigClass
 
             // Получим используемые кодеки.
             $arr_data['codecs'] = $this->getCodecs();
+            $arr_data['enableRecording'] = $sip_peer->enableRecording !== '0';
 
             // Имя сотрудника.
             $extension = Extensions::findFirst("number = '{$sip_peer->extension}'");
@@ -281,7 +303,7 @@ class SIPConf extends CoreConfigClass
             $arr_data['deny']                       = ($network_filter === null) ? '' : $network_filter->deny;
             // Получим используемые кодеки.
             $arr_data['codecs'] = $this->getCodecs();
-            $context_id = preg_replace("/[^a-z\d]/iu", '', $sip_peer->host . $sip_peer->port);
+            $context_id = self::getContextId($sip_peer->host.$sip_peer->port);
             if ( ! isset($this->contexts_data[$context_id])) {
                 $this->contexts_data[$context_id] = [];
             }
@@ -487,7 +509,7 @@ class SIPConf extends CoreConfigClass
         $tlsNatConf = '';
 
         $resolveOk = Processes::mwExec("timeout 1 getent hosts '$externalHostName'") === 0;
-        if(!$resolveOk){
+        if(!empty($externalHostName) && !$resolveOk){
             Util::sysLogMsg('DNS', "ERROR: DNS $externalHostName not resolved, It will not be used in SIP signaling.");
         }
         if ($topology === 'private') {
@@ -586,9 +608,8 @@ class SIPConf extends CoreConfigClass
             if($provider['registration_type'] !== Sip::REG_TYPE_NONE){
                 $prov_config .= $this->generateProviderAuth($provider, $manual_attributes);
             }
-            if($provider['registration_type'] !== Sip::REG_TYPE_INBOUND) {
-                $prov_config .= $this->generateProviderIdentify($provider, $manual_attributes);
-            }
+
+            $prov_config .= $this->generateProviderIdentify($provider, $manual_attributes);
             $prov_config .= $this->generateProviderAor($provider, $manual_attributes);
             $prov_config .= $this->generateProviderEndpoint($provider, $manual_attributes);
         }
@@ -769,11 +790,11 @@ class SIPConf extends CoreConfigClass
     private function generateProviderIdentify(array $provider, array $manual_attributes): string {
         $conf          = '';
         $providerHosts = $this->dataSipHosts[$provider['uniqid']] ?? [];
-        if ( ! in_array($provider['host'], $providerHosts, true)) {
-            $providerHosts[] = $provider['host'];
-        }
         if(!empty($provider['outbound_proxy'])){
             $providerHosts[] = explode(':', $provider['outbound_proxy'])[0];
+        }
+        if(empty($providerHosts)){
+            return '';
         }
         $options = [
             'type'     => 'identify',
@@ -861,10 +882,21 @@ class SIPConf extends CoreConfigClass
             $options,
             CoreConfigClass::OVERRIDE_PROVIDER_PJSIP_OPTIONS
         );
-        $conf    .= "[{$provider['uniqid']}]\n";
+        $conf    .= "[{$provider['uniqid']}]".PHP_EOL;
+        $conf    .= 'set_var=contextID='.$provider['context_id'].PHP_EOL;
         $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'endpoint');
 
         return $conf;
+    }
+
+    /**
+     * Возвращает имя контекста без спецсимволовю
+     * @param $name
+     * @return string
+     */
+    public static function getContextId(string $name = ''):string
+    {
+        return preg_replace("/[^a-z\d]/iu", '', $name).'-incoming';
     }
 
     /**
@@ -1003,7 +1035,6 @@ class SIPConf extends CoreConfigClass
             // Ограничим длину calleridname. Это Unicode символы. Ограничиваем длину.
             $calleridname = mb_substr($calleridname,0, 40);
         }
-        $busylevel    = (trim($peer['busylevel']) === '') ? '1' : '' . $peer['busylevel'];
 
         $dtmfmode = ($peer['dtmfmode'] === 'rfc2833') ? 'rfc4733' : $peer['dtmfmode'];
         $options  = [
@@ -1023,7 +1054,7 @@ class SIPConf extends CoreConfigClass
             'pickup_group'         => '1',
             'sdp_session'          => 'mikopbx',
             'language'             => $language,
-            'device_state_busy_at' => $busylevel,
+            'device_state_busy_at' => "1",
             'aors'                 => $peer['extension'],
             'auth'                 => $peer['extension'],
             'outbound_auth'        => $peer['extension'],

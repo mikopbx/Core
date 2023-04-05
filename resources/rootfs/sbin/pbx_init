@@ -17,7 +17,7 @@
 # If not, see <https://www.gnu.org/licenses/>.
 #
 
-echo "Start ${0}";
+echo " - Start ${0}";
 delta=1; i=0;
 freeOffloadFile='/tmp/freeoffload';
 
@@ -47,7 +47,7 @@ while : ; do
 
     if [ -f /tmp/rebooting ]; then
         echo "Waiting for a reboot (${0})";
-        /sbin/mikopbx_reboot;
+        /sbin/pbx_reboot;
         # Ожидаем перезагрузки 10 секунд.
         # dd if=/dev/urandom bs=1 count=10 2>/dev/null | pv -pL 1 | dd of=/dev/null 2>/dev/null;
     fi

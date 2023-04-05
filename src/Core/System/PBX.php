@@ -77,15 +77,9 @@ class PBX extends Injectable
     public function start(): void
     {
         Network::startSipDump();
-        if (Util::isSystemctl() && ! Util::isDocker()) {
-            $systemctlPath = Util::which('systemctl');
-            Processes::mwExecBg("{$systemctlPath} restart asterisk");
-        } else {
-            $safe_asteriskPath = Util::which('safe_asterisk');
-            // Ключ "-n" отключает подсветку цветом в CLI asterisk.
-            Processes::mwExecBg("{$safe_asteriskPath} -f");
-        }
-
+        $safe_asteriskPath = Util::which('safe_asterisk');
+        // Ключ "-n" отключает подсветку цветом в CLI asterisk.
+        Processes::mwExecBg("{$safe_asteriskPath} -f");
         //Send notifications to modules
         $configClassObj = new ConfigClass();
         $configClassObj->hookModulesMethod(ConfigClass::ON_AFTER_PBX_STARTED);
@@ -106,7 +100,7 @@ class PBX extends Injectable
         if ($di === null) {
             return;
         }
-        $max_size    = 2;
+        $max_size    = 10;
         $log_dir     = System::getLogDir() . '/asterisk/';
         $text_config = "{$log_dir}{$f_name} {
     nocreate

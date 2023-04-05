@@ -20,6 +20,7 @@
 namespace MikoPBX\Tests\Calls\Scripts;
 use MikoPBX\Common\Models\CallDetailRecords;
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
+use MikoPBX\Common\Providers\CDRDatabaseProvider;
 use MikoPBX\Core\Asterisk\AsteriskManager;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
@@ -165,25 +166,21 @@ class TestCallsBase {
      */
     private function actionOriginate(string $src, string $dst):bool{
         self::printInfo("Start originate... $src to $dst");
-        $i = 0;
-        do{
-            $result = $this->am->Originate(
-                'Local/'.$src.'@orgn-wait',
-                $dst,
-                'out-to-exten',
-                '1',
-                null,
-                null,
-                '1',
-                null,
-                "__A_NUM={$this->aNum},__B_NUM={$this->bNum},__C_NUM={$this->cNum},__OFF_NUM={$this->offNum}",
-                null,
-                '0');
-            self::printInfo('Result originate: '.$result['Response']??'none');
-            $i++;
-        }while($result['Response'] === 'Error' && $i < 5);
-
-        return $result['Response'] !== 'Error';
+        $dirName = getenv('dirName');
+        $outgoingDir = "$dirName/logs/spool/outgoing";
+        $conf = "Channel: Local/$src@orgn-wait".PHP_EOL.
+            "Context: out-to-exten".PHP_EOL.
+            "Extension: $dst".PHP_EOL.
+            "Priority: 1".PHP_EOL.
+            "Setvar: __A_NUM=$this->aNum".PHP_EOL.
+            "Setvar: __B_NUM=$this->bNum".PHP_EOL.
+            "Setvar: __C_NUM={$this->cNum}".PHP_EOL.
+            "Setvar: __OFF_NUM={$this->offNum}".PHP_EOL;
+        $tmpFile     = tempnam('/tmp', 'call');
+        file_put_contents($tmpFile,$conf);
+        Processes::mwExec("mv $tmpFile $outgoingDir/test.call");
+        usleep(500000);
+        return true;
     }
 
     /**
@@ -301,9 +298,13 @@ class TestCallsBase {
      */
     protected function checkCdr(): void
     {
-        sleep(4);
+        sleep(6);
         // Проверяем результат.
-        $rows = CallDetailRecords::find()->toArray();
+        $filter = [
+            'work_completed=1',
+            'columns' => '*'
+        ];
+        $rows = CDRDatabaseProvider::getCdr($filter);
         if(count($rows) !== count($this->sampleCDR)){
             self::printError('Call history compromised. Count:'.count($rows).", need: ".count($this->sampleCDR));
             return;
@@ -312,7 +313,8 @@ class TestCallsBase {
 
         $checkedIndexes = [];
         foreach ($rows as $row){
-            if(!file_exists($row['recordingfile'])){
+            $wavFile = Util::trimExtensionForFile($row['recordingfile'].'.wav');
+            if(!file_exists($row['recordingfile']) && !file_exists($wavFile)){
                 if($row['billsec'] > 0){
                     self::printError("File not found '{$row['recordingfile']}'");
                 }

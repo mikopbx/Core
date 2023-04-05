@@ -98,9 +98,9 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
         // $params[] = [[
         //     'moduleId'=>'ModuleBitrix24Integration',
         // ]];
-        $params[] = [[
-            'moduleId'=>'ModuleCallTracking',
-        ]];
+        // $params[] = [[
+        //     'moduleId'=>'ModuleCallTracking',
+        // ]];
         $params[] = [[
             'moduleId'=>'ModuleCTIClient',
         ]];

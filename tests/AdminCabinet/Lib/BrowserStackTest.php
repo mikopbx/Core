@@ -20,6 +20,7 @@
 namespace MikoPBX\Tests\AdminCabinet\Lib;
 
 use Facebook\WebDriver\Remote\RemoteWebDriver;
+use GuzzleHttp\Exception\GuzzleException;
 use PHPUnit\Framework\TestCase;
 use BrowserStack\Local as BrowserStackLocal;
 use GuzzleHttp\Client as GuzzleHttpClient;
@@ -39,16 +40,24 @@ class BrowserStackTest extends TestCase
      */
     public static function setUpBeforeClass(): void
     {
+        // Load the global configuration array
         $CONFIG  = $GLOBALS['CONFIG'];
+
+        // Get the current task ID from an environment variable, or use 0 if the environment variable is not set
         $task_id = getenv('TASK_ID') ? getenv('TASK_ID') : 0;
 
+        // Get the capabilities for the current task from the configuration array
         $caps = $CONFIG['environments'][$task_id];
 
+        // Loop through all the capabilities defined in the configuration array
         foreach ($CONFIG["capabilities"] as $key => $value) {
+            // If the capability is not already set in the current task's capabilities, add it
             if ( ! array_key_exists($key, $caps)) {
                 $caps[$key] = $value;
             }
         }
+
+        // If BrowserStack Local is enabled, start a BrowserStackLocal instance
         if(array_key_exists("browserstack.local", $caps) && $caps["browserstack.local"])
         {
             $bs_local_args = [
@@ -58,20 +67,30 @@ class BrowserStackTest extends TestCase
             self::$bs_local = new BrowserStackLocal();
             self::$bs_local->start($bs_local_args);
         }
+        // If BrowserStack Local is not enabled, set the BrowserStack Local capability values to the global variables
+        else {
+            $caps['browserstack.local'] = "".$GLOBALS['bs_local'];
+            $caps['browserstack.localIdentifier']="".$GLOBALS['bs_localIdentifier'];
+        }
 
+        // Set the URL for the BrowserStack WebDriver endpoint
         $url  = "https://" . $GLOBALS['BROWSERSTACK_USERNAME'] . ":" . $GLOBALS['BROWSERSTACK_ACCESS_KEY'] . "@" . $CONFIG['server'] . "/wd/hub";
 
-        $caps['project'] = "MikoPBX";
+        // Set the  build capabilities
         $caps['build'] = $GLOBALS['BUILD_NUMBER'];
+
+        // Create a new WebDriver instance with the specified URL and capabilities
         self::$driver = RemoteWebDriver::create($url, $caps);
+
+        // Set the initial test result and failure conditions variables
         self::$testResult = true;
         self::$failureConditions = [];
-
     }
+
 
     /**
      * Before execute test we set it name to RemoteWebdriver
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws GuzzleException
      */
     public function setUp(): void
     {
@@ -88,7 +107,6 @@ class BrowserStackTest extends TestCase
 
     /**
      * After execute test we will update his status
-     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function tearDown(): void
     {
@@ -118,7 +136,7 @@ class BrowserStackTest extends TestCase
 
 
         self::$driver->quit();
-        if (self::$bs_local) {
+        if (isset(self::$bs_local) && self::$bs_local) {
             self::$bs_local->stop();
         }
     }

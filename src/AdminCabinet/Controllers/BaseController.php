@@ -19,13 +19,16 @@
 
 namespace MikoPBX\AdminCabinet\Controllers;
 
+use MikoPBX\Common\Providers\ManagedCacheProvider;
+use MikoPBX\Core\System\Util;
 use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings};
 use Phalcon\Mvc\{Controller, View};
-use Phalcon\Logger;
+use Phalcon\Cache\Adapter\Redis;
 use Phalcon\Tag;
 use Phalcon\Text;
 use Sentry\SentrySdk;
-
+use GuzzleHttp;
+use Exception;
 
 /**
  * @property array                                         sessionRO
@@ -45,6 +48,8 @@ class BaseController extends Controller
     protected string $controllerName;
     protected string $controllerNameUnCamelized;
 
+    public const WIKI_LINKS = '/var/etc/wiki-links-LANG.json';
+
     /**
      * Initializes base class
      */
@@ -59,6 +64,70 @@ class BaseController extends Controller
         if ($this->request->isAjax() === false) {
             $this->prepareView();
         }
+    }
+
+    /**
+     * Кастомизация ссылок на wiki документацию для модулей.
+     * @param array $links
+     * @return void
+     */
+    private function customModuleWikiLinks(array $links): void
+    {
+        $this->view->urlToWiki    = $links[$this->language][$this->view->urlToWiki]??$this->view->urlToWiki;
+        $this->view->urlToSupport = $links[$this->language][$this->view->urlToSupport]??$this->view->urlToSupport;
+    }
+
+    /**
+     * Кастомизация ссылок на wiki документацию.
+     * @return void
+     */
+    private function customWikiLinks(): void
+    {
+        if(!$this->session->get('auth')){
+            return;
+        }
+        /** @var Redis $cache */
+        $cache  = $this->di->getShared(ManagedCacheProvider::SERVICE_NAME);
+        $links  = $cache->get('WIKI_LINKS');
+
+        if($links === null){
+            $ttl = 86400;
+            $client = new GuzzleHttp\Client();
+            $url = 'https://raw.githubusercontent.com/mikopbx/Core/master/src/Common/WikiLinks/'.$this->language.'.json';
+            try {
+                $res = $client->request('GET', $url, ['timeout', 1, 'connect_timeout' => 1, 'read_timeout' => 1]);
+            }catch (Exception $e){
+                $res = null;
+                $ttl = 3600;
+                if($e->getCode() !== 404){
+                    Util::sysLogMsg('BaseController', 'Error access to raw.githubusercontent.com');
+                }
+            }
+            $links = null;
+            if($res && $res->getStatusCode() === 200){
+                try {
+                    $links = json_decode($res->getBody(), true, 512, JSON_THROW_ON_ERROR);
+                }catch (Exception $e){
+                    $ttl = 3600;
+                }
+            }
+            if(!is_array($links)){
+                $links = [];
+            }
+            $cache->set('WIKI_LINKS', $links, $ttl);
+        }
+
+        $filename = str_replace('LANG', $this->language, self::WIKI_LINKS);
+        if(file_exists($filename)){
+            try {
+                $local_links = json_decode(file_get_contents($filename), true, 512, JSON_THROW_ON_ERROR);
+                $links = $local_links;
+            }catch (\Exception $e){
+                Util::sysLogMsg('BaseController', $e->getMessage());
+            }
+        }
+        $this->view->urlToWiki    = $links[$this->view->urlToWiki]??$this->view->urlToWiki;
+        $this->view->urlToSupport = $links[$this->view->urlToSupport]??$this->view->urlToSupport;
     }
 
     /**
@@ -91,12 +160,23 @@ class BaseController extends Controller
         }
 
         // Добавим версию модуля, если это модуль
+        $moduleLinks = [];
         if ($this->moduleName === 'PBXExtension') {
+            /** @var PbxExtensionModules $module */
             $module = PbxExtensionModules::findFirstByUniqid($this->controllerName);
             if ($module === null) {
                 $module           = new PbxExtensionModules();
                 $module->disabled = '1';
                 $module->name     = 'Unknown module';
+            }else{
+                try {
+                    $links = json_decode($module->wiki_links, true, 512, JSON_THROW_ON_ERROR);
+                    if(is_array($links)){
+                        $moduleLinks = $links;
+                    }
+                }catch (\JsonException $e){
+                    Util::sysLogMsg(__CLASS__, $e->getMessage());
+                }
             }
             $this->view->module = $module;
         }
@@ -128,28 +208,24 @@ class BaseController extends Controller
         $this->view->debugMode = $this->config->path('adminApplication.debugMode');
         $this->view->urlToLogo = $this->url->get('assets/img/logo-mikopbx.svg');
         if ($this->language === 'ru') {
-            $this->view->urlToWiki
-                = "https://wiki.mikopbx.com/{$this->controllerNameUnCamelized}";
-            $this->view->urlToSupport
-                = 'https://www.mikopbx.ru/support/?fromPBX=true';
+            $this->view->urlToWiki    = "https://wiki.mikopbx.com/{$this->controllerNameUnCamelized}";
+            $this->view->urlToSupport = 'https://www.mikopbx.ru/support/?fromPBX=true';
         } else {
-            $this->view->urlToWiki
-                = "https://wiki.mikopbx.com/{$this->language}:{$this->controllerNameUnCamelized}";
-            $this->view->urlToSupport
-                = 'https://www.mikopbx.com/support/?fromPBX=true';
+            $this->view->urlToWiki    = "https://wiki.mikopbx.com/{$this->language}:{$this->controllerNameUnCamelized}";
+            $this->view->urlToSupport = 'https://www.mikopbx.com/support/?fromPBX=true';
         }
-
         $this->view->urlToController = $this->url->get($this->controllerNameUnCamelized);
         $this->view->represent       = '';
         $this->view->cacheName       = "{$this->controllerName}{$this->actionName}{$this->language}{$versionHash}";
 
         // If it is module we have to use another template
         if ($this->moduleName === 'PBXExtension') {
+            $this->customModuleWikiLinks($moduleLinks);
             $this->view->setTemplateAfter('modules');
         } else {
+            $this->customWikiLinks();
             $this->view->setTemplateAfter('main');
         }
-
     }
 
     /**

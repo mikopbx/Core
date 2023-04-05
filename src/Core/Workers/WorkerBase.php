@@ -49,8 +49,8 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
             true
         );
         register_shutdown_function([$this, 'shutdownHandler']);
-        $this->savePidFile();
         $this->workerStartTime = microtime(true);
+        $this->savePidFile();
     }
 
     /**

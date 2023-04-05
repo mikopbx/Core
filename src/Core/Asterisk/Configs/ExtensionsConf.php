@@ -26,6 +26,7 @@ use MikoPBX\Core\System\{Storage, Util};
 class ExtensionsConf extends CoreConfigClass
 {
     public const ALL_NUMBER_EXTENSION = '_[0-9*#+a-zA-Z][0-9*#+a-zA-Z]!';
+    public const ALL_EXTENSION = '_[0-9*#+a-zA-Z]!';
     public const DIGIT_NUMBER_EXTENSION = '_X!';
     protected string $description = 'extensions.conf';
 
@@ -54,18 +55,22 @@ class ExtensionsConf extends CoreConfigClass
     protected function generateConfigProtected(): void
     {
         /** @scrutinizer ignore-call */
-        $conf              = "[globals] \n" .
-            "TRANSFER_CONTEXT=internal-transfer; \n";
+        $conf              = "[globals]" .PHP_EOL.
+            "TRANSFER_CONTEXT=internal-transfer;".PHP_EOL;
         if ($this->generalSettings['PBXRecordCalls'] === '1') {
-            $conf .= "MONITOR_DIR=" . Storage::getMonitorDir() . " \n";
-            $conf .= "MONITOR_STEREO=" . $this->generalSettings['PBXSplitAudioThread'] . " \n";
+            $conf .= "MONITOR_DIR=" . Storage::getMonitorDir() .PHP_EOL;
+            $conf .= "MONITOR_STEREO=" . $this->generalSettings['PBXSplitAudioThread'] .PHP_EOL;
         }
-        $conf .= "PBX_REC_ANNONCE_IN=" .ExtensionsAnnounceRecording::getPathAnnounceFile($this->generalSettings['PBXRecordAnnouncementIn'])."\n";
-        $conf .= "PBX_REC_ANNONCE_OUT=".ExtensionsAnnounceRecording::getPathAnnounceFile($this->generalSettings['PBXRecordAnnouncementOut'])."\n";
+        if ($this->generalSettings['PBXRecordCallsInner'] === '0') {
+            $conf .= "MONITOR_INNER=0".PHP_EOL;
+        }else{
+            $conf .= "MONITOR_INNER=1".PHP_EOL;
+        }
+        $conf .= "PBX_REC_ANNONCE_IN=" .ExtensionsAnnounceRecording::getPathAnnounceFile($this->generalSettings['PBXRecordAnnouncementIn']).PHP_EOL;
+        $conf .= "PBX_REC_ANNONCE_OUT=".ExtensionsAnnounceRecording::getPathAnnounceFile($this->generalSettings['PBXRecordAnnouncementOut']).PHP_EOL;
         $conf .= $this->hookModulesMethod(CoreConfigClass::EXTENSION_GLOBALS);
-        $conf .= "\n";
-        $conf .= "\n";
-        $conf .= "[general] \n";
+        $conf .= PHP_EOL.PHP_EOL;
+        $conf .= "[general]".PHP_EOL;
 
         // Контекст для внутренних вызовов.
         $conf .= InternalContexts::generate();
@@ -112,9 +117,7 @@ class ExtensionsConf extends CoreConfigClass
                  'same => n,HangUp()' . PHP_EOL .PHP_EOL;
 
         $conf .= '[internal-originate]' . PHP_EOL .
-            'exten => _.!,1,ExecIf($[ "${EXTEN}" == "h" ]?Gosub(interception_bridge_result,${EXTEN},1))' . PHP_EOL . "\t" .
-            'same => n,ExecIf($[ "${EXTEN}" == "h" ]?Hangup())' . PHP_EOL . "\t" .
-            'same => n,Set(pt1c_cid=${FILTER(\*\#\+1234567890,${pt1c_cid})})' . PHP_EOL . "\t" .
+            'exten => '.self::ALL_EXTENSION.',1,Set(pt1c_cid=${FILTER(\*\#\+1234567890,${pt1c_cid})})' . PHP_EOL . "\t" .
             'same => n,Set(MASTER_CHANNEL(ORIGINATE_DST_EXTEN)=${pt1c_cid})' . PHP_EOL . "\t" .
             'same => n,Set(number=${FILTER(\*\#\+1234567890,${EXTEN})})' . PHP_EOL . "\t" .
             'same => n,ExecIf($["${EXTEN}" != "${number}"]?Goto(${CONTEXT},${number},$[${PRIORITY} + 1]))' . PHP_EOL . "\t" .
@@ -123,20 +126,21 @@ class ExtensionsConf extends CoreConfigClass
             'same => n,Gosub(interception_start,${EXTEN},1)' . PHP_EOL . "\t" .
             'same => n,ExecIf($["${pt1c_cid}x" != "x"]?Set(CALLERID(num)=${pt1c_cid}))' . PHP_EOL . "\t" .
             'same => n,ExecIf($["${origCidName}x" != "x"]?Set(CALLERID(name)=${origCidName}))' . PHP_EOL . "\t" .
+            'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1)' . PHP_EOL . "\t" .
             'same => n,ExecIf($["${SRC_QUEUE}x" != "x"]?Goto(internal-originate-queue,${EXTEN},1))' . PHP_EOL . "\t" .
             'same => n,ExecIf($["${CUT(CHANNEL,\;,2)}" == "2"]?Set(__PT1C_SIP_HEADER=${SIPADDHEADER})) ' . PHP_EOL . "\t" .
-            'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1)' . PHP_EOL . "\t" .
             'same => n,ExecIf($["${PJSIP_ENDPOINT(${EXTEN},auth)}x" == "x"]?Goto(internal-num-undefined,${EXTEN},1))' . PHP_EOL . "\t" .
             'same => n,Gosub(set-dial-contacts,${EXTEN},1)' . PHP_EOL . "\t" .
             'same => n,ExecIf($["${FIELDQTY(DST_CONTACT,&)}" != "1" && "${ALLOW_MULTY_ANSWER}" != "1"]?Set(__PT1C_SIP_HEADER=${EMPTY_VAR}))' . PHP_EOL . "\t" .
             'same => n,ExecIf($["${DST_CONTACT}x" != "x"]?Dial(${DST_CONTACT},${ringlength},TtekKHhb(originate-create-channel,${EXTEN},1)U(originate-answer-channel),s,1)))' . PHP_EOL.
-            'exten => h,1,Hangup' . "\n\n".
+            'exten => _[hit],1,Gosub(interception_bridge_result,${EXTEN},1)' . "\n\t".
+            'same => n,Hangup' . "\n\n".
 
             '[internal-originate-queue]' . PHP_EOL .
-            'exten => _X!,1,Set(_NOCDR=1)' . PHP_EOL . "\t" .
+            'exten => '.self::ALL_EXTENSION.',1,Set(_NOCDR=1)' . PHP_EOL . "\t" .
             'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1)' . PHP_EOL . "\t" .
             'same => n,ExecIf($["${SRC_QUEUE}x" != "x"]?Queue(${SRC_QUEUE},kT,,,300,,,originate-answer-channel))' . PHP_EOL . PHP_EOL .
-            'exten => h,1,Hangup' . "\n\n".
+            'exten => _[hit],1,Hangup' . "\n\n".
 
             '[originate-create-channel] ' . PHP_EOL .
             'exten => _.!,1,ExecIf($[ "${EXTEN}" == "h" ]?Hangup()'. PHP_EOL . "\t" .
@@ -163,7 +167,6 @@ class ExtensionsConf extends CoreConfigClass
         $conf .= '[hangup_handler]' . "\n";
         $conf .= 'exten => s,1,NoOp(--- hangup - ${CHANNEL} ---)' . "\n\t";
         $conf .= 'same => n,Gosub(hangup_chan,${EXTEN},1)' . "\n\t";
-
         $conf .= 'same => n,return' . "\n\n";
 
         $conf .= '[set_orign_chan]' . "\n";
@@ -242,4 +245,16 @@ class ExtensionsConf extends CoreConfigClass
         return $conf;
     }
 
+    public static function getExtenByDid($did):string
+    {
+        if(mb_strpos($did, '_') === 0){
+            $ext_prefix = '';
+        }elseif(preg_match_all('/^[.|!|N|X|Z|0-9|\[|\]|\-]+$/m', $did, $matches, PREG_SET_ORDER) === 1){
+            // Это скорее всего шаблон EXTEN.
+            $ext_prefix = '_';
+        }else{
+            $ext_prefix = '';
+        }
+        return $ext_prefix.$did;
+    }
 }

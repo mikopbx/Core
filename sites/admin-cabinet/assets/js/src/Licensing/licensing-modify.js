@@ -246,6 +246,9 @@ const licensingModify = {
 			products.push(licenseData.product);
 		}
 		$.each(products, (key, productValue) => {
+			if(productValue === undefined){
+				return;
+			}
 			let row = '<tr><td>';
 			let product = productValue;
 			if (product['@attributes'] !== undefined) {

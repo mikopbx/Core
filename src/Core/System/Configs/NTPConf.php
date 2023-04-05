@@ -48,6 +48,7 @@ server 2.pool.ntp.org';
             $systemctlPath = Util::which('systemctl');
             Processes::mwExec("{$systemctlPath} restart ntp");
         } else {
+            // T2SDE or Docker
             Processes::killByName("ntpd");
             usleep(500000);
             $manual_time = PbxSettings::getValueByKey('PBXManualTimeSettings');

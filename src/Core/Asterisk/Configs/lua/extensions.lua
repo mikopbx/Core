@@ -95,7 +95,28 @@ function get_variable(name)
     -- app.Verbose( 3, "Var '"..name.."'=" .. p_result)
     return p_result;
 end
+-- Разрещена ли запись разговоров для данного вызова.
+function monitorEnable(src, dst)
+    src = string.sub(src, -9);
+    dst = string.sub(dst, -9);
+    app["NoOp"]("Check (".. src.." -> "..dst..")");
 
+    local isInner     = get_variable("DIALPLAN_EXISTS(monitor-internal,"..src..")") == "1" and get_variable("DIALPLAN_EXISTS(monitor-internal,"..dst..")") == "1";
+    local notRecInner = get_variable("MONITOR_INNER") == "0";
+    if(isInner == true and notRecInner == true )then
+        app["NoOp"]("Is inner call. (".. src.." -> "..dst..") Conversation recording is disabled");
+        return false;
+    end
+    if(get_variable("DIALPLAN_EXISTS(monitor-exceptions,"..src..")") == "1")then
+        app["NoOp"]("Is exception numbers. ("..src..") Conversation recording is disabled");
+        return false;
+    end
+    if(get_variable("DIALPLAN_EXISTS(monitor-exceptions,"..dst..")") == "1")then
+        app["NoOp"]("Is exception numbers. ("..dst..") Conversation recording is disabled");
+        return false;
+    end
+    return true;
+end
 -- Устанавливает значение переменной канала
 function set_variable(p_name, p_value)
     if(is_test == nil) then
@@ -203,7 +224,10 @@ function event_dial(without_event)
     data['agi_channel']  = agi_channel;
     data['did']		     = get_variable("FROM_DID");
     data['verbose_call_id']	= get_variable("CHANNEL(callid)");
-
+    local origCallId = get_variable("ORIG_CALLID");
+    if(origCallId ~= '')then
+        data['verbose_call_id'] = data['verbose_call_id'] .. "&".. origCallId;
+    end
     local is_pjsip = string.lower(get_variable("CHANNEL")):find("pjsip/") ~= nil
     if(is_pjsip) then
         data['src_call_id']  = get_variable("CHANNEL(pjsip,call-id)");
@@ -234,6 +258,10 @@ function event_interception_start()
     data['linkedid']  	    = get_variable("CHANNEL(linkedid)");
     data['int_channel']     = get_variable("INTECEPTION_CNANNEL");
     data['verbose_call_id']	= get_variable("CHANNEL(callid)");
+    local origCallId = get_variable("ORIG_CALLID");
+    if(origCallId ~= '')then
+        data['verbose_call_id'] = data['verbose_call_id'] .. "&".. origCallId;
+    end
 
     if(data['int_channel'] ~= '')then
         data['linkedid']     = get_variable('OLD_LINKEDID');
@@ -307,6 +335,11 @@ function event_voicemail_start()
     data['agi_channel']     = agi_channel;
     data['did']		        = get_variable("FROM_DID");
     data['verbose_call_id']	= get_variable("CHANNEL(callid)");
+    local origCallId = get_variable("ORIG_CALLID");
+    if(origCallId ~= '')then
+        data['verbose_call_id'] = data['verbose_call_id'] .. "&".. origCallId;
+    end
+
     local is_pjsip = string.lower(get_variable("CHANNEL")):find("pjsip/") ~= nil
     if(is_pjsip) then
         data['src_call_id']  = get_variable("CHANNEL(pjsip,call-id)");
@@ -355,6 +388,10 @@ function event_dial_interception()
     data['agi_channel']  = agi_channel;
     data['did']		     = get_variable("FROM_DID");
     data['verbose_call_id']	= get_variable("CHANNEL(callid)");
+    local origCallId = get_variable("ORIG_CALLID");
+    if(origCallId ~= '')then
+        data['verbose_call_id'] = data['verbose_call_id'] .. "&".. origCallId;
+    end
 
     local is_pjsip = string.lower(get_variable("CHANNEL")):find("pjsip/") ~= nil
     if(is_pjsip) then
@@ -440,18 +477,22 @@ function event_dial_answer()
     if(monDir ~= '' and string.lower(data['agi_channel']):find("local/") == nil and isSrcChan) then
         -- Активируем запись разговора.
         -- Только для реальных каналов.
-        local mixFileName = ''..monDir..'/'.. os.date("%Y/%m/%d/%H")..'/'..id;
-        local stereoMode = get_variable("MONITOR_STEREO");
-        local mixOptions = '';
-        if('1' == stereoMode )then
+        if(monitorEnable(get_variable("CONNECTEDLINE(num)"), get_variable("CALLERID(num)"))) then
+            app["NoOp"]("Monitor ... "..get_variable("CONNECTEDLINE(num)").." -> "..get_variable("CALLERID(num)"));
+            local mixFileName = ''..monDir..'/'.. os.date("%Y/%m/%d/%H")..'/'..id;
+            local stereoMode = get_variable("MONITOR_STEREO");
+            local mixOptions = '';
+            if('1' == stereoMode )then
             mixOptions = "abSr("..mixFileName.."_in.wav)t("..mixFileName.."_out.wav)";
-        else
+            else
             mixOptions = 'ab';
+            end
+
+            app["MixMonitor"](mixFileName .. ".wav,"..mixOptions);
+            app["NoOp"]('Start MixMonitor on channel '.. get_variable("CHANNEL"));
+            data['recordingfile']  	= mixFileName .. ".mp3";
+            app["UserEvent"]("StartRecording,recordingfile:"..data['recordingfile']..',recchan:'..data['agi_channel']);
         end
-        app["MixMonitor"](mixFileName .. ".wav,"..mixOptions);
-        app["NoOp"]('Start MixMonitor on channel '.. get_variable("CHANNEL"));
-        data['recordingfile']  	= mixFileName .. ".mp3";
-        app["UserEvent"]("StartRecording,recordingfile:"..data['recordingfile']..',recchan:'..data['agi_channel']);
     end
 
     data['action']      = 'dial_answer';
@@ -516,8 +557,13 @@ function event_dial_answer()
         -- Таймату устанавливается только на реальный канал при входящем через провайдера.
         -- Если masterChannel локальный канал, то скорее всего идет Originate.
         set_variable("__pt1c_UNIQUEID", id);
+        local chanExists = get_variable('CHANNEL_EXISTS('..get_variable("FROM_CHAN")..')');
+        if(chanExists == "1")then
+            set_variable('EXPORT('..get_variable("FROM_CHAN")..',MASTER_CHANNEL(M_DIALSTATUS))', 'ANSWER')
+            set_variable('EXPORT('..get_variable("FROM_CHAN")..',M_DIALSTATUS)', 'ANSWER')
+            app["NoOp"]('EXPORT ANSWER state');
+        end
         set_variable("MASTER_CHANNEL(M_DIALSTATUS)", 'ANSWER');
-        app["AGI"]('/usr/www/src/Core/Asterisk/agi-bin/clean_timeout.php');
         set_variable("MASTER_CHANNEL(M_TIMEOUT_CHANNEL)", '');
 
         local needAnnonceIn  = get_variable('MASTER_CHANNEL(IN_NEED_ANNONCE)');
@@ -578,6 +624,7 @@ function event_transfer_dial()
     data['src_chan'] 	= channel;
     data['did']		    = get_variable("FROM_DID");
     data['verbose_call_id']	= get_variable("CHANNEL(callid)");
+
     data['UNIQUEID']  	= id;
     local is_pjsip = string.lower(get_variable("CHANNEL")):find("pjsip/") ~= nil
     if(is_pjsip) then
@@ -631,18 +678,21 @@ function event_transfer_dial_answer()
     if(monDir ~= '' and string.lower(data['agi_channel']):find("local/") == nil )then
         -- Активируем запись разговора.
         -- Только для реальных каналов.
-        local mixFileName = ''..monDir..'/'.. os.date("%Y/%m/%d/%H")..'/'..id;
-        local stereoMode = get_variable("MONITOR_STEREO");
-        local mixOptions = '';
-        if('1' == stereoMode )then
-            mixOptions = "abSr("..mixFileName.."_in.wav)t("..mixFileName.."_out.wav)";
-        else
-            mixOptions = 'ab';
+        if(monitorEnable(get_variable("CONNECTEDLINE(num)"), get_variable("CALLERID(num)"))) then
+            app["NoOp"]("Monitor ... "..get_variable("CONNECTEDLINE(num)").." -> "..get_variable("CALLERID(num)"));
+            local mixFileName = ''..monDir..'/'.. os.date("%Y/%m/%d/%H")..'/'..id;
+            local stereoMode = get_variable("MONITOR_STEREO");
+            local mixOptions = '';
+            if('1' == stereoMode )then
+                mixOptions = "abSr("..mixFileName.."_in.wav)t("..mixFileName.."_out.wav)";
+            else
+                mixOptions = 'ab';
+            end
+            app["MixMonitor"](mixFileName .. ".wav,"..mixOptions);
+            app["NoOp"]('Start MixMonitor on channel '.. data['agi_channel']);
+            data['recordingfile']  	= mixFileName .. ".mp3";
+            app["UserEvent"]("StartRecording,recordingfile:"..data['recordingfile']..',recchan:'..data['agi_channel']);
         end
-        app["MixMonitor"](mixFileName .. ".wav,"..mixOptions);
-        app["NoOp"]('Start MixMonitor on channel '.. data['agi_channel']);
-        data['recordingfile']  	= mixFileName .. ".mp3";
-        app["UserEvent"]("StartRecording,recordingfile:"..data['recordingfile']..',recchan:'..data['agi_channel']);
     end
 
     userevent_return(data)
@@ -691,6 +741,13 @@ function event_hangup_chan()
     data['OLD_LINKEDID']= get_variable("OLD_LINKEDID");
     data['UNIQUEID']  	= get_variable("pt1c_UNIQUEID");
     data['VMSTATUS']  	= get_variable("VMSTATUS");
+
+    data['verbose_call_id']	= get_variable("CHANNEL(callid)");
+    local origCallId = get_variable("ORIG_CALLID");
+    if(origCallId ~= '')then
+        data['verbose_call_id'] = data['verbose_call_id'] .. "&".. origCallId;
+    end
+
     if('ANSWER' == data['dialstatus'])then
         data['dialstatus'] = "ANSWERED";
     end

@@ -88,7 +88,7 @@ class SysLogsManagementProcessor extends Injectable
      *
      * @return PBXApiResult
      */
-    private static function getLogFromFile(string $filename, string $filter = '', $lines = 500, $offset = 0): PBXApiResult
+    public static function getLogFromFile(string $filename, string $filter = '', $lines = 500, $offset = 0): PBXApiResult
     {
         $res            = new PBXApiResult();
         $res->processor = __METHOD__;
@@ -99,7 +99,10 @@ class SysLogsManagementProcessor extends Injectable
         } else {
             $res->success = true;
             $head         = Util::which('head');
-            $grep         = Util::which('grep');
+            $grep         = '/bin/grep';
+            if (!is_executable($grep)) {
+                $grep         = Util::which('grep');
+            }
             $tail         = Util::which('tail');
             $filter       = escapeshellarg($filter);
             $offset       = (int)$offset;
@@ -112,7 +115,7 @@ class SysLogsManagementProcessor extends Injectable
             if (empty($filter)){
                 $cmd         = "{$tail} -n {$linesPlusOffset} {$filename}";
             } else {
-                $cmd         = "{$grep} -F {$filter} {$filename} | $tail -n {$linesPlusOffset}";
+                $cmd         = "{$grep} --text -h -e ".str_replace('&',"' -e '", $filter)." -F {$filename} | $tail -n {$linesPlusOffset}";
             }
             if ($offset>0){
                 $cmd .= " | {$head} -n {$lines}";

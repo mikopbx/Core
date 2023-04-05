@@ -67,14 +67,14 @@ class LicensingController extends BaseController
     }
 
     /**
-     * Проверка доступа к серверу лицензирования.
+     * Checks connection between MikoPBX and marketplace server
      * @return bool
      */
     private function checkInternetConnection():bool
     {
-        $client  = new GuzzleHttpClient();
+        $client  = new GuzzleHttpClient(['verify' => false ]);
         try {
-            $res    = $client->request('GET', 'https://lic.miko.ru/protect/v1/ping', ['timeout'     => 2, 'http_errors' => false,]);
+            $res    = $client->request('GET', 'https://lic.mikopbx.com/protect/v1/ping', ['timeout'     => 2, 'http_errors' => false,]);
             $code   = $res->getStatusCode();
         }catch (\Throwable $e ){
             $code = 0;

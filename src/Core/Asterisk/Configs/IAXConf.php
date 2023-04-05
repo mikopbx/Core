@@ -107,7 +107,6 @@ class IAXConf extends CoreConfigClass
             $prov_config .= "transfer=mediaonly\n";
             $prov_config .= "disallow=all\n";
             $prov_config .= ";username={$provider['username']}\n";
-            // $prov_config .= "host={$provider['host']}\n";
             $prov_config .= "host=dynamic\n";
             $prov_config .= "trunk=yes\n";
 
@@ -115,14 +114,8 @@ class IAXConf extends CoreConfigClass
             foreach ($provider['codecs'] as $codec) {
                 $prov_config .= "allow={$codec}\n";
             }
+            $prov_config .= "setvar=contextID={$provider['uniqid']}-incoming".PHP_EOL;
             $prov_config .= "\n";
-
-            /*
-            $deny         = (trim($provider['deny'])=='')?'':'deny='.$provider['deny']."\n";
-            $permit       = (trim($provider['permit'])=='')?'':'permit='.$provider['permit']."\n";
-            $prov_config .= "$deny";
-            $prov_config .= "$permit";
-            // */
 
             // Формируем строку регистрации.
             if ($provider['noregister'] == 0) {
@@ -130,7 +123,6 @@ class IAXConf extends CoreConfigClass
                 $user   = $provider['username'];
                 $secret = (trim($provider['secret']) == '') ? '' : ":{$provider['secret']}";
                 $host   = $provider['host'];
-                // $port	   = (trim($provider['port']) =='')?'':":{$provider['port']}";
                 $port        = '';
                 $reg_strings .= "register => {$user}{$secret}@{$host}{$port} \n";
             }

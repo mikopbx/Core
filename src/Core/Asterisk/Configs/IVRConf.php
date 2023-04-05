@@ -56,15 +56,14 @@ class IVRConf extends CoreConfigClass
             } else {
                 $audio_message = 'vm-enter-num-to-call';
             }
-            $try_count_ivr = $ivr['number_of_repeat'];
             $conf          .= "[ivr-{$ivr['extension']}] \n";
             $conf          .= 'exten => s,1,ExecIf($["${CHANNEL(channeltype)}" == "Local"]?Gosub(set_orign_chan,s,1))' . "\n\t";
             $conf          .= "same => n,Set(APPEXTEN={$ivr['extension']})\n\t";
             $conf          .= 'same => n,Gosub(dial_app,${EXTEN},1)' . "\n\t";
             $conf          .= 'same => n,Answer()' . "\n\t";
             $conf          .= 'same => n,Set(try_count=0);' . "\n\t";
+            $conf          .= 'same => n,GotoIf($[${try_count} > ' . $ivr['number_of_repeat'] . ']?internal,' . $ivr['timeout_extension'] . ',1)' . "\n\t";
             $conf          .= 'same => n,Set(try_count=$[${try_count} + 1])' . "\n\t";
-            $conf          .= 'same => n,GotoIf($[${try_count} > ' . $try_count_ivr . ']?internal,' . $ivr['timeout_extension'] . ',1)' . "\n\t";
             $conf          .= "same => n,Set(TIMEOUT(digit)=2) \n\t";
             $conf          .= "same => n,Background({$audio_message}) \n\t";
             if ($timeout_wait_exten > 0) {

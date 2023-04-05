@@ -212,7 +212,6 @@ class WorkerModelsEvents extends WorkerBase
             'settingName' => [
                 'PBXLanguage',
                 'PBXInternalExtensionLength',
-                'PBXRecordCalls',
                 'PBXCallParkingExt',
                 'PBXCallParkingStartSlot',
                 'PBXCallParkingEndSlot',
@@ -228,6 +227,19 @@ class WorkerModelsEvents extends WorkerBase
                 self::R_DIALPLAN,
             ],
         ];
+
+        // CallRecordSettings
+        $tables[] = [
+            'settingName' => [
+                'PBXRecordCalls',
+                'PBXRecordCallsInner',
+                'PBXSplitAudioThread',
+            ],
+            'functions'   => [
+                self::R_DIALPLAN,
+            ],
+        ];
+
         // AMIParameters
         $tables[] = [
             'settingName' => [
@@ -375,6 +387,7 @@ class WorkerModelsEvents extends WorkerBase
             'settingName' => [
                 'MailTplVoicemailSubject',
                 'MailTplVoicemailBody',
+                'MailTplVoicemailFooter',
                 'MailSMTPSenderAddress',
                 'MailSMTPUsername',
                 'PBXTimezone',
@@ -419,6 +432,7 @@ class WorkerModelsEvents extends WorkerBase
                 self::R_NGINX,
                 self::R_PHP_FPM,
                 self::R_REST_API_WORKER,
+                self::R_CALL_EVENTS_WORKER,
                 self::R_SYSLOG,
             ],
         ];
@@ -431,18 +445,6 @@ class WorkerModelsEvents extends WorkerBase
             ],
             'functions'   => [
                 self::R_NTP,
-            ],
-        ];
-
-        // CallRecordSettings
-        $tables[] = [
-            'settingName' => [
-                'PBXRecordCalls',
-                'PBXSplitAudioThread',
-            ],
-            'functions'   => [
-                self::R_CALL_EVENTS_WORKER,
-                self::R_DIALPLAN,
             ],
         ];
 

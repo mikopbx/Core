@@ -22,7 +22,7 @@ HOME=/;
 PATH=/sbin:/bin:/usr/sbin:/usr/bin;
 
 export HOME PATH;
-echo 'Create system dirs';
+echo ' - Create system dirs';
 # Создание каталогов и ссылок.
 mkdir -p /dev/pts \
 		 /dev/bus\
@@ -83,6 +83,14 @@ fi;
 # RAID END
 
 . /sbin/shell_functions.sh;
+echoToTeletype;
+echoToTeletype " - Start /sbin/check-update-pbx...";
+/sbin/check-update-pbx;
+
+if [ -f /tmp/rebooting ]; then
+  exit 0;
+fi;
+
 echoToTeletype;
 echoToTeletype " - Start /sbin/mountoffload...";
 /sbin/mountoffload;

@@ -212,7 +212,6 @@ const callDetailRecords = {
 				} else {
 					$('td', row).eq(0).html('');
 				}
-
 				$('td', row).eq(1).html(data[0]);
 				$('td', row).eq(2)
 					.html(data[1])
@@ -220,7 +219,12 @@ const callDetailRecords = {
 				$('td', row).eq(3)
 					.html(data[2])
 					.addClass('need-update');
-				$('td', row).eq(4).html(data[3]);
+
+				let duration = data[3];
+				if(data.ids !== ''){
+					duration += '<i data-ids="'+ data.ids +'" class="file alternate outline icon">';
+				}
+				$('td', row).eq(4).html(duration).addClass('right aligned');
 			},
 			/**
 			 * Draw event - fired once the table has completed a draw.
@@ -237,9 +241,19 @@ const callDetailRecords = {
 			callDetailRecords.$globalSearch.closest('div').removeClass('loading');
 		});
 
-
+		callDetailRecords.$cdrTable.on('click', 'tr.negative', (e) => {
+			let ids = $(e.target).attr('data-ids');
+			if (ids !== undefined && ids !== '') {
+				window.location = `/admin-cabinet/system-diagnostic/index/?filename=asterisk/verbose&filter=${ids}`;
+			}
+		});
 		// Add event listener for opening and closing details
 		callDetailRecords.$cdrTable.on('click', 'tr.detailed', (e) => {
+			let ids = $(e.target).attr('data-ids');
+			if(ids !== undefined && ids !== ''){
+				window.location = `/admin-cabinet/system-diagnostic/index/?filename=asterisk/verbose&filter=${ids}`;
+				return;
+			}
 			const tr = $(e.target).closest('tr');
 			const row = callDetailRecords.dataTable.row(tr);
 
@@ -249,9 +263,7 @@ const callDetailRecords = {
 				tr.removeClass('shown');
 			} else {
 				// Open this row
-
 				row.child(callDetailRecords.showRecords(row.data())).show();
-
 				tr.addClass('shown');
 				row.child().find('.detail-record-row').each((index, playerRow) => {
 					const id = $(playerRow).attr('id');

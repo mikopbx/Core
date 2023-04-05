@@ -104,8 +104,11 @@ const extensionModules = {
 			params.licFeatureId = $aLink.attr('data-featureid');
 			params.action = 'install';
 			params.aLink = $aLink;
-
-			PbxApi.LicenseCaptureFeatureForProductId(params, extensionModules.cbAfterLicenseCheck);
+			if($('#license-key').val().trim() === '' && params.commercial !== '0'){
+				window.location = `${globalRootUrl}licensing/modify/pbx-extension-modules`;
+			}else{
+				PbxApi.LicenseCaptureFeatureForProductId(params, extensionModules.cbAfterLicenseCheck);
+			}
 		});
 		$('a.update').on('click', (e) => {
 			e.preventDefault();
@@ -120,7 +123,11 @@ const extensionModules = {
 			params.uniqid = $aLink.attr('data-uniqid');
 			params.size = $aLink.attr('data-size');
 			params.aLink = $aLink;
-			PbxApi.LicenseCaptureFeatureForProductId(params, extensionModules.cbAfterLicenseCheck);
+			if($('#license-key').val().trim() === '' && params.commercial !== '0'){
+				window.location = `${globalRootUrl}licensing/modify/pbx-extension-modules`;
+			}else{
+				PbxApi.LicenseCaptureFeatureForProductId(params, extensionModules.cbAfterLicenseCheck);
+			}
 		});
 		$('a.delete').on('click', (e) => {
 			e.preventDefault();
@@ -143,6 +150,11 @@ const extensionModules = {
 		if (obj.promo_link !== undefined && obj.promo_link !== null) {
 			promoLink = `<br><a href="${obj.promo_link}" target="_blank">${globalTranslate.ext_ExternalDescription}</a>`;
 		}
+
+		let additionalIcon = '';
+		if(obj.commercial !== '0'){
+			additionalIcon = '<i class="icon red cart arrow down"></i>';
+		}
 		const dymanicRow = `
 			<tr class="new-module-row" id="${obj.uniqid}">
 						<td>${decodeURIComponent(obj.name)}<br>
@@ -159,6 +171,7 @@ const extensionModules = {
 									data-productId = "${obj.lic_product_id}"
 									data-featureId = "${obj.lic_feature_id}" 
 									data-id ="${obj.release_id}">
+									`+additionalIcon+`
 									<i class="icon download blue"></i> 
 									<span class="percent"></span>
 								</a>
@@ -273,6 +286,9 @@ const extensionModules = {
 		PbxApi.FilesDownloadNewModule(params, (response) => {
 			if (response === true) {
 				upgradeStatusLoopWorker.initialize(params.uniqid, needEnable);
+				if(window.pbxExtensionMenuAddition !== undefined){
+					pbxExtensionMenuAddition.updateSidebarMenu();
+				}
 			} else {
 				if (response.messages !== undefined) {
 					UserMessage.showMultiString(response.messages);

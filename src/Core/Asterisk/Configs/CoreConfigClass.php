@@ -258,6 +258,16 @@ abstract class CoreConfigClass extends Injectable implements AsteriskConfigInter
     }
 
     /**
+     * Prepares additional rules for [all_peers] context section in the extensions.conf file
+     *
+     * @return string
+     */
+    public function extensionGenAllPeersContext(): string
+    {
+        return '';
+    }
+
+    /**
      * Prepares additional includes for [internal-transfer] context section in the extensions.conf file
      *
      * @return string
@@ -336,6 +346,19 @@ abstract class CoreConfigClass extends Injectable implements AsteriskConfigInter
      * @return string
      */
     public function generateIncomingRoutBeforeDialSystem(string $rout_number): string
+    {
+        return '';
+    }
+
+    /**
+     * Prepares additional parameters for each incoming context for each incoming route before dial in the
+     * extensions.conf file
+     *
+     * @param string $rout_number
+     *
+     * @return string
+     */
+    public function generateIncomingRoutBeforeDialPreSystem(string $rout_number): string
     {
         return '';
     }

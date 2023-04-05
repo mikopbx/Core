@@ -1,4 +1,3 @@
-#!/usr/bin/php
 <?php
 /*
  * MikoPBX - free phone system for small business
@@ -18,14 +17,29 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-use MikoPBX\Core\System\BeanstalkClient;
-use MikoPBX\Core\Asterisk\AGI;
-use MikoPBX\Core\Workers\WorkerCallEvents;
-require_once 'Globals.php';
+namespace MikoPBX\Core\Asterisk\Configs;
 
-$agi    = new AGI();
-$client = new BeanstalkClient(WorkerCallEvents::TIMOUT_CHANNEL_TUBE);
-$data   = [
-    'srcChannel' => $agi->get_variable('FROM_CHAN', true),
-];
-$client->publish(json_encode($data));
+
+use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\Util;
+
+class HepConf extends CoreConfigClass
+{
+    protected string $description = 'cdr.conf';
+
+    protected function generateConfigProtected(): void
+    {
+        $conf = "[general]\n" .
+            "enabled=no\n" .
+            "capture_address = 172.16.156.197:9060\n" .
+            ";capture_password = foo\n" .
+            "capture_id = 1234 \n";
+        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/hep.conf', $conf);
+    }
+
+    public static function reload()
+    {
+        $asteriskPath = Util::which('asterisk');
+        Processes::mwExec("{$asteriskPath} -rx 'module reload res_hep.so'", $out);
+    }
+}

@@ -276,6 +276,9 @@ class ProvidersController extends BaseController
                         $providerByType->$name = 0;
                     }
                     break;
+                case 'qualifyfreq':
+                    $providerByType->qualifyfreq = (int)$data[$name];
+                    break;
                 case 'manualattributes':
                     if (array_key_exists($name, $data)) {
                         $providerByType->setManualAttributes($data[$name]);
@@ -309,7 +312,11 @@ class ProvidersController extends BaseController
     {
         $providerHost = $data['host'];
         $additionalHosts = json_decode($data['additionalHosts']);
-        $hosts = array_merge([], array_column($additionalHosts, 'address'), [$providerHost]);
+        if($data['registration_type'] !== Sip::REG_TYPE_INBOUND){
+            $hosts = array_merge([], array_column($additionalHosts, 'address'), [$providerHost]);
+        }else{
+            $hosts = array_column($additionalHosts, 'address');
+        }
         $parameters=[
             'conditions'=>'provider_id = :providerId:',
             'bind'=>[
@@ -318,13 +325,13 @@ class ProvidersController extends BaseController
         ];
         $currentRecords = SipHosts::find($parameters);
         foreach ($currentRecords as $record){
-            if (!in_array($record->address, $hosts)){
+            if (!in_array($record->address, $hosts, true)){
                 if ($record->delete() === false) {
                     $errors = $record->getMessages();
                     $this->flash->warning(implode('<br>', $errors));
                     return false;
                 }
-            } elseif (($key = array_search($record->address, $hosts)) !== false) {
+            } elseif (($key = array_search($record->address, $hosts, true)) !== false) {
                 unset($hosts[$key]);
             }
         }

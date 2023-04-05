@@ -105,7 +105,7 @@ class IptablesConf extends Injectable
             );
 
             $dropCommand = $this->getIptablesInputRule('', '', 'DROP');
-            if (Util::isSystemctl() && ! Util::isDocker()) {
+            if (Util::isSystemctl()) {
                 Util::mwMkdir('/etc/iptables');
                 file_put_contents(self::IP_TABLE_MIKO_CONF, implode("\n", $arr_command));
                 file_put_contents(
@@ -121,6 +121,7 @@ class IptablesConf extends Injectable
                 $systemctlPath = Util::which('systemctl');
                 Processes::mwExec("$systemctlPath restart mikopbx_iptables");
             } else {
+                // T2SDE or Docker
                 Processes::mwExecCommands($arr_command, $out, 'firewall');
                 Processes::mwExecCommands($arr_commands_custom, $out, 'firewall_additional');
                 // Drop everything else
@@ -143,8 +144,8 @@ class IptablesConf extends Injectable
     private function dropAllRules(): void
     {
         $iptablesPath = Util::which('iptables');
-        Processes::mwExec("$iptablesPath -F");
-        Processes::mwExec("$iptablesPath -X");
+        Processes::mwExec("$iptablesPath -F INPUT");
+        Processes::mwExec("$iptablesPath -X INPUT");
     }
 
     /**

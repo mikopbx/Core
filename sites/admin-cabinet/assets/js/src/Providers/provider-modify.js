@@ -175,13 +175,11 @@ const provider = {
 			elHost.hide();
 			elUsername.show();
 			elSecret.show();
-			elAdditionalHost.hide();
 			genPassword.show();
 		}else if(regType === 'none'){
 			elHost.show();
 			elUsername.hide();
 			elSecret.hide();
-			elAdditionalHost.show();
 		}
 
 		let el = $('#disablefromuser');

@@ -1,6 +1,5 @@
 {{ form('sound-files/save', 'role': 'form', 'class': 'ui form large', 'id':'sound-file-form') }}
 {{ form.render('id') }}
-{{ form.render('path') }}
 {{ form.render('category') }}
 <input type="file" name="sound-file" accept=".wav,.mp3" style="display: none!important;" id="file"/>
 <input type="hidden" name="sound-file-url" id="sound-file-url"/>
@@ -41,6 +40,10 @@
 <div class="field">
     <label>{{ t._('sf_Filename') }}</label>
     {{ form.render('name') }}
+</div>
+<div class="field disabled">
+    <label>{{ t._('cf_Path') }}</label>
+    {{ form.render('path') }}
 </div>
 <div class="field" id="audio-player-segment">
     <audio id="audio-player" preload="auto">

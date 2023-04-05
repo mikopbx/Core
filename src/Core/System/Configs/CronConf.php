@@ -50,10 +50,11 @@ class CronConf extends Injectable
     public function reStart(): int
     {
         $this->generateConfig($this->di->getShared('registry')->booting);
-        if (Util::isSystemctl() && ! Util::isDocker()) {
+        if (Util::isSystemctl()) {
             $systemctlPath = Util::which('systemctl');
             Processes::mwExec("{$systemctlPath} restart ".self::PROC_NAME);
         } else {
+            // T2SDE or Docker
             $crondPath = Util::which(self::PROC_NAME);
             Processes::killByName(self::PROC_NAME);
             Processes::mwExec("{$crondPath} -L /dev/null -l 8");
@@ -69,53 +70,39 @@ class CronConf extends Injectable
      */
     private function generateConfig($boot = true): void
     {
-        $mast_have         = [];
-
-        if (Util::isSystemctl() && ! Util::isDocker()) {
-            $mast_have[]   = "SHELL=/bin/sh\n";
-            $mast_have[]   = "PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin\n\n";
-            $cron_filename = '/etc/cron.d/mikopbx';
-            $cron_user     = 'root ';
-        } else {
-            $cron_filename = '/var/spool/cron/crontabs/root';
-            $cron_user     = '';
-        }
+        $mast_have     = [];
+        $cron_filename = '/var/spool/cron/crontabs/root';
 
         $workerSafeScriptsPath = Util::getFilePathByClassName(WorkerSafeScriptsCore::class);
         $phpPath               = Util::which('php');
-        $WorkerSafeScripts     = "{$phpPath} -f {$workerSafeScriptsPath} start > /dev/null 2> /dev/null";
+        $WorkerSafeScripts     = "$phpPath -f {$workerSafeScriptsPath} start > /dev/null 2> /dev/null";
 
         $workersPath = appPath('src/Core/Workers');
-
         $restart_night = $this->mikoPBXConfig->getGeneralSettings('RestartEveryNight');
         $asteriskPath  = Util::which('asterisk');
         $ntpdPath      = Util::which('ntpd');
         $shPath        = Util::which('sh');
+        $dumpPath      = Util::which('dump-conf-db');
+        $checkIpPath   = Util::which('check-out-ip');
+
         if ($restart_night === '1') {
-            $mast_have[] = '0 1 * * * ' . $cron_user . $asteriskPath . ' -rx"core restart now" > /dev/null 2> /dev/null' . "\n";
+            $mast_have[] = '0 1 * * * ' . $asteriskPath . ' -rx"core restart now" > /dev/null 2> /dev/null'.PHP_EOL;
         }
-        $mast_have[] = '*/5 * * * * ' . $cron_user . $ntpdPath . ' -q > /dev/null 2> /dev/null' . "\n";
-        $mast_have[] = '*/6 * * * * ' . $cron_user . "{$shPath} {$workersPath}/Cron/cleaner_download_links.sh > /dev/null 2> /dev/null\n";
-        $mast_have[] = '*/1 * * * * ' . $cron_user . "{$WorkerSafeScripts}\n";
+        $mast_have[] = '*/5 * * * * ' . $ntpdPath . ' -q > /dev/null 2> /dev/null'.PHP_EOL;
+        $mast_have[] = '*/5 * * * * ' . "$dumpPath > /dev/null 2> /dev/null".PHP_EOL;
+        $mast_have[] = '*/1 * * * * ' . "$checkIpPath > /dev/null 2> /dev/null".PHP_EOL;
+        $mast_have[] = '*/6 * * * * ' . "{$shPath} {$workersPath}/Cron/cleaner_download_links.sh > /dev/null 2> /dev/null".PHP_EOL;
+        $mast_have[] = '*/1 * * * * ' . $WorkerSafeScripts.PHP_EOL;
 
         $tasks = [];
-
         // Add additional modules includes
         $configClassObj = new ConfigClass();
         $configClassObj->hookModulesMethod(ConfigClass::CREATE_CRON_TASKS, [&$tasks]);
         $conf = implode('', array_merge($mast_have, $tasks));
 
-        if (Util::isSystemctl() && ! Util::isDocker()) {
-            // Convert rules to debian style
-            $conf = str_replace(' * * * * /', " * * * * $cron_user/", $conf);
-        }
-
         if ($boot === true) {
             Processes::mwExecBg($WorkerSafeScripts);
         }
-
         Util::fileWriteContent($cron_filename, $conf);
     }
-
-
 }

@@ -248,9 +248,11 @@ class Storage extends Di\Injectable
      *
      * @return bool
      */
-    public static function isStorageDiskMounted($filter = '', &$mount_dir = ''): bool
+    public static function isStorageDiskMounted(string $filter = '', string &$mount_dir = ''): bool
     {
-        if (Util::isSystemctl() && file_exists('/storage/usbdisk1/')) {
+        if (!Util::isT2SdeLinux()
+            && file_exists('/storage/usbdisk1/')
+        ) {
             $mount_dir = '/storage/usbdisk1/';
             return true;
         }
@@ -555,13 +557,13 @@ class Storage extends Di\Injectable
     {
         $res_disks = [];
 
-        if (Util::isSystemctl()) {
+        if (Util::isDocker()) {
             $out = [];
             $grepPath = Util::which('grep');
             $dfPath = Util::which('df');
             $awkPath = Util::which('awk');
             Processes::mwExec(
-                "{$dfPath} -k /storage/usbdisk1 | {$awkPath}  '{ print $1 \"|\" $3 \"|\" $4} ' | {$grepPath} -v 'Available'",
+                "{$dfPath} -k /storage | {$awkPath}  '{ print \$1 \"|\" $3 \"|\" \$4} ' | {$grepPath} -v 'Available'",
                 $out
             );
             $disk_data = explode('|', implode(" ", $out));
@@ -572,7 +574,7 @@ class Storage extends Di\Injectable
                     'size' => "" . $m_size,
                     'size_text' => "" . $m_size . " Mb",
                     'vendor' => 'Debian',
-                    'mounted' => '/storage/usbdisk1',
+                    'mounted' => '/storage/usbdisk',
                     'free_space' => round($disk_data[2] / 1024, 1),
                     'partitions' => [],
                     'sys_disk' => true,
@@ -933,7 +935,10 @@ class Storage extends Di\Injectable
      */
     public function configure(): void
     {
-        if(Util::isSystemctl()){
+        $varEtcDir = $this->config->path('core.varEtcDir');
+        $storage_dev_file = "{$varEtcDir}/storage_device";
+        if(!Util::isT2SdeLinux()){
+            file_put_contents($storage_dev_file, "/storage/usbdisk1");
             $this->updateConfigWithNewMountPoint("/storage/usbdisk1");
             $this->createWorkDirs();
             PHPConf::setupLog();
@@ -941,8 +946,7 @@ class Storage extends Di\Injectable
         }
 
         $cf_disk = '';
-        $varEtcDir = $this->config->path('core.varEtcDir');
-        $storage_dev_file = "{$varEtcDir}/storage_device";
+
         if (file_exists($storage_dev_file)) {
             unlink($storage_dev_file);
         }
@@ -1106,13 +1110,8 @@ class Storage extends Di\Injectable
      *
      * @param string $conf
      */
-    public function saveFstab($conf = ''): void
+    public function saveFstab(string $conf = ''): void
     {
-        if(Util::isSystemctl()){
-            // Не настраиваем.
-            return;
-        }
-
         $varEtcDir = $this->config->path('core.varEtcDir');
         // Точка монтирования доп. дисков.
         Util::mwMkdir('/storage');
@@ -1356,10 +1355,6 @@ class Storage extends Di\Injectable
      */
     public function mountSwap(): void
     {
-        if(Util::isSystemctl()){
-            // Не настраиваем.
-            return;
-        }
         $tempDir = $this->config->path('core.tempDir');
         $swapFile = "{$tempDir}/swapfile";
 

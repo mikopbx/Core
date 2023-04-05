@@ -87,7 +87,6 @@ class WorkerSafeScriptsCore extends WorkerBase
                     WorkerModelsEvents::class,
                     WorkerNotifyByEmail::class,
                     WorkerNotifyError::class,
-                    //WorkerLongPoolAPI::class,
                 ],
             self::CHECK_BY_PID_NOT_ALERT =>
                 [
@@ -282,7 +281,7 @@ try {
             return;
         }
         $worker = new $workerClassname();
-        if (($argv[1] === 'start')) {
+        if ($argv[1] === 'start') {
             $worker->start($argv);
             Util::sysLogMsg($workerClassname, "Normal exit after start ended", LOG_DEBUG);
         } elseif ($argv[1] === 'restart' || $argv[1] === 'reload') {

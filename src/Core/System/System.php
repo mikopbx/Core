@@ -23,6 +23,8 @@ use DateTime;
 use DateTimeZone;
 use MikoPBX\Common\Models\CustomFiles;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Core\Asterisk\Configs\H323Conf;
+use MikoPBX\Core\Asterisk\Configs\HepConf;
 use MikoPBX\Core\System\Configs\CronConf;
 use MikoPBX\Core\System\Configs\IptablesConf;
 use MikoPBX\Core\System\Configs\PHPConf;
@@ -94,6 +96,9 @@ class System extends Di\Injectable
                 case 'http.conf':
                     $actions['manager'] = 10; //
                     break;
+                case 'hep.conf':
+                    $actions['hep'] = 10; //
+                    break;
                 case 'root': // crontabs
                     $actions['cron'] = 10;
                     break;
@@ -106,6 +111,9 @@ class System extends Di\Injectable
                 case 'ntp.conf':
                     $actions['ntp'] = 100;
                     break;
+                case 'ooh323.conf':
+                    $actions['h323'] = 100;
+                    break;
                 case 'rtp.conf':
                     $actions['rtp'] = 10;
                     break;
@@ -113,7 +121,8 @@ class System extends Di\Injectable
                 case 'openvpn.ovpn':
                     $actions['network'] = 100;
                     break;
-                case 'jail.local': // fail2ban
+                case 'firewall_additional':
+                case 'jail.local':
                     $actions['firewall'] = 100;
                     break;
                 default:
@@ -166,6 +175,12 @@ class System extends Di\Injectable
                     break;
                 case 'firewall':
                     IptablesConf::reloadFirewall();
+                    break;
+                case 'hep':
+                    HepConf::reload();
+                    break;
+                case 'h323':
+                    H323Conf::reload();
                     break;
                 case 'network':
                     self::networkReload();
@@ -220,8 +235,8 @@ class System extends Di\Injectable
      */
     public static function rebootSync(): void
     {
-        $mikopbx_rebootPath = Util::which('mikopbx_reboot');
-        Processes::mwExec("{$mikopbx_rebootPath} > /dev/null 2>&1");
+        $pbx_rebootPath = Util::which('pbx_reboot');
+        Processes::mwExec("{$pbx_rebootPath} > /dev/null 2>&1");
     }
 
     /**
@@ -229,8 +244,8 @@ class System extends Di\Injectable
      */
     public static function rebootSyncBg(): void
     {
-        $mikopbx_rebootPath = Util::which('mikopbx_reboot');
-        Processes::mwExecBg("{$mikopbx_rebootPath} > /dev/null 2>&1");
+        $pbx_rebootPath = Util::which('pbx_reboot');
+        Processes::mwExecBg("{$pbx_rebootPath} > /dev/null 2>&1");
     }
 
     /**

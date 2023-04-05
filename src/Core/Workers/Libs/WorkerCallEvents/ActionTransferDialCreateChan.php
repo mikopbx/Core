@@ -32,6 +32,10 @@ class ActionTransferDialCreateChan {
      */
     public static function execute(WorkerCallEvents $worker, $data):void
     {
+        $chan = $data['dst_chan']??'';
+        if(!empty($chan)){
+            $worker->addActiveChan($chan);
+        }
         $filter     = [
             'UNIQUEID=:UNIQUEID: AND endtime = "" AND answer = ""',
             'bind' => [
