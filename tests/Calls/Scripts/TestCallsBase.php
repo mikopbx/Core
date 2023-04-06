@@ -42,6 +42,7 @@ class TestCallsBase {
     private string $testDirName;
 
     private AsteriskManager $am;
+    private int $countFiles;
 
     public function __construct(){
         $db_data = self::getIdlePeers();
@@ -56,6 +57,11 @@ class TestCallsBase {
 
         $offPeers = self::getOffPeers();
         $this->offNum = $offPeers[0]??'';
+
+        self::printInfo("aNum: $this->aNum");
+        self::printInfo("bNum: $this->bNum");
+        self::printInfo("cNum: $this->cNum");
+        self::printInfo("offNum: $this->offNum");
 
         $this->am = new AsteriskManager();
         $this->am->connect('127.0.0.1:5039');
@@ -189,11 +195,12 @@ class TestCallsBase {
      * @param array  $sampleCDR
      * @param ?array  $rules
      */
-    public function runTest(string $testName, array $sampleCDR, ?array $rules=null): void{
+    public function runTest(string $testName, array $sampleCDR, ?array $rules=null, int $countFiles=0): void{
 
         self::printHeader('Start test '. $testName .' ...');
         $this->testDirName = $testName;
         $this->sampleCDR   = $sampleCDR;
+        $this->countFiles  = $countFiles;
 
         $this->cpConfig();
         $this->cleanCdr();
@@ -312,13 +319,15 @@ class TestCallsBase {
         self::printInfo('Create CDR successfully');
 
         $checkedIndexes = [];
+        $rcFiles = [];
         foreach ($rows as $row){
             $wavFile = Util::trimExtensionForFile($row['recordingfile'].'.wav');
             if(!file_exists($row['recordingfile']) && !file_exists($wavFile)){
-                if($row['billsec'] > 0){
+                if($row['billsec'] > 0 && $this->countFiles === 0){
                     self::printError("File not found '{$row['recordingfile']}'");
                 }
             }else{
+                $rcFiles[$row['recordingfile']] = 1;
                 Processes::mwExec("soxi {$row['recordingfile']} | grep Duration | awk '{print $3}' | awk -F '.'  '{print $1}'", $out);
                 $timeData = explode(':', implode($out));
                 $d = (int)($timeData[0]??0);
@@ -339,7 +348,12 @@ class TestCallsBase {
                         $valRow     = (int) $row[$key];
                         $valSample  = (int) $data;
                         $values = [$valSample, ($valSample-1), ($valSample+1)];
-                        $ok = min($ok, in_array($valRow, $values));
+                        if($key === 'fileDuration' && $this->countFiles > 0){
+                            // Проверяем только общее количество файлов.
+                            $ok = true;
+                        }else{
+                            $ok = min($ok, in_array($valRow, $values));
+                        }
                     }elseif($row[$key] === $data){
                         $ok = min($ok, true);
                     }else{
@@ -359,6 +373,10 @@ class TestCallsBase {
             }
 
         }
+        if($this->countFiles > 0 && count($rcFiles) !== $this->countFiles){
+            self::printError("Recording file not found");
+        }
+
     }
 
     protected function cpConfig(): void

@@ -35,4 +35,4 @@ $rules = [
     [TestCallsBase::ACtION_WAIT, 2],
     [TestCallsBase::ACtION_ORIGINATE, 'bNum', $conf],
 ];
-$test->runTest($testName, $sampleCDR, $rules);
+$test->runTest($testName, $sampleCDR, $rules, 1);

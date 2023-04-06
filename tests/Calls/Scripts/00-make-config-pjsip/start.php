@@ -31,7 +31,8 @@ TestCallsBase::printInfo("Get data peers...");
 $limitPeers = 5;
 $peers = Sip::find([
     "type = 'peer' AND disabled <> '1'",
-    'limit' => 20
+    'limit' => $limitPeers,
+    'order' => 'extension'
 ])->toArray();
 
 $limitProviders = 2;
