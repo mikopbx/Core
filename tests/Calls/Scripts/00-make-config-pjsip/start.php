@@ -23,6 +23,7 @@ use MikoPBX\Tests\Calls\Scripts\TestCallsBase;
 use MikoPBX\Common\Models\OutgoingRoutingTable;
 use MikoPBX\Core\System\Processes;
 require_once 'Globals.php';
+require_once dirname(__DIR__).'/TestCallsBase.php';
 
 $testName = basename(__DIR__);
 TestCallsBase::printHeader("Start test {$testName}");
