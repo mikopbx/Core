@@ -65,10 +65,10 @@ class GetController extends BaseController
 
     /**
      * Прослушивание файла записи с прокруткой.
-     * /pbxcore/api/cdr/playback MIKO AJAM
-     * http://172.16.156.212/pbxcore/api/cdr/playback?view=/storage/usbdisk1/mikopbx/voicemailarchive/monitor/2018/05/11/16/mikopbx-1526043925.13_43T4MdXcpT.mp3
-     * http://172.16.156.212/pbxcore/api/cdr/playback?view=/storage/usbdisk1/mikopbx/voicemailarchive/monitor/2018/06/01/17/mikopbx-1527865189.0_qrQeNUixcV.wav
-     * http://172.16.156.223/pbxcore/api/cdr/playback?view=/storage/usbdisk1/mikopbx/voicemailarchive/monitor/2018/12/18/09/mikopbx-1545113960.4_gTvBUcLEYh.mp3&download=true&filename=test.mp3
+     * /pbxcore/api/cdr/v2/playback MIKO AJAM
+     * http://172.16.156.212/pbxcore/api/cdr/v2/playback?view=/storage/usbdisk1/mikopbx/voicemailarchive/monitor/2018/05/11/16/mikopbx-1526043925.13_43T4MdXcpT.mp3
+     * http://172.16.156.212/pbxcore/api/cdr/v2/playback?view=/storage/usbdisk1/mikopbx/voicemailarchive/monitor/2018/06/01/17/mikopbx-1527865189.0_qrQeNUixcV.wav
+     * http://172.16.156.223/pbxcore/api/cdr/v2/playback?view=/storage/usbdisk1/mikopbx/voicemailarchive/monitor/2018/12/18/09/mikopbx-1545113960.4_gTvBUcLEYh.mp3&download=true&filename=test.mp3
      * Итого имеем следующий набор параметров API:
      *   * view* - полный путь к файлу записи разговора.
      *  download - опциональный параметр, скачивать записи или нет

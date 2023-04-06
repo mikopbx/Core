@@ -137,7 +137,7 @@ const soundFileModify = {
 			soundFileModify.trashBin.push(soundFileModify.$formObj.form('get value', 'path'));
 			soundFileModify.$formObj.form('set value', 'path', filename);
 			soundFileModify.$soundFileName.trigger('change');
-			sndPlayer.UpdateSource(`/pbxcore/api/cdr/playback?view=${filename}`);
+			sndPlayer.UpdateSource(`/pbxcore/api/cdr/v2/playback?view=${filename}`);
 			soundFileModify.$submitButton.removeClass('loading');
 			soundFileModify.$formObj.removeClass('loading');
 
