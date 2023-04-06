@@ -24,8 +24,8 @@ require_once __DIR__ . '/../TestCallsBase.php';
 [$conf] = ConferenceConf::getConferenceExtensions();
 
 $sampleCDR = [];
-$sampleCDR[] = ['src_num'=>'aNum', 'dst_num'=> $conf, 'duration'=>'11', 'billsec'=>'11', 'fileDuration' => '11'];
-$sampleCDR[] = ['src_num'=>'bNum', 'dst_num'=> $conf, 'duration'=>'10', 'billsec'=>'10'];
+$sampleCDR[] = ['src_num'=>'aNum', 'dst_num'=> $conf, 'duration'=>'11', 'billsec'=>'11'];
+$sampleCDR[] = ['src_num'=>'bNum', 'dst_num'=> $conf, 'duration'=>'10', 'billsec'=>'10', 'fileDuration' => '11'];
 
 $testName = basename(__DIR__);
 $test = new TestCallsBase();
