@@ -57,12 +57,6 @@ class TestCallsBase {
 
         $offPeers = self::getOffPeers();
         $this->offNum = $offPeers[0]??'';
-
-        self::printInfo("aNum: $this->aNum");
-        self::printInfo("bNum: $this->bNum");
-        self::printInfo("cNum: $this->cNum");
-        self::printInfo("offNum: $this->offNum");
-
         $this->am = new AsteriskManager();
         $this->am->connect('127.0.0.1:5039');
         $this->nonStrictComparison = ['duration', 'billsec', 'fileDuration'];
@@ -198,6 +192,7 @@ class TestCallsBase {
     public function runTest(string $testName, array $sampleCDR, ?array $rules=null, int $countFiles=0): void{
 
         self::printHeader('Start test '. $testName .' ...');
+        self::printInfo("aNum: $this->aNum, bNum: $this->bNum, cNum: $this->cNum, offNum: $this->offNum");
         $this->testDirName = $testName;
         $this->sampleCDR   = $sampleCDR;
         $this->countFiles  = $countFiles;
