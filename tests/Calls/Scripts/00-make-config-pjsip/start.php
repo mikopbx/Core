@@ -23,6 +23,7 @@ use MikoPBX\Tests\Calls\Scripts\TestCallsBase;
 use MikoPBX\Common\Models\OutgoingRoutingTable;
 use MikoPBX\Core\System\Processes;
 require_once 'Globals.php';
+require_once dirname(__DIR__).'/TestCallsBase.php';
 
 $testName = basename(__DIR__);
 TestCallsBase::printHeader("Start test {$testName}");
@@ -30,7 +31,8 @@ TestCallsBase::printInfo("Get data peers...");
 $limitPeers = 5;
 $peers = Sip::find([
     "type = 'peer' AND disabled <> '1'",
-    'limit' => 20
+    'limit' => $limitPeers,
+    'order' => 'extension'
 ])->toArray();
 
 $limitProviders = 2;

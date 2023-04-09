@@ -9,14 +9,30 @@
 #
 
 echo -e "\e[01;35mInit asterisk...\e[0m";
+dirName="$(realpath "$(dirname "$0")")";
 /bin/mount -o remount,rw /offload/
 
-dirName=$(dirname "$0");
+
+############################################################
+##### Setup configs
+echo -e "\e[01;35mSetup configs...\e[0m";
+dumpConfFile='/storage/usbdisk1/mikopbx/tmp/mikopbx.db';
+confFile='/cf/conf/mikopbx.db';
+testConfFile="$dirName/db/mikopbx.db";
+cp "$confFile" "$dumpConfFile"
+sqlite3 "$testConfFile" 'delete from m_LanInterfaces';
+sqlite3 "$dumpConfFile" .dump | grep m_LanInterfaces | grep 'INTO m_LanInterfaces' | sqlite3 "$testConfFile"
+cp "$testConfFile" "$confFile"
+php -f "$dirName/db/updateDb.php" /dev/null 2> /dev/null;
+sleep 5;
+asterisk -rx 'core waitfullybooted' /dev/null 2> /dev/null;
+############################################################
+
 pidDir="${dirName}/run/asterisk.pid";
 if [ -f "$pidDir" ]; then
   # Убиваем старый процесс.
   kill "$(cat "$pidDir")";
-fi
+fi;
 
 # Создаем новый asterisk.conf исходя из директории тестового скрипта.
 escapeDirName=$(echo "$dirName" | sed "s/\//\\\\\//g");
@@ -58,3 +74,9 @@ fi;
 
 /usr/sbin/asterisk -C "$astConf" -rx 'core stop now' > /dev/null;
 
+############################################################
+##### Restore configs
+echo -e "\e[01;35mRestore configs...\e[0m";
+cp "$dumpConfFile" "$confFile";
+php -f "$dirName/db/updateDb.php" /dev/null 2> /dev/null;
+############################################################
