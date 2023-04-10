@@ -156,7 +156,7 @@ const provider = {
 		let valUserName  	= $('#username');
 		let valSecret   	= provider.$secret;
 
-		if(valUserName.val() === elUniqId.val()){
+		if(valUserName.val() === elUniqId.val() && regType !== 'outbound'){
 			valUserName.val('');
 		}
 		valUserName.removeAttr('readonly');
