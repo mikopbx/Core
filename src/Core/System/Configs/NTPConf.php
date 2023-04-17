@@ -55,6 +55,7 @@ server 2.pool.ntp.org';
             if ($manual_time !== '1') {
                 $ntpdPath = Util::which('ntpd');
                 Processes::mwExec($ntpdPath);
+                Processes::mwExecBg("$ntpdPath -q");
             }
         }
     }
