@@ -442,6 +442,7 @@ class WorkerModelsEvents extends WorkerBase
             'settingName' => [
                 'PBXManualTimeSettings',
                 'NTPServer',
+                'PBXTimezone',
             ],
             'functions'   => [
                 self::R_NTP,
