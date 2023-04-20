@@ -538,7 +538,7 @@ class Util
      */
     public static function isT2SdeLinux(): bool
     {
-        return !self::isSystemctl();
+        return !self::isSystemctl() && !self::isDocker();
     }
 
     /**
@@ -548,11 +548,7 @@ class Util
     public static function isSystemctl(): bool
     {
         $pathSystemCtl = self::which('systemctl');
-        if (!empty($pathSystemCtl) && is_executable($pathSystemCtl)) {
-            return true;
-        } else {
-            return false;
-        }
+        return !empty($pathSystemCtl) && is_executable($pathSystemCtl);
     }
 
    /**
