@@ -70,7 +70,7 @@ class FillDataTimeSettings extends MikoPBXTestsBase
             'PBXTimezone' => 'Europe/Riga',
             'PBXManualTimeSettings'    => false,
             'ManualDateTime'    => '',
-            'NTPServer'    => 'ntp5.stratum1.ru',
+            'NTPServer'    => '0.pool.ntp.org',
         ]];
         return $params;
     }
