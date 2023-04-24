@@ -454,6 +454,7 @@ function event_dial_end()
     data['src_chan']	= get_variable("CHANNEL");
     data['linkedid']    = get_variable("CHANNEL(linkedid)");
     data['action']      = 'dial_end';
+    app["UserEvent"]("DialFail,FROM_CHAN:"..data['src_chan']..",TO_NUM:"..get_variable("EXTEN")..",REASON:NO_CONTACTS");
     userevent_return(data)
     return data;
 end
