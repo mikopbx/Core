@@ -316,7 +316,6 @@ class OutOffWorkTimeController extends BaseController
                 $rule_id = explode('rule-', $key)[1];
                 if ($value === 'on') {
                     $newRule = new OutWorkTimesRouts();
-                    $newRule->id = $rule_id;
                     $newRule->timeConditionId = $data['id'];
                     $newRule->routId          = $rule_id;
                     if ($newRule->save() === false) {
