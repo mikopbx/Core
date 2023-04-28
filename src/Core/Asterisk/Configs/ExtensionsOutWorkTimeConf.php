@@ -26,18 +26,22 @@ use MikoPBX\Common\Models\OutWorkTimes;
 use MikoPBX\Common\Models\OutWorkTimesRouts;
 use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Core\System\Util;
+use phpDocumentor\Reflection\Types\Collection;
 
 class ExtensionsOutWorkTimeConf extends CoreConfigClass
 {
     public const OUT_WORK_TIME_CONTEXT = 'check-out-work-time';
-
+    private string $conf = '';
     /**
      * Генератор extensions, дополнительные контексты.
      * @return string
      */
     public function extensionGenContexts(): string
     {
-        return $this->generateOutWorkTimes();
+        $this->generateOutWorkTimes();
+        $conf = $this->conf;
+        $this->conf = '';
+        return $conf;
     }
 
     /**
@@ -59,16 +63,15 @@ class ExtensionsOutWorkTimeConf extends CoreConfigClass
      *
      * @return string
      */
-    private function generateOutWorkTimes(): string
+    private function generateOutWorkTimes(): void
     {
-        $conf = "\n\n[playback-exit]\n";
-        $conf .= 'exten => '.ExtensionsConf::ALL_EXTENSION.',1,Gosub(dial_outworktimes,${EXTEN},1)' . "\n\t";
-        $conf .= 'same => n,Playback(${filename})' . "\n\t";
-        $conf .= 'same => n,Hangup()' . "\n";
-        $conf .= 'exten => _[hit],1,Hangup()'.PHP_EOL.PHP_EOL;
+        $this->conf = "\n\n[playback-exit]\n";
+        $this->conf .= 'exten => '.ExtensionsConf::ALL_EXTENSION.',1,Gosub(dial_outworktimes,${EXTEN},1)' . "\n\t";
+        $this->conf .= 'same => n,Playback(${filename})' . "\n\t";
+        $this->conf .= 'same => n,Hangup()' . "\n";
+        $this->conf .= 'exten => _[hit],1,Hangup()'.PHP_EOL.PHP_EOL;
 
-        $conf .= $this->getWorkTimeDialplan(ExtensionsConf::ALL_EXTENSION);
-        return $conf;
+        $this->getWorkTimeDialplan(ExtensionsConf::ALL_EXTENSION);
     }
 
     private function getRoutesData(): array
@@ -129,18 +132,17 @@ class ExtensionsOutWorkTimeConf extends CoreConfigClass
     /**
      * @param $extension
      * @param $checkContextsYear
-     * @return string
      */
-    private function getWorkTimeDialplan($extension):string
+    private function getWorkTimeDialplan($extension):void
     {
         [$routesData, $confByContext] = $this->getRoutesData();
         $checkContextsYear = [];
         $conf_out_set_var  = '';
         $data = OutWorkTimes::find(['order' => 'date_from'])->toArray();
-        $conf = "[".self::OUT_WORK_TIME_CONTEXT."]\n";
-        $conf.= 'exten => '.$extension.',1,Set(currentYear=${STRFTIME(,,%Y)})'."\n\t";
-        $conf.= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-${contextID},${EXTEN},1)}" == "1"]?${CONTEXT}-${contextID},${EXTEN},1)'."\n\t";
-        $conf.= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-${currentYear},${EXTEN},1)}" == "1"]?${CONTEXT}-${currentYear},${EXTEN},1)'."\n\t";
+        $this->conf.= "[".self::OUT_WORK_TIME_CONTEXT."]\n";
+        $this->conf.= 'exten => '.$extension.',1,Set(currentYear=${STRFTIME(,,%Y)})'."\n\t";
+        $this->conf.= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-${contextID},${EXTEN},1)}" == "1"]?${CONTEXT}-${contextID},${EXTEN},1)'."\n\t";
+        $this->conf.= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-${currentYear},${EXTEN},1)}" == "1"]?${CONTEXT}-${currentYear},${EXTEN},1)'."\n\t";
         foreach ($data as $ruleData) {
             if($ruleData['allowRestriction'] !== '1'){
                 // Для правила запрещены ограничения по маршрутам.
@@ -153,25 +155,25 @@ class ExtensionsOutWorkTimeConf extends CoreConfigClass
             foreach ($intervals as $interval){
                 $ruleData['date_to']    = $interval['date_to'];
                 $ruleData['date_from']  = $interval['date_from'];
-                $this->generateOutWorkRule($ruleData, $conf_out_set_var, $conf, $checkContextsYear);
+                $this->generateOutWorkRule($ruleData, $conf_out_set_var, $this->conf, $checkContextsYear);
             }
         }
-        $conf .= "same => n,return\n\n";
-        $conf .= 'exten => _[hit],1,Hangup()'.PHP_EOL;
-        $conf .= $conf_out_set_var;
+        $this->conf .= "same => n,return\n\n";
+        $this->conf .= 'exten => _[hit],1,Hangup()'.PHP_EOL;
+        $this->conf .= $conf_out_set_var;
 
         foreach ($checkContextsYear as $year => $rule){
-            $conf .= "[".self::OUT_WORK_TIME_CONTEXT."-{$year}]\n";
-            $conf .= 'exten => '.ExtensionsConf::ALL_EXTENSION.",1,NoOp(check time {$year} year)\n\t";
-            $conf .= implode("", $rule);
-            $conf .= "same => n,return\n";
-            $conf .= 'exten => _[hit],1,Hangup()'.PHP_EOL;
+            $this->conf .= "[".self::OUT_WORK_TIME_CONTEXT."-{$year}]\n";
+            $this->conf .= 'exten => '.ExtensionsConf::ALL_EXTENSION.",1,NoOp(check time {$year} year)\n\t";
+            $this->conf .= implode("", $rule);
+            $this->conf .= "same => n,return\n";
+            $this->conf .= 'exten => _[hit],1,Hangup()'.PHP_EOL;
         }
 
-        $checkContextsYear = [];
         foreach ($confByContext as $contextKey => &$confContext){
+            $checkContextsYear = [];
             $conf_out_set_var  = '';
-            $conf .= "[".self::OUT_WORK_TIME_CONTEXT."-$contextKey]\n";
+            $this->conf .= "[".self::OUT_WORK_TIME_CONTEXT."-$contextKey]\n";
             $dialplanDid = [];
             foreach ($confContext as $did => $confDid){
                 if($confDid === false){
@@ -219,30 +221,31 @@ class ExtensionsOutWorkTimeConf extends CoreConfigClass
                     $tmpConf[$did].= $dialplan;
                     $tmpConf[$did].= "same => n,return\n\n";
                 }
-                $conf.= implode('', $tmpConf);
+                $this->conf.= implode('', $tmpConf);
             }
-            $conf .= 'exten => _[hit],1,Hangup()'.PHP_EOL.PHP_EOL;
+            $this->conf .= 'exten => _[hit],1,Hangup()'.PHP_EOL.PHP_EOL;
             $confYear = [];
             foreach ($checkContextsYear as $did => $tmpArr){
                 foreach ($tmpArr as $years){
                     foreach ($years as $year => $rule){
                         if(!isset($confYear[$year])){
-                            $confYear[$year] = '';
+                            $confYear[$year][$did] = '';
                         }
-                        $confYear[$year] .= 'exten => '.ExtensionsConf::getExtenByDid($did).",1,NoOp(check time {$year} year)\n\t";
-                        $confYear[$year] .= implode("", $rule);
-                        $confYear[$year] .= "same => n,return\n";
+                        $confYear[$year][$did] .= implode("\n\t", $rule);
                     }
                 }
             }
-            foreach ($confYear as $year => $rule){
-                $conf .= "[".self::OUT_WORK_TIME_CONTEXT."-$contextKey-{$year}]\n";
-                $conf .= $rule;
-                $conf .= 'exten => _[hit],1,Hangup()'.PHP_EOL.PHP_EOL;
+            foreach ($confYear as $year => $ruleData){
+                $this->conf .= "[".self::OUT_WORK_TIME_CONTEXT."-$contextKey-{$year}]\n";
+                foreach ($ruleData as $did => $rule){
+                    $this->conf .= 'exten => '.ExtensionsConf::getExtenByDid($did).",1,NoOp(check time {$year} year)\n\t";
+                    $this->conf .= $rule;
+                    $this->conf .= "same => n,return\n";
+                }
+                $this->conf .= 'exten => _[hit],1,Hangup()'.PHP_EOL.PHP_EOL;
             }
-            $conf .= $conf_out_set_var;
+            $this->conf .= $conf_out_set_var;
         }
-        return $conf;
     }
 
     /**
@@ -370,7 +373,8 @@ class ExtensionsOutWorkTimeConf extends CoreConfigClass
 
             $dialplanName = "work-time-set-var-{$ruleData['id']}";
 
-            if (strpos($conf_out_set_var, $dialplanName) === false) {
+            if (strpos($conf_out_set_var,"[$dialplanName]") === false
+                && strpos($this->conf,"[$dialplanName]") === false) {
                 $conf_out_set_var .= "[{$dialplanName}]\n" .
                     'exten => '.ExtensionsConf::ALL_EXTENSION.',1,Set(filename=' . $audio_message . ')'."\n\t" .
                         'same => n,Goto(playback-exit,${EXTEN},1)'."\n".

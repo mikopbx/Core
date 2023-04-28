@@ -381,10 +381,10 @@ class Util
         }
         $binaryFolders =
             [
-                '/bin',
                 '/sbin',
-                '/usr/bin',
+                '/bin',
                 '/usr/sbin',
+                '/usr/bin',
                 '/usr/local/bin',
                 '/usr/local/sbin',
             ];
