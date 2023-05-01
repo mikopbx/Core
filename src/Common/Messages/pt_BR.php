@@ -1055,7 +1055,7 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'ex_dropdownCategory_USERS' => 'Ramais',
     'ex_dropdownCategory_USER' => 'Ramais',
     'ex_dropdownCategory_CONFERENCE' => 'Conferências',
-    'ex_SelectNumber' => 'Escolha uma sala',
+    'ex_SelectNumber' => 'Escolha um ramal',
     'gs_RTPStunServer' => 'Endereço STUN do servidor (exemplo: stun.test.net:10000)',
     'cr_ValidateExtensionLen' => 'O número do ramal deve ter dois ou mais dígitos',
     'cr_ValidatePinNumber' => 'O PIN deve ser apenas números',
