@@ -155,11 +155,8 @@ class SIPConf extends CoreConfigClass
             if (count($contextsData) === 1) {
                 $conf .= IncomingContexts::generate($provider['uniqid'], $provider['username']);
             } elseif ( ! in_array($provider['context_id'], $contexts, true)) {
-                $conf       .= IncomingContexts::generate(
-                    $contextsData,
-                    null,
-                    $provider['context_id']
-                );
+                $context_id = str_replace('-incoming','',$provider['context_id']);
+                $conf      .= IncomingContexts::generate($contextsData, null, $context_id);
                 $contexts[] = $provider['context_id'];
             }
         }
@@ -186,7 +183,7 @@ class SIPConf extends CoreConfigClass
             }
         }
         $conf.= PHP_EOL.'[monitor-exceptions]'.PHP_EOL.
-                $confExceptions.PHP_EOL.PHP_EOL;
+            $confExceptions.PHP_EOL.PHP_EOL;
         return $conf;
     }
 
@@ -837,14 +834,16 @@ class SIPConf extends CoreConfigClass
 
         if (count($this->contexts_data[$provider['context_id']]) === 1) {
             $context_id = $provider['uniqid'];
+            $context = "{$context_id}-incoming";
         } else {
             $context_id = $provider['context_id'];
+            $context = $context_id;
         }
         $dtmfmode = ($provider['dtmfmode'] === 'rfc2833') ? 'rfc4733' : $provider['dtmfmode'];
         $options  = [
             'type'            => 'endpoint',
             '100rel'          => "no",
-            'context'         => "{$context_id}-incoming",
+            'context'         => $context,
             'dtmf_mode'       => $dtmfmode,
             'disallow'        => 'all',
             'allow'           => $provider['codecs'],
