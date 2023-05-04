@@ -137,6 +137,7 @@ const advicesWorker = {
 							show: 300,
 							hide: 10000,
 						},
+						movePopup: false
 					});
 				advicesWorker.$advicesBellButton.find('i')
 					.transition('set looping')
