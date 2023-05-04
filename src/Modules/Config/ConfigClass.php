@@ -254,6 +254,15 @@ class ConfigClass extends CoreConfigClass implements SystemConfigInterface,
      */
     public function onAfterACLPrepared(AclList &$aclList): void
     {
+    }
 
+    /**
+     * Modifies system menu
+     *
+     * @param array $menuItems
+     * @return void
+     */
+    public function onBeforeHeaderMenuShow(array &$menuItems):void
+    {
     }
 }

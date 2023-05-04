@@ -39,60 +39,66 @@ class SecurityPlugin extends Injectable
 {
 
     /**
-     * This action is executed before execute any action in the application
+     * Runs before dispatching a request.
      *
-     * @param Event      $event
-     * @param Dispatcher $dispatcher
+     * This method checks if the user is authenticated and authorized to access the requested controller and action. If the
+     * user is not authenticated, the method redirects to the login page or returns a 403 response for AJAX requests. If the
+     * requested controller does not exist, the method redirects to the extensions page. If the user is not authorized, the
+     * method shows a 401 error page.
      *
-     * @return bool
+     * @param Event $event The event object.
+     * @param Dispatcher $dispatcher The dispatcher object.
+     *
+     * @return bool `true` if the request should continue, `false` otherwise.
      */
     public function beforeDispatch(/** @scrutinizer ignore-unused */ Event $event, Dispatcher $dispatcher): bool
     {
+        // Check if user is authenticated
         $isLoggedIn = $this->checkUserAuth();
-        $controller = strtoupper($dispatcher->getControllerName());
+
+        // Get the controller and action names
+        $controller = $dispatcher->getControllerName();
         $action = $dispatcher->getActionName();
-        if ( ! $isLoggedIn && $controller !== 'SESSION') {
-            // AJAX REQUESTS
+
+        // Redirect to login page if user is not authenticated and the controller is not "session"
+        if (!$isLoggedIn && $controller !== 'session') {
+            // Return a 403 response for AJAX requests
             if ($this->request->isAjax()) {
-                $this->response->setStatusCode(403, 'Forbidden')->sendHeaders();
-                $this->response->setContent('This user not authorised');
-                $this->response->send();
-
-                return false;
-            } else { // Usual requests
-                $dispatcher->forward(
-                    [
-                        'controller' => 'session',
-                        'action'     => 'index',
-                    ]
-                );
+                $this->response->setStatusCode(403, 'Forbidden')->setContent('This user is not authorized')->send();
+            } else {
+                // Redirect to login page for normal requests
+                $dispatcher->forward([
+                    'controller' => 'session',
+                    'action' => 'index'
+                ]);
             }
-            return true;
+
+            return false;
         }
 
-        // Check does desire controller exists or show extensions page
-        if ($controller === 'INDEX' || !$this->controllerExists($dispatcher)){
-            $controller = 'EXTENSIONS';
+        // Check if the desired controller exists or show the extensions page
+        if ($controller === 'index' || !$this->controllerExists($dispatcher)) {
+            $controller = 'extensions';
         }
 
+        // Check if the authenticated user is allowed to access the requested controller and action
         if ($isLoggedIn) {
             $acl = $this->getAcl();
-            $role = $this->session->get('auth')['role']??'guest';
+            $role = $this->session->get('auth')['role'] ?? 'guest';
             $allowed = $acl->isAllowed($role, $controller, $action);
-            if ($allowed){
-                $dispatcher->forward(
-                    [
-                        'controller' => $controller,
-                        'action'     => $action,
-                    ]
-                );
+
+            // Forward to the requested controller and action if allowed
+            if ($allowed) {
+                $dispatcher->forward([
+                    'controller' => $controller,
+                    'action' => $action
+                ]);
             } else {
-                $dispatcher->forward(
-                    [
-                        'controller' => 'errors',
-                        'action'     => 'show401',
-                    ]
-                );
+                // Show a 401 error if not allowed
+                $dispatcher->forward([
+                    'controller' => 'errors',
+                    'action' => 'show401'
+                ]);
             }
         }
 
@@ -100,42 +106,62 @@ class SecurityPlugin extends Injectable
     }
 
     /**
-     * Checks if controller class exists
-     * @param $dispatcher
-     * @return bool
+     *
+     * Checks if the controller class exists.
+     *
+     * This method checks if the controller class exists by concatenating the controller name, namespace name, and handler
+     * suffix obtained from the $dispatcher object. The method returns true if the class exists, false otherwise.
+     *
+     * @param Dispatcher $dispatcher The dispatcher object.
+     * @return bool true if the controller class exists, false otherwise.
      */
-    private function controllerExists($dispatcher):bool
+    private function controllerExists(Dispatcher $dispatcher): bool
     {
-        $controller = Text::camelize($dispatcher->getControllerName());
-        return class_exists($dispatcher->getNamespaceName().'\\'.$controller.$dispatcher->getHandlerSuffix());
+        $controllerName = $dispatcher->getControllerName();
+        $namespaceName = $dispatcher->getNamespaceName();
+        $handlerSuffix = $dispatcher->getHandlerSuffix();
+
+        return class_exists($namespaceName . '\\' . Text::camelize($controllerName) . $handlerSuffix);
     }
 
+
     /**
-     * Checks if user already logged in or not
+     * Checks if the current user is authenticated.
      *
-     * @return bool
+     * This method checks if the current user is authenticated based on whether they have an existing session or a valid
+     * "remember me" cookie.
+     * If the request is from localhost or the user already has an active session, the method returns
+     * true.
+     * If a "remember me" cookie exists, the method checks if it matches any active tokens in the AuthTokens table.
+     * If a match is found, the user's session is set, and the method returns true. If none of these conditions are met,
+     * the method returns false.
+     *
+     * @return bool true if the user is authenticated, false otherwise.
      */
     private function checkUserAuth(): bool
     {
-        // Check if it localhost request
-        if ($_SERVER['REMOTE_ADDR'] === '127.0.0.1') {
+        // Check if it is a localhost request or if the user is already authenticated.
+        if ($_SERVER['REMOTE_ADDR'] === '127.0.0.1' || $this->session->has('auth')) {
             return true;
-        } // Check if user already registered
-        elseif ($this->session->has('auth')) {
-            return true;
-        } // Check if remember me cookie exists
-        elseif ($this->cookies->has('random_token')) {
-            $token       = $this->cookies->get('random_token')->getValue();
-            $currentDate = date("Y-m-d H:i:s", time());
-            $userTokens  = AuthTokens::find();
-            foreach ($userTokens as $userToken) {
-                if ($userToken->expiryDate < $currentDate) {
-                    $userToken->delete();
-                } elseif ($this->security->checkHash($token, $userToken->tokenHash)) {
-                    $sessionParams = json_decode($userToken->sessionParams);
-                    $this->session->set('auth', $sessionParams);
-                    return true;
-                }
+        }
+
+        // Check if remember me cookie exists.
+        if (!$this->cookies->has('random_token')) {
+            return false;
+        }
+
+        $token = $this->cookies->get('random_token')->getValue();
+        $currentDate = date("Y-m-d H:i:s", time());
+
+        // Delete expired tokens and check if the token matches any active tokens.
+        $userTokens = AuthTokens::find();
+        foreach ($userTokens as $userToken) {
+            if ($userToken->expiryDate < $currentDate) {
+                $userToken->delete();
+            } elseif ($this->security->checkHash($token, $userToken->tokenHash)) {
+                $sessionParams = json_decode($userToken->sessionParams);
+                $this->session->set('auth', $sessionParams);
+                return true;
             }
         }
 
@@ -143,9 +169,15 @@ class SecurityPlugin extends Injectable
     }
 
     /**
-     * Returns an existing or new access control list
+     * Gets the Access Control List (ACL).
      *
-     * @returns AclList
+     * This method creates a new AclList object and sets the default action to AclEnum::DENY. It then adds two roles,
+     * admins and guest, to the ACL, and sets the default permissions such that admins are allowed to perform any
+     * action and guest is denied access to any action.
+     *
+     * Finally, it uses the PBXConfModulesProvider class to allow modules to modify the ACL, and returns the modified ACL.
+     *
+     * @return AclList The Access Control List.
      */
     public function getAcl(): AclList
     {
@@ -162,5 +194,36 @@ class SecurityPlugin extends Injectable
         PBXConfModulesProvider::hookModulesProcedure(WebUIConfigInterface::ON_AFTER_ACL_LIST_PREPARED, [&$acl]);
 
         return $acl;
+    }
+
+    /**
+     * Checks if an action is allowed for the current user.
+     *
+     * This method checks if the specified $action is allowed for the current user based on their role. It gets the user's
+     * role from the session or sets it to 'guest' if no role is set. It then gets the Access Control List (ACL) and checks
+     * if the $action is allowed for the current user's role. If the user is a guest or if the $action is not allowed,
+     * the method returns false. Otherwise, it returns true.
+     *
+     * @param string $controller The name of the controller.
+     * @param string $action The name of the action to check.
+     * @return bool true if the action is allowed for the current user, false otherwise.
+     */
+    public function isAllowedAction(string $controller, string $action='index'): bool
+    {
+        $role = $this->session->get('auth')['role']??'guest';
+
+        if ( $role==='guest') {
+            return false;
+        }
+
+        $acl = $this->getAcl();
+
+        $allowed = $acl->isAllowed($role, $controller, $action);
+
+        if ($allowed != AclEnum::ALLOW) {
+            return false;
+        } else {
+            return true;
+        }
     }
 }

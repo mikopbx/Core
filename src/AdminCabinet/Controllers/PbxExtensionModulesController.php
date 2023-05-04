@@ -20,6 +20,7 @@
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\PbxExtensionModuleSettingsForm;
+use MikoPBX\AdminCabinet\Providers\SecurityPluginProvider;
 use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings};
 use Phalcon\Text;
 
@@ -63,7 +64,7 @@ class PbxExtensionModulesController extends BaseController
     public function modifyAction(string $uniqid): void
     {
         $menuSettings               = "AdditionalMenuItem{$uniqid}";
-        $unCamelizedControllerName  = Text::uncamelize($uniqid, '-');
+        $unCamelizedControllerName  = $this->getControllerName($uniqid);
         $previousMenuSettings       = PbxSettings::findFirstByKey($menuSettings);
         $this->view->showAtMainMenu = $previousMenuSettings !== false;
         if ($previousMenuSettings === null) {
@@ -135,14 +136,28 @@ class PbxExtensionModulesController extends BaseController
         $result  = [];
         $modules = PbxExtensionModules::getEnabledModulesArray();
         foreach ($modules as $module) {
-            $menuSettings         = "AdditionalMenuItem{$module['uniqid']}";
-            $previousMenuSettings = PbxSettings::findFirstByKey($menuSettings);
-            if ($previousMenuSettings !== null) {
-                $result['items'][] = json_decode($previousMenuSettings->value, true);
+            $unCamelizedControllerName  = $this->getControllerName($module['uniqid']);
+            $isAllowed = $this->di->get(SecurityPluginProvider::SERVICE_NAME, [$unCamelizedControllerName]);
+            if ($isAllowed){
+                $menuSettings         = "AdditionalMenuItem{$module['uniqid']}";
+                $previousMenuSettings = PbxSettings::findFirstByKey($menuSettings);
+                if ($previousMenuSettings !== null) {
+                    $result['items'][] = json_decode($previousMenuSettings->value, true);
+                }
             }
         }
         $this->view->message = $result;
         $this->view->success = true;
+    }
+
+    /**
+     * Makes controller name from module name
+     * @param string $uniqid
+     * @return string
+     */
+    private function getControllerName(string $uniqid):string
+    {
+        return Text::uncamelize($uniqid, '-');
     }
 
 }

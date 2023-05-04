@@ -19,6 +19,9 @@
 
 namespace MikoPBX\AdminCabinet\Library;
 
+use MikoPBX\AdminCabinet\Providers\SecurityPluginProvider;
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
+use MikoPBX\Modules\Config\WebUIConfigInterface;
 use Phalcon\Di\Injectable;
 use Phalcon\Text;
 
@@ -145,61 +148,6 @@ class Elements extends Injectable
                 ],
             ],
 
-            //        'diagnostics'=>array(
-            //            'caption' => 'Diagnostics',
-            //            'iconclass' => '',
-            //            'submenu' => array(
-            //                'connections' => array(
-            //                    'caption' => 'Connecton status',
-            //                    'iconclass' => '',
-            //                    'action' => 'index',
-            //                    'param' =>'',
-            //                    'style' =>''
-            //                ),
-            //                'currentcals'=>array(
-            //                    'caption' => 'Current calls',
-            //                    'iconclass' => '',
-            //                    'action' => 'index',
-            //                    'param' =>'',
-            //                    'style' =>''
-            //                ),
-            //                'server-information'=>array(
-            //                    'caption' => 'Server information',
-            //                    'iconclass' => '',
-            //                    'action' => 'index',
-            //                    'param' =>'',
-            //                    'style' =>''
-            //                ),
-            //                'error-logs'=>array(
-            //                    'caption' => 'Error logs',
-            //                    'iconclass' => '',
-            //                    'action' => 'index',
-            //                    'param' =>'',
-            //                    'style' =>''
-            //                ),
-            //                'diskusage' => array(
-            //                    'caption' => 'Disk usage',
-            //                    'iconclass' => '',
-            //                    'action' => 'index',
-            //                    'param' =>'',
-            //                    'style' =>''
-            //                ),
-            //                'packet-capture' => array(
-            //                    'caption' => 'Packet capture',
-            //                    'iconclass' => '',
-            //                    'action' => 'index',
-            //                    'param' =>'',
-            //                    'style' =>''
-            //                ),
-            //                'asterisk-cli' => array(
-            //                    'caption' => 'Asterisk cli',
-            //                    'iconclass' => '',
-            //                    'action' => 'index',
-            //                    'param' =>'',
-            //                    'style' =>''
-            //                ),
-            //            )
-            //        ),
             'maintenance'     => [
                 'caption'   => 'mm_Maintenance',
                 'iconclass' => '',
@@ -225,13 +173,6 @@ class Elements extends Injectable
                         'param'     => '',
                         'style'     => '',
                     ],
-                    // 'factory-reset' => array(
-                    //     'caption' => 'Factory defaults',
-                    //     'iconclass' => '',
-                    //     'action' => 'index',
-                    //     'param' =>'',
-                    //     'style' =>''
-                    // ),
                     'restart'           => [
                         'caption'   => 'mm_Restart',
                         'iconclass' => 'power off',
@@ -286,14 +227,6 @@ class Elements extends Injectable
                         'param'     => '',
                         'style'     => '',
                     ],
-
-                    //                'storage' => array(
-                    //                    'caption' => 'Storage settings',
-                    //                    'iconclass' => '',
-                    //                    'action' => 'index',
-                    //                    'param' =>'',
-                    //                    'style' =>''
-                    //                ),
                     'mail-settings'     => [
                         'caption'   => 'mm_MailSettings',
                         'iconclass' => 'envelope outline',
@@ -301,13 +234,6 @@ class Elements extends Injectable
                         'param'     => '',
                         'style'     => '',
                     ],
-                    //                'ldap-settings'=> array(
-                    //                    'caption' => 'LDAP settings',
-                    //                    'iconclass' => '',
-                    //                    'action' => 'index',
-                    //                    'param' =>'',
-                    //                    'style' =>''
-                    //                ),
                     'asterisk-managers' => [
                         'caption'   => 'mm_AsteriskManagerInterface',
                         'iconclass' => 'asterisk',
@@ -328,15 +254,21 @@ class Elements extends Injectable
         ];
 
     /**
-     * Builds header menu with left and right items
+     * Generates the HTML code for the header menu by iterating through the items and checking if they are allowed
+     * to be displayed by the current user based on their role.
      *
      * @return void
      */
     public function getMenu(): void
     {
         $resultHtml = '';
+
+        PBXConfModulesProvider::hookModulesProcedure(WebUIConfigInterface::ON_BEFORE_HEADER_MENU_SHOW, [&$this->_headerMenu]);
+
         foreach ($this->_headerMenu as $group => $groupparams) {
+            $isAllowedGroup = $this->di->get(SecurityPluginProvider::SERVICE_NAME, [$group, $groupparams['action']]);
             if (array_key_exists('submenu', $groupparams)) {
+                if ($isAllowedGroup) {
                 $resultHtml .= '<div class="item">';
                 $resultHtml .= '<div class="header">';
                 if (array_key_exists('iconclass', $groupparams) && ! empty($groupparams['iconclass'])) {
@@ -345,22 +277,26 @@ class Elements extends Injectable
                 $resultHtml .= $this->translation->_($groupparams['caption']) . '</div>';
                 $resultHtml .= "<div class='menu' data-group='{$group}'>";
                 foreach ($groupparams['submenu'] as $controller => $option) {
-                    $link       = $this->url->get($controller . '/' . $option['action'] . '/' . $option['param']);
-                    $caption    = $this->translation->_($option['caption']);
-                    $resultHtml .= "<a class='item {$option['style']}' href='{$link}'>
+                    $isAllowed = $this->di->get(SecurityPluginProvider::SERVICE_NAME, [$controller, $option['action']]);
+                    if ($isAllowed){
+                        $link       = $this->url->get($controller . '/' . $option['action'] . '/' . $option['param']);
+                        $caption    = $this->translation->_($option['caption']);
+                        $resultHtml .= "<a class='item {$option['style']}' href='{$link}'>
                     		<i class='{$option['iconclass']} icon'></i>{$caption}
                     	 </a>";
+                    }
                 }
                 $resultHtml .= '</div>';
                 $resultHtml .= '</div>';
-            } else {
-                $link       = $this->url->get($group . '/' . $groupparams['action'] . '/' . $groupparams['param']);
-                $caption    = $this->translation->_($groupparams['caption']);
-                $resultHtml .= "<a class='item {$groupparams['style']}' href='{$link}'>
-                    	<i class='{$groupparams['iconclass']} icon'></i>{$caption}
-                      </a>";
+                }
+            } elseif ($isAllowedGroup) {
+                    $link = $this->url->get($group . '/' . $groupparams['action'] . '/' . $groupparams['param']);
+                    $caption = $this->translation->_($groupparams['caption']);
+                    $resultHtml .= "<a class='item {$groupparams['style']}' href='{$link}'>
+                    	    <i class='{$groupparams['iconclass']} icon'></i>{$caption}
+                        </a>";
+                }
             }
-        }
         echo $resultHtml;
     }
 
@@ -398,16 +334,17 @@ class Elements extends Injectable
     }
 
     /**
-     * Returns array of main menu groups
+     * Returns an array with the allowed menu groups based on the current user's permissions.
      *
-     * @return array
+     * @return array An array of the allowed menu groups where the key is the group name and the value is its caption.
      */
     public function getMenuGroups(): array
     {
         $result = [];
         foreach ($this->_headerMenu as $group => $groupparams) {
-            if (array_key_exists('submenu', $groupparams)) {
-                $result[(string)($group)] = $this->translation->_($groupparams['caption']);
+            $isAllowedGroup = $this->di->get(SecurityPluginProvider::SERVICE_NAME, [$group, $groupparams['action']]);
+            if ($isAllowedGroup && array_key_exists('submenu', $groupparams)) {
+                $result[$group] = $this->translation->_($groupparams['caption']);
             }
         }
 
@@ -415,6 +352,10 @@ class Elements extends Injectable
     }
 
 
+    /**
+     * Prepares array of available WEB UI languages
+     * @return array
+     */
     public function getAvailableWebAdminLanguages(): array
     {
         return [

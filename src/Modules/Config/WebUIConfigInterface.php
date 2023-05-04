@@ -27,6 +27,8 @@ interface WebUIConfigInterface
 
     public const ON_AFTER_ACL_LIST_PREPARED = 'onAfterACLPrepared';
 
+    public const ON_BEFORE_HEADER_MENU_SHOW = 'onBeforeHeaderMenuShow';
+
 
     /**
      * Authenticates user over external module
@@ -44,5 +46,14 @@ interface WebUIConfigInterface
      * @return void
      */
     public function onAfterACLPrepared(AclList &$aclList):void;
+
+
+    /**
+     * Modifies system menu
+     *
+     * @param array $menuItems
+     * @return void
+     */
+    public function onBeforeHeaderMenuShow(array &$menuItems):void;
 
 }
