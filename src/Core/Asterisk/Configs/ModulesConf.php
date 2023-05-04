@@ -204,7 +204,7 @@ class ModulesConf extends CoreConfigClass
         foreach ($modules as $value) {
             $conf .= "load => $value\n";
         }
-        $conf .= $this->hookModulesMethod(CoreConfigClass::GENERATE_MODULES_CONF);
+        $conf .= $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_MODULES_CONF);
 
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/modules.conf', $conf);
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/codecs.conf', '');

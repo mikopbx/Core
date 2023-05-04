@@ -404,7 +404,7 @@ class IncomingContexts extends CoreConfigClass
         } else {
             $conf .= "\t" . "same => n," . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER" && "${M_DIALSTATUS}" != "BUSY"]?' . "Dial(Local/{$default_action->extension}@internal,,".'${TRANSFER_OPTIONS}'."Kg)); default action" . "\n";
         }
-        $conf .= $this->hookModulesMethod(CoreConfigClass::GENERATE_INCOMING_ROUT_AFTER_DIAL_CONTEXT, [$uniqId]);
+        $conf .= $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_INCOMING_ROUT_AFTER_DIAL_CONTEXT, [$uniqId]);
 
         return $conf;
     }

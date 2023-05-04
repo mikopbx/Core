@@ -50,7 +50,7 @@ class ExtensionsConf extends CoreConfigClass
     }
 
     /**
-     * Основной генератор extensions.conf
+     * The main extensions.conf generator
      */
     protected function generateConfigProtected(): void
     {
@@ -68,7 +68,7 @@ class ExtensionsConf extends CoreConfigClass
         }
         $conf .= "PBX_REC_ANNONCE_IN=" .ExtensionsAnnounceRecording::getPathAnnounceFile($this->generalSettings['PBXRecordAnnouncementIn']).PHP_EOL;
         $conf .= "PBX_REC_ANNONCE_OUT=".ExtensionsAnnounceRecording::getPathAnnounceFile($this->generalSettings['PBXRecordAnnouncementOut']).PHP_EOL;
-        $conf .= $this->hookModulesMethod(CoreConfigClass::EXTENSION_GLOBALS);
+        $conf .= $this->hookModulesMethod(AsteriskConfigInterface::EXTENSION_GLOBALS);
         $conf .= PHP_EOL.PHP_EOL;
         $conf .= "[general]".PHP_EOL;
 
@@ -205,8 +205,8 @@ class ExtensionsConf extends CoreConfigClass
     private function generateInternalTransfer(&$conf): void
     {
         $conf              .= "[internal-transfer] \n";
-        $conf .= $this->hookModulesMethod(CoreConfigClass::GET_INCLUDE_INTERNAL_TRANSFER);
-        $conf .= $this->hookModulesMethod(CoreConfigClass::EXTENSION_GEN_INTERNAL_TRANSFER);
+        $conf .= $this->hookModulesMethod(AsteriskConfigInterface::GET_INCLUDE_INTERNAL_TRANSFER);
+        $conf .= $this->hookModulesMethod(AsteriskConfigInterface::EXTENSION_GEN_INTERNAL_TRANSFER);
         $conf .= 'exten => h,1,Goto(transfer_dial_hangup,${EXTEN},1)' . "\n\n";
     }
 
@@ -218,7 +218,7 @@ class ExtensionsConf extends CoreConfigClass
     private function generateSipHints(&$conf): void
     {
         $conf .= "[internal-hints] \n";
-        $conf .= $this->hookModulesMethod(CoreConfigClass::EXTENSION_GEN_HINTS);
+        $conf .= $this->hookModulesMethod(AsteriskConfigInterface::EXTENSION_GEN_HINTS);
         $conf .= "\n\n";
     }
 
@@ -231,7 +231,7 @@ class ExtensionsConf extends CoreConfigClass
         $conf              = "\n";
         $conf              .= IncomingContexts::generate('none');
         $conf              .= "[public-direct-dial] \n";
-        $conf .= $this->hookModulesMethod(CoreConfigClass::GENERATE_PUBLIC_CONTEXT);
+        $conf .= $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_PUBLIC_CONTEXT);
         $filter = ["provider IS NULL AND priority<>9999"];
 
         /**

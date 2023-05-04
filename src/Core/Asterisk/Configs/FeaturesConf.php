@@ -25,18 +25,25 @@ class FeaturesConf extends CoreConfigClass
 {
     protected string $description = 'features.conf';
 
+    /**
+     * Generates PICKUP_EXTEN into extensions.conf global section
+     *
+     * @return string
+     */
     public function extensionGlobals(): string
     {
-        // Генерация хинтов.
         return "PICKUP_EXTEN={$this->generalSettings['PBXFeaturePickupExten']}\n";
     }
 
-    // Секция global для extensions.conf.
-
+    /**
+     * Generates the configuration for the features.conf file.
+     *
+     * @return void
+     */
     protected function generateConfigProtected(): void
     {
         $atxTimeout = $this->generalSettings['PBXFeatureAtxferNoAnswerTimeout'];
-        if(empty($atxTimeout)){
+        if (empty($atxTimeout)) {
             $atxTimeout = 45;
         }
         $conf = "[general]\n" .
@@ -45,15 +52,15 @@ class FeaturesConf extends CoreConfigClass
             "transferdigittimeout = {$this->generalSettings['PBXFeatureTransferDigitTimeout']}\n" .
             "pickupexten = {$this->generalSettings['PBXFeaturePickupExten']}\n" .
             "atxferabort = *0\n" .
-            "\n"            .
+            "\n" .
             "[applicationmap]\n\n" .
             "[featuremap]\n" .
             "atxfer => {$this->generalSettings['PBXFeatureAttendedTransfer']}\n" .
             "disconnect = *0\n" .
-            "blindxfer => {$this->generalSettings['PBXFeatureBlindTransfer']}\n".
+            "blindxfer => {$this->generalSettings['PBXFeatureBlindTransfer']}\n" .
             "\n";
 
-        $conf .= $this->hookModulesMethod(CoreConfigClass::GET_FEATURE_MAP);
+        $conf .= $this->hookModulesMethod(AsteriskConfigInterface::GET_FEATURE_MAP);
 
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/features.conf', $conf);
     }

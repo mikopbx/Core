@@ -68,6 +68,7 @@ use MikoPBX\Core\System\{BeanstalkClient,
     Util
 };
 use MikoPBX\Modules\Config\ConfigClass;
+use MikoPBX\Modules\Config\SystemConfigInterface;
 use MikoPBX\Modules\PbxExtensionUtils;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use Phalcon\Di;
@@ -648,7 +649,7 @@ class WorkerModelsEvents extends WorkerBase
             }
         }
         // Send information about models changes to additional modules bulky without any details
-        $this->modulesConfigObj->hookModulesMethod(ConfigClass::MODELS_EVENT_NEED_RELOAD, [$this->modified_tables]);
+        PBXConfModulesProvider::hookModulesMethod(SystemConfigInterface::MODELS_EVENT_NEED_RELOAD, [$this->modified_tables]);
         $this->modified_tables = [];
     }
 
@@ -675,7 +676,7 @@ class WorkerModelsEvents extends WorkerBase
             return;
         }
         // Send information about models changes to additional modules with changed data details
-        $this->modulesConfigObj->hookModulesMethod(ConfigClass::MODELS_EVENT_CHANGE_DATA, [$receivedMessage]);
+        PBXConfModulesProvider::hookModulesMethod(SystemConfigInterface::MODELS_EVENT_CHANGE_DATA, [$receivedMessage]);
     }
 
     /**

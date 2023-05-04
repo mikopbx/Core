@@ -22,6 +22,8 @@ namespace MikoPBX\AdminCabinet\Controllers;
 use MikoPBX\AdminCabinet\Forms\LoginForm;
 use MikoPBX\Common\Models\AuthTokens;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
+use MikoPBX\Modules\Config\WebUIConfigInterface;
 
 /**
  * SessionController
@@ -33,9 +35,9 @@ class SessionController extends BaseController
     public function indexAction(): void
     {
         $this->view->NameFromSettings
-                          = PbxSettings::getValueByKey('Name');
+            = PbxSettings::getValueByKey('Name');
         $this->view->DescriptionFromSettings
-                          = PbxSettings::getValueByKey('Description');
+            = PbxSettings::getValueByKey('Description');
         $this->view->form = new LoginForm();
     }
 
@@ -45,45 +47,62 @@ class SessionController extends BaseController
      */
     public function startAction(): void
     {
-        if ( ! $this->request->isPost()) {
+        if (!$this->request->isPost()) {
             $this->forward('session/index');
         }
         $loginFromUser = $this->request->getPost('login');
-        $passFromUser  = $this->request->getPost('password');
+        $passFromUser = $this->request->getPost('password');
         $this->flash->clear();
-        $login    = PbxSettings::getValueByKey('WebAdminLogin');
+        $login = PbxSettings::getValueByKey('WebAdminLogin');
         $password = PbxSettings::getValueByKey('WebAdminPassword');
+
+        $userLoggedIn = false;
+        $sessionParams = [];
         if ($password === $passFromUser && $login === $loginFromUser) {
+            $sessionParams = [
+                'role' => 'admins',
+            ];
+            $userLoggedIn = true;
+        } else {
+            // Try to authenticate user over additional module
+            $additionalModules = PBXConfModulesProvider::hookModulesMethodWithArrayResult(WebUIConfigInterface::AUTHENTICATE_USER, [$loginFromUser, $passFromUser]);
+            foreach ($additionalModules as $moduleUniqueId => $sessionData) {
+                if (!empty($sessionData)) {
+                    $this->loggerAuth->info("User $login was authenticated over module $moduleUniqueId");
+                    $sessionParams = $sessionData;
+                    $userLoggedIn = true;
+                    break;
+                }
+            }
+        }
+
+        if ($userLoggedIn) {
+            $this->_registerSession($sessionParams);
             $this->updateSystemLanguage();
-            $this->_registerSession('admins');
             $this->view->success = true;
             $backUri = $this->request->getPost('backUri');
-            if (!empty($backUri)){
-                $this->view->reload  = $backUri;
+            if (!empty($backUri)) {
+                $this->view->reload = $backUri;
             } else {
-                $this->view->reload  = 'index/index';
+                $this->view->reload = 'index/index';
             }
-
         } else {
             $this->view->success = false;
             $this->flash->error($this->translation->_('auth_WrongLoginPassword'));
             $remoteAddress = $this->request->getClientAddress(true);
-            $userAgent     = $this->request->getUserAgent();
+            $userAgent = $this->request->getUserAgent();
             $this->loggerAuth->warning("From: {$remoteAddress} UserAgent:{$userAgent} Cause: Wrong password");
             $this->clearAuthCookies();
         }
+
     }
 
     /**
      * Register an authenticated user into session data
      *
-     * @param  $role
      */
-    private function _registerSession($role): void
+    private function _registerSession(array $sessionParams): void
     {
-        $sessionParams = [
-            'role' => $role,
-        ];
         $this->session->set('auth', $sessionParams);
 
         if ($this->request->getPost('rememberMeCheckBox') === 'on') {
@@ -112,17 +131,17 @@ class SessionController extends BaseController
         // Get token for username
         $parameters = [
             'conditions' => 'tokenHash = :tokenHash:',
-            'binds'      => [
+            'binds' => [
                 'tokenHash' => $randomPasswordHash,
             ],
         ];
-        $userToken  = AuthTokens::findFirst($parameters);
+        $userToken = AuthTokens::findFirst($parameters);
         if ($userToken === null) {
             $userToken = new AuthTokens();
         }
         // Insert new token
-        $userToken->tokenHash     = $randomPasswordHash;
-        $userToken->expiryDate    = $expiryDate;
+        $userToken->tokenHash = $randomPasswordHash;
+        $userToken->expiryDate = $expiryDate;
         $userToken->sessionParams = json_encode($sessionParams);
         $userToken->save();
     }
@@ -133,8 +152,8 @@ class SessionController extends BaseController
     private function clearAuthCookies(): void
     {
         if ($this->cookies->has('random_token')) {
-            $cookie     = $this->cookies->get('random_token');
-            $value      = $cookie->getValue();
+            $cookie = $this->cookies->get('random_token');
+            $value = $cookie->getValue();
             $userTokens = AuthTokens::find();
             foreach ($userTokens as $userToken) {
                 if ($this->security->checkHash($value, $userToken->tokenHash)) {
@@ -152,13 +171,13 @@ class SessionController extends BaseController
     private function updateSystemLanguage(): void
     {
         $newLanguage = $this->session->get('WebAdminLanguage');
-        if ( ! isset($newLanguage)) {
+        if (!isset($newLanguage)) {
             return;
         }
         $languageSettings = PbxSettings::findFirstByKey('WebAdminLanguage');
         if ($languageSettings === null) {
-            $languageSettings        = new PbxSettings();
-            $languageSettings->key   = 'WebAdminLanguage';
+            $languageSettings = new PbxSettings();
+            $languageSettings->key = 'WebAdminLanguage';
             $languageSettings->value = PbxSettings::getDefaultArrayValues()['WebAdminLanguage'];
         }
         if ($newLanguage !== $languageSettings->value) {

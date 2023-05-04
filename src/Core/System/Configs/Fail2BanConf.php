@@ -22,11 +22,12 @@ namespace MikoPBX\Core\System\Configs;
 use MikoPBX\Common\Models\Fail2BanRules;
 use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\System\Verify;
-use MikoPBX\Modules\Config\ConfigClass;
+use MikoPBX\Modules\Config\SystemConfigInterface;
 use Phalcon\Di\Injectable;
 use Phalcon\Text;
 use SQLite3;
@@ -394,8 +395,7 @@ class Fail2BanConf extends Injectable
 
 
         // Add additional modules routes
-        $configClassObj = new ConfigClass();
-        $additionalModulesJails = $configClassObj->hookModulesMethodWithArrayResult(ConfigClass::GENERATE_FAIL2BAN_JAILS);
+        $additionalModulesJails = PBXConfModulesProvider::hookModulesMethodWithArrayResult(SystemConfigInterface::GENERATE_FAIL2BAN_JAILS);
         foreach ($additionalModulesJails as $moduleUniqueId=>$moduleJailText) {
             $fileName = Text::uncamelize($moduleUniqueId,'_').'.conf';
             file_put_contents("{$filterPath}/{$fileName}", $moduleJailText);
@@ -420,8 +420,7 @@ class Fail2BanConf extends Injectable
         Processes::mwExec("rm -rf ".self::JAILS_DIR."/{$prefix}*.{$extension}");
         $syslog_file = SyslogConf::getSyslogFile();
 
-        $configClassObj = new ConfigClass();
-        $additionalModulesJails = $configClassObj->hookModulesMethodWithArrayResult(ConfigClass::GENERATE_FAIL2BAN_JAILS);
+        $additionalModulesJails = PBXConfModulesProvider::hookModulesMethodWithArrayResult(SystemConfigInterface::GENERATE_FAIL2BAN_JAILS);
         foreach ($additionalModulesJails as $moduleUniqueId=>$moduleJailText) {
             $fileName = Text::uncamelize($moduleUniqueId,'_');
 

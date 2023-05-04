@@ -134,7 +134,7 @@ class ManagerConf extends CoreConfigClass
         $conf .= "eventfilter=!Event: Newexten\n";
         $conf .= "\n";
 
-        $conf .= $this->hookModulesMethod(CoreConfigClass::GENERATE_MANAGER_CONF);
+        $conf .= $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_MANAGER_CONF);
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/manager.conf', $conf);
     }
 }

@@ -21,9 +21,11 @@ namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Models\Codecs;
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\Asterisk\Configs\{AclConf,
     AsteriskConf,
+    AsteriskConfigInterface,
     CoreConfigClass,
     ExtensionsConf,
     FeaturesConf,
@@ -37,6 +39,7 @@ use MikoPBX\Core\Asterisk\Configs\{AclConf,
     VoiceMailConf};
 use MikoPBX\Core\Workers\WorkerCallEvents;
 use MikoPBX\Modules\Config\ConfigClass;
+use MikoPBX\Modules\Config\SystemConfigInterface;
 use Phalcon\Di;
 use Phalcon\Di\Injectable;
 
@@ -81,8 +84,7 @@ class PBX extends Injectable
         // Ключ "-n" отключает подсветку цветом в CLI asterisk.
         Processes::mwExecBg("{$safe_asteriskPath} -f");
         //Send notifications to modules
-        $configClassObj = new ConfigClass();
-        $configClassObj->hookModulesMethod(ConfigClass::ON_AFTER_PBX_STARTED);
+        PBXConfModulesProvider::hookModulesMethod(SystemConfigInterface::ON_AFTER_PBX_STARTED);
     }
 
     public static function logRotate(): void
@@ -347,8 +349,8 @@ class PBX extends Injectable
         /**
          * Создание конфигурационных файлов.
          */
-        $configClassObj = new ConfigClass();
-        $configClassObj->hookModulesMethod(CoreConfigClass::GENERATE_CONFIG);
+
+        PBXConfModulesProvider::hookModulesMethod(AsteriskConfigInterface::GENERATE_CONFIG);
         self::dialplanReload();
         if ($this->di->getShared('registry')->booting) {
             Util::echoResult('   |- dialplan reload');

@@ -8,6 +8,7 @@ use MikoPBX\Common\Models\Iax;
 use MikoPBX\Common\Models\OutgoingRoutingTable;
 use MikoPBX\Common\Models\Providers;
 use MikoPBX\Common\Models\Sip;
+use MikoPBX\Core\Asterisk\Configs\AsteriskConfigInterface;
 use MikoPBX\Core\Asterisk\Configs\ExtensionsConf;
 use MikoPBX\Core\Asterisk\Configs\IAXConf;
 use MikoPBX\Core\Asterisk\Configs\SIPConf;
@@ -169,13 +170,13 @@ class OutgoingContext extends CoreConfigClass
         $conf .= 'same => n,ExecIf($["${NEED_RETURN}" == "1"]?return)' . "\n\t";
 
         // Формирование исходящего dialplan доп. модулей;. Переопределение dialplan маршрута.
-        $confModules = $this->hookModulesMethod(CoreConfigClass::GENERATE_OUT_ROUT_CONTEXT, [$rout]);
+        $confModules = $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_OUT_ROUT_CONTEXT, [$rout]);
         if ( !empty($confModules)) {
             $conf .= trim($confModules)."\n\t";
         }
         $conf .= 'same => n,Dial(${DIAL_COMMAND},600,${DOPTIONS}TKU(${ISTRANSFER}dial_answer)b(dial_create_chan,s,1))' . "\n\t";
         // Формирование dialplan доп. модулей после команды Dial.
-        $confModules = $this->hookModulesMethod(CoreConfigClass::GENERATE_OUT_ROUT_AFTER_DIAL_CONTEXT, [$rout]);
+        $confModules = $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_OUT_ROUT_AFTER_DIAL_CONTEXT, [$rout]);
         if ( !empty($confModules)) {
             $conf .= trim($confModules)."\n\t";
         }

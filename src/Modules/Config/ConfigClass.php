@@ -21,10 +21,12 @@ namespace MikoPBX\Modules\Config;
 
 use MikoPBX\Core\Asterisk\Configs\CoreConfigClass;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use Phalcon\Acl\Adapter\Memory as AclList;
 use ReflectionClass as ReflectionClassAlias;
 
 class ConfigClass extends CoreConfigClass implements SystemConfigInterface,
-                                                     RestAPIConfigInterface
+                                                     RestAPIConfigInterface,
+                                                     WebUIConfigInterface
 {
     /**
      * External module UniqueID
@@ -232,4 +234,26 @@ class ConfigClass extends CoreConfigClass implements SystemConfigInterface,
     }
 
 
+    /**
+     * Authenticates user over external module
+     *
+     * @param string $login
+     * @param string $password
+     * @return array session data
+     */
+    public function authenticateUser(string $login, string $password): array
+    {
+        return [];
+    }
+
+    /**
+     * Prepares list of additional ACL roles and rules
+     *
+     * @param  AclList $aclList
+     * @return void
+     */
+    public function onAfterACLPrepared(AclList &$aclList): void
+    {
+
+    }
 }

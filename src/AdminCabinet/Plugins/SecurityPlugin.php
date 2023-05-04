@@ -20,6 +20,11 @@
 namespace MikoPBX\AdminCabinet\Plugins;
 
 use MikoPBX\Common\Models\AuthTokens;
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
+use MikoPBX\Modules\Config\WebUIConfigInterface;
+use Phalcon\Acl\Adapter\Memory as AclList;
+use Phalcon\Acl\Enum as AclEnum;
+use Phalcon\Acl\Role as AclRole;
 use Phalcon\Di\Injectable;
 use Phalcon\Events\Event;
 use Phalcon\Mvc\Dispatcher;
@@ -45,7 +50,7 @@ class SecurityPlugin extends Injectable
     {
         $isLoggedIn = $this->checkUserAuth();
         $controller = strtoupper($dispatcher->getControllerName());
-
+        $action = $dispatcher->getActionName();
         if ( ! $isLoggedIn && $controller !== 'SESSION') {
             // AJAX REQUESTS
             if ($this->request->isAjax()) {
@@ -62,25 +67,40 @@ class SecurityPlugin extends Injectable
                     ]
                 );
             }
-
             return true;
         }
 
+        // Check does desire controller exists or show extensions page
+        if ($controller === 'INDEX' || !$this->controllerExists($dispatcher)){
+            $controller = 'EXTENSIONS';
+        }
 
-        if ( $isLoggedIn && ($controller === 'INDEX' || !$this->controllerExists($dispatcher)) ) {
-            $dispatcher->forward(
-                [
-                    'controller' => 'extensions',
-                    'action'     => 'index',
-                ]
-            );
+        if ($isLoggedIn) {
+            $acl = $this->getAcl();
+            $role = $this->session->get('auth')['role']??'guest';
+            $allowed = $acl->isAllowed($role, $controller, $action);
+            if ($allowed){
+                $dispatcher->forward(
+                    [
+                        'controller' => $controller,
+                        'action'     => $action,
+                    ]
+                );
+            } else {
+                $dispatcher->forward(
+                    [
+                        'controller' => 'errors',
+                        'action'     => 'show401',
+                    ]
+                );
+            }
         }
 
         return true;
     }
 
     /**
-     * Проверка существования класса контроллера.
+     * Checks if controller class exists
      * @param $dispatcher
      * @return bool
      */
@@ -122,4 +142,25 @@ class SecurityPlugin extends Injectable
         return false;
     }
 
+    /**
+     * Returns an existing or new access control list
+     *
+     * @returns AclList
+     */
+    public function getAcl(): AclList
+    {
+        $acl = new AclList();
+        $acl->setDefaultAction(AclEnum::DENY);
+        // Register roles
+        $acl->addRole(['admins'=> new AclRole('Admins')]);
+        $acl->addRole(['guest'=> new AclRole('Guests')]);
+
+        // Default permissions
+        $acl->allow('admins', '*', '*');
+        $acl->deny('guest', '*', '*');
+
+        PBXConfModulesProvider::hookModulesProcedure(WebUIConfigInterface::ON_AFTER_ACL_LIST_PREPARED, [&$acl]);
+
+        return $acl;
+    }
 }

@@ -41,7 +41,8 @@ use MikoPBX\PBXCoreREST\Controllers\{Cdr\GetController as CdrGetController,
     License\GetController as LicenseGetController,
     License\PostController as LicensePostController
 };
-use MikoPBX\Modules\Config\ConfigClass;
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
+use MikoPBX\Modules\Config\RestAPIConfigInterface;
 use MikoPBX\PBXCoreREST\Middleware\AuthenticationMiddleware;
 use MikoPBX\PBXCoreREST\Middleware\NotFoundMiddleware;
 use MikoPBX\PBXCoreREST\Middleware\ResponseMiddleware;
@@ -88,8 +89,7 @@ class RouterProvider implements ServiceProviderInterface
         $routes = $this->getRoutes();
 
         // Add additional modules routes
-        $configClassObj = new ConfigClass();
-        $additionalRoutes = $configClassObj->hookModulesMethodWithArrayResult(ConfigClass::GET_PBXCORE_REST_ADDITIONAL_ROUTES);
+        $additionalRoutes = PBXConfModulesProvider::hookModulesMethodWithArrayResult(RestAPIConfigInterface::GET_PBXCORE_REST_ADDITIONAL_ROUTES);
         $additionalRoutes = array_values($additionalRoutes);
         $routes = array_merge($routes, ...$additionalRoutes);
 

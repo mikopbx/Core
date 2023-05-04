@@ -29,6 +29,7 @@ use MikoPBX\Modules\Config\ConfigClass;
 use Phalcon\Config;
 use Phalcon\Di\Injectable;
 use Throwable;
+use function MikoPBX\Common\Config\appPath;
 
 abstract class CoreConfigClass extends Injectable implements AsteriskConfigInterface
 {
@@ -84,6 +85,32 @@ abstract class CoreConfigClass extends Injectable implements AsteriskConfigInter
         $this->messages        = [];
     }
 
+
+    /**
+     * Creates array of AsteriskConfModules
+     * @return array
+     */
+    protected function getCoreConfModules():array
+    {
+        $arrObjects = [];
+        $configsDir = appPath('src/Core/Asterisk/Configs');
+        $modulesFiles = glob("{$configsDir}/*.php", GLOB_NOSORT);
+        foreach ($modulesFiles as $file) {
+            $className        = pathinfo($file)['filename'];
+            if ($className === 'CoreConfigClass'){
+                continue;
+            }
+            $fullClassName = "\\MikoPBX\\Core\\Asterisk\\Configs\\{$className}";
+            if (class_exists($fullClassName)) {
+                $object = new $fullClassName();
+                if ($object instanceof CoreConfigClass){
+                    $arrObjects[] = $object;
+                }
+            }
+        }
+        return  $arrObjects;
+    }
+
     /**
      * Calls additional module method by name and returns plain text result
      *
@@ -95,7 +122,9 @@ abstract class CoreConfigClass extends Injectable implements AsteriskConfigInter
     public function hookModulesMethod(string $methodName, array $arguments = []): string
     {
         $stringResult      = '';
-        $additionalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
+        $coreConfModules = $this->getCoreConfModules();
+        $externalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
+        $additionalModules = array_merge($coreConfModules, $externalModules);
         foreach ($additionalModules as $configClassObj) {
             if ( ! method_exists($configClassObj, $methodName)) {
                 continue;
@@ -128,41 +157,6 @@ abstract class CoreConfigClass extends Injectable implements AsteriskConfigInter
         return $stringResult;
     }
 
-    /**
-     * Calls additional module method by name and returns array of results
-     *
-     * @param string $methodName
-     * @param array  $arguments
-     *
-     * @return array
-     */
-    public function hookModulesMethodWithArrayResult(string $methodName, array $arguments = []): array
-    {
-        $result            = [];
-        $additionalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
-        foreach ($additionalModules as $configClassObj) {
-            if ( ! method_exists($configClassObj, $methodName)) {
-                continue;
-            }
-            try {
-                $moduleMethodResponse = call_user_func_array([$configClassObj, $methodName], $arguments);
-            } catch (Throwable $e) {
-                global $errorLogger;
-                $errorLogger->captureException($e);
-                Util::sysLogMsg(__METHOD__, $e->getMessage(), LOG_ERR);
-                continue;
-            }
-            if ( ! empty($moduleMethodResponse)) {
-                if (is_a($configClassObj, ConfigClass::class)) {
-                    $result[$configClassObj->moduleUniqueId] = $moduleMethodResponse;
-                } else {
-                    $result[] = $moduleMethodResponse;
-                }
-            }
-        }
-
-        return $result;
-    }
 
     /**
      * Makes pretty module text block into config file

@@ -22,7 +22,8 @@ declare(strict_types=1);
 namespace MikoPBX\PBXCoreREST\Middleware;
 
 use MikoPBX\Common\Providers\LoggerAuthProvider;
-use MikoPBX\Modules\Config\ConfigClass;
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
+use MikoPBX\Modules\Config\RestAPIConfigInterface;
 use MikoPBX\PBXCoreREST\Http\Request;
 use MikoPBX\PBXCoreREST\Http\Response;
 use MikoPBX\PBXCoreREST\Providers\RequestProvider;
@@ -82,8 +83,7 @@ class AuthenticationMiddleware implements MiddlewareInterface
     public function thisIsModuleNoAuthRequest(Micro $api): bool
     {
         $pattern  = $api->request->getURI(true);
-        $configClassObj = new ConfigClass();
-        $additionalRoutes = $configClassObj->hookModulesMethodWithArrayResult(ConfigClass::GET_PBXCORE_REST_ADDITIONAL_ROUTES);
+        $additionalRoutes = PBXConfModulesProvider::hookModulesMethodWithArrayResult(RestAPIConfigInterface::GET_PBXCORE_REST_ADDITIONAL_ROUTES);
         foreach ($additionalRoutes as $additionalRoutesFromModule){
             foreach ($additionalRoutesFromModule as $additionalRoute) {
                 $noAuth = $additionalRoute[5] ?? false;

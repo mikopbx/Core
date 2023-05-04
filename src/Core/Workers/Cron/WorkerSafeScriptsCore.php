@@ -23,6 +23,7 @@ require_once 'Globals.php';
 
 use Generator;
 use MikoPBX\Core\System\{BeanstalkClient, Configs\SSHConf, PBX, Processes, Util};
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\Workers\WorkerBeanstalkdTidyUp;
 use MikoPBX\Core\Workers\WorkerCallEvents;
@@ -34,7 +35,7 @@ use MikoPBX\Core\Workers\WorkerModelsEvents;
 use MikoPBX\Core\Workers\WorkerNotifyByEmail;
 use MikoPBX\Core\Workers\WorkerNotifyError;
 use MikoPBX\Core\Workers\WorkerRemoveOldRecords;
-use MikoPBX\Modules\Config\ConfigClass;
+use MikoPBX\Modules\Config\SystemConfigInterface;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use Recoil\React\ReactKernel;
 use Throwable;
@@ -97,8 +98,7 @@ class WorkerSafeScriptsCore extends WorkerBase
                     WorkerRemoveOldRecords::class,
                 ],
         ];
-        $configClassObj = new ConfigClass();
-        $arrModulesWorkers = $configClassObj->hookModulesMethodWithArrayResult(ConfigClass::GET_MODULE_WORKERS);
+        $arrModulesWorkers = PBXConfModulesProvider::hookModulesMethodWithArrayResult(SystemConfigInterface::GET_MODULE_WORKERS);
         $arrModulesWorkers = array_values($arrModulesWorkers);
         $arrModulesWorkers = array_merge(...$arrModulesWorkers);
         if (!empty($arrModulesWorkers)) {

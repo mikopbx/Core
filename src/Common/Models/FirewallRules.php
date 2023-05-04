@@ -19,7 +19,8 @@
 
 namespace MikoPBX\Common\Models;
 
-use MikoPBX\Modules\Config\ConfigClass;
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
+use MikoPBX\Modules\Config\SystemConfigInterface;
 use Phalcon\Mvc\Model\Relation;
 
 /**
@@ -234,8 +235,7 @@ class FirewallRules extends ModelsBase
 
 
         //Add modules firewall rules
-        $configClassObj  = new ConfigClass();
-        $additionalRules = $configClassObj->hookModulesMethodWithArrayResult(ConfigClass::GET_DEFAULT_FIREWALL_RULES);
+        $additionalRules = PBXConfModulesProvider::hookModulesMethodWithArrayResult(SystemConfigInterface::GET_DEFAULT_FIREWALL_RULES);
         foreach ($additionalRules as $additionalRuleFromModule) {
             if ($additionalRuleFromModule !== []) {
                 $additionalRuleFromModule = array_change_key_case($additionalRuleFromModule, CASE_UPPER);

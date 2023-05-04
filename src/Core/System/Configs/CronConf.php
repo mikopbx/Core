@@ -19,11 +19,13 @@
 
 namespace MikoPBX\Core\System\Configs;
 
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Workers\Cron\WorkerSafeScriptsCore;
 use MikoPBX\Modules\Config\ConfigClass;
+use MikoPBX\Modules\Config\SystemConfigInterface;
 use Phalcon\Di\Injectable;
 
 use function MikoPBX\Common\Config\appPath;
@@ -94,10 +96,9 @@ class CronConf extends Injectable
         $mast_have[] = '*/6 * * * * ' . "{$shPath} {$workersPath}/Cron/cleaner_download_links.sh > /dev/null 2> /dev/null".PHP_EOL;
         $mast_have[] = '*/1 * * * * ' . $WorkerSafeScripts.PHP_EOL;
 
-        $tasks = [];
         // Add additional modules includes
-        $configClassObj = new ConfigClass();
-        $configClassObj->hookModulesMethod(ConfigClass::CREATE_CRON_TASKS, [&$tasks]);
+        $tasks = [];
+        PBXConfModulesProvider::hookModulesMethod(SystemConfigInterface::CREATE_CRON_TASKS, [&$tasks]);
         $conf = implode('', array_merge($mast_have, $tasks));
 
         if ($boot === true) {

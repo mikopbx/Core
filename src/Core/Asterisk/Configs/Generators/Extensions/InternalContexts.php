@@ -20,6 +20,7 @@
 namespace MikoPBX\Core\Asterisk\Configs\Generators\Extensions;
 
 
+use MikoPBX\Core\Asterisk\Configs\AsteriskConfigInterface;
 use MikoPBX\Core\Asterisk\Configs\ExtensionsConf;
 use MikoPBX\Core\Asterisk\Configs\SIPConf;
 use MikoPBX\Core\Asterisk\Configs\CoreConfigClass;
@@ -96,7 +97,7 @@ class InternalContexts extends CoreConfigClass
      */
     private function generateAdditionalModulesContext(): string
     {
-        $conf = $this->hookModulesMethod(CoreConfigClass::EXTENSION_GEN_CONTEXTS);
+        $conf = $this->hookModulesMethod(AsteriskConfigInterface::EXTENSION_GEN_CONTEXTS);
         $conf .= "\n";
 
         return $conf;
@@ -221,20 +222,20 @@ class InternalContexts extends CoreConfigClass
      */
     private function generateAdditionalModulesInternalContext(): string
     {
-        $conf = $this->hookModulesMethod(CoreConfigClass::GET_INCLUDE_INTERNAL);
-        $conf .= $this->hookModulesMethod(CoreConfigClass::EXTENSION_GEN_INTERNAL);
+        $conf = $this->hookModulesMethod(AsteriskConfigInterface::GET_INCLUDE_INTERNAL);
+        $conf .= $this->hookModulesMethod(AsteriskConfigInterface::EXTENSION_GEN_INTERNAL);
 
         return $conf;
     }
 
     private function generateAdditionalModulesInternalUsersContext():string
     {
-        return $this->hookModulesMethod(CoreConfigClass::EXTENSION_GEN_INTERNAL_USERS_PRE_DIAL);
+        return $this->hookModulesMethod(AsteriskConfigInterface::EXTENSION_GEN_INTERNAL_USERS_PRE_DIAL);
     }
 
     private function generateAdditionalModulesAllPeersContext():string
     {
-        return $this->hookModulesMethod(CoreConfigClass::EXTENSION_GEN_ALL_PEERS_CONTEXT);
+        return $this->hookModulesMethod(AsteriskConfigInterface::EXTENSION_GEN_ALL_PEERS_CONTEXT);
     }
 
 

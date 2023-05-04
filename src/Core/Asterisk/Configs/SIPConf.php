@@ -28,9 +28,9 @@ use MikoPBX\Common\Models\{Codecs,
     Sip,
     SipHosts,
     Users};
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Asterisk\AstDB;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\IncomingContexts;
-use MikoPBX\Modules\Config\ConfigClass;
 use MikoPBX\Core\System\{MikoPBXConfig, Network, Processes, Util};
 use MikoPBX\Core\Utilities\SubnetCalculator;
 use Phalcon\Di;
@@ -635,7 +635,7 @@ class SIPConf extends CoreConfigClass
         $options         = $this->overridePJSIPOptionsFromModules(
             $provider['uniqid'],
             $options,
-            CoreConfigClass::OVERRIDE_PROVIDER_PJSIP_OPTIONS
+            AsteriskConfigInterface::OVERRIDE_PROVIDER_PJSIP_OPTIONS
         );
         $options['type'] = 'auth';
         $conf            .= "[REG-AUTH-{$provider['uniqid']}]\n";
@@ -654,8 +654,7 @@ class SIPConf extends CoreConfigClass
      */
     private function overridePJSIPOptionsFromModules($extensionOrId, $options, $method): array
     {
-        $configClassObj = new ConfigClass();
-        $modulesOverridingArrays = $configClassObj->hookModulesMethodWithArrayResult($method, [$extensionOrId, $options]);
+        $modulesOverridingArrays = PBXConfModulesProvider::hookModulesMethodWithArrayResult($method, [$extensionOrId, $options]);
         foreach ($modulesOverridingArrays as $newOptionsSet) {
             // How to make some order of overrides?
             $options = $newOptionsSet;
@@ -695,7 +694,7 @@ class SIPConf extends CoreConfigClass
         $options = $this->overridePJSIPOptionsFromModules(
             $provider['uniqid'],
             $options,
-            CoreConfigClass::OVERRIDE_PROVIDER_PJSIP_OPTIONS
+            AsteriskConfigInterface::OVERRIDE_PROVIDER_PJSIP_OPTIONS
         );
         $conf    .= "[REG-{$provider['uniqid']}] \n";
         $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'registration');
@@ -721,7 +720,7 @@ class SIPConf extends CoreConfigClass
         $options         = $this->overridePJSIPOptionsFromModules(
             $provider['uniqid'],
             $options,
-            CoreConfigClass::OVERRIDE_PROVIDER_PJSIP_OPTIONS
+            AsteriskConfigInterface::OVERRIDE_PROVIDER_PJSIP_OPTIONS
         );
         $options['type'] = 'auth';
         $conf            .= "[{$provider['uniqid']}-AUTH]\n";
@@ -768,7 +767,7 @@ class SIPConf extends CoreConfigClass
         $options = $this->overridePJSIPOptionsFromModules(
             $provider['uniqid'],
             $options,
-            CoreConfigClass::OVERRIDE_PROVIDER_PJSIP_OPTIONS
+            AsteriskConfigInterface::OVERRIDE_PROVIDER_PJSIP_OPTIONS
         );
         $conf    .= "[{$provider['uniqid']}]\n";
         $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'aor');
@@ -802,7 +801,7 @@ class SIPConf extends CoreConfigClass
         $options = $this->overridePJSIPOptionsFromModules(
             $provider['uniqid'],
             $options,
-            CoreConfigClass::OVERRIDE_PROVIDER_PJSIP_OPTIONS
+            AsteriskConfigInterface::OVERRIDE_PROVIDER_PJSIP_OPTIONS
         );
         $conf    .= "[{$provider['uniqid']}]\n";
         $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'identify');
@@ -879,7 +878,7 @@ class SIPConf extends CoreConfigClass
         $options = $this->overridePJSIPOptionsFromModules(
             $provider['uniqid'],
             $options,
-            CoreConfigClass::OVERRIDE_PROVIDER_PJSIP_OPTIONS
+            AsteriskConfigInterface::OVERRIDE_PROVIDER_PJSIP_OPTIONS
         );
         $conf    .= "[{$provider['uniqid']}]".PHP_EOL;
         $conf    .= 'set_var=contextID='.$provider['context_id'].PHP_EOL;
@@ -946,7 +945,7 @@ class SIPConf extends CoreConfigClass
             $conf              .= $this->generatePeerEndpoint($lang, $peer, $manual_attributes);
         }
 
-        $conf .= $this->hookModulesMethod(CoreConfigClass::GENERATE_PEERS_PJ);
+        $conf .= $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_PEERS_PJ);
 
         return $conf;
     }
@@ -970,7 +969,7 @@ class SIPConf extends CoreConfigClass
         $options = $this->overridePJSIPOptionsFromModules(
             $peer['extension'],
             $options,
-            CoreConfigClass::OVERRIDE_PJSIP_OPTIONS
+            AsteriskConfigInterface::OVERRIDE_PJSIP_OPTIONS
         );
         $conf    .= "[{$peer['extension']}] \n";
         $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'auth');
@@ -998,7 +997,7 @@ class SIPConf extends CoreConfigClass
         $options = $this->overridePJSIPOptionsFromModules(
             $peer['extension'],
             $options,
-            CoreConfigClass::OVERRIDE_PJSIP_OPTIONS
+            AsteriskConfigInterface::OVERRIDE_PJSIP_OPTIONS
         );
         $conf    .= "[{$peer['extension']}]\n";
         $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'aor');
@@ -1073,11 +1072,11 @@ class SIPConf extends CoreConfigClass
         $options = $this->overridePJSIPOptionsFromModules(
             $peer['extension'],
             $options,
-            CoreConfigClass::OVERRIDE_PJSIP_OPTIONS
+            AsteriskConfigInterface::OVERRIDE_PJSIP_OPTIONS
         );
         $conf    .= "[{$peer['extension']}] \n";
         $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'endpoint');
-        $conf    .= $this->hookModulesMethod(self::GENERATE_PEER_PJ_ADDITIONAL_OPTIONS, [$peer]);
+        $conf    .= $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_PEER_PJ_ADDITIONAL_OPTIONS, [$peer]);
 
         if($this->generalSettings['UseWebRTC'] === '1') {
             unset($options['media_encryption']);
@@ -1099,7 +1098,7 @@ class SIPConf extends CoreConfigClass
              */
             $options['rtcp_mux'] = 'yes';
             $conf .= Util::overrideConfigurationArray($options, $manual_attributes, 'endpoint');
-            $conf .= $this->hookModulesMethod(CoreConfigClass::GENERATE_PEER_PJ_ADDITIONAL_OPTIONS, [$peer]);
+            $conf .= $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_PEER_PJ_ADDITIONAL_OPTIONS, [$peer]);
         }
         return $conf;
     }

@@ -22,7 +22,7 @@ declare(strict_types=1);
 namespace MikoPBX\Common\Providers;
 
 use MikoPBX\Common\Models\PbxExtensionModules;
-use MikoPBX\Core\Asterisk\Configs\CoreConfigClass;
+use MikoPBX\Core\System\Util;
 use MikoPBX\Modules\Config\ConfigClass;
 use Phalcon\Di;
 use Phalcon\Di\DiInterface;
@@ -47,41 +47,14 @@ class PBXConfModulesProvider implements ServiceProviderInterface
         $di->setShared(
             self::SERVICE_NAME,
             function (){
-                return array_merge(
-                    self::getCoreConfModules(),
-                    self::getExtensionsConfModules()
-                );
+                   return self::getExtensionsConfModules();
             }
         );
     }
 
-    /**
-     * Creates array of AsteriskConfModules
-     * @return array
-     */
-    public static function getCoreConfModules():array
-    {
-        $arrObjects = [];
-        $configsDir = appPath('src/Core/Asterisk/Configs');
-        $modulesFiles = glob("{$configsDir}/*.php", GLOB_NOSORT);
-        foreach ($modulesFiles as $file) {
-            $className        = pathinfo($file)['filename'];
-            if ($className === 'CoreConfigClass'){
-                continue;
-            }
-            $fullClassName = "\\MikoPBX\\Core\\Asterisk\\Configs\\{$className}";
-            if (class_exists($fullClassName)) {
-                $object = new $fullClassName();
-                if ($object instanceof CoreConfigClass){
-                    $arrObjects[] = $object;
-                }
-            }
-        }
-        return  $arrObjects;
-    }
 
     /**
-     * Creates array of AsteriskConfModules
+     * Creates array of external installed modules
      * @return array
      */
     public static function getExtensionsConfModules():array
@@ -110,6 +83,114 @@ class PBXConfModulesProvider implements ServiceProviderInterface
         $di = Di::getDefault();
         $di->remove(self::SERVICE_NAME);
         $di->register(new self());
+    }
+
+    /**
+     * Calls additional module method by name and returns array of results
+     *
+     * @param string $methodName
+     * @param array  $arguments
+     *
+     * @return array
+     */
+    public static function hookModulesMethodWithArrayResult(string $methodName, array $arguments = []): array
+    {
+        $result            = [];
+        $di = Di::getDefault();
+        $additionalModules = $di->getShared(self::SERVICE_NAME);
+        foreach ($additionalModules as $configClassObj) {
+            if ( ! method_exists($configClassObj, $methodName)) {
+                continue;
+            }
+            try {
+                $moduleMethodResponse = call_user_func_array([$configClassObj, $methodName], $arguments);
+            } catch (\Throwable $e) {
+                global $errorLogger;
+                $errorLogger->captureException($e);
+                Util::sysLogMsg(__METHOD__, $e->getMessage(), LOG_ERR);
+                continue;
+            }
+            if ( ! empty($moduleMethodResponse)) {
+                if (is_a($configClassObj, ConfigClass::class)) {
+                    $result[$configClassObj->moduleUniqueId] = $moduleMethodResponse;
+                } else {
+                    $result[] = $moduleMethodResponse;
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Calls additional module method by name and returns plain text result
+     *
+     * @param string $methodName
+     * @param array  $arguments
+     *
+     * @return string
+     */
+    public static function hookModulesMethod(string $methodName, array $arguments = []): string
+    {
+        $stringResult      = '';
+        $di = Di::getDefault();
+        $additionalModules = $di->getShared(PBXConfModulesProvider::SERVICE_NAME);
+        foreach ($additionalModules as $configClassObj) {
+            if ( ! method_exists($configClassObj, $methodName)) {
+                continue;
+            }
+            try {
+                $includeString = call_user_func_array([$configClassObj, $methodName], $arguments);
+                if ( ! empty($includeString)) {
+                    $includeString = $configClassObj->confBlockWithComments($includeString);
+                    if (
+                        substr($stringResult, -1) !== "\t"
+                        &&
+                        substr($includeString, 0, 4) === 'same'
+                    ) {
+                        $stringResult .= "\t" . $includeString;
+                    } else {
+                        $stringResult .= $includeString;
+                    }
+                }
+            } catch (\Throwable $e) {
+                global $errorLogger;
+                $errorLogger->captureException($e);
+                Util::sysLogMsg(__METHOD__, $e->getMessage(), LOG_ERR);
+                continue;
+            }
+        }
+
+        return $stringResult;
+    }
+
+
+    /**
+     * Calls additional module method by name without returns
+     *
+     * @param string $methodName
+     * @param array  $arguments
+     *
+     * @return void
+     */
+    public static function hookModulesProcedure(string $methodName, array $arguments = []): void
+    {
+        $result            = [];
+        $di = Di::getDefault();
+        $additionalModules = $di->getShared(self::SERVICE_NAME);
+        foreach ($additionalModules as $configClassObj) {
+            if ( ! method_exists($configClassObj, $methodName)) {
+                continue;
+            }
+            try {
+                call_user_func_array([$configClassObj, $methodName], $arguments);
+            } catch (\Throwable $e) {
+                global $errorLogger;
+                $errorLogger->captureException($e);
+                Util::sysLogMsg(__METHOD__, $e->getMessage(), LOG_ERR);
+                continue;
+            }
+        }
     }
 
 }

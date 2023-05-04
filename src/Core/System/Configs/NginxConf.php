@@ -19,12 +19,13 @@
 
 namespace MikoPBX\Core\System\Configs;
 
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Network;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\System\Verify;
-use MikoPBX\Modules\Config\ConfigClass;
+use MikoPBX\Modules\Config\SystemConfigInterface;
 use Phalcon\Di\Injectable;
 
 class NginxConf extends Injectable
@@ -170,8 +171,7 @@ class NginxConf extends Injectable
         Processes::mwExec("{$rmPath} -rf {$locationsPath}/*.conf");
 
         // Add additional modules routes
-        $configClassObj = new ConfigClass();
-        $additionalLocations = $configClassObj->hookModulesMethodWithArrayResult(ConfigClass::CREATE_NGINX_LOCATIONS);
+        $additionalLocations = PBXConfModulesProvider::hookModulesMethodWithArrayResult(SystemConfigInterface::CREATE_NGINX_LOCATIONS);
         foreach ($additionalLocations as $moduleUniqueId=>$locationContent) {
             $confFileName = "{$locationsPath}/{$moduleUniqueId}.conf";
             file_put_contents($confFileName, $locationContent);
