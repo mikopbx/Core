@@ -78,9 +78,7 @@ const advicesWorker = {
 				$.each(response.advices.error, (key, value) => {
 					htmlMessages += '<div class="item">';
 					htmlMessages += '<i class="frown outline red icon"></i>';
-					htmlMessages += '<div class="content">';
-					htmlMessages += `<div class="ui small red header">${value}</div>`;
-					htmlMessages += '</div>';
+					htmlMessages += `<b>${value}</b>`;
 					htmlMessages += '</div>';
 					countMessages += 1;
 				});
@@ -88,11 +86,9 @@ const advicesWorker = {
 			if (response.advices.warning !== undefined
 				&& response.advices.warning.length > 0) {
 				$.each(response.advices.warning, (key, value) => {
-					htmlMessages += '<div class="item">';
+					htmlMessages += '<div class="item yellow">';
 					htmlMessages += '<i class="meh outline yellow icon"></i>';
-					htmlMessages += '<div class="content">';
-					htmlMessages += `<div class="ui small header">${value}</div>`;
-					htmlMessages += '</div>';
+					htmlMessages += `<b>${value}</b>`;
 					htmlMessages += '</div>';
 					countMessages += 1;
 				});
@@ -102,9 +98,7 @@ const advicesWorker = {
 				$.each(response.advices.info, (key, value) => {
 					htmlMessages += '<div class="item">';
 					htmlMessages += '<i class="smile outline blue icon"></i>';
-					htmlMessages += '<div class="content">';
-					htmlMessages += `<div class="ui small header">${value}</div>`;
-					htmlMessages += '</div>';
+					htmlMessages += `<b>${value}</b>`;
 					htmlMessages += '</div>';
 					countMessages += 1;
 				});
