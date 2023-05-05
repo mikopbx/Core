@@ -208,7 +208,7 @@ return [
     'gs_SIPPort' => 'Porta SIP para registrar telefones nesta estação',
     'gs_PBXAllowGuestCalls' => 'Permitir chamadas de qualquer servidor',
     'gs_PBXSplitAudioThread' => 'Salvar gravações em estéreo',
-    'gs_PBXFeaturePickupExten' => 'Combinação para atender chamadas',
+    'gs_PBXFeaturePickupExten' => 'Combinação para capturar chamadas',
     'gs_PBXFeatureDigitTimeout' => 'Tempo limite máximo entre dígitos ao inserir um número do ramal (em milissegundos)',
     'gs_PBXFeatureBlindTransfer' => 'Combinação para transferência incondicional',
     'gs_PBXFeatureAttendedTransfer' => 'Combinação para transferência consultiva',
@@ -258,7 +258,7 @@ return [
     'mo_NewElementDialplanApplications' => 'Novo app / dialplan',
     'mo_NewElementOutWorkTimes' => 'Nova regra fora do expediente',
     'mo_NewElementOutgoingRoutingTable' => 'Nova regra de processamento de chamadas realizadas',
-    'mo_NewElementIncomingRoutingTable' => 'Nova regra para lidar com chamadas recebidas',
+    'mo_NewElementIncomingRoutingTable' => 'Nova regra de processamento de chamadas recebidas',
     'mo_NewElementSip' => 'Novo provedor SIP',
     'mo_NewElementIax' => 'Novo provedor IAX',
     'mo_NewElementConferenceRooms' => 'Nova sala de conferências',
@@ -1004,7 +1004,7 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'ConnectionSettings' => 'Configurações de conexão',
     'AdvancedOptions' => 'Configurações avançadas',
     'qf_QualifyInstructions' => '<div class=\'ui message \'>
-            Quando esta opção é habilitada, o Asterisk enviará pacotes de Opções SIP na freqüência especificada. Isso é necessário para oferecer suporte ao encapsulamento NAT em seu roteador.
+            Quando esta opção é habilitada, o Asterisk enviará pacotes de Opções SIP na freqüência especificada. Isso é necessário para oferecer suporte ao túnel NAT em seu roteador.
         </div>',
     'qf_NatModeInstructions' => '<div class=\'ui message \'>
             <div class=\'ui bulleted list\'>
