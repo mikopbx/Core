@@ -57,23 +57,29 @@ class PbxExtensionStatus {
 		const cbAfterModuleDisable = $.proxy(this.cbAfterModuleDisable, this);
 		PbxApi.SystemDisableModule(this.uniqid, cbAfterModuleDisable);
 	}
+	// Callback function after disabling the module
 	cbAfterModuleDisable(response, success) {
 		if (success) {
+			// Update UI to show module is disabled
 			this.$toggle.checkbox('set unchecked');
 			this.$statusIcon.removeClass('spinner loading icon');
 			this.changeLabelText(globalTranslate.ext_ModuleDisabledStatusDisabled);
+
+			// Trigger events to indicate module status and config data has changed
 			const event = document.createEvent('Event');
 			event.initEvent('ModuleStatusChanged', false, true);
 			window.dispatchEvent(event);
 			event.initEvent('ConfigDataChanged', false, true);
 			window.dispatchEvent(event);
+
+			// Disable input fields and show message for changed objects
 			this.$disabilityFields.addClass('disabled');
 			if (response.data.changedObjects !== undefined){
 				UserMessage.showMultiString(response.data.changedObjects, globalTranslate.ext_ModuleChangedObjects);
 			}
-			if(window.pbxExtensionMenuAddition !== undefined){
-				window.pbxExtensionMenuAddition.updateSidebarMenu();
-			}
+
+			// Refresh the page to reflect changes
+			window.location.reload();
 		} else {
 			this.$toggle.checkbox('set checked');
 			this.changeLabelText(globalTranslate.ext_ModuleDisabledStatusEnabled);
@@ -86,22 +92,29 @@ class PbxExtensionStatus {
 		$('a.button').removeClass('disabled');
 		this.$statusIcon.removeClass('spinner loading icon');
 	}
+
+	// Callback function after enabling the module
 	cbAfterModuleEnable(response, success) {
 		if (success) {
+			// Update UI to show module is enabled
 			this.$toggle.checkbox('set checked');
 			this.changeLabelText(globalTranslate.ext_ModuleDisabledStatusEnabled);
+
+			// Trigger events to indicate module status and config data has changed
 			const event = document.createEvent('Event');
 			event.initEvent('ModuleStatusChanged', false, true);
 			window.dispatchEvent(event);
 			event.initEvent('ConfigDataChanged', false, true);
 			window.dispatchEvent(event);
+
+			// Enable input fields and show message for changed objects
 			this.$disabilityFields.removeClass('disabled');
 			if (response.data.changedObjects !== undefined){
 				UserMessage.showMultiString(response.data.changedObjects, globalTranslate.ext_ModuleChangedObjects);
 			}
-			if(window.pbxExtensionMenuAddition !== undefined){
-				window.pbxExtensionMenuAddition.updateSidebarMenu();
-			}
+
+			// Refresh the page to reflect changes
+			window.location.reload();
 		} else {
 			this.$toggle.checkbox('set unchecked');
 			this.changeLabelText(globalTranslate.ext_ModuleDisabledStatusDisabled);

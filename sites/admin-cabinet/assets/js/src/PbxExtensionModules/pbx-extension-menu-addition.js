@@ -26,59 +26,10 @@ const pbxExtensionMenuAddition = {
 			.sidebar({})
 			.sidebar('setting', 'transition', 'push')
 			.sidebar('setting', 'dimPage', false);
-		pbxExtensionMenuAddition.originalMenuHtml = pbxExtensionMenuAddition.$sidebarMenu.html();
-		pbxExtensionMenuAddition.showPreviousMenuVersion();
-		pbxExtensionMenuAddition.updateSidebarMenu();
-		window.addEventListener('ConfigDataChanged', pbxExtensionMenuAddition.cbOnDataChanged);
-	},
-	/**
-	 * Обработка события смены языка или данных
-	 */
-	cbOnDataChanged() {
-		sessionStorage.removeItem(`previousMenu${globalWebAdminLanguage}`);
-	},
-	/**
-	 * Показывает старые пункты меню, до получения ответа от сервера
-	 */
-	showPreviousMenuVersion() {
-		const previousMenu = sessionStorage.getItem(`previousMenu${globalWebAdminLanguage}`);
-		if (previousMenu !== null && previousMenu !== undefined) {
-			pbxExtensionMenuAddition.$sidebarMenu.html(previousMenu);
-			pbxExtensionMenuAddition.makeMenuActiveElement();
-		}
-	},
-	/**
-	 * Запрашивает у сервера новую версию меню с учетом включенных модулей
-	 */
-	updateSidebarMenu() {
-		$.api({
-			url: `${globalRootUrl}pbx-extension-modules/sidebarInclude`,
-			on: 'now',
-			onSuccess(response) {
-				$('.item.additional-modules').remove();
-				$.each(response.message.items, (key, value) => {
-					if (value.showAtSidebar) {
-						const $groupForAddition = pbxExtensionMenuAddition.$sidebarMenu.find(`[data-group='${value.group}']`);
-						if ($groupForAddition !== undefined) {
-							let itemHtml = `<a class="item additional-modules" href="${value.href}"><i class="${value.iconClass} icon"></i>`;
-							if (globalTranslate[value.caption] !== undefined) {
-								itemHtml += `${globalTranslate[value.caption]}</a>`;
-							} else {
-								itemHtml += `${value.caption}</a>`;
-							}
-							$groupForAddition.append(itemHtml);
-						}
-					}
-				});
-				sessionStorage.setItem(`previousMenu${globalWebAdminLanguage}`, pbxExtensionMenuAddition.$sidebarMenu.html());
-				pbxExtensionMenuAddition.makeMenuActiveElement();
-			},
-		});
+		pbxExtensionMenuAddition.makeMenuActiveElement();
 	},
 
-	/**
-	 * Подсвечивает текущий элемент меню
-	 */
+	//Sets the active menu item in the sidebar based on the current URL.
 	makeMenuActiveElement() {
 		const current = window.location.href;
 		$.each($('#sidebar-menu a'), (index, value) => {

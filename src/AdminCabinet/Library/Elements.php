@@ -20,6 +20,8 @@
 namespace MikoPBX\AdminCabinet\Library;
 
 use MikoPBX\AdminCabinet\Providers\SecurityPluginProvider;
+use MikoPBX\Common\Models\PbxExtensionModules;
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Modules\Config\WebUIConfigInterface;
 use Phalcon\Di\Injectable;
@@ -263,7 +265,7 @@ class Elements extends Injectable
     {
         $resultHtml = '';
 
-        PBXConfModulesProvider::hookModulesProcedure(WebUIConfigInterface::ON_BEFORE_HEADER_MENU_SHOW, [&$this->_headerMenu]);
+        $this->addMenuItemsFromExternalModules();
 
         foreach ($this->_headerMenu as $group => $groupparams) {
             $addToHTML = false;
@@ -349,8 +351,7 @@ class Elements extends Injectable
     {
         $result = [];
         foreach ($this->_headerMenu as $group => $groupparams) {
-            $isAllowedGroup = $this->di->get(SecurityPluginProvider::SERVICE_NAME, [$group, $groupparams['action']]);
-            if ($isAllowedGroup && array_key_exists('submenu', $groupparams)) {
+            if (array_key_exists('submenu', $groupparams)) {
                 $result[$group] = $this->translation->_($groupparams['caption']);
             }
         }
@@ -387,6 +388,38 @@ class Elements extends Injectable
             'az'      => $this->translation->_('ex_Azərbaycan'),
             'zh_Hans' => $this->translation->_('ex_Chinese'),
         ];
+    }
+
+    /**
+     * Adds menu items from enabled external modules to the header menu.
+     *
+     * @return void
+     */
+    public function addMenuItemsFromExternalModules(): void
+    {
+        $modules = PbxExtensionModules::getEnabledModulesArray();
+        foreach ($modules as $module) {
+            $unCamelizedControllerName  =  Text::uncamelize($module['uniqid'], '-');
+            $isAllowed = $this->di->get(SecurityPluginProvider::SERVICE_NAME, [$unCamelizedControllerName]);
+            if ($isAllowed){
+                $menuSettings         = "AdditionalMenuItem{$module['uniqid']}";
+                $previousMenuSettings = PbxSettings::findFirstByKey($menuSettings);
+                if ($previousMenuSettings !== null) {
+                    $menuItem = json_decode($previousMenuSettings->value, true);
+                    if ($menuItem['showAtSidebar']){
+                        $this->_headerMenu[$menuItem['group']]['submenu'][$unCamelizedControllerName]=[
+                                'caption'   => $menuItem['caption'],
+                                'iconclass' => $menuItem['iconClass'],
+                                'action'    => 'index',
+                                'param'     => '',
+                                'style'     => '',
+                        ];
+                    }
+                }
+            }
+        }
+        
+        PBXConfModulesProvider::hookModulesProcedure(WebUIConfigInterface::ON_BEFORE_HEADER_MENU_SHOW, [&$this->_headerMenu]);
     }
 
 }

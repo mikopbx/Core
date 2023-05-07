@@ -64,7 +64,7 @@ class PbxExtensionModulesController extends BaseController
     public function modifyAction(string $uniqid): void
     {
         $menuSettings               = "AdditionalMenuItem{$uniqid}";
-        $unCamelizedControllerName  = $this->getControllerName($uniqid);
+        $unCamelizedControllerName  = Text::uncamelize($uniqid, '-');
         $previousMenuSettings       = PbxSettings::findFirstByKey($menuSettings);
         $this->view->showAtMainMenu = $previousMenuSettings !== false;
         if ($previousMenuSettings === null) {
@@ -73,7 +73,7 @@ class PbxExtensionModulesController extends BaseController
             $value                       = [
                 'uniqid'        => $uniqid,
                 'href'          => $this->url->get($unCamelizedControllerName),
-                'group'         => '',
+                'group'         => 'modules',
                 'iconClass'     => 'puzzle piece',
                 'caption'       => "Breadcrumb$uniqid",
                 'showAtSidebar' => false,
@@ -125,39 +125,6 @@ class PbxExtensionModulesController extends BaseController
         }
         $this->flash->success($this->translation->_('ms_SuccessfulSaved'));
         $this->view->success = true;
-    }
-
-
-    /**
-     * Prepares sidebar additional items for modules
-     */
-    public function sidebarIncludeAction(): void
-    {
-        $result  = [];
-        $modules = PbxExtensionModules::getEnabledModulesArray();
-        foreach ($modules as $module) {
-            $unCamelizedControllerName  = $this->getControllerName($module['uniqid']);
-            $isAllowed = $this->di->get(SecurityPluginProvider::SERVICE_NAME, [$unCamelizedControllerName]);
-            if ($isAllowed){
-                $menuSettings         = "AdditionalMenuItem{$module['uniqid']}";
-                $previousMenuSettings = PbxSettings::findFirstByKey($menuSettings);
-                if ($previousMenuSettings !== null) {
-                    $result['items'][] = json_decode($previousMenuSettings->value, true);
-                }
-            }
-        }
-        $this->view->message = $result;
-        $this->view->success = true;
-    }
-
-    /**
-     * Makes controller name from module name
-     * @param string $uniqid
-     * @return string
-     */
-    private function getControllerName(string $uniqid):string
-    {
-        return Text::uncamelize($uniqid, '-');
     }
 
 }

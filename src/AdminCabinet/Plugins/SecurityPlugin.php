@@ -201,15 +201,11 @@ class SecurityPlugin extends Injectable
 
         // Allow to show ERROR controllers to everybody
         $acl->addComponent(new Component('Errors'), ['show401', 'show404', 'show500']);
-        $acl->allow('*', 'Errors', '*');
+        $acl->allow('*', 'Errors', ['show401', 'show404', 'show500']);
 
         // Allow to show session controllers actions to everybody
         $acl->addComponent(new Component('Session'), ['index', 'start', 'changeLanguage', 'end']);
-        $acl->allow('*', 'Session', '*');
-
-        // Allow to get menu items from external modules to everybody
-        $acl->addComponent(new Component('PbxExtensionModules'), ['sidebarInclude']);
-        $acl->allow('*', 'PbxExtensionModules', ['sidebarInclude']);
+        $acl->allow('*', 'Session', ['index', 'start', 'changeLanguage', 'end']);
 
         return $acl;
     }
