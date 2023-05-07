@@ -7,7 +7,9 @@
         <div class="field">
             <div class="ui buttons">
                 <div class="ui icon basic button action-playback-button" data-value="{{ id }}"><i class="play icon"></i></div>
-                <a href="/admin-cabinet/sound-files/modify/custom" class="ui icon basic button" target="_blank"><i class="add circle icon"></i></a>
+                {% if isAllowed('modify','sound-files') %}
+                    <a href="/admin-cabinet/sound-files/modify/custom" class="ui icon basic button" target="_blank"><i class="add circle icon"></i></a>
+                {% endif %}
             </div>
         </div>
     </div>

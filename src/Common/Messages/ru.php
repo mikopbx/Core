@@ -888,6 +888,7 @@ return [
     'lic_NoInet' => 'Возможно с сервера MikoPBX нет доступа в интернет',
     'lic_NoInetLicMiko' => 'Возможно ограничен доступ к ресурсу <b>lic.miko.ru</b>',
     'lic_NoInetNetSettings' => "Проверьте настройки <b>DNS</b> и <b>Gateway</b> в настройках <a href='/admin-cabinet/network/modify/'>сети</a>",
+    'lic_ReloadPage'=>'Обновить страницу...',
     'er_Home' => 'Перейти в начало',
     'rs_RestartPhoneSystem' => 'Перезагрузить АТС',
     'rs_ShutDownPhoneSystem' => 'Выключить АТС',

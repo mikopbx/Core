@@ -1,5 +1,6 @@
-{{ link_to("ivr-menu/modify", '<i class="add circle icon"></i> '~t._('iv_AddNewIvrMenu'), "class": "ui blue button", 'id':'add-new-button') }}
-
+{% if isAllowed('modify') %}
+    {{ link_to("ivr-menu/modify", '<i class="add circle icon"></i> '~t._('iv_AddNewIvrMenu'), "class": "ui blue button", 'id':'add-new-button') }}
+{% endif %}
     {% for record in ivrmenu %}
         {% if loop.first %}
             <table class="ui selectable compact table" id="ivr-menu-table">

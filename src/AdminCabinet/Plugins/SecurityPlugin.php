@@ -23,6 +23,7 @@ use MikoPBX\Common\Models\AuthTokens;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Modules\Config\WebUIConfigInterface;
 use Phalcon\Acl\Adapter\Memory as AclList;
+use Phalcon\Acl\Component;
 use Phalcon\Acl\Enum as AclEnum;
 use Phalcon\Acl\Role as AclRole;
 use Phalcon\Di\Injectable;
@@ -61,7 +62,7 @@ class SecurityPlugin extends Injectable
         $action = $dispatcher->getActionName();
 
         // Redirect to login page if user is not authenticated and the controller is not "session"
-        if (!$isLoggedIn && $controller !== 'session') {
+        if (!$isLoggedIn && strtoupper($controller) !== 'SESSION') {
             // Return a 403 response for AJAX requests
             if ($this->request->isAjax()) {
                 $this->response->setStatusCode(403, 'Forbidden')->setContent('This user is not authorized')->send();
@@ -76,29 +77,29 @@ class SecurityPlugin extends Injectable
             return false;
         }
 
-        // Check if the desired controller exists or show the extensions page
-        if ($controller === 'index' || !$this->controllerExists($dispatcher)) {
-            $controller = 'extensions';
-        }
 
         // Check if the authenticated user is allowed to access the requested controller and action
         if ($isLoggedIn) {
-            $acl = $this->getAcl();
-            $role = $this->session->get('auth')['role'] ?? 'guest';
-            $allowed = $acl->isAllowed($role, $controller, $action);
-
-            // Forward to the requested controller and action if allowed
-            if ($allowed) {
+            // Check if the desired controller exists or show the extensions page
+            if (!$this->controllerExists($dispatcher)) {
+                // Redirect to home page if controller does not set
+                $homePath = $this->session->get('auth')['homePage'] ?? 'extensions/index';
+                $controller = explode('/', $homePath)[0];
+                $action = explode('/', $homePath)[1];
                 $dispatcher->forward([
-                    'controller' => $controller,
-                    'action' => $action
+                        'controller' => $controller,
+                        'action' => $action
                 ]);
-            } else {
+                return true;
+            }
+
+            if (!$this->isAllowedAction($controller, $action)) {
                 // Show a 401 error if not allowed
                 $dispatcher->forward([
                     'controller' => 'errors',
                     'action' => 'show401'
                 ]);
+                return true;
             }
         }
 
@@ -115,7 +116,8 @@ class SecurityPlugin extends Injectable
      * @param Dispatcher $dispatcher The dispatcher object.
      * @return bool true if the controller class exists, false otherwise.
      */
-    private function controllerExists(Dispatcher $dispatcher): bool
+    private
+    function controllerExists(Dispatcher $dispatcher): bool
     {
         $controllerName = $dispatcher->getControllerName();
         $namespaceName = $dispatcher->getNamespaceName();
@@ -138,7 +140,8 @@ class SecurityPlugin extends Injectable
      *
      * @return bool true if the user is authenticated, false otherwise.
      */
-    private function checkUserAuth(): bool
+    private
+    function checkUserAuth(): bool
     {
         // Check if it is a localhost request or if the user is already authenticated.
         if ($_SERVER['REMOTE_ADDR'] === '127.0.0.1' || $this->session->has('auth')) {
@@ -159,7 +162,7 @@ class SecurityPlugin extends Injectable
             if ($userToken->expiryDate < $currentDate) {
                 $userToken->delete();
             } elseif ($this->security->checkHash($token, $userToken->tokenHash)) {
-                $sessionParams = json_decode($userToken->sessionParams);
+                $sessionParams = json_decode($userToken->sessionParams, true);
                 $this->session->set('auth', $sessionParams);
                 return true;
             }
@@ -179,19 +182,34 @@ class SecurityPlugin extends Injectable
      *
      * @return AclList The Access Control List.
      */
-    public function getAcl(): AclList
+    public
+    function getAcl(): AclList
     {
         $acl = new AclList();
         $acl->setDefaultAction(AclEnum::DENY);
+
         // Register roles
-        $acl->addRole(['admins'=> new AclRole('Admins')]);
-        $acl->addRole(['guest'=> new AclRole('Guests')]);
+        $acl->addRole(new AclRole('admins', 'Admins'));
+        $acl->addRole(new AclRole('guest', 'Guests'));
 
         // Default permissions
         $acl->allow('admins', '*', '*');
         $acl->deny('guest', '*', '*');
 
+        // Modules HOOK
         PBXConfModulesProvider::hookModulesProcedure(WebUIConfigInterface::ON_AFTER_ACL_LIST_PREPARED, [&$acl]);
+
+        // Allow to show ERROR controllers to everybody
+        $acl->addComponent(new Component('Errors'), ['show401', 'show404', 'show500']);
+        $acl->allow('*', 'Errors', '*');
+
+        // Allow to show session controllers actions to everybody
+        $acl->addComponent(new Component('Session'), ['index', 'start', 'changeLanguage', 'end']);
+        $acl->allow('*', 'Session', '*');
+
+        // Allow to get menu items from external modules to everybody
+        $acl->addComponent(new Component('PbxExtensionModules'), ['sidebarInclude']);
+        $acl->allow('*', 'PbxExtensionModules', ['sidebarInclude']);
 
         return $acl;
     }
@@ -208,13 +226,15 @@ class SecurityPlugin extends Injectable
      * @param string $action The name of the action to check.
      * @return bool true if the action is allowed for the current user, false otherwise.
      */
-    public function isAllowedAction(string $controller, string $action='index'): bool
+    public
+    function isAllowedAction(string $controller, string $action): bool
     {
-        $role = $this->session->get('auth')['role']??'guest';
+        $role = $this->session->get('auth')['role'] ?? 'guest';
 
-        if ( $role==='guest') {
-            return false;
+        if (strpos($controller, '_') > 0) {
+            $controller = str_replace('_', '-', $controller);
         }
+        $controller = Text::camelize($controller);
 
         $acl = $this->getAcl();
 

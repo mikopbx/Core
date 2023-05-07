@@ -1,5 +1,6 @@
-{{ link_to("dialplan-applications/modify", '<i class="add circle icon"></i> '~t._('da_AddNewDialplanApp'), "class": "ui blue button", "id":"add-new-button") }}
-
+{% if isAllowed('modify') %}
+    {{ link_to("dialplan-applications/modify", '<i class="add circle icon"></i> '~t._('da_AddNewDialplanApp'), "class": "ui blue button", "id":"add-new-button") }}
+{% endif %}
     {% for record in apps %}
         {% if loop.first %}
             <table class="ui selectable compact table" id="custom-applications-table">

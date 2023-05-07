@@ -1,4 +1,6 @@
-{{ link_to("asterisk-managers/modify", '<i class="add circle icon"></i> '~t._('am_AddNewUser'), "class": "ui blue button") }}
+{% if isAllowed('modify') %}
+    {{ link_to("asterisk-managers/modify", '<i class="add circle icon"></i> '~t._('am_AddNewUser'), "class": "ui blue button") }}
+{% endif %}
 
     {% for user in amiUsers %}
         {% if loop.first %}

@@ -1,4 +1,6 @@
-{{ link_to("incoming-routes/modify", '<i class="add circle icon"></i> '~t._('ir_AddNewRule'), "class": "ui blue button") }}
+{% if isAllowed('modify') %}
+    {{ link_to("incoming-routes/modify", '<i class="add circle icon"></i> '~t._('ir_AddNewRule'), "class": "ui blue button") }}
+{% endif %}
     {% for rule in routingTable %}
         {% if loop.first %}
             <table class="ui selectable compact table" id="routingTable">

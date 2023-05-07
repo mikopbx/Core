@@ -1,4 +1,10 @@
-{{ link_to("outbound-routes/modify", '<i class="add circle icon"></i> '~t._('or_AddNewRule'), "class": "ui blue button") }}
+{% if isAllowed('modify') %}
+    {{ link_to("outbound-routes/modify", '<i class="add circle icon"></i> '~t._('or_AddNewRule'), "class": "ui blue button") }}
+    {% set modifyClass="" %}
+{% else %}
+    {% set modifyClass="disabled" %}
+{% endif %}
+
 
     {% for rule in routingTable %}
         {% if loop.first %}
@@ -18,7 +24,7 @@
 
         <tr class="rule-row {% if rule['provider'] is NULL %}ui negative{% endif %}" id="{{ rule['id'] }}"
             data-value="{{ rule['priority'] }}">
-            <td class="dragHandle"><i class="sort grey icon"></i></td>
+            <td class="dragHandle {{ modifyClass }}"><i class="sort grey icon"></i></td>
             <td class="{% if rule['disabled']==1 %}disabled{% endif %}">{{ rule['rulename'] }}</td>
             <td class="{% if rule['disabled']==1 %}disabled{% endif %}">
                 {% if (rule['numberbeginswith'] is empty and rule['restnumbers'] is empty) %}

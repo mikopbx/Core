@@ -26,7 +26,6 @@ use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\Asterisk\Configs\{AclConf,
     AsteriskConf,
     AsteriskConfigInterface,
-    CoreConfigClass,
     ExtensionsConf,
     FeaturesConf,
     HttpConf,
@@ -349,8 +348,9 @@ class PBX extends Injectable
         /**
          * Создание конфигурационных файлов.
          */
+        $configClassObj = new ConfigClass();
+        $configClassObj->hookModulesMethod(AsteriskConfigInterface::GENERATE_CONFIG);
 
-        PBXConfModulesProvider::hookModulesMethod(AsteriskConfigInterface::GENERATE_CONFIG);
         self::dialplanReload();
         if ($this->di->getShared('registry')->booting) {
             Util::echoResult('   |- dialplan reload');

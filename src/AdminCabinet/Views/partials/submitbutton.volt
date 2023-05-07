@@ -3,9 +3,15 @@
     {{ link_to(indexurl, "<i class='list icon'></i>"~t._('bt_BackToList'), "class": "ui labeled large icon button", "id":"back-to-list-button") }}
 {% endif %}
 
+{% if isAllowed('save') %}
+    {% set class="" %}
+{% else %}
+    {% set class="disabled" %}
+{% endif %}
+
 {% if submitMode is not empty %}
     <input type="hidden" name="submitMode" value="{{ submitMode }}"/>
-    <div class="ui positive right floated buttons">
+    <div class="ui positive right floated buttons {{ class }}">
         <div class="ui large left labeled icon button" id="submitbutton">
             <i class="save icon"></i>
             {{ t._('bt_'~submitMode) }}
@@ -23,7 +29,7 @@
         </div>
     </div>
 {% else %}
-    <div class="ui left labeled icon large positive right floated button" id="submitbutton" data-value="save">
+    <div class="ui left labeled icon large positive right floated button  {{ class }}" id="submitbutton" data-value="save">
         {% if submitBtnText is empty %}
             <i class="save icon"></i>
             {{ t._('bt_SaveSettings') }}

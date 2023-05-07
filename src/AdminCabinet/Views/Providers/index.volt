@@ -15,9 +15,13 @@
         <div class="ui red approve button">{{ t._('pr_Delete') }}</div>
     </div>
 </div>
-{{ link_to("providers/modifysip", '<i class="add circle icon"></i> '~t._('pr_AddSIPProvider'), "class": " ui blue button add-new-button") }}
+{% if isAllowed('modify') %}
+    {{ link_to("providers/modifysip", '<i class="add circle icon"></i> '~t._('pr_AddSIPProvider'), "class": " ui blue button add-new-button") }}
     {{ link_to("providers/modifyiax", '<i class="add circle icon"></i> '~t._('pr_AddIAXProvider'), "class": " ui blue button add-new-button") }}
-
+    {% set modifyClass="" %}
+{% else %}
+    {% set modifyClass="disabled" %}
+{% endif %}
 
     {% for provider in providerlist %}
         {% if loop.first %}
@@ -41,7 +45,7 @@
             data-links="{{ provider['existLinks']|lower }}">
 
             <td class="no-modify-columns">
-                <div class="ui  toggle checkbox">
+                <div class="ui  toggle checkbox {{ modifyClass }}">
                     <input type="checkbox" {% if provider['status']!='disabled' %} checked {% endif %}> <label></label>
                 </div>
             </td>

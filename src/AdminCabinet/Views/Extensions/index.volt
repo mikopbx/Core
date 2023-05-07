@@ -1,4 +1,6 @@
-{{ link_to("extensions/modify", '<i class="add user icon"></i>  '~t._('ex_AddNewExtension'), "class": "ui blue button", "id":"add-new-button") }}
+{% if isAllowed('modify') %}
+    {{ link_to("extensions/modify", '<i class="add user icon"></i>  '~t._('ex_AddNewExtension'), "class": "ui blue button", "id":"add-new-button") }}
+{% endif %}
     {% for extension in extensions %}
         {% if loop.first %}
             <table class="ui selectable compact table" id="extensions-table" data-page-length='12'>
@@ -35,6 +37,7 @@
                 </div>
             </td>
             <td class="{{ extension['status'] }} disability">{{ extension['email'] }}</td>
+
             {{ partial("partials/tablesbuttons",
                 [
                     'id': extension['id'],
@@ -42,6 +45,7 @@
                     'edit' : 'extensions/modify/',
                     'delete': 'extensions/delete/'
                 ]) }}
+
         </tr>
         {% if loop.last %}
 

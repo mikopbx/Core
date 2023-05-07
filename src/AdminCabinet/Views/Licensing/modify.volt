@@ -128,7 +128,7 @@
             <li>{{ t._('lic_NoInetNetSettings') }}</li>
           </ul>
           <br>
-          <b><a href='#' onclick='window.location.reload()'>Обновить страницу...</a><b>
+          <b><a href='#' onclick='window.location.reload()'>{{ t._('lic_ReloadPage') }}</a></b>
         </div>
     {% endif %}
 </div>

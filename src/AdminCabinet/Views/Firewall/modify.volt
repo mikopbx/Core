@@ -1,6 +1,6 @@
 {{ form('firewall/save', 'role': 'form', 'class': 'ui form large', 'id':'firewall-form') }}
-        {{ form.render('id') }}
 
+{{ form.render('id') }}
 
 <div class="field">
     <label>{{ t._('fw_Description') }}</label>

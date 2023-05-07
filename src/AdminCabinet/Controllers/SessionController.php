@@ -61,6 +61,7 @@ class SessionController extends BaseController
         if ($password === $passFromUser && $login === $loginFromUser) {
             $sessionParams = [
                 'role' => 'admins',
+                'homePage'=>'extensions/index'
             ];
             $userLoggedIn = true;
         } else {

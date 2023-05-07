@@ -28,7 +28,7 @@ use Phalcon\Text;
 /**
  * Elements
  * Helps to build UI elements for the application
- * 
+ *
  * @property \MikoPBX\Common\Providers\TranslationProvider translation
  *
  */
@@ -266,37 +266,44 @@ class Elements extends Injectable
         PBXConfModulesProvider::hookModulesProcedure(WebUIConfigInterface::ON_BEFORE_HEADER_MENU_SHOW, [&$this->_headerMenu]);
 
         foreach ($this->_headerMenu as $group => $groupparams) {
-            $isAllowedGroup = $this->di->get(SecurityPluginProvider::SERVICE_NAME, [$group, $groupparams['action']]);
+            $addToHTML = false;
+            $groupHtml = '';
             if (array_key_exists('submenu', $groupparams)) {
-                if ($isAllowedGroup) {
-                $resultHtml .= '<div class="item">';
-                $resultHtml .= '<div class="header">';
+                $groupHtml .= '<div class="item">';
+                $groupHtml .= '<div class="header">';
                 if (array_key_exists('iconclass', $groupparams) && ! empty($groupparams['iconclass'])) {
-                    $resultHtml .= "<i class='{$groupparams['iconclass']} icon'></i>";
+                    $groupHtml .= "<i class='{$groupparams['iconclass']} icon'></i>";
                 }
-                $resultHtml .= $this->translation->_($groupparams['caption']) . '</div>';
-                $resultHtml .= "<div class='menu' data-group='{$group}'>";
+                $groupHtml .= $this->translation->_($groupparams['caption']) . '</div>';
+                $groupHtml .= "<div class='menu' data-group='{$group}'>";
                 foreach ($groupparams['submenu'] as $controller => $option) {
                     $isAllowed = $this->di->get(SecurityPluginProvider::SERVICE_NAME, [$controller, $option['action']]);
                     if ($isAllowed){
                         $link       = $this->url->get($controller . '/' . $option['action'] . '/' . $option['param']);
                         $caption    = $this->translation->_($option['caption']);
-                        $resultHtml .= "<a class='item {$option['style']}' href='{$link}'>
+                        $groupHtml .= "<a class='item {$option['style']}' href='{$link}'>
                     		<i class='{$option['iconclass']} icon'></i>{$caption}
                     	 </a>";
+                        $addToHTML = true;
                     }
                 }
-                $resultHtml .= '</div>';
-                $resultHtml .= '</div>';
-                }
-            } elseif ($isAllowedGroup) {
+                $groupHtml .= '</div>';
+                $groupHtml .= '</div>';
+            } else {
+                $isAllowedGroup = $this->di->get(SecurityPluginProvider::SERVICE_NAME, [$group, $groupparams['action']??'index']);
+                if ($isAllowedGroup) {
                     $link = $this->url->get($group . '/' . $groupparams['action'] . '/' . $groupparams['param']);
                     $caption = $this->translation->_($groupparams['caption']);
-                    $resultHtml .= "<a class='item {$groupparams['style']}' href='{$link}'>
+                    $groupHtml .= "<a class='item {$groupparams['style']}' href='{$link}'>
                     	    <i class='{$groupparams['iconclass']} icon'></i>{$caption}
                         </a>";
+                    $addToHTML = true;
                 }
             }
+            if ($addToHTML){
+                $resultHtml.=$groupHtml;
+            }
+        }
         echo $resultHtml;
     }
 

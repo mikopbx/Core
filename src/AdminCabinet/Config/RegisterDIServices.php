@@ -27,6 +27,7 @@ use MikoPBX\AdminCabinet\Providers\{AssetProvider,
     ElementsProvider,
     FlashProvider,
     RouterProvider,
+    SecurityPluginProvider,
     SessionProvider,
     ViewProvider,
     VoltProvider};
@@ -82,6 +83,7 @@ class RegisterDIServices
             FlashProvider::class,
             ElementsProvider::class,
             AssetProvider::class,
+            SecurityPluginProvider::class,
 
             // Inject sessions
             SessionProvider::class,
