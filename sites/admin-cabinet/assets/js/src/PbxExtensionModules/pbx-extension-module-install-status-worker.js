@@ -1,6 +1,6 @@
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -46,12 +46,12 @@ const installStatusLoopWorker = {
 			installStatusLoopWorker.cbAfterReceiveNewStatus
 		);
 	},
-	cbAfterReceiveNewStatus(response) {
+	cbAfterReceiveNewStatus(result, response) {
 		installStatusLoopWorker.iterations += 1;
 		installStatusLoopWorker.timeoutHandle =
 			window.setTimeout(installStatusLoopWorker.worker, installStatusLoopWorker.timeOut);
 		// Check installation status
-		if (response === false
+		if (result === false
 			&& installStatusLoopWorker.iterations < 50) {
 			window.clearTimeout(installStatusLoopWorker.timeoutHandle);
 		} else if (installStatusLoopWorker.iterations > 50
