@@ -35,6 +35,11 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
         $this->clickDeleteButtonOnRowWithText($params['description']);
 
         $this->clickButtonByHref('/admin-cabinet/providers/modifysip');
+
+        // Fix uniqid to compare reference data in /etc folder for every build
+        self::$driver->executeScript(
+            "$('#save-provider-form').form('set value','uniqid','{$params['uniqid']}');"
+        );
         $this->selectDropdownItem('registration_type', $params['registration_type']);
         $this->changeInputField('description', $params['description']);
         if ($params['registration_type']==='outbound') {
@@ -113,6 +118,7 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
         $params[] = [
             [
                 'type'              => 'sip',
+                'uniqid'            => 'SIP-1683372701',
                 'registration_type' => 'outbound',
                 'description'       => 'PCTEL',
                 'host'              => 'pctel.ru',
@@ -133,6 +139,7 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
         $params[] = [
             [
                 'type'              => 'sip',
+                'uniqid'            => 'SIP-1683372722',
                 'registration_type' => 'inbound',
                 'description'       => 'Mango office',
                 'host'              => 'mango.office.ru',
@@ -153,8 +160,9 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
 
         $params[] = [
             [
-                'registration_type'=> 'outbound',
                 'type'             => 'sip',
+                'uniqid'           => 'SIP-1683372744',
+                'registration_type'=> 'outbound',
                 'description'      => 'Provider for CTI tests',
                 'host'             => '127.0.0.1',
                 'username'         => 'test',
@@ -175,6 +183,7 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
         $params[] = [
             [
                 'type'              => 'sip',
+                'uniqid'            => 'SIP-1683372748',
                 'registration_type' => 'none',
                 'description'       => 'Mango office for delete',
                 'host'              => 'mango1.office.ru',

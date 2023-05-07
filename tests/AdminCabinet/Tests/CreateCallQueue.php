@@ -38,6 +38,12 @@ class CreateCallQueue extends MikoPBXTestsBaseAlias
         $this->clickDeleteButtonOnRowWithText($params['name']);
 
         $this->clickButtonByHref('/admin-cabinet/call-queues/modify');
+
+        // Fix uniqid to compare reference data in /etc folder for every build
+        self::$driver->executeScript(
+            "$('#queue-form').form('set value','uniqid','{$params['uniqid']}');"
+        );
+
         $this->changeTextAreaValue('description', $params['description']);
         $this->changeInputField('name', $params['name']);
         
@@ -119,6 +125,7 @@ class CreateCallQueue extends MikoPBXTestsBaseAlias
          $params[] = [[
              'description' => 'Sales department queue, the first line of agents',
              'name'        => 'Sales department',
+             'uniqid'      => 'QUEUE-AFDE5973B8115C2B9743C68BF51BFD26',
              'extension'   => 20020,
              'seconds_to_ring_each_member'=>14,
              'seconds_for_wrapup'=>12,
@@ -142,6 +149,7 @@ class CreateCallQueue extends MikoPBXTestsBaseAlias
          $params[] = [[
              'description' => 'Accountant department queue, the second line of agents',
              'name'        => 'Accountant department',
+             'uniqid'      => 'QUEUE-C02B7C0BBE8F0A48DE1CDF21DBADC25A',
              'extension'   => 20021,
              'seconds_to_ring_each_member'=>14,
              'seconds_for_wrapup'=>13,
