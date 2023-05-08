@@ -49,6 +49,7 @@ class DispatcherProvider implements ServiceProviderInterface
         $di->setShared(
             self::SERVICE_NAME,
             function () {
+
                 $eventsManager = new EventsManager();
 
                 /**

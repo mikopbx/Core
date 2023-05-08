@@ -19,11 +19,14 @@
 
 declare(strict_types=1);
 
-namespace MikoPBX\AdminCabinet\Providers;
+namespace MikoPBX\Common\Providers;
 
 
+use MikoPBX\AdminCabinet\Plugins\SecurityPlugin;
+use MikoPBX\Modules\PbxExtensionUtils;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
+use Phalcon\Events\Manager as EventsManager;
 use Phalcon\Mvc\Router;
 
 /**
@@ -45,24 +48,20 @@ class RouterProvider implements ServiceProviderInterface
             function () {
                 $router = new Router();
 
-                $router->add(
-                    '/admin-cabinet/:controller/:action/:params',
-                    [
+                $router->setDefaultModule("admin-cabinet");
+                $router->setDefaultNamespace('MikoPBX\AdminCabinet\Controllers');
+                $router->setDefaultController('extensions');
+                $router->setDefaultAction('index');
+
+                $router->add('/admin-cabinet/:controller/:action/:params', [
+                        'module'     => 'admin-cabinet',
                         'controller' => 1,
                         'action'     => 2,
-                        'params'     => 3,
-                    ]
-                );
+                        'params'     => 3
+                ]);
 
-                $router->add(
-                    '/admin-cabinet/:controller',
-                    [
-                        'controller' => 1,
-                        'action'     => 'index',
-                        'params'     => '',
-                    ]
-                );
-
+                // Register additional app modules from external enabled modules
+                PbxExtensionUtils::registerEnabledModulesInRouter($router);
 
                 return $router;
             }

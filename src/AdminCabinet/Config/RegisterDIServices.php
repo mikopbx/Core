@@ -26,31 +26,29 @@ use MikoPBX\AdminCabinet\Providers\{AssetProvider,
     DispatcherProvider,
     ElementsProvider,
     FlashProvider,
-    RouterProvider,
     SecurityPluginProvider,
     SessionProvider,
     ViewProvider,
     VoltProvider};
-use MikoPBX\Common\Providers\{
-    BeanstalkConnectionModelsProvider,
+use MikoPBX\Common\Providers\{BeanstalkConnectionModelsProvider,
     CDRDatabaseProvider,
+    LanguageProvider,
+    LicenseProvider,
     LoggerAuthProvider,
     LoggerProvider,
     MainDatabaseProvider,
     ManagedCacheProvider,
+    MessagesProvider,
+    ModelsAnnotationsProvider,
     ModelsCacheProvider,
     ModelsMetadataProvider,
-    ModelsAnnotationsProvider,
     ModulesDBConnectionsProvider,
     PBXConfModulesProvider,
     RegistryProvider,
+    RouterProvider,
     SessionReadOnlyProvider,
-    MessagesProvider,
-    LanguageProvider,
     TranslationProvider,
-    LicenseProvider,
-    UrlProvider
-};
+    UrlProvider};
 use Phalcon\Di\DiInterface;
 
 class RegisterDIServices

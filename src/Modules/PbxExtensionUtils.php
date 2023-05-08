@@ -25,7 +25,10 @@ use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di;
+use Phalcon\Mvc\Application;
 
+use Phalcon\Mvc\Router;
+use Phalcon\Text;
 use Throwable;
 
 use function MikoPBX\Common\Config\appPath;
@@ -181,6 +184,61 @@ class PbxExtensionUtils
                         $currentModule->update();
                     }
                 }
+            }
+        }
+    }
+
+    /**
+     * Registers enabled modules with App/Module.php file as external module for application
+     *
+     * @param Application $application
+     * @return void
+     */
+    public static function registerEnabledModulesInApp(Application &$application){
+        $parameters = [
+            'conditions' => 'disabled=0',
+        ];
+        $modules    = PbxExtensionModules::find($parameters)->toArray();
+        foreach ($modules as $module) {
+            $moduleUniqueId = $module['uniqid'];
+            $moduleDir = PbxExtensionUtils::getModuleDir($moduleUniqueId);
+            $unCamelizedModuleName = Text::uncamelize($moduleUniqueId,'-');
+            $moduleAppClass = "{$moduleDir}/App/Module.php";
+            if (file_exists($moduleAppClass)) {
+                $application->registerModules([
+                    $unCamelizedModuleName => [
+                        "className" => "Modules\\{$moduleUniqueId}\\App\\Module",
+                        "path"      => $moduleAppClass,
+                    ],
+                ],true);
+            }
+        }
+    }
+
+    /**
+     * Registers enabled modules with App/Module.php file as external module for routes
+     *
+     * @param Router $router
+     * @return void
+     */
+    public static function registerEnabledModulesInRouter(Router &$router){
+        $parameters = [
+            'conditions' => 'disabled=0',
+        ];
+        $modules    = PbxExtensionModules::find($parameters)->toArray();
+        foreach ($modules as $module) {
+            $moduleUniqueId = $module['uniqid'];
+            $moduleDir = PbxExtensionUtils::getModuleDir($moduleUniqueId);
+            $unCamelizedModuleName = Text::uncamelize($moduleUniqueId,'-');
+            $moduleAppClass = "{$moduleDir}/App/Module.php";
+            if (file_exists($moduleAppClass)) {
+                $router->add("/{$unCamelizedModuleName}/:controller/:action/:params", [
+                    'module'     => $unCamelizedModuleName,
+                    'controller' => 1,
+                    'action'     => 2,
+                    'params'     => 3,
+                    'namespace' => "Modules\\{$moduleUniqueId}\\App\\Controllers"
+                ]);
             }
         }
     }

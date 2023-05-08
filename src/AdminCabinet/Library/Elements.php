@@ -39,216 +39,216 @@ class Elements extends Injectable
 
     private array $_headerMenu
         = [
-            'setup'   => [
-                'caption'   => 'mm_Setup',
+            'setup' => [
+                'caption' => 'mm_Setup',
                 'iconclass' => '',
-                'submenu'   => [
-                    'extensions'          => [
-                        'caption'   => 'mm_Extensions',
+                'submenu' => [
+                    'extensions' => [
+                        'caption' => 'mm_Extensions',
                         'iconclass' => 'user outline',
-                        'action'    => 'index',
-                        'param'     => '',
-                        'style'     => '',
+                        'action' => 'index',
+                        'param' => '',
+                        'style' => '',
                     ],
-                    'call-queues'         => [
-                        'caption'   => 'mm_CallQueues',
+                    'call-queues' => [
+                        'caption' => 'mm_CallQueues',
                         'iconclass' => 'users',
-                        'action'    => 'index',
-                        'param'     => '',
-                        'style'     => '',
+                        'action' => 'index',
+                        'param' => '',
+                        'style' => '',
                     ],
-                    'ivr-menu'            => [
-                        'caption'   => 'mm_IvrMenu',
+                    'ivr-menu' => [
+                        'caption' => 'mm_IvrMenu',
                         'iconclass' => 'sitemap',
-                        'action'    => 'index',
-                        'param'     => '',
-                        'style'     => '',
+                        'action' => 'index',
+                        'param' => '',
+                        'style' => '',
                     ],
-                    'conference-rooms'    => [
-                        'caption'   => 'mm_Conferences',
+                    'conference-rooms' => [
+                        'caption' => 'mm_Conferences',
                         'iconclass' => 'phone volume',
-                        'action'    => 'index',
-                        'param'     => '',
-                        'style'     => '',
+                        'action' => 'index',
+                        'param' => '',
+                        'style' => '',
                     ],
-                    'sound-files'         => [
-                        'caption'   => 'mm_SoundFiles',
+                    'sound-files' => [
+                        'caption' => 'mm_SoundFiles',
                         'iconclass' => 'sound',
-                        'action'    => 'index',
-                        'param'     => '',
-                        'style'     => '',
+                        'action' => 'index',
+                        'param' => '',
+                        'style' => '',
                     ],
                     'call-detail-records' => [
-                        'caption'   => 'mm_CallDetailRecords',
+                        'caption' => 'mm_CallDetailRecords',
                         'iconclass' => 'list ul',
-                        'action'    => 'index',
-                        'param'     => '',
-                        'style'     => '',
+                        'action' => 'index',
+                        'param' => '',
+                        'style' => '',
                     ],
                 ],
             ],
             'routing' => [
-                'caption'   => 'mm_Routing',
+                'caption' => 'mm_Routing',
                 'iconclass' => '',
-                'submenu'   => [
-                    'providers'         => [
-                        'caption'   => 'mm_Providers',
+                'submenu' => [
+                    'providers' => [
+                        'caption' => 'mm_Providers',
                         'iconclass' => 'server',
-                        'action'    => 'index',
-                        'param'     => '',
-                        'style'     => '',
+                        'action' => 'index',
+                        'param' => '',
+                        'style' => '',
                     ],
-                    'incoming-routes'   => [
-                        'caption'   => 'mm_IncomingRoutes',
+                    'incoming-routes' => [
+                        'caption' => 'mm_IncomingRoutes',
                         'iconclass' => 'map signs',
-                        'action'    => 'index',
-                        'param'     => '',
-                        'style'     => '',
+                        'action' => 'index',
+                        'param' => '',
+                        'style' => '',
                     ],
-                    'outbound-routes'   => [
-                        'caption'   => 'mm_OutboundRoutes',
+                    'outbound-routes' => [
+                        'caption' => 'mm_OutboundRoutes',
                         'iconclass' => 'random',
-                        'action'    => 'index',
-                        'param'     => '',
-                        'style'     => '',
+                        'action' => 'index',
+                        'param' => '',
+                        'style' => '',
                     ],
                     'out-off-work-time' => [
-                        'caption'   => 'mm_OutOffWorkTime',
+                        'caption' => 'mm_OutOffWorkTime',
                         'iconclass' => 'calendar times outline',
-                        'action'    => 'index',
-                        'param'     => '',
-                        'style'     => '',
+                        'action' => 'index',
+                        'param' => '',
+                        'style' => '',
                     ],
                 ],
             ],
 
-            'modules'         => [
-                'caption'   => 'mm_Modules',
+            'modules' => [
+                'caption' => 'mm_Modules',
                 'iconclass' => '',
-                'submenu'   => [
+                'submenu' => [
                     'dialplan-applications' => [
-                        'caption'   => 'mm_DialplanApplication',
+                        'caption' => 'mm_DialplanApplication',
                         'iconclass' => 'php',
-                        'action'    => 'index',
-                        'param'     => '',
-                        'style'     => '',
+                        'action' => 'index',
+                        'param' => '',
+                        'style' => '',
                     ],
                     'pbx-extension-modules' => [
-                        'caption'   => 'mm_ModuleManager',
+                        'caption' => 'mm_ModuleManager',
                         'iconclass' => 'puzzle piece',
-                        'action'    => 'index',
-                        'param'     => '',
-                        'style'     => '',
+                        'action' => 'index',
+                        'param' => '',
+                        'style' => '',
                     ],
-                    'licensing'             => [
-                        'caption'   => 'mm_PaidModulesAccessNew',
+                    'licensing' => [
+                        'caption' => 'mm_PaidModulesAccessNew',
                         'iconclass' => 'key',
-                        'action'    => 'modify',
-                        'param'     => '',
-                        'style'     => '',
+                        'action' => 'modify',
+                        'param' => '',
+                        'style' => '',
                     ],
                 ],
             ],
 
-            'maintenance'     => [
-                'caption'   => 'mm_Maintenance',
+            'maintenance' => [
+                'caption' => 'mm_Maintenance',
                 'iconclass' => '',
-                'submenu'   => [
-                    'update'            => [
-                        'caption'   => 'mm_UpdateSystem',
+                'submenu' => [
+                    'update' => [
+                        'caption' => 'mm_UpdateSystem',
                         'iconclass' => 'sync',
-                        'action'    => 'index',
-                        'param'     => '',
-                        'style'     => '',
+                        'action' => 'index',
+                        'param' => '',
+                        'style' => '',
                     ],
                     'system-diagnostic' => [
-                        'caption'   => 'mm_SystemDiagnostic',
+                        'caption' => 'mm_SystemDiagnostic',
                         'iconclass' => 'stethoscope',
-                        'action'    => 'index',
-                        'param'     => '',
-                        'style'     => '',
+                        'action' => 'index',
+                        'param' => '',
+                        'style' => '',
                     ],
-                    'console'           => [
-                        'caption'   => 'mm_SSHConsole',
+                    'console' => [
+                        'caption' => 'mm_SSHConsole',
                         'iconclass' => 'terminal',
-                        'action'    => 'index',
-                        'param'     => '',
-                        'style'     => '',
+                        'action' => 'index',
+                        'param' => '',
+                        'style' => '',
                     ],
-                    'restart'           => [
-                        'caption'   => 'mm_Restart',
+                    'restart' => [
+                        'caption' => 'mm_Restart',
                         'iconclass' => 'power off',
-                        'action'    => 'index',
-                        'param'     => '',
-                        'style'     => '',
+                        'action' => 'index',
+                        'param' => '',
+                        'style' => '',
                     ],
                 ],
             ],
             'networkSettings' => [
-                'caption'   => 'mm_NetworkSettings',
+                'caption' => 'mm_NetworkSettings',
                 'iconclass' => '',
-                'submenu'   => [
-                    'network'   => [
-                        'caption'   => 'mm_Network',
+                'submenu' => [
+                    'network' => [
+                        'caption' => 'mm_Network',
                         'iconclass' => 'globe',
-                        'action'    => 'modify',
-                        'param'     => '',
-                        'style'     => '',
+                        'action' => 'modify',
+                        'param' => '',
+                        'style' => '',
                     ],
-                    'firewall'  => [
-                        'caption'   => 'mm_Firewall',
+                    'firewall' => [
+                        'caption' => 'mm_Firewall',
                         'iconclass' => 'shield alternate',
-                        'action'    => 'index',
-                        'param'     => '',
-                        'style'     => '',
+                        'action' => 'index',
+                        'param' => '',
+                        'style' => '',
                     ],
                     'fail2-ban' => [
-                        'caption'   => 'mm_BruteForceProtection',
+                        'caption' => 'mm_BruteForceProtection',
                         'iconclass' => 'user secret',
-                        'action'    => 'index',
-                        'param'     => '',
-                        'style'     => '',
+                        'action' => 'index',
+                        'param' => '',
+                        'style' => '',
                     ],
                 ],
             ],
-            'server'          => [
-                'caption'   => 'mm_System',
+            'server' => [
+                'caption' => 'mm_System',
                 'iconclass' => '',
-                'submenu'   => [
-                    'general-settings'  => [
-                        'caption'   => 'mm_GeneralSettings',
+                'submenu' => [
+                    'general-settings' => [
+                        'caption' => 'mm_GeneralSettings',
                         'iconclass' => 'cogs',
-                        'action'    => 'modify',
-                        'param'     => '',
-                        'style'     => '',
+                        'action' => 'modify',
+                        'param' => '',
+                        'style' => '',
                     ],
-                    'time-settings'     => [
-                        'caption'   => 'mm_SystemClock',
+                    'time-settings' => [
+                        'caption' => 'mm_SystemClock',
                         'iconclass' => 'time',
-                        'action'    => 'modify',
-                        'param'     => '',
-                        'style'     => '',
+                        'action' => 'modify',
+                        'param' => '',
+                        'style' => '',
                     ],
-                    'mail-settings'     => [
-                        'caption'   => 'mm_MailSettings',
+                    'mail-settings' => [
+                        'caption' => 'mm_MailSettings',
                         'iconclass' => 'envelope outline',
-                        'action'    => 'modify',
-                        'param'     => '',
-                        'style'     => '',
+                        'action' => 'modify',
+                        'param' => '',
+                        'style' => '',
                     ],
                     'asterisk-managers' => [
-                        'caption'   => 'mm_AsteriskManagerInterface',
+                        'caption' => 'mm_AsteriskManagerInterface',
                         'iconclass' => 'asterisk',
-                        'action'    => 'index',
-                        'param'     => '',
-                        'style'     => '',
+                        'action' => 'index',
+                        'param' => '',
+                        'style' => '',
                     ],
-                    'custom-files'      => [
-                        'caption'   => 'mm_CustomFiles',
+                    'custom-files' => [
+                        'caption' => 'mm_CustomFiles',
                         'iconclass' => 'linux',
-                        'action'    => 'index',
-                        'param'     => '',
-                        'style'     => '',
+                        'action' => 'index',
+                        'param' => '',
+                        'style' => '',
                     ],
                 ],
             ],
@@ -273,16 +273,16 @@ class Elements extends Injectable
             if (array_key_exists('submenu', $groupparams)) {
                 $groupHtml .= '<div class="item">';
                 $groupHtml .= '<div class="header">';
-                if (array_key_exists('iconclass', $groupparams) && ! empty($groupparams['iconclass'])) {
+                if (array_key_exists('iconclass', $groupparams) && !empty($groupparams['iconclass'])) {
                     $groupHtml .= "<i class='{$groupparams['iconclass']} icon'></i>";
                 }
                 $groupHtml .= $this->translation->_($groupparams['caption']) . '</div>';
                 $groupHtml .= "<div class='menu' data-group='{$group}'>";
                 foreach ($groupparams['submenu'] as $controller => $option) {
                     $isAllowed = $this->di->get(SecurityPluginProvider::SERVICE_NAME, [$controller, $option['action']]);
-                    if ($isAllowed){
-                        $link       = $this->url->get($controller . '/' . $option['action'] . '/' . $option['param']);
-                        $caption    = $this->translation->_($option['caption']);
+                    if ($isAllowed) {
+                        $link = $this->url->get($controller . '/' . $option['action'] . '/' . $option['param']);
+                        $caption = $this->translation->_($option['caption']);
                         $groupHtml .= "<a class='item {$option['style']}' href='{$link}'>
                     		<i class='{$option['iconclass']} icon'></i>{$caption}
                     	 </a>";
@@ -292,7 +292,7 @@ class Elements extends Injectable
                 $groupHtml .= '</div>';
                 $groupHtml .= '</div>';
             } else {
-                $isAllowedGroup = $this->di->get(SecurityPluginProvider::SERVICE_NAME, [$group, $groupparams['action']??'index']);
+                $isAllowedGroup = $this->di->get(SecurityPluginProvider::SERVICE_NAME, [$group, $groupparams['action'] ?? 'index']);
                 if ($isAllowedGroup) {
                     $link = $this->url->get($group . '/' . $groupparams['action'] . '/' . $groupparams['param']);
                     $caption = $this->translation->_($groupparams['caption']);
@@ -302,8 +302,8 @@ class Elements extends Injectable
                     $addToHTML = true;
                 }
             }
-            if ($addToHTML){
-                $resultHtml.=$groupHtml;
+            if ($addToHTML) {
+                $resultHtml .= $groupHtml;
             }
         }
         echo $resultHtml;
@@ -319,11 +319,11 @@ class Elements extends Injectable
     public function getIconByController($controllerName): string
     {
         $uncamelizeControllerName = Text::uncamelize($controllerName, '-');
-        $result                   = '';
+        $result = '';
         foreach ($this->_headerMenu as $index => $group) {
             if ($index === $uncamelizeControllerName
                 && array_key_exists('iconclass', $group[$uncamelizeControllerName])
-                && ! empty($group[$uncamelizeControllerName]['iconclass'])
+                && !empty($group[$uncamelizeControllerName]['iconclass'])
             ) {
                 $result = "<i class='{$group[$uncamelizeControllerName]['iconclass']} icon'></i>";
                 break;
@@ -331,7 +331,7 @@ class Elements extends Injectable
             if (array_key_exists('submenu', $group)) {
                 foreach ($group['submenu'] as $index2 => $submenu) {
                     if ($index2 === $uncamelizeControllerName
-                        && ! empty($submenu['iconclass'])) {
+                        && !empty($submenu['iconclass'])) {
                         $result = "<i class='{$submenu['iconclass']} icon'></i>";
                         break;
                     }
@@ -367,25 +367,25 @@ class Elements extends Injectable
     public function getAvailableWebAdminLanguages(): array
     {
         return [
-            'en'      => $this->translation->_('ex_English'),
-            'ru'      => $this->translation->_('ex_Russian'),
-            'de'      => $this->translation->_('ex_Deutsch'),
-            'es'      => $this->translation->_('ex_Spanish'),
-            'el'      => $this->translation->_('ex_Greek'),
-            'fr'      => $this->translation->_('ex_French'),
-            'pt'      => $this->translation->_('ex_Portuguese'),
-            'pt_BR'   => $this->translation->_('ex_PortugueseBrazil'),
-            'uk'      => $this->translation->_('ex_Ukrainian'),
-            'ka'      => $this->translation->_('ex_Georgian'),
-            'it'      => $this->translation->_('ex_Italian'),
-            'da'      => $this->translation->_('ex_Danish'),
-            'pl'      => $this->translation->_('ex_Polish'),
-            'sv'      => $this->translation->_('ex_Swedish'),
-            'cs'      => $this->translation->_('ex_Czech'),
-            'tr'      => $this->translation->_('ex_Turkish'),
-            'ja'      => $this->translation->_('ex_Japanese'),
-            'vi'      => $this->translation->_('ex_Vietnamese'),
-            'az'      => $this->translation->_('ex_Azərbaycan'),
+            'en' => $this->translation->_('ex_English'),
+            'ru' => $this->translation->_('ex_Russian'),
+            'de' => $this->translation->_('ex_Deutsch'),
+            'es' => $this->translation->_('ex_Spanish'),
+            'el' => $this->translation->_('ex_Greek'),
+            'fr' => $this->translation->_('ex_French'),
+            'pt' => $this->translation->_('ex_Portuguese'),
+            'pt_BR' => $this->translation->_('ex_PortugueseBrazil'),
+            'uk' => $this->translation->_('ex_Ukrainian'),
+            'ka' => $this->translation->_('ex_Georgian'),
+            'it' => $this->translation->_('ex_Italian'),
+            'da' => $this->translation->_('ex_Danish'),
+            'pl' => $this->translation->_('ex_Polish'),
+            'sv' => $this->translation->_('ex_Swedish'),
+            'cs' => $this->translation->_('ex_Czech'),
+            'tr' => $this->translation->_('ex_Turkish'),
+            'ja' => $this->translation->_('ex_Japanese'),
+            'vi' => $this->translation->_('ex_Vietnamese'),
+            'az' => $this->translation->_('ex_Azərbaycan'),
             'zh_Hans' => $this->translation->_('ex_Chinese'),
         ];
     }
@@ -399,26 +399,26 @@ class Elements extends Injectable
     {
         $modules = PbxExtensionModules::getEnabledModulesArray();
         foreach ($modules as $module) {
-            $unCamelizedControllerName  =  Text::uncamelize($module['uniqid'], '-');
+            $unCamelizedControllerName = Text::uncamelize($module['uniqid'], '-');
             $isAllowed = $this->di->get(SecurityPluginProvider::SERVICE_NAME, [$unCamelizedControllerName]);
-            if ($isAllowed){
-                $menuSettings         = "AdditionalMenuItem{$module['uniqid']}";
+            if ($isAllowed) {
+                $menuSettings = "AdditionalMenuItem{$module['uniqid']}";
                 $previousMenuSettings = PbxSettings::findFirstByKey($menuSettings);
                 if ($previousMenuSettings !== null) {
                     $menuItem = json_decode($previousMenuSettings->value, true);
-                    if ($menuItem['showAtSidebar']){
-                        $this->_headerMenu[$menuItem['group']]['submenu'][$unCamelizedControllerName]=[
-                                'caption'   => $menuItem['caption'],
-                                'iconclass' => $menuItem['iconClass'],
-                                'action'    => 'index',
-                                'param'     => '',
-                                'style'     => '',
+                    if ($menuItem['showAtSidebar']) {
+                        $this->_headerMenu[$menuItem['group']]['submenu'][$unCamelizedControllerName] = [
+                            'caption' => $menuItem['caption'],
+                            'iconclass' => $menuItem['iconClass'],
+                            'action' => 'index',
+                            'param' => '',
+                            'style' => '',
                         ];
                     }
                 }
             }
         }
-        
+
         PBXConfModulesProvider::hookModulesProcedure(WebUIConfigInterface::ON_BEFORE_HEADER_MENU_SHOW, [&$this->_headerMenu]);
     }
 

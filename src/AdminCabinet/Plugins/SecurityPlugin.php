@@ -242,4 +242,8 @@ class SecurityPlugin extends Injectable
             return true;
         }
     }
+
+    public function notMatchedRoute($param, $param2){
+        echo $param;
+    }
 }
