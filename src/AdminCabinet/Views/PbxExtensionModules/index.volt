@@ -61,7 +61,7 @@
         {{ partial("partials/tablesbuttons",
             [
                 'id': '',
-                'edit' : module['classname'],
+                'edit' : module['classname']~'//'~module['classname']~'//index',
                 'delete': 'pbx-extension-modules/delete/'
             ]) }}
     </tr>

@@ -407,7 +407,8 @@ class Elements extends Injectable
                 if ($previousMenuSettings !== null) {
                     $menuItem = json_decode($previousMenuSettings->value, true);
                     if ($menuItem['showAtSidebar']) {
-                        $this->_headerMenu[$menuItem['group']]['submenu'][$unCamelizedControllerName] = [
+                        $controllerUrl = "$unCamelizedControllerName\\$unCamelizedControllerName";
+                        $this->_headerMenu[$menuItem['group']]['submenu'][$controllerUrl] = [
                             'caption' => $menuItem['caption'],
                             'iconclass' => $menuItem['iconClass'],
                             'action' => 'index',

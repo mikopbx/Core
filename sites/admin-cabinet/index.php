@@ -23,6 +23,7 @@ use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Common\Providers\ModelsAnnotationsProvider;
 use MikoPBX\Common\Providers\ModelsCacheProvider;
 use MikoPBX\Common\Providers\ModelsMetadataProvider;
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Common\Providers\RouterProvider;
 use MikoPBX\Core\System\SentryErrorLogger;
 use MikoPBX\Modules\PbxExtensionUtils;
@@ -56,6 +57,9 @@ class Application extends BaseApplication
             // Inject caches
             ManagedCacheProvider::class,
             ModelsCacheProvider::class,
+
+            // Inject PBX modules
+            PBXConfModulesProvider::class,
 
             // Inject routers
             RouterProvider::class,

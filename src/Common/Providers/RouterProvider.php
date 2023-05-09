@@ -22,11 +22,10 @@ declare(strict_types=1);
 namespace MikoPBX\Common\Providers;
 
 
-use MikoPBX\AdminCabinet\Plugins\SecurityPlugin;
+use MikoPBX\Modules\Config\WebUIConfigInterface;
 use MikoPBX\Modules\PbxExtensionUtils;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
-use Phalcon\Events\Manager as EventsManager;
 use Phalcon\Mvc\Router;
 
 /**
@@ -60,8 +59,28 @@ class RouterProvider implements ServiceProviderInterface
                         'params'     => 3
                 ]);
 
+                // Add route for external modules which integrate its views into admin web ui
+                $route = $router->add('/admin-cabinet/{namespace:module.*}/:controller/:action/:params', [
+                    'module'     => 'admin-cabinet',
+                    'namespace'  => 1,
+                    'controller' => 2,
+                    'action'     => 3,
+                    'params'     => 4,
+                ]);
+
+                $route->convert(
+                    'namespace',
+                    function ($namespace) {
+                        $camelizedNameSpace = \Phalcon\Text::Camelize($namespace);
+                        return "\\Modules\\{$camelizedNameSpace}\\App\\Controllers";
+                    }
+                );
+
                 // Register additional app modules from external enabled modules
                 PbxExtensionUtils::registerEnabledModulesInRouter($router);
+
+                // Register additional routes from external enabled modules
+                PBXConfModulesProvider::hookModulesProcedure(WebUIConfigInterface::ON_AFTER_ROUTES_PREPARED,[&$router]);
 
                 return $router;
             }

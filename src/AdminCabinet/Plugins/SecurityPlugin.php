@@ -70,7 +70,9 @@ class SecurityPlugin extends Injectable
                 // Redirect to login page for normal requests
                 $dispatcher->forward([
                     'controller' => 'session',
-                    'action' => 'index'
+                    'action' => 'index',
+                    'module' => 'admin-cabinet',
+                    'namespace'=> 'MikoPBX\AdminCabinet\Controllers'
                 ]);
             }
 
