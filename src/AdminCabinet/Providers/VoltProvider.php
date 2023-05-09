@@ -71,7 +71,7 @@ class VoltProvider implements ServiceProviderInterface
                 // Allows use isAllowed within volt templates
                 $compiler->addFunction(
                     'isAllowed',
-                    function ($action, $controller='') use ($di, $view) {
+                    function ($action, $controller='') use ($view) {
                         if (empty($controller)){
                             $controller = $view->getControllerName();
                         }

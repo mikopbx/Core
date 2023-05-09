@@ -36,6 +36,7 @@ use Exception;
  * @property \Phalcon\Session\Manager session
  * @property \MikoPBX\Common\Providers\TranslationProvider translation
  * @property string language
+ * @property bool showModuleStatusToggle if false it hides status toggle on current UI page
  * @property \MikoPBX\AdminCabinet\Library\Elements elements
  * @property \Phalcon\Flash\Session flash
  * @property \Phalcon\Tag tag
@@ -271,9 +272,9 @@ class BaseController extends Controller
     /**
      * Changes the AJAX response by expected format
      *
-     * @return \Phalcon\Http\Response|\Phalcon\Http\ResponseInterface
+     * @return \Phalcon\Http\ResponseInterface
      */
-    public function afterExecuteRoute(\Phalcon\Mvc\Dispatcher $dispatcher):ResponseInterface
+    public function afterExecuteRoute():ResponseInterface
     {
         if ($this->request->isAjax() === true) {
             $this->view->setRenderLevel(View::LEVEL_NO_RENDER);

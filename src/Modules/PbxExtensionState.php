@@ -26,6 +26,7 @@ use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\ConfigProvider;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Modules\Config\ConfigClass;
+use MikoPBX\Modules\Config\SystemConfigInterface;
 use Phalcon\Di\Injectable;
 use ReflectionClass;
 use Throwable;
@@ -114,8 +115,8 @@ class PbxExtensionState extends Injectable
             return false;
         }
         if ($this->configClass !== null
-            && method_exists($this->configClass, ConfigClass::ON_BEFORE_MODULE_ENABLE)) {
-            call_user_func([$this->configClass, ConfigClass::ON_BEFORE_MODULE_ENABLE]);
+            && method_exists($this->configClass, SystemConfigInterface::ON_BEFORE_MODULE_ENABLE)) {
+            call_user_func([$this->configClass, SystemConfigInterface::ON_BEFORE_MODULE_ENABLE]);
         }
         $module = PbxExtensionModules::findFirstByUniqid($this->moduleUniqueID);
         if ($module !== null) {
@@ -138,14 +139,14 @@ class PbxExtensionState extends Injectable
     protected function enableFirewallSettings(): bool
     {
         if ($this->configClass === null
-            || method_exists($this->configClass, ConfigClass::GET_DEFAULT_FIREWALL_RULES) === false
-            || call_user_func([$this->configClass, ConfigClass::GET_DEFAULT_FIREWALL_RULES]) === []
+            || method_exists($this->configClass, SystemConfigInterface::GET_DEFAULT_FIREWALL_RULES) === false
+            || call_user_func([$this->configClass, SystemConfigInterface::GET_DEFAULT_FIREWALL_RULES]) === []
         ) {
             return true;
         }
 
         $this->db->begin(true);
-        $defaultRules         = call_user_func([$this->configClass, ConfigClass::GET_DEFAULT_FIREWALL_RULES]);
+        $defaultRules         = call_user_func([$this->configClass, SystemConfigInterface::GET_DEFAULT_FIREWALL_RULES]);
         $previousRuleSettings = PbxSettings::findFirstByKey("{$this->moduleUniqueID}FirewallSettings");
         $previousRules        = [];
         if ($previousRuleSettings !== null) {
@@ -212,8 +213,8 @@ class PbxExtensionState extends Injectable
             return false;
         }
         if ($this->configClass !== null
-            && method_exists($this->configClass, ConfigClass::ON_BEFORE_MODULE_DISABLE)) {
-            call_user_func([$this->configClass, ConfigClass::ON_BEFORE_MODULE_DISABLE]);
+            && method_exists($this->configClass, SystemConfigInterface::ON_BEFORE_MODULE_DISABLE)) {
+            call_user_func([$this->configClass, SystemConfigInterface::ON_BEFORE_MODULE_DISABLE]);
         }
         $module = PbxExtensionModules::findFirstByUniqid($this->moduleUniqueID);
         if ($module !== null) {
@@ -228,8 +229,8 @@ class PbxExtensionState extends Injectable
 
         // Kill module workers
         if ($this->configClass !== null
-            && method_exists($this->configClass, ConfigClass::GET_MODULE_WORKERS)) {
-            $workersToKill = call_user_func([$this->configClass, ConfigClass::GET_MODULE_WORKERS]);
+            && method_exists($this->configClass, SystemConfigInterface::GET_MODULE_WORKERS)) {
+            $workersToKill = call_user_func([$this->configClass, SystemConfigInterface::GET_MODULE_WORKERS]);
             if (is_array($workersToKill)) {
                 foreach ($workersToKill as $moduleWorker) {
                     Processes::killByName($moduleWorker['worker']);
@@ -253,8 +254,8 @@ class PbxExtensionState extends Injectable
         $success = true;
 
         if ($this->configClass !== null
-            && method_exists($this->configClass, ConfigClass::ON_BEFORE_MODULE_DISABLE)
-            && call_user_func([$this->configClass, ConfigClass::ON_BEFORE_MODULE_DISABLE]) === false) {
+            && method_exists($this->configClass, SystemConfigInterface::ON_BEFORE_MODULE_DISABLE)
+            && call_user_func([$this->configClass, SystemConfigInterface::ON_BEFORE_MODULE_DISABLE]) === false) {
             $messages = $this->configClass->getMessages();
             if ( ! empty($messages)) {
                 $this->messages = $messages;
@@ -322,14 +323,14 @@ class PbxExtensionState extends Injectable
     protected function disableFirewallSettings(): bool
     {
         if ($this->configClass === null
-            || method_exists($this->configClass, ConfigClass::GET_DEFAULT_FIREWALL_RULES) === false
-            || call_user_func([$this->configClass, ConfigClass::GET_DEFAULT_FIREWALL_RULES]) === []
+            || method_exists($this->configClass, SystemConfigInterface::GET_DEFAULT_FIREWALL_RULES) === false
+            || call_user_func([$this->configClass, SystemConfigInterface::GET_DEFAULT_FIREWALL_RULES]) === []
         ) {
             return true;
         }
         $errors       = [];
         $savedState   = [];
-        $defaultRules = call_user_func([$this->configClass, ConfigClass::GET_DEFAULT_FIREWALL_RULES]);
+        $defaultRules = call_user_func([$this->configClass, SystemConfigInterface::GET_DEFAULT_FIREWALL_RULES]);
         $key          = strtoupper(key($defaultRules));
         $currentRules = FirewallRules::findByCategory($key);
         foreach ($currentRules as $detailRule) {
@@ -398,8 +399,8 @@ class PbxExtensionState extends Injectable
         // If module config has special function before enable, we will execute it
 
         if ($this->configClass !== null
-            && method_exists($this->configClass, ConfigClass::ON_BEFORE_MODULE_ENABLE)
-            && call_user_func([$this->configClass, ConfigClass::ON_BEFORE_MODULE_ENABLE]) === false) {
+            && method_exists($this->configClass, SystemConfigInterface::ON_BEFORE_MODULE_ENABLE)
+            && call_user_func([$this->configClass, SystemConfigInterface::ON_BEFORE_MODULE_ENABLE]) === false) {
             $messages = $this->configClass->getMessages();
             if ( ! empty($messages)) {
                 $this->messages = $messages;

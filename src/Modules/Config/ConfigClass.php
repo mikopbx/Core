@@ -37,7 +37,6 @@ class ConfigClass extends Injectable implements SystemConfigInterface,
      * Config file name i.e. extensions.conf
      */
     protected string $description;
-    private   string $stageMessage = '';
 
     /**
      * Easy way to get or set the PbxSettings values
@@ -98,6 +97,16 @@ class ConfigClass extends Injectable implements SystemConfigInterface,
         }
 
         $this->messages = [];
+    }
+
+    /**
+     * Returns the messages variable
+     *
+     * @return array
+     */
+    public function getMessages(): array
+    {
+        return $this->messages;
     }
 
     /**

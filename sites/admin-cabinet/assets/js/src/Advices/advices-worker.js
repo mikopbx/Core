@@ -42,7 +42,7 @@ const advicesWorker = {
 		setTimeout(advicesWorker.restartWorker,3000);
 	},
 	/**
-	 * Показывает старые советы до получения обвноления со станции
+	 * Показывает старые советы до получения обновления со станции
 	 */
 	showPreviousAdvice() {
 		const previousAdviceBell = sessionStorage.getItem(`previousAdviceBell${globalWebAdminLanguage}`);
