@@ -43,10 +43,10 @@ class CreateExtensionsTest extends MikoPBXTestsBase
             $this->clickButtonByHref('/admin-cabinet/extensions/modify');
 
 
-            // Fix uniqid to compare reference data in /etc folder for every build
-            self::$driver->executeScript(
-            "$('#save-provider-form').form('set value','uniqid','{$params['uniqid']}');"
-            );
+//            // Fix uniqid to compare reference data in /etc folder for every build
+//            self::$driver->executeScript(
+//            "$('#extensions-form').form('set value','uniqid','{$params['uniqid']}');"
+//            );
             $this->changeInputField('user_username', $params['username']);
             $this->changeInputField('number', $params['number']);
             $this->changeInputField('mobile_number', $params['mobile']);
