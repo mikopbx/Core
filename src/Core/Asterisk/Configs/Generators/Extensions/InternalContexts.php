@@ -23,9 +23,9 @@ namespace MikoPBX\Core\Asterisk\Configs\Generators\Extensions;
 use MikoPBX\Core\Asterisk\Configs\AsteriskConfigInterface;
 use MikoPBX\Core\Asterisk\Configs\ExtensionsConf;
 use MikoPBX\Core\Asterisk\Configs\SIPConf;
-use MikoPBX\Core\Asterisk\Configs\CoreConfigClass;
+use MikoPBX\Core\Asterisk\Configs\AsteriskConfigClass;
 
-class InternalContexts extends CoreConfigClass
+class InternalContexts extends AsteriskConfigClass
 {
 
     private string $technology;

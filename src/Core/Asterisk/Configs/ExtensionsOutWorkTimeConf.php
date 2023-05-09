@@ -28,7 +28,7 @@ use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Core\System\Util;
 use phpDocumentor\Reflection\Types\Collection;
 
-class ExtensionsOutWorkTimeConf extends CoreConfigClass
+class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
 {
     public const OUT_WORK_TIME_CONTEXT = 'check-out-work-time';
     private string $conf = '';

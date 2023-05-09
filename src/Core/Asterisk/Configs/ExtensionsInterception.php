@@ -21,7 +21,7 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Core\System\Util;
 
-class ExtensionsInterception extends CoreConfigClass
+class ExtensionsInterception extends AsteriskConfigClass
 {
     /**
      * Prepares additional contexts sections in the extensions.conf file

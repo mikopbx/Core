@@ -22,7 +22,7 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Core\System\Util;
 
-class CelConf extends CoreConfigClass
+class CelConf extends AsteriskConfigClass
 {
     public const BEANSTALK_TUBE = 'asterisk-cel';
     protected string $description = 'cel.conf';

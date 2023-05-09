@@ -23,7 +23,7 @@ use MikoPBX\Common\Models\CallQueues;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Core\System\{Processes, Util};
 
-class QueueConf extends CoreConfigClass
+class QueueConf extends AsteriskConfigClass
 {
     protected string $description = 'queues.conf';
 

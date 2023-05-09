@@ -47,7 +47,7 @@ class PBXConfModulesProvider implements ServiceProviderInterface
         $di->setShared(
             self::SERVICE_NAME,
             function (){
-                   return self::getExtensionsConfModules();
+                   return self::getExternalConfModules();
             }
         );
     }
@@ -57,7 +57,7 @@ class PBXConfModulesProvider implements ServiceProviderInterface
      * Creates array of external installed modules
      * @return array
      */
-    public static function getExtensionsConfModules():array
+    public static function getExternalConfModules():array
     {
         $arrObjects = [];
         $modules = PbxExtensionModules::getEnabledModulesArray();
@@ -175,9 +175,8 @@ class PBXConfModulesProvider implements ServiceProviderInterface
      */
     public static function hookModulesProcedure(string $methodName, array $arguments = []): void
     {
-        $result            = [];
         $di = Di::getDefault();
-        $additionalModules = $di->getShared(self::SERVICE_NAME);
+        $additionalModules = $di->getShared(PBXConfModulesProvider::SERVICE_NAME);
         foreach ($additionalModules as $configClassObj) {
             if ( ! method_exists($configClassObj, $methodName)) {
                 continue;

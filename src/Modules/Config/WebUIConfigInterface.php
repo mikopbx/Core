@@ -20,6 +20,7 @@
 namespace MikoPBX\Modules\Config;
 
 use Phalcon\Acl\Adapter\Memory as AclList;
+use Phalcon\Mvc\Router;
 
 interface WebUIConfigInterface
 {
@@ -29,6 +30,7 @@ interface WebUIConfigInterface
 
     public const ON_BEFORE_HEADER_MENU_SHOW = 'onBeforeHeaderMenuShow';
 
+    public const ON_AFTER_ROUTES_PREPARED = 'onAfterRoutesPrepared';
 
     /**
      * Authenticates user over external module
@@ -45,7 +47,7 @@ interface WebUIConfigInterface
      * @param  AclList $aclList
      * @return void
      */
-    public function onAfterACLPrepared(AclList &$aclList):void;
+    public function onAfterACLPrepared(AclList $aclList):void;
 
 
     /**
@@ -56,4 +58,12 @@ interface WebUIConfigInterface
      */
     public function onBeforeHeaderMenuShow(array &$menuItems):void;
 
+
+    /**
+     * Modifies system routes
+     *
+     * @param Router $router
+     * @return void
+     */
+    public function onAfterRoutesPrepared(Router $router):void;
 }

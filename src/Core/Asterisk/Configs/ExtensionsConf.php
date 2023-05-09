@@ -23,7 +23,7 @@ use MikoPBX\Common\Models\IncomingRoutingTable;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\{IncomingContexts, InternalContexts, OutgoingContext};
 use MikoPBX\Core\System\{Storage, Util};
 
-class ExtensionsConf extends CoreConfigClass
+class ExtensionsConf extends AsteriskConfigClass
 {
     public const ALL_NUMBER_EXTENSION = '_[0-9*#+a-zA-Z][0-9*#+a-zA-Z]!';
     public const ALL_EXTENSION = '_[0-9*#+a-zA-Z]!';

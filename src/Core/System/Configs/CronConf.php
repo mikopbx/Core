@@ -20,11 +20,11 @@
 namespace MikoPBX\Core\System\Configs;
 
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
+use MikoPBX\Common\Providers\RegistryProvider;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Workers\Cron\WorkerSafeScriptsCore;
-use MikoPBX\Modules\Config\ConfigClass;
 use MikoPBX\Modules\Config\SystemConfigInterface;
 use Phalcon\Di\Injectable;
 
@@ -51,7 +51,7 @@ class CronConf extends Injectable
      */
     public function reStart(): int
     {
-        $this->generateConfig($this->di->getShared('registry')->booting);
+        $this->generateConfig($this->di->getShared(RegistryProvider::SERVICE_NAME)->booting);
         if (Util::isSystemctl()) {
             $systemctlPath = Util::which('systemctl');
             Processes::mwExec("{$systemctlPath} restart ".self::PROC_NAME);
@@ -70,7 +70,7 @@ class CronConf extends Injectable
      *
      * @param bool $boot
      */
-    private function generateConfig($boot = true): void
+    private function generateConfig(bool $boot = true): void
     {
         $mast_have     = [];
         $cron_filename = '/var/spool/cron/crontabs/root';

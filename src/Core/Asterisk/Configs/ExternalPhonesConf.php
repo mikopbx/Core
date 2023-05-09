@@ -21,7 +21,7 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\ExternalPhones;
 
-class ExternalPhonesConf extends CoreConfigClass
+class ExternalPhonesConf extends AsteriskConfigClass
 {
     private $arrExternalPhones;
 

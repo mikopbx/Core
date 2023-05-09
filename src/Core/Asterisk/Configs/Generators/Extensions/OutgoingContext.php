@@ -12,9 +12,9 @@ use MikoPBX\Core\Asterisk\Configs\AsteriskConfigInterface;
 use MikoPBX\Core\Asterisk\Configs\ExtensionsConf;
 use MikoPBX\Core\Asterisk\Configs\IAXConf;
 use MikoPBX\Core\Asterisk\Configs\SIPConf;
-use MikoPBX\Core\Asterisk\Configs\CoreConfigClass;
+use MikoPBX\Core\Asterisk\Configs\AsteriskConfigClass;
 
-class OutgoingContext extends CoreConfigClass
+class OutgoingContext extends AsteriskConfigClass
 {
 
     /**

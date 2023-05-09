@@ -19,15 +19,54 @@
 
 namespace MikoPBX\Modules\Config;
 
-use MikoPBX\Core\Asterisk\Configs\CoreConfigClass;
+use MikoPBX\Common\Providers\ConfigProvider;
+use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Acl\Adapter\Memory as AclList;
+use Phalcon\Config;
+use Phalcon\Di\Injectable;
+use Phalcon\Mvc\Router;
 use ReflectionClass as ReflectionClassAlias;
 
-class ConfigClass extends CoreConfigClass implements SystemConfigInterface,
-                                                     RestAPIConfigInterface,
-                                                     WebUIConfigInterface
+class ConfigClass extends Injectable implements SystemConfigInterface,
+                             RestAPIConfigInterface,
+                             WebUIConfigInterface
 {
+
+    /**
+     * Config file name i.e. extensions.conf
+     */
+    protected string $description;
+    private   string $stageMessage = '';
+
+    /**
+     * Easy way to get or set the PbxSettings values
+     *
+     * @var \MikoPBX\Core\System\MikoPBXConfig
+     */
+    protected MikoPBXConfig $mikoPBXConfig;
+
+    /**
+     * Access to the /etc/inc/mikopbx-settings.json values
+     *
+     * @var \Phalcon\Config
+     */
+    protected Config $config;
+
+
+    /**
+     * Error and notice messages
+     *
+     * @var array
+     */
+    protected array $messages;
+
+    /**
+     * Array of PbxSettings values
+     */
+    protected array $generalSettings;
+
+
     /**
      * External module UniqueID
      */
@@ -44,7 +83,11 @@ class ConfigClass extends CoreConfigClass implements SystemConfigInterface,
      */
     public function __construct()
     {
-        parent::__construct();
+        $this->config          = $this->di->getShared(ConfigProvider::SERVICE_NAME);
+        $this->mikoPBXConfig   = new MikoPBXConfig();
+        $this->generalSettings = $this->mikoPBXConfig->getGeneralSettings();
+        $this->messages        = [];
+
         // Get child class parameters and define module Dir and UniqueID
         $reflector        = new ReflectionClassAlias(static::class);
         $partsOfNameSpace = explode('\\', $reflector->getNamespaceName());
@@ -252,7 +295,7 @@ class ConfigClass extends CoreConfigClass implements SystemConfigInterface,
      * @param  AclList $aclList
      * @return void
      */
-    public function onAfterACLPrepared(AclList &$aclList): void
+    public function onAfterACLPrepared(AclList $aclList): void
     {
     }
 
@@ -265,4 +308,15 @@ class ConfigClass extends CoreConfigClass implements SystemConfigInterface,
     public function onBeforeHeaderMenuShow(array &$menuItems):void
     {
     }
+
+    /**
+     * Modifies system routes
+     *
+     * @param Router $router
+     * @return void
+     */
+    public function onAfterRoutesPrepared(Router $router):void
+    {
+    }
+
 }

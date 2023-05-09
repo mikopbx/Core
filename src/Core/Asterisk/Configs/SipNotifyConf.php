@@ -22,7 +22,7 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Core\System\Util;
 
-class SipNotifyConf extends CoreConfigClass
+class SipNotifyConf extends AsteriskConfigClass
 {
     protected string $description = 'sip_notify.conf';
 

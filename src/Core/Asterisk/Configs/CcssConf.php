@@ -20,7 +20,7 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 
-class CcssConf extends CoreConfigClass
+class CcssConf extends AsteriskConfigClass
 {
     protected string $description = 'ccss.conf';
 

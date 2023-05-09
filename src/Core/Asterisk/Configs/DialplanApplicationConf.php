@@ -21,7 +21,7 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\DialplanApplications;
 
-class DialplanApplicationConf extends CoreConfigClass
+class DialplanApplicationConf extends AsteriskConfigClass
 {
 
     /**

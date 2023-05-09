@@ -20,7 +20,7 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 
-class ChanDahdiConf extends CoreConfigClass
+class ChanDahdiConf extends AsteriskConfigClass
 {
     protected string $description = 'chan_dahdi.conf';
 

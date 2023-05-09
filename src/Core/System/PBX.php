@@ -22,6 +22,7 @@ namespace MikoPBX\Core\System;
 use MikoPBX\Common\Models\Codecs;
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
+use MikoPBX\Common\Providers\RegistryProvider;
 use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\Asterisk\Configs\{AclConf,
     AsteriskConf,
@@ -37,7 +38,6 @@ use MikoPBX\Core\Asterisk\Configs\{AclConf,
     SIPConf,
     VoiceMailConf};
 use MikoPBX\Core\Workers\WorkerCallEvents;
-use MikoPBX\Modules\Config\ConfigClass;
 use MikoPBX\Modules\Config\SystemConfigInterface;
 use Phalcon\Di;
 use Phalcon\Di\Injectable;
@@ -342,22 +342,22 @@ class PBX extends Injectable
             'result' => 'ERROR',
         ];
 
-        if ( ! $this->di->getShared('registry')->booting) {
+        if ( ! $this->di->getShared(RegistryProvider::SERVICE_NAME)->booting) {
             $this->stop();
         }
         /**
          * Создание конфигурационных файлов.
          */
-        $configClassObj = new ConfigClass();
+        $configClassObj = new AsteriskConf();
         $configClassObj->hookModulesMethod(AsteriskConfigInterface::GENERATE_CONFIG);
 
         self::dialplanReload();
-        if ($this->di->getShared('registry')->booting) {
+        if ($this->di->getShared(RegistryProvider::SERVICE_NAME)->booting) {
             Util::echoResult('   |- dialplan reload');
         }
         // Создание базы данных истории звонков.
         /** @var \Phalcon\Db\Adapter\Pdo\Sqlite $connection */
-        $connection = $this->di->get('dbCDR');
+        $connection = $this->di->get(CDRDatabaseProvider::SERVICE_NAME);
         if ( ! $connection->tableExists('cdr')) {
             CDRDatabaseProvider::recreateDBConnections();
         } else {
@@ -381,7 +381,7 @@ class PBX extends Injectable
         }
         $extensions = new ExtensionsConf();
         $extensions->generateConfig();
-        if ($di->getRegistry()->booting !== true) {
+        if ($di->getShared(RegistryProvider::SERVICE_NAME)->booting !== true) {
             $path_asterisk = Util::which('asterisk');
             Processes::mwExec("{$path_asterisk} -rx 'dialplan reload'");
             Processes::mwExec("{$path_asterisk} -rx 'module reload pbx_lua.so'");

@@ -23,7 +23,7 @@ namespace MikoPBX\Core\Asterisk\Configs;
 use MikoPBX\Core\System\Util;
 use function MikoPBX\Common\Config\appPath;
 
-class IndicationConf extends CoreConfigClass
+class IndicationConf extends AsteriskConfigClass
 {
     protected string $description = 'indications.conf';
 

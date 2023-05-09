@@ -25,13 +25,11 @@ use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Common\Providers\RegistryProvider;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Util;
-use MikoPBX\Modules\Config\ConfigClass;
 use Phalcon\Config;
 use Phalcon\Di\Injectable;
-use Throwable;
 use function MikoPBX\Common\Config\appPath;
 
-abstract class CoreConfigClass extends Injectable implements AsteriskConfigInterface
+class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
 {
 
     /**
@@ -74,7 +72,7 @@ abstract class CoreConfigClass extends Injectable implements AsteriskConfigInter
     protected array $generalSettings;
 
     /**
-     * ConfigClass constructor.
+     * CoreConfigClass constructor.
      */
     public function __construct()
     {
@@ -87,10 +85,10 @@ abstract class CoreConfigClass extends Injectable implements AsteriskConfigInter
 
 
     /**
-     * Creates array of AsteriskConfModules
+     * Creates array of AsteriskConfObjects
      * @return array
      */
-    protected function getCoreConfModules():array
+    public static function getAsteriskConfObjects():array
     {
         $arrObjects = [];
         $configsDir = appPath('src/Core/Asterisk/Configs');
@@ -103,7 +101,7 @@ abstract class CoreConfigClass extends Injectable implements AsteriskConfigInter
             $fullClassName = "\\MikoPBX\\Core\\Asterisk\\Configs\\{$className}";
             if (class_exists($fullClassName)) {
                 $object = new $fullClassName();
-                if ($object instanceof CoreConfigClass){
+                if ($object instanceof AsteriskConfigClass){
                     $arrObjects[] = $object;
                 }
             }
@@ -112,7 +110,7 @@ abstract class CoreConfigClass extends Injectable implements AsteriskConfigInter
     }
 
     /**
-     * Calls additional module method by name and returns plain text result
+     * Calls core and enabled additional module method by name and returns plain text result
      *
      * @param string $methodName
      * @param array  $arguments
@@ -122,10 +120,7 @@ abstract class CoreConfigClass extends Injectable implements AsteriskConfigInter
     public function hookModulesMethod(string $methodName, array $arguments = []): string
     {
         $stringResult      = '';
-        $coreConfModules = $this->getCoreConfModules();
-        $externalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
-        $additionalModules = array_merge($coreConfModules, $externalModules);
-        foreach ($additionalModules as $configClassObj) {
+        foreach (self::getAsteriskConfObjects() as $configClassObj) {
             if ( ! method_exists($configClassObj, $methodName)) {
                 continue;
             }
@@ -153,6 +148,9 @@ abstract class CoreConfigClass extends Injectable implements AsteriskConfigInter
                 continue;
             }
         }
+
+        // HOOK external enabled modules method
+        $stringResult .= PBXConfModulesProvider::hookModulesMethod($methodName, $arguments);
 
         return $stringResult;
     }

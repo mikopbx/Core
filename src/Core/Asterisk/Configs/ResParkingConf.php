@@ -22,7 +22,7 @@ namespace MikoPBX\Core\Asterisk\Configs;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Util;
 
-class ResParkingConf extends CoreConfigClass
+class ResParkingConf extends AsteriskConfigClass
 {
     protected string $ParkingExt;
     protected string $ParkingStartSlot;

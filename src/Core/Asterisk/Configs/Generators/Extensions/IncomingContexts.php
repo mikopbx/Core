@@ -7,10 +7,10 @@ namespace MikoPBX\Core\Asterisk\Configs\Generators\Extensions;
 use MikoPBX\Common\Models\IncomingRoutingTable;
 use MikoPBX\Core\Asterisk\Configs\AsteriskConfigInterface;
 use MikoPBX\Core\Asterisk\Configs\ConferenceConf;
-use MikoPBX\Core\Asterisk\Configs\CoreConfigClass;
+use MikoPBX\Core\Asterisk\Configs\AsteriskConfigClass;
 use MikoPBX\Core\Asterisk\Configs\ExtensionsConf;
 
-class IncomingContexts extends CoreConfigClass
+class IncomingContexts extends AsteriskConfigClass
 {
     public $provider;
     public $login;

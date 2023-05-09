@@ -51,6 +51,8 @@ use MikoPBX\Common\Models\{AsteriskManagerUsers,
 use MikoPBX\Common\Providers\BeanstalkConnectionModelsProvider;
 use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
+use MikoPBX\Core\Asterisk\Configs\AsteriskConfigInterface;
+use MikoPBX\Core\Asterisk\Configs\AsteriskConfigClass;
 use MikoPBX\Core\Asterisk\Configs\QueueConf;
 use MikoPBX\Core\System\{BeanstalkClient,
     Configs\CronConf,
@@ -67,9 +69,7 @@ use MikoPBX\Core\System\{BeanstalkClient,
     System,
     Util
 };
-use MikoPBX\Modules\Config\ConfigClass;
 use MikoPBX\Modules\Config\SystemConfigInterface;
-use MikoPBX\Modules\PbxExtensionUtils;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use Phalcon\Di;
 use Pheanstalk\Contract\PheanstalkInterface;
@@ -137,11 +137,12 @@ class WorkerModelsEvents extends WorkerBase
     private array $modified_tables;
 
     private int $timeout = 2;
-    private array $arrObject;
+
+    // Array of core conf objects
+    private array $arrAsteriskConfObjects;
     private array $PRIORITY_R;
     private array $pbxSettingsDependencyTable = [];
     private array $modelsDependencyTable = [];
-    private ConfigClass $modulesConfigObj;
 
     /**
      * The entry point
@@ -151,8 +152,8 @@ class WorkerModelsEvents extends WorkerBase
     public function start($params): void
     {
         $this->last_change      = time() - 2;
-        $this->arrObject        = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
-        $this->modulesConfigObj = new ConfigClass();
+
+        $this->arrAsteriskConfObjects        = AsteriskConfigClass::getAsteriskConfObjects();
 
         $this->initPbxSettingsDependencyTable();
         $this->initModelsDependencyTable();
@@ -709,13 +710,13 @@ class WorkerModelsEvents extends WorkerBase
      */
     private function getNewSettingsForDependentModules(string $called_class): void
     {
-        foreach ($this->arrObject as $configClassObj) {
+        foreach ($this->arrAsteriskConfObjects as $configClassObj) {
             try {
-                $dependencies = call_user_func([$configClassObj, ConfigClass::GET_DEPENDENCE_MODELS]);
+                $dependencies = call_user_func([$configClassObj, AsteriskConfigInterface::GET_DEPENDENCE_MODELS]);
                 if (in_array($called_class, $dependencies, true)
-                    && method_exists($configClassObj, ConfigClass::GET_SETTINGS)
+                    && method_exists($configClassObj, AsteriskConfigInterface::GET_SETTINGS)
                 ) {
-                    call_user_func([$configClassObj, ConfigClass::GET_SETTINGS]);
+                    call_user_func([$configClassObj, AsteriskConfigInterface::GET_SETTINGS]);
                 }
             } catch (\Throwable $e) {
                 global $errorLogger;
@@ -995,11 +996,10 @@ class WorkerModelsEvents extends WorkerBase
     }
 
     /**
-     * Restarts rsyslog.
+     * Restarts rsyslog daemon
      */
     public function restartSyslogD(): void
     {
-        // Рестарт демона Syslog.
         $syslogConf = new SyslogConf();
         $syslogConf->reStart();
     }
@@ -1035,13 +1035,11 @@ class WorkerModelsEvents extends WorkerBase
      */
     public function afterModuleStateChanged(array $pbxModuleRecord): void
     {
-        // // Recreate modules array
+        // Recreate modules array
         PBXConfModulesProvider::recreateModulesProvider();
-        //
-        // // Recreate database connections
-        ModulesDBConnectionsProvider::recreateModulesDBConnections();
 
-        $this->arrObject = $this->di->get(PBXConfModulesProvider::SERVICE_NAME);
+        // Recreate database connections
+        ModulesDBConnectionsProvider::recreateModulesDBConnections();
 
         $className       = str_replace('Module', '', $pbxModuleRecord['uniqid']);
         $configClassName = "\\Modules\\{$pbxModuleRecord['uniqid']}\\Lib\\{$className}Conf";
@@ -1049,41 +1047,41 @@ class WorkerModelsEvents extends WorkerBase
             $configClassObj = new $configClassName();
 
             // Reconfigure fail2ban and restart iptables
-            if (method_exists($configClassObj, ConfigClass::GENERATE_FAIL2BAN_JAILS)
-                && ! empty(call_user_func([$configClassObj, ConfigClass::GENERATE_FAIL2BAN_JAILS]))) {
+            if (method_exists($configClassObj, SystemConfigInterface::GENERATE_FAIL2BAN_JAILS)
+                && ! empty(call_user_func([$configClassObj, SystemConfigInterface::GENERATE_FAIL2BAN_JAILS]))) {
                 $this->modified_tables[self::R_FAIL2BAN_CONF] = true;
             }
 
             // Refresh Nginx conf if module has any locations
-            if (method_exists($configClassObj, ConfigClass::CREATE_NGINX_LOCATIONS)
-                && ! empty(call_user_func([$configClassObj, ConfigClass::CREATE_NGINX_LOCATIONS]))) {
+            if (method_exists($configClassObj, SystemConfigInterface::CREATE_NGINX_LOCATIONS)
+                && ! empty(call_user_func([$configClassObj, SystemConfigInterface::CREATE_NGINX_LOCATIONS]))) {
                 $this->modified_tables[self::R_NGINX_CONF] = true;
             }
 
             // Refresh crontab rules if module has any for it
-            if (method_exists($configClassObj, ConfigClass::CREATE_CRON_TASKS)) {
+            if (method_exists($configClassObj, SystemConfigInterface::CREATE_CRON_TASKS)) {
                 $tasks = [];
-                call_user_func_array([$configClassObj, ConfigClass::CREATE_CRON_TASKS], [&$tasks]);
+                call_user_func_array([$configClassObj, SystemConfigInterface::CREATE_CRON_TASKS], [&$tasks]);
                 if ( ! empty($tasks)) {
                     $this->modified_tables[self::R_CRON] = true;
                 }
             }
 
             // Reconfigure asterisk manager interface
-            if (method_exists($configClassObj, ConfigClass::GENERATE_MANAGER_CONF)
-                && ! empty(call_user_func([$configClassObj, ConfigClass::GENERATE_MANAGER_CONF]))) {
+            if (method_exists($configClassObj, AsteriskConfigInterface::GENERATE_MANAGER_CONF)
+                && ! empty(call_user_func([$configClassObj, AsteriskConfigInterface::GENERATE_MANAGER_CONF]))) {
                  $this->modified_tables[self::R_MANAGERS] = true;
             }
 
             // Hook modules AFTER_ methods
             if ($pbxModuleRecord['disabled'] === '1'
-                && method_exists($configClassObj, ConfigClass::ON_AFTER_MODULE_DISABLE))
+                && method_exists($configClassObj, SystemConfigInterface::ON_AFTER_MODULE_DISABLE))
             {
-                call_user_func([$configClassObj, ConfigClass::ON_AFTER_MODULE_DISABLE]);
+                call_user_func([$configClassObj, SystemConfigInterface::ON_AFTER_MODULE_DISABLE]);
             } elseif ($pbxModuleRecord['disabled'] === '0'
-                && method_exists($configClassObj, ConfigClass::ON_AFTER_MODULE_ENABLE))
+                && method_exists($configClassObj, SystemConfigInterface::ON_AFTER_MODULE_ENABLE))
             {
-                call_user_func([$configClassObj, ConfigClass::ON_AFTER_MODULE_ENABLE]);
+                call_user_func([$configClassObj, SystemConfigInterface::ON_AFTER_MODULE_ENABLE]);
             }
         }
     }

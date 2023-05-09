@@ -22,7 +22,7 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Core\System\Util;
 
-class ChanDongle extends CoreConfigClass
+class ChanDongle extends AsteriskConfigClass
 {
     protected string $description = 'dongle.conf';
 

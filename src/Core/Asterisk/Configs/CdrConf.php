@@ -20,7 +20,7 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 
-class CdrConf extends CoreConfigClass
+class CdrConf extends AsteriskConfigClass
 {
     protected string $description = 'cdr.conf';
 

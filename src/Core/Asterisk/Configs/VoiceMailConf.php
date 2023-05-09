@@ -30,7 +30,7 @@ use MikoPBX\Common\Models\Users;
 use Phalcon\Di;
 use Phalcon\Mvc\Model\Manager;
 
-class VoiceMailConf extends CoreConfigClass
+class VoiceMailConf extends AsteriskConfigClass
 {
     public const VOICE_MAIL_EXT = 'voicemail';
     protected string $description = 'voicemail.conf';

@@ -24,7 +24,7 @@ use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\SystemManagementProcessor;
 
-class MusicOnHoldConf extends CoreConfigClass
+class MusicOnHoldConf extends AsteriskConfigClass
 {
     protected string $description = 'musiconhold.conf';
 

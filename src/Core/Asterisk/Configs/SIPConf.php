@@ -36,7 +36,7 @@ use MikoPBX\Core\Utilities\SubnetCalculator;
 use Phalcon\Di;
 use Throwable;
 
-class SIPConf extends CoreConfigClass
+class SIPConf extends AsteriskConfigClass
 {
     public const TYPE_PJSIP = 'PJSIP';
     private const TOPOLOGY_HASH_FILE = '/topology_hash';

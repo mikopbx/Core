@@ -23,7 +23,7 @@ namespace MikoPBX\Core\Asterisk\Configs;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 
-class HepConf extends CoreConfigClass
+class HepConf extends AsteriskConfigClass
 {
     protected string $description = 'cdr.conf';
 

@@ -24,7 +24,7 @@ use MikoPBX\Common\Models\Iax;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\IncomingContexts;
 use MikoPBX\Core\System\Util;
 
-class IAXConf extends CoreConfigClass
+class IAXConf extends AsteriskConfigClass
 {
     public const TYPE_IAX2 = 'IAX2';
 

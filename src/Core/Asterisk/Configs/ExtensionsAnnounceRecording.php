@@ -22,7 +22,7 @@ namespace MikoPBX\Core\Asterisk\Configs;
 use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Core\System\Util;
 
-class ExtensionsAnnounceRecording extends CoreConfigClass
+class ExtensionsAnnounceRecording extends AsteriskConfigClass
 {
     /**
      * Prepares additional contexts sections in the extensions.conf file

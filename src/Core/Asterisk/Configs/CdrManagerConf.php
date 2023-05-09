@@ -22,7 +22,7 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Core\System\Util;
 
-class CdrManagerConf extends CoreConfigClass
+class CdrManagerConf extends AsteriskConfigClass
 {
     protected string $description = 'cdr_manager.conf';
 

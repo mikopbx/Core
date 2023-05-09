@@ -20,7 +20,7 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 
-class UdptlConf extends CoreConfigClass
+class UdptlConf extends AsteriskConfigClass
 {
     protected string $description = 'udptl.conf';
 

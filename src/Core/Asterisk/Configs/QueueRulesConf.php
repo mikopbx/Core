@@ -20,7 +20,7 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 
-class QueueRulesConf extends CoreConfigClass
+class QueueRulesConf extends AsteriskConfigClass
 {
     protected string $description = 'queuerules.conf';
 

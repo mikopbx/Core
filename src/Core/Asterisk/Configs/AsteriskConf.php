@@ -22,7 +22,7 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Core\System\Util;
 
-class AsteriskConf extends CoreConfigClass
+class AsteriskConf extends AsteriskConfigClass
 {
     protected string $description = 'asterisk.conf';
 
