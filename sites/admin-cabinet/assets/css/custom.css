@@ -398,3 +398,10 @@ Blur passwords, secrets
     color: transparent !important;
     text-shadow: 0 0 6px rgba(0,0,0,0.7);
 }
+
+/**
+Sets minimum width for advices bell on main menu header
+ */
+#show-advices-button {
+    min-width: 50px;
+}

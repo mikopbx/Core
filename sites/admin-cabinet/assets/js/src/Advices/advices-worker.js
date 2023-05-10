@@ -46,11 +46,11 @@ const advicesWorker = {
 	 */
 	showPreviousAdvice() {
 		const previousAdviceBell = sessionStorage.getItem(`previousAdviceBell${globalWebAdminLanguage}`);
-		if (previousAdviceBell !== undefined) {
+		if (previousAdviceBell) {
 			advicesWorker.$advicesBellButton.html(previousAdviceBell);
 		}
 		const previousAdvice = sessionStorage.getItem(`previousAdvice${globalWebAdminLanguage}`);
-		if (previousAdvice !== undefined) {
+		if (previousAdvice) {
 			advicesWorker.$advices.html(previousAdvice);
 		}
 	},
