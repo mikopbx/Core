@@ -1133,4 +1133,5 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'ex_CallRecording' => 'Zəng qeydi',
     'ex_enableRecording' => 'İcazə verin',
     'gs_PBXRecordCallsInner' => 'Daxili danışıqların qeydə alınması',
+    'lic_ReloadPage' => 'Səhifəni yeniləyin...',
 ];

@@ -1133,4 +1133,5 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'ex_CallRecording' => 'Gravação de chamadas',
     'ex_enableRecording' => 'Permitir',
     'gs_PBXRecordCallsInner' => 'Gravando conversas internas',
+    'lic_ReloadPage' => 'Recarregue a página...',
 ];

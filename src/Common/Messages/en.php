@@ -1136,4 +1136,5 @@ It can be activated once, after which the coupon becomes redeemed.
     'ex_CallRecording' => 'Call Recording',
     'ex_enableRecording' => 'allow',
     'gs_PBXRecordCallsInner' => 'Recording internal conversations',
+    'lic_ReloadPage' => 'Refresh the page...',
 ];

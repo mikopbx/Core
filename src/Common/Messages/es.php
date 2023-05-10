@@ -1133,4 +1133,5 @@ Se puede activar una vez, después de lo cual el cupón se canjea.
     'ex_enableRecording' => 'Permitir',
     'ex_CallRecording' => 'Grabacion de llamada',
     'gs_PBXRecordCallsInner' => 'Grabación de conversaciones internas',
+    'lic_ReloadPage' => 'Recarga la página...',
 ];

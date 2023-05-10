@@ -1133,4 +1133,5 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'ex_CallRecording' => 'Enregistrement d\'appel',
     'gs_PBXRecordCallsInner' => 'Enregistrement des conversations internes',
     'ex_enableRecording' => 'Permettre',
+    'lic_ReloadPage' => 'Actualiser la page...',
 ];

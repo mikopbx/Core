@@ -1133,4 +1133,5 @@ return [
     'ex_CallRecording' => 'ზარის ჩაწერა',
     'ex_enableRecording' => 'დაშვება',
     'gs_PBXRecordCallsInner' => 'შიდა საუბრების ჩაწერა',
+    'lic_ReloadPage' => 'განაახლეთ გვერდი...',
 ];

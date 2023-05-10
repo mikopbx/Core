@@ -1133,4 +1133,5 @@ Può essere attivato una volta, dopo di che il coupon viene riscattato.
     'ex_CallRecording' => 'Registrazione delle chiamate',
     'ex_enableRecording' => 'Permettere',
     'gs_PBXRecordCallsInner' => 'Registrazione di conversazioni interne',
+    'lic_ReloadPage' => 'Ricarica la pagina...',
 ];

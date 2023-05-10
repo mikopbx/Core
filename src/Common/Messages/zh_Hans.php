@@ -1133,4 +1133,5 @@ return [
     'ex_CallRecording' => '通话录音',
     'ex_enableRecording' => '允许',
     'gs_PBXRecordCallsInner' => '记录内部对话',
+    'lic_ReloadPage' => '刷新页面...',
 ];

@@ -1133,4 +1133,5 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'ex_CallRecording' => 'Opkaldsoptagelse',
     'ex_enableRecording' => 'Give lov til',
     'gs_PBXRecordCallsInner' => 'Optagelse af interne samtaler',
+    'lic_ReloadPage' => 'Opdater siden...',
 ];

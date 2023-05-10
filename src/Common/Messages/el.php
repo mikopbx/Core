@@ -1133,4 +1133,5 @@ return [
     'ex_CallRecording' => 'Καταγραφή κλήσεων',
     'ex_enableRecording' => 'Επιτρέπω',
     'gs_PBXRecordCallsInner' => 'Ηχογράφηση εσωτερικών συνομιλιών',
+    'lic_ReloadPage' => 'Ανανέωσε τη σελίδα...',
 ];

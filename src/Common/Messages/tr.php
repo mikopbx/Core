@@ -1133,4 +1133,5 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
     'ex_CallRecording' => 'Arama kaydı',
     'ex_enableRecording' => 'İzin vermek',
     'gs_PBXRecordCallsInner' => 'Dahili görüşmeleri kaydetme',
+    'lic_ReloadPage' => 'Sayfayı yenile...',
 ];

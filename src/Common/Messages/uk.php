@@ -1133,4 +1133,5 @@ return [
     'ex_CallRecording' => 'Запис розмов',
     'ex_enableRecording' => 'Дозволити',
     'gs_PBXRecordCallsInner' => 'Запис внутрішніх розмов',
+    'lic_ReloadPage' => 'Оновити сторінку...',
 ];

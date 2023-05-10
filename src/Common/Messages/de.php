@@ -1136,4 +1136,5 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
     'ex_CallRecording' => 'Anrufaufzeichnung',
     'ex_enableRecording' => 'Erlauben',
     'gs_PBXRecordCallsInner' => 'Interne Gespräche aufzeichnen',
+    'lic_ReloadPage' => 'Lade die Seite neu...',
 ];

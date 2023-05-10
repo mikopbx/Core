@@ -1133,4 +1133,5 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'ex_enableRecording' => 'Umożliwić',
     'gs_PBXRecordCallsInner' => 'Nagrywanie rozmów wewnętrznych',
     'ex_CallRecording' => 'Nagranie rozmowy',
+    'lic_ReloadPage' => 'Odśwież stronę...',
 ];

@@ -1133,4 +1133,5 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'ex_CallRecording' => 'Nahrávání hovorů',
     'ex_enableRecording' => 'Dovolit',
     'gs_PBXRecordCallsInner' => 'Nahrávání interních rozhovorů',
+    'lic_ReloadPage' => 'Obnovte stránku...',
 ];

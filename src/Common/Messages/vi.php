@@ -1133,4 +1133,5 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá đ
     'ex_CallRecording' => 'Thu âm cuộc gọi',
     'ex_enableRecording' => 'Cho phép',
     'gs_PBXRecordCallsInner' => 'Ghi âm các cuộc hội thoại nội bộ',
+    'lic_ReloadPage' => 'Làm mới trang...',
 ];

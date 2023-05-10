@@ -1133,4 +1133,5 @@ return [
     'ex_CallRecording' => '通話録音',
     'ex_enableRecording' => '許可する',
     'gs_PBXRecordCallsInner' => '社内会話の録音',
+    'lic_ReloadPage' => 'ページを更新...',
 ];

@@ -1133,4 +1133,5 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'ex_CallRecording' => 'Samtalsinspelning',
     'ex_enableRecording' => 'Tillåta',
     'gs_PBXRecordCallsInner' => 'Spela in interna konversationer',
+    'lic_ReloadPage' => 'Uppdatera sidan...',
 ];
