@@ -22,6 +22,9 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 class ChanDahdiConf extends AsteriskConfigClass
 {
+    // The module hook applying priority
+    public int $priority = 1000;
+
     protected string $description = 'chan_dahdi.conf';
 
     protected function generateConfigProtected(): void

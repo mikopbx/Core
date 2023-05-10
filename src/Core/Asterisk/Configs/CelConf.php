@@ -24,6 +24,9 @@ use MikoPBX\Core\System\Util;
 
 class CelConf extends AsteriskConfigClass
 {
+    // The module hook applying priority
+    public int $priority = 1000;
+
     public const BEANSTALK_TUBE = 'asterisk-cel';
     protected string $description = 'cel.conf';
 

@@ -25,6 +25,9 @@ use MikoPBX\Core\System\{Processes, Util};
 
 class QueueConf extends AsteriskConfigClass
 {
+    // The module hook applying priority
+    public int $priority = 570;
+
     protected string $description = 'queues.conf';
 
     /**

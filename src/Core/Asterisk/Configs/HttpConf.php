@@ -23,6 +23,9 @@ use MikoPBX\Core\System\Util;
 
 class HttpConf extends AsteriskConfigClass
 {
+    // The module hook applying priority
+    public int $priority = 1000;
+
     protected string $description = 'http.conf';
 
     protected function generateConfigProtected(): void

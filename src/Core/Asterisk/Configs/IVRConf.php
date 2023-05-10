@@ -24,6 +24,8 @@ use MikoPBX\Core\System\{Processes, Util};
 
 class IVRConf extends AsteriskConfigClass
 {
+    // The module hook applying priority
+    public int $priority = 560;
 
     /**
      * Генерация дополнительных контекстов.

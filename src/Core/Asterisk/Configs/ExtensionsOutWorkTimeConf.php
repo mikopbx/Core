@@ -26,10 +26,11 @@ use MikoPBX\Common\Models\OutWorkTimes;
 use MikoPBX\Common\Models\OutWorkTimesRouts;
 use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Core\System\Util;
-use phpDocumentor\Reflection\Types\Collection;
 
 class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
 {
+    // The module hook applying priority
+    public int $priority = 510;
     public const OUT_WORK_TIME_CONTEXT = 'check-out-work-time';
     private string $conf = '';
     /**

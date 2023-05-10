@@ -12,6 +12,9 @@ use MikoPBX\Core\Asterisk\Configs\ExtensionsConf;
 
 class IncomingContexts extends AsteriskConfigClass
 {
+    // The module hook applying priority
+    public int $priority = 530;
+
     public $provider;
     public $login;
     public string $uniqId;

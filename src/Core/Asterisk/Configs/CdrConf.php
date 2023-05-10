@@ -22,6 +22,9 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 class CdrConf extends AsteriskConfigClass
 {
+    // The module hook applying priority
+    public int $priority = 1000;
+
     protected string $description = 'cdr.conf';
 
     protected function generateConfigProtected(): void

@@ -16,6 +16,8 @@ use MikoPBX\Core\Asterisk\Configs\AsteriskConfigClass;
 
 class OutgoingContext extends AsteriskConfigClass
 {
+    // The module hook applying priority
+    public int $priority = 630;
 
     /**
      * Генератор входящих контекстов. Точка входа.

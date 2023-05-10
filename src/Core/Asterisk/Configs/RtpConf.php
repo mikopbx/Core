@@ -24,6 +24,9 @@ use MikoPBX\Core\System\Util;
 
 class RtpConf extends AsteriskConfigClass
 {
+    // The module hook applying priority
+    public int $priority = 1000;
+
     protected string $description = 'rtp.conf';
 
     protected function generateConfigProtected(): void

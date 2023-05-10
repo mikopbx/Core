@@ -25,6 +25,9 @@ use MikoPBX\Core\System\Util;
 
 class H323Conf extends AsteriskConfigClass
 {
+    // The module hook applying priority
+    public int $priority = 1000;
+
     protected string $description = 'ooh323.conf';
     public const MODULE_NAME = 'chan_ooh323.so';
 

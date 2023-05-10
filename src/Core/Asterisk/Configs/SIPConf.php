@@ -38,6 +38,9 @@ use Throwable;
 
 class SIPConf extends AsteriskConfigClass
 {
+    // The module hook applying priority
+    public int $priority = 540;
+
     public const TYPE_PJSIP = 'PJSIP';
     private const TOPOLOGY_HASH_FILE = '/topology_hash';
 

@@ -24,6 +24,9 @@ use MikoPBX\Core\System\Util;
 
 class SayConf extends AsteriskConfigClass
 {
+    // The module hook applying priority
+    public int $priority = 1000;
+
     protected string $description = 'say.conf';
 
     protected function generateConfigProtected(): void

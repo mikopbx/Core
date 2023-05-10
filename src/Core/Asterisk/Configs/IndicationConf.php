@@ -25,6 +25,9 @@ use function MikoPBX\Common\Config\appPath;
 
 class IndicationConf extends AsteriskConfigClass
 {
+    // The module hook applying priority
+    public int $priority = 1000;
+
     protected string $description = 'indications.conf';
 
     protected function generateConfigProtected(): void

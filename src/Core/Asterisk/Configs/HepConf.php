@@ -25,6 +25,9 @@ use MikoPBX\Core\System\Util;
 
 class HepConf extends AsteriskConfigClass
 {
+    // The module hook applying priority
+    public int $priority = 1000;
+
     protected string $description = 'cdr.conf';
 
     protected function generateConfigProtected(): void

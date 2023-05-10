@@ -26,6 +26,9 @@ use MikoPBX\Core\System\Util;
 
 class AclConf extends AsteriskConfigClass
 {
+    // The module hook applying priority
+    public int $priority = 1000;
+
     protected string $description = 'acl.conf';
     protected array $data_peers;
 

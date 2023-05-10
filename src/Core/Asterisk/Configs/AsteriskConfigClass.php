@@ -31,10 +31,10 @@ use function MikoPBX\Common\Config\appPath;
 
 class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
 {
+    // The module hook applying priority
+    public int $priority = 1000;
 
-    /**
-     * Config file name i.e. extensions.conf
-     */
+    // Config file name i.e. extensions.conf
     protected string $description;
     private   string $stageMessage = '';
 
@@ -85,7 +85,8 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
 
 
     /**
-     * Creates array of AsteriskConfObjects
+     * Returns an array of Asterisk configuration objects sorted by priority.
+     *
      * @return array
      */
     public static function getAsteriskConfObjects():array
@@ -106,6 +107,10 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
                 }
             }
         }
+        // Sort the array based on the priority value
+        usort($arrObjects, function($a, $b) {
+            return $a->priority - $b->priority;
+        });
         return  $arrObjects;
     }
 

@@ -22,6 +22,9 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 class UdptlConf extends AsteriskConfigClass
 {
+    // The module hook applying priority
+    public int $priority = 1000;
+
     protected string $description = 'udptl.conf';
 
     protected function generateConfigProtected(): void

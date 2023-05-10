@@ -22,6 +22,9 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 class CdrSqlite3CustomConf extends AsteriskConfigClass
 {
+    // The module hook applying priority
+    public int $priority = 1000;
+
     protected string $description = 'cdr_sqlite3_custom.conf';
 
     protected function generateConfigProtected(): void

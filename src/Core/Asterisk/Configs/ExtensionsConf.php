@@ -25,9 +25,11 @@ use MikoPBX\Core\System\{Storage, Util};
 
 class ExtensionsConf extends AsteriskConfigClass
 {
+    public int $priority = 500;
     public const ALL_NUMBER_EXTENSION = '_[0-9*#+a-zA-Z][0-9*#+a-zA-Z]!';
     public const ALL_EXTENSION = '_[0-9*#+a-zA-Z]!';
     public const DIGIT_NUMBER_EXTENSION = '_X!';
+
     protected string $description = 'extensions.conf';
 
     /**

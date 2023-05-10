@@ -22,6 +22,9 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 class QueueRulesConf extends AsteriskConfigClass
 {
+    // The module hook applying priority
+    public int $priority = 1000;
+
     protected string $description = 'queuerules.conf';
 
     protected function generateConfigProtected(): void

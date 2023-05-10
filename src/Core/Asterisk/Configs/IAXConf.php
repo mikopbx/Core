@@ -26,6 +26,9 @@ use MikoPBX\Core\System\Util;
 
 class IAXConf extends AsteriskConfigClass
 {
+    // The module hook applying priority
+    public int $priority = 1000;
+
     public const TYPE_IAX2 = 'IAX2';
 
     protected string $description = 'iax.conf';

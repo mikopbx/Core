@@ -24,6 +24,9 @@ use MikoPBX\Common\Models\DialplanApplications;
 class DialplanApplicationConf extends AsteriskConfigClass
 {
 
+    public int $priority = 550;
+
+
     /**
      * Возвращает включения в контекст internal
      *

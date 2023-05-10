@@ -24,6 +24,9 @@ use MikoPBX\Core\System\Util;
 
 class ResParkingConf extends AsteriskConfigClass
 {
+    // The module hook applying priority
+    public int $priority = 590;
+
     protected string $ParkingExt;
     protected string $ParkingStartSlot;
     protected string $ParkingEndSlot;

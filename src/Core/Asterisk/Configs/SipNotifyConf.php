@@ -24,6 +24,9 @@ use MikoPBX\Core\System\Util;
 
 class SipNotifyConf extends AsteriskConfigClass
 {
+    // The module hook applying priority
+    public int $priority = 1000;
+
     protected string $description = 'sip_notify.conf';
 
     protected function generateConfigProtected(): void

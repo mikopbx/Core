@@ -22,6 +22,9 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 class CelSqlite3CustomConf extends AsteriskConfigClass
 {
+    // The module hook applying priority
+    public int $priority = 1000;
+
     protected string $description = 'cel_sqlite3_custom.conf';
 
     protected function generateConfigProtected(): void

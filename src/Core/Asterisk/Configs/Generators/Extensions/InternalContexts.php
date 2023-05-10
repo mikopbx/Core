@@ -27,7 +27,8 @@ use MikoPBX\Core\Asterisk\Configs\AsteriskConfigClass;
 
 class InternalContexts extends AsteriskConfigClass
 {
-
+    // The module hook applying priority
+    public int $priority = 620;
     private string $technology;
     private string $extensionPattern = 'X!';
 

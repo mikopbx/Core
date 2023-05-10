@@ -24,6 +24,8 @@ use MikoPBX\Common\Models\ConferenceRooms;
 
 class ConferenceConf extends AsteriskConfigClass
 {
+    // The module hook applying priority
+    public int $priority = 520;
 
     protected string $description = 'confbridge.conf';
     protected function generateConfigProtected(): void

@@ -19,7 +19,6 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
-use MikoPBX\Common\Models\CallDetailRecordsTmp;
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Storage;
@@ -32,6 +31,9 @@ use Phalcon\Mvc\Model\Manager;
 
 class VoiceMailConf extends AsteriskConfigClass
 {
+    // The module hook applying priority
+    public int $priority = 610;
+
     public const VOICE_MAIL_EXT = 'voicemail';
     protected string $description = 'voicemail.conf';
 

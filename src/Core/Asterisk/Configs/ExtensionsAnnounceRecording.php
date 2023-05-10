@@ -24,6 +24,9 @@ use MikoPBX\Core\System\Util;
 
 class ExtensionsAnnounceRecording extends AsteriskConfigClass
 {
+    // The module hook applying priority
+    public int $priority = 580;
+
     /**
      * Prepares additional contexts sections in the extensions.conf file
      *

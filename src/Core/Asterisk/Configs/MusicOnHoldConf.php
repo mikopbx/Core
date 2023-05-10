@@ -26,6 +26,9 @@ use MikoPBX\PBXCoreREST\Lib\SystemManagementProcessor;
 
 class MusicOnHoldConf extends AsteriskConfigClass
 {
+    // The module hook applying priority
+    public int $priority = 1000;
+
     protected string $description = 'musiconhold.conf';
 
     protected function generateConfigProtected(): void

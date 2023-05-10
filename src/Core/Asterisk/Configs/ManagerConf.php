@@ -26,6 +26,9 @@ use MikoPBX\Core\System\Util;
 
 class ManagerConf extends AsteriskConfigClass
 {
+    // The module hook applying priority
+    public int $priority = 1000;
+
     protected string $description = 'manager.conf';
 
     protected function generateConfigProtected(): void

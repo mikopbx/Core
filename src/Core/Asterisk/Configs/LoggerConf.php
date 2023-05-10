@@ -25,6 +25,9 @@ use MikoPBX\Core\System\Util;
 
 class LoggerConf extends AsteriskConfigClass
 {
+    // The module hook applying priority
+    public int $priority = 1000;
+
     protected string $description = 'logger.conf';
 
     protected function generateConfigProtected(): void
