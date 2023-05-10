@@ -21,12 +21,8 @@ namespace MikoPBX\AdminCabinet\Plugins;
 
 use MikoPBX\AdminCabinet\Controllers\SessionController;
 use MikoPBX\Common\Models\AuthTokens;
-use MikoPBX\Common\Providers\PBXConfModulesProvider;
-use MikoPBX\Modules\Config\WebUIConfigInterface;
-use Phalcon\Acl\Adapter\Memory as AclList;
-use Phalcon\Acl\Component;
+use MikoPBX\Common\Providers\AclProvider;
 use Phalcon\Acl\Enum as AclEnum;
-use Phalcon\Acl\Role as AclRole;
 use Phalcon\Di\Injectable;
 use Phalcon\Events\Event;
 use Phalcon\Mvc\Dispatcher;
@@ -73,13 +69,12 @@ class SecurityPlugin extends Injectable
                     'controller' => 'session',
                     'action' => 'index',
                     'module' => 'admin-cabinet',
-                    'namespace'=> 'MikoPBX\AdminCabinet\Controllers'
+                    'namespace' => 'MikoPBX\AdminCabinet\Controllers'
                 ]);
             }
 
             return false;
         }
-
 
         // Check if the authenticated user is allowed to access the requested controller and action
         if ($isLoggedIn) {
@@ -90,8 +85,8 @@ class SecurityPlugin extends Injectable
                 $controller = explode('/', $homePath)[0];
                 $action = explode('/', $homePath)[1];
                 $dispatcher->forward([
-                        'controller' => $controller,
-                        'action' => $action
+                    'controller' => $controller,
+                    'action' => $action
                 ]);
                 return true;
             }
@@ -175,45 +170,6 @@ class SecurityPlugin extends Injectable
     }
 
     /**
-     * Gets the Access Control List (ACL).
-     *
-     * This method creates a new AclList object and sets the default action to AclEnum::DENY. It then adds two roles,
-     * admins and guest, to the ACL, and sets the default permissions such that admins are allowed to perform any
-     * action and guest is denied access to any action.
-     *
-     * Finally, it uses the PBXConfModulesProvider class to allow modules to modify the ACL, and returns the modified ACL.
-     *
-     * @return AclList The Access Control List.
-     */
-    public
-    function getAcl(): AclList
-    {
-        $acl = new AclList();
-        $acl->setDefaultAction(AclEnum::DENY);
-
-        // Register roles
-        $acl->addRole(new AclRole('admins', 'Admins'));
-        $acl->addRole(new AclRole('guest', 'Guests'));
-
-        // Default permissions
-        $acl->allow('admins', '*', '*');
-        $acl->deny('guest', '*', '*');
-
-        // Modules HOOK
-        PBXConfModulesProvider::hookModulesProcedure(WebUIConfigInterface::ON_AFTER_ACL_LIST_PREPARED, [&$acl]);
-
-        // Allow to show ERROR controllers to everybody
-        $acl->addComponent(new Component('Errors'), ['show401', 'show404', 'show500']);
-        $acl->allow('*', 'Errors', ['show401', 'show404', 'show500']);
-
-        // Allow to show session controllers actions to everybody
-        $acl->addComponent(new Component('Session'), ['index', 'start', 'changeLanguage', 'end']);
-        $acl->allow('*', 'Session', ['index', 'start', 'changeLanguage', 'end']);
-
-        return $acl;
-    }
-
-    /**
      * Checks if an action is allowed for the current user.
      *
      * This method checks if the specified $action is allowed for the current user based on their role. It gets the user's
@@ -225,8 +181,7 @@ class SecurityPlugin extends Injectable
      * @param string $action The name of the action to check.
      * @return bool true if the action is allowed for the current user, false otherwise.
      */
-    public
-    function isAllowedAction(string $controller, string $action): bool
+    public function isAllowedAction(string $controller, string $action): bool
     {
         $role = $this->session->get(SessionController::SESSION_ID)['role'] ?? 'guest';
 
@@ -235,7 +190,7 @@ class SecurityPlugin extends Injectable
         }
         $controller = Text::camelize($controller);
 
-        $acl = $this->getAcl();
+        $acl = $this->di->get(AclProvider::SERVICE_NAME);
 
         $allowed = $acl->isAllowed($role, $controller, $action);
 

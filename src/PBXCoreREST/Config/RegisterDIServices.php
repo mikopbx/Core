@@ -21,7 +21,8 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Config;
 
-use MikoPBX\Common\Providers\{BeanstalkConnectionWorkerApiProvider,
+use MikoPBX\Common\Providers\{AclProvider,
+    BeanstalkConnectionWorkerApiProvider,
     CDRDatabaseProvider,
     LoggerAuthProvider,
     LoggerProvider,
@@ -80,6 +81,9 @@ class RegisterDIServices
 
             // Inject sessions
             SessionProvider::class,
+
+            // Inject Access control lists provider
+            AclProvider::class,
 
             // Inject Logger
             LoggerAuthProvider::class,

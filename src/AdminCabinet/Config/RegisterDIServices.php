@@ -29,7 +29,8 @@ use MikoPBX\AdminCabinet\Providers\{AssetProvider,
     SecurityPluginProvider,
     ViewProvider,
     VoltProvider};
-use MikoPBX\Common\Providers\{BeanstalkConnectionModelsProvider,
+use MikoPBX\Common\Providers\{AclProvider,
+    BeanstalkConnectionModelsProvider,
     CDRDatabaseProvider,
     LanguageProvider,
     LicenseProvider,
@@ -84,6 +85,9 @@ class RegisterDIServices
 
             // Inject sessions
             SessionProvider::class,
+
+            // Inject Access Control Lists
+            AclProvider::class,
 
             // Inject Queue connection
             BeanstalkConnectionModelsProvider::class,

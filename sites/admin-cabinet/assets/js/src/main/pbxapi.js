@@ -184,7 +184,7 @@ const PbxApi = {
 				callback(false);
 			},
 			onError(errorMessage, element, xhr) {
-				if (xhr.status === 403) {
+				if (xhr.status === 401) {
 					window.location = `${globalRootUrl}session/index`;
 				}
 			},
@@ -209,7 +209,7 @@ const PbxApi = {
 				callback(false);
 			},
 			onError(errorMessage, element, xhr) {
-				if (xhr.status === 403) {
+				if (xhr.status === 401) {
 					window.location = `${globalRootUrl}session/index`;
 				}
 			},
@@ -228,7 +228,7 @@ const PbxApi = {
 				callback(response.data);
 			},
 			onError(errorMessage, element, xhr) {
-				if (xhr.status === 403) {
+				if (xhr.status === 401) {
 					window.location = `${globalRootUrl}session/index`;
 				}
 			},
@@ -247,7 +247,7 @@ const PbxApi = {
 				callback(response.data);
 			},
 			onError(errorMessage, element, xhr) {
-				if (xhr.status === 403) {
+				if (xhr.status === 401) {
 					window.location = `${globalRootUrl}session/index`;
 				}
 			},
@@ -286,7 +286,7 @@ const PbxApi = {
 				callback(response.data);
 			},
 			onError(errorMessage, element, xhr) {
-				if (xhr.status === 403) {
+				if (xhr.status === 401) {
 					window.location = `${globalRootUrl}session/index`;
 				}
 			},
@@ -373,7 +373,7 @@ const PbxApi = {
 				}
 			},
 			onError(errorMessage, element, xhr) {
-				if (xhr.status === 403) {
+				if (xhr.status === 401) {
 					window.location = `${globalRootUrl}session/index`;
 				}
 			},

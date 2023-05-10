@@ -57,43 +57,31 @@ class AuthenticationMiddleware implements MiddlewareInterface
 
         if (
             true !== $request->isLocalHostRequest()
-            && true !== $request->isAuthorizedSessionRequest()
             && true !== $request->isDebugModeEnabled()
-            && true !== $this->thisIsModuleNoAuthRequest($api)
+            && true !== $request->isAuthorizedSessionRequest()
+            && true !== $request->thisIsModuleNoAuthRequest($api)
         ) {
             $loggerAuth = $api->getService(LoggerAuthProvider::SERVICE_NAME);
             $loggerAuth->warning("From: {$request->getClientAddress(true)} UserAgent:{$request->getUserAgent()} Cause: Wrong password");
             $this->halt(
                 $api,
-                $response::OK,
-                'Invalid auth token'
+                $response::UNAUTHORIZED,
+                'You are not authenticated '
             );
             return false;
         }
-        return true;
-    }
 
-
-    /**
-     * Check additional modules routes access rules
-     * @param Micro $api
-     *
-     * @return bool
-     */
-    public function thisIsModuleNoAuthRequest(Micro $api): bool
-    {
-        $pattern  = $api->request->getURI(true);
-        $additionalRoutes = PBXConfModulesProvider::hookModulesMethodWithArrayResult(RestAPIConfigInterface::GET_PBXCORE_REST_ADDITIONAL_ROUTES);
-        foreach ($additionalRoutes as $additionalRoutesFromModule){
-            foreach ($additionalRoutesFromModule as $additionalRoute) {
-                $noAuth = $additionalRoute[5] ?? false;
-                if ($noAuth === true
-                    && stripos($pattern, $additionalRoute[2]) === 0) {
-                    return true; // Allow request without authentication
-                }
-            }
+        if (true !== $request->isAllowedAction($api)) {
+             $this->halt(
+                $api,
+                $response::FORBIDDEN,
+                'The route is not allowed'
+            );
+            return false;
         }
-        return false;
+
+
+        return true;
     }
 
 }
