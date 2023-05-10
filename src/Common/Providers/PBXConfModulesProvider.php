@@ -72,6 +72,10 @@ class PBXConfModulesProvider implements ServiceProviderInterface
             }
         }
 
+        // Sort the array based on the priority value
+        usort($arrObjects, function($a, $b) {
+            return $a->priority - $b->priority;
+        });
         return  $arrObjects;
     }
 

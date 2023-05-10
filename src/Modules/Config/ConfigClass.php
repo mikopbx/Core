@@ -32,6 +32,8 @@ class ConfigClass extends Injectable implements SystemConfigInterface,
                              RestAPIConfigInterface,
                              WebUIConfigInterface
 {
+    // The module hook applying priority
+    public int $priority = 1000;
 
     /**
      * Config file name i.e. extensions.conf
