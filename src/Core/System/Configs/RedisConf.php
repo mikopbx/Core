@@ -70,7 +70,7 @@ class RedisConf extends Injectable
         $this->port = $config->port;
         $conf   = "bind {$config->host}" . PHP_EOL;
         $conf   .= "port {$config->port}" . PHP_EOL;
-        $conf   .= "dir {$config->rdbDir}" . PHP_EOL;
+        $conf   .= "dir /var/tmp" . PHP_EOL;
         file_put_contents(self::CONF_FILE, $conf);
     }
 }

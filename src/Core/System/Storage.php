@@ -1188,7 +1188,6 @@ class Storage extends Di\Injectable
             Util::mwMkdir($downloadCacheDir);
             Util::createUpdateSymlink($this->config->path('www.downloadCacheDir'), $downloadCacheDir);
         }
-        Util::mwMkdir($this->config->path('redis.rdbDir'));
 
         $this->createAssetsSymlinks();
         Util::createUpdateSymlink($this->config->path('www.uploadDir'), '/ultmp');
