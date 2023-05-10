@@ -128,7 +128,6 @@ class PbxSettings extends ModelsBase
             'VoicemailExten'                  => '*001',
             'PBXLanguage'                     => 'en-en',
             'PBXInternalExtensionLength'      => '3',
-            'PBXFeaturePickupExten'           => '',
             'PBXRecordCalls'                  => '1',
             'PBXRecordCallsInner'             => '1',
             'PBXSplitAudioThread'             => '0',

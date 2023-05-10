@@ -19,6 +19,7 @@
 
 namespace MikoPBX\Core\System\Configs;
 
+use MikoPBX\Common\Providers\ConfigProvider;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
@@ -65,10 +66,11 @@ class RedisConf extends Injectable
      */
     private function configure(): void
     {
-        $config = $this->getDI()->get('config')->redis;
+        $config = $this->getDI()->get(ConfigProvider::SERVICE_NAME)->redis;
         $this->port = $config->port;
         $conf   = "bind {$config->host}" . PHP_EOL;
         $conf   .= "port {$config->port}" . PHP_EOL;
+        $conf   .= "dir {$config->rdbDir}" . PHP_EOL;
         file_put_contents(self::CONF_FILE, $conf);
     }
 }

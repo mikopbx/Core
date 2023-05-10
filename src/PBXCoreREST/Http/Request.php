@@ -21,6 +21,9 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Http;
 
+use MikoPBX\AdminCabinet\Controllers\SessionController;
+use MikoPBX\Common\Providers\ConfigProvider;
+use MikoPBX\Common\Providers\SessionProvider;
 use Phalcon\Http\Request as PhRequest;
 
 class Request extends PhRequest
@@ -35,14 +38,12 @@ class Request extends PhRequest
 
     public function isDebugModeEnabled(): bool
     {
-        return ($this->getDI()->getShared('config')->path('adminApplication.debugMode'));
+        return ($this->getDI()->getShared(ConfigProvider::SERVICE_NAME)->path('adminApplication.debugMode'));
     }
 
     public function isAuthorizedSessionRequest(): bool
     {
-        $sessionRO = $this->getDI()->getShared('sessionRO');
-
-        return (is_array($sessionRO) && array_key_exists('auth', $sessionRO));
+       return $this->getDI()->getShared(SessionProvider::SERVICE_NAME)->has(SessionController::SESSION_ID);
     }
 
 }

@@ -53,13 +53,9 @@ class LanguageProvider implements ServiceProviderInterface
                         $language = PbxSettings::getValueByKey('SSHLanguage');
                     }
                 } else {
-                    $roSession = $di->getShared(SessionReadOnlyProvider::SERVICE_NAME);
-                    if ($roSession !== null && array_key_exists(
-                            'WebAdminLanguage',
-                            $roSession
-                        ) && ! empty($roSession['WebAdminLanguage'])) {
-                        $language = $roSession['WebAdminLanguage'];
-                    } else {
+                    $session = $di->getShared(SessionProvider::SERVICE_NAME);
+                    $language = $session->get('WebAdminLanguage')??'';
+                    if (empty($language)){
                         $language = PbxSettings::getValueByKey('WebAdminLanguage');
                     }
                 }

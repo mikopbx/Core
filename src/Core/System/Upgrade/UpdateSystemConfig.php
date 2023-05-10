@@ -104,7 +104,6 @@ class UpdateSystemConfig extends Di\Injectable
     private function updateConfigEveryNewRelease(): void
     {
         PbxExtensionUtils::disableOldModules();
-        Storage::clearSessionsFiles();
         IptablesConf::updateFirewallRules();
     }
 

@@ -530,23 +530,6 @@ class Storage extends Di\Injectable
     }
 
     /**
-     * Clear cache folders from PHP sessions files
-     */
-    public static function clearSessionsFiles(): void
-    {
-        $di = Di::getDefault();
-        if ($di === null) {
-            return;
-        }
-        $config = $di->getShared('config');
-        $phpSessionDir = $config->path('www.phpSessionDir');
-        if (!empty($phpSessionDir)) {
-            $rmPath = Util::which('rm');
-            Processes::mwExec("{$rmPath} -rf {$phpSessionDir}/*");
-        }
-    }
-
-    /**
      * Возвращает все подключенные HDD.
      *
      * @param bool $mounted_only
@@ -1205,10 +1188,9 @@ class Storage extends Di\Injectable
             Util::mwMkdir($downloadCacheDir);
             Util::createUpdateSymlink($this->config->path('www.downloadCacheDir'), $downloadCacheDir);
         }
+        Util::mwMkdir($this->config->path('redis.rdbDir'));
 
         $this->createAssetsSymlinks();
-
-        Util::createUpdateSymlink($this->config->path('www.phpSessionDir'), '/var/lib/php/session');
         Util::createUpdateSymlink($this->config->path('www.uploadDir'), '/ultmp');
 
         $filePath = appPath('src/Core/Asterisk/Configs/lua/extensions.lua');

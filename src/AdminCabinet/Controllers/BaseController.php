@@ -19,20 +19,19 @@
 
 namespace MikoPBX\AdminCabinet\Controllers;
 
+use Exception;
+use GuzzleHttp;
+use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings};
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Core\System\Util;
-use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings};
-use Phalcon\Mvc\{Controller, View};
 use Phalcon\Cache\Adapter\Redis;
 use Phalcon\Http\ResponseInterface;
+use Phalcon\Mvc\{Controller, View};
 use Phalcon\Tag;
 use Phalcon\Text;
 use Sentry\SentrySdk;
-use GuzzleHttp;
-use Exception;
 
 /**
- * @property array sessionRO
  * @property \Phalcon\Session\Manager session
  * @property \MikoPBX\Common\Providers\TranslationProvider translation
  * @property string language
@@ -82,7 +81,7 @@ class BaseController extends Controller
      */
     private function customWikiLinks(): void
     {
-        if (!$this->session->get('auth')) {
+        if (!$this->session->has(SessionController::SESSION_ID)) {
             return;
         }
         /** @var Redis $cache */
@@ -136,10 +135,9 @@ class BaseController extends Controller
     protected function prepareView(): void
     {
         date_default_timezone_set($this->getSessionData('PBXTimezone'));
-        $roSession = $this->sessionRO;
         $this->view->PBXVersion = $this->getSessionData('PBXVersion');
         $this->view->setVar('MetaTegHeadDescription', $this->translation->_('MetategHeadDescription'));
-        if ($roSession !== null && array_key_exists('auth', $roSession)) {
+        if ($this->session->has(SessionController::SESSION_ID)) {
             $this->view->SSHPort = $this->getSessionData('SSHPort');
             $this->view->PBXLicense = $this->getSessionData('PBXLicense');
         } else {
@@ -152,12 +150,7 @@ class BaseController extends Controller
 
         $this->view->WebAdminLanguage = $this->getSessionData('WebAdminLanguage');
         $this->view->AvailableLanguages = json_encode($this->elements->getAvailableWebAdminLanguages());
-
-        if ($roSession !== null && array_key_exists('SubmitMode', $roSession)) {
-            $this->view->submitMode = $roSession['SubmitMode'];
-        } else {
-            $this->view->submitMode = 'SaveSettings';
-        }
+        $this->view->submitMode = $this->session->get('SubmitMode')??'SaveSettings';
 
         // Allow anonymous statistics collection for JS code
         if ($this->getSessionData('SendMetrics') === '1') {
@@ -244,14 +237,12 @@ class BaseController extends Controller
      */
     protected function getSessionData(string $key): string
     {
-        $roSession = $this->sessionRO;
-        if ($roSession !== null && array_key_exists($key, $roSession) && !empty($roSession[$key])) {
-            $value = $roSession[$key];
+        if ($this->session->has($key)) {
+            $value = $this->session->get($key);
         } else {
             $value = PbxSettings::getValueByKey($key);
             $this->session->set($key, $value);
         }
-
         return $value;
     }
 

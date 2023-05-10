@@ -34,7 +34,7 @@ use MikoPBX\Common\Providers\{BeanstalkConnectionWorkerApiProvider,
     PBXConfModulesProvider,
     RegistryProvider,
     ManagedCacheProvider,
-    SessionReadOnlyProvider,
+    SessionProvider,
     LanguageProvider};
 use MikoPBX\PBXCoreREST\Providers\{
     DispatcherProvider,
@@ -77,7 +77,9 @@ class RegisterDIServices
             ResponseProvider::class,
             RequestProvider::class,
             RouterProvider::class,
-            SessionReadOnlyProvider::class,
+
+            // Inject sessions
+            SessionProvider::class,
 
             // Inject Logger
             LoggerAuthProvider::class,

@@ -19,6 +19,7 @@
 
 namespace MikoPBX\AdminCabinet\Plugins;
 
+use MikoPBX\AdminCabinet\Controllers\SessionController;
 use MikoPBX\Common\Models\AuthTokens;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Modules\Config\WebUIConfigInterface;
@@ -85,7 +86,7 @@ class SecurityPlugin extends Injectable
             // Check if the desired controller exists or show the extensions page
             if (!$this->controllerExists($dispatcher)) {
                 // Redirect to home page if controller does not set
-                $homePath = $this->session->get('auth')['homePage'] ?? 'extensions/index';
+                $homePath = $this->session->get(SessionController::SESSION_ID)['homePage'] ?? 'extensions/index';
                 $controller = explode('/', $homePath)[0];
                 $action = explode('/', $homePath)[1];
                 $dispatcher->forward([
@@ -146,7 +147,7 @@ class SecurityPlugin extends Injectable
     function checkUserAuth(): bool
     {
         // Check if it is a localhost request or if the user is already authenticated.
-        if ($_SERVER['REMOTE_ADDR'] === '127.0.0.1' || $this->session->has('auth')) {
+        if ($_SERVER['REMOTE_ADDR'] === '127.0.0.1' || $this->session->has(SessionController::SESSION_ID)) {
             return true;
         }
 
@@ -165,7 +166,7 @@ class SecurityPlugin extends Injectable
                 $userToken->delete();
             } elseif ($this->security->checkHash($token, $userToken->tokenHash)) {
                 $sessionParams = json_decode($userToken->sessionParams, true);
-                $this->session->set('auth', $sessionParams);
+                $this->session->set(SessionController::SESSION_ID, $sessionParams);
                 return true;
             }
         }
@@ -227,7 +228,7 @@ class SecurityPlugin extends Injectable
     public
     function isAllowedAction(string $controller, string $action): bool
     {
-        $role = $this->session->get('auth')['role'] ?? 'guest';
+        $role = $this->session->get(SessionController::SESSION_ID)['role'] ?? 'guest';
 
         if (strpos($controller, '_') > 0) {
             $controller = str_replace('_', '-', $controller);

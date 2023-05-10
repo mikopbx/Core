@@ -32,6 +32,8 @@ use MikoPBX\Modules\Config\WebUIConfigInterface;
  */
 class SessionController extends BaseController
 {
+    public const SESSION_ID = 'authAdmin';
+
     public function indexAction(): void
     {
         $this->view->NameFromSettings
@@ -42,7 +44,7 @@ class SessionController extends BaseController
     }
 
     /**
-     * This action authenticate and logs an user into the application
+     * This action authenticate and logs a user into the application
      *
      */
     public function startAction(): void
@@ -104,7 +106,7 @@ class SessionController extends BaseController
      */
     private function _registerSession(array $sessionParams): void
     {
-        $this->session->set('auth', $sessionParams);
+        $this->session->set(self::SESSION_ID, $sessionParams);
 
         if ($this->request->getPost('rememberMeCheckBox') === 'on') {
             $this->updateRememberMeCookies($sessionParams);
@@ -195,7 +197,7 @@ class SessionController extends BaseController
         $newLanguage = $this->request->getPost('newLanguage', 'string');
         if (array_key_exists($newLanguage, $this->elements->getAvailableWebAdminLanguages())) {
             $this->session->set('WebAdminLanguage', $newLanguage);
-            if ($this->session->has('auth')) {
+            if ($this->session->has(self::SESSION_ID)) {
                 $this->updateSystemLanguage();
             }
             $this->view->success = true;
@@ -210,7 +212,7 @@ class SessionController extends BaseController
      */
     public function endAction(): void
     {
-        $this->session->remove('auth');
+        $this->session->remove(self::SESSION_ID);
         $this->session->destroy();
         $this->clearAuthCookies();
     }

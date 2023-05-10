@@ -112,7 +112,7 @@ class Application extends BaseApplication
             $errorLogger->captureException($e);
             PhpError::exceptionHandler($e);
 
-            if (class_exists($whoopsClass) and is_a($whoops, $whoopsClass) ) {
+            if (isset($whoops)) {
                 $whoops->handleException($e);
             } else {
                 echo $e->getMessage();

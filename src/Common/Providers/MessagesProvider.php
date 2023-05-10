@@ -21,10 +21,8 @@ declare(strict_types=1);
 
 namespace MikoPBX\Common\Providers;
 
-use MikoPBX\AdminCabinet\Providers\SessionProvider;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
-
 use function MikoPBX\Common\Config\appPath;
 
 class MessagesProvider implements ServiceProviderInterface

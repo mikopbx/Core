@@ -27,7 +27,6 @@ use MikoPBX\AdminCabinet\Providers\{AssetProvider,
     ElementsProvider,
     FlashProvider,
     SecurityPluginProvider,
-    SessionProvider,
     ViewProvider,
     VoltProvider};
 use MikoPBX\Common\Providers\{BeanstalkConnectionModelsProvider,
@@ -46,7 +45,7 @@ use MikoPBX\Common\Providers\{BeanstalkConnectionModelsProvider,
     PBXConfModulesProvider,
     RegistryProvider,
     RouterProvider,
-    SessionReadOnlyProvider,
+    SessionProvider,
     TranslationProvider,
     UrlProvider};
 use Phalcon\Di\DiInterface;
@@ -85,7 +84,6 @@ class RegisterDIServices
 
             // Inject sessions
             SessionProvider::class,
-            SessionReadOnlyProvider::class,
 
             // Inject Queue connection
             BeanstalkConnectionModelsProvider::class,

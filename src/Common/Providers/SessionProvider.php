@@ -19,13 +19,15 @@
 
 declare(strict_types=1);
 
-namespace MikoPBX\AdminCabinet\Providers;
+namespace MikoPBX\Common\Providers;
 
 
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
-use Phalcon\Session\Adapter\Stream as SessionAdapter;
-use Phalcon\Session\Manager as SessionManager;
+use Phalcon\Session\Adapter\Redis;
+use Phalcon\Session\Manager;
+use Phalcon\Storage\AdapterFactory;
+use Phalcon\Storage\SerializerFactory;
 
 /**
  * Start the session the first time some component request the session service
@@ -34,6 +36,8 @@ class SessionProvider implements ServiceProviderInterface
 {
     public const SERVICE_NAME = 'session';
 
+    public const CACHE_PREFIX = '_PHCM_SESS:';
+
     /**
      * Register session service provider
      *
@@ -41,20 +45,25 @@ class SessionProvider implements ServiceProviderInterface
      */
     public function register(DiInterface $di): void
     {
-        $phpSessionDir = $di->getShared('config')->path('www.phpSessionDir');
+        $config = $di->getShared(ConfigProvider::SERVICE_NAME);
         $di->setShared(
             self::SERVICE_NAME,
-            function () use ($phpSessionDir) {
-                $session = new SessionManager();
-                $files   = new SessionAdapter(
-                    [
-                        'savePath' => $phpSessionDir,
-                        'prefix'   => 'sess_',
-                    ]
-                );
-                $session->setAdapter($files);
-                $session->start();
-
+            function () use ($config) {
+                $options = [
+                    'defaultSerializer' => 'Php',
+                    'lifetime'          => 3600,
+                    'host'              => $config->path('redis.host'),
+                    'port'              => $config->path('redis.port'),
+                    'index'             => 1,
+                    'prefix'            => self::CACHE_PREFIX
+                ];
+                $session           = new Manager();
+                $serializerFactory = new SerializerFactory();
+                $factory           = new AdapterFactory($serializerFactory);
+                $redis             = new Redis($factory, $options);
+                $session
+                    ->setAdapter($redis)
+                    ->start();
                 return $session;
             }
         );

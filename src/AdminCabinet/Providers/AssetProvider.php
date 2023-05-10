@@ -21,11 +21,12 @@ declare(strict_types=1);
 
 namespace MikoPBX\AdminCabinet\Providers;
 
-use Phalcon\Assets\Collection;
+use MikoPBX\AdminCabinet\Controllers\SessionController;
 use MikoPBX\AdminCabinet\Plugins\AssetManager as Manager;
+use MikoPBX\Common\Providers\SessionProvider;
+use Phalcon\Assets\Collection;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
-
 use function MikoPBX\Common\Config\appPath;
 
 class AssetProvider implements ServiceProviderInterface
@@ -55,9 +56,9 @@ class AssetProvider implements ServiceProviderInterface
         $di->set(
             self::SERVICE_NAME,
             function () use ($di) {
-                $session = $di->get('session');
-                if ($session !== null && $session->has('versionHash')) {
-                    $version = (string)$session->get('versionHash');
+                $session = $di->get(SessionProvider::SERVICE_NAME);
+                if ($session->has('versionHash')) {
+                    $version = $session->get('versionHash');
                 } else {
                     $version = str_replace(PHP_EOL, '', file_get_contents('/etc/version'));
                 }
@@ -183,7 +184,7 @@ class AssetProvider implements ServiceProviderInterface
             ->addJs('js/vendor/semantic/checkbox.min.js', true);
 
         // Если пользователь залогинился, сформируем необходимые CSS кеши
-        if ($session && $session->has('auth')) {
+        if ($session->has(SessionController::SESSION_ID)) {
             $this->semanticCollectionCSS
                 ->addCss('css/vendor/semantic/menu.min.css', true)
                 ->addCss('css/vendor/semantic/sidebar.min.css', true)
