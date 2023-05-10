@@ -32,7 +32,7 @@ use Phalcon\Mvc\Model\Manager;
 class VoiceMailConf extends AsteriskConfigClass
 {
     // The module hook applying priority
-    public int $priority = 610;
+    public int $priority = 620;
 
     public const VOICE_MAIL_EXT = 'voicemail';
     protected string $description = 'voicemail.conf';

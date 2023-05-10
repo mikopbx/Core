@@ -24,7 +24,7 @@ use MikoPBX\Core\System\Util;
 class ExtensionsInterception extends AsteriskConfigClass
 {
     // The module hook applying priority
-    public int $priority = 600;
+    public int $priority = 610;
 
     /**
      * Prepares additional contexts sections in the extensions.conf file

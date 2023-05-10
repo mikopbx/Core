@@ -73,7 +73,7 @@ class CreateDialPlanApplicationTest extends MikoPBXTestsBase
         $params = [];
         $params[] = [[
             'extension'=>'132456789',
-            'uniqid'=>'DIALPLAN-APP-146CBFBBF6EB4237EA15B2EC3E67B784',
+            'uniqid'=>'DIALPLAN-APP-146CBFBBF6EB4237EA15B2EC3E67B787',
             'name'=>'Проговорить IP адрес системы2',
             'description'=>"Test Dialplan application with plain text",
             'type'=>"plaintext",
@@ -95,7 +95,7 @@ n,Goto(5)',
         ]];
         $params[] = [[
             'extension'=>'10000123',
-            'uniqid'=>'DIALPLAN-APP-146CBFBBF6EB4237EA15B2EC3E67B787',
+            'uniqid'=>'DIALPLAN-APP-146CBFBBF6EB4237EA15B2EC3E67B784',
             'name'=>'1C MIKO SMART IVR',
             'description'=>"Генерация IVR меню на основе данных CRM системы",
             'type'=>"php",

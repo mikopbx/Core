@@ -24,7 +24,7 @@ use MikoPBX\Common\Models\ExternalPhones;
 class ExternalPhonesConf extends AsteriskConfigClass
 {
     // The module hook applying priority
-    public int $priority = 1000;
+    public int $priority = 580;
 
     private $arrExternalPhones;
 
