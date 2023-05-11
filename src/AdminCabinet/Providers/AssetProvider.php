@@ -31,6 +31,7 @@ use MikoPBX\Modules\Config\WebUIConfigInterface;
 use Phalcon\Assets\Collection;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
+use Phalcon\Mvc\Dispatcher;
 use function MikoPBX\Common\Config\appPath;
 
 class AssetProvider implements ServiceProviderInterface
@@ -75,14 +76,13 @@ class AssetProvider implements ServiceProviderInterface
                 $dispatcher = $di->get(DispatcherProvider::SERVICE_NAME);
                 $controller = $dispatcher->getControllerName();
                 $action = $dispatcher->getActionName();
-                $isExternalModulePage = stripos($dispatcher->getNamespaceName(), '\\Module') === 0;
 
                 if ($action === null) {
                     $action = 'index';
                 }
 
                 $assets->makeSentryAssets();
-                $assets->makeHeaderAssets($session, $isExternalModulePage);
+                $assets->makeHeaderAssets($session, $dispatcher);
 
                 // Generates Controllers assets
                 $method_name = "make{$controller}Assets";
@@ -156,9 +156,9 @@ class AssetProvider implements ServiceProviderInterface
      * Makes assets for all controllers. Base set of scripts and styles
      *
      * @param $session
-     * @param bool $isExternalModulePage
+     * @param Dispatcher $dispatcher
      */
-    private function makeHeaderAssets($session, bool $isExternalModulePage): void
+    private function makeHeaderAssets($session, Dispatcher $dispatcher): void
     {
         $this->semanticCollectionCSS
             ->addCss('css/vendor/semantic/grid.min.css', true)
@@ -233,11 +233,18 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/PbxExtensionModules/pbx-extension-menu-addition.js', true)
                 ->addJs('js/pbx/TopMenuSearch/top-menu-search.js', true);
 
+            // We can disable module status toggle from module controller, using the showModuleStatusToggle variable
+            $isExternalModulePage = str_starts_with($dispatcher->getNamespaceName(), '\\Module');
+
             if ($isExternalModulePage) {
-                $this->footerCollectionJS->addJs(
-                    'js/pbx/PbxExtensionModules/pbx-extension-module-status.js',
-                    true
-                );
+                $currentControllerObject = $dispatcher->getActiveController();
+                $showModuleStatusToggle = property_exists($currentControllerObject, 'showModuleStatusToggle')
+                    ? $currentControllerObject->showModuleStatusToggle
+                    : true;
+
+                if ($showModuleStatusToggle) {
+                    $this->footerCollectionJS->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-status.js', true);
+                }
             }
         }
     }

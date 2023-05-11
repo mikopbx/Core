@@ -414,3 +414,10 @@ Sets padding to correct show slider labels inside segment block
     padding-right: 35px;
     margin-top: 5px;
 }
+
+/**
+Hide module status toggle by default, it will show from pbx-extension-module-status.js
+ */
+#module-status-toggle-segment {
+    display: none;
+}

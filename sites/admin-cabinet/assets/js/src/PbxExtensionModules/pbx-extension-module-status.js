@@ -20,8 +20,10 @@
 class PbxExtensionStatus {
 	initialize(uniqid, changeLabel = true) {
 		this.$toggle = $(`.ui.toggle.checkbox[data-value="${uniqid}"]`);
+		this.$toggleSegment = $('#module-status-toggle-segment');
 		this.$allToggles = $(`.ui.toggle.checkbox`);
 		this.$statusIcon = $(`tr#${uniqid} i.status-icon`);
+		this.$toggleSegment.show();
 		if (changeLabel) {
 			this.$label = $(`.ui.toggle.checkbox[data-value="${uniqid}"]`).find('label');
 		} else {

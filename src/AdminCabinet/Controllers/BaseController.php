@@ -184,13 +184,7 @@ class BaseController extends Controller
         $this->view->urlToController = $this->url->get($this->controllerNameUnCamelized);
         $this->view->represent = '';
 
-        $isExternalModuleController = stripos($this->dispatcher->getNamespaceName(), '\\Module') === 0;
-        // We can disable module status toggle from module controller, using the showModuleStatusToggle variable
-        if (property_exists($this, 'showModuleStatusToggle')) {
-            $this->view->setVar('showModuleStatusToggle', $this->showModuleStatusToggle);
-        } else {
-            $this->view->setVar('showModuleStatusToggle', true);
-        }
+        $isExternalModuleController = str_starts_with($this->dispatcher->getNamespaceName(), '\\Module');
 
         // Add module variables into view
         if ($isExternalModuleController) {

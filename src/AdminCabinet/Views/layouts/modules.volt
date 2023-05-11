@@ -51,8 +51,7 @@
         <!--MAIN CONTENT-->
         <div class="row" id="content-frame">
             <div id="ajax-messages"></div>
-            {% if showModuleStatusToggle %}
-            <div class="ui segment">
+            <div class="ui segment" id="module-status-toggle-segment">
                 <div class="ui toggle checkbox" data-value="{{ controller }}" id="module-status-toggle">
                     <input type="checkbox" name="module-status"
                            id="module-status" {% if module.disabled!=='1' %} checked {% endif %}/>
@@ -61,7 +60,6 @@
                 <a class="ui icon basic button right floated pbx-extensions-settings"
                    href="{{ url('pbx-extension-modules/modify/'~controller) }}"><i class="cogs icon"></i></a>
             </div>
-            {% endif %}
             {% if (action=='index') %}
                 {{ flash.output() }}
                 {{ content() }}
