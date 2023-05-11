@@ -64,14 +64,13 @@ class AssetProvider implements ServiceProviderInterface
 
                 $session = $di->get(SessionProvider::SERVICE_NAME);
 
+                $assets = new AssetProvider();
                 // Module and PBX version caching for proper PBX operation when installing modules.
                 $version = $session->get(SessionProvider::VERSION_HASH) ?? '';
                 if (empty($version)) {
-                    $version = $this->getVersionsHash();
+                    $version = $assets->getVersionsHash();
                     $session->set(SessionProvider::VERSION_HASH, $version);
                 }
-
-                $assets = new AssetProvider();
                 $assets->initializeClassVariables($version);
                 $dispatcher = $di->get(DispatcherProvider::SERVICE_NAME);
                 $controller = $dispatcher->getControllerName();

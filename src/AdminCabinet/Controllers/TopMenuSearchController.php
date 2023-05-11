@@ -35,9 +35,9 @@ use Phalcon\Text;
 class TopMenuSearchController extends BaseController
 {
     /**
-     * Используется для генерации списка выбора пользователей из JS скрипта extensions.js
+     * Makes top search menu over AJAX request
      *
-     * @return void параметры помещаются в view и обрабатваются через ControllerBase::afterExecuteRoute()
+     * @return void The parameters are placed in the view and processed through ControllerBase::afterExecuteRoute().
      */
     public function getForSelectAction(): void
     {
@@ -62,7 +62,7 @@ class TopMenuSearchController extends BaseController
             $categoryItems = [];
             foreach ($records as $record) {
                 if ($itemClass === Users::class && $record->id === '1') {
-                    continue; // Админ
+                    continue; // Admin
                 }
                 $this->addMenuItem($categoryItems, $record, $itemClass);
             }
@@ -116,7 +116,7 @@ class TopMenuSearchController extends BaseController
             'name'          => $elements->getIconByController('incoming-routes') . ' ' . $this->translation->_(
                     'mm_IncomingRoutes'
                 ),
-            'value'         => $this->url->get('incoming-routes'),
+            'value'         => $this->url->get('incoming-routes/index'),
             'type'          => 'MENUITEMS',
             'typeLocalized' => $this->translation->_('ex_dropdownCategory_MENUITEMS'),
             'sorter'        => strip_tags($this->translation->_('mm_IncomingRoutes')),
@@ -125,7 +125,7 @@ class TopMenuSearchController extends BaseController
             'name'          => $elements->getIconByController('outbound-routes') . ' ' . $this->translation->_(
                     'mm_OutboundRoutes'
                 ),
-            'value'         => $this->url->get('outbound-routes'),
+            'value'         => $this->url->get('outbound-routes/index'),
             'type'          => 'MENUITEMS',
             'typeLocalized' => $this->translation->_('ex_dropdownCategory_MENUITEMS'),
             'sorter'        => strip_tags($this->translation->_('mm_OutboundRoutes')),
@@ -150,7 +150,7 @@ class TopMenuSearchController extends BaseController
         ];
         $items[] = [
             'name'          => $elements->getIconByController('network') . ' ' . $this->translation->_('mm_Network'),
-            'value'         => $this->url->get('network/modify/'),
+            'value'         => $this->url->get('network/modify'),
             'type'          => 'MENUITEMS',
             'typeLocalized' => $this->translation->_('ex_dropdownCategory_MENUITEMS'),
             'sorter'        => strip_tags($this->translation->_('mm_Network')),
@@ -168,7 +168,7 @@ class TopMenuSearchController extends BaseController
             'name'          => $elements->getIconByController('call-detail-records') . ' ' . $this->translation->_(
                     'mm_CallDetailRecords'
                 ),
-            'value'         => $this->url->get('call-detail-records'),
+            'value'         => $this->url->get('call-detail-records/index'),
             'type'          => 'MENUITEMS',
             'typeLocalized' => $this->translation->_('ex_dropdownCategory_MENUITEMS'),
             'sorter'        => strip_tags($this->translation->_('mm_CallDetailRecords')),
@@ -177,7 +177,7 @@ class TopMenuSearchController extends BaseController
             'name'          => $elements->getIconByController('sound-files') . ' ' . $this->translation->_(
                     'mm_SoundFiles'
                 ),
-            'value'         => $this->url->get('sound-files'),
+            'value'         => $this->url->get('sound-files/index'),
             'type'          => 'MENUITEMS',
             'typeLocalized' => $this->translation->_('ex_dropdownCategory_MENUITEMS'),
             'sorter'        => strip_tags($this->translation->_('mm_SoundFiles')),
@@ -187,7 +187,7 @@ class TopMenuSearchController extends BaseController
             'name'          => $elements->getIconByController('licensing') . ' ' . $this->translation->_(
                     'mm_Licensing'
                 ),
-            'value'         => $this->url->get('licensing/modify/'),
+            'value'         => $this->url->get('licensing/modify'),
             'type'          => 'MENUITEMS',
             'typeLocalized' => $this->translation->_('ex_dropdownCategory_MENUITEMS'),
             'sorter'        => strip_tags($this->translation->_('mm_Licensing')),
@@ -197,7 +197,7 @@ class TopMenuSearchController extends BaseController
             'name'          => $elements->getIconByController('pbx-extension-modules') . ' ' . $this->translation->_(
                     'BreadcrumbPbxExtensionModules'
                 ),
-            'value'         => $this->url->get('pbx-extension-modules'),
+            'value'         => $this->url->get('pbx-extension-modules/index'),
             'type'          => 'MENUITEMS',
             'typeLocalized' => $this->translation->_('ex_dropdownCategory_MENUITEMS'),
             'sorter'        => strip_tags($this->translation->_('BreadcrumbPbxExtensionModules')),
@@ -207,7 +207,7 @@ class TopMenuSearchController extends BaseController
             'name'          => $elements->getIconByController('system-diagnostic') . ' ' . $this->translation->_(
                     'mm_SystemDiagnostic'
                 ),
-            'value'         => $this->url->get('system-diagnostic'),
+            'value'         => $this->url->get('system-diagnostic/index'),
             'type'          => 'MENUITEMS',
             'typeLocalized' => $this->translation->_('ex_dropdownCategory_MENUITEMS'),
             'sorter'        => strip_tags($this->translation->_('mm_SystemDiagnostic')),
@@ -217,7 +217,7 @@ class TopMenuSearchController extends BaseController
             'name'          => $elements->getIconByController('fail2-ban') . ' ' . $this->translation->_(
                     'mm_BruteForceProtection'
                 ),
-            'value'         => $this->url->get('fail2-ban'),
+            'value'         => $this->url->get('fail2-ban/index'),
             'type'          => 'MENUITEMS',
             'typeLocalized' => $this->translation->_('ex_dropdownCategory_MENUITEMS'),
             'sorter'        => strip_tags($this->translation->_('mm_BruteForceProtection')),
@@ -226,7 +226,7 @@ class TopMenuSearchController extends BaseController
             'name'          => $elements->getIconByController('update') . ' ' . $this->translation->_(
                     'mm_UpdateSystem'
                 ),
-            'value'         => $this->url->get('update'),
+            'value'         => $this->url->get('update/index'),
             'type'          => 'MENUITEMS',
             'typeLocalized' => $this->translation->_('ex_dropdownCategory_MENUITEMS'),
             'sorter'        => strip_tags($this->translation->_('mm_UpdateSystem')),
