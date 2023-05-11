@@ -23,12 +23,13 @@ use MikoPBX\Common\Providers\ConfigProvider;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Acl\Adapter\Memory as AclList;
+use Phalcon\Assets\Manager;
 use Phalcon\Config;
 use Phalcon\Di\Injectable;
 use Phalcon\Mvc\Router;
 use ReflectionClass as ReflectionClassAlias;
 
-class ConfigClass extends Injectable implements SystemConfigInterface,
+abstract class ConfigClass extends Injectable implements SystemConfigInterface,
                              RestAPIConfigInterface,
                              WebUIConfigInterface
 {
@@ -327,6 +328,16 @@ class ConfigClass extends Injectable implements SystemConfigInterface,
      * @return void
      */
     public function onAfterRoutesPrepared(Router $router):void
+    {
+    }
+
+    /**
+     * Modifies system assets
+     *
+     * @param Manager $assets
+     * @return void
+     */
+    public function onAfterAssetsPrepared(Manager $assets):void
     {
     }
 

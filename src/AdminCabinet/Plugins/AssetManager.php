@@ -39,7 +39,7 @@ class AssetManager extends Manager
     /**
      * Prints the HTML for CSS assets
      *
-     * @param string $collectionName
+     * @param string|null $collectionName
      *
      * @return string
      */
@@ -57,7 +57,7 @@ class AssetManager extends Manager
     /**
      * Prints the HTML for JS assets
      *
-     * @param string $collectionName
+     * @param string|null $collectionName
      *
      * @return string
      */

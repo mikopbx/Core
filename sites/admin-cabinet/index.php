@@ -77,6 +77,7 @@ class Application extends BaseApplication
         $this->registerServices();
 
         // Attach Sentry error logger
+        global $errorLogger;
         $errorLogger = new SentryErrorLogger('admin-cabinet');
         $errorLogger->init();
 

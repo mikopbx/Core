@@ -21,6 +21,7 @@ namespace MikoPBX\AdminCabinet\Controllers;
 
 use Exception;
 use GuzzleHttp;
+use MikoPBX\Common\Providers\SessionProvider;
 use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings};
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Core\System\Util;
@@ -142,9 +143,6 @@ class BaseController extends Controller
         } else {
             $this->view->PBXLicense = '';
         }
-        // Module and PBX version caching for proper PBX operation when installing modules.
-        $versionHash = $this->getVersionsHash();
-        $this->session->set('versionHash', $versionHash);
 
         $this->view->WebAdminLanguage = PbxSettings::getValueByKey('WebAdminLanguage');
         $this->view->AvailableLanguages = json_encode($this->elements->getAvailableWebAdminLanguages());
@@ -185,7 +183,6 @@ class BaseController extends Controller
         }
         $this->view->urlToController = $this->url->get($this->controllerNameUnCamelized);
         $this->view->represent = '';
-        $this->view->cacheName = "{$this->controllerName}{$this->actionName}{$this->language}{$versionHash}";
 
         $isExternalModuleController = stripos($this->dispatcher->getNamespaceName(), '\\Module') === 0;
         // We can disable module status toggle from module controller, using the showModuleStatusToggle variable
@@ -224,20 +221,6 @@ class BaseController extends Controller
             $this->view->setTemplateAfter('main');
         }
 
-    }
-
-    /**
-     * Generates common hash sum for correct combine CSS and JS according to installed modules
-     *
-     */
-    private function getVersionsHash(): string
-    {
-        $result = PbxSettings::getValueByKey('PBXVersion');
-        $modulesVersions = PbxExtensionModules::getModulesArray();
-        foreach ($modulesVersions as $module) {
-            $result .= "{$module['id']}{$module['version']}";
-        }
-        return md5($result);
     }
 
     /**

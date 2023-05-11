@@ -3,10 +3,8 @@
 <head>
     <meta charset="utf-8">
     <title>{{ get_title() }}</title>
-    {# {% cache 'headerAssetsBeforeMetatags'~cacheName~'Cache.volt.php' %} #}
     {{ assets.outputCss('SemanticUICSS') }}
     {{ assets.outputCss('headerCSS') }}
-    {# {% endcache %} #}
     <link rel="apple-touch-icon" sizes="180x180" href="{{ url() }}assets/img/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ url() }}assets/img/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ url() }}assets/img/favicon-16x16.png">
@@ -30,17 +28,14 @@
 		var globalWebAdminLanguage = '{{ WebAdminLanguage }}';
 		var globalAvailableLanguages = '{{ AvailableLanguages }}';
     </script>
-    {# {% cache 'headerAssetsAfterMetatags'~cacheName~'Cache.volt.php' %} #}
 
     {{ assets.outputJs('headerSentryJS') }}
     {{ assets.outputJs('headerPBXJS') }}
     {{ assets.outputJs('headerJS') }}
 
-    {# {% endcache %} #}
 </head>
 <body class="pushable">
 {{ content() }}
-{# {% cache 'foterAssets'~cacheName~'Cache.volt.php' %} #}
 
 {{ assets.outputJs('SemanticUIJS') }}
 {{ assets.outputJs('footerACE') }}
@@ -49,7 +44,6 @@
 {{ assets.outputInlineJs() }}
 {{ assets.outputJs('footerJS') }}
 
-{# {% endcache %} #}
 </body>
 </html>
 

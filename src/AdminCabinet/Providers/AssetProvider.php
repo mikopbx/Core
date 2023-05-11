@@ -23,7 +23,11 @@ namespace MikoPBX\AdminCabinet\Providers;
 
 use MikoPBX\AdminCabinet\Controllers\SessionController;
 use MikoPBX\AdminCabinet\Plugins\AssetManager as Manager;
+use MikoPBX\Common\Models\PbxExtensionModules;
+use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Common\Providers\SessionProvider;
+use MikoPBX\Modules\Config\WebUIConfigInterface;
 use Phalcon\Assets\Collection;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
@@ -56,26 +60,29 @@ class AssetProvider implements ServiceProviderInterface
         $di->set(
             self::SERVICE_NAME,
             function () use ($di) {
+
                 $session = $di->get(SessionProvider::SERVICE_NAME);
-                if ($session->has('versionHash')) {
-                    $version = $session->get('versionHash');
-                } else {
-                    $version = str_replace(PHP_EOL, '', file_get_contents('/etc/version'));
+
+                // Module and PBX version caching for proper PBX operation when installing modules.
+                $version = $session->get(SessionProvider::VERSION_HASH) ?? '';
+                if (empty($version)) {
+                    $version = $this->getVersionsHash();
+                    $session->set(SessionProvider::VERSION_HASH, $version);
                 }
 
                 $assets = new AssetProvider();
                 $assets->initializeClassVariables($version);
-                $dispatcher = $di->get('dispatcher');
+                $dispatcher = $di->get(DispatcherProvider::SERVICE_NAME);
                 $controller = $dispatcher->getControllerName();
-                $action     = $dispatcher->getActionName();
-                $moduleName = $dispatcher->getModuleName();
+                $action = $dispatcher->getActionName();
+                $isExternalModulePage = stripos($dispatcher->getNamespaceName(), '\\Module') === 0;
 
                 if ($action === null) {
                     $action = 'index';
                 }
 
                 $assets->makeSentryAssets();
-                $assets->makeHeaderAssets($session, $moduleName);
+                $assets->makeHeaderAssets($session, $isExternalModulePage);
 
                 // Generates Controllers assets
                 $method_name = "make{$controller}Assets";
@@ -86,7 +93,12 @@ class AssetProvider implements ServiceProviderInterface
                 $assets->makeFooterAssets();
                 $assets->makeLocalizationAssets($di, $version);
 
-                return $assets->manager;
+                $assetsManager = $assets->manager;
+
+                // Register additional assets from external enabled modules
+                PBXConfModulesProvider::hookModulesProcedure(WebUIConfigInterface::ON_AFTER_ASSETS_PREPARED, [$assetsManager]);
+
+                return $assetsManager;
             }
         );
     }
@@ -112,7 +124,7 @@ class AssetProvider implements ServiceProviderInterface
         $this->footerCollectionJS = $this->manager->collection('footerPBXJS');
         $this->footerCollectionJS->setPrefix('assets/');
         $this->headerCollectionSentryJS = $this->manager->collection('headerSentryJS');
-        $this->semanticCollectionCSS    = $this->manager->collection('SemanticUICSS');
+        $this->semanticCollectionCSS = $this->manager->collection('SemanticUICSS');
         $this->semanticCollectionCSS->setPrefix('assets/');
         $this->semanticCollectionJS = $this->manager->collection('SemanticUIJS');
         $this->semanticCollectionJS->setPrefix('assets/');
@@ -144,9 +156,9 @@ class AssetProvider implements ServiceProviderInterface
      * Makes assets for all controllers. Base set of scripts and styles
      *
      * @param $session
-     * @param $moduleName
+     * @param bool $isExternalModulePage
      */
-    private function makeHeaderAssets($session, $moduleName): void
+    private function makeHeaderAssets($session, bool $isExternalModulePage): void
     {
         $this->semanticCollectionCSS
             ->addCss('css/vendor/semantic/grid.min.css', true)
@@ -221,7 +233,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/PbxExtensionModules/pbx-extension-menu-addition.js', true)
                 ->addJs('js/pbx/TopMenuSearch/top-menu-search.js', true);
 
-            if ($moduleName === 'PBXExtension') {
+            if ($isExternalModulePage) {
                 $this->footerCollectionJS->addJs(
                     'js/pbx/PbxExtensionModules/pbx-extension-module-status.js',
                     true
@@ -248,13 +260,13 @@ class AssetProvider implements ServiceProviderInterface
      * Makes Language cache for browser JS scripts
      *
      * @param \Phalcon\Di\DiInterface $di
-     * @param string                  $version
+     * @param string $version
      */
     private function makeLocalizationAssets(DiInterface $di, string $version): void
     {
         $language = $di->getShared('language');
         $fileName = "{$this->jsCacheDir}/localization-{$language}-{$version}.min.js";
-        if ( ! file_exists($fileName)) {
+        if (!file_exists($fileName)) {
             $arrStr = [];
             foreach ($di->getShared('messages') as $key => $value) {
                 $arrStr[$key] = str_replace(
@@ -826,5 +838,18 @@ class AssetProvider implements ServiceProviderInterface
         }
     }
 
+    /**
+     * Generates common hash sum for correct combine CSS and JS according to installed modules
+     *
+     */
+    private function getVersionsHash(): string
+    {
+        $result = PbxSettings::getValueByKey('PBXVersion');
+        $modulesVersions = PbxExtensionModules::getModulesArray();
+        foreach ($modulesVersions as $module) {
+            $result .= "{$module['id']}{$module['version']}";
+        }
+        return md5($result);
+    }
 
 }
