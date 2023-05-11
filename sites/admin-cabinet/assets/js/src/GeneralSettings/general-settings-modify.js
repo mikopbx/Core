@@ -23,6 +23,8 @@ const generalSettingsModify = {
 	$dirrtyField: $('#dirrty'),
 	$formObj: $('#general-settings-form'),
 	$webAdminPassword: $('#WebAdminPassword'),
+	$recordsSavePeriodSlider:  $('#PBXRecordSavePeriodSlider'),
+	saveRecordsPeriod:['30', '90', '180', '360', '1080',''],
 	$sshPassword: $('#SSHPassword'),
 	validateRules: { // generalSettingsModify.validateRules.SSHPassword.rules
 		pbxname: {
@@ -212,7 +214,35 @@ const generalSettingsModify = {
 
 		$('#general-settings-form .audio-message-select').dropdown(SoundFilesSelector.getDropdownSettingsWithEmpty());
 
+        // PBXRecordSavePeriod
+		generalSettingsModify.$recordsSavePeriodSlider
+			.slider({
+				min: 0,
+				max: 5,
+				step: 1,
+				smooth: true,
+				interpretLabel: function(value) {
+					let labels = [
+						globalTranslate.gs_Store1MonthOfRecords,
+						globalTranslate.gs_Store3MonthsOfRecords,
+						globalTranslate.gs_Store6MonthsOfRecords,
+						globalTranslate.gs_Store1YearOfRecords,
+						globalTranslate.gs_Store3YearsOfRecords,
+						globalTranslate.gs_StoreAllPossibleRecords,
+					];
+					return labels[value];
+				},
+				onChange: generalSettingsModify.cbAfterSelectSavePeriodSlider,
+			})
+		;
+
+
 		generalSettingsModify.initializeForm();
+
+		const recordSavePeriod = generalSettingsModify.$formObj.form('get value', 'PBXRecordSavePeriod');
+		generalSettingsModify.$recordsSavePeriodSlider
+			.slider('set value', generalSettingsModify.saveRecordsPeriod.indexOf(recordSavePeriod), false);
+
 		$(window).on('GS-ActivateTab', (event, nameTab) => {
 			$('#general-settings-menu').find('.item').tab('change tab', nameTab);
 		});
@@ -230,6 +260,12 @@ const generalSettingsModify = {
 		} else {
 			UserMessage.showMultiString(response);
 		}
+	},
+	cbAfterSelectSavePeriodSlider(value){
+		const savePeriod = generalSettingsModify.saveRecordsPeriod[value];
+		generalSettingsModify.$formObj.form('set value', 'PBXRecordSavePeriod', savePeriod);
+		generalSettingsModify.$dirrtyField.val(Math.random());
+		generalSettingsModify.$dirrtyField.trigger('change');
 	},
 	cbBeforeSendForm(settings) {
 		const result = settings;

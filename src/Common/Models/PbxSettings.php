@@ -133,6 +133,7 @@ class PbxSettings extends ModelsBase
             'PBXSplitAudioThread'             => '0',
             'PBXRecordAnnouncementIn'         => '',
             'PBXRecordAnnouncementOut'        => '',
+            'PBXRecordSavePeriod'             => '',
             'PBXCallParkingExt'               => '800',
             'PBXCallParkingFeature'           => '*2',
             'PBXCallParkingDuration'          => '50',

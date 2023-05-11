@@ -278,20 +278,28 @@ class MikoPBXTestsBase extends BrowserStackTest
      */
     protected function changeInputField(string $name, string $value, bool $skipIfNotExist=false): void
     {
-        $xpath      = '//input[@name="' . $name . '" and (@type="text" or @type="password" or @type="hidden" or @type="number")]';
+        $xpath      = '//input[@name="' . $name . '" and (@type="text" or @type="password" or @type="number" or @type="hidden")]';
         $inputItems = self::$driver->findElements(WebDriverBy::xpath($xpath));
         $actions = new WebDriverActions(self::$driver);
         foreach ($inputItems as $inputItem) {
-            $actions->moveToElement($inputItem);
-            $actions->perform();
             $id = $inputItem->getAttribute('id');
-            if (!empty($id)){
-                self::$driver->executeScript("document.getElementById('{$id}').scrollIntoView({block: 'center'})");
+            $type = $inputItem->getAttribute('type');
+            if ($type === 'hidden'){
+                if (!empty($id)){
+                    self::$driver->executeScript("document.getElementById('{$id}').value={$value}");
+                }
+            } else {
+                $actions->moveToElement($inputItem);
+                $actions->perform();
+                if (!empty($id)){
+                    self::$driver->executeScript("document.getElementById('{$id}').scrollIntoView({block: 'center'})");
+                }
+                $inputItem->click();
+                $inputItem->clear();
+                $inputItem->sendKeys($value);
             }
-            $inputItem->click();
-            $inputItem->clear();
-            $inputItem->sendKeys($value);
         }
+
         if (!$skipIfNotExist && count($inputItems)===0){
             $this->fail('Not found input with name ' . $name .' in changeInputField'. PHP_EOL);
         }

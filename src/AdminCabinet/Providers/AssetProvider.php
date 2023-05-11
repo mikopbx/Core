@@ -639,8 +639,13 @@ class AssetProvider implements ServiceProviderInterface
     private function makeGeneralSettingsAssets(string $action): void
     {
         if ($action === 'modify') {
-            $this->semanticCollectionCSS->addCss('css/vendor/semantic/progress.min.css', true);
-            $this->semanticCollectionJS->addJs('js/vendor/semantic/progress.min.js', true);
+            $this->semanticCollectionCSS
+                ->addCss('css/vendor/semantic/slider.min.css', true)
+                ->addCss('css/vendor/semantic/progress.min.css', true);
+            $this->semanticCollectionJS
+                ->addJs('js/vendor/semantic/slider.min.js', true)
+                ->addJs('js/vendor/semantic/progress.min.js', true);
+
             $this->footerCollectionJS
                 ->addJs('js/vendor/jquery.address.min.js', true)
                 ->addJs('js/vendor/jquery.tablednd.js', true)

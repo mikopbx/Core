@@ -22,6 +22,7 @@ namespace MikoPBX\AdminCabinet\Forms;
 use MikoPBX\Common\Models\SoundFiles;
 use Phalcon\Forms\Element\AbstractElement;
 use Phalcon\Forms\Element\Check;
+use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Numeric;
 use Phalcon\Forms\Element\Password;
 use Phalcon\Forms\Element\Select;
@@ -41,6 +42,10 @@ class GeneralSettingsEditForm extends Form
     {
         foreach ($options as $key => $value) {
             switch ($key) {
+                case 'PBXRecordSavePeriod':
+                case '***ALL HIDDEN ABOVE***':
+                    $this->add(new Hidden($key, ['value' => $value]));
+                    break;
                 case 'SIPPort':
                 case 'TLS_PORT':
                 case 'SIPDefaultExpiry':

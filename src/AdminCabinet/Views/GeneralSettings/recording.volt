@@ -22,5 +22,12 @@
         </div>
     </div>
 </div>
+<div class="field">
+    <label>{{ t._('gs_PBXRecordSavePeriodLabel') }}</label>
+    <div class="ui segment" id="pbx-records-term-slider">
+        <div class="ui bottom aligned ticked labeled slider" id="PBXRecordSavePeriodSlider"></div>
+        {{ form.render('PBXRecordSavePeriod') }}
+    </div>
+</div>
 {{ partial("partials/playAddNewSound", ['label': t._('gs_PBXRecordAnnouncementIn'), 'id':'PBXRecordAnnouncementIn', 'fieldClass':'field', 'fieldId':'']) }}
 {{ partial("partials/playAddNewSound", ['label': t._('gs_PBXRecordAnnouncementOut'), 'id':'PBXRecordAnnouncementOut', 'fieldClass':'field', 'fieldId':'']) }}

@@ -156,6 +156,7 @@ ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQDZ3hd6/gqPxMMCqFytFdVznYD3Debp2LKTRiJEaS2S
                 'codec_h264'             => true,
                 'codec_h263'             => false,
                 'codec_h263p'            => true,
+                'PBXRecordSavePeriod'    => '90'
             ],
         ];
 
