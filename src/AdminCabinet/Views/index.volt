@@ -29,7 +29,6 @@
 		var globalLastSentryEventId = '{{ lastSentryEventId }}';
 		var globalWebAdminLanguage = '{{ WebAdminLanguage }}';
 		var globalAvailableLanguages = '{{ AvailableLanguages }}';
-		var globalSSHPort = '{{ SSHPort }}';
     </script>
     {# {% cache 'headerAssetsAfterMetatags'~cacheName~'Cache.volt.php' %} #}
 

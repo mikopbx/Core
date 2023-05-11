@@ -264,7 +264,7 @@ class Elements extends Injectable
     public function getMenu(): void
     {
         $resultHtml = '';
-
+        $this->addMenuItemSSHMenu();
         $this->addMenuItemsFromExternalModules();
 
         foreach ($this->_headerMenu as $group => $groupparams) {
@@ -283,9 +283,14 @@ class Elements extends Injectable
                     if ($isAllowed) {
                         $link = $this->url->get($controller . '/' . $option['action'] . '/' . $option['param']);
                         $caption = $this->translation->_($option['caption']);
-                        $groupHtml .= "<a class='item {$option['style']}' href='{$link}'>
+                        $groupHtml .= "<a class='item {$option['style']}' href='{$link}'";
+                        if (isset($option['data-value'])){
+                            $groupHtml .= " data-value='{$option['data-value']}'";
+                        }
+                        $groupHtml .= ">
                     		<i class='{$option['iconclass']} icon'></i>{$caption}
                     	 </a>";
+
                         $addToHTML = true;
                     }
                 }
@@ -395,7 +400,7 @@ class Elements extends Injectable
      *
      * @return void
      */
-    public function addMenuItemsFromExternalModules(): void
+    private function addMenuItemsFromExternalModules(): void
     {
         $modules = PbxExtensionModules::getEnabledModulesArray();
         foreach ($modules as $module) {
@@ -421,6 +426,21 @@ class Elements extends Injectable
         }
 
         PBXConfModulesProvider::hookModulesProcedure(WebUIConfigInterface::ON_BEFORE_HEADER_MENU_SHOW, [&$this->_headerMenu]);
+    }
+
+    /**
+     * Modifies SSH console menu item
+     * @param $headerMenu
+     * @return void
+     */
+    private function addMenuItemSSHMenu():void
+    {
+        if (PbxSettings::getValueByKey('SSHDisablePasswordLogins')!=='1'){
+            $sshPort = PbxSettings::getValueByKey('SSHPort');
+            $this->_headerMenu['maintenance']['submenu']['console']['data-value']="root@{$_SERVER['SERVER_ADDR']}:$sshPort";
+        } else {
+            unset ($this->_headerMenu['maintenance']['submenu']['console']);
+        }
     }
 
 }

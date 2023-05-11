@@ -16,7 +16,6 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalSSHPort */
 
 const sshConsole = {
 	$menuLink: $('a[href$="/admin-cabinet/console/index/"]'),
@@ -24,18 +23,16 @@ const sshConsole = {
 	target: null,
 	hide: false,
 	initialize() {
-		$('body').on('click', 'a[href$="/admin-cabinet/console/index/"]', (e) => {
-			e.preventDefault();
-			window.open(sshConsole.link, sshConsole.target);
-		});
-		// Проверим возможность запуска SSH
+		if (!sshConsole.$menuLink){
+			return;
+		}
+		let connectionAddress = sshConsole.$menuLink.attr('data-value');
 		const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor) && !(navigator.userAgent.match(/Opera|OPR\//));
-		//const isSafari = navigator.vendor && navigator.vendor.indexOf('Apple') > -1 && navigator.userAgent && !navigator.userAgent.match('CriOS');
 		if (isChrome) {
 			sshConsole.detect(
 				'chrome-extension://iodihamcpbpeioajjeobimgagajmlibd',
 				() => {
-					sshConsole.link = `ssh://root@${window.location.hostname}:${globalSSHPort}`;
+					sshConsole.link = `chrome-extension://iodihamcpbpeioajjeobimgagajmlibd/html/nassh.html#${connectionAddress}`;
 					sshConsole.target = '_blank';
 				},
 				() => {
@@ -43,6 +40,10 @@ const sshConsole = {
 					sshConsole.target = '_blank';
 				},
 			);
+			$('body').on('click', 'a[href$="/admin-cabinet/console/index/"]', (e) => {
+				e.preventDefault();
+				window.open(sshConsole.link, sshConsole.target);
+			});
 		} else {
 			sshConsole.$menuLink.hide();
 		}

@@ -134,26 +134,24 @@ class BaseController extends Controller
      */
     protected function prepareView(): void
     {
-        date_default_timezone_set($this->getSessionData('PBXTimezone'));
-        $this->view->PBXVersion = $this->getSessionData('PBXVersion');
-        $this->view->setVar('MetaTegHeadDescription', $this->translation->_('MetategHeadDescription'));
+        date_default_timezone_set(PbxSettings::getValueByKey('PBXTimezone'));
+        $this->view->PBXVersion = PbxSettings::getValueByKey('PBXVersion');
+        $this->view->MetaTegHeadDescription=$this->translation->_('MetategHeadDescription');
         if ($this->session->has(SessionController::SESSION_ID)) {
-            $this->view->SSHPort = $this->getSessionData('SSHPort');
-            $this->view->PBXLicense = $this->getSessionData('PBXLicense');
+            $this->view->PBXLicense = PbxSettings::getValueByKey('PBXLicense');
         } else {
-            $this->view->SSHPort = '';
             $this->view->PBXLicense = '';
         }
         // Module and PBX version caching for proper PBX operation when installing modules.
         $versionHash = $this->getVersionsHash();
         $this->session->set('versionHash', $versionHash);
 
-        $this->view->WebAdminLanguage = $this->getSessionData('WebAdminLanguage');
+        $this->view->WebAdminLanguage = PbxSettings::getValueByKey('WebAdminLanguage');
         $this->view->AvailableLanguages = json_encode($this->elements->getAvailableWebAdminLanguages());
         $this->view->submitMode = $this->session->get('SubmitMode')??'SaveSettings';
 
         // Allow anonymous statistics collection for JS code
-        if ($this->getSessionData('SendMetrics') === '1') {
+        if (PbxSettings::getValueByKey('SendMetrics') === '1') {
             touch('/tmp/sendmetrics');
             $this->view->lastSentryEventId = SentrySdk::getCurrentHub()->getLastEventId();
         } else {
@@ -226,24 +224,6 @@ class BaseController extends Controller
             $this->view->setTemplateAfter('main');
         }
 
-    }
-
-    /**
-     * Gets data from session or database if it not exists in session store
-     *
-     * @param $key string session parameter
-     *
-     * @return string
-     */
-    protected function getSessionData(string $key): string
-    {
-        if ($this->session->has($key)) {
-            $value = $this->session->get($key);
-        } else {
-            $value = PbxSettings::getValueByKey($key);
-            $this->session->set($key, $value);
-        }
-        return $value;
     }
 
     /**
