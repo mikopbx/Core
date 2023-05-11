@@ -1134,4 +1134,11 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'ex_enableRecording' => 'Dovolit',
     'gs_PBXRecordCallsInner' => 'Nahrávání interních rozhovorů',
     'lic_ReloadPage' => 'Obnovte stránku...',
+    'gs_StoreAllPossibleRecords' => '∞',
+    'gs_Store1MonthOfRecords' => '1 měsíc',
+    'gs_Store3MonthsOfRecords' => '3 měsíce',
+    'gs_Store6MonthsOfRecords' => '6 měsíců',
+    'gs_Store1YearOfRecords' => '1 rok',
+    'gs_Store3YearsOfRecords' => '3 roky',
+    'gs_PBXRecordSavePeriodLabel' => 'Doba uložení záznamů konverzace',
 ];

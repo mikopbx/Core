@@ -1134,4 +1134,11 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'ex_enableRecording' => 'Give lov til',
     'gs_PBXRecordCallsInner' => 'Optagelse af interne samtaler',
     'lic_ReloadPage' => 'Opdater siden...',
+    'gs_Store3MonthsOfRecords' => '3 måneder',
+    'gs_Store6MonthsOfRecords' => '6 måneder',
+    'gs_Store1YearOfRecords' => '1 år',
+    'gs_Store3YearsOfRecords' => '3 år',
+    'gs_PBXRecordSavePeriodLabel' => 'Perioden for opbevaring af samtaleoptegnelser',
+    'gs_StoreAllPossibleRecords' => '∞',
+    'gs_Store1MonthOfRecords' => '1 måned',
 ];

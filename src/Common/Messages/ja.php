@@ -1134,4 +1134,11 @@ return [
     'ex_enableRecording' => '許可する',
     'gs_PBXRecordCallsInner' => '社内会話の録音',
     'lic_ReloadPage' => 'ページを更新...',
+    'gs_Store3MonthsOfRecords' => '3ヶ月',
+    'gs_Store6MonthsOfRecords' => '6ヵ月',
+    'gs_Store1YearOfRecords' => '1年',
+    'gs_Store3YearsOfRecords' => '3年',
+    'gs_PBXRecordSavePeriodLabel' => '会話記録の保存期間',
+    'gs_StoreAllPossibleRecords' => '∞',
+    'gs_Store1MonthOfRecords' => '1ヶ月',
 ];

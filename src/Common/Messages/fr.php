@@ -1134,4 +1134,11 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'gs_PBXRecordCallsInner' => 'Enregistrement des conversations internes',
     'ex_enableRecording' => 'Permettre',
     'lic_ReloadPage' => 'Actualiser la page...',
+    'gs_Store3MonthsOfRecords' => '3 mois',
+    'gs_Store6MonthsOfRecords' => '6 mois',
+    'gs_Store1YearOfRecords' => '1 an',
+    'gs_Store3YearsOfRecords' => '3 années',
+    'gs_PBXRecordSavePeriodLabel' => 'La période de stockage des enregistrements de conversation',
+    'gs_StoreAllPossibleRecords' => '∞',
+    'gs_Store1MonthOfRecords' => '1 mois',
 ];

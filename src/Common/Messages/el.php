@@ -1134,4 +1134,11 @@ return [
     'ex_enableRecording' => 'Επιτρέπω',
     'gs_PBXRecordCallsInner' => 'Ηχογράφηση εσωτερικών συνομιλιών',
     'lic_ReloadPage' => 'Ανανέωσε τη σελίδα...',
+    'gs_Store1MonthOfRecords' => '1 μήνα',
+    'gs_Store3MonthsOfRecords' => '3 μήνες',
+    'gs_Store6MonthsOfRecords' => '6 μήνες',
+    'gs_Store1YearOfRecords' => '1 χρόνος',
+    'gs_Store3YearsOfRecords' => '3 χρόνια',
+    'gs_PBXRecordSavePeriodLabel' => 'Η περίοδος αποθήκευσης των αρχείων συνομιλίας',
+    'gs_StoreAllPossibleRecords' => '∞',
 ];

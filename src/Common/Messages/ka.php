@@ -1134,4 +1134,11 @@ return [
     'ex_enableRecording' => 'დაშვება',
     'gs_PBXRecordCallsInner' => 'შიდა საუბრების ჩაწერა',
     'lic_ReloadPage' => 'განაახლეთ გვერდი...',
+    'gs_Store1MonthOfRecords' => '1 თვე',
+    'gs_Store3MonthsOfRecords' => '3 თვე',
+    'gs_Store6MonthsOfRecords' => '6 თვე',
+    'gs_Store1YearOfRecords' => '1 წელი',
+    'gs_Store3YearsOfRecords' => '3 წელი',
+    'gs_PBXRecordSavePeriodLabel' => 'საუბრის ჩანაწერების შენახვის პერიოდი',
+    'gs_StoreAllPossibleRecords' => '∞',
 ];

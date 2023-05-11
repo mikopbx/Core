@@ -1134,4 +1134,11 @@ return [
     'ex_enableRecording' => 'Дозволити',
     'gs_PBXRecordCallsInner' => 'Запис внутрішніх розмов',
     'lic_ReloadPage' => 'Оновити сторінку...',
+    'gs_Store3YearsOfRecords' => '3 роки',
+    'gs_PBXRecordSavePeriodLabel' => 'Період зберігання записів розмов',
+    'gs_StoreAllPossibleRecords' => '∞',
+    'gs_Store1MonthOfRecords' => '1 місяць',
+    'gs_Store3MonthsOfRecords' => '3 місяці',
+    'gs_Store6MonthsOfRecords' => '6 місяців',
+    'gs_Store1YearOfRecords' => '1 рік',
 ];

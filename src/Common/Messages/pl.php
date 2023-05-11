@@ -1134,4 +1134,11 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'gs_PBXRecordCallsInner' => 'Nagrywanie rozmów wewnętrznych',
     'ex_CallRecording' => 'Nagranie rozmowy',
     'lic_ReloadPage' => 'Odśwież stronę...',
+    'gs_Store6MonthsOfRecords' => '6 miesięcy',
+    'gs_Store1YearOfRecords' => '1 rok',
+    'gs_Store1MonthOfRecords' => '1 miesiąc',
+    'gs_Store3MonthsOfRecords' => '3 miesiące',
+    'gs_Store3YearsOfRecords' => '3 lata',
+    'gs_PBXRecordSavePeriodLabel' => 'Okres przechowywania nagrań rozmów',
+    'gs_StoreAllPossibleRecords' => '∞',
 ];

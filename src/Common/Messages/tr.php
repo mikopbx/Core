@@ -1134,4 +1134,11 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
     'ex_enableRecording' => 'İzin vermek',
     'gs_PBXRecordCallsInner' => 'Dahili görüşmeleri kaydetme',
     'lic_ReloadPage' => 'Sayfayı yenile...',
+    'gs_Store6MonthsOfRecords' => '6 ay',
+    'gs_Store3YearsOfRecords' => '3 yıl',
+    'gs_PBXRecordSavePeriodLabel' => 'Konuşma kayıtlarının saklanma süresi',
+    'gs_StoreAllPossibleRecords' => '∞',
+    'gs_Store1MonthOfRecords' => '1 ay',
+    'gs_Store3MonthsOfRecords' => '3 ay',
+    'gs_Store1YearOfRecords' => '1 yıl',
 ];

@@ -1134,4 +1134,11 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá đ
     'ex_enableRecording' => 'Cho phép',
     'gs_PBXRecordCallsInner' => 'Ghi âm các cuộc hội thoại nội bộ',
     'lic_ReloadPage' => 'Làm mới trang...',
+    'gs_Store1MonthOfRecords' => '1 tháng',
+    'gs_Store3MonthsOfRecords' => '3 tháng',
+    'gs_Store6MonthsOfRecords' => '6 tháng',
+    'gs_Store1YearOfRecords' => '1 năm',
+    'gs_Store3YearsOfRecords' => '3 năm',
+    'gs_PBXRecordSavePeriodLabel' => 'Thời gian lưu trữ các bản ghi hội thoại',
+    'gs_StoreAllPossibleRecords' => '∞',
 ];

@@ -1134,4 +1134,11 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'ex_enableRecording' => 'Permitir',
     'gs_PBXRecordCallsInner' => 'Gravando conversas internas',
     'lic_ReloadPage' => 'Recarregue a página...',
+    'gs_Store1MonthOfRecords' => '1 mês',
+    'gs_Store3MonthsOfRecords' => '3 meses',
+    'gs_Store6MonthsOfRecords' => '6 meses',
+    'gs_Store1YearOfRecords' => '1 ano',
+    'gs_Store3YearsOfRecords' => '3 anos',
+    'gs_PBXRecordSavePeriodLabel' => 'O período de armazenamento dos registros de conversas',
+    'gs_StoreAllPossibleRecords' => '∞',
 ];

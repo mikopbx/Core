@@ -1134,4 +1134,11 @@ Se puede activar una vez, después de lo cual el cupón se canjea.
     'ex_CallRecording' => 'Grabacion de llamada',
     'gs_PBXRecordCallsInner' => 'Grabación de conversaciones internas',
     'lic_ReloadPage' => 'Recarga la página...',
+    'gs_Store3MonthsOfRecords' => '3 meses',
+    'gs_Store6MonthsOfRecords' => '6 meses',
+    'gs_Store1YearOfRecords' => '1 año',
+    'gs_Store3YearsOfRecords' => '3 años',
+    'gs_PBXRecordSavePeriodLabel' => 'El período de almacenamiento de los registros de conversación.',
+    'gs_StoreAllPossibleRecords' => '∞',
+    'gs_Store1MonthOfRecords' => '1 mes',
 ];

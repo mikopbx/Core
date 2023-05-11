@@ -1134,4 +1134,11 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'ex_enableRecording' => 'Tillåta',
     'gs_PBXRecordCallsInner' => 'Spela in interna konversationer',
     'lic_ReloadPage' => 'Uppdatera sidan...',
+    'gs_Store1MonthOfRecords' => '1 månad',
+    'gs_Store3MonthsOfRecords' => '3 månader',
+    'gs_Store6MonthsOfRecords' => '6 månader',
+    'gs_Store1YearOfRecords' => '1 år',
+    'gs_Store3YearsOfRecords' => '3 år',
+    'gs_PBXRecordSavePeriodLabel' => 'Perioden för lagring av konversationsposter',
+    'gs_StoreAllPossibleRecords' => '∞',
 ];

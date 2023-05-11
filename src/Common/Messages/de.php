@@ -1137,4 +1137,11 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
     'ex_enableRecording' => 'Erlauben',
     'gs_PBXRecordCallsInner' => 'Interne Gespräche aufzeichnen',
     'lic_ReloadPage' => 'Lade die Seite neu...',
+    'gs_Store1MonthOfRecords' => '1 Monat',
+    'gs_Store3MonthsOfRecords' => '3 Monate',
+    'gs_Store6MonthsOfRecords' => '6 Monate',
+    'gs_Store1YearOfRecords' => '1 Jahr',
+    'gs_Store3YearsOfRecords' => '3 Jahre',
+    'gs_PBXRecordSavePeriodLabel' => 'Der Zeitraum der Speicherung von Gesprächsaufzeichnungen',
+    'gs_StoreAllPossibleRecords' => '∞',
 ];

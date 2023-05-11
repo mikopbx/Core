@@ -1134,4 +1134,11 @@ return [
     'ex_enableRecording' => '允许',
     'gs_PBXRecordCallsInner' => '记录内部对话',
     'lic_ReloadPage' => '刷新页面...',
+    'gs_Store1MonthOfRecords' => '1个月',
+    'gs_Store3MonthsOfRecords' => '3个月',
+    'gs_Store6MonthsOfRecords' => '6个月',
+    'gs_Store1YearOfRecords' => '1年',
+    'gs_Store3YearsOfRecords' => '3年',
+    'gs_PBXRecordSavePeriodLabel' => '通话记录保存期限',
+    'gs_StoreAllPossibleRecords' => '∞',
 ];

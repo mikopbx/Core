@@ -1134,4 +1134,11 @@ Può essere attivato una volta, dopo di che il coupon viene riscattato.
     'ex_enableRecording' => 'Permettere',
     'gs_PBXRecordCallsInner' => 'Registrazione di conversazioni interne',
     'lic_ReloadPage' => 'Ricarica la pagina...',
+    'gs_Store3MonthsOfRecords' => '3 mesi',
+    'gs_Store6MonthsOfRecords' => '6 mesi',
+    'gs_Store1YearOfRecords' => '1 anno',
+    'gs_Store3YearsOfRecords' => '3 anni',
+    'gs_PBXRecordSavePeriodLabel' => 'Il periodo di archiviazione dei record di conversazione',
+    'gs_StoreAllPossibleRecords' => '∞',
+    'gs_Store1MonthOfRecords' => '1 mese',
 ];

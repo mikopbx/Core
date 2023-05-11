@@ -1134,4 +1134,11 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'ex_enableRecording' => 'İcazə verin',
     'gs_PBXRecordCallsInner' => 'Daxili danışıqların qeydə alınması',
     'lic_ReloadPage' => 'Səhifəni yeniləyin...',
+    'gs_Store1MonthOfRecords' => '1 ay',
+    'gs_Store1YearOfRecords' => '1 il',
+    'gs_Store3YearsOfRecords' => '3 il',
+    'gs_PBXRecordSavePeriodLabel' => 'Danışıq qeydlərinin saxlanma müddəti',
+    'gs_StoreAllPossibleRecords' => '∞',
+    'gs_Store3MonthsOfRecords' => '3 ay',
+    'gs_Store6MonthsOfRecords' => '6 ay',
 ];
