@@ -172,6 +172,7 @@ class CreateOutOfWorkPeriodsTest extends MikoPBXTestsBase
             'time_to'=>'',
             'action'=> 'extension',
             'extension'=>'201',
+            'allowRestriction'=> false,
             'audio_message_id'=>''
         ]];
 
@@ -185,6 +186,7 @@ class CreateOutOfWorkPeriodsTest extends MikoPBXTestsBase
             'time_to'=>'',
             'action'=> 'playmessage',
             'extension'=>'',
+            'allowRestriction'=> false,
             'audio_message_id'=>'1'
         ]];
 
