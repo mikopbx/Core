@@ -57,7 +57,7 @@ class SentryErrorLogger
             $pbxVersion    = str_replace("\n", "", file_get_contents('/etc/version', false));
             $this->release = "mikopbx@{$pbxVersion}";
         }
-        $this->enabled = file_exists('/tmp/sendmetrics');
+        $this->enabled = file_exists('/etc/sendmetrics');
     }
 
     /**

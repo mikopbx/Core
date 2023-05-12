@@ -25,7 +25,7 @@ const advicesWorker = {
 	$advicesBellButton: $('#show-advices-button'),
 	initialize() {
 		advicesWorker.showPreviousAdvice();
-		// Запустим получение новых советов
+		// Let's initiate the retrieval of new advices.
 		advicesWorker.restartWorker();
 		window.addEventListener('ConfigDataChanged', advicesWorker.cbOnDataChanged);
 	},
@@ -34,7 +34,7 @@ const advicesWorker = {
 		advicesWorker.worker();
 	},
 	/**
-	 * Обработка события смены языка или данных
+	 * Handling the event of language or data change.
 	 */
 	cbOnDataChanged() {
 		sessionStorage.removeItem(`previousAdvice${globalWebAdminLanguage}`);
@@ -42,7 +42,7 @@ const advicesWorker = {
 		setTimeout(advicesWorker.restartWorker,3000);
 	},
 	/**
-	 * Показывает старые советы до получения обновления со станции
+	 * Shows old advice until receiving an update from the station.
 	 */
 	showPreviousAdvice() {
 		const previousAdviceBell = sessionStorage.getItem(`previousAdviceBell${globalWebAdminLanguage}`);

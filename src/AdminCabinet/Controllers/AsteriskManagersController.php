@@ -75,7 +75,7 @@ class AsteriskManagersController extends BaseController
      *
      * @param string $id AsteriskManagerUsers record ID
      */
-    public function modifyAction($id = '')
+    public function modifyAction(string $id = '')
     {
         $manager = AsteriskManagerUsers::findFirstById($id);
         if ($manager === null) {
