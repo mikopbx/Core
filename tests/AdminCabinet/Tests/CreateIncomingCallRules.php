@@ -86,6 +86,7 @@ class CreateIncomingCallRules extends MikoPBXTestsBase
         $params[] = [
             [
                 'rulename'         => 'First rule',
+                'note'  => '',
                 'provider'     => 'none',
                 'providerName' => '',
                 'number'       => 74952293042,
@@ -97,6 +98,7 @@ class CreateIncomingCallRules extends MikoPBXTestsBase
         $params[] = [
             [
                 'rulename'         => 'Second rule',
+                'note'  => '',
                 'provider'     => 'SIP-PROVIDER-34F7CCFE873B9DABD91CC8D75342CB43',
                 'providerName' => '',
                 'number'       => 74952293043,
