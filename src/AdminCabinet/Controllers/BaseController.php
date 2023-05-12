@@ -19,13 +19,7 @@
 
 namespace MikoPBX\AdminCabinet\Controllers;
 
-use Exception;
-use GuzzleHttp;
-use MikoPBX\Common\Providers\SessionProvider;
 use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings};
-use MikoPBX\Common\Providers\ManagedCacheProvider;
-use MikoPBX\Core\System\Util;
-use Phalcon\Cache\Adapter\Redis;
 use Phalcon\Http\ResponseInterface;
 use Phalcon\Mvc\{Controller, View};
 use Phalcon\Tag;
@@ -48,8 +42,7 @@ class BaseController extends Controller
     protected string $actionName;
     protected string $controllerName;
     protected string $controllerNameUnCamelized;
-
-    public const WIKI_LINKS = '/var/etc/wiki-links-LANG.json';
+    protected bool $isExternalModuleController;
 
     /**
      * Initializes base class
@@ -59,74 +52,11 @@ class BaseController extends Controller
         $this->actionName = $this->dispatcher->getActionName();
         $this->controllerName = Text::camelize($this->dispatcher->getControllerName(), '_');
         $this->controllerNameUnCamelized = Text::uncamelize($this->controllerName, '-');
+        $this->isExternalModuleController = str_starts_with($this->dispatcher->getNamespaceName(), '\\Module');
 
         if ($this->request->isAjax() === false) {
             $this->prepareView();
         }
-    }
-
-    /**
-     * Customization of links to the wiki documentation for modules.
-     * @param array $links
-     * @return void
-     */
-    private function customModuleWikiLinks(array $links): void
-    {
-        $this->view->urlToWiki = $links[$this->language][$this->view->urlToWiki] ?? $this->view->urlToWiki;
-        $this->view->urlToSupport = $links[$this->language][$this->view->urlToSupport] ?? $this->view->urlToSupport;
-    }
-
-    /**
-     * Customization of links to the wiki documentation.
-     * @return void
-     */
-    private function customWikiLinks(): void
-    {
-        if (!$this->session->has(SessionController::SESSION_ID)) {
-            return;
-        }
-        /** @var Redis $cache */
-        $cache = $this->di->getShared(ManagedCacheProvider::SERVICE_NAME);
-        $links = $cache->get('WIKI_LINKS');
-
-        if ($links === null) {
-            $ttl = 86400;
-            $client = new GuzzleHttp\Client();
-            $url = 'https://raw.githubusercontent.com/mikopbx/Core/master/src/Common/WikiLinks/' . $this->language . '.json';
-            try {
-                $res = $client->request('GET', $url, ['timeout', 1, 'connect_timeout' => 1, 'read_timeout' => 1]);
-            } catch (Exception $e) {
-                $res = null;
-                $ttl = 3600;
-                if ($e->getCode() !== 404) {
-                    Util::sysLogMsg('BaseController', 'Error access to raw.githubusercontent.com');
-                }
-            }
-            $links = null;
-            if ($res && $res->getStatusCode() === 200) {
-                try {
-                    $links = json_decode($res->getBody(), true, 512, JSON_THROW_ON_ERROR);
-                } catch (Exception $e) {
-                    $ttl = 3600;
-                }
-            }
-            if (!is_array($links)) {
-                $links = [];
-            }
-            $cache->set('WIKI_LINKS', $links, $ttl);
-        }
-
-        $filename = str_replace('LANG', $this->language, self::WIKI_LINKS);
-        if (file_exists($filename)) {
-            try {
-                $local_links = json_decode(file_get_contents($filename), true, 512, JSON_THROW_ON_ERROR);
-                $links = $local_links;
-            } catch (\Exception $e) {
-                Util::sysLogMsg('BaseController', $e->getMessage());
-            }
-        }
-        $this->view->urlToWiki = $links[$this->view->urlToWiki] ?? $this->view->urlToWiki;
-        $this->view->urlToSupport = $links[$this->view->urlToSupport] ?? $this->view->urlToSupport;
     }
 
     /**
@@ -137,27 +67,24 @@ class BaseController extends Controller
     {
         date_default_timezone_set(PbxSettings::getValueByKey('PBXTimezone'));
         $this->view->PBXVersion = PbxSettings::getValueByKey('PBXVersion');
-        $this->view->MetaTegHeadDescription=$this->translation->_('MetategHeadDescription');
+        $this->view->MetaTegHeadDescription = $this->translation->_('MetategHeadDescription');
+        $this->view->isExternalModuleController = $this->isExternalModuleController;
         if ($this->session->has(SessionController::SESSION_ID)) {
             $this->view->PBXLicense = PbxSettings::getValueByKey('PBXLicense');
         } else {
             $this->view->PBXLicense = '';
         }
+        $this->view->urlToWiki = "https://wiki.mikopbx.com/{$this->controllerNameUnCamelized}";
+        if ($this->language === 'ru') {
+            $this->view->urlToSupport = 'https://www.mikopbx.ru/support/?fromPBX=true';
+        } else {
+            $this->view->urlToSupport = 'https://www.mikopbx.com/support/?fromPBX=true';
+        }
 
         $this->view->WebAdminLanguage = PbxSettings::getValueByKey('WebAdminLanguage');
         $this->view->AvailableLanguages = json_encode($this->elements->getAvailableWebAdminLanguages());
-        $this->view->submitMode = $this->session->get('SubmitMode')??'SaveSettings';
-
-        // Allow anonymous statistics collection for JS code
-        if (PbxSettings::getValueByKey('SendMetrics') === '1') {
-            touch('/tmp/sendmetrics');
-            $this->view->lastSentryEventId = SentrySdk::getCurrentHub()->getLastEventId();
-        } else {
-            if (file_exists('/tmp/sendmetrics')) {
-                unlink('/tmp/sendmetrics');
-            }
-            $this->view->lastSentryEventId = null;
-        }
+        $this->view->submitMode = $this->session->get('SubmitMode') ?? 'SaveSettings';
+        $this->view->lastSentryEventId = $this->setLastSentryEventId();
 
         $title = 'MikoPBX';
         switch ($this->actionName) {
@@ -175,46 +102,26 @@ class BaseController extends Controller
         $this->view->t = $this->translation;
         $this->view->debugMode = $this->config->path('adminApplication.debugMode');
         $this->view->urlToLogo = $this->url->get('assets/img/logo-mikopbx.svg');
-        $this->view->urlToWiki = "https://wiki.mikopbx.com/{$this->controllerNameUnCamelized}";
-        if ($this->language === 'ru') {
-            $this->view->urlToSupport = 'https://www.mikopbx.ru/support/?fromPBX=true';
-        } else {
-            $this->view->urlToSupport = 'https://www.mikopbx.com/support/?fromPBX=true';
-        }
         $this->view->urlToController = $this->url->get($this->controllerNameUnCamelized);
         $this->view->represent = '';
 
-        $isExternalModuleController = str_starts_with($this->dispatcher->getNamespaceName(), '\\Module');
-
         // Add module variables into view
-        if ($isExternalModuleController) {
-            $moduleLinks = [];
+        if ($this->isExternalModuleController) {
             /** @var PbxExtensionModules $module */
             $module = PbxExtensionModules::findFirstByUniqid($this->controllerName);
             if ($module === null) {
                 $module = new PbxExtensionModules();
                 $module->disabled = '1';
                 $module->name = 'Unknown module';
-            } else {
-                try {
-                    $links = json_decode($module->wiki_links, true, 512, JSON_THROW_ON_ERROR);
-                    if (is_array($links)) {
-                        $moduleLinks = $links;
-                    }
-                } catch (\JsonException $e) {
-                    Util::sysLogMsg(__CLASS__, $e->getMessage());
-                }
             }
             $this->view->setVar('module', $module);
-            $this->customModuleWikiLinks($moduleLinks);
-
             // If it is module we have to use another volt template
+            $this->view->setVar('globalModuleUniqueId', $module->uniqid);
             $this->view->setTemplateAfter('modules');
         } else {
-            $this->customWikiLinks();
+            $this->view->setVar('globalModuleUniqueId', '');
             $this->view->setTemplateAfter('main');
         }
-
     }
 
     /**
@@ -222,7 +129,7 @@ class BaseController extends Controller
      *
      * @return \Phalcon\Http\ResponseInterface
      */
-    public function afterExecuteRoute():ResponseInterface
+    public function afterExecuteRoute(): ResponseInterface
     {
         if ($this->request->isAjax() === true) {
             $this->view->setRenderLevel(View::LEVEL_NO_RENDER);
@@ -230,22 +137,19 @@ class BaseController extends Controller
             $data = $this->view->getParamsToView();
 
             /* Set global params if is not set in controller/action */
-            if (is_array($data) && isset($data['raw_response'])) {
+            if (isset($data['raw_response'])) {
                 $result = $data['raw_response'];
-            } elseif (is_array($data)) {
-                $data['success'] = array_key_exists('success', $data) ? $data['success'] : true;
-                $data['reload'] = array_key_exists('reload', $data) ? $data['reload'] : false;
+            } else {
+                $data['success'] = $data['success'] ?? true;
+                $data['reload'] = $data['reload'] ?? false;
                 $data['message'] = $data['message'] ?? $this->flash->getMessages();
 
                 // Let's add information about the last error to display a dialog window for the user.
-                if (file_exists('/tmp/sendmetrics')) {
+                if (file_exists('/etc/sendmetrics')) {
                     $data['lastSentryEventId'] = SentrySdk::getCurrentHub()->getLastEventId();
                 }
                 $result = json_encode($data);
-            } else {
-                $result = '';
             }
-
             $this->response->setContent($result);
         }
 
@@ -323,5 +227,23 @@ class BaseController extends Controller
         } else {
             return ($a < $b) ? -1 : 1;
         }
+    }
+
+    /**
+     * Prepares Sentry parameters
+     *
+     * @return \Sentry\EventId|null
+     */
+    private function setLastSentryEventId(): ?\Sentry\EventId
+    {
+        $result = null;
+        // Allow anonymous statistics collection for JS code
+        if (PbxSettings::getValueByKey('SendMetrics') === '1') {
+            touch('/etc/sendmetrics');
+            $result = SentrySdk::getCurrentHub()->getLastEventId();
+        } elseif (file_exists('/etc/sendmetrics')) {
+            unlink('/etc/sendmetrics');
+        }
+        return $result;
     }
 }

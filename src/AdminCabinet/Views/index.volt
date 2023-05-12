@@ -24,6 +24,7 @@
 		var globalRootUrl = '{{ url() }}';
 		var globalDebugMode = '{{ debugMode }}';
 		var globalPBXLicense = '{{ PBXLicense }}';
+        var globalModuleUniqueId = '{{ globalModuleUniqueId }}';
 		var globalLastSentryEventId = '{{ lastSentryEventId }}';
 		var globalWebAdminLanguage = '{{ WebAdminLanguage }}';
 		var globalAvailableLanguages = '{{ AvailableLanguages }}';

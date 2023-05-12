@@ -139,7 +139,7 @@ class AssetProvider implements ServiceProviderInterface
      */
     private function makeSentryAssets(): void
     {
-        if (file_exists('/tmp/sendmetrics')) {
+        if (file_exists('/etc/sendmetrics')) {
             $this->headerCollectionSentryJS->addjs(
                 'assets/js/vendor/sentry/bundle.min.js',
                 true
@@ -194,7 +194,7 @@ class AssetProvider implements ServiceProviderInterface
             ->addJs('js/vendor/semantic/transition.min.js', true)
             ->addJs('js/vendor/semantic/checkbox.min.js', true);
 
-        // Если пользователь залогинился, сформируем необходимые CSS кеши
+        // If the user is logged in, let's generate the required CSS caches.
         if ($session->has(SessionController::SESSION_ID)) {
             $this->semanticCollectionCSS
                 ->addCss('css/vendor/semantic/menu.min.css', true)
@@ -230,7 +230,8 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/main/user-message.js', true)
                 ->addJs('js/pbx/Extensions/extensions.js', true)
                 ->addJs('js/pbx/PbxExtensionModules/pbx-extension-menu-addition.js', true)
-                ->addJs('js/pbx/TopMenuSearch/top-menu-search.js', true);
+                ->addJs('js/pbx/TopMenuSearch/top-menu-search.js', true)
+                ->addJs('js/pbx/WikiLinksReplacement/wiki-links-replacement-worker.js', true);
 
             // We can disable module status toggle from module controller, using the showModuleStatusToggle variable
             $isExternalModulePage = str_starts_with($dispatcher->getNamespaceName(), '\\Module');
