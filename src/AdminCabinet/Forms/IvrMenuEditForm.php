@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -106,7 +106,11 @@ class IvrMenuEditForm extends Form
         $this->add(new Check('allow_enter_any_internal_extension', $cheskarr));
 
         // Description
-        $rows = max(round(strlen($entity->description) / 95), 2);
-        $this->add(new TextArea('description', ["rows" => $rows]));
+        $rows = 1;
+        $strings = explode("\n", $entity->description);
+        foreach ($strings as $string){
+            $rows+=round(strlen($string) / 65);
+        }
+        $this->add(new TextArea('description', ["rows" => max($rows,2)]));
     }
 }

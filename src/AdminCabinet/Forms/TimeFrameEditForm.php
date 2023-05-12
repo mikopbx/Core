@@ -103,8 +103,12 @@ class TimeFrameEditForm extends Form
                     $this->add($action);
                     break;
                 case 'description' :
-                    $rows = max(round(strlen($value) / 95), 2);
-                    $this->add(new TextArea($key, ["rows" => $rows]));
+                    $rows = 1;
+                    $strings = explode("\n", $value);
+                    foreach ($strings as $string){
+                        $rows+=round(strlen($string) / 65);
+                    }
+                    $this->add(new TextArea($key, ["rows" => max($rows,2)]));
                     break;
 
                 default :

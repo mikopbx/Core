@@ -77,6 +77,11 @@ class AsteriskManagerEditForm extends Form
         $this->add($networkfilterid);
 
         // Description
-        $this->add(new TextArea('description', ["rows" => 2]));
+        $rows = 1;
+        $strings = explode("\n", $entity->description);
+        foreach ($strings as $string){
+            $rows+=round(strlen($string) / 65);
+        }
+        $this->add(new TextArea('description', ["rows" => max($rows,2)]));
     }
 }

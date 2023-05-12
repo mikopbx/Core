@@ -44,8 +44,13 @@ class CustomFilesEditForm extends Form
                     $this->add(new Hidden($key));
                     break;
                 case "description":
-                    $rows = max(round(strlen($value) / 95), 2);
-                    $this->add(new TextArea($key, ["rows" => $rows]));
+                    // Description
+                    $rows = 1;
+                    $strings = explode("\n", $value);
+                    foreach ($strings as $string){
+                        $rows+=round(strlen($string) / 65);
+                    }
+                    $this->add(new TextArea('description', ["rows" => max($rows,2)]));
                     break;
                 case "mode":
                     $select = new Select(

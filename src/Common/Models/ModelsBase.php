@@ -321,8 +321,8 @@ class ModelsBase extends Model
                 $name = '<i class="map signs icon"></i> ';
                 if (empty($this->id)) {
                     $name .= $this->t('mo_NewElementIncomingRoutingTable');
-                } elseif ( ! empty($this->note)) {
-                    $name .= $this->t('repIncomingRoutingTable', ['represent' => $this->note]);
+                } elseif ( ! empty($this->rulename)) {
+                    $name .= $this->t('repIncomingRoutingTable', ['represent' => $this->rulename]);
                 } else {
                     $name .= $this->t('repIncomingRoutingTableNumber', ['represent' => $this->id]);
                 }

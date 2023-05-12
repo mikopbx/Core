@@ -85,7 +85,7 @@ class CreateIncomingCallRules extends MikoPBXTestsBase
         $params   = [];
         $params[] = [
             [
-                'note'         => 'First rule',
+                'rulename'         => 'First rule',
                 'provider'     => 'none',
                 'providerName' => '',
                 'number'       => 74952293042,
@@ -96,7 +96,7 @@ class CreateIncomingCallRules extends MikoPBXTestsBase
 
         $params[] = [
             [
-                'note'         => 'Second rule',
+                'rulename'         => 'Second rule',
                 'provider'     => 'SIP-PROVIDER-34F7CCFE873B9DABD91CC8D75342CB43',
                 'providerName' => '',
                 'number'       => 74952293043,
@@ -107,7 +107,15 @@ class CreateIncomingCallRules extends MikoPBXTestsBase
 
         $params[] = [
             [
-                'note'         => 'Rule for test provider',
+                'rulename'     => 'Rule for test provider',
+                'note'         => '1. The client calls in the company
+2. The client hears a voice message
+3. The client dials any extension which exists on PBX (201, 202, 203, 2001, 2002). This setup is called "Resolve extension dialing of any extension".
+4. There is waiting of 7 seconds. 
+5. The client dials digit 1 from phone. The call goes to sales department. (Call queue with extension 2001).
+6. The client dials digit 2 from phone. The call goes to technical support department (Call queue with extension 2002).
+7. The client gathers nothing or incorrectly dials number. The repeated voice notification is lost. The client enters number again. 
+8. The maximum number of attempts of input of number is equal to 5. Attempts come to the end. The call goes to number by default.',
                 'provider'     => '',
                 'providerName' => 'Provider for CTI tests',
                 'number'       => '',

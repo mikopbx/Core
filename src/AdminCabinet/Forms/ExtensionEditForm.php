@@ -198,25 +198,25 @@ class ExtensionEditForm extends Form
         $this->add(new Numeric('qualifyfreq', ["value" => $sip->qualifyfreq, 'autocomplete' => 'off']));
 
         // Manualattributes
-        $rows = max(
-            round(strlen($sip->getManualAttributes()) / 95),
-            2
-        );
-        $this->add(
-            new TextArea(
-                'sip_manualattributes',
-                ["value" => $sip->getManualAttributes(), "rows" => $rows]
-            )
-        );
+        $rows = 1;
+        $strings = explode("\n", $sip->getManualAttributes());
+        foreach ($strings as $string){
+            $rows+=round(strlen($string) / 80);
+        }
+        $this->add(new TextArea('sip_manualattributes', [
+            "value" => $sip->getManualAttributes(),
+            "rows" => max($rows,2)]));
 
         // Description
         $this->add(new Text('sip_description', ["value" => $sip->description, 'autocomplete' => 'off']));
 
         // EXTERNAL Extension
         $this->add(new Text('mobile_number', ["value" => $options['external_extension']->number, 'autocomplete' => 'off']));
+
         // Uniqid
         $externalPhones = $options['external_extension']->ExternalPhones??new ExternalPhones();
         $this->add(new Hidden('mobile_uniqid', ["value" => $externalPhones->uniqid]));
+
         // Disabled
         $this->add(
             new Hidden(

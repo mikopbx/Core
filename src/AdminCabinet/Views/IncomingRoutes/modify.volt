@@ -6,6 +6,11 @@
 {{ form.render('action') }}
 
 <div class="ten wide field">
+    <label>{{ t._('ir_RuleName') }}</label>
+    {{ form.render('rulename') }}
+</div>
+
+<div class="ten wide field">
     <label>{{ t._('ir_Note') }}</label>
     {{ form.render('note') }}
 </div>

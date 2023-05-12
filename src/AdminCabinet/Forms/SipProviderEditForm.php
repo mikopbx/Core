@@ -142,15 +142,6 @@ class SipProviderEditForm extends Form
         $this->add(new Numeric('port'));
         $this->add(new Text('outbound_proxy'));
 
-        // Nat
-        $arrNatType = [
-            'force_rport,comedia' => 'force_rport, comedia',
-            'force_rport'         => 'force_rport',
-            'comedia'             => 'comedia',
-            'auto_force_rport'    => 'auto_force_rport',
-            'no'                  => 'no',
-        ];
-
         // Qualify
         $cheskarr = ['value' => null];
         if ($entity->qualify) {
@@ -191,7 +182,12 @@ class SipProviderEditForm extends Form
         $this->add(new Check('receive_calls_without_auth', $cheskarr));
 
         // Manualattributes
-        $rows = max(round(strlen($entity->manualattributes) / 95), 2);
-        $this->add(new TextArea('manualattributes', ["rows" => $rows]));
+        $rows = 1;
+        $strings = explode("\n", $entity->getManualAttributes());
+        foreach ($strings as $string){
+            $rows+=round(strlen($string) / 65);
+        }
+        $this->add(new TextArea('manualattributes', ["rows" => max($rows,2)]));
+
     }
 }

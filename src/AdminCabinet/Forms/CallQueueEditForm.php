@@ -246,7 +246,11 @@ class CallQueueEditForm extends Form
         $this->add(new Text('callerid_prefix'));
 
         // Description
-        $rows = max(round(strlen($entity->description) / 95), 2);
-        $this->add(new TextArea('description', ["rows" => $rows]));
+        $rows = 1;
+        $strings = explode("\n", $entity->description);
+        foreach ($strings as $string){
+            $rows+=round(strlen($string) / 65);
+        }
+        $this->add(new TextArea('description', ["rows" => max($rows,2)]));
     }
 }

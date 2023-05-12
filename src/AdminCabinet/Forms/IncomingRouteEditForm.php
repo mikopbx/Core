@@ -52,7 +52,12 @@ class IncomingRouteEditForm extends Form
         $this->add(new Text('number'));
 
         // Note
-        $this->add(new TextArea('note', ['rows' => 2]));
+        $rows = 1;
+        $strings = explode("\n", $entity->note);
+        foreach ($strings as $string){
+            $rows+=round(strlen($string) / 65);
+        }
+        $this->add(new TextArea('note', ["rows" => max($rows,2)]));
 
         // Timeout
         $this->add(new Numeric('timeout', ['maxlength' => 3, 'style' => 'width: 80px;', 'defaultValue' => 120]));

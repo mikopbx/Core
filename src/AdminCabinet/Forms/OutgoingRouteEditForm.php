@@ -46,8 +46,12 @@ class OutgoingRouteEditForm extends Form
         $this->add(new Text('rulename'));
 
         // Note
-        $rows = max(round(strlen($entity->note) / 95), 2);
-        $this->add(new TextArea('note', ["rows" => $rows]));
+        $rows = 1;
+        $strings = explode("\n", $entity->note);
+        foreach ($strings as $string){
+            $rows+=round(strlen($string) / 65);
+        }
+        $this->add(new TextArea('note', ["rows" => max($rows,2)]));
 
         // Numberbeginswith
         $this->add(new Text('numberbeginswith'));
