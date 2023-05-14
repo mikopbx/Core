@@ -3,14 +3,14 @@
 {% endif %}
     {% for record in ivrmenu %}
         {% if loop.first %}
-            <table class="ui selectable compact table" id="ivr-menu-table">
+            <table class="ui selectable compact unstackable table" id="ivr-menu-table">
             <thead>
             <tr>
                 <th class="centered">{{ t._('iv_Extension') }}</th>
                 <th>{{ t._('iv_Name') }}</th>
                 <th>{{ t._('iv_Actions') }}</th>
-                <th>{{ t._('iv_TimeoutExtension') }}</th>
-                <th>{{ t._('iv_Note') }}</th>
+                <th class="hide-on-mobile">{{ t._('iv_TimeoutExtension') }}</th>
+                <th class="hide-on-mobile">{{ t._('iv_Note') }}</th>
                 <th></th>
             </tr>
             </thead>
@@ -28,14 +28,14 @@
                     {% endfor %}
                 </small>
             </td>
-            <td class="collapsing">
+            <td class="hide-on-mobile collapsing">
                 <small>
                     {% if record['timeoutExtension'] %}
                         {{ record['timeoutExtension'] }}
                     {% endif %}
                 </small>
             </td>
-            <td>
+            <td class="hide-on-mobile">
                 {% if not (record['description'] is empty) %}
                     <div class="ui basic icon button" data-content="{{ record['description'] }}" data-position="top right"
                          data-variation="wide">

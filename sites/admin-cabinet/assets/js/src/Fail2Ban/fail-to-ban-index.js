@@ -83,7 +83,7 @@ const fail2BanIndex = {
 			return;
 		}
 		let htmlTable = `<h2 class="ui header">${globalTranslate.f2b_TableBannedHeader}</h2>`;
-		htmlTable += '<table class="ui very compact table">';
+		htmlTable += '<table class="ui very compact unstackable table">';
 		htmlTable += '<thead>';
 		htmlTable += `<th>${globalTranslate.f2b_Reason}</th>`;
 		htmlTable += `<th>${globalTranslate.f2b_IpAddres}</th>`;

@@ -36,7 +36,7 @@
 
 {% for module in modulelist %}
     {% if loop.first %}
-        <table class="ui selectable table" id="modules-table">
+        <table class="ui selectable unstackable table" id="modules-table">
         <thead>
         <tr>
             <th></th>
@@ -73,7 +73,7 @@
 <div class="ui hidden divider"></div>
 <div id="online-updates-block" style="display: none">
     <h3 class="ui header">{{ t._('ext_AvailableModules') }}</h3>
-    <table class="ui celled table" id="new-modules-table">
+    <table class="ui celled unstackable table" id="new-modules-table">
         <thead>
         <tr>
             <th>{{ t._('ext_TableColumnDescription') }}</th>

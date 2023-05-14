@@ -7,29 +7,33 @@
     <i class="phone icon"></i> {{ extension }}
 </div>
 <h3 class="ui dividing header ">{{ t._("cq_QueueSetup") }}</h3>
-<div class="ten wide field">
+<div class="wide field">
     <label>{{ t._('cq_Name') }}</label>
-    {{ form.render('name') }}
+    <div class="twelve wide field">
+        {{ form.render('name') }}
+    </div>
 </div>
 
-<div class="ten wide field">
+<div class="field">
     <label>{{ t._('cq_Description') }}</label>
-    {{ form.render('description') }}
+    <div class="twelve wide field">
+        {{ form.render('description') }}
+    </div>
 </div>
 
 <h3 class="ui dividing header ">{{ t._("cq_QueueMembers") }}</h3>
-
-<div class="six wide field">
+<div class="field">
     <label>{{ t._('cq_SelectAgentForAddToQueue') }}</label>
+<div class="six wide field">
     <div class="ui selection dropdown search" id="extensionselect">
         <div class="default text">{{ t._('ex_SelectNumber') }}</div>
         <i class="dropdown icon"></i>
     </div>
 </div>
+</div>
 <div class="ui basic compact segment">
-    <table class="ui selectable small very compact table" id="extensionsTable">
+    <table class="ui selectable small very compact unstackable table" id="extensionsTable">
         <tbody>
-
         {% for extension in extensionsTable %}
             <tr class="member-row" id="{{ extension['number'] }}">
                 <td class="dragHandle"><i class="sort grey icon"></i></td>
@@ -60,34 +64,39 @@
         {{ t._('AdvancedOptions') }}
     </div>
 
-    <div class=" content field">
-        <div class="six wide field">
+    <div class="content">
+        <div class="field">
             <label>{{ t._('cd_Extensions') }}</label>
-            <div class="ui icon input extension">
-                <i class="search icon"></i>
-                {{ form.render('extension') }}
-            </div>
-
-            <div class="ui top pointing red label hidden" id="extension-error">
-                {{ t._("cq_ThisNumberIsNotFree") }}
+            <div class="six wide field">
+                <div class="ui icon input extension">
+                    <i class="search icon"></i>
+                    {{ form.render('extension') }}
+                </div>
+                <div class="ui top pointing red label hidden" id="extension-error">
+                    {{ t._("cq_ThisNumberIsNotFree") }}
+                </div>
             </div>
         </div>
+
         <div class="field">
             <label>{{ t._('cq_CallerIDPrefix') }}</label>
-            {{ form.render('callerid_prefix') }}
+            <div class="six wide field">
+                {{ form.render('callerid_prefix') }}
+            </div>
         </div>
 
         <div class="ui hidden divider"></div>
         <h3 class="ui dividing header ">{{ t._("cq_QueueMemberSettings") }}</h3>
 
         <div class="inline field">
-            <label>{{ t._('cq_SecRingToEachMembers') }}</label>
             {{ form.render('seconds_to_ring_each_member') }}
+            <label>{{ t._('cq_SecRingToEachMembers') }}</label>
+
         </div>
 
         <div class="inline field">
-            <label>{{ t._('cq_WrapupTime') }}</label>
             {{ form.render('seconds_for_wrapup') }}
+            <label>{{ t._('cq_WrapupTime') }}</label>
         </div>
 
         <div class="field">
@@ -125,8 +134,8 @@
         {{ partial("partials/playAddNewSound", ['label': t._('cq_PereodicAnonceSoundFile'), 'id':'periodic_announce_sound_id', 'fieldClass':'eleven wide field', 'fieldId':'']) }}
 
         <div class="inline field">
-            <label>{{ t._('cq_PereodicAnonceFrequency') }}</label>
             {{ form.render('periodic_announce_frequency') }}
+            <label>{{ t._('cq_PereodicAnonceFrequency') }}</label>
         </div>
 
         <div class="ui hidden divider"></div>

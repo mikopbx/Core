@@ -3,12 +3,12 @@
 {% endif %}
     {% for record in indexTable %}
         {% if loop.first %}
-            <table class="ui structured very compact table" id="time-frames-table">
+            <table class="ui structured very compact unstackable table" id="time-frames-table">
             <thead>
             <tr>
                 <th></th>
                 <th>{{ t._('tf_TableColumnDatePeriod') }}</th>
-                <th>{{ t._('tf_TableColumnNotes') }}</th>
+                <th class="hide-on-mobile">{{ t._('tf_TableColumnNotes') }}</th>
                 <th class="right aligned">{{ t._('tf_TableColumnAction') }}</th>
                 <th></th>
             </tr>
@@ -53,7 +53,7 @@
                 {% endif %}
                 </div>
             </td>
-            <td class="collapsing">
+            <td class="collapsing hide-on-mobile">
                 {% if not (record['description'] is empty) %}
                     <div class="ui basic icon button" data-variation="wide" data-content="{{ record['description'] }}" data-position="top right">
                         <i class="file text  icon"></i>

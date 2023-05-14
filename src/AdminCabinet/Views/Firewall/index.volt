@@ -29,7 +29,7 @@
     {% endif %}
     {% for rule in rulesTable %}
         {% if loop.first %}
-            <table class="ui selectable very basic compact table" id="firewall-table">
+            <table class="ui selectable very basic compact unstackable table" id="firewall-table">
             <thead>
             <tr>
                 <th></th>

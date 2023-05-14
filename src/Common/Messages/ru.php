@@ -1048,6 +1048,7 @@ return [
     'lang_HelpWithTranslateIt' => 'Помочь с переводом MikoPBX',
     'topMenu_Support' => 'Поддержка',
     'topMenu_SearchPlaceholder' => 'Введите поисковый запрос',
+    'topMenu_SidebarButton' => 'Меню',
     'MIKO_PBX' => 'МИКО PBX',
     'PBX is running in Live or Recovery mode' => 'Система загружена в режиме восстановления',
     'LAN IP address assigned via DHCP' => 'LAN IP назначен через DHCP сервер',

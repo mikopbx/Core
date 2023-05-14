@@ -3,12 +3,12 @@
 {% endif %}
     {% for record in apps %}
         {% if loop.first %}
-            <table class="ui selectable compact table" id="custom-applications-table">
+            <table class="ui selectable compact unstackable table" id="custom-applications-table">
             <thead>
             <tr>
                 <th>{{ t._('da_ColumnExtension') }}</th>
                 <th>{{ t._('da_ColumnName') }}</th>
-                <th>{{ t._('da_ColumnNote') }}</th>
+                <th >{{ t._('da_ColumnNote') }}</th>
                 <th></th>
             </tr>
             </thead>

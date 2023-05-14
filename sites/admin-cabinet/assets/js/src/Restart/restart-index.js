@@ -52,7 +52,7 @@ const currentCallsWorker = {
 		if (response === false || typeof response !== 'object') return;
 		const respObject = response;
 		let resultUl = `<h2 class="ui header">${globalTranslate.rs_CurrentCalls}</h2>`;
-		resultUl += '<table class="ui very compact table">';
+		resultUl += '<table class="ui very compact unstackable table">';
 		resultUl += '<thead>';
 		resultUl += `<th></th><th>${globalTranslate.rs_DateCall}</th><th>${globalTranslate.rs_Src}</th><th>${globalTranslate.rs_Dst}</th>`;
 		resultUl += '</thead>';

@@ -105,11 +105,13 @@
             <i class="icon dropdown"></i>
             {{ t._('AdvancedOptions') }}
         </div>
-        <div class=" content field">
+        <div class="content">
             <h3 class="ui dividing header ">{{ t._("ex_MobileSettings") }}</h3>
-            <div class="five wide field">
+            <div class="field">
                 <label>{{ t._('ex_MobileDialstring') }}</label>
-                {{ form.render('mobile_dialstring') }}
+                <div class="five wide field">
+                    {{ form.render('mobile_dialstring') }}
+                </div>
             </div>
             <h3 class="ui dividing header ">{{ t._("gs_PBXRecordCalls") }}</h3>
             <div class="ten wide field">
@@ -121,15 +123,21 @@
             <h3 class="ui dividing header ">{{ t._("ex_SipSettings") }}</h3>
             <div class="field">
                 <label>{{ t._('ex_DTMFMode') }}</label>
-                {{ form.render('sip_dtmfmode') }}
+                <div class="five wide field">
+                    {{ form.render('sip_dtmfmode') }}
+                </div>
             </div>
             <div class="field">
                 <label>{{ t._('ex_Transport') }}</label>
-                {{ form.render('sip_transport') }}
+                <div class="five wide field">
+                    {{ form.render('sip_transport') }}
+                </div>
             </div>
             <div class="field">
                 <label>{{ t._('ex_NetworkFilter') }}</label>
-                {{ form.render('sip_networkfilterid') }}
+                <div class="ten wide field">
+                    {{ form.render('sip_networkfilterid') }}
+                </div>
             </div>
             <h3 class="ui dividing header ">{{ t._("ex_ManualAdditionalAttributes") }}</h3>
             <div class="field">

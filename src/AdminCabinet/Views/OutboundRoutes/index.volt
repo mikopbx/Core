@@ -8,14 +8,14 @@
 
     {% for rule in routingTable %}
         {% if loop.first %}
-            <table class="ui selectable compact table" id="routingTable">
+            <table class="ui selectable compact unstackable table" id="routingTable">
             <thead>
             <tr>
                 <th></th>
                 <th>{{ t._('or_TableColumnName') }}</th>
                 <th>{{ t._('or_TableColumnRule') }}</th>
-                <th>{{ t._('or_TableColumnProvider') }}</th>
-                <th>{{ t._('or_TableColumnNote') }}</th>
+                <th class="hide-on-mobile">{{ t._('or_TableColumnProvider') }}</th>
+                <th class="hide-on-mobile">{{ t._('or_TableColumnNote') }}</th>
                 <th></th>
             </tr>
             </thead>
@@ -43,8 +43,8 @@
                      {% endif %}
                 {% endif %}
             </td>
-            <td class="{% if rule['disabled']==1 %}disabled{% endif %}">{{ rule['provider'] }}</td>
-            <td class="{% if rule['disabled']==1 %}disabled{% endif %}">
+            <td class="{% if rule['disabled']==1 %}disabled{% endif %} hide-on-mobile">{{ rule['provider'] }}</td>
+            <td class="{% if rule['disabled']==1 %}disabled{% endif %} hide-on-mobile">
                 {% if not (rule['note'] is empty) %}
                     <div class="ui basic icon button" data-content="{{ rule['note'] }}" data-variation="wide"
                          data-position="top right">

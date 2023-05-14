@@ -25,16 +25,16 @@
 
     {% for provider in providerlist %}
         {% if loop.first %}
-            <table class="ui selectable table" id="providers-table">
+            <table class="ui selectable unstackable table" id="providers-table">
             <thead>
             <tr>
                 <th></th>
                 <th class="center aligned"></th>
                 <th>{{ t._('pr_TableColumnProviderName') }}</th>
-                <th>{{ t._('pr_TableColumnProviderType') }}</th>
+                <th class="hide-on-mobile">{{ t._('pr_TableColumnProviderType') }}</th>
                 <th>{{ t._('pr_TableColumnProviderHostName') }}</th>
-                <th>{{ t._('pr_TableColumnProviderLogin') }}</th>
-                <th colspan="2"></th>
+                <th class="hide-on-mobile">{{ t._('pr_TableColumnProviderLogin') }}</th>
+                <th></th>
             </tr>
             </thead>
             <tbody>
@@ -44,7 +44,7 @@
         <tr class="provider-row" id="{{ provider['uniqid'] }}" data-value="{{ provider['type']|lower }}"
             data-links="{{ provider['existLinks']|lower }}">
 
-            <td class="no-modify-columns">
+            <td class="no-modify-columns collapsing">
                 <div class="ui  toggle checkbox {{ modifyClass }}">
                     <input type="checkbox" {% if provider['status']!='disabled' %} checked {% endif %}> <label></label>
                 </div>
@@ -53,9 +53,9 @@
                         class="spinner loading icon"></i></td>
             <td class="{{ provider['status'] }} disability collapsing">{{ provider['name'] }} <br><span
                         class="features failure"></span></td>
-            <td class="{{ provider['status'] }} disability">{{ provider['type'] }}</td>
+            <td class="{{ provider['status'] }} disability hide-on-mobile">{{ provider['type'] }}</td>
             <td class="{{ provider['status'] }} disability">{{ provider['hostname'] }}</td>
-            <td class="{{ provider['status'] }} disability">{{ provider['username'] }}</td>
+            <td class="{{ provider['status'] }} disability hide-on-mobile">{{ provider['username'] }}</td>
             {{ partial("partials/tablesbuttons",
                 [
                     'id': provider['uniqid'],

@@ -28,6 +28,26 @@ body {
     background: #f1f4f5;
 }
 
+/* Search field */
+#top-menu-search {
+    min-width: 500px;
+}
+
+/**
+Add gap on middle screen size
+ */
+@media only screen and (min-width: 600px) and (max-width: 1400px) {
+    #main {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+}
+
+/* Sidebar menu */
+#sidebar-menu-button {
+    display: none;
+}
+
 #sidebar-menu {
     top: 40px;
     padding-bottom: 50px;
@@ -35,6 +55,22 @@ body {
 
 .ui.sidebar.visible ~ .pusher {
     width: calc(100% - 260px);
+}
+
+@media only screen and (max-width: 768px) {
+    #top-left-logo {
+        display: none;
+    }
+    #sidebar-menu-button {
+        display: block;
+    }
+    #top-menu-search {
+        min-width: 300px;
+    }
+    #main {
+        padding-left: 5px;
+        padding-right: 5px;
+    }
 }
 
 /* Drag and prop tables point view BEGIN*/
@@ -219,11 +255,6 @@ span.features {
     min-width: 400px;
 }
 
-/* Search field */
-#top-menu-search {
-    min-width: 500px;
-}
-
 /* PBX Version */
 div#pbx-version {
     position: fixed;
@@ -381,15 +412,6 @@ Delete button on little extensions table
     font-size: 0.8rem;
 }
 
-/**
-Add gap on middle screen size
- */
-@media only screen and (min-width: 600px) and (max-width: 1400px) {
-    #main {
-        padding-left: 10px;
-        padding-right: 10px;
-    }
-}
 
 /**
 Blur passwords, secrets

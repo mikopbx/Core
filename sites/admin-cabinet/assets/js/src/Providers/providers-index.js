@@ -95,8 +95,8 @@ const providers = {
 			lengthChange: false,
 			paging: false,
 			columns: [
-				{ "width": "0"},
-				{ "width": "0"},
+				null,
+				null,
 				null,
 				{ "width": "0"},
 				null,
