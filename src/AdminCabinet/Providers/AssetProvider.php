@@ -448,6 +448,9 @@ class AssetProvider implements ServiceProviderInterface
             $this->footerCollectionJS
                 ->addJs('js/pbx/main/form.js', true)
                 ->addJs('js/pbx/Session/login-form.js', true);
+        } elseif ($action === 'end') {
+            $this->footerCollectionJS
+                ->addJs('js/pbx/Session/session-end.js', true);
         }
     }
 
