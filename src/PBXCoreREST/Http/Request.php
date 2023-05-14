@@ -90,7 +90,7 @@ class Request extends PhRequest
     public function thisIsModuleNoAuthRequest(Micro $api): bool
     {
         $pattern  = $api->request->getURI(true);
-        $additionalRoutes = PBXConfModulesProvider::hookModulesMethodWithArrayResult(RestAPIConfigInterface::GET_PBXCORE_REST_ADDITIONAL_ROUTES);
+        $additionalRoutes = PBXConfModulesProvider::hookModulesMethod(RestAPIConfigInterface::GET_PBXCORE_REST_ADDITIONAL_ROUTES);
         foreach ($additionalRoutes as $additionalRoutesFromModule){
             foreach ($additionalRoutesFromModule as $additionalRoute) {
                 $noAuth = $additionalRoute[5] ?? false;

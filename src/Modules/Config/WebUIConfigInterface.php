@@ -21,7 +21,10 @@ namespace MikoPBX\Modules\Config;
 
 use Phalcon\Acl\Adapter\Memory as AclList;
 use Phalcon\Assets\Manager;
+use Phalcon\Forms\Form;
+use Phalcon\Mvc\Controller;
 use Phalcon\Mvc\Router;
+use Phalcon\Mvc\View;
 
 interface WebUIConfigInterface
 {
@@ -34,6 +37,14 @@ interface WebUIConfigInterface
     public const ON_AFTER_ROUTES_PREPARED = 'onAfterRoutesPrepared';
 
     public const ON_AFTER_ASSETS_PREPARED = 'onAfterAssetsPrepared';
+
+    public const ON_VOLT_BLOCK_COMPILE = 'onVoltBlockCompile';
+
+    public const ON_BEFORE_FORM_INITIALIZE = 'onBeforeFormInitialize';
+
+    public const ON_BEFORE_EXECUTE_ROUTE = 'onBeforeExecuteRoute';
+    public const ON_AFTER_EXECUTE_ROUTE = 'onAfterExecuteRoute';
+
 
     /**
      * Authenticates user over external module
@@ -77,4 +88,43 @@ interface WebUIConfigInterface
      * @return void
      */
     public function onAfterAssetsPrepared(Manager $assets):void;
+
+
+    /**
+     * Prepares include block within volt template
+     *
+     * @param string $controller
+     * @param string $blockName
+     * @param View $view
+     * @return string
+     */
+    public function onVoltBlockCompile(string $controller, string $blockName, View $view):string;
+
+    /**
+     * Calls from BaseForm before form initialized
+     *
+     * @param Form $form
+     * @param $entity
+     * @param $options
+     * @return void
+     */
+    public function onBeforeFormInitialize(Form $form, $entity, $options):void;
+
+    /**
+     * Calls from BaseController on beforeExecuteRoute function
+     *
+     * @param Controller $controller
+     * @return void
+     */
+    public function onBeforeExecuteRoute(Controller $controller):void;
+
+    /**
+     * Calls from BaseController on afterExecuteRoute function
+     *
+     * @param Controller $controller
+     * @return void
+     */
+    public function onAfterExecuteRoute(Controller $controller):void;
+
+
 }

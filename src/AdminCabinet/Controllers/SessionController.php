@@ -68,7 +68,7 @@ class SessionController extends BaseController
             $userLoggedIn = true;
         } else {
             // Try to authenticate user over additional module
-            $additionalModules = PBXConfModulesProvider::hookModulesMethodWithArrayResult(WebUIConfigInterface::AUTHENTICATE_USER, [$loginFromUser, $passFromUser]);
+            $additionalModules = PBXConfModulesProvider::hookModulesMethod(WebUIConfigInterface::AUTHENTICATE_USER, [$loginFromUser, $passFromUser]);
             foreach ($additionalModules as $moduleUniqueId => $sessionData) {
                 if (!empty($sessionData)) {
                     $this->loggerAuth->info("User $login was authenticated over module $moduleUniqueId");

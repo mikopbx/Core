@@ -21,7 +21,6 @@ namespace MikoPBX\AdminCabinet\Forms;
 
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Text;
-use Phalcon\Forms\Form;
 
 /**
  * Class SoundFilesEditForm
@@ -29,10 +28,12 @@ use Phalcon\Forms\Form;
  * @package MikoPBX\AdminCabinet\Forms
  * @property \MikoPBX\Common\Providers\TranslationProvider translation
  */
-class SoundFilesEditForm extends Form
+class SoundFilesEditForm extends BaseForm
 {
-    public function initialize($entity = null): void
+    public function initialize($entity = null, $options = null): void
     {
+        parent::initialize($entity, $options);
+
         foreach ($entity as $key => $value) {
             switch ($key) {
                 case "path":

@@ -24,8 +24,6 @@ use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Numeric;
 use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
-use Phalcon\Forms\Element\TextArea;
-use Phalcon\Forms\Form;
 
 /**
  * Class CallQueueEditForm
@@ -33,10 +31,12 @@ use Phalcon\Forms\Form;
  * @package MikoPBX\AdminCabinet\Forms
  * @property \MikoPBX\Common\Providers\TranslationProvider translation
  */
-class CallQueueEditForm extends Form
+class CallQueueEditForm extends BaseForm
 {
     public function initialize($entity = null, $options = null): void
     {
+        parent::initialize($entity, $options);
+
         // ID
         $this->add(new Hidden('id'));
 
@@ -229,7 +229,6 @@ class CallQueueEditForm extends Form
         );
 
         // Redirecttoextensionifrepeatexceeded
-
         $extension = new Select(
             'redirect_to_extension_if_repeat_exceeded', $options['extensions'], [
             'using'    => [
@@ -246,11 +245,6 @@ class CallQueueEditForm extends Form
         $this->add(new Text('callerid_prefix'));
 
         // Description
-        $rows = 1;
-        $strings = explode("\n", $entity->description);
-        foreach ($strings as $string){
-            $rows+=round(strlen($string) / 65);
-        }
-        $this->add(new TextArea('description', ["rows" => max($rows,2)]));
+        $this->addTextArea('description',$entity->description, 65);
     }
 }

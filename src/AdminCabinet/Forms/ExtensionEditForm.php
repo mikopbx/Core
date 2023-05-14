@@ -28,9 +28,7 @@ use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Numeric;
 use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
-use Phalcon\Forms\Element\TextArea;
-use Phalcon\Forms\Form;
-use Phalcon\Mvc\Model;
+
 
 /**
  * Class ExtensionEditForm
@@ -38,10 +36,12 @@ use Phalcon\Mvc\Model;
  * @package MikoPBX\AdminCabinet\Forms
  * @property \MikoPBX\Common\Providers\TranslationProvider translation
  */
-class ExtensionEditForm extends Form
+class ExtensionEditForm extends BaseForm
 {
     public function initialize($entity = null, $options = null): void
     {
+        parent::initialize($entity, $options);
+
         // EXTENSION
 
         // ID
@@ -198,14 +198,7 @@ class ExtensionEditForm extends Form
         $this->add(new Numeric('qualifyfreq', ["value" => $sip->qualifyfreq, 'autocomplete' => 'off']));
 
         // Manualattributes
-        $rows = 1;
-        $strings = explode("\n", $sip->getManualAttributes());
-        foreach ($strings as $string){
-            $rows+=round(strlen($string) / 80);
-        }
-        $this->add(new TextArea('sip_manualattributes', [
-            "value" => $sip->getManualAttributes(),
-            "rows" => max($rows,2)]));
+        $this->addTextArea('sip_manualattributes', $sip->getManualAttributes(), 80 );
 
         // Description
         $this->add(new Text('sip_description', ["value" => $sip->description, 'autocomplete' => 'off']));

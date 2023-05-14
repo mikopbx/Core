@@ -425,7 +425,7 @@ class Elements extends Injectable
             }
         }
 
-        PBXConfModulesProvider::hookModulesProcedure(WebUIConfigInterface::ON_BEFORE_HEADER_MENU_SHOW, [&$this->_headerMenu]);
+        PBXConfModulesProvider::hookModulesMethod(WebUIConfigInterface::ON_BEFORE_HEADER_MENU_SHOW, [&$this->_headerMenu]);
     }
 
     /**

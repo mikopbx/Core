@@ -89,7 +89,7 @@ class RouterProvider implements ServiceProviderInterface
         $routes = $this->getRoutes();
 
         // Add additional modules routes
-        $additionalRoutes = PBXConfModulesProvider::hookModulesMethodWithArrayResult(RestAPIConfigInterface::GET_PBXCORE_REST_ADDITIONAL_ROUTES);
+        $additionalRoutes = PBXConfModulesProvider::hookModulesMethod(RestAPIConfigInterface::GET_PBXCORE_REST_ADDITIONAL_ROUTES);
         $additionalRoutes = array_values($additionalRoutes);
         $routes = array_merge($routes, ...$additionalRoutes);
 

@@ -23,8 +23,6 @@ use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Numeric;
 use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
-use Phalcon\Forms\Element\TextArea;
-use Phalcon\Forms\Form;
 
 /**
  * Class OutgoingRouteEditForm
@@ -32,10 +30,12 @@ use Phalcon\Forms\Form;
  * @package MikoPBX\AdminCabinet\Forms
  * @property \MikoPBX\Common\Providers\TranslationProvider translation
  */
-class OutgoingRouteEditForm extends Form
+class OutgoingRouteEditForm extends BaseForm
 {
     public function initialize($entity = null, $options = null): void
     {
+        parent::initialize($entity, $options);
+
         // ID
         $this->add(new Hidden('id'));
 
@@ -46,12 +46,7 @@ class OutgoingRouteEditForm extends Form
         $this->add(new Text('rulename'));
 
         // Note
-        $rows = 1;
-        $strings = explode("\n", $entity->note);
-        foreach ($strings as $string){
-            $rows+=round(strlen($string) / 65);
-        }
-        $this->add(new TextArea('note', ["rows" => max($rows,2)]));
+        $this->addTextArea('note', $entity->note, 65);
 
         // Numberbeginswith
         $this->add(new Text('numberbeginswith'));

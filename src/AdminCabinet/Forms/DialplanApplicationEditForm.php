@@ -22,8 +22,6 @@ namespace MikoPBX\AdminCabinet\Forms;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
-use Phalcon\Forms\Element\TextArea;
-use Phalcon\Forms\Form;
 
 /**
  * Class DialplanApplicationEditForm
@@ -31,10 +29,12 @@ use Phalcon\Forms\Form;
  * @package MikoPBX\AdminCabinet\Forms
  * @property \MikoPBX\Common\Providers\TranslationProvider translation
  */
-class DialplanApplicationEditForm extends Form
+class DialplanApplicationEditForm extends BaseForm
 {
-    public function initialize($entity): void
+    public function initialize($entity = null, $options = null): void
     {
+        parent::initialize($entity, $options);
+
         foreach ($entity as $key => $value) {
             switch ($key) {
                 case "id":
@@ -43,8 +43,7 @@ class DialplanApplicationEditForm extends Form
                     $this->add(new Hidden($key));
                     break;
                 case "description":
-                    $rows = max(round(strlen($value) / 95), 2);
-                    $this->add(new TextArea($key, ["rows" => $rows]));
+                    $this->addTextArea($key, $value, 95);
                     break;
                 case "type":
                     $select = new Select(

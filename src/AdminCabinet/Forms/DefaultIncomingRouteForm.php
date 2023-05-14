@@ -21,7 +21,7 @@ namespace MikoPBX\AdminCabinet\Forms;
 
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Select;
-use Phalcon\Forms\Form;
+
 
 /**
  * Class DefaultIncomingRouteForm
@@ -29,10 +29,12 @@ use Phalcon\Forms\Form;
  * @package MikoPBX\AdminCabinet\Forms
  * @property \MikoPBX\Common\Providers\TranslationProvider translation
  */
-class DefaultIncomingRouteForm extends Form
+class DefaultIncomingRouteForm extends BaseForm
 {
     public function initialize($entity = null, $options = null): void
     {
+        parent::initialize($entity, $options);
+
         foreach ($entity as $key => $value) {
             switch ($key) {
                 case 'action' :

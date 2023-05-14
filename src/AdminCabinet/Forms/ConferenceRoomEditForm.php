@@ -21,7 +21,6 @@ namespace MikoPBX\AdminCabinet\Forms;
 
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Text;
-use Phalcon\Forms\Form;
 
 /**
  * Class ConferenceRoomEditForm
@@ -29,10 +28,12 @@ use Phalcon\Forms\Form;
  * @package MikoPBX\AdminCabinet\Forms
  * @property \MikoPBX\Common\Providers\TranslationProvider translation
  */
-class ConferenceRoomEditForm extends Form
+class ConferenceRoomEditForm extends BaseForm
 {
-    public function initialize(): void
+    public function initialize($entity = null, $options = null): void
     {
+        parent::initialize($entity, $options);
+
         // ID
         $this->add(new Hidden('id'));
 
@@ -44,6 +45,8 @@ class ConferenceRoomEditForm extends Form
 
         // Extension
         $this->add(new Text('extension'));
+
+        // PinCode
         $this->add(new Text('pinCode'));
     }
 }

@@ -23,7 +23,6 @@ use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Password;
 use Phalcon\Forms\Element\Text;
 use Phalcon\Forms\Element\TextArea;
-use Phalcon\Forms\Form;
 
 /**
  * Class MailSettingsEditForm
@@ -31,10 +30,12 @@ use Phalcon\Forms\Form;
  * @package MikoPBX\AdminCabinet\Forms
  * @property \MikoPBX\Common\Providers\TranslationProvider translation
  */
-class MailSettingsEditForm extends Form
+class MailSettingsEditForm extends BaseForm
 {
-    public function initialize(/** @scrutinizer ignore-unused */ $entity = null, $options = null): void
+    public function initialize($entity = null, $options = null): void
     {
+        parent::initialize($entity, $options);
+
         foreach ($options as $key => $value) {
             switch ($key) {
                 case 'MailEnableNotifications' :

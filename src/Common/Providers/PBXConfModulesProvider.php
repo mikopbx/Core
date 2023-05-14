@@ -28,8 +28,6 @@ use Phalcon\Di;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 
-use function MikoPBX\Common\Config\appPath;
-
 /**
  * Main database connection is created based in the parameters defined in the configuration file
  */
@@ -39,6 +37,7 @@ class PBXConfModulesProvider implements ServiceProviderInterface
 
     /**
      * Registers pbxConfModules service provider
+     * Creates array of external installed modules
      *
      * @param \Phalcon\Di\DiInterface $di
      */
@@ -46,37 +45,27 @@ class PBXConfModulesProvider implements ServiceProviderInterface
     {
         $di->setShared(
             self::SERVICE_NAME,
-            function (){
-                   return self::getExternalConfModules();
+            function (string $methodName=''){
+                $additionalModules = [];
+                $modules = PbxExtensionModules::getEnabledModulesArray();
+                foreach ($modules as $value) {
+                    $className      = str_replace('Module', '', $value['uniqid']);
+                    $fullClassName = "\\Modules\\{$value['uniqid']}\\Lib\\{$className}Conf";
+                    if (class_exists($fullClassName)) {
+                        $object = new $fullClassName();
+                        if ($object instanceof ConfigClass){
+                            $additionalModules[] = $object;
+                        }
+                    }
+                }
+
+                // Sort the array based on the priority value for $methodName
+                usort($additionalModules, function($a, $b) use ($methodName) {
+                    return $a->getMethodPriority($methodName) - $b->getMethodPriority($methodName);
+                });
+                return  $additionalModules;
             }
         );
-    }
-
-
-    /**
-     * Creates array of external installed modules
-     * @return array
-     */
-    public static function getExternalConfModules():array
-    {
-        $arrObjects = [];
-        $modules = PbxExtensionModules::getEnabledModulesArray();
-        foreach ($modules as $value) {
-            $className      = str_replace('Module', '', $value['uniqid']);
-            $fullClassName = "\\Modules\\{$value['uniqid']}\\Lib\\{$className}Conf";
-            if (class_exists($fullClassName)) {
-                $object = new $fullClassName();
-                if ($object instanceof ConfigClass){
-                    $arrObjects[] = $object;
-                }
-            }
-        }
-
-        // Sort the array based on the priority value
-        usort($arrObjects, function($a, $b) {
-            return $a->priority - $b->priority;
-        });
-        return  $arrObjects;
     }
 
     /**
@@ -97,11 +86,12 @@ class PBXConfModulesProvider implements ServiceProviderInterface
      *
      * @return array
      */
-    public static function hookModulesMethodWithArrayResult(string $methodName, array $arguments = []): array
+    public static function hookModulesMethod(string $methodName, array $arguments = []): array
     {
         $result            = [];
         $di = Di::getDefault();
-        $additionalModules = $di->getShared(self::SERVICE_NAME);
+        $additionalModules = $di->getShared(PBXConfModulesProvider::SERVICE_NAME, ['methodName'=>$methodName]);
+
         foreach ($additionalModules as $configClassObj) {
             if ( ! method_exists($configClassObj, $methodName)) {
                 continue;
@@ -124,76 +114,6 @@ class PBXConfModulesProvider implements ServiceProviderInterface
         }
 
         return $result;
-    }
-
-    /**
-     * Calls additional module method by name and returns plain text result
-     *
-     * @param string $methodName
-     * @param array  $arguments
-     *
-     * @return string
-     */
-    public static function hookModulesMethod(string $methodName, array $arguments = []): string
-    {
-        $stringResult      = '';
-        $di = Di::getDefault();
-        $additionalModules = $di->getShared(PBXConfModulesProvider::SERVICE_NAME);
-        foreach ($additionalModules as $configClassObj) {
-            if ( ! method_exists($configClassObj, $methodName)) {
-                continue;
-            }
-            try {
-                $includeString = call_user_func_array([$configClassObj, $methodName], $arguments);
-                if ( ! empty($includeString)) {
-                    $includeString = $configClassObj->confBlockWithComments($includeString);
-                    if (
-                        substr($stringResult, -1) !== "\t"
-                        &&
-                        substr($includeString, 0, 4) === 'same'
-                    ) {
-                        $stringResult .= "\t" . $includeString;
-                    } else {
-                        $stringResult .= $includeString;
-                    }
-                }
-            } catch (\Throwable $e) {
-                global $errorLogger;
-                $errorLogger->captureException($e);
-                Util::sysLogMsg(__METHOD__, $e->getMessage(), LOG_ERR);
-                continue;
-            }
-        }
-
-        return $stringResult;
-    }
-
-
-    /**
-     * Calls additional module method by name without returns
-     *
-     * @param string $methodName
-     * @param array  $arguments
-     *
-     * @return void
-     */
-    public static function hookModulesProcedure(string $methodName, array $arguments = []): void
-    {
-        $di = Di::getDefault();
-        $additionalModules = $di->getShared(PBXConfModulesProvider::SERVICE_NAME);
-        foreach ($additionalModules as $configClassObj) {
-            if ( ! method_exists($configClassObj, $methodName)) {
-                continue;
-            }
-            try {
-                call_user_func_array([$configClassObj, $methodName], $arguments);
-            } catch (\Throwable $e) {
-                global $errorLogger;
-                $errorLogger->captureException($e);
-                Util::sysLogMsg(__METHOD__, $e->getMessage(), LOG_ERR);
-                continue;
-            }
-        }
     }
 
 }

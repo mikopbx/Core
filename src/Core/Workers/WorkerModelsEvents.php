@@ -69,6 +69,7 @@ use MikoPBX\Core\System\{BeanstalkClient,
     System,
     Util
 };
+use MikoPBX\Core\Providers\AsteriskConfModulesProvider;
 use MikoPBX\Modules\Config\SystemConfigInterface;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use Phalcon\Di;
@@ -153,7 +154,7 @@ class WorkerModelsEvents extends WorkerBase
     {
         $this->last_change      = time() - 2;
 
-        $this->arrAsteriskConfObjects        = AsteriskConfigClass::getAsteriskConfObjects();
+        $this->arrAsteriskConfObjects        = $this->di->getShared(AsteriskConfModulesProvider::SERVICE_NAME);
 
         $this->initPbxSettingsDependencyTable();
         $this->initModelsDependencyTable();

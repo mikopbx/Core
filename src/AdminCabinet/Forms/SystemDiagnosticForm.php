@@ -23,7 +23,6 @@ use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Numeric;
 use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
-use Phalcon\Forms\Form;
 
 /**
  * Class SystemDiagnosticForm
@@ -31,11 +30,13 @@ use Phalcon\Forms\Form;
  * @package MikoPBX\AdminCabinet\Forms
  * @property \MikoPBX\Common\Providers\TranslationProvider translation
  */
-class SystemDiagnosticForm extends Form
+class SystemDiagnosticForm extends BaseForm
 {
 
-    public function initialize(): void
+    public function initialize($entity = null, $options = null): void
     {
+        parent::initialize($entity, $options);
+
         // Filenames dropdown
         $filenames = new Select(
             'filenames', [], ['class'    => 'ui fluid selection search dropdown filenames-select']

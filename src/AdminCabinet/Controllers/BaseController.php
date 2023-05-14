@@ -19,6 +19,8 @@
 
 namespace MikoPBX\AdminCabinet\Controllers;
 
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
+use MikoPBX\Modules\Config\WebUIConfigInterface;
 use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings};
 use Phalcon\Http\ResponseInterface;
 use Phalcon\Mvc\{Controller, View};
@@ -131,6 +133,7 @@ class BaseController extends Controller
      */
     public function afterExecuteRoute(): ResponseInterface
     {
+
         if ($this->request->isAjax() === true) {
             $this->view->setRenderLevel(View::LEVEL_NO_RENDER);
             $this->response->setContentType('application/json', 'UTF-8');
@@ -153,6 +156,8 @@ class BaseController extends Controller
             $this->response->setContent($result);
         }
 
+        PBXConfModulesProvider::hookModulesMethod(WebUIConfigInterface::ON_AFTER_EXECUTE_ROUTE,[$this]);
+
         return $this->response->send();
     }
 
@@ -161,6 +166,8 @@ class BaseController extends Controller
      */
     public function beforeExecuteRoute(): void
     {
+        PBXConfModulesProvider::hookModulesMethod(WebUIConfigInterface::ON_BEFORE_EXECUTE_ROUTE,[$this]);
+
         if ($this->request->isPost()) {
             $data = $this->request->getPost('submitMode');
             if (!empty($data)) {

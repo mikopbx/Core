@@ -23,20 +23,20 @@ namespace MikoPBX\Core\Asterisk\Configs;
 use MikoPBX\Common\Providers\ConfigProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Common\Providers\RegistryProvider;
+use MikoPBX\Core\Providers\AsteriskConfModulesProvider;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Util;
 use Phalcon\Config;
 use Phalcon\Di\Injectable;
-use function MikoPBX\Common\Config\appPath;
 
 class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
 {
     // The module hook applying priority
-    public int $priority = 1000;
+    protected int $priority = 1000;
 
     // Config file name i.e. extensions.conf
     protected string $description;
-    private   string $stageMessage = '';
+    private string $stageMessage = '';
 
     /**
      * Easy way to get or set the PbxSettings values
@@ -76,57 +76,36 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
      */
     public function __construct()
     {
-        $this->config          = $this->getDI()->getShared(ConfigProvider::SERVICE_NAME);
-        $this->booting         = $this->getDI()->getShared(RegistryProvider::SERVICE_NAME)->booting === true;
-        $this->mikoPBXConfig   = new MikoPBXConfig();
+        $this->config = $this->getDI()->getShared(ConfigProvider::SERVICE_NAME);
+        $this->booting = $this->getDI()->getShared(RegistryProvider::SERVICE_NAME)->booting === true;
+        $this->mikoPBXConfig = new MikoPBXConfig();
         $this->generalSettings = $this->mikoPBXConfig->getGeneralSettings();
-        $this->messages        = [];
+        $this->messages = [];
     }
 
 
     /**
-     * Returns an array of Asterisk configuration objects sorted by priority.
-     *
-     * @return array
-     */
-    public static function getAsteriskConfObjects():array
-    {
-        $arrObjects = [];
-        $configsDir = appPath('src/Core/Asterisk/Configs');
-        $modulesFiles = glob("{$configsDir}/*.php", GLOB_NOSORT);
-        foreach ($modulesFiles as $file) {
-            $className        = pathinfo($file)['filename'];
-            if ($className === 'CoreConfigClass'){
-                continue;
-            }
-            $fullClassName = "\\MikoPBX\\Core\\Asterisk\\Configs\\{$className}";
-            if (class_exists($fullClassName)) {
-                $object = new $fullClassName();
-                if ($object instanceof AsteriskConfigClass){
-                    $arrObjects[] = $object;
-                }
-            }
-        }
-        // Sort the array based on the priority value
-        usort($arrObjects, function($a, $b) {
-            return $a->priority - $b->priority;
-        });
-        return  $arrObjects;
-    }
-
-    /**
-     * Calls core and enabled additional module method by name and returns plain text result
+     * Calls core and enabled additional modules method by name and returns plain text result
      *
      * @param string $methodName
-     * @param array  $arguments
+     * @param array $arguments
      *
      * @return string
      */
     public function hookModulesMethod(string $methodName, array $arguments = []): string
     {
-        $stringResult      = '';
-        foreach (self::getAsteriskConfObjects() as $configClassObj) {
-            if ( ! method_exists($configClassObj, $methodName)) {
+        $stringResult = '';
+        $internalModules = $this->di->getShared(AsteriskConfModulesProvider::SERVICE_NAME);
+        $externalModules = $this->di->getShared(PBXConfModulesProvider::SERVICE_NAME);
+        $arrObjects = array_merge($internalModules, $externalModules);
+
+        // Sort the merged array based on the priority value
+        usort($arrObjects, function ($a, $b) use ($methodName) {
+            return $a->getMethodPriority($methodName) - $b->getMethodPriority($methodName);
+        });
+
+        foreach ($arrObjects as $configClassObj) {
+            if (!method_exists($configClassObj, $methodName)) {
                 continue;
             }
             if (get_class($configClassObj) === get_class($this)) {
@@ -134,8 +113,12 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
             }
             try {
                 $includeString = call_user_func_array([$configClassObj, $methodName], $arguments);
-                if ( ! empty($includeString)) {
-                    $includeString = $configClassObj->confBlockWithComments($includeString);
+                if (!empty($includeString)) {
+                    if (property_exists($configClassObj, 'moduleUniqueId')) {
+                        $includeString = $this->confBlockWithComments($includeString, $configClassObj->moduleUniqueId);
+                    } else {
+                        $includeString = $this->confBlockWithComments($includeString);
+                    }
                     if (
                         substr($stringResult, -1) !== "\t"
                         &&
@@ -153,28 +136,25 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
                 continue;
             }
         }
-
-        // HOOK external enabled modules method
-        $stringResult .= PBXConfModulesProvider::hookModulesMethod($methodName, $arguments);
-
         return $stringResult;
     }
-
 
     /**
      * Makes pretty module text block into config file
      *
      * @param string $addition
-     *
+     * @param string $externalModuleUniqueId
      * @return string
      */
-    protected function confBlockWithComments(string $addition): string
+    protected function confBlockWithComments(string $addition, string $externalModuleUniqueId = ''): string
     {
-        if (empty($addition)) {
-            return '';
+        if (empty($externalModuleUniqueId)) {
+            return rtrim($addition) . PHP_EOL;
         }
-
-        return rtrim($addition) . PHP_EOL;
+        $result = PHP_EOL . '; ***** BEGIN BY ' . $externalModuleUniqueId . PHP_EOL;
+        $result .= rtrim($addition);
+        $result .= PHP_EOL . '; ***** END BY ' . $externalModuleUniqueId . PHP_EOL;
+        return $result;
     }
 
     /**
@@ -193,7 +173,7 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
      */
     protected function echoGenerateConfig(): void
     {
-        if ($this->booting === true && ! empty($this->description)) {
+        if ($this->booting === true && !empty($this->description)) {
             $this->stageMessage = "   |- generate config {$this->description}...";
             Util::echoWithSyslog($this->stageMessage);
         }
@@ -218,7 +198,7 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
      */
     protected function echoDone(): void
     {
-        if ($this->booting === true && ! empty($this->description)) {
+        if ($this->booting === true && !empty($this->description)) {
             Util::echoResult($this->stageMessage);
             $this->stageMessage = '';
         }
@@ -409,8 +389,8 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
     /**
      * Override pjsip options for provider in the pjsip.conf file
      *
-     * @param string $uniqid  the provider unique identifier
-     * @param array  $options list of pjsip options
+     * @param string $uniqid the provider unique identifier
+     * @param array $options list of pjsip options
      *
      * @return array
      */
@@ -423,7 +403,7 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
      * Override pjsip options for peer in the pjsip.conf file
      *
      * @param string $extension the endpoint extension
-     * @param array  $options   list of pjsip options
+     * @param array $options list of pjsip options
      *
      * @return array
      */
@@ -488,6 +468,22 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
     public function generatePeersPj(): string
     {
         return '';
+    }
+
+    /**
+     * Allows overriding the execution priority of a method when called through hookModulesMethod.
+     *
+     * @param string $methodName
+     * @return int
+     */
+    public function getMethodPriority(string $methodName = ''): int
+    {
+        switch ($methodName) {
+            case AsteriskConfigInterface::GENERATE_CONFIG:
+            default:
+                $result = $this->priority;
+        }
+        return $result;
     }
 
 }

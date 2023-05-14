@@ -23,6 +23,7 @@ use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Password;
 use Phalcon\Forms\Element\Text;
 use Phalcon\Forms\Form;
+use Phalcon\Html\Helper\Base;
 
 /**
  * Class LoginForm
@@ -30,10 +31,11 @@ use Phalcon\Forms\Form;
  * @package MikoPBX\AdminCabinet\Forms
  * @property \MikoPBX\Common\Providers\TranslationProvider translation
  */
-class LoginForm extends Form
+class LoginForm extends Base
 {
-    public function initialize(): void
+    public function initialize($entity = null, $options = null): void
     {
+        parent::initialize($entity, $options);
         // Login
         $login = new Text('login');
         $this->add($login);

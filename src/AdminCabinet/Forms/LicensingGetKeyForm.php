@@ -21,7 +21,6 @@ namespace MikoPBX\AdminCabinet\Forms;
 
 use Phalcon\Forms\Element\Numeric;
 use Phalcon\Forms\Element\Text;
-use Phalcon\Forms\Form;
 
 /**
  * Class LicensingGetKeyForm
@@ -29,10 +28,12 @@ use Phalcon\Forms\Form;
  * @package MikoPBX\AdminCabinet\Forms
  * @property \MikoPBX\Common\Providers\TranslationProvider translation
  */
-class LicensingGetKeyForm extends Form
+class LicensingGetKeyForm extends BaseForm
 {
-    public function initialize(): void
+    public function initialize($entity = null, $options = null): void
     {
+        parent::initialize($entity, $options);
+
         $this->add(new Text('companyname'));
         $this->add(new Text('email'));
         $this->add(new Text('contact'));

@@ -235,7 +235,7 @@ class FirewallRules extends ModelsBase
 
 
         //Add modules firewall rules
-        $additionalRules = PBXConfModulesProvider::hookModulesMethodWithArrayResult(SystemConfigInterface::GET_DEFAULT_FIREWALL_RULES);
+        $additionalRules = PBXConfModulesProvider::hookModulesMethod(SystemConfigInterface::GET_DEFAULT_FIREWALL_RULES);
         foreach ($additionalRules as $additionalRuleFromModule) {
             if ($additionalRuleFromModule !== []) {
                 $additionalRuleFromModule = array_change_key_case($additionalRuleFromModule, CASE_UPPER);

@@ -399,6 +399,7 @@ return [
     'ex_MobileNumber' => 'Мобильный номер',
     'ex_Secret' => 'Пароль для SIP',
     'ex_ChangeAvatar' => 'Сменить аватар',
+    'ex_UserPhotography' => 'Фотография сотрудника',
     'ex_MobileSettings' => 'Дополнительные настройки для мобильного',
     'ex_MobileDialstring' => 'Переопределение строки набора',
     'ex_SipSettings' => 'Настройки SIP',

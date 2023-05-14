@@ -22,8 +22,7 @@ namespace MikoPBX\AdminCabinet\Forms;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
-use Phalcon\Forms\Element\TextArea;
-use Phalcon\Forms\Form;
+
 
 /**
  * Class CustomFilesEditForm
@@ -31,10 +30,12 @@ use Phalcon\Forms\Form;
  * @package MikoPBX\AdminCabinet\Forms
  * @property \MikoPBX\Common\Providers\TranslationProvider translation
  */
-class CustomFilesEditForm extends Form
+class CustomFilesEditForm extends BaseForm
 {
-    public function initialize($entity = null): void
+    public function initialize($entity = null, $options = null): void
     {
+        parent::initialize($entity, $options);
+
         foreach ($entity as $key => $value) {
             switch ($key) {
                 case "id":
@@ -44,13 +45,7 @@ class CustomFilesEditForm extends Form
                     $this->add(new Hidden($key));
                     break;
                 case "description":
-                    // Description
-                    $rows = 1;
-                    $strings = explode("\n", $value);
-                    foreach ($strings as $string){
-                        $rows+=round(strlen($string) / 65);
-                    }
-                    $this->add(new TextArea('description', ["rows" => max($rows,2)]));
+                    $this->addTextArea($key, $value, 65);
                     break;
                 case "mode":
                     $select = new Select(

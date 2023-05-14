@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,23 +17,23 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-namespace MikoPBX\AdminCabinet\Forms;
 
-use Phalcon\Forms\Element\Text;
-use Phalcon\Forms\Form;
+
+namespace MikoPBX\AdminCabinet\Plugins;
+
+use Phalcon\Di\Injectable;
+use Phalcon\Events\Event;
+use Phalcon\Mvc\ViewInterface;
 
 /**
- * Class LicensingActivateCouponForm
+ * SecurityPlugin
  *
- * @package MikoPBX\AdminCabinet\Forms
- * @property \MikoPBX\Common\Providers\TranslationProvider translation
+ * This is the security plugin which controls that users only have access to the modules they're assigned to
  */
-class LicensingActivateCouponForm extends BaseForm
+class ViewEventsPlugin extends Injectable
 {
-    public function initialize($entity = null, $options = null): void
+    public function beforeRenderView(Event $event, ViewInterface $view)
     {
-        parent::initialize($entity, $options);
 
-        $this->add(new Text('coupon'));
     }
 }

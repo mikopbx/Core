@@ -23,7 +23,6 @@ use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
-use Phalcon\Forms\Form;
 
 /**
  * Class FirewallEditForm
@@ -31,10 +30,12 @@ use Phalcon\Forms\Form;
  * @package MikoPBX\AdminCabinet\Forms
  * @property \MikoPBX\Common\Providers\TranslationProvider translation
  */
-class FirewallEditForm extends Form
+class FirewallEditForm extends BaseForm
 {
     public function initialize($entity = null, $options = null): void
     {
+        parent::initialize($entity, $options);
+
         $this->add(new Hidden('id'));
         $this->add(new Text('description'));
         $this->add(new Text('network', ['value' => $options['network']]));

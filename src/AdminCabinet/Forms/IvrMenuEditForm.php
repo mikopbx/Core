@@ -24,8 +24,6 @@ use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Numeric;
 use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
-use Phalcon\Forms\Element\TextArea;
-use Phalcon\Forms\Form;
 
 /**
  * Class IvrMenuEditForm
@@ -33,10 +31,11 @@ use Phalcon\Forms\Form;
  * @package MikoPBX\AdminCabinet\Forms
  * @property \MikoPBX\Common\Providers\TranslationProvider translation
  */
-class IvrMenuEditForm extends Form
+class IvrMenuEditForm extends BaseForm
 {
     public function initialize($entity = null, $options = null): void
     {
+        parent::initialize($entity, $options);
         // ID
         $this->add(new Hidden('id'));
 
@@ -106,11 +105,7 @@ class IvrMenuEditForm extends Form
         $this->add(new Check('allow_enter_any_internal_extension', $cheskarr));
 
         // Description
-        $rows = 1;
-        $strings = explode("\n", $entity->description);
-        foreach ($strings as $string){
-            $rows+=round(strlen($string) / 65);
-        }
-        $this->add(new TextArea('description', ["rows" => max($rows,2)]));
+        $this->addTextArea('description', $entity->description, 65);
+
     }
 }

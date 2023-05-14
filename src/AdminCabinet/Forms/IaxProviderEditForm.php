@@ -23,8 +23,6 @@ use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Password;
 use Phalcon\Forms\Element\Text;
-use Phalcon\Forms\Element\TextArea;
-use Phalcon\Forms\Form;
 
 /**
  * Class IaxProviderEditForm
@@ -32,10 +30,11 @@ use Phalcon\Forms\Form;
  * @package MikoPBX\AdminCabinet\Forms
  * @property \MikoPBX\Common\Providers\TranslationProvider translation
  */
-class IaxProviderEditForm extends Form
+class IaxProviderEditForm extends BaseForm
 {
-    public function initialize($entity = null): void
+    public function initialize($entity = null, $options = null): void
     {
+        parent::initialize($entity, $options);
         // ProviderType
         $this->add(new Hidden('providerType', ['value' => 'IAX']));
 
@@ -79,11 +78,7 @@ class IaxProviderEditForm extends Form
         $this->add(new Check('noregister', $cheskarr));
 
         // Manualattributes
-        $rows = 1;
-        $strings = explode("\n", $entity->getManualAttributes());
-        foreach ($strings as $string){
-            $rows+=round(strlen($string) / 80);
-        }
-        $this->add(new TextArea('manualattributes', ["rows" => max($rows,2)]));
+        $this->addTextArea('manualattributes', $entity->getManualAttributes(), 80);
+
     }
 }

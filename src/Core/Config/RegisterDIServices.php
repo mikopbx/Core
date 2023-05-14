@@ -41,6 +41,7 @@ use MikoPBX\Common\Providers\{AmiConnectionCommand,
     MessagesProvider,
     UrlProvider,
     LanguageProvider};
+use MikoPBX\Core\Providers\AsteriskConfModulesProvider;
 use Phalcon\Di;
 
 
@@ -90,6 +91,9 @@ class RegisterDIServices
 
             // Url link builder
             UrlProvider::class,
+
+            // Asterisk conf modules
+            AsteriskConfModulesProvider::class,
 
             // Inject PBX modules
             PBXConfModulesProvider::class,

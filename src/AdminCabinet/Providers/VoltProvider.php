@@ -22,6 +22,8 @@ declare(strict_types=1);
 namespace MikoPBX\AdminCabinet\Providers;
 
 
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
+use MikoPBX\Modules\Config\WebUIConfigInterface;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 use Phalcon\Mvc\View\Engine\Volt as VoltEngine;
@@ -76,6 +78,21 @@ class VoltProvider implements ServiceProviderInterface
                             $controller = $view->getControllerName();
                         }
                         return '$this->di->get("'.SecurityPluginProvider::SERVICE_NAME.'",["' . $controller . '",' . $action . '])';
+                    }
+                );
+                $compiler->addFunction(
+                    'hookVoltBlock',
+                    function ($blockName) use ($view, $volt) {
+                        $controller = $view->getControllerName();
+                        $blockNameWithoutQuotes = str_replace(['"','\''], '', $blockName);
+                        $modulesVoltBlocks =  PBXConfModulesProvider::hookModulesMethod(WebUIConfigInterface::ON_VOLT_BLOCK_COMPILE, [$controller, $blockNameWithoutQuotes, $view]);
+                        $string = '[';
+                        foreach ($modulesVoltBlocks as $key => $value) {
+                            $string .= "'$key'=> '$value', ";
+                        }
+                        $string = rtrim($string, ', '); // Remove trailing comma and space
+                        $string .= ']';
+                        return $string;
                     }
                 );
 

@@ -171,7 +171,7 @@ class NginxConf extends Injectable
         Processes::mwExec("{$rmPath} -rf {$locationsPath}/*.conf");
 
         // Add additional modules routes
-        $additionalLocations = PBXConfModulesProvider::hookModulesMethodWithArrayResult(SystemConfigInterface::CREATE_NGINX_LOCATIONS);
+        $additionalLocations = PBXConfModulesProvider::hookModulesMethod(SystemConfigInterface::CREATE_NGINX_LOCATIONS);
         foreach ($additionalLocations as $moduleUniqueId=>$locationContent) {
             $confFileName = "{$locationsPath}/{$moduleUniqueId}.conf";
             file_put_contents($confFileName, $locationContent);

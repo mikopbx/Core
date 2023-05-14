@@ -150,7 +150,7 @@ class ExtensionsController extends BaseController
      *
      * @param ?string $id modified extension id
      */
-    public function modifyAction($id = null): void
+    public function modifyAction(string $id = null): void
     {
         $extension = Extensions::findFirstById($id);
 
@@ -234,6 +234,7 @@ class ExtensionsController extends BaseController
 
         $this->view->form      = $form;
         $this->view->represent = $extension->getRepresent();
+
     }
 
     /**

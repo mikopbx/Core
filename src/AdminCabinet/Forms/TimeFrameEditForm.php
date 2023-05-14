@@ -23,8 +23,7 @@ use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
-use Phalcon\Forms\Element\TextArea;
-use Phalcon\Forms\Form;
+
 
 /**
  * Class TimeFrameEditForm
@@ -32,10 +31,11 @@ use Phalcon\Forms\Form;
  * @package MikoPBX\AdminCabinet\Forms
  * @property \MikoPBX\Common\Providers\TranslationProvider translation
  */
-class TimeFrameEditForm extends Form
+class TimeFrameEditForm extends BaseForm
 {
     public function initialize($entity = null, $options = null): void
     {
+        parent::initialize($entity, $options);
         foreach ($entity as $key => $value) {
             switch ($key) {
                 case 'id' :
@@ -103,14 +103,8 @@ class TimeFrameEditForm extends Form
                     $this->add($action);
                     break;
                 case 'description' :
-                    $rows = 1;
-                    $strings = explode("\n", $value);
-                    foreach ($strings as $string){
-                        $rows+=round(strlen($string) / 65);
-                    }
-                    $this->add(new TextArea($key, ["rows" => max($rows,2)]));
+                    $this->addTextArea($key, $value, 65);
                     break;
-
                 default :
                     $this->add(new Text($key, ['autocomplete' => 'off']));
             }

@@ -20,15 +20,12 @@
 namespace MikoPBX\AdminCabinet\Forms;
 
 use MikoPBX\Common\Models\SoundFiles;
-use Phalcon\Forms\Element\AbstractElement;
 use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Numeric;
 use Phalcon\Forms\Element\Password;
 use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
-use Phalcon\Forms\Element\TextArea;
-use Phalcon\Forms\Form;
 
 /**
  * Class GeneralSettingsEditForm
@@ -36,10 +33,12 @@ use Phalcon\Forms\Form;
  * @package MikoPBX\AdminCabinet\Forms
  * @property \MikoPBX\Common\Providers\TranslationProvider translation
  */
-class GeneralSettingsEditForm extends Form
+class GeneralSettingsEditForm extends BaseForm
 {
-    public function initialize(/** @scrutinizer ignore-unused */ $entity = null, $options = null): void
+    public function initialize($entity = null, $options = null): void
     {
+        parent::initialize($entity, $options);
+
         foreach ($options as $key => $value) {
             switch ($key) {
                 case 'PBXRecordSavePeriod':
@@ -87,11 +86,6 @@ class GeneralSettingsEditForm extends Form
                     );
                     break;
                 case 'Description':
-                    $this->add(new TextArea($key, ['value' => $value, "rows" => 2]));
-                    break;
-                case 'RTPStunServer':
-                    $this->add(new Text($key, ['value' => $value, "rows" => 1]));
-                    break;
                 case 'SSHAuthorizedKeys':
                 case 'SSHecdsaKey':
                 case 'SSHRsaKey':
@@ -99,13 +93,7 @@ class GeneralSettingsEditForm extends Form
                 case 'WEBHTTPSPublicKey':
                 case 'WEBHTTPSPrivateKey':
                 case '***ALL TEXTAREA ABOVE***':
-                    $rows = max(round(strlen($value) / 95), 2);
-                    $this->add(
-                        new TextArea(
-                            $key,
-                            ['value' => $value, 'rows' => $rows]
-                        )
-                    );
+                    $this->addTextArea($key, $value, 65);
                     break;
                 case 'PBXLanguage':
                     $language = new Select(
@@ -130,13 +118,13 @@ class GeneralSettingsEditForm extends Form
 
                         ]
                         , [
-                            'using'    => [
+                            'using' => [
                                 'id',
                                 'name',
                             ],
-                            'value'    => $value,
+                            'value' => $value,
                             'useEmpty' => false,
-                            'class'    => 'ui selection dropdown language-select',
+                            'class' => 'ui selection dropdown language-select',
                         ]
                     );
                     $this->add($language);
@@ -154,37 +142,36 @@ class GeneralSettingsEditForm extends Form
                             11 => $this->translation->_('gs_ElevenDigthts'),
                         ]
                         , [
-                            'using'    => [
+                            'using' => [
                                 'id',
                                 'name',
                             ],
-                            'value'    => $value,
+                            'value' => $value,
                             'useEmpty' => false,
-                            'class'    => 'ui selection dropdown extension-length-select',
+                            'class' => 'ui selection dropdown extension-length-select',
                         ]
                     );
                     $this->add($extLength);
                     break;
                 case 'PBXRecordAnnouncementIn':
                 case 'PBXRecordAnnouncementOut':
-
                     $currentSoundFile = SoundFiles::findFirstById($value);
-                    $selectArray=[];
-                    if ($currentSoundFile!==null){
-                        $selectArray = [$value=>$currentSoundFile->getRepresent()];
+                    $selectArray = [];
+                    if ($currentSoundFile !== null) {
+                        $selectArray = [$value => $currentSoundFile->getRepresent()];
                     }
 
                     // Audio_message_id
                     $audioMessage = new Select(
                         $key, $selectArray, [
-                                              'using'    => [
-                                                  'id',
-                                                  'name',
-                                              ],
-                                              'useEmpty' => true,
-                                              'value'    => $value,
-                                              'class'    => 'ui selection dropdown search fluid audio-message-select',
-                            ]
+                            'using' => [
+                                'id',
+                                'name',
+                            ],
+                            'useEmpty' => true,
+                            'value' => $value,
+                            'class' => 'ui selection dropdown search fluid audio-message-select',
+                        ]
                     );
                     $this->add($audioMessage);
                     break;

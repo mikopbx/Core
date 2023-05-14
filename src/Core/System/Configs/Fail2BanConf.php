@@ -395,7 +395,7 @@ class Fail2BanConf extends Injectable
 
 
         // Add additional modules routes
-        $additionalModulesJails = PBXConfModulesProvider::hookModulesMethodWithArrayResult(SystemConfigInterface::GENERATE_FAIL2BAN_JAILS);
+        $additionalModulesJails = PBXConfModulesProvider::hookModulesMethod(SystemConfigInterface::GENERATE_FAIL2BAN_JAILS);
         foreach ($additionalModulesJails as $moduleUniqueId=>$moduleJailText) {
             $fileName = Text::uncamelize($moduleUniqueId,'_').'.conf';
             file_put_contents("{$filterPath}/{$fileName}", $moduleJailText);
@@ -420,7 +420,7 @@ class Fail2BanConf extends Injectable
         Processes::mwExec("rm -rf ".self::JAILS_DIR."/{$prefix}*.{$extension}");
         $syslog_file = SyslogConf::getSyslogFile();
 
-        $additionalModulesJails = PBXConfModulesProvider::hookModulesMethodWithArrayResult(SystemConfigInterface::GENERATE_FAIL2BAN_JAILS);
+        $additionalModulesJails = PBXConfModulesProvider::hookModulesMethod(SystemConfigInterface::GENERATE_FAIL2BAN_JAILS);
         foreach ($additionalModulesJails as $moduleUniqueId=>$moduleJailText) {
             $fileName = Text::uncamelize($moduleUniqueId,'_');
 

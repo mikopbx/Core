@@ -98,7 +98,7 @@ class WorkerSafeScriptsCore extends WorkerBase
                     WorkerRemoveOldRecords::class,
                 ],
         ];
-        $arrModulesWorkers = PBXConfModulesProvider::hookModulesMethodWithArrayResult(SystemConfigInterface::GET_MODULE_WORKERS);
+        $arrModulesWorkers = PBXConfModulesProvider::hookModulesMethod(SystemConfigInterface::GET_MODULE_WORKERS);
         $arrModulesWorkers = array_values($arrModulesWorkers);
         $arrModulesWorkers = array_merge(...$arrModulesWorkers);
         if (!empty($arrModulesWorkers)) {

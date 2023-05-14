@@ -26,7 +26,10 @@ use Phalcon\Acl\Adapter\Memory as AclList;
 use Phalcon\Assets\Manager;
 use Phalcon\Config;
 use Phalcon\Di\Injectable;
+use Phalcon\Forms\Form;
+use Phalcon\Mvc\Controller;
 use Phalcon\Mvc\Router;
+use Phalcon\Mvc\View;
 use ReflectionClass as ReflectionClassAlias;
 
 abstract class ConfigClass extends Injectable implements SystemConfigInterface,
@@ -34,7 +37,7 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface,
                              WebUIConfigInterface
 {
     // The module hook applying priority
-    public int $priority = 1000;
+    protected int $priority = 10000;
 
     /**
      * Config file name i.e. extensions.conf
@@ -100,6 +103,23 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface,
         }
 
         $this->messages = [];
+    }
+
+    /**
+     * Allows overriding the execution priority of a method when called through hookModulesMethod.
+     *
+     * @param string $methodName
+     * @return int
+     */
+    public function getMethodPriority(string $methodName=''):int
+    {
+        switch ($methodName){
+            case SystemConfigInterface::CREATE_CRON_TASKS:
+                //...
+            default:
+                $result = $this->priority;
+        }
+        return $result;
     }
 
     /**
@@ -268,26 +288,6 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface,
     {
     }
 
-    /**
-     * Makes pretty module text block into config file
-     *
-     * @param string $addition
-     *
-     * @return string
-     */
-    protected function confBlockWithComments(string $addition): string
-    {
-        $result = '';
-        if (empty($addition)) {
-            return $result;
-        }
-        $result = PHP_EOL . '; ***** BEGIN BY ' . $this->moduleUniqueId . PHP_EOL;
-        $result .= rtrim($addition);
-        $result .= PHP_EOL . '; ***** END BY ' . $this->moduleUniqueId . PHP_EOL;
-
-        return $result;
-    }
-
 
     /**
      * Authenticates user over external module
@@ -341,4 +341,50 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface,
     {
     }
 
+    /**
+     * Prepares include block within volt template
+     *
+     * @param string $controller
+     * @param string $blockName
+     * @param View $view
+     * @return string
+     */
+    public function onVoltBlockCompile(string $controller, string $blockName, View $view):string
+    {
+        return '';
+    }
+
+    /**
+     * Calls from BaseForm before form initialized
+     *
+     * @param Form $form
+     * @param $entity
+     * @param $options
+     * @return void
+     */
+    public function onBeforeFormInitialize(Form $form, $entity, $options):void
+    {
+    }
+
+
+    /**
+     * Calls from BaseController on afterExecuteRoute function
+     *
+     * @param Controller $controller
+     * @return void
+     */
+    public function onAfterExecuteRoute(Controller $controller):void
+    {
+    }
+
+    /**
+     * Calls from BaseController on beforeExecuteRoute function
+     *
+     * @param Controller $controller
+     * @return void
+     */
+    public function onBeforeExecuteRoute(Controller $controller):void
+    {
+
+    }
 }

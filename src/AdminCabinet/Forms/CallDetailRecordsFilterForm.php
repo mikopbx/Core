@@ -20,7 +20,6 @@
 namespace MikoPBX\AdminCabinet\Forms;
 
 use Phalcon\Forms\Element\Text;
-use Phalcon\Forms\Form;
 
 /**
  * Class CallDetailRecordsFilterForm
@@ -28,11 +27,13 @@ use Phalcon\Forms\Form;
  * @package MikoPBX\AdminCabinet\Forms
  * @property \MikoPBX\Common\Providers\TranslationProvider translation
  */
-class CallDetailRecordsFilterForm extends Form
+class CallDetailRecordsFilterForm extends BaseForm
 {
 
     public function initialize(/** @scrutinizer ignore-unused */ $entity = null, $options = null): void
     {
+        parent::initialize($entity, $options);
+
         $this->add(
             new Text(
                 'extension',

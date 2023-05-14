@@ -26,8 +26,6 @@ use Phalcon\Forms\Element\Numeric;
 use Phalcon\Forms\Element\Password;
 use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
-use Phalcon\Forms\Element\TextArea;
-use Phalcon\Forms\Form;
 
 /**
  * Class SipProviderEditForm
@@ -35,10 +33,12 @@ use Phalcon\Forms\Form;
  * @package MikoPBX\AdminCabinet\Forms
  * @property \MikoPBX\Common\Providers\TranslationProvider translation
  */
-class SipProviderEditForm extends Form
+class SipProviderEditForm extends BaseForm
 {
-    public function initialize($entity = null): void
+    public function initialize($entity = null, $options = null): void
     {
+        parent::initialize($entity, $options);
+
         // Не нужны провайдеру
         // Busylevel
         // Extension
@@ -58,7 +58,6 @@ class SipProviderEditForm extends Form
 
         // Type
         $this->add(new Hidden('type'));
-
 
         // Description
         $this->add(new Text('description'));
@@ -182,12 +181,7 @@ class SipProviderEditForm extends Form
         $this->add(new Check('receive_calls_without_auth', $cheskarr));
 
         // Manualattributes
-        $rows = 1;
-        $strings = explode("\n", $entity->getManualAttributes());
-        foreach ($strings as $string){
-            $rows+=round(strlen($string) / 65);
-        }
-        $this->add(new TextArea('manualattributes', ["rows" => max($rows,2)]));
+        $this->addTextArea('manualattributes', $entity->getManualAttributes(), 65);
 
     }
 }

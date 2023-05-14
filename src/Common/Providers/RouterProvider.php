@@ -80,7 +80,7 @@ class RouterProvider implements ServiceProviderInterface
                 PbxExtensionUtils::registerEnabledModulesInRouter($router);
 
                 // Register additional routes from external enabled modules
-                PBXConfModulesProvider::hookModulesProcedure(WebUIConfigInterface::ON_AFTER_ROUTES_PREPARED,[&$router]);
+                PBXConfModulesProvider::hookModulesMethod(WebUIConfigInterface::ON_AFTER_ROUTES_PREPARED,[&$router]);
 
                 return $router;
             }

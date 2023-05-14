@@ -1,8 +1,8 @@
 {% set controller=dispatcher.getControllerName() %}
 {% set action=dispatcher.getActionName() %}
 
-
 {% if (controller!="Session") %}
+
     {{ partial("partials/topMenu") }}
     {{ partial("partials/leftsidebar") }}
     <div id="main" class="ui main-content-wrapper pusher">
@@ -10,7 +10,7 @@
         <div class="ui container" id="main-content-container">
 
             <!--ADVICES-->
-            <div class="ui flowing popup bottom left transition hidden" id="advices"></div>
+            <div class="ui flowing popup bottom left transition hidden" id="advices" ></div>
             <!--/ ADVICES-->
 
             <!--HEADER-->

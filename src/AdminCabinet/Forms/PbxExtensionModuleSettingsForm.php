@@ -23,7 +23,6 @@ use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
-use Phalcon\Forms\Form;
 
 /**
  * Class PbxExtensionModuleSettingsForm
@@ -31,11 +30,13 @@ use Phalcon\Forms\Form;
  * @package MikoPBX\AdminCabinet\Forms
  * @property \MikoPBX\Common\Providers\TranslationProvider translation
  */
-class PbxExtensionModuleSettingsForm extends Form
+class PbxExtensionModuleSettingsForm extends BaseForm
 {
 
     public function initialize($entity = null, $options = null): void
     {
+        parent::initialize($entity, $options);
+
         // ModuleUniqId
         $this->add(new Hidden('uniqid', ['value' => $options['uniqid']]));
 

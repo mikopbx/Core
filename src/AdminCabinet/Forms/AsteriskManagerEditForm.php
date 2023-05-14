@@ -23,18 +23,18 @@ use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
-use Phalcon\Forms\Element\TextArea;
-use Phalcon\Forms\Form;
 
 /**
  * Class AsteriskManagerEditForm
  * @property \MikoPBX\Common\Providers\TranslationProvider translation
  * @package MikoPBX\AdminCabinet\Forms
  */
-class AsteriskManagerEditForm extends Form
+class AsteriskManagerEditForm extends BaseForm
 {
     public function initialize($entity = null, $options = null): void
     {
+        parent::initialize($entity, $options);
+
         // Id
         $this->add(new Hidden('id'));
 
@@ -77,11 +77,7 @@ class AsteriskManagerEditForm extends Form
         $this->add($networkfilterid);
 
         // Description
-        $rows = 1;
-        $strings = explode("\n", $entity->description);
-        foreach ($strings as $string){
-            $rows+=round(strlen($string) / 65);
-        }
-        $this->add(new TextArea('description', ["rows" => max($rows,2)]));
+        $this->addTextArea('description',$entity->description, 65);
+
     }
 }

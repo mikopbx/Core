@@ -657,7 +657,7 @@ class SIPConf extends AsteriskConfigClass
      */
     private function overridePJSIPOptionsFromModules($extensionOrId, $options, $method): array
     {
-        $modulesOverridingArrays = PBXConfModulesProvider::hookModulesMethodWithArrayResult($method, [$extensionOrId, $options]);
+        $modulesOverridingArrays = PBXConfModulesProvider::hookModulesMethod($method, [$extensionOrId, $options]);
         foreach ($modulesOverridingArrays as $newOptionsSet) {
             // How to make some order of overrides?
             $options = $newOptionsSet;

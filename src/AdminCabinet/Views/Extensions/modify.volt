@@ -18,10 +18,13 @@
 <input type="file" name="file-select" id="file-select" style="display: none"/>
 
 <div class="ui top attached tabular menu" id="extensions-menu">
-    <a class="item active" data-tab="general">{{ t._('ex_GeneralSettings') }}</a>
-
-    <a class="item" data-tab="routing">{{ t._('ex_RoutingSettings') }}</a>
+        <a class="item active" data-tab="general">{{ t._('ex_GeneralSettings') }}</a>
+        <a class="item" data-tab="routing">{{ t._('ex_RoutingSettings') }}</a>
+    {{ partial("PbxExtensionModules/hookVoltBlock",
+        ['arrayOfPartials':hookVoltBlock('TabularMenu')])
+    }}
 </div>
+
 <div class="ui bottom attached tab segment active" data-tab="general">
     <div class="two fields">
         <div class="field">
@@ -74,14 +77,12 @@
                     </div>
                 </div>
             </div>
-
-
         </div>
         <div class="field">
             <div class="field">
                 <div class="ui centered card">
                     <div class="image">
-                        <img src='{{ avatar }}' id="avatar">
+                        <img src='{{ avatar }}' id="avatar" alt="{{ t._('ex_UserPhotography') }}">
                     </div>
                     <div class="ui bottom attached basic buttons">
                         <div class="ui button" id="upload-new-avatar">
@@ -96,6 +97,8 @@
             </div>
         </div>
     </div>
+
+    {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('GeneralMainFields')]) }}
 
     <div class="ui accordion field">
         <div class=" title">
@@ -132,6 +135,8 @@
             <div class="field">
                 {{ form.render('sip_manualattributes') }}
             </div>
+
+            {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('GeneralAdvancedFields')]) }}
         </div>
     </div>
 </div>
@@ -153,7 +158,11 @@
         {{ t._('ex_IfMainExtensionIsUnavailableRedirectCallTo') }}
         {{ form.render('fwd_forwardingonunavailable') }}
     </div>
-
 </div>
+
+{{ partial("PbxExtensionModules/hookVoltBlock",
+    ['arrayOfPartials':hookVoltBlock('AdditionalTab')])
+}}
+
 {{ partial("partials/submitbutton",['indexurl':'extensions/index/']) }}
-</form>
+{{ end_form() }}
