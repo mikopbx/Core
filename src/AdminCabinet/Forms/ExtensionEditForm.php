@@ -23,6 +23,7 @@ use MikoPBX\Common\Models\ExtensionForwardingRights;
 use MikoPBX\Common\Models\ExternalPhones;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\Users;
+use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Numeric;
@@ -34,7 +35,7 @@ use Phalcon\Forms\Element\Text;
  * Class ExtensionEditForm
  *
  * @package MikoPBX\AdminCabinet\Forms
- * @property \MikoPBX\Common\Providers\TranslationProvider translation
+ * @property TranslationProvider translation
  */
 class ExtensionEditForm extends BaseForm
 {
@@ -51,8 +52,8 @@ class ExtensionEditForm extends BaseForm
         $this->add(
             new Text(
                 'number', [
-                "data-inputmask" => "'mask': '" . $options["internalextension_mask"] . "'",
-            ]
+                    "data-inputmask" => "'mask': '" . $options["internalextension_mask"] . "'",
+                ]
             )
         );
 
@@ -79,7 +80,7 @@ class ExtensionEditForm extends BaseForm
         $this->add(new Check('public_access', $cheskarr));
 
         // USER
-        $user = $entity->Users??new Users();
+        $user = $entity->Users ?? new Users();
         // ID
         $this->add(new Hidden('user_id', ["value" => $user->id]));
 
@@ -92,7 +93,7 @@ class ExtensionEditForm extends BaseForm
         // Email
         $this->add(
             new Text(
-                'user_email', [ "value" => $user->email, 'autocomplete' => 'off']
+                'user_email', ["value" => $user->email, 'autocomplete' => 'off']
             )
         );
 
@@ -100,7 +101,7 @@ class ExtensionEditForm extends BaseForm
         $this->add(new Hidden('user_avatar', ["value" => $user->avatar]));
 
         // SIP
-        $sip = $entity->Sip??new Sip();
+        $sip = $entity->Sip ?? new Sip();
         $this->add(new Hidden('sip_id', ["value" => $sip->id]));
 
         // Disabled
@@ -122,68 +123,68 @@ class ExtensionEditForm extends BaseForm
         $this->add(
             new Text(
                 'sip_secret', [
-                "value" => $sip->secret,
-                "class"=>"confidential-field",
-                'autocomplete' => 'off'
-            ]
+                    "value" => $sip->secret,
+                    "class" => "confidential-field",
+                    'autocomplete' => 'off'
+                ]
             )
         );
 
         // Dtmfmode
         $arrDTMFType = [
-            'auto'      => $this->translation->_('auto'),
-            'inband'    => $this->translation->_('inband'),
-            'info'      => $this->translation->_('info'),
-            'rfc4733'   => $this->translation->_('rfc4733'),
+            'auto' => $this->translation->_('auto'),
+            'inband' => $this->translation->_('inband'),
+            'info' => $this->translation->_('info'),
+            'rfc4733' => $this->translation->_('rfc4733'),
             'auto_info' => $this->translation->_('auto_info'),
         ];
 
         $dtmfmode = new Select(
             'sip_dtmfmode', $arrDTMFType, [
-            'using'    => [
-                'id',
-                'name',
-            ],
-            'useEmpty' => false,
-            'value'    => $sip->dtmfmode,
-            'class'    => 'ui selection dropdown',
-        ]
+                'using' => [
+                    'id',
+                    'name',
+                ],
+                'useEmpty' => false,
+                'value' => $sip->dtmfmode,
+                'class' => 'ui selection dropdown',
+            ]
         );
         $this->add($dtmfmode);
 
         // Transport
         $arrTransport = [
-            Sip::TRANSPORT_UDP    => Sip::TRANSPORT_UDP,
-            Sip::TRANSPORT_TCP    => Sip::TRANSPORT_TCP,
-            Sip::TRANSPORT_TLS    => Sip::TRANSPORT_TLS,
+            Sip::TRANSPORT_UDP => Sip::TRANSPORT_UDP,
+            Sip::TRANSPORT_TCP => Sip::TRANSPORT_TCP,
+            Sip::TRANSPORT_TLS => Sip::TRANSPORT_TLS,
         ];
 
         $transport = new Select(
             'sip_transport', $arrTransport, [
-            'using'    => [
-                'id',
-                'name',
-            ],
-           'emptyText'  => 'udp, tcp',
-           'emptyValue' => ' ',
-            'useEmpty' => true,
-            'value'    => empty($sip->transport)?' ':$sip->transport,
-            'class'    => 'ui selection dropdown',
-        ]
+                'using' => [
+                    'id',
+                    'name',
+                ],
+                'emptyText' => 'udp, tcp',
+                'emptyValue' => ' ',
+                'useEmpty' => true,
+                'value' => empty($sip->transport) ? ' ' : $sip->transport,
+                'class' => 'ui selection dropdown',
+            ]
         );
         $this->add($transport);
 
         // Networkfilterid
         $networkfilterid = new Select(
             'sip_networkfilterid', $options['network_filters'], [
-            'using'    => [
-                'id',
-                'name',
-            ],
-            'useEmpty' => false,
-            'value'    => $sip->networkfilterid,
-            'class'    => 'ui selection dropdown network-filter-select',
-        ]
+                'using' => [
+                    'id',
+                    'name',
+                ],
+                'useEmpty' => false,
+                'value' => $sip->networkfilterid,
+                'class' => 'ui selection dropdown network-filter-select',
+            ]
         );
         $this->add($networkfilterid);
 
@@ -198,7 +199,7 @@ class ExtensionEditForm extends BaseForm
         $this->add(new Numeric('qualifyfreq', ["value" => $sip->qualifyfreq, 'autocomplete' => 'off']));
 
         // Manualattributes
-        $this->addTextArea('sip_manualattributes', $sip->getManualAttributes(), 80 );
+        $this->addTextArea('sip_manualattributes', $sip->getManualAttributes(), 80);
 
         // Description
         $this->add(new Text('sip_description', ["value" => $sip->description, 'autocomplete' => 'off']));
@@ -207,7 +208,7 @@ class ExtensionEditForm extends BaseForm
         $this->add(new Text('mobile_number', ["value" => $options['external_extension']->number, 'autocomplete' => 'off']));
 
         // Uniqid
-        $externalPhones = $options['external_extension']->ExternalPhones??new ExternalPhones();
+        $externalPhones = $options['external_extension']->ExternalPhones ?? new ExternalPhones();
         $this->add(new Hidden('mobile_uniqid', ["value" => $externalPhones->uniqid]));
 
         // Disabled
@@ -228,18 +229,18 @@ class ExtensionEditForm extends BaseForm
 
         // Routing
         // Forwarding
-        $extensionForwardingRights = $entity->ExtensionForwardingRights??new ExtensionForwardingRights();
+        $extensionForwardingRights = $entity->ExtensionForwardingRights ?? new ExtensionForwardingRights();
         $this->add(
             new Select(
                 'fwd_forwarding', $options['forwarding_extensions'], [
-                'using'    => [
-                    'id',
-                    'name',
-                ],
-                'useEmpty' => true,
-                'value'    => $extensionForwardingRights->forwarding,
-                'class'    => 'ui selection dropdown search forwarding-select',
-            ]
+                    'using' => [
+                        'id',
+                        'name',
+                    ],
+                    'useEmpty' => true,
+                    'value' => $extensionForwardingRights->forwarding,
+                    'class' => 'ui selection dropdown search forwarding-select',
+                ]
             )
         );
 
@@ -247,28 +248,28 @@ class ExtensionEditForm extends BaseForm
         $this->add(
             new Select(
                 'fwd_forwardingonbusy', $options['forwarding_extensions'], [
-                'using'    => [
-                    'id',
-                    'name',
-                ],
-                'useEmpty' => true,
-                'value'    => $extensionForwardingRights->forwardingonbusy,
-                'class'    => 'ui selection dropdown search forwarding-select',
-            ]
+                    'using' => [
+                        'id',
+                        'name',
+                    ],
+                    'useEmpty' => true,
+                    'value' => $extensionForwardingRights->forwardingonbusy,
+                    'class' => 'ui selection dropdown search forwarding-select',
+                ]
             )
         );
         // Forwardingonunavailable
         $this->add(
             new Select(
                 'fwd_forwardingonunavailable', $options['forwarding_extensions'], [
-                'using'    => [
-                    'id',
-                    'name',
-                ],
-                'useEmpty' => true,
-                'value'    => $extensionForwardingRights->forwardingonunavailable,
-                'class'    => 'ui selection dropdown search forwarding-select',
-            ]
+                    'using' => [
+                        'id',
+                        'name',
+                    ],
+                    'useEmpty' => true,
+                    'value' => $extensionForwardingRights->forwardingonunavailable,
+                    'class' => 'ui selection dropdown search forwarding-select',
+                ]
             )
         );
         // RingLength
@@ -276,12 +277,12 @@ class ExtensionEditForm extends BaseForm
         $this->add(
             new Numeric(
                 'fwd_ringlength', [
-                "maxlength"    => 2,
-                "style"        => "width: 80px;",
-                "defaultValue" => 120,
-                "value"        => ($ringDuration > 0) ? $ringDuration : '',
-                'autocomplete' => 'off'
-            ]
+                    "maxlength" => 2,
+                    "style" => "width: 80px;",
+                    "defaultValue" => 120,
+                    "value" => ($ringDuration > 0) ? $ringDuration : '',
+                    'autocomplete' => 'off'
+                ]
             )
         );
 

@@ -15,10 +15,10 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
+/* global globalRootUrl */
 
 const sshConsole = {
-	$menuLink: $('a[href$="/admin-cabinet/console/index/"]'),
+	$menuLink: $(`a[href$="${globalRootUrl}console/index/"]`),
 	link: null,
 	target: null,
 	hide: false,
@@ -40,7 +40,7 @@ const sshConsole = {
 					sshConsole.target = '_blank';
 				},
 			);
-			$('body').on('click', 'a[href$="/admin-cabinet/console/index/"]', (e) => {
+			$('body').on('click', `a[href$="${globalRootUrl}console/index/"]`, (e) => {
 				e.preventDefault();
 				window.open(sshConsole.link, sshConsole.target);
 			});

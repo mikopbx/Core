@@ -19,6 +19,7 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
+use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Numeric;
@@ -29,7 +30,7 @@ use Phalcon\Forms\Element\Text;
  * Class NetworkEditForm
  *
  * @package MikoPBX\AdminCabinet\Forms
- * @property \MikoPBX\Common\Providers\TranslationProvider translation
+ * @property TranslationProvider translation
  */
 class NetworkEditForm extends BaseForm
 {
@@ -56,16 +57,16 @@ class NetworkEditForm extends BaseForm
             $this->add(
                 new Hidden(
                     'interface_' . $eth->id, [
-                    'value' => $eth->interface,
-                ]
+                        'value' => $eth->interface,
+                    ]
                 )
             );
 
             $this->add(
                 new Text(
                     'name_' . $eth->id, [
-                    'value' => $eth->name,
-                ]
+                        'value' => $eth->name,
+                    ]
                 )
             );
 
@@ -80,24 +81,24 @@ class NetworkEditForm extends BaseForm
             $this->add(
                 new Text(
                     'ipaddr_' . $eth->id, [
-                    'value' => $eth->ipaddr,
-                    'class' => 'ipaddress',
-                ]
+                        'value' => $eth->ipaddr,
+                        'class' => 'ipaddress',
+                    ]
                 )
             );
 
             // Выбор подсети интерфейса
             $arrMasks = [
-                "0"  => "0 - 0.0.0.0",
-                "1"  => "1 - 128.0.0.0",
-                "2"  => "2 - 192.0.0.0",
-                "3"  => "3 - 224.0.0.0",
-                "4"  => "4 - 240.0.0.0",
-                "5"  => "5 - 248.0.0.0",
-                "6"  => "6 - 252.0.0.0",
-                "7"  => "7 - 254.0.0.0",
-                "8"  => "8 - 255.0.0.0",
-                "9"  => "9 - 255.128.0.0",
+                "0" => "0 - 0.0.0.0",
+                "1" => "1 - 128.0.0.0",
+                "2" => "2 - 192.0.0.0",
+                "3" => "3 - 224.0.0.0",
+                "4" => "4 - 240.0.0.0",
+                "5" => "5 - 248.0.0.0",
+                "6" => "6 - 252.0.0.0",
+                "7" => "7 - 254.0.0.0",
+                "8" => "8 - 255.0.0.0",
+                "9" => "9 - 255.128.0.0",
                 "10" => "10 - 255.192.0.0",
                 "11" => "11 - 255.224.0.0",
                 "12" => "12 - 255.240.0.0",
@@ -122,29 +123,29 @@ class NetworkEditForm extends BaseForm
                 "31" => "31 - 255.255.255.254",
                 "32" => "32 - 255.255.255.255",
             ];
-            $mask     = new Select(
+            $mask = new Select(
                 'subnet_' . $eth->id, $arrMasks, [
-                'using'    => [
-                    'id',
-                    'name',
-                ],
-                'useEmpty' => false,
-                'value'    => $eth->subnet,
-                'class'    => 'ui search selection dropdown',
-            ]
+                    'using' => [
+                        'id',
+                        'name',
+                    ],
+                    'useEmpty' => false,
+                    'value' => $eth->subnet,
+                    'class' => 'ui search selection dropdown',
+                ]
             );
             $this->add($mask);
 
             $this->add(
                 new Numeric(
                     'vlanid_' . $eth->id, [
-                    'value' => $eth->vlanid,
-                ]
+                        'value' => $eth->vlanid,
+                    ]
                 )
             );
 
             $arrInterfaces[$eth->id] = $eth->name . ' (' . $eth->interface . (($eth->vlanid > 0) ? '.' . $eth->vlanid : '') . ')';
-            if ( ! in_array($eth->interface, $arrRealInterfaces)) {
+            if (!in_array($eth->interface, $arrRealInterfaces)) {
                 $arrRealInterfaces[$eth->id] = $eth->interface;
             }
         }
@@ -154,14 +155,14 @@ class NetworkEditForm extends BaseForm
         // Выбор интернет интерфейса
         $internetInterface = new Select(
             'internet_interface', $arrInterfaces, [
-            'using'    => [
-                'id',
-                'name',
-            ],
-            'useEmpty' => false,
-            'value'    => $entity->id,
-            'class'    => 'ui selection dropdown',
-        ]
+                'using' => [
+                    'id',
+                    'name',
+                ],
+                'useEmpty' => false,
+                'value' => $entity->id,
+                'class' => 'ui selection dropdown',
+            ]
         );
         $this->add($internetInterface);
 
@@ -169,13 +170,13 @@ class NetworkEditForm extends BaseForm
         // Поля для вновь добавляемого интерфейса
         $newInterface = new Select(
             'interface_0', $arrRealInterfaces, [
-            'using'    => [
-                'id',
-                'name',
-            ],
-            'useEmpty' => true,
-            'class'    => 'ui selection dropdown',
-        ]
+                'using' => [
+                    'id',
+                    'name',
+                ],
+                'useEmpty' => true,
+                'class' => 'ui selection dropdown',
+            ]
         );
         $this->add($newInterface);
     }

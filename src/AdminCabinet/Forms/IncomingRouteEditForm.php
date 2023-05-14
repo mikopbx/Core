@@ -19,6 +19,7 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
+use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Numeric;
 use Phalcon\Forms\Element\Select;
@@ -28,7 +29,7 @@ use Phalcon\Forms\Element\Text;
  * Class IncomingRouteEditForm
  *
  * @package MikoPBX\AdminCabinet\Forms
- * @property \MikoPBX\Common\Providers\TranslationProvider translation
+ * @property TranslationProvider translation
  */
 class IncomingRouteEditForm extends BaseForm
 {
@@ -60,26 +61,26 @@ class IncomingRouteEditForm extends BaseForm
         // Providers
         $providers = new Select(
             'provider', $options['providers'], [
-            'using'    => [
-                'id',
-                'name',
-            ],
-            'useEmpty' => false,
-            'class'    => 'ui selection dropdown provider-select',
-        ]
+                'using' => [
+                    'id',
+                    'name',
+                ],
+                'useEmpty' => false,
+                'class' => 'ui selection dropdown provider-select',
+            ]
         );
         $this->add($providers);
 
         // Extension
         $extension = new Select(
             'extension', $options['extensions'], [
-            'using'    => [
-                'id',
-                'name',
-            ],
-            'useEmpty' => false,
-            'class'    => 'ui selection dropdown search forwarding-select',
-        ]
+                'using' => [
+                    'id',
+                    'name',
+                ],
+                'useEmpty' => false,
+                'class' => 'ui selection dropdown search forwarding-select',
+            ]
         );
         $this->add($extension);
     }

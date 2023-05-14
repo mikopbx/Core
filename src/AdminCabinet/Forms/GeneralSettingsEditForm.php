@@ -20,6 +20,7 @@
 namespace MikoPBX\AdminCabinet\Forms;
 
 use MikoPBX\Common\Models\SoundFiles;
+use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Numeric;
@@ -31,7 +32,7 @@ use Phalcon\Forms\Element\Text;
  * Class GeneralSettingsEditForm
  *
  * @package MikoPBX\AdminCabinet\Forms
- * @property \MikoPBX\Common\Providers\TranslationProvider translation
+ * @property TranslationProvider translation
  */
 class GeneralSettingsEditForm extends BaseForm
 {

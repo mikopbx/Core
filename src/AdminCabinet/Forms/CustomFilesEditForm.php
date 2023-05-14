@@ -19,6 +19,7 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
+use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
@@ -28,7 +29,7 @@ use Phalcon\Forms\Element\Text;
  * Class CustomFilesEditForm
  *
  * @package MikoPBX\AdminCabinet\Forms
- * @property \MikoPBX\Common\Providers\TranslationProvider translation
+ * @property TranslationProvider translation
  */
 class CustomFilesEditForm extends BaseForm
 {
@@ -51,17 +52,17 @@ class CustomFilesEditForm extends BaseForm
                     $select = new Select(
                         $key,
                         [
-                            'none'     => $this->translation->_("cf_FileActionsNone"),
-                            'append'   => $this->translation->_("cf_FileActionsAppend"),
+                            'none' => $this->translation->_("cf_FileActionsNone"),
+                            'append' => $this->translation->_("cf_FileActionsAppend"),
                             'override' => $this->translation->_("cf_FileActionsOverride"),
                         ]
                         , [
-                            'using'    => [
+                            'using' => [
                                 'id',
                                 'name',
                             ],
                             'useEmpty' => false,
-                            'class'    => 'ui selection dropdown type-select',
+                            'class' => 'ui selection dropdown type-select',
                         ]
                     );
                     $this->add($select);

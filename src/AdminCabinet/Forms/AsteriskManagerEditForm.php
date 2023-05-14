@@ -19,6 +19,7 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
+use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Select;
@@ -26,7 +27,7 @@ use Phalcon\Forms\Element\Text;
 
 /**
  * Class AsteriskManagerEditForm
- * @property \MikoPBX\Common\Providers\TranslationProvider translation
+ * @property TranslationProvider translation
  * @package MikoPBX\AdminCabinet\Forms
  */
 class AsteriskManagerEditForm extends BaseForm
@@ -42,7 +43,7 @@ class AsteriskManagerEditForm extends BaseForm
         $this->add(new Text('username'));
 
         // Secret
-        $this->add(new Text('secret', [ "class"=>"confidential-field"]));
+        $this->add(new Text('secret', ["class" => "confidential-field"]));
 
 
         foreach ($options['array_of_checkboxes'] as $checkBox) {
@@ -65,19 +66,19 @@ class AsteriskManagerEditForm extends BaseForm
         // Networkfilterid
         $networkfilterid = new Select(
             'networkfilterid', $options['network_filters'], [
-            'using'    => [
-                'id',
-                'name',
-            ],
-            'useEmpty' => false,
-            'value'    => $entity->networkfilterid,
-            'class'    => 'ui selection dropdown network-filter-select',
-        ]
+                'using' => [
+                    'id',
+                    'name',
+                ],
+                'useEmpty' => false,
+                'value' => $entity->networkfilterid,
+                'class' => 'ui selection dropdown network-filter-select',
+            ]
         );
         $this->add($networkfilterid);
 
         // Description
-        $this->addTextArea('description',$entity->description, 65);
+        $this->addTextArea('description', $entity->description, 65);
 
     }
 }

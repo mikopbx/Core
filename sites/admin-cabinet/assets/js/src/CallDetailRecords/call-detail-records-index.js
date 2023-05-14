@@ -244,14 +244,14 @@ const callDetailRecords = {
 		callDetailRecords.$cdrTable.on('click', 'tr.negative', (e) => {
 			let ids = $(e.target).attr('data-ids');
 			if (ids !== undefined && ids !== '') {
-				window.location = `/admin-cabinet/system-diagnostic/index/?filename=asterisk/verbose&filter=${ids}`;
+				window.location = `${globalRootUrl}system-diagnostic/index/?filename=asterisk/verbose&filter=${ids}`;
 			}
 		});
 		// Add event listener for opening and closing details
 		callDetailRecords.$cdrTable.on('click', 'tr.detailed', (e) => {
 			let ids = $(e.target).attr('data-ids');
 			if(ids !== undefined && ids !== ''){
-				window.location = `/admin-cabinet/system-diagnostic/index/?filename=asterisk/verbose&filter=${ids}`;
+				window.location = `${globalRootUrl}system-diagnostic/index/?filename=asterisk/verbose&filter=${ids}`;
 				return;
 			}
 			const tr = $(e.target).closest('tr');

@@ -19,6 +19,7 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
+use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
@@ -27,7 +28,7 @@ use Phalcon\Forms\Element\Text;
  * Class DialplanApplicationEditForm
  *
  * @package MikoPBX\AdminCabinet\Forms
- * @property \MikoPBX\Common\Providers\TranslationProvider translation
+ * @property TranslationProvider translation
  */
 class DialplanApplicationEditForm extends BaseForm
 {
@@ -49,16 +50,16 @@ class DialplanApplicationEditForm extends BaseForm
                     $select = new Select(
                         $key,
                         [
-                            'php'       => $this->translation->_("da_TypePhp"),
+                            'php' => $this->translation->_("da_TypePhp"),
                             'plaintext' => $this->translation->_("da_TypePlaintext"),
                         ]
                         , [
-                            'using'    => [
+                            'using' => [
                                 'id',
                                 'name',
                             ],
                             'useEmpty' => false,
-                            'class'    => 'ui selection dropdown type-select',
+                            'class' => 'ui selection dropdown type-select',
                         ]
                     );
                     $this->add($select);

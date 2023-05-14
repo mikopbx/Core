@@ -19,6 +19,7 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
+use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Password;
 use Phalcon\Forms\Element\Text;
@@ -28,7 +29,7 @@ use Phalcon\Forms\Element\TextArea;
  * Class MailSettingsEditForm
  *
  * @package MikoPBX\AdminCabinet\Forms
- * @property \MikoPBX\Common\Providers\TranslationProvider translation
+ * @property TranslationProvider translation
  */
 class MailSettingsEditForm extends BaseForm
 {
@@ -56,8 +57,8 @@ class MailSettingsEditForm extends BaseForm
                     $this->add(
                         new TextArea(
                             $key, [
-                            'value' => $value,
-                        ]
+                                'value' => $value,
+                            ]
                         )
                     );
                     break;
@@ -66,8 +67,8 @@ class MailSettingsEditForm extends BaseForm
                     $this->add(
                         new Password(
                             $key, [
-                            'value' => $value,
-                        ]
+                                'value' => $value,
+                            ]
                         )
                     );
                     break;
@@ -76,8 +77,8 @@ class MailSettingsEditForm extends BaseForm
                     $this->add(
                         new Text(
                             $key, [
-                            'value' => $value,
-                        ]
+                                'value' => $value,
+                            ]
                         )
                     );
             }

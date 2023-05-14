@@ -20,6 +20,7 @@
 namespace MikoPBX\AdminCabinet\Forms;
 
 use MikoPBX\Common\Models\Sip;
+use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Numeric;
@@ -31,7 +32,7 @@ use Phalcon\Forms\Element\Text;
  * Class SipProviderEditForm
  *
  * @package MikoPBX\AdminCabinet\Forms
- * @property \MikoPBX\Common\Providers\TranslationProvider translation
+ * @property TranslationProvider translation
  */
 class SipProviderEditForm extends BaseForm
 {
@@ -73,67 +74,67 @@ class SipProviderEditForm extends BaseForm
 
         // Dtmfmode
         $arrDTMFType = [
-            'auto'      => $this->translation->_('auto'),
-            'inband'    => $this->translation->_('inband'),
-            'info'      => $this->translation->_('info'),
-            'rfc4733'   => $this->translation->_('rfc4733'),
+            'auto' => $this->translation->_('auto'),
+            'inband' => $this->translation->_('inband'),
+            'info' => $this->translation->_('info'),
+            'rfc4733' => $this->translation->_('rfc4733'),
             'auto_info' => $this->translation->_('auto_info'),
         ];
 
         $dtmfmode = new Select(
             'dtmfmode', $arrDTMFType, [
-            'using'    => [
-                'id',
-                'name',
-            ],
-            'useEmpty' => false,
-            'value'    => $entity->dtmfmode,
-            'class'    => 'ui selection dropdown',
-          ]
+                'using' => [
+                    'id',
+                    'name',
+                ],
+                'useEmpty' => false,
+                'value' => $entity->dtmfmode,
+                'class' => 'ui selection dropdown',
+            ]
         );
         $this->add($dtmfmode);
 
         $regTypeArray = [
             Sip::REG_TYPE_OUTBOUND => $this->translation->_('sip_REG_TYPE_OUTBOUND'),
-            Sip::REG_TYPE_INBOUND  => $this->translation->_('sip_REG_TYPE_INBOUND'),
-            Sip::REG_TYPE_NONE     => $this->translation->_('sip_REG_TYPE_NONE'),
+            Sip::REG_TYPE_INBOUND => $this->translation->_('sip_REG_TYPE_INBOUND'),
+            Sip::REG_TYPE_NONE => $this->translation->_('sip_REG_TYPE_NONE'),
         ];
 
         $regTypeValue = $entity->registration_type;
-        if(empty($regTypeValue)){
-            $regTypeValue = ($entity->noregister === '0')?Sip::REG_TYPE_OUTBOUND: Sip::REG_TYPE_NONE;
+        if (empty($regTypeValue)) {
+            $regTypeValue = ($entity->noregister === '0') ? Sip::REG_TYPE_OUTBOUND : Sip::REG_TYPE_NONE;
         }
         $regType = new Select(
-        'registration_type', $regTypeArray, [
-              'using'    => [
-                  'id',
-                  'name',
-              ],
-              'useEmpty' => false,
-              'value'    => $regTypeValue,
-              'class'    => 'ui selection dropdown',
-          ]
+            'registration_type', $regTypeArray, [
+                'using' => [
+                    'id',
+                    'name',
+                ],
+                'useEmpty' => false,
+                'value' => $regTypeValue,
+                'class' => 'ui selection dropdown',
+            ]
         );
         $this->add($regType);
 
         // Transport
         $arrTransport = [
-            Sip::TRANSPORT_UDP    => Sip::TRANSPORT_UDP,
-            Sip::TRANSPORT_TCP    => Sip::TRANSPORT_TCP,
-            Sip::TRANSPORT_TLS    => Sip::TRANSPORT_TLS,
+            Sip::TRANSPORT_UDP => Sip::TRANSPORT_UDP,
+            Sip::TRANSPORT_TCP => Sip::TRANSPORT_TCP,
+            Sip::TRANSPORT_TLS => Sip::TRANSPORT_TLS,
         ];
         $transport = new Select(
             'transport', $arrTransport, [
-                   'using'    => [
-                       'id',
-                       'name',
-                   ],
-                   'emptyText'  => 'udp, tcp',
-                   'emptyValue' => ' ',
-                   'useEmpty' => true,
-                   'value'    => empty($entity->transport)?' ': $entity->transport,
-                   'class'    => 'ui selection dropdown',
-               ]
+                'using' => [
+                    'id',
+                    'name',
+                ],
+                'emptyText' => 'udp, tcp',
+                'emptyValue' => ' ',
+                'useEmpty' => true,
+                'value' => empty($entity->transport) ? ' ' : $entity->transport,
+                'class' => 'ui selection dropdown',
+            ]
         );
         $this->add($transport);
 

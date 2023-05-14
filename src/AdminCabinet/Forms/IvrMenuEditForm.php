@@ -19,6 +19,7 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
+use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Numeric;
@@ -29,7 +30,7 @@ use Phalcon\Forms\Element\Text;
  * Class IvrMenuEditForm
  *
  * @package MikoPBX\AdminCabinet\Forms
- * @property \MikoPBX\Common\Providers\TranslationProvider translation
+ * @property TranslationProvider translation
  */
 class IvrMenuEditForm extends BaseForm
 {
@@ -52,10 +53,10 @@ class IvrMenuEditForm extends BaseForm
         $this->add(
             new Numeric(
                 'number_of_repeat', [
-                "maxlength"    => 2,
-                "style"        => "width: 80px;",
-                "defaultValue" => 3,
-            ]
+                    "maxlength" => 2,
+                    "style" => "width: 80px;",
+                    "defaultValue" => 3,
+                ]
             )
         );
 
@@ -63,36 +64,36 @@ class IvrMenuEditForm extends BaseForm
         $this->add(
             new Numeric(
                 'timeout', [
-                "maxlength"    => 2,
-                "style"        => "width: 80px;",
-                "defaultValue" => 7,
-            ]
+                    "maxlength" => 2,
+                    "style" => "width: 80px;",
+                    "defaultValue" => 7,
+                ]
             )
         );
 
         // Timeoutextension
         $extension = new Select(
             'timeout_extension', $options['extensions'], [
-            'using'    => [
-                'id',
-                'name',
-            ],
-            'useEmpty' => false,
-            'class'    => 'ui selection dropdown search forwarding-select',
-        ]
+                'using' => [
+                    'id',
+                    'name',
+                ],
+                'useEmpty' => false,
+                'class' => 'ui selection dropdown search forwarding-select',
+            ]
         );
         $this->add($extension);
 
         // Audio_message_id
         $audioMessage = new Select(
             'audio_message_id', $options['soundfiles'], [
-            'using'    => [
-                'id',
-                'name',
-            ],
-            'useEmpty' => false,
-            'class'    => 'ui selection dropdown search audio-message-select',
-        ]
+                'using' => [
+                    'id',
+                    'name',
+                ],
+                'useEmpty' => false,
+                'class' => 'ui selection dropdown search audio-message-select',
+            ]
         );
         $this->add($audioMessage);
 

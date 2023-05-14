@@ -19,6 +19,7 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
+use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Password;
 use Phalcon\Forms\Element\Text;
@@ -29,9 +30,9 @@ use Phalcon\Html\Helper\Base;
  * Class LoginForm
  *
  * @package MikoPBX\AdminCabinet\Forms
- * @property \MikoPBX\Common\Providers\TranslationProvider translation
+ * @property TranslationProvider translation
  */
-class LoginForm extends Base
+class LoginForm extends BaseForm
 {
     public function initialize($entity = null, $options = null): void
     {

@@ -19,6 +19,7 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
+use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Select;
@@ -29,7 +30,7 @@ use Phalcon\Forms\Element\Text;
  * Class TimeFrameEditForm
  *
  * @package MikoPBX\AdminCabinet\Forms
- * @property \MikoPBX\Common\Providers\TranslationProvider translation
+ * @property TranslationProvider translation
  */
 class TimeFrameEditForm extends BaseForm
 {
@@ -51,39 +52,39 @@ class TimeFrameEditForm extends BaseForm
                 case 'extension' :
                     $extension = new Select(
                         $key, $options['extensions'], [
-                        'using'    => [
-                            'id',
-                            'name',
-                        ],
-                        'useEmpty' => true,
-                        'class'    => 'ui selection search forwarding-select',
-                    ]
+                            'using' => [
+                                'id',
+                                'name',
+                            ],
+                            'useEmpty' => true,
+                            'class' => 'ui selection search forwarding-select',
+                        ]
                     );
                     $this->add($extension);
                     break;
                 case 'audio_message_id' :
                     $audiomessageid = new Select(
                         $key, $options['audio-message'], [
-                        'using'    => [
-                            'id',
-                            'name',
-                        ],
-                        'useEmpty' => true,
-                        'class'    => 'ui selection dropdown-default search',
-                    ]
+                            'using' => [
+                                'id',
+                                'name',
+                            ],
+                            'useEmpty' => true,
+                            'class' => 'ui selection dropdown-default search',
+                        ]
                     );
                     $this->add($audiomessageid);
                     break;
                 case 'action' :
                     $action = new Select(
                         $key, $options['available-actions'], [
-                        'using'    => [
-                            'id',
-                            'name',
-                        ],
-                        'useEmpty' => false,
-                        'class'    => 'ui selection dropdown search',
-                    ]
+                            'using' => [
+                                'id',
+                                'name',
+                            ],
+                            'useEmpty' => false,
+                            'class' => 'ui selection dropdown search',
+                        ]
                     );
                     $this->add($action);
                     break;
@@ -91,14 +92,14 @@ class TimeFrameEditForm extends BaseForm
                 case 'weekday_to' :
                     $action = new Select(
                         $key, $options['week-days'], [
-                        'using'    => [
-                            'id',
-                            'name',
-                        ],
-                        'useEmpty' => false,
-                        'value'    => empty($entity->$key) ? -1 : $value,
-                        'class'    => 'ui selection',
-                    ]
+                            'using' => [
+                                'id',
+                                'name',
+                            ],
+                            'useEmpty' => false,
+                            'value' => empty($entity->$key) ? -1 : $value,
+                            'class' => 'ui selection',
+                        ]
                     );
                     $this->add($action);
                     break;

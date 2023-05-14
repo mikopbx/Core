@@ -19,6 +19,7 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
+use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Select;
@@ -28,7 +29,7 @@ use Phalcon\Forms\Element\Text;
  * Class PbxExtensionModuleSettingsForm
  *
  * @package MikoPBX\AdminCabinet\Forms
- * @property \MikoPBX\Common\Providers\TranslationProvider translation
+ * @property TranslationProvider translation
  */
 class PbxExtensionModuleSettingsForm extends BaseForm
 {
@@ -60,8 +61,8 @@ class PbxExtensionModuleSettingsForm extends BaseForm
         $this->add(
             new Text(
                 'caption', [
-                'value' => $this->di->get('translation')->_($options['caption']),
-            ]
+                    'value' => $this->di->get('translation')->_($options['caption']),
+                ]
             )
         );
 
@@ -70,14 +71,14 @@ class PbxExtensionModuleSettingsForm extends BaseForm
 
         $groups = new Select(
             'menu-group', $menuGroups, [
-            'using'    => [
-                'id',
-                'name',
-            ],
-            'useEmpty' => false,
-            'value'    => $options['group'],
-            'class'    => 'ui selection dropdown',
-        ]
+                'using' => [
+                    'id',
+                    'name',
+                ],
+                'useEmpty' => false,
+                'value' => $options['group'],
+                'class' => 'ui selection dropdown',
+            ]
         );
         $this->add($groups);
     }

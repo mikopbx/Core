@@ -19,13 +19,14 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
+use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Text;
 
 /**
  * Class LicensingChangeLicenseKeyForm
  *
  * @package MikoPBX\AdminCabinet\Forms
- * @property \MikoPBX\Common\Providers\TranslationProvider translation
+ * @property TranslationProvider translation
  */
 class LicensingChangeLicenseKeyForm extends BaseForm
 {
