@@ -5,8 +5,11 @@
     {{ form.render('description') }}
 </div>
 <div class="ui top attached tabular menu" id="out-time-modify-menu">
-        <a class="item active" data-tab="general">{{ t._('ex_GeneralSettings') }}</a>
-        <a class="item" data-tab="rules">{{ t._('tf_RoutsRestriction') }}</a>
+    <a class="item active" data-tab="general">{{ t._('ex_GeneralSettings') }}</a>
+    <a class="item" data-tab="rules">{{ t._('tf_RoutsRestriction') }}</a>
+    {{ partial("PbxExtensionModules/hookVoltBlock",
+        ['arrayOfPartials':hookVoltBlock('TabularMenu')])
+    }}
 </div>
 
 <div class="ui bottom attached tab segment active" data-tab="general">
@@ -91,12 +94,11 @@
         </div>
        {{ partial("partials/playAddNewSound", ['label': t._('tf_SelectAudioMessage'), 'id':'audio_message_id', 'fieldClass':'field', 'fieldID':'audio-file-group']) }}
     </div>
-
+    {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('GeneralTabFields')]) }}
 </div>
 
 <div class="ui bottom attached tab segment" data-tab="rules">
 
-<!-- <div class="ui bottom attached tab segment" data-tab="rules"> -->
 {% for rule in rules %}
     {% if loop.first %}
         <table class="ui selectable compact table" id="inbound-rules-table">
@@ -165,7 +167,12 @@
         </table>
     {% endif %}
 {% endfor %}
+    {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('RulesTabFields')]) }}
 </div>
-<!-- </div> -->
+
+{{ partial("PbxExtensionModules/hookVoltBlock",
+    ['arrayOfPartials':hookVoltBlock('AdditionalTab')])
+}}
+
 {{ partial("partials/submitbutton",['indexurl':'out-off-work-time/index/']) }}
-</form>
+{{ end_form() }}

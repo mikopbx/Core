@@ -48,5 +48,8 @@
         </div>
     </div>
 </div>
+
+{{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('Fields')]) }}
+
 {{ partial("partials/submitbutton",['indexurl':'firewall/index/']) }}
-</form>
+{{ end_form() }}

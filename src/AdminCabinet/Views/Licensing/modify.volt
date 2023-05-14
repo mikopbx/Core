@@ -132,4 +132,4 @@
         </div>
     {% endif %}
 </div>
-</form>
+{{ end_form() }}

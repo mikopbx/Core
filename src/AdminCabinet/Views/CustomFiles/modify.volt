@@ -18,7 +18,9 @@
 <div id="application-code" class="application-code">
     <pre>{{ content|e }}</pre>
 </div>
-<div class="ui hidden divider"></div>
 
+{{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('GeneralMainFields')]) }}
+
+<div class="ui hidden divider"></div>
 {{ partial("partials/submitbutton",['indexurl':'custom-files/index/']) }}
-</form>
+{{ end_form() }}

@@ -98,7 +98,7 @@
         </div>
     </div>
 
-    {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('GeneralMainFields')]) }}
+    {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('GeneralTabFields')]) }}
 
     <div class="ui accordion field">
         <div class=" title">
@@ -144,7 +144,7 @@
                 {{ form.render('sip_manualattributes') }}
             </div>
 
-            {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('GeneralAdvancedFields')]) }}
+            {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('GeneralTabAdvancedFields')]) }}
         </div>
     </div>
 </div>

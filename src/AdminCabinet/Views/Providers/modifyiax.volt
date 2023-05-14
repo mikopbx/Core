@@ -27,6 +27,7 @@
     <label>{{ t._('pr_ProviderPassword') }}</label>
     {{ form.render('secret') }}
 </div>
+{{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('Fields')]) }}
 
 <div class="ui accordion field">
     <div class=" title">
@@ -68,7 +69,8 @@
             {{ form.render('manualattributes') }}
         </div>
 
+        {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('AdvancedFields')]) }}
     </div>
 </div>
 {{ partial("partials/submitbutton",['indexurl':'providers/index/']) }}
-</form>
+{{ end_form() }}

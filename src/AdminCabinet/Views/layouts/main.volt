@@ -38,6 +38,7 @@
                 {% endif %}
 
             </h1>
+            {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('Header')]) }}
             <!--/ HEADER-->
 
             <!--LOADER-->
@@ -64,6 +65,7 @@
                 {% endif %}
             </div>
             <!--/MAIN CONTENT-->
+            {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('Footer')]) }}
             <div id="pbx-version">MIKOPBX ver: {{ PBXVersion }}</div>
         </div>
         <!--CONNECTION DIMMER-->

@@ -37,7 +37,7 @@
     <label>{{ t._('ir_TimeoutToTransferDefault') }}</label>
     {{ form.render('timeout') }}
 </div>
-
+{{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('Fields')]) }}
 
 {{ partial("partials/submitbutton",['indexurl':'incoming-routes/index']) }}
-</form>
+{{ end_form() }}

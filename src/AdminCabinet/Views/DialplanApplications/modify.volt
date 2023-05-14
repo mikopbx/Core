@@ -10,6 +10,9 @@
 <div class="ui top attached tabular menu" id="application-code-menu">
     <a class="item" data-tab="main">{{ t._('da_Main') }}</a>
     <a class="item active" data-tab="code">{{ t._('da_Applicationlogic') }}</a>
+    {{ partial("PbxExtensionModules/hookVoltBlock",
+        ['arrayOfPartials':hookVoltBlock('TabularMenu')])
+    }}
 </div>
 <div class="ui bottom attached tab segment" data-tab="main">
 
@@ -36,12 +39,19 @@
         <label>{{ t._('da_Type') }}</label>
         {{ form.render('type') }}
     </div>
+
+    {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('MainTabFields')]) }}
 </div>
 <div class="ui bottom attached tab segment active" data-tab="code">
     <div id="application-code" class="application-code">
         <pre></pre>
     </div>
+    {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('CodeTabFields')]) }}
 </div>
 
+{{ partial("PbxExtensionModules/hookVoltBlock",
+    ['arrayOfPartials':hookVoltBlock('AdditionalTab')])
+}}
+
 {{ partial("partials/submitbutton",['indexurl':'dialplan-applications/index/']) }}
-</form>
+{{ end_form() }}

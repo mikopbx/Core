@@ -5,7 +5,6 @@
 {{ form.render('iconClass') }}
 {{ form.render('uniqid') }}
 
-
 <div class="field">
     <div class="ui toggle checkbox">
         {{ form.render('show-at-sidebar') }}
@@ -23,4 +22,4 @@
 </div>
 
 {{ partial("partials/submitbutton",['indexurl':indexUrl]) }}
-</form>
+{{ end_form() }}

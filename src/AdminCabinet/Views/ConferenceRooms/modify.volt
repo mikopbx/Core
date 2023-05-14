@@ -30,6 +30,7 @@
         {{ form.render('pinCode') }}
     </div>
 </div>
+{{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('GeneralMainFields')]) }}
 
 {{ partial("partials/submitbutton",['indexurl':'conference-rooms/index/']) }}
-</form>
+{{ end_form() }}

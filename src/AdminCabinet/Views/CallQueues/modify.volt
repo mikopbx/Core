@@ -58,6 +58,9 @@
     <label>{{ t._('cq_QueueStrategy') }}</label>
     {{ form.render('strategy') }}
 </div>
+
+{{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('MainFields')]) }}
+
 <div class="ui accordion field">
     <div class=" title">
         <i class="icon dropdown"></i>
@@ -163,34 +166,11 @@
 
         </div>
 
-        {# http://git.miko.ru:8080/browse/ASK-31 #}
-        {# <div class="ui segment"> #}
-        {# <h4 class="ui header">{{ t._("cq_ScenaryThree") }}</h4> #}
-
-        {# <div class="inline field"> #}
-        {# {{ t._("cq_IfQueueNotAnsweredNumberCalls") }} #}
-        {# {{ form.render('number_unanswered_calls_to_redirect') }} #}
-        {# {{ t._("cq_CallsCallWillBeRoutedTo") }} #}
-        {# {{ form.render('redirect_to_extension_if_unanswered') }} #}
-        {# </div> #}
-
-        {# </div> #}
-
-        {# <div class="ui segment"> #}
-        {# <h4 class="ui header">{{ t._("cq_ScenaryFour") }}</h4> #}
-
-        {# <div class="inline field"> #}
-        {# {{ t._("cq_IfQueueNotAnsweredRepeat") }} #}
-        {# {{ form.render('number_repeat_unanswered_to_redirect') }} #}
-        {# {{ t._("cq_CallsCallWillBeRoutedTo") }} #}
-        {# {{ form.render('redirect_to_extension_if_repeat_exceeded') }} #}
-        {# </div> #}
-
-        {# </div> #}
+        {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('AdvancedFields')]) }}
 
     </div>
 </div>
 
 {{ partial("partials/submitbutton",['indexurl':'call-queues/index/']) }}
 
-</form>
+{{ end_form() }}

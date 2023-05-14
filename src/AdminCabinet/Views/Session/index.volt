@@ -40,5 +40,5 @@
     <div class="ui fluid large black button" id="submitbutton">
         {{ t._('auth_SubmitButton') }}
     </div>
-    </form>
+    {{ end_form() }}
 </div>

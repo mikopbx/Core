@@ -3,6 +3,9 @@
     <a class="item active" data-tab="smtp">{{ t._('ms_SMTPSettings') }}</a>
     <a class="item" data-tab="missed">{{ t._('ms_NotificationTemplatesMissed') }}</a>
     <a class="item" data-tab="voicemail">{{ t._('ms_NotificationTemplatesVoicemail') }}</a>
+    {{ partial("PbxExtensionModules/hookVoltBlock",
+        ['arrayOfPartials':hookVoltBlock('TabularMenu')])
+    }}
 </div>
 
 <div class="ui bottom attached tab segment active" data-tab="smtp">
@@ -71,6 +74,7 @@
         <label>{{ t._('ms_MailSysadminEmail') }}</label>
         {{ form.render('SystemNotificationsEmail') }}
     </div>
+    {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('SMTPTabFields')]) }}
 </div>
 <div class="ui bottom attached tab segment" data-tab="missed">
     <div class="five wide field">
@@ -89,6 +93,7 @@
         <label for="MailTplMissedCallBody">{{ t._('ms_MissedCallFooter') }}</label>
         {{ form.render('MailTplMissedCallFooter') }}
     </div>
+    {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('MissedTabFields')]) }}
 </div>
 
 <div class="ui bottom attached tab segment" data-tab="voicemail">
@@ -117,9 +122,12 @@
 
     </div>
 
-
+    {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('VoicemailTabFields')]) }}
 </div>
 
+{{ partial("PbxExtensionModules/hookVoltBlock",
+    ['arrayOfPartials':hookVoltBlock('AdditionalTab')])
+}}
 {{ partial("partials/submitbutton",['indexurl':'']) }}
 <div class="ui clearing hidden divider"></div>
-</form>
+{{ end_form() }}

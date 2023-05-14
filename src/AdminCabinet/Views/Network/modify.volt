@@ -144,4 +144,4 @@
 </div>
 {{ partial("partials/submitbutton",['indexurl':'']) }}
 <div class="ui clearing hidden divider"></div>
-</form>
+{{ end_form() }}

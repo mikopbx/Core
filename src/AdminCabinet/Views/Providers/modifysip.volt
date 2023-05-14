@@ -45,6 +45,7 @@
     <label>{{ t._('pr_DTMFMode') }}</label>
     {{ form.render('dtmfmode') }}
 </div>
+{{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('Fields')]) }}
 
 <div class="ui accordion field">
     <div class=" title">
@@ -124,6 +125,7 @@
         <div class="field">
             {{ form.render('manualattributes') }}
         </div>
+        {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('AdvancedFields')]) }}
     </div>
 </div>
 {{ partial("partials/submitbutton",['indexurl':'providers/index/']) }}

@@ -37,5 +37,8 @@
     <label>{{ t._('or_Provider') }}</label>
     {{ form.render('providerid') }}
 </div>
+
+{{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('Fields')]) }}
+
 {{ partial("partials/submitbutton",['indexurl':'outbound-routes/index/']) }}
-</form>
+{{ end_form() }}
