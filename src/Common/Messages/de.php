@@ -1144,4 +1144,6 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
     'gs_Store3YearsOfRecords' => '3 Jahre',
     'gs_PBXRecordSavePeriodLabel' => 'Der Zeitraum der Speicherung von Gesprächsaufzeichnungen',
     'gs_StoreAllPossibleRecords' => '∞',
+    'ex_UserPhotography' => 'Mitarbeiterfoto',
+    'topMenu_SidebarButton' => 'Speisekarte',
 ];

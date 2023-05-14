@@ -1141,4 +1141,6 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'gs_Store3YearsOfRecords' => '3 år',
     'gs_PBXRecordSavePeriodLabel' => 'Perioden för lagring av konversationsposter',
     'gs_StoreAllPossibleRecords' => '∞',
+    'ex_UserPhotography' => 'Anställd foto',
+    'topMenu_SidebarButton' => 'Meny',
 ];

@@ -1144,4 +1144,6 @@ It can be activated once, after which the coupon becomes redeemed.
     'gs_PBXRecordSavePeriodLabel' => 'The period of storage of conversation records',
     'gs_StoreAllPossibleRecords' => '∞',
     'gs_Store1MonthOfRecords' => '1 month',
+    'ex_UserPhotography' => 'Employee photo',
+    'topMenu_SidebarButton' => 'Menu',
 ];

@@ -1141,4 +1141,6 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
     'gs_Store1MonthOfRecords' => '1 ay',
     'gs_Store3MonthsOfRecords' => '3 ay',
     'gs_Store1YearOfRecords' => '1 yıl',
+    'ex_UserPhotography' => 'Çalışan fotoğrafı',
+    'topMenu_SidebarButton' => 'Menü',
 ];

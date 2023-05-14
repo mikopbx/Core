@@ -1141,4 +1141,6 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'gs_Store3YearsOfRecords' => '3 anos',
     'gs_PBXRecordSavePeriodLabel' => 'O período de armazenamento dos registros de conversas',
     'gs_StoreAllPossibleRecords' => '∞',
+    'ex_UserPhotography' => 'foto do funcionário',
+    'topMenu_SidebarButton' => 'Cardápio',
 ];

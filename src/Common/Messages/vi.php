@@ -1141,4 +1141,6 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá đ
     'gs_Store3YearsOfRecords' => '3 năm',
     'gs_PBXRecordSavePeriodLabel' => 'Thời gian lưu trữ các bản ghi hội thoại',
     'gs_StoreAllPossibleRecords' => '∞',
+    'ex_UserPhotography' => 'ảnh nhân viên',
+    'topMenu_SidebarButton' => 'Thực đơn',
 ];

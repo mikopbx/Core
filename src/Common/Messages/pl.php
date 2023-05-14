@@ -1141,4 +1141,6 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'gs_Store3YearsOfRecords' => '3 lata',
     'gs_PBXRecordSavePeriodLabel' => 'Okres przechowywania nagrań rozmów',
     'gs_StoreAllPossibleRecords' => '∞',
+    'ex_UserPhotography' => 'Zdjęcie pracownika',
+    'topMenu_SidebarButton' => 'Menu',
 ];

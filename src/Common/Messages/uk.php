@@ -1141,4 +1141,6 @@ return [
     'gs_Store3MonthsOfRecords' => '3 місяці',
     'gs_Store6MonthsOfRecords' => '6 місяців',
     'gs_Store1YearOfRecords' => '1 рік',
+    'ex_UserPhotography' => 'Фотографія співробітника',
+    'topMenu_SidebarButton' => 'Меню',
 ];

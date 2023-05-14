@@ -1141,4 +1141,6 @@ return [
     'gs_Store3YearsOfRecords' => '3 χρόνια',
     'gs_PBXRecordSavePeriodLabel' => 'Η περίοδος αποθήκευσης των αρχείων συνομιλίας',
     'gs_StoreAllPossibleRecords' => '∞',
+    'ex_UserPhotography' => 'Φωτογραφία υπαλλήλου',
+    'topMenu_SidebarButton' => 'Μενού',
 ];

@@ -1141,4 +1141,6 @@ return [
     'gs_Store3YearsOfRecords' => '3 წელი',
     'gs_PBXRecordSavePeriodLabel' => 'საუბრის ჩანაწერების შენახვის პერიოდი',
     'gs_StoreAllPossibleRecords' => '∞',
+    'ex_UserPhotography' => 'თანამშრომლის ფოტო',
+    'topMenu_SidebarButton' => 'მენიუ',
 ];

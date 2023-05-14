@@ -1141,4 +1141,6 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'gs_Store1YearOfRecords' => '1 rok',
     'gs_Store3YearsOfRecords' => '3 roky',
     'gs_PBXRecordSavePeriodLabel' => 'Doba uložení záznamů konverzace',
+    'ex_UserPhotography' => 'Fotka zaměstnance',
+    'topMenu_SidebarButton' => 'Jídelní lístek',
 ];

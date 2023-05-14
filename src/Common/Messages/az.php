@@ -1141,4 +1141,6 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'gs_StoreAllPossibleRecords' => '∞',
     'gs_Store3MonthsOfRecords' => '3 ay',
     'gs_Store6MonthsOfRecords' => '6 ay',
+    'ex_UserPhotography' => 'İşçi şəkli',
+    'topMenu_SidebarButton' => 'Menyu',
 ];

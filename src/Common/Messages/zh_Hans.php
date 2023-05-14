@@ -1141,4 +1141,6 @@ return [
     'gs_Store3YearsOfRecords' => '3年',
     'gs_PBXRecordSavePeriodLabel' => '通话记录保存期限',
     'gs_StoreAllPossibleRecords' => '∞',
+    'ex_UserPhotography' => '员工合影',
+    'topMenu_SidebarButton' => '菜单',
 ];

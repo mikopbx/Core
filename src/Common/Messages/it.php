@@ -1141,4 +1141,6 @@ Può essere attivato una volta, dopo di che il coupon viene riscattato.
     'gs_PBXRecordSavePeriodLabel' => 'Il periodo di archiviazione dei record di conversazione',
     'gs_StoreAllPossibleRecords' => '∞',
     'gs_Store1MonthOfRecords' => '1 mese',
+    'ex_UserPhotography' => 'Foto del dipendente',
+    'topMenu_SidebarButton' => 'Menù',
 ];

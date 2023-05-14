@@ -1141,4 +1141,6 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'gs_PBXRecordSavePeriodLabel' => 'La période de stockage des enregistrements de conversation',
     'gs_StoreAllPossibleRecords' => '∞',
     'gs_Store1MonthOfRecords' => '1 mois',
+    'ex_UserPhotography' => 'Photo de l\'employé',
+    'topMenu_SidebarButton' => 'Menu',
 ];

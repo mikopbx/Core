@@ -1141,4 +1141,6 @@ return [
     'gs_PBXRecordSavePeriodLabel' => '会話記録の保存期間',
     'gs_StoreAllPossibleRecords' => '∞',
     'gs_Store1MonthOfRecords' => '1ヶ月',
+    'ex_UserPhotography' => '社員写真',
+    'topMenu_SidebarButton' => 'メニュー',
 ];

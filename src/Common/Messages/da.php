@@ -1141,4 +1141,6 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'gs_PBXRecordSavePeriodLabel' => 'Perioden for opbevaring af samtaleoptegnelser',
     'gs_StoreAllPossibleRecords' => '∞',
     'gs_Store1MonthOfRecords' => '1 måned',
+    'ex_UserPhotography' => 'Medarbejder foto',
+    'topMenu_SidebarButton' => 'Menu',
 ];

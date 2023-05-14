@@ -1141,4 +1141,6 @@ Se puede activar una vez, después de lo cual el cupón se canjea.
     'gs_PBXRecordSavePeriodLabel' => 'El período de almacenamiento de los registros de conversación.',
     'gs_StoreAllPossibleRecords' => '∞',
     'gs_Store1MonthOfRecords' => '1 mes',
+    'ex_UserPhotography' => 'foto de empleado',
+    'topMenu_SidebarButton' => 'Menú',
 ];
